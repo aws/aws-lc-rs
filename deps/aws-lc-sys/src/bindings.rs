@@ -691,7 +691,6 @@ pub const DH_R_DECODE_ERROR: i32 = 104;
 pub const DH_R_ENCODE_ERROR: i32 = 105;
 pub const EVP_MAX_MD_SIZE: i32 = 64;
 pub const EVP_MAX_MD_BLOCK_SIZE: i32 = 128;
-pub const EVP_MD_FLAG_PKEY_DIGEST: i32 = 1;
 pub const EVP_MD_FLAG_DIGALGID_ABSENT: i32 = 2;
 pub const EVP_MD_FLAG_XOF: i32 = 4;
 pub const EVP_MD_CTX_FLAG_NON_FIPS_ALLOW: i32 = 0;
@@ -8287,13 +8286,16 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_BOOLEAN_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_BOOLEAN_it"]
+    pub static ASN1_BOOLEAN_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_TBOOLEAN_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_TBOOLEAN_it"]
+    pub static ASN1_TBOOLEAN_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_FBOOLEAN_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_FBOOLEAN_it"]
+    pub static ASN1_FBOOLEAN_it: ASN1_ITEM;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -8669,31 +8671,40 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_BMPSTRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_BMPSTRING_it"]
+    pub static ASN1_BMPSTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_GENERALSTRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_GENERALSTRING_it"]
+    pub static ASN1_GENERALSTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_IA5STRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_IA5STRING_it"]
+    pub static ASN1_IA5STRING_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_OCTET_STRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_OCTET_STRING_it"]
+    pub static ASN1_OCTET_STRING_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_PRINTABLESTRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_PRINTABLESTRING_it"]
+    pub static ASN1_PRINTABLESTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_T61STRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_T61STRING_it"]
+    pub static ASN1_T61STRING_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_UNIVERSALSTRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_UNIVERSALSTRING_it"]
+    pub static ASN1_UNIVERSALSTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_UTF8STRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_UTF8STRING_it"]
+    pub static ASN1_UTF8STRING_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_VISIBLESTRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_VISIBLESTRING_it"]
+    pub static ASN1_VISIBLESTRING_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ASN1_OCTET_STRING_dup"]
@@ -8789,7 +8800,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_DIRECTORYSTRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_DIRECTORYSTRING_it"]
+    pub static DIRECTORYSTRING_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_DISPLAYTEXT_new"]
@@ -8815,7 +8827,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_DISPLAYTEXT_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_DISPLAYTEXT_it"]
+    pub static DISPLAYTEXT_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ASN1_BIT_STRING_new"]
@@ -8856,7 +8869,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_BIT_STRING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_BIT_STRING_it"]
+    pub static ASN1_BIT_STRING_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ASN1_BIT_STRING_num_bytes"]
@@ -8954,7 +8968,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_INTEGER_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_INTEGER_it"]
+    pub static ASN1_INTEGER_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ASN1_INTEGER_set_uint64"]
@@ -9024,7 +9039,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_ENUMERATED_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_ENUMERATED_it"]
+    pub static ASN1_ENUMERATED_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ASN1_ENUMERATED_set_uint64"]
@@ -9089,7 +9105,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_UTCTIME_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_UTCTIME_it"]
+    pub static ASN1_UTCTIME_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ASN1_UTCTIME_check"]
@@ -9146,7 +9163,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_GENERALIZEDTIME_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_GENERALIZEDTIME_it"]
+    pub static ASN1_GENERALIZEDTIME_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ASN1_GENERALIZEDTIME_check"]
@@ -9201,7 +9219,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_TIME_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_TIME_it"]
+    pub static ASN1_TIME_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ASN1_TIME_diff"]
@@ -9267,7 +9286,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_NULL_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_NULL_it"]
+    pub static ASN1_NULL_it: ASN1_ITEM;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -9322,7 +9342,8 @@ extern "C" {
     ) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_OBJECT_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_OBJECT_it"]
+    pub static ASN1_OBJECT_it: ASN1_ITEM;
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -9829,7 +9850,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_ANY_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_ANY_it"]
+    pub static ASN1_ANY_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ASN1_TYPE_get"]
@@ -10053,7 +10075,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_PRINTABLE_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_PRINTABLE_it"]
+    pub static ASN1_PRINTABLE_it: ASN1_ITEM;
 }
 pub type ASN1_TEMPLATE = ASN1_TEMPLATE_st;
 #[repr(C)]
@@ -10881,7 +10904,8 @@ impl Default for ASN1_AUX_st {
 }
 pub type ASN1_AUX = ASN1_AUX_st;
 extern "C" {
-    pub static aws_lc_0_1_0_ASN1_SEQUENCE_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ASN1_SEQUENCE_it"]
+    pub static ASN1_SEQUENCE_it: ASN1_ITEM;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -12680,14 +12704,6 @@ extern "C" {
 extern "C" {
     #[link_name="aws_lc_0_1_0_EVP_bf_cfb"]
     pub fn EVP_bf_cfb() -> *const EVP_CIPHER;
-}
-extern "C" {
-    #[link_name="aws_lc_0_1_0_EVP_cast5_ecb"]
-    pub fn EVP_cast5_ecb() -> *const EVP_CIPHER;
-}
-extern "C" {
-    #[link_name="aws_lc_0_1_0_EVP_cast5_cbc"]
-    pub fn EVP_cast5_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_EVP_CIPHER_CTX_set_flags"]
@@ -14521,41 +14537,6 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name="aws_lc_0_1_0_DES_set_key_unchecked"]
-    pub fn DES_set_key_unchecked(
-        key: *const DES_cblock,
-        schedule: *mut DES_key_schedule,
-    );
-}
-extern "C" {
-    #[link_name="aws_lc_0_1_0_DES_ede3_cfb64_encrypt"]
-    pub fn DES_ede3_cfb64_encrypt(
-        in_: *const u8,
-        out: *mut u8,
-        length: ::std::os::raw::c_long,
-        ks1: *mut DES_key_schedule,
-        ks2: *mut DES_key_schedule,
-        ks3: *mut DES_key_schedule,
-        ivec: *mut DES_cblock,
-        num: *mut ::std::os::raw::c_int,
-        enc: ::std::os::raw::c_int,
-    );
-}
-extern "C" {
-    #[link_name="aws_lc_0_1_0_DES_ede3_cfb_encrypt"]
-    pub fn DES_ede3_cfb_encrypt(
-        in_: *const u8,
-        out: *mut u8,
-        numbits: ::std::os::raw::c_int,
-        length: ::std::os::raw::c_long,
-        ks1: *mut DES_key_schedule,
-        ks2: *mut DES_key_schedule,
-        ks3: *mut DES_key_schedule,
-        ivec: *mut DES_cblock,
-        enc: ::std::os::raw::c_int,
-    );
-}
-extern "C" {
     #[link_name="aws_lc_0_1_0_DES_decrypt3"]
     pub fn DES_decrypt3(
         data: *mut u32,
@@ -15220,10 +15201,6 @@ extern "C" {
     pub fn EVP_get_digestbyname(arg1: *const ::std::os::raw::c_char) -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name="aws_lc_0_1_0_EVP_dss1"]
-    pub fn EVP_dss1() -> *const EVP_MD;
-}
-extern "C" {
     #[link_name="aws_lc_0_1_0_EVP_MD_CTX_create"]
     pub fn EVP_MD_CTX_create() -> *mut EVP_MD_CTX;
 }
@@ -15835,24 +15812,6 @@ extern "C" {
     #[link_name="aws_lc_0_1_0_i2d_DSAparams"]
     pub fn i2d_DSAparams(in_: *const DSA, outp: *mut *mut u8)
         -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name="aws_lc_0_1_0_DSA_generate_parameters"]
-    pub fn DSA_generate_parameters(
-        bits: ::std::os::raw::c_int,
-        seed: *mut ::std::os::raw::c_uchar,
-        seed_len: ::std::os::raw::c_int,
-        counter_ret: *mut ::std::os::raw::c_int,
-        h_ret: *mut ::std::os::raw::c_ulong,
-        callback: ::std::option::Option<
-            unsafe extern "C" fn(
-                arg1: ::std::os::raw::c_int,
-                arg2: ::std::os::raw::c_int,
-                arg3: *mut ::std::os::raw::c_void,
-            ),
-        >,
-        cb_arg: *mut ::std::os::raw::c_void,
-    ) -> *mut DSA;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -18174,20 +18133,6 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name="aws_lc_0_1_0_EVP_MD_do_all"]
-    pub fn EVP_MD_do_all(
-        callback: ::std::option::Option<
-            unsafe extern "C" fn(
-                cipher: *const EVP_MD,
-                name: *const ::std::os::raw::c_char,
-                unused: *const ::std::os::raw::c_char,
-                arg: *mut ::std::os::raw::c_void,
-            ),
-        >,
-        arg: *mut ::std::os::raw::c_void,
-    );
-}
-extern "C" {
     #[link_name="aws_lc_0_1_0_i2d_PrivateKey"]
     pub fn i2d_PrivateKey(
         key: *const EVP_PKEY,
@@ -19967,26 +19912,6 @@ impl Default for obj_name_st {
     }
 }
 pub type OBJ_NAME = obj_name_st;
-extern "C" {
-    #[link_name="aws_lc_0_1_0_OBJ_NAME_do_all_sorted"]
-    pub fn OBJ_NAME_do_all_sorted(
-        type_: ::std::os::raw::c_int,
-        callback: ::std::option::Option<
-            unsafe extern "C" fn(arg1: *const OBJ_NAME, arg: *mut ::std::os::raw::c_void),
-        >,
-        arg: *mut ::std::os::raw::c_void,
-    );
-}
-extern "C" {
-    #[link_name="aws_lc_0_1_0_OBJ_NAME_do_all"]
-    pub fn OBJ_NAME_do_all(
-        type_: ::std::os::raw::c_int,
-        callback: ::std::option::Option<
-            unsafe extern "C" fn(arg1: *const OBJ_NAME, arg: *mut ::std::os::raw::c_void),
-        >,
-        arg: *mut ::std::os::raw::c_void,
-    );
-}
 extern "C" {
     #[link_name="aws_lc_0_1_0_OBJ_cleanup"]
     pub fn OBJ_cleanup();
@@ -21889,7 +21814,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_ALGOR_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_ALGOR_it"]
+    pub static X509_ALGOR_it: ASN1_ITEM;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -23445,7 +23371,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_ALGORS_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_ALGORS_it"]
+    pub static X509_ALGORS_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_PUBKEY_new"]
@@ -23471,7 +23398,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_PUBKEY_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_PUBKEY_it"]
+    pub static X509_PUBKEY_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_PUBKEY_set"]
@@ -23508,7 +23436,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_SIG_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_SIG_it"]
+    pub static X509_SIG_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_REQ_new"]
@@ -23534,7 +23463,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_REQ_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_REQ_it"]
+    pub static X509_REQ_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_ATTRIBUTE_new"]
@@ -23560,7 +23490,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_ATTRIBUTE_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_ATTRIBUTE_it"]
+    pub static X509_ATTRIBUTE_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_ATTRIBUTE_create"]
@@ -23594,7 +23525,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_EXTENSION_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_EXTENSION_it"]
+    pub static X509_EXTENSION_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_d2i_X509_EXTENSIONS"]
@@ -23612,7 +23544,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_EXTENSIONS_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_EXTENSIONS_it"]
+    pub static X509_EXTENSIONS_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_NAME_ENTRY_new"]
@@ -23638,7 +23571,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_NAME_ENTRY_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_NAME_ENTRY_it"]
+    pub static X509_NAME_ENTRY_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_NAME_new"]
@@ -23664,7 +23598,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_NAME_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_NAME_it"]
+    pub static X509_NAME_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_NAME_set"]
@@ -23697,7 +23632,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_it"]
+    pub static X509_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_up_ref"]
@@ -23867,7 +23803,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_REVOKED_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_REVOKED_it"]
+    pub static X509_REVOKED_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_CRL_new"]
@@ -23893,7 +23830,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_X509_CRL_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_X509_CRL_it"]
+    pub static X509_CRL_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_CRL_add0_revoked"]
@@ -23950,7 +23888,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_NETSCAPE_SPKI_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_NETSCAPE_SPKI_it"]
+    pub static NETSCAPE_SPKI_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_NETSCAPE_SPKAC_new"]
@@ -23976,7 +23915,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_NETSCAPE_SPKAC_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_NETSCAPE_SPKAC_it"]
+    pub static NETSCAPE_SPKAC_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_X509_INFO_new"]
@@ -25181,7 +25121,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_PKCS8_PRIV_KEY_INFO_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_PKCS8_PRIV_KEY_INFO_it"]
+    pub static PKCS8_PRIV_KEY_INFO_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_EVP_PKCS82PKEY"]
@@ -25433,7 +25374,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_RSA_PSS_PARAMS_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_RSA_PSS_PARAMS_it"]
+    pub static RSA_PSS_PARAMS_it: ASN1_ITEM;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -27730,10 +27672,6 @@ extern "C" {
     #[link_name="aws_lc_0_1_0_RC4"]
     pub fn RC4(key: *mut RC4_KEY, len: usize, in_: *const u8, out: *mut u8);
 }
-extern "C" {
-    #[link_name="aws_lc_0_1_0_RC4_options"]
-    pub fn RC4_options() -> *const ::std::os::raw::c_char;
-}
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct RIPEMD160state_st {
@@ -27872,10 +27810,6 @@ extern "C" {
 extern "C" {
     #[link_name="aws_lc_0_1_0_RIPEMD160"]
     pub fn RIPEMD160(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
-}
-extern "C" {
-    #[link_name="aws_lc_0_1_0_RIPEMD160_Transform"]
-    pub fn RIPEMD160_Transform(ctx: *mut RIPEMD160_CTX, block: *const u8);
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_SIPHASH_24"]
@@ -30551,7 +30485,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_PROXY_POLICY_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_PROXY_POLICY_it"]
+    pub static PROXY_POLICY_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_PROXY_CERT_INFO_EXTENSION_new"]
@@ -30577,7 +30512,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_PROXY_CERT_INFO_EXTENSION_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_PROXY_CERT_INFO_EXTENSION_it"]
+    pub static PROXY_CERT_INFO_EXTENSION_it: ASN1_ITEM;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -30911,7 +30847,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_BASIC_CONSTRAINTS_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_BASIC_CONSTRAINTS_it"]
+    pub static BASIC_CONSTRAINTS_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_AUTHORITY_KEYID_new"]
@@ -30937,7 +30874,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_AUTHORITY_KEYID_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_AUTHORITY_KEYID_it"]
+    pub static AUTHORITY_KEYID_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_GENERAL_NAME_new"]
@@ -30963,7 +30901,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_GENERAL_NAME_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_GENERAL_NAME_it"]
+    pub static GENERAL_NAME_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_GENERAL_NAME_dup"]
@@ -31031,7 +30970,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_GENERAL_NAMES_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_GENERAL_NAMES_it"]
+    pub static GENERAL_NAMES_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_i2v_GENERAL_NAMES"]
@@ -31073,7 +31013,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_OTHERNAME_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_OTHERNAME_it"]
+    pub static OTHERNAME_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_EDIPARTYNAME_new"]
@@ -31099,7 +31040,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_EDIPARTYNAME_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_EDIPARTYNAME_it"]
+    pub static EDIPARTYNAME_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_OTHERNAME_cmp"]
@@ -31178,7 +31120,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_EXTENDED_KEY_USAGE_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_EXTENDED_KEY_USAGE_it"]
+    pub static EXTENDED_KEY_USAGE_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_i2a_ACCESS_DESCRIPTION"]
@@ -31211,7 +31154,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_CERTIFICATEPOLICIES_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_CERTIFICATEPOLICIES_it"]
+    pub static CERTIFICATEPOLICIES_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_POLICYINFO_new"]
@@ -31237,7 +31181,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_POLICYINFO_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_POLICYINFO_it"]
+    pub static POLICYINFO_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_POLICYQUALINFO_new"]
@@ -31263,7 +31208,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_POLICYQUALINFO_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_POLICYQUALINFO_it"]
+    pub static POLICYQUALINFO_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_USERNOTICE_new"]
@@ -31289,7 +31235,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_USERNOTICE_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_USERNOTICE_it"]
+    pub static USERNOTICE_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_NOTICEREF_new"]
@@ -31315,7 +31262,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_NOTICEREF_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_NOTICEREF_it"]
+    pub static NOTICEREF_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_CRL_DIST_POINTS_new"]
@@ -31341,7 +31289,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_CRL_DIST_POINTS_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_CRL_DIST_POINTS_it"]
+    pub static CRL_DIST_POINTS_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_DIST_POINT_new"]
@@ -31367,7 +31316,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_DIST_POINT_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_DIST_POINT_it"]
+    pub static DIST_POINT_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_DIST_POINT_NAME_new"]
@@ -31393,7 +31343,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_DIST_POINT_NAME_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_DIST_POINT_NAME_it"]
+    pub static DIST_POINT_NAME_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_ISSUING_DIST_POINT_new"]
@@ -31419,7 +31370,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ISSUING_DIST_POINT_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ISSUING_DIST_POINT_it"]
+    pub static ISSUING_DIST_POINT_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_DIST_POINT_set_dpname"]
@@ -31459,7 +31411,8 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_ACCESS_DESCRIPTION_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_ACCESS_DESCRIPTION_it"]
+    pub static ACCESS_DESCRIPTION_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_AUTHORITY_INFO_ACCESS_new"]
@@ -31485,10 +31438,12 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_AUTHORITY_INFO_ACCESS_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_AUTHORITY_INFO_ACCESS_it"]
+    pub static AUTHORITY_INFO_ACCESS_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_POLICY_MAPPING_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_POLICY_MAPPING_it"]
+    pub static POLICY_MAPPING_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_POLICY_MAPPING_new"]
@@ -31499,10 +31454,12 @@ extern "C" {
     pub fn POLICY_MAPPING_free(a: *mut POLICY_MAPPING);
 }
 extern "C" {
-    pub static aws_lc_0_1_0_POLICY_MAPPINGS_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_POLICY_MAPPINGS_it"]
+    pub static POLICY_MAPPINGS_it: ASN1_ITEM;
 }
 extern "C" {
-    pub static aws_lc_0_1_0_GENERAL_SUBTREE_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_GENERAL_SUBTREE_it"]
+    pub static GENERAL_SUBTREE_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_GENERAL_SUBTREE_new"]
@@ -31513,7 +31470,8 @@ extern "C" {
     pub fn GENERAL_SUBTREE_free(a: *mut GENERAL_SUBTREE);
 }
 extern "C" {
-    pub static aws_lc_0_1_0_NAME_CONSTRAINTS_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_NAME_CONSTRAINTS_it"]
+    pub static NAME_CONSTRAINTS_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_NAME_CONSTRAINTS_new"]
@@ -31532,7 +31490,8 @@ extern "C" {
     pub fn POLICY_CONSTRAINTS_free(a: *mut POLICY_CONSTRAINTS);
 }
 extern "C" {
-    pub static aws_lc_0_1_0_POLICY_CONSTRAINTS_it: ASN1_ITEM;
+    #[link_name="aws_lc_0_1_0_POLICY_CONSTRAINTS_it"]
+    pub static POLICY_CONSTRAINTS_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name="aws_lc_0_1_0_a2i_GENERAL_NAME"]

@@ -1,6 +1,3 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
-
 /* Copyright (c) 2022, Google Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,12 +12,15 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
+// SPDX-License-Identifier: Apache-2.0
+// Modifications Copyright Amazon.com, Inc. or its affiliates. See GitHub history for details.
+
 use regex::Regex;
+use std::{env, fs, io};
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::{env, fs, io};
 
 fn modify_bindings(bindings_path: &PathBuf, prefix: &str) -> io::Result<()> {
     // Needed until this issue is resolved: https://github.com/rust-lang/rust-bindgen/issues/1375
@@ -42,29 +42,31 @@ fn modify_bindings(bindings_path: &PathBuf, prefix: &str) -> io::Result<()> {
 
     // The regular expression here has 3 capture groups.
     // After the prefix is interpolated into the RE, it will have a form like this:
-    // ^(\\s+)pub\\s+fn\\s+aws_lc_0_1_0_(\\w*)(.*)
-    //  ^                               ^     ^- 3: remainder of the line
-    //  |                               |- 2: original function name
-    //  |- 1: indentation at the beginning of the line
+    // ^(\\s+)pub\\s+(fn|static)\\s+aws_lc_0_1_0_(\\w*)(.*)
+    let prefix_symbol_detector =
+        Regex::new(&format!("^(\\s+)pub\\s+(fn|static)\\s+{}_(\\w*)(.*)", prefix)).unwrap();
+    //                        ^            ^                 ^     ^- 4: remainder
+    //                        |            |                 |- 3: original name
+    //                        |            |- 2: Symbol type, either a function or static
+    //                        |- 1: indentation at the beginning of the line
 
-    let prefix_func_detector =
-        Regex::new(&format!("^(\\s+)pub\\s+fn\\s+{}_(\\w*)(.*)", prefix)).unwrap();
     let output_path = bindings_path.parent().unwrap().join("updated_bindings.rs");
     let bindings_reader = BufReader::new(File::open(&bindings_path)?);
     let mut bindings_writer = BufWriter::new(File::create(&output_path)?);
     for line in bindings_reader.lines() {
         let line = line.unwrap().clone();
-        if let Some(captures) = prefix_func_detector.captures(&line) {
+        if let Some(captures) = prefix_symbol_detector.captures(&line) {
             let line_start = &captures[1];
-            let fn_name = &captures[2];
-            let line_end = &captures[3];
+            let symbol_type = &captures[2];
+            let symbol_name = &captures[3];
+            let line_end = &captures[4];
             bindings_writer.write_fmt(format_args!(
                 "{}#[link_name=\"{}_{}\"]\n",
-                line_start, prefix, fn_name
+                line_start, prefix, symbol_name
             ))?;
             bindings_writer.write_fmt(format_args!(
-                "{}pub fn {}{}\n",
-                line_start, fn_name, line_end
+                "{}pub {} {}{}\n",
+                line_start, symbol_type, symbol_name, line_end
             ))?;
         } else {
             bindings_writer.write_fmt(format_args!("{}\n", &line))?;
@@ -102,7 +104,10 @@ const PRELUDE: &str = r#"
 #![allow(unused_imports, non_camel_case_types, non_snake_case, non_upper_case_globals, improper_ctypes)]
 "#;
 
-fn prepare_bindings_builder(manifest_dir: &Path, build_prefix: Option<&str>) -> bindgen::Builder {
+fn prepare_bindings_builder(
+    manifest_dir: &Path,
+    build_prefix: Option<&str>,
+) -> bindgen::Builder {
     let clang_args = prepare_clang_args(manifest_dir, build_prefix);
 
     let builder = bindgen::Builder::default()
