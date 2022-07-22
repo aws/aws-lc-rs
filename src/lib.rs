@@ -1,3 +1,6 @@
+pub mod aead;
+pub mod error;
+
 #[cfg(test)]
 mod tests {
     #[test]
