@@ -1,11 +1,17 @@
 
+
+//use ring::{aead, error};
+
 macro_rules! test_aead
 {( $pkg:ident ) =>
 {
 mod $pkg {
-    use $pkg::aead;
-    use $pkg::aead::{AES_128_GCM, Algorithm, NonceSequence, OpeningKey, UnboundKey, BoundKey, SealingKey, Nonce, Aad};
-    use $pkg::error::Unspecified;
+
+    use $pkg::{aead, error};
+
+    use aead::{AES_128_GCM, Algorithm, NonceSequence, OpeningKey, UnboundKey, BoundKey, SealingKey, Nonce, Aad};
+    use error::Unspecified;
+
 
     const AES_128_TEST_KEY: [u8; 16] = [12, 124, 200, 31, 226, 11, 135, 192, 12, 124, 200, 31, 226, 11, 135, 192 ];
     const TEST_NONCE: [u8; aead::NONCE_LEN] = [ 12, 124, 200, 31, 226, 11, 135, 192, 12, 124, 200, 31 ];
