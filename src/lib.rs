@@ -6,3 +6,8 @@ mod tests {
         assert_eq!(result, 4);
     }
 }
+
+#[macro_use]
+pub mod test;
+
+pub mod error;
