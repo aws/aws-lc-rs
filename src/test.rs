@@ -121,7 +121,7 @@ extern crate alloc;
 
 use alloc::{format, string::String, vec::Vec};
 
-use crate::{error};
+use crate::error;
 
 #[cfg(any(feature = "std", feature = "test_logging"))]
 extern crate std;
@@ -534,6 +534,8 @@ mod tests {
     #[test]
     #[should_panic(expected = "Syntax error: Expected Key = Value.")]
     fn syntax_error() {
-        test::run(test_file!("test/test_1_syntax_error_tests.txt"), |_, _| Ok(()));
+        test::run(test_file!("test/test_1_syntax_error_tests.txt"), |_, _| {
+            Ok(())
+        });
     }
 }

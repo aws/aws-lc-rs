@@ -1,5 +1,3 @@
-
-
 // Copyright 2015-2017 Brian Smith.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
