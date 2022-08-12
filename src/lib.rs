@@ -1,16 +1,16 @@
-pub mod aead;
-pub mod error;
+extern crate core;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
+pub mod aead;
 
 #[macro_use]
 pub mod test;
 
 pub mod error;
+
+mod debug;
+
+mod c;
+
+mod endian;
+
+mod polyfill;

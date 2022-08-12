@@ -5,14 +5,16 @@ macro_rules! test_aead
 mod $pkg {
     use $pkg::{aead, error};
  */
-use aws_lc_ring_facade as ring;
+use aws_lc_ring_facade::{aead, error};
 
-use ring::{aead, error};
+//use ring::{aead, error};
 
 use aead::{
-    Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_128_GCM,
+    Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_128_GCM, Tag
 };
+use std::slice;
 use error::Unspecified;
+use ring::aead::chacha20_poly1305_openssh::TAG_LEN;
 
 const AES_128_TEST_KEY: [u8; 16] = [
     12, 124, 200, 31, 226, 11, 135, 192, 12, 124, 200, 31, 226, 11, 135, 192,
@@ -92,11 +94,15 @@ fn test_aead(config: AeadConfig, in_out: &mut Vec<u8>) -> Result<Vec<u8>, String
     let tag = sealing_key
         .seal_in_place_separate_tag(config.aad(), in_out.as_mut_slice())
         .map_err(|x| x.to_string())?;
-    /*
-       let cipher_text = in_out.clone();
-       println!("Ciphertext: {:?}", cipher_text);
-       assert_ne!(plaintext, cipher_text);
 
+    let cipher_text = in_out.clone();
+    println!("Ciphertext: {:?}", cipher_text);
+    assert_ne!(plaintext, cipher_text);
+    let raw_tag = &tag as *const Tag as *const u8;
+    let tag_value = unsafe { slice::from_raw_parts( raw_tag, TAG_LEN)};
+    println!("Tag: {:?}", tag_value );
+
+/*
        in_out.extend(tag.as_ref());
 
        let result_plaintext = opening_key.open_in_place(config.aad(), in_out).map_err(|x| x.to_string() )?;
