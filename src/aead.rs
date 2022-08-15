@@ -23,6 +23,7 @@
 
 use std::fmt::{Debug, Formatter};
 use crate::{derive_debug_via_id, error};
+use crate::aead::cipher::SymmetricCipherKey;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
@@ -404,8 +405,29 @@ impl core::fmt::Debug for UnboundKey {
 
 #[allow(clippy::large_enum_variant, variant_size_differences)]
 enum KeyInner {
-    Aes128Gcm([u8; 16], *mut aws_lc_sys::EVP_CIPHER_CTX),
-    Aes256Gcm([u8; 32], *mut aws_lc_sys::EVP_CIPHER_CTX),
+    Aes128Gcm(SymmetricCipherKey, *mut aws_lc_sys::EVP_CIPHER_CTX),
+    Aes256Gcm(SymmetricCipherKey, *mut aws_lc_sys::EVP_CIPHER_CTX),
+}
+
+impl KeyInner {
+
+    fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
+        unsafe {
+            let ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
+            if ctx.is_null() {
+                return Err(error::Unspecified);
+            }
+            match key {
+                SymmetricCipherKey::AES_128(_) => {
+                   Ok(KeyInner::Aes128Gcm(key, ctx))
+                }
+                SymmetricCipherKey::AES_256(_) => {
+                    Ok(KeyInner::Aes256Gcm(key, ctx))
+                }
+            }
+        }
+    }
+
 }
 
 impl Drop for KeyInner {
@@ -413,7 +435,7 @@ impl Drop for KeyInner {
         unsafe {
             match self {
                 KeyInner::Aes128Gcm(_, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
-                KeyInner::Aes128Gcm(_, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
+                KeyInner::Aes256Gcm(_, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
                 _ => panic!("Unsupported algorithm")
             }
         }
@@ -679,6 +701,7 @@ enum Direction {
     Sealing,
 }
 
+mod cipher;
 mod aes_gcm;
 mod block;
 //mod chacha;

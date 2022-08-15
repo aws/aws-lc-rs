@@ -1,10 +1,10 @@
 use std::cmp::min;
 use crate::aead::{error, Aad, Algorithm, AlgorithmID, KeyInner, Nonce, Tag, NONCE_LEN, TAG_LEN, counter};
 use std::mem::MaybeUninit;
-use std::os::raw::c_int;
+use std::os::raw::{c_int, c_uint};
 
 use std::ptr::{null, null_mut};
-use crate::aead::block::Block;
+use crate::aead::cipher::SymmetricCipherKey;
 use crate::aead::iv::IV_LEN;
 use crate::endian::BigEndian;
 
@@ -19,9 +19,9 @@ fn aes_gcm_seal(
     println!("aes_gcm_seal");
 
     unsafe {
-        let (cipher, ctx, key_bytes) = match key {
-            KeyInner::Aes128Gcm(key_bytes, ctx) => (aws_lc_sys::EVP_aes_128_gcm(), ctx, key_bytes.as_slice()),
-            KeyInner::Aes256Gcm(key_bytes, ctx) => (aws_lc_sys::EVP_aes_256_gcm(), ctx, key_bytes.as_slice()),
+        let (cipher, ctx, aes_key) = match key {
+            KeyInner::Aes128Gcm(aes_key, ctx) => (aws_lc_sys::EVP_aes_128_gcm(), ctx, aes_key),
+            KeyInner::Aes256Gcm(aes_key, ctx) => (aws_lc_sys::EVP_aes_256_gcm(), ctx, aes_key),
             _ => panic!("Unknown algorithm"),
         };
 
@@ -33,8 +33,8 @@ fn aes_gcm_seal(
             return Err(error::Unspecified);
         }
 
-        let tag_iv = Counter::one(nonce).increment();
-        if 1 != aws_lc_sys::EVP_EncryptInit_ex(*ctx, cipher, null_mut(), key_bytes.as_ptr(), tag_iv.into_bytes_less_safe().as_ptr()) {
+        let tag_iv = Counter::one(nonce).increment().into_bytes_less_safe().as_ptr();
+        if 1 != aws_lc_sys::EVP_EncryptInit_ex(*ctx, cipher, null_mut(), aes_key.key_bytes().as_ptr(), tag_iv) {
             return Err(error::Unspecified);
         }
 
@@ -42,18 +42,19 @@ fn aes_gcm_seal(
         let mut cipher_text = MaybeUninit::<[u8; CHUNK_SIZE]>::uninit();
         let mut out_len  = MaybeUninit::<c_int>::uninit();
 
+        let aad_str = aad.0;
         if 1 != aws_lc_sys::EVP_EncryptUpdate(
             *ctx,
-            std::ptr::null_mut(),
+            null_mut(),
             out_len.as_mut_ptr(),
-            aad.0.as_ptr(),
-            NONCE_LEN as c_int,
+            aad_str.as_ptr(),
+            aad_str.len() as c_int,
         ) {
             return Err(error::Unspecified);
         }
 
-        let plaintext_len = in_out.len();
         let mut pos = 0;
+        let plaintext_len = in_out.len();
         while pos < plaintext_len {
             let in_len = min(plaintext_len - pos, CHUNK_SIZE);
             let next_plain_chunk = &in_out[pos..(pos+in_len)];
@@ -72,24 +73,14 @@ fn aes_gcm_seal(
             next_cipher_chunk.copy_from_slice(&ctext[0..olen]);
             pos += olen;
         }
-
-        aws_lc_sys::EVP_EncryptFinal_ex (*ctx, null_mut(), out_len.as_mut_ptr());
-        debug_assert_eq!(out_len.assume_init(), 0);
+        if 1 != aws_lc_sys::EVP_EncryptFinal_ex (*ctx, null_mut(), out_len.as_mut_ptr()) {
+            return Err(error::Unspecified)
+        }
 
         let mut inner_tag = MaybeUninit::<[u8; 16]>::uninit();
         aws_lc_sys::EVP_CIPHER_CTX_ctrl (*ctx, aws_lc_sys::EVP_CTRL_GCM_GET_TAG, TAG_LEN as c_int, inner_tag.as_mut_ptr().cast());
 
-        let tag = inner_tag.assume_init();
-        //let bytes = tag_iv.into_bytes_less_safe();
-
-        //let aes_key  = MaybeUninit::<aws_lc_sys::AES_KEY>::uninit();
-        //aws_lc_sys::AES_set_encrypt_key(key_bytes.as_mut_ptr(), aes_key.as_mut_ptr());
-
-
-        //let mut tag = aes_key.encrypt_block(Block::from(&bytes));
-        //tag.bitxor_assign(pre_tag.into());
-
-        Ok(Tag(tag))
+        Ok(Tag(inner_tag.assume_init()))
     }
 }
 
@@ -131,25 +122,10 @@ fn init_256(key: &[u8]) ->  Result<KeyInner, error::Unspecified> {
 
 fn init_aes_gcm(key: &[u8], id: AlgorithmID) -> Result<KeyInner, error::Unspecified> {
     unsafe {
-        let cipher= match id {
-            AlgorithmID::AES_128_GCM => aws_lc_sys::EVP_aes_128_gcm(),
-            AlgorithmID::AES_256_GCM => aws_lc_sys::EVP_aes_256_gcm(),
-            _ => panic!("Unknown algorithm"),
-        };
-        let ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
-        if ctx.is_null() {
-            return Err(error::Unspecified);
+        match id {
+            AlgorithmID::AES_128_GCM => KeyInner::new(SymmetricCipherKey::aes128(key)?),
+            AlgorithmID::AES_256_GCM => KeyInner::new(SymmetricCipherKey::aes256(key)?),
+            _ => panic!("Unknown algorithm")
         }
-
-        if id == AlgorithmID::AES_128_GCM {
-            let mut key_128 = [0u8; 16];
-            key_128.copy_from_slice(key);
-            return Ok(KeyInner::Aes128Gcm(key_128, ctx));
-        } else if id == AlgorithmID::AES_256_GCM {
-            let mut key_256 = [0u8; 32];
-            key_256.copy_from_slice(key);
-            return Ok(KeyInner::Aes256Gcm(key_256, ctx));
-        }
-        panic!("Unsupported algorithm");
     }
 }
