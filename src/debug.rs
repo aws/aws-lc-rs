@@ -12,9 +12,6 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-// SPDX-License-Identifier: Apache-2.0
-// Modifications Copyright Amazon.com, Inc. or its affiliates. See GitHub history for details.
-
 // Generates an implementation of the Debug trait for a type that defers to the
 // Debug implementation for a given field.
 #[macro_export]
@@ -28,7 +25,6 @@ macro_rules! derive_debug_via_id {
     };
 }
 
-#[macro_export]
 macro_rules! derive_debug_via_field {
     ($type:ty, $field:ident) => {
         derive_debug_via_field!($type, stringify!($type), $field);
@@ -47,7 +43,6 @@ macro_rules! derive_debug_via_field {
 
 // Generates an implementation of the Debug trait for a type that outputs the
 // hex encoding of the byte slice representation of the value.
-#[macro_export]
 macro_rules! derive_debug_self_as_ref_hex_bytes {
     ($typename:ident) => {
         impl ::core::fmt::Debug for $typename {
@@ -56,6 +51,16 @@ macro_rules! derive_debug_self_as_ref_hex_bytes {
             }
         }
     };
+}
+
+pub(crate) fn write_hex_tuple(
+    fmt: &mut core::fmt::Formatter,
+    type_name: &str,
+    value: &dyn AsRef<[u8]>,
+) -> Result<(), core::fmt::Error> {
+    fmt.debug_tuple(type_name)
+        .field(&HexStr(value.as_ref()))
+        .finish()
 }
 
 pub struct HexStr<'a>(pub &'a [u8]);
@@ -72,7 +77,7 @@ impl core::fmt::Debug for HexStr<'_> {
 pub(crate) fn write_hex_bytes(
     fmt: &mut core::fmt::Formatter,
     bytes: &[u8],
-) -> Result<(), ::core::fmt::Error> {
+) -> Result<(), core::fmt::Error> {
     for byte in bytes {
         write!(fmt, "{:02x}", byte)?;
     }
