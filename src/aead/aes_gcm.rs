@@ -21,8 +21,8 @@ fn aes_gcm_seal(
 ) -> Result<Tag, error::Unspecified> {
     unsafe {
         let (aes_key, cipher, ctx) = match key {
-            KeyInner::Aes128Gcm(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
-            KeyInner::Aes256Gcm(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
+            KeyInner::AES_128_GCM(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
+            KeyInner::AES_256_GCM(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
         };
 
         if 1 != aws_lc_sys::EVP_EncryptInit_ex(*ctx, *cipher, null_mut(), null_mut(), null_mut()) {
@@ -111,8 +111,8 @@ fn aes_gcm_open(
     received_tag: &[u8],
 ) -> Result<(), error::Unspecified> {
     let (aes_key, cipher, ctx) = match key {
-        KeyInner::Aes128Gcm(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
-        KeyInner::Aes256Gcm(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
+        KeyInner::AES_128_GCM(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
+        KeyInner::AES_256_GCM(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
     };
     debug_assert_eq!(TAG_LEN, received_tag.len());
     unsafe {
@@ -188,8 +188,9 @@ fn aes_gcm_open(
         ) {
             return Err(error::Unspecified);
         }
-
-        if 1 != aws_lc_sys::EVP_DecryptFinal_ex(*ctx, null_mut(), out_len.as_mut_ptr()) {
+        let retval = aws_lc_sys::EVP_DecryptFinal_ex(*ctx, null_mut(), out_len.as_mut_ptr());
+        if 1 != retval {
+            eprintln!("EVP_DecryptFinal_ex Error: {}", retval);
             return Err(error::Unspecified);
         }
     }
@@ -199,7 +200,7 @@ fn aes_gcm_open(
 pub static AES_128_GCM: Algorithm = Algorithm {
     init: init_128,
     key_len: 16,
-    id: AlgorithmID::Aes128Gcm,
+    id: AlgorithmID::AES_128_GCM,
     seal: aes_gcm_seal,
     open: aes_gcm_open,
     max_input_len: u64::MAX,
@@ -208,23 +209,23 @@ pub static AES_128_GCM: Algorithm = Algorithm {
 pub static AES_256_GCM: Algorithm = Algorithm {
     init: init_256,
     key_len: 32,
-    id: AlgorithmID::Aes256Gcm,
+    id: AlgorithmID::AES_256_GCM,
     seal: aes_gcm_seal,
     open: aes_gcm_open,
     max_input_len: u64::MAX,
 };
 
 fn init_128(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    return init_aes_gcm(key, AlgorithmID::Aes128Gcm);
+    return init_aes_gcm(key, AlgorithmID::AES_128_GCM);
 }
 
 fn init_256(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    return init_aes_gcm(key, AlgorithmID::Aes256Gcm);
+    return init_aes_gcm(key, AlgorithmID::AES_256_GCM);
 }
 
 fn init_aes_gcm(key: &[u8], id: AlgorithmID) -> Result<KeyInner, error::Unspecified> {
     match id {
-        AlgorithmID::Aes128Gcm => KeyInner::new(SymmetricCipherKey::aes128(key)?),
-        AlgorithmID::Aes256Gcm => KeyInner::new(SymmetricCipherKey::aes256(key)?),
+        AlgorithmID::AES_128_GCM => KeyInner::new(SymmetricCipherKey::aes128(key)?),
+        AlgorithmID::AES_256_GCM => KeyInner::new(SymmetricCipherKey::aes256(key)?),
     }
 }

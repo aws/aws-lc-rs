@@ -208,9 +208,15 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
             .ok_or(error::Unspecified)?;
         check_per_nonce_max_bytes(key.algorithm, ciphertext_len)?;
         let (in_out, received_tag) = in_out.split_at_mut(in_prefix_len + ciphertext_len);
-        (key.algorithm.open)(&key.inner, nonce, aad, in_out, received_tag)?;
+        (key.algorithm.open)(
+            &key.inner,
+            nonce,
+            aad,
+            &mut in_out[in_prefix_len..],
+            received_tag,
+        )?;
         // `ciphertext_len` is also the plaintext length.
-        Ok(&mut in_out[..ciphertext_len])
+        Ok(&mut in_out[in_prefix_len..(in_prefix_len + ciphertext_len)])
     }
 
     open_within(
@@ -329,7 +335,7 @@ fn seal_in_place_separate_tag_(
     aad: Aad<&[u8]>,
     in_out: &mut [u8],
 ) -> Result<Tag, error::Unspecified> {
-    //check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
+    check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
     (key.algorithm.seal)(&key.inner, nonce, aad, in_out)
 }
 
@@ -378,14 +384,18 @@ impl Debug for UnboundKey {
     }
 }
 
-#[allow(clippy::large_enum_variant, variant_size_differences)]
+#[allow(
+    clippy::large_enum_variant,
+    variant_size_differences,
+    non_camel_case_types
+)]
 enum KeyInner {
-    Aes128Gcm(
+    AES_128_GCM(
         SymmetricCipherKey,
         *const aws_lc_sys::EVP_CIPHER,
         *mut aws_lc_sys::EVP_CIPHER_CTX,
     ),
-    Aes256Gcm(
+    AES_256_GCM(
         SymmetricCipherKey,
         *const aws_lc_sys::EVP_CIPHER,
         *mut aws_lc_sys::EVP_CIPHER_CTX,
@@ -402,11 +412,11 @@ impl KeyInner {
             match key {
                 SymmetricCipherKey::Aes128(_) => {
                     let cipher = aws_lc_sys::EVP_aes_128_gcm();
-                    Ok(KeyInner::Aes128Gcm(key, cipher, ctx))
+                    Ok(KeyInner::AES_128_GCM(key, cipher, ctx))
                 }
                 SymmetricCipherKey::Aes256(_) => {
                     let cipher = aws_lc_sys::EVP_aes_256_gcm();
-                    Ok(KeyInner::Aes256Gcm(key, cipher, ctx))
+                    Ok(KeyInner::AES_256_GCM(key, cipher, ctx))
                 }
             }
         }
@@ -417,8 +427,8 @@ impl Drop for KeyInner {
     fn drop(&mut self) {
         unsafe {
             match self {
-                KeyInner::Aes128Gcm(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
-                KeyInner::Aes256Gcm(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
+                KeyInner::AES_128_GCM(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
+                KeyInner::AES_256_GCM(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
             }
         }
     }
@@ -635,9 +645,10 @@ impl Algorithm {
 derive_debug_via_id!(Algorithm);
 
 #[derive(Debug, Eq, PartialEq)]
+#[allow(non_camel_case_types)]
 enum AlgorithmID {
-    Aes128Gcm,
-    Aes256Gcm,
+    AES_128_GCM,
+    AES_256_GCM,
     //Chacha20Poly1305,
 }
 

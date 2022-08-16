@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 /*
 macro_rules! test_aead
 {( $pkg:ident ) =>
@@ -5,6 +8,9 @@ macro_rules! test_aead
 mod $pkg {
     use $pkg::{aead, error};
  */
+
+extern crate core;
+
 use aws_lc_ring_facade::{aead, error};
 
 //use ring::{aead, error};
@@ -13,18 +19,9 @@ use aead::{
     Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, Tag, UnboundKey,
     AES_128_GCM, AES_256_GCM,
 };
+use aws_lc_ring_facade::test::from_hex;
 use error::Unspecified;
 use std::slice;
-
-const AES_128_TEST_KEY: [u8; 16] = [
-    12, 124, 200, 31, 226, 11, 135, 192, 12, 124, 200, 31, 226, 11, 135, 192,
-];
-const AES_256_TEST_KEY: [u8; 32] = [
-    12, 124, 200, 31, 226, 11, 135, 192, 12, 124, 200, 31, 226, 11, 135, 192, 12, 124, 200, 31,
-    226, 11, 135, 192, 12, 124, 200, 31, 226, 11, 135, 192,
-];
-const TEST_NONCE: [u8; 12] = [12, 124, 200, 31, 226, 11, 135, 192, 12, 124, 200, 31];
-const PLAINTEXT: &[u8] = "plaintext to be encrypted".as_bytes();
 
 struct NotANonce(Vec<u8>);
 
@@ -72,27 +69,42 @@ impl AeadConfig {
     }
 }
 
-//#[test]
+#[test]
 fn test_aes_128_gcm() -> Result<(), String> {
-    let config = AeadConfig::new(&AES_128_GCM, &AES_128_TEST_KEY, &TEST_NONCE, "test");
-    let mut in_out = Vec::from(PLAINTEXT);
+    let config = AeadConfig::new(
+        &AES_128_GCM,
+        &from_hex("d480429666d48b400633921c5407d1d1").unwrap(),
+        &from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap(),
+        &std::str::from_utf8(&from_hex("").unwrap()).unwrap(),
+    );
+    let mut in_out = from_hex("").unwrap();
 
-    test_aead(config, &mut in_out)?;
+    test_aead_separate_in_place(&config, &mut in_out)?;
+    test_aead_append_within(&config, &mut in_out)?;
 
     Ok(())
 }
 
 #[test]
 fn test_aes_256_gcm() -> Result<(), String> {
-    let config = AeadConfig::new(&AES_256_GCM, &AES_256_TEST_KEY, &TEST_NONCE, "test");
-    let mut in_out = Vec::from(PLAINTEXT);
+    let config = AeadConfig::new(
+        &AES_256_GCM,
+        &from_hex("e5ac4a32c67e425ac4b143c83c6f161312a97d88d634afdf9f4da5bd35223f01").unwrap(),
+        &from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap(),
+        &std::str::from_utf8(&from_hex("").unwrap()).unwrap(),
+    );
+    let mut in_out = from_hex("").unwrap();
 
-    test_aead(config, &mut in_out)?;
+    test_aead_separate_in_place(&config, &mut in_out)?;
+    test_aead_append_within(&config, &mut in_out)?;
 
     Ok(())
 }
 
-fn test_aead(config: AeadConfig, in_out: &mut Vec<u8>) -> Result<Vec<u8>, String> {
+fn test_aead_separate_in_place(
+    config: &AeadConfig,
+    in_out: &mut Vec<u8>,
+) -> Result<Vec<u8>, String> {
     let mut sealing_key = SealingKey::new(config.key(), config.nonce());
     let mut opening_key = OpeningKey::new(config.key(), config.nonce());
 
@@ -107,7 +119,9 @@ fn test_aead(config: AeadConfig, in_out: &mut Vec<u8>) -> Result<Vec<u8>, String
 
     let cipher_text = in_out.clone();
     println!("Ciphertext: {:?}", cipher_text);
-    assert_ne!(plaintext, cipher_text);
+    if plaintext.len() > 0 {
+        assert_ne!(plaintext, cipher_text);
+    }
     let raw_tag = &tag as *const Tag as *const u8;
     let tag_value = unsafe { slice::from_raw_parts(raw_tag, 16) };
     println!("Tag: {:?}", tag_value);
@@ -115,6 +129,39 @@ fn test_aead(config: AeadConfig, in_out: &mut Vec<u8>) -> Result<Vec<u8>, String
     in_out.extend(tag.as_ref());
     let result_plaintext = opening_key
         .open_in_place(config.aad(), in_out)
+        .map_err(|x| x.to_string())?;
+
+    assert_eq!(plaintext, result_plaintext);
+
+    println!("Roundtrip: {:?}", result_plaintext);
+
+    Ok(Vec::from(result_plaintext))
+}
+
+fn test_aead_append_within(config: &AeadConfig, in_out: &mut Vec<u8>) -> Result<Vec<u8>, String> {
+    let mut sealing_key = SealingKey::new(config.key(), config.nonce());
+    let mut opening_key = OpeningKey::new(config.key(), config.nonce());
+
+    println!("Sealing Key: {:?}", sealing_key);
+    println!("Opening Key: {:?}", opening_key);
+
+    let plaintext = in_out.clone();
+    println!("Plaintext: {:?}", plaintext);
+    let mut sized_in_out = in_out.to_vec();
+    sealing_key
+        .seal_in_place_append_tag(config.aad(), &mut sized_in_out)
+        .map_err(|x| x.to_string())?;
+
+    let (cipher_text, tag_value) = sized_in_out.split_at_mut(plaintext.len());
+
+    if plaintext.len() > 0 {
+        assert_ne!(plaintext, cipher_text);
+    }
+    println!("Ciphertext: {:?}", cipher_text);
+    println!("Tag: {:?}", tag_value);
+
+    let result_plaintext = opening_key
+        .open_within(config.aad(), &mut sized_in_out, 0..)
         .map_err(|x| x.to_string())?;
 
     assert_eq!(plaintext, result_plaintext);

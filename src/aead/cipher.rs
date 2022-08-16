@@ -1,4 +1,18 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// Copyright 2018 Brian Smith.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
+// SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+// OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+// CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::aead::error;
@@ -26,7 +40,9 @@ impl Drop for SymmetricCipherKey {
 
 impl SymmetricCipherKey {
     pub fn aes128(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
-        assert_eq!(key_bytes.len(), 16);
+        if key_bytes.len() != 16 {
+            return Err(error::Unspecified);
+        }
         let mut kb = MaybeUninit::<[u8; 16]>::uninit();
         unsafe {
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
@@ -35,7 +51,9 @@ impl SymmetricCipherKey {
     }
 
     pub fn aes256(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
-        assert_eq!(key_bytes.len(), 32);
+        if key_bytes.len() != 32 {
+            return Err(error::Unspecified);
+        }
         let mut kb = MaybeUninit::<[u8; 32]>::uninit();
         unsafe {
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
