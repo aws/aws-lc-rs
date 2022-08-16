@@ -10,11 +10,11 @@ use aws_lc_ring_facade::{aead, error};
 //use ring::{aead, error};
 
 use aead::{
-    Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_128_GCM, Tag
+    Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, Tag, UnboundKey,
+    AES_128_GCM, AES_256_GCM,
 };
-use std::slice;
 use error::Unspecified;
-use ring::aead::chacha20_poly1305_openssh::TAG_LEN;
+use std::slice;
 
 const AES_128_TEST_KEY: [u8; 16] = [
     12, 124, 200, 31, 226, 11, 135, 192, 12, 124, 200, 31, 226, 11, 135, 192,
@@ -72,9 +72,19 @@ impl AeadConfig {
     }
 }
 
-#[test]
+//#[test]
 fn test_aes_128_gcm() -> Result<(), String> {
     let config = AeadConfig::new(&AES_128_GCM, &AES_128_TEST_KEY, &TEST_NONCE, "test");
+    let mut in_out = Vec::from(PLAINTEXT);
+
+    test_aead(config, &mut in_out)?;
+
+    Ok(())
+}
+
+#[test]
+fn test_aes_256_gcm() -> Result<(), String> {
+    let config = AeadConfig::new(&AES_256_GCM, &AES_256_TEST_KEY, &TEST_NONCE, "test");
     let mut in_out = Vec::from(PLAINTEXT);
 
     test_aead(config, &mut in_out)?;
@@ -99,21 +109,19 @@ fn test_aead(config: AeadConfig, in_out: &mut Vec<u8>) -> Result<Vec<u8>, String
     println!("Ciphertext: {:?}", cipher_text);
     assert_ne!(plaintext, cipher_text);
     let raw_tag = &tag as *const Tag as *const u8;
-    let tag_value = unsafe { slice::from_raw_parts( raw_tag, TAG_LEN)};
-    println!("Tag: {:?}", tag_value );
+    let tag_value = unsafe { slice::from_raw_parts(raw_tag, 16) };
+    println!("Tag: {:?}", tag_value);
 
-/*
-       in_out.extend(tag.as_ref());
+    in_out.extend(tag.as_ref());
+    let result_plaintext = opening_key
+        .open_in_place(config.aad(), in_out)
+        .map_err(|x| x.to_string())?;
 
-       let result_plaintext = opening_key.open_in_place(config.aad(), in_out).map_err(|x| x.to_string() )?;
-       assert_eq!(plaintext, result_plaintext);
+    assert_eq!(plaintext, result_plaintext);
 
-       println!("Roundtrip: {:?}", result_plaintext);
+    println!("Roundtrip: {:?}", result_plaintext);
 
-
-       Ok(Vec::from(result_plaintext))
-    */
-    Ok(Vec::new())
+    Ok(Vec::from(result_plaintext))
 }
 
 /*

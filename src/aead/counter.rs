@@ -16,8 +16,8 @@ use super::{
     iv::{Iv, IV_LEN},
     Nonce,
 };
-use core::convert::TryInto;
 use crate::endian::{ArrayEncoding, BigEndian, Encoding, LittleEndian};
+use core::convert::TryInto;
 
 /// A generator of a monotonically increasing series of `Iv`s.
 ///
