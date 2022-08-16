@@ -121,7 +121,7 @@ extern crate alloc;
 
 use alloc::{format, string::String, vec::Vec};
 
-use crate::error;
+use crate::{digest, error};
 
 #[cfg(any(feature = "std", feature = "test_logging"))]
 extern crate std;
@@ -168,6 +168,24 @@ impl TestCase {
             "true" => true,
             "false" => false,
             s => panic!("Invalid bool value: {}", s),
+        }
+    }
+
+    /// Maps the strings "SHA1", "SHA256", "SHA384", and "SHA512" to digest
+    /// algorithms, maps "SHA224" to `None`, and panics on other (erroneous)
+    /// inputs. "SHA224" is mapped to None because *ring* intentionally does
+    /// not support SHA224, but we need to consume test vectors from NIST that
+    /// have SHA224 vectors in them.
+    pub fn consume_digest_alg(&mut self, key: &str) -> Option<&'static digest::Algorithm> {
+        let name = self.consume_string(key);
+        match name.as_ref() {
+            "SHA1" => Some(&digest::SHA1_FOR_LEGACY_USE_ONLY),
+            "SHA224" => None, // We actively skip SHA-224 support.
+            "SHA256" => Some(&digest::SHA256),
+            "SHA384" => Some(&digest::SHA384),
+            "SHA512" => Some(&digest::SHA512),
+            "SHA512_256" => Some(&digest::SHA512_256),
+            _ => panic!("Unsupported digest algorithm: {}", name),
         }
     }
 

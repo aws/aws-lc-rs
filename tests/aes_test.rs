@@ -110,5 +110,5 @@ macro_rules! test_aead {
 }
 
 mod test_aead {
-    test_aead!(ring);
+    //test_aead!(ring);
 }

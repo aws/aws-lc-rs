@@ -10,5 +10,5 @@ untrusted = { version = "0.9" }
 aws-lc-sys = { path = "deps/aws-lc-sys", version = "0.1.0" }
 
 [dev-dependencies]
-ring = "0.16"
+#ring = "0.16"
 rand = "0.8"
