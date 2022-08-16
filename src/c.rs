@@ -21,9 +21,11 @@
 //! `usize` and `uintptr_t` are different sizes.
 
 // Keep in sync with the checks in base.h that verify these assumptions.
-
+#[allow(non_camel_case_types)]
 pub(crate) type int = i32;
+#[allow(non_camel_case_types)]
 pub(crate) type uint = u32;
+#[allow(non_camel_case_types)]
 pub(crate) type size_t = usize;
 
 #[cfg(all(test, any(unix, windows)))]

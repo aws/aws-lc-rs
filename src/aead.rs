@@ -12,6 +12,9 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 //! Authenticated Encryption with Associated Data (AEAD).
 //!
 //! See [Authenticated encryption: relations among notions and analysis of the
@@ -21,13 +24,13 @@
 //! [AEAD]: http://www-cse.ucsd.edu/~mihir/papers/oem.html
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
-use std::fmt::{Debug, Formatter};
-use crate::{derive_debug_via_id, error};
 use crate::aead::cipher::SymmetricCipherKey;
+use crate::{derive_debug_via_id, error, polyfill};
+use std::fmt::Debug;
+use std::ops::RangeFrom;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
-    //chacha20_poly1305::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},
 };
 
@@ -52,7 +55,7 @@ pub trait NonceSequence {
 }
 
 /// An AEAD key bound to a nonce sequence.
-pub trait BoundKey<N: NonceSequence>: core::fmt::Debug {
+pub trait BoundKey<N: NonceSequence>: Debug {
     /// Constructs a new key from the given `UnboundKey` and `NonceSequence`.
     fn new(key: UnboundKey, nonce_sequence: N) -> Self;
 
@@ -84,7 +87,7 @@ impl<N: NonceSequence> BoundKey<N> for OpeningKey<N> {
     }
 }
 
-impl<N: NonceSequence> core::fmt::Debug for OpeningKey<N> {
+impl<N: NonceSequence> Debug for OpeningKey<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("OpeningKey")
             .field("algorithm", &self.algorithm())
@@ -93,7 +96,6 @@ impl<N: NonceSequence> core::fmt::Debug for OpeningKey<N> {
 }
 
 impl<N: NonceSequence> OpeningKey<N> {
-    /*
     /// Authenticates and decrypts (“opens”) data in place.
     ///
     /// `aad` is the additional authenticated data (AAD), if any.
@@ -112,15 +114,12 @@ impl<N: NonceSequence> OpeningKey<N> {
         aad: Aad<A>,
         in_out: &'in_out mut [u8],
     ) -> Result<&'in_out mut [u8], error::Unspecified>
-        where
-            A: AsRef<[u8]>,
+    where
+        A: AsRef<[u8]>,
     {
         self.open_within(aad, in_out, 0..)
     }
-     */
 
-
-    /*
     /// Authenticates and decrypts (“opens”) data in place, with a shift.
     ///
     /// `aad` is the additional authenticated data (AAD), if any.
@@ -171,8 +170,8 @@ impl<N: NonceSequence> OpeningKey<N> {
         in_out: &'in_out mut [u8],
         ciphertext_and_tag: RangeFrom<usize>,
     ) -> Result<&'in_out mut [u8], error::Unspecified>
-        where
-            A: AsRef<[u8]>,
+    where
+        A: AsRef<[u8]>,
     {
         open_within_(
             &self.key,
@@ -182,9 +181,8 @@ impl<N: NonceSequence> OpeningKey<N> {
             ciphertext_and_tag,
         )
     }
-     */
 }
-/*
+
 #[inline]
 fn open_within_<'in_out, A: AsRef<[u8]>>(
     key: &UnboundKey,
@@ -210,26 +208,15 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
             .ok_or(error::Unspecified)?;
         check_per_nonce_max_bytes(key.algorithm, ciphertext_len)?;
         let (in_out, received_tag) = in_out.split_at_mut(in_prefix_len + ciphertext_len);
-        let Tag(calculated_tag) = (key.algorithm.open)(
+        (key.algorithm.open)(
             &key.inner,
             nonce,
             aad,
-            in_prefix_len,
-            in_out,
-            key.cpu_features,
-        );
-        if constant_time::verify_slices_are_equal(calculated_tag.as_ref(), received_tag).is_err() {
-            // Zero out the plaintext so that it isn't accidentally leaked or used
-            // after verification fails. It would be safest if we could check the
-            // tag before decrypting, but some `open` implementations interleave
-            // authentication with decryption for performance.
-            for b in &mut in_out[..ciphertext_len] {
-                *b = 0;
-            }
-            return Err(error::Unspecified);
-        }
+            &mut in_out[in_prefix_len..],
+            received_tag,
+        )?;
         // `ciphertext_len` is also the plaintext length.
-        Ok(&mut in_out[..ciphertext_len])
+        Ok(&mut in_out[in_prefix_len..(in_prefix_len + ciphertext_len)])
     }
 
     open_within(
@@ -240,7 +227,6 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
         ciphertext_and_tag,
     )
 }
- */
 
 /// An AEAD key for encrypting and signing ("sealing"), bound to a nonce
 /// sequence.
@@ -266,7 +252,7 @@ impl<N: NonceSequence> BoundKey<N> for SealingKey<N> {
     }
 }
 
-impl<N: NonceSequence> core::fmt::Debug for SealingKey<N> {
+impl<N: NonceSequence> Debug for SealingKey<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("SealingKey")
             .field("algorithm", &self.algorithm())
@@ -283,9 +269,9 @@ impl<N: NonceSequence> SealingKey<N> {
         aad: Aad<A>,
         in_out: &mut InOut,
     ) -> Result<(), error::Unspecified>
-        where
-            A: AsRef<[u8]>,
-            InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
         self.seal_in_place_append_tag(aad, in_out)
     }
@@ -305,9 +291,9 @@ impl<N: NonceSequence> SealingKey<N> {
         aad: Aad<A>,
         in_out: &mut InOut,
     ) -> Result<(), error::Unspecified>
-        where
-            A: AsRef<[u8]>,
-            InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
         self.seal_in_place_separate_tag(aad, in_out.as_mut())
             .map(|tag| in_out.extend(tag.as_ref()))
@@ -330,8 +316,8 @@ impl<N: NonceSequence> SealingKey<N> {
         aad: Aad<A>,
         in_out: &mut [u8],
     ) -> Result<Tag, error::Unspecified>
-        where
-            A: AsRef<[u8]>,
+    where
+        A: AsRef<[u8]>,
     {
         seal_in_place_separate_tag_(
             &self.key,
@@ -349,13 +335,8 @@ fn seal_in_place_separate_tag_(
     aad: Aad<&[u8]>,
     in_out: &mut [u8],
 ) -> Result<Tag, error::Unspecified> {
-    //check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
-    (key.algorithm.seal)(
-        &key.inner,
-        nonce,
-        aad,
-        in_out
-    )
+    check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
+    (key.algorithm.seal)(&key.inner, nonce, aad, in_out)
 }
 
 /// The additionally authenticated data (AAD) for an opening or sealing
@@ -374,8 +355,8 @@ impl<A: AsRef<[u8]>> Aad<A> {
 }
 
 impl<A> AsRef<[u8]> for Aad<A>
-    where
-        A: AsRef<[u8]>,
+where
+    A: AsRef<[u8]>,
 {
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
@@ -392,10 +373,10 @@ impl Aad<[u8; 0]> {
 /// An AEAD key without a designated role or nonce sequence.
 pub struct UnboundKey {
     inner: KeyInner,
-    algorithm: &'static Algorithm
+    algorithm: &'static Algorithm,
 }
 
-impl core::fmt::Debug for UnboundKey {
+impl Debug for UnboundKey {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("UnboundKey")
             .field("algorithm", &self.algorithm)
@@ -403,14 +384,25 @@ impl core::fmt::Debug for UnboundKey {
     }
 }
 
-#[allow(clippy::large_enum_variant, variant_size_differences)]
+#[allow(
+    clippy::large_enum_variant,
+    variant_size_differences,
+    non_camel_case_types
+)]
 enum KeyInner {
-    Aes128Gcm(SymmetricCipherKey, *mut aws_lc_sys::EVP_CIPHER_CTX),
-    Aes256Gcm(SymmetricCipherKey, *mut aws_lc_sys::EVP_CIPHER_CTX),
+    AES_128_GCM(
+        SymmetricCipherKey,
+        *const aws_lc_sys::EVP_CIPHER,
+        *mut aws_lc_sys::EVP_CIPHER_CTX,
+    ),
+    AES_256_GCM(
+        SymmetricCipherKey,
+        *const aws_lc_sys::EVP_CIPHER,
+        *mut aws_lc_sys::EVP_CIPHER_CTX,
+    ),
 }
 
 impl KeyInner {
-
     fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
         unsafe {
             let ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
@@ -418,25 +410,25 @@ impl KeyInner {
                 return Err(error::Unspecified);
             }
             match key {
-                SymmetricCipherKey::AES_128(_) => {
-                   Ok(KeyInner::Aes128Gcm(key, ctx))
+                SymmetricCipherKey::Aes128(_) => {
+                    let cipher = aws_lc_sys::EVP_aes_128_gcm();
+                    Ok(KeyInner::AES_128_GCM(key, cipher, ctx))
                 }
-                SymmetricCipherKey::AES_256(_) => {
-                    Ok(KeyInner::Aes256Gcm(key, ctx))
+                SymmetricCipherKey::Aes256(_) => {
+                    let cipher = aws_lc_sys::EVP_aes_256_gcm();
+                    Ok(KeyInner::AES_256_GCM(key, cipher, ctx))
                 }
             }
         }
     }
-
 }
 
 impl Drop for KeyInner {
     fn drop(&mut self) {
         unsafe {
             match self {
-                KeyInner::Aes128Gcm(_, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
-                KeyInner::Aes256Gcm(_, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
-                _ => panic!("Unsupported algorithm")
+                KeyInner::AES_128_GCM(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
+                KeyInner::AES_256_GCM(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
             }
         }
     }
@@ -452,7 +444,7 @@ impl UnboundKey {
     ) -> Result<Self, error::Unspecified> {
         Ok(Self {
             inner: (algorithm.init)(key_bytes)?,
-            algorithm
+            algorithm,
         })
     }
 
@@ -603,15 +595,15 @@ pub struct Algorithm {
         key: &KeyInner,
         nonce: Nonce,
         aad: Aad<&[u8]>,
-        in_out: &mut [u8]
+        in_out: &mut [u8],
     ) -> Result<Tag, error::Unspecified>,
     open: fn(
         key: &KeyInner,
         nonce: Nonce,
         aad: Aad<&[u8]>,
-        in_prefix_len: usize,
-        in_out: &mut [u8]
-    ) -> Result<Tag, error::Unspecified>,
+        in_out: &mut [u8],
+        received_tag: &[u8],
+    ) -> Result<(), error::Unspecified>,
 
     key_len: usize,
     id: AlgorithmID,
@@ -653,10 +645,11 @@ impl Algorithm {
 derive_debug_via_id!(Algorithm);
 
 #[derive(Debug, Eq, PartialEq)]
+#[allow(non_camel_case_types)]
 enum AlgorithmID {
     AES_128_GCM,
     AES_256_GCM,
-    CHACHA20_POLY1305,
+    //Chacha20Poly1305,
 }
 
 impl PartialEq for Algorithm {
@@ -686,14 +679,12 @@ const TAG_LEN: usize = 16;
 /// The maximum length of a tag for the algorithms in this module.
 pub const MAX_TAG_LEN: usize = TAG_LEN;
 
-/*
 fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), error::Unspecified> {
     if polyfill::u64_from_usize(in_out_len) > alg.max_input_len {
         return Err(error::Unspecified);
     }
     Ok(())
 }
-*/
 
 #[derive(Clone, Copy)]
 enum Direction {
@@ -701,9 +692,9 @@ enum Direction {
     Sealing,
 }
 
-mod cipher;
 mod aes_gcm;
 mod block;
+mod cipher;
 //mod chacha;
 //mod chacha20_poly1305;
 //pub mod chacha20_poly1305_openssh;
