@@ -20,6 +20,7 @@ use wasm_bindgen_test::{wasm_bindgen_test, wasm_bindgen_test_configure};
 #[cfg(target_arch = "wasm32")]
 wasm_bindgen_test_configure!(run_in_browser);
 
+//use ring::{aead, error, test, test_file};
 use aws_lc_ring_facade::{aead, error, test, test_file};
 
 use core::ops::RangeFrom;
@@ -57,29 +58,7 @@ fn aead_aes_gcm_256() {
         test_file!("aead_aes_256_gcm_tests.txt"),
     );
 }
-/*
-#[cfg(any(
-    target_arch = "aarch64",
-    target_arch = "arm",
-    target_arch = "x86_64",
-    target_arch = "x86"
-))]
-#[test]
-fn aead_chacha20_poly1305() {
-    test_aead(
-        &aead::CHACHA20_POLY1305,
-        seal_with_key,
-        open_with_key,
-        test_file!("aead_chacha20_poly1305_tests.txt"),
-    );
-    test_aead(
-        &aead::CHACHA20_POLY1305,
-        seal_with_less_safe_key,
-        open_with_less_safe_key,
-        test_file!("aead_chacha20_poly1305_tests.txt"),
-    );
-}
-*/
+
 fn test_aead<Seal, Open>(
     aead_alg: &'static aead::Algorithm,
     seal: Seal,
@@ -328,61 +307,7 @@ fn test_aead_nonce_sizes() -> Result<(), error::Unspecified> {
 
     Ok(())
 }
-/*
-#[cfg(any(
-    target_arch = "aarch64",
-    target_arch = "arm",
-    target_arch = "x86_64",
-    target_arch = "x86"
-))]
-#[allow(clippy::range_plus_one)]
-#[test]
-fn aead_chacha20_poly1305_openssh() {
-    // TODO: test_aead_key_sizes(...);
 
-    test::run(
-        test_file!("aead_chacha20_poly1305_openssh_tests.txt"),
-        |section, test_case| {
-            assert_eq!(section, "");
-
-            // XXX: `polyfill::convert` isn't available here.
-            let key_bytes = {
-                let as_vec = test_case.consume_bytes("KEY");
-                let mut as_array = [0u8; aead::chacha20_poly1305_openssh::KEY_LEN];
-                as_array.copy_from_slice(&as_vec);
-                as_array
-            };
-
-            let sequence_number = test_case.consume_usize("SEQUENCE_NUMBER");
-            assert_eq!(sequence_number as u32 as usize, sequence_number);
-            let sequence_num = sequence_number as u32;
-            let plaintext = test_case.consume_bytes("IN");
-            let ct = test_case.consume_bytes("CT");
-            let expected_tag = test_case.consume_bytes("TAG");
-
-            // TODO: Add some tests for when things fail.
-            //let error = test_case.consume_optional_string("FAILS");
-
-            let mut tag = [0u8; aead::chacha20_poly1305_openssh::TAG_LEN];
-            let mut s_in_out = plaintext.clone();
-            let s_key = aead::chacha20_poly1305_openssh::SealingKey::new(&key_bytes);
-            s_key.seal_in_place(sequence_num, &mut s_in_out[..], &mut tag);
-            assert_eq!(&ct, &s_in_out);
-            assert_eq!(&expected_tag, &tag);
-            let o_key = aead::chacha20_poly1305_openssh::OpeningKey::new(&key_bytes);
-
-            {
-                let o_result = o_key.open_in_place(sequence_num, &mut s_in_out[..], &tag);
-                assert_eq!(o_result, Ok(&plaintext[4..]));
-            }
-            assert_eq!(&s_in_out[..4], &ct[..4]);
-            assert_eq!(&s_in_out[4..], &plaintext[4..]);
-
-            Ok(())
-        },
-    );
-}
-*/
 #[test]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn test_tag_traits() {

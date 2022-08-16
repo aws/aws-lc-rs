@@ -695,9 +695,6 @@ enum Direction {
 mod aes_gcm;
 mod block;
 mod cipher;
-//mod chacha;
-//mod chacha20_poly1305;
-//pub mod chacha20_poly1305_openssh;
 mod counter;
 mod iv;
 mod nonce;
