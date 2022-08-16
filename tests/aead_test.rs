@@ -21,6 +21,7 @@ use wasm_bindgen_test::{wasm_bindgen_test, wasm_bindgen_test_configure};
 wasm_bindgen_test_configure!(run_in_browser);
 
 use aws_lc_ring_facade::{aead, error, test, test_file};
+
 use core::ops::RangeFrom;
 
 #[test]
@@ -32,15 +33,12 @@ fn aead_aes_gcm_128() {
         open_with_key,
         test_file!("aead_aes_128_gcm_tests.txt"),
     );
-    /*
     test_aead(
         &aead::AES_128_GCM,
         seal_with_less_safe_key,
         open_with_less_safe_key,
         test_file!("aead_aes_128_gcm_tests.txt"),
     );
-
-     */
 }
 
 #[test]
@@ -52,15 +50,12 @@ fn aead_aes_gcm_256() {
         open_with_key,
         test_file!("aead_aes_256_gcm_tests.txt"),
     );
-    /*
     test_aead(
         &aead::AES_256_GCM,
         seal_with_less_safe_key,
         open_with_less_safe_key,
         test_file!("aead_aes_256_gcm_tests.txt"),
     );
-
-     */
 }
 /*
 #[cfg(any(
@@ -265,7 +260,7 @@ fn open_with_key<'a>(
     let mut o_key: aead::OpeningKey<OneNonceSequence> = make_key(algorithm, key, nonce);
     o_key.open_within(aad, in_out, ciphertext_and_tag)
 }
-/*
+
 fn seal_with_less_safe_key(
     algorithm: &'static aead::Algorithm,
     key: &[u8],
@@ -287,7 +282,6 @@ fn open_with_less_safe_key<'a>(
     let key = make_less_safe_key(algorithm, key);
     key.open_within(nonce, aad, in_out, ciphertext_and_tag)
 }
-*/
 
 #[allow(clippy::range_plus_one)]
 fn test_aead_key_sizes(aead_alg: &'static aead::Algorithm) {
@@ -427,13 +421,11 @@ fn test_aead_key_debug() {
         "OpeningKey { algorithm: AES_256_GCM }",
         format!("{:?}", opening_key)
     );
-    /*
-       let key: aead::LessSafeKey = make_less_safe_key(&aead::AES_256_GCM, &key_bytes);
-       assert_eq!(
-           "LessSafeKey { algorithm: AES_256_GCM }",
-           format!("{:?}", key)
-       );
-    */
+    let key: aead::LessSafeKey = make_less_safe_key(&aead::AES_256_GCM, &key_bytes);
+    assert_eq!(
+        "LessSafeKey { algorithm: AES_256_GCM }",
+        format!("{:?}", key)
+    );
 }
 
 fn make_key<K: aead::BoundKey<OneNonceSequence>>(
@@ -445,12 +437,12 @@ fn make_key<K: aead::BoundKey<OneNonceSequence>>(
     let nonce_sequence = OneNonceSequence::new(nonce);
     K::new(key, nonce_sequence)
 }
-/*
+
 fn make_less_safe_key(algorithm: &'static aead::Algorithm, key: &[u8]) -> aead::LessSafeKey {
     let key = aead::UnboundKey::new(algorithm, key).unwrap();
     aead::LessSafeKey::new(key)
 }
-*/
+
 struct OneNonceSequence(Option<aead::Nonce>);
 
 impl OneNonceSequence {

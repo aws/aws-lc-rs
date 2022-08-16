@@ -480,7 +480,7 @@ impl hkdf::KeyType for &'static Algorithm {
 pub struct LessSafeKey {
     key: UnboundKey,
 }
-/*
+
 impl LessSafeKey {
     /// Constructs a `LessSafeKey` from an `UnboundKey`.
     pub fn new(key: UnboundKey) -> Self {
@@ -497,8 +497,8 @@ impl LessSafeKey {
         aad: Aad<A>,
         in_out: &'in_out mut [u8],
     ) -> Result<&'in_out mut [u8], error::Unspecified>
-        where
-            A: AsRef<[u8]>,
+    where
+        A: AsRef<[u8]>,
     {
         self.open_within(nonce, aad, in_out, 0..)
     }
@@ -514,8 +514,8 @@ impl LessSafeKey {
         in_out: &'in_out mut [u8],
         ciphertext_and_tag: RangeFrom<usize>,
     ) -> Result<&'in_out mut [u8], error::Unspecified>
-        where
-            A: AsRef<[u8]>,
+    where
+        A: AsRef<[u8]>,
     {
         open_within_(&self.key, nonce, aad, in_out, ciphertext_and_tag)
     }
@@ -529,9 +529,9 @@ impl LessSafeKey {
         aad: Aad<A>,
         in_out: &mut InOut,
     ) -> Result<(), error::Unspecified>
-        where
-            A: AsRef<[u8]>,
-            InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
         self.seal_in_place_append_tag(nonce, aad, in_out)
     }
@@ -547,9 +547,9 @@ impl LessSafeKey {
         aad: Aad<A>,
         in_out: &mut InOut,
     ) -> Result<(), error::Unspecified>
-        where
-            A: AsRef<[u8]>,
-            InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
         self.seal_in_place_separate_tag(nonce, aad, in_out.as_mut())
             .map(|tag| in_out.extend(tag.as_ref()))
@@ -566,8 +566,8 @@ impl LessSafeKey {
         aad: Aad<A>,
         in_out: &mut [u8],
     ) -> Result<Tag, error::Unspecified>
-        where
-            A: AsRef<[u8]>,
+    where
+        A: AsRef<[u8]>,
     {
         seal_in_place_separate_tag_(&self.key, nonce, Aad::from(aad.as_ref()), in_out)
     }
@@ -586,7 +586,7 @@ impl core::fmt::Debug for LessSafeKey {
             .finish()
     }
 }
-*/
+
 /// An AEAD Algorithm.
 pub struct Algorithm {
     init: fn(key: &[u8]) -> Result<KeyInner, error::Unspecified>,
