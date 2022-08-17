@@ -15,9 +15,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Modifications Copyright Amazon.com, Inc. or its affiliates. See GitHub history for details.
 
-use aws_lc_ring_facade as ring;
-
-use ring::{digest, test, test_file};
+use aws_lc_ring_facade::{digest, test, test_file};
 
 /// Test vectors from BoringSSL, Go, and other sources.
 #[test]
@@ -46,7 +44,7 @@ fn digest_misc() {
 }
 
 mod digest_shavs {
-    use crate::ring::{digest, test};
+    use aws_lc_ring_facade::{digest, test};
 
     fn run_known_answer_test(digest_alg: &'static digest::Algorithm, test_file: test::File) {
         let section_name = &format!("L = {}", digest_alg.output_len);
@@ -76,7 +74,7 @@ mod digest_shavs {
             #[allow(non_snake_case)]
             mod $algorithm_name {
                 use super::{run_known_answer_test, run_monte_carlo_test};
-                use crate::ring::{digest, test_file};
+                use aws_lc_ring_facade::{digest, test_file};
 
                 #[cfg(target_arch = "wasm32")]
                 use wasm_bindgen_test::wasm_bindgen_test as test;
@@ -184,7 +182,7 @@ macro_rules! test_i_u_f {
         #[test]
         fn $test_name() {
             let mut input = [0; (digest::MAX_BLOCK_LEN + 1) * 3];
-            let max = $alg.block_len() + 1;
+            let max = $alg.block_len + 1;
             for i in 0..(max * 3) {
                 input[i] = (i & 0xff) as u8;
             }
