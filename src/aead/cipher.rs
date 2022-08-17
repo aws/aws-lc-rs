@@ -23,6 +23,7 @@ use zeroize::Zeroize;
 pub(crate) enum SymmetricCipherKey {
     Aes128([u8; 16]),
     Aes256([u8; 32]),
+    ChaCha20Poly1305([u8; 32]),
 }
 
 impl Drop for SymmetricCipherKey {
@@ -32,6 +33,9 @@ impl Drop for SymmetricCipherKey {
                 key_bytes.zeroize();
             }
             SymmetricCipherKey::Aes256(key_bytes) => {
+                key_bytes.zeroize();
+            }
+            SymmetricCipherKey::ChaCha20Poly1305(key_bytes) => {
                 key_bytes.zeroize();
             }
         }
@@ -61,17 +65,30 @@ impl SymmetricCipherKey {
         }
     }
 
+    pub fn chacha20poly1305(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
+        if key_bytes.len() != 32 {
+            return Err(error::Unspecified);
+        }
+        let mut kb = MaybeUninit::<[u8; 32]>::uninit();
+        unsafe {
+            ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
+            Ok(SymmetricCipherKey::ChaCha20Poly1305(kb.assume_init()))
+        }
+    }
+
     pub fn key_bytes(&self) -> &[u8] {
         match self {
             SymmetricCipherKey::Aes128(bytes) => bytes,
             SymmetricCipherKey::Aes256(bytes) => bytes,
+            SymmetricCipherKey::ChaCha20Poly1305(bytes) => bytes,
         }
     }
 
-    fn key_size_bits(&self) -> usize {
+    pub fn key_size_bits(&self) -> usize {
         match self {
             SymmetricCipherKey::Aes128(_) => 128,
             SymmetricCipherKey::Aes256(_) => 256,
+            SymmetricCipherKey::ChaCha20Poly1305(_) => 256,
         }
     }
 }

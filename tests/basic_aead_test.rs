@@ -17,7 +17,7 @@ use aws_lc_ring_facade::{aead, error};
 
 use aead::{
     Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, Tag, UnboundKey,
-    AES_128_GCM, AES_256_GCM,
+    AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305,
 };
 use aws_lc_ring_facade::test::from_hex;
 use error::Unspecified;
@@ -91,12 +91,28 @@ fn test_aes_256_gcm() -> Result<(), String> {
         &AES_256_GCM,
         &from_hex("e5ac4a32c67e425ac4b143c83c6f161312a97d88d634afdf9f4da5bd35223f01").unwrap(),
         &from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap(),
-        &std::str::from_utf8(&from_hex("").unwrap()).unwrap(),
+        "123456789abcdef",
     );
-    let mut in_out = from_hex("").unwrap();
+    let mut in_out = from_hex("123456789abcdef0").unwrap();
 
     test_aead_separate_in_place(&config, &mut in_out)?;
     test_aead_append_within(&config, &mut in_out)?;
+
+    Ok(())
+}
+
+#[test]
+fn test_chacha20_poly1305() -> Result<(), String> {
+    let config = AeadConfig::new(
+        &CHACHA20_POLY1305,
+        &from_hex("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f").unwrap(),
+        &from_hex("070000004041424344454647").unwrap(),
+        "123456789abcdef",
+    );
+    let mut in_out = from_hex("123456789abcdef0").unwrap();
+
+    test_aead_separate_in_place(&config, &mut in_out)?;
+    //test_aead_append_within(&config, &mut in_out)?;
 
     Ok(())
 }

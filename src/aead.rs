@@ -24,13 +24,20 @@
 //! [AEAD]: http://www-cse.ucsd.edu/~mihir/papers/oem.html
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
+use crate::aead::chacha::seal_combined;
 use crate::aead::cipher::SymmetricCipherKey;
 use crate::{derive_debug_via_id, error, polyfill};
+use aes_gcm::*;
 use std::fmt::Debug;
+use std::io::Write;
+use std::mem;
+use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
+use std::slice::from_raw_parts;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
+    chacha::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},
 };
 
@@ -207,14 +214,15 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
             .checked_sub(TAG_LEN)
             .ok_or(error::Unspecified)?;
         check_per_nonce_max_bytes(key.algorithm, ciphertext_len)?;
-        let (in_out, received_tag) = in_out.split_at_mut(in_prefix_len + ciphertext_len);
-        (key.algorithm.open)(
-            &key.inner,
-            nonce,
-            aad,
-            &mut in_out[in_prefix_len..],
-            received_tag,
-        )?;
+        match key.inner {
+            KeyInner::AES_128_GCM(_, _, _) => {
+                aes_gcm_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
+            }
+            KeyInner::AES_256_GCM(_, _, _) => {
+                aes_gcm_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
+            }
+            _ => panic!("Unsupported algorithm!"),
+        }
         // `ciphertext_len` is also the plaintext length.
         Ok(&mut in_out[in_prefix_len..(in_prefix_len + ciphertext_len)])
     }
@@ -336,7 +344,32 @@ fn seal_in_place_separate_tag_(
     in_out: &mut [u8],
 ) -> Result<Tag, error::Unspecified> {
     check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
-    (key.algorithm.seal)(&key.inner, nonce, aad, in_out)
+    //(key.algorithm.seal_separate)(&key.inner, nonce, aad, in_out)
+    match key.inner {
+        KeyInner::AES_128_GCM(_, _, _) => aes_gcm_seal_separate(&key.inner, nonce, aad, in_out),
+        KeyInner::AES_256_GCM(_, _, _) => aes_gcm_seal_separate(&key.inner, nonce, aad, in_out),
+        KeyInner::CHACHA20_POLY1305(_, _, _) => {
+            let mut extendable_in_out = Vec::new();
+            extendable_in_out.extend_from_slice(&in_out);
+            let plaintext_len = in_out.len();
+
+            seal_combined(
+                &key.inner,
+                nonce,
+                aad,
+                &mut extendable_in_out,
+                plaintext_len,
+            )?;
+            let ciphertext = &extendable_in_out[..plaintext_len];
+            let tag = &extendable_in_out[plaintext_len..];
+
+            in_out.copy_from_slice(&ciphertext);
+
+            let mut my_tag = Vec::new();
+            my_tag.extend_from_slice(tag);
+            Ok(Tag(my_tag.try_into().unwrap()))
+        }
+    }
 }
 
 /// The additionally authenticated data (AAD) for an opening or sealing
@@ -400,23 +433,45 @@ enum KeyInner {
         *const aws_lc_sys::EVP_CIPHER,
         *mut aws_lc_sys::EVP_CIPHER_CTX,
     ),
+    CHACHA20_POLY1305(
+        SymmetricCipherKey,
+        *const aws_lc_sys::EVP_AEAD,
+        *mut aws_lc_sys::EVP_AEAD_CTX,
+    ),
 }
 
 impl KeyInner {
     fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
         unsafe {
-            let ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
-            if ctx.is_null() {
-                return Err(error::Unspecified);
-            }
             match key {
                 SymmetricCipherKey::Aes128(_) => {
+                    let ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
+                    if ctx.is_null() {
+                        return Err(error::Unspecified);
+                    }
                     let cipher = aws_lc_sys::EVP_aes_128_gcm();
                     Ok(KeyInner::AES_128_GCM(key, cipher, ctx))
                 }
                 SymmetricCipherKey::Aes256(_) => {
+                    let ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
+                    if ctx.is_null() {
+                        return Err(error::Unspecified);
+                    }
                     let cipher = aws_lc_sys::EVP_aes_256_gcm();
                     Ok(KeyInner::AES_256_GCM(key, cipher, ctx))
+                }
+                SymmetricCipherKey::ChaCha20Poly1305(_) => {
+                    let cipher = aws_lc_sys::EVP_aead_chacha20_poly1305();
+                    let ctx = aws_lc_sys::EVP_AEAD_CTX_new(
+                        cipher,
+                        key.key_bytes().as_ptr().cast(),
+                        key.key_bytes().len(),
+                        TAG_LEN,
+                    );
+                    if ctx.is_null() {
+                        return Err(error::Unspecified);
+                    }
+                    Ok(KeyInner::CHACHA20_POLY1305(key, cipher, ctx))
                 }
             }
         }
@@ -429,6 +484,7 @@ impl Drop for KeyInner {
             match self {
                 KeyInner::AES_128_GCM(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
                 KeyInner::AES_256_GCM(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
+                KeyInner::CHACHA20_POLY1305(_, _, ctx) => aws_lc_sys::EVP_AEAD_CTX_free(*ctx),
             }
         }
     }
@@ -590,21 +646,6 @@ impl core::fmt::Debug for LessSafeKey {
 /// An AEAD Algorithm.
 pub struct Algorithm {
     init: fn(key: &[u8]) -> Result<KeyInner, error::Unspecified>,
-
-    seal: fn(
-        key: &KeyInner,
-        nonce: Nonce,
-        aad: Aad<&[u8]>,
-        in_out: &mut [u8],
-    ) -> Result<Tag, error::Unspecified>,
-    open: fn(
-        key: &KeyInner,
-        nonce: Nonce,
-        aad: Aad<&[u8]>,
-        in_out: &mut [u8],
-        received_tag: &[u8],
-    ) -> Result<(), error::Unspecified>,
-
     key_len: usize,
     id: AlgorithmID,
 
@@ -649,7 +690,7 @@ derive_debug_via_id!(Algorithm);
 enum AlgorithmID {
     AES_128_GCM,
     AES_256_GCM,
-    //Chacha20Poly1305,
+    CHACHA20_POLY1305,
 }
 
 impl PartialEq for Algorithm {
@@ -694,6 +735,7 @@ enum Direction {
 
 mod aes_gcm;
 mod block;
+mod chacha;
 mod cipher;
 mod counter;
 mod iv;
