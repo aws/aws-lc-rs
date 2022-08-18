@@ -2,7 +2,8 @@ extern crate core;
 
 pub mod aead;
 
-#[macro_use]
+pub mod digest;
+
 pub mod test;
 
 pub mod error;
