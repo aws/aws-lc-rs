@@ -23,8 +23,8 @@ pub(crate) fn aes_gcm_seal_separate(
 ) -> Result<Tag, error::Unspecified> {
     unsafe {
         let (aes_key, cipher, ctx) = match key {
-            KeyInner::AES_128_GCM(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
-            KeyInner::AES_256_GCM(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
+            KeyInner::AES_128_GCM(aes_key, cipher, ctx, ..) => (aes_key, cipher, ctx),
+            KeyInner::AES_256_GCM(aes_key, cipher, ctx, ..) => (aes_key, cipher, ctx),
             _ => panic!("Unsupport algorithm"),
         };
 
@@ -91,7 +91,7 @@ pub(crate) fn aes_gcm_seal_separate(
         Ok(Tag(inner_tag.assume_init()))
     }
 }
-
+/*
 #[inline]
 pub(crate) fn aes_gcm_open_combined(
     key: &KeyInner,
@@ -100,8 +100,8 @@ pub(crate) fn aes_gcm_open_combined(
     in_out: &mut [u8],
 ) -> Result<(), error::Unspecified> {
     let (aes_key, cipher, ctx) = match key {
-        KeyInner::AES_128_GCM(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
-        KeyInner::AES_256_GCM(aes_key, cipher, ctx) => (aes_key, cipher, ctx),
+        KeyInner::AES_128_GCM(aes_key, cipher, ctx, ..) => (aes_key, cipher, ctx),
+        KeyInner::AES_256_GCM(aes_key, cipher, ctx, ..) => (aes_key, cipher, ctx),
         _ => panic!("Unsupported algorithm"),
     };
     debug_assert!(TAG_LEN <= in_out.len());
@@ -170,6 +170,7 @@ pub(crate) fn aes_gcm_open_combined(
     }
     Ok(())
 }
+*/
 
 pub static AES_128_GCM: Algorithm = Algorithm {
     init: init_128,
