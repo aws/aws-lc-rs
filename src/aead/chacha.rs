@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::aead::cipher::SymmetricCipherKey;
-use crate::aead::{counter, Aad, Algorithm, AlgorithmID, KeyInner, Nonce, TAG_LEN};
+use crate::aead::{counter, Aad, Algorithm, AlgorithmID, KeyInner, Nonce, NONCE_LEN, TAG_LEN};
 use crate::endian::BigEndian;
 use crate::error;
 use std::mem::MaybeUninit;
@@ -16,12 +16,11 @@ pub static CHACHA20_POLY1305: Algorithm = Algorithm {
     max_input_len: u64::MAX,
 };
 
-pub(crate) fn seal_combined<InOut>(
+pub(crate) fn aead_seal_combined<InOut>(
     key: &KeyInner,
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut InOut,
-    plaintext_len: usize,
 ) -> Result<(), error::Unspecified>
 where
     InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
@@ -36,32 +35,25 @@ where
             .into_bytes_less_safe()
             .as_ptr();
 
-        let mut overhead_size: usize;
-        unsafe {
-            overhead_size =
-                aws_lc_sys::EVP_AEAD_max_overhead(aws_lc_sys::EVP_aead_xchacha20_poly1305());
-        }
+        let plaintext_len = in_out.as_mut().len();
 
-        in_out.extend(&vec![0u8; overhead_size]);
+        in_out.extend(&vec![0u8; TAG_LEN]);
 
         let mut out_len = MaybeUninit::<usize>::uninit();
         let mut mut_in_out = in_out.as_mut();
-        let mut out_ptr = mut_in_out.as_mut_ptr();
-        let mut in_ptr = mut_in_out.as_ptr();
-        let aad_str_ptr = aad.0.as_ptr();
-        let aad_len = aad.0.len();
+        let add_str = aad.0;
 
         if 1 != aws_lc_sys::EVP_AEAD_CTX_seal(
             ctx,
-            out_ptr,
+            mut_in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
-            plaintext_len + overhead_size,
+            plaintext_len + TAG_LEN,
             tag_iv,
-            TAG_LEN,
-            in_ptr,
+            NONCE_LEN,
+            mut_in_out.as_ptr(),
             plaintext_len,
-            aad_str_ptr,
-            aad_len,
+            add_str.as_ptr(),
+            add_str.len(),
         ) {
             return Err(error::Unspecified);
         }
@@ -70,7 +62,7 @@ where
     }
 }
 
-fn chacha_open_combined(
+pub(crate) fn aead_open_combined(
     key: &KeyInner,
     nonce: Nonce,
     aad: Aad<&[u8]>,
@@ -78,7 +70,7 @@ fn chacha_open_combined(
 ) -> Result<(), error::Unspecified> {
     unsafe {
         let ctx = match key {
-            KeyInner::CHACHA20_POLY1305(_, _, ctx) => ctx,
+            KeyInner::CHACHA20_POLY1305(_, _, ctx) => *ctx,
             _ => panic!("Unsupport algorithm"),
         };
         let tag_iv = Counter::one(nonce)
@@ -86,17 +78,19 @@ fn chacha_open_combined(
             .into_bytes_less_safe()
             .as_ptr();
 
+        let plaintext_len = in_out.as_mut().len() - TAG_LEN;
+
         let aad_str = aad.0;
         let mut out_len = MaybeUninit::<usize>::uninit();
         if 1 != aws_lc_sys::EVP_AEAD_CTX_open(
-            *ctx,
-            in_out.as_mut_ptr().cast(),
+            ctx,
+            in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
-            usize::MAX,
+            plaintext_len,
             tag_iv,
-            TAG_LEN,
+            NONCE_LEN,
             in_out.as_ptr(),
-            in_out.as_mut().len(),
+            plaintext_len + TAG_LEN,
             aad_str.as_ptr(),
             aad_str.len(),
         ) {

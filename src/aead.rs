@@ -24,7 +24,7 @@
 //! [AEAD]: http://www-cse.ucsd.edu/~mihir/papers/oem.html
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
-use crate::aead::chacha::seal_combined;
+use crate::aead::chacha::{aead_open_combined, aead_seal_combined};
 use crate::aead::cipher::SymmetricCipherKey;
 use crate::{derive_debug_via_id, error, polyfill};
 use aes_gcm::*;
@@ -221,7 +221,9 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
             KeyInner::AES_256_GCM(_, _, _) => {
                 aes_gcm_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
             }
-            _ => panic!("Unsupported algorithm!"),
+            KeyInner::CHACHA20_POLY1305(_, _, _) => {
+                aead_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
+            }
         }
         // `ciphertext_len` is also the plaintext length.
         Ok(&mut in_out[in_prefix_len..(in_prefix_len + ciphertext_len)])
@@ -353,13 +355,7 @@ fn seal_in_place_separate_tag_(
             extendable_in_out.extend_from_slice(&in_out);
             let plaintext_len = in_out.len();
 
-            seal_combined(
-                &key.inner,
-                nonce,
-                aad,
-                &mut extendable_in_out,
-                plaintext_len,
-            )?;
+            aead_seal_combined(&key.inner, nonce, aad, &mut extendable_in_out)?;
             let ciphertext = &extendable_in_out[..plaintext_len];
             let tag = &extendable_in_out[plaintext_len..];
 

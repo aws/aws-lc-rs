@@ -58,7 +58,7 @@ fn aead_aes_gcm_256() {
         test_file!("aead_aes_256_gcm_tests.txt"),
     );
 }
-/*
+
 #[cfg(any(
     target_arch = "aarch64",
     target_arch = "arm",
@@ -80,7 +80,7 @@ fn aead_chacha20_poly1305() {
         test_file!("aead_chacha20_poly1305_tests.txt"),
     );
 }
-*/
+
 fn test_aead<Seal, Open>(
     aead_alg: &'static aead::Algorithm,
     seal: Seal,
