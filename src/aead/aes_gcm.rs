@@ -1,16 +1,13 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::aead::{counter, error, Aad, Algorithm, AlgorithmID, KeyInner, Nonce, Tag, TAG_LEN};
+use crate::aead::{error, Aad, Algorithm, AlgorithmID, Counter, KeyInner, Nonce, Tag, TAG_LEN};
 use std::cmp::min;
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
 
 use crate::aead::cipher::SymmetricCipherKey;
-use crate::endian::BigEndian;
 use std::ptr::null_mut;
-
-pub type Counter = counter::Counter<BigEndian<u32>>;
 
 const CHUNK_SIZE: usize = 24576;
 
@@ -28,16 +25,14 @@ pub(crate) fn aes_gcm_seal_separate(
             _ => panic!("Unsupport algorithm"),
         };
 
-        let tag_iv = Counter::one(nonce)
-            .increment()
-            .into_bytes_less_safe()
-            .as_ptr();
+        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
+
         if 1 != aws_lc_sys::EVP_EncryptInit_ex(
             *ctx,
             *cipher,
             null_mut(),
             aes_key.key_bytes().as_ptr(),
-            tag_iv,
+            nonce.as_ptr(),
         ) {
             return Err(error::Unspecified);
         }

@@ -86,14 +86,14 @@ impl Context {
             (!self.max_input_reached)
                 .then(|| self.max_input_reached = self.msg_len > self.algorithm.max_input_len);
 
-            if !self.max_input_reached {
-                if 1 != aws_lc_sys::EVP_DigestUpdate(
+            if !self.max_input_reached
+                && 1 != aws_lc_sys::EVP_DigestUpdate(
                     self.digest_ctx.ctx,
                     data.as_ptr() as *mut _,
                     data.len(),
-                ) {
-                    panic!("EVP_DigestUpdate failed")
-                }
+                )
+            {
+                panic!("EVP_DigestUpdate failed")
             }
         }
     }
@@ -102,7 +102,7 @@ impl Context {
     ///
     /// `finish` consumes the context so it cannot be (mis-)used after `finish`
     /// has been called.
-    pub fn finish(mut self) -> Digest {
+    pub fn finish(self) -> Digest {
         assert!(!self.max_input_reached);
 
         let mut output: Vec<u8> = vec![0u8; MAX_OUTPUT_LEN];

@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::aead::cipher::SymmetricCipherKey;
-use crate::aead::{counter, Algorithm, AlgorithmID, KeyInner};
-use crate::endian::BigEndian;
-use crate::error;
+use crate::aead::{Algorithm, AlgorithmID, KeyInner};
 
-pub type Counter = counter::Counter<BigEndian<u32>>;
+use crate::error;
 
 pub static CHACHA20_POLY1305: Algorithm = Algorithm {
     init: init_chacha,

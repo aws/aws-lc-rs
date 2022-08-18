@@ -29,6 +29,7 @@ use crate::{derive_debug_via_id, error, polyfill};
 use aes_gcm::*;
 use std::fmt::Debug;
 
+use crate::endian::BigEndian;
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
 
@@ -39,9 +40,6 @@ mod cipher;
 mod counter;
 mod iv;
 mod nonce;
-//mod poly1305;
-//pub mod quic;
-//mod shift;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
@@ -794,6 +792,8 @@ enum Direction {
     Sealing,
 }
 
+pub type Counter = counter::Counter<BigEndian<u32>>;
+
 #[inline]
 pub(crate) fn aead_seal_combined<InOut>(
     key: &KeyInner,
@@ -810,10 +810,7 @@ where
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let tag_iv = chacha::Counter::one(nonce)
-            .increment()
-            .into_bytes_less_safe()
-            .as_ptr();
+        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
 
         let plaintext_len = in_out.as_mut().len();
 
@@ -828,7 +825,7 @@ where
             mut_in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len + TAG_LEN,
-            tag_iv,
+            nonce.as_ptr(),
             NONCE_LEN,
             mut_in_out.as_ptr(),
             plaintext_len,
@@ -855,10 +852,7 @@ pub(crate) fn aead_open_combined(
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let tag_iv = chacha::Counter::one(nonce)
-            .increment()
-            .into_bytes_less_safe()
-            .as_ptr();
+        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
 
         let plaintext_len = in_out.as_mut().len() - TAG_LEN;
 
@@ -869,7 +863,7 @@ pub(crate) fn aead_open_combined(
             in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len,
-            tag_iv,
+            nonce.as_ptr(),
             NONCE_LEN,
             in_out.as_ptr(),
             plaintext_len + TAG_LEN,
