@@ -29,11 +29,8 @@ use crate::aead::cipher::SymmetricCipherKey;
 use crate::{derive_debug_via_id, error, polyfill};
 use aes_gcm::*;
 use std::fmt::Debug;
-use std::io::Write;
-use std::mem;
-use std::mem::MaybeUninit;
+
 use std::ops::RangeFrom;
-use std::slice::from_raw_parts;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
@@ -352,14 +349,14 @@ fn seal_in_place_separate_tag_(
         KeyInner::AES_256_GCM(_, _, _) => aes_gcm_seal_separate(&key.inner, nonce, aad, in_out),
         KeyInner::CHACHA20_POLY1305(_, _, _) => {
             let mut extendable_in_out = Vec::new();
-            extendable_in_out.extend_from_slice(&in_out);
+            extendable_in_out.extend_from_slice(in_out);
             let plaintext_len = in_out.len();
 
             aead_seal_combined(&key.inner, nonce, aad, &mut extendable_in_out)?;
             let ciphertext = &extendable_in_out[..plaintext_len];
             let tag = &extendable_in_out[plaintext_len..];
 
-            in_out.copy_from_slice(&ciphertext);
+            in_out.copy_from_slice(ciphertext);
 
             let mut my_tag = Vec::new();
             my_tag.extend_from_slice(tag);
@@ -627,7 +624,7 @@ impl LessSafeKey {
     /// The key's AEAD algorithm.
     #[inline]
     pub fn algorithm(&self) -> &'static Algorithm {
-        &self.key.algorithm
+        self.key.algorithm
     }
 }
 

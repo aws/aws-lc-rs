@@ -72,7 +72,7 @@ pub(crate) fn aes_gcm_seal_separate(
             }
             let olen = out_len.assume_init() as usize;
             let ctext = cipher_text.assume_init();
-            let mut next_cipher_chunk = &mut in_out[pos..(pos + olen)];
+            let next_cipher_chunk = &mut in_out[pos..(pos + olen)];
             next_cipher_chunk.copy_from_slice(&ctext[0..olen]);
             pos += olen;
         }
@@ -186,11 +186,11 @@ pub static AES_256_GCM: Algorithm = Algorithm {
 };
 
 fn init_128(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    return init_aes_gcm(key, AlgorithmID::AES_128_GCM);
+    init_aes_gcm(key, AlgorithmID::AES_128_GCM)
 }
 
 fn init_256(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    return init_aes_gcm(key, AlgorithmID::AES_256_GCM);
+    init_aes_gcm(key, AlgorithmID::AES_256_GCM)
 }
 
 fn init_aes_gcm(key: &[u8], id: AlgorithmID) -> Result<KeyInner, error::Unspecified> {

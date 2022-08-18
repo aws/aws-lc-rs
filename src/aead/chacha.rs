@@ -40,7 +40,7 @@ where
         in_out.extend(&vec![0u8; TAG_LEN]);
 
         let mut out_len = MaybeUninit::<usize>::uninit();
-        let mut mut_in_out = in_out.as_mut();
+        let mut_in_out = in_out.as_mut();
         let add_str = aad.0;
 
         if 1 != aws_lc_sys::EVP_AEAD_CTX_seal(
@@ -102,5 +102,5 @@ pub(crate) fn aead_open_combined(
 }
 
 fn init_chacha(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    Ok(KeyInner::new(SymmetricCipherKey::chacha20poly1305(key)?)?)
+    KeyInner::new(SymmetricCipherKey::chacha20poly1305(key)?)
 }

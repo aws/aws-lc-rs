@@ -75,7 +75,7 @@ fn test_aes_128_gcm() -> Result<(), String> {
         &AES_128_GCM,
         &from_hex("d480429666d48b400633921c5407d1d1").unwrap(),
         &from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap(),
-        &std::str::from_utf8(&from_hex("").unwrap()).unwrap(),
+        std::str::from_utf8(&from_hex("").unwrap()).unwrap(),
     );
     let mut in_out = from_hex("").unwrap();
 
@@ -135,7 +135,7 @@ fn test_aead_separate_in_place(
 
     let cipher_text = in_out.clone();
     println!("Ciphertext: {:?}", cipher_text);
-    if plaintext.len() > 0 {
+    if !plaintext.is_empty() {
         assert_ne!(plaintext, cipher_text);
     }
     let raw_tag = &tag as *const Tag as *const u8;
@@ -170,7 +170,7 @@ fn test_aead_append_within(config: &AeadConfig, in_out: &mut Vec<u8>) -> Result<
 
     let (cipher_text, tag_value) = sized_in_out.split_at_mut(plaintext.len());
 
-    if plaintext.len() > 0 {
+    if !plaintext.is_empty() {
         assert_ne!(plaintext, cipher_text);
     }
     println!("Ciphertext: {:?}", cipher_text);
