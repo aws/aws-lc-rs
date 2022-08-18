@@ -1,4 +1,4 @@
-// Copyright 2015-2017 Brian Smith.
+// Copyright 2015-2022 Brian Smith.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,13 +12,10 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use ring::{digest, test, test_file};
+// SPDX-License-Identifier: Apache-2.0
+// Modifications Copyright Amazon.com, Inc. or its affiliates. See GitHub history for details.
 
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen_test::{wasm_bindgen_test as test, wasm_bindgen_test_configure};
-
-#[cfg(target_arch = "wasm32")]
-wasm_bindgen_test_configure!(run_in_browser);
+use aws_lc_ring_facade::{digest, test, test_file};
 
 /// Test vectors from BoringSSL, Go, and other sources.
 #[test]
@@ -46,10 +43,8 @@ fn digest_misc() {
     });
 }
 
-// wasm_bindgen doesn't build this correctly.
-#[cfg(not(target_arch = "wsam32"))]
 mod digest_shavs {
-    use ring::{digest, test};
+    use aws_lc_ring_facade::{digest, test};
 
     fn run_known_answer_test(digest_alg: &'static digest::Algorithm, test_file: test::File) {
         let section_name = &format!("L = {}", digest_alg.output_len);
@@ -79,7 +74,7 @@ mod digest_shavs {
             #[allow(non_snake_case)]
             mod $algorithm_name {
                 use super::{run_known_answer_test, run_monte_carlo_test};
-                use ring::{digest, test_file};
+                use aws_lc_ring_facade::{digest, test_file};
 
                 #[cfg(target_arch = "wasm32")]
                 use wasm_bindgen_test::wasm_bindgen_test as test;
@@ -187,7 +182,7 @@ macro_rules! test_i_u_f {
         #[test]
         fn $test_name() {
             let mut input = [0; (digest::MAX_BLOCK_LEN + 1) * 3];
-            let max = $alg.block_len() + 1;
+            let max = $alg.block_len + 1;
             for i in 0..(max * 3) {
                 input[i] = (i & 0xff) as u8;
             }
@@ -277,7 +272,6 @@ test_large_digest!(
         0x65, 0x3C, 0x20, 0xE4, 0xBD
     ]
 );
-
 test_large_digest!(
     digest_test_large_digest_sha256,
     digest::SHA256,
