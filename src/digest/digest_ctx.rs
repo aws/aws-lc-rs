@@ -55,3 +55,11 @@ impl DigestContext {
         }
     }
 }
+
+impl Drop for DigestContext {
+    fn drop(&mut self) {
+        unsafe {
+            aws_lc_sys::EVP_MD_CTX_free(self.ctx);
+        }
+    }
+}
