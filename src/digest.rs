@@ -89,7 +89,7 @@ impl Context {
             if !self.max_input_reached {
                 if 1 != aws_lc_sys::EVP_DigestUpdate(
                     self.digest_ctx.ctx,
-                    data.as_ptr() as *mut _,
+                    data.as_ptr().cast(),
                     data.len(),
                 ) {
                     panic!("EVP_DigestUpdate failed")
