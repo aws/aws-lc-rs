@@ -26,11 +26,24 @@
 
 use crate::aead::cipher::SymmetricCipherKey;
 use crate::{derive_debug_via_id, error, polyfill};
+use aes_gcm::*;
 use std::fmt::Debug;
+
+use crate::endian::BigEndian;
+use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
+
+mod aes_gcm;
+mod block;
+mod chacha;
+mod cipher;
+mod counter;
+mod iv;
+mod nonce;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
+    chacha::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},
 };
 
@@ -207,14 +220,17 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
             .checked_sub(TAG_LEN)
             .ok_or(error::Unspecified)?;
         check_per_nonce_max_bytes(key.algorithm, ciphertext_len)?;
-        let (in_out, received_tag) = in_out.split_at_mut(in_prefix_len + ciphertext_len);
-        (key.algorithm.open)(
-            &key.inner,
-            nonce,
-            aad,
-            &mut in_out[in_prefix_len..],
-            received_tag,
-        )?;
+        match key.inner {
+            KeyInner::AES_128_GCM(..) => {
+                aead_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
+            }
+            KeyInner::AES_256_GCM(..) => {
+                aead_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
+            }
+            KeyInner::CHACHA20_POLY1305(..) => {
+                aead_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
+            }
+        }
         // `ciphertext_len` is also the plaintext length.
         Ok(&mut in_out[in_prefix_len..(in_prefix_len + ciphertext_len)])
     }
@@ -295,8 +311,12 @@ impl<N: NonceSequence> SealingKey<N> {
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
-        self.seal_in_place_separate_tag(aad, in_out.as_mut())
-            .map(|tag| in_out.extend(tag.as_ref()))
+        seal_in_place_append_tag_(
+            &self.key,
+            self.nonce_sequence.advance()?,
+            Aad::from(aad.as_ref()),
+            in_out,
+        )
     }
 
     /// Encrypts and signs (“seals”) data in place.
@@ -329,6 +349,25 @@ impl<N: NonceSequence> SealingKey<N> {
 }
 
 #[inline]
+fn seal_in_place_append_tag_<InOut>(
+    key: &UnboundKey,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut InOut,
+) -> Result<(), error::Unspecified>
+where
+    InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+{
+    check_per_nonce_max_bytes(key.algorithm, in_out.as_mut().len())?;
+    match key.inner {
+        KeyInner::AES_128_GCM(..) => aead_seal_combined(&key.inner, nonce, aad, in_out)?,
+        KeyInner::AES_256_GCM(..) => aead_seal_combined(&key.inner, nonce, aad, in_out)?,
+        KeyInner::CHACHA20_POLY1305(..) => aead_seal_combined(&key.inner, nonce, aad, in_out)?,
+    }
+    Ok(())
+}
+
+#[inline]
 fn seal_in_place_separate_tag_(
     key: &UnboundKey,
     nonce: Nonce,
@@ -336,7 +375,26 @@ fn seal_in_place_separate_tag_(
     in_out: &mut [u8],
 ) -> Result<Tag, error::Unspecified> {
     check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
-    (key.algorithm.seal)(&key.inner, nonce, aad, in_out)
+    //(key.algorithm.seal_separate)(&key.inner, nonce, aad, in_out)
+    match key.inner {
+        KeyInner::AES_128_GCM(..) => aes_gcm_seal_separate(&key.inner, nonce, aad, in_out),
+        KeyInner::AES_256_GCM(..) => aes_gcm_seal_separate(&key.inner, nonce, aad, in_out),
+        KeyInner::CHACHA20_POLY1305(..) => {
+            let mut extendable_in_out = Vec::new();
+            extendable_in_out.extend_from_slice(in_out);
+            let plaintext_len = in_out.len();
+
+            aead_seal_combined(&key.inner, nonce, aad, &mut extendable_in_out)?;
+            let ciphertext = &extendable_in_out[..plaintext_len];
+            let tag = &extendable_in_out[plaintext_len..];
+
+            in_out.copy_from_slice(ciphertext);
+
+            let mut my_tag = Vec::new();
+            my_tag.extend_from_slice(tag);
+            Ok(Tag(my_tag.try_into().unwrap()))
+        }
+    }
 }
 
 /// The additionally authenticated data (AAD) for an opening or sealing
@@ -394,29 +452,79 @@ enum KeyInner {
         SymmetricCipherKey,
         *const aws_lc_sys::EVP_CIPHER,
         *mut aws_lc_sys::EVP_CIPHER_CTX,
+        *const aws_lc_sys::EVP_AEAD,
+        *mut aws_lc_sys::EVP_AEAD_CTX,
     ),
     AES_256_GCM(
         SymmetricCipherKey,
         *const aws_lc_sys::EVP_CIPHER,
         *mut aws_lc_sys::EVP_CIPHER_CTX,
+        *const aws_lc_sys::EVP_AEAD,
+        *mut aws_lc_sys::EVP_AEAD_CTX,
+    ),
+    CHACHA20_POLY1305(
+        SymmetricCipherKey,
+        *const aws_lc_sys::EVP_AEAD,
+        *mut aws_lc_sys::EVP_AEAD_CTX,
     ),
 }
 
 impl KeyInner {
     fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
         unsafe {
-            let ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
-            if ctx.is_null() {
-                return Err(error::Unspecified);
-            }
             match key {
                 SymmetricCipherKey::Aes128(_) => {
                     let cipher = aws_lc_sys::EVP_aes_128_gcm();
-                    Ok(KeyInner::AES_128_GCM(key, cipher, ctx))
+                    let cipher_ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
+                    if cipher_ctx.is_null() {
+                        return Err(error::Unspecified);
+                    }
+                    let aead = aws_lc_sys::EVP_aead_aes_128_gcm();
+                    let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
+                        aead,
+                        key.key_bytes().as_ptr().cast(),
+                        key.key_bytes().len(),
+                        TAG_LEN,
+                    );
+                    if aead_ctx.is_null() {
+                        return Err(error::Unspecified);
+                    }
+                    Ok(KeyInner::AES_128_GCM(
+                        key, cipher, cipher_ctx, aead, aead_ctx,
+                    ))
                 }
                 SymmetricCipherKey::Aes256(_) => {
                     let cipher = aws_lc_sys::EVP_aes_256_gcm();
-                    Ok(KeyInner::AES_256_GCM(key, cipher, ctx))
+                    let cipher_ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
+                    if cipher_ctx.is_null() {
+                        return Err(error::Unspecified);
+                    }
+                    let aead = aws_lc_sys::EVP_aead_aes_256_gcm();
+                    let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
+                        aead,
+                        key.key_bytes().as_ptr().cast(),
+                        key.key_bytes().len(),
+                        TAG_LEN,
+                    );
+                    if aead_ctx.is_null() {
+                        return Err(error::Unspecified);
+                    }
+                    Ok(KeyInner::AES_256_GCM(
+                        key, cipher, cipher_ctx, aead, aead_ctx,
+                    ))
+                }
+                SymmetricCipherKey::ChaCha20Poly1305(_) => {
+                    let aead = aws_lc_sys::EVP_aead_chacha20_poly1305();
+                    let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
+                        aead,
+                        key.key_bytes().as_ptr().cast(),
+                        key.key_bytes().len(),
+                        TAG_LEN,
+                    );
+                    if aead_ctx.is_null() {
+                        return Err(error::Unspecified);
+                    }
+                    Ok(KeyInner::CHACHA20_POLY1305(key, aead, aead_ctx))
                 }
             }
         }
@@ -427,8 +535,15 @@ impl Drop for KeyInner {
     fn drop(&mut self) {
         unsafe {
             match self {
-                KeyInner::AES_128_GCM(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
-                KeyInner::AES_256_GCM(_, _, ctx) => aws_lc_sys::EVP_CIPHER_CTX_free(*ctx),
+                KeyInner::AES_128_GCM(.., cipher_ctx, _, aead_ctx) => {
+                    aws_lc_sys::EVP_CIPHER_CTX_free(*cipher_ctx);
+                    aws_lc_sys::EVP_AEAD_CTX_free(*aead_ctx);
+                }
+                KeyInner::AES_256_GCM(.., cipher_ctx, _, aead_ctx) => {
+                    aws_lc_sys::EVP_CIPHER_CTX_free(*cipher_ctx);
+                    aws_lc_sys::EVP_AEAD_CTX_free(*aead_ctx);
+                }
+                KeyInner::CHACHA20_POLY1305(.., ctx) => aws_lc_sys::EVP_AEAD_CTX_free(*ctx),
             }
         }
     }
@@ -480,7 +595,7 @@ impl hkdf::KeyType for &'static Algorithm {
 pub struct LessSafeKey {
     key: UnboundKey,
 }
-/*
+
 impl LessSafeKey {
     /// Constructs a `LessSafeKey` from an `UnboundKey`.
     pub fn new(key: UnboundKey) -> Self {
@@ -497,8 +612,8 @@ impl LessSafeKey {
         aad: Aad<A>,
         in_out: &'in_out mut [u8],
     ) -> Result<&'in_out mut [u8], error::Unspecified>
-        where
-            A: AsRef<[u8]>,
+    where
+        A: AsRef<[u8]>,
     {
         self.open_within(nonce, aad, in_out, 0..)
     }
@@ -514,8 +629,8 @@ impl LessSafeKey {
         in_out: &'in_out mut [u8],
         ciphertext_and_tag: RangeFrom<usize>,
     ) -> Result<&'in_out mut [u8], error::Unspecified>
-        where
-            A: AsRef<[u8]>,
+    where
+        A: AsRef<[u8]>,
     {
         open_within_(&self.key, nonce, aad, in_out, ciphertext_and_tag)
     }
@@ -529,9 +644,9 @@ impl LessSafeKey {
         aad: Aad<A>,
         in_out: &mut InOut,
     ) -> Result<(), error::Unspecified>
-        where
-            A: AsRef<[u8]>,
-            InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
         self.seal_in_place_append_tag(nonce, aad, in_out)
     }
@@ -547,9 +662,9 @@ impl LessSafeKey {
         aad: Aad<A>,
         in_out: &mut InOut,
     ) -> Result<(), error::Unspecified>
-        where
-            A: AsRef<[u8]>,
-            InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
         self.seal_in_place_separate_tag(nonce, aad, in_out.as_mut())
             .map(|tag| in_out.extend(tag.as_ref()))
@@ -566,8 +681,8 @@ impl LessSafeKey {
         aad: Aad<A>,
         in_out: &mut [u8],
     ) -> Result<Tag, error::Unspecified>
-        where
-            A: AsRef<[u8]>,
+    where
+        A: AsRef<[u8]>,
     {
         seal_in_place_separate_tag_(&self.key, nonce, Aad::from(aad.as_ref()), in_out)
     }
@@ -575,7 +690,7 @@ impl LessSafeKey {
     /// The key's AEAD algorithm.
     #[inline]
     pub fn algorithm(&self) -> &'static Algorithm {
-        &self.key.algorithm
+        self.key.algorithm
     }
 }
 
@@ -586,25 +701,10 @@ impl core::fmt::Debug for LessSafeKey {
             .finish()
     }
 }
-*/
+
 /// An AEAD Algorithm.
 pub struct Algorithm {
     init: fn(key: &[u8]) -> Result<KeyInner, error::Unspecified>,
-
-    seal: fn(
-        key: &KeyInner,
-        nonce: Nonce,
-        aad: Aad<&[u8]>,
-        in_out: &mut [u8],
-    ) -> Result<Tag, error::Unspecified>,
-    open: fn(
-        key: &KeyInner,
-        nonce: Nonce,
-        aad: Aad<&[u8]>,
-        in_out: &mut [u8],
-        received_tag: &[u8],
-    ) -> Result<(), error::Unspecified>,
-
     key_len: usize,
     id: AlgorithmID,
 
@@ -649,7 +749,7 @@ derive_debug_via_id!(Algorithm);
 enum AlgorithmID {
     AES_128_GCM,
     AES_256_GCM,
-    //Chacha20Poly1305,
+    CHACHA20_POLY1305,
 }
 
 impl PartialEq for Algorithm {
@@ -692,15 +792,87 @@ enum Direction {
     Sealing,
 }
 
-mod aes_gcm;
-mod block;
-mod cipher;
-//mod chacha;
-//mod chacha20_poly1305;
-//pub mod chacha20_poly1305_openssh;
-mod counter;
-mod iv;
-mod nonce;
-//mod poly1305;
-//pub mod quic;
-//mod shift;
+pub type Counter = counter::Counter<BigEndian<u32>>;
+
+#[inline]
+pub(crate) fn aead_seal_combined<InOut>(
+    key: &KeyInner,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut InOut,
+) -> Result<(), error::Unspecified>
+where
+    InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+{
+    unsafe {
+        let aead_ctx = match key {
+            KeyInner::AES_128_GCM(.., aead_ctx) => *aead_ctx,
+            KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
+            KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
+        };
+        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
+
+        let plaintext_len = in_out.as_mut().len();
+
+        in_out.extend(&vec![0u8; TAG_LEN]);
+
+        let mut out_len = MaybeUninit::<usize>::uninit();
+        let mut_in_out = in_out.as_mut();
+        let add_str = aad.0;
+
+        if 1 != aws_lc_sys::EVP_AEAD_CTX_seal(
+            aead_ctx,
+            mut_in_out.as_mut_ptr(),
+            out_len.as_mut_ptr(),
+            plaintext_len + TAG_LEN,
+            nonce.as_ptr(),
+            NONCE_LEN,
+            mut_in_out.as_ptr(),
+            plaintext_len,
+            add_str.as_ptr(),
+            add_str.len(),
+        ) {
+            return Err(error::Unspecified);
+        }
+
+        Ok(())
+    }
+}
+
+#[inline]
+pub(crate) fn aead_open_combined(
+    key: &KeyInner,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+) -> Result<(), error::Unspecified> {
+    unsafe {
+        let aead_ctx = match key {
+            KeyInner::AES_128_GCM(.., aead_ctx) => *aead_ctx,
+            KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
+            KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
+        };
+        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
+
+        let plaintext_len = in_out.as_mut().len() - TAG_LEN;
+
+        let aad_str = aad.0;
+        let mut out_len = MaybeUninit::<usize>::uninit();
+        if 1 != aws_lc_sys::EVP_AEAD_CTX_open(
+            aead_ctx,
+            in_out.as_mut_ptr(),
+            out_len.as_mut_ptr(),
+            plaintext_len,
+            nonce.as_ptr(),
+            NONCE_LEN,
+            in_out.as_ptr(),
+            plaintext_len + TAG_LEN,
+            aad_str.as_ptr(),
+            aad_str.len(),
+        ) {
+            return Err(error::Unspecified);
+        }
+
+        Ok(())
+    }
+}
