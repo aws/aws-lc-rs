@@ -39,8 +39,10 @@ pub const SHA512_256_OUTPUT_LEN: usize = 256 / 8;
 /// The length of a block for SHA-512-based algorithms, in bytes.
 const SHA512_BLOCK_LEN: usize = 1024 / 8;
 
+/// SHA-1 and SHA-256 are limited to an input size of 2^64-1 bits.
 const SHA256_MAX_INPUT_LEN: usize = u64::MAX as usize;
 
+/// SHA-384, SHA-512, and SHA-512/256 are limited to an input size of 2^128-1 bits.
 const SHA512_MAX_INPUT_LEN: usize = u128::MAX as usize;
 
 /// SHA-1 as specified in [FIPS 180-4]. Deprecated.
