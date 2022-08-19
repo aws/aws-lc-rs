@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 use std::mem::MaybeUninit;
 
-
-
-
 fn sha1_tester(input: &[u8]) -> [u8; 20] {
     let mut hash = MaybeUninit::<[u8; 20]>::uninit();
 
@@ -25,4 +22,17 @@ fn sha1() {
     let result1 = sha1_tester(input1);
     let openssl_result1 = openssl::sha::sha1(input1);
     compare(&result1, &openssl_result1);
+}
+
+#[test]
+fn error_checking() {
+    unsafe {
+        let error = aws_lc_sys::ERR_get_error();
+        let err_lib = aws_lc_sys::ERR_GET_LIB(error);
+        let err_reason = aws_lc_sys::ERR_GET_REASON(error);
+        let err_func = aws_lc_sys::ERR_GET_FUNC(error);
+        assert_eq!(err_lib, 0);
+        assert_eq!(err_reason, 0);
+        assert_eq!(err_func, 0);
+    }
 }

@@ -16,11 +16,11 @@
 // Modifications Copyright Amazon.com, Inc. or its affiliates. See GitHub history for details.
 
 use regex::Regex;
-use std::{env, fs, io};
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::{env, fs, io};
 
 fn modify_bindings(bindings_path: &PathBuf, prefix: &str) -> io::Result<()> {
     // Needed until this issue is resolved: https://github.com/rust-lang/rust-bindgen/issues/1375
@@ -43,8 +43,11 @@ fn modify_bindings(bindings_path: &PathBuf, prefix: &str) -> io::Result<()> {
     // The regular expression here has 3 capture groups.
     // After the prefix is interpolated into the RE, it will have a form like this:
     // ^(\\s+)pub\\s+(fn|static)\\s+aws_lc_0_1_0_(\\w*)(.*)
-    let prefix_symbol_detector =
-        Regex::new(&format!("^(\\s+)pub\\s+(fn|static)\\s+{}_(\\w*)(.*)", prefix)).unwrap();
+    let prefix_symbol_detector = Regex::new(&format!(
+        "^(\\s+)pub\\s+(fn|static)\\s+{}_(\\w*)(.*)",
+        prefix
+    ))
+    .unwrap();
     //                        ^            ^                 ^     ^- 4: remainder
     //                        |            |                 |- 3: original name
     //                        |            |- 2: Symbol type, either a function or static
@@ -104,10 +107,7 @@ const PRELUDE: &str = r#"
 #![allow(unused_imports, non_camel_case_types, non_snake_case, non_upper_case_globals, improper_ctypes)]
 "#;
 
-fn prepare_bindings_builder(
-    manifest_dir: &Path,
-    build_prefix: Option<&str>,
-) -> bindgen::Builder {
+fn prepare_bindings_builder(manifest_dir: &Path, build_prefix: Option<&str>) -> bindgen::Builder {
     let clang_args = prepare_clang_args(manifest_dir, build_prefix);
 
     let builder = bindgen::Builder::default()
@@ -216,6 +216,15 @@ fn prepare_cmake_build(build_prefix: Option<&str>) -> cmake::Config {
     }
 
     let mut cmake_cfg = get_cmake_config();
+
+    let opt_level = env::var("OPT_LEVEL").unwrap_or_else(|_| "0".to_string());
+    if opt_level.ne("0") {
+        if opt_level.eq("1") || opt_level.eq("2") {
+            cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
+        } else {
+            cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
+        }
+    }
 
     if let Some(symbol_prefix) = build_prefix {
         cmake_cfg.define("BORINGSSL_PREFIX", symbol_prefix);

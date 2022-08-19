@@ -254,6 +254,11 @@ else()
   file(COPY ${GENERATE_CODE_ROOT}/err_data.c DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
 endif()
 
+set(CRYPTO_RUST_SOURCES )
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/rust_wrapper.c)
+  list(APPEND CRYPTO_RUST_SOURCES rust_wrapper.c)
+endif()
+
 add_library(
   crypto_objects
   OBJECT
@@ -488,6 +493,7 @@ add_library(
   decrepit/ripemd/ripemd.c
   decrepit/rsa/rsa_decrepit.c
   decrepit/x509/x509_decrepit.c
+  ${CRYPTO_RUST_SOURCES}
 
   ${CRYPTO_ARCH_SOURCES}
 )
@@ -661,6 +667,7 @@ if(BUILD_TESTING)
     fipsmodule/rand/fork_detect_test.cc
     fipsmodule/service_indicator/service_indicator_test.cc
     fipsmodule/sha/sha_test.cc
+    fipsmodule/sha/sha3_test.cc
     fipsmodule/cpucap/cpu_arm_linux_test.cc
     fipsmodule/hkdf/hkdf_test.cc
     hpke/hpke_test.cc
