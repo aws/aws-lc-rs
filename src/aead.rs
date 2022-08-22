@@ -447,7 +447,7 @@ impl Debug for UnboundKey {
     variant_size_differences,
     non_camel_case_types
 )]
-enum KeyInner {
+pub(crate) enum KeyInner {
     AES_128_GCM(
         SymmetricCipherKey,
         *const aws_lc_sys::EVP_CIPHER,
