@@ -109,8 +109,6 @@ mod [<$pkg _benchmarks>]  {
         }
     }
 
-
-
     pub fn test_aead_separate_in_place( config: &AeadConfig, in_out: &mut Vec<u8> )  {
         let mut sealing_key = SealingKey::new(config.[<key_ $pkg>](), config.[<nonce_ $pkg>]());
         let mut opening_key = OpeningKey::new(config.[<key_ $pkg>](), config.[<nonce_ $pkg>]());
@@ -169,7 +167,7 @@ fn test_aes_128_gcm(c: &mut Criterion) {
         std::str::from_utf8(&from_hex("").unwrap()).unwrap(),
     );
     let mut in_out = from_hex("").unwrap();
-    c.bench_function("rust-AES_128_GCM-separate: empty input", |b| {
+    c.bench_function("ring-AES_128_GCM-separate: empty input", |b| {
         b.iter(|| {
             ring_benchmarks::test_aead_separate_in_place(&config, &mut in_out);
         })
@@ -179,7 +177,7 @@ fn test_aes_128_gcm(c: &mut Criterion) {
             aws_lc_ring_facade_benchmarks::test_aead_separate_in_place(&config, &mut in_out);
         })
     });
-    c.bench_function("rust-AES_128_GCM-append: empty input", |b| {
+    c.bench_function("ring-AES_128_GCM-append: empty input", |b| {
         b.iter(|| {
             ring_benchmarks::test_aead_append_within(&config, &mut in_out);
         })

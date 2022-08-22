@@ -472,6 +472,7 @@ pub(crate) enum KeyInner {
 impl KeyInner {
     fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
         unsafe {
+            aws_lc_sys::CRYPTO_library_init();
             match key {
                 SymmetricCipherKey::Aes128(_) => {
                     let cipher = aws_lc_sys::EVP_aes_128_gcm();
