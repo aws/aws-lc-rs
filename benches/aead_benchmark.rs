@@ -1,35 +1,11 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use hex::*;
 use paste::*;
 
 pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
-    if hex_str.len() % 2 != 0 {
-        return Err(String::from(
-            "Hex string does not have an even number of digits",
-        ));
-    }
-
-    let mut result = Vec::with_capacity(hex_str.len() / 2);
-    for digits in hex_str.as_bytes().chunks(2) {
-        let hi = from_hex_digit(digits[0])?;
-        let lo = from_hex_digit(digits[1])?;
-        result.push((hi * 0x10) | lo);
-    }
-    Ok(result)
-}
-
-fn from_hex_digit(d: u8) -> Result<u8, String> {
-    use core::ops::RangeInclusive;
-    const DECIMAL: (u8, RangeInclusive<u8>) = (0, b'0'..=b'9');
-    const HEX_LOWER: (u8, RangeInclusive<u8>) = (10, b'a'..=b'f');
-    const HEX_UPPER: (u8, RangeInclusive<u8>) = (10, b'A'..=b'F');
-    for (offset, range) in &[DECIMAL, HEX_LOWER, HEX_UPPER] {
-        if range.contains(&d) {
-            return Ok(d - range.start() + offset);
-        }
-    }
-    Err(format!("Invalid hex digit '{}'", d as char))
+    <Vec<u8>>::from_hex(hex_str).map_err(|e| String::from("Oops"))
 }
 
 pub enum AeadAlgorithm {

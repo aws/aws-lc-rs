@@ -40,6 +40,7 @@ mod cipher;
 mod counter;
 mod iv;
 mod nonce;
+mod quic;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
@@ -514,7 +515,7 @@ impl KeyInner {
                         key, cipher, cipher_ctx, aead, aead_ctx,
                     ))
                 }
-                SymmetricCipherKey::ChaCha20Poly1305(_) => {
+                SymmetricCipherKey::ChaCha20(_) => {
                     let aead = aws_lc_sys::EVP_aead_chacha20_poly1305();
                     let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
                         aead,
@@ -528,6 +529,14 @@ impl KeyInner {
                     Ok(KeyInner::CHACHA20_POLY1305(key, aead, aead_ctx))
                 }
             }
+        }
+    }
+
+    fn cipher_key(&self) -> &SymmetricCipherKey {
+        match self {
+            KeyInner::AES_128_GCM(cipher_key, ..) => cipher_key,
+            KeyInner::AES_256_GCM(cipher_key, ..) => cipher_key,
+            KeyInner::CHACHA20_POLY1305(cipher_key, ..) => cipher_key,
         }
     }
 }
