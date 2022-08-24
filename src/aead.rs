@@ -24,12 +24,12 @@
 //! [AEAD]: http://www-cse.ucsd.edu/~mihir/papers/oem.html
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
-use crate::aead::cipher::SymmetricCipherKey;
 use crate::{derive_debug_via_id, error, polyfill};
 use aes_gcm::*;
 use std::fmt::Debug;
 
 use crate::endian::BigEndian;
+use key_inner::KeyInner;
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
 
@@ -39,8 +39,9 @@ mod chacha;
 mod cipher;
 mod counter;
 mod iv;
+mod key_inner;
 mod nonce;
-mod quic;
+pub mod quic;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
@@ -443,122 +444,6 @@ impl Debug for UnboundKey {
     }
 }
 
-#[allow(
-    clippy::large_enum_variant,
-    variant_size_differences,
-    non_camel_case_types
-)]
-pub(crate) enum KeyInner {
-    AES_128_GCM(
-        SymmetricCipherKey,
-        *const aws_lc_sys::EVP_CIPHER,
-        *mut aws_lc_sys::EVP_CIPHER_CTX,
-        *const aws_lc_sys::EVP_AEAD,
-        *mut aws_lc_sys::EVP_AEAD_CTX,
-    ),
-    AES_256_GCM(
-        SymmetricCipherKey,
-        *const aws_lc_sys::EVP_CIPHER,
-        *mut aws_lc_sys::EVP_CIPHER_CTX,
-        *const aws_lc_sys::EVP_AEAD,
-        *mut aws_lc_sys::EVP_AEAD_CTX,
-    ),
-    CHACHA20_POLY1305(
-        SymmetricCipherKey,
-        *const aws_lc_sys::EVP_AEAD,
-        *mut aws_lc_sys::EVP_AEAD_CTX,
-    ),
-}
-
-impl KeyInner {
-    fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
-        unsafe {
-            aws_lc_sys::CRYPTO_library_init();
-            match key {
-                SymmetricCipherKey::Aes128(_) => {
-                    let cipher = aws_lc_sys::EVP_aes_128_gcm();
-                    let cipher_ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
-                    if cipher_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    let aead = aws_lc_sys::EVP_aead_aes_128_gcm();
-                    let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
-                        aead,
-                        key.key_bytes().as_ptr().cast(),
-                        key.key_bytes().len(),
-                        TAG_LEN,
-                    );
-                    if aead_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    Ok(KeyInner::AES_128_GCM(
-                        key, cipher, cipher_ctx, aead, aead_ctx,
-                    ))
-                }
-                SymmetricCipherKey::Aes256(_) => {
-                    let cipher = aws_lc_sys::EVP_aes_256_gcm();
-                    let cipher_ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
-                    if cipher_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    let aead = aws_lc_sys::EVP_aead_aes_256_gcm();
-                    let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
-                        aead,
-                        key.key_bytes().as_ptr().cast(),
-                        key.key_bytes().len(),
-                        TAG_LEN,
-                    );
-                    if aead_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    Ok(KeyInner::AES_256_GCM(
-                        key, cipher, cipher_ctx, aead, aead_ctx,
-                    ))
-                }
-                SymmetricCipherKey::ChaCha20(_) => {
-                    let aead = aws_lc_sys::EVP_aead_chacha20_poly1305();
-                    let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
-                        aead,
-                        key.key_bytes().as_ptr().cast(),
-                        key.key_bytes().len(),
-                        TAG_LEN,
-                    );
-                    if aead_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    Ok(KeyInner::CHACHA20_POLY1305(key, aead, aead_ctx))
-                }
-            }
-        }
-    }
-
-    fn cipher_key(&self) -> &SymmetricCipherKey {
-        match self {
-            KeyInner::AES_128_GCM(cipher_key, ..) => cipher_key,
-            KeyInner::AES_256_GCM(cipher_key, ..) => cipher_key,
-            KeyInner::CHACHA20_POLY1305(cipher_key, ..) => cipher_key,
-        }
-    }
-}
-
-impl Drop for KeyInner {
-    fn drop(&mut self) {
-        unsafe {
-            match self {
-                KeyInner::AES_128_GCM(.., cipher_ctx, _, aead_ctx) => {
-                    aws_lc_sys::EVP_CIPHER_CTX_free(*cipher_ctx);
-                    aws_lc_sys::EVP_AEAD_CTX_free(*aead_ctx);
-                }
-                KeyInner::AES_256_GCM(.., cipher_ctx, _, aead_ctx) => {
-                    aws_lc_sys::EVP_CIPHER_CTX_free(*cipher_ctx);
-                    aws_lc_sys::EVP_AEAD_CTX_free(*aead_ctx);
-                }
-                KeyInner::CHACHA20_POLY1305(.., ctx) => aws_lc_sys::EVP_AEAD_CTX_free(*ctx),
-            }
-        }
-    }
-}
-
 impl UnboundKey {
     /// Constructs an `UnboundKey`.
     ///
@@ -802,7 +687,7 @@ enum Direction {
     Sealing,
 }
 
-pub type Counter = counter::Counter<BigEndian<u32>>;
+pub type CounterBEu32 = counter::Counter<BigEndian<u32>>;
 
 #[inline]
 pub(crate) fn aead_seal_combined<InOut>(
@@ -820,7 +705,7 @@ where
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
+        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
 
         let plaintext_len = in_out.as_mut().len();
 
@@ -862,7 +747,7 @@ pub(crate) fn aead_open_combined(
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
+        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
 
         let plaintext_len = in_out.as_mut().len() - TAG_LEN;
 

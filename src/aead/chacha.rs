@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::aead::cipher::SymmetricCipherKey;
-use crate::aead::{Algorithm, AlgorithmID, KeyInner};
+use crate::aead::key_inner::KeyInner;
+use crate::aead::{Algorithm, AlgorithmID};
 
 use crate::error;
 
@@ -14,5 +15,5 @@ pub static CHACHA20_POLY1305: Algorithm = Algorithm {
 };
 
 fn init_chacha(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    KeyInner::new(SymmetricCipherKey::chacha20poly1305(key)?)
+    KeyInner::new(SymmetricCipherKey::chacha20(key)?)
 }

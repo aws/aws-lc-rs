@@ -16,8 +16,9 @@
 //!
 //! See draft-ietf-quic-tls.
 
-use crate::aead::{cipher, KeyInner};
-use crate::{aead::chacha, derive_debug_via_id, error};
+use crate::aead::cipher;
+use crate::aead::key_inner::KeyInner;
+use crate::{derive_debug_via_id, error};
 use core::convert::{TryFrom, TryInto};
 
 /// A key for generating QUIC Header Protection masks.
@@ -109,6 +110,7 @@ impl Algorithm {
 derive_debug_via_id!(Algorithm);
 
 #[derive(Debug, Eq, PartialEq)]
+#[allow(non_camel_case_types)]
 enum AlgorithmID {
     AES_128,
     AES_256,
@@ -158,12 +160,12 @@ fn aes_init_256(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
 }
 
 fn chacha20_init(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    let chacha20 = cipher::SymmetricCipherKey::chacha20poly1305(key)?;
+    let chacha20 = cipher::SymmetricCipherKey::chacha20(key)?;
     Ok(KeyInner::new(chacha20)?)
 }
 
 fn cipher_new_mask(key: &KeyInner, sample: Sample) -> [u8; 5] {
     let cipher_key = key.cipher_key();
 
-    cipher_key.new_mask(sample)
+    cipher_key.new_mask(sample).unwrap()
 }

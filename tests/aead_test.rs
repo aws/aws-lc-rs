@@ -32,13 +32,13 @@ fn aead_aes_gcm_128() {
         &aead::AES_128_GCM,
         seal_with_key,
         open_with_key,
-        test_file!("aead_aes_128_gcm_tests.txt"),
+        test_file!("data/aead_aes_128_gcm_tests.txt"),
     );
     test_aead(
         &aead::AES_128_GCM,
         seal_with_less_safe_key,
         open_with_less_safe_key,
-        test_file!("aead_aes_128_gcm_tests.txt"),
+        test_file!("data/aead_aes_128_gcm_tests.txt"),
     );
 }
 
@@ -49,13 +49,13 @@ fn aead_aes_gcm_256() {
         &aead::AES_256_GCM,
         seal_with_key,
         open_with_key,
-        test_file!("aead_aes_256_gcm_tests.txt"),
+        test_file!("data/aead_aes_256_gcm_tests.txt"),
     );
     test_aead(
         &aead::AES_256_GCM,
         seal_with_less_safe_key,
         open_with_less_safe_key,
-        test_file!("aead_aes_256_gcm_tests.txt"),
+        test_file!("data/aead_aes_256_gcm_tests.txt"),
     );
 }
 
@@ -71,13 +71,13 @@ fn aead_chacha20_poly1305() {
         &aead::CHACHA20_POLY1305,
         seal_with_key,
         open_with_key,
-        test_file!("aead_chacha20_poly1305_tests.txt"),
+        test_file!("data/aead_chacha20_poly1305_tests.txt"),
     );
     test_aead(
         &aead::CHACHA20_POLY1305,
         seal_with_less_safe_key,
         open_with_less_safe_key,
-        test_file!("aead_chacha20_poly1305_tests.txt"),
+        test_file!("data/aead_chacha20_poly1305_tests.txt"),
     );
 }
 
