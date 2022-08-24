@@ -20,7 +20,7 @@ use aws_lc_ring_facade::{digest, test, test_file};
 /// Test vectors from BoringSSL, Go, and other sources.
 #[test]
 fn digest_misc() {
-    test::run(test_file!("digest_tests.txt"), |section, test_case| {
+    test::run(test_file!("data/digest_tests.txt"), |section, test_case| {
         assert_eq!(section, "");
         let digest_alg = test_case.consume_digest_alg("Hash").unwrap();
         let input = test_case.consume_bytes("Input");

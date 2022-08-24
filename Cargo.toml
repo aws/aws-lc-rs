@@ -16,6 +16,7 @@ rand = "0.8"
 libc = "0.2"
 paste = "1.0"
 criterion = "0.3"
+hex = "0.4"
 
 [[bench]]
 name = "aead_benchmark"
