@@ -1,3 +1,4 @@
+use std::any::Any;
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 use criterion::{criterion_group, criterion_main, Criterion};
@@ -7,6 +8,7 @@ pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
     <Vec<u8>>::from_hex(hex_str).map_err(|e| String::from("Oops"))
 }
 
+#[derive(Debug)]
 pub enum AeadAlgorithm {
     MY_AES_128_GCM,
     MY_AES_256_GCM,
@@ -18,27 +20,42 @@ pub struct AeadConfig {
     key: Vec<u8>,
     nonce: Vec<u8>,
     aad: String,
+    in_out: Vec<u8>,
+    description: String,
 }
 
 impl AeadConfig {
-    pub fn new(algorithm: AeadAlgorithm, key: &[u8], nonce: &[u8], aad: &str) -> AeadConfig {
+    pub fn new(
+        algorithm: AeadAlgorithm,
+        key: &[u8],
+        nonce: &[u8],
+        aad: &str,
+        in_out: &[u8],
+        description: &str,
+    ) -> AeadConfig {
         AeadConfig {
             algorithm,
             key: Vec::from(key),
             nonce: Vec::from(nonce),
             aad: String::from(aad),
+            in_out: Vec::from(in_out),
+            description: String::from(description),
         }
     }
 }
-
 macro_rules! benchmark_aead
 {( $pkg:ident ) =>
 {
     paste::item! {
 mod [<$pkg _benchmarks>]  {
+
+    use $pkg::{aead, error, test};
+/*
+mod ring_benchmarks {
+    use ring::{aead, error, test};
+ */
     use criterion::black_box;
     use crate::AeadConfig;
-    use $pkg::{aead, error, test};
     use aead::{
         Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, Tag, UnboundKey,
         AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305,
@@ -74,47 +91,38 @@ mod [<$pkg _benchmarks>]  {
        black_box(UnboundKey::new(algorithm(config), &config.key).unwrap())
     }
 
-    fn aad(config: &crate::AeadConfig) -> Aad<String> {
-        black_box(Aad::from(config.aad.clone()))
-    }
-
     fn nonce(config: &crate::AeadConfig) -> impl NonceSequence {
        black_box(NotANonce::from(config.nonce.clone()))
     }
 
-    pub fn test_aead_separate_in_place( config: &AeadConfig, in_out: &mut Vec<u8> )  {
-        let mut sealing_key = SealingKey::new(key(&config), nonce(&config));
-        let mut opening_key = OpeningKey::new(key(&config), nonce(&config));
-
-        let plaintext = in_out.clone();
-        let tag = sealing_key
-            .seal_in_place_separate_tag(aad(&config), in_out.as_mut_slice())
-            .map_err(|x| x.to_string()).unwrap();
-
-        let cipher_text = in_out.clone();
-        let raw_tag = &tag as *const Tag as *const u8;
-        let tag_value = unsafe { slice::from_raw_parts(raw_tag, 16) };
-
-        in_out.extend(tag.as_ref());
-        let result_plaintext = opening_key
-            .open_in_place(aad(&config), in_out)
-            .map_err(|x| x.to_string()).unwrap();
+    pub fn aad(config: &crate::AeadConfig) -> Aad<String> {
+        black_box(Aad::from(config.aad.clone()))
     }
 
-    pub fn test_aead_append_within(config: &AeadConfig, in_out: &mut Vec<u8>) {
-        let mut sealing_key = SealingKey::new(key(&config), nonce(&config));
-        let mut opening_key = OpeningKey::new(key(&config), nonce(&config));
+    pub fn create_sealing_key(config: &AeadConfig) -> SealingKey<impl NonceSequence> {
+        SealingKey::new(key(&config), nonce(&config))
+    }
 
-        let plaintext = in_out.clone();
-        let mut sized_in_out = in_out.to_vec();
-        sealing_key
-            .seal_in_place_append_tag(aad(&config), &mut sized_in_out)
-            .map_err(|x| x.to_string()).unwrap();
+    pub fn create_opening_key(config: &AeadConfig) -> OpeningKey<impl NonceSequence> {
+        OpeningKey::new(key(&config), nonce(&config))
+    }
 
-        let (cipher_text, tag_value) = sized_in_out.split_at_mut(plaintext.len());
 
-        let result_plaintext = opening_key
-            .open_within(aad(&config), &mut sized_in_out, 0..)
+    pub fn seal_separate(sealing_key: &mut SealingKey<impl NonceSequence>, aad: Aad<String>, in_out: &mut [u8]) -> Tag {
+       sealing_key
+            .seal_in_place_separate_tag(aad, in_out)
+            .map_err(|x| x.to_string()).unwrap()
+    }
+
+    pub fn seal_append(sealing_key: &mut SealingKey<impl NonceSequence>, aad: Aad<String>, in_out: &mut Vec<u8>) {
+       sealing_key
+            .seal_in_place_append_tag(aad, in_out)
+            .map_err(|x| x.to_string()).unwrap()
+    }
+
+    pub fn open(opening_key: &mut OpeningKey<impl NonceSequence>, aad: Aad<String>, in_out: &mut [u8]) {
+       opening_key
+            .open_in_place(aad, in_out)
             .map_err(|x| x.to_string()).unwrap();
     }
 
@@ -124,50 +132,115 @@ mod [<$pkg _benchmarks>]  {
 benchmark_aead!(ring);
 benchmark_aead!(aws_lc_ring_facade);
 
-fn test_aes_128_gcm_small_separate(c: &mut Criterion) {
+fn test_aes_128_gcm(c: &mut Criterion) {
     let config = AeadConfig::new(
         AeadAlgorithm::MY_AES_128_GCM,
         &from_hex("d480429666d48b400633921c5407d1d1").unwrap(),
         &from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap(),
         "aad value",
+        &from_hex("0a2714aa7d").unwrap(),
+        "small",
     );
-    let mut in_out = from_hex("0a2714aa7d").unwrap();
-    c.bench_function("ring-AES_128_GCM-separate: small input", |b| {
+    test_aead_separate(c, &config);
+    test_aead_append(c, &config);
+    test_aead_open(c, &config);
+}
+
+fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
+    let mut in_out = config.in_out.clone();
+
+    let mut aws_sealing_key = aws_lc_ring_facade_benchmarks::create_sealing_key(config);
+    let aws_bench_name = format!(
+        "aws-lc-{:?}-separate: {}",
+        config.algorithm, config.description
+    );
+    c.bench_function(&aws_bench_name, |b| {
         b.iter(|| {
-            ring_benchmarks::test_aead_separate_in_place(&config, &mut in_out);
+            let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
+            aws_lc_ring_facade_benchmarks::seal_separate(
+                &mut aws_sealing_key,
+                aws_aad,
+                &mut in_out,
+            );
         })
     });
-    c.bench_function("aws-lc-AES_128_GCM-separate: small input", |b| {
+
+    let mut ring_sealing_key = ring_benchmarks::create_sealing_key(config);
+    let ring_bench_name = format!(
+        "ring-{:?}-separate: {}",
+        config.algorithm, config.description
+    );
+    c.bench_function(&ring_bench_name, |b| {
         b.iter(|| {
-            aws_lc_ring_facade_benchmarks::test_aead_separate_in_place(&config, &mut in_out);
+            let ring_aad = ring_benchmarks::aad(config);
+            ring_benchmarks::seal_separate(&mut ring_sealing_key, ring_aad, &mut in_out);
         })
     });
 }
 
-fn test_aes_128_gcm_small_append(c: &mut Criterion) {
-    let config = AeadConfig::new(
-        AeadAlgorithm::MY_AES_128_GCM,
-        &from_hex("d480429666d48b400633921c5407d1d1").unwrap(),
-        &from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap(),
-        "aad value",
+fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
+    let mut in_out = config.in_out.clone();
+
+    let mut aws_sealing_key = aws_lc_ring_facade_benchmarks::create_sealing_key(config);
+    let aws_bench_name = format!(
+        "aws-lc-{:?}-append: {}",
+        config.algorithm, config.description
     );
-    let mut in_out = from_hex("0a2714aa7d").unwrap();
-    c.bench_function("ring-AES_128_GCM-append: small input", |b| {
+    c.bench_function(&aws_bench_name, |b| {
         b.iter(|| {
-            ring_benchmarks::test_aead_append_within(&config, &mut in_out);
+            let mut aws_in_out = in_out.clone();
+            let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
+            aws_lc_ring_facade_benchmarks::seal_append(
+                &mut aws_sealing_key,
+                aws_aad,
+                &mut aws_in_out,
+            );
         })
     });
 
-    c.bench_function("aws-lc-AES_128_GCM-append: small input", |b| {
+    let mut ring_sealing_key = ring_benchmarks::create_sealing_key(config);
+
+    let ring_bench_name = format!("ring-{:?}-append: {}", config.algorithm, config.description);
+    c.bench_function(&ring_bench_name, |b| {
         b.iter(|| {
-            aws_lc_ring_facade_benchmarks::test_aead_append_within(&config, &mut in_out);
+            let mut ring_in_out = in_out.clone();
+            let ring_aad = ring_benchmarks::aad(&config);
+            ring_benchmarks::seal_append(&mut ring_sealing_key, ring_aad, &mut ring_in_out);
+        })
+    });
+}
+
+fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
+    let mut in_out = config.in_out.clone();
+
+    let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
+    let mut aws_sealing_key = aws_lc_ring_facade_benchmarks::create_sealing_key(config);
+    aws_lc_ring_facade_benchmarks::seal_append(&mut aws_sealing_key, aws_aad, &mut in_out);
+
+    let mut aws_opening_key = aws_lc_ring_facade_benchmarks::create_opening_key(config);
+    let aws_bench_name = format!("aws_lc-{:?}-open: {}", config.algorithm, config.description);
+    c.bench_function(&aws_bench_name, |b| {
+        b.iter(|| {
+            let mut aws_in_out = in_out.clone();
+            let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
+            aws_lc_ring_facade_benchmarks::open(&mut aws_opening_key, aws_aad, &mut aws_in_out);
+        })
+    });
+
+    let mut ring_opening_key = ring_benchmarks::create_opening_key(config);
+    let ring_bench_name = format!("ring-{:?}-open: {}", config.algorithm, config.description);
+    c.bench_function(&ring_bench_name, |b| {
+        b.iter(|| {
+            let mut ring_in_out = in_out.clone();
+            let ring_aad = ring_benchmarks::aad(&config);
+            ring_benchmarks::open(&mut ring_opening_key, ring_aad, &mut ring_in_out);
         })
     });
 }
 
 criterion_group!(
     benches,
-    test_aes_128_gcm_small_separate,
-    test_aes_128_gcm_small_append
+    test_aes_128_gcm,
+    //test_aes_128_gcm_small_append
 );
 criterion_main!(benches);

@@ -561,8 +561,7 @@ impl LessSafeKey {
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
-        self.seal_in_place_separate_tag(nonce, aad, in_out.as_mut())
-            .map(|tag| in_out.extend(tag.as_ref()))
+        seal_in_place_append_tag_(&self.key, nonce, Aad::from(aad.as_ref()), in_out)
     }
 
     /// Like `SealingKey::seal_in_place_separate_tag()`, except it accepts an
@@ -674,6 +673,7 @@ const TAG_LEN: usize = 16;
 /// The maximum length of a tag for the algorithms in this module.
 pub const MAX_TAG_LEN: usize = TAG_LEN;
 
+#[inline]
 fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), error::Unspecified> {
     if polyfill::u64_from_usize(in_out_len) > alg.max_input_len {
         return Err(error::Unspecified);
