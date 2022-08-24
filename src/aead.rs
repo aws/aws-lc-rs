@@ -447,7 +447,7 @@ impl Debug for UnboundKey {
     variant_size_differences,
     non_camel_case_types
 )]
-enum KeyInner {
+pub(crate) enum KeyInner {
     AES_128_GCM(
         SymmetricCipherKey,
         *const aws_lc_sys::EVP_CIPHER,
@@ -472,6 +472,7 @@ enum KeyInner {
 impl KeyInner {
     fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
         unsafe {
+            aws_lc_sys::CRYPTO_library_init();
             match key {
                 SymmetricCipherKey::Aes128(_) => {
                     let cipher = aws_lc_sys::EVP_aes_128_gcm();

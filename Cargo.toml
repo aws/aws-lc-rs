@@ -14,3 +14,9 @@ zeroize = "1.5"
 ring = "0.16"
 rand = "0.8"
 libc = "0.2"
+paste = "1.0"
+criterion = "0.3"
+
+[[bench]]
+name = "aead_benchmark"
+harness = false
