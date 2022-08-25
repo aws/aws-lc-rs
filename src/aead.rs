@@ -693,11 +693,10 @@ where
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
 
         let plaintext_len = in_out.as_mut().len();
 
-        in_out.extend(&vec![0u8; TAG_LEN]);
+        in_out.extend([0u8; TAG_LEN].iter());
 
         let mut out_len = MaybeUninit::<usize>::uninit();
         let mut_in_out = in_out.as_mut();
@@ -708,7 +707,7 @@ where
             mut_in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len + TAG_LEN,
-            nonce.as_ptr(),
+            nonce.0.as_ptr(),
             NONCE_LEN,
             mut_in_out.as_ptr(),
             plaintext_len,
@@ -735,7 +734,6 @@ pub(crate) fn aead_open_combined(
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
 
         let plaintext_len = in_out.as_mut().len() - TAG_LEN;
 
@@ -746,7 +744,7 @@ pub(crate) fn aead_open_combined(
             in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len,
-            nonce.as_ptr(),
+            nonce.0.as_ptr(),
             NONCE_LEN,
             in_out.as_ptr(),
             plaintext_len + TAG_LEN,

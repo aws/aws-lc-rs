@@ -139,7 +139,7 @@ fn test_aes_128_gcm(c: &mut Criterion) {
         &from_hex("0a2714aa7d").unwrap(),
         "small",
     );
-    test_aead_separate(c, &config);
+    //test_aead_separate(c, &config);
     test_aead_append(c, &config);
     test_aead_open(c, &config);
 }
@@ -195,7 +195,6 @@ fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
             );
         })
     });
-
     let mut ring_sealing_key = ring_benchmarks::create_sealing_key(config);
 
     let ring_bench_name = format!("ring-{:?}-append: {}", config.algorithm, config.description);
