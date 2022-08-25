@@ -679,7 +679,7 @@ where
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
+        let nonce = nonce.as_ref();
 
         let plaintext_len = in_out.as_mut().len();
 
@@ -721,7 +721,7 @@ pub(crate) fn aead_open_combined(
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
+        let nonce = nonce.as_ref();
 
         let plaintext_len = in_out.as_mut().len() - TAG_LEN;
 
