@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 use crate::error;
-use core::convert::TryInto;
+use std::convert::TryInto;
 
 /// A nonce for a single AEAD opening or sealing operation.
 ///
@@ -45,6 +45,15 @@ impl Nonce {
 impl AsRef<[u8; NONCE_LEN]> for Nonce {
     fn as_ref(&self) -> &[u8; NONCE_LEN] {
         &self.0
+    }
+}
+
+impl TryFrom<&[u8]> for Nonce {
+    type Error = ();
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        let result = <[u8; NONCE_LEN]>::try_from(value).map_err(|_| ())?;
+        Ok(Nonce(result))
     }
 }
 

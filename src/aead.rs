@@ -279,21 +279,6 @@ impl<N: NonceSequence> Debug for SealingKey<N> {
 }
 
 impl<N: NonceSequence> SealingKey<N> {
-    /// Deprecated. Renamed to `seal_in_place_append_tag()`.
-    #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
-    #[inline]
-    pub fn seal_in_place<A, InOut>(
-        &mut self,
-        aad: Aad<A>,
-        in_out: &mut InOut,
-    ) -> Result<(), error::Unspecified>
-    where
-        A: AsRef<[u8]>,
-        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
-    {
-        self.seal_in_place_append_tag(aad, in_out)
-    }
-
     /// Encrypts and signs (“seals”) data in place, appending the tag to the
     /// resulting ciphertext.
     ///
@@ -675,7 +660,8 @@ fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), e
     Ok(())
 }
 
-pub type CounterBEu32 = counter::Counter<BigEndian<u32>>;
+type CounterBEu32 = counter::Counter<BigEndian<u32>>;
+pub type Counter = CounterBEu32;
 
 #[inline]
 pub(crate) fn aead_seal_combined<InOut>(
@@ -693,6 +679,7 @@ where
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
+        let nonce = nonce.as_ref();
 
         let plaintext_len = in_out.as_mut().len();
 
@@ -707,7 +694,7 @@ where
             mut_in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len + TAG_LEN,
-            nonce.0.as_ptr(),
+            nonce.as_ptr(),
             NONCE_LEN,
             mut_in_out.as_ptr(),
             plaintext_len,
@@ -734,6 +721,7 @@ pub(crate) fn aead_open_combined(
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
+        let nonce = nonce.as_ref();
 
         let plaintext_len = in_out.as_mut().len() - TAG_LEN;
 
@@ -744,7 +732,7 @@ pub(crate) fn aead_open_combined(
             in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len,
-            nonce.0.as_ptr(),
+            nonce.as_ptr(),
             NONCE_LEN,
             in_out.as_ptr(),
             plaintext_len + TAG_LEN,
@@ -755,5 +743,34 @@ pub(crate) fn aead_open_combined(
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test::from_hex;
+
+    #[test]
+    fn test_aes_128() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        let og_nonce = from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap();
+        let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
+        let unbound_key = UnboundKey::new(&crate::aead::AES_128_GCM, &key).unwrap();
+        let less_safe_key = LessSafeKey::new(unbound_key);
+
+        let nonce = og_nonce.as_slice().try_into().unwrap();
+        let mut in_out = Vec::from(plaintext.as_slice());
+
+        less_safe_key
+            .seal_in_place_append_tag(nonce, Aad::empty(), &mut in_out)
+            .unwrap();
+
+        let nonce = og_nonce.as_slice().try_into().unwrap();
+        less_safe_key
+            .open_in_place(nonce, Aad::empty(), &mut in_out)
+            .unwrap();
+
+        assert_eq!(plaintext, in_out[..plaintext.len()]);
     }
 }
