@@ -1,11 +1,10 @@
-use std::any::Any;
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 use criterion::{criterion_group, criterion_main, Criterion};
 use hex::*;
 
 pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
-    <Vec<u8>>::from_hex(hex_str).map_err(|e| String::from("Oops"))
+    <Vec<u8>>::from_hex(hex_str).map_err(|_e| String::from("Oops"))
 }
 
 #[derive(Debug)]
@@ -49,7 +48,7 @@ macro_rules! benchmark_aead
     paste::item! {
 mod [<$pkg _benchmarks>]  {
 
-    use $pkg::{aead, error, test};
+    use $pkg::{aead, error};
 /*
 mod ring_benchmarks {
     use ring::{aead, error, test};
@@ -57,11 +56,10 @@ mod ring_benchmarks {
     use criterion::black_box;
     use crate::AeadConfig;
     use aead::{
-        Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, Tag, UnboundKey,
-        AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305,
+        Aad, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, Tag, UnboundKey,
     };
     use error::Unspecified;
-    use std::slice;
+
 
     struct NotANonce(Vec<u8>);
 
@@ -81,9 +79,9 @@ mod ring_benchmarks {
 
     fn algorithm(config: &crate::AeadConfig) ->  &'static aead::Algorithm {
         black_box(match &config.algorithm {
-            MY_AES_128_GCM => &aead::AES_128_GCM,
-            MY_AES_256_GCM => &aead::AES_256_GCM,
-            MY_CHACHA20_POLY1305 => &aead::CHACHA20_POLY1305,
+            _MY_AES_128_GCM => &aead::AES_128_GCM,
+            _MY_AES_256_GCM => &aead::AES_256_GCM,
+            _MY_CHACHA20_POLY1305 => &aead::CHACHA20_POLY1305,
         })
     }
 
@@ -179,7 +177,7 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
 }
 
 fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
-    let mut in_out = config.in_out.clone();
+    let in_out = config.in_out.clone();
 
     let mut aws_sealing_key = aws_lc_ring_facade_benchmarks::create_sealing_key(config);
     let aws_bench_name = format!(
@@ -204,7 +202,7 @@ fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
     c.bench_function(&ring_bench_name, |b| {
         b.iter(|| {
             let mut ring_in_out = in_out.clone();
-            let ring_aad = ring_benchmarks::aad(&config);
+            let ring_aad = ring_benchmarks::aad(config);
             ring_benchmarks::seal_append(&mut ring_sealing_key, ring_aad, &mut ring_in_out);
         })
     });
@@ -232,7 +230,7 @@ fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
     c.bench_function(&ring_bench_name, |b| {
         b.iter(|| {
             let mut ring_in_out = in_out.clone();
-            let ring_aad = ring_benchmarks::aad(&config);
+            let ring_aad = ring_benchmarks::aad(config);
             ring_benchmarks::open(&mut ring_opening_key, ring_aad, &mut ring_in_out);
         })
     });

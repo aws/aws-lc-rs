@@ -12,6 +12,9 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+use crate::aead::counter::Counter;
+use crate::endian::ArrayEncoding;
+
 /// The IV for a single block encryption.
 ///
 /// Intentionally not `Clone` to ensure each is used only once.
@@ -29,5 +32,14 @@ impl Iv {
     #[inline]
     pub fn into_bytes_less_safe(self) -> [u8; IV_LEN] {
         self.0
+    }
+}
+
+impl<U32> From<Counter<U32>> for Iv
+where
+    [U32; 4]: ArrayEncoding<[u8; IV_LEN]>,
+{
+    fn from(ctr: Counter<U32>) -> Self {
+        Iv::assume_unique_for_key(*ctr.u32s.as_byte_array())
     }
 }

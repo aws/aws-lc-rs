@@ -19,7 +19,7 @@
 use crate::aead::cipher;
 use crate::aead::key_inner::KeyInner;
 use crate::{derive_debug_via_id, error};
-use core::convert::{TryFrom, TryInto};
+use core::convert::TryFrom;
 
 /// A key for generating QUIC Header Protection masks.
 pub struct HeaderProtectionKey {
@@ -151,17 +151,17 @@ pub static CHACHA20: Algorithm = Algorithm {
 
 fn aes_init_128(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     let aes_key = cipher::SymmetricCipherKey::aes128(key)?;
-    Ok(KeyInner::new(aes_key)?)
+    KeyInner::new(aes_key)
 }
 
 fn aes_init_256(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     let aes_key = cipher::SymmetricCipherKey::aes256(key)?;
-    Ok(KeyInner::new(aes_key)?)
+    KeyInner::new(aes_key)
 }
 
 fn chacha20_init(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     let chacha20 = cipher::SymmetricCipherKey::chacha20(key)?;
-    Ok(KeyInner::new(chacha20)?)
+    KeyInner::new(chacha20)
 }
 
 fn cipher_new_mask(key: &KeyInner, sample: Sample) -> [u8; 5] {

@@ -606,14 +606,7 @@ pub struct Algorithm {
     // TODO: Make this `usize`.
     max_input_len: u64,
 }
-/*
-const fn max_input_len(block_len: usize, overhead_blocks_per_nonce: usize) -> u64 {
-    // Each of our AEADs use a 32-bit block counter so the maximum is the
-    // largest input that will not overflow the counter.
-    ((1u64 << 32) - polyfill::u64_from_usize(overhead_blocks_per_nonce))
-        * polyfill::u64_from_usize(block_len)
-}
-*/
+
 impl Algorithm {
     /// The length of the key.
     #[inline(always)]
@@ -665,6 +658,7 @@ impl AsRef<[u8]> for Tag {
     }
 }
 
+#[allow(dead_code)]
 const MAX_KEY_LEN: usize = 32;
 
 // All the AEADs we support use 128-bit tags.
@@ -679,12 +673,6 @@ fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), e
         return Err(error::Unspecified);
     }
     Ok(())
-}
-
-#[derive(Clone, Copy)]
-enum Direction {
-    Opening { in_prefix_len: usize },
-    Sealing,
 }
 
 pub type CounterBEu32 = counter::Counter<BigEndian<u32>>;

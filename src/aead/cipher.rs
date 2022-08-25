@@ -16,7 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::aead::block::BLOCK_LEN;
-use crate::aead::{block::Block, counter, error, quic::Sample};
+use crate::aead::{block::Block, error, quic::Sample};
 use aws_lc_sys::{EVP_CIPHER, EVP_CIPHER_CTX};
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
@@ -63,7 +63,7 @@ impl Drop for SymmetricCipherKey {
 }
 
 impl SymmetricCipherKey {
-    pub fn aes128(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
+    pub(crate) fn aes128(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
         if key_bytes.len() != 16 {
             return Err(error::Unspecified);
         }
@@ -86,7 +86,7 @@ impl SymmetricCipherKey {
         }
     }
 
-    pub fn aes256(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
+    pub(crate) fn aes256(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
         if key_bytes.len() != 32 {
             return Err(error::Unspecified);
         }
@@ -108,7 +108,7 @@ impl SymmetricCipherKey {
         }
     }
 
-    pub fn chacha20(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
+    pub(crate) fn chacha20(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
         if key_bytes.len() != 32 {
             return Err(error::Unspecified);
         }
@@ -119,7 +119,7 @@ impl SymmetricCipherKey {
         }
     }
 
-    pub fn key_bytes(&self) -> &[u8] {
+    pub(super) fn key_bytes(&self) -> &[u8] {
         match self {
             SymmetricCipherKey::Aes128(bytes, ..) => bytes,
             SymmetricCipherKey::Aes256(bytes, ..) => bytes,
@@ -127,15 +127,7 @@ impl SymmetricCipherKey {
         }
     }
 
-    pub fn key_size_bits(&self) -> usize {
-        match self {
-            SymmetricCipherKey::Aes128(..) => 128,
-            SymmetricCipherKey::Aes256(..) => 256,
-            SymmetricCipherKey::ChaCha20(..) => 256,
-        }
-    }
-
-    pub fn new_mask(&self, sample: Sample) -> Result<[u8; 5], error::Unspecified> {
+    pub(super) fn new_mask(&self, sample: Sample) -> Result<[u8; 5], error::Unspecified> {
         let block = Block::from(&sample);
 
         let encrypted_block = match self {
@@ -163,6 +155,7 @@ impl SymmetricCipherKey {
         Ok(out)
     }
 
+    #[allow(dead_code)]
     pub fn encrypt_block(&self, block: Block) -> Result<Block, error::Unspecified> {
         match self {
             SymmetricCipherKey::Aes128(key_bytes, ecb_cipher, _, ctx) => {
@@ -241,5 +234,38 @@ fn encrypt_block_chacha20(
         );
 
         Ok(Block::from(&cipher_text.assume_init()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test::from_hex;
+
+    #[test]
+    fn test_encrypt_block_aes_128() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        let input = from_hex("00112233445566778899aabbccddeeff").unwrap();
+        let expected_result = from_hex("69c4e0d86a7b0430d8cdb78070b4c55a").unwrap();
+        let input_block: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::try_from(input).unwrap();
+
+        let aes128 = SymmetricCipherKey::aes128(key.as_slice()).unwrap();
+        let result = aes128.encrypt_block(Block::from(&input_block)).unwrap();
+
+        assert_eq!(expected_result.as_slice(), result.as_ref());
+    }
+
+    #[test]
+    fn test_encrypt_block_aes_256() {
+        let key =
+            from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
+        let input = from_hex("00112233445566778899aabbccddeeff").unwrap();
+        let expected_result = from_hex("8ea2b7ca516745bfeafc49904b496089").unwrap();
+        let input_block: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::try_from(input).unwrap();
+
+        let aes128 = SymmetricCipherKey::aes256(key.as_slice()).unwrap();
+        let result = aes128.encrypt_block(Block::from(&input_block)).unwrap();
+
+        assert_eq!(expected_result.as_slice(), result.as_ref());
     }
 }
