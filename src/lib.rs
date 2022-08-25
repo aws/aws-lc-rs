@@ -1,5 +1,3 @@
-extern crate core;
-
 pub mod aead;
 
 pub mod digest;
@@ -40,4 +38,21 @@ unsafe fn dump_error() {
         "Raw Error -- {:?}\nErr: {}, Lib: {}, Reason: {}, Func: {}",
         error_msg, err, lib, reason, func
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{dump_error, init};
+
+    #[test]
+    fn test_init() {
+        init();
+    }
+
+    #[test]
+    fn test_dump() {
+        unsafe {
+            dump_error();
+        }
+    }
 }

@@ -44,14 +44,6 @@ where
         Self::new(nonce, 1)
     }
 
-    #[cfg(test)]
-    pub fn from_test_vector(nonce: &[u8], initial_counter: u32) -> Self {
-        Self::new(
-            Nonce::try_assume_unique_for_key(nonce).unwrap(),
-            initial_counter,
-        )
-    }
-
     fn new(nonce: Nonce, initial_counter: u32) -> Self {
         let mut r = Self {
             u32s: [U32::ZERO; COUNTER_LEN],
