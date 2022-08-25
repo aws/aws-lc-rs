@@ -251,11 +251,11 @@ pub const BIO_R_UNABLE_TO_CREATE_SOCKET: i32 = 113;
 pub const BIO_R_UNINITIALIZED: i32 = 114;
 pub const BIO_R_UNSUPPORTED_METHOD: i32 = 115;
 pub const BIO_R_WRITE_TO_READ_ONLY_BIO: i32 = 116;
-pub const BN_BITS2: i32 = 32;
-pub const BN_DEC_FMT1: &[u8; 3usize] = b"%u\0";
-pub const BN_DEC_FMT2: &[u8; 5usize] = b"%09u\0";
-pub const BN_HEX_FMT1: &[u8; 3usize] = b"%x\0";
-pub const BN_HEX_FMT2: &[u8; 5usize] = b"%08x\0";
+pub const BN_BITS2: i32 = 64;
+pub const BN_DEC_FMT1: &[u8; 5usize] = b"%llu\0";
+pub const BN_DEC_FMT2: &[u8; 8usize] = b"%019llu\0";
+pub const BN_HEX_FMT1: &[u8; 5usize] = b"%llx\0";
+pub const BN_HEX_FMT2: &[u8; 8usize] = b"%016llx\0";
 pub const BN_RAND_TOP_ANY: i32 = -1;
 pub const BN_RAND_TOP_ONE: i32 = 0;
 pub const BN_RAND_TOP_TWO: i32 = 1;
@@ -3707,573 +3707,65 @@ pub const X509V3_R_UNSUPPORTED_TYPE: i32 = 161;
 pub const X509V3_R_USER_TOO_LONG: i32 = 162;
 pub const X509V3_R_INVALID_VALUE: i32 = 163;
 pub const X509V3_R_TRAILING_DATA_IN_EXTENSION: i32 = 164;
-pub type va_list = __builtin_va_list;
-pub type __int8_t = ::std::os::raw::c_schar;
-pub type __uint8_t = ::std::os::raw::c_uchar;
-pub type __uint16_t = ::std::os::raw::c_ushort;
-pub type __uint32_t = ::std::os::raw::c_uint;
 pub type __int64_t = ::std::os::raw::c_longlong;
-pub type __uint64_t = ::std::os::raw::c_ulonglong;
-pub type __off_t = ::std::os::raw::c_long;
-pub type __off64_t = __int64_t;
-pub type __time_t = ::std::os::raw::c_long;
-pub type FILE = _IO_FILE;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct _IO_marker {
-    _unused: [u8; 0],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct _IO_codecvt {
-    _unused: [u8; 0],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct _IO_wide_data {
-    _unused: [u8; 0],
-}
-pub type _IO_lock_t = ::std::os::raw::c_void;
+pub type __darwin_size_t = ::std::os::raw::c_ulong;
+pub type __darwin_va_list = __builtin_va_list;
+pub type __darwin_time_t = ::std::os::raw::c_long;
+pub type __darwin_off_t = __int64_t;
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct _IO_FILE {
-    pub _flags: ::std::os::raw::c_int,
-    pub _IO_read_ptr: *mut ::std::os::raw::c_char,
-    pub _IO_read_end: *mut ::std::os::raw::c_char,
-    pub _IO_read_base: *mut ::std::os::raw::c_char,
-    pub _IO_write_base: *mut ::std::os::raw::c_char,
-    pub _IO_write_ptr: *mut ::std::os::raw::c_char,
-    pub _IO_write_end: *mut ::std::os::raw::c_char,
-    pub _IO_buf_base: *mut ::std::os::raw::c_char,
-    pub _IO_buf_end: *mut ::std::os::raw::c_char,
-    pub _IO_save_base: *mut ::std::os::raw::c_char,
-    pub _IO_backup_base: *mut ::std::os::raw::c_char,
-    pub _IO_save_end: *mut ::std::os::raw::c_char,
-    pub _markers: *mut _IO_marker,
-    pub _chain: *mut _IO_FILE,
-    pub _fileno: ::std::os::raw::c_int,
-    pub _flags2: ::std::os::raw::c_int,
-    pub _old_offset: __off_t,
-    pub _cur_column: ::std::os::raw::c_ushort,
-    pub _vtable_offset: ::std::os::raw::c_schar,
-    pub _shortbuf: [::std::os::raw::c_char; 1usize],
-    pub _lock: *mut _IO_lock_t,
-    pub _offset: __off64_t,
-    pub _codecvt: *mut _IO_codecvt,
-    pub _wide_data: *mut _IO_wide_data,
-    pub _freeres_list: *mut _IO_FILE,
-    pub _freeres_buf: *mut ::std::os::raw::c_void,
-    pub __pad5: usize,
-    pub _mode: ::std::os::raw::c_int,
-    pub _unused2: [::std::os::raw::c_char; 40usize],
+pub struct _opaque_pthread_rwlock_t {
+    pub __sig: ::std::os::raw::c_long,
+    pub __opaque: [::std::os::raw::c_char; 192usize],
 }
 #[test]
-fn bindgen_test_layout__IO_FILE() {
+fn bindgen_test_layout__opaque_pthread_rwlock_t() {
     assert_eq!(
-        ::std::mem::size_of::<_IO_FILE>(),
-        148usize,
-        concat!("Size of: ", stringify!(_IO_FILE))
+        ::std::mem::size_of::<_opaque_pthread_rwlock_t>(),
+        200usize,
+        concat!("Size of: ", stringify!(_opaque_pthread_rwlock_t))
     );
     assert_eq!(
-        ::std::mem::align_of::<_IO_FILE>(),
-        4usize,
-        concat!("Alignment of ", stringify!(_IO_FILE))
+        ::std::mem::align_of::<_opaque_pthread_rwlock_t>(),
+        8usize,
+        concat!("Alignment of ", stringify!(_opaque_pthread_rwlock_t))
     );
-    fn test_field__flags() {
+    fn test_field___sig() {
         assert_eq!(
             unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
+                let uninit = ::std::mem::MaybeUninit::<_opaque_pthread_rwlock_t>::uninit();
                 let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._flags) as usize - ptr as usize
+                ::std::ptr::addr_of!((*ptr).__sig) as usize - ptr as usize
             },
             0usize,
             concat!(
                 "Offset of field: ",
-                stringify!(_IO_FILE),
+                stringify!(_opaque_pthread_rwlock_t),
                 "::",
-                stringify!(_flags)
+                stringify!(__sig)
             )
         );
     }
-    test_field__flags();
-    fn test_field__IO_read_ptr() {
+    test_field___sig();
+    fn test_field___opaque() {
         assert_eq!(
             unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
+                let uninit = ::std::mem::MaybeUninit::<_opaque_pthread_rwlock_t>::uninit();
                 let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_read_ptr) as usize - ptr as usize
-            },
-            4usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_read_ptr)
-            )
-        );
-    }
-    test_field__IO_read_ptr();
-    fn test_field__IO_read_end() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_read_end) as usize - ptr as usize
+                ::std::ptr::addr_of!((*ptr).__opaque) as usize - ptr as usize
             },
             8usize,
             concat!(
                 "Offset of field: ",
-                stringify!(_IO_FILE),
+                stringify!(_opaque_pthread_rwlock_t),
                 "::",
-                stringify!(_IO_read_end)
+                stringify!(__opaque)
             )
         );
     }
-    test_field__IO_read_end();
-    fn test_field__IO_read_base() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_read_base) as usize - ptr as usize
-            },
-            12usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_read_base)
-            )
-        );
-    }
-    test_field__IO_read_base();
-    fn test_field__IO_write_base() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_write_base) as usize - ptr as usize
-            },
-            16usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_write_base)
-            )
-        );
-    }
-    test_field__IO_write_base();
-    fn test_field__IO_write_ptr() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_write_ptr) as usize - ptr as usize
-            },
-            20usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_write_ptr)
-            )
-        );
-    }
-    test_field__IO_write_ptr();
-    fn test_field__IO_write_end() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_write_end) as usize - ptr as usize
-            },
-            24usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_write_end)
-            )
-        );
-    }
-    test_field__IO_write_end();
-    fn test_field__IO_buf_base() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_buf_base) as usize - ptr as usize
-            },
-            28usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_buf_base)
-            )
-        );
-    }
-    test_field__IO_buf_base();
-    fn test_field__IO_buf_end() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_buf_end) as usize - ptr as usize
-            },
-            32usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_buf_end)
-            )
-        );
-    }
-    test_field__IO_buf_end();
-    fn test_field__IO_save_base() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_save_base) as usize - ptr as usize
-            },
-            36usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_save_base)
-            )
-        );
-    }
-    test_field__IO_save_base();
-    fn test_field__IO_backup_base() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_backup_base) as usize - ptr as usize
-            },
-            40usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_backup_base)
-            )
-        );
-    }
-    test_field__IO_backup_base();
-    fn test_field__IO_save_end() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._IO_save_end) as usize - ptr as usize
-            },
-            44usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_IO_save_end)
-            )
-        );
-    }
-    test_field__IO_save_end();
-    fn test_field__markers() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._markers) as usize - ptr as usize
-            },
-            48usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_markers)
-            )
-        );
-    }
-    test_field__markers();
-    fn test_field__chain() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._chain) as usize - ptr as usize
-            },
-            52usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_chain)
-            )
-        );
-    }
-    test_field__chain();
-    fn test_field__fileno() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._fileno) as usize - ptr as usize
-            },
-            56usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_fileno)
-            )
-        );
-    }
-    test_field__fileno();
-    fn test_field__flags2() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._flags2) as usize - ptr as usize
-            },
-            60usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_flags2)
-            )
-        );
-    }
-    test_field__flags2();
-    fn test_field__old_offset() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._old_offset) as usize - ptr as usize
-            },
-            64usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_old_offset)
-            )
-        );
-    }
-    test_field__old_offset();
-    fn test_field__cur_column() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._cur_column) as usize - ptr as usize
-            },
-            68usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_cur_column)
-            )
-        );
-    }
-    test_field__cur_column();
-    fn test_field__vtable_offset() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._vtable_offset) as usize - ptr as usize
-            },
-            70usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_vtable_offset)
-            )
-        );
-    }
-    test_field__vtable_offset();
-    fn test_field__shortbuf() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._shortbuf) as usize - ptr as usize
-            },
-            71usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_shortbuf)
-            )
-        );
-    }
-    test_field__shortbuf();
-    fn test_field__lock() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._lock) as usize - ptr as usize
-            },
-            72usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_lock)
-            )
-        );
-    }
-    test_field__lock();
-    fn test_field__offset() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._offset) as usize - ptr as usize
-            },
-            76usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_offset)
-            )
-        );
-    }
-    test_field__offset();
-    fn test_field__codecvt() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._codecvt) as usize - ptr as usize
-            },
-            84usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_codecvt)
-            )
-        );
-    }
-    test_field__codecvt();
-    fn test_field__wide_data() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._wide_data) as usize - ptr as usize
-            },
-            88usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_wide_data)
-            )
-        );
-    }
-    test_field__wide_data();
-    fn test_field__freeres_list() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._freeres_list) as usize - ptr as usize
-            },
-            92usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_freeres_list)
-            )
-        );
-    }
-    test_field__freeres_list();
-    fn test_field__freeres_buf() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._freeres_buf) as usize - ptr as usize
-            },
-            96usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_freeres_buf)
-            )
-        );
-    }
-    test_field__freeres_buf();
-    fn test_field___pad5() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr).__pad5) as usize - ptr as usize
-            },
-            100usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(__pad5)
-            )
-        );
-    }
-    test_field___pad5();
-    fn test_field__mode() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._mode) as usize - ptr as usize
-            },
-            104usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_mode)
-            )
-        );
-    }
-    test_field__mode();
-    fn test_field__unused2() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<_IO_FILE>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr)._unused2) as usize - ptr as usize
-            },
-            108usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(_IO_FILE),
-                "::",
-                stringify!(_unused2)
-            )
-        );
-    }
-    test_field__unused2();
+    test_field___opaque();
 }
-impl Default for _IO_FILE {
+impl Default for _opaque_pthread_rwlock_t {
     fn default() -> Self {
         let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
         unsafe {
@@ -4282,7 +3774,485 @@ impl Default for _IO_FILE {
         }
     }
 }
-pub type time_t = __time_t;
+pub type __darwin_pthread_rwlock_t = _opaque_pthread_rwlock_t;
+pub type va_list = __darwin_va_list;
+pub type fpos_t = __darwin_off_t;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct __sbuf {
+    pub _base: *mut ::std::os::raw::c_uchar,
+    pub _size: ::std::os::raw::c_int,
+}
+#[test]
+fn bindgen_test_layout___sbuf() {
+    assert_eq!(
+        ::std::mem::size_of::<__sbuf>(),
+        16usize,
+        concat!("Size of: ", stringify!(__sbuf))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<__sbuf>(),
+        8usize,
+        concat!("Alignment of ", stringify!(__sbuf))
+    );
+    fn test_field__base() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sbuf>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._base) as usize - ptr as usize
+            },
+            0usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sbuf),
+                "::",
+                stringify!(_base)
+            )
+        );
+    }
+    test_field__base();
+    fn test_field__size() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sbuf>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._size) as usize - ptr as usize
+            },
+            8usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sbuf),
+                "::",
+                stringify!(_size)
+            )
+        );
+    }
+    test_field__size();
+}
+impl Default for __sbuf {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct __sFILEX {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct __sFILE {
+    pub _p: *mut ::std::os::raw::c_uchar,
+    pub _r: ::std::os::raw::c_int,
+    pub _w: ::std::os::raw::c_int,
+    pub _flags: ::std::os::raw::c_short,
+    pub _file: ::std::os::raw::c_short,
+    pub _bf: __sbuf,
+    pub _lbfsize: ::std::os::raw::c_int,
+    pub _cookie: *mut ::std::os::raw::c_void,
+    pub _close: ::std::option::Option<
+        unsafe extern "C" fn(arg1: *mut ::std::os::raw::c_void) -> ::std::os::raw::c_int,
+    >,
+    pub _read: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: *mut ::std::os::raw::c_void,
+            arg2: *mut ::std::os::raw::c_char,
+            arg3: ::std::os::raw::c_int,
+        ) -> ::std::os::raw::c_int,
+    >,
+    pub _seek: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: *mut ::std::os::raw::c_void,
+            arg2: fpos_t,
+            arg3: ::std::os::raw::c_int,
+        ) -> fpos_t,
+    >,
+    pub _write: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: *mut ::std::os::raw::c_void,
+            arg2: *const ::std::os::raw::c_char,
+            arg3: ::std::os::raw::c_int,
+        ) -> ::std::os::raw::c_int,
+    >,
+    pub _ub: __sbuf,
+    pub _extra: *mut __sFILEX,
+    pub _ur: ::std::os::raw::c_int,
+    pub _ubuf: [::std::os::raw::c_uchar; 3usize],
+    pub _nbuf: [::std::os::raw::c_uchar; 1usize],
+    pub _lb: __sbuf,
+    pub _blksize: ::std::os::raw::c_int,
+    pub _offset: fpos_t,
+}
+#[test]
+fn bindgen_test_layout___sFILE() {
+    assert_eq!(
+        ::std::mem::size_of::<__sFILE>(),
+        152usize,
+        concat!("Size of: ", stringify!(__sFILE))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<__sFILE>(),
+        8usize,
+        concat!("Alignment of ", stringify!(__sFILE))
+    );
+    fn test_field__p() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._p) as usize - ptr as usize
+            },
+            0usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_p)
+            )
+        );
+    }
+    test_field__p();
+    fn test_field__r() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._r) as usize - ptr as usize
+            },
+            8usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_r)
+            )
+        );
+    }
+    test_field__r();
+    fn test_field__w() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._w) as usize - ptr as usize
+            },
+            12usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_w)
+            )
+        );
+    }
+    test_field__w();
+    fn test_field__flags() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._flags) as usize - ptr as usize
+            },
+            16usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_flags)
+            )
+        );
+    }
+    test_field__flags();
+    fn test_field__file() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._file) as usize - ptr as usize
+            },
+            18usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_file)
+            )
+        );
+    }
+    test_field__file();
+    fn test_field__bf() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._bf) as usize - ptr as usize
+            },
+            24usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_bf)
+            )
+        );
+    }
+    test_field__bf();
+    fn test_field__lbfsize() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._lbfsize) as usize - ptr as usize
+            },
+            40usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_lbfsize)
+            )
+        );
+    }
+    test_field__lbfsize();
+    fn test_field__cookie() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._cookie) as usize - ptr as usize
+            },
+            48usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_cookie)
+            )
+        );
+    }
+    test_field__cookie();
+    fn test_field__close() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._close) as usize - ptr as usize
+            },
+            56usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_close)
+            )
+        );
+    }
+    test_field__close();
+    fn test_field__read() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._read) as usize - ptr as usize
+            },
+            64usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_read)
+            )
+        );
+    }
+    test_field__read();
+    fn test_field__seek() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._seek) as usize - ptr as usize
+            },
+            72usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_seek)
+            )
+        );
+    }
+    test_field__seek();
+    fn test_field__write() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._write) as usize - ptr as usize
+            },
+            80usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_write)
+            )
+        );
+    }
+    test_field__write();
+    fn test_field__ub() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._ub) as usize - ptr as usize
+            },
+            88usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_ub)
+            )
+        );
+    }
+    test_field__ub();
+    fn test_field__extra() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._extra) as usize - ptr as usize
+            },
+            104usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_extra)
+            )
+        );
+    }
+    test_field__extra();
+    fn test_field__ur() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._ur) as usize - ptr as usize
+            },
+            112usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_ur)
+            )
+        );
+    }
+    test_field__ur();
+    fn test_field__ubuf() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._ubuf) as usize - ptr as usize
+            },
+            116usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_ubuf)
+            )
+        );
+    }
+    test_field__ubuf();
+    fn test_field__nbuf() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._nbuf) as usize - ptr as usize
+            },
+            119usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_nbuf)
+            )
+        );
+    }
+    test_field__nbuf();
+    fn test_field__lb() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._lb) as usize - ptr as usize
+            },
+            120usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_lb)
+            )
+        );
+    }
+    test_field__lb();
+    fn test_field__blksize() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._blksize) as usize - ptr as usize
+            },
+            136usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_blksize)
+            )
+        );
+    }
+    test_field__blksize();
+    fn test_field__offset() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__sFILE>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr)._offset) as usize - ptr as usize
+            },
+            144usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__sFILE),
+                "::",
+                stringify!(_offset)
+            )
+        );
+    }
+    test_field__offset();
+}
+impl Default for __sFILE {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type FILE = __sFILE;
+pub type time_t = __darwin_time_t;
+pub type pthread_rwlock_t = __darwin_pthread_rwlock_t;
 pub type CRYPTO_THREADID = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -5133,12 +5103,12 @@ pub struct buf_mem_st {
 fn bindgen_test_layout_buf_mem_st() {
     assert_eq!(
         ::std::mem::size_of::<buf_mem_st>(),
-        12usize,
+        24usize,
         concat!("Size of: ", stringify!(buf_mem_st))
     );
     assert_eq!(
         ::std::mem::align_of::<buf_mem_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(buf_mem_st))
     );
     fn test_field_length() {
@@ -5165,7 +5135,7 @@ fn bindgen_test_layout_buf_mem_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(buf_mem_st),
@@ -5182,7 +5152,7 @@ fn bindgen_test_layout_buf_mem_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).max) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(buf_mem_st),
@@ -5292,12 +5262,12 @@ pub struct stack_st {
 fn bindgen_test_layout_stack_st() {
     assert_eq!(
         ::std::mem::size_of::<stack_st>(),
-        20usize,
+        40usize,
         concat!("Size of: ", stringify!(stack_st))
     );
     assert_eq!(
         ::std::mem::align_of::<stack_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(stack_st))
     );
     fn test_field_num() {
@@ -5324,7 +5294,7 @@ fn bindgen_test_layout_stack_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(stack_st),
@@ -5341,7 +5311,7 @@ fn bindgen_test_layout_stack_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).sorted) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(stack_st),
@@ -5358,7 +5328,7 @@ fn bindgen_test_layout_stack_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).num_alloc) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(stack_st),
@@ -5375,7 +5345,7 @@ fn bindgen_test_layout_stack_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).comp) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(stack_st),
@@ -5646,12 +5616,12 @@ pub struct crypto_ex_data_st {
 fn bindgen_test_layout_crypto_ex_data_st() {
     assert_eq!(
         ::std::mem::size_of::<crypto_ex_data_st>(),
-        4usize,
+        8usize,
         concat!("Size of: ", stringify!(crypto_ex_data_st))
     );
     assert_eq!(
         ::std::mem::align_of::<crypto_ex_data_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(crypto_ex_data_st))
     );
     fn test_field_sk() {
@@ -5681,69 +5651,7 @@ impl Default for crypto_ex_data_st {
         }
     }
 }
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub union crypto_mutex_st {
-    pub alignment: f64,
-    pub padding: [u8; 56usize],
-}
-#[test]
-fn bindgen_test_layout_crypto_mutex_st() {
-    assert_eq!(
-        ::std::mem::size_of::<crypto_mutex_st>(),
-        56usize,
-        concat!("Size of: ", stringify!(crypto_mutex_st))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<crypto_mutex_st>(),
-        4usize,
-        concat!("Alignment of ", stringify!(crypto_mutex_st))
-    );
-    fn test_field_alignment() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<crypto_mutex_st>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr).alignment) as usize - ptr as usize
-            },
-            0usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(crypto_mutex_st),
-                "::",
-                stringify!(alignment)
-            )
-        );
-    }
-    test_field_alignment();
-    fn test_field_padding() {
-        assert_eq!(
-            unsafe {
-                let uninit = ::std::mem::MaybeUninit::<crypto_mutex_st>::uninit();
-                let ptr = uninit.as_ptr();
-                ::std::ptr::addr_of!((*ptr).padding) as usize - ptr as usize
-            },
-            0usize,
-            concat!(
-                "Offset of field: ",
-                stringify!(crypto_mutex_st),
-                "::",
-                stringify!(padding)
-            )
-        );
-    }
-    test_field_padding();
-}
-impl Default for crypto_mutex_st {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
-pub type CRYPTO_MUTEX = crypto_mutex_st;
+pub type CRYPTO_MUTEX = pthread_rwlock_t;
 pub type CRYPTO_refcount_t = u32;
 extern "C" {
     #[link_name = "aws_lc_0_1_0_CRYPTO_num_locks"]
@@ -5825,12 +5733,12 @@ pub struct CRYPTO_dynlock {
 fn bindgen_test_layout_CRYPTO_dynlock() {
     assert_eq!(
         ::std::mem::size_of::<CRYPTO_dynlock>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(CRYPTO_dynlock))
     );
     assert_eq!(
         ::std::mem::align_of::<CRYPTO_dynlock>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(CRYPTO_dynlock))
     );
     fn test_field_references() {
@@ -5857,7 +5765,7 @@ fn bindgen_test_layout_CRYPTO_dynlock() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(CRYPTO_dynlock),
@@ -6683,12 +6591,12 @@ pub struct bio_method_st {
 fn bindgen_test_layout_bio_method_st() {
     assert_eq!(
         ::std::mem::size_of::<bio_method_st>(),
-        40usize,
+        80usize,
         concat!("Size of: ", stringify!(bio_method_st))
     );
     assert_eq!(
         ::std::mem::align_of::<bio_method_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(bio_method_st))
     );
     fn test_field_type() {
@@ -6715,7 +6623,7 @@ fn bindgen_test_layout_bio_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).name) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_method_st),
@@ -6732,7 +6640,7 @@ fn bindgen_test_layout_bio_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).bwrite) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_method_st),
@@ -6749,7 +6657,7 @@ fn bindgen_test_layout_bio_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).bread) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_method_st),
@@ -6766,7 +6674,7 @@ fn bindgen_test_layout_bio_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).bputs) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_method_st),
@@ -6783,7 +6691,7 @@ fn bindgen_test_layout_bio_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).bgets) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_method_st),
@@ -6800,7 +6708,7 @@ fn bindgen_test_layout_bio_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).ctrl) as usize - ptr as usize
             },
-            24usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_method_st),
@@ -6817,7 +6725,7 @@ fn bindgen_test_layout_bio_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).create) as usize - ptr as usize
             },
-            28usize,
+            56usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_method_st),
@@ -6834,7 +6742,7 @@ fn bindgen_test_layout_bio_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).destroy) as usize - ptr as usize
             },
-            32usize,
+            64usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_method_st),
@@ -6851,7 +6759,7 @@ fn bindgen_test_layout_bio_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).callback_ctrl) as usize - ptr as usize
             },
-            36usize,
+            72usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_method_st),
@@ -6892,12 +6800,12 @@ pub struct bio_st {
 fn bindgen_test_layout_bio_st() {
     assert_eq!(
         ::std::mem::size_of::<bio_st>(),
-        52usize,
+        80usize,
         concat!("Size of: ", stringify!(bio_st))
     );
     assert_eq!(
         ::std::mem::align_of::<bio_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(bio_st))
     );
     fn test_field_method() {
@@ -6924,7 +6832,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).callback_ex) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -6941,7 +6849,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).cb_arg) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -6958,7 +6866,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).init) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -6975,7 +6883,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).shutdown) as usize - ptr as usize
             },
-            16usize,
+            28usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -6992,7 +6900,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            20usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -7009,7 +6917,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).retry_reason) as usize - ptr as usize
             },
-            24usize,
+            36usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -7026,7 +6934,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).num) as usize - ptr as usize
             },
-            28usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -7043,7 +6951,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).references) as usize - ptr as usize
             },
-            32usize,
+            44usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -7060,7 +6968,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).ptr) as usize - ptr as usize
             },
-            36usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -7077,7 +6985,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).next_bio) as usize - ptr as usize
             },
-            40usize,
+            56usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -7094,7 +7002,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).num_read) as usize - ptr as usize
             },
-            44usize,
+            64usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -7111,7 +7019,7 @@ fn bindgen_test_layout_bio_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).num_write) as usize - ptr as usize
             },
-            48usize,
+            72usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bio_st),
@@ -7131,7 +7039,7 @@ impl Default for bio_st {
         }
     }
 }
-pub type BN_ULONG = u32;
+pub type BN_ULONG = u64;
 extern "C" {
     #[link_name = "aws_lc_0_1_0_BN_new"]
     pub fn BN_new() -> *mut BIGNUM;
@@ -7614,12 +7522,12 @@ pub struct bn_gencb_st {
 fn bindgen_test_layout_bn_gencb_st() {
     assert_eq!(
         ::std::mem::size_of::<bn_gencb_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(bn_gencb_st))
     );
     assert_eq!(
         ::std::mem::align_of::<bn_gencb_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(bn_gencb_st))
     );
     fn test_field_arg() {
@@ -7646,7 +7554,7 @@ fn bindgen_test_layout_bn_gencb_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).callback) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bn_gencb_st),
@@ -7956,12 +7864,12 @@ pub struct bignum_st {
 fn bindgen_test_layout_bignum_st() {
     assert_eq!(
         ::std::mem::size_of::<bignum_st>(),
-        20usize,
+        24usize,
         concat!("Size of: ", stringify!(bignum_st))
     );
     assert_eq!(
         ::std::mem::align_of::<bignum_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(bignum_st))
     );
     fn test_field_d() {
@@ -7988,7 +7896,7 @@ fn bindgen_test_layout_bignum_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).width) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bignum_st),
@@ -8005,7 +7913,7 @@ fn bindgen_test_layout_bignum_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).dmax) as usize - ptr as usize
             },
-            8usize,
+            12usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bignum_st),
@@ -8022,7 +7930,7 @@ fn bindgen_test_layout_bignum_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).neg) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bignum_st),
@@ -8039,7 +7947,7 @@ fn bindgen_test_layout_bignum_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            16usize,
+            20usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bignum_st),
@@ -8070,12 +7978,12 @@ pub struct bn_mont_ctx_st {
 fn bindgen_test_layout_bn_mont_ctx_st() {
     assert_eq!(
         ::std::mem::size_of::<bn_mont_ctx_st>(),
-        48usize,
+        64usize,
         concat!("Size of: ", stringify!(bn_mont_ctx_st))
     );
     assert_eq!(
         ::std::mem::align_of::<bn_mont_ctx_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(bn_mont_ctx_st))
     );
     fn test_field_RR() {
@@ -8102,7 +8010,7 @@ fn bindgen_test_layout_bn_mont_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).N) as usize - ptr as usize
             },
-            20usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bn_mont_ctx_st),
@@ -8119,7 +8027,7 @@ fn bindgen_test_layout_bn_mont_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).n0) as usize - ptr as usize
             },
-            40usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(bn_mont_ctx_st),
@@ -8289,12 +8197,12 @@ pub struct asn1_string_st {
 fn bindgen_test_layout_asn1_string_st() {
     assert_eq!(
         ::std::mem::size_of::<asn1_string_st>(),
-        16usize,
+        24usize,
         concat!("Size of: ", stringify!(asn1_string_st))
     );
     assert_eq!(
         ::std::mem::align_of::<asn1_string_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(asn1_string_st))
     );
     fn test_field_length() {
@@ -8355,7 +8263,7 @@ fn bindgen_test_layout_asn1_string_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(asn1_string_st),
@@ -9311,12 +9219,12 @@ pub union asn1_type_st__bindgen_ty_1 {
 fn bindgen_test_layout_asn1_type_st__bindgen_ty_1() {
     assert_eq!(
         ::std::mem::size_of::<asn1_type_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Size of: ", stringify!(asn1_type_st__bindgen_ty_1))
     );
     assert_eq!(
         ::std::mem::align_of::<asn1_type_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(asn1_type_st__bindgen_ty_1))
     );
     fn test_field_ptr() {
@@ -9690,12 +9598,12 @@ impl Default for asn1_type_st__bindgen_ty_1 {
 fn bindgen_test_layout_asn1_type_st() {
     assert_eq!(
         ::std::mem::size_of::<asn1_type_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(asn1_type_st))
     );
     assert_eq!(
         ::std::mem::align_of::<asn1_type_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(asn1_type_st))
     );
     fn test_field_type() {
@@ -9722,7 +9630,7 @@ fn bindgen_test_layout_asn1_type_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).value) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(asn1_type_st),
@@ -10001,12 +9909,12 @@ pub struct ASN1_TEMPLATE_st {
 fn bindgen_test_layout_ASN1_TEMPLATE_st() {
     assert_eq!(
         ::std::mem::size_of::<ASN1_TEMPLATE_st>(),
-        20usize,
+        40usize,
         concat!("Size of: ", stringify!(ASN1_TEMPLATE_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ASN1_TEMPLATE_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ASN1_TEMPLATE_st))
     );
     fn test_field_flags() {
@@ -10033,7 +9941,7 @@ fn bindgen_test_layout_ASN1_TEMPLATE_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).tag) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_TEMPLATE_st),
@@ -10050,7 +9958,7 @@ fn bindgen_test_layout_ASN1_TEMPLATE_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).offset) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_TEMPLATE_st),
@@ -10067,7 +9975,7 @@ fn bindgen_test_layout_ASN1_TEMPLATE_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).field_name) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_TEMPLATE_st),
@@ -10084,7 +9992,7 @@ fn bindgen_test_layout_ASN1_TEMPLATE_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).item) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_TEMPLATE_st),
@@ -10127,12 +10035,12 @@ pub struct ASN1_ADB_st {
 fn bindgen_test_layout_ASN1_ADB_st() {
     assert_eq!(
         ::std::mem::size_of::<ASN1_ADB_st>(),
-        28usize,
+        56usize,
         concat!("Size of: ", stringify!(ASN1_ADB_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ASN1_ADB_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ASN1_ADB_st))
     );
     fn test_field_flags() {
@@ -10159,7 +10067,7 @@ fn bindgen_test_layout_ASN1_ADB_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).offset) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ADB_st),
@@ -10176,7 +10084,7 @@ fn bindgen_test_layout_ASN1_ADB_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).unused) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ADB_st),
@@ -10193,7 +10101,7 @@ fn bindgen_test_layout_ASN1_ADB_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).tbl) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ADB_st),
@@ -10210,7 +10118,7 @@ fn bindgen_test_layout_ASN1_ADB_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).tblcount) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ADB_st),
@@ -10227,7 +10135,7 @@ fn bindgen_test_layout_ASN1_ADB_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).default_tt) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ADB_st),
@@ -10244,7 +10152,7 @@ fn bindgen_test_layout_ASN1_ADB_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).null_tt) as usize - ptr as usize
             },
-            24usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ADB_st),
@@ -10274,12 +10182,12 @@ pub struct ASN1_ADB_TABLE_st {
 fn bindgen_test_layout_ASN1_ADB_TABLE_st() {
     assert_eq!(
         ::std::mem::size_of::<ASN1_ADB_TABLE_st>(),
-        24usize,
+        48usize,
         concat!("Size of: ", stringify!(ASN1_ADB_TABLE_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ASN1_ADB_TABLE_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ASN1_ADB_TABLE_st))
     );
     fn test_field_value() {
@@ -10306,7 +10214,7 @@ fn bindgen_test_layout_ASN1_ADB_TABLE_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).tt) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ADB_TABLE_st),
@@ -10341,12 +10249,12 @@ pub struct ASN1_ITEM_st {
 fn bindgen_test_layout_ASN1_ITEM_st() {
     assert_eq!(
         ::std::mem::size_of::<ASN1_ITEM_st>(),
-        28usize,
+        56usize,
         concat!("Size of: ", stringify!(ASN1_ITEM_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ASN1_ITEM_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ASN1_ITEM_st))
     );
     fn test_field_itype() {
@@ -10373,7 +10281,7 @@ fn bindgen_test_layout_ASN1_ITEM_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).utype) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ITEM_st),
@@ -10390,7 +10298,7 @@ fn bindgen_test_layout_ASN1_ITEM_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).templates) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ITEM_st),
@@ -10407,7 +10315,7 @@ fn bindgen_test_layout_ASN1_ITEM_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).tcount) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ITEM_st),
@@ -10424,7 +10332,7 @@ fn bindgen_test_layout_ASN1_ITEM_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).funcs) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ITEM_st),
@@ -10441,7 +10349,7 @@ fn bindgen_test_layout_ASN1_ITEM_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).size) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ITEM_st),
@@ -10458,7 +10366,7 @@ fn bindgen_test_layout_ASN1_ITEM_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).sname) as usize - ptr as usize
             },
-            24usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_ITEM_st),
@@ -10543,12 +10451,12 @@ pub struct ASN1_EXTERN_FUNCS_st {
 fn bindgen_test_layout_ASN1_EXTERN_FUNCS_st() {
     assert_eq!(
         ::std::mem::size_of::<ASN1_EXTERN_FUNCS_st>(),
-        28usize,
+        56usize,
         concat!("Size of: ", stringify!(ASN1_EXTERN_FUNCS_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ASN1_EXTERN_FUNCS_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ASN1_EXTERN_FUNCS_st))
     );
     fn test_field_app_data() {
@@ -10575,7 +10483,7 @@ fn bindgen_test_layout_ASN1_EXTERN_FUNCS_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).asn1_ex_new) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_EXTERN_FUNCS_st),
@@ -10592,7 +10500,7 @@ fn bindgen_test_layout_ASN1_EXTERN_FUNCS_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).asn1_ex_free) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_EXTERN_FUNCS_st),
@@ -10609,7 +10517,7 @@ fn bindgen_test_layout_ASN1_EXTERN_FUNCS_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).asn1_ex_clear) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_EXTERN_FUNCS_st),
@@ -10626,7 +10534,7 @@ fn bindgen_test_layout_ASN1_EXTERN_FUNCS_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).asn1_ex_d2i) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_EXTERN_FUNCS_st),
@@ -10643,7 +10551,7 @@ fn bindgen_test_layout_ASN1_EXTERN_FUNCS_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).asn1_ex_i2d) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_EXTERN_FUNCS_st),
@@ -10660,7 +10568,7 @@ fn bindgen_test_layout_ASN1_EXTERN_FUNCS_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).asn1_ex_print) as usize - ptr as usize
             },
-            24usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_EXTERN_FUNCS_st),
@@ -10702,12 +10610,12 @@ pub struct ASN1_AUX_st {
 fn bindgen_test_layout_ASN1_AUX_st() {
     assert_eq!(
         ::std::mem::size_of::<ASN1_AUX_st>(),
-        20usize,
+        32usize,
         concat!("Size of: ", stringify!(ASN1_AUX_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ASN1_AUX_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ASN1_AUX_st))
     );
     fn test_field_app_data() {
@@ -10734,7 +10642,7 @@ fn bindgen_test_layout_ASN1_AUX_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_AUX_st),
@@ -10751,7 +10659,7 @@ fn bindgen_test_layout_ASN1_AUX_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).ref_offset) as usize - ptr as usize
             },
-            8usize,
+            12usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_AUX_st),
@@ -10768,7 +10676,7 @@ fn bindgen_test_layout_ASN1_AUX_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).asn1_cb) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_AUX_st),
@@ -10785,7 +10693,7 @@ fn bindgen_test_layout_ASN1_AUX_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).enc_offset) as usize - ptr as usize
             },
-            16usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ASN1_AUX_st),
@@ -11025,7 +10933,7 @@ fn bindgen_test_layout_blake2b_state_st__bindgen_ty_1() {
     );
     assert_eq!(
         ::std::mem::align_of::<blake2b_state_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(blake2b_state_st__bindgen_ty_1))
     );
     fn test_field_bytes() {
@@ -11076,12 +10984,12 @@ impl Default for blake2b_state_st__bindgen_ty_1 {
 fn bindgen_test_layout_blake2b_state_st() {
     assert_eq!(
         ::std::mem::size_of::<blake2b_state_st>(),
-        212usize,
+        216usize,
         concat!("Size of: ", stringify!(blake2b_state_st))
     );
     assert_eq!(
         ::std::mem::align_of::<blake2b_state_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(blake2b_state_st))
     );
     fn test_field_h() {
@@ -11304,12 +11212,12 @@ pub struct cbs_st {
 fn bindgen_test_layout_cbs_st() {
     assert_eq!(
         ::std::mem::size_of::<cbs_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(cbs_st))
     );
     assert_eq!(
         ::std::mem::align_of::<cbs_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(cbs_st))
     );
     fn test_field_data() {
@@ -11336,7 +11244,7 @@ fn bindgen_test_layout_cbs_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).len) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbs_st),
@@ -11596,12 +11504,12 @@ pub struct cbb_buffer_st {
 fn bindgen_test_layout_cbb_buffer_st() {
     assert_eq!(
         ::std::mem::size_of::<cbb_buffer_st>(),
-        16usize,
+        32usize,
         concat!("Size of: ", stringify!(cbb_buffer_st))
     );
     assert_eq!(
         ::std::mem::align_of::<cbb_buffer_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(cbb_buffer_st))
     );
     fn test_field_buf() {
@@ -11628,7 +11536,7 @@ fn bindgen_test_layout_cbb_buffer_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).len) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbb_buffer_st),
@@ -11645,7 +11553,7 @@ fn bindgen_test_layout_cbb_buffer_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).cap) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbb_buffer_st),
@@ -11662,7 +11570,7 @@ fn bindgen_test_layout_cbb_buffer_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).can_resize) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbb_buffer_st),
@@ -11679,7 +11587,7 @@ fn bindgen_test_layout_cbb_buffer_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).error) as usize - ptr as usize
             },
-            13usize,
+            25usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbb_buffer_st),
@@ -11713,12 +11621,12 @@ pub struct cbb_st {
 fn bindgen_test_layout_cbb_st() {
     assert_eq!(
         ::std::mem::size_of::<cbb_st>(),
-        16usize,
+        32usize,
         concat!("Size of: ", stringify!(cbb_st))
     );
     assert_eq!(
         ::std::mem::align_of::<cbb_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(cbb_st))
     );
     fn test_field_base() {
@@ -11745,7 +11653,7 @@ fn bindgen_test_layout_cbb_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).child) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbb_st),
@@ -11762,7 +11670,7 @@ fn bindgen_test_layout_cbb_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).offset) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbb_st),
@@ -11779,7 +11687,7 @@ fn bindgen_test_layout_cbb_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).pending_len_len) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbb_st),
@@ -11796,7 +11704,7 @@ fn bindgen_test_layout_cbb_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).pending_is_asn1) as usize - ptr as usize
             },
-            13usize,
+            25usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbb_st),
@@ -11813,7 +11721,7 @@ fn bindgen_test_layout_cbb_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).is_child) as usize - ptr as usize
             },
-            14usize,
+            26usize,
             concat!(
                 "Offset of field: ",
                 stringify!(cbb_st),
@@ -12474,12 +12382,12 @@ pub struct evp_cipher_ctx_st {
 fn bindgen_test_layout_evp_cipher_ctx_st() {
     assert_eq!(
         ::std::mem::size_of::<evp_cipher_ctx_st>(),
-        132usize,
+        144usize,
         concat!("Size of: ", stringify!(evp_cipher_ctx_st))
     );
     assert_eq!(
         ::std::mem::align_of::<evp_cipher_ctx_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(evp_cipher_ctx_st))
     );
     fn test_field_cipher() {
@@ -12506,7 +12414,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).app_data) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12523,7 +12431,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).cipher_data) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12540,7 +12448,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).key_len) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12557,7 +12465,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).encrypt) as usize - ptr as usize
             },
-            16usize,
+            28usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12574,7 +12482,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            20usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12591,7 +12499,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).oiv) as usize - ptr as usize
             },
-            24usize,
+            36usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12608,7 +12516,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).iv) as usize - ptr as usize
             },
-            40usize,
+            52usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12625,7 +12533,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).buf) as usize - ptr as usize
             },
-            56usize,
+            68usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12642,7 +12550,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).buf_len) as usize - ptr as usize
             },
-            88usize,
+            100usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12659,7 +12567,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).num) as usize - ptr as usize
             },
-            92usize,
+            104usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12676,7 +12584,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).final_used) as usize - ptr as usize
             },
-            96usize,
+            108usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12693,7 +12601,7 @@ fn bindgen_test_layout_evp_cipher_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).final_) as usize - ptr as usize
             },
-            100usize,
+            112usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_ctx_st),
@@ -12723,12 +12631,12 @@ pub struct evp_cipher_info_st {
 fn bindgen_test_layout_evp_cipher_info_st() {
     assert_eq!(
         ::std::mem::size_of::<evp_cipher_info_st>(),
-        20usize,
+        24usize,
         concat!("Size of: ", stringify!(evp_cipher_info_st))
     );
     assert_eq!(
         ::std::mem::align_of::<evp_cipher_info_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(evp_cipher_info_st))
     );
     fn test_field_cipher() {
@@ -12755,7 +12663,7 @@ fn bindgen_test_layout_evp_cipher_info_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).iv) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_cipher_info_st),
@@ -12835,12 +12743,12 @@ pub struct conf_value_st {
 fn bindgen_test_layout_conf_value_st() {
     assert_eq!(
         ::std::mem::size_of::<conf_value_st>(),
-        12usize,
+        24usize,
         concat!("Size of: ", stringify!(conf_value_st))
     );
     assert_eq!(
         ::std::mem::align_of::<conf_value_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(conf_value_st))
     );
     fn test_field_section() {
@@ -12867,7 +12775,7 @@ fn bindgen_test_layout_conf_value_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).name) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(conf_value_st),
@@ -12884,7 +12792,7 @@ fn bindgen_test_layout_conf_value_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).value) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(conf_value_st),
@@ -13384,7 +13292,7 @@ fn bindgen_test_layout_sha512_state_st() {
     );
     assert_eq!(
         ::std::mem::align_of::<sha512_state_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(sha512_state_st))
     );
     fn test_field_h() {
@@ -13596,7 +13504,7 @@ extern "C" {
         buf: *mut ::std::os::raw::c_char,
         n: usize,
         format: *const ::std::os::raw::c_char,
-        args: va_list,
+        args: *mut __va_list_tag,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -14224,7 +14132,7 @@ extern "C" {
     pub fn DH_get_2048_256() -> *mut DH;
 }
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct dh_st {
     pub p: *mut BIGNUM,
     pub g: *mut BIGNUM,
@@ -14245,12 +14153,12 @@ pub struct dh_st {
 fn bindgen_test_layout_dh_st() {
     assert_eq!(
         ::std::mem::size_of::<dh_st>(),
-        108usize,
+        296usize,
         concat!("Size of: ", stringify!(dh_st))
     );
     assert_eq!(
         ::std::mem::align_of::<dh_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(dh_st))
     );
     fn test_field_p() {
@@ -14272,7 +14180,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).g) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!("Offset of field: ", stringify!(dh_st), "::", stringify!(g))
         );
     }
@@ -14284,7 +14192,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).pub_key) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14301,7 +14209,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).priv_key) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14318,7 +14226,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).priv_length) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14335,7 +14243,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).method_mont_p_lock) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14352,7 +14260,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).method_mont_p) as usize - ptr as usize
             },
-            76usize,
+            240usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14369,7 +14277,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).q) as usize - ptr as usize
             },
-            80usize,
+            248usize,
             concat!("Offset of field: ", stringify!(dh_st), "::", stringify!(q))
         );
     }
@@ -14381,7 +14289,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).j) as usize - ptr as usize
             },
-            84usize,
+            256usize,
             concat!("Offset of field: ", stringify!(dh_st), "::", stringify!(j))
         );
     }
@@ -14393,7 +14301,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).seed) as usize - ptr as usize
             },
-            88usize,
+            264usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14410,7 +14318,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).seedlen) as usize - ptr as usize
             },
-            92usize,
+            272usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14427,7 +14335,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).counter) as usize - ptr as usize
             },
-            96usize,
+            280usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14444,7 +14352,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            100usize,
+            288usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14461,7 +14369,7 @@ fn bindgen_test_layout_dh_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).references) as usize - ptr as usize
             },
-            104usize,
+            292usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dh_st),
@@ -14737,12 +14645,12 @@ pub struct env_md_ctx_st {
 fn bindgen_test_layout_env_md_ctx_st() {
     assert_eq!(
         ::std::mem::size_of::<env_md_ctx_st>(),
-        20usize,
+        40usize,
         concat!("Size of: ", stringify!(env_md_ctx_st))
     );
     assert_eq!(
         ::std::mem::align_of::<env_md_ctx_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(env_md_ctx_st))
     );
     fn test_field_digest() {
@@ -14769,7 +14677,7 @@ fn bindgen_test_layout_env_md_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).md_data) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(env_md_ctx_st),
@@ -14786,7 +14694,7 @@ fn bindgen_test_layout_env_md_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).pctx) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(env_md_ctx_st),
@@ -14803,7 +14711,7 @@ fn bindgen_test_layout_env_md_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).pctx_ops) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(env_md_ctx_st),
@@ -14820,7 +14728,7 @@ fn bindgen_test_layout_env_md_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(env_md_ctx_st),
@@ -15029,12 +14937,12 @@ pub struct DSA_SIG_st {
 fn bindgen_test_layout_DSA_SIG_st() {
     assert_eq!(
         ::std::mem::size_of::<DSA_SIG_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(DSA_SIG_st))
     );
     assert_eq!(
         ::std::mem::align_of::<DSA_SIG_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(DSA_SIG_st))
     );
     fn test_field_r() {
@@ -15061,7 +14969,7 @@ fn bindgen_test_layout_DSA_SIG_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).s) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(DSA_SIG_st),
@@ -15268,7 +15176,7 @@ extern "C" {
     pub fn i2d_DSAparams(in_: *const DSA, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct dsa_st {
     pub version: ::std::os::raw::c_long,
     pub p: *mut BIGNUM,
@@ -15287,12 +15195,12 @@ pub struct dsa_st {
 fn bindgen_test_layout_dsa_st() {
     assert_eq!(
         ::std::mem::size_of::<dsa_st>(),
-        100usize,
+        288usize,
         concat!("Size of: ", stringify!(dsa_st))
     );
     assert_eq!(
         ::std::mem::align_of::<dsa_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(dsa_st))
     );
     fn test_field_version() {
@@ -15319,7 +15227,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).p) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!("Offset of field: ", stringify!(dsa_st), "::", stringify!(p))
         );
     }
@@ -15331,7 +15239,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).q) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!("Offset of field: ", stringify!(dsa_st), "::", stringify!(q))
         );
     }
@@ -15343,7 +15251,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).g) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!("Offset of field: ", stringify!(dsa_st), "::", stringify!(g))
         );
     }
@@ -15355,7 +15263,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).pub_key) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dsa_st),
@@ -15372,7 +15280,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).priv_key) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dsa_st),
@@ -15389,7 +15297,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            24usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dsa_st),
@@ -15406,7 +15314,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).method_mont_lock) as usize - ptr as usize
             },
-            28usize,
+            56usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dsa_st),
@@ -15423,7 +15331,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).method_mont_p) as usize - ptr as usize
             },
-            84usize,
+            256usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dsa_st),
@@ -15440,7 +15348,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).method_mont_q) as usize - ptr as usize
             },
-            88usize,
+            264usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dsa_st),
@@ -15457,7 +15365,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).references) as usize - ptr as usize
             },
-            92usize,
+            272usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dsa_st),
@@ -15474,7 +15382,7 @@ fn bindgen_test_layout_dsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).ex_data) as usize - ptr as usize
             },
-            96usize,
+            280usize,
             concat!(
                 "Offset of field: ",
                 stringify!(dsa_st),
@@ -15800,12 +15708,12 @@ pub struct EC_builtin_curve {
 fn bindgen_test_layout_EC_builtin_curve() {
     assert_eq!(
         ::std::mem::size_of::<EC_builtin_curve>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(EC_builtin_curve))
     );
     assert_eq!(
         ::std::mem::align_of::<EC_builtin_curve>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(EC_builtin_curve))
     );
     fn test_field_nid() {
@@ -15832,7 +15740,7 @@ fn bindgen_test_layout_EC_builtin_curve() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).comment) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(EC_builtin_curve),
@@ -16047,12 +15955,12 @@ pub struct ecdsa_method_st {
 fn bindgen_test_layout_ecdsa_method_st() {
     assert_eq!(
         ::std::mem::size_of::<ecdsa_method_st>(),
-        32usize,
+        56usize,
         concat!("Size of: ", stringify!(ecdsa_method_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ecdsa_method_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ecdsa_method_st))
     );
     fn test_field_common() {
@@ -16096,7 +16004,7 @@ fn bindgen_test_layout_ecdsa_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).init) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ecdsa_method_st),
@@ -16113,7 +16021,7 @@ fn bindgen_test_layout_ecdsa_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).finish) as usize - ptr as usize
             },
-            16usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ecdsa_method_st),
@@ -16130,7 +16038,7 @@ fn bindgen_test_layout_ecdsa_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).group_order_size) as usize - ptr as usize
             },
-            20usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ecdsa_method_st),
@@ -16147,7 +16055,7 @@ fn bindgen_test_layout_ecdsa_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).sign) as usize - ptr as usize
             },
-            24usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ecdsa_method_st),
@@ -16164,7 +16072,7 @@ fn bindgen_test_layout_ecdsa_method_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            28usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ecdsa_method_st),
@@ -16289,12 +16197,12 @@ pub struct ecdsa_sig_st {
 fn bindgen_test_layout_ecdsa_sig_st() {
     assert_eq!(
         ::std::mem::size_of::<ecdsa_sig_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(ecdsa_sig_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ecdsa_sig_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ecdsa_sig_st))
     );
     fn test_field_r() {
@@ -16321,7 +16229,7 @@ fn bindgen_test_layout_ecdsa_sig_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).s) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ecdsa_sig_st),
@@ -16519,12 +16427,12 @@ pub union evp_aead_ctx_st_state {
 fn bindgen_test_layout_evp_aead_ctx_st_state() {
     assert_eq!(
         ::std::mem::size_of::<evp_aead_ctx_st_state>(),
-        580usize,
+        584usize,
         concat!("Size of: ", stringify!(evp_aead_ctx_st_state))
     );
     assert_eq!(
         ::std::mem::align_of::<evp_aead_ctx_st_state>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(evp_aead_ctx_st_state))
     );
     fn test_field_opaque() {
@@ -16599,12 +16507,12 @@ pub struct evp_aead_ctx_st {
 fn bindgen_test_layout_evp_aead_ctx_st() {
     assert_eq!(
         ::std::mem::size_of::<evp_aead_ctx_st>(),
-        588usize,
+        600usize,
         concat!("Size of: ", stringify!(evp_aead_ctx_st))
     );
     assert_eq!(
         ::std::mem::align_of::<evp_aead_ctx_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(evp_aead_ctx_st))
     );
     fn test_field_aead() {
@@ -16631,7 +16539,7 @@ fn bindgen_test_layout_evp_aead_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).state) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_aead_ctx_st),
@@ -16648,7 +16556,7 @@ fn bindgen_test_layout_evp_aead_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).tag_len) as usize - ptr as usize
             },
-            584usize,
+            592usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_aead_ctx_st),
@@ -17662,12 +17570,12 @@ pub union evp_pkey_st__bindgen_ty_1 {
 fn bindgen_test_layout_evp_pkey_st__bindgen_ty_1() {
     assert_eq!(
         ::std::mem::size_of::<evp_pkey_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Size of: ", stringify!(evp_pkey_st__bindgen_ty_1))
     );
     assert_eq!(
         ::std::mem::align_of::<evp_pkey_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(evp_pkey_st__bindgen_ty_1))
     );
     fn test_field_ptr() {
@@ -17769,12 +17677,12 @@ impl Default for evp_pkey_st__bindgen_ty_1 {
 fn bindgen_test_layout_evp_pkey_st() {
     assert_eq!(
         ::std::mem::size_of::<evp_pkey_st>(),
-        16usize,
+        24usize,
         concat!("Size of: ", stringify!(evp_pkey_st))
     );
     assert_eq!(
         ::std::mem::align_of::<evp_pkey_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(evp_pkey_st))
     );
     fn test_field_references() {
@@ -17835,7 +17743,7 @@ fn bindgen_test_layout_evp_pkey_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).ameth) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_pkey_st),
@@ -18139,7 +18047,7 @@ fn bindgen_test_layout_md_ctx_union() {
     );
     assert_eq!(
         ::std::mem::align_of::<md_ctx_union>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(md_ctx_union))
     );
     fn test_field_md5() {
@@ -18234,12 +18142,12 @@ pub struct hmac_ctx_st {
 fn bindgen_test_layout_hmac_ctx_st() {
     assert_eq!(
         ::std::mem::size_of::<hmac_ctx_st>(),
-        660usize,
+        672usize,
         concat!("Size of: ", stringify!(hmac_ctx_st))
     );
     assert_eq!(
         ::std::mem::align_of::<hmac_ctx_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(hmac_ctx_st))
     );
     fn test_field_md() {
@@ -18266,7 +18174,7 @@ fn bindgen_test_layout_hmac_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).methods) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(hmac_ctx_st),
@@ -18283,7 +18191,7 @@ fn bindgen_test_layout_hmac_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).md_ctx) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(hmac_ctx_st),
@@ -18300,7 +18208,7 @@ fn bindgen_test_layout_hmac_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).i_ctx) as usize - ptr as usize
             },
-            224usize,
+            232usize,
             concat!(
                 "Offset of field: ",
                 stringify!(hmac_ctx_st),
@@ -18317,7 +18225,7 @@ fn bindgen_test_layout_hmac_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).o_ctx) as usize - ptr as usize
             },
-            440usize,
+            448usize,
             concat!(
                 "Offset of field: ",
                 stringify!(hmac_ctx_st),
@@ -18334,7 +18242,7 @@ fn bindgen_test_layout_hmac_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).state) as usize - ptr as usize
             },
-            656usize,
+            664usize,
             concat!(
                 "Offset of field: ",
                 stringify!(hmac_ctx_st),
@@ -18577,12 +18485,12 @@ pub struct evp_hpke_ctx_st {
 fn bindgen_test_layout_evp_hpke_ctx_st() {
     assert_eq!(
         ::std::mem::size_of::<evp_hpke_ctx_st>(),
-        696usize,
+        720usize,
         concat!("Size of: ", stringify!(evp_hpke_ctx_st))
     );
     assert_eq!(
         ::std::mem::align_of::<evp_hpke_ctx_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(evp_hpke_ctx_st))
     );
     fn test_field_aead() {
@@ -18609,7 +18517,7 @@ fn bindgen_test_layout_evp_hpke_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).kdf) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_hpke_ctx_st),
@@ -18626,7 +18534,7 @@ fn bindgen_test_layout_evp_hpke_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).aead_ctx) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_hpke_ctx_st),
@@ -18643,7 +18551,7 @@ fn bindgen_test_layout_evp_hpke_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).base_nonce) as usize - ptr as usize
             },
-            596usize,
+            616usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_hpke_ctx_st),
@@ -18660,7 +18568,7 @@ fn bindgen_test_layout_evp_hpke_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).exporter_secret) as usize - ptr as usize
             },
-            620usize,
+            640usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_hpke_ctx_st),
@@ -18677,7 +18585,7 @@ fn bindgen_test_layout_evp_hpke_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).seq) as usize - ptr as usize
             },
-            684usize,
+            704usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_hpke_ctx_st),
@@ -18694,7 +18602,7 @@ fn bindgen_test_layout_evp_hpke_ctx_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).is_sender) as usize - ptr as usize
             },
-            692usize,
+            712usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_hpke_ctx_st),
@@ -18725,12 +18633,12 @@ pub struct evp_hpke_key_st {
 fn bindgen_test_layout_evp_hpke_key_st() {
     assert_eq!(
         ::std::mem::size_of::<evp_hpke_key_st>(),
-        68usize,
+        72usize,
         concat!("Size of: ", stringify!(evp_hpke_key_st))
     );
     assert_eq!(
         ::std::mem::align_of::<evp_hpke_key_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(evp_hpke_key_st))
     );
     fn test_field_kem() {
@@ -18757,7 +18665,7 @@ fn bindgen_test_layout_evp_hpke_key_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).private_key) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_hpke_key_st),
@@ -18774,7 +18682,7 @@ fn bindgen_test_layout_evp_hpke_key_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).public_key) as usize - ptr as usize
             },
-            36usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(evp_hpke_key_st),
@@ -19163,12 +19071,12 @@ pub struct obj_name_st {
 fn bindgen_test_layout_obj_name_st() {
     assert_eq!(
         ::std::mem::size_of::<obj_name_st>(),
-        16usize,
+        24usize,
         concat!("Size of: ", stringify!(obj_name_st))
     );
     assert_eq!(
         ::std::mem::align_of::<obj_name_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(obj_name_st))
     );
     fn test_field_type() {
@@ -19229,7 +19137,7 @@ fn bindgen_test_layout_obj_name_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(obj_name_st),
@@ -19334,12 +19242,12 @@ pub struct PKCS7_SIGNED {
 fn bindgen_test_layout_PKCS7_SIGNED() {
     assert_eq!(
         ::std::mem::size_of::<PKCS7_SIGNED>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(PKCS7_SIGNED))
     );
     assert_eq!(
         ::std::mem::align_of::<PKCS7_SIGNED>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(PKCS7_SIGNED))
     );
     fn test_field_cert() {
@@ -19366,7 +19274,7 @@ fn bindgen_test_layout_PKCS7_SIGNED() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).crl) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(PKCS7_SIGNED),
@@ -19396,12 +19304,12 @@ pub struct PKCS7_SIGN_ENVELOPE {
 fn bindgen_test_layout_PKCS7_SIGN_ENVELOPE() {
     assert_eq!(
         ::std::mem::size_of::<PKCS7_SIGN_ENVELOPE>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(PKCS7_SIGN_ENVELOPE))
     );
     assert_eq!(
         ::std::mem::align_of::<PKCS7_SIGN_ENVELOPE>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(PKCS7_SIGN_ENVELOPE))
     );
     fn test_field_cert() {
@@ -19428,7 +19336,7 @@ fn bindgen_test_layout_PKCS7_SIGN_ENVELOPE() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).crl) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(PKCS7_SIGN_ENVELOPE),
@@ -19476,12 +19384,12 @@ pub union PKCS7__bindgen_ty_1 {
 fn bindgen_test_layout_PKCS7__bindgen_ty_1() {
     assert_eq!(
         ::std::mem::size_of::<PKCS7__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Size of: ", stringify!(PKCS7__bindgen_ty_1))
     );
     assert_eq!(
         ::std::mem::align_of::<PKCS7__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(PKCS7__bindgen_ty_1))
     );
     fn test_field_ptr() {
@@ -19634,12 +19542,12 @@ impl Default for PKCS7__bindgen_ty_1 {
 fn bindgen_test_layout_PKCS7() {
     assert_eq!(
         ::std::mem::size_of::<PKCS7>(),
-        16usize,
+        32usize,
         concat!("Size of: ", stringify!(PKCS7))
     );
     assert_eq!(
         ::std::mem::align_of::<PKCS7>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(PKCS7))
     );
     fn test_field_ber_bytes() {
@@ -19666,7 +19574,7 @@ fn bindgen_test_layout_PKCS7() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).ber_len) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(PKCS7),
@@ -19683,7 +19591,7 @@ fn bindgen_test_layout_PKCS7() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).type_) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(PKCS7),
@@ -19700,7 +19608,7 @@ fn bindgen_test_layout_PKCS7() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).d) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!("Offset of field: ", stringify!(PKCS7), "::", stringify!(d))
         );
     }
@@ -20362,12 +20270,12 @@ pub struct rsa_meth_st {
 fn bindgen_test_layout_rsa_meth_st() {
     assert_eq!(
         ::std::mem::size_of::<rsa_meth_st>(),
-        44usize,
+        80usize,
         concat!("Size of: ", stringify!(rsa_meth_st))
     );
     assert_eq!(
         ::std::mem::align_of::<rsa_meth_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(rsa_meth_st))
     );
     fn test_field_common() {
@@ -20411,7 +20319,7 @@ fn bindgen_test_layout_rsa_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).init) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_meth_st),
@@ -20428,7 +20336,7 @@ fn bindgen_test_layout_rsa_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).finish) as usize - ptr as usize
             },
-            16usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_meth_st),
@@ -20445,7 +20353,7 @@ fn bindgen_test_layout_rsa_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).size) as usize - ptr as usize
             },
-            20usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_meth_st),
@@ -20462,7 +20370,7 @@ fn bindgen_test_layout_rsa_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).sign) as usize - ptr as usize
             },
-            24usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_meth_st),
@@ -20479,7 +20387,7 @@ fn bindgen_test_layout_rsa_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).sign_raw) as usize - ptr as usize
             },
-            28usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_meth_st),
@@ -20496,7 +20404,7 @@ fn bindgen_test_layout_rsa_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).decrypt) as usize - ptr as usize
             },
-            32usize,
+            56usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_meth_st),
@@ -20513,7 +20421,7 @@ fn bindgen_test_layout_rsa_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).private_transform) as usize - ptr as usize
             },
-            36usize,
+            64usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_meth_st),
@@ -20530,7 +20438,7 @@ fn bindgen_test_layout_rsa_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            40usize,
+            72usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_meth_st),
@@ -20557,7 +20465,7 @@ pub struct bn_blinding_st {
 }
 pub type BN_BLINDING = bn_blinding_st;
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct rsa_st {
     pub meth: *mut RSA_METHOD,
     pub n: *mut BIGNUM,
@@ -20586,18 +20494,18 @@ pub struct rsa_st {
     pub blinding_fork_generation: u64,
     pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 1usize]>,
-    pub __bindgen_padding_0: [u8; 3usize],
+    pub __bindgen_padding_0: [u8; 7usize],
 }
 #[test]
 fn bindgen_test_layout_rsa_st() {
     assert_eq!(
         ::std::mem::size_of::<rsa_st>(),
-        160usize,
+        392usize,
         concat!("Size of: ", stringify!(rsa_st))
     );
     assert_eq!(
         ::std::mem::align_of::<rsa_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(rsa_st))
     );
     fn test_field_meth() {
@@ -20624,7 +20532,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).n) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!("Offset of field: ", stringify!(rsa_st), "::", stringify!(n))
         );
     }
@@ -20636,7 +20544,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).e) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!("Offset of field: ", stringify!(rsa_st), "::", stringify!(e))
         );
     }
@@ -20648,7 +20556,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).d) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!("Offset of field: ", stringify!(rsa_st), "::", stringify!(d))
         );
     }
@@ -20660,7 +20568,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).p) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!("Offset of field: ", stringify!(rsa_st), "::", stringify!(p))
         );
     }
@@ -20672,7 +20580,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).q) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!("Offset of field: ", stringify!(rsa_st), "::", stringify!(q))
         );
     }
@@ -20684,7 +20592,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).dmp1) as usize - ptr as usize
             },
-            24usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20701,7 +20609,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).dmq1) as usize - ptr as usize
             },
-            28usize,
+            56usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20718,7 +20626,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).iqmp) as usize - ptr as usize
             },
-            32usize,
+            64usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20735,7 +20643,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).pss) as usize - ptr as usize
             },
-            36usize,
+            72usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20752,7 +20660,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).ex_data) as usize - ptr as usize
             },
-            40usize,
+            80usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20769,7 +20677,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).references) as usize - ptr as usize
             },
-            44usize,
+            88usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20786,7 +20694,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize
             },
-            48usize,
+            92usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20803,7 +20711,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).lock) as usize - ptr as usize
             },
-            52usize,
+            96usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20820,7 +20728,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).mont_n) as usize - ptr as usize
             },
-            108usize,
+            296usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20837,7 +20745,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).mont_p) as usize - ptr as usize
             },
-            112usize,
+            304usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20854,7 +20762,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).mont_q) as usize - ptr as usize
             },
-            116usize,
+            312usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20871,7 +20779,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).d_fixed) as usize - ptr as usize
             },
-            120usize,
+            320usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20888,7 +20796,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).dmp1_fixed) as usize - ptr as usize
             },
-            124usize,
+            328usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20905,7 +20813,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).dmq1_fixed) as usize - ptr as usize
             },
-            128usize,
+            336usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20922,7 +20830,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).inv_small_mod_large_mont) as usize - ptr as usize
             },
-            132usize,
+            344usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20939,7 +20847,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).num_blindings) as usize - ptr as usize
             },
-            136usize,
+            352usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20956,7 +20864,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).blindings) as usize - ptr as usize
             },
-            140usize,
+            360usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20973,7 +20881,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).blindings_inuse) as usize - ptr as usize
             },
-            144usize,
+            368usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -20990,7 +20898,7 @@ fn bindgen_test_layout_rsa_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).blinding_fork_generation) as usize - ptr as usize
             },
-            148usize,
+            376usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_st),
@@ -21044,12 +20952,12 @@ pub struct X509_algor_st {
 fn bindgen_test_layout_X509_algor_st() {
     assert_eq!(
         ::std::mem::size_of::<X509_algor_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(X509_algor_st))
     );
     assert_eq!(
         ::std::mem::align_of::<X509_algor_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(X509_algor_st))
     );
     fn test_field_algorithm() {
@@ -21076,7 +20984,7 @@ fn bindgen_test_layout_X509_algor_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).parameter) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(X509_algor_st),
@@ -21236,12 +21144,12 @@ pub struct x509_trust_st {
 fn bindgen_test_layout_x509_trust_st() {
     assert_eq!(
         ::std::mem::size_of::<x509_trust_st>(),
-        24usize,
+        40usize,
         concat!("Size of: ", stringify!(x509_trust_st))
     );
     assert_eq!(
         ::std::mem::align_of::<x509_trust_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(x509_trust_st))
     );
     fn test_field_trust() {
@@ -21302,7 +21210,7 @@ fn bindgen_test_layout_x509_trust_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).name) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(x509_trust_st),
@@ -21319,7 +21227,7 @@ fn bindgen_test_layout_x509_trust_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).arg1) as usize - ptr as usize
             },
-            16usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(x509_trust_st),
@@ -21336,7 +21244,7 @@ fn bindgen_test_layout_x509_trust_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).arg2) as usize - ptr as usize
             },
-            20usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(x509_trust_st),
@@ -21414,12 +21322,12 @@ pub struct private_key_st {
 fn bindgen_test_layout_private_key_st() {
     assert_eq!(
         ::std::mem::size_of::<private_key_st>(),
-        48usize,
+        80usize,
         concat!("Size of: ", stringify!(private_key_st))
     );
     assert_eq!(
         ::std::mem::align_of::<private_key_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(private_key_st))
     );
     fn test_field_version() {
@@ -21446,7 +21354,7 @@ fn bindgen_test_layout_private_key_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).enc_algor) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(private_key_st),
@@ -21463,7 +21371,7 @@ fn bindgen_test_layout_private_key_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).enc_pkey) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(private_key_st),
@@ -21480,7 +21388,7 @@ fn bindgen_test_layout_private_key_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).dec_pkey) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(private_key_st),
@@ -21497,7 +21405,7 @@ fn bindgen_test_layout_private_key_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).key_length) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(private_key_st),
@@ -21514,7 +21422,7 @@ fn bindgen_test_layout_private_key_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).key_data) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(private_key_st),
@@ -21531,7 +21439,7 @@ fn bindgen_test_layout_private_key_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).key_free) as usize - ptr as usize
             },
-            24usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(private_key_st),
@@ -21548,7 +21456,7 @@ fn bindgen_test_layout_private_key_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).cipher) as usize - ptr as usize
             },
-            28usize,
+            56usize,
             concat!(
                 "Offset of field: ",
                 stringify!(private_key_st),
@@ -21582,12 +21490,12 @@ pub struct X509_info_st {
 fn bindgen_test_layout_X509_info_st() {
     assert_eq!(
         ::std::mem::size_of::<X509_info_st>(),
-        40usize,
+        64usize,
         concat!("Size of: ", stringify!(X509_info_st))
     );
     assert_eq!(
         ::std::mem::align_of::<X509_info_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(X509_info_st))
     );
     fn test_field_x509() {
@@ -21614,7 +21522,7 @@ fn bindgen_test_layout_X509_info_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).crl) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(X509_info_st),
@@ -21631,7 +21539,7 @@ fn bindgen_test_layout_X509_info_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).x_pkey) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(X509_info_st),
@@ -21648,7 +21556,7 @@ fn bindgen_test_layout_X509_info_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).enc_cipher) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(X509_info_st),
@@ -21665,7 +21573,7 @@ fn bindgen_test_layout_X509_info_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).enc_len) as usize - ptr as usize
             },
-            32usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(X509_info_st),
@@ -21682,7 +21590,7 @@ fn bindgen_test_layout_X509_info_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).enc_data) as usize - ptr as usize
             },
-            36usize,
+            56usize,
             concat!(
                 "Offset of field: ",
                 stringify!(X509_info_st),
@@ -21727,12 +21635,12 @@ pub struct Netscape_spkac_st {
 fn bindgen_test_layout_Netscape_spkac_st() {
     assert_eq!(
         ::std::mem::size_of::<Netscape_spkac_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(Netscape_spkac_st))
     );
     assert_eq!(
         ::std::mem::align_of::<Netscape_spkac_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(Netscape_spkac_st))
     );
     fn test_field_pubkey() {
@@ -21759,7 +21667,7 @@ fn bindgen_test_layout_Netscape_spkac_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).challenge) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(Netscape_spkac_st),
@@ -21790,12 +21698,12 @@ pub struct Netscape_spki_st {
 fn bindgen_test_layout_Netscape_spki_st() {
     assert_eq!(
         ::std::mem::size_of::<Netscape_spki_st>(),
-        12usize,
+        24usize,
         concat!("Size of: ", stringify!(Netscape_spki_st))
     );
     assert_eq!(
         ::std::mem::align_of::<Netscape_spki_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(Netscape_spki_st))
     );
     fn test_field_spkac() {
@@ -21822,7 +21730,7 @@ fn bindgen_test_layout_Netscape_spki_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).sig_algor) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(Netscape_spki_st),
@@ -21839,7 +21747,7 @@ fn bindgen_test_layout_Netscape_spki_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).signature) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(Netscape_spki_st),
@@ -24349,12 +24257,12 @@ pub struct rsa_pss_params_st {
 fn bindgen_test_layout_rsa_pss_params_st() {
     assert_eq!(
         ::std::mem::size_of::<rsa_pss_params_st>(),
-        20usize,
+        40usize,
         concat!("Size of: ", stringify!(rsa_pss_params_st))
     );
     assert_eq!(
         ::std::mem::align_of::<rsa_pss_params_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(rsa_pss_params_st))
     );
     fn test_field_hashAlgorithm() {
@@ -24381,7 +24289,7 @@ fn bindgen_test_layout_rsa_pss_params_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).maskGenAlgorithm) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_pss_params_st),
@@ -24398,7 +24306,7 @@ fn bindgen_test_layout_rsa_pss_params_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).saltLength) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_pss_params_st),
@@ -24415,7 +24323,7 @@ fn bindgen_test_layout_rsa_pss_params_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).trailerField) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_pss_params_st),
@@ -24432,7 +24340,7 @@ fn bindgen_test_layout_rsa_pss_params_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).maskHash) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rsa_pss_params_st),
@@ -26411,12 +26319,12 @@ pub struct rand_meth_st {
 fn bindgen_test_layout_rand_meth_st() {
     assert_eq!(
         ::std::mem::size_of::<rand_meth_st>(),
-        24usize,
+        48usize,
         concat!("Size of: ", stringify!(rand_meth_st))
     );
     assert_eq!(
         ::std::mem::align_of::<rand_meth_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(rand_meth_st))
     );
     fn test_field_seed() {
@@ -26443,7 +26351,7 @@ fn bindgen_test_layout_rand_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).bytes) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rand_meth_st),
@@ -26460,7 +26368,7 @@ fn bindgen_test_layout_rand_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).cleanup) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rand_meth_st),
@@ -26477,7 +26385,7 @@ fn bindgen_test_layout_rand_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).add) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rand_meth_st),
@@ -26494,7 +26402,7 @@ fn bindgen_test_layout_rand_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).pseudorand) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rand_meth_st),
@@ -26511,7 +26419,7 @@ fn bindgen_test_layout_rand_meth_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).status) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(rand_meth_st),
@@ -26788,12 +26696,12 @@ pub struct trust_token_st {
 fn bindgen_test_layout_trust_token_st() {
     assert_eq!(
         ::std::mem::size_of::<trust_token_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(trust_token_st))
     );
     assert_eq!(
         ::std::mem::align_of::<trust_token_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(trust_token_st))
     );
     fn test_field_data() {
@@ -26820,7 +26728,7 @@ fn bindgen_test_layout_trust_token_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).len) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(trust_token_st),
@@ -27115,12 +27023,12 @@ pub struct v3_ext_method {
 fn bindgen_test_layout_v3_ext_method() {
     assert_eq!(
         ::std::mem::size_of::<v3_ext_method>(),
-        56usize,
+        104usize,
         concat!("Size of: ", stringify!(v3_ext_method))
     );
     assert_eq!(
         ::std::mem::align_of::<v3_ext_method>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(v3_ext_method))
     );
     fn test_field_ext_nid() {
@@ -27181,7 +27089,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).ext_new) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27198,7 +27106,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).ext_free) as usize - ptr as usize
             },
-            16usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27215,7 +27123,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).d2i) as usize - ptr as usize
             },
-            20usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27232,7 +27140,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).i2d) as usize - ptr as usize
             },
-            24usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27249,7 +27157,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).i2s) as usize - ptr as usize
             },
-            28usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27266,7 +27174,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).s2i) as usize - ptr as usize
             },
-            32usize,
+            56usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27283,7 +27191,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).i2v) as usize - ptr as usize
             },
-            36usize,
+            64usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27300,7 +27208,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).v2i) as usize - ptr as usize
             },
-            40usize,
+            72usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27317,7 +27225,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).i2r) as usize - ptr as usize
             },
-            44usize,
+            80usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27334,7 +27242,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).r2i) as usize - ptr as usize
             },
-            48usize,
+            88usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27351,7 +27259,7 @@ fn bindgen_test_layout_v3_ext_method() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).usr_data) as usize - ptr as usize
             },
-            52usize,
+            96usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_method),
@@ -27398,12 +27306,12 @@ pub struct X509V3_CONF_METHOD_st {
 fn bindgen_test_layout_X509V3_CONF_METHOD_st() {
     assert_eq!(
         ::std::mem::size_of::<X509V3_CONF_METHOD_st>(),
-        16usize,
+        32usize,
         concat!("Size of: ", stringify!(X509V3_CONF_METHOD_st))
     );
     assert_eq!(
         ::std::mem::align_of::<X509V3_CONF_METHOD_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(X509V3_CONF_METHOD_st))
     );
     fn test_field_get_string() {
@@ -27430,7 +27338,7 @@ fn bindgen_test_layout_X509V3_CONF_METHOD_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).get_section) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(X509V3_CONF_METHOD_st),
@@ -27447,7 +27355,7 @@ fn bindgen_test_layout_X509V3_CONF_METHOD_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).free_string) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(X509V3_CONF_METHOD_st),
@@ -27464,7 +27372,7 @@ fn bindgen_test_layout_X509V3_CONF_METHOD_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).free_section) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(X509V3_CONF_METHOD_st),
@@ -27491,12 +27399,12 @@ pub struct v3_ext_ctx {
 fn bindgen_test_layout_v3_ext_ctx() {
     assert_eq!(
         ::std::mem::size_of::<v3_ext_ctx>(),
-        28usize,
+        56usize,
         concat!("Size of: ", stringify!(v3_ext_ctx))
     );
     assert_eq!(
         ::std::mem::align_of::<v3_ext_ctx>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(v3_ext_ctx))
     );
     fn test_field_flags() {
@@ -27523,7 +27431,7 @@ fn bindgen_test_layout_v3_ext_ctx() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).issuer_cert) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_ctx),
@@ -27540,7 +27448,7 @@ fn bindgen_test_layout_v3_ext_ctx() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).subject_cert) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_ctx),
@@ -27557,7 +27465,7 @@ fn bindgen_test_layout_v3_ext_ctx() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).subject_req) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_ctx),
@@ -27574,7 +27482,7 @@ fn bindgen_test_layout_v3_ext_ctx() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).crl) as usize - ptr as usize
             },
-            16usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_ctx),
@@ -27591,7 +27499,7 @@ fn bindgen_test_layout_v3_ext_ctx() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).db_meth) as usize - ptr as usize
             },
-            20usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_ctx),
@@ -27608,7 +27516,7 @@ fn bindgen_test_layout_v3_ext_ctx() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).db) as usize - ptr as usize
             },
-            24usize,
+            48usize,
             concat!(
                 "Offset of field: ",
                 stringify!(v3_ext_ctx),
@@ -27654,12 +27562,12 @@ pub struct BASIC_CONSTRAINTS_st {
 fn bindgen_test_layout_BASIC_CONSTRAINTS_st() {
     assert_eq!(
         ::std::mem::size_of::<BASIC_CONSTRAINTS_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(BASIC_CONSTRAINTS_st))
     );
     assert_eq!(
         ::std::mem::align_of::<BASIC_CONSTRAINTS_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(BASIC_CONSTRAINTS_st))
     );
     fn test_field_ca() {
@@ -27686,7 +27594,7 @@ fn bindgen_test_layout_BASIC_CONSTRAINTS_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).pathlen) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(BASIC_CONSTRAINTS_st),
@@ -27716,12 +27624,12 @@ pub struct otherName_st {
 fn bindgen_test_layout_otherName_st() {
     assert_eq!(
         ::std::mem::size_of::<otherName_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(otherName_st))
     );
     assert_eq!(
         ::std::mem::align_of::<otherName_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(otherName_st))
     );
     fn test_field_type_id() {
@@ -27748,7 +27656,7 @@ fn bindgen_test_layout_otherName_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).value) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(otherName_st),
@@ -27779,12 +27687,12 @@ pub struct EDIPartyName_st {
 fn bindgen_test_layout_EDIPartyName_st() {
     assert_eq!(
         ::std::mem::size_of::<EDIPartyName_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(EDIPartyName_st))
     );
     assert_eq!(
         ::std::mem::align_of::<EDIPartyName_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(EDIPartyName_st))
     );
     fn test_field_nameAssigner() {
@@ -27811,7 +27719,7 @@ fn bindgen_test_layout_EDIPartyName_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).partyName) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(EDIPartyName_st),
@@ -27861,12 +27769,12 @@ pub union GENERAL_NAME_st__bindgen_ty_1 {
 fn bindgen_test_layout_GENERAL_NAME_st__bindgen_ty_1() {
     assert_eq!(
         ::std::mem::size_of::<GENERAL_NAME_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Size of: ", stringify!(GENERAL_NAME_st__bindgen_ty_1))
     );
     assert_eq!(
         ::std::mem::align_of::<GENERAL_NAME_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(GENERAL_NAME_st__bindgen_ty_1))
     );
     fn test_field_ptr() {
@@ -28138,12 +28046,12 @@ impl Default for GENERAL_NAME_st__bindgen_ty_1 {
 fn bindgen_test_layout_GENERAL_NAME_st() {
     assert_eq!(
         ::std::mem::size_of::<GENERAL_NAME_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(GENERAL_NAME_st))
     );
     assert_eq!(
         ::std::mem::align_of::<GENERAL_NAME_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(GENERAL_NAME_st))
     );
     fn test_field_type() {
@@ -28170,7 +28078,7 @@ fn bindgen_test_layout_GENERAL_NAME_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).d) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(GENERAL_NAME_st),
@@ -28222,12 +28130,12 @@ pub struct ACCESS_DESCRIPTION_st {
 fn bindgen_test_layout_ACCESS_DESCRIPTION_st() {
     assert_eq!(
         ::std::mem::size_of::<ACCESS_DESCRIPTION_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(ACCESS_DESCRIPTION_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ACCESS_DESCRIPTION_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ACCESS_DESCRIPTION_st))
     );
     fn test_field_method() {
@@ -28254,7 +28162,7 @@ fn bindgen_test_layout_ACCESS_DESCRIPTION_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).location) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ACCESS_DESCRIPTION_st),
@@ -28310,12 +28218,12 @@ pub union DIST_POINT_NAME_st__bindgen_ty_1 {
 fn bindgen_test_layout_DIST_POINT_NAME_st__bindgen_ty_1() {
     assert_eq!(
         ::std::mem::size_of::<DIST_POINT_NAME_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Size of: ", stringify!(DIST_POINT_NAME_st__bindgen_ty_1))
     );
     assert_eq!(
         ::std::mem::align_of::<DIST_POINT_NAME_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!(
             "Alignment of ",
             stringify!(DIST_POINT_NAME_st__bindgen_ty_1)
@@ -28369,12 +28277,12 @@ impl Default for DIST_POINT_NAME_st__bindgen_ty_1 {
 fn bindgen_test_layout_DIST_POINT_NAME_st() {
     assert_eq!(
         ::std::mem::size_of::<DIST_POINT_NAME_st>(),
-        12usize,
+        24usize,
         concat!("Size of: ", stringify!(DIST_POINT_NAME_st))
     );
     assert_eq!(
         ::std::mem::align_of::<DIST_POINT_NAME_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(DIST_POINT_NAME_st))
     );
     fn test_field_type() {
@@ -28401,7 +28309,7 @@ fn bindgen_test_layout_DIST_POINT_NAME_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).name) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(DIST_POINT_NAME_st),
@@ -28418,7 +28326,7 @@ fn bindgen_test_layout_DIST_POINT_NAME_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).dpname) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(DIST_POINT_NAME_st),
@@ -28451,12 +28359,12 @@ pub struct DIST_POINT_st {
 fn bindgen_test_layout_DIST_POINT_st() {
     assert_eq!(
         ::std::mem::size_of::<DIST_POINT_st>(),
-        16usize,
+        32usize,
         concat!("Size of: ", stringify!(DIST_POINT_st))
     );
     assert_eq!(
         ::std::mem::align_of::<DIST_POINT_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(DIST_POINT_st))
     );
     fn test_field_distpoint() {
@@ -28483,7 +28391,7 @@ fn bindgen_test_layout_DIST_POINT_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).reasons) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(DIST_POINT_st),
@@ -28500,7 +28408,7 @@ fn bindgen_test_layout_DIST_POINT_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).CRLissuer) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(DIST_POINT_st),
@@ -28517,7 +28425,7 @@ fn bindgen_test_layout_DIST_POINT_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).dp_reasons) as usize - ptr as usize
             },
-            12usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(DIST_POINT_st),
@@ -28559,12 +28467,12 @@ pub struct AUTHORITY_KEYID_st {
 fn bindgen_test_layout_AUTHORITY_KEYID_st() {
     assert_eq!(
         ::std::mem::size_of::<AUTHORITY_KEYID_st>(),
-        12usize,
+        24usize,
         concat!("Size of: ", stringify!(AUTHORITY_KEYID_st))
     );
     assert_eq!(
         ::std::mem::align_of::<AUTHORITY_KEYID_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(AUTHORITY_KEYID_st))
     );
     fn test_field_keyid() {
@@ -28591,7 +28499,7 @@ fn bindgen_test_layout_AUTHORITY_KEYID_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).issuer) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(AUTHORITY_KEYID_st),
@@ -28608,7 +28516,7 @@ fn bindgen_test_layout_AUTHORITY_KEYID_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).serial) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(AUTHORITY_KEYID_st),
@@ -28638,12 +28546,12 @@ pub struct NOTICEREF_st {
 fn bindgen_test_layout_NOTICEREF_st() {
     assert_eq!(
         ::std::mem::size_of::<NOTICEREF_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(NOTICEREF_st))
     );
     assert_eq!(
         ::std::mem::align_of::<NOTICEREF_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(NOTICEREF_st))
     );
     fn test_field_organization() {
@@ -28670,7 +28578,7 @@ fn bindgen_test_layout_NOTICEREF_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).noticenos) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(NOTICEREF_st),
@@ -28701,12 +28609,12 @@ pub struct USERNOTICE_st {
 fn bindgen_test_layout_USERNOTICE_st() {
     assert_eq!(
         ::std::mem::size_of::<USERNOTICE_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(USERNOTICE_st))
     );
     assert_eq!(
         ::std::mem::align_of::<USERNOTICE_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(USERNOTICE_st))
     );
     fn test_field_noticeref() {
@@ -28733,7 +28641,7 @@ fn bindgen_test_layout_USERNOTICE_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).exptext) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(USERNOTICE_st),
@@ -28771,12 +28679,12 @@ pub union POLICYQUALINFO_st__bindgen_ty_1 {
 fn bindgen_test_layout_POLICYQUALINFO_st__bindgen_ty_1() {
     assert_eq!(
         ::std::mem::size_of::<POLICYQUALINFO_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Size of: ", stringify!(POLICYQUALINFO_st__bindgen_ty_1))
     );
     assert_eq!(
         ::std::mem::align_of::<POLICYQUALINFO_st__bindgen_ty_1>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(POLICYQUALINFO_st__bindgen_ty_1))
     );
     fn test_field_cpsuri() {
@@ -28844,12 +28752,12 @@ impl Default for POLICYQUALINFO_st__bindgen_ty_1 {
 fn bindgen_test_layout_POLICYQUALINFO_st() {
     assert_eq!(
         ::std::mem::size_of::<POLICYQUALINFO_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(POLICYQUALINFO_st))
     );
     assert_eq!(
         ::std::mem::align_of::<POLICYQUALINFO_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(POLICYQUALINFO_st))
     );
     fn test_field_pqualid() {
@@ -28876,7 +28784,7 @@ fn bindgen_test_layout_POLICYQUALINFO_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).d) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(POLICYQUALINFO_st),
@@ -28917,12 +28825,12 @@ pub struct POLICYINFO_st {
 fn bindgen_test_layout_POLICYINFO_st() {
     assert_eq!(
         ::std::mem::size_of::<POLICYINFO_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(POLICYINFO_st))
     );
     assert_eq!(
         ::std::mem::align_of::<POLICYINFO_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(POLICYINFO_st))
     );
     fn test_field_policyid() {
@@ -28949,7 +28857,7 @@ fn bindgen_test_layout_POLICYINFO_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).qualifiers) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(POLICYINFO_st),
@@ -28996,12 +28904,12 @@ pub struct POLICY_MAPPING_st {
 fn bindgen_test_layout_POLICY_MAPPING_st() {
     assert_eq!(
         ::std::mem::size_of::<POLICY_MAPPING_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(POLICY_MAPPING_st))
     );
     assert_eq!(
         ::std::mem::align_of::<POLICY_MAPPING_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(POLICY_MAPPING_st))
     );
     fn test_field_issuerDomainPolicy() {
@@ -29028,7 +28936,7 @@ fn bindgen_test_layout_POLICY_MAPPING_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).subjectDomainPolicy) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(POLICY_MAPPING_st),
@@ -29076,12 +28984,12 @@ pub struct GENERAL_SUBTREE_st {
 fn bindgen_test_layout_GENERAL_SUBTREE_st() {
     assert_eq!(
         ::std::mem::size_of::<GENERAL_SUBTREE_st>(),
-        12usize,
+        24usize,
         concat!("Size of: ", stringify!(GENERAL_SUBTREE_st))
     );
     assert_eq!(
         ::std::mem::align_of::<GENERAL_SUBTREE_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(GENERAL_SUBTREE_st))
     );
     fn test_field_base() {
@@ -29108,7 +29016,7 @@ fn bindgen_test_layout_GENERAL_SUBTREE_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).minimum) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(GENERAL_SUBTREE_st),
@@ -29125,7 +29033,7 @@ fn bindgen_test_layout_GENERAL_SUBTREE_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).maximum) as usize - ptr as usize
             },
-            8usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(GENERAL_SUBTREE_st),
@@ -29171,12 +29079,12 @@ pub struct NAME_CONSTRAINTS_st {
 fn bindgen_test_layout_NAME_CONSTRAINTS_st() {
     assert_eq!(
         ::std::mem::size_of::<NAME_CONSTRAINTS_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(NAME_CONSTRAINTS_st))
     );
     assert_eq!(
         ::std::mem::align_of::<NAME_CONSTRAINTS_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(NAME_CONSTRAINTS_st))
     );
     fn test_field_permittedSubtrees() {
@@ -29203,7 +29111,7 @@ fn bindgen_test_layout_NAME_CONSTRAINTS_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).excludedSubtrees) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(NAME_CONSTRAINTS_st),
@@ -29233,12 +29141,12 @@ pub struct POLICY_CONSTRAINTS_st {
 fn bindgen_test_layout_POLICY_CONSTRAINTS_st() {
     assert_eq!(
         ::std::mem::size_of::<POLICY_CONSTRAINTS_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(POLICY_CONSTRAINTS_st))
     );
     assert_eq!(
         ::std::mem::align_of::<POLICY_CONSTRAINTS_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(POLICY_CONSTRAINTS_st))
     );
     fn test_field_requireExplicitPolicy() {
@@ -29265,7 +29173,7 @@ fn bindgen_test_layout_POLICY_CONSTRAINTS_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).inhibitPolicyMapping) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(POLICY_CONSTRAINTS_st),
@@ -29296,12 +29204,12 @@ pub struct PROXY_POLICY_st {
 fn bindgen_test_layout_PROXY_POLICY_st() {
     assert_eq!(
         ::std::mem::size_of::<PROXY_POLICY_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(PROXY_POLICY_st))
     );
     assert_eq!(
         ::std::mem::align_of::<PROXY_POLICY_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(PROXY_POLICY_st))
     );
     fn test_field_policyLanguage() {
@@ -29328,7 +29236,7 @@ fn bindgen_test_layout_PROXY_POLICY_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).policy) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(PROXY_POLICY_st),
@@ -29359,12 +29267,12 @@ pub struct PROXY_CERT_INFO_EXTENSION_st {
 fn bindgen_test_layout_PROXY_CERT_INFO_EXTENSION_st() {
     assert_eq!(
         ::std::mem::size_of::<PROXY_CERT_INFO_EXTENSION_st>(),
-        8usize,
+        16usize,
         concat!("Size of: ", stringify!(PROXY_CERT_INFO_EXTENSION_st))
     );
     assert_eq!(
         ::std::mem::align_of::<PROXY_CERT_INFO_EXTENSION_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(PROXY_CERT_INFO_EXTENSION_st))
     );
     fn test_field_pcPathLengthConstraint() {
@@ -29391,7 +29299,7 @@ fn bindgen_test_layout_PROXY_CERT_INFO_EXTENSION_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).proxyPolicy) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(PROXY_CERT_INFO_EXTENSION_st),
@@ -29480,12 +29388,12 @@ pub struct ISSUING_DIST_POINT_st {
 fn bindgen_test_layout_ISSUING_DIST_POINT_st() {
     assert_eq!(
         ::std::mem::size_of::<ISSUING_DIST_POINT_st>(),
-        24usize,
+        32usize,
         concat!("Size of: ", stringify!(ISSUING_DIST_POINT_st))
     );
     assert_eq!(
         ::std::mem::align_of::<ISSUING_DIST_POINT_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(ISSUING_DIST_POINT_st))
     );
     fn test_field_distpoint() {
@@ -29512,7 +29420,7 @@ fn bindgen_test_layout_ISSUING_DIST_POINT_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).onlyuser) as usize - ptr as usize
             },
-            4usize,
+            8usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ISSUING_DIST_POINT_st),
@@ -29529,7 +29437,7 @@ fn bindgen_test_layout_ISSUING_DIST_POINT_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).onlyCA) as usize - ptr as usize
             },
-            8usize,
+            12usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ISSUING_DIST_POINT_st),
@@ -29546,7 +29454,7 @@ fn bindgen_test_layout_ISSUING_DIST_POINT_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).onlysomereasons) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ISSUING_DIST_POINT_st),
@@ -29563,7 +29471,7 @@ fn bindgen_test_layout_ISSUING_DIST_POINT_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).indirectCRL) as usize - ptr as usize
             },
-            16usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ISSUING_DIST_POINT_st),
@@ -29580,7 +29488,7 @@ fn bindgen_test_layout_ISSUING_DIST_POINT_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).onlyattr) as usize - ptr as usize
             },
-            20usize,
+            28usize,
             concat!(
                 "Offset of field: ",
                 stringify!(ISSUING_DIST_POINT_st),
@@ -29621,12 +29529,12 @@ pub struct x509_purpose_st {
 fn bindgen_test_layout_x509_purpose_st() {
     assert_eq!(
         ::std::mem::size_of::<x509_purpose_st>(),
-        28usize,
+        48usize,
         concat!("Size of: ", stringify!(x509_purpose_st))
     );
     assert_eq!(
         ::std::mem::align_of::<x509_purpose_st>(),
-        4usize,
+        8usize,
         concat!("Alignment of ", stringify!(x509_purpose_st))
     );
     fn test_field_purpose() {
@@ -29687,7 +29595,7 @@ fn bindgen_test_layout_x509_purpose_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).check_purpose) as usize - ptr as usize
             },
-            12usize,
+            16usize,
             concat!(
                 "Offset of field: ",
                 stringify!(x509_purpose_st),
@@ -29704,7 +29612,7 @@ fn bindgen_test_layout_x509_purpose_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).name) as usize - ptr as usize
             },
-            16usize,
+            24usize,
             concat!(
                 "Offset of field: ",
                 stringify!(x509_purpose_st),
@@ -29721,7 +29629,7 @@ fn bindgen_test_layout_x509_purpose_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).sname) as usize - ptr as usize
             },
-            20usize,
+            32usize,
             concat!(
                 "Offset of field: ",
                 stringify!(x509_purpose_st),
@@ -29738,7 +29646,7 @@ fn bindgen_test_layout_x509_purpose_st() {
                 let ptr = uninit.as_ptr();
                 ::std::ptr::addr_of!((*ptr).usr_data) as usize - ptr as usize
             },
-            24usize,
+            40usize,
             concat!(
                 "Offset of field: ",
                 stringify!(x509_purpose_st),
@@ -30939,7 +30847,105 @@ pub type stack_X509_POLICY_NODE_cmp_func = ::std::option::Option<
         b: *mut *const X509_POLICY_NODE,
     ) -> ::std::os::raw::c_int,
 >;
-pub type __builtin_va_list = *mut ::std::os::raw::c_char;
+pub type __builtin_va_list = [__va_list_tag; 1usize];
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct __va_list_tag {
+    pub gp_offset: ::std::os::raw::c_uint,
+    pub fp_offset: ::std::os::raw::c_uint,
+    pub overflow_arg_area: *mut ::std::os::raw::c_void,
+    pub reg_save_area: *mut ::std::os::raw::c_void,
+}
+#[test]
+fn bindgen_test_layout___va_list_tag() {
+    assert_eq!(
+        ::std::mem::size_of::<__va_list_tag>(),
+        24usize,
+        concat!("Size of: ", stringify!(__va_list_tag))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<__va_list_tag>(),
+        8usize,
+        concat!("Alignment of ", stringify!(__va_list_tag))
+    );
+    fn test_field_gp_offset() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__va_list_tag>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr).gp_offset) as usize - ptr as usize
+            },
+            0usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__va_list_tag),
+                "::",
+                stringify!(gp_offset)
+            )
+        );
+    }
+    test_field_gp_offset();
+    fn test_field_fp_offset() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__va_list_tag>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr).fp_offset) as usize - ptr as usize
+            },
+            4usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__va_list_tag),
+                "::",
+                stringify!(fp_offset)
+            )
+        );
+    }
+    test_field_fp_offset();
+    fn test_field_overflow_arg_area() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__va_list_tag>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr).overflow_arg_area) as usize - ptr as usize
+            },
+            8usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__va_list_tag),
+                "::",
+                stringify!(overflow_arg_area)
+            )
+        );
+    }
+    test_field_overflow_arg_area();
+    fn test_field_reg_save_area() {
+        assert_eq!(
+            unsafe {
+                let uninit = ::std::mem::MaybeUninit::<__va_list_tag>::uninit();
+                let ptr = uninit.as_ptr();
+                ::std::ptr::addr_of!((*ptr).reg_save_area) as usize - ptr as usize
+            },
+            16usize,
+            concat!(
+                "Offset of field: ",
+                stringify!(__va_list_tag),
+                "::",
+                stringify!(reg_save_area)
+            )
+        );
+    }
+    test_field_reg_save_area();
+}
+impl Default for __va_list_tag {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct CRYPTO_dynlock_value {

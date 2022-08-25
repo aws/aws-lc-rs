@@ -208,11 +208,11 @@ pub struct Algorithm {
 
     max_input_len: usize,
 
-    id: AlgorithmID,
+    pub(crate) id: AlgorithmID,
 }
 
 #[derive(Debug, Eq, PartialEq)]
-enum AlgorithmID {
+pub(crate) enum AlgorithmID {
     SHA1,
     SHA256,
     SHA384,
