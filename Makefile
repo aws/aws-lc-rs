@@ -3,3 +3,7 @@ init:
 
 format:
 	cargo fmt -- --color auto --files-with-diff --verbose 
+
+clippy:
+	cargo clippy -- -W clippy::all
+

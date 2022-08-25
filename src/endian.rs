@@ -12,6 +12,7 @@ where
 }
 
 /// Allow access to a slice of  of `Encoding<T>` as a slice of bytes.
+#[allow(dead_code)]
 pub fn as_byte_slice<E: Encoding<T>, T>(x: &[E]) -> &[u8] {
     unsafe {
         core::slice::from_raw_parts(x.as_ptr() as *const u8, x.len() * core::mem::size_of::<E>())

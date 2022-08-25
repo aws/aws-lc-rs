@@ -20,32 +20,30 @@
 //! probably change if/when we support 16-bit platforms or platforms where
 //! `usize` and `uintptr_t` are different sizes.
 
-// Keep in sync with the checks in base.h that verify these assumptions.
-#[allow(non_camel_case_types)]
-pub(crate) type int = i32;
-#[allow(non_camel_case_types)]
-pub(crate) type uint = u32;
-#[allow(non_camel_case_types)]
-pub(crate) type size_t = usize;
-
 #[cfg(all(test, any(unix, windows)))]
 mod tests {
-    use crate::c;
+    // Keep in sync with the checks in base.h that verify these assumptions.
+    #[allow(non_camel_case_types)]
+    pub(crate) type int = i32;
+    #[allow(non_camel_case_types)]
+    pub(crate) type uint = u32;
+    #[allow(non_camel_case_types)]
+    pub(crate) type size_t = usize;
 
     #[test]
     fn test_libc_compatible() {
         {
-            let x: c::int = 1;
+            let x: int = 1;
             let _x: libc::c_int = x;
         }
 
         {
-            let x: c::uint = 1;
+            let x: uint = 1;
             let _x: libc::c_uint = x;
         }
 
         {
-            let x: c::size_t = 1;
+            let x: size_t = 1;
             let _x: libc::size_t = x;
             let _x: usize = x;
         }

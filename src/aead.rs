@@ -606,14 +606,7 @@ pub struct Algorithm {
     // TODO: Make this `usize`.
     max_input_len: u64,
 }
-/*
-const fn max_input_len(block_len: usize, overhead_blocks_per_nonce: usize) -> u64 {
-    // Each of our AEADs use a 32-bit block counter so the maximum is the
-    // largest input that will not overflow the counter.
-    ((1u64 << 32) - polyfill::u64_from_usize(overhead_blocks_per_nonce))
-        * polyfill::u64_from_usize(block_len)
-}
-*/
+
 impl Algorithm {
     /// The length of the key.
     #[inline(always)]
@@ -665,6 +658,7 @@ impl AsRef<[u8]> for Tag {
     }
 }
 
+#[allow(dead_code)]
 const MAX_KEY_LEN: usize = 32;
 
 // All the AEADs we support use 128-bit tags.
@@ -679,12 +673,6 @@ fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), e
         return Err(error::Unspecified);
     }
     Ok(())
-}
-
-#[derive(Clone, Copy)]
-enum Direction {
-    Opening { in_prefix_len: usize },
-    Sealing,
 }
 
 pub type CounterBEu32 = counter::Counter<BigEndian<u32>>;
@@ -705,11 +693,10 @@ where
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
 
         let plaintext_len = in_out.as_mut().len();
 
-        in_out.extend(&vec![0u8; TAG_LEN]);
+        in_out.extend([0u8; TAG_LEN].iter());
 
         let mut out_len = MaybeUninit::<usize>::uninit();
         let mut_in_out = in_out.as_mut();
@@ -720,7 +707,7 @@ where
             mut_in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len + TAG_LEN,
-            nonce.as_ptr(),
+            nonce.0.as_ptr(),
             NONCE_LEN,
             mut_in_out.as_ptr(),
             plaintext_len,
@@ -747,7 +734,6 @@ pub(crate) fn aead_open_combined(
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
 
         let plaintext_len = in_out.as_mut().len() - TAG_LEN;
 
@@ -758,7 +744,7 @@ pub(crate) fn aead_open_combined(
             in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len,
-            nonce.as_ptr(),
+            nonce.0.as_ptr(),
             NONCE_LEN,
             in_out.as_ptr(),
             plaintext_len + TAG_LEN,

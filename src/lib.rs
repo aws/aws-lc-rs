@@ -27,6 +27,7 @@ pub fn init() {
     });
 }
 
+#[allow(dead_code)]
 unsafe fn dump_error() {
     let err = aws_lc_sys::ERR_get_error();
     let lib = aws_lc_sys::ERR_GET_LIB(err);
