@@ -2,11 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 use aws_lc_ring_facade::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
-use hex::*;
-
-pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
-    <Vec<u8>>::from_hex(hex_str).map_err(|_e| String::from("Oops"))
-}
 
 #[derive(Debug)]
 pub enum AeadAlgorithm {

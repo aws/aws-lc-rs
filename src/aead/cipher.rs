@@ -76,7 +76,7 @@ impl SymmetricCipherKey {
             if gcm_cipher_ctx.is_null() {
                 return Err(error::Unspecified);
             }
-            ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
+            ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 16);
             Ok(SymmetricCipherKey::Aes128(
                 kb.assume_init(),
                 ecb_cipher,
