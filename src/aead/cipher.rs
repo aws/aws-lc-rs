@@ -208,7 +208,9 @@ fn encrypt_block_aes_ecb(
             return Err(error::Unspecified);
         }
 
-        Ok(Block::from(&ctext))
+        // TODO: Why does this line help avoid a SIGSEGV?
+        let result: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::from(ctext);
+        Ok(Block::from(&result))
     }
 }
 
