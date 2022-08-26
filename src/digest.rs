@@ -147,9 +147,14 @@ impl Context {
 /// # }
 /// ```
 pub fn digest(algorithm: &'static Algorithm, data: &[u8]) -> Digest {
-    let mut ctx = Context::new(algorithm);
-    ctx.update(data);
-    ctx.finish()
+    let mut output: Vec<u8> = vec![0u8; MAX_OUTPUT_LEN];
+    (algorithm.one_shot_hash)(data, &mut output);
+
+    Digest {
+        algorithm,
+        digest_msg: <[u8; MAX_OUTPUT_LEN]>::try_from(&output[..MAX_OUTPUT_LEN]).unwrap(),
+        digest_len: algorithm.output_len,
+    }
 }
 
 /// A calculated digest value.
@@ -207,6 +212,8 @@ pub struct Algorithm {
     pub block_len: usize,
 
     max_input_len: usize,
+
+    one_shot_hash: fn(msg: &[u8], output: &mut [u8]),
 
     id: AlgorithmID,
 }
