@@ -10,9 +10,9 @@ pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
 
 #[derive(Debug)]
 pub enum AeadAlgorithm {
-    MY_AES_128_GCM,
-    MY_AES_256_GCM,
-    MY_CHACHA20_POLY1305,
+    Aes128Gcm,
+    Aes256Gcm,
+    Chacha20Poly1305,
 }
 
 pub struct AeadConfig {
@@ -80,9 +80,9 @@ mod ring_benchmarks {
 
     fn algorithm(config: &crate::AeadConfig) ->  &'static aead::Algorithm {
         black_box(match &config.algorithm {
-            crate::AeadAlgorithm::MY_AES_128_GCM => &aead::AES_128_GCM,
-            crate::AeadAlgorithm::MY_AES_256_GCM => &aead::AES_256_GCM,
-            crate::AeadAlgorithm::MY_CHACHA20_POLY1305 => &aead::CHACHA20_POLY1305,
+            crate::AeadAlgorithm::Aes128Gcm => &aead::AES_128_GCM,
+            crate::AeadAlgorithm::Aes256Gcm => &aead::AES_256_GCM,
+            crate::AeadAlgorithm::Chacha20Poly1305 => &aead::CHACHA20_POLY1305,
         })
     }
 
@@ -134,17 +134,16 @@ benchmark_aead!(aws_lc_ring_facade);
 fn test_aes_128_gcm(c: &mut Criterion) {
     test::run(
         test_file!("data/aead_aes_128_gcm_benchmarks.txt"),
-        |section, test_case| {
-            println!("Testcase: {:?}", test_case);
-
+        |_section, test_case| {
             let config = AeadConfig::new(
-                AeadAlgorithm::MY_AES_128_GCM,
+                AeadAlgorithm::Aes128Gcm,
                 test_case.consume_bytes("KEY").as_slice(),
                 test_case.consume_bytes("NONCE").as_slice(),
                 test_case.consume_string("AD").as_str(),
                 test_case.consume_bytes("IN").as_slice(),
                 test_case.consume_string("DESC").as_str(),
             );
+            test_aead_separate(c, &config);
             test_aead_append(c, &config);
             test_aead_open(c, &config);
             Ok(())
@@ -154,18 +153,17 @@ fn test_aes_128_gcm(c: &mut Criterion) {
 
 fn test_aes_256_gcm(c: &mut Criterion) {
     test::run(
-        test_file!("data/aead_aes_128_gcm_benchmarks.txt"),
-        |section, test_case| {
-            println!("Testcase: {:?}", test_case);
-
+        test_file!("data/aead_aes_256_gcm_benchmarks.txt"),
+        |_section, test_case| {
             let config = AeadConfig::new(
-                AeadAlgorithm::MY_AES_128_GCM,
+                AeadAlgorithm::Aes256Gcm,
                 test_case.consume_bytes("KEY").as_slice(),
                 test_case.consume_bytes("NONCE").as_slice(),
                 test_case.consume_string("AD").as_str(),
                 test_case.consume_bytes("IN").as_slice(),
                 test_case.consume_string("DESC").as_str(),
             );
+            test_aead_separate(c, &config);
             test_aead_append(c, &config);
             test_aead_open(c, &config);
             Ok(())
@@ -175,20 +173,19 @@ fn test_aes_256_gcm(c: &mut Criterion) {
 
 fn test_chacha20(c: &mut Criterion) {
     test::run(
-        test_file!("data/aead_aes_128_gcm_benchmarks.txt"),
-        |section, test_case| {
-            println!("Testcase: {:?}", test_case);
-
+        test_file!("data/aead_chacha20_poly1305_benchmarks.txt"),
+        |_section, test_case| {
             let config = AeadConfig::new(
-                AeadAlgorithm::MY_AES_128_GCM,
+                AeadAlgorithm::Chacha20Poly1305,
                 test_case.consume_bytes("KEY").as_slice(),
                 test_case.consume_bytes("NONCE").as_slice(),
                 test_case.consume_string("AD").as_str(),
                 test_case.consume_bytes("IN").as_slice(),
                 test_case.consume_string("DESC").as_str(),
             );
-            //test_aead_append(c, &config);
-            //test_aead_open(c, &config);
+            test_aead_separate(c, &config);
+            test_aead_append(c, &config);
+            test_aead_open(c, &config);
             Ok(())
         },
     );
@@ -207,7 +204,7 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
     c.bench_function(&aws_bench_name, |b| {
         b.iter(|| {
             let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
-            aws_lc_ring_facade_benchmarks::seal_separate(
+            let _tag = aws_lc_ring_facade_benchmarks::seal_separate(
                 &mut aws_sealing_key,
                 aws_aad,
                 &mut in_out,
@@ -225,7 +222,7 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
     c.bench_function(&ring_bench_name, |b| {
         b.iter(|| {
             let ring_aad = ring_benchmarks::aad(config);
-            ring_benchmarks::seal_separate(&mut ring_sealing_key, ring_aad, &mut in_out);
+            let _tag = ring_benchmarks::seal_separate(&mut ring_sealing_key, ring_aad, &mut in_out);
         })
     });
 }
@@ -306,5 +303,5 @@ fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
     });
 }
 
-criterion_group!(benches, test_aes_128_gcm); //, test_aes_256_gcm, test_chacha20,);
+criterion_group!(benches, test_aes_128_gcm, test_aes_256_gcm, test_chacha20,);
 criterion_main!(benches);
