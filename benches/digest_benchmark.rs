@@ -47,8 +47,7 @@ macro_rules! benchmark_digest {
                 })
             }
 
-            pub fn run_digest(config: &DigestConfig, chunk_len: usize) {
-                let chunk = vec![0u8; chunk_len];
+            pub fn run_digest(config: &DigestConfig, chunk: &[u8]) {
                 let mut ctx = Context::new(algorithm(&config));
                 ctx.update(&chunk);
                 ctx.finish();
@@ -100,13 +99,15 @@ fn bench_digest(c: &mut Criterion, config: &DigestConfig) {
     // implementation. Ring does the hashing block computations entirely in Rust.
     // https://github.com/briansmith/ring/blob/main/src/digest.rs#L21-L25
     for chunk_len in g_chunk_lengths {
+        let chunk = vec![0u8; chunk_len];
+
         let aws_bench_name = format!(
             "aws-lc-{:?}: {} ({} bytes)",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&aws_bench_name, |b| {
             b.iter(|| {
-                aws_lc_ring_facade_benchmarks::run_digest(config, chunk_len);
+                aws_lc_ring_facade_benchmarks::run_digest(config, &chunk);
             })
         });
 
@@ -116,7 +117,7 @@ fn bench_digest(c: &mut Criterion, config: &DigestConfig) {
         );
         c.bench_function(&ring_bench_name, |b| {
             b.iter(|| {
-                ring_benchmarks::run_digest(config, chunk_len);
+                ring_benchmarks::run_digest(config, &chunk);
             })
         });
     }
