@@ -21,3 +21,7 @@ criterion = "0.3"
 [[bench]]
 name = "aead_benchmark"
 harness = false
+
+[[bench]]
+name = "digest_benchmark"
+harness = false
