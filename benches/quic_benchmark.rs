@@ -110,6 +110,38 @@ fn test_aes_128(c: &mut Criterion) {
         },
     );
 }
+fn test_aes_256(c: &mut Criterion) {
+    test::run(
+        test_file!("data/quic_aes_256_tests.txt"),
+        |_section, test_case| {
+            let config = QuicConfig::new(
+                QuicAlgorithm::Aes128Gcm,
+                test_case.consume_bytes("KEY").as_slice(),
+                test_case.consume_bytes("SAMPLE").as_slice(),
+                test_case.consume_string("DESC").as_str(),
+            );
+            println!("Testcase: {:?}", test_case);
+            test_new_mask(c, &config);
+            Ok(())
+        },
+    );
+}
+fn test_chacha20(c: &mut Criterion) {
+    test::run(
+        test_file!("data/quic_chacha20_tests.txt"),
+        |_section, test_case| {
+            let config = QuicConfig::new(
+                QuicAlgorithm::Aes128Gcm,
+                test_case.consume_bytes("KEY").as_slice(),
+                test_case.consume_bytes("SAMPLE").as_slice(),
+                test_case.consume_string("DESC").as_str(),
+            );
+            println!("Testcase: {:?}", test_case);
+            test_new_mask(c, &config);
+            Ok(())
+        },
+    );
+}
 
-criterion_group!(benches, test_aes_128,);
+criterion_group!(benches, test_aes_128, test_aes_256, test_chacha20);
 criterion_main!(benches);
