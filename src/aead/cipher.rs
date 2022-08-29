@@ -199,18 +199,11 @@ fn encrypt_block_aes_ecb(
             return Err(error::Unspecified);
         }
 
-        let mut ctext = cipher_text.assume_init();
-        if 1 != aws_lc_sys::EVP_EncryptFinal_ex(
-            ctx,
-            ctext[BLOCK_LEN..].as_mut_ptr(),
-            out_len.as_mut_ptr(),
-        ) {
+        if 1 != aws_lc_sys::EVP_CIPHER_CTX_reset(ctx) {
             return Err(error::Unspecified);
         }
 
-        // TODO: Why does this line help avoid a SIGSEGV?
-        let result: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::from(ctext);
-        Ok(Block::from(&result))
+        Ok(Block::from(&cipher_text.assume_init()))
     }
 }
 

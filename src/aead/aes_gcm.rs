@@ -88,6 +88,10 @@ pub(crate) fn aes_gcm_seal_separate(
             inner_tag.as_mut_ptr().cast(),
         );
 
+        if 1 != aws_lc_sys::EVP_CIPHER_CTX_reset(ctx) {
+            return Err(error::Unspecified);
+        }
+
         Ok(Tag(inner_tag.assume_init()))
     }
 }
