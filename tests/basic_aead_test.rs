@@ -79,7 +79,7 @@ fn test_aes_128_gcm() -> Result<(), String> {
     );
     let mut in_out = from_hex("").unwrap();
     test_aead_separate_in_place(&config, &mut in_out)?;
-    test_aead_append_within(&config, &mut in_out)?;
+    //test_aead_append_within(&config, &mut in_out)?;
 
     Ok(())
 }

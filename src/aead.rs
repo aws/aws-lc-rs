@@ -24,12 +24,12 @@
 //! [AEAD]: http://www-cse.ucsd.edu/~mihir/papers/oem.html
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
-use crate::aead::cipher::SymmetricCipherKey;
 use crate::{derive_debug_via_id, error, polyfill};
 use aes_gcm::*;
 use std::fmt::Debug;
 
 use crate::endian::BigEndian;
+use key_inner::KeyInner;
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
 
@@ -39,7 +39,9 @@ mod chacha;
 mod cipher;
 mod counter;
 mod iv;
+mod key_inner;
 mod nonce;
+pub mod quic;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
@@ -277,21 +279,6 @@ impl<N: NonceSequence> Debug for SealingKey<N> {
 }
 
 impl<N: NonceSequence> SealingKey<N> {
-    /// Deprecated. Renamed to `seal_in_place_append_tag()`.
-    #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
-    #[inline]
-    pub fn seal_in_place<A, InOut>(
-        &mut self,
-        aad: Aad<A>,
-        in_out: &mut InOut,
-    ) -> Result<(), error::Unspecified>
-    where
-        A: AsRef<[u8]>,
-        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
-    {
-        self.seal_in_place_append_tag(aad, in_out)
-    }
-
     /// Encrypts and signs (“seals”) data in place, appending the tag to the
     /// resulting ciphertext.
     ///
@@ -442,113 +429,6 @@ impl Debug for UnboundKey {
     }
 }
 
-#[allow(
-    clippy::large_enum_variant,
-    variant_size_differences,
-    non_camel_case_types
-)]
-enum KeyInner {
-    AES_128_GCM(
-        SymmetricCipherKey,
-        *const aws_lc_sys::EVP_CIPHER,
-        *mut aws_lc_sys::EVP_CIPHER_CTX,
-        *const aws_lc_sys::EVP_AEAD,
-        *mut aws_lc_sys::EVP_AEAD_CTX,
-    ),
-    AES_256_GCM(
-        SymmetricCipherKey,
-        *const aws_lc_sys::EVP_CIPHER,
-        *mut aws_lc_sys::EVP_CIPHER_CTX,
-        *const aws_lc_sys::EVP_AEAD,
-        *mut aws_lc_sys::EVP_AEAD_CTX,
-    ),
-    CHACHA20_POLY1305(
-        SymmetricCipherKey,
-        *const aws_lc_sys::EVP_AEAD,
-        *mut aws_lc_sys::EVP_AEAD_CTX,
-    ),
-}
-
-impl KeyInner {
-    fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
-        unsafe {
-            match key {
-                SymmetricCipherKey::Aes128(_) => {
-                    let cipher = aws_lc_sys::EVP_aes_128_gcm();
-                    let cipher_ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
-                    if cipher_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    let aead = aws_lc_sys::EVP_aead_aes_128_gcm();
-                    let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
-                        aead,
-                        key.key_bytes().as_ptr().cast(),
-                        key.key_bytes().len(),
-                        TAG_LEN,
-                    );
-                    if aead_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    Ok(KeyInner::AES_128_GCM(
-                        key, cipher, cipher_ctx, aead, aead_ctx,
-                    ))
-                }
-                SymmetricCipherKey::Aes256(_) => {
-                    let cipher = aws_lc_sys::EVP_aes_256_gcm();
-                    let cipher_ctx = aws_lc_sys::EVP_CIPHER_CTX_new();
-                    if cipher_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    let aead = aws_lc_sys::EVP_aead_aes_256_gcm();
-                    let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
-                        aead,
-                        key.key_bytes().as_ptr().cast(),
-                        key.key_bytes().len(),
-                        TAG_LEN,
-                    );
-                    if aead_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    Ok(KeyInner::AES_256_GCM(
-                        key, cipher, cipher_ctx, aead, aead_ctx,
-                    ))
-                }
-                SymmetricCipherKey::ChaCha20Poly1305(_) => {
-                    let aead = aws_lc_sys::EVP_aead_chacha20_poly1305();
-                    let aead_ctx = aws_lc_sys::EVP_AEAD_CTX_new(
-                        aead,
-                        key.key_bytes().as_ptr().cast(),
-                        key.key_bytes().len(),
-                        TAG_LEN,
-                    );
-                    if aead_ctx.is_null() {
-                        return Err(error::Unspecified);
-                    }
-                    Ok(KeyInner::CHACHA20_POLY1305(key, aead, aead_ctx))
-                }
-            }
-        }
-    }
-}
-
-impl Drop for KeyInner {
-    fn drop(&mut self) {
-        unsafe {
-            match self {
-                KeyInner::AES_128_GCM(.., cipher_ctx, _, aead_ctx) => {
-                    aws_lc_sys::EVP_CIPHER_CTX_free(*cipher_ctx);
-                    aws_lc_sys::EVP_AEAD_CTX_free(*aead_ctx);
-                }
-                KeyInner::AES_256_GCM(.., cipher_ctx, _, aead_ctx) => {
-                    aws_lc_sys::EVP_CIPHER_CTX_free(*cipher_ctx);
-                    aws_lc_sys::EVP_AEAD_CTX_free(*aead_ctx);
-                }
-                KeyInner::CHACHA20_POLY1305(.., ctx) => aws_lc_sys::EVP_AEAD_CTX_free(*ctx),
-            }
-        }
-    }
-}
-
 impl UnboundKey {
     /// Constructs an `UnboundKey`.
     ///
@@ -666,8 +546,7 @@ impl LessSafeKey {
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
-        self.seal_in_place_separate_tag(nonce, aad, in_out.as_mut())
-            .map(|tag| in_out.extend(tag.as_ref()))
+        seal_in_place_append_tag_(&self.key, nonce, Aad::from(aad.as_ref()), in_out)
     }
 
     /// Like `SealingKey::seal_in_place_separate_tag()`, except it accepts an
@@ -712,14 +591,7 @@ pub struct Algorithm {
     // TODO: Make this `usize`.
     max_input_len: u64,
 }
-/*
-const fn max_input_len(block_len: usize, overhead_blocks_per_nonce: usize) -> u64 {
-    // Each of our AEADs use a 32-bit block counter so the maximum is the
-    // largest input that will not overflow the counter.
-    ((1u64 << 32) - polyfill::u64_from_usize(overhead_blocks_per_nonce))
-        * polyfill::u64_from_usize(block_len)
-}
-*/
+
 impl Algorithm {
     /// The length of the key.
     #[inline(always)]
@@ -771,6 +643,7 @@ impl AsRef<[u8]> for Tag {
     }
 }
 
+#[allow(dead_code)]
 const MAX_KEY_LEN: usize = 32;
 
 // All the AEADs we support use 128-bit tags.
@@ -779,6 +652,7 @@ const TAG_LEN: usize = 16;
 /// The maximum length of a tag for the algorithms in this module.
 pub const MAX_TAG_LEN: usize = TAG_LEN;
 
+#[inline]
 fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), error::Unspecified> {
     if polyfill::u64_from_usize(in_out_len) > alg.max_input_len {
         return Err(error::Unspecified);
@@ -786,13 +660,8 @@ fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), e
     Ok(())
 }
 
-#[derive(Clone, Copy)]
-enum Direction {
-    Opening { in_prefix_len: usize },
-    Sealing,
-}
-
-pub type Counter = counter::Counter<BigEndian<u32>>;
+type CounterBEu32 = counter::Counter<BigEndian<u32>>;
+pub type Counter = CounterBEu32;
 
 #[inline]
 pub(crate) fn aead_seal_combined<InOut>(
@@ -810,11 +679,11 @@ where
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
+        let nonce = nonce.as_ref();
 
         let plaintext_len = in_out.as_mut().len();
 
-        in_out.extend(&vec![0u8; TAG_LEN]);
+        in_out.extend([0u8; TAG_LEN].iter());
 
         let mut out_len = MaybeUninit::<usize>::uninit();
         let mut_in_out = in_out.as_mut();
@@ -852,7 +721,7 @@ pub(crate) fn aead_open_combined(
             KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
             KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
         };
-        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
+        let nonce = nonce.as_ref();
 
         let plaintext_len = in_out.as_mut().len() - TAG_LEN;
 
@@ -874,5 +743,34 @@ pub(crate) fn aead_open_combined(
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test::from_hex;
+
+    #[test]
+    fn test_aes_128() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        let og_nonce = from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap();
+        let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
+        let unbound_key = UnboundKey::new(&crate::aead::AES_128_GCM, &key).unwrap();
+        let less_safe_key = LessSafeKey::new(unbound_key);
+
+        let nonce = og_nonce.as_slice().try_into().unwrap();
+        let mut in_out = Vec::from(plaintext.as_slice());
+
+        less_safe_key
+            .seal_in_place_append_tag(nonce, Aad::empty(), &mut in_out)
+            .unwrap();
+
+        let nonce = og_nonce.as_slice().try_into().unwrap();
+        less_safe_key
+            .open_in_place(nonce, Aad::empty(), &mut in_out)
+            .unwrap();
+
+        assert_eq!(plaintext, in_out[..plaintext.len()]);
     }
 }

@@ -24,7 +24,7 @@ use core::convert::TryInto;
 /// Intentionally not `Clone` to ensure counters aren't forked.
 #[repr(C)]
 pub struct Counter<U32> {
-    u32s: [U32; COUNTER_LEN],
+    pub(super) u32s: [U32; COUNTER_LEN],
 }
 
 const COUNTER_LEN: usize = 4;
@@ -42,14 +42,6 @@ where
     }
     pub fn one(nonce: Nonce) -> Self {
         Self::new(nonce, 1)
-    }
-
-    #[cfg(test)]
-    pub fn from_test_vector(nonce: &[u8], initial_counter: u32) -> Self {
-        Self::new(
-            Nonce::try_assume_unique_for_key(nonce).unwrap(),
-            initial_counter,
-        )
     }
 
     fn new(nonce: Nonce, initial_counter: u32) -> Self {
@@ -93,13 +85,4 @@ impl Layout for BigEndian<u32> {
 
 impl Layout for LittleEndian<u32> {
     const COUNTER_INDEX: usize = 0;
-}
-
-impl<U32> Into<Iv> for Counter<U32>
-where
-    [U32; 4]: ArrayEncoding<[u8; IV_LEN]>,
-{
-    fn into(self) -> Iv {
-        Iv::assume_unique_for_key(*self.u32s.as_byte_array())
-    }
 }

@@ -9,6 +9,7 @@ edition = "2021"
 untrusted = { version = "0.9" }
 aws-lc-sys = { path = "deps/aws-lc-sys", version = "0.1.0" }
 zeroize = "1.5"
+hex = "0.4"
 # temporarily move ring from dev-dependencies to dependencies, since HMAC relies on
 # ring's rand::SystemRandom.
 # TODO: move back to dev-dependencies when we implement rand.
@@ -17,3 +18,13 @@ ring = "0.16"
 [dev-dependencies]
 rand = "0.8"
 libc = "0.2"
+paste = "1.0"
+criterion = "0.3"
+
+[[bench]]
+name = "aead_benchmark"
+harness = false
+
+#[[bench]]
+#name = "digest_benchmark"
+#harness = false

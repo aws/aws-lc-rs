@@ -54,6 +54,8 @@ pub static SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
     block_len: BLOCK_LEN,
     max_input_len: SHA256_MAX_INPUT_LEN,
 
+    one_shot_hash: sha1_digest,
+
     id: AlgorithmID::SHA1,
 };
 
@@ -65,6 +67,8 @@ pub static SHA256: Algorithm = Algorithm {
     chaining_len: SHA256_OUTPUT_LEN,
     block_len: 512 / 8,
     max_input_len: SHA256_MAX_INPUT_LEN,
+
+    one_shot_hash: sha256_digest,
 
     id: AlgorithmID::SHA256,
 };
@@ -78,6 +82,8 @@ pub static SHA384: Algorithm = Algorithm {
     block_len: SHA512_BLOCK_LEN,
     max_input_len: SHA512_MAX_INPUT_LEN,
 
+    one_shot_hash: sha384_digest,
+
     id: AlgorithmID::SHA384,
 };
 
@@ -89,6 +95,8 @@ pub static SHA512: Algorithm = Algorithm {
     chaining_len: SHA512_OUTPUT_LEN,
     block_len: SHA512_BLOCK_LEN,
     max_input_len: SHA512_MAX_INPUT_LEN,
+
+    one_shot_hash: sha512_digest,
 
     id: AlgorithmID::SHA512,
 };
@@ -102,5 +110,37 @@ pub static SHA512_256: Algorithm = Algorithm {
     block_len: SHA512_BLOCK_LEN,
     max_input_len: SHA512_MAX_INPUT_LEN,
 
+    one_shot_hash: sha512_256_digest,
+
     id: AlgorithmID::SHA512_256,
 };
+
+fn sha1_digest(msg: &[u8], output: &mut [u8]) {
+    unsafe {
+        aws_lc_sys::SHA1(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+    }
+}
+
+fn sha256_digest(msg: &[u8], output: &mut [u8]) {
+    unsafe {
+        aws_lc_sys::SHA256(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+    }
+}
+
+fn sha384_digest(msg: &[u8], output: &mut [u8]) {
+    unsafe {
+        aws_lc_sys::SHA384(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+    }
+}
+
+fn sha512_digest(msg: &[u8], output: &mut [u8]) {
+    unsafe {
+        aws_lc_sys::SHA512(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+    }
+}
+
+fn sha512_256_digest(msg: &[u8], output: &mut [u8]) {
+    unsafe {
+        aws_lc_sys::SHA512_256(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+    }
+}

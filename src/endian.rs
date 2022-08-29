@@ -11,13 +11,6 @@ where
     const ZERO: Self;
 }
 
-/// Allow access to a slice of  of `Encoding<T>` as a slice of bytes.
-pub fn as_byte_slice<E: Encoding<T>, T>(x: &[E]) -> &[u8] {
-    unsafe {
-        core::slice::from_raw_parts(x.as_ptr() as *const u8, x.len() * core::mem::size_of::<E>())
-    }
-}
-
 /// Work around the inability to implement `AsRef` for arrays of `Encoding`s
 /// due to the coherence rules.
 pub trait ArrayEncoding<T> {
@@ -34,13 +27,6 @@ macro_rules! define_endian {
     ($endian:ident) => {
         #[repr(transparent)]
         pub struct $endian<T>(T);
-
-        impl<T> $endian<T> {
-            #[deprecated]
-            pub fn into_raw_value(self) -> T {
-                self.0
-            }
-        }
 
         impl<T> Copy for $endian<T> where T: Copy {}
 

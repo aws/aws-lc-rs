@@ -1,15 +1,16 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::aead::{error, Aad, Algorithm, AlgorithmID, Counter, KeyInner, Nonce, Tag, TAG_LEN};
+use crate::aead::{error, Aad, Algorithm, AlgorithmID, CounterBEu32, Nonce, Tag, TAG_LEN};
 use std::cmp::min;
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
 
 use crate::aead::cipher::SymmetricCipherKey;
-use std::ptr::null_mut;
+use crate::aead::key_inner::KeyInner;
+use std::ptr::{null, null_mut};
 
-const CHUNK_SIZE: usize = 24576;
+const CHUNK_SIZE: usize = 4096;
 
 #[inline]
 pub(crate) fn aes_gcm_seal_separate(
@@ -19,28 +20,23 @@ pub(crate) fn aes_gcm_seal_separate(
     in_out: &mut [u8],
 ) -> Result<Tag, error::Unspecified> {
     unsafe {
-        let (aes_key, cipher, ctx) = match key {
-            KeyInner::AES_128_GCM(aes_key, cipher, ctx, ..) => (aes_key, cipher, ctx),
-            KeyInner::AES_256_GCM(aes_key, cipher, ctx, ..) => (aes_key, cipher, ctx),
+        let gcm_ctx = match key.cipher_key() {
+            SymmetricCipherKey::Aes128(.., gcm_ctx) => *gcm_ctx,
+            SymmetricCipherKey::Aes256(.., gcm_ctx) => *gcm_ctx,
             _ => panic!("Unsupport algorithm"),
         };
 
-        let nonce = Counter::one(nonce).increment().into_bytes_less_safe();
+        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
 
-        if 1 != aws_lc_sys::EVP_EncryptInit_ex(
-            *ctx,
-            *cipher,
-            null_mut(),
-            aes_key.key_bytes().as_ptr(),
-            nonce.as_ptr(),
-        ) {
+        if 1 != aws_lc_sys::EVP_EncryptInit_ex(gcm_ctx, null(), null_mut(), null(), nonce.as_ptr())
+        {
             return Err(error::Unspecified);
         }
 
         let aad_str = aad.0;
         let mut out_len = MaybeUninit::<c_int>::uninit();
         if 1 != aws_lc_sys::EVP_EncryptUpdate(
-            *ctx,
+            gcm_ctx,
             null_mut(),
             out_len.as_mut_ptr(),
             aad_str.as_ptr(),
@@ -57,7 +53,7 @@ pub(crate) fn aes_gcm_seal_separate(
             let in_len = min(plaintext_len - pos, CHUNK_SIZE);
             let next_plain_chunk = &in_out[pos..(pos + in_len)];
             if 1 != aws_lc_sys::EVP_EncryptUpdate(
-                *ctx,
+                gcm_ctx,
                 cipher_text.as_mut_ptr().cast(),
                 out_len.as_mut_ptr(),
                 next_plain_chunk.as_ptr(),
@@ -71,13 +67,13 @@ pub(crate) fn aes_gcm_seal_separate(
             next_cipher_chunk.copy_from_slice(&ctext[0..olen]);
             pos += olen;
         }
-        if 1 != aws_lc_sys::EVP_EncryptFinal_ex(*ctx, null_mut(), out_len.as_mut_ptr()) {
+        if 1 != aws_lc_sys::EVP_EncryptFinal_ex(gcm_ctx, null_mut(), out_len.as_mut_ptr()) {
             return Err(error::Unspecified);
         }
 
         let mut inner_tag = MaybeUninit::<[u8; TAG_LEN]>::uninit();
         aws_lc_sys::EVP_CIPHER_CTX_ctrl(
-            *ctx,
+            gcm_ctx,
             aws_lc_sys::EVP_CTRL_GCM_GET_TAG,
             TAG_LEN as c_int,
             inner_tag.as_mut_ptr().cast(),
