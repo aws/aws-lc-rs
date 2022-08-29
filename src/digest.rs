@@ -252,6 +252,19 @@ pub const MAX_OUTPUT_LEN: usize = 512 / 8;
 /// algorithms in this module.
 pub const MAX_CHAINING_LEN: usize = MAX_OUTPUT_LEN;
 
+/// Match digest types for EVP_MD functions.
+pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> *const aws_lc_sys::EVP_MD {
+    return unsafe {
+        match algorithm_id {
+            AlgorithmID::SHA1 => aws_lc_sys::EVP_sha1(),
+            AlgorithmID::SHA256 => aws_lc_sys::EVP_sha256(),
+            AlgorithmID::SHA384 => aws_lc_sys::EVP_sha384(),
+            AlgorithmID::SHA512 => aws_lc_sys::EVP_sha512(),
+            AlgorithmID::SHA512_256 => aws_lc_sys::EVP_sha512_256(),
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     mod max_input {

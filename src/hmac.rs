@@ -322,9 +322,7 @@ impl Context {
 /// It is generally not safe to implement HMAC verification by comparing the
 /// return value of `sign` to a tag. Use `verify` for verification instead.
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
-    let mut ctx = Context::with_key(key);
-    ctx.update(data);
-    ctx.sign()
+    HMACContext::one_shot(key, data)
 }
 
 /// Calculates the HMAC of `data` using the signing key `key`, and verifies
