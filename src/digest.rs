@@ -30,7 +30,10 @@ use crate::{debug, derive_debug_via_id};
 mod digest_ctx;
 mod sha;
 use digest_ctx::DigestContext;
-pub use sha::{SHA1_FOR_LEGACY_USE_ONLY, SHA256, SHA384, SHA512, SHA512_256};
+pub use sha::{
+    SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA256, SHA256_OUTPUT_LEN, SHA384,
+    SHA384_OUTPUT_LEN, SHA512, SHA512_256, SHA512_256_OUTPUT_LEN, SHA512_OUTPUT_LEN,
+};
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
 

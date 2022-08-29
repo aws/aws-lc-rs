@@ -1,4 +1,4 @@
-// Copyright 2015-2016 Brian Smith.
+// Copyright 2015-2022 Brian Smith.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -11,6 +11,9 @@
 // WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 //! HMAC is specified in [RFC 2104].
 //!
@@ -25,6 +28,10 @@
 //! used.
 //!
 //! # Examples:
+//!
+//! TODO: Update document tests to use aws-lc-facade::hmac when aws-lc-facade::rand is implemented.
+//! The current document tests fail with conflicting error results from rand and hmac.
+//! https://github.com/briansmith/ring/blame/be3443f5c6ea3caa52c9f801036551bd2ada8f19/src/hmac.rs#L29-L104
 //!
 //! ## Signing a value and verifying it wasn't tampered with
 //!
@@ -43,7 +50,7 @@
 //!
 //! hmac::verify(&key, msg.as_bytes(), tag.as_ref())?;
 //!
-//! // # Ok::<(), ring::error::Unspecified>(())
+//! # Ok::<(), ring::error::Unspecified>(())
 //! ```
 //!
 //! ## Using the one-shot API:
@@ -68,7 +75,7 @@
 //! let v_key = hmac::Key::new(hmac::HMAC_SHA256, key_value.as_ref());
 //! hmac::verify(&v_key, msg.as_bytes(), tag.as_ref())?;
 //!
-//!  // # Ok::<(), ring::error::Unspecified>(())
+//! # Ok::<(), ring::error::Unspecified>(())
 //! ```
 //!
 //! ## Using the multi-part API:
@@ -100,22 +107,15 @@
 //! }
 //! hmac::verify(&v_key, &msg.as_ref(), tag.as_ref())?;
 //!
-//!  // # Ok::<(), ring::error::Unspecified>(())
+//! # Ok::<(), ring::error::Unspecified>(())
 //! ```
-//!
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
-//! [code for `ring::pbkdf2`]:
-//!     https://github.com/briansmith/ring/blob/main/src/pbkdf2.rs
-//! [code for `ring::hkdf`]:
-//!     https://github.com/briansmith/ring/blob/main/src/hkdf.rs
 
-use crate::digest::MAX_OUTPUT_LEN;
+mod hmac_ctx;
 use crate::hmac::hmac_ctx::HMACContext;
 use crate::{constant_time, digest, error};
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
-
-mod hmac_ctx;
 
 /// An HMAC algorithm.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -146,7 +146,7 @@ pub static HMAC_SHA512: Algorithm = Algorithm(&digest::SHA512);
 /// For a given tag `t`, use `t.as_ref()` to get the tag value as a byte slice.
 #[derive(Clone, Copy, Debug)]
 pub struct Tag {
-    msg: [u8; MAX_OUTPUT_LEN],
+    msg: [u8; digest::MAX_OUTPUT_LEN],
     msg_len: usize,
 }
 
@@ -160,14 +160,14 @@ impl AsRef<[u8]> for Tag {
 /// A key to use for HMAC signing.
 #[derive(Clone)]
 pub struct Key {
-    algorithm: &'static Algorithm,
-    key_value: [u8; digest::MAX_BLOCK_LEN],
+    algorithm: &'static digest::Algorithm,
+    key_value: Vec<u8>,
 }
 
 impl core::fmt::Debug for Key {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("Key")
-            .field("algorithm", self.algorithm().digest_algorithm())
+            .field("algorithm", self.algorithm)
             .finish()
     }
 }
@@ -180,16 +180,18 @@ impl Key {
     /// recommendation in [RFC 2104 Section 3].
     ///
     /// [RFC 2104 Section 3]: https://tools.ietf.org/html/rfc2104#section-3
+    ///
+    /// TODO: Update to use aws-lc-ring-facade::rand when we implement rand.
     pub fn generate(
         algorithm: Algorithm,
         rng: &dyn ring::rand::SecureRandom,
-    ) -> Result<Self, error::Unspecified> {
+    ) -> Result<Self, ring::error::Unspecified> {
         Self::construct(algorithm, |buf| rng.fill(buf))
     }
 
-    fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, error::Unspecified>
+    fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, ring::error::Unspecified>
     where
-        F: FnOnce(&mut [u8]) -> Result<(), error::Unspecified>,
+        F: FnOnce(&mut [u8]) -> Result<(), ring::error::Unspecified>,
     {
         let mut key_bytes = [0; digest::MAX_OUTPUT_LEN];
         let key_bytes = &mut key_bytes[..algorithm.0.output_len];
@@ -218,45 +220,26 @@ impl Key {
     /// removed in a future version of *ring*.
     pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Self {
         let digest_alg = algorithm.0;
-        // let mut key = Self {
-        //     algorithm: &algorithm,
-        //     key_value: *key_value,
-        // };
+        let block_len = digest_alg.block_len;
 
-        // let block_len = digest_alg.block_len;
-
-        // let key_hash;
-        // let key_value = if key_value.len() <= block_len {
-        //     key_value
-        // } else {
-        //     key_hash = digest::digest(digest_alg, key_value);
-        //     key_hash.as_ref()
-        // };
-
-        // const IPAD: u8 = 0x36;
-
-        let mut padded_key = [0u8; digest::MAX_BLOCK_LEN];
-        // let padded_key = &mut padded_key[..block_len];
+        let key_hash;
+        let key_value = if key_value.len() <= block_len {
+            key_value
+        } else {
+            key_hash = digest::digest(digest_alg, key_value);
+            key_hash.as_ref()
+        };
 
         // If the key is shorter than one block then we're supposed to act like
-        // it is padded with zero bytes up to the block length. `x ^ 0 == x` so
-        // we can just leave the trailing bytes of `padded_key` untouched.
+        // it is padded with zero bytes up to the block length. We can just
+        // leave the trailing bytes of `padded_key` untouched.
+        let mut padded_key = vec![0u8; block_len];
         for (padded_key, key_value) in padded_key.iter_mut().zip(key_value.iter()) {
             *padded_key ^= *key_value;
         }
-        // key.inner.update(padded_key);
-        //
-        // const OPAD: u8 = 0x5C;
-
-        // Remove the `IPAD` masking, leaving the unmasked padded key, then
-        // mask with `OPAD`, all in one step.
-        for b in padded_key.iter_mut() {
-            *b ^= 0u8;
-        }
-        // key.key_value.update(padded_key);
 
         Self {
-            algorithm: &algorithm,
+            algorithm: &algorithm.digest_algorithm(),
             key_value: padded_key,
         }
     }
@@ -264,29 +247,15 @@ impl Key {
     /// The digest algorithm for the key.
     #[inline]
     pub fn algorithm(&self) -> Algorithm {
-        Algorithm(self.algorithm.digest_algorithm())
+        Algorithm(self.algorithm)
     }
 }
-
-// impl hkdf::KeyType for Algorithm {
-//     fn len(&self) -> usize {
-//         self.digest_algorithm().output_len()
-//     }
-// }
-//
-// impl From<hkdf::Okm<'_, Algorithm>> for Key {
-//     fn from(okm: hkdf::Okm<Algorithm>) -> Self {
-//         Self::construct(*okm.len(), |buf| okm.fill(buf)).unwrap()
-//     }
-// }
 
 /// A context for multi-step (Init-Update-Finish) HMAC signing.
 ///
 /// Use `sign` for single-step HMAC signing.
 #[derive(Clone)]
 pub struct Context {
-    // inner: digest::Context,
-    // outer: digest::BlockContext,
     hmac_ctx: HMACContext,
     key: Key,
 }
@@ -294,7 +263,7 @@ pub struct Context {
 impl core::fmt::Debug for Context {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("Context")
-            .field("algorithm", self.inner.algorithm())
+            .field("algorithm", self.key.algorithm)
             .finish()
     }
 }
@@ -304,7 +273,7 @@ impl Context {
     /// and key.
     pub fn with_key(signing_key: &Key) -> Self {
         Self {
-            hmac_ctx: HMACContext::new(signing_key.algorithm).unwrap(),
+            hmac_ctx: HMACContext::new(signing_key).unwrap(),
             key: signing_key.clone(),
         }
     }
@@ -327,13 +296,7 @@ impl Context {
     /// the return value of `sign` to a tag. Use `verify` for verification
     /// instead.
     pub fn sign(self) -> Tag {
-        // let algorithm = self.inner.algorithm();
-        // let mut pending = [0u8; digest::MAX_BLOCK_LEN];
-        // let pending = &mut pending[..algorithm.block_len];
-        // let num_pending = algorithm.output_len;
-        // pending[..num_pending].copy_from_slice(self.inner.finish().as_ref());
-        // Tag(self.outer.finish(pending, num_pending))
-        let mut output: Vec<u8> = vec![0u8; MAX_OUTPUT_LEN];
+        let mut output: Vec<u8> = vec![0u8; digest::MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
             if 1 != aws_lc_sys::HMAC_Final(
@@ -344,7 +307,8 @@ impl Context {
                 panic!("HMAC_Final failed")
             }
             Tag {
-                msg: <[u8; MAX_OUTPUT_LEN]>::try_from(&output[..MAX_OUTPUT_LEN]).unwrap(),
+                msg: <[u8; digest::MAX_OUTPUT_LEN]>::try_from(&output[..digest::MAX_OUTPUT_LEN])
+                    .unwrap(),
                 msg_len: out_len.assume_init() as usize,
             }
         }
@@ -377,7 +341,7 @@ pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), error::Unspecifi
 #[cfg(test)]
 mod tests {
     use crate::hmac;
-    // use original Ring's Rand for now.
+    // TODO: Use original Ring's Rand for now. Change to crate::rand when we implement rand.
     use ring::rand;
 
     // Make sure that `Key::generate` and `verify_with_own_key` aren't
@@ -397,6 +361,7 @@ mod tests {
         ] {
             let key = hmac::Key::generate(*algorithm, &rng).unwrap();
             let tag = hmac::sign(&key, HELLO_WORLD_GOOD);
+            println!("{:?}", key);
             assert!(hmac::verify(&key, HELLO_WORLD_GOOD, tag.as_ref()).is_ok());
             assert!(hmac::verify(&key, HELLO_WORLD_BAD, tag.as_ref()).is_err())
         }
