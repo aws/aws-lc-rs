@@ -104,7 +104,6 @@ fn test_aes_128(c: &mut Criterion) {
                 test_case.consume_bytes("SAMPLE").as_slice(),
                 test_case.consume_string("DESC").as_str(),
             );
-            println!("Testcase: {:?}", test_case);
             test_new_mask(c, &config);
             Ok(())
         },
@@ -115,12 +114,11 @@ fn test_aes_256(c: &mut Criterion) {
         test_file!("data/quic_aes_256_tests.txt"),
         |_section, test_case| {
             let config = QuicConfig::new(
-                QuicAlgorithm::Aes128Gcm,
+                QuicAlgorithm::Aes256Gcm,
                 test_case.consume_bytes("KEY").as_slice(),
                 test_case.consume_bytes("SAMPLE").as_slice(),
                 test_case.consume_string("DESC").as_str(),
             );
-            println!("Testcase: {:?}", test_case);
             test_new_mask(c, &config);
             Ok(())
         },
@@ -131,12 +129,11 @@ fn test_chacha20(c: &mut Criterion) {
         test_file!("data/quic_chacha20_tests.txt"),
         |_section, test_case| {
             let config = QuicConfig::new(
-                QuicAlgorithm::Aes128Gcm,
+                QuicAlgorithm::Chacha20,
                 test_case.consume_bytes("KEY").as_slice(),
                 test_case.consume_bytes("SAMPLE").as_slice(),
                 test_case.consume_string("DESC").as_str(),
             );
-            println!("Testcase: {:?}", test_case);
             test_new_mask(c, &config);
             Ok(())
         },
