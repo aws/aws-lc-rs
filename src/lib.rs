@@ -1,10 +1,9 @@
 pub mod aead;
-
+pub mod constant_time;
 pub mod digest;
-
-pub mod test;
-
 pub mod error;
+pub mod hmac;
+pub mod test;
 
 mod debug;
 

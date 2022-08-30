@@ -30,7 +30,10 @@ use crate::{debug, derive_debug_via_id};
 mod digest_ctx;
 mod sha;
 use digest_ctx::DigestContext;
-pub use sha::{SHA1_FOR_LEGACY_USE_ONLY, SHA256, SHA384, SHA512, SHA512_256};
+pub use sha::{
+    SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA256, SHA256_OUTPUT_LEN, SHA384,
+    SHA384_OUTPUT_LEN, SHA512, SHA512_256, SHA512_256_OUTPUT_LEN, SHA512_OUTPUT_LEN,
+};
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
 
@@ -215,11 +218,11 @@ pub struct Algorithm {
 
     one_shot_hash: fn(msg: &[u8], output: &mut [u8]),
 
-    id: AlgorithmID,
+    pub(crate) id: AlgorithmID,
 }
 
 #[derive(Debug, Eq, PartialEq)]
-enum AlgorithmID {
+pub(crate) enum AlgorithmID {
     SHA1,
     SHA256,
     SHA384,
@@ -248,6 +251,19 @@ pub const MAX_OUTPUT_LEN: usize = 512 / 8;
 /// The maximum chaining length ([`Algorithm::chaining_len`]) of all the
 /// algorithms in this module.
 pub const MAX_CHAINING_LEN: usize = MAX_OUTPUT_LEN;
+
+/// Match digest types for EVP_MD functions.
+pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> *const aws_lc_sys::EVP_MD {
+    return unsafe {
+        match algorithm_id {
+            AlgorithmID::SHA1 => aws_lc_sys::EVP_sha1(),
+            AlgorithmID::SHA256 => aws_lc_sys::EVP_sha256(),
+            AlgorithmID::SHA384 => aws_lc_sys::EVP_sha384(),
+            AlgorithmID::SHA512 => aws_lc_sys::EVP_sha512(),
+            AlgorithmID::SHA512_256 => aws_lc_sys::EVP_sha512_256(),
+        }
+    };
+}
 
 #[cfg(test)]
 mod tests {
