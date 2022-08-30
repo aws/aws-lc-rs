@@ -29,10 +29,6 @@
 //!
 //! # Examples:
 //!
-//! TODO: Update document tests to use aws-lc-facade::hmac when aws-lc-facade::rand is implemented.
-//! The current document tests fail with conflicting error results from rand and hmac.
-//! https://github.com/briansmith/ring/blame/be3443f5c6ea3caa52c9f801036551bd2ada8f19/src/hmac.rs#L29-L104
-//!
 //! ## Signing a value and verifying it wasn't tampered with
 //!
 //! ```
@@ -180,8 +176,6 @@ impl Key {
     /// recommendation in [RFC 2104 Section 3].
     ///
     /// [RFC 2104 Section 3]: https://tools.ietf.org/html/rfc2104#section-3
-    ///
-    /// TODO: Update to use aws-lc-ring-facade::rand when we implement rand.
     pub fn generate(
         algorithm: Algorithm,
         rng: &dyn crate::rand::SecureRandom,
@@ -191,7 +185,7 @@ impl Key {
 
     fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, error::Unspecified>
     where
-        F: FnOnce(&mut [u8]) -> Result<(), crate::error::Unspecified>,
+        F: FnOnce(&mut [u8]) -> Result<(), error::Unspecified>,
     {
         let mut key_bytes = [0; digest::MAX_OUTPUT_LEN];
         let key_bytes = &mut key_bytes[..algorithm.0.output_len];
@@ -339,7 +333,6 @@ pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), error::Unspecifi
 #[cfg(test)]
 mod tests {
     use crate::{hmac, rand};
-    // TODO: Use original Ring's Rand for now. Change to crate::rand when we implement rand.
 
     // Make sure that `Key::generate` and `verify_with_own_key` aren't
     // completely wacky.

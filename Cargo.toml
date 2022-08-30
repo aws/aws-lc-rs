@@ -27,6 +27,10 @@ name = "digest_benchmark"
 harness = false
 
 [[bench]]
+name = "hmac_benchmark"
+harness = false
+
+[[bench]]
 name = "quic_benchmark"
 harness = false
 
