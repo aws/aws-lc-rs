@@ -9,8 +9,6 @@ mod $pkg {
     use $pkg::{aead, error};
  */
 
-mod hmac_test;
-
 extern crate core;
 
 use aws_lc_ring_facade::{aead, error};
