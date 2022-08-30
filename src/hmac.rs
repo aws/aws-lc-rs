@@ -157,7 +157,7 @@ impl AsRef<[u8]> for Tag {
 #[derive(Clone)]
 pub struct Key {
     algorithm: &'static digest::Algorithm,
-    key_value: Vec<u8>,
+    hmac_ctx: HMACContext,
 }
 
 impl core::fmt::Debug for Key {
@@ -210,31 +210,11 @@ impl Key {
     ///
     /// You should not use keys larger than the `digest_alg.block_len` because
     /// the truncation described above reduces their strength to only
-    /// `digest_alg.output_len * 8` bits. Support for such keys is likely to be
-    /// removed in a future version of *ring*.
+    /// `digest_alg.output_len * 8` bits.
     pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Self {
-        let digest_alg = algorithm.0;
-        let block_len = digest_alg.block_len;
-
-        let key_hash;
-        let key_value = if key_value.len() <= block_len {
-            key_value
-        } else {
-            key_hash = digest::digest(digest_alg, key_value);
-            key_hash.as_ref()
-        };
-
-        // If the key is shorter than one block then we're supposed to act like
-        // it is padded with zero bytes up to the block length. We can just
-        // leave the trailing bytes of `padded_key` untouched.
-        let mut padded_key = vec![0u8; block_len];
-        for (padded_key, key_value) in padded_key.iter_mut().zip(key_value.iter()) {
-            *padded_key ^= *key_value;
-        }
-
         Self {
-            algorithm: &algorithm.digest_algorithm(),
-            key_value: padded_key,
+            algorithm: algorithm.digest_algorithm(),
+            hmac_ctx: HMACContext::new(algorithm.digest_algorithm(), &key_value).unwrap(),
         }
     }
 
@@ -250,7 +230,6 @@ impl Key {
 /// Use `sign` for single-step HMAC signing.
 #[derive(Clone)]
 pub struct Context {
-    hmac_ctx: HMACContext,
     key: Key,
 }
 
@@ -267,7 +246,6 @@ impl Context {
     /// and key.
     pub fn with_key(signing_key: &Key) -> Self {
         Self {
-            hmac_ctx: HMACContext::new(signing_key).unwrap(),
             key: signing_key.clone(),
         }
     }
@@ -276,7 +254,8 @@ impl Context {
     /// zero or more times until `finish` is called.
     pub fn update(&mut self, data: &[u8]) {
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Update(self.hmac_ctx.ctx, data.as_ptr().cast(), data.len()) {
+            if 1 != aws_lc_sys::HMAC_Update(self.key.hmac_ctx.ctx, data.as_ptr().cast(), data.len())
+            {
                 panic!("HMAC_Update failed")
             }
         }
@@ -294,7 +273,7 @@ impl Context {
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
             if 1 != aws_lc_sys::HMAC_Final(
-                self.hmac_ctx.ctx,
+                self.key.hmac_ctx.ctx,
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
             ) {
@@ -316,7 +295,9 @@ impl Context {
 /// It is generally not safe to implement HMAC verification by comparing the
 /// return value of `sign` to a tag. Use `verify` for verification instead.
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
-    HMACContext::one_shot(key, data)
+    let mut ctx = Context::with_key(key);
+    ctx.update(data);
+    ctx.sign()
 }
 
 /// Calculates the HMAC of `data` using the signing key `key`, and verifies

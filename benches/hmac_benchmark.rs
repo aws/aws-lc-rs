@@ -25,6 +25,13 @@ impl HMACConfig {
     }
 }
 
+// For SHA-{256, 384, 512, 512-256}, aws-lc-ring-facade hmac::sign one-shot Rust functions
+// are around 20% slower on 16 bit inputs when benchmarked against Ring. The performance for
+// 256-16394 bit inputs quickly jumps up and is completely on par with Ring. For SHA-1, AWS-LC is
+// consistently 1-2 times faster on all input lengths.
+// For the one-shot Rust API functions, we do not use the corresponding one-shot HMAC function
+// available in AWS-LC. This is because we've moved HMAC_CTX initialization into the key
+// construction phase, which significantly speeds up our HMAC Rust performance.
 macro_rules! benchmark_hmac {
     ( $pkg:ident ) => {
         paste::item! {
@@ -99,16 +106,8 @@ fn bench_hmac_sha512(c: &mut Criterion) {
 
 const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
 
-// TODO: Run this benchmark on a linux ec2 instance.
+// Benchmark hmac::sign one-shot API.
 fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
-    // Benchmark hmac::sign one-shot.
-    //
-    // For SHA-{256, 384, 512, 512-256}, aws-lc-ring-facade digest::digest one-shot Rust functions
-    // are around 0.8-0.9 times slower on 16 bit inputs when benchmarked against Ring. The
-    // performance on 256-16394 bit inputs is on par with Ring. For SHA-1, our one-shot APIs are
-    // consistently 1-2 times faster around on all input lengths.
-    // For the one-shot Rust API functions, we use the corresponding one-shot SHA functions
-    // available in AWS-LC to save performance spent on additional memory allocation.
     for &chunk_len in &G_CHUNK_LENGTHS {
         let chunk = vec![123u8; chunk_len];
 
@@ -136,17 +135,8 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
     }
 }
 
+// Benchmark incremental hmac update/sign.
 fn bench_hmac_incremental(c: &mut Criterion, config: &HMACConfig) {
-    // Benchmark incremental digest update/finish.
-    //
-    // For update/finish functions, we are consistently around 0.6 times slower on smaller
-    // inputs against ring, while the difference drops off to around 1% slower on larger inputs
-    // for SHA-{256, 384, 512, 512-256}. The same slower performance on smaller inputs also applies
-    // for SHA-1, but the difference speeds up 2-3 times faster on larger inputs.
-    // This difference is most likely caused by the additional memory allocation needed when
-    // wielding the C `EVP_MD`/`EVP_MD_CTX` interfaces as mentioned in the original ring
-    // implementation. Ring does the hashing block computations entirely in Rust.
-    // https://github.com/briansmith/ring/blob/main/src/digest.rs#L21-L25
     for &chunk_len in &G_CHUNK_LENGTHS {
         let chunk = vec![123u8; chunk_len];
 
