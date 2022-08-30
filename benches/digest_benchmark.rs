@@ -66,33 +66,38 @@ benchmark_digest!(aws_lc_ring_facade);
 
 fn bench_sha1(c: &mut Criterion) {
     let config = DigestConfig::new(DigestAlgorithm::SHA1, "SHA1 Digest");
-    bench_digest(c, &config);
+    bench_digest_one_shot(c, &config);
+    bench_digest_incremental(c, &config);
 }
 
 fn bench_sha256(c: &mut Criterion) {
     let config = DigestConfig::new(DigestAlgorithm::SHA256, "SHA256 Digest");
-    bench_digest(c, &config);
+    bench_digest_one_shot(c, &config);
+    bench_digest_incremental(c, &config);
 }
 
 fn bench_sha384(c: &mut Criterion) {
     let config = DigestConfig::new(DigestAlgorithm::SHA384, "SHA384 Digest");
-    bench_digest(c, &config);
+    bench_digest_one_shot(c, &config);
+    bench_digest_incremental(c, &config);
 }
 
 fn bench_sha512(c: &mut Criterion) {
     let config = DigestConfig::new(DigestAlgorithm::SHA512, "SHA512 Digest");
-    bench_digest(c, &config);
+    bench_digest_one_shot(c, &config);
+    bench_digest_incremental(c, &config);
 }
 
 fn bench_sha512_256(c: &mut Criterion) {
     let config = DigestConfig::new(DigestAlgorithm::SHA512_256, "SHA512_256 Digest");
-    bench_digest(c, &config);
+    bench_digest_one_shot(c, &config);
+    bench_digest_incremental(c, &config);
 }
 
-// TODO: Run this benchmark on a linux ec2 instance.
-fn bench_digest(c: &mut Criterion, config: &DigestConfig) {
-    let g_chunk_lengths: Vec<usize> = vec![16, 256, 1350, 8192, 16384];
+const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
 
+// TODO: Run this benchmark on a linux ec2 instance.
+fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
     // Benchmark digest::digest one-shot.
     //
     // For SHA-{256, 384, 512, 512-256}, aws-lc-ring-facade digest::digest one-shot Rust functions
@@ -101,7 +106,7 @@ fn bench_digest(c: &mut Criterion, config: &DigestConfig) {
     // consistently 1-2 times faster around on all input lengths.
     // For the one-shot Rust API functions, we use the corresponding one-shot SHA functions
     // available in AWS-LC to save performance spent on additional memory allocation.
-    for &chunk_len in &g_chunk_lengths {
+    for &chunk_len in &G_CHUNK_LENGTHS {
         let chunk = vec![123u8; chunk_len];
 
         let aws_bench_name = format!(
@@ -124,7 +129,9 @@ fn bench_digest(c: &mut Criterion, config: &DigestConfig) {
             })
         });
     }
+}
 
+fn bench_digest_incremental(c: &mut Criterion, config: &DigestConfig) {
     // Benchmark incremental digest update/finish.
     //
     // For update/finish functions, we are consistently around 0.6 times slower on smaller
@@ -135,7 +142,7 @@ fn bench_digest(c: &mut Criterion, config: &DigestConfig) {
     // wielding the C `EVP_MD`/`EVP_MD_CTX` interfaces as mentioned in the original ring
     // implementation. Ring does the hashing block computations entirely in Rust.
     // https://github.com/briansmith/ring/blob/main/src/digest.rs#L21-L25
-    for &chunk_len in &g_chunk_lengths {
+    for &chunk_len in &G_CHUNK_LENGTHS {
         let chunk = vec![123u8; chunk_len];
 
         let aws_bench_name = format!(
