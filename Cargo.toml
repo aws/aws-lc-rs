@@ -10,10 +10,10 @@ untrusted = { version = "0.9" }
 aws-lc-sys = { path = "deps/aws-lc-sys", version = "0.1.0" }
 zeroize = "1.5"
 hex = "0.4"
+libc = "0.2"
 
 [dev-dependencies]
 rand = "0.8"
-libc = "0.2"
 paste = "1.0"
 criterion = "0.3"
 ring = "0.16"
@@ -29,3 +29,4 @@ harness = false
 [[bench]]
 name = "quic_benchmark"
 harness = false
+
