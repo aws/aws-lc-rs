@@ -40,6 +40,22 @@ unsafe fn dump_error() {
     );
 }
 
+mod sealed {
+    /// Traits that are designed to only be implemented internally in *ring*.
+    //
+    // Usage:
+    // ```
+    // use crate::sealed;
+    //
+    // pub trait MyType: sealed::Sealed {
+    //     // [...]
+    // }
+    //
+    // impl sealed::Sealed for MyType {}
+    // ```
+    pub trait Sealed {}
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{dump_error, init};

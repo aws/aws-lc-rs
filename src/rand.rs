@@ -26,6 +26,10 @@
 //! documentation for more details.
 
 use crate::error;
+use crate::error::Unspecified;
+use std::fmt::{Debug, Formatter};
+use std::os::raw::c_int;
+use std::path::PathBuf;
 
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
@@ -161,7 +165,27 @@ impl sealed::SecureRandom for SystemRandom {
     }
 }
 
-//impl crate::sealed::Sealed for SystemRandom {}
+pub struct AwsLcSecureRandom(());
+
+pub const AWS_LC_SECURE_RANDOM: AwsLcSecureRandom = AwsLcSecureRandom(());
+
+impl Debug for AwsLcSecureRandom {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("{ AWS_LC_SECURE_RANDOM }")
+    }
+}
+
+impl sealed::SecureRandom for AwsLcSecureRandom {
+    fn fill_impl(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
+        unsafe {
+            if 1 != aws_lc_sys::RAND_bytes(dest.as_mut_ptr(), dest.len()) {
+                Err(error::Unspecified)
+            } else {
+                Ok(())
+            }
+        }
+    }
+}
 
 #[cfg(any(
     all(
