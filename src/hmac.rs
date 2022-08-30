@@ -184,14 +184,14 @@ impl Key {
     /// TODO: Update to use aws-lc-ring-facade::rand when we implement rand.
     pub fn generate(
         algorithm: Algorithm,
-        rng: &dyn ring::rand::SecureRandom,
-    ) -> Result<Self, ring::error::Unspecified> {
+        rng: &dyn crate::rand::SecureRandom,
+    ) -> Result<Self, error::Unspecified> {
         Self::construct(algorithm, |buf| rng.fill(buf))
     }
 
-    fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, ring::error::Unspecified>
+    fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, error::Unspecified>
     where
-        F: FnOnce(&mut [u8]) -> Result<(), ring::error::Unspecified>,
+        F: FnOnce(&mut [u8]) -> Result<(), crate::error::Unspecified>,
     {
         let mut key_bytes = [0; digest::MAX_OUTPUT_LEN];
         let key_bytes = &mut key_bytes[..algorithm.0.output_len];
@@ -338,9 +338,8 @@ pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), error::Unspecifi
 
 #[cfg(test)]
 mod tests {
-    use crate::hmac;
+    use crate::{hmac, rand};
     // TODO: Use original Ring's Rand for now. Change to crate::rand when we implement rand.
-    use ring::rand;
 
     // Make sure that `Key::generate` and `verify_with_own_key` aren't
     // completely wacky.

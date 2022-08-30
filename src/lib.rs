@@ -3,6 +3,7 @@ pub mod constant_time;
 pub mod digest;
 pub mod error;
 pub mod hmac;
+pub mod rand;
 pub mod test;
 
 mod debug;

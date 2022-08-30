@@ -17,7 +17,7 @@
 
 use crate::aead::block::BLOCK_LEN;
 use crate::aead::{block::Block, error, quic::Sample};
-use aws_lc_sys::{EVP_CIPHER, EVP_CIPHER_CTX};
+use aws_lc_sys::EVP_CIPHER_CTX;
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
 use std::ptr;
@@ -25,16 +25,8 @@ use std::ptr::{null, null_mut};
 use zeroize::Zeroize;
 
 pub(crate) enum SymmetricCipherKey {
-    Aes128(
-        [u8; 16],
-        *mut aws_lc_sys::EVP_CIPHER_CTX,
-        *mut aws_lc_sys::EVP_CIPHER_CTX,
-    ),
-    Aes256(
-        [u8; 32],
-        *mut aws_lc_sys::EVP_CIPHER_CTX,
-        *mut aws_lc_sys::EVP_CIPHER_CTX,
-    ),
+    Aes128([u8; 16], *mut EVP_CIPHER_CTX, *mut EVP_CIPHER_CTX),
+    Aes256([u8; 32], *mut EVP_CIPHER_CTX, *mut EVP_CIPHER_CTX),
     ChaCha20([u8; 32]),
 }
 
