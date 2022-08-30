@@ -34,15 +34,23 @@ impl Key {
 }
 
 pub struct Context {
-    state: aws_lc_sys::poly1305_state,
+    state: poly1305_state,
 }
+
+// Keep in sync with `poly1305_state` in GFp/poly1305.h.
+//
+// The C code, in particular the way the `poly1305_aligned_state` functions
+// are used, is only correct when the state buffer is 64-byte aligned.
+#[repr(C, align(64))]
+struct poly1305_state([u8; OPAQUE_LEN]);
+const OPAQUE_LEN: usize = 512;
 
 impl Context {
     #[inline]
     pub(super) fn from_key(Key { key_and_nonce }: Key) -> Self {
         unsafe {
-            let mut state = MaybeUninit::<aws_lc_sys::poly1305_state>::uninit();
-            aws_lc_sys::CRYPTO_poly1305_init(state.as_mut_ptr(), key_and_nonce.as_ptr());
+            let mut state = MaybeUninit::<poly1305_state>::uninit();
+            aws_lc_sys::CRYPTO_poly1305_init(state.as_mut_ptr().cast(), key_and_nonce.as_ptr());
             Self {
                 state: state.assume_init(),
             }
@@ -53,18 +61,21 @@ impl Context {
     pub fn update(&mut self, input: &[u8]) {
         unsafe {
             aws_lc_sys::CRYPTO_poly1305_update(
-                self.state.as_mut_ptr().cast(),
+                self.state.0.as_mut_ptr().cast(),
                 input.as_ptr(),
                 input.len(),
-            )
+            );
         }
     }
 
     pub(super) fn finish(mut self) -> Tag {
         unsafe {
-            let mut tag = [0; TAG_LEN];
-            aws_lc_sys::CRYPTO_poly1305_finish(self.state.as_mut_ptr().cast(), tag.as_mut_ptr());
-            Tag(tag)
+            let mut tag = MaybeUninit::<[u8; TAG_LEN]>::uninit();
+            aws_lc_sys::CRYPTO_poly1305_finish(
+                self.state.0.as_mut_ptr().cast(),
+                tag.as_mut_ptr().cast(),
+            );
+            Tag(tag.assume_init())
         }
     }
 }
