@@ -723,7 +723,7 @@ pub(crate) fn aead_open_combined(
         };
         let nonce = nonce.as_ref();
 
-        let plaintext_len = in_out.as_mut().len() - TAG_LEN;
+        let plaintext_len = in_out.len() - TAG_LEN;
 
         let aad_str = aad.0;
         let mut out_len = MaybeUninit::<usize>::uninit();

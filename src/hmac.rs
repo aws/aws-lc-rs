@@ -36,7 +36,7 @@
 //! ## Signing a value and verifying it wasn't tampered with
 //!
 //! ```
-//! use ring::{hmac, rand};
+//! use aws_lc_ring_facade::{hmac, rand};
 //!
 //! let rng = rand::SystemRandom::new();
 //! let key = hmac::Key::generate(hmac::HMAC_SHA256, &rng)?;
@@ -50,14 +50,14 @@
 //!
 //! hmac::verify(&key, msg.as_bytes(), tag.as_ref())?;
 //!
-//! # Ok::<(), ring::error::Unspecified>(())
+//! # Ok::<(), aws_lc_ring_facade::error::Unspecified>(())
 //! ```
 //!
 //! ## Using the one-shot API:
 //!
 //! ```
-//! use ring::{digest, hmac, rand};
-//! use ring::rand::SecureRandom;
+//! use aws_lc_ring_facade::{digest, hmac, rand};
+//! use aws_lc_ring_facade::rand::SecureRandom;
 //!
 //! let msg = "hello, world";
 //!
@@ -75,13 +75,13 @@
 //! let v_key = hmac::Key::new(hmac::HMAC_SHA256, key_value.as_ref());
 //! hmac::verify(&v_key, msg.as_bytes(), tag.as_ref())?;
 //!
-//! # Ok::<(), ring::error::Unspecified>(())
+//! # Ok::<(), aws_lc_ring_facade::error::Unspecified>(())
 //! ```
 //!
 //! ## Using the multi-part API:
 //! ```
-//! use ring::{digest, hmac, rand};
-//! use ring::rand::SecureRandom;
+//! use aws_lc_ring_facade::{digest, hmac, rand};
+//! use aws_lc_ring_facade::rand::SecureRandom;
 //!
 //! let parts = ["hello", ", ", "world"];
 //!
@@ -107,7 +107,7 @@
 //! }
 //! hmac::verify(&v_key, &msg.as_ref(), tag.as_ref())?;
 //!
-//! # Ok::<(), ring::error::Unspecified>(())
+//! # Ok::<(), aws_lc_ring_facade::error::Unspecified>(())
 //! ```
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
@@ -184,14 +184,14 @@ impl Key {
     /// TODO: Update to use aws-lc-ring-facade::rand when we implement rand.
     pub fn generate(
         algorithm: Algorithm,
-        rng: &dyn ring::rand::SecureRandom,
-    ) -> Result<Self, ring::error::Unspecified> {
+        rng: &dyn crate::rand::SecureRandom,
+    ) -> Result<Self, error::Unspecified> {
         Self::construct(algorithm, |buf| rng.fill(buf))
     }
 
-    fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, ring::error::Unspecified>
+    fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, error::Unspecified>
     where
-        F: FnOnce(&mut [u8]) -> Result<(), ring::error::Unspecified>,
+        F: FnOnce(&mut [u8]) -> Result<(), crate::error::Unspecified>,
     {
         let mut key_bytes = [0; digest::MAX_OUTPUT_LEN];
         let key_bytes = &mut key_bytes[..algorithm.0.output_len];
@@ -205,7 +205,7 @@ impl Key {
     /// `key_value` should be a value generated using a secure random number
     /// generator (e.g. the `key_value` output by
     /// `SealingKey::generate_serializable()`) or derived from a random key by
-    /// a key derivation function (e.g. `ring::hkdf`). In particular,
+    /// a key derivation function (e.g. `aws_lc_ring_facade::hkdf`). In particular,
     /// `key_value` shouldn't be a password.
     ///
     /// As specified in RFC 2104, if `key_value` is shorter than the digest
@@ -338,15 +338,37 @@ pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), error::Unspecifi
 
 #[cfg(test)]
 mod tests {
-    use crate::hmac;
+    use crate::{hmac, rand};
     // TODO: Use original Ring's Rand for now. Change to crate::rand when we implement rand.
-    use ring::rand;
 
     // Make sure that `Key::generate` and `verify_with_own_key` aren't
     // completely wacky.
     #[test]
     pub fn hmac_signing_key_coverage() {
         let rng = rand::SystemRandom::new();
+
+        const HELLO_WORLD_GOOD: &[u8] = b"hello, world";
+        const HELLO_WORLD_BAD: &[u8] = b"hello, worle";
+
+        for algorithm in &[
+            hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+            hmac::HMAC_SHA256,
+            hmac::HMAC_SHA384,
+            hmac::HMAC_SHA512,
+        ] {
+            let key = hmac::Key::generate(*algorithm, &rng).unwrap();
+            let tag = hmac::sign(&key, HELLO_WORLD_GOOD);
+            println!("{:?}", key);
+            assert!(hmac::verify(&key, HELLO_WORLD_GOOD, tag.as_ref()).is_ok());
+            assert!(hmac::verify(&key, HELLO_WORLD_BAD, tag.as_ref()).is_err())
+        }
+    }
+
+    // Make sure that `Key::generate` and `verify_with_own_key` aren't
+    // completely wacky.
+    #[test]
+    pub fn hmac_signing_key_coverage_aws_lc() {
+        let rng = rand::AWS_LC_SECURE_RANDOM;
 
         const HELLO_WORLD_GOOD: &[u8] = b"hello, world";
         const HELLO_WORLD_BAD: &[u8] = b"hello, worle";

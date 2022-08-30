@@ -3,6 +3,7 @@ pub mod constant_time;
 pub mod digest;
 pub mod error;
 pub mod hmac;
+pub mod rand;
 pub mod test;
 
 mod debug;
@@ -37,6 +38,22 @@ unsafe fn dump_error() {
         "Raw Error -- {:?}\nErr: {}, Lib: {}, Reason: {}, Func: {}",
         error_msg, err, lib, reason, func
     );
+}
+
+mod sealed {
+    /// Traits that are designed to only be implemented internally in *ring*.
+    //
+    // Usage:
+    // ```
+    // use crate::sealed;
+    //
+    // pub trait MyType: sealed::Sealed {
+    //     // [...]
+    // }
+    //
+    // impl sealed::Sealed for MyType {}
+    // ```
+    pub trait Sealed {}
 }
 
 #[cfg(test)]
