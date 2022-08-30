@@ -36,11 +36,13 @@ use std::ops::RangeFrom;
 mod aes_gcm;
 mod block;
 mod chacha;
+//pub mod chacha20_poly1305_openssh;
 mod cipher;
 mod counter;
 mod iv;
 mod key_inner;
 mod nonce;
+mod poly1305;
 pub mod quic;
 
 pub use self::{

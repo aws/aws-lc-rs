@@ -16,6 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::aead::block::BLOCK_LEN;
+use crate::aead::iv::Iv;
 use crate::aead::{block::Block, error, quic::Sample};
 use aws_lc_sys::EVP_CIPHER_CTX;
 use std::mem::MaybeUninit;
@@ -195,6 +196,19 @@ impl SymmetricCipherKey {
 
         Ok(out)
     }
+    /*
+        #[inline] // Optimize away match on `iv` and length check.
+        pub fn encrypt_iv_xor_blocks_in_place(&self, iv: Iv, in_out: &mut [u8; 2 * BLOCK_LEN]) {
+            unsafe {
+                self.encrypt(
+                    CounterOrIv::Iv(iv),
+                    in_out.as_ptr(),
+                    in_out.len(),
+                    in_out.as_mut_ptr(),
+                );
+            }
+        }
+    */
 
     #[allow(dead_code)]
     pub fn encrypt_block(&self, block: Block) -> Result<Block, error::Unspecified> {
