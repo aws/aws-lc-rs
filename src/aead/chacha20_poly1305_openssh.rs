@@ -78,7 +78,7 @@ impl SealingKey {
                 .encrypt_in_place(make_counter(sequence_number), len_in_out);
             self.key
                 .k_2
-                .encrypt_in_place(counter, data_and_padding_in_out);
+                .encrypt_in_place(counter.into(), data_and_padding_in_out);
         }
 
         let Tag(tag) = poly1305::sign(poly_key, plaintext_in_ciphertext_out);
@@ -110,7 +110,9 @@ impl OpeningKey {
     ) -> [u8; PACKET_LENGTH_LEN] {
         let mut packet_length = encrypted_packet_length;
         let counter = make_counter(sequence_number);
-        self.key.k_1.encrypt_in_place(counter, &mut packet_length);
+        self.key
+            .k_1
+            .encrypt_in_place(counter.into(), &mut packet_length);
         packet_length
     }
 
@@ -147,8 +149,8 @@ impl OpeningKey {
 }
 
 struct Key {
-    k_1: SymmetricCipherKey,
-    k_2: SymmetricCipherKey,
+    k_1: ChaCha20Key,
+    k_2: ChaCha20Key,
 }
 
 impl Key {
@@ -158,8 +160,8 @@ impl Key {
         let k_1: [u8; chacha::KEY_LEN] = k_1.try_into().unwrap();
         let k_2: [u8; chacha::KEY_LEN] = k_2.try_into().unwrap();
         Key {
-            k_1: chacha::Key::from(k_1),
-            k_2: chacha::Key::from(k_2),
+            k_1: ChaCha20Key::from(k_1),
+            k_2: ChaCha20Key::from(k_2),
         }
     }
 }
@@ -180,18 +182,16 @@ pub const KEY_LEN: usize = chacha::KEY_LEN * 2;
 pub const PACKET_LENGTH_LEN: usize = 4; // 32 bits
 
 /// The length in bytes of an authentication tag.
-pub const TAG_LEN: usize = super::BLOCK_LEN;
+pub const TAG_LEN: usize = BLOCK_LEN;
 
 fn verify(key: poly1305::Key, msg: &[u8], tag: &[u8; TAG_LEN]) -> Result<(), error::Unspecified> {
     let Tag(calculated_tag) = poly1305::sign(key, msg);
     constant_time::verify_slices_are_equal(calculated_tag.as_ref(), tag)
 }
 
-pub(super) fn derive_poly1305_key(chacha_key: &chacha::Key, iv: Iv) -> poly1305::Key {
+pub(super) fn derive_poly1305_key(chacha_key: &ChaCha20Key, iv: Iv) -> poly1305::Key {
     let mut key_bytes = [0u8; 2 * BLOCK_LEN];
     chacha_key.encrypt_iv_xor_blocks_in_place(iv, &mut key_bytes);
     poly1305::Key::new(key_bytes)
 }
-
-
  */

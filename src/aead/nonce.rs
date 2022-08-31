@@ -12,6 +12,8 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+use crate::aead::iv::IV_LEN;
+use crate::aead::Counter;
 use crate::error;
 use std::convert::TryInto;
 
@@ -48,12 +50,28 @@ impl AsRef<[u8; NONCE_LEN]> for Nonce {
     }
 }
 
-impl TryFrom<&[u8]> for Nonce {
-    type Error = ();
+impl From<&[u8; NONCE_LEN]> for Nonce {
+    fn from(bytes: &[u8; NONCE_LEN]) -> Self {
+        Nonce(bytes.to_owned())
+    }
+}
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        let result = <[u8; NONCE_LEN]>::try_from(value).map_err(|_| ())?;
+impl TryFrom<&[u8]> for Nonce {
+    type Error = error::Unspecified;
+
+    fn try_from(value: &[u8]) -> Result<Self, error::Unspecified> {
+        let result = <[u8; NONCE_LEN]>::try_from(value).map_err(|_| error::Unspecified)?;
         Ok(Nonce(result))
+    }
+}
+
+impl TryFrom<&Counter> for Nonce {
+    type Error = error::Unspecified;
+
+    fn try_from(counter: &Counter) -> Result<Self, Self::Error> {
+        let bytes = [0u8; NONCE_LEN];
+        //let value: u32 = counter.into();
+        Ok(Nonce(bytes))
     }
 }
 
