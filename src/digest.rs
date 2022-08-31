@@ -108,7 +108,7 @@ impl Context {
     pub fn finish(self) -> Digest {
         assert!(!self.max_input_reached);
 
-        let mut output: Vec<u8> = vec![0u8; MAX_OUTPUT_LEN];
+        let mut output = [0u8; MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
             if 1 != aws_lc_sys::EVP_DigestFinal(
@@ -122,7 +122,7 @@ impl Context {
 
         Digest {
             algorithm: self.algorithm,
-            digest_msg: <[u8; MAX_OUTPUT_LEN]>::try_from(&output[..MAX_OUTPUT_LEN]).unwrap(),
+            digest_msg: output,
             digest_len: self.algorithm.output_len,
         }
     }
@@ -150,12 +150,12 @@ impl Context {
 /// # }
 /// ```
 pub fn digest(algorithm: &'static Algorithm, data: &[u8]) -> Digest {
-    let mut output: Vec<u8> = vec![0u8; MAX_OUTPUT_LEN];
+    let mut output = [0u8; MAX_OUTPUT_LEN];
     (algorithm.one_shot_hash)(data, &mut output);
 
     Digest {
         algorithm,
-        digest_msg: <[u8; MAX_OUTPUT_LEN]>::try_from(&output[..MAX_OUTPUT_LEN]).unwrap(),
+        digest_msg: output,
         digest_len: algorithm.output_len,
     }
 }

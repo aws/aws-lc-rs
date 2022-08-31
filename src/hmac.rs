@@ -269,7 +269,7 @@ impl Context {
     /// the return value of `sign` to a tag. Use `verify` for verification
     /// instead.
     pub fn sign(self) -> Tag {
-        let mut output: Vec<u8> = vec![0u8; digest::MAX_OUTPUT_LEN];
+        let mut output = [0u8; digest::MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
             if 1 != aws_lc_sys::HMAC_Final(
@@ -280,8 +280,7 @@ impl Context {
                 panic!("HMAC_Final failed")
             }
             Tag {
-                msg: <[u8; digest::MAX_OUTPUT_LEN]>::try_from(&output[..digest::MAX_OUTPUT_LEN])
-                    .unwrap(),
+                msg: output,
                 msg_len: out_len.assume_init() as usize,
             }
         }

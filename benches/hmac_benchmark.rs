@@ -29,9 +29,11 @@ impl HMACConfig {
 // are around 20% slower on 16 bit inputs when benchmarked against Ring. The performance for
 // 256-16394 bit inputs quickly jumps up and is completely on par with Ring. For SHA-1, AWS-LC is
 // consistently 1-2 times faster on all input lengths.
-// For the one-shot Rust API functions, we do not use the corresponding one-shot HMAC function
-// available in AWS-LC. This is because we've moved HMAC_CTX initialization into the key
-// construction phase, which significantly speeds up our HMAC Rust performance.
+// For the one-shot hmac::sign, we do not use the corresponding one-shot HMAC function available in
+// AWS-LC. This is because we've moved HMAC_CTX initialization into the key construction phase,
+// which significantly improves our HMAC Rust performance. hmac::sign for both aws-lc-ring-facade
+// and ring call Context::update/Context::sign under the hood, so the performance for one-shot vs
+// incremental should be relatively the same.
 macro_rules! benchmark_hmac {
     ( $pkg:ident ) => {
         paste::item! {
@@ -63,6 +65,17 @@ macro_rules! benchmark_hmac {
                 hmac::Key::new(algorithm(&config), &key_val)
             }
 
+            pub fn create_longer_hmac_key(config: &HMACConfig) -> hmac::Key {
+                let key_length = match &config.algorithm {
+                    crate::HMACAlgorithm::SHA1 => digest::SHA1_OUTPUT_LEN,
+                    crate::HMACAlgorithm::SHA256 => digest::SHA256_OUTPUT_LEN,
+                    crate::HMACAlgorithm::SHA384 => digest::SHA384_OUTPUT_LEN,
+                    crate::HMACAlgorithm::SHA512 => digest::SHA512_OUTPUT_LEN,
+                };
+                let key_val = vec![123u8; key_length + 1];
+                hmac::Key::new(algorithm(&config), &key_val)
+            }
+
             pub fn run_hmac_incremental(key: &hmac::Key, chunk: &[u8]) {
                 let mut s_ctx = hmac::Context::with_key(&key);
                 s_ctx.update(chunk);
@@ -84,24 +97,28 @@ fn bench_hmac_sha1(c: &mut Criterion) {
     let config = HMACConfig::new(HMACAlgorithm::SHA1, "HMAC SHA1");
     bench_hmac_one_shot(c, &config);
     bench_hmac_incremental(c, &config);
+    bench_hmac_longer_key(c, &config);
 }
 
 fn bench_hmac_sha256(c: &mut Criterion) {
     let config = HMACConfig::new(HMACAlgorithm::SHA256, "HMAC SHA256");
     bench_hmac_one_shot(c, &config);
     bench_hmac_incremental(c, &config);
+    bench_hmac_longer_key(c, &config);
 }
 
 fn bench_hmac_sha384(c: &mut Criterion) {
     let config = HMACConfig::new(HMACAlgorithm::SHA384, "HMAC SHA384");
     bench_hmac_one_shot(c, &config);
     bench_hmac_incremental(c, &config);
+    bench_hmac_longer_key(c, &config);
 }
 
 fn bench_hmac_sha512(c: &mut Criterion) {
     let config = HMACConfig::new(HMACAlgorithm::SHA512, "HMAC SHA512");
     bench_hmac_one_shot(c, &config);
     bench_hmac_incremental(c, &config);
+    bench_hmac_longer_key(c, &config);
 }
 
 const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
@@ -125,6 +142,36 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
         let ring_key = ring_benchmarks::create_hmac_key(config);
         let ring_bench_name = format!(
             "ring-{:?}: {} ({} bits) [one-shot]",
+            config.algorithm, config.description, chunk_len
+        );
+        c.bench_function(&ring_bench_name, |b| {
+            b.iter(|| {
+                ring_benchmarks::run_hmac_one_shot(&ring_key, &chunk);
+            })
+        });
+    }
+}
+
+// Benchmark hmac::sign with keys longer than the block size. If a key is longer than the block
+// length then it will be compressed using the digest algorithm.
+fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
+    for &chunk_len in &G_CHUNK_LENGTHS {
+        let chunk = vec![123u8; chunk_len];
+
+        let aws_key = aws_lc_ring_facade_benchmarks::create_longer_hmac_key(config);
+        let aws_bench_name = format!(
+            "aws-lc-{:?}: {} ({} bits) [long-key]",
+            config.algorithm, config.description, chunk_len
+        );
+        c.bench_function(&aws_bench_name, |b| {
+            b.iter(|| {
+                aws_lc_ring_facade_benchmarks::run_hmac_one_shot(&aws_key, &chunk);
+            })
+        });
+
+        let ring_key = ring_benchmarks::create_longer_hmac_key(config);
+        let ring_bench_name = format!(
+            "ring-{:?}: {} ({} bits) [long-key]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&ring_bench_name, |b| {

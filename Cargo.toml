@@ -18,19 +18,19 @@ paste = "1.0"
 criterion = "0.3"
 ring = "0.16"
 
-#[[bench]]
-#name = "aead_benchmark"
-#harness = false
-#
-#[[bench]]
-#name = "digest_benchmark"
-#harness = false
+[[bench]]
+name = "aead_benchmark"
+harness = false
+
+[[bench]]
+name = "digest_benchmark"
+harness = false
 
 [[bench]]
 name = "hmac_benchmark"
 harness = false
 
-#[[bench]]
-#name = "quic_benchmark"
-#harness = false
+[[bench]]
+name = "quic_benchmark"
+harness = false
 
