@@ -130,7 +130,7 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
 
         let aws_key = aws_lc_ring_facade_benchmarks::create_hmac_key(config);
         let aws_bench_name = format!(
-            "aws-lc-{:?}: {} ({} bits) [one-shot]",
+            "aws-lc-{:?}: {} ({} bytes) [one-shot]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&aws_bench_name, |b| {
@@ -141,7 +141,7 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
 
         let ring_key = ring_benchmarks::create_hmac_key(config);
         let ring_bench_name = format!(
-            "ring-{:?}: {} ({} bits) [one-shot]",
+            "ring-{:?}: {} ({} bytes) [one-shot]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&ring_bench_name, |b| {
@@ -160,7 +160,7 @@ fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
 
         let aws_key = aws_lc_ring_facade_benchmarks::create_longer_hmac_key(config);
         let aws_bench_name = format!(
-            "aws-lc-{:?}: {} ({} bits) [long-key]",
+            "aws-lc-{:?}: {} ({} bytes) [long-key]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&aws_bench_name, |b| {
@@ -171,7 +171,7 @@ fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
 
         let ring_key = ring_benchmarks::create_longer_hmac_key(config);
         let ring_bench_name = format!(
-            "ring-{:?}: {} ({} bits) [long-key]",
+            "ring-{:?}: {} ({} bytes) [long-key]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&ring_bench_name, |b| {
@@ -189,7 +189,7 @@ fn bench_hmac_incremental(c: &mut Criterion, config: &HMACConfig) {
 
         let aws_key = aws_lc_ring_facade_benchmarks::create_hmac_key(config);
         let aws_bench_name = format!(
-            "aws-lc-{:?}: {} ({} bits) [update/finish]",
+            "aws-lc-{:?}: {} ({} bytes) [update/finish]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&aws_bench_name, |b| {
@@ -200,7 +200,7 @@ fn bench_hmac_incremental(c: &mut Criterion, config: &HMACConfig) {
 
         let ring_key = ring_benchmarks::create_hmac_key(config);
         let ring_bench_name = format!(
-            "ring-{:?}: {} ({} bits) [update/finish]",
+            "ring-{:?}: {} ({} bytes) [update/finish]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&ring_bench_name, |b| {

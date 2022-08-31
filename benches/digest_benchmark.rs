@@ -110,7 +110,7 @@ fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
         let chunk = vec![123u8; chunk_len];
 
         let aws_bench_name = format!(
-            "aws-lc-{:?}: {} ({} bits) [one-shot]",
+            "aws-lc-{:?}: {} ({} bytes) [one-shot]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&aws_bench_name, |b| {
@@ -120,7 +120,7 @@ fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
         });
 
         let ring_bench_name = format!(
-            "ring-{:?}: {} ({} bits) [one-shot]",
+            "ring-{:?}: {} ({} bytes) [one-shot]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&ring_bench_name, |b| {
@@ -146,7 +146,7 @@ fn bench_digest_incremental(c: &mut Criterion, config: &DigestConfig) {
         let chunk = vec![123u8; chunk_len];
 
         let aws_bench_name = format!(
-            "aws-lc-{:?}: {} ({} bits) [update/finish]",
+            "aws-lc-{:?}: {} ({} bytes) [update/finish]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&aws_bench_name, |b| {
@@ -156,7 +156,7 @@ fn bench_digest_incremental(c: &mut Criterion, config: &DigestConfig) {
         });
 
         let ring_bench_name = format!(
-            "ring-{:?}: {} ({} bits) [update/finish]",
+            "ring-{:?}: {} ({} bytes) [update/finish]",
             config.algorithm, config.description, chunk_len
         );
         c.bench_function(&ring_bench_name, |b| {
