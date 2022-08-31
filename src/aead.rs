@@ -33,10 +33,12 @@ use key_inner::KeyInner;
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
 
+mod aes;
 mod aes_gcm;
 mod block;
 mod chacha;
 //pub mod chacha20_poly1305_openssh;
+mod chacha20_poly1305_openssh;
 mod cipher;
 mod counter;
 mod iv;

@@ -28,8 +28,6 @@
 use crate::error;
 use crate::error::Unspecified;
 use std::fmt::{Debug, Formatter};
-use std::os::raw::c_int;
-use std::path::PathBuf;
 
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
@@ -117,12 +115,18 @@ impl<T> RandomlyConstructable for T where T: self::sealed::RandomlyConstructable
 /// [`getrandom`]: http://man7.org/linux/man-pages/man2/getrandom.2.html
 #[derive(Clone, Debug)]
 pub struct SystemRandom(());
+const SYSTEM_RANDOM: SystemRandom = SystemRandom(());
 
 impl SystemRandom {
     /// Constructs a new `SystemRandom`.
     #[inline(always)]
     pub fn new() -> Self {
-        Self(())
+        Self::default()
+    }
+}
+impl Default for SystemRandom {
+    fn default() -> Self {
+        SYSTEM_RANDOM
     }
 }
 
@@ -147,7 +151,7 @@ impl sealed::SecureRandom for AwsLcSecureRandom {
     fn fill_impl(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
         unsafe {
             if 1 != aws_lc_sys::RAND_bytes(dest.as_mut_ptr(), dest.len()) {
-                Err(error::Unspecified)
+                Err(Unspecified)
             } else {
                 Ok(())
             }

@@ -20,11 +20,11 @@
 //! probably change if/when we support 16-bit platforms or platforms where
 //! `usize` and `uintptr_t` are different sizes.
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, dead_code)]
 pub(crate) type int = i32;
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, dead_code)]
 pub(crate) type uint = u32;
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, dead_code)]
 pub(crate) type size_t = usize;
 
 #[cfg(all(test, any(unix, windows)))]

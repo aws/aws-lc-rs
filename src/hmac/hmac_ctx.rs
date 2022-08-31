@@ -5,7 +5,7 @@ use crate::hmac::{Key, Tag};
 use crate::{digest, error};
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
-use std::ptr::{null, null_mut};
+use std::ptr::null_mut;
 
 #[derive(Clone)]
 pub(crate) struct HMACContext {
@@ -40,16 +40,16 @@ impl HMACContext {
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         let evp_md_type = digest::match_digest_type(&key.algorithm.id);
         unsafe {
-            if null()
-                == aws_lc_sys::HMAC(
-                    evp_md_type,
-                    key.key_value.as_ptr().cast(),
-                    key.key_value.len(),
-                    data.as_ptr(),
-                    data.len(),
-                    output.as_mut_ptr(),
-                    out_len.as_mut_ptr(),
-                )
+            if aws_lc_sys::HMAC(
+                evp_md_type,
+                key.key_value.as_ptr().cast(),
+                key.key_value.len(),
+                data.as_ptr(),
+                data.len(),
+                output.as_mut_ptr(),
+                out_len.as_mut_ptr(),
+            )
+            .is_null()
             {
                 panic!("{}", "HMAC one-shot failed");
             }

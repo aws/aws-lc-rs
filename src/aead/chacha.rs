@@ -1,11 +1,11 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::aead::block::BLOCK_LEN;
 use crate::aead::cipher::SymmetricCipherKey;
-use crate::aead::iv::Iv;
 use crate::aead::key_inner::KeyInner;
-use crate::aead::{poly1305, Algorithm, AlgorithmID};
+use crate::aead::{Algorithm, AlgorithmID};
+use std::ops::Deref;
+use zeroize::Zeroize;
 
 use crate::error;
 
@@ -19,14 +19,17 @@ pub static CHACHA20_POLY1305: Algorithm = Algorithm {
 fn init_chacha(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     KeyInner::new(SymmetricCipherKey::chacha20(key)?)
 }
-/*
-// Also used by chacha20_poly1305_openssh.
-pub(super) fn derive_poly1305_key(
-    chacha_key: &SymmetricCipherKey::ChaCha20,
-    iv: Iv,
-) -> poly1305::Key {
-    let mut key_bytes = [0u8; 2 * BLOCK_LEN];
-    chacha_key.encrypt_iv_xor_blocks_in_place(iv, &mut key_bytes);
-    poly1305::Key::new(key_bytes, cpu_features)
+
+pub(crate) struct ChaCha20Key(pub(super) [u8; 32]);
+impl Deref for ChaCha20Key {
+    type Target = [u8; 32];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
-*/
+impl Drop for ChaCha20Key {
+    fn drop(&mut self) {
+        self.0.zeroize();
+    }
+}

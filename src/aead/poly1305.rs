@@ -16,7 +16,6 @@
 // TODO: enforce maximum input length.
 
 use super::{block::BLOCK_LEN, Tag, TAG_LEN};
-use crate::c;
 use std::mem::MaybeUninit;
 
 /// A Poly1305 key.
@@ -28,6 +27,7 @@ const KEY_LEN: usize = 2 * BLOCK_LEN;
 
 impl Key {
     #[inline]
+    #[allow(dead_code)]
     pub(super) fn new(key_and_nonce: [u8; KEY_LEN]) -> Self {
         Self { key_and_nonce }
     }
@@ -84,6 +84,7 @@ impl Context {
 ///
 /// This is used by chacha20_poly1305_openssh and the standalone
 /// poly1305 test vectors.
+#[allow(dead_code)]
 pub(super) fn sign(key: Key, input: &[u8]) -> Tag {
     let mut ctx = Context::from_key(key);
     ctx.update(input);

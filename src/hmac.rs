@@ -239,7 +239,7 @@ impl Key {
         }
 
         Self {
-            algorithm: &algorithm.digest_algorithm(),
+            algorithm: algorithm.digest_algorithm(),
             key_value: padded_key,
         }
     }
