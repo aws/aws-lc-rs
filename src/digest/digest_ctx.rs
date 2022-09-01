@@ -5,7 +5,6 @@ use crate::digest::{match_digest_type, Algorithm};
 use crate::error;
 use std::ptr::null_mut;
 
-#[derive(Clone)]
 pub(crate) struct DigestContext {
     pub ctx: *mut aws_lc_sys::EVP_MD_CTX,
 }
@@ -30,6 +29,18 @@ impl Drop for DigestContext {
     fn drop(&mut self) {
         unsafe {
             aws_lc_sys::EVP_MD_CTX_free(self.ctx);
+        }
+    }
+}
+
+impl Clone for DigestContext {
+    fn clone(&self) -> Self {
+        unsafe {
+            let ctx = aws_lc_sys::EVP_MD_CTX_new();
+            if 1 != aws_lc_sys::EVP_MD_CTX_copy(ctx, self.ctx) {
+                panic!("EVP_MD_CTX_copy failed");
+            };
+            DigestContext { ctx }
         }
     }
 }

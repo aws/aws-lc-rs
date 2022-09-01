@@ -245,9 +245,8 @@ impl Clone for Context {
     fn clone(&self) -> Self {
         unsafe {
             let ctx = aws_lc_sys::HMAC_CTX_new();
-            aws_lc_sys::HMAC_CTX_init(ctx);
             if 1 != aws_lc_sys::HMAC_CTX_copy_ex(ctx, self.ctx) {
-                panic!("HMAC_Init_ex failed");
+                panic!("HMAC_CTX_copy_ex failed");
             };
             Context {
                 ctx,
@@ -356,7 +355,7 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
         )
         .is_null()
         {
-            panic!("{}", "HMAC one-shot failed");
+            panic!("HMAC one-shot failed");
         }
         Tag {
             msg: output.assume_init(),
