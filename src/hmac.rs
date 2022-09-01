@@ -236,10 +236,25 @@ impl Key {
 /// A context for multi-step (Init-Update-Finish) HMAC signing.
 ///
 /// Use `sign` for single-step HMAC signing.
-#[derive(Clone)]
 pub struct Context {
     ctx: *mut aws_lc_sys::HMAC_CTX,
     key: Key,
+}
+
+impl Clone for Context {
+    fn clone(&self) -> Self {
+        unsafe {
+            let ctx = aws_lc_sys::HMAC_CTX_new();
+            aws_lc_sys::HMAC_CTX_init(ctx);
+            if 1 != aws_lc_sys::HMAC_CTX_copy_ex(ctx, self.ctx) {
+                panic!("HMAC_Init_ex failed");
+            };
+            Context {
+                ctx,
+                key: self.key.clone(),
+            }
+        }
+    }
 }
 
 impl Drop for Context {
