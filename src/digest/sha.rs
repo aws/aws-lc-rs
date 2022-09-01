@@ -15,6 +15,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Modifications Copyright Amazon.com, Inc. or its affiliates. See GitHub history for details.
 
+use crate::digest;
 use crate::digest::{Algorithm, AlgorithmID};
 
 pub const BLOCK_LEN: usize = 512 / 8;
