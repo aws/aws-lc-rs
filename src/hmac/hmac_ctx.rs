@@ -1,11 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::hmac::{Key, Tag};
 use crate::{digest, error};
-use std::mem::MaybeUninit;
-use std::os::raw::c_uint;
-use std::ptr::{null, null_mut};
+use std::ptr::null_mut;
 
 pub(crate) struct HMACContext {
     pub ctx: *mut aws_lc_sys::HMAC_CTX,

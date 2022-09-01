@@ -112,6 +112,7 @@ use crate::hmac::hmac_ctx::HMACContext;
 use crate::{constant_time, digest, error};
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
+use zeroize::Zeroize;
 
 /// An HMAC algorithm.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -158,6 +159,13 @@ impl AsRef<[u8]> for Tag {
 pub struct Key {
     algorithm: &'static digest::Algorithm,
     hmac_ctx: HMACContext,
+    key_bytes: Vec<u8>,
+}
+
+impl Drop for Key {
+    fn drop(&mut self) {
+        self.key_bytes.zeroize();
+    }
 }
 
 impl core::fmt::Debug for Key {
@@ -214,7 +222,8 @@ impl Key {
     pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Self {
         Self {
             algorithm: algorithm.digest_algorithm(),
-            hmac_ctx: HMACContext::new(algorithm.digest_algorithm(), &key_value).unwrap(),
+            hmac_ctx: HMACContext::new(algorithm.digest_algorithm(), key_value).unwrap(),
+            key_bytes: Vec::from(key_value),
         }
     }
 
@@ -294,9 +303,28 @@ impl Context {
 /// It is generally not safe to implement HMAC verification by comparing the
 /// return value of `sign` to a tag. Use `verify` for verification instead.
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
-    let mut ctx = Context::with_key(key);
-    ctx.update(data);
-    ctx.sign()
+    let mut output = MaybeUninit::<[u8; digest::MAX_OUTPUT_LEN]>::uninit();
+    let mut out_len = MaybeUninit::<c_uint>::uninit();
+    let evp_md_type = digest::match_digest_type(&key.algorithm.id);
+    unsafe {
+        if aws_lc_sys::HMAC(
+            evp_md_type,
+            key.key_bytes.as_ptr().cast(),
+            key.key_bytes.len(),
+            data.as_ptr(),
+            data.len(),
+            output.as_mut_ptr().cast(),
+            out_len.as_mut_ptr(),
+        )
+        .is_null()
+        {
+            panic!("{}", "HMAC one-shot failed");
+        }
+        Tag {
+            msg: output.assume_init(),
+            msg_len: out_len.assume_init() as usize,
+        }
+    }
 }
 
 /// Calculates the HMAC of `data` using the signing key `key`, and verifies
