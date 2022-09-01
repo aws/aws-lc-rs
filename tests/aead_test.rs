@@ -342,7 +342,7 @@ fn aead_chacha20_poly1305_openssh() {
     // TODO: test_aead_key_sizes(...);
 
     test::run(
-        test_file!("aead_chacha20_poly1305_openssh_tests.txt"),
+        test_file!("data/aead_chacha20_poly1305_openssh_tests.txt"),
         |section, test_case| {
             assert_eq!(section, "");
 

@@ -4,6 +4,8 @@
 use crate::aead::cipher::SymmetricCipherKey;
 use crate::aead::key_inner::KeyInner;
 use crate::aead::{Algorithm, AlgorithmID};
+use std::ops::Deref;
+use zeroize::Zeroize;
 
 use crate::error;
 
@@ -16,4 +18,18 @@ pub static CHACHA20_POLY1305: Algorithm = Algorithm {
 
 fn init_chacha(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     KeyInner::new(SymmetricCipherKey::chacha20(key)?)
+}
+
+pub(crate) struct ChaCha20Key(pub(super) [u8; 32]);
+impl Deref for ChaCha20Key {
+    type Target = [u8; 32];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl Drop for ChaCha20Key {
+    fn drop(&mut self) {
+        self.0.zeroize();
+    }
 }

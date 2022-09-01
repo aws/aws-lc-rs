@@ -49,7 +49,7 @@ where
             u32s: [U32::ZERO; COUNTER_LEN],
         };
         let nonce_index = (U32::COUNTER_INDEX + 1) % COUNTER_LEN;
-        (&mut r.u32s[nonce_index..][..3])
+        (r.u32s[nonce_index..][..3])
             .iter_mut()
             .zip(nonce.as_ref().chunks_exact(4))
             .for_each(|(initial, nonce)| {

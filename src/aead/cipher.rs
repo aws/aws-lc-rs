@@ -15,41 +15,34 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::aead::aes::{Aes128Key, Aes256Key};
 use crate::aead::block::BLOCK_LEN;
+use crate::aead::chacha::ChaCha20Key;
 use crate::aead::{block::Block, error, quic::Sample};
 use aws_lc_sys::EVP_CIPHER_CTX;
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
 use std::ptr;
 use std::ptr::{null, null_mut};
-use zeroize::Zeroize;
 
 pub(crate) enum SymmetricCipherKey {
-    Aes128([u8; 16], *mut EVP_CIPHER_CTX, *mut EVP_CIPHER_CTX),
-    Aes256([u8; 32], *mut EVP_CIPHER_CTX, *mut EVP_CIPHER_CTX),
-    ChaCha20([u8; 32]),
+    Aes128(Aes128Key, *mut EVP_CIPHER_CTX, *mut EVP_CIPHER_CTX),
+    Aes256(Aes256Key, *mut EVP_CIPHER_CTX, *mut EVP_CIPHER_CTX),
+    ChaCha20(ChaCha20Key),
 }
 
 impl Drop for SymmetricCipherKey {
     fn drop(&mut self) {
         match self {
-            SymmetricCipherKey::Aes128(key_bytes, ecb_ctx, gcm_ctx) => {
-                unsafe {
-                    aws_lc_sys::EVP_CIPHER_CTX_free(*ecb_ctx);
-                    aws_lc_sys::EVP_CIPHER_CTX_free(*gcm_ctx);
-                }
-                key_bytes.zeroize();
-            }
-            SymmetricCipherKey::Aes256(key_bytes, ecb_ctx, gcm_ctx) => {
-                unsafe {
-                    aws_lc_sys::EVP_CIPHER_CTX_free(*ecb_ctx);
-                    aws_lc_sys::EVP_CIPHER_CTX_free(*gcm_ctx);
-                }
-                key_bytes.zeroize();
-            }
-            SymmetricCipherKey::ChaCha20(key_bytes) => {
-                key_bytes.zeroize();
-            }
+            SymmetricCipherKey::Aes128(_, ecb_ctx, gcm_ctx) => unsafe {
+                aws_lc_sys::EVP_CIPHER_CTX_free(*ecb_ctx);
+                aws_lc_sys::EVP_CIPHER_CTX_free(*gcm_ctx);
+            },
+            SymmetricCipherKey::Aes256(_, ecb_ctx, gcm_ctx) => unsafe {
+                aws_lc_sys::EVP_CIPHER_CTX_free(*ecb_ctx);
+                aws_lc_sys::EVP_CIPHER_CTX_free(*gcm_ctx);
+            },
+            _ => {}
         }
     }
 }
@@ -97,7 +90,7 @@ impl SymmetricCipherKey {
             let mut kb = MaybeUninit::<[u8; 16]>::uninit();
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 16);
             Ok(SymmetricCipherKey::Aes128(
-                kb.assume_init(),
+                Aes128Key(kb.assume_init()),
                 ecb_cipher_ctx,
                 gcm_cipher_ctx,
             ))
@@ -146,7 +139,7 @@ impl SymmetricCipherKey {
             let mut kb = MaybeUninit::<[u8; 32]>::uninit();
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
             Ok(SymmetricCipherKey::Aes256(
-                kb.assume_init(),
+                Aes256Key(kb.assume_init()),
                 ecb_cipher_ctx,
                 gcm_cipher_ctx,
             ))
@@ -160,15 +153,15 @@ impl SymmetricCipherKey {
         let mut kb = MaybeUninit::<[u8; 32]>::uninit();
         unsafe {
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
-            Ok(SymmetricCipherKey::ChaCha20(kb.assume_init()))
+            Ok(SymmetricCipherKey::ChaCha20(ChaCha20Key(kb.assume_init())))
         }
     }
 
     pub(super) fn key_bytes(&self) -> &[u8] {
         match self {
-            SymmetricCipherKey::Aes128(bytes, ..) => bytes,
-            SymmetricCipherKey::Aes256(bytes, ..) => bytes,
-            SymmetricCipherKey::ChaCha20(bytes) => bytes,
+            SymmetricCipherKey::Aes128(bytes, ..) => &bytes.0,
+            SymmetricCipherKey::Aes256(bytes, ..) => &bytes.0,
+            SymmetricCipherKey::ChaCha20(bytes) => &bytes.0,
         }
     }
 
@@ -195,6 +188,21 @@ impl SymmetricCipherKey {
 
         Ok(out)
     }
+    /*
+       #[inline] // Optimize away match on `iv` and length check.
+       pub fn encrypt_iv_xor_blocks_in_place(&self, iv: Iv, in_out: &mut [u8; 2 * BLOCK_LEN]) {
+           unsafe {
+               let block1 = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
+               let block2 = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
+               encrypt_block_chacha20(
+                   self.key_bytes(),
+                   Block::from(in_out[0..BLOCK_LEN].into()),
+                   iv.into_bytes_less_safe()[0..NONCE_LEN].into(),
+                   0,
+               )
+           }
+       }
+    */
 
     #[allow(dead_code)]
     pub fn encrypt_block(&self, block: Block) -> Result<Block, error::Unspecified> {
@@ -235,12 +243,13 @@ fn encrypt_block_aes_ecb(
 
 #[inline]
 fn encrypt_block_chacha20(
-    key_bytes: &[u8],
+    key: &ChaCha20Key,
     block: Block,
     nonce: &[u8; 12],
     counter: u32,
 ) -> Result<Block, error::Unspecified> {
     unsafe {
+        let key_bytes = &key.0;
         let mut cipher_text = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
         let plaintext = block.as_ref();
 

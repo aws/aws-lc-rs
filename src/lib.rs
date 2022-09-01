@@ -1,3 +1,5 @@
+extern crate core;
+
 pub mod aead;
 pub mod constant_time;
 pub mod digest;
