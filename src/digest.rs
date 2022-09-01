@@ -108,7 +108,7 @@ impl Context {
     pub fn finish(self) -> Digest {
         assert!(!self.max_input_reached);
 
-        let mut output: Vec<u8> = vec![0u8; MAX_OUTPUT_LEN];
+        let mut output = [0u8; MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
             if 1 != aws_lc_sys::EVP_DigestFinal(
@@ -122,7 +122,7 @@ impl Context {
 
         Digest {
             algorithm: self.algorithm,
-            digest_msg: <[u8; MAX_OUTPUT_LEN]>::try_from(&output[..MAX_OUTPUT_LEN]).unwrap(),
+            digest_msg: output,
             digest_len: self.algorithm.output_len,
         }
     }
@@ -141,7 +141,7 @@ impl Context {
 /// ```
 /// # #[cfg(feature = "alloc")]
 /// # {
-/// use ring::{digest, test};
+/// use aws_lc_ring_facade::{digest, test};
 /// let expected_hex = "09ca7e4eaa6e8ae9c7d261167129184883644d07dfba7cbfbc4c8a2e08360d5b";
 /// let expected: Vec<u8> = test::from_hex(expected_hex).unwrap();
 /// let actual = digest::digest(&digest::SHA256, b"hello, world");
@@ -150,12 +150,12 @@ impl Context {
 /// # }
 /// ```
 pub fn digest(algorithm: &'static Algorithm, data: &[u8]) -> Digest {
-    let mut output: Vec<u8> = vec![0u8; MAX_OUTPUT_LEN];
+    let mut output = [0u8; MAX_OUTPUT_LEN];
     (algorithm.one_shot_hash)(data, &mut output);
 
     Digest {
         algorithm,
-        digest_msg: <[u8; MAX_OUTPUT_LEN]>::try_from(&output[..MAX_OUTPUT_LEN]).unwrap(),
+        digest_msg: output,
         digest_len: algorithm.output_len,
     }
 }
