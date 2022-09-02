@@ -20,7 +20,7 @@ use std::mem::MaybeUninit;
 
 /// A Poly1305 key.
 pub(super) struct Key {
-    key_and_nonce: [u8; KEY_LEN],
+    pub(super) key_and_nonce: [u8; KEY_LEN],
 }
 
 const KEY_LEN: usize = 2 * BLOCK_LEN;

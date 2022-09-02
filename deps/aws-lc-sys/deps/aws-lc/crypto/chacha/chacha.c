@@ -60,6 +60,7 @@ void CRYPTO_hchacha20(uint8_t out[32], const uint8_t key[32],
   OPENSSL_memcpy(&out[16], &x[12], sizeof(uint32_t) * 4);
 }
 
+  /*
 #if defined(CHACHA20_ASM)
 
 void CRYPTO_chacha_20(uint8_t *out, const uint8_t *in, size_t in_len,
@@ -95,7 +96,7 @@ void CRYPTO_chacha_20(uint8_t *out, const uint8_t *in, size_t in_len,
 }
 
 #else
-
+*/
 // chacha_core performs 20 rounds of ChaCha on the input words in
 // |input| and writes the 64 output bytes to |output|.
 static void chacha_core(uint8_t output[64], const uint32_t input[16]) {
@@ -170,4 +171,4 @@ void CRYPTO_chacha_20(uint8_t *out, const uint8_t *in, size_t in_len,
   }
 }
 
-#endif
+//#endif

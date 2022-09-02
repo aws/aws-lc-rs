@@ -44,7 +44,7 @@ where
         Self::new(nonce, 1)
     }
 
-    fn new(nonce: Nonce, initial_counter: u32) -> Self {
+    pub(super) fn new(nonce: Nonce, initial_counter: u32) -> Self {
         let mut r = Self {
             u32s: [U32::ZERO; COUNTER_LEN],
         };

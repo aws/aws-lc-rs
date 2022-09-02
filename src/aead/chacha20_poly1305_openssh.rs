@@ -28,17 +28,19 @@
 //! [chacha20-poly1305@openssh.com]:
 //!    http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL.chacha20poly1305?annotate=HEAD
 //! [RFC 4253]: https://tools.ietf.org/html/rfc4253
-/*
+
 use super::{
     chacha::{self, *},
     poly1305, Nonce, Tag,
 };
 use crate::aead::block::BLOCK_LEN;
 use crate::aead::cipher::SymmetricCipherKey;
+use crate::aead::counter;
 use crate::aead::iv::Iv;
-use crate::aead::Counter;
 use crate::{constant_time, endian::*, error};
 use core::convert::TryInto;
+
+pub(crate) type CounterLEu32 = counter::Counter<LittleEndian<u32>>;
 
 /// A key for sealing packets.
 pub struct SealingKey {
@@ -66,8 +68,8 @@ impl SealingKey {
         plaintext_in_ciphertext_out: &mut [u8],
         tag_out: &mut [u8; TAG_LEN],
     ) {
-        let mut counter = make_counter(sequence_number);
-        let poly_key = derive_poly1305_key(&self.key.k_2, counter.increment());
+        let mut nonce = make_nonce(sequence_number);
+        let poly_key = derive_poly1305_key(&self.key.k_2, nonce);
 
         {
             let (len_in_out, data_and_padding_in_out) =
@@ -75,10 +77,12 @@ impl SealingKey {
 
             self.key
                 .k_1
-                .encrypt_in_place(make_counter(sequence_number), len_in_out);
-            self.key
-                .k_2
-                .encrypt_in_place(counter.into(), data_and_padding_in_out);
+                .encrypt_in_place(make_nonce(sequence_number), len_in_out);
+            self.key.k_2.encrypt_in_place_counter(
+                make_nonce(sequence_number),
+                data_and_padding_in_out,
+                1,
+            );
         }
 
         let Tag(tag) = poly1305::sign(poly_key, plaintext_in_ciphertext_out);
@@ -109,10 +113,8 @@ impl OpeningKey {
         encrypted_packet_length: [u8; PACKET_LENGTH_LEN],
     ) -> [u8; PACKET_LENGTH_LEN] {
         let mut packet_length = encrypted_packet_length;
-        let counter = make_counter(sequence_number);
-        self.key
-            .k_1
-            .encrypt_in_place(counter.into(), &mut packet_length);
+        let nonce = make_nonce(sequence_number);
+        self.key.k_1.encrypt_in_place(nonce, &mut packet_length);
         packet_length
     }
 
@@ -131,18 +133,20 @@ impl OpeningKey {
         ciphertext_in_plaintext_out: &'a mut [u8],
         tag: &[u8; TAG_LEN],
     ) -> Result<&'a [u8], error::Unspecified> {
-        let mut counter = make_counter(sequence_number);
+        let nonce = make_nonce(sequence_number);
 
         // We must verify the tag before decrypting so that
         // `ciphertext_in_plaintext_out` is unmodified if verification fails.
         // This is beyond what we guarantee.
-        let poly_key = derive_poly1305_key(&self.key.k_2, counter.increment());
+        let poly_key = derive_poly1305_key(&self.key.k_2, nonce);
         verify(poly_key, ciphertext_in_plaintext_out, tag)?;
 
         let plaintext_in_ciphertext_out = &mut ciphertext_in_plaintext_out[PACKET_LENGTH_LEN..];
-        self.key
-            .k_2
-            .encrypt_in_place(counter, plaintext_in_ciphertext_out);
+        self.key.k_2.encrypt_in_place_counter(
+            make_nonce(sequence_number),
+            plaintext_in_ciphertext_out,
+            1,
+        );
 
         Ok(plaintext_in_ciphertext_out)
     }
@@ -166,13 +170,8 @@ impl Key {
     }
 }
 
-fn make_counter(sequence_number: u32) -> Counter {
-    let nonce = [
-        BigEndian::ZERO,
-        BigEndian::ZERO,
-        BigEndian::from(sequence_number),
-    ];
-    Counter::zero(Nonce::assume_unique_for_key(*(nonce.as_byte_array())))
+fn make_nonce(sequence_number: u32) -> Nonce {
+    Nonce::from(BigEndian::from(sequence_number))
 }
 
 /// The length of key.
@@ -189,9 +188,37 @@ fn verify(key: poly1305::Key, msg: &[u8], tag: &[u8; TAG_LEN]) -> Result<(), err
     constant_time::verify_slices_are_equal(calculated_tag.as_ref(), tag)
 }
 
-pub(super) fn derive_poly1305_key(chacha_key: &ChaCha20Key, iv: Iv) -> poly1305::Key {
+pub(super) fn derive_poly1305_key(chacha_key: &ChaCha20Key, nonce: Nonce) -> poly1305::Key {
     let mut key_bytes = [0u8; 2 * BLOCK_LEN];
-    chacha_key.encrypt_iv_xor_blocks_in_place(iv, &mut key_bytes);
+    chacha_key.encrypt_in_place(nonce, &mut key_bytes);
     poly1305::Key::new(key_bytes)
 }
- */
+
+#[cfg(test)]
+mod tests {
+    use crate::aead::chacha::ChaCha20Key;
+    use crate::aead::chacha20_poly1305_openssh::derive_poly1305_key;
+    use crate::aead::counter::Counter;
+    use crate::aead::iv::Iv;
+    use crate::aead::{chacha, CounterBEu32, Nonce};
+    use crate::test;
+    use hex::encode;
+
+    #[test]
+    fn derive_poly1305_test() {
+        use hex;
+        let chacha_key =
+            test::from_hex("98bef1469be7269837a45bfbc92a5a6ac762507cf96443bf33b96b1bd4c6f8f6")
+                .unwrap();
+        let expected_poly1305_key =
+            test::from_hex("759de17d6d6258a436e36ecf75e3f00e4d9133ec05c4c855a9ec1a4e4e873b9d")
+                .unwrap();
+        let chacha_key = chacha_key.as_slice();
+        let chacha_key_bytes: [u8; 32] = <[u8; 32]>::try_from(chacha_key).unwrap();
+        let chacha_key = ChaCha20Key::from(chacha_key_bytes);
+        let iv = Nonce::from(&[45u32, 897, 4567]);
+        let poly1305_key = derive_poly1305_key(&chacha_key, iv);
+
+        assert_eq!(&expected_poly1305_key, &poly1305_key.key_and_nonce);
+    }
+}

@@ -12,10 +12,14 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use crate::aead::iv::IV_LEN;
-use crate::aead::Counter;
+use crate::aead::chacha20_poly1305_openssh::CounterLEu32;
+use crate::aead::iv::{Iv, IV_LEN};
+use crate::aead::CounterBEu32;
+use crate::endian::{ArrayEncoding, BigEndian, Encoding, LittleEndian};
 use crate::error;
+use std::cmp;
 use std::convert::TryInto;
+use std::mem::{transmute_copy, MaybeUninit};
 
 /// A nonce for a single AEAD opening or sealing operation.
 ///
@@ -56,22 +60,101 @@ impl From<&[u8; NONCE_LEN]> for Nonce {
     }
 }
 
-impl TryFrom<&[u8]> for Nonce {
-    type Error = error::Unspecified;
-
-    fn try_from(value: &[u8]) -> Result<Self, error::Unspecified> {
-        let result = <[u8; NONCE_LEN]>::try_from(value).map_err(|_| error::Unspecified)?;
-        Ok(Nonce(result))
+impl From<&[u32; NONCE_LEN / 4]> for Nonce {
+    fn from(values: &[u32; NONCE_LEN / 4]) -> Self {
+        unsafe {
+            let bytes: [u8; NONCE_LEN] = transmute_copy(values);
+            Nonce(bytes)
+        }
     }
 }
 
-impl TryFrom<&Counter> for Nonce {
-    type Error = error::Unspecified;
+impl From<BigEndian<u32>> for Nonce {
+    fn from(number: BigEndian<u32>) -> Self {
+        let nonce = [BigEndian::ZERO, BigEndian::ZERO, BigEndian::from(number)];
+        Nonce(*(nonce.as_byte_array()))
+    }
+}
 
-    fn try_from(counter: &Counter) -> Result<Self, Self::Error> {
-        let bytes = [0u8; NONCE_LEN];
-        //let value: u32 = counter.into();
-        Ok(Nonce(bytes))
+impl From<LittleEndian<u32>> for Nonce {
+    fn from(number: LittleEndian<u32>) -> Self {
+        let nonce = [
+            LittleEndian::ZERO,
+            LittleEndian::ZERO,
+            LittleEndian::from(number),
+        ];
+        Nonce(*(nonce.as_byte_array()))
+    }
+}
+
+impl From<BigEndian<u64>> for Nonce {
+    fn from(number: BigEndian<u64>) -> Self {
+        let most_sig_bytes = (u64::from(number) >> 32) as u32;
+        let least_sig_bytes = u64::from(number) as u32;
+        let nonce = [
+            BigEndian::ZERO,
+            BigEndian::from(most_sig_bytes),
+            BigEndian::from(least_sig_bytes),
+        ];
+        Nonce(*(nonce.as_byte_array()))
+    }
+}
+
+impl From<LittleEndian<u64>> for Nonce {
+    fn from(number: LittleEndian<u64>) -> Self {
+        let most_sig_bytes = (u64::from(number) >> 32) as u32;
+        let least_sig_bytes = u64::from(number) as u32;
+
+        let nonce = [
+            LittleEndian::from(least_sig_bytes),
+            LittleEndian::from(most_sig_bytes),
+            LittleEndian::ZERO,
+        ];
+        Nonce(*(nonce.as_byte_array()))
+    }
+}
+
+impl From<&[u8; IV_LEN]> for Nonce {
+    fn from(bytes: &[u8; IV_LEN]) -> Self {
+        let mut nonce_bytes = [0u8; NONCE_LEN];
+        let bytes_start_index = 0;
+        let nonce_start_index = 0;
+
+        for i in 0..NONCE_LEN {
+            nonce_bytes[nonce_start_index + i] = bytes[bytes_start_index + i];
+        }
+        Nonce(nonce_bytes)
+    }
+}
+
+impl From<&[u8]> for Nonce {
+    fn from(bytes: &[u8]) -> Self {
+        let mut nonce_bytes = [0u8; NONCE_LEN];
+        let iteration_count = cmp::min(NONCE_LEN, bytes.len());
+        let bytes_start_index = bytes.len() - iteration_count; // Copy from end
+        let nonce_start_index = NONCE_LEN - iteration_count; // Write to the end
+        for i in 0..iteration_count {
+            nonce_bytes[nonce_start_index + i] = bytes[bytes_start_index + i];
+        }
+        Nonce(nonce_bytes)
+    }
+}
+
+impl From<CounterBEu32> for Nonce {
+    fn from(counter: CounterBEu32) -> Self {
+        Nonce::from(counter.u32s.as_byte_array())
+    }
+}
+
+impl From<CounterLEu32> for Nonce {
+    fn from(counter: CounterLEu32) -> Self {
+        Nonce::from(counter.u32s.as_byte_array())
+    }
+}
+
+impl From<Iv> for Nonce {
+    fn from(iv: Iv) -> Self {
+        Nonce::from(&iv.into_bytes_less_safe())
     }
 }
 
