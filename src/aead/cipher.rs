@@ -16,12 +16,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::aead::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
-use crate::aead::block::BLOCK_LEN;
 use crate::aead::chacha::{encrypt_block_chacha20, ChaCha20Key};
 use crate::aead::{block::Block, error, quic::Sample, Nonce};
 use aws_lc_sys::EVP_CIPHER_CTX;
 use std::mem::MaybeUninit;
-use std::os::raw::c_int;
 use std::ptr;
 use std::ptr::{null, null_mut};
 
@@ -202,6 +200,7 @@ impl SymmetricCipherKey {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::aead::block::BLOCK_LEN;
     use crate::test::from_hex;
 
     #[test]

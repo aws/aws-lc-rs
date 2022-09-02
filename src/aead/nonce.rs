@@ -19,7 +19,7 @@ use crate::endian::{ArrayEncoding, BigEndian, Encoding, LittleEndian};
 use crate::error;
 use std::cmp;
 use std::convert::TryInto;
-use std::mem::{transmute_copy, MaybeUninit};
+use std::mem::transmute_copy;
 
 /// A nonce for a single AEAD opening or sealing operation.
 ///
@@ -71,18 +71,14 @@ impl From<&[u32; NONCE_LEN / 4]> for Nonce {
 
 impl From<BigEndian<u32>> for Nonce {
     fn from(number: BigEndian<u32>) -> Self {
-        let nonce = [BigEndian::ZERO, BigEndian::ZERO, BigEndian::from(number)];
+        let nonce = [BigEndian::ZERO, BigEndian::ZERO, number];
         Nonce(*(nonce.as_byte_array()))
     }
 }
 
 impl From<LittleEndian<u32>> for Nonce {
     fn from(number: LittleEndian<u32>) -> Self {
-        let nonce = [
-            LittleEndian::ZERO,
-            LittleEndian::ZERO,
-            LittleEndian::from(number),
-        ];
+        let nonce = [LittleEndian::ZERO, LittleEndian::ZERO, number];
         Nonce(*(nonce.as_byte_array()))
     }
 }
@@ -120,9 +116,8 @@ impl From<&[u8; IV_LEN]> for Nonce {
         let bytes_start_index = 0;
         let nonce_start_index = 0;
 
-        for i in 0..NONCE_LEN {
-            nonce_bytes[nonce_start_index + i] = bytes[bytes_start_index + i];
-        }
+        nonce_bytes[nonce_start_index..(NONCE_LEN + nonce_start_index)]
+            .copy_from_slice(&bytes[bytes_start_index..(NONCE_LEN + bytes_start_index)]);
         Nonce(nonce_bytes)
     }
 }
@@ -133,9 +128,8 @@ impl From<&[u8]> for Nonce {
         let iteration_count = cmp::min(NONCE_LEN, bytes.len());
         let bytes_start_index = bytes.len() - iteration_count; // Copy from end
         let nonce_start_index = NONCE_LEN - iteration_count; // Write to the end
-        for i in 0..iteration_count {
-            nonce_bytes[nonce_start_index + i] = bytes[bytes_start_index + i];
-        }
+        nonce_bytes[nonce_start_index..(NONCE_LEN + nonce_start_index)]
+            .copy_from_slice(&bytes[bytes_start_index..(NONCE_LEN + bytes_start_index)]);
         Nonce(nonce_bytes)
     }
 }

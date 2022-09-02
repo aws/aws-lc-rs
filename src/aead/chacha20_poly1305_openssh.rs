@@ -34,9 +34,7 @@ use super::{
     poly1305, Nonce, Tag,
 };
 use crate::aead::block::BLOCK_LEN;
-use crate::aead::cipher::SymmetricCipherKey;
 use crate::aead::counter;
-use crate::aead::iv::Iv;
 use crate::{constant_time, endian::*, error};
 use core::convert::TryInto;
 
@@ -68,8 +66,8 @@ impl SealingKey {
         plaintext_in_ciphertext_out: &mut [u8],
         tag_out: &mut [u8; TAG_LEN],
     ) {
-        let mut nonce = make_nonce(sequence_number);
-        let poly_key = derive_poly1305_key(&self.key.k_2, nonce);
+        let nonce = make_nonce(sequence_number);
+        let poly_key = derive_poly1305_key(&self.key.k_2, nonce).unwrap();
 
         {
             let (len_in_out, data_and_padding_in_out) =
@@ -77,12 +75,12 @@ impl SealingKey {
 
             self.key
                 .k_1
-                .encrypt_in_place(make_nonce(sequence_number), len_in_out);
-            self.key.k_2.encrypt_in_place_counter(
-                make_nonce(sequence_number),
-                data_and_padding_in_out,
-                1,
-            );
+                .encrypt_in_place(make_nonce(sequence_number), len_in_out)
+                .unwrap();
+            self.key
+                .k_2
+                .encrypt_in_place_counter(make_nonce(sequence_number), data_and_padding_in_out, 1)
+                .unwrap();
         }
 
         let Tag(tag) = poly1305::sign(poly_key, plaintext_in_ciphertext_out);
@@ -114,7 +112,10 @@ impl OpeningKey {
     ) -> [u8; PACKET_LENGTH_LEN] {
         let mut packet_length = encrypted_packet_length;
         let nonce = make_nonce(sequence_number);
-        self.key.k_1.encrypt_in_place(nonce, &mut packet_length);
+        self.key
+            .k_1
+            .encrypt_in_place(nonce, &mut packet_length)
+            .unwrap();
         packet_length
     }
 
@@ -138,7 +139,7 @@ impl OpeningKey {
         // We must verify the tag before decrypting so that
         // `ciphertext_in_plaintext_out` is unmodified if verification fails.
         // This is beyond what we guarantee.
-        let poly_key = derive_poly1305_key(&self.key.k_2, nonce);
+        let poly_key = derive_poly1305_key(&self.key.k_2, nonce)?;
         verify(poly_key, ciphertext_in_plaintext_out, tag)?;
 
         let plaintext_in_ciphertext_out = &mut ciphertext_in_plaintext_out[PACKET_LENGTH_LEN..];
@@ -146,7 +147,7 @@ impl OpeningKey {
             make_nonce(sequence_number),
             plaintext_in_ciphertext_out,
             1,
-        );
+        )?;
 
         Ok(plaintext_in_ciphertext_out)
     }
@@ -188,25 +189,24 @@ fn verify(key: poly1305::Key, msg: &[u8], tag: &[u8; TAG_LEN]) -> Result<(), err
     constant_time::verify_slices_are_equal(calculated_tag.as_ref(), tag)
 }
 
-pub(super) fn derive_poly1305_key(chacha_key: &ChaCha20Key, nonce: Nonce) -> poly1305::Key {
+pub(super) fn derive_poly1305_key(
+    chacha_key: &ChaCha20Key,
+    nonce: Nonce,
+) -> Result<poly1305::Key, error::Unspecified> {
     let mut key_bytes = [0u8; 2 * BLOCK_LEN];
-    chacha_key.encrypt_in_place(nonce, &mut key_bytes);
-    poly1305::Key::new(key_bytes)
+    chacha_key.encrypt_in_place(nonce, &mut key_bytes)?;
+    Ok(poly1305::Key::new(key_bytes))
 }
 
 #[cfg(test)]
 mod tests {
     use crate::aead::chacha::ChaCha20Key;
     use crate::aead::chacha20_poly1305_openssh::derive_poly1305_key;
-    use crate::aead::counter::Counter;
-    use crate::aead::iv::Iv;
-    use crate::aead::{chacha, CounterBEu32, Nonce};
+    use crate::aead::Nonce;
     use crate::test;
-    use hex::encode;
 
     #[test]
     fn derive_poly1305_test() {
-        use hex;
         let chacha_key =
             test::from_hex("98bef1469be7269837a45bfbc92a5a6ac762507cf96443bf33b96b1bd4c6f8f6")
                 .unwrap();
@@ -217,7 +217,7 @@ mod tests {
         let chacha_key_bytes: [u8; 32] = <[u8; 32]>::try_from(chacha_key).unwrap();
         let chacha_key = ChaCha20Key::from(chacha_key_bytes);
         let iv = Nonce::from(&[45u32, 897, 4567]);
-        let poly1305_key = derive_poly1305_key(&chacha_key, iv);
+        let poly1305_key = derive_poly1305_key(&chacha_key, iv).unwrap();
 
         assert_eq!(&expected_poly1305_key, &poly1305_key.key_and_nonce);
     }

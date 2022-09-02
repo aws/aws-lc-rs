@@ -3,10 +3,8 @@
 
 use crate::aead::block::{Block, BLOCK_LEN};
 use crate::aead::cipher::SymmetricCipherKey;
-use crate::aead::iv::Iv;
 use crate::aead::key_inner::KeyInner;
 use crate::aead::{Algorithm, AlgorithmID, Nonce, NONCE_LEN};
-use std::mem::MaybeUninit;
 use std::ops::Deref;
 use zeroize::Zeroize;
 
@@ -73,18 +71,16 @@ pub(super) fn encrypt_block_chacha20(
     nonce: Nonce,
     counter: u32,
 ) -> Result<Block, error::Unspecified> {
-    unsafe {
-        let mut cipher_text = MaybeUninit::<[u8; BLOCK_LEN]>::uninit().assume_init();
-        encrypt_chacha20(
-            key,
-            block.as_ref().as_slice(),
-            cipher_text.as_mut_slice(),
-            nonce.as_ref(),
-            counter,
-        );
+    let mut cipher_text = [0u8; BLOCK_LEN];
+    encrypt_chacha20(
+        key,
+        block.as_ref().as_slice(),
+        &mut cipher_text,
+        nonce.as_ref(),
+        counter,
+    )?;
 
-        Ok(Block::from(&cipher_text))
-    }
+    Ok(Block::from(&cipher_text))
 }
 
 #[inline]
@@ -135,21 +131,19 @@ pub(super) fn encrypt_in_place_chacha20(
     in_out: &mut [u8],
     counter: u32,
 ) -> Result<(), error::Unspecified> {
+    let key_bytes = &key.0;
+    let inner = InnerNonceCounter::new(nonce, counter);
     unsafe {
-        let key_bytes = &key.0;
-        let inner = InnerNonceCounter::new(nonce, counter);
-        unsafe {
-            aws_lc_sys::CRYPTO_chacha_20(
-                in_out.as_mut_ptr(),
-                in_out.as_ptr(),
-                in_out.len(),
-                key_bytes.as_ptr(),
-                inner.nonce.as_ptr(),
-                inner.ctr,
-            );
-        }
-        Ok(())
+        aws_lc_sys::CRYPTO_chacha_20(
+            in_out.as_mut_ptr(),
+            in_out.as_ptr(),
+            in_out.len(),
+            key_bytes.as_ptr(),
+            inner.nonce.as_ptr(),
+            inner.ctr,
+        );
     }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -222,7 +216,8 @@ mod tests {
             let buf = &mut buf[..(input.len())];
             buf.copy_from_slice(input);
 
-            key.encrypt_in_place_counter(Nonce::from(nonce), buf, ctr);
+            key.encrypt_in_place_counter(Nonce::from(nonce), buf, ctr)
+                .unwrap();
             assert_eq!(
                 &buf[..input.len()],
                 expected,
