@@ -406,7 +406,7 @@ mod tests {
     // completely wacky.
     #[test]
     pub fn hmac_signing_key_coverage_aws_lc() {
-        let rng = rand::AWS_LC_SECURE_RANDOM;
+        let rng = rand::SystemRandom::new();
 
         const HELLO_WORLD_GOOD: &[u8] = b"hello, world";
         const HELLO_WORLD_BAD: &[u8] = b"hello, worle";
