@@ -13,9 +13,8 @@ struct OpenSSHConfig {
 
 #[test]
 fn test_openssh() -> Result<(), String> {
-    let key_vec = from_hex("247a041f6780baf0de3741aa4436024b6a5169b0eab8a090a291f5900bf566a54ac2c64c0f38cab14a143111bc39d1873013f52f2e92062e375c1a5378ad9b32").unwrap();
-    let mut key_bytes = [0u8; aead::chacha20_poly1305_openssh::KEY_LEN];
-    key_bytes.copy_from_slice(key_vec.as_slice());
+    let key_bytes: [u8; aead::chacha20_poly1305_openssh::KEY_LEN] =
+        from_hex("247a041f6780baf0de3741aa4436024b6a5169b0eab8a090a291f5900bf566a54ac2c64c0f38cab14a143111bc39d1873013f52f2e92062e375c1a5378ad9b32").unwrap().try_into().unwrap();
     let plaintext = from_hex("000000100f000000000000000000000000000000").unwrap();
     let sequence_num = 94;
     let ciphertext = from_hex("c87186a24d89e672f37df98a95d0a0653e9f0fe4").unwrap();

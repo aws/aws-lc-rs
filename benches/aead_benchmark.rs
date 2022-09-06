@@ -196,6 +196,7 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
         config.description,
         in_out.len()
     );
+
     c.bench_function(&aws_bench_name, |b| {
         b.iter(|| {
             let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
