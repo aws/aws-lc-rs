@@ -5,7 +5,7 @@ use crate::digest::{match_digest_type, Algorithm};
 use crate::error;
 use std::ptr::null_mut;
 
-pub(crate) struct DigestContext {
+pub(super) struct DigestContext {
     pub ctx: *mut aws_lc_sys::EVP_MD_CTX,
 }
 
