@@ -110,8 +110,8 @@ fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
         let chunk = vec![123u8; chunk_len];
 
         let bench_group_name = format!(
-            "DIGEST-{:?}: {} ({} bytes) [one-shot]",
-            config.algorithm, config.description, chunk_len
+            "DIGEST-{:?}-one-shot ({} bytes)",
+            config.algorithm, chunk_len
         );
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {
@@ -143,8 +143,8 @@ fn bench_digest_incremental(c: &mut Criterion, config: &DigestConfig) {
         let chunk = vec![123u8; chunk_len];
 
         let bench_group_name = format!(
-            "DIGEST-{:?}: {} ({} bytes) [update/finish]",
-            config.algorithm, config.description, chunk_len
+            "DIGEST-{:?}-incremental ({} bytes)",
+            config.algorithm, chunk_len
         );
         let mut group = c.benchmark_group(bench_group_name);
 

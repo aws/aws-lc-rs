@@ -128,8 +128,8 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
         let chunk = vec![123u8; chunk_len];
 
         let bench_group_name = format!(
-            "HMAC-{:?}: {} ({} bytes) [one-shot]",
-            config.algorithm, config.description, chunk_len
+            "HMAC-{:?}-one-shot: ({} bytes)",
+            config.algorithm, chunk_len
         );
         let mut group = c.benchmark_group(bench_group_name);
 
@@ -156,8 +156,8 @@ fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
         let chunk = vec![123u8; chunk_len];
 
         let bench_group_name = format!(
-            "HMAC-{:?}: {} ({} bytes) [long-key]",
-            config.algorithm, config.description, chunk_len
+            "HMAC-{:?}-one-shot-long-key ({} bytes)",
+            config.algorithm, chunk_len
         );
         let mut group = c.benchmark_group(bench_group_name);
 
@@ -184,8 +184,8 @@ fn bench_hmac_incremental(c: &mut Criterion, config: &HMACConfig) {
         let chunk = vec![123u8; chunk_len];
 
         let bench_group_name = format!(
-            "HMAC-{:?}: {} ({} bytes) [update/finish]",
-            config.algorithm, config.description, chunk_len
+            "HMAC-{:?}-incremental: ({} bytes)",
+            config.algorithm, chunk_len
         );
         let mut group = c.benchmark_group(bench_group_name);
 
