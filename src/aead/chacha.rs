@@ -50,14 +50,6 @@ impl ChaCha20Key {
         &self,
         nonce: Nonce,
         in_out: &mut [u8],
-    ) -> Result<(), error::Unspecified> {
-        encrypt_in_place_chacha20(self, nonce.as_ref(), in_out, 0)
-    }
-    #[inline]
-    pub(super) fn encrypt_in_place_counter(
-        &self,
-        nonce: Nonce,
-        in_out: &mut [u8],
         ctr: u32,
     ) -> Result<(), error::Unspecified> {
         encrypt_in_place_chacha20(self, nonce.as_ref(), in_out, ctr)
@@ -108,22 +100,6 @@ pub(super) fn encrypt_chacha20(
     Ok(())
 }
 
-struct InnerNonceCounter {
-    nonce: [u8; NONCE_LEN],
-    ctr: u32,
-}
-
-impl InnerNonceCounter {
-    fn new(nonce: &[u8; NONCE_LEN], ctr: u32) -> InnerNonceCounter {
-        let [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11] = *nonce;
-        let [c0, c1, c2, c3] = ctr.to_le_bytes();
-        InnerNonceCounter {
-            nonce: [x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11],
-            ctr: u32::from_le_bytes([c0, c1, c2, c3]),
-        }
-    }
-}
-
 #[inline]
 pub(super) fn encrypt_in_place_chacha20(
     key: &ChaCha20Key,
@@ -132,15 +108,14 @@ pub(super) fn encrypt_in_place_chacha20(
     counter: u32,
 ) -> Result<(), error::Unspecified> {
     let key_bytes = &key.0;
-    let inner = InnerNonceCounter::new(nonce, counter);
     unsafe {
         aws_lc_sys::CRYPTO_chacha_20(
             in_out.as_mut_ptr(),
             in_out.as_ptr(),
             in_out.len(),
             key_bytes.as_ptr(),
-            inner.nonce.as_ptr(),
-            inner.ctr,
+            nonce.as_ptr(),
+            counter,
         );
     }
     Ok(())
@@ -176,7 +151,7 @@ mod tests {
                 let key = ChaCha20Key::from(*key);
 
                 let ctr = test_case.consume_usize("Ctr");
-                let nonce = test_case.consume_bytes("Nonce");
+                let nonce: [u8; NONCE_LEN] = test_case.consume_bytes("Nonce").try_into().unwrap();
                 let input = test_case.consume_bytes("Input");
                 let output = test_case.consume_bytes("Output");
 
@@ -186,7 +161,7 @@ mod tests {
                 for len in 0..=input.len() {
                     chacha20_test_case_inner(
                         &key,
-                        &nonce,
+                        nonce,
                         ctr as u32,
                         &input[..len],
                         &output[..len],
@@ -201,7 +176,7 @@ mod tests {
 
     fn chacha20_test_case_inner(
         key: &ChaCha20Key,
-        nonce: &[u8],
+        nonce: [u8; NONCE_LEN],
         ctr: u32,
         input: &[u8],
         expected: &[u8],
@@ -215,9 +190,9 @@ mod tests {
             buf[..alignment].fill(ARBITRARY);
             let buf = &mut buf[..(input.len())];
             buf.copy_from_slice(input);
+            let nonce = Nonce(nonce);
 
-            key.encrypt_in_place_counter(Nonce::from(nonce), buf, ctr)
-                .unwrap();
+            key.encrypt_in_place(nonce, buf, ctr).unwrap();
             assert_eq!(
                 &buf[..input.len()],
                 expected,

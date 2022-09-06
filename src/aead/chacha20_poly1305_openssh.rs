@@ -34,11 +34,8 @@ use super::{
     poly1305, Nonce, Tag,
 };
 use crate::aead::block::BLOCK_LEN;
-use crate::aead::counter;
 use crate::{constant_time, endian::*, error};
 use core::convert::TryInto;
-
-pub(crate) type CounterLEu32 = counter::Counter<LittleEndian<u32>>;
 
 /// A key for sealing packets.
 pub struct SealingKey {
@@ -67,7 +64,7 @@ impl SealingKey {
         tag_out: &mut [u8; TAG_LEN],
     ) {
         let nonce = make_nonce(sequence_number);
-        let poly_key = derive_poly1305_key(&self.key.k_2, nonce).unwrap();
+        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(nonce.0)).unwrap();
 
         {
             let (len_in_out, data_and_padding_in_out) =
@@ -75,11 +72,11 @@ impl SealingKey {
 
             self.key
                 .k_1
-                .encrypt_in_place(make_nonce(sequence_number), len_in_out)
+                .encrypt_in_place(Nonce(nonce.0), len_in_out, 0)
                 .unwrap();
             self.key
                 .k_2
-                .encrypt_in_place_counter(make_nonce(sequence_number), data_and_padding_in_out, 1)
+                .encrypt_in_place(nonce, data_and_padding_in_out, 1)
                 .unwrap();
         }
 
@@ -114,7 +111,7 @@ impl OpeningKey {
         let nonce = make_nonce(sequence_number);
         self.key
             .k_1
-            .encrypt_in_place(nonce, &mut packet_length)
+            .encrypt_in_place(nonce, &mut packet_length, 0)
             .unwrap();
         packet_length
     }
@@ -139,15 +136,13 @@ impl OpeningKey {
         // We must verify the tag before decrypting so that
         // `ciphertext_in_plaintext_out` is unmodified if verification fails.
         // This is beyond what we guarantee.
-        let poly_key = derive_poly1305_key(&self.key.k_2, nonce)?;
+        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(nonce.0))?;
         verify(poly_key, ciphertext_in_plaintext_out, tag)?;
 
         let plaintext_in_ciphertext_out = &mut ciphertext_in_plaintext_out[PACKET_LENGTH_LEN..];
-        self.key.k_2.encrypt_in_place_counter(
-            make_nonce(sequence_number),
-            plaintext_in_ciphertext_out,
-            1,
-        )?;
+        self.key
+            .k_2
+            .encrypt_in_place(nonce, plaintext_in_ciphertext_out, 1)?;
 
         Ok(plaintext_in_ciphertext_out)
     }
@@ -194,7 +189,7 @@ pub(super) fn derive_poly1305_key(
     nonce: Nonce,
 ) -> Result<poly1305::Key, error::Unspecified> {
     let mut key_bytes = [0u8; 2 * BLOCK_LEN];
-    chacha_key.encrypt_in_place(nonce, &mut key_bytes)?;
+    chacha_key.encrypt_in_place(nonce, &mut key_bytes, 0)?;
     Ok(poly1305::Key::new(key_bytes))
 }
 
