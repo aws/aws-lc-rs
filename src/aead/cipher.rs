@@ -15,13 +15,11 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::aead::aes::{Aes128Key, Aes256Key};
-use crate::aead::block::BLOCK_LEN;
-use crate::aead::chacha::ChaCha20Key;
-use crate::aead::{block::Block, error, quic::Sample};
+use crate::aead::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
+use crate::aead::chacha::{encrypt_block_chacha20, ChaCha20Key};
+use crate::aead::{block::Block, error, quic::Sample, Nonce};
 use aws_lc_sys::EVP_CIPHER_CTX;
 use std::mem::MaybeUninit;
-use std::os::raw::c_int;
 use std::ptr;
 use std::ptr::{null, null_mut};
 
@@ -178,7 +176,7 @@ impl SymmetricCipherKey {
                 let input = Block::zero();
                 unsafe {
                     let counter = std::mem::transmute::<[u8; 4], u32>(*counter_bytes).to_le();
-                    encrypt_block_chacha20(key_bytes, input, nonce, counter)?
+                    encrypt_block_chacha20(key_bytes, input, Nonce::from(nonce), counter)?
                 }
             }
         };
@@ -188,21 +186,6 @@ impl SymmetricCipherKey {
 
         Ok(out)
     }
-    /*
-       #[inline] // Optimize away match on `iv` and length check.
-       pub fn encrypt_iv_xor_blocks_in_place(&self, iv: Iv, in_out: &mut [u8; 2 * BLOCK_LEN]) {
-           unsafe {
-               let block1 = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
-               let block2 = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
-               encrypt_block_chacha20(
-                   self.key_bytes(),
-                   Block::from(in_out[0..BLOCK_LEN].into()),
-                   iv.into_bytes_less_safe()[0..NONCE_LEN].into(),
-                   0,
-               )
-           }
-       }
-    */
 
     #[allow(dead_code)]
     pub fn encrypt_block(&self, block: Block) -> Result<Block, error::Unspecified> {
@@ -214,62 +197,10 @@ impl SymmetricCipherKey {
     }
 }
 
-#[inline]
-fn encrypt_block_aes_ecb(
-    ctx: *mut EVP_CIPHER_CTX,
-    block: Block,
-) -> Result<Block, error::Unspecified> {
-    unsafe {
-        let mut out_len = MaybeUninit::<c_int>::uninit();
-        let mut cipher_text = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
-        let plain_bytes = block.as_ref();
-        if 1 != aws_lc_sys::EVP_EncryptUpdate(
-            ctx,
-            cipher_text.as_mut_ptr().cast(),
-            out_len.as_mut_ptr(),
-            plain_bytes.as_ptr(),
-            BLOCK_LEN as c_int,
-        ) {
-            return Err(error::Unspecified);
-        }
-        let olen = out_len.assume_init() as usize;
-        if olen != BLOCK_LEN {
-            return Err(error::Unspecified);
-        }
-
-        Ok(Block::from(&cipher_text.assume_init()))
-    }
-}
-
-#[inline]
-fn encrypt_block_chacha20(
-    key: &ChaCha20Key,
-    block: Block,
-    nonce: &[u8; 12],
-    counter: u32,
-) -> Result<Block, error::Unspecified> {
-    unsafe {
-        let key_bytes = &key.0;
-        let mut cipher_text = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
-        let plaintext = block.as_ref();
-
-        // This function can't fail?
-        aws_lc_sys::CRYPTO_chacha_20(
-            cipher_text.as_mut_ptr().cast(),
-            plaintext.as_ptr(),
-            BLOCK_LEN,
-            key_bytes.as_ptr(),
-            nonce.as_ptr(),
-            counter,
-        );
-
-        Ok(Block::from(&cipher_text.assume_init()))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::aead::block::BLOCK_LEN;
     use crate::test::from_hex;
 
     #[test]

@@ -12,8 +12,11 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+use crate::aead::iv::IV_LEN;
+use crate::endian::{ArrayEncoding, BigEndian, Encoding};
 use crate::error;
 use std::convert::TryInto;
+use std::mem::transmute_copy;
 
 /// A nonce for a single AEAD opening or sealing operation.
 ///
@@ -48,12 +51,33 @@ impl AsRef<[u8; NONCE_LEN]> for Nonce {
     }
 }
 
-impl TryFrom<&[u8]> for Nonce {
-    type Error = ();
+impl From<&[u8; NONCE_LEN]> for Nonce {
+    fn from(bytes: &[u8; NONCE_LEN]) -> Self {
+        Nonce(bytes.to_owned())
+    }
+}
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        let result = <[u8; NONCE_LEN]>::try_from(value).map_err(|_| ())?;
-        Ok(Nonce(result))
+impl From<&[u32; NONCE_LEN / 4]> for Nonce {
+    fn from(values: &[u32; NONCE_LEN / 4]) -> Self {
+        unsafe {
+            let bytes: [u8; NONCE_LEN] = transmute_copy(values);
+            Nonce(bytes)
+        }
+    }
+}
+
+impl From<BigEndian<u32>> for Nonce {
+    fn from(number: BigEndian<u32>) -> Self {
+        let nonce = [BigEndian::ZERO, BigEndian::ZERO, number];
+        Nonce(*(nonce.as_byte_array()))
+    }
+}
+
+impl From<&[u8; IV_LEN]> for Nonce {
+    fn from(bytes: &[u8; IV_LEN]) -> Self {
+        let mut nonce_bytes = [0u8; NONCE_LEN];
+        nonce_bytes.copy_from_slice(&bytes[0..NONCE_LEN]);
+        Nonce(nonce_bytes)
     }
 }
 

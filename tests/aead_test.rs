@@ -329,7 +329,7 @@ fn test_aead_nonce_sizes() -> Result<(), error::Unspecified> {
 
     Ok(())
 }
-/*
+
 #[cfg(any(
     target_arch = "aarch64",
     target_arch = "arm",
@@ -383,7 +383,7 @@ fn aead_chacha20_poly1305_openssh() {
         },
     );
 }
-*/
+
 #[test]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn test_tag_traits() {

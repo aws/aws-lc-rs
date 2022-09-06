@@ -26,7 +26,6 @@
 //! documentation for more details.
 
 use crate::error;
-use crate::error::Unspecified;
 use std::fmt::{Debug, Formatter};
 
 /// A secure random number generator.
@@ -103,8 +102,8 @@ pub(crate) mod sealed {
 }
 
 /// A type that can be returned by `ring::rand::generate()`.
-pub trait RandomlyConstructable: self::sealed::RandomlyConstructable {}
-impl<T> RandomlyConstructable for T where T: self::sealed::RandomlyConstructable {}
+pub trait RandomlyConstructable: sealed::RandomlyConstructable {}
+impl<T> RandomlyConstructable for T where T: sealed::RandomlyConstructable {}
 
 /// A secure random number generator where the random values come directly
 /// from the operating system.
@@ -148,10 +147,10 @@ impl Debug for AwsLcSecureRandom {
 }
 
 impl sealed::SecureRandom for AwsLcSecureRandom {
-    fn fill_impl(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
+    fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
         unsafe {
             if 1 != aws_lc_sys::RAND_bytes(dest.as_mut_ptr(), dest.len()) {
-                Err(Unspecified)
+                Err(error::Unspecified)
             } else {
                 Ok(())
             }

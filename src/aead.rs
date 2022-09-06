@@ -37,8 +37,7 @@ mod aes;
 mod aes_gcm;
 mod block;
 mod chacha;
-//pub mod chacha20_poly1305_openssh;
-mod chacha20_poly1305_openssh;
+pub mod chacha20_poly1305_openssh;
 mod cipher;
 mod counter;
 mod iv;
@@ -763,16 +762,16 @@ mod tests {
         let unbound_key = UnboundKey::new(&crate::aead::AES_128_GCM, &key).unwrap();
         let less_safe_key = LessSafeKey::new(unbound_key);
 
-        let nonce = og_nonce.as_slice().try_into().unwrap();
+        let nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();
         let mut in_out = Vec::from(plaintext.as_slice());
 
         less_safe_key
-            .seal_in_place_append_tag(nonce, Aad::empty(), &mut in_out)
+            .seal_in_place_append_tag(Nonce(nonce), Aad::empty(), &mut in_out)
             .unwrap();
 
-        let nonce = og_nonce.as_slice().try_into().unwrap();
+        let nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();
         less_safe_key
-            .open_in_place(nonce, Aad::empty(), &mut in_out)
+            .open_in_place(Nonce(nonce), Aad::empty(), &mut in_out)
             .unwrap();
 
         assert_eq!(plaintext, in_out[..plaintext.len()]);
