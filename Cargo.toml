@@ -22,15 +22,15 @@ ring = "0.16"
 name = "aead_benchmark"
 harness = false
 
-[[bench]]
-name = "digest_benchmark"
-harness = false
-
-[[bench]]
-name = "hmac_benchmark"
-harness = false
-
-[[bench]]
-name = "quic_benchmark"
-harness = false
-
+# [[bench]]
+# name = "digest_benchmark"
+# harness = false
+#
+# [[bench]]
+# name = "hmac_benchmark"
+# harness = false
+#
+# [[bench]]
+# name = "quic_benchmark"
+# harness = false
+#
