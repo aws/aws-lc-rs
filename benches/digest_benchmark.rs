@@ -109,21 +109,18 @@ fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
     for &chunk_len in &G_CHUNK_LENGTHS {
         let chunk = vec![123u8; chunk_len];
 
-        let aws_bench_name = format!(
-            "aws-lc-{:?}: {} ({} bytes) [one-shot]",
+        let bench_group_name = format!(
+            "DIGEST-{:?}: {} ({} bytes) [one-shot]",
             config.algorithm, config.description, chunk_len
         );
-        c.bench_function(&aws_bench_name, |b| {
+        let mut group = c.benchmark_group(bench_group_name);
+        group.bench_function("AWS-LC", |b| {
             b.iter(|| {
                 aws_lc_ring_facade_benchmarks::run_digest_one_shot(config, &chunk);
             })
         });
 
-        let ring_bench_name = format!(
-            "ring-{:?}: {} ({} bytes) [one-shot]",
-            config.algorithm, config.description, chunk_len
-        );
-        c.bench_function(&ring_bench_name, |b| {
+        group.bench_function("Ring", |b| {
             b.iter(|| {
                 ring_benchmarks::run_digest_one_shot(config, &chunk);
             })
@@ -145,21 +142,19 @@ fn bench_digest_incremental(c: &mut Criterion, config: &DigestConfig) {
     for &chunk_len in &G_CHUNK_LENGTHS {
         let chunk = vec![123u8; chunk_len];
 
-        let aws_bench_name = format!(
-            "aws-lc-{:?}: {} ({} bytes) [update/finish]",
+        let bench_group_name = format!(
+            "DIGEST-{:?}: {} ({} bytes) [update/finish]",
             config.algorithm, config.description, chunk_len
         );
-        c.bench_function(&aws_bench_name, |b| {
+        let mut group = c.benchmark_group(bench_group_name);
+
+        group.bench_function("AWS-LC", |b| {
             b.iter(|| {
                 aws_lc_ring_facade_benchmarks::run_digest_incremental(config, &chunk);
             })
         });
 
-        let ring_bench_name = format!(
-            "ring-{:?}: {} ({} bytes) [update/finish]",
-            config.algorithm, config.description, chunk_len
-        );
-        c.bench_function(&ring_bench_name, |b| {
+        group.bench_function("Ring", |b| {
             b.iter(|| {
                 ring_benchmarks::run_digest_incremental(config, &chunk);
             })
