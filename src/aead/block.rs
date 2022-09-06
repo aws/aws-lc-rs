@@ -12,8 +12,6 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use crate::error;
-
 /// An array of 16 bytes that can (in the x86_64 and AAarch64 ABIs, at least)
 /// be efficiently passed by value and returned by value (i.e. in registers),
 /// and which meets the alignment requirements of `u32` and `u64` (at least)
@@ -37,16 +35,6 @@ impl From<&'_ [u8; BLOCK_LEN]> for Block {
     #[inline]
     fn from(bytes: &[u8; BLOCK_LEN]) -> Self {
         unsafe { core::mem::transmute_copy(bytes) }
-    }
-}
-
-impl TryFrom<&[u8]> for Block {
-    type Error = error::Unspecified;
-    #[inline]
-    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        let block: [u8; BLOCK_LEN] =
-            <[u8; BLOCK_LEN]>::try_from(bytes).map_err(|_| error::Unspecified)?;
-        Ok(Block::from(&block))
     }
 }
 
