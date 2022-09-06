@@ -67,27 +67,23 @@ benchmark_quic!(aws_lc_ring_facade);
 fn test_new_mask(c: &mut Criterion, config: &QuicConfig) {
     let sample = config.sample.as_slice();
 
-    let aws_key = aws_lc_ring_facade_benchmarks::header_protection_key(config);
-    let aws_bench_name = format!(
-        "aws-lc-{:?}-quic-new-mask: {} ({} bytes)",
+    let bench_group_name = format!(
+        "QUIC-{:?}-quic-new-mask: {} ({} bytes)",
         config.algorithm,
         config.description,
         sample.len()
     );
-    c.bench_function(&aws_bench_name, |b| {
+    let mut group = c.benchmark_group(bench_group_name);
+
+    let aws_key = aws_lc_ring_facade_benchmarks::header_protection_key(config);
+    group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             let _result = aws_lc_ring_facade_benchmarks::new_mask(&aws_key, sample);
         })
     });
 
     let ring_key = ring_benchmarks::header_protection_key(config);
-    let ring_bench_name = format!(
-        "ring-{:?}-quic-new-mask: {} ({} bytes)",
-        config.algorithm,
-        config.description,
-        sample.len()
-    );
-    c.bench_function(&ring_bench_name, |b| {
+    group.bench_function("Ring", |b| {
         b.iter(|| {
             let _result = ring_benchmarks::new_mask(&ring_key, sample);
         })
