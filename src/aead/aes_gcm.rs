@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::aead::{error, Aad, Algorithm, AlgorithmID, CounterBEu32, Nonce, Tag, TAG_LEN};
+use crate::aead::{error, Aad, Algorithm, AlgorithmID, Nonce, Tag, TAG_LEN};
 use std::cmp::min;
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
