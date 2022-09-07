@@ -365,10 +365,10 @@ fn seal_in_place_separate_tag_(
     in_out: &mut [u8],
 ) -> Result<Tag, error::Unspecified> {
     check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
-    //(key.algorithm.seal_separate)(&key.inner, nonce, aad, in_out)
     match key.inner {
         KeyInner::AES_128_GCM(..) => aes_gcm_seal_separate(&key.inner, nonce, aad, in_out),
         KeyInner::AES_256_GCM(..) => aes_gcm_seal_separate(&key.inner, nonce, aad, in_out),
+        #[cfg(feature = "alloc")]
         KeyInner::CHACHA20_POLY1305(..) => {
             let mut extendable_in_out = Vec::new();
             extendable_in_out.extend_from_slice(in_out);
@@ -383,6 +383,10 @@ fn seal_in_place_separate_tag_(
             let mut my_tag = Vec::new();
             my_tag.extend_from_slice(tag);
             Ok(Tag(my_tag.try_into().unwrap()))
+        }
+        #[cfg(not(feature = "alloc"))]
+        KeyInner::CHACHA20_POLY1305(..) => {
+            panic!("seal_in_place_separate_tag for CHACHA20_POLY1305 requires feature=alloc");
         }
     }
 }

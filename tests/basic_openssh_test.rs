@@ -3,14 +3,6 @@ use aws_lc_ring_facade::test::from_hex;
 //use ring::aead;
 use aws_lc_ring_facade::aead;
 
-struct OpenSSHConfig {
-    key: Vec<u8>,
-    plaintext: Vec<u8>,
-    sequence_num: u32,
-    ciphertext: Vec<u8>,
-    expected_tag: Vec<u8>,
-}
-
 #[test]
 fn test_openssh() -> Result<(), String> {
     let key_bytes: [u8; aead::chacha20_poly1305_openssh::KEY_LEN] =
