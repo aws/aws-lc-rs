@@ -26,7 +26,7 @@ pub(crate) fn aes_gcm_seal_separate(
             _ => panic!("Unsupport algorithm"),
         };
 
-        let nonce = CounterBEu32::one(nonce).increment().into_bytes_less_safe();
+        let nonce = nonce.as_ref();
 
         if 1 != aws_lc_sys::EVP_EncryptInit_ex(gcm_ctx, null(), null_mut(), null(), nonce.as_ptr())
         {
