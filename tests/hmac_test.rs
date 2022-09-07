@@ -19,7 +19,7 @@ use aws_lc_ring_facade::{digest, hmac, test, test_file};
 
 #[test]
 fn hmac_tests() {
-    test::run(test_file!("hmac_tests.txt"), |section, test_case| {
+    test::run(test_file!("data/hmac_tests.txt"), |section, test_case| {
         assert_eq!(section, "");
         let digest_alg = test_case.consume_digest_alg("HMAC");
         let key_value = test_case.consume_bytes("Key");
