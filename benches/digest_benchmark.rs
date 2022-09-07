@@ -14,15 +14,11 @@ pub enum DigestAlgorithm {
 
 pub struct DigestConfig {
     algorithm: DigestAlgorithm,
-    description: String,
 }
 
 impl DigestConfig {
-    pub fn new(algorithm: DigestAlgorithm, description: &str) -> DigestConfig {
-        DigestConfig {
-            algorithm,
-            description: String::from(description),
-        }
+    pub fn new(algorithm: DigestAlgorithm) -> DigestConfig {
+        DigestConfig { algorithm }
     }
 }
 
@@ -65,31 +61,31 @@ benchmark_digest!(ring);
 benchmark_digest!(aws_lc_ring_facade);
 
 fn bench_sha1(c: &mut Criterion) {
-    let config = DigestConfig::new(DigestAlgorithm::SHA1, "SHA1 Digest");
+    let config = DigestConfig::new(DigestAlgorithm::SHA1);
     bench_digest_one_shot(c, &config);
     bench_digest_incremental(c, &config);
 }
 
 fn bench_sha256(c: &mut Criterion) {
-    let config = DigestConfig::new(DigestAlgorithm::SHA256, "SHA256 Digest");
+    let config = DigestConfig::new(DigestAlgorithm::SHA256);
     bench_digest_one_shot(c, &config);
     bench_digest_incremental(c, &config);
 }
 
 fn bench_sha384(c: &mut Criterion) {
-    let config = DigestConfig::new(DigestAlgorithm::SHA384, "SHA384 Digest");
+    let config = DigestConfig::new(DigestAlgorithm::SHA384);
     bench_digest_one_shot(c, &config);
     bench_digest_incremental(c, &config);
 }
 
 fn bench_sha512(c: &mut Criterion) {
-    let config = DigestConfig::new(DigestAlgorithm::SHA512, "SHA512 Digest");
+    let config = DigestConfig::new(DigestAlgorithm::SHA512);
     bench_digest_one_shot(c, &config);
     bench_digest_incremental(c, &config);
 }
 
 fn bench_sha512_256(c: &mut Criterion) {
-    let config = DigestConfig::new(DigestAlgorithm::SHA512_256, "SHA512_256 Digest");
+    let config = DigestConfig::new(DigestAlgorithm::SHA512_256);
     bench_digest_one_shot(c, &config);
     bench_digest_incremental(c, &config);
 }

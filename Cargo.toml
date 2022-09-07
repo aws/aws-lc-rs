@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+alloc = []
+default = ["alloc"]
+
 [dependencies]
 untrusted = { version = "0.9" }
 aws-lc-sys = { path = "deps/aws-lc-sys", version = "0.1.0" }

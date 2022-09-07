@@ -13,15 +13,11 @@ pub enum HMACAlgorithm {
 
 pub struct HMACConfig {
     algorithm: HMACAlgorithm,
-    description: String,
 }
 
 impl HMACConfig {
-    pub fn new(algorithm: HMACAlgorithm, description: &str) -> HMACConfig {
-        HMACConfig {
-            algorithm,
-            description: String::from(description),
-        }
+    pub fn new(algorithm: HMACAlgorithm) -> HMACConfig {
+        HMACConfig { algorithm }
     }
 }
 
@@ -93,28 +89,28 @@ benchmark_hmac!(ring);
 benchmark_hmac!(aws_lc_ring_facade);
 
 fn bench_hmac_sha1(c: &mut Criterion) {
-    let config = HMACConfig::new(HMACAlgorithm::SHA1, "HMAC SHA1");
+    let config = HMACConfig::new(HMACAlgorithm::SHA1);
     bench_hmac_one_shot(c, &config);
     bench_hmac_incremental(c, &config);
     bench_hmac_longer_key(c, &config);
 }
 
 fn bench_hmac_sha256(c: &mut Criterion) {
-    let config = HMACConfig::new(HMACAlgorithm::SHA256, "HMAC SHA256");
+    let config = HMACConfig::new(HMACAlgorithm::SHA256);
     bench_hmac_one_shot(c, &config);
     bench_hmac_incremental(c, &config);
     bench_hmac_longer_key(c, &config);
 }
 
 fn bench_hmac_sha384(c: &mut Criterion) {
-    let config = HMACConfig::new(HMACAlgorithm::SHA384, "HMAC SHA384");
+    let config = HMACConfig::new(HMACAlgorithm::SHA384);
     bench_hmac_one_shot(c, &config);
     bench_hmac_incremental(c, &config);
     bench_hmac_longer_key(c, &config);
 }
 
 fn bench_hmac_sha512(c: &mut Criterion) {
-    let config = HMACConfig::new(HMACAlgorithm::SHA512, "HMAC SHA512");
+    let config = HMACConfig::new(HMACAlgorithm::SHA512);
     bench_hmac_one_shot(c, &config);
     bench_hmac_incremental(c, &config);
     bench_hmac_longer_key(c, &config);
@@ -168,7 +164,6 @@ fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
             })
         });
 
-        let ring_key = ring_benchmarks::create_longer_hmac_key(config);
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 let ring_key = ring_benchmarks::create_longer_hmac_key(config);
