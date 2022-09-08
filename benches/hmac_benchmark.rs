@@ -26,12 +26,13 @@ impl HMACConfig {
 }
 
 // For the one-shot hmac::sign, we use the corresponding one-shot HMAC function available in AWS-LC.
-// For SHA-{256, 384, 512, 512-256}, aws-lc-ring-facade hmac::sign one-shot Rust functions is
-// on par with Ring for all input sizes. For SHA-1, AWS-LC is consistently 1.2-2.5 times
-// faster, depending on the input lengths.
+// For SHA-{256, 384, 512, 512-256}, aws-lc-ring-facade hmac::sign one-shot Rust functions are
+// slightly slower than Ring for 16-256 byte inputs, than quickly catch up and are almost on par
+// with Ring. For SHA-1, AWS-LC is consistently 1.2-2.5 times faster, depending on the input
+// lengths.
 // For Context::{update/sign}, we initialize the HMAC_CTX when the context is constructed, then
 // point update and sign to the corresponding HMAC_Update and HMAC_Final. The extra malloc
-// dependency needed for maintaining HMAC_CTX makes us slightly slower for 16-256 byte input sizes,
+// dependency needed for maintaining HMAC_CTX makes us slightly slower for 16-1350 byte input sizes,
 // but larger inputs are on par with Ring's Context::{update/sign}.
 macro_rules! benchmark_hmac {
     ( $pkg:ident ) => {
@@ -54,24 +55,12 @@ macro_rules! benchmark_hmac {
             }
 
             pub fn create_hmac_key(config: &HMACConfig) -> hmac::Key {
-                let key_length = match &config.algorithm {
-                    crate::HMACAlgorithm::SHA1 => digest::SHA1_OUTPUT_LEN,
-                    crate::HMACAlgorithm::SHA256 => digest::SHA256_OUTPUT_LEN,
-                    crate::HMACAlgorithm::SHA384 => digest::SHA384_OUTPUT_LEN,
-                    crate::HMACAlgorithm::SHA512 => digest::SHA512_OUTPUT_LEN,
-                };
-                let key_val = vec![123u8; key_length];
+                let key_val = vec![123u8; get_key_length(&config)];
                 hmac::Key::new(algorithm(&config), &key_val)
             }
 
             pub fn create_longer_hmac_key(config: &HMACConfig) -> hmac::Key {
-                let key_length = match &config.algorithm {
-                    crate::HMACAlgorithm::SHA1 => digest::SHA1_OUTPUT_LEN,
-                    crate::HMACAlgorithm::SHA256 => digest::SHA256_OUTPUT_LEN,
-                    crate::HMACAlgorithm::SHA384 => digest::SHA384_OUTPUT_LEN,
-                    crate::HMACAlgorithm::SHA512 => digest::SHA512_OUTPUT_LEN,
-                };
-                let key_val = vec![123u8; key_length + 1];
+                let key_val = vec![123u8; get_key_length(&config) + 1];
                 hmac::Key::new(algorithm(&config), &key_val)
             }
 
@@ -83,6 +72,15 @@ macro_rules! benchmark_hmac {
 
             pub fn run_hmac_one_shot(key: &hmac::Key, chunk: &[u8]) {
                 hmac::sign(&key, chunk);
+            }
+
+            fn get_key_length(config: &HMACConfig) -> usize {
+                match &config.algorithm {
+                    crate::HMACAlgorithm::SHA1 => digest::SHA1_OUTPUT_LEN,
+                    crate::HMACAlgorithm::SHA256 => digest::SHA256_OUTPUT_LEN,
+                    crate::HMACAlgorithm::SHA384 => digest::SHA384_OUTPUT_LEN,
+                    crate::HMACAlgorithm::SHA512 => digest::SHA512_OUTPUT_LEN,
+                }
             }
         }
         }
