@@ -6,7 +6,7 @@ use crate::aead::TAG_LEN;
 use crate::{error, init};
 
 use std::mem::MaybeUninit;
-use std::ptr::{null, null_mut};
+use std::ptr::null_mut;
 
 #[allow(
     clippy::large_enum_variant,
