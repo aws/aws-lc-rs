@@ -107,7 +107,7 @@
 //! ```
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
-use crate::{constant_time, digest, error};
+use crate::{constant_time, digest, error, hkdf};
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
 use std::ptr::null_mut;
@@ -156,9 +156,9 @@ impl AsRef<[u8]> for Tag {
 /// A key to use for HMAC signing.
 #[derive(Clone)]
 pub struct Key {
-    algorithm: &'static digest::Algorithm,
-    evp_alg: *const aws_lc_sys::EVP_MD,
-    key_bytes: Vec<u8>,
+    pub(crate) algorithm: Algorithm,
+    pub(crate) evp_alg: *const aws_lc_sys::EVP_MD,
+    pub(crate) key_bytes: Vec<u8>,
 }
 
 impl Drop for Key {
@@ -170,7 +170,7 @@ impl Drop for Key {
 impl core::fmt::Debug for Key {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("Key")
-            .field("algorithm", self.algorithm)
+            .field("algorithm", &self.algorithm.digest_algorithm())
             .finish()
     }
 }
@@ -220,7 +220,7 @@ impl Key {
     /// `digest_alg.output_len * 8` bits.
     pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Self {
         Self {
-            algorithm: algorithm.digest_algorithm(),
+            algorithm,
             evp_alg: digest::match_digest_type(&algorithm.0.id),
             key_bytes: Vec::from(key_value),
         }
@@ -229,7 +229,19 @@ impl Key {
     /// The digest algorithm for the key.
     #[inline]
     pub fn algorithm(&self) -> Algorithm {
-        Algorithm(self.algorithm)
+        Algorithm(self.algorithm.digest_algorithm())
+    }
+}
+
+impl hkdf::KeyType for Algorithm {
+    fn len(&self) -> usize {
+        self.digest_algorithm().output_len
+    }
+}
+
+impl From<hkdf::Okm<'_, Algorithm>> for Key {
+    fn from(okm: hkdf::Okm<Algorithm>) -> Self {
+        Self::construct(*okm.len(), |buf| okm.fill(buf)).unwrap()
     }
 }
 
@@ -267,7 +279,7 @@ impl Drop for Context {
 impl core::fmt::Debug for Context {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("Context")
-            .field("algorithm", self.key.algorithm)
+            .field("algorithm", &self.key.algorithm.digest_algorithm())
             .finish()
     }
 }
