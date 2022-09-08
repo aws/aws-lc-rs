@@ -121,10 +121,7 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
     for &chunk_len in &G_CHUNK_LENGTHS {
         let chunk = vec![123u8; chunk_len];
 
-        let bench_group_name = format!(
-            "HMAC-{:?}-one-shot: ({} bytes)",
-            config.algorithm, chunk_len
-        );
+        let bench_group_name = format!("HMAC-{:?}-one-shot-{}-bytes", config.algorithm, chunk_len);
         let mut group = c.benchmark_group(bench_group_name);
 
         group.bench_function("AWS-LC", |b| {
@@ -150,7 +147,7 @@ fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
         let chunk = vec![123u8; chunk_len];
 
         let bench_group_name = format!(
-            "HMAC-{:?}-one-shot-long-key ({} bytes)",
+            "HMAC-{:?}-one-shot-long-key-{}-bytes",
             config.algorithm, chunk_len
         );
         let mut group = c.benchmark_group(bench_group_name);
@@ -177,7 +174,7 @@ fn bench_hmac_incremental(c: &mut Criterion, config: &HMACConfig) {
         let chunk = vec![123u8; chunk_len];
 
         let bench_group_name = format!(
-            "HMAC-{:?}-incremental: ({} bytes)",
+            "HMAC-{:?}-incremental-{}-bytes",
             config.algorithm, chunk_len
         );
         let mut group = c.benchmark_group(bench_group_name);

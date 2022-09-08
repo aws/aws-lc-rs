@@ -27,7 +27,6 @@ impl HKDFConfig {
 // slightly slower than Ring for 16-256 byte inputs, than quickly catch up and are almost on par
 // with Ring. For SHA-1, AWS-LC is consistently 1.2-2.5 times faster, depending on the input
 // lengths.
-// TODO: update above when ran on linux
 macro_rules! benchmark_hkdf {
     ( $pkg:ident ) => {
         paste::item! {
@@ -113,7 +112,7 @@ fn bench_hkdf(c: &mut Criterion, config: &HKDFConfig) {
     for &chunk_len in &G_CHUNK_LENGTHS {
         let chunk = vec![123u8; chunk_len];
         let info_chunk: &[&[u8]] = &[&chunk];
-        let bench_group_name = format!("HKDF-{:?}: ({} bytes)", config.algorithm, chunk_len);
+        let bench_group_name = format!("HKDF-{:?}-{}-bytes", config.algorithm, chunk_len);
         let mut group = c.benchmark_group(bench_group_name);
 
         let aws_prk = aws_lc_ring_facade_benchmarks::run_hkdf_extract(config);

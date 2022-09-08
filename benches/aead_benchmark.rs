@@ -190,7 +190,7 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
     let mut in_out = config.in_out.clone();
 
     let bench_group_name = format!(
-        "AEAD-{:?}-separate: {} ({} bytes)",
+        "AEAD-{:?}-separate-{}-{}-bytes",
         config.algorithm,
         config.description,
         in_out.len()
@@ -222,7 +222,7 @@ fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
     let in_out = config.in_out.clone();
 
     let bench_group_name = format!(
-        "AEAD-{:?}-append: {} ({} bytes)",
+        "AEAD-{:?}-append-{}-{}-bytes",
         config.algorithm,
         config.description,
         in_out.len()
@@ -260,7 +260,7 @@ fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
     aws_lc_ring_facade_benchmarks::seal_append(&mut aws_sealing_key, aws_aad, &mut in_out);
 
     let bench_group_name = format!(
-        "AEAD-{:?}-open: {} ({} bytes)",
+        "AEAD-{:?}-open-{}-{}-bytes",
         config.algorithm,
         config.description,
         in_out.len()
