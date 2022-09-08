@@ -682,9 +682,9 @@ where
 {
     unsafe {
         let aead_ctx = match key {
-            KeyInner::AES_128_GCM(.., aead_ctx) => *aead_ctx,
-            KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
-            KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
+            KeyInner::AES_128_GCM(.., aead_ctx) => aead_ctx,
+            KeyInner::AES_256_GCM(.., aead_ctx) => aead_ctx,
+            KeyInner::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
 
@@ -724,9 +724,9 @@ pub(crate) fn aead_open_combined(
 ) -> Result<(), error::Unspecified> {
     unsafe {
         let aead_ctx = match key {
-            KeyInner::AES_128_GCM(.., aead_ctx) => *aead_ctx,
-            KeyInner::AES_256_GCM(.., aead_ctx) => *aead_ctx,
-            KeyInner::CHACHA20_POLY1305(.., aead_ctx) => *aead_ctx,
+            KeyInner::AES_128_GCM(.., aead_ctx) => aead_ctx,
+            KeyInner::AES_256_GCM(.., aead_ctx) => aead_ctx,
+            KeyInner::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
 
