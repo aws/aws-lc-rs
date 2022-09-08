@@ -15,14 +15,8 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+use aws_lc_ring_facade::{digest, error, pbkdf2, test, test_file};
 use core::num::NonZeroU32;
-use ring::{digest, error, pbkdf2, test, test_file};
-
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen_test::{wasm_bindgen_test as test, wasm_bindgen_test_configure};
-
-#[cfg(target_arch = "wasm32")]
-wasm_bindgen_test_configure!(run_in_browser);
 
 /// Test vectors from BoringSSL, Go, and other sources.
 #[test]
