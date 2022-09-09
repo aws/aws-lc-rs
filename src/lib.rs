@@ -6,6 +6,7 @@ pub mod digest;
 pub mod error;
 pub mod hkdf;
 pub mod hmac;
+pub mod pbkdf2;
 pub mod rand;
 pub mod test;
 
