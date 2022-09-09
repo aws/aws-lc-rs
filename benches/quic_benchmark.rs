@@ -68,7 +68,7 @@ fn test_new_mask(c: &mut Criterion, config: &QuicConfig) {
     let sample = config.sample.as_slice();
 
     let bench_group_name = format!(
-        "QUIC-{:?}-quic-new-mask-{}-{}-bytes",
+        "QUIC-{:?}-new-mask-{}-{}-bytes",
         config.algorithm,
         config.description,
         sample.len()

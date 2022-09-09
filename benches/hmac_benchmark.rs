@@ -51,12 +51,14 @@ macro_rules! benchmark_hmac {
             }
 
             pub fn create_hmac_key(config: &HMACConfig) -> hmac::Key {
-                let key_val = vec![123u8; get_key_length(&config)];
+                let key_val = vec![123u8; get_digest_length(&config)];
                 hmac::Key::new(algorithm(&config), &key_val)
             }
 
+            // A HMAC key longer than the corresponding digest length will be hashed once
+            // before being processed.
             pub fn create_longer_hmac_key(config: &HMACConfig) -> hmac::Key {
-                let key_val = vec![123u8; get_key_length(&config) + 1];
+                let key_val = vec![123u8; get_digest_length(&config) + 1];
                 hmac::Key::new(algorithm(&config), &key_val)
             }
 
@@ -70,7 +72,7 @@ macro_rules! benchmark_hmac {
                 hmac::sign(&key, chunk);
             }
 
-            fn get_key_length(config: &HMACConfig) -> usize {
+            fn get_digest_length(config: &HMACConfig) -> usize {
                 match &config.algorithm {
                     crate::HMACAlgorithm::SHA1 => digest::SHA1_OUTPUT_LEN,
                     crate::HMACAlgorithm::SHA256 => digest::SHA256_OUTPUT_LEN,
