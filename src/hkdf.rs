@@ -122,6 +122,7 @@ impl From<Okm<'_, Algorithm>> for Salt {
 }
 
 /// The length of the OKM (Output Keying Material) for a `Prk::expand()` call.
+#[allow(clippy::len_without_is_empty)]
 pub trait KeyType {
     /// The length that `Prk::expand()` should expand its input to.
     fn len(&self) -> usize;

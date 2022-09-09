@@ -166,7 +166,7 @@ pub fn derive(
 ) {
     let digest_alg = algorithm.0.digest_algorithm();
     // TODO: Add test to verify this panics. Ring's original tests don't cover this.
-    if out.len() > (MAX_USIZE32 - 1) * &digest_alg.output_len {
+    if out.len() > (MAX_USIZE32 - 1) * digest_alg.output_len {
         panic!("derived key too long");
     }
 
@@ -219,7 +219,7 @@ pub fn verify(
         return Err(error::Unspecified);
     }
     // TODO: Add test to verify this panics. Ring's original tests don't cover this.
-    if previously_derived.len() > (MAX_USIZE32 - 1) * &digest_alg.output_len {
+    if previously_derived.len() > (MAX_USIZE32 - 1) * digest_alg.output_len {
         panic!("derived key too long");
     }
 
@@ -240,5 +240,5 @@ pub fn verify(
         };
     }
 
-    constant_time::verify_slices_are_equal(&derived_buf, &previously_derived)
+    constant_time::verify_slices_are_equal(&derived_buf, previously_derived)
 }
