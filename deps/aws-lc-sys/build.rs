@@ -236,6 +236,14 @@ fn prepare_cmake_build(build_prefix: Option<&str>) -> cmake::Config {
         );
     }
 
+    if cfg!(feature = "asan") {
+        env::set_var("CC", "/usr/bin/clang");
+        env::set_var("CXX", "/usr/bin/clang++");
+        env::set_var("ASM", "/usr/bin/clang");
+
+        cmake_cfg.define("ASAN", "1");
+    }
+
     cmake_cfg
 }
 

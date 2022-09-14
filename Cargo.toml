@@ -8,6 +8,7 @@ edition = "2021"
 [features]
 alloc = []
 default = ["alloc"]
+asan = ["aws-lc-sys/asan"]
 
 [dependencies]
 untrusted = { version = "0.9" }
