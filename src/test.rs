@@ -360,6 +360,11 @@ pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
     <Vec<u8>>::from_hex(hex_str).map_err(|_e| String::from("Oops"))
 }
 
+pub fn from_dirty_hex(hex_str: &str) -> Vec<u8> {
+    let clean: String = hex_str.chars().filter(|c| c.is_ascii_hexdigit()).collect();
+    <Vec<u8>>::from_hex(&clean).unwrap()
+}
+
 fn from_hex_digit(d: u8) -> Result<u8, String> {
     let my_array = [d];
     let my_str = std::str::from_utf8(&my_array).map_err(|e| e.to_string())?;
@@ -435,6 +440,25 @@ fn parse_test_case(
                 // Checking is_none() ensures we don't accept duplicate keys.
                 attributes.push((String::from(key), String::from(value), false));
             }
+        }
+    }
+}
+
+pub mod rand {
+    use crate::error;
+
+    /// An implementation of `SecureRandom` that always fills the output slice
+    /// with the slice in `bytes`. The length of the slice given to `slice`
+    /// must match exactly.
+    #[derive(Debug)]
+    pub struct FixedSliceRandom<'a> {
+        pub bytes: &'a [u8],
+    }
+
+    impl crate::rand::sealed::SecureRandom for FixedSliceRandom<'_> {
+        fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
+            dest.copy_from_slice(self.bytes);
+            Ok(())
         }
     }
 }

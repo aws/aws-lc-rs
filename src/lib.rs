@@ -8,7 +8,11 @@ pub mod hkdf;
 pub mod hmac;
 pub mod pbkdf2;
 pub mod rand;
+pub mod signature;
 pub mod test;
+
+#[cfg(feature = "alloc")]
+mod rsa;
 
 mod debug;
 
