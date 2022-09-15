@@ -174,9 +174,7 @@ impl VerificationAlgorithm for RsaParameters {
     fn verify(&self, public_key: &[u8], msg: &[u8], signature: &[u8]) -> Result<(), Unspecified> {
         unsafe {
             let rsa = build_public_RSA(public_key)?;
-            let result = RSA_verify(self.0, self.1, rsa, msg, signature, &self.2);
-
-            result
+            RSA_verify(self.0, self.1, rsa, msg, signature, &self.2)
         }
     }
 }
@@ -317,17 +315,44 @@ impl AsRef<[u8]> for RsaSubjectPublicKey {
     }
 }
 
+#[derive(Debug)]
+#[allow(non_camel_case_types)]
+pub enum RSASigningAlgorithmId {
+    RSA_PSS_SHA256,
+    RSA_PSS_SHA384,
+    RSA_PSS_SHA512,
+    RSA_PKCS1_SHA256,
+    RSA_PKCS1_SHA384,
+    RSA_PKCS1_SHA512,
+}
+
 #[cfg(feature = "alloc")]
 pub struct RsaEncoding(
     pub(super) &'static digest::Algorithm,
     pub(super) i32,
-    pub(super) &'static str,
+    pub(super) &'static RSASigningAlgorithmId,
 );
 
 impl Debug for RsaEncoding {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("{{ {} }}", self.2))
+        f.write_str(&format!("{{ {:?} }}", self.2))
     }
+}
+
+#[derive(Debug)]
+#[allow(non_camel_case_types)]
+pub enum RSAVerificationAlgorithmId {
+    RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
+    RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
+    RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
+    RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
+    RSA_PKCS1_2048_8192_SHA256,
+    RSA_PKCS1_2048_8192_SHA384,
+    RSA_PKCS1_2048_8192_SHA512,
+    RSA_PKCS1_3072_8192_SHA384,
+    RSA_PSS_2048_8192_SHA256,
+    RSA_PSS_2048_8192_SHA384,
+    RSA_PSS_2048_8192_SHA512,
 }
 
 #[cfg(feature = "alloc")]
@@ -335,13 +360,13 @@ pub struct RsaParameters(
     pub(super) &'static digest::Algorithm,
     pub(super) i32,
     pub(super) RangeInclusive<u32>,
-    pub(super) &'static str,
+    pub(super) &'static RSAVerificationAlgorithmId,
 );
 impl Sealed for RsaParameters {}
 
 impl Debug for RsaParameters {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("{{ {} }}", self.3))
+        f.write_str(&format!("{{ {:?} }}", self.3))
     }
 }
 
@@ -564,8 +589,7 @@ where
     ) -> Result<(), Unspecified> {
         unsafe {
             let rsa = self.build_RSA()?;
-            let result = RSA_verify(params.0, params.1, rsa, msg, signature, &params.2);
-            result
+            RSA_verify(params.0, params.1, rsa, msg, signature, &params.2)
         }
     }
 }

@@ -284,6 +284,7 @@ use crate::{digest, error, rsa, sealed};
 #[cfg(feature = "alloc")]
 pub use crate::rsa::{RsaEncoding, RsaKeyPair};
 
+use crate::rsa::{RSASigningAlgorithmId, RSAVerificationAlgorithmId};
 pub use rsa::RsaParameters;
 pub use rsa::RsaPublicKeyComponents;
 /*
@@ -388,98 +389,98 @@ pub static RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaPara
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
     aws_lc_sys::RSA_PKCS1_PADDING,
     1024..=8192,
-    "RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY",
+    &RSAVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
 );
 pub static RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
     &digest::SHA256,
     aws_lc_sys::RSA_PKCS1_PADDING,
     1024..=8192,
-    "RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY",
+    &RSAVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
 );
 pub static RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
     &digest::SHA512,
     aws_lc_sys::RSA_PKCS1_PADDING,
     1024..=8192,
-    "RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY",
+    &RSAVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
 );
 pub static RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
     aws_lc_sys::RSA_PKCS1_PADDING,
     2048..=8192,
-    "RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY",
+    &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
 );
 pub static RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters(
     &digest::SHA256,
     aws_lc_sys::RSA_PKCS1_PADDING,
     2048..=8192,
-    "RSA_PKCS1_2048_8192_SHA256",
+    &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA256,
 );
 pub static RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters(
     &digest::SHA384,
     aws_lc_sys::RSA_PKCS1_PADDING,
     2048..=8192,
-    "RSA_PKCS1_2048_8192_SHA384",
+    &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA384,
 );
 pub static RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters(
     &digest::SHA512,
     aws_lc_sys::RSA_PKCS1_PADDING,
     2048..=8192,
-    "RSA_PKCS1_2048_8192_SHA512",
+    &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA512,
 );
 pub static RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters(
     &digest::SHA384,
     aws_lc_sys::RSA_PKCS1_PADDING,
     3072..=8192,
-    "RSA_PKCS1_3072_8192_SHA384",
+    &RSAVerificationAlgorithmId::RSA_PKCS1_3072_8192_SHA384,
 );
 
 pub static RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters(
     &digest::SHA256,
     aws_lc_sys::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
-    "RSA_PSS_2048_8192_SHA256",
+    &RSAVerificationAlgorithmId::RSA_PSS_2048_8192_SHA256,
 );
 pub static RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters(
     &digest::SHA384,
     aws_lc_sys::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
-    "RSA_PSS_2048_8192_SHA384",
+    &RSAVerificationAlgorithmId::RSA_PSS_2048_8192_SHA384,
 );
 pub static RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters(
     &digest::SHA512,
     aws_lc_sys::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
-    "RSA_PSS_2048_8192_SHA512",
+    &RSAVerificationAlgorithmId::RSA_PSS_2048_8192_SHA512,
 );
 
 pub static RSA_PSS_SHA256: RsaEncoding = RsaEncoding(
     &digest::SHA256,
     aws_lc_sys::RSA_PKCS1_PSS_PADDING,
-    "RSA_PSS_SHA256",
+    &RSASigningAlgorithmId::RSA_PSS_SHA256,
 );
 pub static RSA_PSS_SHA384: RsaEncoding = RsaEncoding(
     &digest::SHA384,
     aws_lc_sys::RSA_PKCS1_PSS_PADDING,
-    "RSA_PSS_SHA384",
+    &RSASigningAlgorithmId::RSA_PSS_SHA384,
 );
 pub static RSA_PSS_SHA512: RsaEncoding = RsaEncoding(
     &digest::SHA512,
     aws_lc_sys::RSA_PKCS1_PSS_PADDING,
-    "RSA_PSS_SHA512",
+    &RSASigningAlgorithmId::RSA_PSS_SHA512,
 );
 
 pub static RSA_PKCS1_SHA256: RsaEncoding = RsaEncoding(
     &digest::SHA256,
     aws_lc_sys::RSA_PKCS1_PADDING,
-    "RSA_PKCS1_SHA256",
+    &RSASigningAlgorithmId::RSA_PKCS1_SHA256,
 );
 pub static RSA_PKCS1_SHA384: RsaEncoding = RsaEncoding(
     &digest::SHA384,
     aws_lc_sys::RSA_PKCS1_PADDING,
-    "RSA_PKCS1_SHA384",
+    &RSASigningAlgorithmId::RSA_PKCS1_SHA384,
 );
 pub static RSA_PKCS1_SHA512: RsaEncoding = RsaEncoding(
     &digest::SHA512,
     aws_lc_sys::RSA_PKCS1_PADDING,
-    "RSA_PKCS1_SHA512",
+    &RSASigningAlgorithmId::RSA_PKCS1_SHA512,
 );
