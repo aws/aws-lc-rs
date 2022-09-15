@@ -15,7 +15,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-use aws_lc_ring_facade::{digest, error, hkdf, test, test_file};
+use aws_lc_ring_facade::{digest, error, hkdf, hmac, test, test_file};
 
 #[test]
 fn hkdf_tests() {
@@ -101,6 +101,65 @@ fn hkdf_output_len_tests() {
             let mut buf = [0u8; 2];
             assert_eq!(okm.fill(&mut buf), Ok(()));
         }
+    }
+}
+
+#[test]
+/// Try creating various key types via HKDF.
+fn hkdf_key_types() {
+    for &alg in &[
+        hkdf::HKDF_SHA1_FOR_LEGACY_USE_ONLY,
+        hkdf::HKDF_SHA256,
+        hkdf::HKDF_SHA384,
+        hkdf::HKDF_SHA512,
+    ] {
+        let salt = hkdf::Salt::new(alg, &[]);
+        let prk = salt.extract(&[]);
+        let okm = prk.expand(&[b"info"], alg.hmac_algorithm()).unwrap();
+        let hmac_key = hmac::Key::from(okm);
+        assert_eq!(hmac_key.algorithm(), alg.hmac_algorithm());
+
+        let okm = prk.expand(&[b"info"], alg).unwrap();
+        let hkdf_salt_key = hkdf::Salt::from(okm);
+        assert_eq!(hkdf_salt_key.algorithm(), alg);
+
+        let okm = prk.expand(&[b"info"], alg).unwrap();
+        let _hkdf_prk_key = hkdf::Prk::from(okm);
+    }
+}
+
+#[test]
+fn hkdf_coverage() {
+    // Something would have gone horribly wrong for this to not pass, but we test this so our
+    // coverage reports will look better.
+    assert_ne!(hkdf::HKDF_SHA256, hkdf::HKDF_SHA384);
+    assert_eq!(
+        "Algorithm(Algorithm(SHA256))",
+        format!("{:?}", hkdf::HKDF_SHA256)
+    );
+
+    for &alg in &[
+        hkdf::HKDF_SHA1_FOR_LEGACY_USE_ONLY,
+        hkdf::HKDF_SHA256,
+        hkdf::HKDF_SHA384,
+        hkdf::HKDF_SHA512,
+    ] {
+        // Coverage sanity check.
+        assert_eq!(alg.clone(), alg);
+
+        // Only using this API to construct a simple PRK.
+        let prk = hkdf::Prk::new_less_safe(alg, &[0; 32]);
+        let result: My<Vec<u8>> = prk
+            .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
+            .unwrap()
+            .into();
+
+        let prk_clone = prk.clone();
+        let result_2: My<Vec<u8>> = prk_clone
+            .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
+            .unwrap()
+            .into();
+        assert_eq!(result, result_2);
     }
 }
 

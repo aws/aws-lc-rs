@@ -165,7 +165,6 @@ pub fn derive(
     out: &mut [u8],
 ) {
     let digest_alg = algorithm.0.digest_algorithm();
-    // TODO: Add test to verify this panics. Ring's original tests don't cover this.
     if out.len() > (MAX_USIZE32 - 1) * digest_alg.output_len {
         panic!("derived key too long");
     }
@@ -218,7 +217,6 @@ pub fn verify(
     if previously_derived.is_empty() {
         return Err(error::Unspecified);
     }
-    // TODO: Add test to verify this panics. Ring's original tests don't cover this.
     if previously_derived.len() > (MAX_USIZE32 - 1) * digest_alg.output_len {
         panic!("derived key too long");
     }
