@@ -28,7 +28,6 @@ use crate::{derive_debug_via_id, error, polyfill};
 use aes_gcm::*;
 use std::fmt::Debug;
 
-use crate::endian::BigEndian;
 use key_inner::KeyInner;
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
@@ -39,8 +38,6 @@ mod block;
 mod chacha;
 pub mod chacha20_poly1305_openssh;
 mod cipher;
-mod counter;
-mod iv;
 mod key_inner;
 mod nonce;
 mod poly1305;
@@ -666,9 +663,6 @@ fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), e
     }
     Ok(())
 }
-
-type CounterBEu32 = counter::Counter<BigEndian<u32>>;
-pub type Counter = CounterBEu32;
 
 #[inline]
 pub(crate) fn aead_seal_combined<InOut>(

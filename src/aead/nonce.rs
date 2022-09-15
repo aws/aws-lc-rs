@@ -12,7 +12,6 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use crate::aead::iv::IV_LEN;
 use crate::endian::{ArrayEncoding, BigEndian, Encoding};
 use crate::error;
 use std::convert::TryInto;
@@ -73,6 +72,7 @@ impl From<BigEndian<u32>> for Nonce {
     }
 }
 
+pub const IV_LEN: usize = 16;
 impl From<&[u8; IV_LEN]> for Nonce {
     fn from(bytes: &[u8; IV_LEN]) -> Self {
         let mut nonce_bytes = [0u8; NONCE_LEN];
