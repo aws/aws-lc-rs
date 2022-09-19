@@ -64,44 +64,6 @@ fn pbkdf2_tests() {
     });
 }
 
-/// The API documentation specifies that derive should panic, if the designated output length is
-/// too long. Ring checks for an output array length while pbkdf2 is being ran, while we check
-/// the array length before everything is processed.
-#[test]
-#[should_panic(expected = "derived key too long")]
-fn pbkdf2_derive_too_long() {
-    let iterations = NonZeroU32::new(1 as u32).unwrap();
-    let max_usize32 = u32::MAX as usize;
-    for &alg in &[
-        pbkdf2::PBKDF2_HMAC_SHA1,
-        pbkdf2::PBKDF2_HMAC_SHA256,
-        pbkdf2::PBKDF2_HMAC_SHA384,
-        pbkdf2::PBKDF2_HMAC_SHA512,
-    ] {
-        let mut out = vec![0u8; (max_usize32 - 1) * match_pbkdf2_digest(&alg).output_len + 1];
-        pbkdf2::derive(alg, iterations, b"salt", b"password", &mut out);
-    }
-}
-
-/// The API documentation specifies that verify should panic, if the designated output length is
-/// too long. Ring checks for an output array length while pbkdf2 is being ran, while we check
-/// the array length before everything is processed.
-#[test]
-#[should_panic(expected = "derived key too long")]
-fn pbkdf2_verify_too_long() {
-    let iterations = NonZeroU32::new(1 as u32).unwrap();
-    let max_usize32 = u32::MAX as usize;
-    for &alg in &[
-        pbkdf2::PBKDF2_HMAC_SHA1,
-        pbkdf2::PBKDF2_HMAC_SHA256,
-        pbkdf2::PBKDF2_HMAC_SHA384,
-        pbkdf2::PBKDF2_HMAC_SHA512,
-    ] {
-        let mut out = vec![0u8; (max_usize32 - 1) * match_pbkdf2_digest(&alg).output_len + 1];
-        pbkdf2::verify(alg, iterations, b"salt", b"password", &mut out).unwrap();
-    }
-}
-
 #[test]
 fn pbkdf2_coverage() {
     // Coverage sanity check.
@@ -131,16 +93,59 @@ fn pbkdf2_coverage() {
     }
 }
 
-fn match_pbkdf2_digest(&algorithm: &pbkdf2::Algorithm) -> &digest::Algorithm {
-    if algorithm == pbkdf2::PBKDF2_HMAC_SHA1 {
-        &digest::SHA1_FOR_LEGACY_USE_ONLY
-    } else if algorithm == pbkdf2::PBKDF2_HMAC_SHA256 {
-        &digest::SHA256
-    } else if algorithm == pbkdf2::PBKDF2_HMAC_SHA384 {
-        &digest::SHA384
-    } else if algorithm == pbkdf2::PBKDF2_HMAC_SHA512 {
-        &digest::SHA512
-    } else {
-        unreachable!()
+/// The API documentation specifies that derive/verify should panic, if the designated output length
+/// is too long. Ring checks for an output array length while pbkdf2 is being ran, while we check
+/// the array length before everything is processed.
+/// Most platforms will fail to allocate this much memory, so we only test on platforms which can.
+#[cfg(all(target_arch = "x86_64", target_vendor = "apple"))]
+#[cfg(test)]
+mod tests {
+    use aws_lc_ring_facade::{digest, pbkdf2};
+    use core::num::NonZeroU32;
+
+    #[test]
+    #[should_panic(expected = "derived key too long")]
+    fn pbkdf2_derive_too_long() {
+        let iterations = NonZeroU32::new(1 as u32).unwrap();
+        let max_usize32 = u32::MAX as usize;
+        for &alg in &[
+            pbkdf2::PBKDF2_HMAC_SHA1,
+            pbkdf2::PBKDF2_HMAC_SHA256,
+            pbkdf2::PBKDF2_HMAC_SHA384,
+            pbkdf2::PBKDF2_HMAC_SHA512,
+        ] {
+            let mut out = vec![0u8; (max_usize32 - 1) * match_pbkdf2_digest(&alg).output_len + 1];
+            pbkdf2::derive(alg, iterations, b"salt", b"password", &mut out);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "derived key too long")]
+    fn pbkdf2_verify_too_long() {
+        let iterations = NonZeroU32::new(1 as u32).unwrap();
+        let max_usize32 = u32::MAX as usize;
+        for &alg in &[
+            pbkdf2::PBKDF2_HMAC_SHA1,
+            pbkdf2::PBKDF2_HMAC_SHA256,
+            pbkdf2::PBKDF2_HMAC_SHA384,
+            pbkdf2::PBKDF2_HMAC_SHA512,
+        ] {
+            let mut out = vec![0u8; (max_usize32 - 1) * match_pbkdf2_digest(&alg).output_len + 1];
+            pbkdf2::verify(alg, iterations, b"salt", b"password", &mut out).unwrap();
+        }
+    }
+
+    fn match_pbkdf2_digest(&algorithm: &pbkdf2::Algorithm) -> &digest::Algorithm {
+        if algorithm == pbkdf2::PBKDF2_HMAC_SHA1 {
+            &digest::SHA1_FOR_LEGACY_USE_ONLY
+        } else if algorithm == pbkdf2::PBKDF2_HMAC_SHA256 {
+            &digest::SHA256
+        } else if algorithm == pbkdf2::PBKDF2_HMAC_SHA384 {
+            &digest::SHA384
+        } else if algorithm == pbkdf2::PBKDF2_HMAC_SHA512 {
+            &digest::SHA512
+        } else {
+            unreachable!()
+        }
     }
 }
