@@ -15,7 +15,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-use aws_lc_ring_facade::{digest, error, hkdf, hmac, test, test_file};
+use aws_lc_ring_facade::{aead, digest, error, hkdf, hmac, test, test_file};
 
 #[test]
 fn hkdf_tests() {
@@ -125,6 +125,15 @@ fn hkdf_key_types() {
 
         let okm = prk.expand(&[b"info"], alg).unwrap();
         let _hkdf_prk_key = hkdf::Prk::from(okm);
+
+        for aead_alg in [
+            &aead::AES_256_GCM,
+            &aead::AES_128_GCM,
+            &aead::CHACHA20_POLY1305,
+        ] {
+            let okm = prk.expand(&[b"info"], aead_alg).unwrap();
+            let _aead_prk_key = aead::UnboundKey::from(okm);
+        }
     }
 }
 

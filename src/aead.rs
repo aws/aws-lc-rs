@@ -24,7 +24,7 @@
 //! [AEAD]: http://www-cse.ucsd.edu/~mihir/papers/oem.html
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
-use crate::{derive_debug_via_id, error, polyfill};
+use crate::{derive_debug_via_id, error, hkdf, polyfill};
 use aes_gcm::*;
 use std::fmt::Debug;
 
@@ -453,7 +453,7 @@ impl UnboundKey {
         self.algorithm
     }
 }
-/*
+
 impl From<hkdf::Okm<'_, &'static Algorithm>> for UnboundKey {
     fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
         let mut key_bytes = [0; MAX_KEY_LEN];
@@ -470,7 +470,6 @@ impl hkdf::KeyType for &'static Algorithm {
         self.key_len()
     }
 }
-*/
 
 /// Immutable keys for use in situations where `OpeningKey`/`SealingKey` and
 /// `NonceSequence` cannot reasonably be used.
