@@ -85,6 +85,8 @@ impl KeyInner {
     }
 }
 
+unsafe impl Send for KeyInner {}
+
 impl Drop for KeyInner {
     fn drop(&mut self) {
         unsafe {

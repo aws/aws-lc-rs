@@ -29,6 +29,8 @@ pub(crate) enum SymmetricCipherKey {
     ChaCha20(ChaCha20Key),
 }
 
+unsafe impl Send for SymmetricCipherKey {}
+
 impl Drop for SymmetricCipherKey {
     fn drop(&mut self) {
         match self {

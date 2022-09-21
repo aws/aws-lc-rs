@@ -161,6 +161,8 @@ pub struct Key {
     pub(crate) key_bytes: Vec<u8>,
 }
 
+unsafe impl Send for Key {}
+
 impl Drop for Key {
     fn drop(&mut self) {
         self.key_bytes.zeroize();
@@ -267,6 +269,8 @@ impl Clone for Context {
         }
     }
 }
+
+unsafe impl Send for Context {}
 
 impl Drop for Context {
     fn drop(&mut self) {

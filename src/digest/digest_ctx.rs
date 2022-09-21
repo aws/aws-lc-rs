@@ -25,6 +25,8 @@ impl DigestContext {
     }
 }
 
+unsafe impl Send for DigestContext {}
+
 impl Drop for DigestContext {
     fn drop(&mut self) {
         unsafe {

@@ -66,6 +66,8 @@ pub struct Context {
     max_input_reached: bool,
 }
 
+unsafe impl Send for Context {}
+
 impl Context {
     /// Constructs a new context.
     pub fn new(algorithm: &'static Algorithm) -> Self {
@@ -85,7 +87,9 @@ impl Context {
         unsafe {
             // Check if the message has reached the algorithm's maximum allowed input, or overflowed
             // the msg_len counter.
-            (self.msg_len, self.max_input_reached) = self.msg_len.overflowing_add(data.len());
+            let (msg_len, max_input_reached) = self.msg_len.overflowing_add(data.len());
+            self.msg_len = msg_len;
+            self.max_input_reached = max_input_reached;
             (!self.max_input_reached)
                 .then(|| self.max_input_reached = self.msg_len > self.algorithm.max_input_len);
 
@@ -220,6 +224,8 @@ pub struct Algorithm {
 
     pub(crate) id: AlgorithmID,
 }
+
+unsafe impl Send for Algorithm {}
 
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) enum AlgorithmID {
