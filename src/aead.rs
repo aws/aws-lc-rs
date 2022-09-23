@@ -576,7 +576,7 @@ impl LessSafeKey {
     }
 }
 
-impl core::fmt::Debug for LessSafeKey {
+impl Debug for LessSafeKey {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("LessSafeKey")
             .field("algorithm", self.algorithm())
@@ -756,7 +756,7 @@ mod tests {
         let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
         let og_nonce = from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap();
         let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
-        let unbound_key = UnboundKey::new(&crate::aead::AES_128_GCM, &key).unwrap();
+        let unbound_key = UnboundKey::new(&AES_128_GCM, &key).unwrap();
         let less_safe_key = LessSafeKey::new(unbound_key);
 
         let nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();

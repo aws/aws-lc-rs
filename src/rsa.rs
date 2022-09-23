@@ -17,46 +17,51 @@
 // naming conventions. Also the standard camelCase names are used for `KeyPair`
 // components.
 
+use crate::digest;
 use crate::error::{KeyRejected, Unspecified};
-use crate::rand;
+use crate::ptr::{DetachableLcPtr, LcPtr, NonNullPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
-use crate::{digest, error};
+use crate::{cbs, rand};
 use aws_lc_sys::{
-    BN_cmp, BN_free, BN_init, BN_set_u64, EVP_parse_private_key, RSA_free, RSA_new, BIGNUM,
-    EVP_PKEY, EVP_PKEY_CTX, RSA,
+    BN_cmp, BN_new, BN_set_u64, EVP_parse_private_key, RSA_new, BIGNUM, EVP_PKEY, RSA,
 };
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::RangeInclusive;
-use std::os::raw::c_uint;
+use std::os::raw::{c_int, c_uint};
 use std::ptr::null_mut;
 use std::slice;
 use zeroize::Zeroize;
 
+pub mod evp_pkey;
+
 pub struct RsaKeyPair {
-    evp_pkey: *const EVP_PKEY,
+    // https://github.com/awslabs/aws-lc/blob/main/include/openssl/evp.h#L85
+    // An |EVP_PKEY| object represents a public or private key. A given object may
+    // be used concurrently on multiple threads by non-mutating functions, provided
+    // no other thread is concurrently calling a mutating function. Unless otherwise
+    // documented, functions which take a |const| pointer are non-mutating and
+    // functions which take a non-|const| pointer are mutating.
+    evp_pkey: LcPtr<*mut EVP_PKEY>,
     serialized_public_key: RsaSubjectPublicKey,
 }
 
+impl Sealed for RsaKeyPair {}
+unsafe impl Sync for RsaKeyPair {}
+unsafe impl Send for RsaKeyPair {}
+
 impl Drop for RsaKeyPair {
     fn drop(&mut self) {
-        unsafe {
-            aws_lc_sys::EVP_PKEY_free(self.mut_ptr_evp_pkey());
-            self.serialized_public_key.0.zeroize();
-        }
+        self.serialized_public_key.0.zeroize();
     }
 }
 
 impl RsaKeyPair {
-    fn mut_ptr_evp_pkey(&self) -> *mut EVP_PKEY {
-        self.evp_pkey as *mut EVP_PKEY
-    }
-
-    fn new(evp_pkey: *const EVP_PKEY) -> Self {
+    fn new(evp_pkey: LcPtr<*mut EVP_PKEY>) -> Self {
         unsafe {
-            let nonowning_pubkey = aws_lc_sys::EVP_PKEY_get0_RSA(evp_pkey);
+            let nonowning_pubkey = aws_lc_sys::EVP_PKEY_get0_RSA(*evp_pkey);
             let pubkey_bytes = serialize_RSA_pubkey(nonowning_pubkey)
                 .expect("Unable to serialize RSA public key!");
             let serialized_public_key = RsaSubjectPublicKey::new(pubkey_bytes);
@@ -69,26 +74,15 @@ impl RsaKeyPair {
 
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
-            let mut cbs = build_CBS(pkcs8);
+            let mut cbs = cbs::build_CBS(pkcs8);
 
-            let evp_pkey = EVP_parse_private_key(&mut cbs);
-            if evp_pkey.is_null() {
-                return Err(error::KeyRejected::invalid_encoding());
-            }
-            let rsa = aws_lc_sys::EVP_PKEY_get0_RSA(evp_pkey);
-            if rsa.is_null() {
-                aws_lc_sys::EVP_PKEY_free(evp_pkey);
-                return Err(error::KeyRejected::wrong_algorithm());
-            }
+            let evp_pkey = LcPtr::new(EVP_parse_private_key(&mut cbs))
+                .map_err(|_| KeyRejected::invalid_encoding())?;
+            let rsa = NonNullPtr::new(aws_lc_sys::EVP_PKEY_get0_RSA(*evp_pkey))
+                .map_err(|_| KeyRejected::wrong_algorithm())?;
 
-            if let Err(err) = Self::validate_pkey(evp_pkey) {
-                aws_lc_sys::EVP_PKEY_free(evp_pkey);
-                return Err(err);
-            }
-            if let Err(err) = Self::validate_rsa(rsa) {
-                aws_lc_sys::EVP_PKEY_free(evp_pkey);
-                return Err(err);
-            }
+            Self::validate_pkey(evp_pkey.as_non_null())?;
+            Self::validate_rsa(rsa)?;
 
             Ok(Self::new(evp_pkey))
         }
@@ -97,48 +91,28 @@ impl RsaKeyPair {
     pub fn from_der(der: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let rsa = build_private_RSA(der)?;
-            if let Err(e) = Self::validate_rsa(rsa) {
-                aws_lc_sys::RSA_free(rsa);
-                return Err(e);
-            }
+            Self::validate_rsa(rsa.as_non_null())?;
 
-            let evp_pkey = build_EVP_PKEY_from_RSA(rsa, || {
-                aws_lc_sys::RSA_free(rsa);
-                KeyRejected::invalid_encoding()
-            })?;
+            let evp_pkey =
+                build_EVP_PKEY_from_RSA(rsa).map_err(|_| KeyRejected::invalid_encoding())?;
 
-            if let Err(err) = Self::validate_pkey(evp_pkey) {
-                aws_lc_sys::EVP_PKEY_free(evp_pkey);
-                return Err(err);
-            }
+            Self::validate_pkey(evp_pkey.as_non_null())?;
 
             Ok(Self::new(evp_pkey))
         }
     }
 
-    unsafe fn validate_pkey(evp_pkey: *mut EVP_PKEY) -> Result<(), KeyRejected> {
+    #[inline]
+    unsafe fn validate_pkey(evp_pkey: NonNullPtr<*mut EVP_PKEY>) -> Result<(), KeyRejected> {
+        const RSA_KEY_TYPE: c_int = aws_lc_sys::EVP_PKEY_RSA;
         const MIN_PKEY_BITS: c_uint = 2041;
         const MAX_PKEY_BITS: c_uint = 4096;
-        let key_type = aws_lc_sys::EVP_PKEY_id(evp_pkey);
-        if key_type != aws_lc_sys::EVP_PKEY_RSA {
-            return Err(error::KeyRejected::wrong_algorithm());
-        }
-
-        let bits = aws_lc_sys::EVP_PKEY_bits(evp_pkey);
-        let bits = bits as c_uint;
-        if bits < MIN_PKEY_BITS {
-            return Err(KeyRejected::too_small());
-        }
-
-        if bits > MAX_PKEY_BITS {
-            return Err(KeyRejected::too_large());
-        }
-        Ok(())
+        evp_pkey::validate_pkey(evp_pkey, RSA_KEY_TYPE, MIN_PKEY_BITS, MAX_PKEY_BITS)
     }
 
-    unsafe fn validate_rsa(rsa: *mut RSA) -> Result<(), KeyRejected> {
-        let p = aws_lc_sys::RSA_get0_p(rsa);
-        let q = aws_lc_sys::RSA_get0_q(rsa);
+    unsafe fn validate_rsa(rsa: NonNullPtr<*mut RSA>) -> Result<(), KeyRejected> {
+        let p = aws_lc_sys::RSA_get0_p(*rsa);
+        let q = aws_lc_sys::RSA_get0_q(*rsa);
         let p_bits = aws_lc_sys::BN_num_bits(p);
         let q_bits = aws_lc_sys::BN_num_bits(q);
         if p_bits != q_bits {
@@ -148,23 +122,19 @@ impl RsaKeyPair {
             return Err(KeyRejected::private_modulus_len_not_multiple_of_512_bits());
         }
 
-        let exponent = aws_lc_sys::RSA_get0_e(rsa);
+        let exponent = aws_lc_sys::RSA_get0_e(*rsa);
         if Self::compare(exponent, 65537)? == Ordering::Less {
             return Err(KeyRejected::too_small());
         }
         Ok(())
     }
 
-    unsafe fn compare(a: *const BIGNUM, b: u64) -> Result<core::cmp::Ordering, KeyRejected> {
-        let mut b_val = MaybeUninit::<BIGNUM>::uninit();
-        BN_init(b_val.as_mut_ptr());
-        let mut b_val = b_val.assume_init();
-        if 1 != BN_set_u64(&mut b_val, b) {
-            BN_free(&mut b_val);
+    unsafe fn compare(a: *const BIGNUM, b: u64) -> Result<Ordering, KeyRejected> {
+        let b_val = LcPtr::new(BN_new()).map_err(|_| KeyRejected::unexpected_error())?;
+        if 1 != BN_set_u64(*b_val, b) {
             return Err(KeyRejected::unexpected_error());
         }
-        let result = BN_cmp(a, &b_val) as i32;
-        BN_free(&mut b_val);
+        let result = BN_cmp(a, *b_val) as i32;
 
         Ok(result.cmp(&0))
     }
@@ -204,37 +174,33 @@ impl RsaKeyPair {
         signature: &mut [u8],
     ) -> Result<(), Unspecified> {
         unsafe {
-            let evp_pkey_ctx = aws_lc_sys::EVP_PKEY_CTX_new(self.mut_ptr_evp_pkey(), null_mut());
-            if evp_pkey_ctx.is_null() {
-                return Err(Unspecified);
-            }
+            let evp_pkey_ctx = LcPtr::new(aws_lc_sys::EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()))
+                .map_err(|_| Unspecified)?;
 
-            if 1 != aws_lc_sys::EVP_PKEY_sign_init(evp_pkey_ctx) {
+            if 1 != aws_lc_sys::EVP_PKEY_sign_init(*evp_pkey_ctx) {
                 return Err(Unspecified);
             }
 
             let digest = digest::digest(padding_alg.0, msg);
             let digest = digest.as_ref();
 
-            if 1 != aws_lc_sys::EVP_PKEY_CTX_set_rsa_padding(evp_pkey_ctx, padding_alg.1) {
+            if 1 != aws_lc_sys::EVP_PKEY_CTX_set_rsa_padding(*evp_pkey_ctx, padding_alg.1) {
                 return Err(Unspecified);
             }
 
             let evp_md = digest::match_digest_type(&padding_alg.0.id);
-            if 1 != aws_lc_sys::EVP_PKEY_CTX_set_signature_md(evp_pkey_ctx, evp_md) {
+            if 1 != aws_lc_sys::EVP_PKEY_CTX_set_signature_md(*evp_pkey_ctx, evp_md) {
                 return Err(Unspecified);
             }
 
             let mut sig_len = MaybeUninit::<usize>::uninit();
             let result = aws_lc_sys::EVP_PKEY_sign(
-                evp_pkey_ctx,
+                *evp_pkey_ctx,
                 signature.as_mut_ptr(),
                 sig_len.as_mut_ptr(),
                 digest.as_ptr(),
                 digest.len(),
             );
-
-            aws_lc_sys::EVP_PKEY_CTX_free(evp_pkey_ctx);
 
             if result != 1 {
                 return Err(Unspecified);
@@ -244,7 +210,7 @@ impl RsaKeyPair {
     }
 
     pub fn public_modulus_len(&self) -> usize {
-        unsafe { aws_lc_sys::EVP_PKEY_size(self.evp_pkey) as usize }
+        unsafe { aws_lc_sys::EVP_PKEY_size(*self.evp_pkey) as usize }
     }
 }
 
@@ -256,10 +222,6 @@ impl Debug for RsaKeyPair {
         ))
     }
 }
-
-impl Sealed for RsaKeyPair {}
-unsafe impl Sync for RsaKeyPair {}
-unsafe impl Send for RsaKeyPair {}
 
 #[derive(Clone)]
 pub struct RsaSubjectPublicKey(Box<[u8]>);
@@ -281,13 +243,11 @@ unsafe fn serialize_RSA_pubkey(pubkey: *const RSA) -> Result<Box<[u8]>, Unspecif
     ) {
         return Err(Unspecified);
     }
-    let pubkey_bytes = pubkey_bytes.assume_init();
+    let pubkey_bytes = LcPtr::new(pubkey_bytes.assume_init()).map_err(|_| Unspecified)?;
     let outlen = outlen.assume_init();
-    let pubkey_slice = slice::from_raw_parts(pubkey_bytes, outlen);
+    let pubkey_slice = slice::from_raw_parts(*pubkey_bytes, outlen);
     let mut pubkey_vec = Vec::<u8>::new();
     pubkey_vec.extend_from_slice(pubkey_slice);
-
-    aws_lc_sys::OPENSSL_free(pubkey_bytes.cast());
 
     Ok(pubkey_vec.into_boxed_slice())
 }
@@ -373,16 +333,10 @@ impl Debug for RsaParameters {
 impl RsaParameters {
     pub fn public_modulus_len(public_key: &[u8]) -> Result<u32, Unspecified> {
         unsafe {
-            let mut cbs = MaybeUninit::<aws_lc_sys::CBS>::uninit();
-            aws_lc_sys::CBS_init(cbs.as_mut_ptr(), public_key.as_ptr(), public_key.len());
-            let mut cbs = cbs.assume_init();
-
-            let rsa = aws_lc_sys::RSA_parse_public_key(&mut cbs);
-            if rsa.is_null() {
-                return Err(Unspecified);
-            }
-            let mod_len = aws_lc_sys::RSA_bits(rsa);
-            aws_lc_sys::RSA_free(rsa);
+            let mut cbs = cbs::build_CBS(public_key);
+            let rsa =
+                LcPtr::new(aws_lc_sys::RSA_parse_public_key(&mut cbs)).map_err(|_| Unspecified)?;
+            let mod_len = aws_lc_sys::RSA_bits(*rsa);
 
             Ok(mod_len)
         }
@@ -397,68 +351,37 @@ impl RsaParameters {
     }
 }
 
-#[allow(non_snake_case)]
-unsafe fn build_EVP_PKEY_CTX<F, U>(
-    evp_pkey: *mut EVP_PKEY,
-    err_fn: F,
-) -> Result<*mut EVP_PKEY_CTX, U>
-where
-    F: FnOnce() -> U,
-{
-    let evp_pkey_ctx = aws_lc_sys::EVP_PKEY_CTX_new(evp_pkey, null_mut());
-    if evp_pkey_ctx.is_null() {
-        return Err(err_fn());
-    }
-    Ok(evp_pkey_ctx)
-}
-
 #[inline]
 #[allow(non_snake_case)]
-unsafe fn build_EVP_PKEY_from_RSA<F, U>(rsa: *mut RSA, err_fn: F) -> Result<*mut EVP_PKEY, U>
-where
-    F: FnOnce() -> U,
-{
-    let evp_pkey = aws_lc_sys::EVP_PKEY_new();
-    if evp_pkey.is_null() {
-        return Err(err_fn());
-    }
+unsafe fn build_EVP_PKEY_from_RSA(
+    rsa: DetachableLcPtr<*mut RSA>,
+) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+    let evp_pkey = LcPtr::new(aws_lc_sys::EVP_PKEY_new()).map_err(|_| Unspecified)?;
 
-    if 1 != aws_lc_sys::EVP_PKEY_assign_RSA(evp_pkey, rsa) {
-        aws_lc_sys::EVP_PKEY_free(evp_pkey);
-        return Err(err_fn());
+    if 1 != aws_lc_sys::EVP_PKEY_assign_RSA(*evp_pkey, *rsa) {
+        return Err(Unspecified);
     }
+    rsa.detach();
     Ok(evp_pkey)
 }
 
 #[inline]
 #[allow(non_snake_case)]
-unsafe fn build_CBS(data: &[u8]) -> aws_lc_sys::CBS {
-    let mut cbs = MaybeUninit::<aws_lc_sys::CBS>::uninit();
-    aws_lc_sys::CBS_init(cbs.as_mut_ptr(), data.as_ptr(), data.len());
-    cbs.assume_init()
-}
+unsafe fn build_public_RSA(public_key: &[u8]) -> Result<DetachableLcPtr<*mut RSA>, Unspecified> {
+    let mut cbs = cbs::build_CBS(public_key);
 
-#[inline]
-#[allow(non_snake_case)]
-unsafe fn build_public_RSA(public_key: &[u8]) -> Result<*mut RSA, Unspecified> {
-    let mut cbs = build_CBS(public_key);
-
-    let rsa = aws_lc_sys::RSA_parse_public_key(&mut cbs);
-    if rsa.is_null() {
-        return Err(Unspecified);
-    }
+    let rsa = DetachableLcPtr::new(aws_lc_sys::RSA_parse_public_key(&mut cbs))
+        .map_err(|_| Unspecified)?;
     Ok(rsa)
 }
 
 #[inline]
 #[allow(non_snake_case)]
-unsafe fn build_private_RSA(public_key: &[u8]) -> Result<*mut RSA, KeyRejected> {
-    let mut cbs = build_CBS(public_key);
+unsafe fn build_private_RSA(public_key: &[u8]) -> Result<DetachableLcPtr<*mut RSA>, KeyRejected> {
+    let mut cbs = cbs::build_CBS(public_key);
 
-    let rsa = aws_lc_sys::RSA_parse_private_key(&mut cbs);
-    if rsa.is_null() {
-        return Err(KeyRejected::invalid_encoding());
-    }
+    let rsa = DetachableLcPtr::new(aws_lc_sys::RSA_parse_private_key(&mut cbs))
+        .map_err(|_| KeyRejected::invalid_encoding())?;
     Ok(rsa)
 }
 
@@ -467,71 +390,30 @@ unsafe fn build_private_RSA(public_key: &[u8]) -> Result<*mut RSA, KeyRejected> 
 fn RSA_verify(
     algorithm: &'static digest::Algorithm,
     padding: i32,
-    public_key: *mut RSA,
+    public_key: DetachableLcPtr<*mut RSA>,
     msg: &[u8],
     signature: &[u8],
     allowed_bit_size: &RangeInclusive<u32>,
 ) -> Result<(), Unspecified> {
     unsafe {
-        let evp_pkey = build_EVP_PKEY_from_RSA(public_key, || {
-            aws_lc_sys::RSA_free(public_key);
-            Unspecified
-        })?;
+        let evp_pkey = build_EVP_PKEY_from_RSA(public_key)?;
 
-        let bits = aws_lc_sys::EVP_PKEY_bits(evp_pkey);
+        let bits = aws_lc_sys::EVP_PKEY_bits(*evp_pkey);
         let bits = bits as c_uint;
         if !allowed_bit_size.contains(&bits) {
-            aws_lc_sys::EVP_PKEY_free(evp_pkey);
             return Err(Unspecified);
         }
 
-        let evp_pkey_ctx = build_EVP_PKEY_CTX(evp_pkey, || {
-            aws_lc_sys::EVP_PKEY_free(evp_pkey);
-            Unspecified
-        })?;
+        let evp_pkey_ctx = evp_pkey::build_EVP_PKEY_CTX(evp_pkey.as_non_null())?;
 
-        let result = EVP_PKEY_CTX_verify(algorithm, padding, msg, signature, evp_pkey_ctx);
-        aws_lc_sys::EVP_PKEY_CTX_free(evp_pkey_ctx);
-        aws_lc_sys::EVP_PKEY_free(evp_pkey);
-        result
+        evp_pkey::EVP_PKEY_CTX_verify(
+            algorithm,
+            Some(padding),
+            msg,
+            signature,
+            evp_pkey_ctx.as_non_null(),
+        )
     }
-}
-
-#[inline]
-#[allow(non_snake_case)]
-unsafe fn EVP_PKEY_CTX_verify(
-    algorithm: &'static digest::Algorithm,
-    padding: i32,
-    msg: &[u8],
-    signature: &[u8],
-    evp_pkey_ctx: *mut EVP_PKEY_CTX,
-) -> Result<(), Unspecified> {
-    if 1 != aws_lc_sys::EVP_PKEY_verify_init(evp_pkey_ctx) {
-        return Err(Unspecified);
-    }
-
-    let digest = digest::digest(algorithm, msg);
-    let digest = digest.as_ref();
-
-    if 1 != aws_lc_sys::EVP_PKEY_CTX_set_rsa_padding(evp_pkey_ctx, padding) {
-        return Err(Unspecified);
-    }
-
-    let evp_md = digest::match_digest_type(&algorithm.id);
-    if 1 != aws_lc_sys::EVP_PKEY_CTX_set_signature_md(evp_pkey_ctx, evp_md) {
-        return Err(Unspecified);
-    }
-
-    if 1 != aws_lc_sys::EVP_PKEY_verify(
-        evp_pkey_ctx,
-        signature.as_ptr(),
-        signature.len(),
-        digest.as_ptr(),
-        digest.len(),
-    ) {
-        return Err(Unspecified);
-    }
-    Ok(())
 }
 
 #[derive(Debug)]
@@ -549,34 +431,35 @@ where
 {
     #[allow(non_snake_case)]
     #[inline]
-    unsafe fn build_RSA(&self) -> Result<*mut RSA, Unspecified> {
+    unsafe fn build_RSA(&self) -> Result<DetachableLcPtr<*mut RSA>, Unspecified> {
         let n_bytes = self.n.as_ref();
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
             return Err(Unspecified);
         }
-        let n_bn = aws_lc_sys::BN_bin2bn(n_bytes.as_ptr(), n_bytes.len(), null_mut());
-        if n_bn.is_null() {
-            return Err(Unspecified);
-        }
+        let n_bn = DetachableLcPtr::new(aws_lc_sys::BN_bin2bn(
+            n_bytes.as_ptr(),
+            n_bytes.len(),
+            null_mut(),
+        ))
+        .map_err(|_| Unspecified)?;
 
         let e_bytes = self.e.as_ref();
         if e_bytes.is_empty() || e_bytes[0] == 0u8 {
-            BN_free(n_bn);
             return Err(Unspecified);
         }
-        let e_bn = aws_lc_sys::BN_bin2bn(e_bytes.as_ptr(), e_bytes.len(), null_mut());
-        if e_bn.is_null() {
-            BN_free(n_bn);
-            return Err(Unspecified);
-        }
+        let e_bn = DetachableLcPtr::new(aws_lc_sys::BN_bin2bn(
+            e_bytes.as_ptr(),
+            e_bytes.len(),
+            null_mut(),
+        ))
+        .map_err(|_| Unspecified)?;
 
-        let rsa = RSA_new();
-        if 1 != aws_lc_sys::RSA_set0_key(rsa, n_bn, e_bn, null_mut()) {
-            BN_free(n_bn);
-            BN_free(e_bn);
-            RSA_free(rsa);
+        let rsa = DetachableLcPtr::new(RSA_new()).map_err(|_| Unspecified)?;
+        if 1 != aws_lc_sys::RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) {
             return Err(Unspecified);
         }
+        n_bn.detach();
+        e_bn.detach();
         Ok(rsa)
     }
 

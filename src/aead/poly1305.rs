@@ -42,6 +42,7 @@ pub struct Context {
 // The C code, in particular the way the `poly1305_aligned_state` functions
 // are used, is only correct when the state buffer is 64-byte aligned.
 #[repr(C, align(64))]
+#[allow(non_camel_case_types)]
 struct poly1305_state([u8; OPAQUE_LEN]);
 const OPAQUE_LEN: usize = 512;
 

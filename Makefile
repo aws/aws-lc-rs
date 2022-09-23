@@ -10,5 +10,5 @@ clippy:
 asan:
 # TODO: This build target produces linker error on Mac.
 # Run specific tests:
-#	RUSTFLAGS=-Zsanitizer=address RUSTDOCFLAGS=-Zsanitizer=address cargo +nightly test --test rsa_test --target `rustc -vV | sed -n 's|host: ||p'`  --features asan
-	RUSTFLAGS=-Zsanitizer=address RUSTDOCFLAGS=-Zsanitizer=address cargo +nightly test --target `rustc -vV | sed -n 's|host: ||p'`  --features asan
+	RUSTFLAGS=-Zsanitizer=address RUSTDOCFLAGS=-Zsanitizer=address cargo +nightly test --test ecdsa_tests --target `rustc -vV | sed -n 's|host: ||p'`  --features asan
+#	RUSTFLAGS=-Zsanitizer=address RUSTDOCFLAGS=-Zsanitizer=address cargo +nightly test --target `rustc -vV | sed -n 's|host: ||p'`  --features asan

@@ -279,15 +279,18 @@ pub use crate::ec::{
 };
 */
 
-use crate::{digest, error, rsa, sealed};
+use crate::{digest, ec, error, rsa, sealed};
 
 #[cfg(feature = "alloc")]
 pub use crate::rsa::{RsaEncoding, RsaKeyPair};
 
+use crate::ec::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
 use crate::rsa::{RSASigningAlgorithmId, RSAVerificationAlgorithmId};
 pub use rsa::RsaParameters;
 pub use rsa::RsaPublicKeyComponents;
-/*
+
+pub use crate::ec::key_pair::EcdsaKeyPair;
+
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component
 /// will have a tag, a one-byte length, and a one-byte “I'm not negative”
@@ -301,8 +304,7 @@ pub struct Signature {
     value: [u8; MAX_LEN],
     len: usize,
 }
- */
-/*
+
 impl Signature {
     // Panics if `value` is too long.
     pub(crate) fn new<F>(fill: F) -> Self
@@ -323,7 +325,6 @@ impl AsRef<[u8]> for Signature {
         &self.value[..self.len]
     }
 }
-*/
 
 /// Key pairs for signing messages (private key and public key).
 pub trait KeyPair: core::fmt::Debug + Send + Sized + Sync {
@@ -484,3 +485,65 @@ pub static RSA_PKCS1_SHA512: RsaEncoding = RsaEncoding(
     aws_lc_sys::RSA_PKCS1_PADDING,
     &RSASigningAlgorithmId::RSA_PKCS1_SHA512,
 );
+
+pub static ECDSA_P256_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    id: &ec::AlgorithmID::ECDSA_P256,
+    digest: &digest::SHA256,
+    bits: 256,
+    nid: aws_lc_sys::NID_X9_62_prime256v1,
+    sig_format: EcdsaSignatureFormat::Fixed,
+};
+pub static ECDSA_P256_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    id: &ec::AlgorithmID::ECDSA_P256,
+    digest: &digest::SHA384,
+    bits: 256,
+    nid: aws_lc_sys::NID_X9_62_prime256v1,
+    sig_format: EcdsaSignatureFormat::Fixed,
+};
+pub static ECDSA_P384_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    id: &ec::AlgorithmID::ECDSA_P384,
+    digest: &digest::SHA384,
+    bits: 384,
+    nid: aws_lc_sys::NID_secp384r1,
+    sig_format: EcdsaSignatureFormat::Fixed,
+};
+pub static ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    id: &ec::AlgorithmID::ECDSA_P256,
+    digest: &digest::SHA256,
+    bits: 256,
+    nid: aws_lc_sys::NID_X9_62_prime256v1,
+    sig_format: EcdsaSignatureFormat::ASN1,
+};
+pub static ECDSA_P256_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    id: &ec::AlgorithmID::ECDSA_P256,
+    digest: &digest::SHA384,
+    bits: 256,
+    nid: aws_lc_sys::NID_X9_62_prime256v1,
+    sig_format: EcdsaSignatureFormat::ASN1,
+};
+pub static ECDSA_P384_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    id: &ec::AlgorithmID::ECDSA_P384,
+    digest: &digest::SHA256,
+    bits: 256,
+    nid: aws_lc_sys::NID_secp384r1,
+    sig_format: EcdsaSignatureFormat::ASN1,
+};
+pub static ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    id: &ec::AlgorithmID::ECDSA_P384,
+    digest: &digest::SHA384,
+    bits: 384,
+    nid: aws_lc_sys::NID_secp384r1,
+    sig_format: EcdsaSignatureFormat::ASN1,
+};
+
+pub static ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+    EcdsaSigningAlgorithm::new(&ECDSA_P256_SHA256_FIXED);
+
+pub static ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+    EcdsaSigningAlgorithm::new(&ECDSA_P384_SHA384_FIXED);
+
+pub static ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+    EcdsaSigningAlgorithm::new(&ECDSA_P256_SHA256_ASN1);
+
+pub static ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+    EcdsaSigningAlgorithm::new(&ECDSA_P384_SHA384_ASN1);

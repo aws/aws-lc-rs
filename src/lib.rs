@@ -7,6 +7,7 @@ pub mod error;
 pub mod hkdf;
 pub mod hmac;
 pub mod pbkdf2;
+pub mod pkcs8;
 pub mod rand;
 pub mod signature;
 pub mod test;
@@ -20,7 +21,11 @@ mod c;
 
 mod endian;
 
+mod cbb;
+mod cbs;
+mod ec;
 mod polyfill;
+mod ptr;
 
 use std::ffi::CStr;
 use std::sync::Once;
