@@ -290,6 +290,7 @@ pub use rsa::RsaParameters;
 pub use rsa::RsaPublicKeyComponents;
 
 pub use crate::ec::key_pair::EcdsaKeyPair;
+//pub use crate::ed25519::Ed25519KeyPair;
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component
@@ -490,49 +491,42 @@ pub static ECDSA_P256_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificati
     id: &ec::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA256,
     bits: 256,
-    nid: aws_lc_sys::NID_X9_62_prime256v1,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 pub static ECDSA_P256_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA384,
     bits: 256,
-    nid: aws_lc_sys::NID_X9_62_prime256v1,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 pub static ECDSA_P384_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA384,
     bits: 384,
-    nid: aws_lc_sys::NID_secp384r1,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 pub static ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA256,
     bits: 256,
-    nid: aws_lc_sys::NID_X9_62_prime256v1,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 pub static ECDSA_P256_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA384,
     bits: 256,
-    nid: aws_lc_sys::NID_X9_62_prime256v1,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 pub static ECDSA_P384_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA256,
     bits: 256,
-    nid: aws_lc_sys::NID_secp384r1,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 pub static ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA384,
     bits: 384,
-    nid: aws_lc_sys::NID_secp384r1,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 

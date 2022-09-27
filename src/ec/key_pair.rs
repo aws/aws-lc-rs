@@ -102,7 +102,7 @@ impl EcdsaKeyPair {
         _rng: &dyn SecureRandom,
     ) -> Result<Document, Unspecified> {
         unsafe {
-            let ec_key = DetachableLcPtr::new(aws_lc_sys::EC_KEY_new_by_curve_name(alg.0.nid))
+            let ec_key = DetachableLcPtr::new(aws_lc_sys::EC_KEY_new_by_curve_name(alg.0.id.nid()))
                 .map_err(|_| Unspecified)?;
 
             // TODO: There's a separate function for FIPS
@@ -154,8 +154,8 @@ impl EcdsaKeyPair {
         public_key: &[u8],
     ) -> Result<Self, KeyRejected> {
         unsafe {
-            let ec_group =
-                ec::EC_GROUP_from_nid(alg.0.nid).map_err(|_| KeyRejected::unexpected_error())?;
+            let ec_group = ec::EC_GROUP_from_nid(alg.0.id.nid())
+                .map_err(|_| KeyRejected::unexpected_error())?;
             let public_ec_point = ec::EC_POINT_from_bytes(&ec_group, public_key)
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let private_bn = ec::BIGNUM_from_be_bytes(private_key)

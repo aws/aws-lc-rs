@@ -57,7 +57,6 @@ pub struct EcdsaVerificationAlgorithm {
     pub(super) id: &'static AlgorithmID,
     pub(super) digest: &'static digest::Algorithm,
     pub(super) bits: c_uint,
-    pub(super) nid: i32,
     pub(super) sig_format: EcdsaSignatureFormat,
 }
 
@@ -94,6 +93,16 @@ pub(crate) enum AlgorithmID {
     ECDSA_P384,
 }
 
+impl AlgorithmID {
+    #[inline]
+    pub(crate) fn nid(&'static self) -> i32 {
+        match self {
+            AlgorithmID::ECDSA_P256 => aws_lc_sys::NID_X9_62_prime256v1,
+            AlgorithmID::ECDSA_P384 => aws_lc_sys::NID_secp384r1,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct EcdsaPublicKey(Box<[u8]>);
 
@@ -121,7 +130,7 @@ unsafe impl Sync for EcdsaPublicKey {}
 impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
     fn verify(&self, public_key: &[u8], msg: &[u8], signature: &[u8]) -> Result<(), Unspecified> {
         unsafe {
-            let ec_group = EC_GROUP_from_nid(self.nid)?;
+            let ec_group = EC_GROUP_from_nid(self.id.nid())?;
             let ec_point = EC_POINT_from_bytes(&ec_group, public_key)?;
             let ec_key = EC_KEY_from_public_point(&ec_group, &ec_point)?;
 
