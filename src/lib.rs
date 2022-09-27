@@ -24,6 +24,7 @@ mod endian;
 mod cbb;
 mod cbs;
 mod ec;
+mod ed25519;
 mod polyfill;
 mod ptr;
 

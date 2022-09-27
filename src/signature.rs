@@ -255,29 +255,6 @@
 //! #     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
 //! # }
 //! ```
-/*
-use crate::{cpu, ec, error, sealed};
-
-pub use crate::ec::{
-    curve25519::ed25519::{
-        signing::Ed25519KeyPair,
-        verification::{EdDSAParameters, ED25519},
-        ED25519_PUBLIC_KEY_LEN,
-    },
-    suite_b::ecdsa::{
-        signing::{
-            EcdsaKeyPair, EcdsaSigningAlgorithm, ECDSA_P256_SHA256_ASN1_SIGNING,
-            ECDSA_P256_SHA256_FIXED_SIGNING, ECDSA_P384_SHA384_ASN1_SIGNING,
-            ECDSA_P384_SHA384_FIXED_SIGNING,
-        },
-        verification::{
-            EcdsaVerificationAlgorithm, ECDSA_P256_SHA256_ASN1, ECDSA_P256_SHA256_FIXED,
-            ECDSA_P256_SHA384_ASN1, ECDSA_P384_SHA256_ASN1, ECDSA_P384_SHA384_ASN1,
-            ECDSA_P384_SHA384_FIXED,
-        },
-    },
-};
-*/
 
 use crate::{digest, ec, error, rsa, sealed};
 
@@ -290,7 +267,10 @@ pub use rsa::RsaParameters;
 pub use rsa::RsaPublicKeyComponents;
 
 pub use crate::ec::key_pair::EcdsaKeyPair;
-//pub use crate::ed25519::Ed25519KeyPair;
+use crate::ed25519;
+pub use crate::ed25519::Ed25519KeyPair;
+
+pub const ED25519: ed25519::ED25519 = ed25519::ED25519 {};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component
