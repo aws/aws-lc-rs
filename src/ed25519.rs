@@ -19,6 +19,7 @@ use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::os::raw::{c_int, c_uint};
 use std::ptr::null_mut;
+use untrusted::Input;
 
 const ED25519_PRIVATE_KEY_LEN: usize = aws_lc_sys::ED25519_PRIVATE_KEY_LEN as usize;
 const ED25519_PRIVATE_KEY_PREFIX_LEN: usize = 32;
@@ -32,13 +33,18 @@ pub struct ED25519 {}
 impl sealed::Sealed for ED25519 {}
 
 impl VerificationAlgorithm for ED25519 {
-    fn verify(&self, public_key: &[u8], msg: &[u8], signature: &[u8]) -> Result<(), Unspecified> {
+    fn verify(
+        &self,
+        public_key: Input<'_>,
+        msg: Input<'_>,
+        signature: Input<'_>,
+    ) -> Result<(), Unspecified> {
         unsafe {
             if 1 != aws_lc_sys::ED25519_verify(
-                msg.as_ptr(),
+                msg.as_slice_less_safe().as_ptr(),
                 msg.len(),
-                signature.as_ptr(),
-                public_key.as_ptr(),
+                signature.as_slice_less_safe().as_ptr(),
+                public_key.as_slice_less_safe().as_ptr(),
             ) {
                 return Err(Unspecified);
             }
@@ -255,6 +261,9 @@ mod test {
             r#"302e020100300506032b6570042204209d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60"#,
         );
 
-        let _result = Ed25519KeyPair::from_pkcs8(&key).unwrap();
+        let key_pair = Ed25519KeyPair::from_pkcs8(&key).unwrap();
+
+        assert_eq!("Ed25519KeyPair { public_key: PublicKey(\"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a\") }", 
+                   format!("{:?}", key_pair));
     }
 }

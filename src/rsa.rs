@@ -17,12 +17,11 @@
 // naming conventions. Also the standard camelCase names are used for `KeyPair`
 // components.
 
-use crate::digest;
 use crate::error::{KeyRejected, Unspecified};
 use crate::ptr::{DetachableLcPtr, LcPtr, NonNullPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
-use crate::{cbs, rand};
+use crate::{cbs, digest, rand};
 use aws_lc_sys::{
     BN_cmp, BN_new, BN_set_u64, EVP_parse_private_key, RSA_new, BIGNUM, EVP_PKEY, RSA,
 };
@@ -33,6 +32,7 @@ use std::ops::RangeInclusive;
 use std::os::raw::{c_int, c_uint};
 use std::ptr::null_mut;
 use std::slice;
+use untrusted::Input;
 use zeroize::Zeroize;
 
 pub mod evp_pkey;
@@ -141,10 +141,22 @@ impl RsaKeyPair {
 }
 
 impl VerificationAlgorithm for RsaParameters {
-    fn verify(&self, public_key: &[u8], msg: &[u8], signature: &[u8]) -> Result<(), Unspecified> {
+    fn verify(
+        &self,
+        public_key: Input<'_>,
+        msg: Input<'_>,
+        signature: Input<'_>,
+    ) -> Result<(), Unspecified> {
         unsafe {
-            let rsa = build_public_RSA(public_key)?;
-            RSA_verify(self.0, self.1, rsa, msg, signature, &self.2)
+            let rsa = build_public_RSA(public_key.as_slice_less_safe())?;
+            RSA_verify(
+                self.0,
+                self.1,
+                rsa,
+                msg.as_slice_less_safe(),
+                signature.as_slice_less_safe(),
+                &self.2,
+            )
         }
     }
 }
@@ -168,11 +180,12 @@ impl RsaKeyPair {
     /// platforms, it is done less perfectly.
     pub fn sign(
         &self,
-        padding_alg: &RsaEncoding,
+        padding_alg: &'static dyn RsaEncoding,
         _rng: &dyn rand::SecureRandom,
         msg: &[u8],
         signature: &mut [u8],
     ) -> Result<(), Unspecified> {
+        let encoding = padding_alg.encoding();
         unsafe {
             let evp_pkey_ctx = LcPtr::new(aws_lc_sys::EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()))
                 .map_err(|_| Unspecified)?;
@@ -181,14 +194,14 @@ impl RsaKeyPair {
                 return Err(Unspecified);
             }
 
-            let digest = digest::digest(padding_alg.0, msg);
+            let digest = digest::digest(encoding.0, msg);
             let digest = digest.as_ref();
 
-            if 1 != aws_lc_sys::EVP_PKEY_CTX_set_rsa_padding(*evp_pkey_ctx, padding_alg.1) {
+            if 1 != aws_lc_sys::EVP_PKEY_CTX_set_rsa_padding(*evp_pkey_ctx, encoding.1.padding()) {
                 return Err(Unspecified);
             }
 
-            let evp_md = digest::match_digest_type(&padding_alg.0.id);
+            let evp_md = digest::match_digest_type(&encoding.0.id);
             if 1 != aws_lc_sys::EVP_PKEY_CTX_set_signature_md(*evp_pkey_ctx, evp_md) {
                 return Err(Unspecified);
             }
@@ -287,13 +300,37 @@ pub enum RSASigningAlgorithmId {
 }
 
 #[cfg(feature = "alloc")]
-pub struct RsaEncoding(
+pub struct RsaSignatureEncoding(
     pub(super) &'static digest::Algorithm,
-    pub(super) i32,
+    pub(super) &'static RsaPadding,
     pub(super) &'static RSASigningAlgorithmId,
 );
 
-impl Debug for RsaEncoding {
+#[allow(non_camel_case_types)]
+pub enum RsaPadding {
+    RSA_PKCS1_PADDING,
+    RSA_PKCS1_PSS_PADDING,
+}
+impl RsaPadding {
+    fn padding(&self) -> i32 {
+        match self {
+            RsaPadding::RSA_PKCS1_PADDING => aws_lc_sys::RSA_PKCS1_PADDING,
+            RsaPadding::RSA_PKCS1_PSS_PADDING => aws_lc_sys::RSA_PKCS1_PSS_PADDING,
+        }
+    }
+}
+
+pub trait RsaEncoding {
+    fn encoding(&'static self) -> &'static RsaSignatureEncoding;
+}
+
+impl RsaEncoding for RsaSignatureEncoding {
+    fn encoding(&'static self) -> &'static RsaSignatureEncoding {
+        self
+    }
+}
+
+impl Debug for RsaSignatureEncoding {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!("{{ {:?} }}", self.2))
     }
@@ -318,7 +355,7 @@ pub enum RSAVerificationAlgorithmId {
 #[cfg(feature = "alloc")]
 pub struct RsaParameters(
     pub(super) &'static digest::Algorithm,
-    pub(super) i32,
+    pub(super) &'static RsaPadding,
     pub(super) RangeInclusive<u32>,
     pub(super) &'static RSAVerificationAlgorithmId,
 );
@@ -389,7 +426,7 @@ unsafe fn build_private_RSA(public_key: &[u8]) -> Result<DetachableLcPtr<*mut RS
 #[allow(non_snake_case)]
 fn RSA_verify(
     algorithm: &'static digest::Algorithm,
-    padding: i32,
+    padding: &'static RsaPadding,
     public_key: DetachableLcPtr<*mut RSA>,
     msg: &[u8],
     signature: &[u8],
@@ -408,7 +445,7 @@ fn RSA_verify(
 
         evp_pkey::EVP_PKEY_CTX_verify(
             algorithm,
-            Some(padding),
+            Some(padding.padding()),
             msg,
             signature,
             evp_pkey_ctx.as_non_null(),

@@ -89,12 +89,6 @@ impl core::fmt::Display for Unspecified {
 #[cfg(feature = "std")]
 impl std::error::Error for Unspecified {}
 
-impl From<untrusted::EndOfInput> for Unspecified {
-    fn from(_: untrusted::EndOfInput) -> Self {
-        Self
-    }
-}
-
 impl From<core::array::TryFromSliceError> for Unspecified {
     fn from(_: core::array::TryFromSliceError) -> Self {
         Self

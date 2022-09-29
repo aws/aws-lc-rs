@@ -31,6 +31,7 @@ use std::ops::Deref;
 use std::os::raw::{c_int, c_uint};
 use std::ptr::null_mut;
 use std::slice;
+use untrusted::Input;
 
 pub(crate) mod key_pair;
 
@@ -128,17 +129,24 @@ unsafe impl Send for EcdsaPublicKey {}
 unsafe impl Sync for EcdsaPublicKey {}
 
 impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
-    fn verify(&self, public_key: &[u8], msg: &[u8], signature: &[u8]) -> Result<(), Unspecified> {
+    fn verify(
+        &self,
+        public_key: Input<'_>,
+        msg: Input<'_>,
+        signature: Input<'_>,
+    ) -> Result<(), Unspecified> {
         unsafe {
             let ec_group = EC_GROUP_from_nid(self.id.nid())?;
-            let ec_point = EC_POINT_from_bytes(&ec_group, public_key)?;
+            let ec_point = EC_POINT_from_bytes(&ec_group, public_key.as_slice_less_safe())?;
             let ec_key = EC_KEY_from_public_point(&ec_group, &ec_point)?;
 
             let ecdsa_sig = match self.sig_format {
-                EcdsaSignatureFormat::ASN1 => ECDSA_SIG_from_asn1(signature),
-                EcdsaSignatureFormat::Fixed => ECDSA_SIG_from_fixed(self.id, signature),
+                EcdsaSignatureFormat::ASN1 => ECDSA_SIG_from_asn1(signature.as_slice_less_safe()),
+                EcdsaSignatureFormat::Fixed => {
+                    ECDSA_SIG_from_fixed(self.id, signature.as_slice_less_safe())
+                }
             }?;
-            let msg_digest = digest::digest(self.digest, msg);
+            let msg_digest = digest::digest(self.digest, msg.as_slice_less_safe());
             let msg_digest = msg_digest.as_ref();
 
             if 1 != ECDSA_do_verify(msg_digest.as_ptr(), msg_digest.len(), *ecdsa_sig, *ec_key) {
