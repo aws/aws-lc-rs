@@ -21,22 +21,27 @@ pub(crate) fn aes_gcm_seal_separate(
 ) -> Result<Tag, error::Unspecified> {
     unsafe {
         let gcm_ctx = match key.cipher_key() {
-            SymmetricCipherKey::Aes128(.., gcm_ctx) => *gcm_ctx,
-            SymmetricCipherKey::Aes256(.., gcm_ctx) => *gcm_ctx,
+            SymmetricCipherKey::Aes128(.., gcm_ctx) => gcm_ctx,
+            SymmetricCipherKey::Aes256(.., gcm_ctx) => gcm_ctx,
             _ => panic!("Unsupport algorithm"),
         };
 
         let nonce = nonce.as_ref();
 
-        if 1 != aws_lc_sys::EVP_EncryptInit_ex(gcm_ctx, null(), null_mut(), null(), nonce.as_ptr())
-        {
+        if 1 != aws_lc_sys::EVP_EncryptInit_ex(
+            **gcm_ctx,
+            null(),
+            null_mut(),
+            null(),
+            nonce.as_ptr(),
+        ) {
             return Err(error::Unspecified);
         }
 
         let aad_str = aad.0;
         let mut out_len = MaybeUninit::<c_int>::uninit();
         if 1 != aws_lc_sys::EVP_EncryptUpdate(
-            gcm_ctx,
+            **gcm_ctx,
             null_mut(),
             out_len.as_mut_ptr(),
             aad_str.as_ptr(),
@@ -53,7 +58,7 @@ pub(crate) fn aes_gcm_seal_separate(
             let in_len = min(plaintext_len - pos, CHUNK_SIZE);
             let next_plain_chunk = &in_out[pos..(pos + in_len)];
             if 1 != aws_lc_sys::EVP_EncryptUpdate(
-                gcm_ctx,
+                **gcm_ctx,
                 cipher_text.as_mut_ptr().cast(),
                 out_len.as_mut_ptr(),
                 next_plain_chunk.as_ptr(),
@@ -67,13 +72,13 @@ pub(crate) fn aes_gcm_seal_separate(
             next_cipher_chunk.copy_from_slice(&ctext[0..olen]);
             pos += olen;
         }
-        if 1 != aws_lc_sys::EVP_EncryptFinal_ex(gcm_ctx, null_mut(), out_len.as_mut_ptr()) {
+        if 1 != aws_lc_sys::EVP_EncryptFinal_ex(**gcm_ctx, null_mut(), out_len.as_mut_ptr()) {
             return Err(error::Unspecified);
         }
 
         let mut inner_tag = MaybeUninit::<[u8; TAG_LEN]>::uninit();
         aws_lc_sys::EVP_CIPHER_CTX_ctrl(
-            gcm_ctx,
+            **gcm_ctx,
             aws_lc_sys::EVP_CTRL_GCM_GET_TAG,
             TAG_LEN as c_int,
             inner_tag.as_mut_ptr().cast(),

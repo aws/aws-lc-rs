@@ -107,6 +107,7 @@
 //! ```
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
+use crate::ptr::LcPtr;
 use crate::{constant_time, digest, error, hkdf};
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
@@ -251,34 +252,33 @@ impl From<hkdf::Okm<'_, Algorithm>> for Key {
 ///
 /// Use `sign` for single-step HMAC signing.
 pub struct Context {
-    ctx: *mut aws_lc_sys::HMAC_CTX,
+    ctx: LcPtr<*mut aws_lc_sys::HMAC_CTX>,
     key: Key,
 }
 
 impl Clone for Context {
     fn clone(&self) -> Self {
+        self.clone_checked().expect("Unable to clone DigestContext")
+    }
+}
+
+impl Context {
+    fn clone_checked(&self) -> Result<Self, &'static str> {
         unsafe {
-            let ctx = aws_lc_sys::HMAC_CTX_new();
-            if 1 != aws_lc_sys::HMAC_CTX_copy_ex(ctx, self.ctx) {
-                panic!("HMAC_CTX_copy_ex failed");
+            let ctx = LcPtr::new(aws_lc_sys::HMAC_CTX_new())
+                .map_err(|_| "Cloning Context failed during allocation")?;
+            if 1 != aws_lc_sys::HMAC_CTX_copy_ex(*ctx, *self.ctx) {
+                return Err("HMAC_CTX_copy_ex failed");
             };
-            Context {
+            Ok(Context {
                 ctx,
                 key: self.key.clone(),
-            }
+            })
         }
     }
 }
 
 unsafe impl Send for Context {}
-
-impl Drop for Context {
-    fn drop(&mut self) {
-        unsafe {
-            aws_lc_sys::HMAC_CTX_free(self.ctx);
-        }
-    }
-}
 
 impl core::fmt::Debug for Context {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
@@ -292,27 +292,28 @@ impl Context {
     /// Constructs a new HMAC signing context using the given digest algorithm
     /// and key.
     pub fn with_key(signing_key: &Key) -> Self {
+        Self::with_key_checked(signing_key).expect("Context::with_key failed")
+    }
+    pub fn with_key_checked(signing_key: &Key) -> Result<Self, &'static str> {
         unsafe {
-            let ctx = aws_lc_sys::HMAC_CTX_new();
-            if ctx.is_null() {
-                panic!("Failed to initialize HMAC context");
-            }
+            let ctx =
+                LcPtr::new(aws_lc_sys::HMAC_CTX_new()).map_err(|_| "Context allocation failed")?;
             let evp_md_type = signing_key.evp_alg;
             let key_bytes = signing_key.key_bytes.as_slice();
             if 1 != aws_lc_sys::HMAC_Init_ex(
-                ctx,
+                *ctx,
                 key_bytes.as_ptr().cast(),
                 key_bytes.len(),
                 evp_md_type,
                 null_mut(),
             ) {
-                panic!("Failed to initialize HMAC context");
+                return Err("Failed to initialize HMAC context");
             };
 
-            Self {
+            Ok(Self {
                 ctx,
                 key: signing_key.clone(),
-            }
+            })
         }
     }
 
@@ -320,7 +321,7 @@ impl Context {
     /// zero or more times until `finish` is called.
     pub fn update(&mut self, data: &[u8]) {
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Update(self.ctx, data.as_ptr().cast(), data.len()) {
+            if 1 != aws_lc_sys::HMAC_Update(*self.ctx, data.as_ptr().cast(), data.len()) {
                 panic!("HMAC_Update failed")
             }
         }
@@ -337,7 +338,7 @@ impl Context {
         let mut output = [0u8; digest::MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Final(self.ctx, output.as_mut_ptr(), out_len.as_mut_ptr()) {
+            if 1 != aws_lc_sys::HMAC_Final(*self.ctx, output.as_mut_ptr(), out_len.as_mut_ptr()) {
                 panic!("HMAC_Final failed")
             }
             Tag {

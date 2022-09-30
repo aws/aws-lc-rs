@@ -95,7 +95,7 @@ impl Context {
 
             if !self.max_input_reached
                 && 1 != aws_lc_sys::EVP_DigestUpdate(
-                    self.digest_ctx.ctx,
+                    *self.digest_ctx.ctx,
                     data.as_ptr().cast(),
                     data.len(),
                 )
@@ -116,7 +116,7 @@ impl Context {
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
             if 1 != aws_lc_sys::EVP_DigestFinal(
-                self.digest_ctx.ctx,
+                *self.digest_ctx.ctx,
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
             ) {

@@ -215,4 +215,7 @@ create_pointer!(ECDSA_SIG, ECDSA_SIG_free);
 create_pointer!(BIGNUM, BN_free);
 create_pointer!(EVP_PKEY, EVP_PKEY_free);
 create_pointer!(EVP_PKEY_CTX, EVP_PKEY_CTX_free);
+create_pointer!(EVP_CIPHER_CTX, EVP_CIPHER_CTX_free);
+create_pointer!(EVP_MD_CTX, EVP_MD_CTX_free);
+create_pointer!(HMAC_CTX, HMAC_CTX_free);
 create_pointer!(RSA, RSA_free);
