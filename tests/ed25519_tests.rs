@@ -38,7 +38,7 @@ fn test_signature_ed25519() {
             {
                 let key_pair =
                     Ed25519KeyPair::from_seed_and_public_key(&seed, &public_key).unwrap();
-                let actual_sig = key_pair.sign(&msg).unwrap();
+                let actual_sig = key_pair.sign(&msg);
                 assert_eq!(&expected_sig[..], actual_sig.as_ref());
             }
 
@@ -49,7 +49,7 @@ fn test_signature_ed25519() {
             assert_eq!(public_key, key_pair.public_key().as_ref());
 
             // Test Signature generation.
-            let actual_sig = key_pair.sign(&msg).unwrap();
+            let actual_sig = key_pair.sign(&msg);
             assert_eq!(&expected_sig[..], actual_sig.as_ref());
 
             // Test Signature verification.

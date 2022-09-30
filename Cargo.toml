@@ -51,3 +51,11 @@ harness = false
 [[bench]]
 name = "rsa_benchmark"
 harness = false
+
+[[bench]]
+name = "ecdsa_benchmark"
+harness = false
+
+[[bench]]
+name = "ed25519_benchmark"
+harness = false

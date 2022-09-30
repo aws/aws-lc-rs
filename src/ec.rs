@@ -82,7 +82,7 @@ impl sealed::Sealed for EcdsaVerificationAlgorithm {}
 impl sealed::Sealed for EcdsaSigningAlgorithm {}
 
 #[derive(Debug)]
-pub(crate) enum EcdsaSignatureFormat {
+pub enum EcdsaSignatureFormat {
     ASN1,
     Fixed,
 }

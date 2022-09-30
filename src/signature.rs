@@ -262,17 +262,14 @@ use untrusted::Input;
 #[cfg(feature = "alloc")]
 pub use crate::rsa::{RsaKeyPair, RsaSignatureEncoding};
 
-use crate::ec::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
+pub use crate::ec::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
 use crate::rsa::{RSASigningAlgorithmId, RSAVerificationAlgorithmId};
 pub use rsa::RsaEncoding;
 pub use rsa::RsaParameters;
 pub use rsa::RsaPublicKeyComponents;
 
 pub use crate::ec::key_pair::EcdsaKeyPair;
-use crate::ed25519;
-pub use crate::ed25519::Ed25519KeyPair;
-
-pub const ED25519: ed25519::ED25519 = ed25519::ED25519 {};
+pub use crate::ed25519::{Ed25519KeyPair, EdDSAParameters};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component
@@ -526,3 +523,5 @@ pub static ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
 
 pub static ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm::new(&ECDSA_P384_SHA384_ASN1);
+
+pub static ED25519: EdDSAParameters = EdDSAParameters {};

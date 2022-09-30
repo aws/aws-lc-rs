@@ -28,11 +28,11 @@ const ED25519_SIGNATURE_LEN: usize = aws_lc_sys::ED25519_SIGNATURE_LEN as usize;
 const ED25519_SEED_LEN: usize = 32;
 
 #[derive(Debug)]
-pub struct ED25519 {}
+pub struct EdDSAParameters;
 
-impl sealed::Sealed for ED25519 {}
+impl sealed::Sealed for EdDSAParameters {}
 
-impl VerificationAlgorithm for ED25519 {
+impl VerificationAlgorithm for EdDSAParameters {
     fn verify(
         &self,
         public_key: Input<'_>,
@@ -210,7 +210,12 @@ impl Ed25519KeyPair {
         Self::from_pkcs8(pkcs8)
     }
 
-    pub fn sign(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
+    // For Ring compatibility
+    pub fn sign(&self, msg: &[u8]) -> Signature {
+        Self::sign_checked(self, msg).expect("ED25519 signing failed")
+    }
+
+    pub fn sign_checked(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
         unsafe {
             let mut sig_bytes = MaybeUninit::<[u8; ED25519_SIGNATURE_LEN]>::uninit();
             if 1 != aws_lc_sys::ED25519_sign(
