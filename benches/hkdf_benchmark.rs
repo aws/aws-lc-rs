@@ -110,7 +110,7 @@ const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
 
 fn bench_hkdf(c: &mut Criterion, config: &HKDFConfig) {
     for &chunk_len in &G_CHUNK_LENGTHS {
-        let chunk = vec![123u8; chunk_len];
+        let chunk = vec![1u8; chunk_len];
         let info_chunk: &[&[u8]] = &[&chunk];
         let bench_group_name = format!("HKDF-{:?}-{}-bytes", config.algorithm, chunk_len);
         let mut group = c.benchmark_group(bench_group_name);

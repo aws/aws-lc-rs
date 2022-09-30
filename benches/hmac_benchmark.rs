@@ -51,14 +51,14 @@ macro_rules! benchmark_hmac {
             }
 
             pub fn create_hmac_key(config: &HMACConfig) -> hmac::Key {
-                let key_val = vec![123u8; get_digest_length(&config)];
+                let key_val = vec![1u8; get_digest_length(&config)];
                 hmac::Key::new(algorithm(&config), &key_val)
             }
 
             // A HMAC key longer than the corresponding digest length will be hashed once
             // before being processed.
             pub fn create_longer_hmac_key(config: &HMACConfig) -> hmac::Key {
-                let key_val = vec![123u8; get_digest_length(&config) + 1];
+                let key_val = vec![1u8; get_digest_length(&config) + 1];
                 hmac::Key::new(algorithm(&config), &key_val)
             }
 
@@ -121,7 +121,7 @@ const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
 // Benchmark hmac::sign one-shot API.
 fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
     for &chunk_len in &G_CHUNK_LENGTHS {
-        let chunk = vec![123u8; chunk_len];
+        let chunk = vec![1u8; chunk_len];
 
         let bench_group_name = format!("HMAC-{:?}-one-shot-{}-bytes", config.algorithm, chunk_len);
         let mut group = c.benchmark_group(bench_group_name);
@@ -146,7 +146,7 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
 // length then it will be compressed using the digest algorithm.
 fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
     for &chunk_len in &G_CHUNK_LENGTHS {
-        let chunk = vec![123u8; chunk_len];
+        let chunk = vec![1u8; chunk_len];
 
         let bench_group_name = format!(
             "HMAC-{:?}-one-shot-long-key-{}-bytes",

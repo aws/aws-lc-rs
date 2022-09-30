@@ -92,7 +92,6 @@ fn bench_sha512_256(c: &mut Criterion) {
 
 const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
 
-// TODO: Run this benchmark on a linux ec2 instance.
 fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
     // Benchmark digest::digest one-shot.
     //
@@ -103,7 +102,7 @@ fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
     // For the one-shot Rust API functions, we use the corresponding one-shot SHA functions
     // available in AWS-LC to save performance spent on additional memory allocation.
     for &chunk_len in &G_CHUNK_LENGTHS {
-        let chunk = vec![123u8; chunk_len];
+        let chunk = vec![1u8; chunk_len];
 
         let bench_group_name =
             format!("DIGEST-{:?}-one-shot-{}-bytes", config.algorithm, chunk_len);
@@ -134,7 +133,7 @@ fn bench_digest_incremental(c: &mut Criterion, config: &DigestConfig) {
     // implementation. Ring does the hashing block computations entirely in Rust.
     // https://github.com/briansmith/ring/blob/main/src/digest.rs#L21-L25
     for &chunk_len in &G_CHUNK_LENGTHS {
-        let chunk = vec![123u8; chunk_len];
+        let chunk = vec![1u8; chunk_len];
 
         let bench_group_name = format!(
             "DIGEST-{:?}-incremental-{}-bytes",

@@ -93,21 +93,21 @@ const G_ITERATIONS: [usize; 4] = [6250, 12500, 25000, 50000];
 
 fn bench_pbkdf2(c: &mut Criterion, config: &PBKDF2Config) {
     for &iterations in &G_ITERATIONS {
-        let iterations = NonZeroU32::new(iterations as u32).unwrap();
-        let bench_group_name = format!("PBKDF2-{:?}-{}-iterations", config.algorithm, iterations);
+        let iter = NonZeroU32::new(iterations as u32).unwrap();
+        let bench_group_name = format!("PBKDF2-{:?}-{}-iterations", config.algorithm, iter);
         let mut group = c.benchmark_group(bench_group_name);
 
         let mut aws_out = vec![0u8; 64];
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_ring_facade_benchmarks::run_pbkdf2_derive(&config, iterations, &mut aws_out);
+                aws_lc_ring_facade_benchmarks::run_pbkdf2_derive(&config, iter, &mut aws_out);
             })
         });
 
         let mut ring_out = vec![0u8; 64];
         group.bench_function("Ring", |b| {
             b.iter(|| {
-                ring_benchmarks::run_pbkdf2_derive(&config, iterations, &mut ring_out);
+                ring_benchmarks::run_pbkdf2_derive(&config, iter, &mut ring_out);
             })
         });
     }
