@@ -75,3 +75,23 @@ pub(super) fn encrypt_block_aes_ecb(
         Ok(Block::from(&cipher_text.assume_init()))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::aead::aes::{Aes128Key, Aes256Key};
+    use crate::test;
+
+    #[test]
+    fn test_key_type_header_protection_key() {
+        let aes128_key_bytes = test::from_dirty_hex(r#"d480429666d48b400633921c5407d1d1"#);
+        let aes256_key_bytes = test::from_dirty_hex(
+            r#"d480429666d48b400633921c5407d1d1d480429666d48b400633921c5407d1d1"#,
+        );
+
+        let aes128 = Aes128Key(aes128_key_bytes.clone().try_into().unwrap());
+        let aes256 = Aes256Key(aes256_key_bytes.clone().try_into().unwrap());
+
+        assert_eq!(aes128.as_slice(), aes128_key_bytes.as_slice());
+        assert_eq!(aes256.as_slice(), aes256_key_bytes.as_slice());
+    }
+}

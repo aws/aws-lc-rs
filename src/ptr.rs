@@ -156,26 +156,6 @@ impl<P: Pointer> From<NonNullPtr<P>> for LcPtr<P> {
     }
 }
 
-pub(crate) struct StaticPointer<T> {
-    ptr: *const T,
-}
-
-impl<T> StaticPointer<T> {
-    pub fn new(ptr: *const T) -> Self {
-        Self { ptr }
-    }
-}
-
-unsafe impl<T> Sync for StaticPointer<T> {}
-
-impl<T> Deref for StaticPointer<T> {
-    type Target = *const T;
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.ptr
-    }
-}
-
 pub trait Pointer {
     fn free(&mut self);
 }

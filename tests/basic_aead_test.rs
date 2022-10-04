@@ -1,19 +1,9 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-/*
-macro_rules! test_aead
-{( $pkg:ident ) =>
-{
-mod $pkg {
-    use $pkg::{aead, error};
- */
-
 extern crate core;
 
 use aws_lc_ring_facade::{aead, error};
-
-//use ring::{aead, error};
 
 use aead::{
     Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, Tag, UnboundKey,
@@ -63,14 +53,12 @@ impl AeadConfig {
         Aad::from(self.aad.clone())
     }
     fn nonce(&self) -> impl NonceSequence {
-        //RngNonce{}
-        //NotANonce::new()
         NotANonce::from(self.nonce.clone())
     }
 }
 
 #[test]
-fn test_aes_128_gcm() -> Result<(), String> {
+fn test_aes_128_gcm() {
     let config = AeadConfig::new(
         &AES_128_GCM,
         &from_hex("d480429666d48b400633921c5407d1d1").unwrap(),
@@ -78,14 +66,12 @@ fn test_aes_128_gcm() -> Result<(), String> {
         std::str::from_utf8(&from_hex("").unwrap()).unwrap(),
     );
     let mut in_out = from_hex("").unwrap();
-    test_aead_separate_in_place(&config, &mut in_out)?;
-    //test_aead_append_within(&config, &mut in_out)?;
-
-    Ok(())
+    test_aead_separate_in_place(&config, &mut in_out).unwrap();
+    test_aead_append_within(&config, &mut in_out).unwrap();
 }
 
 #[test]
-fn test_aes_256_gcm() -> Result<(), String> {
+fn test_aes_256_gcm() {
     let config = AeadConfig::new(
         &AES_256_GCM,
         &from_hex("e5ac4a32c67e425ac4b143c83c6f161312a97d88d634afdf9f4da5bd35223f01").unwrap(),
@@ -94,14 +80,12 @@ fn test_aes_256_gcm() -> Result<(), String> {
     );
     let mut in_out = from_hex("123456789abcdef0").unwrap();
 
-    test_aead_separate_in_place(&config, &mut in_out)?;
-    test_aead_append_within(&config, &mut in_out)?;
-
-    Ok(())
+    test_aead_separate_in_place(&config, &mut in_out).unwrap();
+    test_aead_append_within(&config, &mut in_out).unwrap();
 }
 
 #[test]
-fn test_chacha20_poly1305() -> Result<(), String> {
+fn test_chacha20_poly1305() {
     let config = AeadConfig::new(
         &CHACHA20_POLY1305,
         &from_hex("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f").unwrap(),
@@ -110,10 +94,8 @@ fn test_chacha20_poly1305() -> Result<(), String> {
     );
     let mut in_out = from_hex("123456789abcdef0").unwrap();
 
-    test_aead_separate_in_place(&config, &mut in_out)?;
-    //test_aead_append_within(&config, &mut in_out)?;
-
-    Ok(())
+    test_aead_separate_in_place(&config, &mut in_out).unwrap();
+    test_aead_append_within(&config, &mut in_out).unwrap();
 }
 
 fn test_aead_separate_in_place(

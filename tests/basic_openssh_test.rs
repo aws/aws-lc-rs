@@ -1,10 +1,9 @@
 use aws_lc_ring_facade::test::from_hex;
 
-//use ring::aead;
 use aws_lc_ring_facade::aead;
 
 #[test]
-fn test_openssh() -> Result<(), String> {
+fn test_openssh() {
     let key_bytes: [u8; aead::chacha20_poly1305_openssh::KEY_LEN] =
         from_hex("247a041f6780baf0de3741aa4436024b6a5169b0eab8a090a291f5900bf566a54ac2c64c0f38cab14a143111bc39d1873013f52f2e92062e375c1a5378ad9b32").unwrap().try_into().unwrap();
     let plaintext = from_hex("000000100f000000000000000000000000000000").unwrap();
@@ -27,6 +26,4 @@ fn test_openssh() -> Result<(), String> {
     }
     assert_eq!(&s_in_out[..4], &ciphertext[..4]);
     assert_eq!(&s_in_out[4..], &plaintext[4..]);
-
-    Ok(())
 }

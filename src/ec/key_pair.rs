@@ -8,18 +8,13 @@ use crate::ec::{
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Document;
-use crate::ptr::{DetachableLcPtr, IntoPointer, LcPtr};
+use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 use crate::{cbb, cbs, digest, ec};
-use aws_lc_sys::{
-    ECDSA_do_sign, EC_KEY_get0_group, EC_KEY_get0_private_key, EC_KEY_get0_public_key,
-    EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, EVP_PKEY_get1_EC_KEY, EVP_parse_private_key,
-    EC_KEY,
-};
+use aws_lc_sys::{ECDSA_do_sign, EVP_PKEY_get1_EC_KEY, EVP_parse_private_key, EC_KEY};
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
-use std::ptr::{null, null_mut};
 
 pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
@@ -51,22 +46,6 @@ impl EcdsaKeyPair {
         algorithm: &'static EcdsaSigningAlgorithm,
         ec_key: LcPtr<*mut EC_KEY>,
     ) -> Result<Self, Unspecified> {
-        let ec_group = EC_KEY_get0_group(*ec_key)
-            .into_pointer()
-            .ok_or(Unspecified)?;
-        if EC_KEY_get0_public_key(*ec_key).is_null() {
-            let priv_key = EC_KEY_get0_private_key(*ec_key)
-                .into_pointer()
-                .ok_or(Unspecified)?;
-            let pub_key = LcPtr::new(EC_POINT_new(ec_group)).map_err(|_| Unspecified)?;
-            if 1 != EC_POINT_mul(ec_group, *pub_key, priv_key, null(), null(), null_mut()) {
-                return Err(Unspecified);
-            }
-            if 1 != EC_KEY_set_public_key(*ec_key, *pub_key) {
-                return Err(Unspecified);
-            }
-        }
-
         let pubkey = ec::marshal_public_key(&ec_key)?;
 
         Ok(Self {
