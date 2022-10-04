@@ -107,8 +107,8 @@
 //! ```
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
-use crate::ptr::LcPtr;
 use crate::{constant_time, digest, error, hkdf};
+use aws_lc_sys::HMAC_CTX;
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
 use std::ptr::null_mut;
@@ -221,6 +221,7 @@ impl Key {
     /// You should not use keys larger than the `digest_alg.block_len` because
     /// the truncation described above reduces their strength to only
     /// `digest_alg.output_len * 8` bits.
+    #[inline]
     pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Self {
         Self {
             algorithm,
@@ -252,26 +253,25 @@ impl From<hkdf::Okm<'_, Algorithm>> for Key {
 ///
 /// Use `sign` for single-step HMAC signing.
 pub struct Context {
-    ctx: LcPtr<*mut aws_lc_sys::HMAC_CTX>,
+    ctx: aws_lc_sys::HMAC_CTX,
     key: Key,
 }
 
 impl Clone for Context {
     fn clone(&self) -> Self {
-        self.clone_checked().expect("Unable to clone DigestContext")
+        self.try_clone().expect("Unable to clone HmacContext")
     }
 }
 
 impl Context {
-    fn clone_checked(&self) -> Result<Self, &'static str> {
+    fn try_clone(&self) -> Result<Self, &'static str> {
         unsafe {
-            let ctx = LcPtr::new(aws_lc_sys::HMAC_CTX_new())
-                .map_err(|_| "Cloning Context failed during allocation")?;
-            if 1 != aws_lc_sys::HMAC_CTX_copy_ex(*ctx, *self.ctx) {
+            let mut ctx = MaybeUninit::<aws_lc_sys::HMAC_CTX>::uninit();
+            if 1 != aws_lc_sys::HMAC_CTX_copy_ex(ctx.as_mut_ptr(), &self.ctx) {
                 return Err("HMAC_CTX_copy_ex failed");
             };
             Ok(Context {
-                ctx,
+                ctx: ctx.assume_init(),
                 key: self.key.clone(),
             })
         }
@@ -291,17 +291,19 @@ impl core::fmt::Debug for Context {
 impl Context {
     /// Constructs a new HMAC signing context using the given digest algorithm
     /// and key.
+    #[inline]
     pub fn with_key(signing_key: &Key) -> Self {
-        Self::with_key_checked(signing_key).expect("Context::with_key failed")
+        Self::try_with_key(signing_key).expect("Context::with_key failed")
     }
-    pub fn with_key_checked(signing_key: &Key) -> Result<Self, &'static str> {
+
+    fn try_with_key(signing_key: &Key) -> Result<Self, &'static str> {
         unsafe {
-            let ctx =
-                LcPtr::new(aws_lc_sys::HMAC_CTX_new()).map_err(|_| "Context allocation failed")?;
+            let mut ctx = MaybeUninit::<aws_lc_sys::HMAC_CTX>::uninit();
+            aws_lc_sys::HMAC_CTX_init(ctx.as_mut_ptr());
             let evp_md_type = signing_key.evp_alg;
             let key_bytes = signing_key.key_bytes.as_slice();
             if 1 != aws_lc_sys::HMAC_Init_ex(
-                *ctx,
+                ctx.as_mut_ptr(),
                 key_bytes.as_ptr().cast(),
                 key_bytes.len(),
                 evp_md_type,
@@ -311,7 +313,7 @@ impl Context {
             };
 
             Ok(Self {
-                ctx,
+                ctx: ctx.assume_init(),
                 key: signing_key.clone(),
             })
         }
@@ -319,9 +321,10 @@ impl Context {
 
     /// Updates the HMAC with all the data in `data`. `update` may be called
     /// zero or more times until `finish` is called.
+    #[inline]
     pub fn update(&mut self, data: &[u8]) {
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Update(*self.ctx, data.as_ptr().cast(), data.len()) {
+            if 1 != aws_lc_sys::HMAC_Update(&mut self.ctx, data.as_ptr().cast(), data.len()) {
                 panic!("HMAC_Update failed")
             }
         }
@@ -334,11 +337,14 @@ impl Context {
     /// It is generally not safe to implement HMAC verification by comparing
     /// the return value of `sign` to a tag. Use `verify` for verification
     /// instead.
+    #[inline]
     pub fn sign(self) -> Tag {
         let mut output = [0u8; digest::MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
+        let ctx_ptr = &self.ctx as *const HMAC_CTX;
+        let ctx_ptr = ctx_ptr as *mut HMAC_CTX;
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Final(*self.ctx, output.as_mut_ptr(), out_len.as_mut_ptr()) {
+            if 1 != aws_lc_sys::HMAC_Final(ctx_ptr, output.as_mut_ptr(), out_len.as_mut_ptr()) {
                 panic!("HMAC_Final failed")
             }
             Tag {
