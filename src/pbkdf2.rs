@@ -115,7 +115,8 @@
 //!     assert!(db.verify_password("alice", "@74d7]404j|W}6u").is_ok());
 //! }
 
-use crate::{constant_time, digest, error, hmac};
+use crate::error::Unspecified;
+use crate::{constant_time, digest, hmac};
 use core::num::NonZeroU32;
 
 /// A PBKDF2 algorithm.
@@ -157,6 +158,7 @@ const MAX_USIZE32: usize = u32::MAX as usize;
 ///
 /// `derive` panics if `out.len()` is larger than (2**32 - 1) * the digest
 /// algorithm's output length, per the PBKDF2 specification.
+#[inline]
 pub fn derive(
     algorithm: Algorithm,
     iterations: NonZeroU32,
@@ -164,9 +166,20 @@ pub fn derive(
     secret: &[u8],
     out: &mut [u8],
 ) {
+    try_derive(algorithm, iterations, salt, secret, out).expect("pkkdf2 derive failed")
+}
+
+#[inline]
+fn try_derive(
+    algorithm: Algorithm,
+    iterations: NonZeroU32,
+    salt: &[u8],
+    secret: &[u8],
+    out: &mut [u8],
+) -> Result<(), Unspecified> {
     let digest_alg = algorithm.0.digest_algorithm();
     if out.len() > (MAX_USIZE32 - 1) * digest_alg.output_len {
-        panic!("derived key too long");
+        panic!("derived key too long")
     }
 
     unsafe {
@@ -180,9 +193,10 @@ pub fn derive(
             out.len(),
             out.as_mut_ptr(),
         ) {
-            panic!("PKCS5_PBKDF2_HMAC failed");
+            return Err(Unspecified);
         };
     }
+    Ok(())
 }
 
 /// Verifies that a previously-derived (e.g., using `derive`) PBKDF2 value
@@ -205,17 +219,18 @@ pub fn derive(
 ///
 /// `verify` panics if `previously_derived.len()` is larger than (2**32 - 1) * the digest
 /// algorithm's output length, per the PBKDF2 specification.
+#[inline]
 pub fn verify(
     algorithm: Algorithm,
     iterations: NonZeroU32,
     salt: &[u8],
     secret: &[u8],
     previously_derived: &[u8],
-) -> Result<(), error::Unspecified> {
+) -> Result<(), Unspecified> {
     let digest_alg = algorithm.0.digest_algorithm();
 
     if previously_derived.is_empty() {
-        return Err(error::Unspecified);
+        return Err(Unspecified);
     }
     if previously_derived.len() > (MAX_USIZE32 - 1) * digest_alg.output_len {
         panic!("derived key too long");
@@ -234,7 +249,7 @@ pub fn verify(
             previously_derived.len(),
             derived_buf.as_mut_ptr(),
         ) {
-            return Err(error::Unspecified);
+            return Err(Unspecified);
         };
     }
 

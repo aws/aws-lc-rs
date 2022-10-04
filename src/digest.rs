@@ -29,6 +29,7 @@ use crate::{debug, derive_debug_via_id};
 
 mod digest_ctx;
 mod sha;
+use crate::error::Unspecified;
 use digest_ctx::DigestContext;
 pub use sha::{
     SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA256, SHA256_OUTPUT_LEN, SHA384,
@@ -83,7 +84,12 @@ impl Context {
     ///
     /// The original implementation of Ring defers the failure of overflowed
     /// inputs to `finish`, so we replicate the behavior.
+    #[inline]
     pub fn update(&mut self, data: &[u8]) {
+        Self::try_update(self, data).expect("digest update failed");
+    }
+    #[inline]
+    fn try_update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
             // Check if the message has reached the algorithm's maximum allowed input, or overflowed
             // the msg_len counter.
@@ -93,15 +99,17 @@ impl Context {
             (!self.max_input_reached)
                 .then(|| self.max_input_reached = self.msg_len > self.algorithm.max_input_len);
 
-            if !self.max_input_reached
-                && 1 != aws_lc_sys::EVP_DigestUpdate(
-                    *self.digest_ctx.ctx,
-                    data.as_ptr().cast(),
-                    data.len(),
-                )
-            {
-                panic!("EVP_DigestUpdate failed")
+            if self.max_input_reached {
+                return Err(Unspecified);
             }
+            if 1 != aws_lc_sys::EVP_DigestUpdate(
+                *self.digest_ctx.ctx,
+                data.as_ptr().cast(),
+                data.len(),
+            ) {
+                return Err(Unspecified);
+            }
+            Ok(())
         }
     }
 
@@ -109,7 +117,13 @@ impl Context {
     ///
     /// `finish` consumes the context so it cannot be (mis-)used after `finish`
     /// has been called.
+    #[inline]
     pub fn finish(self) -> Digest {
+        Self::try_finish(self).expect("EVP_DigestFinal failed")
+    }
+
+    #[inline]
+    fn try_finish(self) -> Result<Digest, Unspecified> {
         assert!(!self.max_input_reached);
 
         let mut output = [0u8; MAX_OUTPUT_LEN];
@@ -120,15 +134,15 @@ impl Context {
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
             ) {
-                panic!("EVP_DigestFinal failed")
+                return Err(Unspecified);
             }
         }
 
-        Digest {
+        Ok(Digest {
             algorithm: self.algorithm,
             digest_msg: output,
             digest_len: self.algorithm.output_len,
-        }
+        })
     }
 
     /// The algorithm that this context is using.
@@ -153,6 +167,7 @@ impl Context {
 /// assert_eq!(&expected, &actual.as_ref());
 /// # }
 /// ```
+#[inline]
 pub fn digest(algorithm: &'static Algorithm, data: &[u8]) -> Digest {
     let mut output = [0u8; MAX_OUTPUT_LEN];
     (algorithm.one_shot_hash)(data, &mut output);

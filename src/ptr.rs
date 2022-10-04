@@ -14,13 +14,14 @@ pub(crate) struct LcPtr<P: Pointer> {
 
 impl<P: Pointer> Deref for LcPtr<P> {
     type Target = P;
-
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.pointer
     }
 }
 
 impl<P: Pointer> LcPtr<P> {
+    #[inline]
     pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ()> {
         if let Some(pointer) = value.into_pointer() {
             Ok(Self { pointer })
@@ -66,6 +67,7 @@ impl<P: Pointer> Deref for DetachableLcPtr<P> {
 }
 
 impl<P: Pointer> DetachableLcPtr<P> {
+    #[inline]
     pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ()> {
         if let Some(pointer) = value.into_pointer() {
             Ok(Self {
@@ -88,6 +90,7 @@ impl<P: Pointer> DetachableLcPtr<P> {
 }
 
 impl<P: Pointer + Copy> DetachableLcPtr<P> {
+    #[inline]
     pub fn as_non_null(&self) -> NonNullPtr<P> {
         match self.pointer {
             Some(pointer) => NonNullPtr { pointer },
@@ -127,13 +130,14 @@ pub struct NonNullPtr<P: Pointer> {
 
 impl<P: Pointer> Deref for NonNullPtr<P> {
     type Target = P;
-
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.pointer
     }
 }
 
 impl<P: Pointer> NonNullPtr<P> {
+    #[inline]
     pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ()> {
         if let Some(pointer) = value.into_pointer() {
             Ok(Self { pointer })
@@ -144,10 +148,31 @@ impl<P: Pointer> NonNullPtr<P> {
 }
 
 impl<P: Pointer> From<NonNullPtr<P>> for LcPtr<P> {
+    #[inline]
     fn from(nnptr: NonNullPtr<P>) -> Self {
         LcPtr {
             pointer: nnptr.pointer,
         }
+    }
+}
+
+pub(crate) struct StaticPointer<T> {
+    ptr: *const T,
+}
+
+impl<T> StaticPointer<T> {
+    pub fn new(ptr: *const T) -> Self {
+        Self { ptr }
+    }
+}
+
+unsafe impl<T> Sync for StaticPointer<T> {}
+
+impl<T> Deref for StaticPointer<T> {
+    type Target = *const T;
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.ptr
     }
 }
 
@@ -160,6 +185,7 @@ pub trait IntoPointer<P> {
 }
 
 impl<T> IntoPointer<*mut T> for *const T {
+    #[inline]
     fn into_pointer(self) -> Option<*mut T> {
         if self.is_null() {
             None
@@ -170,6 +196,7 @@ impl<T> IntoPointer<*mut T> for *const T {
 }
 
 impl<T> IntoPointer<*mut T> for *mut T {
+    #[inline]
     fn into_pointer(self) -> Option<*mut T> {
         if self.is_null() {
             None
@@ -183,6 +210,7 @@ impl<T> IntoPointer<*mut T> for NonNullPtr<*mut T>
 where
     *mut T: Pointer,
 {
+    #[inline]
     fn into_pointer(self) -> Option<*mut T> {
         if self.is_null() {
             None

@@ -18,7 +18,8 @@
 
 use crate::aead::cipher;
 use crate::aead::key_inner::KeyInner;
-use crate::{derive_debug_via_id, error};
+use crate::hkdf::KeyType;
+use crate::{derive_debug_via_id, error, hkdf};
 use core::convert::TryFrom;
 
 /// A key for generating QUIC Header Protection masks.
@@ -27,7 +28,6 @@ pub struct HeaderProtectionKey {
     algorithm: &'static Algorithm,
 }
 
-/*
 impl From<hkdf::Okm<'_, &'static Algorithm>> for HeaderProtectionKey {
     fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
         let mut key_bytes = [0; super::MAX_KEY_LEN];
@@ -37,7 +37,12 @@ impl From<hkdf::Okm<'_, &'static Algorithm>> for HeaderProtectionKey {
         Self::new(algorithm, key_bytes).unwrap()
     }
 }
-*/
+
+impl KeyType for HeaderProtectionKey {
+    fn len(&self) -> usize {
+        self.inner.cipher_key().key_bytes().len()
+    }
+}
 
 impl HeaderProtectionKey {
     /// Create a new header protection key.
@@ -56,6 +61,7 @@ impl HeaderProtectionKey {
     /// Generate a new QUIC Header Protection mask.
     ///
     /// `sample` must be exactly `self.algorithm().sample_len()` bytes long.
+    #[inline]
     pub fn new_mask(&self, sample: &[u8]) -> Result<[u8; 5], error::Unspecified> {
         let sample = <&[u8; SAMPLE_LEN]>::try_from(sample)?;
 
@@ -84,14 +90,13 @@ pub struct Algorithm {
     key_len: usize,
     id: AlgorithmID,
 }
-/*
-impl hkdf::KeyType for &'static Algorithm {
+
+impl KeyType for &'static Algorithm {
     #[inline]
     fn len(&self) -> usize {
         self.key_len()
     }
 }
-*/
 
 impl Algorithm {
     /// The length of the key.
@@ -118,6 +123,7 @@ enum AlgorithmID {
 }
 
 impl PartialEq for Algorithm {
+    #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
@@ -149,21 +155,25 @@ pub static CHACHA20: Algorithm = Algorithm {
     id: AlgorithmID::CHACHA20,
 };
 
+#[inline]
 fn aes_init_128(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     let aes_key = cipher::SymmetricCipherKey::aes128(key)?;
     KeyInner::new(aes_key)
 }
 
+#[inline]
 fn aes_init_256(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     let aes_key = cipher::SymmetricCipherKey::aes256(key)?;
     KeyInner::new(aes_key)
 }
 
+#[inline]
 fn chacha20_init(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     let chacha20 = cipher::SymmetricCipherKey::chacha20(key)?;
     KeyInner::new(chacha20)
 }
 
+#[inline]
 fn cipher_new_mask(key: &KeyInner, sample: Sample) -> [u8; 5] {
     let cipher_key = key.cipher_key();
 

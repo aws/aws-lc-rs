@@ -34,6 +34,7 @@ pub static CHACHA20_POLY1305: Algorithm = Algorithm {
     max_input_len: u64::MAX,
 };
 
+#[inline]
 fn init_chacha(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     KeyInner::new(SymmetricCipherKey::chacha20(key)?)
 }

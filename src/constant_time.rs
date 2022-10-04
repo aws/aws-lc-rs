@@ -21,6 +21,7 @@ use crate::error;
 /// contents of each, but NOT in constant time with respect to the lengths of
 /// `a` and `b`.
 /// AWS-LC's |CRYPTO_memcmp| fits this use case.
+#[inline]
 pub fn verify_slices_are_equal(a: &[u8], b: &[u8]) -> Result<(), error::Unspecified> {
     if a.len() != b.len() {
         return Err(error::Unspecified);

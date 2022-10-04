@@ -27,12 +27,12 @@ unsafe impl Send for DigestContext {}
 
 impl Clone for DigestContext {
     fn clone(&self) -> Self {
-        self.clone_checked().expect("Unable to clone DigestContext")
+        self.try_clone().expect("Unable to clone DigestContext")
     }
 }
 
 impl DigestContext {
-    fn clone_checked(&self) -> Result<Self, &'static str> {
+    fn try_clone(&self) -> Result<Self, &'static str> {
         unsafe {
             let ctx = LcPtr::new(aws_lc_sys::EVP_MD_CTX_new())
                 .map_err(|_| "Cloning DigestContext failed during allocation.")?;

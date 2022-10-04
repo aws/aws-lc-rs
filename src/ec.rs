@@ -72,7 +72,7 @@ impl EcdsaSigningAlgorithm {
 
 impl Deref for EcdsaSigningAlgorithm {
     type Target = EcdsaVerificationAlgorithm;
-
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         self.0
     }
@@ -95,7 +95,7 @@ pub(crate) enum AlgorithmID {
 }
 
 impl AlgorithmID {
-    #[inline]
+    #[inline(always)]
     pub(crate) fn nid(&'static self) -> i32 {
         match self {
             AlgorithmID::ECDSA_P256 => aws_lc_sys::NID_X9_62_prime256v1,
@@ -120,6 +120,7 @@ impl EcdsaPublicKey {
 }
 
 impl AsRef<[u8]> for EcdsaPublicKey {
+    #[inline(always)]
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
     }
@@ -129,6 +130,7 @@ unsafe impl Send for EcdsaPublicKey {}
 unsafe impl Sync for EcdsaPublicKey {}
 
 impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
+    #[inline]
     fn verify(
         &self,
         public_key: Input<'_>,
@@ -233,6 +235,7 @@ unsafe fn EC_GROUP_from_nid(nid: i32) -> Result<LcPtr<*mut EC_GROUP>, Unspecifie
     LcPtr::new(aws_lc_sys::EC_GROUP_new_by_curve_name(nid)).map_err(|_| Unspecified)
 }
 
+#[inline]
 #[allow(non_snake_case)]
 unsafe fn EC_POINT_from_bytes(
     ec_group: &LcPtr<*mut EC_GROUP>,
@@ -253,6 +256,7 @@ unsafe fn EC_POINT_from_bytes(
     Ok(ec_point)
 }
 
+#[inline]
 #[allow(non_snake_case)]
 unsafe fn EC_POINT_to_bytes(
     ec_group: *const EC_GROUP,
@@ -276,6 +280,7 @@ unsafe fn EC_POINT_to_bytes(
     Ok(out_len)
 }
 
+#[inline]
 #[allow(non_snake_case)]
 unsafe fn ECDSA_SIG_to_asn1(ecdsa_sig: &LcPtr<*mut ECDSA_SIG>) -> Result<Signature, Unspecified> {
     let mut out_bytes = MaybeUninit::<*mut u8>::uninit();
@@ -294,6 +299,7 @@ unsafe fn ECDSA_SIG_to_asn1(ecdsa_sig: &LcPtr<*mut ECDSA_SIG>) -> Result<Signatu
     }))
 }
 
+#[inline]
 #[allow(non_snake_case)]
 unsafe fn ECDSA_SIG_to_fixed(
     alg_id: &'static AlgorithmID,
@@ -322,6 +328,7 @@ unsafe fn ECDSA_SIG_to_fixed(
     }))
 }
 
+#[inline]
 #[allow(non_snake_case)]
 unsafe fn ECDSA_SIG_from_asn1(signature: &[u8]) -> Result<LcPtr<*mut ECDSA_SIG>, Unspecified> {
     LcPtr::new(ECDSA_SIG_from_bytes(signature.as_ptr(), signature.len())).map_err(|_| Unspecified)
@@ -337,6 +344,7 @@ const fn ecdsa_fixed_number_byte_size(alg_id: &'static AlgorithmID) -> usize {
     }
 }
 
+#[inline]
 #[allow(non_snake_case)]
 unsafe fn ECDSA_SIG_from_fixed(
     alg_id: &'static AlgorithmID,
@@ -360,6 +368,7 @@ unsafe fn ECDSA_SIG_from_fixed(
     Ok(ecdsa_sig)
 }
 
+#[inline]
 #[allow(non_snake_case)]
 unsafe fn BIGNUM_to_be_bytes(
     bignum: NonNullPtr<*mut BIGNUM>,
@@ -377,6 +386,7 @@ unsafe fn BIGNUM_to_be_bytes(
     Ok(bn_bytes)
 }
 
+#[inline]
 #[allow(non_snake_case)]
 unsafe fn BIGNUM_from_be_bytes(bytes: &[u8]) -> Result<DetachableLcPtr<*mut BIGNUM>, Unspecified> {
     DetachableLcPtr::new(BN_bin2bn(bytes.as_ptr(), bytes.len(), null_mut()))

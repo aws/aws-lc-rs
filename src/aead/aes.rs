@@ -23,7 +23,7 @@ use zeroize::Zeroize;
 pub(crate) struct Aes128Key(pub(super) [u8; 16]);
 impl Deref for Aes128Key {
     type Target = [u8; 16];
-
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -38,6 +38,7 @@ pub(crate) struct Aes256Key(pub(super) [u8; 32]);
 impl Deref for Aes256Key {
     type Target = [u8; 32];
 
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.0
     }

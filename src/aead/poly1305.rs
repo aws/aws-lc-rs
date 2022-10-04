@@ -69,6 +69,7 @@ impl Context {
         }
     }
 
+    #[inline]
     pub(super) fn finish(mut self) -> Tag {
         unsafe {
             let mut tag = MaybeUninit::<[u8; TAG_LEN]>::uninit();
@@ -85,7 +86,7 @@ impl Context {
 ///
 /// This is used by chacha20_poly1305_openssh and the standalone
 /// poly1305 test vectors.
-#[allow(dead_code)]
+#[inline]
 pub(super) fn sign(key: Key, input: &[u8]) -> Tag {
     let mut ctx = Context::from_key(key);
     ctx.update(input);

@@ -57,6 +57,7 @@ impl SealingKey {
     /// `padding_length||payload||random padding`. It will be overwritten by
     /// `encrypted_packet_length||ciphertext`, where `encrypted_packet_length`
     /// is encrypted with `K_1` and `ciphertext` is encrypted by `K_2`.
+    #[inline]
     pub fn seal_in_place(
         &self,
         sequence_number: u32,
@@ -102,6 +103,7 @@ impl OpeningKey {
     ///
     /// Importantly, the result won't be authenticated until `open_in_place` is
     /// called.
+    #[inline]
     pub fn decrypt_packet_length(
         &self,
         sequence_number: u32,
@@ -125,6 +127,7 @@ impl OpeningKey {
     /// `plaintext` is `&ciphertext_in_plaintext_out[PACKET_LENGTH_LEN..]`;
     /// otherwise the contents of `ciphertext_in_plaintext_out` are unspecified
     /// and must not be used.
+    #[inline]
     pub fn open_in_place<'a>(
         &self,
         sequence_number: u32,
@@ -166,6 +169,7 @@ impl Key {
     }
 }
 
+#[inline]
 fn make_nonce(sequence_number: u32) -> Nonce {
     Nonce::from(BigEndian::from(sequence_number))
 }
@@ -179,11 +183,13 @@ pub const PACKET_LENGTH_LEN: usize = 4; // 32 bits
 /// The length in bytes of an authentication tag.
 pub const TAG_LEN: usize = BLOCK_LEN;
 
+#[inline]
 fn verify(key: poly1305::Key, msg: &[u8], tag: &[u8; TAG_LEN]) -> Result<(), error::Unspecified> {
     let Tag(calculated_tag) = poly1305::sign(key, msg);
     constant_time::verify_slices_are_equal(calculated_tag.as_ref(), tag)
 }
 
+#[inline]
 pub(super) fn derive_poly1305_key(
     chacha_key: &ChaCha20Key,
     nonce: Nonce,

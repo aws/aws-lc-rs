@@ -40,6 +40,7 @@ unsafe impl Sync for EcdsaKeyPair {}
 impl KeyPair for EcdsaKeyPair {
     type PublicKey = EcdsaPublicKey;
 
+    #[inline(always)]
     fn public_key(&self) -> &Self::PublicKey {
         &self.pubkey
     }
@@ -171,6 +172,7 @@ impl EcdsaKeyPair {
         }
     }
 
+    #[inline]
     pub fn sign(&self, _rng: &dyn SecureRandom, message: &[u8]) -> Result<Signature, Unspecified> {
         unsafe {
             let digest = digest::digest(self.algorithm.digest, message);

@@ -301,6 +301,7 @@ impl Signature {
 }
 
 impl AsRef<[u8]> for Signature {
+    #[inline(always)]
     fn as_ref(&self) -> &[u8] {
         &self.value[..self.len]
     }
@@ -360,6 +361,7 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     /// `message` using it.
     ///
     /// See the [crate::signature] module-level documentation for examples.
+    #[inline]
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
         self.algorithm.verify(
             Input::from(self.bytes.as_ref()),

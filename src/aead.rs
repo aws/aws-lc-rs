@@ -628,6 +628,7 @@ enum AlgorithmID {
 }
 
 impl PartialEq for Algorithm {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }

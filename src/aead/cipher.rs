@@ -19,8 +19,9 @@ use crate::aead::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
 use crate::aead::chacha::{encrypt_block_chacha20, ChaCha20Key};
 use crate::aead::{block::Block, error, quic::Sample, Nonce};
 use crate::error::Unspecified;
-use crate::ptr::LcPtr;
-use aws_lc_sys::EVP_CIPHER_CTX;
+use crate::ptr::{LcPtr, StaticPointer};
+use aws_lc_sys::{EVP_CIPHER, EVP_CIPHER_CTX};
+use lazy_static::lazy_static;
 use std::mem::MaybeUninit;
 use std::ptr;
 use std::ptr::{null, null_mut};
@@ -41,6 +42,17 @@ pub(crate) enum SymmetricCipherKey {
 
 unsafe impl Send for SymmetricCipherKey {}
 
+lazy_static! {
+    pub(super) static ref AES_128_ECB_CIPHER: StaticPointer<EVP_CIPHER> =
+        unsafe { StaticPointer::new(aws_lc_sys::EVP_aes_128_ecb()) };
+    pub(super) static ref AES_128_GCM_CIPHER: StaticPointer<EVP_CIPHER> =
+        unsafe { StaticPointer::new(aws_lc_sys::EVP_aes_128_gcm()) };
+    pub(super) static ref AES_256_ECB_CIPHER: StaticPointer<EVP_CIPHER> =
+        unsafe { StaticPointer::new(aws_lc_sys::EVP_aes_256_ecb()) };
+    pub(super) static ref AES_256_GCM_CIPHER: StaticPointer<EVP_CIPHER> =
+        unsafe { StaticPointer::new(aws_lc_sys::EVP_aes_256_gcm()) };
+}
+
 impl SymmetricCipherKey {
     pub(crate) fn aes128(key_bytes: &[u8]) -> Result<Self, Unspecified> {
         if key_bytes.len() != 16 {
@@ -48,14 +60,11 @@ impl SymmetricCipherKey {
         }
 
         unsafe {
-            let ecb_cipher = aws_lc_sys::EVP_aes_128_ecb();
-            let gcm_cipher = aws_lc_sys::EVP_aes_128_gcm();
-
             let ecb_cipher_ctx =
                 LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new()).map_err(|_| Unspecified)?;
             if 1 != aws_lc_sys::EVP_EncryptInit_ex(
                 *ecb_cipher_ctx,
-                ecb_cipher,
+                **AES_128_ECB_CIPHER,
                 null_mut(),
                 key_bytes.as_ptr(),
                 null(),
@@ -70,7 +79,7 @@ impl SymmetricCipherKey {
                 LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new()).map_err(|_| Unspecified)?;
             if 1 != aws_lc_sys::EVP_EncryptInit_ex(
                 *gcm_cipher_ctx,
-                gcm_cipher,
+                **AES_128_GCM_CIPHER,
                 null_mut(),
                 key_bytes.as_ptr(),
                 null(),
@@ -92,14 +101,11 @@ impl SymmetricCipherKey {
             return Err(Unspecified);
         }
         unsafe {
-            let ecb_cipher = aws_lc_sys::EVP_aes_256_ecb();
-            let gcm_cipher = aws_lc_sys::EVP_aes_256_gcm();
-
             let ecb_cipher_ctx =
                 LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new()).map_err(|_| Unspecified)?;
             if 1 != aws_lc_sys::EVP_EncryptInit_ex(
                 *ecb_cipher_ctx,
-                ecb_cipher,
+                **AES_256_ECB_CIPHER,
                 null_mut(),
                 key_bytes.as_ptr(),
                 null(),
@@ -114,7 +120,7 @@ impl SymmetricCipherKey {
                 LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new()).map_err(|_| Unspecified)?;
             if 1 != aws_lc_sys::EVP_EncryptInit_ex(
                 *gcm_cipher_ctx,
-                gcm_cipher,
+                **AES_256_GCM_CIPHER,
                 null_mut(),
                 key_bytes.as_ptr(),
                 null(),
@@ -143,6 +149,7 @@ impl SymmetricCipherKey {
         }
     }
 
+    #[inline(always)]
     pub(super) fn key_bytes(&self) -> &[u8] {
         match self {
             SymmetricCipherKey::Aes128(bytes, ..) => &bytes.0,
@@ -151,6 +158,7 @@ impl SymmetricCipherKey {
         }
     }
 
+    #[inline]
     pub(super) fn new_mask(&self, sample: Sample) -> Result<[u8; 5], error::Unspecified> {
         let block = Block::from(&sample);
 
@@ -176,6 +184,7 @@ impl SymmetricCipherKey {
     }
 
     #[allow(dead_code)]
+    #[inline]
     pub fn encrypt_block(&self, block: Block) -> Result<Block, error::Unspecified> {
         match self {
             SymmetricCipherKey::Aes128(.., ecb_ctx, _) => encrypt_block_aes_ecb(**ecb_ctx, block),

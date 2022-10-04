@@ -182,14 +182,17 @@ pub static AES_256_GCM: Algorithm = Algorithm {
     max_input_len: u64::MAX,
 };
 
+#[inline]
 fn init_128(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     init_aes_gcm(key, AlgorithmID::AES_128_GCM)
 }
 
+#[inline]
 fn init_256(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
     init_aes_gcm(key, AlgorithmID::AES_256_GCM)
 }
 
+#[inline]
 fn init_aes_gcm(key: &[u8], id: AlgorithmID) -> Result<KeyInner, error::Unspecified> {
     match id {
         AlgorithmID::AES_128_GCM => KeyInner::new(SymmetricCipherKey::aes128(key)?),

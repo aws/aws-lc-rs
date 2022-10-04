@@ -21,6 +21,7 @@
 //!
 //! [RFC 5869]: https://tools.ietf.org/html/rfc5869
 
+use crate::error::Unspecified;
 use crate::{digest, error, hmac};
 use std::mem::MaybeUninit;
 
@@ -76,7 +77,13 @@ impl Salt {
     /// The [HKDF-Extract] operation.
     ///
     /// [HKDF-Extract]: https://tools.ietf.org/html/rfc5869#section-2.2
+    #[inline]
     pub fn extract(&self, secret: &[u8]) -> Prk {
+        Self::try_extract(self, secret).expect("HKDF_extract failed")
+    }
+
+    #[inline]
+    fn try_extract(&self, secret: &[u8]) -> Result<Prk, Unspecified> {
         unsafe {
             let mut out_key = MaybeUninit::<[u8; digest::MAX_OUTPUT_LEN]>::uninit();
             let mut out_len = MaybeUninit::<usize>::uninit();
@@ -90,14 +97,14 @@ impl Salt {
                 self.key.key_bytes.as_ptr(),
                 self.key.key_bytes.len(),
             ) {
-                panic!("HKDF_extract failed");
+                return Err(Unspecified);
             };
-            Prk {
+            Ok(Prk {
                 key: hmac::Key::new(
                     self.key.algorithm(),
                     &out_key.assume_init()[..out_len.assume_init()],
                 ),
-            }
+            })
         }
     }
 

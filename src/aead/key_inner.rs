@@ -76,6 +76,7 @@ impl KeyInner {
         }
     }
 
+    #[inline]
     pub(crate) fn cipher_key(&self) -> &SymmetricCipherKey {
         match self {
             KeyInner::AES_128_GCM(cipher_key, ..) => cipher_key,

@@ -33,6 +33,7 @@ pub struct EdDSAParameters;
 impl sealed::Sealed for EdDSAParameters {}
 
 impl VerificationAlgorithm for EdDSAParameters {
+    #[inline]
     fn verify(
         &self,
         public_key: Input<'_>,
@@ -73,6 +74,7 @@ pub struct Ed25519PublicKey {
 }
 
 impl AsRef<[u8]> for Ed25519PublicKey {
+    #[inline(always)]
     fn as_ref(&self) -> &[u8] {
         &self.public_key
     }
@@ -86,7 +88,7 @@ impl Debug for Ed25519PublicKey {
 
 impl KeyPair for Ed25519KeyPair {
     type PublicKey = Ed25519PublicKey;
-
+    #[inline(always)]
     fn public_key(&self) -> &Self::PublicKey {
         &self.public_key
     }
@@ -210,12 +212,13 @@ impl Ed25519KeyPair {
         Self::from_pkcs8(pkcs8)
     }
 
-    // For Ring compatibility
+    #[inline]
     pub fn sign(&self, msg: &[u8]) -> Signature {
-        Self::sign_checked(self, msg).expect("ED25519 signing failed")
+        Self::try_sign(self, msg).expect("ED25519 signing failed")
     }
 
-    pub fn sign_checked(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
+    #[inline]
+    fn try_sign(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
         unsafe {
             let mut sig_bytes = MaybeUninit::<[u8; ED25519_SIGNATURE_LEN]>::uninit();
             if 1 != aws_lc_sys::ED25519_sign(
@@ -236,6 +239,7 @@ impl Ed25519KeyPair {
     }
 }
 
+#[inline]
 unsafe fn validate_pkey(evp_pkey: NonNullPtr<*mut EVP_PKEY>) -> Result<(), KeyRejected> {
     const ED25519_KEY_TYPE: c_int = aws_lc_sys::EVP_PKEY_ED25519;
     const ED25519_MIN_BITS: c_uint = 253;

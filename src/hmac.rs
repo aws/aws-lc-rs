@@ -107,6 +107,7 @@
 //! ```
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
+use crate::error::Unspecified;
 use crate::{constant_time, digest, error, hkdf};
 use aws_lc_sys::HMAC_CTX;
 use std::mem::MaybeUninit;
@@ -193,7 +194,7 @@ impl Key {
         Self::construct(algorithm, |buf| rng.fill(buf))
     }
 
-    fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, error::Unspecified>
+    fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, Unspecified>
     where
         F: FnOnce(&mut [u8]) -> Result<(), error::Unspecified>,
     {
@@ -238,6 +239,7 @@ impl Key {
 }
 
 impl hkdf::KeyType for Algorithm {
+    #[inline]
     fn len(&self) -> usize {
         self.digest_algorithm().output_len
     }
@@ -253,7 +255,7 @@ impl From<hkdf::Okm<'_, Algorithm>> for Key {
 ///
 /// Use `sign` for single-step HMAC signing.
 pub struct Context {
-    ctx: aws_lc_sys::HMAC_CTX,
+    ctx: HMAC_CTX,
     key: Key,
 }
 
@@ -266,7 +268,7 @@ impl Clone for Context {
 impl Context {
     fn try_clone(&self) -> Result<Self, &'static str> {
         unsafe {
-            let mut ctx = MaybeUninit::<aws_lc_sys::HMAC_CTX>::uninit();
+            let mut ctx = MaybeUninit::<HMAC_CTX>::uninit();
             if 1 != aws_lc_sys::HMAC_CTX_copy_ex(ctx.as_mut_ptr(), &self.ctx) {
                 return Err("HMAC_CTX_copy_ex failed");
             };
@@ -296,6 +298,7 @@ impl Context {
         Self::try_with_key(signing_key).expect("Context::with_key failed")
     }
 
+    #[inline]
     fn try_with_key(signing_key: &Key) -> Result<Self, &'static str> {
         unsafe {
             let mut ctx = MaybeUninit::<aws_lc_sys::HMAC_CTX>::uninit();
@@ -323,11 +326,17 @@ impl Context {
     /// zero or more times until `finish` is called.
     #[inline]
     pub fn update(&mut self, data: &[u8]) {
+        Self::try_update(self, data).expect("HMAC_Update failed");
+    }
+
+    #[inline]
+    fn try_update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
             if 1 != aws_lc_sys::HMAC_Update(&mut self.ctx, data.as_ptr().cast(), data.len()) {
-                panic!("HMAC_Update failed")
+                return Err(Unspecified);
             }
         }
+        Ok(())
     }
 
     /// Finalizes the HMAC calculation and returns the HMAC value. `sign`
@@ -339,18 +348,21 @@ impl Context {
     /// instead.
     #[inline]
     pub fn sign(self) -> Tag {
+        Self::try_sign(self).expect("HMAC_Final failed")
+    }
+    #[inline]
+    fn try_sign(mut self) -> Result<Tag, Unspecified> {
         let mut output = [0u8; digest::MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
-        let ctx_ptr = &self.ctx as *const HMAC_CTX;
-        let ctx_ptr = ctx_ptr as *mut HMAC_CTX;
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Final(ctx_ptr, output.as_mut_ptr(), out_len.as_mut_ptr()) {
-                panic!("HMAC_Final failed")
+            if 1 != aws_lc_sys::HMAC_Final(&mut self.ctx, output.as_mut_ptr(), out_len.as_mut_ptr())
+            {
+                return Err(Unspecified);
             }
-            Tag {
+            Ok(Tag {
                 msg: output,
                 msg_len: out_len.assume_init() as usize,
-            }
+            })
         }
     }
 }
@@ -363,6 +375,11 @@ impl Context {
 /// return value of `sign` to a tag. Use `verify` for verification instead.
 #[inline]
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
+    try_sign(key, data).expect("HMAC one-shot failed")
+}
+
+#[inline]
+fn try_sign(key: &Key, data: &[u8]) -> Result<Tag, Unspecified> {
     let mut output = MaybeUninit::<[u8; digest::MAX_OUTPUT_LEN]>::uninit();
     let mut out_len = MaybeUninit::<c_uint>::uninit();
     let evp_md_type = key.evp_alg;
@@ -378,12 +395,12 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
         )
         .is_null()
         {
-            panic!("HMAC one-shot failed");
+            return Err(Unspecified);
         }
-        Tag {
+        Ok(Tag {
             msg: output.assume_init(),
             msg_len: out_len.assume_init() as usize,
-        }
+        })
     }
 }
 
@@ -394,6 +411,7 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 /// `Key` with the same value as `key` and then using `verify`.
 ///
 /// The verification will be done in constant time to prevent timing attacks.
+#[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), error::Unspecified> {
     constant_time::verify_slices_are_equal(sign(key, data).as_ref(), tag)
 }

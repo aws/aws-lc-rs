@@ -45,18 +45,21 @@ impl Nonce {
 }
 
 impl AsRef<[u8; NONCE_LEN]> for Nonce {
+    #[inline(always)]
     fn as_ref(&self) -> &[u8; NONCE_LEN] {
         &self.0
     }
 }
 
 impl From<&[u8; NONCE_LEN]> for Nonce {
+    #[inline]
     fn from(bytes: &[u8; NONCE_LEN]) -> Self {
         Nonce(bytes.to_owned())
     }
 }
 
 impl From<&[u32; NONCE_LEN / 4]> for Nonce {
+    #[inline]
     fn from(values: &[u32; NONCE_LEN / 4]) -> Self {
         unsafe {
             let bytes: [u8; NONCE_LEN] = transmute_copy(values);
@@ -66,6 +69,7 @@ impl From<&[u32; NONCE_LEN / 4]> for Nonce {
 }
 
 impl From<BigEndian<u32>> for Nonce {
+    #[inline]
     fn from(number: BigEndian<u32>) -> Self {
         let nonce = [BigEndian::ZERO, BigEndian::ZERO, number];
         Nonce(*(nonce.as_byte_array()))
@@ -74,6 +78,7 @@ impl From<BigEndian<u32>> for Nonce {
 
 pub const IV_LEN: usize = 16;
 impl From<&[u8; IV_LEN]> for Nonce {
+    #[inline]
     fn from(bytes: &[u8; IV_LEN]) -> Self {
         let mut nonce_bytes = [0u8; NONCE_LEN];
         nonce_bytes.copy_from_slice(&bytes[0..NONCE_LEN]);
