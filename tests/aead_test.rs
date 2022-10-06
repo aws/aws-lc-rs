@@ -18,7 +18,6 @@ use aws_lc_ring_facade::{aead, error, test, test_file};
 use core::ops::RangeFrom;
 
 #[test]
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 fn aead_aes_gcm_128() {
     test_aead(
         &aead::AES_128_GCM,

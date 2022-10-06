@@ -152,19 +152,19 @@ fn test_ed25519_from_pkcs8() {
                 (Err(e), None) => panic!(
                     "Failed with error \"{}\", but expected to succeed: \"{}\"",
                     e,
-                    hex::encode(&input)
+                    test::to_hex(&input)
                 ),
                 (Ok(_), Some(e)) => panic!(
                     "Succeeded, but expected error \"{}\": {}",
                     e,
-                    hex::encode(&input)
+                    test::to_hex(&input)
                 ),
                 (Err(actual), Some(expected)) => {
                     assert_eq!(
                         actual.description_(),
                         expected,
                         "Input: {}",
-                        hex::encode(&input)
+                        test::to_hex(&input)
                     )
                 }
             };

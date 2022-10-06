@@ -355,14 +355,49 @@ where
     }
 }
 
-use hex::FromHex;
+pub fn to_hex_upper<T: AsRef<[u8]>>(bytes: T) -> String {
+    to_hex(bytes).to_ascii_uppercase()
+}
+
+pub fn to_hex<T: AsRef<[u8]>>(bytes: T) -> String {
+    let bytes = bytes.as_ref();
+    let mut encoding = String::with_capacity(2 * bytes.len());
+    for byte in bytes {
+        let upper_val = byte >> 4u8;
+        let lower_val = byte & 0x0f;
+        encoding.push(char::from_digit(upper_val as u32, 16).unwrap());
+        encoding.push(char::from_digit(lower_val as u32, 16).unwrap());
+    }
+    encoding
+}
+
 pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
-    <Vec<u8>>::from_hex(hex_str).map_err(|_e| String::from("Oops"))
+    let mut bytes = Vec::<u8>::with_capacity(hex_str.len() / 2 + 1);
+    let mut current_byte = b'\0';
+    let mut index = 0;
+    for ch in hex_str.chars() {
+        if !ch.is_ascii_hexdigit() {
+            return Err("Invalid hex string".to_string());
+        }
+        let value = ch.to_digit(16).unwrap() as u8;
+        if index % 2 == 0 {
+            current_byte = (value << 4) as u8;
+        } else {
+            current_byte |= value;
+            bytes.push(current_byte);
+        }
+
+        index += 1;
+    }
+    if index % 2 == 1 {
+        bytes.push(current_byte);
+    }
+    Ok(bytes)
 }
 
 pub fn from_dirty_hex(hex_str: &str) -> Vec<u8> {
     let clean: String = hex_str.chars().filter(|c| c.is_ascii_hexdigit()).collect();
-    <Vec<u8>>::from_hex(&clean).unwrap()
+    from_hex(clean.as_str()).unwrap()
 }
 
 fn from_hex_digit(d: u8) -> Result<u8, String> {

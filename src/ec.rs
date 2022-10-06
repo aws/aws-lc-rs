@@ -18,7 +18,7 @@ use crate::ptr::{DetachableLcPtr, IntoPointer, LcPtr, NonNullPtr};
 
 use crate::rsa::evp_pkey;
 use crate::signature::{Signature, VerificationAlgorithm};
-use crate::{digest, sealed};
+use crate::{digest, sealed, test};
 use aws_lc_sys::{
     BN_bin2bn, BN_bn2bin, BN_num_bytes, ECDSA_SIG_from_bytes, ECDSA_SIG_new, ECDSA_SIG_set0,
     ECDSA_SIG_to_bytes, ECDSA_do_verify, EC_KEY_get0_group, EC_KEY_get0_public_key,
@@ -109,7 +109,7 @@ pub struct EcdsaPublicKey(Box<[u8]>);
 
 impl Debug for EcdsaPublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("PublicKey(\"{}\")", hex::encode(self.0.as_ref())))
+        f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.0.as_ref())))
     }
 }
 
@@ -396,9 +396,9 @@ unsafe fn BIGNUM_from_be_bytes(bytes: &[u8]) -> Result<DetachableLcPtr<*mut BIGN
 #[cfg(test)]
 mod tests {
     use crate::ec::key_pair::EcdsaKeyPair;
-    use crate::signature;
     use crate::signature::ECDSA_P256_SHA256_FIXED_SIGNING;
     use crate::test::from_dirty_hex;
+    use crate::{signature, test};
 
     #[test]
     fn test_from_pkcs8() {
@@ -436,6 +436,6 @@ mod tests {
         );
         let actual_result =
             signature::UnparsedPublicKey::new(alg, &public_key).verify(msg.as_bytes(), &sig);
-        assert!(actual_result.is_ok(), "Key: {}", hex::encode(public_key));
+        assert!(actual_result.is_ok(), "Key: {}", test::to_hex(public_key));
     }
 }

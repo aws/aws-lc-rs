@@ -91,11 +91,13 @@ unsafe impl Send for KeyInner {}
 impl Drop for KeyInner {
     fn drop(&mut self) {
         unsafe {
-            match self {
-                KeyInner::AES_128_GCM(.., ctx) => aws_lc_sys::EVP_AEAD_CTX_cleanup(ctx),
-                KeyInner::AES_256_GCM(.., ctx) => aws_lc_sys::EVP_AEAD_CTX_cleanup(ctx),
-                KeyInner::CHACHA20_POLY1305(.., ctx) => aws_lc_sys::EVP_AEAD_CTX_cleanup(ctx),
-            }
+            let ctx = match self {
+                KeyInner::AES_128_GCM(.., ctx) => ctx,
+                KeyInner::AES_256_GCM(.., ctx) => ctx,
+                KeyInner::CHACHA20_POLY1305(.., ctx) => ctx,
+            };
+            aws_lc_sys::EVP_AEAD_CTX_cleanup(ctx);
+            aws_lc_sys::EVP_AEAD_CTX_zero(ctx);
         }
     }
 }

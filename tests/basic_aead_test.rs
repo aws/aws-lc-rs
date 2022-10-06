@@ -6,12 +6,11 @@ extern crate core;
 use aws_lc_ring_facade::{aead, error};
 
 use aead::{
-    Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, Tag, UnboundKey,
+    Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey,
     AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305,
 };
 use aws_lc_ring_facade::test::from_hex;
 use error::Unspecified;
-use std::slice;
 
 struct NotANonce(Vec<u8>);
 
@@ -119,9 +118,7 @@ fn test_aead_separate_in_place(
     if !plaintext.is_empty() {
         assert_ne!(plaintext, cipher_text);
     }
-    let raw_tag = &tag as *const Tag as *const u8;
-    let tag_value = unsafe { slice::from_raw_parts(raw_tag, 16) };
-    println!("Tag: {:?}", tag_value);
+    println!("Tag: {:?}", tag.as_ref());
 
     in_out.extend(tag.as_ref());
     let result_plaintext = opening_key

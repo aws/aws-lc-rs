@@ -15,9 +15,7 @@ asan = ["aws-lc-sys/asan"]
 untrusted = { version = "0.7.1" }
 aws-lc-sys = { path = "deps/aws-lc-sys", version = "0.1.0" }
 zeroize = "1.5"
-hex = "0.4"
 libc = "0.2"
-lazy_static = "1.4"
 
 [dev-dependencies]
 rand = "0.8"

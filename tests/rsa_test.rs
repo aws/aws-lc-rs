@@ -43,7 +43,7 @@ fn rsa_from_pkcs8_test() {
                     format!("{}", actual),
                     expected,
                     "Input: {}",
-                    hex::encode(input.as_slice())
+                    test::to_hex(input.as_slice())
                 ),
             };
 
@@ -69,7 +69,7 @@ fn test_signature_rsa_pkcs1_sign() {
             };
 
             let private_key = test_case.consume_bytes("Key");
-            let debug_msg = format!("Key = {}", hex::encode(&private_key));
+            let debug_msg = format!("Key = {}", test::to_hex(&private_key));
             let msg = test_case.consume_bytes("Msg");
             let expected = test_case.consume_bytes("Sig");
             let result = test_case.consume_string("Result");
@@ -238,7 +238,7 @@ fn test_signature_rsa_primitive_verification() {
                 result.is_ok(),
                 expected == "Pass",
                 "N = {}",
-                hex::encode_upper(n)
+                test::to_hex_upper(n)
             );
             Ok(())
         },

@@ -62,18 +62,18 @@ fn ecdsa_from_pkcs8_test() {
                 (Err(e), None) => panic!(
                     "Failed with error \"{}\", but expected to succeed. Input: {}",
                     e,
-                    hex::encode(&input)
+                    test::to_hex(&input)
                 ),
                 (Ok(_), Some(e)) => panic!(
                     "Succeeded, but expected error \"{}\" - Input: {}",
                     e,
-                    hex::encode(&input)
+                    test::to_hex(&input)
                 ),
                 (Err(actual), Some(expected)) => assert_eq!(
                     format!("{}", actual),
                     expected,
                     "Input: {}",
-                    hex::encode(&input)
+                    test::to_hex(&input)
                 ),
             };
 
@@ -90,12 +90,12 @@ fn ecdsa_from_pkcs8_test() {
             assert!(
                 signature::EcdsaKeyPair::from_pkcs8(other_fixed, &input).is_err(),
                 "Input: {}",
-                hex::encode(&input)
+                test::to_hex(&input)
             );
             assert!(
                 signature::EcdsaKeyPair::from_pkcs8(other_asn1, &input).is_err(),
                 "Input: {}",
-                hex::encode(&input)
+                test::to_hex(&input)
             );
 
             Ok(())

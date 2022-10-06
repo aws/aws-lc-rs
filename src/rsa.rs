@@ -21,7 +21,7 @@ use crate::error::{KeyRejected, Unspecified};
 use crate::ptr::{DetachableLcPtr, LcPtr, NonNullPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
-use crate::{cbs, digest, rand};
+use crate::{cbs, digest, rand, test};
 use aws_lc_sys::{
     BN_cmp, BN_new, BN_set_u64, EVP_parse_private_key, RSA_new, BIGNUM, EVP_PKEY, RSA,
 };
@@ -277,7 +277,7 @@ impl Debug for RsaSubjectPublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!(
             "RsaSubjectPublicKey(\"{}\")",
-            hex::encode(self.0.as_ref())
+            test::to_hex(self.0.as_ref())
         ))
     }
 }

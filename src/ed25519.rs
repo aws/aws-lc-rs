@@ -10,7 +10,7 @@ use crate::ptr::{LcPtr, NonNullPtr};
 use crate::rand::SecureRandom;
 use crate::rsa::evp_pkey;
 use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
-use crate::{cbb, cbs, constant_time, sealed};
+use crate::{cbb, cbs, constant_time, sealed, test};
 use aws_lc_sys::{
     EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_new_raw_private_key,
     EVP_parse_private_key, EVP_PKEY,
@@ -63,7 +63,7 @@ impl Debug for Ed25519KeyPair {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!(
             "Ed25519KeyPair {{ public_key: PublicKey(\"{}\") }}",
-            hex::encode(&self.public_key)
+            test::to_hex(&self.public_key)
         ))
     }
 }
@@ -82,7 +82,10 @@ impl AsRef<[u8]> for Ed25519PublicKey {
 
 impl Debug for Ed25519PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("PublicKey(\"{}\")", hex::encode(&self.public_key)))
+        f.write_str(&format!(
+            "PublicKey(\"{}\")",
+            test::to_hex(&self.public_key)
+        ))
     }
 }
 
@@ -253,7 +256,7 @@ unsafe fn validate_pkey(evp_pkey: NonNullPtr<*mut EVP_PKEY>) -> Result<(), KeyRe
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::ed25519::Ed25519KeyPair;
     use crate::test;
 
