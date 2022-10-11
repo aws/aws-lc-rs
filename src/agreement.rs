@@ -37,6 +37,7 @@ enum AlgorithmID {
 }
 
 impl AlgorithmID {
+    #[inline]
     fn nid(&self) -> i32 {
         match self {
             AlgorithmID::ECDH_P256 => NID_X9_62_prime256v1,
@@ -45,6 +46,7 @@ impl AlgorithmID {
         }
     }
 
+    #[inline]
     fn pub_key_len(&self) -> usize {
         match self {
             AlgorithmID::ECDH_P256 => 65,
@@ -124,6 +126,7 @@ impl Debug for EphemeralPrivateKey {
 }
 
 impl EphemeralPrivateKey {
+    #[inline]
     pub fn generate(alg: &'static Algorithm, rng: &dyn SecureRandom) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
@@ -144,6 +147,7 @@ impl EphemeralPrivateKey {
         }
     }
 
+    #[inline]
     fn from_x25519_private_key(
         priv_key: &[u8; X25519_PRIVATE_KEY_LEN],
     ) -> Result<Self, Unspecified> {
@@ -155,6 +159,7 @@ impl EphemeralPrivateKey {
         }
     }
 
+    #[inline]
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         unsafe {
             let ec_group = ec_group_from_nid(ECDH_P256.id.nid())?;
@@ -168,6 +173,7 @@ impl EphemeralPrivateKey {
         }
     }
 
+    #[inline]
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         unsafe {
             let ec_group = ec_group_from_nid(ECDH_P384.id.nid())?;
@@ -207,6 +213,7 @@ impl EphemeralPrivateKey {
         }
     }
 
+    #[inline]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.inner_key.algorithm()
     }
@@ -277,6 +284,7 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     }
 }
 
+#[inline]
 pub fn agree_ephemeral<B: AsRef<[u8]>, F, R, E>(
     my_private_key: EphemeralPrivateKey,
     peer_public_key: &UnparsedPublicKey<B>,
@@ -332,6 +340,7 @@ where
 }
 const MAX_AGREEMENT_SECRET_LEN: usize = 48;
 
+#[inline]
 unsafe fn ec_key_ecdh<'a>(
     buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
     priv_ec_key: NonNullPtr<*mut EC_KEY>,
@@ -375,6 +384,7 @@ unsafe fn ec_key_ecdh<'a>(
     Ok(&buffer[0..outlen])
 }
 
+#[inline]
 unsafe fn x25519_diffie_hellman(
     out_shared_key: &mut [u8],
     priv_key: &[u8; X25519_PRIVATE_KEY_LEN],

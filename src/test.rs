@@ -491,6 +491,7 @@ pub mod rand {
     }
 
     impl crate::rand::sealed::SecureRandom for FixedSliceRandom<'_> {
+        #[inline]
         fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
             dest.copy_from_slice(self.bytes);
             Ok(())

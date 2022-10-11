@@ -92,7 +92,7 @@ fn test_new_mask(c: &mut Criterion, config: &QuicConfig) {
 
 fn test_aes_128(c: &mut Criterion) {
     test::run(
-        test_file!("data/quic_aes_128_tests.txt"),
+        test_file!("data/quic_aes_128_benchmarks.txt"),
         |_section, test_case| {
             let config = QuicConfig::new(
                 QuicAlgorithm::Aes128Gcm,
@@ -107,7 +107,7 @@ fn test_aes_128(c: &mut Criterion) {
 }
 fn test_aes_256(c: &mut Criterion) {
     test::run(
-        test_file!("data/quic_aes_256_tests.txt"),
+        test_file!("data/quic_aes_256_benchmarks.txt"),
         |_section, test_case| {
             let config = QuicConfig::new(
                 QuicAlgorithm::Aes256Gcm,
@@ -122,7 +122,7 @@ fn test_aes_256(c: &mut Criterion) {
 }
 fn test_chacha20(c: &mut Criterion) {
     test::run(
-        test_file!("data/quic_chacha20_tests.txt"),
+        test_file!("data/quic_chacha20_benchmarks.txt"),
         |_section, test_case| {
             let config = QuicConfig::new(
                 QuicAlgorithm::Chacha20,
