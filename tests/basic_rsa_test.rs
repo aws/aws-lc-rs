@@ -125,7 +125,7 @@ fn test_sign() {
 
     let rng = SystemRandom::default();
 
-    let mut actual = vec![0u8; key_pair.public_modulus_len()];
+    let mut actual = [0u8; 256];
     key_pair
         .sign(alg, &rng, &msg, actual.as_mut_slice())
         .unwrap();

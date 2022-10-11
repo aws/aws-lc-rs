@@ -1,6 +1,7 @@
 extern crate core;
 
 pub mod aead;
+pub mod agreement;
 pub mod constant_time;
 pub mod digest;
 pub mod error;

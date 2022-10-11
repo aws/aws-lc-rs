@@ -21,9 +21,9 @@ use std::os::raw::{c_int, c_uint};
 use std::ptr::null_mut;
 use untrusted::Input;
 
-const ED25519_PRIVATE_KEY_LEN: usize = aws_lc_sys::ED25519_PRIVATE_KEY_LEN as usize;
-const ED25519_PRIVATE_KEY_PREFIX_LEN: usize = 32;
-const ED25519_PUBLIC_KEY_LEN: usize = aws_lc_sys::ED25519_PUBLIC_KEY_LEN as usize;
+pub(crate) const ED25519_PRIVATE_KEY_LEN: usize = aws_lc_sys::ED25519_PRIVATE_KEY_LEN as usize;
+pub(crate) const ED25519_PRIVATE_KEY_PREFIX_LEN: usize = 32;
+pub(crate) const ED25519_PUBLIC_KEY_LEN: usize = aws_lc_sys::ED25519_PUBLIC_KEY_LEN as usize;
 const ED25519_SIGNATURE_LEN: usize = aws_lc_sys::ED25519_SIGNATURE_LEN as usize;
 const ED25519_SEED_LEN: usize = 32;
 
@@ -97,27 +97,33 @@ impl KeyPair for Ed25519KeyPair {
     }
 }
 
+pub(crate) unsafe fn generate_key(
+    rng: &dyn SecureRandom,
+) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+    let mut seed = [0u8; ED25519_SEED_LEN];
+    rng.fill(&mut seed)?;
+
+    let mut public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
+    let mut private_key = MaybeUninit::<[u8; ED25519_PRIVATE_KEY_LEN]>::uninit();
+    aws_lc_sys::ED25519_keypair_from_seed(
+        public_key.as_mut_ptr().cast(),
+        private_key.as_mut_ptr().cast(),
+        seed.as_ptr(),
+    );
+
+    LcPtr::new(EVP_PKEY_new_raw_private_key(
+        aws_lc_sys::EVP_PKEY_ED25519,
+        null_mut(),
+        private_key.assume_init().as_ptr(),
+        ED25519_PRIVATE_KEY_PREFIX_LEN,
+    ))
+    .map_err(|_| Unspecified)
+}
+
 impl Ed25519KeyPair {
     pub fn generate_pkcs8(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
         unsafe {
-            let mut seed = [0u8; ED25519_SEED_LEN];
-            rng.fill(&mut seed)?;
-
-            let mut public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
-            let mut private_key = MaybeUninit::<[u8; ED25519_PRIVATE_KEY_LEN]>::uninit();
-            aws_lc_sys::ED25519_keypair_from_seed(
-                public_key.as_mut_ptr().cast(),
-                private_key.as_mut_ptr().cast(),
-                seed.as_ptr(),
-            );
-
-            let evp_pkey = LcPtr::new(EVP_PKEY_new_raw_private_key(
-                aws_lc_sys::EVP_PKEY_ED25519,
-                null_mut(),
-                private_key.assume_init().as_ptr(),
-                ED25519_PRIVATE_KEY_PREFIX_LEN,
-            ))
-            .map_err(|_| Unspecified)?;
+            let evp_pkey = generate_key(rng)?;
 
             let mut cbb = cbb::build_CBB(PKCS8_DOCUMENT_MAX_LEN);
             if 1 != aws_lc_sys::EVP_marshal_private_key(&mut cbb, *evp_pkey) {

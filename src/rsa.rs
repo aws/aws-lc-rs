@@ -186,6 +186,10 @@ impl RsaKeyPair {
         signature: &mut [u8],
     ) -> Result<(), Unspecified> {
         let encoding = padding_alg.encoding();
+        let mut output_len = self.public_modulus_len();
+        if signature.len() != output_len {
+            return Err(Unspecified);
+        }
         unsafe {
             let evp_pkey_ctx = LcPtr::new(aws_lc_sys::EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()))
                 .map_err(|_| Unspecified)?;
@@ -206,14 +210,14 @@ impl RsaKeyPair {
                 return Err(Unspecified);
             }
 
-            let mut sig_len = MaybeUninit::<usize>::uninit();
             let result = aws_lc_sys::EVP_PKEY_sign(
                 *evp_pkey_ctx,
                 signature.as_mut_ptr(),
-                sig_len.as_mut_ptr(),
+                &mut output_len,
                 digest.as_ptr(),
                 digest.len(),
             );
+            debug_assert_eq!(output_len, signature.len());
 
             if result != 1 {
                 return Err(Unspecified);
