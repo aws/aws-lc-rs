@@ -256,7 +256,8 @@
 //! # }
 //! ```
 
-use crate::{digest, ec, error, rsa, sealed};
+use crate::{digest, ec, error, rsa, sealed, test};
+use std::fmt::{Debug, Formatter};
 use untrusted::Input;
 
 #[cfg(feature = "alloc")]
@@ -332,6 +333,16 @@ pub trait VerificationAlgorithm: core::fmt::Debug + Sync + sealed::Sealed {
 pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
     algorithm: &'static dyn VerificationAlgorithm,
     bytes: B,
+}
+
+impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!(
+            "UnparsedPublicKey {{ algorithm: {:?}, bytes: \"{}\" }}",
+            self.algorithm,
+            test::to_hex(self.bytes.as_ref())
+        ))
+    }
 }
 
 impl<B: Copy> Copy for UnparsedPublicKey<B> where B: AsRef<[u8]> {}
@@ -527,3 +538,29 @@ pub static ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm::new(&ECDSA_P384_SHA384_ASN1);
 
 pub static ED25519: EdDSAParameters = EdDSAParameters {};
+
+#[cfg(test)]
+mod tests {
+    use crate::rand::{generate, SystemRandom};
+    use crate::signature::{UnparsedPublicKey, ED25519};
+    use regex::Regex;
+
+    #[test]
+    fn test_unparsed_public_key() {
+        let random_pubkey: [u8; 32] = generate(&SystemRandom::new()).unwrap().expose();
+        let unparsed_pubkey = UnparsedPublicKey::new(&ED25519, random_pubkey);
+        let unparsed_pubkey_debug = format!("{:?}", &unparsed_pubkey);
+
+        let unparsed_pubkey_clone = unparsed_pubkey.clone();
+        assert_eq!(
+            unparsed_pubkey_debug,
+            format!("{:?}", unparsed_pubkey_clone)
+        );
+        let pubkey_re = Regex::new(
+            "UnparsedPublicKey \\{ algorithm: EdDSAParameters, bytes: \"[0-9a-f]{64}\" \\}",
+        )
+        .unwrap();
+
+        assert!(pubkey_re.is_match(&unparsed_pubkey_debug));
+    }
+}

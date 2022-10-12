@@ -25,8 +25,9 @@
 //! (seccomp filters on Linux in particular). See `SystemRandom`'s
 //! documentation for more details.
 
-use crate::error;
 use std::fmt::Debug;
+
+use crate::error;
 
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
@@ -80,29 +81,27 @@ pub(crate) mod sealed {
     }
 
     pub trait RandomlyConstructable: Sized {
-        fn zero() -> Self; // `Default::default()`
+        fn zero() -> Self;
+        // `Default::default()`
         fn as_mut_bytes(&mut self) -> &mut [u8]; // `AsMut<[u8]>::as_mut`
     }
 
-    macro_rules! impl_random_arrays {
-        [ $($len:expr)+ ] => {
-            $(
-                impl RandomlyConstructable for [u8; $len] {
-                    #[inline]
-                    fn zero() -> Self { [0; $len] }
+    impl<const T: usize> RandomlyConstructable for [u8; T] {
+        #[inline]
+        fn zero() -> Self {
+            [0; T]
+        }
 
-                    #[inline]
-                    fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self[..] }
-                }
-            )+
+        #[inline]
+        fn as_mut_bytes(&mut self) -> &mut [u8] {
+            &mut self[..]
         }
     }
-
-    impl_random_arrays![4 8 16 32 48 64 128 256];
 }
 
 /// A type that can be returned by `ring::rand::generate()`.
 pub trait RandomlyConstructable: sealed::RandomlyConstructable {}
+
 impl<T> RandomlyConstructable for T where T: sealed::RandomlyConstructable {}
 
 /// A secure random number generator where the random values come directly
@@ -114,6 +113,7 @@ impl<T> RandomlyConstructable for T where T: sealed::RandomlyConstructable {}
 /// [`getrandom`]: http://man7.org/linux/man-pages/man2/getrandom.2.html
 #[derive(Clone, Debug)]
 pub struct SystemRandom(());
+
 const SYSTEM_RANDOM: SystemRandom = SystemRandom(());
 
 impl SystemRandom {
@@ -123,6 +123,7 @@ impl SystemRandom {
         Self::default()
     }
 }
+
 impl Default for SystemRandom {
     fn default() -> Self {
         SYSTEM_RANDOM
@@ -139,5 +140,47 @@ impl sealed::SecureRandom for SystemRandom {
                 Ok(())
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::array::IntoIter;
+
+    use crate::rand::generate;
+    use crate::rand::SystemRandom;
+
+    #[test]
+    fn test_randomly_constructable() {
+        let rando = SystemRandom::new();
+        let random_array = generate(&rando).unwrap();
+        let random_array: [u8; 173] = random_array.expose();
+        let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
+        assert!((108f64..148f64).contains(&mean));
+        assert!(variance > 8f64);
+        println!("Mean: {} Variance: {}", mean, variance);
+    }
+
+    fn mean_variance<T: Into<f64>, const N: usize>(
+        iterable: &mut IntoIter<T, N>,
+    ) -> Option<(f64, f64)> {
+        let iter = iterable.into_iter();
+        let mean: Option<T> = iter.next();
+        if mean.is_none() {
+            return None;
+        }
+        let mut mean = mean.unwrap().into();
+        let mut var_squared = 0f64;
+        let mut count = 1f64;
+        while let Some(value) = iter.next() {
+            count += 1f64;
+            let value = value.into();
+            let prev_mean = mean;
+            mean = prev_mean + (value - prev_mean) / count;
+            var_squared =
+                var_squared + ((value - prev_mean) * (value - mean) - var_squared) / count;
+        }
+
+        Some((mean, var_squared.sqrt()))
     }
 }
