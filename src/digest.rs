@@ -358,4 +358,28 @@ mod tests {
         max_input_tests!(SHA384);
         max_input_tests!(SHA512);
     }
+
+    #[test]
+    fn digest_coverage() {
+        use crate::digest;
+
+        for alg in [
+            &digest::SHA1_FOR_LEGACY_USE_ONLY,
+            &digest::SHA256,
+            &digest::SHA384,
+            &digest::SHA512,
+        ] {
+            // Clone after updating context with message, then check if the final Digest is the same.
+            let mut ctx = digest::Context::new(alg);
+            ctx.update(b"hello, world");
+            let ctx_clone = ctx.clone();
+            assert_eq!(ctx_clone.algorithm(), ctx.algorithm());
+
+            let orig_digest = ctx.finish();
+            let clone_digest = ctx_clone.finish();
+            assert_eq!(orig_digest.algorithm(), clone_digest.algorithm());
+            assert_eq!(orig_digest.as_ref(), clone_digest.as_ref());
+            assert_eq!(orig_digest.clone().as_ref(), clone_digest.as_ref());
+        }
+    }
 }

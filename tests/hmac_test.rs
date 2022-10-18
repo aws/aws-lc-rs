@@ -106,28 +106,3 @@ fn hmac_debug() {
 
     assert_eq!("Algorithm(SHA256)", format!("{:?}", hmac::HMAC_SHA256));
 }
-
-#[test]
-fn hmac_coverage() {
-    // Something would have gone horribly wrong for this to not pass, but we test this so our
-    // coverage reports will look better.
-    assert_ne!(hmac::HMAC_SHA256, hmac::HMAC_SHA384);
-
-    for &alg in &[
-        hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
-        hmac::HMAC_SHA256,
-        hmac::HMAC_SHA384,
-        hmac::HMAC_SHA512,
-    ] {
-        // Clone after updating context with message, then check if the final Tag is the same.
-        let key = hmac::Key::new(alg, &[0; 32]);
-        let mut ctx = hmac::Context::with_key(&key);
-        ctx.update(b"hello, world");
-        let ctx_clone = ctx.clone();
-
-        let orig_tag = ctx.sign();
-        let clone_tag = ctx_clone.sign();
-        assert_eq!(orig_tag.as_ref(), clone_tag.as_ref());
-        assert_eq!(orig_tag.clone().as_ref(), clone_tag.as_ref());
-    }
-}

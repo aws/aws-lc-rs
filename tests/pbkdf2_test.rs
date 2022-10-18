@@ -64,35 +64,6 @@ fn pbkdf2_tests() {
     });
 }
 
-#[test]
-fn pbkdf2_coverage() {
-    // Coverage sanity check.
-    assert_eq!(
-        true,
-        pbkdf2::PBKDF2_HMAC_SHA256 == pbkdf2::PBKDF2_HMAC_SHA256
-    );
-    assert_eq!(
-        true,
-        pbkdf2::PBKDF2_HMAC_SHA256 != pbkdf2::PBKDF2_HMAC_SHA384
-    );
-
-    let iterations = NonZeroU32::new(100 as u32).unwrap();
-    for &alg in &[
-        pbkdf2::PBKDF2_HMAC_SHA1,
-        pbkdf2::PBKDF2_HMAC_SHA256,
-        pbkdf2::PBKDF2_HMAC_SHA384,
-        pbkdf2::PBKDF2_HMAC_SHA512,
-    ] {
-        let mut out = vec![0u8; 64];
-        pbkdf2::derive(alg, iterations, b"salt", b"password", &mut out);
-
-        let alg_clone = alg.clone();
-        let mut out2 = vec![0u8; 64];
-        pbkdf2::derive(alg_clone, iterations, b"salt", b"password", &mut out2);
-        assert_eq!(out, out2);
-    }
-}
-
 /// The API documentation specifies that derive/verify should panic, if the designated output length
 /// is too long. Ring checks for an output array length while pbkdf2 is being ran, while we check
 /// the array length before everything is processed.

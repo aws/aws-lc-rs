@@ -243,3 +243,19 @@ impl<L: KeyType> Okm<'_, L> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::hkdf;
+
+    #[test]
+    fn hkdf_coverage() {
+        // Something would have gone horribly wrong for this to not pass, but we test this so our
+        // coverage reports will look better.
+        assert_ne!(hkdf::HKDF_SHA256, hkdf::HKDF_SHA384);
+        assert_eq!(
+            "Algorithm(Algorithm(SHA256))",
+            format!("{:?}", hkdf::HKDF_SHA256)
+        );
+    }
+}
