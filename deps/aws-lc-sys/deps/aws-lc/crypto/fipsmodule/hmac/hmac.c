@@ -63,6 +63,7 @@
 #include <openssl/mem.h>
 
 #include "../../internal.h"
+#include "../service_indicator/internal.h"
 
 typedef int (*HashInit)(void *);
 typedef int (*HashUpdate)(void *, const void*, size_t);
@@ -373,9 +374,9 @@ end:
   }
 }
 
-size_t HMAC_size(const HMAC_CTX *ctx) {
-  return EVP_MD_size(ctx->md);
-}
+size_t HMAC_size(const HMAC_CTX *ctx) { return EVP_MD_size(ctx->md); }
+
+const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx) { return ctx->md; }
 
 int HMAC_CTX_copy_ex(HMAC_CTX *dest, const HMAC_CTX *src) {
   OPENSSL_memcpy(dest, src, sizeof(HMAC_CTX));

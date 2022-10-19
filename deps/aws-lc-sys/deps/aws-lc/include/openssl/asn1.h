@@ -1093,6 +1093,11 @@ OPENSSL_EXPORT int ASN1_INTEGER_set(ASN1_INTEGER *a, long v);
 OPENSSL_EXPORT int ASN1_INTEGER_get_uint64(uint64_t *out,
                                            const ASN1_INTEGER *a);
 
+// ASN1_INTEGER_get_int64 converts |a| to a |int64_t|. On success, it returns
+// one and sets |*out| to the result. If |a| did not fit or has the wrong type,
+// it returns zero.
+OPENSSL_EXPORT int ASN1_INTEGER_get_int64(int64_t *out, const ASN1_INTEGER *a);
+
 // ASN1_INTEGER_get returns the value of |a| as a |long|, or -1 if |a| is out of
 // range or the wrong type.
 //
@@ -1156,6 +1161,12 @@ OPENSSL_EXPORT int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v);
 // wrong type, it returns zero.
 OPENSSL_EXPORT int ASN1_ENUMERATED_get_uint64(uint64_t *out,
                                               const ASN1_ENUMERATED *a);
+
+// ASN1_ENUMERATED_get_int64 converts |a| to a |int64_t|. On success, it
+// returns one and sets |*out| to the result. If |a| did not fit or has the
+// wrong type, it returns zero.
+OPENSSL_EXPORT int ASN1_ENUMERATED_get_int64(int64_t *out,
+                                             const ASN1_ENUMERATED *a);
 
 // ASN1_ENUMERATED_get returns the value of |a| as a |long|, or -1 if |a| is out
 // of range or the wrong type.
@@ -1381,6 +1392,15 @@ OPENSSL_EXPORT ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(
 // valid UTCTime, and |ASN1_GENERALIZEDTIME_set_string| if |str| is a valid
 // GeneralizedTime. If |str| is neither, it returns zero.
 OPENSSL_EXPORT int ASN1_TIME_set_string(ASN1_TIME *s, const char *str);
+
+// ASN1_TIME_to_time_t converts |t| to a time_t value in |out|. On
+// success, one is returned. On failure zero is returned. This function
+// will fail if the time can not be represented in a time_t.
+OPENSSL_EXPORT int ASN1_TIME_to_time_t(const ASN1_TIME *t, time_t *out);
+
+// ASN1_TIME_to_posix converts |t| to a POSIX time value in |out|. On
+// success, one is returned. On failure zero is returned.
+OPENSSL_EXPORT int ASN1_TIME_to_posix(const ASN1_TIME *t, int64_t *out);
 
 // TODO(davidben): Expand and document function prototypes generated in macros.
 
