@@ -165,6 +165,11 @@ pub struct Key {
 
 unsafe impl Send for Key {}
 
+/// This is safe to do for Key, since the Key maintains a constant pointer to EVP_MD.
+/// EVP_MD will always be an immutable constant pointer to the digest structures defined
+/// in AWS-LC.
+unsafe impl Sync for Key {}
+
 impl Drop for Key {
     fn drop(&mut self) {
         self.key_bytes.zeroize();

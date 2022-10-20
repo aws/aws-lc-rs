@@ -23,6 +23,7 @@ paste = "1.0"
 criterion = "0.4"
 ring = "0.16"
 regex = "1.6.0"
+lazy_static = "1.4.0"
 
 [[bench]]
 name = "aead_benchmark"
