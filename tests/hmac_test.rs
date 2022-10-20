@@ -108,17 +108,16 @@ fn hmac_debug() {
 }
 
 #[test]
-fn test_hmac_traits() {
+fn hmac_traits() {
     test::compile_time_assert_send::<hmac::Key>();
     test::compile_time_assert_sync::<hmac::Key>();
 }
 
 #[test]
-fn test_hmac_thread_safeness() {
+fn hmac_thread_safeness() {
     use std::thread;
     lazy_static::lazy_static! {
-        /// Compute the Initial salt once, as the seed is constant
-        static ref SECRET_KEY: hmac::Key = hmac::Key::new(hmac::HMAC_SHA256, b"this is a test! ");
+        static ref SECRET_KEY: hmac::Key = hmac::Key::new(hmac::HMAC_SHA256, b"this is a test!");
         static ref MSG: Vec<u8> = vec![1u8; 256];
     }
 
