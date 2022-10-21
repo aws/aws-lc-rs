@@ -371,6 +371,15 @@ fn test_aead_traits() {
     test::compile_time_assert_sync::<aead::LessSafeKey>();
 }
 
+#[cfg(not(feature = "thread_local"))]
+#[test]
+fn test_aead_traits() {
+    test::compile_time_assert_send::<aead::Tag>();
+    test::compile_time_assert_sync::<aead::Tag>();
+    test::compile_time_assert_send::<aead::UnboundKey>();
+    test::compile_time_assert_send::<aead::LessSafeKey>();
+}
+
 #[cfg(feature = "thread_local")]
 #[test]
 fn test_aead_thread_safeness() {
