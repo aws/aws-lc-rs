@@ -28,6 +28,7 @@ use crate::{derive_debug_via_id, error, hkdf, polyfill};
 use aes_gcm::*;
 use std::fmt::Debug;
 
+use crate::error::Unspecified;
 use key_inner::KeyInner;
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
@@ -42,6 +43,11 @@ mod key_inner;
 mod nonce;
 mod poly1305;
 pub mod quic;
+
+#[cfg(feature = "thread_local")]
+use thread_local::ThreadLocal;
+#[cfg(feature = "thread_local")]
+use zeroize::Zeroize;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
@@ -66,7 +72,7 @@ pub trait NonceSequence {
     /// implementation may that enforce a maximum number of records are
     /// sent/received under a key this way. Once `advance()` fails, it must
     /// fail for all subsequent calls.
-    fn advance(&mut self) -> Result<Nonce, error::Unspecified>;
+    fn advance(&mut self) -> Result<Nonce, Unspecified>;
 }
 
 /// An AEAD key bound to a nonce sequence.
@@ -128,7 +134,7 @@ impl<N: NonceSequence> OpeningKey<N> {
         &mut self,
         aad: Aad<A>,
         in_out: &'in_out mut [u8],
-    ) -> Result<&'in_out mut [u8], error::Unspecified>
+    ) -> Result<&'in_out mut [u8], Unspecified>
     where
         A: AsRef<[u8]>,
     {
@@ -184,7 +190,7 @@ impl<N: NonceSequence> OpeningKey<N> {
         aad: Aad<A>,
         in_out: &'in_out mut [u8],
         ciphertext_and_tag: RangeFrom<usize>,
-    ) -> Result<&'in_out mut [u8], error::Unspecified>
+    ) -> Result<&'in_out mut [u8], Unspecified>
     where
         A: AsRef<[u8]>,
     {
@@ -205,32 +211,30 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
     Aad(aad): Aad<A>,
     in_out: &'in_out mut [u8],
     ciphertext_and_tag: RangeFrom<usize>,
-) -> Result<&'in_out mut [u8], error::Unspecified> {
+) -> Result<&'in_out mut [u8], Unspecified> {
     fn open_within<'in_out>(
         key: &UnboundKey,
         nonce: Nonce,
         aad: Aad<&[u8]>,
         in_out: &'in_out mut [u8],
         ciphertext_and_tag: RangeFrom<usize>,
-    ) -> Result<&'in_out mut [u8], error::Unspecified> {
+    ) -> Result<&'in_out mut [u8], Unspecified> {
         let in_prefix_len = ciphertext_and_tag.start;
-        let ciphertext_and_tag_len = in_out
-            .len()
-            .checked_sub(in_prefix_len)
-            .ok_or(error::Unspecified)?;
+        let ciphertext_and_tag_len = in_out.len().checked_sub(in_prefix_len).ok_or(Unspecified)?;
         let ciphertext_len = ciphertext_and_tag_len
             .checked_sub(TAG_LEN)
-            .ok_or(error::Unspecified)?;
+            .ok_or(Unspecified)?;
         check_per_nonce_max_bytes(key.algorithm, ciphertext_len)?;
-        match key.inner {
+        let key_inner_ref = key.get_inner_key()?;
+        match key_inner_ref {
             KeyInner::AES_128_GCM(..) => {
-                aead_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
+                aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?
             }
             KeyInner::AES_256_GCM(..) => {
-                aead_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
+                aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?
             }
             KeyInner::CHACHA20_POLY1305(..) => {
-                aead_open_combined(&key.inner, nonce, aad, &mut in_out[in_prefix_len..])?
+                aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?
             }
         }
         // `ciphertext_len` is also the plaintext length.
@@ -293,7 +297,7 @@ impl<N: NonceSequence> SealingKey<N> {
         &mut self,
         aad: Aad<A>,
         in_out: &mut InOut,
-    ) -> Result<(), error::Unspecified>
+    ) -> Result<(), Unspecified>
     where
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
@@ -322,7 +326,7 @@ impl<N: NonceSequence> SealingKey<N> {
         &mut self,
         aad: Aad<A>,
         in_out: &mut [u8],
-    ) -> Result<Tag, error::Unspecified>
+    ) -> Result<Tag, Unspecified>
     where
         A: AsRef<[u8]>,
     {
@@ -341,15 +345,16 @@ fn seal_in_place_append_tag_<InOut>(
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut InOut,
-) -> Result<(), error::Unspecified>
+) -> Result<(), Unspecified>
 where
     InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
 {
     check_per_nonce_max_bytes(key.algorithm, in_out.as_mut().len())?;
-    match key.inner {
-        KeyInner::AES_128_GCM(..) => aead_seal_combined(&key.inner, nonce, aad, in_out)?,
-        KeyInner::AES_256_GCM(..) => aead_seal_combined(&key.inner, nonce, aad, in_out)?,
-        KeyInner::CHACHA20_POLY1305(..) => aead_seal_combined(&key.inner, nonce, aad, in_out)?,
+    let key_inner_ref = key.get_inner_key()?;
+    match key_inner_ref {
+        KeyInner::AES_128_GCM(..) => aead_seal_combined(key_inner_ref, nonce, aad, in_out)?,
+        KeyInner::AES_256_GCM(..) => aead_seal_combined(key_inner_ref, nonce, aad, in_out)?,
+        KeyInner::CHACHA20_POLY1305(..) => aead_seal_combined(key_inner_ref, nonce, aad, in_out)?,
     }
     Ok(())
 }
@@ -360,18 +365,19 @@ fn seal_in_place_separate_tag_(
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut [u8],
-) -> Result<Tag, error::Unspecified> {
+) -> Result<Tag, Unspecified> {
     check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
-    match key.inner {
-        KeyInner::AES_128_GCM(..) => aes_gcm_seal_separate(&key.inner, nonce, aad, in_out),
-        KeyInner::AES_256_GCM(..) => aes_gcm_seal_separate(&key.inner, nonce, aad, in_out),
+    let key_inner_ref = key.get_inner_key()?;
+    match key_inner_ref {
+        KeyInner::AES_128_GCM(..) => aes_gcm_seal_separate(key_inner_ref, nonce, aad, in_out),
+        KeyInner::AES_256_GCM(..) => aes_gcm_seal_separate(key_inner_ref, nonce, aad, in_out),
         #[cfg(feature = "alloc")]
         KeyInner::CHACHA20_POLY1305(..) => {
             let mut extendable_in_out = Vec::new();
             extendable_in_out.extend_from_slice(in_out);
             let plaintext_len = in_out.len();
 
-            aead_seal_combined(&key.inner, nonce, aad, &mut extendable_in_out)?;
+            aead_seal_combined(key_inner_ref, nonce, aad, &mut extendable_in_out)?;
             let ciphertext = &extendable_in_out[..plaintext_len];
             let tag = &extendable_in_out[plaintext_len..];
 
@@ -419,10 +425,31 @@ impl Aad<[u8; 0]> {
     }
 }
 
+#[cfg(feature = "thread_local")]
+const MAX_KEY_BYTE_LEN: usize = 32;
+
 /// An AEAD key without a designated role or nonce sequence.
+#[cfg(feature = "thread_local")]
+pub struct UnboundKey {
+    // There are concerns about using ThreadLocal due to platform-specific behaviour. The best
+    // solution would be to restructure our structs so that they contain no mutable state.
+    inner: ThreadLocal<KeyInner>,
+    key_bytes: [u8; MAX_KEY_BYTE_LEN],
+    key_len: usize,
+    algorithm: &'static Algorithm,
+}
+
+#[cfg(not(feature = "thread_local"))]
 pub struct UnboundKey {
     inner: KeyInner,
     algorithm: &'static Algorithm,
+}
+
+#[cfg(feature = "thread_local")]
+impl Drop for UnboundKey {
+    fn drop(&mut self) {
+        self.key_bytes.zeroize();
+    }
 }
 
 impl Debug for UnboundKey {
@@ -437,14 +464,45 @@ impl UnboundKey {
     /// Constructs an `UnboundKey`.
     ///
     /// Fails if `key_bytes.len() != algorithm.key_len()`.
-    pub fn new(
-        algorithm: &'static Algorithm,
-        key_bytes: &[u8],
-    ) -> Result<Self, error::Unspecified> {
+    #[cfg(feature = "thread_local")]
+    pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
+        if key_bytes.len() > MAX_KEY_BYTE_LEN {
+            return Err(Unspecified);
+        }
+        let key_len = key_bytes.len();
+        let mut my_key_bytes = [0u8; MAX_KEY_BYTE_LEN];
+        my_key_bytes[0..key_len].copy_from_slice(key_bytes);
+        let key_bytes = my_key_bytes;
+        let unbound_key = Self {
+            inner: ThreadLocal::new(),
+            key_bytes,
+            key_len,
+            algorithm,
+        };
+        unbound_key.get_inner_key()?;
+        Ok(unbound_key)
+    }
+
+    #[cfg(not(feature = "thread_local"))]
+    pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         Ok(Self {
             inner: (algorithm.init)(key_bytes)?,
             algorithm,
         })
+    }
+
+    #[cfg(feature = "thread_local")]
+    fn get_inner_key(&self) -> Result<&KeyInner, Unspecified> {
+        let inner_key = self
+            .inner
+            .get_or_try(|| (self.algorithm.init)(&self.key_bytes[0..self.key_len]))?;
+        Ok(inner_key)
+    }
+
+    /// No-op function if thread_local is turned off.
+    #[cfg(not(feature = "thread_local"))]
+    fn get_inner_key(&self) -> Result<&KeyInner, Unspecified> {
+        Ok(&self.inner)
     }
 
     /// The key's AEAD algorithm.
@@ -494,7 +552,7 @@ impl LessSafeKey {
         nonce: Nonce,
         aad: Aad<A>,
         in_out: &'in_out mut [u8],
-    ) -> Result<&'in_out mut [u8], error::Unspecified>
+    ) -> Result<&'in_out mut [u8], Unspecified>
     where
         A: AsRef<[u8]>,
     {
@@ -511,7 +569,7 @@ impl LessSafeKey {
         aad: Aad<A>,
         in_out: &'in_out mut [u8],
         ciphertext_and_tag: RangeFrom<usize>,
-    ) -> Result<&'in_out mut [u8], error::Unspecified>
+    ) -> Result<&'in_out mut [u8], Unspecified>
     where
         A: AsRef<[u8]>,
     {
@@ -526,7 +584,7 @@ impl LessSafeKey {
         nonce: Nonce,
         aad: Aad<A>,
         in_out: &mut InOut,
-    ) -> Result<(), error::Unspecified>
+    ) -> Result<(), Unspecified>
     where
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
@@ -544,7 +602,7 @@ impl LessSafeKey {
         nonce: Nonce,
         aad: Aad<A>,
         in_out: &mut InOut,
-    ) -> Result<(), error::Unspecified>
+    ) -> Result<(), Unspecified>
     where
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
@@ -562,7 +620,7 @@ impl LessSafeKey {
         nonce: Nonce,
         aad: Aad<A>,
         in_out: &mut [u8],
-    ) -> Result<Tag, error::Unspecified>
+    ) -> Result<Tag, Unspecified>
     where
         A: AsRef<[u8]>,
     {
@@ -586,7 +644,7 @@ impl Debug for LessSafeKey {
 
 /// An AEAD Algorithm.
 pub struct Algorithm {
-    init: fn(key: &[u8]) -> Result<KeyInner, error::Unspecified>,
+    init: fn(key: &[u8]) -> Result<KeyInner, Unspecified>,
     key_len: usize,
     id: AlgorithmID,
 
@@ -657,9 +715,9 @@ const TAG_LEN: usize = 16;
 pub const MAX_TAG_LEN: usize = TAG_LEN;
 
 #[inline]
-fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), error::Unspecified> {
+fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), Unspecified> {
     if polyfill::u64_from_usize(in_out_len) > alg.max_input_len {
-        return Err(error::Unspecified);
+        return Err(Unspecified);
     }
     Ok(())
 }
@@ -670,7 +728,7 @@ pub(crate) fn aead_seal_combined<InOut>(
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut InOut,
-) -> Result<(), error::Unspecified>
+) -> Result<(), Unspecified>
 where
     InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
 {
@@ -702,7 +760,7 @@ where
             add_str.as_ptr(),
             add_str.len(),
         ) {
-            return Err(error::Unspecified);
+            return Err(Unspecified);
         }
 
         Ok(())
@@ -715,7 +773,7 @@ pub(crate) fn aead_open_combined(
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut [u8],
-) -> Result<(), error::Unspecified> {
+) -> Result<(), Unspecified> {
     unsafe {
         let aead_ctx = match key {
             KeyInner::AES_128_GCM(.., aead_ctx) => aead_ctx,
@@ -740,7 +798,7 @@ pub(crate) fn aead_open_combined(
             aad_str.as_ptr(),
             aad_str.len(),
         ) {
-            return Err(error::Unspecified);
+            return Err(Unspecified);
         }
 
         Ok(())
