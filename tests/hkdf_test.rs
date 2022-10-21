@@ -164,6 +164,40 @@ fn hkdf_clone_tests() {
     }
 }
 
+#[test]
+fn hkdf_thread_safeness() {
+    use std::thread;
+
+    lazy_static::lazy_static! {
+        /// Compute the Initial salt once, as the seed is constant
+        static ref SECRET_KEY: hkdf::Salt = hkdf::Salt::new(hkdf::HKDF_SHA256, b"this is a test!");
+    }
+
+    // Compute the OKM, so we have something to compare to.
+    let okm: My<Vec<u8>> = SECRET_KEY
+        .extract(b"secret")
+        .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
+        .unwrap()
+        .into();
+
+    let mut join_handles = Vec::new();
+    for _ in 1..100 {
+        let join_handle = thread::spawn(|| {
+            let okm = SECRET_KEY
+                .extract(b"secret")
+                .expand(&[b"info"], My(digest::MAX_OUTPUT_LEN))
+                .unwrap()
+                .into();
+            okm
+        });
+        join_handles.push(join_handle);
+    }
+    for handle in join_handles {
+        let thread_okm: My<Vec<u8>> = handle.join().unwrap();
+        assert_eq!(thread_okm, okm);
+    }
+}
+
 /// Generic newtype wrapper that lets us implement traits for externally-defined
 /// types.
 #[derive(Debug, PartialEq)]
