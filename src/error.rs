@@ -212,3 +212,13 @@ impl From<()> for Unspecified {
         Unspecified
     }
 }
+
+impl From<Unspecified> for () {
+    fn from(_: Unspecified) -> Self {}
+}
+
+impl From<()> for KeyRejected {
+    fn from(_: ()) -> Self {
+        KeyRejected::unexpected_error()
+    }
+}

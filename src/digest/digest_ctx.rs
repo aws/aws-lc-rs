@@ -13,7 +13,7 @@ pub(super) struct DigestContext {
 impl DigestContext {
     pub fn new(algorithm: &'static Algorithm) -> Result<DigestContext, Unspecified> {
         unsafe {
-            let ctx = LcPtr::new(aws_lc_sys::EVP_MD_CTX_new()).map_err(|_| Unspecified)?;
+            let ctx = LcPtr::new(aws_lc_sys::EVP_MD_CTX_new())?;
             let evp_md_type = match_digest_type(&algorithm.id);
             if 1 != aws_lc_sys::EVP_DigestInit_ex(*ctx, evp_md_type, null_mut()) {
                 return Err(Unspecified);

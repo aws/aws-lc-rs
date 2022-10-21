@@ -48,8 +48,7 @@ impl SymmetricCipherKey {
         }
 
         unsafe {
-            let ecb_cipher_ctx =
-                LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new()).map_err(|_| Unspecified)?;
+            let ecb_cipher_ctx = LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new())?;
             if 1 != aws_lc_sys::EVP_EncryptInit_ex(
                 *ecb_cipher_ctx,
                 aws_lc_sys::EVP_aes_128_ecb(),
@@ -63,8 +62,7 @@ impl SymmetricCipherKey {
                 return Err(Unspecified);
             }
 
-            let gcm_cipher_ctx =
-                LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new()).map_err(|_| Unspecified)?;
+            let gcm_cipher_ctx = LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new())?;
             if 1 != aws_lc_sys::EVP_EncryptInit_ex(
                 *gcm_cipher_ctx,
                 aws_lc_sys::EVP_aes_128_gcm(),
@@ -89,8 +87,7 @@ impl SymmetricCipherKey {
             return Err(Unspecified);
         }
         unsafe {
-            let ecb_cipher_ctx =
-                LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new()).map_err(|_| Unspecified)?;
+            let ecb_cipher_ctx = LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new())?;
             if 1 != aws_lc_sys::EVP_EncryptInit_ex(
                 *ecb_cipher_ctx,
                 aws_lc_sys::EVP_aes_256_ecb(),
@@ -104,8 +101,7 @@ impl SymmetricCipherKey {
                 return Err(Unspecified);
             }
 
-            let gcm_cipher_ctx =
-                LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new()).map_err(|_| Unspecified)?;
+            let gcm_cipher_ctx = LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new())?;
             if 1 != aws_lc_sys::EVP_EncryptInit_ex(
                 *gcm_cipher_ctx,
                 aws_lc_sys::EVP_aes_256_gcm(),

@@ -163,7 +163,7 @@ impl EphemeralPrivateKey {
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         unsafe {
             let ec_group = ec_group_from_nid(ECDH_P256.id.nid())?;
-            let priv_key = ec::bignum_from_be_bytes(priv_key).map_err(|_| Unspecified)?;
+            let priv_key = ec::bignum_from_be_bytes(priv_key)?;
 
             let ec_key = ec::ec_key_from_private(&ec_group.as_non_null(), &priv_key.as_non_null())?;
             let ec_key = LcPtr::from(ec_key);
@@ -177,7 +177,7 @@ impl EphemeralPrivateKey {
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         unsafe {
             let ec_group = ec_group_from_nid(ECDH_P384.id.nid())?;
-            let priv_key = ec::bignum_from_be_bytes(priv_key).map_err(|_| Unspecified)?;
+            let priv_key = ec::bignum_from_be_bytes(priv_key)?;
 
             let ec_key = ec::ec_key_from_private(&ec_group.as_non_null(), &priv_key.as_non_null())?;
             let ec_key = LcPtr::from(ec_key);
@@ -347,9 +347,9 @@ unsafe fn ec_key_ecdh<'a>(
     peer_pub_key_bytes: &[u8],
     nid: i32,
 ) -> Result<&'a [u8], ()> {
-    let ec_group = ec_group_from_nid(nid).map_err(|_| ())?;
-    let pub_key_point = ec_point_from_bytes(&ec_group, peer_pub_key_bytes).map_err(|_| ())?;
-    let peer_ec_key = ec_key_from_public_point(&ec_group, &pub_key_point).map_err(|_| ())?;
+    let ec_group = ec_group_from_nid(nid)?;
+    let pub_key_point = ec_point_from_bytes(&ec_group, peer_pub_key_bytes)?;
+    let peer_ec_key = ec_key_from_public_point(&ec_group, &pub_key_point)?;
 
     let priv_group = NonNullPtr::new(EC_KEY_get0_group(*priv_ec_key))?;
     let priv_nid = EC_GROUP_get_curve_name(*priv_group);

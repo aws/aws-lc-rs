@@ -178,9 +178,9 @@ pub(crate) unsafe fn marshal_public_key_to_buffer(
     buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
     ec_key: &NonNullPtr<*mut EC_KEY>,
 ) -> Result<usize, Unspecified> {
-    let ec_group = NonNullPtr::new(EC_KEY_get0_group(**ec_key)).map_err(|_| Unspecified)?;
+    let ec_group = NonNullPtr::new(EC_KEY_get0_group(**ec_key))?;
 
-    let ec_point = NonNullPtr::new(EC_KEY_get0_public_key(**ec_key)).map_err(|_| Unspecified)?;
+    let ec_point = NonNullPtr::new(EC_KEY_get0_public_key(**ec_key))?;
 
     let out_len = ec_point_to_bytes(*ec_group, *ec_point, buffer)?;
     Ok(out_len)
@@ -202,7 +202,7 @@ pub(crate) unsafe fn ec_key_from_public_point(
     ec_group: &LcPtr<*mut EC_GROUP>,
     public_ec_point: &LcPtr<*mut EC_POINT>,
 ) -> Result<DetachableLcPtr<*mut EC_KEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(aws_lc_sys::EC_KEY_new()).map_err(|_| Unspecified)?;
+    let ec_key = DetachableLcPtr::new(aws_lc_sys::EC_KEY_new())?;
     if 1 != aws_lc_sys::EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(Unspecified);
     }
@@ -217,14 +217,14 @@ pub(crate) unsafe fn ec_key_from_private(
     ec_group: &NonNullPtr<*mut EC_GROUP>,
     private_big_num: &NonNullPtr<*mut BIGNUM>,
 ) -> Result<DetachableLcPtr<*mut EC_KEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(aws_lc_sys::EC_KEY_new()).map_err(|_| Unspecified)?;
+    let ec_key = DetachableLcPtr::new(aws_lc_sys::EC_KEY_new())?;
     if 1 != aws_lc_sys::EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(Unspecified);
     }
     if 1 != EC_KEY_set_private_key(*ec_key, **private_big_num) {
         return Err(Unspecified);
     }
-    let pub_key = LcPtr::new(EC_POINT_new(**ec_group)).map_err(|_| Unspecified)?;
+    let pub_key = LcPtr::new(EC_POINT_new(**ec_group))?;
     if 1 != EC_POINT_mul(
         **ec_group,
         *pub_key,
@@ -247,23 +247,23 @@ unsafe fn ec_key_from_public_private(
     ec_group: &LcPtr<*mut EC_GROUP>,
     public_ec_point: &LcPtr<*mut EC_POINT>,
     private_bignum: &LcPtr<*mut BIGNUM>,
-) -> Result<LcPtr<*mut EC_KEY>, Unspecified> {
-    let ec_key = LcPtr::new(aws_lc_sys::EC_KEY_new()).map_err(|_| Unspecified)?;
+) -> Result<LcPtr<*mut EC_KEY>, ()> {
+    let ec_key = LcPtr::new(aws_lc_sys::EC_KEY_new())?;
     if 1 != aws_lc_sys::EC_KEY_set_group(*ec_key, **ec_group) {
-        return Err(Unspecified);
+        return Err(());
     }
     if 1 != EC_KEY_set_public_key(*ec_key, **public_ec_point) {
-        return Err(Unspecified);
+        return Err(());
     }
     if 1 != EC_KEY_set_private_key(*ec_key, **private_bignum) {
-        return Err(Unspecified);
+        return Err(());
     }
     Ok(ec_key)
 }
 
 #[inline]
-pub(crate) unsafe fn ec_group_from_nid(nid: i32) -> Result<LcPtr<*mut EC_GROUP>, Unspecified> {
-    LcPtr::new(aws_lc_sys::EC_GROUP_new_by_curve_name(nid)).map_err(|_| Unspecified)
+pub(crate) unsafe fn ec_group_from_nid(nid: i32) -> Result<LcPtr<*mut EC_GROUP>, ()> {
+    LcPtr::new(aws_lc_sys::EC_GROUP_new_by_curve_name(nid))
 }
 
 #[inline]
@@ -271,7 +271,7 @@ pub(crate) unsafe fn ec_point_from_bytes(
     ec_group: &LcPtr<*mut EC_GROUP>,
     bytes: &[u8],
 ) -> Result<LcPtr<*mut EC_POINT>, Unspecified> {
-    let ec_point = LcPtr::new(EC_POINT_new(**ec_group)).map_err(|_| Unspecified)?;
+    let ec_point = LcPtr::new(EC_POINT_new(**ec_group))?;
 
     if 1 != aws_lc_sys::EC_POINT_oct2point(
         **ec_group,
@@ -317,7 +317,7 @@ unsafe fn ecdsa_sig_to_asn1(ecdsa_sig: &LcPtr<*mut ECDSA_SIG>) -> Result<Signatu
     if 1 != ECDSA_SIG_to_bytes(out_bytes.as_mut_ptr(), out_len.as_mut_ptr(), **ecdsa_sig) {
         return Err(Unspecified);
     }
-    let out_bytes = LcPtr::new(out_bytes.assume_init()).map_err(|_| Unspecified)?;
+    let out_bytes = LcPtr::new(out_bytes.assume_init())?;
     let out_len = out_len.assume_init();
 
     Ok(Signature::new(|slice| {
@@ -334,13 +334,13 @@ unsafe fn ecdsa_sig_to_fixed(
 ) -> Result<Signature, Unspecified> {
     let expected_number_size = ecdsa_fixed_number_byte_size(alg_id);
 
-    let r_bn = NonNullPtr::new(aws_lc_sys::ECDSA_SIG_get0_r(**sig)).map_err(|_| Unspecified)?;
+    let r_bn = NonNullPtr::new(aws_lc_sys::ECDSA_SIG_get0_r(**sig))?;
     let mut r_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
-    let r_bytes = bignum_to_be_bytes(r_bn, &mut r_buffer).map_err(|_| Unspecified)?;
+    let r_bytes = bignum_to_be_bytes(r_bn, &mut r_buffer)?;
 
-    let s_bn = NonNullPtr::new(aws_lc_sys::ECDSA_SIG_get0_s(**sig)).map_err(|_| Unspecified)?;
+    let s_bn = NonNullPtr::new(aws_lc_sys::ECDSA_SIG_get0_s(**sig))?;
     let mut s_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
-    let s_bytes = bignum_to_be_bytes(s_bn, &mut s_buffer).map_err(|_| Unspecified)?;
+    let s_bytes = bignum_to_be_bytes(s_bn, &mut s_buffer)?;
 
     Ok(Signature::new(|slice| {
         let (r_start, r_end) = ((expected_number_size - r_bytes), expected_number_size);
@@ -356,8 +356,8 @@ unsafe fn ecdsa_sig_to_fixed(
 }
 
 #[inline]
-unsafe fn ecdsa_sig_from_asn1(signature: &[u8]) -> Result<LcPtr<*mut ECDSA_SIG>, Unspecified> {
-    LcPtr::new(ECDSA_SIG_from_bytes(signature.as_ptr(), signature.len())).map_err(|_| Unspecified)
+unsafe fn ecdsa_sig_from_asn1(signature: &[u8]) -> Result<LcPtr<*mut ECDSA_SIG>, ()> {
+    LcPtr::new(ECDSA_SIG_from_bytes(signature.as_ptr(), signature.len()))
 }
 
 const MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE: usize = 48;
@@ -374,18 +374,18 @@ const fn ecdsa_fixed_number_byte_size(alg_id: &'static AlgorithmID) -> usize {
 unsafe fn ecdsa_sig_from_fixed(
     alg_id: &'static AlgorithmID,
     signature: &[u8],
-) -> Result<LcPtr<*mut ECDSA_SIG>, Unspecified> {
+) -> Result<LcPtr<*mut ECDSA_SIG>, ()> {
     let num_size_bytes = ecdsa_fixed_number_byte_size(alg_id);
     if signature.len() != 2 * num_size_bytes {
-        return Err(Unspecified);
+        return Err(());
     }
     let r_bn = bignum_from_be_bytes(&signature[..num_size_bytes])?;
     let s_bn = bignum_from_be_bytes(&signature[num_size_bytes..])?;
 
-    let ecdsa_sig = LcPtr::new(ECDSA_SIG_new()).map_err(|_| Unspecified)?;
+    let ecdsa_sig = LcPtr::new(ECDSA_SIG_new())?;
 
     if 1 != ECDSA_SIG_set0(*ecdsa_sig, *r_bn, *s_bn) {
-        return Err(Unspecified);
+        return Err(());
     }
     r_bn.detach();
     s_bn.detach();
@@ -413,9 +413,8 @@ unsafe fn bignum_to_be_bytes(
 #[inline]
 pub(crate) unsafe fn bignum_from_be_bytes(
     bytes: &[u8],
-) -> Result<DetachableLcPtr<*mut BIGNUM>, Unspecified> {
+) -> Result<DetachableLcPtr<*mut BIGNUM>, ()> {
     DetachableLcPtr::new(BN_bin2bn(bytes.as_ptr(), bytes.len(), null_mut()))
-        .map_err(|_| Unspecified)
 }
 
 #[cfg(test)]

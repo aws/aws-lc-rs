@@ -42,8 +42,7 @@ impl KeyPair for EcdsaKeyPair {
 }
 
 pub(crate) unsafe fn generate_key(nid: i32) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
-    let ec_key =
-        DetachableLcPtr::new(aws_lc_sys::EC_KEY_new_by_curve_name(nid)).map_err(|_| Unspecified)?;
+    let ec_key = DetachableLcPtr::new(aws_lc_sys::EC_KEY_new_by_curve_name(nid))?;
 
     // TODO: There's a separate function for FIPS
     // aws_lc_sys::EC_KEY_generate_key_fips(ec_key)
@@ -51,7 +50,7 @@ pub(crate) unsafe fn generate_key(nid: i32) -> Result<LcPtr<*mut EVP_PKEY>, Unsp
         return Err(Unspecified);
     }
 
-    let evp_pkey = LcPtr::new(aws_lc_sys::EVP_PKEY_new()).map_err(|_| Unspecified)?;
+    let evp_pkey = LcPtr::new(aws_lc_sys::EVP_PKEY_new())?;
     if 1 != aws_lc_sys::EVP_PKEY_assign_EC_KEY(*evp_pkey, *ec_key) {
         return Err(Unspecified);
     }
@@ -64,7 +63,7 @@ impl EcdsaKeyPair {
     unsafe fn new(
         algorithm: &'static EcdsaSigningAlgorithm,
         ec_key: LcPtr<*mut EC_KEY>,
-    ) -> Result<Self, Unspecified> {
+    ) -> Result<Self, ()> {
         let pubkey = ec::marshal_public_key(&ec_key.as_non_null())?;
 
         Ok(Self {
@@ -85,12 +84,11 @@ impl EcdsaKeyPair {
                 .map_err(|_| KeyRejected::invalid_encoding())?;
 
             ec::validate_pkey(evp_pkey.as_non_null(), alg.bits)?;
-            let ec_key = LcPtr::new(EVP_PKEY_get1_EC_KEY(*evp_pkey))
-                .map_err(|_| KeyRejected::unexpected_error())?;
+            let ec_key = LcPtr::new(EVP_PKEY_get1_EC_KEY(*evp_pkey))?;
 
             ec::validate_ec_key(*ec_key)?;
 
-            let key_pair = Self::new(alg, ec_key).map_err(|_| KeyRejected::unexpected_error())?;
+            let key_pair = Self::new(alg, ec_key)?;
 
             Ok(key_pair)
         }
@@ -119,8 +117,7 @@ impl EcdsaKeyPair {
                 aws_lc_sys::CBB_cleanup(&mut cbb);
                 return Err(Unspecified);
             }
-            let pkcs8_bytes_ptr =
-                LcPtr::new(pkcs8_bytes_ptr.assume_init()).map_err(|_| Unspecified)?;
+            let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr.assume_init())?;
             let out_len = out_len.assume_init();
 
             let bytes_slice = std::slice::from_raw_parts(*pkcs8_bytes_ptr, out_len);
@@ -140,18 +137,15 @@ impl EcdsaKeyPair {
         public_key: &[u8],
     ) -> Result<Self, KeyRejected> {
         unsafe {
-            let ec_group = ec::ec_group_from_nid(alg.0.id.nid())
-                .map_err(|_| KeyRejected::unexpected_error())?;
+            let ec_group = ec::ec_group_from_nid(alg.0.id.nid())?;
             let public_ec_point = ec::ec_point_from_bytes(&ec_group, public_key)
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let private_bn = ec::bignum_from_be_bytes(private_key)
                 .map_err(|_| KeyRejected::invalid_encoding())?
                 .into();
 
-            let ec_key = ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)
-                .map_err(|_| KeyRejected::unexpected_error())?;
-
-            let key_pair = Self::new(alg, ec_key).map_err(|_| KeyRejected::unexpected_error())?;
+            let ec_key = ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
+            let key_pair = Self::new(alg, ec_key)?;
 
             Ok(key_pair)
         }
@@ -162,8 +156,7 @@ impl EcdsaKeyPair {
         unsafe {
             let digest = digest::digest(self.algorithm.digest, message);
             let digest = digest.as_ref();
-            let ecdsa_sig = LcPtr::new(ECDSA_do_sign(digest.as_ptr(), digest.len(), *self.ec_key))
-                .map_err(|_| Unspecified)?;
+            let ecdsa_sig = LcPtr::new(ECDSA_do_sign(digest.as_ptr(), digest.len(), *self.ec_key))?;
             match self.algorithm.sig_format {
                 EcdsaSignatureFormat::ASN1 => ec::ecdsa_sig_to_asn1(&ecdsa_sig),
                 EcdsaSignatureFormat::Fixed => {

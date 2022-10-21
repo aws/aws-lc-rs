@@ -97,9 +97,7 @@ impl KeyPair for Ed25519KeyPair {
     }
 }
 
-pub(crate) unsafe fn generate_key(
-    rng: &dyn SecureRandom,
-) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<*mut EVP_PKEY>, ()> {
     let mut seed = [0u8; ED25519_SEED_LEN];
     rng.fill(&mut seed)?;
 
@@ -117,7 +115,6 @@ pub(crate) unsafe fn generate_key(
         private_key.assume_init().as_ptr(),
         ED25519_PRIVATE_KEY_PREFIX_LEN,
     ))
-    .map_err(|_| Unspecified)
 }
 
 impl Ed25519KeyPair {
@@ -141,8 +138,7 @@ impl Ed25519KeyPair {
                 aws_lc_sys::CBB_cleanup(&mut cbb);
                 return Err(Unspecified);
             }
-            let pkcs8_bytes_ptr =
-                LcPtr::new(pkcs8_bytes_ptr.assume_init()).map_err(|_| Unspecified)?;
+            let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr.assume_init())?;
             let out_len = out_len.assume_init();
 
             let bytes_slice = std::slice::from_raw_parts(*pkcs8_bytes_ptr, out_len);

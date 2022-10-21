@@ -58,7 +58,7 @@ impl Drop for RsaKeyPair {
 }
 
 impl RsaKeyPair {
-    fn new(rsa_key: LcPtr<*mut RSA>) -> Result<Self, Unspecified> {
+    fn new(rsa_key: LcPtr<*mut RSA>) -> Result<Self, KeyRejected> {
         unsafe {
             let pubkey_bytes = serialize_RSA_pubkey(rsa_key.as_non_null())?;
             let serialized_public_key = RsaSubjectPublicKey::new(pubkey_bytes);
@@ -78,7 +78,7 @@ impl RsaKeyPair {
                 .map_err(|_| KeyRejected::wrong_algorithm())?;
             Self::validate_rsa(rsa.as_non_null())?;
 
-            Self::new(rsa).map_err(|_| KeyRejected::unexpected_error())
+            Self::new(rsa)
         }
     }
 
@@ -86,7 +86,7 @@ impl RsaKeyPair {
         unsafe {
             let rsa = build_private_RSA(der)?;
             Self::validate_rsa(rsa.as_non_null())?;
-            Self::new(rsa).map_err(|_| KeyRejected::unexpected_error())
+            Self::new(rsa)
         }
     }
     const MIN_RSA_BITS: c_uint = 1024;
@@ -241,7 +241,7 @@ impl RsaSubjectPublicKey {
 }
 
 #[allow(non_snake_case)]
-unsafe fn serialize_RSA_pubkey(pubkey: NonNullPtr<*mut RSA>) -> Result<Box<[u8]>, Unspecified> {
+unsafe fn serialize_RSA_pubkey(pubkey: NonNullPtr<*mut RSA>) -> Result<Box<[u8]>, KeyRejected> {
     let mut pubkey_bytes = MaybeUninit::<*mut u8>::uninit();
     let mut outlen = MaybeUninit::<usize>::uninit();
     if 1 != aws_lc_sys::RSA_public_key_to_bytes(
@@ -249,9 +249,9 @@ unsafe fn serialize_RSA_pubkey(pubkey: NonNullPtr<*mut RSA>) -> Result<Box<[u8]>
         outlen.as_mut_ptr(),
         *pubkey,
     ) {
-        return Err(Unspecified);
+        return Err(KeyRejected::unexpected_error());
     }
-    let pubkey_bytes = LcPtr::new(pubkey_bytes.assume_init()).map_err(|_| Unspecified)?;
+    let pubkey_bytes = LcPtr::new(pubkey_bytes.assume_init())?;
     let outlen = outlen.assume_init();
     let pubkey_slice = slice::from_raw_parts(*pubkey_bytes, outlen);
     let mut pubkey_vec = Vec::<u8>::new();
@@ -358,8 +358,7 @@ impl RsaParameters {
     pub fn public_modulus_len(public_key: &[u8]) -> Result<u32, Unspecified> {
         unsafe {
             let mut cbs = cbs::build_CBS(public_key);
-            let rsa =
-                LcPtr::new(aws_lc_sys::RSA_parse_public_key(&mut cbs)).map_err(|_| Unspecified)?;
+            let rsa = LcPtr::new(aws_lc_sys::RSA_parse_public_key(&mut cbs))?;
             let mod_len = aws_lc_sys::RSA_bits(*rsa);
 
             Ok(mod_len)
@@ -380,7 +379,7 @@ impl RsaParameters {
 unsafe fn build_public_RSA(public_key: &[u8]) -> Result<LcPtr<*mut RSA>, Unspecified> {
     let mut cbs = cbs::build_CBS(public_key);
 
-    let rsa = LcPtr::new(aws_lc_sys::RSA_parse_public_key(&mut cbs)).map_err(|_| Unspecified)?;
+    let rsa = LcPtr::new(aws_lc_sys::RSA_parse_public_key(&mut cbs))?;
     Ok(rsa)
 }
 
@@ -458,32 +457,30 @@ where
 {
     #[allow(non_snake_case)]
     #[inline]
-    unsafe fn build_RSA(&self) -> Result<LcPtr<*mut RSA>, Unspecified> {
+    unsafe fn build_RSA(&self) -> Result<LcPtr<*mut RSA>, ()> {
         let n_bytes = self.n.as_ref();
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
-            return Err(Unspecified);
+            return Err(());
         }
         let n_bn = DetachableLcPtr::new(aws_lc_sys::BN_bin2bn(
             n_bytes.as_ptr(),
             n_bytes.len(),
             null_mut(),
-        ))
-        .map_err(|_| Unspecified)?;
+        ))?;
 
         let e_bytes = self.e.as_ref();
         if e_bytes.is_empty() || e_bytes[0] == 0u8 {
-            return Err(Unspecified);
+            return Err(());
         }
         let e_bn = DetachableLcPtr::new(aws_lc_sys::BN_bin2bn(
             e_bytes.as_ptr(),
             e_bytes.len(),
             null_mut(),
-        ))
-        .map_err(|_| Unspecified)?;
+        ))?;
 
-        let rsa = LcPtr::new(RSA_new()).map_err(|_| Unspecified)?;
+        let rsa = LcPtr::new(RSA_new())?;
         if 1 != aws_lc_sys::RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) {
-            return Err(Unspecified);
+            return Err(());
         }
         n_bn.detach();
         e_bn.detach();
