@@ -360,10 +360,54 @@ fn aead_chacha20_poly1305_openssh() {
     );
 }
 
+#[cfg(feature = "thread_local")]
 #[test]
-fn test_tag_traits() {
+fn test_aead_traits() {
     test::compile_time_assert_send::<aead::Tag>();
     test::compile_time_assert_sync::<aead::Tag>();
+    test::compile_time_assert_send::<aead::UnboundKey>();
+    test::compile_time_assert_sync::<aead::UnboundKey>();
+    test::compile_time_assert_send::<aead::LessSafeKey>();
+    test::compile_time_assert_sync::<aead::LessSafeKey>();
+}
+
+#[cfg(feature = "thread_local")]
+#[test]
+fn test_aead_thread_safeness() {
+    lazy_static::lazy_static! {
+        /// Compute the Initial salt once, as the seed is constant
+        static ref SECRET_KEY: aead::LessSafeKey = aead::LessSafeKey::new(
+            aead::UnboundKey::new(&aead::AES_128_GCM, b"this is a test! ").unwrap(),
+        );
+    }
+    use std::thread;
+
+    let tag = SECRET_KEY
+        .seal_in_place_separate_tag(
+            aead::Nonce::try_assume_unique_for_key(&[0; aead::NONCE_LEN]).unwrap(),
+            aead::Aad::empty(),
+            &mut [],
+        )
+        .unwrap();
+
+    let mut join_handles = Vec::new();
+    for _ in 1..100 {
+        let join_handle = thread::spawn(|| {
+            let tag = SECRET_KEY
+                .seal_in_place_separate_tag(
+                    aead::Nonce::try_assume_unique_for_key(&[0; aead::NONCE_LEN]).unwrap(),
+                    aead::Aad::empty(),
+                    &mut [],
+                )
+                .unwrap();
+            tag
+        });
+        join_handles.push(join_handle);
+    }
+    for handle in join_handles {
+        let thread_tag = handle.join().unwrap();
+        assert_eq!(thread_tag.as_ref(), tag.as_ref());
+    }
 }
 
 #[test]

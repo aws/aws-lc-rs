@@ -10,6 +10,7 @@ if(MSVC)
 endif()
 
 include(sources.cmake)
+include(TestBigEndian)
 
 if(POLICY CMP0077)
   cmake_policy(SET CMP0077 NEW) #option does nothing when a normal variable of the same name exists.
@@ -148,6 +149,12 @@ if(BORINGSSL_PREFIX AND BORINGSSL_PREFIX_SYMBOLS AND GO_EXECUTABLE)
            symbol_prefix_include/boringssl_prefix_symbols_nasm.inc
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/symbol_prefix_include
     COMMAND ${GO_EXECUTABLE} run ${CMAKE_CURRENT_SOURCE_DIR}/util/make_prefix_headers.go -out ${CMAKE_CURRENT_BINARY_DIR}/symbol_prefix_include ${BORINGSSL_PREFIX_SYMBOLS_PATH}
+    # Temporary exclude all Kyber symbols.
+    # TODO(dkostic): fix the prefix build to work with Kyber source code.
+    COMMAND sed -i.bak '/pqcrystals/d' ${CMAKE_CURRENT_BINARY_DIR}/symbol_prefix_include/boringssl_prefix_symbols.h
+    COMMAND sed -i.bak '/ bignum_/d' ${CMAKE_CURRENT_BINARY_DIR}/symbol_prefix_include/boringssl_prefix_symbols.h
+    COMMAND sed -i.bak '/ bignum_/d' ${CMAKE_CURRENT_BINARY_DIR}/symbol_prefix_include/boringssl_prefix_symbols_asm.h
+    COMMAND sed -i.bak '/ bignum_/d' ${CMAKE_CURRENT_BINARY_DIR}/symbol_prefix_include/boringssl_prefix_symbols_nasm.inc
     DEPENDS util/make_prefix_headers.go
             ${BORINGSSL_PREFIX_SYMBOLS_PATH})
 
@@ -227,6 +234,16 @@ if (GCC)
   # https://cmake.org/cmake/help/latest/command/try_run.html
   set(MEMCMP_INVALID_STRIPPED "")
   set(MEMCMP_INVALID_STRIPPED__TRYRUN_OUTPUT "")
+
+  # See https://gitlab.kitware.com/cmake/cmake/-/issues/16920 for why we set this to 2
+  # During the `try_run` commands invoked by `check_run` a test program is run for the threading library.
+  # This test is run expecting two threads, and this variable isn't set, for some systems
+  # (particularly for systems using cross-compilation) causing our test to run without 2 threads and fail.
+  # We set this variable here to allow these builds to succeed and keep these tests around to make sure 
+  # that we properly detect the compiler bugs that we are trying to test for with these `try_run` calls.
+
+  set(THREADS_PTHREAD_ARG "2" CACHE STRING "Forcibly set by CMakeLists.txt." FORCE)
+
   if (CMAKE_BUILD_TYPE_LOWER MATCHES "release")
     # CMAKE_C_FLAGS_RELEASE enables `-O3`.
     check_run(memcmp_invalid_stripped_check.c MEMCMP_INVALID_STRIPPED "${CMAKE_C_FLAGS_RELEASE}")
@@ -391,6 +408,9 @@ elseif(MSVC)
       "C4701" # potentially uninitialized local
       "C4505" # unreferenced local function has been removed
       "C4702" # unreachable code in bcm.c power on tests
+      "C4191" # unsafe conversion from 'type of expression' to 'type required'
+              # TODO remove once https://github.com/openssl/openssl/issues/18957 is resolved
+      "C4996" # deprecated warnings using low level functions in OpenSSL 3.0
           )
   set(MSVC_LEVEL4_WARNINGS_LIST
       # See https://connect.microsoft.com/VisualStudio/feedback/details/1217660/warning-c4265-when-using-functional-header
@@ -625,6 +645,11 @@ if(NOT OPENSSL_NO_ASM AND CMAKE_OSX_ARCHITECTURES)
   list(GET CMAKE_OSX_ARCHITECTURES 0 CMAKE_SYSTEM_PROCESSOR)
 endif()
 
+TEST_BIG_ENDIAN(BIG_ENDIAN)
+if(BIG_ENDIAN)
+  message(FATAL_ERROR "Big Endian is not supported.")
+endif()
+
 if(OPENSSL_NO_SSE2_FOR_TESTING)
   add_definitions(-DOPENSSL_NO_SSE2_FOR_TESTING)
 endif()
@@ -648,13 +673,13 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64.*|ARM64|aarch64")
   set(ARCH "aarch64")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm*")
   set(ARCH "arm")
-elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "mips")
-  # Just to avoid the “unknown processor” error.
-  set(ARCH "generic")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "powerpc64le|ppc64le")
   set(ARCH "ppc64le")
+elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "riscv64")
+  set(ARCH "riscv64")
 else()
-  message(FATAL_ERROR "Unknown processor:" ${CMAKE_SYSTEM_PROCESSOR})
+  message(STATUS "Unknown processor found. Using generic implementations. Processor:" ${CMAKE_SYSTEM_PROCESSOR})
+  set(ARCH "generic")
 endif()
 
 if(ANDROID AND NOT ANDROID_NDK_REVISION AND ARCH STREQUAL "arm")

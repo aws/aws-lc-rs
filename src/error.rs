@@ -206,3 +206,9 @@ impl From<KeyRejected> for Unspecified {
         Unspecified
     }
 }
+
+impl From<()> for Unspecified {
+    fn from(_: ()) -> Self {
+        Unspecified
+    }
+}

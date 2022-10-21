@@ -21,6 +21,7 @@ set(
   crypto/cipher_extra/test/aes_128_cbc_sha256_tls_tests.txt
   crypto/cipher_extra/test/aes_128_ccm_bluetooth_tests.txt
   crypto/cipher_extra/test/aes_128_ccm_bluetooth_8_tests.txt
+  crypto/cipher_extra/test/aes_128_ccm_matter_tests.txt
   crypto/cipher_extra/test/aes_128_ctr_hmac_sha256.txt
   crypto/cipher_extra/test/aes_128_gcm_randnonce_tests.txt
   crypto/cipher_extra/test/aes_128_gcm_siv_tests.txt
@@ -50,6 +51,7 @@ set(
   crypto/curve25519/ed25519_tests.txt
   crypto/ecdh_extra/ecdh_tests.txt
   crypto/evp_extra/evp_tests.txt
+  crypto/evp_extra/pq_kem_kat_tests_kyber512.txt
   crypto/evp_extra/scrypt_tests.txt
   crypto/fipsmodule/aes/aes_tests.txt
   crypto/fipsmodule/bn/bn_tests.txt

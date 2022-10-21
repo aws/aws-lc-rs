@@ -8,7 +8,8 @@ rust-version = "1.57"
 
 [features]
 alloc = []
-default = ["alloc"]
+thread_local = ["dep:thread_local"]
+default = ["alloc", "thread_local"]
 asan = ["aws-lc-sys/asan"]
 
 [dependencies]
@@ -16,6 +17,7 @@ untrusted = { version = "0.7.1" }
 aws-lc-sys = { path = "deps/aws-lc-sys", version = "0.1.0" }
 zeroize = "1.5"
 libc = "0.2"
+thread_local = { version ="1.1.4", optional = true }
 
 [dev-dependencies]
 rand = "0.8"
@@ -24,6 +26,12 @@ criterion = "0.4"
 ring = "0.16"
 regex = "1.6.0"
 lazy_static = "1.4.0"
+
+[profile.release]
+lto = true
+
+[profile.bench]
+lto = true
 
 [[bench]]
 name = "aead_benchmark"

@@ -865,6 +865,16 @@ static inline void CRYPTO_store_u32_be(void *out, uint32_t v) {
   OPENSSL_memcpy(out, &v, sizeof(v));
 }
 
+static inline uint64_t CRYPTO_load_u64_le(const void *in) {
+  uint64_t v;
+  OPENSSL_memcpy(&v, in, sizeof(v));
+  return v;
+}
+
+static inline void CRYPTO_store_u64_le(void *out, uint64_t v) {
+  OPENSSL_memcpy(out, &v, sizeof(v));
+}
+
 static inline uint64_t CRYPTO_load_u64_be(const void *ptr) {
   uint64_t ret;
   OPENSSL_memcpy(&ret, ptr, sizeof(ret));
@@ -978,9 +988,6 @@ OPENSSL_INLINE void boringssl_ensure_ffdh_self_test(void) {}
 // boringssl_self_test_sha256 performs a SHA-256 KAT.
 int boringssl_self_test_sha256(void);
 
-// boringssl_self_test_sha512 performs a SHA-512 KAT.
-int boringssl_self_test_sha512(void);
-
 // boringssl_self_test_hmac_sha256 performs an HMAC-SHA-256 KAT.
 int boringssl_self_test_hmac_sha256(void);
 
@@ -1016,6 +1023,10 @@ OPENSSL_INLINE int boringssl_fips_break_test(const char *test) {
 extern uint8_t BORINGSSL_function_hit[7];
 #endif  // BORINGSSL_DISPATCH_TEST
 
+#if !defined(AWSLC_FIPS) && !defined(BORINGSSL_SHARED_LIBRARY)
+// This function is defined in |bcm.c|, see the comment therein for explanation.
+void dummy_func_for_constructor(void);
+#endif
 
 #if defined(__cplusplus)
 }  // extern C

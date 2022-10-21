@@ -99,16 +99,13 @@ static void vpaes_ctr32_encrypt_blocks_with_bsaes(const uint8_t *in,
   out += 16 * bsaes_blocks;
   blocks -= bsaes_blocks;
 
-  union {
-    uint32_t u32[4];
-    uint8_t u8[16];
-  } new_ivec;
-  memcpy(new_ivec.u8, ivec, 16);
-  uint32_t ctr = CRYPTO_bswap4(new_ivec.u32[3]) + bsaes_blocks;
-  new_ivec.u32[3] = CRYPTO_bswap4(ctr);
+  uint8_t new_ivec[16];
+  memcpy(new_ivec, ivec, 12);
+  uint32_t ctr = CRYPTO_load_u32_be(ivec + 12) + bsaes_blocks;
+  CRYPTO_store_u32_be(new_ivec + 12, ctr);
 
   // Finish any remaining blocks with |vpaes_ctr32_encrypt_blocks|.
-  vpaes_ctr32_encrypt_blocks(in, out, blocks, key, new_ivec.u8);
+  vpaes_ctr32_encrypt_blocks(in, out, blocks, key, new_ivec);
 }
 #endif  // BSAES
 
@@ -338,11 +335,9 @@ ctr128_f aes_ctr_set_key(AES_KEY *aes_key, GCM128_KEY *gcm_key,
 #endif
 
 static EVP_AES_GCM_CTX *aes_gcm_from_cipher_ctx(EVP_CIPHER_CTX *ctx) {
-#if defined(__GNUC__) || defined(__clang__)
   OPENSSL_STATIC_ASSERT(
       alignof(EVP_AES_GCM_CTX) <= 16,
       EVP_AES_GCM_CTX_needs_more_alignment_than_this_function_provides)
-#endif
 
   // |malloc| guarantees up to 4-byte alignment on 32-bit and 8-byte alignment
   // on 64-bit systems, so we need to adjust to reach 16-byte alignment.
@@ -603,6 +598,113 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out, const uint8_t *in,
   }
 }
 
+static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const uint8_t *key,
+                            const uint8_t *iv, int enc) {
+  EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
+  if (!iv && !key) {
+    return 1;
+  }
+
+  if (key) {
+    // Verify that the two keys are different.
+    //
+    // This addresses the vulnerability described in Rogaway's
+    // September 2004 paper:
+    //
+    //      "Efficient Instantiations of Tweakable Blockciphers and
+    //       Refinements to Modes OCB and PMAC".
+    //      (http://web.cs.ucdavis.edu/~rogaway/papers/offsets.pdf)
+    //
+    // FIPS 140-2 IG A.9 XTS-AES Key Generation Requirements states
+    // that:
+    //      "The check for Key_1 != Key_2 shall be done at any place
+    //       BEFORE using the keys in the XTS-AES algorithm to process
+    //       data with them."
+    //
+    // key_len is two AES keys
+
+    if (OPENSSL_memcmp(key, key + ctx->key_len / 2, ctx->key_len / 2) == 0) {
+      OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_XTS_DUPLICATED_KEYS);
+      return 0;
+    }
+
+    if (enc) {
+      AES_set_encrypt_key(key, ctx->key_len * 4, &xctx->ks1.ks);
+      xctx->xts.block1 = AES_encrypt;
+    } else {
+      AES_set_decrypt_key(key, ctx->key_len * 4, &xctx->ks1.ks);
+      xctx->xts.block1 = AES_decrypt;
+    }
+
+    AES_set_encrypt_key(key + ctx->key_len / 2,
+                        ctx->key_len * 4, &xctx->ks2.ks);
+    xctx->xts.block2 = AES_encrypt;
+    xctx->xts.key1 = &xctx->ks1.ks;
+  }
+
+  if (iv) {
+    xctx->xts.key2 = &xctx->ks2.ks;
+    OPENSSL_memcpy(ctx->iv, iv, 16);
+  }
+
+  return 1;
+}
+
+static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out,
+                          const uint8_t *in, size_t len) {
+  EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
+  if (!xctx->xts.key1 ||
+      !xctx->xts.key2 ||
+      !out ||
+      !in ||
+      len < AES_BLOCK_SIZE) {
+    return 0;
+  }
+
+  // Impose a limit of 2^20 blocks per data unit as specified by
+  // IEEE Std 1619-2018.  The earlier and obsolete IEEE Std 1619-2007
+  // indicated that this was a SHOULD NOT rather than a MUST NOT.
+  // NIST SP 800-38E mandates the same limit.
+  if (len > XTS_MAX_BLOCKS_PER_DATA_UNIT * AES_BLOCK_SIZE) {
+    OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_XTS_DATA_UNIT_IS_TOO_LARGE);
+    return 0;
+  }
+
+  if (hwaes_xts_available()) {
+    return aes_hw_xts_cipher(in, out, len, xctx->xts.key1, xctx->xts.key2,
+                             ctx->iv, ctx->encrypt);
+  } else {
+    return CRYPTO_xts128_encrypt(&xctx->xts, ctx->iv, in, out, len, ctx->encrypt);
+  }
+}
+
+static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr) {
+  EVP_AES_XTS_CTX *xctx = c->cipher_data;
+  if (type == EVP_CTRL_COPY) {
+    EVP_CIPHER_CTX *out = ptr;
+    EVP_AES_XTS_CTX *xctx_out = out->cipher_data;
+    if (xctx->xts.key1) {
+      if (xctx->xts.key1 != &xctx->ks1.ks) {
+        return 0;
+      }
+      xctx_out->xts.key1 = &xctx_out->ks1.ks;
+    }
+    if (xctx->xts.key2) {
+      if (xctx->xts.key2 != &xctx->ks2.ks) {
+        return 0;
+      }
+      xctx_out->xts.key2 = &xctx_out->ks2.ks;
+    }
+    return 1;
+  } else if (type != EVP_CTRL_INIT) {
+    return -1;
+  }
+  // key1 and key2 are used as an indicator both key and IV are set
+  xctx->xts.key1 = NULL;
+  xctx->xts.key2 = NULL;
+  return 1;
+}
+
 DEFINE_METHOD_FUNCTION(EVP_CIPHER, EVP_aes_128_cbc) {
   memset(out, 0, sizeof(EVP_CIPHER));
 
@@ -807,6 +909,22 @@ DEFINE_METHOD_FUNCTION(EVP_CIPHER, EVP_aes_256_gcm) {
   out->ctrl = aes_gcm_ctrl;
 }
 
+DEFINE_METHOD_FUNCTION(EVP_CIPHER, EVP_aes_256_xts) {
+  memset(out, 0, sizeof(EVP_CIPHER));
+
+  out->nid = NID_aes_256_xts;
+  out->block_size = 1;
+  out->key_len = 64;
+  out->iv_len = 16;
+  out->ctx_size = sizeof(EVP_AES_XTS_CTX);
+  out->flags = EVP_CIPH_XTS_MODE | EVP_CIPH_CUSTOM_IV |
+               EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT |
+               EVP_CIPH_CUSTOM_COPY;
+  out->init = aes_xts_init_key;
+  out->cipher = aes_xts_cipher;
+  out->ctrl = aes_xts_ctrl;
+}
+
 #if defined(HWAES_ECB)
 
 static int aes_hw_ecb_cipher(EVP_CIPHER_CTX *ctx, uint8_t *out,
@@ -929,11 +1047,9 @@ static int aead_aes_gcm_init_impl(struct aead_aes_gcm_ctx *gcm_ctx,
 OPENSSL_STATIC_ASSERT(sizeof(((EVP_AEAD_CTX *)NULL)->state) >=
                           sizeof(struct aead_aes_gcm_ctx),
                       AEAD_state_is_too_small)
-#if defined(__GNUC__) || defined(__clang__)
 OPENSSL_STATIC_ASSERT(alignof(union evp_aead_ctx_st_state) >=
                           alignof(struct aead_aes_gcm_ctx),
                       AEAD_state_has_insufficient_alignment)
-#endif
 
 static int aead_aes_gcm_init(EVP_AEAD_CTX *ctx, const uint8_t *key,
                              size_t key_len, size_t requested_tag_len) {
@@ -1268,11 +1384,9 @@ struct aead_aes_gcm_tls12_ctx {
 OPENSSL_STATIC_ASSERT(sizeof(((EVP_AEAD_CTX *)NULL)->state) >=
                           sizeof(struct aead_aes_gcm_tls12_ctx),
                       AEAD_state_is_too_small)
-#if defined(__GNUC__) || defined(__clang__)
 OPENSSL_STATIC_ASSERT(alignof(union evp_aead_ctx_st_state) >=
                           alignof(struct aead_aes_gcm_tls12_ctx),
                       AEAD_state_has_insufficient_alignment)
-#endif
 
 static int aead_aes_gcm_tls12_init(EVP_AEAD_CTX *ctx, const uint8_t *key,
                                    size_t key_len, size_t requested_tag_len) {
@@ -1305,12 +1419,9 @@ static int aead_aes_gcm_tls12_seal_scatter(
   }
 
   // The given nonces must be strictly monotonically increasing.
-  uint64_t given_counter;
-  OPENSSL_memcpy(&given_counter, nonce + nonce_len - sizeof(given_counter),
-                 sizeof(given_counter));
-  given_counter = CRYPTO_bswap8(given_counter);
-  if (given_counter == UINT64_MAX ||
-      given_counter < gcm_ctx->min_next_nonce) {
+  uint64_t given_counter =
+      CRYPTO_load_u64_be(nonce + nonce_len - sizeof(uint64_t));
+  if (given_counter == UINT64_MAX || given_counter < gcm_ctx->min_next_nonce) {
     OPENSSL_PUT_ERROR(CIPHER, CIPHER_R_INVALID_NONCE);
     return 0;
   }
@@ -1366,11 +1477,9 @@ struct aead_aes_gcm_tls13_ctx {
 OPENSSL_STATIC_ASSERT(sizeof(((EVP_AEAD_CTX *)NULL)->state) >=
                           sizeof(struct aead_aes_gcm_tls13_ctx),
                       AEAD_state_is_too_small)
-#if defined(__GNUC__) || defined(__clang__)
 OPENSSL_STATIC_ASSERT(alignof(union evp_aead_ctx_st_state) >=
                           alignof(struct aead_aes_gcm_tls13_ctx),
                       AEAD_state_has_insufficient_alignment)
-#endif
 
 static int aead_aes_gcm_tls13_init(EVP_AEAD_CTX *ctx, const uint8_t *key,
                                    size_t key_len, size_t requested_tag_len) {
@@ -1406,10 +1515,8 @@ static int aead_aes_gcm_tls13_seal_scatter(
   // The given nonces must be strictly monotonically increasing. See
   // https://tools.ietf.org/html/rfc8446#section-5.3 for details of the TLS 1.3
   // nonce construction.
-  uint64_t given_counter;
-  OPENSSL_memcpy(&given_counter, nonce + nonce_len - sizeof(given_counter),
-                 sizeof(given_counter));
-  given_counter = CRYPTO_bswap8(given_counter);
+  uint64_t given_counter =
+      CRYPTO_load_u64_be(nonce + nonce_len - sizeof(uint64_t));
 
   if (gcm_ctx->first) {
     // In the first call the sequence number will be zero and therefore the
