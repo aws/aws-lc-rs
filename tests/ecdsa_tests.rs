@@ -19,6 +19,18 @@ use aws_lc_ring_facade::{
 };
 
 #[test]
+fn ecdsa_traits() {
+    test::compile_time_assert_send::<signature::EcdsaKeyPair>();
+    test::compile_time_assert_sync::<signature::EcdsaKeyPair>();
+    test::compile_time_assert_send::<signature::Signature>();
+    test::compile_time_assert_sync::<signature::Signature>();
+    test::compile_time_assert_send::<signature::UnparsedPublicKey<&[u8]>>();
+    test::compile_time_assert_sync::<signature::UnparsedPublicKey<&[u8]>>();
+    test::compile_time_assert_send::<signature::UnparsedPublicKey<Vec<u8>>>();
+    test::compile_time_assert_sync::<signature::UnparsedPublicKey<Vec<u8>>>();
+}
+
+#[test]
 fn ecdsa_from_pkcs8_test() {
     test::run(
         test_file!("data/ecdsa_from_pkcs8_tests.txt"),

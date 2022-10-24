@@ -14,15 +14,19 @@
 
 use aws_lc_ring_facade::signature::{KeyPair, RsaParameters};
 #[cfg(feature = "alloc")]
-use aws_lc_ring_facade::{
-    //io::der,
-    rand,
-    signature,
-    //signature::KeyPair,
-    signature::RsaKeyPair,
-    test,
-    test_file,
-};
+use aws_lc_ring_facade::{rand, signature, signature::RsaKeyPair, test, test_file};
+
+#[test]
+fn rsa_traits() {
+    test::compile_time_assert_send::<RsaKeyPair>();
+    test::compile_time_assert_sync::<RsaKeyPair>();
+    test::compile_time_assert_send::<signature::RsaSubjectPublicKey>();
+    test::compile_time_assert_sync::<signature::RsaSubjectPublicKey>();
+    test::compile_time_assert_send::<signature::RsaPublicKeyComponents<&[u8]>>();
+    test::compile_time_assert_sync::<signature::RsaPublicKeyComponents<&[u8]>>();
+    test::compile_time_assert_send::<signature::RsaPublicKeyComponents<Vec<u8>>>();
+    test::compile_time_assert_sync::<signature::RsaPublicKeyComponents<Vec<u8>>>();
+}
 
 #[cfg(feature = "alloc")]
 #[test]
@@ -253,11 +257,12 @@ fn rsa_test_public_key_coverage() {
 
     let key_pair = RsaKeyPair::from_pkcs8(PRIVATE_KEY).unwrap();
 
+    let pubkey = key_pair.public_key();
     // Test `AsRef<[u8]>`
-    assert_eq!(key_pair.public_key().as_ref(), PUBLIC_KEY);
+    assert_eq!(pubkey.as_ref(), PUBLIC_KEY);
 
     // Test `Clone`.
-    let _ = key_pair.public_key().clone();
+    let _ = pubkey.clone();
 
     // TODO: We currently don't directly expose the public key modulus and exponent
     /*

@@ -268,6 +268,7 @@ use crate::rsa::{RSASigningAlgorithmId, RSAVerificationAlgorithmId};
 pub use rsa::RsaEncoding;
 pub use rsa::RsaParameters;
 pub use rsa::RsaPublicKeyComponents;
+pub use rsa::RsaSubjectPublicKey;
 
 pub use crate::ec::key_pair::EcdsaKeyPair;
 pub use crate::ed25519::{Ed25519KeyPair, EdDSAParameters};

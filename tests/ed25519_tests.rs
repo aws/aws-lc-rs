@@ -18,6 +18,12 @@ use aws_lc_ring_facade::{
     test, test_file,
 };
 
+#[test]
+fn test_ed25519_traits() {
+    test::compile_time_assert_send::<Ed25519KeyPair>();
+    test::compile_time_assert_sync::<Ed25519KeyPair>();
+}
+
 /// Test vectors from BoringSSL.
 #[test]
 fn test_signature_ed25519() {
