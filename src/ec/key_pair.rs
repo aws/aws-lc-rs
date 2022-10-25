@@ -83,10 +83,10 @@ impl EcdsaKeyPair {
             let evp_pkey = LcPtr::new(EVP_parse_private_key(&mut cbs))
                 .map_err(|_| KeyRejected::invalid_encoding())?;
 
-            ec::validate_pkey(evp_pkey.as_non_null(), alg.bits)?;
-            let ec_key = LcPtr::new(EVP_PKEY_get1_EC_KEY(*evp_pkey))?;
+            let ec_key = LcPtr::new(EVP_PKEY_get1_EC_KEY(*evp_pkey))
+                .map_err(|_| KeyRejected::wrong_algorithm())?;
 
-            ec::validate_ec_key(*ec_key)?;
+            ec::validate_ec_key(ec_key.as_non_null(), alg.bits)?;
 
             let key_pair = Self::new(alg, ec_key)?;
 

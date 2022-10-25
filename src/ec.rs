@@ -16,19 +16,18 @@ use crate::error::{KeyRejected, Unspecified};
 
 use crate::ptr::{DetachableLcPtr, LcPtr, NonNullPtr};
 
-use crate::rsa::evp_pkey;
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
 use aws_lc_sys::{
     BN_bin2bn, BN_bn2bin, BN_num_bytes, ECDSA_SIG_from_bytes, ECDSA_SIG_new, ECDSA_SIG_set0,
     ECDSA_SIG_to_bytes, ECDSA_do_verify, EC_KEY_get0_group, EC_KEY_get0_public_key,
     EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, BIGNUM, ECDSA_SIG,
-    EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY,
+    EC_GROUP, EC_KEY, EC_POINT,
 };
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
-use std::os::raw::{c_int, c_uint};
+use std::os::raw::c_uint;
 use std::ptr::{null, null_mut};
 use std::slice;
 use untrusted::Input;
@@ -161,16 +160,20 @@ impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
 }
 
 #[inline]
-unsafe fn validate_pkey(
-    evp_pkey: NonNullPtr<*mut EVP_PKEY>,
+unsafe fn validate_ec_key(
+    ec_key: NonNullPtr<*mut EC_KEY>,
     expected_bits: c_uint,
 ) -> Result<(), KeyRejected> {
-    const EC_KEY_TYPE: c_int = aws_lc_sys::EVP_PKEY_EC;
-    evp_pkey::validate_pkey(evp_pkey, EC_KEY_TYPE, expected_bits, expected_bits)
-}
+    let ec_group = NonNullPtr::new(aws_lc_sys::EC_KEY_get0_group(*ec_key))?;
+    let bits = aws_lc_sys::EC_GROUP_order_bits(*ec_group) as c_uint;
 
-#[inline]
-unsafe fn validate_ec_key(_ec_key: *mut EC_KEY) -> Result<(), KeyRejected> {
+    if bits < expected_bits {
+        return Err(KeyRejected::too_small());
+    }
+
+    if bits > expected_bits {
+        return Err(KeyRejected::too_large());
+    }
     Ok(())
 }
 

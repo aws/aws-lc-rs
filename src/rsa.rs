@@ -34,8 +34,6 @@ use std::slice;
 use untrusted::Input;
 use zeroize::Zeroize;
 
-pub mod evp_pkey;
-
 pub struct RsaKeyPair {
     // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L286
     // An |RSA| object represents a public or private RSA key. A given object may be

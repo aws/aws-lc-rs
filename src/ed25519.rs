@@ -8,7 +8,6 @@ use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Document;
 use crate::ptr::{LcPtr, NonNullPtr};
 use crate::rand::SecureRandom;
-use crate::rsa::evp_pkey;
 use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
 use crate::{cbb, cbs, constant_time, sealed, test};
 use aws_lc_sys::{
@@ -188,7 +187,7 @@ impl Ed25519KeyPair {
             let evp_pkey = LcPtr::new(EVP_parse_private_key(&mut cbs))
                 .map_err(|_| KeyRejected::invalid_encoding())?;
 
-            validate_pkey(evp_pkey.as_non_null())?;
+            validate_ed25519_evp_pkey(evp_pkey.as_non_null())?;
 
             let mut private_key = [0u8; ED25519_PRIVATE_KEY_LEN];
             let mut out_len: usize = ED25519_PRIVATE_KEY_LEN;
@@ -245,16 +244,28 @@ impl Ed25519KeyPair {
 }
 
 #[inline]
-unsafe fn validate_pkey(evp_pkey: NonNullPtr<*mut EVP_PKEY>) -> Result<(), KeyRejected> {
+pub(crate) unsafe fn validate_ed25519_evp_pkey(
+    evp_pkey: NonNullPtr<*mut EVP_PKEY>,
+) -> Result<(), KeyRejected> {
     const ED25519_KEY_TYPE: c_int = aws_lc_sys::EVP_PKEY_ED25519;
     const ED25519_MIN_BITS: c_uint = 253;
     const ED25519_MAX_BITS: c_uint = 256;
-    evp_pkey::validate_pkey(
-        evp_pkey,
-        ED25519_KEY_TYPE,
-        ED25519_MIN_BITS,
-        ED25519_MAX_BITS,
-    )
+
+    let key_type = aws_lc_sys::EVP_PKEY_id(*evp_pkey);
+    if key_type != ED25519_KEY_TYPE {
+        return Err(KeyRejected::wrong_algorithm());
+    }
+
+    let bits = aws_lc_sys::EVP_PKEY_bits(*evp_pkey);
+    let bits = bits as c_uint;
+    if bits < ED25519_MIN_BITS {
+        return Err(KeyRejected::too_small());
+    }
+
+    if bits > ED25519_MAX_BITS {
+        return Err(KeyRejected::too_large());
+    }
+    Ok(())
 }
 
 #[cfg(test)]
