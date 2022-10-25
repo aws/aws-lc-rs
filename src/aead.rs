@@ -44,9 +44,9 @@ mod nonce;
 mod poly1305;
 pub mod quic;
 
-#[cfg(feature = "thread_local")]
+#[cfg(feature = "threadlocal")]
 use thread_local::ThreadLocal;
-#[cfg(feature = "thread_local")]
+#[cfg(feature = "threadlocal")]
 use zeroize::Zeroize;
 
 pub use self::{
@@ -425,11 +425,11 @@ impl Aad<[u8; 0]> {
     }
 }
 
-#[cfg(feature = "thread_local")]
+#[cfg(feature = "threadlocal")]
 const MAX_KEY_BYTE_LEN: usize = 32;
 
 /// An AEAD key without a designated role or nonce sequence.
-#[cfg(feature = "thread_local")]
+#[cfg(feature = "threadlocal")]
 pub struct UnboundKey {
     // There are concerns about using ThreadLocal due to platform-specific behaviour. The best
     // solution would be to restructure our structs so that they contain no mutable state.
@@ -439,13 +439,13 @@ pub struct UnboundKey {
     algorithm: &'static Algorithm,
 }
 
-#[cfg(not(feature = "thread_local"))]
+#[cfg(not(feature = "threadlocal"))]
 pub struct UnboundKey {
     inner: KeyInner,
     algorithm: &'static Algorithm,
 }
 
-#[cfg(feature = "thread_local")]
+#[cfg(feature = "threadlocal")]
 impl Drop for UnboundKey {
     fn drop(&mut self) {
         self.key_bytes.zeroize();
@@ -464,7 +464,7 @@ impl UnboundKey {
     /// Constructs an `UnboundKey`.
     ///
     /// Fails if `key_bytes.len() != algorithm.key_len()`.
-    #[cfg(feature = "thread_local")]
+    #[cfg(feature = "threadlocal")]
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         if key_bytes.len() > MAX_KEY_BYTE_LEN {
             return Err(Unspecified);
@@ -483,7 +483,7 @@ impl UnboundKey {
         Ok(unbound_key)
     }
 
-    #[cfg(not(feature = "thread_local"))]
+    #[cfg(not(feature = "threadlocal"))]
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         Ok(Self {
             inner: (algorithm.init)(key_bytes)?,
@@ -491,7 +491,7 @@ impl UnboundKey {
         })
     }
 
-    #[cfg(feature = "thread_local")]
+    #[cfg(feature = "threadlocal")]
     fn get_inner_key(&self) -> Result<&KeyInner, Unspecified> {
         let inner_key = self
             .inner
@@ -500,7 +500,7 @@ impl UnboundKey {
     }
 
     /// No-op function if thread_local is turned off.
-    #[cfg(not(feature = "thread_local"))]
+    #[cfg(not(feature = "threadlocal"))]
     fn get_inner_key(&self) -> Result<&KeyInner, Unspecified> {
         Ok(&self.inner)
     }

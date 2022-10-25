@@ -8,8 +8,8 @@ rust-version = "1.57"
 
 [features]
 alloc = []
-thread_local = ["dep:thread_local"]
-default = ["alloc", "thread_local"]
+threadlocal = ["thread_local"]
+default = ["alloc", "threadlocal"]
 asan = ["aws-lc-sys/asan"]
 
 [dependencies]
