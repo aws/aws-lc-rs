@@ -156,12 +156,10 @@ impl KeyRejected {
     //    KeyRejected("PublicKeyIsMissing")
     //}
 
-    #[cfg(feature = "alloc")]
     pub(crate) fn too_small() -> Self {
         KeyRejected("TooSmall")
     }
 
-    #[cfg(feature = "alloc")]
     pub(crate) fn too_large() -> Self {
         KeyRejected("TooLarge")
     }
@@ -174,7 +172,6 @@ impl KeyRejected {
         KeyRejected("WrongAlgorithm")
     }
 
-    #[cfg(feature = "alloc")]
     pub(crate) fn private_modulus_len_not_multiple_of_512_bits() -> Self {
         KeyRejected("PrivateModulusLenNotMultipleOf512Bits")
     }
@@ -220,5 +217,11 @@ impl From<Unspecified> for () {
 impl From<()> for KeyRejected {
     fn from(_: ()) -> Self {
         KeyRejected::unexpected_error()
+    }
+}
+
+impl From<untrusted::EndOfInput> for Unspecified {
+    fn from(_: untrusted::EndOfInput) -> Self {
+        Unspecified
     }
 }

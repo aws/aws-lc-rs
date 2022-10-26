@@ -9,8 +9,9 @@ rust-version = "1.57"
 [features]
 alloc = []
 threadlocal = ["thread_local"]
-default = ["alloc", "threadlocal"]
+default = ["alloc", "threadlocal", "ring-io"]
 asan = ["aws-lc-sys/asan"]
+ring-io = []
 
 [dependencies]
 untrusted = { version = "0.7.1" }

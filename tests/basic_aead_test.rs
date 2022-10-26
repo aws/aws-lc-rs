@@ -93,6 +93,7 @@ fn test_chacha20_poly1305() {
     );
     let mut in_out = from_hex("123456789abcdef0").unwrap();
 
+    #[cfg(feature = "alloc")]
     test_aead_separate_in_place(&config, &mut in_out).unwrap();
     test_aead_append_within(&config, &mut in_out).unwrap();
 }

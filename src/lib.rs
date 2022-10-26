@@ -7,13 +7,14 @@ pub mod digest;
 pub mod error;
 pub mod hkdf;
 pub mod hmac;
+#[cfg(all(feature = "ring-io"))]
+pub mod io;
 pub mod pbkdf2;
 pub mod pkcs8;
 pub mod rand;
 pub mod signature;
 pub mod test;
 
-#[cfg(feature = "alloc")]
 mod rsa;
 
 mod debug;

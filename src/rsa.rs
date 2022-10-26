@@ -19,9 +19,14 @@
 
 use crate::digest::match_digest_type;
 use crate::error::{KeyRejected, Unspecified};
+#[cfg(feature = "ring-io")]
+use crate::io;
 use crate::ptr::{DetachableLcPtr, LcPtr, NonNullPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
+#[cfg(feature = "ring-io")]
+use aws_lc_sys::{BN_bn2bin, BN_num_bytes, RSA_get0_e, RSA_get0_n};
+
 use crate::{cbs, digest, rand, test};
 use aws_lc_sys::{BN_cmp, BN_new, BN_set_u64, EVP_parse_private_key, RSA_new, BIGNUM, RSA};
 use std::cmp::Ordering;
@@ -49,17 +54,10 @@ impl Sealed for RsaKeyPair {}
 unsafe impl Send for RsaKeyPair {}
 unsafe impl Sync for RsaKeyPair {}
 
-impl Drop for RsaKeyPair {
-    fn drop(&mut self) {
-        self.serialized_public_key.0.zeroize();
-    }
-}
-
 impl RsaKeyPair {
     fn new(rsa_key: LcPtr<*mut RSA>) -> Result<Self, KeyRejected> {
         unsafe {
-            let pubkey_bytes = serialize_RSA_pubkey(rsa_key.as_non_null())?;
-            let serialized_public_key = RsaSubjectPublicKey::new(pubkey_bytes);
+            let serialized_public_key = RsaSubjectPublicKey::new(rsa_key.as_non_null())?;
             Ok(RsaKeyPair {
                 rsa_key,
                 serialized_public_key,
@@ -199,7 +197,7 @@ impl RsaKeyPair {
                     output_len,
                     digest.as_ptr(),
                     digest.len(),
-                    digest::match_digest_type(&digest_alg.id),
+                    match_digest_type(&digest_alg.id),
                     null(),
                     -1,
                 ),
@@ -229,25 +227,16 @@ impl Debug for RsaKeyPair {
     }
 }
 
-#[derive(Clone)]
-pub struct RsaSubjectPublicKey(Box<[u8]>);
-
-impl RsaSubjectPublicKey {
-    fn new(pubkey_box: Box<[u8]>) -> Self {
-        RsaSubjectPublicKey(pubkey_box)
-    }
-}
-
 #[allow(non_snake_case)]
-unsafe fn serialize_RSA_pubkey(pubkey: NonNullPtr<*mut RSA>) -> Result<Box<[u8]>, KeyRejected> {
+unsafe fn serialize_RSA_pubkey(pubkey: &NonNullPtr<*mut RSA>) -> Result<Box<[u8]>, ()> {
     let mut pubkey_bytes = MaybeUninit::<*mut u8>::uninit();
     let mut outlen = MaybeUninit::<usize>::uninit();
     if 1 != aws_lc_sys::RSA_public_key_to_bytes(
         pubkey_bytes.as_mut_ptr(),
         outlen.as_mut_ptr(),
-        *pubkey,
+        **pubkey,
     ) {
-        return Err(KeyRejected::unexpected_error());
+        return Err(());
     }
     let pubkey_bytes = LcPtr::new(pubkey_bytes.assume_init())?;
     let outlen = outlen.assume_init();
@@ -258,6 +247,16 @@ unsafe fn serialize_RSA_pubkey(pubkey: NonNullPtr<*mut RSA>) -> Result<Box<[u8]>
     Ok(pubkey_vec.into_boxed_slice())
 }
 
+#[cfg(feature = "ring-io")]
+unsafe fn serialize_bignum(bignum: NonNullPtr<*mut BIGNUM>) -> Result<Box<[u8]>, ()> {
+    let bn_len = BN_num_bytes(*bignum) as usize;
+    let mut bn_vec: Vec<u8> = vec![0u8; bn_len];
+    let bytes_written = BN_bn2bin(*bignum, bn_vec.as_mut_ptr());
+    debug_assert_eq!(bn_len, bytes_written);
+    debug_assert_eq!(bn_vec.len(), bytes_written);
+    Ok(bn_vec.into_boxed_slice())
+}
+
 impl KeyPair for RsaKeyPair {
     type PublicKey = RsaSubjectPublicKey;
 
@@ -266,18 +265,72 @@ impl KeyPair for RsaKeyPair {
     }
 }
 
+#[derive(Clone)]
+pub struct RsaSubjectPublicKey {
+    key: Box<[u8]>,
+    #[cfg(feature = "ring-io")]
+    modulus: Box<[u8]>,
+    #[cfg(feature = "ring-io")]
+    exponent: Box<[u8]>,
+}
+
+impl Drop for RsaSubjectPublicKey {
+    fn drop(&mut self) {
+        self.key.zeroize();
+        #[cfg(feature = "ring-io")]
+        self.modulus.zeroize();
+        #[cfg(feature = "ring-io")]
+        self.exponent.zeroize();
+    }
+}
+
+impl RsaSubjectPublicKey {
+    unsafe fn new(pubkey: NonNullPtr<*mut RSA>) -> Result<Self, ()> {
+        let key = serialize_RSA_pubkey(&pubkey)?;
+        #[cfg(feature = "ring-io")]
+        {
+            let modulus = NonNullPtr::new(RSA_get0_n(*pubkey))?;
+            let modulus = serialize_bignum(modulus)?;
+            let exponent = NonNullPtr::new(RSA_get0_e(*pubkey))?;
+            let exponent = serialize_bignum(exponent)?;
+
+            Ok(RsaSubjectPublicKey {
+                key,
+                modulus,
+                exponent,
+            })
+        }
+
+        #[cfg(not(feature = "ring-io"))]
+        Ok(RsaSubjectPublicKey { key })
+    }
+}
+
 impl Debug for RsaSubjectPublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!(
             "RsaSubjectPublicKey(\"{}\")",
-            test::to_hex(self.0.as_ref())
+            test::to_hex(self.key.as_ref())
         ))
     }
 }
 
 impl AsRef<[u8]> for RsaSubjectPublicKey {
     fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
+        self.key.as_ref()
+    }
+}
+
+#[cfg(feature = "ring-io")]
+impl<'a> RsaSubjectPublicKey {
+    /// The public modulus (n).
+    pub fn modulus(&'a self) -> io::Positive<'a> {
+        io::Positive::new_non_empty_without_leading_zeros(Input::from(self.modulus.as_ref()))
+    }
+
+    /// The public exponent (e).
+    pub fn exponent(&'a self) -> io::Positive<'a> {
+        io::Positive::new_non_empty_without_leading_zeros(Input::from(self.exponent.as_ref()))
     }
 }
 
@@ -292,7 +345,6 @@ pub enum RSASigningAlgorithmId {
     RSA_PKCS1_SHA512,
 }
 
-#[cfg(feature = "alloc")]
 pub struct RsaSignatureEncoding(
     pub(super) &'static digest::Algorithm,
     pub(super) &'static RsaPadding,
@@ -337,7 +389,6 @@ pub enum RSAVerificationAlgorithmId {
     RSA_PSS_2048_8192_SHA512,
 }
 
-#[cfg(feature = "alloc")]
 pub struct RsaParameters(
     pub(super) &'static digest::Algorithm,
     pub(super) &'static RsaPadding,

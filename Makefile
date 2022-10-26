@@ -21,3 +21,11 @@ asan-release:
 
 coverage:
 	cargo llvm-cov --open --hide-instantiations
+
+ci:
+	cargo fmt --check --verbose
+	cargo test --release
+	cargo test --no-default-features
+	cargo test --no-default-features --features ring-io
+	cargo test --no-default-features --features alloc
+	cargo test --no-default-features --features threadlocal

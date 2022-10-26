@@ -13,7 +13,6 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 use aws_lc_ring_facade::signature::{KeyPair, RsaParameters};
-#[cfg(feature = "alloc")]
 use aws_lc_ring_facade::{rand, signature, signature::RsaKeyPair, test, test_file};
 
 #[test]
@@ -28,7 +27,6 @@ fn rsa_traits() {
     test::compile_time_assert_sync::<signature::RsaPublicKeyComponents<Vec<u8>>>();
 }
 
-#[cfg(feature = "alloc")]
 #[test]
 fn rsa_from_pkcs8_test() {
     test::run(
@@ -56,7 +54,6 @@ fn rsa_from_pkcs8_test() {
     );
 }
 
-#[cfg(feature = "alloc")]
 #[test]
 fn test_signature_rsa_pkcs1_sign() {
     let rng = rand::SystemRandom::new();
@@ -97,7 +94,6 @@ fn test_signature_rsa_pkcs1_sign() {
     );
 }
 
-#[cfg(feature = "alloc")]
 #[test]
 fn test_signature_rsa_pss_sign() {
     test::run(
@@ -136,7 +132,6 @@ fn test_signature_rsa_pss_sign() {
     );
 }
 
-#[cfg(feature = "alloc")]
 #[test]
 fn test_signature_rsa_pkcs1_verify() {
     let sha1_params = &[
@@ -192,7 +187,6 @@ fn test_signature_rsa_pkcs1_verify() {
     );
 }
 
-#[cfg(feature = "alloc")]
 #[test]
 fn test_signature_rsa_pss_verify() {
     test::run(
@@ -224,7 +218,6 @@ fn test_signature_rsa_pss_verify() {
 
 // Test for `primitive::verify()`. Read public key parts from a file
 // and use them to verify a signature.
-#[cfg(feature = "alloc")]
 #[test]
 fn test_signature_rsa_primitive_verification() {
     test::run(
@@ -248,7 +241,7 @@ fn test_signature_rsa_primitive_verification() {
         },
     )
 }
-#[cfg(feature = "alloc")]
+
 #[test]
 fn rsa_test_public_key_coverage() {
     const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_2048.p8");
@@ -264,9 +257,7 @@ fn rsa_test_public_key_coverage() {
     // Test `Clone`.
     let _ = pubkey.clone();
 
-    // TODO: We currently don't directly expose the public key modulus and exponent
-    /*
-    // Test `exponent()`.
+    #[cfg(feature = "ring-io")]
     assert_eq!(
         &[0x01, 0x00, 0x01],
         key_pair
@@ -274,7 +265,7 @@ fn rsa_test_public_key_coverage() {
             .exponent()
             .big_endian_without_leading_zero()
     );
-    */
+
     // Test `Debug`
     assert_eq!(PUBLIC_KEY_DEBUG, format!("{:?}", key_pair.public_key()));
     assert_eq!(

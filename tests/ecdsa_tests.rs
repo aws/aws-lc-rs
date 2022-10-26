@@ -134,7 +134,6 @@ fn ecdsa_generate_pkcs8_test() {
         println!();
         println!();
 
-        #[cfg(feature = "alloc")]
         let _ = signature::EcdsaKeyPair::from_pkcs8(*alg, pkcs8.as_ref()).unwrap();
     }
 }

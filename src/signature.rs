@@ -255,22 +255,18 @@
 //! #     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
 //! # }
 //! ```
+use crate::rsa;
+use rsa::{RSASigningAlgorithmId, RSAVerificationAlgorithmId, RsaSignatureEncoding};
+pub use rsa::{
+    RsaEncoding, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey,
+};
 
-use crate::{digest, ec, error, rsa, sealed, test};
+use crate::{digest, ec, error, sealed, test};
 use std::fmt::{Debug, Formatter};
 use untrusted::Input;
 
-#[cfg(feature = "alloc")]
-pub use crate::rsa::{RsaKeyPair, RsaSignatureEncoding};
-
-pub use crate::ec::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
-use crate::rsa::{RSASigningAlgorithmId, RSAVerificationAlgorithmId};
-pub use rsa::RsaEncoding;
-pub use rsa::RsaParameters;
-pub use rsa::RsaPublicKeyComponents;
-pub use rsa::RsaSubjectPublicKey;
-
 pub use crate::ec::key_pair::EcdsaKeyPair;
+pub use crate::ec::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
 pub use crate::ed25519::{Ed25519KeyPair, EdDSAParameters};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
