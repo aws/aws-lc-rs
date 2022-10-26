@@ -1097,6 +1097,8 @@
 %xdefine _EVP_PKEY_CTX_set0_rsa_oaep_label _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set0_rsa_oaep_label
 %xdefine _EVP_PKEY_CTX_set1_hkdf_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_hkdf_key
 %xdefine _EVP_PKEY_CTX_set1_hkdf_salt _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_hkdf_salt
+%xdefine _EVP_PKEY_CTX_set_dsa_paramgen_bits _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_dsa_paramgen_bits
+%xdefine _EVP_PKEY_CTX_set_dsa_paramgen_q_bits _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_dsa_paramgen_q_bits
 %xdefine _EVP_PKEY_CTX_set_ec_param_enc _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_ec_param_enc
 %xdefine _EVP_PKEY_CTX_set_ec_paramgen_curve_nid _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_ec_paramgen_curve_nid
 %xdefine _EVP_PKEY_CTX_set_hkdf_md _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_hkdf_md
@@ -1798,6 +1800,7 @@
 %xdefine _SPAKE2_CTX_new _ %+ BORINGSSL_PREFIX %+ _SPAKE2_CTX_new
 %xdefine _SPAKE2_generate_msg _ %+ BORINGSSL_PREFIX %+ _SPAKE2_generate_msg
 %xdefine _SPAKE2_process_msg _ %+ BORINGSSL_PREFIX %+ _SPAKE2_process_msg
+%xdefine _SSHKDF _ %+ BORINGSSL_PREFIX %+ _SSHKDF
 %xdefine _SSLeay _ %+ BORINGSSL_PREFIX %+ _SSLeay
 %xdefine _SSLeay_version _ %+ BORINGSSL_PREFIX %+ _SSLeay_version
 %xdefine _TRUST_TOKEN_CLIENT_add_key _ %+ BORINGSSL_PREFIX %+ _TRUST_TOKEN_CLIENT_add_key
@@ -1962,9 +1965,6 @@
 %xdefine _X509_EXTENSION_set_object _ %+ BORINGSSL_PREFIX %+ _X509_EXTENSION_set_object
 %xdefine _X509_INFO_free _ %+ BORINGSSL_PREFIX %+ _X509_INFO_free
 %xdefine _X509_INFO_new _ %+ BORINGSSL_PREFIX %+ _X509_INFO_new
-%xdefine _X509_LOOKUP_by_alias _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_by_alias
-%xdefine _X509_LOOKUP_by_fingerprint _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_by_fingerprint
-%xdefine _X509_LOOKUP_by_issuer_serial _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_by_issuer_serial
 %xdefine _X509_LOOKUP_by_subject _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_by_subject
 %xdefine _X509_LOOKUP_ctrl _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_ctrl
 %xdefine _X509_LOOKUP_file _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_file
@@ -2291,7 +2291,6 @@
 %xdefine _X509_getm_notAfter _ %+ BORINGSSL_PREFIX %+ _X509_getm_notAfter
 %xdefine _X509_getm_notBefore _ %+ BORINGSSL_PREFIX %+ _X509_getm_notBefore
 %xdefine _X509_gmtime_adj _ %+ BORINGSSL_PREFIX %+ _X509_gmtime_adj
-%xdefine _X509_issuer_and_serial_cmp _ %+ BORINGSSL_PREFIX %+ _X509_issuer_and_serial_cmp
 %xdefine _X509_issuer_name_cmp _ %+ BORINGSSL_PREFIX %+ _X509_issuer_name_cmp
 %xdefine _X509_issuer_name_hash _ %+ BORINGSSL_PREFIX %+ _X509_issuer_name_hash
 %xdefine _X509_issuer_name_hash_old _ %+ BORINGSSL_PREFIX %+ _X509_issuer_name_hash_old
@@ -4282,6 +4281,8 @@
 %xdefine EVP_PKEY_CTX_set0_rsa_oaep_label BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set0_rsa_oaep_label
 %xdefine EVP_PKEY_CTX_set1_hkdf_key BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_hkdf_key
 %xdefine EVP_PKEY_CTX_set1_hkdf_salt BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_hkdf_salt
+%xdefine EVP_PKEY_CTX_set_dsa_paramgen_bits BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_dsa_paramgen_bits
+%xdefine EVP_PKEY_CTX_set_dsa_paramgen_q_bits BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_dsa_paramgen_q_bits
 %xdefine EVP_PKEY_CTX_set_ec_param_enc BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_ec_param_enc
 %xdefine EVP_PKEY_CTX_set_ec_paramgen_curve_nid BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_ec_paramgen_curve_nid
 %xdefine EVP_PKEY_CTX_set_hkdf_md BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_hkdf_md
@@ -4983,6 +4984,7 @@
 %xdefine SPAKE2_CTX_new BORINGSSL_PREFIX %+ _SPAKE2_CTX_new
 %xdefine SPAKE2_generate_msg BORINGSSL_PREFIX %+ _SPAKE2_generate_msg
 %xdefine SPAKE2_process_msg BORINGSSL_PREFIX %+ _SPAKE2_process_msg
+%xdefine SSHKDF BORINGSSL_PREFIX %+ _SSHKDF
 %xdefine SSLeay BORINGSSL_PREFIX %+ _SSLeay
 %xdefine SSLeay_version BORINGSSL_PREFIX %+ _SSLeay_version
 %xdefine TRUST_TOKEN_CLIENT_add_key BORINGSSL_PREFIX %+ _TRUST_TOKEN_CLIENT_add_key
@@ -5147,9 +5149,6 @@
 %xdefine X509_EXTENSION_set_object BORINGSSL_PREFIX %+ _X509_EXTENSION_set_object
 %xdefine X509_INFO_free BORINGSSL_PREFIX %+ _X509_INFO_free
 %xdefine X509_INFO_new BORINGSSL_PREFIX %+ _X509_INFO_new
-%xdefine X509_LOOKUP_by_alias BORINGSSL_PREFIX %+ _X509_LOOKUP_by_alias
-%xdefine X509_LOOKUP_by_fingerprint BORINGSSL_PREFIX %+ _X509_LOOKUP_by_fingerprint
-%xdefine X509_LOOKUP_by_issuer_serial BORINGSSL_PREFIX %+ _X509_LOOKUP_by_issuer_serial
 %xdefine X509_LOOKUP_by_subject BORINGSSL_PREFIX %+ _X509_LOOKUP_by_subject
 %xdefine X509_LOOKUP_ctrl BORINGSSL_PREFIX %+ _X509_LOOKUP_ctrl
 %xdefine X509_LOOKUP_file BORINGSSL_PREFIX %+ _X509_LOOKUP_file
@@ -5476,7 +5475,6 @@
 %xdefine X509_getm_notAfter BORINGSSL_PREFIX %+ _X509_getm_notAfter
 %xdefine X509_getm_notBefore BORINGSSL_PREFIX %+ _X509_getm_notBefore
 %xdefine X509_gmtime_adj BORINGSSL_PREFIX %+ _X509_gmtime_adj
-%xdefine X509_issuer_and_serial_cmp BORINGSSL_PREFIX %+ _X509_issuer_and_serial_cmp
 %xdefine X509_issuer_name_cmp BORINGSSL_PREFIX %+ _X509_issuer_name_cmp
 %xdefine X509_issuer_name_hash BORINGSSL_PREFIX %+ _X509_issuer_name_hash
 %xdefine X509_issuer_name_hash_old BORINGSSL_PREFIX %+ _X509_issuer_name_hash_old
