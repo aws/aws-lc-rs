@@ -28,9 +28,6 @@ ring = "0.16"
 regex = "1.6.0"
 lazy_static = "1.4.0"
 
-[profile.release]
-lto = true
-
 [profile.bench]
 lto = true
 
