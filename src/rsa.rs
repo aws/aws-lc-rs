@@ -351,13 +351,15 @@ pub struct RsaSignatureEncoding(
     pub(super) &'static RSASigningAlgorithmId,
 );
 
+impl Sealed for RsaSignatureEncoding {}
+
 #[allow(non_camel_case_types)]
 pub enum RsaPadding {
     RSA_PKCS1_PADDING,
     RSA_PKCS1_PSS_PADDING,
 }
 
-pub trait RsaEncoding {
+pub trait RsaEncoding: 'static + Sync + Sealed + Debug {
     fn encoding(&'static self) -> &'static RsaSignatureEncoding;
 }
 

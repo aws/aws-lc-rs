@@ -37,6 +37,8 @@ pub use sha::{
 };
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
+#[cfg(feature = "threadlocal")]
+use thread_local::ThreadLocal;
 
 /// A context for multi-step (Init-Update-Finish) digest calculations.
 ///
@@ -55,6 +57,8 @@ use std::os::raw::c_uint;
 ///
 /// assert_eq!(&one_shot.as_ref(), &multi_part.as_ref());
 /// ```
+
+#[cfg(not(feature = "threadlocal"))]
 #[derive(Clone)]
 pub struct Context {
     /// The context's algorithm.
@@ -67,17 +71,61 @@ pub struct Context {
     max_input_reached: bool,
 }
 
+#[cfg(feature = "threadlocal")]
+pub struct Context {
+    /// The context's algorithm.
+    pub(crate) algorithm: &'static Algorithm,
+    digest_ctx: ThreadLocal<DigestContext>,
+    // The spec specifies that SHA-1 and SHA-256 support up to
+    // 2^64-1 bits of input. SHA-384 and SHA-512 support up to
+    // 2^128-1 bits.
+    msg_len: usize,
+    max_input_reached: bool,
+}
+
+#[cfg(feature = "threadlocal")]
+impl Clone for Context {
+    fn clone(&self) -> Self {
+        let result = Self {
+            algorithm: self.algorithm,
+            digest_ctx: ThreadLocal::new(),
+            msg_len: self.msg_len,
+            max_input_reached: self.max_input_reached,
+        };
+        #[cfg(feature = "threadlocal")]
+        let _ = result.digest_ctx.get_or(|| self.get_digest_ctx().clone());
+        result
+    }
+}
+
 unsafe impl Send for Context {}
 
 impl Context {
     /// Constructs a new context.
     pub fn new(algorithm: &'static Algorithm) -> Self {
-        Self {
+        let result = Self {
             algorithm,
+            #[cfg(feature = "threadlocal")]
+            digest_ctx: ThreadLocal::new(),
+            #[cfg(not(feature = "threadlocal"))]
             digest_ctx: DigestContext::new(algorithm).unwrap(),
             msg_len: 0u128 as usize,
             max_input_reached: false,
-        }
+        };
+        #[cfg(feature = "threadlocal")]
+        let _ = result.get_digest_ctx();
+        result
+    }
+
+    #[cfg(feature = "threadlocal")]
+    fn get_digest_ctx(&self) -> &DigestContext {
+        self.digest_ctx
+            .get_or(|| DigestContext::new(self.algorithm).unwrap())
+    }
+
+    #[cfg(not(feature = "threadlocal"))]
+    fn get_digest_ctx(&self) -> &DigestContext {
+        &self.digest_ctx
     }
 
     /// Updates the message to digest with all the data in `data`.
@@ -103,7 +151,7 @@ impl Context {
                 return Err(Unspecified);
             }
             if 1 != aws_lc_sys::EVP_DigestUpdate(
-                *self.digest_ctx.ctx,
+                *self.get_digest_ctx().ctx,
                 data.as_ptr().cast(),
                 data.len(),
             ) {
@@ -130,7 +178,7 @@ impl Context {
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
             if 1 != aws_lc_sys::EVP_DigestFinal(
-                *self.digest_ctx.ctx,
+                *self.get_digest_ctx().ctx,
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
             ) {
@@ -293,8 +341,11 @@ mod tests {
     mod max_input {
         extern crate alloc;
         use super::super::super::digest;
+        #[cfg(not(feature = "threadlocal"))]
         use crate::digest::digest_ctx::DigestContext;
         use alloc::vec;
+        #[cfg(feature = "threadlocal")]
+        use thread_local::ThreadLocal;
 
         macro_rules! max_input_tests {
             ( $algorithm_name:ident ) => {
@@ -349,6 +400,9 @@ mod tests {
             // 2^128-1 for SHA-384 and SHA-512, aligning with the spec.
             digest::Context {
                 algorithm: alg,
+                #[cfg(feature = "threadlocal")]
+                digest_ctx: ThreadLocal::new(),
+                #[cfg(not(feature = "threadlocal"))]
                 digest_ctx: DigestContext::new(alg).unwrap(),
                 msg_len: (alg.max_input_len - alg.block_len + 1),
                 max_input_reached: false,
