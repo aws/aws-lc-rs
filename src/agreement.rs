@@ -116,6 +116,14 @@ impl KeyInner {
 
 unsafe impl Send for EphemeralPrivateKey {}
 
+// https://github.com/awslabs/aws-lc/blob/main/include/openssl/ec_key.h#L88
+// An |EC_KEY| object represents a public or private EC key. A given object may
+// be used concurrently on multiple threads by non-mutating functions, provided
+// no other thread is concurrently calling a mutating function. Unless otherwise
+// documented, functions which take a |const| pointer are non-mutating and
+// functions which take a non-|const| pointer are mutating.
+unsafe impl Sync for EphemeralPrivateKey {}
+
 impl Debug for EphemeralPrivateKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!(
