@@ -21,15 +21,6 @@ impl HMACConfig {
     }
 }
 
-// For the one-shot hmac::sign, we use the corresponding one-shot HMAC function available in AWS-LC.
-// For SHA-{256, 384, 512, 512-256}, aws-lc-ring-facade hmac::sign one-shot Rust functions are
-// slightly slower than Ring for 16-256 byte inputs, than quickly catch up and are almost on par
-// with Ring. For SHA-1, AWS-LC is consistently 1.2-2.5 times faster, depending on the input
-// lengths.
-// For Context::{update/sign}, we initialize the HMAC_CTX when the context is constructed, then
-// point update and sign to the corresponding HMAC_Update and HMAC_Final. The extra malloc
-// dependency needed for maintaining HMAC_CTX makes us slightly slower for 16-1350 byte input sizes,
-// but larger inputs are on par with Ring's Context::{update/sign}.
 macro_rules! benchmark_hmac {
     ( $pkg:ident ) => {
         paste::item! {

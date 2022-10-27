@@ -15,6 +15,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+use aws_lc_ring_facade::hmac::sign;
 use aws_lc_ring_facade::{digest, hmac, test, test_file};
 
 #[test]
@@ -121,12 +122,16 @@ fn hmac_thread_safeness() {
         static ref MSG: Vec<u8> = vec![1u8; 256];
     }
 
-    let signature = hmac::sign(&*SECRET_KEY, &*MSG);
+    let signature = sign(&*SECRET_KEY, &*MSG);
 
     let mut join_handles = Vec::new();
     for _ in 1..100 {
         let join_handle = thread::spawn(|| {
-            let signature = hmac::sign(&*SECRET_KEY, &*MSG);
+            let signature = sign(&*SECRET_KEY, &*MSG);
+            for _ in 1..100 {
+                let my_signature = sign(&*SECRET_KEY, &*MSG);
+                assert_eq!(signature.as_ref(), my_signature.as_ref());
+            }
             signature
         });
         join_handles.push(join_handle);

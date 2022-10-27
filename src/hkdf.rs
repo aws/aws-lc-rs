@@ -22,8 +22,9 @@
 //! [RFC 5869]: https://tools.ietf.org/html/rfc5869
 
 use crate::error::Unspecified;
-use crate::{digest, error, hmac};
+use crate::{digest, hmac};
 use std::mem::MaybeUninit;
+use zeroize::Zeroize;
 
 /// An HKDF algorithm.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -50,6 +51,19 @@ pub static HKDF_SHA384: Algorithm = Algorithm(hmac::HMAC_SHA384);
 /// HKDF using HMAC-SHA-512.
 pub static HKDF_SHA512: Algorithm = Algorithm(hmac::HMAC_SHA512);
 
+/// General Salt length's for HKDF don't normally exceed 256 bits.
+/// We set the limit to something tolerable, so that the Salt structure can be stack allocatable.
+const MAX_HKDF_SALT_LEN: usize = 80;
+
+/// General Info length's for HKDF don't normally exceed 256 bits.
+/// We set the limit to something tolerable, so that the memory passed into |HKDF_expand| is
+/// allocated on the stack.
+const MAX_HKDF_INFO_LEN: usize = 80;
+
+/// The maximum output size of a PRK computed by |HKDF_extract| is the maximum digest
+/// size that can be outputted by AWS-LC.
+const MAX_HKDF_PRK_LEN: usize = digest::MAX_OUTPUT_LEN;
+
 impl KeyType for Algorithm {
     fn len(&self) -> usize {
         self.0.digest_algorithm().output_len
@@ -59,7 +73,15 @@ impl KeyType for Algorithm {
 /// A salt for HKDF operations.
 #[derive(Debug)]
 pub struct Salt {
-    key: hmac::Key,
+    algorithm: Algorithm,
+    key_bytes: [u8; MAX_HKDF_SALT_LEN],
+    key_len: usize,
+}
+
+impl Drop for Salt {
+    fn drop(&mut self) {
+        self.key_bytes.zeroize();
+    }
 }
 
 impl Salt {
@@ -69,9 +91,21 @@ impl Salt {
     /// Constructing a `Salt` is relatively expensive so it is good to reuse a
     /// `Salt` object instead of re-constructing `Salt`s with the same value.
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
-        Self {
-            key: hmac::Key::new(algorithm.0, value),
+        Salt::try_new(algorithm, value).expect("Salt length limit exceeded.")
+    }
+
+    fn try_new(algorithm: Algorithm, value: &[u8]) -> Result<Salt, Unspecified> {
+        let key_len = value.len();
+        if key_len > MAX_HKDF_SALT_LEN {
+            return Err(Unspecified);
         }
+        let mut key_bytes = [0u8; MAX_HKDF_SALT_LEN];
+        key_bytes[0..key_len].copy_from_slice(value);
+        Ok(Self {
+            algorithm,
+            key_bytes,
+            key_len,
+        })
     }
 
     /// The [HKDF-Extract] operation.
@@ -85,25 +119,26 @@ impl Salt {
     #[inline]
     fn try_extract(&self, secret: &[u8]) -> Result<Prk, Unspecified> {
         unsafe {
-            let mut out_key = MaybeUninit::<[u8; digest::MAX_OUTPUT_LEN]>::uninit();
-            let mut out_len = MaybeUninit::<usize>::uninit();
-
+            let mut key_bytes = MaybeUninit::<[u8; MAX_HKDF_PRK_LEN]>::uninit();
+            let mut key_len = MaybeUninit::<usize>::uninit();
             if 1 != aws_lc_sys::HKDF_extract(
-                out_key.as_mut_ptr().cast(),
-                out_len.as_mut_ptr(),
-                self.key.evp_alg,
+                key_bytes.as_mut_ptr().cast(),
+                key_len.as_mut_ptr(),
+                digest::match_digest_type(&self.algorithm.0.digest_algorithm().id),
                 secret.as_ptr(),
                 secret.len(),
-                self.key.key_bytes.as_ptr(),
-                self.key.key_bytes.len(),
+                self.key_bytes.as_ptr(),
+                self.key_len,
             ) {
                 return Err(Unspecified);
             };
+            let key_bytes = key_bytes.assume_init();
+            let key_len = key_len.assume_init();
+            debug_assert!(key_len <= MAX_HKDF_PRK_LEN);
             Ok(Prk {
-                key: hmac::Key::new(
-                    self.key.algorithm(),
-                    &out_key.assume_init()[..out_len.assume_init()],
-                ),
+                algorithm: self.algorithm,
+                key_bytes,
+                key_len,
             })
         }
     }
@@ -111,19 +146,22 @@ impl Salt {
     /// The algorithm used to derive this salt.
     #[inline]
     pub fn algorithm(&self) -> Algorithm {
-        Algorithm(self.key.algorithm)
+        Algorithm(self.algorithm.hmac_algorithm())
     }
 }
 
+#[allow(clippy::assertions_on_constants)]
+const _: () = assert!(MAX_HKDF_PRK_LEN <= MAX_HKDF_SALT_LEN);
+
 impl From<Okm<'_, Algorithm>> for Salt {
     fn from(okm: Okm<'_, Algorithm>) -> Self {
+        let key_len = okm.prk.key_len;
+        let mut key_bytes = [0u8; MAX_HKDF_SALT_LEN];
+        key_bytes[0..key_len].copy_from_slice(&okm.prk.key_bytes[..key_len]);
         Self {
-            key: hmac::Key::from(Okm {
-                prk: okm.prk,
-                info: okm.info,
-                len: okm.len().0,
-                len_cached: okm.len_cached,
-            }),
+            algorithm: okm.prk.algorithm,
+            key_bytes,
+            key_len,
         }
     }
 }
@@ -138,7 +176,15 @@ pub trait KeyType {
 /// A HKDF PRK (pseudorandom key).
 #[derive(Clone, Debug)]
 pub struct Prk {
-    key: hmac::Key,
+    algorithm: Algorithm,
+    key_bytes: [u8; MAX_HKDF_PRK_LEN],
+    key_len: usize,
+}
+
+impl Drop for Prk {
+    fn drop(&mut self) {
+        self.key_bytes.zeroize();
+    }
 }
 
 impl Prk {
@@ -148,9 +194,21 @@ impl Prk {
     /// intentionally wants to leak the PRK secret, e.g. to implement
     /// `SSLKEYLOGFILE` functionality.
     pub fn new_less_safe(algorithm: Algorithm, value: &[u8]) -> Self {
-        Self {
-            key: hmac::Key::new(algorithm.hmac_algorithm(), value),
+        Prk::try_new_less_safe(algorithm, value).expect("Prk length limit exceeded.")
+    }
+
+    fn try_new_less_safe(algorithm: Algorithm, value: &[u8]) -> Result<Prk, Unspecified> {
+        let key_len = value.len();
+        if key_len > MAX_HKDF_PRK_LEN {
+            return Err(Unspecified);
         }
+        let mut key_bytes = [0u8; MAX_HKDF_PRK_LEN];
+        key_bytes[0..key_len].copy_from_slice(value);
+        Ok(Self {
+            algorithm,
+            key_bytes,
+            key_len,
+        })
     }
 
     /// The [HKDF-Expand] operation.
@@ -161,32 +219,35 @@ impl Prk {
     #[inline]
     pub fn expand<'a, L: KeyType>(
         &'a self,
-        info: &'a [&'a [u8]],
+        info: &'_ [&'_ [u8]],
         len: L,
-    ) -> Result<Okm<'a, L>, error::Unspecified> {
+    ) -> Result<Okm<'a, L>, Unspecified> {
         let len_cached = len.len();
-        if len_cached > 255 * self.key.algorithm.digest_algorithm().output_len {
-            return Err(error::Unspecified);
+        if len_cached > 255 * self.algorithm.0.digest_algorithm().output_len {
+            return Err(Unspecified);
+        }
+        let mut info_bytes = [0u8; MAX_HKDF_INFO_LEN];
+        let mut info_len = 0;
+        for byte_ary in info {
+            let new_info_len = info_len + byte_ary.len();
+            if new_info_len > MAX_HKDF_INFO_LEN {
+                return Err(Unspecified);
+            }
+            info_bytes[info_len..new_info_len].copy_from_slice(byte_ary);
+            info_len = new_info_len;
         }
         Ok(Okm {
             prk: self,
-            info,
+            info_bytes,
+            info_len,
             len,
-            len_cached,
         })
     }
 }
 
 impl From<Okm<'_, Algorithm>> for Prk {
     fn from(okm: Okm<Algorithm>) -> Self {
-        Self {
-            key: hmac::Key::from(Okm {
-                prk: okm.prk,
-                info: okm.info,
-                len: okm.len().0,
-                len_cached: okm.len_cached,
-            }),
-        }
+        okm.prk.clone()
     }
 }
 
@@ -197,9 +258,9 @@ impl From<Okm<'_, Algorithm>> for Prk {
 #[derive(Debug)]
 pub struct Okm<'a, L: KeyType> {
     prk: &'a Prk,
-    info: &'a [&'a [u8]],
+    info_bytes: [u8; MAX_HKDF_INFO_LEN],
+    info_len: usize,
     len: L,
-    len_cached: usize,
 }
 
 impl<L: KeyType> Okm<'_, L> {
@@ -217,26 +278,21 @@ impl<L: KeyType> Okm<'_, L> {
     /// imposed by the HKDF specification due to the way HKDF's counter is
     /// constructed.)
     #[inline]
-    pub fn fill(self, out: &mut [u8]) -> Result<(), error::Unspecified> {
-        if out.len() != self.len_cached {
-            return Err(error::Unspecified);
+    pub fn fill(self, out: &mut [u8]) -> Result<(), Unspecified> {
+        if out.len() != self.len.len() {
+            return Err(Unspecified);
         }
         unsafe {
-            let mut info_value = vec![];
-            for info in self.info {
-                info_value.append(&mut info.to_vec());
-            }
-
             if 1 != aws_lc_sys::HKDF_expand(
                 out.as_mut_ptr(),
                 out.len(),
-                self.prk.key.evp_alg,
-                self.prk.key.key_bytes.as_ptr(),
-                self.prk.key.key_bytes.len(),
-                info_value.as_ptr(),
-                info_value.len(),
+                digest::match_digest_type(&self.prk.algorithm.0.digest_algorithm().id),
+                self.prk.key_bytes.as_ptr(),
+                self.prk.key_len,
+                self.info_bytes.as_ptr(),
+                self.info_len,
             ) {
-                return Err(error::Unspecified);
+                return Err(Unspecified);
             };
         }
 

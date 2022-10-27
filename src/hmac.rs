@@ -113,7 +113,6 @@ use aws_lc_sys::HMAC_CTX;
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
 use std::ptr::null_mut;
-use zeroize::Zeroize;
 
 /// An HMAC algorithm.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -155,26 +154,45 @@ impl AsRef<[u8]> for Tag {
     }
 }
 
-/// A key to use for HMAC signing.
+struct LcHmacCtx(HMAC_CTX);
+
+impl LcHmacCtx {
+    fn as_mut_ptr(&mut self) -> *mut HMAC_CTX {
+        &mut self.0
+    }
+    fn as_ptr(&self) -> *const HMAC_CTX {
+        &self.0
+    }
+}
+unsafe impl Send for LcHmacCtx {}
+
+impl Drop for LcHmacCtx {
+    fn drop(&mut self) {
+        unsafe { aws_lc_sys::HMAC_CTX_cleanup(self.as_mut_ptr()) }
+    }
+}
+
+impl Clone for LcHmacCtx {
+    fn clone(&self) -> Self {
+        unsafe {
+            let mut hmac_ctx = MaybeUninit::<HMAC_CTX>::uninit();
+            aws_lc_sys::HMAC_CTX_init(hmac_ctx.as_mut_ptr());
+            let mut hmac_ctx = hmac_ctx.assume_init();
+            aws_lc_sys::HMAC_CTX_copy_ex(&mut hmac_ctx, self.as_ptr());
+            LcHmacCtx(hmac_ctx)
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Key {
     pub(crate) algorithm: Algorithm,
-    pub(crate) evp_alg: *const aws_lc_sys::EVP_MD,
-    pub(crate) key_bytes: Vec<u8>,
+    ctx: LcHmacCtx,
 }
 
 unsafe impl Send for Key {}
-
-/// This is safe to do for Key, since the Key maintains a constant pointer to EVP_MD.
-/// EVP_MD will always be an immutable constant pointer to the digest structures defined
-/// in AWS-LC.
+// All uses of *mut HMAC_CTX require the creation of a Context, which will clone the Key.
 unsafe impl Sync for Key {}
-
-impl Drop for Key {
-    fn drop(&mut self) {
-        self.key_bytes.zeroize();
-    }
-}
 
 impl core::fmt::Debug for Key {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
@@ -195,13 +213,13 @@ impl Key {
     pub fn generate(
         algorithm: Algorithm,
         rng: &dyn crate::rand::SecureRandom,
-    ) -> Result<Self, error::Unspecified> {
+    ) -> Result<Self, Unspecified> {
         Self::construct(algorithm, |buf| rng.fill(buf))
     }
 
     fn construct<F>(algorithm: Algorithm, fill: F) -> Result<Self, Unspecified>
     where
-        F: FnOnce(&mut [u8]) -> Result<(), error::Unspecified>,
+        F: FnOnce(&mut [u8]) -> Result<(), Unspecified>,
     {
         let mut key_bytes = [0; digest::MAX_OUTPUT_LEN];
         let key_bytes = &mut key_bytes[..algorithm.0.output_len];
@@ -229,11 +247,33 @@ impl Key {
     /// `digest_alg.output_len * 8` bits.
     #[inline]
     pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Self {
-        Self {
-            algorithm,
-            evp_alg: digest::match_digest_type(&algorithm.0.id),
-            key_bytes: Vec::from(key_value),
+        Key::try_new(algorithm, key_value).expect("Unable to create HmacContext")
+    }
+
+    fn try_new(algorithm: Algorithm, key_value: &[u8]) -> Result<Self, Unspecified> {
+        unsafe {
+            let mut ctx = MaybeUninit::<HMAC_CTX>::uninit();
+            aws_lc_sys::HMAC_CTX_init(ctx.as_mut_ptr());
+            let evp_md_type = digest::match_digest_type(&algorithm.digest_algorithm().id);
+            if 1 != aws_lc_sys::HMAC_Init_ex(
+                ctx.as_mut_ptr(),
+                key_value.as_ptr().cast(),
+                key_value.len(),
+                evp_md_type,
+                null_mut(),
+            ) {
+                return Err(Unspecified);
+            };
+            let result = Self {
+                algorithm,
+                ctx: LcHmacCtx(ctx.assume_init()),
+            };
+            Ok(result)
         }
+    }
+
+    unsafe fn get_hmac_ctx_ptr(&mut self) -> *mut HMAC_CTX {
+        self.ctx.as_mut_ptr()
     }
 
     /// The digest algorithm for the key.
@@ -260,27 +300,13 @@ impl From<hkdf::Okm<'_, Algorithm>> for Key {
 ///
 /// Use `sign` for single-step HMAC signing.
 pub struct Context {
-    ctx: HMAC_CTX,
     key: Key,
 }
 
 impl Clone for Context {
     fn clone(&self) -> Self {
-        self.try_clone().expect("Unable to clone HmacContext")
-    }
-}
-
-impl Context {
-    fn try_clone(&self) -> Result<Self, &'static str> {
-        unsafe {
-            let mut ctx = MaybeUninit::<HMAC_CTX>::uninit();
-            if 1 != aws_lc_sys::HMAC_CTX_copy_ex(ctx.as_mut_ptr(), &self.ctx) {
-                return Err("HMAC_CTX_copy_ex failed");
-            };
-            Ok(Context {
-                ctx: ctx.assume_init(),
-                key: self.key.clone(),
-            })
+        Self {
+            key: self.key.clone(),
         }
     }
 }
@@ -300,30 +326,8 @@ impl Context {
     /// and key.
     #[inline]
     pub fn with_key(signing_key: &Key) -> Self {
-        Self::try_with_key(signing_key).expect("Context::with_key failed")
-    }
-
-    #[inline]
-    fn try_with_key(signing_key: &Key) -> Result<Self, &'static str> {
-        unsafe {
-            let mut ctx = MaybeUninit::<aws_lc_sys::HMAC_CTX>::uninit();
-            aws_lc_sys::HMAC_CTX_init(ctx.as_mut_ptr());
-            let evp_md_type = signing_key.evp_alg;
-            let key_bytes = signing_key.key_bytes.as_slice();
-            if 1 != aws_lc_sys::HMAC_Init_ex(
-                ctx.as_mut_ptr(),
-                key_bytes.as_ptr().cast(),
-                key_bytes.len(),
-                evp_md_type,
-                null_mut(),
-            ) {
-                return Err("Failed to initialize HMAC context");
-            };
-
-            Ok(Self {
-                ctx: ctx.assume_init(),
-                key: signing_key.clone(),
-            })
+        Self {
+            key: signing_key.clone(),
         }
     }
 
@@ -337,7 +341,11 @@ impl Context {
     #[inline]
     fn try_update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Update(&mut self.ctx, data.as_ptr().cast(), data.len()) {
+            if 1 != aws_lc_sys::HMAC_Update(
+                self.key.get_hmac_ctx_ptr(),
+                data.as_ptr().cast(),
+                data.len(),
+            ) {
                 return Err(Unspecified);
             }
         }
@@ -360,8 +368,11 @@ impl Context {
         let mut output = [0u8; digest::MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Final(&mut self.ctx, output.as_mut_ptr(), out_len.as_mut_ptr())
-            {
+            if 1 != aws_lc_sys::HMAC_Final(
+                self.key.get_hmac_ctx_ptr(),
+                output.as_mut_ptr(),
+                out_len.as_mut_ptr(),
+            ) {
                 return Err(Unspecified);
             }
             Ok(Tag {
@@ -385,28 +396,9 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 
 #[inline]
 fn try_sign(key: &Key, data: &[u8]) -> Result<Tag, Unspecified> {
-    let mut output = MaybeUninit::<[u8; digest::MAX_OUTPUT_LEN]>::uninit();
-    let mut out_len = MaybeUninit::<c_uint>::uninit();
-    let evp_md_type = key.evp_alg;
-    unsafe {
-        if aws_lc_sys::HMAC(
-            evp_md_type,
-            key.key_bytes.as_ptr().cast(),
-            key.key_bytes.len(),
-            data.as_ptr(),
-            data.len(),
-            output.as_mut_ptr().cast(),
-            out_len.as_mut_ptr(),
-        )
-        .is_null()
-        {
-            return Err(Unspecified);
-        }
-        Ok(Tag {
-            msg: output.assume_init(),
-            msg_len: out_len.assume_init() as usize,
-        })
-    }
+    let mut ctx = Context::with_key(key);
+    ctx.update(data);
+    Ok(ctx.sign())
 }
 
 /// Calculates the HMAC of `data` using the signing key `key`, and verifies

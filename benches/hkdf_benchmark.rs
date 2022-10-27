@@ -106,7 +106,7 @@ fn bench_hkdf_sha512(c: &mut Criterion) {
     bench_hkdf(c, &config);
 }
 
-const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
+const G_CHUNK_LENGTHS: [usize; 4] = [16, 32, 64, 80];
 
 fn bench_hkdf(c: &mut Criterion, config: &HKDFConfig) {
     for &chunk_len in &G_CHUNK_LENGTHS {
