@@ -303,6 +303,7 @@ impl<L: KeyType> Okm<'_, L> {
 #[cfg(test)]
 mod tests {
     use crate::hkdf;
+    use crate::hkdf::{Salt, HKDF_SHA256};
 
     #[test]
     fn hkdf_coverage() {
@@ -313,5 +314,71 @@ mod tests {
             "Algorithm(Algorithm(SHA256))",
             format!("{:?}", hkdf::HKDF_SHA256)
         );
+    }
+
+    #[test]
+    fn rustls_test() {
+        const INFO1: &[&[u8]] = &[
+            &[0, 32],
+            &[13],
+            &[116, 108, 115, 49, 51, 32],
+            &[100, 101, 114, 105, 118, 101, 100],
+            &[32],
+            &[
+                227, 176, 196, 66, 152, 252, 28, 20, 154, 251, 244, 200, 153, 111, 185, 36, 39,
+                174, 65, 228, 100, 155, 147, 76, 164, 149, 153, 27, 120, 82, 184, 85,
+            ],
+        ];
+
+        const INFO2: &[&[u8]] = &[
+            &[0, 32],
+            &[18],
+            &[116, 108, 115, 49, 51, 32],
+            &[99, 32, 104, 115, 32, 116, 114, 97, 102, 102, 105, 99],
+            &[32],
+            &[
+                236, 20, 122, 6, 222, 163, 200, 132, 108, 2, 178, 35, 142, 65, 189, 220, 157, 137,
+                249, 174, 161, 123, 94, 253, 77, 116, 130, 175, 117, 136, 28, 10,
+            ],
+        ];
+        /*
+                const SEED: &[u8] = &[
+                    51, 173, 10, 28, 96, 126, 192, 59, 9, 230, 205, 152, 147, 104, 12, 226, 16, 173, 243,
+                    0, 170, 31, 38, 96, 225, 178, 46, 16, 241, 112, 249, 42,
+                ];
+
+                const SECRET: &[u8] = &[
+                    231, 184, 254, 248, 144, 59, 82, 12, 185, 161, 137, 113, 182, 157, 212, 93, 202, 83,
+                    206, 47, 18, 191, 59, 239, 147, 21, 227, 18, 113, 223, 75, 64,
+                ];
+        */
+        let salt = Salt::new(HKDF_SHA256, &[0u8; 32]);
+        let prk = salt.extract(&[0u8; 32]);
+        let okm = prk.expand(INFO1, HKDF_SHA256).unwrap();
+        let okm2 = prk.expand(INFO2, HKDF_SHA256).unwrap();
+
+        let mut output1 = [0u8; 32];
+        okm.fill(&mut output1).expect("test failed");
+        let mut output2 = [0u8; 32];
+        okm2.fill(&mut output2).expect("test failed");
+
+        println!("AWS-LC Result: {:?}", output1);
+        println!("AWS-LC Result: {:?}", output2);
+
+        let ring_salt = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, &[0u8; 32]);
+        let ring_prk = ring_salt.extract(&[0u8; 32]);
+        let ring_okm = ring_prk.expand(INFO1, ring::hkdf::HKDF_SHA256).unwrap();
+        let ring_okm2 = ring_prk.expand(INFO2, ring::hkdf::HKDF_SHA256).unwrap();
+
+        let mut ring_output1 = [0u8; 32];
+        ring_okm.fill(&mut ring_output1).expect("test failed");
+        let mut ring_output2 = [0u8; 32];
+        ring_okm2.fill(&mut ring_output2).expect("test failed");
+
+        println!("Ring Result: {:?}", ring_output1);
+        println!("Ring Result: {:?}", ring_output2);
+
+        assert_eq!(ring_output1, output1);
+        assert_eq!(ring_output2, output2);
     }
 }

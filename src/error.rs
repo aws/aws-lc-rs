@@ -181,7 +181,6 @@ impl KeyRejected {
     }
 }
 
-#[cfg(feature = "std")]
 impl std::error::Error for KeyRejected {
     fn cause(&self) -> Option<&dyn std::error::Error> {
         None
@@ -189,6 +188,17 @@ impl std::error::Error for KeyRejected {
 
     fn description(&self) -> &str {
         self.description_()
+    }
+}
+
+impl std::error::Error for Unspecified {
+    #[inline]
+    fn cause(&self) -> Option<&dyn std::error::Error> {
+        None
+    }
+
+    fn description(&self) -> &str {
+        "Unspecified"
     }
 }
 
