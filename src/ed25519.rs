@@ -22,7 +22,7 @@ use untrusted::Input;
 
 pub(crate) const ED25519_PRIVATE_KEY_LEN: usize = aws_lc_sys::ED25519_PRIVATE_KEY_LEN as usize;
 pub(crate) const ED25519_PRIVATE_KEY_PREFIX_LEN: usize = 32;
-pub(crate) const ED25519_PUBLIC_KEY_LEN: usize = aws_lc_sys::ED25519_PUBLIC_KEY_LEN as usize;
+pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc_sys::ED25519_PUBLIC_KEY_LEN as usize;
 const ED25519_SIGNATURE_LEN: usize = aws_lc_sys::ED25519_SIGNATURE_LEN as usize;
 const ED25519_SEED_LEN: usize = 32;
 

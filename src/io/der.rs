@@ -22,7 +22,7 @@ use crate::error;
 pub const CONSTRUCTED: u8 = 1 << 5;
 pub const CONTEXT_SPECIFIC: u8 = 2 << 6;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Tag {
     Boolean = 0x01,
@@ -35,7 +35,7 @@ pub enum Tag {
     UTCTime = 0x17,
     GeneralizedTime = 0x18,
 
-    ContextSpecificConstructed0 = CONTEXT_SPECIFIC | CONSTRUCTED | 0,
+    ContextSpecificConstructed0 = CONTEXT_SPECIFIC | CONSTRUCTED,
     ContextSpecificConstructed1 = CONTEXT_SPECIFIC | CONSTRUCTED | 1,
     ContextSpecificConstructed3 = CONTEXT_SPECIFIC | CONSTRUCTED | 3,
 }
