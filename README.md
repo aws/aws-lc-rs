@@ -1,6 +1,5 @@
-## My Project
-
-TODO: Fill this README out!
+# aws-lc-ring-facade
+A Ring-compatible Rust library implemented with AWS-LC cryptographic operations
 
 Be sure to:
 
@@ -15,4 +14,3 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This library is licensed under the LICENSE NAME HERE License.
-

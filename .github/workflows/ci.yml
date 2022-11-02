@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: CI
+    runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: 1
+    steps:
+      - uses: actions/checkout@v2
+      - run: cargo fmt --check --verbose
+      - run: cargo test --release --all-targets
+      - run: cargo test --no-default-features
+      - run: cargo test --no-default-features --features ring-io
+      - run: cargo test --no-default-features --features alloc
+      - run: cargo test --no-default-features --features threadlocal
+
