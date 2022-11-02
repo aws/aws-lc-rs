@@ -12,7 +12,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR ISC
 // Modifications Copyright Amazon.com, Inc. or its affiliates. See GitHub history for details.
 
 use bindgen::callbacks::ParseCallbacks;
@@ -36,9 +36,10 @@ impl StripPrefixCallback {
 
 impl ParseCallbacks for StripPrefixCallback {
     fn generated_name_override(&self, name: &str) -> Option<String> {
-        self.remove_prefix.as_ref().and_then(|s| {
+        self.remove_prefix.as_ref().map_or(None, |s| {
             let prefix = format!("{}_", s);
-            name.strip_prefix(prefix.as_str()).map(String::from)
+            name.strip_prefix(prefix.as_str())
+                .map_or(None, |s| Some(String::from(s)))
         })
     }
 }
@@ -62,7 +63,7 @@ fn prepare_clang_args(manifest_dir: &Path, build_prefix: Option<&str>) -> Vec<St
 
 const COPYRIGHT: &str = r#"
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: Apache-2.0 OR ISC
 "#;
 
 const PRELUDE: &str = r#"
@@ -254,8 +255,8 @@ fn main() -> Result<(), String> {
 
     let aws_lc_dir = build_aws_lc();
 
-    let lib_file = Crypto.locate_file(&aws_lc_dir, OutputLibType::Static, None);
-    let prefixed_lib_file = Crypto.locate_file(&aws_lc_dir, OutputLibType::Static, Some(&prefix));
+    let lib_file = Crypto.locate_file(&aws_lc_dir, Static, None);
+    let prefixed_lib_file = Crypto.locate_file(&aws_lc_dir, Static, Some(&prefix));
     fs::rename(lib_file, prefixed_lib_file).expect("Unexpected error: Library not found");
 
     let libcrypto_dir = Crypto.locate_dir(&aws_lc_dir);
