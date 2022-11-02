@@ -56,17 +56,6 @@ macro_rules! derive_debug_self_as_ref_hex_bytes {
     };
 }
 
-pub struct HexStr<'a>(pub &'a [u8]);
-
-impl core::fmt::Debug for HexStr<'_> {
-    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
-        fmt.write_str("\"")?;
-        write_hex_bytes(fmt, self.0)?;
-        fmt.write_str("\"")?;
-        Ok(())
-    }
-}
-
 pub(crate) fn write_hex_bytes(
     fmt: &mut core::fmt::Formatter,
     bytes: &[u8],
