@@ -1,4 +1,4 @@
-# aws-lc-ring-facade
+# aws-lc-ring
 A Ring-compatible Rust library implemented with AWS-LC cryptographic operations
 
 Be sure to:
