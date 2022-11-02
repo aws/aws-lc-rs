@@ -155,11 +155,12 @@ const _: () = assert!(MAX_HKDF_PRK_LEN <= MAX_HKDF_SALT_LEN);
 
 impl From<Okm<'_, Algorithm>> for Salt {
     fn from(okm: Okm<'_, Algorithm>) -> Self {
-        let key_len = okm.prk.key_len;
+        let algorithm = okm.prk.algorithm;
         let mut key_bytes = [0u8; MAX_HKDF_SALT_LEN];
-        key_bytes[0..key_len].copy_from_slice(&okm.prk.key_bytes[..key_len]);
+        let key_len = okm.len().len();
+        okm.fill(&mut key_bytes[..key_len]).unwrap();
         Self {
-            algorithm: okm.prk.algorithm,
+            algorithm,
             key_bytes,
             key_len,
         }
