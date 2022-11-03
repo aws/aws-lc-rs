@@ -23,7 +23,7 @@ impl HKDFConfig {
 
 // For the hkdf functions, we use the corresponding one-shot HKDF_expand/extract functions available
 // in AWS-LC.
-// For SHA-{256, 384, 512, 512-256}, aws-lc-ring-facade hmac::sign one-shot Rust functions are
+// For SHA-{256, 384, 512, 512-256}, aws-lc-ring hmac::sign one-shot Rust functions are
 // slightly slower than Ring for 16-256 byte inputs, than quickly catch up and are almost on par
 // with Ring. For SHA-1, AWS-LC is consistently 1.2-2.5 times faster, depending on the input
 // lengths.
@@ -84,7 +84,7 @@ macro_rules! benchmark_hkdf {
 }
 
 benchmark_hkdf!(ring);
-benchmark_hkdf!(aws_lc_ring_facade);
+benchmark_hkdf!(aws_lc_ring);
 
 fn bench_hkdf_sha1(c: &mut Criterion) {
     let config = HKDFConfig::new(HKDFAlgorithm::SHA1);
@@ -115,10 +115,10 @@ fn bench_hkdf(c: &mut Criterion, config: &HKDFConfig) {
         let bench_group_name = format!("HKDF-{:?}-{}-bytes", config.algorithm, chunk_len);
         let mut group = c.benchmark_group(bench_group_name);
 
-        let aws_prk = aws_lc_ring_facade_benchmarks::run_hkdf_extract(config);
+        let aws_prk = aws_lc_ring_benchmarks::run_hkdf_extract(config);
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_ring_facade_benchmarks::run_hkdf_expand(&aws_prk, info_chunk);
+                aws_lc_ring_benchmarks::run_hkdf_expand(&aws_prk, info_chunk);
             })
         });
 

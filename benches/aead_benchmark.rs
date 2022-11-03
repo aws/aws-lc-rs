@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-use aws_lc_ring_facade::{test, test_file};
+use aws_lc_ring::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 #[derive(Debug)]
@@ -124,7 +124,7 @@ mod ring_benchmarks {
 }}}
 
 benchmark_aead!(ring);
-benchmark_aead!(aws_lc_ring_facade);
+benchmark_aead!(aws_lc_ring);
 
 fn test_aes_128_gcm(c: &mut Criterion) {
     test::run(
@@ -197,15 +197,12 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
     );
     let mut group = c.benchmark_group(bench_group_name);
 
-    let mut aws_sealing_key = aws_lc_ring_facade_benchmarks::create_sealing_key(config);
+    let mut aws_sealing_key = aws_lc_ring_benchmarks::create_sealing_key(config);
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
-            let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
-            let _tag = aws_lc_ring_facade_benchmarks::seal_separate(
-                &mut aws_sealing_key,
-                aws_aad,
-                &mut in_out,
-            );
+            let aws_aad = aws_lc_ring_benchmarks::aad(config);
+            let _tag =
+                aws_lc_ring_benchmarks::seal_separate(&mut aws_sealing_key, aws_aad, &mut in_out);
         })
     });
 
@@ -229,16 +226,12 @@ fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
     );
     let mut group = c.benchmark_group(bench_group_name);
 
-    let mut aws_sealing_key = aws_lc_ring_facade_benchmarks::create_sealing_key(config);
+    let mut aws_sealing_key = aws_lc_ring_benchmarks::create_sealing_key(config);
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             let mut aws_in_out = in_out.clone();
-            let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
-            aws_lc_ring_facade_benchmarks::seal_append(
-                &mut aws_sealing_key,
-                aws_aad,
-                &mut aws_in_out,
-            );
+            let aws_aad = aws_lc_ring_benchmarks::aad(config);
+            aws_lc_ring_benchmarks::seal_append(&mut aws_sealing_key, aws_aad, &mut aws_in_out);
         })
     });
 
@@ -255,9 +248,9 @@ fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
 fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
     let mut in_out = config.in_out.clone();
 
-    let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
-    let mut aws_sealing_key = aws_lc_ring_facade_benchmarks::create_sealing_key(config);
-    aws_lc_ring_facade_benchmarks::seal_append(&mut aws_sealing_key, aws_aad, &mut in_out);
+    let aws_aad = aws_lc_ring_benchmarks::aad(config);
+    let mut aws_sealing_key = aws_lc_ring_benchmarks::create_sealing_key(config);
+    aws_lc_ring_benchmarks::seal_append(&mut aws_sealing_key, aws_aad, &mut in_out);
 
     let bench_group_name = format!(
         "AEAD-{:?}-open-{}-{}-bytes",
@@ -267,12 +260,12 @@ fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
     );
     let mut group = c.benchmark_group(bench_group_name);
 
-    let mut aws_opening_key = aws_lc_ring_facade_benchmarks::create_opening_key(config);
+    let mut aws_opening_key = aws_lc_ring_benchmarks::create_opening_key(config);
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             let mut aws_in_out = in_out.clone();
-            let aws_aad = aws_lc_ring_facade_benchmarks::aad(config);
-            aws_lc_ring_facade_benchmarks::open(&mut aws_opening_key, aws_aad, &mut aws_in_out);
+            let aws_aad = aws_lc_ring_benchmarks::aad(config);
+            aws_lc_ring_benchmarks::open(&mut aws_opening_key, aws_aad, &mut aws_in_out);
         })
     });
 

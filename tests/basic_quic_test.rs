@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //use ring::{aead, error};
-use aws_lc_ring_facade::aead;
+use aws_lc_ring::aead;
 
 use aead::quic;
-use aws_lc_ring_facade::test::from_dirty_hex;
+use aws_lc_ring::test::from_dirty_hex;
 
 #[test]
 fn test_quic_aes_128_gcm() {

@@ -64,7 +64,7 @@ macro_rules! benchmark_pbkdf2 {
 }
 
 benchmark_pbkdf2!(ring);
-benchmark_pbkdf2!(aws_lc_ring_facade);
+benchmark_pbkdf2!(aws_lc_ring);
 
 fn bench_pbkdf2_sha1(c: &mut Criterion) {
     let config = PBKDF2Config::new(PBKDF2Algorithm::SHA1);
@@ -100,7 +100,7 @@ fn bench_pbkdf2(c: &mut Criterion, config: &PBKDF2Config) {
         let mut aws_out = vec![0u8; 64];
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_ring_facade_benchmarks::run_pbkdf2_derive(&config, iter, &mut aws_out);
+                aws_lc_ring_benchmarks::run_pbkdf2_derive(&config, iter, &mut aws_out);
             })
         });
 

@@ -1,7 +1,7 @@
-use aws_lc_ring_facade::rand::SystemRandom;
-use aws_lc_ring_facade::signature;
-use aws_lc_ring_facade::signature::RsaKeyPair;
-use aws_lc_ring_facade::test::from_dirty_hex;
+use aws_lc_ring::rand::SystemRandom;
+use aws_lc_ring::signature;
+use aws_lc_ring::signature::RsaKeyPair;
+use aws_lc_ring::test::from_dirty_hex;
 
 #[test]
 fn test_rsa_pkcs8() {

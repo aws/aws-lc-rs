@@ -12,8 +12,8 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use aws_lc_ring_facade::signature::{KeyPair, RsaParameters};
-use aws_lc_ring_facade::{rand, signature, signature::RsaKeyPair, test, test_file};
+use aws_lc_ring::signature::{KeyPair, RsaParameters};
+use aws_lc_ring::{rand, signature, signature::RsaKeyPair, test, test_file};
 
 #[test]
 fn rsa_traits() {

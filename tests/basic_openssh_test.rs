@@ -1,6 +1,6 @@
-use aws_lc_ring_facade::test::from_hex;
+use aws_lc_ring::test::from_hex;
 
-use aws_lc_ring_facade::aead;
+use aws_lc_ring::aead;
 
 #[test]
 fn test_openssh() {

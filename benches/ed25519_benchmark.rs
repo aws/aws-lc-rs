@@ -3,7 +3,7 @@
  *
  */
 
-use aws_lc_ring_facade::{test, test_file};
+use aws_lc_ring::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 #[allow(dead_code)]
@@ -74,16 +74,16 @@ macro_rules! benchmark_ed25519 {
     };
 }
 benchmark_ed25519!(ring);
-benchmark_ed25519!(aws_lc_ring_facade);
+benchmark_ed25519!(aws_lc_ring);
 
 fn test_ed25519_sign(c: &mut Criterion, config: &Ed25519Config) {
     let bench_group_name = format!("ED25519-sign-{}-bytes", config.msg.len());
     let mut group = c.benchmark_group(bench_group_name);
 
-    let aws_key_pair = aws_lc_ring_facade_benchmarks::create_key_pair(&config);
+    let aws_key_pair = aws_lc_ring_benchmarks::create_key_pair(&config);
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
-            aws_lc_ring_facade_benchmarks::sign(&aws_key_pair, &config.msg);
+            aws_lc_ring_benchmarks::sign(&aws_key_pair, &config.msg);
         })
     });
 
@@ -102,10 +102,10 @@ fn test_ed25519_verify(c: &mut Criterion, config: &Ed25519Config) {
     let pub_key = config.public_key.as_slice();
     let sig = config.signature.as_slice();
 
-    let aws_verification_alg = aws_lc_ring_facade_benchmarks::verification();
+    let aws_verification_alg = aws_lc_ring_benchmarks::verification();
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
-            aws_lc_ring_facade_benchmarks::verify(aws_verification_alg, pub_key, &config.msg, &sig);
+            aws_lc_ring_benchmarks::verify(aws_verification_alg, pub_key, &config.msg, &sig);
         })
     });
 

@@ -1,3 +1,4 @@
+use zeroize::Zeroize;
 // Copyright 2017 Brian Smith.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -23,5 +24,11 @@ impl AsRef<[u8]> for Document {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.bytes[..self.len]
+    }
+}
+
+impl Drop for Document {
+    fn drop(&mut self) {
+        self.bytes.zeroize()
     }
 }

@@ -12,7 +12,7 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use aws_lc_ring_facade::{
+use aws_lc_ring::{
     rand,
     signature::{self, KeyPair},
     test, test_file,

@@ -15,8 +15,8 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-use aws_lc_ring_facade::hmac::sign;
-use aws_lc_ring_facade::{digest, hmac, test, test_file};
+use aws_lc_ring::hmac::sign;
+use aws_lc_ring::{digest, hmac, test, test_file};
 
 #[test]
 fn hmac_tests() {

@@ -3,7 +3,7 @@
  *
  */
 
-use aws_lc_ring_facade::{test, test_file};
+use aws_lc_ring::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -87,7 +87,7 @@ mod ring_benchmarks {
     };
 }
 
-benchmark_agreement!(aws_lc_ring_facade);
+benchmark_agreement!(aws_lc_ring);
 benchmark_agreement!(ring);
 
 fn test_agree_ephemeral(c: &mut Criterion, config: &AgreementConfig) {
@@ -95,11 +95,11 @@ fn test_agree_ephemeral(c: &mut Criterion, config: &AgreementConfig) {
 
     let mut group = c.benchmark_group(bench_group_name);
 
-    let aws_peer_public_key = aws_lc_ring_facade_benchmarks::peer_public_key(config);
+    let aws_peer_public_key = aws_lc_ring_benchmarks::peer_public_key(config);
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
-            let private_key = aws_lc_ring_facade_benchmarks::private_key(config);
-            aws_lc_ring_facade_benchmarks::agreement(private_key, &aws_peer_public_key);
+            let private_key = aws_lc_ring_benchmarks::private_key(config);
+            aws_lc_ring_benchmarks::agreement(private_key, &aws_peer_public_key);
         })
     });
 
