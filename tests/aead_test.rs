@@ -402,7 +402,6 @@ fn test_aead_thread_safeness() {
     let mut join_handles = Vec::new();
     for _ in 1..100 {
         let join_handle = thread::spawn(|| {
-            
             SECRET_KEY
                 .seal_in_place_separate_tag(
                     aead::Nonce::try_assume_unique_for_key(&[0; aead::NONCE_LEN]).unwrap(),

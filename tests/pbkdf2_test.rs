@@ -101,8 +101,8 @@ mod tests {
             pbkdf2::PBKDF2_HMAC_SHA384,
             pbkdf2::PBKDF2_HMAC_SHA512,
         ] {
-            let mut out = vec![0u8; (max_usize32 - 1) * match_pbkdf2_digest(&alg).output_len + 1];
-            pbkdf2::verify(alg, iterations, b"salt", b"password", &mut out).unwrap();
+            let out = vec![0u8; (max_usize32 - 1) * match_pbkdf2_digest(&alg).output_len + 1];
+            pbkdf2::verify(alg, iterations, b"salt", b"password", &out).unwrap();
         }
     }
 

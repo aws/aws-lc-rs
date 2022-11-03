@@ -243,17 +243,10 @@ mod tests {
         (&[0x02, 0x02, 0x00, 0xff], 0xff),
     ];
 
-    static GOOD_BIG_POSITIVE_INTEGERS: &[((&[u8], &[u8]), (&[u8], &[u8]))] =
-        &[
-            (
-                (&[0x02, 0x81, 129u8, 1], &[0; 128]),
-                (&[1], &[0; 128])
-            ),
-            (
-                (&[0x02, 0x82, 0x01, 0x00, 1], &[0; 255]),
-                (&[1], &[0; 255])
-            )
-        ];
+    static GOOD_BIG_POSITIVE_INTEGERS: &[((&[u8], &[u8]), (&[u8], &[u8]))] = &[
+        ((&[0x02, 0x81, 129u8, 1], &[0; 128]), (&[1], &[0; 128])),
+        ((&[0x02, 0x82, 0x01, 0x00, 1], &[0; 255]), (&[1], &[0; 255])),
+    ];
 
     static BAD_NONNEGATIVE_INTEGERS: &[&[u8]] = &[
         &[],           // At end of input
@@ -335,7 +328,9 @@ mod tests {
 
     #[test]
     fn test_big() {
-        for &((bytes_in_a, bytes_in_b), (bytes_out_a, bytes_out_b)) in GOOD_BIG_POSITIVE_INTEGERS.iter() {
+        for &((bytes_in_a, bytes_in_b), (bytes_out_a, bytes_out_b)) in
+            GOOD_BIG_POSITIVE_INTEGERS.iter()
+        {
             let mut bytes_in = Vec::new();
             bytes_in.extend(bytes_in_a);
             bytes_in.extend(bytes_in_b);

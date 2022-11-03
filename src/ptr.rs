@@ -147,7 +147,6 @@ impl<P: Pointer> NonNullPtr<P> {
     }
 }
 
-
 pub trait Pointer {
     fn free(&mut self);
 }
@@ -177,7 +176,6 @@ impl<T> IntoPointer<*mut T> for *mut T {
         }
     }
 }
-
 
 #[macro_export]
 macro_rules! create_pointer {
