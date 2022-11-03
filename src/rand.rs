@@ -161,15 +161,13 @@ mod tests {
     fn mean_variance<T: Into<f64>, const N: usize>(
         iterable: &mut IntoIter<T, N>,
     ) -> Option<(f64, f64)> {
-        let iter = iterable.into_iter();
+        let iter = iterable;
         let mean: Option<T> = iter.next();
-        if mean.is_none() {
-            return None;
-        }
+        mean.as_ref()?;
         let mut mean = mean.unwrap().into();
         let mut var_squared = 0f64;
         let mut count = 1f64;
-        while let Some(value) = iter.next() {
+        for value in iter.by_ref() {
             count += 1f64;
             let value = value.into();
             let prev_mean = mean;

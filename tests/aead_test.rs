@@ -402,14 +402,13 @@ fn test_aead_thread_safeness() {
     let mut join_handles = Vec::new();
     for _ in 1..100 {
         let join_handle = thread::spawn(|| {
-            let tag = SECRET_KEY
+            SECRET_KEY
                 .seal_in_place_separate_tag(
                     aead::Nonce::try_assume_unique_for_key(&[0; aead::NONCE_LEN]).unwrap(),
                     aead::Aad::empty(),
                     &mut [],
                 )
-                .unwrap();
-            tag
+                .unwrap()
         });
         join_handles.push(join_handle);
     }

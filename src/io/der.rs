@@ -22,7 +22,7 @@ use crate::error;
 pub const CONSTRUCTED: u8 = 1 << 5;
 pub const CONTEXT_SPECIFIC: u8 = 2 << 6;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u8)]
 pub enum Tag {
     Boolean = 0x01,
@@ -243,6 +243,11 @@ mod tests {
         (&[0x02, 0x02, 0x00, 0xff], 0xff),
     ];
 
+    static GOOD_BIG_POSITIVE_INTEGERS: &[((&[u8], &[u8]), (&[u8], &[u8]))] = &[
+        ((&[0x02, 0x81, 129u8, 1], &[0; 128]), (&[1], &[0; 128])),
+        ((&[0x02, 0x82, 0x01, 0x00, 1], &[0; 255]), (&[1], &[0; 255])),
+    ];
+
     static BAD_NONNEGATIVE_INTEGERS: &[&[u8]] = &[
         &[],           // At end of input
         &[0x02],       // Tag only
@@ -304,6 +309,39 @@ mod tests {
         for &test_in in BAD_NONNEGATIVE_INTEGERS.iter() {
             with_bad_i(test_in, |input| {
                 let _ = positive_integer(input)?;
+                Ok(())
+            });
+        }
+    }
+
+    #[test]
+    fn test_tag() {
+        let tgt = usize::from(Tag::GeneralizedTime);
+        assert_eq!(0x18usize, tgt);
+
+        let tgt = u8::from(Tag::GeneralizedTime);
+        assert_eq!(0x18u8, tgt);
+
+        let tgt = Tag::GeneralizedTime;
+        assert_eq!(tgt, Tag::GeneralizedTime);
+    }
+
+    #[test]
+    fn test_big() {
+        for &((bytes_in_a, bytes_in_b), (bytes_out_a, bytes_out_b)) in
+            GOOD_BIG_POSITIVE_INTEGERS.iter()
+        {
+            let mut bytes_in = Vec::new();
+            bytes_in.extend(bytes_in_a);
+            bytes_in.extend(bytes_in_b);
+            let mut bytes_out = Vec::new();
+            bytes_out.extend(bytes_out_a);
+            bytes_out.extend(bytes_out_b);
+
+            with_good_i(&bytes_in, |input| {
+                let positive = positive_integer(input)?;
+                let expected_bytes = positive.big_endian_without_leading_zero();
+                assert_eq!(expected_bytes, &bytes_out);
                 Ok(())
             });
         }

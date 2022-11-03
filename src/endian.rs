@@ -1,5 +1,3 @@
-use core::num::Wrapping;
-
 /// An `Encoding` of a type `T` can be converted to/from its byte
 /// representation without any byte swapping or other computation.
 ///
@@ -41,18 +39,6 @@ macro_rules! define_endian {
     };
 }
 
-macro_rules! impl_from_byte_array {
-    ($endian:ident, $base:ident, $elems:expr) => {
-        impl FromByteArray<[u8; $elems * core::mem::size_of::<$base>()]>
-            for [$endian<$base>; $elems]
-        {
-            fn from_byte_array(a: &[u8; $elems * core::mem::size_of::<$base>()]) -> Self {
-                unsafe { core::mem::transmute_copy(a) }
-            }
-        }
-    };
-}
-
 macro_rules! impl_array_encoding {
     ($endian:ident, $base:ident, $elems:expr) => {
         impl ArrayEncoding<[u8; $elems * core::mem::size_of::<$base>()]>
@@ -67,8 +53,6 @@ macro_rules! impl_array_encoding {
                 unsafe { &*as_bytes_ptr }
             }
         }
-
-        impl_from_byte_array!($endian, $base, $elems);
     };
 }
 
@@ -78,30 +62,9 @@ macro_rules! impl_endian {
             const ZERO: Self = Self(0);
         }
 
-        impl From<[u8; $size]> for $endian<$base> {
-            #[inline]
-            fn from(bytes: [u8; $size]) -> Self {
-                Self($base::from_ne_bytes(bytes))
-            }
-        }
-
-        impl From<$endian<$base>> for [u8; $size] {
-            #[inline]
-            fn from(encoded: $endian<$base>) -> Self {
-                $base::to_ne_bytes(encoded.0)
-            }
-        }
-
         impl From<$base> for $endian<$base> {
             #[inline]
             fn from(value: $base) -> Self {
-                Self($base::$to_endian(value))
-            }
-        }
-
-        impl From<Wrapping<$base>> for $endian<$base> {
-            #[inline]
-            fn from(Wrapping(value): Wrapping<$base>) -> Self {
                 Self($base::$to_endian(value))
             }
         }
@@ -135,6 +98,8 @@ mod tests {
     #[test]
     fn test_big_endian() {
         let x = BigEndian::from(1u32);
+        let x2 = x;
         assert_eq!(u32::from(x), 1);
+        assert_eq!(u32::from(x2), 1);
     }
 }

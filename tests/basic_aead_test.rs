@@ -133,14 +133,14 @@ fn test_aead_separate_in_place(
     Ok(Vec::from(result_plaintext))
 }
 
-fn test_aead_append_within(config: &AeadConfig, in_out: &mut Vec<u8>) -> Result<Vec<u8>, String> {
+fn test_aead_append_within(config: &AeadConfig, in_out: &mut [u8]) -> Result<Vec<u8>, String> {
     let mut sealing_key = SealingKey::new(config.key(), config.nonce());
     let mut opening_key = OpeningKey::new(config.key(), config.nonce());
 
     println!("Sealing Key: {:?}", sealing_key);
     println!("Opening Key: {:?}", opening_key);
 
-    let plaintext = in_out.clone();
+    let plaintext = in_out.to_owned();
     println!("Plaintext: {:?}", plaintext);
     let mut sized_in_out = in_out.to_vec();
     sealing_key

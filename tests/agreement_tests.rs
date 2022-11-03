@@ -73,7 +73,7 @@ fn agreement_traits() {
     let bytes = [0x01, 0x02, 0x03];
 
     let unparsed_public_key = agreement::UnparsedPublicKey::new(&agreement::X25519, &bytes);
-    let unparsed_pubkey_clone = unparsed_public_key.clone();
+    let unparsed_pubkey_clone = unparsed_public_key;
     assert_eq!(
         format!("{:?}", unparsed_public_key),
         r#"UnparsedPublicKey { algorithm: Algorithm { curve: Curve25519 }, bytes: "010203" }"#

@@ -82,7 +82,7 @@ pub struct Unspecified;
 // This is required for the implementation of `std::error::Error`.
 impl core::fmt::Display for Unspecified {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.write_str("ring::error::Unspecified")
+        f.write_str("Unspecified")
     }
 }
 
@@ -233,5 +233,39 @@ impl From<()> for KeyRejected {
 impl From<untrusted::EndOfInput> for Unspecified {
     fn from(_: untrusted::EndOfInput) -> Self {
         Unspecified
+    }
+}
+
+#[allow(deprecated, unused_imports)]
+mod tests {
+    use std::error::Error;
+
+    #[test]
+    fn display_unspecified() {
+        let output = format!("{}", super::Unspecified);
+        assert_eq!("Unspecified", output);
+    }
+
+    #[test]
+    fn unexpected_error() {
+        let key_rejected = super::KeyRejected::from(());
+        assert_eq!("UnexpectedError", key_rejected.description());
+
+        let unspecified = super::Unspecified::from(key_rejected);
+        assert_eq!("Unspecified", unspecified.description());
+
+        let unspecified = unspecified;
+        assert_eq!("Unspecified", unspecified.description());
+    }
+
+    #[test]
+    fn std_error() {
+        let key_rejected = super::KeyRejected::wrong_algorithm();
+        assert!(key_rejected.cause().is_none());
+        assert_eq!("WrongAlgorithm", key_rejected.description());
+
+        let unspecified = super::Unspecified;
+        assert!(unspecified.cause().is_none());
+        assert_eq!("Unspecified", unspecified.description());
     }
 }

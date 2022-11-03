@@ -77,7 +77,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "derived key too long")]
     fn pbkdf2_derive_too_long() {
-        let iterations = NonZeroU32::new(1 as u32).unwrap();
+        let iterations = NonZeroU32::new(1_u32).unwrap();
         let max_usize32 = u32::MAX as usize;
         for &alg in &[
             pbkdf2::PBKDF2_HMAC_SHA1,
@@ -93,7 +93,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "derived key too long")]
     fn pbkdf2_verify_too_long() {
-        let iterations = NonZeroU32::new(1 as u32).unwrap();
+        let iterations = NonZeroU32::new(1_u32).unwrap();
         let max_usize32 = u32::MAX as usize;
         for &alg in &[
             pbkdf2::PBKDF2_HMAC_SHA1,
@@ -101,8 +101,8 @@ mod tests {
             pbkdf2::PBKDF2_HMAC_SHA384,
             pbkdf2::PBKDF2_HMAC_SHA512,
         ] {
-            let mut out = vec![0u8; (max_usize32 - 1) * match_pbkdf2_digest(&alg).output_len + 1];
-            pbkdf2::verify(alg, iterations, b"salt", b"password", &mut out).unwrap();
+            let out = vec![0u8; (max_usize32 - 1) * match_pbkdf2_digest(&alg).output_len + 1];
+            pbkdf2::verify(alg, iterations, b"salt", b"password", &out).unwrap();
         }
     }
 
