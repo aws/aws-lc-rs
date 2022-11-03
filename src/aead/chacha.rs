@@ -63,12 +63,7 @@ impl Drop for ChaCha20Key {
 #[allow(clippy::needless_pass_by_value)]
 impl ChaCha20Key {
     #[inline]
-    pub(super) fn encrypt_in_place(
-        &self,
-        nonce: Nonce,
-        in_out: &mut [u8],
-        ctr: u32,
-    ) {
+    pub(super) fn encrypt_in_place(&self, nonce: Nonce, in_out: &mut [u8], ctr: u32) {
         encrypt_in_place_chacha20(self, nonce.as_ref(), in_out, ctr);
     }
 }

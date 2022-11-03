@@ -147,7 +147,10 @@ impl SymmetricCipherKey {
         let block = Block::from(&sample);
 
         let encrypted_block = match self {
-            SymmetricCipherKey::Aes128(.., ecb_ctx, _) | SymmetricCipherKey::Aes256(.., ecb_ctx, _) => encrypt_block_aes_ecb(**ecb_ctx, block)?,
+            SymmetricCipherKey::Aes128(.., ecb_ctx, _)
+            | SymmetricCipherKey::Aes256(.., ecb_ctx, _) => {
+                encrypt_block_aes_ecb(**ecb_ctx, block)?
+            }
             SymmetricCipherKey::ChaCha20(key_bytes) => {
                 let plaintext = block.as_ref();
                 let counter_bytes: &[u8; 4] = plaintext[0..=3].try_into()?;
@@ -170,7 +173,8 @@ impl SymmetricCipherKey {
     #[inline]
     pub fn encrypt_block(&self, block: Block) -> Result<Block, error::Unspecified> {
         match self {
-            SymmetricCipherKey::Aes128(.., ecb_ctx, _) | SymmetricCipherKey::Aes256(.., ecb_ctx, _) => encrypt_block_aes_ecb(**ecb_ctx, block),
+            SymmetricCipherKey::Aes128(.., ecb_ctx, _)
+            | SymmetricCipherKey::Aes256(.., ecb_ctx, _) => encrypt_block_aes_ecb(**ecb_ctx, block),
             SymmetricCipherKey::ChaCha20(..) => panic!("Unsupported algorithm!"),
         }
     }

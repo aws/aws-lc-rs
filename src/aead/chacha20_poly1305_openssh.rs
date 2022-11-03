@@ -72,9 +72,7 @@ impl SealingKey {
             let (len_in_out, data_and_padding_in_out) =
                 plaintext_in_ciphertext_out.split_at_mut(PACKET_LENGTH_LEN);
 
-            self.key
-                .k_1
-                .encrypt_in_place(Nonce(nonce.0), len_in_out, 0);
+            self.key.k_1.encrypt_in_place(Nonce(nonce.0), len_in_out, 0);
             self.key
                 .k_2
                 .encrypt_in_place(nonce, data_and_padding_in_out, 1);
@@ -112,9 +110,7 @@ impl OpeningKey {
     ) -> [u8; PACKET_LENGTH_LEN] {
         let mut packet_length = encrypted_packet_length;
         let nonce = make_nonce(sequence_number);
-        self.key
-            .k_1
-            .encrypt_in_place(nonce, &mut packet_length, 0);
+        self.key.k_1.encrypt_in_place(nonce, &mut packet_length, 0);
         packet_length
     }
 
@@ -194,10 +190,7 @@ fn verify(key: poly1305::Key, msg: &[u8], tag: &[u8; TAG_LEN]) -> Result<(), err
 }
 
 #[inline]
-pub(super) fn derive_poly1305_key(
-    chacha_key: &ChaCha20Key,
-    nonce: Nonce,
-) -> poly1305::Key {
+pub(super) fn derive_poly1305_key(chacha_key: &ChaCha20Key, nonce: Nonce) -> poly1305::Key {
     let mut key_bytes = [0u8; 2 * BLOCK_LEN];
     chacha_key.encrypt_in_place(nonce, &mut key_bytes, 0);
     poly1305::Key::new(key_bytes)
