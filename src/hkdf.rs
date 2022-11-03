@@ -264,6 +264,12 @@ pub struct Okm<'a, L: KeyType> {
     len: L,
 }
 
+impl<'a, L: KeyType> Drop for Okm<'a, L> {
+    fn drop(&mut self) {
+        self.info_bytes.zeroize()
+    }
+}
+
 impl<L: KeyType> Okm<'_, L> {
     /// The `OkmLength` given to `Prk::expand()`.
     #[inline]
