@@ -217,6 +217,7 @@ impl Ed25519KeyPair {
     }
 
     #[inline]
+    #[must_use]
     pub fn sign(&self, msg: &[u8]) -> Signature {
         Self::try_sign(self, msg).expect("ED25519 signing failed")
     }

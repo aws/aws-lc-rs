@@ -12,7 +12,11 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #[cfg(test)]
-use super::{der::*, writer::*, *};
+use super::{
+    der::Tag,
+    writer::{write_copy, Accumulator, LengthMeasurement, Writer},
+    Positive,
+};
 
 #[cfg(test)]
 pub(crate) fn write_positive_integer(output: &mut dyn Accumulator, value: &Positive) {

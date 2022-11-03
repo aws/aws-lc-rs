@@ -64,6 +64,7 @@ pub struct EcdsaVerificationAlgorithm {
 pub struct EcdsaSigningAlgorithm(&'static EcdsaVerificationAlgorithm);
 
 impl EcdsaSigningAlgorithm {
+    #[must_use]
     pub const fn new(algorithm: &'static EcdsaVerificationAlgorithm) -> Self {
         EcdsaSigningAlgorithm(algorithm)
     }

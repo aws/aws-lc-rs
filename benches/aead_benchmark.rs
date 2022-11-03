@@ -20,6 +20,7 @@ pub struct AeadConfig {
 }
 
 impl AeadConfig {
+    #[must_use]
     pub fn new(
         algorithm: AeadAlgorithm,
         key: &[u8],

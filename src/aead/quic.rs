@@ -41,7 +41,9 @@ impl From<hkdf::Okm<'_, &'static Algorithm>> for HeaderProtectionKey {
 impl HeaderProtectionKey {
     /// Create a new header protection key.
     ///
-    /// `key_bytes` must be exactly `algorithm.key_len` bytes long.
+    /// # Errors
+    /// `error::Unspecified` when `key_bytes` length is not `algorithm.key_len`
+    ///
     pub fn new(
         algorithm: &'static Algorithm,
         key_bytes: &[u8],
@@ -54,7 +56,9 @@ impl HeaderProtectionKey {
 
     /// Generate a new QUIC Header Protection mask.
     ///
-    /// `sample` must be exactly `self.algorithm().sample_len()` bytes long.
+    /// # Errors
+    /// `error::Unspecified` when `sample` length is not `self.algorithm().sample_len()`.
+    ///
     #[inline]
     pub fn new_mask(&self, sample: &[u8]) -> Result<[u8; 5], error::Unspecified> {
         let sample = <&[u8; SAMPLE_LEN]>::try_from(sample)?;
@@ -64,7 +68,8 @@ impl HeaderProtectionKey {
     }
 
     /// The key's algorithm.
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
     }
@@ -94,13 +99,15 @@ impl KeyType for &'static Algorithm {
 
 impl Algorithm {
     /// The length of the key.
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub fn key_len(&self) -> usize {
         self.key_len
     }
 
     /// The required sample length.
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub fn sample_len(&self) -> usize {
         SAMPLE_LEN
     }
@@ -117,7 +124,7 @@ enum AlgorithmID {
 }
 
 impl PartialEq for Algorithm {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
@@ -141,7 +148,7 @@ pub static AES_256: Algorithm = Algorithm {
     id: AlgorithmID::AES_256,
 };
 
-/// ChaCha20.
+/// `ChaCha20`.
 pub static CHACHA20: Algorithm = Algorithm {
     key_len: 32,
     init: chacha20_init,

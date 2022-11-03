@@ -147,12 +147,12 @@ const MAX_USIZE32: usize = u32::MAX as usize;
 ///
 /// | Parameter   | RFC 2898 Section 5.2 Term
 /// |-------------|-------------------------------------------
-/// | digest_alg  | PRF (HMAC with the given digest algorithm)
-/// | iterations  | c (iteration count)
-/// | salt        | S (salt)
-/// | secret      | P (password)
-/// | out         | dk (derived key)
-/// | out.len()   | dkLen (derived key length)
+/// | `digest_alg`  | PRF (HMAC with the given digest algorithm)
+/// | `iterations`  | c (iteration count)
+/// | `salt`        | S (salt)
+/// | `secret`      | P (password)
+/// | `out`         | dk (derived key)
+/// | `out.len()`   | dkLen (derived key length)
 ///
 /// # Panics
 ///
@@ -160,27 +160,28 @@ const MAX_USIZE32: usize = u32::MAX as usize;
 /// algorithm's output length, per the PBKDF2 specification.
 #[inline]
 pub fn derive(
-    algorithm: Algorithm,
+    digest_alg: Algorithm,
     iterations: NonZeroU32,
     salt: &[u8],
     secret: &[u8],
     out: &mut [u8],
 ) {
-    try_derive(algorithm, iterations, salt, secret, out).expect("pkkdf2 derive failed")
+    try_derive(digest_alg, iterations, salt, secret, out).expect("pkkdf2 derive failed")
 }
 
 #[inline]
 fn try_derive(
-    algorithm: Algorithm,
+    digest_alg: Algorithm,
     iterations: NonZeroU32,
     salt: &[u8],
     secret: &[u8],
     out: &mut [u8],
 ) -> Result<(), Unspecified> {
-    let digest_alg = algorithm.0.digest_algorithm();
-    if out.len() > (MAX_USIZE32 - 1) * digest_alg.output_len {
-        panic!("derived key too long")
-    }
+    let digest_alg = digest_alg.0.digest_algorithm();
+    assert!(
+        out.len() <= (MAX_USIZE32 - 1) * digest_alg.output_len,
+        "derived key too long"
+    );
 
     unsafe {
         if 1 != aws_lc_sys::PKCS5_PBKDF2_HMAC(
@@ -208,7 +209,7 @@ fn try_derive(
 ///
 /// | Parameter                  | RFC 2898 Section 5.2 Term
 /// |----------------------------|--------------------------------------------
-/// | digest_alg                 | PRF (HMAC with the given digest algorithm).
+/// | `digest_alg`                 | PRF (HMAC with the given digest algorithm).
 /// | `iterations`               | c (iteration count)
 /// | `salt`                     | S (salt)
 /// | `secret`                   | P (password)
@@ -232,9 +233,10 @@ pub fn verify(
     if previously_derived.is_empty() {
         return Err(Unspecified);
     }
-    if previously_derived.len() > (MAX_USIZE32 - 1) * digest_alg.output_len {
-        panic!("derived key too long");
-    }
+    assert!(
+        previously_derived.len() <= (MAX_USIZE32 - 1) * digest_alg.output_len,
+        "derived key too long"
+    );
 
     // Create a vector with the expected output length.
     let mut derived_buf = vec![0u8; previously_derived.len()];

@@ -24,7 +24,7 @@ fn test_ed25519_traits() {
     test::compile_time_assert_sync::<Ed25519KeyPair>();
 }
 
-/// Test vectors from BoringSSL.
+/// Test vectors from `BoringSSL`.
 #[test]
 fn test_signature_ed25519() {
     test::run(
@@ -71,7 +71,7 @@ fn test_signature_ed25519() {
     );
 }
 
-/// Test vectors from BoringSSL.
+/// Test vectors from `BoringSSL`.
 #[test]
 fn test_signature_ed25519_verify() {
     test::run(

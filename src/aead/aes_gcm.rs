@@ -13,6 +13,7 @@ use std::ptr::{null, null_mut};
 const CHUNK_SIZE: usize = 4096;
 
 #[inline]
+#[allow(clippy::needless_pass_by_value)]
 pub(crate) fn aes_gcm_seal_separate(
     key: &KeyInner,
     nonce: Nonce,
@@ -21,9 +22,10 @@ pub(crate) fn aes_gcm_seal_separate(
 ) -> Result<Tag, error::Unspecified> {
     unsafe {
         let gcm_ctx = match key.cipher_key() {
-            SymmetricCipherKey::Aes128(.., gcm_ctx) => gcm_ctx,
-            SymmetricCipherKey::Aes256(.., gcm_ctx) => gcm_ctx,
-            _ => panic!("Unsupport algorithm"),
+            SymmetricCipherKey::ChaCha20(..) => panic!("Unsupport algorithm"),
+            SymmetricCipherKey::Aes256(.., gcm_ctx) | SymmetricCipherKey::Aes128(.., gcm_ctx) => {
+                gcm_ctx
+            }
         };
 
         let nonce = nonce.as_ref();
@@ -66,6 +68,7 @@ pub(crate) fn aes_gcm_seal_separate(
             ) {
                 return Err(error::Unspecified);
             }
+            #[allow(clippy::cast_sign_loss)]
             let olen = out_len.assume_init() as usize;
             let ctext = cipher_text.assume_init();
             let next_cipher_chunk = &mut in_out[pos..(pos + olen)];
@@ -197,6 +200,6 @@ fn init_aes_gcm(key: &[u8], id: AlgorithmID) -> Result<KeyInner, error::Unspecif
     match id {
         AlgorithmID::AES_128_GCM => KeyInner::new(SymmetricCipherKey::aes128(key)?),
         AlgorithmID::AES_256_GCM => KeyInner::new(SymmetricCipherKey::aes256(key)?),
-        _ => panic!("Unrecognized algorithm: {:?}", id),
+        AlgorithmID::CHACHA20_POLY1305 => panic!("Unrecognized algorithm: {:?}", id),
     }
 }

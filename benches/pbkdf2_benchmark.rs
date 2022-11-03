@@ -17,6 +17,7 @@ pub struct PBKDF2Config {
 }
 
 impl PBKDF2Config {
+    #[must_use]
     pub fn new(algorithm: PBKDF2Algorithm) -> PBKDF2Config {
         PBKDF2Config { algorithm }
     }
