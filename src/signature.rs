@@ -548,7 +548,7 @@ mod tests {
         let unparsed_pubkey = UnparsedPublicKey::new(&ED25519, random_pubkey);
         let unparsed_pubkey_debug = format!("{:?}", &unparsed_pubkey);
 
-        let unparsed_pubkey_clone = unparsed_pubkey.clone();
+        let unparsed_pubkey_clone = unparsed_pubkey;
         assert_eq!(
             unparsed_pubkey_debug,
             format!("{:?}", unparsed_pubkey_clone)

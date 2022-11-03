@@ -100,14 +100,14 @@ fn bench_pbkdf2(c: &mut Criterion, config: &PBKDF2Config) {
         let mut aws_out = vec![0u8; 64];
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_ring_benchmarks::run_pbkdf2_derive(&config, iter, &mut aws_out);
+                aws_lc_ring_benchmarks::run_pbkdf2_derive(config, iter, &mut aws_out);
             })
         });
 
         let mut ring_out = vec![0u8; 64];
         group.bench_function("Ring", |b| {
             b.iter(|| {
-                ring_benchmarks::run_pbkdf2_derive(&config, iter, &mut ring_out);
+                ring_benchmarks::run_pbkdf2_derive(config, iter, &mut ring_out);
             })
         });
     }

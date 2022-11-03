@@ -329,7 +329,7 @@ mod tests {
         let tgt = u8::from(Tag::GeneralizedTime);
         assert_eq!(0x18u8, tgt);
 
-        let tgt = Tag::GeneralizedTime.clone();
+        let tgt = Tag::GeneralizedTime;
         assert_eq!(tgt, Tag::GeneralizedTime);
     }
 

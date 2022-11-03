@@ -98,7 +98,7 @@ mod tests {
     #[test]
     fn test_big_endian() {
         let x = BigEndian::from(1u32);
-        let x2 = x.clone();
+        let x2 = x;
         assert_eq!(u32::from(x), 1);
         assert_eq!(u32::from(x2), 1);
     }

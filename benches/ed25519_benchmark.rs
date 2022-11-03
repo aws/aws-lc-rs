@@ -80,14 +80,14 @@ fn test_ed25519_sign(c: &mut Criterion, config: &Ed25519Config) {
     let bench_group_name = format!("ED25519-sign-{}-bytes", config.msg.len());
     let mut group = c.benchmark_group(bench_group_name);
 
-    let aws_key_pair = aws_lc_ring_benchmarks::create_key_pair(&config);
+    let aws_key_pair = aws_lc_ring_benchmarks::create_key_pair(config);
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             aws_lc_ring_benchmarks::sign(&aws_key_pair, &config.msg);
         })
     });
 
-    let ring_key_pair = ring_benchmarks::create_key_pair(&config);
+    let ring_key_pair = ring_benchmarks::create_key_pair(config);
 
     group.bench_function("Ring", |b| {
         b.iter(|| {
@@ -105,7 +105,7 @@ fn test_ed25519_verify(c: &mut Criterion, config: &Ed25519Config) {
     let aws_verification_alg = aws_lc_ring_benchmarks::verification();
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
-            aws_lc_ring_benchmarks::verify(aws_verification_alg, pub_key, &config.msg, &sig);
+            aws_lc_ring_benchmarks::verify(aws_verification_alg, pub_key, &config.msg, sig);
         })
     });
 
@@ -113,7 +113,7 @@ fn test_ed25519_verify(c: &mut Criterion, config: &Ed25519Config) {
 
     group.bench_function("Ring", |b| {
         b.iter(|| {
-            ring_benchmarks::verify(ring_verification_alg, pub_key, &config.msg, &sig);
+            ring_benchmarks::verify(ring_verification_alg, pub_key, &config.msg, sig);
         })
     });
 }

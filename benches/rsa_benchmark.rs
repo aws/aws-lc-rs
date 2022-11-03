@@ -160,7 +160,7 @@ fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
     let aws_rng = aws_lc_ring_benchmarks::get_rng();
     let aws_encoding = aws_lc_ring_benchmarks::encoding(config.padding, config.digest);
     let aws_key_pair = aws_lc_ring_benchmarks::create_key_pair(&config.key);
-    let mut aws_sig = &mut buffer[0..aws_key_pair.public_modulus_len()];
+    let aws_sig = &mut buffer[0..aws_key_pair.public_modulus_len()];
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             aws_lc_ring_benchmarks::sign(
@@ -168,7 +168,7 @@ fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
                 &aws_rng,
                 &config.msg,
                 aws_encoding,
-                &mut aws_sig,
+                aws_sig,
             );
         })
     });
@@ -176,7 +176,7 @@ fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
     let ring_rng = ring_benchmarks::get_rng();
     let ring_encoding = ring_benchmarks::encoding(config.padding, config.digest);
     let ring_key_pair = ring_benchmarks::create_key_pair(&config.key);
-    let mut ring_sig = &mut buffer[0..ring_key_pair.public_modulus_len()];
+    let ring_sig = &mut buffer[0..ring_key_pair.public_modulus_len()];
 
     group.bench_function("Ring", |b| {
         b.iter(|| {
@@ -185,7 +185,7 @@ fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
                 &ring_rng,
                 &config.msg,
                 ring_encoding,
-                &mut ring_sig,
+                ring_sig,
             );
         })
     });
@@ -209,7 +209,7 @@ fn test_rsa_verify(c: &mut Criterion, config: &RsaConfig) {
 
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_ring_benchmarks::verify(aws_params, aws_pub_key, &config.msg, &aws_sig);
+                aws_lc_ring_benchmarks::verify(aws_params, aws_pub_key, &config.msg, aws_sig);
             })
         });
     }
@@ -223,7 +223,7 @@ fn test_rsa_verify(c: &mut Criterion, config: &RsaConfig) {
 
         group.bench_function("Ring", |b| {
             b.iter(|| {
-                ring_benchmarks::verify(ring_params, ring_pub_key, &config.msg, &ring_sig);
+                ring_benchmarks::verify(ring_params, ring_pub_key, &config.msg, ring_sig);
             })
         });
     }

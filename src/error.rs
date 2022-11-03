@@ -236,36 +236,35 @@ impl From<untrusted::EndOfInput> for Unspecified {
     }
 }
 
-#[allow(deprecated)]
+#[allow(deprecated, unused_imports)]
 mod tests {
-    use crate::error::{KeyRejected, Unspecified};
     use std::error::Error;
 
     #[test]
     fn display_unspecified() {
-        let output = format!("{}", Unspecified);
+        let output = format!("{}", super::Unspecified);
         assert_eq!("Unspecified", output);
     }
 
     #[test]
     fn unexpected_error() {
-        let key_rejected = KeyRejected::from(());
+        let key_rejected = super::KeyRejected::from(());
         assert_eq!("UnexpectedError", key_rejected.description());
 
-        let unspecified = Unspecified::from(key_rejected);
+        let unspecified = super::Unspecified::from(key_rejected);
         assert_eq!("Unspecified", unspecified.description());
 
-        let unspecified = unspecified.clone();
+        let unspecified = unspecified;
         assert_eq!("Unspecified", unspecified.description());
     }
 
     #[test]
     fn std_error() {
-        let key_rejected = KeyRejected::wrong_algorithm();
+        let key_rejected = super::KeyRejected::wrong_algorithm();
         assert!(key_rejected.cause().is_none());
         assert_eq!("WrongAlgorithm", key_rejected.description());
 
-        let unspecified = Unspecified;
+        let unspecified = super::Unspecified;
         assert!(unspecified.cause().is_none());
         assert_eq!("Unspecified", unspecified.description());
     }
