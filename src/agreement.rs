@@ -27,6 +27,7 @@ use aws_lc_sys::{
 };
 use std::fmt::{Debug, Formatter};
 use std::ptr::null_mut;
+use zeroize::Zeroize;
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq)]
@@ -97,6 +98,16 @@ enum KeyInner {
     ECDH_P256(LcPtr<*mut EC_KEY>),
     ECDH_P384(LcPtr<*mut EC_KEY>),
     X25519([u8; X25519_PRIVATE_KEY_LEN], [u8; X25519_PUBLIC_VALUE_LEN]),
+}
+
+impl Drop for KeyInner {
+    fn drop(&mut self) {
+        if let KeyInner::X25519(private, public) = self {
+            private.zeroize();
+            public.zeroize();
+        }
+        // LcPtr's Drop implementation will call EC_KEY_free
+    }
 }
 
 pub struct EphemeralPrivateKey {
@@ -316,12 +327,12 @@ where
 
     let mut buffer = [0u8; MAX_AGREEMENT_SECRET_LEN];
 
-    let secret: &[u8] = match my_private_key.inner_key {
+    let secret: &[u8] = match &my_private_key.inner_key {
         KeyInner::X25519(priv_key, ..) => {
             let mut pub_key = [0u8; X25519_PUBLIC_VALUE_LEN];
             pub_key.copy_from_slice(peer_pub_bytes);
             unsafe {
-                let result = x25519_diffie_hellman(&mut buffer, &priv_key, &pub_key);
+                let result = x25519_diffie_hellman(&mut buffer, priv_key, &pub_key);
                 if result.is_err() {
                     return Err(error_value);
                 }
