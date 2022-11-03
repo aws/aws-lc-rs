@@ -147,14 +147,6 @@ impl<P: Pointer> NonNullPtr<P> {
     }
 }
 
-impl<P: Pointer> From<NonNullPtr<P>> for LcPtr<P> {
-    #[inline]
-    fn from(nnptr: NonNullPtr<P>) -> Self {
-        LcPtr {
-            pointer: nnptr.pointer,
-        }
-    }
-}
 
 pub trait Pointer {
     fn free(&mut self);
@@ -186,19 +178,6 @@ impl<T> IntoPointer<*mut T> for *mut T {
     }
 }
 
-impl<T> IntoPointer<*mut T> for NonNullPtr<*mut T>
-where
-    *mut T: Pointer,
-{
-    #[inline]
-    fn into_pointer(self) -> Option<*mut T> {
-        if self.is_null() {
-            None
-        } else {
-            Some(self.pointer)
-        }
-    }
-}
 
 #[macro_export]
 macro_rules! create_pointer {

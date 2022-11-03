@@ -4,8 +4,9 @@ init:
 format:
 	cargo +nightly fmt -- --color auto --files-with-diff --verbose
 
+# TODO: Make clippy more annoying
 clippy:
-	cargo clippy -- -W clippy::all
+	cargo clippy --all -- -W clippy::all # -W clippy::pedantic -W clippy::restriction -W clippy::nursery -D warnings
 
 asan:
 # TODO: This build target produces linker error on Mac.
