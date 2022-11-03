@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 //use ring::{aead, error, test, test_file};
-use aws_lc_ring_facade::{aead, error, test, test_file};
+use aws_lc_ring::{aead, error, test, test_file};
 
 use core::ops::RangeFrom;
 

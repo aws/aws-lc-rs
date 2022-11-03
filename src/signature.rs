@@ -128,12 +128,12 @@
 //!
 /* TODO: Implement Ed25519KeyPair and re-enable this Doc test
 //! ```
-//! use aws_lc_ring_facade::{
+//! use aws_lc_ring::{
 //!     rand,
 //!     signature::{self, KeyPair},
 //! };
 //!
-//! # fn main() -> Result<(), aws_lc_ring_facade::error::Unspecified> {
+//! # fn main() -> Result<(), aws_lc_ring::error::Unspecified> {
 //! // Generate a key pair in PKCS#8 (v2) format.
 //! let rng = rand::SystemRandom::new();
 //! let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8(&rng)?;
@@ -193,7 +193,7 @@
 //! ```
 //!
 //! ```
-//! use aws_lc_ring_facade::{rand, signature};
+//! use aws_lc_ring::{rand, signature};
 //!
 //! # #[cfg(feature = "std")]
 //! fn sign_and_verify_rsa(private_key_path: &std::path::Path,

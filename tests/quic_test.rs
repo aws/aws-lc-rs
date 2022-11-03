@@ -12,8 +12,8 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use aws_lc_ring_facade::aead::quic;
-use aws_lc_ring_facade::{test, test_file};
+use aws_lc_ring::aead::quic;
+use aws_lc_ring::{test, test_file};
 
 #[test]
 fn quic_aes_128() {
