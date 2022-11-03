@@ -222,13 +222,13 @@ fn try_derive(
 /// algorithm's output length, per the PBKDF2 specification.
 #[inline]
 pub fn verify(
-    algorithm: Algorithm,
+    digest_alg: Algorithm,
     iterations: NonZeroU32,
     salt: &[u8],
     secret: &[u8],
     previously_derived: &[u8],
 ) -> Result<(), Unspecified> {
-    let digest_alg = algorithm.0.digest_algorithm();
+    let digest_alg = digest_alg.0.digest_algorithm();
 
     if previously_derived.is_empty() {
         return Err(Unspecified);
