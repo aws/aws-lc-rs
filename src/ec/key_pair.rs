@@ -16,6 +16,7 @@ use aws_lc_sys::{ECDSA_do_sign, EVP_PKEY_get1_EC_KEY, EVP_parse_private_key, EC_
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 
+#[allow(clippy::module_name_repetitions)]
 pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
     ec_key: LcPtr<*mut EC_KEY>,
@@ -35,7 +36,7 @@ unsafe impl Sync for EcdsaKeyPair {}
 impl KeyPair for EcdsaKeyPair {
     type PublicKey = EcdsaPublicKey;
 
-    #[inline(always)]
+    #[inline]
     fn public_key(&self) -> &Self::PublicKey {
         &self.pubkey
     }
@@ -86,7 +87,7 @@ impl EcdsaKeyPair {
             let ec_key = LcPtr::new(EVP_PKEY_get1_EC_KEY(*evp_pkey))
                 .map_err(|_| KeyRejected::wrong_algorithm())?;
 
-            ec::validate_ec_key(ec_key.as_non_null(), alg.bits)?;
+            ec::validate_ec_key(&ec_key.as_non_null(), alg.bits)?;
 
             let key_pair = Self::new(alg, ec_key)?;
 

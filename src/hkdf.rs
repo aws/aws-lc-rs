@@ -280,7 +280,7 @@ pub struct Okm<'a, L: KeyType> {
 
 impl<'a, L: KeyType> Drop for Okm<'a, L> {
     fn drop(&mut self) {
-        self.info_bytes.zeroize()
+        self.info_bytes.zeroize();
     }
 }
 

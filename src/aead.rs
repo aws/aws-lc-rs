@@ -548,6 +548,10 @@ impl LessSafeKey {
     /// Like [`OpeningKey::open_in_place()`], except it accepts an arbitrary nonce.
     ///
     /// `nonce` must be unique for every use of the key to open data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid.
+    ///
     #[inline]
     pub fn open_in_place<'in_out, A>(
         &self,
@@ -564,6 +568,10 @@ impl LessSafeKey {
     /// Like [`OpeningKey::open_within()`], except it accepts an arbitrary nonce.
     ///
     /// `nonce` must be unique for every use of the key to open data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid.
+    ///
     #[inline]
     pub fn open_within<'in_out, A>(
         &self,
@@ -581,6 +589,7 @@ impl LessSafeKey {
     /// Deprecated. Renamed to `seal_in_place_append_tag()`.
     #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
     #[inline]
+    #[allow(clippy::missing_errors_doc)]
     pub fn seal_in_place<A, InOut>(
         &self,
         nonce: Nonce,
@@ -598,7 +607,12 @@ impl LessSafeKey {
     /// arbitrary nonce.
     ///
     /// `nonce` must be unique for every use of the key to seal data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if encryption operation fails.
+    ///
     #[inline]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_append_tag<A, InOut>(
         &self,
         nonce: Nonce,
@@ -616,7 +630,12 @@ impl LessSafeKey {
     /// arbitrary nonce.
     ///
     /// `nonce` must be unique for every use of the key to seal data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if encryption operation fails.
+    ///
     #[inline]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_separate_tag<A>(
         &self,
         nonce: Nonce,
@@ -657,7 +676,7 @@ pub struct Algorithm {
 
 impl Algorithm {
     /// The length of the key.
-    #[inline(always)]
+    #[inline]
     #[must_use]
     pub fn key_len(&self) -> usize {
         self.key_len
@@ -666,14 +685,14 @@ impl Algorithm {
     /// The length of a tag.
     ///
     /// See also `MAX_TAG_LEN`.
-    #[inline(always)]
+    #[inline]
     #[must_use]
     pub fn tag_len(&self) -> usize {
         TAG_LEN
     }
 
     /// The length of the nonces.
-    #[inline(always)]
+    #[inline]
     #[must_use]
     pub fn nonce_len(&self) -> usize {
         NONCE_LEN
@@ -728,6 +747,7 @@ fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), U
 }
 
 #[inline]
+#[allow(clippy::needless_pass_by_value)]
 pub(crate) fn aead_seal_combined<InOut>(
     key: &KeyInner,
     nonce: Nonce,
@@ -739,9 +759,9 @@ where
 {
     unsafe {
         let aead_ctx = match key {
-            KeyInner::AES_128_GCM(.., aead_ctx) => aead_ctx,
-            KeyInner::AES_256_GCM(.., aead_ctx) => aead_ctx,
-            KeyInner::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
+            KeyInner::AES_128_GCM(.., aead_ctx)
+            | KeyInner::AES_256_GCM(.., aead_ctx)
+            | KeyInner::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
 
@@ -773,6 +793,7 @@ where
 }
 
 #[inline]
+#[allow(clippy::needless_pass_by_value)]
 pub(crate) fn aead_open_combined(
     key: &KeyInner,
     nonce: Nonce,
@@ -781,9 +802,9 @@ pub(crate) fn aead_open_combined(
 ) -> Result<(), Unspecified> {
     unsafe {
         let aead_ctx = match key {
-            KeyInner::AES_128_GCM(.., aead_ctx) => aead_ctx,
-            KeyInner::AES_256_GCM(.., aead_ctx) => aead_ctx,
-            KeyInner::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
+            KeyInner::AES_128_GCM(.., aead_ctx)
+            | KeyInner::AES_256_GCM(.., aead_ctx)
+            | KeyInner::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
 

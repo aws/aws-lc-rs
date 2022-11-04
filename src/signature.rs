@@ -299,7 +299,7 @@ impl Signature {
 }
 
 impl AsRef<[u8]> for Signature {
-    #[inline(always)]
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.value[..self.len]
     }
@@ -342,12 +342,7 @@ impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
     }
 }
 
-impl<B: Copy> Copy for UnparsedPublicKey<B> where B: AsRef<[u8]> {}
-
-impl<B: Clone> Clone for UnparsedPublicKey<B>
-where
-    B: AsRef<[u8]>,
-{
+impl<B: Clone + AsRef<[u8]>> Clone for UnparsedPublicKey<B> {
     fn clone(&self) -> Self {
         Self {
             algorithm: self.algorithm,

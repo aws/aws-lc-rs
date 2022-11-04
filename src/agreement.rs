@@ -151,7 +151,7 @@ impl EphemeralPrivateKey {
             AlgorithmID::X25519 => {
                 let mut priv_key = [0u8; X25519_PRIVATE_KEY_LEN];
                 rng.fill(&mut priv_key)?;
-                Self::from_x25519_private_key(&priv_key)
+                Ok(Self::from_x25519_private_key(&priv_key))
             }
             AlgorithmID::ECDH_P256 => {
                 let mut priv_key = [0u8; ECDH_P256_PRIVATE_KEY_LEN];
@@ -167,14 +167,12 @@ impl EphemeralPrivateKey {
     }
 
     #[inline]
-    fn from_x25519_private_key(
-        priv_key: &[u8; X25519_PRIVATE_KEY_LEN],
-    ) -> Result<Self, Unspecified> {
+    fn from_x25519_private_key(priv_key: &[u8; X25519_PRIVATE_KEY_LEN]) -> Self {
         unsafe {
             let mut pub_key = [0u8; X25519_PUBLIC_VALUE_LEN];
             X25519_public_from_private(pub_key.as_mut_ptr().cast(), priv_key.as_ptr());
             let inner_key = KeyInner::X25519(*priv_key, pub_key);
-            Ok(EphemeralPrivateKey { inner_key })
+            EphemeralPrivateKey { inner_key }
         }
     }
 
@@ -306,6 +304,7 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 }
 
 #[inline]
+#[allow(clippy::needless_pass_by_value)]
 pub fn agree_ephemeral<B: AsRef<[u8]>, F, R, E>(
     my_private_key: EphemeralPrivateKey,
     peer_public_key: &UnparsedPublicKey<B>,
@@ -362,6 +361,7 @@ where
 const MAX_AGREEMENT_SECRET_LEN: usize = 48;
 
 #[inline]
+#[allow(clippy::needless_pass_by_value)]
 unsafe fn ec_key_ecdh<'a>(
     buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
     priv_ec_key: NonNullPtr<*mut EC_KEY>,
@@ -400,6 +400,7 @@ unsafe fn ec_key_ecdh<'a>(
     if 0 >= outlen {
         return Err(());
     }
+    #[allow(clippy::cast_sign_loss)]
     let outlen = outlen as usize;
 
     Ok(&buffer[0..outlen])

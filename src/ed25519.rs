@@ -53,6 +53,7 @@ impl VerificationAlgorithm for EdDSAParameters {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub struct Ed25519KeyPair {
     private_key: [u8; ED25519_PRIVATE_KEY_LEN],
     public_key: Ed25519PublicKey,
@@ -68,12 +69,13 @@ impl Debug for Ed25519KeyPair {
 }
 
 #[derive(Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub struct Ed25519PublicKey {
     public_key: [u8; ED25519_PUBLIC_KEY_LEN],
 }
 
 impl AsRef<[u8]> for Ed25519PublicKey {
-    #[inline(always)]
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.public_key
     }
@@ -90,7 +92,7 @@ impl Debug for Ed25519PublicKey {
 
 impl KeyPair for Ed25519KeyPair {
     type PublicKey = Ed25519PublicKey;
-    #[inline(always)]
+    #[inline]
     fn public_key(&self) -> &Self::PublicKey {
         &self.public_key
     }
@@ -187,7 +189,7 @@ impl Ed25519KeyPair {
             let evp_pkey = LcPtr::new(EVP_parse_private_key(&mut cbs))
                 .map_err(|_| KeyRejected::invalid_encoding())?;
 
-            validate_ed25519_evp_pkey(evp_pkey.as_non_null())?;
+            validate_ed25519_evp_pkey(&evp_pkey.as_non_null())?;
 
             let mut private_key = [0u8; ED25519_PRIVATE_KEY_LEN];
             let mut out_len: usize = ED25519_PRIVATE_KEY_LEN;
@@ -246,18 +248,18 @@ impl Ed25519KeyPair {
 
 #[inline]
 pub(crate) unsafe fn validate_ed25519_evp_pkey(
-    evp_pkey: NonNullPtr<*mut EVP_PKEY>,
+    evp_pkey: &NonNullPtr<*mut EVP_PKEY>,
 ) -> Result<(), KeyRejected> {
     const ED25519_KEY_TYPE: c_int = aws_lc_sys::EVP_PKEY_ED25519;
     const ED25519_MIN_BITS: c_uint = 253;
     const ED25519_MAX_BITS: c_uint = 256;
 
-    let key_type = aws_lc_sys::EVP_PKEY_id(*evp_pkey);
+    let key_type = aws_lc_sys::EVP_PKEY_id(**evp_pkey);
     if key_type != ED25519_KEY_TYPE {
         return Err(KeyRejected::wrong_algorithm());
     }
 
-    let bits = aws_lc_sys::EVP_PKEY_bits(*evp_pkey);
+    let bits = aws_lc_sys::EVP_PKEY_bits(**evp_pkey);
     let bits = bits as c_uint;
     if bits < ED25519_MIN_BITS {
         return Err(KeyRejected::too_small());

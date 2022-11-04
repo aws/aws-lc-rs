@@ -75,7 +75,7 @@ impl Accumulator for Writer {
 }
 
 pub fn write_copy(accumulator: &mut dyn Accumulator, to_copy: untrusted::Input) {
-    accumulator.write_bytes(to_copy.as_slice_less_safe())
+    accumulator.write_bytes(to_copy.as_slice_less_safe());
 }
 
 #[cfg(test)]

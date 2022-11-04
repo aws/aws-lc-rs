@@ -157,6 +157,7 @@ pub fn compile_time_assert_std_error_error<T: std::error::Error>() {}
 ///
 /// Requires the `alloc` default feature to be enabled.
 #[derive(Debug)]
+#[allow(clippy::module_name_repetitions)]
 pub struct TestCase {
     attributes: Vec<(String, String, bool)>,
 }
@@ -285,6 +286,7 @@ impl TestCase {
 
 /// References a test input file.
 #[macro_export]
+#[allow(clippy::module_name_repetitions)]
 macro_rules! test_file {
     ($file_name:expr) => {
         $crate::test::File {
@@ -306,6 +308,11 @@ pub struct File<'a> {
 /// Parses test cases out of the given file, calling `f` on each vector until
 /// `f` fails or until all the test vectors have been read. `f` can indicate
 /// failure either by returning `Err()` or by panicking.
+///
+/// # Panics
+/// Panics on test failure.
+///
+#[allow(clippy::needless_pass_by_value)]
 pub fn run<F>(test_file: File, mut f: F)
 where
     F: FnMut(&str, &mut TestCase) -> Result<(), error::Unspecified>,
@@ -318,15 +325,15 @@ where
     while let Some(mut test_case) = parse_test_case(&mut current_section, lines) {
         let result = match f(&current_section, &mut test_case) {
             Ok(()) => {
-                if !test_case
+                if test_case
                     .attributes
                     .iter()
                     .any(|&(_, _, consumed)| !consumed)
                 {
-                    Ok(())
-                } else {
                     failed = true;
                     Err("Test didn't consume all attributes.")
+                } else {
+                    Ok(())
                 }
             }
             Err(error::Unspecified) => Err("Test returned Err(error::Unspecified)."),
@@ -376,6 +383,7 @@ pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
         if !ch.is_ascii_hexdigit() {
             return Err("Invalid hex string".to_string());
         }
+        #[allow(clippy::cast_possible_truncation)]
         let value = ch.to_digit(16).unwrap() as u8;
         if index % 2 == 0 {
             current_byte = (value << 4) as u8;

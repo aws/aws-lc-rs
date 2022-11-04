@@ -72,7 +72,7 @@ impl EcdsaSigningAlgorithm {
 
 impl Deref for EcdsaSigningAlgorithm {
     type Target = EcdsaVerificationAlgorithm;
-    #[inline(always)]
+    #[inline]
     fn deref(&self) -> &Self::Target {
         self.0
     }
@@ -95,7 +95,7 @@ pub(crate) enum AlgorithmID {
 }
 
 impl AlgorithmID {
-    #[inline(always)]
+    #[inline]
     pub(crate) fn nid(&'static self) -> i32 {
         match self {
             AlgorithmID::ECDSA_P256 => aws_lc_sys::NID_X9_62_prime256v1,
@@ -120,7 +120,7 @@ impl EcdsaPublicKey {
 }
 
 impl AsRef<[u8]> for EcdsaPublicKey {
-    #[inline(always)]
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
     }
@@ -162,10 +162,10 @@ impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
 
 #[inline]
 unsafe fn validate_ec_key(
-    ec_key: NonNullPtr<*mut EC_KEY>,
+    ec_key: &NonNullPtr<*mut EC_KEY>,
     expected_bits: c_uint,
 ) -> Result<(), KeyRejected> {
-    let ec_group = NonNullPtr::new(aws_lc_sys::EC_KEY_get0_group(*ec_key))?;
+    let ec_group = NonNullPtr::new(EC_KEY_get0_group(**ec_key))?;
     let bits = aws_lc_sys::EC_GROUP_order_bits(*ec_group) as c_uint;
 
     if bits < expected_bits {
@@ -340,11 +340,11 @@ unsafe fn ecdsa_sig_to_fixed(
 
     let r_bn = NonNullPtr::new(aws_lc_sys::ECDSA_SIG_get0_r(**sig))?;
     let mut r_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
-    let r_bytes = bignum_to_be_bytes(r_bn, &mut r_buffer)?;
+    let r_bytes = bignum_to_be_bytes(&r_bn, &mut r_buffer)?;
 
     let s_bn = NonNullPtr::new(aws_lc_sys::ECDSA_SIG_get0_s(**sig))?;
     let mut s_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
-    let s_bytes = bignum_to_be_bytes(s_bn, &mut s_buffer)?;
+    let s_bytes = bignum_to_be_bytes(&s_bn, &mut s_buffer)?;
 
     Ok(Signature::new(|slice| {
         let (r_start, r_end) = ((expected_number_size - r_bytes), expected_number_size);
@@ -399,15 +399,15 @@ unsafe fn ecdsa_sig_from_fixed(
 
 #[inline]
 unsafe fn bignum_to_be_bytes(
-    bignum: NonNullPtr<*mut BIGNUM>,
+    bignum: &NonNullPtr<*mut BIGNUM>,
     bytes: &mut [u8],
 ) -> Result<usize, Unspecified> {
-    let bn_bytes = BN_num_bytes(*bignum);
+    let bn_bytes = BN_num_bytes(**bignum);
     if bn_bytes > bytes.len() as c_uint {
         return Err(Unspecified);
     }
 
-    let bn_bytes = BN_bn2bin(*bignum, bytes.as_mut_ptr());
+    let bn_bytes = BN_bn2bin(**bignum, bytes.as_mut_ptr());
     if bn_bytes == 0 {
         return Err(Unspecified);
     }
