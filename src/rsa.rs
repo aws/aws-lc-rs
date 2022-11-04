@@ -25,10 +25,10 @@ use crate::ptr::{DetachableLcPtr, LcPtr, NonNullPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
 #[cfg(feature = "ring-io")]
-use aws_lc_sys::{BN_bn2bin, BN_num_bytes, RSA_get0_e, RSA_get0_n};
+use aws_lc_sys::{BN_bn2bin, BN_num_bytes};
 
 use crate::{cbs, digest, rand, test};
-use aws_lc_sys::{BN_cmp, BN_new, BN_set_u64, EVP_parse_private_key, RSA_new, BIGNUM, RSA};
+use aws_lc_sys::{BN_cmp, BN_new, BN_set_u64, EVP_parse_private_key, RSA_new, RSA_get0_e, RSA_get0_n, BIGNUM, RSA};
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
