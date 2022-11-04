@@ -30,11 +30,11 @@
 //! [RFC 4253]: https://tools.ietf.org/html/rfc4253
 
 use super::{
-    chacha::{self, *},
+    chacha::{self, ChaCha20Key},
     poly1305, Nonce, Tag,
 };
 use crate::aead::block::BLOCK_LEN;
-use crate::{constant_time, endian::*, error};
+use crate::{constant_time, endian::BigEndian, error};
 use core::convert::TryInto;
 
 /// A key for sealing packets.
@@ -44,6 +44,7 @@ pub struct SealingKey {
 
 impl SealingKey {
     /// Constructs a new `SealingKey`.
+    #[must_use]
     pub fn new(key_material: &[u8; KEY_LEN]) -> SealingKey {
         SealingKey {
             key: Key::new(key_material),
@@ -65,20 +66,16 @@ impl SealingKey {
         tag_out: &mut [u8; TAG_LEN],
     ) {
         let nonce = make_nonce(sequence_number);
-        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(nonce.0)).unwrap();
+        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(nonce.0));
 
         {
             let (len_in_out, data_and_padding_in_out) =
                 plaintext_in_ciphertext_out.split_at_mut(PACKET_LENGTH_LEN);
 
-            self.key
-                .k_1
-                .encrypt_in_place(Nonce(nonce.0), len_in_out, 0)
-                .unwrap();
+            self.key.k_1.encrypt_in_place(Nonce(nonce.0), len_in_out, 0);
             self.key
                 .k_2
-                .encrypt_in_place(nonce, data_and_padding_in_out, 1)
-                .unwrap();
+                .encrypt_in_place(nonce, data_and_padding_in_out, 1);
         }
 
         let Tag(tag) = poly1305::sign(poly_key, plaintext_in_ciphertext_out);
@@ -93,6 +90,7 @@ pub struct OpeningKey {
 
 impl OpeningKey {
     /// Constructs a new `OpeningKey`.
+    #[must_use]
     pub fn new(key_material: &[u8; KEY_LEN]) -> OpeningKey {
         OpeningKey {
             key: Key::new(key_material),
@@ -104,6 +102,7 @@ impl OpeningKey {
     /// Importantly, the result won't be authenticated until `open_in_place` is
     /// called.
     #[inline]
+    #[must_use]
     pub fn decrypt_packet_length(
         &self,
         sequence_number: u32,
@@ -111,10 +110,7 @@ impl OpeningKey {
     ) -> [u8; PACKET_LENGTH_LEN] {
         let mut packet_length = encrypted_packet_length;
         let nonce = make_nonce(sequence_number);
-        self.key
-            .k_1
-            .encrypt_in_place(nonce, &mut packet_length, 0)
-            .unwrap();
+        self.key.k_1.encrypt_in_place(nonce, &mut packet_length, 0);
         packet_length
     }
 
@@ -127,6 +123,10 @@ impl OpeningKey {
     /// `plaintext` is `&ciphertext_in_plaintext_out[PACKET_LENGTH_LEN..]`;
     /// otherwise the contents of `ciphertext_in_plaintext_out` are unspecified
     /// and must not be used.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid
+    ///
     #[inline]
     pub fn open_in_place<'a>(
         &self,
@@ -139,13 +139,13 @@ impl OpeningKey {
         // We must verify the tag before decrypting so that
         // `ciphertext_in_plaintext_out` is unmodified if verification fails.
         // This is beyond what we guarantee.
-        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(nonce.0))?;
+        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(nonce.0));
         verify(poly_key, ciphertext_in_plaintext_out, tag)?;
 
         let plaintext_in_ciphertext_out = &mut ciphertext_in_plaintext_out[PACKET_LENGTH_LEN..];
         self.key
             .k_2
-            .encrypt_in_place(nonce, plaintext_in_ciphertext_out, 1)?;
+            .encrypt_in_place(nonce, plaintext_in_ciphertext_out, 1);
 
         Ok(plaintext_in_ciphertext_out)
     }
@@ -190,13 +190,10 @@ fn verify(key: poly1305::Key, msg: &[u8], tag: &[u8; TAG_LEN]) -> Result<(), err
 }
 
 #[inline]
-pub(super) fn derive_poly1305_key(
-    chacha_key: &ChaCha20Key,
-    nonce: Nonce,
-) -> Result<poly1305::Key, error::Unspecified> {
+pub(super) fn derive_poly1305_key(chacha_key: &ChaCha20Key, nonce: Nonce) -> poly1305::Key {
     let mut key_bytes = [0u8; 2 * BLOCK_LEN];
-    chacha_key.encrypt_in_place(nonce, &mut key_bytes, 0)?;
-    Ok(poly1305::Key::new(key_bytes))
+    chacha_key.encrypt_in_place(nonce, &mut key_bytes, 0);
+    poly1305::Key::new(key_bytes)
 }
 
 #[cfg(test)]
@@ -218,7 +215,7 @@ mod tests {
         let chacha_key_bytes: [u8; 32] = <[u8; 32]>::try_from(chacha_key).unwrap();
         let chacha_key = ChaCha20Key::from(chacha_key_bytes);
         let iv = Nonce::from(&[45u32, 897, 4567]);
-        let poly1305_key = derive_poly1305_key(&chacha_key, iv).unwrap();
+        let poly1305_key = derive_poly1305_key(&chacha_key, iv);
 
         assert_eq!(&expected_poly1305_key, &poly1305_key.key_and_nonce);
     }

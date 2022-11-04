@@ -231,9 +231,10 @@ impl TestCase {
                         }
                     }
                     Some(b'"') => {
-                        if s.next().is_some() {
-                            panic!("characters after the closing quote of a quoted string.");
-                        }
+                        assert!(
+                            s.next().is_none(),
+                            "characters after the closing quote of a quoted string."
+                        );
                         break;
                     }
                     Some(b) => *b,
@@ -273,9 +274,7 @@ impl TestCase {
     pub fn consume_optional_string(&mut self, key: &str) -> Option<String> {
         for (name, value, consumed) in &mut self.attributes {
             if key == name {
-                if *consumed {
-                    panic!("Attribute {} was already consumed", key);
-                }
+                assert!(!(*consumed), "Attribute {} was already consumed", key);
                 *consumed = true;
                 return Some(value.clone());
             }
@@ -350,9 +349,7 @@ where
         }
     }
 
-    if failed {
-        panic!("Test failed.")
-    }
+    assert!(!failed, "Test failed.");
 }
 
 pub fn to_hex_upper<T: AsRef<[u8]>>(bytes: T) -> String {
@@ -365,8 +362,8 @@ pub fn to_hex<T: AsRef<[u8]>>(bytes: T) -> String {
     for byte in bytes {
         let upper_val = byte >> 4u8;
         let lower_val = byte & 0x0f;
-        encoding.push(char::from_digit(upper_val as u32, 16).unwrap());
-        encoding.push(char::from_digit(lower_val as u32, 16).unwrap());
+        encoding.push(char::from_digit(u32::from(upper_val), 16).unwrap());
+        encoding.push(char::from_digit(u32::from(lower_val), 16).unwrap());
     }
     encoding
 }
@@ -395,8 +392,9 @@ pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
     Ok(bytes)
 }
 
+#[must_use]
 pub fn from_dirty_hex(hex_str: &str) -> Vec<u8> {
-    let clean: String = hex_str.chars().filter(|c| c.is_ascii_hexdigit()).collect();
+    let clean: String = hex_str.chars().filter(char::is_ascii_hexdigit).collect();
     from_hex(clean.as_str()).unwrap()
 }
 
@@ -461,9 +459,7 @@ fn parse_test_case(
                 is_first_line = false;
 
                 let parts: Vec<&str> = line.splitn(2, " = ").collect();
-                if parts.len() != 2 {
-                    panic!("Syntax error: Expected Key = Value.");
-                };
+                assert!(parts.len() == 2, "Syntax error: Expected Key = Value.");
 
                 let key = parts[0].trim();
                 let value = parts[1].trim();
@@ -583,9 +579,7 @@ mod tests {
         let mut n = 0;
         test::run(test_file!("test/test_3_tests.txt"), |_, test_case| {
             let _ = test_case.consume_string("Key");
-            if n == test_to_fail {
-                panic!("Oh Noes!");
-            };
+            assert!(n != test_to_fail, "Oh Noes!");
             n += 1;
             Ok(())
         });

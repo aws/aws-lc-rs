@@ -58,7 +58,7 @@ impl Context {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn update(&mut self, input: &[u8]) {
         unsafe {
             aws_lc_sys::CRYPTO_poly1305_update(
@@ -84,7 +84,7 @@ impl Context {
 
 /// Implements the original, non-IETF padding semantics.
 ///
-/// This is used by chacha20_poly1305_openssh and the standalone
+/// This is used by `chacha20_poly1305_openssh` and the standalone
 /// poly1305 test vectors.
 #[inline]
 pub(super) fn sign(key: Key, input: &[u8]) -> Tag {

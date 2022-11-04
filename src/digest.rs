@@ -102,6 +102,7 @@ unsafe impl Send for Context {}
 
 impl Context {
     /// Constructs a new context.
+    #[must_use]
     pub fn new(algorithm: &'static Algorithm) -> Self {
         let result = Self {
             algorithm,
@@ -216,6 +217,7 @@ impl Context {
 /// # }
 /// ```
 #[inline]
+#[must_use]
 pub fn digest(algorithm: &'static Algorithm, data: &[u8]) -> Digest {
     let mut output = [0u8; MAX_OUTPUT_LEN];
     (algorithm.one_shot_hash)(data, &mut output);
@@ -243,6 +245,7 @@ pub struct Digest {
 impl Digest {
     /// The algorithm that was used to calculate the digest value.
     #[inline(always)]
+    #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
     }
@@ -323,7 +326,7 @@ pub const MAX_OUTPUT_LEN: usize = 512 / 8;
 /// algorithms in this module.
 pub const MAX_CHAINING_LEN: usize = MAX_OUTPUT_LEN;
 
-/// Match digest types for EVP_MD functions.
+/// Match digest types for `EVP_MD` functions.
 pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> *const aws_lc_sys::EVP_MD {
     unsafe {
         match algorithm_id {

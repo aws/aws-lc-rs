@@ -121,6 +121,7 @@ pub struct Algorithm(&'static digest::Algorithm);
 impl Algorithm {
     /// The digest algorithm this HMAC algorithm is based on.
     #[inline]
+    #[must_use]
     pub fn digest_algorithm(&self) -> &'static digest::Algorithm {
         self.0
     }
@@ -246,6 +247,7 @@ impl Key {
     /// the truncation described above reduces their strength to only
     /// `digest_alg.output_len * 8` bits.
     #[inline]
+    #[must_use]
     pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Self {
         Key::try_new(algorithm, key_value).expect("Unable to create HmacContext")
     }
@@ -278,6 +280,7 @@ impl Key {
 
     /// The digest algorithm for the key.
     #[inline]
+    #[must_use]
     pub fn algorithm(&self) -> Algorithm {
         Algorithm(self.algorithm.digest_algorithm())
     }
@@ -325,6 +328,7 @@ impl Context {
     /// Constructs a new HMAC signing context using the given digest algorithm
     /// and key.
     #[inline]
+    #[must_use]
     pub fn with_key(signing_key: &Key) -> Self {
         Self {
             key: signing_key.clone(),
@@ -360,6 +364,7 @@ impl Context {
     /// the return value of `sign` to a tag. Use `verify` for verification
     /// instead.
     #[inline]
+    #[must_use]
     pub fn sign(self) -> Tag {
         Self::try_sign(self).expect("HMAC_Final failed")
     }
@@ -390,6 +395,7 @@ impl Context {
 /// It is generally not safe to implement HMAC verification by comparing the
 /// return value of `sign` to a tag. Use `verify` for verification instead.
 #[inline]
+#[must_use]
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
     try_sign(key, data).expect("HMAC one-shot failed")
 }

@@ -18,6 +18,7 @@ pub struct QuicConfig {
 }
 
 impl QuicConfig {
+    #[must_use]
     pub fn new(
         algorithm: QuicAlgorithm,
         key: &[u8],

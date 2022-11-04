@@ -17,7 +17,7 @@
 
 use aws_lc_ring::{digest, test, test_file};
 
-/// Test vectors from BoringSSL, Go, and other sources.
+/// Test vectors from `BoringSSL`, `Go`, and other sources.
 #[test]
 fn digest_misc() {
     test::run(test_file!("data/digest_tests.txt"), |section, test_case| {
@@ -218,7 +218,7 @@ test_i_u_f!(digest_test_i_u_f_sha512, digest::SHA512);
 /// calculation of 8GB of the byte 123.
 ///
 /// You can verify the expected values in many ways. One way is
-/// `python ~/p/write_big.py`, where write_big.py is:
+/// `python ~/p/write_big.py`, where `write_big.py` is:
 ///
 /// ```python
 /// chunk = bytearray([123] * (16 * 1024))

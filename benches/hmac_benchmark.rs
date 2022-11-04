@@ -16,6 +16,7 @@ pub struct HMACConfig {
 }
 
 impl HMACConfig {
+    #[must_use]
     pub fn new(algorithm: HMACAlgorithm) -> HMACConfig {
         HMACConfig { algorithm }
     }
@@ -53,12 +54,14 @@ macro_rules! benchmark_hmac {
                 hmac::Key::new(algorithm(&config), &key_val)
             }
 
+            #[allow(unused_must_use)]
             pub fn run_hmac_incremental(key: &hmac::Key, chunk: &[u8]) {
                 let mut s_ctx = hmac::Context::with_key(&key);
                 s_ctx.update(chunk);
                 s_ctx.sign();
             }
 
+            #[allow(unused_must_use)]
             pub fn run_hmac_one_shot(key: &hmac::Key, chunk: &[u8]) {
                 hmac::sign(&key, chunk);
             }

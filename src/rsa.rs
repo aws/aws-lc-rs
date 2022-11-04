@@ -212,6 +212,7 @@ impl RsaKeyPair {
         Ok(())
     }
 
+    #[must_use]
     pub fn public_modulus_len(&self) -> usize {
         // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
         unsafe { (aws_lc_sys::RSA_bits(*self.rsa_key) / 8) as usize }
@@ -324,11 +325,13 @@ impl AsRef<[u8]> for RsaSubjectPublicKey {
 #[cfg(feature = "ring-io")]
 impl<'a> RsaSubjectPublicKey {
     /// The public modulus (n).
+    #[must_use]
     pub fn modulus(&'a self) -> io::Positive<'a> {
         io::Positive::new_non_empty_without_leading_zeros(Input::from(self.modulus.as_ref()))
     }
 
     /// The public exponent (e).
+    #[must_use]
     pub fn exponent(&'a self) -> io::Positive<'a> {
         io::Positive::new_non_empty_without_leading_zeros(Input::from(self.exponent.as_ref()))
     }
@@ -416,10 +419,12 @@ impl RsaParameters {
         }
     }
 
+    #[must_use]
     pub fn min_modulus_len(&self) -> u32 {
         *self.2.start()
     }
 
+    #[must_use]
     pub fn max_modulus_len(&self) -> u32 {
         *self.2.end()
     }

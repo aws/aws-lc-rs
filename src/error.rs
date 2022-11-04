@@ -129,7 +129,8 @@ impl From<core::array::TryFromSliceError> for Unspecified {
 pub struct KeyRejected(&'static str);
 
 impl KeyRejected {
-    /// The value returned from <Self as std::error::Error>::description()
+    /// The value returned from `<Self as std::error::Error>::description()`
+    #[must_use]
     pub fn description_(&self) -> &'static str {
         self.0
     }

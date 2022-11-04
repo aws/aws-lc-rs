@@ -25,7 +25,7 @@
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
 use crate::{derive_debug_via_id, error, hkdf, polyfill};
-use aes_gcm::*;
+use aes_gcm::aes_gcm_seal_separate;
 use std::fmt::Debug;
 
 use crate::error::Unspecified;
@@ -67,7 +67,8 @@ pub use self::{
 pub trait NonceSequence {
     /// Returns the next nonce in the sequence.
     ///
-    /// This may fail if "too many" nonces have been requested, where how many
+    /// # Errors
+    /// `error::Unspecified` if  "too many" nonces have been requested, where how many
     /// is too many is up to the implementation of `NonceSequence`. An
     /// implementation may that enforce a maximum number of records are
     /// sent/received under a key this way. Once `advance()` fails, it must
@@ -126,7 +127,8 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// has been overwritten by the plaintext; `plaintext` will refer to the
     /// plaintext without the tag.
     ///
-    /// When `open_in_place()` returns `Err(..)`, `in_out` may have been
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
     /// overwritten in an unspecified way.
     ///
     #[inline]
@@ -165,8 +167,6 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// Similarly, `key.open_within(aad, in_out, 0..)` is equivalent to
     /// `key.open_in_place(aad, in_out)`.
     ///
-    ///  When `open_in_place()` returns `Err(..)`, `in_out` may have been
-    /// overwritten in an unspecified way.
     ///
     /// The shifting feature is useful in the case where multiple packets are
     /// being reassembled in place. Consider this example where the peer has
@@ -184,6 +184,11 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// ```
     ///
     /// This reassembly be accomplished with three calls to `open_within()`.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
+    /// overwritten in an unspecified way.
+    ///
     #[inline]
     pub fn open_within<'in_out, A>(
         &mut self,
@@ -226,17 +231,9 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
             .ok_or(Unspecified)?;
         check_per_nonce_max_bytes(key.algorithm, ciphertext_len)?;
         let key_inner_ref = key.get_inner_key()?;
-        match key_inner_ref {
-            KeyInner::AES_128_GCM(..) => {
-                aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?
-            }
-            KeyInner::AES_256_GCM(..) => {
-                aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?
-            }
-            KeyInner::CHACHA20_POLY1305(..) => {
-                aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?
-            }
-        }
+
+        aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?;
+
         // `ciphertext_len` is also the plaintext length.
         Ok(&mut in_out[in_prefix_len..(in_prefix_len + ciphertext_len)])
     }
@@ -292,7 +289,11 @@ impl<N: NonceSequence> SealingKey<N> {
     /// key.seal_in_place_separate_tag(aad, in_out.as_mut())
     ///     .map(|tag| in_out.extend(tag.as_ref()))
     /// ```
+    /// # Errors
+    /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
+    ///
     #[inline]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_append_tag<A, InOut>(
         &mut self,
         aad: Aad<A>,
@@ -321,7 +322,12 @@ impl<N: NonceSequence> SealingKey<N> {
     /// will overwrite the plaintext with the ciphertext and return the tag.
     /// For most protocols, the caller must append the tag to the ciphertext.
     /// The tag will be `self.algorithm.tag_len()` bytes long.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
+    ///
     #[inline]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_separate_tag<A>(
         &mut self,
         aad: Aad<A>,
@@ -351,12 +357,7 @@ where
 {
     check_per_nonce_max_bytes(key.algorithm, in_out.as_mut().len())?;
     let key_inner_ref = key.get_inner_key()?;
-    match key_inner_ref {
-        KeyInner::AES_128_GCM(..) => aead_seal_combined(key_inner_ref, nonce, aad, in_out)?,
-        KeyInner::AES_256_GCM(..) => aead_seal_combined(key_inner_ref, nonce, aad, in_out)?,
-        KeyInner::CHACHA20_POLY1305(..) => aead_seal_combined(key_inner_ref, nonce, aad, in_out)?,
-    }
-    Ok(())
+    aead_seal_combined(key_inner_ref, nonce, aad, in_out)
 }
 
 #[inline]
@@ -420,6 +421,7 @@ where
 
 impl Aad<[u8; 0]> {
     /// Construct an empty `Aad`.
+    #[must_use]
     pub fn empty() -> Self {
         Self::from([])
     }
@@ -462,8 +464,8 @@ impl Debug for UnboundKey {
 
 impl UnboundKey {
     /// Constructs an `UnboundKey`.
-    ///
-    /// Fails if `key_bytes.len() != algorithm.key_len()`.
+    /// # Errors
+    /// `error::Unspecified` if `key_bytes.len() != algorithm.key_len()`.
     #[cfg(feature = "threadlocal")]
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         if key_bytes.len() > MAX_KEY_BYTE_LEN {
@@ -656,6 +658,7 @@ pub struct Algorithm {
 impl Algorithm {
     /// The length of the key.
     #[inline(always)]
+    #[must_use]
     pub fn key_len(&self) -> usize {
         self.key_len
     }
@@ -664,12 +667,14 @@ impl Algorithm {
     ///
     /// See also `MAX_TAG_LEN`.
     #[inline(always)]
+    #[must_use]
     pub fn tag_len(&self) -> usize {
         TAG_LEN
     }
 
     /// The length of the nonces.
     #[inline(always)]
+    #[must_use]
     pub fn nonce_len(&self) -> usize {
         NONCE_LEN
     }
@@ -677,7 +682,7 @@ impl Algorithm {
 
 derive_debug_via_id!(Algorithm);
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 #[allow(non_camel_case_types)]
 enum AlgorithmID {
     AES_128_GCM,

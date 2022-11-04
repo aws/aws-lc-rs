@@ -79,9 +79,9 @@ impl KeyInner {
     #[inline]
     pub(crate) fn cipher_key(&self) -> &SymmetricCipherKey {
         match self {
-            KeyInner::AES_128_GCM(cipher_key, ..) => cipher_key,
-            KeyInner::AES_256_GCM(cipher_key, ..) => cipher_key,
-            KeyInner::CHACHA20_POLY1305(cipher_key, ..) => cipher_key,
+            KeyInner::AES_128_GCM(cipher_key, ..)
+            | KeyInner::AES_256_GCM(cipher_key, ..)
+            | KeyInner::CHACHA20_POLY1305(cipher_key, ..) => cipher_key,
         }
     }
 }
@@ -92,9 +92,9 @@ impl Drop for KeyInner {
     fn drop(&mut self) {
         unsafe {
             let ctx = match self {
-                KeyInner::AES_128_GCM(.., ctx) => ctx,
-                KeyInner::AES_256_GCM(.., ctx) => ctx,
-                KeyInner::CHACHA20_POLY1305(.., ctx) => ctx,
+                KeyInner::AES_128_GCM(.., ctx)
+                | KeyInner::AES_256_GCM(.., ctx)
+                | KeyInner::CHACHA20_POLY1305(.., ctx) => ctx,
             };
             aws_lc_sys::EVP_AEAD_CTX_cleanup(ctx);
             aws_lc_sys::EVP_AEAD_CTX_zero(ctx);

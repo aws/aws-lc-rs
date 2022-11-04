@@ -18,7 +18,7 @@
 use aws_lc_ring::{digest, error, pbkdf2, test, test_file};
 use core::num::NonZeroU32;
 
-/// Test vectors from BoringSSL, Go, and other sources.
+/// Test vectors from `BoringSSL`, Go, and other sources.
 #[test]
 fn pbkdf2_tests() {
     test::run(test_file!("data/pbkdf2_tests.txt"), |section, test_case| {

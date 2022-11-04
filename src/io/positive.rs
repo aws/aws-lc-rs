@@ -29,6 +29,7 @@ impl<'a> Positive<'a> {
     /// byte, without any leading zeros. The result is guaranteed to be
     /// non-empty.
     #[inline]
+    #[must_use]
     pub fn big_endian_without_leading_zero(&self) -> &'a [u8] {
         self.big_endian_without_leading_zero_as_input()
             .as_slice_less_safe()
@@ -45,6 +46,7 @@ impl Positive<'_> {
     ///
     /// Will not panic because the value is guaranteed to have at least one
     /// byte.
+    #[must_use]
     pub fn first_byte(&self) -> u8 {
         // This won't panic because
         self.0.as_slice_less_safe()[0]

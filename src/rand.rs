@@ -116,6 +116,7 @@ const SYSTEM_RANDOM: SystemRandom = SystemRandom(());
 impl SystemRandom {
     /// Constructs a new `SystemRandom`.
     #[inline(always)]
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

@@ -47,6 +47,7 @@ macro_rules! benchmark_ed25519 {
                     .expect(&format!("Unable to build Ed25519KeyPair: {:?}", config))
             }
 
+            #[allow(unused_must_use)]
             pub fn sign(key_pair: &Ed25519KeyPair, msg: &[u8]) {
                 key_pair.sign(msg);
             }

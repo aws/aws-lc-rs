@@ -24,7 +24,7 @@
 //! there are `RSA_PKCS1_2048_8192_SHA256`, `RSA_PKCS1_2048_8192_SHA384`, etc.,
 //! which encode sets of parameter choices into objects. This is designed to
 //! reduce the risks of algorithm agility and to provide consistency with ECDSA
-//! and EdDSA.
+//! and `EdDSA`.
 //!
 //! Currently this module does not support digesting the message to be signed
 //! separately from the public key operation, as it is currently being
@@ -166,11 +166,11 @@
 //!
 //! ## Signing and verifying with RSA (PKCS#1 1.5 padding)
 //!
-//! By default OpenSSL writes RSA public keys in SubjectPublicKeyInfo format,
-//! not RSAPublicKey format, and Base64-encodes them (“PEM” format).
+//! By default OpenSSL writes RSA public keys in `SubjectPublicKeyInfo` format,
+//! not `RSAPublicKey` format, and Base64-encodes them (“PEM” format).
 //!
-//! To convert the PEM SubjectPublicKeyInfo format (“BEGIN PUBLIC KEY”) to the
-//! binary RSAPublicKey format needed by `verify()`, use:
+//! To convert the PEM `SubjectPublicKeyInfo` format (“BEGIN PUBLIC KEY”) to the
+//! binary `RSAPublicKey` format needed by `verify()`, use:
 //!
 //! ```sh
 //! openssl rsa -pubin \
@@ -182,7 +182,7 @@
 //! ```
 //!
 //! To extract the RSAPublicKey-formatted public key from an ASN.1 (binary)
-//! DER-encoded RSAPrivateKey format private key file, use:
+//! DER-encoded `RSAPrivateKey` format private key file, use:
 //!
 //! ```sh
 //! openssl rsa -in private_key.der \
@@ -368,7 +368,7 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     /// Parses the public key and verifies `signature` is a valid signature of
     /// `message` using it.
     ///
-    /// See the [crate::signature] module-level documentation for examples.
+    /// See the [`crate::signature`] module-level documentation for examples.
     #[inline]
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
         self.algorithm.verify(

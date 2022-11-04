@@ -33,6 +33,7 @@ pub struct Algorithm(hmac::Algorithm);
 impl Algorithm {
     /// The underlying HMAC algorithm.
     #[inline]
+    #[must_use]
     pub fn hmac_algorithm(&self) -> hmac::Algorithm {
         self.0
     }
@@ -56,11 +57,11 @@ pub static HKDF_SHA512: Algorithm = Algorithm(hmac::HMAC_SHA512);
 const MAX_HKDF_SALT_LEN: usize = 80;
 
 /// General Info length's for HKDF don't normally exceed 256 bits.
-/// We set the limit to something tolerable, so that the memory passed into |HKDF_expand| is
+/// We set the limit to something tolerable, so that the memory passed into |`HKDF_expand`| is
 /// allocated on the stack.
 const MAX_HKDF_INFO_LEN: usize = 80;
 
-/// The maximum output size of a PRK computed by |HKDF_extract| is the maximum digest
+/// The maximum output size of a PRK computed by |`HKDF_extract`| is the maximum digest
 /// size that can be outputted by AWS-LC.
 const MAX_HKDF_PRK_LEN: usize = digest::MAX_OUTPUT_LEN;
 
@@ -90,6 +91,7 @@ impl Salt {
     ///
     /// Constructing a `Salt` is relatively expensive so it is good to reuse a
     /// `Salt` object instead of re-constructing `Salt`s with the same value.
+    #[must_use]
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
         Salt::try_new(algorithm, value).expect("Salt length limit exceeded.")
     }
@@ -112,6 +114,7 @@ impl Salt {
     ///
     /// [HKDF-Extract]: https://tools.ietf.org/html/rfc5869#section-2.2
     #[inline]
+    #[must_use]
     pub fn extract(&self, secret: &[u8]) -> Prk {
         Self::try_extract(self, secret).expect("HKDF_extract failed")
     }
@@ -145,6 +148,7 @@ impl Salt {
 
     /// The algorithm used to derive this salt.
     #[inline]
+    #[must_use]
     pub fn algorithm(&self) -> Algorithm {
         Algorithm(self.algorithm.hmac_algorithm())
     }
@@ -194,6 +198,7 @@ impl Prk {
     /// Usually one can avoid using this. It is useful when the application
     /// intentionally wants to leak the PRK secret, e.g. to implement
     /// `SSLKEYLOGFILE` functionality.
+    #[must_use]
     pub fn new_less_safe(algorithm: Algorithm, value: &[u8]) -> Self {
         Prk::try_new_less_safe(algorithm, value).expect("Prk length limit exceeded.")
     }

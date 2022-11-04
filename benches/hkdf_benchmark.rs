@@ -16,6 +16,7 @@ pub struct HKDFConfig {
 }
 
 impl HKDFConfig {
+    #[must_use]
     pub fn new(algorithm: HKDFAlgorithm) -> HKDFConfig {
         HKDFConfig { algorithm }
     }

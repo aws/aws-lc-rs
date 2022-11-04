@@ -17,6 +17,7 @@ pub struct DigestConfig {
 }
 
 impl DigestConfig {
+    #[must_use]
     pub fn new(algorithm: DigestAlgorithm) -> DigestConfig {
         DigestConfig { algorithm }
     }
@@ -49,6 +50,7 @@ macro_rules! benchmark_digest {
                 ctx.finish();
             }
 
+            #[allow(unused_must_use)]
             pub fn run_digest_one_shot(config: &DigestConfig, chunk: &[u8]) {
                 digest::digest(algorithm(&config), &chunk);
             }

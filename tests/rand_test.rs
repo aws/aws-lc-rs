@@ -54,7 +54,7 @@ fn test_system_random_lengths() {
         WEB_LIMIT * 2,
     ];
 
-    for len in lengths.iter() {
+    for len in &lengths {
         let mut buf = vec![0; *len];
 
         let rng = rand::SystemRandom::new();

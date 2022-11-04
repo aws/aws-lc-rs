@@ -60,19 +60,16 @@ impl Drop for ChaCha20Key {
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 impl ChaCha20Key {
     #[inline]
-    pub(super) fn encrypt_in_place(
-        &self,
-        nonce: Nonce,
-        in_out: &mut [u8],
-        ctr: u32,
-    ) -> Result<(), error::Unspecified> {
-        encrypt_in_place_chacha20(self, nonce.as_ref(), in_out, ctr)
+    pub(super) fn encrypt_in_place(&self, nonce: Nonce, in_out: &mut [u8], ctr: u32) {
+        encrypt_in_place_chacha20(self, nonce.as_ref(), in_out, ctr);
     }
 }
 
 #[inline]
+#[allow(clippy::needless_pass_by_value)]
 pub(super) fn encrypt_block_chacha20(
     key: &ChaCha20Key,
     block: Block,
@@ -122,7 +119,7 @@ pub(super) fn encrypt_in_place_chacha20(
     nonce: &[u8; NONCE_LEN],
     in_out: &mut [u8],
     counter: u32,
-) -> Result<(), error::Unspecified> {
+) {
     let key_bytes = &key.0;
     unsafe {
         aws_lc_sys::CRYPTO_chacha_20(
@@ -134,7 +131,6 @@ pub(super) fn encrypt_in_place_chacha20(
             counter,
         );
     }
-    Ok(())
 }
 
 #[cfg(test)]
@@ -208,7 +204,7 @@ mod tests {
             buf.copy_from_slice(input);
             let nonce = Nonce(nonce);
 
-            key.encrypt_in_place(nonce, buf, ctr).unwrap();
+            key.encrypt_in_place(nonce, buf, ctr);
             assert_eq!(
                 &buf[..input.len()],
                 expected,

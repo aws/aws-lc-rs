@@ -233,6 +233,7 @@ impl EphemeralPrivateKey {
     }
 
     #[inline]
+    #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.inner_key.algorithm()
     }
@@ -247,6 +248,7 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
+    #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.alg
     }
