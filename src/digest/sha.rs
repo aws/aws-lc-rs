@@ -40,9 +40,11 @@ pub const SHA512_256_OUTPUT_LEN: usize = 256 / 8;
 const SHA512_BLOCK_LEN: usize = 1024 / 8;
 
 /// SHA-1 and SHA-256 are limited to an input size of 2^64-1 bits.
+#[allow(clippy::cast_possible_truncation)]
 const SHA256_MAX_INPUT_LEN: usize = u64::MAX as usize;
 
 /// SHA-384, SHA-512, and SHA-512/256 are limited to an input size of 2^128-1 bits.
+#[allow(clippy::cast_possible_truncation)]
 const SHA512_MAX_INPUT_LEN: usize = u128::MAX as usize;
 
 /// SHA-1 as specified in [FIPS 180-4]. Deprecated.

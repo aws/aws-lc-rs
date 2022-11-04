@@ -166,7 +166,7 @@ pub fn derive(
     secret: &[u8],
     out: &mut [u8],
 ) {
-    try_derive(digest_alg, iterations, salt, secret, out).expect("pkkdf2 derive failed")
+    try_derive(digest_alg, iterations, salt, secret, out).expect("pkkdf2 derive failed");
 }
 
 #[inline]

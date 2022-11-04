@@ -39,7 +39,7 @@ impl<T> SecureRandom for T
 where
     T: sealed::SecureRandom,
 {
-    #[inline(always)]
+    #[inline]
     fn fill(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
         self.fill_impl(dest)
     }
@@ -63,10 +63,7 @@ impl<T: RandomlyConstructable> Random<T> {
 #[inline]
 pub fn generate<T: RandomlyConstructable>(
     rng: &dyn SecureRandom,
-) -> Result<Random<T>, error::Unspecified>
-where
-    T: RandomlyConstructable,
-{
+) -> Result<Random<T>, error::Unspecified> {
     let mut r = T::zero();
     rng.fill(r.as_mut_bytes())?;
     Ok(Random(r))
@@ -115,7 +112,7 @@ const SYSTEM_RANDOM: SystemRandom = SystemRandom(());
 
 impl SystemRandom {
     /// Constructs a new `SystemRandom`.
-    #[inline(always)]
+    #[inline]
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -129,13 +126,13 @@ impl Default for SystemRandom {
 }
 
 impl sealed::SecureRandom for SystemRandom {
-    #[inline(always)]
+    #[inline]
     fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
         unsafe {
-            if 1 != aws_lc_sys::RAND_bytes(dest.as_mut_ptr(), dest.len()) {
-                Err(error::Unspecified)
-            } else {
+            if 1 == aws_lc_sys::RAND_bytes(dest.as_mut_ptr(), dest.len()) {
                 Ok(())
+            } else {
+                Err(error::Unspecified)
             }
         }
     }

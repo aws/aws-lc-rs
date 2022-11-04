@@ -397,14 +397,9 @@ impl Context {
 #[inline]
 #[must_use]
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
-    try_sign(key, data).expect("HMAC one-shot failed")
-}
-
-#[inline]
-fn try_sign(key: &Key, data: &[u8]) -> Result<Tag, Unspecified> {
     let mut ctx = Context::with_key(key);
     ctx.update(data);
-    Ok(ctx.sign())
+    ctx.sign()
 }
 
 /// Calculates the HMAC of `data` using the signing key `key`, and verifies

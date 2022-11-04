@@ -195,7 +195,7 @@ impl Context {
     }
 
     /// The algorithm that this context is using.
-    #[inline(always)]
+    #[inline]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
     }
@@ -244,7 +244,7 @@ pub struct Digest {
 
 impl Digest {
     /// The algorithm that was used to calculate the digest value.
-    #[inline(always)]
+    #[inline]
     #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
@@ -252,7 +252,7 @@ impl Digest {
 }
 
 impl AsRef<[u8]> for Digest {
-    #[inline(always)]
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.digest_msg[..self.digest_len]
     }

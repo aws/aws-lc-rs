@@ -39,6 +39,7 @@ use std::slice;
 use untrusted::Input;
 use zeroize::Zeroize;
 
+#[allow(clippy::module_name_repetitions)]
 pub struct RsaKeyPair {
     // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L286
     // An |RSA| object represents a public or private RSA key. A given object may be
@@ -57,7 +58,7 @@ unsafe impl Sync for RsaKeyPair {}
 impl RsaKeyPair {
     fn new(rsa_key: LcPtr<*mut RSA>) -> Result<Self, KeyRejected> {
         unsafe {
-            let serialized_public_key = RsaSubjectPublicKey::new(rsa_key.as_non_null())?;
+            let serialized_public_key = RsaSubjectPublicKey::new(&rsa_key.as_non_null())?;
             Ok(RsaKeyPair {
                 rsa_key,
                 serialized_public_key,
@@ -72,7 +73,7 @@ impl RsaKeyPair {
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let rsa = LcPtr::new(aws_lc_sys::EVP_PKEY_get1_RSA(*evp_pkey))
                 .map_err(|_| KeyRejected::wrong_algorithm())?;
-            Self::validate_rsa(rsa.as_non_null())?;
+            Self::validate_rsa(&rsa.as_non_null())?;
 
             Self::new(rsa)
         }
@@ -81,16 +82,16 @@ impl RsaKeyPair {
     pub fn from_der(der: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let rsa = build_private_RSA(der)?;
-            Self::validate_rsa(rsa.as_non_null())?;
+            Self::validate_rsa(&rsa.as_non_null())?;
             Self::new(rsa)
         }
     }
     const MIN_RSA_BITS: c_uint = 1024;
     const MAX_RSA_BITS: c_uint = 2048;
 
-    unsafe fn validate_rsa(rsa: NonNullPtr<*mut RSA>) -> Result<(), KeyRejected> {
-        let p = aws_lc_sys::RSA_get0_p(*rsa);
-        let q = aws_lc_sys::RSA_get0_q(*rsa);
+    unsafe fn validate_rsa(rsa: &NonNullPtr<*mut RSA>) -> Result<(), KeyRejected> {
+        let p = aws_lc_sys::RSA_get0_p(**rsa);
+        let q = aws_lc_sys::RSA_get0_q(**rsa);
         let p_bits = aws_lc_sys::BN_num_bits(p);
         let q_bits = aws_lc_sys::BN_num_bits(q);
         if p_bits != q_bits {
@@ -105,7 +106,7 @@ impl RsaKeyPair {
         if p_bits > Self::MAX_RSA_BITS {
             return Err(KeyRejected::too_large());
         }
-        let exponent = aws_lc_sys::RSA_get0_e(*rsa);
+        let exponent = RSA_get0_e(**rsa);
         if Self::compare(exponent, 65537)? == Ordering::Less {
             return Err(KeyRejected::too_small());
         }
@@ -135,7 +136,7 @@ impl VerificationAlgorithm for RsaParameters {
             RSA_verify(
                 self.0,
                 self.1,
-                rsa,
+                &rsa,
                 msg.as_slice_less_safe(),
                 signature.as_slice_less_safe(),
                 &self.2,
@@ -249,13 +250,13 @@ unsafe fn serialize_RSA_pubkey(pubkey: &NonNullPtr<*mut RSA>) -> Result<Box<[u8]
 }
 
 #[cfg(feature = "ring-io")]
-unsafe fn serialize_bignum(bignum: NonNullPtr<*mut BIGNUM>) -> Result<Box<[u8]>, ()> {
-    let bn_len = BN_num_bytes(*bignum) as usize;
+unsafe fn serialize_bignum(bignum: &NonNullPtr<*mut BIGNUM>) -> Box<[u8]> {
+    let bn_len = BN_num_bytes(**bignum) as usize;
     let mut bn_vec: Vec<u8> = vec![0u8; bn_len];
-    let bytes_written = BN_bn2bin(*bignum, bn_vec.as_mut_ptr());
+    let bytes_written = BN_bn2bin(**bignum, bn_vec.as_mut_ptr());
     debug_assert_eq!(bn_len, bytes_written);
     debug_assert_eq!(bn_vec.len(), bytes_written);
-    Ok(bn_vec.into_boxed_slice())
+    bn_vec.into_boxed_slice()
 }
 
 impl KeyPair for RsaKeyPair {
@@ -267,6 +268,7 @@ impl KeyPair for RsaKeyPair {
 }
 
 #[derive(Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub struct RsaSubjectPublicKey {
     key: Box<[u8]>,
     #[cfg(feature = "ring-io")]
@@ -286,14 +288,14 @@ impl Drop for RsaSubjectPublicKey {
 }
 
 impl RsaSubjectPublicKey {
-    unsafe fn new(pubkey: NonNullPtr<*mut RSA>) -> Result<Self, ()> {
-        let key = serialize_RSA_pubkey(&pubkey)?;
+    unsafe fn new(pubkey: &NonNullPtr<*mut RSA>) -> Result<Self, ()> {
+        let key = serialize_RSA_pubkey(pubkey)?;
         #[cfg(feature = "ring-io")]
         {
-            let modulus = NonNullPtr::new(RSA_get0_n(*pubkey))?;
-            let modulus = serialize_bignum(modulus)?;
-            let exponent = NonNullPtr::new(RSA_get0_e(*pubkey))?;
-            let exponent = serialize_bignum(exponent)?;
+            let modulus = NonNullPtr::new(RSA_get0_n(**pubkey))?;
+            let modulus = serialize_bignum(&modulus);
+            let exponent = NonNullPtr::new(RSA_get0_e(**pubkey))?;
+            let exponent = serialize_bignum(&exponent);
 
             Ok(RsaSubjectPublicKey {
                 key,
@@ -348,6 +350,7 @@ pub enum RSASigningAlgorithmId {
     RSA_PKCS1_SHA512,
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub struct RsaSignatureEncoding(
     pub(super) &'static digest::Algorithm,
     pub(super) &'static RsaPadding,
@@ -357,11 +360,13 @@ pub struct RsaSignatureEncoding(
 impl Sealed for RsaSignatureEncoding {}
 
 #[allow(non_camel_case_types)]
+#[allow(clippy::module_name_repetitions)]
 pub enum RsaPadding {
     RSA_PKCS1_PADDING,
     RSA_PKCS1_PSS_PADDING,
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait RsaEncoding: 'static + Sync + Sealed + Debug {
     fn encoding(&'static self) -> &'static RsaSignatureEncoding;
 }
@@ -394,6 +399,7 @@ pub enum RSAVerificationAlgorithmId {
     RSA_PSS_2048_8192_SHA512,
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub struct RsaParameters(
     pub(super) &'static digest::Algorithm,
     pub(super) &'static RsaPadding,
@@ -454,13 +460,13 @@ unsafe fn build_private_RSA(public_key: &[u8]) -> Result<LcPtr<*mut RSA>, KeyRej
 fn RSA_verify(
     algorithm: &'static digest::Algorithm,
     padding: &'static RsaPadding,
-    public_key: LcPtr<*mut RSA>,
+    public_key: &LcPtr<*mut RSA>,
     msg: &[u8],
     signature: &[u8],
     allowed_bit_size: &RangeInclusive<u32>,
 ) -> Result<(), Unspecified> {
     unsafe {
-        let n = NonNullPtr::new(aws_lc_sys::RSA_get0_n(*public_key))?;
+        let n = NonNullPtr::new(RSA_get0_n(**public_key))?;
         let n_bits = aws_lc_sys::BN_num_bits(*n);
         let n_bits = n_bits as c_uint;
         if !allowed_bit_size.contains(&n_bits) {
@@ -477,10 +483,10 @@ fn RSA_verify(
                 digest.len(),
                 signature.as_ptr(),
                 signature.len(),
-                *public_key,
+                **public_key,
             ),
             RsaPadding::RSA_PKCS1_PSS_PADDING => aws_lc_sys::RSA_verify_pss_mgf1(
-                *public_key,
+                **public_key,
                 digest.as_ptr(),
                 digest.len(),
                 match_digest_type(&algorithm.id),
@@ -499,6 +505,7 @@ fn RSA_verify(
 }
 
 #[derive(Debug)]
+#[allow(clippy::module_name_repetitions)]
 pub struct RsaPublicKeyComponents<B>
 where
     B: AsRef<[u8]> + Debug,
@@ -552,7 +559,7 @@ where
     ) -> Result<(), Unspecified> {
         unsafe {
             let rsa = self.build_RSA()?;
-            RSA_verify(params.0, params.1, rsa, msg, signature, &params.2)
+            RSA_verify(params.0, params.1, &rsa, msg, signature, &params.2)
         }
     }
 }

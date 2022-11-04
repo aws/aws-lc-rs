@@ -48,6 +48,7 @@ impl<P: Pointer + Copy> LcPtr<P> {
 }
 
 #[derive(Debug)]
+#[allow(clippy::module_name_repetitions)]
 pub struct DetachableLcPtr<P: Pointer> {
     pointer: Option<P>,
 }
@@ -124,6 +125,7 @@ impl<P: Pointer> Drop for DetachableLcPtr<P> {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub struct NonNullPtr<P: Pointer> {
     pointer: P,
 }

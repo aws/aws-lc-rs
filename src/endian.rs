@@ -23,19 +23,9 @@ pub trait FromByteArray<T> {
 
 macro_rules! define_endian {
     ($endian:ident) => {
+        #[derive(Copy, Clone)]
         #[repr(transparent)]
         pub struct $endian<T>(T);
-
-        impl<T> Copy for $endian<T> where T: Copy {}
-
-        impl<T> Clone for $endian<T>
-        where
-            T: Clone,
-        {
-            fn clone(&self) -> Self {
-                Self(self.0.clone())
-            }
-        }
     };
 }
 
@@ -49,7 +39,7 @@ macro_rules! impl_array_encoding {
                 // `as` and `unsafe` here using
                 // `as_byte_slice(self).try_into().unwrap()`.
                 let as_bytes_ptr =
-                    self.as_ptr() as *const [u8; $elems * core::mem::size_of::<$base>()];
+                    self.as_ptr().cast::<[u8;  $elems * core::mem::size_of::<$base>()]>();
                 unsafe { &*as_bytes_ptr }
             }
         }
