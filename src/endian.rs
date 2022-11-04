@@ -38,8 +38,9 @@ macro_rules! impl_array_encoding {
                 // TODO: When we can require Rust 1.47.0 or later we could avoid
                 // `as` and `unsafe` here using
                 // `as_byte_slice(self).try_into().unwrap()`.
-                let as_bytes_ptr =
-                    self.as_ptr().cast::<[u8;  $elems * core::mem::size_of::<$base>()]>();
+                let as_bytes_ptr = self
+                    .as_ptr()
+                    .cast::<[u8; $elems * core::mem::size_of::<$base>()]>();
                 unsafe { &*as_bytes_ptr }
             }
         }
