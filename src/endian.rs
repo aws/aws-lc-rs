@@ -9,6 +9,12 @@ where
     const ZERO: Self;
 }
 
+pub fn as_byte_slice<E: Encoding<T>, T>(x: &[E]) -> &[u8] {
+    unsafe {
+        core::slice::from_raw_parts(x.as_ptr().cast::<u8>(), x.len() * core::mem::size_of::<E>())
+    }
+}
+
 /// Work around the inability to implement `AsRef` for arrays of `Encoding`s
 /// due to the coherence rules.
 pub trait ArrayEncoding<T> {
@@ -35,13 +41,7 @@ macro_rules! impl_array_encoding {
             for [$endian<$base>; $elems]
         {
             fn as_byte_array(&self) -> &[u8; $elems * core::mem::size_of::<$base>()] {
-                // TODO: When we can require Rust 1.47.0 or later we could avoid
-                // `as` and `unsafe` here using
-                // `as_byte_slice(self).try_into().unwrap()`.
-                let as_bytes_ptr = self
-                    .as_ptr()
-                    .cast::<[u8; $elems * core::mem::size_of::<$base>()]>();
-                unsafe { &*as_bytes_ptr }
+                as_byte_slice(self).try_into().unwrap()
             }
         }
     };
