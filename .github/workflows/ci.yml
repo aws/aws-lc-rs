@@ -5,18 +5,105 @@ on:
     branches:
       - '*'
 
-jobs:
-  test:
-    name: CI
-    runs-on: ubuntu-latest
-    env:
-      RUST_BACKTRACE: 1
-    steps:
-      - uses: actions/checkout@v2
-      - run: cargo fmt --check --verbose
-      - run: cargo test --release --all-targets
-      - run: cargo test --no-default-features
-      - run: cargo test --no-default-features --features ring-io
-      - run: cargo test --no-default-features --features alloc
-      - run: cargo test --no-default-features --features threadlocal
+env:
+  RUST_BACKTRACE: 1
+  # Pin the nightly toolchain to prevent breakage.
+  # This should be occasionally updated.
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2022-09-15
 
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          profile: minimal
+          override: true
+          components: rustfmt
+
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: fmt
+          args: -- --check --verbose
+
+  clippy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # TODO: fail on warnings, turn on when clippy warnings are resolved.
+      # matrix:
+        # fail on warnings
+        # args: ["-D warnings"]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          components: clippy
+
+      - name: Run cargo clippy
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: clippy
+          args: --all-features --all-targets -- ${{ matrix.args }}
+
+  test:
+    name: tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [stable]
+        os: [ubuntu-latest, macOS-latest]
+        args:
+          - --release --all-targets
+          - --no-default-features
+          - --no-default-features --features ring-io
+          - --no-default-features --features alloc
+          - --no-default-features --features threadlocal
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: test
+          args: ${{ matrix.args }}
+
+  # TODO: add bot to post coverage details to PR, or upload results to AWS account.
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          override: true
+          components: llvm-tools-preview
+
+      - name: Install cargo-llvm-cov
+        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
+
+      - name: Run coverage
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: llvm-cov
+          args: --html --no-fail-fast
