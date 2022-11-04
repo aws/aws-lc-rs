@@ -494,6 +494,9 @@ fn rustls_bug() {
         )
         .unwrap();
 
+    assert_eq!(ring_tag.as_ref(), tag.as_ref());
+    assert_eq!(ring_enc_data.as_slice(), enc_data.as_slice());
+
     fn append(v: &mut Vec<u8>, extra: &[u8], data: &[u8], tag: &[u8]) {
         v.extend_from_slice(&extra);
         v.extend_from_slice(&data);
@@ -511,28 +514,32 @@ fn rustls_bug() {
         ring_tag.as_ref(),
     );
 
-    let mut ciphertext = enc_data_tag_vec.into_boxed_slice();
-    let mut ring_ciphertext = ring_enc_data_tag_vec.into_boxed_slice();
+    assert_eq!(ring_enc_data_tag_vec, enc_data_tag_vec);
 
-    lsk.open_within(
-        aead::Nonce::assume_unique_for_key(NONCE),
-        aead::Aad::from(AAD),
-        ciphertext.as_mut(),
-        8..,
-    )
-    .unwrap();
+    let len = lsk
+        .open_within(
+            aead::Nonce::assume_unique_for_key(NONCE),
+            aead::Aad::from(AAD),
+            &mut enc_data_tag_vec[..],
+            8..,
+        )
+        .unwrap()
+        .len();
 
-    ring_lsk
+    let ring_len = ring_lsk
         .open_within(
             ring::aead::Nonce::assume_unique_for_key(NONCE),
             ring::aead::Aad::from(AAD),
-            ring_ciphertext.as_mut(),
+            &mut ring_enc_data_tag_vec[..],
             8..,
         )
-        .unwrap();
+        .unwrap()
+        .len();
 
-    assert_eq!(*DATA, ciphertext[8..ciphertext.len() - 16]);
-    assert_eq!(*DATA, ring_ciphertext[8..ring_ciphertext.len() - 16]);
+    assert_eq!(
+        ring_enc_data_tag_vec.truncate(ring_len),
+        enc_data_tag_vec.truncate(len)
+    );
 }
 
 fn make_key<K: aead::BoundKey<OneNonceSequence>>(
