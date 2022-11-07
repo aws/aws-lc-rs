@@ -456,6 +456,8 @@ fn test_aead_key_debug() {
     );
 }
 
+// Based on bugs found while testing against rustls.
+// Specifically related to tls12 API tests: https://github.com/rustls/rustls/blob/main/rustls/tests/api.rs
 #[test]
 fn rustls_bug() {
     const KEY: &[u8] = &[
@@ -503,13 +505,15 @@ fn rustls_bug() {
         v.extend_from_slice(tag);
     }
 
+    let prefix_bytes: &[u8] = &NONCE[4..];
+
     let mut enc_data_tag_vec: Vec<u8> = vec![];
-    append(&mut enc_data_tag_vec, &NONCE[4..], &enc_data, tag.as_ref());
+    append(&mut enc_data_tag_vec, prefix_bytes, &enc_data, tag.as_ref());
 
     let mut ring_enc_data_tag_vec: Vec<u8> = vec![];
     append(
         &mut ring_enc_data_tag_vec,
-        &NONCE[4..],
+        prefix_bytes,
         &ring_enc_data,
         ring_tag.as_ref(),
     );
@@ -521,7 +525,7 @@ fn rustls_bug() {
             aead::Nonce::assume_unique_for_key(NONCE),
             aead::Aad::from(AAD),
             &mut enc_data_tag_vec[..],
-            8..,
+            prefix_bytes.len()..,
         )
         .unwrap()
         .len();
@@ -531,7 +535,7 @@ fn rustls_bug() {
             ring::aead::Nonce::assume_unique_for_key(NONCE),
             ring::aead::Aad::from(AAD),
             &mut ring_enc_data_tag_vec[..],
-            8..,
+            prefix_bytes.len()..,
         )
         .unwrap()
         .len();
