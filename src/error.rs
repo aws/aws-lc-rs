@@ -17,7 +17,6 @@
 
 //! Error reporting.
 
-#[cfg(feature = "std")]
 extern crate std;
 
 /// An error with absolutely no details.
@@ -84,9 +83,6 @@ impl core::fmt::Display for Unspecified {
         f.write_str("Unspecified")
     }
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for Unspecified {}
 
 impl From<core::array::TryFromSliceError> for Unspecified {
     fn from(_: core::array::TryFromSliceError) -> Self {

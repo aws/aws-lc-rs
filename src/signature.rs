@@ -198,7 +198,6 @@
 //! ```
 //! use aws_lc_ring::{rand, signature};
 //!
-//! # #[cfg(feature = "std")]
 //! fn sign_and_verify_rsa(private_key_path: &std::path::Path,
 //!                        public_key_path: &std::path::Path)
 //!                        -> Result<(), MyError> {
@@ -226,14 +225,12 @@
 //!
 //! #[derive(Debug)]
 //! enum MyError {
-//! #  #[cfg(feature = "std")]
 //!    IO(std::io::Error),
 //!    BadPrivateKey,
 //!    OOM,
 //!    BadSignature,
 //! }
 //!
-//! # #[cfg(feature = "std")]
 //! fn read_file(path: &std::path::Path) -> Result<Vec<u8>, MyError> {
 //!     use std::io::Read;
 //!
@@ -243,7 +240,6 @@
 //!     Ok(contents)
 //! }
 //! #
-//! # #[cfg(not(feature = "std"))]
 //! # fn sign_and_verify_rsa(_private_key_path: &std::path::Path,
 //! #                        _public_key_path: &std::path::Path)
 //! #                        -> Result<(), ()> {

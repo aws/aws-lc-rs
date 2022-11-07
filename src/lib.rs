@@ -5,37 +5,39 @@
 //!
 //! # Feature Flags
 //!
-//! <table>
-//! <tr><th width=20%>Feature
-//!     <th width=70%>Description
-//! <tr><td><code>alloc (default)</code>
-//!     <td>Allows implementation to allocate values of arbitrary size.
-//!         Currently, this is required for <code>SealingKey::seal_in_place_separate_tag</code> with
-//!         <code>CHACHA_POLY1305</code> and for the <code>io::writer</code> module.
-//! <tr><td><code>threadlocal (default)</code>
-//!     <td> Allows implementation to use <code>thread_local</code>, which is needed for certain structs
-//!         to impl <code>Sync</code>. Used by <code>aead::SealingKey</code>, <code>aead::UnboundKey</code>,
-//!         <code>aead::UnboundKey</code>, and <code>digest::Context</code>. These structs can still
-//!         be used without this feature.
-//! <tr><td><code>ring-io (default)</code>
-//!     <td>Enable feature to access the `io` module.
-//! <tr><td><code>asan</code>
-//!     <td>Performs an "address sanitizer" build of the `aws-lc-sys` crate.
-//! </table>
+//! #### - alloc (default) ####
+//! Allows implementation to allocate values of arbitrary size.
+//! Currently, this is required for `SealingKey::seal_in_place_separate_tag` with`CHACHA_POLY1305`
+//! and for the <code>io::writer</code> module.
+//!
+//! #### - threadlocal (default) ####
+//! Allows implementation to use `thread_local`, which is needed for certain structs to
+//! impl `Sync`. Used by `aead::SealingKey`, `aead::OpeningKey`, and `aead::UnboundKey`.
+//! These structs can still be used without this feature.
+//!
+//! #### - ring-io (default) ####
+//! Enable feature to access the  `io`  module.
+//!
+//! #### - asan ####
+//! Performs an "address sanitizer" build of the  `aws-lc-sys`  crate.
+//!
 //!
 //! # Ring-compatibility
 //!
-//! Although this library attempts to be compatible with Ring, there are a few places where our
+//! Although this library attempts to be fully compatible with Ring, there are a few places where our
 //! behavior is observably different.
 //!
+//! * Our implementation requires the `std` library. We currently do not support a
+//! [#!\[no_std\]](https://docs.rust-embedded.org/book/intro/no-std.html) build.
+//! * We only support the platforms supported by `aws-lc-sys`.  Currently this is includes MacOS and
+//! Linux, both x86-64 and ARM64.
 //! * `SealingKey::seal_in_place_separate_tag` with `CHACHA_POLY1305` requires allocating a separate
 //! buffer that can contain both the ciphertext and tag. When the `alloc` feature is disabled, this
 //! function cannot be called with `CHACHA_POLY1305` keys.
 //! * AWS-LC does not support parsing PKCS#8 v2. Thus, `Ed25519KeyPair::from_pkcs8` is not
 //! supported. Instead, you can use `Ed25519KeyPair::from_pkcs8_maybe_unchecked` for many common
 //! use-cases.
-//! * We only support the platforms supported by `aws-lc-sys`.  Currently this is includes MacOS and
-//! Linux, both x86-64 and ARM64.
+
 //! * When parsing PKCS#8 fails, the reason provided for `KeyRejected` may differ from Ring.
 //!
 
