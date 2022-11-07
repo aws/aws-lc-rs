@@ -1,5 +1,5 @@
-// Copyright Amazon.com Inc. or its affiliates.
-// SPDX-License-Identifier: Apache-2.0
+// Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: ISC
 
 use std::mem::MaybeUninit;
 

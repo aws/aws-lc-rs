@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: ISC
 
 use crate::ec::{ec_group_from_nid, ec_key_from_public_point, ec_point_from_bytes};
 use crate::error::Unspecified;

@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: ISC
 
 use crate::aead::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
 use crate::aead::chacha::{encrypt_block_chacha20, ChaCha20Key};

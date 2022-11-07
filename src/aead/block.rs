@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: ISC
 
 /// An array of 16 bytes that can (in the `x86_64` and `AAarch64` ABIs, at least)
 /// be efficiently passed by value and returned by value (i.e. in registers),
