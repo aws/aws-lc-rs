@@ -102,13 +102,7 @@ impl EcdsaKeyPair {
     }
 
     /// Generates a new key pair and returns the key pair serialized as a
-    /// PKCS#8 document.
-    ///
-    /// The PKCS#8 document will be a v1 `OneAsymmetricKey` with the public key
-    /// included in the `ECPrivateKey` structure, as described in
-    /// [RFC 5958 Section 2] and [RFC 5915]. The `ECPrivateKey` structure will
-    /// not have a `parameters` field so the generated key is compatible with
-    /// PKCS#11.
+    /// PKCS#8 v1 document.
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.

@@ -15,9 +15,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: ISC
 
-//! PKCS#8 is specified in [RFC 5958].
+//! PKCS#8 is specified in [RFC 5208].
 //!
-//! [RFC 5958]: https://tools.ietf.org/html/rfc5958.
+//! [RFC 5208]: https://tools.ietf.org/html/rfc5208.
 
 use crate::ec;
 use zeroize::Zeroize;
