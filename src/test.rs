@@ -130,7 +130,6 @@ use alloc::{string::String, vec::Vec};
 
 use crate::{digest, error};
 
-#[cfg(any(feature = "std", feature = "test_logging"))]
 extern crate std;
 
 /// `compile_time_assert_clone::<T>();` fails to compile if `T` doesn't
