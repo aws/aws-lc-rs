@@ -1,7 +1,10 @@
 // Copyright Amazon.com Inc. or its affiliates.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::ec::{EcdsaPublicKey, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PKCS8_DOCUMENT_MAX_LEN, validate_ec_key};
+use crate::ec::{
+    validate_ec_key, EcdsaPublicKey, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
+    PKCS8_DOCUMENT_MAX_LEN,
+};
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Document;
 use crate::ptr::{DetachableLcPtr, LcPtr};

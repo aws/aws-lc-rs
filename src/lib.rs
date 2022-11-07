@@ -1,7 +1,6 @@
 // Copyright Amazon.com Inc. or its affiliates.
 // SPDX-License-Identifier: Apache-2.0
 
-
 // TODO: add missing docs
 // #![warn(missing_docs)]
 
