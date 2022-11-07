@@ -240,17 +240,11 @@
 //!     Ok(contents)
 //! }
 //! #
-//! # fn sign_and_verify_rsa(_private_key_path: &std::path::Path,
-//! #                        _public_key_path: &std::path::Path)
-//! #                        -> Result<(), ()> {
-//! #     Ok(())
-//! # }
-//! #
 //! # fn main() {
 //! #     let private_key_path =
-//! #         std::path::Path::new("src/rsa/signature_rsa_example_private_key.der");
+//! #         std::path::Path::new("tests/data/signature_rsa_example_private_key.der");
 //! #     let public_key_path =
-//! #         std::path::Path::new("src/rsa/signature_rsa_example_public_key.der");
+//! #         std::path::Path::new("tests/data/signature_rsa_example_public_key.der");
 //! #     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
 //! # }
 //! ```
