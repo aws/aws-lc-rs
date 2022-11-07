@@ -246,6 +246,7 @@ mod tests {
         (&[0x02, 0x02, 0x00, 0xff], 0xff),
     ];
 
+    #[allow(clippy::type_complexity)]
     static GOOD_BIG_POSITIVE_INTEGERS: &[((&[u8], &[u8]), (&[u8], &[u8]))] = &[
         ((&[0x02, 0x81, 129u8, 1], &[0; 128]), (&[1], &[0; 128])),
         ((&[0x02, 0x82, 0x01, 0x00, 1], &[0; 255]), (&[1], &[0; 255])),
