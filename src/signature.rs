@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: ISC
+// SPDX-License-Identifier: Apache-2.0 OR ISC
 
 //! Public key signatures: signing and verification.
 //!
