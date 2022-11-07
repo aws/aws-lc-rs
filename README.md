@@ -1,11 +1,7 @@
 # aws-lc-ring
 A Ring-compatible Rust library implemented with AWS-LC cryptographic operations
 
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
-* Write in your license below and create a LICENSE file
+TODO: Work with open source marketing to update this section with correct wording. 
 
 ## Security
 
