@@ -100,10 +100,53 @@ jobs:
           components: llvm-tools-preview
 
       - name: Install cargo-llvm-cov
-        run: curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install 
+          args: cargo-llvm-cov
 
       - name: Run coverage
         uses: actions-rs/cargo@v1.0.3
         with:
           command: llvm-cov
           args: --html --no-fail-fast
+
+  asan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          override: true
+      - name: Run address sanitizers
+        uses: actions-rs/cargo@v1.0.3
+        env:
+          RUST_BACKTRACE: 1
+          ASAN_OPTIONS: detect_leaks=1
+          RUSTFLAGS: -Zsanitizer=address
+          RUSTDOCFLAGS: -Zsanitizer=address
+        with:
+          command: test 
+          args: --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
+
+  asan-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          override: true
+      - name: Run address sanitizers
+        uses: actions-rs/cargo@v1.0.3
+        env:
+          RUST_BACKTRACE: 1
+          ASAN_OPTIONS: detect_leaks=1
+          RUSTFLAGS: -Zsanitizer=address
+          RUSTDOCFLAGS: -Zsanitizer=address
+        with:
+          command: test
+          args: --release --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
