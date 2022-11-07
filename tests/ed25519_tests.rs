@@ -51,7 +51,7 @@ fn test_signature_ed25519() {
             // Test PKCS#8 generation, parsing, and private-to-public calculations.
             let rng = test::rand::FixedSliceRandom { bytes: &seed };
             let pkcs8 = Ed25519KeyPair::generate_pkcs8(&rng).unwrap();
-            let key_pair = Ed25519KeyPair::from_pkcs8(pkcs8.as_ref()).unwrap();
+            let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(pkcs8.as_ref()).unwrap();
             assert_eq!(public_key, key_pair.public_key().as_ref());
 
             // Test Signature generation.
@@ -153,7 +153,7 @@ fn test_ed25519_from_pkcs8() {
             let input = test_case.consume_bytes("Input");
             let error = test_case.consume_optional_string("Error");
 
-            match (Ed25519KeyPair::from_pkcs8(&input), error) {
+            match (Ed25519KeyPair::from_pkcs8_maybe_unchecked(&input), error) {
                 (Ok(_), None) => (),
                 (Err(e), None) => panic!(
                     "Failed with error \"{}\", but expected to succeed: \"{}\"",
@@ -187,7 +187,7 @@ fn ed25519_test_public_key_coverage() {
     const PUBLIC_KEY_DEBUG: &str =
         "PublicKey(\"0590d26d769c711c3d8cbffc41f5b4665d63feb3d17765c3b630d50bf5c188fb\")";
 
-    let key_pair = signature::Ed25519KeyPair::from_pkcs8(PRIVATE_KEY).unwrap();
+    let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(PRIVATE_KEY).unwrap();
 
     // Test `AsRef<[u8]>`
     assert_eq!(key_pair.public_key().as_ref(), PUBLIC_KEY);

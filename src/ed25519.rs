@@ -318,7 +318,7 @@ mod tests {
     fn test_generate_pkcs8() {
         let document = Ed25519KeyPair::generate_pkcs8(&crate::rand::SystemRandom::new()).unwrap();
 
-        let _key_pair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let _key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
     }
 
     #[test]
@@ -327,7 +327,7 @@ mod tests {
             r#"302e020100300506032b6570042204209d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60"#,
         );
 
-        let key_pair = Ed25519KeyPair::from_pkcs8(&key).unwrap();
+        let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(&key).unwrap();
 
         assert_eq!("Ed25519KeyPair { public_key: PublicKey(\"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a\") }", 
                    format!("{:?}", key_pair));
