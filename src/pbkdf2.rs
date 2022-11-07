@@ -216,10 +216,14 @@ fn try_derive(
 /// | `previously_derived`       | dk (derived key)
 /// | `previously_derived.len()` | dkLen (derived key length)
 ///
+/// # Errors
+/// `error::Unspecified` is the inputs were not verified.
+///
 /// # Panics
 ///
 /// `verify` panics if `previously_derived.len()` is larger than (2**32 - 1) * the digest
 /// algorithm's output length, per the PBKDF2 specification.
+///
 #[inline]
 pub fn verify(
     digest_alg: Algorithm,

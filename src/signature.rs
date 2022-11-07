@@ -12,6 +12,9 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 //! Public key signatures: signing and verification.
 //!
 //! Use the `verify` function to verify signatures, passing a reference to the
@@ -315,9 +318,13 @@ pub trait KeyPair: core::fmt::Debug + Send + Sized + Sync {
 }
 
 /// A signature verification algorithm.
-pub trait VerificationAlgorithm: core::fmt::Debug + Sync + sealed::Sealed {
+pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     /// Verify the signature `signature` of message `msg` with the public key
     /// `public_key`.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if inputs not verified.
+    ///
     fn verify(
         &self,
         public_key: Input<'_>,
@@ -364,6 +371,10 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     /// `message` using it.
     ///
     /// See the [`crate::signature`] module-level documentation for examples.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if inputs not verified.
+    ///
     #[inline]
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
         self.algorithm.verify(
@@ -374,48 +385,63 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     }
 }
 
+/// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-1.
 pub static RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     1024..=8192,
     &RSAVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
 );
+
+/// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-256.
 pub static RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
     &digest::SHA256,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     1024..=8192,
     &RSAVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
 );
+
+/// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-512.
 pub static RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
     &digest::SHA512,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     1024..=8192,
     &RSAVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
 );
+
+/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-1.
 pub static RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
     &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
 );
+
+/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-256.
 pub static RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters(
     &digest::SHA256,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
     &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA256,
 );
+
+/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-384.
 pub static RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters(
     &digest::SHA384,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
     &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA384,
 );
+
+/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-512.
 pub static RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters(
     &digest::SHA512,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
     &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA512,
 );
+
+/// Verification of signatures using RSA keys of 3072-8192 bits, PKCS#1.5 padding, and SHA-384.
 pub static RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters(
     &digest::SHA384,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
@@ -423,18 +449,23 @@ pub static RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters(
     &RSAVerificationAlgorithmId::RSA_PKCS1_3072_8192_SHA384,
 );
 
+/// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-256.
 pub static RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters(
     &digest::SHA256,
     &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
     &RSAVerificationAlgorithmId::RSA_PSS_2048_8192_SHA256,
 );
+
+/// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-384.
 pub static RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters(
     &digest::SHA384,
     &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
     &RSAVerificationAlgorithmId::RSA_PSS_2048_8192_SHA384,
 );
+
+/// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-512.
 pub static RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters(
     &digest::SHA512,
     &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
@@ -442,74 +473,89 @@ pub static RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters(
     &RSAVerificationAlgorithmId::RSA_PSS_2048_8192_SHA512,
 );
 
+/// RSA PSS padding using SHA-256 for RSA signatures.
 pub static RSA_PSS_SHA256: RsaSignatureEncoding = RsaSignatureEncoding(
     &digest::SHA256,
     &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
     &RSASigningAlgorithmId::RSA_PSS_SHA256,
 );
+
+/// RSA PSS padding using SHA-384 for RSA signatures.
 pub static RSA_PSS_SHA384: RsaSignatureEncoding = RsaSignatureEncoding(
     &digest::SHA384,
     &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
     &RSASigningAlgorithmId::RSA_PSS_SHA384,
 );
+
+/// RSA PSS padding using SHA-512 for RSA signatures.
 pub static RSA_PSS_SHA512: RsaSignatureEncoding = RsaSignatureEncoding(
     &digest::SHA512,
     &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
     &RSASigningAlgorithmId::RSA_PSS_SHA512,
 );
 
+/// PKCS#1 1.5 padding using SHA-256 for RSA signatures.
 pub static RSA_PKCS1_SHA256: RsaSignatureEncoding = RsaSignatureEncoding(
     &digest::SHA256,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     &RSASigningAlgorithmId::RSA_PKCS1_SHA256,
 );
+
+/// PKCS#1 1.5 padding using SHA-384 for RSA signatures.
 pub static RSA_PKCS1_SHA384: RsaSignatureEncoding = RsaSignatureEncoding(
     &digest::SHA384,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     &RSASigningAlgorithmId::RSA_PKCS1_SHA384,
 );
+
+/// PKCS#1 1.5 padding using SHA-512 for RSA signatures.
 pub static RSA_PKCS1_SHA512: RsaSignatureEncoding = RsaSignatureEncoding(
     &digest::SHA512,
     &rsa::RsaPadding::RSA_PKCS1_PADDING,
     &RSASigningAlgorithmId::RSA_PKCS1_SHA512,
 );
 
+/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
 pub static ECDSA_P256_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA256,
     bits: 256,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
-pub static ECDSA_P256_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-    id: &ec::AlgorithmID::ECDSA_P256,
-    digest: &digest::SHA384,
-    bits: 256,
-    sig_format: EcdsaSignatureFormat::Fixed,
-};
+
+/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
 pub static ECDSA_P384_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA384,
     bits: 384,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
+
+/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
 pub static ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA256,
     bits: 256,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
+
+/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-384.
 pub static ECDSA_P256_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA384,
     bits: 256,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
+
+/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-256.
 pub static ECDSA_P384_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA256,
     bits: 256,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
+
+/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
 pub static ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA384,
@@ -517,18 +563,23 @@ pub static ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificatio
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
+/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
 pub static ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm::new(&ECDSA_P256_SHA256_FIXED);
 
+/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
 pub static ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm::new(&ECDSA_P384_SHA384_FIXED);
 
+/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
 pub static ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm::new(&ECDSA_P256_SHA256_ASN1);
 
+/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
 pub static ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm::new(&ECDSA_P384_SHA384_ASN1);
 
+/// Verification of Ed25519 signatures.
 pub static ED25519: EdDSAParameters = EdDSAParameters {};
 
 #[cfg(test)]

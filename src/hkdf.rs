@@ -221,7 +221,8 @@ impl Prk {
     ///
     /// [HKDF-Expand]: https://tools.ietf.org/html/rfc5869#section-2.3
     ///
-    /// Fails if (and only if) `len` is too large.
+    /// # Errors
+    /// `error::Unspecified` if (and only if) `len` is too large.
     #[inline]
     pub fn expand<'a, L: KeyType>(
         &'a self,
@@ -294,10 +295,10 @@ impl<L: KeyType> Okm<'_, L> {
     /// Fills `out` with the output of the HKDF-Expand operation for the given
     /// inputs.
     ///
-    /// Fails if (and only if) the requested output length is larger than 255
-    /// times the size of the digest algorithm's output. (This is the limit
-    /// imposed by the HKDF specification due to the way HKDF's counter is
-    /// constructed.)
+    /// # Errors
+    /// `error::Unspecified` if the requested output length differs from the length specified by
+    /// `L: KeyType`.
+    ///
     #[inline]
     pub fn fill(self, out: &mut [u8]) -> Result<(), Unspecified> {
         if out.len() != self.len.len() {

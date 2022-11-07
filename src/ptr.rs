@@ -1,7 +1,5 @@
-/*
- * Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- */
+// Copyright Amazon.com Inc. or its affiliates.
+// SPDX-License-Identifier: Apache-2.0
 
 use std::ops::Deref;
 
@@ -179,7 +177,6 @@ impl<T> IntoPointer<*mut T> for *mut T {
     }
 }
 
-#[macro_export]
 macro_rules! create_pointer {
     ($ty:ty, $free:path) => {
         impl Pointer for *mut $ty {
