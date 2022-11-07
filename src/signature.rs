@@ -198,7 +198,6 @@
 //! ```
 //! use aws_lc_ring::{rand, signature};
 //!
-//! # #[cfg(feature = "std")]
 //! fn sign_and_verify_rsa(private_key_path: &std::path::Path,
 //!                        public_key_path: &std::path::Path)
 //!                        -> Result<(), MyError> {
@@ -226,14 +225,12 @@
 //!
 //! #[derive(Debug)]
 //! enum MyError {
-//! #  #[cfg(feature = "std")]
 //!    IO(std::io::Error),
 //!    BadPrivateKey,
 //!    OOM,
 //!    BadSignature,
 //! }
 //!
-//! # #[cfg(feature = "std")]
 //! fn read_file(path: &std::path::Path) -> Result<Vec<u8>, MyError> {
 //!     use std::io::Read;
 //!
@@ -243,18 +240,11 @@
 //!     Ok(contents)
 //! }
 //! #
-//! # #[cfg(not(feature = "std"))]
-//! # fn sign_and_verify_rsa(_private_key_path: &std::path::Path,
-//! #                        _public_key_path: &std::path::Path)
-//! #                        -> Result<(), ()> {
-//! #     Ok(())
-//! # }
-//! #
 //! # fn main() {
 //! #     let private_key_path =
-//! #         std::path::Path::new("src/rsa/signature_rsa_example_private_key.der");
+//! #         std::path::Path::new("tests/data/signature_rsa_example_private_key.der");
 //! #     let public_key_path =
-//! #         std::path::Path::new("src/rsa/signature_rsa_example_public_key.der");
+//! #         std::path::Path::new("tests/data/signature_rsa_example_public_key.der");
 //! #     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
 //! # }
 //! ```
@@ -269,7 +259,8 @@ use std::fmt::{Debug, Formatter};
 use untrusted::Input;
 
 pub use crate::ec::key_pair::EcdsaKeyPair;
-pub use crate::ec::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
+use crate::ec::EcdsaSignatureFormat;
+pub use crate::ec::{EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
 pub use crate::ed25519::{Ed25519KeyPair, EdDSAParameters, ED25519_PUBLIC_KEY_LEN};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of

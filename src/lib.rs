@@ -1,8 +1,47 @@
 // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: ISC
 
-// TODO: add missing docs
-// #![warn(missing_docs)]
+//! Ring-compatible crypto library using AWS-LC's cryptographic primitives.
+//!
+//! # Feature Flags
+//!
+//! #### - alloc (default) ####
+//! Allows implementation to allocate values of arbitrary size.
+//! Currently, this is required for `SealingKey::seal_in_place_separate_tag` with`CHACHA_POLY1305`
+//! and for the <code>io::writer</code> module.
+//!
+//! #### - threadlocal (default) ####
+//! Allows implementation to use `thread_local`, which is needed for certain structs to
+//! impl `Sync`. Used by `aead::SealingKey`, `aead::OpeningKey`, and `aead::UnboundKey`.
+//! These structs can still be used without this feature.
+//!
+//! #### - ring-io (default) ####
+//! Enable feature to access the  `io`  module.
+//!
+//! #### - asan ####
+//! Performs an "address sanitizer" build of the  `aws-lc-sys`  crate.
+//!
+//!
+//! # Ring-compatibility
+//!
+//! Although this library attempts to be fully compatible with Ring, there are a few places where our
+//! behavior is observably different.
+//!
+//! * Our implementation requires the `std` library. We currently do not support a
+//! [#!\[no_std\]](https://docs.rust-embedded.org/book/intro/no-std.html) build.
+//! * We only support the platforms supported by `aws-lc-sys`.  Currently this is includes MacOS and
+//! Linux, both x86-64 and ARM64.
+//! * `SealingKey::seal_in_place_separate_tag` with `CHACHA_POLY1305` requires allocating a separate
+//! buffer that can contain both the ciphertext and tag. When the `alloc` feature is disabled, this
+//! function cannot be called with `CHACHA_POLY1305` keys.
+//! * AWS-LC does not support parsing PKCS#8 v2. Thus, `Ed25519KeyPair::from_pkcs8` is not
+//! supported. Instead, you can use `Ed25519KeyPair::from_pkcs8_maybe_unchecked` for many common
+//! use-cases.
+
+//! * When parsing PKCS#8 fails, the reason provided for `KeyRejected` may differ from Ring.
+//!
+
+#![warn(missing_docs)]
 
 extern crate core;
 
@@ -37,9 +76,11 @@ mod ptr;
 
 use std::ffi::CStr;
 use std::sync::Once;
+
 static START: Once = Once::new();
 
 #[inline]
+/// Initialize the AWS-LC library. (This should generally not be needed.)
 pub fn init() {
     START.call_once(|| unsafe {
         aws_lc_sys::CRYPTO_library_init();

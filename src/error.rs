@@ -17,7 +17,6 @@
 
 //! Error reporting.
 
-#[cfg(feature = "std")]
 extern crate std;
 
 /// An error with absolutely no details.
@@ -30,8 +29,8 @@ extern crate std;
 ///
 /// `Result<T, ring::error::Unspecified>` is mostly equivalent to
 /// `Result<T, ()>`. However, `ring::error::Unspecified` implements
-/// [`std::error::Error`] and users of *ring* can implement
-/// `From<ring::error::Unspecified>` to map this to their own error types, as
+/// [`std::error::Error`] and users can implement
+/// `From<error::Unspecified>` to map this to their own error types, as
 /// described in [“Error Handling” in the Rust Book]:
 ///
 /// ```
@@ -40,7 +39,6 @@ extern crate std;
 /// enum Error {
 ///     CryptoError,
 ///
-/// #  #[cfg(feature = "alloc")]
 ///     IOError(std::io::Error),
 ///     // [...]
 /// }
@@ -85,9 +83,6 @@ impl core::fmt::Display for Unspecified {
         f.write_str("Unspecified")
     }
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for Unspecified {}
 
 impl From<core::array::TryFromSliceError> for Unspecified {
     fn from(_: core::array::TryFromSliceError) -> Self {

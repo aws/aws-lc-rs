@@ -44,6 +44,7 @@ use std::slice;
 use untrusted::Input;
 use zeroize::Zeroize;
 
+/// An RSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
 pub struct RsaKeyPair {
     // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L286
@@ -268,6 +269,9 @@ impl RsaKeyPair {
         Ok(())
     }
 
+    /// Returns the length in bytes of the key pair's public modulus.
+    ///
+    /// A signature has the same length as the public modulus.
     #[must_use]
     pub fn public_modulus_len(&self) -> usize {
         // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
@@ -322,6 +326,7 @@ impl KeyPair for RsaKeyPair {
     }
 }
 
+/// A serialized RSA public key.
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct RsaSubjectPublicKey {
@@ -421,8 +426,12 @@ pub enum RsaPadding {
     RSA_PKCS1_PSS_PADDING,
 }
 
+/// An RSA signature encoding as described in [RFC 3447 Section 8].
+///
+/// [RFC 3447 Section 8]: https://tools.ietf.org/html/rfc3447#section-8
 #[allow(clippy::module_name_repetitions)]
 pub trait RsaEncoding: 'static + Sync + Sealed + Debug {
+    /// The signature encoding.
     fn encoding(&'static self) -> &'static RsaSignatureEncoding;
 }
 
@@ -454,6 +463,7 @@ pub enum RSAVerificationAlgorithmId {
     RSA_PSS_2048_8192_SHA512,
 }
 
+/// Parameters for RSA verification.
 #[allow(clippy::module_name_repetitions)]
 pub struct RsaParameters(
     pub(super) &'static digest::Algorithm,
@@ -485,11 +495,14 @@ impl RsaParameters {
     }
 
     #[must_use]
+    /// Minimum modulus length in bits.
     pub fn min_modulus_len(&self) -> u32 {
         *self.2.start()
     }
 
     #[must_use]
+
+    /// Maximum modulus length in bits.
     pub fn max_modulus_len(&self) -> u32 {
         *self.2.end()
     }
@@ -563,13 +576,23 @@ fn RSA_verify(
     }
 }
 
+/// Low-level API for the verification of RSA signatures.
+///
+/// When the public key is in DER-encoded PKCS#1 ASN.1 format, it is
+/// recommended to use `ring::signature::verify()` with
+/// `ring::signature::RSA_PKCS1_*`, because `ring::signature::verify()`
+/// will handle the parsing in that case. Otherwise, this function can be used
+/// to pass in the raw bytes for the public key components as
+/// `untrusted::Input` arguments.
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct RsaPublicKeyComponents<B>
 where
     B: AsRef<[u8]> + Debug,
 {
+    /// The public modulus, encoded in big-endian bytes without leading zeros.
     pub n: B,
+    /// The public exponent, encoded in big-endian bytes without leading zeros.
     pub e: B,
 }
 

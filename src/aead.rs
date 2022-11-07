@@ -444,6 +444,7 @@ pub struct UnboundKey {
     algorithm: &'static Algorithm,
 }
 
+/// An AEAD key without a designated role or nonce sequence.
 #[cfg(not(feature = "threadlocal"))]
 pub struct UnboundKey {
     inner: KeyInner,
@@ -488,6 +489,9 @@ impl UnboundKey {
         Ok(unbound_key)
     }
 
+    /// Constructs an `UnboundKey`.
+    /// # Errors
+    /// `error::Unspecified` if `key_bytes.len() != algorithm.key_len()`.
     #[cfg(not(feature = "threadlocal"))]
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         Ok(Self {
@@ -743,7 +747,7 @@ pub const MAX_TAG_LEN: usize = TAG_LEN;
 
 #[inline]
 #[must_use]
-pub const fn u64_from_usize(x: usize) -> u64 {
+const fn u64_from_usize(x: usize) -> u64 {
     x as u64
 }
 

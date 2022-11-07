@@ -18,12 +18,14 @@ use std::os::raw::{c_int, c_uint};
 use std::ptr::null_mut;
 use untrusted::Input;
 
+/// The length of an Ed25519 public key.
+pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc_sys::ED25519_PUBLIC_KEY_LEN as usize;
 pub(crate) const ED25519_PRIVATE_KEY_LEN: usize = aws_lc_sys::ED25519_PRIVATE_KEY_LEN as usize;
 pub(crate) const ED25519_PRIVATE_KEY_PREFIX_LEN: usize = 32;
-pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc_sys::ED25519_PUBLIC_KEY_LEN as usize;
 const ED25519_SIGNATURE_LEN: usize = aws_lc_sys::ED25519_SIGNATURE_LEN as usize;
 const ED25519_SEED_LEN: usize = 32;
 
+/// Parameters for EdDSA signing and verification.
 #[derive(Debug)]
 pub struct EdDSAParameters;
 
@@ -51,6 +53,7 @@ impl VerificationAlgorithm for EdDSAParameters {
     }
 }
 
+/// An Ed25519 key pair, for signing.
 #[allow(clippy::module_name_repetitions)]
 pub struct Ed25519KeyPair {
     private_key: [u8; ED25519_PRIVATE_KEY_LEN],
@@ -256,6 +259,7 @@ impl Ed25519KeyPair {
         }
     }
 
+    /// Returns the signature of the message msg.
     #[inline]
     #[must_use]
     pub fn sign(&self, msg: &[u8]) -> Signature {

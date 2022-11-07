@@ -15,6 +15,7 @@ use aws_lc_sys::{ECDSA_do_sign, EVP_PKEY_get1_EC_KEY, EVP_parse_private_key, EC_
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 
+/// An ECDSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
 pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
@@ -101,13 +102,7 @@ impl EcdsaKeyPair {
     }
 
     /// Generates a new key pair and returns the key pair serialized as a
-    /// PKCS#8 document.
-    ///
-    /// The PKCS#8 document will be a v1 `OneAsymmetricKey` with the public key
-    /// included in the `ECPrivateKey` structure, as described in
-    /// [RFC 5958 Section 2] and [RFC 5915]. The `ECPrivateKey` structure will
-    /// not have a `parameters` field so the generated key is compatible with
-    /// PKCS#11.
+    /// PKCS#8 v1 document.
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.

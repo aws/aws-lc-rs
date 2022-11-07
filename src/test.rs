@@ -130,7 +130,6 @@ use alloc::{string::String, vec::Vec};
 
 use crate::{digest, error};
 
-#[cfg(any(feature = "std", feature = "test_logging"))]
 extern crate std;
 
 /// `compile_time_assert_clone::<T>();` fails to compile if `T` doesn't
@@ -155,7 +154,6 @@ pub fn compile_time_assert_sync<T: Sync>() {}
 
 /// `compile_time_assert_std_error_error::<T>();` fails to compile if `T`
 /// doesn't implement `std::error::Error`.
-#[cfg(feature = "std")]
 pub fn compile_time_assert_std_error_error<T: std::error::Error>() {}
 
 /// A test case. A test case consists of a set of named attributes. Every

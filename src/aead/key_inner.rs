@@ -3,7 +3,7 @@
 
 use crate::aead::cipher::SymmetricCipherKey;
 use crate::aead::TAG_LEN;
-use crate::{error, init};
+use crate::error;
 
 use std::mem::MaybeUninit;
 use std::ptr::null_mut;
@@ -22,7 +22,6 @@ pub(crate) enum KeyInner {
 impl KeyInner {
     pub(crate) fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
         unsafe {
-            init();
             match key {
                 SymmetricCipherKey::Aes128(..) => {
                     let aead = aws_lc_sys::EVP_aead_aes_128_gcm();
