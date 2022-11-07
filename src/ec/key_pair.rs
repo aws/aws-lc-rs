@@ -15,6 +15,7 @@ use aws_lc_sys::{ECDSA_do_sign, EVP_PKEY_get1_EC_KEY, EVP_parse_private_key, EC_
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 
+/// An ECDSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
 pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,

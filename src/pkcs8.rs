@@ -1,4 +1,3 @@
-use zeroize::Zeroize;
 // Copyright 2017 Brian Smith.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -16,7 +15,12 @@ use zeroize::Zeroize;
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: ISC
 
+//! PKCS#8 is specified in [RFC 5958].
+//!
+//! [RFC 5958]: https://tools.ietf.org/html/rfc5958.
+
 use crate::ec;
+use zeroize::Zeroize;
 
 /// A generated PKCS#8 document.
 pub struct Document {

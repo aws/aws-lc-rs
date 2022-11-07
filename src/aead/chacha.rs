@@ -27,6 +27,11 @@ use crate::error;
 
 pub(crate) const KEY_LEN: usize = 32usize;
 
+/// ChaCha20-Poly1305 as described in [RFC 7539].
+///
+/// The keys are 256 bits long and the nonces are 96 bits long.
+///
+/// [RFC 7539]: https://tools.ietf.org/html/rfc7539
 pub static CHACHA20_POLY1305: Algorithm = Algorithm {
     init: init_chacha,
     key_len: KEY_LEN,

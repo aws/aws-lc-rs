@@ -15,8 +15,13 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: ISC
 
+//! Serialization and deserialization.
+
+/// Trait for structs that accumulate bytes for subsequent processing.
 pub trait Accumulator {
+    /// Write a single byte
     fn write_byte(&mut self, value: u8);
+    /// Write a sequence of bytes
     fn write_bytes(&mut self, value: &[u8]);
 }
 
@@ -77,6 +82,7 @@ impl Accumulator for Writer {
     }
 }
 
+/// Write bytes from accumulator to `to_copy`.
 pub fn write_copy(accumulator: &mut dyn Accumulator, to_copy: untrusted::Input) {
     accumulator.write_bytes(to_copy.as_slice_less_safe());
 }

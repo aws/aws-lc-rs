@@ -55,6 +55,7 @@ pub(crate) const PUBLIC_KEY_MAX_LEN: usize = 1 + (2 * ELEM_MAX_BYTES);
 /// longer.
 pub const PKCS8_DOCUMENT_MAX_LEN: usize = 40 + SCALAR_MAX_BYTES + PUBLIC_KEY_MAX_LEN;
 
+/// An ECDSA verification algorithm.
 #[derive(Debug)]
 pub struct EcdsaVerificationAlgorithm {
     pub(super) id: &'static AlgorithmID,
@@ -63,12 +64,13 @@ pub struct EcdsaVerificationAlgorithm {
     pub(super) sig_format: EcdsaSignatureFormat,
 }
 
+/// An ECDSA signing algorithm.
 #[derive(Debug)]
 pub struct EcdsaSigningAlgorithm(&'static EcdsaVerificationAlgorithm);
 
 impl EcdsaSigningAlgorithm {
     #[must_use]
-    pub const fn new(algorithm: &'static EcdsaVerificationAlgorithm) -> Self {
+    pub(crate) const fn new(algorithm: &'static EcdsaVerificationAlgorithm) -> Self {
         EcdsaSigningAlgorithm(algorithm)
     }
 }
@@ -85,7 +87,7 @@ impl sealed::Sealed for EcdsaVerificationAlgorithm {}
 impl sealed::Sealed for EcdsaSigningAlgorithm {}
 
 #[derive(Debug)]
-pub enum EcdsaSignatureFormat {
+pub(crate) enum EcdsaSignatureFormat {
     ASN1,
     Fixed,
 }

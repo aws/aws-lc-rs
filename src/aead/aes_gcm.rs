@@ -171,6 +171,7 @@ pub(crate) fn aes_gcm_open_combined(
 }
 */
 
+/// AES-128 in GCM mode with 128-bit tags and 96 bit nonces.
 pub static AES_128_GCM: Algorithm = Algorithm {
     init: init_128,
     key_len: 16,
@@ -178,6 +179,7 @@ pub static AES_128_GCM: Algorithm = Algorithm {
     max_input_len: u64::MAX,
 };
 
+/// AES-256 in GCM mode with 128-bit tags and 96 bit nonces.
 pub static AES_256_GCM: Algorithm = Algorithm {
     init: init_256,
     key_len: 32,

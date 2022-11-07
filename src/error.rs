@@ -40,7 +40,6 @@ extern crate std;
 /// enum Error {
 ///     CryptoError,
 ///
-/// #  #[cfg(feature = "alloc")]
 ///     IOError(std::io::Error),
 ///     // [...]
 /// }

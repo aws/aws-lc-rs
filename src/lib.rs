@@ -1,8 +1,45 @@
 // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: ISC
 
-// TODO: add missing docs
-// #![warn(missing_docs)]
+//! Ring-compatible crypto library using AWS-LC's cryptographic primitives.
+//!
+//! # Feature Flags
+//!
+//! <table>
+//! <tr><th width=20%>Feature
+//!     <th width=70%>Description
+//! <tr><td><code>alloc (default)</code>
+//!     <td>Allows implementation to allocate values of arbitrary size.
+//!         Currently, this is required for <code>SealingKey::seal_in_place_separate_tag</code> with
+//!         <code>CHACHA_POLY1305</code> and for the <code>io::writer</code> module.
+//! <tr><td><code>threadlocal (default)</code>
+//!     <td> Allows implementation to use <code>thread_local</code>, which is needed for certain structs
+//!         to impl <code>Sync</code>. Used by <code>aead::SealingKey</code>, <code>aead::UnboundKey</code>,
+//!         <code>aead::UnboundKey</code>, and <code>digest::Context</code>. These structs can still
+//!         be used without this feature.
+//! <tr><td><code>ring-io (default)</code>
+//!     <td>Enable feature to access the `io` module.
+//! <tr><td><code>asan</code>
+//!     <td>Performs an "address sanitizer" build of the `aws-lc-sys` crate.
+//! </table>
+//!
+//! # Ring-compatibility
+//!
+//! Although this library attempts to be compatible with Ring, there are a few places where our
+//! behavior is observably different.
+//!
+//! * `SealingKey::seal_in_place_separate_tag` with `CHACHA_POLY1305` requires allocating a separate
+//! buffer that can contain both the ciphertext and tag. When the `alloc` feature is disabled, this
+//! function cannot be called with `CHACHA_POLY1305` keys.
+//! * AWS-LC does not support parsing PKCS#8 v2. Thus, `Ed25519KeyPair::from_pkcs8` is not
+//! supported. Instead, you can use `Ed25519KeyPair::from_pkcs8_maybe_unchecked` for many common
+//! use-cases.
+//! * We only support the platforms supported by `aws-lc-sys`.  Currently this is includes MacOS and
+//! Linux, both x86-64 and ARM64.
+//! * When parsing PKCS#8 fails, the reason provided for `KeyRejected` may differ from Ring.
+//!
+
+#![warn(missing_docs)]
 
 extern crate core;
 
@@ -37,9 +74,11 @@ mod ptr;
 
 use std::ffi::CStr;
 use std::sync::Once;
+
 static START: Once = Once::new();
 
 #[inline]
+/// Initialize the AWS-LC library. (This should generally not be needed.)
 pub fn init() {
     START.call_once(|| unsafe {
         aws_lc_sys::CRYPTO_library_init();

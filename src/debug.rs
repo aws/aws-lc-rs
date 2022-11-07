@@ -18,6 +18,8 @@
 // Generates an implementation of the Debug trait for a type that defers to the
 // Debug implementation for a given field.
 
+#![allow(missing_docs)]
+
 #[macro_export]
 macro_rules! derive_debug_via_id {
     ($typename:ident) => {

@@ -72,6 +72,7 @@ pub struct Context {
 }
 
 #[cfg(feature = "threadlocal")]
+/// A context for multi-step (Init-Update-Finish) digest calculations.
 pub struct Context {
     /// The context's algorithm.
     pub(crate) algorithm: &'static Algorithm,
@@ -206,7 +207,6 @@ impl Context {
 /// # Examples:
 ///
 /// ```
-/// # #[cfg(feature = "alloc")]
 /// # {
 /// use aws_lc_ring::{digest, test};
 /// let expected_hex = "09ca7e4eaa6e8ae9c7d261167129184883644d07dfba7cbfbc4c8a2e08360d5b";

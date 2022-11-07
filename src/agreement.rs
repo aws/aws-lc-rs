@@ -15,6 +15,53 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: ISC
 
+//! Key Agreement: ECDH, including X25519.
+//!
+//! # Example
+//!
+//! Note that this example uses X25519, but ECDH using NIST P-256/P-384 is done
+//! exactly the same way, just substituting
+//! `agreement::ECDH_P256`/`agreement::ECDH_P384` for `agreement::X25519`.
+//!
+//! ```
+//! use ring::{agreement, rand};
+//!
+//! let rng = rand::SystemRandom::new();
+//!
+//! let my_private_key = agreement::EphemeralPrivateKey::generate(&agreement::X25519, &rng)?;
+//!
+//! // Make `my_public_key` a byte slice containing my public key. In a real
+//! // application, this would be sent to the peer in an encoded protocol
+//! // message.
+//! let my_public_key = my_private_key.compute_public_key()?;
+//!
+//! let peer_public_key = {
+//!     // In a real application, the peer public key would be parsed out of a
+//!     // protocol message. Here we just generate one.
+//!     let peer_public_key = {
+//!         let peer_private_key =
+//!             agreement::EphemeralPrivateKey::generate(&agreement::X25519, &rng)?;
+//!         peer_private_key.compute_public_key()?
+//!     };
+//!
+//!     agreement::UnparsedPublicKey::new(&agreement::X25519, peer_public_key)
+//! };
+//!
+//! agreement::agree_ephemeral(
+//!     my_private_key,
+//!     &peer_public_key,
+//!     ring::error::Unspecified,
+//!     |_key_material| {
+//!         // In a real application, we'd apply a KDF to the key material and the
+//!         // public keys (as recommended in RFC 7748) and then derive session
+//!         // keys from the result. We omit all that here.
+//!         Ok(())
+//!     },
+//! )?;
+//!
+//! # Ok::<(), ring::error::Unspecified>(())
+//! ```
+
 use crate::ec::{ec_group_from_nid, ec_key_from_public_point, ec_point_from_bytes};
 use crate::error::Unspecified;
 use crate::ptr::{LcPtr, NonNullPtr};
@@ -68,6 +115,7 @@ impl Debug for AlgorithmID {
     }
 }
 
+/// A key agreement algorithm.
 #[derive(PartialEq, Eq)]
 pub struct Algorithm {
     id: AlgorithmID,
@@ -79,12 +127,24 @@ impl Debug for Algorithm {
     }
 }
 
+/// ECDH using the NSA Suite B P-256 (secp256r1) curve.
 pub static ECDH_P256: Algorithm = Algorithm {
     id: AlgorithmID::ECDH_P256,
 };
+
+/// ECDH using the NSA Suite B P-384 (secp384r1) curve.
 pub static ECDH_P384: Algorithm = Algorithm {
     id: AlgorithmID::ECDH_P384,
 };
+
+/// X25519 (ECDH using Curve25519) as described in [RFC 7748].
+///
+/// Everything is as described in RFC 7748. Key agreement will fail if the
+/// result of the X25519 operation is zero; see the notes on the
+/// "all-zero value" in [RFC 7748 section 6.1].
+///
+/// [RFC 7748]: https://tools.ietf.org/html/rfc7748
+/// [RFC 7748 section 6.1]: https://tools.ietf.org/html/rfc7748#section-6.1
 pub static X25519: Algorithm = Algorithm {
     id: AlgorithmID::X25519,
 };
@@ -242,6 +302,7 @@ impl EphemeralPrivateKey {
         }
     }
 
+    /// The algorithm for the private key.
     #[inline]
     #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
@@ -251,6 +312,7 @@ impl EphemeralPrivateKey {
 
 const MAX_PUBLIC_KEY_LEN: usize = ec::PUBLIC_KEY_MAX_LEN;
 
+/// A public key for key agreement.
 pub struct PublicKey {
     alg: &'static Algorithm,
     public_key: [u8; MAX_PUBLIC_KEY_LEN],
@@ -258,6 +320,7 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
+    /// The algorithm for the public key.
     #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.alg
@@ -291,6 +354,7 @@ impl Clone for PublicKey {
 }
 
 #[derive(Copy, Clone)]
+/// An unparsed, possibly malformed, public key for key agreement.
 pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
     alg: &'static Algorithm,
     bytes: B,
@@ -307,6 +371,7 @@ impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
 }
 
 impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
+    /// Constructs a new UnparsedPublicKey.
     pub fn new(algorithm: &'static Algorithm, bytes: B) -> Self {
         UnparsedPublicKey {
             alg: algorithm,
