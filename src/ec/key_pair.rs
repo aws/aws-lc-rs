@@ -1,10 +1,9 @@
-/*
- * Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- */
+// Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: ISC
 
 use crate::ec::{
-    EcdsaPublicKey, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PKCS8_DOCUMENT_MAX_LEN,
+    validate_ec_key, EcdsaPublicKey, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
+    PKCS8_DOCUMENT_MAX_LEN,
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Document;
@@ -74,6 +73,12 @@ impl EcdsaKeyPair {
         })
     }
 
+    /// Constructs an ECDSA key pair by parsing an unencrypted PKCS#8 v1
+    /// id-ecPublicKey `ECPrivateKey` key.
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if bytes do not encode an ECDSA key pair or if the key is otherwise not
+    /// acceptable.
     pub fn from_pkcs8(
         alg: &'static EcdsaSigningAlgorithm,
         pkcs8: &[u8],
@@ -95,6 +100,18 @@ impl EcdsaKeyPair {
         }
     }
 
+    /// Generates a new key pair and returns the key pair serialized as a
+    /// PKCS#8 document.
+    ///
+    /// The PKCS#8 document will be a v1 `OneAsymmetricKey` with the public key
+    /// included in the `ECPrivateKey` structure, as described in
+    /// [RFC 5958 Section 2] and [RFC 5915]. The `ECPrivateKey` structure will
+    /// not have a `parameters` field so the generated key is compatible with
+    /// PKCS#11.
+    ///
+    /// # Errors
+    /// `error::Unspecified` on internal error.
+    ///
     pub fn generate_pkcs8(
         alg: &'static EcdsaSigningAlgorithm,
         _rng: &dyn SecureRandom,
@@ -132,6 +149,25 @@ impl EcdsaKeyPair {
         }
     }
 
+    /// Constructs an ECDSA key pair from the private key and public key bytes
+    ///
+    /// The private key must encoded as a big-endian fixed-length integer. For
+    /// example, a P-256 private key must be 32 bytes prefixed with leading
+    /// zeros as needed.
+    ///
+    /// The public key is encoding in uncompressed form using the
+    /// Octet-String-to-Elliptic-Curve-Point algorithm in
+    /// [SEC 1: Elliptic Curve Cryptography, Version 2.0].
+    ///
+    /// This is intended for use by code that deserializes key pairs. It is
+    /// recommended to use `EcdsaKeyPair::from_pkcs8()` (with a PKCS#8-encoded
+    /// key) instead.
+    ///
+    /// [SEC 1: Elliptic Curve Cryptography, Version 2.0]:
+    ///     http://www.secg.org/sec1-v2.pdf
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
     pub fn from_private_key_and_public_key(
         alg: &'static EcdsaSigningAlgorithm,
         private_key: &[u8],
@@ -146,12 +182,19 @@ impl EcdsaKeyPair {
                 .into();
 
             let ec_key = ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
+            validate_ec_key(&ec_key.as_non_null(), alg.bits)?;
             let key_pair = Self::new(alg, ec_key)?;
 
             Ok(key_pair)
         }
     }
 
+    /// Returns the signature of the message using a random nonce.
+    /// The `_rng` provided is ignored.
+    ///
+    /// # Errors
+    /// `error::Unspecified` on internal error.
+    ///
     #[inline]
     pub fn sign(&self, _rng: &dyn SecureRandom, message: &[u8]) -> Result<Signature, Unspecified> {
         unsafe {

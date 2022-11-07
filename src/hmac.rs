@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: ISC
 
 //! HMAC is specified in [RFC 2104].
 //!
@@ -108,7 +108,7 @@
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
 use crate::error::Unspecified;
-use crate::{constant_time, digest, error, hkdf};
+use crate::{constant_time, digest, hkdf};
 use aws_lc_sys::HMAC_CTX;
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
@@ -185,6 +185,7 @@ impl Clone for LcHmacCtx {
     }
 }
 
+/// A key to use for HMAC signing.
 #[derive(Clone)]
 pub struct Key {
     pub(crate) algorithm: Algorithm,
@@ -211,6 +212,10 @@ impl Key {
     /// recommendation in [RFC 2104 Section 3].
     ///
     /// [RFC 2104 Section 3]: https://tools.ietf.org/html/rfc2104#section-3
+    ///
+    /// # Errors
+    /// `error::Unspecified` is the `rng` fails.
+    ///
     pub fn generate(
         algorithm: Algorithm,
         rng: &dyn crate::rand::SecureRandom,
@@ -409,8 +414,12 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 /// `Key` with the same value as `key` and then using `verify`.
 ///
 /// The verification will be done in constant time to prevent timing attacks.
+///
+/// # Errors
+/// `error::Unspecified` if the inputs are not verified.
+///
 #[inline]
-pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), error::Unspecified> {
+pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
     constant_time::verify_slices_are_equal(sign(key, data).as_ref(), tag)
 }
 

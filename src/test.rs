@@ -12,6 +12,9 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: ISC
+
 //! Testing framework.
 //!
 //! Unlike the rest of *ring*, this testing framework uses panics pretty
@@ -116,6 +119,10 @@
 //! (`src/example_tests.txt`), the test inputs that led to the failure, and the
 //! stack trace to the line in the test code that panicked: entry 9 in the
 //! stack trace pointing to line 652 of the file `example.rs`.
+
+#![allow(missing_docs)]
+#![allow(clippy::missing_panics_doc)]
+#![allow(clippy::missing_errors_doc)]
 
 extern crate alloc;
 

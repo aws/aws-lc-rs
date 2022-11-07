@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: ISC
 
 //! Authenticated Encryption with Associated Data (AEAD).
 //!
@@ -24,7 +24,7 @@
 //! [AEAD]: http://www-cse.ucsd.edu/~mihir/papers/oem.html
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
-use crate::{derive_debug_via_id, error, hkdf, polyfill};
+use crate::{derive_debug_via_id, error, hkdf};
 use aes_gcm::aes_gcm_seal_separate;
 use std::fmt::Debug;
 
@@ -742,8 +742,14 @@ const TAG_LEN: usize = 16;
 pub const MAX_TAG_LEN: usize = TAG_LEN;
 
 #[inline]
+#[must_use]
+pub const fn u64_from_usize(x: usize) -> u64 {
+    x as u64
+}
+
+#[inline]
 fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), Unspecified> {
-    if polyfill::u64_from_usize(in_out_len) > alg.max_input_len {
+    if u64_from_usize(in_out_len) > alg.max_input_len {
         return Err(Unspecified);
     }
     Ok(())

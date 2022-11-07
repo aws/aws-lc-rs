@@ -12,6 +12,9 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: ISC
+
 //! Cryptographic pseudo-random number generation.
 //!
 //! An application should create a single `SystemRandom` and then use it for
@@ -32,6 +35,10 @@ use crate::error;
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
     /// Fills `dest` with random bytes.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if unable to fill `dest`.
+    ///
     fn fill(&self, dest: &mut [u8]) -> Result<(), error::Unspecified>;
 }
 
@@ -60,6 +67,10 @@ impl<T: RandomlyConstructable> Random<T> {
 }
 
 /// Generate the new random value using `rng`.
+///
+/// # Errors
+/// `error::Unspecified` if unable to fill buffer.
+///
 #[inline]
 pub fn generate<T: RandomlyConstructable>(
     rng: &dyn SecureRandom,

@@ -6,7 +6,7 @@ format:
 
 # TODO: Make clippy more annoying
 clippy:
-	cargo clippy --all -- -W clippy::all # -W clippy::pedantic -W clippy::restriction -W clippy::nursery -D warnings
+	cargo clippy --all -- -W clippy::all  -W clippy::pedantic # -W clippy::restriction -W clippy::nursery -D warnings
 
 asan:
 # TODO: This build target produces linker error on Mac.

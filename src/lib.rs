@@ -1,3 +1,9 @@
+// Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: ISC
+
+// TODO: add missing docs
+// #![warn(missing_docs)]
+
 extern crate core;
 
 pub mod aead;
@@ -27,7 +33,6 @@ mod cbb;
 mod cbs;
 mod ec;
 mod ed25519;
-mod polyfill;
 mod ptr;
 
 use std::ffi::CStr;

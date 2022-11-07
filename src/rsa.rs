@@ -12,6 +12,9 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: ISC
+
 // *R* and *r* in Montgomery math refer to different things, so we always use
 // `R` to refer to *R* to avoid confusion, even when that's against the normal
 // naming conventions. Also the standard camelCase names are used for `KeyPair`
@@ -68,6 +71,53 @@ impl RsaKeyPair {
         }
     }
 
+    /// Parses an unencrypted PKCS#8-encoded RSA private key.
+    ///
+    /// Only two-prime (not multi-prime) keys are supported. The public modulus
+    /// (n) must be at least 2047 bits. The public modulus must be no larger
+    /// than 4096 bits. It is recommended that the public modulus be exactly
+    /// 2048 or 3072 bits. The public exponent must be at least 65537.
+    ///
+    /// The following will generate a 2048-bit RSA private key of the correct form using
+    /// OpenSSL's command line tool:
+    ///
+    /// ```sh
+    ///    openssl genpkey -algorithm RSA \
+    ///        -pkeyopt rsa_keygen_bits:2048 \
+    ///        -pkeyopt rsa_keygen_pubexp:65537 | \
+    ///      openssl pkcs8 -topk8 -nocrypt -outform der > rsa-2048-private-key.pk8
+    /// ```
+    ///
+    /// The following will generate a 3072-bit RSA private key of the correct form:
+    ///
+    /// ```sh
+    ///    openssl genpkey -algorithm RSA \
+    ///        -pkeyopt rsa_keygen_bits:3072 \
+    ///        -pkeyopt rsa_keygen_pubexp:65537 | \
+    ///      openssl pkcs8 -topk8 -nocrypt -outform der > rsa-3072-private-key.pk8
+    /// ```
+    ///
+    /// Often, keys generated for use in OpenSSL-based software are stored in
+    /// the Base64 “PEM” format without the PKCS#8 wrapper. Such keys can be
+    /// converted to binary PKCS#8 form using the OpenSSL command line tool like
+    /// this:
+    ///
+    /// ```sh
+    /// openssl pkcs8 -topk8 -nocrypt -outform der \
+    ///     -in rsa-2048-private-key.pem > rsa-2048-private-key.pk8
+    /// ```
+    ///
+    /// Base64 (“PEM”) PKCS#8-encoded keys can be converted to the binary PKCS#8
+    /// form like this:
+    ///
+    /// ```sh
+    /// openssl pkcs8 -nocrypt -outform der \
+    ///     -in rsa-2048-private-key.pem > rsa-2048-private-key.pk8
+    /// ```
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if bytes do not encode an RSA private key or if the key is otherwise
+    /// not acceptable.
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let mut cbs = cbs::build_CBS(pkcs8);
@@ -81,6 +131,10 @@ impl RsaKeyPair {
         }
     }
 
+    /// Parses a DER-encoded `RSAPrivateKey` structure (RFC 8017).
+    ///
+    /// # Errors
+    /// `error:KeyRejected` on error.
     pub fn from_der(der: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let rsa = build_private_RSA(der)?;
@@ -160,10 +214,9 @@ impl RsaKeyPair {
     /// function does *not* take a precomputed digest; instead, `sign`
     /// calculates the digest itself.
     ///
-    /// Lots of effort has been made to make the signing operations close to
-    /// constant time to protect the private key from side channel attacks. On
-    /// x86-64, this is done pretty well, but not perfectly. On other
-    /// platforms, it is done less perfectly.
+    /// # Errors
+    /// `error::Unspecified` on error.
+    ///
     pub fn sign(
         &self,
         padding_alg: &'static dyn RsaEncoding,
@@ -417,6 +470,10 @@ impl Debug for RsaParameters {
 }
 
 impl RsaParameters {
+    /// Parses a DER-encoded `RSAPublicKey` structure (RFC 8017) to determine its size in bits.
+    ///
+    /// # Errors
+    /// `error::Unspecified` on parse error.
     pub fn public_modulus_len(public_key: &[u8]) -> Result<u32, Unspecified> {
         unsafe {
             let mut cbs = cbs::build_CBS(public_key);
@@ -553,6 +610,13 @@ where
     }
 
     #[allow(unused_variables, dead_code)]
+    /// Verifies that `signature` is a valid signature of `message` using `self`
+    /// as the public key. `params` determine what algorithm parameters
+    /// (padding, digest algorithm, key length range, etc.) are used in the
+    /// verification.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if `message` was not verified.
     pub fn verify(
         &self,
         params: &RsaParameters,

@@ -1,7 +1,5 @@
-/*
- * Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- */
+// Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: ISC
 
 use crate::ec::PKCS8_DOCUMENT_MAX_LEN;
 use crate::error::{KeyRejected, Unspecified};
@@ -119,6 +117,11 @@ pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<*mut E
 }
 
 impl Ed25519KeyPair {
+    /// Generates a `Ed25519KeyPair` using the `rng` provided, then marshals that key as a
+    /// DER-encoded `PrivateKeyInfo` structure (RFC5280).
+    ///
+    /// # Errors
+    /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     pub fn generate_pkcs8(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
         unsafe {
             let evp_pkey = generate_key(rng)?;
@@ -153,6 +156,20 @@ impl Ed25519KeyPair {
         }
     }
 
+    /// Constructs an Ed25519 key pair from the private key seed `seed` and its
+    /// public key `public_key`.
+    ///
+    /// It is recommended to use `Ed25519KeyPair::from_pkcs8()` instead.
+    ///
+    /// The private and public keys will be verified to be consistent with each
+    /// other. This helps avoid misuse of the key (e.g. accidentally swapping
+    /// the private key and public key, or using the wrong private key for the
+    /// public key). This also detects any corruption of the public or private
+    /// key.
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if parse error, or if key is otherwise unacceptable.
+    ///
     pub fn from_seed_and_public_key(
         seed: &[u8],
         expected_public_key: &[u8],
@@ -182,7 +199,32 @@ impl Ed25519KeyPair {
         }
     }
 
-    pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
+    /// CURRENTLY NOT SUPPORTED. Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v2
+    /// Ed25519 private key.
+    ///
+    /// `openssl genpkey -algorithm ED25519` generates PKCS# v1 keys, which
+    /// can be parsed with `Ed25519KeyPair::from_pkcs8_maybe_unchecked()`.
+    ///
+    /// # Errors
+    /// `error::KeyRejected("InvalidEncoding")` for all inputs.
+    /// PKCS#8 v2 is currently not supported by AWS-LC.
+    pub fn from_pkcs8(_pkcs8: &[u8]) -> Result<Self, KeyRejected> {
+        Err(KeyRejected::invalid_encoding())
+    }
+
+    /// Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v1
+    /// Ed25519 private key.
+    ///
+    /// `openssl genpkey -algorithm ED25519` generates PKCS# v1 keys.
+    ///
+    /// PKCS#8 v1 files do not contain the public key, so when a v1 file is parsed the public key
+    /// will be computed from the private key, and there will be no consistency check
+    /// between the public key and the private key.
+    ///
+    /// # Errors
+    /// `error::KeyRejected` on parse error, or if key is otherwise unacceptable.
+    ///
+    pub fn from_pkcs8_maybe_unchecked(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let mut cbs = cbs::build_CBS(pkcs8);
 
@@ -212,10 +254,6 @@ impl Ed25519KeyPair {
 
             Ok(key_pair)
         }
-    }
-
-    pub fn from_pkcs8_maybe_unchecked(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        Self::from_pkcs8(pkcs8)
     }
 
     #[inline]
@@ -280,7 +318,7 @@ mod tests {
     fn test_generate_pkcs8() {
         let document = Ed25519KeyPair::generate_pkcs8(&crate::rand::SystemRandom::new()).unwrap();
 
-        let _key_pair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let _key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
     }
 
     #[test]
@@ -289,7 +327,7 @@ mod tests {
             r#"302e020100300506032b6570042204209d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60"#,
         );
 
-        let key_pair = Ed25519KeyPair::from_pkcs8(&key).unwrap();
+        let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(&key).unwrap();
 
         assert_eq!("Ed25519KeyPair { public_key: PublicKey(\"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a\") }", 
                    format!("{:?}", key_pair));
