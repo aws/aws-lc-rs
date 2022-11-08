@@ -21,7 +21,7 @@ use crate::aead::{block::Block, error, quic::Sample, Nonce};
 use crate::error::Unspecified;
 use aws_lc_sys::AES_KEY;
 use libc::c_uint;
-use std::mem::{size_of, MaybeUninit};
+use std::mem::{size_of, MaybeUninit, transmute};
 use std::ptr;
 use zeroize::Zeroize;
 
@@ -32,6 +32,7 @@ pub(crate) enum SymmetricCipherKey {
 }
 
 unsafe impl Send for SymmetricCipherKey {}
+// The AES_KEY value is only used as a `*const AES_KEY` in calls to `AES_ecb_encrypt`.
 unsafe impl Sync for SymmetricCipherKey {}
 
 impl Drop for SymmetricCipherKey {
@@ -39,9 +40,8 @@ impl Drop for SymmetricCipherKey {
         // Aes128Key, Aes256Key and ChaCha20Key implement Drop separately.
         match self {
             SymmetricCipherKey::Aes128(_, aes_key) | SymmetricCipherKey::Aes256(_, aes_key) => unsafe {
-                let value: &mut [u8; size_of::<AES_KEY>()] = &mut *(aes_key
-                    as *mut aws_lc_sys::aes_key_st)
-                    .cast::<[u8; size_of::<AES_KEY>()]>();
+                #[allow(clippy::transmute_ptr_to_ptr)]
+                let value: &mut [u8; size_of::<AES_KEY>()] = transmute(aes_key);
                 value.zeroize();
             },
             SymmetricCipherKey::ChaCha20(_) => {}

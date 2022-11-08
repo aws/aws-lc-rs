@@ -16,7 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aead::block::{Block, BLOCK_LEN};
-use aws_lc_sys::AES_ENCRYPT;
+use aws_lc_sys::{AES_KEY, AES_ENCRYPT};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 use zeroize::Zeroize;
@@ -51,7 +51,7 @@ impl Drop for Aes256Key {
 }
 
 #[inline]
-pub(super) fn encrypt_block_aes_ecb(aes_key: &aws_lc_sys::AES_KEY, block: Block) -> Block {
+pub(super) fn encrypt_block_aes_ecb(aes_key: &AES_KEY, block: Block) -> Block {
     unsafe {
         let mut cipher_text = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
         let plain_bytes = block.as_ref();
