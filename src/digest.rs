@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications Copyright Amazon.com, Inc. or its affiliates. See GitHub history for details.
-// SPDX-License-Identifier: ISC
+// SPDX-License-Identifier: Apache-2.0 OR ISC
 
 //! SHA-2 and the legacy SHA-1 digest algorithm.
 //!
