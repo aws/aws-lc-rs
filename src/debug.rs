@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: ISC
+// SPDX-License-Identifier: Apache-2.0 OR ISC
 
 // Generates an implementation of the Debug trait for a type that defers to the
 // Debug implementation for a given field.

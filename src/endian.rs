@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications copyright Amazon.com, Inc. or its affiliates.
-// SPDX-License-Identifier: ISC
+// SPDX-License-Identifier: Apache-2.0 OR ISC
 
 /// An `Encoding` of a type `T` can be converted to/from its byte
 /// representation without any byte swapping or other computation.

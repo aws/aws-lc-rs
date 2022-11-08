@@ -1,5 +1,5 @@
 // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: ISC
+// SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aead::{error, Aad, Algorithm, AlgorithmID, Nonce, Tag, TAG_LEN};
 use std::cmp::min;
