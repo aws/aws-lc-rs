@@ -84,10 +84,7 @@ impl AsRef<[u8]> for Ed25519PublicKey {
 
 impl Debug for Ed25519PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!(
-            "PublicKey(\"{}\")",
-            test::to_hex(self.public_key)
-        ))
+        f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.public_key)))
     }
 }
 

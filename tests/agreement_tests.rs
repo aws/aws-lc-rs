@@ -167,7 +167,6 @@ fn agreement_agree_ephemeral() {
 
 #[test]
 fn test_agreement_ecdh_x25519_rfc_iterated() {
-
     fn expect_iterated_x25519(
         expected_result: &str,
         range: core::ops::Range<usize>,
