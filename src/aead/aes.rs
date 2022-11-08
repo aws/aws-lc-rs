@@ -16,11 +16,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aead::block::{Block, BLOCK_LEN};
-use crate::error;
-use aws_lc_sys::EVP_CIPHER_CTX;
+use aws_lc_sys::AES_ENCRYPT;
 use std::mem::MaybeUninit;
 use std::ops::Deref;
-use std::os::raw::c_int;
 use zeroize::Zeroize;
 
 pub(crate) struct Aes128Key(pub(super) [u8; 16]);
@@ -53,30 +51,18 @@ impl Drop for Aes256Key {
 }
 
 #[inline]
-pub(super) fn encrypt_block_aes_ecb(
-    ctx: *mut EVP_CIPHER_CTX,
-    block: Block,
-) -> Result<Block, error::Unspecified> {
+pub(super) fn encrypt_block_aes_ecb(aes_key: &aws_lc_sys::AES_KEY, block: Block) -> Block {
     unsafe {
-        let mut out_len = MaybeUninit::<c_int>::uninit();
         let mut cipher_text = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
         let plain_bytes = block.as_ref();
-        if 1 != aws_lc_sys::EVP_EncryptUpdate(
-            ctx,
-            cipher_text.as_mut_ptr().cast(),
-            out_len.as_mut_ptr(),
+        aws_lc_sys::AES_ecb_encrypt(
             plain_bytes.as_ptr(),
-            BLOCK_LEN as c_int,
-        ) {
-            return Err(error::Unspecified);
-        }
-        #[allow(clippy::cast_sign_loss)]
-        let olen = out_len.assume_init() as usize;
-        if olen != BLOCK_LEN {
-            return Err(error::Unspecified);
-        }
+            cipher_text.as_mut_ptr().cast(),
+            aes_key,
+            AES_ENCRYPT,
+        );
 
-        Ok(Block::from(&cipher_text.assume_init()))
+        Block::from(&cipher_text.assume_init())
     }
 }
 

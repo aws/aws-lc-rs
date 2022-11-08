@@ -19,27 +19,35 @@ use crate::aead::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
 use crate::aead::chacha::{encrypt_block_chacha20, ChaCha20Key};
 use crate::aead::{block::Block, error, quic::Sample, Nonce};
 use crate::error::Unspecified;
-use crate::ptr::LcPtr;
-use aws_lc_sys::EVP_CIPHER_CTX;
-use std::mem::MaybeUninit;
+use aws_lc_sys::AES_KEY;
+use libc::c_uint;
+use std::mem::{size_of, MaybeUninit};
 use std::ptr;
-use std::ptr::{null, null_mut};
+use zeroize::Zeroize;
 
 pub(crate) enum SymmetricCipherKey {
-    Aes128(
-        Aes128Key,
-        LcPtr<*mut EVP_CIPHER_CTX>,
-        LcPtr<*mut EVP_CIPHER_CTX>,
-    ),
-    Aes256(
-        Aes256Key,
-        LcPtr<*mut EVP_CIPHER_CTX>,
-        LcPtr<*mut EVP_CIPHER_CTX>,
-    ),
+    Aes128(Aes128Key, AES_KEY),
+    Aes256(Aes256Key, AES_KEY),
     ChaCha20(ChaCha20Key),
 }
 
 unsafe impl Send for SymmetricCipherKey {}
+unsafe impl Sync for SymmetricCipherKey {}
+
+impl Drop for SymmetricCipherKey {
+    fn drop(&mut self) {
+        // Aes128Key, Aes256Key and ChaCha20Key implement Drop separately.
+        match self {
+            SymmetricCipherKey::Aes128(_, aes_key) | SymmetricCipherKey::Aes256(_, aes_key) => unsafe {
+                let value: &mut [u8; size_of::<AES_KEY>()] = &mut *(aes_key
+                    as *mut aws_lc_sys::aes_key_st)
+                    .cast::<[u8; size_of::<AES_KEY>()]>();
+                value.zeroize();
+            },
+            SymmetricCipherKey::ChaCha20(_) => {}
+        }
+    }
+}
 
 impl SymmetricCipherKey {
     pub(crate) fn aes128(key_bytes: &[u8]) -> Result<Self, Unspecified> {
@@ -48,36 +56,22 @@ impl SymmetricCipherKey {
         }
 
         unsafe {
-            let ecb_cipher_ctx = LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new())?;
-            if 1 != aws_lc_sys::EVP_EncryptInit_ex(
-                *ecb_cipher_ctx,
-                aws_lc_sys::EVP_aes_128_ecb(),
-                null_mut(),
+            let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
+            #[allow(clippy::cast_possible_truncation)]
+            if 0 != aws_lc_sys::AES_set_encrypt_key(
                 key_bytes.as_ptr(),
-                null(),
+                (key_bytes.len() * 8) as c_uint,
+                aes_key.as_mut_ptr(),
             ) {
                 return Err(Unspecified);
             }
-            if 1 != aws_lc_sys::EVP_CIPHER_CTX_set_padding(*ecb_cipher_ctx, 0) {
-                return Err(Unspecified);
-            }
+            let aes_key = aes_key.assume_init();
 
-            let gcm_cipher_ctx = LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new())?;
-            if 1 != aws_lc_sys::EVP_EncryptInit_ex(
-                *gcm_cipher_ctx,
-                aws_lc_sys::EVP_aes_128_gcm(),
-                null_mut(),
-                key_bytes.as_ptr(),
-                null(),
-            ) {
-                return Err(Unspecified);
-            }
             let mut kb = MaybeUninit::<[u8; 16]>::uninit();
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 16);
             Ok(SymmetricCipherKey::Aes128(
                 Aes128Key(kb.assume_init()),
-                ecb_cipher_ctx,
-                gcm_cipher_ctx,
+                aes_key,
             ))
         }
     }
@@ -87,37 +81,22 @@ impl SymmetricCipherKey {
             return Err(Unspecified);
         }
         unsafe {
-            let ecb_cipher_ctx = LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new())?;
-            if 1 != aws_lc_sys::EVP_EncryptInit_ex(
-                *ecb_cipher_ctx,
-                aws_lc_sys::EVP_aes_256_ecb(),
-                null_mut(),
+            let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
+            #[allow(clippy::cast_possible_truncation)]
+            if 0 != aws_lc_sys::AES_set_encrypt_key(
                 key_bytes.as_ptr(),
-                null(),
+                (key_bytes.len() * 8) as c_uint,
+                aes_key.as_mut_ptr(),
             ) {
                 return Err(Unspecified);
             }
-            if 1 != aws_lc_sys::EVP_CIPHER_CTX_set_padding(*ecb_cipher_ctx, 0) {
-                return Err(Unspecified);
-            }
-
-            let gcm_cipher_ctx = LcPtr::new(aws_lc_sys::EVP_CIPHER_CTX_new())?;
-            if 1 != aws_lc_sys::EVP_EncryptInit_ex(
-                *gcm_cipher_ctx,
-                aws_lc_sys::EVP_aes_256_gcm(),
-                null_mut(),
-                key_bytes.as_ptr(),
-                null(),
-            ) {
-                return Err(Unspecified);
-            }
+            let aes_key = aes_key.assume_init();
 
             let mut kb = MaybeUninit::<[u8; 32]>::uninit();
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
             Ok(SymmetricCipherKey::Aes256(
                 Aes256Key(kb.assume_init()),
-                ecb_cipher_ctx,
-                gcm_cipher_ctx,
+                aes_key,
             ))
         }
     }
@@ -147,9 +126,8 @@ impl SymmetricCipherKey {
         let block = Block::from(&sample);
 
         let encrypted_block = match self {
-            SymmetricCipherKey::Aes128(.., ecb_ctx, _)
-            | SymmetricCipherKey::Aes256(.., ecb_ctx, _) => {
-                encrypt_block_aes_ecb(**ecb_ctx, block)?
+            SymmetricCipherKey::Aes128(.., aes_key) | SymmetricCipherKey::Aes256(.., aes_key) => {
+                encrypt_block_aes_ecb(aes_key, block)
             }
             SymmetricCipherKey::ChaCha20(key_bytes) => {
                 let plaintext = block.as_ref();
@@ -171,10 +149,11 @@ impl SymmetricCipherKey {
 
     #[allow(dead_code)]
     #[inline]
-    pub fn encrypt_block(&self, block: Block) -> Result<Block, error::Unspecified> {
+    pub fn encrypt_block(&self, block: Block) -> Result<Block, Unspecified> {
         match self {
-            SymmetricCipherKey::Aes128(.., ecb_ctx, _)
-            | SymmetricCipherKey::Aes256(.., ecb_ctx, _) => encrypt_block_aes_ecb(**ecb_ctx, block),
+            SymmetricCipherKey::Aes128(.., aes_key) | SymmetricCipherKey::Aes256(.., aes_key) => {
+                Ok(encrypt_block_aes_ecb(aes_key, block))
+            }
             SymmetricCipherKey::ChaCha20(..) => panic!("Unsupported algorithm!"),
         }
     }

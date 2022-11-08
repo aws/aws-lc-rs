@@ -25,7 +25,7 @@
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
 use crate::{derive_debug_via_id, error, hkdf};
-use aes_gcm::aes_gcm_seal_separate;
+use aes_gcm::aead_seal_separate;
 use std::fmt::Debug;
 
 use crate::error::Unspecified;
@@ -43,11 +43,6 @@ mod key_inner;
 mod nonce;
 mod poly1305;
 pub mod quic;
-
-#[cfg(feature = "threadlocal")]
-use thread_local::ThreadLocal;
-#[cfg(feature = "threadlocal")]
-use zeroize::Zeroize;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
@@ -230,7 +225,7 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
             .checked_sub(TAG_LEN)
             .ok_or(Unspecified)?;
         check_per_nonce_max_bytes(key.algorithm, ciphertext_len)?;
-        let key_inner_ref = key.get_inner_key()?;
+        let key_inner_ref = key.get_inner_key();
 
         aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?;
 
@@ -359,7 +354,7 @@ where
     InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
 {
     check_per_nonce_max_bytes(key.algorithm, in_out.as_mut().len())?;
-    let key_inner_ref = key.get_inner_key()?;
+    let key_inner_ref = key.get_inner_key();
     aead_seal_combined(key_inner_ref, nonce, aad, in_out)
 }
 
@@ -371,31 +366,8 @@ fn seal_in_place_separate_tag_(
     in_out: &mut [u8],
 ) -> Result<Tag, Unspecified> {
     check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
-    let key_inner_ref = key.get_inner_key()?;
-    match key_inner_ref {
-        KeyInner::AES_128_GCM(..) => aes_gcm_seal_separate(key_inner_ref, nonce, aad, in_out),
-        KeyInner::AES_256_GCM(..) => aes_gcm_seal_separate(key_inner_ref, nonce, aad, in_out),
-        #[cfg(feature = "alloc")]
-        KeyInner::CHACHA20_POLY1305(..) => {
-            let mut extendable_in_out = Vec::new();
-            extendable_in_out.extend_from_slice(in_out);
-            let plaintext_len = in_out.len();
-
-            aead_seal_combined(key_inner_ref, nonce, aad, &mut extendable_in_out)?;
-            let ciphertext = &extendable_in_out[..plaintext_len];
-            let tag = &extendable_in_out[plaintext_len..];
-
-            in_out.copy_from_slice(ciphertext);
-
-            let mut my_tag = Vec::new();
-            my_tag.extend_from_slice(tag);
-            Ok(Tag(my_tag.try_into().unwrap()))
-        }
-        #[cfg(not(feature = "alloc"))]
-        KeyInner::CHACHA20_POLY1305(..) => {
-            panic!("seal_in_place_separate_tag for CHACHA20_POLY1305 requires feature=alloc");
-        }
-    }
+    let key_inner_ref = key.get_inner_key();
+    aead_seal_separate(key_inner_ref, nonce, aad, in_out)
 }
 
 /// The additionally authenticated data (AAD) for an opening or sealing
@@ -430,32 +402,10 @@ impl Aad<[u8; 0]> {
     }
 }
 
-#[cfg(feature = "threadlocal")]
-const MAX_KEY_BYTE_LEN: usize = 32;
-
 /// An AEAD key without a designated role or nonce sequence.
-#[cfg(feature = "threadlocal")]
-pub struct UnboundKey {
-    // There are concerns about using ThreadLocal due to platform-specific behaviour. The best
-    // solution would be to restructure our structs so that they contain no mutable state.
-    inner: ThreadLocal<KeyInner>,
-    key_bytes: [u8; MAX_KEY_BYTE_LEN],
-    key_len: usize,
-    algorithm: &'static Algorithm,
-}
-
-/// An AEAD key without a designated role or nonce sequence.
-#[cfg(not(feature = "threadlocal"))]
 pub struct UnboundKey {
     inner: KeyInner,
     algorithm: &'static Algorithm,
-}
-
-#[cfg(feature = "threadlocal")]
-impl Drop for UnboundKey {
-    fn drop(&mut self) {
-        self.key_bytes.zeroize();
-    }
 }
 
 impl Debug for UnboundKey {
@@ -470,29 +420,6 @@ impl UnboundKey {
     /// Constructs an `UnboundKey`.
     /// # Errors
     /// `error::Unspecified` if `key_bytes.len() != algorithm.key_len()`.
-    #[cfg(feature = "threadlocal")]
-    pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
-        if key_bytes.len() > MAX_KEY_BYTE_LEN {
-            return Err(Unspecified);
-        }
-        let key_len = key_bytes.len();
-        let mut my_key_bytes = [0u8; MAX_KEY_BYTE_LEN];
-        my_key_bytes[0..key_len].copy_from_slice(key_bytes);
-        let key_bytes = my_key_bytes;
-        let unbound_key = Self {
-            inner: ThreadLocal::new(),
-            key_bytes,
-            key_len,
-            algorithm,
-        };
-        unbound_key.get_inner_key()?;
-        Ok(unbound_key)
-    }
-
-    /// Constructs an `UnboundKey`.
-    /// # Errors
-    /// `error::Unspecified` if `key_bytes.len() != algorithm.key_len()`.
-    #[cfg(not(feature = "threadlocal"))]
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         Ok(Self {
             inner: (algorithm.init)(key_bytes)?,
@@ -500,22 +427,14 @@ impl UnboundKey {
         })
     }
 
-    #[cfg(feature = "threadlocal")]
-    fn get_inner_key(&self) -> Result<&KeyInner, Unspecified> {
-        let inner_key = self
-            .inner
-            .get_or_try(|| (self.algorithm.init)(&self.key_bytes[0..self.key_len]))?;
-        Ok(inner_key)
-    }
-
-    /// No-op function if thread_local is turned off.
-    #[cfg(not(feature = "threadlocal"))]
-    fn get_inner_key(&self) -> Result<&KeyInner, Unspecified> {
-        Ok(&self.inner)
+    #[inline]
+    fn get_inner_key(&self) -> &KeyInner {
+        &self.inner
     }
 
     /// The key's AEAD algorithm.
     #[inline]
+    #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
     }
@@ -548,6 +467,7 @@ pub struct LessSafeKey {
 
 impl LessSafeKey {
     /// Constructs a `LessSafeKey` from an `UnboundKey`.
+    #[must_use]
     pub fn new(key: UnboundKey) -> Self {
         Self { key }
     }
@@ -657,6 +577,7 @@ impl LessSafeKey {
 
     /// The key's AEAD algorithm.
     #[inline]
+    #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.key.algorithm
     }
