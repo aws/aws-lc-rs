@@ -16,7 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aead::block::{Block, BLOCK_LEN};
-use aws_lc_sys::{AES_KEY, AES_ENCRYPT};
+use aws_lc_sys::{AES_ENCRYPT, AES_KEY};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 use zeroize::Zeroize;
