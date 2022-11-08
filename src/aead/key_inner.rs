@@ -19,6 +19,9 @@ pub(crate) enum KeyInner {
     CHACHA20_POLY1305(SymmetricCipherKey, aws_lc_sys::EVP_AEAD_CTX),
 }
 
+unsafe impl Send for KeyInner {}
+unsafe impl Sync for KeyInner {}
+
 impl KeyInner {
     pub(crate) fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
         unsafe {
@@ -84,8 +87,6 @@ impl KeyInner {
         }
     }
 }
-
-unsafe impl Send for KeyInner {}
 
 impl Drop for KeyInner {
     fn drop(&mut self) {
