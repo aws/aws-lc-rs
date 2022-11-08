@@ -242,7 +242,7 @@ fn test_signature_rsa_primitive_verification() {
             );
             Ok(())
         },
-    )
+    );
 }
 
 #[test]
@@ -258,6 +258,7 @@ fn rsa_test_public_key_coverage() {
     assert_eq!(pubkey.as_ref(), PUBLIC_KEY);
 
     // Test `Clone`.
+    #[allow(clippy::let_underscore_drop)]
     let _ = pubkey.clone();
 
     #[cfg(feature = "ring-io")]

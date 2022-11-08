@@ -124,14 +124,14 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
             b.iter(|| {
                 let aws_key = aws_lc_ring_benchmarks::create_hmac_key(config);
                 aws_lc_ring_benchmarks::run_hmac_one_shot(&aws_key, &chunk);
-            })
+            });
         });
 
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 let ring_key = ring_benchmarks::create_hmac_key(config);
                 ring_benchmarks::run_hmac_one_shot(&ring_key, &chunk);
-            })
+            });
         });
     }
 }
@@ -152,14 +152,14 @@ fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
             b.iter(|| {
                 let aws_key = aws_lc_ring_benchmarks::create_longer_hmac_key(config);
                 aws_lc_ring_benchmarks::run_hmac_one_shot(&aws_key, &chunk);
-            })
+            });
         });
 
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 let ring_key = ring_benchmarks::create_longer_hmac_key(config);
                 ring_benchmarks::run_hmac_one_shot(&ring_key, &chunk);
-            })
+            });
         });
     }
 }
@@ -179,14 +179,14 @@ fn bench_hmac_incremental(c: &mut Criterion, config: &HMACConfig) {
             b.iter(|| {
                 let aws_key = aws_lc_ring_benchmarks::create_hmac_key(config);
                 aws_lc_ring_benchmarks::run_hmac_incremental(&aws_key, &chunk);
-            })
+            });
         });
 
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 let ring_key = ring_benchmarks::create_hmac_key(config);
                 ring_benchmarks::run_hmac_incremental(&ring_key, &chunk);
-            })
+            });
         });
     }
 }

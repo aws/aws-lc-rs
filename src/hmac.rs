@@ -431,10 +431,10 @@ mod tests {
     // completely wacky.
     #[test]
     pub fn hmac_signing_key_coverage() {
-        let rng = rand::SystemRandom::new();
-
         const HELLO_WORLD_GOOD: &[u8] = b"hello, world";
         const HELLO_WORLD_BAD: &[u8] = b"hello, worle";
+
+        let rng = rand::SystemRandom::new();
 
         for algorithm in &[
             hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
@@ -446,7 +446,7 @@ mod tests {
             let tag = hmac::sign(&key, HELLO_WORLD_GOOD);
             println!("{:?}", key);
             assert!(hmac::verify(&key, HELLO_WORLD_GOOD, tag.as_ref()).is_ok());
-            assert!(hmac::verify(&key, HELLO_WORLD_BAD, tag.as_ref()).is_err())
+            assert!(hmac::verify(&key, HELLO_WORLD_BAD, tag.as_ref()).is_err());
         }
     }
 

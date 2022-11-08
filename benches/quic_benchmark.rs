@@ -81,14 +81,14 @@ fn test_new_mask(c: &mut Criterion, config: &QuicConfig) {
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             aws_lc_ring_benchmarks::new_mask(&aws_key, sample);
-        })
+        });
     });
 
     let ring_key = ring_benchmarks::header_protection_key(config);
     group.bench_function("Ring", |b| {
         b.iter(|| {
             ring_benchmarks::new_mask(&ring_key, sample);
-        })
+        });
     });
 }
 

@@ -205,7 +205,7 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
             let aws_aad = aws_lc_ring_benchmarks::aad(config);
             let _tag =
                 aws_lc_ring_benchmarks::seal_separate(&mut aws_sealing_key, aws_aad, &mut in_out);
-        })
+        });
     });
 
     let mut ring_sealing_key = ring_benchmarks::create_sealing_key(config);
@@ -213,7 +213,7 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
         b.iter(|| {
             let ring_aad = ring_benchmarks::aad(config);
             let _tag = ring_benchmarks::seal_separate(&mut ring_sealing_key, ring_aad, &mut in_out);
-        })
+        });
     });
 }
 
@@ -234,7 +234,7 @@ fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
             let mut aws_in_out = in_out.clone();
             let aws_aad = aws_lc_ring_benchmarks::aad(config);
             aws_lc_ring_benchmarks::seal_append(&mut aws_sealing_key, aws_aad, &mut aws_in_out);
-        })
+        });
     });
 
     let mut ring_sealing_key = ring_benchmarks::create_sealing_key(config);
@@ -243,7 +243,7 @@ fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
             let mut ring_in_out = in_out.clone();
             let ring_aad = ring_benchmarks::aad(config);
             ring_benchmarks::seal_append(&mut ring_sealing_key, ring_aad, &mut ring_in_out);
-        })
+        });
     });
 }
 
@@ -268,7 +268,7 @@ fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
             let mut aws_in_out = in_out.clone();
             let aws_aad = aws_lc_ring_benchmarks::aad(config);
             aws_lc_ring_benchmarks::open(&mut aws_opening_key, aws_aad, &mut aws_in_out);
-        })
+        });
     });
 
     let mut ring_opening_key = ring_benchmarks::create_opening_key(config);
@@ -277,7 +277,7 @@ fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
             let mut ring_in_out = in_out.clone();
             let ring_aad = ring_benchmarks::aad(config);
             ring_benchmarks::open(&mut ring_opening_key, ring_aad, &mut ring_in_out);
-        })
+        });
     });
 }
 

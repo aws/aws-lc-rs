@@ -67,6 +67,7 @@ fn aead_chacha20_poly1305() {
     );
 }
 
+#[allow(clippy::too_many_lines)]
 fn test_aead<Seal, Open>(
     aead_alg: &'static aead::Algorithm,
     seal: Seal,
@@ -89,6 +90,55 @@ fn test_aead<Seal, Open>(
         RangeFrom<usize>,
     ) -> Result<&'a mut [u8], error::Unspecified>,
 {
+    // TLS record headers are 5 bytes long.
+    // TLS explicit nonces for AES-GCM are 8 bytes long.
+    static MINIMAL_IN_PREFIX_LENS: [usize; 36] = [
+        // No input prefix to overwrite; i.e. the opening is exactly
+        // "in place."
+        0,
+        1,
+        2,
+        // Proposed TLS 1.3 header (no explicit nonce).
+        5,
+        8,
+        // Probably the most common use of a non-zero `in_prefix_len`
+        // would be to write a decrypted TLS record over the top of the
+        // TLS header and nonce.
+        5 /* record header */ + 8, /* explicit nonce */
+        // The stitched AES-GCM x86-64 code works on 6-block (96 byte)
+        // units. Some of the ChaCha20 code is even weirder.
+        15,  // The maximum partial AES block.
+        16,  // One AES block.
+        17,  // One byte more than a full AES block.
+        31,  // 2 AES blocks or 1 ChaCha20 block, minus 1.
+        32,  // Two AES blocks, one ChaCha20 block.
+        33,  // 2 AES blocks or 1 ChaCha20 block, plus 1.
+        47,  // Three AES blocks - 1.
+        48,  // Three AES blocks.
+        49,  // Three AES blocks + 1.
+        63,  // Four AES blocks or two ChaCha20 blocks, minus 1.
+        64,  // Four AES blocks or two ChaCha20 blocks.
+        65,  // Four AES blocks or two ChaCha20 blocks, plus 1.
+        79,  // Five AES blocks, minus 1.
+        80,  // Five AES blocks.
+        81,  // Five AES blocks, plus 1.
+        95,  // Six AES blocks or three ChaCha20 blocks, minus 1.
+        96,  // Six AES blocks or three ChaCha20 blocks.
+        97,  // Six AES blocks or three ChaCha20 blocks, plus 1.
+        111, // Seven AES blocks, minus 1.
+        112, // Seven AES blocks.
+        113, // Seven AES blocks, plus 1.
+        127, // Eight AES blocks or four ChaCha20 blocks, minus 1.
+        128, // Eight AES blocks or four ChaCha20 blocks.
+        129, // Eight AES blocks or four ChaCha20 blocks, plus 1.
+        143, // Nine AES blocks, minus 1.
+        144, // Nine AES blocks.
+        145, // Nine AES blocks, plus 1.
+        255, // 16 AES blocks or 8 ChaCha20 blocks, minus 1.
+        256, // 16 AES blocks or 8 ChaCha20 blocks.
+        257, // 16 AES blocks or 8 ChaCha20 blocks, plus 1.
+    ];
+
     test_aead_key_sizes(aead_alg);
 
     test::run(test_file, |section, test_case| {
@@ -128,55 +178,6 @@ fn test_aead<Seal, Open>(
         // In release builds, test all prefix lengths from 0 to 4096 bytes.
         // Debug builds are too slow for this, so for those builds, only
         // test a smaller subset.
-
-        // TLS record headers are 5 bytes long.
-        // TLS explicit nonces for AES-GCM are 8 bytes long.
-        static MINIMAL_IN_PREFIX_LENS: [usize; 36] = [
-            // No input prefix to overwrite; i.e. the opening is exactly
-            // "in place."
-            0,
-            1,
-            2,
-            // Proposed TLS 1.3 header (no explicit nonce).
-            5,
-            8,
-            // Probably the most common use of a non-zero `in_prefix_len`
-            // would be to write a decrypted TLS record over the top of the
-            // TLS header and nonce.
-            5 /* record header */ + 8, /* explicit nonce */
-            // The stitched AES-GCM x86-64 code works on 6-block (96 byte)
-            // units. Some of the ChaCha20 code is even weirder.
-            15,  // The maximum partial AES block.
-            16,  // One AES block.
-            17,  // One byte more than a full AES block.
-            31,  // 2 AES blocks or 1 ChaCha20 block, minus 1.
-            32,  // Two AES blocks, one ChaCha20 block.
-            33,  // 2 AES blocks or 1 ChaCha20 block, plus 1.
-            47,  // Three AES blocks - 1.
-            48,  // Three AES blocks.
-            49,  // Three AES blocks + 1.
-            63,  // Four AES blocks or two ChaCha20 blocks, minus 1.
-            64,  // Four AES blocks or two ChaCha20 blocks.
-            65,  // Four AES blocks or two ChaCha20 blocks, plus 1.
-            79,  // Five AES blocks, minus 1.
-            80,  // Five AES blocks.
-            81,  // Five AES blocks, plus 1.
-            95,  // Six AES blocks or three ChaCha20 blocks, minus 1.
-            96,  // Six AES blocks or three ChaCha20 blocks.
-            97,  // Six AES blocks or three ChaCha20 blocks, plus 1.
-            111, // Seven AES blocks, minus 1.
-            112, // Seven AES blocks.
-            113, // Seven AES blocks, plus 1.
-            127, // Eight AES blocks or four ChaCha20 blocks, minus 1.
-            128, // Eight AES blocks or four ChaCha20 blocks.
-            129, // Eight AES blocks or four ChaCha20 blocks, plus 1.
-            143, // Nine AES blocks, minus 1.
-            144, // Nine AES blocks.
-            145, // Nine AES blocks, plus 1.
-            255, // 16 AES blocks or 8 ChaCha20 blocks, minus 1.
-            256, // 16 AES blocks or 8 ChaCha20 blocks.
-            257, // 16 AES blocks or 8 ChaCha20 blocks, plus 1.
-        ];
 
         let mut more_comprehensive_in_prefix_lengths = [0; 4096];
         let in_prefix_lengths = if cfg!(debug_assertions) {
@@ -315,7 +316,7 @@ fn test_aead_nonce_sizes() {
     assert!(aead::Nonce::try_assume_unique_for_key(&nonce[..16]).is_err()); // 128 bits.
 }
 
-#[allow(clippy::range_plus_one)]
+#[allow(clippy::range_plus_one, clippy::cast_possible_truncation)]
 #[test]
 fn aead_chacha20_poly1305_openssh() {
     // TODO: test_aead_key_sizes(...);
@@ -473,6 +474,12 @@ fn rustls_bug() {
         20, 0, 0, 12, 92, 94, 146, 70, 164, 130, 7, 112, 227, 239, 243, 228,
     ];
 
+    fn append(v: &mut Vec<u8>, extra: &[u8], data: &[u8], tag: &[u8]) {
+        v.extend_from_slice(extra);
+        v.extend_from_slice(data);
+        v.extend_from_slice(tag);
+    }
+
     let uk = aead::UnboundKey::new(&aead::AES_256_GCM, KEY).unwrap();
     let ring_uk = ring::aead::UnboundKey::new(&ring::aead::AES_256_GCM, KEY).unwrap();
 
@@ -501,12 +508,6 @@ fn rustls_bug() {
 
     assert_eq!(ring_tag.as_ref(), tag.as_ref());
     assert_eq!(ring_enc_data.as_slice(), enc_data.as_slice());
-
-    fn append(v: &mut Vec<u8>, extra: &[u8], data: &[u8], tag: &[u8]) {
-        v.extend_from_slice(extra);
-        v.extend_from_slice(data);
-        v.extend_from_slice(tag);
-    }
 
     let prefix_bytes: &[u8] = &NONCE[4..];
 

@@ -324,7 +324,7 @@ where
 {
     let lines = &mut test_file.contents.lines();
 
-    let mut current_section = String::from("");
+    let mut current_section = String::new();
     let mut failed = false;
 
     while let Some(mut test_case) = parse_test_case(&mut current_section, lines) {
@@ -570,7 +570,7 @@ mod tests {
         let fbr = FixedByteRandom { byte: 42 };
         let mut bs = [0u8; 42];
         fbr.fill_impl(&mut bs).expect("filled");
-        assert_eq!([42u8; 42], bs)
+        assert_eq!([42u8; 42], bs);
     }
 
     #[test]
@@ -626,7 +626,7 @@ mod tests {
     #[test]
     fn one_ok() {
         test::run(test_file!("test/test_1_tests.txt"), |_, test_case| {
-            let _ = test_case.consume_string("Key");
+            test_case.consume_string("Key");
             Ok(())
         });
     }
@@ -635,7 +635,7 @@ mod tests {
     #[should_panic(expected = "Test failed.")]
     fn one_err() {
         test::run(test_file!("test/test_1_tests.txt"), |_, test_case| {
-            let _ = test_case.consume_string("Key");
+            test_case.consume_string("Key");
             Err(error::Unspecified)
         });
     }
@@ -644,7 +644,7 @@ mod tests {
     #[should_panic(expected = "Oh noes!")]
     fn one_panics() {
         test::run(test_file!("test/test_1_tests.txt"), |_, test_case| {
-            let _ = test_case.consume_string("Key");
+            test_case.consume_string("Key");
             panic!("Oh noes!");
         });
     }
@@ -652,29 +652,29 @@ mod tests {
     #[test]
     #[should_panic(expected = "Test failed.")]
     fn first_err() {
-        err_one(0)
+        err_one(0);
     }
 
     #[test]
     #[should_panic(expected = "Test failed.")]
     fn middle_err() {
-        err_one(1)
+        err_one(1);
     }
 
     #[test]
     #[should_panic(expected = "Test failed.")]
     fn last_err() {
-        err_one(2)
+        err_one(2);
     }
 
     fn err_one(test_to_fail: usize) {
         let mut n = 0;
         test::run(test_file!("test/test_3_tests.txt"), |_, test_case| {
-            let _ = test_case.consume_string("Key");
-            let result = if n != test_to_fail {
-                Ok(())
-            } else {
+            test_case.consume_string("Key");
+            let result = if n == test_to_fail {
                 Err(error::Unspecified)
+            } else {
+                Ok(())
             };
             n += 1;
             result
@@ -684,25 +684,25 @@ mod tests {
     #[test]
     #[should_panic(expected = "Oh Noes!")]
     fn first_panic() {
-        panic_one(0)
+        panic_one(0);
     }
 
     #[test]
     #[should_panic(expected = "Oh Noes!")]
     fn middle_panic() {
-        panic_one(1)
+        panic_one(1);
     }
 
     #[test]
     #[should_panic(expected = "Oh Noes!")]
     fn last_panic() {
-        panic_one(2)
+        panic_one(2);
     }
 
     fn panic_one(test_to_fail: usize) {
         let mut n = 0;
         test::run(test_file!("test/test_3_tests.txt"), |_, test_case| {
-            let _ = test_case.consume_string("Key");
+            test_case.consume_string("Key");
             assert!(n != test_to_fail, "Oh Noes!");
             n += 1;
             Ok(())

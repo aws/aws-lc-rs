@@ -122,14 +122,14 @@ fn hmac_thread_safeness() {
         static ref MSG: Vec<u8> = vec![1u8; 256];
     }
 
-    let signature = sign(&*SECRET_KEY, &*MSG);
+    let signature = sign(&SECRET_KEY, &MSG);
 
     let mut join_handles = Vec::new();
     for _ in 1..100 {
         let join_handle = thread::spawn(|| {
-            let signature = sign(&*SECRET_KEY, &*MSG);
+            let signature = sign(&SECRET_KEY, &MSG);
             for _ in 1..100 {
-                let my_signature = sign(&*SECRET_KEY, &*MSG);
+                let my_signature = sign(&SECRET_KEY, &MSG);
                 assert_eq!(signature.as_ref(), my_signature.as_ref());
             }
             signature

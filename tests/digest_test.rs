@@ -118,6 +118,7 @@ mod digest_shavs {
         };
     }
 
+    #[allow(clippy::cast_sign_loss)]
     fn run_monte_carlo_test(digest_alg: &'static digest::Algorithm, test_file: test::File) {
         let section_name = &format!("L = {}", digest_alg.output_len);
 
@@ -150,6 +151,7 @@ mod digest_shavs {
                 ctx.update(&mds[1]);
                 ctx.update(&mds[2]);
                 let md_i = ctx.finish();
+                #[allow(clippy::let_underscore_drop)]
                 let _ = mds.remove(0);
                 mds.push(Vec::from(md_i.as_ref()));
             }
@@ -214,7 +216,7 @@ test_i_u_f!(digest_test_i_u_f_sha256, digest::SHA256);
 test_i_u_f!(digest_test_i_u_f_sha384, digest::SHA384);
 test_i_u_f!(digest_test_i_u_f_sha512, digest::SHA512);
 
-/// See https://bugzilla.mozilla.org/show_bug.cgi?id=610162. This tests the
+/// See <https://bugzilla.mozilla.org/show_bug.cgi?id=610162/>. This tests the
 /// calculation of 8GB of the byte 123.
 ///
 /// You can verify the expected values in many ways. One way is

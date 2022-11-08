@@ -25,7 +25,7 @@ pub(crate) const ED25519_PRIVATE_KEY_PREFIX_LEN: usize = 32;
 const ED25519_SIGNATURE_LEN: usize = aws_lc_sys::ED25519_SIGNATURE_LEN as usize;
 const ED25519_SEED_LEN: usize = 32;
 
-/// Parameters for EdDSA signing and verification.
+/// Parameters for `EdDSA` signing and verification.
 #[derive(Debug)]
 pub struct EdDSAParameters;
 
@@ -84,10 +84,7 @@ impl AsRef<[u8]> for Ed25519PublicKey {
 
 impl Debug for Ed25519PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!(
-            "PublicKey(\"{}\")",
-            test::to_hex(&self.public_key)
-        ))
+        f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.public_key)))
     }
 }
 

@@ -35,7 +35,7 @@ fn hkdf_tests() {
         let secret = test_case.consume_bytes("IKM");
         let salt = test_case.consume_bytes("salt");
         let info = test_case.consume_bytes("info");
-        let _ = test_case.consume_bytes("PRK");
+        test_case.consume_bytes("PRK");
         let expected_out = test_case.consume_bytes("OKM");
 
         let salt = hkdf::Salt::new(alg, &salt);

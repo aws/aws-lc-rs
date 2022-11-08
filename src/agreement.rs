@@ -371,7 +371,7 @@ impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
 }
 
 impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
-    /// Constructs a new UnparsedPublicKey.
+    /// Constructs a new `UnparsedPublicKey`.
     pub fn new(algorithm: &'static Algorithm, bytes: B) -> Self {
         UnparsedPublicKey {
             alg: algorithm,

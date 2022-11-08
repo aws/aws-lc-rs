@@ -90,11 +90,11 @@ fn bench_pbkdf2_sha512(c: &mut Criterion) {
 // The recommended number of iterations can go to the hundred thousands, but we only need a
 // suitable number of iterations to capture our speed performance. The time to run pbkdf2 grows
 // proportionally, according to the number of iterations.
-const G_ITERATIONS: [usize; 4] = [6250, 12500, 25000, 50000];
+const G_ITERATIONS: [u32; 4] = [6250, 12500, 25000, 50000];
 
 fn bench_pbkdf2(c: &mut Criterion, config: &PBKDF2Config) {
     for &iterations in &G_ITERATIONS {
-        let iter = NonZeroU32::new(iterations as u32).unwrap();
+        let iter = NonZeroU32::new(iterations).unwrap();
         let bench_group_name = format!("PBKDF2-{:?}-{}-iterations", config.algorithm, iter);
         let mut group = c.benchmark_group(bench_group_name);
 
@@ -102,14 +102,14 @@ fn bench_pbkdf2(c: &mut Criterion, config: &PBKDF2Config) {
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
                 aws_lc_ring_benchmarks::run_pbkdf2_derive(config, iter, &mut aws_out);
-            })
+            });
         });
 
         let mut ring_out = vec![0u8; 64];
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 ring_benchmarks::run_pbkdf2_derive(config, iter, &mut ring_out);
-            })
+            });
         });
     }
 }

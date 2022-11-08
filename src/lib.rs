@@ -8,7 +8,7 @@
 //! #### - alloc (default) ####
 //! Allows implementation to allocate values of arbitrary size.
 //! Currently, this is required for `SealingKey::seal_in_place_separate_tag` with`CHACHA_POLY1305`
-//! and for the <code>io::writer</code> module.
+//! and for the `io::writer` module.
 //!
 //! #### - threadlocal (default) ####
 //! Allows implementation to use `thread_local`, which is needed for certain structs to
@@ -28,8 +28,8 @@
 //! behavior is observably different.
 //!
 //! * Our implementation requires the `std` library. We currently do not support a
-//! [#!\[no_std\]](https://docs.rust-embedded.org/book/intro/no-std.html) build.
-//! * We only support the platforms supported by `aws-lc-sys`.  Currently this is includes MacOS and
+//! [`#!\[no_std\]`](https://docs.rust-embedded.org/book/intro/no-std.html) build.
+//! * We only support the platforms supported by `aws-lc-sys`.  Currently this is includes Mac and
 //! Linux, both x86-64 and ARM64.
 //! * `SealingKey::seal_in_place_separate_tag` with `CHACHA_POLY1305` requires allocating a separate
 //! buffer that can contain both the ciphertext and tag. When the `alloc` feature is disabled, this

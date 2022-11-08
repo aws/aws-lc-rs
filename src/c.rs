@@ -31,6 +31,7 @@ pub(crate) type uint = u32;
 pub(crate) type size_t = usize;
 
 #[cfg(all(test, any(unix, windows)))]
+#[allow(clippy::no_effect_underscore_binding)]
 mod tests {
     // Keep in sync with the checks in base.h that verify these assumptions.
 
