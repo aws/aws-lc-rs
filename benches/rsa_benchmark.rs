@@ -168,7 +168,7 @@ fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
                 aws_encoding,
                 aws_sig,
             );
-        })
+        });
     });
 
     let ring_rng = ring_benchmarks::get_rng();
@@ -185,7 +185,7 @@ fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
                 ring_encoding,
                 ring_sig,
             );
-        })
+        });
     });
 }
 
@@ -208,7 +208,7 @@ fn test_rsa_verify(c: &mut Criterion, config: &RsaConfig) {
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
                 aws_lc_ring_benchmarks::verify(aws_params, aws_pub_key, &config.msg, aws_sig);
-            })
+            });
         });
     }
 
@@ -222,7 +222,7 @@ fn test_rsa_verify(c: &mut Criterion, config: &RsaConfig) {
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 ring_benchmarks::verify(ring_params, ring_pub_key, &config.msg, ring_sig);
-            })
+            });
         });
     }
 }

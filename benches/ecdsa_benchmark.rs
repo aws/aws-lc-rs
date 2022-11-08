@@ -209,7 +209,7 @@ fn test_ecdsa_sign(c: &mut Criterion, config: &EcdsaConfig) {
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             aws_lc_ring_benchmarks::sign(&aws_key_pair, &aws_rng, &config.msg);
-        })
+        });
     });
 
     let ring_rng = ring_benchmarks::get_rng();
@@ -218,7 +218,7 @@ fn test_ecdsa_sign(c: &mut Criterion, config: &EcdsaConfig) {
     group.bench_function("Ring", |b| {
         b.iter(|| {
             ring_benchmarks::sign(&ring_key_pair, &ring_rng, &config.msg);
-        })
+        });
     });
 }
 
@@ -241,7 +241,7 @@ fn test_ecdsa_verify(c: &mut Criterion, config: &EcdsaConfig) {
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             aws_lc_ring_benchmarks::verify(aws_verification_alg, pub_key, &config.msg, sig);
-        })
+        });
     });
 
     let ring_verification_alg =
@@ -250,7 +250,7 @@ fn test_ecdsa_verify(c: &mut Criterion, config: &EcdsaConfig) {
     group.bench_function("Ring", |b| {
         b.iter(|| {
             ring_benchmarks::verify(ring_verification_alg, pub_key, &config.msg, sig);
-        })
+        });
     });
 }
 fn test_ecdsa(c: &mut Criterion) {

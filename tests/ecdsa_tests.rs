@@ -137,7 +137,7 @@ fn ecdsa_generate_pkcs8_test() {
         println!();
         println!();
 
-        let _ = signature::EcdsaKeyPair::from_pkcs8(alg, pkcs8.as_ref()).unwrap();
+        signature::EcdsaKeyPair::from_pkcs8(alg, pkcs8.as_ref()).unwrap();
     }
 }
 
@@ -224,10 +224,11 @@ fn ecdsa_test_public_key_coverage() {
     assert_eq!(key_pair.public_key().as_ref(), PUBLIC_KEY);
 
     // Test `Clone`.
-    #[allow(clippy::clone_on_copy, clippy::redundant_clone)]
-    let _: <signature::EcdsaKeyPair as KeyPair>::PublicKey = key_pair.public_key().clone();
+    #[allow(clippy::let_underscore_drop)]
+    let _ = key_pair.public_key().clone();
 
     // Test `Copy`.
+    #[allow(clippy::let_underscore_drop)]
     let _: <signature::EcdsaKeyPair as KeyPair>::PublicKey = *key_pair.public_key();
 
     // Test `Debug`.

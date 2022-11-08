@@ -47,7 +47,7 @@ macro_rules! benchmark_hkdf {
                 })
             }
 
-            /// HKDF_extract is essentially just HMAC under the hood.
+            /// `HKDF_extract` is essentially just HMAC under the hood.
             pub fn run_hkdf_extract(config: &HKDFConfig) -> hkdf::Prk {
                 let salt = hkdf::Salt::new(algorithm(&config), &[]);
                 salt.extract(&[])
@@ -120,14 +120,14 @@ fn bench_hkdf(c: &mut Criterion, config: &HKDFConfig) {
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
                 aws_lc_ring_benchmarks::run_hkdf_expand(&aws_prk, info_chunk);
-            })
+            });
         });
 
         let ring_prk = ring_benchmarks::run_hkdf_extract(config);
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 ring_benchmarks::run_hkdf_expand(&ring_prk, info_chunk);
-            })
+            });
         });
     }
 }

@@ -39,7 +39,7 @@ fn test_rsa_pkcs8() {
     );
 
     let key = RsaKeyPair::from_pkcs8(&rsa_pkcs8_input);
-    assert!(key.is_ok())
+    assert!(key.is_ok());
 }
 
 #[test]
@@ -74,7 +74,7 @@ fn test_rsa_from_der() {
     );
 
     let key = RsaKeyPair::from_der(&rsa_key_input);
-    assert!(key.is_ok())
+    assert!(key.is_ok());
 }
 
 #[test]

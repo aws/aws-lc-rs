@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0 OR ISC
+// SPDX-License-Identifier: ISC
 
 #[cfg(test)]
 use super::{
@@ -30,8 +30,8 @@ pub(crate) fn write_positive_integer(output: &mut dyn Accumulator, value: &Posit
         if (first_byte & 0x80) != 0 {
             output.write_byte(0); // Disambiguate negative number.
         }
-        write_copy(output, value)
-    })
+        write_copy(output, value);
+    });
 }
 
 #[cfg(test)]
@@ -42,13 +42,14 @@ pub(crate) fn write_all(tag: Tag, write_value: &dyn Fn(&mut dyn Accumulator)) ->
         length
     };
 
-    let mut output = Writer::with_capacity(length);
+    let mut output = Writer::with_capacity(&length);
     write_tlv(&mut output, tag, write_value);
 
     output.into()
 }
 
 #[cfg(test)]
+#[allow(clippy::cast_possible_truncation)]
 fn write_tlv<F>(output: &mut dyn Accumulator, tag: Tag, write_value: F)
 where
     F: Fn(&mut dyn Accumulator),
@@ -97,6 +98,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::cast_possible_truncation)]
     fn test_write_all() {
         let mut data: [u8; TEST_DATA_SIZE] = generate(&SystemRandom::new()).unwrap().expose();
         data[0] |= 0x80; //negative

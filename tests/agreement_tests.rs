@@ -143,15 +143,13 @@ fn agreement_agree_ephemeral() {
                 }
 
                 Some(_) => {
-                    // In the no-heap mode, some algorithms aren't supported so
-                    // we have to skip those algorithms' test cases.
-                    let dummy_private_key = agreement::EphemeralPrivateKey::generate(alg, &rng)?;
                     fn kdf_not_called(_: &[u8]) -> Result<(), ()> {
                         panic!(
                             "The KDF was called during ECDH when the peer's \
                          public key is invalid."
                         );
                     }
+                    let dummy_private_key = agreement::EphemeralPrivateKey::generate(alg, &rng)?;
                     assert!(agreement::agree_ephemeral(
                         dummy_private_key,
                         &peer_public,
@@ -169,8 +167,6 @@ fn agreement_agree_ephemeral() {
 
 #[test]
 fn test_agreement_ecdh_x25519_rfc_iterated() {
-    let mut k = h("0900000000000000000000000000000000000000000000000000000000000000");
-    let mut u = k.clone();
 
     fn expect_iterated_x25519(
         expected_result: &str,
@@ -185,6 +181,9 @@ fn test_agreement_ecdh_x25519_rfc_iterated() {
         }
         assert_eq!(&h(expected_result), k);
     }
+
+    let mut k = h("0900000000000000000000000000000000000000000000000000000000000000");
+    let mut u = k.clone();
 
     expect_iterated_x25519(
         "422c8e7a6227d7bca1350b3e2bb7279f7897b87bb6854b783c60e80311ae3079",

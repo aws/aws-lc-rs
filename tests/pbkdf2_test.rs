@@ -37,8 +37,9 @@ fn pbkdf2_tests() {
                 unreachable!()
             }
         };
-        let iterations = test_case.consume_usize("c");
-        let iterations = NonZeroU32::new(iterations as u32).unwrap();
+        #[allow(clippy::cast_possible_truncation)]
+        let iterations = test_case.consume_usize("c") as u32;
+        let iterations = NonZeroU32::new(iterations).unwrap();
         let secret = test_case.consume_bytes("P");
         let salt = test_case.consume_bytes("S");
         let dk = test_case.consume_bytes("DK");

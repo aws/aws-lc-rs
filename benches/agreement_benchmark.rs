@@ -98,7 +98,7 @@ fn test_agree_ephemeral(c: &mut Criterion, config: &AgreementConfig) {
         b.iter(|| {
             let private_key = aws_lc_ring_benchmarks::private_key(config);
             aws_lc_ring_benchmarks::agreement(private_key, &aws_peer_public_key);
-        })
+        });
     });
 
     let ring_peer_public_key = ring_benchmarks::peer_public_key(config);
@@ -106,7 +106,7 @@ fn test_agree_ephemeral(c: &mut Criterion, config: &AgreementConfig) {
         b.iter(|| {
             let private_key = ring_benchmarks::private_key(config);
             ring_benchmarks::agreement(private_key, &ring_peer_public_key);
-        })
+        });
     });
 }
 

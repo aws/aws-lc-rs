@@ -167,7 +167,8 @@ mod tests {
                 let key: &[u8; KEY_LEN] = key.as_slice().try_into()?;
                 let key = ChaCha20Key::from(*key);
 
-                let ctr = test_case.consume_usize("Ctr");
+                #[allow(clippy::cast_possible_truncation)]
+                let ctr = test_case.consume_usize("Ctr") as u32;
                 let nonce: [u8; NONCE_LEN] = test_case.consume_bytes("Nonce").try_into().unwrap();
                 let input = test_case.consume_bytes("Input");
                 let output = test_case.consume_bytes("Output");
@@ -179,7 +180,7 @@ mod tests {
                     chacha20_test_case_inner(
                         &key,
                         nonce,
-                        ctr as u32,
+                        ctr,
                         &input[..len],
                         &output[..len],
                         &mut buf,

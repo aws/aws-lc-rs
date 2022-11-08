@@ -174,7 +174,7 @@ fn test_ed25519_from_pkcs8() {
                         expected,
                         "Input: {}",
                         test::to_hex(&input)
-                    )
+                    );
                 }
             };
 

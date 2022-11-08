@@ -58,7 +58,7 @@ pub(super) struct Writer {
 
 impl Writer {
     #[cfg(test)]
-    pub(super) fn with_capacity(capacity: LengthMeasurement) -> Self {
+    pub(super) fn with_capacity(capacity: &LengthMeasurement) -> Self {
         Self {
             bytes: Vec::with_capacity(capacity.len),
             requested_capacity: capacity.len,
@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_writer() {
-        let mut writer = Writer::with_capacity(LengthMeasurement {
+        let mut writer = Writer::with_capacity(&LengthMeasurement {
             len: TEST_DATA_SIZE,
         });
 

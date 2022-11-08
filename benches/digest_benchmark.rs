@@ -112,13 +112,13 @@ fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
                 aws_lc_ring_benchmarks::run_digest_one_shot(config, &chunk);
-            })
+            });
         });
 
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 ring_benchmarks::run_digest_one_shot(config, &chunk);
-            })
+            });
         });
     }
 }
@@ -146,13 +146,13 @@ fn bench_digest_incremental(c: &mut Criterion, config: &DigestConfig) {
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
                 aws_lc_ring_benchmarks::run_digest_incremental(config, &chunk);
-            })
+            });
         });
 
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 ring_benchmarks::run_digest_incremental(config, &chunk);
-            })
+            });
         });
     }
 }
