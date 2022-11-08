@@ -324,7 +324,7 @@ where
 {
     let lines = &mut test_file.contents.lines();
 
-    let mut current_section = String::from("");
+    let mut current_section = String::new();
     let mut failed = false;
 
     while let Some(mut test_case) = parse_test_case(&mut current_section, lines) {
