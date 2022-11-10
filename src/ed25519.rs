@@ -127,19 +127,17 @@ impl Ed25519KeyPair {
             let evp_pkey = generate_key(rng)?;
 
             let mut cbb = cbb::build_CBB(PKCS8_DOCUMENT_MAX_LEN);
-            if 1 != aws_lc_sys::EVP_marshal_private_key(&mut cbb, *evp_pkey) {
-                aws_lc_sys::CBB_cleanup(&mut cbb);
+            if 1 != aws_lc_sys::EVP_marshal_private_key(cbb.as_mut_ptr(), *evp_pkey) {
                 return Err(Unspecified);
             }
 
             let mut pkcs8_bytes_ptr = MaybeUninit::<*mut u8>::uninit();
             let mut out_len = MaybeUninit::<usize>::uninit();
             if 1 != aws_lc_sys::CBB_finish(
-                &mut cbb,
+                cbb.as_mut_ptr(),
                 pkcs8_bytes_ptr.as_mut_ptr(),
                 out_len.as_mut_ptr(),
             ) {
-                aws_lc_sys::CBB_cleanup(&mut cbb);
                 return Err(Unspecified);
             }
             let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr.assume_init())?;
@@ -202,12 +200,15 @@ impl Ed25519KeyPair {
     /// CURRENTLY NOT SUPPORTED. Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v2
     /// Ed25519 private key.
     ///
-    /// `openssl genpkey -algorithm ED25519` generates PKCS# v1 keys, which
+    /// `openssl genpkey -algorithm ED25519` generates PKCS#8 v1 keys, which
     /// can be parsed with `Ed25519KeyPair::from_pkcs8_maybe_unchecked()`.
     ///
     /// # Errors
     /// `error::KeyRejected("InvalidEncoding")` for all inputs.
     /// PKCS#8 v2 is currently not supported by AWS-LC.
+    #[deprecated(
+        note = "PKCS#8 v2 keys are not supported by AWS-LC. Support may be added in future versions."
+    )]
     pub fn from_pkcs8(_pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         Err(KeyRejected::invalid_encoding())
     }
@@ -316,10 +317,13 @@ mod tests {
     use crate::test;
 
     #[test]
+    #[allow(deprecated)]
     fn test_generate_pkcs8() {
         let document = Ed25519KeyPair::generate_pkcs8(&crate::rand::SystemRandom::new()).unwrap();
 
         let _key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
+
+        assert!(Ed25519KeyPair::from_pkcs8(document.as_ref()).is_err())
     }
 
     #[test]

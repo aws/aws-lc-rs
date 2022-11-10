@@ -3,10 +3,30 @@
 
 use std::mem::MaybeUninit;
 
+pub(crate) struct LcCBB(aws_lc_sys::CBB);
+
+impl LcCBB {
+    pub(crate) fn as_ptr(&self) -> *const aws_lc_sys::CBB {
+        &self.0
+    }
+
+    pub(crate) fn as_mut_ptr(&mut self) -> *mut aws_lc_sys::CBB {
+        &mut self.0
+    }
+}
+
+impl Drop for LcCBB {
+    fn drop(&mut self) {
+        unsafe {
+            aws_lc_sys::CBB_cleanup(&mut self.0);
+        }
+    }
+}
+
 #[inline]
 #[allow(non_snake_case)]
-pub unsafe fn build_CBB(initial_capacity: usize) -> aws_lc_sys::CBB {
+pub(crate) unsafe fn build_CBB(initial_capacity: usize) -> LcCBB {
     let mut cbb = MaybeUninit::<aws_lc_sys::CBB>::uninit();
     aws_lc_sys::CBB_init(cbb.as_mut_ptr(), initial_capacity);
-    cbb.assume_init()
+    LcCBB(cbb.assume_init())
 }
