@@ -242,7 +242,7 @@ impl RsaKeyPair {
                 RsaPadding::RSA_PKCS1_PADDING => aws_lc_sys::RSA_sign(
                     digest_alg.hash_nid,
                     digest.as_ptr(),
-                    digest.len() as c_uint,
+                    digest.len(),
                     signature.as_mut_ptr(),
                     &mut (output_len as c_uint),
                     *self.rsa_key,
