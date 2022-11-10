@@ -94,3 +94,16 @@ impl From<&[u8; IV_LEN]> for Nonce {
 
 /// All the AEADs we support use 96-bit nonces.
 pub const NONCE_LEN: usize = 96 / 8;
+
+mod tests {
+    use crate::aead::nonce::IV_LEN;
+    use crate::aead::Nonce;
+
+    #[test]
+    fn test_nonce_from_byte_array() {
+        let iv: [u8; IV_LEN] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+        let nonce = Nonce::from(&iv);
+
+        assert_eq!(&[1u8, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], nonce.as_ref());
+    }
+}
