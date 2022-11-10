@@ -226,6 +226,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::cast_possible_truncation)]
     fn test_decrypt_packet_length() {
         let key_bytes: [u8; KEY_LEN] = test::from_dirty_hex("98bef1469be7269837a45bfbc92a5a6ac762\
         507cf96443bf33b96b1bd4c6f8f6759de17d6d6258a436e36ecf75e3f00e4d9133ec05c4c855a9ec1a4e4e873b9d")

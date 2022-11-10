@@ -50,11 +50,12 @@ impl AsRef<[u8; BLOCK_LEN]> for Block {
 }
 
 mod tests {
-    use super::{Block, BLOCK_LEN};
 
     #[test]
     fn test_block_clone() {
+        use super::{Block, BLOCK_LEN};
         let block_a = Block::from(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+        #[allow(clippy::clone_on_copy)]
         let block_b = block_a.clone();
 
         for i in 0..BLOCK_LEN {

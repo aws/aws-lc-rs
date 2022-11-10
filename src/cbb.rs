@@ -6,10 +6,6 @@ use std::mem::MaybeUninit;
 pub(crate) struct LcCBB(aws_lc_sys::CBB);
 
 impl LcCBB {
-    pub(crate) fn as_ptr(&self) -> *const aws_lc_sys::CBB {
-        &self.0
-    }
-
     pub(crate) fn as_mut_ptr(&mut self) -> *mut aws_lc_sys::CBB {
         &mut self.0
     }

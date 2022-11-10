@@ -323,7 +323,7 @@ mod tests {
 
         let _key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
 
-        assert!(Ed25519KeyPair::from_pkcs8(document.as_ref()).is_err())
+        assert!(Ed25519KeyPair::from_pkcs8(document.as_ref()).is_err());
     }
 
     #[test]
