@@ -776,13 +776,17 @@ mod tests {
         let og_nonce = from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap();
         let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
         let unbound_key = UnboundKey::new(&AES_128_GCM, &key).unwrap();
+        assert_eq!(&AES_128_GCM, unbound_key.algorithm());
+
         let less_safe_key = LessSafeKey::new(unbound_key);
 
         let nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();
         let mut in_out = Vec::from(plaintext.as_slice());
 
+        #[allow(deprecated)]
         less_safe_key
-            .seal_in_place_append_tag(Nonce(nonce), Aad::empty(), &mut in_out)
+            // Test coverage for `seal_in_place`, which calls `seal_in_place_append_tag`.
+            .seal_in_place(Nonce(nonce), Aad::empty(), &mut in_out)
             .unwrap();
 
         let nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();

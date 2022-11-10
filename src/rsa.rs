@@ -207,13 +207,15 @@ impl RsaKeyPair {
     /// `padding_alg` and the digest is then padded using the padding algorithm
     /// from `padding_alg`. The signature it written into `signature`;
     /// `signature`'s length must be exactly the length returned by
-    /// `public_modulus_len()`. `rng` may be used to randomize the padding
-    /// (e.g. for PSS).
+    /// `public_modulus_len()`.
     ///
     /// Many other crypto libraries have signing functions that takes a
     /// precomputed digest as input, instead of the message to digest. This
     /// function does *not* take a precomputed digest; instead, `sign`
     /// calculates the digest itself.
+    ///
+    /// # Ring Compatibility
+    /// Our implementation ignored the `SecureRandom` parameter.
     ///
     /// # Errors
     /// `error::Unspecified` on error.

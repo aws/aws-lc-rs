@@ -556,19 +556,19 @@ pub static ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificatio
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
 pub static ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm::new(&ECDSA_P256_SHA256_FIXED);
+    EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
 pub static ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm::new(&ECDSA_P384_SHA384_FIXED);
+    EcdsaSigningAlgorithm(&ECDSA_P384_SHA384_FIXED);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
 pub static ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm::new(&ECDSA_P256_SHA256_ASN1);
+    EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
 pub static ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm::new(&ECDSA_P384_SHA384_ASN1);
+    EcdsaSigningAlgorithm(&ECDSA_P384_SHA384_ASN1);
 
 /// Verification of Ed25519 signatures.
 pub static ED25519: EdDSAParameters = EdDSAParameters {};

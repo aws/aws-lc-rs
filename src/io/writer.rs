@@ -90,8 +90,7 @@ pub fn write_copy(accumulator: &mut dyn Accumulator, to_copy: untrusted::Input) 
 #[cfg(test)]
 mod tests {
     use crate::io::writer::{write_copy, Accumulator, LengthMeasurement, Writer};
-    use crate::rand::{generate, SystemRandom};
-    use rand::RngCore;
+    use crate::rand::{generate, SecureRandom, SystemRandom};
     const TEST_DATA_SIZE: usize = 100;
 
     #[test]
@@ -106,13 +105,20 @@ mod tests {
     }
 
     fn test_accumulator(accumulator: &mut dyn Accumulator) -> [u8; TEST_DATA_SIZE] {
+        fn next_u32() -> u32 {
+            let rng = SystemRandom::default();
+            let mut bytes = [0u8; 4];
+            rng.fill(&mut bytes).unwrap();
+            u32::from_be_bytes(bytes)
+        }
+
         let data: [u8; TEST_DATA_SIZE] = generate(&SystemRandom::new()).unwrap().expose();
 
         accumulator.write_byte(data[0]);
 
         let mut index = 1;
         while index < TEST_DATA_SIZE {
-            let next_chunk_size = 1 + (rand::thread_rng().next_u32() % 10) as usize;
+            let next_chunk_size = 1 + (next_u32() % 10) as usize;
             let mut next_index = index + next_chunk_size;
             if next_index > TEST_DATA_SIZE {
                 next_index = TEST_DATA_SIZE;

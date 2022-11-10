@@ -202,7 +202,9 @@ pub(super) fn derive_poly1305_key(chacha_key: &ChaCha20Key, nonce: Nonce) -> pol
 #[cfg(test)]
 mod tests {
     use crate::aead::chacha::ChaCha20Key;
-    use crate::aead::chacha20_poly1305_openssh::derive_poly1305_key;
+    use crate::aead::chacha20_poly1305_openssh::{
+        derive_poly1305_key, OpeningKey, SealingKey, KEY_LEN, TAG_LEN,
+    };
     use crate::aead::Nonce;
     use crate::test;
 
@@ -221,5 +223,32 @@ mod tests {
         let poly1305_key = derive_poly1305_key(&chacha_key, iv);
 
         assert_eq!(&expected_poly1305_key, &poly1305_key.key_and_nonce);
+    }
+
+    #[test]
+    #[allow(clippy::cast_possible_truncation)]
+    fn test_decrypt_packet_length() {
+        let key_bytes: [u8; KEY_LEN] = test::from_dirty_hex("98bef1469be7269837a45bfbc92a5a6ac762\
+        507cf96443bf33b96b1bd4c6f8f6759de17d6d6258a436e36ecf75e3f00e4d9133ec05c4c855a9ec1a4e4e873b9d")
+            .try_into().unwrap();
+
+        let sealing_key = SealingKey::new(&key_bytes);
+        let opening_key = OpeningKey::new(&key_bytes);
+
+        let plaintext = b"Hello World!";
+        let packet_length = plaintext.len() as u32;
+        let packet_length = packet_length.to_be_bytes();
+        let mut in_out = Vec::new();
+
+        in_out.extend_from_slice(&packet_length);
+        in_out.extend_from_slice(plaintext);
+
+        let mut tag = [0u8; TAG_LEN];
+        sealing_key.seal_in_place(0, &mut in_out, &mut tag);
+
+        let encrypted_length: [u8; 4] = in_out[0..4].to_owned().try_into().unwrap();
+        let decrypted_length = opening_key.decrypt_packet_length(0, encrypted_length);
+        let decrypted_length = u32::from_be_bytes(decrypted_length);
+        assert_eq!(plaintext.len() as u32, decrypted_length);
     }
 }

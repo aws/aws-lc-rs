@@ -104,6 +104,9 @@ impl EcdsaKeyPair {
     /// Generates a new key pair and returns the key pair serialized as a
     /// PKCS#8 v1 document.
     ///
+    /// # Ring Compatibility
+    /// Our implementation ignored the `SecureRandom` parameter.
+    ///
     /// # Errors
     /// `error::Unspecified` on internal error.
     ///
@@ -115,19 +118,17 @@ impl EcdsaKeyPair {
             let evp_pkey = generate_key(alg.0.id.nid())?;
 
             let mut cbb = cbb::build_CBB(PKCS8_DOCUMENT_MAX_LEN);
-            if 1 != aws_lc_sys::EVP_marshal_private_key(&mut cbb, *evp_pkey) {
-                aws_lc_sys::CBB_cleanup(&mut cbb);
+            if 1 != aws_lc_sys::EVP_marshal_private_key(cbb.as_mut_ptr(), *evp_pkey) {
                 return Err(Unspecified);
             }
 
             let mut pkcs8_bytes_ptr = MaybeUninit::<*mut u8>::uninit();
             let mut out_len = MaybeUninit::<usize>::uninit();
             if 1 != aws_lc_sys::CBB_finish(
-                &mut cbb,
+                cbb.as_mut_ptr(),
                 pkcs8_bytes_ptr.as_mut_ptr(),
                 out_len.as_mut_ptr(),
             ) {
-                aws_lc_sys::CBB_cleanup(&mut cbb);
                 return Err(Unspecified);
             }
             let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr.assume_init())?;
@@ -185,7 +186,9 @@ impl EcdsaKeyPair {
     }
 
     /// Returns the signature of the message using a random nonce.
-    /// The `_rng` provided is ignored.
+    ///
+    /// # Ring Compatibility
+    /// Our implementation ignored the `SecureRandom` parameter.
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.

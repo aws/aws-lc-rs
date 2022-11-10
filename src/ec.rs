@@ -66,14 +66,7 @@ pub struct EcdsaVerificationAlgorithm {
 
 /// An ECDSA signing algorithm.
 #[derive(Debug)]
-pub struct EcdsaSigningAlgorithm(&'static EcdsaVerificationAlgorithm);
-
-impl EcdsaSigningAlgorithm {
-    #[must_use]
-    pub(crate) const fn new(algorithm: &'static EcdsaVerificationAlgorithm) -> Self {
-        EcdsaSigningAlgorithm(algorithm)
-    }
-}
+pub struct EcdsaSigningAlgorithm(pub(crate) &'static EcdsaVerificationAlgorithm);
 
 impl Deref for EcdsaSigningAlgorithm {
     type Target = EcdsaVerificationAlgorithm;
