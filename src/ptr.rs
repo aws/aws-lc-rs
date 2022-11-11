@@ -5,6 +5,8 @@ use std::ops::Deref;
 
 use aws_lc_sys::OPENSSL_free;
 
+use mirai_annotations::verify_unreachable;
+
 #[derive(Debug)]
 pub(crate) struct LcPtr<P: Pointer> {
     pointer: P,
@@ -57,10 +59,10 @@ impl<P: Pointer> Deref for DetachableLcPtr<P> {
     fn deref(&self) -> &Self::Target {
         match &self.pointer {
             Some(pointer) => pointer,
-            None => unsafe {
+            None => {
                 // Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                core::hint::unreachable_unchecked()
-            },
+                verify_unreachable!()
+            }
         }
     }
 }
@@ -80,10 +82,10 @@ impl<P: Pointer> DetachableLcPtr<P> {
     pub fn detach(mut self) -> NonNullPtr<P> {
         match self.pointer.take() {
             Some(pointer) => NonNullPtr { pointer },
-            None => unsafe {
+            None => {
                 // Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                core::hint::unreachable_unchecked()
-            },
+                verify_unreachable!()
+            }
         }
     }
 }
@@ -93,10 +95,10 @@ impl<P: Pointer + Copy> DetachableLcPtr<P> {
     pub fn as_non_null(&self) -> NonNullPtr<P> {
         match self.pointer {
             Some(pointer) => NonNullPtr { pointer },
-            None => unsafe {
+            None => {
                 // Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                core::hint::unreachable_unchecked()
-            },
+                verify_unreachable!()
+            }
         }
     }
 }
@@ -106,10 +108,10 @@ impl<P: Pointer> From<DetachableLcPtr<P>> for LcPtr<P> {
     fn from(mut dptr: DetachableLcPtr<P>) -> Self {
         match dptr.pointer.take() {
             Some(pointer) => LcPtr { pointer },
-            None => unsafe {
+            None => {
                 // Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                core::hint::unreachable_unchecked()
-            },
+                verify_unreachable!()
+            }
         }
     }
 }
