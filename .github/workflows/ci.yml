@@ -165,3 +165,21 @@ jobs:
       - name: Run s2n-quic integration
         run: |
           ./scripts/run-s2n-quic-integration.sh
+
+  rustls-integration:
+    name: rustls-integration
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: stable
+          override: true
+      - name: Run rustls integration
+        run: |
+          ./scripts/run-rustls-integration.sh
