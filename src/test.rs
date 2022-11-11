@@ -127,6 +127,7 @@
 extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
+use mirai_annotations::unrecoverable;
 
 use crate::{digest, error};
 
@@ -173,7 +174,7 @@ impl TestCase {
         match self.consume_string(key).as_ref() {
             "true" => true,
             "false" => false,
-            s => panic!("Invalid bool value: {}", s),
+            s => unrecoverable!("Invalid bool value: {}", s),
         }
     }
 
@@ -191,7 +192,7 @@ impl TestCase {
             "SHA384" => Some(&digest::SHA384),
             "SHA512" => Some(&digest::SHA512),
             "SHA512_256" => Some(&digest::SHA512_256),
-            _ => panic!("Unsupported digest algorithm: {}", name),
+            _ => unrecoverable!("Unsupported digest algorithm: {}", name),
         }
     }
 
@@ -210,7 +211,7 @@ impl TestCase {
         let result = if s.starts_with('\"') {
             // The value is a quoted UTF-8 string.
 
-            let mut bytes = Vec::with_capacity(s.as_bytes().len() - 2);
+            let mut bytes = Vec::with_capacity(s.as_bytes().len());
             let mut s = s.as_bytes().iter().skip(1);
             loop {
                 let b = match s.next() {
@@ -228,23 +229,24 @@ impl TestCase {
                                 {
                                     (hi << 4) | lo
                                 } else {
-                                    panic!("Invalid hex escape sequence in string.");
+                                    unrecoverable!("Invalid hex escape sequence in string.");
                                 }
                             }
                             _ => {
-                                panic!("Invalid hex escape sequence in string.");
+                                unrecoverable!("Invalid hex escape sequence in string.");
                             }
                         }
                     }
                     Some(b'"') => {
-                        assert!(
-                            s.next().is_none(),
-                            "characters after the closing quote of a quoted string."
-                        );
+                        if s.next().is_some() {
+                            unrecoverable!(
+                                "characters after the closing quote of a quoted string."
+                            );
+                        }
                         break;
                     }
                     Some(b) => *b,
-                    None => panic!("Missing terminating '\"' in string literal."),
+                    None => unrecoverable!("Missing terminating '\"' in string literal."),
                 };
                 bytes.push(b);
             }
@@ -254,7 +256,7 @@ impl TestCase {
             match from_hex(&s) {
                 Ok(s) => s,
                 Err(err_str) => {
-                    panic!("{} in {}", err_str, s);
+                    unrecoverable!("{} in {}", err_str, s);
                 }
             }
         };

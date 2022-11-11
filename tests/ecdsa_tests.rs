@@ -20,6 +20,7 @@ use aws_lc_ring::{
     signature::{self, KeyPair},
     test, test_file,
 };
+use mirai_annotations::unrecoverable;
 
 #[test]
 fn ecdsa_traits() {
@@ -97,8 +98,10 @@ fn ecdsa_from_pkcs8_test() {
                 error,
             ) {
                 (Ok(_), None) => (),
-                (Err(e), None) => panic!("Failed with error \"{}\", but expected to succeed", e),
-                (Ok(_), Some(e)) => panic!("Succeeded, but expected error \"{}\"", e),
+                (Err(e), None) => {
+                    unrecoverable!("Failed with error \"{}\", but expected to succeed", e)
+                }
+                (Ok(_), Some(e)) => unrecoverable!("Succeeded, but expected error \"{}\"", e),
                 (Err(actual), Some(expected)) => assert_eq!(format!("{}", actual), expected),
             };
 
@@ -193,7 +196,7 @@ fn signature_ecdsa_verify_fixed_test() {
                 ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_FIXED,
                 ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_FIXED,
                 _ => {
-                    panic!("Unsupported curve+digest: {}+{}", curve_name, digest_name);
+                    unrecoverable!("Unsupported curve+digest: {}+{}", curve_name, digest_name);
                 }
             };
 
