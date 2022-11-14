@@ -377,24 +377,24 @@ mod tests {
 
         fn max_input_test(alg: &'static digest::Algorithm) {
             let mut context = nearly_full_context(alg);
-            let next_input = vec![0u8; alg.block_len];
+            let next_input = vec![0u8; alg.block_len - 1];
             context.update(&next_input);
             let _ = context.finish(); // no panic
         }
 
         fn too_long_input_test_block(alg: &'static digest::Algorithm) {
             let mut context = nearly_full_context(alg);
-            let next_input = vec![0u8; alg.block_len + 1];
-            context.update(&next_input); // should panic
-            let _ = context.finish();
+            let next_input = vec![0u8; alg.block_len];
+            context.update(&next_input);
+            let _ = context.finish(); // should panic
         }
 
         fn too_long_input_test_byte(alg: &'static digest::Algorithm) {
             let mut context = nearly_full_context(alg);
-            let next_input = vec![0u8; alg.block_len];
+            let next_input = vec![0u8; alg.block_len - 1];
             context.update(&next_input); // no panic
-            context.update(&[0]); // should panic
-            let _ = context.finish();
+            context.update(&[0]);
+            let _ = context.finish(); // should panic
         }
 
         fn nearly_full_context(alg: &'static digest::Algorithm) -> digest::Context {
@@ -407,7 +407,7 @@ mod tests {
                 digest_ctx: ThreadLocal::new(),
                 #[cfg(not(feature = "threadlocal"))]
                 digest_ctx: DigestContext::new(alg).unwrap(),
-                msg_len: (alg.max_input_len - alg.block_len),
+                msg_len: (alg.max_input_len - alg.block_len + 1),
                 max_input_reached: false,
             }
         }
