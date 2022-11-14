@@ -2,8 +2,9 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0 OR ISC
 
+ROOT=$PWD
 RUSTLS_RING_STRING="^ring = \".*\""
-RUSTLS_OUR_STRING="ring = { path = \"../../../aws-lc-ring\", package = \"aws-lc-ring\"}"
+RUSTLS_OUR_STRING="ring = { path = \"${PWD}\", package = \"aws-lc-ring\"}"
 
 git clone https://github.com/rustls/rustls.git
 cd rustls
