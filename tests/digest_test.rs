@@ -45,6 +45,7 @@ fn digest_misc() {
 
 mod digest_shavs {
     use aws_lc_ring::{digest, test};
+    use mirai_annotations::checked_assume;
 
     fn run_known_answer_test(digest_alg: &'static digest::Algorithm, test_file: test::File) {
         let section_name = &format!("L = {}", digest_alg.output_len);
@@ -59,7 +60,7 @@ mod digest_shavs {
                 assert_eq!(msg, &[0u8]);
                 msg.truncate(0);
             }
-
+            checked_assume!(msg.len() < usize::MAX / 8);
             assert_eq!(msg.len() * 8, len_bits);
             let expected = test_case.consume_bytes("MD");
             let actual = digest::digest(digest_alg, &msg);

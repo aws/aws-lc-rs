@@ -4,7 +4,7 @@
 use crate::ec::PKCS8_DOCUMENT_MAX_LEN;
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Document;
-use crate::ptr::{LcPtr, NonNullPtr};
+use crate::ptr::{ConstPointer, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
 use crate::{cbb, cbs, constant_time, sealed, test};
@@ -232,7 +232,7 @@ impl Ed25519KeyPair {
             let evp_pkey = LcPtr::new(EVP_parse_private_key(&mut cbs))
                 .map_err(|_| KeyRejected::invalid_encoding())?;
 
-            validate_ed25519_evp_pkey(&evp_pkey.as_non_null())?;
+            validate_ed25519_evp_pkey(&evp_pkey.as_const())?;
 
             let mut private_key = [0u8; ED25519_PRIVATE_KEY_LEN];
             let mut out_len: usize = ED25519_PRIVATE_KEY_LEN;
@@ -288,7 +288,7 @@ impl Ed25519KeyPair {
 
 #[inline]
 pub(crate) unsafe fn validate_ed25519_evp_pkey(
-    evp_pkey: &NonNullPtr<*mut EVP_PKEY>,
+    evp_pkey: &ConstPointer<EVP_PKEY>,
 ) -> Result<(), KeyRejected> {
     const ED25519_KEY_TYPE: c_int = aws_lc_sys::EVP_PKEY_ED25519;
     const ED25519_MIN_BITS: c_uint = 253;

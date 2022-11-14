@@ -74,6 +74,7 @@ fn pbkdf2_tests() {
 mod tests {
     use aws_lc_ring::{digest, pbkdf2};
     use core::num::NonZeroU32;
+    use mirai_annotations::assume;
 
     #[test]
     #[should_panic(expected = "derived key too long")]
@@ -86,7 +87,9 @@ mod tests {
             pbkdf2::PBKDF2_HMAC_SHA384,
             pbkdf2::PBKDF2_HMAC_SHA512,
         ] {
-            let mut out = vec![0u8; (max_usize32 - 1) * match_pbkdf2_digest(&alg).output_len + 1];
+            let output_len = match_pbkdf2_digest(&alg).output_len;
+            assume!(output_len < 2048);
+            let mut out = vec![0u8; (max_usize32 - 1) * output_len + 1];
             pbkdf2::derive(alg, iterations, b"salt", b"password", &mut out);
         }
     }
