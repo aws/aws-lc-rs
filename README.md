@@ -1,5 +1,5 @@
 # aws-lc-ring
-A Ring-compatible Rust library implemented with AWS-LC cryptographic operations
+A Ring-compatible Rust library implemented with [AWS-LC](https://github.com/awslabs/aws-lc) cryptographic operations
 
 TODO: Work with open source marketing to update this section with correct wording. 
 

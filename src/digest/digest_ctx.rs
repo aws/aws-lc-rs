@@ -7,7 +7,7 @@ use crate::ptr::LcPtr;
 use std::ptr::null_mut;
 
 pub(super) struct DigestContext {
-    pub(super) ctx: LcPtr<*mut aws_lc_sys::EVP_MD_CTX>,
+    ctx: LcPtr<*mut aws_lc_sys::EVP_MD_CTX>,
 }
 
 impl DigestContext {
@@ -21,9 +21,14 @@ impl DigestContext {
             Ok(DigestContext { ctx })
         }
     }
+
+    pub(super) fn as_mut_ptr(&mut self) -> *mut aws_lc_sys::EVP_MD_CTX {
+        *self.ctx
+    }
 }
 
 unsafe impl Send for DigestContext {}
+unsafe impl Sync for DigestContext {}
 
 impl Clone for DigestContext {
     fn clone(&self) -> Self {
