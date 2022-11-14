@@ -10,6 +10,9 @@ env:
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
   RUST_NIGHTLY_TOOLCHAIN: nightly
+  # Mirai version tag, updates this whenever a new version
+  # is released.
+  MIRAI_TAG: v1.1.2
 
 jobs:
   rustfmt:
@@ -137,6 +140,44 @@ jobs:
           command: llvm-cov
           # TODO: raise to 95% when we're over 95%.
           args: --no-fail-fast --fail-under-lines 90
+
+  mirai-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      # Update toolchain when fixed: https://github.com/facebookexperimental/MIRAI/issues/1188
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: nightly-2022-09-05
+          profile: minimal
+          components: rust-src, rustc-dev, llvm-tools-preview
+
+      - name: Cache Cargo
+        uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-mirai-${{ env.MIRAI_TAG }}
+
+      # https://github.com/facebookexperimental/MIRAI/blob/main/documentation/InstallationGuide.md#installing-mirai-into-cargo
+      - name: Install MIRAI
+        run: |
+          git clone --depth 1 --branch ${{ env.MIRAI_TAG }} https://github.com/facebookexperimental/MIRAI.git
+          cd MIRAI
+          cargo install --force --path ./checker --no-default-features
+          cd ../
+
+      - name: Run MIRAI
+        run: |
+          cargo mirai
 
   asan:
     runs-on: ubuntu-latest
