@@ -24,7 +24,7 @@ use crate::digest::match_digest_type;
 use crate::error::{KeyRejected, Unspecified};
 #[cfg(feature = "ring-io")]
 use crate::io;
-use crate::ptr::{DetachableLcPtr, LcPtr, NonNullPtr};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
 #[cfg(feature = "ring-io")]
@@ -64,7 +64,7 @@ unsafe impl Sync for RsaKeyPair {}
 impl RsaKeyPair {
     fn new(rsa_key: LcPtr<*mut RSA>) -> Result<Self, KeyRejected> {
         unsafe {
-            let serialized_public_key = RsaSubjectPublicKey::new(&rsa_key.as_non_null())?;
+            let serialized_public_key = RsaSubjectPublicKey::new(&rsa_key.as_const())?;
             Ok(RsaKeyPair {
                 rsa_key,
                 serialized_public_key,
@@ -126,7 +126,7 @@ impl RsaKeyPair {
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let rsa = LcPtr::new(aws_lc_sys::EVP_PKEY_get1_RSA(*evp_pkey))
                 .map_err(|_| KeyRejected::wrong_algorithm())?;
-            Self::validate_rsa(&rsa.as_non_null())?;
+            Self::validate_rsa(&rsa.as_const())?;
 
             Self::new(rsa)
         }
@@ -139,14 +139,14 @@ impl RsaKeyPair {
     pub fn from_der(der: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let rsa = build_private_RSA(der)?;
-            Self::validate_rsa(&rsa.as_non_null())?;
+            Self::validate_rsa(&rsa.as_const())?;
             Self::new(rsa)
         }
     }
     const MIN_RSA_BITS: c_uint = 1024;
     const MAX_RSA_BITS: c_uint = 2048;
 
-    unsafe fn validate_rsa(rsa: &NonNullPtr<*mut RSA>) -> Result<(), KeyRejected> {
+    unsafe fn validate_rsa(rsa: &ConstPointer<RSA>) -> Result<(), KeyRejected> {
         let p = aws_lc_sys::RSA_get0_p(**rsa);
         let q = aws_lc_sys::RSA_get0_q(**rsa);
         let p_bits = aws_lc_sys::BN_num_bits(p);
@@ -163,19 +163,19 @@ impl RsaKeyPair {
         if p_bits > Self::MAX_RSA_BITS {
             return Err(KeyRejected::too_large());
         }
-        let exponent = RSA_get0_e(**rsa);
-        if Self::compare(exponent, 65537)? == Ordering::Less {
+        let exponent = ConstPointer::new(RSA_get0_e(**rsa))?;
+        if Self::compare(&exponent, 65537)? == Ordering::Less {
             return Err(KeyRejected::too_small());
         }
         Ok(())
     }
 
-    unsafe fn compare(a: *const BIGNUM, b: u64) -> Result<Ordering, KeyRejected> {
+    unsafe fn compare(a: &ConstPointer<BIGNUM>, b: u64) -> Result<Ordering, KeyRejected> {
         let b_val = LcPtr::new(BN_new()).map_err(|_| KeyRejected::unexpected_error())?;
         if 1 != BN_set_u64(*b_val, b) {
             return Err(KeyRejected::unexpected_error());
         }
-        let result = BN_cmp(a, *b_val) as i32;
+        let result = BN_cmp(**a, *b_val) as i32;
 
         Ok(result.cmp(&0))
     }
@@ -256,7 +256,7 @@ impl RsaKeyPair {
                     output_len,
                     digest.as_ptr(),
                     digest.len(),
-                    match_digest_type(&digest_alg.id),
+                    *match_digest_type(&digest_alg.id),
                     null(),
                     -1,
                 ),
@@ -291,7 +291,7 @@ impl Debug for RsaKeyPair {
 }
 
 #[allow(non_snake_case)]
-unsafe fn serialize_RSA_pubkey(pubkey: &NonNullPtr<*mut RSA>) -> Result<Box<[u8]>, ()> {
+unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, ()> {
     let mut pubkey_bytes = MaybeUninit::<*mut u8>::uninit();
     let mut outlen = MaybeUninit::<usize>::uninit();
     if 1 != aws_lc_sys::RSA_public_key_to_bytes(
@@ -311,7 +311,7 @@ unsafe fn serialize_RSA_pubkey(pubkey: &NonNullPtr<*mut RSA>) -> Result<Box<[u8]
 }
 
 #[cfg(feature = "ring-io")]
-unsafe fn serialize_bignum(bignum: &NonNullPtr<*mut BIGNUM>) -> Box<[u8]> {
+unsafe fn serialize_bignum(bignum: &ConstPointer<BIGNUM>) -> Box<[u8]> {
     let bn_len = BN_num_bytes(**bignum) as usize;
     let mut bn_vec: Vec<u8> = vec![0u8; bn_len];
     let bytes_written = BN_bn2bin(**bignum, bn_vec.as_mut_ptr());
@@ -350,13 +350,13 @@ impl Drop for RsaSubjectPublicKey {
 }
 
 impl RsaSubjectPublicKey {
-    unsafe fn new(pubkey: &NonNullPtr<*mut RSA>) -> Result<Self, ()> {
+    unsafe fn new(pubkey: &ConstPointer<RSA>) -> Result<Self, ()> {
         let key = serialize_RSA_pubkey(pubkey)?;
         #[cfg(feature = "ring-io")]
         {
-            let modulus = NonNullPtr::new(RSA_get0_n(**pubkey))?;
+            let modulus = ConstPointer::new(RSA_get0_n(**pubkey))?;
             let modulus = serialize_bignum(&modulus);
-            let exponent = NonNullPtr::new(RSA_get0_e(**pubkey))?;
+            let exponent = ConstPointer::new(RSA_get0_e(**pubkey))?;
             let exponent = serialize_bignum(&exponent);
 
             Ok(RsaSubjectPublicKey {
@@ -540,7 +540,7 @@ fn RSA_verify(
     allowed_bit_size: &RangeInclusive<u32>,
 ) -> Result<(), Unspecified> {
     unsafe {
-        let n = NonNullPtr::new(RSA_get0_n(**public_key))?;
+        let n = ConstPointer::new(RSA_get0_n(**public_key))?;
         let n_bits = aws_lc_sys::BN_num_bits(*n);
         let n_bits = n_bits as c_uint;
         if !allowed_bit_size.contains(&n_bits) {
@@ -563,7 +563,7 @@ fn RSA_verify(
                 **public_key,
                 digest.as_ptr(),
                 digest.len(),
-                match_digest_type(&algorithm.id),
+                *match_digest_type(&algorithm.id),
                 null(),
                 -1,
                 signature.as_ptr(),

@@ -7,7 +7,7 @@ use crate::ptr::LcPtr;
 use std::ptr::null_mut;
 
 pub(super) struct DigestContext {
-    pub ctx: LcPtr<*mut aws_lc_sys::EVP_MD_CTX>,
+    pub(super) ctx: LcPtr<*mut aws_lc_sys::EVP_MD_CTX>,
 }
 
 impl DigestContext {
@@ -15,7 +15,7 @@ impl DigestContext {
         unsafe {
             let ctx = LcPtr::new(aws_lc_sys::EVP_MD_CTX_new())?;
             let evp_md_type = match_digest_type(&algorithm.id);
-            if 1 != aws_lc_sys::EVP_DigestInit_ex(*ctx, evp_md_type, null_mut()) {
+            if 1 != aws_lc_sys::EVP_DigestInit_ex(*ctx, *evp_md_type, null_mut()) {
                 return Err(Unspecified);
             };
             Ok(DigestContext { ctx })
