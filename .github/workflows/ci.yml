@@ -56,6 +56,31 @@ jobs:
           command: clippy
           args: --all-features --all-targets -- ${{ matrix.args }}
 
+  udeps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          profile: minimal
+          override: true
+
+      - name: Install cargo-udeps
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install 
+          args: cargo-udeps
+
+      - name: Run cargo udeps
+        run: cargo udeps --workspace --all-targets
+        env:
+          RUSTC_WRAPPER: ""
+
   test:
     name: tests
     runs-on: ${{ matrix.os }}
@@ -83,7 +108,6 @@ jobs:
           command: test
           args: ${{ matrix.args }}
 
-  # TODO: add bot to post coverage details to PR, or upload results to AWS account.
   coverage:
     runs-on: ubuntu-latest
     steps:
@@ -104,11 +128,15 @@ jobs:
           command: install 
           args: cargo-llvm-cov
 
+      # TODO: add bot to post coverage details to PR, or upload results to AWS 
+      # account. Using --html can give us more insight which regions are missing
+      # coverage immediately.
       - name: Run coverage
         uses: actions-rs/cargo@v1.0.3
         with:
           command: llvm-cov
-          args: --html --no-fail-fast
+          # TODO: raise to 95% when we're over 95%.
+          args: --no-fail-fast --fail-under-lines 90
 
   asan:
     runs-on: ubuntu-latest
