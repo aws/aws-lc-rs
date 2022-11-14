@@ -99,7 +99,7 @@ fn ecdsa_from_pkcs8_test() {
             ) {
                 (Ok(_), None) => (),
                 (Err(e), None) => {
-                    unrecoverable!("Failed with error \"{}\", but expected to succeed", e)
+                    unrecoverable!("Failed with error \"{}\", but expected to succeed", e);
                 }
                 (Ok(_), Some(e)) => unrecoverable!("Succeeded, but expected error \"{}\"", e),
                 (Err(actual), Some(expected)) => assert_eq!(format!("{}", actual), expected),

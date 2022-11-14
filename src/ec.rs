@@ -17,7 +17,7 @@
 
 use crate::error::{KeyRejected, Unspecified};
 
-use crate::ptr::{DetachableLcPtr, LcPtr, NonNullPtr};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
@@ -160,10 +160,10 @@ impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
 
 #[inline]
 unsafe fn validate_ec_key(
-    ec_key: &NonNullPtr<*mut EC_KEY>,
+    ec_key: &ConstPointer<EC_KEY>,
     expected_bits: c_uint,
 ) -> Result<(), KeyRejected> {
-    let ec_group = NonNullPtr::new(EC_KEY_get0_group(**ec_key))?;
+    let ec_group = ConstPointer::new(EC_KEY_get0_group(**ec_key))?;
     let bits = aws_lc_sys::EC_GROUP_order_bits(*ec_group) as c_uint;
 
     if bits < expected_bits {
@@ -178,18 +178,18 @@ unsafe fn validate_ec_key(
 
 pub(crate) unsafe fn marshal_public_key_to_buffer(
     buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
-    ec_key: &NonNullPtr<*mut EC_KEY>,
+    ec_key: &ConstPointer<EC_KEY>,
 ) -> Result<usize, Unspecified> {
-    let ec_group = NonNullPtr::new(EC_KEY_get0_group(**ec_key))?;
+    let ec_group = ConstPointer::new(EC_KEY_get0_group(**ec_key))?;
 
-    let ec_point = NonNullPtr::new(EC_KEY_get0_public_key(**ec_key))?;
+    let ec_point = ConstPointer::new(EC_KEY_get0_public_key(**ec_key))?;
 
-    let out_len = ec_point_to_bytes(*ec_group, *ec_point, buffer)?;
+    let out_len = ec_point_to_bytes(&ec_group, &ec_point, buffer)?;
     Ok(out_len)
 }
 
 pub(crate) fn marshal_public_key(
-    ec_key: &NonNullPtr<*mut EC_KEY>,
+    ec_key: &ConstPointer<EC_KEY>,
 ) -> Result<EcdsaPublicKey, Unspecified> {
     unsafe {
         let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
@@ -216,8 +216,8 @@ pub(crate) unsafe fn ec_key_from_public_point(
 
 #[inline]
 pub(crate) unsafe fn ec_key_from_private(
-    ec_group: &NonNullPtr<*mut EC_GROUP>,
-    private_big_num: &NonNullPtr<*mut BIGNUM>,
+    ec_group: &ConstPointer<EC_GROUP>,
+    private_big_num: &ConstPointer<BIGNUM>,
 ) -> Result<DetachableLcPtr<*mut EC_KEY>, Unspecified> {
     let ec_key = DetachableLcPtr::new(aws_lc_sys::EC_KEY_new())?;
     if 1 != aws_lc_sys::EC_KEY_set_group(*ec_key, **ec_group) {
@@ -290,15 +290,15 @@ pub(crate) unsafe fn ec_point_from_bytes(
 
 #[inline]
 unsafe fn ec_point_to_bytes(
-    ec_group: *const EC_GROUP,
-    ec_point: *const EC_POINT,
+    ec_group: &ConstPointer<EC_GROUP>,
+    ec_point: &ConstPointer<EC_POINT>,
     buf: &mut [u8; PUBLIC_KEY_MAX_LEN],
 ) -> Result<usize, Unspecified> {
     let pt_conv_form = aws_lc_sys::point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED;
 
     let out_len = aws_lc_sys::EC_POINT_point2oct(
-        ec_group,
-        ec_point,
+        **ec_group,
+        **ec_point,
         pt_conv_form,
         buf.as_mut_ptr().cast(),
         PUBLIC_KEY_MAX_LEN,
@@ -336,11 +336,11 @@ unsafe fn ecdsa_sig_to_fixed(
 ) -> Result<Signature, Unspecified> {
     let expected_number_size = ecdsa_fixed_number_byte_size(alg_id);
 
-    let r_bn = NonNullPtr::new(aws_lc_sys::ECDSA_SIG_get0_r(**sig))?;
+    let r_bn = ConstPointer::new(aws_lc_sys::ECDSA_SIG_get0_r(**sig))?;
     let mut r_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
     let r_bytes = bignum_to_be_bytes(&r_bn, &mut r_buffer)?;
 
-    let s_bn = NonNullPtr::new(aws_lc_sys::ECDSA_SIG_get0_s(**sig))?;
+    let s_bn = ConstPointer::new(aws_lc_sys::ECDSA_SIG_get0_s(**sig))?;
     let mut s_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
     let s_bytes = bignum_to_be_bytes(&s_bn, &mut s_buffer)?;
 
@@ -397,7 +397,7 @@ unsafe fn ecdsa_sig_from_fixed(
 
 #[inline]
 unsafe fn bignum_to_be_bytes(
-    bignum: &NonNullPtr<*mut BIGNUM>,
+    bignum: &ConstPointer<BIGNUM>,
     bytes: &mut [u8],
 ) -> Result<usize, Unspecified> {
     let bn_bytes = BN_num_bytes(**bignum);

@@ -64,7 +64,7 @@
 
 use crate::ec::{ec_group_from_nid, ec_key_from_public_point, ec_point_from_bytes};
 use crate::error::Unspecified;
-use crate::ptr::{LcPtr, NonNullPtr};
+use crate::ptr::{ConstPointer, LcPtr};
 use crate::rand::SecureRandom;
 use crate::{ec, test};
 use aws_lc_sys::{
@@ -250,7 +250,7 @@ impl EphemeralPrivateKey {
             let ec_group = ec_group_from_nid(ECDH_P256.id.nid())?;
             let priv_key = ec::bignum_from_be_bytes(priv_key)?;
 
-            let ec_key = ec::ec_key_from_private(&ec_group.as_non_null(), &priv_key.as_non_null())?;
+            let ec_key = ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())?;
             let ec_key = LcPtr::from(ec_key);
             Ok(EphemeralPrivateKey {
                 inner_key: KeyInner::ECDH_P256(ec_key),
@@ -264,7 +264,7 @@ impl EphemeralPrivateKey {
             let ec_group = ec_group_from_nid(ECDH_P384.id.nid())?;
             let priv_key = ec::bignum_from_be_bytes(priv_key)?;
 
-            let ec_key = ec::ec_key_from_private(&ec_group.as_non_null(), &priv_key.as_non_null())?;
+            let ec_key = ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())?;
             let ec_key = LcPtr::from(ec_key);
             Ok(EphemeralPrivateKey {
                 inner_key: KeyInner::ECDH_P384(ec_key),
@@ -282,7 +282,7 @@ impl EphemeralPrivateKey {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
                 unsafe {
                     let key_len =
-                        ec::marshal_public_key_to_buffer(&mut buffer, &ec_key.as_non_null())?;
+                        ec::marshal_public_key_to_buffer(&mut buffer, &ec_key.as_const())?;
                     Ok(PublicKey {
                         alg: self.algorithm(),
                         public_key: buffer,
@@ -446,12 +446,8 @@ where
         KeyInner::ECDH_P256(ec_key) | KeyInner::ECDH_P384(ec_key) => {
             let pub_key_bytes = peer_public_key.bytes.as_ref();
             unsafe {
-                let result = ec_key_ecdh(
-                    &mut buffer,
-                    ec_key.as_non_null(),
-                    pub_key_bytes,
-                    expected_nid,
-                );
+                let result =
+                    ec_key_ecdh(&mut buffer, ec_key.as_const(), pub_key_bytes, expected_nid);
                 if result.is_err() {
                     return Err(error_value);
                 }
@@ -467,7 +463,7 @@ const MAX_AGREEMENT_SECRET_LEN: usize = 48;
 #[allow(clippy::needless_pass_by_value)]
 unsafe fn ec_key_ecdh<'a>(
     buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
-    priv_ec_key: NonNullPtr<*mut EC_KEY>,
+    priv_ec_key: ConstPointer<EC_KEY>,
     peer_pub_key_bytes: &[u8],
     nid: i32,
 ) -> Result<&'a [u8], ()> {
@@ -475,7 +471,7 @@ unsafe fn ec_key_ecdh<'a>(
     let pub_key_point = ec_point_from_bytes(&ec_group, peer_pub_key_bytes)?;
     let peer_ec_key = ec_key_from_public_point(&ec_group, &pub_key_point)?;
 
-    let priv_group = NonNullPtr::new(EC_KEY_get0_group(*priv_ec_key))?;
+    let priv_group = ConstPointer::new(EC_KEY_get0_group(*priv_ec_key))?;
     let priv_nid = EC_GROUP_get_curve_name(*priv_group);
 
     let supported_curves = [NID_X9_62_prime256v1, NID_secp384r1];
@@ -483,12 +479,12 @@ unsafe fn ec_key_ecdh<'a>(
         return Err(());
     }
 
-    let peer_group = NonNullPtr::new(EC_KEY_get0_group(*peer_ec_key))?;
+    let peer_group = ConstPointer::new(EC_KEY_get0_group(*peer_ec_key))?;
     if 0 != aws_lc_sys::EC_GROUP_cmp(*priv_group, *peer_group, null_mut()) {
         return Err(());
     }
 
-    let peer_pub_key = NonNullPtr::new(EC_KEY_get0_public_key(*peer_ec_key))?;
+    let peer_pub_key = ConstPointer::new(EC_KEY_get0_public_key(*peer_ec_key))?;
 
     let field_size = EC_GROUP_get_degree(*priv_group) as usize;
     let max_secret_len = (field_size + 7) / 8;

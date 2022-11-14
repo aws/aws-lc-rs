@@ -30,6 +30,8 @@ use crate::{debug, derive_debug_via_id};
 mod digest_ctx;
 mod sha;
 use crate::error::Unspecified;
+use crate::ptr::ConstPointer;
+use aws_lc_sys::EVP_MD;
 use digest_ctx::DigestContext;
 pub use sha::{
     SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA256, SHA256_OUTPUT_LEN, SHA384,
@@ -143,15 +145,14 @@ impl Context {
         unsafe {
             // Check if the message has reached the algorithm's maximum allowed input, or overflowed
             // the msg_len counter.
-            let (msg_len, max_input_reached) = self.msg_len.overflowing_add(data.len());
-            self.msg_len = msg_len;
-            self.max_input_reached = max_input_reached;
-            (!self.max_input_reached)
-                .then(|| self.max_input_reached = self.msg_len > self.algorithm.max_input_len);
-
-            if self.max_input_reached {
+            let (msg_len, overflowed) = self.msg_len.overflowing_add(data.len());
+            if overflowed || msg_len > self.algorithm.max_input_len {
                 return Err(Unspecified);
             }
+
+            self.msg_len = msg_len;
+            self.max_input_reached = self.msg_len == self.algorithm.max_input_len;
+
             if 1 != aws_lc_sys::EVP_DigestUpdate(
                 *self.get_digest_ctx().ctx,
                 data.as_ptr().cast(),
@@ -174,8 +175,6 @@ impl Context {
 
     #[inline]
     fn try_finish(self) -> Result<Digest, Unspecified> {
-        assert!(!self.max_input_reached);
-
         let mut output = [0u8; MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
@@ -327,15 +326,16 @@ pub const MAX_OUTPUT_LEN: usize = 512 / 8;
 pub const MAX_CHAINING_LEN: usize = MAX_OUTPUT_LEN;
 
 /// Match digest types for `EVP_MD` functions.
-pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> *const aws_lc_sys::EVP_MD {
+pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<EVP_MD> {
     unsafe {
-        match algorithm_id {
+        ConstPointer::new(match algorithm_id {
             AlgorithmID::SHA1 => aws_lc_sys::EVP_sha1(),
             AlgorithmID::SHA256 => aws_lc_sys::EVP_sha256(),
             AlgorithmID::SHA384 => aws_lc_sys::EVP_sha384(),
             AlgorithmID::SHA512 => aws_lc_sys::EVP_sha512(),
             AlgorithmID::SHA512_256 => aws_lc_sys::EVP_sha512_256(),
-        }
+        })
+        .unwrap_or_else(|_| panic!("Digest algorithm not found: {:?}", algorithm_id))
     }
 }
 

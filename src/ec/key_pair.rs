@@ -65,7 +65,7 @@ impl EcdsaKeyPair {
         algorithm: &'static EcdsaSigningAlgorithm,
         ec_key: LcPtr<*mut EC_KEY>,
     ) -> Result<Self, ()> {
-        let pubkey = ec::marshal_public_key(&ec_key.as_non_null())?;
+        let pubkey = ec::marshal_public_key(&ec_key.as_const())?;
 
         Ok(Self {
             algorithm,
@@ -93,7 +93,7 @@ impl EcdsaKeyPair {
             let ec_key = LcPtr::new(EVP_PKEY_get1_EC_KEY(*evp_pkey))
                 .map_err(|_| KeyRejected::wrong_algorithm())?;
 
-            ec::validate_ec_key(&ec_key.as_non_null(), alg.bits)?;
+            validate_ec_key(&ec_key.as_const(), alg.bits)?;
 
             let key_pair = Self::new(alg, ec_key)?;
 
@@ -178,7 +178,7 @@ impl EcdsaKeyPair {
                 .into();
 
             let ec_key = ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
-            validate_ec_key(&ec_key.as_non_null(), alg.bits)?;
+            validate_ec_key(&ec_key.as_const(), alg.bits)?;
             let key_pair = Self::new(alg, ec_key)?;
 
             Ok(key_pair)

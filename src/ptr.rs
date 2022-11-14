@@ -40,9 +40,9 @@ impl<P: Pointer> Drop for LcPtr<P> {
 
 impl<P: Pointer + Copy> LcPtr<P> {
     #[inline]
-    pub fn as_non_null(&self) -> NonNullPtr<P> {
-        NonNullPtr {
-            pointer: self.pointer,
+    pub fn as_const<T>(&self) -> ConstPointer<T> {
+        ConstPointer {
+            ptr: self.pointer.as_const_ptr(),
         }
     }
 }
@@ -79,22 +79,18 @@ impl<P: Pointer> DetachableLcPtr<P> {
         }
     }
     #[inline]
-    pub fn detach(mut self) -> NonNullPtr<P> {
-        match self.pointer.take() {
-            Some(pointer) => NonNullPtr { pointer },
-            None => {
-                // Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                verify_unreachable!()
-            }
-        }
+    pub fn detach(mut self) {
+        self.pointer.take();
     }
 }
 
 impl<P: Pointer + Copy> DetachableLcPtr<P> {
     #[inline]
-    pub fn as_non_null(&self) -> NonNullPtr<P> {
+    pub fn as_const<T>(&self) -> ConstPointer<T> {
         match self.pointer {
-            Some(pointer) => NonNullPtr { pointer },
+            Some(pointer) => ConstPointer {
+                ptr: pointer.as_const_ptr(),
+            },
             None => {
                 // Safety: pointer is only None when DetachableLcPtr is detached or dropped
                 verify_unreachable!()
@@ -125,47 +121,34 @@ impl<P: Pointer> Drop for DetachableLcPtr<P> {
     }
 }
 
-#[allow(clippy::module_name_repetitions)]
-pub struct NonNullPtr<P: Pointer> {
-    pointer: P,
+pub struct ConstPointer<T> {
+    ptr: *const T,
 }
 
-impl<P: Pointer> Deref for NonNullPtr<P> {
-    type Target = P;
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.pointer
+impl<T> ConstPointer<T> {
+    pub fn new(ptr: *const T) -> Result<ConstPointer<T>, ()> {
+        if ptr.is_null() {
+            return Err(());
+        }
+        Ok(ConstPointer { ptr })
     }
 }
 
-impl<P: Pointer> NonNullPtr<P> {
-    #[inline]
-    pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ()> {
-        if let Some(pointer) = value.into_pointer() {
-            Ok(Self { pointer })
-        } else {
-            Err(())
-        }
+impl<T> Deref for ConstPointer<T> {
+    type Target = *const T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ptr
     }
 }
 
 pub trait Pointer {
     fn free(&mut self);
+    fn as_const_ptr<T>(&self) -> *const T;
 }
 
 pub trait IntoPointer<P> {
     fn into_pointer(self) -> Option<P>;
-}
-
-impl<T> IntoPointer<*mut T> for *const T {
-    #[inline]
-    fn into_pointer(self) -> Option<*mut T> {
-        if self.is_null() {
-            None
-        } else {
-            Some(self as *mut T)
-        }
-    }
 }
 
 impl<T> IntoPointer<*mut T> for *mut T {
@@ -188,6 +171,10 @@ macro_rules! create_pointer {
                     let ptr = *self;
                     $free(ptr.cast());
                 }
+            }
+
+            fn as_const_ptr<T>(&self) -> *const T {
+                self.cast()
             }
         }
     };
