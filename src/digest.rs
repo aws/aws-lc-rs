@@ -71,6 +71,11 @@ pub struct Context {
 
 impl Context {
     /// Constructs a new context.
+    ///
+    /// # Panics
+    ///
+    /// `new` panics if it fails to initialize an aws-lc digest context for the given
+    /// algorithm.
     #[must_use]
     pub fn new(algorithm: &'static Algorithm) -> Self {
         Self {
@@ -118,6 +123,7 @@ impl Context {
     /// `finish` consumes the context so it cannot be (mis-)used after `finish`
     /// has been called.
     #[inline]
+    #[must_use]
     pub fn finish(self) -> Digest {
         Self::try_finish(self).expect("EVP_DigestFinal failed")
     }
@@ -145,6 +151,7 @@ impl Context {
 
     /// The algorithm that this context is using.
     #[inline]
+    #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
     }

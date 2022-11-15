@@ -47,7 +47,7 @@ macro_rules! benchmark_digest {
             pub fn run_digest_incremental(config: &DigestConfig, chunk: &[u8]) {
                 let mut ctx = Context::new(algorithm(&config));
                 ctx.update(&chunk);
-                ctx.finish();
+                let _ = ctx.finish();
             }
 
             #[allow(unused_must_use)]
