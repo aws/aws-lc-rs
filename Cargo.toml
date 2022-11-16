@@ -8,8 +8,7 @@ rust-version = "1.57"
 
 [features]
 alloc = []
-threadlocal = ["thread_local"]
-default = ["alloc", "threadlocal", "ring-io"]
+default = ["alloc", "ring-io"]
 asan = ["aws-lc-sys/asan"]
 ring-io = []
 
@@ -18,7 +17,6 @@ untrusted = { version = "0.7.1" }
 aws-lc-sys = { version = "0.1.0" }
 zeroize = "1"
 libc = "0.2"
-thread_local = { version ="1.1.4", optional = true }
 mirai-annotations = "1.12.0"
 
 [dev-dependencies]

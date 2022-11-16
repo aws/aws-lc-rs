@@ -10,11 +10,6 @@
 //! Allows implementation to allocate values of arbitrary size. (The meaning of this feature differs
 //! from the "alloc" feature of Ring.) Currently, this is required by the `io::writer` module.
 //!
-//! #### - threadlocal (default) ####
-//! Allows implementation to use `thread_local`, which is needed for certain structs to
-//! impl `Sync`. Currently, only used by `digest::Context`.
-//! This struct can still be used without this feature.
-//!
 //! #### - ring-io (default) ####
 //! Enable feature to access the  `io`  module.
 //!
