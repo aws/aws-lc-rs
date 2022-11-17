@@ -28,8 +28,6 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
 use crate::{cbs, digest, rand, test};
-#[cfg(feature = "ring-io")]
-use aws_lc_sys::BIGNUM;
 use aws_lc_sys::{
     EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, RSA,
 };
@@ -309,16 +307,6 @@ unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, 
     Ok(pubkey_vec.into_boxed_slice())
 }
 
-#[cfg(feature = "ring-io")]
-unsafe fn serialize_bignum(bignum: &ConstPointer<BIGNUM>) -> Box<[u8]> {
-    let bn_len = bignum.num_bytes();
-    let mut bn_vec: Vec<u8> = vec![0u8; bn_len as usize];
-    bignum
-        .to_be_bytes(&mut bn_vec)
-        .expect("BIGNUM serialization failed");
-    bn_vec.into_boxed_slice()
-}
-
 impl KeyPair for RsaKeyPair {
     type PublicKey = RsaSubjectPublicKey;
 
@@ -354,10 +342,9 @@ impl RsaSubjectPublicKey {
         #[cfg(feature = "ring-io")]
         {
             let modulus = ConstPointer::new(RSA_get0_n(**pubkey))?;
-            let modulus = serialize_bignum(&modulus);
+            let modulus = modulus.to_be_bytes().into_boxed_slice();
             let exponent = ConstPointer::new(RSA_get0_e(**pubkey))?;
-            let exponent = serialize_bignum(&exponent);
-
+            let exponent = exponent.to_be_bytes().into_boxed_slice();
             Ok(RsaSubjectPublicKey {
                 key,
                 modulus,

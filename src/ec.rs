@@ -338,22 +338,23 @@ unsafe fn ecdsa_sig_to_fixed(
     let expected_number_size = ecdsa_fixed_number_byte_size(alg_id);
 
     let r_bn = ConstPointer::new(aws_lc_sys::ECDSA_SIG_get0_r(**sig))?;
-    let mut r_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
-    let r_bytes = r_bn.to_be_bytes(&mut r_buffer)?;
+    let r_buffer = r_bn.to_be_bytes();
 
     let s_bn = ConstPointer::new(aws_lc_sys::ECDSA_SIG_get0_s(**sig))?;
-    let mut s_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
-    let s_bytes = s_bn.to_be_bytes(&mut s_buffer)?;
+    let s_buffer = s_bn.to_be_bytes();
 
     Ok(Signature::new(|slice| {
-        let (r_start, r_end) = ((expected_number_size - r_bytes), expected_number_size);
+        let (r_start, r_end) = (
+            (expected_number_size - r_buffer.len()),
+            expected_number_size,
+        );
         let (s_start, s_end) = (
-            (2 * expected_number_size - s_bytes),
+            (2 * expected_number_size - s_buffer.len()),
             2 * expected_number_size,
         );
 
-        slice[r_start..r_end].copy_from_slice(&r_buffer[0..r_bytes]);
-        slice[s_start..s_end].copy_from_slice(&s_buffer[0..s_bytes]);
+        slice[r_start..r_end].copy_from_slice(r_buffer.as_slice());
+        slice[s_start..s_end].copy_from_slice(s_buffer.as_slice());
         2 * expected_number_size
     }))
 }
@@ -362,8 +363,6 @@ unsafe fn ecdsa_sig_to_fixed(
 unsafe fn ecdsa_sig_from_asn1(signature: &[u8]) -> Result<LcPtr<*mut ECDSA_SIG>, ()> {
     LcPtr::new(ECDSA_SIG_from_bytes(signature.as_ptr(), signature.len()))
 }
-
-const MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE: usize = 48;
 
 #[inline]
 const fn ecdsa_fixed_number_byte_size(alg_id: &'static AlgorithmID) -> usize {
