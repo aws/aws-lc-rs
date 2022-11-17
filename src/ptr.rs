@@ -180,9 +180,8 @@ macro_rules! create_pointer {
     };
 }
 use aws_lc_sys::{
-    BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_CIPHER_CTX_free,
-    EVP_MD_CTX_free, EVP_PKEY_free, HMAC_CTX_free, RSA_free, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
-    EC_POINT, EVP_CIPHER_CTX, EVP_MD_CTX, EVP_PKEY, HMAC_CTX, RSA,
+    BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_PKEY_free, RSA_free,
+    BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, RSA,
 };
 create_pointer!(u8, OPENSSL_free);
 create_pointer!(EC_GROUP, EC_GROUP_free);
@@ -191,7 +190,4 @@ create_pointer!(EC_KEY, EC_KEY_free);
 create_pointer!(ECDSA_SIG, ECDSA_SIG_free);
 create_pointer!(BIGNUM, BN_free);
 create_pointer!(EVP_PKEY, EVP_PKEY_free);
-create_pointer!(EVP_CIPHER_CTX, EVP_CIPHER_CTX_free);
-create_pointer!(EVP_MD_CTX, EVP_MD_CTX_free);
-create_pointer!(HMAC_CTX, HMAC_CTX_free);
 create_pointer!(RSA, RSA_free);

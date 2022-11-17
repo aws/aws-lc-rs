@@ -31,14 +31,12 @@ use crate::signature::{KeyPair, VerificationAlgorithm};
 use aws_lc_sys::{BN_bn2bin, BN_num_bytes};
 
 use crate::{cbs, digest, rand, test};
-use aws_lc_sys::{
-    BN_cmp, BN_new, BN_set_u64, EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_new, BIGNUM, RSA,
-};
+use aws_lc_sys::{EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_new, BIGNUM, RSA};
+use core::ffi::c_uint;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::RangeInclusive;
-use std::os::raw::c_uint;
 use std::ptr::{null, null_mut};
 use std::slice;
 use untrusted::Input;
@@ -164,20 +162,11 @@ impl RsaKeyPair {
             return Err(KeyRejected::too_large());
         }
         let exponent = ConstPointer::new(RSA_get0_e(**rsa))?;
-        if Self::compare(&exponent, 65537)? == Ordering::Less {
-            return Err(KeyRejected::too_small());
+        let min_val: ConstPointer<BIGNUM> = DetachableLcPtr::try_from(65537)?.as_const();
+        match exponent.compare(&min_val) {
+            Ordering::Less => Err(KeyRejected::too_small()),
+            Ordering::Equal | Ordering::Greater => Ok(()),
         }
-        Ok(())
-    }
-
-    unsafe fn compare(a: &ConstPointer<BIGNUM>, b: u64) -> Result<Ordering, KeyRejected> {
-        let b_val = LcPtr::new(BN_new()).map_err(|_| KeyRejected::unexpected_error())?;
-        if 1 != BN_set_u64(*b_val, b) {
-            return Err(KeyRejected::unexpected_error());
-        }
-        let result = BN_cmp(**a, *b_val) as i32;
-
-        Ok(result.cmp(&0))
     }
 }
 
@@ -241,28 +230,35 @@ impl RsaKeyPair {
             // These functions are non-mutating of RSA:
             // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L286
             let result = match padding {
-                RsaPadding::RSA_PKCS1_PADDING => aws_lc_sys::RSA_sign(
-                    digest_alg.hash_nid,
-                    digest.as_ptr(),
-                    digest.len(),
-                    signature.as_mut_ptr(),
-                    &mut (output_len as c_uint),
-                    *self.rsa_key,
-                ),
-                RsaPadding::RSA_PKCS1_PSS_PADDING => aws_lc_sys::RSA_sign_pss_mgf1(
-                    *self.rsa_key,
-                    &mut output_len,
-                    signature.as_mut_ptr(),
-                    output_len,
-                    digest.as_ptr(),
-                    digest.len(),
-                    *match_digest_type(&digest_alg.id),
-                    null(),
-                    -1,
-                ),
+                RsaPadding::RSA_PKCS1_PADDING => {
+                    let mut output_len = c_uint::try_from(output_len).map_err(|_| Unspecified)?;
+                    let result = aws_lc_sys::RSA_sign(
+                        digest_alg.hash_nid,
+                        digest.as_ptr(),
+                        digest.len(),
+                        signature.as_mut_ptr(),
+                        &mut output_len,
+                        *self.rsa_key,
+                    );
+                    debug_assert_eq!(output_len as usize, signature.len());
+                    result
+                }
+                RsaPadding::RSA_PKCS1_PSS_PADDING => {
+                    let result = aws_lc_sys::RSA_sign_pss_mgf1(
+                        *self.rsa_key,
+                        &mut output_len,
+                        signature.as_mut_ptr(),
+                        output_len,
+                        digest.as_ptr(),
+                        digest.len(),
+                        *match_digest_type(&digest_alg.id),
+                        null(),
+                        -1,
+                    );
+                    debug_assert_eq!(output_len, signature.len());
+                    result
+                }
             };
-
-            debug_assert_eq!(output_len as usize, signature.len());
 
             if result != 1 {
                 return Err(Unspecified);
@@ -542,7 +538,6 @@ fn RSA_verify(
     unsafe {
         let n = ConstPointer::new(RSA_get0_n(**public_key))?;
         let n_bits = aws_lc_sys::BN_num_bits(*n);
-        let n_bits = n_bits as c_uint;
         if !allowed_bit_size.contains(&n_bits) {
             return Err(Unspecified);
         }
@@ -609,21 +604,13 @@ where
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
             return Err(());
         }
-        let n_bn = DetachableLcPtr::new(aws_lc_sys::BN_bin2bn(
-            n_bytes.as_ptr(),
-            n_bytes.len(),
-            null_mut(),
-        ))?;
+        let n_bn = DetachableLcPtr::try_from(n_bytes)?;
 
         let e_bytes = self.e.as_ref();
         if e_bytes.is_empty() || e_bytes[0] == 0u8 {
             return Err(());
         }
-        let e_bn = DetachableLcPtr::new(aws_lc_sys::BN_bin2bn(
-            e_bytes.as_ptr(),
-            e_bytes.len(),
-            null_mut(),
-        ))?;
+        let e_bn = DetachableLcPtr::try_from(e_bytes)?;
 
         let rsa = LcPtr::new(RSA_new())?;
         if 1 != aws_lc_sys::RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) {

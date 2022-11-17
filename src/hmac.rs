@@ -110,8 +110,8 @@
 use crate::error::Unspecified;
 use crate::{constant_time, digest, hkdf};
 use aws_lc_sys::HMAC_CTX;
+use core::ffi::c_uint;
 use std::mem::MaybeUninit;
-use std::os::raw::c_uint;
 use std::ptr::null_mut;
 
 /// An HMAC algorithm.

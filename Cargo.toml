@@ -14,9 +14,8 @@ ring-io = []
 
 [dependencies]
 untrusted = { version = "0.7.1" }
-aws-lc-sys = { version = "0.1.0" }
+aws-lc-sys = { version = "0.2.0" }
 zeroize = "1"
-libc = "0.2"
 mirai-annotations = "1.12.0"
 
 [dev-dependencies]
