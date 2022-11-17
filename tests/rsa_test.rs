@@ -180,6 +180,7 @@ fn test_signature_rsa_pkcs1_verify() {
 
             for &alg in params {
                 let width_ok = key_bits >= alg.min_modulus_len();
+                let width_ok = width_ok && key_bits <= alg.max_modulus_len();
                 let actual_result =
                     signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
                 assert_eq!(actual_result.is_ok(), is_valid && width_ok);
