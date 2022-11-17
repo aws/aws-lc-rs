@@ -10,6 +10,9 @@ env:
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
   RUST_NIGHTLY_TOOLCHAIN: nightly
+  # Mirai version tag, updates this whenever a new version
+  # is released.
+  MIRAI_TAG: v1.1.2
 
 jobs:
   rustfmt:
@@ -81,6 +84,31 @@ jobs:
           command: public-api
           args: --all-features --deny changed --deny removed --diff-git-checkouts ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }}
 
+  udeps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          profile: minimal
+          override: true
+
+      - name: Install cargo-udeps
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install 
+          args: cargo-udeps
+
+      - name: Run cargo udeps
+        run: cargo udeps --workspace --all-targets
+        env:
+          RUSTC_WRAPPER: ""
+
   test:
     name: tests
     runs-on: ${{ matrix.os }}
@@ -94,7 +122,6 @@ jobs:
           - --no-default-features
           - --no-default-features --features ring-io
           - --no-default-features --features alloc
-          - --no-default-features --features threadlocal
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1.0.7
@@ -108,7 +135,6 @@ jobs:
           command: test
           args: ${{ matrix.args }}
 
-  # TODO: add bot to post coverage details to PR, or upload results to AWS account.
   coverage:
     runs-on: ubuntu-latest
     steps:
@@ -129,11 +155,53 @@ jobs:
           command: install 
           args: cargo-llvm-cov
 
+      # TODO: add bot to post coverage details to PR, or upload results to AWS 
+      # account. Using --html can give us more insight which regions are missing
+      # coverage immediately.
       - name: Run coverage
         uses: actions-rs/cargo@v1.0.3
         with:
           command: llvm-cov
-          args: --html --no-fail-fast
+          # TODO: raise to 95% when we're over 95%.
+          args: --no-fail-fast --fail-under-lines 90
+
+  mirai-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      # Update toolchain when fixed: https://github.com/facebookexperimental/MIRAI/issues/1188
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: nightly-2022-09-05
+          profile: minimal
+          components: rust-src, rustc-dev, llvm-tools-preview
+
+      - name: Cache Cargo
+        uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-mirai-${{ env.MIRAI_TAG }}
+
+      # https://github.com/facebookexperimental/MIRAI/blob/main/documentation/InstallationGuide.md#installing-mirai-into-cargo
+      - name: Install MIRAI
+        run: |
+          git clone --depth 1 --branch ${{ env.MIRAI_TAG }} https://github.com/facebookexperimental/MIRAI.git
+          cd MIRAI
+          cargo install --force --path ./checker --no-default-features
+          cd ../
+
+      - name: Run MIRAI
+        run: |
+          cargo mirai
 
   asan:
     runs-on: ubuntu-latest

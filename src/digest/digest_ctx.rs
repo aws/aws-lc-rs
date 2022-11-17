@@ -3,27 +3,35 @@
 
 use crate::digest::{match_digest_type, Algorithm};
 use crate::error::Unspecified;
-use crate::ptr::LcPtr;
+use std::mem::MaybeUninit;
 use std::ptr::null_mut;
 
-pub(super) struct DigestContext {
-    pub(super) ctx: LcPtr<*mut aws_lc_sys::EVP_MD_CTX>,
-}
+pub(super) struct DigestContext(aws_lc_sys::EVP_MD_CTX);
 
 impl DigestContext {
     pub fn new(algorithm: &'static Algorithm) -> Result<DigestContext, Unspecified> {
+        let evp_md_type = match_digest_type(&algorithm.id);
+        let mut dc = MaybeUninit::<aws_lc_sys::EVP_MD_CTX>::uninit();
         unsafe {
-            let ctx = LcPtr::new(aws_lc_sys::EVP_MD_CTX_new())?;
-            let evp_md_type = match_digest_type(&algorithm.id);
-            if 1 != aws_lc_sys::EVP_DigestInit_ex(*ctx, *evp_md_type, null_mut()) {
+            aws_lc_sys::EVP_MD_CTX_init(dc.as_mut_ptr());
+            if 1 != aws_lc_sys::EVP_DigestInit_ex(dc.as_mut_ptr(), *evp_md_type, null_mut()) {
                 return Err(Unspecified);
             };
-            Ok(DigestContext { ctx })
+            Ok(Self(dc.assume_init()))
         }
+    }
+
+    pub(super) fn as_mut_ptr(&mut self) -> *mut aws_lc_sys::EVP_MD_CTX {
+        &mut self.0
+    }
+
+    pub(super) fn as_ptr(&self) -> *const aws_lc_sys::EVP_MD_CTX {
+        &self.0
     }
 }
 
 unsafe impl Send for DigestContext {}
+unsafe impl Sync for DigestContext {}
 
 impl Clone for DigestContext {
     fn clone(&self) -> Self {
@@ -31,15 +39,23 @@ impl Clone for DigestContext {
     }
 }
 
+impl Drop for DigestContext {
+    fn drop(&mut self) {
+        unsafe {
+            aws_lc_sys::EVP_MD_CTX_cleanup(self.as_mut_ptr());
+        }
+    }
+}
+
 impl DigestContext {
     fn try_clone(&self) -> Result<Self, &'static str> {
+        let mut dc = MaybeUninit::<aws_lc_sys::EVP_MD_CTX>::uninit();
         unsafe {
-            let ctx = LcPtr::new(aws_lc_sys::EVP_MD_CTX_new())
-                .map_err(|_| "Cloning DigestContext failed during allocation.")?;
-            if 1 != aws_lc_sys::EVP_MD_CTX_copy(*ctx, *self.ctx) {
+            aws_lc_sys::EVP_MD_CTX_init(dc.as_mut_ptr());
+            if 1 != aws_lc_sys::EVP_MD_CTX_copy(dc.as_mut_ptr(), self.as_ptr()) {
                 return Err("EVP_MD_CTX_copy failed");
             };
-            Ok(DigestContext { ctx })
+            Ok(Self(dc.assume_init()))
         }
     }
 }
