@@ -7,19 +7,13 @@ use aws_lc_sys::{
 };
 use mirai_annotations::unrecoverable;
 use std::cmp::Ordering;
+use std::ptr::null_mut;
 
 impl TryFrom<&[u8]> for DetachableLcPtr<*mut BIGNUM> {
     type Error = ();
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        unsafe {
-            let bn = DetachableLcPtr::new(BN_new())?;
-            let result = BN_bin2bn(bytes.as_ptr(), bytes.len(), *bn);
-            if result.is_null() {
-                return Err(());
-            }
-            Ok(bn)
-        }
+        unsafe { DetachableLcPtr::new(BN_bin2bn(bytes.as_ptr(), bytes.len(), null_mut())) }
     }
 }
 
