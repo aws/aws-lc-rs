@@ -59,6 +59,31 @@ jobs:
           command: clippy
           args: --all-features --all-targets -- ${{ matrix.args }}
 
+  apidiff:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: nightly
+          profile: minimal
+          override: true
+      - name: Install cargo-public-api
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install
+          args: cargo-public-api
+      - name: Perform API Diff
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: public-api
+          args: --all-features --deny changed --deny removed --diff-git-checkouts ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }}
+
   udeps:
     runs-on: ubuntu-latest
     steps:
