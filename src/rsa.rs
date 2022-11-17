@@ -27,10 +27,11 @@ use crate::io;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
-#[cfg(feature = "ring-io")]
 use crate::{cbs, digest, rand, test};
+#[cfg(feature = "ring-io")]
+use aws_lc_sys::BIGNUM;
 use aws_lc_sys::{
-    EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, BIGNUM, RSA,
+    EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, RSA,
 };
 use core::ffi::c_uint;
 use std::cmp::Ordering;

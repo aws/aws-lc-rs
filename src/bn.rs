@@ -63,6 +63,7 @@ impl ConstPointer<BIGNUM> {
         }
     }
 
+    #[cfg(feature = "ring-io")]
     pub(crate) fn num_bytes(&self) -> u32 {
         unsafe { BN_num_bytes(**self) }
     }
