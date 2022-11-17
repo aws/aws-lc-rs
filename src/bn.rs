@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::ptr::{ConstPointer, DetachableLcPtr};
-use aws_lc_sys::{BN_bin2bn, BN_bn2bin, BN_cmp, BN_new, BN_num_bytes, BN_set_u64, BIGNUM};
+use aws_lc_sys::{
+    BN_bin2bn, BN_bn2bin, BN_cmp, BN_new, BN_num_bits, BN_num_bytes, BN_set_u64, BIGNUM,
+};
 use core::ffi::c_uint;
 use std::cmp::Ordering;
 
@@ -59,5 +61,13 @@ impl ConstPointer<BIGNUM> {
             let result = BN_cmp(**self, **other);
             result.cmp(&0)
         }
+    }
+
+    pub(crate) fn num_bytes(&self) -> u32 {
+        unsafe { BN_num_bytes(**self) }
+    }
+
+    pub(crate) fn num_bits(&self) -> u32 {
+        unsafe { BN_num_bits(**self) }
     }
 }

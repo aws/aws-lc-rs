@@ -28,10 +28,10 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
 #[cfg(feature = "ring-io")]
-use aws_lc_sys::{BN_bn2bin, BN_num_bytes};
-
 use crate::{cbs, digest, rand, test};
-use aws_lc_sys::{EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_new, BIGNUM, RSA};
+use aws_lc_sys::{
+    EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, BIGNUM, RSA,
+};
 use core::ffi::c_uint;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
@@ -141,14 +141,15 @@ impl RsaKeyPair {
             Self::new(rsa)
         }
     }
-    const MIN_RSA_BITS: c_uint = 1024;
-    const MAX_RSA_BITS: c_uint = 2048;
+    const MIN_RSA_BITS: u32 = 1024;
+    const MAX_RSA_BITS: u32 = 2048;
 
     unsafe fn validate_rsa(rsa: &ConstPointer<RSA>) -> Result<(), KeyRejected> {
-        let p = aws_lc_sys::RSA_get0_p(**rsa);
-        let q = aws_lc_sys::RSA_get0_q(**rsa);
-        let p_bits = aws_lc_sys::BN_num_bits(p);
-        let q_bits = aws_lc_sys::BN_num_bits(q);
+        let p = ConstPointer::new(RSA_get0_p(**rsa))?;
+        let q = ConstPointer::new(RSA_get0_q(**rsa))?;
+        let p_bits = p.num_bits();
+        let q_bits = q.num_bits();
+
         if p_bits != q_bits {
             return Err(KeyRejected::inconsistent_components());
         }
@@ -161,9 +162,10 @@ impl RsaKeyPair {
         if p_bits > Self::MAX_RSA_BITS {
             return Err(KeyRejected::too_large());
         }
-        let exponent = ConstPointer::new(RSA_get0_e(**rsa))?;
-        let min_val: ConstPointer<BIGNUM> = DetachableLcPtr::try_from(65537)?.as_const();
-        match exponent.compare(&min_val) {
+
+        let e = ConstPointer::new(RSA_get0_e(**rsa))?;
+        let min_exponent = DetachableLcPtr::try_from(65537)?;
+        match e.compare(&min_exponent.as_const()) {
             Ordering::Less => Err(KeyRejected::too_small()),
             Ordering::Equal | Ordering::Greater => Ok(()),
         }
@@ -308,11 +310,11 @@ unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, 
 
 #[cfg(feature = "ring-io")]
 unsafe fn serialize_bignum(bignum: &ConstPointer<BIGNUM>) -> Box<[u8]> {
-    let bn_len = BN_num_bytes(**bignum) as usize;
-    let mut bn_vec: Vec<u8> = vec![0u8; bn_len];
-    let bytes_written = BN_bn2bin(**bignum, bn_vec.as_mut_ptr());
-    debug_assert_eq!(bn_len, bytes_written);
-    debug_assert_eq!(bn_vec.len(), bytes_written);
+    let bn_len = bignum.num_bytes();
+    let mut bn_vec: Vec<u8> = vec![0u8; bn_len as usize];
+    bignum
+        .to_be_bytes(&mut bn_vec)
+        .expect("BIGNUM serialization failed");
     bn_vec.into_boxed_slice()
 }
 
@@ -537,7 +539,7 @@ fn RSA_verify(
 ) -> Result<(), Unspecified> {
     unsafe {
         let n = ConstPointer::new(RSA_get0_n(**public_key))?;
-        let n_bits = aws_lc_sys::BN_num_bits(*n);
+        let n_bits = n.num_bits();
         if !allowed_bit_size.contains(&n_bits) {
             return Err(Unspecified);
         }
