@@ -95,6 +95,7 @@ impl From<&[u8; IV_LEN]> for Nonce {
 /// All the AEADs we support use 96-bit nonces.
 pub const NONCE_LEN: usize = 96 / 8;
 
+#[cfg(test)]
 mod tests {
 
     #[test]

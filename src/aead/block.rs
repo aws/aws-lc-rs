@@ -49,6 +49,7 @@ impl AsRef<[u8; BLOCK_LEN]> for Block {
     }
 }
 
+#[cfg(test)]
 mod tests {
 
     #[test]
