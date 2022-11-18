@@ -14,8 +14,9 @@
 //! Enable feature to access the  `io`  module.
 //!
 //! #### - asan ####
-//! Performs an "address sanitizer" build of the  `aws-lc-sys`  crate.
-//!
+//! Performs an "address sanitizer" build. This can be used to help detect memory leaks. See the
+//! ["Address Sanitizer" section](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html#addresssanitizer)
+//! of the [Rust Unstable Book](https://doc.rust-lang.org/beta/unstable-book/).
 //!
 //! # Ring-compatibility
 //!
@@ -23,14 +24,17 @@
 //! behavior is observably different.
 //!
 //! * Our implementation requires the `std` library. We currently do not support a
-//! [`#!\[no_std\]`](https://docs.rust-embedded.org/book/intro/no-std.html) build.
-//! * We only support the platforms supported by `aws-lc-sys`.  Currently this is includes Mac and
-//! Linux, both x86-64 and ARM64.
-//! * AWS-LC does not support parsing PKCS#8 v2. Thus, `Ed25519KeyPair::from_pkcs8` is not
-//! supported. Instead, you can use `Ed25519KeyPair::from_pkcs8_maybe_unchecked` for many common
-//! use-cases.
-
-//! * When parsing PKCS#8 fails, the reason provided for `KeyRejected` may differ from Ring.
+//! [`#![no_std]`](https://docs.rust-embedded.org/book/intro/no-std.html) build.
+//! * We only support a subset of the platforms supported by `aws-lc-sys`.  We currently support Mac
+//! and Linux, both x86-64 and aarch64.
+//! * Due to its dependence on AWS-LC, this library does not support generating or parsing
+//! [PKCS#8 v2](https://tools.ietf.org/html/rfc5958). Thus, the `Ed25519KeyPair::generate_pkcs8` and
+//! `Ed25519KeyPair::from_pkcs8` implementations always returns an error. Instead, you can use
+//! `Ed25519KeyPair::generate_pkcs8v1` for generating and
+//! `Ed25519KeyPair::from_pkcs8_maybe_unchecked` for parsing
+//! [PKCS#8 v1](https://tools.ietf.org/html/rfc5208).
+//! * When parsing fails, the `KeyRejected` response may differ from Ring's response on the same
+//! input.
 //!
 
 #![warn(missing_docs)]
