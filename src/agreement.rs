@@ -64,7 +64,7 @@
 
 use crate::ec::{ec_group_from_nid, ec_key_from_public_point, ec_point_from_bytes};
 use crate::error::Unspecified;
-use crate::ptr::{ConstPointer, LcPtr};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::{ec, test};
 use aws_lc_sys::{
@@ -248,7 +248,7 @@ impl EphemeralPrivateKey {
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         unsafe {
             let ec_group = ec_group_from_nid(ECDH_P256.id.nid())?;
-            let priv_key = ec::bignum_from_be_bytes(priv_key)?;
+            let priv_key = DetachableLcPtr::try_from(priv_key)?;
 
             let ec_key = ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())?;
             let ec_key = LcPtr::from(ec_key);
@@ -262,7 +262,7 @@ impl EphemeralPrivateKey {
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         unsafe {
             let ec_group = ec_group_from_nid(ECDH_P384.id.nid())?;
-            let priv_key = ec::bignum_from_be_bytes(priv_key)?;
+            let priv_key = DetachableLcPtr::try_from(priv_key)?;
 
             let ec_key = ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())?;
             let ec_key = LcPtr::from(ec_key);

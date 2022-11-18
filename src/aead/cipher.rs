@@ -20,8 +20,8 @@ use crate::aead::chacha::{encrypt_block_chacha20, ChaCha20Key};
 use crate::aead::{block::Block, error, quic::Sample, Nonce};
 use crate::error::Unspecified;
 use aws_lc_sys::AES_KEY;
-use libc::c_uint;
 use std::mem::{size_of, transmute, MaybeUninit};
+use std::os::raw::c_uint;
 use std::ptr;
 use zeroize::Zeroize;
 

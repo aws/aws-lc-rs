@@ -22,10 +22,10 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
 use aws_lc_sys::{
-    BN_bin2bn, BN_bn2bin, BN_num_bytes, ECDSA_SIG_from_bytes, ECDSA_SIG_new, ECDSA_SIG_set0,
-    ECDSA_SIG_to_bytes, ECDSA_do_verify, EC_KEY_get0_group, EC_KEY_get0_public_key,
-    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, BIGNUM, ECDSA_SIG,
-    EC_GROUP, EC_KEY, EC_POINT,
+    ECDSA_SIG_from_bytes, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, ECDSA_do_verify,
+    EC_GROUP_order_bits, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_set_private_key,
+    EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
+    EC_POINT,
 };
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
@@ -164,7 +164,8 @@ unsafe fn validate_ec_key(
     expected_bits: c_uint,
 ) -> Result<(), KeyRejected> {
     let ec_group = ConstPointer::new(EC_KEY_get0_group(**ec_key))?;
-    let bits = aws_lc_sys::EC_GROUP_order_bits(*ec_group) as c_uint;
+    let bits = c_uint::try_from(EC_GROUP_order_bits(*ec_group))
+        .map_err(|_| KeyRejected::unexpected_error())?;
 
     if bits < expected_bits {
         return Err(KeyRejected::too_small());
@@ -248,7 +249,7 @@ pub(crate) unsafe fn ec_key_from_private(
 unsafe fn ec_key_from_public_private(
     ec_group: &LcPtr<*mut EC_GROUP>,
     public_ec_point: &LcPtr<*mut EC_POINT>,
-    private_bignum: &LcPtr<*mut BIGNUM>,
+    private_bignum: &DetachableLcPtr<*mut BIGNUM>,
 ) -> Result<LcPtr<*mut EC_KEY>, ()> {
     let ec_key = LcPtr::new(aws_lc_sys::EC_KEY_new())?;
     if 1 != aws_lc_sys::EC_KEY_set_group(*ec_key, **ec_group) {
@@ -337,22 +338,23 @@ unsafe fn ecdsa_sig_to_fixed(
     let expected_number_size = ecdsa_fixed_number_byte_size(alg_id);
 
     let r_bn = ConstPointer::new(aws_lc_sys::ECDSA_SIG_get0_r(**sig))?;
-    let mut r_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
-    let r_bytes = bignum_to_be_bytes(&r_bn, &mut r_buffer)?;
+    let r_buffer = r_bn.to_be_bytes();
 
     let s_bn = ConstPointer::new(aws_lc_sys::ECDSA_SIG_get0_s(**sig))?;
-    let mut s_buffer = [0u8; MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE];
-    let s_bytes = bignum_to_be_bytes(&s_bn, &mut s_buffer)?;
+    let s_buffer = s_bn.to_be_bytes();
 
     Ok(Signature::new(|slice| {
-        let (r_start, r_end) = ((expected_number_size - r_bytes), expected_number_size);
+        let (r_start, r_end) = (
+            (expected_number_size - r_buffer.len()),
+            expected_number_size,
+        );
         let (s_start, s_end) = (
-            (2 * expected_number_size - s_bytes),
+            (2 * expected_number_size - s_buffer.len()),
             2 * expected_number_size,
         );
 
-        slice[r_start..r_end].copy_from_slice(&r_buffer[0..r_bytes]);
-        slice[s_start..s_end].copy_from_slice(&s_buffer[0..s_bytes]);
+        slice[r_start..r_end].copy_from_slice(r_buffer.as_slice());
+        slice[s_start..s_end].copy_from_slice(s_buffer.as_slice());
         2 * expected_number_size
     }))
 }
@@ -361,8 +363,6 @@ unsafe fn ecdsa_sig_to_fixed(
 unsafe fn ecdsa_sig_from_asn1(signature: &[u8]) -> Result<LcPtr<*mut ECDSA_SIG>, ()> {
     LcPtr::new(ECDSA_SIG_from_bytes(signature.as_ptr(), signature.len()))
 }
-
-const MAX_ECDSA_FIXED_NUMBER_BYTE_SIZE: usize = 48;
 
 #[inline]
 const fn ecdsa_fixed_number_byte_size(alg_id: &'static AlgorithmID) -> usize {
@@ -381,8 +381,8 @@ unsafe fn ecdsa_sig_from_fixed(
     if signature.len() != 2 * num_size_bytes {
         return Err(());
     }
-    let r_bn = bignum_from_be_bytes(&signature[..num_size_bytes])?;
-    let s_bn = bignum_from_be_bytes(&signature[num_size_bytes..])?;
+    let r_bn = DetachableLcPtr::try_from(&signature[..num_size_bytes])?;
+    let s_bn = DetachableLcPtr::try_from(&signature[num_size_bytes..])?;
 
     let ecdsa_sig = LcPtr::new(ECDSA_SIG_new())?;
 
@@ -393,30 +393,6 @@ unsafe fn ecdsa_sig_from_fixed(
     s_bn.detach();
 
     Ok(ecdsa_sig)
-}
-
-#[inline]
-unsafe fn bignum_to_be_bytes(
-    bignum: &ConstPointer<BIGNUM>,
-    bytes: &mut [u8],
-) -> Result<usize, Unspecified> {
-    let bn_bytes = BN_num_bytes(**bignum);
-    if bn_bytes > bytes.len() as c_uint {
-        return Err(Unspecified);
-    }
-
-    let bn_bytes = BN_bn2bin(**bignum, bytes.as_mut_ptr());
-    if bn_bytes == 0 {
-        return Err(Unspecified);
-    }
-    Ok(bn_bytes)
-}
-
-#[inline]
-pub(crate) unsafe fn bignum_from_be_bytes(
-    bytes: &[u8],
-) -> Result<DetachableLcPtr<*mut BIGNUM>, ()> {
-    DetachableLcPtr::new(BN_bin2bn(bytes.as_ptr(), bytes.len(), null_mut()))
 }
 
 #[cfg(test)]

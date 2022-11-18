@@ -56,10 +56,9 @@ mod rsa;
 
 mod debug;
 
-mod c;
-
 mod endian;
 
+mod bn;
 mod cbb;
 mod cbs;
 mod ec;

@@ -27,12 +27,9 @@ use crate::io;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
-#[cfg(feature = "ring-io")]
-use aws_lc_sys::{BN_bn2bin, BN_num_bytes};
-
 use crate::{cbs, digest, rand, test};
 use aws_lc_sys::{
-    BN_cmp, BN_new, BN_set_u64, EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_new, BIGNUM, RSA,
+    EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, RSA,
 };
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
@@ -143,14 +140,15 @@ impl RsaKeyPair {
             Self::new(rsa)
         }
     }
-    const MIN_RSA_BITS: c_uint = 1024;
-    const MAX_RSA_BITS: c_uint = 2048;
+    const MIN_RSA_BITS: u32 = 1024;
+    const MAX_RSA_BITS: u32 = 2048;
 
     unsafe fn validate_rsa(rsa: &ConstPointer<RSA>) -> Result<(), KeyRejected> {
-        let p = aws_lc_sys::RSA_get0_p(**rsa);
-        let q = aws_lc_sys::RSA_get0_q(**rsa);
-        let p_bits = aws_lc_sys::BN_num_bits(p);
-        let q_bits = aws_lc_sys::BN_num_bits(q);
+        let p = ConstPointer::new(RSA_get0_p(**rsa))?;
+        let q = ConstPointer::new(RSA_get0_q(**rsa))?;
+        let p_bits = p.num_bits();
+        let q_bits = q.num_bits();
+
         if p_bits != q_bits {
             return Err(KeyRejected::inconsistent_components());
         }
@@ -163,21 +161,13 @@ impl RsaKeyPair {
         if p_bits > Self::MAX_RSA_BITS {
             return Err(KeyRejected::too_large());
         }
-        let exponent = ConstPointer::new(RSA_get0_e(**rsa))?;
-        if Self::compare(&exponent, 65537)? == Ordering::Less {
-            return Err(KeyRejected::too_small());
-        }
-        Ok(())
-    }
 
-    unsafe fn compare(a: &ConstPointer<BIGNUM>, b: u64) -> Result<Ordering, KeyRejected> {
-        let b_val = LcPtr::new(BN_new()).map_err(|_| KeyRejected::unexpected_error())?;
-        if 1 != BN_set_u64(*b_val, b) {
-            return Err(KeyRejected::unexpected_error());
+        let e = ConstPointer::new(RSA_get0_e(**rsa))?;
+        let min_exponent = DetachableLcPtr::try_from(65537)?;
+        match e.compare(&min_exponent.as_const()) {
+            Ordering::Less => Err(KeyRejected::too_small()),
+            Ordering::Equal | Ordering::Greater => Ok(()),
         }
-        let result = BN_cmp(**a, *b_val) as i32;
-
-        Ok(result.cmp(&0))
     }
 }
 
@@ -241,28 +231,35 @@ impl RsaKeyPair {
             // These functions are non-mutating of RSA:
             // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L286
             let result = match padding {
-                RsaPadding::RSA_PKCS1_PADDING => aws_lc_sys::RSA_sign(
-                    digest_alg.hash_nid,
-                    digest.as_ptr(),
-                    digest.len(),
-                    signature.as_mut_ptr(),
-                    &mut (output_len as c_uint),
-                    *self.rsa_key,
-                ),
-                RsaPadding::RSA_PKCS1_PSS_PADDING => aws_lc_sys::RSA_sign_pss_mgf1(
-                    *self.rsa_key,
-                    &mut output_len,
-                    signature.as_mut_ptr(),
-                    output_len,
-                    digest.as_ptr(),
-                    digest.len(),
-                    *match_digest_type(&digest_alg.id),
-                    null(),
-                    -1,
-                ),
+                RsaPadding::RSA_PKCS1_PADDING => {
+                    let mut output_len = c_uint::try_from(output_len).map_err(|_| Unspecified)?;
+                    let result = aws_lc_sys::RSA_sign(
+                        digest_alg.hash_nid,
+                        digest.as_ptr(),
+                        digest.len(),
+                        signature.as_mut_ptr(),
+                        &mut output_len,
+                        *self.rsa_key,
+                    );
+                    debug_assert_eq!(output_len as usize, signature.len());
+                    result
+                }
+                RsaPadding::RSA_PKCS1_PSS_PADDING => {
+                    let result = aws_lc_sys::RSA_sign_pss_mgf1(
+                        *self.rsa_key,
+                        &mut output_len,
+                        signature.as_mut_ptr(),
+                        output_len,
+                        digest.as_ptr(),
+                        digest.len(),
+                        *match_digest_type(&digest_alg.id),
+                        null(),
+                        -1,
+                    );
+                    debug_assert_eq!(output_len, signature.len());
+                    result
+                }
             };
-
-            debug_assert_eq!(output_len as usize, signature.len());
 
             if result != 1 {
                 return Err(Unspecified);
@@ -277,7 +274,7 @@ impl RsaKeyPair {
     #[must_use]
     pub fn public_modulus_len(&self) -> usize {
         // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
-        unsafe { (aws_lc_sys::RSA_bits(*self.rsa_key) / 8) as usize }
+        unsafe { (aws_lc_sys::RSA_size(*self.rsa_key)) as usize }
     }
 }
 
@@ -308,16 +305,6 @@ unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, 
     pubkey_vec.extend_from_slice(pubkey_slice);
 
     Ok(pubkey_vec.into_boxed_slice())
-}
-
-#[cfg(feature = "ring-io")]
-unsafe fn serialize_bignum(bignum: &ConstPointer<BIGNUM>) -> Box<[u8]> {
-    let bn_len = BN_num_bytes(**bignum) as usize;
-    let mut bn_vec: Vec<u8> = vec![0u8; bn_len];
-    let bytes_written = BN_bn2bin(**bignum, bn_vec.as_mut_ptr());
-    debug_assert_eq!(bn_len, bytes_written);
-    debug_assert_eq!(bn_vec.len(), bytes_written);
-    bn_vec.into_boxed_slice()
 }
 
 impl KeyPair for RsaKeyPair {
@@ -355,10 +342,9 @@ impl RsaSubjectPublicKey {
         #[cfg(feature = "ring-io")]
         {
             let modulus = ConstPointer::new(RSA_get0_n(**pubkey))?;
-            let modulus = serialize_bignum(&modulus);
+            let modulus = modulus.to_be_bytes().into_boxed_slice();
             let exponent = ConstPointer::new(RSA_get0_e(**pubkey))?;
-            let exponent = serialize_bignum(&exponent);
-
+            let exponent = exponent.to_be_bytes().into_boxed_slice();
             Ok(RsaSubjectPublicKey {
                 key,
                 modulus,
@@ -503,7 +489,6 @@ impl RsaParameters {
     }
 
     #[must_use]
-
     /// Maximum modulus length in bits.
     pub fn max_modulus_len(&self) -> u32 {
         *self.2.end()
@@ -541,8 +526,7 @@ fn RSA_verify(
 ) -> Result<(), Unspecified> {
     unsafe {
         let n = ConstPointer::new(RSA_get0_n(**public_key))?;
-        let n_bits = aws_lc_sys::BN_num_bits(*n);
-        let n_bits = n_bits as c_uint;
+        let n_bits = n.num_bits();
         if !allowed_bit_size.contains(&n_bits) {
             return Err(Unspecified);
         }
@@ -609,21 +593,13 @@ where
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
             return Err(());
         }
-        let n_bn = DetachableLcPtr::new(aws_lc_sys::BN_bin2bn(
-            n_bytes.as_ptr(),
-            n_bytes.len(),
-            null_mut(),
-        ))?;
+        let n_bn = DetachableLcPtr::try_from(n_bytes)?;
 
         let e_bytes = self.e.as_ref();
         if e_bytes.is_empty() || e_bytes[0] == 0u8 {
             return Err(());
         }
-        let e_bn = DetachableLcPtr::new(aws_lc_sys::BN_bin2bn(
-            e_bytes.as_ptr(),
-            e_bytes.len(),
-            null_mut(),
-        ))?;
+        let e_bn = DetachableLcPtr::try_from(e_bytes)?;
 
         let rsa = LcPtr::new(RSA_new())?;
         if 1 != aws_lc_sys::RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) {
@@ -652,5 +628,63 @@ where
             let rsa = self.build_RSA()?;
             RSA_verify(params.0, params.1, &rsa, msg, signature, &params.2)
         }
+    }
+}
+
+mod tests {
+    #[cfg(feature = "ring-io")]
+    #[test]
+    fn test_rsa() {
+        use crate::signature::KeyPair;
+        use crate::signature::RsaKeyPair;
+        use crate::test::from_dirty_hex;
+        let rsa_pkcs8_input: Vec<u8> = from_dirty_hex(
+            r#"308204bd020100300d06092a864886f70d0101010500048204a7308204a30201000282010100b9d7a
+        f84fa4184a5f22037ec8aff2db5f78bd8c21e714e579ae57c6398c4950f3a694b17bfccf488766159aec5bb7c2c4
+        3d59c798cbd45a09c9c86933f126879ee7eadcd404f61ecfc425197cab03946ba381a49ef3b4d0f60b17f8a747cd
+        e56a834a7f6008f35ffb2f60a54ceda1974ff2a9963aba7f80d4e2916a93d8c74bb1ba5f3b189a4e8f0377bd3e94
+        b5cc3f9c53cb8c8c7c0af394818755e968b7a76d9cada8da7af5fbe25da2a09737d5e4e4d7092aa16a0718d7322c
+        e8aca767015128d6d35775ea9cb8bb1ac6512e1b787d34015221be780a37b1d69bc3708bfd8832591be6095a768f
+        0fd3b3457927e6ae3641d55799a29a0a269cb4a693bc14b0203010001028201001c5fb7e69fa6dd2fd0f5e653f12
+        ce0b7c5a1ce6864e97bc2985dad4e2f86e4133d21d25b3fe774f658cca83aace9e11d8905d62c20b6cd28a680a77
+        357cfe1afac201f3d1532898afb40cce0560bedd2c49fc833bd98da3d1cd03cded0c637d4173e62de865b572d410
+        f9ba83324cd7a3573359428232f1628f6d104e9e6c5f380898b5570201cf11eb5f7e0c4933139c7e7fba67582287
+        ffb81b84fa81e9a2d9739815a25790c06ead7abcf286bd43c6e3d009d01f15fca3d720bbea48b0c8ccf8764f3c82
+        2e61159d8efcbff38c794f8afe040b45df14c976a91b1b6d886a55b8e68969bcb30c7197920d97d7721d78d954d8
+        9ffecbcc93c6ee82a86fe754102818100eba1cbe453f5cb2fb7eabc12d697267d25785a8f7b43cc2cb14555d3618
+        c63929b19839dcd4212397ecda8ad872f97ede6ac95ebda7322bbc9409bac2b24ae56ad62202800c670365ae2867
+        1195fe934978a5987bee2fcea06561b782630b066b0a35c3f559a281f0f729fc282ef8ebdbb065d60000223da6ed
+        b732fa32d82bb02818100c9e81e353315fd88eff53763ed7b3859f419a0a158f5155851ce0fe6e43188e44fb43dd
+        25bcdb7f3839fe84a5db88c6525e5bcbae513bae5ff54398106bd8ae4d241c082f8a64a9089531f7b57b09af5204
+        2efa097140702dda55a2141c174dd7a324761267728a6cc4ce386c034393d855ebe985c4e5f2aec2bd3f2e2123ab
+        1028180566889dd9c50798771397a68aa1ad9b970e136cc811676ac3901c51c741c48737dbf187de8c47eec68acc
+        05b8a4490c164230c0366a36c2c52fc075a56a3e7eecf3c39b091c0336c2b5e00913f0de5f62c5046ceb9d88188c
+        c740d34bd44839bd4d0c346527cea93a15596727d139e53c35eed25043bc4ac18950f237c02777b0281800f9dd98
+        049e44088efee6a8b5b19f5c0d765880c12c25a154bb6817a5d5a0b798544aea76f9c58c707fe3d4c4b3573fe7ad
+        0eb291580d22ae9f5ccc0d311a40590d1af1f3236427c2d72f57367d3ec185b9771cb5d041a8ab93409e59a9d68f
+        99c72f91c658a3fe5aed59f9f938c368530a4a45f4a7c7155f3906c4354030ef102818100c89e0ba805c970abd84
+        a70770d8fc57bfaa34748a58b77fcddaf0ca285db91953ef5728c1be7470da5540df6af56bb04c0f5ec500f83b08
+        057664cb1551e1e29c58d8b1e9d70e23ed57fdf9936c591a83c1dc954f6654d4a245b6d8676d045c2089ffce537d
+        234fc88e98d92afa92926c75b286e8fee70e273d762bbe63cd63b"#,
+        );
+
+        let key = RsaKeyPair::from_pkcs8(&rsa_pkcs8_input).unwrap();
+        let pk = key.public_key();
+        let modulus_bytes = pk.modulus().big_endian_without_leading_zero();
+        assert_eq!(&rsa_pkcs8_input[38..294], modulus_bytes);
+    }
+
+    #[test]
+    fn test_debug() {
+        use crate::signature;
+        assert_eq!(
+            "{ RSA_PSS_SHA512 }",
+            format!("{:?}", signature::RSA_PSS_SHA512)
+        );
+
+        assert_eq!(
+            "{ RSA_PSS_2048_8192_SHA256 }",
+            format!("{:?}", signature::RSA_PSS_2048_8192_SHA256)
+        );
     }
 }
