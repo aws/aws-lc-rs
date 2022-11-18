@@ -31,11 +31,11 @@ use crate::{cbs, digest, rand, test};
 use aws_lc_sys::{
     EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, RSA,
 };
-use core::ffi::c_uint;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::RangeInclusive;
+use std::os::raw::c_uint;
 use std::ptr::{null, null_mut};
 use std::slice;
 use untrusted::Input;
@@ -274,7 +274,7 @@ impl RsaKeyPair {
     #[must_use]
     pub fn public_modulus_len(&self) -> usize {
         // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
-        unsafe { (aws_lc_sys::RSA_bits(*self.rsa_key) / 8) as usize }
+        unsafe { (aws_lc_sys::RSA_size(*self.rsa_key)) as usize }
     }
 }
 

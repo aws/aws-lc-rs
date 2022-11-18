@@ -27,10 +27,10 @@ use aws_lc_sys::{
     EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
     EC_POINT,
 };
-use core::ffi::c_uint;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
+use std::os::raw::c_uint;
 use std::ptr::{null, null_mut};
 use std::slice;
 use untrusted::Input;

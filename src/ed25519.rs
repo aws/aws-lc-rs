@@ -12,9 +12,9 @@ use aws_lc_sys::{
     EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_new_raw_private_key,
     EVP_parse_private_key, EVP_PKEY,
 };
-use core::ffi::{c_int, c_uint};
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
+use std::os::raw::{c_int, c_uint};
 use std::ptr::null_mut;
 use untrusted::Input;
 

@@ -32,13 +32,13 @@ mod sha;
 use crate::error::Unspecified;
 use crate::ptr::ConstPointer;
 use aws_lc_sys::EVP_MD;
-use core::ffi::c_uint;
 use digest_ctx::DigestContext;
 pub use sha::{
     SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA256, SHA256_OUTPUT_LEN, SHA384,
     SHA384_OUTPUT_LEN, SHA512, SHA512_256, SHA512_256_OUTPUT_LEN, SHA512_OUTPUT_LEN,
 };
 use std::mem::MaybeUninit;
+use std::os::raw::c_uint;
 
 /// A context for multi-step (Init-Update-Finish) digest calculations.
 ///
