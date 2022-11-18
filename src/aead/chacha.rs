@@ -20,7 +20,6 @@ use crate::aead::block::{Block, BLOCK_LEN};
 use crate::aead::cipher::SymmetricCipherKey;
 use crate::aead::key_inner::KeyInner;
 use crate::aead::{Algorithm, AlgorithmID, Nonce, NONCE_LEN};
-use std::ops::Deref;
 use zeroize::Zeroize;
 
 use crate::error;
@@ -45,13 +44,6 @@ fn init_chacha(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
 }
 
 pub(crate) struct ChaCha20Key(pub(super) [u8; KEY_LEN]);
-impl Deref for ChaCha20Key {
-    type Target = [u8; KEY_LEN];
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 impl From<[u8; KEY_LEN]> for ChaCha20Key {
     fn from(bytes: [u8; KEY_LEN]) -> Self {

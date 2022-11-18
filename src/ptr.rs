@@ -49,7 +49,7 @@ impl<P: Pointer + Copy> LcPtr<P> {
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
-pub struct DetachableLcPtr<P: Pointer> {
+pub(crate) struct DetachableLcPtr<P: Pointer> {
     pointer: Option<P>,
 }
 
@@ -78,9 +78,10 @@ impl<P: Pointer> DetachableLcPtr<P> {
             Err(())
         }
     }
+
     #[inline]
-    pub fn detach(mut self) {
-        self.pointer.take();
+    pub fn detach(mut self) -> P {
+        self.pointer.take().unwrap()
     }
 }
 
@@ -121,7 +122,8 @@ impl<P: Pointer> Drop for DetachableLcPtr<P> {
     }
 }
 
-pub struct ConstPointer<T> {
+#[derive(Debug)]
+pub(crate) struct ConstPointer<T> {
     ptr: *const T,
 }
 
@@ -142,12 +144,12 @@ impl<T> Deref for ConstPointer<T> {
     }
 }
 
-pub trait Pointer {
+pub(crate) trait Pointer {
     fn free(&mut self);
     fn as_const_ptr<T>(&self) -> *const T;
 }
 
-pub trait IntoPointer<P> {
+pub(crate) trait IntoPointer<P> {
     fn into_pointer(self) -> Option<P>;
 }
 
@@ -191,3 +193,25 @@ create_pointer!(ECDSA_SIG, ECDSA_SIG_free);
 create_pointer!(BIGNUM, BN_free);
 create_pointer!(EVP_PKEY, EVP_PKEY_free);
 create_pointer!(RSA, RSA_free);
+
+#[cfg(test)]
+mod tests {
+    use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+    use aws_lc_sys::BIGNUM;
+
+    #[test]
+    fn test_debug() {
+        let num = 100u64;
+        let detachable_ptr: DetachableLcPtr<*mut BIGNUM> = DetachableLcPtr::try_from(num).unwrap();
+        let debug = format!("{:?}", detachable_ptr);
+        assert!(debug.contains("DetachableLcPtr { pointer: Some("));
+
+        let const_ptr: ConstPointer<BIGNUM> = detachable_ptr.as_const();
+        let debug = format!("{:?}", const_ptr);
+        assert!(debug.contains("ConstPointer { ptr:"));
+
+        let lc_ptr = LcPtr::new(detachable_ptr.detach()).unwrap();
+        let debug = format!("{:?}", lc_ptr);
+        assert!(debug.contains("LcPtr { pointer:"));
+    }
+}

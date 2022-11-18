@@ -631,6 +631,7 @@ where
     }
 }
 
+#[cfg(test)]
 mod tests {
     #[cfg(feature = "ring-io")]
     #[test]

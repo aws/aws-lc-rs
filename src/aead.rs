@@ -778,6 +778,9 @@ mod tests {
         let unbound_key = UnboundKey::new(&AES_128_GCM, &key).unwrap();
         assert_eq!(&AES_128_GCM, unbound_key.algorithm());
 
+        assert_eq!(16, AES_128_GCM.tag_len());
+        assert_eq!(12, AES_128_GCM.nonce_len());
+
         let less_safe_key = LessSafeKey::new(unbound_key);
 
         let nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();
