@@ -163,7 +163,7 @@ jobs:
         with:
           command: llvm-cov
           # TODO: raise to 95% when we're over 95%.
-          args: --no-fail-fast --fail-under-lines 90
+          args: --no-fail-fast --fail-under-lines 95
 
   mirai-analysis:
     runs-on: ubuntu-latest
