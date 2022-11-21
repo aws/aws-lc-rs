@@ -162,7 +162,7 @@ mod tests {
         let random_array = generate(&rando).unwrap();
         let random_array: [u8; 173] = random_array.expose();
         let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
-        assert!((108f64..148f64).contains(&mean));
+        assert!((106f64..150f64).contains(&mean), "Mean: {}", mean);
         assert!(variance > 8f64);
         println!("Mean: {} Variance: {}", mean, variance);
     }
