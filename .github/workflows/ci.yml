@@ -82,7 +82,7 @@ jobs:
         uses: actions-rs/cargo@v1.0.3
         with:
           command: public-api
-          args: --all-features --deny changed --deny removed --diff-git-checkouts ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.base.sha }}
+          args: --all-features --deny changed --deny removed --diff-git-checkouts ${{ github.event.pull_request.base.sha }}  ${{ github.event.pull_request.head.sha }}
 
   udeps:
     runs-on: ubuntu-latest

@@ -117,12 +117,33 @@ pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<*mut E
 }
 
 impl Ed25519KeyPair {
+    /// CURRENTLY NOT SUPPORTED. Use `generate_pkcs8v1` instead.
+    ///
+    /// Generates a new key pair and returns the key pair serialized as a
+    /// PKCS#8 document.
+    ///
+    /// The PKCS#8 document will be a v2 `OneAsymmetricKey` with the public key,
+    /// as described in [RFC 5958 Section 2]; see [RFC 8410 Section 10.3] for an
+    /// example.
+    ///
+    /// [RFC 5958 Section 2]: https://tools.ietf.org/html/rfc5958#section-2
+    /// [RFC 8410 Section 10.3]: https://tools.ietf.org/html/rfc8410#section-10.3
+    ///
+    /// # Errors
+    /// `error::Unspecified` for all inputs.
+    #[deprecated(
+        note = "PKCS#8 v2 keys are not supported by AWS-LC. Support may be added in future versions."
+    )]
+    pub fn generate_pkcs8(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
+        Err(Unspecified)
+    }
+
     /// Generates a `Ed25519KeyPair` using the `rng` provided, then marshals that key as a
-    /// DER-encoded `PrivateKeyInfo` structure (RFC5280).
+    /// DER-encoded `PrivateKeyInfo` structure (RFC5208).
     ///
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
-    pub fn generate_pkcs8(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
+    pub fn generate_pkcs8v1(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
         unsafe {
             let evp_pkey = generate_key(rng)?;
 
@@ -319,10 +340,11 @@ mod tests {
     #[test]
     #[allow(deprecated)]
     fn test_generate_pkcs8() {
-        let document = Ed25519KeyPair::generate_pkcs8(&crate::rand::SystemRandom::new()).unwrap();
-
+        let rng = crate::rand::SystemRandom::new();
+        let document = Ed25519KeyPair::generate_pkcs8v1(&rng).unwrap();
         let _key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
 
+        assert!(Ed25519KeyPair::generate_pkcs8(&rng).is_err());
         assert!(Ed25519KeyPair::from_pkcs8(document.as_ref()).is_err());
     }
 

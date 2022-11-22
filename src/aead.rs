@@ -21,7 +21,7 @@
 //! generic composition paradigm][AEAD] for an introduction to the concept of
 //! AEADs.
 //!
-//! [AEAD]: http://www-cse.ucsd.edu/~mihir/papers/oem.html
+//! [AEAD]: https://eprint.iacr.org/2000/025
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
 use crate::{derive_debug_via_id, error, hkdf};
