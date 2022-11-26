@@ -120,22 +120,39 @@ use crate::{constant_time, digest, hmac};
 use core::num::NonZeroU32;
 
 /// A PBKDF2 algorithm.
+///
+/// max_output_len is computed as u64 instead of usize to prevent overflowing on 32-bit machines.
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct Algorithm(hmac::Algorithm);
+pub struct Algorithm {
+    algorithm: hmac::Algorithm,
+    max_output_len: u64,
+}
 
 /// PBKDF2 using HMAC-SHA1.
-pub static PBKDF2_HMAC_SHA1: Algorithm = Algorithm(hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY);
+pub static PBKDF2_HMAC_SHA1: Algorithm = Algorithm {
+    algorithm: hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+    max_output_len: MAX_USIZE32 * digest::SHA1_OUTPUT_LEN as u64,
+};
 
 /// PBKDF2 using HMAC-SHA256.
-pub static PBKDF2_HMAC_SHA256: Algorithm = Algorithm(hmac::HMAC_SHA256);
+pub static PBKDF2_HMAC_SHA256: Algorithm = Algorithm {
+    algorithm: hmac::HMAC_SHA256,
+    max_output_len: MAX_USIZE32 * digest::SHA256_OUTPUT_LEN as u64,
+};
 
 /// PBKDF2 using HMAC-SHA384.
-pub static PBKDF2_HMAC_SHA384: Algorithm = Algorithm(hmac::HMAC_SHA384);
+pub static PBKDF2_HMAC_SHA384: Algorithm = Algorithm {
+    algorithm: hmac::HMAC_SHA384,
+    max_output_len: MAX_USIZE32 * digest::SHA384_OUTPUT_LEN as u64,
+};
 
 /// PBKDF2 using HMAC-SHA512.
-pub static PBKDF2_HMAC_SHA512: Algorithm = Algorithm(hmac::HMAC_SHA512);
+pub static PBKDF2_HMAC_SHA512: Algorithm = Algorithm {
+    algorithm: hmac::HMAC_SHA512,
+    max_output_len: MAX_USIZE32 * digest::SHA512_OUTPUT_LEN as u64,
+};
 
-const MAX_USIZE32: usize = u32::MAX as usize;
+const MAX_USIZE32: u64 = u32::MAX as u64;
 
 /// Fills `out` with the key derived using PBKDF2 with the given inputs.
 ///
@@ -177,9 +194,8 @@ fn try_derive(
     secret: &[u8],
     out: &mut [u8],
 ) -> Result<(), Unspecified> {
-    let digest_alg = digest_alg.0.digest_algorithm();
     assert!(
-        out.len() <= (MAX_USIZE32 - 1) * digest_alg.output_len,
+        out.len() as u64 <= digest_alg.max_output_len,
         "derived key too long"
     );
 
@@ -190,7 +206,7 @@ fn try_derive(
             salt.as_ptr(),
             salt.len(),
             iterations.get(),
-            *digest::match_digest_type(&digest_alg.id),
+            *digest::match_digest_type(&digest_alg.algorithm.digest_algorithm().id),
             out.len(),
             out.as_mut_ptr(),
         ) {
@@ -232,13 +248,11 @@ pub fn verify(
     secret: &[u8],
     previously_derived: &[u8],
 ) -> Result<(), Unspecified> {
-    let digest_alg = digest_alg.0.digest_algorithm();
-
     if previously_derived.is_empty() {
         return Err(Unspecified);
     }
     assert!(
-        previously_derived.len() <= (MAX_USIZE32 - 1) * digest_alg.output_len,
+        previously_derived.len() as u64 <= digest_alg.max_output_len,
         "derived key too long"
     );
 
@@ -251,7 +265,7 @@ pub fn verify(
             salt.as_ptr(),
             salt.len(),
             iterations.get(),
-            *digest::match_digest_type(&digest_alg.id),
+            *digest::match_digest_type(&digest_alg.algorithm.digest_algorithm().id),
             previously_derived.len(),
             derived_buf.as_mut_ptr(),
         ) {
