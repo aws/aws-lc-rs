@@ -21,12 +21,17 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
+#[cfg(feature = "fips")]
+use aws_lc::EC_KEY_check_fips;
+#[cfg(not(feature = "fips"))]
+use aws_lc::EC_KEY_check_key;
 use aws_lc::{
     ECDSA_SIG_from_bytes, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, ECDSA_do_verify,
     EC_GROUP_order_bits, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_set_private_key,
     EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
     EC_POINT,
 };
+
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
@@ -174,6 +179,17 @@ unsafe fn validate_ec_key(
     if bits > expected_bits {
         return Err(KeyRejected::too_large());
     }
+
+    #[cfg(not(feature = "fips"))]
+    if 1 != EC_KEY_check_key(**ec_key) {
+        return Err(KeyRejected::inconsistent_components());
+    }
+
+    #[cfg(feature = "fips")]
+    if 1 != EC_KEY_check_fips(**ec_key) {
+        return Err(KeyRejected::inconsistent_components());
+    }
+
     Ok(())
 }
 

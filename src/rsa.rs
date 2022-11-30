@@ -28,7 +28,12 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
 use crate::{cbs, digest, rand, test};
+#[cfg(feature = "fips")]
+use aws_lc::RSA_check_fips;
+#[cfg(not(feature = "fips"))]
+use aws_lc::RSA_check_key;
 use aws_lc::{EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, RSA};
+
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
@@ -165,7 +170,19 @@ impl RsaKeyPair {
         match e.compare(&min_exponent.as_const()) {
             Ordering::Less => Err(KeyRejected::too_small()),
             Ordering::Equal | Ordering::Greater => Ok(()),
+        }?;
+
+        #[cfg(not(feature = "fips"))]
+        if 1 != RSA_check_key(**rsa) {
+            return Err(KeyRejected::inconsistent_components());
         }
+
+        #[cfg(feature = "fips")]
+        if 1 != RSA_check_fips(**rsa as *mut RSA) {
+            return Err(KeyRejected::inconsistent_components());
+        }
+
+        Ok(())
     }
 }
 

@@ -88,6 +88,23 @@ pub fn init() {
     });
 }
 
+#[cfg(feature = "fips")]
+/// Panics if the underlying implementation is not FIPS, otherwise it returns.
+pub fn fips_mode() {
+    try_fips_mode().unwrap()
+}
+
+/// Return an error if the underlying implementation is not FIPS, otherwise ok.
+pub fn try_fips_mode() -> Result<(), &'static str> {
+    init();
+    unsafe {
+        match aws_lc::FIPS_mode() {
+            1 => Ok(()),
+            _ => Err("FIPS mode not enabled!"),
+        }
+    }
+}
+
 #[allow(dead_code)]
 unsafe fn dump_error() {
     let err = aws_lc::ERR_get_error();
@@ -133,5 +150,18 @@ mod tests {
         unsafe {
             dump_error();
         }
+    }
+
+    #[cfg(not(feature = "fips"))]
+    #[test]
+    fn test_fips() {
+        assert!(crate::try_fips_mode().is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "fips")]
+    fn test_fips() {
+        // TODO: This test will fail until we can link to an actual FIPS AWS-LC implementation
+        // crate::fips_mode();
     }
 }
