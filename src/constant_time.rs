@@ -18,6 +18,7 @@
 //! Constant-time operations.
 
 use crate::error;
+use aws_lc::CRYPTO_memcmp;
 
 /// Returns `Ok(())` if `a == b` and `Err(error::Unspecified)` otherwise.
 /// The comparison of `a` and `b` is done in constant time with respect to the
@@ -32,7 +33,7 @@ pub fn verify_slices_are_equal(a: &[u8], b: &[u8]) -> Result<(), error::Unspecif
     if a.len() != b.len() {
         return Err(error::Unspecified);
     }
-    let result = unsafe { aws_lc::CRYPTO_memcmp(a.as_ptr().cast(), b.as_ptr().cast(), a.len()) };
+    let result = unsafe { CRYPTO_memcmp(a.as_ptr().cast(), b.as_ptr().cast(), a.len()) };
     match result {
         0 => Ok(()),
         _ => Err(error::Unspecified),

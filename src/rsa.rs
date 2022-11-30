@@ -32,7 +32,11 @@ use crate::{cbs, digest, rand, test};
 use aws_lc::RSA_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::RSA_check_key;
-use aws_lc::{EVP_parse_private_key, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, RSA};
+use aws_lc::{
+    EVP_PKEY_get1_RSA, EVP_parse_private_key, RSA_bits, RSA_get0_e, RSA_get0_n, RSA_get0_p,
+    RSA_get0_q, RSA_new, RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes,
+    RSA_set0_key, RSA_sign, RSA_sign_pss_mgf1, RSA_size, RSA_verify, RSA_verify_pss_mgf1, RSA,
+};
 
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
@@ -124,7 +128,7 @@ impl RsaKeyPair {
             let mut cbs = cbs::build_CBS(pkcs8);
             let evp_pkey = LcPtr::new(EVP_parse_private_key(&mut cbs))
                 .map_err(|_| KeyRejected::invalid_encoding())?;
-            let rsa = LcPtr::new(aws_lc::EVP_PKEY_get1_RSA(*evp_pkey))
+            let rsa = LcPtr::new(EVP_PKEY_get1_RSA(*evp_pkey))
                 .map_err(|_| KeyRejected::wrong_algorithm())?;
             Self::validate_rsa(&rsa.as_const())?;
 
@@ -195,7 +199,7 @@ impl VerificationAlgorithm for RsaParameters {
     ) -> Result<(), Unspecified> {
         unsafe {
             let rsa = build_public_RSA(public_key.as_slice_less_safe())?;
-            RSA_verify(
+            verify_RSA(
                 self.0,
                 self.1,
                 &rsa,
@@ -248,7 +252,7 @@ impl RsaKeyPair {
             let result = match padding {
                 RsaPadding::RSA_PKCS1_PADDING => {
                     let mut output_len = c_uint::try_from(output_len).map_err(|_| Unspecified)?;
-                    let result = aws_lc::RSA_sign(
+                    let result = RSA_sign(
                         digest_alg.hash_nid,
                         digest.as_ptr(),
                         digest.len(),
@@ -260,7 +264,7 @@ impl RsaKeyPair {
                     result
                 }
                 RsaPadding::RSA_PKCS1_PSS_PADDING => {
-                    let result = aws_lc::RSA_sign_pss_mgf1(
+                    let result = RSA_sign_pss_mgf1(
                         *self.rsa_key,
                         &mut output_len,
                         signature.as_mut_ptr(),
@@ -289,7 +293,7 @@ impl RsaKeyPair {
     #[must_use]
     pub fn public_modulus_len(&self) -> usize {
         // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
-        unsafe { (aws_lc::RSA_size(*self.rsa_key)) as usize }
+        unsafe { (RSA_size(*self.rsa_key)) as usize }
     }
 }
 
@@ -306,11 +310,7 @@ impl Debug for RsaKeyPair {
 unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, ()> {
     let mut pubkey_bytes = MaybeUninit::<*mut u8>::uninit();
     let mut outlen = MaybeUninit::<usize>::uninit();
-    if 1 != aws_lc::RSA_public_key_to_bytes(
-        pubkey_bytes.as_mut_ptr(),
-        outlen.as_mut_ptr(),
-        **pubkey,
-    ) {
+    if 1 != RSA_public_key_to_bytes(pubkey_bytes.as_mut_ptr(), outlen.as_mut_ptr(), **pubkey) {
         return Err(());
     }
     let pubkey_bytes = LcPtr::new(pubkey_bytes.assume_init())?;
@@ -490,8 +490,8 @@ impl RsaParameters {
     pub fn public_modulus_len(public_key: &[u8]) -> Result<u32, Unspecified> {
         unsafe {
             let mut cbs = cbs::build_CBS(public_key);
-            let rsa = LcPtr::new(aws_lc::RSA_parse_public_key(&mut cbs))?;
-            let mod_len = aws_lc::RSA_bits(*rsa);
+            let rsa = LcPtr::new(RSA_parse_public_key(&mut cbs))?;
+            let mod_len = RSA_bits(*rsa);
 
             Ok(mod_len)
         }
@@ -515,7 +515,7 @@ impl RsaParameters {
 unsafe fn build_public_RSA(public_key: &[u8]) -> Result<LcPtr<*mut RSA>, Unspecified> {
     let mut cbs = cbs::build_CBS(public_key);
 
-    let rsa = LcPtr::new(aws_lc::RSA_parse_public_key(&mut cbs))?;
+    let rsa = LcPtr::new(RSA_parse_public_key(&mut cbs))?;
     Ok(rsa)
 }
 
@@ -524,14 +524,14 @@ unsafe fn build_public_RSA(public_key: &[u8]) -> Result<LcPtr<*mut RSA>, Unspeci
 unsafe fn build_private_RSA(public_key: &[u8]) -> Result<LcPtr<*mut RSA>, KeyRejected> {
     let mut cbs = cbs::build_CBS(public_key);
 
-    let rsa = LcPtr::new(aws_lc::RSA_parse_private_key(&mut cbs))
-        .map_err(|_| KeyRejected::invalid_encoding())?;
+    let rsa =
+        LcPtr::new(RSA_parse_private_key(&mut cbs)).map_err(|_| KeyRejected::invalid_encoding())?;
     Ok(rsa)
 }
 
 #[inline]
 #[allow(non_snake_case)]
-fn RSA_verify(
+fn verify_RSA(
     algorithm: &'static digest::Algorithm,
     padding: &'static RsaPadding,
     public_key: &LcPtr<*mut RSA>,
@@ -550,7 +550,7 @@ fn RSA_verify(
         let digest = digest.as_ref();
 
         let result = match padding {
-            RsaPadding::RSA_PKCS1_PADDING => aws_lc::RSA_verify(
+            RsaPadding::RSA_PKCS1_PADDING => RSA_verify(
                 algorithm.hash_nid,
                 digest.as_ptr(),
                 digest.len(),
@@ -558,7 +558,7 @@ fn RSA_verify(
                 signature.len(),
                 **public_key,
             ),
-            RsaPadding::RSA_PKCS1_PSS_PADDING => aws_lc::RSA_verify_pss_mgf1(
+            RsaPadding::RSA_PKCS1_PSS_PADDING => RSA_verify_pss_mgf1(
                 **public_key,
                 digest.as_ptr(),
                 digest.len(),
@@ -617,7 +617,7 @@ where
         let e_bn = DetachableLcPtr::try_from(e_bytes)?;
 
         let rsa = LcPtr::new(RSA_new())?;
-        if 1 != aws_lc::RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) {
+        if 1 != RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) {
             return Err(());
         }
         n_bn.detach();
@@ -641,7 +641,7 @@ where
     ) -> Result<(), Unspecified> {
         unsafe {
             let rsa = self.build_RSA()?;
-            RSA_verify(params.0, params.1, &rsa, msg, signature, &params.2)
+            verify_RSA(params.0, params.1, &rsa, msg, signature, &params.2)
         }
     }
 }

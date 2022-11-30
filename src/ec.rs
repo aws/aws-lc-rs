@@ -26,9 +26,11 @@ use aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::EC_KEY_check_key;
 use aws_lc::{
-    ECDSA_SIG_from_bytes, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, ECDSA_do_verify,
-    EC_GROUP_order_bits, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_set_private_key,
-    EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
+    point_conversion_form_t, ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s,
+    ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, ECDSA_do_verify, EC_GROUP_new_by_curve_name,
+    EC_GROUP_order_bits, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
+    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, EC_POINT_oct2point,
+    EC_POINT_point2oct, NID_X9_62_prime256v1, NID_secp384r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
     EC_POINT,
 };
 
@@ -101,8 +103,8 @@ impl AlgorithmID {
     #[inline]
     pub(crate) fn nid(&'static self) -> i32 {
         match self {
-            AlgorithmID::ECDSA_P256 => aws_lc::NID_X9_62_prime256v1,
-            AlgorithmID::ECDSA_P384 => aws_lc::NID_secp384r1,
+            AlgorithmID::ECDSA_P256 => NID_X9_62_prime256v1,
+            AlgorithmID::ECDSA_P384 => NID_secp384r1,
         }
     }
 }
@@ -221,8 +223,8 @@ pub(crate) unsafe fn ec_key_from_public_point(
     ec_group: &LcPtr<*mut EC_GROUP>,
     public_ec_point: &LcPtr<*mut EC_POINT>,
 ) -> Result<DetachableLcPtr<*mut EC_KEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(aws_lc::EC_KEY_new())?;
-    if 1 != aws_lc::EC_KEY_set_group(*ec_key, **ec_group) {
+    let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
+    if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(Unspecified);
     }
     if 1 != EC_KEY_set_public_key(*ec_key, **public_ec_point) {
@@ -236,8 +238,8 @@ pub(crate) unsafe fn ec_key_from_private(
     ec_group: &ConstPointer<EC_GROUP>,
     private_big_num: &ConstPointer<BIGNUM>,
 ) -> Result<DetachableLcPtr<*mut EC_KEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(aws_lc::EC_KEY_new())?;
-    if 1 != aws_lc::EC_KEY_set_group(*ec_key, **ec_group) {
+    let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
+    if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(Unspecified);
     }
     if 1 != EC_KEY_set_private_key(*ec_key, **private_big_num) {
@@ -267,8 +269,8 @@ unsafe fn ec_key_from_public_private(
     public_ec_point: &LcPtr<*mut EC_POINT>,
     private_bignum: &DetachableLcPtr<*mut BIGNUM>,
 ) -> Result<LcPtr<*mut EC_KEY>, ()> {
-    let ec_key = LcPtr::new(aws_lc::EC_KEY_new())?;
-    if 1 != aws_lc::EC_KEY_set_group(*ec_key, **ec_group) {
+    let ec_key = LcPtr::new(EC_KEY_new())?;
+    if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(());
     }
     if 1 != EC_KEY_set_public_key(*ec_key, **public_ec_point) {
@@ -282,7 +284,7 @@ unsafe fn ec_key_from_public_private(
 
 #[inline]
 pub(crate) unsafe fn ec_group_from_nid(nid: i32) -> Result<LcPtr<*mut EC_GROUP>, ()> {
-    LcPtr::new(aws_lc::EC_GROUP_new_by_curve_name(nid))
+    LcPtr::new(EC_GROUP_new_by_curve_name(nid))
 }
 
 #[inline]
@@ -292,7 +294,7 @@ pub(crate) unsafe fn ec_point_from_bytes(
 ) -> Result<LcPtr<*mut EC_POINT>, Unspecified> {
     let ec_point = LcPtr::new(EC_POINT_new(**ec_group))?;
 
-    if 1 != aws_lc::EC_POINT_oct2point(
+    if 1 != EC_POINT_oct2point(
         **ec_group,
         *ec_point,
         bytes.as_ptr(),
@@ -311,9 +313,9 @@ unsafe fn ec_point_to_bytes(
     ec_point: &ConstPointer<EC_POINT>,
     buf: &mut [u8; PUBLIC_KEY_MAX_LEN],
 ) -> Result<usize, Unspecified> {
-    let pt_conv_form = aws_lc::point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED;
+    let pt_conv_form = point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED;
 
-    let out_len = aws_lc::EC_POINT_point2oct(
+    let out_len = EC_POINT_point2oct(
         **ec_group,
         **ec_point,
         pt_conv_form,
@@ -353,10 +355,10 @@ unsafe fn ecdsa_sig_to_fixed(
 ) -> Result<Signature, Unspecified> {
     let expected_number_size = ecdsa_fixed_number_byte_size(alg_id);
 
-    let r_bn = ConstPointer::new(aws_lc::ECDSA_SIG_get0_r(**sig))?;
+    let r_bn = ConstPointer::new(ECDSA_SIG_get0_r(**sig))?;
     let r_buffer = r_bn.to_be_bytes();
 
-    let s_bn = ConstPointer::new(aws_lc::ECDSA_SIG_get0_s(**sig))?;
+    let s_bn = ConstPointer::new(ECDSA_SIG_get0_s(**sig))?;
     let s_buffer = s_bn.to_be_bytes();
 
     Ok(Signature::new(|slice| {

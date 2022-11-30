@@ -29,6 +29,7 @@ use aes_gcm::aead_seal_separate;
 use std::fmt::Debug;
 
 use crate::error::Unspecified;
+use aws_lc::{EVP_AEAD_CTX_open, EVP_AEAD_CTX_seal};
 use key_inner::KeyInner;
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
@@ -707,7 +708,7 @@ where
         let mut_in_out = in_out.as_mut();
         let add_str = aad.0;
 
-        if 1 != aws_lc::EVP_AEAD_CTX_seal(
+        if 1 != EVP_AEAD_CTX_seal(
             aead_ctx,
             mut_in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
@@ -746,7 +747,7 @@ pub(crate) fn aead_open_combined(
 
         let aad_str = aad.0;
         let mut out_len = MaybeUninit::<usize>::uninit();
-        if 1 != aws_lc::EVP_AEAD_CTX_open(
+        if 1 != EVP_AEAD_CTX_open(
             aead_ctx,
             in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),

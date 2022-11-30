@@ -9,8 +9,10 @@ use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
 use crate::{cbb, cbs, constant_time, sealed, test};
 use aws_lc::{
-    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_new_raw_private_key,
-    EVP_parse_private_key, EVP_PKEY,
+    CBB_finish, ED25519_keypair_from_seed, ED25519_sign, ED25519_verify, EVP_PKEY_bits,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id,
+    EVP_PKEY_new_raw_private_key, EVP_marshal_private_key, EVP_parse_private_key, EVP_PKEY,
+    EVP_PKEY_ED25519,
 };
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
@@ -40,7 +42,7 @@ impl VerificationAlgorithm for EdDSAParameters {
         signature: Input<'_>,
     ) -> Result<(), Unspecified> {
         unsafe {
-            if 1 != aws_lc::ED25519_verify(
+            if 1 != ED25519_verify(
                 msg.as_slice_less_safe().as_ptr(),
                 msg.len(),
                 signature.as_slice_less_safe().as_ptr(),
@@ -102,14 +104,14 @@ pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<*mut E
 
     let mut public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
     let mut private_key = MaybeUninit::<[u8; ED25519_PRIVATE_KEY_LEN]>::uninit();
-    aws_lc::ED25519_keypair_from_seed(
+    ED25519_keypair_from_seed(
         public_key.as_mut_ptr().cast(),
         private_key.as_mut_ptr().cast(),
         seed.as_ptr(),
     );
 
     LcPtr::new(EVP_PKEY_new_raw_private_key(
-        aws_lc::EVP_PKEY_ED25519,
+        EVP_PKEY_ED25519,
         null_mut(),
         private_key.assume_init().as_ptr(),
         ED25519_PRIVATE_KEY_PREFIX_LEN,
@@ -148,13 +150,13 @@ impl Ed25519KeyPair {
             let evp_pkey = generate_key(rng)?;
 
             let mut cbb = cbb::build_CBB(PKCS8_DOCUMENT_MAX_LEN);
-            if 1 != aws_lc::EVP_marshal_private_key(cbb.as_mut_ptr(), *evp_pkey) {
+            if 1 != EVP_marshal_private_key(cbb.as_mut_ptr(), *evp_pkey) {
                 return Err(Unspecified);
             }
 
             let mut pkcs8_bytes_ptr = MaybeUninit::<*mut u8>::uninit();
             let mut out_len = MaybeUninit::<usize>::uninit();
-            if 1 != aws_lc::CBB_finish(
+            if 1 != CBB_finish(
                 cbb.as_mut_ptr(),
                 pkcs8_bytes_ptr.as_mut_ptr(),
                 out_len.as_mut_ptr(),
@@ -200,7 +202,7 @@ impl Ed25519KeyPair {
         unsafe {
             let mut public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
             let mut private_key = MaybeUninit::<[u8; ED25519_PRIVATE_KEY_LEN]>::uninit();
-            aws_lc::ED25519_keypair_from_seed(
+            ED25519_keypair_from_seed(
                 public_key.as_mut_ptr().cast(),
                 private_key.as_mut_ptr().cast(),
                 seed.as_ptr(),
@@ -289,7 +291,7 @@ impl Ed25519KeyPair {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
         unsafe {
             let mut sig_bytes = MaybeUninit::<[u8; ED25519_SIGNATURE_LEN]>::uninit();
-            if 1 != aws_lc::ED25519_sign(
+            if 1 != ED25519_sign(
                 sig_bytes.as_mut_ptr().cast(),
                 msg.as_ptr(),
                 msg.len(),
@@ -311,16 +313,16 @@ impl Ed25519KeyPair {
 pub(crate) unsafe fn validate_ed25519_evp_pkey(
     evp_pkey: &ConstPointer<EVP_PKEY>,
 ) -> Result<(), KeyRejected> {
-    const ED25519_KEY_TYPE: c_int = aws_lc::EVP_PKEY_ED25519;
+    const ED25519_KEY_TYPE: c_int = EVP_PKEY_ED25519;
     const ED25519_MIN_BITS: c_uint = 253;
     const ED25519_MAX_BITS: c_uint = 256;
 
-    let key_type = aws_lc::EVP_PKEY_id(**evp_pkey);
+    let key_type = EVP_PKEY_id(**evp_pkey);
     if key_type != ED25519_KEY_TYPE {
         return Err(KeyRejected::wrong_algorithm());
     }
 
-    let bits = aws_lc::EVP_PKEY_bits(**evp_pkey);
+    let bits = EVP_PKEY_bits(**evp_pkey);
     let bits = c_uint::try_from(bits).map_err(|_| KeyRejected::unexpected_error())?;
     if bits < ED25519_MIN_BITS {
         return Err(KeyRejected::too_small());

@@ -68,9 +68,9 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::{ec, test};
 use aws_lc::{
-    ECDH_compute_key, EC_GROUP_get_curve_name, EC_GROUP_get_degree, EC_KEY_get0_group,
-    EC_KEY_get0_public_key, NID_X9_62_prime256v1, NID_secp384r1, X25519_public_from_private,
-    EC_KEY, NID_X25519,
+    ECDH_compute_key, EC_GROUP_cmp, EC_GROUP_get_curve_name, EC_GROUP_get_degree,
+    EC_KEY_get0_group, EC_KEY_get0_public_key, NID_X9_62_prime256v1, NID_secp384r1,
+    X25519_public_from_private, EC_KEY, NID_X25519,
 };
 use std::fmt::{Debug, Formatter};
 use std::ptr::null_mut;
@@ -480,7 +480,7 @@ unsafe fn ec_key_ecdh<'a>(
     }
 
     let peer_group = ConstPointer::new(EC_KEY_get0_group(*peer_ec_key))?;
-    if 0 != aws_lc::EC_GROUP_cmp(*priv_group, *peer_group, null_mut()) {
+    if 0 != EC_GROUP_cmp(*priv_group, *peer_group, null_mut()) {
         return Err(());
     }
 

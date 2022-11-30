@@ -19,6 +19,7 @@
 // TODO: enforce maximum input length.
 
 use super::{block::BLOCK_LEN, Tag, TAG_LEN};
+use aws_lc::{CRYPTO_poly1305_finish, CRYPTO_poly1305_init, CRYPTO_poly1305_update};
 use std::mem::MaybeUninit;
 
 /// A Poly1305 key.
@@ -54,7 +55,7 @@ impl Context {
     pub(super) fn from_key(Key { key_and_nonce }: Key) -> Self {
         unsafe {
             let mut state = MaybeUninit::<poly1305_state>::uninit();
-            aws_lc::CRYPTO_poly1305_init(state.as_mut_ptr().cast(), key_and_nonce.as_ptr());
+            CRYPTO_poly1305_init(state.as_mut_ptr().cast(), key_and_nonce.as_ptr());
             Self {
                 state: state.assume_init(),
             }
@@ -64,7 +65,7 @@ impl Context {
     #[inline]
     pub fn update(&mut self, input: &[u8]) {
         unsafe {
-            aws_lc::CRYPTO_poly1305_update(
+            CRYPTO_poly1305_update(
                 self.state.0.as_mut_ptr().cast(),
                 input.as_ptr(),
                 input.len(),
@@ -76,10 +77,7 @@ impl Context {
     pub(super) fn finish(mut self) -> Tag {
         unsafe {
             let mut tag = MaybeUninit::<[u8; TAG_LEN]>::uninit();
-            aws_lc::CRYPTO_poly1305_finish(
-                self.state.0.as_mut_ptr().cast(),
-                tag.as_mut_ptr().cast(),
-            );
+            CRYPTO_poly1305_finish(self.state.0.as_mut_ptr().cast(), tag.as_mut_ptr().cast());
             Tag(tag.assume_init())
         }
     }

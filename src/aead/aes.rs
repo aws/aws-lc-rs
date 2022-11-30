@@ -16,7 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aead::block::{Block, BLOCK_LEN};
-use aws_lc::{AES_ENCRYPT, AES_KEY};
+use aws_lc::{AES_ecb_encrypt, AES_ENCRYPT, AES_KEY};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 use zeroize::Zeroize;
@@ -55,7 +55,7 @@ pub(super) fn encrypt_block_aes_ecb(aes_key: &AES_KEY, block: Block) -> Block {
     unsafe {
         let mut cipher_text = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
         let plain_bytes = block.as_ref();
-        aws_lc::AES_ecb_encrypt(
+        AES_ecb_encrypt(
             plain_bytes.as_ptr(),
             cipher_text.as_mut_ptr().cast(),
             aes_key,

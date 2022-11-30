@@ -75,6 +75,10 @@ mod ec;
 mod ed25519;
 mod ptr;
 
+use aws_lc::{
+    CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, ERR_GET_FUNC, ERR_GET_LIB,
+    ERR_GET_REASON,
+};
 use std::ffi::CStr;
 use std::sync::Once;
 
@@ -84,7 +88,7 @@ static START: Once = Once::new();
 /// Initialize the AWS-LC library. (This should generally not be needed.)
 pub fn init() {
     START.call_once(|| unsafe {
-        aws_lc::CRYPTO_library_init();
+        CRYPTO_library_init();
     });
 }
 
@@ -94,11 +98,14 @@ pub fn fips_mode() {
     try_fips_mode().unwrap()
 }
 
-/// Return an error if the underlying implementation is not FIPS, otherwise ok.
+/// Indicates whether the underlying implementation is FIPS.
+///
+/// # Errors
+/// Return an error if the underlying implementation is not FIPS, otherwise ok
 pub fn try_fips_mode() -> Result<(), &'static str> {
     init();
     unsafe {
-        match aws_lc::FIPS_mode() {
+        match FIPS_mode() {
             1 => Ok(()),
             _ => Err("FIPS mode not enabled!"),
         }
@@ -107,12 +114,12 @@ pub fn try_fips_mode() -> Result<(), &'static str> {
 
 #[allow(dead_code)]
 unsafe fn dump_error() {
-    let err = aws_lc::ERR_get_error();
-    let lib = aws_lc::ERR_GET_LIB(err);
-    let reason = aws_lc::ERR_GET_REASON(err);
-    let func = aws_lc::ERR_GET_FUNC(err);
+    let err = ERR_get_error();
+    let lib = ERR_GET_LIB(err);
+    let reason = ERR_GET_REASON(err);
+    let func = ERR_GET_FUNC(err);
     let mut buffer = [0u8; 256];
-    aws_lc::ERR_error_string(err, buffer.as_mut_ptr().cast());
+    ERR_error_string(err, buffer.as_mut_ptr().cast());
     let error_msg = CStr::from_bytes_with_nul_unchecked(&buffer);
     eprintln!(
         "Raw Error -- {:?}\nErr: {}, Lib: {}, Reason: {}, Func: {}",

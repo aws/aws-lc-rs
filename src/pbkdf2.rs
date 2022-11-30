@@ -117,11 +117,12 @@
 
 use crate::error::Unspecified;
 use crate::{constant_time, digest, hmac};
+use aws_lc::PKCS5_PBKDF2_HMAC;
 use core::num::NonZeroU32;
 
 /// A PBKDF2 algorithm.
 ///
-/// max_output_len is computed as u64 instead of usize to prevent overflowing on 32-bit machines.
+/// `max_output_len` is computed as u64 instead of usize to prevent overflowing on 32-bit machines.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Algorithm {
     algorithm: hmac::Algorithm,
@@ -200,7 +201,7 @@ fn try_derive(
     );
 
     unsafe {
-        if 1 != aws_lc::PKCS5_PBKDF2_HMAC(
+        if 1 != PKCS5_PBKDF2_HMAC(
             secret.as_ptr().cast(),
             secret.len(),
             salt.as_ptr(),
@@ -259,7 +260,7 @@ pub fn verify(
     // Create a vector with the expected output length.
     let mut derived_buf = vec![0u8; previously_derived.len()];
     unsafe {
-        if 1 != aws_lc::PKCS5_PBKDF2_HMAC(
+        if 1 != PKCS5_PBKDF2_HMAC(
             secret.as_ptr().cast(),
             secret.len(),
             salt.as_ptr(),
