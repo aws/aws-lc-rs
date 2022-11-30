@@ -54,7 +54,7 @@ impl Context {
     pub(super) fn from_key(Key { key_and_nonce }: Key) -> Self {
         unsafe {
             let mut state = MaybeUninit::<poly1305_state>::uninit();
-            aws_lc_sys::CRYPTO_poly1305_init(state.as_mut_ptr().cast(), key_and_nonce.as_ptr());
+            aws_lc::CRYPTO_poly1305_init(state.as_mut_ptr().cast(), key_and_nonce.as_ptr());
             Self {
                 state: state.assume_init(),
             }
@@ -64,7 +64,7 @@ impl Context {
     #[inline]
     pub fn update(&mut self, input: &[u8]) {
         unsafe {
-            aws_lc_sys::CRYPTO_poly1305_update(
+            aws_lc::CRYPTO_poly1305_update(
                 self.state.0.as_mut_ptr().cast(),
                 input.as_ptr(),
                 input.len(),
@@ -76,7 +76,7 @@ impl Context {
     pub(super) fn finish(mut self) -> Tag {
         unsafe {
             let mut tag = MaybeUninit::<[u8; TAG_LEN]>::uninit();
-            aws_lc_sys::CRYPTO_poly1305_finish(
+            aws_lc::CRYPTO_poly1305_finish(
                 self.state.0.as_mut_ptr().cast(),
                 tag.as_mut_ptr().cast(),
             );

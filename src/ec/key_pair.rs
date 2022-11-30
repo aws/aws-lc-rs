@@ -11,7 +11,7 @@ use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 use crate::{cbb, cbs, digest, ec};
-use aws_lc_sys::{ECDSA_do_sign, EVP_PKEY_get1_EC_KEY, EVP_parse_private_key, EC_KEY, EVP_PKEY};
+use aws_lc::{ECDSA_do_sign, EVP_PKEY_get1_EC_KEY, EVP_parse_private_key, EC_KEY, EVP_PKEY};
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 
@@ -43,16 +43,20 @@ impl KeyPair for EcdsaKeyPair {
 }
 
 pub(crate) unsafe fn generate_key(nid: i32) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(aws_lc_sys::EC_KEY_new_by_curve_name(nid))?;
+    let ec_key = DetachableLcPtr::new(aws_lc::EC_KEY_new_by_curve_name(nid))?;
 
-    // TODO: There's a separate function for FIPS
-    // aws_lc_sys::EC_KEY_generate_key_fips(ec_key)
-    if 1 != aws_lc_sys::EC_KEY_generate_key(*ec_key) {
+    #[cfg(feature = "fips")]
+    if 1 != aws_lc::EC_KEY_generate_key_fips(*ec_key) {
         return Err(Unspecified);
     }
 
-    let evp_pkey = LcPtr::new(aws_lc_sys::EVP_PKEY_new())?;
-    if 1 != aws_lc_sys::EVP_PKEY_assign_EC_KEY(*evp_pkey, *ec_key) {
+    #[cfg(not(feature = "fips"))]
+    if 1 != aws_lc::EC_KEY_generate_key(*ec_key) {
+        return Err(Unspecified);
+    }
+
+    let evp_pkey = LcPtr::new(aws_lc::EVP_PKEY_new())?;
+    if 1 != aws_lc::EVP_PKEY_assign_EC_KEY(*evp_pkey, *ec_key) {
         return Err(Unspecified);
     }
     ec_key.detach();
@@ -118,13 +122,13 @@ impl EcdsaKeyPair {
             let evp_pkey = generate_key(alg.0.id.nid())?;
 
             let mut cbb = cbb::build_CBB(PKCS8_DOCUMENT_MAX_LEN);
-            if 1 != aws_lc_sys::EVP_marshal_private_key(cbb.as_mut_ptr(), *evp_pkey) {
+            if 1 != aws_lc::EVP_marshal_private_key(cbb.as_mut_ptr(), *evp_pkey) {
                 return Err(Unspecified);
             }
 
             let mut pkcs8_bytes_ptr = MaybeUninit::<*mut u8>::uninit();
             let mut out_len = MaybeUninit::<usize>::uninit();
-            if 1 != aws_lc_sys::CBB_finish(
+            if 1 != aws_lc::CBB_finish(
                 cbb.as_mut_ptr(),
                 pkcs8_bytes_ptr.as_mut_ptr(),
                 out_len.as_mut_ptr(),

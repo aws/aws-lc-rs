@@ -32,8 +32,7 @@ pub fn verify_slices_are_equal(a: &[u8], b: &[u8]) -> Result<(), error::Unspecif
     if a.len() != b.len() {
         return Err(error::Unspecified);
     }
-    let result =
-        unsafe { aws_lc_sys::CRYPTO_memcmp(a.as_ptr().cast(), b.as_ptr().cast(), a.len()) };
+    let result = unsafe { aws_lc::CRYPTO_memcmp(a.as_ptr().cast(), b.as_ptr().cast(), a.len()) };
     match result {
         0 => Ok(()),
         _ => Err(error::Unspecified),

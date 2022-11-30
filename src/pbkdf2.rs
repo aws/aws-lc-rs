@@ -200,7 +200,7 @@ fn try_derive(
     );
 
     unsafe {
-        if 1 != aws_lc_sys::PKCS5_PBKDF2_HMAC(
+        if 1 != aws_lc::PKCS5_PBKDF2_HMAC(
             secret.as_ptr().cast(),
             secret.len(),
             salt.as_ptr(),
@@ -259,7 +259,7 @@ pub fn verify(
     // Create a vector with the expected output length.
     let mut derived_buf = vec![0u8; previously_derived.len()];
     unsafe {
-        if 1 != aws_lc_sys::PKCS5_PBKDF2_HMAC(
+        if 1 != aws_lc::PKCS5_PBKDF2_HMAC(
             secret.as_ptr().cast(),
             secret.len(),
             salt.as_ptr(),

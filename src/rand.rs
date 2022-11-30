@@ -140,7 +140,7 @@ impl sealed::SecureRandom for SystemRandom {
     #[inline]
     fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
         unsafe {
-            if 1 == aws_lc_sys::RAND_bytes(dest.as_mut_ptr(), dest.len()) {
+            if 1 == aws_lc::RAND_bytes(dest.as_mut_ptr(), dest.len()) {
                 Ok(())
             } else {
                 Err(error::Unspecified)

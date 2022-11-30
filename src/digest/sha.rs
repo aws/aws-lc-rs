@@ -60,7 +60,7 @@ pub static SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 
     id: AlgorithmID::SHA1,
 
-    hash_nid: aws_lc_sys::NID_sha1,
+    hash_nid: aws_lc::NID_sha1,
 };
 
 /// SHA-256 as specified in [FIPS 180-4].
@@ -76,7 +76,7 @@ pub static SHA256: Algorithm = Algorithm {
 
     id: AlgorithmID::SHA256,
 
-    hash_nid: aws_lc_sys::NID_sha256,
+    hash_nid: aws_lc::NID_sha256,
 };
 
 /// SHA-384 as specified in [FIPS 180-4].
@@ -91,7 +91,7 @@ pub static SHA384: Algorithm = Algorithm {
     one_shot_hash: sha384_digest,
 
     id: AlgorithmID::SHA384,
-    hash_nid: aws_lc_sys::NID_sha384,
+    hash_nid: aws_lc::NID_sha384,
 };
 
 /// SHA-512 as specified in [FIPS 180-4].
@@ -106,7 +106,7 @@ pub static SHA512: Algorithm = Algorithm {
     one_shot_hash: sha512_digest,
 
     id: AlgorithmID::SHA512,
-    hash_nid: aws_lc_sys::NID_sha512,
+    hash_nid: aws_lc::NID_sha512,
 };
 
 /// SHA-512/256 as specified in [FIPS 180-4].
@@ -121,35 +121,35 @@ pub static SHA512_256: Algorithm = Algorithm {
     one_shot_hash: sha512_256_digest,
 
     id: AlgorithmID::SHA512_256,
-    hash_nid: aws_lc_sys::NID_sha512_256,
+    hash_nid: aws_lc::NID_sha512_256,
 };
 
 fn sha1_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
-        aws_lc_sys::SHA1(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+        aws_lc::SHA1(msg.as_ptr(), msg.len(), output.as_mut_ptr());
     }
 }
 
 fn sha256_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
-        aws_lc_sys::SHA256(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+        aws_lc::SHA256(msg.as_ptr(), msg.len(), output.as_mut_ptr());
     }
 }
 
 fn sha384_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
-        aws_lc_sys::SHA384(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+        aws_lc::SHA384(msg.as_ptr(), msg.len(), output.as_mut_ptr());
     }
 }
 
 fn sha512_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
-        aws_lc_sys::SHA512(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+        aws_lc::SHA512(msg.as_ptr(), msg.len(), output.as_mut_ptr());
     }
 }
 
 fn sha512_256_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
-        aws_lc_sys::SHA512_256(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+        aws_lc::SHA512_256(msg.as_ptr(), msg.len(), output.as_mut_ptr());
     }
 }

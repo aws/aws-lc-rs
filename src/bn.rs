@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 or ISC
 
 use crate::ptr::{ConstPointer, DetachableLcPtr};
-use aws_lc_sys::{
-    BN_bin2bn, BN_bn2bin, BN_cmp, BN_new, BN_num_bits, BN_num_bytes, BN_set_u64, BIGNUM,
-};
+use aws_lc::{BN_bin2bn, BN_bn2bin, BN_cmp, BN_new, BN_num_bits, BN_num_bytes, BN_set_u64, BIGNUM};
 use mirai_annotations::unrecoverable;
 use std::cmp::Ordering;
 use std::ptr::null_mut;

@@ -29,7 +29,7 @@ pub(crate) fn aead_seal_separate(
         let mut tag = MaybeUninit::<[u8; MAX_TAG_LEN]>::uninit();
         let mut out_tag_len = MaybeUninit::<usize>::uninit();
 
-        if 1 != aws_lc_sys::EVP_AEAD_CTX_seal_scatter(
+        if 1 != aws_lc::EVP_AEAD_CTX_seal_scatter(
             aead_ctx,
             in_out.as_mut_ptr(),
             tag.as_mut_ptr().cast(),

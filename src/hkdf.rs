@@ -124,7 +124,7 @@ impl Salt {
         unsafe {
             let mut key_bytes = MaybeUninit::<[u8; MAX_HKDF_PRK_LEN]>::uninit();
             let mut key_len = MaybeUninit::<usize>::uninit();
-            if 1 != aws_lc_sys::HKDF_extract(
+            if 1 != aws_lc::HKDF_extract(
                 key_bytes.as_mut_ptr().cast(),
                 key_len.as_mut_ptr(),
                 *digest::match_digest_type(&self.algorithm.0.digest_algorithm().id),
@@ -305,7 +305,7 @@ impl<L: KeyType> Okm<'_, L> {
             return Err(Unspecified);
         }
         unsafe {
-            if 1 != aws_lc_sys::HKDF_expand(
+            if 1 != aws_lc::HKDF_expand(
                 out.as_mut_ptr(),
                 out.len(),
                 *digest::match_digest_type(&self.prk.algorithm.0.digest_algorithm().id),

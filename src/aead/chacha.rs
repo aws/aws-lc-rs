@@ -98,7 +98,7 @@ pub(super) fn encrypt_chacha20(
     }
     let key_bytes = &key.0;
     unsafe {
-        aws_lc_sys::CRYPTO_chacha_20(
+        aws_lc::CRYPTO_chacha_20(
             ciphertext.as_mut_ptr(),
             plaintext.as_ptr(),
             plaintext.len(),
@@ -119,7 +119,7 @@ pub(super) fn encrypt_in_place_chacha20(
 ) {
     let key_bytes = &key.0;
     unsafe {
-        aws_lc_sys::CRYPTO_chacha_20(
+        aws_lc::CRYPTO_chacha_20(
             in_out.as_mut_ptr(),
             in_out.as_ptr(),
             in_out.len(),

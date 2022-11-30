@@ -11,10 +11,12 @@ alloc = []
 default = ["alloc", "ring-io"]
 asan = ["aws-lc-sys/asan"]
 ring-io = []
+fips = ["aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { version = "0.7.1" }
 aws-lc-sys = { version = "0.2.0" }
+aws-lc-fips-sys = { path = "../aws-lc-fips-sys",  optional = true }
 zeroize = "1"
 mirai-annotations = "1.12.0"
 
