@@ -26,6 +26,8 @@ coverage:
 ci:
 	cargo fmt --check --verbose
 	cargo test --release --all-targets
+	cargo test --release --all-targets --features fips
 	cargo test --no-default-features
+	cargo test --no-default-features --features fips
 	cargo test --no-default-features --features ring-io
 	cargo test --no-default-features --features alloc
