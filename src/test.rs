@@ -127,6 +127,7 @@
 extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
+use mirai_annotations::unrecoverable;
 
 use crate::{digest, error};
 
@@ -168,15 +169,6 @@ pub struct TestCase {
 }
 
 impl TestCase {
-    /// Maps the string "true" to true and the string "false" to false.
-    pub fn consume_bool(&mut self, key: &str) -> bool {
-        match self.consume_string(key).as_ref() {
-            "true" => true,
-            "false" => false,
-            s => panic!("Invalid bool value: {}", s),
-        }
-    }
-
     /// Maps the strings "SHA1", "SHA256", "SHA384", and "SHA512" to digest
     /// algorithms, maps "SHA224" to `None`, and panics on other (erroneous)
     /// inputs. "SHA224" is mapped to None because *ring* intentionally does
@@ -191,7 +183,7 @@ impl TestCase {
             "SHA384" => Some(&digest::SHA384),
             "SHA512" => Some(&digest::SHA512),
             "SHA512_256" => Some(&digest::SHA512_256),
-            _ => panic!("Unsupported digest algorithm: {}", name),
+            _ => unrecoverable!("Unsupported digest algorithm: {}", name),
         }
     }
 
@@ -210,7 +202,7 @@ impl TestCase {
         let result = if s.starts_with('\"') {
             // The value is a quoted UTF-8 string.
 
-            let mut bytes = Vec::with_capacity(s.as_bytes().len() - 2);
+            let mut bytes = Vec::with_capacity(s.as_bytes().len());
             let mut s = s.as_bytes().iter().skip(1);
             loop {
                 let b = match s.next() {
@@ -220,31 +212,21 @@ impl TestCase {
                             Some(b'0') => 0u8,
                             Some(b't') => b'\t',
                             Some(b'n') => b'\n',
-                            // "\xHH"
-                            Some(b'x') => {
-                                let hi = s.next().expect("Invalid hex escape sequence in string.");
-                                let lo = s.next().expect("Invalid hex escape sequence in string.");
-                                if let (Ok(hi), Ok(lo)) = (from_hex_digit(*hi), from_hex_digit(*lo))
-                                {
-                                    (hi << 4) | lo
-                                } else {
-                                    panic!("Invalid hex escape sequence in string.");
-                                }
-                            }
                             _ => {
-                                panic!("Invalid hex escape sequence in string.");
+                                unrecoverable!("Invalid hex escape sequence in string.");
                             }
                         }
                     }
                     Some(b'"') => {
-                        assert!(
-                            s.next().is_none(),
-                            "characters after the closing quote of a quoted string."
-                        );
+                        if s.next().is_some() {
+                            unrecoverable!(
+                                "characters after the closing quote of a quoted string."
+                            );
+                        }
                         break;
                     }
                     Some(b) => *b,
-                    None => panic!("Missing terminating '\"' in string literal."),
+                    None => unrecoverable!("Missing terminating '\"' in string literal."),
                 };
                 bytes.push(b);
             }
@@ -254,7 +236,7 @@ impl TestCase {
             match from_hex(&s) {
                 Ok(s) => s,
                 Err(err_str) => {
-                    panic!("{} in {}", err_str, s);
+                    unrecoverable!("{} in {}", err_str, s);
                 }
             }
         };
@@ -409,14 +391,6 @@ pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
 pub fn from_dirty_hex(hex_str: &str) -> Vec<u8> {
     let clean: String = hex_str.chars().filter(char::is_ascii_hexdigit).collect();
     from_hex(clean.as_str()).unwrap()
-}
-
-fn from_hex_digit(d: u8) -> Result<u8, String> {
-    let my_array = [d];
-    let my_str = std::str::from_utf8(&my_array).map_err(|e| e.to_string())?;
-    let my_vec = from_hex(my_str)?;
-    let my_result = my_vec.first().ok_or("Invalid Hex Digit")?;
-    Ok(my_result.to_owned())
 }
 
 fn parse_test_case(

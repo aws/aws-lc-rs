@@ -21,7 +21,7 @@
 //! generic composition paradigm][AEAD] for an introduction to the concept of
 //! AEADs.
 //!
-//! [AEAD]: http://www-cse.ucsd.edu/~mihir/papers/oem.html
+//! [AEAD]: https://eprint.iacr.org/2000/025
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 
 use crate::{derive_debug_via_id, error, hkdf};
@@ -777,6 +777,9 @@ mod tests {
         let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
         let unbound_key = UnboundKey::new(&AES_128_GCM, &key).unwrap();
         assert_eq!(&AES_128_GCM, unbound_key.algorithm());
+
+        assert_eq!(16, AES_128_GCM.tag_len());
+        assert_eq!(12, AES_128_GCM.nonce_len());
 
         let less_safe_key = LessSafeKey::new(unbound_key);
 

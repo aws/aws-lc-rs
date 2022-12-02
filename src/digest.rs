@@ -30,6 +30,8 @@ use crate::{debug, derive_debug_via_id};
 mod digest_ctx;
 mod sha;
 use crate::error::Unspecified;
+use crate::ptr::ConstPointer;
+use aws_lc_sys::EVP_MD;
 use digest_ctx::DigestContext;
 pub use sha::{
     SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA256, SHA256_OUTPUT_LEN, SHA384,
@@ -37,8 +39,6 @@ pub use sha::{
 };
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
-#[cfg(feature = "threadlocal")]
-use thread_local::ThreadLocal;
 
 /// A context for multi-step (Init-Update-Finish) digest calculations.
 ///
@@ -57,8 +57,6 @@ use thread_local::ThreadLocal;
 ///
 /// assert_eq!(&one_shot.as_ref(), &multi_part.as_ref());
 /// ```
-
-#[cfg(not(feature = "threadlocal"))]
 #[derive(Clone)]
 pub struct Context {
     /// The context's algorithm.
@@ -71,63 +69,21 @@ pub struct Context {
     max_input_reached: bool,
 }
 
-#[cfg(feature = "threadlocal")]
-/// A context for multi-step (Init-Update-Finish) digest calculations.
-pub struct Context {
-    /// The context's algorithm.
-    pub(crate) algorithm: &'static Algorithm,
-    digest_ctx: ThreadLocal<DigestContext>,
-    // The spec specifies that SHA-1 and SHA-256 support up to
-    // 2^64-1 bits of input. SHA-384 and SHA-512 support up to
-    // 2^128-1 bits.
-    msg_len: usize,
-    max_input_reached: bool,
-}
-
-#[cfg(feature = "threadlocal")]
-impl Clone for Context {
-    fn clone(&self) -> Self {
-        let result = Self {
-            algorithm: self.algorithm,
-            digest_ctx: ThreadLocal::new(),
-            msg_len: self.msg_len,
-            max_input_reached: self.max_input_reached,
-        };
-        #[cfg(feature = "threadlocal")]
-        let _ = result.digest_ctx.get_or(|| self.get_digest_ctx().clone());
-        result
-    }
-}
-
-unsafe impl Send for Context {}
-
 impl Context {
     /// Constructs a new context.
+    ///
+    /// # Panics
+    ///
+    /// `new` panics if it fails to initialize an aws-lc digest context for the given
+    /// algorithm.
     #[must_use]
     pub fn new(algorithm: &'static Algorithm) -> Self {
-        let result = Self {
+        Self {
             algorithm,
-            #[cfg(feature = "threadlocal")]
-            digest_ctx: ThreadLocal::new(),
-            #[cfg(not(feature = "threadlocal"))]
             digest_ctx: DigestContext::new(algorithm).unwrap(),
             msg_len: 0u128 as usize,
             max_input_reached: false,
-        };
-        #[cfg(feature = "threadlocal")]
-        let _ = result.get_digest_ctx();
-        result
-    }
-
-    #[cfg(feature = "threadlocal")]
-    fn get_digest_ctx(&self) -> &DigestContext {
-        self.digest_ctx
-            .get_or(|| DigestContext::new(self.algorithm).unwrap())
-    }
-
-    #[cfg(not(feature = "threadlocal"))]
-    fn get_digest_ctx(&self) -> &DigestContext {
-        &self.digest_ctx
+        }
     }
 
     /// Updates the message to digest with all the data in `data`.
@@ -143,17 +99,16 @@ impl Context {
         unsafe {
             // Check if the message has reached the algorithm's maximum allowed input, or overflowed
             // the msg_len counter.
-            let (msg_len, max_input_reached) = self.msg_len.overflowing_add(data.len());
-            self.msg_len = msg_len;
-            self.max_input_reached = max_input_reached;
-            (!self.max_input_reached)
-                .then(|| self.max_input_reached = self.msg_len > self.algorithm.max_input_len);
-
-            if self.max_input_reached {
+            let (msg_len, overflowed) = self.msg_len.overflowing_add(data.len());
+            if overflowed || msg_len > self.algorithm.max_input_len {
                 return Err(Unspecified);
             }
+
+            self.msg_len = msg_len;
+            self.max_input_reached = self.msg_len == self.algorithm.max_input_len;
+
             if 1 != aws_lc_sys::EVP_DigestUpdate(
-                *self.get_digest_ctx().ctx,
+                self.digest_ctx.as_mut_ptr(),
                 data.as_ptr().cast(),
                 data.len(),
             ) {
@@ -168,19 +123,18 @@ impl Context {
     /// `finish` consumes the context so it cannot be (mis-)used after `finish`
     /// has been called.
     #[inline]
+    #[must_use]
     pub fn finish(self) -> Digest {
         Self::try_finish(self).expect("EVP_DigestFinal failed")
     }
 
     #[inline]
-    fn try_finish(self) -> Result<Digest, Unspecified> {
-        assert!(!self.max_input_reached);
-
+    fn try_finish(mut self) -> Result<Digest, Unspecified> {
         let mut output = [0u8; MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
             if 1 != aws_lc_sys::EVP_DigestFinal(
-                *self.get_digest_ctx().ctx,
+                self.digest_ctx.as_mut_ptr(),
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
             ) {
@@ -197,6 +151,7 @@ impl Context {
 
     /// The algorithm that this context is using.
     #[inline]
+    #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
     }
@@ -327,15 +282,16 @@ pub const MAX_OUTPUT_LEN: usize = 512 / 8;
 pub const MAX_CHAINING_LEN: usize = MAX_OUTPUT_LEN;
 
 /// Match digest types for `EVP_MD` functions.
-pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> *const aws_lc_sys::EVP_MD {
+pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<EVP_MD> {
     unsafe {
-        match algorithm_id {
+        ConstPointer::new(match algorithm_id {
             AlgorithmID::SHA1 => aws_lc_sys::EVP_sha1(),
             AlgorithmID::SHA256 => aws_lc_sys::EVP_sha256(),
             AlgorithmID::SHA384 => aws_lc_sys::EVP_sha384(),
             AlgorithmID::SHA512 => aws_lc_sys::EVP_sha512(),
             AlgorithmID::SHA512_256 => aws_lc_sys::EVP_sha512_256(),
-        }
+        })
+        .unwrap_or_else(|_| panic!("Digest algorithm not found: {:?}", algorithm_id))
     }
 }
 
@@ -343,12 +299,10 @@ pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> *const aws_lc_sys
 mod tests {
     mod max_input {
         extern crate alloc;
+
         use super::super::super::digest;
-        #[cfg(not(feature = "threadlocal"))]
         use crate::digest::digest_ctx::DigestContext;
         use alloc::vec;
-        #[cfg(feature = "threadlocal")]
-        use thread_local::ThreadLocal;
 
         macro_rules! max_input_tests {
             ( $algorithm_name:ident ) => {
@@ -403,9 +357,6 @@ mod tests {
             // 2^128-1 for SHA-384 and SHA-512, aligning with the spec.
             digest::Context {
                 algorithm: alg,
-                #[cfg(feature = "threadlocal")]
-                digest_ctx: ThreadLocal::new(),
-                #[cfg(not(feature = "threadlocal"))]
                 digest_ctx: DigestContext::new(alg).unwrap(),
                 msg_len: (alg.max_input_len - alg.block_len + 1),
                 max_input_reached: false,

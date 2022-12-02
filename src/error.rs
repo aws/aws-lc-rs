@@ -233,7 +233,10 @@ impl From<untrusted::EndOfInput> for Unspecified {
 }
 
 #[allow(deprecated, unused_imports)]
+#[cfg(test)]
 mod tests {
+    use crate::error::KeyRejected;
+    use crate::test;
     use std::error::Error;
 
     #[test]
@@ -263,5 +266,7 @@ mod tests {
         let unspecified = super::Unspecified;
         assert!(unspecified.cause().is_none());
         assert_eq!("Unspecified", unspecified.description());
+
+        test::compile_time_assert_std_error_error::<KeyRejected>();
     }
 }

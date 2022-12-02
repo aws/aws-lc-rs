@@ -251,4 +251,13 @@ mod tests {
         let decrypted_length = u32::from_be_bytes(decrypted_length);
         assert_eq!(plaintext.len() as u32, decrypted_length);
     }
+
+    #[test]
+    fn test_types() {
+        test::compile_time_assert_send::<OpeningKey>();
+        test::compile_time_assert_sync::<OpeningKey>();
+
+        test::compile_time_assert_send::<SealingKey>();
+        test::compile_time_assert_sync::<SealingKey>();
+    }
 }

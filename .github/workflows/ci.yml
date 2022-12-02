@@ -10,6 +10,9 @@ env:
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
   RUST_NIGHTLY_TOOLCHAIN: nightly
+  # Mirai version tag, updates this whenever a new version
+  # is released.
+  MIRAI_TAG: v1.1.2
 
 jobs:
   rustfmt:
@@ -56,6 +59,56 @@ jobs:
           command: clippy
           args: --all-features --all-targets -- ${{ matrix.args }}
 
+  apidiff:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: nightly
+          profile: minimal
+          override: true
+      - name: Install cargo-public-api
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install
+          args: cargo-public-api
+      - name: Perform API Diff
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: public-api
+          args: --all-features --deny changed --deny removed --diff-git-checkouts ${{ github.event.pull_request.base.sha }}  ${{ github.event.pull_request.head.sha }}
+
+  udeps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          profile: minimal
+          override: true
+
+      - name: Install cargo-udeps
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install 
+          args: cargo-udeps
+
+      - name: Run cargo udeps
+        run: cargo udeps --workspace --all-targets
+        env:
+          RUSTC_WRAPPER: ""
+
   test:
     name: tests
     runs-on: ${{ matrix.os }}
@@ -77,7 +130,6 @@ jobs:
           - --no-default-features
           - --no-default-features --features ring-io
           - --no-default-features --features alloc
-          - --no-default-features --features threadlocal
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1.0.7
@@ -101,7 +153,6 @@ jobs:
           args: ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
           use-cross: ${{ matrix.target != 'native' }}
 
-  # TODO: add bot to post coverage details to PR, or upload results to AWS account.
   coverage:
     runs-on: ubuntu-latest
     steps:
@@ -122,11 +173,52 @@ jobs:
           command: install 
           args: cargo-llvm-cov
 
+      # TODO: add bot to post coverage details to PR, or upload results to AWS 
+      # account. Using --html can give us more insight which regions are missing
+      # coverage immediately.
       - name: Run coverage
         uses: actions-rs/cargo@v1.0.3
         with:
           command: llvm-cov
-          args: --html --no-fail-fast
+          args: --no-fail-fast --fail-under-lines 95
+
+  mirai-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      # Update toolchain when fixed: https://github.com/facebookexperimental/MIRAI/issues/1188
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: nightly-2022-09-05
+          profile: minimal
+          components: rust-src, rustc-dev, llvm-tools-preview
+
+      - name: Cache Cargo
+        uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-mirai-${{ env.MIRAI_TAG }}
+
+      # https://github.com/facebookexperimental/MIRAI/blob/main/documentation/InstallationGuide.md#installing-mirai-into-cargo
+      - name: Install MIRAI
+        run: |
+          git clone --depth 1 --branch ${{ env.MIRAI_TAG }} https://github.com/facebookexperimental/MIRAI.git
+          cd MIRAI
+          cargo install --force --path ./checker --no-default-features
+          cd ../
+
+      - name: Run MIRAI
+        run: |
+          cargo mirai
 
   asan:
     runs-on: ubuntu-latest
@@ -165,3 +257,39 @@ jobs:
         with:
           command: test
           args: --release --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
+
+  s2n-quic-integration:
+    name: s2n-quic-integration
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: stable
+          override: true
+      - name: Run s2n-quic integration
+        run: |
+          ./scripts/run-s2n-quic-integration.sh
+
+  rustls-integration:
+    name: rustls-integration
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: stable
+          override: true
+      - name: Run rustls integration
+        run: |
+          ./scripts/run-rustls-integration.sh

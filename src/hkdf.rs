@@ -127,7 +127,7 @@ impl Salt {
             if 1 != aws_lc_sys::HKDF_extract(
                 key_bytes.as_mut_ptr().cast(),
                 key_len.as_mut_ptr(),
-                digest::match_digest_type(&self.algorithm.0.digest_algorithm().id),
+                *digest::match_digest_type(&self.algorithm.0.digest_algorithm().id),
                 secret.as_ptr(),
                 secret.len(),
                 self.key_bytes.as_ptr(),
@@ -308,7 +308,7 @@ impl<L: KeyType> Okm<'_, L> {
             if 1 != aws_lc_sys::HKDF_expand(
                 out.as_mut_ptr(),
                 out.len(),
-                digest::match_digest_type(&self.prk.algorithm.0.digest_algorithm().id),
+                *digest::match_digest_type(&self.prk.algorithm.0.digest_algorithm().id),
                 self.prk.key_bytes.as_ptr(),
                 self.prk.key_len,
                 self.info_bytes.as_ptr(),

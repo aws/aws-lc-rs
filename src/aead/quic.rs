@@ -186,7 +186,7 @@ fn cipher_new_mask(key: &KeyInner, sample: Sample) -> [u8; 5] {
 
 #[cfg(test)]
 mod test {
-    use crate::aead::quic::{HeaderProtectionKey, AES_128, AES_256, CHACHA20};
+    use crate::aead::quic::{Algorithm, HeaderProtectionKey, AES_128, AES_256, CHACHA20};
     use crate::{hkdf, test};
 
     #[test]
@@ -215,5 +215,14 @@ mod test {
         let ring_hpk = ring::aead::quic::HeaderProtectionKey::from(ring_okm);
         let ring_mask = ring_hpk.new_mask(&sample).unwrap();
         assert_eq!(mask, ring_mask);
+    }
+
+    #[test]
+    fn test_types() {
+        test::compile_time_assert_send::<Algorithm>();
+        test::compile_time_assert_sync::<Algorithm>();
+
+        test::compile_time_assert_send::<HeaderProtectionKey>();
+        test::compile_time_assert_sync::<HeaderProtectionKey>();
     }
 }

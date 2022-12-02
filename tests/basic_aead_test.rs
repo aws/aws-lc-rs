@@ -3,7 +3,7 @@
 
 extern crate core;
 
-use aws_lc_ring::{aead, error};
+use aws_lc_ring::{aead, error, test};
 
 use aead::{
     Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey,
@@ -164,6 +164,19 @@ fn test_aead_append_within(config: &AeadConfig, in_out: &mut [u8]) -> Result<Vec
     println!("Roundtrip: {:?}", result_plaintext);
 
     Ok(Vec::from(result_plaintext))
+}
+
+#[test]
+fn test_types() {
+    test::compile_time_assert_send::<Algorithm>();
+    test::compile_time_assert_sync::<Algorithm>();
+    test::compile_time_assert_eq::<Algorithm>();
+
+    test::compile_time_assert_send::<SealingKey<NotANonce>>();
+    test::compile_time_assert_sync::<SealingKey<NotANonce>>();
+
+    test::compile_time_assert_send::<OpeningKey<NotANonce>>();
+    test::compile_time_assert_sync::<OpeningKey<NotANonce>>();
 }
 
 /*
