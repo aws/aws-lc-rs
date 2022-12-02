@@ -65,7 +65,7 @@ pub struct Context {
     // The spec specifies that SHA-1 and SHA-256 support up to
     // 2^64-1 bits of input. SHA-384 and SHA-512 support up to
     // 2^128-1 bits.
-    msg_len: usize,
+    msg_len: u128,
     max_input_reached: bool,
 }
 
@@ -81,7 +81,7 @@ impl Context {
         Self {
             algorithm,
             digest_ctx: DigestContext::new(algorithm).unwrap(),
-            msg_len: 0u128 as usize,
+            msg_len: 0u128,
             max_input_reached: false,
         }
     }
@@ -99,7 +99,7 @@ impl Context {
         unsafe {
             // Check if the message has reached the algorithm's maximum allowed input, or overflowed
             // the msg_len counter.
-            let (msg_len, overflowed) = self.msg_len.overflowing_add(data.len());
+            let (msg_len, overflowed) = self.msg_len.overflowing_add(data.len() as u128);
             if overflowed || msg_len > self.algorithm.max_input_len {
                 return Err(Unspecified);
             }
@@ -239,7 +239,8 @@ pub struct Algorithm {
     /// The internal block length.
     pub block_len: usize,
 
-    max_input_len: usize,
+    // max_input_len is computed as u128 instead of usize to prevent overflowing on 32-bit machines.
+    max_input_len: u128,
 
     one_shot_hash: fn(msg: &[u8], output: &mut [u8]),
 
@@ -355,10 +356,11 @@ mod tests {
             // All implementations of Ring's original digest only support up
             // to 2^64-1 bits of input; AWS-LC's rust wrappers support up to
             // 2^128-1 for SHA-384 and SHA-512, aligning with the spec.
+            let block_len = alg.block_len as u128;
             digest::Context {
                 algorithm: alg,
                 digest_ctx: DigestContext::new(alg).unwrap(),
-                msg_len: (alg.max_input_len - alg.block_len + 1),
+                msg_len: (alg.max_input_len - block_len + 1),
                 max_input_reached: false,
             }
         }
