@@ -31,7 +31,10 @@ mod digest_ctx;
 mod sha;
 use crate::error::Unspecified;
 use crate::ptr::ConstPointer;
-use aws_lc_sys::EVP_MD;
+use aws_lc::{
+    EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha256, EVP_sha384, EVP_sha512,
+    EVP_sha512_256, EVP_MD,
+};
 use digest_ctx::DigestContext;
 pub use sha::{
     SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA256, SHA256_OUTPUT_LEN, SHA384,
@@ -110,7 +113,7 @@ impl Context {
             self.msg_len = msg_len;
             self.max_input_reached = self.msg_len == self.algorithm.max_input_len;
 
-            if 1 != aws_lc_sys::EVP_DigestUpdate(
+            if 1 != EVP_DigestUpdate(
                 self.digest_ctx.as_mut_ptr(),
                 data.as_ptr().cast(),
                 data.len(),
@@ -136,7 +139,7 @@ impl Context {
         let mut output = [0u8; MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
-            if 1 != aws_lc_sys::EVP_DigestFinal(
+            if 1 != EVP_DigestFinal(
                 self.digest_ctx.as_mut_ptr(),
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
@@ -289,11 +292,11 @@ pub const MAX_CHAINING_LEN: usize = MAX_OUTPUT_LEN;
 pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<EVP_MD> {
     unsafe {
         ConstPointer::new(match algorithm_id {
-            AlgorithmID::SHA1 => aws_lc_sys::EVP_sha1(),
-            AlgorithmID::SHA256 => aws_lc_sys::EVP_sha256(),
-            AlgorithmID::SHA384 => aws_lc_sys::EVP_sha384(),
-            AlgorithmID::SHA512 => aws_lc_sys::EVP_sha512(),
-            AlgorithmID::SHA512_256 => aws_lc_sys::EVP_sha512_256(),
+            AlgorithmID::SHA1 => EVP_sha1(),
+            AlgorithmID::SHA256 => EVP_sha256(),
+            AlgorithmID::SHA384 => EVP_sha384(),
+            AlgorithmID::SHA512 => EVP_sha512(),
+            AlgorithmID::SHA512_256 => EVP_sha512_256(),
         })
         .unwrap_or_else(|_| panic!("Digest algorithm not found: {:?}", algorithm_id))
     }

@@ -7,6 +7,7 @@ use std::mem::MaybeUninit;
 use crate::aead::cipher::SymmetricCipherKey;
 use crate::aead::key_inner::KeyInner;
 use crate::error::Unspecified;
+use aws_lc::EVP_AEAD_CTX_seal_scatter;
 use std::ptr::null;
 
 #[inline]
@@ -29,7 +30,7 @@ pub(crate) fn aead_seal_separate(
         let mut tag = MaybeUninit::<[u8; MAX_TAG_LEN]>::uninit();
         let mut out_tag_len = MaybeUninit::<usize>::uninit();
 
-        if 1 != aws_lc_sys::EVP_AEAD_CTX_seal_scatter(
+        if 1 != EVP_AEAD_CTX_seal_scatter(
             aead_ctx,
             in_out.as_mut_ptr(),
             tag.as_mut_ptr().cast(),

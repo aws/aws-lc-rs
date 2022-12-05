@@ -153,6 +153,32 @@ jobs:
           args: ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
           use-cross: ${{ matrix.target != 'native' }}
 
+  fips-test:
+    name: fips-tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [stable]
+        os: [ubuntu-latest, macOS-latest]
+        args:
+          - --release --all-targets --features fips
+          - --no-default-features --features fips
+          - --no-default-features --features fips,ring-io
+          - --no-default-features --features fips,alloc
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: test
+          args: ${{ matrix.args }}
+
   coverage:
     runs-on: ubuntu-latest
     steps:

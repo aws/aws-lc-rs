@@ -109,7 +109,10 @@
 
 use crate::error::Unspecified;
 use crate::{constant_time, digest, hkdf};
-use aws_lc_sys::HMAC_CTX;
+use aws_lc::{
+    HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_CTX_init, HMAC_Final, HMAC_Init_ex, HMAC_Update,
+    HMAC_CTX,
+};
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
 use std::ptr::null_mut;
@@ -169,7 +172,7 @@ unsafe impl Send for LcHmacCtx {}
 
 impl Drop for LcHmacCtx {
     fn drop(&mut self) {
-        unsafe { aws_lc_sys::HMAC_CTX_cleanup(self.as_mut_ptr()) }
+        unsafe { HMAC_CTX_cleanup(self.as_mut_ptr()) }
     }
 }
 
@@ -177,9 +180,9 @@ impl Clone for LcHmacCtx {
     fn clone(&self) -> Self {
         unsafe {
             let mut hmac_ctx = MaybeUninit::<HMAC_CTX>::uninit();
-            aws_lc_sys::HMAC_CTX_init(hmac_ctx.as_mut_ptr());
+            HMAC_CTX_init(hmac_ctx.as_mut_ptr());
             let mut hmac_ctx = hmac_ctx.assume_init();
-            aws_lc_sys::HMAC_CTX_copy_ex(&mut hmac_ctx, self.as_ptr());
+            HMAC_CTX_copy_ex(&mut hmac_ctx, self.as_ptr());
             LcHmacCtx(hmac_ctx)
         }
     }
@@ -260,9 +263,9 @@ impl Key {
     fn try_new(algorithm: Algorithm, key_value: &[u8]) -> Result<Self, Unspecified> {
         unsafe {
             let mut ctx = MaybeUninit::<HMAC_CTX>::uninit();
-            aws_lc_sys::HMAC_CTX_init(ctx.as_mut_ptr());
+            HMAC_CTX_init(ctx.as_mut_ptr());
             let evp_md_type = digest::match_digest_type(&algorithm.digest_algorithm().id);
-            if 1 != aws_lc_sys::HMAC_Init_ex(
+            if 1 != HMAC_Init_ex(
                 ctx.as_mut_ptr(),
                 key_value.as_ptr().cast(),
                 key_value.len(),
@@ -350,7 +353,7 @@ impl Context {
     #[inline]
     fn try_update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Update(
+            if 1 != HMAC_Update(
                 self.key.get_hmac_ctx_ptr(),
                 data.as_ptr().cast(),
                 data.len(),
@@ -378,7 +381,7 @@ impl Context {
         let mut output = [0u8; digest::MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
-            if 1 != aws_lc_sys::HMAC_Final(
+            if 1 != HMAC_Final(
                 self.key.get_hmac_ctx_ptr(),
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),

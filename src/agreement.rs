@@ -67,10 +67,10 @@ use crate::error::Unspecified;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::{ec, test};
-use aws_lc_sys::{
-    ECDH_compute_key, EC_GROUP_get_curve_name, EC_GROUP_get_degree, EC_KEY_get0_group,
-    EC_KEY_get0_public_key, NID_X9_62_prime256v1, NID_secp384r1, X25519_public_from_private,
-    EC_KEY, NID_X25519,
+use aws_lc::{
+    ECDH_compute_key, EC_GROUP_cmp, EC_GROUP_get_curve_name, EC_GROUP_get_degree,
+    EC_KEY_get0_group, EC_KEY_get0_public_key, NID_X9_62_prime256v1, NID_secp384r1,
+    X25519_public_from_private, EC_KEY, NID_X25519,
 };
 use std::fmt::{Debug, Formatter};
 use std::ptr::null_mut;
@@ -148,11 +148,11 @@ pub static ECDH_P384: Algorithm = Algorithm {
 pub static X25519: Algorithm = Algorithm {
     id: AlgorithmID::X25519,
 };
-const X25519_PRIVATE_KEY_LEN: usize = aws_lc_sys::X25519_PRIVATE_KEY_LEN as usize;
+const X25519_PRIVATE_KEY_LEN: usize = aws_lc::X25519_PRIVATE_KEY_LEN as usize;
 const ECDH_P256_PRIVATE_KEY_LEN: usize = 32;
 const ECDH_P384_PRIVATE_KEY_LEN: usize = 48;
-const X25519_PUBLIC_VALUE_LEN: usize = aws_lc_sys::X25519_PUBLIC_VALUE_LEN as usize;
-const X25519_SHARED_KEY_LEN: usize = aws_lc_sys::X25519_SHARED_KEY_LEN as usize;
+const X25519_PUBLIC_VALUE_LEN: usize = aws_lc::X25519_PUBLIC_VALUE_LEN as usize;
+const X25519_SHARED_KEY_LEN: usize = aws_lc::X25519_SHARED_KEY_LEN as usize;
 #[allow(non_camel_case_types)]
 enum KeyInner {
     ECDH_P256(LcPtr<*mut EC_KEY>),
@@ -480,7 +480,7 @@ unsafe fn ec_key_ecdh<'a>(
     }
 
     let peer_group = ConstPointer::new(EC_KEY_get0_group(*peer_ec_key))?;
-    if 0 != aws_lc_sys::EC_GROUP_cmp(*priv_group, *peer_group, null_mut()) {
+    if 0 != EC_GROUP_cmp(*priv_group, *peer_group, null_mut()) {
         return Err(());
     }
 
@@ -512,7 +512,7 @@ unsafe fn x25519_diffie_hellman(
     peer_pub_key: &[u8; X25519_PUBLIC_VALUE_LEN],
 ) -> Result<(), ()> {
     debug_assert!(out_shared_key.len() >= X25519_SHARED_KEY_LEN);
-    if 1 != aws_lc_sys::X25519(
+    if 1 != aws_lc::X25519(
         out_shared_key.as_mut_ptr(),
         priv_key.as_ptr(),
         peer_pub_key.as_ptr(),

@@ -3,7 +3,7 @@
 
 use std::ops::Deref;
 
-use aws_lc_sys::OPENSSL_free;
+use aws_lc::OPENSSL_free;
 
 use mirai_annotations::verify_unreachable;
 
@@ -181,7 +181,7 @@ macro_rules! create_pointer {
         }
     };
 }
-use aws_lc_sys::{
+use aws_lc::{
     BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_PKEY_free, RSA_free,
     BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, RSA,
 };
@@ -197,7 +197,7 @@ create_pointer!(RSA, RSA_free);
 #[cfg(test)]
 mod tests {
     use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
-    use aws_lc_sys::BIGNUM;
+    use aws_lc::BIGNUM;
 
     #[test]
     fn test_debug() {
