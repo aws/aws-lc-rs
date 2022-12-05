@@ -338,7 +338,7 @@ mod tests {
             let mut bytes_in = Vec::new();
             bytes_in.extend(bytes_in_a);
             bytes_in.extend(bytes_in_b);
-            let mut bytes_out = Vec::new();
+            let mut bytes_out: Vec<u8> = Vec::new();
             bytes_out.extend(bytes_out_a);
             bytes_out.extend(bytes_out_b);
 

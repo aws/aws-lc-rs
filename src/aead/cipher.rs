@@ -19,7 +19,7 @@ use crate::aead::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
 use crate::aead::chacha::{encrypt_block_chacha20, ChaCha20Key};
 use crate::aead::{block::Block, error, quic::Sample, Nonce};
 use crate::error::Unspecified;
-use aws_lc_sys::AES_KEY;
+use aws_lc::{AES_set_encrypt_key, AES_KEY};
 use std::mem::{size_of, transmute, MaybeUninit};
 use std::os::raw::c_uint;
 use std::ptr;
@@ -58,7 +58,7 @@ impl SymmetricCipherKey {
         unsafe {
             let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
             #[allow(clippy::cast_possible_truncation)]
-            if 0 != aws_lc_sys::AES_set_encrypt_key(
+            if 0 != AES_set_encrypt_key(
                 key_bytes.as_ptr(),
                 (key_bytes.len() * 8) as c_uint,
                 aes_key.as_mut_ptr(),
@@ -83,7 +83,7 @@ impl SymmetricCipherKey {
         unsafe {
             let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
             #[allow(clippy::cast_possible_truncation)]
-            if 0 != aws_lc_sys::AES_set_encrypt_key(
+            if 0 != AES_set_encrypt_key(
                 key_bytes.as_ptr(),
                 (key_bytes.len() * 8) as c_uint,
                 aes_key.as_mut_ptr(),
