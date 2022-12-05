@@ -41,10 +41,13 @@
 
 extern crate core;
 
+/*
+TODO: Uncomment this block, once aws_lc_fips_sys is available.
 #[cfg(feature = "fips")]
 extern crate aws_lc_fips_sys as aws_lc;
 
 #[cfg(not(feature = "fips"))]
+ */
 extern crate aws_lc_sys as aws_lc;
 
 pub mod aead;
