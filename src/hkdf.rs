@@ -227,7 +227,7 @@ impl Prk {
     #[inline]
     pub fn expand<'a, L: KeyType>(
         &'a self,
-        info: &'_ [&'_ [u8]],
+        info: &'a [&'a [u8]],
         len: L,
     ) -> Result<Okm<'a, L>, Unspecified> {
         let len_cached = len.len();

@@ -32,11 +32,11 @@
 //!    http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL.chacha20poly1305?annotate=HEAD
 //! [RFC 4253]: https://tools.ietf.org/html/rfc4253
 
+use super::BLOCK_LEN;
 use super::{
     chacha::{self, ChaCha20Key},
     poly1305, Nonce, Tag,
 };
-use crate::aead::block::BLOCK_LEN;
 use crate::{constant_time, endian::BigEndian, error};
 use core::convert::TryInto;
 

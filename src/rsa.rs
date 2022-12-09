@@ -37,6 +37,7 @@ use aws_lc::{
     RSA_get0_q, RSA_new, RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes,
     RSA_set0_key, RSA_sign, RSA_sign_pss_mgf1, RSA_size, RSA_verify, RSA_verify_pss_mgf1, RSA,
 };
+use core::fmt;
 
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
@@ -140,9 +141,9 @@ impl RsaKeyPair {
     ///
     /// # Errors
     /// `error:KeyRejected` on error.
-    pub fn from_der(der: &[u8]) -> Result<Self, KeyRejected> {
+    pub fn from_der(input: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
-            let rsa = build_private_RSA(der)?;
+            let rsa = build_private_RSA(input)?;
             Self::validate_rsa(&rsa.as_const())?;
             Self::new(rsa)
         }
@@ -298,7 +299,7 @@ impl RsaKeyPair {
 }
 
 impl Debug for RsaKeyPair {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "RsaKeyPair {{ public_key: {:?} }}",
             self.serialized_public_key
@@ -373,7 +374,7 @@ impl RsaSubjectPublicKey {
 }
 
 impl Debug for RsaSubjectPublicKey {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "RsaSubjectPublicKey(\"{}\")",
             test::to_hex(self.key.as_ref())
@@ -388,16 +389,16 @@ impl AsRef<[u8]> for RsaSubjectPublicKey {
 }
 
 #[cfg(feature = "ring-io")]
-impl<'a> RsaSubjectPublicKey {
+impl RsaSubjectPublicKey {
     /// The public modulus (n).
     #[must_use]
-    pub fn modulus(&'a self) -> io::Positive<'a> {
+    pub fn modulus(&self) -> io::Positive<'_> {
         io::Positive::new_non_empty_without_leading_zeros(Input::from(self.modulus.as_ref()))
     }
 
     /// The public exponent (e).
     #[must_use]
-    pub fn exponent(&'a self) -> io::Positive<'a> {
+    pub fn exponent(&self) -> io::Positive<'_> {
         io::Positive::new_non_empty_without_leading_zeros(Input::from(self.exponent.as_ref()))
     }
 }
@@ -424,6 +425,7 @@ impl Sealed for RsaSignatureEncoding {}
 
 #[allow(non_camel_case_types)]
 #[allow(clippy::module_name_repetitions)]
+#[derive(Debug)]
 pub enum RsaPadding {
     RSA_PKCS1_PADDING,
     RSA_PKCS1_PSS_PADDING,
@@ -445,7 +447,7 @@ impl RsaEncoding for RsaSignatureEncoding {
 }
 
 impl Debug for RsaSignatureEncoding {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!("{{ {:?} }}", self.2))
     }
 }
@@ -477,7 +479,7 @@ pub struct RsaParameters(
 impl Sealed for RsaParameters {}
 
 impl Debug for RsaParameters {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str(&format!("{{ {:?} }}", self.3))
     }
 }
@@ -585,8 +587,8 @@ fn verify_RSA(
 /// will handle the parsing in that case. Otherwise, this function can be used
 /// to pass in the raw bytes for the public key components as
 /// `untrusted::Input` arguments.
-#[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
+#[derive(Debug, Clone)]
 pub struct RsaPublicKeyComponents<B>
 where
     B: AsRef<[u8]> + Debug,
@@ -596,6 +598,8 @@ where
     /// The public exponent, encoded in big-endian bytes without leading zeros.
     pub e: B,
 }
+
+impl<B: Copy> Copy for RsaPublicKeyComponents<B> where B: AsRef<[u8]> + Debug {}
 
 impl<B> RsaPublicKeyComponents<B>
 where
@@ -636,12 +640,12 @@ where
     pub fn verify(
         &self,
         params: &RsaParameters,
-        msg: &[u8],
+        message: &[u8],
         signature: &[u8],
     ) -> Result<(), Unspecified> {
         unsafe {
             let rsa = self.build_RSA()?;
-            verify_RSA(params.0, params.1, &rsa, msg, signature, &params.2)
+            verify_RSA(params.0, params.1, &rsa, message, signature, &params.2)
         }
     }
 }

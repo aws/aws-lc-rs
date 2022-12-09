@@ -178,25 +178,25 @@ const MAX_USIZE32: u64 = u32::MAX as u64;
 /// algorithm's output length, per the PBKDF2 specification.
 #[inline]
 pub fn derive(
-    digest_alg: Algorithm,
+    algorithm: Algorithm,
     iterations: NonZeroU32,
     salt: &[u8],
     secret: &[u8],
     out: &mut [u8],
 ) {
-    try_derive(digest_alg, iterations, salt, secret, out).expect("pbkdf2 derive failed");
+    try_derive(algorithm, iterations, salt, secret, out).expect("pbkdf2 derive failed");
 }
 
 #[inline]
 fn try_derive(
-    digest_alg: Algorithm,
+    algorithm: Algorithm,
     iterations: NonZeroU32,
     salt: &[u8],
     secret: &[u8],
     out: &mut [u8],
 ) -> Result<(), Unspecified> {
     assert!(
-        out.len() as u64 <= digest_alg.max_output_len,
+        out.len() as u64 <= algorithm.max_output_len,
         "derived key too long"
     );
 
@@ -207,7 +207,7 @@ fn try_derive(
             salt.as_ptr(),
             salt.len(),
             iterations.get(),
-            *digest::match_digest_type(&digest_alg.algorithm.digest_algorithm().id),
+            *digest::match_digest_type(&algorithm.algorithm.digest_algorithm().id),
             out.len(),
             out.as_mut_ptr(),
         ) {
@@ -243,7 +243,7 @@ fn try_derive(
 ///
 #[inline]
 pub fn verify(
-    digest_alg: Algorithm,
+    algorithm: Algorithm,
     iterations: NonZeroU32,
     salt: &[u8],
     secret: &[u8],
@@ -253,7 +253,7 @@ pub fn verify(
         return Err(Unspecified);
     }
     assert!(
-        previously_derived.len() as u64 <= digest_alg.max_output_len,
+        previously_derived.len() as u64 <= algorithm.max_output_len,
         "derived key too long"
     );
 
@@ -266,7 +266,7 @@ pub fn verify(
             salt.as_ptr(),
             salt.len(),
             iterations.get(),
-            *digest::match_digest_type(&digest_alg.algorithm.digest_algorithm().id),
+            *digest::match_digest_type(&algorithm.algorithm.digest_algorithm().id),
             previously_derived.len(),
             derived_buf.as_mut_ptr(),
         ) {

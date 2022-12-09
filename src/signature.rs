@@ -300,9 +300,9 @@ impl AsRef<[u8]> for Signature {
 }
 
 /// Key pairs for signing messages (private key and public key).
-pub trait KeyPair: core::fmt::Debug + Send + Sized + Sync {
+pub trait KeyPair: Debug + Send + Sized + Sync {
     /// The type of the public key.
-    type PublicKey: AsRef<[u8]> + core::fmt::Debug + Clone + Send + Sized + Sync;
+    type PublicKey: AsRef<[u8]> + Debug + Clone + Send + Sized + Sync;
 
     /// The public key for the key pair.
     fn public_key(&self) -> &Self::PublicKey;
@@ -325,10 +325,13 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
 }
 
 /// An unparsed, possibly malformed, public key for signature verification.
+#[derive(Clone)]
 pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
     algorithm: &'static dyn VerificationAlgorithm,
     bytes: B,
 }
+
+impl<B: Copy> Copy for UnparsedPublicKey<B> where B: AsRef<[u8]> {}
 
 impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -337,15 +340,6 @@ impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
             self.algorithm,
             test::to_hex(self.bytes.as_ref())
         ))
-    }
-}
-
-impl<B: Clone + AsRef<[u8]>> Clone for UnparsedPublicKey<B> {
-    fn clone(&self) -> Self {
-        Self {
-            algorithm: self.algorithm,
-            bytes: self.bytes.clone(),
-        }
     }
 }
 
@@ -585,7 +579,7 @@ mod tests {
         let unparsed_pubkey = UnparsedPublicKey::new(&ED25519, random_pubkey);
         let unparsed_pubkey_debug = format!("{:?}", &unparsed_pubkey);
 
-        #[allow(clippy::redundant_clone)]
+        #[allow(clippy::clone_on_copy)]
         let unparsed_pubkey_clone = unparsed_pubkey.clone();
         assert_eq!(
             unparsed_pubkey_debug,

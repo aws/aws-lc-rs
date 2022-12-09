@@ -18,7 +18,7 @@
 //! Serialization and deserialization.
 
 /// Trait for structs that accumulate bytes for subsequent processing.
-pub trait Accumulator {
+pub(crate) trait Accumulator {
     /// Write a single byte
     fn write_byte(&mut self, value: u8);
     /// Write a sequence of bytes
@@ -83,7 +83,8 @@ impl Accumulator for Writer {
 }
 
 /// Write bytes from accumulator to `to_copy`.
-pub fn write_copy(accumulator: &mut dyn Accumulator, to_copy: untrusted::Input) {
+#[cfg(test)]
+pub(crate) fn write_copy(accumulator: &mut dyn Accumulator, to_copy: untrusted::Input) {
     accumulator.write_bytes(to_copy.as_slice_less_safe());
 }
 

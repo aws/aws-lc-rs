@@ -117,6 +117,19 @@ use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
 use std::ptr::null_mut;
 
+/// A deprecated alias for `Tag`.
+#[deprecated]
+pub type Signature = Tag;
+/// Renamed to `Context`.
+#[deprecated]
+pub type SigningContext = Context;
+/// Renamed to `Key`.
+#[deprecated]
+pub type SigningKey = Key;
+/// Merged into `Key`.
+#[deprecated]
+pub type VerificationKey = Key;
+
 /// An HMAC algorithm.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Algorithm(&'static digest::Algorithm);

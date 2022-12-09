@@ -14,6 +14,7 @@ use aws_lc::{
     EVP_PKEY_new_raw_private_key, EVP_marshal_private_key, EVP_parse_private_key, EVP_PKEY,
     EVP_PKEY_ED25519,
 };
+use core::fmt;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::os::raw::{c_int, c_uint};
@@ -59,11 +60,11 @@ impl VerificationAlgorithm for EdDSAParameters {
 #[allow(clippy::module_name_repetitions)]
 pub struct Ed25519KeyPair {
     private_key: [u8; ED25519_PRIVATE_KEY_LEN],
-    public_key: Ed25519PublicKey,
+    public_key: PublicKey,
 }
 
 impl Debug for Ed25519KeyPair {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "Ed25519KeyPair {{ public_key: PublicKey(\"{}\") }}",
             test::to_hex(&self.public_key)
@@ -73,25 +74,25 @@ impl Debug for Ed25519KeyPair {
 
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
-pub struct Ed25519PublicKey {
+pub struct PublicKey {
     public_key: [u8; ED25519_PUBLIC_KEY_LEN],
 }
 
-impl AsRef<[u8]> for Ed25519PublicKey {
+impl AsRef<[u8]> for PublicKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.public_key
     }
 }
 
-impl Debug for Ed25519PublicKey {
+impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.public_key)))
     }
 }
 
 impl KeyPair for Ed25519KeyPair {
-    type PublicKey = Ed25519PublicKey;
+    type PublicKey = PublicKey;
     #[inline]
     fn public_key(&self) -> &Self::PublicKey {
         &self.public_key
@@ -191,31 +192,30 @@ impl Ed25519KeyPair {
     /// # Errors
     /// `error::KeyRejected` if parse error, or if key is otherwise unacceptable.
     ///
-    pub fn from_seed_and_public_key(
-        seed: &[u8],
-        expected_public_key: &[u8],
-    ) -> Result<Self, KeyRejected> {
+    pub fn from_seed_and_public_key(seed: &[u8], public_key: &[u8]) -> Result<Self, KeyRejected> {
         if seed.len() < ED25519_SEED_LEN {
             return Err(KeyRejected::inconsistent_components());
         }
 
         unsafe {
-            let mut public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
+            let mut derived_public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
             let mut private_key = MaybeUninit::<[u8; ED25519_PRIVATE_KEY_LEN]>::uninit();
             ED25519_keypair_from_seed(
-                public_key.as_mut_ptr().cast(),
+                derived_public_key.as_mut_ptr().cast(),
                 private_key.as_mut_ptr().cast(),
                 seed.as_ptr(),
             );
-            let public_key = public_key.assume_init();
+            let derived_public_key = derived_public_key.assume_init();
             let private_key = private_key.assume_init();
 
-            constant_time::verify_slices_are_equal(expected_public_key, &public_key)
+            constant_time::verify_slices_are_equal(public_key, &derived_public_key)
                 .map_err(|_| KeyRejected::inconsistent_components())?;
 
             Ok(Self {
                 private_key,
-                public_key: Ed25519PublicKey { public_key },
+                public_key: PublicKey {
+                    public_key: derived_public_key,
+                },
             })
         }
     }
@@ -273,7 +273,7 @@ impl Ed25519KeyPair {
 
             let key_pair = Self {
                 private_key,
-                public_key: Ed25519PublicKey { public_key },
+                public_key: PublicKey { public_key },
             };
 
             Ok(key_pair)

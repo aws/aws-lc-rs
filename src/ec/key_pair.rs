@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::ec::{
-    validate_ec_key, EcdsaPublicKey, EcdsaSignatureFormat, EcdsaSigningAlgorithm,
-    PKCS8_DOCUMENT_MAX_LEN,
+    validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey, PKCS8_DOCUMENT_MAX_LEN,
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Document;
@@ -20,6 +19,7 @@ use aws_lc::{
     EVP_PKEY_get1_EC_KEY, EVP_PKEY_new, EVP_marshal_private_key, EVP_parse_private_key, EC_KEY,
     EVP_PKEY,
 };
+use core::fmt;
 
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
@@ -29,11 +29,11 @@ use std::mem::MaybeUninit;
 pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
     ec_key: LcPtr<*mut EC_KEY>,
-    pubkey: EcdsaPublicKey,
+    pubkey: PublicKey,
 }
 
 impl Debug for EcdsaKeyPair {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!("EcdsaKeyPair {{ public_key: {:?} }}", self.pubkey))
     }
 }
@@ -43,7 +43,7 @@ unsafe impl Send for EcdsaKeyPair {}
 unsafe impl Sync for EcdsaKeyPair {}
 
 impl KeyPair for EcdsaKeyPair {
-    type PublicKey = EcdsaPublicKey;
+    type PublicKey = PublicKey;
 
     #[inline]
     fn public_key(&self) -> &Self::PublicKey {
