@@ -17,7 +17,9 @@
 
 use aws_lc_ring::{aead, error, test, test_file};
 
+use aws_lc_ring::aead::{Nonce, NONCE_LEN};
 use core::ops::RangeFrom;
+use mirai_annotations::unrecoverable;
 
 #[test]
 fn aead_aes_gcm_128() {
@@ -77,14 +79,14 @@ fn test_aead<Seal, Open>(
     Seal: Fn(
         &'static aead::Algorithm,
         &[u8],
-        aead::Nonce,
+        Nonce,
         aead::Aad<&[u8]>,
         &mut Vec<u8>,
     ) -> Result<(), error::Unspecified>,
     Open: for<'a> Fn(
         &'static aead::Algorithm,
         &[u8],
-        aead::Nonce,
+        Nonce,
         aead::Aad<&[u8]>,
         &'a mut [u8],
         RangeFrom<usize>,
@@ -196,6 +198,7 @@ fn test_aead<Seal, Open>(
             o_in_out.resize(in_prefix_len, 123);
             o_in_out.extend_from_slice(&ct[..]);
 
+            let o_in_out_clone = o_in_out.clone();
             let nonce = aead::Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap();
             let o_result = open(
                 aead_alg,
@@ -211,19 +214,142 @@ fn test_aead<Seal, Open>(
                     assert!(o_result.is_ok(), "Not ok: {:?}", o_result);
                     let result = o_result.unwrap();
                     assert_eq!(&plaintext[..], result);
+
+                    for bad_func in [aead_open_bad_tag, aead_open_bad_nonce, aead_open_bad_aad] {
+                        bad_func(
+                            aead_alg,
+                            &key_bytes,
+                            &nonce_bytes,
+                            aad.as_slice(),
+                            &o_in_out_clone,
+                            in_prefix_len,
+                            &open,
+                        );
+                    }
                 }
                 Some(ref error) if error == "WRONG_NONCE_LENGTH" => {
                     assert_eq!(Err(error::Unspecified), s_result);
                     assert_eq!(Err(error::Unspecified), o_result);
                 }
                 Some(error) => {
-                    unreachable!("Unexpected error test case: {}", error);
+                    unrecoverable!("Unexpected error test case: {}", error);
                 }
             };
         }
 
         Ok(())
     });
+}
+
+fn aead_open_bad_tag<Open>(
+    aead_alg: &'static aead::Algorithm,
+    key_bytes: &[u8],
+    nonce_bytes: &[u8],
+    aad_bytes: &[u8],
+    in_out: &[u8],
+    in_prefix_len: usize,
+    open: Open,
+) where
+    Open: for<'a> Fn(
+        &'static aead::Algorithm,
+        &[u8],
+        Nonce,
+        aead::Aad<&[u8]>,
+        &'a mut [u8],
+        RangeFrom<usize>,
+    ) -> Result<&'a mut [u8], error::Unspecified>,
+{
+    let mut in_out = Vec::from(in_out);
+    let in_out_len = in_out.len();
+    in_out[in_out_len - 1] ^= 0x08;
+    let nonce_bytes = Vec::from(nonce_bytes);
+    let aad_bytes = Vec::from(aad_bytes);
+    let nonce = Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap();
+    let aad = aead::Aad::from(aad_bytes.as_slice());
+    let err_result = open(
+        aead_alg,
+        key_bytes,
+        nonce,
+        aad,
+        &mut in_out,
+        in_prefix_len..,
+    );
+    assert!(err_result.is_err());
+}
+
+fn aead_open_bad_nonce<Open>(
+    aead_alg: &'static aead::Algorithm,
+    key_bytes: &[u8],
+    nonce_bytes: &[u8],
+    aad_bytes: &[u8],
+    in_out: &[u8],
+    in_prefix_len: usize,
+    open: Open,
+) where
+    Open: for<'a> Fn(
+        &'static aead::Algorithm,
+        &[u8],
+        Nonce,
+        aead::Aad<&[u8]>,
+        &'a mut [u8],
+        RangeFrom<usize>,
+    ) -> Result<&'a mut [u8], error::Unspecified>,
+{
+    let mut in_out = Vec::from(in_out);
+    let mut nonce_bytes = Vec::from(nonce_bytes);
+    nonce_bytes[NONCE_LEN - 1] ^= 0x80;
+    let aad_bytes = Vec::from(aad_bytes);
+    let nonce = Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap();
+    let aad = aead::Aad::from(aad_bytes.as_slice());
+    let err_result = open(
+        aead_alg,
+        key_bytes,
+        nonce,
+        aad,
+        &mut in_out,
+        in_prefix_len..,
+    );
+    assert!(err_result.is_err());
+}
+
+fn aead_open_bad_aad<Open>(
+    aead_alg: &'static aead::Algorithm,
+    key_bytes: &[u8],
+    nonce_bytes: &[u8],
+    aad_bytes: &[u8],
+    in_out: &[u8],
+    in_prefix_len: usize,
+    open: Open,
+) where
+    Open: for<'a> Fn(
+        &'static aead::Algorithm,
+        &[u8],
+        Nonce,
+        aead::Aad<&[u8]>,
+        &'a mut [u8],
+        RangeFrom<usize>,
+    ) -> Result<&'a mut [u8], error::Unspecified>,
+{
+    let mut in_out = Vec::from(in_out);
+    let nonce_bytes = Vec::from(nonce_bytes);
+    let mut aad_bytes = Vec::from(aad_bytes);
+    let aad_len = aad_bytes.len();
+    if aad_len == 0 {
+        aad_bytes.push(0x08);
+    } else {
+        aad_bytes[aad_len - 1] ^= 0x08;
+    }
+    let nonce = Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap();
+    let aad = aead::Aad::from(aad_bytes.as_slice());
+    let err_result = open(
+        aead_alg,
+        key_bytes,
+        nonce,
+        aad,
+        &mut in_out,
+        in_prefix_len..,
+    );
+    assert!(err_result.is_err());
 }
 
 fn seal_with_key(
@@ -240,7 +366,7 @@ fn seal_with_key(
 fn open_with_key<'a>(
     algorithm: &'static aead::Algorithm,
     key: &[u8],
-    nonce: aead::Nonce,
+    nonce: Nonce,
     aad: aead::Aad<&[u8]>,
     in_out: &'a mut [u8],
     ciphertext_and_tag: RangeFrom<usize>,
@@ -252,7 +378,7 @@ fn open_with_key<'a>(
 fn seal_with_less_safe_key(
     algorithm: &'static aead::Algorithm,
     key: &[u8],
-    nonce: aead::Nonce,
+    nonce: Nonce,
     aad: aead::Aad<&[u8]>,
     in_out: &mut Vec<u8>,
 ) -> Result<(), error::Unspecified> {
@@ -351,7 +477,21 @@ fn aead_chacha20_poly1305_openssh() {
             assert_eq!(&ct, &s_in_out);
             assert_eq!(&expected_tag, &tag);
             let o_key = aead::chacha20_poly1305_openssh::OpeningKey::new(&key_bytes);
-
+            {
+                let mut cipher_text_clone = Vec::from(&s_in_out[..]);
+                let mut tag_clone = [0u8; aead::chacha20_poly1305_openssh::TAG_LEN];
+                tag_clone.copy_from_slice(&tag);
+                tag_clone[0] = 1;
+                let o_result =
+                    o_key.open_in_place(sequence_num, &mut cipher_text_clone[..], &tag_clone);
+                assert!(o_result.is_err());
+            }
+            {
+                let mut cipher_text_clone = Vec::from(&s_in_out[..]);
+                let o_result =
+                    o_key.open_in_place(sequence_num + 1, &mut cipher_text_clone[..], &tag);
+                assert!(o_result.is_err());
+            }
             {
                 let o_result = o_key.open_in_place(sequence_num, &mut s_in_out[..], &tag);
                 assert_eq!(o_result, Ok(&plaintext[4..]));
