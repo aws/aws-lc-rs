@@ -536,6 +536,7 @@ pub mod rand {
 mod tests {
     use crate::rand::sealed::SecureRandom;
     use crate::test::rand::{FixedByteRandom, FixedSliceRandom, FixedSliceSequenceRandom};
+    use crate::test::{from_dirty_hex, to_hex_upper};
     use crate::{error, test};
     use std::cell::UnsafeCell;
 
@@ -689,5 +690,12 @@ mod tests {
         test::run(test_file!("test/test_1_syntax_error_tests.txt"), |_, _| {
             Ok(())
         });
+    }
+
+    #[test]
+    fn test_to_hex_upper() {
+        let hex = "abcdef0123";
+        let bytes = from_dirty_hex(hex);
+        assert_eq!(hex.to_ascii_uppercase(), to_hex_upper(bytes));
     }
 }

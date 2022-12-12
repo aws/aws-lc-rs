@@ -143,8 +143,9 @@ fn test_aead_append_within(config: &AeadConfig, in_out: &mut [u8]) -> Result<Vec
     let plaintext = in_out.to_owned();
     println!("Plaintext: {:?}", plaintext);
     let mut sized_in_out = in_out.to_vec();
+    #[allow(deprecated)]
     sealing_key
-        .seal_in_place_append_tag(config.aad(), &mut sized_in_out)
+        .seal_in_place(config.aad(), &mut sized_in_out)
         .map_err(|x| x.to_string())?;
 
     let (cipher_text, tag_value) = sized_in_out.split_at_mut(plaintext.len());

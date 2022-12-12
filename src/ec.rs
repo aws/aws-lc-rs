@@ -16,6 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::error::{KeyRejected, Unspecified};
+use core::fmt;
 
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 
@@ -63,7 +64,7 @@ pub(crate) const PUBLIC_KEY_MAX_LEN: usize = 1 + (2 * ELEM_MAX_BYTES);
 pub const PKCS8_DOCUMENT_MAX_LEN: usize = 40 + SCALAR_MAX_BYTES + PUBLIC_KEY_MAX_LEN;
 
 /// An ECDSA verification algorithm.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct EcdsaVerificationAlgorithm {
     pub(super) id: &'static AlgorithmID,
     pub(super) digest: &'static digest::Algorithm,
@@ -72,7 +73,7 @@ pub struct EcdsaVerificationAlgorithm {
 }
 
 /// An ECDSA signing algorithm.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct EcdsaSigningAlgorithm(pub(crate) &'static EcdsaVerificationAlgorithm);
 
 impl Deref for EcdsaSigningAlgorithm {
@@ -86,7 +87,7 @@ impl Deref for EcdsaSigningAlgorithm {
 impl sealed::Sealed for EcdsaVerificationAlgorithm {}
 impl sealed::Sealed for EcdsaSigningAlgorithm {}
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub(crate) enum EcdsaSignatureFormat {
     ASN1,
     Fixed,
@@ -110,29 +111,29 @@ impl AlgorithmID {
 }
 
 #[derive(Clone)]
-pub struct EcdsaPublicKey(Box<[u8]>);
+pub struct PublicKey(Box<[u8]>);
 
-impl Debug for EcdsaPublicKey {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl Debug for PublicKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.0.as_ref())))
     }
 }
 
-impl EcdsaPublicKey {
+impl PublicKey {
     fn new(pubkey_box: Box<[u8]>) -> Self {
-        EcdsaPublicKey(pubkey_box)
+        PublicKey(pubkey_box)
     }
 }
 
-impl AsRef<[u8]> for EcdsaPublicKey {
+impl AsRef<[u8]> for PublicKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
     }
 }
 
-unsafe impl Send for EcdsaPublicKey {}
-unsafe impl Sync for EcdsaPublicKey {}
+unsafe impl Send for PublicKey {}
+unsafe impl Sync for PublicKey {}
 
 impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
     #[inline]
@@ -207,14 +208,12 @@ pub(crate) unsafe fn marshal_public_key_to_buffer(
     Ok(out_len)
 }
 
-pub(crate) fn marshal_public_key(
-    ec_key: &ConstPointer<EC_KEY>,
-) -> Result<EcdsaPublicKey, Unspecified> {
+pub(crate) fn marshal_public_key(ec_key: &ConstPointer<EC_KEY>) -> Result<PublicKey, Unspecified> {
     unsafe {
         let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
         let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, ec_key)?;
         let pub_key = Vec::from(&pub_key_bytes[0..key_len]);
-        Ok(EcdsaPublicKey::new(pub_key.into_boxed_slice()))
+        Ok(PublicKey::new(pub_key.into_boxed_slice()))
     }
 }
 

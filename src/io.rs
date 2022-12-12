@@ -21,7 +21,7 @@
 pub mod der;
 
 #[cfg(feature = "alloc")]
-pub mod writer;
+mod writer;
 
 #[cfg(feature = "alloc")]
 pub(crate) mod der_writer;

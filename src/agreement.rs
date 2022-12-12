@@ -72,6 +72,7 @@ use aws_lc::{
     EC_KEY_get0_group, EC_KEY_get0_public_key, NID_X9_62_prime256v1, NID_secp384r1,
     X25519_public_from_private, EC_KEY, NID_X25519,
 };
+use core::fmt;
 use std::fmt::{Debug, Formatter};
 use std::ptr::null_mut;
 use zeroize::Zeroize;
@@ -105,7 +106,7 @@ impl AlgorithmID {
 }
 
 impl Debug for AlgorithmID {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         let output = match self {
             AlgorithmID::ECDH_P256 => "curve: P256",
             AlgorithmID::ECDH_P384 => "curve: P384",
@@ -122,7 +123,7 @@ pub struct Algorithm {
 }
 
 impl Debug for Algorithm {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!("Algorithm {{ {:?} }}", self.id))
     }
 }
@@ -199,7 +200,7 @@ unsafe impl Send for EphemeralPrivateKey {}
 unsafe impl Sync for EphemeralPrivateKey {}
 
 impl Debug for EphemeralPrivateKey {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "EphemeralPrivateKey {{ algorithm: {:?} }}",
             self.inner_key.algorithm()
@@ -328,7 +329,7 @@ impl PublicKey {
 }
 
 impl Debug for PublicKey {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "PublicKey {{ algorithm: {:?}, bytes: \"{}\" }}",
             self.alg,
@@ -353,15 +354,20 @@ impl Clone for PublicKey {
     }
 }
 
-#[derive(Copy, Clone)]
 /// An unparsed, possibly malformed, public key for key agreement.
+#[derive(Clone)]
 pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
     alg: &'static Algorithm,
     bytes: B,
 }
 
-impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl<B: Copy> Copy for UnparsedPublicKey<B> where B: AsRef<[u8]> {}
+
+impl<B: Debug> Debug for UnparsedPublicKey<B>
+where
+    B: AsRef<[u8]>,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "UnparsedPublicKey {{ algorithm: {:?}, bytes: {:?} }}",
             self.alg,
@@ -377,6 +383,16 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
             alg: algorithm,
             bytes,
         }
+    }
+
+    /// The agreement algorithm associated with this public key
+    pub fn algorithm(&self) -> &'static Algorithm {
+        self.alg
+    }
+
+    /// The bytes provided for this public key
+    pub fn bytes(&self) -> &B {
+        &self.bytes
     }
 }
 
@@ -575,6 +591,8 @@ mod tests {
                 "04D12DFB5289C8D4F81208B70270398C342296970A0BCCB74C736FC7554494BF6356FBF3CA366CC23E8157854C13C58D6AAC23F046ADA30F8353E74F33039872AB",
             ),
         );
+        assert_eq!(peer_public.algorithm(), alg);
+        assert_eq!(peer_public.bytes(), &peer_public.bytes);
 
         let my_private = test::from_dirty_hex(
             "C88F01F510D9AC3F70A292DAA2316DE544E9AAB8AFE84049C62A9C57862D1433",

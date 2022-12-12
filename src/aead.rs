@@ -47,6 +47,7 @@ pub mod quic;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
+    block::BLOCK_LEN,
     chacha::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},
 };
@@ -279,6 +280,24 @@ impl<N: NonceSequence> Debug for SealingKey<N> {
 }
 
 impl<N: NonceSequence> SealingKey<N> {
+    /// Deprecated. Renamed to `seal_in_place_append_tag`.
+    ///
+    /// # Errors
+    /// See `seal_in_place_append_tag`
+    #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
+    #[inline]
+    pub fn seal_in_place<A, InOut>(
+        &mut self,
+        aad: Aad<A>,
+        in_out: &mut InOut,
+    ) -> Result<(), Unspecified>
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    {
+        self.seal_in_place_append_tag(aad, in_out)
+    }
+
     /// Encrypts and signs (“seals”) data in place, appending the tag to the
     /// resulting ciphertext.
     ///

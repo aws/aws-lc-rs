@@ -25,6 +25,7 @@ pub struct Block {
     subblocks: [u64; 2],
 }
 
+/// Block length
 pub const BLOCK_LEN: usize = 16;
 
 impl Block {

@@ -16,6 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_ring::signature::{KeyPair, RsaParameters};
+use aws_lc_ring::test::to_hex_upper;
 use aws_lc_ring::{rand, signature, signature::RsaKeyPair, test, test_file};
 
 #[test]
@@ -239,7 +240,7 @@ fn test_signature_rsa_primitive_verification() {
                 result.is_ok(),
                 expected == "Pass",
                 "N = {}",
-                test::to_hex_upper(n)
+                to_hex_upper(n)
             );
             Ok(())
         },
