@@ -256,7 +256,7 @@ impl RsaKeyPair {
                     let result = RSA_sign(
                         digest_alg.hash_nid,
                         digest.as_ptr(),
-                        digest.len(),
+                        digest.len().try_into().unwrap(),
                         signature.as_mut_ptr(),
                         &mut output_len,
                         *self.rsa_key,

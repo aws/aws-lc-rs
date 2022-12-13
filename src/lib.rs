@@ -39,13 +39,10 @@
 
 #![warn(missing_docs)]
 
-/*
-TODO: Uncomment this block, once aws_lc_fips_sys is available.
 #[cfg(feature = "fips")]
 extern crate aws_lc_fips_sys as aws_lc;
 
 #[cfg(not(feature = "fips"))]
- */
 extern crate aws_lc_sys as aws_lc;
 extern crate core;
 
@@ -170,7 +167,6 @@ mod tests {
     #[test]
     #[cfg(feature = "fips")]
     fn test_fips() {
-        // TODO: This test will fail until we can link to an actual FIPS AWS-LC implementation
-        // crate::fips_mode();
+        crate::fips_mode();
     }
 }

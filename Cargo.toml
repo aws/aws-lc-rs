@@ -11,13 +11,12 @@ alloc = []
 default = ["alloc", "ring-io"]
 asan = ["aws-lc-sys/asan"]
 ring-io = []
-# TODO: fips = ["aws-lc-fips-sys"]
-fips = []
+fips = ["aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { version = "0.7.1" }
 aws-lc-sys = { version = "0.2.1" }
-# TODO: aws-lc-fips-sys = { "0.1.0",  optional = true }
+aws-lc-fips-sys = { version = "0.1.0", optional = true }
 zeroize = "1"
 mirai-annotations = "1.12.0"
 
