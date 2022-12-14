@@ -156,6 +156,9 @@ jobs:
   fips-test:
     name: fips-tests
     runs-on: ${{ matrix.os }}
+    env:
+        CC: clang
+        CXX: clang++
     strategy:
       fail-fast: false
       matrix:
