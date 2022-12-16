@@ -361,12 +361,9 @@ pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
     bytes: B,
 }
 
-impl<B: Copy> Copy for UnparsedPublicKey<B> where B: AsRef<[u8]> {}
+impl<B: Copy + AsRef<[u8]>> Copy for UnparsedPublicKey<B> {}
 
-impl<B: Debug> Debug for UnparsedPublicKey<B>
-where
-    B: AsRef<[u8]>,
-{
+impl<B: Debug + AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "UnparsedPublicKey {{ algorithm: {:?}, bytes: {:?} }}",
