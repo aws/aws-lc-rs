@@ -373,7 +373,7 @@ pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
         #[allow(clippy::cast_possible_truncation)]
         let value = ch.to_digit(16).unwrap() as u8;
         if index % 2 == 0 {
-            current_byte = (value << 4) as u8;
+            current_byte = value << 4;
         } else {
             current_byte |= value;
             bytes.push(current_byte);

@@ -603,7 +603,7 @@ where
     pub e: B,
 }
 
-impl<B: Copy> Copy for RsaPublicKeyComponents<B> where B: AsRef<[u8]> + Debug {}
+impl<B: Copy + AsRef<[u8]> + Debug> Copy for RsaPublicKeyComponents<B> {}
 
 impl<B> RsaPublicKeyComponents<B>
 where
