@@ -8,23 +8,27 @@ use crate::error::Unspecified;
 use crate::rand;
 use crate::rand::SystemRandom;
 
+/// `PredictableNonceSequence`
 #[allow(clippy::module_name_repetitions)]
 pub struct PredictableNonceSequence {
     position: u64,
 }
 
 impl Default for PredictableNonceSequence {
+    /// default
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl PredictableNonceSequence {
+    /// new
     #[must_use]
     pub fn new() -> PredictableNonceSequence {
         PredictableNonceSequence::starting_from(0)
     }
 
+    /// `starting_from`
     #[must_use]
     pub fn starting_from(position: u64) -> PredictableNonceSequence {
         PredictableNonceSequence { position }
@@ -41,6 +45,7 @@ impl NonceSequence for PredictableNonceSequence {
     }
 }
 
+/// `UnpredictableNonceSequence`
 #[allow(clippy::module_name_repetitions)]
 pub struct UnpredictableNonceSequence {
     aes_key: SymmetricCipherKey,
@@ -48,12 +53,18 @@ pub struct UnpredictableNonceSequence {
 }
 
 impl UnpredictableNonceSequence {
+    /// new
+    /// # Panics
     #[must_use]
     pub fn new() -> ([u8; 16], UnpredictableNonceSequence) {
         let rand = SystemRandom::new();
         let key: [u8; 16] = rand::generate(&rand).unwrap().expose();
         (key, UnpredictableNonceSequence::using_key(key))
     }
+
+    /// `starting_from`
+    ///
+    /// # Panics
     #[must_use]
     pub fn starting_from(position: u64) -> ([u8; 16], UnpredictableNonceSequence) {
         let rand = SystemRandom::new();
@@ -63,10 +74,15 @@ impl UnpredictableNonceSequence {
             UnpredictableNonceSequence::using_key_and_position(key, position),
         )
     }
+
+    /// `using_key`
     #[must_use]
     pub fn using_key(key: [u8; 16]) -> UnpredictableNonceSequence {
         UnpredictableNonceSequence::using_key_and_position(key, 0)
     }
+
+    /// `using_key_and_position`
+    /// # Panics
     #[must_use]
     pub fn using_key_and_position(key: [u8; 16], position: u64) -> UnpredictableNonceSequence {
         UnpredictableNonceSequence {
