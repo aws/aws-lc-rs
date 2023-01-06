@@ -59,8 +59,8 @@
 //!     },
 //! )?;
 //!
+//! # Ok::<(), ring::error::Unspecified>(())
 //! ```
-
 use crate::ec::{ec_group_from_nid, ec_key_from_public_point, ec_point_from_bytes};
 use crate::error::Unspecified;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
