@@ -8,16 +8,25 @@ use crate::error::Unspecified;
 use crate::rand;
 use crate::rand::SystemRandom;
 
-struct PredictableNonceSequence {
+#[allow(clippy::module_name_repetitions)]
+pub struct PredictableNonceSequence {
     position: u64,
 }
 
+impl Default for PredictableNonceSequence {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PredictableNonceSequence {
-    fn new() -> PredictableNonceSequence {
+    #[must_use]
+    pub fn new() -> PredictableNonceSequence {
         PredictableNonceSequence::starting_from(0)
     }
 
-    fn starting_from(position: u64) -> PredictableNonceSequence {
+    #[must_use]
+    pub fn starting_from(position: u64) -> PredictableNonceSequence {
         PredictableNonceSequence { position }
     }
 }
@@ -32,19 +41,21 @@ impl NonceSequence for PredictableNonceSequence {
     }
 }
 
-struct UnpredictableNonceSequence {
+#[allow(clippy::module_name_repetitions)]
+pub struct UnpredictableNonceSequence {
     aes_key: SymmetricCipherKey,
     position: u64,
 }
 
 impl UnpredictableNonceSequence {
-    fn new() -> ([u8; 16], UnpredictableNonceSequence) {
+    #[must_use]
+    pub fn new() -> ([u8; 16], UnpredictableNonceSequence) {
         let rand = SystemRandom::new();
         let key: [u8; 16] = rand::generate(&rand).unwrap().expose();
-        (key.clone(), UnpredictableNonceSequence::using_key(key))
+        (key, UnpredictableNonceSequence::using_key(key))
     }
-
-    fn starting_from(position: u64) -> ([u8; 16], UnpredictableNonceSequence) {
+    #[must_use]
+    pub fn starting_from(position: u64) -> ([u8; 16], UnpredictableNonceSequence) {
         let rand = SystemRandom::new();
         let key: [u8; 16] = rand::generate(&rand).unwrap().expose();
         (
@@ -52,12 +63,12 @@ impl UnpredictableNonceSequence {
             UnpredictableNonceSequence::using_key_and_position(key, position),
         )
     }
-
-    fn using_key(key: [u8; 16]) -> UnpredictableNonceSequence {
+    #[must_use]
+    pub fn using_key(key: [u8; 16]) -> UnpredictableNonceSequence {
         UnpredictableNonceSequence::using_key_and_position(key, 0)
     }
-
-    fn using_key_and_position(key: [u8; 16], position: u64) -> UnpredictableNonceSequence {
+    #[must_use]
+    pub fn using_key_and_position(key: [u8; 16], position: u64) -> UnpredictableNonceSequence {
         UnpredictableNonceSequence {
             aes_key: SymmetricCipherKey::aes128(&key).unwrap(),
             position,
@@ -85,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_predictable() {
-        let value = 0x024CB016EAu64; // 9_876_543_210
+        let value = 0x0002_4CB0_16EA_u64; // 9_876_543_210
         let mut predicatable_ns = PredictableNonceSequence::starting_from(value);
         let nonce = predicatable_ns.advance().unwrap().0;
         assert_eq!(nonce, [0, 0, 0, 0, 0, 0, 0, 0x02, 0x4C, 0xB0, 0x16, 0xEB]);
@@ -105,17 +116,17 @@ mod tests {
         let mut uns2 = UnpredictableNonceSequence::using_key_and_position(key, STARTING_POS);
 
         for _ in 0..100 {
-            assert_eq!(uns1.advance().unwrap().0, uns2.advance().unwrap().0)
+            assert_eq!(uns1.advance().unwrap().0, uns2.advance().unwrap().0);
         }
     }
 
     #[test]
     fn test_unpredictable_new() {
         let (key, mut uns1) = UnpredictableNonceSequence::new();
-        let mut uns2 = UnpredictableNonceSequence::using_key(key, STARTING_POS);
+        let mut uns2 = UnpredictableNonceSequence::using_key(key);
 
         for _ in 0..100 {
-            assert_eq!(uns1.advance().unwrap().0, uns2.advance().unwrap().0)
+            assert_eq!(uns1.advance().unwrap().0, uns2.advance().unwrap().0);
         }
     }
 }
