@@ -64,6 +64,13 @@ impl From<&[u8; NONCE_LEN]> for Nonce {
     }
 }
 
+impl From<[u8; NONCE_LEN]> for Nonce {
+    #[inline]
+    fn from(bytes: [u8; NONCE_LEN]) -> Self {
+        Nonce(bytes)
+    }
+}
+
 impl From<&[u32; NONCE_LEN / 4]> for Nonce {
     #[inline]
     fn from(values: &[u32; NONCE_LEN / 4]) -> Self {
