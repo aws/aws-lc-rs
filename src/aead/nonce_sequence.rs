@@ -16,7 +16,7 @@ use zeroize::Zeroize;
 /// increments on each call to `advance`. This counter is used as the nonce.
 #[allow(clippy::module_name_repetitions)]
 pub struct PredictableNonceSequence {
-    position: u64,
+    counter: u64,
 }
 
 impl Default for PredictableNonceSequence {
@@ -37,14 +37,20 @@ impl PredictableNonceSequence {
     /// indicated.
     #[must_use]
     pub fn starting_from(position: u64) -> PredictableNonceSequence {
-        PredictableNonceSequence { position }
+        PredictableNonceSequence { counter: position }
+    }
+
+    /// Provides the current internal counter value.
+    #[must_use]
+    pub fn counter(&self) -> u64 {
+        self.counter
     }
 }
 
 impl NonceSequence for PredictableNonceSequence {
     fn advance(&mut self) -> Result<Nonce, Unspecified> {
-        self.position = self.position.wrapping_add(1);
-        let bytes: [u8; 8] = self.position.to_be_bytes();
+        self.counter = self.counter.wrapping_add(1);
+        let bytes: [u8; 8] = self.counter.to_be_bytes();
         let mut nonce_bytes = [0u8; 12];
         nonce_bytes[4..].copy_from_slice(&bytes);
         Ok(Nonce(nonce_bytes))
@@ -92,10 +98,16 @@ impl Drop for NonceSequenceKey {
 #[allow(clippy::module_name_repetitions)]
 pub struct UnpredictableNonceSequence {
     aes_key: SymmetricCipherKey,
-    position: u64,
+    counter: u64,
 }
 
 impl UnpredictableNonceSequence {
+    /// Provides the current internal counter value.
+    #[must_use]
+    pub fn counter(&self) -> u64 {
+        self.counter
+    }
+
     /// Generates a random 128-bit AES128 key and uses it to construct a
     /// `UnpredictableNonceSequence` with an internal counter at 0.
     /// # Panics
@@ -142,16 +154,16 @@ impl UnpredictableNonceSequence {
     ) -> UnpredictableNonceSequence {
         UnpredictableNonceSequence {
             aes_key: SymmetricCipherKey::aes128(&key.0).unwrap(),
-            position,
+            counter: position,
         }
     }
 }
 
 impl NonceSequence for UnpredictableNonceSequence {
     fn advance(&mut self) -> Result<Nonce, Unspecified> {
-        self.position = self.position.wrapping_add(1);
+        self.counter = self.counter.wrapping_add(1);
         let mut block_bytes = [0u8; 16];
-        block_bytes[4..12].copy_from_slice(&self.position.to_be_bytes());
+        block_bytes[4..12].copy_from_slice(&self.counter.to_be_bytes());
         let encrypted_block = self.aes_key.encrypt_block(Block::from(&block_bytes))?;
         let encrypted_bytes = encrypted_block.as_ref();
         let mut nonce_bytes = [0u8; NONCE_LEN];
