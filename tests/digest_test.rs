@@ -152,7 +152,7 @@ mod digest_shavs {
                 ctx.update(&mds[1]);
                 ctx.update(&mds[2]);
                 let md_i = ctx.finish();
-                #[allow(clippy::let_underscore_drop)]
+                #[allow(let_underscore_drop)]
                 let _ = mds.remove(0);
                 mds.push(Vec::from(md_i.as_ref()));
             }
