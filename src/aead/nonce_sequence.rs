@@ -101,7 +101,7 @@ impl NonceSequence for UnpredictableNonceSequence {
         let encrypted_bytes = encrypted_block.as_ref();
         let mut nonce_bytes = [0u8; NONCE_LEN];
         nonce_bytes.copy_from_slice(&encrypted_bytes[0..NONCE_LEN]);
-        Ok(Nonce::from(nonce_bytes))
+        Ok(Nonce(nonce_bytes))
     }
 }
 
