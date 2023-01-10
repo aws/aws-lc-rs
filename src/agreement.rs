@@ -61,7 +61,6 @@
 //!
 //! # Ok::<(), ring::error::Unspecified>(())
 //! ```
-
 use crate::ec::{ec_group_from_nid, ec_key_from_public_point, ec_point_from_bytes};
 use crate::error::Unspecified;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
@@ -158,14 +157,13 @@ const X25519_SHARED_KEY_LEN: usize = aws_lc::X25519_SHARED_KEY_LEN as usize;
 enum KeyInner {
     ECDH_P256(LcPtr<*mut EC_KEY>),
     ECDH_P384(LcPtr<*mut EC_KEY>),
-    X25519([u8; X25519_PRIVATE_KEY_LEN], [u8; X25519_PUBLIC_VALUE_LEN]),
+    X25519([u8; X25519_PRIVATE_KEY_LEN]),
 }
 
 impl Drop for KeyInner {
     fn drop(&mut self) {
-        if let KeyInner::X25519(private, public) = self {
+        if let KeyInner::X25519(private) = self {
             private.zeroize();
-            public.zeroize();
         }
         // LcPtr's Drop implementation will call EC_KEY_free
     }
@@ -237,12 +235,8 @@ impl EphemeralPrivateKey {
 
     #[inline]
     fn from_x25519_private_key(priv_key: &[u8; X25519_PRIVATE_KEY_LEN]) -> Self {
-        unsafe {
-            let mut pub_key = [0u8; X25519_PUBLIC_VALUE_LEN];
-            X25519_public_from_private(pub_key.as_mut_ptr().cast(), priv_key.as_ptr());
-            let inner_key = KeyInner::X25519(*priv_key, pub_key);
-            EphemeralPrivateKey { inner_key }
-        }
+        let inner_key = KeyInner::X25519(*priv_key);
+        EphemeralPrivateKey { inner_key }
     }
 
     #[inline]
@@ -291,9 +285,12 @@ impl EphemeralPrivateKey {
                     })
                 }
             }
-            KeyInner::X25519(_, pub_key) => {
+            KeyInner::X25519(priv_key) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
-                buffer[0..X25519_PUBLIC_VALUE_LEN].copy_from_slice(pub_key);
+                unsafe {
+                    X25519_public_from_private(buffer.as_mut_ptr().cast(), priv_key.as_ptr());
+                }
+
                 Ok(PublicKey {
                     alg: self.algorithm(),
                     public_key: buffer,

@@ -227,11 +227,11 @@ fn ecdsa_test_public_key_coverage() {
     assert_eq!(key_pair.public_key().as_ref(), PUBLIC_KEY);
 
     // Test `Clone`.
-    #[allow(clippy::let_underscore_drop)]
+    #[allow(let_underscore_drop)]
     let _ = key_pair.public_key().clone();
 
     // Test `Copy`.
-    #[allow(clippy::let_underscore_drop)]
+    #[allow(let_underscore_drop)]
     let _: <signature::EcdsaKeyPair as KeyPair>::PublicKey = *key_pair.public_key();
 
     // Test `Debug`.
