@@ -1,3 +1,5 @@
+UNAME_S := $(shell uname -s)
+
 init:
 	rustup component add rustfmt &&  git config core.hooksPath .githooks
 
@@ -26,8 +28,10 @@ coverage:
 ci:
 	cargo fmt --check --verbose
 	cargo test --release --all-targets
+ifeq ($(UNAME_S),Linux)
 	cargo test --release --all-targets --features fips
-	cargo test --no-default-features
 	cargo test --no-default-features --features fips
+endif
+	cargo test --no-default-features
 	cargo test --no-default-features --features ring-io
 	cargo test --no-default-features --features alloc
