@@ -33,9 +33,9 @@ use aws_lc::RSA_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::RSA_check_key;
 use aws_lc::{
-    EVP_PKEY_get1_RSA, EVP_parse_private_key, RSA_bits, RSA_get0_e, RSA_get0_n, RSA_get0_p,
-    RSA_get0_q, RSA_new, RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes,
-    RSA_set0_key, RSA_sign, RSA_sign_pss_mgf1, RSA_size, RSA_verify, RSA_verify_pss_mgf1, RSA,
+    RSA_bits, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, RSA_parse_private_key,
+    RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_sign, RSA_sign_pss_mgf1,
+    RSA_size, RSA_verify, RSA_verify_pss_mgf1, RSA,
 };
 use core::fmt;
 
@@ -126,11 +126,8 @@ impl RsaKeyPair {
     /// not acceptable.
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
-            let mut cbs = cbs::build_CBS(pkcs8);
-            let evp_pkey = LcPtr::new(EVP_parse_private_key(&mut cbs))
-                .map_err(|_| KeyRejected::invalid_encoding())?;
-            let rsa = LcPtr::new(EVP_PKEY_get1_RSA(*evp_pkey))
-                .map_err(|_| KeyRejected::wrong_algorithm())?;
+            let evp_pkey = LcPtr::try_from(pkcs8)?;
+            let rsa = evp_pkey.get_rsa()?;
             Self::validate_rsa(&rsa.as_const())?;
 
             Self::new(rsa)

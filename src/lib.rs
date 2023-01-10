@@ -72,6 +72,7 @@ mod cbb;
 mod cbs;
 mod ec;
 mod ed25519;
+mod evp_pkey;
 mod ptr;
 
 use aws_lc::{

@@ -1,28 +1,23 @@
 // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::ec::{
-    validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey, PKCS8_DOCUMENT_MAX_LEN,
-};
+use crate::ec::{validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Document;
 use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
-use crate::{cbb, cbs, digest, ec};
+use crate::{digest, ec};
 #[cfg(not(feature = "fips"))]
 use aws_lc::EC_KEY_generate_key;
 #[cfg(feature = "fips")]
 use aws_lc::EC_KEY_generate_key_fips;
 use aws_lc::{
-    CBB_finish, ECDSA_do_sign, EC_KEY_new_by_curve_name, EVP_PKEY_assign_EC_KEY,
-    EVP_PKEY_get1_EC_KEY, EVP_PKEY_new, EVP_marshal_private_key, EVP_parse_private_key, EC_KEY,
-    EVP_PKEY,
+    ECDSA_do_sign, EC_KEY_new_by_curve_name, EVP_PKEY_assign_EC_KEY, EVP_PKEY_new, EC_KEY, EVP_PKEY,
 };
-use core::fmt;
+use std::fmt;
 
 use std::fmt::{Debug, Formatter};
-use std::mem::MaybeUninit;
 
 /// An ECDSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
@@ -98,13 +93,9 @@ impl EcdsaKeyPair {
         pkcs8: &[u8],
     ) -> Result<Self, KeyRejected> {
         unsafe {
-            let mut cbs = cbs::build_CBS(pkcs8);
+            let evp_pkey = LcPtr::try_from(pkcs8)?;
 
-            let evp_pkey = LcPtr::new(EVP_parse_private_key(&mut cbs))
-                .map_err(|_| KeyRejected::invalid_encoding())?;
-
-            let ec_key = LcPtr::new(EVP_PKEY_get1_EC_KEY(*evp_pkey))
-                .map_err(|_| KeyRejected::wrong_algorithm())?;
+            let ec_key = evp_pkey.get_ec_key()?;
 
             validate_ec_key(&ec_key.as_const(), alg.bits)?;
 
@@ -130,31 +121,7 @@ impl EcdsaKeyPair {
         unsafe {
             let evp_pkey = generate_key(alg.0.id.nid())?;
 
-            let mut cbb = cbb::build_CBB(PKCS8_DOCUMENT_MAX_LEN);
-            if 1 != EVP_marshal_private_key(cbb.as_mut_ptr(), *evp_pkey) {
-                return Err(Unspecified);
-            }
-
-            let mut pkcs8_bytes_ptr = MaybeUninit::<*mut u8>::uninit();
-            let mut out_len = MaybeUninit::<usize>::uninit();
-            if 1 != CBB_finish(
-                cbb.as_mut_ptr(),
-                pkcs8_bytes_ptr.as_mut_ptr(),
-                out_len.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr.assume_init())?;
-            let out_len = out_len.assume_init();
-
-            let bytes_slice = std::slice::from_raw_parts(*pkcs8_bytes_ptr, out_len);
-            let mut pkcs8_bytes = [0u8; PKCS8_DOCUMENT_MAX_LEN];
-            pkcs8_bytes[0..out_len].copy_from_slice(bytes_slice);
-
-            Ok(Document {
-                bytes: pkcs8_bytes,
-                len: out_len,
-            })
+            evp_pkey.marshall_private_key()
         }
     }
 
