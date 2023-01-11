@@ -46,7 +46,10 @@ mod nonce_sequence;
 mod poly1305;
 pub mod quic;
 
-pub use nonce_sequence::{PredictableNonceSequence, UnpredictableNonceSequence};
+pub use nonce_sequence::{
+    PredictableNonceSequence, PredictableNonceSequenceBuilder, UnpredictableNonceSequence,
+    UnpredictableNonceSequenceBuilder,
+};
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_256_GCM},
