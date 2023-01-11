@@ -6,7 +6,7 @@ use crate::aead::cipher::SymmetricCipherKey;
 use crate::aead::{Nonce, NonceSequence, NONCE_LEN};
 use crate::error::Unspecified;
 use crate::rand;
-use crate::rand::SystemRandom;
+use crate::rand::{SecureRandom, SystemRandom};
 use zeroize::Zeroize;
 
 /// `PredictableNonceSequence` is an implementation of the `NonceSequence` trait.
@@ -54,15 +54,23 @@ impl PredictableNonceSequenceBuilder {
     /// #  Panics
     /// Panics if unable to obtain random bytes
     #[must_use]
-    pub fn random() -> PredictableNonceSequenceBuilder {
-        let sys_rand = SystemRandom::new();
-        let context: [u8; 4] = rand::generate(&sys_rand).unwrap().expose();
-        let position: [u8; 8] = rand::generate(&sys_rand).unwrap().expose();
+    pub fn random(rng: &dyn SecureRandom) -> PredictableNonceSequenceBuilder {
+        let context: [u8; 4] = rand::generate(rng).unwrap().expose();
+        let position: [u8; 8] = rand::generate(rng).unwrap().expose();
         PredictableNonceSequenceBuilder {
             limit: u64::MAX,
             context,
             position: u64::from_be_bytes(position),
         }
+    }
+
+    /// Generates a random value for the context.
+    /// # Panics
+    /// Panics if unable to obtain random bytes.
+    #[must_use]
+    pub fn random_context(mut self, rng: &dyn SecureRandom) -> PredictableNonceSequenceBuilder {
+        self.context = rand::generate(rng).unwrap().expose();
+        self
     }
 
     /// The context for the `PredictableNonceSequence` - this value helps differentiate nonce
@@ -147,8 +155,8 @@ impl NonceSequence for PredictableNonceSequence {
 pub struct NonceSequenceKey([u8; 16]);
 
 impl NonceSequenceKey {
-    fn random() -> Self {
-        let key: [u8; 16] = rand::generate(&SystemRandom::new()).unwrap().expose();
+    fn random(rng: &dyn SecureRandom) -> Self {
+        let key: [u8; 16] = rand::generate(rng).unwrap().expose();
         Self(key)
     }
 }
@@ -220,16 +228,24 @@ impl UnpredictableNonceSequenceBuilder {
     /// # Panics
     /// Panics is unable to obtain random bytes.
     #[must_use]
-    pub fn random() -> UnpredictableNonceSequenceBuilder {
-        let sys_rand = SystemRandom::new();
-        let context: [u8; 12] = rand::generate(&sys_rand).unwrap().expose();
-        let position: [u8; 4] = rand::generate(&sys_rand).unwrap().expose();
+    pub fn random(rng: &dyn SecureRandom) -> UnpredictableNonceSequenceBuilder {
+        let context: [u8; 12] = rand::generate(rng).unwrap().expose();
+        let position: [u8; 4] = rand::generate(rng).unwrap().expose();
 
         UnpredictableNonceSequenceBuilder {
             limit: u32::from(u16::MAX),
             context,
             position: u32::from_be_bytes(position),
         }
+    }
+
+    /// Generates a random value for the context.
+    /// # Panics
+    /// Panics if unable to obtain random bytes.
+    #[must_use]
+    pub fn random_context(mut self, rng: &dyn SecureRandom) -> UnpredictableNonceSequenceBuilder {
+        self.context = rand::generate(rng).unwrap().expose();
+        self
     }
 
     /// Sets the "context" for the `UnpredictableNonceSequence` - this value helps differentiate
@@ -274,7 +290,7 @@ impl UnpredictableNonceSequenceBuilder {
     /// Panics is unable to construct cipher key.
     #[must_use]
     pub fn build(self) -> (NonceSequenceKey, UnpredictableNonceSequence) {
-        let key = NonceSequenceKey::random();
+        let key = NonceSequenceKey::random(&SystemRandom::new());
         let result = UnpredictableNonceSequence {
             limit: self.limit,
             counter: 0,
@@ -336,6 +352,7 @@ mod tests {
         PredictableNonceSequenceBuilder, UnpredictableNonceSequenceBuilder,
     };
     use crate::aead::NonceSequence;
+    use crate::rand::SystemRandom;
 
     #[test]
     fn test_predictable_context() {
@@ -365,10 +382,13 @@ mod tests {
 
     #[test]
     fn test_predictable_random() {
-        let mut predictable_ns1 = PredictableNonceSequenceBuilder::random().build();
+        let rng = SystemRandom::new();
+        let mut predictable_ns1 = PredictableNonceSequenceBuilder::random(&rng)
+            .random_context(&rng)
+            .build();
         let mut predictable_ns2 = PredictableNonceSequenceBuilder::new()
-            .position(predictable_ns1.position)
-            .context(predictable_ns1.context)
+            .position(predictable_ns1.position())
+            .context(predictable_ns1.context())
             .build();
         for _ in 1..100 {
             assert_eq!(
@@ -399,11 +419,14 @@ mod tests {
     }
 
     #[test]
-    fn test_unpredictable_new() {
-        let (key, mut uns1) = UnpredictableNonceSequenceBuilder::random().build();
+    fn test_unpredictable_random() {
+        let rng = SystemRandom::new();
+        let (key, mut uns1) = UnpredictableNonceSequenceBuilder::random(&rng)
+            .random_context(&rng)
+            .build();
         let mut uns2 = UnpredictableNonceSequenceBuilder::new()
             .context(uns1.context())
-            .position(uns1.position)
+            .position(uns1.position())
             .build_with_key(&key);
 
         for _ in 0..100 {
