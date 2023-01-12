@@ -1,9 +1,10 @@
 // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 or ISC
 
+use crate::aead::aes::AES128_KEY_LENGTH;
 use crate::aead::block::Block;
 use crate::aead::cipher::SymmetricCipherKey;
-use crate::aead::{Nonce, NonceSequence, NONCE_LEN};
+use crate::aead::{Nonce, NonceSequence, BLOCK_LEN, NONCE_LEN};
 use crate::error::Unspecified;
 use crate::rand;
 use crate::rand::{SecureRandom, SystemRandom};
@@ -142,7 +143,7 @@ impl NonceSequence for PredictableNonceSequence {
         }
         self.position = self.position.wrapping_add(1);
         let bytes: [u8; 8] = self.position.to_be_bytes();
-        let mut nonce_bytes = [0u8; 12];
+        let mut nonce_bytes = [0u8; NONCE_LEN];
         nonce_bytes[..4].copy_from_slice(&self.context);
         nonce_bytes[4..].copy_from_slice(&bytes);
         Ok(Nonce(nonce_bytes))
@@ -151,25 +152,25 @@ impl NonceSequence for PredictableNonceSequence {
 
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
-/// `NonceSequenceKey` wraps a `[u8; 16]`. The value is zero'd when dropped.
-pub struct NonceSequenceKey([u8; 16]);
+/// `NonceSequenceKey` wraps a `[u8; AES128_KEY_LENGTH]`. The value is zero'd when dropped.
+pub struct NonceSequenceKey([u8; AES128_KEY_LENGTH]);
 
 impl NonceSequenceKey {
     fn random(rng: &dyn SecureRandom) -> Self {
-        let key: [u8; 16] = rand::generate(rng).unwrap().expose();
+        let key: [u8; AES128_KEY_LENGTH] = rand::generate(rng).unwrap().expose();
         Self(key)
     }
 }
 
-impl From<&[u8; 16]> for NonceSequenceKey {
-    fn from(value: &[u8; 16]) -> Self {
-        let mut key = [0u8; 16];
+impl From<&[u8; AES128_KEY_LENGTH]> for NonceSequenceKey {
+    fn from(value: &[u8; AES128_KEY_LENGTH]) -> Self {
+        let mut key = [0u8; AES128_KEY_LENGTH];
         key.copy_from_slice(value);
         Self(key)
     }
 }
 
-impl From<NonceSequenceKey> for [u8; 16] {
+impl From<NonceSequenceKey> for [u8; AES128_KEY_LENGTH] {
     fn from(value: NonceSequenceKey) -> Self {
         value.0
     }
@@ -335,7 +336,7 @@ impl NonceSequence for UnpredictableNonceSequence {
             return Err(Unspecified);
         }
         self.position = self.position.wrapping_add(1);
-        let mut block_bytes = [0u8; 16];
+        let mut block_bytes = [0u8; BLOCK_LEN];
         block_bytes[..12].copy_from_slice(&self.context);
         block_bytes[12..].copy_from_slice(&self.position.to_be_bytes());
         let encrypted_block = self.key.encrypt_block(Block::from(&block_bytes))?;

@@ -21,9 +21,12 @@ use std::mem::MaybeUninit;
 use std::ops::Deref;
 use zeroize::Zeroize;
 
-pub(crate) struct Aes128Key(pub(super) [u8; 16]);
+pub(super) const AES128_KEY_LENGTH: usize = 16;
+pub(super) const AES256_KEY_LENGTH: usize = 32;
+
+pub(crate) struct Aes128Key(pub(super) [u8; AES128_KEY_LENGTH]);
 impl Deref for Aes128Key {
-    type Target = [u8; 16];
+    type Target = [u8; AES128_KEY_LENGTH];
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -35,9 +38,9 @@ impl Drop for Aes128Key {
     }
 }
 
-pub(crate) struct Aes256Key(pub(super) [u8; 32]);
+pub(crate) struct Aes256Key(pub(super) [u8; AES256_KEY_LENGTH]);
 impl Deref for Aes256Key {
-    type Target = [u8; 32];
+    type Target = [u8; AES256_KEY_LENGTH];
 
     #[inline]
     fn deref(&self) -> &Self::Target {
