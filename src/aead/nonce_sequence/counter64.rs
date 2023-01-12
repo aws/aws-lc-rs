@@ -47,8 +47,8 @@ impl Counter64Builder {
     /// The identifier for the `Counter64` - this value helps differentiate nonce
     /// sequences.
     #[must_use]
-    pub fn identifier(mut self, identifier: [u8; 4]) -> Counter64Builder {
-        self.identifier = identifier;
+    pub fn identifier<T: Into<[u8; 4]>>(mut self, identifier: T) -> Counter64Builder {
+        self.identifier = identifier.into();
         self
     }
 
@@ -146,6 +146,18 @@ mod tests {
         assert_eq!(nonce, [0, 0, 0, 0, 0, 0, 0, 0x02, 0x4C, 0xB0, 0x16, 0xEA]);
         let nonce = cns.advance().unwrap().0;
         assert_eq!(nonce, [0, 0, 0, 0, 0, 0, 0, 0x02, 0x4C, 0xB0, 0x16, 0xEB]);
+    }
+
+    #[test]
+    fn test_counter64_id() {
+        let mut cns = Counter64Builder::new()
+            .counter(0x_6A_u64)
+            .identifier(0x_7B_u32.to_be_bytes())
+            .build();
+        let nonce = cns.advance().unwrap().0;
+        assert_eq!(nonce, [0, 0, 0, 0x7B, 0, 0, 0, 0, 0, 0, 0, 0x6A]);
+        let nonce = cns.advance().unwrap().0;
+        assert_eq!(nonce, [0, 0, 0, 0x7B, 0, 0, 0, 0, 0, 0, 0, 0x6B]);
     }
 
     #[test]
