@@ -42,6 +42,7 @@ pub mod chacha20_poly1305_openssh;
 mod cipher;
 mod key_inner;
 mod nonce;
+pub mod nonce_sequence;
 mod poly1305;
 pub mod quic;
 
