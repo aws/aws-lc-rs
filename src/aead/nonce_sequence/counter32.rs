@@ -129,16 +129,30 @@ mod tests {
 
     #[test]
     fn test_counter32_identifier() {
-        let mut cns = Counter32Builder::new()
+        let mut cns = Counter32Builder::default()
             .identifier([0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5])
             .counter(7)
             .build();
+        assert_eq!(0, cns.generated());
         let nonce = cns.advance().unwrap().0;
+        assert_eq!(8, cns.counter());
+        assert_eq!(
+            [0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5],
+            cns.identifier()
+        );
+        assert_eq!(u32::MAX, cns.limit());
+        assert_eq!(1, cns.generated());
         assert_eq!(
             nonce,
             [0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5, 0, 0, 0, 7]
         );
         let nonce = cns.advance().unwrap().0;
+        assert_eq!(2, cns.generated());
+        assert_eq!(9, cns.counter());
+        assert_eq!(
+            [0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5],
+            cns.identifier()
+        );
         assert_eq!(
             nonce,
             [0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5, 0, 0, 0, 8]
@@ -169,7 +183,10 @@ mod tests {
     #[test]
     fn test_counter32_limit() {
         let mut cns = Counter32Builder::new().limit(1).build();
+        assert_eq!(1, cns.limit());
+        assert_eq!(0, cns.generated());
         let _nonce = cns.advance().unwrap().0;
+        assert_eq!(1, cns.generated());
         assert!(cns.advance().is_err());
     }
 }
