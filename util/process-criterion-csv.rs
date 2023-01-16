@@ -193,16 +193,16 @@ fn main() {
         .expect(&format!("Unable to open file: '{:?}'", &cli.csv_file));
 
     for line in contents.lines() {
+        if line.starts_with("group") {
+            continue;
+        }
         let components: Vec<&str> = line.split(",").collect();
         assert_eq!(8, components.len());
         let test = components[0].trim();
         let lib = components[1].trim();
-        let time = f64::from_str(components[5])
-            .expect(&format!("Unable to parse time: {}", components[5]));
-        let iter = u32::from_str(components[7]).expect(&format!(
-            "Unable to parse iteration count: {}",
-            components[7]
-        ));
+        let time = f64::from_str(components[5]).expect(&format!("Unable to parse time: {}", line));
+        let iter = u32::from_str(components[7])
+            .expect(&format!("Unable to parse iteration count: {}", line));
         let avg = time.div(iter as f64);
         match lib {
             "AWS-LC" => insert_result(test, avg, &mut aws_results),
