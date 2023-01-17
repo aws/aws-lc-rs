@@ -127,13 +127,21 @@ mod tests {
 
     #[test]
     fn test_counter64_identifier() {
-        let mut cns = Counter64Builder::new()
+        let mut cns = Counter64Builder::default()
             .identifier([0xA1, 0xB2, 0xC3, 0xD4])
             .counter(7)
             .build();
+        assert_eq!(0, cns.generated());
         let nonce = cns.advance().unwrap().0;
+        assert_eq!(8, cns.counter());
+        assert_eq!([0xA1, 0xB2, 0xC3, 0xD4], cns.identifier());
+        assert_eq!(u64::MAX, cns.limit());
+        assert_eq!(1, cns.generated());
         assert_eq!(nonce, [0xA1, 0xB2, 0xC3, 0xD4, 0, 0, 0, 0, 0, 0, 0, 7]);
         let nonce = cns.advance().unwrap().0;
+        assert_eq!(2, cns.generated());
+        assert_eq!(9, cns.counter());
+        assert_eq!([0xA1, 0xB2, 0xC3, 0xD4], cns.identifier());
         assert_eq!(nonce, [0xA1, 0xB2, 0xC3, 0xD4, 0, 0, 0, 0, 0, 0, 0, 8]);
     }
 
@@ -163,7 +171,10 @@ mod tests {
     #[test]
     fn test_counter64_limit() {
         let mut cns = Counter64Builder::new().limit(1).build();
+        assert_eq!(1, cns.limit());
+        assert_eq!(0, cns.generated());
         let _nonce = cns.advance().unwrap().0;
+        assert_eq!(1, cns.generated());
         assert!(cns.advance().is_err());
     }
 }

@@ -214,12 +214,13 @@ pub fn positive_integer<'a>(
 mod tests {
     use super::*;
     use crate::error;
+    use untrusted::Input;
 
     fn with_good_i<F, R>(value: &[u8], f: F)
     where
         F: FnOnce(&mut untrusted::Reader) -> Result<R, error::Unspecified>,
     {
-        let r = untrusted::Input::from(value).read_all(error::Unspecified, f);
+        let r = Input::from(value).read_all(error::Unspecified, f);
         assert!(r.is_ok());
     }
 
@@ -227,7 +228,7 @@ mod tests {
     where
         F: FnOnce(&mut untrusted::Reader) -> Result<R, error::Unspecified>,
     {
-        let r = untrusted::Input::from(value).read_all(error::Unspecified, f);
+        let r = Input::from(value).read_all(error::Unspecified, f);
         assert!(r.is_err());
     }
 
@@ -349,5 +350,20 @@ mod tests {
                 Ok(())
             });
         }
+    }
+
+    #[test]
+    fn test_bit_string_with_no_unused_bits() {
+        // Not a BitString
+        let mut reader_bad = untrusted::Reader::new(Input::from(&[0x02, 0x01]));
+        assert!(bit_string_with_no_unused_bits(&mut reader_bad).is_err());
+        // Unused bits at end
+        let mut reader_bad2 = untrusted::Reader::new(Input::from(&[0x03, 0x01, 0x01]));
+        assert!(bit_string_with_no_unused_bits(&mut reader_bad2).is_err());
+
+        let mut reader_good = untrusted::Reader::new(Input::from(&[0x03, 0x01, 0x00]));
+        let input = bit_string_with_no_unused_bits(&mut reader_good).unwrap();
+        let expected_result: &[u8] = &[];
+        assert_eq!(expected_result, input.as_slice_less_safe());
     }
 }
