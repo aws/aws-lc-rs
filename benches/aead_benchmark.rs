@@ -17,7 +17,6 @@ pub struct AeadConfig {
     nonce: Vec<u8>,
     aad: String,
     in_out: Vec<u8>,
-    description: String,
 }
 
 impl AeadConfig {
@@ -28,7 +27,6 @@ impl AeadConfig {
         nonce: &[u8],
         aad: &str,
         in_out: &[u8],
-        description: &str,
     ) -> AeadConfig {
         AeadConfig {
             algorithm,
@@ -36,7 +34,6 @@ impl AeadConfig {
             nonce: Vec::from(nonce),
             aad: String::from(aad),
             in_out: Vec::from(in_out),
-            description: String::from(description),
         }
     }
 }
@@ -138,7 +135,6 @@ fn test_aes_128_gcm(c: &mut Criterion) {
                 test_case.consume_bytes("NONCE").as_slice(),
                 test_case.consume_string("AD").as_str(),
                 test_case.consume_bytes("IN").as_slice(),
-                test_case.consume_string("DESC").as_str(),
             );
             test_aead_separate(c, &config);
             test_aead_append(c, &config);
@@ -158,7 +154,6 @@ fn test_aes_256_gcm(c: &mut Criterion) {
                 test_case.consume_bytes("NONCE").as_slice(),
                 test_case.consume_string("AD").as_str(),
                 test_case.consume_bytes("IN").as_slice(),
-                test_case.consume_string("DESC").as_str(),
             );
             test_aead_separate(c, &config);
             test_aead_append(c, &config);
@@ -178,7 +173,6 @@ fn test_chacha20(c: &mut Criterion) {
                 test_case.consume_bytes("NONCE").as_slice(),
                 test_case.consume_string("AD").as_str(),
                 test_case.consume_bytes("IN").as_slice(),
-                test_case.consume_string("DESC").as_str(),
             );
             test_aead_separate(c, &config);
             test_aead_append(c, &config);
