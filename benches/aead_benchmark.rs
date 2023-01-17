@@ -192,9 +192,8 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
     let mut in_out = config.in_out.clone();
 
     let bench_group_name = format!(
-        "AEAD-{:?}-separate-{}-{}-bytes",
+        "AEAD-{:?}-separate-{}-bytes",
         config.algorithm,
-        config.description,
         in_out.len()
     );
     let mut group = c.benchmark_group(bench_group_name);
@@ -220,12 +219,7 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
 fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
     let in_out = config.in_out.clone();
 
-    let bench_group_name = format!(
-        "AEAD-{:?}-append-{}-{}-bytes",
-        config.algorithm,
-        config.description,
-        in_out.len()
-    );
+    let bench_group_name = format!("AEAD-{:?}-append-{}-bytes", config.algorithm, in_out.len());
     let mut group = c.benchmark_group(bench_group_name);
 
     let mut aws_sealing_key = aws_lc_ring_benchmarks::create_sealing_key(config);
@@ -254,12 +248,7 @@ fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
     let mut aws_sealing_key = aws_lc_ring_benchmarks::create_sealing_key(config);
     aws_lc_ring_benchmarks::seal_append(&mut aws_sealing_key, aws_aad, &mut in_out);
 
-    let bench_group_name = format!(
-        "AEAD-{:?}-open-{}-{}-bytes",
-        config.algorithm,
-        config.description,
-        in_out.len()
-    );
+    let bench_group_name = format!("AEAD-{:?}-open-{}-bytes", config.algorithm, in_out.len());
     let mut group = c.benchmark_group(bench_group_name);
 
     let mut aws_opening_key = aws_lc_ring_benchmarks::create_opening_key(config);
