@@ -6,14 +6,16 @@
 //!
 //! After running the benchmarks, you can collect the data into a single CSV:
 //! ```
-//! $ find ./target -name "raw.csv" | xargs cat | sort | egrep -v "^group" > bench-aarch64-AL2.csv
+//! $ find ./target/criterion -name "raw.csv" | xargs cat | sort | egrep -v "^group" > bench-aarch64-AL2.csv
 //! ```
 //!
 //! ```cargo
 //! [dependencies]
 //! clap = { version = "4.0.29", features = ["derive"] }
+//! itertools = "0.10.5"
 //! ```
 
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::io::Write;
 use std::ops::{Deref, DerefMut, Div};
@@ -23,6 +25,11 @@ use std::string::String;
 use std::{fs, io};
 
 use clap::Parser;
+
+use itertools::{
+    EitherOrBoth::{Both, Left, Right},
+    Itertools,
+};
 
 struct Stats(Vec<f64>);
 struct FinalizedStats(Vec<f64>);
@@ -183,6 +190,84 @@ where
     (aws, ring, relative_percentage)
 }
 
+fn numerical_string_compare(a: &str, b: &str) -> Ordering {
+    let mut number_compare = false;
+    let mut a_num = 0u32;
+    let mut b_num = 0u32;
+
+    for pair in a.chars().into_iter().zip_longest(b.chars().into_iter()) {
+        match pair {
+            Both(ac, bc) => {
+                if ac.is_digit(10) {
+                    if bc.is_digit(10) {
+                        if ac.cmp(&bc).is_eq() {
+                            continue;
+                        }
+                        a_num *= 10;
+                        a_num += ac.to_digit(10).unwrap();
+                        b_num *= 10;
+                        b_num += bc.to_digit(10).unwrap();
+                        number_compare = true;
+                    } else if number_compare {
+                        return Ordering::Greater;
+                    } else {
+                        return ac.cmp(&bc);
+                    }
+                } else if bc.is_digit(10) {
+                    if number_compare {
+                        return Ordering::Less;
+                    } else {
+                        return ac.cmp(&bc);
+                    }
+                } else if number_compare {
+                    return a_num.cmp(&b_num);
+                } else {
+                    let result = ac.cmp(&bc);
+                    if !result.is_eq() {
+                        return result;
+                    }
+                }
+            }
+            Left(_ac) => {
+                return Ordering::Greater;
+            }
+            Right(_bc) => {
+                return Ordering::Less;
+            }
+        }
+    }
+    Ordering::Equal
+}
+
+/// Tests can be run from the command line:
+///    $ rust-script --test ./util/process-criterion-csv.rs
+#[test]
+fn test_numerical_string_compare() {
+    let h123 = "Hello256-123-bytes";
+    let h987 = "Hello256-987-bytes";
+    let h1234 = "Hello256-1234-bytes";
+    let h9876 = "Hello256-9876-bytes";
+    assert_eq!(Ordering::Equal, numerical_string_compare(h123, h123));
+    assert_eq!(Ordering::Less, numerical_string_compare(h123, h987));
+    assert_eq!(Ordering::Greater, numerical_string_compare(h987, h123));
+    assert_eq!(Ordering::Less, numerical_string_compare(h123, h1234));
+    assert_eq!(Ordering::Greater, numerical_string_compare(h1234, h123));
+    assert_eq!(Ordering::Less, numerical_string_compare(h123, h9876));
+    assert_eq!(Ordering::Greater, numerical_string_compare(h9876, h123));
+
+    assert_eq!(Ordering::Equal, numerical_string_compare(h987, h987));
+    assert_eq!(Ordering::Less, numerical_string_compare(h987, h1234));
+    assert_eq!(Ordering::Greater, numerical_string_compare(h1234, h987));
+    assert_eq!(Ordering::Less, numerical_string_compare(h987, h9876));
+    assert_eq!(Ordering::Greater, numerical_string_compare(h9876, h987));
+
+    assert_eq!(Ordering::Equal, numerical_string_compare(h1234, h1234));
+    assert_eq!(Ordering::Less, numerical_string_compare(h1234, h9876));
+    assert_eq!(Ordering::Greater, numerical_string_compare(h9876, h1234));
+
+    assert_eq!(Ordering::Equal, numerical_string_compare(h9876, h9876));
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -193,16 +278,16 @@ fn main() {
         .expect(&format!("Unable to open file: '{:?}'", &cli.csv_file));
 
     for line in contents.lines() {
+        if line.starts_with("group") {
+            continue;
+        }
         let components: Vec<&str> = line.split(",").collect();
         assert_eq!(8, components.len());
         let test = components[0].trim();
         let lib = components[1].trim();
-        let time = f64::from_str(components[5])
-            .expect(&format!("Unable to parse time: {}", components[5]));
-        let iter = u32::from_str(components[7]).expect(&format!(
-            "Unable to parse iteration count: {}",
-            components[7]
-        ));
+        let time = f64::from_str(components[5]).expect(&format!("Unable to parse time: {}", line));
+        let iter = u32::from_str(components[7])
+            .expect(&format!("Unable to parse iteration count: {}", line));
         let avg = time.div(iter as f64);
         match lib {
             "AWS-LC" => insert_result(test, avg, &mut aws_results),
@@ -212,7 +297,7 @@ fn main() {
     }
 
     let mut test_keys: Vec<&String> = aws_results.keys().collect();
-    test_keys.sort();
+    test_keys.sort_by(|a, b| numerical_string_compare(a, b));
     let mut handle = io::stdout().lock();
     writeln!(handle, "Test{}", cli.header_line()).unwrap();
 
