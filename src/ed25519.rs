@@ -16,6 +16,7 @@ use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ptr::null_mut;
 use untrusted::Input;
+use zeroize::Zeroize;
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
@@ -106,6 +107,7 @@ pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<*mut E
         private_key.as_mut_ptr().cast(),
         seed.as_ptr(),
     );
+    seed.zeroize();
 
     LcPtr::new(EVP_PKEY_new_raw_private_key(
         EVP_PKEY_ED25519,
