@@ -278,6 +278,8 @@ fn test_numerical_end_string_compare() {
     let h987 = "Hello256-987";
     assert_eq!(Ordering::Less, numerical_string_compare(h123, h987));
     assert_eq!(Ordering::Greater, numerical_string_compare(h987, h123));
+    assert_eq!(Ordering::Equal, numerical_string_compare(h123, h123));
+    assert_eq!(Ordering::Equal, numerical_string_compare(h987, h987));
 }
 
 fn main() {
