@@ -236,7 +236,11 @@ fn numerical_string_compare(a: &str, b: &str) -> Ordering {
             }
         }
     }
-    Ordering::Equal
+    return if number_compare {
+        a_num.cmp(&b_num)
+    } else {
+        Ordering::Equal
+    };
 }
 
 /// Tests can be run from the command line:
@@ -266,6 +270,14 @@ fn test_numerical_string_compare() {
     assert_eq!(Ordering::Greater, numerical_string_compare(h9876, h1234));
 
     assert_eq!(Ordering::Equal, numerical_string_compare(h9876, h9876));
+}
+
+#[test]
+fn test_numerical_end_string_compare() {
+    let h123 = "Hello256-123";
+    let h987 = "Hello256-987";
+    assert_eq!(Ordering::Less, numerical_string_compare(h123, h987));
+    assert_eq!(Ordering::Greater, numerical_string_compare(h987, h123));
 }
 
 fn main() {
