@@ -82,7 +82,9 @@ pub struct Salt {
 
 impl fmt::Debug for Salt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("hkdf::Salt").finish()
+        f.debug_struct("hkdf::Salt")
+            .field("algorithm", &self.algorithm.0)
+            .finish()
     }
 }
 
@@ -195,7 +197,9 @@ pub struct Prk {
 
 impl fmt::Debug for Prk {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("hkdf::Prk").finish()
+        f.debug_struct("hkdf::Prk")
+            .field("algorithm", &self.algorithm.0)
+            .finish()
     }
 }
 
@@ -293,7 +297,7 @@ pub struct Okm<'a, L: KeyType> {
 
 impl<'a, L: KeyType> fmt::Debug for Okm<'a, L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("hkdf::Okm").finish()
+        f.debug_struct("hkdf::Okm").field("prk", &self.prk).finish()
     }
 }
 
@@ -544,6 +548,45 @@ mod tests {
                 89, 74, 29, 169, 83, 186, 156, 217, 15, 130, 215, 15, 245, 57, 91, 192, 227, 195,
                 106, 0, 10, 225, 34, 200, 10, 198, 253, 171, 44, 32, 192, 249
             ]
+        );
+    }
+
+    #[test]
+    fn test_debug() {
+        const SALT: &[u8; 32] = &[
+            29, 113, 120, 243, 11, 202, 39, 222, 206, 81, 163, 184, 122, 153, 52, 192, 98, 195,
+            240, 32, 34, 19, 160, 128, 178, 111, 97, 232, 113, 101, 221, 143,
+        ];
+        const SECRET1: &[u8; 32] = &[
+            157, 191, 36, 107, 110, 131, 193, 6, 175, 226, 193, 3, 168, 133, 165, 181, 65, 120,
+            194, 152, 31, 92, 37, 191, 73, 222, 41, 112, 207, 236, 196, 174,
+        ];
+
+        const INFO1: &[&[u8]] = &[
+            &[
+                2, 130, 61, 83, 192, 248, 63, 60, 211, 73, 169, 66, 101, 160, 196, 212, 250, 113,
+            ],
+            &[
+                80, 46, 248, 123, 78, 204, 171, 178, 67, 204, 96, 27, 131, 24,
+            ],
+        ];
+
+        let alg = HKDF_SHA256;
+        let salt = Salt::new(alg, SALT);
+        let prk = salt.extract(SECRET1);
+        let okm = prk.expand(INFO1, alg).unwrap();
+
+        assert_eq!(
+            "hkdf::Salt { algorithm: Algorithm(SHA256) }",
+            format!("{:?}", salt)
+        );
+        assert_eq!(
+            "hkdf::Prk { algorithm: Algorithm(SHA256) }",
+            format!("{:?}", prk)
+        );
+        assert_eq!(
+            "hkdf::Okm { prk: hkdf::Prk { algorithm: Algorithm(SHA256) } }",
+            format!("{:?}", okm)
         );
     }
 }
