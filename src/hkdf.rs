@@ -24,6 +24,7 @@
 use crate::error::Unspecified;
 use crate::{digest, hmac};
 use aws_lc::{HKDF_expand, HKDF_extract};
+use core::fmt;
 use std::mem::MaybeUninit;
 use zeroize::Zeroize;
 
@@ -77,6 +78,12 @@ pub struct Salt {
     algorithm: Algorithm,
     key_bytes: [u8; MAX_HKDF_SALT_LEN],
     key_len: usize,
+}
+
+impl fmt::Debug for Salt {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("hkdf::Salt").finish()
+    }
 }
 
 impl Drop for Salt {
@@ -186,6 +193,12 @@ pub struct Prk {
     key_len: usize,
 }
 
+impl fmt::Debug for Prk {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("hkdf::Prk").finish()
+    }
+}
+
 impl Drop for Prk {
     fn drop(&mut self) {
         self.key_bytes.zeroize();
@@ -276,6 +289,12 @@ pub struct Okm<'a, L: KeyType> {
     info_bytes: [u8; MAX_HKDF_INFO_LEN],
     info_len: usize,
     len: L,
+}
+
+impl<'a, L: KeyType> fmt::Debug for Okm<'a, L> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("hkdf::Okm").finish()
+    }
 }
 
 impl<'a, L: KeyType> Drop for Okm<'a, L> {
