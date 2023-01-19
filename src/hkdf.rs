@@ -73,7 +73,6 @@ impl KeyType for Algorithm {
 }
 
 /// A salt for HKDF operations.
-#[derive(Debug)]
 pub struct Salt {
     algorithm: Algorithm,
     key_bytes: [u8; MAX_HKDF_SALT_LEN],
@@ -180,7 +179,7 @@ pub trait KeyType {
 }
 
 /// A HKDF PRK (pseudorandom key).
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Prk {
     algorithm: Algorithm,
     key_bytes: [u8; MAX_HKDF_PRK_LEN],
@@ -272,7 +271,6 @@ impl From<Okm<'_, Algorithm>> for Prk {
 ///
 /// Intentionally not `Clone` or `Copy` as an OKM is generally only safe to
 /// use once.
-#[derive(Debug)]
 pub struct Okm<'a, L: KeyType> {
     prk: &'a Prk,
     info_bytes: [u8; MAX_HKDF_INFO_LEN],
