@@ -42,7 +42,7 @@ jobs:
       fail-fast: false
       matrix:
         # fail on warnings
-        args: ["-D warnings"]
+        args: ["-D warnings", "-W clippy::all", "-W clippy::pedantic"]
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1.0.7
