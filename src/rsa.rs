@@ -251,7 +251,7 @@ impl RsaKeyPair {
                 RsaPadding::RSA_PKCS1_PADDING => {
                     let mut output_len = c_uint::try_from(output_len).map_err(|_| Unspecified)?;
                     #[cfg(feature = "fips")]
-                    let digest_len = digest.len() as u32;
+                    let digest_len = u32::try_from(digest.len()).ok()?;
                     #[cfg(not(feature = "fips"))]
                     let digest_len = digest.len();
                     let result = RSA_sign(

@@ -94,6 +94,9 @@ pub fn init() {
 
 #[cfg(feature = "fips")]
 /// Panics if the underlying implementation is not FIPS, otherwise it returns.
+///
+/// # Panics
+/// Panics if the underlying implementation is not FIPS.
 pub fn fips_mode() {
     try_fips_mode().unwrap()
 }
