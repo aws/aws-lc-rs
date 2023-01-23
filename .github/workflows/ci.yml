@@ -40,9 +40,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        # fail on warnings
-        args: ["-D warnings", "-W clippy::all", "-W clippy::pedantic"]
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1.0.7
@@ -57,7 +54,7 @@ jobs:
         uses: actions-rs/cargo@v1.0.3
         with:
           command: clippy
-          args: --all-targets -- ${{ matrix.args }}
+          args: --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
       - name: Run cargo clippy on fips
         uses: actions-rs/cargo@v1.0.3
@@ -66,7 +63,7 @@ jobs:
           CXX: clang++
         with:
           command: clippy
-          args: --features fips --all-targets -- ${{ matrix.args }}
+          args: --features fips --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
   apidiff:
     runs-on: ubuntu-latest
