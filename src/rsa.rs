@@ -226,7 +226,7 @@ impl RsaKeyPair {
     ///
     /// # Errors
     /// `error::Unspecified` on error.
-    ///
+    /// With "fips" feature enabled, errors if digest length is greater than `u32::MAX`.
     pub fn sign(
         &self,
         padding_alg: &'static dyn RsaEncoding,
@@ -251,7 +251,7 @@ impl RsaKeyPair {
                 RsaPadding::RSA_PKCS1_PADDING => {
                     let mut output_len = c_uint::try_from(output_len).map_err(|_| Unspecified)?;
                     #[cfg(feature = "fips")]
-                    let digest_len = digest.len() as u32;
+                    let digest_len = u32::try_from(digest.len()).map_err(|_| Unspecified)?;
                     #[cfg(not(feature = "fips"))]
                     let digest_len = digest.len();
                     let result = RSA_sign(
