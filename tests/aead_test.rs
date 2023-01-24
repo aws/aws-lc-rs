@@ -488,8 +488,11 @@ fn aead_chacha20_poly1305_openssh() {
             }
             {
                 let mut cipher_text_clone = Vec::from(&s_in_out[..]);
-                let o_result =
-                    o_key.open_in_place(sequence_num + 1, &mut cipher_text_clone[..], &tag);
+                let o_result = o_key.open_in_place(
+                    sequence_num.checked_add(1).unwrap(),
+                    &mut cipher_text_clone[..],
+                    &tag,
+                );
                 assert!(o_result.is_err());
             }
             {
