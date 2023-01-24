@@ -226,9 +226,7 @@ impl RsaKeyPair {
     ///
     /// # Errors
     /// `error::Unspecified` on error.
-    ///
-    /// # Panics
-    /// With "fips" feature enabled, panics if digest length is greater than `u32::MAX`.
+    /// With "fips" feature enabled, errors if digest length is greater than `u32::MAX`.
     pub fn sign(
         &self,
         padding_alg: &'static dyn RsaEncoding,
