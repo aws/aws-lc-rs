@@ -108,7 +108,7 @@ pub fn bit_string_with_no_unused_bits<'a>(
     input: &mut untrusted::Reader<'a>,
 ) -> Result<untrusted::Input<'a>, error::Unspecified> {
     nested(input, Tag::BitString, error::Unspecified, |value| {
-        let unused_bits_at_end = value.read_byte().map_err(|_| error::Unspecified)?;
+        let unused_bits_at_end = value.read_byte()?;
         if unused_bits_at_end != 0 {
             return Err(error::Unspecified);
         }
