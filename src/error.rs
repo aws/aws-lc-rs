@@ -19,6 +19,8 @@
 
 extern crate std;
 
+use std::num::TryFromIntError;
+
 /// An error with absolutely no details.
 ///
 /// *ring* uses this unit type as the error type in most of its results
@@ -229,6 +231,18 @@ impl From<()> for KeyRejected {
 impl From<untrusted::EndOfInput> for Unspecified {
     fn from(_: untrusted::EndOfInput) -> Self {
         Unspecified
+    }
+}
+
+impl From<TryFromIntError> for Unspecified {
+    fn from(_: TryFromIntError) -> Self {
+        Unspecified
+    }
+}
+
+impl From<TryFromIntError> for KeyRejected {
+    fn from(_: TryFromIntError) -> Self {
+        KeyRejected::unexpected_error()
     }
 }
 

@@ -172,8 +172,7 @@ unsafe fn validate_ec_key(
     expected_bits: c_uint,
 ) -> Result<(), KeyRejected> {
     let ec_group = ConstPointer::new(EC_KEY_get0_group(**ec_key))?;
-    let bits = c_uint::try_from(EC_GROUP_order_bits(*ec_group))
-        .map_err(|_| KeyRejected::unexpected_error())?;
+    let bits = c_uint::try_from(EC_GROUP_order_bits(*ec_group))?;
 
     if bits < expected_bits {
         return Err(KeyRejected::too_small());
