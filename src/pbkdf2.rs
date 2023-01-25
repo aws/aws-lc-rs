@@ -119,6 +119,7 @@ use crate::error::Unspecified;
 use crate::{constant_time, digest, hmac};
 use aws_lc::PKCS5_PBKDF2_HMAC;
 use core::num::NonZeroU32;
+use zeroize::Zeroize;
 
 /// A PBKDF2 algorithm.
 ///
@@ -274,7 +275,9 @@ pub fn verify(
         };
     }
 
-    constant_time::verify_slices_are_equal(&derived_buf, previously_derived)
+    let result = constant_time::verify_slices_are_equal(&derived_buf, previously_derived);
+    derived_buf.zeroize();
+    result
 }
 
 #[cfg(test)]

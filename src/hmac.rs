@@ -180,6 +180,18 @@ impl LcHmacCtx {
     fn as_ptr(&self) -> *const HMAC_CTX {
         &self.0
     }
+
+    fn try_clone(&self) -> Result<Self, Unspecified> {
+        unsafe {
+            let mut hmac_ctx = MaybeUninit::<HMAC_CTX>::uninit();
+            HMAC_CTX_init(hmac_ctx.as_mut_ptr());
+            let mut hmac_ctx = hmac_ctx.assume_init();
+            if 1 != HMAC_CTX_copy_ex(&mut hmac_ctx, self.as_ptr()) {
+                return Err(Unspecified);
+            }
+            Ok(LcHmacCtx(hmac_ctx))
+        }
+    }
 }
 unsafe impl Send for LcHmacCtx {}
 
@@ -191,13 +203,7 @@ impl Drop for LcHmacCtx {
 
 impl Clone for LcHmacCtx {
     fn clone(&self) -> Self {
-        unsafe {
-            let mut hmac_ctx = MaybeUninit::<HMAC_CTX>::uninit();
-            HMAC_CTX_init(hmac_ctx.as_mut_ptr());
-            let mut hmac_ctx = hmac_ctx.assume_init();
-            HMAC_CTX_copy_ex(&mut hmac_ctx, self.as_ptr());
-            LcHmacCtx(hmac_ctx)
-        }
+        self.try_clone().expect("Unable to clone LcHmacCtx")
     }
 }
 
