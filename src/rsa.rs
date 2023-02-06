@@ -318,9 +318,7 @@ unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, 
     let pubkey_bytes = LcPtr::new(pubkey_bytes.assume_init())?;
     let outlen = outlen.assume_init();
     let pubkey_slice = slice::from_raw_parts(*pubkey_bytes, outlen);
-    let mut pubkey_vec = Vec::<u8>::new();
-    pubkey_vec.extend_from_slice(pubkey_slice);
-
+    let pubkey_vec = Vec::from(pubkey_slice);
     Ok(pubkey_vec.into_boxed_slice())
 }
 
