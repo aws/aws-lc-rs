@@ -140,12 +140,19 @@ impl Default for SystemRandom {
 impl sealed::SecureRandom for SystemRandom {
     #[inline]
     fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
-        unsafe {
-            if 1 == RAND_bytes(dest.as_mut_ptr(), dest.len()) {
-                Ok(())
-            } else {
-                Err(error::Unspecified)
-            }
+        fill(dest)
+    }
+}
+
+/// Fills `dest` with random bytes.
+/// # Errors
+/// `error::Unspecified` if unable to fill `dest`.
+pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
+    unsafe {
+        if 1 == RAND_bytes(dest.as_mut_ptr(), dest.len()) {
+            Ok(())
+        } else {
+            Err(error::Unspecified)
         }
     }
 }
