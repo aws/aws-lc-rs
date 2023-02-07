@@ -23,6 +23,56 @@
 //!
 //! [AEAD]: https://eprint.iacr.org/2000/025
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
+//!
+//! # Examples
+//! ```
+//! use aws_lc_ring::rand;
+//! use aws_lc_ring::aead::{UnboundKey, AES_128_KEY_LEN, AES_128_GCM, nonce_sequence, SealingKey,
+//!     OpeningKey, Aad, BoundKey};
+//! use aws_lc_ring::test::from_hex;
+//!
+//! let plaintext = "plaintext value";
+//!
+//! // Generate random bytes for secret key
+//! let mut key_bytes = [0u8; AES_128_KEY_LEN];
+//! rand::fill(&mut key_bytes).expect("Unable to generate key");
+//!
+//! // Contextual information must match between encryption and decryption
+//! let aad_content = "aws-lc-ring documentation";
+//! let sequence_id = 0xabcdef01u32.to_be_bytes();
+//!
+//! // Buffer containing plaintext. This will be modified to contain the ciphertext.
+//! let mut in_out_buffer = Vec::from(plaintext);
+//!
+//! // Construct a SealingKey for encryption
+//! let unbound_key = UnboundKey::new(&AES_128_GCM, &key_bytes).unwrap();
+//! let nonce_sequence = nonce_sequence::Counter64Builder::new()
+//!     .identifier(sequence_id)
+//!     .build();
+//! let mut sealing_key = SealingKey::new(unbound_key, nonce_sequence);
+//!
+//! // Encrypt a value using the SealingKey
+//! let aad = Aad::from(aad_content);
+//! sealing_key.seal_in_place_append_tag(aad, &mut in_out_buffer).expect("Encryption failed");
+//!
+//! // The `buffer now contains the ciphertext followed by a "tag" value.
+//! let plaintext_len = in_out_buffer.len() - AES_128_GCM.tag_len();
+//!
+//! // Construct an OpeningKey for decryption
+//! let unbound_key = UnboundKey::new(&AES_128_GCM, &key_bytes).unwrap();
+//! let nonce_sequence = nonce_sequence::Counter64Builder::new()
+//!     .identifier(sequence_id)
+//!     .build();
+//! let mut opening_key = OpeningKey::new(unbound_key, nonce_sequence);
+//!
+//! // Decrypt the value using the OpeningKey
+//! let aad = Aad::from(aad_content);
+//! opening_key.open_in_place(aad, &mut in_out_buffer).expect("Decryption failed");
+//!
+//! let decrypted_plaintext = std::str::from_utf8(&in_out_buffer[0..plaintext_len]).unwrap();
+//!
+//! assert_eq!(plaintext, decrypted_plaintext);
+//! ```
 
 use crate::{derive_debug_via_id, error, hkdf};
 use aes_gcm::aead_seal_separate;
@@ -47,7 +97,7 @@ mod poly1305;
 pub mod quic;
 
 pub use self::{
-    aes_gcm::{AES_128_GCM, AES_256_GCM},
+    aes_gcm::{AES_128_GCM, AES_128_KEY_LEN, AES_256_GCM, AES_256_KEY_LEN},
     block::BLOCK_LEN,
     chacha::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},

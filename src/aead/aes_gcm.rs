@@ -51,10 +51,16 @@ pub(crate) fn aead_seal_separate(
     }
 }
 
+/// Length of an AES-128 key in bytes.
+pub const AES_128_KEY_LEN: usize = 16;
+
+/// Length of an AES-256 key in bytes.
+pub const AES_256_KEY_LEN: usize = 32;
+
 /// AES-128 in GCM mode with 128-bit tags and 96 bit nonces.
 pub static AES_128_GCM: Algorithm = Algorithm {
     init: init_128,
-    key_len: 16,
+    key_len: AES_128_KEY_LEN,
     id: AlgorithmID::AES_128_GCM,
     max_input_len: u64::MAX,
 };
@@ -62,7 +68,7 @@ pub static AES_128_GCM: Algorithm = Algorithm {
 /// AES-256 in GCM mode with 128-bit tags and 96 bit nonces.
 pub static AES_256_GCM: Algorithm = Algorithm {
     init: init_256,
-    key_len: 32,
+    key_len: AES_256_KEY_LEN,
     id: AlgorithmID::AES_256_GCM,
     max_input_len: u64::MAX,
 };

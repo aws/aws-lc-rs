@@ -129,43 +129,41 @@
 //!
 //! ## Signing and verifying with Ed25519
 //!
-/* TODO: Implement Ed25519KeyPair and re-enable this Doc test
 //! ```
 //! use aws_lc_ring::{
 //!     rand,
 //!     signature::{self, KeyPair},
 //! };
 //!
-//! # fn main() -> Result<(), aws_lc_ring::error::Unspecified> {
-//! // Generate a key pair in PKCS#8 (v2) format.
-//! let rng = rand::SystemRandom::new();
-//! let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8(&rng)?;
+//! fn main() -> Result<(), aws_lc_ring::error::Unspecified> {
+//!     // Generate a key pair in PKCS#8 (v1) format.
+//!     let rng = rand::SystemRandom::new();
+//!     let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8v1(&rng)?;
 //!
-//! // Normally the application would store the PKCS#8 file persistently. Later
-//! // it would read the PKCS#8 file from persistent storage to use it.
+//!     // Normally the application would store the PKCS#8 file persistently. Later
+//!     // it would read the PKCS#8 file from persistent storage to use it.
 //!
-//! let key_pair = signature::Ed25519KeyPair::from_pkcs8(pkcs8_bytes.as_ref())?;
+//!     let key_pair = signature::Ed25519KeyPair::from_pkcs8_maybe_unchecked(pkcs8_bytes.as_ref())?;
 //!
-//! // Sign the message "hello, world".
-//! const MESSAGE: &[u8] = b"hello, world";
-//! let sig = key_pair.sign(MESSAGE);
+//!     // Sign the message "hello, world".
+//!     const MESSAGE: &[u8] = b"hello, world";
+//!     let sig = key_pair.sign(MESSAGE);
 //!
-//! // Normally an application would extract the bytes of the signature and
-//! // send them in a protocol message to the peer(s). Here we just get the
-//! // public key key directly from the key pair.
-//! let peer_public_key_bytes = key_pair.public_key().as_ref();
+//!     // Normally an application would extract the bytes of the signature and
+//!     // send them in a protocol message to the peer(s). Here we just get the
+//!     // public key key directly from the key pair.
+//!     let peer_public_key_bytes = key_pair.public_key().as_ref();
 //!
-//! // Verify the signature of the message using the public key. Normally the
-//! // verifier of the message would parse the inputs to this code out of the
-//! // protocol message(s) sent by the signer.
-//! let peer_public_key =
-//!     signature::UnparsedPublicKey::new(&signature::ED25519, peer_public_key_bytes);
-//! peer_public_key.verify(MESSAGE, sig.as_ref())?;
+//!     // Verify the signature of the message using the public key. Normally the
+//!     // verifier of the message would parse the inputs to this code out of the
+//!     // protocol message(s) sent by the signer.
+//!     let peer_public_key =
+//!         signature::UnparsedPublicKey::new(&signature::ED25519, peer_public_key_bytes);
+//!     peer_public_key.verify(MESSAGE, sig.as_ref())?;
 //!
-//! # Ok(())
-//! # }
+//!     Ok(())
+//! }
 //! ```
- */
 //!
 //! ## Signing and verifying with RSA (PKCS#1 1.5 padding)
 //!
@@ -201,26 +199,26 @@
 //! fn sign_and_verify_rsa(private_key_path: &std::path::Path,
 //!                        public_key_path: &std::path::Path)
 //!                        -> Result<(), MyError> {
-//! // Create an `RsaKeyPair` from the DER-encoded bytes. This example uses
-//! // a 2048-bit key, but larger keys are also supported.
-//! let private_key_der = read_file(private_key_path)?;
-//! let key_pair = signature::RsaKeyPair::from_der(&private_key_der)
-//!     .map_err(|_| MyError::BadPrivateKey)?;
+//!     // Create an `RsaKeyPair` from the DER-encoded bytes. This example uses
+//!     // a 2048-bit key, but larger keys are also supported.
+//!     let private_key_der = read_file(private_key_path)?;
+//!     let key_pair = signature::RsaKeyPair::from_der(&private_key_der)
+//!         .map_err(|_| MyError::BadPrivateKey)?;
 //!
-//! // Sign the message "hello, world", using PKCS#1 v1.5 padding and the
-//! // SHA256 digest algorithm.
-//! const MESSAGE: &'static [u8] = b"hello, world";
-//! let rng = rand::SystemRandom::new();
-//! let mut signature = vec![0; key_pair.public_modulus_len()];
-//! key_pair.sign(&signature::RSA_PKCS1_SHA256, &rng, MESSAGE, &mut signature)
-//!     .map_err(|_| MyError::OOM)?;
+//!     // Sign the message "hello, world", using PKCS#1 v1.5 padding and the
+//!     // SHA256 digest algorithm.
+//!     const MESSAGE: &'static [u8] = b"hello, world";
+//!     let rng = rand::SystemRandom::new();
+//!     let mut signature = vec![0; key_pair.public_modulus_len()];
+//!     key_pair.sign(&signature::RSA_PKCS1_SHA256, &rng, MESSAGE, &mut signature)
+//!         .map_err(|_| MyError::OOM)?;
 //!
-//! // Verify the signature.
-//! let public_key =
-//!     signature::UnparsedPublicKey::new(&signature::RSA_PKCS1_2048_8192_SHA256,
+//!     // Verify the signature.
+//!     let public_key =
+//!         signature::UnparsedPublicKey::new(&signature::RSA_PKCS1_2048_8192_SHA256,
 //!                                       read_file(public_key_path)?);
-//! public_key.verify(MESSAGE, &signature)
-//!     .map_err(|_| MyError::BadSignature)
+//!     public_key.verify(MESSAGE, &signature)
+//!         .map_err(|_| MyError::BadSignature)
 //! }
 //!
 //! #[derive(Debug)]
@@ -239,14 +237,14 @@
 //!     file.read_to_end(&mut contents).map_err(|e| MyError::IO(e))?;
 //!     Ok(contents)
 //! }
-//! #
-//! # fn main() {
-//! #     let private_key_path =
-//! #         std::path::Path::new("tests/data/signature_rsa_example_private_key.der");
-//! #     let public_key_path =
-//! #         std::path::Path::new("tests/data/signature_rsa_example_public_key.der");
-//! #     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
-//! # }
+//!
+//! fn main() {
+//!     let private_key_path =
+//!         std::path::Path::new("tests/data/signature_rsa_example_private_key.der");
+//!     let public_key_path =
+//!         std::path::Path::new("tests/data/signature_rsa_example_public_key.der");
+//!     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
+//! }
 //! ```
 use crate::rsa;
 use rsa::{RSASigningAlgorithmId, RSAVerificationAlgorithmId, RsaSignatureEncoding};
