@@ -24,7 +24,6 @@
 //! [AEAD]: https://eprint.iacr.org/2000/025
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 //!
-//!
 //! # Examples
 //! ```
 //! use aws_lc_ring::rand;
