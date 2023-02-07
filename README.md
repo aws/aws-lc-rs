@@ -33,7 +33,11 @@ Instead, you can use `Ed25519KeyPair::generate_pkcs8v1` for generating and `Ed25
 for parsing PKCS#8 v1.
 * When parsing fails, the `KeyRejected` response may differ from *ring*’s response on the same input.
 
-## Have a Question?
+## Questions, Feedback and Contributing
+
+* [Submit an non-security Bug/Issue/Request](https://github.com/awslabs/aws-lc-ring/issues/new/choose)
+* [API documentation](https://docs.rs/aws-lc-ring/)
+* [Fork our repo](https://github.com/awslabs/aws-lc-ring/fork)
 
 If you have any questions about submitting PR's, opening issues, *aws-lc-ring* API usage or
 any similar topic, we have a public chatroom available here to answer your questions
