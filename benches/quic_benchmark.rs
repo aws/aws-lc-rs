@@ -1,5 +1,5 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0 OR ISC OR ISC
+// SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_ring::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};

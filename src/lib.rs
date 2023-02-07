@@ -25,7 +25,7 @@
 //!
 //! * Our implementation requires the `std` library. We currently do not support a
 //! [`#![no_std]`](https://docs.rust-embedded.org/book/intro/no-std.html) build.
-//! * We only support a subset of the platforms supported by `aws-lc-sys`.  We currently support Mac
+//! * We can only support a subset of the platforms supported by `aws-lc-sys`.  We currently support Mac
 //! and Linux, both x86-64 and aarch64.
 //! * Due to its dependence on AWS-LC, this library does not support generating or parsing
 //! [PKCS#8 v2](https://tools.ietf.org/html/rfc5958). Thus, the `Ed25519KeyPair::generate_pkcs8` and

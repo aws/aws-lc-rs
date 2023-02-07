@@ -55,7 +55,7 @@
 //! let aad = Aad::from(aad_content);
 //! sealing_key.seal_in_place_append_tag(aad, &mut in_out_buffer).expect("Encryption failed");
 //!
-//! // The `buffer now contains the ciphertext followed by a "tag" value.
+//! // The buffer now contains the ciphertext followed by a "tag" value.
 //! let plaintext_len = in_out_buffer.len() - AES_128_GCM.tag_len();
 //!
 //! // Construct an OpeningKey for decryption
