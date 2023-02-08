@@ -19,6 +19,9 @@ Performs an “address sanitizer” build of AWS-LC. This can be used to help de
 “[Sanitizer](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html)” 
 section of the Rust Unstable Book.
 
+* `bindgen`
+Enables generation and building of the `aws-lc-sys` dependency crate on platforms not provided with pre-generated bindings.
+
 ## *ring*-compatibility
 
 Although this library attempts to be fully compatible with *ring*, there are a few places where our behavior is 
