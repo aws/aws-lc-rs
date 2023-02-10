@@ -20,6 +20,30 @@
 //! HKDF is specified in [RFC 5869].
 //!
 //! [RFC 5869]: https://tools.ietf.org/html/rfc5869
+//!
+//! # Example
+//! ```
+//! use aws_lc_ring::{aead, hkdf, hmac, rand};
+//!
+//! // Generate a (non-secret) salt value
+//! let mut salt_bytes = [0u8; 32];
+//! rand::fill(&mut salt_bytes).unwrap();
+//!
+//! // Extract pseudo-random key from secret keying materials
+//! let salt = hkdf::Salt::new(hkdf::HKDF_SHA256, &salt_bytes);
+//! let pseudo_random_key = salt.extract(b"secret input keying material");
+//!
+//! // Derive HMAC key
+//! let hmac_key_material = pseudo_random_key.expand(&[b"hmac contextual info"],
+//!         hkdf::HKDF_SHA256.hmac_algorithm()).unwrap();
+//! let hmac_key = hmac::Key::from(hmac_key_material);
+//!
+//! // Derive UnboundKey for AES-128-GCM
+//! let aes_keying_material = pseudo_random_key.expand(&[b"aes contextual info"],
+//!         &aead::AES_128_GCM).unwrap();
+//! let aead_unbound_key = aead::UnboundKey::from(aes_keying_material);
+//!
+//! ```
 
 use crate::error::Unspecified;
 use crate::{digest, hmac};
