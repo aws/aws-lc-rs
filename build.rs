@@ -1,5 +1,5 @@
 fn main() {
-    let mutually_exclusives_count = vec![cfg!(feature = "bindgen"), cfg!(feature = "bindgen-fips")]
+    let mutually_exclusives_count = vec![cfg!(feature = "bindgen"), cfg!(feature = "fips")]
         .iter()
         .filter(|x| **x)
         .count();
