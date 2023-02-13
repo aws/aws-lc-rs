@@ -135,26 +135,32 @@ extern crate std;
 
 /// `compile_time_assert_clone::<T>();` fails to compile if `T` doesn't
 /// implement `Clone`.
+#[allow(clippy::extra_unused_type_parameters)]
 pub fn compile_time_assert_clone<T: Clone>() {}
 
 /// `compile_time_assert_copy::<T>();` fails to compile if `T` doesn't
 /// implement `Copy`.
+#[allow(clippy::extra_unused_type_parameters)]
 pub fn compile_time_assert_copy<T: Copy>() {}
 
 /// `compile_time_assert_eq::<T>();` fails to compile if `T` doesn't
 /// implement `Eq`.
+#[allow(clippy::extra_unused_type_parameters)]
 pub fn compile_time_assert_eq<T: Eq>() {}
 
 /// `compile_time_assert_send::<T>();` fails to compile if `T` doesn't
 /// implement `Send`.
+#[allow(clippy::extra_unused_type_parameters)]
 pub fn compile_time_assert_send<T: Send>() {}
 
 /// `compile_time_assert_sync::<T>();` fails to compile if `T` doesn't
 /// implement `Sync`.
+#[allow(clippy::extra_unused_type_parameters)]
 pub fn compile_time_assert_sync<T: Sync>() {}
 
 /// `compile_time_assert_std_error_error::<T>();` fails to compile if `T`
 /// doesn't implement `std::error::Error`.
+#[allow(clippy::extra_unused_type_parameters)]
 pub fn compile_time_assert_std_error_error<T: std::error::Error>() {}
 
 /// A test case. A test case consists of a set of named attributes. Every
