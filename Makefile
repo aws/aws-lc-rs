@@ -32,6 +32,6 @@ ifeq ($(UNAME_S),Linux)
 	cargo test --release --all-targets --features fips
 	cargo test --no-default-features --features fips
 endif
-	cargo test --no-default-features
-	cargo test --no-default-features --features ring-io
-	cargo test --no-default-features --features alloc
+	cargo test --no-default-features --features aws-lc-sys
+	cargo test --no-default-features --features aws-lc-sys,ring-io
+	cargo test --no-default-features --features aws-lc-sys,alloc

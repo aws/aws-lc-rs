@@ -126,9 +126,9 @@ jobs:
         target: [native, aarch64-unknown-linux-gnu, i686-unknown-linux-gnu]
         args:
           - --release --all-targets
-          - --no-default-features
-          - --no-default-features --features ring-io
-          - --no-default-features --features alloc
+          - --no-default-features --features non-fips
+          - --no-default-features --features non-fips,ring-io
+          - --no-default-features --features non-fips,alloc
         exclude:
           - rust: stable
             os: macOS-latest
