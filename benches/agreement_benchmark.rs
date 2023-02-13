@@ -17,7 +17,7 @@ impl From<&str> for Curve {
             "X25519" => Curve::X25519,
             "P-256" => Curve::P256,
             "P-384" => Curve::P384,
-            _ => panic!("Unrecognized curve: '{}'", value),
+            _ => panic!("Unrecognized curve: '{value}'"),
         }
     }
 }

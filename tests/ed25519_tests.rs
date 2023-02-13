@@ -88,7 +88,7 @@ fn test_signature_ed25519_verify() {
             let expected_result = match test_case.consume_string("Result").as_str() {
                 "P" => Ok(()),
                 "F" => Err(error::Unspecified),
-                s => panic!("{:?} is not a valid result", s),
+                s => panic!("{s:?} is not a valid result"),
             };
             test_signature_verification(&public_key, &msg, &sig, expected_result);
             Ok(())
@@ -136,8 +136,8 @@ fn test_ed25519_from_pkcs8_unchecked() {
 
             match (Ed25519KeyPair::from_pkcs8_maybe_unchecked(&input), error) {
                 (Ok(_), None) => (),
-                (Err(e), None) => panic!("Failed with error \"{}\", but expected to succeed", e),
-                (Ok(_), Some(e)) => panic!("Succeeded, but expected error \"{}\"", e),
+                (Err(e), None) => panic!("Failed with error \"{e}\", but expected to succeed"),
+                (Ok(_), Some(e)) => panic!("Succeeded, but expected error \"{e}\""),
                 (Err(actual), Some(expected)) => assert_eq!(actual.description_(), expected),
             };
 
@@ -209,6 +209,6 @@ fn ed25519_test_public_key_coverage() {
             "Ed25519KeyPair {{ public_key: {:?} }}",
             key_pair.public_key()
         ),
-        format!("{:?}", key_pair)
+        format!("{key_pair:?}")
     );
 }

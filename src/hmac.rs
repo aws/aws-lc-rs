@@ -466,7 +466,7 @@ mod tests {
         ] {
             let key = hmac::Key::generate(*algorithm, &rng).unwrap();
             let tag = hmac::sign(&key, HELLO_WORLD_GOOD);
-            println!("{:?}", key);
+            println!("{key:?}");
             assert!(hmac::verify(&key, HELLO_WORLD_GOOD, tag.as_ref()).is_ok());
             assert!(hmac::verify(&key, HELLO_WORLD_BAD, tag.as_ref()).is_err());
         }

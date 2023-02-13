@@ -46,8 +46,7 @@ fn agreement_traits() {
 
     assert!(
         pubkey_re.is_match(&pubkey_debug),
-        "pubkey_debug: {}",
-        pubkey_debug
+        "pubkey_debug: {pubkey_debug}"
     );
 
     let pubkey_clone = public_key.clone();
@@ -75,11 +74,11 @@ fn agreement_traits() {
     let unparsed_public_key = agreement::UnparsedPublicKey::new(&agreement::X25519, &bytes);
     let unparsed_pubkey_clone = unparsed_public_key;
     assert_eq!(
-        format!("{:?}", unparsed_public_key),
+        format!("{unparsed_public_key:?}"),
         r#"UnparsedPublicKey { algorithm: Algorithm { curve: Curve25519 }, bytes: "010203" }"#
     );
     assert_eq!(
-        format!("{:?}", unparsed_pubkey_clone),
+        format!("{unparsed_pubkey_clone:?}"),
         r#"UnparsedPublicKey { algorithm: Algorithm { curve: Curve25519 }, bytes: "010203" }"#
     );
 
@@ -87,11 +86,11 @@ fn agreement_traits() {
         agreement::UnparsedPublicKey::new(&agreement::X25519, Vec::from(bytes));
     let unparsed_pubkey_clone = unparsed_public_key.clone();
     assert_eq!(
-        format!("{:?}", unparsed_public_key),
+        format!("{unparsed_public_key:?}"),
         r#"UnparsedPublicKey { algorithm: Algorithm { curve: Curve25519 }, bytes: "010203" }"#
     );
     assert_eq!(
-        format!("{:?}", unparsed_pubkey_clone),
+        format!("{unparsed_pubkey_clone:?}"),
         r#"UnparsedPublicKey { algorithm: Algorithm { curve: Curve25519 }, bytes: "010203" }"#
     );
 }
@@ -290,7 +289,7 @@ fn h(s: &str) -> Vec<u8> {
     match test::from_hex(s) {
         Ok(v) => v,
         Err(msg) => {
-            panic!("{} in {}", msg, s);
+            panic!("{msg} in {s}");
         }
     }
 }
@@ -303,6 +302,6 @@ fn alg_from_curve_name(curve_name: &str) -> &'static agreement::Algorithm {
     } else if curve_name == "X25519" {
         &agreement::X25519
     } else {
-        panic!("Unsupported curve: {}", curve_name);
+        panic!("Unsupported curve: {curve_name}");
     }
 }

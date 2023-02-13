@@ -124,10 +124,7 @@ unsafe fn dump_error() {
     let mut buffer = [0u8; 256];
     ERR_error_string(err, buffer.as_mut_ptr().cast());
     let error_msg = CStr::from_bytes_with_nul_unchecked(&buffer);
-    eprintln!(
-        "Raw Error -- {:?}\nErr: {}, Lib: {}, Reason: {}, Func: {}",
-        error_msg, err, lib, reason, func
-    );
+    eprintln!("Raw Error -- {error_msg:?}\nErr: {err}, Lib: {lib}, Reason: {reason}, Func: {func}");
 }
 
 mod sealed {
