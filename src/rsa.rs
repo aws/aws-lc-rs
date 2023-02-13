@@ -250,9 +250,6 @@ impl RsaKeyPair {
             let result = match padding {
                 RsaPadding::RSA_PKCS1_PADDING => {
                     let mut output_len = c_uint::try_from(output_len)?;
-                    #[cfg(feature = "fips")]
-                    let digest_len = u32::try_from(digest.len())?;
-                    #[cfg(not(feature = "fips"))]
                     let digest_len = digest.len();
                     let result = RSA_sign(
                         digest_alg.hash_nid,
