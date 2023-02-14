@@ -166,7 +166,8 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "fips")]
+    // FIPS mode is disabled for an ASAN build
+    #[cfg(all(feature = "fips", not(feature = "asan")))]
     fn test_fips() {
         crate::fips_mode();
     }
