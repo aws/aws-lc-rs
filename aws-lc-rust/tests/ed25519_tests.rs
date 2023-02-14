@@ -125,30 +125,35 @@ fn test_ed25519_from_seed_and_public_key_misuse() {
 }
 
 #[test]
-fn test_ed25519_from_pkcs8_unchecked() {
-    // Just test that we can parse the input.
-    test::run(
-        test_file!("data/ed25519_from_pkcs8_unchecked_tests.txt"),
-        |section, test_case| {
-            assert_eq!(section, "");
-            let input = test_case.consume_bytes("Input");
-            let error = test_case.consume_optional_string("Error");
-
-            match (Ed25519KeyPair::from_pkcs8_maybe_unchecked(&input), error) {
-                (Ok(_), None) => (),
-                (Err(e), None) => panic!("Failed with error \"{e}\", but expected to succeed"),
-                (Ok(_), Some(e)) => panic!("Succeeded, but expected error \"{e}\""),
-                (Err(actual), Some(expected)) => assert_eq!(actual.description_(), expected),
-            };
-
-            Ok(())
-        },
-    );
-}
-
-#[test]
-#[ignore] // Ignore since this has bad data not spec compliant, will be fixed in the PR for PKCS#8 v2 support.
 fn test_ed25519_from_pkcs8() {
+    fn check_result(
+        input: &Vec<u8>,
+        result: Result<Ed25519KeyPair, error::KeyRejected>,
+        error: Option<String>,
+    ) {
+        match (result, error) {
+            (Ok(_), None) => (),
+            (Err(e), None) => panic!(
+                "Failed with error \"{}\", but expected to succeed: \"{}\"",
+                e,
+                test::to_hex(&input)
+            ),
+            (Ok(_), Some(e)) => panic!(
+                "Succeeded, but expected error \"{}\": {}",
+                e,
+                test::to_hex(&input)
+            ),
+            (Err(actual), Some(expected)) => {
+                assert_eq!(
+                    actual.description_(),
+                    expected,
+                    "Input: {}",
+                    test::to_hex(&input)
+                );
+            }
+        };
+    }
+
     // Just test that we can parse the input.
     test::run(
         test_file!("data/ed25519_from_pkcs8_tests.txt"),
@@ -157,27 +162,25 @@ fn test_ed25519_from_pkcs8() {
             let input = test_case.consume_bytes("Input");
             let error = test_case.consume_optional_string("Error");
 
-            match (Ed25519KeyPair::from_pkcs8_maybe_unchecked(&input), error) {
-                (Ok(_), None) => (),
-                (Err(e), None) => panic!(
-                    "Failed with error \"{}\", but expected to succeed: \"{}\"",
-                    e,
-                    test::to_hex(&input)
-                ),
-                (Ok(_), Some(e)) => panic!(
-                    "Succeeded, but expected error \"{}\": {}",
-                    e,
-                    test::to_hex(&input)
-                ),
-                (Err(actual), Some(expected)) => {
-                    assert_eq!(
-                        actual.description_(),
-                        expected,
-                        "Input: {}",
-                        test::to_hex(&input)
-                    );
-                }
-            };
+            check_result(&input, Ed25519KeyPair::from_pkcs8(&input), error.clone());
+
+            Ok(())
+        },
+    );
+
+    // Just test that we can parse the input.
+    test::run(
+        test_file!("data/ed25519_from_pkcs8_tests.txt"),
+        |section, test_case| {
+            assert_eq!(section, "");
+            let input = test_case.consume_bytes("Input");
+            let error = test_case.consume_optional_string("Error");
+
+            check_result(
+                &input,
+                Ed25519KeyPair::from_pkcs8_maybe_unchecked(&input),
+                error,
+            );
 
             Ok(())
         },

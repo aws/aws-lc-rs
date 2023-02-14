@@ -40,3 +40,9 @@ impl Drop for Document {
         self.bytes.zeroize();
     }
 }
+
+#[derive(Copy, Clone)]
+pub(crate) enum Version {
+    V1,
+    V2,
+}

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::error::{KeyRejected, Unspecified};
-use crate::pkcs8::Document;
+use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
@@ -134,8 +134,6 @@ pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<*mut E
 }
 
 impl Ed25519KeyPair {
-    /// CURRENTLY NOT SUPPORTED. Use `generate_pkcs8v1` instead.
-    ///
     /// Generates a new key pair and returns the key pair serialized as a
     /// PKCS#8 document.
     ///
@@ -147,28 +145,28 @@ impl Ed25519KeyPair {
     /// [RFC 8410 Section 10.3]: https://tools.ietf.org/html/rfc8410#section-10.3
     ///
     /// # *ring* Compatibility
-    /// Our implementation ignores the `SecureRandom` parameter.
+    /// The ring 0.16.x API did not produce encoded v2 documents that were compliant with RFC 5958.
+    /// The aws-lc-ring implementation produces PKCS#8 v2 encoded documents that are compliant per
+    /// the RFC specification.
     ///
     /// # Errors
-    /// `error::Unspecified` for all inputs.
-    #[deprecated(
-        note = "PKCS#8 v2 keys are not supported by AWS-LC. Support may be added in future versions."
-    )]
-    pub fn generate_pkcs8(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
-        Err(Unspecified)
+    /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
+    pub fn generate_pkcs8(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
+        let evp_pkey = unsafe { generate_key(rng)? };
+        evp_pkey.marshall_private_key(Version::V2)
     }
 
-    /// Generates a `Ed25519KeyPair` using the `rng` provided, then marshals that key as a
-    /// DER-encoded `PrivateKeyInfo` structure (RFC5208).
+    /// Generates a `Ed25519KeyPair` using the `rng` provided, then serializes that key as a
+    /// PKCS#8 document.
+    ///
+    /// The PKCS#8 document will be a v1 `PrivateKeyInfo` structure (RFC5208). Use this method
+    /// when needing to produce documents that are compatible with the OpenSSL CLI.
     ///
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     pub fn generate_pkcs8v1(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
-        unsafe {
-            let evp_pkey = generate_key(rng)?;
-
-            evp_pkey.marshall_private_key()
-        }
+        let evp_pkey = unsafe { generate_key(rng)? };
+        evp_pkey.marshall_private_key(Version::V1)
     }
 
     /// Constructs an Ed25519 key pair from the private key seed `seed` and its
@@ -213,35 +211,47 @@ impl Ed25519KeyPair {
         }
     }
 
-    /// CURRENTLY NOT SUPPORTED. Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v2
+    /// Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v1 or v2
     /// Ed25519 private key.
     ///
-    /// `openssl genpkey -algorithm ED25519` generates PKCS#8 v1 keys, which
-    /// can be parsed with `Ed25519KeyPair::from_pkcs8_maybe_unchecked()`.
+    /// `openssl genpkey -algorithm ED25519` generates PKCS#8 v1 keys.
+    ///
+    /// # Ring Compatibility
+    /// * This method accepts either v1 or v2 encoded keys, if a v2 encoded key is provided, with the
+    ///   public key component present, it will be verified to match the one derived from the
+    ///   encoded private key.
+    /// * The ring 0.16.x API did not produce encoded v2 documents that were compliant with RFC 5958.
+    ///   The aws-lc-ring implementation produces PKCS#8 v2 encoded documents that are compliant per
+    ///   the RFC specification.
     ///
     /// # Errors
-    /// `error::KeyRejected("InvalidEncoding")` for all inputs.
-    /// PKCS#8 v2 is currently not supported by *AWS-LC*.
-    #[deprecated(
-        note = "PKCS#8 v2 keys are not supported by AWS-LC. Support may be added in future versions."
-    )]
-    pub fn from_pkcs8(_pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        Err(KeyRejected::invalid_encoding())
+    /// `error::KeyRejected` on parse error, or if key is otherwise unacceptable.
+    ///
+    pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
+        Self::parse_pkcs8(pkcs8)
     }
 
-    /// Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v1
+    /// Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v1 or v2
     /// Ed25519 private key.
     ///
     /// `openssl genpkey -algorithm ED25519` generates PKCS# v1 keys.
     ///
-    /// PKCS#8 v1 files do not contain the public key, so when a v1 file is parsed the public key
-    /// will be computed from the private key, and there will be no consistency check
-    /// between the public key and the private key.
+    /// # Ring Compatibility
+    /// * This method accepts either v1 or v2 encoded keys, if a v2 encoded key is provided, with the
+    ///   public key component present, it will be verified to match the one derived from the
+    ///   encoded private key.
+    /// * The ring 0.16.x API did not produce encoded v2 documents that were compliant with RFC 5958.
+    ///   The aws-lc-ring implementation produces PKCS#8 v2 encoded documents that are compliant per
+    ///   the RFC specification.
     ///
     /// # Errors
     /// `error::KeyRejected` on parse error, or if key is otherwise unacceptable.
     ///
     pub fn from_pkcs8_maybe_unchecked(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
+        Self::parse_pkcs8(pkcs8)
+    }
+
+    fn parse_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let evp_pkey = LcPtr::try_from(pkcs8)?;
 
@@ -305,25 +315,58 @@ mod tests {
     use crate::test;
 
     #[test]
-    #[allow(deprecated)]
     fn test_generate_pkcs8() {
         let rng = crate::rand::SystemRandom::new();
-        let document = Ed25519KeyPair::generate_pkcs8v1(&rng).unwrap();
-        let _key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
+        let document = Ed25519KeyPair::generate_pkcs8(&rng).unwrap();
+        let _ = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let _ = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
 
-        assert!(Ed25519KeyPair::generate_pkcs8(&rng).is_err());
-        assert!(Ed25519KeyPair::from_pkcs8(document.as_ref()).is_err());
+        let document = Ed25519KeyPair::generate_pkcs8v1(&rng).unwrap();
+        let _ = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let _ = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
     }
 
     #[test]
     fn test_from_pkcs8() {
-        let key = test::from_dirty_hex(
-            r#"302e020100300506032b6570042204209d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60"#,
-        );
+        struct TestCase {
+            key: &'static str,
+            expected_public: &'static str,
+        }
 
-        let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(&key).unwrap();
-
-        assert_eq!("Ed25519KeyPair { public_key: PublicKey(\"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a\") }", 
-                   format!("{key_pair:?}"));
+        for case in vec![
+            TestCase {
+                key: "302e020100300506032b6570042204209d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60",
+                expected_public: "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+            },
+            TestCase {
+                key: "3051020101300506032b657004220420756434bd5b824753007a138d27abbc14b5cc786adb78fb62435e6419a2b2e72b8121000faccd81e57de15fa6343a7fbb43b2b93f28be6435100ae8bd633c6dfee3d198",
+                expected_public: "0faccd81e57de15fa6343a7fbb43b2b93f28be6435100ae8bd633c6dfee3d198",
+            },
+            TestCase {
+                key: "304f020100300506032b657004220420d4ee72dbf913584ad5b6d8f1f769f8ad3afe7c28cbf1d4fbe097a88f44755842a01f301d060a2a864886f70d01090914310f0c0d437572646c6520436861697273",
+                expected_public: "19bf44096984cdfe8541bac167dc3b96c85086aa30b6b6cb0c5c38ad703166e1",
+            },
+            TestCase {
+                key: "3072020101300506032b657004220420d4ee72dbf913584ad5b6d8f1f769f8ad3afe7c28cbf1d4fbe097a88f44755842a01f301d060a2a864886f70d01090914310f0c0d437572646c652043686169727381210019bf44096984cdfe8541bac167dc3b96c85086aa30b6b6cb0c5c38ad703166e1",
+                expected_public: "19bf44096984cdfe8541bac167dc3b96c85086aa30b6b6cb0c5c38ad703166e1",
+            }
+        ] {
+            let key_pair = Ed25519KeyPair::from_pkcs8(&test::from_dirty_hex(case.key)).unwrap();
+            assert_eq!(
+                format!(
+                    r#"Ed25519KeyPair {{ public_key: PublicKey("{}") }}"#,
+                    case.expected_public
+                ),
+                format!("{:?}", key_pair)
+            );
+            let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(&test::from_dirty_hex(case.key)).unwrap();
+            assert_eq!(
+                format!(
+                    r#"Ed25519KeyPair {{ public_key: PublicKey("{}") }}"#,
+                    case.expected_public
+                ),
+                format!("{key_pair:?}")
+            );
+        }
     }
 }

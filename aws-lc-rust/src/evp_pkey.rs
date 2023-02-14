@@ -3,12 +3,13 @@
 
 use crate::ec::PKCS8_DOCUMENT_MAX_LEN;
 use crate::error::{KeyRejected, Unspecified};
-use crate::pkcs8::Document;
+use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
 use crate::{cbb, cbs};
 use aws_lc::{
     CBB_finish, EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id,
-    EVP_marshal_private_key, EVP_parse_private_key, EC_KEY, EVP_PKEY, RSA,
+    EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_parse_private_key, EC_KEY, EVP_PKEY,
+    RSA,
 };
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
@@ -78,11 +79,21 @@ impl LcPtr<*mut EVP_PKEY> {
         unsafe { LcPtr::new(EVP_PKEY_get1_RSA(**self)).map_err(|_| KeyRejected::wrong_algorithm()) }
     }
 
-    pub(crate) fn marshall_private_key(&self) -> Result<Document, Unspecified> {
+    pub(crate) fn marshall_private_key(&self, version: Version) -> Result<Document, Unspecified> {
         unsafe {
             let mut cbb = cbb::build_CBB(PKCS8_DOCUMENT_MAX_LEN);
-            if 1 != EVP_marshal_private_key(cbb.as_mut_ptr(), **self) {
-                return Err(Unspecified);
+
+            match version {
+                Version::V1 => {
+                    if 1 != EVP_marshal_private_key(cbb.as_mut_ptr(), **self) {
+                        return Err(Unspecified);
+                    }
+                }
+                Version::V2 => {
+                    if 1 != EVP_marshal_private_key_v2(cbb.as_mut_ptr(), **self) {
+                        return Err(Unspecified);
+                    }
+                }
             }
 
             let mut pkcs8_bytes_ptr = MaybeUninit::<*mut u8>::uninit();

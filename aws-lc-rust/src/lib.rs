@@ -31,14 +31,10 @@
 //! [`#![no_std]`](https://docs.rust-embedded.org/book/intro/no-std.html) build.
 //! * We can only support a subset of the platforms supported by `aws-lc-sys`.  We currently support Mac
 //! and Linux, both x86-64 and aarch64.
-//! * Due to its dependence on *AWS-LC*, this library does not support generating or parsing
-//! [PKCS#8 v2](https://tools.ietf.org/html/rfc5958). Thus, the `Ed25519KeyPair::generate_pkcs8` and
-//! `Ed25519KeyPair::from_pkcs8` implementations always returns an error. Instead, you can use
-//! `Ed25519KeyPair::generate_pkcs8v1` for generating and
-//! `Ed25519KeyPair::from_pkcs8_maybe_unchecked` for parsing
-//! [PKCS#8 v1](https://tools.ietf.org/html/rfc5208).
-//! * When parsing fails, the `KeyRejected` response may differ from *ring*'s response on the same
-//! input.
+//! * `Ed25519KeyPair::from_pkcs8` and `Ed25519KeyPair::from_pkcs8_maybe_unchecked` both support
+//! parsing of v1 or v2 PKCS#8 documents. If a v2 encoded key is provided to either function,
+//! public key component, if present, will be verified to match the one derived from the encoded
+//! private key.
 //!
 
 #![warn(missing_docs)]
