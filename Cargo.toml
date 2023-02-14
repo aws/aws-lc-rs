@@ -11,15 +11,14 @@ rust-version = "1.60"
 alloc = []
 default = ["aws-lc-sys", "alloc", "ring-io"]
 ring-io = []
+bindgen = ["aws-lc-sys?/bindgen", "aws-lc-fips-sys?/bindgen"]
+asan = ["aws-lc-sys?/asan", "aws-lc-fips-sys?/asan"]
 
 # require non-FIPS
 non-fips = ["aws-lc-sys"]
-bindgen = ["non-fips", "aws-lc-sys/bindgen"]
-asan = ["non-fips", "aws-lc-sys/asan"]
 
 # require FIPS
-fips = ["aws-lc-fips-sys"]
-bindgen-fips = ["fips", "aws-lc-fips-sys/bindgen"]
+fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { version = "0.7.1" }
