@@ -23,15 +23,4 @@ fn main() {
         );
         std::process::exit(1);
     }
-
-    // "aws-lc-fips-sys" should not be specified w/o fips
-    let xnor_count = vec![cfg!(feature = "fips"), cfg!(feature = "aws-lc-fips-sys")]
-        .iter()
-        .filter(|x| **x)
-        .count();
-
-    if xnor_count == 1 {
-        eprint!("For a FIPS build specify the fips feature.");
-        std::process::exit(1);
-    }
 }
