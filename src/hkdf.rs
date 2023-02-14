@@ -406,8 +406,8 @@ mod tests {
         let mut output2 = [0u8; 32];
         okm2.fill(&mut output2).expect("test failed");
 
-        println!("AWS-LC Result: {:?}", output1);
-        println!("AWS-LC Result: {:?}", output2);
+        println!("AWS-LC Result: {output1:?}");
+        println!("AWS-LC Result: {output2:?}");
 
         let ring_salt = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, &[0u8; 32]);
         let ring_prk = ring_salt.extract(&[0u8; 32]);
@@ -419,8 +419,8 @@ mod tests {
         let mut ring_output2 = [0u8; 32];
         ring_okm2.fill(&mut ring_output2).expect("test failed");
 
-        println!("Ring Result: {:?}", ring_output1);
-        println!("Ring Result: {:?}", ring_output2);
+        println!("Ring Result: {ring_output1:?}");
+        println!("Ring Result: {ring_output2:?}");
 
         assert_eq!(ring_output1, output1);
         assert_eq!(ring_output2, output2);
@@ -466,7 +466,7 @@ mod tests {
         let mut output = [0u8; 32];
         okm2.fill(&mut output).expect("test failed");
 
-        println!("AWS-LC: {:?}", output);
+        println!("AWS-LC: {output:?}");
 
         let ring_alg = ring::hkdf::HKDF_SHA256;
         let ring_salt = ring::hkdf::Salt::new(ring_alg, SALT);
@@ -479,7 +479,7 @@ mod tests {
         let mut ring_output = [0u8; 32];
         ring_okm2.fill(&mut ring_output).expect("test failed");
 
-        println!("ring: {:?}", ring_output);
+        println!("ring: {ring_output:?}");
 
         assert_eq!(ring_output, output);
         assert_eq!(
@@ -527,7 +527,7 @@ mod tests {
         let mut output = [0u8; 32];
         okm2.fill(&mut output).expect("test failed");
 
-        println!("AWS-LC: {:?}", output);
+        println!("AWS-LC: {output:?}");
 
         let ring_alg = ring::hkdf::HKDF_SHA256;
         let ring_salt = ring::hkdf::Salt::new(ring_alg, SALT);
@@ -539,7 +539,7 @@ mod tests {
         let mut ring_output = [0u8; 32];
         ring_okm2.fill(&mut ring_output).expect("test failed");
 
-        println!("ring: {:?}", ring_output);
+        println!("ring: {ring_output:?}");
 
         assert_eq!(ring_output, output);
         assert_eq!(
@@ -578,15 +578,15 @@ mod tests {
 
         assert_eq!(
             "hkdf::Salt { algorithm: Algorithm(SHA256) }",
-            format!("{:?}", salt)
+            format!("{salt:?}")
         );
         assert_eq!(
             "hkdf::Prk { algorithm: Algorithm(SHA256) }",
-            format!("{:?}", prk)
+            format!("{prk:?}")
         );
         assert_eq!(
             "hkdf::Okm { prk: hkdf::Prk { algorithm: Algorithm(SHA256) } }",
-            format!("{:?}", okm)
+            format!("{okm:?}")
         );
     }
 }

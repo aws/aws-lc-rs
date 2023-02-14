@@ -92,7 +92,7 @@ fn main() -> Result<()> {
     if cli.files.is_empty() {
         if let Err(e) = process(digest_alg, &mut std::io::stdin(), "-") {
             // Display error information
-            println!("digest: -: {}", e);
+            println!("digest: -: {e}");
             error = Some(e);
         }
     } else {

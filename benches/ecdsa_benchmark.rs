@@ -52,7 +52,7 @@ impl EcdsaFormat {
         match value.trim() {
             "FIXED" => &FIXED,
             "ASN1" => &ASN1,
-            _ => panic!("Unrecognized padding: '{}'", value),
+            _ => panic!("Unrecognized padding: '{value}'"),
         }
     }
 }
@@ -71,7 +71,7 @@ impl EcdsaCurve {
         match value.trim() {
             "P-256" => &P256,
             "P-384" => &P384,
-            _ => panic!("Unrecognized padding: '{}'", value),
+            _ => panic!("Unrecognized padding: '{value}'"),
         }
     }
 }
@@ -93,7 +93,7 @@ impl EcdsaDigest {
             "SHA256" => &SHA256,
             "SHA384" => &SHA384,
             "SHA512" => &SHA512,
-            _ => panic!("Unrecognize padding: '{}'", value),
+            _ => panic!("Unrecognize padding: '{value}'"),
         }
     }
 }

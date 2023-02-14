@@ -207,8 +207,7 @@ mod tests {
             assert_eq!(
                 &buf[..input.len()],
                 expected,
-                "Failed on alignment: {}",
-                alignment,
+                "Failed on alignment: {alignment}",
             );
         }
     }

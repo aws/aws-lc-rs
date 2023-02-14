@@ -203,15 +203,15 @@ mod tests {
     fn test_debug() {
         let num = 100u64;
         let detachable_ptr: DetachableLcPtr<*mut BIGNUM> = DetachableLcPtr::try_from(num).unwrap();
-        let debug = format!("{:?}", detachable_ptr);
+        let debug = format!("{detachable_ptr:?}");
         assert!(debug.contains("DetachableLcPtr { pointer: Some("));
 
         let const_ptr: ConstPointer<BIGNUM> = detachable_ptr.as_const();
-        let debug = format!("{:?}", const_ptr);
+        let debug = format!("{const_ptr:?}");
         assert!(debug.contains("ConstPointer { ptr:"));
 
         let lc_ptr = LcPtr::new(detachable_ptr.detach()).unwrap();
-        let debug = format!("{:?}", lc_ptr);
+        let debug = format!("{lc_ptr:?}");
         assert!(debug.contains("LcPtr { pointer:"));
     }
 }

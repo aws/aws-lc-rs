@@ -88,6 +88,6 @@ fn init_aes_gcm(key: &[u8], id: AlgorithmID) -> Result<KeyInner, Unspecified> {
     match id {
         AlgorithmID::AES_128_GCM => KeyInner::new(SymmetricCipherKey::aes128(key)?),
         AlgorithmID::AES_256_GCM => KeyInner::new(SymmetricCipherKey::aes256(key)?),
-        AlgorithmID::CHACHA20_POLY1305 => panic!("Unrecognized algorithm: {:?}", id),
+        AlgorithmID::CHACHA20_POLY1305 => panic!("Unrecognized algorithm: {id:?}"),
     }
 }

@@ -39,7 +39,7 @@ impl RsaPadding {
         match value.trim() {
             "PSS" => &PSS,
             "PKCS1" => &PKCS1,
-            _ => panic!("Unrecognized padding: '{}'", value),
+            _ => panic!("Unrecognized padding: '{value}'"),
         }
     }
 }
@@ -61,7 +61,7 @@ impl RsaDigest {
             "SHA256" => &SHA256,
             "SHA384" => &SHA384,
             "SHA512" => &SHA512,
-            _ => panic!("Unrecognize padding: '{}'", value),
+            _ => panic!("Unrecognize padding: '{value}'"),
         }
     }
 }

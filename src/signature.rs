@@ -579,10 +579,7 @@ mod tests {
 
         #[allow(clippy::clone_on_copy)]
         let unparsed_pubkey_clone = unparsed_pubkey.clone();
-        assert_eq!(
-            unparsed_pubkey_debug,
-            format!("{:?}", unparsed_pubkey_clone)
-        );
+        assert_eq!(unparsed_pubkey_debug, format!("{unparsed_pubkey_clone:?}"));
         let pubkey_re = Regex::new(
             "UnparsedPublicKey \\{ algorithm: EdDSAParameters, bytes: \"[0-9a-f]{64}\" \\}",
         )

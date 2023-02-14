@@ -105,17 +105,17 @@ fn test_aead_separate_in_place(
     let mut sealing_key = SealingKey::new(config.key(), config.nonce());
     let mut opening_key = OpeningKey::new(config.key(), config.nonce());
 
-    println!("Sealing Key: {:?}", sealing_key);
-    println!("Opening Key: {:?}", opening_key);
+    println!("Sealing Key: {sealing_key:?}");
+    println!("Opening Key: {opening_key:?}");
 
     let plaintext = in_out.clone();
-    println!("Plaintext: {:?}", plaintext);
+    println!("Plaintext: {plaintext:?}");
     let tag = sealing_key
         .seal_in_place_separate_tag(config.aad(), in_out.as_mut_slice())
         .map_err(|x| x.to_string())?;
 
     let cipher_text = in_out.clone();
-    println!("Ciphertext: {:?}", cipher_text);
+    println!("Ciphertext: {cipher_text:?}");
     if !plaintext.is_empty() {
         assert_ne!(plaintext, cipher_text);
     }
@@ -128,7 +128,7 @@ fn test_aead_separate_in_place(
 
     assert_eq!(plaintext, result_plaintext);
 
-    println!("Roundtrip: {:?}", result_plaintext);
+    println!("Roundtrip: {result_plaintext:?}");
 
     Ok(Vec::from(result_plaintext))
 }
@@ -137,11 +137,11 @@ fn test_aead_append_within(config: &AeadConfig, in_out: &mut [u8]) -> Result<Vec
     let mut sealing_key = SealingKey::new(config.key(), config.nonce());
     let mut opening_key = OpeningKey::new(config.key(), config.nonce());
 
-    println!("Sealing Key: {:?}", sealing_key);
-    println!("Opening Key: {:?}", opening_key);
+    println!("Sealing Key: {sealing_key:?}");
+    println!("Opening Key: {opening_key:?}");
 
     let plaintext = in_out.to_owned();
-    println!("Plaintext: {:?}", plaintext);
+    println!("Plaintext: {plaintext:?}");
     let mut sized_in_out = in_out.to_vec();
     #[allow(deprecated)]
     sealing_key
@@ -153,8 +153,8 @@ fn test_aead_append_within(config: &AeadConfig, in_out: &mut [u8]) -> Result<Vec
     if !plaintext.is_empty() {
         assert_ne!(plaintext, cipher_text);
     }
-    println!("Ciphertext: {:?}", cipher_text);
-    println!("Tag: {:?}", tag_value);
+    println!("Ciphertext: {cipher_text:?}");
+    println!("Tag: {tag_value:?}");
 
     let result_plaintext = opening_key
         .open_within(config.aad(), &mut sized_in_out, 0..)
@@ -162,7 +162,7 @@ fn test_aead_append_within(config: &AeadConfig, in_out: &mut [u8]) -> Result<Vec
 
     assert_eq!(plaintext, result_plaintext);
 
-    println!("Roundtrip: {:?}", result_plaintext);
+    println!("Roundtrip: {result_plaintext:?}");
 
     Ok(Vec::from(result_plaintext))
 }

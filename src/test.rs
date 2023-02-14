@@ -198,7 +198,7 @@ impl TestCase {
     /// empty (zero-length) value is represented as "".
     pub fn consume_bytes(&mut self, key: &str) -> Vec<u8> {
         self.consume_optional_bytes(key)
-            .unwrap_or_else(|| panic!("No attribute named \"{}\"", key))
+            .unwrap_or_else(|| panic!("No attribute named \"{key}\""))
     }
 
     /// Like `consume_bytes()` except it returns `None` if the test case
@@ -260,7 +260,7 @@ impl TestCase {
     /// other interpretation.
     pub fn consume_string(&mut self, key: &str) -> String {
         self.consume_optional_string(key)
-            .unwrap_or_else(|| panic!("No attribute named \"{}\"", key))
+            .unwrap_or_else(|| panic!("No attribute named \"{key}\""))
     }
 
     /// Like `consume_string()` except it returns `None` if the test case
@@ -268,7 +268,7 @@ impl TestCase {
     pub fn consume_optional_string(&mut self, key: &str) -> Option<String> {
         for (name, value, consumed) in &mut self.attributes {
             if key == name {
-                assert!(!(*consumed), "Attribute {} was already consumed", key);
+                assert!(!(*consumed), "Attribute {key} was already consumed");
                 *consumed = true;
                 return Some(value.clone());
             }

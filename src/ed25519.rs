@@ -305,6 +305,6 @@ mod tests {
         let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(&key).unwrap();
 
         assert_eq!("Ed25519KeyPair { public_key: PublicKey(\"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a\") }", 
-                   format!("{:?}", key_pair));
+                   format!("{key_pair:?}"));
     }
 }

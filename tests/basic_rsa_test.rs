@@ -164,7 +164,7 @@ fn test_rsa_verify() {
 
     for &alg in params {
         let actual_result = signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
-        assert!(actual_result.is_ok(), "Rejected by: {:?}", alg);
+        assert!(actual_result.is_ok(), "Rejected by: {alg:?}");
     }
 }
 
