@@ -28,10 +28,27 @@
 //! (seccomp filters on Linux in particular). See `SystemRandom`'s
 //! documentation for more details.
 
+//! # Example
+//! ```
+//! use aws_lc_rust::{rand, rand::SecureRandom};
+//!
+//! //  Using `rand::fill`
+//! let mut rand_bytes = [0u8; 32];
+//! rand::fill(&mut rand_bytes).unwrap();
+//!
+//! // Using `SystemRandom`
+//! let rng = rand::SystemRandom::new();
+//! rng.fill(&mut rand_bytes).unwrap();
+//!
+//! // Using `rand::generate`
+//! let random_array = rand::generate(&rng).unwrap();
+//! let more_rand_bytes : [u8; 64] = random_array.expose();
+//! ```
 use aws_lc::RAND_bytes;
 use std::fmt::Debug;
 
 use crate::error;
+use crate::error::Unspecified;
 
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
@@ -40,7 +57,7 @@ pub trait SecureRandom: sealed::SecureRandom {
     /// # Errors
     /// `error::Unspecified` if unable to fill `dest`.
     ///
-    fn fill(&self, dest: &mut [u8]) -> Result<(), error::Unspecified>;
+    fn fill(&self, dest: &mut [u8]) -> Result<(), Unspecified>;
 }
 
 impl<T> SecureRandom for T
@@ -48,7 +65,7 @@ where
     T: sealed::SecureRandom,
 {
     #[inline]
-    fn fill(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
+    fn fill(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
         self.fill_impl(dest)
     }
 }
@@ -75,7 +92,7 @@ impl<T: RandomlyConstructable> Random<T> {
 #[inline]
 pub fn generate<T: RandomlyConstructable>(
     rng: &dyn SecureRandom,
-) -> Result<Random<T>, error::Unspecified> {
+) -> Result<Random<T>, Unspecified> {
     let mut r = T::zero();
     rng.fill(r.as_mut_bytes())?;
     Ok(Random(r))

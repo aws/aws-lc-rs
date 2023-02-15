@@ -21,6 +21,24 @@
 //! function should be used. Otherwise, the digest can be calculated in
 //! multiple steps using `Context`.
 
+//! # Example
+//!
+//! ```
+//! use aws_lc_rust::digest;
+//!
+//! // Using `digest::digest`
+//! let one_shot = digest::digest(&digest::SHA384, b"hello, world");
+//!
+//! // Using `digest::Context`
+//! let mut ctx = digest::Context::new(&digest::SHA384);
+//! ctx.update(b"hello");
+//! ctx.update(b", ");
+//! ctx.update(b"world");
+//! let multi_part = ctx.finish();
+//!
+//! assert_eq!(&one_shot.as_ref(), &multi_part.as_ref());
+//! ```
+
 #![allow(non_snake_case)]
 use crate::{debug, derive_debug_via_id};
 
@@ -42,21 +60,6 @@ use std::os::raw::c_uint;
 
 /// A context for multi-step (Init-Update-Finish) digest calculations.
 ///
-/// # Examples
-///
-/// ```
-/// use aws_lc_rust::digest;
-///
-/// let one_shot = digest::digest(&digest::SHA384, b"hello, world");
-///
-/// let mut ctx = digest::Context::new(&digest::SHA384);
-/// ctx.update(b"hello");
-/// ctx.update(b", ");
-/// ctx.update(b"world");
-/// let multi_part = ctx.finish();
-///
-/// assert_eq!(&one_shot.as_ref(), &multi_part.as_ref());
-/// ```
 #[derive(Clone)]
 pub struct Context {
     /// The context's algorithm.
