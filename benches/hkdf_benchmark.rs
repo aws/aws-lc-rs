@@ -24,7 +24,7 @@ impl HKDFConfig {
 
 // For the hkdf functions, we use the corresponding one-shot HKDF_expand/extract functions available
 // in AWS-LC.
-// For SHA-{256, 384, 512, 512-256}, aws-lc-ring hmac::sign one-shot Rust functions are
+// For SHA-{256, 384, 512, 512-256}, aws-lc-rust hmac::sign one-shot Rust functions are
 // slightly slower than Ring for 16-256 byte inputs, than quickly catch up and are almost on par
 // with Ring. For SHA-1, AWS-LC is consistently 1.2-2.5 times faster, depending on the input
 // lengths.

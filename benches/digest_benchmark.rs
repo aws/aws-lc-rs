@@ -97,7 +97,7 @@ const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
 fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
     // Benchmark digest::digest one-shot.
     //
-    // For SHA-{256, 384, 512, 512-256}, aws-lc-ring digest::digest one-shot Rust functions
+    // For SHA-{256, 384, 512, 512-256}, aws-lc-rust digest::digest one-shot Rust functions
     // are around 0.8-0.9 times slower on 16 bit inputs when benchmarked against Ring. The
     // performance on 256-16394 bit inputs is on par with Ring. For SHA-1, our one-shot APIs are
     // consistently 1-2 times faster around on all input lengths.

@@ -4,7 +4,7 @@
 
 ROOT=$PWD
 RUSTLS_RING_STRING="^ring = \".*\""
-RUSTLS_OUR_STRING="ring = { path = \"${PWD}\", package = \"aws-lc-ring\"}"
+RUSTLS_OUR_STRING="ring = { path = \"${PWD}\", package = \"aws-lc-rust\"}"
 
 git clone https://github.com/rustls/rustls.git
 cd rustls

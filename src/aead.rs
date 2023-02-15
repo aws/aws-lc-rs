@@ -38,7 +38,7 @@
 //! rand::fill(&mut key_bytes).expect("Unable to generate key");
 //!
 //! // Contextual information must match between encryption and decryption
-//! let aad_content = "aws-lc-ring documentation";
+//! let aad_content = "aws-lc-rust documentation";
 //! let sequence_id = 0xabcdef01u32.to_be_bytes();
 //!
 //! // Buffer containing plaintext. This will be modified to contain the ciphertext.

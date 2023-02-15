@@ -4,9 +4,9 @@
 
 ROOT=$PWD
 QUIC_RING_STRING="^ring = { .* optional .* }"
-QUIC_OUR_STRING="ring = { path = \"${PWD}\", optional = true, package = \"aws-lc-ring\"}"
+QUIC_OUR_STRING="ring = { path = \"${PWD}\", optional = true, package = \"aws-lc-rust\"}"
 QUIC_CRYPTO_RING_STRING="^ring = { .* }"
-QUIC_CRYPTO_OUR_STRING="ring = { path = \"${PWD}\", package = \"aws-lc-ring\"}"
+QUIC_CRYPTO_OUR_STRING="ring = { path = \"${PWD}\", package = \"aws-lc-rust\"}"
 
 git clone https://github.com/aws/s2n-quic.git
 cd s2n-quic
