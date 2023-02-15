@@ -108,7 +108,7 @@ pub(crate) mod sealed {
     }
 }
 
-/// A type that can be returned by `ring::rand::generate()`.
+/// A type that can be returned by `aws_lc_rust::rand::generate()`.
 pub trait RandomlyConstructable: sealed::RandomlyConstructable {}
 
 impl<T> RandomlyConstructable for T where T: sealed::RandomlyConstructable {}

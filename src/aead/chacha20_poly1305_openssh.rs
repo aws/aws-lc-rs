@@ -18,8 +18,8 @@
 //! The [chacha20-poly1305@openssh.com] AEAD-ish construct.
 //!
 //! This should only be used by SSH implementations. It has a similar, but
-//! different API from `ring::aead` because the construct cannot use the same
-//! API as `ring::aead` due to the way the construct handles the encrypted
+//! different API from `aws_lc_rust::aead` because the construct cannot use the same
+//! API as `aws_lc_rust::aead` due to the way the construct handles the encrypted
 //! packet length.
 //!
 //! The concatenation of a and b is denoted `a||b`. `K_1` and `K_2` are defined

@@ -24,7 +24,7 @@
 //! `agreement::ECDH_P256`/`agreement::ECDH_P384` for `agreement::X25519`.
 //!
 //! ```
-//! use ring::{agreement, rand};
+//! use aws_lc_rust::{agreement, rand};
 //!
 //! let rng = rand::SystemRandom::new();
 //!
@@ -50,7 +50,7 @@
 //! agreement::agree_ephemeral(
 //!     my_private_key,
 //!     &peer_public_key,
-//!     ring::error::Unspecified,
+//!     aws_lc_rust::error::Unspecified,
 //!     |_key_material| {
 //!         // In a real application, we'd apply a KDF to the key material and the
 //!         // public keys (as recommended in RFC 7748) and then derive session
@@ -59,7 +59,7 @@
 //!     },
 //! )?;
 //!
-//! # Ok::<(), ring::error::Unspecified>(())
+//! # Ok::<(), aws_lc_rust::error::Unspecified>(())
 //! ```
 use crate::ec::{ec_group_from_nid, ec_key_from_public_point, ec_point_from_bytes};
 use crate::error::Unspecified;
