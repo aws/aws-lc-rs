@@ -176,10 +176,33 @@ pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
 
 #[cfg(test)]
 mod tests {
+    use crate::rand;
     use std::array::IntoIter;
 
-    use crate::rand::generate;
-    use crate::rand::SystemRandom;
+    use crate::rand::{generate, SecureRandom, SystemRandom};
+
+    #[test]
+    fn test_secure_random_fill() {
+        let mut random_array = [0u8; 173];
+        let rng = SystemRandom::new();
+        rng.fill(&mut random_array).unwrap();
+
+        let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
+        assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
+        assert!(variance > 8f64);
+        println!("Mean: {mean} Variance: {variance}");
+    }
+
+    #[test]
+    fn test_rand_fill() {
+        let mut random_array: [u8; 173] = [0u8; 173];
+        rand::fill(&mut random_array).unwrap();
+
+        let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
+        assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
+        assert!(variance > 8f64);
+        println!("Mean: {mean} Variance: {variance}");
+    }
 
     #[test]
     fn test_randomly_constructable() {
