@@ -3,14 +3,14 @@
 
 //! digest - display the checksum for files.
 //!
-//! digest is an example program using `aws-lc-ring`. It can compute the digest (i.e., "checksum")
-//! of files using any of the digest algorithms supported by `aws-lc-ring`.
+//! digest is an example program using `aws-lc-rust`. It can compute the digest (i.e., "checksum")
+//! of files using any of the digest algorithms supported by `aws-lc-rust`.
 //!
 //! The program can be run from the command line using cargo:
 //! ```
 //! > cargo run --example digest -- -d sha256 LICENSE
 //! ```
-use aws_lc_ring::{digest, test};
+use aws_lc_rust::{digest, test};
 use clap::{Parser, ValueEnum};
 use std::fs::File;
 use std::io::{Read, Result};

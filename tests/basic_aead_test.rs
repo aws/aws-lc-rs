@@ -3,13 +3,13 @@
 
 extern crate core;
 
-use aws_lc_ring::{aead, error, test};
+use aws_lc_rust::{aead, error, test};
 
 use aead::{
     Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey,
     AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305,
 };
-use aws_lc_ring::test::from_hex;
+use aws_lc_rust::test::from_hex;
 use error::Unspecified;
 
 struct NotANonce(Vec<u8>);
@@ -185,6 +185,6 @@ fn test_types() {
 
 mod test_aead {
     test_aead!(ring);
-    test_aead!(aws_lc_ring);
+    test_aead!(aws_lc_rust);
 }
 */

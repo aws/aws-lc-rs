@@ -15,9 +15,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_ring::{aead, error, test, test_file};
+use aws_lc_rust::{aead, error, test, test_file};
 
-use aws_lc_ring::aead::{Nonce, NONCE_LEN};
+use aws_lc_rust::aead::{Nonce, NONCE_LEN};
 use core::ops::RangeFrom;
 use mirai_annotations::unrecoverable;
 

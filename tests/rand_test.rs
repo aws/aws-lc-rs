@@ -15,7 +15,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_ring::{
+use aws_lc_rust::{
     rand::{self, SecureRandom as _},
     test,
 };

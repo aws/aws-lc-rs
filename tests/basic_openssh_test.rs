@@ -1,9 +1,9 @@
 // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_ring::test::from_hex;
+use aws_lc_rust::test::from_hex;
 
-use aws_lc_ring::aead;
+use aws_lc_rust::aead;
 
 #[test]
 fn test_openssh() {

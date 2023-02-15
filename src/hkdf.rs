@@ -23,7 +23,7 @@
 //!
 //! # Example
 //! ```
-//! use aws_lc_ring::{aead, hkdf, hmac, rand};
+//! use aws_lc_rust::{aead, hkdf, hmac, rand};
 //!
 //! // Generate a (non-secret) salt value
 //! let mut salt_bytes = [0u8; 32];

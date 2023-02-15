@@ -1,5 +1,5 @@
-# aws-lc-ring
-*aws-lc-ring* is a cryptographic library using [AWS-LC](https://github.com/awslabs/aws-lc) for its cryptographic operations.
+# AWS Libcrypto for Rust (aws-lc-rust)
+*aws-lc-rust* is a cryptographic library using [AWS-LC](https://github.com/aws/aws-lc) for its cryptographic operations.
 This library strives to be API-compatible with the popular Rust library named 
 [ring](https://github.com/briansmith/ring).
 
@@ -38,26 +38,26 @@ for parsing PKCS#8 v1.
 
 ## Questions, Feedback and Contributing
 
-* [Submit an non-security Bug/Issue/Request](https://github.com/awslabs/aws-lc-ring/issues/new/choose)
-* [API documentation](https://docs.rs/aws-lc-ring/)
-* [Fork our repo](https://github.com/awslabs/aws-lc-ring/fork)
+* [Submit an non-security Bug/Issue/Request](https://github.com/awslabs/aws-lc-rust/issues/new/choose)
+* [API documentation](https://docs.rs/aws-lc-rust/)
+* [Fork our repo](https://github.com/awslabs/aws-lc-rust/fork)
 
-If you have any questions about submitting PR's, opening issues, *aws-lc-ring* API usage or
+If you have any questions about submitting PR's, opening issues, *aws-lc-rust* API usage or
 any similar topic, we have a public chatroom available here to answer your questions
-on [Gitter](https://gitter.im/awslabs/aws-lc).
+on [Gitter](https://gitter.im/aws/aws-lc).
 
 Otherwise, if you think you might have found a security impacting issue, please instead
 follow our *Security Notification Process* below.
 
 ## Security Notification Process
 
-If you discover a potential security issue in *AWS-LC* or *aws-lc-ring*, we ask that you notify AWS
+If you discover a potential security issue in *AWS-LC* or *aws-lc-rust*, we ask that you notify AWS
 Security via our
 [vulnerability reporting page](https://aws.amazon.com/security/vulnerability-reporting/).
 Please do **not** create a public GitHub issue.
 
-If you package or distribute *aws-lc-ring*, or use *aws-lc-ring* as part of a large multi-user service,
-you may be eligible for pre-notification of future *aws-lc-ring* releases.
+If you package or distribute *aws-lc-rust*, or use *aws-lc-rust* as part of a large multi-user service,
+you may be eligible for pre-notification of future *aws-lc-rust* releases.
 Please contact aws-lc-pre-notifications@amazon.com.
 
 ## License

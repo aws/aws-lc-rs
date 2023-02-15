@@ -32,7 +32,7 @@
 //! ## Signing a value and verifying it wasn't tampered with
 //!
 //! ```
-//! use aws_lc_ring::{hmac, rand};
+//! use aws_lc_rust::{hmac, rand};
 //!
 //! let rng = rand::SystemRandom::new();
 //! let key = hmac::Key::generate(hmac::HMAC_SHA256, &rng)?;
@@ -46,14 +46,14 @@
 //!
 //! hmac::verify(&key, msg.as_bytes(), tag.as_ref())?;
 //!
-//! # Ok::<(), aws_lc_ring::error::Unspecified>(())
+//! # Ok::<(), aws_lc_rust::error::Unspecified>(())
 //! ```
 //!
 //! ## Using the one-shot API:
 //!
 //! ```
-//! use aws_lc_ring::{digest, hmac, rand};
-//! use aws_lc_ring::rand::SecureRandom;
+//! use aws_lc_rust::{digest, hmac, rand};
+//! use aws_lc_rust::rand::SecureRandom;
 //!
 //! let msg = "hello, world";
 //!
@@ -71,13 +71,13 @@
 //! let v_key = hmac::Key::new(hmac::HMAC_SHA256, key_value.as_ref());
 //! hmac::verify(&v_key, msg.as_bytes(), tag.as_ref())?;
 //!
-//! # Ok::<(), aws_lc_ring::error::Unspecified>(())
+//! # Ok::<(), aws_lc_rust::error::Unspecified>(())
 //! ```
 //!
 //! ## Using the multi-part API:
 //! ```
-//! use aws_lc_ring::{digest, hmac, rand};
-//! use aws_lc_ring::rand::SecureRandom;
+//! use aws_lc_rust::{digest, hmac, rand};
+//! use aws_lc_rust::rand::SecureRandom;
 //!
 //! let parts = ["hello", ", ", "world"];
 //!
@@ -103,7 +103,7 @@
 //! }
 //! hmac::verify(&v_key, &msg.as_ref(), tag.as_ref())?;
 //!
-//! # Ok::<(), aws_lc_ring::error::Unspecified>(())
+//! # Ok::<(), aws_lc_rust::error::Unspecified>(())
 //! ```
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
@@ -261,7 +261,7 @@ impl Key {
     /// `key_value` should be a value generated using a secure random number
     /// generator (e.g. the `key_value` output by
     /// `SealingKey::generate_serializable()`) or derived from a random key by
-    /// a key derivation function (e.g. `aws_lc_ring::hkdf`). In particular,
+    /// a key derivation function (e.g. `aws_lc_rust::hkdf`). In particular,
     /// `key_value` shouldn't be a password.
     ///
     /// As specified in RFC 2104, if `key_value` is shorter than the digest

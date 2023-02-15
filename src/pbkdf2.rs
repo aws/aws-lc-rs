@@ -33,7 +33,7 @@
 //! ## Password Database Example
 //!
 //! ```
-//! use aws_lc_ring::{digest, pbkdf2};
+//! use aws_lc_rust::{digest, pbkdf2};
 //! use std::{collections::HashMap, num::NonZeroU32};
 //!
 //! static PBKDF2_ALG: pbkdf2::Algorithm = pbkdf2::PBKDF2_HMAC_SHA256;
