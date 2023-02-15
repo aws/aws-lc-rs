@@ -48,7 +48,7 @@ use std::os::raw::c_uint;
 /// # Examples
 ///
 /// ```
-/// use aws_lc_ring::digest;
+/// use aws_lc_rust::digest;
 ///
 /// let one_shot = digest::digest(&digest::SHA384, b"hello, world");
 ///
@@ -169,7 +169,7 @@ impl Context {
 ///
 /// ```
 /// # {
-/// use aws_lc_ring::{digest, test};
+/// use aws_lc_rust::{digest, test};
 /// let expected_hex = "09ca7e4eaa6e8ae9c7d261167129184883644d07dfba7cbfbc4c8a2e08360d5b";
 /// let expected: Vec<u8> = test::from_hex(expected_hex).unwrap();
 /// let actual = digest::digest(&digest::SHA256, b"hello, world");

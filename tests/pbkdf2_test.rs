@@ -15,7 +15,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_ring::{digest, error, pbkdf2, test, test_file};
+use aws_lc_rust::{digest, error, pbkdf2, test, test_file};
 use core::num::NonZeroU32;
 
 /// Test vectors from `BoringSSL`, Go, and other sources.
@@ -72,7 +72,7 @@ fn pbkdf2_tests() {
 #[cfg(all(target_arch = "x86_64", target_vendor = "apple"))]
 #[cfg(test)]
 mod tests {
-    use aws_lc_ring::{digest, pbkdf2};
+    use aws_lc_rust::{digest, pbkdf2};
     use core::num::NonZeroU32;
     use mirai_annotations::assume;
 

@@ -60,7 +60,7 @@ macro_rules! benchmark_digest {
 }
 
 benchmark_digest!(ring);
-benchmark_digest!(aws_lc_ring);
+benchmark_digest!(aws_lc_rust);
 
 fn bench_sha1(c: &mut Criterion) {
     let config = DigestConfig::new(DigestAlgorithm::SHA1);
@@ -111,7 +111,7 @@ fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_ring_benchmarks::run_digest_one_shot(config, &chunk);
+                aws_lc_rust_benchmarks::run_digest_one_shot(config, &chunk);
             });
         });
 
@@ -145,7 +145,7 @@ fn bench_digest_incremental(c: &mut Criterion, config: &DigestConfig) {
 
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_ring_benchmarks::run_digest_incremental(config, &chunk);
+                aws_lc_rust_benchmarks::run_digest_incremental(config, &chunk);
             });
         });
 

@@ -15,9 +15,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_ring::signature::{KeyPair, RsaParameters};
-use aws_lc_ring::test::to_hex_upper;
-use aws_lc_ring::{rand, signature, signature::RsaKeyPair, test, test_file};
+use aws_lc_rust::signature::{KeyPair, RsaParameters};
+use aws_lc_rust::test::to_hex_upper;
+use aws_lc_rust::{rand, signature, signature::RsaKeyPair, test, test_file};
 
 #[test]
 fn rsa_traits() {

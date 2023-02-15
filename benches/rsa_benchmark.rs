@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_ring::{test, test_file};
+use aws_lc_rust::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 #[allow(dead_code)]
@@ -142,7 +142,7 @@ mod ring_benchmarks {
     };
 }
 benchmark_rsa!(ring);
-benchmark_rsa!(aws_lc_ring);
+benchmark_rsa!(aws_lc_rust);
 
 fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
     let mut buffer = [0u8; 2048];
@@ -155,13 +155,13 @@ fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
         config.msg.len()
     );
     let mut group = c.benchmark_group(bench_group_name);
-    let aws_rng = aws_lc_ring_benchmarks::get_rng();
-    let aws_encoding = aws_lc_ring_benchmarks::encoding(config.padding, config.digest);
-    let aws_key_pair = aws_lc_ring_benchmarks::create_key_pair(&config.key);
+    let aws_rng = aws_lc_rust_benchmarks::get_rng();
+    let aws_encoding = aws_lc_rust_benchmarks::encoding(config.padding, config.digest);
+    let aws_key_pair = aws_lc_rust_benchmarks::create_key_pair(&config.key);
     let aws_sig = &mut buffer[0..aws_key_pair.public_modulus_len()];
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
-            aws_lc_ring_benchmarks::sign(
+            aws_lc_rust_benchmarks::sign(
                 &aws_key_pair,
                 &aws_rng,
                 &config.msg,
@@ -199,15 +199,15 @@ fn test_rsa_verify(c: &mut Criterion, config: &RsaConfig) {
     );
     let mut group = c.benchmark_group(bench_group_name);
     {
-        use aws_lc_ring::signature::KeyPair;
-        let aws_params = aws_lc_ring_benchmarks::parameters(config.padding, config.digest);
-        let aws_key_pair = aws_lc_ring_benchmarks::create_key_pair(&config.key);
+        use aws_lc_rust::signature::KeyPair;
+        let aws_params = aws_lc_rust_benchmarks::parameters(config.padding, config.digest);
+        let aws_key_pair = aws_lc_rust_benchmarks::create_key_pair(&config.key);
         let aws_pub_key = aws_key_pair.public_key().as_ref();
         let aws_sig = config.signature.as_slice();
 
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_ring_benchmarks::verify(aws_params, aws_pub_key, &config.msg, aws_sig);
+                aws_lc_rust_benchmarks::verify(aws_params, aws_pub_key, &config.msg, aws_sig);
             });
         });
     }

@@ -17,7 +17,7 @@
 
 extern crate alloc;
 
-use aws_lc_ring::{agreement, error, rand, test, test_file};
+use aws_lc_rust::{agreement, error, rand, test, test_file};
 
 #[test]
 fn agreement_traits() {

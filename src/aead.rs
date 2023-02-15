@@ -26,10 +26,10 @@
 //!
 //! # Examples
 //! ```
-//! use aws_lc_ring::rand;
-//! use aws_lc_ring::aead::{UnboundKey, AES_128_KEY_LEN, AES_128_GCM, nonce_sequence, SealingKey,
+//! use aws_lc_rust::rand;
+//! use aws_lc_rust::aead::{UnboundKey, AES_128_KEY_LEN, AES_128_GCM, nonce_sequence, SealingKey,
 //!     OpeningKey, Aad, BoundKey};
-//! use aws_lc_ring::test::from_hex;
+//! use aws_lc_rust::test::from_hex;
 //!
 //! let plaintext = "plaintext value";
 //!

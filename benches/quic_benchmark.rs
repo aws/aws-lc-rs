@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_ring::{test, test_file};
+use aws_lc_rust::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 #[derive(Debug)]
@@ -64,7 +64,7 @@ macro_rules! benchmark_quic
 }}}
 
 benchmark_quic!(ring);
-benchmark_quic!(aws_lc_ring);
+benchmark_quic!(aws_lc_rust);
 
 fn test_new_mask(c: &mut Criterion, config: &QuicConfig) {
     let sample = config.sample.as_slice();
@@ -77,10 +77,10 @@ fn test_new_mask(c: &mut Criterion, config: &QuicConfig) {
     );
     let mut group = c.benchmark_group(bench_group_name);
 
-    let aws_key = aws_lc_ring_benchmarks::header_protection_key(config);
+    let aws_key = aws_lc_rust_benchmarks::header_protection_key(config);
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
-            aws_lc_ring_benchmarks::new_mask(&aws_key, sample);
+            aws_lc_rust_benchmarks::new_mask(&aws_key, sample);
         });
     });
 

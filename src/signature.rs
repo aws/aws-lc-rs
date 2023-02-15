@@ -130,12 +130,12 @@
 //! ## Signing and verifying with Ed25519
 //!
 //! ```
-//! use aws_lc_ring::{
+//! use aws_lc_rust::{
 //!     rand,
 //!     signature::{self, KeyPair},
 //! };
 //!
-//! fn main() -> Result<(), aws_lc_ring::error::Unspecified> {
+//! fn main() -> Result<(), aws_lc_rust::error::Unspecified> {
 //!     // Generate a key pair in PKCS#8 (v1) format.
 //!     let rng = rand::SystemRandom::new();
 //!     let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8v1(&rng)?;
@@ -194,7 +194,7 @@
 //! ```
 //!
 //! ```
-//! use aws_lc_ring::{rand, signature};
+//! use aws_lc_rust::{rand, signature};
 //!
 //! fn sign_and_verify_rsa(private_key_path: &std::path::Path,
 //!                        public_key_path: &std::path::Path)

@@ -85,7 +85,7 @@ macro_rules! benchmark_hkdf {
 }
 
 benchmark_hkdf!(ring);
-benchmark_hkdf!(aws_lc_ring);
+benchmark_hkdf!(aws_lc_rust);
 
 fn bench_hkdf_sha1(c: &mut Criterion) {
     let config = HKDFConfig::new(HKDFAlgorithm::SHA1);
@@ -116,10 +116,10 @@ fn bench_hkdf(c: &mut Criterion, config: &HKDFConfig) {
         let bench_group_name = format!("HKDF-{:?}-{}-bytes", config.algorithm, chunk_len);
         let mut group = c.benchmark_group(bench_group_name);
 
-        let aws_prk = aws_lc_ring_benchmarks::run_hkdf_extract(config);
+        let aws_prk = aws_lc_rust_benchmarks::run_hkdf_extract(config);
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_ring_benchmarks::run_hkdf_expand(&aws_prk, info_chunk);
+                aws_lc_rust_benchmarks::run_hkdf_expand(&aws_prk, info_chunk);
             });
         });
 

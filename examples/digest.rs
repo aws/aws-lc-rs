@@ -10,7 +10,7 @@
 //! ```
 //! > cargo run --example digest -- -d sha256 LICENSE
 //! ```
-use aws_lc_ring::{digest, test};
+use aws_lc_rust::{digest, test};
 use clap::{Parser, ValueEnum};
 use std::fs::File;
 use std::io::{Read, Result};

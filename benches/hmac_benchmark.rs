@@ -80,7 +80,7 @@ macro_rules! benchmark_hmac {
 }
 
 benchmark_hmac!(ring);
-benchmark_hmac!(aws_lc_ring);
+benchmark_hmac!(aws_lc_rust);
 
 fn bench_hmac_sha1(c: &mut Criterion) {
     let config = HMACConfig::new(HMACAlgorithm::SHA1);
@@ -122,8 +122,8 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
 
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                let aws_key = aws_lc_ring_benchmarks::create_hmac_key(config);
-                aws_lc_ring_benchmarks::run_hmac_one_shot(&aws_key, &chunk);
+                let aws_key = aws_lc_rust_benchmarks::create_hmac_key(config);
+                aws_lc_rust_benchmarks::run_hmac_one_shot(&aws_key, &chunk);
             });
         });
 
@@ -150,8 +150,8 @@ fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
 
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                let aws_key = aws_lc_ring_benchmarks::create_longer_hmac_key(config);
-                aws_lc_ring_benchmarks::run_hmac_one_shot(&aws_key, &chunk);
+                let aws_key = aws_lc_rust_benchmarks::create_longer_hmac_key(config);
+                aws_lc_rust_benchmarks::run_hmac_one_shot(&aws_key, &chunk);
             });
         });
 
@@ -177,8 +177,8 @@ fn bench_hmac_incremental(c: &mut Criterion, config: &HMACConfig) {
 
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                let aws_key = aws_lc_ring_benchmarks::create_hmac_key(config);
-                aws_lc_ring_benchmarks::run_hmac_incremental(&aws_key, &chunk);
+                let aws_key = aws_lc_rust_benchmarks::create_hmac_key(config);
+                aws_lc_rust_benchmarks::run_hmac_incremental(&aws_key, &chunk);
             });
         });
 
