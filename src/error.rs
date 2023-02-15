@@ -23,7 +23,7 @@ use std::num::TryFromIntError;
 
 /// An error with absolutely no details.
 ///
-/// *`aws_lc_rust`* uses this unit type as the error type in most of its results
+/// *aws-lc-rust* uses this unit type as the error type in most of its results
 /// because (a) usually the specific reasons for a failure are obvious or are
 /// not useful to know, and/or (b) providing more details about a failure might
 /// provide a dangerous side channel, and/or (c) it greatly simplifies the
@@ -70,7 +70,7 @@ use std::num::TryFromIntError;
 /// crypto library. This approach attempts to minimize complexity in the hopes
 /// of avoiding such problems. In some cases, this approach may be too extreme,
 /// and it may be important for an operation to provide some details about the
-/// cause of a failure. Users of *`aws_lc_rust`* are encouraged to report such cases so
+/// cause of a failure. Users of *aws-lc-rust* are encouraged to report such cases so
 /// that they can be addressed individually.
 ///
 /// [`std::error::Error`]: https://doc.rust-lang.org/std/error/trait.Error.html

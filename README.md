@@ -15,12 +15,12 @@ feature of *ring*.) Currently, this is only required by the `io::writer` module.
 Enable feature to access the io module.
 
 * `asan`
-Performs an “address sanitizer” build of AWS-LC. This can be used to help detect memory leaks. See the 
-“[Sanitizer](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html)” 
+Performs an “address sanitizer” build of *AWS-LC*. This can be used to help detect memory leaks. See the
+“[Sanitizer](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html)”
 section of the Rust Unstable Book.
 
 * `bindgen`
-Enables generation and building of the `aws-lc-sys` dependency crate on platforms not provided with pre-generated bindings.
+Enables generation and building of the *aws-lc-sys* dependency crate on platforms not provided with pre-generated bindings.
 
 ## *ring*-compatibility
 

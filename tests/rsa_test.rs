@@ -129,7 +129,7 @@ fn test_signature_rsa_pss_sign() {
             let mut actual = vec![0u8; key_pair.public_modulus_len()];
 
             key_pair.sign(alg, &rng, &msg, actual.as_mut_slice())?;
-            // TODO: AWS-LC does not allow the salt to be specified for PSS
+            // TODO: *AWS-LC* does not allow the salt to be specified for PSS
             //assert_eq!(actual.as_slice() == &expected[..], result == "Pass");
             Ok(())
         },

@@ -202,7 +202,7 @@ impl Ed25519KeyPair {
     ///
     /// # Errors
     /// `error::KeyRejected("InvalidEncoding")` for all inputs.
-    /// PKCS#8 v2 is currently not supported by AWS-LC.
+    /// PKCS#8 v2 is currently not supported by *AWS-LC*.
     #[deprecated(
         note = "PKCS#8 v2 keys are not supported by AWS-LC. Support may be added in future versions."
     )]

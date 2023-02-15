@@ -114,7 +114,7 @@ pub trait RandomlyConstructable: sealed::RandomlyConstructable {}
 impl<T> RandomlyConstructable for T where T: sealed::RandomlyConstructable {}
 
 /// A secure random number generator where the random values come from the
-/// underlying AWS-LC libcrypto.
+/// underlying *AWS-LC* libcrypto.
 ///
 /// A single `SystemRandom` may be shared across multiple threads safely.
 #[derive(Clone, Debug)]

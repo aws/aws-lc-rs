@@ -88,7 +88,7 @@ const MAX_HKDF_SALT_LEN: usize = 80;
 const MAX_HKDF_INFO_LEN: usize = 80;
 
 /// The maximum output size of a PRK computed by |`HKDF_extract`| is the maximum digest
-/// size that can be outputted by AWS-LC.
+/// size that can be outputted by *AWS-LC*.
 const MAX_HKDF_PRK_LEN: usize = digest::MAX_OUTPUT_LEN;
 
 impl KeyType for Algorithm {

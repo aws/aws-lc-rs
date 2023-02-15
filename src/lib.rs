@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 //! Ring-compatible crypto library using the cryptographic operations provided by
-//! [AWS-LC](https://github.com/awslabs/aws-lc).
+//! [*AWS-LC*](https://github.com/awslabs/aws-lc).
 //!
 //! # Feature Flags
 //!
@@ -27,7 +27,7 @@
 //! [`#![no_std]`](https://docs.rust-embedded.org/book/intro/no-std.html) build.
 //! * We can only support a subset of the platforms supported by `aws-lc-sys`.  We currently support Mac
 //! and Linux, both x86-64 and aarch64.
-//! * Due to its dependence on AWS-LC, this library does not support generating or parsing
+//! * Due to its dependence on *AWS-LC*, this library does not support generating or parsing
 //! [PKCS#8 v2](https://tools.ietf.org/html/rfc5958). Thus, the `Ed25519KeyPair::generate_pkcs8` and
 //! `Ed25519KeyPair::from_pkcs8` implementations always returns an error. Instead, you can use
 //! `Ed25519KeyPair::generate_pkcs8v1` for generating and
@@ -85,7 +85,7 @@ use std::sync::Once;
 static START: Once = Once::new();
 
 #[inline]
-/// Initialize the AWS-LC library. (This should generally not be needed.)
+/// Initialize the *AWS-LC* library. (This should generally not be needed.)
 pub fn init() {
     START.call_once(|| unsafe {
         CRYPTO_library_init();
@@ -128,7 +128,7 @@ unsafe fn dump_error() {
 }
 
 mod sealed {
-    /// Traits that are designed to only be implemented internally in *`aws_lc_rust`*.
+    /// Traits that are designed to only be implemented internally in *aws-lc-rust*.
     //
     // Usage:
     // ```

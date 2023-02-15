@@ -3,8 +3,8 @@
 
 //! digest - display the checksum for files.
 //!
-//! digest is an example program using `aws-lc-rust`. It can compute the digest (i.e., "checksum")
-//! of files using any of the digest algorithms supported by `aws-lc-rust`.
+//! *digest* is an example program using *aws-lc-rust*. It can compute the digest (i.e., "checksum")
+//! of files using any of the digest algorithms supported by *aws-lc-rust*.
 //!
 //! The program can be run from the command line using cargo:
 //! ```
