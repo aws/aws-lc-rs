@@ -35,6 +35,10 @@ Thus, the `Ed25519KeyPair::generate_pkcs8` and `Ed25519KeyPair::from_pkcs8` impl
 Instead, you can use `Ed25519KeyPair::generate_pkcs8v1` for generating and `Ed25519KeyPair::from_pkcs8_maybe_unchecked`
 for parsing PKCS#8 v1.
 * When parsing fails, the `KeyRejected` response may differ from *ring*’s response on the same input.
+* The implementations for several functions use internally generated pseudo-randomness and 
+ignore the provided `SecureRandom` parameter. These functions include: `Ed25519KeyPair::generate_pkcs8`, 
+`EcdsaKeyPair::generate_pkcs8`, `EcdsaKeyPair::sign`, and `RsaKeyPair::sign`.
+
 
 ## Questions, Feedback and Contributing
 

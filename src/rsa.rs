@@ -221,7 +221,7 @@ impl RsaKeyPair {
     /// function does *not* take a precomputed digest; instead, `sign`
     /// calculates the digest itself.
     ///
-    /// # Ring Compatibility
+    /// # *ring* Compatibility
     /// Our implementation ignored the `SecureRandom` parameter.
     ///
     /// # Errors

@@ -91,12 +91,13 @@ impl Context {
 
     /// Updates the message to digest with all the data in `data`.
     ///
-    /// The original implementation of Ring defers the failure of overflowed
-    /// inputs to `finish`, so we replicate the behavior.
+    /// # Panic
+    /// Panics if update causes total input length to exceed maximum allowed (`u64::MAX`).
     #[inline]
     pub fn update(&mut self, data: &[u8]) {
         Self::try_update(self, data).expect("digest update failed");
     }
+
     #[inline]
     fn try_update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
@@ -236,7 +237,7 @@ pub struct Algorithm {
     /// digest algorithm.
     ///
     /// This function isn't actually used in *aws-lc-rust*, and is only
-    /// kept for compatibility with the original ring implementation.
+    /// kept for compatibility with the original *ring* implementation.
     pub chaining_len: usize,
 
     /// The internal block length.

@@ -1,14 +1,14 @@
 // Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-//! Ring-compatible crypto library using the cryptographic operations provided by
+//! *ring*-compatible crypto library using the cryptographic operations provided by
 //! [*AWS-LC*](https://github.com/awslabs/aws-lc).
 //!
 //! # Feature Flags
 //!
 //! #### - alloc (default) ####
 //! Allows implementation to allocate values of arbitrary size. (The meaning of this feature differs
-//! from the "alloc" feature of Ring.) Currently, this is required by the `io::writer` module.
+//! from the "alloc" feature of *ring*.) Currently, this is required by the `io::writer` module.
 //!
 //! #### - ring-io (default) ####
 //! Enable feature to access the  `io`  module.
@@ -18,9 +18,9 @@
 //! ["Address Sanitizer" section](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html#addresssanitizer)
 //! of the [Rust Unstable Book](https://doc.rust-lang.org/beta/unstable-book/).
 //!
-//! # Ring-compatibility
+//! # *ring*-compatibility
 //!
-//! Although this library attempts to be fully compatible with Ring, there are a few places where our
+//! Although this library attempts to be fully compatible with *ring*, there are a few places where our
 //! behavior is observably different.
 //!
 //! * Our implementation requires the `std` library. We currently do not support a
@@ -33,7 +33,7 @@
 //! `Ed25519KeyPair::generate_pkcs8v1` for generating and
 //! `Ed25519KeyPair::from_pkcs8_maybe_unchecked` for parsing
 //! [PKCS#8 v1](https://tools.ietf.org/html/rfc5208).
-//! * When parsing fails, the `KeyRejected` response may differ from Ring's response on the same
+//! * When parsing fails, the `KeyRejected` response may differ from *ring*'s response on the same
 //! input.
 //!
 
