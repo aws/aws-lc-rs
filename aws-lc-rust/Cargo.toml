@@ -41,9 +41,6 @@ regex = "1.6.0"
 lazy_static = "1.4.0"
 clap = {version = "4.1.4", features = ["derive"]}
 
-[profile.bench]
-lto = true
-
 [[bench]]
 name = "aead_benchmark"
 harness = false
