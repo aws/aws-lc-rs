@@ -130,6 +130,9 @@ impl Ed25519KeyPair {
     /// [RFC 5958 Section 2]: https://tools.ietf.org/html/rfc5958#section-2
     /// [RFC 8410 Section 10.3]: https://tools.ietf.org/html/rfc8410#section-10.3
     ///
+    /// # *ring* Compatibility
+    /// Our implementation ignores the `SecureRandom` parameter.
+    ///
     /// # Errors
     /// `error::Unspecified` for all inputs.
     #[deprecated(
@@ -202,7 +205,7 @@ impl Ed25519KeyPair {
     ///
     /// # Errors
     /// `error::KeyRejected("InvalidEncoding")` for all inputs.
-    /// PKCS#8 v2 is currently not supported by AWS-LC.
+    /// PKCS#8 v2 is currently not supported by *AWS-LC*.
     #[deprecated(
         note = "PKCS#8 v2 keys are not supported by AWS-LC. Support may be added in future versions."
     )]

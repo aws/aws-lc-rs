@@ -221,7 +221,7 @@ impl RsaKeyPair {
     /// function does *not* take a precomputed digest; instead, `sign`
     /// calculates the digest itself.
     ///
-    /// # Ring Compatibility
+    /// # *ring* Compatibility
     /// Our implementation ignored the `SecureRandom` parameter.
     ///
     /// # Errors
@@ -578,8 +578,8 @@ fn verify_RSA(
 /// Low-level API for the verification of RSA signatures.
 ///
 /// When the public key is in DER-encoded PKCS#1 ASN.1 format, it is
-/// recommended to use `ring::signature::verify()` with
-/// `ring::signature::RSA_PKCS1_*`, because `ring::signature::verify()`
+/// recommended to use `aws_lc_rust::signature::verify()` with
+/// `aws_lc_rust::signature::RSA_PKCS1_*`, because `aws_lc_rust::signature::verify()`
 /// will handle the parsing in that case. Otherwise, this function can be used
 /// to pass in the raw bytes for the public key components as
 /// `untrusted::Input` arguments.

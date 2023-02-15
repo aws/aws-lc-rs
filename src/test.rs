@@ -17,9 +17,9 @@
 
 //! Testing framework.
 //!
-//! Unlike the rest of *ring*, this testing framework uses panics pretty
+//! Unlike the rest of *aws-lc-rust*, this testing framework uses panics pretty
 //! liberally. It was originally designed for internal use--it drives most of
-//! *ring*'s internal tests, and so it is optimized for getting *ring*'s tests
+//! *aws-lc-rust*'s internal tests, and so it is optimized for getting *aws-lc-rust*'s tests
 //! written quickly at the expense of some usability. The documentation is
 //! lacking. The best way to learn it is to look at some examples. The digest
 //! tests are the most complicated because they use named sections. Other tests
@@ -54,7 +54,7 @@
 //! Here's how you would consume the test data:
 //!
 //! ```ignore
-//! use ring::test;
+//! use aws_lc_rust::test;
 //!
 //! test::run(test::test_file!("hmac_tests.txt"), |section, test_case| {
 //!     assert_eq!(section, ""); // This test doesn't use named sections.

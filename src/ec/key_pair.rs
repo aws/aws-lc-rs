@@ -108,8 +108,8 @@ impl EcdsaKeyPair {
     /// Generates a new key pair and returns the key pair serialized as a
     /// PKCS#8 v1 document.
     ///
-    /// # Ring Compatibility
-    /// Our implementation ignored the `SecureRandom` parameter.
+    /// # *ring* Compatibility
+    /// Our implementation ignores the `SecureRandom` parameter.
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.
@@ -165,7 +165,7 @@ impl EcdsaKeyPair {
 
     /// Returns the signature of the message using a random nonce.
     ///
-    /// # Ring Compatibility
+    /// # *ring* Compatibility
     /// Our implementation ignored the `SecureRandom` parameter.
     ///
     /// # Errors

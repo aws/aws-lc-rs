@@ -21,9 +21,6 @@
 //! function should be used. Otherwise, the digest can be calculated in
 //! multiple steps using `Context`.
 
-// Contrary to Ring's original SHA implementations, which does the hashing operations in rust,
-// aws-lc-rust calls the EVP_Digest APIs from AWS-LC's crypto.
-
 #![allow(non_snake_case)]
 use crate::{debug, derive_debug_via_id};
 
@@ -68,7 +65,7 @@ pub struct Context {
     // The spec specifies that SHA-1 and SHA-256 support up to
     // 2^64-1 bits of input. SHA-384 and SHA-512 support up to
     // 2^128-1 bits.
-    // Implementations of Ring's and aws-lc-rust's digest only support up
+    // Implementations of `digest` only support up
     // to 2^64-1 bits of input, which should be sufficient enough for
     // practical use cases.
     msg_len: u64,
@@ -94,12 +91,13 @@ impl Context {
 
     /// Updates the message to digest with all the data in `data`.
     ///
-    /// The original implementation of Ring defers the failure of overflowed
-    /// inputs to `finish`, so we replicate the behavior.
+    /// # Panic
+    /// Panics if update causes total input length to exceed maximum allowed (`u64::MAX`).
     #[inline]
     pub fn update(&mut self, data: &[u8]) {
         Self::try_update(self, data).expect("digest update failed");
     }
+
     #[inline]
     fn try_update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
@@ -238,8 +236,8 @@ pub struct Algorithm {
     /// for determining the size of an HMAC key that is appropriate for the
     /// digest algorithm.
     ///
-    /// This function isn't actually used in aws-lc-rust, and is only
-    /// kept for compatibility with the original ring implementation.
+    /// This function isn't actually used in *aws-lc-rust*, and is only
+    /// kept for compatibility with the original *ring* implementation.
     pub chaining_len: usize,
 
     /// The internal block length.
@@ -359,7 +357,7 @@ mod tests {
         }
 
         fn nearly_full_context(alg: &'static digest::Algorithm) -> digest::Context {
-            // Implementations of Ring's and aws-lc-rust's digest only support up
+            // Implementations of `digest` only support up
             // to 2^64-1 bits of input.
             let block_len = alg.block_len as u64;
             digest::Context {

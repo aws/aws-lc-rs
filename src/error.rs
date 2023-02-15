@@ -23,20 +23,20 @@ use std::num::TryFromIntError;
 
 /// An error with absolutely no details.
 ///
-/// *ring* uses this unit type as the error type in most of its results
+/// *aws-lc-rust* uses this unit type as the error type in most of its results
 /// because (a) usually the specific reasons for a failure are obvious or are
 /// not useful to know, and/or (b) providing more details about a failure might
 /// provide a dangerous side channel, and/or (c) it greatly simplifies the
 /// error handling logic.
 ///
-/// `Result<T, ring::error::Unspecified>` is mostly equivalent to
-/// `Result<T, ()>`. However, `ring::error::Unspecified` implements
+/// `Result<T, aws_lc_rust::error::Unspecified>` is mostly equivalent to
+/// `Result<T, ()>`. However, `aws_lc_rust::error::Unspecified` implements
 /// [`std::error::Error`] and users can implement
 /// `From<error::Unspecified>` to map this to their own error types, as
-/// described in [“Error Handling” in the Rust Book]:
+/// described in [“Error Handling” in the Rust Book](https://doc.rust-lang.org/book/ch09-00-error-handling.html):
 ///
 /// ```
-/// use ring::rand::{self, SecureRandom};
+/// use aws_lc_rust::rand::{self, SecureRandom};
 ///
 /// enum Error {
 ///     CryptoError,
@@ -45,15 +45,15 @@ use std::num::TryFromIntError;
 ///     // [...]
 /// }
 ///
-/// impl From<ring::error::Unspecified> for Error {
-///     fn from(_: ring::error::Unspecified) -> Self { Error::CryptoError }
+/// impl From<aws_lc_rust::error::Unspecified> for Error {
+///     fn from(_: aws_lc_rust::error::Unspecified) -> Self { Error::CryptoError }
 /// }
 ///
 /// fn eight_random_bytes() -> Result<[u8; 8], Error> {
 ///     let rng = rand::SystemRandom::new();
 ///     let mut bytes = [0; 8];
 ///
-///     // The `From<ring::error::Unspecified>` implementation above makes this
+///     // The `From<aws_lc_rust::error::Unspecified>` implementation above makes this
 ///     // equivalent to
 ///     // `rng.fill(&mut bytes).map_err(|_| Error::CryptoError)?`.
 ///     rng.fill(&mut bytes)?;
@@ -70,7 +70,7 @@ use std::num::TryFromIntError;
 /// crypto library. This approach attempts to minimize complexity in the hopes
 /// of avoiding such problems. In some cases, this approach may be too extreme,
 /// and it may be important for an operation to provide some details about the
-/// cause of a failure. Users of *ring* are encouraged to report such cases so
+/// cause of a failure. Users of *aws-lc-rust* are encouraged to report such cases so
 /// that they can be addressed individually.
 ///
 /// [`std::error::Error`]: https://doc.rust-lang.org/std/error/trait.Error.html

@@ -282,7 +282,7 @@ fn open_within_<'in_out, A: AsRef<[u8]>>(
 
         aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?;
 
-        // ring is shifting the plaintext to the left
+        // shift the plaintext to the left
         in_out.copy_within(in_prefix_len..in_prefix_len + ciphertext_len, 0);
 
         // `ciphertext_len` is also the plaintext length.

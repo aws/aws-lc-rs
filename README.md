@@ -15,12 +15,12 @@ feature of *ring*.) Currently, this is only required by the `io::writer` module.
 Enable feature to access the io module.
 
 * `asan`
-Performs an “address sanitizer” build of AWS-LC. This can be used to help detect memory leaks. See the 
-“[Sanitizer](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html)” 
+Performs an “address sanitizer” build of *AWS-LC*. This can be used to help detect memory leaks. See the
+“[Sanitizer](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html)”
 section of the Rust Unstable Book.
 
 * `bindgen`
-Enables generation and building of the `aws-lc-sys` dependency crate on platforms not provided with pre-generated bindings.
+Enables generation and building of the *aws-lc-sys* dependency crate on platforms not provided with pre-generated bindings.
 
 ## *ring*-compatibility
 
@@ -35,6 +35,10 @@ Thus, the `Ed25519KeyPair::generate_pkcs8` and `Ed25519KeyPair::from_pkcs8` impl
 Instead, you can use `Ed25519KeyPair::generate_pkcs8v1` for generating and `Ed25519KeyPair::from_pkcs8_maybe_unchecked`
 for parsing PKCS#8 v1.
 * When parsing fails, the `KeyRejected` response may differ from *ring*’s response on the same input.
+* The implementations for several functions use internally generated pseudo-randomness and 
+ignore the provided `SecureRandom` parameter. These functions include: `Ed25519KeyPair::generate_pkcs8`, 
+`EcdsaKeyPair::generate_pkcs8`, `EcdsaKeyPair::sign`, and `RsaKeyPair::sign`.
+
 
 ## Questions, Feedback and Contributing
 

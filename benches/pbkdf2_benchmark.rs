@@ -23,8 +23,6 @@ impl PBKDF2Config {
     }
 }
 
-// For PBKDF2-SHA-1, AWS-LC is 2-3 times faster than Ring's implementation.
-// For PBKDF2-SHA-{256, 384, 512, 512-256}, AWS-LC is slightly faster for all iterations.
 macro_rules! benchmark_pbkdf2 {
     ( $pkg:ident ) => {
         paste::item! {

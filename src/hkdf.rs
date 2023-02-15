@@ -88,7 +88,7 @@ const MAX_HKDF_SALT_LEN: usize = 80;
 const MAX_HKDF_INFO_LEN: usize = 80;
 
 /// The maximum output size of a PRK computed by |`HKDF_extract`| is the maximum digest
-/// size that can be outputted by AWS-LC.
+/// size that can be outputted by *AWS-LC*.
 const MAX_HKDF_PRK_LEN: usize = digest::MAX_OUTPUT_LEN;
 
 impl KeyType for Algorithm {
@@ -443,8 +443,8 @@ mod tests {
         let mut ring_output2 = [0u8; 32];
         ring_okm2.fill(&mut ring_output2).expect("test failed");
 
-        println!("Ring Result: {ring_output1:?}");
-        println!("Ring Result: {ring_output2:?}");
+        println!("ring Result: {ring_output1:?}");
+        println!("ring Result: {ring_output2:?}");
 
         assert_eq!(ring_output1, output1);
         assert_eq!(ring_output2, output2);
