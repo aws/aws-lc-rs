@@ -128,7 +128,7 @@ unsafe fn dump_error() {
 }
 
 mod sealed {
-    /// Traits that are designed to only be implemented internally in *aws_lc_rust*.
+    /// Traits that are designed to only be implemented internally in *`aws_lc_rust`*.
     //
     // Usage:
     // ```
