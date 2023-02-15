@@ -130,6 +130,9 @@ impl Ed25519KeyPair {
     /// [RFC 5958 Section 2]: https://tools.ietf.org/html/rfc5958#section-2
     /// [RFC 8410 Section 10.3]: https://tools.ietf.org/html/rfc8410#section-10.3
     ///
+    /// # *ring* Compatibility
+    /// Our implementation ignores the `SecureRandom` parameter.
+    ///
     /// # Errors
     /// `error::Unspecified` for all inputs.
     #[deprecated(
