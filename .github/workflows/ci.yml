@@ -90,6 +90,66 @@ jobs:
           command: public-api
           args: diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
+#  dependency-review:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: 'Checkout Repository'
+#        uses: actions/checkout@v3
+#      - name: 'Dependency Review'
+#        uses: actions/dependency-review-action@v3
+#        with:
+#          allow-licenses: Apache-2.0, ISC, MIT, MIT-0
+
+  # This step won't be needed once "dependency-review" is enabled
+  audit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: nightly
+          profile: minimal
+          override: true
+      - name: Install cargo-audit
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install
+          args: cargo-audit
+      - name: Perform Security Audit
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: audit
+
+  # This step won't be needed once "dependency-review" is enabled
+  license:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: nightly
+          profile: minimal
+          override: true
+      - name: Install cargo-license
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install
+          args: cargo-license
+      - name: Report all dependency licenses
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: license
+
   udeps:
     runs-on: ubuntu-latest
     steps:
