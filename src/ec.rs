@@ -140,7 +140,6 @@ unsafe impl Sync for PublicKey {}
 impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
     #[inline]
     #[cfg(feature = "ring-sig-verify")]
-    #[deprecated(note = "please use `VerificationAlgorithm::verify_sig` instead")]
     fn verify(
         &self,
         public_key: Input<'_>,

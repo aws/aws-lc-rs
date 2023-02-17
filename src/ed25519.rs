@@ -36,7 +36,6 @@ impl sealed::Sealed for EdDSAParameters {}
 impl VerificationAlgorithm for EdDSAParameters {
     #[inline]
     #[cfg(feature = "ring-sig-verify")]
-    #[deprecated(note = "please use `VerificationAlgorithm::verify_sig` instead")]
     fn verify(
         &self,
         public_key: Input<'_>,
