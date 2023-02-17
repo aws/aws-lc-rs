@@ -15,6 +15,8 @@ use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ptr::null_mut;
+
+#[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 use zeroize::Zeroize;
 
@@ -33,18 +35,33 @@ impl sealed::Sealed for EdDSAParameters {}
 
 impl VerificationAlgorithm for EdDSAParameters {
     #[inline]
+    #[cfg(feature = "ring-sig-verify")]
+    #[deprecated(note = "please use `VerificationAlgorithm::verify_sig` instead")]
     fn verify(
         &self,
         public_key: Input<'_>,
         msg: Input<'_>,
         signature: Input<'_>,
     ) -> Result<(), Unspecified> {
+        self.verify_sig(
+            public_key.as_slice_less_safe(),
+            msg.as_slice_less_safe(),
+            signature.as_slice_less_safe(),
+        )
+    }
+
+    fn verify_sig(
+        &self,
+        public_key: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
         unsafe {
             if 1 != ED25519_verify(
-                msg.as_slice_less_safe().as_ptr(),
+                msg.as_ptr(),
                 msg.len(),
-                signature.as_slice_less_safe().as_ptr(),
-                public_key.as_slice_less_safe().as_ptr(),
+                signature.as_ptr(),
+                public_key.as_ptr(),
             ) {
                 return Err(Unspecified);
             }

@@ -254,6 +254,7 @@ pub use rsa::{
 
 use crate::{digest, ec, error, sealed, test};
 use std::fmt::{Debug, Formatter};
+#[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
 pub use crate::ec::key_pair::EcdsaKeyPair;
@@ -313,12 +314,25 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     ///
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
-    ///
+    #[cfg(feature = "ring-sig-verify")]
+    #[deprecated(note = "please use `VerificationAlgorithm::verify_sig` instead")]
     fn verify(
         &self,
         public_key: Input<'_>,
         msg: Input<'_>,
         signature: Input<'_>,
+    ) -> Result<(), error::Unspecified>;
+
+    /// Verify the signature `signature` of message `msg` with the public key
+    /// `public_key`.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if inputs not verified.
+    fn verify_sig(
+        &self,
+        public_key: &[u8],
+        msg: &[u8],
+        signature: &[u8],
     ) -> Result<(), error::Unspecified>;
 }
 
@@ -360,11 +374,8 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     ///
     #[inline]
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
-        self.algorithm.verify(
-            Input::from(self.bytes.as_ref()),
-            Input::from(message),
-            Input::from(signature),
-        )
+        self.algorithm
+            .verify_sig(self.bytes.as_ref(), message, signature)
     }
 }
 

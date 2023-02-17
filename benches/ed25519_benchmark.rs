@@ -1,10 +1,13 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+#![allow(deprecated, dead_code)]
+
+#[cfg(feature = "ring-sig-verify")]
 use aws_lc_rust::{test, test_file};
+#[cfg(feature = "ring-sig-verify")]
 use criterion::{criterion_group, criterion_main, Criterion};
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub struct Ed25519Config {
     seed: Vec<u8>,
@@ -24,6 +27,7 @@ impl Ed25519Config {
     }
 }
 
+#[cfg(feature = "ring-sig-verify")]
 macro_rules! benchmark_ed25519 {
     ( $pkg:ident ) => {
         paste::item! {
@@ -72,9 +76,14 @@ macro_rules! benchmark_ed25519 {
         }
     };
 }
+
+#[cfg(feature = "ring-sig-verify")]
 benchmark_ed25519!(ring);
+
+#[cfg(feature = "ring-sig-verify")]
 benchmark_ed25519!(aws_lc_rust);
 
+#[cfg(feature = "ring-sig-verify")]
 fn test_ed25519_sign(c: &mut Criterion, config: &Ed25519Config) {
     let bench_group_name = format!("ED25519-sign-{}-bytes", config.msg.len());
     let mut group = c.benchmark_group(bench_group_name);
@@ -95,6 +104,7 @@ fn test_ed25519_sign(c: &mut Criterion, config: &Ed25519Config) {
     });
 }
 
+#[cfg(feature = "ring-sig-verify")]
 fn test_ed25519_verify(c: &mut Criterion, config: &Ed25519Config) {
     let bench_group_name = format!("ED25519-verify-{}-bytes", config.msg.len());
     let mut group = c.benchmark_group(bench_group_name);
@@ -116,6 +126,7 @@ fn test_ed25519_verify(c: &mut Criterion, config: &Ed25519Config) {
         });
     });
 }
+#[cfg(feature = "ring-sig-verify")]
 fn test_ed25519(c: &mut Criterion) {
     test::run(
         test_file!("data/ed25519_benchmarks.txt"),
@@ -133,5 +144,12 @@ fn test_ed25519(c: &mut Criterion) {
     );
 }
 
+#[cfg(feature = "ring-sig-verify")]
 criterion_group!(benches, test_ed25519);
+#[cfg(feature = "ring-sig-verify")]
 criterion_main!(benches);
+
+#[cfg(not(feature = "ring-sig-verify"))]
+fn main() {
+    println!("This bench requires feature: ring-sig-verify");
+}
