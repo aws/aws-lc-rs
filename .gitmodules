@@ -1,0 +1,4 @@
+[submodule "aws-lc-sys/aws-lc"]
+	path = aws-lc-sys/aws-lc
+	url = git@github.com:aws/aws-lc.git
+	branch = main

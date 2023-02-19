@@ -2,6 +2,7 @@ UNAME_S := $(shell uname -s)
 
 init:
 	rustup component add rustfmt clippy &&  git config core.hooksPath .githooks
+	cargo install rust-script
 	cargo install cargo-llvm-cov cargo-license
 	cargo install cargo-audit --features=fix
 
