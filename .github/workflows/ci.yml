@@ -138,6 +138,7 @@ jobs:
           - --release --all-targets
           - --no-default-features --features non-fips
           - --no-default-features --features non-fips,ring-io
+          - --no-default-features --features non-fips,ring-sig-verify
           - --no-default-features --features non-fips,alloc
         exclude:
           - rust: stable
@@ -184,6 +185,7 @@ jobs:
           - --release --all-targets --features fips
           - --no-default-features --features fips
           - --no-default-features --features fips,ring-io
+          - --no-default-features --features fips,ring-sig-verify
           - --no-default-features --features fips,alloc
           - --no-default-features --features fips,bindgen
     steps:

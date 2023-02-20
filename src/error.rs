@@ -228,6 +228,7 @@ impl From<()> for KeyRejected {
     }
 }
 
+#[cfg(any(feature = "ring-sig-verify", feature = "ring-io"))]
 impl From<untrusted::EndOfInput> for Unspecified {
     fn from(_: untrusted::EndOfInput) -> Self {
         Unspecified

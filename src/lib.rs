@@ -13,6 +13,10 @@
 //! #### - ring-io (default) ####
 //! Enable feature to access the  `io`  module.
 //!
+//! #### - ring-sig-verify (default) ####
+//! Enable feature to preserve compatibility with ring's `signature::VerificationAlgorithm::verify`
+//! function. This adds a requirement on `untrusted = "0.7.1"`.
+//!
 //! #### - asan ####
 //! Performs an "address sanitizer" build. This can be used to help detect memory leaks. See the
 //! ["Address Sanitizer" section](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html#addresssanitizer)
