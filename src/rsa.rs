@@ -199,21 +199,28 @@ impl VerificationAlgorithm for RsaParameters {
         signature: Input<'_>,
     ) -> Result<(), Unspecified> {
         self.verify_sig(
-            public_key.as_slice_less_safe(),
-            msg.as_slice_less_safe(),
-            signature.as_slice_less_safe(),
+            &public_key.as_slice_less_safe(),
+            &msg.as_slice_less_safe(),
+            &signature.as_slice_less_safe(),
         )
     }
 
     fn verify_sig(
         &self,
-        public_key: &[u8],
-        msg: &[u8],
-        signature: &[u8],
+        public_key: &dyn AsRef<[u8]>,
+        msg: &dyn AsRef<[u8]>,
+        signature: &dyn AsRef<[u8]>,
     ) -> Result<(), Unspecified> {
         unsafe {
-            let rsa = build_public_RSA(public_key)?;
-            verify_RSA(self.0, self.1, &rsa, msg, signature, &self.2)
+            let rsa = build_public_RSA(public_key.as_ref())?;
+            verify_RSA(
+                self.0,
+                self.1,
+                &rsa,
+                msg.as_ref(),
+                signature.as_ref(),
+                &self.2,
+            )
         }
     }
 }

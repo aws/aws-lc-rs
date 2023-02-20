@@ -330,9 +330,9 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     /// `error::Unspecified` if inputs not verified.
     fn verify_sig(
         &self,
-        public_key: &[u8],
-        msg: &[u8],
-        signature: &[u8],
+        public_key: &dyn AsRef<[u8]>,
+        msg: &dyn AsRef<[u8]>,
+        signature: &dyn AsRef<[u8]>,
     ) -> Result<(), error::Unspecified>;
 }
 
@@ -375,7 +375,7 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     #[inline]
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
         self.algorithm
-            .verify_sig(self.bytes.as_ref(), message, signature)
+            .verify_sig(&self.bytes.as_ref(), &message, &signature)
     }
 }
 

@@ -43,24 +43,24 @@ impl VerificationAlgorithm for EdDSAParameters {
         signature: Input<'_>,
     ) -> Result<(), Unspecified> {
         self.verify_sig(
-            public_key.as_slice_less_safe(),
-            msg.as_slice_less_safe(),
-            signature.as_slice_less_safe(),
+            &public_key.as_slice_less_safe(),
+            &msg.as_slice_less_safe(),
+            &signature.as_slice_less_safe(),
         )
     }
 
     fn verify_sig(
         &self,
-        public_key: &[u8],
-        msg: &[u8],
-        signature: &[u8],
+        public_key: &dyn AsRef<[u8]>,
+        msg: &dyn AsRef<[u8]>,
+        signature: &dyn AsRef<[u8]>,
     ) -> Result<(), Unspecified> {
         unsafe {
             if 1 != ED25519_verify(
-                msg.as_ptr(),
-                msg.len(),
-                signature.as_ptr(),
-                public_key.as_ptr(),
+                msg.as_ref().as_ptr(),
+                msg.as_ref().len(),
+                signature.as_ref().as_ptr(),
+                public_key.as_ref().as_ptr(),
             ) {
                 return Err(Unspecified);
             }
