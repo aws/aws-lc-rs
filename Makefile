@@ -47,5 +47,6 @@ ifeq ($(UNAME_S),Linux)
 	cargo test --no-default-features --features fips
 endif
 	cargo test --no-default-features --features aws-lc-sys
+	cargo test --no-default-features --features aws-lc-sys,ring-sig-verify
 	cargo test --no-default-features --features aws-lc-sys,ring-io
 	cargo test --no-default-features --features aws-lc-sys,alloc

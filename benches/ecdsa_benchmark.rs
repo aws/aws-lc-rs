@@ -1,7 +1,11 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+#![allow(deprecated, dead_code)]
+
+#[cfg(feature = "ring-sig-verify")]
 use aws_lc_rust::{test, test_file};
+#[cfg(feature = "ring-sig-verify")]
 use criterion::{criterion_group, criterion_main, Criterion};
 
 #[allow(dead_code)]
@@ -17,6 +21,7 @@ pub struct EcdsaConfig {
 }
 
 impl EcdsaConfig {
+    #[cfg(feature = "ring-sig-verify")]
     fn new(
         curve: &str,
         digest: &str,
@@ -48,6 +53,7 @@ pub const FIXED: EcdsaFormat = EcdsaFormat::FIXED;
 pub const ASN1: EcdsaFormat = EcdsaFormat::ASN1;
 
 impl EcdsaFormat {
+    #[cfg(feature = "ring-sig-verify")]
     fn from(value: &str) -> &'static Self {
         match value.trim() {
             "FIXED" => &FIXED,
@@ -67,6 +73,7 @@ pub const P256: EcdsaCurve = EcdsaCurve::P256;
 pub const P384: EcdsaCurve = EcdsaCurve::P384;
 
 impl EcdsaCurve {
+    #[cfg(feature = "ring-sig-verify")]
     fn from(value: &str) -> &'static Self {
         match value.trim() {
             "P-256" => &P256,
@@ -88,6 +95,7 @@ pub const SHA384: EcdsaDigest = EcdsaDigest::SHA384;
 pub const SHA512: EcdsaDigest = EcdsaDigest::SHA512;
 
 impl EcdsaDigest {
+    #[cfg(feature = "ring-sig-verify")]
     fn from(value: &str) -> &'static Self {
         match value.trim() {
             "SHA256" => &SHA256,
@@ -98,6 +106,7 @@ impl EcdsaDigest {
     }
 }
 
+#[cfg(feature = "ring-sig-verify")]
 macro_rules! benchmark_ecdsa {
     ( $pkg:ident ) => {
         paste::item! {
@@ -189,10 +198,13 @@ mod ring_benchmarks {
 }
     };
 }
+
+#[cfg(feature = "ring-sig-verify")]
 benchmark_ecdsa!(ring);
+#[cfg(feature = "ring-sig-verify")]
 benchmark_ecdsa!(aws_lc_rust);
-/*
-*/
+
+#[cfg(feature = "ring-sig-verify")]
 fn test_ecdsa_sign(c: &mut Criterion, config: &EcdsaConfig) {
     let bench_group_name = format!(
         "ECDSA-{}-{:?}-{:?}-{:?}-sign-{}-bytes",
@@ -222,6 +234,7 @@ fn test_ecdsa_sign(c: &mut Criterion, config: &EcdsaConfig) {
     });
 }
 
+#[cfg(feature = "ring-sig-verify")]
 fn test_ecdsa_verify(c: &mut Criterion, config: &EcdsaConfig) {
     let bench_group_name = format!(
         "ECDSA-{}-{:?}-{:?}-{:?}-verify-{}-bytes",
@@ -253,6 +266,7 @@ fn test_ecdsa_verify(c: &mut Criterion, config: &EcdsaConfig) {
         });
     });
 }
+#[cfg(feature = "ring-sig-verify")]
 fn test_ecdsa(c: &mut Criterion) {
     test::run(
         test_file!("data/ecdsa_benchmarks.txt"),
@@ -272,6 +286,12 @@ fn test_ecdsa(c: &mut Criterion) {
         },
     );
 }
-
+#[cfg(feature = "ring-sig-verify")]
 criterion_group!(benches, test_ecdsa);
+#[cfg(feature = "ring-sig-verify")]
 criterion_main!(benches);
+
+#[cfg(not(feature = "ring-sig-verify"))]
+fn main() {
+    println!("This bench requires feature: ring-sig-verify");
+}

@@ -46,6 +46,8 @@ use std::ops::RangeInclusive;
 use std::os::raw::c_uint;
 use std::ptr::{null, null_mut};
 use std::slice;
+
+#[cfg(any(feature = "ring-sig-verify", feature = "ring-io"))]
 use untrusted::Input;
 use zeroize::Zeroize;
 
@@ -189,22 +191,29 @@ impl RsaKeyPair {
 }
 
 impl VerificationAlgorithm for RsaParameters {
+    #[cfg(feature = "ring-sig-verify")]
     fn verify(
         &self,
         public_key: Input<'_>,
         msg: Input<'_>,
         signature: Input<'_>,
     ) -> Result<(), Unspecified> {
+        self.verify_sig(
+            public_key.as_slice_less_safe(),
+            msg.as_slice_less_safe(),
+            signature.as_slice_less_safe(),
+        )
+    }
+
+    fn verify_sig(
+        &self,
+        public_key: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
         unsafe {
-            let rsa = build_public_RSA(public_key.as_slice_less_safe())?;
-            verify_RSA(
-                self.0,
-                self.1,
-                &rsa,
-                msg.as_slice_less_safe(),
-                signature.as_slice_less_safe(),
-                &self.2,
-            )
+            let rsa = build_public_RSA(public_key)?;
+            verify_RSA(self.0, self.1, &rsa, msg, signature, &self.2)
         }
     }
 }
