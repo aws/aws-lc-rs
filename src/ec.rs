@@ -147,28 +147,28 @@ impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
         signature: Input<'_>,
     ) -> Result<(), Unspecified> {
         self.verify_sig(
-            &public_key.as_slice_less_safe(),
-            &msg.as_slice_less_safe(),
-            &signature.as_slice_less_safe(),
+            public_key.as_slice_less_safe(),
+            msg.as_slice_less_safe(),
+            signature.as_slice_less_safe(),
         )
     }
 
     fn verify_sig(
         &self,
-        public_key: &dyn AsRef<[u8]>,
-        msg: &dyn AsRef<[u8]>,
-        signature: &dyn AsRef<[u8]>,
+        public_key: &[u8],
+        msg: &[u8],
+        signature: &[u8],
     ) -> Result<(), Unspecified> {
         unsafe {
             let ec_group = ec_group_from_nid(self.id.nid())?;
-            let ec_point = ec_point_from_bytes(&ec_group, public_key.as_ref())?;
+            let ec_point = ec_point_from_bytes(&ec_group, public_key)?;
             let ec_key = ec_key_from_public_point(&ec_group, &ec_point)?;
 
             let ecdsa_sig = match self.sig_format {
-                EcdsaSignatureFormat::ASN1 => ecdsa_sig_from_asn1(signature.as_ref()),
-                EcdsaSignatureFormat::Fixed => ecdsa_sig_from_fixed(self.id, signature.as_ref()),
+                EcdsaSignatureFormat::ASN1 => ecdsa_sig_from_asn1(signature),
+                EcdsaSignatureFormat::Fixed => ecdsa_sig_from_fixed(self.id, signature),
             }?;
-            let msg_digest = digest::digest(self.digest, msg.as_ref());
+            let msg_digest = digest::digest(self.digest, msg);
             let msg_digest = msg_digest.as_ref();
 
             if 1 != ECDSA_do_verify(msg_digest.as_ptr(), msg_digest.len(), *ecdsa_sig, *ec_key) {
