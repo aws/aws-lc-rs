@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "aws-lc-rust",
-    "aws-lc-sys"
+    "aws-lc-sys",
+    "aws-lc-fips-sys"
 ]
 
 [profile.bench]

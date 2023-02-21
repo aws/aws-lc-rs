@@ -1,0 +1,65 @@
+[package]
+name = "aws-lc-fips-sys"
+description = "AWS-LC is a general-purpose cryptographic library maintained by the AWS Cryptography team for AWS and their customers. This is the FIPS validated version of AWS-LC."
+version = "0.6.0"
+authors = ["AWS-LC"]
+edition = "2021"
+repository = "https://github.com/awslabs/aws-lc"
+license = "Apache-2.0 OR ISC"
+rust-version = "1.60.0"
+include = [
+    "LICENSE",
+    "/aws-lc/**/*.c",
+    "/aws-lc/**/*.cc",
+    "/aws-lc/**/*.pl",
+    "/aws-lc/**/*.h",
+    "/aws-lc/**/*.S",
+    "/aws-lc/**/CMakeLists.txt",
+    "/aws-lc/**/*.cmake",
+    "/aws-lc/**/*.errordata",
+    "/aws-lc/**/*.go",
+    "/aws-lc/go.mod",
+    "/aws-lc/go.sum",
+    "!/aws-lc/bindings/**",
+    "!/aws-lc/docs/**",
+    "!/aws-lc/fuzz/**",
+    "!/aws-lc/generated-src/crypto_test_data.cc",
+    "!/aws-lc/tests/**",
+    "!/aws-lc/third_party/**",
+    "!/aws-lc/util/**",
+    "/aws-lc/tests/compiler_features_tests/**.c",
+    "/aws-lc/third_party/fiat/**/LICENSE",
+    "/aws-lc/third_party/fiat/**/*.h",
+    "/aws-lc/third_party/s2n-bignum/**/*.S",
+    "/aws-lc/third_party/s2n-bignum/**/*.h",
+    "/aws-lc/third_party/jitterentropy/**",
+    "/aws-lc/util/fipstools/**/CMakeLists.txt",
+    "/aws-lc/util/fipstools/**/*.c",
+    "/aws-lc/util/fipstools/**/*.cc",
+    "/aws-lc/util/fipstools/**/*.go",
+    "/aws-lc/util/ar/**/*.go",
+    "/aws-lc/util/godeps.go",
+    "/CMakeLists.txt",
+    "/build/**/*.rs",
+    "/Cargo.toml",
+    "/generated-include/**",
+    "/include/**",
+    "/rust_wrapper.c",
+    "/src/**/*.rs",
+    "/tests/**/*.rs",
+]
+build = "build/main.rs"
+
+[features]
+asan = []
+bindgen = ["dep:bindgen"] # Generate the bindings on the targetted platform as a fallback mechanism.
+ssl = []
+
+[build-dependencies]
+cmake = "0.1.48"
+bindgen = { version = "0.64.0", optional = true }
+dunce = "1.0"
+
+[dependencies]
+libc = "0.2"
+paste = "1.0.11"
