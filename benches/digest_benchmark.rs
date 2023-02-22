@@ -93,7 +93,7 @@ fn bench_sha512_256(c: &mut Criterion) {
     bench_digest_incremental(c, &config);
 }
 
-const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
+const G_CHUNK_LENGTHS: [usize; 3] = [16, 1350, 16384];
 
 fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
     // Benchmark digest::digest one-shot.
