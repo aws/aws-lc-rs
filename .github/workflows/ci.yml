@@ -104,11 +104,13 @@ jobs:
           toolchain: nightly
           profile: minimal
           override: true
-      - name: Run benchmark
+      - name: Install cargo-criterion
         uses: actions-rs/cargo@v1.0.3
         with:
-          command: bench
-          args:
+          command: install
+          args: cargo-criterion
+      - name: Run benchmark
+        run: cargo +nightly criterion --output-format bencher | tee output.txt
       - name: Download previous benchmark data
         uses: actions/cache@v1
         with:
