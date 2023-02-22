@@ -111,7 +111,7 @@ fn bench_hmac_sha512(c: &mut Criterion) {
     bench_hmac_longer_key(c, &config);
 }
 
-const G_CHUNK_LENGTHS: [usize; 5] = [16, 256, 1350, 8192, 16384];
+const G_CHUNK_LENGTHS: [usize; 3] = [16, 1350, 16384];
 
 // Benchmark hmac::sign one-shot API.
 fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
