@@ -91,7 +91,6 @@ jobs:
           args: diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
   benchmarks:
-    name: Performance regression check
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -119,11 +118,8 @@ jobs:
         uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: 'cargo'
-          # Where the output from the benchmark tool is stored
           output-file-path: output.txt
-          # Where the previous data file is stored
           external-data-json-path: ./cache/benchmark-data.json
-          # Workflow will fail when an alert happens
           comment-always: true
 
 #  dependency-review:
