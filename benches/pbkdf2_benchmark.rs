@@ -89,7 +89,7 @@ fn bench_pbkdf2_sha512(c: &mut Criterion) {
 // The recommended number of iterations can go to the hundred thousands, but we only need a
 // suitable number of iterations to capture our speed performance. The time to run pbkdf2 grows
 // proportionally, according to the number of iterations.
-const G_ITERATIONS: [u32; 4] = [6250, 12500, 25000, 50000];
+const G_ITERATIONS: [u32; 2] = [6250, 50000];
 
 fn bench_pbkdf2(c: &mut Criterion, config: &PBKDF2Config) {
     for &iterations in &G_ITERATIONS {
