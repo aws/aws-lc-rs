@@ -45,10 +45,6 @@ macro_rules! benchmark_agreement {
 
             use $pkg::{agreement, test};
 
-/*
-mod ring_benchmarks {
-    use ring::{agreement, test};
-*/
     use crate::{AgreementConfig, Curve};
     use agreement::{
         agree_ephemeral, Algorithm, EphemeralPrivateKey, UnparsedPublicKey, ECDH_P256, ECDH_P384,
@@ -86,6 +82,7 @@ mod ring_benchmarks {
 }
 
 benchmark_agreement!(aws_lc_rust);
+#[cfg(feature = "ring-benchmarks")]
 benchmark_agreement!(ring);
 
 fn test_agree_ephemeral(c: &mut Criterion, config: &AgreementConfig) {
@@ -100,14 +97,16 @@ fn test_agree_ephemeral(c: &mut Criterion, config: &AgreementConfig) {
             aws_lc_rust_benchmarks::agreement(private_key, &aws_peer_public_key);
         });
     });
-
-    let ring_peer_public_key = ring_benchmarks::peer_public_key(config);
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            let private_key = ring_benchmarks::private_key(config);
-            ring_benchmarks::agreement(private_key, &ring_peer_public_key);
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let ring_peer_public_key = ring_benchmarks::peer_public_key(config);
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                let private_key = ring_benchmarks::private_key(config);
+                ring_benchmarks::agreement(private_key, &ring_peer_public_key);
+            });
         });
-    });
+    }
 }
 
 fn test_agreement(c: &mut Criterion) {

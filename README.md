@@ -12,7 +12,14 @@ Allows implementation to allocate values of unbounded size. (The meaning of this
 feature of *ring*.) Currently, this is only required by the `io::writer` module.
 
 * `ring-io` (*default*)
-Enable feature to access the io module.
+This feature enables the `io` module. Requires `untrusted = "0.7.1"`.
+
+* `ring-sig-verify` (*default*)
+This feature enables Trait method `signature::VerificationAlgorithm::verify`. This method is deprecated,
+use `signature::VerificationAlgorithm::verify_sig` instead. Requires `untrusted = "0.7.1"`.
+
+* `ring-benchmarks`
+This feature enables benchmarks to run against `ring`.
 
 * `asan`
 Performs an “address sanitizer” build of *AWS-LC*. This can be used to help detect memory leaks. See the

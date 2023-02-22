@@ -44,10 +44,7 @@ macro_rules! benchmark_aead
 mod [<$pkg _benchmarks>]  {
 
     use $pkg::{aead, error};
-/*
-mod ring_benchmarks {
-    use ring::{aead, error, test};
- */
+
     use criterion::black_box;
     use crate::AeadConfig;
     use aead::{
@@ -122,8 +119,9 @@ mod ring_benchmarks {
 }
 }}}
 
-benchmark_aead!(ring);
 benchmark_aead!(aws_lc_rust);
+#[cfg(feature = "ring-benchmarks")]
+benchmark_aead!(ring);
 
 fn test_aes_128_gcm(c: &mut Criterion) {
     test::run(
@@ -201,13 +199,17 @@ fn test_aead_separate(c: &mut Criterion, config: &AeadConfig) {
         });
     });
 
-    let mut ring_sealing_key = ring_benchmarks::create_sealing_key(config);
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            let ring_aad = ring_benchmarks::aad(config);
-            let _tag = ring_benchmarks::seal_separate(&mut ring_sealing_key, ring_aad, &mut in_out);
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let mut ring_sealing_key = ring_benchmarks::create_sealing_key(config);
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                let ring_aad = ring_benchmarks::aad(config);
+                let _tag =
+                    ring_benchmarks::seal_separate(&mut ring_sealing_key, ring_aad, &mut in_out);
+            });
         });
-    });
+    }
 }
 
 fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
@@ -225,14 +227,17 @@ fn test_aead_append(c: &mut Criterion, config: &AeadConfig) {
         });
     });
 
-    let mut ring_sealing_key = ring_benchmarks::create_sealing_key(config);
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            let mut ring_in_out = in_out.clone();
-            let ring_aad = ring_benchmarks::aad(config);
-            ring_benchmarks::seal_append(&mut ring_sealing_key, ring_aad, &mut ring_in_out);
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let mut ring_sealing_key = ring_benchmarks::create_sealing_key(config);
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                let mut ring_in_out = in_out.clone();
+                let ring_aad = ring_benchmarks::aad(config);
+                ring_benchmarks::seal_append(&mut ring_sealing_key, ring_aad, &mut ring_in_out);
+            });
         });
-    });
+    }
 }
 
 fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
@@ -254,14 +259,17 @@ fn test_aead_open(c: &mut Criterion, config: &AeadConfig) {
         });
     });
 
-    let mut ring_opening_key = ring_benchmarks::create_opening_key(config);
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            let mut ring_in_out = in_out.clone();
-            let ring_aad = ring_benchmarks::aad(config);
-            ring_benchmarks::open(&mut ring_opening_key, ring_aad, &mut ring_in_out);
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let mut ring_opening_key = ring_benchmarks::create_opening_key(config);
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                let mut ring_in_out = in_out.clone();
+                let ring_aad = ring_benchmarks::aad(config);
+                ring_benchmarks::open(&mut ring_opening_key, ring_aad, &mut ring_in_out);
+            });
         });
-    });
+    }
 }
 
 criterion_group!(benches, test_aes_128_gcm, test_aes_256_gcm, test_chacha20,);

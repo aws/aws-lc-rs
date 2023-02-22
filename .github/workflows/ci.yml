@@ -90,6 +90,42 @@ jobs:
           command: public-api
           args: diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
+  benchmarks:
+    name: Performance regression check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: nightly
+          profile: minimal
+          override: true
+      - name: Run benchmark
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: bench
+          args:
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'cargo'
+          # Where the output from the benchmark tool is stored
+          output-file-path: output.txt
+          # Where the previous data file is stored
+          external-data-json-path: ./cache/benchmark-data.json
+          # Workflow will fail when an alert happens
+          comment-always: true
+
 #  dependency-review:
 #    runs-on: ubuntu-latest
 #    steps:
@@ -167,7 +203,7 @@ jobs:
       - name: Install cargo-udeps
         uses: actions-rs/cargo@v1.0.3
         with:
-          command: install 
+          command: install
           args: cargo-udeps
 
       - name: Run cargo udeps
@@ -185,7 +221,8 @@ jobs:
         os: [ubuntu-latest, macOS-latest]
         target: [native, aarch64-unknown-linux-gnu, i686-unknown-linux-gnu]
         args:
-          - --release --all-targets
+          - --all-targets
+          - --release --all-targets --features ring-benchmarks
           - --no-default-features --features non-fips
           - --no-default-features --features non-fips,ring-io
           - --no-default-features --features non-fips,ring-sig-verify
@@ -268,10 +305,10 @@ jobs:
       - name: Install cargo-llvm-cov
         uses: actions-rs/cargo@v1.0.3
         with:
-          command: install 
+          command: install
           args: cargo-llvm-cov
 
-      # TODO: add bot to post coverage details to PR, or upload results to AWS 
+      # TODO: add bot to post coverage details to PR, or upload results to AWS
       # account. Using --html can give us more insight which regions are missing
       # coverage immediately.
       - name: Run coverage
@@ -334,7 +371,7 @@ jobs:
           RUSTFLAGS: -Zsanitizer=address
           RUSTDOCFLAGS: -Zsanitizer=address
         with:
-          command: test 
+          command: test
           args: --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
 
   asan-release:

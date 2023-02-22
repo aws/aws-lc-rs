@@ -35,12 +35,6 @@ macro_rules! benchmark_ed25519 {
 
                     use $pkg::signature;
 
-        /*
-        #[allow(unused_imports, unused_variables, dead_code)]
-        mod ring_benchmarks {
-            use ring::{error, rand, signature};
-        */
-
             use crate::Ed25519Config;
             use signature::{ED25519, Ed25519KeyPair, EdDSAParameters, VerificationAlgorithm};
 
@@ -78,10 +72,10 @@ macro_rules! benchmark_ed25519 {
 }
 
 #[cfg(feature = "ring-sig-verify")]
-benchmark_ed25519!(ring);
-
-#[cfg(feature = "ring-sig-verify")]
 benchmark_ed25519!(aws_lc_rust);
+
+#[cfg(all(feature = "ring-sig-verify", feature = "ring-benchmarks"))]
+benchmark_ed25519!(ring);
 
 #[cfg(feature = "ring-sig-verify")]
 fn test_ed25519_sign(c: &mut Criterion, config: &Ed25519Config) {
@@ -94,14 +88,16 @@ fn test_ed25519_sign(c: &mut Criterion, config: &Ed25519Config) {
             aws_lc_rust_benchmarks::sign(&aws_key_pair, &config.msg);
         });
     });
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let ring_key_pair = ring_benchmarks::create_key_pair(config);
 
-    let ring_key_pair = ring_benchmarks::create_key_pair(config);
-
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            ring_benchmarks::sign(&ring_key_pair, &config.msg);
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                ring_benchmarks::sign(&ring_key_pair, &config.msg);
+            });
         });
-    });
+    }
 }
 
 #[cfg(feature = "ring-sig-verify")]
@@ -117,15 +113,18 @@ fn test_ed25519_verify(c: &mut Criterion, config: &Ed25519Config) {
             aws_lc_rust_benchmarks::verify(aws_verification_alg, pub_key, &config.msg, sig);
         });
     });
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let ring_verification_alg = ring_benchmarks::verification();
 
-    let ring_verification_alg = ring_benchmarks::verification();
-
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            ring_benchmarks::verify(ring_verification_alg, pub_key, &config.msg, sig);
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                ring_benchmarks::verify(ring_verification_alg, pub_key, &config.msg, sig);
+            });
         });
-    });
+    }
 }
+
 #[cfg(feature = "ring-sig-verify")]
 fn test_ed25519(c: &mut Criterion) {
     test::run(

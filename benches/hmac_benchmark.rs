@@ -79,8 +79,9 @@ macro_rules! benchmark_hmac {
     };
 }
 
-benchmark_hmac!(ring);
 benchmark_hmac!(aws_lc_rust);
+#[cfg(feature = "ring-benchmarks")]
+benchmark_hmac!(ring);
 
 fn bench_hmac_sha1(c: &mut Criterion) {
     let config = HMACConfig::new(HMACAlgorithm::SHA1);
@@ -127,12 +128,15 @@ fn bench_hmac_one_shot(c: &mut Criterion, config: &HMACConfig) {
             });
         });
 
-        group.bench_function("Ring", |b| {
-            b.iter(|| {
-                let ring_key = ring_benchmarks::create_hmac_key(config);
-                ring_benchmarks::run_hmac_one_shot(&ring_key, &chunk);
+        #[cfg(feature = "ring-benchmarks")]
+        {
+            group.bench_function("Ring", |b| {
+                b.iter(|| {
+                    let ring_key = ring_benchmarks::create_hmac_key(config);
+                    ring_benchmarks::run_hmac_one_shot(&ring_key, &chunk);
+                });
             });
-        });
+        }
     }
 }
 
@@ -155,12 +159,15 @@ fn bench_hmac_longer_key(c: &mut Criterion, config: &HMACConfig) {
             });
         });
 
-        group.bench_function("Ring", |b| {
-            b.iter(|| {
-                let ring_key = ring_benchmarks::create_longer_hmac_key(config);
-                ring_benchmarks::run_hmac_one_shot(&ring_key, &chunk);
+        #[cfg(feature = "ring-benchmarks")]
+        {
+            group.bench_function("Ring", |b| {
+                b.iter(|| {
+                    let ring_key = ring_benchmarks::create_longer_hmac_key(config);
+                    ring_benchmarks::run_hmac_one_shot(&ring_key, &chunk);
+                });
             });
-        });
+        }
     }
 }
 
@@ -181,13 +188,15 @@ fn bench_hmac_incremental(c: &mut Criterion, config: &HMACConfig) {
                 aws_lc_rust_benchmarks::run_hmac_incremental(&aws_key, &chunk);
             });
         });
-
-        group.bench_function("Ring", |b| {
-            b.iter(|| {
-                let ring_key = ring_benchmarks::create_hmac_key(config);
-                ring_benchmarks::run_hmac_incremental(&ring_key, &chunk);
+        #[cfg(feature = "ring-benchmarks")]
+        {
+            group.bench_function("Ring", |b| {
+                b.iter(|| {
+                    let ring_key = ring_benchmarks::create_hmac_key(config);
+                    ring_benchmarks::run_hmac_incremental(&ring_key, &chunk);
+                });
             });
-        });
+        }
     }
 }
 

@@ -62,8 +62,9 @@ macro_rules! benchmark_pbkdf2 {
     };
 }
 
-benchmark_pbkdf2!(ring);
 benchmark_pbkdf2!(aws_lc_rust);
+#[cfg(feature = "ring-benchmarks")]
+benchmark_pbkdf2!(ring);
 
 fn bench_pbkdf2_sha1(c: &mut Criterion) {
     let config = PBKDF2Config::new(PBKDF2Algorithm::SHA1);
@@ -102,13 +103,15 @@ fn bench_pbkdf2(c: &mut Criterion, config: &PBKDF2Config) {
                 aws_lc_rust_benchmarks::run_pbkdf2_derive(config, iter, &mut aws_out);
             });
         });
-
-        let mut ring_out = vec![0u8; 64];
-        group.bench_function("Ring", |b| {
-            b.iter(|| {
-                ring_benchmarks::run_pbkdf2_derive(config, iter, &mut ring_out);
+        #[cfg(feature = "ring-benchmarks")]
+        {
+            let mut ring_out = vec![0u8; 64];
+            group.bench_function("Ring", |b| {
+                b.iter(|| {
+                    ring_benchmarks::run_pbkdf2_derive(config, iter, &mut ring_out);
+                });
             });
-        });
+        }
     }
 }
 
