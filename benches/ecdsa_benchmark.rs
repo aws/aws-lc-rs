@@ -114,12 +114,6 @@ macro_rules! benchmark_ecdsa {
 
             use $pkg::{rand, signature};
 
-/*
-#[allow(unused_imports, unused_variables, dead_code)]
-mod ring_benchmarks {
-    use ring::{error, rand, signature};
-        */
-
     use crate::{EcdsaConfig, EcdsaCurve, EcdsaDigest, EcdsaFormat};
     use signature::{EcdsaKeyPair, EcdsaSigningAlgorithm, VerificationAlgorithm, EcdsaVerificationAlgorithm};
 
@@ -200,9 +194,10 @@ mod ring_benchmarks {
 }
 
 #[cfg(feature = "ring-sig-verify")]
-benchmark_ecdsa!(ring);
-#[cfg(feature = "ring-sig-verify")]
 benchmark_ecdsa!(aws_lc_rust);
+
+#[cfg(all(feature = "ring-sig-verify", feature = "ring-benchmarks"))]
+benchmark_ecdsa!(ring);
 
 #[cfg(feature = "ring-sig-verify")]
 fn test_ecdsa_sign(c: &mut Criterion, config: &EcdsaConfig) {
@@ -223,15 +218,17 @@ fn test_ecdsa_sign(c: &mut Criterion, config: &EcdsaConfig) {
             aws_lc_rust_benchmarks::sign(&aws_key_pair, &aws_rng, &config.msg);
         });
     });
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let ring_rng = ring_benchmarks::get_rng();
+        let ring_key_pair = ring_benchmarks::create_key_pair(config);
 
-    let ring_rng = ring_benchmarks::get_rng();
-    let ring_key_pair = ring_benchmarks::create_key_pair(config);
-
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            ring_benchmarks::sign(&ring_key_pair, &ring_rng, &config.msg);
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                ring_benchmarks::sign(&ring_key_pair, &ring_rng, &config.msg);
+            });
         });
-    });
+    }
 }
 
 #[cfg(feature = "ring-sig-verify")]
@@ -256,15 +253,17 @@ fn test_ecdsa_verify(c: &mut Criterion, config: &EcdsaConfig) {
             aws_lc_rust_benchmarks::verify(aws_verification_alg, pub_key, &config.msg, sig);
         });
     });
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let ring_verification_alg =
+            ring_benchmarks::verification(config.curve, config.digest, config.format);
 
-    let ring_verification_alg =
-        ring_benchmarks::verification(config.curve, config.digest, config.format);
-
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            ring_benchmarks::verify(ring_verification_alg, pub_key, &config.msg, sig);
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                ring_benchmarks::verify(ring_verification_alg, pub_key, &config.msg, sig);
+            });
         });
-    });
+    }
 }
 #[cfg(feature = "ring-sig-verify")]
 fn test_ecdsa(c: &mut Criterion) {

@@ -14,6 +14,7 @@ alloc = []
 default = ["aws-lc-sys", "alloc", "ring-io", "ring-sig-verify"]
 ring-io = ["dep:untrusted"]
 ring-sig-verify = ["dep:untrusted"]
+ring-benchmarks = []
 bindgen = ["aws-lc-sys?/bindgen", "aws-lc-fips-sys?/bindgen"]
 asan = ["aws-lc-sys?/asan", "aws-lc-fips-sys?/asan"]
 

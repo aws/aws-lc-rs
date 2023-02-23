@@ -41,6 +41,7 @@ coverage:
 
 ci:
 	cargo fmt --check --verbose
+	cargo test --all-targets --features ring-benchmarks
 	cargo test --release --all-targets
 ifeq ($(UNAME_S),Linux)
 	cargo test --release --all-targets --features fips

@@ -81,12 +81,6 @@ macro_rules! benchmark_rsa {
 
             use $pkg::{signature, rand};
 
-/*
-#[allow(unused_imports, unused_variables, dead_code)]
-mod ring_benchmarks {
-    use ring::{error, rand, signature};
-        */
-
     use super::{RsaDigest, RsaPadding};
     use signature::{RsaKeyPair, RsaParameters, VerificationAlgorithm};
 
@@ -151,9 +145,9 @@ mod ring_benchmarks {
 }
 
 #[cfg(feature = "ring-sig-verify")]
-benchmark_rsa!(ring);
-#[cfg(feature = "ring-sig-verify")]
 benchmark_rsa!(aws_lc_rust);
+#[cfg(all(feature = "ring-sig-verify", feature = "ring-benchmarks"))]
+benchmark_rsa!(ring);
 
 #[cfg(feature = "ring-sig-verify")]
 fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
@@ -182,23 +176,25 @@ fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
             );
         });
     });
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let ring_rng = ring_benchmarks::get_rng();
+        let ring_encoding = ring_benchmarks::encoding(config.padding, config.digest);
+        let ring_key_pair = ring_benchmarks::create_key_pair(&config.key);
+        let ring_sig = &mut buffer[0..ring_key_pair.public_modulus_len()];
 
-    let ring_rng = ring_benchmarks::get_rng();
-    let ring_encoding = ring_benchmarks::encoding(config.padding, config.digest);
-    let ring_key_pair = ring_benchmarks::create_key_pair(&config.key);
-    let ring_sig = &mut buffer[0..ring_key_pair.public_modulus_len()];
-
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            ring_benchmarks::sign(
-                &ring_key_pair,
-                &ring_rng,
-                &config.msg,
-                ring_encoding,
-                ring_sig,
-            );
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                ring_benchmarks::sign(
+                    &ring_key_pair,
+                    &ring_rng,
+                    &config.msg,
+                    ring_encoding,
+                    ring_sig,
+                );
+            });
         });
-    });
+    }
 }
 
 #[cfg(feature = "ring-sig-verify")]
@@ -224,7 +220,7 @@ fn test_rsa_verify(c: &mut Criterion, config: &RsaConfig) {
             });
         });
     }
-
+    #[cfg(feature = "ring-benchmarks")]
     {
         use ring::signature::KeyPair;
         let ring_params = ring_benchmarks::parameters(config.padding, config.digest);
