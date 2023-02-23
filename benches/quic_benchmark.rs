@@ -63,8 +63,9 @@ macro_rules! benchmark_quic
         }
 }}}
 
-benchmark_quic!(ring);
 benchmark_quic!(aws_lc_rust);
+#[cfg(feature = "ring-benchmarks")]
+benchmark_quic!(ring);
 
 fn test_new_mask(c: &mut Criterion, config: &QuicConfig) {
     let sample = config.sample.as_slice();
@@ -84,12 +85,15 @@ fn test_new_mask(c: &mut Criterion, config: &QuicConfig) {
         });
     });
 
-    let ring_key = ring_benchmarks::header_protection_key(config);
-    group.bench_function("Ring", |b| {
-        b.iter(|| {
-            ring_benchmarks::new_mask(&ring_key, sample);
+    #[cfg(feature = "ring-benchmarks")]
+    {
+        let ring_key = ring_benchmarks::header_protection_key(config);
+        group.bench_function("Ring", |b| {
+            b.iter(|| {
+                ring_benchmarks::new_mask(&ring_key, sample);
+            });
         });
-    });
+    }
 }
 
 fn test_aes_128(c: &mut Criterion) {

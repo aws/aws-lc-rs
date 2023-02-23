@@ -59,8 +59,9 @@ macro_rules! benchmark_digest {
     };
 }
 
-benchmark_digest!(ring);
 benchmark_digest!(aws_lc_rust);
+#[cfg(feature = "ring-benchmarks")]
+benchmark_digest!(ring);
 
 fn bench_sha1(c: &mut Criterion) {
     let config = DigestConfig::new(DigestAlgorithm::SHA1);
@@ -110,12 +111,14 @@ fn bench_digest_one_shot(c: &mut Criterion, config: &DigestConfig) {
                 aws_lc_rust_benchmarks::run_digest_one_shot(config, &chunk);
             });
         });
-
-        group.bench_function("Ring", |b| {
-            b.iter(|| {
-                ring_benchmarks::run_digest_one_shot(config, &chunk);
+        #[cfg(feature = "ring-benchmarks")]
+        {
+            group.bench_function("Ring", |b| {
+                b.iter(|| {
+                    ring_benchmarks::run_digest_one_shot(config, &chunk);
+                });
             });
-        });
+        }
     }
 }
 
@@ -144,12 +147,14 @@ fn bench_digest_incremental(c: &mut Criterion, config: &DigestConfig) {
                 aws_lc_rust_benchmarks::run_digest_incremental(config, &chunk);
             });
         });
-
-        group.bench_function("Ring", |b| {
-            b.iter(|| {
-                ring_benchmarks::run_digest_incremental(config, &chunk);
+        #[cfg(feature = "ring-benchmarks")]
+        {
+            group.bench_function("Ring", |b| {
+                b.iter(|| {
+                    ring_benchmarks::run_digest_incremental(config, &chunk);
+                });
             });
-        });
+        }
     }
 }
 

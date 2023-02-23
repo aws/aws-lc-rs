@@ -80,8 +80,9 @@ macro_rules! benchmark_hkdf {
     };
 }
 
-benchmark_hkdf!(ring);
 benchmark_hkdf!(aws_lc_rust);
+#[cfg(feature = "ring-benchmarks")]
+benchmark_hkdf!(ring);
 
 fn bench_hkdf_sha1(c: &mut Criterion) {
     let config = HKDFConfig::new(HKDFAlgorithm::SHA1);
@@ -118,13 +119,15 @@ fn bench_hkdf(c: &mut Criterion, config: &HKDFConfig) {
                 aws_lc_rust_benchmarks::run_hkdf_expand(&aws_prk, info_chunk);
             });
         });
-
-        let ring_prk = ring_benchmarks::run_hkdf_extract(config);
-        group.bench_function("Ring", |b| {
-            b.iter(|| {
-                ring_benchmarks::run_hkdf_expand(&ring_prk, info_chunk);
+        #[cfg(feature = "ring-benchmarks")]
+        {
+            let ring_prk = ring_benchmarks::run_hkdf_extract(config);
+            group.bench_function("Ring", |b| {
+                b.iter(|| {
+                    ring_benchmarks::run_hkdf_expand(&ring_prk, info_chunk);
+                });
             });
-        });
+        }
     }
 }
 

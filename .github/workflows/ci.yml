@@ -167,7 +167,7 @@ jobs:
       - name: Install cargo-udeps
         uses: actions-rs/cargo@v1.0.3
         with:
-          command: install 
+          command: install
           args: cargo-udeps
 
       - name: Run cargo udeps
@@ -185,7 +185,8 @@ jobs:
         os: [ubuntu-latest, macOS-latest]
         target: [native, aarch64-unknown-linux-gnu, i686-unknown-linux-gnu]
         args:
-          - --release --all-targets
+          - --all-targets
+          - --release --all-targets --features ring-benchmarks
           - --no-default-features --features non-fips
           - --no-default-features --features non-fips,ring-io
           - --no-default-features --features non-fips,ring-sig-verify
@@ -268,10 +269,10 @@ jobs:
       - name: Install cargo-llvm-cov
         uses: actions-rs/cargo@v1.0.3
         with:
-          command: install 
+          command: install
           args: cargo-llvm-cov
 
-      # TODO: add bot to post coverage details to PR, or upload results to AWS 
+      # TODO: add bot to post coverage details to PR, or upload results to AWS
       # account. Using --html can give us more insight which regions are missing
       # coverage immediately.
       - name: Run coverage
@@ -334,7 +335,7 @@ jobs:
           RUSTFLAGS: -Zsanitizer=address
           RUSTDOCFLAGS: -Zsanitizer=address
         with:
-          command: test 
+          command: test
           args: --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
 
   asan-release:
