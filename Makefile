@@ -1,10 +1,16 @@
 UNAME_S := $(shell uname -s)
 
-init:
+init-submodules:
+	git submodule update --init --recursive
+
+init: init-submodules
 	rustup component add rustfmt clippy &&  git config core.hooksPath .githooks
 	cargo install rust-script
 	cargo install cargo-llvm-cov cargo-license
 	cargo install cargo-audit --features=fix
+
+update-submodules:
+	git submodule update --init --recursive --remote --checkout
 
 lic:
 	cargo +nightly license
@@ -52,3 +58,5 @@ endif
 	cargo test --no-default-features --features aws-lc-sys,ring-sig-verify
 	cargo test --no-default-features --features aws-lc-sys,ring-io
 	cargo test --no-default-features --features aws-lc-sys,alloc
+
+.PHONY: init-submodules init asan asan-fips asan-release audit ci clippy coverage format lic update-submodules
