@@ -10,6 +10,7 @@ RUN apt-get update && \
     rustup update && \
     rustup component add rustfmt clippy && \
     cargo install rust-script && \
+    git config --global --add safe.directory '*' && \
     apt-get autoremove --purge -y && \
     apt-get clean && \
     apt-get autoclean && \

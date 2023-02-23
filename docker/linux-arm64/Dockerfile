@@ -17,6 +17,7 @@ RUN apt-get update && \
     rustup component add rustfmt clippy && \
     cargo +nightly install -Z sparse-registry --debug cargo-ament-build && \
     cargo install rust-script && \
+    git config --global --add safe.directory '*' && \
     apt-get autoremove --purge -y && \
     apt-get clean && \
     apt-get autoclean && \
