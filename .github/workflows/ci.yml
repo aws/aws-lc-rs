@@ -20,8 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          submodules: true
-
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
@@ -40,8 +39,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        crate_dir: ["aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rust"]
+        features:
+          - ""
+          - "--features fips"
+        exclude:
+          - crate_dir: aws-lc-sys
+            features: "--features fips"
+          - crate_dir: aws-lc-fips-sys
+            features: "--features fips"
+    defaults:
+      run:
+        working-directory: ${{ matrix.crate_dir }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
@@ -49,30 +63,22 @@ jobs:
           profile: minimal
           override: true
           components: clippy
-
       - name: Run cargo clippy
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: clippy
-          args: --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
+        run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
-      - name: Run cargo clippy on fips
-        uses: actions-rs/cargo@v1.0.3
-        env:
-          CC: clang
-          CXX: clang++
-        with:
-          command: clippy
-          args: --features fips --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
-
-  apidiff:
+  aws-lc-rust-apidiff:
+    name: aws-lc-rust apidiff
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+    defaults:
+      run:
+        working-directory: "aws-lc-rust"
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
@@ -84,11 +90,9 @@ jobs:
         with:
           command: install
           args: cargo-public-api
+
       - name: Perform API Diff
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: public-api
-          args: diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+        run: cargo public-api diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
 #  dependency-review:
 #    runs-on: ubuntu-latest
@@ -109,6 +113,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
@@ -134,6 +139,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
@@ -155,7 +161,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          submodules: true
+          submodules: 'recursive'
 
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
@@ -175,8 +181,8 @@ jobs:
         env:
           RUSTC_WRAPPER: ""
 
-  test:
-    name: tests
+  aws-lc-rust-test:
+    name: aws-lc-rust tests
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -198,8 +204,13 @@ jobs:
           - rust: stable
             os: macOS-latest
             target: i686-unknown-linux-gnu
+    defaults:
+      run:
+        working-directory: "aws-lc-rust"
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
@@ -215,14 +226,15 @@ jobs:
           args: cross
 
       - name: Run cargo test
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: test
-          args: ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
-          use-cross: ${{ matrix.target != 'native' }}
+        if: ${{ matrix.target == 'native' }}
+        run: cargo test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
+
+      - name: Run cargo cross test
+        if: ${{ matrix.target != 'native' }}
+        run: cross test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
 
   fips-test:
-    name: fips-tests
+    name: aws-lc-rust fips-tests
     runs-on: ${{ matrix.os }}
     env:
       CC: clang
@@ -239,24 +251,31 @@ jobs:
           - --no-default-features --features fips,ring-sig-verify
           - --no-default-features --features fips,alloc
           - --no-default-features --features fips,bindgen
+    defaults:
+      run:
+        working-directory: "aws-lc-rust"
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
           toolchain: ${{ matrix.rust }}
           override: true
       - name: Run cargo test
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: test
-          args: ${{ matrix.args }}
+        run: cargo test ${{ matrix.args }}
 
-  coverage:
+  aws-lc-rust-coverage:
+    name: aws-ls-rust coverage
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "aws-lc-rust"
     steps:
       - uses: actions/checkout@v3
         with:
+          submodules: 'recursive'
           lfs: true
 
       - uses: actions-rs/toolchain@v1.0.7
@@ -276,16 +295,14 @@ jobs:
       # account. Using --html can give us more insight which regions are missing
       # coverage immediately.
       - name: Run coverage
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: llvm-cov
-          args: --no-fail-fast --fail-under-lines 95
+        run: cargo llvm-cov --no-fail-fast --fail-under-lines 95
 
   mirai-analysis:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
+          submodules: 'recursive'
           lfs: true
 
       # Update toolchain when fixed: https://github.com/facebookexperimental/MIRAI/issues/1188
@@ -319,65 +336,41 @@ jobs:
         run: |
           cargo mirai
 
-  asan:
+  aws-lc-rust-asan:
+    name: aws-lc-rust asan
+    defaults:
+      run:
+        working-directory: "aws-lc-rust"
+    strategy:
+      matrix:
+        args:
+          -
+          - --release
+        features:
+          - --features asan
+          - --no-default-features --features fips,asan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
           override: true
       - name: Run address sanitizers
-        uses: actions-rs/cargo@v1.0.3
         env:
           ASAN_OPTIONS: detect_leaks=1
           RUSTFLAGS: -Zsanitizer=address
           RUSTDOCFLAGS: -Zsanitizer=address
-        with:
-          command: test
-          args: --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
-
-  asan-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1.0.7
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          override: true
-      - name: Run address sanitizers
-        uses: actions-rs/cargo@v1.0.3
-        env:
-          ASAN_OPTIONS: detect_leaks=1
-          RUSTFLAGS: -Zsanitizer=address
-          RUSTDOCFLAGS: -Zsanitizer=address
-        with:
-          command: test
-          args: --release --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
-
-  asan-fips:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1.0.7
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          override: true
-      - name: Run address sanitizers
-        uses: actions-rs/cargo@v1.0.3
-        env:
-          ASAN_OPTIONS: detect_leaks=1
-          RUSTFLAGS: -Zsanitizer=address
-          RUSTDOCFLAGS: -Zsanitizer=address
-        with:
-          command: test
-          args: --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --no-default-features --features fips,asan
+        run: cargo test ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
 
   s2n-quic-integration:
     name: s2n-quic-integration
+    defaults:
+      run:
+        working-directory: "aws-lc-rust"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -385,6 +378,8 @@ jobs:
         os: [ubuntu-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
@@ -396,6 +391,9 @@ jobs:
 
   rustls-integration:
     name: rustls-integration
+    defaults:
+      run:
+        working-directory: "aws-lc-rust"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -403,6 +401,8 @@ jobs:
         os: [ubuntu-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
