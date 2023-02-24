@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate_dir: ["aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rust"]
+        crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rust" ]
         features:
           - ""
           - "--features fips"
@@ -61,7 +61,7 @@ jobs:
           override: true
           components: clippy
       - name: Run cargo clippy
-        working-directory: ./aws-lc-rust
+        working-directory: ${{ matrix.crate_dir }}
         run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
   aws-lc-rust-apidiff:
@@ -69,6 +69,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rust" ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -86,18 +88,18 @@ jobs:
           command: install
           args: cargo-public-api
       - name: Perform API Diff
-        working-directory: ./aws-lc-rust
+        working-directory: ${{ matrix.crate_dir }}
         run: cargo public-api diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
-#  dependency-review:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: 'Checkout Repository'
-#        uses: actions/checkout@v3
-#      - name: 'Dependency Review'
-#        uses: actions/dependency-review-action@v3
-#        with:
-#          allow-licenses: Apache-2.0, ISC, MIT, MIT-0
+  #  dependency-review:
+  #    runs-on: ubuntu-latest
+  #    steps:
+  #      - name: 'Checkout Repository'
+  #        uses: actions/checkout@v3
+  #      - name: 'Dependency Review'
+  #        uses: actions/dependency-review-action@v3
+  #        with:
+  #          allow-licenses: Apache-2.0, ISC, MIT, MIT-0
 
   # This step won't be needed once "dependency-review" is enabled
   audit:
@@ -182,9 +184,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [stable]
-        os: [ubuntu-latest, macOS-latest]
-        target: [native, aarch64-unknown-linux-gnu, i686-unknown-linux-gnu]
+        rust: [ stable ]
+        os: [ ubuntu-latest, macOS-latest ]
+        target: [ native, aarch64-unknown-linux-gnu, i686-unknown-linux-gnu ]
         args:
           - --all-targets
           - --release --all-targets --features ring-benchmarks
@@ -236,8 +238,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [stable]
-        os: [ubuntu-latest]
+        rust: [ stable ]
+        os: [ ubuntu-latest ]
         args:
           - --release --all-targets --features fips
           - --no-default-features --features fips
@@ -285,7 +287,7 @@ jobs:
       # coverage immediately.
       - name: Run coverage
         working-directory: ./aws-lc-rust
-        run: cargo llvm-cov --no-fail-fast --fail-under-lines 95 --workspace --exclude aws-lc-sys --exclude aws-lc-fips-sys
+        run: cargo llvm-cov --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-sys/*"
 
   mirai-analysis:
     runs-on: ubuntu-latest
@@ -360,7 +362,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [ ubuntu-latest, macOS-latest ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -381,7 +383,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [ ubuntu-latest, macOS-latest ]
     steps:
       - uses: actions/checkout@v3
         with:
