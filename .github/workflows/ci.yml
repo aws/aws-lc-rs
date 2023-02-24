@@ -49,9 +49,6 @@ jobs:
             features: "--features fips"
           - crate_dir: aws-lc-fips-sys
             features: "--features fips"
-    defaults:
-      run:
-        working-directory: ${{ matrix.crate_dir }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -64,6 +61,7 @@ jobs:
           override: true
           components: clippy
       - name: Run cargo clippy
+        working-directory: ./aws-lc-rust
         run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
   aws-lc-rust-apidiff:
@@ -71,9 +69,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-    defaults:
-      run:
-        working-directory: ./aws-lc-rust
     steps:
       - uses: actions/checkout@v3
         with:
@@ -90,8 +85,8 @@ jobs:
         with:
           command: install
           args: cargo-public-api
-
       - name: Perform API Diff
+        working-directory: ./aws-lc-rust
         run: cargo public-api diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
 
 #  dependency-review:
@@ -204,9 +199,6 @@ jobs:
           - rust: stable
             os: macOS-latest
             target: i686-unknown-linux-gnu
-    defaults:
-      run:
-        working-directory: ./aws-lc-rust
     steps:
       - uses: actions/checkout@v3
         with:
@@ -226,10 +218,12 @@ jobs:
           args: cross
 
       - name: Run cargo test
+        working-directory: ./aws-lc-rust
         if: ${{ matrix.target == 'native' }}
         run: cargo test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
 
       - name: Run cargo cross test
+        working-directory: ./aws-lc-rust
         if: ${{ matrix.target != 'native' }}
         run: cross test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
 
@@ -251,9 +245,6 @@ jobs:
           - --no-default-features --features fips,ring-sig-verify
           - --no-default-features --features fips,alloc
           - --no-default-features --features fips,bindgen
-    defaults:
-      run:
-        working-directory: ./aws-lc-rust
     steps:
       - uses: actions/checkout@v3
         with:
@@ -264,14 +255,12 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
       - name: Run cargo test
+        working-directory: ./aws-lc-rust
         run: cargo test ${{ matrix.args }}
 
   aws-lc-rust-coverage:
     name: aws-ls-rust coverage
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./aws-lc-rust
     steps:
       - uses: actions/checkout@v3
         with:
@@ -295,6 +284,7 @@ jobs:
       # account. Using --html can give us more insight which regions are missing
       # coverage immediately.
       - name: Run coverage
+        working-directory: ./aws-lc-rust
         run: cargo llvm-cov --no-fail-fast --fail-under-lines 95 --workspace --exclude aws-lc-sys --exclude aws-lc-fips-sys
 
   mirai-analysis:
@@ -338,9 +328,6 @@ jobs:
 
   aws-lc-rust-asan:
     name: aws-lc-rust asan
-    defaults:
-      run:
-        working-directory: ./aws-lc-rust
     strategy:
       matrix:
         args:
@@ -364,13 +351,11 @@ jobs:
           ASAN_OPTIONS: detect_leaks=1
           RUSTFLAGS: -Zsanitizer=address
           RUSTDOCFLAGS: -Zsanitizer=address
+        working-directory: ./aws-lc-rust
         run: cargo test ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
 
   s2n-quic-integration:
     name: s2n-quic-integration
-    defaults:
-      run:
-        working-directory: ./aws-lc-rust
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -386,14 +371,12 @@ jobs:
           toolchain: stable
           override: true
       - name: Run s2n-quic integration
+        working-directory: ./aws-lc-rust
         run: |
           ./scripts/run-s2n-quic-integration.sh
 
   rustls-integration:
     name: rustls-integration
-    defaults:
-      run:
-        working-directory: ./aws-lc-rust
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -409,5 +392,6 @@ jobs:
           toolchain: stable
           override: true
       - name: Run rustls integration
+        working-directory: ./aws-lc-rust
         run: |
           ./scripts/run-rustls-integration.sh

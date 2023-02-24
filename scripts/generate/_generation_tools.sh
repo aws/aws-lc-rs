@@ -117,6 +117,13 @@ function check_running_on_macos {
   return 1
 }
 
+function assert_docker_status {
+  if ! docker stats --no-stream; then
+    echo Please start the Docker daemon to continue.
+    exit 1
+  fi
+}
+
 function parse_version {
   local VERSION="${1}"
   echo Version: "${VERSION}"

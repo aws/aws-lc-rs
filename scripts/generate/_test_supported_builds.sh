@@ -44,6 +44,8 @@ if [[ -z "${RELATIVE_CRATE_PATH}" ]]; then
   exit 1
 fi
 
+assert_docker_status
+
 pushd "${REPO_ROOT}" &>/dev/null
 
 if [[ "${GENERATE_FIPS}" -eq 0 ]]; then

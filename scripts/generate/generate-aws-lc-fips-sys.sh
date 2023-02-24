@@ -17,6 +17,8 @@ source "${SCRIPT_DIR}"/_generation_tools.sh
 generation_options "$@"
 shift $((OPTIND - 1))
 
+assert_docker_status
+
 pushd "${REPO_ROOT}" &>/dev/null
 
 check_workspace $IGNORE_DIRTY

@@ -29,7 +29,6 @@ RUN apt-get update && \
     rm -rf /tmp/*
 
 ENV PATH="/root/sdk/${GO_VERSION}/bin:${PATH}"
-ENV CARGO_UNSTABLE_SPARSE_REGISTRY=true
 
 # Static FIPS build only supports clang.
 ENV CC=clang
