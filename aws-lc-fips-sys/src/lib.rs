@@ -44,7 +44,18 @@ mod generated {
         non_camel_case_types,
         non_snake_case,
         non_upper_case_globals,
-        improper_ctypes
+        improper_ctypes,
+        clippy::cast_lossless,
+        clippy::cast_possible_truncation,
+        clippy::default_trait_access,
+        clippy::must_use_candidate,
+        clippy::not_unsafe_ptr_arg_deref,
+        clippy::ptr_as_ptr,
+        clippy::semicolon_if_nothing_returned,
+        clippy::too_many_lines,
+        clippy::unreadable_literal,
+        clippy::used_underscore_binding,
+        clippy::useless_transmute
     )]
 
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
@@ -53,23 +64,26 @@ mod generated {
 pub use generated::*;
 
 #[allow(non_snake_case)]
+#[must_use]
 pub fn ERR_GET_LIB(packed_error: u32) -> i32 {
     unsafe { ERR_GET_LIB_RUST(packed_error) }
 }
 
 #[allow(non_snake_case)]
+#[must_use]
 pub fn ERR_GET_REASON(packed_error: u32) -> i32 {
     unsafe { ERR_GET_REASON_RUST(packed_error) }
 }
 
 #[allow(non_snake_case)]
+#[must_use]
 pub fn ERR_GET_FUNC(packed_error: u32) -> i32 {
     unsafe { ERR_GET_FUNC_RUST(packed_error) }
 }
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, clippy::not_unsafe_ptr_arg_deref)]
 pub fn BIO_get_mem_data(b: *mut BIO, pp: *mut *mut c_char) -> c_long {
-    unsafe { BIO_ctrl(b, BIO_CTRL_INFO, 0, pp as *mut c_void) }
+    unsafe { BIO_ctrl(b, BIO_CTRL_INFO, 0, pp.cast::<c_void>()) }
 }
 
 pub fn init() {

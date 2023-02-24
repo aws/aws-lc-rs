@@ -52,6 +52,7 @@ function check_workspace {
 
 function check_branch {
   local IGNORE_BRANCH=$1
+  local IGNORE_UPSTREAM=$2
   local CURRENT_BRANCH
 
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -67,13 +68,26 @@ function check_branch {
     fi
   fi
 
+  local UPSTREAM
+  UPSTREAM=$(git status -sb | head -n 1 | sed -e 's/^## [^\.]*\(\.\.\.\)*\([^\.]*\)$/\2/')
+  if [ -z "${UPSTREAM}" ]; then
+    echo No upstream branch found.
+    if [[ ${IGNORE_UPSTREAM} -eq 0 ]]; then
+      echo Aborting. Use '-u' to ignore.
+      echo
+      exit 1
+    else
+      echo Ignoring missing upstream branch.
+      echo
+      return 0
+    fi
+  fi
+
   local LOCAL_HASH
   local UPSTREAM_HASH
   git fetch
   LOCAL_HASH=$(git rev-parse HEAD)
-  UPSTREAM_HASH=$(git rev-parse "${CURRENT_BRANCH}"'@{upstream}')
-
-  local IGNORE_UPSTREAM=$2
+  UPSTREAM_HASH=$(git rev-parse "${UPSTREAM}")
 
   if [[ ! "${LOCAL_HASH}" == "${UPSTREAM_HASH}" ]]; then
     echo "${CURRENT_BRANCH}" not up to date with upstream.
@@ -91,7 +105,7 @@ function check_branch {
 # If host is macOS returns successfully (zero value return)
 function check_running_on_macos {
   local FAIL_NON_MACOS=$1
-  if [[ "$(uname -o)" =~ [Dd]arwin ]]; then
+  if [[ "$(uname)" =~ [Dd]arwin ]]; then
     return 0
   fi
   if [[ $FAIL_NON_MACOS -eq 1 ]]; then
