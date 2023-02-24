@@ -295,7 +295,7 @@ jobs:
       # account. Using --html can give us more insight which regions are missing
       # coverage immediately.
       - name: Run coverage
-        run: cargo llvm-cov --no-fail-fast --fail-under-lines 95 --exclude aws-lc-sys
+        run: cargo llvm-cov --no-fail-fast --fail-under-lines 95 --workspace --exclude aws-lc-sys --exclude aws-lc-fips-sys
 
   mirai-analysis:
     runs-on: ubuntu-latest
