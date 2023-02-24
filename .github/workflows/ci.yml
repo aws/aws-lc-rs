@@ -73,7 +73,7 @@ jobs:
       fail-fast: false
     defaults:
       run:
-        working-directory: "aws-lc-rust"
+        working-directory: ./aws-lc-rust
     steps:
       - uses: actions/checkout@v3
         with:
@@ -206,7 +206,7 @@ jobs:
             target: i686-unknown-linux-gnu
     defaults:
       run:
-        working-directory: "aws-lc-rust"
+        working-directory: ./aws-lc-rust
     steps:
       - uses: actions/checkout@v3
         with:
@@ -253,7 +253,7 @@ jobs:
           - --no-default-features --features fips,bindgen
     defaults:
       run:
-        working-directory: "aws-lc-rust"
+        working-directory: ./aws-lc-rust
     steps:
       - uses: actions/checkout@v3
         with:
@@ -271,7 +271,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: "aws-lc-rust"
+        working-directory: ./aws-lc-rust
     steps:
       - uses: actions/checkout@v3
         with:
@@ -340,7 +340,7 @@ jobs:
     name: aws-lc-rust asan
     defaults:
       run:
-        working-directory: "aws-lc-rust"
+        working-directory: ./aws-lc-rust
     strategy:
       matrix:
         args:
@@ -370,7 +370,7 @@ jobs:
     name: s2n-quic-integration
     defaults:
       run:
-        working-directory: "aws-lc-rust"
+        working-directory: ./aws-lc-rust
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -393,7 +393,7 @@ jobs:
     name: rustls-integration
     defaults:
       run:
-        working-directory: "aws-lc-rust"
+        working-directory: ./aws-lc-rust
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
