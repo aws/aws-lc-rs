@@ -17,10 +17,10 @@
 
 #[cfg(feature = "bindgen")]
 use std::default::Default;
+use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::{env, fs};
 
 #[cfg(feature = "bindgen")]
 mod bindgen;
@@ -59,19 +59,9 @@ impl OutputLibType {
             OutputLibType::Dynamic => "dylib",
         }
     }
-    fn lib_extension(&self) -> &str {
-        match self {
-            OutputLibType::Static => "a",
-            OutputLibType::Dynamic => "so",
-        }
-    }
 }
 
 impl OutputLib {
-    fn filename(self, libtype: OutputLibType, prefix: Option<&str>) -> String {
-        format!("lib{}.{}", &self.libname(prefix), libtype.lib_extension())
-    }
-
     fn libname(self, prefix: Option<&str>) -> String {
         format!(
             "{}{}",
@@ -95,10 +85,6 @@ impl OutputLib {
                 .join(self.libname(None))
                 .join(get_platform_output_path()),
         }
-    }
-
-    fn locate_file(self, path: &Path, libtype: OutputLibType, prefix: Option<&str>) -> PathBuf {
-        self.locate_dir(path).join(self.filename(libtype, prefix))
     }
 }
 
@@ -297,11 +283,6 @@ fn main() {
         }
     }
 
-    let libcrypto_file = Crypto.locate_file(&artifact_output, Static, None);
-    let prefixed_libcrypto_file = Crypto.locate_file(&artifact_output, Static, Some(&prefix));
-    fs::rename(libcrypto_file, prefixed_libcrypto_file)
-        .expect("Unexpected error: Library not found");
-
     println!(
         "cargo:rustc-link-search=native={}",
         Crypto.locate_dir(&artifact_output).display()
@@ -314,10 +295,6 @@ fn main() {
     );
 
     if cfg!(feature = "ssl") {
-        let libssl_file = Ssl.locate_file(&artifact_output, Static, None);
-        let prefixed_libssl_file = Ssl.locate_file(&artifact_output, Static, Some(&prefix));
-        fs::rename(libssl_file, prefixed_libssl_file).expect("Unexpected error: Library not found");
-
         println!(
             "cargo:rustc-link-search=native={}",
             Ssl.locate_dir(&artifact_output).display()
@@ -337,7 +314,7 @@ fn main() {
     println!(
         "cargo:rustc-link-lib={}={}",
         Static.rust_lib_type(),
-        RustWrapper.libname(None)
+        RustWrapper.libname(Some(&prefix))
     );
 
     for include_path in vec![

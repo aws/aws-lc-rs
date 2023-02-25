@@ -9,3 +9,7 @@ add_definitions(-DAWS_LC_RUST_INCLUDE_SSL)
 add_library(rust_wrapper STATIC rust_wrapper.c)
 target_include_directories(rust_wrapper PRIVATE include)
 target_link_libraries(rust_wrapper PUBLIC crypto ssl)
+
+if (BORINGSSL_PREFIX)
+    set_target_properties(rust_wrapper crypto ssl PROPERTIES PREFIX "lib${BORINGSSL_PREFIX}")
+endif ()
