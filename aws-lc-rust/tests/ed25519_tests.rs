@@ -136,19 +136,19 @@ fn test_ed25519_from_pkcs8() {
             (Err(e), None) => panic!(
                 "Failed with error \"{}\", but expected to succeed: \"{}\"",
                 e,
-                test::to_hex(&input)
+                test::to_hex(input)
             ),
             (Ok(_), Some(e)) => panic!(
                 "Succeeded, but expected error \"{}\": {}",
                 e,
-                test::to_hex(&input)
+                test::to_hex(input)
             ),
             (Err(actual), Some(expected)) => {
                 assert_eq!(
                     actual.description_(),
                     expected,
                     "Input: {}",
-                    test::to_hex(&input)
+                    test::to_hex(input)
                 );
             }
         };
@@ -162,7 +162,7 @@ fn test_ed25519_from_pkcs8() {
             let input = test_case.consume_bytes("Input");
             let error = test_case.consume_optional_string("Error");
 
-            check_result(&input, Ed25519KeyPair::from_pkcs8(&input), error.clone());
+            check_result(&input, Ed25519KeyPair::from_pkcs8(&input), error);
 
             Ok(())
         },

@@ -318,12 +318,14 @@ mod tests {
     fn test_generate_pkcs8() {
         let rng = crate::rand::SystemRandom::new();
         let document = Ed25519KeyPair::generate_pkcs8(&rng).unwrap();
-        let _ = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
-        let _ = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
+        let _: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let _: Ed25519KeyPair =
+            Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
 
         let document = Ed25519KeyPair::generate_pkcs8v1(&rng).unwrap();
-        let _ = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
-        let _ = Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
+        let _: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let _: Ed25519KeyPair =
+            Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
     }
 
     #[test]
@@ -357,7 +359,7 @@ mod tests {
                     r#"Ed25519KeyPair {{ public_key: PublicKey("{}") }}"#,
                     case.expected_public
                 ),
-                format!("{:?}", key_pair)
+                format!("{key_pair:?}")
             );
             let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(&test::from_dirty_hex(case.key)).unwrap();
             assert_eq!(
