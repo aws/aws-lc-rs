@@ -39,8 +39,8 @@ CRATE_DIR="${REPO_ROOT}/${RELATIVE_CRATE_PATH}"
 
 pushd "${CRATE_DIR}" &>/dev/null
 
-CRATE_NAME=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -n "Cargo.toml")
-CRATE_VERSION=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -v "Cargo.toml")
+CRATE_NAME=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -n)
+CRATE_VERSION=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -v)
 
 PUBLISHED_CRATE_VERSION=$(cargo search "${CRATE_NAME}" | egrep "^${CRATE_NAME} " | sed -e 's/.*"\(.*\)".*/\1/')
 

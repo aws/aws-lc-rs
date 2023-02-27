@@ -32,7 +32,7 @@ macro_rules! benchmark_digest {
 
             use criterion::black_box;
             use crate::DigestConfig;
-            use digest::Context;
+            use digest::{Context, Digest};
 
             fn algorithm(config: &crate::DigestConfig) ->  &'static digest::Algorithm {
                 black_box(match &config.algorithm {
@@ -47,7 +47,7 @@ macro_rules! benchmark_digest {
             pub fn run_digest_incremental(config: &DigestConfig, chunk: &[u8]) {
                 let mut ctx = Context::new(algorithm(&config));
                 ctx.update(&chunk);
-                let _ = ctx.finish();
+                let _: Digest = ctx.finish();
             }
 
             #[allow(unused_must_use)]

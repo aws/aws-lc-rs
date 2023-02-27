@@ -70,7 +70,7 @@ jobs:
       fail-fast: false
       matrix:
         crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rust" ]
-        diff_target: ["branch", "published"]
+        diff_target: [ "branch", "published" ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -90,14 +90,14 @@ jobs:
       - name: Install rust-script
         uses: actions-rs/cargo@v1.0.3
         with:
-            command: install
-            args: rust-script
+          command: install
+          args: rust-script
       - name: Perform API Diff (Target Branch)
-        if: ${{ matrix.diff_target }} == "branch"
+        if: matrix.diff_target == 'branch'
         working-directory: ${{ matrix.crate_dir }}
         run: cargo public-api diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
       - name: Perform API Diff (Published)
-        if: ${{ matrix.diff_target }} == "published"
+        if: matrix.diff_target == 'published'
         working-directory: ${{ matrix.crate_dir }}
         shell: bash
         run: |

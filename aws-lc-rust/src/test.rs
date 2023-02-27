@@ -444,8 +444,8 @@ fn parse_test_case(
                 assert!(line.ends_with(']'));
                 current_section.truncate(0);
                 current_section.push_str(line);
-                let _ = current_section.pop();
-                let _ = current_section.remove(0);
+                let _: Option<char> = current_section.pop();
+                let _: char = current_section.remove(0);
             }
 
             Some(line) => {
@@ -565,7 +565,7 @@ mod tests {
     #[should_panic]
     fn fixed_slice_random_length_mismatch() {
         let fbr = FixedSliceRandom { bytes: &[42u8; 42] };
-        let _ = fbr.fill_impl(&mut []);
+        let _: Result<(), error::Unspecified> = fbr.fill_impl(&mut []);
     }
 
     #[test]
@@ -590,7 +590,7 @@ mod tests {
             current: UnsafeCell::new(0),
         };
         let mut bs_one = [0u8; 7];
-        let _ = fbr.fill_impl(&mut bs_one);
+        let _: Result<(), error::Unspecified> = fbr.fill_impl(&mut bs_one);
     }
 
     // TODO: This test is causing a thread panic which prevents capture with should_panic
@@ -601,7 +601,7 @@ mod tests {
     //         bytes: &[&[42u8; 42]],
     //         current: UnsafeCell::new(0),
     //     };
-    //     let _ = fbr.fill_impl(&mut []);
+    //     let _: Result<(), error::Unspecified> = fbr.fill_impl(&mut []);
     // }
 
     #[test]

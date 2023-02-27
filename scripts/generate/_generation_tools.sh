@@ -150,10 +150,10 @@ function validate_crate_version {
   pushd "${CRATE_DIR}" &>/dev/null
 
   local CRATE_NAME
-  CRATE_NAME=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -n "Cargo.toml")
+  CRATE_NAME=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -n)
 
   local CRATE_VERSION
-  CRATE_VERSION=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -v "Cargo.toml")
+  CRATE_VERSION=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -v)
 
   PUBLISHED_CRATE_VERSION=$(cargo search "${CRATE_NAME}" | egrep "^${CRATE_NAME} " | sed -e 's/.*"\(.*\)".*/\1/')
 

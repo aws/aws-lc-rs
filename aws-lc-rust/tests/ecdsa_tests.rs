@@ -227,7 +227,7 @@ fn ecdsa_test_public_key_coverage() {
     assert_eq!(key_pair.public_key().as_ref(), PUBLIC_KEY);
 
     // Test `Clone`.
-    #[allow(let_underscore_drop)]
+    #[allow(let_underscore_drop, clippy::let_underscore_untyped)]
     let _ = key_pair.public_key().clone();
 
     // Test `Copy`.

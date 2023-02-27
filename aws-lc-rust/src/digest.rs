@@ -310,6 +310,7 @@ mod tests {
 
         use super::super::super::digest;
         use crate::digest::digest_ctx::DigestContext;
+        use crate::digest::Digest;
         use alloc::vec;
 
         macro_rules! max_input_tests {
@@ -341,14 +342,14 @@ mod tests {
             let mut context = nearly_full_context(alg);
             let next_input = vec![0u8; alg.block_len - 1];
             context.update(&next_input);
-            let _ = context.finish(); // no panic
+            let _: Digest = context.finish(); // no panic
         }
 
         fn too_long_input_test_block(alg: &'static digest::Algorithm) {
             let mut context = nearly_full_context(alg);
             let next_input = vec![0u8; alg.block_len];
             context.update(&next_input);
-            let _ = context.finish(); // should panic
+            let _: Digest = context.finish(); // should panic
         }
 
         fn too_long_input_test_byte(alg: &'static digest::Algorithm) {
@@ -356,7 +357,7 @@ mod tests {
             let next_input = vec![0u8; alg.block_len - 1];
             context.update(&next_input); // no panic
             context.update(&[0]);
-            let _ = context.finish(); // should panic
+            let _: Digest = context.finish(); // should panic
         }
 
         fn nearly_full_context(alg: &'static digest::Algorithm) -> digest::Context {

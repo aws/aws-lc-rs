@@ -12,7 +12,7 @@ use toml::Table;
 #[derive(Parser)]
 #[command(about)]
 struct Args {
-    cargo_file_path: String,
+    cargo_file_path: Option<String>,
     #[arg(short = 'v', long = "version")]
     version: bool,
     #[arg(short = 'n', long = "name")]
@@ -22,7 +22,8 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let content = read_to_string(args.cargo_file_path).expect("failed to read file");
+    let content = read_to_string(args.cargo_file_path.unwrap_or("Cargo.toml".to_string()))
+        .expect("failed to read file");
 
     let table = content.parse::<Table>().unwrap();
 

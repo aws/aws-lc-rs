@@ -143,7 +143,7 @@ fn nonnegative_integer<'a>(
             if input.at_end() && first_byte < min_value {
                 return Err(error::Unspecified);
             }
-            let _ = input.read_bytes_to_end();
+            let _: untrusted::Input = input.read_bytes_to_end();
             Ok(())
         })
     }
@@ -171,7 +171,7 @@ fn nonnegative_integer<'a>(
                     // is set.
                     return Err(error::Unspecified);
                 }
-                let _ = input.read_bytes_to_end();
+                let _: untrusted::Input = input.read_bytes_to_end();
                 Ok(())
             })?;
             check_minimum(r, min_value)?;
@@ -183,7 +183,7 @@ fn nonnegative_integer<'a>(
             return Err(error::Unspecified);
         }
 
-        let _ = input.read_bytes_to_end();
+        let _: untrusted::Input = input.read_bytes_to_end();
         check_minimum(value, min_value)?;
         Ok(value)
     })
@@ -289,7 +289,7 @@ mod tests {
         }
         for &test_in in BAD_NONNEGATIVE_INTEGERS.iter() {
             with_bad_i(test_in, |input| {
-                let _ = small_nonnegative_integer(input)?;
+                let _: u8 = small_nonnegative_integer(input)?;
                 Ok(())
             });
         }
@@ -298,7 +298,7 @@ mod tests {
     #[test]
     fn test_positive_integer() {
         with_bad_i(ZERO_INTEGER, |input| {
-            let _ = positive_integer(input)?;
+            let _: Positive<'_> = positive_integer(input)?;
             Ok(())
         });
         for &(test_in, test_out) in GOOD_POSITIVE_INTEGERS.iter() {
@@ -315,7 +315,7 @@ mod tests {
         }
         for &test_in in BAD_NONNEGATIVE_INTEGERS.iter() {
             with_bad_i(test_in, |input| {
-                let _ = positive_integer(input)?;
+                let _: Positive<'_> = positive_integer(input)?;
                 Ok(())
             });
         }

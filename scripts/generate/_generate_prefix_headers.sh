@@ -38,7 +38,7 @@ GEN_INCLUDE_DIR="${CRATE_DIR}/generated-include"
 pushd "${AWS_LC_DIR}" &>/dev/null
 TEMP_FILE=$(mktemp)
 
-find "${SYMBOLS_DIR}" -type f -print0 | xargs -0 sort | uniq >"${TEMP_FILE}"
+find "${SYMBOLS_DIR}" -type f -print0 | env LC_ALL=C xargs -0 sort | uniq >"${TEMP_FILE}"
 go env -w GOPROXY=direct
 go run -mod readonly "${AWS_LC_DIR}"/util/make_prefix_headers.go -out "${GEN_INCLUDE_DIR}" "${TEMP_FILE}"
 rm "${TEMP_FILE}" &>/dev/null || true

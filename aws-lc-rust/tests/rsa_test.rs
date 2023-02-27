@@ -15,7 +15,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rust::signature::{KeyPair, RsaParameters};
+use aws_lc_rust::signature::{KeyPair, RsaParameters, RsaSubjectPublicKey};
 use aws_lc_rust::test::to_hex_upper;
 use aws_lc_rust::{rand, signature, signature::RsaKeyPair, test, test_file};
 
@@ -261,7 +261,7 @@ fn rsa_test_public_key_coverage() {
 
     // Test `Clone`.
     #[allow(let_underscore_drop)]
-    let _ = pubkey.clone();
+    let _: RsaSubjectPublicKey = pubkey.clone();
 
     #[cfg(feature = "ring-io")]
     assert_eq!(
