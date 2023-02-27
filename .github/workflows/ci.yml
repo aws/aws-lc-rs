@@ -64,13 +64,13 @@ jobs:
         working-directory: ${{ matrix.crate_dir }}
         run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
-  aws-lc-rust-apidiff:
-    name: aws-lc-rust apidiff
+  apidiff:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rust" ]
+        diff_target: ["branch", "published"]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -87,9 +87,23 @@ jobs:
         with:
           command: install
           args: cargo-public-api
-      - name: Perform API Diff
+      - name: Install rust-script
+        uses: actions-rs/cargo@v1.0.3
+        with:
+            command: install
+            args: rust-script
+      - name: Perform API Diff (Target Branch)
+        if: ${{ matrix.diff_target }} == "branch"
         working-directory: ${{ matrix.crate_dir }}
         run: cargo public-api diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+      - name: Perform API Diff (Published)
+        if: ${{ matrix.diff_target }} == "published"
+        working-directory: ${{ matrix.crate_dir }}
+        shell: bash
+        run: |
+          CRATE_NAME=$("${GITHUB_WORKSPACE}"/scripts/tools/cargo-dig.rs -n)
+          CRATE_VERSION=$(cargo search --limit 1 ${CRATE_NAME} | head -n 1 | sed -e 's/[^"]*"\([^"]*\)".*/\1/')
+          cargo public-api diff --deny changed --deny removed "${CRATE_VERSION}"
 
   #  dependency-review:
   #    runs-on: ubuntu-latest
