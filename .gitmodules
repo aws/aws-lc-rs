@@ -1,0 +1,8 @@
+[submodule "aws-lc-sys/aws-lc"]
+	path = aws-lc-sys/aws-lc
+	url = https://github.com/aws/aws-lc.git
+	branch = main
+[submodule "aws-lc-fips-sys/aws-lc"]
+	path = aws-lc-fips-sys/aws-lc
+	url = https://github.com/aws/aws-lc.git
+	branch = fips-2022-11-02
