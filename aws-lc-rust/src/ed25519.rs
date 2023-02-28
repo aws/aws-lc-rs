@@ -23,7 +23,8 @@ use zeroize::Zeroize;
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
 pub(crate) const ED25519_PRIVATE_KEY_LEN: usize = aws_lc::ED25519_PRIVATE_KEY_LEN as usize;
-pub(crate) const ED25519_PRIVATE_KEY_PREFIX_LEN: usize = 32;
+pub(crate) const ED25519_PRIVATE_KEY_SEED_LEN: usize =
+    aws_lc::ED25519_PRIVATE_KEY_SEED_LEN as usize;
 const ED25519_SIGNATURE_LEN: usize = aws_lc::ED25519_SIGNATURE_LEN as usize;
 const ED25519_SEED_LEN: usize = 32;
 
@@ -129,7 +130,7 @@ pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<*mut E
         EVP_PKEY_ED25519,
         null_mut(),
         private_key.assume_init().as_ptr(),
-        ED25519_PRIVATE_KEY_PREFIX_LEN,
+        ED25519_PRIVATE_KEY_SEED_LEN,
     ))
 }
 
@@ -269,7 +270,7 @@ impl Ed25519KeyPair {
             if 1 != EVP_PKEY_get_raw_public_key(*evp_pkey, public_key.as_mut_ptr(), &mut out_len) {
                 return Err(KeyRejected::wrong_algorithm());
             }
-            private_key[ED25519_PUBLIC_KEY_LEN..].copy_from_slice(&public_key);
+            private_key[ED25519_PRIVATE_KEY_SEED_LEN..].copy_from_slice(&public_key);
 
             let key_pair = Self {
                 private_key,
