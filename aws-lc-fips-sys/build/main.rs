@@ -237,6 +237,11 @@ fn main() {
     use crate::OutputLib::{Crypto, RustWrapper, Ssl};
     use crate::OutputLibType::Static;
 
+    if cfg!(not(target_os = "linux")) {
+        println!("\nFIPS is currently only supported on Linux.");
+        std::process::exit(1);
+    }
+
     let is_bindgen_enabled = cfg!(feature = "bindgen");
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
