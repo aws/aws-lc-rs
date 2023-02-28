@@ -5,3 +5,5 @@ test:
 	cargo test --release --all-targets
 
 ci: format clippy test api-diff-pub
+
+.PHONY: test ci
