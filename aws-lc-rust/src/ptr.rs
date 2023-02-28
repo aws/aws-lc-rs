@@ -185,6 +185,10 @@ use aws_lc::{
     BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_PKEY_free, RSA_free,
     BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, RSA,
 };
+
+// `OPENSSL_free` and the other `XXX_free` functions perform a zeroization of the memory when it's
+// freed. This is different than functions of the same name in OpenSSL which generally do not zero
+// memory.
 create_pointer!(u8, OPENSSL_free);
 create_pointer!(EC_GROUP, EC_GROUP_free);
 create_pointer!(EC_POINT, EC_POINT_free);
