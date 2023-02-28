@@ -44,3 +44,6 @@ fi
 "${SCRIPT_DIR}"/_test_supported_builds.sh "${SCRIPT_ARGS[@]}" -f
 
 popd &>/dev/null # ${REPO_ROOT}
+
+echo 'Generation Succeeded!'
+

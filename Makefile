@@ -1,6 +1,10 @@
 
+
 init-submodules:
 	git submodule update --init --recursive
+
+deinit-submodules:
+	git submodule deinit --all -f
 
 init: init-submodules
 	git config core.hooksPath .githooks
@@ -8,8 +12,13 @@ init: init-submodules
 	cargo install rust-script cargo-llvm-cov cargo-license public-api --locked
 	cargo install cargo-audit --features=fix --locked
 
-update-submodules:
-	git submodule update --init --recursive --remote --checkout
+update-aws-lc-fips-sys:
+	git submodule update --init --remote --checkout -- aws-lc-fips-sys/aws-lc
+
+update-aws-lc-sys:
+	git submodule update --init --remote --checkout -- aws-lc-sys/aws-lc
+
+update-submodules: update-aws-lc-fips-sys update-aws-lc-sys
 
 lic:
 	cargo +nightly license
@@ -29,4 +38,4 @@ api-diff-pub:
 clippy:
 	cargo +nightly clippy --all-targets -- -W clippy::all  -W clippy::pedantic
 
-.PHONY: init-submodules init update-submodules lic audit format api-diff-main api-diff-pub clippy
+.PHONY: init-aws-lc-sys init-aws-lc-fips-sys init-submodules init update-submodules lic audit format api-diff-main api-diff-pub clippy
