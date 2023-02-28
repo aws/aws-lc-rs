@@ -3,7 +3,7 @@
 
 use crate::ec::{validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 use crate::error::{KeyRejected, Unspecified};
-use crate::pkcs8::Document;
+use crate::pkcs8::{Document, Version};
 use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
@@ -121,7 +121,7 @@ impl EcdsaKeyPair {
         unsafe {
             let evp_pkey = generate_key(alg.0.id.nid())?;
 
-            evp_pkey.marshall_private_key()
+            evp_pkey.marshall_private_key(Version::V1)
         }
     }
 
