@@ -179,3 +179,14 @@ function validate_crate_version {
   echo
   echo "Generating crate with version: ${CRATE_VERSION}"
 }
+
+function submodule_commit_metadata {
+  local CRATE_DIR=$1
+  local REPO_ROOT
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+
+  pushd "${REPO_ROOT}" &>/dev/null
+  COMMIT_HASH=$(git submodule status -- ${CRATE_DIR}/aws-lc | sed -e 's/.\([0-9a-f]*\).*/\1/')
+  perl -pi -e "s/commit-hash .*/commit-hash = \"${COMMIT_HASH}\"/" ${CRATE_DIR}/Cargo.toml
+  popd &>/dev/null
+}

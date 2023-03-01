@@ -50,6 +50,8 @@ if [[ ${SKIP_TEST} -eq 1 ]]; then
 fi
 "${SCRIPT_DIR}"/_test_supported_builds.sh "${SCRIPT_ARGS[@]}"
 
+submodule_commit_metadata aws-lc-sys
+
 popd &>/dev/null # ${REPO_ROOT}
 
 echo 'Generation Succeeded!'

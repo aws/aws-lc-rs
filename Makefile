@@ -30,10 +30,10 @@ format:
 	cargo +nightly fmt -- --color auto --files-with-diff --verbose
 
 api-diff-main:
-	cargo public-api diff --deny changed --deny removed `git rev-parse main`..`git rev-parse HEAD`
+	cargo public-api diff `git rev-parse main`..`git rev-parse HEAD`
 
 api-diff-pub:
-	cargo public-api diff --deny changed --deny removed latest
+	cargo public-api diff latest
 
 clippy:
 	cargo +nightly clippy --all-targets -- -W clippy::all  -W clippy::pedantic

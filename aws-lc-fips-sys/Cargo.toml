@@ -63,3 +63,6 @@ dunce = "1.0"
 [dependencies]
 libc = "0.2"
 paste = "1.0.11"
+
+[package.metadata.aws-lc-fips-sys]
+commit-hash = "19e464c9b613a5f8583d837076da4838436c6ce0"
