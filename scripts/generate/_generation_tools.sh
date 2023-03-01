@@ -186,7 +186,7 @@ function submodule_commit_metadata {
   REPO_ROOT=$(git rev-parse --show-toplevel)
 
   pushd "${REPO_ROOT}" &>/dev/null
-  COMMIT_HASH=$(git submodule status -- ${CRATE_DIR}/aws-lc | cut -f 2 -d' ')
+  COMMIT_HASH=$(git submodule status -- ${CRATE_DIR}/aws-lc | sed -e 's/.\([0-9a-f]*\).*/\1/')
   perl -pi -e "s/commit-hash .*/commit-hash = \"${COMMIT_HASH}\"/" ${CRATE_DIR}/Cargo.toml
   popd &>/dev/null
 }
