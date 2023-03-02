@@ -1,6 +1,7 @@
-[![Crates.io](https://img.shields.io/crates/v/aws-lc-rust.svg)](https://crates.io/crates/aws-lc-rust)
-
 # AWS Libcrypto for Rust (aws-lc-rust)
+
+[![Crates.io](https://img.shields.io/crates/v/aws-lc-rust.svg)](https://crates.io/crates/aws-lc-rust)
+[![GitHub](https://img.shields.io/badge/GitHub-awslabs%2Faws--lc--rust-blue)](https://github.com/awslabs/aws-lc-rust)
 
 *ring*-compatible crypto library using the cryptographic operations provided by
 [*AWS-LC*](https://github.com/awslabs/aws-lc).
@@ -36,6 +37,16 @@ and Linux, both x86-64 and aarch64.
 parsing of v1 or v2 PKCS#8 documents. If a v2 encoded key is provided to either function,
 public key component, if present, will be verified to match the one derived from the encoded
 private key.
+
+## Motivation
+
+As there exists no standard Rust cryptographic API, we chose the Rust cryptographic library ring (v0.16) as our target API to
+build higher-level Rust bindings on top of *AWS-LC*. *ring* is one of the most used cryptographic APIs in the Rust community,
+but lacked support for alternate cryptographic implementations. Our desire to build a Rust API on top of AWS-LC is to be able
+to offer a FIPS validated Rust option for our customers. AWS-LC has been validated by an accredited lab,
+and was submitted to NIST on 2021-12-23. *aws-lc-rust* adds to the Rust cryptographic landscape with features such as an
+experimental FIPS operation mode, a stable API, and a process for
+[vulnerability reporting and disclosure](https://aws.amazon.com/security/vulnerability-reporting/).
 
 
 ## Questions, Feedback and Contributing
