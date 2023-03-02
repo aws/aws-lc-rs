@@ -325,5 +325,5 @@ fn main() {
         println!("cargo:include={}", include_path.display());
     }
 
-    println!("cargo:rerun-if-changed=build/");
+    println!("cargo:rerun-if-changed=builder/");
 }
