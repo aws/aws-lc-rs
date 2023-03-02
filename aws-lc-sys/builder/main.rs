@@ -326,4 +326,5 @@ fn main() {
     }
 
     println!("cargo:rerun-if-changed=builder/");
+    println!("cargo:rerun-if-changed=aws-lc/");
 }
