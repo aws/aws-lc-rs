@@ -30,6 +30,17 @@ Since this crate builds AWS-LC as a native library, all build tools needed to bu
 
 If you use a different build combination for FIPS and would like us to support it, please open an issue to us at [AWS-LC](https://github.com/aws/aws-lc/issues/new?assignees=&labels=&template=build-issue.md&title=).
 
+## Security Notification Process
+
+If you discover a potential security issue in *AWS-LC* or *aws-lc-fips-sys*, we ask that you notify AWS
+Security via our
+[vulnerability reporting page](https://aws.amazon.com/security/vulnerability-reporting/).
+Please do **not** create a public GitHub issue.
+
+If you package or distribute *aws-lc-fips-sys*, or use *aws-lc-fips-sys* as part of a large multi-user service,
+you may be eligible for pre-notification of future *aws-lc-fips-sys* releases.
+Please contact aws-lc-pre-notifications@amazon.com.
+
 ## Contribution
 
 See contributing file at [AWS-LC](https://github.com/aws/aws-lc/blob/main/CONTRIBUTING.md)

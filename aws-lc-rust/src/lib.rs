@@ -36,6 +36,16 @@
 //! public key component, if present, will be verified to match the one derived from the encoded
 //! private key.
 //!
+//! # Motivation
+//!
+//! As there exists no standard Rust cryptographic API, we chose the Rust cryptographic library ring (v0.16) as our target API to
+//! build higher-level Rust bindings on top of *AWS-LC*. *ring* is one of the most used cryptographic APIs in the Rust community,
+//! but lacked support for alternate cryptographic implementations. Our desire to build a Rust API on top of AWS-LC is to be able
+//! to offer a FIPS validated Rust option for our customers. AWS-LC has been validated by an accredited lab,
+//! and was submitted to NIST on 2021-12-23. *aws-lc-rust* adds to the Rust cryptographic landscape with features such as an
+//! experimental FIPS operation mode, a stable API, and a process for
+//! [vulnerability reporting and disclosure](https://aws.amazon.com/security/vulnerability-reporting/).
+//!
 
 #![warn(missing_docs)]
 
