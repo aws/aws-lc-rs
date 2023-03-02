@@ -40,7 +40,7 @@ include = [
     "/aws-lc/util/ar/**/*.go",
     "/aws-lc/util/godeps.go",
     "/CMakeLists.txt",
-    "/build/**/*.rs",
+    "/builder/**/*.rs",
     "/Cargo.toml",
     "/generated-include/**",
     "/include/**",
@@ -48,7 +48,7 @@ include = [
     "/src/**/*.rs",
     "/tests/**/*.rs",
 ]
-build = "build/main.rs"
+build = "builder/main.rs"
 
 [features]
 asan = []

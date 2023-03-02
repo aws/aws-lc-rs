@@ -95,15 +95,7 @@ fn get_platform_output_path() -> PathBuf {
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn prefix_string() -> String {
-    format!("aws_lc_fips_{}", VERSION.to_string().replace('.', "_"))
-}
-
-fn test_perl_command() -> bool {
-    test_command("perl".as_ref(), &["--version".as_ref()])
-}
-
-fn test_go_command() -> bool {
-    test_command("go".as_ref(), &["version".as_ref()])
+    format!("aws_lc_{}", VERSION.to_string().replace('.', "_"))
 }
 
 #[cfg(feature = "bindgen")]
@@ -153,9 +145,12 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
         );
     }
 
+    // Build flags that minimize our crate size.
     cmake_cfg.define("BUILD_TESTING", "OFF");
     cmake_cfg.define("BUILD_LIBSSL", "ON");
-    cmake_cfg.define("FIPS", "1");
+    // Build flags that minimize our dependencies.
+    cmake_cfg.define("DISABLE_PERL", "ON");
+    cmake_cfg.define("DISABLE_GO", "ON");
 
     if cfg!(feature = "asan") {
         env::set_var("CC", "/usr/bin/clang");
@@ -237,11 +232,6 @@ fn main() {
     use crate::OutputLib::{Crypto, RustWrapper, Ssl};
     use crate::OutputLibType::Static;
 
-    if cfg!(not(target_os = "linux")) {
-        println!("\nFIPS is currently only supported on Linux.");
-        std::process::exit(1);
-    }
-
     let is_bindgen_enabled = cfg!(feature = "bindgen");
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
@@ -250,22 +240,17 @@ fn main() {
 
     let pregenerated = !is_bindgen_enabled || is_internal_generate;
 
+    cfg_bindgen_platform!(linux_x86, "linux", "x86", pregenerated);
     cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", pregenerated);
     cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", pregenerated);
+    cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", pregenerated);
 
-    if !(linux_x86_64 || linux_aarch64) {
+    if !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
         emit_rustc_cfg("not_pregenerated");
     }
 
     let mut missing_dependency = false;
-    if !test_go_command() {
-        eprintln!("Missing dependency: go-lang is required for FIPS.");
-        missing_dependency = true;
-    }
-    if !test_perl_command() {
-        eprintln!("Missing dependency: perl is required for FIPS.");
-        missing_dependency = true;
-    }
+
     if let Some(cmake_cmd) = find_cmake_command() {
         env::set_var("CMAKE", cmake_cmd);
     } else {
@@ -340,5 +325,6 @@ fn main() {
         println!("cargo:include={}", include_path.display());
     }
 
-    println!("cargo:rerun-if-changed=build/");
+    println!("cargo:rerun-if-changed=builder/");
+    println!("cargo:rerun-if-changed=aws-lc/");
 }
