@@ -19,6 +19,12 @@ Enable feature to access the  `io`  module.
 Enable feature to preserve compatibility with ring's `signature::VerificationAlgorithm::verify`
 function. This adds a requirement on `untrusted = "0.7.1"`.
 
+##### - fips ####
+**EXPERIMENTAL** Enable this feature to have aws-lc-rust use the
+[*aws-lc-fips-sys*](https://crates.io/crates/aws-lc-fips-sys) crate for the cryptographic
+implementations. The *aws-lc-fips-sys* crate provides bindings to the FIPS variant of
+[*AWS-LC*](https://github.com/aws/aws-lc).
+
 ##### - asan ####
 Performs an "address sanitizer" build. This can be used to help detect memory leaks. See the
 ["Address Sanitizer" section](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html#addresssanitizer)
