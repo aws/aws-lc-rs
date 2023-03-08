@@ -37,6 +37,12 @@ pub(crate) fn get_generated_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("generated-include")
 }
 
+pub(crate) fn get_aws_lc_sys_includes_path() -> Option<Vec<PathBuf>> {
+    env::var("AWS_LC_SYS_INCLUDES")
+        .map(|colon_delim_paths| colon_delim_paths.split(':').map(PathBuf::from).collect())
+        .ok()
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum OutputLib {
@@ -323,6 +329,11 @@ fn main() {
         get_aws_lc_include_path(&manifest_dir),
     ] {
         println!("cargo:include={}", include_path.display());
+    }
+    if let Some(include_paths) = get_aws_lc_sys_includes_path() {
+        for path in include_paths {
+            println!("cargo:include={}", path.display());
+        }
     }
 
     println!("cargo:rerun-if-changed=builder/");

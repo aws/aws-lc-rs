@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 // Modifications Copyright Amazon.com, Inc. or its affiliates. See GitHub history for details.
 
-use crate::{get_aws_lc_include_path, get_generated_include_path, get_rust_include_path};
+use crate::{
+    get_aws_lc_include_path, get_aws_lc_sys_includes_path, get_generated_include_path,
+    get_rust_include_path,
+};
 use bindgen::callbacks::{ItemInfo, ParseCallbacks};
 use std::fmt::Debug;
 use std::path::Path;
@@ -39,6 +42,13 @@ fn prepare_clang_args(manifest_dir: &Path, build_prefix: &Option<&str>) -> Vec<S
         "-I".to_string(),
         get_aws_lc_include_path(manifest_dir).display().to_string(),
     ];
+
+    if let Some(include_paths) = get_aws_lc_sys_includes_path() {
+        for path in include_paths {
+            clang_args.push("-I".to_string());
+            clang_args.push(path.display().to_string());
+        }
+    }
 
     if let Some(prefix) = build_prefix {
         clang_args.push(format!("-DBORINGSSL_PREFIX={}", prefix));
