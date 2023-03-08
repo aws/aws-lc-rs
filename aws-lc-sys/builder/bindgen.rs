@@ -43,9 +43,11 @@ fn prepare_clang_args(manifest_dir: &Path, build_prefix: &Option<&str>) -> Vec<S
         get_aws_lc_include_path(manifest_dir).display().to_string(),
     ];
 
-    if let Some(include_path) = get_aws_lc_sys_includes_path() {
-        clang_args.push("-I".to_string());
-        clang_args.push(include_path.display().to_string());
+    if let Some(include_paths) = get_aws_lc_sys_includes_path() {
+        for path in include_paths {
+            clang_args.push("-I".to_string());
+            clang_args.push(path.display().to_string());
+        }
     }
 
     if let Some(prefix) = build_prefix {
