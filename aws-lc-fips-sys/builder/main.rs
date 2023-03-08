@@ -37,6 +37,12 @@ pub(crate) fn get_generated_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("generated-include")
 }
 
+pub(crate) fn get_aws_lc_fips_sys_includes_path() -> Option<PathBuf> {
+    env::var("AWS_LC_FIPS_SYS_INCLUDES")
+        .map(|path| PathBuf::from(path))
+        .ok()
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum OutputLib {
@@ -337,6 +343,9 @@ fn main() {
         get_generated_include_path(&manifest_dir),
         get_aws_lc_include_path(&manifest_dir),
     ] {
+        println!("cargo:include={}", include_path.display());
+    }
+    if let Some(include_path) = get_aws_lc_fips_sys_includes_path() {
         println!("cargo:include={}", include_path.display());
     }
 
