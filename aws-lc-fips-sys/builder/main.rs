@@ -38,9 +38,7 @@ pub(crate) fn get_generated_include_path(manifest_dir: &Path) -> PathBuf {
 }
 
 pub(crate) fn get_aws_lc_fips_sys_includes_path() -> Option<PathBuf> {
-    env::var("AWS_LC_FIPS_SYS_INCLUDES")
-        .map(|path| PathBuf::from(path))
-        .ok()
+    env::var("AWS_LC_FIPS_SYS_INCLUDES").map(PathBuf::from).ok()
 }
 
 #[allow(dead_code)]
