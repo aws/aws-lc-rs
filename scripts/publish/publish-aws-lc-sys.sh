@@ -12,7 +12,7 @@ source "${SCRIPT_DIR}"/_publish_tools.sh
 
 publish_options "$@"
 
-pushd "${CRATE_DIR}"
+pushd "${CRATE_DIR}" &>/dev/null
 run_prepublish_checks -c "${RELATIVE_CRATE_PATH}"
 publish_crate "${RELATIVE_CRATE_PATH}" ${PUBLISH}
-popd
+popd &>/dev/null
