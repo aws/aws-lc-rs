@@ -1,5 +1,5 @@
-// Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0 or ISC
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aead::{Nonce, NonceSequence, NONCE_LEN};
 use crate::error::Unspecified;

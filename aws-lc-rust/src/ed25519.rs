@@ -1,4 +1,5 @@
-// Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+// Copyright 2015-2016 Brian Smith.
+// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::error::{KeyRejected, Unspecified};

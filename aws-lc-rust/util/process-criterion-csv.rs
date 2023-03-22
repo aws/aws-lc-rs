@@ -15,6 +15,9 @@
 //! itertools = "0.10.5"
 //! ```
 
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::io::Write;

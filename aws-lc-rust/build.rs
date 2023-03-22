@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
 fn main() {
     let mutually_exclusives_count = vec![cfg!(feature = "non-fips"), cfg!(feature = "fips")]
         .iter()

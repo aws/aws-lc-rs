@@ -5,6 +5,9 @@
 //! clap = { version = "4.1.6", features = ["derive"] }
 //! ```
 
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
 use clap::Parser;
 use std::fs::read_to_string;
 use toml::Table;
