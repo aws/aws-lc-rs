@@ -49,6 +49,7 @@ fn agreement_traits() {
         "pubkey_debug: {pubkey_debug}"
     );
 
+    #[allow(clippy::redundant_clone)]
     let pubkey_clone = public_key.clone();
     assert_eq!(public_key.as_ref(), pubkey_clone.as_ref());
     assert_eq!(pubkey_debug, format!("{:?}", &pubkey_clone));
@@ -84,6 +85,7 @@ fn agreement_traits() {
 
     let unparsed_public_key =
         agreement::UnparsedPublicKey::new(&agreement::X25519, Vec::from(bytes));
+    #[allow(clippy::redundant_clone)]
     let unparsed_pubkey_clone = unparsed_public_key.clone();
     assert_eq!(
         format!("{unparsed_public_key:?}"),
