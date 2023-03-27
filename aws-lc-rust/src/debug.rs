@@ -1,4 +1,5 @@
 // Copyright 2018 Trent Clarke.
+// SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
