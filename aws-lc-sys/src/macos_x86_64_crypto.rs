@@ -109,7 +109,7 @@ pub const AWSLC_VERSION_NAME: &[u8; 7usize] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
 pub const AWSLC_API_VERSION: i32 = 20;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 6usize] = b"1.4.0\0";
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 6usize] = b"1.5.1\0";
 pub const ERR_FLAG_STRING: i32 = 1;
 pub const ERR_FLAG_MALLOCED: i32 = 2;
 pub const ERR_R_FATAL: i32 = 64;
@@ -362,6 +362,9 @@ pub const B_ASN1_UTF8STRING: i32 = 8192;
 pub const B_ASN1_UTCTIME: i32 = 16384;
 pub const B_ASN1_GENERALIZEDTIME: i32 = 32768;
 pub const B_ASN1_SEQUENCE: i32 = 65536;
+pub const ASN1_BOOLEAN_FALSE: i32 = 0;
+pub const ASN1_BOOLEAN_TRUE: i32 = 255;
+pub const ASN1_BOOLEAN_NONE: i32 = -1;
 pub const ASN1_STRING_FLAG_BITS_LEFT: i32 = 8;
 pub const MBSTRING_FLAG: i32 = 4096;
 pub const MBSTRING_UTF8: i32 = 4096;
@@ -8623,13 +8626,13 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_ASN1_UTCTIME_set"]
-    pub fn ASN1_UTCTIME_set(s: *mut ASN1_UTCTIME, t: time_t) -> *mut ASN1_UTCTIME;
+    pub fn ASN1_UTCTIME_set(s: *mut ASN1_UTCTIME, posix_time: i64) -> *mut ASN1_UTCTIME;
 }
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_ASN1_UTCTIME_adj"]
     pub fn ASN1_UTCTIME_adj(
         s: *mut ASN1_UTCTIME,
-        t: time_t,
+        posix_time: i64,
         offset_day: ::std::os::raw::c_int,
         offset_sec: ::std::os::raw::c_long,
     ) -> *mut ASN1_UTCTIME;
@@ -8680,14 +8683,14 @@ extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_ASN1_GENERALIZEDTIME_set"]
     pub fn ASN1_GENERALIZEDTIME_set(
         s: *mut ASN1_GENERALIZEDTIME,
-        t: time_t,
+        posix_time: i64,
     ) -> *mut ASN1_GENERALIZEDTIME;
 }
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_ASN1_GENERALIZEDTIME_adj"]
     pub fn ASN1_GENERALIZEDTIME_adj(
         s: *mut ASN1_GENERALIZEDTIME,
-        t: time_t,
+        posix_time: i64,
         offset_day: ::std::os::raw::c_int,
         offset_sec: ::std::os::raw::c_long,
     ) -> *mut ASN1_GENERALIZEDTIME;
@@ -8733,14 +8736,18 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_ASN1_TIME_set_posix"]
+    pub fn ASN1_TIME_set_posix(s: *mut ASN1_TIME, posix_time: i64) -> *mut ASN1_TIME;
+}
+extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_ASN1_TIME_set"]
-    pub fn ASN1_TIME_set(s: *mut ASN1_TIME, t: time_t) -> *mut ASN1_TIME;
+    pub fn ASN1_TIME_set(s: *mut ASN1_TIME, time: time_t) -> *mut ASN1_TIME;
 }
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_ASN1_TIME_adj"]
     pub fn ASN1_TIME_adj(
         s: *mut ASN1_TIME,
-        t: time_t,
+        posix_time: i64,
         offset_day: ::std::os::raw::c_int,
         offset_sec: ::std::os::raw::c_long,
     ) -> *mut ASN1_TIME;
@@ -10589,6 +10596,10 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_CBS_get_until_first"]
     pub fn CBS_get_until_first(cbs: *mut CBS, out: *mut CBS, c: u8) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_CBS_get_u64_decimal"]
+    pub fn CBS_get_u64_decimal(cbs: *mut CBS, out: *mut u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_CBS_get_asn1"]
@@ -12567,8 +12578,32 @@ extern "C" {
     pub fn OPENSSL_strnlen(s: *const ::std::os::raw::c_char, len: usize) -> usize;
 }
 extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_OPENSSL_isalpha"]
+    pub fn OPENSSL_isalpha(c: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_OPENSSL_isdigit"]
+    pub fn OPENSSL_isdigit(c: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_OPENSSL_isxdigit"]
+    pub fn OPENSSL_isxdigit(c: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_OPENSSL_fromxdigit"]
+    pub fn OPENSSL_fromxdigit(out: *mut u8, c: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_OPENSSL_isalnum"]
+    pub fn OPENSSL_isalnum(c: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+}
+extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_OPENSSL_tolower"]
     pub fn OPENSSL_tolower(c: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_OPENSSL_isspace"]
+    pub fn OPENSSL_isspace(c: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_OPENSSL_strcasecmp"]
@@ -19077,10 +19112,6 @@ impl rsa_st {
         __bindgen_bitfield_unit
     }
 }
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_0_5_0_allow_rsa_keys_d_gt_n"]
-    pub fn allow_rsa_keys_d_gt_n();
-}
 pub type sk_X509_free_func = ::std::option::Option<unsafe extern "C" fn(arg1: *mut X509)>;
 pub type sk_X509_copy_func =
     ::std::option::Option<unsafe extern "C" fn(arg1: *const X509) -> *mut X509>;
@@ -21243,6 +21274,10 @@ extern "C" {
     pub fn X509_cmp_time(s: *const ASN1_TIME, t: *mut time_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_X509_cmp_time_posix"]
+    pub fn X509_cmp_time_posix(s: *const ASN1_TIME, t: i64) -> ::std::os::raw::c_int;
+}
+extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_X509_cmp_current_time"]
     pub fn X509_cmp_current_time(s: *const ASN1_TIME) -> ::std::os::raw::c_int;
 }
@@ -22915,6 +22950,14 @@ extern "C" {
     );
 }
 extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_X509_STORE_CTX_set_time_posix"]
+    pub fn X509_STORE_CTX_set_time_posix(
+        ctx: *mut X509_STORE_CTX,
+        flags: ::std::os::raw::c_ulong,
+        t: i64,
+    );
+}
+extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_X509_STORE_CTX_set_verify_cb"]
     pub fn X509_STORE_CTX_set_verify_cb(
         ctx: *mut X509_STORE_CTX,
@@ -23009,6 +23052,10 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_X509_VERIFY_PARAM_set_time"]
     pub fn X509_VERIFY_PARAM_set_time(param: *mut X509_VERIFY_PARAM, t: time_t);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_5_0_X509_VERIFY_PARAM_set_time_posix"]
+    pub fn X509_VERIFY_PARAM_set_time_posix(param: *mut X509_VERIFY_PARAM, t: i64);
 }
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_X509_VERIFY_PARAM_add0_policy"]
@@ -23825,7 +23872,7 @@ extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_PEM_write_bio_PKCS8PrivateKey_nid"]
     pub fn PEM_write_bio_PKCS8PrivateKey_nid(
         bp: *mut BIO,
-        x: *mut EVP_PKEY,
+        x: *const EVP_PKEY,
         nid: ::std::os::raw::c_int,
         kstr: *mut ::std::os::raw::c_char,
         klen: ::std::os::raw::c_int,
@@ -23837,7 +23884,7 @@ extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_PEM_write_bio_PKCS8PrivateKey"]
     pub fn PEM_write_bio_PKCS8PrivateKey(
         arg1: *mut BIO,
-        arg2: *mut EVP_PKEY,
+        arg2: *const EVP_PKEY,
         arg3: *const EVP_CIPHER,
         arg4: *mut ::std::os::raw::c_char,
         arg5: ::std::os::raw::c_int,
@@ -23849,7 +23896,7 @@ extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_i2d_PKCS8PrivateKey_bio"]
     pub fn i2d_PKCS8PrivateKey_bio(
         bp: *mut BIO,
-        x: *mut EVP_PKEY,
+        x: *const EVP_PKEY,
         enc: *const EVP_CIPHER,
         kstr: *mut ::std::os::raw::c_char,
         klen: ::std::os::raw::c_int,
@@ -23861,7 +23908,7 @@ extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_i2d_PKCS8PrivateKey_nid_bio"]
     pub fn i2d_PKCS8PrivateKey_nid_bio(
         bp: *mut BIO,
-        x: *mut EVP_PKEY,
+        x: *const EVP_PKEY,
         nid: ::std::os::raw::c_int,
         kstr: *mut ::std::os::raw::c_char,
         klen: ::std::os::raw::c_int,
@@ -23882,7 +23929,7 @@ extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_i2d_PKCS8PrivateKey_fp"]
     pub fn i2d_PKCS8PrivateKey_fp(
         fp: *mut FILE,
-        x: *mut EVP_PKEY,
+        x: *const EVP_PKEY,
         enc: *const EVP_CIPHER,
         kstr: *mut ::std::os::raw::c_char,
         klen: ::std::os::raw::c_int,
@@ -23894,7 +23941,7 @@ extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_i2d_PKCS8PrivateKey_nid_fp"]
     pub fn i2d_PKCS8PrivateKey_nid_fp(
         fp: *mut FILE,
-        x: *mut EVP_PKEY,
+        x: *const EVP_PKEY,
         nid: ::std::os::raw::c_int,
         kstr: *mut ::std::os::raw::c_char,
         klen: ::std::os::raw::c_int,
@@ -23906,7 +23953,7 @@ extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_PEM_write_PKCS8PrivateKey_nid"]
     pub fn PEM_write_PKCS8PrivateKey_nid(
         fp: *mut FILE,
-        x: *mut EVP_PKEY,
+        x: *const EVP_PKEY,
         nid: ::std::os::raw::c_int,
         kstr: *mut ::std::os::raw::c_char,
         klen: ::std::os::raw::c_int,
@@ -23927,7 +23974,7 @@ extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_PEM_write_PKCS8PrivateKey"]
     pub fn PEM_write_PKCS8PrivateKey(
         fp: *mut FILE,
-        x: *mut EVP_PKEY,
+        x: *const EVP_PKEY,
         enc: *const EVP_CIPHER,
         kstr: *mut ::std::os::raw::c_char,
         klen: ::std::os::raw::c_int,
@@ -24662,21 +24709,6 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_TRUST_TOKEN_ISSUER_redeem"]
     pub fn TRUST_TOKEN_ISSUER_redeem(
-        ctx: *const TRUST_TOKEN_ISSUER,
-        out: *mut *mut u8,
-        out_len: *mut usize,
-        out_token: *mut *mut TRUST_TOKEN,
-        out_client_data: *mut *mut u8,
-        out_client_data_len: *mut usize,
-        out_redemption_time: *mut u64,
-        request: *const u8,
-        request_len: usize,
-        lifetime: u64,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_0_5_0_TRUST_TOKEN_ISSUER_redeem_raw"]
-    pub fn TRUST_TOKEN_ISSUER_redeem_raw(
         ctx: *const TRUST_TOKEN_ISSUER,
         out_public: *mut u32,
         out_private: *mut u8,
@@ -26778,13 +26810,6 @@ extern "C" {
     pub fn GENERAL_NAME_dup(a: *mut GENERAL_NAME) -> *mut GENERAL_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_0_5_0_GENERAL_NAME_cmp"]
-    pub fn GENERAL_NAME_cmp(
-        a: *const GENERAL_NAME,
-        b: *const GENERAL_NAME,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_i2v_GENERAL_NAME"]
     pub fn i2v_GENERAL_NAME(
         method: *const X509V3_EXT_METHOD,
@@ -26892,10 +26917,6 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_EDIPARTYNAME_it"]
     pub static EDIPARTYNAME_it: ASN1_ITEM;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_0_5_0_OTHERNAME_cmp"]
-    pub fn OTHERNAME_cmp(a: *mut OTHERNAME, b: *mut OTHERNAME) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}_aws_lc_0_5_0_GENERAL_NAME_set0_value"]

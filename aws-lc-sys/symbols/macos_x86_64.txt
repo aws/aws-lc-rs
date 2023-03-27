@@ -123,6 +123,7 @@ ASN1_TIME_it
 ASN1_TIME_new
 ASN1_TIME_print
 ASN1_TIME_set
+ASN1_TIME_set_posix
 ASN1_TIME_set_string
 ASN1_TIME_to_generalizedtime
 ASN1_TIME_to_posix
@@ -538,6 +539,7 @@ CBS_get_u24_length_prefixed
 CBS_get_u32
 CBS_get_u32le
 CBS_get_u64
+CBS_get_u64_decimal
 CBS_get_u64le
 CBS_get_u8
 CBS_get_u8_length_prefixed
@@ -894,6 +896,8 @@ ENGINE_new
 ENGINE_register_all_complete
 ENGINE_set_ECDSA_method
 ENGINE_set_RSA_method
+ERR_GET_LIB
+ERR_GET_REASON
 ERR_SAVE_STATE_free
 ERR_add_error_data
 ERR_add_error_dataf
@@ -1469,6 +1473,7 @@ OPENSSL_config
 OPENSSL_cpucap_initialized
 OPENSSL_cpuid_setup
 OPENSSL_free
+OPENSSL_fromxdigit
 OPENSSL_gmtime
 OPENSSL_gmtime_adj
 OPENSSL_gmtime_diff
@@ -1476,6 +1481,11 @@ OPENSSL_hash32
 OPENSSL_ia32cap_P
 OPENSSL_init_crypto
 OPENSSL_init_ssl
+OPENSSL_isalnum
+OPENSSL_isalpha
+OPENSSL_isdigit
+OPENSSL_isspace
+OPENSSL_isxdigit
 OPENSSL_lh_delete
 OPENSSL_lh_doall_arg
 OPENSSL_lh_free
@@ -1504,7 +1514,6 @@ OPENSSL_strnlen
 OPENSSL_timegm
 OPENSSL_tm_to_posix
 OPENSSL_tolower
-OTHERNAME_cmp
 OTHERNAME_free
 OTHERNAME_it
 OTHERNAME_new
@@ -2357,7 +2366,6 @@ TRUST_TOKEN_ISSUER_issue
 TRUST_TOKEN_ISSUER_new
 TRUST_TOKEN_ISSUER_redeem
 TRUST_TOKEN_ISSUER_redeem_over_message
-TRUST_TOKEN_ISSUER_redeem_raw
 TRUST_TOKEN_ISSUER_set_metadata_key
 TRUST_TOKEN_ISSUER_set_srr_key
 TRUST_TOKEN_PRETOKEN_free
@@ -2402,6 +2410,7 @@ X509V3_add_standard_extensions
 X509V3_add_value
 X509V3_add_value_bool
 X509V3_add_value_int
+X509V3_bool_from_string
 X509V3_conf_free
 X509V3_extensions_print
 X509V3_get_d2i
@@ -2671,6 +2680,7 @@ X509_STORE_CTX_set_ex_data
 X509_STORE_CTX_set_flags
 X509_STORE_CTX_set_purpose
 X509_STORE_CTX_set_time
+X509_STORE_CTX_set_time_posix
 X509_STORE_CTX_set_trust
 X509_STORE_CTX_set_verify_cb
 X509_STORE_CTX_trusted_stack
@@ -2753,6 +2763,7 @@ X509_VERIFY_PARAM_set_flags
 X509_VERIFY_PARAM_set_hostflags
 X509_VERIFY_PARAM_set_purpose
 X509_VERIFY_PARAM_set_time
+X509_VERIFY_PARAM_set_time_posix
 X509_VERIFY_PARAM_set_trust
 X509_VERIFY_PARAM_table_cleanup
 X509_add1_ext_i2d
@@ -2775,6 +2786,7 @@ X509_check_trust
 X509_cmp
 X509_cmp_current_time
 X509_cmp_time
+X509_cmp_time_posix
 X509_delete_ext
 X509_digest
 X509_dup
@@ -2968,7 +2980,6 @@ aesni_cbc_sha1_enc
 aesni_cbc_sha256_enc
 aesni_gcm_decrypt
 aesni_gcm_encrypt
-allow_rsa_keys_d_gt_n
 asn1_bit_string_length
 asn1_do_adb
 asn1_enc_free
