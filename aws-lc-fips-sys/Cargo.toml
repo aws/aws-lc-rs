@@ -54,6 +54,7 @@ build = "builder/main.rs"
 asan = []
 bindgen = ["dep:bindgen"] # Generate the bindings on the targetted platform as a fallback mechanism.
 ssl = []
+dynamic = []
 
 [build-dependencies]
 cmake = "0.1.48"
