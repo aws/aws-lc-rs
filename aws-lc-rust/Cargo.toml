@@ -17,6 +17,7 @@ ring-sig-verify = ["dep:untrusted"]
 ring-benchmarks = []
 bindgen = ["aws-lc-sys?/bindgen", "aws-lc-fips-sys?/bindgen"]
 asan = ["aws-lc-sys?/asan", "aws-lc-fips-sys?/asan"]
+dynamic = ["aws-lc-sys?/dynamic", "aws-lc-fips-sys?/dynamic"]
 
 # require non-FIPS
 non-fips = ["aws-lc-sys"]
