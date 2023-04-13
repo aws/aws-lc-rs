@@ -6,7 +6,7 @@ set -e
 
 SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 PUBLISH=0
-RELATIVE_CRATE_PATH=aws-lc-rust
+RELATIVE_CRATE_PATH=aws-lc-rs
 
 source "${SCRIPT_DIR}"/_publish_tools.sh
 
