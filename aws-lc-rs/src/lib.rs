@@ -51,12 +51,12 @@
 //!
 //! Rust developers increasingly need to deploy applications that meet US and Canadian government
 //! cryptographic requirements. We evaluated how to deliver FIPS validated cryptography in idiomatic
-//! and performant Rust, built around our AWS-LC offering. We found the popular ring (v0.16) library
-//! fulfilled much of the cryptographic needs in the Rust community, but it did not meet the needs
-//! of developers with FIPS requirements. Our intention is to contribute a drop-in replacement for
-//! ring that provides FIPS and is compatible with the ring API. Rust developers with prescribed
-//! cryptographic requirements can seamlessly integrate aws-lc-rs into their applications and
-//! deploy them into AWS Regions.
+//! and performant Rust, built around our AWS-LC offering. We found that the popular ring (v0.16)
+//! library fulfilled much of the cryptographic needs in the Rust community, but it did not meet the
+//! needs of developers with FIPS requirements. Our intention is to contribute a drop-in replacement
+//! for ring that provides FIPS support and is compatible with the ring API. Rust developers with
+//! prescribed cryptographic requirements can seamlessly integrate aws-lc-rs into their applications
+//! and deploy them into AWS Regions.
 //!
 
 #![warn(missing_docs)]
