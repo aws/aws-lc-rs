@@ -43,7 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rust" ]
+        crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rs" ]
         features:
           - ""
           - "--features fips"
@@ -72,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rust" ]
+        crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rs" ]
         diff_target: [ "branch", "published" ]
     steps:
       - uses: actions/checkout@v3
@@ -195,8 +195,8 @@ jobs:
         env:
           RUSTC_WRAPPER: ""
 
-  aws-lc-rust-test:
-    name: aws-lc-rust tests
+  aws-lc-rs-test:
+    name: aws-lc-rs tests
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -237,17 +237,17 @@ jobs:
           args: cross
 
       - name: Run cargo test
-        working-directory: ./aws-lc-rust
+        working-directory: ./aws-lc-rs
         if: ${{ matrix.target == 'native' }}
         run: cargo test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
 
       - name: Run cargo cross test
-        working-directory: ./aws-lc-rust
+        working-directory: ./aws-lc-rs
         if: ${{ matrix.target != 'native' }}
         run: cross test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
 
   fips-test:
-    name: aws-lc-rust fips-tests
+    name: aws-lc-rs fips-tests
     runs-on: ${{ matrix.os }}
     env:
       CC: clang
@@ -274,11 +274,11 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
       - name: Run cargo test
-        working-directory: ./aws-lc-rust
+        working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
 
-  aws-lc-rust-coverage:
-    name: aws-ls-rust coverage
+  aws-lc-rs-coverage:
+    name: aws-ls-rs coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -303,7 +303,7 @@ jobs:
       # account. Using --html can give us more insight which regions are missing
       # coverage immediately.
       - name: Run coverage
-        working-directory: ./aws-lc-rust
+        working-directory: ./aws-lc-rs
         run: cargo llvm-cov --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-sys/*"
 
   mirai-analysis:
@@ -343,12 +343,12 @@ jobs:
           rm -rf ${MIRAI_TMP_SRC}
 
       - name: Run MIRAI
-        working-directory: ./aws-lc-rust
+        working-directory: ./aws-lc-rs
         run: |
           cargo mirai
 
-  aws-lc-rust-asan:
-    name: aws-lc-rust asan
+  aws-lc-rs-asan:
+    name: aws-lc-rs asan
     strategy:
       matrix:
         args:
@@ -372,7 +372,7 @@ jobs:
           ASAN_OPTIONS: detect_leaks=1
           RUSTFLAGS: -Zsanitizer=address
           RUSTDOCFLAGS: -Zsanitizer=address
-        working-directory: ./aws-lc-rust
+        working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
 
   s2n-quic-integration:
@@ -392,7 +392,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Run s2n-quic integration
-        working-directory: ./aws-lc-rust
+        working-directory: ./aws-lc-rs
         run: |
           ./scripts/run-s2n-quic-integration.sh
 
@@ -413,6 +413,6 @@ jobs:
           toolchain: stable
           override: true
       - name: Run rustls integration
-        working-directory: ./aws-lc-rust
+        working-directory: ./aws-lc-rs
         run: |
           ./scripts/run-rustls-integration.sh

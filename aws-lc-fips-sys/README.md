@@ -10,7 +10,7 @@
 This crate uses [AWS-LC](https://github.com/aws/aws-lc/tree/fips-2022-11-02), which been submitted to an accredited lab
 for FIPS validation testing, and upon completion will be submitted to NIST for certification. Once NIST grants a
 validation certificate to AWS-LC, we will make an announcement to Rust developers on how to leverage the FIPS mode
-using [aws-lc-rust](https://crates.io/crates/aws-lc-rust).
+using [aws-lc-rs](https://crates.io/crates/aws-lc-rs).
 
 ## Release Support
 

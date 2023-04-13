@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "aws-lc-rust",
+    "aws-lc-rs",
     "aws-lc-sys",
     "aws-lc-fips-sys"
 ]
