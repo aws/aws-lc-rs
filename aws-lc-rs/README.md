@@ -1,7 +1,7 @@
 # AWS Libcrypto for Rust (aws-lc-rs)
 
 [![Crates.io](https://img.shields.io/crates/v/aws-lc-rs.svg)](https://crates.io/crates/aws-lc-rs)
-[![GitHub](https://img.shields.io/badge/GitHub-awslabs%2Faws--lc--rust-blue)](https://github.com/awslabs/aws-lc-rust)
+[![GitHub](https://img.shields.io/badge/GitHub-awslabs%2Faws--lc--rs-blue)](https://github.com/awslabs/aws-lc-rs)
 
 *ring*-compatible crypto library using the cryptographic operations provided by
 [*AWS-LC*](https://github.com/awslabs/aws-lc).
@@ -61,9 +61,9 @@ and deploy them into AWS Regions.
 
 ## Questions, Feedback and Contributing
 
-* [Submit an non-security Bug/Issue/Request](https://github.com/awslabs/aws-lc-rust/issues/new/choose)
+* [Submit an non-security Bug/Issue/Request](https://github.com/awslabs/aws-lc-rs/issues/new/choose)
 * [API documentation](https://docs.rs/aws-lc-rs/)
-* [Fork our repo](https://github.com/awslabs/aws-lc-rust/fork)
+* [Fork our repo](https://github.com/awslabs/aws-lc-rs/fork)
 
 If you have any questions about submitting PR's, opening issues, *aws-lc-rs* API usage or
 any similar topic, we have a public chatroom available here to answer your questions
