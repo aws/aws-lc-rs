@@ -5,7 +5,7 @@ version = "0.5.0"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/awslabs/aws-lc"
-license = "Apache-2.0 OR ISC"
+license = "ISC AND (Apache-2.0 OR ISC)"
 rust-version = "1.60.0"
 include = [
     "LICENSE",
@@ -50,7 +50,7 @@ ssl = []
 
 [build-dependencies]
 cmake = "0.1.48"
-bindgen = { version = "0.64.0", optional = true }
+bindgen = { version = "0.65.1", optional = true }
 dunce = "1.0"
 
 [dependencies]
@@ -61,4 +61,4 @@ paste = "1.0.11"
 openssl = { version = "0.10" }
 
 [package.metadata.aws-lc-sys]
-commit-hash = "b9a4e9f2a99ae90fd80729a651a7c244cf2cf170"
+commit-hash = "8668d2dbe3342d4f304382cf5b5a82f63a6adc75"

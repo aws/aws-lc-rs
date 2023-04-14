@@ -1,2 +1,5 @@
 AWS Libcrypto for Rust
 Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+Based on ring
+Copyright Brian Smith

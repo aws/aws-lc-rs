@@ -1,5 +1,5 @@
 ---
-name: AWS-LC-Rust General Issue
+name: AWS-LC for Rust General Issue
 about: Template
 title: ''
 labels: ''
@@ -9,7 +9,7 @@ assignees: ''
 
 ### Security issue notifications
 
-If you discover a potential security issue in AWS-LC-Rust we ask that you notify AWS Security via our
+If you discover a potential security issue in AWS-LC for Rust we ask that you notify AWS Security via our
 [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a
 public github issue, if in doubt contact AWS security first.
 
@@ -19,7 +19,7 @@ A short description of what the problem is and why we need to fix it. Add reprod
 
 ### Solution:
 
-A description of the possible solution in terms of AWS-LC-Rust architecture. Highlight and explain any potentially
+A description of the possible solution in terms of AWS-LC for Rust architecture. Highlight and explain any potentially
 controversial design decisions taken.
 
 * **Does this change any public APIs?** If yes, explain.

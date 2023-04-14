@@ -7,7 +7,7 @@ set -ex
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 #############################################
-# Build images from aws-lc-rust GitHub repo #
+# Build images from aws-lc-rs GitHub repo #
 #############################################
 
 # Linux hosts might not have "jq" installed.

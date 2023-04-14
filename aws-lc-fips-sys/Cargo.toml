@@ -5,7 +5,7 @@ version = "0.6.0"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/awslabs/aws-lc"
-license = "Apache-2.0 OR ISC"
+license = "ISC AND (Apache-2.0 OR ISC)"
 rust-version = "1.60.0"
 include = [
     "LICENSE",
@@ -57,7 +57,7 @@ ssl = []
 
 [build-dependencies]
 cmake = "0.1.48"
-bindgen = { version = "0.64.0", optional = true }
+bindgen = { version = "0.65.1", optional = true }
 dunce = "1.0"
 
 [dependencies]

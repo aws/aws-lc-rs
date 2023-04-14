@@ -91,6 +91,7 @@ ASN1_SEQUENCE_it
 ASN1_SET_ANY_it
 ASN1_STRING_TABLE_add
 ASN1_STRING_TABLE_cleanup
+ASN1_STRING_clear_free
 ASN1_STRING_cmp
 ASN1_STRING_copy
 ASN1_STRING_data
@@ -123,6 +124,7 @@ ASN1_TIME_it
 ASN1_TIME_new
 ASN1_TIME_print
 ASN1_TIME_set
+ASN1_TIME_set_posix
 ASN1_TIME_set_string
 ASN1_TIME_to_generalizedtime
 ASN1_TIME_to_posix
@@ -330,6 +332,7 @@ BN_GENCB_free
 BN_GENCB_get_arg
 BN_GENCB_new
 BN_GENCB_set
+BN_GENCB_set_old
 BN_MONT_CTX_copy
 BN_MONT_CTX_free
 BN_MONT_CTX_new
@@ -528,6 +531,7 @@ CBS_get_bytes
 CBS_get_last_u8
 CBS_get_optional_asn1
 CBS_get_optional_asn1_bool
+CBS_get_optional_asn1_int64
 CBS_get_optional_asn1_octet_string
 CBS_get_optional_asn1_uint64
 CBS_get_u16
@@ -538,6 +542,7 @@ CBS_get_u24_length_prefixed
 CBS_get_u32
 CBS_get_u32le
 CBS_get_u64
+CBS_get_u64_decimal
 CBS_get_u64le
 CBS_get_u8
 CBS_get_u8_length_prefixed
@@ -685,6 +690,7 @@ DES_set_odd_parity
 DH_bits
 DH_check
 DH_check_pub_key
+DH_clear_flags
 DH_compute_key
 DH_compute_key_hashed
 DH_compute_key_padded
@@ -869,6 +875,7 @@ EC_POINT_is_on_curve
 EC_POINT_mul
 EC_POINT_new
 EC_POINT_oct2point
+EC_POINT_point2bn
 EC_POINT_point2cbb
 EC_POINT_point2oct
 EC_POINT_set_affine_coordinates
@@ -878,6 +885,8 @@ EC_POINT_set_to_infinity
 EC_curve_nid2nist
 EC_curve_nist2nid
 EC_get_builtin_curves
+EC_hash_to_curve_p256_xmd_sha256_sswu
+EC_hash_to_curve_p384_xmd_sha384_sswu
 ED25519_keypair
 ED25519_keypair_from_seed
 ED25519_sign
@@ -893,6 +902,8 @@ ENGINE_new
 ENGINE_register_all_complete
 ENGINE_set_ECDSA_method
 ENGINE_set_RSA_method
+ERR_GET_LIB
+ERR_GET_REASON
 ERR_SAVE_STATE_free
 ERR_add_error_data
 ERR_add_error_dataf
@@ -908,6 +919,7 @@ ERR_get_error_line_data
 ERR_get_next_error_library
 ERR_lib_error_string
 ERR_load_BIO_strings
+ERR_load_CRYPTO_strings
 ERR_load_ERR_strings
 ERR_load_RAND_strings
 ERR_load_SSL_strings
@@ -932,7 +944,9 @@ ERR_set_error_data
 ERR_set_mark
 EVP_AEAD_CTX_aead
 EVP_AEAD_CTX_cleanup
+EVP_AEAD_CTX_deserialize_state
 EVP_AEAD_CTX_free
+EVP_AEAD_CTX_get_aead_id
 EVP_AEAD_CTX_get_iv
 EVP_AEAD_CTX_init
 EVP_AEAD_CTX_init_with_direction
@@ -941,6 +955,7 @@ EVP_AEAD_CTX_open
 EVP_AEAD_CTX_open_gather
 EVP_AEAD_CTX_seal
 EVP_AEAD_CTX_seal_scatter
+EVP_AEAD_CTX_serialize_state
 EVP_AEAD_CTX_tag_len
 EVP_AEAD_CTX_zero
 EVP_AEAD_get_iv_from_ipv4_nanosecs
@@ -1461,6 +1476,7 @@ OCSP_response_status
 OCSP_single_get0_status
 OPENSSL_add_all_algorithms_conf
 OPENSSL_armcap_P
+OPENSSL_asprintf
 OPENSSL_built_in_curves
 OPENSSL_cleanse
 OPENSSL_cleanup
@@ -1469,12 +1485,18 @@ OPENSSL_config
 OPENSSL_cpucap_initialized
 OPENSSL_cpuid_setup
 OPENSSL_free
+OPENSSL_fromxdigit
 OPENSSL_gmtime
 OPENSSL_gmtime_adj
 OPENSSL_gmtime_diff
 OPENSSL_hash32
 OPENSSL_init_crypto
 OPENSSL_init_ssl
+OPENSSL_isalnum
+OPENSSL_isalpha
+OPENSSL_isdigit
+OPENSSL_isspace
+OPENSSL_isxdigit
 OPENSSL_lh_delete
 OPENSSL_lh_doall_arg
 OPENSSL_lh_free
@@ -1503,7 +1525,8 @@ OPENSSL_strnlen
 OPENSSL_timegm
 OPENSSL_tm_to_posix
 OPENSSL_tolower
-OTHERNAME_cmp
+OPENSSL_vasprintf
+OPENSSL_vasprintf_internal
 OTHERNAME_free
 OTHERNAME_it
 OTHERNAME_new
@@ -1796,11 +1819,13 @@ SHA3_384
 SHA3_512
 SHA3_Absorb
 SHA3_Absorb_cext
+SHA3_Absorb_hw
 SHA3_Final
 SHA3_Init
 SHA3_Reset
 SHA3_Squeeze
 SHA3_Squeeze_cext
+SHA3_Squeeze_hw
 SHA3_Update
 SHA512
 SHA512_256
@@ -2357,7 +2382,6 @@ TRUST_TOKEN_ISSUER_issue
 TRUST_TOKEN_ISSUER_new
 TRUST_TOKEN_ISSUER_redeem
 TRUST_TOKEN_ISSUER_redeem_over_message
-TRUST_TOKEN_ISSUER_redeem_raw
 TRUST_TOKEN_ISSUER_set_metadata_key
 TRUST_TOKEN_ISSUER_set_srr_key
 TRUST_TOKEN_PRETOKEN_free
@@ -2377,6 +2401,7 @@ UTF8_putc
 X25519
 X25519_keypair
 X25519_public_from_private
+X25519_public_from_private_nohw
 X509V3_EXT_CRL_add_nconf
 X509V3_EXT_REQ_add_nconf
 X509V3_EXT_add
@@ -2402,6 +2427,7 @@ X509V3_add_standard_extensions
 X509V3_add_value
 X509V3_add_value_bool
 X509V3_add_value_int
+X509V3_bool_from_string
 X509V3_conf_free
 X509V3_extensions_print
 X509V3_get_d2i
@@ -2671,6 +2697,7 @@ X509_STORE_CTX_set_ex_data
 X509_STORE_CTX_set_flags
 X509_STORE_CTX_set_purpose
 X509_STORE_CTX_set_time
+X509_STORE_CTX_set_time_posix
 X509_STORE_CTX_set_trust
 X509_STORE_CTX_set_verify_cb
 X509_STORE_CTX_trusted_stack
@@ -2753,6 +2780,7 @@ X509_VERIFY_PARAM_set_flags
 X509_VERIFY_PARAM_set_hostflags
 X509_VERIFY_PARAM_set_purpose
 X509_VERIFY_PARAM_set_time
+X509_VERIFY_PARAM_set_time_posix
 X509_VERIFY_PARAM_set_trust
 X509_VERIFY_PARAM_table_cleanup
 X509_add1_ext_i2d
@@ -2775,6 +2803,7 @@ X509_check_trust
 X509_cmp
 X509_cmp_current_time
 X509_cmp_time
+X509_cmp_time_posix
 X509_delete_ext
 X509_digest
 X509_dup
@@ -2978,7 +3007,6 @@ aes_nohw_decrypt
 aes_nohw_encrypt
 aes_nohw_set_decrypt_key
 aes_nohw_set_encrypt_key
-allow_rsa_keys_d_gt_n
 asn1_bit_string_length
 asn1_do_adb
 asn1_enc_free
@@ -3220,8 +3248,10 @@ dsa_check_parameters
 dummy_func_for_constructor
 ec_GFp_mont_add
 ec_GFp_mont_dbl
+ec_GFp_mont_felem_exp
 ec_GFp_mont_felem_from_bytes
 ec_GFp_mont_felem_mul
+ec_GFp_mont_felem_reduce
 ec_GFp_mont_felem_sqr
 ec_GFp_mont_felem_to_bytes
 ec_GFp_mont_group_finish
@@ -3268,6 +3298,8 @@ ec_felem_to_bytes
 ec_get_x_coordinate_as_bytes
 ec_get_x_coordinate_as_scalar
 ec_group_new
+ec_hash_to_curve_p256_xmd_sha256_sswu
+ec_hash_to_curve_p384_xmd_sha384_sswu
 ec_hash_to_curve_p384_xmd_sha512_sswu_draft07
 ec_hash_to_scalar_p384_xmd_sha512_draft07
 ec_init_precomp
@@ -3322,6 +3354,8 @@ ecp_nistz256_sqr_mont
 ecp_nistz256_sub
 ed25519_asn1_meth
 ed25519_pkey_meth
+fe_carry
+fe_neg
 gcm_ghash_neon
 gcm_ghash_nohw
 gcm_ghash_v8
@@ -3331,6 +3365,8 @@ gcm_gmult_v8
 gcm_init_neon
 gcm_init_nohw
 gcm_init_v8
+ge_double_scalarmult_vartime
+ge_p3_tobytes
 i2a_ACCESS_DESCRIPTION
 i2a_ASN1_ENUMERATED
 i2a_ASN1_INTEGER
@@ -3546,6 +3582,7 @@ rsa_verify_no_self_test
 rsa_verify_raw_no_self_test
 s2i_ASN1_INTEGER
 s2i_ASN1_OCTET_STRING
+sc_muladd
 sha1_block_data_order
 sha1_func
 sha224_func
@@ -3656,6 +3693,7 @@ vpaes_decrypt
 vpaes_encrypt
 vpaes_set_decrypt_key
 vpaes_set_encrypt_key
+x25519_NEON
 x25519_asn1_meth
 x25519_ge_add
 x25519_ge_frombytes_vartime
@@ -3669,6 +3707,7 @@ x25519_ge_sub
 x25519_ge_tobytes
 x25519_pkey_meth
 x25519_sc_reduce
+x25519_scalar_mult_generic_nohw
 x509V3_add_value_asn1_string
 x509_digest_sign_algorithm
 x509_digest_verify_init
