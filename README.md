@@ -34,9 +34,9 @@ cryptographic requirements can seamlessly integrate aws-lc-rs into their applica
 
 ## Questions, Feedback and Contributing
 
-* [Submit an non-security Bug/Issue/Request](https://github.com/awslabs/aws-lc-rust/issues/new/choose)
+* [Submit an non-security Bug/Issue/Request](https://github.com/awslabs/aws-lc-rs/issues/new/choose)
 * [API documentation](https://docs.rs/aws-lc-rs/)
-* [Fork our repo](https://github.com/awslabs/aws-lc-rust/fork)
+* [Fork our repo](https://github.com/awslabs/aws-lc-rs/fork)
 
 If you have any questions about submitting PR's, opening issues, *aws-lc-rs* API usage or
 any similar topic, we have a public chatroom available here to answer your questions
