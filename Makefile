@@ -18,6 +18,9 @@ update-aws-lc-fips-sys:
 
 update-aws-lc-sys:
 	git submodule update --init --remote --checkout -- aws-lc-sys/aws-lc
+	cd aws-lc-sys/aws-lc && \
+		git fetch --all && \
+		git tag -l | xargs ../../scripts/tools/semver.rs | xargs git checkout
 
 update-submodules: update-aws-lc-fips-sys update-aws-lc-sys
 
