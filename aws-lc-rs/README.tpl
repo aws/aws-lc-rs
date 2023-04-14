@@ -1,7 +1,7 @@
 # AWS Libcrypto for Rust ({{crate}})
 
 [![Crates.io](https://img.shields.io/crates/v/aws-lc-rs.svg)](https://crates.io/crates/aws-lc-rs)
-[![GitHub](https://img.shields.io/badge/GitHub-awslabs%2Faws--lc--rust-blue)](https://github.com/awslabs/aws-lc-rs)
+[![GitHub](https://img.shields.io/badge/GitHub-awslabs%2Faws--lc--rs-blue)](https://github.com/awslabs/aws-lc-rs)
 
 {{readme}}
 
