@@ -65,9 +65,7 @@ and deploy them into AWS Regions.
 * [API documentation](https://docs.rs/aws-lc-rs/)
 * [Fork our repo](https://github.com/awslabs/aws-lc-rs/fork)
 
-If you have any questions about submitting PR's, opening issues, *aws-lc-rs* API usage or
-any similar topic, we have a public chatroom available here to answer your questions
-on [Gitter](https://gitter.im/aws/aws-lc).
+We use [GitHub Issues](https://github.com/awslabs/aws-lc-rs/issues/new/choose) for managing feature requests, bug reports, or questions about aws-lc-rs API usage.
 
 Otherwise, if you think you might have found a security impacting issue, please instead
 follow our *Security Notification Process* below.
