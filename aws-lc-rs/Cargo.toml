@@ -1,12 +1,15 @@
 [package]
 name = "aws-lc-rs"
 authors = ["AWS-LibCrypto"]
-version = "1.0.0-rc1"
+version = "1.0.0"
 edition = "2021"
 rust-version = "1.60"
 keywords = ["crypto", "cryptography", "security"]
 license = "ISC AND (Apache-2.0 OR ISC)"
 description = "aws-lc-rs is a cryptographic library using AWS-LC for its cryptographic operations. This library strives to be API-compatible with the popular Rust library named ring."
+documentation = "https://docs.rs/crate/aws-lc-rs"
+homepage = "https://github.com/awslabs/aws-lc-rs"
+repository = "https://github.com/awslabs/aws-lc-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
