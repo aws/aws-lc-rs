@@ -113,6 +113,8 @@ jobs:
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v3
         with:
