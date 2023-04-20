@@ -21,9 +21,9 @@ function cmake_build_options() {
 
 function filter_symbols() {
   if [[ "${GENERATE_FIPS}" -eq 0 ]]; then
-    grep -v "^_\?bignum_" | grep -v "pqcrystals"
+    grep -v "^_\?bignum_" | grep -v "_\?curve25519_x25519" | grep -v "pqcrystals"
   else
-    grep -v "^_\?bignum_" | grep -v "pqcrystals" | grep -v "OPENSSL_armcap_P"
+    grep -v "^_\?bignum_" | grep -v "_\?curve25519_x25519" | grep -v "pqcrystals" | grep -v "OPENSSL_armcap_P"
   fi
 }
 
