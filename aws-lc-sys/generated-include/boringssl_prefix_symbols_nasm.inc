@@ -1699,12 +1699,6 @@
 %xdefine _POLICY_MAPPING_free _ %+ BORINGSSL_PREFIX %+ _POLICY_MAPPING_free
 %xdefine _POLICY_MAPPING_it _ %+ BORINGSSL_PREFIX %+ _POLICY_MAPPING_it
 %xdefine _POLICY_MAPPING_new _ %+ BORINGSSL_PREFIX %+ _POLICY_MAPPING_new
-%xdefine _PROXY_CERT_INFO_EXTENSION_free _ %+ BORINGSSL_PREFIX %+ _PROXY_CERT_INFO_EXTENSION_free
-%xdefine _PROXY_CERT_INFO_EXTENSION_it _ %+ BORINGSSL_PREFIX %+ _PROXY_CERT_INFO_EXTENSION_it
-%xdefine _PROXY_CERT_INFO_EXTENSION_new _ %+ BORINGSSL_PREFIX %+ _PROXY_CERT_INFO_EXTENSION_new
-%xdefine _PROXY_POLICY_free _ %+ BORINGSSL_PREFIX %+ _PROXY_POLICY_free
-%xdefine _PROXY_POLICY_it _ %+ BORINGSSL_PREFIX %+ _PROXY_POLICY_it
-%xdefine _PROXY_POLICY_new _ %+ BORINGSSL_PREFIX %+ _PROXY_POLICY_new
 %xdefine _RAND_OpenSSL _ %+ BORINGSSL_PREFIX %+ _RAND_OpenSSL
 %xdefine _RAND_SSLeay _ %+ BORINGSSL_PREFIX %+ _RAND_SSLeay
 %xdefine _RAND_add _ %+ BORINGSSL_PREFIX %+ _RAND_add
@@ -2422,7 +2416,6 @@
 %xdefine _X25519 _ %+ BORINGSSL_PREFIX %+ _X25519
 %xdefine _X25519_keypair _ %+ BORINGSSL_PREFIX %+ _X25519_keypair
 %xdefine _X25519_public_from_private _ %+ BORINGSSL_PREFIX %+ _X25519_public_from_private
-%xdefine _X25519_public_from_private_nohw _ %+ BORINGSSL_PREFIX %+ _X25519_public_from_private_nohw
 %xdefine _X509V3_EXT_CRL_add_nconf _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_CRL_add_nconf
 %xdefine _X509V3_EXT_REQ_add_nconf _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_REQ_add_nconf
 %xdefine _X509V3_EXT_add _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_add
@@ -3100,6 +3093,12 @@
 %xdefine _aesni_cbc_sha256_enc _ %+ BORINGSSL_PREFIX %+ _aesni_cbc_sha256_enc
 %xdefine _aesni_gcm_decrypt _ %+ BORINGSSL_PREFIX %+ _aesni_gcm_decrypt
 %xdefine _aesni_gcm_encrypt _ %+ BORINGSSL_PREFIX %+ _aesni_gcm_encrypt
+%xdefine _aesv8_gcm_8x_dec_128 _ %+ BORINGSSL_PREFIX %+ _aesv8_gcm_8x_dec_128
+%xdefine _aesv8_gcm_8x_dec_192 _ %+ BORINGSSL_PREFIX %+ _aesv8_gcm_8x_dec_192
+%xdefine _aesv8_gcm_8x_dec_256 _ %+ BORINGSSL_PREFIX %+ _aesv8_gcm_8x_dec_256
+%xdefine _aesv8_gcm_8x_enc_128 _ %+ BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_128
+%xdefine _aesv8_gcm_8x_enc_192 _ %+ BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_192
+%xdefine _aesv8_gcm_8x_enc_256 _ %+ BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_256
 %xdefine _asn1_bit_string_length _ %+ BORINGSSL_PREFIX %+ _asn1_bit_string_length
 %xdefine _asn1_do_adb _ %+ BORINGSSL_PREFIX %+ _asn1_do_adb
 %xdefine _asn1_enc_free _ %+ BORINGSSL_PREFIX %+ _asn1_enc_free
@@ -3298,8 +3297,6 @@
 %xdefine _d2i_PKCS8_fp _ %+ BORINGSSL_PREFIX %+ _d2i_PKCS8_fp
 %xdefine _d2i_POLICYINFO _ %+ BORINGSSL_PREFIX %+ _d2i_POLICYINFO
 %xdefine _d2i_POLICYQUALINFO _ %+ BORINGSSL_PREFIX %+ _d2i_POLICYQUALINFO
-%xdefine _d2i_PROXY_CERT_INFO_EXTENSION _ %+ BORINGSSL_PREFIX %+ _d2i_PROXY_CERT_INFO_EXTENSION
-%xdefine _d2i_PROXY_POLICY _ %+ BORINGSSL_PREFIX %+ _d2i_PROXY_POLICY
 %xdefine _d2i_PUBKEY _ %+ BORINGSSL_PREFIX %+ _d2i_PUBKEY
 %xdefine _d2i_PUBKEY_bio _ %+ BORINGSSL_PREFIX %+ _d2i_PUBKEY_bio
 %xdefine _d2i_PUBKEY_fp _ %+ BORINGSSL_PREFIX %+ _d2i_PUBKEY_fp
@@ -3438,6 +3435,8 @@
 %xdefine _ec_set_to_safe_point _ %+ BORINGSSL_PREFIX %+ _ec_set_to_safe_point
 %xdefine _ec_simple_scalar_inv0_montgomery _ %+ BORINGSSL_PREFIX %+ _ec_simple_scalar_inv0_montgomery
 %xdefine _ec_simple_scalar_to_montgomery_inv_vartime _ %+ BORINGSSL_PREFIX %+ _ec_simple_scalar_to_montgomery_inv_vartime
+%xdefine _ecdsa_digestsign_no_self_test _ %+ BORINGSSL_PREFIX %+ _ecdsa_digestsign_no_self_test
+%xdefine _ecdsa_digestverify_no_self_test _ %+ BORINGSSL_PREFIX %+ _ecdsa_digestverify_no_self_test
 %xdefine _ecdsa_do_verify_no_self_test _ %+ BORINGSSL_PREFIX %+ _ecdsa_do_verify_no_self_test
 %xdefine _ecdsa_sign_with_nonce_for_known_answer_test _ %+ BORINGSSL_PREFIX %+ _ecdsa_sign_with_nonce_for_known_answer_test
 %xdefine _ecp_nistz256_avx2_select_w7 _ %+ BORINGSSL_PREFIX %+ _ecp_nistz256_avx2_select_w7
@@ -3577,8 +3576,6 @@
 %xdefine _i2d_PKCS8_fp _ %+ BORINGSSL_PREFIX %+ _i2d_PKCS8_fp
 %xdefine _i2d_POLICYINFO _ %+ BORINGSSL_PREFIX %+ _i2d_POLICYINFO
 %xdefine _i2d_POLICYQUALINFO _ %+ BORINGSSL_PREFIX %+ _i2d_POLICYQUALINFO
-%xdefine _i2d_PROXY_CERT_INFO_EXTENSION _ %+ BORINGSSL_PREFIX %+ _i2d_PROXY_CERT_INFO_EXTENSION
-%xdefine _i2d_PROXY_POLICY _ %+ BORINGSSL_PREFIX %+ _i2d_PROXY_POLICY
 %xdefine _i2d_PUBKEY _ %+ BORINGSSL_PREFIX %+ _i2d_PUBKEY
 %xdefine _i2d_PUBKEY_bio _ %+ BORINGSSL_PREFIX %+ _i2d_PUBKEY_bio
 %xdefine _i2d_PUBKEY_fp _ %+ BORINGSSL_PREFIX %+ _i2d_PUBKEY_fp
@@ -3693,6 +3690,8 @@
 %xdefine _rsa_default_private_transform _ %+ BORINGSSL_PREFIX %+ _rsa_default_private_transform
 %xdefine _rsa_default_sign_raw _ %+ BORINGSSL_PREFIX %+ _rsa_default_sign_raw
 %xdefine _rsa_default_size _ %+ BORINGSSL_PREFIX %+ _rsa_default_size
+%xdefine _rsa_digestsign_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_digestsign_no_self_test
+%xdefine _rsa_digestverify_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_digestverify_no_self_test
 %xdefine _rsa_pss_asn1_meth _ %+ BORINGSSL_PREFIX %+ _rsa_pss_asn1_meth
 %xdefine _rsa_sign_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_sign_no_self_test
 %xdefine _rsa_verify_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_verify_no_self_test
@@ -3797,7 +3796,6 @@
 %xdefine _v3_nscert _ %+ BORINGSSL_PREFIX %+ _v3_nscert
 %xdefine _v3_ocsp_accresp _ %+ BORINGSSL_PREFIX %+ _v3_ocsp_accresp
 %xdefine _v3_ocsp_nocheck _ %+ BORINGSSL_PREFIX %+ _v3_ocsp_nocheck
-%xdefine _v3_pci _ %+ BORINGSSL_PREFIX %+ _v3_pci
 %xdefine _v3_policy_constraints _ %+ BORINGSSL_PREFIX %+ _v3_policy_constraints
 %xdefine _v3_policy_mappings _ %+ BORINGSSL_PREFIX %+ _v3_policy_mappings
 %xdefine _v3_sinfo _ %+ BORINGSSL_PREFIX %+ _v3_sinfo
@@ -3829,6 +3827,7 @@
 %xdefine _x25519_ge_sub _ %+ BORINGSSL_PREFIX %+ _x25519_ge_sub
 %xdefine _x25519_ge_tobytes _ %+ BORINGSSL_PREFIX %+ _x25519_ge_tobytes
 %xdefine _x25519_pkey_meth _ %+ BORINGSSL_PREFIX %+ _x25519_pkey_meth
+%xdefine _x25519_public_from_private_nohw _ %+ BORINGSSL_PREFIX %+ _x25519_public_from_private_nohw
 %xdefine _x25519_sc_reduce _ %+ BORINGSSL_PREFIX %+ _x25519_sc_reduce
 %xdefine _x25519_scalar_mult_generic_nohw _ %+ BORINGSSL_PREFIX %+ _x25519_scalar_mult_generic_nohw
 %xdefine _x509V3_add_value_asn1_string _ %+ BORINGSSL_PREFIX %+ _x509V3_add_value_asn1_string
@@ -5529,12 +5528,6 @@
 %xdefine POLICY_MAPPING_free BORINGSSL_PREFIX %+ _POLICY_MAPPING_free
 %xdefine POLICY_MAPPING_it BORINGSSL_PREFIX %+ _POLICY_MAPPING_it
 %xdefine POLICY_MAPPING_new BORINGSSL_PREFIX %+ _POLICY_MAPPING_new
-%xdefine PROXY_CERT_INFO_EXTENSION_free BORINGSSL_PREFIX %+ _PROXY_CERT_INFO_EXTENSION_free
-%xdefine PROXY_CERT_INFO_EXTENSION_it BORINGSSL_PREFIX %+ _PROXY_CERT_INFO_EXTENSION_it
-%xdefine PROXY_CERT_INFO_EXTENSION_new BORINGSSL_PREFIX %+ _PROXY_CERT_INFO_EXTENSION_new
-%xdefine PROXY_POLICY_free BORINGSSL_PREFIX %+ _PROXY_POLICY_free
-%xdefine PROXY_POLICY_it BORINGSSL_PREFIX %+ _PROXY_POLICY_it
-%xdefine PROXY_POLICY_new BORINGSSL_PREFIX %+ _PROXY_POLICY_new
 %xdefine RAND_OpenSSL BORINGSSL_PREFIX %+ _RAND_OpenSSL
 %xdefine RAND_SSLeay BORINGSSL_PREFIX %+ _RAND_SSLeay
 %xdefine RAND_add BORINGSSL_PREFIX %+ _RAND_add
@@ -6252,7 +6245,6 @@
 %xdefine X25519 BORINGSSL_PREFIX %+ _X25519
 %xdefine X25519_keypair BORINGSSL_PREFIX %+ _X25519_keypair
 %xdefine X25519_public_from_private BORINGSSL_PREFIX %+ _X25519_public_from_private
-%xdefine X25519_public_from_private_nohw BORINGSSL_PREFIX %+ _X25519_public_from_private_nohw
 %xdefine X509V3_EXT_CRL_add_nconf BORINGSSL_PREFIX %+ _X509V3_EXT_CRL_add_nconf
 %xdefine X509V3_EXT_REQ_add_nconf BORINGSSL_PREFIX %+ _X509V3_EXT_REQ_add_nconf
 %xdefine X509V3_EXT_add BORINGSSL_PREFIX %+ _X509V3_EXT_add
@@ -6930,6 +6922,12 @@
 %xdefine aesni_cbc_sha256_enc BORINGSSL_PREFIX %+ _aesni_cbc_sha256_enc
 %xdefine aesni_gcm_decrypt BORINGSSL_PREFIX %+ _aesni_gcm_decrypt
 %xdefine aesni_gcm_encrypt BORINGSSL_PREFIX %+ _aesni_gcm_encrypt
+%xdefine aesv8_gcm_8x_dec_128 BORINGSSL_PREFIX %+ _aesv8_gcm_8x_dec_128
+%xdefine aesv8_gcm_8x_dec_192 BORINGSSL_PREFIX %+ _aesv8_gcm_8x_dec_192
+%xdefine aesv8_gcm_8x_dec_256 BORINGSSL_PREFIX %+ _aesv8_gcm_8x_dec_256
+%xdefine aesv8_gcm_8x_enc_128 BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_128
+%xdefine aesv8_gcm_8x_enc_192 BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_192
+%xdefine aesv8_gcm_8x_enc_256 BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_256
 %xdefine asn1_bit_string_length BORINGSSL_PREFIX %+ _asn1_bit_string_length
 %xdefine asn1_do_adb BORINGSSL_PREFIX %+ _asn1_do_adb
 %xdefine asn1_enc_free BORINGSSL_PREFIX %+ _asn1_enc_free
@@ -7128,8 +7126,6 @@
 %xdefine d2i_PKCS8_fp BORINGSSL_PREFIX %+ _d2i_PKCS8_fp
 %xdefine d2i_POLICYINFO BORINGSSL_PREFIX %+ _d2i_POLICYINFO
 %xdefine d2i_POLICYQUALINFO BORINGSSL_PREFIX %+ _d2i_POLICYQUALINFO
-%xdefine d2i_PROXY_CERT_INFO_EXTENSION BORINGSSL_PREFIX %+ _d2i_PROXY_CERT_INFO_EXTENSION
-%xdefine d2i_PROXY_POLICY BORINGSSL_PREFIX %+ _d2i_PROXY_POLICY
 %xdefine d2i_PUBKEY BORINGSSL_PREFIX %+ _d2i_PUBKEY
 %xdefine d2i_PUBKEY_bio BORINGSSL_PREFIX %+ _d2i_PUBKEY_bio
 %xdefine d2i_PUBKEY_fp BORINGSSL_PREFIX %+ _d2i_PUBKEY_fp
@@ -7268,6 +7264,8 @@
 %xdefine ec_set_to_safe_point BORINGSSL_PREFIX %+ _ec_set_to_safe_point
 %xdefine ec_simple_scalar_inv0_montgomery BORINGSSL_PREFIX %+ _ec_simple_scalar_inv0_montgomery
 %xdefine ec_simple_scalar_to_montgomery_inv_vartime BORINGSSL_PREFIX %+ _ec_simple_scalar_to_montgomery_inv_vartime
+%xdefine ecdsa_digestsign_no_self_test BORINGSSL_PREFIX %+ _ecdsa_digestsign_no_self_test
+%xdefine ecdsa_digestverify_no_self_test BORINGSSL_PREFIX %+ _ecdsa_digestverify_no_self_test
 %xdefine ecdsa_do_verify_no_self_test BORINGSSL_PREFIX %+ _ecdsa_do_verify_no_self_test
 %xdefine ecdsa_sign_with_nonce_for_known_answer_test BORINGSSL_PREFIX %+ _ecdsa_sign_with_nonce_for_known_answer_test
 %xdefine ecp_nistz256_avx2_select_w7 BORINGSSL_PREFIX %+ _ecp_nistz256_avx2_select_w7
@@ -7407,8 +7405,6 @@
 %xdefine i2d_PKCS8_fp BORINGSSL_PREFIX %+ _i2d_PKCS8_fp
 %xdefine i2d_POLICYINFO BORINGSSL_PREFIX %+ _i2d_POLICYINFO
 %xdefine i2d_POLICYQUALINFO BORINGSSL_PREFIX %+ _i2d_POLICYQUALINFO
-%xdefine i2d_PROXY_CERT_INFO_EXTENSION BORINGSSL_PREFIX %+ _i2d_PROXY_CERT_INFO_EXTENSION
-%xdefine i2d_PROXY_POLICY BORINGSSL_PREFIX %+ _i2d_PROXY_POLICY
 %xdefine i2d_PUBKEY BORINGSSL_PREFIX %+ _i2d_PUBKEY
 %xdefine i2d_PUBKEY_bio BORINGSSL_PREFIX %+ _i2d_PUBKEY_bio
 %xdefine i2d_PUBKEY_fp BORINGSSL_PREFIX %+ _i2d_PUBKEY_fp
@@ -7523,6 +7519,8 @@
 %xdefine rsa_default_private_transform BORINGSSL_PREFIX %+ _rsa_default_private_transform
 %xdefine rsa_default_sign_raw BORINGSSL_PREFIX %+ _rsa_default_sign_raw
 %xdefine rsa_default_size BORINGSSL_PREFIX %+ _rsa_default_size
+%xdefine rsa_digestsign_no_self_test BORINGSSL_PREFIX %+ _rsa_digestsign_no_self_test
+%xdefine rsa_digestverify_no_self_test BORINGSSL_PREFIX %+ _rsa_digestverify_no_self_test
 %xdefine rsa_pss_asn1_meth BORINGSSL_PREFIX %+ _rsa_pss_asn1_meth
 %xdefine rsa_sign_no_self_test BORINGSSL_PREFIX %+ _rsa_sign_no_self_test
 %xdefine rsa_verify_no_self_test BORINGSSL_PREFIX %+ _rsa_verify_no_self_test
@@ -7627,7 +7625,6 @@
 %xdefine v3_nscert BORINGSSL_PREFIX %+ _v3_nscert
 %xdefine v3_ocsp_accresp BORINGSSL_PREFIX %+ _v3_ocsp_accresp
 %xdefine v3_ocsp_nocheck BORINGSSL_PREFIX %+ _v3_ocsp_nocheck
-%xdefine v3_pci BORINGSSL_PREFIX %+ _v3_pci
 %xdefine v3_policy_constraints BORINGSSL_PREFIX %+ _v3_policy_constraints
 %xdefine v3_policy_mappings BORINGSSL_PREFIX %+ _v3_policy_mappings
 %xdefine v3_sinfo BORINGSSL_PREFIX %+ _v3_sinfo
@@ -7659,6 +7656,7 @@
 %xdefine x25519_ge_sub BORINGSSL_PREFIX %+ _x25519_ge_sub
 %xdefine x25519_ge_tobytes BORINGSSL_PREFIX %+ _x25519_ge_tobytes
 %xdefine x25519_pkey_meth BORINGSSL_PREFIX %+ _x25519_pkey_meth
+%xdefine x25519_public_from_private_nohw BORINGSSL_PREFIX %+ _x25519_public_from_private_nohw
 %xdefine x25519_sc_reduce BORINGSSL_PREFIX %+ _x25519_sc_reduce
 %xdefine x25519_scalar_mult_generic_nohw BORINGSSL_PREFIX %+ _x25519_scalar_mult_generic_nohw
 %xdefine x509V3_add_value_asn1_string BORINGSSL_PREFIX %+ _x509V3_add_value_asn1_string

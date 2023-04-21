@@ -1678,12 +1678,6 @@ POLICY_MAPPINGS_it
 POLICY_MAPPING_free
 POLICY_MAPPING_it
 POLICY_MAPPING_new
-PROXY_CERT_INFO_EXTENSION_free
-PROXY_CERT_INFO_EXTENSION_it
-PROXY_CERT_INFO_EXTENSION_new
-PROXY_POLICY_free
-PROXY_POLICY_it
-PROXY_POLICY_new
 RAND_OpenSSL
 RAND_SSLeay
 RAND_add
@@ -2396,7 +2390,6 @@ UTF8_putc
 X25519
 X25519_keypair
 X25519_public_from_private
-X25519_public_from_private_nohw
 X509V3_EXT_CRL_add_nconf
 X509V3_EXT_REQ_add_nconf
 X509V3_EXT_add
@@ -3139,8 +3132,6 @@ d2i_PKCS8_bio
 d2i_PKCS8_fp
 d2i_POLICYINFO
 d2i_POLICYQUALINFO
-d2i_PROXY_CERT_INFO_EXTENSION
-d2i_PROXY_POLICY
 d2i_PUBKEY
 d2i_PUBKEY_bio
 d2i_PUBKEY_fp
@@ -3279,6 +3270,8 @@ ec_scalar_to_montgomery_inv_vartime
 ec_set_to_safe_point
 ec_simple_scalar_inv0_montgomery
 ec_simple_scalar_to_montgomery_inv_vartime
+ecdsa_digestsign_no_self_test
+ecdsa_digestverify_no_self_test
 ecdsa_do_verify_no_self_test
 ecdsa_sign_with_nonce_for_known_answer_test
 ed25519_asn1_meth
@@ -3390,8 +3383,6 @@ i2d_PKCS8_bio
 i2d_PKCS8_fp
 i2d_POLICYINFO
 i2d_POLICYQUALINFO
-i2d_PROXY_CERT_INFO_EXTENSION
-i2d_PROXY_POLICY
 i2d_PUBKEY
 i2d_PUBKEY_bio
 i2d_PUBKEY_fp
@@ -3505,6 +3496,8 @@ rsa_default_decrypt
 rsa_default_private_transform
 rsa_default_sign_raw
 rsa_default_size
+rsa_digestsign_no_self_test
+rsa_digestverify_no_self_test
 rsa_pss_asn1_meth
 rsa_sign_no_self_test
 rsa_verify_no_self_test
@@ -3603,7 +3596,6 @@ v3_ns_ia5_list
 v3_nscert
 v3_ocsp_accresp
 v3_ocsp_nocheck
-v3_pci
 v3_policy_constraints
 v3_policy_mappings
 v3_sinfo
@@ -3634,6 +3626,7 @@ x25519_ge_scalarmult_small_precomp
 x25519_ge_sub
 x25519_ge_tobytes
 x25519_pkey_meth
+x25519_public_from_private_nohw
 x25519_sc_reduce
 x25519_scalar_mult_generic_nohw
 x509V3_add_value_asn1_string
