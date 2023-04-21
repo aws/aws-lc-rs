@@ -113,7 +113,7 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: BindingOptions<'_>) ->
         .size_t_is_usize(true)
         .layout_tests(true)
         .prepend_enum_name(true)
-        .rustfmt_bindings(true)
+        .formatter(bindgen::Formatter::Rustfmt)
         .clang_args(clang_args)
         .raw_line(COPYRIGHT)
         .header(
