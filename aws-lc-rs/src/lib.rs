@@ -17,11 +17,11 @@
 //! [dependencies]
 //! aws-lc-rs = "1.0.0"
 //! ```
-//! Consuming projects will need a C Compiler (Clang or GCC) and CMake to build.
+//! Consuming projects will need a C Compiler (Clang or GCC) and Cmake to build.
 //!
 //! **Requirements**:
 //! * C compiler (Clang or GCC)
-//! * CMake (> v3.12) is required to build.
+//! * Cmake (> v3.12) is required to build.
 //!
 //! **Feature-specific Requirements**
 //!   * Linux - required for `fips`
