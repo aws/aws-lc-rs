@@ -28,6 +28,10 @@ which been submitted to an accredited lab for FIPS validation testing, and upon 
 for certification. Once NIST grants a validation certificate to AWS-LC, we will make an announcement to Rust developers
 on how to leverage the FIPS mode using [aws-lc-rs](https://crates.io/crates/aws-lc-rs).
 
+## Build
+
+Please see the [build instructions](aws-lc-rs/README.md#Build) in the aws-lc-rs crate.
+
 # Motivation
 Rust developers increasingly need to deploy applications that meet US and Canadian government cryptographic
 requirements. We evaluated how to deliver FIPS validated cryptography in idiomatic and performant Rust, built around our
