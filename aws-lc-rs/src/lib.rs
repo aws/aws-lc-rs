@@ -3,8 +3,54 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-//! *ring*-compatible crypto library using the cryptographic operations provided by
-//! [*AWS-LC*](https://github.com/awslabs/aws-lc).
+//! A [*ring*](https://github.com/briansmith/ring)-compatible crypto library using the cryptographic
+//! operations provided by [*AWS-LC*](https://github.com/awslabs/aws-lc). It uses either the
+//! auto-generated [*aws-lc-sys*](https://crates.io/crates/aws-lc-sys) or [*aws-lc-fips-sys*](https://crates.io/crates/aws-lc-fips-sys)
+//! Foreign Function Interface (FFI) crates found in this repository for invoking *AWS-LC*.
+//!
+//! # Build
+//!
+//! `aws-lc-rs` is available through [crates.io](https://crates.io/crates/aws-lc-rs). It can
+//! be added to your project in the [standard way](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html)
+//! using `Cargo.toml`:
+//! ```toml
+//! [dependencies]
+//! aws-lc-rs = "1.0.0"
+//! ```
+//! Consuming projects will need a C Compiler (Clang or GCC) and Cmake to build.
+//!
+//! **Requirements**:
+//! * C compiler (Clang or GCC)
+//! * Cmake (> v3.12) is required to build.
+//!
+//! **Feature-specific Requirements**
+//!   * Linux - required for `fips`
+//!   * [Go](https://go.dev/) - required for `fips`
+//!   * [libclang](https://llvm.org/) - required for `bindgen`
+//!     * see [Rust-bindgen requirements](https://rust-lang.github.io/rust-bindgen/requirements.html) for more information.
+//!
+//! ## Contributor Quickstart for Amazon Linux 2023
+//!
+//! For those who would like to contribute to our project or build it directly from our repository,
+//! a few more packages may be needed. The listing below shows the steps needed for you to begin
+//! building and testing our project locally.
+//! ```shell
+//! # Install CMake, Clang, Git, Libclang and Golang
+//! sudo yum install -y cmake3 clang git clang-libs golang openssl-devel
+//!
+//! # Install Rust
+//! curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+//! source "$HOME/.cargo/env"
+//!
+//! # Clone and initialize a local repository
+//! git clone https://github.com/awslabs/aws-lc-rs.git
+//! cd aws-lc-rs
+//! git submodule update --init --recursive
+//!
+//! # Build and test the project
+//! cargo test
+//!
+//! ```
 //!
 //! # Feature Flags
 //!
@@ -26,12 +72,18 @@
 //! [*AWS-LC*](https://github.com/aws/aws-lc). AWS-LC has been submitted to an accredited lab
 //! for FIPS validation testing, and upon completion will be submitted to NIST for certification.
 //! Once NIST grants a validation certificate to AWS-LC, we will make an announcement to Rust
-//! developers on how to leverage the FIPS mode.
+//! developers on how to leverage the FIPS mode. This feature is currently only available on Linux.
 //!
 //! #### - asan ####
 //! Performs an "address sanitizer" build. This can be used to help detect memory leaks. See the
 //! ["Address Sanitizer" section](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html#addresssanitizer)
 //! of the [Rust Unstable Book](https://doc.rust-lang.org/beta/unstable-book/).
+//!
+//! #### - bindgen ####
+//! Causes `aws-lc-sys` or `aws-lc-fips-sys` to generates fresh bindings for AWS-LC instead of using
+//! the pre-generated bindings. This feature require `libclang` to be installed. See the
+//! [requirements](https://rust-lang.github.io/rust-bindgen/requirements.html)
+//! for [rust-bindgen](https://github.com/rust-lang/rust-bindgen)
 //!
 //! # *ring*-compatibility
 //!
