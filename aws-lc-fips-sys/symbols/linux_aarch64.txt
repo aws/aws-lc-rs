@@ -94,6 +94,7 @@ ASN1_SEQUENCE_it
 ASN1_SET_ANY_it
 ASN1_STRING_TABLE_add
 ASN1_STRING_TABLE_cleanup
+ASN1_STRING_clear_free
 ASN1_STRING_cmp
 ASN1_STRING_copy
 ASN1_STRING_data
@@ -532,6 +533,7 @@ CBS_get_bytes
 CBS_get_last_u8
 CBS_get_optional_asn1
 CBS_get_optional_asn1_bool
+CBS_get_optional_asn1_int64
 CBS_get_optional_asn1_octet_string
 CBS_get_optional_asn1_uint64
 CBS_get_u16
@@ -938,7 +940,9 @@ ERR_set_error_data
 ERR_set_mark
 EVP_AEAD_CTX_aead
 EVP_AEAD_CTX_cleanup
+EVP_AEAD_CTX_deserialize_state
 EVP_AEAD_CTX_free
+EVP_AEAD_CTX_get_aead_id
 EVP_AEAD_CTX_get_iv
 EVP_AEAD_CTX_init
 EVP_AEAD_CTX_init_with_direction
@@ -947,6 +951,7 @@ EVP_AEAD_CTX_open
 EVP_AEAD_CTX_open_gather
 EVP_AEAD_CTX_seal
 EVP_AEAD_CTX_seal_scatter
+EVP_AEAD_CTX_serialize_state
 EVP_AEAD_CTX_tag_len
 EVP_AEAD_CTX_zero
 EVP_AEAD_get_iv_from_ipv4_nanosecs
@@ -1812,11 +1817,13 @@ SHA3_384
 SHA3_512
 SHA3_Absorb
 SHA3_Absorb_cext
+SHA3_Absorb_hw
 SHA3_Final
 SHA3_Init
 SHA3_Reset
 SHA3_Squeeze
 SHA3_Squeeze_cext
+SHA3_Squeeze_hw
 SHA3_Update
 SHA512
 SHA512_256
@@ -3324,6 +3331,8 @@ ec_scalar_to_montgomery_inv_vartime
 ec_set_to_safe_point
 ec_simple_scalar_inv0_montgomery
 ec_simple_scalar_to_montgomery_inv_vartime
+ecdsa_digestsign_no_self_test
+ecdsa_digestverify_no_self_test
 ecdsa_do_verify_no_self_test
 ecdsa_sign_with_nonce_for_known_answer_test
 ecp_nistz256_div_by_2
@@ -3584,6 +3593,8 @@ rsa_default_decrypt
 rsa_default_private_transform
 rsa_default_sign_raw
 rsa_default_size
+rsa_digestsign_no_self_test
+rsa_digestverify_no_self_test
 rsa_pss_asn1_meth
 rsa_sign_no_self_test
 rsa_verify_no_self_test
