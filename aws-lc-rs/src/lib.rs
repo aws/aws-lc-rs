@@ -52,9 +52,6 @@
 //!
 //! ```
 //!
-//! The crate is developed and tested on MacOS and Linux.
-//!
-//!
 //! # Feature Flags
 //!
 //! #### - alloc (default) ####
