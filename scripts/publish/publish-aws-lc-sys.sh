@@ -6,7 +6,9 @@ set -e
 
 SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 PUBLISH=0
+REPO_ROOT=$(git rev-parse --show-toplevel)
 RELATIVE_CRATE_PATH=aws-lc-sys
+CRATE_DIR="${REPO_ROOT}/${RELATIVE_CRATE_PATH}"
 
 source "${SCRIPT_DIR}"/_publish_tools.sh
 
