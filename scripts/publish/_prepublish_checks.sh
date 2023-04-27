@@ -42,7 +42,7 @@ cargo clean --target-dir "${TEMP_TARGET_DIR}"
 cargo clippy --fix --allow-no-vcs
 cargo fmt
 cargo test --target-dir "${TEMP_TARGET_DIR}" # sanity check
-cargo package --target-dir "${TEMP_TARGET_DIR}" --no-verify # checks if published package will build.
+cargo package --target-dir "${TEMP_TARGET_DIR}" --allow-dirty # checks if published package will build.
 cargo clean --target-dir "${TEMP_TARGET_DIR}"
 
 popd &>/dev/null # "${CRATE_DIR}"
