@@ -48,10 +48,10 @@ function publish_crate {
 
   pushd "${CRATE_DIR}" &>/dev/null
 
-  cargo publish --dry-run
+  cargo publish --dry-run --allow-dirty
 
   if [[ ${PUBLISH} -eq 1 ]]; then
-    cargo publish
+    cargo publish --allow-dirty
   else
     echo Not published. Use -p to publish.
   fi
