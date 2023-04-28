@@ -21,7 +21,8 @@
 //!
 //! **Requirements**:
 //! * C compiler (Clang or GCC)
-//! * Cmake (> v3.12) is required to build.
+//! * Cmake (> v3.12)
+//! * MacOS or Linux
 //!
 //! **Feature-specific Requirements**
 //!   * Linux - required for `fips`
@@ -35,7 +36,7 @@
 //! a few more packages may be needed. The listing below shows the steps needed for you to begin
 //! building and testing our project locally.
 //! ```shell
-//! # Install CMake, Clang, Git, Libclang and Golang
+//! # Install dependencies needed for build and testing
 //! sudo yum install -y cmake3 clang git clang-libs golang openssl-devel
 //!
 //! # Install Rust
