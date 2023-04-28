@@ -22,7 +22,7 @@
 //! **Requirements**:
 //! * C compiler (Clang or GCC)
 //! * Cmake (> v3.12)
-//! * MacOS or Linux
+//! * Mac OS or Linux
 //!
 //! **Feature-specific Requirements**
 //!   * Linux - required for `fips`

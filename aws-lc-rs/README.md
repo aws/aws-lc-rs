@@ -22,7 +22,7 @@ Consuming projects will need a C Compiler (Clang or GCC) and Cmake to build.
 **Requirements**:
 * C compiler (Clang or GCC)
 * Cmake (> v3.12)
-* MacOS or Linux
+* Mac OS or Linux
 
 **Feature-specific Requirements**
   * Linux - required for `fips`
