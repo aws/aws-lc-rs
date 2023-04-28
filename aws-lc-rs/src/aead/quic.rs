@@ -54,7 +54,7 @@ impl HeaderProtectionKey {
     pub fn new_mask(&self, sample: &[u8]) -> Result<[u8; 5], error::Unspecified> {
         let sample = <&[u8; SAMPLE_LEN]>::try_from(sample)?;
 
-        let out = (self.algorithm.new_mask)(&self.inner, *sample);
+        let out = cipher_new_mask(&self.inner, *sample);
         Ok(out)
     }
 
@@ -74,8 +74,6 @@ pub type Sample = [u8; SAMPLE_LEN];
 /// A QUIC Header Protection Algorithm.
 pub struct Algorithm {
     init: fn(key: &[u8]) -> Result<KeyInner, error::Unspecified>,
-
-    new_mask: fn(key: &KeyInner, sample: Sample) -> [u8; 5],
 
     key_len: usize,
     id: AlgorithmID,
@@ -127,7 +125,6 @@ impl Eq for Algorithm {}
 pub static AES_128: Algorithm = Algorithm {
     key_len: 16,
     init: aes_init_128,
-    new_mask: cipher_new_mask,
     id: AlgorithmID::AES_128,
 };
 
@@ -135,7 +132,6 @@ pub static AES_128: Algorithm = Algorithm {
 pub static AES_256: Algorithm = Algorithm {
     key_len: 32,
     init: aes_init_256,
-    new_mask: cipher_new_mask,
     id: AlgorithmID::AES_256,
 };
 
@@ -143,7 +139,6 @@ pub static AES_256: Algorithm = Algorithm {
 pub static CHACHA20: Algorithm = Algorithm {
     key_len: 32,
     init: chacha20_init,
-    new_mask: cipher_new_mask,
     id: AlgorithmID::CHACHA20,
 };
 
