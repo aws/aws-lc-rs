@@ -69,17 +69,12 @@ impl OutputLib {
             }
         )
     }
+}
 
-    fn locate_dir(self, path: &Path) -> PathBuf {
-        match self {
-            OutputLib::RustWrapper => path.join("build").join(get_platform_output_path()),
-            OutputLib::Crypto | OutputLib::Ssl => path
-                .join("build")
-                .join("aws-lc")
-                .join(self.libname(None))
-                .join(get_platform_output_path()),
-        }
-    }
+fn artifact_output_dir(path: &Path) -> PathBuf {
+    path.join("build")
+        .join("artifacts")
+        .join(get_platform_output_path())
 }
 
 fn get_platform_output_path() -> PathBuf {
@@ -261,7 +256,7 @@ fn main() {
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
     let prefix = prefix_string();
 
-    let artifact_output = build_rust_wrapper(&manifest_dir);
+    let out_dir = build_rust_wrapper(&manifest_dir);
 
     if is_internal_generate {
         #[cfg(feature = "bindgen")]
@@ -279,7 +274,7 @@ fn main() {
 
     println!(
         "cargo:rustc-link-search=native={}",
-        Crypto.locate_dir(&artifact_output).display()
+        artifact_output_dir(&out_dir).display()
     );
 
     println!(
@@ -290,21 +285,12 @@ fn main() {
 
     if cfg!(feature = "ssl") {
         println!(
-            "cargo:rustc-link-search=native={}",
-            Ssl.locate_dir(&artifact_output).display()
-        );
-
-        println!(
             "cargo:rustc-link-lib={}={}",
             Static.rust_lib_type(),
             Ssl.libname(Some(&prefix))
         );
     }
 
-    println!(
-        "cargo:rustc-link-search=native={}",
-        RustWrapper.locate_dir(&artifact_output).display()
-    );
     println!(
         "cargo:rustc-link-lib={}={}",
         Static.rust_lib_type(),
