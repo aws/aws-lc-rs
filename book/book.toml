@@ -1,0 +1,6 @@
+[book]
+authors = ["Sean McGrail"]
+language = "en"
+multilingual = false
+src = "src"
+title = "AWS Libcrypto for Rust User Guide"
