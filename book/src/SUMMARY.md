@@ -9,6 +9,7 @@
     - [macOS](requirements/macos.md)
     - [Windows](requirements/windows.md)
 - [Platform Support](platform_support.md)
+- [FAQ](faq.md)
 
 -----------
 [Resources](resources.md)
