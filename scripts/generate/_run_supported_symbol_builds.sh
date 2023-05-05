@@ -52,6 +52,7 @@ pushd "${REPO_ROOT}" &>/dev/null
 ##
 ## These docker image can be built from Dockerfiles under: <AWS-LC-DIR>/tests/ci/docker_images/rust
 ##
+pids=''
 if [[ "${GENERATE_FIPS}" -eq 0 ]]; then
   ## macOS symbols
   IS_MACOS_HOST=$(check_running_on_macos [[ $IGNORE_MACOS -eq 0 ]])
@@ -65,19 +66,26 @@ if [[ "${GENERATE_FIPS}" -eq 0 ]]; then
 
   ## 386 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/386 -- rust:linux-386 /bin/bash -c "${COLLECT_SYMBOLS_SCRIPT} -c ${RELATIVE_CRATE_PATH}" &
+  pids="$! ${pids}"
   ## x86_64 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/amd64 -- rust:linux-x86_64 /bin/bash -c "${COLLECT_SYMBOLS_SCRIPT} -c ${RELATIVE_CRATE_PATH}" &
+  pids="$! ${pids}"
   ## arm64 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/arm64 -- rust:linux-arm64 /bin/bash -c "${COLLECT_SYMBOLS_SCRIPT} -c ${RELATIVE_CRATE_PATH}" &
+  pids="$! ${pids}"
 
 else
 
   ## x86_64 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/amd64 -- rust:linux-x86_64 /bin/bash -c "${COLLECT_SYMBOLS_SCRIPT} -c ${RELATIVE_CRATE_PATH} -f" &
+  pids="$! ${pids}"
   ## arm64 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/arm64 -- rust:linux-arm64 /bin/bash -c "${COLLECT_SYMBOLS_SCRIPT} -c ${RELATIVE_CRATE_PATH} -f" &
+  pids="$! ${pids}"
 fi
 
-wait
+for pid in ${pids}; do
+  wait ${pid}
+done
 
 popd &>/dev/null # ${REPO_ROOT}

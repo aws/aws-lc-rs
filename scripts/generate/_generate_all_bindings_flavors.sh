@@ -49,6 +49,7 @@ assert_docker_status
 
 pushd "${REPO_ROOT}" &>/dev/null
 
+pids=""
 if [[ "${GENERATE_FIPS}" -eq 0 ]]; then
   ## macOS bindings
   IS_MACOS_HOST=$(check_running_on_macos [[ $IGNORE_MACOS -eq 0 ]])
@@ -68,20 +69,27 @@ if [[ "${GENERATE_FIPS}" -eq 0 ]]; then
 
   ## 386 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/386 rust:linux-386 /bin/bash -c "${GEN_BINDINGS_SCRIPT} -c ${RELATIVE_CRATE_PATH}" &
+  pids="$! ${pids}"
   ## linux x86_64 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/amd64 rust:linux-x86_64 /bin/bash -c "${GEN_BINDINGS_SCRIPT} -c ${RELATIVE_CRATE_PATH}" &
+  pids="$! ${pids}"
   ## linux aarch64 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/arm64 rust:linux-arm64 /bin/bash -c "${GEN_BINDINGS_SCRIPT} -c ${RELATIVE_CRATE_PATH}" &
+  pids="$! ${pids}"
 
 else
   ## linux x86_64 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/amd64 rust:linux-x86_64 /bin/bash -c "${GEN_BINDINGS_SCRIPT} -c ${RELATIVE_CRATE_PATH}" &
+  pids="$! ${pids}"
   ## linux aarch64 build
   docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/arm64 rust:linux-arm64 /bin/bash -c "${GEN_BINDINGS_SCRIPT} -c ${RELATIVE_CRATE_PATH}" &
+  pids="$! ${pids}"
 
 fi
 
 echo "Waiting for build completion"
-wait
+for pid in ${pids}; do
+  wait ${pid}
+done
 
 popd &>/dev/null # ${REPO_ROOT}
