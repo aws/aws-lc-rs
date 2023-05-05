@@ -11,7 +11,7 @@ The answer to this question is dependent on several factors based on the target 
 * Must be a platform and CPU architecture supported by [AWS-LC][AWS-LC].
 * Must be a platform supported by the Rust compiler with support for the full standard library.
   See the Rust compiler's [platform support][rustc] documentation.
-* If the underlying `aws-lc-sys` or `aws-lc-fips-sys` crate don't have pre-generated bindings for the desired platform
+* If the underlying `aws-lc-sys` or `aws-lc-fips-sys` crates don't have pre-generated bindings for the desired platform
   then you must use the `bindgen` crate feature of `aws-lc-rs` to enable generation of the FFI bindings for the desired
   platform and architecture. See [Requirements](requirements/README.md) for more details on what build dependencies are 
   required for target platforms.

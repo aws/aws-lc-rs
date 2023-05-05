@@ -18,4 +18,17 @@ sudo port install cmake
 brew install cmake
 ```
 
+## LLVM (When building with `bindgen` feature)
+
+### MacPorts
+
+```shell
+sudo port install clang
+```
+
+### Homebrew
+```shell
+brew install llvm
+```
+
 [XCODE]: https://developer.apple.com/xcode/resources/
