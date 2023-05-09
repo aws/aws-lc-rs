@@ -236,7 +236,7 @@ jobs:
         rust: [ stable ]
         os: [ ubuntu-latest, macOS-latest ]
         args:
-          - --no-default-features --features bindgen
+          - --no-default-features --features aws-lc-sys,bindgen
           - --release --all-targets --features ring-benchmarks,bindgen
     steps:
       - uses: actions/checkout@v3

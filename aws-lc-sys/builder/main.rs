@@ -160,8 +160,7 @@ fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf)
         disable_prelude: true,
     };
 
-    let bindings =
-        bindgen::generate_bindings(manifest_dir, options).expect("Unable to generate bindings.");
+    let bindings = bindgen::generate_bindings(manifest_dir, &options);
 
     bindings
         .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
@@ -172,25 +171,23 @@ fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf)
 fn generate_src_bindings(manifest_dir: &PathBuf, prefix: &str, src_bindings_path: &PathBuf) {
     bindgen::generate_bindings(
         &manifest_dir,
-        bindgen::BindingOptions {
+        &bindgen::BindingOptions {
             build_prefix: Some(&prefix),
             include_ssl: false,
             ..Default::default()
         },
     )
-    .expect("Unable to generate bindings.")
     .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
     .expect("write bindings");
 
     bindgen::generate_bindings(
         &manifest_dir,
-        bindgen::BindingOptions {
+        &bindgen::BindingOptions {
             build_prefix: Some(&prefix),
             include_ssl: true,
             ..Default::default()
         },
     )
-    .expect("Unable to generate bindings.")
     .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto_ssl"))))
     .expect("write bindings");
 }
