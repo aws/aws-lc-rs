@@ -15,10 +15,10 @@ macro_rules! use_bindings {
 macro_rules! platform_binding {
     ($platform:ident) => {
         paste! {
-            #[cfg(all($platform, not(feature = "ssl")))]
+            #[cfg(all($platform, not(feature = "ssl"), not(not_pregenerated)))]
             use_bindings!([< $platform _crypto >]);
 
-            #[cfg(all($platform, feature = "ssl"))]
+            #[cfg(all($platform, feature = "ssl", not(not_pregenerated)))]
             use_bindings!([< $platform _crypto_ssl >]);
         }
     };

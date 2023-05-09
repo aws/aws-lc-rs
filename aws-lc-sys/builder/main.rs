@@ -252,7 +252,7 @@ fn main() {
     cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", pregenerated);
     cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", pregenerated);
 
-    if is_bindgen_enabled && !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
+    if is_bindgen_enabled || !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
         emit_rustc_cfg("not_pregenerated");
     }
 
