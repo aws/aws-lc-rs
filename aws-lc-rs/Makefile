@@ -26,6 +26,7 @@ coverage:
 test:
 	cargo test --all-targets --features ring-benchmarks
 	cargo test --release --all-targets
+	cargo test --release --all-targets --features bindgen
 ifeq ($(UNAME_S),Linux)
 	cargo test --release --all-targets --features fips
 	cargo test --no-default-features --features fips

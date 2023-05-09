@@ -3,14 +3,11 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-#[cfg(feature = "bindgen")]
-use std::default::Default;
 use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-#[cfg(feature = "bindgen")]
 mod bindgen;
 
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
@@ -156,20 +153,18 @@ fn build_rust_wrapper(manifest_dir: &PathBuf) -> PathBuf {
     prepare_cmake_build(manifest_dir, Some(&prefix_string())).build()
 }
 
-#[cfg(feature = "bindgen")]
-fn generate_bindings(manifest_dir: &PathBuf, prefix: &str, bindings_path: &PathBuf) {
+fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf) {
     let options = bindgen::BindingOptions {
-        build_prefix: Some(&prefix),
+        build_prefix: Some(prefix),
         include_ssl: cfg!(feature = "ssl"),
         disable_prelude: true,
-        ..Default::default()
     };
 
     let bindings =
-        bindgen::generate_bindings(&manifest_dir, options).expect("Unable to generate bindings.");
+        bindgen::generate_bindings(manifest_dir, options).expect("Unable to generate bindings.");
 
     bindings
-        .write(Box::new(std::fs::File::create(&bindings_path).unwrap()))
+        .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
         .expect("written bindings");
 }
 
@@ -221,7 +216,7 @@ fn main() {
     use crate::OutputLib::{Crypto, RustWrapper, Ssl};
     use crate::OutputLibType::Static;
 
-    let is_bindgen_enabled = cfg!(feature = "bindgen");
+    let mut is_bindgen_enabled = cfg!(feature = "bindgen");
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
         .unwrap_or_else(|_| String::from("0"))
@@ -236,6 +231,7 @@ fn main() {
 
     if !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
         emit_rustc_cfg("not_pregenerated");
+        is_bindgen_enabled = true;
     }
 
     let mut missing_dependency = false;
@@ -264,12 +260,9 @@ fn main() {
             let src_bindings_path = Path::new(&manifest_dir).join("src");
             generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
         }
-    } else {
-        #[cfg(feature = "bindgen")]
-        {
-            let gen_bindings_path = Path::new(&env::var("OUT_DIR").unwrap()).join("bindings.rs");
-            generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
-        }
+    } else if is_bindgen_enabled {
+        let gen_bindings_path = Path::new(&env::var("OUT_DIR").unwrap()).join("bindings.rs");
+        generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
     }
 
     println!(
