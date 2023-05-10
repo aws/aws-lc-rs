@@ -45,13 +45,13 @@ jobs:
       matrix:
         crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rs" ]
         features:
-          - ""
-          - "--features fips"
+          - "--features bindgen"
+          - "--features bindgen,fips"
         exclude:
           - crate_dir: aws-lc-sys
-            features: "--features fips"
+            features: "--features bindgen,fips"
           - crate_dir: aws-lc-fips-sys
-            features: "--features fips"
+            features: "--features bindgen,fips"
     steps:
       - uses: actions/checkout@v3
         with:
