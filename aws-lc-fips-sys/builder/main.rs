@@ -169,8 +169,7 @@ fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf)
         disable_prelude: true,
     };
 
-    let bindings =
-        bindgen::generate_bindings(manifest_dir, &options);
+    let bindings = bindgen::generate_bindings(manifest_dir, &options);
 
     bindings
         .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
