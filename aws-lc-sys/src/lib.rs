@@ -15,10 +15,10 @@ macro_rules! use_bindings {
 macro_rules! platform_binding {
     ($platform:ident) => {
         paste! {
-            #[cfg(all($platform, not(feature = "ssl"), not(not_pregenerated)))]
+            #[cfg(all($platform, not(feature = "ssl"), not(use_bindgen_generated)))]
             use_bindings!([< $platform _crypto >]);
 
-            #[cfg(all($platform, feature = "ssl", not(not_pregenerated)))]
+            #[cfg(all($platform, feature = "ssl", not(use_bindgen_generated)))]
             use_bindings!([< $platform _crypto_ssl >]);
         }
     };
@@ -32,7 +32,7 @@ platform_binding!(linux_aarch64);
 
 platform_binding!(macos_x86_64);
 
-#[cfg(not_pregenerated)]
+#[cfg(use_bindgen_generated)]
 mod generated {
     #![allow(
         unused_imports,
@@ -55,7 +55,7 @@ mod generated {
 
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
-#[cfg(not_pregenerated)]
+#[cfg(use_bindgen_generated)]
 pub use generated::*;
 
 #[allow(non_snake_case)]

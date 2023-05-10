@@ -231,29 +231,22 @@ fn main() {
     use crate::OutputLib::{Crypto, RustWrapper, Ssl};
     use crate::OutputLibType::Static;
 
-    let is_bindgen_enabled = cfg!(any(
-        feature = "bindgen",
-        not(any(
-            all(target_os = "macos", target_arch = "x86_64"),
-            all(target_os = "linux", target_arch = "x86"),
-            all(target_os = "linux", target_arch = "x86_64"),
-            all(target_os = "linux", target_arch = "aarch64")
-        ))
-    ));
+    let mut is_bindgen_required = cfg!(feature = "bindgen");
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
         .unwrap_or_else(|_| String::from("0"))
         .eq("1");
 
-    let pregenerated = !is_bindgen_enabled || is_internal_generate;
+    let pregenerated = !is_bindgen_required || is_internal_generate;
 
     cfg_bindgen_platform!(linux_x86, "linux", "x86", pregenerated);
     cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", pregenerated);
     cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", pregenerated);
     cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", pregenerated);
 
-    if is_bindgen_enabled || !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
-        emit_rustc_cfg("not_pregenerated");
+    if !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
+        emit_rustc_cfg("use_bindgen_generated");
+        is_bindgen_required = true;
     }
 
     let mut missing_dependency = false;
@@ -282,7 +275,7 @@ fn main() {
             let src_bindings_path = Path::new(&manifest_dir).join("src");
             generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
         }
-    } else {
+    } else if is_bindgen_required {
         #[cfg(any(
             feature = "bindgen",
             not(any(
