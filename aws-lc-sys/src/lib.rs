@@ -4,11 +4,6 @@
 use paste::paste;
 use std::os::raw::{c_char, c_long, c_void};
 
-// Warn to use feature bindgen if building on a platform where prebuilt-bindings
-// aren't available
-#[cfg(all(not(feature = "bindgen"), not_pregenerated))]
-compile_error!("Prebuilt-bindings aren't available. Turn on feature bindgen to build.");
-
 #[allow(unused_macros)]
 macro_rules! use_bindings {
     ($bindings:ident) => {
@@ -20,10 +15,10 @@ macro_rules! use_bindings {
 macro_rules! platform_binding {
     ($platform:ident) => {
         paste! {
-            #[cfg(all($platform, not(feature = "ssl")))]
+            #[cfg(all($platform, not(feature = "ssl"), not(use_bindgen_generated)))]
             use_bindings!([< $platform _crypto >]);
 
-            #[cfg(all($platform, feature = "ssl"))]
+            #[cfg(all($platform, feature = "ssl", not(use_bindgen_generated)))]
             use_bindings!([< $platform _crypto_ssl >]);
         }
     };
@@ -37,7 +32,7 @@ platform_binding!(linux_aarch64);
 
 platform_binding!(macos_x86_64);
 
-#[cfg(all(feature = "bindgen", not_pregenerated))]
+#[cfg(use_bindgen_generated)]
 mod generated {
     #![allow(
         unused_imports,
@@ -60,7 +55,7 @@ mod generated {
 
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
-#[cfg(all(feature = "bindgen", not_pregenerated))]
+#[cfg(use_bindgen_generated)]
 pub use generated::*;
 
 #[allow(non_snake_case)]

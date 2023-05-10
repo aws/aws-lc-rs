@@ -44,13 +44,19 @@ build = "builder/main.rs"
 
 [features]
 asan = []
-bindgen = ["dep:bindgen"] # Generate the bindings on the targetted platform as a fallback mechanism.
 ssl = []
+bindgen = ["dep:bindgen"] # Generate the bindings on the targetted platform as a fallback mechanism.
 
 [build-dependencies]
 cmake = "0.1.48"
-bindgen = { version = "0.65.1", optional = true }
 dunce = "1.0"
+
+[target.'cfg(any(all(target_os = "macos", target_arch = "x86_64"), all(target_os = "linux", target_arch = "x86"), all(target_os = "linux", target_arch = "x86_64"), all(target_os = "linux", target_arch = "aarch64")))'.build-dependencies]
+bindgen = { version = "0.65.1", optional = true }
+
+[target.'cfg(not(any(all(target_os = "macos", target_arch = "x86_64"), all(target_os = "linux", target_arch = "x86"), all(target_os = "linux", target_arch = "x86_64"), all(target_os = "linux", target_arch = "aarch64"))))'.build-dependencies]
+bindgen = { version = "0.65.1" }
+
 
 [dependencies]
 libc = "0.2"

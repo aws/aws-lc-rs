@@ -3,14 +3,20 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-#[cfg(feature = "bindgen")]
-use std::default::Default;
 use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(
+    feature = "bindgen",
+    not(any(
+        all(target_os = "macos", target_arch = "x86_64"),
+        all(target_os = "linux", target_arch = "x86"),
+        all(target_os = "linux", target_arch = "x86_64"),
+        all(target_os = "linux", target_arch = "aarch64")
+    ))
+))]
 mod bindgen;
 
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
@@ -156,46 +162,50 @@ fn build_rust_wrapper(manifest_dir: &PathBuf) -> PathBuf {
     prepare_cmake_build(manifest_dir, Some(&prefix_string())).build()
 }
 
-#[cfg(feature = "bindgen")]
-fn generate_bindings(manifest_dir: &PathBuf, prefix: &str, bindings_path: &PathBuf) {
+#[cfg(any(
+    feature = "bindgen",
+    not(any(
+        all(target_os = "macos", target_arch = "x86_64"),
+        all(target_os = "linux", target_arch = "x86"),
+        all(target_os = "linux", target_arch = "x86_64"),
+        all(target_os = "linux", target_arch = "aarch64")
+    ))
+))]
+fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf) {
     let options = bindgen::BindingOptions {
-        build_prefix: Some(&prefix),
+        build_prefix: Some(prefix),
         include_ssl: cfg!(feature = "ssl"),
         disable_prelude: true,
-        ..Default::default()
     };
 
-    let bindings =
-        bindgen::generate_bindings(&manifest_dir, options).expect("Unable to generate bindings.");
+    let bindings = bindgen::generate_bindings(manifest_dir, &options);
 
     bindings
-        .write(Box::new(std::fs::File::create(&bindings_path).unwrap()))
+        .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
         .expect("written bindings");
 }
 
 #[cfg(feature = "bindgen")]
-fn generate_src_bindings(manifest_dir: &PathBuf, prefix: &str, src_bindings_path: &PathBuf) {
+fn generate_src_bindings(manifest_dir: &Path, prefix: &str, src_bindings_path: &Path) {
     bindgen::generate_bindings(
-        &manifest_dir,
-        bindgen::BindingOptions {
-            build_prefix: Some(&prefix),
+        manifest_dir,
+        &bindgen::BindingOptions {
+            build_prefix: Some(prefix),
             include_ssl: false,
             ..Default::default()
         },
     )
-    .expect("Unable to generate bindings.")
     .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
     .expect("write bindings");
 
     bindgen::generate_bindings(
-        &manifest_dir,
-        bindgen::BindingOptions {
-            build_prefix: Some(&prefix),
+        manifest_dir,
+        &bindgen::BindingOptions {
+            build_prefix: Some(prefix),
             include_ssl: true,
             ..Default::default()
         },
     )
-    .expect("Unable to generate bindings.")
     .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto_ssl"))))
     .expect("write bindings");
 }
@@ -221,13 +231,13 @@ fn main() {
     use crate::OutputLib::{Crypto, RustWrapper, Ssl};
     use crate::OutputLibType::Static;
 
-    let is_bindgen_enabled = cfg!(feature = "bindgen");
+    let mut is_bindgen_required = cfg!(feature = "bindgen");
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
         .unwrap_or_else(|_| String::from("0"))
         .eq("1");
 
-    let pregenerated = !is_bindgen_enabled || is_internal_generate;
+    let pregenerated = !is_bindgen_required || is_internal_generate;
 
     cfg_bindgen_platform!(linux_x86, "linux", "x86", pregenerated);
     cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", pregenerated);
@@ -235,7 +245,8 @@ fn main() {
     cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", pregenerated);
 
     if !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
-        emit_rustc_cfg("not_pregenerated");
+        emit_rustc_cfg("use_bindgen_generated");
+        is_bindgen_required = true;
     }
 
     let mut missing_dependency = false;
@@ -264,8 +275,16 @@ fn main() {
             let src_bindings_path = Path::new(&manifest_dir).join("src");
             generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
         }
-    } else {
-        #[cfg(feature = "bindgen")]
+    } else if is_bindgen_required {
+        #[cfg(any(
+            feature = "bindgen",
+            not(any(
+                all(target_os = "macos", target_arch = "x86_64"),
+                all(target_os = "linux", target_arch = "x86"),
+                all(target_os = "linux", target_arch = "x86_64"),
+                all(target_os = "linux", target_arch = "aarch64")
+            ))
+        ))]
         {
             let gen_bindings_path = Path::new(&env::var("OUT_DIR").unwrap()).join("bindings.rs");
             generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);

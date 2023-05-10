@@ -227,6 +227,30 @@ jobs:
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
 
+  bindgen-test:
+    name: aws-lc-rs bindgen-tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ ubuntu-latest, macOS-latest ]
+        args:
+          - --no-default-features --features aws-lc-sys,bindgen
+          - --release --all-targets --features ring-benchmarks,bindgen
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Run cargo test
+        working-directory: ./aws-lc-rs
+        run: cargo test ${{ matrix.args }}
+
   windows-test:
     name: aws-lc-rs windows-tests
     runs-on: ${{ matrix.os }}
@@ -236,12 +260,13 @@ jobs:
         rust: [ stable ]
         os: [ windows-2019 ]
         args:
+          - --all-targets
           - --all-targets --features bindgen
-          - --release --all-targets --features ring-benchmarks,bindgen
-          - --no-default-features --features non-fips,bindgen
-          - --no-default-features --features non-fips,ring-io,bindgen
-          - --no-default-features --features non-fips,ring-sig-verify,bindgen
-          - --no-default-features --features non-fips,alloc,bindgen
+          - --release --all-targets --features ring-benchmarks
+          - --no-default-features --features non-fips
+          - --no-default-features --features non-fips,ring-io
+          - --no-default-features --features non-fips,ring-sig-verify
+          - --no-default-features --features non-fips,alloc
     steps:
       - uses: ilammy/setup-nasm@v1
       - uses: actions/checkout@v3

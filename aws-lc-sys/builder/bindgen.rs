@@ -22,11 +22,10 @@ impl StripPrefixCallback {
     }
 }
 
-#[cfg(feature = "bindgen")]
 impl ParseCallbacks for StripPrefixCallback {
     fn generated_name_override(&self, item_info: ItemInfo<'_>) -> Option<String> {
         self.remove_prefix.as_ref().and_then(|s| {
-            let prefix = format!("{}_", s);
+            let prefix = format!("{s}_");
             item_info
                 .name
                 .strip_prefix(prefix.as_str())
@@ -35,7 +34,7 @@ impl ParseCallbacks for StripPrefixCallback {
     }
 }
 
-fn prepare_clang_args(manifest_dir: &Path, build_prefix: &Option<&str>) -> Vec<String> {
+fn prepare_clang_args(manifest_dir: &Path, build_prefix: Option<&str>) -> Vec<String> {
     let mut clang_args: Vec<String> = vec![
         "-I".to_string(),
         get_rust_include_path(manifest_dir).display().to_string(),
@@ -51,7 +50,7 @@ fn prepare_clang_args(manifest_dir: &Path, build_prefix: &Option<&str>) -> Vec<S
     }
 
     if let Some(prefix) = build_prefix {
-        clang_args.push(format!("-DBORINGSSL_PREFIX={}", prefix));
+        clang_args.push(format!("-DBORINGSSL_PREFIX={prefix}"));
         clang_args.push("-I".to_string());
         clang_args.push(
             get_generated_include_path(manifest_dir)
@@ -96,8 +95,8 @@ pub(crate) struct BindingOptions<'a> {
     pub disable_prelude: bool,
 }
 
-fn prepare_bindings_builder(manifest_dir: &Path, options: BindingOptions<'_>) -> bindgen::Builder {
-    let clang_args = prepare_clang_args(manifest_dir, &options.build_prefix);
+fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions<'_>) -> bindgen::Builder {
+    let clang_args = prepare_clang_args(manifest_dir, options.build_prefix);
 
     let mut builder = bindgen::Builder::default()
         .derive_copy(true)
@@ -140,10 +139,9 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: BindingOptions<'_>) ->
 
 pub(crate) fn generate_bindings(
     manifest_dir: &Path,
-    options: BindingOptions<'_>,
-) -> Result<bindgen::Bindings, &'static str> {
-    let bindings = prepare_bindings_builder(&manifest_dir, options)
+    options: &BindingOptions<'_>,
+) -> bindgen::Bindings {
+    prepare_bindings_builder(manifest_dir, options)
         .generate()
-        .expect("Unable to generate bindings.");
-    Ok(bindings)
+        .expect("Unable to generate bindings.")
 }
