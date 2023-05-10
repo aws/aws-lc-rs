@@ -3,9 +3,13 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aead::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
-use crate::aead::chacha::{encrypt_block_chacha20, ChaCha20Key};
-use crate::aead::{block::Block, error, quic::Sample, Nonce};
+pub(crate) mod aes;
+pub(crate) mod block;
+pub(crate) mod chacha;
+
+use crate::cipher::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
+use crate::cipher::block::Block;
+use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
 use aws_lc::{AES_set_encrypt_key, AES_KEY};
 use std::mem::{size_of, transmute, MaybeUninit};
@@ -89,9 +93,9 @@ impl SymmetricCipherKey {
         }
     }
 
-    pub(crate) fn chacha20(key_bytes: &[u8]) -> Result<Self, error::Unspecified> {
+    pub(crate) fn chacha20(key_bytes: &[u8]) -> Result<Self, Unspecified> {
         if key_bytes.len() != 32 {
-            return Err(error::Unspecified);
+            return Err(Unspecified);
         }
         let mut kb = MaybeUninit::<[u8; 32]>::uninit();
         unsafe {
@@ -109,32 +113,6 @@ impl SymmetricCipherKey {
         }
     }
 
-    #[inline]
-    pub(super) fn new_mask(&self, sample: Sample) -> Result<[u8; 5], error::Unspecified> {
-        let block = Block::from(&sample);
-
-        let encrypted_block = match self {
-            SymmetricCipherKey::Aes128(.., aes_key) | SymmetricCipherKey::Aes256(.., aes_key) => {
-                encrypt_block_aes_ecb(aes_key, block)
-            }
-            SymmetricCipherKey::ChaCha20(key_bytes) => {
-                let plaintext = block.as_ref();
-                let counter_bytes: &[u8; 4] = plaintext[0..=3].try_into()?;
-                let nonce: &[u8; 12] = plaintext[4..=15].try_into()?;
-                let input = Block::zero();
-                unsafe {
-                    let counter = std::mem::transmute::<[u8; 4], u32>(*counter_bytes).to_le();
-                    encrypt_block_chacha20(key_bytes, input, Nonce::from(nonce), counter)?
-                }
-            }
-        };
-
-        let mut out: [u8; 5] = [0; 5];
-        out.copy_from_slice(&encrypted_block.as_ref()[..5]);
-
-        Ok(out)
-    }
-
     #[allow(dead_code)]
     #[inline]
     pub fn encrypt_block(&self, block: Block) -> Result<Block, Unspecified> {
@@ -150,7 +128,7 @@ impl SymmetricCipherKey {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::aead::block::BLOCK_LEN;
+    use crate::cipher::block::BLOCK_LEN;
     use crate::test::from_hex;
 
     #[test]

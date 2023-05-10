@@ -20,11 +20,9 @@
 //!    http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL.chacha20poly1305?annotate=HEAD
 //! [RFC 4253]: https://tools.ietf.org/html/rfc4253
 
-use super::BLOCK_LEN;
-use super::{
-    chacha::{self, ChaCha20Key},
-    poly1305, Nonce, Tag,
-};
+use super::{poly1305, Nonce, Tag};
+use crate::cipher::block::BLOCK_LEN;
+use crate::cipher::chacha::{self, ChaCha20Key};
 use crate::{constant_time, endian::BigEndian, error};
 use core::convert::TryInto;
 
@@ -63,10 +61,10 @@ impl SealingKey {
             let (len_in_out, data_and_padding_in_out) =
                 plaintext_in_ciphertext_out.split_at_mut(PACKET_LENGTH_LEN);
 
-            self.key.k_1.encrypt_in_place(Nonce(nonce.0), len_in_out, 0);
+            self.key.k_1.encrypt_in_place(nonce.as_ref(), len_in_out, 0);
             self.key
                 .k_2
-                .encrypt_in_place(nonce, data_and_padding_in_out, 1);
+                .encrypt_in_place(nonce.as_ref(), data_and_padding_in_out, 1);
         }
 
         let Tag(tag) = poly1305::sign(poly_key, plaintext_in_ciphertext_out);
@@ -101,7 +99,9 @@ impl OpeningKey {
     ) -> [u8; PACKET_LENGTH_LEN] {
         let mut packet_length = encrypted_packet_length;
         let nonce = make_nonce(sequence_number);
-        self.key.k_1.encrypt_in_place(nonce, &mut packet_length, 0);
+        self.key
+            .k_1
+            .encrypt_in_place(nonce.as_ref(), &mut packet_length, 0);
         packet_length
     }
 
@@ -136,7 +136,7 @@ impl OpeningKey {
         let plaintext_in_ciphertext_out = &mut ciphertext_in_plaintext_out[PACKET_LENGTH_LEN..];
         self.key
             .k_2
-            .encrypt_in_place(nonce, plaintext_in_ciphertext_out, 1);
+            .encrypt_in_place(nonce.as_ref(), plaintext_in_ciphertext_out, 1);
 
         Ok(plaintext_in_ciphertext_out)
     }
@@ -181,19 +181,20 @@ fn verify(key: poly1305::Key, msg: &[u8], tag: &[u8; TAG_LEN]) -> Result<(), err
 }
 
 #[inline]
+#[allow(clippy::needless_pass_by_value)]
 pub(super) fn derive_poly1305_key(chacha_key: &ChaCha20Key, nonce: Nonce) -> poly1305::Key {
     let mut key_bytes = [0u8; 2 * BLOCK_LEN];
-    chacha_key.encrypt_in_place(nonce, &mut key_bytes, 0);
+    chacha_key.encrypt_in_place(nonce.as_ref(), &mut key_bytes, 0);
     poly1305::Key::new(key_bytes)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::aead::chacha::ChaCha20Key;
     use crate::aead::chacha20_poly1305_openssh::{
         derive_poly1305_key, OpeningKey, SealingKey, KEY_LEN, TAG_LEN,
     };
     use crate::aead::Nonce;
+    use crate::cipher::chacha::ChaCha20Key;
     use crate::test;
 
     #[test]

@@ -1,8 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aead::cipher::SymmetricCipherKey;
 use crate::aead::TAG_LEN;
+use crate::cipher::SymmetricCipherKey;
 use crate::error;
 
 use aws_lc::{

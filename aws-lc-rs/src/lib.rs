@@ -136,6 +136,8 @@ pub mod rand;
 pub mod signature;
 pub mod test;
 
+mod cipher;
+
 mod rsa;
 
 mod debug;

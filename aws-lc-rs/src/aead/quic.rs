@@ -7,8 +7,10 @@
 //!
 //! See draft-ietf-quic-tls.
 
-use crate::aead::cipher;
 use crate::aead::key_inner::KeyInner;
+use crate::cipher::aes::encrypt_block_aes_ecb;
+use crate::cipher::chacha::encrypt_block_chacha20;
+use crate::cipher::{self, block, SymmetricCipherKey};
 use crate::hkdf::KeyType;
 use crate::{derive_debug_via_id, error, hkdf};
 use core::convert::TryFrom;
@@ -54,8 +56,7 @@ impl HeaderProtectionKey {
     pub fn new_mask(&self, sample: &[u8]) -> Result<[u8; 5], error::Unspecified> {
         let sample = <&[u8; SAMPLE_LEN]>::try_from(sample)?;
 
-        let out = cipher_new_mask(&self.inner, *sample);
-        Ok(out)
+        cipher_new_mask(&self.inner, *sample)
     }
 
     /// The key's algorithm.
@@ -161,10 +162,34 @@ fn chacha20_init(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
 }
 
 #[inline]
-fn cipher_new_mask(key: &KeyInner, sample: Sample) -> [u8; 5] {
+fn cipher_new_mask(key: &KeyInner, sample: Sample) -> Result<[u8; 5], error::Unspecified> {
     let cipher_key = key.cipher_key();
 
-    cipher_key.new_mask(sample).unwrap()
+    let block = block::Block::from(&sample);
+
+    let encrypted_block = match cipher_key {
+        SymmetricCipherKey::Aes128(.., aes_key) | SymmetricCipherKey::Aes256(.., aes_key) => {
+            encrypt_block_aes_ecb(aes_key, block)
+        }
+        SymmetricCipherKey::ChaCha20(key_bytes) => {
+            let plaintext = block.as_ref();
+            let counter_bytes: &[u8; 4] = plaintext[0..=3]
+                .try_into()
+                .map_err(|_| error::Unspecified)?;
+            let nonce: &[u8; 12] = plaintext[4..=15]
+                .try_into()
+                .map_err(|_| error::Unspecified)?;
+            let input = block::Block::zero();
+            unsafe {
+                let counter = std::mem::transmute::<[u8; 4], u32>(*counter_bytes).to_le();
+                encrypt_block_chacha20(key_bytes, input, nonce, counter)?
+            }
+        }
+    };
+
+    let mut out: [u8; 5] = [0; 5];
+    out.copy_from_slice(&encrypted_block.as_ref()[..5]);
+    Ok(out)
 }
 
 #[cfg(test)]

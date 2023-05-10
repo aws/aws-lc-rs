@@ -9,16 +9,16 @@
 /// for the target.
 #[repr(C)]
 #[derive(Copy, Clone)]
-pub struct Block {
+pub(crate) struct Block {
     subblocks: [u64; 2],
 }
 
 /// Block length
-pub const BLOCK_LEN: usize = 16;
+pub(crate) const BLOCK_LEN: usize = 16;
 
 impl Block {
     #[inline]
-    pub fn zero() -> Self {
+    pub(crate) fn zero() -> Self {
         Self { subblocks: [0, 0] }
     }
 }
