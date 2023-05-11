@@ -42,7 +42,7 @@ cargo clean --target-dir "${TEMP_TARGET_DIR}"
 # Sets AWS_LC_RUST_INTERNAL_BINDGEN=1 which will cause the generation bindings for a specific platform. This feature
 # is only intended for internal use thus is not a cargo feature. Requires bindgen to be enabled. The internal_bindgen
 # config is enabled so that the final crates doesn't expect to find the dynamically generated bindings.rs
-env AWS_LC_RUST_INTERNAL_BINDGEN=1 cargo build --target-dir "${TEMP_TARGET_DIR}" --features bindgen
+env AWS_LC_RUST_INTERNAL_BINDGEN=1 cargo build --target-dir "${TEMP_TARGET_DIR}" --features bindgen,ssl
 cargo clean --target-dir "${TEMP_TARGET_DIR}"
 
 popd &>/dev/null # ${CRATE_DIR}

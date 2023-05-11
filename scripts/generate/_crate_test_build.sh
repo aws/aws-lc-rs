@@ -45,6 +45,7 @@ export GOPROXY=direct
 
 cargo clean --target-dir "${TEMP_TARGET_DIR}"
 cargo test --target-dir "${TEMP_TARGET_DIR}" --release
+cargo test --target-dir "${TEMP_TARGET_DIR}" --release --features ssl
 
 rm -rf "${TEMP_TARGET_DIR}" &>/dev/null || true
 
