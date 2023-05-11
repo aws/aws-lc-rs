@@ -4,8 +4,8 @@
 use crate::aead::{Aad, Algorithm, AlgorithmID, Nonce, Tag, MAX_TAG_LEN};
 use std::mem::MaybeUninit;
 
-use crate::aead::cipher::SymmetricCipherKey;
 use crate::aead::key_inner::KeyInner;
+use crate::cipher::SymmetricCipherKey;
 use crate::error::Unspecified;
 use aws_lc::EVP_AEAD_CTX_seal_scatter;
 use std::ptr::null;

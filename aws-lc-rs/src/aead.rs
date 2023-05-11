@@ -15,14 +15,14 @@
 //! # Examples
 //! ```
 //! use aws_lc_rs::rand;
-//! use aws_lc_rs::aead::{UnboundKey, AES_128_KEY_LEN, AES_128_GCM, nonce_sequence, SealingKey,
+//! use aws_lc_rs::aead::{UnboundKey, AES_128_GCM, nonce_sequence, SealingKey,
 //!     OpeningKey, Aad, BoundKey};
 //! use aws_lc_rs::test::from_hex;
 //!
 //! let plaintext = "plaintext value";
 //!
 //! // Generate random bytes for secret key
-//! let mut key_bytes = [0u8; AES_128_KEY_LEN];
+//! let mut key_bytes = [0u8; 16];
 //! rand::fill(&mut key_bytes).expect("Unable to generate key");
 //!
 //! // Contextual information must match between encryption and decryption
@@ -62,7 +62,7 @@
 //! assert_eq!(plaintext, decrypted_plaintext);
 //! ```
 
-use crate::{derive_debug_via_id, error, hkdf};
+use crate::{derive_debug_via_id, hkdf};
 use aes_gcm::aead_seal_separate;
 use std::fmt::Debug;
 
@@ -72,12 +72,9 @@ use key_inner::KeyInner;
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
 
-mod aes;
 mod aes_gcm;
-mod block;
 mod chacha;
 pub mod chacha20_poly1305_openssh;
-mod cipher;
 mod key_inner;
 mod nonce;
 pub mod nonce_sequence;
@@ -85,8 +82,7 @@ mod poly1305;
 pub mod quic;
 
 pub use self::{
-    aes_gcm::{AES_128_GCM, AES_128_KEY_LEN, AES_256_GCM, AES_256_KEY_LEN},
-    block::BLOCK_LEN,
+    aes_gcm::{AES_128_GCM, AES_256_GCM},
     chacha::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},
 };

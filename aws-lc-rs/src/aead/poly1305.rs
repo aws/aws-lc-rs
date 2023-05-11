@@ -5,7 +5,8 @@
 
 // TODO: enforce maximum input length.
 
-use super::{block::BLOCK_LEN, Tag, TAG_LEN};
+use super::{Tag, TAG_LEN};
+use crate::cipher::block::BLOCK_LEN;
 use aws_lc::{CRYPTO_poly1305_finish, CRYPTO_poly1305_init, CRYPTO_poly1305_update};
 use std::mem::MaybeUninit;
 

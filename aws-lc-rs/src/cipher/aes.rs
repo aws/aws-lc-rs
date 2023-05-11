@@ -3,13 +3,13 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aead::block::{Block, BLOCK_LEN};
+use crate::cipher::block::{Block, BLOCK_LEN};
 use aws_lc::{AES_ecb_encrypt, AES_ENCRYPT, AES_KEY};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 use zeroize::Zeroize;
 
-pub(crate) struct Aes128Key(pub(super) [u8; 16]);
+pub(crate) struct Aes128Key(pub(crate) [u8; 16]);
 impl Deref for Aes128Key {
     type Target = [u8; 16];
     #[inline]
@@ -23,7 +23,7 @@ impl Drop for Aes128Key {
     }
 }
 
-pub(crate) struct Aes256Key(pub(super) [u8; 32]);
+pub(crate) struct Aes256Key(pub(crate) [u8; 32]);
 impl Deref for Aes256Key {
     type Target = [u8; 32];
 
@@ -39,7 +39,7 @@ impl Drop for Aes256Key {
 }
 
 #[inline]
-pub(super) fn encrypt_block_aes_ecb(aes_key: &AES_KEY, block: Block) -> Block {
+pub(crate) fn encrypt_block_aes_ecb(aes_key: &AES_KEY, block: Block) -> Block {
     unsafe {
         let mut cipher_text = MaybeUninit::<[u8; BLOCK_LEN]>::uninit();
         let plain_bytes = block.as_ref();
@@ -56,7 +56,7 @@ pub(super) fn encrypt_block_aes_ecb(aes_key: &AES_KEY, block: Block) -> Block {
 
 #[cfg(test)]
 mod test {
-    use crate::aead::aes::{Aes128Key, Aes256Key};
+    use crate::cipher::aes::{Aes128Key, Aes256Key};
     use crate::test;
 
     #[test]
