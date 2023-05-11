@@ -142,7 +142,11 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
 
     // Build flags that minimize our crate size.
     cmake_cfg.define("BUILD_TESTING", "OFF");
-    cmake_cfg.define("BUILD_LIBSSL", "ON");
+    if cfg!(feature = "ssl") {
+        cmake_cfg.define("BUILD_LIBSSL", "ON");
+    } else {
+        cmake_cfg.define("BUILD_LIBSSL", "OFF");
+    }
     // Build flags that minimize our dependencies.
     cmake_cfg.define("DISABLE_PERL", "ON");
     cmake_cfg.define("DISABLE_GO", "ON");
@@ -159,7 +163,9 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
 }
 
 fn build_rust_wrapper(manifest_dir: &PathBuf) -> PathBuf {
-    prepare_cmake_build(manifest_dir, Some(&prefix_string())).build()
+    prepare_cmake_build(manifest_dir, Some(&prefix_string()))
+        .configure_arg("--no-warn-unused-cli")
+        .build()
 }
 
 #[cfg(any(
