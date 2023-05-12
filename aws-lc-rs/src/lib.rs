@@ -20,15 +20,16 @@
 //! Consuming projects will need a C Compiler (Clang or GCC) and Cmake to build.
 //!
 //! **Requirements**:
-//! * C compiler (Clang or GCC)
-//! * Cmake (> v3.12)
-//! * Linux or [macOS](https://www.apple.com/macos)
+//! * C compiler (Clang or GCC or Visual Studio Build Tools 2017)
+//! * Cmake (>= v3.12)
+//! * Linux or [macOS](https://www.apple.com/macos) or Windows
 //!
-//! **Feature-specific Requirements**
+//! **Platform- and Feature-specific Requirements**
 //!   * Linux - required for `fips`
 //!   * [Go](https://go.dev/) - required for `fips`
-//!   * [libclang](https://llvm.org/) - required for `bindgen`
-//!     * see [Rust-bindgen requirements](https://rust-lang.github.io/rust-bindgen/requirements.html) for more information.
+//!   * [libclang](https://llvm.org/) - required for `bindgen` and for any platform lacking pre-generated bindings (like Windows or M1 Macs)
+//!
+//! See our [User Guide](https://awslabs.github.io/aws-lc-rs/) for guidance on installing these requirements.
 //!
 //! ## Contributor Quickstart for Amazon Linux 2023
 //!
