@@ -8,7 +8,7 @@
 //! See draft-ietf-quic-tls.
 
 use crate::aead::key_inner::KeyInner;
-use crate::cipher::aes::encrypt_block_aes_ecb;
+use crate::cipher::aes::encrypt_block_aes;
 use crate::cipher::chacha::encrypt_block_chacha20;
 use crate::cipher::{self, block, SymmetricCipherKey};
 use crate::hkdf::KeyType;
@@ -169,7 +169,7 @@ fn cipher_new_mask(key: &KeyInner, sample: Sample) -> Result<[u8; 5], error::Uns
 
     let encrypted_block = match cipher_key {
         SymmetricCipherKey::Aes128(.., aes_key) | SymmetricCipherKey::Aes256(.., aes_key) => {
-            encrypt_block_aes_ecb(aes_key, block)
+            encrypt_block_aes(aes_key, block)
         }
         SymmetricCipherKey::ChaCha20(key_bytes) => {
             let plaintext = block.as_ref();

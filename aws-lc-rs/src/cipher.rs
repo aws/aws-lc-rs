@@ -7,7 +7,7 @@ pub(crate) mod aes;
 pub(crate) mod block;
 pub(crate) mod chacha;
 
-use crate::cipher::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
+use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
@@ -24,7 +24,7 @@ pub(crate) enum SymmetricCipherKey {
 }
 
 unsafe impl Send for SymmetricCipherKey {}
-// The AES_KEY value is only used as a `*const AES_KEY` in calls to `AES_ecb_encrypt`.
+// The AES_KEY value is only used as a `*const AES_KEY` in calls to `AES_encrypt`.
 unsafe impl Sync for SymmetricCipherKey {}
 
 impl Drop for SymmetricCipherKey {
@@ -115,10 +115,10 @@ impl SymmetricCipherKey {
 
     #[allow(dead_code)]
     #[inline]
-    pub fn encrypt_block(&self, block: Block) -> Result<Block, Unspecified> {
+    pub(crate) fn encrypt_block(&self, block: Block) -> Block {
         match self {
             SymmetricCipherKey::Aes128(.., aes_key) | SymmetricCipherKey::Aes256(.., aes_key) => {
-                Ok(encrypt_block_aes_ecb(aes_key, block))
+                encrypt_block_aes(aes_key, block)
             }
             SymmetricCipherKey::ChaCha20(..) => panic!("Unsupported algorithm!"),
         }
@@ -139,7 +139,7 @@ mod tests {
         let input_block: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::try_from(input).unwrap();
 
         let aes128 = SymmetricCipherKey::aes128(key.as_slice()).unwrap();
-        let result = aes128.encrypt_block(Block::from(&input_block)).unwrap();
+        let result = aes128.encrypt_block(Block::from(&input_block));
 
         assert_eq!(expected_result.as_slice(), result.as_ref());
     }
@@ -153,7 +153,7 @@ mod tests {
         let input_block: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::try_from(input).unwrap();
 
         let aes128 = SymmetricCipherKey::aes256(key.as_slice()).unwrap();
-        let result = aes128.encrypt_block(Block::from(&input_block)).unwrap();
+        let result = aes128.encrypt_block(Block::from(&input_block));
 
         assert_eq!(expected_result.as_slice(), result.as_ref());
     }
