@@ -7,7 +7,7 @@ pub(crate) mod aes;
 pub(crate) mod block;
 pub(crate) mod chacha;
 
-use crate::cipher::aes::{encrypt_block_aes_ecb, Aes128Key, Aes256Key};
+use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
@@ -24,7 +24,7 @@ pub(crate) enum SymmetricCipherKey {
 }
 
 unsafe impl Send for SymmetricCipherKey {}
-// The AES_KEY value is only used as a `*const AES_KEY` in calls to `AES_ecb_encrypt`.
+// The AES_KEY value is only used as a `*const AES_KEY` in calls to `AES_encrypt`.
 unsafe impl Sync for SymmetricCipherKey {}
 
 impl Drop for SymmetricCipherKey {
@@ -118,7 +118,7 @@ impl SymmetricCipherKey {
     pub fn encrypt_block(&self, block: Block) -> Result<Block, Unspecified> {
         match self {
             SymmetricCipherKey::Aes128(.., aes_key) | SymmetricCipherKey::Aes256(.., aes_key) => {
-                Ok(encrypt_block_aes_ecb(aes_key, block))
+                Ok(encrypt_block_aes(aes_key, block))
             }
             SymmetricCipherKey::ChaCha20(..) => panic!("Unsupported algorithm!"),
         }
