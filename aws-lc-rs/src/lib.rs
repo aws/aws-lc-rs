@@ -151,6 +151,7 @@ mod cbs;
 mod ec;
 mod ed25519;
 mod evp_pkey;
+mod iv;
 mod ptr;
 
 use aws_lc::{
