@@ -146,7 +146,7 @@ mod ec;
 mod ed25519;
 mod endian;
 mod evp_pkey;
-mod iv;
+pub mod iv;
 mod ptr;
 mod rsa;
 

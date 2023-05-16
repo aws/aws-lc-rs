@@ -3,6 +3,7 @@
 
 use crate::aead::{Nonce, NonceSequence, NONCE_LEN};
 use crate::error::Unspecified;
+use crate::iv::NonceIV;
 
 /// `Counter32` is an implementation of the `NonceSequence` trait.
 /// The internal state of a `Counter32` is a 32-bit unsigned counter that
@@ -118,7 +119,7 @@ impl NonceSequence for Counter32 {
         nonce_bytes[..8].copy_from_slice(&self.identifier);
         nonce_bytes[8..].copy_from_slice(&counter_bytes);
         self.counter = self.counter.wrapping_add(1);
-        Ok(Nonce(nonce_bytes))
+        Ok(Nonce(NonceIV::from(nonce_bytes)))
     }
 }
 
@@ -134,7 +135,8 @@ mod tests {
             .counter(7)
             .build();
         assert_eq!(0, cns.generated());
-        let nonce = cns.advance().unwrap().0;
+        let nonce = cns.advance().unwrap();
+        let nonce = nonce.as_ref();
         assert_eq!(8, cns.counter());
         assert_eq!(
             [0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5],
@@ -144,9 +146,10 @@ mod tests {
         assert_eq!(1, cns.generated());
         assert_eq!(
             nonce,
-            [0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5, 0, 0, 0, 7]
+            &[0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5, 0, 0, 0, 7]
         );
-        let nonce = cns.advance().unwrap().0;
+        let nonce = cns.advance().unwrap();
+        let nonce = nonce.as_ref();
         assert_eq!(2, cns.generated());
         assert_eq!(9, cns.counter());
         assert_eq!(
@@ -155,17 +158,19 @@ mod tests {
         );
         assert_eq!(
             nonce,
-            [0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5, 0, 0, 0, 8]
+            &[0xA1, 0xB2, 0xC3, 0xD4, 0xA2, 0xB3, 0xC4, 0xD5, 0, 0, 0, 8]
         );
     }
 
     #[test]
     fn test_counter32() {
         let mut cns = Counter32Builder::new().counter(0x_4CB0_16EA_u32).build();
-        let nonce = cns.advance().unwrap().0;
-        assert_eq!(nonce, [0, 0, 0, 0, 0, 0, 0, 0, 0x4C, 0xB0, 0x16, 0xEA]);
-        let nonce = cns.advance().unwrap().0;
-        assert_eq!(nonce, [0, 0, 0, 0, 0, 0, 0, 0, 0x4C, 0xB0, 0x16, 0xEB]);
+        let nonce = cns.advance().unwrap();
+        let nonce = nonce.as_ref();
+        assert_eq!(nonce, &[0, 0, 0, 0, 0, 0, 0, 0, 0x4C, 0xB0, 0x16, 0xEA]);
+        let nonce = cns.advance().unwrap();
+        let nonce = nonce.as_ref();
+        assert_eq!(nonce, &[0, 0, 0, 0, 0, 0, 0, 0, 0x4C, 0xB0, 0x16, 0xEB]);
     }
 
     #[test]
@@ -174,10 +179,12 @@ mod tests {
             .counter(0x_6A_u32)
             .identifier(0x_7B_u64.to_be_bytes())
             .build();
-        let nonce = cns.advance().unwrap().0;
-        assert_eq!(nonce, [0, 0, 0, 0, 0, 0, 0, 0x7B, 0, 0, 0, 0x6A]);
-        let nonce = cns.advance().unwrap().0;
-        assert_eq!(nonce, [0, 0, 0, 0, 0, 0, 0, 0x7B, 0, 0, 0, 0x6B]);
+        let nonce = cns.advance().unwrap();
+        let nonce = nonce.as_ref();
+        assert_eq!(nonce, &[0, 0, 0, 0, 0, 0, 0, 0x7B, 0, 0, 0, 0x6A]);
+        let nonce = cns.advance().unwrap();
+        let nonce = nonce.as_ref();
+        assert_eq!(nonce, &[0, 0, 0, 0, 0, 0, 0, 0x7B, 0, 0, 0, 0x6B]);
     }
 
     #[test]
@@ -185,7 +192,7 @@ mod tests {
         let mut cns = Counter32Builder::new().limit(1).build();
         assert_eq!(1, cns.limit());
         assert_eq!(0, cns.generated());
-        let _nonce = cns.advance().unwrap().0;
+        let _nonce = cns.advance().unwrap();
         assert_eq!(1, cns.generated());
         assert!(cns.advance().is_err());
     }
