@@ -137,22 +137,18 @@ pub mod rand;
 pub mod signature;
 pub mod test;
 
-mod cipher;
-
-mod rsa;
-
-mod debug;
-
-mod endian;
-
 mod bn;
 mod cbb;
 mod cbs;
+pub mod cipher;
+mod debug;
 mod ec;
 mod ed25519;
+mod endian;
 mod evp_pkey;
 mod iv;
 mod ptr;
+mod rsa;
 
 use aws_lc::{
     CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, ERR_GET_FUNC, ERR_GET_LIB,
