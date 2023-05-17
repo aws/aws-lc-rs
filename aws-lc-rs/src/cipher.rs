@@ -571,86 +571,128 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_iv_aes_128_cbc_16_bytes() {
-        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
-        let input = from_hex("00112233445566778899aabbccddeeff").unwrap();
-        let expected_ciphertext =
-            from_hex("69c4e0d86a7b0430d8cdb78070b4c55a9e978e6d16b086570ef794ef97984232").unwrap();
-        let iv = [0u8; AES_IV_LEN];
-        let cipher_key = CipherKey::new(&AES_128_CBC_PKCS7_PADDING, &key).unwrap();
-        let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv);
+    macro_rules! cipher_test_vector {
+        ($name:ident, $cipher:expr, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
+            #[test]
+            fn $name() {
+                let key = from_hex($key).unwrap();
+                let input = from_hex($plaintext).unwrap();
+                let expected_ciphertext = from_hex($ciphertext).unwrap();
+                let mut iv = from_hex($iv).unwrap();
+                let iv = {
+                    let slice = iv.as_mut_slice();
+                    let mut iv = [0u8; 16];
+                    {
+                        let x = iv.as_mut_slice();
+                        x.copy_from_slice(slice);
+                    }
+                    iv
+                };
 
-        let mut ciphertext = input.clone();
-        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
-        assert_eq!(expected_ciphertext, ciphertext);
+                let alg = $cipher;
+                let cipher_key = CipherKey::new(alg, &key).unwrap();
+                let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv.try_into().unwrap());
 
-        let cipher_key2 = CipherKey::new(&AES_128_CBC_PKCS7_PADDING, &key).unwrap();
-        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+                let mut ciphertext = input.clone();
+                let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
+                assert_eq!(expected_ciphertext, ciphertext);
 
-        let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
-        assert_eq!(input.as_slice(), plaintext);
+                let cipher_key2 = CipherKey::new(alg, &key).unwrap();
+                let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+
+                let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
+                assert_eq!(input.as_slice(), plaintext);
+            }
+        };
     }
 
-    #[test]
-    fn test_iv_aes_256_cbc_15_bytes() {
-        let key =
-            from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
-        let input = from_hex("00112233445566778899aabbccddee").unwrap();
-        let expected_ciphertext = from_hex("2ddfb635a651a43f582997966840ca0c").unwrap();
-        let iv = [0u8; AES_IV_LEN];
-        let cipher_key = CipherKey::new(&AES_256_CBC_PKCS7_PADDING, &key).unwrap();
-        let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv);
+    cipher_test_vector!(
+        test_iv_aes_128_cbc_16_bytes,
+        &AES_128_CBC_PKCS7_PADDING,
+        "000102030405060708090a0b0c0d0e0f",
+        "00000000000000000000000000000000",
+        "00112233445566778899aabbccddeeff",
+        "69c4e0d86a7b0430d8cdb78070b4c55a9e978e6d16b086570ef794ef97984232"
+    );
 
-        let mut ciphertext = input.clone();
-        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
-        assert_eq!(expected_ciphertext, ciphertext);
+    cipher_test_vector!(
+        test_iv_aes_256_cbc_15_bytes,
+        &AES_256_CBC_PKCS7_PADDING,
+        "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "00000000000000000000000000000000",
+        "00112233445566778899aabbccddee",
+        "2ddfb635a651a43f582997966840ca0c"
+    );
 
-        let cipher_key2 = CipherKey::new(&AES_256_CBC_PKCS7_PADDING, &key).unwrap();
-        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+    cipher_test_vector!(
+        test_iv_aes_128_ctr_16_bytes,
+        &AES_128_CTR,
+        "000102030405060708090a0b0c0d0e0f",
+        "00000000000000000000000000000000",
+        "00112233445566778899aabbccddeeff",
+        "c6b01904c3da3df5e7d62bd96d153686"
+    );
 
-        let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
-        assert_eq!(input.as_slice(), plaintext);
-    }
+    cipher_test_vector!(
+        test_iv_aes_256_ctr_15_bytes,
+        &AES_256_CTR,
+        "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "00000000000000000000000000000000",
+        "00112233445566778899aabbccddee",
+        "f28122856e1cf9a7216a30d111f399"
+    );
 
-    #[test]
-    fn test_iv_aes_128_ctr_16_bytes() {
-        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
-        let input = from_hex("00112233445566778899aabbccddeeff").unwrap();
-        let expected_ciphertext = from_hex("c6b01904c3da3df5e7d62bd96d153686").unwrap();
-        let iv = [0u8; AES_IV_LEN];
-        let cipher_key = CipherKey::new(&AES_128_CTR, &key).unwrap();
-        let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv);
+    cipher_test_vector!(
+        test_openssl_128_ctr_15_bytes,
+        &AES_128_CTR,
+        "244828580821c1652582c76e34d299f5",
+        "093145d5af233f46072a5eb5adc11aa1",
+        "3ee38cec171e6cf466bf0df98aa0e1",
+        "bd7d928f60e3422d96b3f8cd614eb2"
+    );
 
-        let mut ciphertext = input.clone();
-        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
-        assert_eq!(expected_ciphertext, ciphertext);
+    cipher_test_vector!(
+        test_openssl_256_ctr_15_bytes,
+        &AES_256_CTR,
+        "0857db8240ea459bdf660b4cced66d1f2d3734ff2de7b81e92740e65e7cc6a1d",
+        "f028ecb053f801102d11fccc9d303a27",
+        "eca7285d19f3c20e295378460e8729",
+        "b5098e5e788de6ac2f2098eb2fc6f8"
+    );
 
-        let cipher_key2 = CipherKey::new(&AES_128_CTR, &key).unwrap();
-        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+    cipher_test_vector!(
+        test_openssl_aes_128_cbc_15_bytes,
+        &AES_128_CBC_PKCS7_PADDING,
+        "053304bb3899e1d99db9d29343ea782d",
+        "b5313560244a4822c46c2a0c9d0cf7fd",
+        "a3e4c990356c01f320043c3d8d6f43",
+        "ad96993f248bd6a29760ec7ccda95ee1"
+    );
 
-        let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
-        assert_eq!(input.as_slice(), plaintext);
-    }
+    cipher_test_vector!(
+        test_openssl_aes_128_cbc_16_bytes,
+        &AES_128_CBC_PKCS7_PADDING,
+        "95af71f1c63e4a1d0b0b1a27fb978283",
+        "89e40797dca70197ff87d3dbb0ef2802",
+        "aece7b5e3c3df1ffc9802d2dfe296dc7",
+        "301b5dab49fb11e919d0d39970d06739301919743304f23f3cbc67d28564b25b"
+    );
 
-    #[test]
-    fn test_iv_aes_256_ctr_15_bytes() {
-        let key =
-            from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
-        let input = from_hex("00112233445566778899aabbccddee").unwrap();
-        let expected_ciphertext = from_hex("f28122856e1cf9a7216a30d111f399").unwrap();
-        let iv = [0u8; AES_IV_LEN];
-        let cipher_key = CipherKey::new(&AES_256_CTR, &key).unwrap();
-        let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv);
+    cipher_test_vector!(
+        test_openssl_aes_256_cbc_15_bytes,
+        &AES_256_CBC_PKCS7_PADDING,
+        "d369e03e9752784917cc7bac1db7399598d9555e691861d9dd7b3292a693ef57",
+        "1399bb66b2f6ad99a7f064140eaaa885",
+        "7385f5784b85bf0a97768ddd896d6d",
+        "4351082bac9b4593ae8848cc9dfb5a01"
+    );
 
-        let mut ciphertext = input.clone();
-        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
-        assert_eq!(expected_ciphertext, ciphertext);
-
-        let cipher_key2 = CipherKey::new(&AES_256_CTR, &key).unwrap();
-        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
-
-        let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
-        assert_eq!(input.as_slice(), plaintext);
-    }
+    cipher_test_vector!(
+        test_openssl_aes_256_cbc_16_bytes,
+        &AES_256_CBC_PKCS7_PADDING,
+        "d4a8206dcae01242f9db79a4ecfe277d0f7bb8ccbafd8f9809adb39f35aa9b41",
+        "24f6076548fb9d93c8f7ed9f6e661ef9",
+        "a39c1fdf77ea3e1f18178c0ec237c70a",
+        "f1af484830a149ee0387b854d65fe87ca0e62efc1c8e6909d4b9ab8666470453"
+    );
 }
