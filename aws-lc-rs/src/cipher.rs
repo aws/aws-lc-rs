@@ -15,7 +15,7 @@ use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
 use crate::iv::IV;
 use crate::rand;
-use aws_lc::{AES_set_encrypt_key, AES_KEY};
+use aws_lc::{AES_set_decrypt_key, AES_set_encrypt_key, AES_KEY};
 use aws_lc_sys::{AES_cbc_encrypt, AES_ctr128_encrypt, AES_DECRYPT, AES_ENCRYPT};
 use std::mem::{size_of, transmute, MaybeUninit};
 use std::os::raw::c_uint;
@@ -23,9 +23,19 @@ use std::ptr;
 use zeroize::Zeroize;
 
 pub(crate) enum SymmetricCipherKey {
-    Aes128(Aes128Key, AES_KEY),
-    Aes256(Aes256Key, AES_KEY),
-    ChaCha20(ChaCha20Key),
+    Aes128 {
+        raw_key: Aes128Key,
+        enc_key: AES_KEY,
+        dec_key: AES_KEY,
+    },
+    Aes256 {
+        raw_key: Aes256Key,
+        enc_key: AES_KEY,
+        dec_key: AES_KEY,
+    },
+    ChaCha20 {
+        raw_key: ChaCha20Key,
+    },
 }
 
 unsafe impl Send for SymmetricCipherKey {}
@@ -36,12 +46,20 @@ impl Drop for SymmetricCipherKey {
     fn drop(&mut self) {
         // Aes128Key, Aes256Key and ChaCha20Key implement Drop separately.
         match self {
-            SymmetricCipherKey::Aes128(_, aes_key) | SymmetricCipherKey::Aes256(_, aes_key) => unsafe {
+            SymmetricCipherKey::Aes128 {
+                enc_key, dec_key, ..
+            }
+            | SymmetricCipherKey::Aes256 {
+                enc_key, dec_key, ..
+            } => unsafe {
                 #[allow(clippy::transmute_ptr_to_ptr)]
-                let value: &mut [u8; size_of::<AES_KEY>()] = transmute(aes_key);
-                value.zeroize();
+                let enc_bytes: &mut [u8; size_of::<AES_KEY>()] = transmute(enc_key);
+                enc_bytes.zeroize();
+                #[allow(clippy::transmute_ptr_to_ptr)]
+                let dec_bytes: &mut [u8; size_of::<AES_KEY>()] = transmute(dec_key);
+                dec_bytes.zeroize();
             },
-            SymmetricCipherKey::ChaCha20(_) => {}
+            SymmetricCipherKey::ChaCha20 { .. } => {}
         }
     }
 }
@@ -132,6 +150,17 @@ pub struct EncryptingKey<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_
 impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
     EncryptingKey<KEYSIZE, IVSIZE, BLOCK_SIZE>
 {
+    #[cfg(test)]
+    fn new_with_iv(
+        cipher_key: CipherKey<KEYSIZE, IVSIZE, BLOCK_SIZE>,
+        iv_bytes: [u8; IVSIZE],
+    ) -> EncryptingKey<KEYSIZE, IVSIZE, BLOCK_SIZE> {
+        EncryptingKey {
+            cipher_key,
+            iv: IV::assume_unique_for_key(iv_bytes),
+        }
+    }
+
     fn new(
         cipher_key: CipherKey<KEYSIZE, IVSIZE, BLOCK_SIZE>,
     ) -> Result<EncryptingKey<KEYSIZE, IVSIZE, BLOCK_SIZE>, Unspecified> {
@@ -157,9 +186,10 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
                 let block_size: u8 = BLOCK_SIZE.try_into().map_err(|_| Unspecified)?;
                 in_out.extend(vec![block_size; BLOCK_SIZE].iter());
             } else {
-                let v: u8 = remainder.try_into().map_err(|_| Unspecified)?;
+                let padding_size = BLOCK_SIZE - remainder;
+                let v: u8 = padding_size.try_into().map_err(|_| Unspecified)?;
                 // Heap allocation :(
-                in_out.extend(vec![v; BLOCK_SIZE - remainder].iter());
+                in_out.extend(vec![v; padding_size].iter());
             }
         }
 
@@ -172,8 +202,9 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
             AlgorithmId::Aes128ctr | AlgorithmId::Aes256ctr => {
                 let mut num = MaybeUninit::<u32>::new(0);
                 let key = match &self.cipher_key.key {
-                    SymmetricCipherKey::Aes128(_, key) | SymmetricCipherKey::Aes256(_, key) => key,
-                    SymmetricCipherKey::ChaCha20(_) => return Err(Unspecified),
+                    SymmetricCipherKey::Aes128 { enc_key, .. }
+                    | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+                    SymmetricCipherKey::ChaCha20 { .. } => return Err(Unspecified),
                 };
 
                 let mut buf = [0u8; BLOCK_SIZE];
@@ -194,8 +225,9 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
             }
             AlgorithmId::Aes128cbc | AlgorithmId::Aes256cbc => {
                 let key = match &self.cipher_key.key {
-                    SymmetricCipherKey::Aes128(_, key) | SymmetricCipherKey::Aes256(_, key) => key,
-                    SymmetricCipherKey::ChaCha20(_) => return Err(Unspecified),
+                    SymmetricCipherKey::Aes128 { enc_key, .. }
+                    | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+                    SymmetricCipherKey::ChaCha20 { .. } => return Err(Unspecified),
                 };
                 unsafe {
                     AES_cbc_encrypt(
@@ -240,8 +272,9 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
             AlgorithmId::Aes128ctr | AlgorithmId::Aes256ctr => {
                 let mut num = MaybeUninit::<u32>::new(0);
                 let key = match &self.cipher_key.key {
-                    SymmetricCipherKey::Aes128(_, key) | SymmetricCipherKey::Aes256(_, key) => key,
-                    SymmetricCipherKey::ChaCha20(_) => return Err(Unspecified),
+                    SymmetricCipherKey::Aes128 { enc_key, .. }
+                    | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+                    SymmetricCipherKey::ChaCha20 { .. } => return Err(Unspecified),
                 };
                 let mut buf = [0u8; BLOCK_SIZE];
                 unsafe {
@@ -259,8 +292,9 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
             }
             AlgorithmId::Aes128cbc | AlgorithmId::Aes256cbc => {
                 let key = match &self.cipher_key.key {
-                    SymmetricCipherKey::Aes128(_, key) | SymmetricCipherKey::Aes256(_, key) => key,
-                    SymmetricCipherKey::ChaCha20(_) => return Err(Unspecified),
+                    SymmetricCipherKey::Aes128 { dec_key, .. }
+                    | SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
+                    SymmetricCipherKey::ChaCha20 { .. } => return Err(Unspecified),
                 };
                 unsafe {
                     AES_cbc_encrypt(
@@ -307,23 +341,35 @@ impl SymmetricCipherKey {
         }
 
         unsafe {
-            let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
+            let mut enc_key = MaybeUninit::<AES_KEY>::uninit();
             #[allow(clippy::cast_possible_truncation)]
             if 0 != AES_set_encrypt_key(
                 key_bytes.as_ptr(),
                 (key_bytes.len() * 8) as c_uint,
-                aes_key.as_mut_ptr(),
+                enc_key.as_mut_ptr(),
             ) {
                 return Err(Unspecified);
             }
-            let aes_key = aes_key.assume_init();
+            let enc_key = enc_key.assume_init();
+
+            let mut dec_key = MaybeUninit::<AES_KEY>::uninit();
+            #[allow(clippy::cast_possible_truncation)]
+            if 0 != AES_set_decrypt_key(
+                key_bytes.as_ptr(),
+                (key_bytes.len() * 8) as c_uint,
+                dec_key.as_mut_ptr(),
+            ) {
+                return Err(Unspecified);
+            }
+            let dec_key = dec_key.assume_init();
 
             let mut kb = MaybeUninit::<[u8; 16]>::uninit();
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 16);
-            Ok(SymmetricCipherKey::Aes128(
-                Aes128Key(kb.assume_init()),
-                aes_key,
-            ))
+            Ok(SymmetricCipherKey::Aes128 {
+                raw_key: Aes128Key(kb.assume_init()),
+                enc_key,
+                dec_key,
+            })
         }
     }
 
@@ -332,23 +378,35 @@ impl SymmetricCipherKey {
             return Err(Unspecified);
         }
         unsafe {
-            let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
+            let mut enc_key = MaybeUninit::<AES_KEY>::uninit();
             #[allow(clippy::cast_possible_truncation)]
             if 0 != AES_set_encrypt_key(
                 key_bytes.as_ptr(),
                 (key_bytes.len() * 8) as c_uint,
-                aes_key.as_mut_ptr(),
+                enc_key.as_mut_ptr(),
             ) {
                 return Err(Unspecified);
             }
-            let aes_key = aes_key.assume_init();
+            let enc_key = enc_key.assume_init();
+
+            let mut dec_key = MaybeUninit::<AES_KEY>::uninit();
+            #[allow(clippy::cast_possible_truncation)]
+            if 0 != AES_set_decrypt_key(
+                key_bytes.as_ptr(),
+                (key_bytes.len() * 8) as c_uint,
+                dec_key.as_mut_ptr(),
+            ) {
+                return Err(Unspecified);
+            }
+            let dec_key = dec_key.assume_init();
 
             let mut kb = MaybeUninit::<[u8; 32]>::uninit();
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
-            Ok(SymmetricCipherKey::Aes256(
-                Aes256Key(kb.assume_init()),
-                aes_key,
-            ))
+            Ok(SymmetricCipherKey::Aes256 {
+                raw_key: Aes256Key(kb.assume_init()),
+                enc_key,
+                dec_key,
+            })
         }
     }
 
@@ -359,16 +417,18 @@ impl SymmetricCipherKey {
         let mut kb = MaybeUninit::<[u8; 32]>::uninit();
         unsafe {
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
-            Ok(SymmetricCipherKey::ChaCha20(ChaCha20Key(kb.assume_init())))
+            Ok(SymmetricCipherKey::ChaCha20 {
+                raw_key: ChaCha20Key(kb.assume_init()),
+            })
         }
     }
 
     #[inline]
     pub(super) fn key_bytes(&self) -> &[u8] {
         match self {
-            SymmetricCipherKey::Aes128(bytes, ..) => &bytes.0,
-            SymmetricCipherKey::Aes256(bytes, ..) => &bytes.0,
-            SymmetricCipherKey::ChaCha20(bytes) => &bytes.0,
+            SymmetricCipherKey::Aes128 { raw_key, .. } => &raw_key.0,
+            SymmetricCipherKey::Aes256 { raw_key, .. } => &raw_key.0,
+            SymmetricCipherKey::ChaCha20 { raw_key, .. } => &raw_key.0,
         }
     }
 
@@ -376,10 +436,9 @@ impl SymmetricCipherKey {
     #[inline]
     pub(crate) fn encrypt_block(&self, block: Block) -> Block {
         match self {
-            SymmetricCipherKey::Aes128(.., aes_key) | SymmetricCipherKey::Aes256(.., aes_key) => {
-                encrypt_block_aes(aes_key, block)
-            }
-            SymmetricCipherKey::ChaCha20(..) => panic!("Unsupported algorithm!"),
+            SymmetricCipherKey::Aes128 { enc_key, .. }
+            | SymmetricCipherKey::Aes256 { enc_key, .. } => encrypt_block_aes(enc_key, block),
+            SymmetricCipherKey::ChaCha20 { .. } => panic!("Unsupported algorithm!"),
         }
     }
 }
@@ -438,9 +497,49 @@ mod tests {
     }
 
     #[test]
-    fn test_aes_128_cbc() {
+    fn test_aes_128_cbc_15_bytes() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        let input = from_hex("00112233445566778899aabbccddee").unwrap();
+
+        let cipher_key = CipherKey::new(&AES128_CBC, &key).unwrap();
+        let encrypting_key = EncryptingKey::new(cipher_key).unwrap();
+
+        let mut ciphertext = input.clone();
+        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
+
+        let cipher_key2 = CipherKey::new(&AES128_CBC, &key).unwrap();
+        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+
+        let plaintext_len = decrypting_key.decrypt(&mut ciphertext).unwrap();
+        let plaintext = ciphertext.as_slice();
+        let plaintext = &plaintext[..plaintext_len];
+        assert_eq!(input.as_slice(), plaintext);
+    }
+
+    #[test]
+    fn test_aes_128_cbc_16_bytes() {
         let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
         let input = from_hex("00112233445566778899aabbccddeeff").unwrap();
+
+        let cipher_key = CipherKey::new(&AES128_CBC, &key).unwrap();
+        let encrypting_key = EncryptingKey::new(cipher_key).unwrap();
+
+        let mut ciphertext = input.clone();
+        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
+
+        let cipher_key2 = CipherKey::new(&AES128_CBC, &key).unwrap();
+        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+
+        let plaintext_len = decrypting_key.decrypt(&mut ciphertext).unwrap();
+        let plaintext = ciphertext.as_slice();
+        let plaintext = &plaintext[..plaintext_len];
+        assert_eq!(input.as_slice(), plaintext);
+    }
+
+    #[test]
+    fn test_aes_128_cbc_17_bytes() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        let input = from_hex("00112233445566778899aabbccddeeff00").unwrap();
 
         let cipher_key = CipherKey::new(&AES128_CBC, &key).unwrap();
         let encrypting_key = EncryptingKey::new(cipher_key).unwrap();
