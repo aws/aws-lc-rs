@@ -15,8 +15,10 @@ use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
 use crate::iv::IV;
 use crate::rand;
-use aws_lc::{AES_set_decrypt_key, AES_set_encrypt_key, AES_KEY};
-use aws_lc_sys::{AES_cbc_encrypt, AES_ctr128_encrypt, AES_DECRYPT, AES_ENCRYPT};
+use aws_lc::{
+    AES_cbc_encrypt, AES_ctr128_encrypt, AES_set_decrypt_key, AES_set_encrypt_key, AES_DECRYPT,
+    AES_ENCRYPT, AES_KEY,
+};
 use std::mem::{size_of, transmute, MaybeUninit};
 use std::os::raw::c_uint;
 use std::ptr;
