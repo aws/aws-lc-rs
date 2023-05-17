@@ -82,15 +82,25 @@ pub struct Algorithm<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE
     OperatingMode,
 );
 
-pub const AES128_CTR: Algorithm<16, 16, 16> =
+const AES128_KEY_LEN: usize = 16;
+const AES256_KEY_LEN: usize = 32;
+const AES_IV_LEN: usize = 16;
+const AES_BLOCK_LEN: usize = 16;
+
+const CHACHA20_KEY_LEN: usize = 32;
+const CHACHA20_IV_LEN: usize = 12;
+const CHACHA20_BLOCK_LEN: usize = 64;
+
+pub const AES128_CTR: Algorithm<AES128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(AlgorithmId::Aes128ctr, OperatingMode::Stream);
-pub const AES128_CBC: Algorithm<16, 16, 16> =
+pub const AES128_CBC: Algorithm<AES128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(AlgorithmId::Aes128cbc, OperatingMode::Block);
-pub const AES256_CTR: Algorithm<32, 16, 16> =
+pub const AES256_CTR: Algorithm<AES256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(AlgorithmId::Aes256ctr, OperatingMode::Stream);
-pub const AES256_CBC: Algorithm<32, 16, 16> =
+pub const AES256_CBC: Algorithm<AES256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(AlgorithmId::Aes256cbc, OperatingMode::Block);
-pub const CHACHA20: Algorithm<32, 12, 64> = Algorithm(AlgorithmId::Chacha20, OperatingMode::Stream);
+pub const CHACHA20: Algorithm<CHACHA20_KEY_LEN, CHACHA20_IV_LEN, CHACHA20_BLOCK_LEN> =
+    Algorithm(AlgorithmId::Chacha20, OperatingMode::Stream);
 
 impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
     Algorithm<KEYSIZE, IVSIZE, BLOCK_SIZE>
