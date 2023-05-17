@@ -3,7 +3,11 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-#![allow(dead_code, clippy::module_name_repetitions)]
+#![allow(
+    missing_docs,
+    clippy::missing_errors_doc,
+    clippy::module_name_repetitions
+)]
 
 pub(crate) mod aes;
 pub(crate) mod block;
@@ -74,6 +78,7 @@ enum AlgorithmId {
     Aes256cbc,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Copy)]
 enum PaddingStrategy {
     Unpadded,
@@ -121,7 +126,7 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
 
     #[inline]
     fn get_operating_mode(&self) -> &OperatingMode {
-        return &self.1;
+        &self.1
     }
 }
 
@@ -272,6 +277,7 @@ pub struct DecryptingKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     DecryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN>
 {
+    #[must_use]
     pub fn new(
         cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
         iv: IV<IV_LEN>,
