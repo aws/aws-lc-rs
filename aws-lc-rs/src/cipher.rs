@@ -98,16 +98,18 @@ const AES_BLOCK_LEN: usize = 16;
 
 pub const AES_128_CTR: Algorithm<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(AlgorithmId::Aes128ctr, OperatingMode::Stream);
-pub const AES_128_CBC_PKCS7_PADDING: Algorithm<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> = Algorithm(
-    AlgorithmId::Aes128cbc,
-    OperatingMode::Block(PaddingStrategy::PKCS7),
-);
+pub const AES_128_CBC_PKCS7_PADDING: Algorithm<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
+    Algorithm(
+        AlgorithmId::Aes128cbc,
+        OperatingMode::Block(PaddingStrategy::PKCS7),
+    );
 pub const AES_256_CTR: Algorithm<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(AlgorithmId::Aes256ctr, OperatingMode::Stream);
-pub const AES_256_CBC_PKCS7_PADDING: Algorithm<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> = Algorithm(
-    AlgorithmId::Aes256cbc,
-    OperatingMode::Block(PaddingStrategy::PKCS7),
-);
+pub const AES_256_CBC_PKCS7_PADDING: Algorithm<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
+    Algorithm(
+        AlgorithmId::Aes256cbc,
+        OperatingMode::Block(PaddingStrategy::PKCS7),
+    );
 
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>
@@ -205,9 +207,9 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
                         in_out.extend(vec![v; padding_size].iter());
                     }
                 }
-                PaddingStrategy::Unpadded => {},
+                PaddingStrategy::Unpadded => {}
             },
-            OperatingMode::Stream => {},
+            OperatingMode::Stream => {}
         }
 
         let in_out = in_out.as_mut();
