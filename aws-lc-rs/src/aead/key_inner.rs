@@ -30,7 +30,7 @@ impl KeyInner {
     pub(crate) fn new(key: SymmetricCipherKey) -> Result<KeyInner, error::Unspecified> {
         unsafe {
             match key {
-                SymmetricCipherKey::Aes128(..) => {
+                SymmetricCipherKey::Aes128 { .. } => {
                     let aead = EVP_aead_aes_128_gcm();
                     let mut aead_ctx = MaybeUninit::<EVP_AEAD_CTX>::uninit();
 
@@ -46,7 +46,7 @@ impl KeyInner {
                     }
                     Ok(KeyInner::AES_128_GCM(key, aead_ctx.assume_init()))
                 }
-                SymmetricCipherKey::Aes256(..) => {
+                SymmetricCipherKey::Aes256 { .. } => {
                     let aead = EVP_aead_aes_256_gcm();
                     let mut aead_ctx = MaybeUninit::<EVP_AEAD_CTX>::uninit();
 
@@ -62,7 +62,7 @@ impl KeyInner {
                     }
                     Ok(KeyInner::AES_256_GCM(key, aead_ctx.assume_init()))
                 }
-                SymmetricCipherKey::ChaCha20(..) => {
+                SymmetricCipherKey::ChaCha20 { .. } => {
                     let aead = EVP_aead_chacha20_poly1305();
                     let mut aead_ctx = MaybeUninit::<EVP_AEAD_CTX>::uninit();
 
