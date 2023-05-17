@@ -643,7 +643,7 @@ mod tests {
     );
 
     cipher_test_vector!(
-        test_openssl_128_ctr_15_bytes,
+        test_openssl_aes_128_ctr_15_bytes,
         &AES_128_CTR,
         "244828580821c1652582c76e34d299f5",
         "093145d5af233f46072a5eb5adc11aa1",
@@ -652,7 +652,7 @@ mod tests {
     );
 
     cipher_test_vector!(
-        test_openssl_256_ctr_15_bytes,
+        test_openssl_aes_256_ctr_15_bytes,
         &AES_256_CTR,
         "0857db8240ea459bdf660b4cced66d1f2d3734ff2de7b81e92740e65e7cc6a1d",
         "f028ecb053f801102d11fccc9d303a27",
