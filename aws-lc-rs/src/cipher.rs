@@ -3,7 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-#![allow(dead_code, unused_variables)]
+#![allow(dead_code, clippy::module_name_repetitions)]
 
 pub(crate) mod aes;
 pub(crate) mod block;
@@ -12,7 +12,7 @@ pub(crate) mod chacha;
 use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
-use crate::error::{self, Unspecified};
+use crate::error::Unspecified;
 use crate::iv::IV;
 use crate::rand;
 use aws_lc::{AES_set_encrypt_key, AES_KEY};
@@ -79,23 +79,17 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
 {
     #[inline]
     fn get_id(&self) -> &AlgorithmId {
-        return &self.0;
+        &self.0
     }
 
     #[inline]
     fn is_block_mode(&self) -> bool {
-        match &self.1 {
-            OperatingMode::Block => true,
-            _ => false,
-        }
+        matches!(&self.1, OperatingMode::Block)
     }
 
     #[inline]
     fn is_stream_mode(&self) -> bool {
-        match &self.1 {
-            OperatingMode::Stream => true,
-            _ => false,
-        }
+        matches!(&self.1, OperatingMode::Stream)
     }
 }
 
@@ -109,7 +103,7 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
 {
     #[inline]
     fn get_algorithm(&self) -> &'static Algorithm<KEYSIZE, IVSIZE, BLOCK_SIZE> {
-        return self.algorithm;
+        self.algorithm
     }
 }
 
@@ -149,7 +143,6 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
         })
     }
 
-    #[must_use]
     fn encrypt<INOUT>(self, in_out: &mut INOUT) -> Result<IV<IVSIZE>, Unspecified>
     where
         INOUT: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
@@ -161,10 +154,10 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
             // This implements PKCS#7 padding scheme, used by aws-lc if we were using EVP_CIPHER API's
             let remainder = in_out_len % BLOCK_SIZE;
             if remainder == 0 {
-                let block_size: u8 = BLOCK_SIZE.try_into().map_err(|_| error::Unspecified)?;
+                let block_size: u8 = BLOCK_SIZE.try_into().map_err(|_| Unspecified)?;
                 in_out.extend(vec![block_size; BLOCK_SIZE].iter());
             } else {
-                let v: u8 = remainder.try_into().map_err(|_| error::Unspecified)?;
+                let v: u8 = remainder.try_into().map_err(|_| Unspecified)?;
                 // Heap allocation :(
                 in_out.extend(vec![v; BLOCK_SIZE - remainder].iter());
             }
@@ -180,7 +173,7 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
                 let mut num = MaybeUninit::<u32>::new(0);
                 let key = match &self.cipher_key.key {
                     SymmetricCipherKey::Aes128(_, key) | SymmetricCipherKey::Aes256(_, key) => key,
-                    _ => return Err(error::Unspecified),
+                    SymmetricCipherKey::ChaCha20(_) => return Err(Unspecified),
                 };
 
                 let mut buf = [0u8; BLOCK_SIZE];
@@ -194,15 +187,15 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
                         iv.as_mut_ptr(),
                         buf.as_mut_slice().as_mut_ptr(),
                         num.as_mut_ptr(),
-                    )
+                    );
                 };
 
-                Zeroize::zeroize(buf.as_mut_slice())
+                Zeroize::zeroize(buf.as_mut_slice());
             }
             AlgorithmId::Aes128cbc | AlgorithmId::Aes256cbc => {
                 let key = match &self.cipher_key.key {
                     SymmetricCipherKey::Aes128(_, key) | SymmetricCipherKey::Aes256(_, key) => key,
-                    _ => return Err(error::Unspecified),
+                    SymmetricCipherKey::ChaCha20(_) => return Err(Unspecified),
                 };
                 unsafe {
                     AES_cbc_encrypt(
@@ -212,7 +205,7 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
                         key,
                         iv.as_mut_ptr(),
                         AES_ENCRYPT,
-                    )
+                    );
                 }
             }
             AlgorithmId::Chacha20 => todo!(),
@@ -236,7 +229,6 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
         DecryptingKey { cipher_key, iv }
     }
 
-    #[must_use]
     fn decrypt(mut self, in_out: &mut [u8]) -> Result<usize, Unspecified> {
         let alg = self.cipher_key.get_algorithm();
 
@@ -249,7 +241,7 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
                 let mut num = MaybeUninit::<u32>::new(0);
                 let key = match &self.cipher_key.key {
                     SymmetricCipherKey::Aes128(_, key) | SymmetricCipherKey::Aes256(_, key) => key,
-                    _ => return Err(error::Unspecified),
+                    SymmetricCipherKey::ChaCha20(_) => return Err(Unspecified),
                 };
                 let mut buf = [0u8; BLOCK_SIZE];
                 unsafe {
@@ -261,14 +253,14 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
                         iv.as_mut_ptr(),
                         buf.as_mut_slice().as_mut_ptr(),
                         num.as_mut_ptr(),
-                    )
+                    );
                 };
-                Zeroize::zeroize(buf.as_mut_slice())
+                Zeroize::zeroize(buf.as_mut_slice());
             }
             AlgorithmId::Aes128cbc | AlgorithmId::Aes256cbc => {
                 let key = match &self.cipher_key.key {
                     SymmetricCipherKey::Aes128(_, key) | SymmetricCipherKey::Aes256(_, key) => key,
-                    _ => return Err(error::Unspecified),
+                    SymmetricCipherKey::ChaCha20(_) => return Err(Unspecified),
                 };
                 unsafe {
                     AES_cbc_encrypt(
@@ -278,26 +270,26 @@ impl<const KEYSIZE: usize, const IVSIZE: usize, const BLOCK_SIZE: usize>
                         key,
                         iv.as_mut_ptr(),
                         AES_DECRYPT,
-                    )
+                    );
                 }
             }
             AlgorithmId::Chacha20 => todo!(),
         }
 
         if alg.is_block_mode() {
-            let block_size: u8 = BLOCK_SIZE.try_into().map_err(|_| error::Unspecified)?;
+            let block_size: u8 = BLOCK_SIZE.try_into().map_err(|_| Unspecified)?;
 
-            if in_out.len() == 0 || in_out.len() < BLOCK_SIZE {
-                return Err(error::Unspecified);
+            if in_out.is_empty() || in_out.len() < BLOCK_SIZE {
+                return Err(Unspecified);
             }
             let padding: u8 = in_out[in_out.len() - 1];
             if padding == 0 || padding > block_size {
-                return Err(error::Unspecified);
+                return Err(Unspecified);
             }
 
-            for i in (in_out.len() - padding as usize)..in_out.len() {
-                if in_out[i] != padding {
-                    return Err(error::Unspecified);
+            for item in in_out.iter().skip(in_out.len() - padding as usize) {
+                if *item != padding {
+                    return Err(Unspecified);
                 }
             }
 

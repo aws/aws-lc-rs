@@ -29,8 +29,8 @@ impl<const L: usize> IV<L> {
         Self(value)
     }
 
-    pub fn size(&self) -> usize {
-        return L;
+    pub fn size() -> usize {
+        L
     }
 }
 
