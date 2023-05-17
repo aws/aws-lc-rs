@@ -285,10 +285,7 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
         DecryptingKey { cipher_key, iv }
     }
 
-    pub fn decrypt<'in_out>(
-        mut self,
-        in_out: &'in_out mut [u8],
-    ) -> Result<&'in_out mut [u8], Unspecified> {
+    pub fn decrypt(mut self, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
         let alg = self.cipher_key.get_algorithm();
 
         let mut final_len = in_out.len();
@@ -523,7 +520,7 @@ mod tests {
             input.push(byte);
         }
 
-        let cipher_key = CipherKey::new(alg, &key).unwrap();
+        let cipher_key = CipherKey::new(alg, key).unwrap();
         let encrypting_key = EncryptingKey::new(cipher_key).unwrap();
 
         let mut ciphertext = input.clone();
@@ -531,7 +528,7 @@ mod tests {
 
         assert_ne!(input.as_slice(), ciphertext);
 
-        let cipher_key2 = CipherKey::new(alg, &key).unwrap();
+        let cipher_key2 = CipherKey::new(alg, key).unwrap();
         let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
 
         let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
@@ -541,7 +538,7 @@ mod tests {
     #[test]
     fn test_aes_128_cbc() {
         let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
-        for i in 0..49 {
+        for i in 0..=50 {
             helper_test_cipher_n_bytes(key.as_slice(), &AES_128_CBC_PKCS7_PADDING, i);
         }
     }
@@ -550,7 +547,7 @@ mod tests {
     fn test_aes_256_cbc() {
         let key =
             from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
-        for i in 0..49 {
+        for i in 0..=50 {
             helper_test_cipher_n_bytes(key.as_slice(), &AES_256_CBC_PKCS7_PADDING, i);
         }
     }
@@ -559,7 +556,7 @@ mod tests {
     fn test_aes_128_ctr() {
         let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
         // TODO: test 0 bytes.
-        for i in 1..49 {
+        for i in 1..=50 {
             helper_test_cipher_n_bytes(key.as_slice(), &AES_128_CTR, i);
         }
     }
@@ -569,8 +566,91 @@ mod tests {
         let key =
             from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
         // TODO: test 0 bytes.
-        for i in 1..49 {
+        for i in 1..=50 {
             helper_test_cipher_n_bytes(key.as_slice(), &AES_256_CTR, i);
         }
+    }
+
+    #[test]
+    fn test_iv_aes_128_cbc_16_bytes() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        let input = from_hex("00112233445566778899aabbccddeeff").unwrap();
+        let expected_ciphertext =
+            from_hex("69c4e0d86a7b0430d8cdb78070b4c55a9e978e6d16b086570ef794ef97984232").unwrap();
+        let iv = [0u8; AES_IV_LEN];
+        let cipher_key = CipherKey::new(&AES_128_CBC_PKCS7_PADDING, &key).unwrap();
+        let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv);
+
+        let mut ciphertext = input.clone();
+        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
+        assert_eq!(expected_ciphertext, ciphertext);
+
+        let cipher_key2 = CipherKey::new(&AES_128_CBC_PKCS7_PADDING, &key).unwrap();
+        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+
+        let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
+        assert_eq!(input.as_slice(), plaintext);
+    }
+
+    #[test]
+    fn test_iv_aes_256_cbc_15_bytes() {
+        let key =
+            from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
+        let input = from_hex("00112233445566778899aabbccddee").unwrap();
+        let expected_ciphertext = from_hex("2ddfb635a651a43f582997966840ca0c").unwrap();
+        let iv = [0u8; AES_IV_LEN];
+        let cipher_key = CipherKey::new(&AES_256_CBC_PKCS7_PADDING, &key).unwrap();
+        let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv);
+
+        let mut ciphertext = input.clone();
+        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
+        assert_eq!(expected_ciphertext, ciphertext);
+
+        let cipher_key2 = CipherKey::new(&AES_256_CBC_PKCS7_PADDING, &key).unwrap();
+        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+
+        let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
+        assert_eq!(input.as_slice(), plaintext);
+    }
+
+    #[test]
+    fn test_iv_aes_128_ctr_16_bytes() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        let input = from_hex("00112233445566778899aabbccddeeff").unwrap();
+        let expected_ciphertext = from_hex("c6b01904c3da3df5e7d62bd96d153686").unwrap();
+        let iv = [0u8; AES_IV_LEN];
+        let cipher_key = CipherKey::new(&AES_128_CTR, &key).unwrap();
+        let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv);
+
+        let mut ciphertext = input.clone();
+        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
+        assert_eq!(expected_ciphertext, ciphertext);
+
+        let cipher_key2 = CipherKey::new(&AES_128_CTR, &key).unwrap();
+        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+
+        let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
+        assert_eq!(input.as_slice(), plaintext);
+    }
+
+    #[test]
+    fn test_iv_aes_256_ctr_15_bytes() {
+        let key =
+            from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
+        let input = from_hex("00112233445566778899aabbccddee").unwrap();
+        let expected_ciphertext = from_hex("f28122856e1cf9a7216a30d111f399").unwrap();
+        let iv = [0u8; AES_IV_LEN];
+        let cipher_key = CipherKey::new(&AES_256_CTR, &key).unwrap();
+        let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv);
+
+        let mut ciphertext = input.clone();
+        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
+        assert_eq!(expected_ciphertext, ciphertext);
+
+        let cipher_key2 = CipherKey::new(&AES_256_CTR, &key).unwrap();
+        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+
+        let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
+        assert_eq!(input.as_slice(), plaintext);
     }
 }
