@@ -34,6 +34,13 @@ impl<const L: usize> IV<L> {
     }
 }
 
+impl<const L: usize> AsMut<[u8; L]> for IV<L> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [u8; L] {
+        &mut self.0
+    }
+}
+
 impl<const L: usize> AsRef<[u8; L]> for IV<L> {
     #[inline]
     fn as_ref(&self) -> &[u8; L] {
