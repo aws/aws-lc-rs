@@ -265,7 +265,7 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     /// Encrypts the data `in_out` in-place. If the algorithm bound to this key uses padding
     /// then the `in_out` will be extended to add the necessary padding.
     ///
-    /// Returns the initalization vector necessary to later decrypt the data.
+    /// Returns the initialization vector necessary to later decrypt the data.
     ///
     /// # Errors
     ///
@@ -370,8 +370,9 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
 
     /// Decrypts the data `in_out` in-place.
     ///
-    /// Returns a reference to the decrypted data. If the algorithm bound to this key uses padding,
-    /// then the returned slice reference will have it's length adjusted to remove the padding bytes.
+    /// Returns a slice reference to the decrypted data within `in_out`. If the algorithm bound to
+    /// this key uses padding then the returned slice reference is length adjusted to exclude
+    /// the padding bytes.
     ///
     /// # Errors
     ///
@@ -618,7 +619,10 @@ mod tests {
         let mut ciphertext = input.clone();
         let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
 
-        assert_ne!(input.as_slice(), ciphertext);
+        if n > 5 {
+            // There's no more than a 1 in 2^48 chance that this will fail randomly
+            assert_ne!(input.as_slice(), ciphertext);
+        }
 
         let cipher_key2 = CipherKey::new(alg, key).unwrap();
         let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
@@ -647,8 +651,7 @@ mod tests {
     #[test]
     fn test_aes_128_ctr() {
         let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
-        // TODO: test 0 bytes.
-        for i in 1..=50 {
+        for i in 0..=50 {
             helper_test_cipher_n_bytes(key.as_slice(), &AES_128_CTR, i);
         }
     }
@@ -657,8 +660,7 @@ mod tests {
     fn test_aes_256_ctr() {
         let key =
             from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
-        // TODO: test 0 bytes.
-        for i in 1..=50 {
+        for i in 0..=50 {
             helper_test_cipher_n_bytes(key.as_slice(), &AES_256_CTR, i);
         }
     }
@@ -673,7 +675,7 @@ mod tests {
                 let mut iv = from_hex($iv).unwrap();
                 let iv = {
                     let slice = iv.as_mut_slice();
-                    let mut iv = [0u8; 16];
+                    let mut iv = [0u8; $iv.len() / 2];
                     {
                         let x = iv.as_mut_slice();
                         x.copy_from_slice(slice);
