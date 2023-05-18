@@ -19,7 +19,7 @@
 //!
 //! # Examples
 //! ```
-//! use aws_lc_rs::cipher::{CipherKey, DecryptingKey, EncryptingKey, AES_128_CTR};
+//! use aws_lc_rs::cipher::{UnboundCipherKey, DecryptingKey, EncryptingKey, AES_128_CTR};
 //!
 //! let mut plaintext = Vec::from("This is a secret message!");
 //!
@@ -28,11 +28,11 @@
 //!     0xd1,
 //! ];
 //!
-//! let key = CipherKey::new(&AES_128_CTR, key_bytes).unwrap();
+//! let key = UnboundCipherKey::new(&AES_128_CTR, key_bytes).unwrap();
 //! let encrypting_key = EncryptingKey::new(key).unwrap();
 //! let iv = encrypting_key.encrypt(&mut plaintext).unwrap();
 //!
-//! let key = CipherKey::new(&AES_128_CTR, key_bytes).unwrap();
+//! let key = UnboundCipherKey::new(&AES_128_CTR, key_bytes).unwrap();
 //! let decrypting_key = DecryptingKey::new(key, iv);
 //! let plaintext = decrypting_key.decrypt(&mut plaintext).unwrap();
 //! ```
@@ -48,8 +48,7 @@ use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
-use crate::iv::IV;
-use crate::rand;
+use crate::iv::NonceIV;
 use aws_lc::{
     AES_cbc_encrypt, AES_ctr128_encrypt, AES_set_decrypt_key, AES_set_encrypt_key, AES_DECRYPT,
     AES_ENCRYPT, AES_KEY,
@@ -188,13 +187,13 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
 }
 
 /// A key bound to a particular cipher algorithm.
-pub struct CipherKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
+pub struct UnboundCipherKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
     algorithm: &'static Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>,
     key: SymmetricCipherKey,
 }
 
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
-    CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>
+    UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>
 {
     #[inline]
     fn get_algorithm(&self) -> &'static Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN> {
@@ -203,9 +202,9 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
 }
 
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
-    CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>
+    UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>
 {
-    /// Constructs a [`CipherKey`].
+    /// Constructs a [`UnboundCipherKey`].
     ///
     /// # Errors
     ///
@@ -221,27 +220,29 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
             AlgorithmId::Aes128ctr | AlgorithmId::Aes128cbc => SymmetricCipherKey::aes128(key),
             AlgorithmId::Aes256ctr | AlgorithmId::Aes256cbc => SymmetricCipherKey::aes256(key),
         }?;
-        Ok(CipherKey { algorithm, key })
+        Ok(UnboundCipherKey { algorithm, key })
     }
 }
 
 /// An encryting cipher key.
 pub struct EncryptingKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
-    cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
-    iv: IV<IV_LEN>,
+    cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
+    iv: NonceIV<IV_LEN>,
 }
 
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     EncryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN>
 {
-    #[cfg(test)]
-    fn new_with_iv(
-        cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
+    /// Constructs a new [`EncryptingKey`] using provided `cipher_key` and `iv`.
+    /// It is recommended to use `EncryptingKey::new` to avoid the potential reuse of an
+    /// initialization vector (`IV`).
+    pub fn less_safe_new_using_iv(
+        cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
         iv_bytes: [u8; IV_LEN],
     ) -> EncryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN> {
         EncryptingKey {
             cipher_key,
-            iv: IV::assume_unique_for_key(iv_bytes),
+            iv: NonceIV::assume_unique_for_key(iv_bytes),
         }
     }
 
@@ -252,13 +253,11 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     /// * [`Unspecified`]: Returned if a randomized IV fails to be generated.
     ///
     pub fn new(
-        cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
+        cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
     ) -> Result<EncryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN>, Unspecified> {
-        let mut iv_bytes = [0u8; IV_LEN];
-        rand::fill(&mut iv_bytes)?;
         Ok(EncryptingKey {
             cipher_key,
-            iv: IV::assume_unique_for_key(iv_bytes),
+            iv: NonceIV::<IV_LEN>::new()?,
         })
     }
 
@@ -271,7 +270,7 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     ///
     /// * [`Unspecified`]: Returned if the data fails to be encrypted.
     ///
-    pub fn encrypt<InOut>(self, in_out: &mut InOut) -> Result<IV<IV_LEN>, Unspecified>
+    pub fn encrypt<InOut>(self, in_out: &mut InOut) -> Result<NonceIV<IV_LEN>, Unspecified>
     where
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
@@ -352,8 +351,8 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
 
 /// An decrypting cipher key.
 pub struct DecryptingKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
-    cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
-    iv: IV<IV_LEN>,
+    cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
+    iv: NonceIV<IV_LEN>,
 }
 
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
@@ -362,8 +361,8 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     /// Constructs a new [`DecryptingKey`].
     #[must_use]
     pub fn new(
-        cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
-        iv: IV<IV_LEN>,
+        cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
+        iv: NonceIV<IV_LEN>,
     ) -> DecryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN> {
         DecryptingKey { cipher_key, iv }
     }
@@ -613,21 +612,21 @@ mod tests {
             input.push(byte);
         }
 
-        let cipher_key = CipherKey::new(alg, key).unwrap();
+        let cipher_key = UnboundCipherKey::new(alg, key).unwrap();
         let encrypting_key = EncryptingKey::new(cipher_key).unwrap();
 
-        let mut ciphertext = input.clone();
-        let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
+        let mut in_out = input.clone();
+        let decrypt_iv = encrypting_key.encrypt(&mut in_out).unwrap();
 
         if n > 5 {
             // There's no more than a 1 in 2^48 chance that this will fail randomly
-            assert_ne!(input.as_slice(), ciphertext);
+            assert_ne!(input.as_slice(), in_out);
         }
 
-        let cipher_key2 = CipherKey::new(alg, key).unwrap();
+        let cipher_key2 = UnboundCipherKey::new(alg, key).unwrap();
         let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
 
-        let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
+        let plaintext = decrypting_key.decrypt(&mut in_out).unwrap();
         assert_eq!(input.as_slice(), plaintext);
     }
 
@@ -684,17 +683,18 @@ mod tests {
                 };
 
                 let alg = $cipher;
-                let cipher_key = CipherKey::new(alg, &key).unwrap();
-                let encrypting_key = EncryptingKey::new_with_iv(cipher_key, iv.try_into().unwrap());
+                let cipher_key = UnboundCipherKey::new(alg, &key).unwrap();
+                let encrypting_key =
+                    EncryptingKey::less_safe_new_using_iv(cipher_key, iv.try_into().unwrap());
 
-                let mut ciphertext = input.clone();
-                let decrypt_iv = encrypting_key.encrypt(&mut ciphertext).unwrap();
-                assert_eq!(expected_ciphertext, ciphertext);
+                let mut in_out = input.clone();
+                let decrypt_iv = encrypting_key.encrypt(&mut in_out).unwrap();
+                assert_eq!(expected_ciphertext, in_out);
 
-                let cipher_key2 = CipherKey::new(alg, &key).unwrap();
+                let cipher_key2 = UnboundCipherKey::new(alg, &key).unwrap();
                 let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
 
-                let plaintext = decrypting_key.decrypt(&mut ciphertext).unwrap();
+                let plaintext = decrypting_key.decrypt(&mut in_out).unwrap();
                 assert_eq!(input.as_slice(), plaintext);
             }
         };

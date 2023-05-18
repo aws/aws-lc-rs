@@ -4,11 +4,12 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 #![allow(dead_code)]
 
-use crate::error;
+use crate::error::Unspecified;
+use crate::{error, rand};
 
-pub struct IV<const L: usize>([u8; L]);
+pub struct NonceIV<const L: usize>([u8; L]);
 
-impl<const L: usize> IV<L> {
+impl<const L: usize> NonceIV<L> {
     /// Constructs a `IV` with the given value, assuming that the value is
     /// unique for the lifetime of the key it is being used with.
     ///
@@ -32,32 +33,39 @@ impl<const L: usize> IV<L> {
     pub fn size() -> usize {
         L
     }
+
+    /// Constructs a new IVNonce from pseudo-random bytes.
+    pub fn new() -> Result<Self, Unspecified> {
+        let mut iv_bytes = [0u8; L];
+        rand::fill(&mut iv_bytes)?;
+        Ok(Self(iv_bytes))
+    }
 }
 
-impl<const L: usize> AsMut<[u8; L]> for IV<L> {
+impl<const L: usize> AsMut<[u8; L]> for NonceIV<L> {
     #[inline]
     fn as_mut(&mut self) -> &mut [u8; L] {
         &mut self.0
     }
 }
 
-impl<const L: usize> AsRef<[u8; L]> for IV<L> {
+impl<const L: usize> AsRef<[u8; L]> for NonceIV<L> {
     #[inline]
     fn as_ref(&self) -> &[u8; L] {
         &self.0
     }
 }
 
-impl<const L: usize> From<&[u8; L]> for IV<L> {
+impl<const L: usize> From<&[u8; L]> for NonceIV<L> {
     #[inline]
     fn from(bytes: &[u8; L]) -> Self {
-        IV(bytes.to_owned())
+        NonceIV(bytes.to_owned())
     }
 }
 
-impl<const L: usize> From<[u8; L]> for IV<L> {
+impl<const L: usize> From<[u8; L]> for NonceIV<L> {
     #[inline]
     fn from(bytes: [u8; L]) -> Self {
-        IV(bytes)
+        NonceIV(bytes)
     }
 }
