@@ -3,11 +3,42 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-#![allow(
-    missing_docs,
-    clippy::missing_errors_doc,
-    clippy::module_name_repetitions
-)]
+//! Block and Stream Cipher for Encryption and Decryption.
+//!
+//! # 🛑 Read Before Using
+//!
+//! This module provides access to block and stream cipher algorithms.
+//! The modes provided here only provide confidentiality, but **do not**
+//! provide integrity or authentication verification of ciphertext.
+//!
+//! These algorithms are provided solely for applications requring them
+//! in order to maintain backwards compatability in legacy applications.
+//!
+//! If you are developing new applications requring data encryption see
+//! the algorithms provided in [`aead`](crate::aead).
+//!
+//! # Examples
+//! ```
+//! use aws_lc_rs::cipher::{CipherKey, DecryptingKey, EncryptingKey, AES_128_CTR};
+//!
+//! let mut plaintext = Vec::from("This is a secret message!");
+//!
+//! let key_bytes: &[u8] = &[
+//!     0xff, 0x0b, 0xe5, 0x84, 0x64, 0x0b, 0x00, 0xc8, 0x90, 0x7a, 0x4b, 0xbf, 0x82, 0x7c, 0xb6,
+//!     0xd1,
+//! ];
+//!
+//! let key = CipherKey::new(&AES_128_CTR, key_bytes).unwrap();
+//! let encrypting_key = EncryptingKey::new(key).unwrap();
+//! let iv = encrypting_key.encrypt(&mut plaintext).unwrap();
+//!
+//! let key = CipherKey::new(&AES_128_CTR, key_bytes).unwrap();
+//! let decrypting_key = DecryptingKey::new(key, iv);
+//! let plaintext = decrypting_key.decrypt(&mut plaintext).unwrap();
+//! ```
+//!
+
+#![allow(clippy::module_name_repetitions)]
 
 pub(crate) mod aes;
 pub(crate) mod block;
@@ -91,25 +122,51 @@ enum OperatingMode {
     Stream,
 }
 
+/// A Block or Stream Cipher Algorithm
+///
+/// # Supported Algorithms
+///
+/// ## Counter (CTR) Modes
+///
+/// * [`AES_128_CTR`]
+/// * [`AES_256_CTR`]
+///
+/// ## Cipher block chaining (CBC) Modes
+///
+/// * [`AES_128_CBC_PKCS7_PADDING`]
+/// * [`AES_256_CBC_PKCS7_PADDING`]
+///
 pub struct Algorithm<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>(
     AlgorithmId,
     OperatingMode,
 );
 
+/// The number of bytes in an AES 128-bit key
 pub const AES_128_KEY_LEN: usize = 16;
+
+/// The number of bytes in an AES 256-bit key
 pub const AES_256_KEY_LEN: usize = 32;
+
+/// The number of bytes for an AES initalization vector (IV)
 pub const AES_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
+/// AES-128 Counter (CTR) Mode
 pub const AES_128_CTR: Algorithm<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(AlgorithmId::Aes128ctr, OperatingMode::Stream);
+
+/// AES-128 Cipher block chaining (CBC) Mode using PKCS#7 padding.
 pub const AES_128_CBC_PKCS7_PADDING: Algorithm<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(
         AlgorithmId::Aes128cbc,
         OperatingMode::Block(PaddingStrategy::PKCS7),
     );
+
+/// AES-256 Counter (CTR) Mode
 pub const AES_256_CTR: Algorithm<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(AlgorithmId::Aes256ctr, OperatingMode::Stream);
+
+/// AES-256 Cipher block chaining (CBC) Mode using PKCS#7 padding.
 pub const AES_256_CBC_PKCS7_PADDING: Algorithm<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
     Algorithm(
         AlgorithmId::Aes256cbc,
@@ -130,6 +187,7 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     }
 }
 
+/// A key bound to a particular cipher algorithm.
 pub struct CipherKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
     algorithm: &'static Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>,
     key: SymmetricCipherKey,
@@ -147,6 +205,13 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>
 {
+    /// Constructs a [`CipherKey`].
+    ///
+    /// # Errors
+    ///
+    /// * [`Unspecified`] if `key_bytes.len()` does not match the
+    /// length required by `algorithm`.
+    ///
     pub fn new(
         algorithm: &'static Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>,
         key_bytes: &[u8],
@@ -160,6 +225,7 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     }
 }
 
+/// An encryting cipher key.
 pub struct EncryptingKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
     cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
     iv: IV<IV_LEN>,
@@ -179,6 +245,12 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
         }
     }
 
+    /// Constructs a new [`EncryptingKey`].
+    ///
+    /// # Errors
+    ///
+    /// * [`Unspecified`]: Returned if a randomized IV fails to be generated.
+    ///
     pub fn new(
         cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
     ) -> Result<EncryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN>, Unspecified> {
@@ -190,6 +262,15 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
         })
     }
 
+    /// Encrypts the data `in_out` in-place. If the algorithm bound to this key uses padding
+    /// then the `in_out` will be extended to add the necessary padding.
+    ///
+    /// Returns the initalization vector necessary to later decrypt the data.
+    ///
+    /// # Errors
+    ///
+    /// * [`Unspecified`]: Returned if the data fails to be encrypted.
+    ///
     pub fn encrypt<InOut>(self, in_out: &mut InOut) -> Result<IV<IV_LEN>, Unspecified>
     where
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
@@ -269,6 +350,7 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     }
 }
 
+/// An decrypting cipher key.
 pub struct DecryptingKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
     cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
     iv: IV<IV_LEN>,
@@ -277,6 +359,7 @@ pub struct DecryptingKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     DecryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN>
 {
+    /// Constructs a new [`DecryptingKey`].
     #[must_use]
     pub fn new(
         cipher_key: CipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
@@ -285,6 +368,15 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
         DecryptingKey { cipher_key, iv }
     }
 
+    /// Decrypts the data `in_out` in-place.
+    ///
+    /// Returns a reference to the decrypted data. If the algorithm bound to this key uses padding,
+    /// then the returned slice reference will have it's length adjusted to remove the padding bytes.
+    ///
+    /// # Errors
+    ///
+    /// * [`Unspecified`]: Returned if the data fails to be decrypted.
+    ///
     pub fn decrypt(mut self, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
         let alg = self.cipher_key.get_algorithm();
 
