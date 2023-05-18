@@ -56,7 +56,7 @@ use crate::rand::SecureRandom;
 use crate::{ec, test};
 use aws_lc::{
     ECDH_compute_key, EC_GROUP_cmp, EC_GROUP_get_curve_name, EC_GROUP_get_degree,
-    EC_KEY_get0_group, EC_KEY_get0_public_key, NID_X9_62_prime256v1, NID_secp384r1,
+    EC_KEY_get0_group, EC_KEY_get0_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
     X25519_public_from_private, EC_KEY, NID_X25519,
 };
 use core::fmt;
@@ -69,6 +69,7 @@ use zeroize::Zeroize;
 enum AlgorithmID {
     ECDH_P256,
     ECDH_P384,
+    ECDH_P521,
     X25519,
 }
 
@@ -78,6 +79,7 @@ impl AlgorithmID {
         match self {
             AlgorithmID::ECDH_P256 => NID_X9_62_prime256v1,
             AlgorithmID::ECDH_P384 => NID_secp384r1,
+            AlgorithmID::ECDH_P521 => NID_secp521r1,
             AlgorithmID::X25519 => NID_X25519,
         }
     }
@@ -87,6 +89,7 @@ impl AlgorithmID {
         match self {
             AlgorithmID::ECDH_P256 => 65,
             AlgorithmID::ECDH_P384 => 97,
+            AlgorithmID::ECDH_P521 => 133,
             AlgorithmID::X25519 => 32,
         }
     }
@@ -97,6 +100,7 @@ impl Debug for AlgorithmID {
         let output = match self {
             AlgorithmID::ECDH_P256 => "curve: P256",
             AlgorithmID::ECDH_P384 => "curve: P384",
+            AlgorithmID::ECDH_P521 => "curve: P521",
             AlgorithmID::X25519 => "curve: Curve25519",
         };
         f.write_str(output)
@@ -125,6 +129,11 @@ pub static ECDH_P384: Algorithm = Algorithm {
     id: AlgorithmID::ECDH_P384,
 };
 
+/// ECDH using the NSA Suite B P-521 (secp384r1) curve.
+pub static ECDH_P521: Algorithm = Algorithm {
+    id: AlgorithmID::ECDH_P521,
+};
+
 /// X25519 (ECDH using Curve25519) as described in [RFC 7748].
 ///
 /// Everything is as described in RFC 7748. Key agreement will fail if the
@@ -139,12 +148,14 @@ pub static X25519: Algorithm = Algorithm {
 const X25519_PRIVATE_KEY_LEN: usize = aws_lc::X25519_PRIVATE_KEY_LEN as usize;
 const ECDH_P256_PRIVATE_KEY_LEN: usize = 32;
 const ECDH_P384_PRIVATE_KEY_LEN: usize = 48;
+const ECDH_P521_PRIVATE_KEY_LEN: usize = 66;
 const X25519_PUBLIC_VALUE_LEN: usize = aws_lc::X25519_PUBLIC_VALUE_LEN as usize;
 const X25519_SHARED_KEY_LEN: usize = aws_lc::X25519_SHARED_KEY_LEN as usize;
 #[allow(non_camel_case_types)]
 enum KeyInner {
     ECDH_P256(LcPtr<*mut EC_KEY>),
     ECDH_P384(LcPtr<*mut EC_KEY>),
+    ECDH_P521(LcPtr<*mut EC_KEY>),
     X25519([u8; X25519_PRIVATE_KEY_LEN]),
 }
 
@@ -170,6 +181,7 @@ impl KeyInner {
         match self {
             KeyInner::ECDH_P256(..) => &ECDH_P256,
             KeyInner::ECDH_P384(..) => &ECDH_P384,
+            KeyInner::ECDH_P521(..) => &ECDH_P521,
             KeyInner::X25519(..) => &X25519,
         }
     }
@@ -218,6 +230,21 @@ impl EphemeralPrivateKey {
                 rng.fill(&mut priv_key)?;
                 Self::from_p384_private_key(&priv_key)
             }
+            AlgorithmID::ECDH_P521 => {
+                let mut priv_key = [0u8; ECDH_P521_PRIVATE_KEY_LEN];
+                // If the rng is only used for testing purposes, we set the hard-coded value. This is the case
+                // for our KATs. Otherwise, we delegate the random key generation to AWS-LC.
+                //
+                // P-521 is not a Montgomery curve, so we can't directly generate a random key and assign it to
+                // the EC_KEY. We use EC_KEY_generate_key in AWS-LC to generate the key instead.
+                // TODO: Should we delegate the random key generation to AWS-LC for all curves?
+                if rng.for_testing() {
+                    rng.fill(&mut priv_key)?;
+                    Self::from_p521_private_key(&priv_key)
+                } else {
+                    Self::generate_p521_key()
+                }
+            }
         }
     }
 
@@ -254,6 +281,33 @@ impl EphemeralPrivateKey {
             })
         }
     }
+
+    #[inline]
+    fn from_p521_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
+        unsafe {
+            let ec_group = ec_group_from_nid(ECDH_P521.id.nid())?;
+            let priv_key = DetachableLcPtr::try_from(priv_key)?;
+
+            let ec_key = ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())?;
+            let ec_key = LcPtr::from(ec_key);
+            Ok(EphemeralPrivateKey {
+                inner_key: KeyInner::ECDH_P521(ec_key),
+            })
+        }
+    }
+
+    #[inline]
+    fn generate_p521_key() -> Result<Self, Unspecified> {
+        unsafe {
+            let ec_group = ec_group_from_nid(ECDH_P521.id.nid())?;
+            let ec_key = ec::ec_key_generation(&ec_group.as_const())?;
+            let ec_key = LcPtr::from(ec_key);
+            Ok(EphemeralPrivateKey {
+                inner_key: KeyInner::ECDH_P521(ec_key),
+            })
+        }
+    }
+
     /// Computes the public key from the private key.
     ///
     /// # Errors
@@ -261,7 +315,9 @@ impl EphemeralPrivateKey {
     ///
     pub fn compute_public_key(&self) -> Result<PublicKey, Unspecified> {
         match &self.inner_key {
-            KeyInner::ECDH_P256(ec_key) | KeyInner::ECDH_P384(ec_key) => {
+            KeyInner::ECDH_P256(ec_key)
+            | KeyInner::ECDH_P384(ec_key)
+            | KeyInner::ECDH_P521(ec_key) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
                 unsafe {
                     let key_len =
@@ -441,7 +497,7 @@ where
                 &buffer[0..X25519_SHARED_KEY_LEN]
             }
         }
-        KeyInner::ECDH_P256(ec_key) | KeyInner::ECDH_P384(ec_key) => {
+        KeyInner::ECDH_P256(ec_key) | KeyInner::ECDH_P384(ec_key) | KeyInner::ECDH_P521(ec_key) => {
             let pub_key_bytes = peer_public_key.bytes.as_ref();
             unsafe {
                 let result =
@@ -455,7 +511,9 @@ where
     };
     kdf(secret)
 }
-const MAX_AGREEMENT_SECRET_LEN: usize = 48;
+
+// Current max secret length is P-521's.
+const MAX_AGREEMENT_SECRET_LEN: usize = ECDH_P521_PRIVATE_KEY_LEN;
 
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
@@ -472,7 +530,7 @@ unsafe fn ec_key_ecdh<'a>(
     let priv_group = ConstPointer::new(EC_KEY_get0_group(*priv_ec_key))?;
     let priv_nid = EC_GROUP_get_curve_name(*priv_group);
 
-    let supported_curves = [NID_X9_62_prime256v1, NID_secp384r1];
+    let supported_curves = [NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1];
     if !supported_curves.contains(&priv_nid as &i32) {
         return Err(());
     }
@@ -630,6 +688,46 @@ mod tests {
         );
         let output = test::from_dirty_hex(
             "11187331C279962D93D604243FD592CB9D0A926F422E47187521287E7156C5C4D603135569B9E9D09CF5D4A270F59746",
+        );
+
+        assert_eq!(my_private.algorithm(), alg);
+
+        let computed_public = my_private.compute_public_key().unwrap();
+        assert_eq!(computed_public.as_ref(), &my_public[..]);
+
+        assert_eq!(computed_public.algorithm(), alg);
+
+        let result = agreement::agree_ephemeral(my_private, &peer_public, (), |key_material| {
+            assert_eq!(key_material, &output[..]);
+            Ok(())
+        });
+        assert_eq!(result, Ok(()));
+    }
+
+    #[test]
+    fn test_agreement_ecdh_p521() {
+        let alg = &agreement::ECDH_P521;
+        let peer_public = agreement::UnparsedPublicKey::new(
+            alg,
+            test::from_dirty_hex(
+                "0401a32099b02c0bd85371f60b0dd20890e6c7af048c8179890fda308b359dbbc2b7a832bb8c6526c4af99a7ea3f0b3cb96ae1eb7684132795c478ad6f962e4a6f446d017627357b39e9d7632a1370b3e93c1afb5c851b910eb4ead0c9d387df67cde85003e0e427552f1cd09059aad0262e235cce5fba8cedc4fdc1463da76dcd4b6d1a46",
+            ),
+        );
+
+        let my_private = test::from_dirty_hex(
+            "00df14b1f1432a7b0fb053965fd8643afee26b2451ecb6a8a53a655d5fbe16e4c64ce8647225eb11e7fdcb23627471dffc5c2523bd2ae89957cba3a57a23933e5a78",
+        );
+
+        let my_private = {
+            let rng = test::rand::FixedSliceRandom { bytes: &my_private };
+            agreement::EphemeralPrivateKey::generate(alg, &rng).unwrap()
+        };
+
+        let my_public = test::from_dirty_hex(
+            "04004e8583bbbb2ecd93f0714c332dff5ab3bc6396e62f3c560229664329baa5138c3bb1c36428abd4e23d17fcb7a2cfcc224b2e734c8941f6f121722d7b6b9415457601cf0874f204b0363f020864672fadbf87c8811eb147758b254b74b14fae742159f0f671a018212bbf25b8519e126d4cad778cfff50d288fd39ceb0cac635b175ec0",
+        );
+        let output = test::from_dirty_hex(
+            "01aaf24e5d47e4080c18c55ea35581cd8da30f1a079565045d2008d51b12d0abb4411cda7a0785b15d149ed301a3697062f42da237aa7f07e0af3fd00eb1800d9c41",
         );
 
         assert_eq!(my_private.algorithm(), alg);

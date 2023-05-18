@@ -456,6 +456,10 @@ fn parse_test_case(
     }
 }
 
+/// Deterministic implementations of `ring::rand::SecureRandom`.
+///
+/// These are only used for testing KATs where a random number should be generated.
+#[doc(hidden)]
 pub mod rand {
     use crate::error;
 
@@ -470,6 +474,11 @@ pub mod rand {
         fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
             dest.fill(self.byte);
             Ok(())
+        }
+
+        #[inline]
+        fn for_testing(&self) -> bool {
+            true
         }
     }
 
@@ -486,6 +495,11 @@ pub mod rand {
         fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
             dest.copy_from_slice(self.bytes);
             Ok(())
+        }
+
+        #[inline]
+        fn for_testing(&self) -> bool {
+            true
         }
     }
 
@@ -514,6 +528,11 @@ pub mod rand {
             // the next one, if any.
             unsafe { *self.current.get() += 1 };
             Ok(())
+        }
+
+        #[inline]
+        fn for_testing(&self) -> bool {
+            true
         }
     }
 

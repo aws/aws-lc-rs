@@ -213,6 +213,7 @@ fn agree_ephemeral_e2e() {
     for algorithm in [
         &agreement::ECDH_P256,
         &agreement::ECDH_P384,
+        &agreement::ECDH_P521,
         &agreement::X25519,
     ] {
         let alice_private_key = agreement::EphemeralPrivateKey::generate(algorithm, &rng).unwrap();
@@ -289,6 +290,8 @@ fn alg_from_curve_name(curve_name: &str) -> &'static agreement::Algorithm {
         &agreement::ECDH_P256
     } else if curve_name == "P-384" {
         &agreement::ECDH_P384
+    } else if curve_name == "P-521" {
+        &agreement::ECDH_P521
     } else if curve_name == "X25519" {
         &agreement::X25519
     } else {
