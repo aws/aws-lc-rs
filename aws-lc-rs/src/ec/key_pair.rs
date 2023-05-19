@@ -156,11 +156,9 @@ impl EcdsaKeyPair {
             let public_ec_point = ec::ec_point_from_bytes(&ec_group, public_key)
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let private_bn = DetachableLcPtr::try_from(private_key)?;
-
             let ec_key = ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
             validate_ec_key(&ec_key.as_const(), alg.bits)?;
             let key_pair = Self::new(alg, ec_key)?;
-
             Ok(key_pair)
         }
     }
