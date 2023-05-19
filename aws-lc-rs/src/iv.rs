@@ -9,11 +9,60 @@
 use crate::error::Unspecified;
 use crate::{error, rand};
 
+pub enum NonceIV {
+    Size128(FixedLength<16>),
+}
+
+impl NonceIV {
+    /// Constructs a [`NonceIV`] with the given value, assuming that the value is
+    /// unique for the lifetime of the key it is being used with.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when byte slice length is not a supported length.
+    #[inline]
+    pub fn try_assume_unique_for_key(value: &[u8]) -> Result<Self, error::Unspecified> {
+        match value.len() {
+            16 => Ok(NonceIV::Size128(FixedLength::<16>::try_from(value)?)),
+            _ => Err(error::Unspecified),
+        }
+    }
+
+    /// Returns the size of the nonce in bytes.
+    #[allow(clippy::must_use_candidate)]
+    pub fn size(&self) -> usize {
+        match self {
+            NonceIV::Size128(v) => v.size(),
+        }
+    }
+}
+
+impl AsRef<[u8]> for NonceIV {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            NonceIV::Size128(fv) => fv.as_ref(),
+        }
+    }
+}
+
+impl AsMut<[u8]> for NonceIV {
+    fn as_mut(&mut self) -> &mut [u8] {
+        match self {
+            NonceIV::Size128(fv) => fv.as_mut(),
+        }
+    }
+}
+
+impl From<[u8; 16]> for NonceIV {
+    fn from(value: [u8; 16]) -> Self {
+        NonceIV::Size128(FixedLength::<16>(value))
+    }
+}
+
 /// An initalization vector that must be unique for the lifetime of the associated key
 /// it is used with.
-pub struct NonceIV<const L: usize>([u8; L]);
+pub struct FixedLength<const L: usize>([u8; L]);
 
-impl<const L: usize> NonceIV<L> {
+impl<const L: usize> FixedLength<L> {
     /// Constructs a [`NonceIV`] with the given value, assuming that the value is
     /// unique for the lifetime of the key it is being used with.
     ///
@@ -36,7 +85,7 @@ impl<const L: usize> NonceIV<L> {
 
     /// Returns the size of the nonce in bytes.
     #[allow(clippy::must_use_candidate)]
-    pub fn size() -> usize {
+    pub fn size(&self) -> usize {
         L
     }
 
@@ -53,47 +102,47 @@ impl<const L: usize> NonceIV<L> {
     }
 }
 
-impl<const L: usize> AsMut<[u8; L]> for NonceIV<L> {
+impl<const L: usize> AsMut<[u8; L]> for FixedLength<L> {
     #[inline]
     fn as_mut(&mut self) -> &mut [u8; L] {
         &mut self.0
     }
 }
 
-impl<const L: usize> AsRef<[u8; L]> for NonceIV<L> {
+impl<const L: usize> AsRef<[u8; L]> for FixedLength<L> {
     #[inline]
     fn as_ref(&self) -> &[u8; L] {
         &self.0
     }
 }
 
-impl<const L: usize> From<&[u8; L]> for NonceIV<L> {
+impl<const L: usize> From<&[u8; L]> for FixedLength<L> {
     #[inline]
     fn from(bytes: &[u8; L]) -> Self {
-        NonceIV(bytes.to_owned())
+        FixedLength(bytes.to_owned())
     }
 }
 
-impl<const L: usize> From<[u8; L]> for NonceIV<L> {
+impl<const L: usize> From<[u8; L]> for FixedLength<L> {
     #[inline]
     fn from(bytes: [u8; L]) -> Self {
-        NonceIV(bytes)
+        FixedLength(bytes)
     }
 }
 
-impl<const L: usize> TryFrom<&[u8]> for NonceIV<L> {
+impl<const L: usize> TryFrom<&[u8]> for FixedLength<L> {
     type Error = Unspecified;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        NonceIV::<L>::try_assume_unique_for_key(value)
+        FixedLength::<L>::try_assume_unique_for_key(value)
     }
 }
 
-impl<const L: usize> TryFrom<NonceIV<L>> for [u8; L] {
+impl<const L: usize> TryFrom<FixedLength<L>> for [u8; L] {
     type Error = Unspecified;
 
-    fn try_from(value: NonceIV<L>) -> Result<Self, Self::Error> {
-        let value: [u8; L] = value.0.try_into().map_err(|_|Unspecified)?;
+    fn try_from(value: FixedLength<L>) -> Result<Self, Self::Error> {
+        let value: [u8; L] = value.0.try_into().map_err(|_| Unspecified)?;
         Ok(value)
     }
 }

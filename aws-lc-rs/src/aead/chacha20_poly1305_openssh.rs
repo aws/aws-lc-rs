@@ -23,7 +23,7 @@
 use super::{poly1305, Nonce, Tag};
 use crate::cipher::block::BLOCK_LEN;
 use crate::cipher::chacha::{self, ChaCha20Key};
-use crate::iv::NonceIV;
+use crate::iv::FixedLength;
 use crate::{constant_time, endian::BigEndian, error};
 use core::convert::TryInto;
 
@@ -56,7 +56,7 @@ impl SealingKey {
         tag_out: &mut [u8; TAG_LEN],
     ) {
         let nonce = make_nonce(sequence_number);
-        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(NonceIV::from(nonce.as_ref())));
+        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(FixedLength::from(nonce.as_ref())));
 
         {
             let (len_in_out, data_and_padding_in_out) =
@@ -131,7 +131,7 @@ impl OpeningKey {
         // We must verify the tag before decrypting so that
         // `ciphertext_in_plaintext_out` is unmodified if verification fails.
         // This is beyond what we guarantee.
-        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(NonceIV::from(nonce.as_ref())));
+        let poly_key = derive_poly1305_key(&self.key.k_2, Nonce(FixedLength::from(nonce.as_ref())));
         verify(poly_key, ciphertext_in_plaintext_out, tag)?;
 
         let plaintext_in_ciphertext_out = &mut ciphertext_in_plaintext_out[PACKET_LENGTH_LEN..];

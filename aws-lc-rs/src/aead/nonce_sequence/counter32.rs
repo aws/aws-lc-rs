@@ -3,7 +3,7 @@
 
 use crate::aead::{Nonce, NonceSequence, NONCE_LEN};
 use crate::error::Unspecified;
-use crate::iv::NonceIV;
+use crate::iv::FixedLength;
 
 /// `Counter32` is an implementation of the `NonceSequence` trait.
 /// The internal state of a `Counter32` is a 32-bit unsigned counter that
@@ -119,7 +119,7 @@ impl NonceSequence for Counter32 {
         nonce_bytes[..8].copy_from_slice(&self.identifier);
         nonce_bytes[8..].copy_from_slice(&counter_bytes);
         self.counter = self.counter.wrapping_add(1);
-        Ok(Nonce(NonceIV::from(nonce_bytes)))
+        Ok(Nonce(FixedLength::from(nonce_bytes)))
     }
 }
 
