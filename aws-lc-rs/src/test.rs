@@ -475,11 +475,6 @@ pub mod rand {
             dest.fill(self.byte);
             Ok(())
         }
-
-        #[inline]
-        fn for_testing(&self) -> bool {
-            true
-        }
     }
 
     /// An implementation of `SecureRandom` that always fills the output slice
@@ -495,11 +490,6 @@ pub mod rand {
         fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
             dest.copy_from_slice(self.bytes);
             Ok(())
-        }
-
-        #[inline]
-        fn for_testing(&self) -> bool {
-            true
         }
     }
 
@@ -528,11 +518,6 @@ pub mod rand {
             // the next one, if any.
             unsafe { *self.current.get() += 1 };
             Ok(())
-        }
-
-        #[inline]
-        fn for_testing(&self) -> bool {
-            true
         }
     }
 

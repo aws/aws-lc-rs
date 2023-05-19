@@ -92,8 +92,6 @@ pub(crate) mod sealed {
     pub trait SecureRandom: core::fmt::Debug {
         /// Fills `dest` with random bytes.
         fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified>;
-        /// Specifies if this rng is for testing.
-        fn for_testing(&self) -> bool;
     }
 
     pub trait RandomlyConstructable: Sized {
@@ -148,11 +146,6 @@ impl sealed::SecureRandom for SystemRandom {
     #[inline]
     fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
         fill(dest)
-    }
-
-    #[inline]
-    fn for_testing(&self) -> bool {
-        false
     }
 }
 

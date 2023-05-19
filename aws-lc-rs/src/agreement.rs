@@ -232,18 +232,11 @@ impl EphemeralPrivateKey {
             }
             AlgorithmID::ECDH_P521 => {
                 let mut priv_key = [0u8; ECDH_P521_PRIVATE_KEY_LEN];
-                // If the rng is only used for testing purposes, we set the hard-coded value. This is the case
-                // for our KATs. Otherwise, we delegate the random key generation to AWS-LC.
-                //
-                // P-521 is not a Montgomery curve, so we can't directly generate a random key and assign it to
-                // the EC_KEY. We use EC_KEY_generate_key in AWS-LC to generate the key instead.
-                // TODO: Should we delegate the random key generation to AWS-LC for all curves?
-                if rng.for_testing() {
-                    rng.fill(&mut priv_key)?;
-                    Self::from_p521_private_key(&priv_key)
-                } else {
-                    Self::generate_p521_key()
-                }
+                // The private key is stored in 66 bytes = 528-bits, which is too large.
+                rng.fill(&mut priv_key)?;
+                // We mask the top 7-bits of the first byte, so at most 521-bits are set.
+                priv_key[0] &= 0x01;
+                Self::from_p521_private_key(&priv_key)
             }
         }
     }
@@ -289,18 +282,6 @@ impl EphemeralPrivateKey {
             let priv_key = DetachableLcPtr::try_from(priv_key)?;
 
             let ec_key = ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())?;
-            let ec_key = LcPtr::from(ec_key);
-            Ok(EphemeralPrivateKey {
-                inner_key: KeyInner::ECDH_P521(ec_key),
-            })
-        }
-    }
-
-    #[inline]
-    fn generate_p521_key() -> Result<Self, Unspecified> {
-        unsafe {
-            let ec_group = ec_group_from_nid(ECDH_P521.id.nid())?;
-            let ec_key = ec::ec_key_generation(&ec_group.as_const())?;
             let ec_key = LcPtr::from(ec_key);
             Ok(EphemeralPrivateKey {
                 inner_key: KeyInner::ECDH_P521(ec_key),
