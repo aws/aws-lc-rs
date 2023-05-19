@@ -231,8 +231,9 @@ impl EphemeralPrivateKey {
                 unsafe {
                     X25519_keypair(pub_key.as_mut_ptr(), priv_key.as_mut_ptr());
                 }
-                let inner_key = KeyInner::X25519(priv_key);
-                Ok(EphemeralPrivateKey { inner_key })
+                Ok(EphemeralPrivateKey {
+                    inner_key: KeyInner::X25519(priv_key),
+                })
             }
             AlgorithmID::ECDH_P256 => unsafe {
                 let ec_group = ec_group_from_nid(ECDH_P256.id.nid())?;

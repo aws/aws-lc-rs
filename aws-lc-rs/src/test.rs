@@ -108,9 +108,7 @@
 //! stack trace to the line in the test code that panicked: entry 9 in the
 //! stack trace pointing to line 652 of the file `example.rs`.
 
-#![allow(missing_docs)]
-#![allow(clippy::missing_panics_doc)]
-#![allow(clippy::missing_errors_doc)]
+#![doc(hidden)]
 
 extern crate alloc;
 
@@ -459,7 +457,6 @@ fn parse_test_case(
 /// Deterministic implementations of `ring::rand::SecureRandom`.
 ///
 /// These are only used for testing KATs where a random number should be generated.
-#[doc(hidden)]
 pub mod rand {
     use crate::error;
 
