@@ -219,7 +219,7 @@ impl RsaKeyPair {
     /// calculates the digest itself.
     ///
     /// # *ring* Compatibility
-    /// Our implementation ignored the `SecureRandom` parameter.
+    /// Our implementation ignores the `SecureRandom` parameter.
     ///
     /// # Errors
     /// `error::Unspecified` on error.

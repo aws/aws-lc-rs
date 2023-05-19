@@ -168,7 +168,7 @@ impl EcdsaKeyPair {
     /// Returns the signature of the message using a random nonce.
     ///
     /// # *ring* Compatibility
-    /// Our implementation ignored the `SecureRandom` parameter.
+    /// Our implementation ignores the `SecureRandom` parameter.
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.
