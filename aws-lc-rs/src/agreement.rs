@@ -236,22 +236,19 @@ impl EphemeralPrivateKey {
                 })
             }
             AlgorithmID::ECDH_P256 => unsafe {
-                let ec_group = ec_group_from_nid(ECDH_P256.id.nid())?;
-                let ec_key = ec_key_generate(&ec_group.as_const())?;
+                let ec_key = ec_key_generate(ECDH_P256.id.nid())?;
                 Ok(EphemeralPrivateKey {
                     inner_key: KeyInner::ECDH_P256(LcPtr::from(ec_key)),
                 })
             },
             AlgorithmID::ECDH_P384 => unsafe {
-                let ec_group = ec_group_from_nid(ECDH_P384.id.nid())?;
-                let ec_key = ec_key_generate(&ec_group.as_const())?;
+                let ec_key = ec_key_generate(ECDH_P384.id.nid())?;
                 Ok(EphemeralPrivateKey {
                     inner_key: KeyInner::ECDH_P384(LcPtr::from(ec_key)),
                 })
             },
             AlgorithmID::ECDH_P521 => unsafe {
-                let ec_group = ec_group_from_nid(ECDH_P521.id.nid())?;
-                let ec_key = ec_key_generate(&ec_group.as_const())?;
+                let ec_key = ec_key_generate(ECDH_P521.id.nid())?;
                 Ok(EphemeralPrivateKey {
                     inner_key: KeyInner::ECDH_P521(LcPtr::from(ec_key)),
                 })
