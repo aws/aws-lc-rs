@@ -48,7 +48,7 @@ use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
-use crate::iv::NonceIV;
+use crate::iv::{FixedLength, NonceIV};
 use aws_lc::{
     AES_cbc_encrypt, AES_ctr128_encrypt, AES_set_decrypt_key, AES_set_encrypt_key, AES_DECRYPT,
     AES_ENCRYPT, AES_KEY,
@@ -100,14 +100,6 @@ impl Drop for SymmetricCipherKey {
     }
 }
 
-#[derive(Clone, Copy)]
-enum AlgorithmId {
-    Aes128ctr,
-    Aes128cbc,
-    Aes256ctr,
-    Aes256cbc,
-}
-
 #[allow(dead_code)]
 #[derive(Clone, Copy)]
 enum PaddingStrategy {
@@ -135,8 +127,7 @@ enum OperatingMode {
 /// * [`AES_128_CBC_PKCS7_PADDING`]
 /// * [`AES_256_CBC_PKCS7_PADDING`]
 ///
-pub struct Algorithm<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>(
-    AlgorithmId,
+pub struct SymmetricCipher<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>(
     OperatingMode,
 );
 
@@ -150,60 +141,89 @@ pub const AES_256_KEY_LEN: usize = 32;
 pub const AES_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
+pub enum Algorithm {
+    AES_128_CTR(SymmetricCipher<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+    AES_256_CTR(SymmetricCipher<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+    AES_128_CBC_PKCS7_PADDING(SymmetricCipher<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+    AES_256_CBC_PKCS7_PADDING(SymmetricCipher<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+}
+
+impl Algorithm {
+    fn get_operating_mode(&self) -> &OperatingMode {
+        match self {
+            Algorithm::AES_128_CTR(v) => v.get_operating_mode(),
+            Algorithm::AES_256_CTR(v) => v.get_operating_mode(),
+            Algorithm::AES_128_CBC_PKCS7_PADDING(v) => v.get_operating_mode(),
+            Algorithm::AES_256_CBC_PKCS7_PADDING(v) => v.get_operating_mode(),
+        }
+    }
+
+    fn get_block_len(&self) -> usize {
+        match self {
+            Algorithm::AES_128_CTR(v) => v.get_block_size(),
+            Algorithm::AES_256_CTR(v) => v.get_block_size(),
+            Algorithm::AES_128_CBC_PKCS7_PADDING(v) => v.get_block_size(),
+            Algorithm::AES_256_CBC_PKCS7_PADDING(v) => v.get_block_size(),
+        }
+    }
+}
+
 /// AES-128 Counter (CTR) Mode
-pub const AES_128_CTR: Algorithm<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
-    Algorithm(AlgorithmId::Aes128ctr, OperatingMode::Stream);
+pub const AES_128_CTR: Algorithm = Algorithm::AES_128_CTR(SymmetricCipher(OperatingMode::Stream));
 
 /// AES-128 Cipher block chaining (CBC) Mode using PKCS#7 padding.
-pub const AES_128_CBC_PKCS7_PADDING: Algorithm<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
-    Algorithm(
-        AlgorithmId::Aes128cbc,
-        OperatingMode::Block(PaddingStrategy::PKCS7),
-    );
+pub const AES_128_CBC_PKCS7_PADDING: Algorithm = Algorithm::AES_128_CBC_PKCS7_PADDING(
+    SymmetricCipher(OperatingMode::Block(PaddingStrategy::PKCS7)),
+);
 
 /// AES-256 Counter (CTR) Mode
-pub const AES_256_CTR: Algorithm<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
-    Algorithm(AlgorithmId::Aes256ctr, OperatingMode::Stream);
+pub const AES_256_CTR: Algorithm = Algorithm::AES_256_CTR(SymmetricCipher(OperatingMode::Stream));
 
 /// AES-256 Cipher block chaining (CBC) Mode using PKCS#7 padding.
-pub const AES_256_CBC_PKCS7_PADDING: Algorithm<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN> =
-    Algorithm(
-        AlgorithmId::Aes256cbc,
-        OperatingMode::Block(PaddingStrategy::PKCS7),
-    );
+pub const AES_256_CBC_PKCS7_PADDING: Algorithm = Algorithm::AES_256_CBC_PKCS7_PADDING(
+    SymmetricCipher(OperatingMode::Block(PaddingStrategy::PKCS7)),
+);
 
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
-    Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>
+    SymmetricCipher<KEY_LEN, IV_LEN, BLOCK_LEN>
 {
     #[inline]
-    fn get_id(&self) -> &AlgorithmId {
+    fn get_operating_mode(&self) -> &OperatingMode {
         &self.0
     }
 
-    #[inline]
-    fn get_operating_mode(&self) -> &OperatingMode {
-        &self.1
+    fn try_into_key<'a>(&self, key: &'a [u8]) -> Result<&'a [u8; KEY_LEN], Unspecified> {
+        let key: &'a [u8; KEY_LEN] = key.try_into()?;
+        Ok(key)
+    }
+
+    fn get_block_size(&self) -> usize {
+        BLOCK_LEN
+    }
+
+    fn new_block(&self) -> [u8; BLOCK_LEN] {
+        [0u8; BLOCK_LEN]
+    }
+
+    fn new_randomized_nonce(&self) -> Result<NonceIV, Unspecified> {
+        match IV_LEN {
+            16 => Ok(NonceIV::Size128(FixedLength::<16>::new()?)),
+            _ => Err(Unspecified),
+        }
+    }
+
+    fn unsafe_nonce_array(&self) -> [u8; IV_LEN] {
+        [0u8; IV_LEN]
     }
 }
 
 /// A key bound to a particular cipher algorithm.
-pub struct UnboundCipherKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
-    algorithm: &'static Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>,
+pub struct UnboundCipherKey {
+    algorithm: &'static Algorithm,
     key: SymmetricCipherKey,
 }
 
-impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
-    UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>
-{
-    #[inline]
-    fn get_algorithm(&self) -> &'static Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN> {
-        self.algorithm
-    }
-}
-
-impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
-    UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>
-{
+impl UnboundCipherKey {
     /// Constructs a [`UnboundCipherKey`].
     ///
     /// # Errors
@@ -211,53 +231,49 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     /// * [`Unspecified`] if `key_bytes.len()` does not match the
     /// length required by `algorithm`.
     ///
-    pub fn new(
-        algorithm: &'static Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>,
-        key_bytes: &[u8],
-    ) -> Result<Self, Unspecified> {
-        let key: &[u8; KEY_LEN] = key_bytes.try_into()?;
-        let key = match algorithm.get_id() {
-            AlgorithmId::Aes128ctr | AlgorithmId::Aes128cbc => SymmetricCipherKey::aes128(key),
-            AlgorithmId::Aes256ctr | AlgorithmId::Aes256cbc => SymmetricCipherKey::aes256(key),
+    pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
+        let key = match algorithm {
+            Algorithm::AES_128_CTR(v) | Algorithm::AES_128_CBC_PKCS7_PADDING(v) => {
+                let key = v.try_into_key(key_bytes)?;
+                SymmetricCipherKey::aes128(key)
+            }
+            Algorithm::AES_256_CTR(v) | Algorithm::AES_256_CBC_PKCS7_PADDING(v) => {
+                let key = v.try_into_key(key_bytes)?;
+                SymmetricCipherKey::aes256(key)
+            }
         }?;
         Ok(UnboundCipherKey { algorithm, key })
+    }
+
+    #[inline]
+    fn get_algorithm(&self) -> &'static Algorithm {
+        self.algorithm
     }
 }
 
 /// An encryting cipher key.
-pub struct EncryptingKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
-    cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
-    iv: NonceIV<IV_LEN>,
+pub struct EncryptingKey {
+    cipher_key: UnboundCipherKey,
+    iv: NonceIV,
 }
 
-impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
-    EncryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN>
-{
-    /// Constructs a new [`EncryptingKey`] using provided `cipher_key` and `iv`.
-    /// It is recommended to use `EncryptingKey::new` to avoid the potential reuse of an
-    /// initialization vector (`IV`).
-    pub fn less_safe_new_using_iv(
-        cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
-        iv_bytes: [u8; IV_LEN],
-    ) -> EncryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN> {
-        EncryptingKey {
-            cipher_key,
-            iv: NonceIV::assume_unique_for_key(iv_bytes),
-        }
-    }
-
+impl EncryptingKey {
     /// Constructs a new [`EncryptingKey`].
     ///
     /// # Errors
     ///
     /// * [`Unspecified`]: Returned if a randomized IV fails to be generated.
     ///
-    pub fn new(
-        cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
-    ) -> Result<EncryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN>, Unspecified> {
+    pub fn new(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
+        let iv = match key.get_algorithm() {
+            Algorithm::AES_128_CTR(v) => v.new_randomized_nonce(),
+            Algorithm::AES_256_CTR(v) => v.new_randomized_nonce(),
+            Algorithm::AES_128_CBC_PKCS7_PADDING(v) => v.new_randomized_nonce(),
+            Algorithm::AES_256_CBC_PKCS7_PADDING(v) => v.new_randomized_nonce(),
+        }?;
         Ok(EncryptingKey {
-            cipher_key,
-            iv: NonceIV::<IV_LEN>::new()?,
+            cipher_key: key,
+            iv,
         })
     }
 
@@ -270,7 +286,7 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     ///
     /// * [`Unspecified`]: Returned if the data fails to be encrypted.
     ///
-    pub fn encrypt<InOut>(self, in_out: &mut InOut) -> Result<NonceIV<IV_LEN>, Unspecified>
+    pub fn encrypt<InOut>(self, in_out: &mut InOut) -> Result<NonceIV, Unspecified>
     where
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
@@ -284,20 +300,15 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
 }
 
 /// An decrypting cipher key.
-pub struct DecryptingKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
-    cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
-    iv: NonceIV<IV_LEN>,
+pub struct DecryptingKey {
+    cipher_key: UnboundCipherKey,
+    iv: NonceIV,
 }
 
-impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
-    DecryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN>
-{
+impl DecryptingKey {
     /// Constructs a new [`DecryptingKey`].
     #[must_use]
-    pub fn new(
-        cipher_key: UnboundCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>,
-        iv: NonceIV<IV_LEN>,
-    ) -> DecryptingKey<KEY_LEN, IV_LEN, BLOCK_LEN> {
+    pub fn new(cipher_key: UnboundCipherKey, iv: NonceIV) -> DecryptingKey {
         DecryptingKey { cipher_key, iv }
     }
 
@@ -323,14 +334,26 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
 }
 
 /// Less safe cipher key that allows for specifying a user provided [`NonceIV`].
-pub struct LessSafeCipherKey<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize> {
-    algorithm: &'static Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>,
+pub struct LessSafeCipherKey {
+    algorithm: &'static Algorithm,
     key: SymmetricCipherKey,
 }
 
-impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
-    LessSafeCipherKey<KEY_LEN, IV_LEN, BLOCK_LEN>
-{
+impl LessSafeCipherKey {
+    pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
+        let key = match algorithm {
+            Algorithm::AES_128_CTR(v) | Algorithm::AES_128_CBC_PKCS7_PADDING(v) => {
+                let key = v.try_into_key(key_bytes)?;
+                SymmetricCipherKey::aes128(key)
+            }
+            Algorithm::AES_256_CTR(v) | Algorithm::AES_256_CBC_PKCS7_PADDING(v) => {
+                let key = v.try_into_key(key_bytes)?;
+                SymmetricCipherKey::aes256(key)
+            }
+        }?;
+        Ok(LessSafeCipherKey { algorithm, key })
+    }
+
     /// Encrypts the data `in_out` in-place. If the algorithm bound to this key uses padding
     /// then the `in_out` will be extended to add the necessary padding.
     ///
@@ -340,11 +363,7 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     ///
     /// * [`Unspecified`]: Returned if the data fails to be encrypted.
     ///
-    pub fn encrypt<InOut>(
-        &self,
-        iv: NonceIV<IV_LEN>,
-        in_out: &mut InOut,
-    ) -> Result<NonceIV<IV_LEN>, Unspecified>
+    pub fn encrypt<InOut>(&self, iv: NonceIV, in_out: &mut InOut) -> Result<NonceIV, Unspecified>
     where
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
@@ -364,33 +383,35 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     #[allow(unused_mut)]
     pub fn decrypt<'a>(
         &self,
-        iv: NonceIV<IV_LEN>,
+        iv: NonceIV,
         in_out: &'a mut [u8],
     ) -> Result<&'a mut [u8], Unspecified> {
         decrypt(self.algorithm, &self.key, iv, in_out)
     }
 }
 
-fn encrypt<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize, InOut>(
-    algorithm: &Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>,
+fn encrypt<InOut>(
+    algorithm: &'static Algorithm,
     key: &SymmetricCipherKey,
-    iv: NonceIV<IV_LEN>,
+    iv: NonceIV,
     in_out: &mut InOut,
-) -> Result<NonceIV<IV_LEN>, Unspecified>
+) -> Result<NonceIV, Unspecified>
 where
     InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
 {
+    let block_len: usize = algorithm.get_block_len();
+
     match algorithm.get_operating_mode() {
         OperatingMode::Block(strategy) => match strategy {
             PaddingStrategy::PKCS7 => {
                 let in_out_len = in_out.as_mut().len();
                 // This implements PKCS#7 padding scheme, used by aws-lc if we were using EVP_CIPHER API's
-                let remainder = in_out_len % BLOCK_LEN;
+                let remainder = in_out_len % block_len;
                 if remainder == 0 {
-                    let block_size: u8 = BLOCK_LEN.try_into().map_err(|_| Unspecified)?;
-                    in_out.extend(vec![block_size; BLOCK_LEN].iter());
+                    let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
+                    in_out.extend(vec![block_size; block_len].iter());
                 } else {
-                    let padding_size = BLOCK_LEN - remainder;
+                    let padding_size = block_len - remainder;
                     let v: u8 = padding_size.try_into().map_err(|_| Unspecified)?;
                     // Heap allocation :(
                     in_out.extend(vec![v; padding_size].iter());
@@ -403,114 +424,161 @@ where
 
     let in_out = in_out.as_mut();
 
-    let mut ivec = [0u8; IV_LEN];
-    ivec.copy_from_slice(iv.as_ref());
-
-    match algorithm.get_id() {
-        AlgorithmId::Aes128ctr | AlgorithmId::Aes256ctr => {
-            let mut num = MaybeUninit::<u32>::new(0);
-            let key = match key {
-                SymmetricCipherKey::Aes128 { enc_key, .. }
-                | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
-                SymmetricCipherKey::ChaCha20 { .. } => return Err(Unspecified),
-            };
-
-            let mut buf = [0u8; BLOCK_LEN];
-
-            unsafe {
-                AES_ctr128_encrypt(
-                    in_out.as_ptr(),
-                    in_out.as_mut_ptr(),
-                    in_out.len(),
-                    key,
-                    ivec.as_mut_ptr(),
-                    buf.as_mut_slice().as_mut_ptr(),
-                    num.as_mut_ptr(),
-                );
-            };
-
-            Zeroize::zeroize(buf.as_mut_slice());
-        }
-        AlgorithmId::Aes128cbc | AlgorithmId::Aes256cbc => {
-            let key = match key {
-                SymmetricCipherKey::Aes128 { enc_key, .. }
-                | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
-                SymmetricCipherKey::ChaCha20 { .. } => return Err(Unspecified),
-            };
-            unsafe {
-                AES_cbc_encrypt(
-                    in_out.as_ptr(),
-                    in_out.as_mut_ptr(),
-                    in_out.len(),
-                    key,
-                    ivec.as_mut_ptr(),
-                    AES_ENCRYPT,
-                );
+    let mut ivec = {
+        let mut ivec = match algorithm {
+            Algorithm::AES_128_CTR(v) | Algorithm::AES_128_CBC_PKCS7_PADDING(v) => {
+                v.unsafe_nonce_array()
             }
+            Algorithm::AES_256_CTR(v) | Algorithm::AES_256_CBC_PKCS7_PADDING(v) => {
+                v.unsafe_nonce_array()
+            }
+        };
+        ivec.copy_from_slice(iv.as_ref());
+        ivec
+    };
+
+    match algorithm {
+        Algorithm::AES_128_CTR(v) => {
+            let key = match key {
+                SymmetricCipherKey::Aes128 { enc_key, .. } => enc_key,
+                _ => return Err(Unspecified),
+            };
+
+            let mut buf = v.new_block();
+            aes_ctr128_encrypt(key, &mut ivec, &mut buf, in_out);
+        }
+        Algorithm::AES_256_CTR(v) => {
+            let key = match key {
+                SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+                _ => return Err(Unspecified),
+            };
+
+            let mut buf = v.new_block();
+
+            aes_ctr128_encrypt(key, &mut ivec, &mut buf, in_out);
+        }
+        Algorithm::AES_128_CBC_PKCS7_PADDING(_) => {
+            let key = match key {
+                SymmetricCipherKey::Aes128 { enc_key, .. } => enc_key,
+                _ => return Err(Unspecified),
+            };
+            aes_cbc_encrypt(key, &mut ivec, in_out);
+        }
+        Algorithm::AES_256_CBC_PKCS7_PADDING(_) => {
+            let key = match key {
+                SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+                _ => return Err(Unspecified),
+            };
+            aes_cbc_encrypt(key, &mut ivec, in_out);
         }
     }
     Ok(iv)
 }
 
-fn decrypt<'a, const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>(
-    algorithm: &Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>,
+fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_out: &mut [u8]) {
+    let mut num = MaybeUninit::<u32>::new(0);
+
+    unsafe {
+        AES_ctr128_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            in_out.len(),
+            key,
+            iv.as_mut_ptr(),
+            block_buffer.as_mut_ptr(),
+            num.as_mut_ptr(),
+        );
+    };
+
+    Zeroize::zeroize(block_buffer);
+}
+
+fn aes_cbc_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    unsafe {
+        AES_cbc_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            in_out.len(),
+            key,
+            iv.as_mut_ptr(),
+            AES_ENCRYPT,
+        );
+    }
+}
+
+fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
+    unsafe {
+        AES_cbc_encrypt(
+            in_out.as_ptr(),
+            in_out.as_mut_ptr(),
+            in_out.len(),
+            key,
+            iv.as_mut_ptr(),
+            AES_DECRYPT,
+        );
+    }
+}
+
+fn decrypt<'a>(
+    algorithm: &'static Algorithm,
     key: &SymmetricCipherKey,
-    iv: NonceIV<IV_LEN>,
+    mut iv: NonceIV,
     in_out: &'a mut [u8],
 ) -> Result<&'a mut [u8], Unspecified> {
     let mut final_len = in_out.len();
 
-    let mut iv: [u8; IV_LEN] = iv.try_into()?;
+    let iv = iv.as_mut();
 
-    match algorithm.get_id() {
-        AlgorithmId::Aes128ctr | AlgorithmId::Aes256ctr => {
-            let mut num = MaybeUninit::<u32>::new(0);
+    match algorithm {
+        Algorithm::AES_128_CTR(v) => {
             let key = match key {
-                SymmetricCipherKey::Aes128 { enc_key, .. }
-                | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
-                SymmetricCipherKey::ChaCha20 { .. } => return Err(Unspecified),
+                SymmetricCipherKey::Aes128 { enc_key, .. } => enc_key,
+                _ => return Err(Unspecified),
             };
-            let mut buf = [0u8; BLOCK_LEN];
-            unsafe {
-                AES_ctr128_encrypt(
-                    in_out.as_ptr(),
-                    in_out.as_mut_ptr(),
-                    in_out.len(),
-                    key,
-                    iv.as_mut_ptr(),
-                    buf.as_mut_slice().as_mut_ptr(),
-                    num.as_mut_ptr(),
-                );
-            };
-            Zeroize::zeroize(buf.as_mut_slice());
+
+            let mut buf = v.new_block();
+            aes_ctr128_encrypt(key, iv, &mut buf, in_out);
         }
-        AlgorithmId::Aes128cbc | AlgorithmId::Aes256cbc => {
+        Algorithm::AES_256_CTR(v) => {
             let key = match key {
-                SymmetricCipherKey::Aes128 { dec_key, .. }
-                | SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
-                SymmetricCipherKey::ChaCha20 { .. } => return Err(Unspecified),
+                SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+                _ => return Err(Unspecified),
             };
-            unsafe {
-                AES_cbc_encrypt(
-                    in_out.as_ptr(),
-                    in_out.as_mut_ptr(),
-                    in_out.len(),
-                    key,
-                    iv.as_mut_ptr(),
-                    AES_DECRYPT,
-                );
-            }
+
+            let mut buf = v.new_block();
+
+            aes_ctr128_encrypt(key, iv, &mut buf, in_out);
+        }
+        Algorithm::AES_128_CBC_PKCS7_PADDING(_) => {
+            let key = match key {
+                SymmetricCipherKey::Aes128 { dec_key, .. } => dec_key,
+                _ => return Err(Unspecified),
+            };
+            aes_cbc_decrypt(key, iv, in_out);
+        }
+        Algorithm::AES_256_CBC_PKCS7_PADDING(_) => {
+            let key = match key {
+                SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
+                _ => return Err(Unspecified),
+            };
+            aes_cbc_decrypt(key, iv, in_out);
         }
     }
 
     match algorithm.get_operating_mode() {
         OperatingMode::Block(strategy) => match strategy {
             PaddingStrategy::PKCS7 => {
-                let block_size: u8 = BLOCK_LEN.try_into().map_err(|_| Unspecified)?;
+                let block_len = algorithm.get_block_len();
 
-                if in_out.is_empty() || in_out.len() < BLOCK_LEN {
+                let block_size: u8 = algorithm
+                    .get_block_len()
+                    .try_into()
+                    .map_err(|_| Unspecified)?;
+
+                if in_out.is_empty() || in_out.len() < block_len {
                     return Err(Unspecified);
                 }
+
                 let padding: u8 = in_out[in_out.len() - 1];
                 if padding == 0 || padding > block_size {
                     return Err(Unspecified);
@@ -674,15 +742,7 @@ mod tests {
         assert_eq!(expected_result.as_slice(), result.as_ref());
     }
 
-    fn helper_test_cipher_n_bytes<
-        const KEY_LEN: usize,
-        const IV_LEN: usize,
-        const BLOCK_LEN: usize,
-    >(
-        key: &[u8],
-        alg: &'static Algorithm<KEY_LEN, IV_LEN, BLOCK_LEN>,
-        n: usize,
-    ) {
+    fn helper_test_cipher_n_bytes(key: &[u8], alg: &'static Algorithm, n: usize) {
         let mut input: Vec<u8> = Vec::with_capacity(n);
         for i in 0..n {
             let byte: u8 = i.try_into().unwrap();
@@ -760,12 +820,12 @@ mod tests {
                 };
 
                 let alg = $cipher;
-                let cipher_key = UnboundCipherKey::new(alg, &key).unwrap();
-                let encrypting_key =
-                    EncryptingKey::less_safe_new_using_iv(cipher_key, iv.try_into().unwrap());
+                let encrypting_key = LessSafeCipherKey::new(alg, &key).unwrap();
 
                 let mut in_out = input.clone();
-                let decrypt_iv = encrypting_key.encrypt(&mut in_out).unwrap();
+                let decrypt_iv = encrypting_key
+                    .encrypt(NonceIV::try_from(iv).unwrap(), &mut in_out)
+                    .unwrap();
                 assert_eq!(expected_ciphertext, in_out);
 
                 let cipher_key2 = UnboundCipherKey::new(alg, &key).unwrap();
