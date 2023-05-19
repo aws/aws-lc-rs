@@ -18,16 +18,21 @@ use aws_lc::{
     point_conversion_form_t, ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s,
     ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, ECDSA_do_verify, EC_GROUP_new_by_curve_name,
     EC_GROUP_order_bits, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
-    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, EC_POINT_oct2point,
+    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new, EC_POINT_oct2point,
     EC_POINT_point2oct, NID_X9_62_prime256v1, NID_secp384r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
     EC_POINT,
 };
+
+#[cfg(test)]
+use aws_lc::EC_POINT_mul;
 
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 use std::os::raw::c_uint;
-use std::ptr::{null, null_mut};
+#[cfg(test)]
+use std::ptr::null;
+use std::ptr::null_mut;
 use std::slice;
 
 #[cfg(feature = "ring-sig-verify")]
@@ -233,7 +238,7 @@ pub(crate) unsafe fn ec_key_from_public_point(
     Ok(ec_key)
 }
 
-#[inline]
+#[cfg(test)]
 pub(crate) unsafe fn ec_key_from_private(
     ec_group: &ConstPointer<EC_GROUP>,
     private_big_num: &ConstPointer<BIGNUM>,
@@ -263,6 +268,21 @@ pub(crate) unsafe fn ec_key_from_private(
     let bits: c_uint = EC_GROUP_order_bits(**ec_group).try_into()?;
     validate_ec_key(&ec_key.as_const(), bits)?;
 
+    Ok(ec_key)
+}
+
+#[inline]
+pub(crate) unsafe fn ec_key_generate(
+    ec_group: &ConstPointer<EC_GROUP>,
+) -> Result<DetachableLcPtr<*mut EC_KEY>, Unspecified> {
+    let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
+    if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
+        return Err(Unspecified);
+    }
+
+    if 1 != aws_lc::EC_KEY_generate_key(*ec_key) {
+        return Err(Unspecified);
+    }
     Ok(ec_key)
 }
 
