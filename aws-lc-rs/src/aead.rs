@@ -861,7 +861,11 @@ mod tests {
         let mut nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();
         nonce[0] = 0;
         assert!(less_safe_key
-            .open_in_place(Nonce(FixedLength::from(nonce)), Aad::empty(), &mut in_out_clone)
+            .open_in_place(
+                Nonce(FixedLength::from(nonce)),
+                Aad::empty(),
+                &mut in_out_clone
+            )
             .is_err());
 
         let nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();
