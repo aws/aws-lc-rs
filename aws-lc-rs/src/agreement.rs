@@ -129,7 +129,7 @@ pub static ECDH_P384: Algorithm = Algorithm {
     id: AlgorithmID::ECDH_P384,
 };
 
-/// ECDH using the NSA Suite B P-521 (secp384r1) curve.
+/// ECDH using the NSA Suite B P-521 (secp521r1) curve.
 pub static ECDH_P521: Algorithm = Algorithm {
     id: AlgorithmID::ECDH_P521,
 };
