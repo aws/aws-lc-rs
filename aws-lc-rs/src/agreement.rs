@@ -61,7 +61,7 @@ use crate::{ec, test};
 use aws_lc::{
     ECDH_compute_key, EC_GROUP_cmp, EC_GROUP_get_curve_name, EC_GROUP_get_degree,
     EC_KEY_get0_group, EC_KEY_get0_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
-    X25519_public_from_private, EC_KEY, NID_X25519,
+    X25519_keypair, X25519_public_from_private, EC_KEY, NID_X25519,
 };
 
 use core::fmt;
@@ -217,15 +217,22 @@ impl EphemeralPrivateKey {
     #[inline]
     /// Generate a new ephemeral private key for the given algorithm.
     ///
+    /// # *ring* Compatibility
+    ///  Our implementation ignores the `SecureRandom` parameter.
+    ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
     ///
-    pub fn generate(alg: &'static Algorithm, rng: &dyn SecureRandom) -> Result<Self, Unspecified> {
+    pub fn generate(alg: &'static Algorithm, _rng: &dyn SecureRandom) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
                 let mut priv_key = [0u8; X25519_PRIVATE_KEY_LEN];
-                rng.fill(&mut priv_key)?;
-                Ok(Self::from_x25519_private_key(&priv_key))
+                let mut pub_key = [0u8; X25519_PUBLIC_VALUE_LEN];
+                unsafe {
+                    X25519_keypair(pub_key.as_mut_ptr(), priv_key.as_mut_ptr());
+                }
+                let inner_key = KeyInner::X25519(priv_key);
+                Ok(EphemeralPrivateKey { inner_key })
             }
             AlgorithmID::ECDH_P256 => unsafe {
                 let ec_group = ec_group_from_nid(ECDH_P256.id.nid())?;
@@ -281,7 +288,7 @@ impl EphemeralPrivateKey {
         }
     }
 
-    #[inline]
+    #[cfg(test)]
     fn from_x25519_private_key(priv_key: &[u8; X25519_PRIVATE_KEY_LEN]) -> Self {
         let inner_key = KeyInner::X25519(*priv_key);
         EphemeralPrivateKey { inner_key }
@@ -601,7 +608,60 @@ unsafe fn x25519_diffie_hellman(
 
 #[cfg(test)]
 mod tests {
+    use crate::error::Unspecified;
     use crate::{agreement, rand, test, test_file};
+
+    #[test]
+    fn test_agreement_ecdh_x25519_rfc_iterated() {
+        fn expect_iterated_x25519(
+            expected_result: &str,
+            range: core::ops::Range<usize>,
+            k: &mut Vec<u8>,
+            u: &mut Vec<u8>,
+        ) {
+            for _ in range {
+                let new_k = x25519(k, u);
+                *u = k.clone();
+                *k = new_k;
+            }
+            assert_eq!(&h(expected_result), k);
+        }
+
+        let mut k = h("0900000000000000000000000000000000000000000000000000000000000000");
+        let mut u = k.clone();
+
+        expect_iterated_x25519(
+            "422c8e7a6227d7bca1350b3e2bb7279f7897b87bb6854b783c60e80311ae3079",
+            0..1,
+            &mut k,
+            &mut u,
+        );
+        expect_iterated_x25519(
+            "684cf59ba83309552800ef566f2f4d3c1c3887c49360e3875f2eb94d99532c51",
+            1..1_000,
+            &mut k,
+            &mut u,
+        );
+
+        // The spec gives a test vector for 1,000,000 iterations but it takes
+        // too long to do 1,000,000 iterations by default right now. This
+        // 10,000 iteration vector is self-computed.
+        expect_iterated_x25519(
+            "2c125a20f639d504a7703d2e223c79a79de48c4ee8c23379aa19a62ecd211815",
+            1_000..10_000,
+            &mut k,
+            &mut u,
+        );
+
+        if cfg!(feature = "slow_tests") {
+            expect_iterated_x25519(
+                "7c3911e0ab2586fd864497297e575e6f3bc601c0883c30df5f4dd2d24f665424",
+                10_000..1_000_000,
+                &mut k,
+                &mut u,
+            );
+        }
+    }
 
     #[test]
     fn test_agreement_x25519() {
@@ -619,7 +679,7 @@ mod tests {
 
         let my_private = {
             let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-            agreement::EphemeralPrivateKey::generate(alg, &rng).unwrap()
+            agreement::EphemeralPrivateKey::generate_for_test(alg, &rng).unwrap()
         };
 
         let my_public = test::from_dirty_hex(
@@ -915,6 +975,16 @@ mod tests {
             },
         );
     }
+
+    fn h(s: &str) -> Vec<u8> {
+        match test::from_hex(s) {
+            Ok(v) => v,
+            Err(msg) => {
+                panic!("{msg} in {s}");
+            }
+        }
+    }
+
     fn alg_from_curve_name(curve_name: &str) -> &'static agreement::Algorithm {
         if curve_name == "P-256" {
             &agreement::ECDH_P256
@@ -927,5 +997,19 @@ mod tests {
         } else {
             panic!("Unsupported curve: {curve_name}");
         }
+    }
+
+    fn x25519(private_key: &[u8], public_key: &[u8]) -> Vec<u8> {
+        x25519_(private_key, public_key).unwrap()
+    }
+
+    fn x25519_(private_key: &[u8], public_key: &[u8]) -> Result<Vec<u8>, Unspecified> {
+        let rng = test::rand::FixedSliceRandom { bytes: private_key };
+        let private_key =
+            agreement::EphemeralPrivateKey::generate_for_test(&agreement::X25519, &rng)?;
+        let public_key = agreement::UnparsedPublicKey::new(&agreement::X25519, public_key);
+        agreement::agree_ephemeral(private_key, &public_key, Unspecified, |agreed_value| {
+            Ok(Vec::from(agreed_value))
+        })
     }
 }

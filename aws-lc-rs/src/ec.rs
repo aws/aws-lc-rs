@@ -10,10 +10,6 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
-#[cfg(feature = "fips")]
-use aws_lc::EC_KEY_check_fips;
-#[cfg(not(feature = "fips"))]
-use aws_lc::EC_KEY_check_key;
 use aws_lc::{
     point_conversion_form_t, ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s,
     ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, ECDSA_do_verify, EC_GROUP_new_by_curve_name,
@@ -22,6 +18,10 @@ use aws_lc::{
     EC_POINT_point2oct, NID_X9_62_prime256v1, NID_secp384r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
     EC_POINT,
 };
+#[cfg(feature = "fips")]
+use aws_lc::{EC_KEY_check_fips, EC_KEY_generate_key_fips};
+#[cfg(not(feature = "fips"))]
+use aws_lc::{EC_KEY_check_key, EC_KEY_generate_key};
 
 #[cfg(test)]
 use aws_lc::EC_POINT_mul;
@@ -279,8 +279,12 @@ pub(crate) unsafe fn ec_key_generate(
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(Unspecified);
     }
-
-    if 1 != aws_lc::EC_KEY_generate_key(*ec_key) {
+    #[cfg(not(feature = "fips"))]
+    if 1 != EC_KEY_generate_key(*ec_key) {
+        return Err(Unspecified);
+    }
+    #[cfg(feature = "fips")]
+    if 1 != EC_KEY_generate_key_fips(*ec_key) {
         return Err(Unspecified);
     }
     Ok(ec_key)
