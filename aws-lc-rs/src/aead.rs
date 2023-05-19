@@ -823,7 +823,7 @@ pub(crate) fn aead_open_combined(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{iv::NonceIV, test::from_hex};
+    use crate::{iv::FixedLength, test::from_hex};
 
     #[test]
     fn test_aes_128() {
@@ -844,14 +844,14 @@ mod tests {
         #[allow(deprecated)]
         less_safe_key
             // Test coverage for `seal_in_place`, which calls `seal_in_place_append_tag`.
-            .seal_in_place(Nonce(NonceIV::from(nonce)), Aad::empty(), &mut in_out)
+            .seal_in_place(Nonce(FixedLength::from(nonce)), Aad::empty(), &mut in_out)
             .unwrap();
 
         let mut in_out_clone = in_out.clone();
         let nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();
         assert!(less_safe_key
             .open_in_place(
-                Nonce(NonceIV::from(nonce)),
+                Nonce(FixedLength::from(nonce)),
                 Aad::from("test"),
                 &mut in_out_clone
             )
@@ -861,12 +861,12 @@ mod tests {
         let mut nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();
         nonce[0] = 0;
         assert!(less_safe_key
-            .open_in_place(Nonce(NonceIV::from(nonce)), Aad::empty(), &mut in_out_clone)
+            .open_in_place(Nonce(FixedLength::from(nonce)), Aad::empty(), &mut in_out_clone)
             .is_err());
 
         let nonce: [u8; NONCE_LEN] = og_nonce.as_slice().try_into().unwrap();
         less_safe_key
-            .open_in_place(Nonce(NonceIV::from(nonce)), Aad::empty(), &mut in_out)
+            .open_in_place(Nonce(FixedLength::from(nonce)), Aad::empty(), &mut in_out)
             .unwrap();
 
         assert_eq!(plaintext, in_out[..plaintext.len()]);
