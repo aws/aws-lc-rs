@@ -51,6 +51,16 @@ fn ecdsa_from_pkcs8_test() {
                         &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
                     ),
                 ),
+                "P-521" => (
+                    (
+                        &signature::ECDSA_P521_SHA512_FIXED_SIGNING,
+                        &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
+                    ),
+                    (
+                        &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+                        &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
+                    ),
+                ),
                 _ => unreachable!(),
             };
 
@@ -119,6 +129,8 @@ fn ecdsa_generate_pkcs8_test() {
         &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
         &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
         &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+        &signature::ECDSA_P521_SHA512_FIXED_SIGNING,
+        &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
     ] {
         let pkcs8 = signature::EcdsaKeyPair::generate_pkcs8(alg, &rng).unwrap();
         println!();
@@ -151,6 +163,7 @@ fn signature_ecdsa_verify_asn1_test() {
                 ("P-256", "SHA384") => &signature::ECDSA_P256_SHA384_ASN1,
                 ("P-384", "SHA256") => &signature::ECDSA_P384_SHA256_ASN1,
                 ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_ASN1,
+                ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_ASN1,
                 _ => {
                     panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
                 }
@@ -183,6 +196,7 @@ fn signature_ecdsa_verify_fixed_test() {
             let alg = match (curve_name.as_str(), digest_name.as_str()) {
                 ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_FIXED,
                 ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_FIXED,
+                ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_FIXED,
                 _ => {
                     unrecoverable!("Unsupported curve+digest: {}+{}", curve_name, digest_name);
                 }
@@ -233,8 +247,7 @@ fn ecdsa_test_public_key_coverage() {
 // This test is not a known-answer test, though it re-uses the known-answer
 // test vectors. Because the nonce is randomized, the signature will be
 // different each time. Because of that, here we simply verify that the
-// signature verifies correctly. The known-answer tests themselves are in
-// ecsda/signing.rs.
+// signature verifies correctly.
 #[test]
 fn signature_ecdsa_sign_fixed_sign_and_verify_test() {
     let rng = rand::SystemRandom::new();
@@ -265,6 +278,10 @@ fn signature_ecdsa_sign_fixed_sign_and_verify_test() {
                     &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
                     &signature::ECDSA_P384_SHA384_FIXED,
                 ),
+                ("P-521", "SHA512") => (
+                    &signature::ECDSA_P521_SHA512_FIXED_SIGNING,
+                    &signature::ECDSA_P521_SHA512_FIXED,
+                ),
                 _ => {
                     panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
                 }
@@ -288,8 +305,7 @@ fn signature_ecdsa_sign_fixed_sign_and_verify_test() {
 // This test is not a known-answer test, though it re-uses the known-answer
 // test vectors. Because the nonce is randomized, the signature will be
 // different each time. Because of that, here we simply verify that the
-// signature verifies correctly. The known-answer tests themselves are in
-// ecsda/signing.rs.
+// signature verifies correctly.
 #[test]
 fn signature_ecdsa_sign_asn1_test() {
     let rng = rand::SystemRandom::new();
@@ -319,6 +335,10 @@ fn signature_ecdsa_sign_asn1_test() {
                 ("P-384", "SHA384") => (
                     &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
                     &signature::ECDSA_P384_SHA384_ASN1,
+                ),
+                ("P-521", "SHA512") => (
+                    &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
+                    &signature::ECDSA_P521_SHA512_ASN1,
                 ),
                 _ => {
                     panic!("Unsupported curve+digest: {curve_name}+{digest_name}");

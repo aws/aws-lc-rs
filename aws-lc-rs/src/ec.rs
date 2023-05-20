@@ -16,7 +16,7 @@ use aws_lc::{
     EC_GROUP_order_bits, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new,
     EC_KEY_new_by_curve_name, EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key,
     EC_POINT_new, EC_POINT_oct2point, EC_POINT_point2oct, NID_X9_62_prime256v1, NID_secp384r1,
-    BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT,
+    NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT,
 };
 #[cfg(feature = "fips")]
 use aws_lc::{EC_KEY_check_fips, EC_KEY_generate_key_fips};
@@ -56,7 +56,8 @@ pub(crate) const PUBLIC_KEY_MAX_LEN: usize = 1 + (2 * ELEM_MAX_BYTES);
 /// `40` is the length of the P-384 template. It is actually one byte shorter
 /// than the P-256 template, but the private key and the public key are much
 /// longer.
-pub const PKCS8_DOCUMENT_MAX_LEN: usize = 40 + SCALAR_MAX_BYTES + PUBLIC_KEY_MAX_LEN;
+/// `42` is the length of the P-521 template.
+pub const PKCS8_DOCUMENT_MAX_LEN: usize = 42 + SCALAR_MAX_BYTES + PUBLIC_KEY_MAX_LEN;
 
 /// An ECDSA verification algorithm.
 #[derive(Debug, Eq, PartialEq)]
@@ -93,6 +94,7 @@ pub(crate) enum EcdsaSignatureFormat {
 pub(crate) enum AlgorithmID {
     ECDSA_P256,
     ECDSA_P384,
+    ECDSA_P521,
 }
 
 impl AlgorithmID {
@@ -101,6 +103,7 @@ impl AlgorithmID {
         match self {
             AlgorithmID::ECDSA_P256 => NID_X9_62_prime256v1,
             AlgorithmID::ECDSA_P384 => NID_secp384r1,
+            AlgorithmID::ECDSA_P521 => NID_secp521r1,
         }
     }
 }
@@ -411,6 +414,7 @@ const fn ecdsa_fixed_number_byte_size(alg_id: &'static AlgorithmID) -> usize {
     match alg_id {
         AlgorithmID::ECDSA_P256 => 32,
         AlgorithmID::ECDSA_P384 => 48,
+        AlgorithmID::ECDSA_P521 => 66,
     }
 }
 
