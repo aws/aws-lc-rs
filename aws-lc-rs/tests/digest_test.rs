@@ -34,8 +34,21 @@ fn digest_misc() {
 mod digest_shavs {
     use aws_lc_rs::{digest, test};
 
-    fn run_known_answer_test(digest_alg: &'static digest::Algorithm, test_file: test::File) {
-        let section_name = &format!("L = {}", digest_alg.output_len);
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum TestType {
+        Fips202,
+        Fips180_4,
+    }
+
+    fn run_known_answer_test(
+        digest_alg: &'static digest::Algorithm,
+        test_file: test::File,
+        test_type: TestType,
+    ) {
+        let section_name = &match test_type {
+            TestType::Fips180_4 => format!("L = {}", digest_alg.output_len),
+            TestType::Fips202 => format!("L = {}", 8 * digest_alg.output_len),
+        };
         test::run(test_file, |section, test_case| {
             assert_eq!(section_name, section);
             let len_bits = test_case.consume_usize("Len");
@@ -57,10 +70,13 @@ mod digest_shavs {
     }
 
     macro_rules! shavs_tests {
-        ( $file_name:ident, $algorithm_name:ident ) => {
+        ( $file_name:ident, $algorithm_name:ident, $test_type:expr ) => {
             #[allow(non_snake_case)]
             mod $algorithm_name {
-                use super::{run_known_answer_test, run_monte_carlo_test};
+                use super::{
+                    run_known_answer_test, run_monte_carlo_fips_180_4_test,
+                    run_monte_carlo_fips_202_test, TestType,
+                };
                 use aws_lc_rs::{digest, test_file};
 
                 #[cfg(target_arch = "wasm32")]
@@ -75,9 +91,9 @@ mod digest_shavs {
                             stringify!($file_name),
                             "ShortMsg.rsp"
                         )),
+                        $test_type,
                     );
                 }
-
                 #[test]
                 fn long_msg_known_answer_test() {
                     run_known_answer_test(
@@ -87,27 +103,42 @@ mod digest_shavs {
                             stringify!($file_name),
                             "LongMsg.rsp"
                         )),
+                        $test_type,
                     );
                 }
 
                 #[test]
                 fn monte_carlo_test() {
-                    run_monte_carlo_test(
-                        &digest::$algorithm_name,
-                        test_file!(concat!(
-                            "../third_party/NIST/SHAVS/",
-                            stringify!($file_name),
-                            "Monte.rsp"
-                        )),
-                    );
+                    if $test_type == TestType::Fips180_4 {
+                        run_monte_carlo_fips_180_4_test(
+                            &digest::$algorithm_name,
+                            test_file!(concat!(
+                                "../third_party/NIST/SHAVS/",
+                                stringify!($file_name),
+                                "Monte.rsp"
+                            )),
+                        );
+                    } else {
+                        run_monte_carlo_fips_202_test(
+                            &digest::$algorithm_name,
+                            test_file!(concat!(
+                                "../third_party/NIST/SHAVS/",
+                                stringify!($file_name),
+                                "Monte.rsp"
+                            )),
+                        );
+                    }
                 }
             }
         };
     }
 
     #[allow(clippy::cast_sign_loss)]
-    fn run_monte_carlo_test(digest_alg: &'static digest::Algorithm, test_file: test::File) {
-        let section_name = &format!("L = {}", digest_alg.output_len);
+    fn run_monte_carlo_fips_180_4_test(
+        digest_alg: &'static digest::Algorithm,
+        test_file: test::File,
+    ) {
+        let section_name = format!("L = {}", digest_alg.output_len);
 
         let mut expected_count: isize = -1;
         let mut seed = Vec::with_capacity(digest_alg.output_len);
@@ -152,10 +183,54 @@ mod digest_shavs {
         assert_eq!(expected_count, 100);
     }
 
-    shavs_tests!(SHA1, SHA1_FOR_LEGACY_USE_ONLY);
-    shavs_tests!(SHA256, SHA256);
-    shavs_tests!(SHA384, SHA384);
-    shavs_tests!(SHA512, SHA512);
+    #[allow(clippy::cast_sign_loss)]
+    fn run_monte_carlo_fips_202_test(
+        digest_alg: &'static digest::Algorithm,
+        test_file: test::File,
+    ) {
+        let section_name = format!("L = {}", 8 * digest_alg.output_len);
+
+        let mut expected_count: isize = -1;
+        let mut seed = Vec::with_capacity(digest_alg.output_len);
+
+        test::run(test_file, |section, test_case| {
+            assert_eq!(section_name, section);
+
+            if expected_count == -1 {
+                seed.extend(test_case.consume_bytes("Seed"));
+                expected_count = 0;
+                return Ok(());
+            }
+
+            assert!(expected_count >= 0);
+            let actual_count = test_case.consume_usize("COUNT");
+            assert_eq!(expected_count as usize, actual_count);
+            expected_count += 1;
+
+            let expected_md = test_case.consume_bytes("MD");
+
+            let mut prev_md = seed.clone();
+            for _ in 0..1000 {
+                let mut ctx = digest::Context::new(digest_alg);
+                ctx.update(&prev_md);
+                prev_md = Vec::from(ctx.finish().as_ref());
+            }
+
+            assert_eq!(&expected_md, &prev_md);
+            seed = prev_md;
+
+            Ok(())
+        });
+
+        assert_eq!(expected_count, 100);
+    }
+
+    shavs_tests!(SHA1, SHA1_FOR_LEGACY_USE_ONLY, TestType::Fips180_4);
+    shavs_tests!(SHA256, SHA256, TestType::Fips180_4);
+    shavs_tests!(SHA384, SHA384, TestType::Fips180_4);
+    shavs_tests!(SHA512, SHA512, TestType::Fips180_4);
+    shavs_tests!(SHA3_384, SHA3_384, TestType::Fips202);
+    shavs_tests!(SHA3_512, SHA3_512, TestType::Fips202);
 }
 
 /// Test some ways in which `Context::update` and/or `Context::finish`

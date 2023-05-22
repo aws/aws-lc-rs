@@ -35,13 +35,14 @@ mod sha;
 use crate::error::Unspecified;
 use crate::ptr::ConstPointer;
 use aws_lc::{
-    EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha256, EVP_sha384, EVP_sha512,
-    EVP_sha512_256, EVP_MD,
+    EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha256, EVP_sha384, EVP_sha3_384,
+    EVP_sha3_512, EVP_sha512, EVP_sha512_256, EVP_MD,
 };
 use digest_ctx::DigestContext;
 pub use sha::{
     SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA256, SHA256_OUTPUT_LEN, SHA384,
-    SHA384_OUTPUT_LEN, SHA512, SHA512_256, SHA512_256_OUTPUT_LEN, SHA512_OUTPUT_LEN,
+    SHA384_OUTPUT_LEN, SHA3_384, SHA3_512, SHA512, SHA512_256, SHA512_256_OUTPUT_LEN,
+    SHA512_OUTPUT_LEN,
 };
 use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
@@ -229,6 +230,7 @@ pub struct Algorithm {
     ///
     /// This function isn't actually used in *aws-lc-rs*, and is only
     /// kept for compatibility with the original *ring* implementation.
+    #[deprecated]
     pub chaining_len: usize,
 
     /// The internal block length.
@@ -253,6 +255,8 @@ pub(crate) enum AlgorithmID {
     SHA384,
     SHA512,
     SHA512_256,
+    SHA3_384,
+    SHA3_512,
 }
 
 impl PartialEq for Algorithm {
@@ -286,6 +290,8 @@ pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<EVP_
             AlgorithmID::SHA384 => EVP_sha384(),
             AlgorithmID::SHA512 => EVP_sha512(),
             AlgorithmID::SHA512_256 => EVP_sha512_256(),
+            AlgorithmID::SHA3_384 => EVP_sha3_384(),
+            AlgorithmID::SHA3_512 => EVP_sha3_512(),
         })
         .unwrap_or_else(|_| panic!("Digest algorithm not found: {algorithm_id:?}"))
     }
@@ -310,7 +316,6 @@ mod tests {
                     fn max_input_test() {
                         super::max_input_test(&digest::$algorithm_name);
                     }
-
                     #[test]
                     #[should_panic]
                     fn too_long_input_test_block() {
@@ -364,6 +369,8 @@ mod tests {
         max_input_tests!(SHA256);
         max_input_tests!(SHA384);
         max_input_tests!(SHA512);
+        max_input_tests!(SHA3_384);
+        max_input_tests!(SHA3_512);
     }
 
     #[test]
@@ -375,6 +382,8 @@ mod tests {
             &digest::SHA256,
             &digest::SHA384,
             &digest::SHA512,
+            &digest::SHA3_384,
+            &digest::SHA3_512,
         ] {
             // Clone after updating context with message, then check if the final Digest is the same.
             let mut ctx = digest::Context::new(alg);
