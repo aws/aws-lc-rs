@@ -9,8 +9,10 @@
 use crate::error::Unspecified;
 use crate::{error, rand};
 
+/// A cryptographic nonce.
 pub enum NonceIV {
-    Size128(FixedLength<16>),
+    /// 128-bit (16 byte) nonce.
+    Size128(FixedLength<{ 128 / 8 }>),
 }
 
 impl NonceIV {
@@ -142,7 +144,6 @@ impl<const L: usize> TryFrom<FixedLength<L>> for [u8; L] {
     type Error = Unspecified;
 
     fn try_from(value: FixedLength<L>) -> Result<Self, Self::Error> {
-        let value: [u8; L] = value.0.try_into().map_err(|_| Unspecified)?;
-        Ok(value)
+        Ok(value.0)
     }
 }
