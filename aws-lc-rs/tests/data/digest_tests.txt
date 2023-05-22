@@ -212,3 +212,28 @@ Hash = SHA512_256
 Input = "How can you write a big system without C++?  -Paul Glick"
 Repeat = 1
 Output = 3fa46d52094b01021cff5af9a438982b887a5793f624c0a6644149b6b7c3f485
+
+# SHA3-384 tests
+
+Hash = SHA3_384
+Input = "abc"
+Repeat = 1
+Output = ec01498288516fc926459f58e2c6ad8df9b473cb0fc08c2596da7cf0e49be4b298d88cea927ac7f539f1edf228376d25
+
+Hash = SHA3_384
+Input = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+Repeat = 1
+Output = 79407d3b5916b59c3e30b09822974791c313fb9ecc849e406f23592d04f625dc8c709b98b43b3852b337216179aa7fc7
+
+# SHA3-512 tests
+
+Hash = SHA3_512
+Input = "abc"
+Repeat = 1
+Output = b751850b1a57168a5693cd924b6b096e08f621827444f70d884f5d0240d2712e10e116e9192af3c91a7ec57647e3934057340b4cf408d5a56592f8274eec53f0
+
+Hash = SHA3_512
+Input = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+Repeat = 1
+Output = afebb2ef542e6579c50cad06d2e578f9f8dd6881d7dc824d26360feebf18a4fa73e3261122948efcfd492e74e82e2189ed0fb440d187f382270cb455f21dd185
+

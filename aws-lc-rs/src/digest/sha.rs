@@ -3,8 +3,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::digest::{Algorithm, AlgorithmID};
-use aws_lc::{NID_sha1, NID_sha256, NID_sha384, NID_sha512, NID_sha512_256};
+use crate::digest::{Algorithm, AlgorithmID, Context};
+use aws_lc::{
+    NID_sha1, NID_sha256, NID_sha384, NID_sha3_384, NID_sha3_512, NID_sha512, NID_sha512_256,
+};
 
 pub const BLOCK_LEN: usize = 512 / 8;
 pub const CHAINING_LEN: usize = 160 / 8;
@@ -36,6 +38,24 @@ const SHA256_MAX_INPUT_LEN: u64 = u64::MAX;
 /// u64 is more than sufficient enough for practical usecases, so we limit the input length to 2^64-1 bits.
 #[allow(clippy::cast_possible_truncation)]
 const SHA512_MAX_INPUT_LEN: u64 = u64::MAX;
+
+/// The length of a block for SHA3-384-based algorithms, in bytes.
+const SHA3_384_BLOCK_LEN: usize = 104;
+
+/// The length of a block for SHA3-512-based algorithms, in bytes.
+const SHA3_512_BLOCK_LEN: usize = 72;
+
+/// The length of the output of SHA3-384, in bytes.
+pub const SHA3_384_OUTPUT_LEN: usize = 384 / 8;
+
+/// The length of the output of SHA3-512, in bytes.
+pub const SHA3_512_OUTPUT_LEN: usize = 512 / 8;
+
+#[allow(clippy::cast_possible_truncation)]
+const SHA3_384_MAX_INPUT_LEN: u64 = u64::MAX;
+
+#[allow(clippy::cast_possible_truncation)]
+const SHA3_512_MAX_INPUT_LEN: u64 = u64::MAX;
 
 /// SHA-1 as specified in [FIPS 180-4]. Deprecated.
 ///
@@ -114,6 +134,36 @@ pub static SHA512_256: Algorithm = Algorithm {
     hash_nid: NID_sha512_256,
 };
 
+/// SHA3-384 as specified in [FIPS 202].
+///
+/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
+pub static SHA3_384: Algorithm = Algorithm {
+    output_len: SHA3_384_OUTPUT_LEN,
+    chaining_len: SHA3_384_OUTPUT_LEN,
+    block_len: SHA3_384_BLOCK_LEN,
+    max_input_len: SHA3_384_MAX_INPUT_LEN,
+
+    one_shot_hash: sha3_384_digest,
+
+    id: AlgorithmID::SHA3_384,
+    hash_nid: NID_sha3_384,
+};
+
+/// SHA3-512 as specified in [FIPS 202].
+///
+/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
+pub static SHA3_512: Algorithm = Algorithm {
+    output_len: SHA3_512_OUTPUT_LEN,
+    chaining_len: SHA3_512_OUTPUT_LEN,
+    block_len: SHA3_512_BLOCK_LEN,
+    max_input_len: SHA3_512_MAX_INPUT_LEN,
+
+    one_shot_hash: sha3_512_digest,
+
+    id: AlgorithmID::SHA3_512,
+    hash_nid: NID_sha3_512,
+};
+
 fn sha1_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
         aws_lc::SHA1(msg.as_ptr(), msg.len(), output.as_mut_ptr());
@@ -142,4 +192,18 @@ fn sha512_256_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
         aws_lc::SHA512_256(msg.as_ptr(), msg.len(), output.as_mut_ptr());
     }
+}
+
+fn sha3_384_digest(msg: &[u8], output: &mut [u8]) {
+    let mut ctx = Context::new(&SHA3_384);
+    ctx.update(msg);
+    let digest = ctx.finish();
+    output[0..SHA3_384_OUTPUT_LEN].copy_from_slice(digest.as_ref());
+}
+
+fn sha3_512_digest(msg: &[u8], output: &mut [u8]) {
+    let mut ctx = Context::new(&SHA3_512);
+    ctx.update(msg);
+    let digest = ctx.finish();
+    output[0..SHA3_512_OUTPUT_LEN].copy_from_slice(digest.as_ref());
 }
