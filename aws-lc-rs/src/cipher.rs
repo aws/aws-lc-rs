@@ -108,7 +108,7 @@ enum PaddingStrategy {
 }
 
 impl OperatingMode {
-    fn add_padding<InOut>(&self, block_len: usize, in_out: &mut InOut) -> Result<(), Unspecified>
+    fn add_padding<InOut>(self, block_len: usize, in_out: &mut InOut) -> Result<(), Unspecified>
     where
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
@@ -134,6 +134,36 @@ impl OperatingMode {
         }
         Ok(())
     }
+
+    fn remove_padding(self, block_len: usize, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
+        match self {
+            OperatingMode::Block(strategy) => match strategy {
+                PaddingStrategy::PKCS7 => {
+                    let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
+
+                    if in_out.is_empty() || in_out.len() < block_len {
+                        return Err(Unspecified);
+                    }
+
+                    let padding: u8 = in_out[in_out.len() - 1];
+                    if padding == 0 || padding > block_size {
+                        return Err(Unspecified);
+                    }
+
+                    for item in in_out.iter().skip(in_out.len() - padding as usize) {
+                        if *item != padding {
+                            return Err(Unspecified);
+                        }
+                    }
+
+                    let final_len = in_out.len() - padding as usize;
+                    Ok(&mut in_out[0..final_len])
+                }
+                PaddingStrategy::Unpadded => Ok(in_out),
+            },
+            OperatingMode::Stream => Ok(in_out),
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -142,20 +172,7 @@ enum OperatingMode {
     Stream,
 }
 
-/// A Block or Stream Cipher Algorithm
-///
-/// # Supported Algorithms
-///
-/// ## Counter (CTR) Modes
-///
-/// * [`AES_128_CTR`]
-/// * [`AES_256_CTR`]
-///
-/// ## Cipher block chaining (CBC) Modes
-///
-/// * [`AES_128_CBC_PKCS7_PADDING`]
-/// * [`AES_256_CBC_PKCS7_PADDING`]
-///
+/// A cipher configuration description.
 pub struct CipherConfig<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>(
     OperatingMode,
 );
@@ -170,36 +187,52 @@ pub const AES_256_KEY_LEN: usize = 32;
 pub const AES_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
+/// A Block or Stream Cipher Algorithm
+///
+/// # Supported Algorithms
+///
+/// ## Counter (CTR) Modes
+///
+/// * [`AES_128_CTR`]
+/// * [`AES_256_CTR`]
+///
+/// ## Cipher block chaining (CBC) Modes
+///
+/// * [`AES_128_CBC_PKCS7_PADDING`]
+/// * [`AES_256_CBC_PKCS7_PADDING`]
+///l
 pub enum Algorithm {
-    AES_128_CTR(CipherConfig<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
-    AES_256_CTR(CipherConfig<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
-    AES_128_CBC_PKCS7_PADDING(CipherConfig<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
-    AES_256_CBC_PKCS7_PADDING(CipherConfig<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+    /// AES-128 Counter (CTR) Mode
+    Aes128Ctr(CipherConfig<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+
+    /// AES-256 Counter (CTR) Mode
+    Aes256Ctr(CipherConfig<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+
+    /// AES-128 Cipher block chaining (CBC) Mode
+    Aes128CbcPkcs7Padding(CipherConfig<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+
+    /// AES-256 Cipher block chaining (CBC) Mode
+    Aes256CbcPkcs7Padding(CipherConfig<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
 }
 
 impl Algorithm {
     fn get_operating_mode(&self) -> &OperatingMode {
         match self {
-            Algorithm::AES_128_CTR(v) => v.get_operating_mode(),
-            Algorithm::AES_256_CTR(v) => v.get_operating_mode(),
-            Algorithm::AES_128_CBC_PKCS7_PADDING(v) => v.get_operating_mode(),
-            Algorithm::AES_256_CBC_PKCS7_PADDING(v) => v.get_operating_mode(),
+            Algorithm::Aes128Ctr(v) | Algorithm::Aes128CbcPkcs7Padding(v) => v.get_operating_mode(),
+            Algorithm::Aes256Ctr(v) | Algorithm::Aes256CbcPkcs7Padding(v) => v.get_operating_mode(),
         }
     }
 
     fn get_block_len(&self) -> usize {
         match self {
-            Algorithm::AES_128_CTR(v) => v.get_block_size(),
-            Algorithm::AES_256_CTR(v) => v.get_block_size(),
-            Algorithm::AES_128_CBC_PKCS7_PADDING(v) => v.get_block_size(),
-            Algorithm::AES_256_CBC_PKCS7_PADDING(v) => v.get_block_size(),
+            Algorithm::Aes128Ctr(v) | Algorithm::Aes128CbcPkcs7Padding(v) => v.get_block_len(),
+            Algorithm::Aes256Ctr(v) | Algorithm::Aes256CbcPkcs7Padding(v) => v.get_block_len(),
         }
     }
 
+    #[allow(clippy::unused_self)]
     fn new_randomized_nonce(&self) -> Result<NonceIV, Unspecified> {
-        match self {
-            _ => Ok(NonceIV::Size128(FixedLength::<16>::new()?)),
-        }
+        Ok(NonceIV::Size128(FixedLength::<16>::new()?))
     }
 
     fn new_symmetric_cipher_key(
@@ -207,11 +240,11 @@ impl Algorithm {
         key_bytes: &[u8],
     ) -> Result<SymmetricCipherKey, Unspecified> {
         match self {
-            Algorithm::AES_128_CTR(v) | Algorithm::AES_128_CBC_PKCS7_PADDING(v) => {
+            Algorithm::Aes128Ctr(v) | Algorithm::Aes128CbcPkcs7Padding(v) => {
                 let key = v.try_into_key(key_bytes)?;
                 SymmetricCipherKey::aes128(key)
             }
-            Algorithm::AES_256_CTR(v) | Algorithm::AES_256_CBC_PKCS7_PADDING(v) => {
+            Algorithm::Aes256Ctr(v) | Algorithm::Aes256CbcPkcs7Padding(v) => {
                 let key = v.try_into_key(key_bytes)?;
                 SymmetricCipherKey::aes256(key)
             }
@@ -227,30 +260,37 @@ impl Algorithm {
         Ok(())
     }
 
-    const fn max_block_size() -> usize {
+    fn finalalize_decryption<'a>(&self, in_out: &'a mut [u8]) -> Result<&'a mut [u8], Unspecified> {
+        let in_out = self
+            .get_operating_mode()
+            .remove_padding(self.get_block_len(), in_out.as_mut())?;
+        Ok(in_out)
+    }
+
+    const fn max_block_len() -> usize {
         16
     }
 
-    const fn max_iv_size() -> usize {
+    const fn max_iv_len() -> usize {
         16
     }
 }
 
 /// AES-128 Counter (CTR) Mode
-pub const AES_128_CTR: Algorithm = Algorithm::AES_128_CTR(CipherConfig(OperatingMode::Stream));
+pub const AES_128_CTR: Algorithm = Algorithm::Aes128Ctr(CipherConfig(OperatingMode::Stream));
 
 /// AES-128 Cipher block chaining (CBC) Mode using PKCS#7 padding.
-pub const AES_128_CBC_PKCS7_PADDING: Algorithm = Algorithm::AES_128_CBC_PKCS7_PADDING(
-    CipherConfig(OperatingMode::Block(PaddingStrategy::PKCS7)),
-);
+pub const AES_128_CBC_PKCS7_PADDING: Algorithm =
+    Algorithm::Aes128CbcPkcs7Padding(CipherConfig(OperatingMode::Block(PaddingStrategy::PKCS7)));
 
 /// AES-256 Counter (CTR) Mode
-pub const AES_256_CTR: Algorithm = Algorithm::AES_256_CTR(CipherConfig(OperatingMode::Stream));
+pub const AES_256_CTR: Algorithm = Algorithm::Aes256Ctr(CipherConfig(OperatingMode::Stream));
 
 /// AES-256 Cipher block chaining (CBC) Mode using PKCS#7 padding.
-pub const AES_256_CBC_PKCS7_PADDING: Algorithm = Algorithm::AES_256_CBC_PKCS7_PADDING(
-    CipherConfig(OperatingMode::Block(PaddingStrategy::PKCS7)),
-);
+pub const AES_256_CBC_PKCS7_PADDING: Algorithm =
+    Algorithm::Aes256CbcPkcs7Padding(CipherConfig(OperatingMode::Block(PaddingStrategy::PKCS7)));
+
+const MAX_BLOCK_LEN: usize = 16;
 
 impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
     CipherConfig<KEY_LEN, IV_LEN, BLOCK_LEN>
@@ -260,17 +300,15 @@ impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
         &self.0
     }
 
+    #[allow(clippy::unused_self)]
     fn try_into_key<'a>(&self, key: &'a [u8]) -> Result<&'a [u8; KEY_LEN], Unspecified> {
         let key: &'a [u8; KEY_LEN] = key.try_into()?;
         Ok(key)
     }
 
-    fn get_block_size(&self) -> usize {
+    #[allow(clippy::unused_self)]
+    fn get_block_len(&self) -> usize {
         BLOCK_LEN
-    }
-
-    fn new_block(&self) -> [u8; BLOCK_LEN] {
-        [0u8; BLOCK_LEN]
     }
 }
 
@@ -383,6 +421,11 @@ pub struct LessSafeCipherKey {
 }
 
 impl LessSafeCipherKey {
+    /// Constructs a new [`LessSafeCipherKey`].
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if `key_bytes` is not the proper byte length for the selected algorithm.
+    ///
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         let key = algorithm.new_symmetric_cipher_key(key_bytes)?;
         Ok(LessSafeCipherKey { algorithm, key })
@@ -437,10 +480,10 @@ where
 
     let in_out = in_out.as_mut();
 
-    let mut ivec = [0u8; Algorithm::max_iv_size()];
+    let mut ivec = [0u8; Algorithm::max_iv_len()];
     ivec.copy_from_slice(iv.as_ref());
 
-    let mut buf = [0u8; Algorithm::max_block_size()];
+    let mut buf = [0u8; Algorithm::max_block_len()];
 
     // This works b/c we currently only support AES keys
     let aes_key = match key {
@@ -451,10 +494,10 @@ where
     }?;
 
     match algorithm {
-        Algorithm::AES_128_CTR(..) | Algorithm::AES_256_CTR(..) => {
+        Algorithm::Aes128Ctr(..) | Algorithm::Aes256Ctr(..) => {
             aes_ctr128_encrypt(aes_key, &mut ivec, &mut buf, in_out);
         }
-        Algorithm::AES_128_CBC_PKCS7_PADDING(..) | Algorithm::AES_256_CBC_PKCS7_PADDING(..) => {
+        Algorithm::Aes128CbcPkcs7Padding(..) | Algorithm::Aes256CbcPkcs7Padding(..) => {
             aes_cbc_encrypt(aes_key, &mut ivec, in_out);
         }
     }
@@ -511,38 +554,42 @@ fn decrypt<'a>(
     mut iv: NonceIV,
     in_out: &'a mut [u8],
 ) -> Result<&'a mut [u8], Unspecified> {
-    let mut final_len = in_out.len();
-
     let iv = iv.as_mut();
 
     match algorithm {
-        Algorithm::AES_128_CTR(v) => {
+        Algorithm::Aes128Ctr(v) => {
             let key = match key {
                 SymmetricCipherKey::Aes128 { enc_key, .. } => enc_key,
                 _ => return Err(Unspecified),
             };
 
-            let mut buf = v.new_block();
+            let mut buf = [0u8; MAX_BLOCK_LEN];
+
+            assert!(buf.len() >= v.get_block_len());
+
             aes_ctr128_encrypt(key, iv, &mut buf, in_out);
         }
-        Algorithm::AES_256_CTR(v) => {
+        Algorithm::Aes256Ctr(v) => {
             let key = match key {
                 SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
                 _ => return Err(Unspecified),
             };
 
-            let mut buf = v.new_block();
+            let mut buf = [0u8; MAX_BLOCK_LEN];
+
+            assert!(buf.len() >= v.get_block_len());
 
             aes_ctr128_encrypt(key, iv, &mut buf, in_out);
         }
-        Algorithm::AES_128_CBC_PKCS7_PADDING(_) => {
+        Algorithm::Aes128CbcPkcs7Padding(_) => {
             let key = match key {
                 SymmetricCipherKey::Aes128 { dec_key, .. } => dec_key,
                 _ => return Err(Unspecified),
             };
+
             aes_cbc_decrypt(key, iv, in_out);
         }
-        Algorithm::AES_256_CBC_PKCS7_PADDING(_) => {
+        Algorithm::Aes256CbcPkcs7Padding(_) => {
             let key = match key {
                 SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
                 _ => return Err(Unspecified),
@@ -551,39 +598,9 @@ fn decrypt<'a>(
         }
     }
 
-    match algorithm.get_operating_mode() {
-        OperatingMode::Block(strategy) => match strategy {
-            PaddingStrategy::PKCS7 => {
-                let block_len = algorithm.get_block_len();
+    let in_out = algorithm.finalalize_decryption(in_out)?;
 
-                let block_size: u8 = algorithm
-                    .get_block_len()
-                    .try_into()
-                    .map_err(|_| Unspecified)?;
-
-                if in_out.is_empty() || in_out.len() < block_len {
-                    return Err(Unspecified);
-                }
-
-                let padding: u8 = in_out[in_out.len() - 1];
-                if padding == 0 || padding > block_size {
-                    return Err(Unspecified);
-                }
-
-                for item in in_out.iter().skip(in_out.len() - padding as usize) {
-                    if *item != padding {
-                        return Err(Unspecified);
-                    }
-                }
-
-                final_len = in_out.len() - padding as usize;
-            }
-            PaddingStrategy::Unpadded => {}
-        },
-        OperatingMode::Stream => {}
-    }
-
-    Ok(&mut in_out[0..final_len])
+    Ok(in_out)
 }
 
 impl SymmetricCipherKey {
