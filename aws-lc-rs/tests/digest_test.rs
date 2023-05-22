@@ -75,7 +75,7 @@ mod digest_shavs {
             mod $algorithm_name {
                 use super::{
                     run_known_answer_test, run_monte_carlo_fips_180_4_test,
-                    run_monte_carlo_fips_200_test, TestType,
+                    run_monte_carlo_fips_202_test, TestType,
                 };
                 use aws_lc_rs::{digest, test_file};
 
@@ -119,7 +119,7 @@ mod digest_shavs {
                             )),
                         );
                     } else {
-                        run_monte_carlo_fips_200_test(
+                        run_monte_carlo_fips_202_test(
                             &digest::$algorithm_name,
                             test_file!(concat!(
                                 "../third_party/NIST/SHAVS/",
@@ -184,7 +184,7 @@ mod digest_shavs {
     }
 
     #[allow(clippy::cast_sign_loss)]
-    fn run_monte_carlo_fips_200_test(
+    fn run_monte_carlo_fips_202_test(
         digest_alg: &'static digest::Algorithm,
         test_file: test::File,
     ) {

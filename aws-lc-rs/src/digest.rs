@@ -230,6 +230,7 @@ pub struct Algorithm {
     ///
     /// This function isn't actually used in *aws-lc-rs*, and is only
     /// kept for compatibility with the original *ring* implementation.
+    #[deprecated]
     pub chaining_len: usize,
 
     /// The internal block length.
