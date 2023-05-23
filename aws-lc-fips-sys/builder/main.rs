@@ -143,7 +143,11 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
     }
 
     cmake_cfg.define("BUILD_TESTING", "OFF");
-    cmake_cfg.define("BUILD_LIBSSL", "ON");
+    if cfg!(feature = "ssl") {
+        cmake_cfg.define("BUILD_LIBSSL", "ON");
+    } else {
+        cmake_cfg.define("BUILD_LIBSSL", "OFF");
+    }
     cmake_cfg.define("FIPS", "1");
 
     if cfg!(feature = "asan") {
@@ -158,7 +162,9 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
 }
 
 fn build_rust_wrapper(manifest_dir: &PathBuf) -> PathBuf {
-    prepare_cmake_build(manifest_dir, Some(&prefix_string())).build()
+    prepare_cmake_build(manifest_dir, Some(&prefix_string()))
+        .configure_arg("--no-warn-unused-cli")
+        .build()
 }
 
 #[cfg(feature = "bindgen")]
