@@ -477,6 +477,11 @@ CAST_S_table4
 CAST_S_table5
 CAST_S_table6
 CAST_S_table7
+CAST_cbc_encrypt
+CAST_decrypt
+CAST_ecb_encrypt
+CAST_encrypt
+CAST_set_key
 CBB_add_asn1
 CBB_add_asn1_bool
 CBB_add_asn1_int64
@@ -551,6 +556,7 @@ CBS_init
 CBS_is_unsigned_asn1_integer
 CBS_is_valid_asn1_bitstring
 CBS_is_valid_asn1_integer
+CBS_is_valid_asn1_oid
 CBS_len
 CBS_mem_equal
 CBS_parse_generalized_time
@@ -1269,6 +1275,8 @@ EVP_bf_cbc
 EVP_bf_cfb
 EVP_bf_ecb
 EVP_blake2b256
+EVP_cast5_cbc
+EVP_cast5_ecb
 EVP_cleanup
 EVP_des_cbc
 EVP_des_ecb
@@ -2576,6 +2584,7 @@ X509_PKEY_free
 X509_PKEY_new
 X509_PUBKEY_free
 X509_PUBKEY_get
+X509_PUBKEY_get0
 X509_PUBKEY_get0_param
 X509_PUBKEY_get0_public_key
 X509_PUBKEY_it
@@ -2808,6 +2817,7 @@ X509_get0_authority_serial
 X509_get0_extensions
 X509_get0_notAfter
 X509_get0_notBefore
+X509_get0_pubkey
 X509_get0_pubkey_bitstr
 X509_get0_serialNumber
 X509_get0_signature
@@ -3006,6 +3016,7 @@ asn1_item_combine_free
 asn1_refcount_dec_and_test_zero
 asn1_refcount_set_one
 asn1_set_choice_selector
+asn1_type_cleanup
 asn1_type_value_as_pointer
 asn1_utctime_to_tm
 awslc_api_version_num
@@ -3233,7 +3244,7 @@ d2i_X509_bio
 d2i_X509_fp
 dh_compute_key_padded_no_self_test
 dsa_asn1_meth
-dsa_check_parameters
+dsa_check_key
 dummy_func_for_constructor
 ec_GFp_mont_add
 ec_GFp_mont_dbl
@@ -3693,7 +3704,6 @@ vpaes_decrypt
 vpaes_encrypt
 vpaes_set_decrypt_key
 vpaes_set_encrypt_key
-x25519_NEON
 x25519_asn1_meth
 x25519_ge_add
 x25519_ge_frombytes_vartime
