@@ -60,6 +60,14 @@ impl From<[u8; 16]> for NonceIV {
     }
 }
 
+impl TryFrom<&[u8]> for NonceIV {
+    type Error = Unspecified;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        Ok(NonceIV::Size128(FixedLength::<16>::try_from(value)?))
+    }
+}
+
 /// An initalization vector that must be unique for the lifetime of the associated key
 /// it is used with.
 pub struct FixedLength<const L: usize>([u8; L]);
