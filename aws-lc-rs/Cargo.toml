@@ -41,7 +41,8 @@ criterion = { version = "0.5.0", features = ["csv_output"]}
 ring = "0.16"
 regex = "1.6.0"
 lazy_static = "1.4.0"
-clap = {version = "4.1.8", features = ["derive"]}
+clap = { version = "4.1.8", features = ["derive"] }
+openssl = { version = "0.10.52", features = ["vendored"] }
 
 [[bench]]
 name = "aead_benchmark"
@@ -81,4 +82,8 @@ harness = false
 
 [[bench]]
 name = "agreement_benchmark"
+harness = false
+
+[[bench]]
+name = "cipher_benchmark"
 harness = false
