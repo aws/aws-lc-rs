@@ -1,156 +1,42 @@
-use aws_lc_rs::cipher::{
-    DecryptingKey, DecryptionContext, EncryptingKey, OperatingMode, PaddedBlockDecryptingKey,
-    PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
+use aws_lc_rs::{
+    cipher::{LessSafeCipherKey, AES_128_CTR},
+    iv::NonceIV,
+    test, test_file,
 };
-use aws_lc_rs::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
-use openssl::symm::Cipher;
 
-macro_rules! openssl_bench {
-    ($group:ident, $openssl: expr, $key:ident, $iv:ident, $data:ident) => {
-        $group.bench_function("OpenSSL", |b| {
-            b.iter(|| {
-                use openssl::symm::{decrypt, encrypt};
-                let data = encrypt($openssl, &$key, Some(&$iv), &$data).unwrap();
-                let _ = decrypt($openssl, &$key, Some(&$iv), data.as_ref()).unwrap();
-            })
-        });
-    };
-}
+fn test_aes_128_ctr(c: &mut Criterion) {
+    test::run(
+        test_file!("data/cipher_aes_128_ctr.txt"),
+        |_section, test_case| {
+            let key = test_case.consume_bytes("KEY");
+            let iv = test_case.consume_bytes("IV");
+            let data = test_case.consume_bytes("IN");
 
-macro_rules! benchmark_padded {
-    ($fn:ident, $test:literal, $file:literal, $awslc:expr, $mode:expr, $openssl:expr) => {
-        fn $fn(c: &mut Criterion) {
-            test::run(test_file!($file), |_section, test_case| {
-                let key_bytes = test_case.consume_bytes("KEY");
-                let iv = test_case.consume_bytes("IV");
-                let data = test_case.consume_bytes("IN");
+            let mut group = c.benchmark_group(format!("AES-128-CTR-{}-bytes", data.len()));
 
-                let mut group = c.benchmark_group(format!("{}-{}-bytes", $test, data.len()));
-
-                group.bench_function("AWS-LC", |b| {
-                    b.iter(|| {
-                        let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-                        let iv: DecryptionContext =
-                            DecryptionContext::Iv128(iv.as_slice().try_into().unwrap());
-
-                        let encrypt_key = match $mode {
-                            OperatingMode::CBC => {
-                                PaddedBlockEncryptingKey::less_safe_cbc_pkcs7(key, iv)
-                            }
-                            _ => unreachable!(),
-                        }
-                        .unwrap();
-
-                        let mut in_out = Vec::from(data.as_slice());
-                        let context = encrypt_key.encrypt(&mut in_out).unwrap();
-
-                        let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-
-                        let decrypt_key = match $mode {
-                            OperatingMode::CBC => PaddedBlockDecryptingKey::cbc_pkcs7(key, context),
-                            _ => unreachable!(),
-                        }
-                        .unwrap();
-
-                        let _ = decrypt_key.decrypt(&mut in_out).unwrap();
-                    })
-                });
-
-                openssl_bench!(group, $openssl, key_bytes, iv, data);
-
-                Ok(())
+            group.bench_function("AWS-LC", |b| {
+                b.iter(|| {
+                    let key = LessSafeCipherKey::new(&AES_128_CTR, &key).unwrap();
+                    let iv: NonceIV = iv.as_slice().try_into().unwrap();
+                    let mut in_out = Vec::from(data.as_slice());
+                    let iv = key.encrypt(iv, &mut in_out).unwrap();
+                    let _ = key.decrypt(iv, &mut in_out).unwrap();
+                })
             });
-        }
-    };
-}
 
-macro_rules! benchmark_unpadded {
-    ($fn:ident, $test:literal, $file:literal, $awslc:expr, $mode:expr, $openssl:expr) => {
-        fn $fn(c: &mut Criterion) {
-            test::run(test_file!($file), |_section, test_case| {
-                let key_bytes = test_case.consume_bytes("KEY");
-                let iv = test_case.consume_bytes("IV");
-                let data = test_case.consume_bytes("IN");
-
-                let mut group = c.benchmark_group(format!("{}-{}-bytes", $test, data.len()));
-
-                group.bench_function("AWS-LC", |b| {
-                    b.iter(|| {
-                        let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-                        let iv: DecryptionContext =
-                            DecryptionContext::Iv128(iv.as_slice().try_into().unwrap());
-
-                        let encrypt_key = match $mode {
-                            OperatingMode::CTR => EncryptingKey::less_safe_ctr(key, iv),
-                            _ => unreachable!(),
-                        }
-                        .unwrap();
-
-                        let mut in_out = Vec::from(data.as_slice());
-                        let context = encrypt_key.encrypt(&mut in_out).unwrap();
-
-                        let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-
-                        let decrypt_key = match $mode {
-                            OperatingMode::CTR => DecryptingKey::ctr(key, context),
-                            _ => unreachable!(),
-                        }
-                        .unwrap();
-
-                        let _ = decrypt_key.decrypt(&mut in_out).unwrap();
-                    })
-                });
-
-                openssl_bench!(group, $openssl, key_bytes, iv, data);
-
-                Ok(())
+            group.bench_function("openssl", |b| {
+                b.iter(|| {
+                    use openssl::symm::{decrypt, encrypt, Cipher};
+                    let data = encrypt(Cipher::aes_128_ctr(), &key, Some(&iv), &data).unwrap();
+                    let _ = decrypt(Cipher::aes_128_ctr(), &key, Some(&iv), data.as_ref()).unwrap();
+                })
             });
-        }
-    };
+
+            Ok(())
+        },
+    );
 }
 
-benchmark_unpadded!(
-    test_aes_128_ctr,
-    "AES-128-CTR",
-    "data/cipher_aes_128_ctr.txt",
-    &AES_128,
-    OperatingMode::CTR,
-    Cipher::aes_128_ctr()
-);
-
-benchmark_unpadded!(
-    test_aes_256_ctr,
-    "AES-256-CTR",
-    "data/cipher_aes_256_ctr.txt",
-    &AES_256,
-    OperatingMode::CTR,
-    Cipher::aes_256_ctr()
-);
-
-benchmark_padded!(
-    test_aes_128_cbc,
-    "AES-128-CBC",
-    "data/cipher_aes_128_cbc.txt",
-    &AES_128,
-    OperatingMode::CBC,
-    Cipher::aes_128_cbc()
-);
-
-benchmark_padded!(
-    test_aes_256_cbc,
-    "AES-256-CBC",
-    "data/cipher_aes_256_cbc.txt",
-    &AES_256,
-    OperatingMode::CBC,
-    Cipher::aes_256_cbc()
-);
-
-criterion_group!(
-    benches,
-    test_aes_128_ctr,
-    test_aes_128_cbc,
-    test_aes_256_ctr,
-    test_aes_256_cbc
-);
+criterion_group!(benches, test_aes_128_ctr);
 criterion_main!(benches);
