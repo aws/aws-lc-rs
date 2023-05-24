@@ -175,6 +175,7 @@ impl TestCase {
             "SHA384" => Some(&digest::SHA384),
             "SHA512" => Some(&digest::SHA512),
             "SHA512_256" => Some(&digest::SHA512_256),
+            "SHA3_256" => Some(&digest::SHA3_256),
             "SHA3_384" => Some(&digest::SHA3_384),
             "SHA3_512" => Some(&digest::SHA3_512),
             _ => unrecoverable!("Unsupported digest algorithm: {}", name),
