@@ -5,7 +5,8 @@
 
 use crate::digest::{Algorithm, AlgorithmID, Context};
 use aws_lc::{
-    NID_sha1, NID_sha256, NID_sha384, NID_sha3_384, NID_sha3_512, NID_sha512, NID_sha512_256,
+    NID_sha1, NID_sha256, NID_sha384, NID_sha3_256, NID_sha3_384, NID_sha3_512, NID_sha512,
+    NID_sha512_256,
 };
 
 pub const BLOCK_LEN: usize = 512 / 8;
@@ -39,17 +40,26 @@ const SHA256_MAX_INPUT_LEN: u64 = u64::MAX;
 #[allow(clippy::cast_possible_truncation)]
 const SHA512_MAX_INPUT_LEN: u64 = u64::MAX;
 
+/// The length of a block for SHA3-256-based algorithms, in bytes.
+const SHA3_256_BLOCK_LEN: usize = 136;
+
 /// The length of a block for SHA3-384-based algorithms, in bytes.
 const SHA3_384_BLOCK_LEN: usize = 104;
 
 /// The length of a block for SHA3-512-based algorithms, in bytes.
 const SHA3_512_BLOCK_LEN: usize = 72;
 
+/// The length of the output of SHA3-256 in bytes.
+pub const SHA3_256_OUTPUT_LEN: usize = 256 / 8;
+
 /// The length of the output of SHA3-384, in bytes.
 pub const SHA3_384_OUTPUT_LEN: usize = 384 / 8;
 
 /// The length of the output of SHA3-512, in bytes.
 pub const SHA3_512_OUTPUT_LEN: usize = 512 / 8;
+
+#[allow(clippy::cast_possible_truncation)]
+const SHA3_256_MAX_INPUT_LEN: u64 = u64::MAX;
 
 #[allow(clippy::cast_possible_truncation)]
 const SHA3_384_MAX_INPUT_LEN: u64 = u64::MAX;
@@ -139,6 +149,22 @@ pub static SHA512_256: Algorithm = Algorithm {
     hash_nid: NID_sha512_256,
 };
 
+/// SHA3-256 as specified in [FIPS 202].
+///
+/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
+#[allow(deprecated)]
+pub static SHA3_256: Algorithm = Algorithm {
+    output_len: SHA3_256_OUTPUT_LEN,
+    chaining_len: SHA3_256_OUTPUT_LEN,
+    block_len: SHA3_256_BLOCK_LEN,
+    max_input_len: SHA3_256_MAX_INPUT_LEN,
+
+    one_shot_hash: sha3_256_digest,
+
+    id: AlgorithmID::SHA3_256,
+    hash_nid: NID_sha3_256,
+};
+
 /// SHA3-384 as specified in [FIPS 202].
 ///
 /// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
@@ -199,6 +225,13 @@ fn sha512_256_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
         aws_lc::SHA512_256(msg.as_ptr(), msg.len(), output.as_mut_ptr());
     }
+}
+
+fn sha3_256_digest(msg: &[u8], output: &mut [u8]) {
+    let mut ctx = Context::new(&SHA3_256);
+    ctx.update(msg);
+    let digest = ctx.finish();
+    output[0..SHA3_256_OUTPUT_LEN].copy_from_slice(digest.as_ref());
 }
 
 fn sha3_384_digest(msg: &[u8], output: &mut [u8]) {

@@ -213,6 +213,18 @@ Input = "How can you write a big system without C++?  -Paul Glick"
 Repeat = 1
 Output = 3fa46d52094b01021cff5af9a438982b887a5793f624c0a6644149b6b7c3f485
 
+# SHA3-256 tests
+
+Hash = SHA3_256
+Input = "abc"
+Repeat = 1
+Output = 3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532
+
+Hash = SHA3_256
+Input = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+Repeat = 1
+Output = 916f6061fe879741ca6469b43971dfdb28b1a32dc36cb3254e812be27aad1d18
+
 # SHA3-384 tests
 
 Hash = SHA3_384

@@ -35,13 +35,13 @@ mod sha;
 use crate::error::Unspecified;
 use crate::ptr::ConstPointer;
 use aws_lc::{
-    EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha256, EVP_sha384, EVP_sha3_384,
-    EVP_sha3_512, EVP_sha512, EVP_sha512_256, EVP_MD,
+    EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha256, EVP_sha384, EVP_sha3_256,
+    EVP_sha3_384, EVP_sha3_512, EVP_sha512, EVP_sha512_256, EVP_MD,
 };
 use digest_ctx::DigestContext;
 pub use sha::{
     SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA256, SHA256_OUTPUT_LEN, SHA384,
-    SHA384_OUTPUT_LEN, SHA3_384, SHA3_512, SHA512, SHA512_256, SHA512_256_OUTPUT_LEN,
+    SHA384_OUTPUT_LEN, SHA3_256, SHA3_384, SHA3_512, SHA512, SHA512_256, SHA512_256_OUTPUT_LEN,
     SHA512_OUTPUT_LEN,
 };
 use std::mem::MaybeUninit;
@@ -255,6 +255,7 @@ pub(crate) enum AlgorithmID {
     SHA384,
     SHA512,
     SHA512_256,
+    SHA3_256,
     SHA3_384,
     SHA3_512,
 }
@@ -290,6 +291,7 @@ pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<EVP_
             AlgorithmID::SHA384 => EVP_sha384(),
             AlgorithmID::SHA512 => EVP_sha512(),
             AlgorithmID::SHA512_256 => EVP_sha512_256(),
+            AlgorithmID::SHA3_256 => EVP_sha3_256(),
             AlgorithmID::SHA3_384 => EVP_sha3_384(),
             AlgorithmID::SHA3_512 => EVP_sha3_512(),
         })

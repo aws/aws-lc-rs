@@ -229,6 +229,7 @@ mod digest_shavs {
     shavs_tests!(SHA256, SHA256, TestType::Fips180_4);
     shavs_tests!(SHA384, SHA384, TestType::Fips180_4);
     shavs_tests!(SHA512, SHA512, TestType::Fips180_4);
+    shavs_tests!(SHA3_256, SHA3_256, TestType::Fips202);
     shavs_tests!(SHA3_384, SHA3_384, TestType::Fips202);
     shavs_tests!(SHA3_512, SHA3_512, TestType::Fips202);
 }
