@@ -103,7 +103,7 @@ impl Drop for SymmetricCipherKey {
 #[allow(dead_code)]
 #[derive(Clone, Copy)]
 enum PaddingStrategy {
-    Unpadded,
+    NoPadding,
     PKCS7,
 }
 
@@ -128,7 +128,7 @@ impl OperatingMode {
                         in_out.extend(vec![v; padding_size].iter());
                     }
                 }
-                PaddingStrategy::Unpadded => {}
+                PaddingStrategy::NoPadding => {}
             },
             OperatingMode::Stream => {}
         }
@@ -159,7 +159,7 @@ impl OperatingMode {
                     let final_len = in_out.len() - padding as usize;
                     Ok(&mut in_out[0..final_len])
                 }
-                PaddingStrategy::Unpadded => Ok(in_out),
+                PaddingStrategy::NoPadding => Ok(in_out),
             },
             OperatingMode::Stream => Ok(in_out),
         }
