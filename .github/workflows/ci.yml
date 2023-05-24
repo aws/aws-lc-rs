@@ -82,7 +82,7 @@ jobs:
       - uses: actions-rs/toolchain@v1.0.7
         id: toolchain
         with:
-          toolchain: nightly
+          toolchain: nightly-2023-01-04
           profile: minimal
           override: true
       - name: Install cargo-public-api
