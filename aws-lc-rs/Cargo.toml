@@ -10,6 +10,15 @@ description = "aws-lc-rs is a cryptographic library using AWS-LC for its cryptog
 documentation = "https://docs.rs/crate/aws-lc-rs"
 homepage = "https://github.com/awslabs/aws-lc-rs"
 repository = "https://github.com/awslabs/aws-lc-rs"
+# Exclude tests and test data from published crate
+exclude = [
+    "third_party/NIST/*",
+    "tests/**/*",
+    "*.txt",
+    "*.p8",
+    "*.der",
+    "*.bin",
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
