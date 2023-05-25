@@ -48,7 +48,7 @@ use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
-use crate::iv::{FixedLength, NonceIV};
+use crate::iv::{self, FixedLength};
 use aws_lc::{
     AES_cbc_encrypt, AES_ctr128_encrypt, AES_set_decrypt_key, AES_set_encrypt_key, AES_DECRYPT,
     AES_ENCRYPT, AES_KEY,
@@ -100,82 +100,64 @@ impl Drop for SymmetricCipherKey {
     }
 }
 
+/// The cipher block padding strategy.
 #[allow(dead_code)]
 #[derive(Clone, Copy)]
-enum PaddingStrategy {
-    NoPadding,
+pub enum PaddingStrategy {
+    /// PKCS#7 Padding.
     PKCS7,
 }
 
-impl OperatingMode {
+impl PaddingStrategy {
     fn add_padding<InOut>(self, block_len: usize, in_out: &mut InOut) -> Result<(), Unspecified>
     where
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
         match self {
-            OperatingMode::Block(strategy) => match strategy {
-                PaddingStrategy::PKCS7 => {
-                    let in_out_len = in_out.as_mut().len();
-                    // This implements PKCS#7 padding scheme, used by aws-lc if we were using EVP_CIPHER API's
-                    let remainder = in_out_len % block_len;
-                    if remainder == 0 {
-                        let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
-                        in_out.extend(vec![block_size; block_len].iter());
-                    } else {
-                        let padding_size = block_len - remainder;
-                        let v: u8 = padding_size.try_into().map_err(|_| Unspecified)?;
-                        // Heap allocation :(
-                        in_out.extend(vec![v; padding_size].iter());
-                    }
+            PaddingStrategy::PKCS7 => {
+                let in_out_len = in_out.as_mut().len();
+                // This implements PKCS#7 padding scheme, used by aws-lc if we were using EVP_CIPHER API's
+                let remainder = in_out_len % block_len;
+                if remainder == 0 {
+                    let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
+                    in_out.extend(vec![block_size; block_len].iter());
+                } else {
+                    let padding_size = block_len - remainder;
+                    let v: u8 = padding_size.try_into().map_err(|_| Unspecified)?;
+                    // Heap allocation :(
+                    in_out.extend(vec![v; padding_size].iter());
                 }
-                PaddingStrategy::NoPadding => {}
-            },
-            OperatingMode::Stream => {}
+            }
         }
         Ok(())
     }
 
     fn remove_padding(self, block_len: usize, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
         match self {
-            OperatingMode::Block(strategy) => match strategy {
-                PaddingStrategy::PKCS7 => {
-                    let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
+            PaddingStrategy::PKCS7 => {
+                let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
 
-                    if in_out.is_empty() || in_out.len() < block_len {
-                        return Err(Unspecified);
-                    }
-
-                    let padding: u8 = in_out[in_out.len() - 1];
-                    if padding == 0 || padding > block_size {
-                        return Err(Unspecified);
-                    }
-
-                    for item in in_out.iter().skip(in_out.len() - padding as usize) {
-                        if *item != padding {
-                            return Err(Unspecified);
-                        }
-                    }
-
-                    let final_len = in_out.len() - padding as usize;
-                    Ok(&mut in_out[0..final_len])
+                if in_out.is_empty() || in_out.len() < block_len {
+                    return Err(Unspecified);
                 }
-                PaddingStrategy::NoPadding => Ok(in_out),
-            },
-            OperatingMode::Stream => Ok(in_out),
+
+                let padding: u8 = in_out[in_out.len() - 1];
+                if padding == 0 || padding > block_size {
+                    return Err(Unspecified);
+                }
+
+                for item in in_out.iter().skip(in_out.len() - padding as usize) {
+                    if *item != padding {
+                        return Err(Unspecified);
+                    }
+                }
+
+                let final_len = in_out.len() - padding as usize;
+                Ok(&mut in_out[0..final_len])
+            }
         }
     }
 }
-
-#[derive(Clone, Copy)]
-enum OperatingMode {
-    Block(PaddingStrategy),
-    Stream,
-}
-
-/// A cipher configuration description.
-pub struct CipherConfig<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>(
-    OperatingMode,
-);
 
 /// The number of bytes in an AES 128-bit key
 pub const AES_128_KEY_LEN: usize = 16;
@@ -187,128 +169,94 @@ pub const AES_256_KEY_LEN: usize = 32;
 pub const AES_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
-/// A Block or Stream Cipher Algorithm
-///
-/// # Supported Algorithms
-///
-/// ## Counter (CTR) Modes
-///
-/// * [`AES_128_CTR`]
-/// * [`AES_256_CTR`]
-///
-/// ## Cipher block chaining (CBC) Modes
-///
-/// * [`AES_128_CBC_PKCS7_PADDING`]
-/// * [`AES_256_CBC_PKCS7_PADDING`]
-///l
-pub enum Algorithm {
-    /// AES-128 Counter (CTR) Mode
-    Aes128Ctr(CipherConfig<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+/// The cipher operating mode.
+#[non_exhaustive]
+#[derive(Clone, Copy)]
+pub enum OperatingMode {
+    /// Cipher block chaining (CBC) mode.
+    CBC,
 
-    /// AES-256 Counter (CTR) Mode
-    Aes256Ctr(CipherConfig<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
-
-    /// AES-128 Cipher block chaining (CBC) Mode
-    Aes128CbcPkcs7Padding(CipherConfig<AES_128_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
-
-    /// AES-256 Cipher block chaining (CBC) Mode
-    Aes256CbcPkcs7Padding(CipherConfig<AES_256_KEY_LEN, AES_IV_LEN, AES_BLOCK_LEN>),
+    /// Counter (CTR) mode.
+    CTR,
 }
+
+/// The contextual data used to encrypted/decrypt data.
+#[non_exhaustive]
+pub enum DecryptionContext {
+    /// A 128-bit Initalization Vector.
+    Iv128(iv::FixedLength<16>),
+
+    /// No input to the cipher mode.
+    None,
+}
+
+#[non_exhaustive]
+/// Cipher algorithm identifier.
+pub enum AlgorithmId {
+    /// AES 128-bit
+    Aes128,
+
+    /// AES 256-bit
+    Aes256,
+}
+
+/// A cipher algorithm.
+pub struct Algorithm {
+    id: AlgorithmId,
+    key_len: usize,
+    block_len: usize,
+}
+
+/// AES 128-bit cipher
+pub const AES_128: Algorithm = Algorithm {
+    id: AlgorithmId::Aes128,
+    key_len: AES_128_KEY_LEN,
+    block_len: AES_BLOCK_LEN,
+};
+
+/// AES 256-bit cipher
+pub const AES_256: Algorithm = Algorithm {
+    id: AlgorithmId::Aes256,
+    key_len: AES_256_KEY_LEN,
+    block_len: AES_BLOCK_LEN,
+};
 
 impl Algorithm {
-    fn get_operating_mode(&self) -> &OperatingMode {
-        match self {
-            Algorithm::Aes128Ctr(v) | Algorithm::Aes128CbcPkcs7Padding(v) => v.get_operating_mode(),
-            Algorithm::Aes256Ctr(v) | Algorithm::Aes256CbcPkcs7Padding(v) => v.get_operating_mode(),
-        }
+    fn id(&self) -> &AlgorithmId {
+        &self.id
     }
 
-    fn get_block_len(&self) -> usize {
-        match self {
-            Algorithm::Aes128Ctr(v) | Algorithm::Aes128CbcPkcs7Padding(v) => v.get_block_len(),
-            Algorithm::Aes256Ctr(v) | Algorithm::Aes256CbcPkcs7Padding(v) => v.get_block_len(),
-        }
+    #[allow(unused)]
+    const fn key_len(&self) -> usize {
+        self.key_len
     }
 
-    #[allow(clippy::unused_self)]
-    fn new_randomized_nonce(&self) -> Result<NonceIV, Unspecified> {
-        Ok(NonceIV::Size128(FixedLength::<16>::new()?))
+    const fn block_len(&self) -> usize {
+        self.block_len
     }
 
-    fn new_symmetric_cipher_key(
+    fn new_decrypting_context(
         &self,
-        key_bytes: &[u8],
-    ) -> Result<SymmetricCipherKey, Unspecified> {
-        match self {
-            Algorithm::Aes128Ctr(v) | Algorithm::Aes128CbcPkcs7Padding(v) => {
-                let key = v.try_into_key(key_bytes)?;
-                SymmetricCipherKey::aes128(key)
-            }
-            Algorithm::Aes256Ctr(v) | Algorithm::Aes256CbcPkcs7Padding(v) => {
-                let key = v.try_into_key(key_bytes)?;
-                SymmetricCipherKey::aes256(key)
-            }
+        mode: OperatingMode,
+    ) -> Result<DecryptionContext, Unspecified> {
+        match self.id {
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
+                OperatingMode::CBC | OperatingMode::CTR => {
+                    Ok(DecryptionContext::Iv128(FixedLength::new()?))
+                }
+            },
         }
     }
 
-    fn prepare_for_encrypt<InOut>(&self, in_out: &mut InOut) -> Result<(), Unspecified>
-    where
-        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
-    {
-        self.get_operating_mode()
-            .add_padding(self.get_block_len(), in_out)?;
-        Ok(())
-    }
-
-    fn finalalize_decryption<'a>(&self, in_out: &'a mut [u8]) -> Result<&'a mut [u8], Unspecified> {
-        let in_out = self
-            .get_operating_mode()
-            .remove_padding(self.get_block_len(), in_out.as_mut())?;
-        Ok(in_out)
-    }
-
-    const fn max_block_len() -> usize {
-        16
-    }
-
-    const fn max_iv_len() -> usize {
-        16
-    }
-}
-
-/// AES-128 Counter (CTR) Mode
-pub const AES_128_CTR: Algorithm = Algorithm::Aes128Ctr(CipherConfig(OperatingMode::Stream));
-
-/// AES-128 Cipher block chaining (CBC) Mode using PKCS#7 padding.
-pub const AES_128_CBC_PKCS7_PADDING: Algorithm =
-    Algorithm::Aes128CbcPkcs7Padding(CipherConfig(OperatingMode::Block(PaddingStrategy::PKCS7)));
-
-/// AES-256 Counter (CTR) Mode
-pub const AES_256_CTR: Algorithm = Algorithm::Aes256Ctr(CipherConfig(OperatingMode::Stream));
-
-/// AES-256 Cipher block chaining (CBC) Mode using PKCS#7 padding.
-pub const AES_256_CBC_PKCS7_PADDING: Algorithm =
-    Algorithm::Aes256CbcPkcs7Padding(CipherConfig(OperatingMode::Block(PaddingStrategy::PKCS7)));
-
-const MAX_BLOCK_LEN: usize = 16;
-
-impl<const KEY_LEN: usize, const IV_LEN: usize, const BLOCK_LEN: usize>
-    CipherConfig<KEY_LEN, IV_LEN, BLOCK_LEN>
-{
-    #[inline]
-    fn get_operating_mode(&self) -> &OperatingMode {
-        &self.0
-    }
-
-    #[allow(clippy::unused_self)]
-    fn try_into_key<'a>(&self, key: &'a [u8]) -> Result<&'a [u8; KEY_LEN], Unspecified> {
-        let key: &'a [u8; KEY_LEN] = key.try_into()?;
-        Ok(key)
-    }
-
-    #[allow(clippy::unused_self)]
-    fn get_block_len(&self) -> usize {
-        BLOCK_LEN
+    fn is_valid_decryption_context(&self, mode: OperatingMode, input: &DecryptionContext) -> bool {
+        match self.id {
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
+                OperatingMode::CBC | OperatingMode::CTR => match input {
+                    DecryptionContext::Iv128(_) => true,
+                    _ => false,
+                },
+            },
+        }
     }
 }
 
@@ -327,181 +275,436 @@ impl UnboundCipherKey {
     /// length required by `algorithm`.
     ///
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
-        let key = algorithm.new_symmetric_cipher_key(key_bytes)?;
+        let key = match algorithm.id() {
+            AlgorithmId::Aes128 => SymmetricCipherKey::aes128(key_bytes),
+            AlgorithmId::Aes256 => SymmetricCipherKey::aes256(key_bytes),
+        }?;
         Ok(UnboundCipherKey { algorithm, key })
     }
 
     #[inline]
-    fn get_algorithm(&self) -> &'static Algorithm {
+    fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
     }
 }
 
-/// An encryting cipher key.
-pub struct EncryptingKey {
-    cipher_key: UnboundCipherKey,
-    iv: NonceIV,
+/// A cipher encryption key that performs block padding.
+pub struct PaddedBlockEncryptingKey {
+    key: UnboundCipherKey,
+    mode: OperatingMode,
+    padding: PaddingStrategy,
+    context: DecryptionContext,
 }
 
-impl EncryptingKey {
-    /// Constructs a new [`EncryptingKey`].
-    ///
-    /// # Errors
-    ///
-    /// * [`Unspecified`]: Returned if a randomized IV fails to be generated.
-    ///
-    pub fn new(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
-        let iv = key.get_algorithm().new_randomized_nonce()?;
-        Ok(EncryptingKey {
-            cipher_key: key,
-            iv,
+impl PaddedBlockEncryptingKey {
+    /// Constructs a new `PaddedBlockEncryptingKey` cipher with chaining block cipher (CBC) mode.
+    /// Plaintext data is padded following the PKCS#7 scheme.
+    pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockEncryptingKey, Unspecified> {
+        PaddedBlockEncryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7, None)
+    }
+
+    /// Constructs a new `PaddedBlockEncryptingKey` cipher with chaining block cipher (CBC) mode.
+    /// The users provided context will be used for the CBC initalization-vector.
+    /// Plaintext data is padded following the PKCS#7 scheme.
+    pub fn less_safe_cbc_pkcs7(
+        key: UnboundCipherKey,
+        context: DecryptionContext,
+    ) -> Result<PaddedBlockEncryptingKey, Unspecified> {
+        PaddedBlockEncryptingKey::new(
+            key,
+            OperatingMode::CBC,
+            PaddingStrategy::PKCS7,
+            Some(context),
+        )
+    }
+
+    fn new(
+        key: UnboundCipherKey,
+        mode: OperatingMode,
+        padding: PaddingStrategy,
+        context: Option<DecryptionContext>,
+    ) -> Result<PaddedBlockEncryptingKey, Unspecified> {
+        let mode_input = match context {
+            Some(mi) => {
+                if !key.algorithm().is_valid_decryption_context(mode, &mi) {
+                    return Err(Unspecified);
+                }
+                mi
+            }
+            None => key.algorithm.new_decrypting_context(mode)?,
+        };
+
+        Ok(PaddedBlockEncryptingKey {
+            key,
+            mode,
+            padding,
+            context: mode_input,
         })
     }
 
-    /// Encrypts the data `in_out` in-place. If the algorithm bound to this key uses padding
-    /// then the `in_out` will be extended to add the necessary padding.
-    ///
-    /// Returns the initialization vector necessary to later decrypt the data.
+    /// Returns the cipher algorithm.
+    pub fn algorithm(&self) -> &Algorithm {
+        self.key.algorithm()
+    }
+
+    /// Returns the cipher operating mode.
+    pub fn mode(&self) -> OperatingMode {
+        self.mode
+    }
+
+    /// Returns the cipher padding strategy.
+    pub fn padding(&self) -> PaddingStrategy {
+        self.padding
+    }
+
+    /// Pads and encrypts data provided in `in_out` in-place.
+    /// Returns a references to the encryted data.
     ///
     /// # Errors
+    /// * [`Unspecified`]: Returned if encryption fails.
     ///
-    /// * [`Unspecified`]: Returned if the data fails to be encrypted.
-    ///
-    pub fn encrypt<InOut>(self, in_out: &mut InOut) -> Result<NonceIV, Unspecified>
+    pub fn encrypt<InOut>(self, in_out: &mut InOut) -> Result<DecryptionContext, Unspecified>
     where
-        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+        InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
     {
-        encrypt(
-            self.cipher_key.get_algorithm(),
-            &self.cipher_key.key,
-            self.iv,
-            in_out,
-        )
+        self.padding
+            .add_padding(self.algorithm().block_len(), in_out)?;
+        TryInto::<EncryptingKey>::try_into(self)?.encrypt(in_out.as_mut())
     }
 }
 
-/// An decrypting cipher key.
+impl TryFrom<PaddedBlockEncryptingKey> for EncryptingKey {
+    type Error = Unspecified;
+
+    fn try_from(value: PaddedBlockEncryptingKey) -> Result<Self, Self::Error> {
+        EncryptingKey::new(value.key, value.mode, Some(value.context))
+    }
+}
+
+/// A cipher decryption key that performs block padding.
+pub struct PaddedBlockDecryptingKey {
+    key: UnboundCipherKey,
+    mode: OperatingMode,
+    padding: PaddingStrategy,
+    mode_input: DecryptionContext,
+}
+
+impl PaddedBlockDecryptingKey {
+    /// Constructs a new `PaddedBlockDecryptingKey` cipher with chaining block cipher (CBC) mode.
+    /// Decrypted data is unpadded following the PKCS#7 scheme.
+    pub fn cbc_pkcs7(
+        key: UnboundCipherKey,
+        mode_input: DecryptionContext,
+    ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
+        PaddedBlockDecryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7, mode_input)
+    }
+
+    fn new(
+        key: UnboundCipherKey,
+        mode: OperatingMode,
+        padding: PaddingStrategy,
+        mode_input: DecryptionContext,
+    ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
+        if !key
+            .algorithm()
+            .is_valid_decryption_context(mode, &mode_input)
+        {
+            return Err(Unspecified);
+        }
+
+        Ok(PaddedBlockDecryptingKey {
+            key,
+            mode,
+            padding,
+            mode_input,
+        })
+    }
+
+    /// Returns the cipher algorithm.
+    pub fn algorithm(&self) -> &Algorithm {
+        self.key.algorithm()
+    }
+
+    /// Returns the cipher operating mode.
+    pub fn mode(&self) -> OperatingMode {
+        self.mode
+    }
+
+    /// Returns the cipher padding strategy.
+    pub fn padding(&self) -> PaddingStrategy {
+        self.padding
+    }
+
+    /// Decrypts and unpads data provided in `in_out` in-place.
+    /// Returns a references to the decrypted data.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if decryption fails.
+    ///
+    pub fn decrypt<'a>(self, in_out: &'a mut [u8]) -> Result<&'a mut [u8], Unspecified> {
+        let block_len = self.algorithm().block_len();
+        let padding = self.padding;
+        let mut in_out = TryInto::<DecryptingKey>::try_into(self)?.decrypt(in_out)?;
+        in_out = padding.remove_padding(block_len, in_out)?;
+        Ok(in_out)
+    }
+}
+
+/// A cipher encryption key that does not perform block padding.
+pub struct EncryptingKey {
+    key: UnboundCipherKey,
+    mode: OperatingMode,
+    context: DecryptionContext,
+}
+
+impl EncryptingKey {
+    /// Constructs an `EncryptingKey` operating in counter (CTR) mode using the provided key.
+    pub fn ctr(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
+        EncryptingKey::new(key, OperatingMode::CTR, None)
+    }
+
+    /// Constructs an `EncryptingKey` operating in counter (CTR) mode using the provided key.
+    /// The users provided context will be used for the CTR mode initalization-vector.
+    pub fn less_safe_ctr(
+        key: UnboundCipherKey,
+        context: DecryptionContext,
+    ) -> Result<EncryptingKey, Unspecified> {
+        EncryptingKey::new(key, OperatingMode::CTR, Some(context))
+    }
+
+    fn new(
+        key: UnboundCipherKey,
+        mode: OperatingMode,
+        context: Option<DecryptionContext>,
+    ) -> Result<EncryptingKey, Unspecified> {
+        let context = match context {
+            Some(mi) => {
+                if !key.algorithm().is_valid_decryption_context(mode, &mi) {
+                    return Err(Unspecified);
+                }
+                mi
+            }
+            None => key.algorithm.new_decrypting_context(mode)?,
+        };
+
+        Ok(EncryptingKey { key, mode, context })
+    }
+
+    /// Returns the cipher algorithm.
+    pub fn algorithm(&self) -> &Algorithm {
+        self.key.algorithm()
+    }
+
+    /// Returns the cipher operating mode.
+    pub fn mode(&self) -> OperatingMode {
+        self.mode
+    }
+
+    /// Encrypts the data provided in `in_out` in-place.
+    /// Returns a references to the decrypted data.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
+    /// and `in_out.len()` is not. Otherwise returned if encryption fails.
+    ///
+    pub fn encrypt(self, in_out: &mut [u8]) -> Result<DecryptionContext, Unspecified> {
+        let block_len = self.algorithm().block_len();
+
+        match self.mode {
+            OperatingMode::CTR => {}
+            _ => {
+                if (in_out.len() % block_len) != 0 {
+                    return Err(Unspecified);
+                }
+            }
+        }
+
+        match self.mode {
+            OperatingMode::CBC => match self.key.algorithm().id() {
+                AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                    encrypt_aes_cbc_mode(self.key, self.context, in_out)
+                }
+            },
+            OperatingMode::CTR => match self.key.algorithm().id() {
+                AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                    encrypt_aes_ctr_mode(self.key, self.context, in_out)
+                }
+            },
+        }
+    }
+}
+
+/// A cipher decryption key that does not perform block padding.
 pub struct DecryptingKey {
-    cipher_key: UnboundCipherKey,
-    iv: NonceIV,
+    key: UnboundCipherKey,
+    mode: OperatingMode,
+    mode_input: DecryptionContext,
 }
 
 impl DecryptingKey {
-    /// Constructs a new [`DecryptingKey`].
-    #[must_use]
-    pub fn new(cipher_key: UnboundCipherKey, iv: NonceIV) -> DecryptingKey {
-        DecryptingKey { cipher_key, iv }
+    /// Constructs a cipher decrypting key operating in counter (CTR) mode using the provided key and context.
+    pub fn ctr(
+        key: UnboundCipherKey,
+        context: DecryptionContext,
+    ) -> Result<DecryptingKey, Unspecified> {
+        DecryptingKey::new(key, OperatingMode::CTR, context)
     }
 
-    /// Decrypts the data `in_out` in-place.
-    ///
-    /// Returns a slice reference to the decrypted data within `in_out`. If the algorithm bound to
-    /// this key uses padding then the returned slice reference is length adjusted to exclude
-    /// the padding bytes.
+    fn new(
+        key: UnboundCipherKey,
+        mode: OperatingMode,
+        mode_input: DecryptionContext,
+    ) -> Result<DecryptingKey, Unspecified> {
+        if !key
+            .algorithm()
+            .is_valid_decryption_context(mode, &mode_input)
+        {
+            return Err(Unspecified);
+        }
+
+        Ok(DecryptingKey {
+            key,
+            mode,
+            mode_input,
+        })
+    }
+
+    /// Returns the cipher algorithm.
+    pub fn algorithm(&self) -> &Algorithm {
+        self.key.algorithm()
+    }
+
+    /// Returns the cipher operating mode.
+    pub fn mode(&self) -> OperatingMode {
+        self.mode
+    }
+
+    /// Decrypts the data provided in `in_out` in-place.
+    /// Returns a references to the decrypted data.
     ///
     /// # Errors
+    /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
+    /// and `in_out.len()` is not. Otherwise returned if decryption fails.
     ///
-    /// * [`Unspecified`]: Returned if the data fails to be decrypted.
-    ///
-    #[allow(unused_mut)]
-    pub fn decrypt(mut self, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
-        decrypt(
-            self.cipher_key.algorithm,
-            &self.cipher_key.key,
-            self.iv,
-            in_out,
-        )
+    pub fn decrypt<'a>(self, in_out: &'a mut [u8]) -> Result<&'a mut [u8], Unspecified> {
+        let block_len = self.algorithm().block_len();
+
+        match self.mode {
+            OperatingMode::CTR => {}
+            _ => {
+                if (in_out.len() % block_len) != 0 {
+                    return Err(Unspecified);
+                }
+            }
+        }
+
+        match self.mode {
+            OperatingMode::CBC => match self.key.algorithm().id() {
+                AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                    decrypt_aes_cbc_mode(self.key, self.mode_input, in_out).map(|_| in_out)
+                }
+            },
+            OperatingMode::CTR => match self.key.algorithm().id() {
+                AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                    decrypt_aes_ctr_mode(self.key, self.mode_input, in_out).map(|_| in_out)
+                }
+            },
+        }
     }
 }
 
-/// Less safe cipher key that allows for specifying a user provided [`NonceIV`].
-pub struct LessSafeCipherKey {
-    algorithm: &'static Algorithm,
-    key: SymmetricCipherKey,
-}
+impl TryFrom<PaddedBlockDecryptingKey> for DecryptingKey {
+    type Error = Unspecified;
 
-impl LessSafeCipherKey {
-    /// Constructs a new [`LessSafeCipherKey`].
-    ///
-    /// # Errors
-    /// * [`Unspecified`]: Returned if `key_bytes` is not the proper byte length for the selected algorithm.
-    ///
-    pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
-        let key = algorithm.new_symmetric_cipher_key(key_bytes)?;
-        Ok(LessSafeCipherKey { algorithm, key })
-    }
-
-    /// Encrypts the data `in_out` in-place. If the algorithm bound to this key uses padding
-    /// then the `in_out` will be extended to add the necessary padding.
-    ///
-    /// Returns the initialization vector necessary to later decrypt the data.
-    ///
-    /// # Errors
-    ///
-    /// * [`Unspecified`]: Returned if the data fails to be encrypted.
-    ///
-    pub fn encrypt<InOut>(&self, iv: NonceIV, in_out: &mut InOut) -> Result<NonceIV, Unspecified>
-    where
-        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
-    {
-        encrypt(self.algorithm, &self.key, iv, in_out)
-    }
-
-    /// Decrypts the data `in_out` in-place.
-    ///
-    /// Returns a slice reference to the decrypted data within `in_out`. If the algorithm bound to
-    /// this key uses padding then the returned slice reference is length adjusted to exclude
-    /// the padding bytes.
-    ///
-    /// # Errors
-    ///
-    /// * [`Unspecified`]: Returned if the data fails to be decrypted.
-    ///
-    #[allow(unused_mut)]
-    pub fn decrypt<'a>(
-        &self,
-        iv: NonceIV,
-        in_out: &'a mut [u8],
-    ) -> Result<&'a mut [u8], Unspecified> {
-        decrypt(self.algorithm, &self.key, iv, in_out)
+    fn try_from(value: PaddedBlockDecryptingKey) -> Result<Self, Self::Error> {
+        DecryptingKey::new(value.key, value.mode, value.mode_input)
     }
 }
 
-fn encrypt<InOut>(
-    algorithm: &'static Algorithm,
-    key: &SymmetricCipherKey,
-    iv: NonceIV,
-    in_out: &mut InOut,
-) -> Result<NonceIV, Unspecified>
-where
-    InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
-{
-    algorithm.prepare_for_encrypt(in_out)?;
+fn encrypt_aes_ctr_mode(
+    key: UnboundCipherKey,
+    context: DecryptionContext,
+    in_out: &mut [u8],
+) -> Result<DecryptionContext, Unspecified> {
+    let key = match &key.key {
+        SymmetricCipherKey::Aes128 { enc_key, .. } => enc_key,
+        SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+        _ => return Err(Unspecified),
+    };
 
-    let in_out = in_out.as_mut();
+    let mut iv = {
+        let mut iv = [0u8; AES_IV_LEN];
+        iv.copy_from_slice(match &context {
+            DecryptionContext::Iv128(iv) => iv.as_ref(),
+            _ => return Err(Unspecified),
+        });
+        iv
+    };
 
-    let mut ivec = [0u8; Algorithm::max_iv_len()];
-    ivec.copy_from_slice(iv.as_ref());
+    let mut buffer = [0u8; AES_BLOCK_LEN];
 
-    let mut buf = [0u8; Algorithm::max_block_len()];
+    aes_ctr128_encrypt(key, &mut iv, &mut buffer, in_out);
 
-    // This works b/c we currently only support AES keys
-    let aes_key = match key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            Ok(enc_key)
-        }
-        SymmetricCipherKey::ChaCha20 { .. } => Err(Unspecified),
-    }?;
+    Ok(context)
+}
 
-    match algorithm {
-        Algorithm::Aes128Ctr(..) | Algorithm::Aes256Ctr(..) => {
-            aes_ctr128_encrypt(aes_key, &mut ivec, &mut buf, in_out);
-        }
-        Algorithm::Aes128CbcPkcs7Padding(..) | Algorithm::Aes256CbcPkcs7Padding(..) => {
-            aes_cbc_encrypt(aes_key, &mut ivec, in_out);
-        }
-    }
-    Ok(iv)
+fn decrypt_aes_ctr_mode(
+    key: UnboundCipherKey,
+    context: DecryptionContext,
+    in_out: &mut [u8],
+) -> Result<DecryptionContext, Unspecified> {
+    // it's the same in CTR, just providing a nice named wrapper to match
+    encrypt_aes_ctr_mode(key, context, in_out)
+}
+
+fn encrypt_aes_cbc_mode(
+    key: UnboundCipherKey,
+    context: DecryptionContext,
+    in_out: &mut [u8],
+) -> Result<DecryptionContext, Unspecified> {
+    let key = match &key.key {
+        SymmetricCipherKey::Aes128 { enc_key, .. } => enc_key,
+        SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+        _ => return Err(Unspecified),
+    };
+
+    let mut iv = {
+        let mut iv = [0u8; AES_IV_LEN];
+        iv.copy_from_slice(match &context {
+            DecryptionContext::Iv128(iv) => iv.as_ref(),
+            _ => return Err(Unspecified),
+        });
+        iv
+    };
+
+    aes_cbc_encrypt(key, &mut iv, in_out);
+
+    Ok(context)
+}
+
+fn decrypt_aes_cbc_mode(
+    key: UnboundCipherKey,
+    context: DecryptionContext,
+    in_out: &mut [u8],
+) -> Result<DecryptionContext, Unspecified> {
+    let key = match &key.key {
+        SymmetricCipherKey::Aes128 { dec_key, .. } => dec_key,
+        SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
+        _ => return Err(Unspecified),
+    };
+
+    let mut iv = {
+        let mut iv = [0u8; AES_IV_LEN];
+        iv.copy_from_slice(match &context {
+            DecryptionContext::Iv128(iv) => iv.as_ref(),
+            _ => return Err(Unspecified),
+        });
+        iv
+    };
+
+    aes_cbc_decrypt(key, &mut iv, in_out);
+
+    Ok(context)
 }
 
 fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_out: &mut [u8]) {
@@ -548,64 +751,9 @@ fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
     }
 }
 
-fn decrypt<'a>(
-    algorithm: &'static Algorithm,
-    key: &SymmetricCipherKey,
-    mut iv: NonceIV,
-    in_out: &'a mut [u8],
-) -> Result<&'a mut [u8], Unspecified> {
-    let iv = iv.as_mut();
-
-    match algorithm {
-        Algorithm::Aes128Ctr(v) => {
-            let key = match key {
-                SymmetricCipherKey::Aes128 { enc_key, .. } => enc_key,
-                _ => return Err(Unspecified),
-            };
-
-            let mut buf = [0u8; MAX_BLOCK_LEN];
-
-            assert!(buf.len() >= v.get_block_len());
-
-            aes_ctr128_encrypt(key, iv, &mut buf, in_out);
-        }
-        Algorithm::Aes256Ctr(v) => {
-            let key = match key {
-                SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
-                _ => return Err(Unspecified),
-            };
-
-            let mut buf = [0u8; MAX_BLOCK_LEN];
-
-            assert!(buf.len() >= v.get_block_len());
-
-            aes_ctr128_encrypt(key, iv, &mut buf, in_out);
-        }
-        Algorithm::Aes128CbcPkcs7Padding(_) => {
-            let key = match key {
-                SymmetricCipherKey::Aes128 { dec_key, .. } => dec_key,
-                _ => return Err(Unspecified),
-            };
-
-            aes_cbc_decrypt(key, iv, in_out);
-        }
-        Algorithm::Aes256CbcPkcs7Padding(_) => {
-            let key = match key {
-                SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
-                _ => return Err(Unspecified),
-            };
-            aes_cbc_decrypt(key, iv, in_out);
-        }
-    }
-
-    let in_out = algorithm.finalalize_decryption(in_out)?;
-
-    Ok(in_out)
-}
-
 impl SymmetricCipherKey {
     pub(crate) fn aes128(key_bytes: &[u8]) -> Result<Self, Unspecified> {
-        if key_bytes.len() != 16 {
+        if key_bytes.len() != AES_128_KEY_LEN {
             return Err(Unspecified);
         }
 
@@ -745,7 +893,12 @@ mod tests {
         assert_eq!(expected_result.as_slice(), result.as_ref());
     }
 
-    fn helper_test_cipher_n_bytes(key: &[u8], alg: &'static Algorithm, n: usize) {
+    fn helper_test_cipher_n_bytes(
+        key: &[u8],
+        alg: &'static Algorithm,
+        mode: OperatingMode,
+        n: usize,
+    ) {
         let mut input: Vec<u8> = Vec::with_capacity(n);
         for i in 0..n {
             let byte: u8 = i.try_into().unwrap();
@@ -753,7 +906,7 @@ mod tests {
         }
 
         let cipher_key = UnboundCipherKey::new(alg, key).unwrap();
-        let encrypting_key = EncryptingKey::new(cipher_key).unwrap();
+        let encrypting_key = EncryptingKey::new(cipher_key, mode, None).unwrap();
 
         let mut in_out = input.clone();
         let decrypt_iv = encrypting_key.encrypt(&mut in_out).unwrap();
@@ -764,7 +917,40 @@ mod tests {
         }
 
         let cipher_key2 = UnboundCipherKey::new(alg, key).unwrap();
-        let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+        let decrypting_key = DecryptingKey::new(cipher_key2, mode, decrypt_iv).unwrap();
+
+        let plaintext = decrypting_key.decrypt(&mut in_out).unwrap();
+        assert_eq!(input.as_slice(), plaintext);
+    }
+
+    fn helper_test_padded_cipher_n_bytes(
+        key: &[u8],
+        alg: &'static Algorithm,
+        mode: OperatingMode,
+        padding: PaddingStrategy,
+        n: usize,
+    ) {
+        let mut input: Vec<u8> = Vec::with_capacity(n);
+        for i in 0..n {
+            let byte: u8 = i.try_into().unwrap();
+            input.push(byte);
+        }
+
+        let cipher_key = UnboundCipherKey::new(alg, key).unwrap();
+        let encrypting_key =
+            PaddedBlockEncryptingKey::new(cipher_key, mode, padding, None).unwrap();
+
+        let mut in_out = input.clone();
+        let decrypt_iv = encrypting_key.encrypt(&mut in_out).unwrap();
+
+        if n > 5 {
+            // There's no more than a 1 in 2^48 chance that this will fail randomly
+            assert_ne!(input.as_slice(), in_out);
+        }
+
+        let cipher_key2 = UnboundCipherKey::new(alg, key).unwrap();
+        let decrypting_key =
+            PaddedBlockDecryptingKey::new(cipher_key2, mode, padding, decrypt_iv).unwrap();
 
         let plaintext = decrypting_key.decrypt(&mut in_out).unwrap();
         assert_eq!(input.as_slice(), plaintext);
@@ -774,7 +960,13 @@ mod tests {
     fn test_aes_128_cbc() {
         let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
         for i in 0..=50 {
-            helper_test_cipher_n_bytes(key.as_slice(), &AES_128_CBC_PKCS7_PADDING, i);
+            helper_test_padded_cipher_n_bytes(
+                key.as_slice(),
+                &AES_128,
+                OperatingMode::CBC,
+                PaddingStrategy::PKCS7,
+                i,
+            );
         }
     }
 
@@ -783,7 +975,13 @@ mod tests {
         let key =
             from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
         for i in 0..=50 {
-            helper_test_cipher_n_bytes(key.as_slice(), &AES_256_CBC_PKCS7_PADDING, i);
+            helper_test_padded_cipher_n_bytes(
+                key.as_slice(),
+                &AES_256,
+                OperatingMode::CBC,
+                PaddingStrategy::PKCS7,
+                i,
+            );
         }
     }
 
@@ -791,7 +989,7 @@ mod tests {
     fn test_aes_128_ctr() {
         let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
         for i in 0..=50 {
-            helper_test_cipher_n_bytes(key.as_slice(), &AES_128_CTR, i);
+            helper_test_cipher_n_bytes(key.as_slice(), &AES_128, OperatingMode::CTR, i);
         }
     }
 
@@ -800,12 +998,12 @@ mod tests {
         let key =
             from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
         for i in 0..=50 {
-            helper_test_cipher_n_bytes(key.as_slice(), &AES_256_CTR, i);
+            helper_test_cipher_n_bytes(key.as_slice(), &AES_256, OperatingMode::CTR, i);
         }
     }
 
-    macro_rules! cipher_test_vector {
-        ($name:ident, $cipher:expr, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
+    macro_rules! padded_cipher_kat {
+        ($name:ident, $alg:expr, $mode:expr, $padding:expr, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
             #[test]
             fn $name() {
                 let key = from_hex($key).unwrap();
@@ -822,17 +1020,24 @@ mod tests {
                     iv
                 };
 
-                let alg = $cipher;
-                let encrypting_key = LessSafeCipherKey::new(alg, &key).unwrap();
+                let dc = DecryptionContext::Iv128(FixedLength::from(iv));
+
+                let alg = $alg;
+
+                let unbound_key = UnboundCipherKey::new(alg, &key).unwrap();
+
+                let encrypting_key =
+                    PaddedBlockEncryptingKey::new(unbound_key, $mode, $padding, Some(dc)).unwrap();
 
                 let mut in_out = input.clone();
-                let decrypt_iv = encrypting_key
-                    .encrypt(NonceIV::try_from(iv).unwrap(), &mut in_out)
-                    .unwrap();
+
+                let context = encrypting_key.encrypt(&mut in_out).unwrap();
+
                 assert_eq!(expected_ciphertext, in_out);
 
-                let cipher_key2 = UnboundCipherKey::new(alg, &key).unwrap();
-                let decrypting_key = DecryptingKey::new(cipher_key2, decrypt_iv);
+                let unbound_key2 = UnboundCipherKey::new(alg, &key).unwrap();
+                let decrypting_key =
+                    PaddedBlockDecryptingKey::new(unbound_key2, $mode, $padding, context).unwrap();
 
                 let plaintext = decrypting_key.decrypt(&mut in_out).unwrap();
                 assert_eq!(input.as_slice(), plaintext);
@@ -840,90 +1045,147 @@ mod tests {
         };
     }
 
-    cipher_test_vector!(
+    macro_rules! cipher_kat {
+        ($name:ident, $alg:expr, $mode:expr, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
+            #[test]
+            fn $name() {
+                let key = from_hex($key).unwrap();
+                let input = from_hex($plaintext).unwrap();
+                let expected_ciphertext = from_hex($ciphertext).unwrap();
+                let mut iv = from_hex($iv).unwrap();
+                let iv = {
+                    let slice = iv.as_mut_slice();
+                    let mut iv = [0u8; $iv.len() / 2];
+                    {
+                        let x = iv.as_mut_slice();
+                        x.copy_from_slice(slice);
+                    }
+                    iv
+                };
+
+                let dc = DecryptionContext::Iv128(FixedLength::from(iv));
+
+                let alg = $alg;
+
+                let unbound_key = UnboundCipherKey::new(alg, &key).unwrap();
+
+                let encrypting_key = EncryptingKey::new(unbound_key, $mode, Some(dc)).unwrap();
+
+                let mut in_out = input.clone();
+
+                let context = encrypting_key.encrypt(&mut in_out).unwrap();
+
+                assert_eq!(expected_ciphertext, in_out);
+
+                let unbound_key2 = UnboundCipherKey::new(alg, &key).unwrap();
+                let decrypting_key = DecryptingKey::new(unbound_key2, $mode, context).unwrap();
+
+                let plaintext = decrypting_key.decrypt(&mut in_out).unwrap();
+                assert_eq!(input.as_slice(), plaintext);
+            }
+        };
+    }
+
+    padded_cipher_kat!(
         test_iv_aes_128_cbc_16_bytes,
-        &AES_128_CBC_PKCS7_PADDING,
+        &AES_128,
+        OperatingMode::CBC,
+        PaddingStrategy::PKCS7,
         "000102030405060708090a0b0c0d0e0f",
         "00000000000000000000000000000000",
         "00112233445566778899aabbccddeeff",
         "69c4e0d86a7b0430d8cdb78070b4c55a9e978e6d16b086570ef794ef97984232"
     );
 
-    cipher_test_vector!(
+    padded_cipher_kat!(
         test_iv_aes_256_cbc_15_bytes,
-        &AES_256_CBC_PKCS7_PADDING,
+        &AES_256,
+        OperatingMode::CBC,
+        PaddingStrategy::PKCS7,
         "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
         "00000000000000000000000000000000",
         "00112233445566778899aabbccddee",
         "2ddfb635a651a43f582997966840ca0c"
     );
 
-    cipher_test_vector!(
+    cipher_kat!(
         test_iv_aes_128_ctr_16_bytes,
-        &AES_128_CTR,
+        &AES_128,
+        OperatingMode::CTR,
         "000102030405060708090a0b0c0d0e0f",
         "00000000000000000000000000000000",
         "00112233445566778899aabbccddeeff",
         "c6b01904c3da3df5e7d62bd96d153686"
     );
 
-    cipher_test_vector!(
+    cipher_kat!(
         test_iv_aes_256_ctr_15_bytes,
-        &AES_256_CTR,
+        &AES_256,
+        OperatingMode::CTR,
         "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
         "00000000000000000000000000000000",
         "00112233445566778899aabbccddee",
         "f28122856e1cf9a7216a30d111f399"
     );
 
-    cipher_test_vector!(
+    cipher_kat!(
         test_openssl_aes_128_ctr_15_bytes,
-        &AES_128_CTR,
+        &AES_128,
+        OperatingMode::CTR,
         "244828580821c1652582c76e34d299f5",
         "093145d5af233f46072a5eb5adc11aa1",
         "3ee38cec171e6cf466bf0df98aa0e1",
         "bd7d928f60e3422d96b3f8cd614eb2"
     );
 
-    cipher_test_vector!(
+    cipher_kat!(
         test_openssl_aes_256_ctr_15_bytes,
-        &AES_256_CTR,
+        &AES_256,
+        OperatingMode::CTR,
         "0857db8240ea459bdf660b4cced66d1f2d3734ff2de7b81e92740e65e7cc6a1d",
         "f028ecb053f801102d11fccc9d303a27",
         "eca7285d19f3c20e295378460e8729",
         "b5098e5e788de6ac2f2098eb2fc6f8"
     );
 
-    cipher_test_vector!(
+    padded_cipher_kat!(
         test_openssl_aes_128_cbc_15_bytes,
-        &AES_128_CBC_PKCS7_PADDING,
+        &AES_128,
+        OperatingMode::CBC,
+        PaddingStrategy::PKCS7,
         "053304bb3899e1d99db9d29343ea782d",
         "b5313560244a4822c46c2a0c9d0cf7fd",
         "a3e4c990356c01f320043c3d8d6f43",
         "ad96993f248bd6a29760ec7ccda95ee1"
     );
 
-    cipher_test_vector!(
+    padded_cipher_kat!(
         test_openssl_aes_128_cbc_16_bytes,
-        &AES_128_CBC_PKCS7_PADDING,
+        &AES_128,
+        OperatingMode::CBC,
+        PaddingStrategy::PKCS7,
         "95af71f1c63e4a1d0b0b1a27fb978283",
         "89e40797dca70197ff87d3dbb0ef2802",
         "aece7b5e3c3df1ffc9802d2dfe296dc7",
         "301b5dab49fb11e919d0d39970d06739301919743304f23f3cbc67d28564b25b"
     );
 
-    cipher_test_vector!(
+    padded_cipher_kat!(
         test_openssl_aes_256_cbc_15_bytes,
-        &AES_256_CBC_PKCS7_PADDING,
+        &AES_256,
+        OperatingMode::CBC,
+        PaddingStrategy::PKCS7,
         "d369e03e9752784917cc7bac1db7399598d9555e691861d9dd7b3292a693ef57",
         "1399bb66b2f6ad99a7f064140eaaa885",
         "7385f5784b85bf0a97768ddd896d6d",
         "4351082bac9b4593ae8848cc9dfb5a01"
     );
 
-    cipher_test_vector!(
+    padded_cipher_kat!(
         test_openssl_aes_256_cbc_16_bytes,
-        &AES_256_CBC_PKCS7_PADDING,
+        &AES_256,
+        OperatingMode::CBC,
+        PaddingStrategy::PKCS7,
         "d4a8206dcae01242f9db79a4ecfe277d0f7bb8ccbafd8f9809adb39f35aa9b41",
         "24f6076548fb9d93c8f7ed9f6e661ef9",
         "a39c1fdf77ea3e1f18178c0ec237c70a",
