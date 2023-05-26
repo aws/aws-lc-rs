@@ -94,8 +94,8 @@
 //!
 //! * Our implementation requires the `std` library. We currently do not support a
 //! [`#![no_std]`](https://docs.rust-embedded.org/book/intro/no-std.html) build.
-//! * We can only support a subset of the platforms supported by `aws-lc-sys`.  We currently support Mac
-//! and Linux, both x86-64 and aarch64.
+//! * We can only support a subset of the platforms supported by `aws-lc-sys`. See the list of
+//! supported platforms above.
 //! * `Ed25519KeyPair::from_pkcs8` and `Ed25519KeyPair::from_pkcs8_maybe_unchecked` both support
 //! parsing of v1 or v2 PKCS#8 documents. If a v2 encoded key is provided to either function,
 //! public key component, if present, will be verified to match the one derived from the encoded

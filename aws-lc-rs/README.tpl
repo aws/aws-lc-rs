@@ -29,4 +29,4 @@ Please contact aws-lc-pre-notifications@amazon.com.
 
 ## License
 
-This library is licensed under the Apache-2.0 or the ISC License. For license details see []()
+This library is licensed under the Apache-2.0 or the ISC License.
