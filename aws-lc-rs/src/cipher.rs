@@ -18,8 +18,13 @@
 //! the algorithms provided in [`aead`](crate::aead).
 //!
 //! # Examples
+//!
+//! ## AES-128 CBC Mode Encryption
+//!
 //! ```
-//! use aws_lc_rs::cipher::{UnboundCipherKey, DecryptingKey, EncryptingKey, AES_128_CTR};
+//! use aws_lc_rs::cipher::{
+//!     PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128,
+//! };
 //!
 //! let mut plaintext = Vec::from("This is a secret message!");
 //!
@@ -28,12 +33,33 @@
 //!     0xd1,
 //! ];
 //!
-//! let key = UnboundCipherKey::new(&AES_128_CTR, key_bytes).unwrap();
-//! let encrypting_key = EncryptingKey::new(key).unwrap();
-//! let iv = encrypting_key.encrypt(&mut plaintext).unwrap();
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
+//! let encrypting_key = PaddedBlockEncryptingKey::cbc_pkcs7(key).unwrap();
+//! let context = encrypting_key.encrypt(&mut plaintext).unwrap();
 //!
-//! let key = UnboundCipherKey::new(&AES_128_CTR, key_bytes).unwrap();
-//! let decrypting_key = DecryptingKey::new(key, iv);
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
+//! let decrypting_key = PaddedBlockDecryptingKey::cbc_pkcs7(key, context).unwrap();
+//! let plaintext = decrypting_key.decrypt(&mut plaintext).unwrap();
+//! ```
+//!
+//! ## AES-128 CTR Mode Encryption
+//!
+//! ```
+//! use aws_lc_rs::cipher::{DecryptingKey, EncryptingKey, UnboundCipherKey, AES_128};
+//!
+//! let mut plaintext = Vec::from("This is a secret message!");
+//!
+//! let key_bytes: &[u8] = &[
+//!     0xff, 0x0b, 0xe5, 0x84, 0x64, 0x0b, 0x00, 0xc8, 0x90, 0x7a, 0x4b, 0xbf, 0x82, 0x7c, 0xb6,
+//!     0xd1,
+//! ];
+//!
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
+//! let encrypting_key = EncryptingKey::ctr(key).unwrap();
+//! let context = encrypting_key.encrypt(&mut plaintext).unwrap();
+//!
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
+//! let decrypting_key = DecryptingKey::ctr(key, context).unwrap();
 //! let plaintext = decrypting_key.decrypt(&mut plaintext).unwrap();
 //! ```
 //!
@@ -251,10 +277,9 @@ impl Algorithm {
     fn is_valid_decryption_context(&self, mode: OperatingMode, input: &DecryptionContext) -> bool {
         match self.id {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
-                OperatingMode::CBC | OperatingMode::CTR => match input {
-                    DecryptionContext::Iv128(_) => true,
-                    _ => false,
-                },
+                OperatingMode::CBC | OperatingMode::CTR => {
+                    matches!(input, DecryptionContext::Iv128(_))
+                }
             },
         }
     }
@@ -299,6 +324,10 @@ pub struct PaddedBlockEncryptingKey {
 impl PaddedBlockEncryptingKey {
     /// Constructs a new `PaddedBlockEncryptingKey` cipher with chaining block cipher (CBC) mode.
     /// Plaintext data is padded following the PKCS#7 scheme.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error cosntruct a `PaddedBlockEncryptingKey`.
+    ///
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         PaddedBlockEncryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7, None)
     }
@@ -306,6 +335,10 @@ impl PaddedBlockEncryptingKey {
     /// Constructs a new `PaddedBlockEncryptingKey` cipher with chaining block cipher (CBC) mode.
     /// The users provided context will be used for the CBC initalization-vector.
     /// Plaintext data is padded following the PKCS#7 scheme.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing a `PaddedBlockEncryptingKey`.
+    ///
     pub fn less_safe_cbc_pkcs7(
         key: UnboundCipherKey,
         context: DecryptionContext,
@@ -343,16 +376,19 @@ impl PaddedBlockEncryptingKey {
     }
 
     /// Returns the cipher algorithm.
+    #[must_use]
     pub fn algorithm(&self) -> &Algorithm {
         self.key.algorithm()
     }
 
     /// Returns the cipher operating mode.
+    #[must_use]
     pub fn mode(&self) -> OperatingMode {
         self.mode
     }
 
     /// Returns the cipher padding strategy.
+    #[must_use]
     pub fn padding(&self) -> PaddingStrategy {
         self.padding
     }
@@ -392,6 +428,10 @@ pub struct PaddedBlockDecryptingKey {
 impl PaddedBlockDecryptingKey {
     /// Constructs a new `PaddedBlockDecryptingKey` cipher with chaining block cipher (CBC) mode.
     /// Decrypted data is unpadded following the PKCS#7 scheme.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
+    ///
     pub fn cbc_pkcs7(
         key: UnboundCipherKey,
         mode_input: DecryptionContext,
@@ -421,16 +461,19 @@ impl PaddedBlockDecryptingKey {
     }
 
     /// Returns the cipher algorithm.
+    #[must_use]
     pub fn algorithm(&self) -> &Algorithm {
         self.key.algorithm()
     }
 
     /// Returns the cipher operating mode.
+    #[must_use]
     pub fn mode(&self) -> OperatingMode {
         self.mode
     }
 
     /// Returns the cipher padding strategy.
+    #[must_use]
     pub fn padding(&self) -> PaddingStrategy {
         self.padding
     }
@@ -441,7 +484,7 @@ impl PaddedBlockDecryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if decryption fails.
     ///
-    pub fn decrypt<'a>(self, in_out: &'a mut [u8]) -> Result<&'a mut [u8], Unspecified> {
+    pub fn decrypt(self, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
         let block_len = self.algorithm().block_len();
         let padding = self.padding;
         let mut in_out = TryInto::<DecryptingKey>::try_into(self)?.decrypt(in_out)?;
@@ -459,12 +502,20 @@ pub struct EncryptingKey {
 
 impl EncryptingKey {
     /// Constructs an `EncryptingKey` operating in counter (CTR) mode using the provided key.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error construct the `EncryptingKey`.
+    ///
     pub fn ctr(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
         EncryptingKey::new(key, OperatingMode::CTR, None)
     }
 
     /// Constructs an `EncryptingKey` operating in counter (CTR) mode using the provided key.
     /// The users provided context will be used for the CTR mode initalization-vector.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error creating the `EncryptingKey`.
+    ///
     pub fn less_safe_ctr(
         key: UnboundCipherKey,
         context: DecryptionContext,
@@ -491,11 +542,13 @@ impl EncryptingKey {
     }
 
     /// Returns the cipher algorithm.
+    #[must_use]
     pub fn algorithm(&self) -> &Algorithm {
         self.key.algorithm()
     }
 
     /// Returns the cipher operating mode.
+    #[must_use]
     pub fn mode(&self) -> OperatingMode {
         self.mode
     }
@@ -522,12 +575,12 @@ impl EncryptingKey {
         match self.mode {
             OperatingMode::CBC => match self.key.algorithm().id() {
                 AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                    encrypt_aes_cbc_mode(self.key, self.context, in_out)
+                    encrypt_aes_cbc_mode(&self.key, self.context, in_out)
                 }
             },
             OperatingMode::CTR => match self.key.algorithm().id() {
                 AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                    encrypt_aes_ctr_mode(self.key, self.context, in_out)
+                    encrypt_aes_ctr_mode(&self.key, self.context, in_out)
                 }
             },
         }
@@ -543,6 +596,10 @@ pub struct DecryptingKey {
 
 impl DecryptingKey {
     /// Constructs a cipher decrypting key operating in counter (CTR) mode using the provided key and context.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error during decryption.
+    ///
     pub fn ctr(
         key: UnboundCipherKey,
         context: DecryptionContext,
@@ -570,11 +627,13 @@ impl DecryptingKey {
     }
 
     /// Returns the cipher algorithm.
+    #[must_use]
     pub fn algorithm(&self) -> &Algorithm {
         self.key.algorithm()
     }
 
     /// Returns the cipher operating mode.
+    #[must_use]
     pub fn mode(&self) -> OperatingMode {
         self.mode
     }
@@ -586,7 +645,7 @@ impl DecryptingKey {
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
     /// and `in_out.len()` is not. Otherwise returned if decryption fails.
     ///
-    pub fn decrypt<'a>(self, in_out: &'a mut [u8]) -> Result<&'a mut [u8], Unspecified> {
+    pub fn decrypt(self, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
         let block_len = self.algorithm().block_len();
 
         match self.mode {
@@ -601,12 +660,12 @@ impl DecryptingKey {
         match self.mode {
             OperatingMode::CBC => match self.key.algorithm().id() {
                 AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                    decrypt_aes_cbc_mode(self.key, self.mode_input, in_out).map(|_| in_out)
+                    decrypt_aes_cbc_mode(&self.key, self.mode_input, in_out).map(|_| in_out)
                 }
             },
             OperatingMode::CTR => match self.key.algorithm().id() {
                 AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                    decrypt_aes_ctr_mode(self.key, self.mode_input, in_out).map(|_| in_out)
+                    decrypt_aes_ctr_mode(&self.key, self.mode_input, in_out).map(|_| in_out)
                 }
             },
         }
@@ -622,13 +681,15 @@ impl TryFrom<PaddedBlockDecryptingKey> for DecryptingKey {
 }
 
 fn encrypt_aes_ctr_mode(
-    key: UnboundCipherKey,
+    key: &UnboundCipherKey,
     context: DecryptionContext,
     in_out: &mut [u8],
 ) -> Result<DecryptionContext, Unspecified> {
+    #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key.key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } => enc_key,
-        SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
+            enc_key
+        }
         _ => return Err(Unspecified),
     };
 
@@ -649,7 +710,7 @@ fn encrypt_aes_ctr_mode(
 }
 
 fn decrypt_aes_ctr_mode(
-    key: UnboundCipherKey,
+    key: &UnboundCipherKey,
     context: DecryptionContext,
     in_out: &mut [u8],
 ) -> Result<DecryptionContext, Unspecified> {
@@ -658,13 +719,15 @@ fn decrypt_aes_ctr_mode(
 }
 
 fn encrypt_aes_cbc_mode(
-    key: UnboundCipherKey,
+    key: &UnboundCipherKey,
     context: DecryptionContext,
     in_out: &mut [u8],
 ) -> Result<DecryptionContext, Unspecified> {
+    #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key.key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } => enc_key,
-        SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
+        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
+            enc_key
+        }
         _ => return Err(Unspecified),
     };
 
@@ -683,13 +746,15 @@ fn encrypt_aes_cbc_mode(
 }
 
 fn decrypt_aes_cbc_mode(
-    key: UnboundCipherKey,
+    key: &UnboundCipherKey,
     context: DecryptionContext,
     in_out: &mut [u8],
 ) -> Result<DecryptionContext, Unspecified> {
+    #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key.key {
-        SymmetricCipherKey::Aes128 { dec_key, .. } => dec_key,
-        SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
+        SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
+            dec_key
+        }
         _ => return Err(Unspecified),
     };
 
