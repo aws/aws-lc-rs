@@ -14,7 +14,7 @@ use crate::{error, rand};
 pub struct FixedLength<const L: usize>([u8; L]);
 
 impl<const L: usize> FixedLength<L> {
-    /// Constructs a [`NonceIV`] with the given value, assuming that the value is
+    /// Constructs a [`FixedLength`] with the given value, assuming that the value is
     /// unique for the lifetime of the key it is being used with.
     ///
     /// Fails if `value` isn't `L` bytes long.
@@ -26,7 +26,7 @@ impl<const L: usize> FixedLength<L> {
         Ok(Self::assume_unique_for_key(*value))
     }
 
-    /// Constructs a [`NonceIV`] with the given value, assuming that the value is
+    /// Constructs a [`FixedLength`] with the given value, assuming that the value is
     /// unique for the lifetime of the key it is being used with.
     #[inline]
     #[must_use]
@@ -40,7 +40,7 @@ impl<const L: usize> FixedLength<L> {
         L
     }
 
-    /// Constructs a new [`NonceIV`] from pseudo-random bytes.
+    /// Constructs a new [`FixedLength`] from pseudo-random bytes.
     ///
     /// # Errors
     ///
