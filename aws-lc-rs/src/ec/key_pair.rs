@@ -99,7 +99,7 @@ impl EcdsaKeyPair {
 
             let ec_key = evp_pkey.get_ec_key()?;
 
-            validate_ec_key(&ec_key.as_const(), alg.bits)?;
+            validate_ec_key(&ec_key.as_const(), alg.id.nid())?;
 
             let key_pair = Self::new(alg, ec_key)?;
 
@@ -157,7 +157,7 @@ impl EcdsaKeyPair {
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let private_bn = DetachableLcPtr::try_from(private_key)?;
             let ec_key = ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
-            validate_ec_key(&ec_key.as_const(), alg.bits)?;
+            validate_ec_key(&ec_key.as_const(), alg.id.nid())?;
             let key_pair = Self::new(alg, ec_key)?;
             Ok(key_pair)
         }

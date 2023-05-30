@@ -12,8 +12,8 @@ use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
 use aws_lc::{
     point_conversion_form_t, ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s,
-    ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, ECDSA_do_verify, EC_GROUP_new_by_curve_name,
-    EC_GROUP_order_bits, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new,
+    ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, ECDSA_do_verify, EC_GROUP_get_curve_name,
+    EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new,
     EC_KEY_new_by_curve_name, EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key,
     EC_POINT_new, EC_POINT_oct2point, EC_POINT_point2oct, NID_X9_62_prime256v1, NID_secp384r1,
     NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT,
@@ -179,17 +179,13 @@ impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
 #[inline]
 unsafe fn validate_ec_key(
     ec_key: &ConstPointer<EC_KEY>,
-    expected_bits: c_uint,
+    expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
     let ec_group = ConstPointer::new(EC_KEY_get0_group(**ec_key))?;
-    let bits = c_uint::try_from(EC_GROUP_order_bits(*ec_group))?;
+    let key_nid = EC_GROUP_get_curve_name(*ec_group);
 
-    if bits < expected_bits {
-        return Err(KeyRejected::too_small());
-    }
-
-    if bits > expected_bits {
-        return Err(KeyRejected::too_large());
+    if key_nid != expected_curve_nid {
+        return Err(KeyRejected::wrong_algorithm());
     }
 
     #[cfg(not(feature = "fips"))]
@@ -267,9 +263,9 @@ pub(crate) unsafe fn ec_key_from_private(
     if 1 != EC_KEY_set_public_key(*ec_key, *pub_key) {
         return Err(Unspecified);
     }
+    let expected_curve_nid = EC_GROUP_get_curve_name(**ec_group);
     // Validate the EC_KEY before returning it.
-    let bits: c_uint = EC_GROUP_order_bits(**ec_group).try_into()?;
-    validate_ec_key(&ec_key.as_const(), bits)?;
+    validate_ec_key(&ec_key.as_const(), expected_curve_nid)?;
 
     Ok(ec_key)
 }
