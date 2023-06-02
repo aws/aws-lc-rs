@@ -150,12 +150,12 @@ fn ecdsa_generate_pkcs8_test() {
 
 #[test]
 fn signature_ecdsa_verify_asn1_test() {
-    test_signature_ecdsa_verify_asn1(test_file!("data/ecdsa_verify_asn1_tests.txt"))
+    test_signature_ecdsa_verify_asn1(test_file!("data/ecdsa_verify_asn1_tests.txt"));
 }
 
 #[test]
 fn signature_ecdsa_verify_asn1_sha3_test() {
-    test_signature_ecdsa_verify_asn1(test_file!("data/ecdsa_verify_asn1_sha3_tests.txt"))
+    test_signature_ecdsa_verify_asn1(test_file!("data/ecdsa_verify_asn1_sha3_tests.txt"));
 }
 
 fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
