@@ -150,75 +150,85 @@ fn ecdsa_generate_pkcs8_test() {
 
 #[test]
 fn signature_ecdsa_verify_asn1_test() {
-    test::run(
-        test_file!("data/ecdsa_verify_asn1_tests.txt"),
-        |section, test_case| {
-            assert_eq!(section, "");
+    test_signature_ecdsa_verify_asn1(test_file!("data/ecdsa_verify_asn1_tests.txt"))
+}
 
-            let curve_name = test_case.consume_string("Curve");
-            let digest_name = test_case.consume_string("Digest");
-            let msg = test_case.consume_bytes("Msg");
-            let public_key = test_case.consume_bytes("Q");
-            let sig = test_case.consume_bytes("Sig");
-            let is_valid = test_case.consume_string("Result") == "P (0 )";
+#[test]
+fn signature_ecdsa_verify_asn1_sha3_test() {
+    test_signature_ecdsa_verify_asn1(test_file!("data/ecdsa_verify_asn1_sha3_tests.txt"))
+}
 
-            let alg = match (curve_name.as_str(), digest_name.as_str()) {
-                ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_ASN1,
-                ("P-256", "SHA384") => &signature::ECDSA_P256_SHA384_ASN1,
-                ("P-384", "SHA256") => &signature::ECDSA_P384_SHA256_ASN1,
-                ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_ASN1,
-                ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_ASN1,
-                ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_ASN1,
-                ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_ASN1,
-                _ => {
-                    panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
-                }
-            };
+fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
+    test::run(data_file, |section, test_case| {
+        assert_eq!(section, "");
 
-            let actual_result =
-                signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
-            assert_eq!(actual_result.is_ok(), is_valid);
+        let curve_name = test_case.consume_string("Curve");
+        let digest_name = test_case.consume_string("Digest");
+        let msg = test_case.consume_bytes("Msg");
+        let public_key = test_case.consume_bytes("Q");
+        let sig = test_case.consume_bytes("Sig");
+        let is_valid = test_case.consume_string("Result") == "P (0 )";
 
-            Ok(())
-        },
-    );
+        let alg = match (curve_name.as_str(), digest_name.as_str()) {
+            ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_ASN1,
+            ("P-256", "SHA384") => &signature::ECDSA_P256_SHA384_ASN1,
+            ("P-384", "SHA256") => &signature::ECDSA_P384_SHA256_ASN1,
+            ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_ASN1,
+            ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_ASN1,
+            ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_ASN1,
+            ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_ASN1,
+            _ => {
+                panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
+            }
+        };
+
+        let actual_result = signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
+        assert_eq!(actual_result.is_ok(), is_valid);
+
+        Ok(())
+    });
 }
 
 #[test]
 fn signature_ecdsa_verify_fixed_test() {
-    test::run(
-        test_file!("data/ecdsa_verify_fixed_tests.txt"),
-        |section, test_case| {
-            assert_eq!(section, "");
+    test_signature_ecdsa_verify_fixed(test_file!("data/ecdsa_verify_fixed_tests.txt"));
+}
 
-            let curve_name = test_case.consume_string("Curve");
-            let digest_name = test_case.consume_string("Digest");
+#[test]
+fn signature_ecdsa_verify_sha3_fixed_test() {
+    test_signature_ecdsa_verify_fixed(test_file!("data/ecdsa_verify_fixed_sha3_tests.txt"));
+}
 
-            let msg = test_case.consume_bytes("Msg");
-            let public_key = test_case.consume_bytes("Q");
-            let sig = test_case.consume_bytes("Sig");
-            let expected_result = test_case.consume_string("Result");
+fn test_signature_ecdsa_verify_fixed(data_file: test::File) {
+    test::run(data_file, |section, test_case| {
+        assert_eq!(section, "");
 
-            let alg = match (curve_name.as_str(), digest_name.as_str()) {
-                ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_FIXED,
-                ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_FIXED,
-                ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_FIXED,
-                ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_FIXED,
-                ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_FIXED,
-                _ => {
-                    unrecoverable!("Unsupported curve+digest: {}+{}", curve_name, digest_name);
-                }
-            };
+        let curve_name = test_case.consume_string("Curve");
+        let digest_name = test_case.consume_string("Digest");
 
-            let is_valid = expected_result == "P (0 )";
+        let msg = test_case.consume_bytes("Msg");
+        let public_key = test_case.consume_bytes("Q");
+        let sig = test_case.consume_bytes("Sig");
+        let expected_result = test_case.consume_string("Result");
 
-            let actual_result =
-                signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
-            assert_eq!(actual_result.is_ok(), is_valid);
+        let alg = match (curve_name.as_str(), digest_name.as_str()) {
+            ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_FIXED,
+            ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_FIXED,
+            ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_FIXED,
+            ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_FIXED,
+            ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_FIXED,
+            _ => {
+                unrecoverable!("Unsupported curve+digest: {}+{}", curve_name, digest_name);
+            }
+        };
 
-            Ok(())
-        },
-    );
+        let is_valid = expected_result == "P (0 )";
+
+        let actual_result = signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
+        assert_eq!(actual_result.is_ok(), is_valid);
+
+        Ok(())
+    });
 }
 
 #[test]
@@ -252,133 +262,143 @@ fn ecdsa_test_public_key_coverage() {
     );
 }
 
-// This test is not a known-answer test, though it re-uses the known-answer
-// test vectors. Because the nonce is randomized, the signature will be
-// different each time. Because of that, here we simply verify that the
-// signature verifies correctly.
 #[test]
 fn signature_ecdsa_sign_fixed_sign_and_verify_test() {
-    let rng = rand::SystemRandom::new();
+    test_signature_ecdsa_sign_fixed_sign_and_verify(test_file!("data/ecdsa_sign_fixed_tests.txt"));
+}
 
-    test::run(
-        test_file!("data/ecdsa_sign_fixed_tests.txt"),
-        |section, test_case| {
-            assert_eq!(section, "");
-
-            let curve_name = test_case.consume_string("Curve");
-            let digest_name = test_case.consume_string("Digest");
-
-            let msg = test_case.consume_bytes("Msg");
-            let d = test_case.consume_bytes("d");
-            let q = test_case.consume_bytes("Q");
-
-            // Ignored since the actual signature will use a randomized nonce.
-            let _k = test_case.consume_bytes("k");
-            let _expected_result = test_case.consume_bytes("Sig");
-
-            let (signing_alg, verification_alg) = match (curve_name.as_str(), digest_name.as_str())
-            {
-                ("P-256", "SHA256") => (
-                    &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
-                    &signature::ECDSA_P256_SHA256_FIXED,
-                ),
-                ("P-384", "SHA384") => (
-                    &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
-                    &signature::ECDSA_P384_SHA384_FIXED,
-                ),
-                ("P-384", "SHA3-384") => (
-                    &signature::ECDSA_P384_SHA3_384_FIXED_SIGNING,
-                    &signature::ECDSA_P384_SHA3_384_FIXED,
-                ),
-                ("P-521", "SHA512") => (
-                    &signature::ECDSA_P521_SHA512_FIXED_SIGNING,
-                    &signature::ECDSA_P521_SHA512_FIXED,
-                ),
-                ("P-521", "SHA3-512") => (
-                    &signature::ECDSA_P521_SHA3_512_FIXED_SIGNING,
-                    &signature::ECDSA_P521_SHA3_512_FIXED,
-                ),
-                _ => {
-                    panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
-                }
-            };
-
-            let private_key =
-                signature::EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q)
-                    .unwrap();
-
-            let signature = private_key.sign(&rng, &msg).unwrap();
-
-            let public_key = signature::UnparsedPublicKey::new(verification_alg, q);
-            let vfy_result = public_key.verify(&msg, signature.as_ref());
-            assert!(vfy_result.is_ok());
-
-            Ok(())
-        },
-    );
+#[test]
+fn signature_ecdsa_sign_fixed_sign_and_verify_sha3_test() {
+    test_signature_ecdsa_sign_fixed_sign_and_verify(test_file!(
+        "data/ecdsa_sign_fixed_sha3_tests.txt"
+    ));
 }
 
 // This test is not a known-answer test, though it re-uses the known-answer
 // test vectors. Because the nonce is randomized, the signature will be
 // different each time. Because of that, here we simply verify that the
 // signature verifies correctly.
-#[test]
-fn signature_ecdsa_sign_asn1_test() {
+fn test_signature_ecdsa_sign_fixed_sign_and_verify(data_file: test::File) {
     let rng = rand::SystemRandom::new();
 
-    test::run(
-        test_file!("data/ecdsa_sign_asn1_tests.txt"),
-        |section, test_case| {
-            assert_eq!(section, "");
+    test::run(data_file, |section, test_case| {
+        assert_eq!(section, "");
 
-            let curve_name = test_case.consume_string("Curve");
-            let digest_name = test_case.consume_string("Digest");
+        let curve_name = test_case.consume_string("Curve");
+        let digest_name = test_case.consume_string("Digest");
 
-            let msg = test_case.consume_bytes("Msg");
-            let d = test_case.consume_bytes("d");
-            let q = test_case.consume_bytes("Q");
+        let msg = test_case.consume_bytes("Msg");
+        let d = test_case.consume_bytes("d");
+        let q = test_case.consume_bytes("Q");
 
-            // Ignored since the actual signature will use a randomized nonce.
-            let _k = test_case.consume_bytes("k");
-            let _expected_result = test_case.consume_bytes("Sig");
+        // Ignored since the actual signature will use a randomized nonce.
+        let _k = test_case.consume_optional_bytes("k");
+        let _expected_result = test_case.consume_bytes("Sig");
 
-            let (signing_alg, verification_alg) = match (curve_name.as_str(), digest_name.as_str())
-            {
-                ("P-256", "SHA256") => (
-                    &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
-                    &signature::ECDSA_P256_SHA256_ASN1,
-                ),
-                ("P-384", "SHA384") => (
-                    &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
-                    &signature::ECDSA_P384_SHA384_ASN1,
-                ),
-                ("P-384", "SHA3-384") => (
-                    &signature::ECDSA_P384_SHA3_384_ASN1_SIGNING,
-                    &signature::ECDSA_P384_SHA3_384_ASN1,
-                ),
-                ("P-521", "SHA512") => (
-                    &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
-                    &signature::ECDSA_P521_SHA512_ASN1,
-                ),
-                ("P-521", "SHA3-512") => (
-                    &signature::ECDSA_P521_SHA3_512_ASN1_SIGNING,
-                    &signature::ECDSA_P521_SHA3_512_ASN1,
-                ),
-                _ => {
-                    panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
-                }
-            };
+        let (signing_alg, verification_alg) = match (curve_name.as_str(), digest_name.as_str()) {
+            ("P-256", "SHA256") => (
+                &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+                &signature::ECDSA_P256_SHA256_FIXED,
+            ),
+            ("P-384", "SHA384") => (
+                &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+                &signature::ECDSA_P384_SHA384_FIXED,
+            ),
+            ("P-384", "SHA3-384") => (
+                &signature::ECDSA_P384_SHA3_384_FIXED_SIGNING,
+                &signature::ECDSA_P384_SHA3_384_FIXED,
+            ),
+            ("P-521", "SHA512") => (
+                &signature::ECDSA_P521_SHA512_FIXED_SIGNING,
+                &signature::ECDSA_P521_SHA512_FIXED,
+            ),
+            ("P-521", "SHA3-512") => (
+                &signature::ECDSA_P521_SHA3_512_FIXED_SIGNING,
+                &signature::ECDSA_P521_SHA3_512_FIXED,
+            ),
+            _ => {
+                panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
+            }
+        };
 
-            let private_key =
-                signature::EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q)
-                    .unwrap();
+        let private_key =
+            signature::EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q).unwrap();
 
-            let signature = private_key.sign(&rng, &msg).unwrap();
+        let signature = private_key.sign(&rng, &msg).unwrap();
 
-            let public_key = signature::UnparsedPublicKey::new(verification_alg, q);
-            assert_eq!(public_key.verify(&msg, signature.as_ref()), Ok(()));
+        let public_key = signature::UnparsedPublicKey::new(verification_alg, q);
+        let vfy_result = public_key.verify(&msg, signature.as_ref());
+        assert!(vfy_result.is_ok());
 
-            Ok(())
-        },
-    );
+        Ok(())
+    });
+}
+
+#[test]
+fn signature_ecdsa_sign_asn1_test() {
+    test_signature_ecdsa_sign_asn1(test_file!("data/ecdsa_sign_asn1_tests.txt"));
+}
+
+#[test]
+fn signature_ecdsa_sign_asn1_sha3_test() {
+    test_signature_ecdsa_sign_asn1(test_file!("data/ecdsa_sign_asn1_sha3_tests.txt"));
+}
+
+// This test is not a known-answer test, though it re-uses the known-answer
+// test vectors. Because the nonce is randomized, the signature will be
+// different each time. Because of that, here we simply verify that the
+// signature verifies correctly.
+fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
+    let rng = rand::SystemRandom::new();
+
+    test::run(data_file, |section, test_case| {
+        assert_eq!(section, "");
+
+        let curve_name = test_case.consume_string("Curve");
+        let digest_name = test_case.consume_string("Digest");
+
+        let msg = test_case.consume_bytes("Msg");
+        let d = test_case.consume_bytes("d");
+        let q = test_case.consume_bytes("Q");
+
+        // Ignored since the actual signature will use a randomized nonce.
+        let _k = test_case.consume_optional_bytes("k");
+        let _expected_result = test_case.consume_bytes("Sig");
+
+        let (signing_alg, verification_alg) = match (curve_name.as_str(), digest_name.as_str()) {
+            ("P-256", "SHA256") => (
+                &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
+                &signature::ECDSA_P256_SHA256_ASN1,
+            ),
+            ("P-384", "SHA384") => (
+                &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
+                &signature::ECDSA_P384_SHA384_ASN1,
+            ),
+            ("P-384", "SHA3-384") => (
+                &signature::ECDSA_P384_SHA3_384_ASN1_SIGNING,
+                &signature::ECDSA_P384_SHA3_384_ASN1,
+            ),
+            ("P-521", "SHA512") => (
+                &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
+                &signature::ECDSA_P521_SHA512_ASN1,
+            ),
+            ("P-521", "SHA3-512") => (
+                &signature::ECDSA_P521_SHA3_512_ASN1_SIGNING,
+                &signature::ECDSA_P521_SHA3_512_ASN1,
+            ),
+            _ => {
+                panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
+            }
+        };
+
+        let private_key =
+            signature::EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q).unwrap();
+
+        let signature = private_key.sign(&rng, &msg).unwrap();
+
+        let public_key = signature::UnparsedPublicKey::new(verification_alg, q);
+        assert_eq!(public_key.verify(&msg, signature.as_ref()), Ok(()));
+
+        Ok(())
+    });
 }
