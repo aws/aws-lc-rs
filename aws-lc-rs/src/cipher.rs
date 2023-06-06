@@ -169,13 +169,24 @@ pub enum CipherContext {
     None,
 }
 
-const EMPTY_BYTE_ARRAY: [u8; 0] = [];
+impl<'a> TryFrom<&'a CipherContext> for &'a [u8] {
+    type Error = Unspecified;
 
-impl AsRef<[u8]> for CipherContext {
-    fn as_ref(&self) -> &[u8] {
-        match self {
-            CipherContext::Iv128(iv) => iv.as_ref(),
-            CipherContext::None => &EMPTY_BYTE_ARRAY,
+    fn try_from(value: &'a CipherContext) -> Result<Self, Unspecified> {
+        match value {
+            CipherContext::Iv128(iv) => Ok(iv.as_ref()),
+            CipherContext::None => Err(Unspecified),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a mut CipherContext> for &'a mut [u8] {
+    type Error = Unspecified;
+
+    fn try_from(value: &'a mut CipherContext) -> Result<Self, Unspecified> {
+        match value {
+            CipherContext::Iv128(iv) => Ok(iv.as_mut()),
+            CipherContext::None => Err(Unspecified),
         }
     }
 }
@@ -652,7 +663,7 @@ fn encrypt_aes_ctr_mode(
 
     let mut iv = {
         let mut iv = [0u8; AES_IV_LEN];
-        iv.copy_from_slice(context.as_ref());
+        iv.copy_from_slice((&context).try_into()?);
         iv
     };
 
@@ -687,7 +698,7 @@ fn encrypt_aes_cbc_mode(
 
     let mut iv = {
         let mut iv = [0u8; AES_IV_LEN];
-        iv.copy_from_slice(context.as_ref());
+        iv.copy_from_slice((&context).try_into()?);
         iv
     };
 
@@ -711,7 +722,7 @@ fn decrypt_aes_cbc_mode(
 
     let mut iv = {
         let mut iv = [0u8; AES_IV_LEN];
-        iv.copy_from_slice(context.as_ref());
+        iv.copy_from_slice((&context).try_into()?);
         iv
     };
 
@@ -767,7 +778,6 @@ fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cipher::block::{Block, BLOCK_LEN};
     use crate::test::from_hex;
 
     fn helper_test_cipher_n_bytes(
