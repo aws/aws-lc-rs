@@ -163,7 +163,7 @@ pub enum OperatingMode {
 #[non_exhaustive]
 pub enum CipherContext {
     /// A 128-bit Initalization Vector.
-    Iv128(FixedLength<16>),
+    Iv128(FixedLength<AES_IV_LEN>),
 
     /// No input to the cipher mode.
     None,
@@ -216,11 +216,6 @@ pub const AES_256: Algorithm = Algorithm {
 impl Algorithm {
     fn id(&self) -> &AlgorithmId {
         &self.id
-    }
-
-    #[allow(unused)]
-    const fn key_len(&self) -> usize {
-        self.key_len
     }
 
     const fn block_len(&self) -> usize {
