@@ -180,17 +180,6 @@ impl<'a> TryFrom<&'a CipherContext> for &'a [u8] {
     }
 }
 
-impl<'a> TryFrom<&'a mut CipherContext> for &'a mut [u8] {
-    type Error = Unspecified;
-
-    fn try_from(value: &'a mut CipherContext) -> Result<Self, Unspecified> {
-        match value {
-            CipherContext::Iv128(iv) => Ok(iv.as_mut()),
-            CipherContext::None => Err(Unspecified),
-        }
-    }
-}
-
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// Cipher algorithm identifier.
