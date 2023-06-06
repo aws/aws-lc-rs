@@ -69,66 +69,19 @@
 pub(crate) mod aes;
 pub(crate) mod block;
 pub(crate) mod chacha;
+pub(crate) mod key;
 
-use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
-use crate::cipher::block::Block;
-use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
-use crate::iv::{self, FixedLength};
-use aws_lc::{
-    AES_cbc_encrypt, AES_ctr128_encrypt, AES_set_decrypt_key, AES_set_encrypt_key, AES_DECRYPT,
-    AES_ENCRYPT, AES_KEY,
-};
-use std::mem::{size_of, transmute, MaybeUninit};
-use std::os::raw::c_uint;
-use std::ptr;
+use crate::iv::FixedLength;
+use aws_lc::{AES_cbc_encrypt, AES_ctr128_encrypt, AES_DECRYPT, AES_ENCRYPT, AES_KEY};
+use key::SymmetricCipherKey;
+use std::fmt::Debug;
+use std::mem::MaybeUninit;
 use zeroize::Zeroize;
 
-pub(crate) enum SymmetricCipherKey {
-    Aes128 {
-        raw_key: Aes128Key,
-        enc_key: AES_KEY,
-        dec_key: AES_KEY,
-    },
-    Aes256 {
-        raw_key: Aes256Key,
-        enc_key: AES_KEY,
-        dec_key: AES_KEY,
-    },
-    ChaCha20 {
-        raw_key: ChaCha20Key,
-    },
-}
-
-unsafe impl Send for SymmetricCipherKey {}
-// The AES_KEY value is only used as a `*const AES_KEY` in calls to `AES_encrypt`.
-unsafe impl Sync for SymmetricCipherKey {}
-
-impl Drop for SymmetricCipherKey {
-    fn drop(&mut self) {
-        // Aes128Key, Aes256Key and ChaCha20Key implement Drop separately.
-        match self {
-            SymmetricCipherKey::Aes128 {
-                enc_key, dec_key, ..
-            }
-            | SymmetricCipherKey::Aes256 {
-                enc_key, dec_key, ..
-            } => unsafe {
-                #[allow(clippy::transmute_ptr_to_ptr)]
-                let enc_bytes: &mut [u8; size_of::<AES_KEY>()] = transmute(enc_key);
-                enc_bytes.zeroize();
-                #[allow(clippy::transmute_ptr_to_ptr)]
-                let dec_bytes: &mut [u8; size_of::<AES_KEY>()] = transmute(dec_key);
-                dec_bytes.zeroize();
-            },
-            SymmetricCipherKey::ChaCha20 { .. } => {}
-        }
-    }
-}
-
 /// The cipher block padding strategy.
-#[allow(dead_code)]
-#[derive(Clone, Copy)]
+#[non_exhaustive]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum PaddingStrategy {
     /// PKCS#7 Padding.
     PKCS7,
@@ -197,7 +150,7 @@ const AES_BLOCK_LEN: usize = 16;
 
 /// The cipher operating mode.
 #[non_exhaustive]
-#[derive(Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum OperatingMode {
     /// Cipher block chaining (CBC) mode.
     CBC,
@@ -208,15 +161,27 @@ pub enum OperatingMode {
 
 /// The contextual data used to encrypted/decrypt data.
 #[non_exhaustive]
-pub enum DecryptionContext {
+pub enum CipherContext {
     /// A 128-bit Initalization Vector.
-    Iv128(iv::FixedLength<16>),
+    Iv128(FixedLength<16>),
 
     /// No input to the cipher mode.
     None,
 }
 
+const EMPTY_BYTE_ARRAY: [u8; 0] = [];
+
+impl AsRef<[u8]> for CipherContext {
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            CipherContext::Iv128(iv) => iv.as_ref(),
+            CipherContext::None => &EMPTY_BYTE_ARRAY,
+        }
+    }
+}
+
 #[non_exhaustive]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// Cipher algorithm identifier.
 pub enum AlgorithmId {
     /// AES 128-bit
@@ -227,6 +192,7 @@ pub enum AlgorithmId {
 }
 
 /// A cipher algorithm.
+#[derive(Debug, PartialEq, Eq)]
 pub struct Algorithm {
     id: AlgorithmId,
     key_len: usize,
@@ -261,24 +227,21 @@ impl Algorithm {
         self.block_len
     }
 
-    fn new_decrypting_context(
-        &self,
-        mode: OperatingMode,
-    ) -> Result<DecryptionContext, Unspecified> {
+    fn new_cipher_context(&self, mode: OperatingMode) -> Result<CipherContext, Unspecified> {
         match self.id {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
                 OperatingMode::CBC | OperatingMode::CTR => {
-                    Ok(DecryptionContext::Iv128(FixedLength::new()?))
+                    Ok(CipherContext::Iv128(FixedLength::new()?))
                 }
             },
         }
     }
 
-    fn is_valid_decryption_context(&self, mode: OperatingMode, input: &DecryptionContext) -> bool {
+    fn is_valid_cipher_context(&self, mode: OperatingMode, input: &CipherContext) -> bool {
         match self.id {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
                 OperatingMode::CBC | OperatingMode::CTR => {
-                    matches!(input, DecryptionContext::Iv128(_))
+                    matches!(input, CipherContext::Iv128(_))
                 }
             },
         }
@@ -318,7 +281,7 @@ pub struct PaddedBlockEncryptingKey {
     key: UnboundCipherKey,
     mode: OperatingMode,
     padding: PaddingStrategy,
-    context: DecryptionContext,
+    context: CipherContext,
 }
 
 impl PaddedBlockEncryptingKey {
@@ -341,7 +304,7 @@ impl PaddedBlockEncryptingKey {
     ///
     pub fn less_safe_cbc_pkcs7(
         key: UnboundCipherKey,
-        context: DecryptionContext,
+        context: CipherContext,
     ) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         PaddedBlockEncryptingKey::new(
             key,
@@ -355,16 +318,16 @@ impl PaddedBlockEncryptingKey {
         key: UnboundCipherKey,
         mode: OperatingMode,
         padding: PaddingStrategy,
-        context: Option<DecryptionContext>,
+        context: Option<CipherContext>,
     ) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         let mode_input = match context {
             Some(mi) => {
-                if !key.algorithm().is_valid_decryption_context(mode, &mi) {
+                if !key.algorithm().is_valid_cipher_context(mode, &mi) {
                     return Err(Unspecified);
                 }
                 mi
             }
-            None => key.algorithm.new_decrypting_context(mode)?,
+            None => key.algorithm.new_cipher_context(mode)?,
         };
 
         Ok(PaddedBlockEncryptingKey {
@@ -399,7 +362,7 @@ impl PaddedBlockEncryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if encryption fails.
     ///
-    pub fn encrypt<InOut>(self, in_out: &mut InOut) -> Result<DecryptionContext, Unspecified>
+    pub fn encrypt<InOut>(self, in_out: &mut InOut) -> Result<CipherContext, Unspecified>
     where
         InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
     {
@@ -422,7 +385,7 @@ pub struct PaddedBlockDecryptingKey {
     key: UnboundCipherKey,
     mode: OperatingMode,
     padding: PaddingStrategy,
-    mode_input: DecryptionContext,
+    mode_input: CipherContext,
 }
 
 impl PaddedBlockDecryptingKey {
@@ -434,7 +397,7 @@ impl PaddedBlockDecryptingKey {
     ///
     pub fn cbc_pkcs7(
         key: UnboundCipherKey,
-        mode_input: DecryptionContext,
+        mode_input: CipherContext,
     ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
         PaddedBlockDecryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7, mode_input)
     }
@@ -443,12 +406,9 @@ impl PaddedBlockDecryptingKey {
         key: UnboundCipherKey,
         mode: OperatingMode,
         padding: PaddingStrategy,
-        mode_input: DecryptionContext,
+        mode_input: CipherContext,
     ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
-        if !key
-            .algorithm()
-            .is_valid_decryption_context(mode, &mode_input)
-        {
+        if !key.algorithm().is_valid_cipher_context(mode, &mode_input) {
             return Err(Unspecified);
         }
 
@@ -497,7 +457,7 @@ impl PaddedBlockDecryptingKey {
 pub struct EncryptingKey {
     key: UnboundCipherKey,
     mode: OperatingMode,
-    context: DecryptionContext,
+    context: CipherContext,
 }
 
 impl EncryptingKey {
@@ -518,7 +478,7 @@ impl EncryptingKey {
     ///
     pub fn less_safe_ctr(
         key: UnboundCipherKey,
-        context: DecryptionContext,
+        context: CipherContext,
     ) -> Result<EncryptingKey, Unspecified> {
         EncryptingKey::new(key, OperatingMode::CTR, Some(context))
     }
@@ -526,16 +486,16 @@ impl EncryptingKey {
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
-        context: Option<DecryptionContext>,
+        context: Option<CipherContext>,
     ) -> Result<EncryptingKey, Unspecified> {
         let context = match context {
             Some(mi) => {
-                if !key.algorithm().is_valid_decryption_context(mode, &mi) {
+                if !key.algorithm().is_valid_cipher_context(mode, &mi) {
                     return Err(Unspecified);
                 }
                 mi
             }
-            None => key.algorithm.new_decrypting_context(mode)?,
+            None => key.algorithm.new_cipher_context(mode)?,
         };
 
         Ok(EncryptingKey { key, mode, context })
@@ -560,7 +520,7 @@ impl EncryptingKey {
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
     /// and `in_out.len()` is not. Otherwise returned if encryption fails.
     ///
-    pub fn encrypt(self, in_out: &mut [u8]) -> Result<DecryptionContext, Unspecified> {
+    pub fn encrypt(self, in_out: &mut [u8]) -> Result<CipherContext, Unspecified> {
         let block_len = self.algorithm().block_len();
 
         match self.mode {
@@ -591,7 +551,7 @@ impl EncryptingKey {
 pub struct DecryptingKey {
     key: UnboundCipherKey,
     mode: OperatingMode,
-    mode_input: DecryptionContext,
+    mode_input: CipherContext,
 }
 
 impl DecryptingKey {
@@ -602,7 +562,7 @@ impl DecryptingKey {
     ///
     pub fn ctr(
         key: UnboundCipherKey,
-        context: DecryptionContext,
+        context: CipherContext,
     ) -> Result<DecryptingKey, Unspecified> {
         DecryptingKey::new(key, OperatingMode::CTR, context)
     }
@@ -610,12 +570,9 @@ impl DecryptingKey {
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
-        mode_input: DecryptionContext,
+        mode_input: CipherContext,
     ) -> Result<DecryptingKey, Unspecified> {
-        if !key
-            .algorithm()
-            .is_valid_decryption_context(mode, &mode_input)
-        {
+        if !key.algorithm().is_valid_cipher_context(mode, &mode_input) {
             return Err(Unspecified);
         }
 
@@ -682,9 +639,9 @@ impl TryFrom<PaddedBlockDecryptingKey> for DecryptingKey {
 
 fn encrypt_aes_ctr_mode(
     key: &UnboundCipherKey,
-    context: DecryptionContext,
+    context: CipherContext,
     in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
+) -> Result<CipherContext, Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key.key {
         SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
@@ -695,10 +652,7 @@ fn encrypt_aes_ctr_mode(
 
     let mut iv = {
         let mut iv = [0u8; AES_IV_LEN];
-        iv.copy_from_slice(match &context {
-            DecryptionContext::Iv128(iv) => iv.as_ref(),
-            _ => return Err(Unspecified),
-        });
+        iv.copy_from_slice(context.as_ref());
         iv
     };
 
@@ -711,18 +665,18 @@ fn encrypt_aes_ctr_mode(
 
 fn decrypt_aes_ctr_mode(
     key: &UnboundCipherKey,
-    context: DecryptionContext,
+    context: CipherContext,
     in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
+) -> Result<CipherContext, Unspecified> {
     // it's the same in CTR, just providing a nice named wrapper to match
     encrypt_aes_ctr_mode(key, context, in_out)
 }
 
 fn encrypt_aes_cbc_mode(
     key: &UnboundCipherKey,
-    context: DecryptionContext,
+    context: CipherContext,
     in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
+) -> Result<CipherContext, Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key.key {
         SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
@@ -733,10 +687,7 @@ fn encrypt_aes_cbc_mode(
 
     let mut iv = {
         let mut iv = [0u8; AES_IV_LEN];
-        iv.copy_from_slice(match &context {
-            DecryptionContext::Iv128(iv) => iv.as_ref(),
-            _ => return Err(Unspecified),
-        });
+        iv.copy_from_slice(context.as_ref());
         iv
     };
 
@@ -747,9 +698,9 @@ fn encrypt_aes_cbc_mode(
 
 fn decrypt_aes_cbc_mode(
     key: &UnboundCipherKey,
-    context: DecryptionContext,
+    context: CipherContext,
     in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
+) -> Result<CipherContext, Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key.key {
         SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
@@ -760,10 +711,7 @@ fn decrypt_aes_cbc_mode(
 
     let mut iv = {
         let mut iv = [0u8; AES_IV_LEN];
-        iv.copy_from_slice(match &context {
-            DecryptionContext::Iv128(iv) => iv.as_ref(),
-            _ => return Err(Unspecified),
-        });
+        iv.copy_from_slice(context.as_ref());
         iv
     };
 
@@ -816,147 +764,11 @@ fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
     }
 }
 
-impl SymmetricCipherKey {
-    pub(crate) fn aes128(key_bytes: &[u8]) -> Result<Self, Unspecified> {
-        if key_bytes.len() != AES_128_KEY_LEN {
-            return Err(Unspecified);
-        }
-
-        unsafe {
-            let mut enc_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_encrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                enc_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let enc_key = enc_key.assume_init();
-
-            let mut dec_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_decrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                dec_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let dec_key = dec_key.assume_init();
-
-            let mut kb = MaybeUninit::<[u8; 16]>::uninit();
-            ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 16);
-            Ok(SymmetricCipherKey::Aes128 {
-                raw_key: Aes128Key(kb.assume_init()),
-                enc_key,
-                dec_key,
-            })
-        }
-    }
-
-    pub(crate) fn aes256(key_bytes: &[u8]) -> Result<Self, Unspecified> {
-        if key_bytes.len() != 32 {
-            return Err(Unspecified);
-        }
-        unsafe {
-            let mut enc_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_encrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                enc_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let enc_key = enc_key.assume_init();
-
-            let mut dec_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_decrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                dec_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let dec_key = dec_key.assume_init();
-
-            let mut kb = MaybeUninit::<[u8; 32]>::uninit();
-            ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
-            Ok(SymmetricCipherKey::Aes256 {
-                raw_key: Aes256Key(kb.assume_init()),
-                enc_key,
-                dec_key,
-            })
-        }
-    }
-
-    pub(crate) fn chacha20(key_bytes: &[u8]) -> Result<Self, Unspecified> {
-        if key_bytes.len() != 32 {
-            return Err(Unspecified);
-        }
-        let mut kb = MaybeUninit::<[u8; 32]>::uninit();
-        unsafe {
-            ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
-            Ok(SymmetricCipherKey::ChaCha20 {
-                raw_key: ChaCha20Key(kb.assume_init()),
-            })
-        }
-    }
-
-    #[inline]
-    pub(super) fn key_bytes(&self) -> &[u8] {
-        match self {
-            SymmetricCipherKey::Aes128 { raw_key, .. } => &raw_key.0,
-            SymmetricCipherKey::Aes256 { raw_key, .. } => &raw_key.0,
-            SymmetricCipherKey::ChaCha20 { raw_key, .. } => &raw_key.0,
-        }
-    }
-
-    #[allow(dead_code)]
-    #[inline]
-    pub(crate) fn encrypt_block(&self, block: Block) -> Block {
-        match self {
-            SymmetricCipherKey::Aes128 { enc_key, .. }
-            | SymmetricCipherKey::Aes256 { enc_key, .. } => encrypt_block_aes(enc_key, block),
-            SymmetricCipherKey::ChaCha20 { .. } => panic!("Unsupported algorithm!"),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cipher::block::BLOCK_LEN;
+    use crate::cipher::block::{Block, BLOCK_LEN};
     use crate::test::from_hex;
-
-    #[test]
-    fn test_encrypt_block_aes_128() {
-        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
-        let input = from_hex("00112233445566778899aabbccddeeff").unwrap();
-        let expected_result = from_hex("69c4e0d86a7b0430d8cdb78070b4c55a").unwrap();
-        let input_block: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::try_from(input).unwrap();
-
-        let aes128 = SymmetricCipherKey::aes128(key.as_slice()).unwrap();
-        let result = aes128.encrypt_block(Block::from(&input_block));
-
-        assert_eq!(expected_result.as_slice(), result.as_ref());
-    }
-
-    #[test]
-    fn test_encrypt_block_aes_256() {
-        let key =
-            from_hex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
-        let input = from_hex("00112233445566778899aabbccddeeff").unwrap();
-        let expected_result = from_hex("8ea2b7ca516745bfeafc49904b496089").unwrap();
-        let input_block: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::try_from(input).unwrap();
-
-        let aes128 = SymmetricCipherKey::aes256(key.as_slice()).unwrap();
-        let result = aes128.encrypt_block(Block::from(&input_block));
-
-        assert_eq!(expected_result.as_slice(), result.as_ref());
-    }
 
     fn helper_test_cipher_n_bytes(
         key: &[u8],
@@ -1085,7 +897,7 @@ mod tests {
                     iv
                 };
 
-                let dc = DecryptionContext::Iv128(FixedLength::from(iv));
+                let dc = CipherContext::Iv128(FixedLength::from(iv));
 
                 let alg = $alg;
 
@@ -1128,7 +940,7 @@ mod tests {
                     iv
                 };
 
-                let dc = DecryptionContext::Iv128(FixedLength::from(iv));
+                let dc = CipherContext::Iv128(FixedLength::from(iv));
 
                 let alg = $alg;
 

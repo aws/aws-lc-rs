@@ -7,7 +7,7 @@
 use crate::aead::key_inner::KeyInner;
 use crate::aead::{Algorithm, AlgorithmID};
 use crate::cipher::chacha::KEY_LEN;
-use crate::cipher::SymmetricCipherKey;
+use crate::cipher::key::SymmetricCipherKey;
 
 use crate::error;
 

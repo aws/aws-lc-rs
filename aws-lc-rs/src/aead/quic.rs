@@ -10,7 +10,8 @@
 use crate::aead::key_inner::KeyInner;
 use crate::cipher::aes::encrypt_block_aes;
 use crate::cipher::chacha::encrypt_block_chacha20;
-use crate::cipher::{self, block, SymmetricCipherKey};
+use crate::cipher::key::SymmetricCipherKey;
+use crate::cipher::{block, key};
 use crate::hkdf::KeyType;
 use crate::{derive_debug_via_id, error, hkdf};
 use core::convert::TryFrom;
@@ -145,19 +146,19 @@ pub static CHACHA20: Algorithm = Algorithm {
 
 #[inline]
 fn aes_init_128(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    let aes_key = cipher::SymmetricCipherKey::aes128(key)?;
+    let aes_key = key::SymmetricCipherKey::aes128(key)?;
     KeyInner::new(aes_key)
 }
 
 #[inline]
 fn aes_init_256(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    let aes_key = cipher::SymmetricCipherKey::aes256(key)?;
+    let aes_key = key::SymmetricCipherKey::aes256(key)?;
     KeyInner::new(aes_key)
 }
 
 #[inline]
 fn chacha20_init(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    let chacha20 = cipher::SymmetricCipherKey::chacha20(key)?;
+    let chacha20 = key::SymmetricCipherKey::chacha20(key)?;
     KeyInner::new(chacha20)
 }
 
