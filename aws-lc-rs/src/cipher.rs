@@ -148,6 +148,8 @@ pub const AES_256_KEY_LEN: usize = 32;
 pub const AES_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
+const IV_LEN_128_BIT: usize = 16;
+
 /// The cipher operating mode.
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -163,7 +165,7 @@ pub enum OperatingMode {
 #[non_exhaustive]
 pub enum CipherContext {
     /// A 128-bit Initalization Vector.
-    Iv128(FixedLength<AES_IV_LEN>),
+    Iv128(FixedLength<IV_LEN_128_BIT>),
 
     /// No input to the cipher mode.
     None,
