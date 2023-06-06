@@ -60,13 +60,6 @@ impl<const L: usize> Drop for FixedLength<L> {
     }
 }
 
-impl<const L: usize> AsMut<[u8; L]> for FixedLength<L> {
-    #[inline]
-    fn as_mut(&mut self) -> &mut [u8; L] {
-        &mut self.0
-    }
-}
-
 impl<const L: usize> AsRef<[u8; L]> for FixedLength<L> {
     #[inline]
     fn as_ref(&self) -> &[u8; L] {
@@ -101,5 +94,24 @@ impl<const L: usize> TryFrom<FixedLength<L>> for [u8; L] {
 
     fn try_from(value: FixedLength<L>) -> Result<Self, Self::Error> {
         Ok(value.0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::iv::FixedLength;
+
+    #[test]
+    fn test_size() {
+        let fixed = FixedLength::from([0u8; 16]);
+        assert_eq!(16, fixed.size());
+
+        let array = [0u8; 12];
+        let fixed = FixedLength::<12>::try_from(array.as_slice()).unwrap();
+        assert_eq!(12, fixed.size());
+
+        assert!(FixedLength::<16>::try_from(array.as_slice()).is_err());
+
+        assert!(TryInto::<[u8; 12]>::try_into(fixed).is_ok());
     }
 }
