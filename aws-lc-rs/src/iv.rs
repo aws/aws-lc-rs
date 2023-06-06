@@ -8,6 +8,7 @@
 
 use crate::error::Unspecified;
 use crate::{error, rand};
+use zeroize::Zeroize;
 
 /// An initalization vector that must be unique for the lifetime of the associated key
 /// it is used with.
@@ -50,6 +51,12 @@ impl<const L: usize> FixedLength<L> {
         let mut iv_bytes = [0u8; L];
         rand::fill(&mut iv_bytes)?;
         Ok(Self(iv_bytes))
+    }
+}
+
+impl<const L: usize> Drop for FixedLength<L> {
+    fn drop(&mut self) {
+        self.0.zeroize();
     }
 }
 
