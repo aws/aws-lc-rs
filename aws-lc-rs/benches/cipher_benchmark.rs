@@ -1,5 +1,5 @@
 use aws_lc_rs::cipher::{
-    DecryptingKey, DecryptionContext, EncryptingKey, OperatingMode, PaddedBlockDecryptingKey,
+    CipherContext, DecryptingKey, EncryptingKey, OperatingMode, PaddedBlockDecryptingKey,
     PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
 };
 use aws_lc_rs::{test, test_file};
@@ -31,8 +31,8 @@ macro_rules! benchmark_padded {
                 group.bench_function("AWS-LC", |b| {
                     b.iter(|| {
                         let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-                        let iv: DecryptionContext =
-                            DecryptionContext::Iv128(iv.as_slice().try_into().unwrap());
+                        let iv: CipherContext =
+                            CipherContext::Iv128(iv.as_slice().try_into().unwrap());
 
                         let encrypt_key = match $mode {
                             OperatingMode::CBC => {
@@ -78,8 +78,8 @@ macro_rules! benchmark_unpadded {
                 group.bench_function("AWS-LC", |b| {
                     b.iter(|| {
                         let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-                        let iv: DecryptionContext =
-                            DecryptionContext::Iv128(iv.as_slice().try_into().unwrap());
+                        let iv: CipherContext =
+                            CipherContext::Iv128(iv.as_slice().try_into().unwrap());
 
                         let encrypt_key = match $mode {
                             OperatingMode::CTR => EncryptingKey::less_safe_ctr(key, iv),

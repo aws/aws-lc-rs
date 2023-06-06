@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aead::TAG_LEN;
-use crate::cipher::SymmetricCipherKey;
+use crate::cipher::key::SymmetricCipherKey;
 use crate::error;
 
 use aws_lc::{

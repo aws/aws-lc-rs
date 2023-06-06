@@ -463,6 +463,7 @@ pub struct UnboundKey {
     algorithm: &'static Algorithm,
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl Debug for UnboundKey {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("UnboundKey")
