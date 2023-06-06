@@ -52,8 +52,8 @@ struct Cli {
 
 #[derive(ValueEnum, Clone, Copy)]
 enum Mode {
-    CTR,
-    CBC,
+    Ctr,
+    Cbc,
 }
 
 #[derive(Subcommand)]
@@ -73,36 +73,31 @@ enum Commands {
 fn main() -> Result<(), &'static str> {
     let cli = Cli::parse();
 
-    let key = match cli.key {
-        Some(key) => match hex::decode(key) {
+    let key = if let Some(key) = cli.key {
+        match hex::decode(key) {
             Ok(v) => v,
             Err(..) => {
                 return Err("invalid key");
             }
-        },
-        None => {
-            let mut v = vec![0u8; 16];
-            aws_lc_rs::rand::fill(v.as_mut_slice()).map_err(|_| "failed to generate key")?;
-            v
         }
+    } else {
+        let mut v = vec![0u8; 16];
+        aws_lc_rs::rand::fill(v.as_mut_slice()).map_err(|_| "failed to generate key")?;
+        v
     };
 
     match (cli.command, cli.mode) {
-        (Commands::Encrypt { iv, plaintext }, Mode::CTR) => aes_ctr_encrypt(key, iv, plaintext),
-        (Commands::Encrypt { iv, plaintext }, Mode::CBC) => aes_cbc_encrypt(key, iv, plaintext),
-        (Commands::Decrypt { iv, ciphertext }, Mode::CTR) => aes_ctr_decrypt(key, iv, ciphertext),
-        (Commands::Decrypt { iv, ciphertext }, Mode::CBC) => aes_cbc_decrypt(key, iv, ciphertext),
+        (Commands::Encrypt { iv, plaintext }, Mode::Ctr) => aes_ctr_encrypt(&key, iv, plaintext),
+        (Commands::Encrypt { iv, plaintext }, Mode::Cbc) => aes_cbc_encrypt(&key, iv, plaintext),
+        (Commands::Decrypt { iv, ciphertext }, Mode::Ctr) => aes_ctr_decrypt(&key, iv, ciphertext),
+        (Commands::Decrypt { iv, ciphertext }, Mode::Cbc) => aes_cbc_decrypt(&key, iv, ciphertext),
     }?;
 
     Ok(())
 }
 
-fn aes_ctr_encrypt(
-    key: Vec<u8>,
-    iv: Option<String>,
-    plaintext: String,
-) -> Result<(), &'static str> {
-    let hex_key = hex::encode(key.as_slice());
+fn aes_ctr_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<(), &'static str> {
+    let hex_key = hex::encode(key);
     let key = new_unbound_key(key)?;
 
     let key = match iv {
@@ -130,14 +125,14 @@ fn aes_ctr_encrypt(
 
     let ciphertext = hex::encode(ciphertext.as_slice());
 
-    println!("key: {}", hex_key);
+    println!("key: {hex_key}");
     println!("iv: {}", hex::encode(iv));
     println!("ciphertext: {ciphertext}");
 
     Ok(())
 }
 
-fn aes_ctr_decrypt(key: Vec<u8>, iv: String, ciphertext: String) -> Result<(), &'static str> {
+fn aes_ctr_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'static str> {
     let key = new_unbound_key(key)?;
     let iv = {
         let v = hex::decode(iv).map_err(|_| "invalid iv")?;
@@ -149,7 +144,7 @@ fn aes_ctr_decrypt(key: Vec<u8>, iv: String, ciphertext: String) -> Result<(), &
         .map_err(|_| "failed to initalized aes decryption")?;
 
     let mut ciphertext =
-        Vec::from(hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?);
+        hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?;
 
     let plaintext = key
         .decrypt(ciphertext.as_mut())
@@ -163,12 +158,8 @@ fn aes_ctr_decrypt(key: Vec<u8>, iv: String, ciphertext: String) -> Result<(), &
     Ok(())
 }
 
-fn aes_cbc_encrypt(
-    key: Vec<u8>,
-    iv: Option<String>,
-    plaintext: String,
-) -> Result<(), &'static str> {
-    let hex_key = hex::encode(key.as_slice());
+fn aes_cbc_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<(), &'static str> {
+    let hex_key = hex::encode(key);
     let key = new_unbound_key(key)?;
 
     let key = match iv {
@@ -196,14 +187,14 @@ fn aes_cbc_encrypt(
 
     let ciphertext = hex::encode(ciphertext.as_slice());
 
-    println!("key: {}", hex_key);
+    println!("key: {hex_key}");
     println!("iv: {}", hex::encode(iv));
     println!("ciphertext: {ciphertext}");
 
     Ok(())
 }
 
-fn aes_cbc_decrypt(key: Vec<u8>, iv: String, ciphertext: String) -> Result<(), &'static str> {
+fn aes_cbc_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'static str> {
     let key = new_unbound_key(key)?;
     let iv = {
         let v = hex::decode(iv).map_err(|_| "invalid iv")?;
@@ -215,7 +206,7 @@ fn aes_cbc_decrypt(key: Vec<u8>, iv: String, ciphertext: String) -> Result<(), &
         .map_err(|_| "failed to initalized aes decryption")?;
 
     let mut ciphertext =
-        Vec::from(hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?);
+        hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?;
 
     let plaintext = key
         .decrypt(ciphertext.as_mut())
@@ -229,7 +220,7 @@ fn aes_cbc_decrypt(key: Vec<u8>, iv: String, ciphertext: String) -> Result<(), &
     Ok(())
 }
 
-fn new_unbound_key(key: Vec<u8>) -> Result<UnboundCipherKey, &'static str> {
+fn new_unbound_key(key: &[u8]) -> Result<UnboundCipherKey, &'static str> {
     let alg = match key.len() {
         16 => &AES_128,
         32 => &AES_256,
@@ -238,5 +229,5 @@ fn new_unbound_key(key: Vec<u8>) -> Result<UnboundCipherKey, &'static str> {
         }
     };
 
-    UnboundCipherKey::new(alg, key.as_ref()).map_err(|_| "failed to construct aes key")
+    UnboundCipherKey::new(alg, key).map_err(|_| "failed to construct aes key")
 }
