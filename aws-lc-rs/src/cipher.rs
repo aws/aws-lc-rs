@@ -659,6 +659,7 @@ fn encrypt_aes_ctr_mode(
     let mut buffer = [0u8; AES_BLOCK_LEN];
 
     aes_ctr128_encrypt(key, &mut iv, &mut buffer, in_out);
+    iv.zeroize();
 
     Ok(context)
 }
@@ -692,6 +693,7 @@ fn encrypt_aes_cbc_mode(
     };
 
     aes_cbc_encrypt(key, &mut iv, in_out);
+    iv.zeroize();
 
     Ok(context)
 }
@@ -716,6 +718,7 @@ fn decrypt_aes_cbc_mode(
     };
 
     aes_cbc_decrypt(key, &mut iv, in_out);
+    iv.zeroize();
 
     Ok(context)
 }
