@@ -83,7 +83,7 @@ use zeroize::Zeroize;
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum PaddingStrategy {
-    /// PKCS#7 Padding.
+    /// PKCS#7 Padding. ([See RFC 5652](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3))
     PKCS7,
 }
 
@@ -365,15 +365,11 @@ impl PaddedBlockEncryptingKey {
     {
         self.padding
             .add_padding(self.algorithm().block_len(), in_out)?;
-        TryInto::<EncryptingKey>::try_into(self)?.encrypt(in_out.as_mut())
+        self.into_encrypting_key()?.encrypt(in_out.as_mut())
     }
-}
 
-impl TryFrom<PaddedBlockEncryptingKey> for EncryptingKey {
-    type Error = Unspecified;
-
-    fn try_from(value: PaddedBlockEncryptingKey) -> Result<Self, Self::Error> {
-        EncryptingKey::new(value.key, value.mode, Some(value.context))
+    fn into_encrypting_key(self) -> Result<EncryptingKey, Unspecified> {
+        EncryptingKey::new(self.key, self.mode, Some(self.context))
     }
 }
 
@@ -444,9 +440,13 @@ impl PaddedBlockDecryptingKey {
     pub fn decrypt(self, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
         let block_len = self.algorithm().block_len();
         let padding = self.padding;
-        let mut in_out = TryInto::<DecryptingKey>::try_into(self)?.decrypt(in_out)?;
+        let mut in_out = self.into_decrypting_key()?.decrypt(in_out)?;
         in_out = padding.remove_padding(block_len, in_out)?;
         Ok(in_out)
+    }
+
+    fn into_decrypting_key(self) -> Result<DecryptingKey, Unspecified> {
+        DecryptingKey::new(self.key, self.mode, self.mode_input)
     }
 }
 
@@ -623,14 +623,6 @@ impl DecryptingKey {
                 }
             },
         }
-    }
-}
-
-impl TryFrom<PaddedBlockDecryptingKey> for DecryptingKey {
-    type Error = Unspecified;
-
-    fn try_from(value: PaddedBlockDecryptingKey) -> Result<Self, Self::Error> {
-        DecryptingKey::new(value.key, value.mode, value.mode_input)
     }
 }
 
