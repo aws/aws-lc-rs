@@ -21,7 +21,10 @@
 //!
 //! ## AES-128 CBC Mode Encryption
 //!
-//! ```
+//! ```rust
+//! # use std::error::Error;
+//! #
+//! # fn main() -> Result<(), Box<dyn Error>> {
 //! use aws_lc_rs::cipher::{
 //!     PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128,
 //! };
@@ -33,18 +36,25 @@
 //!     0xd1,
 //! ];
 //!
-//! let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
-//! let encrypting_key = PaddedBlockEncryptingKey::cbc_pkcs7(key).unwrap();
-//! let context = encrypting_key.encrypt(&mut plaintext).unwrap();
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
+//! let encrypting_key = PaddedBlockEncryptingKey::cbc_pkcs7(key)?;
+//! let context = encrypting_key.encrypt(&mut plaintext)?;
 //!
-//! let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
-//! let decrypting_key = PaddedBlockDecryptingKey::cbc_pkcs7(key, context).unwrap();
-//! let plaintext = decrypting_key.decrypt(&mut plaintext).unwrap();
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
+//! let decrypting_key = PaddedBlockDecryptingKey::cbc_pkcs7(key, context)?;
+//! let plaintext = decrypting_key.decrypt(&mut plaintext)?;
+//! #
+//! #
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! ## AES-128 CTR Mode Encryption
 //!
-//! ```
+//! ```rust
+//! # use std::error::Error;
+//! #
+//! # fn main() -> Result<(), Box<dyn Error>> {
 //! use aws_lc_rs::cipher::{DecryptingKey, EncryptingKey, UnboundCipherKey, AES_128};
 //!
 //! let mut plaintext = Vec::from("This is a secret message!");
@@ -54,13 +64,16 @@
 //!     0xd1,
 //! ];
 //!
-//! let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
-//! let encrypting_key = EncryptingKey::ctr(key).unwrap();
-//! let context = encrypting_key.encrypt(&mut plaintext).unwrap();
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
+//! let encrypting_key = EncryptingKey::ctr(key)?;
+//! let context = encrypting_key.encrypt(&mut plaintext)?;
 //!
-//! let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
-//! let decrypting_key = DecryptingKey::ctr(key, context).unwrap();
-//! let plaintext = decrypting_key.decrypt(&mut plaintext).unwrap();
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
+//! let decrypting_key = DecryptingKey::ctr(key, context)?;
+//! let plaintext = decrypting_key.decrypt(&mut plaintext)?;
+//! #
+//! # Ok(())
+//! # }
 //! ```
 //!
 
@@ -252,7 +265,7 @@ pub struct UnboundCipherKey {
 }
 
 impl UnboundCipherKey {
-    /// Constructs a [`UnboundCipherKey`].
+    /// Constructs an [`UnboundCipherKey`].
     ///
     /// # Errors
     ///
