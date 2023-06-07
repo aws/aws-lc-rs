@@ -3,7 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{aead, digest, error, hkdf, hmac, test, test_file};
+use aws_lc_rs::{aead, cipher, digest, error, hkdf, hmac, test, test_file};
 
 #[test]
 fn hkdf_tests() {
@@ -121,6 +121,11 @@ fn hkdf_key_types() {
         ] {
             let okm = prk.expand(&[b"info"], aead_alg).unwrap();
             let _aead_prk_key = aead::UnboundKey::from(okm);
+        }
+
+        for cipher_alg in [&cipher::AES_256, &cipher::AES_128] {
+            let okm = prk.expand(&[b"info"], cipher_alg).unwrap();
+            let _aead_prk_key = cipher::UnboundCipherKey::from(okm);
         }
     }
 }
