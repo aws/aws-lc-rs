@@ -3,7 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-//! Block and Stream Cipher for Encryption and Decryption.
+//! Block and Stream Ciphers for Encryption and Decryption.
 //!
 //! # 🛑 Read Before Using
 //!
@@ -25,11 +25,13 @@
 //! # use std::error::Error;
 //! #
 //! # fn main() -> Result<(), Box<dyn Error>> {
+//! use std::io::Read;
 //! use aws_lc_rs::cipher::{
 //!     PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128,
 //! };
 //!
-//! let mut plaintext = Vec::from("This is a secret message!");
+//! let original_message = "This is a secret message!".as_bytes();
+//! let mut in_out_buffer = Vec::from(original_message);
 //!
 //! let key_bytes: &[u8] = &[
 //!     0xff, 0x0b, 0xe5, 0x84, 0x64, 0x0b, 0x00, 0xc8, 0x90, 0x7a, 0x4b, 0xbf, 0x82, 0x7c, 0xb6,
@@ -38,11 +40,12 @@
 //!
 //! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
 //! let encrypting_key = PaddedBlockEncryptingKey::cbc_pkcs7(key)?;
-//! let context = encrypting_key.encrypt(&mut plaintext)?;
+//! let context = encrypting_key.encrypt(&mut in_out_buffer)?;
 //!
 //! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
 //! let decrypting_key = PaddedBlockDecryptingKey::cbc_pkcs7(key, context)?;
-//! let plaintext = decrypting_key.decrypt(&mut plaintext)?;
+//! let plaintext = decrypting_key.decrypt(&mut in_out_buffer)?;
+//! assert_eq!(original_message, plaintext);
 //! #
 //! #
 //! # Ok(())
@@ -57,7 +60,8 @@
 //! # fn main() -> Result<(), Box<dyn Error>> {
 //! use aws_lc_rs::cipher::{DecryptingKey, EncryptingKey, UnboundCipherKey, AES_128};
 //!
-//! let mut plaintext = Vec::from("This is a secret message!");
+//! let original_message = "This is a secret message!".as_bytes();
+//! let mut in_out_buffer = Vec::from(original_message);
 //!
 //! let key_bytes: &[u8] = &[
 //!     0xff, 0x0b, 0xe5, 0x84, 0x64, 0x0b, 0x00, 0xc8, 0x90, 0x7a, 0x4b, 0xbf, 0x82, 0x7c, 0xb6,
@@ -66,11 +70,12 @@
 //!
 //! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
 //! let encrypting_key = EncryptingKey::ctr(key)?;
-//! let context = encrypting_key.encrypt(&mut plaintext)?;
+//! let context = encrypting_key.encrypt(&mut in_out_buffer)?;
 //!
 //! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
 //! let decrypting_key = DecryptingKey::ctr(key, context)?;
-//! let plaintext = decrypting_key.decrypt(&mut plaintext)?;
+//! let plaintext = decrypting_key.decrypt(&mut in_out_buffer)?;
+//! assert_eq!(original_message, plaintext);
 //! #
 //! # Ok(())
 //! # }
@@ -85,6 +90,8 @@ pub(crate) mod chacha;
 pub(crate) mod key;
 
 use crate::error::Unspecified;
+use crate::hkdf;
+use crate::hkdf::KeyType;
 use crate::iv::FixedLength;
 use aws_lc::{AES_cbc_encrypt, AES_ctr128_encrypt, AES_DECRYPT, AES_ENCRYPT, AES_KEY};
 use key::SymmetricCipherKey;
@@ -215,14 +222,14 @@ pub struct Algorithm {
 }
 
 /// AES 128-bit cipher
-pub const AES_128: Algorithm = Algorithm {
+pub static AES_128: Algorithm = Algorithm {
     id: AlgorithmId::Aes128,
     key_len: AES_128_KEY_LEN,
     block_len: AES_BLOCK_LEN,
 };
 
 /// AES 256-bit cipher
-pub const AES_256: Algorithm = Algorithm {
+pub static AES_256: Algorithm = Algorithm {
     id: AlgorithmId::Aes256,
     key_len: AES_256_KEY_LEN,
     block_len: AES_BLOCK_LEN,
@@ -258,6 +265,31 @@ impl Algorithm {
     }
 }
 
+#[allow(clippy::missing_fields_in_debug)]
+impl Debug for UnboundCipherKey {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+        f.debug_struct("UnboundCipherKey")
+            .field("algorithm", &self.algorithm)
+            .finish()
+    }
+}
+
+impl From<hkdf::Okm<'_, &'static Algorithm>> for UnboundCipherKey {
+    fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
+        let mut key_bytes = [0; AES_256_KEY_LEN];
+        let key_bytes = &mut key_bytes[..okm.len().key_len];
+        let algorithm = *okm.len();
+        okm.fill(key_bytes).unwrap();
+        Self::new(algorithm, key_bytes).unwrap()
+    }
+}
+
+impl KeyType for &'static Algorithm {
+    fn len(&self) -> usize {
+        self.key_len
+    }
+}
+
 /// A key bound to a particular cipher algorithm.
 pub struct UnboundCipherKey {
     algorithm: &'static Algorithm,
@@ -281,7 +313,9 @@ impl UnboundCipherKey {
     }
 
     #[inline]
-    fn algorithm(&self) -> &'static Algorithm {
+    #[must_use]
+    /// Returns the algorithm associated with this key.
+    pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
     }
 }
@@ -773,6 +807,23 @@ fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
 mod tests {
     use super::*;
     use crate::test::from_hex;
+
+    #[test]
+    fn test_debug() {
+        {
+            let aes_128_key_bytes = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+            let cipher_key = UnboundCipherKey::new(&AES_128, aes_128_key_bytes.as_slice()).unwrap();
+            assert_eq!("UnboundCipherKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 } }", format!("{cipher_key:?}"));
+        }
+
+        {
+            let aes_256_key_bytes =
+                from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f")
+                    .unwrap();
+            let cipher_key = UnboundCipherKey::new(&AES_256, aes_256_key_bytes.as_slice()).unwrap();
+            assert_eq!("UnboundCipherKey { algorithm: Algorithm { id: Aes256, key_len: 32, block_len: 16 } }", format!("{cipher_key:?}"));
+        }
+    }
 
     fn helper_test_cipher_n_bytes(
         key: &[u8],

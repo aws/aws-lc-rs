@@ -83,7 +83,7 @@
 //!
 //! #### - bindgen ####
 //! Causes `aws-lc-sys` or `aws-lc-fips-sys` to generates fresh bindings for AWS-LC instead of using
-//! the pre-generated bindings. This feature require `libclang` to be installed. See the
+//! the pre-generated bindings. This feature requires `libclang` to be installed. See the
 //! [requirements](https://rust-lang.github.io/rust-bindgen/requirements.html)
 //! for [rust-bindgen](https://github.com/rust-lang/rust-bindgen)
 //!
