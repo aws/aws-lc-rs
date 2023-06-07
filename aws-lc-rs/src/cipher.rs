@@ -202,6 +202,15 @@ impl<'a> TryFrom<&'a CipherContext> for &'a [u8] {
     }
 }
 
+impl Debug for CipherContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Iv128(_) => write!(f, "Iv128"),
+            Self::None => write!(f, "None"),
+        }
+    }
+}
+
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// Cipher algorithm identifier.
@@ -420,12 +429,23 @@ impl PaddedBlockEncryptingKey {
     }
 }
 
+impl Debug for PaddedBlockEncryptingKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PaddedBlockEncryptingKey")
+            .field("key", &self.key)
+            .field("mode", &self.mode)
+            .field("padding", &self.padding)
+            .field("context", &self.context)
+            .finish()
+    }
+}
+
 /// A cipher decryption key that performs block padding.
 pub struct PaddedBlockDecryptingKey {
     key: UnboundCipherKey,
     mode: OperatingMode,
     padding: PaddingStrategy,
-    mode_input: CipherContext,
+    context: CipherContext,
 }
 
 impl PaddedBlockDecryptingKey {
@@ -437,18 +457,18 @@ impl PaddedBlockDecryptingKey {
     ///
     pub fn cbc_pkcs7(
         key: UnboundCipherKey,
-        mode_input: CipherContext,
+        context: CipherContext,
     ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
-        PaddedBlockDecryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7, mode_input)
+        PaddedBlockDecryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7, context)
     }
 
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
         padding: PaddingStrategy,
-        mode_input: CipherContext,
+        context: CipherContext,
     ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
-        if !key.algorithm().is_valid_cipher_context(mode, &mode_input) {
+        if !key.algorithm().is_valid_cipher_context(mode, &context) {
             return Err(Unspecified);
         }
 
@@ -456,7 +476,7 @@ impl PaddedBlockDecryptingKey {
             key,
             mode,
             padding,
-            mode_input,
+            context,
         })
     }
 
@@ -493,7 +513,18 @@ impl PaddedBlockDecryptingKey {
     }
 
     fn into_decrypting_key(self) -> Result<DecryptingKey, Unspecified> {
-        DecryptingKey::new(self.key, self.mode, self.mode_input)
+        DecryptingKey::new(self.key, self.mode, self.context)
+    }
+}
+
+impl Debug for PaddedBlockDecryptingKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PaddedBlockDecryptingKey")
+            .field("key", &self.key)
+            .field("mode", &self.mode)
+            .field("padding", &self.padding)
+            .field("context", &self.context)
+            .finish()
     }
 }
 
@@ -591,11 +622,21 @@ impl EncryptingKey {
     }
 }
 
+impl Debug for EncryptingKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EncryptingKey")
+            .field("key", &self.key)
+            .field("mode", &self.mode)
+            .field("context", &self.context)
+            .finish()
+    }
+}
+
 /// A cipher decryption key that does not perform block padding.
 pub struct DecryptingKey {
     key: UnboundCipherKey,
     mode: OperatingMode,
-    mode_input: CipherContext,
+    context: CipherContext,
 }
 
 impl DecryptingKey {
@@ -614,17 +655,13 @@ impl DecryptingKey {
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
-        mode_input: CipherContext,
+        context: CipherContext,
     ) -> Result<DecryptingKey, Unspecified> {
-        if !key.algorithm().is_valid_cipher_context(mode, &mode_input) {
+        if !key.algorithm().is_valid_cipher_context(mode, &context) {
             return Err(Unspecified);
         }
 
-        Ok(DecryptingKey {
-            key,
-            mode,
-            mode_input,
-        })
+        Ok(DecryptingKey { key, mode, context })
     }
 
     /// Returns the cipher algorithm.
@@ -661,15 +698,25 @@ impl DecryptingKey {
         match self.mode {
             OperatingMode::CBC => match self.key.algorithm().id() {
                 AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                    decrypt_aes_cbc_mode(&self.key, self.mode_input, in_out).map(|_| in_out)
+                    decrypt_aes_cbc_mode(&self.key, self.context, in_out).map(|_| in_out)
                 }
             },
             OperatingMode::CTR => match self.key.algorithm().id() {
                 AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                    decrypt_aes_ctr_mode(&self.key, self.mode_input, in_out).map(|_| in_out)
+                    decrypt_aes_ctr_mode(&self.key, self.context, in_out).map(|_| in_out)
                 }
             },
         }
+    }
+}
+
+impl Debug for DecryptingKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DecryptingKey")
+            .field("key", &self.key)
+            .field("mode", &self.mode)
+            .field("context", &self.context)
+            .finish()
     }
 }
 
@@ -822,6 +869,38 @@ mod tests {
                     .unwrap();
             let cipher_key = UnboundCipherKey::new(&AES_256, aes_256_key_bytes.as_slice()).unwrap();
             assert_eq!("UnboundCipherKey { algorithm: Algorithm { id: Aes256, key_len: 32, block_len: 16 } }", format!("{cipher_key:?}"));
+        }
+
+        {
+            let key_bytes = &[0u8; 16];
+            let key = PaddedBlockEncryptingKey::cbc_pkcs7(
+                UnboundCipherKey::new(&AES_128, key_bytes).unwrap(),
+            )
+            .unwrap();
+            assert_eq!("PaddedBlockEncryptingKey { key: UnboundCipherKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 } }, mode: CBC, padding: PKCS7, context: Iv128 }", format!("{key:?}"));
+            let mut data = vec![0u8; 16];
+            let context = key.encrypt(&mut data).unwrap();
+            assert_eq!("Iv128", format!("{context:?}"));
+            let key = PaddedBlockDecryptingKey::cbc_pkcs7(
+                UnboundCipherKey::new(&AES_128, key_bytes).unwrap(),
+                context,
+            )
+            .unwrap();
+            assert_eq!("PaddedBlockDecryptingKey { key: UnboundCipherKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 } }, mode: CBC, padding: PKCS7, context: Iv128 }", format!("{key:?}"));
+        }
+
+        {
+            let key_bytes = &[0u8; 16];
+            let key =
+                EncryptingKey::ctr(UnboundCipherKey::new(&AES_128, key_bytes).unwrap()).unwrap();
+            assert_eq!("EncryptingKey { key: UnboundCipherKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 } }, mode: CTR, context: Iv128 }", format!("{key:?}"));
+            let mut data = vec![0u8; 16];
+            let context = key.encrypt(&mut data).unwrap();
+            assert_eq!("Iv128", format!("{context:?}"));
+            let key =
+                DecryptingKey::ctr(UnboundCipherKey::new(&AES_128, key_bytes).unwrap(), context)
+                    .unwrap();
+            assert_eq!("DecryptingKey { key: UnboundCipherKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 } }, mode: CTR, context: Iv128 }", format!("{key:?}"));
         }
     }
 
