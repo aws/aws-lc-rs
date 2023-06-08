@@ -3,8 +3,7 @@ Resolves #ISSUE-NUMBER1
 Addresses #ISSUE-NUMBER2
 
 ### Description of changes: 
-Describe current behavior and how your code changes that behavior. If there are no issues this pr is resolving, explain
-why this change is necessary.
+Describe current behavior and how your code changes that behavior. If there are no issues this pr is resolving, explain why this change is necessary.
 
 ### Call-outs:
 Point out areas that need special attention or support during the review process. Discuss architecture or design changes.
