@@ -182,6 +182,71 @@ pub enum OperatingMode {
 }
 
 /// The contextual data used to encrypted/decrypt data.
+///
+/// # Examples
+///
+/// ## Constructing a `CipherContext` for decryption.
+///
+/// ```rust
+/// # use std::error::Error;
+/// # fn main() -> Result<(), Box<dyn Error>> {
+/// use aws_lc_rs::cipher::{CipherContext, DecryptingKey, UnboundCipherKey, AES_128};
+/// use aws_lc_rs::iv::FixedLength;
+///
+/// let context = CipherContext::Iv128(FixedLength::<16>::from(&[
+///     0x8d, 0xdb, 0x7d, 0xf1, 0x56, 0xf5, 0x1c, 0xde, 0x63, 0xe3, 0x4a, 0x34, 0xb0, 0xdf, 0x28,
+///     0xf0,
+/// ]));
+///
+/// let ciphertext: &[u8] = &[
+///     0x79, 0x8c, 0x04, 0x58, 0xcf, 0x98, 0xb1, 0xe9, 0x97, 0x6b, 0xa1, 0xce,
+/// ];
+///
+/// let mut in_out_buffer = Vec::from(ciphertext);
+///
+/// let key = UnboundCipherKey::new(
+///     &AES_128,
+///     &[
+///         0x5b, 0xfc, 0xe7, 0x5e, 0x57, 0xc5, 0x4d, 0xda, 0x2d, 0xd4, 0x7e, 0x07, 0x0a, 0xef,
+///         0x43, 0x29,
+///     ],
+/// )?;
+/// let decrypting_key = DecryptingKey::ctr(key, context)?;
+/// let plaintext = decrypting_key.decrypt(&mut in_out_buffer)?;
+/// assert_eq!("Hello World!".as_bytes(), plaintext);
+///
+///     # Ok(())
+/// # }
+/// ```
+///
+/// ## Getting an immutable reference to an IV slice.
+///
+/// `CipherContext` implements `TryFrom<&CipherContext>` for `&[u8]` allowing immutable references
+/// to IV bytes returned from cipher encryption operations.
+///
+/// ```rust
+/// # use std::error::Error;
+/// # fn main() -> Result<(), Box<dyn Error>> {
+/// use aws_lc_rs::cipher::CipherContext;
+/// # use aws_lc_rs::cipher::{EncryptingKey, UnboundCipherKey, AES_128};
+/// # let original_message = "Hello World!".as_bytes();
+/// # let mut in_out_buffer = Vec::from(original_message);
+/// # let key_bytes: &[u8] = &[
+/// #    0x68, 0xf9, 0x46, 0x1a, 0xde, 0x8d, 0x35, 0x38, 0x7b, 0x50, 0xcc, 0x9a, 0x36, 0x64, 0xf8,
+/// #    0x9d,
+/// # ];
+/// # let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
+/// # let encrypting_key = EncryptingKey::ctr(key)?;
+/// #
+/// let context: CipherContext = encrypting_key.encrypt(&mut in_out_buffer)?;
+/// let iv_bytes: &[u8] = (&context).try_into()?;
+/// assert_eq!(16, iv_bytes.len());
+/// #
+/// #    Ok(())
+/// # }
+/// ```
+///
+///
 #[non_exhaustive]
 pub enum CipherContext {
     /// A 128-bit Initalization Vector.
