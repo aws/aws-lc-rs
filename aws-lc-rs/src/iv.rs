@@ -35,7 +35,7 @@ impl<const L: usize> FixedLength<L> {
         Self(value)
     }
 
-    /// Returns the size of the nonce in bytes.
+    /// Returns the size of the iv in bytes.
     #[allow(clippy::must_use_candidate)]
     pub fn size(&self) -> usize {
         L
