@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
 use aws_lc_rs::cipher::{
     CipherContext, DecryptingKey, EncryptingKey, OperatingMode, PaddedBlockDecryptingKey,
     PaddedBlockEncryptingKey, PaddingStrategy, UnboundCipherKey, AES_128, AES_256,
