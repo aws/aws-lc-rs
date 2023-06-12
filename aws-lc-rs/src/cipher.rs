@@ -174,7 +174,7 @@ pub const AES_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
 const MAX_CIPHER_BLOCK_LEN: usize = AES_BLOCK_LEN;
-const MAX_CIPHER_BLOCK_LEN_U8: u8 = AES_BLOCK_LEN as u8;
+const MAX_CIPHER_BLOCK_LEN_U8: u8 = 16; // AES_BLOCK_LEN
 
 const IV_LEN_128_BIT: usize = 16;
 
