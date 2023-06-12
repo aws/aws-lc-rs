@@ -164,6 +164,8 @@ pub const AES_128_KEY_LEN: usize = 16;
 /// The number of bytes in an AES 256-bit key
 pub const AES_256_KEY_LEN: usize = 32;
 
+const MAX_CIPHER_KEY_LEN: usize = AES_256_KEY_LEN;
+
 /// The number of bytes for an AES initalization vector (IV)
 pub const AES_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
@@ -350,7 +352,7 @@ impl Debug for UnboundCipherKey {
 
 impl From<hkdf::Okm<'_, &'static Algorithm>> for UnboundCipherKey {
     fn from(okm: hkdf::Okm<&'static Algorithm>) -> Self {
-        let mut key_bytes = [0; AES_256_KEY_LEN];
+        let mut key_bytes = [0; MAX_CIPHER_KEY_LEN];
         let key_bytes = &mut key_bytes[..okm.len().key_len];
         let algorithm = *okm.len();
         okm.fill(key_bytes).unwrap();
