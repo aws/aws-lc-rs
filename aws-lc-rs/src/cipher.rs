@@ -114,21 +114,16 @@ impl PaddingStrategy {
     {
         match self {
             PaddingStrategy::PKCS7 => {
-                let mut padding_buffer = [MAX_CIPHER_BLOCK_LEN_U8; MAX_CIPHER_BLOCK_LEN];
+                let mut padding_buffer = [0u8; MAX_CIPHER_BLOCK_LEN];
 
                 let in_out_len = in_out.as_mut().len();
                 // This implements PKCS#7 padding scheme, used by aws-lc if we were using EVP_CIPHER API's
                 let remainder = in_out_len % block_len;
-                if remainder == 0 {
-                    // Possible heap allocation here :(
-                    in_out.extend(padding_buffer.iter());
-                } else {
-                    let padding_size = block_len - remainder;
-                    let v: u8 = padding_size.try_into().map_err(|_| Unspecified)?;
-                    padding_buffer.fill(v);
-                    // Possible heap allocation here :(
-                    in_out.extend(padding_buffer[0..padding_size].iter());
-                }
+                let padding_size = block_len - remainder;
+                let v: u8 = padding_size.try_into().map_err(|_| Unspecified)?;
+                padding_buffer.fill(v);
+                // Possible heap allocation here :(
+                in_out.extend(padding_buffer[0..padding_size].iter());
             }
         }
         Ok(())
@@ -174,7 +169,6 @@ pub const AES_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
 const MAX_CIPHER_BLOCK_LEN: usize = AES_BLOCK_LEN;
-const MAX_CIPHER_BLOCK_LEN_U8: u8 = 16; // AES_BLOCK_LEN
 
 const IV_LEN_128_BIT: usize = 16;
 
