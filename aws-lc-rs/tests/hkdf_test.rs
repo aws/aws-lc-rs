@@ -125,7 +125,7 @@ fn hkdf_key_types() {
 
         for cipher_alg in [&cipher::AES_256, &cipher::AES_128] {
             let okm = prk.expand(&[b"info"], cipher_alg).unwrap();
-            let _aead_prk_key = cipher::UnboundCipherKey::from(okm);
+            let _aes_prk_key = cipher::UnboundCipherKey::from(okm);
         }
     }
 }
