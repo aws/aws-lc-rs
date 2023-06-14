@@ -4,13 +4,12 @@
 use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
-use crate::cipher::AES_128_KEY_LEN;
+use crate::cipher::{AES_128_KEY_LEN, AES_256_KEY_LEN};
 use crate::error::Unspecified;
 use aws_lc::{AES_set_decrypt_key, AES_set_encrypt_key, AES_KEY};
 use core::ptr::copy_nonoverlapping;
 use std::mem::{size_of, transmute, MaybeUninit};
 use std::os::raw::c_uint;
-use std::ptr;
 use zeroize::Zeroize;
 
 pub(crate) enum SymmetricCipherKey {
@@ -85,8 +84,8 @@ impl SymmetricCipherKey {
             }
             let dec_key = dec_key.assume_init();
 
-            let mut kb = MaybeUninit::<[u8; 16]>::uninit();
-            ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 16);
+            let mut kb = MaybeUninit::<[u8; AES_128_KEY_LEN]>::uninit();
+            copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), AES_128_KEY_LEN);
             Ok(SymmetricCipherKey::Aes128 {
                 raw_key: Aes128Key(kb.assume_init()),
                 enc_key,
@@ -96,7 +95,7 @@ impl SymmetricCipherKey {
     }
 
     pub(crate) fn aes256(key_bytes: &[u8]) -> Result<Self, Unspecified> {
-        if key_bytes.len() != 32 {
+        if key_bytes.len() != AES_256_KEY_LEN {
             return Err(Unspecified);
         }
         unsafe {
@@ -122,8 +121,8 @@ impl SymmetricCipherKey {
             }
             let dec_key = dec_key.assume_init();
 
-            let mut kb = MaybeUninit::<[u8; 32]>::uninit();
-            copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
+            let mut kb = MaybeUninit::<[u8; AES_256_KEY_LEN]>::uninit();
+            copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), AES_256_KEY_LEN);
             Ok(SymmetricCipherKey::Aes256 {
                 raw_key: Aes256Key(kb.assume_init()),
                 enc_key,

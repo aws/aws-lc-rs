@@ -24,6 +24,7 @@
 //! $ cargo run --example cipher -- --mode cbc --key 6489d8ce0c4facf18b872705a05d5ee4 decrypt --iv 5cd56fb752830ec2459889226c5431bd 6311c14e8104730be124ce1e57e51fe3
 //! Hello World
 //! ```
+use aws_lc_rs::cipher::{AES_128_KEY_LEN, AES_IV_LEN};
 use aws_lc_rs::{
     cipher::{
         CipherContext, DecryptingKey, EncryptingKey, PaddedBlockDecryptingKey,
@@ -81,7 +82,7 @@ fn main() -> Result<(), &'static str> {
             }
         }
     } else {
-        let mut v = vec![0u8; 16];
+        let mut v = vec![0u8; AES_128_KEY_LEN];
         aws_lc_rs::rand::fill(v.as_mut_slice()).map_err(|_| "failed to generate key")?;
         v
     };
@@ -166,7 +167,8 @@ fn aes_cbc_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
         Some(iv) => {
             let iv = {
                 let v = hex::decode(iv).map_err(|_| "invalid iv")?;
-                let v: FixedLength<16> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
+                let v: FixedLength<AES_IV_LEN> =
+                    v.as_slice().try_into().map_err(|_| "invalid iv")?;
                 v
             };
             PaddedBlockEncryptingKey::less_safe_cbc_pkcs7(key, CipherContext::Iv128(iv))
