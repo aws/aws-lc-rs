@@ -164,8 +164,11 @@ pub const AES_256_KEY_LEN: usize = 32;
 
 const MAX_CIPHER_KEY_LEN: usize = AES_256_KEY_LEN;
 
-/// The number of bytes for an AES initialization vector (IV)
-pub const AES_IV_LEN: usize = 16;
+/// The number of bytes for an AES-CBC initialization vector (IV)
+pub const AES_CBC_IV_LEN: usize = 16;
+
+/// The number of bytes for an AES-CTR initialization vector (IV)
+pub const AES_CTR_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
 const MAX_CIPHER_BLOCK_LEN: usize = AES_BLOCK_LEN;
@@ -748,7 +751,7 @@ impl DecryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
-    /// and `in_out.len()` is not. Otherwise returned if decryption fails.
+    /// and `in_out.len()` is not. Also returned if decryption fails.
     ///
     pub fn decrypt(self, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
         let block_len = self.algorithm().block_len();
@@ -801,7 +804,7 @@ fn encrypt_aes_ctr_mode(
     };
 
     let mut iv = {
-        let mut iv = [0u8; AES_IV_LEN];
+        let mut iv = [0u8; AES_CTR_IV_LEN];
         iv.copy_from_slice((&context).try_into()?);
         iv
     };
@@ -837,7 +840,7 @@ fn encrypt_aes_cbc_mode(
     };
 
     let mut iv = {
-        let mut iv = [0u8; AES_IV_LEN];
+        let mut iv = [0u8; AES_CBC_IV_LEN];
         iv.copy_from_slice((&context).try_into()?);
         iv
     };
@@ -862,7 +865,7 @@ fn decrypt_aes_cbc_mode(
     };
 
     let mut iv = {
-        let mut iv = [0u8; AES_IV_LEN];
+        let mut iv = [0u8; AES_CBC_IV_LEN];
         iv.copy_from_slice((&context).try_into()?);
         iv
     };
