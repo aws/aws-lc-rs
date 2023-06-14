@@ -10,7 +10,7 @@ use crate::error::Unspecified;
 use crate::{error, rand};
 use zeroize::Zeroize;
 
-/// An initalization vector that must be unique for the lifetime of the associated key
+/// An initialization vector that must be unique for the lifetime of the associated key
 /// it is used with.
 pub struct FixedLength<const L: usize>([u8; L]);
 

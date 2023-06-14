@@ -164,7 +164,7 @@ pub const AES_256_KEY_LEN: usize = 32;
 
 const MAX_CIPHER_KEY_LEN: usize = AES_256_KEY_LEN;
 
-/// The number of bytes for an AES initalization vector (IV)
+/// The number of bytes for an AES initialization vector (IV)
 pub const AES_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
@@ -251,7 +251,7 @@ pub enum OperatingMode {
 ///
 #[non_exhaustive]
 pub enum CipherContext {
-    /// A 128-bit Initalization Vector.
+    /// A 128-bit Initialization Vector.
     Iv128(FixedLength<IV_LEN_128_BIT>),
 
     /// No input to the cipher mode.
@@ -416,7 +416,7 @@ impl PaddedBlockEncryptingKey {
     }
 
     /// Constructs a new `PaddedBlockEncryptingKey` cipher with chaining block cipher (CBC) mode.
-    /// The users provided context will be used for the CBC initalization-vector.
+    /// The users provided context will be used for the CBC initialization-vector.
     /// Plaintext data is padded following the PKCS#7 scheme.
     ///
     /// # Errors
@@ -613,7 +613,7 @@ impl EncryptingKey {
     }
 
     /// Constructs an `EncryptingKey` operating in counter (CTR) mode using the provided key.
-    /// The users provided context will be used for the CTR mode initalization-vector.
+    /// The users provided context will be used for the CTR mode initialization-vector.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error creating the `EncryptingKey`.
