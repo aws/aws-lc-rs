@@ -4,8 +4,8 @@
 use crate::aead::{Aad, Algorithm, AlgorithmID, Nonce, Tag, MAX_TAG_LEN};
 use std::mem::MaybeUninit;
 
-use crate::aead::key_inner::KeyInner;
-use crate::cipher::SymmetricCipherKey;
+use crate::aead::aead_ctx::AeadCtx;
+use crate::cipher::aes::{AES_128_KEY_LEN, AES_256_KEY_LEN};
 use crate::error::Unspecified;
 use aws_lc::EVP_AEAD_CTX_seal_scatter;
 use std::ptr::null;
@@ -13,16 +13,16 @@ use std::ptr::null;
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
 pub(crate) fn aead_seal_separate(
-    key: &KeyInner,
+    key: &AeadCtx,
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut [u8],
 ) -> Result<Tag, Unspecified> {
     unsafe {
         let aead_ctx = match key {
-            KeyInner::CHACHA20_POLY1305(.., aead_ctx)
-            | KeyInner::AES_128_GCM(.., aead_ctx)
-            | KeyInner::AES_256_GCM(.., aead_ctx) => aead_ctx,
+            AeadCtx::CHACHA20_POLY1305(.., aead_ctx)
+            | AeadCtx::AES_128_GCM(.., aead_ctx)
+            | AeadCtx::AES_256_GCM(.., aead_ctx) => aead_ctx,
         };
 
         let aad_slice = aad.as_ref();
@@ -51,15 +51,9 @@ pub(crate) fn aead_seal_separate(
     }
 }
 
-/// Length of an AES-128 key in bytes.
-pub const AES_128_KEY_LEN: usize = 16;
-
-/// Length of an AES-256 key in bytes.
-pub const AES_256_KEY_LEN: usize = 32;
-
 /// AES-128 in GCM mode with 128-bit tags and 96 bit nonces.
 pub static AES_128_GCM: Algorithm = Algorithm {
-    init: init_128,
+    init: init_128_aead,
     key_len: AES_128_KEY_LEN,
     id: AlgorithmID::AES_128_GCM,
     max_input_len: u64::MAX,
@@ -67,27 +61,27 @@ pub static AES_128_GCM: Algorithm = Algorithm {
 
 /// AES-256 in GCM mode with 128-bit tags and 96 bit nonces.
 pub static AES_256_GCM: Algorithm = Algorithm {
-    init: init_256,
+    init: init_256_aead,
     key_len: AES_256_KEY_LEN,
     id: AlgorithmID::AES_256_GCM,
     max_input_len: u64::MAX,
 };
 
 #[inline]
-fn init_128(key: &[u8]) -> Result<KeyInner, Unspecified> {
+fn init_128_aead(key: &[u8]) -> Result<AeadCtx, Unspecified> {
     init_aes_gcm(key, AlgorithmID::AES_128_GCM)
 }
 
 #[inline]
-fn init_256(key: &[u8]) -> Result<KeyInner, Unspecified> {
+fn init_256_aead(key: &[u8]) -> Result<AeadCtx, Unspecified> {
     init_aes_gcm(key, AlgorithmID::AES_256_GCM)
 }
 
 #[inline]
-fn init_aes_gcm(key: &[u8], id: AlgorithmID) -> Result<KeyInner, Unspecified> {
+fn init_aes_gcm(key: &[u8], id: AlgorithmID) -> Result<AeadCtx, Unspecified> {
     match id {
-        AlgorithmID::AES_128_GCM => KeyInner::new(SymmetricCipherKey::aes128(key)?),
-        AlgorithmID::AES_256_GCM => KeyInner::new(SymmetricCipherKey::aes256(key)?),
+        AlgorithmID::AES_128_GCM => AeadCtx::aes_128_gcm(key),
+        AlgorithmID::AES_256_GCM => AeadCtx::aes_256_gcm(key),
         AlgorithmID::CHACHA20_POLY1305 => panic!("Unrecognized algorithm: {id:?}"),
     }
 }

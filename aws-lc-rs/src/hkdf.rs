@@ -92,6 +92,7 @@ pub struct Salt {
     key_len: usize,
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl fmt::Debug for Salt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("hkdf::Salt")
@@ -207,6 +208,7 @@ pub struct Prk {
     key_len: usize,
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl fmt::Debug for Prk {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("hkdf::Prk")

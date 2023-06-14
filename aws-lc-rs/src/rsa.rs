@@ -622,7 +622,6 @@ where
         Ok(rsa)
     }
 
-    #[allow(unused_variables, dead_code)]
     /// Verifies that `signature` is a valid signature of `message` using `self`
     /// as the public key. `params` determine what algorithm parameters
     /// (padding, digest algorithm, key length range, etc.) are used in the
