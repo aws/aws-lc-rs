@@ -4,8 +4,10 @@ use aws_lc_rs::cipher::{
 };
 use aws_lc_rs::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
+#[cfg(feature = "openssl-benchmarks")]
 use openssl::symm::Cipher;
 
+#[cfg(feature = "openssl-benchmarks")]
 macro_rules! openssl_bench {
     ($group:ident, $openssl: expr, $key:ident, $iv:ident, $data:ident) => {
         $group.bench_function("OpenSSL", |b| {
@@ -15,6 +17,13 @@ macro_rules! openssl_bench {
                 let _ = decrypt($openssl, &$key, Some(&$iv), data.as_ref()).unwrap();
             })
         });
+    };
+}
+
+#[cfg(not(feature = "openssl-benchmarks"))]
+macro_rules! openssl_bench {
+    ($group:ident, $openssl: expr, $key:ident, $iv:ident, $data:ident) => {
+        // NO-OP
     };
 }
 
