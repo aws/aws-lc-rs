@@ -25,9 +25,7 @@ impl Nonce {
     /// `error::Unspecified` when byte slice length is not `NONCE_LEN`
     #[inline]
     pub fn try_assume_unique_for_key(value: &[u8]) -> Result<Self, error::Unspecified> {
-        Ok(Self(FixedLength::<NONCE_LEN>::try_assume_unique_for_key(
-            value,
-        )?))
+        Ok(Self(FixedLength::<NONCE_LEN>::try_from(value)?))
     }
 
     /// Constructs a `Nonce` with the given value, assuming that the value is
@@ -35,7 +33,7 @@ impl Nonce {
     #[inline]
     #[must_use]
     pub fn assume_unique_for_key(value: [u8; NONCE_LEN]) -> Self {
-        Self(FixedLength::<NONCE_LEN>::assume_unique_for_key(value))
+        Self(FixedLength::<NONCE_LEN>::from(value))
     }
 }
 

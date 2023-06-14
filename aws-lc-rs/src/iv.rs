@@ -7,7 +7,7 @@
 //! Initialization Vector (IV) cryptographic primitives
 
 use crate::error::Unspecified;
-use crate::{error, rand};
+use crate::rand;
 use zeroize::Zeroize;
 
 /// An initialization vector that must be unique for the lifetime of the associated key
@@ -15,26 +15,6 @@ use zeroize::Zeroize;
 pub struct FixedLength<const L: usize>([u8; L]);
 
 impl<const L: usize> FixedLength<L> {
-    /// Constructs a [`FixedLength`] with the given value, assuming that the value is
-    /// unique for the lifetime of the key it is being used with.
-    ///
-    /// Fails if `value` isn't `L` bytes long.
-    /// # Errors
-    /// `error::Unspecified` when byte slice length is not `L`
-    #[inline]
-    pub fn try_assume_unique_for_key(value: &[u8]) -> Result<Self, error::Unspecified> {
-        let value: &[u8; L] = value.try_into()?;
-        Ok(Self::assume_unique_for_key(*value))
-    }
-
-    /// Constructs a [`FixedLength`] with the given value, assuming that the value is
-    /// unique for the lifetime of the key it is being used with.
-    #[inline]
-    #[must_use]
-    pub fn assume_unique_for_key(value: [u8; L]) -> Self {
-        Self(value)
-    }
-
     /// Returns the size of the iv in bytes.
     #[allow(clippy::must_use_candidate)]
     pub fn size(&self) -> usize {
@@ -85,7 +65,8 @@ impl<const L: usize> TryFrom<&[u8]> for FixedLength<L> {
     type Error = Unspecified;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        FixedLength::<L>::try_assume_unique_for_key(value)
+        let value: &[u8; L] = value.try_into()?;
+        Ok(Self::from(*value))
     }
 }
 
