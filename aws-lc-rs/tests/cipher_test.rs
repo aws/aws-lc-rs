@@ -189,7 +189,7 @@ cipher_kat!(
 );
 
 cipher_kat!(
-    test_kat_256_ctr_15_bytes,
+    test_kat_aes_256_ctr_15_bytes_2,
     &AES_256,
     OperatingMode::CTR,
     ctr,
@@ -212,7 +212,7 @@ padded_cipher_kat!(
 );
 
 padded_cipher_kat!(
-    test_kat_128_cbc_16_bytes,
+    test_kat_aes_128_cbc_16_bytes_2,
     &AES_128,
     OperatingMode::CBC,
     PaddingStrategy::PKCS7,
@@ -292,7 +292,7 @@ cipher_rt!(
 );
 
 cipher_rt!(
-    test_rt_256_ctr_15_bytes,
+    test_rt_aes_256_ctr_15_bytes_2,
     &AES_256,
     OperatingMode::CTR,
     ctr,
@@ -301,7 +301,7 @@ cipher_rt!(
 );
 
 cipher_rt!(
-    test_rt_256_ctr_17_bytes,
+    test_rt_aes_256_ctr_17_bytes,
     &AES_256,
     OperatingMode::CTR,
     ctr,
@@ -320,7 +320,7 @@ padded_cipher_rt!(
 );
 
 padded_cipher_rt!(
-    test_rt_128_cbc_16_bytes,
+    test_rt_aes_128_cbc_16_bytes_2,
     &AES_128,
     OperatingMode::CBC,
     PaddingStrategy::PKCS7,

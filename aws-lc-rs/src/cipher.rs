@@ -409,7 +409,7 @@ impl PaddedBlockEncryptingKey {
     /// Plaintext data is padded following the PKCS#7 scheme.
     ///
     /// # Errors
-    /// * [`Unspecified`]: Returned if there is an error cosntruct a `PaddedBlockEncryptingKey`.
+    /// * [`Unspecified`]: Returned if there is an error cosntructing a `PaddedBlockEncryptingKey`.
     ///
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         PaddedBlockEncryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7, None)
@@ -606,7 +606,7 @@ impl EncryptingKey {
     /// Constructs an `EncryptingKey` operating in counter (CTR) mode using the provided key.
     ///
     /// # Errors
-    /// * [`Unspecified`]: Returned if there is an error construct the `EncryptingKey`.
+    /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
     ///
     pub fn ctr(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
         EncryptingKey::new(key, OperatingMode::CTR, None)
