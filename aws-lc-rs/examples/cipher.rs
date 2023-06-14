@@ -101,24 +101,22 @@ fn aes_ctr_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
     let hex_key = hex::encode(key);
     let key = new_unbound_key(key)?;
 
-    let key = match iv {
-        Some(iv) => {
-            let iv = {
-                let v = hex::decode(iv).map_err(|_| "invalid iv")?;
-                let v: FixedLength<16> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
-                v
-            };
-            EncryptingKey::less_safe_ctr(key, CipherContext::Iv128(iv))
-        }
-        None => EncryptingKey::ctr(key),
-    }
-    .map_err(|_| "failed to initialized aes encryption")?;
+    let key = EncryptingKey::ctr(key).map_err(|_| "failed to initalized aes encryption")?;
 
     let mut ciphertext = Vec::from(plaintext);
 
-    let context = key
-        .encrypt(ciphertext.as_mut())
-        .map_err(|_| "Failed to encrypt plaintext")?;
+    let context = match iv {
+        Some(iv) => {
+            let context = {
+                let v = hex::decode(iv).map_err(|_| "invalid iv")?;
+                let v: FixedLength<16> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
+                CipherContext::Iv128(v)
+            };
+            key.less_safe_encrypt(ciphertext.as_mut(), context)
+        }
+        None => key.encrypt(ciphertext.as_mut()),
+    }
+    .map_err(|_| "failed to encrypt plaintext")?;
 
     let iv: &[u8] = (&context)
         .try_into()
@@ -141,14 +139,13 @@ fn aes_ctr_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
         v
     };
 
-    let key = DecryptingKey::ctr(key, CipherContext::Iv128(iv))
-        .map_err(|_| "failed to initialized aes decryption")?;
+    let key = DecryptingKey::ctr(key).map_err(|_| "failed to initalized aes decryption")?;
 
     let mut ciphertext =
         hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?;
 
     let plaintext = key
-        .decrypt(ciphertext.as_mut())
+        .decrypt(ciphertext.as_mut(), CipherContext::Iv128(iv))
         .map_err(|_| "failed to decrypt ciphertext")?;
 
     let plaintext =
@@ -163,25 +160,24 @@ fn aes_cbc_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
     let hex_key = hex::encode(key);
     let key = new_unbound_key(key)?;
 
-    let key = match iv {
-        Some(iv) => {
-            let iv = {
-                let v = hex::decode(iv).map_err(|_| "invalid iv")?;
-                let v: FixedLength<AES_CBC_IV_LEN> =
-                    v.as_slice().try_into().map_err(|_| "invalid iv")?;
-                v
-            };
-            PaddedBlockEncryptingKey::less_safe_cbc_pkcs7(key, CipherContext::Iv128(iv))
-        }
-        None => PaddedBlockEncryptingKey::cbc_pkcs7(key),
-    }
-    .map_err(|_| "failed to initialized aes encryption")?;
+    let key = PaddedBlockEncryptingKey::cbc_pkcs7(key)
+        .map_err(|_| "failed to initalized aes encryption")?;
 
     let mut ciphertext = Vec::from(plaintext);
 
-    let context = key
-        .encrypt(&mut ciphertext)
-        .map_err(|_| "Failed to encrypt plaintext")?;
+    let context = match iv {
+        Some(iv) => {
+            let context = {
+                let v = hex::decode(iv).map_err(|_| "invalid iv")?;
+                let v: FixedLength<AES_CBC_IV_LEN> =
+                    v.as_slice().try_into().map_err(|_| "invalid iv")?;
+                CipherContext::Iv128(v)
+            };
+            key.less_safe_encrypt(&mut ciphertext, context)
+        }
+        None => key.encrypt(&mut ciphertext),
+    }
+    .map_err(|_| "failed to initalized aes encryption")?;
 
     let iv: &[u8] = (&context)
         .try_into()
@@ -204,14 +200,14 @@ fn aes_cbc_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
         v
     };
 
-    let key = PaddedBlockDecryptingKey::cbc_pkcs7(key, CipherContext::Iv128(iv))
-        .map_err(|_| "failed to initialized aes decryption")?;
+    let key = PaddedBlockDecryptingKey::cbc_pkcs7(key)
+        .map_err(|_| "failed to initalized aes decryption")?;
 
     let mut ciphertext =
         hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?;
 
     let plaintext = key
-        .decrypt(ciphertext.as_mut())
+        .decrypt(ciphertext.as_mut(), CipherContext::Iv128(iv))
         .map_err(|_| "failed to decrypt ciphertext")?;
 
     let plaintext =
