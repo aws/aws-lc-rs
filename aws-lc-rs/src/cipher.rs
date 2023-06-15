@@ -7,7 +7,7 @@ pub(crate) mod aes;
 pub(crate) mod block;
 pub(crate) mod chacha;
 
-use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
+use crate::cipher::aes::encrypt_block_aes;
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 use crate::error::Unspecified;
@@ -18,8 +18,8 @@ use std::ptr;
 use zeroize::Zeroize;
 
 pub(crate) enum SymmetricCipherKey {
-    Aes128(Aes128Key, AES_KEY),
-    Aes256(Aes256Key, AES_KEY),
+    Aes128(AES_KEY),
+    Aes256(AES_KEY),
     ChaCha20(ChaCha20Key),
 }
 
@@ -31,7 +31,7 @@ impl Drop for SymmetricCipherKey {
     fn drop(&mut self) {
         // Aes128Key, Aes256Key and ChaCha20Key implement Drop separately.
         match self {
-            SymmetricCipherKey::Aes128(_, aes_key) | SymmetricCipherKey::Aes256(_, aes_key) => unsafe {
+            SymmetricCipherKey::Aes128(aes_key) | SymmetricCipherKey::Aes256(aes_key) => unsafe {
                 #[allow(clippy::transmute_ptr_to_ptr)]
                 let value: &mut [u8; size_of::<AES_KEY>()] = transmute(aes_key);
                 value.zeroize();
@@ -61,10 +61,7 @@ impl SymmetricCipherKey {
 
             let mut kb = MaybeUninit::<[u8; 16]>::uninit();
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 16);
-            Ok(SymmetricCipherKey::Aes128(
-                Aes128Key(kb.assume_init()),
-                aes_key,
-            ))
+            Ok(SymmetricCipherKey::Aes128(aes_key))
         }
     }
 
@@ -86,10 +83,7 @@ impl SymmetricCipherKey {
 
             let mut kb = MaybeUninit::<[u8; 32]>::uninit();
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
-            Ok(SymmetricCipherKey::Aes256(
-                Aes256Key(kb.assume_init()),
-                aes_key,
-            ))
+            Ok(SymmetricCipherKey::Aes256(aes_key))
         }
     }
 
@@ -101,15 +95,6 @@ impl SymmetricCipherKey {
         unsafe {
             ptr::copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), 32);
             Ok(SymmetricCipherKey::ChaCha20(ChaCha20Key(kb.assume_init())))
-        }
-    }
-
-    #[inline]
-    pub(super) fn key_bytes(&self) -> &[u8] {
-        match self {
-            SymmetricCipherKey::Aes128(bytes, ..) => &bytes.0,
-            SymmetricCipherKey::Aes256(bytes, ..) => &bytes.0,
-            SymmetricCipherKey::ChaCha20(bytes) => &bytes.0,
         }
     }
 

@@ -67,15 +67,15 @@ use aes_gcm::aead_seal_separate;
 use std::fmt::Debug;
 
 use crate::error::Unspecified;
+use aead_ctx::AeadCtx;
 use aws_lc::{EVP_AEAD_CTX_open, EVP_AEAD_CTX_seal};
-use key_inner::KeyInner;
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
 
+mod aead_ctx;
 mod aes_gcm;
 mod chacha;
 pub mod chacha20_poly1305_openssh;
-mod key_inner;
 mod nonce;
 pub mod nonce_sequence;
 mod poly1305;
@@ -459,7 +459,7 @@ impl Aad<[u8; 0]> {
 
 /// An AEAD key without a designated role or nonce sequence.
 pub struct UnboundKey {
-    inner: KeyInner,
+    inner: AeadCtx,
     algorithm: &'static Algorithm,
 }
 
@@ -484,7 +484,7 @@ impl UnboundKey {
     }
 
     #[inline]
-    fn get_inner_key(&self) -> &KeyInner {
+    fn get_inner_key(&self) -> &AeadCtx {
         &self.inner
     }
 
@@ -649,7 +649,7 @@ impl Debug for LessSafeKey {
 
 /// An AEAD Algorithm.
 pub struct Algorithm {
-    init: fn(key: &[u8]) -> Result<KeyInner, Unspecified>,
+    init: fn(key: &[u8]) -> Result<AeadCtx, Unspecified>,
     key_len: usize,
     id: AlgorithmID,
 
@@ -739,7 +739,7 @@ fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), U
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
 pub(crate) fn aead_seal_combined<InOut>(
-    key: &KeyInner,
+    key: &AeadCtx,
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut InOut,
@@ -749,9 +749,9 @@ where
 {
     unsafe {
         let aead_ctx = match key {
-            KeyInner::AES_128_GCM(.., aead_ctx)
-            | KeyInner::AES_256_GCM(.., aead_ctx)
-            | KeyInner::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
+            AeadCtx::AES_128_GCM(aead_ctx)
+            | AeadCtx::AES_256_GCM(aead_ctx)
+            | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
 
@@ -785,16 +785,16 @@ where
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
 pub(crate) fn aead_open_combined(
-    key: &KeyInner,
+    key: &AeadCtx,
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut [u8],
 ) -> Result<(), Unspecified> {
     unsafe {
         let aead_ctx = match key {
-            KeyInner::AES_128_GCM(.., aead_ctx)
-            | KeyInner::AES_256_GCM(.., aead_ctx)
-            | KeyInner::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
+            AeadCtx::AES_128_GCM(aead_ctx)
+            | AeadCtx::AES_256_GCM(aead_ctx)
+            | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
 
