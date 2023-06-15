@@ -20,9 +20,9 @@ pub(crate) fn aead_seal_separate(
 ) -> Result<Tag, Unspecified> {
     unsafe {
         let aead_ctx = match key {
-            AeadCtx::CHACHA20_POLY1305(.., aead_ctx)
-            | AeadCtx::AES_128_GCM(.., aead_ctx)
-            | AeadCtx::AES_256_GCM(.., aead_ctx) => aead_ctx,
+            AeadCtx::CHACHA20_POLY1305(aead_ctx)
+            | AeadCtx::AES_128_GCM(aead_ctx)
+            | AeadCtx::AES_256_GCM(aead_ctx) => aead_ctx,
         };
 
         let aad_slice = aad.as_ref();
@@ -69,19 +69,10 @@ pub static AES_256_GCM: Algorithm = Algorithm {
 
 #[inline]
 fn init_128_aead(key: &[u8]) -> Result<AeadCtx, Unspecified> {
-    init_aes_gcm(key, AlgorithmID::AES_128_GCM)
+    AeadCtx::aes_128_gcm(key)
 }
 
 #[inline]
 fn init_256_aead(key: &[u8]) -> Result<AeadCtx, Unspecified> {
-    init_aes_gcm(key, AlgorithmID::AES_256_GCM)
-}
-
-#[inline]
-fn init_aes_gcm(key: &[u8], id: AlgorithmID) -> Result<AeadCtx, Unspecified> {
-    match id {
-        AlgorithmID::AES_128_GCM => AeadCtx::aes_128_gcm(key),
-        AlgorithmID::AES_256_GCM => AeadCtx::aes_256_gcm(key),
-        AlgorithmID::CHACHA20_POLY1305 => panic!("Unrecognized algorithm: {id:?}"),
-    }
+    AeadCtx::aes_256_gcm(key)
 }

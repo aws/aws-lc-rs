@@ -89,9 +89,9 @@ impl Drop for AeadCtx {
     fn drop(&mut self) {
         unsafe {
             let ctx = match self {
-                AeadCtx::AES_128_GCM(.., ctx)
-                | AeadCtx::AES_256_GCM(.., ctx)
-                | AeadCtx::CHACHA20_POLY1305(.., ctx) => ctx,
+                AeadCtx::AES_128_GCM(ctx)
+                | AeadCtx::AES_256_GCM(ctx)
+                | AeadCtx::CHACHA20_POLY1305(ctx) => ctx,
             };
             EVP_AEAD_CTX_cleanup(ctx);
             EVP_AEAD_CTX_zero(ctx);

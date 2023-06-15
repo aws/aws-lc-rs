@@ -749,9 +749,9 @@ where
 {
     unsafe {
         let aead_ctx = match key {
-            AeadCtx::AES_128_GCM(.., aead_ctx)
-            | AeadCtx::AES_256_GCM(.., aead_ctx)
-            | AeadCtx::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
+            AeadCtx::AES_128_GCM(aead_ctx)
+            | AeadCtx::AES_256_GCM(aead_ctx)
+            | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
 
@@ -792,9 +792,9 @@ pub(crate) fn aead_open_combined(
 ) -> Result<(), Unspecified> {
     unsafe {
         let aead_ctx = match key {
-            AeadCtx::AES_128_GCM(.., aead_ctx)
-            | AeadCtx::AES_256_GCM(.., aead_ctx)
-            | AeadCtx::CHACHA20_POLY1305(.., aead_ctx) => aead_ctx,
+            AeadCtx::AES_128_GCM(aead_ctx)
+            | AeadCtx::AES_256_GCM(aead_ctx)
+            | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
 
