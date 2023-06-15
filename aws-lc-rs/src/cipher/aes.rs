@@ -6,37 +6,12 @@
 use crate::cipher::block::{Block, BLOCK_LEN};
 use aws_lc::{AES_encrypt, AES_KEY};
 use std::mem::MaybeUninit;
-use std::ops::Deref;
-use zeroize::Zeroize;
 
-pub(crate) struct Aes128Key(pub(crate) [u8; 16]);
-impl Deref for Aes128Key {
-    type Target = [u8; 16];
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl Drop for Aes128Key {
-    fn drop(&mut self) {
-        self.0.zeroize();
-    }
-}
+/// Length of an AES-128 key in bytes.
+pub const AES_128_KEY_LEN: usize = 16;
 
-pub(crate) struct Aes256Key(pub(crate) [u8; 32]);
-impl Deref for Aes256Key {
-    type Target = [u8; 32];
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl Drop for Aes256Key {
-    fn drop(&mut self) {
-        self.0.zeroize();
-    }
-}
+/// Length of an AES-256 key in bytes.
+pub const AES_256_KEY_LEN: usize = 32;
 
 #[inline]
 pub(crate) fn encrypt_block_aes(aes_key: &AES_KEY, block: Block) -> Block {
@@ -50,25 +25,5 @@ pub(crate) fn encrypt_block_aes(aes_key: &AES_KEY, block: Block) -> Block {
         );
 
         Block::from(&cipher_text.assume_init())
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::cipher::aes::{Aes128Key, Aes256Key};
-    use crate::test;
-
-    #[test]
-    fn test_key_type_header_protection_key() {
-        let aes128_key_bytes = test::from_dirty_hex(r#"d480429666d48b400633921c5407d1d1"#);
-        let aes256_key_bytes = test::from_dirty_hex(
-            r#"d480429666d48b400633921c5407d1d1d480429666d48b400633921c5407d1d1"#,
-        );
-
-        let aes128 = Aes128Key(aes128_key_bytes.clone().try_into().unwrap());
-        let aes256 = Aes256Key(aes256_key_bytes.clone().try_into().unwrap());
-
-        assert_eq!(aes128.as_slice(), aes128_key_bytes.as_slice());
-        assert_eq!(aes256.as_slice(), aes256_key_bytes.as_slice());
     }
 }

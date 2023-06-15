@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::cipher::aes::{encrypt_block_aes, Aes128Key, Aes256Key};
+use crate::cipher::aes::encrypt_block_aes;
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 use crate::cipher::{AES_128_KEY_LEN, AES_256_KEY_LEN};
@@ -13,19 +13,9 @@ use std::os::raw::c_uint;
 use zeroize::Zeroize;
 
 pub(crate) enum SymmetricCipherKey {
-    Aes128 {
-        raw_key: Aes128Key,
-        enc_key: AES_KEY,
-        dec_key: AES_KEY,
-    },
-    Aes256 {
-        raw_key: Aes256Key,
-        enc_key: AES_KEY,
-        dec_key: AES_KEY,
-    },
-    ChaCha20 {
-        raw_key: ChaCha20Key,
-    },
+    Aes128 { enc_key: AES_KEY, dec_key: AES_KEY },
+    Aes256 { enc_key: AES_KEY, dec_key: AES_KEY },
+    ChaCha20 { raw_key: ChaCha20Key },
 }
 
 unsafe impl Send for SymmetricCipherKey {}
@@ -37,12 +27,8 @@ impl Drop for SymmetricCipherKey {
     fn drop(&mut self) {
         // Aes128Key, Aes256Key and ChaCha20Key implement Drop separately.
         match self {
-            SymmetricCipherKey::Aes128 {
-                enc_key, dec_key, ..
-            }
-            | SymmetricCipherKey::Aes256 {
-                enc_key, dec_key, ..
-            } => unsafe {
+            SymmetricCipherKey::Aes128 { enc_key, dec_key }
+            | SymmetricCipherKey::Aes256 { enc_key, dec_key } => unsafe {
                 let enc_bytes: &mut [u8; size_of::<AES_KEY>()] = (enc_key as *mut AES_KEY)
                     .cast::<[u8; size_of::<AES_KEY>()]>()
                     .as_mut()
@@ -90,11 +76,7 @@ impl SymmetricCipherKey {
 
             let mut kb = MaybeUninit::<[u8; AES_128_KEY_LEN]>::uninit();
             copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), AES_128_KEY_LEN);
-            Ok(SymmetricCipherKey::Aes128 {
-                raw_key: Aes128Key(kb.assume_init()),
-                enc_key,
-                dec_key,
-            })
+            Ok(SymmetricCipherKey::Aes128 { enc_key, dec_key })
         }
     }
 
@@ -127,11 +109,7 @@ impl SymmetricCipherKey {
 
             let mut kb = MaybeUninit::<[u8; AES_256_KEY_LEN]>::uninit();
             copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), AES_256_KEY_LEN);
-            Ok(SymmetricCipherKey::Aes256 {
-                raw_key: Aes256Key(kb.assume_init()),
-                enc_key,
-                dec_key,
-            })
+            Ok(SymmetricCipherKey::Aes256 { enc_key, dec_key })
         }
     }
 
@@ -145,15 +123,6 @@ impl SymmetricCipherKey {
             Ok(SymmetricCipherKey::ChaCha20 {
                 raw_key: ChaCha20Key(kb.assume_init()),
             })
-        }
-    }
-
-    #[inline]
-    pub(crate) fn key_bytes(&self) -> &[u8] {
-        match self {
-            SymmetricCipherKey::Aes128 { raw_key, .. } => &raw_key.0,
-            SymmetricCipherKey::Aes256 { raw_key, .. } => &raw_key.0,
-            SymmetricCipherKey::ChaCha20 { raw_key, .. } => &raw_key.0,
         }
     }
 

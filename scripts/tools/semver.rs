@@ -1,13 +1,12 @@
 #!/usr/bin/env rust-script
+//! Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//! SPDX-License-Identifier: Apache-2.0 OR ISC
 //! ```cargo
 //! [dependencies]
 //! clap = { version = "4.2.2", features = ["derive"] }
 //! regex = "1.7.3"
 //! semver = "1.0.17"
 //! ```
-
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use clap::Parser;
 

@@ -7,18 +7,17 @@
 //!
 //! See draft-ietf-quic-tls.
 
-use crate::aead::key_inner::KeyInner;
 use crate::cipher::aes::encrypt_block_aes;
+use crate::cipher::block;
 use crate::cipher::chacha::encrypt_block_chacha20;
 use crate::cipher::key::SymmetricCipherKey;
-use crate::cipher::{block, key};
 use crate::hkdf::KeyType;
 use crate::{derive_debug_via_id, error, hkdf};
 use core::convert::TryFrom;
 
 /// A key for generating QUIC Header Protection masks.
 pub struct HeaderProtectionKey {
-    inner: KeyInner,
+    inner: SymmetricCipherKey,
     algorithm: &'static Algorithm,
 }
 
@@ -75,7 +74,7 @@ pub type Sample = [u8; SAMPLE_LEN];
 
 /// A QUIC Header Protection Algorithm.
 pub struct Algorithm {
-    init: fn(key: &[u8]) -> Result<KeyInner, error::Unspecified>,
+    init: fn(key: &[u8]) -> Result<SymmetricCipherKey, error::Unspecified>,
 
     key_len: usize,
     id: AlgorithmID,
@@ -126,46 +125,29 @@ impl Eq for Algorithm {}
 /// AES-128.
 pub static AES_128: Algorithm = Algorithm {
     key_len: 16,
-    init: aes_init_128,
+    init: SymmetricCipherKey::aes128,
     id: AlgorithmID::AES_128,
 };
 
 /// AES-256.
 pub static AES_256: Algorithm = Algorithm {
     key_len: 32,
-    init: aes_init_256,
+    init: SymmetricCipherKey::aes256,
     id: AlgorithmID::AES_256,
 };
 
 /// `ChaCha20`.
 pub static CHACHA20: Algorithm = Algorithm {
     key_len: 32,
-    init: chacha20_init,
+    init: SymmetricCipherKey::chacha20,
     id: AlgorithmID::CHACHA20,
 };
 
 #[inline]
-fn aes_init_128(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    let aes_key = key::SymmetricCipherKey::aes128(key)?;
-    KeyInner::new(aes_key)
-}
-
-#[inline]
-fn aes_init_256(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    let aes_key = key::SymmetricCipherKey::aes256(key)?;
-    KeyInner::new(aes_key)
-}
-
-#[inline]
-fn chacha20_init(key: &[u8]) -> Result<KeyInner, error::Unspecified> {
-    let chacha20 = key::SymmetricCipherKey::chacha20(key)?;
-    KeyInner::new(chacha20)
-}
-
-#[inline]
-fn cipher_new_mask(key: &KeyInner, sample: Sample) -> Result<[u8; 5], error::Unspecified> {
-    let cipher_key = key.cipher_key();
-
+fn cipher_new_mask(
+    cipher_key: &SymmetricCipherKey,
+    sample: Sample,
+) -> Result<[u8; 5], error::Unspecified> {
     let block = block::Block::from(&sample);
 
     let encrypted_block = match cipher_key {
