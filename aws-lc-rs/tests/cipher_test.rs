@@ -10,97 +10,90 @@ use aws_lc_rs::test::from_hex;
 
 macro_rules! padded_cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
-        paste::item! {
-            #[test]
-            fn $name() {
-                let key = from_hex($key).unwrap();
-                let input = from_hex($plaintext).unwrap();
-                let expected_ciphertext = from_hex($ciphertext).unwrap();
+        #[test]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
 
-                let iv = from_hex($iv).unwrap();
-                let fixed_iv = FixedLength::try_from(iv.as_slice()).unwrap();
-                let context = CipherContext::Iv128(fixed_iv);
+            let iv = from_hex($iv).unwrap();
+            let fixed_iv = FixedLength::try_from(iv.as_slice()).unwrap();
+            let context = CipherContext::Iv128(fixed_iv);
 
-                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
 
-                let encrypting_key =
-                    PaddedBlockEncryptingKey::$constructor(unbound_key).unwrap();
-                assert_eq!($mode, encrypting_key.mode());
-                assert_eq!($alg, encrypting_key.algorithm());
-                let mut in_out = input.clone();
-                let context = encrypting_key.less_safe_encrypt(&mut in_out, context).unwrap();
-                assert_eq!(expected_ciphertext.as_slice(), in_out.as_slice());
+            let encrypting_key = PaddedBlockEncryptingKey::$constructor(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key
+                .less_safe_encrypt(&mut in_out, context)
+                .unwrap();
+            assert_eq!(expected_ciphertext.as_slice(), in_out.as_slice());
 
-                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
-                let decrypting_key =
-                    PaddedBlockDecryptingKey::$constructor(unbound_key2).unwrap();
-                assert_eq!($mode, decrypting_key.mode());
-                assert_eq!($alg, decrypting_key.algorithm());
-                let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
-                assert_eq!(input.as_slice(), plaintext);
-            }
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = PaddedBlockDecryptingKey::$constructor(unbound_key2).unwrap();
+            assert_eq!($mode, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
         }
     };
 }
 
 macro_rules! cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
-        paste::item! {
-            #[test]
-            fn $name() {
-                let key = from_hex($key).unwrap();
-                let input = from_hex($plaintext).unwrap();
-                let expected_ciphertext = from_hex($ciphertext).unwrap();
+        #[test]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
 
-                let iv = from_hex($iv).unwrap();
-                let fixed_iv = FixedLength::try_from(iv.as_slice()).unwrap();
-                let context = CipherContext::Iv128(fixed_iv);
+            let iv = from_hex($iv).unwrap();
+            let fixed_iv = FixedLength::try_from(iv.as_slice()).unwrap();
+            let context = CipherContext::Iv128(fixed_iv);
 
-                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
 
-                let encrypting_key =
-                    EncryptingKey::$constructor(unbound_key).unwrap();
-                assert_eq!($mode, encrypting_key.mode());
-                assert_eq!($alg, encrypting_key.algorithm());
-                let mut in_out = input.clone();
-                let context = encrypting_key.less_safe_encrypt(in_out.as_mut_slice(), context).unwrap();
-                assert_eq!(expected_ciphertext.as_slice(), in_out);
+            let encrypting_key = EncryptingKey::$constructor(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key
+                .less_safe_encrypt(in_out.as_mut_slice(), context)
+                .unwrap();
+            assert_eq!(expected_ciphertext.as_slice(), in_out);
 
-                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
-                let decrypting_key =
-                    DecryptingKey::$constructor(unbound_key2).unwrap();
-                assert_eq!($mode, decrypting_key.mode());
-                assert_eq!($alg, decrypting_key.algorithm());
-                let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
-                assert_eq!(input.as_slice(), plaintext);
-            }
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = DecryptingKey::$constructor(unbound_key2).unwrap();
+            assert_eq!($mode, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
         }
     };
 }
 
 macro_rules! padded_cipher_rt {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $plaintext:literal) => {
-        paste::item! {
-            #[test]
-            fn $name() {
-                let key = from_hex($key).unwrap();
-                let input = from_hex($plaintext).unwrap();
-                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+        #[test]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
 
-                let encrypting_key = PaddedBlockEncryptingKey::$constructor(unbound_key).unwrap();
-                assert_eq!($mode, encrypting_key.mode());
-                assert_eq!($alg, encrypting_key.algorithm());
-                let mut in_out = input.clone();
-                let context = encrypting_key.encrypt(&mut in_out).unwrap();
+            let encrypting_key = PaddedBlockEncryptingKey::$constructor(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key.encrypt(&mut in_out).unwrap();
 
-                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
-                let decrypting_key =
-                    PaddedBlockDecryptingKey::$constructor(unbound_key2).unwrap();
-                assert_eq!($mode, decrypting_key.mode());
-                assert_eq!($alg, decrypting_key.algorithm());
-                let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
-                assert_eq!(input.as_slice(), plaintext);
-            }
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = PaddedBlockDecryptingKey::$constructor(unbound_key2).unwrap();
+            assert_eq!($mode, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
         }
     };
 }
