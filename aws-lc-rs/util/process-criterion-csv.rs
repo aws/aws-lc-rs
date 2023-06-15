@@ -1,4 +1,6 @@
 #!/usr/bin/env rust-script
+//! Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//! SPDX-License-Identifier: Apache-2.0 OR ISC
 //! To run, you will need to install rust-script:
 //! ```
 //! $ cargo install rust-script
@@ -14,9 +16,6 @@
 //! clap = { version = "4.0.29", features = ["derive"] }
 //! itertools = "0.10.5"
 //! ```
-
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use std::cmp::Ordering;
 use std::collections::HashMap;

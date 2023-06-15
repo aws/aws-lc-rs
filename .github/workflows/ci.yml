@@ -420,3 +420,12 @@ jobs:
         working-directory: ./aws-lc-rs
         run: |
           ./scripts/run-rustls-integration.sh
+
+  copyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check
+        run: |
+          ./scripts/tools/copyright_check.sh
