@@ -206,6 +206,7 @@ unsafe impl Send for Key {}
 // All uses of *mut HMAC_CTX require the creation of a Context, which will clone the Key.
 unsafe impl Sync for Key {}
 
+#[allow(clippy::missing_fields_in_debug)]
 impl core::fmt::Debug for Key {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("Key")
