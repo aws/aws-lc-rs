@@ -8,7 +8,7 @@ use crate::cipher::{AES_128_KEY_LEN, AES_256_KEY_LEN};
 use crate::error::Unspecified;
 use aws_lc::{AES_set_decrypt_key, AES_set_encrypt_key, AES_KEY};
 use core::ptr::copy_nonoverlapping;
-use std::mem::{size_of, transmute, MaybeUninit};
+use std::mem::{size_of, MaybeUninit};
 use std::os::raw::c_uint;
 use zeroize::Zeroize;
 
@@ -43,11 +43,15 @@ impl Drop for SymmetricCipherKey {
             | SymmetricCipherKey::Aes256 {
                 enc_key, dec_key, ..
             } => unsafe {
-                #[allow(clippy::transmute_ptr_to_ptr)]
-                let enc_bytes: &mut [u8; size_of::<AES_KEY>()] = transmute(enc_key);
+                let enc_bytes: &mut [u8; size_of::<AES_KEY>()] = (enc_key as *mut AES_KEY)
+                    .cast::<[u8; size_of::<AES_KEY>()]>()
+                    .as_mut()
+                    .unwrap();
                 enc_bytes.zeroize();
-                #[allow(clippy::transmute_ptr_to_ptr)]
-                let dec_bytes: &mut [u8; size_of::<AES_KEY>()] = transmute(dec_key);
+                let dec_bytes: &mut [u8; size_of::<AES_KEY>()] = (dec_key as *mut AES_KEY)
+                    .cast::<[u8; size_of::<AES_KEY>()]>()
+                    .as_mut()
+                    .unwrap();
                 dec_bytes.zeroize();
             },
             SymmetricCipherKey::ChaCha20 { .. } => {}
