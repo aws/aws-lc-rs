@@ -36,25 +36,23 @@ macro_rules! benchmark_padded {
                             CipherContext::Iv128(iv.as_slice().try_into().unwrap());
 
                         let encrypt_key = match $mode {
-                            OperatingMode::CBC => {
-                                PaddedBlockEncryptingKey::less_safe_cbc_pkcs7(key, iv)
-                            }
+                            OperatingMode::CBC => PaddedBlockEncryptingKey::cbc_pkcs7(key),
                             _ => unreachable!(),
                         }
                         .unwrap();
 
                         let mut in_out = Vec::from(data.as_slice());
-                        let context = encrypt_key.encrypt(&mut in_out).unwrap();
+                        let context = encrypt_key.less_safe_encrypt(&mut in_out, iv).unwrap();
 
                         let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
 
                         let decrypt_key = match $mode {
-                            OperatingMode::CBC => PaddedBlockDecryptingKey::cbc_pkcs7(key, context),
+                            OperatingMode::CBC => PaddedBlockDecryptingKey::cbc_pkcs7(key),
                             _ => unreachable!(),
                         }
                         .unwrap();
 
-                        let _ = decrypt_key.decrypt(&mut in_out).unwrap();
+                        let _ = decrypt_key.decrypt(&mut in_out, context).unwrap();
                     })
                 });
 
@@ -83,23 +81,23 @@ macro_rules! benchmark_unpadded {
                             CipherContext::Iv128(iv.as_slice().try_into().unwrap());
 
                         let encrypt_key = match $mode {
-                            OperatingMode::CTR => EncryptingKey::less_safe_ctr(key, iv),
+                            OperatingMode::CTR => EncryptingKey::ctr(key),
                             _ => unreachable!(),
                         }
                         .unwrap();
 
                         let mut in_out = Vec::from(data.as_slice());
-                        let context = encrypt_key.encrypt(&mut in_out).unwrap();
+                        let context = encrypt_key.less_safe_encrypt(&mut in_out, iv).unwrap();
 
                         let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
 
                         let decrypt_key = match $mode {
-                            OperatingMode::CTR => DecryptingKey::ctr(key, context),
+                            OperatingMode::CTR => DecryptingKey::ctr(key),
                             _ => unreachable!(),
                         }
                         .unwrap();
 
-                        let _ = decrypt_key.decrypt(&mut in_out).unwrap();
+                        let _ = decrypt_key.decrypt(&mut in_out, context).unwrap();
                     })
                 });
 
