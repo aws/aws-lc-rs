@@ -151,6 +151,29 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
     cmake_cfg.define("DISABLE_PERL", "ON");
     cmake_cfg.define("DISABLE_GO", "ON");
 
+    // B/c this is the build script, you can't use `cfg!(target_os = "ios")` here. You must use the
+    // environment variables.
+    let target = env::var("TARGET").unwrap();
+    let target_vendor = env::var("CARGO_CFG_TARGET_VENDOR").unwrap();
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+    if target_vendor == "apple" {
+        // Use rustup to add support for cross-compilation targets. For example:
+        // ```
+        // rustup target add aarch64-apple-ios-sim
+        // ```
+
+        if target_os.trim() == "ios" {
+            cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
+            if target.trim().ends_with("-ios-sim") {
+                cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
+            }
+        }
+        if target_arch.trim() == "aarch64" {
+            cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
+        }
+    }
+
     if cfg!(feature = "asan") {
         env::set_var("CC", "/usr/bin/clang");
         env::set_var("CXX", "/usr/bin/clang++");
