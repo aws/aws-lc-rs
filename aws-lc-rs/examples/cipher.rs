@@ -24,7 +24,7 @@
 //! $ cargo run --example cipher -- --mode cbc --key 6489d8ce0c4facf18b872705a05d5ee4 decrypt --iv 5cd56fb752830ec2459889226c5431bd 6311c14e8104730be124ce1e57e51fe3
 //! Hello World
 //! ```
-use aws_lc_rs::cipher::{AES_128_KEY_LEN, AES_CBC_IV_LEN};
+use aws_lc_rs::cipher::{AES_128_KEY_LEN, AES_256_KEY_LEN, AES_CBC_IV_LEN, AES_CTR_IV_LEN};
 use aws_lc_rs::{
     cipher::{
         CipherContext, DecryptingKey, EncryptingKey, PaddedBlockDecryptingKey,
@@ -109,7 +109,8 @@ fn aes_ctr_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
         Some(iv) => {
             let context = {
                 let v = hex::decode(iv).map_err(|_| "invalid iv")?;
-                let v: FixedLength<16> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
+                let v: FixedLength<AES_CTR_IV_LEN> =
+                    v.as_slice().try_into().map_err(|_| "invalid iv")?;
                 CipherContext::Iv128(v)
             };
             key.less_safe_encrypt(ciphertext.as_mut(), context)
@@ -135,7 +136,7 @@ fn aes_ctr_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
     let key = new_unbound_key(key)?;
     let iv = {
         let v = hex::decode(iv).map_err(|_| "invalid iv")?;
-        let v: FixedLength<16> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
+        let v: FixedLength<AES_CTR_IV_LEN> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
         v
     };
 
@@ -196,7 +197,7 @@ fn aes_cbc_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
     let key = new_unbound_key(key)?;
     let iv = {
         let v = hex::decode(iv).map_err(|_| "invalid iv")?;
-        let v: FixedLength<16> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
+        let v: FixedLength<AES_CBC_IV_LEN> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
         v
     };
 
@@ -220,8 +221,8 @@ fn aes_cbc_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
 
 fn new_unbound_key(key: &[u8]) -> Result<UnboundCipherKey, &'static str> {
     let alg = match key.len() {
-        16 => &AES_128,
-        32 => &AES_256,
+        AES_128_KEY_LEN => &AES_128,
+        AES_256_KEY_LEN => &AES_256,
         _ => {
             return Err("invalid aes key length");
         }
