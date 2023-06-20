@@ -149,10 +149,7 @@ fn aes_ctr_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
         hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?;
 
     let plaintext = key
-        .decrypt(
-            ciphertext.as_mut(),
-            DecryptionContext::new(CipherContext::Iv128(iv)),
-        )
+        .decrypt(ciphertext.as_mut(), DecryptionContext::iv128(iv))
         .map_err(|_| "failed to decrypt ciphertext")?;
 
     let plaintext =
