@@ -97,6 +97,7 @@ use aws_lc::{AES_cbc_encrypt, AES_ctr128_encrypt, AES_DECRYPT, AES_ENCRYPT, AES_
 use key::SymmetricCipherKey;
 use std::fmt::Debug;
 use std::mem::MaybeUninit;
+use std::ops::Deref;
 use zeroize::Zeroize;
 
 /// The cipher block padding strategy.
@@ -198,7 +199,7 @@ pub enum OperatingMode {
 /// use aws_lc_rs::cipher::{CipherContext, DecryptionContext, DecryptingKey, UnboundCipherKey, AES_128};
 /// use aws_lc_rs::iv::FixedLength;
 ///
-/// let context = DecryptionContext::new(CipherContext::Iv128(FixedLength::<16>::from(&[
+/// let context = DecryptionContext::iv128(FixedLength::<16>::from(&[
 ///     0x8d, 0xdb, 0x7d, 0xf1, 0x56, 0xf5, 0x1c, 0xde, 0x63, 0xe3, 0x4a, 0x34, 0xb0, 0xdf, 0x28,
 ///     0xf0,
 /// ])));
@@ -287,21 +288,9 @@ impl From<EncryptionContext> for CipherContext {
     }
 }
 
-impl<'a> From<&'a EncryptionContext> for &'a CipherContext {
-    fn from(value: &'a EncryptionContext) -> Self {
-        &value.0
-    }
-}
-
 impl From<DecryptionContext> for CipherContext {
     fn from(value: DecryptionContext) -> Self {
         value.0
-    }
-}
-
-impl<'a> From<&'a DecryptionContext> for &'a CipherContext {
-    fn from(value: &'a DecryptionContext) -> Self {
-        &value.0
     }
 }
 
@@ -311,11 +300,35 @@ impl EncryptionContext {
     pub fn new(context: CipherContext) -> Self {
         Self(context)
     }
+
+    pub fn iv128(iv: FixedLength<IV_LEN_128_BIT>) -> Self {
+        Self(CipherContext::Iv128(iv))
+    }
+
+    pub fn none() -> Self {
+        Self(CipherContext::None)
+    }
+}
+
+impl Deref for EncryptionContext {
+    type Target = CipherContext;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl From<CipherContext> for EncryptionContext {
     fn from(value: CipherContext) -> Self {
         Self(value)
+    }
+}
+
+impl<'a> TryFrom<&'a EncryptionContext> for &'a [u8] {
+    type Error = Unspecified;
+
+    fn try_from(value: &'a EncryptionContext) -> Result<Self, Self::Error> {
+        (&value.0).try_into()
     }
 }
 
@@ -331,6 +344,22 @@ impl DecryptionContext {
     pub fn new(context: CipherContext) -> Self {
         Self(context)
     }
+
+    pub fn iv128(iv: FixedLength<IV_LEN_128_BIT>) -> Self {
+        Self(CipherContext::Iv128(iv))
+    }
+
+    pub fn none() -> Self {
+        Self(CipherContext::None)
+    }
+}
+
+impl Deref for DecryptionContext {
+    type Target = CipherContext;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl From<CipherContext> for DecryptionContext {
@@ -342,9 +371,8 @@ impl From<CipherContext> for DecryptionContext {
 impl<'a> TryFrom<&'a DecryptionContext> for &'a [u8] {
     type Error = Unspecified;
 
-    fn try_from(value: &'a DecryptionContext) -> Result<Self, Unspecified> {
-        let slice: &[u8] = (&value.0).try_into()?;
-        Ok(slice)
+    fn try_from(value: &'a DecryptionContext) -> Result<Self, Self::Error> {
+        (&value.0).try_into()
     }
 }
 
@@ -396,11 +424,11 @@ impl Algorithm {
         self.block_len
     }
 
-    fn new_cipher_context(&self, mode: OperatingMode) -> Result<CipherContext, Unspecified> {
+    fn new_cipher_context(&self, mode: OperatingMode) -> Result<EncryptionContext, Unspecified> {
         match self.id {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
                 OperatingMode::CBC | OperatingMode::CTR => {
-                    Ok(CipherContext::Iv128(FixedLength::new()?))
+                    Ok(CipherContext::Iv128(FixedLength::new()?).into())
                 }
             },
         }
@@ -521,7 +549,7 @@ impl PaddedBlockEncryptingKey {
     where
         InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
     {
-        let context: EncryptionContext = self.key.algorithm.new_cipher_context(self.mode)?.into();
+        let context: EncryptionContext = self.key.algorithm.new_cipher_context(self.mode)?;
         self.less_safe_encrypt(in_out, context)
     }
 
@@ -542,7 +570,7 @@ impl PaddedBlockEncryptingKey {
         if !self
             .key
             .algorithm()
-            .is_valid_cipher_context(self.mode, (&context).into())
+            .is_valid_cipher_context(self.mode, &context)
         {
             return Err(Unspecified);
         }
@@ -616,7 +644,7 @@ impl PaddedBlockDecryptingKey {
         if !self
             .key
             .algorithm()
-            .is_valid_cipher_context(self.mode, (&context).into())
+            .is_valid_cipher_context(self.mode, &context)
         {
             return Err(Unspecified);
         }
@@ -680,7 +708,7 @@ impl EncryptingKey {
     /// and `in_out.len()` is not. Otherwise returned if encryption fails.
     ///
     pub fn encrypt(&self, in_out: &mut [u8]) -> Result<DecryptionContext, Unspecified> {
-        let context: EncryptionContext = self.key.algorithm.new_cipher_context(self.mode)?.into();
+        let context: EncryptionContext = self.key.algorithm.new_cipher_context(self.mode)?;
         self.less_safe_encrypt(in_out, context)
     }
 
@@ -699,7 +727,7 @@ impl EncryptingKey {
         if !self
             .key
             .algorithm()
-            .is_valid_cipher_context(self.mode, (&context).into())
+            .is_valid_cipher_context(self.mode, &context)
         {
             return Err(Unspecified);
         }
