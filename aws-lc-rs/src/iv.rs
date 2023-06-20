@@ -10,6 +10,9 @@ use crate::error::Unspecified;
 use crate::rand;
 use zeroize::Zeroize;
 
+/// A 128-bit (16-byte) Initalization Vector
+pub const IV_LEN_128_BIT: usize = 16;
+
 /// An initialization vector that must be unique for the lifetime of the associated key
 /// it is used with.
 pub struct FixedLength<const L: usize>([u8; L]);
@@ -26,7 +29,6 @@ impl<const L: usize> FixedLength<L> {
     /// # Errors
     ///
     /// * [`Unspecified`]: Returned if there is a failure generating `L` bytes.
-    ///
     pub fn new() -> Result<Self, Unspecified> {
         let mut iv_bytes = [0u8; L];
         rand::fill(&mut iv_bytes)?;
