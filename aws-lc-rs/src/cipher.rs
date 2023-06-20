@@ -857,14 +857,10 @@ fn decrypt<'in_out>(
 
     match mode {
         OperatingMode::CBC => match key.algorithm().id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                decrypt_aes_cbc_mode(key, context, in_out).map(|_| in_out)
-            }
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => decrypt_aes_cbc_mode(key, context, in_out),
         },
         OperatingMode::CTR => match key.algorithm().id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                decrypt_aes_ctr_mode(key, context, in_out).map(|_| in_out)
-            }
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => decrypt_aes_ctr_mode(key, context, in_out),
         },
     }
 }
@@ -896,13 +892,13 @@ fn encrypt_aes_ctr_mode(
     Ok(context.into())
 }
 
-fn decrypt_aes_ctr_mode(
+fn decrypt_aes_ctr_mode<'a>(
     key: &UnboundCipherKey,
     context: CipherContext,
-    in_out: &mut [u8],
-) -> Result<(), Unspecified> {
+    in_out: &'a mut [u8],
+) -> Result<&'a mut [u8], Unspecified> {
     // it's the same in CTR, just providing a nice named wrapper to match
-    encrypt_aes_ctr_mode(key, context, in_out).map(|_| ())
+    encrypt_aes_ctr_mode(key, context, in_out).map(|_| in_out)
 }
 
 fn encrypt_aes_cbc_mode(
@@ -931,11 +927,11 @@ fn encrypt_aes_cbc_mode(
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn decrypt_aes_cbc_mode(
+fn decrypt_aes_cbc_mode<'a>(
     key: &UnboundCipherKey,
     context: CipherContext,
-    in_out: &mut [u8],
-) -> Result<(), Unspecified> {
+    in_out: &'a mut [u8],
+) -> Result<&'a mut [u8], Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key.key {
         SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
@@ -953,7 +949,7 @@ fn decrypt_aes_cbc_mode(
     aes_cbc_decrypt(key, &mut iv, in_out);
     iv.zeroize();
 
-    Ok(())
+    Ok(in_out)
 }
 
 fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_out: &mut [u8]) {
