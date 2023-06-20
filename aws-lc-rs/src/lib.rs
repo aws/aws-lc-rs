@@ -83,7 +83,7 @@
 //!
 //! #### - bindgen ####
 //! Causes `aws-lc-sys` or `aws-lc-fips-sys` to generates fresh bindings for AWS-LC instead of using
-//! the pre-generated bindings. This feature require `libclang` to be installed. See the
+//! the pre-generated bindings. This feature requires `libclang` to be installed. See the
 //! [requirements](https://rust-lang.github.io/rust-bindgen/requirements.html)
 //! for [rust-bindgen](https://github.com/rust-lang/rust-bindgen)
 //!
@@ -137,21 +137,18 @@ pub mod rand;
 pub mod signature;
 pub mod test;
 
-mod cipher;
-
-mod rsa;
-
-mod debug;
-
-mod endian;
-
 mod bn;
 mod cbb;
 mod cbs;
+pub mod cipher;
+mod debug;
 mod ec;
 mod ed25519;
+mod endian;
 mod evp_pkey;
+pub mod iv;
 mod ptr;
+mod rsa;
 
 use aws_lc::{
     CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, ERR_GET_FUNC, ERR_GET_LIB,
