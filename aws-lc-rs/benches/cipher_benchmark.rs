@@ -35,9 +35,8 @@ macro_rules! benchmark_padded {
                 group.bench_function("AWS-LC", |b| {
                     b.iter(|| {
                         let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-                        let iv: EncryptionContext = EncryptionContext::new(CipherContext::Iv128(
-                            iv.as_slice().try_into().unwrap(),
-                        ));
+                        let iv: EncryptionContext =
+                            EncryptionContext::iv128(iv.as_slice().try_into().unwrap());
 
                         let encrypt_key = match $mode {
                             OperatingMode::CBC => PaddedBlockEncryptingKey::cbc_pkcs7(key),
@@ -81,9 +80,8 @@ macro_rules! benchmark_unpadded {
                 group.bench_function("AWS-LC", |b| {
                     b.iter(|| {
                         let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-                        let iv: EncryptionContext = EncryptionContext::new(CipherContext::Iv128(
-                            iv.as_slice().try_into().unwrap(),
-                        ));
+                        let iv: EncryptionContext =
+                            EncryptionContext::iv128(iv.as_slice().try_into().unwrap());
 
                         let encrypt_key = match $mode {
                             OperatingMode::CTR => EncryptingKey::ctr(key),
