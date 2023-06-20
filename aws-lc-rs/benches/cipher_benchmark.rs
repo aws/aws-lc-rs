@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::cipher::{
-    CipherContext, DecryptingKey, EncryptingKey, OperatingMode, PaddedBlockDecryptingKey,
-    PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
+    CipherContext, DecryptingKey, EncryptingKey, EncryptionContext, OperatingMode,
+    PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
 };
 use aws_lc_rs::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
@@ -35,8 +35,8 @@ macro_rules! benchmark_padded {
                 group.bench_function("AWS-LC", |b| {
                     b.iter(|| {
                         let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-                        let iv: CipherContext =
-                            CipherContext::Iv128(iv.as_slice().try_into().unwrap());
+                        let iv: EncryptionContext =
+                            EncryptionContext::new(CipherContext::Iv128(iv.as_slice().try_into().unwrap()));
 
                         let encrypt_key = match $mode {
                             OperatingMode::CBC => PaddedBlockEncryptingKey::cbc_pkcs7(key),
@@ -80,8 +80,9 @@ macro_rules! benchmark_unpadded {
                 group.bench_function("AWS-LC", |b| {
                     b.iter(|| {
                         let key = UnboundCipherKey::new($awslc, &key_bytes).unwrap();
-                        let iv: CipherContext =
-                            CipherContext::Iv128(iv.as_slice().try_into().unwrap());
+                        let iv: EncryptionContext = EncryptionContext::new(CipherContext::Iv128(
+                            iv.as_slice().try_into().unwrap(),
+                        ));
 
                         let encrypt_key = match $mode {
                             OperatingMode::CTR => EncryptingKey::ctr(key),
