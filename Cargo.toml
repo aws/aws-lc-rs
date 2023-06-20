@@ -4,6 +4,7 @@ members = [
     "aws-lc-sys",
     "aws-lc-fips-sys"
 ]
+resolver = "2"
 
 [profile.bench]
 lto = true
