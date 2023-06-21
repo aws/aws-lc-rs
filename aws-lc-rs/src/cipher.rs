@@ -19,16 +19,18 @@
 //!
 //! # Examples
 //!
-//! ## AES-128 CBC Mode Encryption
+//! ## Encryption Modes
+//!
+//! ### AES-128 CBC
 //!
 //! ```rust
 //! # use std::error::Error;
 //! #
 //! # fn main() -> Result<(), Box<dyn Error>> {
-//! use std::io::Read;
 //! use aws_lc_rs::cipher::{
 //!     PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128,
 //! };
+//! use std::io::Read;
 //!
 //! let original_message = "This is a secret message!".as_bytes();
 //! let mut in_out_buffer = Vec::from(original_message);
@@ -52,7 +54,7 @@
 //! # }
 //! ```
 //!
-//! ## AES-128 CTR Mode Encryption
+//! ### AES-128 CTR
 //!
 //! ```rust
 //! # use std::error::Error;
@@ -81,6 +83,57 @@
 //! # }
 //! ```
 //!
+//! ## Constructing a `DecryptionContext` for decryption.
+//!
+//! ```rust
+//! # use std::error::Error;
+//! # fn main() -> Result<(), Box<dyn Error>> {
+//! use aws_lc_rs::cipher::{DecryptingKey, DecryptionContext, UnboundCipherKey, AES_128};
+//! use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
+//!
+//! let context = DecryptionContext::Iv128(FixedLength::<IV_LEN_128_BIT>::from(&[
+//!     0x8d, 0xdb, 0x7d, 0xf1, 0x56, 0xf5, 0x1c, 0xde, 0x63, 0xe3, 0x4a, 0x34, 0xb0, 0xdf, 0x28,
+//!     0xf0,
+//! ]));
+//!
+//! let ciphertext: &[u8] = &[
+//!     0x79, 0x8c, 0x04, 0x58, 0xcf, 0x98, 0xb1, 0xe9, 0x97, 0x6b, 0xa1, 0xce,
+//! ];
+//!
+//! let mut in_out_buffer = Vec::from(ciphertext);
+//!
+//! let key = UnboundCipherKey::new(
+//!     &AES_128,
+//!     &[
+//!         0x5b, 0xfc, 0xe7, 0x5e, 0x57, 0xc5, 0x4d, 0xda, 0x2d, 0xd4, 0x7e, 0x07, 0x0a, 0xef,
+//!         0x43, 0x29,
+//!     ],
+//! )?;
+//! let mut decrypting_key = DecryptingKey::ctr(key)?;
+//! let plaintext = decrypting_key.decrypt(&mut in_out_buffer, context)?;
+//! assert_eq!("Hello World!".as_bytes(), plaintext);
+//!
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## Getting an immutable reference to the IV slice.
+//!
+//! `DecryptionContext` implements `TryFrom<&DecryptionContext>` for `&[u8]` allowing immutable references
+//! to IV bytes returned from cipher encryption operations. Note this is implemented as a `TryFrom` as it
+//! may fail for future enum variants that aren't representable as a single slice.
+//!
+//! ```rust
+//! # use std::error::Error;
+//! # fn main() -> Result<(), Box<dyn Error>> {
+//! # use aws_lc_rs::cipher::DecryptionContext;
+//! # use aws_lc_rs::iv::FixedLength;
+//! # let x: DecryptionContext = DecryptionContext::Iv128(FixedLength::from([0u8; 16]));
+//! // x is type `DecryptionContext`
+//! let iv: &[u8] = (&x).try_into()?;
+//! # Ok(())
+//! # }
+//! ```
 
 #![allow(clippy::module_name_repetitions)]
 
@@ -183,72 +236,6 @@ pub enum OperatingMode {
     /// Counter (CTR) mode.
     CTR,
 }
-
-/// The contextual data used to encrypted/decrypt data.
-///
-/// # Examples
-///
-/// ## Constructing a `CipherContext` for decryption.
-///
-/// ```rust
-/// # use std::error::Error;
-/// # fn main() -> Result<(), Box<dyn Error>> {
-/// use aws_lc_rs::cipher::{DecryptionContext, DecryptingKey, UnboundCipherKey, AES_128};
-/// use aws_lc_rs::iv::FixedLength;
-///
-/// let context = DecryptionContext::Iv128(FixedLength::<16>::from(&[
-///     0x8d, 0xdb, 0x7d, 0xf1, 0x56, 0xf5, 0x1c, 0xde, 0x63, 0xe3, 0x4a, 0x34, 0xb0, 0xdf, 0x28,
-///     0xf0,
-/// ]));
-///
-/// let ciphertext: &[u8] = &[
-///     0x79, 0x8c, 0x04, 0x58, 0xcf, 0x98, 0xb1, 0xe9, 0x97, 0x6b, 0xa1, 0xce,
-/// ];
-///
-/// let mut in_out_buffer = Vec::from(ciphertext);
-///
-/// let key = UnboundCipherKey::new(
-///     &AES_128,
-///     &[
-///         0x5b, 0xfc, 0xe7, 0x5e, 0x57, 0xc5, 0x4d, 0xda, 0x2d, 0xd4, 0x7e, 0x07, 0x0a, 0xef,
-///         0x43, 0x29,
-///     ],
-/// )?;
-/// let mut decrypting_key = DecryptingKey::ctr(key)?;
-/// let plaintext = decrypting_key.decrypt(&mut in_out_buffer, context)?;
-/// assert_eq!("Hello World!".as_bytes(), plaintext);
-///
-///     # Ok(())
-/// # }
-/// ```
-///
-/// ## Getting an immutable reference to an IV slice.
-///
-/// `CipherContext` implements `TryFrom<&CipherContext>` for `&[u8]` allowing immutable references
-/// to IV bytes returned from cipher encryption operations.
-///
-/// ```rust
-/// # use std::error::Error;
-/// # fn main() -> Result<(), Box<dyn Error>> {
-/// use aws_lc_rs::cipher::DecryptionContext;
-/// # use aws_lc_rs::cipher::{EncryptingKey, UnboundCipherKey, AES_128};
-/// # let original_message = "Hello World!".as_bytes();
-/// # let mut in_out_buffer = Vec::from(original_message);
-/// # let key_bytes: &[u8] = &[
-/// #    0x68, 0xf9, 0x46, 0x1a, 0xde, 0x8d, 0x35, 0x38, 0x7b, 0x50, 0xcc, 0x9a, 0x36, 0x64, 0xf8,
-/// #    0x9d,
-/// # ];
-/// # let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
-/// # let mut encrypting_key = EncryptingKey::ctr(key)?;
-/// #
-/// let context: DecryptionContext = encrypting_key.encrypt(&mut in_out_buffer)?;
-/// let iv_bytes: &[u8] = (&context).try_into()?;
-/// assert_eq!(16, iv_bytes.len());
-/// #
-/// #    Ok(())
-/// # }
-/// ```
-///
 
 macro_rules! define_cipher_context {
     ($name:ident, $other:ident) => {
@@ -404,7 +391,6 @@ impl UnboundCipherKey {
     ///
     /// * [`Unspecified`] if `key_bytes.len()` does not match the
     /// length required by `algorithm`.
-    ///
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         let key = match algorithm.id() {
             AlgorithmId::Aes128 => SymmetricCipherKey::aes128(key_bytes),
@@ -434,7 +420,6 @@ impl PaddedBlockEncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error cosntructing a `PaddedBlockEncryptingKey`.
-    ///
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         PaddedBlockEncryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
     }
@@ -465,7 +450,6 @@ impl PaddedBlockEncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if encryption fails.
-    ///
     pub fn encrypt<InOut>(&self, in_out: &mut InOut) -> Result<DecryptionContext, Unspecified>
     where
         InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
@@ -479,7 +463,6 @@ impl PaddedBlockEncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if encryption fails.
-    ///
     pub fn less_safe_encrypt<InOut>(
         &self,
         in_out: &mut InOut,
@@ -525,7 +508,6 @@ impl PaddedBlockDecryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
-    ///
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockDecryptingKey, Unspecified> {
         PaddedBlockDecryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
     }
@@ -556,7 +538,6 @@ impl PaddedBlockDecryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if decryption fails.
-    ///
     pub fn decrypt<'in_out>(
         &self,
         in_out: &'in_out mut [u8],
@@ -599,7 +580,6 @@ impl EncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
-    ///
     pub fn ctr(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
         EncryptingKey::new(key, OperatingMode::CTR)
     }
@@ -627,7 +607,6 @@ impl EncryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
     /// and `in_out.len()` is not. Otherwise returned if encryption fails.
-    ///
     pub fn encrypt(&self, in_out: &mut [u8]) -> Result<DecryptionContext, Unspecified> {
         let context = self.key.algorithm.new_encryption_context(self.mode)?;
         self.less_safe_encrypt(in_out, context)
@@ -639,7 +618,6 @@ impl EncryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
     /// and `in_out.len()` is not. Otherwise returned if encryption fails.
-    ///
     pub fn less_safe_encrypt(
         &self,
         in_out: &mut [u8],
@@ -676,7 +654,6 @@ impl DecryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
-    ///
     pub fn ctr(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
         DecryptingKey::new(key, OperatingMode::CTR)
     }
@@ -704,7 +681,6 @@ impl DecryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
     /// and `in_out.len()` is not. Also returned if decryption fails.
-    ///
     pub fn decrypt<'in_out>(
         &self,
         in_out: &'in_out mut [u8],
