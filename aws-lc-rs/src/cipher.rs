@@ -119,7 +119,7 @@
 //!
 //! ## Getting an immutable reference to the IV slice.
 //!
-//! `DecryptionContext` implements `TryFrom<&DecryptionContext>` for `&[u8]` allowing immutable references
+//! `TryFrom<&DecryptionContext>` is implemented for `&[u8]` allowing immutable references
 //! to IV bytes returned from cipher encryption operations. Note this is implemented as a `TryFrom` as it
 //! may fail for future enum variants that aren't representable as a single slice.
 //!
