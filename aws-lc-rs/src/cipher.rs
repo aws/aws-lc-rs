@@ -92,7 +92,7 @@ pub(crate) mod key;
 use crate::error::Unspecified;
 use crate::hkdf;
 use crate::hkdf::KeyType;
-use crate::iv::FixedLength;
+use crate::iv::{FixedLength, IV_LEN_128_BIT};
 use aws_lc::{AES_cbc_encrypt, AES_ctr128_encrypt, AES_DECRYPT, AES_ENCRYPT, AES_KEY};
 use key::SymmetricCipherKey;
 use std::fmt::Debug;
@@ -172,8 +172,6 @@ pub const AES_CTR_IV_LEN: usize = 16;
 const AES_BLOCK_LEN: usize = 16;
 
 const MAX_CIPHER_BLOCK_LEN: usize = AES_BLOCK_LEN;
-
-const IV_LEN_128_BIT: usize = 16;
 
 /// The cipher operating mode.
 #[non_exhaustive]
@@ -768,14 +766,10 @@ fn decrypt<'in_out>(
 
     match mode {
         OperatingMode::CBC => match key.algorithm().id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                decrypt_aes_cbc_mode(key, context, in_out).map(|_| in_out)
-            }
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => decrypt_aes_cbc_mode(key, context, in_out),
         },
         OperatingMode::CTR => match key.algorithm().id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                decrypt_aes_ctr_mode(key, context, in_out).map(|_| in_out)
-            }
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => decrypt_aes_ctr_mode(key, context, in_out),
         },
     }
 }
@@ -807,13 +801,13 @@ fn encrypt_aes_ctr_mode(
     Ok(context.into())
 }
 
-fn decrypt_aes_ctr_mode(
+fn decrypt_aes_ctr_mode<'in_out>(
     key: &UnboundCipherKey,
     context: DecryptionContext,
-    in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
+    in_out: &'in_out mut [u8],
+) -> Result<&'in_out mut [u8], Unspecified> {
     // it's the same in CTR, just providing a nice named wrapper to match
-    encrypt_aes_ctr_mode(key, context.into(), in_out)
+    encrypt_aes_ctr_mode(key, context.into(), in_out).map(|_| in_out)
 }
 
 fn encrypt_aes_cbc_mode(
@@ -841,11 +835,11 @@ fn encrypt_aes_cbc_mode(
     Ok(context.into())
 }
 
-fn decrypt_aes_cbc_mode(
+fn decrypt_aes_cbc_mode<'in_out>(
     key: &UnboundCipherKey,
     context: DecryptionContext,
-    in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
+    in_out: &'in_out mut [u8],
+) -> Result<&'in_out mut [u8], Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key.key {
         SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
@@ -863,7 +857,7 @@ fn decrypt_aes_cbc_mode(
     aes_cbc_decrypt(key, &mut iv, in_out);
     iv.zeroize();
 
-    Ok(context)
+    Ok(in_out)
 }
 
 fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_out: &mut [u8]) {
