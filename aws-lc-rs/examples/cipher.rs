@@ -24,10 +24,12 @@
 //! $ cargo run --example cipher -- --mode cbc --key 6489d8ce0c4facf18b872705a05d5ee4 decrypt --iv 5cd56fb752830ec2459889226c5431bd 6311c14e8104730be124ce1e57e51fe3
 //! Hello World
 //! ```
-use aws_lc_rs::cipher::{AES_128_KEY_LEN, AES_256_KEY_LEN, AES_CBC_IV_LEN, AES_CTR_IV_LEN};
+use aws_lc_rs::cipher::{
+    DecryptionContext, AES_128_KEY_LEN, AES_256_KEY_LEN, AES_CBC_IV_LEN, AES_CTR_IV_LEN,
+};
 use aws_lc_rs::{
     cipher::{
-        CipherContext, DecryptingKey, EncryptingKey, PaddedBlockDecryptingKey,
+        DecryptingKey, EncryptingKey, EncryptionContext, PaddedBlockDecryptingKey,
         PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
     },
     iv::FixedLength,
@@ -111,7 +113,7 @@ fn aes_ctr_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
                 let v = hex::decode(iv).map_err(|_| "invalid iv")?;
                 let v: FixedLength<AES_CTR_IV_LEN> =
                     v.as_slice().try_into().map_err(|_| "invalid iv")?;
-                CipherContext::Iv128(v)
+                EncryptionContext::Iv128(v)
             };
             key.less_safe_encrypt(ciphertext.as_mut(), context)
         }
@@ -146,7 +148,7 @@ fn aes_ctr_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
         hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?;
 
     let plaintext = key
-        .decrypt(ciphertext.as_mut(), CipherContext::Iv128(iv))
+        .decrypt(ciphertext.as_mut(), DecryptionContext::Iv128(iv))
         .map_err(|_| "failed to decrypt ciphertext")?;
 
     let plaintext =
@@ -172,7 +174,7 @@ fn aes_cbc_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
                 let v = hex::decode(iv).map_err(|_| "invalid iv")?;
                 let v: FixedLength<AES_CBC_IV_LEN> =
                     v.as_slice().try_into().map_err(|_| "invalid iv")?;
-                CipherContext::Iv128(v)
+                EncryptionContext::Iv128(v)
             };
             key.less_safe_encrypt(&mut ciphertext, context)
         }
@@ -208,7 +210,7 @@ fn aes_cbc_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
         hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?;
 
     let plaintext = key
-        .decrypt(ciphertext.as_mut(), CipherContext::Iv128(iv))
+        .decrypt(ciphertext.as_mut(), DecryptionContext::Iv128(iv))
         .map_err(|_| "failed to decrypt ciphertext")?;
 
     let plaintext =
