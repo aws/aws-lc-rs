@@ -252,7 +252,7 @@ pub enum OperatingMode {
 
 macro_rules! define_cipher_context {
     ($name:ident, $other:ident) => {
-        /// The contextual data used to encrypted or decrypt data.
+        /// The contextual data used to encrypt or decrypt data.
         #[non_exhaustive]
         pub enum $name {
             /// A 128-bit Initialization Vector.
