@@ -332,7 +332,10 @@ impl Algorithm {
         self.block_len
     }
 
-    fn new_cipher_context(&self, mode: OperatingMode) -> Result<EncryptionContext, Unspecified> {
+    fn new_encryption_context(
+        &self,
+        mode: OperatingMode,
+    ) -> Result<EncryptionContext, Unspecified> {
         match self.id {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
                 OperatingMode::CBC | OperatingMode::CTR => {
@@ -467,7 +470,7 @@ impl PaddedBlockEncryptingKey {
     where
         InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
     {
-        let context = self.key.algorithm.new_cipher_context(self.mode)?;
+        let context = self.key.algorithm.new_encryption_context(self.mode)?;
         self.less_safe_encrypt(in_out, context)
     }
 
@@ -626,7 +629,7 @@ impl EncryptingKey {
     /// and `in_out.len()` is not. Otherwise returned if encryption fails.
     ///
     pub fn encrypt(&self, in_out: &mut [u8]) -> Result<DecryptionContext, Unspecified> {
-        let context = self.key.algorithm.new_cipher_context(self.mode)?;
+        let context = self.key.algorithm.new_encryption_context(self.mode)?;
         self.less_safe_encrypt(in_out, context)
     }
 
@@ -835,6 +838,7 @@ fn encrypt_aes_cbc_mode(
     Ok(context.into())
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn decrypt_aes_cbc_mode<'in_out>(
     key: &UnboundCipherKey,
     context: DecryptionContext,
