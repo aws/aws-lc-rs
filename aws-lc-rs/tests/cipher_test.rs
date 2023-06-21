@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::cipher::{
-    CipherContext, DecryptingKey, EncryptingKey, OperatingMode, PaddedBlockDecryptingKey,
+    DecryptingKey, EncryptingKey, EncryptionContext, OperatingMode, PaddedBlockDecryptingKey,
     PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
 };
 use aws_lc_rs::iv::FixedLength;
@@ -18,7 +18,7 @@ macro_rules! padded_cipher_kat {
 
             let iv = from_hex($iv).unwrap();
             let fixed_iv = FixedLength::try_from(iv.as_slice()).unwrap();
-            let context = CipherContext::Iv128(fixed_iv);
+            let context = EncryptionContext::Iv128(fixed_iv);
 
             let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
 
@@ -51,7 +51,7 @@ macro_rules! cipher_kat {
 
             let iv = from_hex($iv).unwrap();
             let fixed_iv = FixedLength::try_from(iv.as_slice()).unwrap();
-            let context = CipherContext::Iv128(fixed_iv);
+            let context = EncryptionContext::Iv128(fixed_iv);
 
             let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
 
