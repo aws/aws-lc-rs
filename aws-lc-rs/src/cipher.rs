@@ -251,10 +251,10 @@ pub enum OperatingMode {
 ///
 
 macro_rules! define_cipher_context {
-    ($visibility: vis, $name:ident, $other:ident) => {
+    ($name:ident, $other:ident) => {
         /// The contextual data used to encrypted or decrypt data.
         #[non_exhaustive]
-        $visibility enum $name {
+        pub enum $name {
             /// A 128-bit Initialization Vector.
             Iv128(FixedLength<IV_LEN_128_BIT>),
         }
@@ -287,8 +287,8 @@ macro_rules! define_cipher_context {
     };
 }
 
-define_cipher_context!(pub, EncryptionContext, DecryptionContext);
-define_cipher_context!(pub, DecryptionContext, EncryptionContext);
+define_cipher_context!(EncryptionContext, DecryptionContext);
+define_cipher_context!(DecryptionContext, EncryptionContext);
 
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
