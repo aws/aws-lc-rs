@@ -8,27 +8,27 @@
 //!
 //! The program can be run from the command line using cargo:
 //! ```sh
-//! $ cargo run --example cipher -- --mode ctr encrypt "Hello World"
+//! $ cargo run --example cipher -- encrypt --mode ctr  "Hello World"
 //! key: b331133eb742497c67ced9520c9a7de3
 //! iv: 4e967c7b799e0670431888e2e959e154
 //! ciphertext: 88bcbd8d1656d60de739c5
 //!
-//! $ cargo run --example cipher -- --mode ctr --key b331133eb742497c67ced9520c9a7de3 decrypt --iv 4e967c7b799e0670431888e2e959e154 88bcbd8d1656d60de739c5
+//! $ cargo run --example cipher -- decrypt --mode ctr --key b331133eb742497c67ced9520c9a7de3 --iv 4e967c7b799e0670431888e2e959e154 88bcbd8d1656d60de739c5
 //! Hello World
 //!
-//! $ cargo run --example cipher -- --mode cbc encrypt "Hello World"
+//! $ cargo run --example cipher -- encrypt --mode cbc "Hello World"
 //! key: 6489d8ce0c4facf18b872705a05d5ee4
 //! iv: 5cd56fb752830ec2459889226c5431bd
 //! ciphertext: 6311c14e8104730be124ce1e57e51fe3
 //!
-//! $ cargo run --example cipher -- --mode cbc --key 6489d8ce0c4facf18b872705a05d5ee4 decrypt --iv 5cd56fb752830ec2459889226c5431bd 6311c14e8104730be124ce1e57e51fe3
+//! $ cargo run --example cipher -- decrypt --mode cbc --key 6489d8ce0c4facf18b872705a05d5ee4 --iv 5cd56fb752830ec2459889226c5431bd 6311c14e8104730be124ce1e57e51fe3
 //! Hello World
 //! ```
-use aws_lc_rs::cipher::{AES_128_KEY_LEN, AES_256_KEY_LEN, AES_CBC_IV_LEN, AES_CTR_IV_LEN};
 use aws_lc_rs::{
     cipher::{
-        CipherContext, DecryptingKey, EncryptingKey, PaddedBlockDecryptingKey,
-        PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
+        DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext,
+        PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128,
+        AES_128_KEY_LEN, AES_256, AES_256_KEY_LEN, AES_CBC_IV_LEN, AES_CTR_IV_LEN,
     },
     iv::FixedLength,
 };
@@ -37,16 +37,6 @@ use clap::{Parser, Subcommand, ValueEnum};
 #[derive(Parser)]
 #[command(author, version, name = "cipher")]
 struct Cli {
-    #[arg(
-        short,
-        long,
-        help = "AES 128 or 256 bit key in hex, if not provided defaults to 128"
-    )]
-    key: Option<String>,
-
-    #[arg(short, long, value_enum, help = "AES cipher mode")]
-    mode: Mode,
-
     #[command(subcommand)]
     command: Commands,
 }
@@ -60,13 +50,31 @@ enum Mode {
 #[derive(Subcommand)]
 enum Commands {
     Encrypt {
-        #[arg(short, long, help = "Initalization Vector (IV)")]
+        #[arg(short, long, help = "Initalization Vector (IV) in hex")]
         iv: Option<String>,
+
+        #[arg(
+            short,
+            long,
+            help = "AES 128 or 256 bit key in hex, if not provided defaults to 128"
+        )]
+        key: Option<String>,
+
+        #[arg(short, long, value_enum, help = "AES cipher mode")]
+        mode: Mode,
+
         plaintext: String,
     },
     Decrypt {
-        #[arg(short, long, help = "Initalization Vector (IV)")]
+        #[arg(short, long, help = "Initalization Vector (IV) in hex")]
         iv: String,
+
+        #[arg(short, long, help = "AES 128 or 256 bit key in hex")]
+        key: String,
+
+        #[arg(short, long, value_enum, help = "AES cipher mode")]
+        mode: Mode,
+
         ciphertext: String,
     },
 }
@@ -74,32 +82,57 @@ enum Commands {
 fn main() -> Result<(), &'static str> {
     let cli = Cli::parse();
 
-    let key = if let Some(key) = cli.key {
-        match hex::decode(key) {
-            Ok(v) => v,
-            Err(..) => {
-                return Err("invalid key");
+    match cli.command {
+        Commands::Encrypt {
+            iv,
+            key,
+            mode,
+            plaintext,
+        } => {
+            if matches!(mode, Mode::Ctr) {
+                aes_ctr_encrypt(key, iv, plaintext)
+            } else {
+                aes_cbc_encrypt(key, iv, plaintext)
             }
         }
-    } else {
-        let mut v = vec![0u8; AES_128_KEY_LEN];
-        aws_lc_rs::rand::fill(v.as_mut_slice()).map_err(|_| "failed to generate key")?;
-        v
-    };
-
-    match (cli.command, cli.mode) {
-        (Commands::Encrypt { iv, plaintext }, Mode::Ctr) => aes_ctr_encrypt(&key, iv, plaintext),
-        (Commands::Encrypt { iv, plaintext }, Mode::Cbc) => aes_cbc_encrypt(&key, iv, plaintext),
-        (Commands::Decrypt { iv, ciphertext }, Mode::Ctr) => aes_ctr_decrypt(&key, iv, ciphertext),
-        (Commands::Decrypt { iv, ciphertext }, Mode::Cbc) => aes_cbc_decrypt(&key, iv, ciphertext),
+        Commands::Decrypt {
+            iv,
+            key,
+            mode,
+            ciphertext,
+        } => {
+            if matches!(mode, Mode::Ctr) {
+                aes_ctr_decrypt(key, iv, ciphertext)
+            } else {
+                aes_cbc_decrypt(key, iv, ciphertext)
+            }
+        }
     }?;
 
     Ok(())
 }
 
-fn aes_ctr_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<(), &'static str> {
-    let hex_key = hex::encode(key);
-    let key = new_unbound_key(key)?;
+fn construct_key_bytes(key: Option<String>) -> Result<Vec<u8>, &'static str> {
+    if let Some(key) = key {
+        match hex::decode(key) {
+            Ok(v) => Ok(v),
+            Err(..) => Err("invalid key"),
+        }
+    } else {
+        let mut v = vec![0u8; AES_128_KEY_LEN];
+        aws_lc_rs::rand::fill(v.as_mut_slice()).map_err(|_| "failed to generate key")?;
+        Ok(v)
+    }
+}
+
+fn aes_ctr_encrypt(
+    key: Option<String>,
+    iv: Option<String>,
+    plaintext: String,
+) -> Result<(), &'static str> {
+    let key_bytes = construct_key_bytes(key)?;
+    let hex_key = hex::encode(key_bytes.as_slice());
+    let key = new_unbound_key(key_bytes.as_slice())?;
 
     let key = EncryptingKey::ctr(key).map_err(|_| "failed to initalized aes encryption")?;
 
@@ -111,7 +144,7 @@ fn aes_ctr_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
                 let v = hex::decode(iv).map_err(|_| "invalid iv")?;
                 let v: FixedLength<AES_CTR_IV_LEN> =
                     v.as_slice().try_into().map_err(|_| "invalid iv")?;
-                CipherContext::Iv128(v)
+                EncryptionContext::Iv128(v)
             };
             key.less_safe_encrypt(ciphertext.as_mut(), context)
         }
@@ -132,8 +165,9 @@ fn aes_ctr_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
     Ok(())
 }
 
-fn aes_ctr_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'static str> {
-    let key = new_unbound_key(key)?;
+fn aes_ctr_decrypt(key: String, iv: String, ciphertext: String) -> Result<(), &'static str> {
+    let key_bytes = construct_key_bytes(Some(key))?;
+    let key = new_unbound_key(key_bytes.as_slice())?;
     let iv = {
         let v = hex::decode(iv).map_err(|_| "invalid iv")?;
         let v: FixedLength<AES_CTR_IV_LEN> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
@@ -146,7 +180,7 @@ fn aes_ctr_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
         hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?;
 
     let plaintext = key
-        .decrypt(ciphertext.as_mut(), CipherContext::Iv128(iv))
+        .decrypt(ciphertext.as_mut(), DecryptionContext::Iv128(iv))
         .map_err(|_| "failed to decrypt ciphertext")?;
 
     let plaintext =
@@ -157,9 +191,14 @@ fn aes_ctr_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
     Ok(())
 }
 
-fn aes_cbc_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<(), &'static str> {
-    let hex_key = hex::encode(key);
-    let key = new_unbound_key(key)?;
+fn aes_cbc_encrypt(
+    key: Option<String>,
+    iv: Option<String>,
+    plaintext: String,
+) -> Result<(), &'static str> {
+    let key_bytes = construct_key_bytes(key)?;
+    let hex_key = hex::encode(key_bytes.as_slice());
+    let key = new_unbound_key(key_bytes.as_slice())?;
 
     let key = PaddedBlockEncryptingKey::cbc_pkcs7(key)
         .map_err(|_| "failed to initalized aes encryption")?;
@@ -172,7 +211,7 @@ fn aes_cbc_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
                 let v = hex::decode(iv).map_err(|_| "invalid iv")?;
                 let v: FixedLength<AES_CBC_IV_LEN> =
                     v.as_slice().try_into().map_err(|_| "invalid iv")?;
-                CipherContext::Iv128(v)
+                EncryptionContext::Iv128(v)
             };
             key.less_safe_encrypt(&mut ciphertext, context)
         }
@@ -193,8 +232,9 @@ fn aes_cbc_encrypt(key: &[u8], iv: Option<String>, plaintext: String) -> Result<
     Ok(())
 }
 
-fn aes_cbc_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'static str> {
-    let key = new_unbound_key(key)?;
+fn aes_cbc_decrypt(key: String, iv: String, ciphertext: String) -> Result<(), &'static str> {
+    let key_bytes = construct_key_bytes(Some(key))?;
+    let key = new_unbound_key(key_bytes.as_slice())?;
     let iv = {
         let v = hex::decode(iv).map_err(|_| "invalid iv")?;
         let v: FixedLength<AES_CBC_IV_LEN> = v.as_slice().try_into().map_err(|_| "invalid iv")?;
@@ -208,7 +248,7 @@ fn aes_cbc_decrypt(key: &[u8], iv: String, ciphertext: String) -> Result<(), &'s
         hex::decode(ciphertext).map_err(|_| "ciphertext is not valid hex encoding")?;
 
     let plaintext = key
-        .decrypt(ciphertext.as_mut(), CipherContext::Iv128(iv))
+        .decrypt(ciphertext.as_mut(), DecryptionContext::Iv128(iv))
         .map_err(|_| "failed to decrypt ciphertext")?;
 
     let plaintext =
