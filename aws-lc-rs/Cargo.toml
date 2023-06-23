@@ -1,7 +1,7 @@
 [package]
 name = "aws-lc-rs"
 authors = ["AWS-LibCrypto"]
-version = "1.1.0"
+version = "1.2.0"
 edition = "2021"
 rust-version = "1.60"
 keywords = ["crypto", "cryptography", "security"]
@@ -40,7 +40,7 @@ fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { version = "0.7.1", optional = true }
-aws-lc-sys = { version = "0.7.0", path = "../aws-lc-sys", optional = true }
+aws-lc-sys = { version = "0.8.0", path = "../aws-lc-sys", optional = true }
 aws-lc-fips-sys = { version = "0.8.0", path = "../aws-lc-fips-sys", optional = true }
 zeroize = "1"
 mirai-annotations = "1.12.0"
