@@ -69,7 +69,7 @@ function check_branch {
   fi
 
   local UPSTREAM
-  UPSTREAM=$(git status -sb | head -n 1 | sed -e 's/^## .*\(\.\.\.\)\(.*\)$/\2/')
+  UPSTREAM=$(git status -sb | head -n 1 | sed -e 's/^## \(.*\.\.\.\)*\(.*\)$/\2/')
   if [ -z "${UPSTREAM}" ]; then
     echo No upstream branch found.
     if [[ ${IGNORE_UPSTREAM} -eq 0 ]]; then
