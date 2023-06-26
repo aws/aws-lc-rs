@@ -6,8 +6,10 @@ use std::{os::raw::c_int};
 use std::ptr::null_mut;
 use aws_lc::{
     EVP_PKEY, NID_KYBER512_R3, EVP_PKEY_keygen, EVP_PKEY_CTX_new_id, EVP_PKEY_keygen_init,
-    EVP_PKEY_KEM, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_CTX_kem_set_params
+    EVP_PKEY_KEM, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new,
+    EVP_PKEY_encapsulate, EVP_PKEY_decapsulate
 };
+use zeroize::Zeroize;
 
 const KYBER512_SECRETKEYBYTES: usize = 1632;
 const KYBER512_PUBLICKEYBYTES: usize = 800;
@@ -38,7 +40,8 @@ impl Algorithm {
 // PrivateKey
 pub struct PrivateKey {
     algorithm: &'static Algorithm,
-    context: LcPtr<*mut EVP_PKEY>
+    context: LcPtr<*mut EVP_PKEY>,
+    shared_secret: [u8; SHARED_SECRET_MAX_LEN]
 }
 
 impl PrivateKey {
@@ -49,25 +52,45 @@ impl PrivateKey {
                 Ok(PrivateKey {
                     algorithm: alg,
                     context: LcPtr::from(kyber_key),
+                    shared_secret: [0u8; SHARED_SECRET_MAX_LEN]
                 })
             },
         }
     }
 
-    unsafe fn from_raw_bytes(alg: &'static Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(alg.nid(), bytes.as_ptr(), bytes.len()))?;
-        Ok(PrivateKey {
-            algorithm: alg,
-            context: LcPtr::from(pkey),
-        })
+    fn from_raw_bytes(alg: &'static Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+        unsafe {
+            let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(alg.nid(), bytes.as_ptr(), bytes.len()))?;
+            Ok(PrivateKey {
+                algorithm: alg,
+                context: LcPtr::from(pkey),
+                shared_secret: [0u8; SHARED_SECRET_MAX_LEN]
+            })
+        }
     }
 
     fn compute_public_key(&self) -> Result<PublicKey, Unspecified> {
-        Ok(PublicKey{ alg: &Algorithm::KYBER512_R3, bytes: [0u8; PUBLIC_KEY_MAX_LEN] })
+        // Could implement clone for LcPtr and call that here
+        Ok(PublicKey{ algorithm: self.algorithm, context: LcPtr::new(*self.context)?,
+                      ciphertext: [0u8; CIPHERTEXT_MAX_LEN], shared_secret: [0u8; SHARED_SECRET_MAX_LEN] })
     }
 
-    fn decapsulate(&self, ciphertext: &[u8]) -> Result<[u8; SHARED_SECRET_MAX_LEN], Unspecified> {
-        Ok([0u8; SHARED_SECRET_MAX_LEN])
+    fn decapsulate(&mut self, ciphertext: &mut [u8]) -> Result<&[u8], Unspecified> {
+        unsafe {
+            let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
+            let mut shared_secret_len;
+            match self.algorithm {
+                Algorithm::KYBER512_R3 => {
+                    // ciphertext_len = KYBER512_CIPHERTEXTBYTES;
+                    shared_secret_len = KYBER512_SECRETKEYBYTES;
+                }
+            }
+            if EVP_PKEY_decapsulate(*ctx, self.shared_secret.as_mut_ptr(), &mut shared_secret_len,
+                                    ciphertext.as_mut_ptr(), ciphertext.len()) != 1 {
+                self.shared_secret.zeroize()
+            }
+            Ok(&self.shared_secret[0..shared_secret_len])
+        }
     }
 }
 
@@ -78,19 +101,35 @@ impl Into<[u8; PRIVATE_KEY_MAX_LEN]> for PrivateKey {
 }
 
 /// An unparsed, possibly malformed, public key for key agreement.
-#[derive(Clone)]
+// #[derive(Clone)]
 pub struct PublicKey {
-    alg: &'static Algorithm,
-    bytes: [u8; PUBLIC_KEY_MAX_LEN],
+    algorithm: &'static Algorithm,
+    context: LcPtr<*mut EVP_PKEY>,
+    ciphertext: [u8; CIPHERTEXT_MAX_LEN],
+    shared_secret: [u8; SHARED_SECRET_MAX_LEN]
 }
 
 impl PublicKey {
-    fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        Ok(PublicKey{ alg: &Algorithm::KYBER512_R3, bytes: bytes.try_into().map_err(|_e| KeyRejected::unexpected_error())? })
-    }
+    // fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+    //     Ok(PublicKey{ alg: &Algorithm::KYBER512_R3, context: bytes.try_into().map_err(|_e| KeyRejected::unexpected_error())? })
+    // }
 
-    fn encapsulate(&self) -> Result<([u8; CIPHERTEXT_MAX_LEN], [u8; SHARED_SECRET_MAX_LEN]), Unspecified> {
-        Ok(([0u8; CIPHERTEXT_MAX_LEN], [0u8; SHARED_SECRET_MAX_LEN]))
+    fn encapsulate(&mut self) -> Result<(&[u8], &[u8]), Unspecified> {
+        unsafe {
+            let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
+            // get buffer lengths
+            let mut ciphertext_len;
+            let mut shared_secret_len;
+            match self.algorithm {
+                Algorithm::KYBER512_R3 => {
+                    ciphertext_len = KYBER512_CIPHERTEXTBYTES;
+                    shared_secret_len = KYBER512_SECRETKEYBYTES;
+                }
+            }
+            EVP_PKEY_encapsulate(*ctx, self.ciphertext.as_mut_ptr(), &mut ciphertext_len,
+                                    self.shared_secret.as_mut_ptr(), &mut shared_secret_len);
+            Ok((&self.ciphertext[0..ciphertext_len], &self.shared_secret[0..shared_secret_len]))
+        }
     }
 }
 
@@ -123,7 +162,6 @@ mod tests {
     use crate::{agreement, rand, test, test_file};
 
     #[test]
-    fn key_transport_test() {
-
+    fn test_agreement_kyber512() {
     }
 }
