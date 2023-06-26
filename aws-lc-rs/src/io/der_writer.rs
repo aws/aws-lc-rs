@@ -71,12 +71,13 @@ mod tests {
     use crate::io::der_writer::{write_all, write_positive_integer};
     use crate::io::writer::{Accumulator, LengthMeasurement};
     use crate::io::Positive;
-    use crate::rand::{generate, SystemRandom};
+    use crate::rand::{generate, LessSafeSystemRandom, SystemRandom};
 
     const TEST_DATA_SIZE: usize = 100;
     #[test]
     fn test_write_positive_integer() {
-        let mut data: [u8; TEST_DATA_SIZE] = generate(&SystemRandom::new()).unwrap().expose();
+        let mut data: [u8; TEST_DATA_SIZE] =
+            generate(&LessSafeSystemRandom::new()).unwrap().expose();
         data[0] |= 0x80; //negative
         let positive = Positive::new_non_empty_without_leading_zeros(untrusted::Input::from(&data));
         let mut length_measurement = LengthMeasurement::zero();

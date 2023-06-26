@@ -35,7 +35,6 @@
 use aws_lc::RAND_bytes;
 use std::fmt::Debug;
 
-use crate::error;
 use crate::error::Unspecified;
 
 /// A secure random number generator.
@@ -144,7 +143,7 @@ impl Default for SystemRandom {
 
 impl sealed::SecureRandom for SystemRandom {
     #[inline]
-    fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
+    fn fill_impl(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
         fill(dest)
     }
 }
@@ -152,22 +151,68 @@ impl sealed::SecureRandom for SystemRandom {
 /// Fills `dest` with random bytes.
 /// # Errors
 /// `error::Unspecified` if unable to fill `dest`.
-pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
+pub fn fill(dest: &mut [u8]) -> Result<(), Unspecified> {
     unsafe {
         if 1 == RAND_bytes(dest.as_mut_ptr(), dest.len()) {
             Ok(())
         } else {
-            Err(error::Unspecified)
+            Err(Unspecified)
         }
+    }
+}
+
+/// Fills `dest` with random bytes.
+/// # Errors
+/// `error::Unspecified` if unable to fill `dest`.
+pub fn less_safe_fill(dest: &mut [u8]) -> Result<(), Unspecified> {
+    getrandom::getrandom(dest).map_err(|_| Unspecified)
+}
+
+/// A random number generator where the random values come from the
+/// operating system.
+///
+/// This is potentially faster than `SystemRandom`,
+/// especially when the "fips" feature is enabled.
+/// A single `LessSafeSystemRandom` may be shared across multiple threads safely.
+///
+/// # 🛑 Warning
+/// The bytes provide by this type are less secure. It should not be used for key generation,
+/// instead use `rand::fill` or `SystemRandom`.
+#[derive(Clone, Debug)]
+pub struct LessSafeSystemRandom(());
+
+const LESS_SAFE_SYSTEM_RANDOM: LessSafeSystemRandom = LessSafeSystemRandom(());
+
+impl LessSafeSystemRandom {
+    /// Constructs a new `LessSecureRandom`.
+    #[inline]
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl Default for LessSafeSystemRandom {
+    fn default() -> Self {
+        LESS_SAFE_SYSTEM_RANDOM
+    }
+}
+
+impl sealed::SecureRandom for LessSafeSystemRandom {
+    #[inline]
+    fn fill_impl(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
+        less_safe_fill(dest)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::rand;
     use std::array::IntoIter;
 
-    use crate::rand::{generate, SecureRandom, SystemRandom};
+    use crate::rand::{
+        generate, LessSafeSystemRandom, SecureRandom, SystemRandom, LESS_SAFE_SYSTEM_RANDOM,
+        SYSTEM_RANDOM,
+    };
 
     #[test]
     fn test_secure_random_fill() {
@@ -183,9 +228,25 @@ mod tests {
 
     #[test]
     fn test_rand_fill() {
-        let mut random_array: [u8; 173] = [0u8; 173];
-        rand::fill(&mut random_array).unwrap();
+        for drbg in [
+            &SYSTEM_RANDOM as &dyn SecureRandom,
+            &LESS_SAFE_SYSTEM_RANDOM as &dyn SecureRandom,
+        ] {
+            let mut random_array: [u8; 173] = [0u8; 173];
+            drbg.fill(&mut random_array).unwrap();
 
+            let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
+            assert!((104f64..152f64).contains(&mean), "Mean: {mean}");
+            assert!(variance > 7f64);
+            println!("Mean: {mean} Variance: {variance}");
+        }
+    }
+
+    #[test]
+    fn test_random_constructable() {
+        let rando = SystemRandom::new();
+        let random_array = generate(&rando).unwrap();
+        let random_array: [u8; 173] = random_array.expose();
         let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
         assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
         assert!(variance > 8f64);
@@ -193,13 +254,13 @@ mod tests {
     }
 
     #[test]
-    fn test_randomly_constructable() {
-        let rando = SystemRandom::new();
+    fn test_less_random_constructable() {
+        let rando = LessSafeSystemRandom::new();
         let random_array = generate(&rando).unwrap();
         let random_array: [u8; 173] = random_array.expose();
         let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
-        assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
-        assert!(variance > 8f64);
+        assert!((104f64..152f64).contains(&mean), "Mean: {mean}");
+        assert!(variance > 7f64);
         println!("Mean: {mean} Variance: {variance}");
     }
 
