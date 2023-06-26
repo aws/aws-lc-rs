@@ -161,7 +161,15 @@ pub fn fill(dest: &mut [u8]) -> Result<(), Unspecified> {
     }
 }
 
-/// Fills `dest` with random bytes.
+/// Fills `dest` with random bytes from the host operating system.
+///
+/// This is potentially faster than `rand::fill`,
+/// especially when the "fips" feature is enabled.
+///
+/// # 🛑 Warning
+/// The bytes provide by this type are less secure. It should not be used for key generation,
+/// instead use `rand::fill` or `SystemRandom`.
+///
 /// # Errors
 /// `error::Unspecified` if unable to fill `dest`.
 pub fn less_safe_fill(dest: &mut [u8]) -> Result<(), Unspecified> {
