@@ -11,12 +11,13 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
 use aws_lc::{
-    point_conversion_form_t, ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s,
-    ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, ECDSA_do_verify, EC_GROUP_get_curve_name,
-    EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new,
-    EC_KEY_new_by_curve_name, EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key,
-    EC_POINT_new, EC_POINT_oct2point, EC_POINT_point2oct, NID_X9_62_prime256v1, NID_secp256k1,
-    NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT,
+    point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
+    ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes,
+    ECDSA_do_verify, EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
+    EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_new_by_curve_name,
+    EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new,
+    EC_POINT_oct2point, EC_POINT_point2oct, NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1,
+    NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT,
 };
 #[cfg(feature = "fips")]
 use aws_lc::{EC_KEY_check_fips, EC_KEY_generate_key_fips};
@@ -37,13 +38,16 @@ use std::slice;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
+use zeroize::Zeroize;
 
 pub(crate) mod key_pair;
 
 const ELEM_MAX_BITS: usize = 521;
-pub const ELEM_MAX_BYTES: usize = (ELEM_MAX_BITS + 7) / 8;
+pub(crate) const ELEM_MAX_BYTES: usize = (ELEM_MAX_BITS + 7) / 8;
 
-pub const SCALAR_MAX_BYTES: usize = ELEM_MAX_BYTES;
+pub(crate) const SCALAR_MAX_BYTES: usize = ELEM_MAX_BYTES;
+
+pub(crate) const PRIVATE_KEY_MAX_LEN: usize = 1 + ELEM_MAX_BYTES;
 
 /// The maximum length, in bytes, of an encoded public key.
 pub(crate) const PUBLIC_KEY_MAX_LEN: usize = 1 + (2 * ELEM_MAX_BYTES);
@@ -115,7 +119,10 @@ pub struct PublicKey(Box<[u8]>);
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-        f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.0.as_ref())))
+        f.write_str(&format!(
+            "EcdsaPublicKey(\"{}\")",
+            test::to_hex(self.0.as_ref())
+        ))
     }
 }
 
@@ -134,6 +141,37 @@ impl AsRef<[u8]> for PublicKey {
 
 unsafe impl Send for PublicKey {}
 unsafe impl Sync for PublicKey {}
+
+#[derive(Clone)]
+pub struct PrivateKey(Box<[u8]>);
+
+impl Drop for PrivateKey {
+    fn drop(&mut self) {
+        self.0.zeroize();
+    }
+}
+
+impl Debug for PrivateKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+        f.write_str("EcdsaPrivateKey()")
+    }
+}
+
+impl PrivateKey {
+    fn new(box_bytes: Box<[u8]>) -> Self {
+        PrivateKey(box_bytes)
+    }
+}
+
+impl AsRef<[u8]> for PrivateKey {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
+unsafe impl Send for PrivateKey {}
+unsafe impl Sync for PrivateKey {}
 
 impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
     #[inline]
@@ -203,6 +241,36 @@ unsafe fn validate_ec_key(
     Ok(())
 }
 
+pub(crate) unsafe fn marshal_private_key_to_buffer(
+    alg_id: &'static AlgorithmID,
+    buffer: &mut [u8; PRIVATE_KEY_MAX_LEN],
+    ec_key: &ConstPointer<EC_KEY>,
+) -> Result<usize, Unspecified> {
+    let private_bn = ConstPointer::new(EC_KEY_get0_private_key(**ec_key))?;
+    let private_size: usize = ecdsa_fixed_number_byte_size(alg_id);
+    {
+        let size: usize = BN_num_bytes(*private_bn).try_into()?;
+        debug_assert!(size <= private_size);
+    }
+
+    if 1 != BN_bn2bin_padded(buffer.as_mut_ptr(), private_size, *private_bn) {
+        return Err(Unspecified);
+    }
+
+    Ok(private_size)
+}
+
+pub(crate) fn marshal_private_key(
+    alg_id: &'static AlgorithmID,
+    ec_key: &ConstPointer<EC_KEY>,
+) -> Result<PrivateKey, Unspecified> {
+    let mut priv_key_bytes = [0u8; PRIVATE_KEY_MAX_LEN];
+    unsafe {
+        let key_len = marshal_private_key_to_buffer(alg_id, &mut priv_key_bytes, ec_key)?;
+        Ok(PrivateKey::new(priv_key_bytes[0..key_len].into()))
+    }
+}
+
 pub(crate) unsafe fn marshal_public_key_to_buffer(
     buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
     ec_key: &ConstPointer<EC_KEY>,
@@ -216,11 +284,10 @@ pub(crate) unsafe fn marshal_public_key_to_buffer(
 }
 
 pub(crate) fn marshal_public_key(ec_key: &ConstPointer<EC_KEY>) -> Result<PublicKey, Unspecified> {
+    let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
     unsafe {
-        let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
         let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, ec_key)?;
-        let pub_key = Vec::from(&pub_key_bytes[0..key_len]);
-        Ok(PublicKey::new(pub_key.into_boxed_slice()))
+        Ok(PublicKey::new(pub_key_bytes[0..key_len].into()))
     }
 }
 

@@ -4,22 +4,22 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::{
-    rand,
-    signature::{self, KeyPair},
+    rand::SystemRandom,
+    signature::{self, EcdsaKeyPair, KeyPair, Signature, UnparsedPublicKey},
     test, test_file,
 };
 use mirai_annotations::unrecoverable;
 
 #[test]
 fn ecdsa_traits() {
-    test::compile_time_assert_send::<signature::EcdsaKeyPair>();
-    test::compile_time_assert_sync::<signature::EcdsaKeyPair>();
-    test::compile_time_assert_send::<signature::Signature>();
-    test::compile_time_assert_sync::<signature::Signature>();
-    test::compile_time_assert_send::<signature::UnparsedPublicKey<&[u8]>>();
-    test::compile_time_assert_sync::<signature::UnparsedPublicKey<&[u8]>>();
-    test::compile_time_assert_send::<signature::UnparsedPublicKey<Vec<u8>>>();
-    test::compile_time_assert_sync::<signature::UnparsedPublicKey<Vec<u8>>>();
+    test::compile_time_assert_send::<EcdsaKeyPair>();
+    test::compile_time_assert_sync::<EcdsaKeyPair>();
+    test::compile_time_assert_send::<Signature>();
+    test::compile_time_assert_sync::<Signature>();
+    test::compile_time_assert_send::<UnparsedPublicKey<&[u8]>>();
+    test::compile_time_assert_sync::<UnparsedPublicKey<&[u8]>>();
+    test::compile_time_assert_send::<UnparsedPublicKey<Vec<u8>>>();
+    test::compile_time_assert_sync::<UnparsedPublicKey<Vec<u8>>>();
 }
 
 #[test]
@@ -68,10 +68,7 @@ fn ecdsa_from_pkcs8_test() {
 
             let error = test_case.consume_optional_string("Error");
 
-            match (
-                signature::EcdsaKeyPair::from_pkcs8(this_fixed, &input),
-                error.clone(),
-            ) {
+            match (EcdsaKeyPair::from_pkcs8(this_fixed, &input), error.clone()) {
                 (Ok(_), None) => (),
                 (Err(e), None) => panic!(
                     "Failed with error \"{}\", but expected to succeed. Input: {}",
@@ -91,10 +88,7 @@ fn ecdsa_from_pkcs8_test() {
                 ),
             };
 
-            match (
-                signature::EcdsaKeyPair::from_pkcs8(this_asn1, &input),
-                error,
-            ) {
+            match (EcdsaKeyPair::from_pkcs8(this_asn1, &input), error) {
                 (Ok(_), None) => (),
                 (Err(e), None) => {
                     unrecoverable!("Failed with error \"{}\", but expected to succeed", e);
@@ -104,12 +98,12 @@ fn ecdsa_from_pkcs8_test() {
             };
 
             assert!(
-                signature::EcdsaKeyPair::from_pkcs8(other_fixed, &input).is_err(),
+                EcdsaKeyPair::from_pkcs8(other_fixed, &input).is_err(),
                 "Input: {}",
                 test::to_hex(&input)
             );
             assert!(
-                signature::EcdsaKeyPair::from_pkcs8(other_asn1, &input).is_err(),
+                EcdsaKeyPair::from_pkcs8(other_asn1, &input).is_err(),
                 "Input: {}",
                 test::to_hex(&input)
             );
@@ -122,7 +116,7 @@ fn ecdsa_from_pkcs8_test() {
 // Verify that, at least, we generate PKCS#8 documents that we can read.
 #[test]
 fn ecdsa_generate_pkcs8_test() {
-    let rng = rand::SystemRandom::new();
+    let rng = SystemRandom::new();
 
     for alg in &[
         &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
@@ -140,7 +134,7 @@ fn ecdsa_generate_pkcs8_test() {
         &signature::ECDSA_P256K1_SHA3_256_ASN1_SIGNING,
         &signature::ECDSA_P256K1_SHA3_256_FIXED_SIGNING,
     ] {
-        let pkcs8 = signature::EcdsaKeyPair::generate_pkcs8(alg, &rng).unwrap();
+        let pkcs8 = EcdsaKeyPair::generate_pkcs8(alg, &rng).unwrap();
         println!();
         for b in pkcs8.as_ref() {
             print!("{:02x}", *b);
@@ -148,7 +142,7 @@ fn ecdsa_generate_pkcs8_test() {
         println!();
         println!();
 
-        signature::EcdsaKeyPair::from_pkcs8(alg, pkcs8.as_ref()).unwrap();
+        EcdsaKeyPair::from_pkcs8(alg, pkcs8.as_ref()).unwrap();
     }
 }
 
@@ -188,7 +182,7 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
             }
         };
 
-        let actual_result = signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
+        let actual_result = UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
         assert_eq!(actual_result.is_ok(), is_valid);
 
         Ok(())
@@ -232,7 +226,7 @@ fn test_signature_ecdsa_verify_fixed(data_file: test::File) {
 
         let is_valid = expected_result == "P (0 )";
 
-        let actual_result = signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
+        let actual_result = UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
         assert_eq!(actual_result.is_ok(), is_valid);
 
         Ok(())
@@ -245,11 +239,8 @@ fn ecdsa_test_public_key_coverage() {
     const PUBLIC_KEY: &[u8] = include_bytes!("data/ecdsa_test_public_key_p256.der");
     const PUBLIC_KEY_DEBUG: &str = include_str!("data/ecdsa_test_public_key_p256_debug.txt");
 
-    let key_pair = signature::EcdsaKeyPair::from_pkcs8(
-        &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
-        PRIVATE_KEY,
-    )
-    .unwrap();
+    let key_pair =
+        EcdsaKeyPair::from_pkcs8(&signature::ECDSA_P256_SHA256_FIXED_SIGNING, PRIVATE_KEY).unwrap();
 
     // Test `AsRef<[u8]>`
     assert_eq!(key_pair.public_key().as_ref(), PUBLIC_KEY);
@@ -260,7 +251,7 @@ fn ecdsa_test_public_key_coverage() {
 
     // Test `Copy`.
     #[allow(let_underscore_drop)]
-    let _: <signature::EcdsaKeyPair as KeyPair>::PublicKey = *key_pair.public_key();
+    let _: <EcdsaKeyPair as KeyPair>::PublicKey = *key_pair.public_key();
 
     // Test `Debug`.
     assert_eq!(PUBLIC_KEY_DEBUG, format!("{:?}", key_pair.public_key()));
@@ -287,7 +278,7 @@ fn signature_ecdsa_sign_fixed_sign_and_verify_sha3_test() {
 // different each time. Because of that, here we simply verify that the
 // signature verifies correctly.
 fn test_signature_ecdsa_sign_fixed_sign_and_verify(data_file: test::File) {
-    let rng = rand::SystemRandom::new();
+    let rng = SystemRandom::new();
 
     test::run(data_file, |section, test_case| {
         assert_eq!(section, "");
@@ -338,11 +329,11 @@ fn test_signature_ecdsa_sign_fixed_sign_and_verify(data_file: test::File) {
         };
 
         let private_key =
-            signature::EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q).unwrap();
+            EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q).unwrap();
 
         let signature = private_key.sign(&rng, &msg).unwrap();
 
-        let public_key = signature::UnparsedPublicKey::new(verification_alg, q);
+        let public_key = UnparsedPublicKey::new(verification_alg, q);
         let vfy_result = public_key.verify(&msg, signature.as_ref());
         assert!(vfy_result.is_ok());
 
@@ -365,7 +356,7 @@ fn signature_ecdsa_sign_asn1_sha3_test() {
 // different each time. Because of that, here we simply verify that the
 // signature verifies correctly.
 fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
-    let rng = rand::SystemRandom::new();
+    let rng = SystemRandom::new();
 
     test::run(data_file, |section, test_case| {
         assert_eq!(section, "");
@@ -416,13 +407,69 @@ fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
         };
 
         let private_key =
-            signature::EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q).unwrap();
+            EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q).unwrap();
 
         let signature = private_key.sign(&rng, &msg).unwrap();
 
-        let public_key = signature::UnparsedPublicKey::new(verification_alg, q);
+        let public_key = UnparsedPublicKey::new(verification_alg, q);
         assert_eq!(public_key.verify(&msg, signature.as_ref()), Ok(()));
 
         Ok(())
     });
+}
+
+#[test]
+fn test_to_pkcs8() {
+    for signing_alg in [
+        &signature::ECDSA_P521_SHA3_512_ASN1_SIGNING,
+        &signature::ECDSA_P521_SHA3_512_FIXED_SIGNING,
+        &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
+        &signature::ECDSA_P521_SHA512_FIXED_SIGNING,
+        &signature::ECDSA_P384_SHA3_384_ASN1_SIGNING,
+        &signature::ECDSA_P384_SHA3_384_FIXED_SIGNING,
+        &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
+        &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+        &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
+        &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+    ] {
+        let rnd = SystemRandom::new();
+        let key_pair_doc = EcdsaKeyPair::generate_pkcs8(signing_alg, &rnd).unwrap();
+        let key_pair = EcdsaKeyPair::from_pkcs8(signing_alg, key_pair_doc.as_ref()).unwrap();
+
+        let key_pair_export_doc = key_pair.to_pkcs8().unwrap();
+        // Verify that the exported bytes match the original generated bytes
+        assert_eq!(key_pair_doc.as_ref(), key_pair_export_doc.as_ref());
+    }
+}
+
+#[test]
+fn test_private_key() {
+    for signing_alg in [
+        &signature::ECDSA_P521_SHA3_512_ASN1_SIGNING,
+        &signature::ECDSA_P521_SHA3_512_FIXED_SIGNING,
+        &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
+        &signature::ECDSA_P521_SHA512_FIXED_SIGNING,
+        &signature::ECDSA_P384_SHA3_384_ASN1_SIGNING,
+        &signature::ECDSA_P384_SHA3_384_FIXED_SIGNING,
+        &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
+        &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+        &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
+        &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+    ] {
+        let rnd = SystemRandom::new();
+        let key_pair_doc = EcdsaKeyPair::generate_pkcs8(signing_alg, &rnd).unwrap();
+        let key_pair = EcdsaKeyPair::from_pkcs8(signing_alg, key_pair_doc.as_ref()).unwrap();
+
+        let private_key = key_pair.private_key();
+        let public_key = key_pair.public_key();
+
+        let key_pair_copy = EcdsaKeyPair::from_private_key_and_public_key(
+            signing_alg,
+            private_key.as_ref(),
+            public_key.as_ref(),
+        )
+        .unwrap();
+        let key_pair_copy_doc = key_pair_copy.to_pkcs8().unwrap();
+        assert_eq!(key_pair_doc.as_ref(), key_pair_copy_doc.as_ref());
+    }
 }
