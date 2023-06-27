@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{error::{Unspecified, KeyRejected}, ptr::LcPtr, ptr::{DetachableLcPtr, Pointer}};
+use crate::{error::{Unspecified, KeyRejected}, ptr::LcPtr, ptr::{DetachableLcPtr, Pointer}, cipher};
 use std::{os::raw::c_int};
 use std::ptr::null_mut;
 use aws_lc::{
@@ -23,8 +23,8 @@ const SHARED_SECRET_MAX_LEN: usize = KYBER512_BYTES;
 
 
 #[allow(non_camel_case_types)]
-#[derive(Clone)]
-enum Algorithm {
+#[derive(Clone, Debug, PartialEq)]
+pub enum Algorithm {
     KYBER512_R3,
 }
 
@@ -37,45 +37,51 @@ impl Algorithm {
     }
 }
 
-// PrivateKey
-pub struct PrivateKey {
-    algorithm: &'static Algorithm,
+// KemPrivateKey
+pub struct KemPrivateKey {
+    algorithm: Algorithm,
     context: LcPtr<*mut EVP_PKEY>,
-    shared_secret: [u8; SHARED_SECRET_MAX_LEN]
+    // shared_secret: [u8; SHARED_SECRET_MAX_LEN]
 }
 
-impl PrivateKey {
-    fn generate(alg: &'static Algorithm) -> Result<Self, Unspecified> {
+impl KemPrivateKey {
+    fn generate(alg: Algorithm) -> Result<Self, Unspecified> {
         match alg {
             Algorithm::KYBER512_R3 => unsafe {
                 let kyber_key = kem_key_generate(alg.nid())?;
-                Ok(PrivateKey {
+                Ok(KemPrivateKey {
                     algorithm: alg,
                     context: LcPtr::from(kyber_key),
-                    shared_secret: [0u8; SHARED_SECRET_MAX_LEN]
+                    // shared_secret: [0u8; SHARED_SECRET_MAX_LEN]
                 })
             },
         }
     }
 
-    fn from_raw_bytes(alg: &'static Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+    fn algorithm(&self) -> &Algorithm {
+        &self.algorithm
+    }
+
+    fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(alg.nid(), bytes.as_ptr(), bytes.len()))?;
-            Ok(PrivateKey {
+            Ok(KemPrivateKey {
                 algorithm: alg,
                 context: LcPtr::from(pkey),
-                shared_secret: [0u8; SHARED_SECRET_MAX_LEN]
+                // shared_secret: [0u8; SHARED_SECRET_MAX_LEN]
             })
         }
     }
 
-    fn compute_public_key(&self) -> Result<PublicKey, Unspecified> {
+    fn compute_public_key(&self) -> Result<KemPublicKey, Unspecified> {
         // Could implement clone for LcPtr and call that here
-        Ok(PublicKey{ algorithm: self.algorithm, context: LcPtr::new(*self.context)?,
-                      ciphertext: [0u8; CIPHERTEXT_MAX_LEN], shared_secret: [0u8; SHARED_SECRET_MAX_LEN] })
+        Ok(KemPublicKey{ algorithm: self.algorithm.clone(), context: LcPtr::new(*self.context)?,
+        /*ciphertext: [0u8; CIPHERTEXT_MAX_LEN], shared_secret: [0u8; SHARED_SECRET_MAX_LEN]*/ })
     }
 
-    fn decapsulate(&mut self, ciphertext: &mut [u8]) -> Result<&[u8], Unspecified> {
+    fn decapsulate<F, R>(&self, ciphertext: &mut [u8], kdf: F) -> Result<R, Unspecified>
+    where
+        F: FnOnce(&[u8]) -> Result<R, Unspecified> {
         unsafe {
             let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
             let mut shared_secret_len;
@@ -85,16 +91,17 @@ impl PrivateKey {
                     shared_secret_len = KYBER512_SECRETKEYBYTES;
                 }
             }
-            if EVP_PKEY_decapsulate(*ctx, self.shared_secret.as_mut_ptr(), &mut shared_secret_len,
+            let mut shared_secret = Vec::with_capacity(shared_secret_len);
+            if EVP_PKEY_decapsulate(*ctx, shared_secret.as_mut_ptr(), &mut shared_secret_len,
                                     ciphertext.as_mut_ptr(), ciphertext.len()) != 1 {
-                self.shared_secret.zeroize()
+                shared_secret.zeroize()
             }
-            Ok(&self.shared_secret[0..shared_secret_len])
+            kdf(&shared_secret)
         }
     }
 }
 
-impl Into<[u8; PRIVATE_KEY_MAX_LEN]> for PrivateKey {
+impl Into<[u8; PRIVATE_KEY_MAX_LEN]> for KemPrivateKey {
     fn into(self) -> [u8; PRIVATE_KEY_MAX_LEN] {
         [0u8; PRIVATE_KEY_MAX_LEN]
     }
@@ -102,19 +109,21 @@ impl Into<[u8; PRIVATE_KEY_MAX_LEN]> for PrivateKey {
 
 /// An unparsed, possibly malformed, public key for key agreement.
 // #[derive(Clone)]
-pub struct PublicKey {
-    algorithm: &'static Algorithm,
+pub struct KemPublicKey {
+    algorithm: Algorithm,
     context: LcPtr<*mut EVP_PKEY>,
-    ciphertext: [u8; CIPHERTEXT_MAX_LEN],
-    shared_secret: [u8; SHARED_SECRET_MAX_LEN]
+    // ciphertext: [u8; CIPHERTEXT_MAX_LEN],
+    // shared_secret: [u8; SHARED_SECRET_MAX_LEN]
 }
 
-impl PublicKey {
+impl KemPublicKey {
     // fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-    //     Ok(PublicKey{ alg: &Algorithm::KYBER512_R3, context: bytes.try_into().map_err(|_e| KeyRejected::unexpected_error())? })
+    //     Ok(KemPublicKey{ alg: &Algorithm::KYBER512_R3, context: bytes.try_into().map_err(|_e| KeyRejected::unexpected_error())? })
     // }
 
-    fn encapsulate(&mut self) -> Result<(&[u8], &[u8]), Unspecified> {
+    fn encapsulate<F, R>(&self, kdf: F) -> Result<R, Unspecified>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<R, Unspecified> {
         unsafe {
             let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
             // get buffer lengths
@@ -126,14 +135,16 @@ impl PublicKey {
                     shared_secret_len = KYBER512_SECRETKEYBYTES;
                 }
             }
-            EVP_PKEY_encapsulate(*ctx, self.ciphertext.as_mut_ptr(), &mut ciphertext_len,
-                                    self.shared_secret.as_mut_ptr(), &mut shared_secret_len);
-            Ok((&self.ciphertext[0..ciphertext_len], &self.shared_secret[0..shared_secret_len]))
+            let mut ciphertext = Vec::with_capacity(ciphertext_len);
+            let mut shared_secret = Vec::with_capacity(shared_secret_len);
+            EVP_PKEY_encapsulate(*ctx, ciphertext.as_mut_ptr(), &mut ciphertext_len,
+                                    shared_secret.as_mut_ptr(), &mut shared_secret_len);
+            kdf(&ciphertext, &shared_secret)
         }
     }
 }
 
-impl Into<[u8; PUBLIC_KEY_MAX_LEN]> for PublicKey {
+impl Into<[u8; PUBLIC_KEY_MAX_LEN]> for KemPublicKey {
     fn into(self) -> [u8; PUBLIC_KEY_MAX_LEN] {
         [0; PUBLIC_KEY_MAX_LEN]
     }
@@ -158,10 +169,40 @@ unsafe fn kem_key_generate(
 
 #[cfg(test)]
 mod tests {
-    use crate::error::Unspecified;
-    use crate::{agreement, rand, test, test_file};
+    use crate::{key_transport, rand, test, test_file};
+
+    use super::KemPrivateKey;
 
     #[test]
     fn test_agreement_kyber512() {
+        let priv_key = KemPrivateKey::generate(key_transport::Algorithm::KYBER512_R3).unwrap();
+        assert_eq!(priv_key.algorithm(), &key_transport::Algorithm::KYBER512_R3);
+
+        let pub_key = priv_key.compute_public_key().unwrap();
+
+        let mut ciphertext: Vec<u8> = vec![];
+        let mut alice_shared_secret: Vec<u8> = vec![];
+
+        let alice_result = pub_key.encapsulate(|ct, ss| {
+            ciphertext.extend_from_slice(ct);
+            alice_shared_secret.extend_from_slice(ss);
+            Ok(())
+        });
+        assert_eq!(alice_result, Ok(()));
+
+        let mut bob_shared_secret: Vec<u8> = vec![];
+
+        let bob_result = priv_key.decapsulate(&mut ciphertext, |ss| {
+            bob_shared_secret.extend_from_slice(ss);
+            Ok(())
+        });
+        assert_eq!(bob_result, Ok(()));
+
+        assert_eq!(alice_shared_secret, bob_shared_secret);
+    }
+
+    #[test]
+    fn test_serialized_agreement_kyber512() {
+
     }
 }
