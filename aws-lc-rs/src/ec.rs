@@ -17,13 +17,14 @@ use aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::EC_KEY_check_key;
 use aws_lc::{
-    point_conversion_form_t, ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s,
-    ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EC_GROUP_get_curve_name,
-    EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new,
-    EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new,
-    EC_POINT_oct2point, EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY,
-    EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new,
+    point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, CONF_modules_finish,
+    ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0,
+    ECDSA_SIG_to_bytes, EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
+    EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
+    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new, EC_POINT_oct2point,
+    EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new_id,
+    EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new,
     NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP,
     EC_POINT, EVP_PKEY, EVP_PKEY_EC,
 };
@@ -41,13 +42,16 @@ use std::ptr::null_mut;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
+use zeroize::Zeroize;
 
 pub(crate) mod key_pair;
 
 const ELEM_MAX_BITS: usize = 521;
-pub const ELEM_MAX_BYTES: usize = (ELEM_MAX_BITS + 7) / 8;
+pub(crate) const ELEM_MAX_BYTES: usize = (ELEM_MAX_BITS + 7) / 8;
 
-pub const SCALAR_MAX_BYTES: usize = ELEM_MAX_BYTES;
+pub(crate) const SCALAR_MAX_BYTES: usize = ELEM_MAX_BYTES;
+
+pub(crate) const PRIVATE_KEY_MAX_LEN: usize = 1 + ELEM_MAX_BYTES;
 
 /// The maximum length, in bytes, of an encoded public key.
 pub(crate) const PUBLIC_KEY_MAX_LEN: usize = 1 + (2 * ELEM_MAX_BYTES);
@@ -119,7 +123,10 @@ pub struct PublicKey(Box<[u8]>);
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-        f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.0.as_ref())))
+        f.write_str(&format!(
+            "EcdsaPublicKey(\"{}\")",
+            test::to_hex(self.0.as_ref())
+        ))
     }
 }
 
@@ -138,6 +145,37 @@ impl AsRef<[u8]> for PublicKey {
 
 unsafe impl Send for PublicKey {}
 unsafe impl Sync for PublicKey {}
+
+#[derive(Clone)]
+pub struct PrivateKey(Box<[u8]>);
+
+impl Drop for PrivateKey {
+    fn drop(&mut self) {
+        self.0.zeroize();
+    }
+}
+
+impl Debug for PrivateKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+        f.write_str("EcdsaPrivateKey()")
+    }
+}
+
+impl PrivateKey {
+    fn new(box_bytes: Box<[u8]>) -> Self {
+        PrivateKey(box_bytes)
+    }
+}
+
+impl AsRef<[u8]> for PrivateKey {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
+unsafe impl Send for PrivateKey {}
+unsafe impl Sync for PrivateKey {}
 
 impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
     #[inline]
@@ -263,6 +301,37 @@ unsafe fn validate_evp_key(
     }
 
     Ok(())
+}
+
+pub(crate) unsafe fn marshal_private_key_to_buffer(
+    alg_id: &'static AlgorithmID,
+    evp_key: &ConstPointer<EVP_PKEY>,
+) -> Result<Vec<u8>, Unspecified> {
+    let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_key))?;
+    let private_bn = ConstPointer::new(EC_KEY_get0_private_key(*ec_key))?;
+    let private_size: usize = ecdsa_fixed_number_byte_size(alg_id);
+    {
+        let size: usize = BN_num_bytes(*private_bn).try_into()?;
+        debug_assert!(size <= private_size);
+    }
+
+    let mut buffer = vec![0u8; SCALAR_MAX_BYTES];
+    if 1 != BN_bn2bin_padded(buffer.as_mut_ptr(), private_size, *private_bn) {
+        return Err(Unspecified);
+    }
+    buffer.truncate(private_size);
+
+    Ok(buffer)
+}
+
+pub(crate) fn marshal_private_key(
+    alg_id: &'static AlgorithmID,
+    evp_key: &ConstPointer<EVP_PKEY>,
+) -> Result<PrivateKey, Unspecified> {
+    unsafe {
+        let priv_key_bytes = marshal_private_key_to_buffer(alg_id, evp_key)?;
+        Ok(PrivateKey::new(priv_key_bytes.into()))
+    }
 }
 
 pub(crate) unsafe fn marshal_public_key_to_buffer(

@@ -5,7 +5,8 @@
 
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{
-    evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
+    evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PrivateKey,
+    PublicKey,
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
@@ -27,6 +28,7 @@ pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
     evp_pkey: LcPtr<EVP_PKEY>,
     pubkey: PublicKey,
+    privkey: PrivateKey,
 }
 
 impl Debug for EcdsaKeyPair {
@@ -55,11 +57,12 @@ impl EcdsaKeyPair {
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
         let pubkey = ec::marshal_public_key(&evp_pkey.as_const())?;
-
+        let privkey = ec::marshal_private_key(algorithm.id, &evp_pkey.as_const())?;
         Ok(Self {
             algorithm,
             evp_pkey,
             pubkey,
+            privkey,
         })
     }
 
@@ -145,6 +148,17 @@ impl EcdsaKeyPair {
             let key_pair = Self::new(alg, evp_pkey)?;
             Ok(key_pair)
         }
+    }
+
+    /// Exposes the private key encoded as a big-endian fixed-length integer.
+    ///
+    /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
+    #[must_use]
+    pub fn private_key(&self) -> &PrivateKey {
+        &self.privkey
     }
 
     /// Returns the signature of the message using a random nonce.
