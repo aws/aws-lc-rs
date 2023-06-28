@@ -7,7 +7,7 @@ use std::ptr::null_mut;
 use aws_lc::{
     EVP_PKEY, NID_KYBER512_R3, EVP_PKEY_keygen, EVP_PKEY_CTX_new_id, EVP_PKEY_keygen_init,
     EVP_PKEY_KEM, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new,
-    EVP_PKEY_encapsulate, EVP_PKEY_decapsulate, EVP_PKEY_get_raw_public_key
+    EVP_PKEY_encapsulate, EVP_PKEY_decapsulate, EVP_PKEY_get_raw_public_key, EVP_PKEY_kem_new_raw_public_key
 };
 use zeroize::Zeroize;
 
@@ -76,21 +76,26 @@ impl KemPrivateKey {
 
     fn compute_public_key(&self) -> Result<KemPublicKey, Unspecified> {
         // Could implement clone for LcPtr and call that here
-        let mut public_key_bytes = vec![0u8; KYBER512_PUBLICKEYBYTES];
-        let mut public_key_len;
+        let mut pubkey_bytes = vec![0u8; KYBER512_PUBLICKEYBYTES];
+        let mut pubkey_len;
+        let mut pubkey_ctx_copy = null_mut();
         match self.algorithm {
             Algorithm::KYBER512_R3 => {
-                public_key_len = KYBER512_PUBLICKEYBYTES;
+                pubkey_len = KYBER512_PUBLICKEYBYTES;
             }
         }
         unsafe {
-            if 1 != EVP_PKEY_get_raw_public_key(*self.context, public_key_bytes.as_mut_ptr(), &mut public_key_len) {
+            if 1 != EVP_PKEY_get_raw_public_key(*self.context, pubkey_bytes.as_mut_ptr(), &mut pubkey_len) {
+                return Err(Unspecified);
+            }
+            pubkey_ctx_copy = EVP_PKEY_kem_new_raw_public_key(self.algorithm.nid(), pubkey_bytes.as_mut_ptr(), pubkey_len);
+            if pubkey_ctx_copy.is_null() {
                 return Err(Unspecified);
             }
         }
         Ok(KemPublicKey{ algorithm: self.algorithm.clone(),
-                         context: LcPtr::new(*self.context)?,
-                         public_key: public_key_bytes })
+                         context: LcPtr::new(pubkey_ctx_copy)?, })
+                        //  public_key: pubkey_bytes })
     }
 
     fn decapsulate<F, R>(&self, ciphertext: &mut [u8], kdf: F) -> Result<R, Unspecified>
@@ -126,7 +131,7 @@ impl Into<[u8; PRIVATE_KEY_MAX_LEN]> for KemPrivateKey {
 pub struct KemPublicKey {
     algorithm: Algorithm,
     context: LcPtr<*mut EVP_PKEY>,
-    public_key: Vec<u8>
+    // public_key: Vec<u8>
     // ciphertext: [u8; CIPHERTEXT_MAX_LEN],
     // shared_secret: [u8; SHARED_SECRET_MAX_LEN]
 }
@@ -218,26 +223,24 @@ mod tests {
 
         let pub_key = priv_key.compute_public_key().unwrap();
 
-        // let mut ciphertext: Vec<u8> = vec![];
-        // let mut alice_shared_secret: Vec<u8> = vec![];
+        let mut ciphertext: Vec<u8> = vec![];
+        let mut alice_shared_secret: Vec<u8> = vec![];
 
-        // let alice_result = pub_key.encapsulate(|ct, ss| {
-        //     ciphertext.extend_from_slice(ct);
-        //     alice_shared_secret.extend_from_slice(ss);
-        //     Ok(())
-        // });
-        // assert_eq!(alice_result, Ok(()));
+        let alice_result = pub_key.encapsulate(|ct, ss| {
+            ciphertext.extend_from_slice(ct);
+            alice_shared_secret.extend_from_slice(ss);
+            Ok(())
+        });
+        assert_eq!(alice_result, Ok(()));
 
-        // let mut bob_shared_secret: Vec<u8> = vec![];
+        let mut bob_shared_secret: Vec<u8> = vec![];
 
-        // let bob_result = priv_key.decapsulate(&mut ciphertext, |ss| {
-        //     bob_shared_secret.extend_from_slice(ss);
-        //     Ok(())
-        // });
-        // assert_eq!(bob_result, Ok(()));
-
-        // assert_eq!(alice_shared_secret, bob_shared_secret);
-        println!("test_agreement_kyber512 passed...");
+        let bob_result = priv_key.decapsulate(&mut ciphertext, |ss| {
+            bob_shared_secret.extend_from_slice(ss);
+            Ok(())
+        });
+        assert_eq!(bob_result, Ok(()));
+        assert_eq!(alice_shared_secret, bob_shared_secret);
     }
 
     #[test]
