@@ -54,10 +54,10 @@ enum OutputLibType {
 
 impl Default for OutputLibType {
     fn default() -> Self {
-        if cfg!(any(
-            all(target_os = "linux", target_arch = "x86_64"),
-            all(target_os = "linux", target_arch = "aarch64")
-        )) {
+        let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+        let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+
+        if target_os == "linux" && (target_arch == "x86_64" || target_arch == "aarch64") {
             OutputLibType::Static
         } else {
             OutputLibType::Dynamic
@@ -243,8 +243,10 @@ fn emit_rustc_cfg(cfg: &str) {
 
 macro_rules! cfg_bindgen_platform {
     ($binding:ident, $os:literal, $arch:literal, $additional:expr) => {
+        let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+        let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
         let $binding = {
-            (cfg!(all(target_os = $os, target_arch = $arch)) && $additional)
+            (target_os == $os && target_arch == $arch && $additional)
                 .then(|| {
                     emit_rustc_cfg(concat!($os, "_", $arch));
                     true
@@ -275,28 +277,7 @@ fn main() {
         is_bindgen_required = true;
     }
 
-    let mut missing_dependency = false;
-    if output_lib_type == OutputLibType::Static {
-        if !test_go_command() {
-            eprintln!("Missing dependency: go-lang is required for FIPS.");
-            missing_dependency = true;
-        }
-        if !test_perl_command() {
-            eprintln!("Missing dependency: perl is required for FIPS.");
-            missing_dependency = true;
-        }
-    }
-    if let Some(cmake_cmd) = find_cmake_command() {
-        env::set_var("CMAKE", cmake_cmd);
-    } else {
-        eprintln!("Missing dependency: cmake");
-        missing_dependency = true;
-    };
-
-    assert!(
-        !missing_dependency,
-        "Required build dependency is missing. Halting build."
-    );
+    check_dependencies(output_lib_type);
 
     let manifest_dir = env::current_dir().unwrap();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
@@ -304,11 +285,14 @@ fn main() {
 
     let out_dir = build_rust_wrapper(&manifest_dir);
 
+    #[allow(unused_assignments)]
+    let mut bindings_available = false;
     if is_internal_generate {
         #[cfg(feature = "bindgen")]
         {
             let src_bindings_path = Path::new(&manifest_dir).join("src");
             generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
+            bindings_available = true;
         }
     } else if is_bindgen_required {
         #[cfg(any(
@@ -321,8 +305,16 @@ fn main() {
         {
             let gen_bindings_path = Path::new(&env::var("OUT_DIR").unwrap()).join("bindings.rs");
             generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
+            bindings_available = true;
         }
+    } else {
+        bindings_available = true;
     }
+
+    assert!(
+        bindings_available,
+        "aws-lc-fip-sys build failed. Please enable the 'bindgen' feature on aws-lc-rs or aws-lc-fips-sys"
+    );
 
     println!(
         "cargo:rustc-link-search=native={}",
@@ -364,4 +356,29 @@ fn main() {
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
+}
+
+fn check_dependencies(output_lib_type: OutputLibType) {
+    let mut missing_dependency = false;
+    if output_lib_type == OutputLibType::Static {
+        if !test_go_command() {
+            eprintln!("Missing dependency: go-lang is required for FIPS.");
+            missing_dependency = true;
+        }
+        if !test_perl_command() {
+            eprintln!("Missing dependency: perl is required for FIPS.");
+            missing_dependency = true;
+        }
+    }
+    if let Some(cmake_cmd) = find_cmake_command() {
+        env::set_var("CMAKE", cmake_cmd);
+    } else {
+        eprintln!("Missing dependency: cmake");
+        missing_dependency = true;
+    };
+
+    assert!(
+        !missing_dependency,
+        "Required build dependency is missing. Halting build."
+    );
 }
