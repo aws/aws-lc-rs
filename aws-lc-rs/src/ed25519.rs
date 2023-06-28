@@ -386,9 +386,11 @@ impl Ed25519KeyPair {
     /// Provides the private key "seed" for this Ed25519 key pair.
     ///
     /// For serialization of the key pair, `Ed25519KeyPair::to_pkcs8()` is preferred.
-    #[must_use]
-    pub fn seed(&self) -> Seed {
-        Seed(self)
+    ///
+    /// # Errors
+    /// Currently the function cannot fail, but it might in future implementations.
+    pub fn seed(&self) -> Result<Seed, Unspecified> {
+        Ok(Seed(self))
     }
 }
 

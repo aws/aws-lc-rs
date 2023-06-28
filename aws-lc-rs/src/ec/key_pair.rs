@@ -5,8 +5,8 @@
 
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{
-    evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PrivateKey,
-    PublicKey,
+    evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
+    SCALAR_MAX_BYTES,
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
@@ -21,6 +21,7 @@ use std::mem::MaybeUninit;
 use std::ptr::{null, null_mut};
 
 use std::fmt::{Debug, Formatter};
+use zeroize::Zeroize;
 
 /// An ECDSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
@@ -28,7 +29,6 @@ pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
     evp_pkey: LcPtr<EVP_PKEY>,
     pubkey: PublicKey,
-    privkey: PrivateKey,
 }
 
 impl Debug for EcdsaKeyPair {
@@ -57,12 +57,10 @@ impl EcdsaKeyPair {
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
         let pubkey = ec::marshal_public_key(&evp_pkey.as_const())?;
-        let privkey = ec::marshal_private_key(algorithm.id, &evp_pkey.as_const())?;
         Ok(Self {
             algorithm,
             evp_pkey,
             pubkey,
-            privkey,
         })
     }
 
@@ -110,7 +108,7 @@ impl EcdsaKeyPair {
     /// `error::Unspecified` on internal error.
     ///
     pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
-        unsafe { self.evp_pkey.marshall_private_key(Version::V1) }
+        self.evp_pkey.marshall_private_key(Version::V1)
     }
 
     /// Constructs an ECDSA key pair from the private key and public key bytes
@@ -156,9 +154,18 @@ impl EcdsaKeyPair {
     ///
     /// # Errors
     /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
-    #[must_use]
-    pub fn private_key(&self) -> &PrivateKey {
-        &self.privkey
+    pub fn private_key(&self) -> Result<PrivateKey, Unspecified> {
+        unsafe {
+            let mut priv_key_bytes = [0u8; SCALAR_MAX_BYTES];
+
+            let key_len = ec::marshal_private_key_to_buffer(
+                self.algorithm.id,
+                &mut priv_key_bytes,
+                &self.evp_pkey.as_const(),
+            )?;
+
+            Ok(PrivateKey::new(self, priv_key_bytes[0..key_len].into()))
+        }
     }
 
     /// Returns the signature of the message using a random nonce.
@@ -277,3 +284,34 @@ mod tests {
         }
     }
 }
+
+#[derive(Clone)]
+pub struct PrivateKey<'a>(&'a EcdsaKeyPair, Box<[u8]>);
+
+impl Drop for PrivateKey<'_> {
+    fn drop(&mut self) {
+        self.1.zeroize();
+    }
+}
+
+impl Debug for PrivateKey<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+        f.write_str("EcdsaPrivateKey()")
+    }
+}
+
+impl<'a> PrivateKey<'a> {
+    fn new(key_pair: &'a EcdsaKeyPair, box_bytes: Box<[u8]>) -> Self {
+        PrivateKey(key_pair, box_bytes)
+    }
+}
+
+impl AsRef<[u8]> for PrivateKey<'_> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        self.1.as_ref()
+    }
+}
+
+unsafe impl Send for PrivateKey<'_> {}
+unsafe impl Sync for PrivateKey<'_> {}
