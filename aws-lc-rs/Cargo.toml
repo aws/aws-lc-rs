@@ -1,7 +1,7 @@
 [package]
 name = "aws-lc-rs"
 authors = ["AWS-LibCrypto"]
-version = "1.1.0"
+version = "1.2.0"
 edition = "2021"
 rust-version = "1.60"
 keywords = ["crypto", "cryptography", "security"]
@@ -28,6 +28,7 @@ default = ["aws-lc-sys", "alloc", "ring-io", "ring-sig-verify"]
 ring-io = ["dep:untrusted"]
 ring-sig-verify = ["dep:untrusted"]
 ring-benchmarks = []
+openssl-benchmarks = []
 bindgen = ["aws-lc-sys?/bindgen", "aws-lc-fips-sys?/bindgen"]
 asan = ["aws-lc-sys?/asan", "aws-lc-fips-sys?/asan"]
 
@@ -39,18 +40,20 @@ fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { version = "0.7.1", optional = true }
-aws-lc-sys = { version = "0.7.0", path = "../aws-lc-sys", optional = true }
-aws-lc-fips-sys = { version = "0.8.0", path = "../aws-lc-fips-sys", optional = true }
+aws-lc-sys = { version = "0.8.0", path = "../aws-lc-sys", optional = true }
+aws-lc-fips-sys = { version = "0.9.0", path = "../aws-lc-fips-sys", optional = true }
 zeroize = "1"
 mirai-annotations = "1.12.0"
 
 [dev-dependencies]
 paste = "1.0"
-criterion = { version = "0.5.0", features = ["csv_output"]}
+criterion = { version = "0.5.0", features = ["csv_output"] }
 ring = "0.16"
 regex = "1.6.0"
 lazy_static = "1.4.0"
-clap = {version = "4.1.8", features = ["derive"]}
+clap = { version = "4.1.8", features = ["derive"] }
+openssl = { version = "0.10.52", features = ["vendored"] }
+hex = "0.4.3"
 
 [[bench]]
 name = "aead_benchmark"
@@ -90,4 +93,8 @@ harness = false
 
 [[bench]]
 name = "agreement_benchmark"
+harness = false
+
+[[bench]]
+name = "cipher_benchmark"
 harness = false

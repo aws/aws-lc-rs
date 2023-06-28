@@ -1,7 +1,7 @@
 [package]
 name = "aws-lc-sys"
 description = "AWS-LC is a general-purpose cryptographic library maintained by the AWS Cryptography team for AWS and their customers. It іs based on code from the Google BoringSSL project and the OpenSSL project."
-version = "0.7.0"
+version = "0.8.0"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/awslabs/aws-lc"
@@ -55,7 +55,7 @@ dunce = "1.0"
 bindgen = { version = "0.66.0", optional = true }
 
 [target.'cfg(not(any(all(target_os = "macos", target_arch = "x86_64"), all(target_os = "linux", target_arch = "x86"), all(target_os = "linux", target_arch = "x86_64"), all(target_os = "linux", target_arch = "aarch64"))))'.build-dependencies]
-bindgen = { version = "0.65.1" }
+bindgen = { version = "0.66.1" }
 
 
 [dependencies]
@@ -66,4 +66,4 @@ paste = "1.0.11"
 openssl = { version = "0.10" }
 
 [package.metadata.aws-lc-sys]
-commit-hash = "987bd7c672e2c3dd1cc76be3ce9eece93ba9bd88"
+commit-hash = "80c394324382c78d2cbd783babaad1f612c1642d"

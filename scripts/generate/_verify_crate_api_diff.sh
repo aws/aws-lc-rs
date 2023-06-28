@@ -54,7 +54,7 @@ TEMP_TARGET_DIR=$(mktemp -d)
 go env -w GOPROXY=direct
 
 env AWS_LC_RUST_INTERNAL_BINDGEN=1 cargo build --target-dir "${TEMP_TARGET_DIR}" --features bindgen
-if ! cargo public-api --target-dir "${TEMP_TARGET_DIR}" diff --deny changed --deny removed "${PUBLISHED_CRATE_VERSION}"; then
+if ! cargo +nightly-2023-01-04 public-api --target-dir "${TEMP_TARGET_DIR}" diff --deny changed --deny removed "${PUBLISHED_CRATE_VERSION}"; then
   echo
   echo "Version changing from: ${PUBLISHED_CRATE_VERSION} to ${CRATE_VERSION}"
   if ! prompt_yes_no "API changes found.  Continue with crate generation?"; then

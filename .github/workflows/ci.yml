@@ -141,7 +141,9 @@ jobs:
           args: cargo-udeps
 
       - name: Run cargo udeps
-        run: cargo udeps --workspace --all-targets
+        # we only use openssl when the openssl-benchmarks feature is enabled.
+        # openssl is a dev-dependency so it can't be optional.
+        run: cargo udeps --workspace --all-targets --features openssl-benchmarks
         env:
           RUSTC_WRAPPER: ""
 

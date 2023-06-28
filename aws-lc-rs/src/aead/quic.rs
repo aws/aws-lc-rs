@@ -8,8 +8,9 @@
 //! See draft-ietf-quic-tls.
 
 use crate::cipher::aes::encrypt_block_aes;
+use crate::cipher::block;
 use crate::cipher::chacha::encrypt_block_chacha20;
-use crate::cipher::{block, SymmetricCipherKey};
+use crate::cipher::key::SymmetricCipherKey;
 use crate::hkdf::KeyType;
 use crate::{derive_debug_via_id, error, hkdf};
 use core::convert::TryFrom;
@@ -150,10 +151,10 @@ fn cipher_new_mask(
     let block = block::Block::from(&sample);
 
     let encrypted_block = match cipher_key {
-        SymmetricCipherKey::Aes128(.., aes_key) | SymmetricCipherKey::Aes256(.., aes_key) => {
-            encrypt_block_aes(aes_key, block)
+        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
+            encrypt_block_aes(enc_key, block)
         }
-        SymmetricCipherKey::ChaCha20(key_bytes) => {
+        SymmetricCipherKey::ChaCha20 { raw_key } => {
             let plaintext = block.as_ref();
             let counter_bytes: &[u8; 4] = plaintext[0..=3]
                 .try_into()
@@ -164,7 +165,7 @@ fn cipher_new_mask(
             let input = block::Block::zero();
             unsafe {
                 let counter = std::mem::transmute::<[u8; 4], u32>(*counter_bytes).to_le();
-                encrypt_block_chacha20(key_bytes, input, nonce, counter)?
+                encrypt_block_chacha20(raw_key, input, nonce, counter)?
             }
         }
     };
