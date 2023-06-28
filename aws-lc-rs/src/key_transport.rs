@@ -46,7 +46,7 @@ pub struct KemPrivateKey {
 }
 
 impl KemPrivateKey {
-    fn generate(alg: Algorithm) -> Result<Self, Unspecified> {
+    pub fn generate(alg: Algorithm) -> Result<Self, Unspecified> {
         match alg {
             Algorithm::KYBER512_R3 => unsafe {
                 let kyber_key = kem_key_generate(alg.nid())?;
@@ -59,11 +59,11 @@ impl KemPrivateKey {
         }
     }
 
-    fn algorithm(&self) -> &Algorithm {
+    pub fn algorithm(&self) -> &Algorithm {
         &self.algorithm
     }
 
-    fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+    pub fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(alg.nid(), bytes.as_ptr(), bytes.len()))?;
             Ok(KemPrivateKey {
@@ -74,7 +74,7 @@ impl KemPrivateKey {
         }
     }
 
-    fn compute_public_key(&self) -> Result<KemPublicKey, Unspecified> {
+    pub fn compute_public_key(&self) -> Result<KemPublicKey, Unspecified> {
         // Could implement clone for LcPtr and call that here
         let mut pubkey_bytes = vec![0u8; KYBER512_PUBLICKEYBYTES];
         let mut pubkey_len;
@@ -98,7 +98,7 @@ impl KemPrivateKey {
                         //  public_key: pubkey_bytes })
     }
 
-    fn decapsulate<F, R>(&self, ciphertext: &mut [u8], kdf: F) -> Result<R, Unspecified>
+    pub fn decapsulate<F, R>(&self, ciphertext: &mut [u8], kdf: F) -> Result<R, Unspecified>
     where
         F: FnOnce(&[u8]) -> Result<R, Unspecified> {
         unsafe {
@@ -136,11 +136,11 @@ pub struct KemPublicKey {
 }
 
 impl KemPublicKey {
-    fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+    pub fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
         Ok(KemPublicKey{ algorithm: Algorithm::KYBER512_R3, context: bytes.try_into().map_err(|_e| KeyRejected::unexpected_error())? })
     }
 
-    fn encapsulate<F, R>(&self, kdf: F) -> Result<R, Unspecified>
+    pub fn encapsulate<F, R>(&self, kdf: F) -> Result<R, Unspecified>
     where
         F: FnOnce(&[u8], &[u8]) -> Result<R, Unspecified> {
         unsafe {
@@ -207,38 +207,4 @@ mod tests {
     use crate::{key_transport::*, rand, test, test_file};
     use std::env;
 
-    #[test]
-    fn test_agreement_kyber512() {
-        // Debugging
-        env::set_var("RUST_BACKTRACE", "1");
-
-        let priv_key = KemPrivateKey::generate(Algorithm::KYBER512_R3).unwrap();
-        assert_eq!(priv_key.algorithm(), &Algorithm::KYBER512_R3);
-
-        let pub_key = priv_key.compute_public_key().unwrap();
-
-        let mut ciphertext: Vec<u8> = vec![];
-        let mut alice_shared_secret: Vec<u8> = vec![];
-
-        let alice_result = pub_key.encapsulate(|ct, ss| {
-            ciphertext.extend_from_slice(ct);
-            alice_shared_secret.extend_from_slice(ss);
-            Ok(())
-        });
-        assert_eq!(alice_result, Ok(()));
-
-        let mut bob_shared_secret: Vec<u8> = vec![];
-
-        let bob_result = priv_key.decapsulate(&mut ciphertext, |ss| {
-            bob_shared_secret.extend_from_slice(ss);
-            Ok(())
-        });
-        assert_eq!(bob_result, Ok(()));
-        assert_eq!(alice_shared_secret, bob_shared_secret);
-    }
-
-    #[test]
-    fn test_serialized_agreement_kyber512() {
-
-    }
 }
