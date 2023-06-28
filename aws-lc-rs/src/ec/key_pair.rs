@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::ec::{
-    validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PrivateKey, PublicKey,
+    validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey, SCALAR_MAX_BYTES,
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::{Document, Version};
@@ -23,6 +23,7 @@ use aws_lc::{
 use std::fmt;
 
 use std::fmt::{Debug, Formatter};
+use zeroize::Zeroize;
 
 /// An ECDSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
@@ -30,7 +31,6 @@ pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
     ec_key: LcPtr<EC_KEY>,
     pubkey: PublicKey,
-    privkey: PrivateKey,
 }
 
 impl Debug for EcdsaKeyPair {
@@ -80,12 +80,10 @@ impl EcdsaKeyPair {
         ec_key: LcPtr<EC_KEY>,
     ) -> Result<Self, ()> {
         let pubkey = ec::marshal_public_key(&ec_key.as_const())?;
-        let privkey = ec::marshal_private_key(algorithm.id, &ec_key.as_const())?;
         Ok(Self {
             algorithm,
             ec_key,
             pubkey,
-            privkey,
         })
     }
 
@@ -189,9 +187,18 @@ impl EcdsaKeyPair {
     ///
     /// # Errors
     /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
-    #[must_use]
-    pub fn private_key(&self) -> &PrivateKey {
-        &self.privkey
+    pub fn private_key(&self) -> Result<PrivateKey, Unspecified> {
+        unsafe {
+            let mut priv_key_bytes = [0u8; SCALAR_MAX_BYTES];
+
+            let key_len = ec::marshal_private_key_to_buffer(
+                self.algorithm.id,
+                &mut priv_key_bytes,
+                &self.ec_key.as_const(),
+            )?;
+
+            Ok(PrivateKey::new(self, priv_key_bytes[0..key_len].into()))
+        }
     }
 
     /// Returns the signature of the message using a random nonce.
@@ -217,3 +224,34 @@ impl EcdsaKeyPair {
         }
     }
 }
+
+#[derive(Clone)]
+pub struct PrivateKey<'a>(&'a EcdsaKeyPair, Box<[u8]>);
+
+impl Drop for PrivateKey<'_> {
+    fn drop(&mut self) {
+        self.1.zeroize();
+    }
+}
+
+impl Debug for PrivateKey<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+        f.write_str("EcdsaPrivateKey()")
+    }
+}
+
+impl<'a> PrivateKey<'a> {
+    fn new(key_pair: &'a EcdsaKeyPair, box_bytes: Box<[u8]>) -> Self {
+        PrivateKey(key_pair, box_bytes)
+    }
+}
+
+impl AsRef<[u8]> for PrivateKey<'_> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        self.1.as_ref()
+    }
+}
+
+unsafe impl Send for PrivateKey<'_> {}
+unsafe impl Sync for PrivateKey<'_> {}

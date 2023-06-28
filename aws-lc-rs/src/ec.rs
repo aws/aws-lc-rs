@@ -38,7 +38,6 @@ use std::slice;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
-use zeroize::Zeroize;
 
 pub(crate) mod key_pair;
 
@@ -46,8 +45,6 @@ const ELEM_MAX_BITS: usize = 521;
 pub(crate) const ELEM_MAX_BYTES: usize = (ELEM_MAX_BITS + 7) / 8;
 
 pub(crate) const SCALAR_MAX_BYTES: usize = ELEM_MAX_BYTES;
-
-pub(crate) const PRIVATE_KEY_MAX_LEN: usize = 1 + ELEM_MAX_BYTES;
 
 /// The maximum length, in bytes, of an encoded public key.
 pub(crate) const PUBLIC_KEY_MAX_LEN: usize = 1 + (2 * ELEM_MAX_BYTES);
@@ -142,37 +139,6 @@ impl AsRef<[u8]> for PublicKey {
 unsafe impl Send for PublicKey {}
 unsafe impl Sync for PublicKey {}
 
-#[derive(Clone)]
-pub struct PrivateKey(Box<[u8]>);
-
-impl Drop for PrivateKey {
-    fn drop(&mut self) {
-        self.0.zeroize();
-    }
-}
-
-impl Debug for PrivateKey {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-        f.write_str("EcdsaPrivateKey()")
-    }
-}
-
-impl PrivateKey {
-    fn new(box_bytes: Box<[u8]>) -> Self {
-        PrivateKey(box_bytes)
-    }
-}
-
-impl AsRef<[u8]> for PrivateKey {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
-    }
-}
-
-unsafe impl Send for PrivateKey {}
-unsafe impl Sync for PrivateKey {}
-
 impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
     #[inline]
     #[cfg(feature = "ring-sig-verify")]
@@ -243,7 +209,7 @@ unsafe fn validate_ec_key(
 
 pub(crate) unsafe fn marshal_private_key_to_buffer(
     alg_id: &'static AlgorithmID,
-    buffer: &mut [u8; PRIVATE_KEY_MAX_LEN],
+    buffer: &mut [u8; SCALAR_MAX_BYTES],
     ec_key: &ConstPointer<EC_KEY>,
 ) -> Result<usize, Unspecified> {
     let private_bn = ConstPointer::new(EC_KEY_get0_private_key(**ec_key))?;
@@ -258,17 +224,6 @@ pub(crate) unsafe fn marshal_private_key_to_buffer(
     }
 
     Ok(private_size)
-}
-
-pub(crate) fn marshal_private_key(
-    alg_id: &'static AlgorithmID,
-    ec_key: &ConstPointer<EC_KEY>,
-) -> Result<PrivateKey, Unspecified> {
-    let mut priv_key_bytes = [0u8; PRIVATE_KEY_MAX_LEN];
-    unsafe {
-        let key_len = marshal_private_key_to_buffer(alg_id, &mut priv_key_bytes, ec_key)?;
-        Ok(PrivateKey::new(priv_key_bytes[0..key_len].into()))
-    }
 }
 
 pub(crate) unsafe fn marshal_public_key_to_buffer(

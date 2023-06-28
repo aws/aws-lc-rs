@@ -234,7 +234,7 @@ fn test_seed() {
     let key_pair_doc = Ed25519KeyPair::generate_pkcs8(&rnd).unwrap();
 
     let key_pair = Ed25519KeyPair::from_pkcs8(key_pair_doc.as_ref()).unwrap();
-    let seed = key_pair.seed();
+    let seed = key_pair.seed().unwrap();
 
     let pub_key = key_pair.public_key();
 
