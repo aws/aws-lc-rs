@@ -65,9 +65,6 @@ bindgen = { version = "0.66.1", optional = true }
 [target.'cfg(not(any(all(target_os = "linux", target_arch = "x86_64"), all(target_os = "linux", target_arch = "aarch64"))))'.build-dependencies]
 bindgen = { version = "0.66.1" }
 
-
-
-
 [dependencies]
 libc = "0.2"
 paste = "1.0.11"

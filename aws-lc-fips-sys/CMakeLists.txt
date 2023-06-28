@@ -17,7 +17,7 @@ endfunction()
 
 if (BUILD_SHARED_LIBS AND FIPS)
     # FIPS_SHARED does not support unique function or data sections, but we can't set this from Rust
-    # as cmake crate will postfix the C/CXX flags after out disablement nullifying them.
+    # as cmake crate will postfix the C/CXX flags after our disablement nullifying them.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-function-sections -fno-data-sections")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-function-sections -fno-data-sections")
 endif ()
