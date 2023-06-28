@@ -10,7 +10,13 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(
+    feature = "bindgen",
+    not(any(
+        all(target_os = "linux", target_arch = "x86_64"),
+        all(target_os = "linux", target_arch = "aarch64")
+    ))
+))]
 mod bindgen;
 
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
@@ -44,6 +50,19 @@ enum OutputLib {
 enum OutputLibType {
     Static,
     Dynamic,
+}
+
+impl Default for OutputLibType {
+    fn default() -> Self {
+        if cfg!(any(
+            all(target_os = "linux", target_arch = "x86_64"),
+            all(target_os = "linux", target_arch = "aarch64")
+        )) {
+            OutputLibType::Static
+        } else {
+            OutputLibType::Dynamic
+        }
+    }
 }
 
 impl OutputLibType {
@@ -124,6 +143,10 @@ fn get_cmake_config(manifest_dir: &PathBuf) -> cmake::Config {
 fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cmake::Config {
     let mut cmake_cfg = get_cmake_config(manifest_dir);
 
+    if OutputLibType::default() == OutputLibType::Dynamic {
+        cmake_cfg.define("BUILD_SHARED_LIBS", "1");
+    }
+
     let opt_level = env::var("OPT_LEVEL").unwrap_or_else(|_| "0".to_string());
     if opt_level.ne("0") {
         if opt_level.eq("1") || opt_level.eq("2") {
@@ -142,6 +165,7 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
         );
     }
 
+    // Build flags that minimize our crate size.
     cmake_cfg.define("BUILD_TESTING", "OFF");
     if cfg!(feature = "ssl") {
         cmake_cfg.define("BUILD_LIBSSL", "ON");
@@ -167,7 +191,13 @@ fn build_rust_wrapper(manifest_dir: &PathBuf) -> PathBuf {
         .build()
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(
+    feature = "bindgen",
+    not(any(
+        all(target_os = "linux", target_arch = "x86_64"),
+        all(target_os = "linux", target_arch = "aarch64")
+    ))
+))]
 fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf) {
     let options = bindgen::BindingOptions {
         build_prefix: Some(prefix),
@@ -226,36 +256,35 @@ macro_rules! cfg_bindgen_platform {
 
 fn main() {
     use crate::OutputLib::{Crypto, RustWrapper, Ssl};
-    use crate::OutputLibType::Static;
 
-    if cfg!(not(target_os = "linux")) {
-        println!("\nFIPS is currently only supported on Linux.");
-        std::process::exit(1);
-    }
+    let output_lib_type = OutputLibType::default();
 
-    let is_bindgen_enabled = cfg!(feature = "bindgen");
+    let mut is_bindgen_required = cfg!(feature = "bindgen");
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
         .unwrap_or_else(|_| String::from("0"))
         .eq("1");
 
-    let pregenerated = !is_bindgen_enabled || is_internal_generate;
+    let pregenerated = !is_bindgen_required || is_internal_generate;
 
     cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", pregenerated);
     cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", pregenerated);
 
     if !(linux_x86_64 || linux_aarch64) {
-        emit_rustc_cfg("not_pregenerated");
+        emit_rustc_cfg("use_bindgen_generated");
+        is_bindgen_required = true;
     }
 
     let mut missing_dependency = false;
-    if !test_go_command() {
-        eprintln!("Missing dependency: go-lang is required for FIPS.");
-        missing_dependency = true;
-    }
-    if !test_perl_command() {
-        eprintln!("Missing dependency: perl is required for FIPS.");
-        missing_dependency = true;
+    if output_lib_type == OutputLibType::Static {
+        if !test_go_command() {
+            eprintln!("Missing dependency: go-lang is required for FIPS.");
+            missing_dependency = true;
+        }
+        if !test_perl_command() {
+            eprintln!("Missing dependency: perl is required for FIPS.");
+            missing_dependency = true;
+        }
     }
     if let Some(cmake_cmd) = find_cmake_command() {
         env::set_var("CMAKE", cmake_cmd);
@@ -281,8 +310,14 @@ fn main() {
             let src_bindings_path = Path::new(&manifest_dir).join("src");
             generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
         }
-    } else {
-        #[cfg(feature = "bindgen")]
+    } else if is_bindgen_required {
+        #[cfg(any(
+            feature = "bindgen",
+            not(any(
+                all(target_os = "linux", target_arch = "x86_64"),
+                all(target_os = "linux", target_arch = "aarch64")
+            ))
+        ))]
         {
             let gen_bindings_path = Path::new(&env::var("OUT_DIR").unwrap()).join("bindings.rs");
             generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
@@ -296,21 +331,21 @@ fn main() {
 
     println!(
         "cargo:rustc-link-lib={}={}",
-        Static.rust_lib_type(),
+        output_lib_type.rust_lib_type(),
         Crypto.libname(Some(&prefix))
     );
 
     if cfg!(feature = "ssl") {
         println!(
             "cargo:rustc-link-lib={}={}",
-            Static.rust_lib_type(),
+            output_lib_type.rust_lib_type(),
             Ssl.libname(Some(&prefix))
         );
     }
 
     println!(
         "cargo:rustc-link-lib={}={}",
-        Static.rust_lib_type(),
+        output_lib_type.rust_lib_type(),
         RustWrapper.libname(Some(&prefix))
     );
 

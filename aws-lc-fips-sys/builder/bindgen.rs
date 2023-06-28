@@ -22,11 +22,10 @@ impl StripPrefixCallback {
     }
 }
 
-#[cfg(feature = "bindgen")]
 impl ParseCallbacks for StripPrefixCallback {
     fn generated_name_override(&self, item_info: ItemInfo<'_>) -> Option<String> {
         self.remove_prefix.as_ref().and_then(|s| {
-            let prefix = format!("{}_", s);
+            let prefix = format!("{s}_");
             item_info
                 .name
                 .strip_prefix(prefix.as_str())
