@@ -52,6 +52,12 @@ enum OutputLibType {
     Dynamic,
 }
 
+impl Default for OutputLibType {
+    fn default() -> Self {
+        OutputLibType::Static
+    }
+}
+
 impl OutputLibType {
     fn rust_lib_type(&self) -> &str {
         match self {
@@ -121,6 +127,10 @@ fn get_cmake_config(manifest_dir: &PathBuf) -> cmake::Config {
 
 fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cmake::Config {
     let mut cmake_cfg = get_cmake_config(manifest_dir);
+
+    if OutputLibType::default() == OutputLibType::Dynamic {
+        cmake_cfg.define("BUILD_SHARED_LIBS", "1");
+    }
 
     let opt_level = env::var("OPT_LEVEL").unwrap_or_else(|_| "0".to_string());
     if opt_level.ne("0") {
@@ -235,9 +245,9 @@ macro_rules! cfg_bindgen_platform {
 
 fn main() {
     use crate::OutputLib::{Crypto, RustWrapper, Ssl};
-    use crate::OutputLibType::Static;
 
     let mut is_bindgen_required = cfg!(feature = "bindgen");
+    let output_lib_type = OutputLibType::default();
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
         .unwrap_or_else(|_| String::from("0"))
@@ -304,21 +314,21 @@ fn main() {
 
     println!(
         "cargo:rustc-link-lib={}={}",
-        Static.rust_lib_type(),
+        output_lib_type.rust_lib_type(),
         Crypto.libname(Some(&prefix))
     );
 
     if cfg!(feature = "ssl") {
         println!(
             "cargo:rustc-link-lib={}={}",
-            Static.rust_lib_type(),
+            output_lib_type.rust_lib_type(),
             Ssl.libname(Some(&prefix))
         );
     }
 
     println!(
         "cargo:rustc-link-lib={}={}",
-        Static.rust_lib_type(),
+        output_lib_type.rust_lib_type(),
         RustWrapper.libname(Some(&prefix))
     );
 
