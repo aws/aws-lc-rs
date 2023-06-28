@@ -78,7 +78,7 @@ impl KemPrivateKey {
         // Could implement clone for LcPtr and call that here
         let mut pubkey_bytes = vec![0u8; KYBER512_PUBLICKEYBYTES];
         let mut pubkey_len;
-        let mut pubkey_ctx_copy = null_mut();
+        let pubkey_ctx_copy;
         match self.algorithm {
             Algorithm::KYBER512_R3 => {
                 pubkey_len = KYBER512_PUBLICKEYBYTES;
@@ -106,7 +106,6 @@ impl KemPrivateKey {
             let mut shared_secret_len;
             match self.algorithm {
                 Algorithm::KYBER512_R3 => {
-                    // ciphertext_len = KYBER512_CIPHERTEXTBYTES;
                     shared_secret_len = KYBER512_BYTES;
                 }
             }
@@ -137,9 +136,9 @@ pub struct KemPublicKey {
 }
 
 impl KemPublicKey {
-    // fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-    //     Ok(KemPublicKey{ alg: &Algorithm::KYBER512_R3, context: bytes.try_into().map_err(|_e| KeyRejected::unexpected_error())? })
-    // }
+    fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+        Ok(KemPublicKey{ algorithm: Algorithm::KYBER512_R3, context: bytes.try_into().map_err(|_e| KeyRejected::unexpected_error())? })
+    }
 
     fn encapsulate<F, R>(&self, kdf: F) -> Result<R, Unspecified>
     where
@@ -199,11 +198,6 @@ unsafe fn kem_key_generate(
         key_raw.free();
         return Err(Unspecified);
     }
-    // #[cfg(feature = "debug-kem")]
-    // fn print_private_key() {
-
-    // }
-        // println!("Debugging kem");
     
     Ok(DetachableLcPtr::new(key_raw)?)
 }
