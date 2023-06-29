@@ -17,10 +17,10 @@ const KYBER512_PUBLICKEYBYTES: usize = 800;
 const KYBER512_CIPHERTEXTBYTES: usize = 768;
 const KYBER512_BYTES: usize = 32;
 
-const PRIVATE_KEY_MAX_LEN: usize = KYBER512_SECRETKEYBYTES;
-const PUBLIC_KEY_MAX_LEN: usize = KYBER512_PUBLICKEYBYTES;
-const CIPHERTEXT_MAX_LEN: usize = KYBER512_CIPHERTEXTBYTES;
-const SHARED_SECRET_MAX_LEN: usize = KYBER512_BYTES;
+// const PRIVATE_KEY_MAX_LEN: usize = KYBER512_SECRETKEYBYTES;
+// const PUBLIC_KEY_MAX_LEN: usize = KYBER512_PUBLICKEYBYTES;
+// const CIPHERTEXT_MAX_LEN: usize = KYBER512_CIPHERTEXTBYTES;
+// const SHARED_SECRET_MAX_LEN: usize = KYBER512_BYTES;
 
 
 #[allow(non_camel_case_types)]
@@ -165,7 +165,7 @@ impl PartialEq for KemPrivateKey {
 }
 
 /// An unparsed, possibly malformed, public key for key agreement.
-// #[derive(Clone)]
+#[derive(Debug)]
 pub struct KemPublicKey {
     algorithm: Algorithm,
     context: LcPtr<*mut EVP_PKEY>,
@@ -220,13 +220,32 @@ impl KemPublicKey {
                 algorithm: alg,
                 context: LcPtr::new(pubkey_ctx)?,
                 pub_key: bytes.to_owned()
-                // pub_key: bytes.try_into().map_err(|_e|KeyRejected::unexpected_error())?
             })
         }
     }
 
     pub fn get_raw_bytes(&self) -> &[u8] {
         &self.pub_key
+    }
+}
+
+#[cfg(test)]
+impl PartialEq for KemPublicKey {
+    fn eq(&self, other: &Self) -> bool {
+        let mut self_pubkey_bytes_from_ctx = vec![0u8; self.algorithm.get_privkey_len()];
+        let mut other_pubkey_bytes_from_ctx = vec![0u8; other.algorithm.get_privkey_len()];
+
+        unsafe {
+            if 1 != EVP_PKEY_get_raw_public_key(*self.context, self_pubkey_bytes_from_ctx.as_mut_ptr(), &mut self.algorithm.get_pubkey_len()) {
+                panic!("Error getting public key from context");
+            }
+            if 1 != EVP_PKEY_get_raw_public_key(*other.context, other_pubkey_bytes_from_ctx.as_mut_ptr(), &mut other.algorithm.get_pubkey_len()) {
+                panic!("Error getting public key from context");
+            }
+        }
+        self.algorithm == other.algorithm &&
+        self.pub_key == other.pub_key &&
+        self_pubkey_bytes_from_ctx == other_pubkey_bytes_from_ctx
     }
 }
 
@@ -266,6 +285,14 @@ mod tests {
 
     #[test]
     fn test_pubkey_serialize() {
+        let priv_key = KemPrivateKey::generate(Algorithm::KYBER512_R3).unwrap();
+        assert_eq!(priv_key.algorithm(), &Algorithm::KYBER512_R3);
 
+        let pub_key = priv_key.compute_public_key().unwrap();
+
+        let pubkey_raw_bytes = pub_key.get_raw_bytes();
+        let pub_key_from_bytes = KemPublicKey::from_raw_bytes(Algorithm::KYBER512_R3, pubkey_raw_bytes).unwrap();
+
+        assert_eq!(pub_key, pub_key_from_bytes)
     }
 }
