@@ -4,7 +4,7 @@
 use aws_lc_rs::key_transport::*;
 
 #[test]
-fn test_agreement_kyber512() {
+fn test_kem_kyber512() {
     let priv_key = KemPrivateKey::generate(Algorithm::KYBER512_R3).unwrap();
     assert_eq!(priv_key.algorithm(), &Algorithm::KYBER512_R3);
 
@@ -31,7 +31,7 @@ fn test_agreement_kyber512() {
 }
 
 #[test]
-fn test_serialized_agreement_kyber512() {
+fn test_serialized_kem_kyber512() {
     let priv_key = KemPrivateKey::generate(Algorithm::KYBER512_R3).unwrap();
     assert_eq!(priv_key.algorithm(), &Algorithm::KYBER512_R3);
 
