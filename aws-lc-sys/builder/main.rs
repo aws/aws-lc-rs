@@ -54,6 +54,21 @@ enum OutputLibType {
 
 impl Default for OutputLibType {
     fn default() -> Self {
+        let build_type_result = env::var("AWS_LC_SYS_STATIC");
+        if let Ok(build_type) = build_type_result {
+            eprintln!("AWS_LC_SYS_STATIC={build_type}");
+            // If the environment variable is set, we ignore every other factor.
+            let build_type = build_type.to_lowercase();
+            if build_type.starts_with('0')
+                || build_type.starts_with('n')
+                || build_type.starts_with("off")
+            {
+                // Only dynamic if the value is set and is a "negative" value
+                return OutputLibType::Dynamic;
+            }
+
+            return OutputLibType::Static;
+        }
         OutputLibType::Static
     }
 }
@@ -130,6 +145,8 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
 
     if OutputLibType::default() == OutputLibType::Dynamic {
         cmake_cfg.define("BUILD_SHARED_LIBS", "1");
+    } else {
+        cmake_cfg.define("BUILD_SHARED_LIBS", "0");
     }
 
     let opt_level = env::var("OPT_LEVEL").unwrap_or_else(|_| "0".to_string());
@@ -348,6 +365,7 @@ fn main() {
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
+    println!("cargo:rerun-if-env-changed=AWS_LC_SYS_STATIC");
 }
 
 fn check_dependencies() {

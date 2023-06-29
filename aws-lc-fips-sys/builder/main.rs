@@ -54,6 +54,22 @@ enum OutputLibType {
 
 impl Default for OutputLibType {
     fn default() -> Self {
+        let build_type_result = env::var("AWS_LC_FIPS_SYS_STATIC");
+        if let Ok(build_type) = build_type_result {
+            eprintln!("AWS_LC_FIPS_SYS_STATIC={build_type}");
+            // If the environment variable is set, we ignore every other factor.
+            let build_type = build_type.to_lowercase();
+            if build_type.starts_with('0')
+                || build_type.starts_with('n')
+                || build_type.starts_with("off")
+            {
+                // Only dynamic if the value is set and is a "negative" value
+                return OutputLibType::Dynamic;
+            }
+
+            return OutputLibType::Static;
+        }
+
         let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
         let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
 
@@ -145,6 +161,8 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
 
     if OutputLibType::default() == OutputLibType::Dynamic {
         cmake_cfg.define("BUILD_SHARED_LIBS", "1");
+    } else {
+        cmake_cfg.define("BUILD_SHARED_LIBS", "0");
     }
 
     let opt_level = env::var("OPT_LEVEL").unwrap_or_else(|_| "0".to_string());
@@ -277,7 +295,7 @@ fn main() {
         is_bindgen_required = true;
     }
 
-    check_dependencies(output_lib_type);
+    check_dependencies();
 
     let manifest_dir = env::current_dir().unwrap();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
@@ -356,19 +374,18 @@ fn main() {
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
+    println!("cargo:rerun-if-env-changed=AWS_LC_FIPS_SYS_STATIC");
 }
 
-fn check_dependencies(output_lib_type: OutputLibType) {
+fn check_dependencies() {
     let mut missing_dependency = false;
-    if output_lib_type == OutputLibType::Static {
-        if !test_go_command() {
-            eprintln!("Missing dependency: go-lang is required for FIPS.");
-            missing_dependency = true;
-        }
-        if !test_perl_command() {
-            eprintln!("Missing dependency: perl is required for FIPS.");
-            missing_dependency = true;
-        }
+    if !test_go_command() {
+        eprintln!("Missing dependency: Go is required for FIPS.");
+        missing_dependency = true;
+    }
+    if !test_perl_command() {
+        eprintln!("Missing dependency: perl is required for FIPS.");
+        missing_dependency = true;
     }
     if let Some(cmake_cmd) = find_cmake_command() {
         env::set_var("CMAKE", cmake_cmd);
