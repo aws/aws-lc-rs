@@ -7,7 +7,7 @@ use std::ptr::null_mut;
 use aws_lc::{
     EVP_PKEY, NID_KYBER512_R3, EVP_PKEY_keygen, EVP_PKEY_CTX_new_id, EVP_PKEY_keygen_init,
     EVP_PKEY_KEM, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new,
-    EVP_PKEY_encapsulate, EVP_PKEY_decapsulate, EVP_PKEY_get_raw_public_key, EVP_PKEY_kem_new_raw_public_key
+    EVP_PKEY_encapsulate, EVP_PKEY_decapsulate, EVP_PKEY_get_raw_public_key, EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_get_raw_private_key
 };
 use zeroize::Zeroize;
 
@@ -36,13 +36,28 @@ impl Algorithm {
             Algorithm::KYBER512_R3 => NID_KYBER512_R3,
         }
     }
+
+    #[inline]
+    fn get_pubkey_len(&self) -> usize {
+        match self {
+            Algorithm::KYBER512_R3 => KYBER512_PUBLICKEYBYTES,
+        }
+    }
+
+    #[inline]
+    fn get_privkey_len(&self) -> usize {
+        match self {
+            Algorithm::KYBER512_R3 => KYBER512_SECRETKEYBYTES,
+        }
+    }
 }
 
 // KemPrivateKey
+#[derive(Debug)]
 pub struct KemPrivateKey {
     algorithm: Algorithm,
     context: LcPtr<*mut EVP_PKEY>,
-    // shared_secret: [u8; SHARED_SECRET_MAX_LEN]
+    priv_key: Vec<u8>
 }
 
 impl KemPrivateKey {
@@ -50,10 +65,14 @@ impl KemPrivateKey {
         match alg {
             Algorithm::KYBER512_R3 => unsafe {
                 let kyber_key = kem_key_generate(alg.nid())?;
+                let mut priv_key_bytes = vec![0u8; alg.get_privkey_len()];
+                if 1 != EVP_PKEY_get_raw_private_key(*kyber_key, priv_key_bytes.as_mut_ptr(), &mut alg.get_privkey_len()) {
+                    return Err(Unspecified);
+                }
                 Ok(KemPrivateKey {
                     algorithm: alg,
                     context: LcPtr::from(kyber_key),
-                    // shared_secret: [0u8; SHARED_SECRET_MAX_LEN]
+                    priv_key: priv_key_bytes
                 })
             },
         }
@@ -63,20 +82,9 @@ impl KemPrivateKey {
         &self.algorithm
     }
 
-    pub fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        unsafe {
-            let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(alg.nid(), bytes.as_ptr(), bytes.len()))?;
-            Ok(KemPrivateKey {
-                algorithm: alg,
-                context: LcPtr::from(pkey),
-                // shared_secret: [0u8; SHARED_SECRET_MAX_LEN]
-            })
-        }
-    }
-
     pub fn compute_public_key(&self) -> Result<KemPublicKey, Unspecified> {
         // Could implement clone for LcPtr and call that here
-        let mut pubkey_bytes = vec![0u8; KYBER512_PUBLICKEYBYTES];
+        let mut pubkey_bytes = vec![0u8; self.algorithm.get_pubkey_len()];
         let mut pubkey_len;
         let pubkey_ctx_copy;
         match self.algorithm {
@@ -93,9 +101,11 @@ impl KemPrivateKey {
                 return Err(Unspecified);
             }
         }
-        Ok(KemPublicKey{ algorithm: self.algorithm.clone(),
-                         context: LcPtr::new(pubkey_ctx_copy)?, })
-                        //  public_key: pubkey_bytes })
+        Ok(KemPublicKey{
+            algorithm: self.algorithm.clone(),
+            context: LcPtr::new(pubkey_ctx_copy)?,
+            pub_key: pubkey_bytes
+        })
     }
 
     pub fn decapsulate<F, R>(&self, ciphertext: &mut [u8], kdf: F) -> Result<R, Unspecified>
@@ -117,11 +127,40 @@ impl KemPrivateKey {
             kdf(&shared_secret)
         }
     }
+
+    pub fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+        unsafe {
+            let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(alg.nid(), bytes.as_ptr(), bytes.len())).map_err(|_e| KeyRejected::unexpected_error())?;
+            Ok(KemPrivateKey {
+                algorithm: alg,
+                context: LcPtr::from(pkey),
+                priv_key: bytes.to_owned()
+            })
+        }
+    }
+
+    pub fn get_raw_bytes(&self) -> &[u8] {
+        &self.priv_key
+    }
 }
 
-impl Into<[u8; PRIVATE_KEY_MAX_LEN]> for KemPrivateKey {
-    fn into(self) -> [u8; PRIVATE_KEY_MAX_LEN] {
-        [0u8; PRIVATE_KEY_MAX_LEN]
+#[cfg(test)]
+impl PartialEq for KemPrivateKey {
+    fn eq(&self, other: &Self) -> bool {
+        let mut self_privkey_bytes_from_ctx = vec![0u8; self.algorithm.get_privkey_len()];
+        let mut other_privkey_bytes_from_ctx = vec![0u8; other.algorithm.get_privkey_len()];
+
+        unsafe {
+            if 1 != EVP_PKEY_get_raw_private_key(*self.context, self_privkey_bytes_from_ctx.as_mut_ptr(), &mut self.algorithm.get_privkey_len()) {
+                panic!("Error getting private key from context");
+            }
+            if 1 != EVP_PKEY_get_raw_private_key(*other.context, other_privkey_bytes_from_ctx.as_mut_ptr(), &mut other.algorithm.get_privkey_len()) {
+                panic!("Error getting private key from context");
+            }
+        }
+        self.algorithm == other.algorithm &&
+        self.priv_key == other.priv_key &&
+        self_privkey_bytes_from_ctx == other_privkey_bytes_from_ctx
     }
 }
 
@@ -130,16 +169,10 @@ impl Into<[u8; PRIVATE_KEY_MAX_LEN]> for KemPrivateKey {
 pub struct KemPublicKey {
     algorithm: Algorithm,
     context: LcPtr<*mut EVP_PKEY>,
-    // public_key: Vec<u8>
-    // ciphertext: [u8; CIPHERTEXT_MAX_LEN],
-    // shared_secret: [u8; SHARED_SECRET_MAX_LEN]
+    pub_key: Vec<u8>,
 }
 
 impl KemPublicKey {
-    pub fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        Ok(KemPublicKey{ algorithm: Algorithm::KYBER512_R3, context: bytes.try_into().map_err(|_e| KeyRejected::unexpected_error())? })
-    }
-
     pub fn encapsulate<F, R>(&self, kdf: F) -> Result<R, Unspecified>
     where
         F: FnOnce(&[u8], &[u8]) -> Result<R, Unspecified> {
@@ -176,11 +209,24 @@ impl KemPublicKey {
             kdf(&ciphertext, &shared_secret)
         }
     }
-}
 
-impl Into<[u8; PUBLIC_KEY_MAX_LEN]> for KemPublicKey {
-    fn into(self) -> [u8; PUBLIC_KEY_MAX_LEN] {
-        [0; PUBLIC_KEY_MAX_LEN]
+    pub fn from_raw_bytes(alg: Algorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+        unsafe {
+            let pubkey_ctx = EVP_PKEY_kem_new_raw_public_key(alg.nid(), bytes.as_ptr(), alg.get_pubkey_len());
+            if pubkey_ctx.is_null() {
+                return Err(KeyRejected::unexpected_error());
+            }
+            Ok(KemPublicKey { 
+                algorithm: alg,
+                context: LcPtr::new(pubkey_ctx)?,
+                pub_key: bytes.to_owned()
+                // pub_key: bytes.try_into().map_err(|_e|KeyRejected::unexpected_error())?
+            })
+        }
+    }
+
+    pub fn get_raw_bytes(&self) -> &[u8] {
+        &self.pub_key
     }
 }
 
@@ -207,4 +253,19 @@ mod tests {
     use crate::{key_transport::*, rand, test, test_file};
     use std::env;
 
+    #[test]
+    fn test_privkey_serialize() {
+        let priv_key = KemPrivateKey::generate(Algorithm::KYBER512_R3).unwrap();
+        assert_eq!(priv_key.algorithm(), &Algorithm::KYBER512_R3);
+
+        let privkey_raw_bytes = priv_key.get_raw_bytes();
+        let priv_key_from_bytes = KemPrivateKey::from_raw_bytes(Algorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
+
+        assert_eq!(priv_key, priv_key_from_bytes)
+    }
+
+    #[test]
+    fn test_pubkey_serialize() {
+
+    }
 }

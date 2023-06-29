@@ -6,8 +6,7 @@ use aws_lc_rs::key_transport::*;
 
 #[test]
 fn test_agreement_kyber512() {
-    // Debugging
-    env::set_var("RUST_BACKTRACE", "1");
+    // env::set_var("RUST_BACKTRACE", "1");
 
     let priv_key = KemPrivateKey::generate(Algorithm::KYBER512_R3).unwrap();
     assert_eq!(priv_key.algorithm(), &Algorithm::KYBER512_R3);
