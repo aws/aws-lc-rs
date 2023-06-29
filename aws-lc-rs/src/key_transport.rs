@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{error::{Unspecified, KeyRejected}, ptr::LcPtr, ptr::{DetachableLcPtr, Pointer}, cipher};
+use crate::{error::{Unspecified, KeyRejected}, ptr::LcPtr, ptr::{DetachableLcPtr, Pointer}};
 use std::{os::raw::c_int};
 use std::ptr::null_mut;
 use aws_lc::{
@@ -269,8 +269,7 @@ unsafe fn kem_key_generate(
 
 #[cfg(test)]
 mod tests {
-    use crate::{key_transport::*, rand, test, test_file};
-    use std::env;
+    use crate::key_transport::*;
 
     #[test]
     fn test_privkey_serialize() {
@@ -280,7 +279,7 @@ mod tests {
         let privkey_raw_bytes = priv_key.get_raw_bytes();
         let priv_key_from_bytes = KemPrivateKey::from_raw_bytes(Algorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
 
-        assert_eq!(priv_key, priv_key_from_bytes)
+        assert_eq!(priv_key, priv_key_from_bytes);
     }
 
     #[test]
@@ -293,6 +292,6 @@ mod tests {
         let pubkey_raw_bytes = pub_key.get_raw_bytes();
         let pub_key_from_bytes = KemPublicKey::from_raw_bytes(Algorithm::KYBER512_R3, pubkey_raw_bytes).unwrap();
 
-        assert_eq!(pub_key, pub_key_from_bytes)
+        assert_eq!(pub_key, pub_key_from_bytes);
     }
 }
