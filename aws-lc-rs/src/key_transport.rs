@@ -136,7 +136,6 @@ impl KemPrivateKey {
     /// `error::Unspecified` when operation fails due to internal error.
     /// 
     pub fn compute_public_key(&self) -> Result<KemPublicKey, Unspecified> {
-        // Could implement clone for LcPtr and call that here
         let mut pubkey_bytes = vec![0u8; self.algorithm.get_pubkey_len()];
         let mut pubkey_len;
         let pubkey_ctx_copy;
@@ -262,7 +261,6 @@ impl KemPublicKey {
         F: FnOnce(&[u8], &[u8]) -> Result<R, Unspecified> {
         unsafe {
             let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
-            // get buffer lengths
             let mut ciphertext_len;
             let mut shared_secret_len;
             match self.algorithm {
@@ -271,10 +269,10 @@ impl KemPublicKey {
                     shared_secret_len = KYBER512_BYTES;
                 }
             }
+            
             let mut ciphertext: Vec<u8> = vec![0u8; ciphertext_len];
-            // println!("Shared secret length: {}", shared_secret_len);
             let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
-            // println!("Shared secret capacity: {}", shared_secret.capacity());
+
             if EVP_PKEY_encapsulate(*ctx, ciphertext.as_mut_ptr(), &mut ciphertext_len,
                                     shared_secret.as_mut_ptr(), &mut shared_secret_len) != 1 {
                 ciphertext.zeroize();
