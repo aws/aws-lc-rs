@@ -15,13 +15,13 @@
 //! let priv_key = KemPrivateKey::generate(KemAlgorithm::KYBER512_R3)?;
 //!
 //! // Generate private key bytes to possibly save for later decapsulation
-//! let privkey_raw_bytes = priv_key.get_raw_bytes();
+//! let privkey_raw_bytes = priv_key.as_ref();
 //!
 //! let pub_key = priv_key.compute_public_key()?;
 //!
 //! // Get the public key bytes to send to bob through some encoded
 //! // protocol message.
-//! let pub_key_bytes = pub_key.get_raw_bytes();
+//! let pub_key_bytes = pub_key.as_ref();
 //!
 //! let mut ciphertext: Vec<u8> = vec![];
 //!
@@ -371,13 +371,13 @@ mod tests {
         let priv_key = KemPrivateKey::generate(KemAlgorithm::KYBER512_R3).unwrap();
         assert_eq!(priv_key.algorithm(), &KemAlgorithm::KYBER512_R3);
 
-        let privkey_raw_bytes = priv_key.get_raw_bytes();
+        let privkey_raw_bytes = priv_key.as_ref();
         let priv_key_from_bytes =
             KemPrivateKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
 
         assert_eq!(
-            priv_key.get_raw_bytes(),
-            priv_key_from_bytes.get_raw_bytes()
+            priv_key.as_ref(),
+            priv_key_from_bytes.as_ref()
         );
         assert_eq!(priv_key.algorithm(), priv_key_from_bytes.algorithm());
     }
@@ -389,11 +389,11 @@ mod tests {
 
         let pub_key = priv_key.compute_public_key().unwrap();
 
-        let pubkey_raw_bytes = pub_key.get_raw_bytes();
+        let pubkey_raw_bytes = pub_key.as_ref();
         let pub_key_from_bytes =
             KemPublicKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, pubkey_raw_bytes).unwrap();
 
-        assert_eq!(pub_key.get_raw_bytes(), pub_key_from_bytes.get_raw_bytes());
+        assert_eq!(pub_key.as_ref(), pub_key_from_bytes.as_ref());
         assert_eq!(pub_key.algorithm(), pub_key_from_bytes.algorithm());
     }
 }
