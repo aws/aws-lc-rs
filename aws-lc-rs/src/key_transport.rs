@@ -238,41 +238,13 @@ impl KemPrivateKey {
             })
         }
     }
+}
 
-    /// Gets the raw bytes of the current `KemPrivateKey`
-    #[must_use]
-    pub fn get_raw_bytes(&self) -> &[u8] {
+impl AsRef<[u8]> for KemPrivateKey {
+    fn as_ref(&self) -> &[u8] {
         &self.priv_key
     }
 }
-
-// #[cfg(test)]
-// impl PartialEq for KemPrivateKey {
-//     fn eq(&self, other: &Self) -> bool {
-//         let mut self_privkey_bytes_from_ctx = vec![0u8; self.algorithm.get_privkey_len()];
-//         let mut other_privkey_bytes_from_ctx = vec![0u8; other.algorithm.get_privkey_len()];
-
-//         unsafe {
-//             if 1 != EVP_PKEY_get_raw_private_key(
-//                 *self.context,
-//                 self_privkey_bytes_from_ctx.as_mut_ptr(),
-//                 &mut self.algorithm.get_privkey_len(),
-//             ) {
-//                 panic!("Error getting private key from context");
-//             }
-//             if 1 != EVP_PKEY_get_raw_private_key(
-//                 *other.context,
-//                 other_privkey_bytes_from_ctx.as_mut_ptr(),
-//                 &mut other.algorithm.get_privkey_len(),
-//             ) {
-//                 panic!("Error getting private key from context");
-//             }
-//         }
-//         self.algorithm == other.algorithm
-//             && self.priv_key == other.priv_key
-//             && self_privkey_bytes_from_ctx == other_privkey_bytes_from_ctx
-//     }
-// }
 
 /// A serializable public key usable with KEMS. This can be constructed
 /// from a `KemPrivateKey` or constructed from raw bytes.
@@ -365,41 +337,13 @@ impl KemPublicKey {
             })
         }
     }
+}
 
-    /// Gets the raw bytes of the current `KemPublicKey`
-    #[must_use]
-    pub fn get_raw_bytes(&self) -> &[u8] {
+impl AsRef<[u8]> for KemPublicKey {
+    fn as_ref(&self) -> &[u8] {
         &self.pub_key
     }
 }
-
-// #[cfg(test)]
-// impl PartialEq for KemPublicKey {
-//     fn eq(&self, other: &Self) -> bool {
-//         let mut self_pubkey_bytes_from_ctx = vec![0u8; self.algorithm.get_privkey_len()];
-//         let mut other_pubkey_bytes_from_ctx = vec![0u8; other.algorithm.get_privkey_len()];
-
-//         unsafe {
-//             if 1 != EVP_PKEY_get_raw_public_key(
-//                 *self.context,
-//                 self_pubkey_bytes_from_ctx.as_mut_ptr(),
-//                 &mut self.algorithm.get_pubkey_len(),
-//             ) {
-//                 panic!("Error getting public key from context");
-//             }
-//             if 1 != EVP_PKEY_get_raw_public_key(
-//                 *other.context,
-//                 other_pubkey_bytes_from_ctx.as_mut_ptr(),
-//                 &mut other.algorithm.get_pubkey_len(),
-//             ) {
-//                 panic!("Error getting public key from context");
-//             }
-//         }
-//         self.algorithm == other.algorithm
-//             && self.pub_key == other.pub_key
-//             && self_pubkey_bytes_from_ctx == other_pubkey_bytes_from_ctx
-//     }
-// }
 
 // Returns a DetachableLcPtr to an EVP_PKEY
 #[inline]
