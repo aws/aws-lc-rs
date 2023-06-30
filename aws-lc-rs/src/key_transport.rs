@@ -25,7 +25,7 @@
 //!
 //! let mut ciphertext: Vec<u8> = vec![];
 //!
-//! let retrieved_pub_key = KemPublicKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, pub_key_bytes)?;
+//! let retrieved_pub_key = KemPublicKey::new(KemAlgorithm::KYBER512_R3, pub_key_bytes)?;
 //! let bob_result = retrieved_pub_key.encapsulate(|ct, ss| {
 //!     ciphertext.extend_from_slice(ct);
 //!     // In a real application, we'd apply a KDF to the shared secret and the
@@ -35,7 +35,7 @@
 //! });
 //!
 //! // Retrieve private key from stored raw bytes
-//! let retrieved_priv_key = KemPrivateKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, privkey_raw_bytes)?;
+//! let retrieved_priv_key = KemPrivateKey::new(KemAlgorithm::KYBER512_R3, privkey_raw_bytes)?;
 //!
 //! let alice_result = retrieved_priv_key.decapsulate(&mut ciphertext, |ss| {
 //!     // In a real application, we'd apply a KDF to the shared secret and the
@@ -224,7 +224,7 @@ impl KemPrivateKey {
     /// # Errors
     /// `error::KeyRejected` when operation fails during key creation.
     ///
-    pub fn from_raw_bytes(alg: KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+    pub fn new(alg: KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
                 alg.nid(),
@@ -323,7 +323,7 @@ impl KemPublicKey {
     /// # Errors
     /// `error::KeyRejected` when operation fails during key creation.
     ///
-    pub fn from_raw_bytes(alg: KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+    pub fn new(alg: KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let pubkey_ctx =
                 EVP_PKEY_kem_new_raw_public_key(alg.nid(), bytes.as_ptr(), alg.get_pubkey_len());
@@ -373,7 +373,7 @@ mod tests {
 
         let privkey_raw_bytes = priv_key.as_ref();
         let priv_key_from_bytes =
-            KemPrivateKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
+            KemPrivateKey::new(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
 
         assert_eq!(
             priv_key.as_ref(),
@@ -391,7 +391,7 @@ mod tests {
 
         let pubkey_raw_bytes = pub_key.as_ref();
         let pub_key_from_bytes =
-            KemPublicKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, pubkey_raw_bytes).unwrap();
+            KemPublicKey::new(KemAlgorithm::KYBER512_R3, pubkey_raw_bytes).unwrap();
 
         assert_eq!(pub_key.as_ref(), pub_key_from_bytes.as_ref());
         assert_eq!(pub_key.algorithm(), pub_key_from_bytes.algorithm());

@@ -47,7 +47,7 @@ fn test_serialized_kem_kyber512() {
     let mut bob_shared_secret: Vec<u8> = vec![];
 
     let retrieved_pub_key =
-        KemPublicKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, pub_key_bytes).unwrap();
+        KemPublicKey::new(KemAlgorithm::KYBER512_R3, pub_key_bytes).unwrap();
     let bob_result = retrieved_pub_key.encapsulate(|ct, ss| {
         ciphertext.extend_from_slice(ct);
         bob_shared_secret.extend_from_slice(ss);
@@ -59,7 +59,7 @@ fn test_serialized_kem_kyber512() {
 
     // Retrieve private key from stored raw bytes
     let retrieved_priv_key =
-        KemPrivateKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
+        KemPrivateKey::new(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
 
     let alice_result = retrieved_priv_key.decapsulate(&mut ciphertext, |ss| {
         alice_shared_secret.extend_from_slice(ss);
