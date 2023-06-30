@@ -225,15 +225,18 @@ impl KemPrivateKey {
     /// `error::KeyRejected` when operation fails during key creation.
     ///
     pub fn new(alg: KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+        if alg.get_privkey_len() != bytes.len() {
+            return Err(KeyRejected::unexpected_error());
+        }
         unsafe {
-            let pkey = LcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
+            let privkey_ctx = LcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
                 alg.nid(),
                 bytes.as_ptr(),
-                bytes.len(),
+                alg.get_privkey_len(),
             ))?;
             Ok(KemPrivateKey {
                 algorithm: alg,
-                context: LcPtr::from(pkey),
+                context: privkey_ctx,
                 priv_key: bytes.to_owned(),
             })
         }
@@ -324,15 +327,18 @@ impl KemPublicKey {
     /// `error::KeyRejected` when operation fails during key creation.
     ///
     pub fn new(alg: KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
+        if alg.get_pubkey_len() != bytes.len() {
+            return Err(KeyRejected::unexpected_error());
+        }
         unsafe {
-            let pubkey_ctx =
-                EVP_PKEY_kem_new_raw_public_key(alg.nid(), bytes.as_ptr(), alg.get_pubkey_len());
-            if pubkey_ctx.is_null() {
-                return Err(KeyRejected::unexpected_error());
-            }
+            let pubkey_ctx = LcPtr::new(EVP_PKEY_kem_new_raw_public_key(
+                alg.nid(),
+                bytes.as_ptr(),
+                alg.get_pubkey_len(),
+            ))?;
             Ok(KemPublicKey {
                 algorithm: alg,
-                context: LcPtr::new(pubkey_ctx)?,
+                context: pubkey_ctx,
                 pub_key: bytes.to_owned(),
             })
         }
@@ -375,10 +381,7 @@ mod tests {
         let priv_key_from_bytes =
             KemPrivateKey::new(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
 
-        assert_eq!(
-            priv_key.as_ref(),
-            priv_key_from_bytes.as_ref()
-        );
+        assert_eq!(priv_key.as_ref(), priv_key_from_bytes.as_ref());
         assert_eq!(priv_key.algorithm(), priv_key_from_bytes.algorithm());
     }
 

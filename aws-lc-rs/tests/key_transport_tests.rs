@@ -46,8 +46,7 @@ fn test_serialized_kem_kyber512() {
     let mut ciphertext: Vec<u8> = vec![];
     let mut bob_shared_secret: Vec<u8> = vec![];
 
-    let retrieved_pub_key =
-        KemPublicKey::new(KemAlgorithm::KYBER512_R3, pub_key_bytes).unwrap();
+    let retrieved_pub_key = KemPublicKey::new(KemAlgorithm::KYBER512_R3, pub_key_bytes).unwrap();
     let bob_result = retrieved_pub_key.encapsulate(|ct, ss| {
         ciphertext.extend_from_slice(ct);
         bob_shared_secret.extend_from_slice(ss);
