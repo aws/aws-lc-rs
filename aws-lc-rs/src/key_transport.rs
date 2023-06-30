@@ -49,7 +49,7 @@
 use crate::{
     error::{KeyRejected, Unspecified},
     ptr::LcPtr,
-    ptr::{DetachableLcPtr, Pointer},
+    ptr::Pointer,
 };
 use aws_lc::{
     EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
@@ -125,7 +125,7 @@ impl KemPrivateKey {
                 }
                 Ok(KemPrivateKey {
                     algorithm: alg,
-                    context: LcPtr::from(kyber_key),
+                    context: kyber_key,
                     priv_key: priv_key_bytes,
                 })
             },
@@ -192,7 +192,7 @@ impl KemPrivateKey {
         F: FnOnce(&[u8]) -> Result<R, Unspecified>,
     {
         unsafe {
-            let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
+            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
             let mut shared_secret_len;
             match self.algorithm {
                 KemAlgorithm::KYBER512_R3 => {
@@ -226,7 +226,7 @@ impl KemPrivateKey {
     ///
     pub fn new(alg: KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
-            let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
+            let pkey = LcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
                 alg.nid(),
                 bytes.as_ptr(),
                 bytes.len(),
@@ -276,7 +276,7 @@ impl KemPublicKey {
         F: FnOnce(&[u8], &[u8]) -> Result<R, Unspecified>,
     {
         unsafe {
-            let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
+            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
             let mut ciphertext_len;
             let mut shared_secret_len;
             match self.algorithm {
@@ -345,10 +345,10 @@ impl AsRef<[u8]> for KemPublicKey {
     }
 }
 
-// Returns a DetachableLcPtr to an EVP_PKEY
+// Returns an LcPtr to an EVP_PKEY
 #[inline]
-unsafe fn kem_key_generate(nid: c_int) -> Result<DetachableLcPtr<*mut EVP_PKEY>, Unspecified> {
-    let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new_id(EVP_PKEY_KEM, null_mut()))?;
+unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+    let ctx = LcPtr::new(EVP_PKEY_CTX_new_id(EVP_PKEY_KEM, null_mut()))?;
     let mut key_raw: *mut EVP_PKEY = null_mut();
     if 1 != EVP_PKEY_keygen_init(*ctx)
         || 1 != EVP_PKEY_CTX_kem_set_params(*ctx, nid)
@@ -359,7 +359,7 @@ unsafe fn kem_key_generate(nid: c_int) -> Result<DetachableLcPtr<*mut EVP_PKEY>,
         return Err(Unspecified);
     }
 
-    Ok(DetachableLcPtr::new(key_raw)?)
+    Ok(LcPtr::new(key_raw)?)
 }
 
 #[cfg(test)]
