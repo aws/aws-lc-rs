@@ -1,12 +1,12 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::key_transport::{KemAlgorithm, KemPrivateKey, KemPublicKey};
+use aws_lc_rs::key_transport::{KemPrivateKey, KemPublicKey, KYBER512_R3};
 
 #[test]
 fn test_kem_kyber512() {
-    let priv_key = KemPrivateKey::generate(KemAlgorithm::KYBER512_R3).unwrap();
-    assert_eq!(priv_key.algorithm(), &KemAlgorithm::KYBER512_R3);
+    let priv_key = KemPrivateKey::generate(&KYBER512_R3).unwrap();
+    assert_eq!(priv_key.algorithm(), &KYBER512_R3);
 
     let pub_key = priv_key.compute_public_key().unwrap();
 
@@ -32,8 +32,8 @@ fn test_kem_kyber512() {
 
 #[test]
 fn test_serialized_kem_kyber512() {
-    let priv_key = KemPrivateKey::generate(KemAlgorithm::KYBER512_R3).unwrap();
-    assert_eq!(priv_key.algorithm(), &KemAlgorithm::KYBER512_R3);
+    let priv_key = KemPrivateKey::generate(&KYBER512_R3).unwrap();
+    assert_eq!(priv_key.algorithm(), &KYBER512_R3);
 
     // Generate private key bytes to possibly save for later
     let privkey_raw_bytes = priv_key.as_ref();
@@ -46,7 +46,7 @@ fn test_serialized_kem_kyber512() {
     let mut ciphertext: Vec<u8> = vec![];
     let mut bob_shared_secret: Vec<u8> = vec![];
 
-    let retrieved_pub_key = KemPublicKey::new(KemAlgorithm::KYBER512_R3, pub_key_bytes).unwrap();
+    let retrieved_pub_key = KemPublicKey::new(&KYBER512_R3, pub_key_bytes).unwrap();
     let bob_result = retrieved_pub_key.encapsulate(|ct, ss| {
         ciphertext.extend_from_slice(ct);
         bob_shared_secret.extend_from_slice(ss);
@@ -57,8 +57,7 @@ fn test_serialized_kem_kyber512() {
     let mut alice_shared_secret: Vec<u8> = vec![];
 
     // Retrieve private key from stored raw bytes
-    let retrieved_priv_key =
-        KemPrivateKey::new(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
+    let retrieved_priv_key = KemPrivateKey::new(&KYBER512_R3, privkey_raw_bytes).unwrap();
 
     let alice_result = retrieved_priv_key.decapsulate(&mut ciphertext, |ss| {
         alice_shared_secret.extend_from_slice(ss);
