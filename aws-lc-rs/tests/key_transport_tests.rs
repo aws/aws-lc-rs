@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::key_transport::*;
+use aws_lc_rs::key_transport::{KemAlgorithm, KemPrivateKey, KemPublicKey};
 
 #[test]
 fn test_kem_kyber512() {
@@ -46,7 +46,8 @@ fn test_serialized_kem_kyber512() {
     let mut ciphertext: Vec<u8> = vec![];
     let mut bob_shared_secret: Vec<u8> = vec![];
 
-    let retrieved_pub_key = KemPublicKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, pub_key_bytes).unwrap();
+    let retrieved_pub_key =
+        KemPublicKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, pub_key_bytes).unwrap();
     let bob_result = retrieved_pub_key.encapsulate(|ct, ss| {
         ciphertext.extend_from_slice(ct);
         bob_shared_secret.extend_from_slice(ss);
@@ -57,8 +58,9 @@ fn test_serialized_kem_kyber512() {
     let mut alice_shared_secret: Vec<u8> = vec![];
 
     // Retrieve private key from stored raw bytes
-    let retrieved_priv_key = KemPrivateKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
-    
+    let retrieved_priv_key =
+        KemPrivateKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
+
     let alice_result = retrieved_priv_key.decapsulate(&mut ciphertext, |ss| {
         alice_shared_secret.extend_from_slice(ss);
         Ok(())

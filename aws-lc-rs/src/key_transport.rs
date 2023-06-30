@@ -10,7 +10,7 @@
 //! `KemAlgorithm::<desired_algorithm_here>` for `KemAlgorithm::KYBER512_R3`.
 //!
 //! ```
-//! use aws_lc_rs::key_transport::*;
+//! use aws_lc_rs::key_transport::{KemAlgorithm, KemPrivateKey, KemPublicKey};
 //!
 //! let priv_key = KemPrivateKey::generate(KemAlgorithm::KYBER512_R3)?;
 //!
@@ -33,7 +33,7 @@
 //!     // keys from the result. We omit all that here.
 //!     Ok(())
 //! });
-//! 
+//!
 //! // Retrieve private key from stored raw bytes
 //! let retrieved_priv_key = KemPrivateKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, privkey_raw_bytes)?;
 //!
@@ -43,25 +43,28 @@
 //!     // keys from the result. We omit all that here.
 //!     Ok(())
 //! });
-//! 
+//!
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
-use crate::{error::{Unspecified, KeyRejected}, ptr::LcPtr, ptr::{DetachableLcPtr, Pointer}};
-use std::{os::raw::c_int};
-use std::ptr::null_mut;
-use aws_lc::{
-    EVP_PKEY, NID_KYBER512_R3, EVP_PKEY_keygen, EVP_PKEY_CTX_new_id, EVP_PKEY_keygen_init,
-    EVP_PKEY_KEM, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new,
-    EVP_PKEY_encapsulate, EVP_PKEY_decapsulate, EVP_PKEY_get_raw_public_key, EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_get_raw_private_key
+use crate::{
+    error::{KeyRejected, Unspecified},
+    ptr::LcPtr,
+    ptr::{DetachableLcPtr, Pointer},
 };
+use aws_lc::{
+    EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
+    EVP_PKEY_encapsulate, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
+    EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_keygen,
+    EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM, NID_KYBER512_R3,
+};
+use std::os::raw::c_int;
+use std::ptr::null_mut;
 use zeroize::Zeroize;
-
 
 const KYBER512_SECRETKEYBYTES: usize = 1632;
 const KYBER512_PUBLICKEYBYTES: usize = 800;
 const KYBER512_CIPHERTEXTBYTES: usize = 768;
 const KYBER512_BYTES: usize = 32;
-
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
@@ -99,12 +102,12 @@ impl KemAlgorithm {
 pub struct KemPrivateKey {
     algorithm: KemAlgorithm,
     context: LcPtr<*mut EVP_PKEY>,
-    priv_key: Vec<u8>
+    priv_key: Vec<u8>,
 }
 
 impl KemPrivateKey {
     /// Generate a new KEM private key for the given algorithm.
-    /// 
+    ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
     ///
@@ -113,28 +116,33 @@ impl KemPrivateKey {
             KemAlgorithm::KYBER512_R3 => unsafe {
                 let kyber_key = kem_key_generate(alg.nid())?;
                 let mut priv_key_bytes = vec![0u8; alg.get_privkey_len()];
-                if 1 != EVP_PKEY_get_raw_private_key(*kyber_key, priv_key_bytes.as_mut_ptr(), &mut alg.get_privkey_len()) {
+                if 1 != EVP_PKEY_get_raw_private_key(
+                    *kyber_key,
+                    priv_key_bytes.as_mut_ptr(),
+                    &mut alg.get_privkey_len(),
+                ) {
                     return Err(Unspecified);
                 }
                 Ok(KemPrivateKey {
                     algorithm: alg,
                     context: LcPtr::from(kyber_key),
-                    priv_key: priv_key_bytes
+                    priv_key: priv_key_bytes,
                 })
             },
         }
     }
 
     /// Return the algorithm associated of the given KEM private key.
+    #[must_use]
     pub fn algorithm(&self) -> &KemAlgorithm {
         &self.algorithm
     }
 
     /// Computes the KEM public key from the KEM private key
-    /// 
+    ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    /// 
+    ///
     pub fn compute_public_key(&self) -> Result<KemPublicKey, Unspecified> {
         let mut pubkey_bytes = vec![0u8; self.algorithm.get_pubkey_len()];
         let mut pubkey_len;
@@ -145,35 +153,44 @@ impl KemPrivateKey {
             }
         }
         unsafe {
-            if 1 != EVP_PKEY_get_raw_public_key(*self.context, pubkey_bytes.as_mut_ptr(), &mut pubkey_len) {
+            if 1 != EVP_PKEY_get_raw_public_key(
+                *self.context,
+                pubkey_bytes.as_mut_ptr(),
+                &mut pubkey_len,
+            ) {
                 return Err(Unspecified);
             }
-            pubkey_ctx_copy = EVP_PKEY_kem_new_raw_public_key(self.algorithm.nid(), pubkey_bytes.as_mut_ptr(), pubkey_len);
+            pubkey_ctx_copy = EVP_PKEY_kem_new_raw_public_key(
+                self.algorithm.nid(),
+                pubkey_bytes.as_mut_ptr(),
+                pubkey_len,
+            );
             if pubkey_ctx_copy.is_null() {
                 return Err(Unspecified);
             }
         }
-        Ok(KemPublicKey{
+        Ok(KemPublicKey {
             algorithm: self.algorithm.clone(),
             context: LcPtr::new(pubkey_ctx_copy)?,
-            pub_key: pubkey_bytes
+            pub_key: pubkey_bytes,
         })
     }
 
     /// Performs the decapsulate operation using the current KEM private key on the given ciphertext.
-    /// 
+    ///
     /// `ciphertext` is the ciphertext generated by the encapsulate operation using the KEM public key
     /// associated with the current KEM private key.
-    /// 
+    ///
     /// After the decapsulation is finished, `decapsulate` calls `kdf` with the raw shared secret
     /// from the operation and then returns what `kdf` returns.
-    /// 
+    ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    /// 
+    ///
     pub fn decapsulate<F, R>(&self, ciphertext: &mut [u8], kdf: F) -> Result<R, Unspecified>
     where
-        F: FnOnce(&[u8]) -> Result<R, Unspecified> {
+        F: FnOnce(&[u8]) -> Result<R, Unspecified>,
+    {
         unsafe {
             let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
             let mut shared_secret_len;
@@ -183,35 +200,48 @@ impl KemPrivateKey {
                 }
             }
             let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
-            if EVP_PKEY_decapsulate(*ctx, shared_secret.as_mut_ptr(), &mut shared_secret_len,
-                                    ciphertext.as_mut_ptr(), ciphertext.len()) != 1 {
-                shared_secret.zeroize()
+            if EVP_PKEY_decapsulate(
+                *ctx,
+                shared_secret.as_mut_ptr(),
+                &mut shared_secret_len,
+                ciphertext.as_mut_ptr(),
+                ciphertext.len(),
+            ) != 1
+            {
+                shared_secret.zeroize();
+                return Err(Unspecified);
             }
             kdf(&shared_secret)
         }
     }
 
     /// Creates a new KEM private key from raw bytes
-    /// 
+    ///
     /// `alg` is the `KemAlgorithm` to be associated with the generated `KemPrivateKey`
-    /// 
+    ///
     /// `bytes` is a slice of raw bytes representing a `KemPrivateKey`
-    /// 
+    ///
     /// # Errors
     /// `error::KeyRejected` when operation fails during key creation.
-    /// 
+    ///
     pub fn from_raw_bytes(alg: KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
-            let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(alg.nid(), bytes.as_ptr(), bytes.len())).map_err(|_e| KeyRejected::unexpected_error())?;
+            let pkey = DetachableLcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
+                alg.nid(),
+                bytes.as_ptr(),
+                bytes.len(),
+            ))
+            .map_err(|_e| KeyRejected::unexpected_error())?;
             Ok(KemPrivateKey {
                 algorithm: alg,
                 context: LcPtr::from(pkey),
-                priv_key: bytes.to_owned()
+                priv_key: bytes.to_owned(),
             })
         }
     }
 
     /// Gets the raw bytes of the current `KemPrivateKey`
+    #[must_use]
     pub fn get_raw_bytes(&self) -> &[u8] {
         &self.priv_key
     }
@@ -224,21 +254,29 @@ impl PartialEq for KemPrivateKey {
         let mut other_privkey_bytes_from_ctx = vec![0u8; other.algorithm.get_privkey_len()];
 
         unsafe {
-            if 1 != EVP_PKEY_get_raw_private_key(*self.context, self_privkey_bytes_from_ctx.as_mut_ptr(), &mut self.algorithm.get_privkey_len()) {
+            if 1 != EVP_PKEY_get_raw_private_key(
+                *self.context,
+                self_privkey_bytes_from_ctx.as_mut_ptr(),
+                &mut self.algorithm.get_privkey_len(),
+            ) {
                 panic!("Error getting private key from context");
             }
-            if 1 != EVP_PKEY_get_raw_private_key(*other.context, other_privkey_bytes_from_ctx.as_mut_ptr(), &mut other.algorithm.get_privkey_len()) {
+            if 1 != EVP_PKEY_get_raw_private_key(
+                *other.context,
+                other_privkey_bytes_from_ctx.as_mut_ptr(),
+                &mut other.algorithm.get_privkey_len(),
+            ) {
                 panic!("Error getting private key from context");
             }
         }
-        self.algorithm == other.algorithm &&
-        self.priv_key == other.priv_key &&
-        self_privkey_bytes_from_ctx == other_privkey_bytes_from_ctx
+        self.algorithm == other.algorithm
+            && self.priv_key == other.priv_key
+            && self_privkey_bytes_from_ctx == other_privkey_bytes_from_ctx
     }
 }
 
 /// A serializable public key usable with KEMS. This can be constructed
-/// from a KemPrivateKey or constructed from raw bytes.
+/// from a `KemPrivateKey` or constructed from raw bytes.
 #[derive(Debug)]
 pub struct KemPublicKey {
     algorithm: KemAlgorithm,
@@ -249,16 +287,17 @@ pub struct KemPublicKey {
 impl KemPublicKey {
     /// Performs the encapsulate operation using the current KEM public key, generating a ciphertext
     /// and associated shared secret.
-    /// 
+    ///
     /// After the decapsulation is finished, `decapsulate` calls `kdf` with the ciphertext and raw shared secret
     /// from the operation and then returns what `kdf` returns.
-    /// 
+    ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    /// 
+    ///
     pub fn encapsulate<F, R>(&self, kdf: F) -> Result<R, Unspecified>
     where
-        F: FnOnce(&[u8], &[u8]) -> Result<R, Unspecified> {
+        F: FnOnce(&[u8], &[u8]) -> Result<R, Unspecified>,
+    {
         unsafe {
             let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
             let mut ciphertext_len;
@@ -269,19 +308,25 @@ impl KemPublicKey {
                     shared_secret_len = KYBER512_BYTES;
                 }
             }
-            
+
             let mut ciphertext: Vec<u8> = vec![0u8; ciphertext_len];
             let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
-            if EVP_PKEY_encapsulate(*ctx, ciphertext.as_mut_ptr(), &mut ciphertext_len,
-                                    shared_secret.as_mut_ptr(), &mut shared_secret_len) != 1 {
+            if EVP_PKEY_encapsulate(
+                *ctx,
+                ciphertext.as_mut_ptr(),
+                &mut ciphertext_len,
+                shared_secret.as_mut_ptr(),
+                &mut shared_secret_len,
+            ) != 1
+            {
                 ciphertext.zeroize();
                 shared_secret.zeroize();
                 return Err(Unspecified);
             }
 
             #[cfg(feature = "debug-kem")]
-            {   
+            {
                 println!("Ciphertext length: {}", ciphertext_len);
                 println!("Shared secret length: {}", shared_secret_len);
                 println!("Ciphertext: {:02x?}", ciphertext);
@@ -293,29 +338,31 @@ impl KemPublicKey {
     }
 
     /// Creates a new KEM public key from raw bytes
-    /// 
+    ///
     /// `alg` is the `KemAlgorithm` to be associated with the generated `KemPublicKey`
-    /// 
+    ///
     /// `bytes` is a slice of raw bytes representing a `KemPublicKey`
-    /// 
+    ///
     /// # Errors
     /// `error::KeyRejected` when operation fails during key creation.
-    /// 
+    ///
     pub fn from_raw_bytes(alg: KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
-            let pubkey_ctx = EVP_PKEY_kem_new_raw_public_key(alg.nid(), bytes.as_ptr(), alg.get_pubkey_len());
+            let pubkey_ctx =
+                EVP_PKEY_kem_new_raw_public_key(alg.nid(), bytes.as_ptr(), alg.get_pubkey_len());
             if pubkey_ctx.is_null() {
                 return Err(KeyRejected::unexpected_error());
             }
-            Ok(KemPublicKey { 
+            Ok(KemPublicKey {
                 algorithm: alg,
                 context: LcPtr::new(pubkey_ctx)?,
-                pub_key: bytes.to_owned()
+                pub_key: bytes.to_owned(),
             })
         }
     }
 
     /// Gets the raw bytes of the current `KemPublicKey`
+    #[must_use]
     pub fn get_raw_bytes(&self) -> &[u8] {
         &self.pub_key
     }
@@ -328,40 +375,47 @@ impl PartialEq for KemPublicKey {
         let mut other_pubkey_bytes_from_ctx = vec![0u8; other.algorithm.get_privkey_len()];
 
         unsafe {
-            if 1 != EVP_PKEY_get_raw_public_key(*self.context, self_pubkey_bytes_from_ctx.as_mut_ptr(), &mut self.algorithm.get_pubkey_len()) {
+            if 1 != EVP_PKEY_get_raw_public_key(
+                *self.context,
+                self_pubkey_bytes_from_ctx.as_mut_ptr(),
+                &mut self.algorithm.get_pubkey_len(),
+            ) {
                 panic!("Error getting public key from context");
             }
-            if 1 != EVP_PKEY_get_raw_public_key(*other.context, other_pubkey_bytes_from_ctx.as_mut_ptr(), &mut other.algorithm.get_pubkey_len()) {
+            if 1 != EVP_PKEY_get_raw_public_key(
+                *other.context,
+                other_pubkey_bytes_from_ctx.as_mut_ptr(),
+                &mut other.algorithm.get_pubkey_len(),
+            ) {
                 panic!("Error getting public key from context");
             }
         }
-        self.algorithm == other.algorithm &&
-        self.pub_key == other.pub_key &&
-        self_pubkey_bytes_from_ctx == other_pubkey_bytes_from_ctx
+        self.algorithm == other.algorithm
+            && self.pub_key == other.pub_key
+            && self_pubkey_bytes_from_ctx == other_pubkey_bytes_from_ctx
     }
 }
 
 // Returns a DetachableLcPtr to an EVP_PKEY
 #[inline]
-unsafe fn kem_key_generate(
-    nid: c_int,
-) -> Result<DetachableLcPtr<*mut EVP_PKEY>, Unspecified> {
+unsafe fn kem_key_generate(nid: c_int) -> Result<DetachableLcPtr<*mut EVP_PKEY>, Unspecified> {
     let ctx = DetachableLcPtr::new(EVP_PKEY_CTX_new_id(EVP_PKEY_KEM, null_mut()))?;
     let mut key_raw: *mut EVP_PKEY = null_mut();
-    if 1 != EVP_PKEY_keygen_init(*ctx) ||
-       1 != EVP_PKEY_CTX_kem_set_params(*ctx, nid) ||
-       1 != EVP_PKEY_keygen(*ctx, &mut key_raw) {
+    if 1 != EVP_PKEY_keygen_init(*ctx)
+        || 1 != EVP_PKEY_CTX_kem_set_params(*ctx, nid)
+        || 1 != EVP_PKEY_keygen(*ctx, &mut key_raw)
+    {
         // We don't have the key wrapped with LcPtr yet, so explicitly free it
         key_raw.free();
         return Err(Unspecified);
     }
-    
+
     Ok(DetachableLcPtr::new(key_raw)?)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::key_transport::*;
+    use crate::key_transport::{KemAlgorithm, KemPrivateKey, KemPublicKey};
 
     #[test]
     fn test_kem_privkey_serialize() {
@@ -369,7 +423,8 @@ mod tests {
         assert_eq!(priv_key.algorithm(), &KemAlgorithm::KYBER512_R3);
 
         let privkey_raw_bytes = priv_key.get_raw_bytes();
-        let priv_key_from_bytes = KemPrivateKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
+        let priv_key_from_bytes =
+            KemPrivateKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, privkey_raw_bytes).unwrap();
 
         assert_eq!(priv_key, priv_key_from_bytes);
     }
@@ -382,7 +437,8 @@ mod tests {
         let pub_key = priv_key.compute_public_key().unwrap();
 
         let pubkey_raw_bytes = pub_key.get_raw_bytes();
-        let pub_key_from_bytes = KemPublicKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, pubkey_raw_bytes).unwrap();
+        let pub_key_from_bytes =
+            KemPublicKey::from_raw_bytes(KemAlgorithm::KYBER512_R3, pubkey_raw_bytes).unwrap();
 
         assert_eq!(pub_key, pub_key_from_bytes);
     }
