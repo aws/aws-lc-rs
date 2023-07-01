@@ -6,7 +6,7 @@
 //! # Example
 //!
 //! Note that this example uses Kyber-512, but other algorithms can be used
-//! exactly the same way, just substituting
+//! in the exact same way by substituting
 //! `key_transport::<desired_algorithm_here>` for `key_transport::KYBER512_R3`.
 //!
 //! ```
@@ -28,9 +28,8 @@
 //! let retrieved_pub_key = KemPublicKey::new(&KYBER512_R3, pub_key_bytes)?;
 //! let bob_result = retrieved_pub_key.encapsulate(|ct, ss| {
 //!     ciphertext.extend_from_slice(ct);
-//!     // In a real application, we'd apply a KDF to the shared secret and the
-//!     // public keys (as recommended in RFC 7748) and then derive session
-//!     // keys from the result. We omit all that here.
+//!     // In real applications, a KDF would be applied to derive
+//!     // the session keys from the shared secret. We omit that here.
 //!     Ok(())
 //! });
 //!
@@ -38,9 +37,8 @@
 //! let retrieved_priv_key = KemPrivateKey::new(&KYBER512_R3, privkey_raw_bytes)?;
 //!
 //! let alice_result = retrieved_priv_key.decapsulate(&mut ciphertext, |ss| {
-//!     // In a real application, we'd apply a KDF to the shared secret and the
-//!     // public keys (as recommended in RFC 7748) and then derive session
-//!     // keys from the result. We omit all that here.
+//!     // In real applications, a KDF would be applied to derive
+//!     // the session keys from the shared secret. We omit that here.
 //!     Ok(())
 //! });
 //!
@@ -286,7 +284,7 @@ impl KemPublicKey {
     /// Performs the encapsulate operation using the current KEM public key, generating a ciphertext
     /// and associated shared secret.
     ///
-    /// After the decapsulation is finished, `decapsulate` calls `kdf` with the ciphertext and raw shared secret
+    /// After the encapsulation is finished, `encapsulate` calls `kdf` with the ciphertext and raw shared secret
     /// from the operation and then returns what `kdf` returns.
     ///
     /// # Errors
