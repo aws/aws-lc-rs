@@ -41,10 +41,8 @@ fn test_serialized_kem_kyber512() {
     // Generate private key bytes to possibly save for later
     let privkey_raw_bytes = priv_key.as_ref();
 
-    let pub_key = priv_key.compute_public_key().unwrap();
-
     // Generate public key bytes to send to bob
-    let pub_key_bytes = pub_key.as_ref();
+    let pub_key_bytes = priv_key.compute_public_key().unwrap().as_ref();
 
     let mut ciphertext: Vec<u8> = vec![];
     let mut bob_shared_secret: Vec<u8> = vec![];
