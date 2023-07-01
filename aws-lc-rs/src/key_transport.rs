@@ -10,9 +10,9 @@
 //! `key_transport::<desired_algorithm_here>` for `key_transport::KYBER512_R3`.
 //!
 //! ```
-//! use aws_lc_rs::key_transport;
+//! use aws_lc_rs::key_transport::{KemPrivateKey, KemPublicKey, KYBER512_R3};
 //!
-//! let priv_key = key_transport::KemPrivateKey::generate(&key_transport::KYBER512_R3)?;
+//! let priv_key = KemPrivateKey::generate(&KYBER512_R3)?;
 //!
 //! // Generate private key bytes to possibly save for later decapsulation
 //! let privkey_raw_bytes = priv_key.as_ref();
@@ -25,7 +25,7 @@
 //!
 //! let mut ciphertext: Vec<u8> = vec![];
 //!
-//! let retrieved_pub_key = key_transport::KemPublicKey::new(&key_transport::KYBER512_R3, pub_key_bytes)?;
+//! let retrieved_pub_key = KemPublicKey::new(&KYBER512_R3, pub_key_bytes)?;
 //! let bob_result = retrieved_pub_key.encapsulate(|ct, ss| {
 //!     ciphertext.extend_from_slice(ct);
 //!     // In a real application, we'd apply a KDF to the shared secret and the
@@ -35,7 +35,7 @@
 //! });
 //!
 //! // Retrieve private key from stored raw bytes
-//! let retrieved_priv_key = key_transport::KemPrivateKey::new(&key_transport::KYBER512_R3, privkey_raw_bytes)?;
+//! let retrieved_priv_key = KemPrivateKey::new(&KYBER512_R3, privkey_raw_bytes)?;
 //!
 //! let alice_result = retrieved_priv_key.decapsulate(&mut ciphertext, |ss| {
 //!     // In a real application, we'd apply a KDF to the shared secret and the
@@ -68,12 +68,12 @@ const KYBER512_R3_SHARED_SECRET_LENGTH: usize = 32;
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
-/// A selection of algorithms to be used as KEMs.
-pub enum KemAlgorithmID {
-    /// Kyber-512 algorithm ID
+
+enum KemAlgorithmID {
     Kyber512_R3,
 }
 
+/// A KEM algorithm
 #[derive(Debug, PartialEq)]
 pub struct KemAlgorithm {
     id: KemAlgorithmID,
