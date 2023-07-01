@@ -317,14 +317,6 @@ impl KemPublicKey {
                 return Err(Unspecified);
             }
 
-            #[cfg(feature = "debug-kem")]
-            {
-                println!("Ciphertext length: {}", ciphertext_len);
-                println!("Shared secret length: {}", shared_secret_len);
-                println!("Ciphertext: {:02x?}", ciphertext);
-                println!("Shared Secret: {:02x?}", shared_secret);
-            }
-
             kdf(&ciphertext, &shared_secret)
         }
     }
