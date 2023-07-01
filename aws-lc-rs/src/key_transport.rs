@@ -148,8 +148,6 @@ impl KemPrivateKey {
                 priv_key_bytes.as_mut_ptr(),
                 &mut alg.secret_key_size(),
             ) {
-                priv_key_bytes.zeroize();
-                alg.secret_key_size().zeroize();
                 return Err(Unspecified);
             }
             Ok(KemPrivateKey {
@@ -180,8 +178,6 @@ impl KemPrivateKey {
                 pubkey_bytes.as_mut_ptr(),
                 &mut self.algorithm.public_key_size(),
             ) {
-                pubkey_bytes.zeroize();
-                self.algorithm.public_key_size().zeroize();
                 return Err(Unspecified);
             }
 
@@ -225,8 +221,6 @@ impl KemPrivateKey {
                 ciphertext.as_mut_ptr(),
                 ciphertext.len(),
             ) {
-                shared_secret.zeroize();
-                self.algorithm.secret_key_size().zeroize();
                 return Err(Unspecified);
             }
             kdf(&shared_secret)
@@ -258,6 +252,12 @@ impl KemPrivateKey {
                 priv_key: bytes.to_owned().into(),
             })
         }
+    }
+}
+
+impl Drop for KemPrivateKey {
+    fn drop(&mut self) {
+        self.priv_key.zeroize();
     }
 }
 
@@ -310,10 +310,6 @@ impl KemPublicKey {
                 &mut self.algorithm.shared_secret_size(),
             ) != 1
             {
-                ciphertext.zeroize();
-                shared_secret.zeroize();
-                self.algorithm.cipher_text_size().zeroize();
-                self.algorithm.shared_secret_size().zeroize();
                 return Err(Unspecified);
             }
 
@@ -346,6 +342,12 @@ impl KemPublicKey {
                 pub_key: bytes.to_owned().into(),
             })
         }
+    }
+}
+
+impl Drop for KemPublicKey {
+    fn drop(&mut self) {
+        self.pub_key.zeroize();
     }
 }
 
