@@ -127,7 +127,7 @@ impl KemAlgorithm {
 #[derive(Debug)]
 pub struct KemPrivateKey {
     algorithm: &'static KemAlgorithm,
-    context: LcPtr<*mut EVP_PKEY>,
+    pkey: LcPtr<*mut EVP_PKEY>,
     priv_key: Box<[u8]>,
 }
 
@@ -152,7 +152,7 @@ impl KemPrivateKey {
             }
             Ok(KemPrivateKey {
                 algorithm: alg,
-                context: kyber_key,
+                pkey: kyber_key,
                 priv_key: priv_key_bytes.into(),
             })
         }
@@ -174,7 +174,7 @@ impl KemPrivateKey {
         let mut pubkey_bytes = vec![0u8; self.algorithm.public_key_size()];
         unsafe {
             if 1 != EVP_PKEY_get_raw_public_key(
-                *self.context,
+                *self.pkey,
                 pubkey_bytes.as_mut_ptr(),
                 &mut self.algorithm.public_key_size(),
             ) {
@@ -189,7 +189,7 @@ impl KemPrivateKey {
 
             Ok(KemPublicKey {
                 algorithm: self.algorithm.clone(),
-                context: pubkey_ctx_copy,
+                pkey: pubkey_ctx_copy,
                 pub_key: pubkey_bytes.into(),
             })
         }
@@ -211,7 +211,7 @@ impl KemPrivateKey {
         F: FnOnce(&[u8]) -> Result<R, Unspecified>,
     {
         unsafe {
-            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
+            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut()))?;
             let mut shared_secret: Vec<u8> = vec![0u8; self.algorithm.shared_secret_size()];
 
             if 1 != EVP_PKEY_decapsulate(
@@ -248,7 +248,7 @@ impl KemPrivateKey {
             ))?;
             Ok(KemPrivateKey {
                 algorithm: alg,
-                context: privkey_ctx,
+                pkey: privkey_ctx,
                 priv_key: bytes.to_owned().into(),
             })
         }
@@ -272,7 +272,7 @@ impl AsRef<[u8]> for KemPrivateKey {
 #[derive(Debug)]
 pub struct KemPublicKey {
     algorithm: &'static KemAlgorithm,
-    context: LcPtr<*mut EVP_PKEY>,
+    pkey: LcPtr<*mut EVP_PKEY>,
     pub_key: Box<[u8]>,
 }
 
@@ -297,7 +297,7 @@ impl KemPublicKey {
         F: FnOnce(&[u8], &[u8]) -> Result<R, Unspecified>,
     {
         unsafe {
-            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.context, null_mut()))?;
+            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut()))?;
 
             let mut ciphertext: Vec<u8> = vec![0u8; self.algorithm.cipher_text_size()];
             let mut shared_secret: Vec<u8> = vec![0u8; self.algorithm.shared_secret_size()];
@@ -338,7 +338,7 @@ impl KemPublicKey {
             ))?;
             Ok(KemPublicKey {
                 algorithm: alg,
-                context: pubkey_ctx,
+                pkey: pubkey_ctx,
                 pub_key: bytes.to_owned().into(),
             })
         }
