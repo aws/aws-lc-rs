@@ -136,8 +136,6 @@ impl KemPrivateKey {
     /// `error::Unspecified` when operation fails due to internal error.
     ///
     pub fn generate(alg: &'static KemAlgorithm) -> Result<Self, Unspecified> {
-        // match alg {
-        //     KemAlgorithm::KYBER512_R3 =>
         unsafe {
             let kyber_key = kem_key_generate(alg.id.nid())?;
             let mut priv_key_bytes = vec![0u8; alg.secret_key_size()];
@@ -154,7 +152,6 @@ impl KemPrivateKey {
                 priv_key: priv_key_bytes.into(),
             })
         }
-        // }
     }
 
     /// Return the algorithm associated with the given KEM private key.
@@ -186,7 +183,7 @@ impl KemPrivateKey {
             ))?;
 
             Ok(KemPublicKey {
-                algorithm: self.algorithm.clone(),
+                algorithm: self.algorithm,
                 pkey: pubkey_ctx_copy,
                 pub_key: pubkey_bytes.into(),
             })
