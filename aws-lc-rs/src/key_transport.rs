@@ -59,6 +59,9 @@ use std::os::raw::c_int;
 use std::ptr::null_mut;
 use zeroize::Zeroize;
 
+// Key lengths defined as stated on the CRYSTALS website:
+// https://pq-crystals.org/kyber/
+//
 const KYBER512_R3_SECRET_KEY_LENGTH: usize = 1632;
 const KYBER512_R3_CIPHERTEXT_LENGTH: usize = 768;
 const KYBER512_R3_PUBLIC_KEY_LENGTH: usize = 800;
