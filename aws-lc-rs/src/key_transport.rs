@@ -123,7 +123,7 @@ impl KemAlgorithm {
     }
 }
 
-/// A serializable private key usable with KEMs. This can be randomly generated
+/// A serializable private key usable with KEMs. This can be randomly generated with KemPrivateKey::generate
 /// or constructed from raw bytes.
 #[derive(Debug)]
 pub struct KemPrivateKey {
@@ -179,7 +179,7 @@ impl KemPrivateKey {
                 return Err(Unspecified);
             }
 
-            let pubkey_ctx_copy = LcPtr::new(EVP_PKEY_kem_new_raw_public_key(
+            let pubkey = LcPtr::new(EVP_PKEY_kem_new_raw_public_key(
                 self.algorithm.id.nid(),
                 pubkey_bytes.as_mut_ptr(),
                 self.algorithm.public_key_size(),
@@ -187,7 +187,7 @@ impl KemPrivateKey {
 
             Ok(KemPublicKey {
                 algorithm: self.algorithm,
-                pkey: pubkey_ctx_copy,
+                pkey: pubkey,
                 pub_key: pubkey_bytes.into(),
             })
         }
@@ -241,14 +241,14 @@ impl KemPrivateKey {
             return Err(KeyRejected::unexpected_error());
         }
         unsafe {
-            let privkey_ctx = LcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
+            let privkey = LcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
                 alg.id.nid(),
                 bytes.as_ptr(),
                 bytes.len(),
             ))?;
             Ok(KemPrivateKey {
                 algorithm: alg,
-                pkey: privkey_ctx,
+                pkey: privkey,
                 priv_key: bytes.to_owned().into(),
             })
         }
@@ -333,14 +333,14 @@ impl KemPublicKey {
             return Err(KeyRejected::unexpected_error());
         }
         unsafe {
-            let pubkey_ctx = LcPtr::new(EVP_PKEY_kem_new_raw_public_key(
+            let pubkey = LcPtr::new(EVP_PKEY_kem_new_raw_public_key(
                 alg.id.nid(),
                 bytes.as_ptr(),
                 bytes.len(),
             ))?;
             Ok(KemPublicKey {
                 algorithm: alg,
-                pkey: pubkey_ctx,
+                pkey: pubkey,
                 pub_key: bytes.to_owned().into(),
             })
         }
