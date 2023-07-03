@@ -225,7 +225,9 @@ impl KemPrivateKey {
         }
     }
 
-    /// Creates a new KEM private key from raw bytes
+    /// Creates a new KEM private key from raw bytes. This method is NOT meant to generate
+    /// a new private key, rather it restores a `KemPrivateKey` that was previously converted
+    /// to raw bytes.
     ///
     /// `alg` is the `KemAlgorithm` to be associated with the generated `KemPrivateKey`
     ///
@@ -315,7 +317,9 @@ impl KemPublicKey {
         }
     }
 
-    /// Creates a new KEM public key from raw bytes
+    /// Creates a new KEM public key from raw bytes. This method is NOT meant to generate
+    /// a new public key, rather it restores a `KemPublicKey` that was previously converted
+    /// to raw bytes.
     ///
     /// `alg` is the `KemAlgorithm` to be associated with the generated `KemPublicKey`
     ///
