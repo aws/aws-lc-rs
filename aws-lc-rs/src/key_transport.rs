@@ -69,7 +69,6 @@ const KYBER512_R3_SHARED_SECRET_LENGTH: usize = 32;
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
-
 enum KemAlgorithmID {
     Kyber512_R3,
 }
@@ -123,6 +122,7 @@ impl KemAlgorithm {
         self.shared_secret_size
     }
 }
+
 /// A serializable private key usable with KEMs. This can be randomly generated
 /// or constructed from raw bytes.
 #[derive(Debug)]
