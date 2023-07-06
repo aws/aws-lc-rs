@@ -262,6 +262,9 @@ impl Key {
     /// You should not use keys larger than the `digest_alg.block_len` because
     /// the truncation described above reduces their strength to only
     /// `digest_alg.output_len * 8` bits.
+    /// 
+    /// # Panics
+    /// Panics if the HMAC context cannot be constructed
     #[inline]
     #[must_use]
     pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Self {
@@ -353,6 +356,9 @@ impl Context {
 
     /// Updates the HMAC with all the data in `data`. `update` may be called
     /// zero or more times until `finish` is called.
+    /// 
+    /// # Panics
+    /// Panics if the HMAC cannot be updated
     #[inline]
     pub fn update(&mut self, data: &[u8]) {
         Self::try_update(self, data).expect("HMAC_Update failed");
@@ -379,6 +385,9 @@ impl Context {
     /// It is generally not safe to implement HMAC verification by comparing
     /// the return value of `sign` to a tag. Use `verify` for verification
     /// instead.
+    /// 
+    /// # Panics
+    /// Panics if the HMAC calculation cannot be finalized
     #[inline]
     #[must_use]
     pub fn sign(self) -> Tag {

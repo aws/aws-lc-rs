@@ -284,6 +284,9 @@ impl Ed25519KeyPair {
     }
 
     /// Returns the signature of the message msg.
+    /// 
+    /// # Panics
+    /// Panics if the message is unable to be signed
     #[inline]
     #[must_use]
     pub fn sign(&self, msg: &[u8]) -> Signature {
@@ -338,7 +341,7 @@ mod tests {
             expected_public: &'static str,
         }
 
-        for case in vec![
+        for case in [
             TestCase {
                 key: "302e020100300506032b6570042204209d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60",
                 expected_public: "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",

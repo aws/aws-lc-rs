@@ -359,7 +359,7 @@ fn main() {
         RustWrapper.libname(Some(&prefix))
     );
 
-    for include_path in vec![
+    for include_path in [
         get_rust_include_path(&manifest_dir),
         get_generated_include_path(&manifest_dir),
         get_aws_lc_include_path(&manifest_dir),

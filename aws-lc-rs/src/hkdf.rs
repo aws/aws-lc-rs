@@ -113,6 +113,9 @@ impl Salt {
     ///
     /// Constructing a `Salt` is relatively expensive so it is good to reuse a
     /// `Salt` object instead of re-constructing `Salt`s with the same value.
+    /// 
+    /// # Panics
+    /// `new` panics if the salt length exceeds the limit
     #[must_use]
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
         Salt::try_new(algorithm, value).expect("Salt length limit exceeded.")
@@ -135,6 +138,9 @@ impl Salt {
     /// The [HKDF-Extract] operation.
     ///
     /// [HKDF-Extract]: https://tools.ietf.org/html/rfc5869#section-2.2
+    /// 
+    /// # Panics
+    /// Panics if the extract operation is unable to be performed
     #[inline]
     #[must_use]
     pub fn extract(&self, secret: &[u8]) -> Prk {
@@ -229,6 +235,9 @@ impl Prk {
     /// Usually one can avoid using this. It is useful when the application
     /// intentionally wants to leak the PRK secret, e.g. to implement
     /// `SSLKEYLOGFILE` functionality.
+    /// 
+    /// # Panics
+    /// Panics if the given Prk length exceeds the limit
     #[must_use]
     pub fn new_less_safe(algorithm: Algorithm, value: &[u8]) -> Self {
         Prk::try_new_less_safe(algorithm, value).expect("Prk length limit exceeded.")
