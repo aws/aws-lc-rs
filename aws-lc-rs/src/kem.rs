@@ -171,12 +171,13 @@ impl KemPrivateKey {
     /// `error::Unspecified` when operation fails due to internal error.
     ///
     pub fn compute_public_key(&self) -> Result<KemPublicKey, Unspecified> {
-        let mut pubkey_bytes = vec![0u8; self.algorithm.public_key_size()];
+        let mut public_key_size = self.algorithm.public_key_size();
+        let mut pubkey_bytes = vec![0u8; public_key_size];
         unsafe {
             if 1 != EVP_PKEY_get_raw_public_key(
                 self.pkey.as_const_ptr(),
                 pubkey_bytes.as_mut_ptr(),
-                &mut self.algorithm.public_key_size(),
+                &mut public_key_size,
             ) {
                 return Err(Unspecified);
             }
@@ -184,7 +185,7 @@ impl KemPrivateKey {
             let pubkey = LcPtr::new(EVP_PKEY_kem_new_raw_public_key(
                 self.algorithm.id.nid(),
                 pubkey_bytes.as_ptr(),
-                self.algorithm.public_key_size(),
+                public_key_size,
             ))?;
 
             Ok(KemPublicKey {
