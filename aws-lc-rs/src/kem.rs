@@ -384,16 +384,14 @@ impl AsRef<[u8]> for KemPublicKey {
 #[inline]
 unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
     let ctx = LcPtr::new(EVP_PKEY_CTX_new_id(EVP_PKEY_KEM, null_mut()))?;
-    let mut key_raw: *mut EVP_PKEY = null_mut();
-    if 1 != EVP_PKEY_keygen_init(*ctx)
-        || 1 != EVP_PKEY_CTX_kem_set_params(*ctx, nid)
-        || 1 != EVP_PKEY_keygen(*ctx, &mut key_raw)
-    {
-        // We don't have the key wrapped with LcPtr yet, so explicitly free it
-        key_raw.free();
+    if 1 != EVP_PKEY_keygen_init(*ctx) || 1 != EVP_PKEY_CTX_kem_set_params(*ctx, nid) {
         return Err(Unspecified);
     }
 
+    let mut key_raw: *mut EVP_PKEY = null_mut();
+    if 1 != EVP_PKEY_keygen(*ctx, &mut key_raw) {
+        return Err(Unspecified);
+    }
     Ok(LcPtr::new(key_raw)?)
 }
 
