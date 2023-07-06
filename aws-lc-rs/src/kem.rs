@@ -205,22 +205,31 @@ impl KemPrivateKey {
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
     ///
-    pub fn decapsulate<F, R>(&self, ciphertext: &mut [u8], kdf: F) -> Result<R, Unspecified>
+    pub fn decapsulate<F, R, E>(
+        &self,
+        ciphertext: &mut [u8],
+        error_value: E,
+        kdf: F,
+    ) -> Result<R, E>
     where
-        F: FnOnce(&[u8]) -> Result<R, Unspecified>,
+        F: FnOnce(&[u8]) -> Result<R, E>,
     {
         unsafe {
-            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut()))?;
-            let mut shared_secret: Vec<u8> = vec![0u8; self.algorithm.shared_secret_size()];
+            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut()));
+            if ctx.is_err() {
+                return Err(error_value);
+            }
+            let mut shared_secret_len = self.algorithm.shared_secret_size();
+            let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
             if 1 != EVP_PKEY_decapsulate(
-                *ctx,
+                *ctx.unwrap(),
                 shared_secret.as_mut_ptr(),
-                &mut self.algorithm.secret_key_size(),
+                &mut shared_secret_len,
                 ciphertext.as_mut_ptr(),
                 ciphertext.len(),
             ) {
-                return Err(Unspecified);
+                return Err(error_value);
             }
             kdf(&shared_secret)
         }
@@ -383,7 +392,13 @@ unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecifi
 
 #[cfg(test)]
 mod tests {
-    use crate::{kem::{KemPrivateKey, KemPublicKey, KYBER512_R3, KYBER512_R3_SECRET_KEY_LENGTH, KYBER512_R3_PUBLIC_KEY_LENGTH}, error::KeyRejected};
+    use crate::{
+        error::KeyRejected,
+        kem::{
+            KemPrivateKey, KemPublicKey, KYBER512_R3, KYBER512_R3_PUBLIC_KEY_LENGTH,
+            KYBER512_R3_SECRET_KEY_LENGTH,
+        },
+    };
 
     #[test]
     fn test_kem_privkey_serialize() {
@@ -415,21 +430,33 @@ mod tests {
     fn test_kem_privkey_wrong_size() {
         let too_long_bytes = vec![0u8; KYBER512_R3_SECRET_KEY_LENGTH + 1];
         let long_priv_key_from_bytes = KemPrivateKey::new(&KYBER512_R3, &too_long_bytes);
-        assert_eq!(long_priv_key_from_bytes.err(), Some(KeyRejected::too_large()));
+        assert_eq!(
+            long_priv_key_from_bytes.err(),
+            Some(KeyRejected::too_large())
+        );
 
         let too_short_bytes = vec![0u8; KYBER512_R3_SECRET_KEY_LENGTH - 1];
         let short_priv_key_from_bytes = KemPrivateKey::new(&KYBER512_R3, &too_short_bytes);
-        assert_eq!(short_priv_key_from_bytes.err(), Some(KeyRejected::too_small()));
+        assert_eq!(
+            short_priv_key_from_bytes.err(),
+            Some(KeyRejected::too_small())
+        );
     }
 
     #[test]
     fn test_kem_pubkey_wrong_size() {
         let too_long_bytes = vec![0u8; KYBER512_R3_PUBLIC_KEY_LENGTH + 1];
         let long_priv_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_long_bytes);
-        assert_eq!(long_priv_key_from_bytes.err(), Some(KeyRejected::too_large()));
+        assert_eq!(
+            long_priv_key_from_bytes.err(),
+            Some(KeyRejected::too_large())
+        );
 
         let too_short_bytes = vec![0u8; KYBER512_R3_PUBLIC_KEY_LENGTH - 1];
         let short_priv_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_short_bytes);
-        assert_eq!(short_priv_key_from_bytes.err(), Some(KeyRejected::too_small()));
+        assert_eq!(
+            short_priv_key_from_bytes.err(),
+            Some(KeyRejected::too_small())
+        );
     }
 }
