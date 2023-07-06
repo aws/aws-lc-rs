@@ -8,7 +8,6 @@
 
 #![allow(missing_docs)]
 
-#[macro_export]
 macro_rules! derive_debug_via_id {
     ($typename:ident) => {
         impl ::core::fmt::Debug for $typename {
@@ -18,6 +17,7 @@ macro_rules! derive_debug_via_id {
         }
     };
 }
+pub(crate) use derive_debug_via_id;
 
 #[allow(unused_macros)]
 macro_rules! derive_debug_via_field {
