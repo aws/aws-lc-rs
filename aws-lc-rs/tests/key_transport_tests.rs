@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::key_transport::{KemPrivateKey, KemPublicKey, KYBER512_R3};
+use aws_lc_rs::kem::{KemPrivateKey, KemPublicKey, KYBER512_R3};
 
 #[test]
 fn test_kem_kyber512() {

@@ -7,10 +7,10 @@
 //!
 //! Note that this example uses Kyber-512, but other algorithms can be used
 //! in the exact same way by substituting
-//! `key_transport::<desired_algorithm_here>` for `key_transport::KYBER512_R3`.
+//! `kem::<desired_algorithm_here>` for `kem::KYBER512_R3`.
 //!
 //! ```
-//! use aws_lc_rs::key_transport::{KemPrivateKey, KemPublicKey, KYBER512_R3};
+//! use aws_lc_rs::kem::{KemPrivateKey, KemPublicKey, KYBER512_R3};
 //!
 //! let priv_key = KemPrivateKey::generate(&KYBER512_R3)?;
 //!
@@ -379,7 +379,7 @@ unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecifi
 
 #[cfg(test)]
 mod tests {
-    use crate::key_transport::{KemPrivateKey, KemPublicKey, KYBER512_R3};
+    use crate::kem::{KemPrivateKey, KemPublicKey, KYBER512_R3};
 
     #[test]
     fn test_kem_privkey_serialize() {
