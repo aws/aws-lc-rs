@@ -4,21 +4,17 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::digest::digest_ctx::DigestContext;
-use crate::ec::{validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
+use crate::ec::{
+    ec_key_generate, validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
+};
 use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
 use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 use crate::{digest, ec};
-#[cfg(not(feature = "fips"))]
-use aws_lc::EC_KEY_generate_key;
-#[cfg(feature = "fips")]
-use aws_lc::EC_KEY_generate_key_fips;
-use aws_lc::{
-    EC_KEY_new_by_curve_name, EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_assign_EC_KEY,
-    EVP_PKEY_new, EVP_PKEY,
-};
+use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY};
 use std::fmt;
 use std::mem::MaybeUninit;
 use std::ptr::{null, null_mut};
@@ -50,28 +46,6 @@ impl KeyPair for EcdsaKeyPair {
     fn public_key(&self) -> &Self::PublicKey {
         &self.pubkey
     }
-}
-
-pub(crate) unsafe fn generate_key(nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(EC_KEY_new_by_curve_name(nid))?;
-
-    #[cfg(feature = "fips")]
-    if 1 != EC_KEY_generate_key_fips(*ec_key) {
-        return Err(Unspecified);
-    }
-
-    #[cfg(not(feature = "fips"))]
-    if 1 != EC_KEY_generate_key(*ec_key) {
-        return Err(Unspecified);
-    }
-
-    let evp_pkey = LcPtr::new(EVP_PKEY_new())?;
-    if 1 != EVP_PKEY_assign_EC_KEY(*evp_pkey, *ec_key) {
-        return Err(Unspecified);
-    }
-    ec_key.detach();
-
-    Ok(evp_pkey)
 }
 
 impl EcdsaKeyPair {
@@ -123,11 +97,9 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         _rng: &dyn SecureRandom,
     ) -> Result<Document, Unspecified> {
-        unsafe {
-            let evp_pkey = generate_key(alg.0.id.nid())?;
+        let evp_pkey = ec_key_generate(alg.0.id.nid())?;
 
-            evp_pkey.marshall_private_key(Version::V1)
-        }
+        evp_pkey.marshall_private_key(Version::V1)
     }
 
     /// Constructs an ECDSA key pair from the private key and public key bytes
@@ -236,7 +208,7 @@ fn compute_ecdsa_signature<'a>(
 ) -> Result<&'a mut [u8], Unspecified> {
     let mut out_sig_len = signature.len();
 
-    if 1 != unsafe {
+    if 1 != indicator_check!(unsafe {
         EVP_DigestSign(
             ctx.as_mut_ptr(),
             signature.as_mut_ptr(),
@@ -244,7 +216,7 @@ fn compute_ecdsa_signature<'a>(
             message.as_ptr(),
             message.len(),
         )
-    } {
+    }) {
         return Err(Unspecified);
     }
 

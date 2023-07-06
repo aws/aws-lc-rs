@@ -65,6 +65,8 @@ impl Context {
         unsafe {
             let mut tag = MaybeUninit::<[u8; TAG_LEN]>::uninit();
             CRYPTO_poly1305_finish(self.state.0.as_mut_ptr().cast(), tag.as_mut_ptr().cast());
+            #[cfg(feature = "fips")]
+            crate::fips::indicator::set_unapproved();
             Tag(tag.assume_init(), TAG_LEN)
         }
     }

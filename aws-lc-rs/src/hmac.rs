@@ -96,6 +96,7 @@
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use crate::{constant_time, digest, hkdf};
 use aws_lc::{
     HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_CTX_init, HMAC_Final, HMAC_Init_ex, HMAC_Update,
@@ -397,11 +398,11 @@ impl Context {
         let mut output = [0u8; digest::MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
         unsafe {
-            if 1 != HMAC_Final(
+            if 1 != indicator_check!(HMAC_Final(
                 self.key.get_hmac_ctx_ptr(),
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
-            ) {
+            )) {
                 return Err(Unspecified);
             }
             Ok(Tag {

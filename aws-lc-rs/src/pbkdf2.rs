@@ -104,6 +104,7 @@
 //! }
 
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use crate::{constant_time, digest, hmac};
 use aws_lc::PKCS5_PBKDF2_HMAC;
 use core::num::NonZeroU32;
@@ -189,8 +190,8 @@ fn try_derive(
         "derived key too long"
     );
 
-    unsafe {
-        if 1 != PKCS5_PBKDF2_HMAC(
+    if 1 != indicator_check!(unsafe {
+        PKCS5_PBKDF2_HMAC(
             secret.as_ptr().cast(),
             secret.len(),
             salt.as_ptr(),
@@ -199,9 +200,9 @@ fn try_derive(
             *digest::match_digest_type(&algorithm.algorithm.digest_algorithm().id),
             out.len(),
             out.as_mut_ptr(),
-        ) {
-            return Err(Unspecified);
-        };
+        )
+    }) {
+        return Err(Unspecified);
     }
     Ok(())
 }
@@ -248,20 +249,8 @@ pub fn verify(
 
     // Create a vector with the expected output length.
     let mut derived_buf = vec![0u8; previously_derived.len()];
-    unsafe {
-        if 1 != PKCS5_PBKDF2_HMAC(
-            secret.as_ptr().cast(),
-            secret.len(),
-            salt.as_ptr(),
-            salt.len(),
-            iterations.get(),
-            *digest::match_digest_type(&algorithm.algorithm.digest_algorithm().id),
-            previously_derived.len(),
-            derived_buf.as_mut_ptr(),
-        ) {
-            return Err(Unspecified);
-        };
-    }
+
+    try_derive(algorithm, iterations, salt, secret, &mut derived_buf)?;
 
     let result = constant_time::verify_slices_are_equal(&derived_buf, previously_derived);
     derived_buf.zeroize();

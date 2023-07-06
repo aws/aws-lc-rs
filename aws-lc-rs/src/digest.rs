@@ -28,6 +28,7 @@
 //! ```
 
 #![allow(non_snake_case)]
+use crate::fips::indicator_check;
 use crate::{debug, derive_debug_via_id};
 
 pub(crate) mod digest_ctx;
@@ -103,6 +104,7 @@ impl Context {
             self.msg_len = msg_len;
             self.max_input_reached = self.msg_len == self.algorithm.max_input_len;
 
+            // Doesn't require boundary_check! guard
             if 1 != EVP_DigestUpdate(
                 self.digest_ctx.as_mut_ptr(),
                 data.as_ptr().cast(),
@@ -131,14 +133,14 @@ impl Context {
     fn try_finish(mut self) -> Result<Digest, Unspecified> {
         let mut output = [0u8; MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
-        unsafe {
-            if 1 != EVP_DigestFinal(
+        if 1 != indicator_check!(unsafe {
+            EVP_DigestFinal(
                 self.digest_ctx.as_mut_ptr(),
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
+            )
+        }) {
+            return Err(Unspecified);
         }
 
         Ok(Digest {

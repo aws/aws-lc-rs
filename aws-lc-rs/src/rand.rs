@@ -37,6 +37,7 @@ use std::fmt::Debug;
 
 use crate::error;
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
@@ -153,13 +154,10 @@ impl sealed::SecureRandom for SystemRandom {
 /// # Errors
 /// `error::Unspecified` if unable to fill `dest`.
 pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
-    unsafe {
-        if 1 == RAND_bytes(dest.as_mut_ptr(), dest.len()) {
-            Ok(())
-        } else {
-            Err(error::Unspecified)
-        }
+    if 1 != indicator_check!(unsafe { RAND_bytes(dest.as_mut_ptr(), dest.len()) }) {
+        return Err(Unspecified);
     }
+    Ok(())
 }
 
 #[cfg(test)]

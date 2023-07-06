@@ -143,6 +143,7 @@ pub(crate) mod chacha;
 pub(crate) mod key;
 
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use crate::hkdf;
 use crate::hkdf::KeyType;
 use crate::iv::{FixedLength, IV_LEN_128_BIT};
@@ -843,7 +844,7 @@ fn decrypt_aes_cbc_mode<'in_out>(
 fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_out: &mut [u8]) {
     let mut num = MaybeUninit::<u32>::new(0);
 
-    unsafe {
+    indicator_check!(unsafe {
         AES_ctr128_encrypt(
             in_out.as_ptr(),
             in_out.as_mut_ptr(),
@@ -853,13 +854,13 @@ fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_
             block_buffer.as_mut_ptr(),
             num.as_mut_ptr(),
         );
-    };
+    });
 
     Zeroize::zeroize(block_buffer);
 }
 
 fn aes_cbc_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
-    unsafe {
+    indicator_check!(unsafe {
         AES_cbc_encrypt(
             in_out.as_ptr(),
             in_out.as_mut_ptr(),
@@ -868,11 +869,11 @@ fn aes_cbc_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
             iv.as_mut_ptr(),
             AES_ENCRYPT,
         );
-    }
+    });
 }
 
 fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
-    unsafe {
+    indicator_check!(unsafe {
         AES_cbc_encrypt(
             in_out.as_ptr(),
             in_out.as_mut_ptr(),
@@ -881,7 +882,7 @@ fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
             iv.as_mut_ptr(),
             AES_DECRYPT,
         );
-    }
+    });
 }
 
 #[cfg(test)]

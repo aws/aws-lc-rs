@@ -235,6 +235,23 @@ impl From<TryFromIntError> for KeyRejected {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct ServiceNotApproved;
+
+impl std::error::Error for ServiceNotApproved {}
+
+impl core::fmt::Display for ServiceNotApproved {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ServiceNotApproved")
+    }
+}
+
+impl From<ServiceNotApproved> for Unspecified {
+    fn from(_: ServiceNotApproved) -> Self {
+        Self {}
+    }
+}
+
 #[allow(deprecated, unused_imports)]
 #[cfg(test)]
 mod tests {

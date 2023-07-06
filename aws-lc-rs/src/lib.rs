@@ -124,9 +124,48 @@ mod ec;
 mod ed25519;
 mod endian;
 mod evp_pkey;
+mod fips;
 pub mod iv;
 mod ptr;
 mod rsa;
+
+#[cfg(feature = "fips")]
+pub use crate::fips::reset_fips_service_status;
+
+pub use crate::fips::{get_fips_service_status, FipsServiceStatus};
+
+/// Use `check_fips_service_status` to wrap an **aws-lc-rs** cryptographic function, and verify
+/// that the operation was approved by the FIPS module. By default this macro will reset the FIPS module
+/// status if the operation was not approved. You must use `FipsServiceStatus` to determine if
+/// the operation was not approved. If the crate was not built with the `fips` feature, this function will
+/// always wrap the function result with `FipsServiceStatus::NotEnabled`.
+#[macro_export]
+macro_rules! check_fips_service_status {
+    ($function:expr) => {{
+        #[cfg(feature = "fips")]
+        {
+            use $crate::{get_fips_service_status, reset_fips_service_status, FipsServiceStatus};
+            let result = $function;
+            let result = get_fips_service_status().map(|()| result);
+            match &result {
+                FipsServiceStatus::ApprovedMode(_) => {}
+                FipsServiceStatus::NonApprovedMode(_) => {
+                    $crate::reset_fips_service_status();
+                }
+                _ => {
+                    panic!("unexpected `fips_service_status` status")
+                }
+            }
+            result
+        }
+        #[cfg(not(feature = "fips"))]
+        {
+            use $crate::FipsServiceStatus;
+            let result = $function;
+            FipsServiceStatus::NotEnabled(result)
+        }
+    }};
+}
 
 pub(crate) use debug::derive_debug_via_id;
 
@@ -148,11 +187,13 @@ pub fn init() {
 }
 
 #[cfg(feature = "fips")]
+#[deprecated = "See `crate::get_fips_service_status`"]
 /// Panics if the underlying implementation is not FIPS, otherwise it returns.
 ///
 /// # Panics
 /// Panics if the underlying implementation is not FIPS.
 pub fn fips_mode() {
+    #[allow(deprecated)]
     try_fips_mode().unwrap();
 }
 
@@ -160,6 +201,7 @@ pub fn fips_mode() {
 ///
 /// # Errors
 /// Return an error if the underlying implementation is not FIPS, otherwise ok
+#[deprecated = "See `crate::get_fips_service_status`"]
 pub fn try_fips_mode() -> Result<(), &'static str> {
     init();
     unsafe {
@@ -217,13 +259,26 @@ mod tests {
     #[cfg(not(feature = "fips"))]
     #[test]
     fn test_fips() {
-        assert!(crate::try_fips_mode().is_err());
+        assert!({
+            #[allow(deprecated)]
+            crate::try_fips_mode().is_err()
+        });
     }
 
     #[test]
     // FIPS mode is disabled for an ASAN build
     #[cfg(all(feature = "fips", not(feature = "asan")))]
     fn test_fips() {
+        #[allow(deprecated)]
         crate::fips_mode();
+    }
+
+    #[test]
+    #[cfg(not(feature = "fips"))]
+    fn test_check_fips_service_status() {
+        matches!(
+            check_fips_service_status!(()),
+            crate::FipsServiceStatus::NotEnabled(())
+        );
     }
 }
