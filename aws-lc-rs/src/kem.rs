@@ -26,7 +26,7 @@
 //! let mut ciphertext: Vec<u8> = vec![];
 //!
 //! let retrieved_pub_key = KemPublicKey::new(&KYBER512_R3, pub_key_bytes)?;
-//! let bob_result = retrieved_pub_key.encapsulate(|ct, ss| {
+//! let bob_result = retrieved_pub_key.encapsulate(Unspecified, |ct, ss| {
 //!     ciphertext.extend_from_slice(ct);
 //!     // In real applications, a KDF would be applied to derive
 //!     // the session keys from the shared secret. We omit that here.
@@ -114,7 +114,7 @@ impl KemAlgorithm {
     }
 
     #[inline]
-    fn cipher_text_size(&self) -> usize {
+    fn ciphertext_size(&self) -> usize {
         self.ciphertext_size
     }
 
@@ -306,25 +306,30 @@ impl KemPublicKey {
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
     ///
-    pub fn encapsulate<F, R>(&self, kdf: F) -> Result<R, Unspecified>
+    #[allow(clippy::missing_panics_doc)]
+    pub fn encapsulate<F, R, E>(&self, error_value: E, kdf: F) -> Result<R, E>
     where
-        F: FnOnce(&[u8], &[u8]) -> Result<R, Unspecified>,
+        F: FnOnce(&[u8], &[u8]) -> Result<R, E>,
     {
         unsafe {
-            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut()))?;
+            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut()));
+            if ctx.is_err() {
+                return Err(error_value);
+            }
 
-            let mut ciphertext: Vec<u8> = vec![0u8; self.algorithm.cipher_text_size()];
-            let mut shared_secret: Vec<u8> = vec![0u8; self.algorithm.shared_secret_size()];
+            let mut ciphertext_len = self.algorithm.ciphertext_size();
+            let mut shared_secret_len = self.algorithm.shared_secret_size();
+            let mut ciphertext: Vec<u8> = vec![0u8; ciphertext_len];
+            let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
-            if EVP_PKEY_encapsulate(
-                *ctx,
+            if 1 != EVP_PKEY_encapsulate(
+                *ctx.unwrap(),
                 ciphertext.as_mut_ptr(),
-                &mut self.algorithm.cipher_text_size(),
+                &mut ciphertext_len,
                 shared_secret.as_mut_ptr(),
-                &mut self.algorithm.shared_secret_size(),
-            ) != 1
-            {
-                return Err(Unspecified);
+                &mut shared_secret_len,
+            ) {
+                return Err(error_value);
             }
 
             kdf(&ciphertext, &shared_secret)

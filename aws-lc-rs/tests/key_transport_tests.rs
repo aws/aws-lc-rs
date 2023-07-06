@@ -16,7 +16,7 @@ fn test_kem_kyber512() {
     let mut ciphertext: Vec<u8> = vec![];
     let mut alice_shared_secret: Vec<u8> = vec![];
 
-    let alice_result = pub_key.encapsulate(|ct, ss| {
+    let alice_result = pub_key.encapsulate(Unspecified, |ct, ss| {
         ciphertext.extend_from_slice(ct);
         alice_shared_secret.extend_from_slice(ss);
         Ok(())
@@ -50,7 +50,7 @@ fn test_serialized_kem_kyber512() {
     let mut bob_shared_secret: Vec<u8> = vec![];
 
     let retrieved_pub_key = KemPublicKey::new(&KYBER512_R3, pub_key_bytes).unwrap();
-    let bob_result = retrieved_pub_key.encapsulate(|ct, ss| {
+    let bob_result = retrieved_pub_key.encapsulate(Unspecified, |ct, ss| {
         ciphertext.extend_from_slice(ct);
         bob_shared_secret.extend_from_slice(ss);
         Ok(())
