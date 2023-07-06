@@ -10,7 +10,7 @@
 //! `kem::<desired_algorithm_here>` for `kem::KYBER512_R3`.
 //!
 //! ```
-//! use aws_lc_rs::kem::{KemPrivateKey, KemPublicKey, KYBER512_R3};
+//! use aws_lc_rs::{kem::{KemPrivateKey, KemPublicKey, KYBER512_R3}, error::Unspecified};
 //!
 //! let priv_key = KemPrivateKey::generate(&KYBER512_R3)?;
 //!
@@ -36,7 +36,7 @@
 //! // Retrieve private key from stored raw bytes
 //! let retrieved_priv_key = KemPrivateKey::new(&KYBER512_R3, privkey_raw_bytes)?;
 //!
-//! let alice_result = retrieved_priv_key.decapsulate(&mut ciphertext, |ss| {
+//! let alice_result = retrieved_priv_key.decapsulate(&mut ciphertext, Unspecified, |ss| {
 //!     // In real applications, a KDF would be applied to derive
 //!     // the session keys from the shared secret. We omit that here.
 //!     Ok(())
@@ -55,6 +55,7 @@ use aws_lc::{
     EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_keygen,
     EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM, NID_KYBER512_R3,
 };
+use std::cmp::Ordering;
 use std::os::raw::c_int;
 use std::ptr::null_mut;
 use zeroize::Zeroize;
@@ -123,7 +124,7 @@ impl KemAlgorithm {
     }
 }
 
-/// A serializable private key usable with KEMs. This can be randomly generated with KemPrivateKey::generate
+/// A serializable private key usable with KEMs. This can be randomly generated with `KemPrivateKey::generate`
 /// or constructed from raw bytes.
 #[derive(Debug)]
 pub struct KemPrivateKey {
@@ -203,8 +204,9 @@ impl KemPrivateKey {
     /// from the operation and then returns what `kdf` returns.
     ///
     /// # Errors
-    /// `error::Unspecified` when operation fails due to internal error.
+    /// `error_value` when operation fails due to internal error.
     ///
+    #[allow(clippy::missing_panics_doc)]
     pub fn decapsulate<F, R, E>(
         &self,
         ciphertext: &mut [u8],
@@ -247,11 +249,11 @@ impl KemPrivateKey {
     /// `error::KeyRejected` when operation fails during key creation.
     ///
     pub fn new(alg: &'static KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        if alg.secret_key_size() > bytes.len() {
-            return Err(KeyRejected::too_small());
-        } else if alg.secret_key_size() < bytes.len() {
-            return Err(KeyRejected::too_large());
-        }
+        match bytes.len().cmp(&alg.secret_key_size()) {
+            Ordering::Less => Err(KeyRejected::too_small()),
+            Ordering::Greater => Err(KeyRejected::too_large()),
+            Ordering::Equal => Ok(()),
+        }?;
         unsafe {
             let privkey = LcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
                 alg.id.nid(),
@@ -341,11 +343,11 @@ impl KemPublicKey {
     /// `error::KeyRejected` when operation fails during key creation.
     ///
     pub fn new(alg: &'static KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        if alg.public_key_size() > bytes.len() {
-            return Err(KeyRejected::too_small());
-        } else if alg.public_key_size() < bytes.len() {
-            return Err(KeyRejected::too_large());
-        }
+        match bytes.len().cmp(&alg.public_key_size()) {
+            Ordering::Less => Err(KeyRejected::too_small()),
+            Ordering::Greater => Err(KeyRejected::too_large()),
+            Ordering::Equal => Ok(()),
+        }?;
         unsafe {
             let pubkey = LcPtr::new(EVP_PKEY_kem_new_raw_public_key(
                 alg.id.nid(),
