@@ -141,11 +141,12 @@ impl KemPrivateKey {
     pub fn generate(alg: &'static KemAlgorithm) -> Result<Self, Unspecified> {
         unsafe {
             let kyber_key = kem_key_generate(alg.id.nid())?;
-            let mut priv_key_bytes = vec![0u8; alg.secret_key_size()];
+            let mut secret_key_size = alg.secret_key_size();
+            let mut priv_key_bytes = vec![0u8; secret_key_size];
             if 1 != EVP_PKEY_get_raw_private_key(
-                *kyber_key,
+                kyber_key.as_const_ptr(),
                 priv_key_bytes.as_mut_ptr(),
-                &mut alg.secret_key_size(),
+                &mut secret_key_size,
             ) {
                 return Err(Unspecified);
             }
@@ -172,7 +173,7 @@ impl KemPrivateKey {
         let mut pubkey_bytes = vec![0u8; self.algorithm.public_key_size()];
         unsafe {
             if 1 != EVP_PKEY_get_raw_public_key(
-                *self.pkey,
+                self.pkey.as_const_ptr(),
                 pubkey_bytes.as_mut_ptr(),
                 &mut self.algorithm.public_key_size(),
             ) {
@@ -181,7 +182,7 @@ impl KemPrivateKey {
 
             let pubkey = LcPtr::new(EVP_PKEY_kem_new_raw_public_key(
                 self.algorithm.id.nid(),
-                pubkey_bytes.as_mut_ptr(),
+                pubkey_bytes.as_ptr(),
                 self.algorithm.public_key_size(),
             ))?;
 
@@ -249,7 +250,7 @@ impl KemPrivateKey {
             Ok(KemPrivateKey {
                 algorithm: alg,
                 pkey: privkey,
-                priv_key: bytes.to_owned().into(),
+                priv_key: bytes.into(),
             })
         }
     }
@@ -341,7 +342,7 @@ impl KemPublicKey {
             Ok(KemPublicKey {
                 algorithm: alg,
                 pkey: pubkey,
-                pub_key: bytes.to_owned().into(),
+                pub_key: bytes.into(),
             })
         }
     }
