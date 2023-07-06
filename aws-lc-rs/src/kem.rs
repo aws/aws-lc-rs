@@ -451,16 +451,16 @@ mod tests {
     #[test]
     fn test_kem_pubkey_wrong_size() {
         let too_long_bytes = vec![0u8; KYBER512_R3_PUBLIC_KEY_LENGTH + 1];
-        let long_priv_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_long_bytes);
+        let long_pub_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_long_bytes);
         assert_eq!(
-            long_priv_key_from_bytes.err(),
+            long_pub_key_from_bytes.err(),
             Some(KeyRejected::too_large())
         );
 
         let too_short_bytes = vec![0u8; KYBER512_R3_PUBLIC_KEY_LENGTH - 1];
-        let short_priv_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_short_bytes);
+        let short_pub_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_short_bytes);
         assert_eq!(
-            short_priv_key_from_bytes.err(),
+            short_pub_key_from_bytes.err(),
             Some(KeyRejected::too_small())
         );
     }
