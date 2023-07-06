@@ -238,8 +238,10 @@ impl KemPrivateKey {
     /// `error::KeyRejected` when operation fails during key creation.
     ///
     pub fn new(alg: &'static KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        if alg.secret_key_size() != bytes.len() {
-            return Err(KeyRejected::unexpected_error());
+        if alg.secret_key_size() > bytes.len() {
+            return Err(KeyRejected::too_small());
+        } else if alg.secret_key_size() < bytes.len() {
+            return Err(KeyRejected::too_large());
         }
         unsafe {
             let privkey = LcPtr::new(EVP_PKEY_kem_new_raw_secret_key(
@@ -330,8 +332,10 @@ impl KemPublicKey {
     /// `error::KeyRejected` when operation fails during key creation.
     ///
     pub fn new(alg: &'static KemAlgorithm, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        if alg.public_key_size() != bytes.len() {
-            return Err(KeyRejected::unexpected_error());
+        if alg.public_key_size() > bytes.len() {
+            return Err(KeyRejected::too_small());
+        } else if alg.public_key_size() < bytes.len() {
+            return Err(KeyRejected::too_large());
         }
         unsafe {
             let pubkey = LcPtr::new(EVP_PKEY_kem_new_raw_public_key(
@@ -379,7 +383,7 @@ unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecifi
 
 #[cfg(test)]
 mod tests {
-    use crate::kem::{KemPrivateKey, KemPublicKey, KYBER512_R3};
+    use crate::{kem::{KemPrivateKey, KemPublicKey, KYBER512_R3, KYBER512_R3_SECRET_KEY_LENGTH, KYBER512_R3_PUBLIC_KEY_LENGTH}, error::KeyRejected};
 
     #[test]
     fn test_kem_privkey_serialize() {
@@ -405,5 +409,27 @@ mod tests {
 
         assert_eq!(pub_key.as_ref(), pub_key_from_bytes.as_ref());
         assert_eq!(pub_key.algorithm(), pub_key_from_bytes.algorithm());
+    }
+
+    #[test]
+    fn test_kem_privkey_wrong_size() {
+        let too_long_bytes = vec![0u8; KYBER512_R3_SECRET_KEY_LENGTH + 1];
+        let long_priv_key_from_bytes = KemPrivateKey::new(&KYBER512_R3, &too_long_bytes);
+        assert_eq!(long_priv_key_from_bytes.err(), Some(KeyRejected::too_large()));
+
+        let too_short_bytes = vec![0u8; KYBER512_R3_SECRET_KEY_LENGTH - 1];
+        let short_priv_key_from_bytes = KemPrivateKey::new(&KYBER512_R3, &too_short_bytes);
+        assert_eq!(short_priv_key_from_bytes.err(), Some(KeyRejected::too_small()));
+    }
+
+    #[test]
+    fn test_kem_pubkey_wrong_size() {
+        let too_long_bytes = vec![0u8; KYBER512_R3_PUBLIC_KEY_LENGTH + 1];
+        let long_priv_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_long_bytes);
+        assert_eq!(long_priv_key_from_bytes.err(), Some(KeyRejected::too_large()));
+
+        let too_short_bytes = vec![0u8; KYBER512_R3_PUBLIC_KEY_LENGTH - 1];
+        let short_priv_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_short_bytes);
+        assert_eq!(short_priv_key_from_bytes.err(), Some(KeyRejected::too_small()));
     }
 }
