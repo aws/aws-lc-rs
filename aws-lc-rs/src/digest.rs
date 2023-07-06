@@ -118,7 +118,7 @@ impl Context {
     ///
     /// `finish` consumes the context so it cannot be (mis-)used after `finish`
     /// has been called.
-    /// 
+    ///
     /// # Panics
     /// Panics if the digest is unable to be finalized
     #[inline]

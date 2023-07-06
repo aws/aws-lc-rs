@@ -113,7 +113,7 @@ impl Salt {
     ///
     /// Constructing a `Salt` is relatively expensive so it is good to reuse a
     /// `Salt` object instead of re-constructing `Salt`s with the same value.
-    /// 
+    ///
     /// # Panics
     /// `new` panics if the salt length exceeds the limit
     #[must_use]
@@ -138,7 +138,7 @@ impl Salt {
     /// The [HKDF-Extract] operation.
     ///
     /// [HKDF-Extract]: https://tools.ietf.org/html/rfc5869#section-2.2
-    /// 
+    ///
     /// # Panics
     /// Panics if the extract operation is unable to be performed
     #[inline]
@@ -235,7 +235,7 @@ impl Prk {
     /// Usually one can avoid using this. It is useful when the application
     /// intentionally wants to leak the PRK secret, e.g. to implement
     /// `SSLKEYLOGFILE` functionality.
-    /// 
+    ///
     /// # Panics
     /// Panics if the given Prk length exceeds the limit
     #[must_use]

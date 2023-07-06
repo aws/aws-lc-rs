@@ -262,7 +262,7 @@ impl Key {
     /// You should not use keys larger than the `digest_alg.block_len` because
     /// the truncation described above reduces their strength to only
     /// `digest_alg.output_len * 8` bits.
-    /// 
+    ///
     /// # Panics
     /// Panics if the HMAC context cannot be constructed
     #[inline]
@@ -356,7 +356,7 @@ impl Context {
 
     /// Updates the HMAC with all the data in `data`. `update` may be called
     /// zero or more times until `finish` is called.
-    /// 
+    ///
     /// # Panics
     /// Panics if the HMAC cannot be updated
     #[inline]
@@ -385,7 +385,7 @@ impl Context {
     /// It is generally not safe to implement HMAC verification by comparing
     /// the return value of `sign` to a tag. Use `verify` for verification
     /// instead.
-    /// 
+    ///
     /// # Panics
     /// Panics if the HMAC calculation cannot be finalized
     #[inline]

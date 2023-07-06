@@ -284,7 +284,7 @@ impl Ed25519KeyPair {
     }
 
     /// Returns the signature of the message msg.
-    /// 
+    ///
     /// # Panics
     /// Panics if the message is unable to be signed
     #[inline]
