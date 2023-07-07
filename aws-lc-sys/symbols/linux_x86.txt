@@ -1058,6 +1058,9 @@ EVP_HPKE_CTX_max_overhead
 EVP_HPKE_CTX_new
 EVP_HPKE_CTX_open
 EVP_HPKE_CTX_seal
+EVP_HPKE_CTX_setup_auth_recipient
+EVP_HPKE_CTX_setup_auth_sender
+EVP_HPKE_CTX_setup_auth_sender_with_seed_for_testing
 EVP_HPKE_CTX_setup_recipient
 EVP_HPKE_CTX_setup_sender
 EVP_HPKE_CTX_setup_sender_with_seed_for_testing
@@ -1913,7 +1916,9 @@ SSL_CTX_add0_chain_cert
 SSL_CTX_add1_chain_cert
 SSL_CTX_add_cert_compression_alg
 SSL_CTX_add_client_CA
+SSL_CTX_add_client_custom_ext
 SSL_CTX_add_extra_chain_cert
+SSL_CTX_add_server_custom_ext
 SSL_CTX_add_session
 SSL_CTX_check_private_key
 SSL_CTX_cipher_in_group
@@ -2158,6 +2163,7 @@ SSL_enable_signed_cert_timestamps
 SSL_enable_tls_channel_id
 SSL_error_description
 SSL_export_keying_material
+SSL_extension_supported
 SSL_free
 SSL_from_bytes
 SSL_generate_key_block
@@ -2176,6 +2182,7 @@ SSL_get0_peer_verify_algorithms
 SSL_get0_server_requested_CAs
 SSL_get0_session_id_context
 SSL_get0_signed_cert_timestamp_list
+SSL_get0_verified_chain
 SSL_get1_session
 SSL_get_SSL_CTX
 SSL_get_certificate
@@ -3558,6 +3565,7 @@ rsa_default_sign_raw
 rsa_default_size
 rsa_digestsign_no_self_test
 rsa_digestverify_no_self_test
+rsa_invalidate_key
 rsa_pss_asn1_meth
 rsa_sign_no_self_test
 rsa_verify_no_self_test
@@ -3676,6 +3684,7 @@ voprf_pst1_generate_key
 voprf_pst1_issuer_key_from_bytes
 voprf_pst1_read
 voprf_pst1_sign
+voprf_pst1_sign_with_proof_scalar_for_testing
 voprf_pst1_unblind
 vpaes_cbc_encrypt
 vpaes_decrypt
