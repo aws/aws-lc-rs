@@ -220,20 +220,19 @@ impl KemPrivateKey {
         let mut shared_secret_len = self.algorithm.shared_secret_size();
         let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
         unsafe {
-            let Ok(ctx) = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut())) else {
-                return Err(error_value);
-            };
-            if 1 != EVP_PKEY_decapsulate(
-                *ctx,
-                shared_secret.as_mut_ptr(),
-                &mut shared_secret_len,
-                ciphertext.as_mut_ptr(),
-                ciphertext.len(),
-            ) {
-                return Err(error_value);
+            if let Ok(ctx) = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut())) {
+                if 1 == EVP_PKEY_decapsulate(
+                    *ctx,
+                    shared_secret.as_mut_ptr(),
+                    &mut shared_secret_len,
+                    ciphertext.as_mut_ptr(),
+                    ciphertext.len(),
+                ) {
+                    return kdf(&shared_secret);
+                }
             }
+            Err(error_value)
         }
-        kdf(&shared_secret)
     }
 
     /// Creates a new KEM private key from raw bytes. This method is NOT meant to generate
@@ -316,20 +315,19 @@ impl KemPublicKey {
         let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
         unsafe {
-            let Ok(ctx) = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut())) else {
-                return Err(error_value);
-            };
-            if 1 != EVP_PKEY_encapsulate(
-                *ctx,
-                ciphertext.as_mut_ptr(),
-                &mut ciphertext_len,
-                shared_secret.as_mut_ptr(),
-                &mut shared_secret_len,
-            ) {
-                return Err(error_value);
+            if let Ok(ctx) = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut())) {
+                if 1 == EVP_PKEY_encapsulate(
+                    *ctx,
+                    ciphertext.as_mut_ptr(),
+                    &mut ciphertext_len,
+                    shared_secret.as_mut_ptr(),
+                    &mut shared_secret_len,
+                ) {
+                    return kdf(&ciphertext, &shared_secret);
+                }
             }
+            Err(error_value)
         }
-        kdf(&ciphertext, &shared_secret)
     }
 
     /// Creates a new KEM public key from raw bytes. This method is NOT meant to generate
