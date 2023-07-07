@@ -526,12 +526,8 @@ where
         KeyInner::ECDH_P256(ec_key) | KeyInner::ECDH_P384(ec_key) | KeyInner::ECDH_P521(ec_key) => {
             let pub_key_bytes = peer_public_key.bytes.as_ref();
             unsafe {
-                let result =
-                    ec_key_ecdh(&mut buffer, ec_key.as_const(), pub_key_bytes, expected_nid);
-                if result.is_err() {
-                    return Err(error_value);
-                }
-                result.unwrap()
+                ec_key_ecdh(&mut buffer, ec_key.as_const(), pub_key_bytes, expected_nid)
+                    .or(Err(error_value))?
             }
         }
     };
