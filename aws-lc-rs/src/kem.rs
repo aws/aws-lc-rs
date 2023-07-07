@@ -220,13 +220,11 @@ impl KemPrivateKey {
         let mut shared_secret_len = self.algorithm.shared_secret_size();
         let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
         unsafe {
-            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut()));
-            if ctx.is_err() {
+            let Ok(ctx) = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut())) else {
                 return Err(error_value);
-            }
-
+            };
             if 1 != EVP_PKEY_decapsulate(
-                *ctx.unwrap(),
+                *ctx,
                 shared_secret.as_mut_ptr(),
                 &mut shared_secret_len,
                 ciphertext.as_mut_ptr(),
@@ -318,12 +316,11 @@ impl KemPublicKey {
         let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
         unsafe {
-            let ctx = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut()));
-            if ctx.is_err() {
+            let Ok(ctx) = LcPtr::new(EVP_PKEY_CTX_new(*self.pkey, null_mut())) else {
                 return Err(error_value);
-            }
+            };
             if 1 != EVP_PKEY_encapsulate(
-                *ctx.unwrap(),
+                *ctx,
                 ciphertext.as_mut_ptr(),
                 &mut ciphertext_len,
                 shared_secret.as_mut_ptr(),
