@@ -125,6 +125,8 @@ mod ed25519;
 mod endian;
 mod evp_pkey;
 pub mod iv;
+#[allow(clippy::module_name_repetitions)]
+pub mod kem;
 mod ptr;
 mod rsa;
 
