@@ -182,8 +182,9 @@ macro_rules! create_pointer {
     };
 }
 use aws_lc::{
-    BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_PKEY_free, RSA_free,
-    BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, RSA,
+    BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_PKEY_CTX_free,
+    EVP_PKEY_free, RSA_free, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, EVP_PKEY_CTX,
+    RSA,
 };
 
 // `OPENSSL_free` and the other `XXX_free` functions perform a zeroization of the memory when it's
@@ -196,6 +197,7 @@ create_pointer!(EC_KEY, EC_KEY_free);
 create_pointer!(ECDSA_SIG, ECDSA_SIG_free);
 create_pointer!(BIGNUM, BN_free);
 create_pointer!(EVP_PKEY, EVP_PKEY_free);
+create_pointer!(EVP_PKEY_CTX, EVP_PKEY_CTX_free);
 create_pointer!(RSA, RSA_free);
 
 #[cfg(test)]
