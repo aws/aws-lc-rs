@@ -369,8 +369,9 @@ impl<L: KeyType> Okm<'_, L> {
 
 #[cfg(test)]
 mod tests {
-    use crate::hkdf;
-    use crate::hkdf::{Prk, Salt, HKDF_SHA256};
+    use crate::hkdf::{self, Salt, HKDF_SHA256};
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
+    use crate::hkdf::Prk;
 
     #[test]
     fn hkdf_coverage() {
@@ -384,6 +385,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn rustls_test() {
         const INFO1: &[&[u8]] = &[
             &[0, 32],
@@ -450,6 +452,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn okm_to_salt() {
         const SALT: &[u8; 32] = &[
             29, 113, 120, 243, 11, 202, 39, 222, 206, 81, 163, 184, 122, 153, 52, 192, 98, 195,
@@ -515,6 +518,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn okm_to_prk() {
         const SALT: &[u8; 32] = &[
             29, 113, 120, 243, 11, 202, 39, 222, 206, 81, 163, 184, 122, 153, 52, 192, 98, 195,

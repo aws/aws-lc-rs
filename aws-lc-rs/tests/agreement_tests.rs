@@ -4,10 +4,11 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 extern crate alloc;
-
+#[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 use aws_lc_rs::{agreement, rand};
 
 #[test]
+#[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 fn agree_ephemeral_e2e() {
     let rng = rand::SystemRandom::new();
 

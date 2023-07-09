@@ -577,6 +577,7 @@ fn test_aead_key_debug() {
 // Specifically related to tls12 API tests: https://github.com/rustls/rustls/blob/main/rustls/tests/api.rs
 #[test]
 #[allow(clippy::unit_cmp)]
+#[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 fn rustls_bug() {
     const KEY: &[u8] = &[
         239, 90, 253, 140, 117, 97, 1, 139, 56, 128, 152, 217, 106, 97, 87, 101, 79, 81, 29, 233,

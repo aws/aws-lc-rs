@@ -167,6 +167,10 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
         );
     }
 
+    if target_os() == "windows" && target_arch() == "aarch64" {
+        cmake_cfg.define("OPENSSL_NO_ASM", "1");
+    }
+
     // Build flags that minimize our crate size.
     cmake_cfg.define("BUILD_TESTING", "OFF");
     if cfg!(feature = "ssl") {
@@ -247,12 +251,18 @@ fn emit_rustc_cfg(cfg: &str) {
     println!("cargo:rustc-cfg={cfg}");
 }
 
+fn target_os() -> String {
+    env::var("CARGO_CFG_TARGET_OS").unwrap()
+}
+
+fn target_arch() -> String {
+    env::var("CARGO_CFG_TARGET_ARCH").unwrap()
+}
+
 macro_rules! cfg_bindgen_platform {
     ($binding:ident, $os:literal, $arch:literal, $additional:expr) => {
-        let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-        let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
         let $binding = {
-            (target_os == $os && target_arch == $arch && $additional)
+            (target_os() == $os && target_arch() == $arch && $additional)
                 .then(|| {
                     emit_rustc_cfg(concat!($os, "_", $arch));
                     true

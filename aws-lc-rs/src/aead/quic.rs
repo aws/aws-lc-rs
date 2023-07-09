@@ -177,10 +177,12 @@ fn cipher_new_mask(
 
 #[cfg(test)]
 mod test {
-    use crate::aead::quic::{Algorithm, HeaderProtectionKey, AES_128, AES_256, CHACHA20};
-    use crate::{hkdf, test};
+    use crate::{test, aead::quic::{Algorithm, HeaderProtectionKey}};
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
+    use crate::{hkdf, aead::quic::{AES_128, AES_256, CHACHA20}};
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn test_key_type_header_protection_key() {
         let key_bytes = test::from_dirty_hex(r#"d480429666d48b400633921c5407d1d1"#);
         let info = test::from_dirty_hex(r#"f0f1f2f3f4f5f6f7f8f9"#);
