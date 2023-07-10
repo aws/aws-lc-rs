@@ -177,9 +177,15 @@ fn cipher_new_mask(
 
 #[cfg(test)]
 mod test {
-    use crate::{test, aead::quic::{Algorithm, HeaderProtectionKey}};
+    use crate::{
+        aead::quic::{Algorithm, HeaderProtectionKey},
+        test,
+    };
     #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
-    use crate::{hkdf, aead::quic::{AES_128, AES_256, CHACHA20}};
+    use crate::{
+        aead::quic::{AES_128, AES_256, CHACHA20},
+        hkdf,
+    };
 
     #[test]
     #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]

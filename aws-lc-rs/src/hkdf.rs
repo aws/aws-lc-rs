@@ -369,9 +369,9 @@ impl<L: KeyType> Okm<'_, L> {
 
 #[cfg(test)]
 mod tests {
-    use crate::hkdf::{self, Salt, HKDF_SHA256};
     #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     use crate::hkdf::Prk;
+    use crate::hkdf::{self, Salt, HKDF_SHA256};
 
     #[test]
     fn hkdf_coverage() {
