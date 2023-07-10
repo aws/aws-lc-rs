@@ -1078,6 +1078,9 @@
 %xdefine _EVP_HPKE_CTX_new _ %+ BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_new
 %xdefine _EVP_HPKE_CTX_open _ %+ BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_open
 %xdefine _EVP_HPKE_CTX_seal _ %+ BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_seal
+%xdefine _EVP_HPKE_CTX_setup_auth_recipient _ %+ BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_auth_recipient
+%xdefine _EVP_HPKE_CTX_setup_auth_sender _ %+ BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_auth_sender
+%xdefine _EVP_HPKE_CTX_setup_auth_sender_with_seed_for_testing _ %+ BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_auth_sender_with_seed_for_testing
 %xdefine _EVP_HPKE_CTX_setup_recipient _ %+ BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_recipient
 %xdefine _EVP_HPKE_CTX_setup_sender _ %+ BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_sender
 %xdefine _EVP_HPKE_CTX_setup_sender_with_seed_for_testing _ %+ BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_sender_with_seed_for_testing
@@ -1939,7 +1942,9 @@
 %xdefine _SSL_CTX_add1_chain_cert _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_add1_chain_cert
 %xdefine _SSL_CTX_add_cert_compression_alg _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_add_cert_compression_alg
 %xdefine _SSL_CTX_add_client_CA _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_add_client_CA
+%xdefine _SSL_CTX_add_client_custom_ext _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_add_client_custom_ext
 %xdefine _SSL_CTX_add_extra_chain_cert _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_add_extra_chain_cert
+%xdefine _SSL_CTX_add_server_custom_ext _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_add_server_custom_ext
 %xdefine _SSL_CTX_add_session _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_add_session
 %xdefine _SSL_CTX_check_private_key _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_check_private_key
 %xdefine _SSL_CTX_cipher_in_group _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_cipher_in_group
@@ -2184,6 +2189,7 @@
 %xdefine _SSL_enable_tls_channel_id _ %+ BORINGSSL_PREFIX %+ _SSL_enable_tls_channel_id
 %xdefine _SSL_error_description _ %+ BORINGSSL_PREFIX %+ _SSL_error_description
 %xdefine _SSL_export_keying_material _ %+ BORINGSSL_PREFIX %+ _SSL_export_keying_material
+%xdefine _SSL_extension_supported _ %+ BORINGSSL_PREFIX %+ _SSL_extension_supported
 %xdefine _SSL_free _ %+ BORINGSSL_PREFIX %+ _SSL_free
 %xdefine _SSL_from_bytes _ %+ BORINGSSL_PREFIX %+ _SSL_from_bytes
 %xdefine _SSL_generate_key_block _ %+ BORINGSSL_PREFIX %+ _SSL_generate_key_block
@@ -2202,6 +2208,7 @@
 %xdefine _SSL_get0_server_requested_CAs _ %+ BORINGSSL_PREFIX %+ _SSL_get0_server_requested_CAs
 %xdefine _SSL_get0_session_id_context _ %+ BORINGSSL_PREFIX %+ _SSL_get0_session_id_context
 %xdefine _SSL_get0_signed_cert_timestamp_list _ %+ BORINGSSL_PREFIX %+ _SSL_get0_signed_cert_timestamp_list
+%xdefine _SSL_get0_verified_chain _ %+ BORINGSSL_PREFIX %+ _SSL_get0_verified_chain
 %xdefine _SSL_get1_session _ %+ BORINGSSL_PREFIX %+ _SSL_get1_session
 %xdefine _SSL_get_SSL_CTX _ %+ BORINGSSL_PREFIX %+ _SSL_get_SSL_CTX
 %xdefine _SSL_get_certificate _ %+ BORINGSSL_PREFIX %+ _SSL_get_certificate
@@ -3754,6 +3761,7 @@
 %xdefine _rsa_default_size _ %+ BORINGSSL_PREFIX %+ _rsa_default_size
 %xdefine _rsa_digestsign_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_digestsign_no_self_test
 %xdefine _rsa_digestverify_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_digestverify_no_self_test
+%xdefine _rsa_invalidate_key _ %+ BORINGSSL_PREFIX %+ _rsa_invalidate_key
 %xdefine _rsa_pss_asn1_meth _ %+ BORINGSSL_PREFIX %+ _rsa_pss_asn1_meth
 %xdefine _rsa_sign_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_sign_no_self_test
 %xdefine _rsa_verify_no_self_test _ %+ BORINGSSL_PREFIX %+ _rsa_verify_no_self_test
@@ -3878,6 +3886,7 @@
 %xdefine _voprf_pst1_issuer_key_from_bytes _ %+ BORINGSSL_PREFIX %+ _voprf_pst1_issuer_key_from_bytes
 %xdefine _voprf_pst1_read _ %+ BORINGSSL_PREFIX %+ _voprf_pst1_read
 %xdefine _voprf_pst1_sign _ %+ BORINGSSL_PREFIX %+ _voprf_pst1_sign
+%xdefine _voprf_pst1_sign_with_proof_scalar_for_testing _ %+ BORINGSSL_PREFIX %+ _voprf_pst1_sign_with_proof_scalar_for_testing
 %xdefine _voprf_pst1_unblind _ %+ BORINGSSL_PREFIX %+ _voprf_pst1_unblind
 %xdefine _vpaes_cbc_encrypt _ %+ BORINGSSL_PREFIX %+ _vpaes_cbc_encrypt
 %xdefine _vpaes_ctr32_encrypt_blocks _ %+ BORINGSSL_PREFIX %+ _vpaes_ctr32_encrypt_blocks
@@ -4977,6 +4986,9 @@
 %xdefine EVP_HPKE_CTX_new BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_new
 %xdefine EVP_HPKE_CTX_open BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_open
 %xdefine EVP_HPKE_CTX_seal BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_seal
+%xdefine EVP_HPKE_CTX_setup_auth_recipient BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_auth_recipient
+%xdefine EVP_HPKE_CTX_setup_auth_sender BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_auth_sender
+%xdefine EVP_HPKE_CTX_setup_auth_sender_with_seed_for_testing BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_auth_sender_with_seed_for_testing
 %xdefine EVP_HPKE_CTX_setup_recipient BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_recipient
 %xdefine EVP_HPKE_CTX_setup_sender BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_sender
 %xdefine EVP_HPKE_CTX_setup_sender_with_seed_for_testing BORINGSSL_PREFIX %+ _EVP_HPKE_CTX_setup_sender_with_seed_for_testing
@@ -5838,7 +5850,9 @@
 %xdefine SSL_CTX_add1_chain_cert BORINGSSL_PREFIX %+ _SSL_CTX_add1_chain_cert
 %xdefine SSL_CTX_add_cert_compression_alg BORINGSSL_PREFIX %+ _SSL_CTX_add_cert_compression_alg
 %xdefine SSL_CTX_add_client_CA BORINGSSL_PREFIX %+ _SSL_CTX_add_client_CA
+%xdefine SSL_CTX_add_client_custom_ext BORINGSSL_PREFIX %+ _SSL_CTX_add_client_custom_ext
 %xdefine SSL_CTX_add_extra_chain_cert BORINGSSL_PREFIX %+ _SSL_CTX_add_extra_chain_cert
+%xdefine SSL_CTX_add_server_custom_ext BORINGSSL_PREFIX %+ _SSL_CTX_add_server_custom_ext
 %xdefine SSL_CTX_add_session BORINGSSL_PREFIX %+ _SSL_CTX_add_session
 %xdefine SSL_CTX_check_private_key BORINGSSL_PREFIX %+ _SSL_CTX_check_private_key
 %xdefine SSL_CTX_cipher_in_group BORINGSSL_PREFIX %+ _SSL_CTX_cipher_in_group
@@ -6083,6 +6097,7 @@
 %xdefine SSL_enable_tls_channel_id BORINGSSL_PREFIX %+ _SSL_enable_tls_channel_id
 %xdefine SSL_error_description BORINGSSL_PREFIX %+ _SSL_error_description
 %xdefine SSL_export_keying_material BORINGSSL_PREFIX %+ _SSL_export_keying_material
+%xdefine SSL_extension_supported BORINGSSL_PREFIX %+ _SSL_extension_supported
 %xdefine SSL_free BORINGSSL_PREFIX %+ _SSL_free
 %xdefine SSL_from_bytes BORINGSSL_PREFIX %+ _SSL_from_bytes
 %xdefine SSL_generate_key_block BORINGSSL_PREFIX %+ _SSL_generate_key_block
@@ -6101,6 +6116,7 @@
 %xdefine SSL_get0_server_requested_CAs BORINGSSL_PREFIX %+ _SSL_get0_server_requested_CAs
 %xdefine SSL_get0_session_id_context BORINGSSL_PREFIX %+ _SSL_get0_session_id_context
 %xdefine SSL_get0_signed_cert_timestamp_list BORINGSSL_PREFIX %+ _SSL_get0_signed_cert_timestamp_list
+%xdefine SSL_get0_verified_chain BORINGSSL_PREFIX %+ _SSL_get0_verified_chain
 %xdefine SSL_get1_session BORINGSSL_PREFIX %+ _SSL_get1_session
 %xdefine SSL_get_SSL_CTX BORINGSSL_PREFIX %+ _SSL_get_SSL_CTX
 %xdefine SSL_get_certificate BORINGSSL_PREFIX %+ _SSL_get_certificate
@@ -7653,6 +7669,7 @@
 %xdefine rsa_default_size BORINGSSL_PREFIX %+ _rsa_default_size
 %xdefine rsa_digestsign_no_self_test BORINGSSL_PREFIX %+ _rsa_digestsign_no_self_test
 %xdefine rsa_digestverify_no_self_test BORINGSSL_PREFIX %+ _rsa_digestverify_no_self_test
+%xdefine rsa_invalidate_key BORINGSSL_PREFIX %+ _rsa_invalidate_key
 %xdefine rsa_pss_asn1_meth BORINGSSL_PREFIX %+ _rsa_pss_asn1_meth
 %xdefine rsa_sign_no_self_test BORINGSSL_PREFIX %+ _rsa_sign_no_self_test
 %xdefine rsa_verify_no_self_test BORINGSSL_PREFIX %+ _rsa_verify_no_self_test
@@ -7777,6 +7794,7 @@
 %xdefine voprf_pst1_issuer_key_from_bytes BORINGSSL_PREFIX %+ _voprf_pst1_issuer_key_from_bytes
 %xdefine voprf_pst1_read BORINGSSL_PREFIX %+ _voprf_pst1_read
 %xdefine voprf_pst1_sign BORINGSSL_PREFIX %+ _voprf_pst1_sign
+%xdefine voprf_pst1_sign_with_proof_scalar_for_testing BORINGSSL_PREFIX %+ _voprf_pst1_sign_with_proof_scalar_for_testing
 %xdefine voprf_pst1_unblind BORINGSSL_PREFIX %+ _voprf_pst1_unblind
 %xdefine vpaes_cbc_encrypt BORINGSSL_PREFIX %+ _vpaes_cbc_encrypt
 %xdefine vpaes_ctr32_encrypt_blocks BORINGSSL_PREFIX %+ _vpaes_ctr32_encrypt_blocks
