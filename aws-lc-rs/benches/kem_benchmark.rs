@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::{test, test_file};
-// use aws_lc_rs_benchmarks::{encapsulate, decapsulate};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 #[allow(non_camel_case_types)]
@@ -22,26 +21,18 @@ impl From<&str> for Algorithm {
 
 pub struct KemConfig {
     algorithm: Algorithm,
-    public_key: Vec<u8>,
-    secret_key: Vec<u8>,
-    ciphertext: Vec<u8>,
-    shared_secret: Vec<u8>,
+    public_key: Box<[u8]>,
+    secret_key: Box<[u8]>,
+    ciphertext: Box<[u8]>,
 }
 
 impl KemConfig {
-    fn new(
-        algorithm: &str,
-        public_key: &[u8],
-        secret_key: &[u8],
-        ciphertext: &[u8],
-        shared_secret: &[u8],
-    ) -> Self {
+    fn new(algorithm: &str, public_key: &[u8], secret_key: &[u8], ciphertext: &[u8]) -> Self {
         KemConfig {
             algorithm: Algorithm::from(algorithm),
-            public_key: Vec::from(public_key),
-            secret_key: Vec::from(secret_key),
-            ciphertext: Vec::from(ciphertext),
-            shared_secret: Vec::from(shared_secret),
+            public_key: Vec::from(public_key).into(),
+            secret_key: Vec::from(secret_key).into(),
+            ciphertext: Vec::from(ciphertext).into(),
         }
     }
 }
@@ -51,7 +42,7 @@ macro_rules! benchmark_kem {
         paste::item! {
                 mod [<$pkg _benchmarks>]  {
 
-                    use $pkg::{kem, test};
+                    use $pkg::kem;
 
             use crate::{KemConfig, Algorithm};
             use kem::{KemPrivateKey, KemPublicKey, KemAlgorithm, KYBER512_R3};
@@ -68,6 +59,11 @@ macro_rules! benchmark_kem {
 
             pub fn new_public_key(config: &KemConfig) -> KemPublicKey {
                 KemPublicKey::new(algorithm(config), &config.public_key).unwrap()
+            }
+
+            pub fn keygen(config: &KemConfig) {
+                let private_key = KemPrivateKey::generate(algorithm(config)).unwrap();
+                let _public_key = private_key.compute_public_key().unwrap();
             }
 
             pub fn encapsulate(
@@ -93,20 +89,15 @@ macro_rules! benchmark_kem {
 }
 
 benchmark_kem!(aws_lc_rs);
-// #[cfg(feature = "ring-benchmarks")]
-// benchmark_agreement!(ring);
 
 fn test_kem_keygen(c: &mut Criterion, config: &KemConfig) {
     let bench_group_name = format!("KEM-keygen-{:?}", config.algorithm);
 
     let mut group = c.benchmark_group(bench_group_name);
 
-    // let aws_peer_public_key = aws_lc_rs_benchmarks::peer_public_key(config);
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
-            let private_key = aws_lc_rs_benchmarks::new_private_key(config);
-            let public_key = aws_lc_rs_benchmarks::new_public_key(config);
-            aws_lc_rs_benchmarks::encapsulate(&public_key);
+            aws_lc_rs_benchmarks::keygen(config);
         });
     });
 }
@@ -116,10 +107,8 @@ fn test_kem_encapsulate(c: &mut Criterion, config: &KemConfig) {
 
     let mut group = c.benchmark_group(bench_group_name);
 
-    // let aws_peer_public_key = aws_lc_rs_benchmarks::peer_public_key(config);
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
-            // let private_key = aws_lc_rs_benchmarks::new_private_key(config);
             let public_key = aws_lc_rs_benchmarks::new_public_key(config);
             aws_lc_rs_benchmarks::encapsulate(&public_key);
         });
@@ -134,7 +123,6 @@ fn test_kem_decapsulate(c: &mut Criterion, config: &KemConfig) {
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             let private_key = aws_lc_rs_benchmarks::new_private_key(config);
-            // let public_key = aws_lc_rs_benchmarks::new_public_key(config);
             aws_lc_rs_benchmarks::decapsulate(config, &private_key);
         });
     });
@@ -149,9 +137,8 @@ fn test_kem(c: &mut Criterion) {
                 test_case.consume_bytes("pk").as_slice(),
                 test_case.consume_bytes("sk").as_slice(),
                 test_case.consume_bytes("ct").as_slice(),
-                test_case.consume_bytes("ss").as_slice(),
             );
-            // test_kem_keygen(c, &config);
+            test_kem_keygen(c, &config);
             test_kem_encapsulate(c, &config);
             test_kem_decapsulate(c, &config);
             Ok(())
