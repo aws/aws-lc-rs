@@ -90,7 +90,7 @@ macro_rules! benchmark_kem {
 
 benchmark_kem!(aws_lc_rs);
 
-fn test_kem_keygen(c: &mut Criterion, config: &KemConfig) {
+fn bench_kem_keygen(c: &mut Criterion, config: &KemConfig) {
     let bench_group_name = format!("KEM-keygen-{:?}", config.algorithm);
 
     let mut group = c.benchmark_group(bench_group_name);
@@ -102,7 +102,7 @@ fn test_kem_keygen(c: &mut Criterion, config: &KemConfig) {
     });
 }
 
-fn test_kem_encapsulate(c: &mut Criterion, config: &KemConfig) {
+fn bench_kem_encapsulate(c: &mut Criterion, config: &KemConfig) {
     let bench_group_name = format!("KEM-encapsulate-{:?}", config.algorithm);
 
     let mut group = c.benchmark_group(bench_group_name);
@@ -115,7 +115,7 @@ fn test_kem_encapsulate(c: &mut Criterion, config: &KemConfig) {
     });
 }
 
-fn test_kem_decapsulate(c: &mut Criterion, config: &KemConfig) {
+fn bench_kem_decapsulate(c: &mut Criterion, config: &KemConfig) {
     let bench_group_name = format!("KEM-decapsulate-{:?}", config.algorithm);
 
     let mut group = c.benchmark_group(bench_group_name);
@@ -128,7 +128,7 @@ fn test_kem_decapsulate(c: &mut Criterion, config: &KemConfig) {
     });
 }
 
-fn test_kem(c: &mut Criterion) {
+fn bench_kem(c: &mut Criterion) {
     test::run(
         test_file!("data/kem_benchmarks.txt"),
         |_section, test_case| {
@@ -138,13 +138,13 @@ fn test_kem(c: &mut Criterion) {
                 test_case.consume_bytes("sk").as_slice(),
                 test_case.consume_bytes("ct").as_slice(),
             );
-            test_kem_keygen(c, &config);
-            test_kem_encapsulate(c, &config);
-            test_kem_decapsulate(c, &config);
+            bench_kem_keygen(c, &config);
+            bench_kem_encapsulate(c, &config);
+            bench_kem_decapsulate(c, &config);
             Ok(())
         },
     );
 }
 
-criterion_group!(benches, test_kem);
+criterion_group!(benches, bench_kem);
 criterion_main!(benches);
