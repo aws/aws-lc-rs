@@ -16,7 +16,7 @@ use aws_lc::{
     EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new,
     EC_KEY_new_by_curve_name, EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key,
     EC_POINT_new, EC_POINT_oct2point, EC_POINT_point2oct, NID_X9_62_prime256v1, NID_secp384r1,
-    NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT,
+    NID_secp521r1, NID_secp256k1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT,
 };
 #[cfg(feature = "fips")]
 use aws_lc::{EC_KEY_check_fips, EC_KEY_generate_key_fips};
@@ -95,6 +95,7 @@ pub(crate) enum AlgorithmID {
     ECDSA_P256,
     ECDSA_P384,
     ECDSA_P521,
+    ECDSA_P256K1,
 }
 
 impl AlgorithmID {
@@ -104,6 +105,7 @@ impl AlgorithmID {
             AlgorithmID::ECDSA_P256 => NID_X9_62_prime256v1,
             AlgorithmID::ECDSA_P384 => NID_secp384r1,
             AlgorithmID::ECDSA_P521 => NID_secp521r1,
+            AlgorithmID::ECDSA_P256K1 => NID_secp256k1
         }
     }
 }
@@ -411,6 +413,7 @@ const fn ecdsa_fixed_number_byte_size(alg_id: &'static AlgorithmID) -> usize {
         AlgorithmID::ECDSA_P256 => 32,
         AlgorithmID::ECDSA_P384 => 48,
         AlgorithmID::ECDSA_P521 => 66,
+        AlgorithmID::ECDSA_P256K1 => 32,
     }
 }
 
