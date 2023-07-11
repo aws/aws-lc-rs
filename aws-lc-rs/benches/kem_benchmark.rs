@@ -91,7 +91,7 @@ macro_rules! benchmark_kem {
 benchmark_kem!(aws_lc_rs);
 
 fn bench_kem_keygen(c: &mut Criterion, config: &KemConfig) {
-    let bench_group_name = format!("KEM-keygen-{:?}", config.algorithm);
+    let bench_group_name = format!("KEM-{:?}-keygen", config.algorithm);
 
     let mut group = c.benchmark_group(bench_group_name);
 
@@ -103,7 +103,7 @@ fn bench_kem_keygen(c: &mut Criterion, config: &KemConfig) {
 }
 
 fn bench_kem_encapsulate(c: &mut Criterion, config: &KemConfig) {
-    let bench_group_name = format!("KEM-encapsulate-{:?}", config.algorithm);
+    let bench_group_name = format!("KEM-{:?}-encapsulate", config.algorithm);
 
     let mut group = c.benchmark_group(bench_group_name);
 
@@ -116,7 +116,7 @@ fn bench_kem_encapsulate(c: &mut Criterion, config: &KemConfig) {
 }
 
 fn bench_kem_decapsulate(c: &mut Criterion, config: &KemConfig) {
-    let bench_group_name = format!("KEM-decapsulate-{:?}", config.algorithm);
+    let bench_group_name = format!("KEM-{:?}-decapsulate", config.algorithm);
 
     let mut group = c.benchmark_group(bench_group_name);
 
