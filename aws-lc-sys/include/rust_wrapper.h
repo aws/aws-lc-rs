@@ -6,6 +6,10 @@
 #ifndef OPENSSL_HEADER_RUST_WRAPPER_H
 #define OPENSSL_HEADER_RUST_WRAPPER_H
 
+#ifdef _WIN32
+#define BORINGSSL_SHARED_LIBRARY
+#endif
+
 #include <openssl/err.h>
 
 #if defined(__cplusplus)

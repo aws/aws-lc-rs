@@ -31,28 +31,6 @@
 //!
 //! See our [User Guide](https://awslabs.github.io/aws-lc-rs/) for guidance on installing these requirements.
 //!
-//! ## Contributor Quickstart for Amazon Linux 2023
-//!
-//! For those who would like to contribute to our project or build it directly from our repository,
-//! a few more packages may be needed. The listing below shows the steps needed for you to begin
-//! building and testing our project locally.
-//! ```shell
-//! # Install dependencies needed for build and testing
-//! sudo yum install -y cmake3 clang git clang-libs golang openssl-devel
-//!
-//! # Install Rust
-//! curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-//! source "$HOME/.cargo/env"
-//!
-//! # Clone and initialize a local repository
-//! git clone https://github.com/awslabs/aws-lc-rs.git
-//! cd aws-lc-rs
-//! git submodule update --init --recursive
-//!
-//! # Build and test the project
-//! cargo test
-//!
-//! ```
 //!
 //! # Feature Flags
 //!
@@ -151,6 +129,8 @@ pub mod iv;
 pub mod kem;
 mod ptr;
 mod rsa;
+
+pub(crate) use debug::derive_debug_via_id;
 
 use aws_lc::{
     CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, ERR_GET_FUNC, ERR_GET_LIB,

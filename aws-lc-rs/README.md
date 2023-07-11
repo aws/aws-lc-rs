@@ -31,28 +31,6 @@ Consuming projects will need a C Compiler (Clang or GCC) and Cmake to build.
 
 See our [User Guide](https://awslabs.github.io/aws-lc-rs/) for guidance on installing these requirements.
 
-### Contributor Quickstart for Amazon Linux 2023
-
-For those who would like to contribute to our project or build it directly from our repository,
-a few more packages may be needed. The listing below shows the steps needed for you to begin
-building and testing our project locally.
-```shell
-# Install dependencies needed for build and testing
-sudo yum install -y cmake3 clang git clang-libs golang openssl-devel
-
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source "$HOME/.cargo/env"
-
-# Clone and initialize a local repository
-git clone https://github.com/awslabs/aws-lc-rs.git
-cd aws-lc-rs
-git submodule update --init --recursive
-
-# Build and test the project
-cargo test
-
-```
 
 ## Feature Flags
 
@@ -83,7 +61,7 @@ of the [Rust Unstable Book](https://doc.rust-lang.org/beta/unstable-book/).
 
 ##### - bindgen ####
 Causes `aws-lc-sys` or `aws-lc-fips-sys` to generates fresh bindings for AWS-LC instead of using
-the pre-generated bindings. This feature require `libclang` to be installed. See the
+the pre-generated bindings. This feature requires `libclang` to be installed. See the
 [requirements](https://rust-lang.github.io/rust-bindgen/requirements.html)
 for [rust-bindgen](https://github.com/rust-lang/rust-bindgen)
 
@@ -112,6 +90,29 @@ for ring that provides FIPS support and is compatible with the ring API. Rust de
 prescribed cryptographic requirements can seamlessly integrate aws-lc-rs into their applications
 and deploy them into AWS Regions.
 
+
+### Contributor Quickstart for Amazon Linux 2023
+
+For those who would like to contribute to our project or build it directly from our repository,
+a few more packages may be needed. The listing below shows the steps needed for you to begin
+building and testing our project locally.
+```shell
+# Install dependencies needed for build and testing
+sudo yum install -y cmake3 clang git clang-libs golang openssl-devel
+
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source "$HOME/.cargo/env"
+
+# Clone and initialize a local repository
+git clone https://github.com/awslabs/aws-lc-rs.git
+cd aws-lc-rs
+git submodule update --init --recursive
+
+# Build and test the project
+cargo test
+
+```
 
 ## Questions, Feedback and Contributing
 

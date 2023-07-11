@@ -36,6 +36,9 @@ endif
 	cargo test --no-default-features --features aws-lc-sys,ring-io
 	cargo test --no-default-features --features aws-lc-sys,alloc
 
-ci: format clippy test coverage api-diff-pub
+msrv:
+	cargo msrv verify
 
-.PHONY: asan asan-fips asan-release ci clippy coverage test
+ci: format clippy msrv test coverage api-diff-pub
+
+.PHONY: asan asan-fips asan-release ci clippy coverage test msrv
