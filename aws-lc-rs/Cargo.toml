@@ -98,3 +98,7 @@ harness = false
 [[bench]]
 name = "cipher_benchmark"
 harness = false
+
+[[bench]]
+name = "kem_benchmark"
+harness = false
