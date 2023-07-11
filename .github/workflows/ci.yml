@@ -450,6 +450,53 @@ jobs:
         run: |
           ./scripts/tools/copyright_check.sh
 
+  build-env-test:
+    name: aws-lc-rs build-env-test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest ]
+        static: [ 0, 1 ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: stable
+          override: true
+      - name: Run cargo test
+        working-directory: ./aws-lc-rs
+        # Doc-tests fail to link with dynamic build
+        # See: https://github.com/rust-lang/cargo/issues/8531
+        run: AWS_LC_SYS_STATIC=${{ matrix.static }}  cargo test --tests
+
+  build-env-fips-test:
+    name: aws-lc-rs build-env-fips-test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest ]
+        static: [ 0, 1 ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: stable
+          override: true
+      - name: Run cargo test
+        working-directory: ./aws-lc-rs
+        if: ${{ matrix.os != 'macOS-latest' || matrix.static != 1 }}
+        # Doc-tests fail to link with dynamic build
+        # See: https://github.com/rust-lang/cargo/issues/8531
+        run: AWS_LC_FIPS_SYS_STATIC=${{ matrix.static }} cargo test --tests --features fips
+
   msrv:
     name: Minimum Supported Rust Version
     runs-on: ubuntu-latest
