@@ -433,3 +433,22 @@ jobs:
       - name: Check
         run: |
           ./scripts/tools/copyright_check.sh
+
+  msrv:
+    name: Minimum Supported Rust Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          lfs: true
+
+      - name: Install cargo-msrv
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install
+          args: cargo-msrv
+
+      - name: Verify msrv
+        working-directory: ./aws-lc-rs
+        run: cargo msrv verify
