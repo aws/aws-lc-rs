@@ -198,6 +198,11 @@ jobs:
         if: ${{ matrix.target != 'native' }}
         run: cross test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
 
+      - name: Run extra tests
+        working-directory: ./aws-lc-rs-testing
+        if: ${{ matrix.target == 'native' }}
+        run: cargo test --all-targets
+
   fips-test:
     name: aws-lc-rs fips-tests
     runs-on: ${{ matrix.os }}
@@ -312,7 +317,7 @@ jobs:
       # coverage immediately.
       - name: Run coverage
         working-directory: ./aws-lc-rs
-        run: cargo llvm-cov --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-sys/*"
+        run: cargo llvm-cov --workspace --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-(fips-)?sys/.*"
 
   mirai-analysis:
     runs-on: ubuntu-latest

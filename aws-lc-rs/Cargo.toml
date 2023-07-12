@@ -27,8 +27,6 @@ alloc = []
 default = ["aws-lc-sys", "alloc", "ring-io", "ring-sig-verify"]
 ring-io = ["dep:untrusted"]
 ring-sig-verify = ["dep:untrusted"]
-ring-benchmarks = []
-openssl-benchmarks = []
 bindgen = ["aws-lc-sys?/bindgen", "aws-lc-fips-sys?/bindgen"]
 asan = ["aws-lc-sys?/asan", "aws-lc-fips-sys?/asan"]
 
@@ -47,54 +45,7 @@ mirai-annotations = "1.12.0"
 
 [dev-dependencies]
 paste = "1.0"
-criterion = { version = "0.5.0", features = ["csv_output"] }
-ring = "0.16"
 regex = "1.6.0"
 lazy_static = "1.4.0"
 clap = { version = "4.1.8", features = ["derive"] }
-openssl = { version = "0.10.52", features = ["vendored"] }
 hex = "0.4.3"
-
-[[bench]]
-name = "aead_benchmark"
-harness = false
-
-[[bench]]
-name = "digest_benchmark"
-harness = false
-
-[[bench]]
-name = "hkdf_benchmark"
-harness = false
-
-[[bench]]
-name = "hmac_benchmark"
-harness = false
-
-[[bench]]
-name = "pbkdf2_benchmark"
-harness = false
-
-[[bench]]
-name = "quic_benchmark"
-harness = false
-
-[[bench]]
-name = "rsa_benchmark"
-harness = false
-
-[[bench]]
-name = "ecdsa_benchmark"
-harness = false
-
-[[bench]]
-name = "ed25519_benchmark"
-harness = false
-
-[[bench]]
-name = "agreement_benchmark"
-harness = false
-
-[[bench]]
-name = "cipher_benchmark"
-harness = false

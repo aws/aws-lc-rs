@@ -1,0 +1,67 @@
+[package]
+name = "aws-lc-rs-testing"
+authors = ["AWS-LibCrypto"]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.60"
+publish = false
+
+[features]
+ring-benchmarks = []
+openssl-benchmarks = []
+bindgen = ["aws-lc-rs/bindgen"]
+fips = ["aws-lc-rs/fips"]
+
+[dependencies]
+aws-lc-rs = { version = "1.0", path = "../aws-lc-rs" }
+
+[dev-dependencies]
+paste = "1.0.13"
+criterion = { version = "0.5.0", features = ["csv_output"] }
+ring = "0.16"
+lazy_static = "1.4.0"
+openssl = { version = "0.10.52", features = ["vendored"] }
+
+[[bench]]
+name = "aead_benchmark"
+harness = false
+
+[[bench]]
+name = "digest_benchmark"
+harness = false
+
+[[bench]]
+name = "hkdf_benchmark"
+harness = false
+
+[[bench]]
+name = "hmac_benchmark"
+harness = false
+
+[[bench]]
+name = "pbkdf2_benchmark"
+harness = false
+
+[[bench]]
+name = "quic_benchmark"
+harness = false
+
+[[bench]]
+name = "rsa_benchmark"
+harness = false
+
+[[bench]]
+name = "ecdsa_benchmark"
+harness = false
+
+[[bench]]
+name = "ed25519_benchmark"
+harness = false
+
+[[bench]]
+name = "agreement_benchmark"
+harness = false
+
+[[bench]]
+name = "cipher_benchmark"
+harness = false
