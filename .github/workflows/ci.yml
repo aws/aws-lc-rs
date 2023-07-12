@@ -246,7 +246,7 @@ jobs:
         os: [ ubuntu-latest, macOS-latest ]
         args:
           - --no-default-features --features aws-lc-sys,bindgen
-          - --release --all-targets --features ring-benchmarks,bindgen
+          - --release --all-targets --features bindgen
     steps:
       - uses: actions/checkout@v3
         with:
@@ -271,7 +271,7 @@ jobs:
         args:
           - --all-targets
           - --all-targets --features bindgen
-          - --release --all-targets --features ring-benchmarks
+          - --release --all-targets
           - --no-default-features --features non-fips
           - --no-default-features --features non-fips,ring-io
           - --no-default-features --features non-fips,ring-sig-verify
