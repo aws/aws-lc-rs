@@ -202,7 +202,7 @@ fn verify_asn1_signature(
     let pkey = evp_pkey_from_public_key(alg, public_key)?;
 
     let pkey_ctx =
-        LcPtr::new(unsafe { EVP_PKEY_CTX_new(*pkey, null_mut()) }).map_err(|_| Unspecified)?;
+        LcPtr::new(unsafe { EVP_PKEY_CTX_new(*pkey, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_verify_init(*pkey_ctx) } {
         return Err(Unspecified);
@@ -236,7 +236,7 @@ fn evp_pkey_from_public_key(
     let ec_point = unsafe { ec_point_from_bytes(&ec_group, public_key)? };
     let ec_key = unsafe { ec_key_from_public_point(&ec_group, &ec_point)? };
 
-    let pkey = LcPtr::new(unsafe { EVP_PKEY_new() }).map_err(|_| Unspecified)?;
+    let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
 
     if 1 != unsafe { EVP_PKEY_assign_EC_KEY(*pkey, *ec_key) } {
         return Err(Unspecified);

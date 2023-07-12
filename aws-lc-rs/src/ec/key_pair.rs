@@ -82,7 +82,7 @@ impl EcdsaKeyPair {
     ) -> Result<Self, ()> {
         let pubkey = ec::marshal_public_key(&ec_key.as_const())?;
 
-        let evp_pkey = LcPtr::new(unsafe { EVP_PKEY_new() }).map_err(|_| Unspecified)?;
+        let evp_pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
         if 1 != unsafe { EVP_PKEY_set1_EC_KEY(*evp_pkey, *ec_key) } {
             return Err(());
         }
@@ -188,8 +188,7 @@ impl EcdsaKeyPair {
     ///
     #[inline]
     pub fn sign(&self, _rng: &dyn SecureRandom, message: &[u8]) -> Result<Signature, Unspecified> {
-        let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) })
-            .map_err(|_| Unspecified)?;
+        let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) })?;
 
         if 1 != unsafe { EVP_PKEY_sign_init(*pkey_ctx) } {
             return Err(Unspecified);
