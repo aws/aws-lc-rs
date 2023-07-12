@@ -187,7 +187,7 @@ fn verify_fixed_signature(
     } {
         return Err(Unspecified);
     }
-    let out_bytes = unsafe { out_bytes.assume_init() };
+    let out_bytes = LcPtr::new(unsafe { out_bytes.assume_init() })?;
     let signature = LcVec::new(&out_bytes, unsafe { out_bytes_len.assume_init() })?;
     verify_asn1_signature(alg, digest, public_key, msg, signature.as_slice())
 }

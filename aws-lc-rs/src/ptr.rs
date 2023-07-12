@@ -206,20 +206,11 @@ pub(crate) struct LcVec<'a, T: 'a> {
     phantom: PhantomData<&'a mut T>,
 }
 
-impl<'a, T: 'a> Drop for LcVec<'a, T> {
-    fn drop(&mut self) {
-        unsafe { OPENSSL_free(self.pointer.cast()) }
-    }
-}
-
 macro_rules! impl_lc_vec {
     ($T:ty) => {
         impl<'a> LcVec<'a, $T> {
-            pub fn new(pointer: &'a *mut $T, len: usize) -> Result<Self, ()> {
-                if pointer.is_null() {
-                    return Err(());
-                }
-                let pointer = *pointer;
+            pub fn new(pointer: &'a LcPtr<*mut $T>, len: usize) -> Result<Self, ()> {
+                let pointer = **pointer;
                 Ok(Self {
                     pointer,
                     len,
