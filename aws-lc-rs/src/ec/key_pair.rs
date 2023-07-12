@@ -217,7 +217,7 @@ fn get_signature_length(ctx: &mut DigestContext) -> Result<usize, Unspecified> {
     let mut out_sig_len = MaybeUninit::<usize>::uninit();
 
     // determine signature size
-    let result = unsafe {
+    if 1 != unsafe {
         EVP_DigestSign(
             ctx.as_mut_ptr(),
             null_mut(),
@@ -225,8 +225,7 @@ fn get_signature_length(ctx: &mut DigestContext) -> Result<usize, Unspecified> {
             null(),
             0,
         )
-    };
-    if 1 != result {
+    } {
         return Err(Unspecified);
     }
 
@@ -239,22 +238,19 @@ fn compute_ecdsa_signature<'a>(
     message: &[u8],
     signature: &'a mut [u8],
 ) -> Result<&'a mut [u8], Unspecified> {
-    let mut out_sig_len = MaybeUninit::<usize>::new(signature.len());
+    let mut out_sig_len = signature.len();
 
-    let result = unsafe {
+    if 1 != unsafe {
         EVP_DigestSign(
             ctx.as_mut_ptr(),
             signature.as_mut_ptr(),
-            out_sig_len.as_mut_ptr(),
+            &mut out_sig_len,
             message.as_ptr(),
             message.len(),
         )
-    };
-    if 1 != result {
+    } {
         return Err(Unspecified);
     }
-
-    let out_sig_len = unsafe { out_sig_len.assume_init() };
 
     Ok(&mut signature[0..out_sig_len])
 }

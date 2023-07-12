@@ -4,11 +4,10 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::digest::digest_ctx::DigestContext;
-use crate::digest::Algorithm;
 use crate::error::{KeyRejected, Unspecified};
 use core::fmt;
 
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, LcVec};
 
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
@@ -188,9 +187,9 @@ fn verify_fixed_signature(
     } {
         return Err(Unspecified);
     }
-    let out_bytes = LcPtr::new(unsafe { out_bytes.assume_init() }).map_err(|_| Unspecified)?;
-    let signature = make_slice_from_lc_ptr(&out_bytes, unsafe { out_bytes_len.assume_init() });
-    verify_asn1_signature(alg, digest, public_key, msg, signature)
+    let out_bytes = unsafe { out_bytes.assume_init() };
+    let signature = LcVec::new(&out_bytes, unsafe { out_bytes_len.assume_init() })?;
+    verify_asn1_signature(alg, digest, public_key, msg, signature.as_slice())
 }
 
 fn verify_asn1_signature(
@@ -226,10 +225,6 @@ fn verify_asn1_signature(
     }
 
     Ok(())
-}
-
-fn make_slice_from_lc_ptr<'a>(ptr: &'a LcPtr<*mut u8>, len: usize) -> &'a [u8] {
-    unsafe { std::slice::from_raw_parts::<'a>(ptr.as_const_ptr(), len) }
 }
 
 #[inline]

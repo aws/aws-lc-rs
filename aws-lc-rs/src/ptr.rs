@@ -199,6 +199,48 @@ create_pointer!(EVP_PKEY, EVP_PKEY_free);
 create_pointer!(EVP_PKEY_CTX, EVP_PKEY_CTX_free);
 create_pointer!(RSA, RSA_free);
 
+#[derive(Debug)]
+pub(crate) struct LcVec<'a, T: 'a> {
+    pointer: *mut T,
+    len: usize,
+    phantom: PhantomData<&'a mut T>,
+}
+
+impl<'a, T: 'a> Drop for LcVec<'a, T> {
+    fn drop(&mut self) {
+        unsafe { OPENSSL_free(self.pointer.cast()) }
+    }
+}
+
+macro_rules! impl_lc_vec {
+    ($T:ty) => {
+        impl<'a> LcVec<'a, $T> {
+            pub fn new(pointer: &'a *mut $T, len: usize) -> Result<Self, ()> {
+                if pointer.is_null() {
+                    return Err(());
+                }
+                let pointer = *pointer;
+                Ok(Self {
+                    pointer,
+                    len,
+                    phantom: PhantomData,
+                })
+            }
+
+            pub fn as_slice(&self) -> &'a [$T] {
+                unsafe { std::slice::from_raw_parts(self.pointer.cast(), self.len) }
+            }
+
+            #[allow(dead_code)]
+            pub fn as_mut_slice(&self) -> &'a mut [$T] {
+                unsafe { std::slice::from_raw_parts_mut(self.pointer, self.len) }
+            }
+        }
+    };
+}
+
+impl_lc_vec!(u8);
+
 #[cfg(test)]
 mod tests {
     use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
