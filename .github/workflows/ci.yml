@@ -158,7 +158,7 @@ jobs:
         target: [ native, aarch64-unknown-linux-gnu, i686-unknown-linux-gnu ]
         args:
           - --all-targets
-          - --release --all-targets --features ring-benchmarks
+          - --release --all-targets
           - --no-default-features --features non-fips
           - --no-default-features --features non-fips,ring-io
           - --no-default-features --features non-fips,ring-sig-verify

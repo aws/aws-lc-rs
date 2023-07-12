@@ -376,7 +376,7 @@ mod tests {
         // Something would have gone horribly wrong for this to not pass, but we test this so our
         // coverage reports will look better.
         assert_ne!(HKDF_SHA256, HKDF_SHA384);
-        assert_eq!("Algorithm(Algorithm(SHA256))", format!("{:?}", HKDF_SHA256));
+        assert_eq!("Algorithm(Algorithm(SHA256))", format!("{HKDF_SHA256:?}"));
     }
 
     #[test]
