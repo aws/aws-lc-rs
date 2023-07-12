@@ -201,8 +201,7 @@ fn verify_asn1_signature(
 ) -> Result<(), Unspecified> {
     let pkey = evp_pkey_from_public_key(alg, public_key)?;
 
-    let pkey_ctx =
-        LcPtr::new(unsafe { EVP_PKEY_CTX_new(*pkey, null_mut()) })?;
+    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*pkey, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_verify_init(*pkey_ctx) } {
         return Err(Unspecified);
