@@ -3,10 +3,12 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::digest::digest_ctx::DigestContext;
+use crate::digest::Algorithm;
 use crate::error::{KeyRejected, Unspecified};
 use core::fmt;
 
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
 
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
@@ -156,50 +158,78 @@ impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), Unspecified> {
-        unsafe {
-            let pkey = evp_pkey_from_public_key(self.id, public_key)?;
-
-            let pkey_ctx =
-                LcPtr::new(EVP_PKEY_CTX_new(*pkey, null_mut())).map_err(|_| Unspecified)?;
-
-            if 1 != EVP_PKEY_verify_init(*pkey_ctx) {
-                return Err(Unspecified);
-            };
-
-            let ecdsa_sig = match self.sig_format {
-                EcdsaSignatureFormat::ASN1 => signature,
-                EcdsaSignatureFormat::Fixed => {
-                    let sig = ecdsa_sig_from_fixed(self.id, signature)?;
-                    let mut out_bytes = MaybeUninit::<*mut u8>::uninit();
-                    let mut out_bytes_len = MaybeUninit::<usize>::uninit();
-                    if 1 != ECDSA_SIG_to_bytes(
-                        out_bytes.as_mut_ptr(),
-                        out_bytes_len.as_mut_ptr(),
-                        *sig.as_const(),
-                    ) {
-                        return Err(Unspecified);
-                    }
-                    std::slice::from_raw_parts(out_bytes.assume_init(), out_bytes_len.assume_init())
-                }
-            };
-
-            let mut dctx = digest::digest_ctx::DigestContext::new(self.digest)?;
-
-            EVP_MD_CTX_set_pkey_ctx(dctx.as_mut_ptr(), *pkey_ctx);
-
-            if 1 != EVP_DigestVerify(
-                dctx.as_mut_ptr(),
-                ecdsa_sig.as_ptr(),
-                ecdsa_sig.len(),
-                msg.as_ptr(),
-                msg.len(),
-            ) {
-                return Err(Unspecified);
+        match self.sig_format {
+            EcdsaSignatureFormat::ASN1 => {
+                verify_asn1_signature(self.id, self.digest, public_key, msg, signature)
             }
-
-            Ok(())
+            EcdsaSignatureFormat::Fixed => {
+                verify_fixed_signature(self.id, self.digest, public_key, msg, signature)
+            }
         }
     }
+}
+
+fn verify_fixed_signature(
+    alg: &'static AlgorithmID,
+    digest: &'static digest::Algorithm,
+    public_key: &[u8],
+    msg: &[u8],
+    signature: &[u8],
+) -> Result<(), Unspecified> {
+    let mut out_bytes = MaybeUninit::<*mut u8>::uninit();
+    let mut out_bytes_len = MaybeUninit::<usize>::uninit();
+    let sig = unsafe { ecdsa_sig_from_fixed(alg, signature)? };
+    if 1 != unsafe {
+        ECDSA_SIG_to_bytes(
+            out_bytes.as_mut_ptr(),
+            out_bytes_len.as_mut_ptr(),
+            *sig.as_const(),
+        )
+    } {
+        return Err(Unspecified);
+    }
+    let out_bytes = LcPtr::new(unsafe { out_bytes.assume_init() }).map_err(|_| Unspecified)?;
+    let signature = make_slice_from_lc_ptr(&out_bytes, unsafe { out_bytes_len.assume_init() });
+    verify_asn1_signature(alg, digest, public_key, msg, signature)
+}
+
+fn verify_asn1_signature(
+    alg: &'static AlgorithmID,
+    digest: &'static digest::Algorithm,
+    public_key: &[u8],
+    msg: &[u8],
+    signature: &[u8],
+) -> Result<(), Unspecified> {
+    let pkey = evp_pkey_from_public_key(alg, public_key)?;
+
+    let pkey_ctx =
+        LcPtr::new(unsafe { EVP_PKEY_CTX_new(*pkey, null_mut()) }).map_err(|_| Unspecified)?;
+
+    if 1 != unsafe { EVP_PKEY_verify_init(*pkey_ctx) } {
+        return Err(Unspecified);
+    };
+
+    let mut dctx = DigestContext::new(digest)?;
+
+    unsafe { EVP_MD_CTX_set_pkey_ctx(dctx.as_mut_ptr(), *pkey_ctx) };
+
+    if 1 != unsafe {
+        EVP_DigestVerify(
+            dctx.as_mut_ptr(),
+            signature.as_ptr(),
+            signature.len(),
+            msg.as_ptr(),
+            msg.len(),
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    Ok(())
+}
+
+fn make_slice_from_lc_ptr<'a>(ptr: &'a LcPtr<*mut u8>, len: usize) -> &'a [u8] {
+    unsafe { std::slice::from_raw_parts::<'a>(ptr.as_const_ptr(), len) }
 }
 
 #[inline]

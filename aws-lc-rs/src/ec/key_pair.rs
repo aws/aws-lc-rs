@@ -200,7 +200,7 @@ impl EcdsaKeyPair {
 
         let mut out_sig = vec![0u8; get_signature_length(&mut context)?];
 
-        let out_sig = compute_ecdsa_signature(&mut context, message, &mut out_sig)?;
+        let out_sig = compute_ecdsa_signature(&mut context, message, out_sig.as_mut_slice())?;
 
         Ok(match self.algorithm.sig_format {
             EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
@@ -239,7 +239,7 @@ fn compute_ecdsa_signature<'a>(
     message: &[u8],
     signature: &'a mut [u8],
 ) -> Result<&'a mut [u8], Unspecified> {
-    let mut out_sig_len = MaybeUninit::<usize>::uninit();
+    let mut out_sig_len = MaybeUninit::<usize>::new(signature.len());
 
     let result = unsafe {
         EVP_DigestSign(
