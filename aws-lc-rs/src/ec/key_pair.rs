@@ -3,6 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::{Document, Version};
@@ -15,9 +16,13 @@ use aws_lc::EC_KEY_generate_key;
 #[cfg(feature = "fips")]
 use aws_lc::EC_KEY_generate_key_fips;
 use aws_lc::{
-    ECDSA_do_sign, EC_KEY_new_by_curve_name, EVP_PKEY_assign_EC_KEY, EVP_PKEY_new, EC_KEY, EVP_PKEY,
+    EC_KEY_new_by_curve_name, EVP_DigestSign, EVP_MD_CTX_set_pkey_ctx, EVP_PKEY_CTX_new,
+    EVP_PKEY_assign_EC_KEY, EVP_PKEY_new, EVP_PKEY_set1_EC_KEY, EVP_PKEY_sign_init, EC_KEY,
+    EVP_PKEY,
 };
 use std::fmt;
+use std::mem::MaybeUninit;
+use std::ptr::{null, null_mut};
 
 use std::fmt::{Debug, Formatter};
 
@@ -25,7 +30,7 @@ use std::fmt::{Debug, Formatter};
 #[allow(clippy::module_name_repetitions)]
 pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
-    ec_key: LcPtr<*mut EC_KEY>,
+    evp_pkey: LcPtr<*mut EVP_PKEY>,
     pubkey: PublicKey,
 }
 
@@ -77,9 +82,19 @@ impl EcdsaKeyPair {
     ) -> Result<Self, ()> {
         let pubkey = ec::marshal_public_key(&ec_key.as_const())?;
 
+        let evp_pkey = LcPtr::new(unsafe { EVP_PKEY_new() }).map_err(|_| Unspecified)?;
+        if 1 != unsafe { EVP_PKEY_set1_EC_KEY(*evp_pkey, *ec_key) } {
+            return Err(());
+        }
+
+        // Remove this reference since we took ownership by value, EVP_PKEY already incremented a reference to it
+        // so this is safe, and would happen regardless.
+        // Doing this in lieu of passing by reference or allowing the lint bypass.
+        drop(ec_key);
+
         Ok(Self {
             algorithm,
-            ec_key,
+            evp_pkey,
             pubkey,
         })
     }
@@ -173,16 +188,73 @@ impl EcdsaKeyPair {
     ///
     #[inline]
     pub fn sign(&self, _rng: &dyn SecureRandom, message: &[u8]) -> Result<Signature, Unspecified> {
-        unsafe {
-            let digest = digest::digest(self.algorithm.digest, message);
-            let digest = digest.as_ref();
-            let ecdsa_sig = LcPtr::new(ECDSA_do_sign(digest.as_ptr(), digest.len(), *self.ec_key))?;
-            match self.algorithm.sig_format {
-                EcdsaSignatureFormat::ASN1 => ec::ecdsa_sig_to_asn1(&ecdsa_sig),
-                EcdsaSignatureFormat::Fixed => {
-                    ec::ecdsa_sig_to_fixed(self.algorithm.id, &ecdsa_sig)
-                }
-            }
-        }
+        let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) })
+            .map_err(|_| Unspecified)?;
+
+        if 1 != unsafe { EVP_PKEY_sign_init(*pkey_ctx) } {
+            return Err(Unspecified);
+        };
+
+        let mut context = digest::digest_ctx::DigestContext::new(self.algorithm.digest)?;
+        unsafe { EVP_MD_CTX_set_pkey_ctx(context.as_mut_ptr(), *pkey_ctx) };
+
+        let mut out_sig = vec![0u8; get_signature_length(&mut context)?];
+
+        let out_sig = compute_ecdsa_signature(&mut context, message, &mut out_sig)?;
+
+        Ok(match self.algorithm.sig_format {
+            EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
+                slice[..out_sig.len()].copy_from_slice(out_sig);
+                out_sig.len()
+            }),
+            EcdsaSignatureFormat::Fixed => ec::ecdsa_asn1_to_fixed(self.algorithm.id, out_sig)?,
+        })
     }
+}
+
+#[inline]
+fn get_signature_length(ctx: &mut DigestContext) -> Result<usize, Unspecified> {
+    let mut out_sig_len = MaybeUninit::<usize>::uninit();
+
+    // determine signature size
+    let result = unsafe {
+        EVP_DigestSign(
+            ctx.as_mut_ptr(),
+            null_mut(),
+            out_sig_len.as_mut_ptr(),
+            null(),
+            0,
+        )
+    };
+    if 1 != result {
+        return Err(Unspecified);
+    }
+
+    Ok(unsafe { out_sig_len.assume_init() })
+}
+
+#[inline]
+fn compute_ecdsa_signature<'a>(
+    ctx: &mut DigestContext,
+    message: &[u8],
+    signature: &'a mut [u8],
+) -> Result<&'a mut [u8], Unspecified> {
+    let mut out_sig_len = MaybeUninit::<usize>::uninit();
+
+    let result = unsafe {
+        EVP_DigestSign(
+            ctx.as_mut_ptr(),
+            signature.as_mut_ptr(),
+            out_sig_len.as_mut_ptr(),
+            message.as_ptr(),
+            message.len(),
+        )
+    };
+    if 1 != result {
+        return Err(Unspecified);
+    }
+
+    let out_sig_len = unsafe { out_sig_len.assume_init() };
+
+    Ok(&mut signature[0..out_sig_len])
 }

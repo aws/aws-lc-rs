@@ -3,7 +3,7 @@
 
 use std::ops::Deref;
 
-use aws_lc::OPENSSL_free;
+use aws_lc::{OPENSSL_free, EVP_PKEY_CTX};
 
 use mirai_annotations::verify_unreachable;
 
@@ -196,6 +196,7 @@ create_pointer!(EC_KEY, EC_KEY_free);
 create_pointer!(ECDSA_SIG, ECDSA_SIG_free);
 create_pointer!(BIGNUM, BN_free);
 create_pointer!(EVP_PKEY, EVP_PKEY_free);
+create_pointer!(EVP_PKEY_CTX, EVP_PKEY_free);
 create_pointer!(RSA, RSA_free);
 
 #[cfg(test)]
