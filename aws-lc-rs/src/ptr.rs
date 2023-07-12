@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::{marker::PhantomData, ops::Deref};
+use std::ops::Deref;
 
 use aws_lc::{EVP_PKEY_CTX_free, OPENSSL_free, EVP_PKEY_CTX};
 
@@ -28,6 +28,10 @@ impl<P: Pointer> LcPtr<P> {
         } else {
             Err(())
         }
+    }
+
+    pub unsafe fn as_slice<T>(&self, len: usize) -> &[T] {
+        std::slice::from_raw_parts(self.pointer.as_const_ptr(), len)
     }
 }
 
@@ -198,39 +202,6 @@ create_pointer!(BIGNUM, BN_free);
 create_pointer!(EVP_PKEY, EVP_PKEY_free);
 create_pointer!(EVP_PKEY_CTX, EVP_PKEY_CTX_free);
 create_pointer!(RSA, RSA_free);
-
-#[derive(Debug)]
-pub(crate) struct LcVec<'a, T: 'a> {
-    pointer: *mut T,
-    len: usize,
-    phantom: PhantomData<&'a mut T>,
-}
-
-macro_rules! impl_lc_vec {
-    ($T:ty) => {
-        impl<'a> LcVec<'a, $T> {
-            pub fn new(pointer: &'a LcPtr<*mut $T>, len: usize) -> Result<Self, ()> {
-                let pointer = **pointer;
-                Ok(Self {
-                    pointer,
-                    len,
-                    phantom: PhantomData,
-                })
-            }
-
-            pub fn as_slice(&self) -> &'a [$T] {
-                unsafe { std::slice::from_raw_parts(self.pointer.cast(), self.len) }
-            }
-
-            #[allow(dead_code)]
-            pub fn as_mut_slice(&self) -> &'a mut [$T] {
-                unsafe { std::slice::from_raw_parts_mut(self.pointer, self.len) }
-            }
-        }
-    };
-}
-
-impl_lc_vec!(u8);
 
 #[cfg(test)]
 mod tests {

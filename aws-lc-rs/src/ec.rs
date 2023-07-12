@@ -7,7 +7,7 @@ use crate::digest::digest_ctx::DigestContext;
 use crate::error::{KeyRejected, Unspecified};
 use core::fmt;
 
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, LcVec};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
@@ -188,8 +188,8 @@ fn verify_fixed_signature(
         return Err(Unspecified);
     }
     let out_bytes = LcPtr::new(unsafe { out_bytes.assume_init() })?;
-    let signature = LcVec::new(&out_bytes, unsafe { out_bytes_len.assume_init() })?;
-    verify_asn1_signature(alg, digest, public_key, msg, signature.as_slice())
+    let signature = unsafe { out_bytes.as_slice::<u8>(out_bytes_len.assume_init()) };
+    verify_asn1_signature(alg, digest, public_key, msg, signature)
 }
 
 fn verify_asn1_signature(
