@@ -8,7 +8,7 @@
 // naming conventions. Also the standard camelCase names are used for `KeyPair`
 // components.
 
-use crate::digest::match_digest_type;
+use crate::digest::digest_ctx::DigestContext;
 use crate::error::{KeyRejected, Unspecified};
 #[cfg(feature = "ring-io")]
 use crate::io;
@@ -21,17 +21,19 @@ use aws_lc::RSA_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::RSA_check_key;
 use aws_lc::{
-    RSA_bits, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new, RSA_parse_private_key,
-    RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_sign, RSA_sign_pss_mgf1,
-    RSA_size, RSA_verify, RSA_verify_pss_mgf1, RSA,
+    EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
+    EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_assign_RSA,
+    EVP_PKEY_get0_RSA, EVP_PKEY_new, RSA_bits, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q,
+    RSA_new, RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key,
+    RSA_size, EVP_PKEY, EVP_PKEY_CTX, RSA, RSA_PKCS1_PSS_PADDING,
 };
 use core::fmt;
+use mirai_annotations::verify_unreachable;
 
 use std::cmp::Ordering;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::RangeInclusive;
-use std::os::raw::c_uint;
 use std::ptr::{null, null_mut};
 use std::slice;
 
@@ -48,7 +50,7 @@ pub struct RsaKeyPair {
     // other thread is concurrently calling a mutating function. Unless otherwise
     // documented, functions which take a |const| pointer are non-mutating and
     // functions which take a non-|const| pointer are mutating.
-    rsa_key: LcPtr<*mut RSA>,
+    rsa_key: LcPtr<*mut EVP_PKEY>,
     serialized_public_key: RsaSubjectPublicKey,
 }
 
@@ -57,11 +59,12 @@ unsafe impl Send for RsaKeyPair {}
 unsafe impl Sync for RsaKeyPair {}
 
 impl RsaKeyPair {
-    fn new(rsa_key: LcPtr<*mut RSA>) -> Result<Self, KeyRejected> {
+    fn new(evp_pkey: LcPtr<*mut EVP_PKEY>) -> Result<Self, KeyRejected> {
         unsafe {
+            let rsa_key = evp_pkey.get_rsa()?;
             let serialized_public_key = RsaSubjectPublicKey::new(&rsa_key.as_const())?;
             Ok(RsaKeyPair {
-                rsa_key,
+                rsa_key: evp_pkey,
                 serialized_public_key,
             })
         }
@@ -117,10 +120,8 @@ impl RsaKeyPair {
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let evp_pkey = LcPtr::try_from(pkcs8)?;
-            let rsa = evp_pkey.get_rsa()?;
-            Self::validate_rsa(&rsa.as_const())?;
-
-            Self::new(rsa)
+            Self::validate_rsa(&evp_pkey)?;
+            Self::new(evp_pkey)
         }
     }
 
@@ -130,17 +131,19 @@ impl RsaKeyPair {
     /// `error:KeyRejected` on error.
     pub fn from_der(input: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
-            let rsa = build_private_RSA(input)?;
-            Self::validate_rsa(&rsa.as_const())?;
-            Self::new(rsa)
+            let pkey = build_private_RSA(input)?;
+            Self::validate_rsa(&pkey)?;
+            Self::new(pkey)
         }
     }
     const MIN_RSA_BITS: u32 = 1024;
     const MAX_RSA_BITS: u32 = 2048;
 
-    unsafe fn validate_rsa(rsa: &ConstPointer<RSA>) -> Result<(), KeyRejected> {
-        let p = ConstPointer::new(RSA_get0_p(**rsa))?;
-        let q = ConstPointer::new(RSA_get0_q(**rsa))?;
+    unsafe fn validate_rsa(rsa: &LcPtr<*mut EVP_PKEY>) -> Result<(), KeyRejected> {
+        let rsa = rsa.get_rsa()?.as_const();
+
+        let p = ConstPointer::new(RSA_get0_p(*rsa))?;
+        let q = ConstPointer::new(RSA_get0_q(*rsa))?;
         let p_bits = p.num_bits();
         let q_bits = q.num_bits();
 
@@ -157,7 +160,7 @@ impl RsaKeyPair {
             return Err(KeyRejected::too_large());
         }
 
-        let e = ConstPointer::new(RSA_get0_e(**rsa))?;
+        let e = ConstPointer::new(RSA_get0_e(*rsa))?;
         let min_exponent = DetachableLcPtr::try_from(65537)?;
         match e.compare(&min_exponent.as_const()) {
             Ordering::Less => Err(KeyRejected::too_small()),
@@ -165,12 +168,12 @@ impl RsaKeyPair {
         }?;
 
         #[cfg(not(feature = "fips"))]
-        if 1 != RSA_check_key(**rsa) {
+        if 1 != RSA_check_key(*rsa) {
             return Err(KeyRejected::inconsistent_components());
         }
 
         #[cfg(feature = "fips")]
-        if 1 != RSA_check_fips(**rsa as *mut RSA) {
+        if 1 != RSA_check_fips(*rsa as *mut RSA) {
             return Err(KeyRejected::inconsistent_components());
         }
 
@@ -232,54 +235,41 @@ impl RsaKeyPair {
         signature: &mut [u8],
     ) -> Result<(), Unspecified> {
         let encoding = padding_alg.encoding();
-        let mut output_len = self.public_modulus_len();
-        if signature.len() != output_len {
+
+        let mut md_ctx = digest::digest_ctx::DigestContext::new_uninit();
+        let mut pctx = MaybeUninit::<*mut EVP_PKEY_CTX>::uninit();
+        let digest = digest::match_digest_type(&encoding.0.id);
+
+        if 1 != unsafe {
+            EVP_DigestSignInit(
+                md_ctx.as_mut_ptr(),
+                pctx.as_mut_ptr(),
+                *digest,
+                null_mut(),
+                *self.rsa_key,
+            )
+        } {
             return Err(Unspecified);
         }
-        unsafe {
-            let digest_alg = encoding.0;
-            let digest = digest::digest(digest_alg, msg);
-            let digest = digest.as_ref();
 
-            let padding = encoding.1;
-            // These functions are non-mutating of RSA:
-            // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L286
-            let result = match padding {
-                RsaPadding::RSA_PKCS1_PADDING => {
-                    let mut output_len = c_uint::try_from(output_len)?;
-                    let digest_len = digest.len();
-                    let result = RSA_sign(
-                        digest_alg.hash_nid,
-                        digest.as_ptr(),
-                        digest_len,
-                        signature.as_mut_ptr(),
-                        &mut output_len,
-                        *self.rsa_key,
-                    );
-                    debug_assert_eq!(output_len as usize, signature.len());
-                    result
-                }
-                RsaPadding::RSA_PKCS1_PSS_PADDING => {
-                    let result = RSA_sign_pss_mgf1(
-                        *self.rsa_key,
-                        &mut output_len,
-                        signature.as_mut_ptr(),
-                        output_len,
-                        digest.as_ptr(),
-                        digest.len(),
-                        *match_digest_type(&digest_alg.id),
-                        null(),
-                        -1,
-                    );
-                    debug_assert_eq!(output_len, signature.len());
-                    result
-                }
-            };
-
-            if result != 1 {
+        if let RsaPadding::RSA_PKCS1_PSS_PADDING = encoding.1 {
+            let pctx = unsafe { pctx.assume_init() };
+            if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) } {
                 return Err(Unspecified);
-            }
+            };
+            if 1 != unsafe { EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) } {
+                return Err(Unspecified);
+            };
         }
+
+        let max_len = get_signature_length(&mut md_ctx)?;
+
+        debug_assert!(signature.len() >= max_len);
+
+        let computed_signature = compute_rsa_signature(&mut md_ctx, msg, signature)?;
+
+        debug_assert!(computed_signature.len() >= signature.len());
+
         Ok(())
     }
 
@@ -288,8 +278,14 @@ impl RsaKeyPair {
     /// A signature has the same length as the public modulus.
     #[must_use]
     pub fn public_modulus_len(&self) -> usize {
-        // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
-        unsafe { (RSA_size(*self.rsa_key)) as usize }
+        // This was already validated to be an RSA key so this can't fail
+        match self.rsa_key.get_rsa() {
+            Ok(rsa) => {
+                // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
+                unsafe { (RSA_size(*rsa)) as usize }
+            }
+            Err(_) => verify_unreachable!(),
+        }
     }
 }
 
@@ -300,6 +296,49 @@ impl Debug for RsaKeyPair {
             self.serialized_public_key
         ))
     }
+}
+
+#[inline]
+fn get_signature_length(ctx: &mut DigestContext) -> Result<usize, Unspecified> {
+    let mut out_sig_len = MaybeUninit::<usize>::uninit();
+
+    // determine signature size
+    if 1 != unsafe {
+        EVP_DigestSign(
+            ctx.as_mut_ptr(),
+            null_mut(),
+            out_sig_len.as_mut_ptr(),
+            null(),
+            0,
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    Ok(unsafe { out_sig_len.assume_init() })
+}
+
+#[inline]
+fn compute_rsa_signature<'a>(
+    ctx: &mut DigestContext,
+    message: &[u8],
+    signature: &'a mut [u8],
+) -> Result<&'a mut [u8], Unspecified> {
+    let mut out_sig_len = signature.len();
+
+    if 1 != unsafe {
+        EVP_DigestSign(
+            ctx.as_mut_ptr(),
+            signature.as_mut_ptr(),
+            &mut out_sig_len,
+            message.as_ptr(),
+            message.len(),
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    Ok(&mut signature[0..out_sig_len])
 }
 
 #[allow(non_snake_case)]
@@ -507,21 +546,38 @@ impl RsaParameters {
 
 #[inline]
 #[allow(non_snake_case)]
-unsafe fn build_public_RSA(public_key: &[u8]) -> Result<LcPtr<*mut RSA>, Unspecified> {
+unsafe fn build_public_RSA(public_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
     let mut cbs = cbs::build_CBS(public_key);
 
-    let rsa = LcPtr::new(RSA_parse_public_key(&mut cbs))?;
-    Ok(rsa)
+    let rsa = DetachableLcPtr::new(RSA_parse_public_key(&mut cbs))?;
+
+    let pkey = LcPtr::new(EVP_PKEY_new())?;
+
+    if 1 != EVP_PKEY_assign_RSA(*pkey, *rsa) {
+        return Err(Unspecified);
+    }
+
+    rsa.detach();
+
+    Ok(pkey)
 }
 
 #[inline]
 #[allow(non_snake_case)]
-unsafe fn build_private_RSA(public_key: &[u8]) -> Result<LcPtr<*mut RSA>, KeyRejected> {
-    let mut cbs = cbs::build_CBS(public_key);
+unsafe fn build_private_RSA(private_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY>, KeyRejected> {
+    let mut cbs = cbs::build_CBS(private_key);
 
-    let rsa =
-        LcPtr::new(RSA_parse_private_key(&mut cbs)).map_err(|_| KeyRejected::invalid_encoding())?;
-    Ok(rsa)
+    let rsa = DetachableLcPtr::new(RSA_parse_private_key(&mut cbs))?;
+
+    let pkey = LcPtr::new(EVP_PKEY_new())?;
+
+    if 1 != EVP_PKEY_assign_RSA(*pkey, *rsa) {
+        return Err(KeyRejected::unexpected_error());
+    }
+
+    rsa.detach();
+
+    Ok(pkey)
 }
 
 #[inline]
@@ -529,47 +585,60 @@ unsafe fn build_private_RSA(public_key: &[u8]) -> Result<LcPtr<*mut RSA>, KeyRej
 fn verify_RSA(
     algorithm: &'static digest::Algorithm,
     padding: &'static RsaPadding,
-    public_key: &LcPtr<*mut RSA>,
+    public_key: &LcPtr<*mut EVP_PKEY>,
     msg: &[u8],
     signature: &[u8],
     allowed_bit_size: &RangeInclusive<u32>,
 ) -> Result<(), Unspecified> {
-    unsafe {
-        let n = ConstPointer::new(RSA_get0_n(**public_key))?;
-        let n_bits = n.num_bits();
-        if !allowed_bit_size.contains(&n_bits) {
-            return Err(Unspecified);
-        }
-
-        let digest = digest::digest(algorithm, msg);
-        let digest = digest.as_ref();
-
-        let result = match padding {
-            RsaPadding::RSA_PKCS1_PADDING => RSA_verify(
-                algorithm.hash_nid,
-                digest.as_ptr(),
-                digest.len(),
-                signature.as_ptr(),
-                signature.len(),
-                **public_key,
-            ),
-            RsaPadding::RSA_PKCS1_PSS_PADDING => RSA_verify_pss_mgf1(
-                **public_key,
-                digest.as_ptr(),
-                digest.len(),
-                *match_digest_type(&algorithm.id),
-                null(),
-                -1,
-                signature.as_ptr(),
-                signature.len(),
-            ),
-        };
-
-        if result != 1 {
-            return Err(Unspecified);
-        }
-        Ok(())
+    let rsa = DetachableLcPtr::new(unsafe { EVP_PKEY_get0_RSA(**public_key) })?;
+    let n = ConstPointer::new(unsafe { RSA_get0_n(rsa.detach()) })?;
+    let n_bits = n.num_bits();
+    if !allowed_bit_size.contains(&n_bits) {
+        return Err(Unspecified);
     }
+
+    let mut md_ctx = digest::digest_ctx::DigestContext::new_uninit();
+    let digest = digest::match_digest_type(&algorithm.id);
+
+    let mut pctx = MaybeUninit::<*mut EVP_PKEY_CTX>::uninit();
+
+    if 1 != unsafe {
+        EVP_DigestVerifyInit(
+            md_ctx.as_mut_ptr(),
+            pctx.as_mut_ptr(),
+            *digest,
+            null_mut(),
+            **public_key,
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    // This is allocation is managed by aws-lc so need for us to wrap it for freeing.
+    let pctx = unsafe { pctx.assume_init() };
+
+    if let RsaPadding::RSA_PKCS1_PSS_PADDING = padding {
+        if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) } {
+            return Err(Unspecified);
+        };
+        if 1 != unsafe { EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) } {
+            return Err(Unspecified);
+        };
+    }
+
+    if 1 != unsafe {
+        EVP_DigestVerify(
+            md_ctx.as_mut_ptr(),
+            signature.as_ptr(),
+            signature.len(),
+            msg.as_ptr(),
+            msg.len(),
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    Ok(())
 }
 
 /// Low-level API for the verification of RSA signatures.
@@ -600,7 +669,7 @@ where
 {
     #[allow(non_snake_case)]
     #[inline]
-    unsafe fn build_RSA(&self) -> Result<LcPtr<*mut RSA>, ()> {
+    unsafe fn build_RSA(&self) -> Result<LcPtr<*mut EVP_PKEY>, ()> {
         let n_bytes = self.n.as_ref();
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
             return Err(());
@@ -613,13 +682,20 @@ where
         }
         let e_bn = DetachableLcPtr::try_from(e_bytes)?;
 
-        let rsa = LcPtr::new(RSA_new())?;
+        let rsa = DetachableLcPtr::new(RSA_new())?;
         if 1 != RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) {
             return Err(());
         }
         n_bn.detach();
         e_bn.detach();
-        Ok(rsa)
+
+        let pkey = LcPtr::new(EVP_PKEY_new())?;
+        if 1 != EVP_PKEY_assign_RSA(*pkey, *rsa) {
+            return Err(());
+        }
+        rsa.detach();
+
+        Ok(pkey)
     }
 
     /// Verifies that `signature` is a valid signature of `message` using `self`

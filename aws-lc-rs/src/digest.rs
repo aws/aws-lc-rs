@@ -245,8 +245,6 @@ pub struct Algorithm {
     one_shot_hash: fn(msg: &[u8], output: &mut [u8]),
 
     pub(crate) id: AlgorithmID,
-
-    pub(crate) hash_nid: i32,
 }
 
 unsafe impl Send for Algorithm {}
