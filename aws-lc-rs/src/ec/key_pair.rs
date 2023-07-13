@@ -16,9 +16,8 @@ use aws_lc::EC_KEY_generate_key;
 #[cfg(feature = "fips")]
 use aws_lc::EC_KEY_generate_key_fips;
 use aws_lc::{
-    EC_KEY_new_by_curve_name, EVP_DigestSign, EVP_MD_CTX_set_pkey_ctx, EVP_PKEY_CTX_new,
-    EVP_PKEY_assign_EC_KEY, EVP_PKEY_new, EVP_PKEY_set1_EC_KEY, EVP_PKEY_sign_init, EC_KEY,
-    EVP_PKEY,
+    EC_KEY_new_by_curve_name, EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_assign_EC_KEY,
+    EVP_PKEY_new, EVP_PKEY_set1_EC_KEY, EC_KEY, EVP_PKEY,
 };
 use std::fmt;
 use std::mem::MaybeUninit;
@@ -188,18 +187,25 @@ impl EcdsaKeyPair {
     ///
     #[inline]
     pub fn sign(&self, _rng: &dyn SecureRandom, message: &[u8]) -> Result<Signature, Unspecified> {
-        let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) })?;
+        let mut md_ctx = DigestContext::new_uninit();
 
-        if 1 != unsafe { EVP_PKEY_sign_init(*pkey_ctx) } {
+        let digest = digest::match_digest_type(&self.algorithm.digest.id);
+
+        if 1 != unsafe {
+            EVP_DigestSignInit(
+                md_ctx.as_mut_ptr(),
+                null_mut(),
+                *digest,
+                null_mut(),
+                *self.evp_pkey,
+            )
+        } {
             return Err(Unspecified);
-        };
+        }
 
-        let mut context = digest::digest_ctx::DigestContext::new(self.algorithm.digest)?;
-        unsafe { EVP_MD_CTX_set_pkey_ctx(context.as_mut_ptr(), *pkey_ctx) };
+        let mut out_sig = vec![0u8; get_signature_length(&mut md_ctx)?];
 
-        let mut out_sig = vec![0u8; get_signature_length(&mut context)?];
-
-        let out_sig = compute_ecdsa_signature(&mut context, message, out_sig.as_mut_slice())?;
+        let out_sig = compute_ecdsa_signature(&mut md_ctx, message, out_sig.as_mut_slice())?;
 
         Ok(match self.algorithm.sig_format {
             EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {

@@ -16,10 +16,9 @@ use aws_lc::{
     ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EC_GROUP_get_curve_name,
     EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new,
     EC_KEY_new_by_curve_name, EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key,
-    EC_POINT_new, EC_POINT_oct2point, EC_POINT_point2oct, EVP_DigestVerify,
-    EVP_MD_CTX_set_pkey_ctx, EVP_PKEY_CTX_new, EVP_PKEY_assign_EC_KEY, EVP_PKEY_new,
-    EVP_PKEY_verify_init, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG,
-    EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY,
+    EC_POINT_new, EC_POINT_oct2point, EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit,
+    EVP_PKEY_assign_EC_KEY, EVP_PKEY_new, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
+    BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY,
 };
 #[cfg(feature = "fips")]
 use aws_lc::{EC_KEY_check_fips, EC_KEY_generate_key_fips};
@@ -201,19 +200,19 @@ fn verify_asn1_signature(
 ) -> Result<(), Unspecified> {
     let pkey = evp_pkey_from_public_key(alg, public_key)?;
 
-    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*pkey, null_mut()) })?;
+    let mut md_ctx = DigestContext::new_uninit();
 
-    if 1 != unsafe { EVP_PKEY_verify_init(*pkey_ctx) } {
+    let digest = digest::match_digest_type(&digest.id);
+
+    if 1 != unsafe {
+        EVP_DigestVerifyInit(md_ctx.as_mut_ptr(), null_mut(), *digest, null_mut(), *pkey)
+    } {
         return Err(Unspecified);
-    };
-
-    let mut dctx = DigestContext::new(digest)?;
-
-    unsafe { EVP_MD_CTX_set_pkey_ctx(dctx.as_mut_ptr(), *pkey_ctx) };
+    }
 
     if 1 != unsafe {
         EVP_DigestVerify(
-            dctx.as_mut_ptr(),
+            md_ctx.as_mut_ptr(),
             signature.as_ptr(),
             signature.len(),
             msg.as_ptr(),

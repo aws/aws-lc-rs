@@ -12,13 +12,21 @@ pub(crate) struct DigestContext(EVP_MD_CTX);
 impl DigestContext {
     pub fn new(algorithm: &'static Algorithm) -> Result<DigestContext, Unspecified> {
         let evp_md_type = match_digest_type(&algorithm.id);
-        let mut dc = MaybeUninit::<EVP_MD_CTX>::uninit();
+        let mut dc = Self::new_uninit();
         unsafe {
             EVP_MD_CTX_init(dc.as_mut_ptr());
             if 1 != EVP_DigestInit_ex(dc.as_mut_ptr(), *evp_md_type, null_mut()) {
                 return Err(Unspecified);
             };
-            Ok(Self(dc.assume_init()))
+            Ok(dc)
+        }
+    }
+
+    pub fn new_uninit() -> DigestContext {
+        let mut dc = MaybeUninit::<EVP_MD_CTX>::uninit();
+        unsafe {
+            EVP_MD_CTX_init(dc.as_mut_ptr());
+            Self(dc.assume_init())
         }
     }
 
