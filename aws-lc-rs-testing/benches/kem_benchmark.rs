@@ -37,12 +37,12 @@ impl KemConfig {
     }
 }
 
-mod aws_lc_rs_benchmarks  {
+mod aws_lc_rs_benchmarks {
 
     use aws_lc_rs::kem;
 
-    use crate::{KemConfig, Algorithm};
-    use kem::{KemPrivateKey, KemPublicKey, KemAlgorithm, KYBER512_R3};
+    use crate::{Algorithm, KemConfig};
+    use kem::{KemAlgorithm, KemPrivateKey, KemPublicKey, KYBER512_R3};
 
     fn algorithm(config: &KemConfig) -> &'static KemAlgorithm {
         match config.algorithm {
@@ -63,22 +63,17 @@ mod aws_lc_rs_benchmarks  {
         let _public_key = private_key.compute_public_key().unwrap();
     }
 
-    pub fn encapsulate(
-        public_key: &KemPublicKey,
-    ) {
-        public_key.encapsulate((), |ct, ss| {
-            Ok((Vec::from(ct), Vec::from(ss)))
-        }).unwrap();
+    pub fn encapsulate(public_key: &KemPublicKey) {
+        public_key
+            .encapsulate((), |ct, ss| Ok((Vec::from(ct), Vec::from(ss))))
+            .unwrap();
     }
 
-    pub fn decapsulate(
-        config: &KemConfig,
-        secret_key: &KemPrivateKey,
-    ) {
+    pub fn decapsulate(config: &KemConfig, secret_key: &KemPrivateKey) {
         let mut ciphertext = config.ciphertext.clone();
-        secret_key.decapsulate(&mut ciphertext, (), |ss| {
-            Ok(Vec::from(ss))
-        }).unwrap();
+        secret_key
+            .decapsulate(&mut ciphertext, (), |ss| Ok(Vec::from(ss)))
+            .unwrap();
     }
 }
 
