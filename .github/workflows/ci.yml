@@ -177,7 +177,7 @@ jobs:
         run: cross test --target ${{ matrix.target }}
       - name: Cross-compilation w/ bindgen
         working-directory: ./aws-lc-rs
-        run: cross build --release --features bindgen --target ${{ matrix.target }}
+        run: cross test --release --features bindgen --target ${{ matrix.target }}
 
 
   aws-lc-rs-test:
