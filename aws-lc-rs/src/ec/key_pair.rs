@@ -75,6 +75,7 @@ pub(crate) unsafe fn generate_key(nid: i32) -> Result<LcPtr<*mut EVP_PKEY>, Unsp
 }
 
 impl EcdsaKeyPair {
+    #[allow(clippy::needless_pass_by_value)]
     unsafe fn new(
         algorithm: &'static EcdsaSigningAlgorithm,
         ec_key: LcPtr<*mut EC_KEY>,
@@ -85,11 +86,6 @@ impl EcdsaKeyPair {
         if 1 != unsafe { EVP_PKEY_set1_EC_KEY(*evp_pkey, *ec_key) } {
             return Err(());
         }
-
-        // Remove this reference since we took ownership by value, EVP_PKEY already incremented a reference to it
-        // so this is safe, and would happen regardless.
-        // Doing this in lieu of passing by reference or allowing the lint bypass.
-        drop(ec_key);
 
         Ok(Self {
             algorithm,
