@@ -10,7 +10,7 @@ deinit-submodules:
 init: init-submodules
 	git config core.hooksPath .githooks
 	rustup component add rustfmt clippy
-	cargo install rust-script cargo-llvm-cov cargo-license public-api --locked
+	cargo install rust-script cargo-llvm-cov cargo-license public-api cargo-msrv --locked
 	cargo install cargo-audit --features=fix --locked
 
 update-aws-lc-fips-sys:

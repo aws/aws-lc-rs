@@ -181,7 +181,7 @@ fn test_aead<Seal, Open>(
         };
         let mut o_in_out = vec![123u8; 4096];
 
-        for &in_prefix_len in in_prefix_lengths.iter() {
+        for &in_prefix_len in in_prefix_lengths {
             o_in_out.truncate(0);
             o_in_out.resize(in_prefix_len, 123);
             o_in_out.extend_from_slice(&ct[..]);
