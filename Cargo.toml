@@ -2,7 +2,8 @@
 members = [
     "aws-lc-rs",
     "aws-lc-sys",
-    "aws-lc-fips-sys"
+    "aws-lc-fips-sys",
+    "aws-lc-rs-testing"
 ]
 resolver = "2"
 

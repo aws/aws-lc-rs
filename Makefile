@@ -42,4 +42,7 @@ api-diff-pub:
 clippy:
 	cargo +nightly clippy --all-targets --features bindgen -- -W clippy::all  -W clippy::pedantic
 
-.PHONY: init-aws-lc-sys init-aws-lc-fips-sys init-submodules init update-submodules lic audit format api-diff-main api-diff-pub clippy
+udep:
+	cargo +nightly udeps --all-targets
+
+.PHONY: init-aws-lc-sys init-aws-lc-fips-sys init-submodules init update-submodules lic audit format api-diff-main api-diff-pub clippy udep
