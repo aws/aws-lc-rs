@@ -256,5 +256,5 @@ criterion_main!(benches);
 
 #[cfg(not(feature = "ring-sig-verify"))]
 fn main() {
-    println!("This bench requires feature: ring-sig-verify")
+    println!("This bench requires feature: ring-sig-verify");
 }
