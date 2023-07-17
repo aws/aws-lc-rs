@@ -147,6 +147,42 @@ jobs:
         env:
           RUSTC_WRAPPER: ""
 
+  aws-lc-rs-cross-test:
+    name: aws-lc-rs cross tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ ubuntu-latest ]
+        target: [ aarch64-unknown-linux-gnu, i686-unknown-linux-gnu,  powerpc64le-unknown-linux-gnu, riscv64gc-unknown-linux-gnu ]
+    steps:
+      - name: Set CROSS_CMAKE_SYSTEM_PROCESSOR
+        if: ${{ matrix.target == 'powerpc64le-unknown-linux-gnu' }}
+        run: echo CROSS_CMAKE_SYSTEM_PROCESSOR=ppc64le >> $GITHUB_ENV
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+          target: ${{ matrix.target }}
+      - name: Install cross
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install
+          args: cross --git https://github.com/cross-rs/cross
+      - name: Cross-compilation
+        if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'i686-unknown-linux-gnu' }}
+        working-directory: ./aws-lc-rs
+        run: cross test --target ${{ matrix.target }}
+      - name: Cross-compilation w/ bindgen
+        working-directory: ./aws-lc-rs
+        run: cross test --release --features bindgen --target ${{ matrix.target }}
+
+
   aws-lc-rs-test:
     name: aws-lc-rs tests
     runs-on: ${{ matrix.os }}
@@ -155,7 +191,6 @@ jobs:
       matrix:
         rust: [ stable ]
         os: [ ubuntu-latest, macOS-latest ]
-        target: [ native, aarch64-unknown-linux-gnu, i686-unknown-linux-gnu ]
         args:
           - --all-targets
           - --release --all-targets
@@ -163,13 +198,6 @@ jobs:
           - --no-default-features --features non-fips,ring-io
           - --no-default-features --features non-fips,ring-sig-verify
           - --no-default-features --features non-fips,alloc
-        exclude:
-          - rust: stable
-            os: macOS-latest
-            target: aarch64-unknown-linux-gnu
-          - rust: stable
-            os: macOS-latest
-            target: i686-unknown-linux-gnu
     steps:
       - uses: actions/checkout@v3
         with:
@@ -179,28 +207,11 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           override: true
-          target: ${{ matrix.target != 'native' && matrix.target || '' }}
-
-      - name: Install cross
-        if: ${{ matrix.target != 'native' }}
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: cross
-
       - name: Run cargo test
         working-directory: ./aws-lc-rs
-        if: ${{ matrix.target == 'native' }}
-        run: cargo test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
-
-      - name: Run cargo cross test
-        working-directory: ./aws-lc-rs
-        if: ${{ matrix.target != 'native' }}
-        run: cross test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
-
+        run: cargo test ${{ matrix.args }}
       - name: Run extra tests
         working-directory: ./aws-lc-rs-testing
-        if: ${{ matrix.target == 'native' }}
         run: cargo test --all-targets
 
   fips-test:
