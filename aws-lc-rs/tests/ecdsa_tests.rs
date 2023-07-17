@@ -221,6 +221,8 @@ fn test_signature_ecdsa_verify_fixed(data_file: test::File) {
             ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_FIXED,
             ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_FIXED,
             ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_FIXED,
+            ("secp256k1", "SHA256") => &signature::ECDSA_P256K1_SHA256_FIXED,
+            ("secp256k1", "SHA3-256") => &signature::ECDSA_P256K1_SHA3_256_FIXED,
             _ => {
                 unrecoverable!("Unsupported curve+digest: {}+{}", curve_name, digest_name);
             }
