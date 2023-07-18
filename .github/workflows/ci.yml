@@ -90,11 +90,6 @@ jobs:
         with:
           command: install
           args: cargo-public-api
-      - name: Install rust-script
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: rust-script
       - name: Perform API Diff (Target Branch)
         if: matrix.diff_target == 'branch'
         working-directory: ${{ matrix.crate_dir }}
@@ -104,7 +99,7 @@ jobs:
         working-directory: ${{ matrix.crate_dir }}
         shell: bash
         run: |
-          CRATE_NAME=$("${GITHUB_WORKSPACE}"/scripts/tools/cargo-dig.rs -n)
+          CRATE_NAME="${{ matrix.crate_dir }}"
           CRATE_VERSION=$(cargo search --limit 1 ${CRATE_NAME} | head -n 1 | sed -e 's/[^"]*"\([^"]*\)".*/\1/')
           cargo public-api diff --deny changed --deny removed "${CRATE_VERSION}"
 
