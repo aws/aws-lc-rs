@@ -53,7 +53,7 @@ use aws_lc::{
     EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
     EVP_PKEY_encapsulate, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
     EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_keygen,
-    EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM, NID_KYBER512_R3,
+    EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM, NID_KYBER512_R3, NID_KYBER768_R3, NID_KYBER1024_R3
 };
 use std::cmp::Ordering;
 use std::os::raw::c_int;
@@ -68,10 +68,22 @@ const KYBER512_R3_CIPHERTEXT_LENGTH: usize = 768;
 const KYBER512_R3_PUBLIC_KEY_LENGTH: usize = 800;
 const KYBER512_R3_SHARED_SECRET_LENGTH: usize = 32;
 
+const KYBER768_R3_SECRET_KEY_LENGTH: usize = 2400;
+const KYBER768_R3_CIPHERTEXT_LENGTH: usize = 1088;
+const KYBER768_R3_PUBLIC_KEY_LENGTH: usize = 1184;
+const KYBER768_R3_SHARED_SECRET_LENGTH: usize = 32;
+
+const KYBER1024_R3_SECRET_KEY_LENGTH: usize = 3168;
+const KYBER1024_R3_CIPHERTEXT_LENGTH: usize = 1568;
+const KYBER1024_R3_PUBLIC_KEY_LENGTH: usize = 1568;
+const KYBER1024_R3_SHARED_SECRET_LENGTH: usize = 32;
+
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
 enum KemAlgorithmID {
     Kyber512_R3,
+    Kyber768_R3,
+    Kyber1024_R3,
 }
 
 /// A KEM algorithm
@@ -93,11 +105,31 @@ pub static KYBER512_R3: KemAlgorithm = KemAlgorithm {
     shared_secret_size: KYBER512_R3_SHARED_SECRET_LENGTH,
 };
 
+/// NIST Round 3 iteration of the Kyber-768 algorithm
+pub static KYBER768_R3: KemAlgorithm = KemAlgorithm {
+    id: KemAlgorithmID::Kyber768_R3,
+    secret_key_size: KYBER768_R3_SECRET_KEY_LENGTH,
+    public_key_size: KYBER768_R3_PUBLIC_KEY_LENGTH,
+    ciphertext_size: KYBER768_R3_CIPHERTEXT_LENGTH,
+    shared_secret_size: KYBER768_R3_SHARED_SECRET_LENGTH,
+};
+
+/// NIST Round 3 iteration of the Kyber-1024 algorithm
+pub static KYBER1024_R3: KemAlgorithm = KemAlgorithm {
+    id: KemAlgorithmID::Kyber1024_R3,
+    secret_key_size: KYBER1024_R3_SECRET_KEY_LENGTH,
+    public_key_size: KYBER1024_R3_PUBLIC_KEY_LENGTH,
+    ciphertext_size: KYBER1024_R3_CIPHERTEXT_LENGTH,
+    shared_secret_size: KYBER1024_R3_SHARED_SECRET_LENGTH,
+};
+
 impl KemAlgorithmID {
     #[inline]
     fn nid(&self) -> i32 {
         match self {
             KemAlgorithmID::Kyber512_R3 => NID_KYBER512_R3,
+            KemAlgorithmID::Kyber768_R3 => NID_KYBER768_R3,
+            KemAlgorithmID::Kyber1024_R3 => NID_KYBER1024_R3,
         }
     }
 }
