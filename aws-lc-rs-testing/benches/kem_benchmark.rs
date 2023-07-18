@@ -8,12 +8,16 @@ use criterion::{criterion_group, criterion_main, Criterion};
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 enum Algorithm {
     KYBER512_R3,
+    KYBER768_R3,
+    KYBER1024_R3,
 }
 
 impl From<&str> for Algorithm {
     fn from(value: &str) -> Self {
         match value {
             "KYBER512_R3" => Algorithm::KYBER512_R3,
+            "KYBER768_R3" => Algorithm::KYBER768_R3,
+            "KYBER1024_R3" => Algorithm::KYBER1024_R3,
             _ => panic!("Unrecognized algorithm: '{value}'"),
         }
     }
@@ -42,11 +46,13 @@ mod aws_lc_rs_benchmarks {
     use aws_lc_rs::kem;
 
     use crate::{Algorithm, KemConfig};
-    use kem::{KemAlgorithm, KemPrivateKey, KemPublicKey, KYBER512_R3};
+    use kem::{KemAlgorithm, KemPrivateKey, KemPublicKey, KYBER1024_R3, KYBER512_R3, KYBER768_R3};
 
     fn algorithm(config: &KemConfig) -> &'static KemAlgorithm {
         match config.algorithm {
             Algorithm::KYBER512_R3 => &KYBER512_R3,
+            Algorithm::KYBER768_R3 => &KYBER768_R3,
+            Algorithm::KYBER1024_R3 => &KYBER1024_R3,
         }
     }
 
