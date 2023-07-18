@@ -66,7 +66,7 @@ fn test_aes_128_gcm() {
     );
     let mut in_out = from_hex("").unwrap();
     test_aead_separate_in_place(&config, &mut in_out).unwrap();
-    test_aead_append_within(&config, &mut in_out).unwrap();
+    test_aead_append_within(&config, &in_out).unwrap();
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn test_aes_256_gcm() {
     let mut in_out = from_hex("123456789abcdef0").unwrap();
 
     test_aead_separate_in_place(&config, &mut in_out).unwrap();
-    test_aead_append_within(&config, &mut in_out).unwrap();
+    test_aead_append_within(&config, &in_out).unwrap();
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn test_chacha20_poly1305() {
 
     #[cfg(feature = "alloc")]
     test_aead_separate_in_place(&config, &mut in_out).unwrap();
-    test_aead_append_within(&config, &mut in_out).unwrap();
+    test_aead_append_within(&config, &in_out).unwrap();
 }
 
 fn test_aead_separate_in_place(
@@ -133,7 +133,7 @@ fn test_aead_separate_in_place(
     Ok(Vec::from(result_plaintext))
 }
 
-fn test_aead_append_within(config: &AeadConfig, in_out: &mut [u8]) -> Result<Vec<u8>, String> {
+fn test_aead_append_within(config: &AeadConfig, in_out: &[u8]) -> Result<Vec<u8>, String> {
     let mut sealing_key = SealingKey::new(config.key(), config.nonce());
     let mut opening_key = OpeningKey::new(config.key(), config.nonce());
 
