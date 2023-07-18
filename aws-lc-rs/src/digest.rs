@@ -30,7 +30,7 @@
 #![allow(non_snake_case)]
 use crate::{debug, derive_debug_via_id};
 
-mod digest_ctx;
+pub(crate) mod digest_ctx;
 mod sha;
 use crate::error::Unspecified;
 use crate::ptr::ConstPointer;
