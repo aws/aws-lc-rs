@@ -14,7 +14,6 @@ impl DigestContext {
         let evp_md_type = match_digest_type(&algorithm.id);
         let mut dc = Self::new_uninit();
         unsafe {
-            EVP_MD_CTX_init(dc.as_mut_ptr());
             if 1 != EVP_DigestInit_ex(dc.as_mut_ptr(), *evp_md_type, null_mut()) {
                 return Err(Unspecified);
             };
