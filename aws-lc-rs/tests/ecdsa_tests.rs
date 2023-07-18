@@ -181,12 +181,15 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
             ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_ASN1,
             ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_ASN1,
             ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_ASN1,
+            ("secp256k1", "SHA256") => &signature::ECDSA_P256K1_SHA256_ASN1,
+            ("secp256k1", "SHA3-256") => &signature::ECDSA_P256K1_SHA3_256_ASN1,
             _ => {
                 panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
             }
         };
 
         let actual_result = signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
+        println!("{curve_name}: is_valid={is_valid}, actual_result={actual_result:?}");
         assert_eq!(actual_result.is_ok(), is_valid);
 
         Ok(())
@@ -399,6 +402,14 @@ fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
             ("P-521", "SHA3-512") => (
                 &signature::ECDSA_P521_SHA3_512_ASN1_SIGNING,
                 &signature::ECDSA_P521_SHA3_512_ASN1,
+            ),
+            ("secp256k1", "SHA256") => (
+                &signature::ECDSA_P256K1_SHA256_ASN1_SIGNING,
+                &signature::ECDSA_P256K1_SHA256_ASN1,
+            ),
+            ("secp256k1", "SHA3-256") => (
+                &signature::ECDSA_P256K1_SHA3_256_ASN1_SIGNING,
+                &signature::ECDSA_P256K1_SHA3_256_ASN1,
             ),
             _ => {
                 panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
