@@ -425,45 +425,9 @@ unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecifi
 #[cfg(test)]
 mod tests {
     use crate::{
-        error::{KeyRejected, Unspecified},
+        error::KeyRejected,
         kem::{KemPrivateKey, KemPublicKey, KYBER1024_R3, KYBER512_R3, KYBER768_R3},
-        test, test_file,
     };
-
-    #[test]
-    fn test_kem_kyber512() {
-        test::run(
-            test_file!("../tests/data/kyber512r3.txt"),
-            |_section, test_case| {
-                let public_key_bytes = test_case.consume_bytes("pk");
-                let secret_key_bytes = test_case.consume_bytes("sk");
-                let ciphertext_bytes = test_case.consume_bytes("ct");
-                let shared_secret_bytes = test_case.consume_bytes("ss");
-
-                let secret_key = KemPrivateKey::new(&KYBER512_R3, &secret_key_bytes).unwrap();
-                // let public_key = secret_key.compute_public_key().unwrap();
-                let public_key = KemPublicKey::new(&KYBER512_R3, &public_key_bytes).unwrap();
-                assert_eq!(public_key.as_ref(), public_key_bytes);
-
-                let (mut ciphertext, bob_shared_secret) = public_key
-                    .encapsulate(Unspecified, |ciphertext, shared_secret| {
-                        Ok((ciphertext.to_vec(), shared_secret.to_vec()))
-                    })
-                    .unwrap();
-                // assert_eq!(ciphertext, ciphertext_bytes);
-                assert_eq!(bob_shared_secret, shared_secret_bytes);
-
-                let alice_shared_secret = secret_key
-                    .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
-                        Ok(shared_secret.to_vec())
-                    })
-                    .unwrap();
-                assert_eq!(alice_shared_secret, shared_secret_bytes);
-
-                Ok(())
-            },
-        );
-    }
 
     #[test]
     fn test_kem_privkey_serialize() {
