@@ -13,6 +13,7 @@ use aws_lc::{
 };
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
+use std::ptr::null_mut;
 
 impl TryFrom<&[u8]> for LcPtr<*mut EVP_PKEY> {
     type Error = KeyRejected;
@@ -96,16 +97,12 @@ impl LcPtr<*mut EVP_PKEY> {
                 }
             }
 
-            let mut pkcs8_bytes_ptr = MaybeUninit::<*mut u8>::uninit();
+            let mut pkcs8_bytes_ptr = null_mut::<u8>();
             let mut out_len = MaybeUninit::<usize>::uninit();
-            if 1 != CBB_finish(
-                cbb.as_mut_ptr(),
-                pkcs8_bytes_ptr.as_mut_ptr(),
-                out_len.as_mut_ptr(),
-            ) {
+            if 1 != CBB_finish(cbb.as_mut_ptr(), &mut pkcs8_bytes_ptr, out_len.as_mut_ptr()) {
                 return Err(Unspecified);
             }
-            let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr.assume_init())?;
+            let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr)?;
             let out_len = out_len.assume_init();
 
             let bytes_slice = std::slice::from_raw_parts(*pkcs8_bytes_ptr, out_len);
