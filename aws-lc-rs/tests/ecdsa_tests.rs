@@ -189,7 +189,6 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
         };
 
         let actual_result = signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
-        println!("{curve_name}: is_valid={is_valid}, actual_result={actual_result:?}");
         assert_eq!(actual_result.is_ok(), is_valid);
 
         Ok(())
