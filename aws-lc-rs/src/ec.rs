@@ -174,19 +174,15 @@ fn verify_fixed_signature(
     msg: &[u8],
     signature: &[u8],
 ) -> Result<(), Unspecified> {
-    let mut out_bytes = MaybeUninit::<*mut u8>::uninit();
+    let mut out_bytes = null_mut::<u8>();
     let mut out_bytes_len = MaybeUninit::<usize>::uninit();
     let sig = unsafe { ecdsa_sig_from_fixed(alg, signature)? };
     if 1 != unsafe {
-        ECDSA_SIG_to_bytes(
-            out_bytes.as_mut_ptr(),
-            out_bytes_len.as_mut_ptr(),
-            *sig.as_const(),
-        )
+        ECDSA_SIG_to_bytes(&mut out_bytes, out_bytes_len.as_mut_ptr(), *sig.as_const())
     } {
         return Err(Unspecified);
     }
-    let out_bytes = LcPtr::new(unsafe { out_bytes.assume_init() })?;
+    let out_bytes = LcPtr::new(out_bytes)?;
     let signature = unsafe { out_bytes.as_slice::<u8>(out_bytes_len.assume_init()) };
     verify_asn1_signature(alg, digest, public_key, msg, signature)
 }
