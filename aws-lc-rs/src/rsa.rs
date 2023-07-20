@@ -25,7 +25,7 @@ use aws_lc::{
     EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_assign_RSA,
     EVP_PKEY_get0_RSA, EVP_PKEY_new, RSA_bits, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q,
     RSA_new, RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key,
-    RSA_size, EVP_PKEY, EVP_PKEY_CTX, RSA, RSA_PKCS1_PSS_PADDING,
+    RSA_size, EVP_PKEY, EVP_PKEY_CTX, RSA, RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
 };
 use core::fmt;
 use mirai_annotations::verify_unreachable;
@@ -35,7 +35,6 @@ use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::RangeInclusive;
 use std::ptr::{null, null_mut};
-use std::slice;
 
 #[cfg(any(feature = "ring-sig-verify", feature = "ring-io"))]
 use untrusted::Input;
@@ -44,13 +43,13 @@ use zeroize::Zeroize;
 /// An RSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
 pub struct RsaKeyPair {
-    // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L286
-    // An |RSA| object represents a public or private RSA key. A given object may be
+    // https://github.com/aws/aws-lc/blob/ebaa07a207fee02bd68fe8d65f6b624afbf29394/include/openssl/evp.h#L295
+    // An |EVP_PKEY| object represents a public or private RSA key. A given object may be
     // used concurrently on multiple threads by non-mutating functions, provided no
     // other thread is concurrently calling a mutating function. Unless otherwise
     // documented, functions which take a |const| pointer are non-mutating and
     // functions which take a non-|const| pointer are mutating.
-    rsa_key: LcPtr<*mut EVP_PKEY>,
+    evp_pkey: LcPtr<*mut EVP_PKEY>,
     serialized_public_key: RsaSubjectPublicKey,
 }
 
@@ -64,7 +63,7 @@ impl RsaKeyPair {
             let rsa_key = evp_pkey.get_rsa()?;
             let serialized_public_key = RsaSubjectPublicKey::new(&rsa_key.as_const())?;
             Ok(RsaKeyPair {
-                rsa_key: evp_pkey,
+                evp_pkey,
                 serialized_public_key,
             })
         }
@@ -120,7 +119,7 @@ impl RsaKeyPair {
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
             let evp_pkey = LcPtr::try_from(pkcs8)?;
-            Self::validate_rsa(&evp_pkey)?;
+            Self::validate_rsa_pkey(&evp_pkey)?;
             Self::new(evp_pkey)
         }
     }
@@ -131,15 +130,15 @@ impl RsaKeyPair {
     /// `error:KeyRejected` on error.
     pub fn from_der(input: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
-            let pkey = build_private_RSA(input)?;
-            Self::validate_rsa(&pkey)?;
+            let pkey = build_private_RSA_PKEY(input)?;
+            Self::validate_rsa_pkey(&pkey)?;
             Self::new(pkey)
         }
     }
     const MIN_RSA_BITS: u32 = 1024;
     const MAX_RSA_BITS: u32 = 2048;
 
-    unsafe fn validate_rsa(rsa: &LcPtr<*mut EVP_PKEY>) -> Result<(), KeyRejected> {
+    unsafe fn validate_rsa_pkey(rsa: &LcPtr<*mut EVP_PKEY>) -> Result<(), KeyRejected> {
         let rsa = rsa.get_rsa()?.as_const();
 
         let p = ConstPointer::new(RSA_get0_p(*rsa))?;
@@ -203,7 +202,7 @@ impl VerificationAlgorithm for RsaParameters {
         signature: &[u8],
     ) -> Result<(), Unspecified> {
         unsafe {
-            let rsa = build_public_RSA(public_key)?;
+            let rsa = build_public_RSA_PKEY(public_key)?;
             verify_RSA(self.0, self.1, &rsa, msg, signature, &self.2)
         }
     }
@@ -237,29 +236,25 @@ impl RsaKeyPair {
         let encoding = padding_alg.encoding();
 
         let mut md_ctx = digest::digest_ctx::DigestContext::new_uninit();
-        let mut pctx = MaybeUninit::<*mut EVP_PKEY_CTX>::uninit();
+        let mut pctx = null_mut::<EVP_PKEY_CTX>();
         let digest = digest::match_digest_type(&encoding.0.id);
 
         if 1 != unsafe {
             EVP_DigestSignInit(
                 md_ctx.as_mut_ptr(),
-                pctx.as_mut_ptr(),
+                &mut pctx,
                 *digest,
                 null_mut(),
-                *self.rsa_key,
+                *self.evp_pkey,
             )
         } {
             return Err(Unspecified);
         }
 
         if let RsaPadding::RSA_PKCS1_PSS_PADDING = encoding.1 {
-            let pctx = unsafe { pctx.assume_init() };
-            if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) } {
-                return Err(Unspecified);
-            };
-            if 1 != unsafe { EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) } {
-                return Err(Unspecified);
-            };
+            // AWS-LC owns pctx, check for null and then immediately detach so we don't drop it.
+            let pctx = DetachableLcPtr::new(pctx)?.detach();
+            configure_rsa_pkcs1_pss_padding(pctx)?;
         }
 
         let max_len = get_signature_length(&mut md_ctx)?;
@@ -279,7 +274,7 @@ impl RsaKeyPair {
     #[must_use]
     pub fn public_modulus_len(&self) -> usize {
         // This was already validated to be an RSA key so this can't fail
-        match self.rsa_key.get_rsa() {
+        match self.evp_pkey.get_rsa() {
             Ok(rsa) => {
                 // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
                 unsafe { (RSA_size(*rsa)) as usize }
@@ -296,6 +291,17 @@ impl Debug for RsaKeyPair {
             self.serialized_public_key
         ))
     }
+}
+
+#[inline]
+fn configure_rsa_pkcs1_pss_padding(pctx: *mut EVP_PKEY_CTX) -> Result<(), ()> {
+    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) } {
+        return Err(());
+    };
+    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST) } {
+        return Err(());
+    };
+    Ok(())
 }
 
 #[inline]
@@ -343,14 +349,14 @@ fn compute_rsa_signature<'a>(
 
 #[allow(non_snake_case)]
 unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, ()> {
-    let mut pubkey_bytes = MaybeUninit::<*mut u8>::uninit();
+    let mut pubkey_bytes = null_mut::<u8>();
     let mut outlen = MaybeUninit::<usize>::uninit();
-    if 1 != RSA_public_key_to_bytes(pubkey_bytes.as_mut_ptr(), outlen.as_mut_ptr(), **pubkey) {
+    if 1 != RSA_public_key_to_bytes(&mut pubkey_bytes, outlen.as_mut_ptr(), **pubkey) {
         return Err(());
     }
-    let pubkey_bytes = LcPtr::new(pubkey_bytes.assume_init())?;
+    let pubkey_bytes = LcPtr::new(pubkey_bytes)?;
     let outlen = outlen.assume_init();
-    let pubkey_slice = slice::from_raw_parts(*pubkey_bytes, outlen);
+    let pubkey_slice = pubkey_bytes.as_slice(outlen);
     let pubkey_vec = Vec::from(pubkey_slice);
     Ok(pubkey_vec.into_boxed_slice())
 }
@@ -546,7 +552,7 @@ impl RsaParameters {
 
 #[inline]
 #[allow(non_snake_case)]
-unsafe fn build_public_RSA(public_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+unsafe fn build_public_RSA_PKEY(public_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
     let mut cbs = cbs::build_CBS(public_key);
 
     let rsa = DetachableLcPtr::new(RSA_parse_public_key(&mut cbs))?;
@@ -564,7 +570,7 @@ unsafe fn build_public_RSA(public_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY>, Un
 
 #[inline]
 #[allow(non_snake_case)]
-unsafe fn build_private_RSA(private_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY>, KeyRejected> {
+unsafe fn build_private_RSA_PKEY(private_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY>, KeyRejected> {
     let mut cbs = cbs::build_CBS(private_key);
 
     let rsa = DetachableLcPtr::new(RSA_parse_private_key(&mut cbs))?;
@@ -600,12 +606,12 @@ fn verify_RSA(
     let mut md_ctx = digest::digest_ctx::DigestContext::new_uninit();
     let digest = digest::match_digest_type(&algorithm.id);
 
-    let mut pctx = MaybeUninit::<*mut EVP_PKEY_CTX>::uninit();
+    let mut pctx = null_mut::<EVP_PKEY_CTX>();
 
     if 1 != unsafe {
         EVP_DigestVerifyInit(
             md_ctx.as_mut_ptr(),
-            pctx.as_mut_ptr(),
+            &mut pctx,
             *digest,
             null_mut(),
             **public_key,
@@ -614,16 +620,10 @@ fn verify_RSA(
         return Err(Unspecified);
     }
 
-    // This is allocation is managed by aws-lc so need for us to wrap it for freeing.
-    let pctx = unsafe { pctx.assume_init() };
-
     if let RsaPadding::RSA_PKCS1_PSS_PADDING = padding {
-        if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) } {
-            return Err(Unspecified);
-        };
-        if 1 != unsafe { EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) } {
-            return Err(Unspecified);
-        };
+        // AWS-LC owns pctx, check for null and then immediately detach so we don't drop it.
+        let pctx = DetachableLcPtr::new(pctx)?.detach();
+        configure_rsa_pkcs1_pss_padding(pctx)?;
     }
 
     if 1 != unsafe {

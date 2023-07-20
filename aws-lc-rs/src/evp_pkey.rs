@@ -105,7 +105,7 @@ impl LcPtr<*mut EVP_PKEY> {
             let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr)?;
             let out_len = out_len.assume_init();
 
-            let bytes_slice = std::slice::from_raw_parts(*pkcs8_bytes_ptr, out_len);
+            let bytes_slice = pkcs8_bytes_ptr.as_slice(out_len);
             let mut pkcs8_bytes = [0u8; PKCS8_DOCUMENT_MAX_LEN];
             pkcs8_bytes[0..out_len].copy_from_slice(bytes_slice);
 
