@@ -135,6 +135,10 @@ fn ecdsa_generate_pkcs8_test() {
         &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
         &signature::ECDSA_P521_SHA3_512_FIXED_SIGNING,
         &signature::ECDSA_P521_SHA3_512_ASN1_SIGNING,
+        &signature::ECDSA_P256K1_SHA256_ASN1_SIGNING,
+        &signature::ECDSA_P256K1_SHA256_FIXED_SIGNING,
+        &signature::ECDSA_P256K1_SHA3_256_ASN1_SIGNING,
+        &signature::ECDSA_P256K1_SHA3_256_FIXED_SIGNING,
     ] {
         let pkcs8 = signature::EcdsaKeyPair::generate_pkcs8(alg, &rng).unwrap();
         println!();
@@ -177,6 +181,8 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
             ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_ASN1,
             ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_ASN1,
             ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_ASN1,
+            ("secp256k1", "SHA256") => &signature::ECDSA_P256K1_SHA256_ASN1,
+            ("secp256k1", "SHA3-256") => &signature::ECDSA_P256K1_SHA3_256_ASN1,
             _ => {
                 panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
             }
@@ -217,6 +223,8 @@ fn test_signature_ecdsa_verify_fixed(data_file: test::File) {
             ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_FIXED,
             ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_FIXED,
             ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_FIXED,
+            ("secp256k1", "SHA256") => &signature::ECDSA_P256K1_SHA256_FIXED,
+            ("secp256k1", "SHA3-256") => &signature::ECDSA_P256K1_SHA3_256_FIXED,
             _ => {
                 unrecoverable!("Unsupported curve+digest: {}+{}", curve_name, digest_name);
             }
@@ -316,6 +324,14 @@ fn test_signature_ecdsa_sign_fixed_sign_and_verify(data_file: test::File) {
                 &signature::ECDSA_P521_SHA3_512_FIXED_SIGNING,
                 &signature::ECDSA_P521_SHA3_512_FIXED,
             ),
+            ("secp256k1", "SHA256") => (
+                &signature::ECDSA_P256K1_SHA256_FIXED_SIGNING,
+                &signature::ECDSA_P256K1_SHA256_FIXED,
+            ),
+            ("secp256k1", "SHA3-256") => (
+                &signature::ECDSA_P256K1_SHA3_256_FIXED_SIGNING,
+                &signature::ECDSA_P256K1_SHA3_256_FIXED,
+            ),
             _ => {
                 panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
             }
@@ -385,6 +401,14 @@ fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
             ("P-521", "SHA3-512") => (
                 &signature::ECDSA_P521_SHA3_512_ASN1_SIGNING,
                 &signature::ECDSA_P521_SHA3_512_ASN1,
+            ),
+            ("secp256k1", "SHA256") => (
+                &signature::ECDSA_P256K1_SHA256_ASN1_SIGNING,
+                &signature::ECDSA_P256K1_SHA256_ASN1,
+            ),
+            ("secp256k1", "SHA3-256") => (
+                &signature::ECDSA_P256K1_SHA3_256_ASN1_SIGNING,
+                &signature::ECDSA_P256K1_SHA3_256_ASN1,
             ),
             _ => {
                 panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
