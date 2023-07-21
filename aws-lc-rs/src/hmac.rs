@@ -134,6 +134,9 @@ impl Algorithm {
 /// HMAC using SHA-1. Obsolete.
 pub static HMAC_SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm(&digest::SHA1_FOR_LEGACY_USE_ONLY);
 
+/// HMAC using SHA-224.
+pub static HMAC_SHA224: Algorithm = Algorithm(&digest::SHA224);
+
 /// HMAC using SHA-256.
 pub static HMAC_SHA256: Algorithm = Algorithm(&digest::SHA256);
 
@@ -458,6 +461,7 @@ mod tests {
 
         for algorithm in &[
             hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+            hmac::HMAC_SHA224,
             hmac::HMAC_SHA256,
             hmac::HMAC_SHA384,
             hmac::HMAC_SHA512,
@@ -478,6 +482,7 @@ mod tests {
 
         for &alg in &[
             hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+            hmac::HMAC_SHA224,
             hmac::HMAC_SHA256,
             hmac::HMAC_SHA384,
             hmac::HMAC_SHA512,

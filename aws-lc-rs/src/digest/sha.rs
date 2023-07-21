@@ -6,7 +6,7 @@
 use crate::digest::{Algorithm, AlgorithmID, Context};
 use aws_lc::{
     NID_sha1, NID_sha256, NID_sha384, NID_sha3_256, NID_sha3_384, NID_sha3_512, NID_sha512,
-    NID_sha512_256,
+    NID_sha512_256, NID_sha224
 };
 
 pub const BLOCK_LEN: usize = 512 / 8;
@@ -15,6 +15,9 @@ pub const OUTPUT_LEN: usize = 160 / 8;
 
 /// The length of the output of SHA-1, in bytes.
 pub const SHA1_OUTPUT_LEN: usize = OUTPUT_LEN;
+
+/// The length of the output of SHA-224, in bytes.
+pub const SHA224_OUTPUT_LEN: usize = 224 / 8;
 
 /// The length of the output of SHA-256, in bytes.
 pub const SHA256_OUTPUT_LEN: usize = 256 / 8;
@@ -82,6 +85,23 @@ pub static SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
     id: AlgorithmID::SHA1,
 
     hash_nid: NID_sha1,
+};
+
+/// SHA-256 as specified in [FIPS 180-4].
+///
+/// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
+#[allow(deprecated)]
+pub static SHA224: Algorithm = Algorithm {
+    output_len: SHA224_OUTPUT_LEN,
+    chaining_len: SHA224_OUTPUT_LEN,
+    block_len: 512 / 8,
+    max_input_len: SHA256_MAX_INPUT_LEN,
+
+    one_shot_hash: sha224_digest,
+
+    id: AlgorithmID::SHA224,
+
+    hash_nid: NID_sha224,
 };
 
 /// SHA-256 as specified in [FIPS 180-4].
@@ -200,6 +220,12 @@ pub static SHA3_512: Algorithm = Algorithm {
 fn sha1_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
         aws_lc::SHA1(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+    }
+}
+
+fn sha224_digest(msg: &[u8], output: &mut [u8]) {
+    unsafe {
+        aws_lc::SHA224(msg.as_ptr(), msg.len(), output.as_mut_ptr());
     }
 }
 
