@@ -53,7 +53,8 @@ use aws_lc::{
     EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
     EVP_PKEY_encapsulate, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
     EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_keygen,
-    EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM, NID_KYBER512_R3,
+    EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM, NID_KYBER1024_R3, NID_KYBER512_R3,
+    NID_KYBER768_R3,
 };
 use std::cmp::Ordering;
 use std::os::raw::c_int;
@@ -68,10 +69,22 @@ const KYBER512_R3_CIPHERTEXT_LENGTH: usize = 768;
 const KYBER512_R3_PUBLIC_KEY_LENGTH: usize = 800;
 const KYBER512_R3_SHARED_SECRET_LENGTH: usize = 32;
 
+const KYBER768_R3_SECRET_KEY_LENGTH: usize = 2400;
+const KYBER768_R3_CIPHERTEXT_LENGTH: usize = 1088;
+const KYBER768_R3_PUBLIC_KEY_LENGTH: usize = 1184;
+const KYBER768_R3_SHARED_SECRET_LENGTH: usize = 32;
+
+const KYBER1024_R3_SECRET_KEY_LENGTH: usize = 3168;
+const KYBER1024_R3_CIPHERTEXT_LENGTH: usize = 1568;
+const KYBER1024_R3_PUBLIC_KEY_LENGTH: usize = 1568;
+const KYBER1024_R3_SHARED_SECRET_LENGTH: usize = 32;
+
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
 enum KemAlgorithmID {
     Kyber512_R3,
+    Kyber768_R3,
+    Kyber1024_R3,
 }
 
 /// A KEM algorithm
@@ -93,11 +106,31 @@ pub static KYBER512_R3: KemAlgorithm = KemAlgorithm {
     shared_secret_size: KYBER512_R3_SHARED_SECRET_LENGTH,
 };
 
+/// NIST Round 3 iteration of the Kyber-768 algorithm
+pub static KYBER768_R3: KemAlgorithm = KemAlgorithm {
+    id: KemAlgorithmID::Kyber768_R3,
+    secret_key_size: KYBER768_R3_SECRET_KEY_LENGTH,
+    public_key_size: KYBER768_R3_PUBLIC_KEY_LENGTH,
+    ciphertext_size: KYBER768_R3_CIPHERTEXT_LENGTH,
+    shared_secret_size: KYBER768_R3_SHARED_SECRET_LENGTH,
+};
+
+/// NIST Round 3 iteration of the Kyber-1024 algorithm
+pub static KYBER1024_R3: KemAlgorithm = KemAlgorithm {
+    id: KemAlgorithmID::Kyber1024_R3,
+    secret_key_size: KYBER1024_R3_SECRET_KEY_LENGTH,
+    public_key_size: KYBER1024_R3_PUBLIC_KEY_LENGTH,
+    ciphertext_size: KYBER1024_R3_CIPHERTEXT_LENGTH,
+    shared_secret_size: KYBER1024_R3_SHARED_SECRET_LENGTH,
+};
+
 impl KemAlgorithmID {
     #[inline]
     fn nid(&self) -> i32 {
         match self {
             KemAlgorithmID::Kyber512_R3 => NID_KYBER512_R3,
+            KemAlgorithmID::Kyber768_R3 => NID_KYBER768_R3,
+            KemAlgorithmID::Kyber1024_R3 => NID_KYBER1024_R3,
         }
     }
 }
@@ -393,69 +426,74 @@ unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecifi
 mod tests {
     use crate::{
         error::KeyRejected,
-        kem::{
-            KemPrivateKey, KemPublicKey, KYBER512_R3, KYBER512_R3_PUBLIC_KEY_LENGTH,
-            KYBER512_R3_SECRET_KEY_LENGTH,
-        },
+        kem::{KemPrivateKey, KemPublicKey, KYBER1024_R3, KYBER512_R3, KYBER768_R3},
     };
 
     #[test]
     fn test_kem_privkey_serialize() {
-        let priv_key = KemPrivateKey::generate(&KYBER512_R3).unwrap();
-        assert_eq!(priv_key.algorithm(), &KYBER512_R3);
+        for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
+            let priv_key = KemPrivateKey::generate(algorithm).unwrap();
+            assert_eq!(priv_key.algorithm(), algorithm);
 
-        let privkey_raw_bytes = priv_key.as_ref();
-        let priv_key_from_bytes = KemPrivateKey::new(&KYBER512_R3, privkey_raw_bytes).unwrap();
+            let privkey_raw_bytes = priv_key.as_ref();
+            let priv_key_from_bytes = KemPrivateKey::new(algorithm, privkey_raw_bytes).unwrap();
 
-        assert_eq!(priv_key.as_ref(), priv_key_from_bytes.as_ref());
-        assert_eq!(priv_key.algorithm(), priv_key_from_bytes.algorithm());
+            assert_eq!(priv_key.as_ref(), priv_key_from_bytes.as_ref());
+            assert_eq!(priv_key.algorithm(), priv_key_from_bytes.algorithm());
+        }
     }
 
     #[test]
     fn test_kem_pubkey_serialize() {
-        let priv_key = KemPrivateKey::generate(&KYBER512_R3).unwrap();
-        assert_eq!(priv_key.algorithm(), &KYBER512_R3);
+        for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
+            let priv_key = KemPrivateKey::generate(algorithm).unwrap();
+            assert_eq!(priv_key.algorithm(), algorithm);
 
-        let pub_key = priv_key.compute_public_key().unwrap();
+            let pub_key = priv_key.compute_public_key().unwrap();
 
-        let pubkey_raw_bytes = pub_key.as_ref();
-        let pub_key_from_bytes = KemPublicKey::new(&KYBER512_R3, pubkey_raw_bytes).unwrap();
+            let pubkey_raw_bytes = pub_key.as_ref();
+            let pub_key_from_bytes = KemPublicKey::new(algorithm, pubkey_raw_bytes).unwrap();
 
-        assert_eq!(pub_key.as_ref(), pub_key_from_bytes.as_ref());
-        assert_eq!(pub_key.algorithm(), pub_key_from_bytes.algorithm());
+            assert_eq!(pub_key.as_ref(), pub_key_from_bytes.as_ref());
+            assert_eq!(pub_key.algorithm(), pub_key_from_bytes.algorithm());
+        }
     }
 
     #[test]
     fn test_kem_privkey_wrong_size() {
-        let too_long_bytes = vec![0u8; KYBER512_R3_SECRET_KEY_LENGTH + 1];
-        let long_priv_key_from_bytes = KemPrivateKey::new(&KYBER512_R3, &too_long_bytes);
-        assert_eq!(
-            long_priv_key_from_bytes.err(),
-            Some(KeyRejected::too_large())
-        );
+        for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
+            let too_long_bytes = vec![0u8; algorithm.secret_key_size() + 1];
+            let long_priv_key_from_bytes = KemPrivateKey::new(algorithm, &too_long_bytes);
+            assert_eq!(
+                long_priv_key_from_bytes.err(),
+                Some(KeyRejected::too_large())
+            );
 
-        let too_short_bytes = vec![0u8; KYBER512_R3_SECRET_KEY_LENGTH - 1];
-        let short_priv_key_from_bytes = KemPrivateKey::new(&KYBER512_R3, &too_short_bytes);
-        assert_eq!(
-            short_priv_key_from_bytes.err(),
-            Some(KeyRejected::too_small())
-        );
+            let too_short_bytes = vec![0u8; algorithm.secret_key_size() - 1];
+            let short_priv_key_from_bytes = KemPrivateKey::new(algorithm, &too_short_bytes);
+            assert_eq!(
+                short_priv_key_from_bytes.err(),
+                Some(KeyRejected::too_small())
+            );
+        }
     }
 
     #[test]
     fn test_kem_pubkey_wrong_size() {
-        let too_long_bytes = vec![0u8; KYBER512_R3_PUBLIC_KEY_LENGTH + 1];
-        let long_pub_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_long_bytes);
-        assert_eq!(
-            long_pub_key_from_bytes.err(),
-            Some(KeyRejected::too_large())
-        );
+        for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
+            let too_long_bytes = vec![0u8; algorithm.public_key_size() + 1];
+            let long_pub_key_from_bytes = KemPublicKey::new(algorithm, &too_long_bytes);
+            assert_eq!(
+                long_pub_key_from_bytes.err(),
+                Some(KeyRejected::too_large())
+            );
 
-        let too_short_bytes = vec![0u8; KYBER512_R3_PUBLIC_KEY_LENGTH - 1];
-        let short_pub_key_from_bytes = KemPublicKey::new(&KYBER512_R3, &too_short_bytes);
-        assert_eq!(
-            short_pub_key_from_bytes.err(),
-            Some(KeyRejected::too_small())
-        );
+            let too_short_bytes = vec![0u8; algorithm.public_key_size() - 1];
+            let short_pub_key_from_bytes = KemPublicKey::new(algorithm, &too_short_bytes);
+            assert_eq!(
+                short_pub_key_from_bytes.err(),
+                Some(KeyRejected::too_small())
+            );
+        }
     }
 }
