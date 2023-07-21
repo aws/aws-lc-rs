@@ -166,29 +166,34 @@ pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
 mod tests {
     use crate::rand;
     use std::array::IntoIter;
+    use std::ops::Range;
 
     use crate::rand::{generate, SecureRandom, SystemRandom};
 
+    const RAND_ARY_SIZE: usize = 191;
+    const EXPECTED_MEAN_RANGE: Range<f64> = 101f64..155f64;
+    const EXPECTED_VARIANCE_LB: f64 = 8f64;
+
     #[test]
     fn test_secure_random_fill() {
-        let mut random_array = [0u8; 191];
+        let mut random_array = [0u8; RAND_ARY_SIZE];
         let rng = SystemRandom::new();
         rng.fill(&mut random_array).unwrap();
 
         let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
-        assert!((101f64..155f64).contains(&mean), "Mean: {mean}");
-        assert!(variance > 8f64, "Variance: {variance}");
+        assert!(EXPECTED_MEAN_RANGE.contains(&mean), "Mean: {mean}");
+        assert!(variance > EXPECTED_VARIANCE_LB, "Variance: {variance}");
         println!("Mean: {mean} Variance: {variance}");
     }
 
     #[test]
     fn test_rand_fill() {
-        let mut random_array: [u8; 173] = [0u8; 173];
+        let mut random_array = [0u8; RAND_ARY_SIZE];
         rand::fill(&mut random_array).unwrap();
 
         let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
-        assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
-        assert!(variance > 8f64);
+        assert!(EXPECTED_MEAN_RANGE.contains(&mean), "Mean: {mean}");
+        assert!(variance > EXPECTED_VARIANCE_LB);
         println!("Mean: {mean} Variance: {variance}");
     }
 
@@ -196,10 +201,10 @@ mod tests {
     fn test_randomly_constructable() {
         let rando = SystemRandom::new();
         let random_array = generate(&rando).unwrap();
-        let random_array: [u8; 173] = random_array.expose();
+        let random_array: [u8; RAND_ARY_SIZE] = random_array.expose();
         let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
-        assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
-        assert!(variance > 8f64);
+        assert!(EXPECTED_MEAN_RANGE.contains(&mean), "Mean: {mean}");
+        assert!(variance > EXPECTED_VARIANCE_LB, "Variance: {variance}");
         println!("Mean: {mean} Variance: {variance}");
     }
 
