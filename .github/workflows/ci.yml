@@ -177,6 +177,28 @@ jobs:
         working-directory: ./aws-lc-rs
         run: cross test --release --features bindgen --target ${{ matrix.target }}
 
+  aws-lc-rs-platform-build:
+    name: Cross-platform build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ macos-latest ]
+        target: [ aarch64-apple-ios ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+          target: ${{ matrix.target }}
+      - name: Run cargo build
+        working-directory: ./aws-lc-rs
+        run: cargo build --features bindgen --target ${{ matrix.target }}
 
   aws-lc-rs-test:
     name: aws-lc-rs tests

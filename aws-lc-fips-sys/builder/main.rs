@@ -70,10 +70,7 @@ impl Default for OutputLibType {
             return OutputLibType::Static;
         }
 
-        let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-        let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
-
-        if target_os == "linux" && (target_arch == "x86_64" || target_arch == "aarch64") {
+        if target_os() == "linux" && (target_arch() == "x86_64" || target_arch() == "aarch64") {
             OutputLibType::Static
         } else {
             OutputLibType::Dynamic
@@ -259,12 +256,28 @@ fn emit_rustc_cfg(cfg: &str) {
     println!("cargo:rustc-cfg={cfg}");
 }
 
+fn target_os() -> String {
+    env::var("CARGO_CFG_TARGET_OS").unwrap()
+}
+
+fn target_arch() -> String {
+    env::var("CARGO_CFG_TARGET_ARCH").unwrap()
+}
+
+#[allow(unused)]
+fn target_vendor() -> String {
+    env::var("CARGO_CFG_TARGET_VENDOR").unwrap()
+}
+
+#[allow(unused)]
+fn target() -> String {
+    env::var("TARGET").unwrap()
+}
+
 macro_rules! cfg_bindgen_platform {
     ($binding:ident, $os:literal, $arch:literal, $additional:expr) => {
-        let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
-        let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
         let $binding = {
-            (target_os == $os && target_arch == $arch && $additional)
+            (target_os() == $os && target_arch() == $arch && $additional)
                 .then(|| {
                     emit_rustc_cfg(concat!($os, "_", $arch));
                     true
