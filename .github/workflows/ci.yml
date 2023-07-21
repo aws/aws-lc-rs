@@ -90,11 +90,6 @@ jobs:
         with:
           command: install
           args: cargo-public-api
-      - name: Install rust-script
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: rust-script
       - name: Perform API Diff (Target Branch)
         if: matrix.diff_target == 'branch'
         working-directory: ${{ matrix.crate_dir }}
@@ -104,7 +99,7 @@ jobs:
         working-directory: ${{ matrix.crate_dir }}
         shell: bash
         run: |
-          CRATE_NAME=$("${GITHUB_WORKSPACE}"/scripts/tools/cargo-dig.rs -n)
+          CRATE_NAME="${{ matrix.crate_dir }}"
           CRATE_VERSION=$(cargo search --limit 1 ${CRATE_NAME} | head -n 1 | sed -e 's/[^"]*"\([^"]*\)".*/\1/')
           cargo public-api diff --deny changed --deny removed "${CRATE_VERSION}"
 
@@ -147,6 +142,42 @@ jobs:
         env:
           RUSTC_WRAPPER: ""
 
+  aws-lc-rs-cross-test:
+    name: aws-lc-rs cross tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ ubuntu-latest ]
+        target: [ aarch64-unknown-linux-gnu, i686-unknown-linux-gnu,  powerpc64le-unknown-linux-gnu, riscv64gc-unknown-linux-gnu ]
+    steps:
+      - name: Set CROSS_CMAKE_SYSTEM_PROCESSOR
+        if: ${{ matrix.target == 'powerpc64le-unknown-linux-gnu' }}
+        run: echo CROSS_CMAKE_SYSTEM_PROCESSOR=ppc64le >> $GITHUB_ENV
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+          target: ${{ matrix.target }}
+      - name: Install cross
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install
+          args: cross --git https://github.com/cross-rs/cross
+      - name: Cross-compilation
+        if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'i686-unknown-linux-gnu' }}
+        working-directory: ./aws-lc-rs
+        run: cross test --target ${{ matrix.target }}
+      - name: Cross-compilation w/ bindgen
+        working-directory: ./aws-lc-rs
+        run: cross test --release --features bindgen --target ${{ matrix.target }}
+
+
   aws-lc-rs-test:
     name: aws-lc-rs tests
     runs-on: ${{ matrix.os }}
@@ -155,21 +186,13 @@ jobs:
       matrix:
         rust: [ stable ]
         os: [ ubuntu-latest, macOS-latest ]
-        target: [ native, aarch64-unknown-linux-gnu, i686-unknown-linux-gnu ]
         args:
           - --all-targets
-          - --release --all-targets --features ring-benchmarks
+          - --release --all-targets
           - --no-default-features --features non-fips
           - --no-default-features --features non-fips,ring-io
           - --no-default-features --features non-fips,ring-sig-verify
           - --no-default-features --features non-fips,alloc
-        exclude:
-          - rust: stable
-            os: macOS-latest
-            target: aarch64-unknown-linux-gnu
-          - rust: stable
-            os: macOS-latest
-            target: i686-unknown-linux-gnu
     steps:
       - uses: actions/checkout@v3
         with:
@@ -179,24 +202,12 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           override: true
-          target: ${{ matrix.target != 'native' && matrix.target || '' }}
-
-      - name: Install cross
-        if: ${{ matrix.target != 'native' }}
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: cross
-
       - name: Run cargo test
         working-directory: ./aws-lc-rs
-        if: ${{ matrix.target == 'native' }}
-        run: cargo test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
-
-      - name: Run cargo cross test
-        working-directory: ./aws-lc-rs
-        if: ${{ matrix.target != 'native' }}
-        run: cross test ${{ matrix.args }} ${{ matrix.target != 'native' && format('--target {0}', matrix.target) || '' }}
+        run: cargo test ${{ matrix.args }}
+      - name: Run extra tests
+        working-directory: ./aws-lc-rs-testing
+        run: cargo test --all-targets
 
   fips-test:
     name: aws-lc-rs fips-tests
@@ -208,7 +219,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-latest, macOS-latest ]
         args:
           - --release --all-targets --features fips
           - --no-default-features --features fips
@@ -227,7 +238,9 @@ jobs:
           override: true
       - name: Run cargo test
         working-directory: ./aws-lc-rs
-        run: cargo test ${{ matrix.args }}
+        # Doc-tests fail to link with dynamic build
+        # See: https://github.com/rust-lang/cargo/issues/8531
+        run: cargo test --tests ${{ matrix.args }}
 
   bindgen-test:
     name: aws-lc-rs bindgen-tests
@@ -239,7 +252,7 @@ jobs:
         os: [ ubuntu-latest, macOS-latest ]
         args:
           - --no-default-features --features aws-lc-sys,bindgen
-          - --release --all-targets --features ring-benchmarks,bindgen
+          - --release --all-targets --features bindgen
     steps:
       - uses: actions/checkout@v3
         with:
@@ -264,7 +277,7 @@ jobs:
         args:
           - --all-targets
           - --all-targets --features bindgen
-          - --release --all-targets --features ring-benchmarks
+          - --release --all-targets
           - --no-default-features --features non-fips
           - --no-default-features --features non-fips,ring-io
           - --no-default-features --features non-fips,ring-sig-verify
@@ -310,7 +323,7 @@ jobs:
       # coverage immediately.
       - name: Run coverage
         working-directory: ./aws-lc-rs
-        run: cargo llvm-cov --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-sys/*"
+        run: cargo llvm-cov --workspace --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-(fips-)?sys/.*"
 
   mirai-analysis:
     runs-on: ubuntu-latest
@@ -431,3 +444,69 @@ jobs:
       - name: Check
         run: |
           ./scripts/tools/copyright_check.sh
+
+  build-env-test:
+    name: aws-lc-rs build-env-test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest ]
+        static: [ 0, 1 ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: stable
+          override: true
+      - name: Run cargo test
+        working-directory: ./aws-lc-rs
+        # Doc-tests fail to link with dynamic build
+        # See: https://github.com/rust-lang/cargo/issues/8531
+        run: AWS_LC_SYS_STATIC=${{ matrix.static }}  cargo test --tests
+
+  build-env-fips-test:
+    name: aws-lc-rs build-env-fips-test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest ]
+        static: [ 0, 1 ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: stable
+          override: true
+      - name: Run cargo test
+        working-directory: ./aws-lc-rs
+        if: ${{ matrix.os != 'macOS-latest' || matrix.static != 1 }}
+        # Doc-tests fail to link with dynamic build
+        # See: https://github.com/rust-lang/cargo/issues/8531
+        run: AWS_LC_FIPS_SYS_STATIC=${{ matrix.static }} cargo test --tests --features fips
+
+  msrv:
+    name: Minimum Supported Rust Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          lfs: true
+
+      - name: Install cargo-msrv
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install
+          args: cargo-msrv
+
+      - name: Verify msrv
+        working-directory: ./aws-lc-rs
+        run: cargo msrv verify

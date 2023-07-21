@@ -1,7 +1,7 @@
 [package]
 name = "aws-lc-fips-sys"
 description = "AWS-LC is a general-purpose cryptographic library maintained by the AWS Cryptography team for AWS and their customers. This is the FIPS validated version of AWS-LC."
-version = "0.9.0"
+version = "0.9.1"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/awslabs/aws-lc"
@@ -57,12 +57,17 @@ ssl = []
 
 [build-dependencies]
 cmake = "0.1.48"
-bindgen = { version = "0.66.0", optional = true }
 dunce = "1.0"
+
+[target.'cfg(any(all(target_os = "linux", target_arch = "x86_64"), all(target_os = "linux", target_arch = "aarch64")))'.build-dependencies]
+bindgen = { version = "0.66.1", optional = true }
+
+[target.'cfg(not(any(all(target_os = "linux", target_arch = "x86_64"), all(target_os = "linux", target_arch = "aarch64"))))'.build-dependencies]
+bindgen = { version = "0.66.1" }
 
 [dependencies]
 libc = "0.2"
 paste = "1.0.11"
 
 [package.metadata.aws-lc-fips-sys]
-commit-hash = "74f6538863e0d4713b1e2a4b7d380e8919b8c52e"
+commit-hash = "99f67f188d228f065d6c4a93cf4fc2683a0b9369"

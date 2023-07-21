@@ -52,6 +52,27 @@ enum OutputLibType {
     Dynamic,
 }
 
+impl Default for OutputLibType {
+    fn default() -> Self {
+        let build_type_result = env::var("AWS_LC_SYS_STATIC");
+        if let Ok(build_type) = build_type_result {
+            eprintln!("AWS_LC_SYS_STATIC={build_type}");
+            // If the environment variable is set, we ignore every other factor.
+            let build_type = build_type.to_lowercase();
+            if build_type.starts_with('0')
+                || build_type.starts_with('n')
+                || build_type.starts_with("off")
+            {
+                // Only dynamic if the value is set and is a "negative" value
+                return OutputLibType::Dynamic;
+            }
+
+            return OutputLibType::Static;
+        }
+        OutputLibType::Static
+    }
+}
+
 impl OutputLibType {
     fn rust_lib_type(&self) -> &str {
         match self {
@@ -121,6 +142,12 @@ fn get_cmake_config(manifest_dir: &PathBuf) -> cmake::Config {
 
 fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cmake::Config {
     let mut cmake_cfg = get_cmake_config(manifest_dir);
+
+    if OutputLibType::default() == OutputLibType::Dynamic {
+        cmake_cfg.define("BUILD_SHARED_LIBS", "1");
+    } else {
+        cmake_cfg.define("BUILD_SHARED_LIBS", "0");
+    }
 
     let opt_level = env::var("OPT_LEVEL").unwrap_or_else(|_| "0".to_string());
     if opt_level.ne("0") {
@@ -243,10 +270,18 @@ fn emit_rustc_cfg(cfg: &str) {
     println!("cargo:rustc-cfg={cfg}");
 }
 
+fn target_os() -> String {
+    env::var("CARGO_CFG_TARGET_OS").unwrap()
+}
+
+fn target_arch() -> String {
+    env::var("CARGO_CFG_TARGET_ARCH").unwrap()
+}
+
 macro_rules! cfg_bindgen_platform {
     ($binding:ident, $os:literal, $arch:literal, $additional:expr) => {
         let $binding = {
-            (cfg!(all(target_os = $os, target_arch = $arch)) && $additional)
+            (target_os() == $os && target_arch() == $arch && $additional)
                 .then(|| {
                     emit_rustc_cfg(concat!($os, "_", $arch));
                     true
@@ -258,9 +293,9 @@ macro_rules! cfg_bindgen_platform {
 
 fn main() {
     use crate::OutputLib::{Crypto, RustWrapper, Ssl};
-    use crate::OutputLibType::Static;
 
     let mut is_bindgen_required = cfg!(feature = "bindgen");
+    let output_lib_type = OutputLibType::default();
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
         .unwrap_or_else(|_| String::from("0"))
@@ -278,19 +313,7 @@ fn main() {
         is_bindgen_required = true;
     }
 
-    let mut missing_dependency = false;
-
-    if let Some(cmake_cmd) = find_cmake_command() {
-        env::set_var("CMAKE", cmake_cmd);
-    } else {
-        eprintln!("Missing dependency: cmake");
-        missing_dependency = true;
-    };
-
-    assert!(
-        !missing_dependency,
-        "Required build dependency is missing. Halting build."
-    );
+    check_dependencies();
 
     let manifest_dir = env::current_dir().unwrap();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
@@ -298,11 +321,14 @@ fn main() {
 
     let out_dir = build_rust_wrapper(&manifest_dir);
 
+    #[allow(unused_assignments)]
+    let mut bindings_available = false;
     if is_internal_generate {
         #[cfg(feature = "bindgen")]
         {
             let src_bindings_path = Path::new(&manifest_dir).join("src");
             generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
+            bindings_available = true;
         }
     } else if is_bindgen_required {
         #[cfg(any(
@@ -317,8 +343,16 @@ fn main() {
         {
             let gen_bindings_path = Path::new(&env::var("OUT_DIR").unwrap()).join("bindings.rs");
             generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
+            bindings_available = true;
         }
+    } else {
+        bindings_available = true;
     }
+
+    assert!(
+        bindings_available,
+        "aws-lc-sys build failed. Please enable the 'bindgen' feature on aws-lc-rs or aws-lc-sys"
+    );
 
     println!(
         "cargo:rustc-link-search=native={}",
@@ -327,25 +361,25 @@ fn main() {
 
     println!(
         "cargo:rustc-link-lib={}={}",
-        Static.rust_lib_type(),
+        output_lib_type.rust_lib_type(),
         Crypto.libname(Some(&prefix))
     );
 
     if cfg!(feature = "ssl") {
         println!(
             "cargo:rustc-link-lib={}={}",
-            Static.rust_lib_type(),
+            output_lib_type.rust_lib_type(),
             Ssl.libname(Some(&prefix))
         );
     }
 
     println!(
         "cargo:rustc-link-lib={}={}",
-        Static.rust_lib_type(),
+        output_lib_type.rust_lib_type(),
         RustWrapper.libname(Some(&prefix))
     );
 
-    for include_path in vec![
+    for include_path in [
         get_rust_include_path(&manifest_dir),
         get_generated_include_path(&manifest_dir),
         get_aws_lc_include_path(&manifest_dir),
@@ -360,4 +394,21 @@ fn main() {
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
+    println!("cargo:rerun-if-env-changed=AWS_LC_SYS_STATIC");
+}
+
+fn check_dependencies() {
+    let mut missing_dependency = false;
+
+    if let Some(cmake_cmd) = find_cmake_command() {
+        env::set_var("CMAKE", cmake_cmd);
+    } else {
+        eprintln!("Missing dependency: cmake");
+        missing_dependency = true;
+    };
+
+    assert!(
+        !missing_dependency,
+        "Required build dependency is missing. Halting build."
+    );
 }

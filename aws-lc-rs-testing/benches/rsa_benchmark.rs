@@ -3,9 +3,7 @@
 
 #![allow(deprecated, dead_code)]
 
-#[cfg(feature = "ring-sig-verify")]
 use aws_lc_rs::{test, test_file};
-#[cfg(feature = "ring-sig-verify")]
 use criterion::{criterion_group, criterion_main, Criterion};
 
 #[allow(dead_code)]
@@ -18,7 +16,6 @@ pub struct RsaConfig {
 }
 
 impl RsaConfig {
-    #[cfg(feature = "ring-sig-verify")]
     fn new(padding: &str, digest: &str, key: &[u8], msg: &[u8], signature: &[u8]) -> RsaConfig {
         RsaConfig {
             padding: RsaPadding::from(padding),
@@ -40,7 +37,6 @@ pub const PSS: RsaPadding = RsaPadding::PSS;
 pub const PKCS1: RsaPadding = RsaPadding::PKCS1;
 
 impl RsaPadding {
-    #[cfg(feature = "ring-sig-verify")]
     fn from(value: &str) -> &'static Self {
         match value.trim() {
             "PSS" => &PSS,
@@ -62,7 +58,6 @@ pub const SHA384: RsaDigest = RsaDigest::SHA384;
 pub const SHA512: RsaDigest = RsaDigest::SHA512;
 
 impl RsaDigest {
-    #[cfg(feature = "ring-sig-verify")]
     fn from(value: &str) -> &'static Self {
         match value.trim() {
             "SHA256" => &SHA256,
@@ -73,7 +68,6 @@ impl RsaDigest {
     }
 }
 
-#[cfg(feature = "ring-sig-verify")]
 macro_rules! benchmark_rsa {
     ( $pkg:ident ) => {
         paste::item! {
@@ -144,12 +138,10 @@ macro_rules! benchmark_rsa {
     };
 }
 
-#[cfg(feature = "ring-sig-verify")]
 benchmark_rsa!(aws_lc_rs);
-#[cfg(all(feature = "ring-sig-verify", feature = "ring-benchmarks"))]
+#[cfg(feature = "ring-benchmarks")]
 benchmark_rsa!(ring);
 
-#[cfg(feature = "ring-sig-verify")]
 fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
     let mut buffer = [0u8; 2048];
 
@@ -191,7 +183,6 @@ fn test_rsa_sign(c: &mut Criterion, config: &RsaConfig) {
     }
 }
 
-#[cfg(feature = "ring-sig-verify")]
 fn test_rsa_verify(c: &mut Criterion, config: &RsaConfig) {
     let bench_group_name = format!(
         "RSA-{}-{:?}-{:?}-verify-{}-bytes",
@@ -230,7 +221,6 @@ fn test_rsa_verify(c: &mut Criterion, config: &RsaConfig) {
     }
 }
 
-#[cfg(feature = "ring-sig-verify")]
 fn test_rsa(c: &mut Criterion) {
     test::run(
         test_file!("data/rsa_benchmarks.txt"),
@@ -249,12 +239,5 @@ fn test_rsa(c: &mut Criterion) {
     );
 }
 
-#[cfg(feature = "ring-sig-verify")]
 criterion_group!(benches, test_rsa);
-#[cfg(feature = "ring-sig-verify")]
 criterion_main!(benches);
-
-#[cfg(not(feature = "ring-sig-verify"))]
-fn main() {
-    println!("This bench requires feature: ring-sig-verify")
-}

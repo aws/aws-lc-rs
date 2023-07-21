@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 fn main() {
-    let mutually_exclusives_count = vec![cfg!(feature = "non-fips"), cfg!(feature = "fips")]
+    let mutually_exclusives_count = [cfg!(feature = "non-fips"), cfg!(feature = "fips")]
         .iter()
         .filter(|x| **x)
         .count();
@@ -14,7 +14,7 @@ fn main() {
 
     // This appears asymmetric, but it reflects the `cfg` statements in lib.rs that
     // require `aws-lc-sys` to be present when "fips" is not enabled.
-    let at_least_one_count = vec![cfg!(feature = "aws-lc-sys"), cfg!(feature = "fips")]
+    let at_least_one_count = [cfg!(feature = "aws-lc-sys"), cfg!(feature = "fips")]
         .iter()
         .filter(|x| **x)
         .count();

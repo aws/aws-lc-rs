@@ -269,13 +269,13 @@ mod tests {
             assert_eq!(small_nonnegative_integer(input)?, 0x00);
             Ok(())
         });
-        for &(test_in, test_out) in GOOD_POSITIVE_INTEGERS.iter() {
+        for &(test_in, test_out) in GOOD_POSITIVE_INTEGERS {
             with_good_i(test_in, |input| {
                 assert_eq!(small_nonnegative_integer(input)?, test_out);
                 Ok(())
             });
         }
-        for &test_in in BAD_NONNEGATIVE_INTEGERS.iter() {
+        for &test_in in BAD_NONNEGATIVE_INTEGERS {
             with_bad_i(test_in, |input| {
                 let _: u8 = small_nonnegative_integer(input)?;
                 Ok(())
@@ -289,7 +289,7 @@ mod tests {
             let _: Positive<'_> = positive_integer(input)?;
             Ok(())
         });
-        for &(test_in, test_out) in GOOD_POSITIVE_INTEGERS.iter() {
+        for &(test_in, test_out) in GOOD_POSITIVE_INTEGERS {
             with_good_i(test_in, |input| {
                 let test_out = [test_out];
                 assert_eq!(
@@ -301,7 +301,7 @@ mod tests {
                 Ok(())
             });
         }
-        for &test_in in BAD_NONNEGATIVE_INTEGERS.iter() {
+        for &test_in in BAD_NONNEGATIVE_INTEGERS {
             with_bad_i(test_in, |input| {
                 let _: Positive<'_> = positive_integer(input)?;
                 Ok(())
@@ -323,9 +323,7 @@ mod tests {
 
     #[test]
     fn test_big() {
-        for &((bytes_in_a, bytes_in_b), (bytes_out_a, bytes_out_b)) in
-            GOOD_BIG_POSITIVE_INTEGERS.iter()
-        {
+        for &((bytes_in_a, bytes_in_b), (bytes_out_a, bytes_out_b)) in GOOD_BIG_POSITIVE_INTEGERS {
             let mut bytes_in = Vec::new();
             bytes_in.extend(bytes_in_a);
             bytes_in.extend(bytes_in_b);

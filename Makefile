@@ -10,7 +10,7 @@ deinit-submodules:
 init: init-submodules
 	git config core.hooksPath .githooks
 	rustup component add rustfmt clippy
-	cargo install rust-script cargo-llvm-cov cargo-license public-api --locked
+	cargo install rust-script cargo-llvm-cov cargo-license public-api cargo-msrv --locked
 	cargo install cargo-audit --features=fix --locked
 
 update-aws-lc-fips-sys:
@@ -42,4 +42,7 @@ api-diff-pub:
 clippy:
 	cargo +nightly clippy --all-targets --features bindgen -- -W clippy::all  -W clippy::pedantic
 
-.PHONY: init-aws-lc-sys init-aws-lc-fips-sys init-submodules init update-submodules lic audit format api-diff-main api-diff-pub clippy
+udep:
+	cargo +nightly udeps --all-targets
+
+.PHONY: init-aws-lc-sys init-aws-lc-fips-sys init-submodules init update-submodules lic audit format api-diff-main api-diff-pub clippy udep

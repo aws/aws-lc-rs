@@ -83,7 +83,7 @@ impl Context {
 
     /// Updates the message to digest with all the data in `data`.
     ///
-    /// # Panic
+    /// # Panics
     /// Panics if update causes total input length to exceed maximum allowed (`u64::MAX`).
     #[inline]
     pub fn update(&mut self, data: &[u8]) {
@@ -118,6 +118,9 @@ impl Context {
     ///
     /// `finish` consumes the context so it cannot be (mis-)used after `finish`
     /// has been called.
+    ///
+    /// # Panics
+    /// Panics if the digest is unable to be finalized
     #[inline]
     #[must_use]
     pub fn finish(self) -> Digest {
