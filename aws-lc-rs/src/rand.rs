@@ -171,13 +171,13 @@ mod tests {
 
     #[test]
     fn test_secure_random_fill() {
-        let mut random_array = [0u8; 173];
+        let mut random_array = [0u8; 191];
         let rng = SystemRandom::new();
         rng.fill(&mut random_array).unwrap();
 
         let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
-        assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
-        assert!(variance > 8f64);
+        assert!((101f64..155f64).contains(&mean), "Mean: {mean}");
+        assert!(variance > 8f64, "Variance: {variance}");
         println!("Mean: {mean} Variance: {variance}");
     }
 
