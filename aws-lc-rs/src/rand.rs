@@ -193,7 +193,7 @@ mod tests {
 
         let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
         assert!(EXPECTED_MEAN_RANGE.contains(&mean), "Mean: {mean}");
-        assert!(variance > EXPECTED_VARIANCE_LB);
+        assert!(variance > EXPECTED_VARIANCE_LB, "Variance: {variance}");
         println!("Mean: {mean} Variance: {variance}");
     }
 
