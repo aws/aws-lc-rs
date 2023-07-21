@@ -360,7 +360,7 @@ pub fn to_hex<T: AsRef<[u8]>>(bytes: T) -> String {
 pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
     let mut bytes = Vec::<u8>::with_capacity(hex_str.len() / 2 + 1);
     let mut current_byte = b'\0';
-    let mut index = 0;
+    let mut index: u32 = 0;
     for ch in hex_str.chars() {
         if !ch.is_ascii_hexdigit() {
             return Err("Invalid hex string".to_string());
@@ -374,7 +374,11 @@ pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
             bytes.push(current_byte);
         }
 
-        index += 1;
+        if let Some(idx) = index.checked_add(1) {
+            index = idx;
+        } else {
+            break;
+        }
     }
     if index % 2 == 1 {
         bytes.push(current_byte);
