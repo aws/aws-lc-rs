@@ -53,7 +53,7 @@ use crate::ec::{
     ec_group_from_nid, ec_key_from_public_point, ec_key_generate, ec_point_from_bytes,
 };
 use crate::error::Unspecified;
-use crate::ptr::{DetachableLcPtr, LcPtr};
+use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::{ec, test};
 use aws_lc::{
@@ -164,12 +164,6 @@ enum KeyInner {
     X25519(LcPtr<*mut EVP_PKEY>),
 }
 
-impl Drop for KeyInner {
-    fn drop(&mut self) {
-        // LcPtr's Drop implementation will call EVP_PKEY_free
-    }
-}
-
 /// An ephemeral private key for use (only) with `agree_ephemeral`. The
 /// signature of `agree_ephemeral` ensures that an `EphemeralPrivateKey` can be
 /// used for at most one key agreement.
@@ -223,25 +217,25 @@ impl EphemeralPrivateKey {
             AlgorithmID::X25519 => {
                 let priv_key = generate_x25519()?;
                 Ok(EphemeralPrivateKey {
-                    inner_key: KeyInner::X25519(LcPtr::from(priv_key)),
+                    inner_key: KeyInner::X25519(priv_key),
                 })
             }
             AlgorithmID::ECDH_P256 => {
                 let ec_key = ec_key_generate(ECDH_P256.id.nid())?;
                 Ok(EphemeralPrivateKey {
-                    inner_key: KeyInner::ECDH_P256(LcPtr::from(ec_key)),
+                    inner_key: KeyInner::ECDH_P256(ec_key),
                 })
             }
             AlgorithmID::ECDH_P384 => {
                 let ec_key = ec_key_generate(ECDH_P384.id.nid())?;
                 Ok(EphemeralPrivateKey {
-                    inner_key: KeyInner::ECDH_P384(LcPtr::from(ec_key)),
+                    inner_key: KeyInner::ECDH_P384(ec_key),
                 })
             }
             AlgorithmID::ECDH_P521 => {
                 let ec_key = ec_key_generate(ECDH_P521.id.nid())?;
                 Ok(EphemeralPrivateKey {
-                    inner_key: KeyInner::ECDH_P521(LcPtr::from(ec_key)),
+                    inner_key: KeyInner::ECDH_P521(ec_key),
                 })
             }
         }
@@ -371,6 +365,8 @@ impl EphemeralPrivateKey {
 
 #[cfg(test)]
 fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+    use crate::ptr::DetachableLcPtr;
+
     let ec_group = unsafe { ec_group_from_nid(nid)? };
     let priv_key = DetachableLcPtr::try_from(priv_key)?;
 
@@ -379,7 +375,7 @@ fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<*mut EVP_PKEY>
     Ok(pkey)
 }
 
-pub(crate) fn generate_x25519() -> Result<DetachableLcPtr<*mut EVP_PKEY>, Unspecified> {
+pub(crate) fn generate_x25519() -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
@@ -392,7 +388,7 @@ pub(crate) fn generate_x25519() -> Result<DetachableLcPtr<*mut EVP_PKEY>, Unspec
         return Err(Unspecified);
     }
 
-    let pkey = DetachableLcPtr::new(pkey)?;
+    let pkey = LcPtr::new(pkey)?;
 
     Ok(pkey)
 }

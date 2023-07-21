@@ -355,7 +355,7 @@ pub(crate) unsafe fn ec_key_from_private(
 }
 
 #[inline]
-pub(crate) fn ec_key_generate(nid: c_int) -> Result<DetachableLcPtr<*mut EVP_PKEY>, Unspecified> {
+pub(crate) fn ec_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_EC, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
@@ -372,7 +372,7 @@ pub(crate) fn ec_key_generate(nid: c_int) -> Result<DetachableLcPtr<*mut EVP_PKE
         return Err(Unspecified);
     }
 
-    let pkey = DetachableLcPtr::new(pkey)?;
+    let pkey = LcPtr::new(pkey)?;
 
     Ok(pkey)
 }
