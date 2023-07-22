@@ -24,6 +24,8 @@ fn hmac_tests() {
             };
             if digest_alg == &digest::SHA1_FOR_LEGACY_USE_ONLY {
                 hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY
+            } else if digest_alg == &digest::SHA224 {
+                hmac::HMAC_SHA224
             } else if digest_alg == &digest::SHA256 {
                 hmac::HMAC_SHA256
             } else if digest_alg == &digest::SHA384 {

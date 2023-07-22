@@ -15,6 +15,8 @@ fn digest_misc() {
         let repeat = test_case.consume_usize("Repeat");
         let expected = test_case.consume_bytes("Output");
 
+        println!("input: {input:?}");
+
         let mut ctx = digest::Context::new(digest_alg);
         let mut data = Vec::new();
         for _ in 0..repeat {
@@ -226,6 +228,7 @@ mod digest_shavs {
     }
 
     shavs_tests!(SHA1, SHA1_FOR_LEGACY_USE_ONLY, TestType::Fips180_4);
+    shavs_tests!(SHA224, SHA224, TestType::Fips180_4);
     shavs_tests!(SHA256, SHA256, TestType::Fips180_4);
     shavs_tests!(SHA384, SHA384, TestType::Fips180_4);
     shavs_tests!(SHA512, SHA512, TestType::Fips180_4);
@@ -275,6 +278,7 @@ macro_rules! test_i_u_f {
     };
 }
 test_i_u_f!(digest_test_i_u_f_sha1, digest::SHA1_FOR_LEGACY_USE_ONLY);
+test_i_u_f!(digest_test_i_u_f_sha224, digest::SHA224);
 test_i_u_f!(digest_test_i_u_f_sha256, digest::SHA256);
 test_i_u_f!(digest_test_i_u_f_sha384, digest::SHA384);
 test_i_u_f!(digest_test_i_u_f_sha512, digest::SHA512);
@@ -295,6 +299,7 @@ test_i_u_f!(digest_test_i_u_f_sha512, digest::SHA512);
 ///
 /// ```sh
 /// sha1sum -b tempfile
+/// sha224sum -b tempfile
 /// sha256sum -b tempfile
 /// sha384sum -b tempfile
 /// sha512sum -b tempfile
@@ -338,6 +343,15 @@ test_large_digest!(
     ]
 );
 test_large_digest!(
+    digest_test_large_digest_sha224,
+    digest::SHA224,
+    224 / 8,
+    [
+        0xC2, 0x58, 0x05, 0x9f, 0xa8, 0x03, 0x85, 0xeb, 0xf9, 0xf7, 0x3d, 0x01, 0xfe, 0x94, 0x36,
+        0xd9, 0x62, 0xc4, 0x9a, 0xeb, 0x2c, 0xd0, 0x7e, 0x21, 0x1e, 0xe1, 0x05, 0x55
+    ]
+);
+test_large_digest!(
     digest_test_large_digest_sha256,
     digest::SHA256,
     256 / 8,
@@ -377,6 +391,7 @@ test_large_digest!(
 #[test]
 fn test_fmt_algorithm() {
     assert_eq!("SHA1", &format!("{:?}", digest::SHA1_FOR_LEGACY_USE_ONLY));
+    assert_eq!("SHA224", &format!("{:?}", digest::SHA224));
     assert_eq!("SHA256", &format!("{:?}", digest::SHA256));
     assert_eq!("SHA384", &format!("{:?}", digest::SHA384));
     assert_eq!("SHA512", &format!("{:?}", digest::SHA512));
@@ -391,6 +406,10 @@ fn digest_test_fmt() {
             "{:?}",
             digest::digest(&digest::SHA1_FOR_LEGACY_USE_ONLY, b"hello, world")
         )
+    );
+    assert_eq!(
+        "SHA224:6e1a93e32fb44081a401f3db3ef2e6e108b7bbeeb5705afdaf01fb27",
+        &format!("{:?}", digest::digest(&digest::SHA224, b"hello, world"))
     );
     assert_eq!(
         "SHA256:09ca7e4eaa6e8ae9c7d261167129184883644d\
