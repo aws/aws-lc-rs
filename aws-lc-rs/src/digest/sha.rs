@@ -36,10 +36,19 @@ const SHA512_BLOCK_LEN: usize = 1024 / 8;
 
 /// SHA-1 and SHA-256 are limited to an input size of 2^64-1 bits.
 #[allow(clippy::cast_possible_truncation)]
+const SHA1_MAX_INPUT_LEN: u64 = u64::MAX;
+
+#[allow(clippy::cast_possible_truncation)]
+const SHA224_MAX_INPUT_LEN: u64 = u64::MAX;
+
+#[allow(clippy::cast_possible_truncation)]
 const SHA256_MAX_INPUT_LEN: u64 = u64::MAX;
 
 /// SHA-384, SHA-512, and SHA-512/256 are limited to an input size of 2^128-1 bits according to the spec.
 /// u64 is more than sufficient enough for practical usecases, so we limit the input length to 2^64-1 bits.
+#[allow(clippy::cast_possible_truncation)]
+const SHA384_MAX_INPUT_LEN: u64 = u64::MAX;
+
 #[allow(clippy::cast_possible_truncation)]
 const SHA512_MAX_INPUT_LEN: u64 = u64::MAX;
 
@@ -78,7 +87,7 @@ pub static SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
     output_len: SHA1_OUTPUT_LEN,
     chaining_len: CHAINING_LEN,
     block_len: BLOCK_LEN,
-    max_input_len: SHA256_MAX_INPUT_LEN,
+    max_input_len: SHA1_MAX_INPUT_LEN,
 
     one_shot_hash: sha1_digest,
 
@@ -95,7 +104,7 @@ pub static SHA224: Algorithm = Algorithm {
     output_len: SHA224_OUTPUT_LEN,
     chaining_len: SHA224_OUTPUT_LEN,
     block_len: 512 / 8,
-    max_input_len: SHA256_MAX_INPUT_LEN,
+    max_input_len: SHA224_MAX_INPUT_LEN,
 
     one_shot_hash: sha224_digest,
 
@@ -129,7 +138,7 @@ pub static SHA384: Algorithm = Algorithm {
     output_len: SHA384_OUTPUT_LEN,
     chaining_len: SHA512_OUTPUT_LEN,
     block_len: SHA512_BLOCK_LEN,
-    max_input_len: SHA512_MAX_INPUT_LEN,
+    max_input_len: SHA384_MAX_INPUT_LEN,
 
     one_shot_hash: sha384_digest,
 
