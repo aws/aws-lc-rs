@@ -17,7 +17,7 @@ use aws_lc::EC_KEY_generate_key;
 use aws_lc::EC_KEY_generate_key_fips;
 use aws_lc::{
     EC_KEY_new_by_curve_name, EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_assign_EC_KEY,
-    EVP_PKEY_new, EVP_PKEY_set1_EC_KEY, EC_KEY, EVP_PKEY,
+    EVP_PKEY_new, EVP_PKEY,
 };
 use std::fmt;
 use std::mem::MaybeUninit;
@@ -78,14 +78,9 @@ impl EcdsaKeyPair {
     #[allow(clippy::needless_pass_by_value)]
     unsafe fn new(
         algorithm: &'static EcdsaSigningAlgorithm,
-        ec_key: LcPtr<*mut EC_KEY>,
+        evp_pkey: LcPtr<*mut EVP_PKEY>,
     ) -> Result<Self, ()> {
-        let pubkey = ec::marshal_public_key(&ec_key.as_const())?;
-
-        let evp_pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
-        if 1 != unsafe { EVP_PKEY_set1_EC_KEY(*evp_pkey, *ec_key) } {
-            return Err(());
-        }
+        let pubkey = ec::marshal_public_key(&evp_pkey.as_const())?;
 
         Ok(Self {
             algorithm,
@@ -107,11 +102,9 @@ impl EcdsaKeyPair {
         unsafe {
             let evp_pkey = LcPtr::try_from(pkcs8)?;
 
-            let ec_key = evp_pkey.get_ec_key()?;
+            validate_ec_key(&evp_pkey.as_const(), alg.id.nid())?;
 
-            validate_ec_key(&ec_key.as_const(), alg.id.nid())?;
-
-            let key_pair = Self::new(alg, ec_key)?;
+            let key_pair = Self::new(alg, evp_pkey)?;
 
             Ok(key_pair)
         }
@@ -166,9 +159,11 @@ impl EcdsaKeyPair {
             let public_ec_point = ec::ec_point_from_bytes(&ec_group, public_key)
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let private_bn = DetachableLcPtr::try_from(private_key)?;
-            let ec_key = ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
-            validate_ec_key(&ec_key.as_const(), alg.id.nid())?;
-            let key_pair = Self::new(alg, ec_key)?;
+            let evp_pkey =
+                ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
+            validate_ec_key(&evp_pkey.as_const(), alg.id.nid())?;
+
+            let key_pair = Self::new(alg, evp_pkey)?;
             Ok(key_pair)
         }
     }

@@ -11,19 +11,21 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
+#[cfg(feature = "fips")]
+use aws_lc::EC_KEY_check_fips;
+#[cfg(not(feature = "fips"))]
+use aws_lc::EC_KEY_check_key;
 use aws_lc::{
     point_conversion_form_t, ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s,
     ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EC_GROUP_get_curve_name,
     EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new,
-    EC_KEY_new_by_curve_name, EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key,
-    EC_POINT_new, EC_POINT_oct2point, EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_PKEY_assign_EC_KEY, EVP_PKEY_new, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
-    BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY,
+    EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new,
+    EC_POINT_oct2point, EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY,
+    EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new,
+    NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
+    EC_POINT, EVP_PKEY, EVP_PKEY_EC,
 };
-#[cfg(feature = "fips")]
-use aws_lc::{EC_KEY_check_fips, EC_KEY_generate_key_fips};
-#[cfg(not(feature = "fips"))]
-use aws_lc::{EC_KEY_check_key, EC_KEY_generate_key};
 
 #[cfg(test)]
 use aws_lc::EC_POINT_mul;
@@ -243,10 +245,12 @@ fn evp_pkey_from_public_key(
 
 #[inline]
 unsafe fn validate_ec_key(
-    ec_key: &ConstPointer<EC_KEY>,
+    evp_pkey: &ConstPointer<EVP_PKEY>,
     expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
-    let ec_group = ConstPointer::new(EC_KEY_get0_group(**ec_key))?;
+    let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
+
+    let ec_group = ConstPointer::new(EC_KEY_get0_group(*ec_key))?;
     let key_nid = EC_GROUP_get_curve_name(*ec_group);
 
     if key_nid != expected_curve_nid {
@@ -254,12 +258,12 @@ unsafe fn validate_ec_key(
     }
 
     #[cfg(not(feature = "fips"))]
-    if 1 != EC_KEY_check_key(**ec_key) {
+    if 1 != EC_KEY_check_key(*ec_key) {
         return Err(KeyRejected::inconsistent_components());
     }
 
     #[cfg(feature = "fips")]
-    if 1 != EC_KEY_check_fips(**ec_key) {
+    if 1 != EC_KEY_check_fips(*ec_key) {
         return Err(KeyRejected::inconsistent_components());
     }
 
@@ -268,20 +272,27 @@ unsafe fn validate_ec_key(
 
 pub(crate) unsafe fn marshal_public_key_to_buffer(
     buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
-    ec_key: &ConstPointer<EC_KEY>,
+    evp_pkey: &ConstPointer<EVP_PKEY>,
 ) -> Result<usize, Unspecified> {
-    let ec_group = ConstPointer::new(EC_KEY_get0_group(**ec_key))?;
+    let ec_key = EVP_PKEY_get0_EC_KEY(**evp_pkey);
+    if ec_key.is_null() {
+        return Err(Unspecified);
+    }
 
-    let ec_point = ConstPointer::new(EC_KEY_get0_public_key(**ec_key))?;
+    let ec_group = ConstPointer::new(EC_KEY_get0_group(ec_key))?;
+
+    let ec_point = ConstPointer::new(EC_KEY_get0_public_key(ec_key))?;
 
     let out_len = ec_point_to_bytes(&ec_group, &ec_point, buffer)?;
     Ok(out_len)
 }
 
-pub(crate) fn marshal_public_key(ec_key: &ConstPointer<EC_KEY>) -> Result<PublicKey, Unspecified> {
+pub(crate) fn marshal_public_key(
+    evp_pkey: &ConstPointer<EVP_PKEY>,
+) -> Result<PublicKey, Unspecified> {
     unsafe {
         let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
-        let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, ec_key)?;
+        let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey)?;
         let pub_key = Vec::from(&pub_key_bytes[0..key_len]);
         Ok(PublicKey::new(pub_key.into_boxed_slice()))
     }
@@ -306,7 +317,7 @@ pub(crate) unsafe fn ec_key_from_public_point(
 pub(crate) unsafe fn ec_key_from_private(
     ec_group: &ConstPointer<EC_GROUP>,
     private_big_num: &ConstPointer<BIGNUM>,
-) -> Result<DetachableLcPtr<*mut EC_KEY>, Unspecified> {
+) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
     let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(Unspecified);
@@ -329,26 +340,41 @@ pub(crate) unsafe fn ec_key_from_private(
         return Err(Unspecified);
     }
     let expected_curve_nid = EC_GROUP_get_curve_name(**ec_group);
-    // Validate the EC_KEY before returning it.
-    validate_ec_key(&ec_key.as_const(), expected_curve_nid)?;
 
-    Ok(ec_key)
+    let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
+
+    if 1 != unsafe { EVP_PKEY_assign_EC_KEY(*pkey, *ec_key) } {
+        return Err(Unspecified);
+    }
+    ec_key.detach();
+
+    // Validate the EC_KEY before returning it.
+    validate_ec_key(&pkey.as_const(), expected_curve_nid)?;
+
+    Ok(pkey)
 }
 
 #[inline]
-pub(crate) unsafe fn ec_key_generate(
-    nid: c_int,
-) -> Result<DetachableLcPtr<*mut EC_KEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(EC_KEY_new_by_curve_name(nid))?;
-    #[cfg(not(feature = "fips"))]
-    if 1 != EC_KEY_generate_key(*ec_key) {
+pub(crate) fn ec_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_EC, null_mut()) })?;
+
+    if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
         return Err(Unspecified);
     }
-    #[cfg(feature = "fips")]
-    if 1 != EC_KEY_generate_key_fips(*ec_key) {
+
+    if 1 != unsafe { EVP_PKEY_CTX_set_ec_paramgen_curve_nid(*pkey_ctx, nid) } {
         return Err(Unspecified);
     }
-    Ok(ec_key)
+
+    let mut pkey = null_mut::<EVP_PKEY>();
+
+    if 1 != unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) } {
+        return Err(Unspecified);
+    }
+
+    let pkey = LcPtr::new(pkey)?;
+
+    Ok(pkey)
 }
 
 #[inline]
@@ -356,8 +382,8 @@ unsafe fn ec_key_from_public_private(
     ec_group: &LcPtr<*mut EC_GROUP>,
     public_ec_point: &LcPtr<*mut EC_POINT>,
     private_bignum: &DetachableLcPtr<*mut BIGNUM>,
-) -> Result<LcPtr<*mut EC_KEY>, ()> {
-    let ec_key = LcPtr::new(EC_KEY_new())?;
+) -> Result<LcPtr<*mut EVP_PKEY>, ()> {
+    let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(());
     }
@@ -367,7 +393,14 @@ unsafe fn ec_key_from_public_private(
     if 1 != EC_KEY_set_private_key(*ec_key, **private_bignum) {
         return Err(());
     }
-    Ok(ec_key)
+
+    let evp_pkey = LcPtr::new(EVP_PKEY_new())?;
+    if 1 != EVP_PKEY_assign_EC_KEY(*evp_pkey, *ec_key) {
+        return Err(());
+    }
+    ec_key.detach();
+
+    Ok(evp_pkey)
 }
 
 #[inline]

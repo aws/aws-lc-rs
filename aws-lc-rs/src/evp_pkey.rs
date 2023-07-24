@@ -70,6 +70,7 @@ impl LcPtr<*mut EVP_PKEY> {
         unsafe { EVP_PKEY_bits(**self) }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn get_ec_key(&self) -> Result<LcPtr<*mut EC_KEY>, KeyRejected> {
         unsafe {
             LcPtr::new(EVP_PKEY_get1_EC_KEY(**self)).map_err(|_| KeyRejected::wrong_algorithm())
