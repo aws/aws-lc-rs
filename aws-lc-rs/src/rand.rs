@@ -170,30 +170,45 @@ mod tests {
 
     use crate::rand::{generate, SecureRandom, SystemRandom};
 
-    const RAND_ARY_SIZE: usize = 191;
-    const EXPECTED_MEAN_RANGE: Range<f64> = 101f64..155f64;
-    const EXPECTED_VARIANCE_LB: f64 = 8f64;
+    // These are sanity checks to verify that the random bytes "look" random by checking the mean
+    // and variance of a sample of values generated.
+    const RAND_ARRAY_SIZE: usize = 191;
+    //const EXPECTED_MEAN: f64 = 127.5; // (255 - 0)/2
+    //const EXPECTED_VARIANCE: f64 = 5461.25; // ((256^2) - 1)/12 = ~73.9^2
+    //const EXPECTED_STD_DEV: f64 = 5.3472; // (5461.25/191) ^ (1/2)
+
+    // Expect sample mean to be within 6 std. deviations of expected mean.
+    const SAMPLE_MEAN_RANGE: Range<f64> = 95.42..159.58; // 127.5 +/- (6 * 5.3472)
+
+    // Expect sample std. deviation to be with 20% of sqrt of expected variance
+    const SAMPLE_STD_DEV_RANGE: Range<f64> = 59.12..88.68; // (0.8 .. 1.2) * 73.9
 
     #[test]
     fn test_secure_random_fill() {
-        let mut random_array = [0u8; RAND_ARY_SIZE];
+        let mut random_array = [0u8; RAND_ARRAY_SIZE];
         let rng = SystemRandom::new();
         rng.fill(&mut random_array).unwrap();
 
-        let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
-        assert!(EXPECTED_MEAN_RANGE.contains(&mean), "Mean: {mean}");
-        assert!(variance > EXPECTED_VARIANCE_LB, "Variance: {variance}");
+        let (mean, variance) = sample_mean_variance(&mut random_array.into_iter()).unwrap();
+        assert!(SAMPLE_MEAN_RANGE.contains(&mean), "Mean: {mean}");
+        assert!(
+            SAMPLE_STD_DEV_RANGE.contains(&variance.sqrt()),
+            "Variance: {variance}"
+        );
         println!("Mean: {mean} Variance: {variance}");
     }
 
     #[test]
     fn test_rand_fill() {
-        let mut random_array = [0u8; RAND_ARY_SIZE];
+        let mut random_array = [0u8; RAND_ARRAY_SIZE];
         rand::fill(&mut random_array).unwrap();
 
-        let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
-        assert!(EXPECTED_MEAN_RANGE.contains(&mean), "Mean: {mean}");
-        assert!(variance > EXPECTED_VARIANCE_LB, "Variance: {variance}");
+        let (mean, variance) = sample_mean_variance(&mut random_array.into_iter()).unwrap();
+        assert!(SAMPLE_MEAN_RANGE.contains(&mean), "Mean: {mean}");
+        assert!(
+            SAMPLE_STD_DEV_RANGE.contains(&variance.sqrt()),
+            "Variance: {variance}"
+        );
         println!("Mean: {mean} Variance: {variance}");
     }
 
@@ -201,31 +216,34 @@ mod tests {
     fn test_randomly_constructable() {
         let rando = SystemRandom::new();
         let random_array = generate(&rando).unwrap();
-        let random_array: [u8; RAND_ARY_SIZE] = random_array.expose();
-        let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
-        assert!(EXPECTED_MEAN_RANGE.contains(&mean), "Mean: {mean}");
-        assert!(variance > EXPECTED_VARIANCE_LB, "Variance: {variance}");
+        let random_array: [u8; RAND_ARRAY_SIZE] = random_array.expose();
+        let (mean, variance) = sample_mean_variance(&mut random_array.into_iter()).unwrap();
+        assert!(SAMPLE_MEAN_RANGE.contains(&mean), "Mean: {mean}");
+        assert!(
+            SAMPLE_STD_DEV_RANGE.contains(&variance.sqrt()),
+            "Variance: {variance}"
+        );
         println!("Mean: {mean} Variance: {variance}");
     }
 
-    fn mean_variance<T: Into<f64>, const N: usize>(
+    fn sample_mean_variance<T: Into<f64>, const N: usize>(
         iterable: &mut IntoIter<T, N>,
     ) -> Option<(f64, f64)> {
         let iter = iterable;
         let mean: Option<T> = iter.next();
         mean.as_ref()?;
         let mut mean = mean.unwrap().into();
-        let mut var_squared = 0f64;
-        let mut count = 1f64;
+        let mut dev_squared = 0f64;
+        let mut count = 0f64;
         for value in iter.by_ref() {
             count += 1f64;
             let value = value.into();
             let prev_mean = mean;
             mean = prev_mean + (value - prev_mean) / count;
-            var_squared =
-                var_squared + ((value - prev_mean) * (value - mean) - var_squared) / count;
+            dev_squared =
+                dev_squared + ((value - prev_mean) * (value - mean) - dev_squared) / count;
         }
 
-        Some((mean, var_squared.sqrt()))
+        Some((mean, dev_squared))
     }
 }
