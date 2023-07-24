@@ -5,8 +5,8 @@
 
 use crate::digest::{Algorithm, AlgorithmID, Context};
 use aws_lc::{
-    NID_sha1, NID_sha256, NID_sha384, NID_sha3_256, NID_sha3_384, NID_sha3_512, NID_sha512,
-    NID_sha512_256, NID_sha224
+    NID_sha1, NID_sha224, NID_sha256, NID_sha384, NID_sha3_256, NID_sha3_384, NID_sha3_512,
+    NID_sha512, NID_sha512_256,
 };
 
 pub const BLOCK_LEN: usize = 512 / 8;
