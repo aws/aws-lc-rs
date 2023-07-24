@@ -15,8 +15,6 @@ fn digest_misc() {
         let repeat = test_case.consume_usize("Repeat");
         let expected = test_case.consume_bytes("Output");
 
-        println!("input: {input:?}");
-
         let mut ctx = digest::Context::new(digest_alg);
         let mut data = Vec::new();
         for _ in 0..repeat {
