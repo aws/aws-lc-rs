@@ -23,8 +23,8 @@ use aws_lc::{
     EC_POINT_oct2point, EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit,
     EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY,
     EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new,
-    NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
-    EC_POINT, EVP_PKEY, EVP_PKEY_EC,
+    NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP,
+    EC_KEY, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
 };
 
 #[cfg(test)]
@@ -98,6 +98,7 @@ pub(crate) enum AlgorithmID {
     ECDSA_P256,
     ECDSA_P384,
     ECDSA_P521,
+    ECDSA_P256K1,
 }
 
 impl AlgorithmID {
@@ -107,6 +108,7 @@ impl AlgorithmID {
             AlgorithmID::ECDSA_P256 => NID_X9_62_prime256v1,
             AlgorithmID::ECDSA_P384 => NID_secp384r1,
             AlgorithmID::ECDSA_P521 => NID_secp521r1,
+            AlgorithmID::ECDSA_P256K1 => NID_secp256k1,
         }
     }
 }
@@ -482,7 +484,7 @@ fn ecdsa_asn1_to_fixed(alg_id: &'static AlgorithmID, sig: &[u8]) -> Result<Signa
 #[inline]
 const fn ecdsa_fixed_number_byte_size(alg_id: &'static AlgorithmID) -> usize {
     match alg_id {
-        AlgorithmID::ECDSA_P256 => 32,
+        AlgorithmID::ECDSA_P256 | AlgorithmID::ECDSA_P256K1 => 32,
         AlgorithmID::ECDSA_P384 => 48,
         AlgorithmID::ECDSA_P521 => 66,
     }

@@ -178,6 +178,18 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
     cmake_cfg.define("DISABLE_PERL", "ON");
     cmake_cfg.define("DISABLE_GO", "ON");
 
+    if target_vendor() == "apple" {
+        if target_os().trim() == "ios" {
+            cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
+            if target().trim().ends_with("-ios-sim") {
+                cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
+            }
+        }
+        if target_arch().trim() == "aarch64" {
+            cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
+        }
+    }
+
     if cfg!(feature = "asan") {
         env::set_var("CC", "/usr/bin/clang");
         env::set_var("CXX", "/usr/bin/clang++");
@@ -253,6 +265,14 @@ fn target_os() -> String {
 
 fn target_arch() -> String {
     env::var("CARGO_CFG_TARGET_ARCH").unwrap()
+}
+
+fn target_vendor() -> String {
+    env::var("CARGO_CFG_TARGET_VENDOR").unwrap()
+}
+
+fn target() -> String {
+    env::var("TARGET").unwrap()
 }
 
 macro_rules! cfg_bindgen_platform {
