@@ -10,7 +10,7 @@ use aws_lc::{
 };
 
 /// The length of a block for SHA-1, in bytes.
-pub const SHA1_BLOCK_LEN: usize = 512 / 8;
+const SHA1_BLOCK_LEN: usize = 512 / 8;
 
 /// The length of the output of SHA-1, in bytes.
 pub const SHA1_OUTPUT_LEN: usize = 160 / 8;
