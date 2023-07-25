@@ -9,18 +9,20 @@ use aws_lc::{
     NID_sha512, NID_sha512_256,
 };
 
-pub const BLOCK_LEN: usize = 512 / 8;
-pub const CHAINING_LEN: usize = 160 / 8;
-pub const OUTPUT_LEN: usize = 160 / 8;
+/// The length of a block for SHA-1, in bytes.
+pub const SHA1_BLOCK_LEN: usize = 512 / 8;
 
 /// The length of the output of SHA-1, in bytes.
-pub const SHA1_OUTPUT_LEN: usize = OUTPUT_LEN;
+pub const SHA1_OUTPUT_LEN: usize = 160 / 8;
 
 /// The length of the output of SHA-224, in bytes.
 pub const SHA224_OUTPUT_LEN: usize = 224 / 8;
 
 /// The length of the output of SHA-256, in bytes.
 pub const SHA256_OUTPUT_LEN: usize = 256 / 8;
+
+/// The length of a block for SHA-256-based algorithms, in bytes.
+const SHA256_BLOCK_LEN: usize = 512 / 8;
 
 /// The length of the output of SHA-384, in bytes.
 pub const SHA384_OUTPUT_LEN: usize = 384 / 8;
@@ -34,7 +36,7 @@ pub const SHA512_256_OUTPUT_LEN: usize = 256 / 8;
 /// The length of a block for SHA-512-based algorithms, in bytes.
 const SHA512_BLOCK_LEN: usize = 1024 / 8;
 
-/// SHA-1 and SHA-256 are limited to an input size of 2^64-1 bits.
+/// SHA-1, SHA-224, and SHA-256 are limited to an input size of 2^64-1 bits.
 #[allow(clippy::cast_possible_truncation)]
 const SHA1_MAX_INPUT_LEN: u64 = u64::MAX;
 
@@ -85,8 +87,8 @@ const SHA3_512_MAX_INPUT_LEN: u64 = u64::MAX;
 #[allow(deprecated)]
 pub static SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
     output_len: SHA1_OUTPUT_LEN,
-    chaining_len: CHAINING_LEN,
-    block_len: BLOCK_LEN,
+    chaining_len: SHA1_OUTPUT_LEN,
+    block_len: SHA1_BLOCK_LEN,
     max_input_len: SHA1_MAX_INPUT_LEN,
 
     one_shot_hash: sha1_digest,
@@ -106,7 +108,7 @@ pub static SHA224: Algorithm = Algorithm {
     // The chaining length is equivalent to the length before truncation.
     // SHA-224 is truncated from 256 bits so the chaining length is 256 bits, or 32 bytes.
     chaining_len: SHA256_OUTPUT_LEN,
-    block_len: BLOCK_LEN,
+    block_len: SHA256_BLOCK_LEN,
     max_input_len: SHA224_MAX_INPUT_LEN,
 
     one_shot_hash: sha224_digest,
@@ -123,7 +125,7 @@ pub static SHA224: Algorithm = Algorithm {
 pub static SHA256: Algorithm = Algorithm {
     output_len: SHA256_OUTPUT_LEN,
     chaining_len: SHA256_OUTPUT_LEN,
-    block_len: BLOCK_LEN,
+    block_len: SHA256_BLOCK_LEN,
     max_input_len: SHA256_MAX_INPUT_LEN,
 
     one_shot_hash: sha256_digest,
