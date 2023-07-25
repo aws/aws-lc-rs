@@ -96,14 +96,17 @@ pub static SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
     hash_nid: NID_sha1,
 };
 
-/// SHA-256 as specified in [FIPS 180-4].
+/// SHA-224 as specified in [FIPS 180-4].
 ///
 /// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 #[allow(deprecated)]
 pub static SHA224: Algorithm = Algorithm {
     output_len: SHA224_OUTPUT_LEN,
-    chaining_len: SHA224_OUTPUT_LEN,
-    block_len: 512 / 8,
+
+    // The chaining length is equivalent to the length before truncation.
+    // SHA-224 is truncated from 256 bits so the chaining length is 256 bits, or 32 bytes.
+    chaining_len: SHA256_OUTPUT_LEN,
+    block_len: BLOCK_LEN,
     max_input_len: SHA224_MAX_INPUT_LEN,
 
     one_shot_hash: sha224_digest,
@@ -120,7 +123,7 @@ pub static SHA224: Algorithm = Algorithm {
 pub static SHA256: Algorithm = Algorithm {
     output_len: SHA256_OUTPUT_LEN,
     chaining_len: SHA256_OUTPUT_LEN,
-    block_len: 512 / 8,
+    block_len: BLOCK_LEN,
     max_input_len: SHA256_MAX_INPUT_LEN,
 
     one_shot_hash: sha256_digest,
@@ -136,6 +139,9 @@ pub static SHA256: Algorithm = Algorithm {
 #[allow(deprecated)]
 pub static SHA384: Algorithm = Algorithm {
     output_len: SHA384_OUTPUT_LEN,
+
+    // The chaining length is equivalent to the length before truncation.
+    // SHA-384 is truncated from 512 bits so the chaining length is 512 bits, or 64 bytes.
     chaining_len: SHA512_OUTPUT_LEN,
     block_len: SHA512_BLOCK_LEN,
     max_input_len: SHA384_MAX_INPUT_LEN,

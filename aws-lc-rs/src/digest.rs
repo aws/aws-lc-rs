@@ -226,7 +226,7 @@ pub struct Algorithm {
 
     /// The size of the chaining value of the digest function, in bytes. For
     /// non-truncated algorithms (SHA-1, SHA-256, SHA-512), this is equal to
-    /// `output_len`. For truncated algorithms (e.g. SHA-384, SHA-512/256),
+    /// `output_len`. For truncated algorithms (e.g. SHA-224, SHA-384, SHA-512/256),
     /// this is equal to the length before truncation. This is mostly helpful
     /// for determining the size of an HMAC key that is appropriate for the
     /// digest algorithm.
