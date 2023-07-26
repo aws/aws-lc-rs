@@ -102,6 +102,10 @@ int ERR_GET_FUNC_RUST(uint32_t packed_error);
 #include "openssl/x509_vfy.h"
 #include "openssl/x509v3.h"
 
+#if defined(AWS_LC_RUST_PQ_RANDOM_TEST)
+#include "pq_custom_randombytes.h"
+#endif
+
 #if defined(AWS_LC_RUST_INCLUDE_SSL)
 #include "openssl/ssl.h"
 #include "openssl/ssl3.h"

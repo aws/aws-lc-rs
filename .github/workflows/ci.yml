@@ -220,6 +220,7 @@ jobs:
           - --no-default-features --features non-fips,ring-io
           - --no-default-features --features non-fips,ring-sig-verify
           - --no-default-features --features non-fips,alloc
+          - --no-default-features --features non-fips,test_pq_kat
     steps:
       - uses: actions/checkout@v3
         with:

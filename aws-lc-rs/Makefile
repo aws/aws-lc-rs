@@ -35,6 +35,7 @@ endif
 	cargo test --no-default-features --features aws-lc-sys,ring-sig-verify
 	cargo test --no-default-features --features aws-lc-sys,ring-io
 	cargo test --no-default-features --features aws-lc-sys,alloc
+	cargo test --no-default-features --features aws-lc-sys,test_pq_kat
 
 msrv:
 	cargo msrv verify

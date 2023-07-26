@@ -23,6 +23,10 @@ pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("aws-lc").join("include")
 }
 
+pub(crate) fn get_aws_lc_rand_extra_path(manifest_dir: &Path) -> PathBuf {
+    manifest_dir.join("aws-lc").join("crypto").join("rand_extra")
+}
+
 pub(crate) fn get_rust_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("include")
 }
