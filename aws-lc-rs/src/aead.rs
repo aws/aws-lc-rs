@@ -63,7 +63,7 @@
 //! ```
 
 use crate::{derive_debug_via_id, hkdf};
-use aes_gcm::aead_seal_separate;
+use aes_gcm::{aead_seal_separate, aead_seal_separate_scatter};
 use std::fmt::Debug;
 
 use crate::error::Unspecified;
@@ -396,6 +396,43 @@ impl<N: NonceSequence> SealingKey<N> {
             in_out,
         )
     }
+
+    /// Encrypts and signs (“seals”) data in place with extra plaintext.
+    ///
+    /// `aad` is the additional authenticated data (AAD), if any. This is
+    /// authenticated but not encrypted. The type `A` could be a byte slice
+    /// `&[u8]`, a byte array `[u8; N]` for some constant `N`, `Vec<u8>`, etc.
+    /// If there is no AAD then use `Aad::empty()`.
+    ///
+    /// The plaintext is given as the input value of `in_out` and `extra_in`. `seal_in_place()`
+    /// will overwrite the plaintext contained in `in_out` with the ciphertext. The `extra_in` will
+    /// be encrypted into the `extra_out_and_tag`, along with the tag.
+    /// The `extra_out_and_tag` length must be equal to the `extra_len` and `self.algorithm.tag_len()`.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
+    ///
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_scatter<A>(
+        &mut self,
+        aad: Aad<A>,
+        in_out: &mut [u8],
+        extra_in: &[u8],
+        extra_out_and_tag: &mut [u8],
+    ) -> Result<(), Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        seal_in_place_separate_scatter_(
+            &self.key,
+            self.nonce_sequence.advance()?,
+            Aad::from(aad.as_ref()),
+            in_out,
+            extra_in,
+            extra_out_and_tag,
+        )
+    }
 }
 
 #[inline]
@@ -423,6 +460,27 @@ fn seal_in_place_separate_tag_(
     check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
     let key_inner_ref = key.get_inner_key();
     aead_seal_separate(key_inner_ref, nonce, aad, in_out)
+}
+
+#[inline]
+fn seal_in_place_separate_scatter_(
+    key: &UnboundKey,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+    extra_in: &[u8],
+    extra_out_and_tag: &mut [u8],
+) -> Result<(), Unspecified> {
+    check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
+    let key_inner_ref = key.get_inner_key();
+    aead_seal_separate_scatter(
+        key_inner_ref,
+        nonce,
+        aad,
+        in_out,
+        extra_in,
+        extra_out_and_tag,
+    )
 }
 
 /// The additionally authenticated data (AAD) for an opening or sealing
@@ -629,6 +687,37 @@ impl LessSafeKey {
         A: AsRef<[u8]>,
     {
         seal_in_place_separate_tag_(&self.key, nonce, Aad::from(aad.as_ref()), in_out)
+    }
+
+    /// Like `SealingKey::seal_in_place_scatter()`, except it accepts an
+    /// arbitrary nonce.
+    ///
+    /// `nonce` must be unique for every use of the key to seal data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if encryption operation fails.
+    ///
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_scatter<A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &mut [u8],
+        extra_in: &[u8],
+        extra_out_and_tag: &mut [u8],
+    ) -> Result<(), Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        seal_in_place_separate_scatter_(
+            &self.key,
+            nonce,
+            Aad::from(aad.as_ref()),
+            in_out,
+            extra_in,
+            extra_out_and_tag,
+        )
     }
 
     /// The key's AEAD algorithm.

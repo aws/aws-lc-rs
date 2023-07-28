@@ -53,6 +53,48 @@ pub(crate) fn aead_seal_separate(
     }
 }
 
+#[inline]
+#[allow(clippy::needless_pass_by_value)]
+pub(crate) fn aead_seal_separate_scatter(
+    key: &AeadCtx,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+    extra_in: &[u8],
+    extra_out_and_tag: &mut [u8],
+) -> Result<(), Unspecified> {
+    unsafe {
+        let aead_ctx = match key {
+            AeadCtx::CHACHA20_POLY1305(aead_ctx)
+            | AeadCtx::AES_128_GCM(aead_ctx)
+            | AeadCtx::AES_256_GCM(aead_ctx) => aead_ctx,
+        };
+
+        let aad_slice = aad.as_ref();
+        let nonce = nonce.as_ref();
+        let mut out_tag_len = extra_out_and_tag.len();
+
+        if 1 != EVP_AEAD_CTX_seal_scatter(
+            aead_ctx,
+            in_out.as_mut_ptr(),
+            extra_out_and_tag.as_mut_ptr().cast(),
+            &mut out_tag_len,
+            extra_out_and_tag.len(),
+            nonce.as_ptr(),
+            nonce.len(),
+            in_out.as_ptr(),
+            in_out.len(),
+            extra_in.as_ptr(),
+            extra_in.len(),
+            aad_slice.as_ptr(),
+            aad_slice.len(),
+        ) {
+            return Err(Unspecified);
+        }
+        Ok(())
+    }
+}
+
 /// AES-128 in GCM mode with 128-bit tags and 96 bit nonces.
 pub static AES_128_GCM: Algorithm = Algorithm {
     init: init_128_aead,
