@@ -22,6 +22,6 @@ pub static CHACHA20_POLY1305: Algorithm = Algorithm {
 };
 
 #[inline]
-fn init_chacha_aead(key: &[u8]) -> Result<AeadCtx, error::Unspecified> {
-    AeadCtx::chacha20(key)
+fn init_chacha_aead(key: &[u8], tag_len: usize) -> Result<AeadCtx, error::Unspecified> {
+    AeadCtx::chacha20(key, tag_len)
 }
