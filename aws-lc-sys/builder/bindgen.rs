@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::{
-    get_aws_lc_include_path, get_aws_lc_sys_includes_path, get_generated_include_path,
-    get_rust_include_path, get_aws_lc_rand_extra_path,
+    get_aws_lc_include_path, get_aws_lc_rand_extra_path, get_aws_lc_sys_includes_path,
+    get_generated_include_path, get_rust_include_path,
 };
 use bindgen::callbacks::{ItemInfo, ParseCallbacks};
 use std::fmt::Debug;
@@ -61,7 +61,11 @@ fn prepare_clang_args(manifest_dir: &Path) -> Vec<String> {
 
     if cfg!(feature = "test_pq_random") {
         clang_args.push("-I".to_string());
-        clang_args.push(get_aws_lc_rand_extra_path(manifest_dir).display().to_string());
+        clang_args.push(
+            get_aws_lc_rand_extra_path(manifest_dir)
+                .display()
+                .to_string(),
+        );
     }
 
     if let Some(include_paths) = get_aws_lc_sys_includes_path() {
