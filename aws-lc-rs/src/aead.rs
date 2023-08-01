@@ -82,7 +82,7 @@ mod poly1305;
 pub mod quic;
 
 pub use self::{
-    aes_gcm::{AES_128_GCM, AES_256_GCM},
+    aes_gcm::{AES_128_GCM, AES_256_GCM, AES_256_GCM_SIV},
     chacha::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},
 };
@@ -690,6 +690,7 @@ derive_debug_via_id!(Algorithm);
 enum AlgorithmID {
     AES_128_GCM,
     AES_256_GCM,
+    AES_256_GCM_SIV,
     CHACHA20_POLY1305,
 }
 
@@ -751,6 +752,7 @@ where
         let aead_ctx = match key {
             AeadCtx::AES_128_GCM(aead_ctx)
             | AeadCtx::AES_256_GCM(aead_ctx)
+            | AeadCtx::AES_256_GCM_SIV(aead_ctx)
             | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
@@ -794,6 +796,7 @@ pub(crate) fn aead_open_combined(
         let aead_ctx = match key {
             AeadCtx::AES_128_GCM(aead_ctx)
             | AeadCtx::AES_256_GCM(aead_ctx)
+            | AeadCtx::AES_256_GCM_SIV(aead_ctx)
             | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
         };
         let nonce = nonce.as_ref();
