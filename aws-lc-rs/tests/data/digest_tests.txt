@@ -20,6 +20,48 @@ Input = "0123456701234567012345670123456701234567012345670123456701234567"
 Repeat = 10
 Output = dea356a2cddd90c7a7ecedc5ebb563934f460452
 
+# SHA-224 tests from NIST.
+
+Hash = SHA224
+Input = ff
+Repeat = 1
+Output = e33f9d75e6ae1369dbabf81b96b4591ae46bba30b591a6b6c62542b5
+
+Hash = SHA224
+Repeat = 1
+Input = 84
+Output = 3cd36921df5d6963e73739cf4d20211e2d8877c19cff087ade9d0e3a
+
+Hash = SHA224
+Repeat = 1
+Input = 5c7b
+Output = daff9bce685eb831f97fc1225b03c275a6c112e2d6e76f5faf7a36e6
+
+Hash = SHA224
+Repeat = 1
+Input = 51ca3d
+Output = 2c8959023515476e38388abb43599a29876b4b33d56adc06032de3a2
+
+Hash = SHA224
+Repeat = 1
+Input = 6084347e
+Output = ae57c0a6d49739ba338adfa53bdae063e5c09122b77604780a8eeaa3
+
+Hash = SHA224
+Repeat = 1
+Input = 493e14623c
+Output = 7f631f295e024e74552083245ca8f988a3fb65680ae97c3040d2e65c
+
+Hash = SHA224
+Repeat = 1
+Input = d729d8cd1631
+Output = 342e8e6b23c1c6a54910631f098e08e836259c57e49c1b1d023d166d
+
+Hash = SHA224
+Repeat = 1
+Input = cbf2061e10faa5
+Output = 3aa702b1b66dc57d7aec3ccdbdfbd88592d7520f843ba5d0fa481168
+
 # SHA-256 tests from NIST.
 
 Hash = SHA256
