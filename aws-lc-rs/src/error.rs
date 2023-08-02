@@ -256,6 +256,7 @@ mod tests {
         let unspecified = super::Unspecified::from(key_rejected);
         assert_eq!("Unspecified", unspecified.description());
 
+        #[allow(clippy::redundant_locals)]
         let unspecified = unspecified;
         assert_eq!("Unspecified", unspecified.description());
     }
