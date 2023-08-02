@@ -63,6 +63,16 @@ pub(crate) fn aead_seal_separate_scatter(
     extra_in: &[u8],
     extra_out_and_tag: &mut [u8],
 ) -> Result<(), Unspecified> {
+    // ensure that the extra lengths match
+    {
+        let actual = extra_in.len() + MAX_TAG_LEN;
+        let expected = extra_out_and_tag.len();
+
+        if actual != expected {
+            return Err(Unspecified);
+        }
+    }
+
     unsafe {
         let aead_ctx = match key {
             AeadCtx::CHACHA20_POLY1305(aead_ctx)
@@ -77,7 +87,7 @@ pub(crate) fn aead_seal_separate_scatter(
         if 1 != EVP_AEAD_CTX_seal_scatter(
             aead_ctx,
             in_out.as_mut_ptr(),
-            extra_out_and_tag.as_mut_ptr().cast(),
+            extra_out_and_tag.as_mut_ptr(),
             &mut out_tag_len,
             extra_out_and_tag.len(),
             nonce.as_ptr(),
