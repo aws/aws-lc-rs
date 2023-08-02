@@ -69,7 +69,7 @@ impl AeadCtx {
             if 1 != EVP_AEAD_CTX_init(
                 aead_ctx.as_mut_ptr(),
                 aead,
-                key_bytes.as_ptr().cast(),
+                key_bytes.as_ptr(),
                 key_bytes.len(),
                 TAG_LEN,
                 null_mut(),

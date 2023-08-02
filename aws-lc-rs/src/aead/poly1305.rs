@@ -35,8 +35,7 @@ pub struct Context {
 // are used, is only correct when the state buffer is 64-byte aligned.
 #[repr(C, align(64))]
 #[allow(non_camel_case_types)]
-struct poly1305_state([u8; OPAQUE_LEN]);
-const OPAQUE_LEN: usize = 512;
+struct poly1305_state(aws_lc::poly1305_state);
 
 impl Context {
     #[inline]

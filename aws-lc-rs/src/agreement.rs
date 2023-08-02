@@ -358,7 +358,7 @@ impl EphemeralPrivateKey {
             KeyInner::X25519(priv_key) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
                 unsafe {
-                    X25519_public_from_private(buffer.as_mut_ptr().cast(), priv_key.as_ptr());
+                    X25519_public_from_private(buffer.as_mut_ptr(), priv_key.as_ptr());
                 }
 
                 Ok(PublicKey {

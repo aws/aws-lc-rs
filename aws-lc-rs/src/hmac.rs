@@ -370,11 +370,7 @@ impl Context {
     #[inline]
     fn try_update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
-            if 1 != HMAC_Update(
-                self.key.get_hmac_ctx_ptr(),
-                data.as_ptr().cast(),
-                data.len(),
-            ) {
+            if 1 != HMAC_Update(self.key.get_hmac_ctx_ptr(), data.as_ptr(), data.len()) {
                 return Err(Unspecified);
             }
         }
