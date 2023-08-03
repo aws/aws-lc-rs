@@ -14,7 +14,7 @@ use aws_lc::{
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
 
-impl TryFrom<&[u8]> for LcPtr<*mut EVP_PKEY> {
+impl TryFrom<&[u8]> for LcPtr<EVP_PKEY> {
     type Error = KeyRejected;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
@@ -26,7 +26,7 @@ impl TryFrom<&[u8]> for LcPtr<*mut EVP_PKEY> {
     }
 }
 
-impl LcPtr<*mut EVP_PKEY> {
+impl LcPtr<EVP_PKEY> {
     pub(crate) fn validate_as_ed25519(&self) -> Result<(), KeyRejected> {
         const ED25519_KEY_TYPE: c_int = aws_lc::EVP_PKEY_ED25519;
         const ED25519_MIN_BITS: c_int = 253;
@@ -69,13 +69,13 @@ impl LcPtr<*mut EVP_PKEY> {
         unsafe { EVP_PKEY_bits(**self) }
     }
 
-    pub(crate) fn get_ec_key(&self) -> Result<LcPtr<*mut EC_KEY>, KeyRejected> {
+    pub(crate) fn get_ec_key(&self) -> Result<LcPtr<EC_KEY>, KeyRejected> {
         unsafe {
             LcPtr::new(EVP_PKEY_get1_EC_KEY(**self)).map_err(|_| KeyRejected::wrong_algorithm())
         }
     }
 
-    pub(crate) fn get_rsa(&self) -> Result<LcPtr<*mut RSA>, KeyRejected> {
+    pub(crate) fn get_rsa(&self) -> Result<LcPtr<RSA>, KeyRejected> {
         unsafe { LcPtr::new(EVP_PKEY_get1_RSA(**self)).map_err(|_| KeyRejected::wrong_algorithm()) }
     }
 
