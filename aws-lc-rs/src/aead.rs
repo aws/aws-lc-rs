@@ -764,7 +764,7 @@ where
         let add_str = aad.0;
 
         if 1 != EVP_AEAD_CTX_seal(
-            aead_ctx,
+            *aead_ctx.as_const(),
             mut_in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len + TAG_LEN,
@@ -803,7 +803,7 @@ pub(crate) fn aead_open_combined(
         let aad_str = aad.0;
         let mut out_len = MaybeUninit::<usize>::uninit();
         if 1 != EVP_AEAD_CTX_open(
-            aead_ctx,
+            *aead_ctx.as_const(),
             in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len,
