@@ -457,70 +457,29 @@ mod tests {
                 unsafe {
                     pq_custom_randombytes_use_deterministic_for_testing();
                     pq_custom_randombytes_init_for_testing(seed.as_ptr());
-                
-
-                    let ctx = LcPtr::new(EVP_PKEY_CTX_new_id(EVP_PKEY_KEM, null_mut()))?;
-
-                    // // Setup the context with specific KEM parameters.
-                    assert!(EVP_PKEY_CTX_kem_set_params(*ctx, NID_KYBER512_R3) != 0);
-
-                    // Generate a key pair.
-                    let mut raw: *mut EVP_PKEY = null_mut();
-                    assert!(EVP_PKEY_keygen_init(*ctx) != 0);
-                    assert!(EVP_PKEY_keygen(*ctx, &mut raw) != 0);
-                    assert!(raw != null_mut());
-
-                    // // Create PKEY from the generated raw key and a new context with it.
-                    let pkey: LcPtr<*mut EVP_PKEY> = LcPtr::new(raw)?;
-                    // let ctx_reconstruct = LcPtr::new(EVP_PKEY_CTX_new(*pkey, null_mut()))?;
-                    // assert!(*ctx_reconstruct != null_mut());
-
-                    // let pkey_reconstruct: LcPtr<*mut EVP_PKEY> = LcPtr::new(EVP_PKEY_CTX_get0_pkey(*ctx))?;
-                    let mut kyber_512_pubkey_len = 800;
-                    let mut pubkey_gen_bytes = vec![0u8; kyber_512_pubkey_len];
-                    let mut kyber_512_privkey_len = 1632;
-                    let mut privkey_gen_bytes = vec![0u8; kyber_512_privkey_len];
-
-                    assert!(EVP_PKEY_get_raw_public_key(*pkey, pubkey_gen_bytes.as_mut_ptr(), &mut kyber_512_pubkey_len) != 0);                    
-                    assert_eq!(pubkey_gen_bytes, public_key_bytes);
-
-                    assert!(EVP_PKEY_get_raw_private_key(*pkey, privkey_gen_bytes.as_mut_ptr(), &mut kyber_512_privkey_len) != 0);
-                    assert_eq!(privkey_gen_bytes.len(), 1632);
-                    assert_eq!(secret_key_bytes.len(), 1632);
-                    assert_eq!(privkey_gen_bytes, secret_key_bytes);
                 }
 
-                
-                // let priv_key = KemPrivateKey::generate(&KYBER512_R3).unwrap();
-                
-                // // print pub_key length
-                // println!("pub_key length: {}", priv_key.as_ref().len());
-                // // print public_key_bytes length
-                // println!("public_key_bytes length: {}", secret_key_bytes.len());
-                
-                // assert_eq!(priv_key.as_ref(), secret_key_bytes);
+                let priv_key = KemPrivateKey::generate(&KYBER512_R3).unwrap();
 
-                // let pub_key = priv_key.compute_public_key().unwrap();
-                // assert_eq!(pub_key.as_ref(), public_key_bytes);
+                assert_eq!(priv_key.as_ref(), secret_key_bytes);
 
-                // // let secret_key = KemPrivateKey::new(&KYBER512_R3, &secret_key_bytes).unwrap();
-                // // let public_key = secret_key.compute_public_key().unwrap();
-                // // let public_key = KemPublicKey::new(&KYBER512_R3, &public_key_bytes).unwrap();
-                // // assert_eq!(public_key.as_ref(), public_key_bytes);
-                // let (mut ciphertext, bob_shared_secret) = pub_key
-                //     .encapsulate(Unspecified, |ciphertext, shared_secret| {
-                //         Ok((ciphertext.to_vec(), shared_secret.to_vec()))
-                //     })
-                //     .unwrap();
-                // // assert_eq!(ciphertext, ciphertext_bytes);
-                // // assert_eq!(bob_shared_secret, shared_secret_bytes);
+                let pub_key = priv_key.compute_public_key().unwrap();
+                assert_eq!(pub_key.as_ref(), public_key_bytes);
+
+                let (mut ciphertext, bob_shared_secret) = pub_key
+                    .encapsulate(Unspecified, |ciphertext, shared_secret| {
+                        Ok((ciphertext.to_vec(), shared_secret.to_vec()))
+                    })
+                    .unwrap();
+                assert_eq!(ciphertext, ciphertext_bytes);
+                assert_eq!(bob_shared_secret, shared_secret_bytes);
                 
-                // let alice_shared_secret = priv_key
-                //     .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
-                //         Ok(shared_secret.to_vec())
-                //     })
-                //     .unwrap();
-                // assert_eq!(alice_shared_secret, shared_secret_bytes);
+                let alice_shared_secret = priv_key
+                    .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
+                        Ok(shared_secret.to_vec())
+                    })
+                    .unwrap();
+                assert_eq!(alice_shared_secret, shared_secret_bytes);
 
                 Ok(())
             },
