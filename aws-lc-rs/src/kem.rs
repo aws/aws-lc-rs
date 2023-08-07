@@ -424,18 +424,21 @@ unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecifi
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "test_pq_kat")]
     use crate::{
-        error::{KeyRejected, Unspecified},
-        kem::{KemPrivateKey, KemPublicKey, KYBER1024_R3, KYBER512_R3, KYBER768_R3},
+        aws_lc::{
+            pq_custom_randombytes_init_for_testing,
+            pq_custom_randombytes_use_deterministic_for_testing,
+        },
+        error::Unspecified,
         test, test_file,
     };
-    #[cfg(feature = "pq-custom-randombytes")]
-    use aws_lc::{
-        pq_custom_randombytes_init_for_testing,
-        pq_custom_randombytes_use_deterministic_for_testing
+    use crate::{
+        error::KeyRejected,
+        kem::{KemPrivateKey, KemPublicKey, KYBER1024_R3, KYBER512_R3, KYBER768_R3},
     };
 
-    #[cfg(feature = "pq-custom-randombytes")]
+    #[cfg(feature = "test_pq_kat")]
     #[test]
     fn test_kem_kyber512() {
         test::run(
@@ -454,6 +457,96 @@ mod tests {
                 }
 
                 let priv_key = KemPrivateKey::generate(&KYBER512_R3).unwrap();
+
+                assert_eq!(priv_key.as_ref(), secret_key_bytes);
+
+                let pub_key = priv_key.compute_public_key().unwrap();
+                assert_eq!(pub_key.as_ref(), public_key_bytes);
+
+                let (mut ciphertext, bob_shared_secret) = pub_key
+                    .encapsulate(Unspecified, |ciphertext, shared_secret| {
+                        Ok((ciphertext.to_vec(), shared_secret.to_vec()))
+                    })
+                    .unwrap();
+                assert_eq!(ciphertext, ciphertext_bytes);
+                assert_eq!(bob_shared_secret, shared_secret_bytes);
+
+                let alice_shared_secret = priv_key
+                    .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
+                        Ok(shared_secret.to_vec())
+                    })
+                    .unwrap();
+                assert_eq!(alice_shared_secret, shared_secret_bytes);
+
+                Ok(())
+            },
+        );
+    }
+
+    #[cfg(feature = "test_pq_kat")]
+    #[test]
+    fn test_kem_kyber768() {
+        test::run(
+            test_file!("../tests/data/kyber768r3.txt"),
+            |_section, test_case| {
+                let seed = test_case.consume_bytes("seed");
+                let public_key_bytes = test_case.consume_bytes("pk");
+                let secret_key_bytes = test_case.consume_bytes("sk");
+                let ciphertext_bytes = test_case.consume_bytes("ct");
+                let shared_secret_bytes = test_case.consume_bytes("ss");
+
+                // Set randomness generation in deterministic mode.
+                unsafe {
+                    pq_custom_randombytes_use_deterministic_for_testing();
+                    pq_custom_randombytes_init_for_testing(seed.as_ptr());
+                }
+
+                let priv_key = KemPrivateKey::generate(&KYBER768_R3).unwrap();
+
+                assert_eq!(priv_key.as_ref(), secret_key_bytes);
+
+                let pub_key = priv_key.compute_public_key().unwrap();
+                assert_eq!(pub_key.as_ref(), public_key_bytes);
+
+                let (mut ciphertext, bob_shared_secret) = pub_key
+                    .encapsulate(Unspecified, |ciphertext, shared_secret| {
+                        Ok((ciphertext.to_vec(), shared_secret.to_vec()))
+                    })
+                    .unwrap();
+                assert_eq!(ciphertext, ciphertext_bytes);
+                assert_eq!(bob_shared_secret, shared_secret_bytes);
+
+                let alice_shared_secret = priv_key
+                    .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
+                        Ok(shared_secret.to_vec())
+                    })
+                    .unwrap();
+                assert_eq!(alice_shared_secret, shared_secret_bytes);
+
+                Ok(())
+            },
+        );
+    }
+
+    #[cfg(feature = "test_pq_kat")]
+    #[test]
+    fn test_kem_kyber1024() {
+        test::run(
+            test_file!("../tests/data/kyber1024r3.txt"),
+            |_section, test_case| {
+                let seed = test_case.consume_bytes("seed");
+                let public_key_bytes = test_case.consume_bytes("pk");
+                let secret_key_bytes = test_case.consume_bytes("sk");
+                let ciphertext_bytes = test_case.consume_bytes("ct");
+                let shared_secret_bytes = test_case.consume_bytes("ss");
+
+                // Set randomness generation in deterministic mode.
+                unsafe {
+                    pq_custom_randombytes_use_deterministic_for_testing();
+                    pq_custom_randombytes_init_for_testing(seed.as_ptr());
+                }
+
+                let priv_key = KemPrivateKey::generate(&KYBER1024_R3).unwrap();
 
                 assert_eq!(priv_key.as_ref(), secret_key_bytes);
 
