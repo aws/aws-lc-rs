@@ -428,20 +428,14 @@ mod tests {
         error::{KeyRejected, Unspecified},
         kem::{KemPrivateKey, KemPublicKey, KYBER1024_R3, KYBER512_R3, KYBER768_R3},
         test, test_file,
-        ptr::LcPtr,
-        ptr::Pointer,
     };
-    use aws_lc::{pq_custom_randombytes_use_deterministic_for_testing, pq_custom_randombytes_init_for_testing,
-        EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
-        EVP_PKEY_encapsulate, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
-        EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_keygen,
-        EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM, NID_KYBER1024_R3, NID_KYBER512_R3,
-        NID_KYBER768_R3, EVP_PKEY_CTX_get0_pkey,
+    #[cfg(feature = "pq-custom-randombytes")]
+    use aws_lc::{
+        pq_custom_randombytes_init_for_testing,
+        pq_custom_randombytes_use_deterministic_for_testing
     };
-    use std::{os::raw::c_int, ptr::null};
-    use std::ptr::null_mut;
-    use zeroize::Zeroize;
 
+    #[cfg(feature = "pq-custom-randombytes")]
     #[test]
     fn test_kem_kyber512() {
         test::run(
@@ -473,7 +467,7 @@ mod tests {
                     .unwrap();
                 assert_eq!(ciphertext, ciphertext_bytes);
                 assert_eq!(bob_shared_secret, shared_secret_bytes);
-                
+
                 let alice_shared_secret = priv_key
                     .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
                         Ok(shared_secret.to_vec())

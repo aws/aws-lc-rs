@@ -26,4 +26,9 @@ fn main() {
         );
         std::process::exit(1);
     }
+
+    // Force tests to run single threaded if running PQ KATs
+    if cfg!(feature = "test_pq_kat") {
+        println!("cargo:rustc-env=RUST_TEST_THREADS=1");
+    }
 }
