@@ -385,7 +385,6 @@ fn main() {
         get_rust_include_path(&manifest_dir),
         get_generated_include_path(&manifest_dir),
         get_aws_lc_include_path(&manifest_dir),
-        // get_aws_lc_rand_extra_path(&manifest_dir),
     ] {
         println!("cargo:include={}", include_path.display());
     }
