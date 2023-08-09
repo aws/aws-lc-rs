@@ -5,15 +5,20 @@
 
 use crate::digest::{Algorithm, AlgorithmID, Context};
 
-pub const BLOCK_LEN: usize = 512 / 8;
-pub const CHAINING_LEN: usize = 160 / 8;
-pub const OUTPUT_LEN: usize = 160 / 8;
+/// The length of a block for SHA-1, in bytes.
+const SHA1_BLOCK_LEN: usize = 512 / 8;
 
 /// The length of the output of SHA-1, in bytes.
-pub const SHA1_OUTPUT_LEN: usize = OUTPUT_LEN;
+pub const SHA1_OUTPUT_LEN: usize = 160 / 8;
+
+/// The length of the output of SHA-224, in bytes.
+pub const SHA224_OUTPUT_LEN: usize = 224 / 8;
 
 /// The length of the output of SHA-256, in bytes.
 pub const SHA256_OUTPUT_LEN: usize = 256 / 8;
+
+/// The length of a block for SHA-256-based algorithms, in bytes.
+const SHA256_BLOCK_LEN: usize = 512 / 8;
 
 /// The length of the output of SHA-384, in bytes.
 pub const SHA384_OUTPUT_LEN: usize = 384 / 8;
@@ -26,15 +31,6 @@ pub const SHA512_256_OUTPUT_LEN: usize = 256 / 8;
 
 /// The length of a block for SHA-512-based algorithms, in bytes.
 const SHA512_BLOCK_LEN: usize = 1024 / 8;
-
-/// SHA-1 and SHA-256 are limited to an input size of 2^64-1 bits.
-#[allow(clippy::cast_possible_truncation)]
-const SHA256_MAX_INPUT_LEN: u64 = u64::MAX;
-
-/// SHA-384, SHA-512, and SHA-512/256 are limited to an input size of 2^128-1 bits according to the spec.
-/// u64 is more than sufficient enough for practical usecases, so we limit the input length to 2^64-1 bits.
-#[allow(clippy::cast_possible_truncation)]
-const SHA512_MAX_INPUT_LEN: u64 = u64::MAX;
 
 /// The length of a block for SHA3-256-based algorithms, in bytes.
 const SHA3_256_BLOCK_LEN: usize = 136;
@@ -54,14 +50,11 @@ pub const SHA3_384_OUTPUT_LEN: usize = 384 / 8;
 /// The length of the output of SHA3-512, in bytes.
 pub const SHA3_512_OUTPUT_LEN: usize = 512 / 8;
 
+/// SHA-1, SHA-224, and SHA-256 are limited to an input size of 2^64-1 bits.
+/// SHA-384, SHA-512, and SHA-512/256 are limited to an input size of 2^128-1 bits according to the spec.
+/// u64 is more than sufficient enough for practical usecases, so we limit the input length to 2^64-1 bits.
 #[allow(clippy::cast_possible_truncation)]
-const SHA3_256_MAX_INPUT_LEN: u64 = u64::MAX;
-
-#[allow(clippy::cast_possible_truncation)]
-const SHA3_384_MAX_INPUT_LEN: u64 = u64::MAX;
-
-#[allow(clippy::cast_possible_truncation)]
-const SHA3_512_MAX_INPUT_LEN: u64 = u64::MAX;
+const DIGEST_MAX_INPUT_LEN: u64 = u64::MAX;
 
 /// SHA-1 as specified in [FIPS 180-4]. Deprecated.
 ///
@@ -69,13 +62,31 @@ const SHA3_512_MAX_INPUT_LEN: u64 = u64::MAX;
 #[allow(deprecated)]
 pub static SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
     output_len: SHA1_OUTPUT_LEN,
-    chaining_len: CHAINING_LEN,
-    block_len: BLOCK_LEN,
-    max_input_len: SHA256_MAX_INPUT_LEN,
+    chaining_len: SHA1_OUTPUT_LEN,
+    block_len: SHA1_BLOCK_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
 
     one_shot_hash: sha1_digest,
 
     id: AlgorithmID::SHA1,
+};
+
+/// SHA-224 as specified in [FIPS 180-4].
+///
+/// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
+#[allow(deprecated)]
+pub static SHA224: Algorithm = Algorithm {
+    output_len: SHA224_OUTPUT_LEN,
+
+    // The chaining length is equivalent to the length before truncation.
+    // SHA-224 is truncated from 256 bits so the chaining length is 256 bits, or 32 bytes.
+    chaining_len: SHA256_OUTPUT_LEN,
+    block_len: SHA256_BLOCK_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
+
+    one_shot_hash: sha224_digest,
+
+    id: AlgorithmID::SHA224,
 };
 
 /// SHA-256 as specified in [FIPS 180-4].
@@ -85,8 +96,8 @@ pub static SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 pub static SHA256: Algorithm = Algorithm {
     output_len: SHA256_OUTPUT_LEN,
     chaining_len: SHA256_OUTPUT_LEN,
-    block_len: 512 / 8,
-    max_input_len: SHA256_MAX_INPUT_LEN,
+    block_len: SHA256_BLOCK_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
 
     one_shot_hash: sha256_digest,
 
@@ -99,9 +110,12 @@ pub static SHA256: Algorithm = Algorithm {
 #[allow(deprecated)]
 pub static SHA384: Algorithm = Algorithm {
     output_len: SHA384_OUTPUT_LEN,
+
+    // The chaining length is equivalent to the length before truncation.
+    // SHA-384 is truncated from 512 bits so the chaining length is 512 bits, or 64 bytes.
     chaining_len: SHA512_OUTPUT_LEN,
     block_len: SHA512_BLOCK_LEN,
-    max_input_len: SHA512_MAX_INPUT_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
 
     one_shot_hash: sha384_digest,
 
@@ -116,7 +130,7 @@ pub static SHA512: Algorithm = Algorithm {
     output_len: SHA512_OUTPUT_LEN,
     chaining_len: SHA512_OUTPUT_LEN,
     block_len: SHA512_BLOCK_LEN,
-    max_input_len: SHA512_MAX_INPUT_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
 
     one_shot_hash: sha512_digest,
 
@@ -131,7 +145,7 @@ pub static SHA512_256: Algorithm = Algorithm {
     output_len: SHA512_256_OUTPUT_LEN,
     chaining_len: SHA512_OUTPUT_LEN,
     block_len: SHA512_BLOCK_LEN,
-    max_input_len: SHA512_MAX_INPUT_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
 
     one_shot_hash: sha512_256_digest,
 
@@ -146,7 +160,7 @@ pub static SHA3_256: Algorithm = Algorithm {
     output_len: SHA3_256_OUTPUT_LEN,
     chaining_len: SHA3_256_OUTPUT_LEN,
     block_len: SHA3_256_BLOCK_LEN,
-    max_input_len: SHA3_256_MAX_INPUT_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
 
     one_shot_hash: sha3_256_digest,
 
@@ -161,7 +175,7 @@ pub static SHA3_384: Algorithm = Algorithm {
     output_len: SHA3_384_OUTPUT_LEN,
     chaining_len: SHA3_384_OUTPUT_LEN,
     block_len: SHA3_384_BLOCK_LEN,
-    max_input_len: SHA3_384_MAX_INPUT_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
 
     one_shot_hash: sha3_384_digest,
 
@@ -176,7 +190,7 @@ pub static SHA3_512: Algorithm = Algorithm {
     output_len: SHA3_512_OUTPUT_LEN,
     chaining_len: SHA3_512_OUTPUT_LEN,
     block_len: SHA3_512_BLOCK_LEN,
-    max_input_len: SHA3_512_MAX_INPUT_LEN,
+    max_input_len: DIGEST_MAX_INPUT_LEN,
 
     one_shot_hash: sha3_512_digest,
 
@@ -186,6 +200,12 @@ pub static SHA3_512: Algorithm = Algorithm {
 fn sha1_digest(msg: &[u8], output: &mut [u8]) {
     unsafe {
         aws_lc::SHA1(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+    }
+}
+
+fn sha224_digest(msg: &[u8], output: &mut [u8]) {
+    unsafe {
+        aws_lc::SHA224(msg.as_ptr(), msg.len(), output.as_mut_ptr());
     }
 }
 

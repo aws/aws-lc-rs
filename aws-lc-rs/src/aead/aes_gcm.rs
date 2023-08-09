@@ -31,7 +31,7 @@ pub(crate) fn aead_seal_separate(
         let mut out_tag_len = MaybeUninit::<usize>::uninit();
 
         if 1 != EVP_AEAD_CTX_seal_scatter(
-            aead_ctx,
+            *aead_ctx.as_const(),
             in_out.as_mut_ptr(),
             tag.as_mut_ptr().cast(),
             out_tag_len.as_mut_ptr(),
