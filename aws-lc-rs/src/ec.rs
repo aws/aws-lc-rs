@@ -273,9 +273,7 @@ pub(crate) unsafe fn ec_key_from_private(
 }
 
 #[inline]
-pub(crate) unsafe fn ec_key_generate(
-    nid: c_int,
-) -> Result<DetachableLcPtr<EC_KEY>, Unspecified> {
+pub(crate) unsafe fn ec_key_generate(nid: c_int) -> Result<DetachableLcPtr<EC_KEY>, Unspecified> {
     let ec_key = DetachableLcPtr::new(EC_KEY_new_by_curve_name(nid))?;
     #[cfg(not(feature = "fips"))]
     if 1 != EC_KEY_generate_key(*ec_key) {

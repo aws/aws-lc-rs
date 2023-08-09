@@ -41,9 +41,9 @@ impl<P: Pointer> Drop for ManagedPointer<P> {
     }
 }
 
-impl<P: Pointer + Copy> ManagedPointer<P> {
+impl<P: Pointer> ManagedPointer<P> {
     #[inline]
-    pub fn as_const<T>(&self) -> ConstPointer<T> {
+    pub fn as_const(&self) -> ConstPointer<P::T> {
         ConstPointer {
             ptr: self.pointer.as_const_ptr(),
         }
@@ -88,10 +88,10 @@ impl<P: Pointer> DetachablePointer<P> {
     }
 }
 
-impl<P: Pointer + Copy> DetachablePointer<P> {
+impl<P: Pointer> DetachablePointer<P> {
     #[inline]
-    pub fn as_const<T>(&self) -> ConstPointer<T> {
-        match self.pointer {
+    pub fn as_const(&self) -> ConstPointer<P::T> {
+        match &self.pointer {
             Some(pointer) => ConstPointer {
                 ptr: pointer.as_const_ptr(),
             },
@@ -148,8 +148,10 @@ impl<T> Deref for ConstPointer<T> {
 }
 
 pub(crate) trait Pointer {
+    type T;
+
     fn free(&mut self);
-    fn as_const_ptr<T>(&self) -> *const T;
+    fn as_const_ptr(&self) -> *const Self::T;
 }
 
 pub(crate) trait IntoPointer<P> {
@@ -170,6 +172,8 @@ impl<T> IntoPointer<*mut T> for *mut T {
 macro_rules! create_pointer {
     ($ty:ty, $free:path) => {
         impl Pointer for *mut $ty {
+            type T = $ty;
+
             #[inline]
             fn free(&mut self) {
                 unsafe {
@@ -178,7 +182,7 @@ macro_rules! create_pointer {
                 }
             }
 
-            fn as_const_ptr<T>(&self) -> *const T {
+            fn as_const_ptr(&self) -> *const Self::T {
                 self.cast()
             }
         }
@@ -210,7 +214,8 @@ mod tests {
     #[test]
     fn test_debug() {
         let num = 100u64;
-        let detachable_ptr: DetachablePointer<*mut BIGNUM> = DetachablePointer::try_from(num).unwrap();
+        let detachable_ptr: DetachablePointer<*mut BIGNUM> =
+            DetachablePointer::try_from(num).unwrap();
         let debug = format!("{detachable_ptr:?}");
         assert!(debug.contains("DetachablePointer { pointer: Some("));
 
