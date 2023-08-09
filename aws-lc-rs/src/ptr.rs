@@ -3,7 +3,7 @@
 
 use std::ops::Deref;
 
-use aws_lc::OPENSSL_free;
+use aws_lc::{EVP_AEAD_CTX_free, OPENSSL_free, EVP_AEAD_CTX};
 
 use mirai_annotations::verify_unreachable;
 
@@ -197,6 +197,7 @@ create_pointer!(ECDSA_SIG, ECDSA_SIG_free);
 create_pointer!(BIGNUM, BN_free);
 create_pointer!(EVP_PKEY, EVP_PKEY_free);
 create_pointer!(RSA, RSA_free);
+create_pointer!(EVP_AEAD_CTX, EVP_AEAD_CTX_free);
 
 #[cfg(test)]
 mod tests {
