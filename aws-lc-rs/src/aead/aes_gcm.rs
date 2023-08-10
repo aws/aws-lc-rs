@@ -85,7 +85,7 @@ pub(crate) fn aead_seal_separate_scatter(
         let mut out_tag_len = extra_out_and_tag.len();
 
         if 1 != EVP_AEAD_CTX_seal_scatter(
-            aead_ctx,
+            *aead_ctx.as_const(),
             in_out.as_mut_ptr(),
             extra_out_and_tag.as_mut_ptr(),
             &mut out_tag_len,
