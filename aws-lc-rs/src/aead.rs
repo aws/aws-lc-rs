@@ -1570,8 +1570,8 @@ mod tests {
                         );
 
                         match (result, case.expect_err) {
-                            (Ok(_), true) => panic!("expected error for seal_in_place_append_tag"),
-                            (Ok(_), false) => {}
+                            (Ok(()), true) => panic!("expected error for seal_in_place_append_tag"),
+                            (Ok(()), false) => {}
                             (Err(_), true) => return,
                             (Err(e), false) => panic!("{e}"),
                         }
