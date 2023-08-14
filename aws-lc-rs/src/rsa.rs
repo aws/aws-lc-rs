@@ -520,7 +520,7 @@ unsafe fn build_private_RSA(public_key: &[u8]) -> Result<LcPtr<RSA>, KeyRejected
     let mut cbs = cbs::build_CBS(public_key);
 
     let rsa =
-        LcPtr::new(RSA_parse_private_key(&mut cbs)).map_err(|_| KeyRejected::invalid_encoding())?;
+        LcPtr::new(RSA_parse_private_key(&mut cbs)).map_err(|()| KeyRejected::invalid_encoding())?;
     Ok(rsa)
 }
 
