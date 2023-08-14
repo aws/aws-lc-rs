@@ -344,7 +344,7 @@ unsafe fn ec_point_to_bytes(
         **ec_group,
         **ec_point,
         pt_conv_form,
-        buf.as_mut_ptr().cast(),
+        buf.as_mut_ptr(),
         PUBLIC_KEY_MAX_LEN,
         null_mut(),
     );
