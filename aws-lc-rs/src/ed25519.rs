@@ -115,7 +115,7 @@ impl KeyPair for Ed25519KeyPair {
     }
 }
 
-pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<*mut EVP_PKEY>, ()> {
+pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<EVP_PKEY>, ()> {
     let mut seed = [0u8; ED25519_SEED_LEN];
     rng.fill(&mut seed)?;
 

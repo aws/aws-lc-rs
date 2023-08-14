@@ -18,9 +18,9 @@ use aws_lc::{
     non_camel_case_types
 )]
 pub(crate) enum AeadCtx {
-    AES_128_GCM(LcPtr<*mut EVP_AEAD_CTX>),
-    AES_256_GCM(LcPtr<*mut EVP_AEAD_CTX>),
-    CHACHA20_POLY1305(LcPtr<*mut EVP_AEAD_CTX>),
+    AES_128_GCM(LcPtr<EVP_AEAD_CTX>),
+    AES_256_GCM(LcPtr<EVP_AEAD_CTX>),
+    CHACHA20_POLY1305(LcPtr<EVP_AEAD_CTX>),
 }
 
 unsafe impl Send for AeadCtx {}
@@ -60,7 +60,7 @@ impl AeadCtx {
     fn build_context(
         aead_fn: unsafe extern "C" fn() -> *const aws_lc::evp_aead_st,
         key_bytes: &[u8],
-    ) -> Result<LcPtr<*mut EVP_AEAD_CTX>, Unspecified> {
+    ) -> Result<LcPtr<EVP_AEAD_CTX>, Unspecified> {
         let aead = unsafe { aead_fn() };
 
         let aead_ctx = unsafe {

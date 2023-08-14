@@ -160,9 +160,9 @@ const X25519_PUBLIC_VALUE_LEN: usize = aws_lc::X25519_PUBLIC_VALUE_LEN as usize;
 const X25519_SHARED_KEY_LEN: usize = aws_lc::X25519_SHARED_KEY_LEN as usize;
 #[allow(non_camel_case_types)]
 enum KeyInner {
-    ECDH_P256(LcPtr<*mut EC_KEY>),
-    ECDH_P384(LcPtr<*mut EC_KEY>),
-    ECDH_P521(LcPtr<*mut EC_KEY>),
+    ECDH_P256(LcPtr<EC_KEY>),
+    ECDH_P384(LcPtr<EC_KEY>),
+    ECDH_P521(LcPtr<EC_KEY>),
     X25519([u8; X25519_PRIVATE_KEY_LEN]),
 }
 
