@@ -1041,7 +1041,7 @@ impl Algorithm {
     /// The length of the nonces.
     #[inline]
     #[must_use]
-    pub const fn nonce_len(&self) -> usize {
+    pub fn nonce_len(&self) -> usize {
         NONCE_LEN
     }
 }
