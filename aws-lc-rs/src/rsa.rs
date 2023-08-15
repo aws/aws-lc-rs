@@ -138,7 +138,7 @@ impl RsaKeyPair {
     const MIN_RSA_BITS: u32 = 1024;
     const MAX_RSA_BITS: u32 = 2048;
 
-    unsafe fn validate_rsa_pkey(rsa: &LcPtr<*mut EVP_PKEY>) -> Result<(), KeyRejected> {
+    unsafe fn validate_rsa_pkey(rsa: &LcPtr<EVP_PKEY>) -> Result<(), KeyRejected> {
         let rsa = rsa.get_rsa()?.as_const();
 
         let p = ConstPointer::new(RSA_get0_p(*rsa))?;

@@ -169,7 +169,7 @@ impl AeadCtx {
         key_bytes: &[u8],
         tag_len: usize,
         direction: Option<AeadDirection>,
-    ) -> Result<LcPtr<*mut EVP_AEAD_CTX>, Unspecified> {
+    ) -> Result<LcPtr<EVP_AEAD_CTX>, Unspecified> {
         if AES_128_KEY_LEN != key_bytes.len() {
             return Err(Unspecified);
         }
@@ -181,7 +181,7 @@ impl AeadCtx {
         key_bytes: &[u8],
         tag_len: usize,
         direction: Option<AeadDirection>,
-    ) -> Result<LcPtr<*mut EVP_AEAD_CTX>, Unspecified> {
+    ) -> Result<LcPtr<EVP_AEAD_CTX>, Unspecified> {
         if AES_256_KEY_LEN != key_bytes.len() {
             return Err(Unspecified);
         }
@@ -198,7 +198,7 @@ impl AeadCtx {
 
         // We are performing the allocation ourselves as EVP_AEAD_CTX_new will call EVP_AEAD_CTX_init by default
         // and this avoid having to zero and reinitalize again if we need to set an explicit direction.
-        let aead_ctx: LcPtr<*mut EVP_AEAD_CTX> =
+        let aead_ctx: LcPtr<EVP_AEAD_CTX> =
             LcPtr::new(unsafe { OPENSSL_malloc(size_of::<EVP_AEAD_CTX>()) }.cast())?;
 
         unsafe { EVP_AEAD_CTX_zero(*aead_ctx) };

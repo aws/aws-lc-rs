@@ -37,7 +37,7 @@ impl<P: Pointer> ManagedPointer<P> {
         }
     }
 
-    pub unsafe fn as_slice<T>(&self, len: usize) -> &[T] {
+    pub unsafe fn as_slice(&self, len: usize) -> &[P::T] {
         std::slice::from_raw_parts(self.pointer.as_const_ptr(), len)
     }
 }

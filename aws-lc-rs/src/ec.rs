@@ -187,7 +187,7 @@ fn verify_fixed_signature(
         return Err(Unspecified);
     }
     let out_bytes = LcPtr::new(out_bytes)?;
-    let signature = unsafe { out_bytes.as_slice::<u8>(out_bytes_len.assume_init()) };
+    let signature = unsafe { out_bytes.as_slice(out_bytes_len.assume_init()) };
     verify_asn1_signature(alg, digest, public_key, msg, signature)
 }
 
@@ -229,7 +229,7 @@ fn verify_asn1_signature(
 fn evp_pkey_from_public_key(
     alg: &'static AlgorithmID,
     public_key: &[u8],
-) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let ec_group = unsafe { ec_group_from_nid(alg.nid())? };
     let ec_point = unsafe { ec_point_from_bytes(&ec_group, public_key)? };
     let ec_key = unsafe { ec_key_from_public_point(&ec_group, &ec_point)? };

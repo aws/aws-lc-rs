@@ -364,7 +364,7 @@ impl EphemeralPrivateKey {
 }
 
 #[cfg(test)]
-fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     use crate::ptr::DetachableLcPtr;
 
     let ec_group = unsafe { ec_group_from_nid(nid)? };
@@ -375,7 +375,7 @@ fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<*mut EVP_PKEY>
     Ok(pkey)
 }
 
-pub(crate) fn generate_x25519() -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+pub(crate) fn generate_x25519() -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
@@ -546,7 +546,7 @@ const MAX_AGREEMENT_SECRET_LEN: usize = ECDH_P521_PRIVATE_KEY_LEN;
 #[allow(clippy::needless_pass_by_value)]
 fn ec_key_ecdh<'a>(
     buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
-    priv_key: &LcPtr<*mut EVP_PKEY>,
+    priv_key: &LcPtr<EVP_PKEY>,
     peer_pub_key_bytes: &[u8],
     nid: i32,
 ) -> Result<&'a [u8], ()> {
@@ -586,7 +586,7 @@ fn ec_key_ecdh<'a>(
 #[inline]
 fn x25519_diffie_hellman<'a>(
     buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
-    priv_key: &LcPtr<*mut EVP_PKEY>,
+    priv_key: &LcPtr<EVP_PKEY>,
     peer_pub_key: &[u8],
 ) -> Result<&'a [u8], ()> {
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
