@@ -212,7 +212,7 @@ struct ZeroizeBoxSlice<T: Zeroize>(Box<[T]>);
 
 impl<T: Clone + Zeroize> From<&[T]> for ZeroizeBoxSlice<T> {
     fn from(value: &[T]) -> Self {
-        Self(Box::from(value))
+        Self(Vec::from(value).into_boxed_slice())
     }
 }
 
