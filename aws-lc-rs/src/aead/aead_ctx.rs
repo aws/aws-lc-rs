@@ -37,19 +37,19 @@ impl From<AeadDirection> for evp_aead_direction_t {
     non_camel_case_types
 )]
 pub(crate) enum AeadCtx {
-    AES_128_GCM(LcPtr<*mut EVP_AEAD_CTX>),
-    AES_256_GCM(LcPtr<*mut EVP_AEAD_CTX>),
+    AES_128_GCM(LcPtr<EVP_AEAD_CTX>),
+    AES_256_GCM(LcPtr<EVP_AEAD_CTX>),
 
-    AES_128_GCM_RANDNONCE(LcPtr<*mut EVP_AEAD_CTX>),
-    AES_256_GCM_RANDNONCE(LcPtr<*mut EVP_AEAD_CTX>),
+    AES_128_GCM_RANDNONCE(LcPtr<EVP_AEAD_CTX>),
+    AES_256_GCM_RANDNONCE(LcPtr<EVP_AEAD_CTX>),
 
-    AES_128_GCM_TLS12(LcPtr<*mut EVP_AEAD_CTX>),
-    AES_256_GCM_TLS12(LcPtr<*mut EVP_AEAD_CTX>),
+    AES_128_GCM_TLS12(LcPtr<EVP_AEAD_CTX>),
+    AES_256_GCM_TLS12(LcPtr<EVP_AEAD_CTX>),
 
-    AES_128_GCM_TLS13(LcPtr<*mut EVP_AEAD_CTX>),
-    AES_256_GCM_TLS13(LcPtr<*mut EVP_AEAD_CTX>),
+    AES_128_GCM_TLS13(LcPtr<EVP_AEAD_CTX>),
+    AES_256_GCM_TLS13(LcPtr<EVP_AEAD_CTX>),
 
-    CHACHA20_POLY1305(LcPtr<*mut EVP_AEAD_CTX>),
+    CHACHA20_POLY1305(LcPtr<EVP_AEAD_CTX>),
 }
 
 unsafe impl Send for AeadCtx {}
@@ -193,7 +193,7 @@ impl AeadCtx {
         key_bytes: &[u8],
         tag_len: usize,
         direction: Option<AeadDirection>,
-    ) -> Result<LcPtr<*mut EVP_AEAD_CTX>, Unspecified> {
+    ) -> Result<LcPtr<EVP_AEAD_CTX>, Unspecified> {
         let aead = unsafe { aead_fn() };
 
         // We are performing the allocation ourselves as EVP_AEAD_CTX_new will call EVP_AEAD_CTX_init by default

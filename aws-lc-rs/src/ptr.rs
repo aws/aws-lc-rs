@@ -11,12 +11,15 @@ use aws_lc::{
 
 use mirai_annotations::verify_unreachable;
 
+pub(crate) type LcPtr<T> = ManagedPointer<*mut T>;
+pub(crate) type DetachableLcPtr<T> = DetachablePointer<*mut T>;
+
 #[derive(Debug)]
-pub(crate) struct LcPtr<P: Pointer> {
+pub(crate) struct ManagedPointer<P: Pointer> {
     pointer: P,
 }
 
-impl<P: Pointer> Deref for LcPtr<P> {
+impl<P: Pointer> Deref for ManagedPointer<P> {
     type Target = P;
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -24,7 +27,7 @@ impl<P: Pointer> Deref for LcPtr<P> {
     }
 }
 
-impl<P: Pointer> LcPtr<P> {
+impl<P: Pointer> ManagedPointer<P> {
     #[inline]
     pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ()> {
         if let Some(pointer) = value.into_pointer() {
@@ -39,16 +42,16 @@ impl<P: Pointer> LcPtr<P> {
     }
 }
 
-impl<P: Pointer> Drop for LcPtr<P> {
+impl<P: Pointer> Drop for ManagedPointer<P> {
     #[inline]
     fn drop(&mut self) {
         self.pointer.free();
     }
 }
 
-impl<P: Pointer + Copy> LcPtr<P> {
+impl<P: Pointer> ManagedPointer<P> {
     #[inline]
-    pub fn as_const<T>(&self) -> ConstPointer<T> {
+    pub fn as_const(&self) -> ConstPointer<P::T> {
         ConstPointer {
             ptr: self.pointer.as_const_ptr(),
         }
@@ -57,11 +60,11 @@ impl<P: Pointer + Copy> LcPtr<P> {
 
 #[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
-pub(crate) struct DetachableLcPtr<P: Pointer> {
+pub(crate) struct DetachablePointer<P: Pointer> {
     pointer: Option<P>,
 }
 
-impl<P: Pointer> Deref for DetachableLcPtr<P> {
+impl<P: Pointer> Deref for DetachablePointer<P> {
     type Target = P;
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -75,7 +78,7 @@ impl<P: Pointer> Deref for DetachableLcPtr<P> {
     }
 }
 
-impl<P: Pointer> DetachableLcPtr<P> {
+impl<P: Pointer> DetachablePointer<P> {
     #[inline]
     pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ()> {
         if let Some(pointer) = value.into_pointer() {
@@ -93,10 +96,10 @@ impl<P: Pointer> DetachableLcPtr<P> {
     }
 }
 
-impl<P: Pointer + Copy> DetachableLcPtr<P> {
+impl<P: Pointer> DetachablePointer<P> {
     #[inline]
-    pub fn as_const<T>(&self) -> ConstPointer<T> {
-        match self.pointer {
+    pub fn as_const(&self) -> ConstPointer<P::T> {
+        match &self.pointer {
             Some(pointer) => ConstPointer {
                 ptr: pointer.as_const_ptr(),
             },
@@ -108,11 +111,11 @@ impl<P: Pointer + Copy> DetachableLcPtr<P> {
     }
 }
 
-impl<P: Pointer> From<DetachableLcPtr<P>> for LcPtr<P> {
+impl<P: Pointer> From<DetachablePointer<P>> for ManagedPointer<P> {
     #[inline]
-    fn from(mut dptr: DetachableLcPtr<P>) -> Self {
+    fn from(mut dptr: DetachablePointer<P>) -> Self {
         match dptr.pointer.take() {
-            Some(pointer) => LcPtr { pointer },
+            Some(pointer) => ManagedPointer { pointer },
             None => {
                 // Safety: pointer is only None when DetachableLcPtr is detached or dropped
                 verify_unreachable!()
@@ -121,7 +124,7 @@ impl<P: Pointer> From<DetachableLcPtr<P>> for LcPtr<P> {
     }
 }
 
-impl<P: Pointer> Drop for DetachableLcPtr<P> {
+impl<P: Pointer> Drop for DetachablePointer<P> {
     #[inline]
     fn drop(&mut self) {
         if let Some(mut pointer) = self.pointer.take() {
@@ -153,8 +156,10 @@ impl<T> Deref for ConstPointer<T> {
 }
 
 pub(crate) trait Pointer {
+    type T;
+
     fn free(&mut self);
-    fn as_const_ptr<T>(&self) -> *const T;
+    fn as_const_ptr(&self) -> *const Self::T;
 }
 
 pub(crate) trait IntoPointer<P> {
@@ -175,6 +180,8 @@ impl<T> IntoPointer<*mut T> for *mut T {
 macro_rules! create_pointer {
     ($ty:ty, $free:path) => {
         impl Pointer for *mut $ty {
+            type T = $ty;
+
             #[inline]
             fn free(&mut self) {
                 unsafe {
@@ -183,7 +190,7 @@ macro_rules! create_pointer {
                 }
             }
 
-            fn as_const_ptr<T>(&self) -> *const T {
+            fn as_const_ptr(&self) -> *const Self::T {
                 self.cast()
             }
         }
@@ -206,22 +213,23 @@ create_pointer!(EVP_AEAD_CTX, EVP_AEAD_CTX_free);
 
 #[cfg(test)]
 mod tests {
-    use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+    use crate::ptr::{ConstPointer, DetachablePointer, ManagedPointer};
     use aws_lc::BIGNUM;
 
     #[test]
     fn test_debug() {
         let num = 100u64;
-        let detachable_ptr: DetachableLcPtr<*mut BIGNUM> = DetachableLcPtr::try_from(num).unwrap();
+        let detachable_ptr: DetachablePointer<*mut BIGNUM> =
+            DetachablePointer::try_from(num).unwrap();
         let debug = format!("{detachable_ptr:?}");
-        assert!(debug.contains("DetachableLcPtr { pointer: Some("));
+        assert!(debug.contains("DetachablePointer { pointer: Some("));
 
         let const_ptr: ConstPointer<BIGNUM> = detachable_ptr.as_const();
         let debug = format!("{const_ptr:?}");
         assert!(debug.contains("ConstPointer { ptr:"));
 
-        let lc_ptr = LcPtr::new(detachable_ptr.detach()).unwrap();
+        let lc_ptr = ManagedPointer::new(detachable_ptr.detach()).unwrap();
         let debug = format!("{lc_ptr:?}");
-        assert!(debug.contains("LcPtr { pointer:"));
+        assert!(debug.contains("ManagedPointer { pointer:"));
     }
 }

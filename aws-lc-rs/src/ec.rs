@@ -302,9 +302,9 @@ pub(crate) fn marshal_public_key(
 
 #[inline]
 pub(crate) unsafe fn ec_key_from_public_point(
-    ec_group: &LcPtr<*mut EC_GROUP>,
-    public_ec_point: &LcPtr<*mut EC_POINT>,
-) -> Result<DetachableLcPtr<*mut EC_KEY>, Unspecified> {
+    ec_group: &LcPtr<EC_GROUP>,
+    public_ec_point: &LcPtr<EC_POINT>,
+) -> Result<DetachableLcPtr<EC_KEY>, Unspecified> {
     let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(Unspecified);
@@ -319,7 +319,7 @@ pub(crate) unsafe fn ec_key_from_public_point(
 pub(crate) unsafe fn ec_key_from_private(
     ec_group: &ConstPointer<EC_GROUP>,
     private_big_num: &ConstPointer<BIGNUM>,
-) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(Unspecified);
@@ -357,7 +357,7 @@ pub(crate) unsafe fn ec_key_from_private(
 }
 
 #[inline]
-pub(crate) fn ec_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+pub(crate) fn ec_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_EC, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
@@ -381,10 +381,10 @@ pub(crate) fn ec_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspec
 
 #[inline]
 unsafe fn ec_key_from_public_private(
-    ec_group: &LcPtr<*mut EC_GROUP>,
-    public_ec_point: &LcPtr<*mut EC_POINT>,
-    private_bignum: &DetachableLcPtr<*mut BIGNUM>,
-) -> Result<LcPtr<*mut EVP_PKEY>, ()> {
+    ec_group: &LcPtr<EC_GROUP>,
+    public_ec_point: &LcPtr<EC_POINT>,
+    private_bignum: &DetachableLcPtr<BIGNUM>,
+) -> Result<LcPtr<EVP_PKEY>, ()> {
     let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(());
@@ -406,15 +406,15 @@ unsafe fn ec_key_from_public_private(
 }
 
 #[inline]
-pub(crate) unsafe fn ec_group_from_nid(nid: i32) -> Result<LcPtr<*mut EC_GROUP>, ()> {
+pub(crate) unsafe fn ec_group_from_nid(nid: i32) -> Result<LcPtr<EC_GROUP>, ()> {
     LcPtr::new(EC_GROUP_new_by_curve_name(nid))
 }
 
 #[inline]
 pub(crate) unsafe fn ec_point_from_bytes(
-    ec_group: &LcPtr<*mut EC_GROUP>,
+    ec_group: &LcPtr<EC_GROUP>,
     bytes: &[u8],
-) -> Result<LcPtr<*mut EC_POINT>, Unspecified> {
+) -> Result<LcPtr<EC_POINT>, Unspecified> {
     let ec_point = LcPtr::new(EC_POINT_new(**ec_group))?;
 
     if 1 != EC_POINT_oct2point(
@@ -442,7 +442,7 @@ unsafe fn ec_point_to_bytes(
         **ec_group,
         **ec_point,
         pt_conv_form,
-        buf.as_mut_ptr().cast(),
+        buf.as_mut_ptr(),
         PUBLIC_KEY_MAX_LEN,
         null_mut(),
     );
@@ -494,7 +494,7 @@ const fn ecdsa_fixed_number_byte_size(alg_id: &'static AlgorithmID) -> usize {
 unsafe fn ecdsa_sig_from_fixed(
     alg_id: &'static AlgorithmID,
     signature: &[u8],
-) -> Result<LcPtr<*mut ECDSA_SIG>, ()> {
+) -> Result<LcPtr<ECDSA_SIG>, ()> {
     let num_size_bytes = ecdsa_fixed_number_byte_size(alg_id);
     if signature.len() != 2 * num_size_bytes {
         return Err(());

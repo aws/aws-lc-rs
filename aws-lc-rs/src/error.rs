@@ -201,7 +201,7 @@ impl From<KeyRejected> for Unspecified {
 }
 
 impl From<()> for Unspecified {
-    fn from(_: ()) -> Self {
+    fn from((): ()) -> Self {
         Unspecified
     }
 }
@@ -211,7 +211,7 @@ impl From<Unspecified> for () {
 }
 
 impl From<()> for KeyRejected {
-    fn from(_: ()) -> Self {
+    fn from((): ()) -> Self {
         KeyRejected::unexpected_error()
     }
 }
@@ -256,6 +256,7 @@ mod tests {
         let unspecified = super::Unspecified::from(key_rejected);
         assert_eq!("Unspecified", unspecified.description());
 
+        #[allow(clippy::redundant_locals)]
         let unspecified = unspecified;
         assert_eq!("Unspecified", unspecified.description());
     }

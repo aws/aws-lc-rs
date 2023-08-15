@@ -49,7 +49,7 @@ pub struct RsaKeyPair {
     // other thread is concurrently calling a mutating function. Unless otherwise
     // documented, functions which take a |const| pointer are non-mutating and
     // functions which take a non-|const| pointer are mutating.
-    evp_pkey: LcPtr<*mut EVP_PKEY>,
+    evp_pkey: LcPtr<EVP_PKEY>,
     serialized_public_key: RsaSubjectPublicKey,
 }
 
@@ -58,7 +58,7 @@ unsafe impl Send for RsaKeyPair {}
 unsafe impl Sync for RsaKeyPair {}
 
 impl RsaKeyPair {
-    fn new(evp_pkey: LcPtr<*mut EVP_PKEY>) -> Result<Self, KeyRejected> {
+    fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, KeyRejected> {
         unsafe {
             let rsa_key = evp_pkey.get_rsa()?;
             let serialized_public_key = RsaSubjectPublicKey::new(&rsa_key.as_const())?;
@@ -552,7 +552,7 @@ impl RsaParameters {
 
 #[inline]
 #[allow(non_snake_case)]
-unsafe fn build_public_RSA_PKEY(public_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+unsafe fn build_public_RSA_PKEY(public_key: &[u8]) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let mut cbs = cbs::build_CBS(public_key);
 
     let rsa = DetachableLcPtr::new(RSA_parse_public_key(&mut cbs))?;
@@ -570,7 +570,7 @@ unsafe fn build_public_RSA_PKEY(public_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY
 
 #[inline]
 #[allow(non_snake_case)]
-unsafe fn build_private_RSA_PKEY(private_key: &[u8]) -> Result<LcPtr<*mut EVP_PKEY>, KeyRejected> {
+unsafe fn build_private_RSA_PKEY(private_key: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     let mut cbs = cbs::build_CBS(private_key);
 
     let rsa = DetachableLcPtr::new(RSA_parse_private_key(&mut cbs))?;
@@ -591,7 +591,7 @@ unsafe fn build_private_RSA_PKEY(private_key: &[u8]) -> Result<LcPtr<*mut EVP_PK
 fn verify_RSA(
     algorithm: &'static digest::Algorithm,
     padding: &'static RsaPadding,
-    public_key: &LcPtr<*mut EVP_PKEY>,
+    public_key: &LcPtr<EVP_PKEY>,
     msg: &[u8],
     signature: &[u8],
     allowed_bit_size: &RangeInclusive<u32>,
@@ -669,7 +669,7 @@ where
 {
     #[allow(non_snake_case)]
     #[inline]
-    unsafe fn build_RSA(&self) -> Result<LcPtr<*mut EVP_PKEY>, ()> {
+    unsafe fn build_RSA(&self) -> Result<LcPtr<EVP_PKEY>, ()> {
         let n_bytes = self.n.as_ref();
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
             return Err(());

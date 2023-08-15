@@ -29,7 +29,7 @@ use std::fmt::{Debug, Formatter};
 #[allow(clippy::module_name_repetitions)]
 pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
-    evp_pkey: LcPtr<*mut EVP_PKEY>,
+    evp_pkey: LcPtr<EVP_PKEY>,
     pubkey: PublicKey,
 }
 
@@ -52,7 +52,7 @@ impl KeyPair for EcdsaKeyPair {
     }
 }
 
-pub(crate) unsafe fn generate_key(nid: i32) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+pub(crate) unsafe fn generate_key(nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let ec_key = DetachableLcPtr::new(EC_KEY_new_by_curve_name(nid))?;
 
     #[cfg(feature = "fips")]
@@ -78,7 +78,7 @@ impl EcdsaKeyPair {
     #[allow(clippy::needless_pass_by_value)]
     unsafe fn new(
         algorithm: &'static EcdsaSigningAlgorithm,
-        evp_pkey: LcPtr<*mut EVP_PKEY>,
+        evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
         let pubkey = ec::marshal_public_key(&evp_pkey.as_const())?;
 

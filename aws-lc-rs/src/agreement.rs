@@ -158,10 +158,10 @@ const ECDH_P521_PRIVATE_KEY_LEN: usize = 66;
 const X25519_SHARED_KEY_LEN: usize = aws_lc::X25519_SHARED_KEY_LEN as usize;
 #[allow(non_camel_case_types)]
 enum KeyInner {
-    ECDH_P256(LcPtr<*mut EVP_PKEY>),
-    ECDH_P384(LcPtr<*mut EVP_PKEY>),
-    ECDH_P521(LcPtr<*mut EVP_PKEY>),
-    X25519(LcPtr<*mut EVP_PKEY>),
+    ECDH_P256(LcPtr<EVP_PKEY>),
+    ECDH_P384(LcPtr<EVP_PKEY>),
+    ECDH_P521(LcPtr<EVP_PKEY>),
+    X25519(LcPtr<EVP_PKEY>),
 }
 
 /// An ephemeral private key for use (only) with `agree_ephemeral`. The

@@ -7,7 +7,7 @@ use mirai_annotations::unrecoverable;
 use std::cmp::Ordering;
 use std::ptr::null_mut;
 
-impl TryFrom<&[u8]> for DetachableLcPtr<*mut BIGNUM> {
+impl TryFrom<&[u8]> for DetachableLcPtr<BIGNUM> {
     type Error = ();
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
@@ -15,7 +15,7 @@ impl TryFrom<&[u8]> for DetachableLcPtr<*mut BIGNUM> {
     }
 }
 
-impl TryFrom<u64> for DetachableLcPtr<*mut BIGNUM> {
+impl TryFrom<u64> for DetachableLcPtr<BIGNUM> {
     type Error = ();
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
