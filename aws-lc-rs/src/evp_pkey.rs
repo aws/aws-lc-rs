@@ -21,7 +21,8 @@ impl TryFrom<&[u8]> for LcPtr<EVP_PKEY> {
         unsafe {
             let mut cbs = cbs::build_CBS(bytes);
 
-            LcPtr::new(EVP_parse_private_key(&mut cbs)).map_err(|_| KeyRejected::invalid_encoding())
+            LcPtr::new(EVP_parse_private_key(&mut cbs))
+                .map_err(|()| KeyRejected::invalid_encoding())
         }
     }
 }
@@ -71,12 +72,14 @@ impl LcPtr<EVP_PKEY> {
 
     pub(crate) fn get_ec_key(&self) -> Result<LcPtr<EC_KEY>, KeyRejected> {
         unsafe {
-            LcPtr::new(EVP_PKEY_get1_EC_KEY(**self)).map_err(|_| KeyRejected::wrong_algorithm())
+            LcPtr::new(EVP_PKEY_get1_EC_KEY(**self)).map_err(|()| KeyRejected::wrong_algorithm())
         }
     }
 
     pub(crate) fn get_rsa(&self) -> Result<LcPtr<RSA>, KeyRejected> {
-        unsafe { LcPtr::new(EVP_PKEY_get1_RSA(**self)).map_err(|_| KeyRejected::wrong_algorithm()) }
+        unsafe {
+            LcPtr::new(EVP_PKEY_get1_RSA(**self)).map_err(|()| KeyRejected::wrong_algorithm())
+        }
     }
 
     pub(crate) fn marshall_private_key(&self, version: Version) -> Result<Document, Unspecified> {
