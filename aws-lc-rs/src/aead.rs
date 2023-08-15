@@ -14,9 +14,10 @@
 //!
 //! # Examples
 //! ```
+//! use aws_lc_rs::aead::{
+//!     nonce_sequence, Aad, BoundKey, OpeningKey, SealingKey, UnboundKey, AES_128_GCM,
+//! };
 //! use aws_lc_rs::rand;
-//! use aws_lc_rs::aead::{UnboundKey, AES_128_GCM, nonce_sequence, SealingKey,
-//!     OpeningKey, Aad, BoundKey};
 //! use aws_lc_rs::test::from_hex;
 //!
 //! let plaintext = "plaintext value";
@@ -41,7 +42,9 @@
 //!
 //! // Encrypt a value using the SealingKey
 //! let aad = Aad::from(aad_content);
-//! sealing_key.seal_in_place_append_tag(aad, &mut in_out_buffer).expect("Encryption failed");
+//! sealing_key
+//!     .seal_in_place_append_tag(aad, &mut in_out_buffer)
+//!     .expect("Encryption failed");
 //!
 //! // The buffer now contains the ciphertext followed by a "tag" value.
 //! let plaintext_len = in_out_buffer.len() - AES_128_GCM.tag_len();
@@ -55,20 +58,23 @@
 //!
 //! // Decrypt the value using the OpeningKey
 //! let aad = Aad::from(aad_content);
-//! opening_key.open_in_place(aad, &mut in_out_buffer).expect("Decryption failed");
+//! opening_key
+//!     .open_in_place(aad, &mut in_out_buffer)
+//!     .expect("Decryption failed");
 //!
 //! let decrypted_plaintext = std::str::from_utf8(&in_out_buffer[0..plaintext_len]).unwrap();
 //!
 //! assert_eq!(plaintext, decrypted_plaintext);
 //! ```
 
-use crate::{derive_debug_via_id, hkdf};
-use aes_gcm::aead_seal_separate;
-use std::fmt::Debug;
+use crate::{derive_debug_via_id, hkdf, iv::FixedLength};
+use std::{fmt::Debug, ptr::null, sync::Mutex};
 
 use crate::error::Unspecified;
 use aead_ctx::AeadCtx;
-use aws_lc::{EVP_AEAD_CTX_open, EVP_AEAD_CTX_seal};
+use aws_lc::{
+    EVP_AEAD_CTX_open, EVP_AEAD_CTX_open_gather, EVP_AEAD_CTX_seal, EVP_AEAD_CTX_seal_scatter,
+};
 use std::mem::MaybeUninit;
 use std::ops::RangeFrom;
 
@@ -162,7 +168,6 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
     /// overwritten in an unspecified way.
-    ///
     #[inline]
     pub fn open_in_place<'in_out, A>(
         &mut self,
@@ -220,7 +225,6 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
     /// overwritten in an unspecified way.
-    ///
     #[inline]
     pub fn open_within<'in_out, A>(
         &mut self,
@@ -231,8 +235,9 @@ impl<N: NonceSequence> OpeningKey<N> {
     where
         A: AsRef<[u8]>,
     {
-        open_within_(
-            &self.key,
+        open_within(
+            self.key.algorithm(),
+            self.key.get_inner_key(),
             self.nonce_sequence.advance()?,
             aad,
             in_out,
@@ -242,44 +247,45 @@ impl<N: NonceSequence> OpeningKey<N> {
 }
 
 #[inline]
-fn open_within_<'in_out, A: AsRef<[u8]>>(
-    key: &UnboundKey,
+fn open_within<'in_out, A: AsRef<[u8]>>(
+    alg: &'static Algorithm,
+    ctx: &AeadCtx,
     nonce: Nonce,
     Aad(aad): Aad<A>,
     in_out: &'in_out mut [u8],
     ciphertext_and_tag: RangeFrom<usize>,
 ) -> Result<&'in_out mut [u8], Unspecified> {
-    fn open_within<'in_out>(
-        key: &UnboundKey,
-        nonce: Nonce,
-        aad: Aad<&[u8]>,
-        in_out: &'in_out mut [u8],
-        ciphertext_and_tag: RangeFrom<usize>,
-    ) -> Result<&'in_out mut [u8], Unspecified> {
-        let in_prefix_len = ciphertext_and_tag.start;
-        let ciphertext_and_tag_len = in_out.len().checked_sub(in_prefix_len).ok_or(Unspecified)?;
-        let ciphertext_len = ciphertext_and_tag_len
-            .checked_sub(TAG_LEN)
-            .ok_or(Unspecified)?;
-        check_per_nonce_max_bytes(key.algorithm, ciphertext_len)?;
-        let key_inner_ref = key.get_inner_key();
+    let in_prefix_len = ciphertext_and_tag.start;
+    let ciphertext_and_tag_len = in_out.len().checked_sub(in_prefix_len).ok_or(Unspecified)?;
+    let ciphertext_len = ciphertext_and_tag_len
+        .checked_sub(alg.tag_len())
+        .ok_or(Unspecified)?;
+    check_per_nonce_max_bytes(alg, ciphertext_len)?;
 
-        aead_open_combined(key_inner_ref, nonce, aad, &mut in_out[in_prefix_len..])?;
+    match ctx {
+        AeadCtx::AES_128_GCM_RANDNONCE(_) | AeadCtx::AES_256_GCM_RANDNONCE(_) => {
+            aead_open_combined_randnonce(
+                alg,
+                ctx,
+                nonce,
+                Aad::from(aad.as_ref()),
+                &mut in_out[in_prefix_len..],
+            )
+        }
+        _ => aead_open_combined(
+            alg,
+            ctx,
+            nonce,
+            Aad::from(aad.as_ref()),
+            &mut in_out[in_prefix_len..],
+        ),
+    }?;
 
-        // shift the plaintext to the left
-        in_out.copy_within(in_prefix_len..in_prefix_len + ciphertext_len, 0);
+    // shift the plaintext to the left
+    in_out.copy_within(in_prefix_len..in_prefix_len + ciphertext_len, 0);
 
-        // `ciphertext_len` is also the plaintext length.
-        Ok(&mut in_out[..ciphertext_len])
-    }
-
-    open_within(
-        key,
-        nonce,
-        Aad::from(aad.as_ref()),
-        in_out,
-        ciphertext_and_tag,
-    )
+    // `ciphertext_len` is also the plaintext length.
+    Ok(&mut in_out[..ciphertext_len])
 }
 
 /// An AEAD key for encrypting and signing ("sealing"), bound to a nonce
@@ -344,7 +350,6 @@ impl<N: NonceSequence> SealingKey<N> {
     /// ```
     /// # Errors
     /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
-    ///
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_append_tag<A, InOut>(
@@ -356,12 +361,14 @@ impl<N: NonceSequence> SealingKey<N> {
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
-        seal_in_place_append_tag_(
-            &self.key,
-            self.nonce_sequence.advance()?,
+        seal_in_place_append_tag(
+            self.algorithm(),
+            self.key.get_inner_key(),
+            Some(self.nonce_sequence.advance()?),
             Aad::from(aad.as_ref()),
             in_out,
         )
+        .map(|_| ())
     }
 
     /// Encrypts and signs (“seals”) data in place.
@@ -378,7 +385,6 @@ impl<N: NonceSequence> SealingKey<N> {
     ///
     /// # Errors
     /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
-    ///
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_separate_tag<A>(
@@ -389,40 +395,48 @@ impl<N: NonceSequence> SealingKey<N> {
     where
         A: AsRef<[u8]>,
     {
-        seal_in_place_separate_tag_(
-            &self.key,
-            self.nonce_sequence.advance()?,
+        seal_in_place_separate_tag(
+            self.algorithm(),
+            self.key.get_inner_key(),
+            Some(self.nonce_sequence.advance()?),
             Aad::from(aad.as_ref()),
             in_out,
         )
+        .map(|(_, tag)| tag)
     }
 }
 
 #[inline]
-fn seal_in_place_append_tag_<InOut>(
-    key: &UnboundKey,
-    nonce: Nonce,
+fn seal_in_place_append_tag<'a, InOut>(
+    alg: &'static Algorithm,
+    ctx: &AeadCtx,
+    nonce: Option<Nonce>,
     aad: Aad<&[u8]>,
-    in_out: &mut InOut,
-) -> Result<(), Unspecified>
+    in_out: &'a mut InOut,
+) -> Result<Nonce, Unspecified>
 where
     InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
 {
-    check_per_nonce_max_bytes(key.algorithm, in_out.as_mut().len())?;
-    let key_inner_ref = key.get_inner_key();
-    aead_seal_combined(key_inner_ref, nonce, aad, in_out)
+    check_per_nonce_max_bytes(alg, in_out.as_mut().len())?;
+    match nonce {
+        Some(nonce) => aead_seal_combined(alg, ctx, nonce, aad, in_out),
+        None => aead_seal_combined_randnonce(alg, ctx, aad, in_out),
+    }
 }
 
 #[inline]
-fn seal_in_place_separate_tag_(
-    key: &UnboundKey,
-    nonce: Nonce,
+fn seal_in_place_separate_tag(
+    alg: &'static Algorithm,
+    ctx: &AeadCtx,
+    nonce: Option<Nonce>,
     aad: Aad<&[u8]>,
     in_out: &mut [u8],
-) -> Result<Tag, Unspecified> {
-    check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
-    let key_inner_ref = key.get_inner_key();
-    aead_seal_separate(key_inner_ref, nonce, aad, in_out)
+) -> Result<(Nonce, Tag), Unspecified> {
+    check_per_nonce_max_bytes(alg, in_out.len())?;
+    match nonce {
+        Some(nonce) => aead_seal_separate(alg, ctx, nonce, aad, in_out),
+        None => aead_seal_separate_randnonce(alg, ctx, aad, in_out),
+    }
 }
 
 /// The additionally authenticated data (AAD) for an opening or sealing
@@ -478,7 +492,7 @@ impl UnboundKey {
     /// `error::Unspecified` if `key_bytes.len() != algorithm.key_len()`.
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         Ok(Self {
-            inner: (algorithm.init)(key_bytes)?,
+            inner: (algorithm.init)(key_bytes, algorithm.tag_len())?,
             algorithm,
         })
     }
@@ -534,7 +548,6 @@ impl LessSafeKey {
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
-    ///
     #[inline]
     pub fn open_in_place<'in_out, A>(
         &self,
@@ -554,7 +567,6 @@ impl LessSafeKey {
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
-    ///
     #[inline]
     pub fn open_within<'in_out, A>(
         &self,
@@ -566,7 +578,14 @@ impl LessSafeKey {
     where
         A: AsRef<[u8]>,
     {
-        open_within_(&self.key, nonce, aad, in_out, ciphertext_and_tag)
+        open_within(
+            self.key.algorithm,
+            self.key.get_inner_key(),
+            nonce,
+            aad,
+            in_out,
+            ciphertext_and_tag,
+        )
     }
 
     /// Deprecated. Renamed to `seal_in_place_append_tag()`.
@@ -593,7 +612,6 @@ impl LessSafeKey {
     ///
     /// # Errors
     /// `error::Unspecified` if encryption operation fails.
-    ///
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_append_tag<A, InOut>(
@@ -606,7 +624,14 @@ impl LessSafeKey {
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
-        seal_in_place_append_tag_(&self.key, nonce, Aad::from(aad.as_ref()), in_out)
+        seal_in_place_append_tag(
+            self.algorithm(),
+            self.key.get_inner_key(),
+            Some(nonce),
+            Aad::from(aad.as_ref()),
+            in_out,
+        )
+        .map(|_| ())
     }
 
     /// Like `SealingKey::seal_in_place_separate_tag()`, except it accepts an
@@ -616,7 +641,6 @@ impl LessSafeKey {
     ///
     /// # Errors
     /// `error::Unspecified` if encryption operation fails.
-    ///
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_separate_tag<A>(
@@ -628,7 +652,14 @@ impl LessSafeKey {
     where
         A: AsRef<[u8]>,
     {
-        seal_in_place_separate_tag_(&self.key, nonce, Aad::from(aad.as_ref()), in_out)
+        seal_in_place_separate_tag(
+            self.algorithm(),
+            self.key.get_inner_key(),
+            Some(nonce),
+            Aad::from(aad.as_ref()),
+            in_out,
+        )
+        .map(|(_, tag)| tag)
     }
 
     /// The key's AEAD algorithm.
@@ -647,9 +678,341 @@ impl Debug for LessSafeKey {
     }
 }
 
+/// AEAD Cipher key using a randomized nonce.
+pub struct RandomizedNonceKey {
+    ctx: AeadCtx,
+    algorithm: &'static Algorithm,
+}
+
+impl RandomizedNonceKey {
+    /// New Random Nonce Sequence
+    /// # Errors
+    pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
+        let ctx = match algorithm.id {
+            AlgorithmID::AES_128_GCM => AeadCtx::aes_128_gcm_randnonce(
+                key_bytes,
+                algorithm.tag_len(),
+                algorithm.nonce_len(),
+            ),
+            AlgorithmID::AES_256_GCM => AeadCtx::aes_256_gcm_randnonce(
+                key_bytes,
+                algorithm.tag_len(),
+                algorithm.nonce_len(),
+            ),
+            AlgorithmID::CHACHA20_POLY1305 => return Err(Unspecified),
+        }?;
+        Ok(Self { ctx, algorithm })
+    }
+
+    /// Like [`OpeningKey::open_in_place()`], except it accepts an arbitrary nonce.
+    ///
+    /// `nonce` must be unique for every use of the key to open data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid.
+    #[inline]
+    pub fn open_in_place<'in_out, A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &'in_out mut [u8],
+    ) -> Result<&'in_out mut [u8], Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.open_within(nonce, aad, in_out, 0..)
+    }
+
+    /// Like [`OpeningKey::open_within()`], except it accepts an arbitrary nonce.
+    ///
+    /// `nonce` must be unique for every use of the key to open data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid.
+    #[inline]
+    pub fn open_within<'in_out, A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &'in_out mut [u8],
+        ciphertext_and_tag: RangeFrom<usize>,
+    ) -> Result<&'in_out mut [u8], Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        open_within(
+            self.algorithm,
+            &self.ctx,
+            nonce,
+            aad,
+            in_out,
+            ciphertext_and_tag,
+        )
+    }
+
+    /// Like [`SealingKey::seal_in_place_append_tag()`], except it accepts an
+    /// arbitrary nonce.
+    ///
+    /// `nonce` must be unique for every use of the key to seal data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if encryption operation fails.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_append_tag<'a, A, InOut>(
+        &self,
+        aad: Aad<A>,
+        in_out: &'a mut InOut,
+    ) -> Result<Nonce, Unspecified>
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    {
+        seal_in_place_append_tag(
+            self.algorithm,
+            &self.ctx,
+            None,
+            Aad::from(aad.as_ref()),
+            in_out,
+        )
+    }
+
+    /// Like `SealingKey::seal_in_place_separate_tag()`, except it accepts an
+    /// arbitrary nonce.
+    ///
+    /// `nonce` must be unique for every use of the key to seal data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if encryption operation fails.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_separate_tag<A>(
+        &self,
+        aad: Aad<A>,
+        in_out: &mut [u8],
+    ) -> Result<(Nonce, Tag), Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        let nonce = if let AlgorithmID::CHACHA20_POLY1305 = self.algorithm.id {
+            Some(Nonce(FixedLength::<NONCE_LEN>::new()?))
+        } else {
+            None
+        };
+        seal_in_place_separate_tag(
+            self.algorithm,
+            &self.ctx,
+            nonce,
+            Aad::from(aad.as_ref()),
+            in_out,
+        )
+    }
+
+    /// The key's AEAD algorithm.
+    #[inline]
+    #[must_use]
+    pub fn algorithm(&self) -> &'static Algorithm {
+        self.algorithm
+    }
+}
+
+/// The Transport Layer Security (TLS) protocol version.
+pub enum TLSProtocolId {
+    /// TLS 1.2 (RFC 5246)
+    TLS12,
+
+    /// TLS 1.3 (RFC 8446)
+    TLS13,
+}
+
+/// AEAD Encryption key used for TLS protocol record encryption.
+pub struct TLSRecordSealingKey {
+    // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
+    // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
+    // or force this type to !Sync. Since this is an implementation detail of AWS-LC
+    // we have optex to manage this behavior internally.
+    ctx: Mutex<AeadCtx>,
+    algorithm: &'static Algorithm,
+}
+
+impl TLSRecordSealingKey {
+    /// New TLS record sealing key. Only supports `AES_128_GCM` and `AES_256_GCM`.
+    ///
+    /// # Errors
+    /// * `Unspecified`: Returned if the length of `key_bytes` does not match the chosen algorithm,
+    /// or if an unsupported algorithm is provided.
+    pub fn new(
+        algorithm: &'static Algorithm,
+        protocol: TLSProtocolId,
+        key_bytes: &[u8],
+    ) -> Result<Self, Unspecified> {
+        let ctx = Mutex::new(match (algorithm.id, protocol) {
+            (AlgorithmID::AES_128_GCM, TLSProtocolId::TLS12) => AeadCtx::aes_128_gcm_tls12(
+                key_bytes,
+                algorithm.tag_len(),
+                aead_ctx::AeadDirection::Seal,
+            ),
+            (AlgorithmID::AES_128_GCM, TLSProtocolId::TLS13) => AeadCtx::aes_128_gcm_tls13(
+                key_bytes,
+                algorithm.tag_len(),
+                aead_ctx::AeadDirection::Seal,
+            ),
+            (AlgorithmID::AES_256_GCM, TLSProtocolId::TLS12) => AeadCtx::aes_256_gcm_tls12(
+                key_bytes,
+                algorithm.tag_len(),
+                aead_ctx::AeadDirection::Seal,
+            ),
+            (AlgorithmID::AES_256_GCM, TLSProtocolId::TLS13) => AeadCtx::aes_256_gcm_tls13(
+                key_bytes,
+                algorithm.tag_len(),
+                aead_ctx::AeadDirection::Seal,
+            ),
+            (AlgorithmID::CHACHA20_POLY1305, _) => Err(Unspecified),
+        }?);
+        Ok(Self { ctx, algorithm })
+    }
+
+    /// Accepts a `Nonce` and `Aad` construction that is unique for this key and
+    /// TLS record sealing operation for the configured TLS protocol version.
+    ///
+    /// `nonce` must be unique and incremented per each sealing operation,
+    /// otherwise an error is returned.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if encryption operation fails.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_append_tag<A, InOut>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &mut InOut,
+    ) -> Result<(), Unspecified>
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    {
+        let ctx = self.ctx.lock().map_err(|_| Unspecified)?;
+        seal_in_place_append_tag(
+            self.algorithm,
+            &ctx,
+            Some(nonce),
+            Aad::from(aad.as_ref()),
+            in_out,
+        )
+        .map(|_| ())
+    }
+
+    /// The key's AEAD algorithm.
+    #[inline]
+    #[must_use]
+    pub fn algorithm(&self) -> &'static Algorithm {
+        self.algorithm
+    }
+}
+
+/// AEAD Encryption key used for TLS protocol record encryption.
+pub struct TLSRecordOpeningKey {
+    // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
+    // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
+    // or force this type to !Sync. Since this is an implementation detail of AWS-LC
+    // we have optex to manage this behavior internally.
+    ctx: Mutex<AeadCtx>,
+    algorithm: &'static Algorithm,
+}
+
+impl TLSRecordOpeningKey {
+    /// New TLS record opening key. Only supports `AES_128_GCM` and `AES_256_GCM` Algorithms.
+    ///
+    /// # Errors
+    /// * `Unspecified`: Returned if the length of `key_bytes` does not match the chosen algorithm,
+    /// or if an unsupported algorithm is provided.
+    pub fn new(
+        algorithm: &'static Algorithm,
+        protocol: TLSProtocolId,
+        key_bytes: &[u8],
+    ) -> Result<Self, Unspecified> {
+        let ctx = Mutex::new(match (algorithm.id, protocol) {
+            (AlgorithmID::AES_128_GCM, TLSProtocolId::TLS12) => AeadCtx::aes_128_gcm_tls12(
+                key_bytes,
+                algorithm.tag_len(),
+                aead_ctx::AeadDirection::Open,
+            ),
+            (AlgorithmID::AES_128_GCM, TLSProtocolId::TLS13) => AeadCtx::aes_128_gcm_tls13(
+                key_bytes,
+                algorithm.tag_len(),
+                aead_ctx::AeadDirection::Open,
+            ),
+            (AlgorithmID::AES_256_GCM, TLSProtocolId::TLS12) => AeadCtx::aes_256_gcm_tls12(
+                key_bytes,
+                algorithm.tag_len(),
+                aead_ctx::AeadDirection::Open,
+            ),
+            (AlgorithmID::AES_256_GCM, TLSProtocolId::TLS13) => AeadCtx::aes_256_gcm_tls13(
+                key_bytes,
+                algorithm.tag_len(),
+                aead_ctx::AeadDirection::Open,
+            ),
+            (AlgorithmID::CHACHA20_POLY1305, _) => Err(Unspecified),
+        }?);
+        Ok(Self { ctx, algorithm })
+    }
+
+    /// Accepts a Noce and Aad construction that is unique for this TLS record
+    /// opening operation.
+    ///
+    /// `nonce` must be unique for every use of the key to open data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid.
+    #[inline]
+    pub fn open_in_place<'in_out, A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &'in_out mut [u8],
+    ) -> Result<&'in_out mut [u8], Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.open_within(nonce, aad, in_out, 0..)
+    }
+
+    /// Accepts a Noce and Aad construction that is unique for this TLS record
+    /// opening operation.
+    ///
+    /// `nonce` must be unique for every use of the key to open data.
+    ///
+    /// See [`OpeningKey::open_within`] for details on `ciphertext_and_tag` argument usage.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid.
+    #[inline]
+    pub fn open_within<'in_out, A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &'in_out mut [u8],
+        ciphertext_and_tag: RangeFrom<usize>,
+    ) -> Result<&'in_out mut [u8], Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        let ctx = self.ctx.lock().map_err(|_| Unspecified)?;
+        open_within(self.algorithm, &ctx, nonce, aad, in_out, ciphertext_and_tag)
+    }
+
+    /// The key's AEAD algorithm.
+    #[inline]
+    #[must_use]
+    pub fn algorithm(&self) -> &'static Algorithm {
+        self.algorithm
+    }
+}
+
 /// An AEAD Algorithm.
 pub struct Algorithm {
-    init: fn(key: &[u8]) -> Result<AeadCtx, Unspecified>,
+    init: fn(key: &[u8], tag_len: usize) -> Result<AeadCtx, Unspecified>,
     key_len: usize,
     id: AlgorithmID,
 
@@ -705,11 +1068,11 @@ impl Eq for Algorithm {}
 /// An authentication tag.
 #[must_use]
 #[repr(C)]
-pub struct Tag([u8; TAG_LEN]);
+pub struct Tag([u8; MAX_TAG_LEN], usize);
 
 impl AsRef<[u8]> for Tag {
     fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
+        self.0[..self.1].as_ref()
     }
 }
 
@@ -721,6 +1084,12 @@ const TAG_LEN: usize = 16;
 
 /// The maximum length of a tag for the algorithms in this module.
 pub const MAX_TAG_LEN: usize = TAG_LEN;
+
+/// The maximum length of a nonce returned by our AEAD API.
+const MAX_NONCE_LEN: usize = NONCE_LEN;
+
+/// The maximum required tag buffer needed if using AWS-LC generated nonce construction
+const MAX_TAG_NONCE_BUFFER_LEN: usize = MAX_TAG_LEN + MAX_NONCE_LEN;
 
 #[inline]
 #[must_use]
@@ -739,92 +1108,297 @@ fn check_per_nonce_max_bytes(alg: &Algorithm, in_out_len: usize) -> Result<(), U
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
 pub(crate) fn aead_seal_combined<InOut>(
-    key: &AeadCtx,
+    alg: &'static Algorithm,
+    ctx: &AeadCtx,
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut InOut,
-) -> Result<(), Unspecified>
+) -> Result<Nonce, Unspecified>
 where
     InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
 {
-    unsafe {
-        let aead_ctx = match key {
-            AeadCtx::AES_128_GCM(aead_ctx)
-            | AeadCtx::AES_256_GCM(aead_ctx)
-            | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
-        };
+    let plaintext_len = in_out.as_mut().len();
+
+    let alg_tag_len = alg.tag_len();
+
+    debug_assert!(alg_tag_len <= MAX_TAG_LEN);
+
+    let tag_buffer = [0u8; MAX_TAG_LEN];
+
+    in_out.extend(tag_buffer[..alg_tag_len].iter());
+
+    let mut out_len = MaybeUninit::<usize>::uninit();
+    let mut_in_out = in_out.as_mut();
+    let aad_str = aad.0;
+
+    {
         let nonce = nonce.as_ref();
 
-        let plaintext_len = in_out.as_mut().len();
+        debug_assert_eq!(nonce.len(), alg.nonce_len());
 
-        in_out.extend([0u8; TAG_LEN].iter());
-
-        let mut out_len = MaybeUninit::<usize>::uninit();
-        let mut_in_out = in_out.as_mut();
-        let add_str = aad.0;
-
-        if 1 != EVP_AEAD_CTX_seal(
-            *aead_ctx.as_const(),
-            mut_in_out.as_mut_ptr(),
-            out_len.as_mut_ptr(),
-            plaintext_len + TAG_LEN,
-            nonce.as_ptr(),
-            NONCE_LEN,
-            mut_in_out.as_ptr(),
-            plaintext_len,
-            add_str.as_ptr(),
-            add_str.len(),
-        ) {
+        if 1 != unsafe {
+            EVP_AEAD_CTX_seal(
+                ctx.as_ptr(),
+                mut_in_out.as_mut_ptr(),
+                out_len.as_mut_ptr(),
+                plaintext_len + alg_tag_len,
+                nonce.as_ptr(),
+                nonce.len(),
+                mut_in_out.as_ptr(),
+                plaintext_len,
+                aad_str.as_ptr(),
+                aad_str.len(),
+            )
+        } {
             return Err(Unspecified);
         }
-
-        Ok(())
     }
+
+    Ok(nonce)
+}
+
+#[inline]
+#[allow(clippy::needless_pass_by_value)]
+pub(crate) fn aead_seal_combined_randnonce<InOut>(
+    alg: &'static Algorithm,
+    key: &AeadCtx,
+    aad: Aad<&[u8]>,
+    in_out: &mut InOut,
+) -> Result<Nonce, Unspecified>
+where
+    InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+{
+    let mut tag_buffer = [0u8; MAX_TAG_NONCE_BUFFER_LEN];
+
+    let mut out_tag_len = MaybeUninit::<usize>::uninit();
+    let aad_str = aad.0;
+
+    {
+        let plaintext_len = in_out.as_mut().len();
+        let in_out = in_out.as_mut();
+
+        if 1 != unsafe {
+            EVP_AEAD_CTX_seal_scatter(
+                key.as_ptr(),
+                in_out.as_mut_ptr(),
+                tag_buffer.as_mut_ptr(),
+                out_tag_len.as_mut_ptr(),
+                tag_buffer.len(),
+                null(),
+                0,
+                in_out.as_ptr(),
+                plaintext_len,
+                null(),
+                0,
+                aad_str.as_ptr(),
+                aad_str.len(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+    }
+
+    let tag_len = alg.tag_len();
+    let nonce_len = alg.nonce_len();
+
+    let nonce = Nonce(FixedLength::<NONCE_LEN>::try_from(
+        &tag_buffer[tag_len..tag_len + nonce_len],
+    )?);
+
+    in_out.extend(&tag_buffer[..tag_len]);
+
+    Ok(nonce)
+}
+
+#[inline]
+#[allow(clippy::needless_pass_by_value)]
+pub(crate) fn aead_seal_separate(
+    alg: &'static Algorithm,
+    ctx: &AeadCtx,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+) -> Result<(Nonce, Tag), Unspecified> {
+    let aad_slice = aad.as_ref();
+    let mut tag = [0u8; MAX_TAG_LEN];
+    let mut out_tag_len = MaybeUninit::<usize>::uninit();
+    {
+        let nonce = nonce.as_ref();
+
+        debug_assert_eq!(nonce.len(), alg.nonce_len());
+
+        if 1 != unsafe {
+            EVP_AEAD_CTX_seal_scatter(
+                ctx.as_ptr(),
+                in_out.as_mut_ptr(),
+                tag.as_mut_ptr(),
+                out_tag_len.as_mut_ptr(),
+                tag.len(),
+                nonce.as_ptr(),
+                nonce.len(),
+                in_out.as_ptr(),
+                in_out.len(),
+                null(),
+                0usize,
+                aad_slice.as_ptr(),
+                aad_slice.len(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+    }
+    Ok((nonce, Tag(tag, unsafe { out_tag_len.assume_init() })))
+}
+
+#[inline]
+#[allow(clippy::needless_pass_by_value)]
+pub(crate) fn aead_seal_separate_randnonce(
+    alg: &'static Algorithm,
+    ctx: &AeadCtx,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+) -> Result<(Nonce, Tag), Unspecified> {
+    let aad_slice = aad.as_ref();
+    let mut tag_buffer = [0u8; MAX_TAG_NONCE_BUFFER_LEN];
+
+    debug_assert!(alg.tag_len() + alg.nonce_len() <= tag_buffer.len());
+
+    let mut out_tag_len = MaybeUninit::<usize>::uninit();
+
+    if 1 != unsafe {
+        EVP_AEAD_CTX_seal_scatter(
+            ctx.as_ptr(),
+            in_out.as_mut_ptr(),
+            tag_buffer.as_mut_ptr(),
+            out_tag_len.as_mut_ptr(),
+            tag_buffer.len(),
+            null(),
+            0,
+            in_out.as_ptr(),
+            in_out.len(),
+            null(),
+            0usize,
+            aad_slice.as_ptr(),
+            aad_slice.len(),
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    let tag_len = alg.tag_len();
+    let nonce_len = alg.nonce_len();
+
+    let nonce = Nonce(FixedLength::<NONCE_LEN>::try_from(
+        &tag_buffer[tag_len..tag_len + nonce_len],
+    )?);
+
+    let mut tag = [0u8; MAX_TAG_LEN];
+    tag.copy_from_slice(&tag_buffer[..tag_len]);
+
+    Ok((nonce, Tag(tag, tag_len)))
 }
 
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
 pub(crate) fn aead_open_combined(
-    key: &AeadCtx,
+    alg: &'static Algorithm,
+    ctx: &AeadCtx,
     nonce: Nonce,
     aad: Aad<&[u8]>,
     in_out: &mut [u8],
 ) -> Result<(), Unspecified> {
-    unsafe {
-        let aead_ctx = match key {
-            AeadCtx::AES_128_GCM(aead_ctx)
-            | AeadCtx::AES_256_GCM(aead_ctx)
-            | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
-        };
-        let nonce = nonce.as_ref();
+    let nonce = nonce.as_ref();
 
-        let plaintext_len = in_out.len() - TAG_LEN;
+    debug_assert_eq!(nonce.len(), alg.nonce_len());
 
-        let aad_str = aad.0;
-        let mut out_len = MaybeUninit::<usize>::uninit();
-        if 1 != EVP_AEAD_CTX_open(
-            *aead_ctx.as_const(),
+    let plaintext_len = in_out.len() - alg.tag_len();
+
+    let aad_str = aad.0;
+    let mut out_len = MaybeUninit::<usize>::uninit();
+    if 1 != unsafe {
+        EVP_AEAD_CTX_open(
+            ctx.as_ptr(),
             in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len,
             nonce.as_ptr(),
-            NONCE_LEN,
+            nonce.len(),
             in_out.as_ptr(),
-            plaintext_len + TAG_LEN,
+            plaintext_len + alg.tag_len(),
             aad_str.as_ptr(),
             aad_str.len(),
-        ) {
-            return Err(Unspecified);
-        }
-
-        Ok(())
+        )
+    } {
+        return Err(Unspecified);
     }
+
+    Ok(())
+}
+
+#[inline]
+#[allow(clippy::needless_pass_by_value)]
+pub(crate) fn aead_open_combined_randnonce(
+    alg: &'static Algorithm,
+    ctx: &AeadCtx,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+) -> Result<(), Unspecified> {
+    let nonce = nonce.as_ref();
+
+    let alg_nonce_len = alg.nonce_len();
+    let alg_tag_len = alg.tag_len();
+
+    debug_assert_eq!(nonce.len(), alg_nonce_len);
+    debug_assert!(alg_tag_len + alg_nonce_len <= MAX_TAG_NONCE_BUFFER_LEN);
+
+    let plaintext_len = in_out.len() - alg_tag_len;
+
+    let mut tag_buffer = [0u8; MAX_TAG_NONCE_BUFFER_LEN];
+
+    tag_buffer[..alg_tag_len].copy_from_slice(&in_out[plaintext_len..plaintext_len + alg_tag_len]);
+    tag_buffer[alg_tag_len..alg_tag_len + alg_nonce_len].copy_from_slice(nonce);
+
+    let tag_slice = &tag_buffer[0..alg_tag_len + alg_nonce_len];
+
+    let aad_str = aad.0;
+
+    if 1 != unsafe {
+        EVP_AEAD_CTX_open_gather(
+            ctx.as_ptr(),
+            in_out.as_mut_ptr(),
+            null(),
+            0,
+            in_out.as_ptr(),
+            plaintext_len,
+            tag_slice.as_ptr(),
+            tag_slice.len(),
+            aad_str.as_ptr(),
+            aad_str.len(),
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{iv::FixedLength, test::from_hex};
+    use paste::paste;
+
+    const TEST_128_BIT_KEY: &[u8] = &[
+        0xb0, 0x37, 0x9f, 0xf8, 0xfb, 0x8e, 0xa6, 0x31, 0xf4, 0x1c, 0xe6, 0x3e, 0xb5, 0xc5, 0x20,
+        0x7c,
+    ];
+
+    const TEST_256_BIT_KEY: &[u8] = &[
+        0x56, 0xd8, 0x96, 0x68, 0xbd, 0x96, 0xeb, 0xff, 0x5e, 0xa2, 0x0b, 0x34, 0xf2, 0x79, 0x84,
+        0x6e, 0x2b, 0x13, 0x01, 0x3d, 0xab, 0x1d, 0xa4, 0x07, 0x5a, 0x16, 0xd5, 0x0b, 0x53, 0xb0,
+        0xcc, 0x88,
+    ];
 
     #[test]
     fn test_aes_128() {
@@ -876,4 +1450,191 @@ mod tests {
 
         assert_eq!(plaintext, in_out[..plaintext.len()]);
     }
+
+    macro_rules! test_randnonce {
+        ($name:ident, $alg:expr, $key:expr) => {
+            paste! {
+                #[test]
+                fn [<test_ $name _randnonce_unsupported>]() {
+                    assert!(RandomizedNonceKey::new($alg, $key).is_err());
+                }
+            }
+        };
+        ($name:ident, $alg:expr, $key:expr, $expect_tag_len:expr, $expect_nonce_len:expr) => {
+            paste! {
+                #[test]
+                fn [<test_ $name _randnonce>]() {
+                    let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
+                    let rand_nonce_key =
+                        RandomizedNonceKey::new($alg, $key).unwrap();
+
+                    assert_eq!($alg, rand_nonce_key.algorithm());
+                    assert_eq!(*$expect_tag_len, $alg.tag_len());
+                    assert_eq!(*$expect_nonce_len, $alg.nonce_len());
+
+                    let mut in_out = Vec::from(plaintext.as_slice());
+
+                    let nonce = rand_nonce_key
+                        .seal_in_place_append_tag(Aad::empty(), &mut in_out)
+                        .unwrap();
+
+                    assert_ne!(plaintext, in_out[..plaintext.len()]);
+
+                    rand_nonce_key
+                        .open_in_place(nonce, Aad::empty(), &mut in_out)
+                        .unwrap();
+
+                    assert_eq!(plaintext, in_out[..plaintext.len()]);
+
+                    let mut in_out = Vec::from(plaintext.as_slice());
+
+                    let (nonce, tag) = rand_nonce_key
+                        .seal_in_place_separate_tag(Aad::empty(), &mut in_out)
+                        .unwrap();
+
+                    assert_ne!(plaintext, in_out[..plaintext.len()]);
+
+                    in_out.extend(tag.as_ref());
+
+                    rand_nonce_key
+                        .open_in_place(nonce, Aad::empty(), &mut in_out)
+                        .unwrap();
+
+                    assert_eq!(plaintext, in_out[..plaintext.len()]);
+                }
+            }
+        };
+    }
+
+    test_randnonce!(aes_128_gcm, &AES_128_GCM, TEST_128_BIT_KEY, &16, &12);
+    test_randnonce!(aes_256_gcm, &AES_256_GCM, TEST_256_BIT_KEY, &16, &12);
+    test_randnonce!(chacha20_poly1305, &CHACHA20_POLY1305, TEST_256_BIT_KEY);
+
+    struct TlsNonceTestCase {
+        nonce: &'static str,
+        expect_err: bool,
+    }
+
+    const TLS_NONCE_TEST_CASES: &[TlsNonceTestCase] = &[
+        TlsNonceTestCase {
+            nonce: "9fab40177c900aad9fc28cc3",
+            expect_err: false,
+        },
+        TlsNonceTestCase {
+            nonce: "9fab40177c900aad9fc28cc4",
+            expect_err: false,
+        },
+        TlsNonceTestCase {
+            nonce: "9fab40177c900aad9fc28cc2",
+            expect_err: true,
+        },
+    ];
+
+    macro_rules! test_tls_aead {
+        ($name:ident, $alg:expr, $proto:expr, $key:expr) => {
+            paste! {
+                #[test]
+                fn [<test_ $name _tls_aead_unsupported>]() {
+                    assert!(TLSRecordSealingKey::new($alg, $proto, $key).is_err());
+                    assert!(TLSRecordOpeningKey::new($alg, $proto, $key).is_err());
+                }
+            }
+        };
+        ($name:ident, $alg:expr, $proto:expr, $key:expr, $expect_tag_len:expr, $expect_nonce_len:expr) => {
+            paste! {
+                #[test]
+                fn [<test_ $name>]() {
+                    let sealing_key =
+                        TLSRecordSealingKey::new($alg, $proto, $key).unwrap();
+
+                    let opening_key =
+                        TLSRecordOpeningKey::new($alg, $proto, $key).unwrap();
+
+                    for case in TLS_NONCE_TEST_CASES {
+                        let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
+
+                        assert_eq!($alg, sealing_key.algorithm());
+                        assert_eq!(*$expect_tag_len, $alg.tag_len());
+                        assert_eq!(*$expect_nonce_len, $alg.nonce_len());
+
+                        let mut in_out = Vec::from(plaintext.as_slice());
+
+                        let nonce = from_hex(case.nonce).unwrap();
+
+                        let nonce_bytes = nonce.as_slice();
+
+                        let result = sealing_key.seal_in_place_append_tag(
+                            Nonce::try_assume_unique_for_key(nonce_bytes).unwrap(),
+                            Aad::empty(),
+                            &mut in_out,
+                        );
+
+                        match (result, case.expect_err) {
+                            (Ok(()), true) => panic!("expected error for seal_in_place_append_tag"),
+                            (Ok(()), false) => {}
+                            (Err(_), true) => return,
+                            (Err(e), false) => panic!("{e}"),
+                        }
+
+                        assert_ne!(plaintext, in_out[..plaintext.len()]);
+
+                        opening_key
+                            .open_in_place(
+                                Nonce::try_assume_unique_for_key(nonce_bytes).unwrap(),
+                                Aad::empty(),
+                                &mut in_out,
+                            )
+                            .unwrap();
+
+                        assert_eq!(plaintext, in_out[..plaintext.len()]);
+                    }
+                }
+            }
+        };
+    }
+
+    test_tls_aead!(
+        aes_128_gcm_tls12,
+        &AES_128_GCM,
+        TLSProtocolId::TLS12,
+        TEST_128_BIT_KEY,
+        &16,
+        &12
+    );
+    test_tls_aead!(
+        aes_128_gcm_tls13,
+        &AES_128_GCM,
+        TLSProtocolId::TLS13,
+        TEST_128_BIT_KEY,
+        &16,
+        &12
+    );
+    test_tls_aead!(
+        aes_256_gcm_tls12,
+        &AES_256_GCM,
+        TLSProtocolId::TLS12,
+        TEST_256_BIT_KEY,
+        &16,
+        &12
+    );
+    test_tls_aead!(
+        aes_256_gcm_tls13,
+        &AES_256_GCM,
+        TLSProtocolId::TLS13,
+        TEST_256_BIT_KEY,
+        &16,
+        &12
+    );
+    test_tls_aead!(
+        chacha20_poly1305_tls12,
+        &CHACHA20_POLY1305,
+        TLSProtocolId::TLS12,
+        TEST_256_BIT_KEY
+    );
+    test_tls_aead!(
+        chacha20_poly1305_tls13,
+        &CHACHA20_POLY1305,
+        TLSProtocolId::TLS13,
+        TEST_256_BIT_KEY
+    );
 }

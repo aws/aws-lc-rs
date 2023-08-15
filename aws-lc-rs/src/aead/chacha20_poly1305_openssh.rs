@@ -68,7 +68,8 @@ impl SealingKey {
                 .encrypt_in_place(nonce.as_ref(), data_and_padding_in_out, 1);
         }
 
-        let Tag(tag) = poly1305::sign(poly_key, plaintext_in_ciphertext_out);
+        let Tag(tag, tag_len) = poly1305::sign(poly_key, plaintext_in_ciphertext_out);
+        debug_assert_eq!(TAG_LEN, tag_len);
         tag_out.copy_from_slice(tag.as_ref());
     }
 }
@@ -177,7 +178,7 @@ pub const TAG_LEN: usize = BLOCK_LEN;
 
 #[inline]
 fn verify(key: poly1305::Key, msg: &[u8], tag: &[u8; TAG_LEN]) -> Result<(), error::Unspecified> {
-    let Tag(calculated_tag) = poly1305::sign(key, msg);
+    let Tag(calculated_tag, _) = poly1305::sign(key, msg);
     constant_time::verify_slices_are_equal(calculated_tag.as_ref(), tag)
 }
 
