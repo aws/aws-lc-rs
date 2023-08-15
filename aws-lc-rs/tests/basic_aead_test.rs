@@ -7,7 +7,7 @@ use aws_lc_rs::{aead, error, test};
 
 use aead::{
     Aad, Algorithm, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey,
-    AES_128_GCM, AES_256_GCM, AES_256_GCM_SIV, CHACHA20_POLY1305,
+    AES_128_GCM, AES_128_GCM_SIV, AES_256_GCM, AES_256_GCM_SIV, CHACHA20_POLY1305,
 };
 use aws_lc_rs::test::from_hex;
 use error::Unspecified;
@@ -88,6 +88,20 @@ fn test_aes_256_gcm_siv() {
     let config = AeadConfig::new(
         &AES_256_GCM_SIV,
         &from_hex("e5ac4a32c67e425ac4b143c83c6f161312a97d88d634afdf9f4da5bd35223f01").unwrap(),
+        &from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap(),
+        "123456789abcdef",
+    );
+    let mut in_out = from_hex("123456789abcdef0").unwrap();
+
+    test_aead_separate_in_place(&config, &mut in_out).unwrap();
+    test_aead_append_within(&config, &in_out).unwrap();
+}
+
+#[test]
+fn test_aes_128_gcm_siv() {
+    let config = AeadConfig::new(
+        &AES_128_GCM_SIV,
+        &from_hex("d480429666d48b400633921c5407d1d1").unwrap(),
         &from_hex("5bf11a0951f0bfc7ea5c9e58").unwrap(),
         "123456789abcdef",
     );

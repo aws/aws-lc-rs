@@ -23,6 +23,7 @@ pub(crate) fn aead_seal_separate(
             AeadCtx::CHACHA20_POLY1305(aead_ctx)
             | AeadCtx::AES_128_GCM(aead_ctx)
             | AeadCtx::AES_256_GCM(aead_ctx)
+            | AeadCtx::AES_128_GCM_SIV(aead_ctx)
             | AeadCtx::AES_256_GCM_SIV(aead_ctx) => aead_ctx,
         };
 
@@ -76,6 +77,14 @@ pub static AES_256_GCM_SIV: Algorithm = Algorithm {
     max_input_len: u64::MAX,
 };
 
+/// AES-128 in GCM mode with nonce reuse resistance, 128-bit tags and 96 bit nonces.
+pub static AES_128_GCM_SIV: Algorithm = Algorithm {
+    init: init_128_aead_siv,
+    key_len: AES_128_KEY_LEN,
+    id: AlgorithmID::AES_128_GCM_SIV,
+    max_input_len: u64::MAX,
+};
+
 #[inline]
 fn init_128_aead(key: &[u8]) -> Result<AeadCtx, Unspecified> {
     AeadCtx::aes_128_gcm(key)
@@ -89,4 +98,9 @@ fn init_256_aead(key: &[u8]) -> Result<AeadCtx, Unspecified> {
 #[inline]
 fn init_256_aead_siv(key: &[u8]) -> Result<AeadCtx, Unspecified> {
     AeadCtx::aes_256_gcm_siv(key)
+}
+
+#[inline]
+fn init_128_aead_siv(key: &[u8]) -> Result<AeadCtx, Unspecified> {
+    AeadCtx::aes_128_gcm_siv(key)
 }
