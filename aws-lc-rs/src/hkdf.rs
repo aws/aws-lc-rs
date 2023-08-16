@@ -227,8 +227,8 @@ impl PrkMode {
                         out.as_mut_ptr(),
                         out.len(),
                         digest,
-                        secret.0.as_ptr(),
-                        secret.0.len(),
+                        secret.as_ptr(),
+                        secret.len(),
                         salt.as_ptr(),
                         *salt_len,
                         info.as_ptr(),
@@ -255,15 +255,17 @@ impl core::fmt::Debug for PrkMode {
 
 struct ZeroizeBoxSlice<T: Zeroize>(Box<[T]>);
 
-impl<T: Clone + Zeroize> From<&[T]> for ZeroizeBoxSlice<T> {
-    fn from(value: &[T]) -> Self {
-        Self(Vec::from(value).into_boxed_slice())
+impl<T: Zeroize> std::ops::Deref for ZeroizeBoxSlice<T> {
+    type Target = [T];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
-impl<T: Zeroize> AsRef<[T]> for ZeroizeBoxSlice<T> {
-    fn as_ref(&self) -> &[T] {
-        &self.0
+impl<T: Clone + Zeroize> From<&[T]> for ZeroizeBoxSlice<T> {
+    fn from(value: &[T]) -> Self {
+        Self(Vec::from(value).into_boxed_slice())
     }
 }
 
