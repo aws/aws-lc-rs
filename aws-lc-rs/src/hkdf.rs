@@ -199,6 +199,51 @@ enum PrkMode {
     },
 }
 
+impl PrkMode {
+    fn fill(&self, algorithm: Algorithm, out: &mut [u8], info: &[u8]) -> Result<(), Unspecified> {
+        let digest = *digest::match_digest_type(&algorithm.0.digest_algorithm().id);
+
+        match &self {
+            PrkMode::Expand { key_bytes, key_len } => unsafe {
+                if 1 != HKDF_expand(
+                    out.as_mut_ptr(),
+                    out.len(),
+                    digest,
+                    key_bytes.as_ptr(),
+                    *key_len,
+                    info.as_ptr(),
+                    info.len(),
+                ) {
+                    return Err(Unspecified);
+                }
+            },
+            PrkMode::ExtractExpand {
+                secret,
+                salt,
+                salt_len,
+            } => {
+                if 1 != unsafe {
+                    HKDF(
+                        out.as_mut_ptr(),
+                        out.len(),
+                        digest,
+                        secret.0.as_ptr(),
+                        secret.0.len(),
+                        salt.as_ptr(),
+                        *salt_len,
+                        info.as_ptr(),
+                        info.len(),
+                    )
+                } {
+                    return Err(Unspecified);
+                }
+            }
+        };
+
+        Ok(())
+    }
+}
+
 impl core::fmt::Debug for PrkMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -364,42 +409,9 @@ impl<L: KeyType> Okm<'_, L> {
             return Err(Unspecified);
         }
 
-        match &self.prk.mode {
-            PrkMode::Expand { key_bytes, key_len } => unsafe {
-                if 1 != HKDF_expand(
-                    out.as_mut_ptr(),
-                    out.len(),
-                    *digest::match_digest_type(&self.prk.algorithm.0.digest_algorithm().id),
-                    key_bytes.as_ptr(),
-                    *key_len,
-                    self.info_bytes.as_ptr(),
-                    self.info_len,
-                ) {
-                    return Err(Unspecified);
-                }
-            },
-            PrkMode::ExtractExpand {
-                secret,
-                salt,
-                salt_len,
-            } => {
-                if 1 != unsafe {
-                    HKDF(
-                        out.as_mut_ptr(),
-                        out.len(),
-                        *digest::match_digest_type(&self.prk.algorithm.0.digest_algorithm().id),
-                        secret.0.as_ptr(),
-                        secret.0.len(),
-                        salt.as_ptr(),
-                        *salt_len,
-                        self.info_bytes.as_ptr(),
-                        self.info_len,
-                    )
-                } {
-                    return Err(Unspecified);
-                }
-            }
-        };
+        self.prk
+            .mode
+            .fill(self.prk.algorithm, out, &self.info_bytes[..self.info_len])?;
 
         Ok(())
     }
