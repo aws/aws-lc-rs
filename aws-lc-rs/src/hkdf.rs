@@ -88,8 +88,8 @@ impl KeyType for Algorithm {
 /// A salt for HKDF operations.
 pub struct Salt {
     algorithm: Algorithm,
-    key_bytes: [u8; MAX_HKDF_SALT_LEN],
-    key_len: usize,
+    salt_bytes: [u8; MAX_HKDF_SALT_LEN],
+    salt_len: usize,
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -103,7 +103,7 @@ impl fmt::Debug for Salt {
 
 impl Drop for Salt {
     fn drop(&mut self) {
-        self.key_bytes.zeroize();
+        self.salt_bytes.zeroize();
     }
 }
 
@@ -122,16 +122,16 @@ impl Salt {
     }
 
     fn try_new(algorithm: Algorithm, value: &[u8]) -> Result<Salt, Unspecified> {
-        let key_len = value.len();
-        if key_len > MAX_HKDF_SALT_LEN {
+        let salt_len = value.len();
+        if salt_len > MAX_HKDF_SALT_LEN {
             return Err(Unspecified);
         }
-        let mut key_bytes = [0u8; MAX_HKDF_SALT_LEN];
-        key_bytes[0..key_len].copy_from_slice(value);
+        let mut salt_bytes = [0u8; MAX_HKDF_SALT_LEN];
+        salt_bytes[0..salt_len].copy_from_slice(value);
         Ok(Self {
             algorithm,
-            key_bytes,
-            key_len,
+            salt_bytes,
+            salt_len,
         })
     }
 
@@ -148,8 +148,8 @@ impl Salt {
             algorithm: self.algorithm,
             mode: PrkMode::ExtractExpand {
                 secret: Arc::from(ZeroizeBoxSlice::from(secret)),
-                salt: self.key_bytes,
-                salt_len: self.key_len,
+                salt: self.salt_bytes,
+                salt_len: self.salt_len,
             },
         }
     }
@@ -173,8 +173,8 @@ impl From<Okm<'_, Algorithm>> for Salt {
         okm.fill(&mut key_bytes[..key_len]).unwrap();
         Self {
             algorithm,
-            key_bytes,
-            key_len,
+            salt_bytes: key_bytes,
+            salt_len: key_len,
         }
     }
 }
