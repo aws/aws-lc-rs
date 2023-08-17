@@ -168,13 +168,13 @@ const _: () = assert!(MAX_HKDF_PRK_LEN <= MAX_HKDF_SALT_LEN);
 impl From<Okm<'_, Algorithm>> for Salt {
     fn from(okm: Okm<'_, Algorithm>) -> Self {
         let algorithm = okm.prk.algorithm;
-        let mut key_bytes = [0u8; MAX_HKDF_SALT_LEN];
-        let key_len = okm.len().len();
-        okm.fill(&mut key_bytes[..key_len]).unwrap();
+        let mut salt_bytes = [0u8; MAX_HKDF_SALT_LEN];
+        let salt_len = okm.len().len();
+        okm.fill(&mut salt_bytes[..salt_len]).unwrap();
         Self {
             algorithm,
-            salt_bytes: key_bytes,
-            salt_len: key_len,
+            salt_bytes,
+            salt_len,
         }
     }
 }
