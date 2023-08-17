@@ -35,9 +35,9 @@
 
 use crate::error::Unspecified;
 use crate::{digest, hmac};
-use aws_lc::{HKDF_expand, HKDF_extract};
+use aws_lc::{HKDF_expand, HKDF};
 use core::fmt;
-use std::mem::MaybeUninit;
+use std::sync::Arc;
 use zeroize::Zeroize;
 
 /// An HKDF algorithm.
@@ -88,8 +88,8 @@ impl KeyType for Algorithm {
 /// A salt for HKDF operations.
 pub struct Salt {
     algorithm: Algorithm,
-    key_bytes: [u8; MAX_HKDF_SALT_LEN],
-    key_len: usize,
+    salt_bytes: [u8; MAX_HKDF_SALT_LEN],
+    salt_len: usize,
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -103,7 +103,7 @@ impl fmt::Debug for Salt {
 
 impl Drop for Salt {
     fn drop(&mut self) {
-        self.key_bytes.zeroize();
+        self.salt_bytes.zeroize();
     }
 }
 
@@ -122,16 +122,16 @@ impl Salt {
     }
 
     fn try_new(algorithm: Algorithm, value: &[u8]) -> Result<Salt, Unspecified> {
-        let key_len = value.len();
-        if key_len > MAX_HKDF_SALT_LEN {
+        let salt_len = value.len();
+        if salt_len > MAX_HKDF_SALT_LEN {
             return Err(Unspecified);
         }
-        let mut key_bytes = [0u8; MAX_HKDF_SALT_LEN];
-        key_bytes[0..key_len].copy_from_slice(value);
+        let mut salt_bytes = [0u8; MAX_HKDF_SALT_LEN];
+        salt_bytes[0..salt_len].copy_from_slice(value);
         Ok(Self {
             algorithm,
-            key_bytes,
-            key_len,
+            salt_bytes,
+            salt_len,
         })
     }
 
@@ -144,33 +144,13 @@ impl Salt {
     #[inline]
     #[must_use]
     pub fn extract(&self, secret: &[u8]) -> Prk {
-        Self::try_extract(self, secret).expect("HKDF_extract failed")
-    }
-
-    #[inline]
-    fn try_extract(&self, secret: &[u8]) -> Result<Prk, Unspecified> {
-        unsafe {
-            let mut key_bytes = MaybeUninit::<[u8; MAX_HKDF_PRK_LEN]>::uninit();
-            let mut key_len = MaybeUninit::<usize>::uninit();
-            if 1 != HKDF_extract(
-                key_bytes.as_mut_ptr().cast(),
-                key_len.as_mut_ptr(),
-                *digest::match_digest_type(&self.algorithm.0.digest_algorithm().id),
-                secret.as_ptr(),
-                secret.len(),
-                self.key_bytes.as_ptr(),
-                self.key_len,
-            ) {
-                return Err(Unspecified);
-            };
-            let key_bytes = key_bytes.assume_init();
-            let key_len = key_len.assume_init();
-            debug_assert!(key_len <= MAX_HKDF_PRK_LEN);
-            Ok(Prk {
-                algorithm: self.algorithm,
-                key_bytes,
-                key_len,
-            })
+        Prk {
+            algorithm: self.algorithm,
+            mode: PrkMode::ExtractExpand {
+                secret: Arc::from(ZeroizeBoxSlice::from(secret)),
+                salt: self.salt_bytes,
+                salt_len: self.salt_len,
+            },
         }
     }
 
@@ -188,13 +168,13 @@ const _: () = assert!(MAX_HKDF_PRK_LEN <= MAX_HKDF_SALT_LEN);
 impl From<Okm<'_, Algorithm>> for Salt {
     fn from(okm: Okm<'_, Algorithm>) -> Self {
         let algorithm = okm.prk.algorithm;
-        let mut key_bytes = [0u8; MAX_HKDF_SALT_LEN];
-        let key_len = okm.len().len();
-        okm.fill(&mut key_bytes[..key_len]).unwrap();
+        let mut salt_bytes = [0u8; MAX_HKDF_SALT_LEN];
+        let salt_len = okm.len().len();
+        okm.fill(&mut salt_bytes[..salt_len]).unwrap();
         Self {
             algorithm,
-            key_bytes,
-            key_len,
+            salt_bytes,
+            salt_len,
         }
     }
 }
@@ -206,26 +186,109 @@ pub trait KeyType {
     fn len(&self) -> usize;
 }
 
+#[derive(Clone)]
+enum PrkMode {
+    Expand {
+        key_bytes: [u8; MAX_HKDF_PRK_LEN],
+        key_len: usize,
+    },
+    ExtractExpand {
+        secret: Arc<ZeroizeBoxSlice<u8>>,
+        salt: [u8; MAX_HKDF_SALT_LEN],
+        salt_len: usize,
+    },
+}
+
+impl PrkMode {
+    fn fill(&self, algorithm: Algorithm, out: &mut [u8], info: &[u8]) -> Result<(), Unspecified> {
+        let digest = *digest::match_digest_type(&algorithm.0.digest_algorithm().id);
+
+        match &self {
+            PrkMode::Expand { key_bytes, key_len } => unsafe {
+                if 1 != HKDF_expand(
+                    out.as_mut_ptr(),
+                    out.len(),
+                    digest,
+                    key_bytes.as_ptr(),
+                    *key_len,
+                    info.as_ptr(),
+                    info.len(),
+                ) {
+                    return Err(Unspecified);
+                }
+            },
+            PrkMode::ExtractExpand {
+                secret,
+                salt,
+                salt_len,
+            } => {
+                if 1 != unsafe {
+                    HKDF(
+                        out.as_mut_ptr(),
+                        out.len(),
+                        digest,
+                        secret.as_ptr(),
+                        secret.len(),
+                        salt.as_ptr(),
+                        *salt_len,
+                        info.as_ptr(),
+                        info.len(),
+                    )
+                } {
+                    return Err(Unspecified);
+                }
+            }
+        };
+
+        Ok(())
+    }
+}
+
+impl core::fmt::Debug for PrkMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Expand { .. } => f.debug_struct("Expand").finish_non_exhaustive(),
+            Self::ExtractExpand { .. } => f.debug_struct("ExtractExpand").finish_non_exhaustive(),
+        }
+    }
+}
+
+struct ZeroizeBoxSlice<T: Zeroize>(Box<[T]>);
+
+impl<T: Zeroize> std::ops::Deref for ZeroizeBoxSlice<T> {
+    type Target = [T];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T: Clone + Zeroize> From<&[T]> for ZeroizeBoxSlice<T> {
+    fn from(value: &[T]) -> Self {
+        Self(Vec::from(value).into_boxed_slice())
+    }
+}
+
+impl<T: Zeroize> Drop for ZeroizeBoxSlice<T> {
+    fn drop(&mut self) {
+        self.0.zeroize();
+    }
+}
+
 /// A HKDF PRK (pseudorandom key).
 #[derive(Clone)]
 pub struct Prk {
     algorithm: Algorithm,
-    key_bytes: [u8; MAX_HKDF_PRK_LEN],
-    key_len: usize,
+    mode: PrkMode,
 }
 
 #[allow(clippy::missing_fields_in_debug)]
 impl fmt::Debug for Prk {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("hkdf::Prk")
             .field("algorithm", &self.algorithm.0)
+            .field("mode", &self.mode)
             .finish()
-    }
-}
-
-impl Drop for Prk {
-    fn drop(&mut self) {
-        self.key_bytes.zeroize();
     }
 }
 
@@ -252,8 +315,7 @@ impl Prk {
         key_bytes[0..key_len].copy_from_slice(value);
         Ok(Self {
             algorithm,
-            key_bytes,
-            key_len,
+            mode: PrkMode::Expand { key_bytes, key_len },
         })
     }
 
@@ -301,8 +363,7 @@ impl From<Okm<'_, Algorithm>> for Prk {
 
         Self {
             algorithm,
-            key_bytes,
-            key_len,
+            mode: PrkMode::Expand { key_bytes, key_len },
         }
     }
 }
@@ -349,19 +410,10 @@ impl<L: KeyType> Okm<'_, L> {
         if out.len() != self.len.len() {
             return Err(Unspecified);
         }
-        unsafe {
-            if 1 != HKDF_expand(
-                out.as_mut_ptr(),
-                out.len(),
-                *digest::match_digest_type(&self.prk.algorithm.0.digest_algorithm().id),
-                self.prk.key_bytes.as_ptr(),
-                self.prk.key_len,
-                self.info_bytes.as_ptr(),
-                self.info_len,
-            ) {
-                return Err(Unspecified);
-            };
-        }
+
+        self.prk
+            .mode
+            .fill(self.prk.algorithm, out, &self.info_bytes[..self.info_len])?;
 
         Ok(())
     }
@@ -409,11 +461,11 @@ mod tests {
             format!("{salt:?}")
         );
         assert_eq!(
-            "hkdf::Prk { algorithm: Algorithm(SHA256) }",
+            "hkdf::Prk { algorithm: Algorithm(SHA256), mode: ExtractExpand { .. } }",
             format!("{prk:?}")
         );
         assert_eq!(
-            "hkdf::Okm { prk: hkdf::Prk { algorithm: Algorithm(SHA256) } }",
+            "hkdf::Okm { prk: hkdf::Prk { algorithm: Algorithm(SHA256), mode: ExtractExpand { .. } } }",
             format!("{okm:?}")
         );
     }

@@ -113,17 +113,17 @@ fn bench_hkdf(c: &mut Criterion, config: &HKDFConfig) {
         let bench_group_name = format!("HKDF-{:?}-{}-bytes", config.algorithm, chunk_len);
         let mut group = c.benchmark_group(bench_group_name);
 
-        let aws_prk = aws_lc_rs_benchmarks::run_hkdf_extract(config);
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
+                let aws_prk = aws_lc_rs_benchmarks::run_hkdf_extract(config);
                 aws_lc_rs_benchmarks::run_hkdf_expand(&aws_prk, info_chunk);
             });
         });
         #[cfg(feature = "ring-benchmarks")]
         {
-            let ring_prk = ring_benchmarks::run_hkdf_extract(config);
             group.bench_function("Ring", |b| {
                 b.iter(|| {
+                    let ring_prk = ring_benchmarks::run_hkdf_extract(config);
                     ring_benchmarks::run_hkdf_expand(&ring_prk, info_chunk);
                 });
             });
