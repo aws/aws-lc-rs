@@ -136,7 +136,7 @@ impl RsaKeyPair {
         }
     }
     const MIN_RSA_BITS: u32 = 1024;
-    const MAX_RSA_BITS: u32 = 2048;
+    const MAX_RSA_BITS: u32 = 4096;
 
     unsafe fn validate_rsa(rsa: &ConstPointer<RSA>) -> Result<(), KeyRejected> {
         let p = ConstPointer::new(RSA_get0_p(**rsa))?;
