@@ -8,8 +8,8 @@ use crate::cipher::aes::{AES_128_KEY_LEN, AES_256_KEY_LEN};
 use crate::error::Unspecified;
 use crate::ptr::LcPtr;
 use aws_lc::{
-    EVP_AEAD_CTX_new, EVP_aead_aes_128_gcm, EVP_aead_aes_256_gcm, EVP_aead_chacha20_poly1305,
-    EVP_AEAD_CTX,
+    EVP_AEAD_CTX_new, EVP_aead_aes_128_gcm, EVP_aead_aes_128_gcm_siv, EVP_aead_aes_256_gcm,
+    EVP_aead_aes_256_gcm_siv, EVP_aead_chacha20_poly1305, EVP_AEAD_CTX,
 };
 
 #[allow(
@@ -20,6 +20,8 @@ use aws_lc::{
 pub(crate) enum AeadCtx {
     AES_128_GCM(LcPtr<EVP_AEAD_CTX>),
     AES_256_GCM(LcPtr<EVP_AEAD_CTX>),
+    AES_128_GCM_SIV(LcPtr<EVP_AEAD_CTX>),
+    AES_256_GCM_SIV(LcPtr<EVP_AEAD_CTX>),
     CHACHA20_POLY1305(LcPtr<EVP_AEAD_CTX>),
 }
 
@@ -37,12 +39,32 @@ impl AeadCtx {
         )?))
     }
 
+    pub(crate) fn aes_128_gcm_siv(key_bytes: &[u8]) -> Result<Self, Unspecified> {
+        if AES_128_KEY_LEN != key_bytes.len() {
+            return Err(Unspecified);
+        }
+        Ok(AeadCtx::AES_128_GCM_SIV(AeadCtx::build_context(
+            EVP_aead_aes_128_gcm_siv,
+            key_bytes,
+        )?))
+    }
+
     pub(crate) fn aes_256_gcm(key_bytes: &[u8]) -> Result<Self, Unspecified> {
         if AES_256_KEY_LEN != key_bytes.len() {
             return Err(Unspecified);
         }
         Ok(AeadCtx::AES_256_GCM(AeadCtx::build_context(
             EVP_aead_aes_256_gcm,
+            key_bytes,
+        )?))
+    }
+
+    pub(crate) fn aes_256_gcm_siv(key_bytes: &[u8]) -> Result<Self, Unspecified> {
+        if AES_256_KEY_LEN != key_bytes.len() {
+            return Err(Unspecified);
+        }
+        Ok(AeadCtx::AES_256_GCM_SIV(AeadCtx::build_context(
+            EVP_aead_aes_256_gcm_siv,
             key_bytes,
         )?))
     }
