@@ -10,6 +10,7 @@ ARG GO_VERSION=go1.20.1
 RUN apt-get update && \
     apt-get -y install clang cmake golang && \
     rustup update && \
+    rustup toolchain install nightly && \
     rustup component add rustfmt clippy && \
     cargo install rust-script && \
     git config --global --add safe.directory '*' && \
@@ -22,3 +23,7 @@ RUN apt-get update && \
     rm -rf /tmp/*
 
 ENV PATH="/root/sdk/${GO_VERSION}/bin:${PATH}"
+
+# Static FIPS build only supports clang.
+ENV CC=clang
+ENV CXX=clang++
