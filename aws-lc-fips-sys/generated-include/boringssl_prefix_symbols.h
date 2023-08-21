@@ -3851,3 +3851,4 @@
 #define x509v3_conf_name_matches BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509v3_conf_name_matches)
 #define x509v3_hex_to_bytes BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509v3_hex_to_bytes)
 #define x509v3_looks_like_dns_name BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509v3_looks_like_dns_name)
+#define x86_64_assembly_implementation_FOR_TESTING BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x86_64_assembly_implementation_FOR_TESTING)

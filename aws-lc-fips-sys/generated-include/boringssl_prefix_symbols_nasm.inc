@@ -3848,6 +3848,7 @@
 %xdefine _x509v3_conf_name_matches _ %+ BORINGSSL_PREFIX %+ _x509v3_conf_name_matches
 %xdefine _x509v3_hex_to_bytes _ %+ BORINGSSL_PREFIX %+ _x509v3_hex_to_bytes
 %xdefine _x509v3_looks_like_dns_name _ %+ BORINGSSL_PREFIX %+ _x509v3_looks_like_dns_name
+%xdefine _x86_64_assembly_implementation_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _x86_64_assembly_implementation_FOR_TESTING
 %else
 %xdefine ACCESS_DESCRIPTION_free BORINGSSL_PREFIX %+ _ACCESS_DESCRIPTION_free
 %xdefine ACCESS_DESCRIPTION_it BORINGSSL_PREFIX %+ _ACCESS_DESCRIPTION_it
@@ -7683,4 +7684,5 @@
 %xdefine x509v3_conf_name_matches BORINGSSL_PREFIX %+ _x509v3_conf_name_matches
 %xdefine x509v3_hex_to_bytes BORINGSSL_PREFIX %+ _x509v3_hex_to_bytes
 %xdefine x509v3_looks_like_dns_name BORINGSSL_PREFIX %+ _x509v3_looks_like_dns_name
+%xdefine x86_64_assembly_implementation_FOR_TESTING BORINGSSL_PREFIX %+ _x86_64_assembly_implementation_FOR_TESTING
 %endif
