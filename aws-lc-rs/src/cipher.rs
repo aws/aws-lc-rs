@@ -421,6 +421,9 @@ impl PaddedBlockEncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error cosntructing a `PaddedBlockEncryptingKey`.
+    ///
+    /// # FIPS
+    /// This mode utilizes cryptographic implementations that follow FIPS implementation guidance.
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         PaddedBlockEncryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
     }
@@ -655,6 +658,9 @@ impl DecryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
+    ///
+    /// # FIPS
+    /// This mode utilizes cryptographic functions that follow FIPS implementation guidance.
     pub fn ctr(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
         DecryptingKey::new(key, OperatingMode::CTR)
     }

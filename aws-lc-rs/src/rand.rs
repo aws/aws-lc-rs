@@ -30,7 +30,7 @@
 //!
 //! // Using `rand::generate`
 //! let random_array = rand::generate(&rng).unwrap();
-//! let more_rand_bytes : [u8; 64] = random_array.expose();
+//! let more_rand_bytes: [u8; 64] = random_array.expose();
 //! ```
 use aws_lc::RAND_bytes;
 use std::fmt::Debug;
@@ -45,7 +45,6 @@ pub trait SecureRandom: sealed::SecureRandom {
     ///
     /// # Errors
     /// `error::Unspecified` if unable to fill `dest`.
-    ///
     fn fill(&self, dest: &mut [u8]) -> Result<(), Unspecified>;
 }
 
@@ -77,7 +76,6 @@ impl<T: RandomlyConstructable> Random<T> {
 ///
 /// # Errors
 /// `error::Unspecified` if unable to fill buffer.
-///
 #[inline]
 pub fn generate<T: RandomlyConstructable>(
     rng: &dyn SecureRandom,
@@ -123,6 +121,9 @@ impl<T> RandomlyConstructable for T where T: sealed::RandomlyConstructable {}
 /// underlying *AWS-LC* libcrypto.
 ///
 /// A single `SystemRandom` may be shared across multiple threads safely.
+///
+/// # FIPS
+/// This implementation uses a DRBG design following FIPS implementation guidance.
 #[derive(Clone, Debug)]
 pub struct SystemRandom(());
 
@@ -153,6 +154,9 @@ impl sealed::SecureRandom for SystemRandom {
 /// Fills `dest` with random bytes.
 /// # Errors
 /// `error::Unspecified` if unable to fill `dest`.
+///
+/// # FIPS
+/// This implementation uses a DRBG design following FIPS implementation guidance.
 pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
     if 1 != indicator_check!(unsafe { RAND_bytes(dest.as_mut_ptr(), dest.len()) }) {
         return Err(Unspecified);

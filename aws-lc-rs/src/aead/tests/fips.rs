@@ -9,7 +9,7 @@ mod quic;
 use crate::{
     aead::{
         nonce_sequence::Counter64Builder, Aad, BoundKey, Nonce, OpeningKey, RandomizedNonceKey,
-        SealingKey, TLSProtocolId, TLSRecordOpeningKey, TLSRecordSealingKey, UnboundKey,
+        SealingKey, TlsProtocolId, TlsRecordOpeningKey, TlsRecordSealingKey, UnboundKey,
         AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305,
     },
     fips::{assert_fips_status_indicator, FipsServiceStatus},
@@ -191,7 +191,7 @@ macro_rules! tls_nonce_api {
     ($name:ident, $alg:expr, $proto:expr, $key:expr) => {
         #[test]
         fn $name() {
-            let key = TLSRecordSealingKey::new($alg, $proto, $key).unwrap();
+            let key = TlsRecordSealingKey::new($alg, $proto, $key).unwrap();
 
             let mut in_out = Vec::from(TEST_MESSAGE);
 
@@ -205,7 +205,7 @@ macro_rules! tls_nonce_api {
             )
             .unwrap();
 
-            let key = TLSRecordOpeningKey::new($alg, $proto, $key).unwrap();
+            let key = TlsRecordOpeningKey::new($alg, $proto, $key).unwrap();
 
             let in_out = assert_fips_status_indicator!(
                 key.open_in_place(Nonce::from(&TEST_NONCE_96_BIT), Aad::empty(), &mut in_out),
@@ -220,8 +220,8 @@ macro_rules! tls_nonce_api {
     ($name:ident, $alg:expr, $proto:expr, $key:expr, false) => {
         #[test]
         fn $name() {
-            assert!(TLSRecordSealingKey::new($alg, $proto, $key).is_err());
-            assert!(TLSRecordOpeningKey::new($alg, $proto, $key).is_err());
+            assert!(TlsRecordSealingKey::new($alg, $proto, $key).is_err());
+            assert!(TlsRecordOpeningKey::new($alg, $proto, $key).is_err());
         }
     };
 }
@@ -229,38 +229,38 @@ macro_rules! tls_nonce_api {
 tls_nonce_api!(
     aes_128_tls12_nonce_api,
     &AES_128_GCM,
-    TLSProtocolId::TLS12,
+    TlsProtocolId::TLS12,
     &TEST_KEY_128_BIT
 );
 tls_nonce_api!(
     aes_256_tls12_nonce_api,
     &AES_256_GCM,
-    TLSProtocolId::TLS12,
+    TlsProtocolId::TLS12,
     &TEST_KEY_256_BIT
 );
 tls_nonce_api!(
     aes_128_tls13_nonce_api,
     &AES_128_GCM,
-    TLSProtocolId::TLS13,
+    TlsProtocolId::TLS13,
     &TEST_KEY_128_BIT
 );
 tls_nonce_api!(
     aes_256_tls13_nonce_api,
     &AES_256_GCM,
-    TLSProtocolId::TLS13,
+    TlsProtocolId::TLS13,
     &TEST_KEY_256_BIT
 );
 tls_nonce_api!(
     chaca20_poly1305_tls12_nonce_api,
     &CHACHA20_POLY1305,
-    TLSProtocolId::TLS12,
+    TlsProtocolId::TLS12,
     &TEST_KEY_256_BIT,
     false
 );
 tls_nonce_api!(
     chaca20_poly1305_tls13_nonce_api,
     &CHACHA20_POLY1305,
-    TLSProtocolId::TLS13,
+    TlsProtocolId::TLS13,
     &TEST_KEY_256_BIT,
     false
 );

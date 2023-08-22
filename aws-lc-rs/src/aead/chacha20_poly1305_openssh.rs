@@ -19,6 +19,9 @@
 //! [chacha20-poly1305@openssh.com]:
 //!    http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL.chacha20poly1305?annotate=HEAD
 //! [RFC 4253]: https://tools.ietf.org/html/rfc4253
+//!
+//! # FIPS
+//! FIPS users should not use the APIs offered in this module.
 
 use super::{poly1305, Nonce, Tag};
 use crate::cipher::block::BLOCK_LEN;
@@ -48,6 +51,9 @@ impl SealingKey {
     /// `padding_length||payload||random padding`. It will be overwritten by
     /// `encrypted_packet_length||ciphertext`, where `encrypted_packet_length`
     /// is encrypted with `K_1` and `ciphertext` is encrypted by `K_2`.
+    ///
+    /// # FIPS
+    /// FIPS users should not use this method.
     #[inline]
     pub fn seal_in_place(
         &self,
@@ -92,6 +98,9 @@ impl OpeningKey {
     ///
     /// Importantly, the result won't be authenticated until `open_in_place` is
     /// called.
+    ///
+    /// # FIPS
+    /// FIPS users should not use this method.
     #[inline]
     #[must_use]
     pub fn decrypt_packet_length(
@@ -120,6 +129,8 @@ impl OpeningKey {
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid
     ///
+    /// # FIPS
+    /// FIPS users should not use this method.
     #[inline]
     pub fn open_in_place<'a>(
         &self,

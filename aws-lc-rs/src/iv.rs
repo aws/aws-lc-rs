@@ -29,7 +29,6 @@ impl<const L: usize> FixedLength<L> {
     /// # Errors
     ///
     /// * [`Unspecified`]: Returned if there is a failure generating `L` bytes.
-    ///
     pub fn new() -> Result<Self, Unspecified> {
         let mut iv_bytes = [0u8; L];
         rand::fill(&mut iv_bytes)?;

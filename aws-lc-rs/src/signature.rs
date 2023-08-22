@@ -184,9 +184,10 @@
 //! ```
 //! use aws_lc_rs::{rand, signature};
 //!
-//! fn sign_and_verify_rsa(private_key_path: &std::path::Path,
-//!                        public_key_path: &std::path::Path)
-//!                        -> Result<(), MyError> {
+//! fn sign_and_verify_rsa(
+//!     private_key_path: &std::path::Path,
+//!     public_key_path: &std::path::Path,
+//! ) -> Result<(), MyError> {
 //!     // Create an `RsaKeyPair` from the DER-encoded bytes. This example uses
 //!     // a 2048-bit key, but larger keys are also supported.
 //!     let private_key_der = read_file(private_key_path)?;
@@ -198,23 +199,26 @@
 //!     const MESSAGE: &'static [u8] = b"hello, world";
 //!     let rng = rand::SystemRandom::new();
 //!     let mut signature = vec![0; key_pair.public_modulus_len()];
-//!     key_pair.sign(&signature::RSA_PKCS1_SHA256, &rng, MESSAGE, &mut signature)
+//!     key_pair
+//!         .sign(&signature::RSA_PKCS1_SHA256, &rng, MESSAGE, &mut signature)
 //!         .map_err(|_| MyError::OOM)?;
 //!
 //!     // Verify the signature.
-//!     let public_key =
-//!         signature::UnparsedPublicKey::new(&signature::RSA_PKCS1_2048_8192_SHA256,
-//!                                       read_file(public_key_path)?);
-//!     public_key.verify(MESSAGE, &signature)
+//!     let public_key = signature::UnparsedPublicKey::new(
+//!         &signature::RSA_PKCS1_2048_8192_SHA256,
+//!         read_file(public_key_path)?,
+//!     );
+//!     public_key
+//!         .verify(MESSAGE, &signature)
 //!         .map_err(|_| MyError::BadSignature)
 //! }
 //!
 //! #[derive(Debug)]
 //! enum MyError {
-//!    IO(std::io::Error),
-//!    BadPrivateKey,
-//!    OOM,
-//!    BadSignature,
+//!     IO(std::io::Error),
+//!     BadPrivateKey,
+//!     OOM,
+//!     BadSignature,
 //! }
 //!
 //! fn read_file(path: &std::path::Path) -> Result<Vec<u8>, MyError> {
@@ -222,7 +226,8 @@
 //!
 //!     let mut file = std::fs::File::open(path).map_err(|e| MyError::IO(e))?;
 //!     let mut contents: Vec<u8> = Vec::new();
-//!     file.read_to_end(&mut contents).map_err(|e| MyError::IO(e))?;
+//!     file.read_to_end(&mut contents)
+//!         .map_err(|e| MyError::IO(e))?;
 //!     Ok(contents)
 //! }
 //!
@@ -316,6 +321,12 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     ///
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
+    ///
+    /// # FIPS
+    /// FIPS users should utilize this method when meeting the following conditions:
+    /// * RSA Key Sizes: 1024, 2048, 3072, 4096
+    /// * NIST Elliptic Curves: P256, P384, P521
+    /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
     fn verify_sig(
         &self,
         public_key: &[u8],
@@ -359,7 +370,6 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     ///
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
-    ///
     #[inline]
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
         self.algorithm

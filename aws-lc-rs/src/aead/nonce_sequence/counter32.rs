@@ -13,7 +13,6 @@ use crate::iv::FixedLength;
 /// `u32::MAX`.
 ///
 /// See [Section 3.2 of RFC 5116](https://www.rfc-editor.org/rfc/rfc5116#section-3.2).
-///
 #[allow(clippy::module_name_repetitions)]
 pub struct Counter32 {
     limit: u32,
