@@ -3742,3 +3742,4 @@ x509v3_cache_extensions
 x509v3_conf_name_matches
 x509v3_hex_to_bytes
 x509v3_looks_like_dns_name
+x86_64_assembly_implementation_FOR_TESTING

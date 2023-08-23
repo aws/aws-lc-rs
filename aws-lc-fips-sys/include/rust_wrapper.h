@@ -89,6 +89,7 @@ int ERR_GET_FUNC_RUST(uint32_t packed_error);
 #include "openssl/ripemd.h"
 #include "openssl/rsa.h"
 #include "openssl/safestack.h"
+#include "openssl/service_indicator.h"
 #include "openssl/sha.h"
 #include "openssl/siphash.h"
 #include "openssl/span.h"
