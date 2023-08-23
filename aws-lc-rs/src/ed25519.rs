@@ -4,14 +4,16 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
 use crate::{constant_time, sealed, test};
 use aws_lc::{
-    ED25519_keypair_from_seed, ED25519_sign, ED25519_verify, EVP_PKEY_get_raw_private_key,
-    EVP_PKEY_get_raw_public_key, EVP_PKEY_new_raw_private_key, EVP_PKEY, EVP_PKEY_ED25519,
+    ED25519_keypair_from_seed, ED25519_sign, ED25519_verify, EVP_PKEY_CTX_new_id,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen,
+    EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_ED25519,
 };
 use std::fmt;
 use std::fmt::{Debug, Formatter};
@@ -20,7 +22,6 @@ use std::ptr::null_mut;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
-use zeroize::Zeroize;
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
@@ -116,31 +117,22 @@ impl KeyPair for Ed25519KeyPair {
     }
 }
 
-pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<EVP_PKEY>, ()> {
-    // TODO: Should we drop support for using the provided rng in a minor release?
+pub(crate) unsafe fn generate_key() -> Result<LcPtr<EVP_PKEY>, ()> {
+    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, null_mut()) })?;
 
-    let mut seed = [0u8; ED25519_SEED_LEN];
-    rng.fill(&mut seed)?;
+    if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
+        return Err(());
+    }
 
-    let mut public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
-    let mut private_key = MaybeUninit::<[u8; ED25519_PRIVATE_KEY_LEN]>::uninit();
-    ED25519_keypair_from_seed(
-        public_key.as_mut_ptr().cast(),
-        private_key.as_mut_ptr().cast(),
-        seed.as_ptr(),
-    );
-    seed.zeroize();
+    let mut pkey = null_mut::<EVP_PKEY>();
 
-    // ED25519_keypair_from_seed doesn't set FIPS indicator, and Ed25119 is not approved anyways at this time.
-    // Seems like it could be approved for use in the future per FIPS 186-5 and CMVP guidance.
-    crate::fips::set_fips_service_status_unapproved();
+    if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) }) {
+        return Err(());
+    }
 
-    LcPtr::new(EVP_PKEY_new_raw_private_key(
-        EVP_PKEY_ED25519,
-        null_mut(),
-        private_key.assume_init().as_ptr(),
-        ED25519_PRIVATE_KEY_SEED_LEN,
-    ))
+    let pkey = LcPtr::new(pkey)?;
+
+    Ok(pkey)
 }
 
 impl Ed25519KeyPair {
@@ -159,10 +151,12 @@ impl Ed25519KeyPair {
     /// The aws-lc-ring implementation produces PKCS#8 v2 encoded documents that are compliant per
     /// the RFC specification.
     ///
+    /// Our implementation ignores the `SecureRandom` parameter.
+    ///
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
-    pub fn generate_pkcs8(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
-        let evp_pkey = unsafe { generate_key(rng)? };
+    pub fn generate_pkcs8(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
+        let evp_pkey = unsafe { generate_key()? };
         evp_pkey.marshall_private_key(Version::V2)
     }
 
@@ -172,10 +166,13 @@ impl Ed25519KeyPair {
     /// The PKCS#8 document will be a v1 `PrivateKeyInfo` structure (RFC5208). Use this method
     /// when needing to produce documents that are compatible with the OpenSSL CLI.
     ///
+    /// # *ring* Compatibility
+    ///  Our implementation ignores the `SecureRandom` parameter.
+    ///
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
-    pub fn generate_pkcs8v1(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
-        let evp_pkey = unsafe { generate_key(rng)? };
+    pub fn generate_pkcs8v1(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
+        let evp_pkey = unsafe { generate_key()? };
         evp_pkey.marshall_private_key(Version::V1)
     }
 
