@@ -135,8 +135,8 @@ impl RsaKeyPair {
             Self::new(rsa)
         }
     }
-    const MIN_RSA_BITS: u32 = 1024;
-    const MAX_RSA_BITS: u32 = 4096;
+    const MIN_RSA_PRIME_BITS: u32 = 1024;
+    const MAX_RSA_PRIME_BITS: u32 = 4096;
 
     unsafe fn validate_rsa(rsa: &ConstPointer<RSA>) -> Result<(), KeyRejected> {
         let p = ConstPointer::new(RSA_get0_p(**rsa))?;
@@ -147,14 +147,16 @@ impl RsaKeyPair {
         if p_bits != q_bits {
             return Err(KeyRejected::inconsistent_components());
         }
-        if p_bits % 512 != 0 {
-            return Err(KeyRejected::private_modulus_len_not_multiple_of_512_bits());
-        }
-        if p_bits < Self::MIN_RSA_BITS {
+
+        if p_bits < Self::MIN_RSA_PRIME_BITS {
             return Err(KeyRejected::too_small());
         }
-        if p_bits > Self::MAX_RSA_BITS {
+        if p_bits > Self::MAX_RSA_PRIME_BITS {
             return Err(KeyRejected::too_large());
+        }
+
+        if p_bits % 512 != 0 {
+            return Err(KeyRejected::private_modulus_len_not_multiple_of_512_bits());
         }
 
         let e = ConstPointer::new(RSA_get0_e(**rsa))?;
