@@ -42,6 +42,38 @@ fn aead_aes_gcm_256() {
 }
 
 #[test]
+fn aead_aes_gcm_siv_256() {
+    test_aead(
+        &aead::AES_256_GCM_SIV,
+        seal_with_key,
+        open_with_key,
+        test_file!("data/aes_256_gcm_siv_tests.txt"),
+    );
+    test_aead(
+        &aead::AES_256_GCM_SIV,
+        seal_with_less_safe_key,
+        open_with_less_safe_key,
+        test_file!("data/aes_256_gcm_siv_tests.txt"),
+    );
+}
+
+#[test]
+fn aead_aes_gcm_siv_128() {
+    test_aead(
+        &aead::AES_128_GCM_SIV,
+        seal_with_key,
+        open_with_key,
+        test_file!("data/aes_128_gcm_siv_tests.txt"),
+    );
+    test_aead(
+        &aead::AES_128_GCM_SIV,
+        seal_with_less_safe_key,
+        open_with_less_safe_key,
+        test_file!("data/aes_128_gcm_siv_tests.txt"),
+    );
+}
+
+#[test]
 fn aead_chacha20_poly1305() {
     test_aead(
         &aead::CHACHA20_POLY1305,

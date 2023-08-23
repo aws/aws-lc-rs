@@ -3856,4 +3856,5 @@
 #define _x509v3_conf_name_matches BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509v3_conf_name_matches)
 #define _x509v3_hex_to_bytes BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509v3_hex_to_bytes)
 #define _x509v3_looks_like_dns_name BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509v3_looks_like_dns_name)
+#define _x86_64_assembly_implementation_FOR_TESTING BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x86_64_assembly_implementation_FOR_TESTING)
 #endif

@@ -12,9 +12,10 @@ use crate::ptr::LcPtr;
 use aws_lc::{
     evp_aead_direction_t, evp_aead_direction_t_evp_aead_open, evp_aead_direction_t_evp_aead_seal,
     EVP_AEAD_CTX_init, EVP_AEAD_CTX_init_with_direction, EVP_AEAD_CTX_zero, EVP_aead_aes_128_gcm,
-    EVP_aead_aes_128_gcm_randnonce, EVP_aead_aes_128_gcm_tls12, EVP_aead_aes_128_gcm_tls13,
-    EVP_aead_aes_256_gcm, EVP_aead_aes_256_gcm_randnonce, EVP_aead_aes_256_gcm_tls12,
-    EVP_aead_aes_256_gcm_tls13, EVP_aead_chacha20_poly1305, OPENSSL_malloc, EVP_AEAD_CTX,
+    EVP_aead_aes_128_gcm_randnonce, EVP_aead_aes_128_gcm_siv, EVP_aead_aes_128_gcm_tls12,
+    EVP_aead_aes_128_gcm_tls13, EVP_aead_aes_256_gcm, EVP_aead_aes_256_gcm_randnonce,
+    EVP_aead_aes_256_gcm_siv, EVP_aead_aes_256_gcm_tls12, EVP_aead_aes_256_gcm_tls13,
+    EVP_aead_chacha20_poly1305, OPENSSL_malloc, EVP_AEAD_CTX,
 };
 
 pub(crate) enum AeadDirection {
@@ -39,6 +40,9 @@ impl From<AeadDirection> for evp_aead_direction_t {
 pub(crate) enum AeadCtx {
     AES_128_GCM(LcPtr<EVP_AEAD_CTX>),
     AES_256_GCM(LcPtr<EVP_AEAD_CTX>),
+
+    AES_128_GCM_SIV(LcPtr<EVP_AEAD_CTX>),
+    AES_256_GCM_SIV(LcPtr<EVP_AEAD_CTX>),
 
     AES_128_GCM_RANDNONCE(LcPtr<EVP_AEAD_CTX>),
     AES_256_GCM_RANDNONCE(LcPtr<EVP_AEAD_CTX>),
@@ -65,9 +69,27 @@ impl AeadCtx {
         )?))
     }
 
+    pub(crate) fn aes_128_gcm_siv(key_bytes: &[u8], tag_len: usize) -> Result<Self, Unspecified> {
+        Ok(AeadCtx::AES_128_GCM_SIV(AeadCtx::aes_128_context(
+            EVP_aead_aes_128_gcm_siv,
+            key_bytes,
+            tag_len,
+            None,
+        )?))
+    }
+
     pub(crate) fn aes_256_gcm(key_bytes: &[u8], tag_len: usize) -> Result<Self, Unspecified> {
         Ok(AeadCtx::AES_256_GCM(AeadCtx::aes_256_context(
             EVP_aead_aes_256_gcm,
+            key_bytes,
+            tag_len,
+            None,
+        )?))
+    }
+
+    pub(crate) fn aes_256_gcm_siv(key_bytes: &[u8], tag_len: usize) -> Result<Self, Unspecified> {
+        Ok(AeadCtx::AES_256_GCM_SIV(AeadCtx::aes_256_context(
+            EVP_aead_aes_256_gcm_siv,
             key_bytes,
             tag_len,
             None,
@@ -234,6 +256,8 @@ impl AeadCtx {
         match self {
             AeadCtx::AES_128_GCM(ctx)
             | AeadCtx::AES_256_GCM(ctx)
+            | AeadCtx::AES_128_GCM_SIV(ctx)
+            | AeadCtx::AES_256_GCM_SIV(ctx)
             | AeadCtx::AES_128_GCM_RANDNONCE(ctx)
             | AeadCtx::AES_256_GCM_RANDNONCE(ctx)
             | AeadCtx::AES_128_GCM_TLS12(ctx)
@@ -249,6 +273,8 @@ impl AeadCtx {
         match self {
             AeadCtx::AES_128_GCM(ctx)
             | AeadCtx::AES_256_GCM(ctx)
+            | AeadCtx::AES_128_GCM_SIV(ctx)
+            | AeadCtx::AES_256_GCM_SIV(ctx)
             | AeadCtx::AES_128_GCM_RANDNONCE(ctx)
             | AeadCtx::AES_256_GCM_RANDNONCE(ctx)
             | AeadCtx::AES_128_GCM_TLS12(ctx)

@@ -88,7 +88,7 @@ mod poly1305;
 pub mod quic;
 
 pub use self::{
-    aes_gcm::{AES_128_GCM, AES_256_GCM},
+    aes_gcm::{AES_128_GCM, AES_128_GCM_SIV, AES_256_GCM, AES_256_GCM_SIV},
     chacha::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},
 };
@@ -699,7 +699,9 @@ impl RandomizedNonceKey {
                 algorithm.tag_len(),
                 algorithm.nonce_len(),
             ),
-            AlgorithmID::CHACHA20_POLY1305 => return Err(Unspecified),
+            AlgorithmID::AES_128_GCM_SIV
+            | AlgorithmID::AES_256_GCM_SIV
+            | AlgorithmID::CHACHA20_POLY1305 => return Err(Unspecified),
         }?;
         Ok(Self { ctx, algorithm })
     }
@@ -867,7 +869,9 @@ impl TLSRecordSealingKey {
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Seal,
             ),
-            (AlgorithmID::CHACHA20_POLY1305, _) => Err(Unspecified),
+            (AlgorithmID::AES_128_GCM_SIV, _)
+            | (AlgorithmID::AES_256_GCM_SIV, _)
+            | (AlgorithmID::CHACHA20_POLY1305, _) => Err(Unspecified),
         }?);
         Ok(Self { ctx, algorithm })
     }
@@ -953,7 +957,9 @@ impl TLSRecordOpeningKey {
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Open,
             ),
-            (AlgorithmID::CHACHA20_POLY1305, _) => Err(Unspecified),
+            (AlgorithmID::AES_128_GCM_SIV, _)
+            | (AlgorithmID::AES_256_GCM_SIV, _)
+            | (AlgorithmID::CHACHA20_POLY1305, _) => Err(Unspecified),
         }?);
         Ok(Self { ctx, algorithm })
     }
@@ -1053,6 +1059,8 @@ derive_debug_via_id!(Algorithm);
 enum AlgorithmID {
     AES_128_GCM,
     AES_256_GCM,
+    AES_128_GCM_SIV,
+    AES_256_GCM_SIV,
     CHACHA20_POLY1305,
 }
 
