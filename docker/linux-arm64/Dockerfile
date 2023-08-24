@@ -24,6 +24,5 @@ RUN apt-get update && \
 
 ENV PATH="/root/sdk/${GO_VERSION}/bin:${PATH}"
 
-# Static FIPS build only supports clang.
 ENV CC=clang
 ENV CXX=clang++
