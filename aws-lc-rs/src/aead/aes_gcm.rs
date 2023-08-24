@@ -19,14 +19,7 @@ pub(crate) fn aead_seal_separate(
     in_out: &mut [u8],
 ) -> Result<Tag, Unspecified> {
     unsafe {
-        let aead_ctx = match key {
-            AeadCtx::CHACHA20_POLY1305(aead_ctx)
-            | AeadCtx::AES_128_GCM(aead_ctx)
-            | AeadCtx::AES_256_GCM(aead_ctx)
-            | AeadCtx::AES_128_GCM_SIV(aead_ctx)
-            | AeadCtx::AES_256_GCM_SIV(aead_ctx) => aead_ctx,
-        };
-
+        let aead_ctx = key.as_ref();
         let aad_slice = aad.as_ref();
         let nonce = nonce.as_ref();
         let mut tag = MaybeUninit::<[u8; MAX_TAG_LEN]>::uninit();
@@ -74,12 +67,7 @@ pub(crate) fn aead_seal_separate_scatter(
     }
 
     unsafe {
-        let aead_ctx = match key {
-            AeadCtx::CHACHA20_POLY1305(aead_ctx)
-            | AeadCtx::AES_128_GCM(aead_ctx)
-            | AeadCtx::AES_256_GCM(aead_ctx) => aead_ctx,
-        };
-
+        let aead_ctx = key.as_ref();
         let aad_slice = aad.as_ref();
         let nonce = nonce.as_ref();
         let mut out_tag_len = extra_out_and_tag.len();
