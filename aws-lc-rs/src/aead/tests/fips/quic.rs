@@ -1,12 +1,12 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
+use crate::{
     aead::quic::{HeaderProtectionKey, AES_128, AES_256, CHACHA20},
-    FipsServiceStatus,
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
 };
 
-use crate::common::{assert_fips_status_indicator, TEST_KEY_128_BIT, TEST_KEY_256_BIT};
+use super::{TEST_KEY_128_BIT, TEST_KEY_256_BIT};
 
 macro_rules! quic_api {
     ($name:ident, $alg:expr, $key:expr, $expect:path) => {

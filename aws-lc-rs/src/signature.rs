@@ -690,6 +690,9 @@ mod tests {
     use crate::signature::{UnparsedPublicKey, ED25519};
     use regex::Regex;
 
+    #[cfg(feature = "fips")]
+    mod fips;
+
     #[test]
     fn test_unparsed_public_key() {
         let random_pubkey: [u8; 32] = generate(&SystemRandom::new()).unwrap().expose();

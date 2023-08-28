@@ -1,17 +1,19 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
+#![cfg(debug_assertions)]
+
+use crate::{
     digest::{SHA1_OUTPUT_LEN, SHA224_OUTPUT_LEN, SHA256_OUTPUT_LEN, SHA512_OUTPUT_LEN},
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
     hmac::{
         sign, verify, Key, HMAC_SHA1_FOR_LEGACY_USE_ONLY, HMAC_SHA224, HMAC_SHA256, HMAC_SHA384,
         HMAC_SHA512,
     },
     rand::{self, SystemRandom},
-    FipsServiceStatus,
 };
 
-use crate::common::{assert_fips_status_indicator, TEST_MESSAGE};
+const TEST_MESSAGE: &str = "test message";
 
 macro_rules! hmac_api {
     ($name:ident, $alg:expr, $out_len:expr) => {

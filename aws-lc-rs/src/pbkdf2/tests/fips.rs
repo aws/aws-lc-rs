@@ -1,17 +1,17 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+#![cfg(debug_assertions)]
+
 use std::num::NonZeroU32;
 
-use aws_lc_rs::{
+use crate::{
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
     pbkdf2::{
         derive, verify, PBKDF2_HMAC_SHA1, PBKDF2_HMAC_SHA256, PBKDF2_HMAC_SHA384,
         PBKDF2_HMAC_SHA512,
     },
-    FipsServiceStatus,
 };
-
-use crate::common::assert_fips_status_indicator;
 
 macro_rules! pbkdf2_api {
     ($name:ident, $alg:expr, $secret_len:literal, $salt_len:literal, $iterations:literal, $expect:path) => {

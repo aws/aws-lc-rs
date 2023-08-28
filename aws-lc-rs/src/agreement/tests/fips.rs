@@ -1,17 +1,17 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
+#![cfg(debug_assertions)]
+
+use crate::{
     agreement::{
         agree_ephemeral, EphemeralPrivateKey, UnparsedPublicKey, ECDH_P256, ECDH_P384, ECDH_P521,
         X25519,
     },
     error::Unspecified,
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
     rand::SystemRandom,
-    FipsServiceStatus,
 };
-
-use crate::common::assert_fips_status_indicator;
 
 macro_rules! agree_ephemeral_api {
     ($name:ident, $alg:expr, $expect:path) => {

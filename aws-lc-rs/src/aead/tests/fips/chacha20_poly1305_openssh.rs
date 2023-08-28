@@ -1,12 +1,12 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
+use crate::{
     aead::chacha20_poly1305_openssh::{OpeningKey, SealingKey},
-    FipsServiceStatus,
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
 };
 
-use crate::common::{assert_fips_status_indicator, TEST_MESSAGE};
+use super::TEST_MESSAGE;
 
 #[test]
 fn test() {

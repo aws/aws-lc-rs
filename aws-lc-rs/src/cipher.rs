@@ -890,6 +890,9 @@ mod tests {
     use super::*;
     use crate::test::from_hex;
 
+    #[cfg(feature = "fips")]
+    mod fips;
+
     #[test]
     fn test_debug() {
         {

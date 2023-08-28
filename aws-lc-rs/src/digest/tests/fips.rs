@@ -1,15 +1,17 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
+#![cfg(debug_assertions)]
+
+use crate::{
     digest::{
         Context, SHA1_FOR_LEGACY_USE_ONLY, SHA224, SHA256, SHA384, SHA3_256, SHA3_384, SHA3_512,
         SHA512, SHA512_256,
     },
-    FipsServiceStatus,
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
 };
 
-use crate::common::{assert_fips_status_indicator, TEST_MESSAGE};
+const TEST_MESSAGE: &str = "test message";
 
 macro_rules! digest_api {
     ($name:ident, $alg:expr, $expect:path) => {

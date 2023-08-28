@@ -627,6 +627,9 @@ mod tests {
     use crate::error::Unspecified;
     use crate::{agreement, rand, test, test_file};
 
+    #[cfg(feature = "fips")]
+    mod fips;
+
     #[test]
     fn test_agreement_ecdh_x25519_rfc_iterated() {
         fn expect_iterated_x25519(

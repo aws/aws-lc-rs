@@ -68,8 +68,7 @@ impl VerificationAlgorithm for EdDSAParameters {
         } {
             return Err(Unspecified);
         }
-        #[cfg(feature = "fips")]
-        crate::fips::indicator::set_unapproved();
+        crate::fips::set_fips_service_status_unapproved();
         Ok(())
     }
 }
@@ -134,8 +133,7 @@ pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<EVP_PK
 
     // ED25519_keypair_from_seed doesn't set FIPS indicator, and Ed25119 is not approved anyways at this time.
     // Seems like it could be approved for use in the future per FIPS 186-5 and CMVP guidance.
-    #[cfg(feature = "fips")]
-    crate::fips::indicator::set_unapproved();
+    crate::fips::set_fips_service_status_unapproved();
 
     LcPtr::new(EVP_PKEY_new_raw_private_key(
         EVP_PKEY_ED25519,
@@ -316,8 +314,7 @@ impl Ed25519KeyPair {
             return Err(Unspecified);
         }
 
-        #[cfg(feature = "fips")]
-        crate::fips::indicator::set_unapproved();
+        crate::fips::set_fips_service_status_unapproved();
 
         let sig_bytes = unsafe { sig_bytes.assume_init() };
 

@@ -1,7 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
+#![cfg(debug_assertions)]
+
+use crate::{
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
     rand::SystemRandom,
     signature::{
         EcdsaKeyPair, Ed25519KeyPair, EdDSAParameters, KeyPair, RsaKeyPair, VerificationAlgorithm,
@@ -21,17 +24,13 @@ use aws_lc_rs::{
         RSA_PKCS1_SHA512, RSA_PSS_2048_8192_SHA256, RSA_PSS_2048_8192_SHA384,
         RSA_PSS_2048_8192_SHA512, RSA_PSS_SHA256, RSA_PSS_SHA384, RSA_PSS_SHA512,
     },
-    FipsServiceStatus,
 };
 
-use crate::common::{
-    assert_fips_status_indicator, TEST_MESSAGE, TEST_MESSAGE_P384_SHA256_ASN1,
-    TEST_MESSAGE_RSA_PKCS1_1024_SHA1, TEST_MESSAGE_RSA_PKCS1_1024_SHA256,
-    TEST_MESSAGE_RSA_PKCS1_1024_SHA512, TEST_MESSGAE_P256_SHA384_ASN1, TEST_P256_PUBLIC_BYTES,
-    TEST_P384_PUBLIC_BYTES, TEST_RSA_1024_PUBLIC_BYTES, TEST_RSA_2048_PRIVATE_PKCS8_DER,
-    TEST_RSA_3072_PRIVATE_PKCS8_DER, TEST_RSA_4096_PRIVATE_PKCS8_DER,
-    TEST_RSA_8192_PRIVATE_PKCS8_DER,
-};
+mod keys;
+
+use keys::*;
+
+const TEST_MESSAGE: &str = "test message";
 
 macro_rules! ecdsa_generate_sign_verify {
     ($name:ident, $sign_alg:expr, $verify_alg:expr, $generate_expect:path, $sign_verify_expect:path) => {

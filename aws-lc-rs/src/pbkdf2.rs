@@ -262,6 +262,9 @@ mod tests {
     use crate::pbkdf2;
     use core::num::NonZeroU32;
 
+    #[cfg(feature = "fips")]
+    mod fips;
+
     #[test]
     fn pbkdf2_coverage() {
         // Coverage sanity check.

@@ -447,6 +447,9 @@ pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
 mod tests {
     use crate::{hmac, rand};
 
+    #[cfg(feature = "fips")]
+    mod fips;
+
     // Make sure that `Key::generate` and `verify_with_own_key` aren't
     // completely wacky.
     #[test]

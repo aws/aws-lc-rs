@@ -1,20 +1,24 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
+#![cfg(debug_assertions)]
+
+use crate::{
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
     hkdf::{
         KeyType, Prk, Salt, HKDF_SHA1_FOR_LEGACY_USE_ONLY, HKDF_SHA256, HKDF_SHA384, HKDF_SHA512,
     },
-    FipsServiceStatus,
 };
 
-use crate::common::{assert_fips_status_indicator, TEST_KEY_128_BIT};
+const TEST_KEY_128_BIT: [u8; 16] = [
+    0x9f, 0xd9, 0x41, 0xc3, 0xa6, 0xfe, 0xb9, 0x26, 0x2a, 0x35, 0xa7, 0x44, 0xbb, 0xc0, 0x3a, 0x6a,
+];
 
 macro_rules! hkdf_extract_expand_api {
     ($name:ident, $alg:expr, $expect:path, $salt_len:literal, $info_len:literal) => {
         #[test]
         fn $name() {
-            let salt = vec![42u8; $salt_len];
+            let salt = [42u8; $salt_len];
 
             // Will not set indicator function
             let salt = assert_fips_status_indicator!(

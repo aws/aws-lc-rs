@@ -1,23 +1,34 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+#![cfg(debug_assertions)]
+
 mod chacha20_poly1305_openssh;
 mod quic;
 
-use aws_lc_rs::aead::{
-    nonce_sequence::Counter64Builder, Aad, BoundKey, OpeningKey, SealingKey, UnboundKey,
-    AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305,
-};
-use aws_lc_rs::aead::{
-    Nonce, RandomizedNonceKey, TLSProtocolId, TLSRecordOpeningKey, TLSRecordSealingKey,
+use crate::{
+    aead::{
+        nonce_sequence::Counter64Builder, Aad, BoundKey, Nonce, OpeningKey, RandomizedNonceKey,
+        SealingKey, TLSProtocolId, TLSRecordOpeningKey, TLSRecordSealingKey, UnboundKey,
+        AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305,
+    },
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
 };
 
-use aws_lc_rs::FipsServiceStatus;
+const TEST_KEY_128_BIT: [u8; 16] = [
+    0x9f, 0xd9, 0x41, 0xc3, 0xa6, 0xfe, 0xb9, 0x26, 0x2a, 0x35, 0xa7, 0x44, 0xbb, 0xc0, 0x3a, 0x6a,
+];
 
-use crate::common::{
-    assert_fips_status_indicator, TEST_KEY_128_BIT, TEST_KEY_256_BIT, TEST_MESSAGE,
-    TEST_NONCE_96_BIT,
-};
+const TEST_KEY_256_BIT: [u8; 32] = [
+    0xd8, 0x32, 0x58, 0xa9, 0x5a, 0x62, 0x6c, 0x99, 0xc4, 0xe6, 0xb5, 0x3f, 0x97, 0x90, 0x62, 0xbe,
+    0x71, 0x0f, 0xd5, 0xe1, 0xd4, 0xfe, 0x95, 0xb3, 0x03, 0x46, 0xa5, 0x8e, 0x36, 0xad, 0x18, 0xe3,
+];
+
+const TEST_NONCE_96_BIT: [u8; 12] = [
+    0xe4, 0x39, 0x17, 0x95, 0x86, 0xcd, 0xcd, 0x5a, 0x1b, 0x46, 0x7b, 0x1d,
+];
+
+const TEST_MESSAGE: &str = "test message";
 
 macro_rules! nonce_sequence_api {
     ($name:ident, $alg:expr, $key:expr, $seal_expect:path, $open_expect:path) => {

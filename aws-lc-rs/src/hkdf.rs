@@ -424,6 +424,9 @@ impl<L: KeyType> Okm<'_, L> {
 mod tests {
     use crate::hkdf::{Salt, HKDF_SHA256, HKDF_SHA384};
 
+    #[cfg(feature = "fips")]
+    mod fips;
+
     #[test]
     fn hkdf_coverage() {
         // Something would have gone horribly wrong for this to not pass, but we test this so our

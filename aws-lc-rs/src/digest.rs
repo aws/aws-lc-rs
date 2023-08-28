@@ -306,6 +306,9 @@ pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<EVP_
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "fips")]
+    mod fips;
+
     mod max_input {
         extern crate alloc;
 

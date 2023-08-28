@@ -24,8 +24,7 @@ pub(crate) fn encrypt_block_aes(aes_key: &AES_KEY, block: Block) -> Block {
             aes_key,
         );
 
-        #[cfg(feature = "fips")]
-        crate::fips::indicator::set_unapproved();
+        crate::fips::set_fips_service_status_unapproved();
 
         Block::from(&cipher_text.assume_init())
     }
