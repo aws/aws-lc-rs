@@ -439,6 +439,77 @@ fn seal_in_place_separate_tag(
     }
 }
 
+#[inline]
+fn seal_in_place_separate_scatter(
+    alg: &'static Algorithm,
+    key: &UnboundKey,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+    extra_in: &[u8],
+    extra_out_and_tag: &mut [u8],
+) -> Result<(), Unspecified> {
+    check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
+    let key_inner_ref = key.get_inner_key();
+    aead_seal_separate_scatter(
+        alg,
+        key_inner_ref,
+        nonce,
+        aad,
+        in_out,
+        extra_in,
+        extra_out_and_tag,
+    )
+}
+
+#[inline]
+#[allow(clippy::needless_pass_by_value)]
+pub(crate) fn aead_seal_separate_scatter(
+    alg: &'static Algorithm,
+    key: &AeadCtx,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+    extra_in: &[u8],
+    extra_out_and_tag: &mut [u8],
+) -> Result<(), Unspecified> {
+    // ensure that the extra lengths match
+    {
+        let actual = extra_in.len() + alg.tag_len();
+        let expected = extra_out_and_tag.len();
+
+        if actual != expected {
+            return Err(Unspecified);
+        }
+    }
+
+    let aead_ctx = key.as_ref();
+    let aad_slice = aad.as_ref();
+    let nonce = nonce.as_ref();
+    let mut out_tag_len = extra_out_and_tag.len();
+
+    if 1 != unsafe {
+        EVP_AEAD_CTX_seal_scatter(
+            *aead_ctx.as_const(),
+            in_out.as_mut_ptr(),
+            extra_out_and_tag.as_mut_ptr(),
+            &mut out_tag_len,
+            extra_out_and_tag.len(),
+            nonce.as_ptr(),
+            nonce.len(),
+            in_out.as_ptr(),
+            in_out.len(),
+            extra_in.as_ptr(),
+            extra_in.len(),
+            aad_slice.as_ptr(),
+            aad_slice.len(),
+        )
+    } {
+        return Err(Unspecified);
+    }
+    Ok(())
+}
+
 /// The additionally authenticated data (AAD) for an opening or sealing
 /// operation. This data is authenticated but is **not** encrypted.
 ///
@@ -660,6 +731,47 @@ impl LessSafeKey {
             in_out,
         )
         .map(|(_, tag)| tag)
+    }
+
+    /// Encrypts and signs (“seals”) data in place with extra plaintext.
+    ///
+    /// `aad` is the additional authenticated data (AAD), if any. This is
+    /// authenticated but not encrypted. The type `A` could be a byte slice
+    /// `&[u8]`, a byte array `[u8; N]` for some constant `N`, `Vec<u8>`, etc.
+    /// If there is no AAD then use `Aad::empty()`.
+    ///
+    /// The plaintext is given as the input value of `in_out` and `extra_in`. `seal_in_place()`
+    /// will overwrite the plaintext contained in `in_out` with the ciphertext. The `extra_in` will
+    /// be encrypted into the `extra_out_and_tag`, along with the tag.
+    /// The `extra_out_and_tag` length must be equal to the `extra_len` and `self.algorithm.tag_len()`.
+    ///
+    /// `nonce` must be unique for every use of the key to seal data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if encryption operation fails.
+    ///
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_scatter<A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &mut [u8],
+        extra_in: &[u8],
+        extra_out_and_tag: &mut [u8],
+    ) -> Result<(), Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        seal_in_place_separate_scatter(
+            self.algorithm(),
+            &self.key,
+            nonce,
+            Aad::from(aad.as_ref()),
+            in_out,
+            extra_in,
+            extra_out_and_tag,
+        )
     }
 
     /// The key's AEAD algorithm.
@@ -1146,7 +1258,7 @@ where
 
         if 1 != unsafe {
             EVP_AEAD_CTX_seal(
-                ctx.as_ptr(),
+                *ctx.as_ref().as_const(),
                 mut_in_out.as_mut_ptr(),
                 out_len.as_mut_ptr(),
                 plaintext_len + alg_tag_len,
@@ -1187,7 +1299,7 @@ where
 
         if 1 != unsafe {
             EVP_AEAD_CTX_seal_scatter(
-                key.as_ptr(),
+                *key.as_ref().as_const(),
                 in_out.as_mut_ptr(),
                 tag_buffer.as_mut_ptr(),
                 out_tag_len.as_mut_ptr(),
@@ -1237,7 +1349,7 @@ pub(crate) fn aead_seal_separate(
 
         if 1 != unsafe {
             EVP_AEAD_CTX_seal_scatter(
-                ctx.as_ptr(),
+                *ctx.as_ref().as_const(),
                 in_out.as_mut_ptr(),
                 tag.as_mut_ptr(),
                 out_tag_len.as_mut_ptr(),
@@ -1275,7 +1387,7 @@ pub(crate) fn aead_seal_separate_randnonce(
 
     if 1 != unsafe {
         EVP_AEAD_CTX_seal_scatter(
-            ctx.as_ptr(),
+            *ctx.as_ref().as_const(),
             in_out.as_mut_ptr(),
             tag_buffer.as_mut_ptr(),
             out_tag_len.as_mut_ptr(),
@@ -1325,7 +1437,7 @@ pub(crate) fn aead_open_combined(
     let mut out_len = MaybeUninit::<usize>::uninit();
     if 1 != unsafe {
         EVP_AEAD_CTX_open(
-            ctx.as_ptr(),
+            *ctx.as_ref().as_const(),
             in_out.as_mut_ptr(),
             out_len.as_mut_ptr(),
             plaintext_len,
@@ -1373,7 +1485,7 @@ pub(crate) fn aead_open_combined_randnonce(
 
     if 1 != unsafe {
         EVP_AEAD_CTX_open_gather(
-            ctx.as_ptr(),
+            *ctx.as_ref().as_const(),
             in_out.as_mut_ptr(),
             null(),
             0,

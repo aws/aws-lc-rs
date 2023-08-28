@@ -251,8 +251,11 @@ impl AeadCtx {
         }
         Ok(aead_ctx)
     }
+}
 
-    pub fn as_ptr(&self) -> *const EVP_AEAD_CTX {
+impl AsRef<LcPtr<EVP_AEAD_CTX>> for AeadCtx {
+    #[inline]
+    fn as_ref(&self) -> &LcPtr<EVP_AEAD_CTX> {
         match self {
             AeadCtx::AES_128_GCM(ctx)
             | AeadCtx::AES_256_GCM(ctx)
@@ -264,24 +267,7 @@ impl AeadCtx {
             | AeadCtx::AES_256_GCM_TLS12(ctx)
             | AeadCtx::AES_128_GCM_TLS13(ctx)
             | AeadCtx::AES_256_GCM_TLS13(ctx)
-            | AeadCtx::CHACHA20_POLY1305(ctx) => *ctx.as_const(),
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn as_mut_ptr(&self) -> *mut EVP_AEAD_CTX {
-        match self {
-            AeadCtx::AES_128_GCM(ctx)
-            | AeadCtx::AES_256_GCM(ctx)
-            | AeadCtx::AES_128_GCM_SIV(ctx)
-            | AeadCtx::AES_256_GCM_SIV(ctx)
-            | AeadCtx::AES_128_GCM_RANDNONCE(ctx)
-            | AeadCtx::AES_256_GCM_RANDNONCE(ctx)
-            | AeadCtx::AES_128_GCM_TLS12(ctx)
-            | AeadCtx::AES_256_GCM_TLS12(ctx)
-            | AeadCtx::AES_128_GCM_TLS13(ctx)
-            | AeadCtx::AES_256_GCM_TLS13(ctx)
-            | AeadCtx::CHACHA20_POLY1305(ctx) => **ctx,
+            | AeadCtx::CHACHA20_POLY1305(ctx) => ctx,
         }
     }
 }

@@ -23,6 +23,12 @@ fn aead_aes_gcm_128() {
         open_with_less_safe_key,
         test_file!("data/aead_aes_128_gcm_tests.txt"),
     );
+    test_aead(
+        &aead::AES_128_GCM,
+        seal_with_less_safe_key_scatter,
+        open_with_less_safe_key,
+        test_file!("data/aead_aes_128_gcm_tests.txt"),
+    );
 }
 
 #[test]
@@ -36,6 +42,12 @@ fn aead_aes_gcm_256() {
     test_aead(
         &aead::AES_256_GCM,
         seal_with_less_safe_key,
+        open_with_less_safe_key,
+        test_file!("data/aead_aes_256_gcm_tests.txt"),
+    );
+    test_aead(
+        &aead::AES_256_GCM,
+        seal_with_less_safe_key_scatter,
         open_with_less_safe_key,
         test_file!("data/aead_aes_256_gcm_tests.txt"),
     );
@@ -84,6 +96,12 @@ fn aead_chacha20_poly1305() {
     test_aead(
         &aead::CHACHA20_POLY1305,
         seal_with_less_safe_key,
+        open_with_less_safe_key,
+        test_file!("data/aead_chacha20_poly1305_tests.txt"),
+    );
+    test_aead(
+        &aead::CHACHA20_POLY1305,
+        seal_with_less_safe_key_scatter,
         open_with_less_safe_key,
         test_file!("data/aead_chacha20_poly1305_tests.txt"),
     );
@@ -404,6 +422,33 @@ fn seal_with_less_safe_key(
 ) -> Result<(), error::Unspecified> {
     let key = make_less_safe_key(algorithm, key);
     key.seal_in_place_append_tag(nonce, aad, in_out)
+}
+
+fn seal_with_less_safe_key_scatter(
+    algorithm: &'static aead::Algorithm,
+    key: &[u8],
+    nonce: Nonce,
+    aad: aead::Aad<&[u8]>,
+    in_out: &mut Vec<u8>,
+) -> Result<(), error::Unspecified> {
+    // choose a split point for the `extra` data
+    let split_point = if in_out.is_empty() {
+        0
+    } else {
+        let split_point = u32::from_ne_bytes(key[..4].try_into().unwrap());
+        split_point as usize % in_out.len()
+    };
+
+    // create an extra bit of data to be encrypted
+    let extra_in = in_out[split_point..].to_vec();
+    let key = make_less_safe_key(algorithm, key);
+
+    // reserve space at the end for the tag
+    in_out.extend_from_slice(&[0u8; crate::aead::MAX_TAG_LEN][..algorithm.tag_len()]);
+
+    let (in_out, extra_out_and_tag) = in_out.split_at_mut(split_point);
+
+    key.seal_in_place_scatter(nonce, aad, in_out, &extra_in, extra_out_and_tag)
 }
 
 fn open_with_less_safe_key<'a>(
