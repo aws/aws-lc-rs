@@ -97,3 +97,16 @@ impl AeadCtx {
         Ok(aead_ctx)
     }
 }
+
+impl AsRef<LcPtr<EVP_AEAD_CTX>> for AeadCtx {
+    #[inline]
+    fn as_ref(&self) -> &LcPtr<EVP_AEAD_CTX> {
+        match self {
+            AeadCtx::AES_128_GCM(ctx)
+            | AeadCtx::AES_256_GCM(ctx)
+            | AeadCtx::AES_128_GCM_SIV(ctx)
+            | AeadCtx::AES_256_GCM_SIV(ctx)
+            | AeadCtx::CHACHA20_POLY1305(ctx) => ctx,
+        }
+    }
+}

@@ -63,7 +63,7 @@
 //! ```
 
 use crate::{derive_debug_via_id, hkdf};
-use aes_gcm::aead_seal_separate;
+use aes_gcm::{aead_seal_separate, aead_seal_separate_scatter};
 use std::fmt::Debug;
 
 use crate::error::Unspecified;
@@ -425,6 +425,27 @@ fn seal_in_place_separate_tag_(
     aead_seal_separate(key_inner_ref, nonce, aad, in_out)
 }
 
+#[inline]
+fn seal_in_place_separate_scatter_(
+    key: &UnboundKey,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+    extra_in: &[u8],
+    extra_out_and_tag: &mut [u8],
+) -> Result<(), Unspecified> {
+    check_per_nonce_max_bytes(key.algorithm, in_out.len())?;
+    let key_inner_ref = key.get_inner_key();
+    aead_seal_separate_scatter(
+        key_inner_ref,
+        nonce,
+        aad,
+        in_out,
+        extra_in,
+        extra_out_and_tag,
+    )
+}
+
 /// The additionally authenticated data (AAD) for an opening or sealing
 /// operation. This data is authenticated but is **not** encrypted.
 ///
@@ -631,6 +652,46 @@ impl LessSafeKey {
         seal_in_place_separate_tag_(&self.key, nonce, Aad::from(aad.as_ref()), in_out)
     }
 
+    /// Encrypts and signs (“seals”) data in place with extra plaintext.
+    ///
+    /// `aad` is the additional authenticated data (AAD), if any. This is
+    /// authenticated but not encrypted. The type `A` could be a byte slice
+    /// `&[u8]`, a byte array `[u8; N]` for some constant `N`, `Vec<u8>`, etc.
+    /// If there is no AAD then use `Aad::empty()`.
+    ///
+    /// The plaintext is given as the input value of `in_out` and `extra_in`. `seal_in_place()`
+    /// will overwrite the plaintext contained in `in_out` with the ciphertext. The `extra_in` will
+    /// be encrypted into the `extra_out_and_tag`, along with the tag.
+    /// The `extra_out_and_tag` length must be equal to the `extra_len` and `self.algorithm.tag_len()`.
+    ///
+    /// `nonce` must be unique for every use of the key to seal data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if encryption operation fails.
+    ///
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_scatter<A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &mut [u8],
+        extra_in: &[u8],
+        extra_out_and_tag: &mut [u8],
+    ) -> Result<(), Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        seal_in_place_separate_scatter_(
+            &self.key,
+            nonce,
+            Aad::from(aad.as_ref()),
+            in_out,
+            extra_in,
+            extra_out_and_tag,
+        )
+    }
+
     /// The key's AEAD algorithm.
     #[inline]
     #[must_use]
@@ -750,13 +811,7 @@ where
     InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
 {
     unsafe {
-        let aead_ctx = match key {
-            AeadCtx::AES_128_GCM(aead_ctx)
-            | AeadCtx::AES_256_GCM(aead_ctx)
-            | AeadCtx::AES_128_GCM_SIV(aead_ctx)
-            | AeadCtx::AES_256_GCM_SIV(aead_ctx)
-            | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
-        };
+        let aead_ctx = key.as_ref();
         let nonce = nonce.as_ref();
 
         let plaintext_len = in_out.as_mut().len();
@@ -795,13 +850,7 @@ pub(crate) fn aead_open_combined(
     in_out: &mut [u8],
 ) -> Result<(), Unspecified> {
     unsafe {
-        let aead_ctx = match key {
-            AeadCtx::AES_128_GCM(aead_ctx)
-            | AeadCtx::AES_256_GCM(aead_ctx)
-            | AeadCtx::AES_128_GCM_SIV(aead_ctx)
-            | AeadCtx::AES_256_GCM_SIV(aead_ctx)
-            | AeadCtx::CHACHA20_POLY1305(aead_ctx) => aead_ctx,
-        };
+        let aead_ctx = key.as_ref();
         let nonce = nonce.as_ref();
 
         let plaintext_len = in_out.len() - TAG_LEN;

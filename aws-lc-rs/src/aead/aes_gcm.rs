@@ -19,14 +19,7 @@ pub(crate) fn aead_seal_separate(
     in_out: &mut [u8],
 ) -> Result<Tag, Unspecified> {
     unsafe {
-        let aead_ctx = match key {
-            AeadCtx::CHACHA20_POLY1305(aead_ctx)
-            | AeadCtx::AES_128_GCM(aead_ctx)
-            | AeadCtx::AES_256_GCM(aead_ctx)
-            | AeadCtx::AES_128_GCM_SIV(aead_ctx)
-            | AeadCtx::AES_256_GCM_SIV(aead_ctx) => aead_ctx,
-        };
-
+        let aead_ctx = key.as_ref();
         let aad_slice = aad.as_ref();
         let nonce = nonce.as_ref();
         let mut tag = MaybeUninit::<[u8; MAX_TAG_LEN]>::uninit();
@@ -50,6 +43,53 @@ pub(crate) fn aead_seal_separate(
             return Err(Unspecified);
         }
         Ok(Tag(tag.assume_init()))
+    }
+}
+
+#[inline]
+#[allow(clippy::needless_pass_by_value)]
+pub(crate) fn aead_seal_separate_scatter(
+    key: &AeadCtx,
+    nonce: Nonce,
+    aad: Aad<&[u8]>,
+    in_out: &mut [u8],
+    extra_in: &[u8],
+    extra_out_and_tag: &mut [u8],
+) -> Result<(), Unspecified> {
+    // ensure that the extra lengths match
+    {
+        let actual = extra_in.len() + MAX_TAG_LEN;
+        let expected = extra_out_and_tag.len();
+
+        if actual != expected {
+            return Err(Unspecified);
+        }
+    }
+
+    unsafe {
+        let aead_ctx = key.as_ref();
+        let aad_slice = aad.as_ref();
+        let nonce = nonce.as_ref();
+        let mut out_tag_len = extra_out_and_tag.len();
+
+        if 1 != EVP_AEAD_CTX_seal_scatter(
+            *aead_ctx.as_const(),
+            in_out.as_mut_ptr(),
+            extra_out_and_tag.as_mut_ptr(),
+            &mut out_tag_len,
+            extra_out_and_tag.len(),
+            nonce.as_ptr(),
+            nonce.len(),
+            in_out.as_ptr(),
+            in_out.len(),
+            extra_in.as_ptr(),
+            extra_in.len(),
+            aad_slice.as_ptr(),
+            aad_slice.len(),
+        ) {
+            return Err(Unspecified);
+        }
+        Ok(())
     }
 }
 
