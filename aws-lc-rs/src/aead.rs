@@ -981,9 +981,12 @@ impl TLSRecordSealingKey {
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Seal,
             ),
-            (AlgorithmID::AES_128_GCM_SIV, _)
-            | (AlgorithmID::AES_256_GCM_SIV, _)
-            | (AlgorithmID::CHACHA20_POLY1305, _) => Err(Unspecified),
+            (
+                AlgorithmID::AES_128_GCM_SIV
+                | AlgorithmID::AES_256_GCM_SIV
+                | AlgorithmID::CHACHA20_POLY1305,
+                _,
+            ) => Err(Unspecified),
         }?);
         Ok(Self { ctx, algorithm })
     }
@@ -1069,9 +1072,12 @@ impl TLSRecordOpeningKey {
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Open,
             ),
-            (AlgorithmID::AES_128_GCM_SIV, _)
-            | (AlgorithmID::AES_256_GCM_SIV, _)
-            | (AlgorithmID::CHACHA20_POLY1305, _) => Err(Unspecified),
+            (
+                AlgorithmID::AES_128_GCM_SIV
+                | AlgorithmID::AES_256_GCM_SIV
+                | AlgorithmID::CHACHA20_POLY1305,
+                _,
+            ) => Err(Unspecified),
         }?);
         Ok(Self { ctx, algorithm })
     }
