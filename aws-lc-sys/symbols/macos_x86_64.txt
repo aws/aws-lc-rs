@@ -579,6 +579,7 @@ CMAC_Init
 CMAC_Reset
 CMAC_Update
 CONF_VALUE_new
+CONF_modules_finish
 CONF_modules_free
 CONF_modules_load_file
 CONF_modules_unload
@@ -1101,6 +1102,7 @@ EVP_MD_CTX_set_pkey_ctx
 EVP_MD_CTX_size
 EVP_MD_CTX_type
 EVP_MD_block_size
+EVP_MD_do_all
 EVP_MD_do_all_sorted
 EVP_MD_flags
 EVP_MD_meth_get_flags
@@ -2050,6 +2052,7 @@ SSL_CTX_set_read_ahead
 SSL_CTX_set_record_protocol_version
 SSL_CTX_set_retain_only_sha256_of_client_certs
 SSL_CTX_set_reverify_on_resume
+SSL_CTX_set_security_level
 SSL_CTX_set_select_certificate_cb
 SSL_CTX_set_session_cache_mode
 SSL_CTX_set_session_id_context
@@ -2120,6 +2123,7 @@ SSL_SESSION_has_peer_sha256
 SSL_SESSION_has_ticket
 SSL_SESSION_is_resumable
 SSL_SESSION_new
+SSL_SESSION_print
 SSL_SESSION_set1_id
 SSL_SESSION_set1_id_context
 SSL_SESSION_set_ex_data
@@ -2188,6 +2192,11 @@ SSL_get0_signed_cert_timestamp_list
 SSL_get0_verified_chain
 SSL_get1_session
 SSL_get_SSL_CTX
+SSL_get_all_cipher_names
+SSL_get_all_curve_names
+SSL_get_all_signature_algorithm_names
+SSL_get_all_standard_cipher_names
+SSL_get_all_version_names
 SSL_get_certificate
 SSL_get_cipher_by_value
 SSL_get_cipher_list
@@ -2465,6 +2474,7 @@ X509V3_EXT_add
 X509V3_EXT_add_alias
 X509V3_EXT_add_nconf
 X509V3_EXT_add_nconf_sk
+X509V3_EXT_conf
 X509V3_EXT_conf_nid
 X509V3_EXT_d2i
 X509V3_EXT_free
@@ -3289,6 +3299,7 @@ d2i_X509_SIG
 d2i_X509_VAL
 d2i_X509_bio
 d2i_X509_fp
+dh_check_params_fast
 dh_compute_key_padded_no_self_test
 dsa_asn1_meth
 dsa_check_key
@@ -3800,3 +3811,4 @@ x509v3_cache_extensions
 x509v3_conf_name_matches
 x509v3_hex_to_bytes
 x509v3_looks_like_dns_name
+x86_64_assembly_implementation_FOR_TESTING

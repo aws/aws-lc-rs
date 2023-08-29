@@ -595,6 +595,7 @@
 %xdefine _CMAC_Reset _ %+ BORINGSSL_PREFIX %+ _CMAC_Reset
 %xdefine _CMAC_Update _ %+ BORINGSSL_PREFIX %+ _CMAC_Update
 %xdefine _CONF_VALUE_new _ %+ BORINGSSL_PREFIX %+ _CONF_VALUE_new
+%xdefine _CONF_modules_finish _ %+ BORINGSSL_PREFIX %+ _CONF_modules_finish
 %xdefine _CONF_modules_free _ %+ BORINGSSL_PREFIX %+ _CONF_modules_free
 %xdefine _CONF_modules_load_file _ %+ BORINGSSL_PREFIX %+ _CONF_modules_load_file
 %xdefine _CONF_modules_unload _ %+ BORINGSSL_PREFIX %+ _CONF_modules_unload
@@ -1119,6 +1120,7 @@
 %xdefine _EVP_MD_CTX_size _ %+ BORINGSSL_PREFIX %+ _EVP_MD_CTX_size
 %xdefine _EVP_MD_CTX_type _ %+ BORINGSSL_PREFIX %+ _EVP_MD_CTX_type
 %xdefine _EVP_MD_block_size _ %+ BORINGSSL_PREFIX %+ _EVP_MD_block_size
+%xdefine _EVP_MD_do_all _ %+ BORINGSSL_PREFIX %+ _EVP_MD_do_all
 %xdefine _EVP_MD_do_all_sorted _ %+ BORINGSSL_PREFIX %+ _EVP_MD_do_all_sorted
 %xdefine _EVP_MD_flags _ %+ BORINGSSL_PREFIX %+ _EVP_MD_flags
 %xdefine _EVP_MD_meth_get_flags _ %+ BORINGSSL_PREFIX %+ _EVP_MD_meth_get_flags
@@ -2073,6 +2075,7 @@
 %xdefine _SSL_CTX_set_record_protocol_version _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_record_protocol_version
 %xdefine _SSL_CTX_set_retain_only_sha256_of_client_certs _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_retain_only_sha256_of_client_certs
 %xdefine _SSL_CTX_set_reverify_on_resume _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_reverify_on_resume
+%xdefine _SSL_CTX_set_security_level _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_security_level
 %xdefine _SSL_CTX_set_select_certificate_cb _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_select_certificate_cb
 %xdefine _SSL_CTX_set_session_cache_mode _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_session_cache_mode
 %xdefine _SSL_CTX_set_session_id_context _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_session_id_context
@@ -2143,6 +2146,7 @@
 %xdefine _SSL_SESSION_has_ticket _ %+ BORINGSSL_PREFIX %+ _SSL_SESSION_has_ticket
 %xdefine _SSL_SESSION_is_resumable _ %+ BORINGSSL_PREFIX %+ _SSL_SESSION_is_resumable
 %xdefine _SSL_SESSION_new _ %+ BORINGSSL_PREFIX %+ _SSL_SESSION_new
+%xdefine _SSL_SESSION_print _ %+ BORINGSSL_PREFIX %+ _SSL_SESSION_print
 %xdefine _SSL_SESSION_set1_id _ %+ BORINGSSL_PREFIX %+ _SSL_SESSION_set1_id
 %xdefine _SSL_SESSION_set1_id_context _ %+ BORINGSSL_PREFIX %+ _SSL_SESSION_set1_id_context
 %xdefine _SSL_SESSION_set_ex_data _ %+ BORINGSSL_PREFIX %+ _SSL_SESSION_set_ex_data
@@ -2211,6 +2215,11 @@
 %xdefine _SSL_get0_verified_chain _ %+ BORINGSSL_PREFIX %+ _SSL_get0_verified_chain
 %xdefine _SSL_get1_session _ %+ BORINGSSL_PREFIX %+ _SSL_get1_session
 %xdefine _SSL_get_SSL_CTX _ %+ BORINGSSL_PREFIX %+ _SSL_get_SSL_CTX
+%xdefine _SSL_get_all_cipher_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_cipher_names
+%xdefine _SSL_get_all_curve_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_curve_names
+%xdefine _SSL_get_all_signature_algorithm_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_signature_algorithm_names
+%xdefine _SSL_get_all_standard_cipher_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_standard_cipher_names
+%xdefine _SSL_get_all_version_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_version_names
 %xdefine _SSL_get_certificate _ %+ BORINGSSL_PREFIX %+ _SSL_get_certificate
 %xdefine _SSL_get_cipher_by_value _ %+ BORINGSSL_PREFIX %+ _SSL_get_cipher_by_value
 %xdefine _SSL_get_cipher_list _ %+ BORINGSSL_PREFIX %+ _SSL_get_cipher_list
@@ -2488,6 +2497,7 @@
 %xdefine _X509V3_EXT_add_alias _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_add_alias
 %xdefine _X509V3_EXT_add_nconf _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_add_nconf
 %xdefine _X509V3_EXT_add_nconf_sk _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_add_nconf_sk
+%xdefine _X509V3_EXT_conf _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_conf
 %xdefine _X509V3_EXT_conf_nid _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_conf_nid
 %xdefine _X509V3_EXT_d2i _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_d2i
 %xdefine _X509V3_EXT_free _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_free
@@ -3399,6 +3409,7 @@
 %xdefine _d2i_X509_VAL _ %+ BORINGSSL_PREFIX %+ _d2i_X509_VAL
 %xdefine _d2i_X509_bio _ %+ BORINGSSL_PREFIX %+ _d2i_X509_bio
 %xdefine _d2i_X509_fp _ %+ BORINGSSL_PREFIX %+ _d2i_X509_fp
+%xdefine _dh_check_params_fast _ %+ BORINGSSL_PREFIX %+ _dh_check_params_fast
 %xdefine _dh_compute_key_padded_no_self_test _ %+ BORINGSSL_PREFIX %+ _dh_compute_key_padded_no_self_test
 %xdefine _dsa_asn1_meth _ %+ BORINGSSL_PREFIX %+ _dsa_asn1_meth
 %xdefine _dsa_check_key _ %+ BORINGSSL_PREFIX %+ _dsa_check_key
@@ -3541,6 +3552,7 @@
 %xdefine _gcm_setiv_avx512 _ %+ BORINGSSL_PREFIX %+ _gcm_setiv_avx512
 %xdefine _ge_double_scalarmult_vartime _ %+ BORINGSSL_PREFIX %+ _ge_double_scalarmult_vartime
 %xdefine _ge_p3_tobytes _ %+ BORINGSSL_PREFIX %+ _ge_p3_tobytes
+%xdefine _handle_cpu_env _ %+ BORINGSSL_PREFIX %+ _handle_cpu_env
 %xdefine _i2a_ACCESS_DESCRIPTION _ %+ BORINGSSL_PREFIX %+ _i2a_ACCESS_DESCRIPTION
 %xdefine _i2a_ASN1_ENUMERATED _ %+ BORINGSSL_PREFIX %+ _i2a_ASN1_ENUMERATED
 %xdefine _i2a_ASN1_INTEGER _ %+ BORINGSSL_PREFIX %+ _i2a_ASN1_INTEGER
@@ -3921,6 +3933,7 @@
 %xdefine _x509v3_conf_name_matches _ %+ BORINGSSL_PREFIX %+ _x509v3_conf_name_matches
 %xdefine _x509v3_hex_to_bytes _ %+ BORINGSSL_PREFIX %+ _x509v3_hex_to_bytes
 %xdefine _x509v3_looks_like_dns_name _ %+ BORINGSSL_PREFIX %+ _x509v3_looks_like_dns_name
+%xdefine _x86_64_assembly_implementation_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _x86_64_assembly_implementation_FOR_TESTING
 %else
 %xdefine ACCESS_DESCRIPTION_free BORINGSSL_PREFIX %+ _ACCESS_DESCRIPTION_free
 %xdefine ACCESS_DESCRIPTION_it BORINGSSL_PREFIX %+ _ACCESS_DESCRIPTION_it
@@ -4503,6 +4516,7 @@
 %xdefine CMAC_Reset BORINGSSL_PREFIX %+ _CMAC_Reset
 %xdefine CMAC_Update BORINGSSL_PREFIX %+ _CMAC_Update
 %xdefine CONF_VALUE_new BORINGSSL_PREFIX %+ _CONF_VALUE_new
+%xdefine CONF_modules_finish BORINGSSL_PREFIX %+ _CONF_modules_finish
 %xdefine CONF_modules_free BORINGSSL_PREFIX %+ _CONF_modules_free
 %xdefine CONF_modules_load_file BORINGSSL_PREFIX %+ _CONF_modules_load_file
 %xdefine CONF_modules_unload BORINGSSL_PREFIX %+ _CONF_modules_unload
@@ -5027,6 +5041,7 @@
 %xdefine EVP_MD_CTX_size BORINGSSL_PREFIX %+ _EVP_MD_CTX_size
 %xdefine EVP_MD_CTX_type BORINGSSL_PREFIX %+ _EVP_MD_CTX_type
 %xdefine EVP_MD_block_size BORINGSSL_PREFIX %+ _EVP_MD_block_size
+%xdefine EVP_MD_do_all BORINGSSL_PREFIX %+ _EVP_MD_do_all
 %xdefine EVP_MD_do_all_sorted BORINGSSL_PREFIX %+ _EVP_MD_do_all_sorted
 %xdefine EVP_MD_flags BORINGSSL_PREFIX %+ _EVP_MD_flags
 %xdefine EVP_MD_meth_get_flags BORINGSSL_PREFIX %+ _EVP_MD_meth_get_flags
@@ -5981,6 +5996,7 @@
 %xdefine SSL_CTX_set_record_protocol_version BORINGSSL_PREFIX %+ _SSL_CTX_set_record_protocol_version
 %xdefine SSL_CTX_set_retain_only_sha256_of_client_certs BORINGSSL_PREFIX %+ _SSL_CTX_set_retain_only_sha256_of_client_certs
 %xdefine SSL_CTX_set_reverify_on_resume BORINGSSL_PREFIX %+ _SSL_CTX_set_reverify_on_resume
+%xdefine SSL_CTX_set_security_level BORINGSSL_PREFIX %+ _SSL_CTX_set_security_level
 %xdefine SSL_CTX_set_select_certificate_cb BORINGSSL_PREFIX %+ _SSL_CTX_set_select_certificate_cb
 %xdefine SSL_CTX_set_session_cache_mode BORINGSSL_PREFIX %+ _SSL_CTX_set_session_cache_mode
 %xdefine SSL_CTX_set_session_id_context BORINGSSL_PREFIX %+ _SSL_CTX_set_session_id_context
@@ -6051,6 +6067,7 @@
 %xdefine SSL_SESSION_has_ticket BORINGSSL_PREFIX %+ _SSL_SESSION_has_ticket
 %xdefine SSL_SESSION_is_resumable BORINGSSL_PREFIX %+ _SSL_SESSION_is_resumable
 %xdefine SSL_SESSION_new BORINGSSL_PREFIX %+ _SSL_SESSION_new
+%xdefine SSL_SESSION_print BORINGSSL_PREFIX %+ _SSL_SESSION_print
 %xdefine SSL_SESSION_set1_id BORINGSSL_PREFIX %+ _SSL_SESSION_set1_id
 %xdefine SSL_SESSION_set1_id_context BORINGSSL_PREFIX %+ _SSL_SESSION_set1_id_context
 %xdefine SSL_SESSION_set_ex_data BORINGSSL_PREFIX %+ _SSL_SESSION_set_ex_data
@@ -6119,6 +6136,11 @@
 %xdefine SSL_get0_verified_chain BORINGSSL_PREFIX %+ _SSL_get0_verified_chain
 %xdefine SSL_get1_session BORINGSSL_PREFIX %+ _SSL_get1_session
 %xdefine SSL_get_SSL_CTX BORINGSSL_PREFIX %+ _SSL_get_SSL_CTX
+%xdefine SSL_get_all_cipher_names BORINGSSL_PREFIX %+ _SSL_get_all_cipher_names
+%xdefine SSL_get_all_curve_names BORINGSSL_PREFIX %+ _SSL_get_all_curve_names
+%xdefine SSL_get_all_signature_algorithm_names BORINGSSL_PREFIX %+ _SSL_get_all_signature_algorithm_names
+%xdefine SSL_get_all_standard_cipher_names BORINGSSL_PREFIX %+ _SSL_get_all_standard_cipher_names
+%xdefine SSL_get_all_version_names BORINGSSL_PREFIX %+ _SSL_get_all_version_names
 %xdefine SSL_get_certificate BORINGSSL_PREFIX %+ _SSL_get_certificate
 %xdefine SSL_get_cipher_by_value BORINGSSL_PREFIX %+ _SSL_get_cipher_by_value
 %xdefine SSL_get_cipher_list BORINGSSL_PREFIX %+ _SSL_get_cipher_list
@@ -6396,6 +6418,7 @@
 %xdefine X509V3_EXT_add_alias BORINGSSL_PREFIX %+ _X509V3_EXT_add_alias
 %xdefine X509V3_EXT_add_nconf BORINGSSL_PREFIX %+ _X509V3_EXT_add_nconf
 %xdefine X509V3_EXT_add_nconf_sk BORINGSSL_PREFIX %+ _X509V3_EXT_add_nconf_sk
+%xdefine X509V3_EXT_conf BORINGSSL_PREFIX %+ _X509V3_EXT_conf
 %xdefine X509V3_EXT_conf_nid BORINGSSL_PREFIX %+ _X509V3_EXT_conf_nid
 %xdefine X509V3_EXT_d2i BORINGSSL_PREFIX %+ _X509V3_EXT_d2i
 %xdefine X509V3_EXT_free BORINGSSL_PREFIX %+ _X509V3_EXT_free
@@ -7307,6 +7330,7 @@
 %xdefine d2i_X509_VAL BORINGSSL_PREFIX %+ _d2i_X509_VAL
 %xdefine d2i_X509_bio BORINGSSL_PREFIX %+ _d2i_X509_bio
 %xdefine d2i_X509_fp BORINGSSL_PREFIX %+ _d2i_X509_fp
+%xdefine dh_check_params_fast BORINGSSL_PREFIX %+ _dh_check_params_fast
 %xdefine dh_compute_key_padded_no_self_test BORINGSSL_PREFIX %+ _dh_compute_key_padded_no_self_test
 %xdefine dsa_asn1_meth BORINGSSL_PREFIX %+ _dsa_asn1_meth
 %xdefine dsa_check_key BORINGSSL_PREFIX %+ _dsa_check_key
@@ -7449,6 +7473,7 @@
 %xdefine gcm_setiv_avx512 BORINGSSL_PREFIX %+ _gcm_setiv_avx512
 %xdefine ge_double_scalarmult_vartime BORINGSSL_PREFIX %+ _ge_double_scalarmult_vartime
 %xdefine ge_p3_tobytes BORINGSSL_PREFIX %+ _ge_p3_tobytes
+%xdefine handle_cpu_env BORINGSSL_PREFIX %+ _handle_cpu_env
 %xdefine i2a_ACCESS_DESCRIPTION BORINGSSL_PREFIX %+ _i2a_ACCESS_DESCRIPTION
 %xdefine i2a_ASN1_ENUMERATED BORINGSSL_PREFIX %+ _i2a_ASN1_ENUMERATED
 %xdefine i2a_ASN1_INTEGER BORINGSSL_PREFIX %+ _i2a_ASN1_INTEGER
@@ -7829,4 +7854,5 @@
 %xdefine x509v3_conf_name_matches BORINGSSL_PREFIX %+ _x509v3_conf_name_matches
 %xdefine x509v3_hex_to_bytes BORINGSSL_PREFIX %+ _x509v3_hex_to_bytes
 %xdefine x509v3_looks_like_dns_name BORINGSSL_PREFIX %+ _x509v3_looks_like_dns_name
+%xdefine x86_64_assembly_implementation_FOR_TESTING BORINGSSL_PREFIX %+ _x86_64_assembly_implementation_FOR_TESTING
 %endif
