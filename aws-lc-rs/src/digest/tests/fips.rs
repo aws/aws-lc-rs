@@ -34,11 +34,7 @@ macro_rules! digest_api {
     };
 }
 
-digest_api!(
-    sha1,
-    &SHA1_FOR_LEGACY_USE_ONLY,
-    FipsServiceStatus::Approved
-);
+digest_api!(sha1, &SHA1_FOR_LEGACY_USE_ONLY, FipsServiceStatus::Approved);
 digest_api!(sha224, &SHA224, FipsServiceStatus::Approved);
 digest_api!(sha256, &SHA256, FipsServiceStatus::Approved);
 digest_api!(sha384, &SHA384, FipsServiceStatus::Approved);

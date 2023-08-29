@@ -21,10 +21,8 @@ macro_rules! hkdf_extract_expand_api {
             let salt = [42u8; $salt_len];
 
             // Will not set indicator function
-            let salt = assert_fips_status_indicator!(
-                Salt::new($alg, &salt[..]),
-                FipsServiceStatus::Unset
-            );
+            let salt =
+                assert_fips_status_indicator!(Salt::new($alg, &salt[..]), FipsServiceStatus::Unset);
 
             // Will not set the indicator function
             let prk = assert_fips_status_indicator!(

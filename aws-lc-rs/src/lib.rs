@@ -218,9 +218,7 @@ mod tests {
     #[cfg(not(feature = "fips"))]
     #[test]
     fn test_fips() {
-        assert!({
-            crate::try_fips_mode().is_err()
-        });
+        assert!({ crate::try_fips_mode().is_err() });
     }
 
     #[test]

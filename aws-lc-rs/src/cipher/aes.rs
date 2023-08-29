@@ -3,7 +3,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{cipher::block::{Block, BLOCK_LEN}, fips::indicator_check};
+use crate::{
+    cipher::block::{Block, BLOCK_LEN},
+    fips::indicator_check,
+};
 use aws_lc::{AES_ecb_encrypt, AES_ENCRYPT, AES_KEY};
 use std::mem::MaybeUninit;
 
