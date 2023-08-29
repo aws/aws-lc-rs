@@ -149,13 +149,11 @@ pub fn init() {
 }
 
 #[cfg(feature = "fips")]
-#[deprecated = "See `crate::get_fips_service_status`"]
 /// Panics if the underlying implementation is not FIPS, otherwise it returns.
 ///
 /// # Panics
 /// Panics if the underlying implementation is not FIPS.
 pub fn fips_mode() {
-    #[allow(deprecated)]
     try_fips_mode().unwrap();
 }
 
@@ -163,7 +161,6 @@ pub fn fips_mode() {
 ///
 /// # Errors
 /// Return an error if the underlying implementation is not FIPS, otherwise ok
-#[deprecated = "See `crate::get_fips_service_status`"]
 pub fn try_fips_mode() -> Result<(), &'static str> {
     init();
     unsafe {
@@ -222,7 +219,6 @@ mod tests {
     #[test]
     fn test_fips() {
         assert!({
-            #[allow(deprecated)]
             crate::try_fips_mode().is_err()
         });
     }
@@ -231,7 +227,6 @@ mod tests {
     // FIPS mode is disabled for an ASAN build
     #[cfg(all(feature = "fips", not(feature = "asan")))]
     fn test_fips() {
-        #[allow(deprecated)]
         crate::fips_mode();
     }
 }

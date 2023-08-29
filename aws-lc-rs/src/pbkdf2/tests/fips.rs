@@ -45,7 +45,7 @@ pbkdf2_api!(
     13,
     15,
     999,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved
 );
 pbkdf2_api!(
     sha1_14secret_16_salt_1000iter,
@@ -53,7 +53,7 @@ pbkdf2_api!(
     14,
     16,
     1000,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 pbkdf2_api!(
     sha1_15secret_17_salt_1001iter,
@@ -61,7 +61,7 @@ pbkdf2_api!(
     15,
     16,
     1001,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 pbkdf2_api!(
     sha256_13secret_15_salt_999iter,
@@ -69,7 +69,7 @@ pbkdf2_api!(
     13,
     15,
     999,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved
 );
 pbkdf2_api!(
     sha256_14secret_16_salt_1000iter,
@@ -77,7 +77,7 @@ pbkdf2_api!(
     14,
     16,
     1000,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 pbkdf2_api!(
     sha256_15secret_17_salt_1001iter,
@@ -85,7 +85,7 @@ pbkdf2_api!(
     15,
     16,
     1001,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 pbkdf2_api!(
     sha384_13secret_15_salt_999iter,
@@ -93,7 +93,7 @@ pbkdf2_api!(
     13,
     15,
     999,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved
 );
 pbkdf2_api!(
     sha384_14secret_16_salt_1000iter,
@@ -101,7 +101,7 @@ pbkdf2_api!(
     14,
     16,
     1000,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 pbkdf2_api!(
     sha384_15secret_17_salt_1001iter,
@@ -109,7 +109,7 @@ pbkdf2_api!(
     15,
     16,
     1001,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 pbkdf2_api!(
     sha512_13secret_15_salt_999iter,
@@ -117,7 +117,7 @@ pbkdf2_api!(
     13,
     15,
     999,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved
 );
 pbkdf2_api!(
     sha512_14secret_16_salt_1000iter,
@@ -125,7 +125,7 @@ pbkdf2_api!(
     14,
     16,
     1000,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 pbkdf2_api!(
     sha512_15secret_17_salt_1001iter,
@@ -133,5 +133,5 @@ pbkdf2_api!(
     15,
     16,
     1001,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );

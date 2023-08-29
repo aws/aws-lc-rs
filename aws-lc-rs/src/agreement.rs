@@ -573,7 +573,7 @@ fn ec_key_ecdh<'a>(
 
     let mut out_key_len = buffer.len();
 
-    if 1 != unsafe { EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len) } {
+    if 1 != indicator_check!(unsafe { EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len) }) {
         return Err(());
     }
 

@@ -32,7 +32,7 @@ macro_rules! block_api {
 
             let context = assert_fips_status_indicator!(
                 key.encrypt(&mut in_out),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Approved
             )
             .unwrap();
 
@@ -40,7 +40,7 @@ macro_rules! block_api {
 
             let in_out = assert_fips_status_indicator!(
                 key.decrypt(&mut in_out, context),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Approved
             )
             .unwrap();
 

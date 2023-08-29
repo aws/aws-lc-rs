@@ -46,7 +46,7 @@ macro_rules! ecdsa_generate_sign_verify {
 
             let keypair = assert_fips_status_indicator!(
                 EcdsaKeyPair::from_pkcs8($sign_alg, key_document.as_ref()),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Approved
             )
             .unwrap();
 
@@ -75,71 +75,71 @@ ecdsa_generate_sign_verify!(
     ecdsa_p256_sha256_asn1,
     &ECDSA_P256_SHA256_ASN1_SIGNING,
     ECDSA_P256_SHA256_ASN1,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 ecdsa_generate_sign_verify!(
     ecdsa_p256_sha256_fixed,
     &ECDSA_P256_SHA256_FIXED_SIGNING,
     ECDSA_P256_SHA256_FIXED,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 ecdsa_generate_sign_verify!(
     ecdsa_p384_sha3_384_asn1,
     &ECDSA_P384_SHA3_384_ASN1_SIGNING,
     ECDSA_P384_SHA3_384_ASN1,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::NonApproved
 );
 ecdsa_generate_sign_verify!(
     ecdsa_p384_sha3_384_fixed,
     &ECDSA_P384_SHA3_384_FIXED_SIGNING,
     ECDSA_P384_SHA3_384_FIXED,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::NonApproved
 );
 ecdsa_generate_sign_verify!(
     ecdsa_p384_sha384_asn1,
     &ECDSA_P384_SHA384_ASN1_SIGNING,
     ECDSA_P384_SHA384_ASN1,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 ecdsa_generate_sign_verify!(
     ecdsa_p384_sha384_fixed,
     &ECDSA_P384_SHA384_FIXED_SIGNING,
     ECDSA_P384_SHA384_FIXED,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 ecdsa_generate_sign_verify!(
     ecdsa_p521_sha3_512_asn1,
     &ECDSA_P521_SHA3_512_ASN1_SIGNING,
     ECDSA_P521_SHA3_512_ASN1,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::NonApproved
 );
 ecdsa_generate_sign_verify!(
     ecdsa_p521_sha3_512_fixed,
     &ECDSA_P521_SHA3_512_FIXED_SIGNING,
     ECDSA_P521_SHA3_512_FIXED,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::NonApproved
 );
 ecdsa_generate_sign_verify!(
     ecdsa_p521_sha512_asn1,
     &ECDSA_P521_SHA512_ASN1_SIGNING,
     ECDSA_P521_SHA512_ASN1,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 ecdsa_generate_sign_verify!(
     ecdsa_p521_sha512_fixed,
     &ECDSA_P521_SHA512_FIXED_SIGNING,
     ECDSA_P521_SHA512_FIXED,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 
 #[test]
@@ -148,19 +148,19 @@ fn ed25519() {
 
     let key_document = assert_fips_status_indicator!(
         Ed25519KeyPair::generate_pkcs8(&rng),
-        FipsServiceStatus::NonApprovedMode
+        FipsServiceStatus::NonApproved
     )
     .unwrap();
 
     let keypair = assert_fips_status_indicator!(
         Ed25519KeyPair::from_pkcs8(key_document.as_ref()),
-        FipsServiceStatus::ApprovedMode
+        FipsServiceStatus::Unset
     )
     .unwrap();
 
     let signature = assert_fips_status_indicator!(
         keypair.sign(TEST_MESSAGE.as_bytes()),
-        FipsServiceStatus::NonApprovedMode
+        FipsServiceStatus::NonApproved
     );
 
     let public_key = keypair.public_key();
@@ -171,7 +171,7 @@ fn ed25519() {
             TEST_MESSAGE.as_bytes(),
             signature.as_ref()
         ),
-        FipsServiceStatus::NonApprovedMode
+        FipsServiceStatus::NonApproved
     )
     .unwrap();
 }
@@ -194,14 +194,14 @@ ecdsa_verify!(
     &TEST_P256_PUBLIC_BYTES[..],
     ECDSA_P256_SHA384_ASN1,
     &TEST_MESSGAE_P256_SHA384_ASN1[..],
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 ecdsa_verify!(
     ecdsa_p384_sha256_asn1,
     &TEST_P384_PUBLIC_BYTES[..],
     ECDSA_P384_SHA256_ASN1,
     &TEST_MESSAGE_P384_SHA256_ASN1[..],
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 
 macro_rules! rsa_sign_verify {
@@ -236,168 +236,168 @@ rsa_sign_verify!(
     &TEST_RSA_2048_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA256,
     RSA_PKCS1_2048_8192_SHA256,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pkcs1_2048_sha384,
     &TEST_RSA_2048_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA384,
     RSA_PKCS1_2048_8192_SHA384,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pkcs1_2048_sha512,
     &TEST_RSA_2048_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA512,
     RSA_PKCS1_2048_8192_SHA512,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pkcs1_3072_sha256,
     &TEST_RSA_3072_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA256,
     RSA_PKCS1_2048_8192_SHA256,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pkcs1_3072_sha384,
     &TEST_RSA_3072_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA384,
     RSA_PKCS1_2048_8192_SHA384,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pkcs1_3072_sha512,
     &TEST_RSA_3072_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA512,
     RSA_PKCS1_2048_8192_SHA512,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pkcs1_4096_sha256,
     &TEST_RSA_4096_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA256,
     RSA_PKCS1_2048_8192_SHA256,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pkcs1_4096_sha384,
     &TEST_RSA_4096_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA384,
     RSA_PKCS1_2048_8192_SHA384,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pkcs1_4096_sha512,
     &TEST_RSA_4096_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA512,
     RSA_PKCS1_2048_8192_SHA512,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pkcs1_8192_sha256,
     &TEST_RSA_8192_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA256,
     RSA_PKCS1_2048_8192_SHA256,
-    FipsServiceStatus::NonApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved,
+    FipsServiceStatus::NonApproved
 );
 rsa_sign_verify!(
     rsa_pkcs1_8192_sha384,
     &TEST_RSA_8192_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA384,
     RSA_PKCS1_2048_8192_SHA384,
-    FipsServiceStatus::NonApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved,
+    FipsServiceStatus::NonApproved
 );
 rsa_sign_verify!(
     rsa_pkcs1_8192_sha512,
     &TEST_RSA_8192_PRIVATE_PKCS8_DER[..],
     &RSA_PKCS1_SHA512,
     RSA_PKCS1_2048_8192_SHA512,
-    FipsServiceStatus::NonApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved,
+    FipsServiceStatus::NonApproved
 );
 rsa_sign_verify!(
     rsa_pss_2048_sha256,
     &TEST_RSA_2048_PRIVATE_PKCS8_DER[..],
     &RSA_PSS_SHA256,
     RSA_PSS_2048_8192_SHA256,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pss_2048_sha384,
     &TEST_RSA_2048_PRIVATE_PKCS8_DER[..],
     &RSA_PSS_SHA384,
     RSA_PSS_2048_8192_SHA384,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pss_2048_sha512,
     &TEST_RSA_2048_PRIVATE_PKCS8_DER[..],
     &RSA_PSS_SHA512,
     RSA_PSS_2048_8192_SHA512,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pss_4096_sha256,
     &TEST_RSA_4096_PRIVATE_PKCS8_DER[..],
     &RSA_PSS_SHA256,
     RSA_PSS_2048_8192_SHA256,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pss_4096_sha384,
     &TEST_RSA_4096_PRIVATE_PKCS8_DER[..],
     &RSA_PSS_SHA384,
     RSA_PSS_2048_8192_SHA384,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pss_4096_sha512,
     &TEST_RSA_4096_PRIVATE_PKCS8_DER[..],
     &RSA_PSS_SHA512,
     RSA_PSS_2048_8192_SHA512,
-    FipsServiceStatus::ApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved,
+    FipsServiceStatus::Approved
 );
 rsa_sign_verify!(
     rsa_pss_8192_sha256,
     &TEST_RSA_8192_PRIVATE_PKCS8_DER[..],
     &RSA_PSS_SHA256,
     RSA_PSS_2048_8192_SHA256,
-    FipsServiceStatus::NonApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved,
+    FipsServiceStatus::NonApproved
 );
 rsa_sign_verify!(
     rsa_pss_8192_sha384,
     &TEST_RSA_8192_PRIVATE_PKCS8_DER[..],
     &RSA_PSS_SHA384,
     RSA_PSS_2048_8192_SHA384,
-    FipsServiceStatus::NonApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved,
+    FipsServiceStatus::NonApproved
 );
 rsa_sign_verify!(
     rsa_pss_8192_sha512,
     &TEST_RSA_8192_PRIVATE_PKCS8_DER[..],
     &RSA_PSS_SHA512,
     RSA_PSS_2048_8192_SHA512,
-    FipsServiceStatus::NonApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved,
+    FipsServiceStatus::NonApproved
 );
 
 macro_rules! rsa_verify {
@@ -418,14 +418,14 @@ rsa_verify!(
     &TEST_RSA_1024_PUBLIC_BYTES[..],
     RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
     &TEST_MESSAGE_RSA_PKCS1_1024_SHA1,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 rsa_verify!(
     rsa_pkcs1_1024_sha256,
     &TEST_RSA_1024_PUBLIC_BYTES[..],
     RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
     &TEST_MESSAGE_RSA_PKCS1_1024_SHA256,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );
 // TODO: Ring API never had SHA384 with RSA-1024?
 // rsa_verify!(
@@ -433,12 +433,12 @@ rsa_verify!(
 //     &TEST_RSA_1024_PUBLIC_BYTES[..],
 //     RSA_PKCS1_1024_8192_SHA38,
 //     &TEST_MESSAGE_RSA_PKCS1_1024_SHA384,
-//     FipsServiceStatus::ApprovedMode
+//     FipsServiceStatus::Approved
 // );
 rsa_verify!(
     rsa_pkcs1_1024_sha512,
     &TEST_RSA_1024_PUBLIC_BYTES[..],
     RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
     &TEST_MESSAGE_RSA_PKCS1_1024_SHA512,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::Approved
 );

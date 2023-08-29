@@ -27,14 +27,14 @@ macro_rules! hmac_api {
 
             let tag = assert_fips_status_indicator!(
                 sign(&s_key, TEST_MESSAGE.as_bytes()),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Approved
             );
 
             let v_key = Key::new($alg, key_value.as_ref());
 
             assert_fips_status_indicator!(
                 verify(&v_key, TEST_MESSAGE.as_bytes(), tag.as_ref()).unwrap(),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Approved
             );
         }
     };

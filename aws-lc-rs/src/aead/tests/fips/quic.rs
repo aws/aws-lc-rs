@@ -23,17 +23,17 @@ quic_api!(
     aes_128,
     &AES_128,
     &TEST_KEY_128_BIT,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::Approved
 );
 quic_api!(
     aes_256,
     &AES_256,
     &TEST_KEY_256_BIT,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::Approved
 );
 quic_api!(
     chacha20,
     &CHACHA20,
     &TEST_KEY_256_BIT,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved
 );

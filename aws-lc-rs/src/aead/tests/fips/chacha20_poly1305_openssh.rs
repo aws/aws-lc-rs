@@ -31,7 +31,7 @@ fn test() {
 
     assert_fips_status_indicator!(
         key.seal_in_place(1024, &mut message, &mut tag),
-        FipsServiceStatus::NonApprovedMode
+        FipsServiceStatus::NonApproved
     );
 
     let mut encrypted_packet_length = [0u8; 4];
@@ -41,7 +41,7 @@ fn test() {
 
     let packet_length = assert_fips_status_indicator!(
         key.decrypt_packet_length(1024, encrypted_packet_length),
-        FipsServiceStatus::NonApprovedMode
+        FipsServiceStatus::NonApproved
     );
 
     #[allow(clippy::cast_possible_truncation)]
@@ -56,7 +56,7 @@ fn test() {
 
     let message = assert_fips_status_indicator!(
         key.open_in_place(1024, &mut message, &tag).unwrap(),
-        FipsServiceStatus::NonApprovedMode
+        FipsServiceStatus::NonApproved
     );
     assert_eq!(TEST_MESSAGE.as_bytes(), message);
 }

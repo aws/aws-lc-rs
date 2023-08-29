@@ -52,7 +52,7 @@ macro_rules! agree_ephemeral_api {
     };
 }
 
-agree_ephemeral_api!(ecdh_p256, &ECDH_P256, FipsServiceStatus::ApprovedMode);
-agree_ephemeral_api!(ecdh_p384, &ECDH_P384, FipsServiceStatus::ApprovedMode);
-agree_ephemeral_api!(ecdh_p521, &ECDH_P521, FipsServiceStatus::ApprovedMode);
-agree_ephemeral_api!(x25519, &X25519, FipsServiceStatus::NonApprovedMode);
+agree_ephemeral_api!(ecdh_p256, &ECDH_P256, FipsServiceStatus::Approved);
+agree_ephemeral_api!(ecdh_p384, &ECDH_P384, FipsServiceStatus::Approved);
+agree_ephemeral_api!(ecdh_p521, &ECDH_P521, FipsServiceStatus::Approved);
+agree_ephemeral_api!(x25519, &X25519, FipsServiceStatus::NonApproved);

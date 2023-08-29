@@ -99,22 +99,22 @@ nonce_sequence_api!(
     aes_gcm_128_nonce_sequence_api,
     &AES_128_GCM,
     &TEST_KEY_128_BIT[..],
-    FipsServiceStatus::NonApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::NonApproved,
+    FipsServiceStatus::Approved
 );
 nonce_sequence_api!(
     aes_gcm_256_nonce_sequence_api,
     &AES_256_GCM,
     &TEST_KEY_256_BIT[..],
-    FipsServiceStatus::NonApprovedMode,
-    FipsServiceStatus::ApprovedMode
+    FipsServiceStatus::NonApproved,
+    FipsServiceStatus::Approved
 );
 nonce_sequence_api!(
     chacha20_poly1305_nonce_sequence_api,
     &CHACHA20_POLY1305,
     &TEST_KEY_256_BIT[..],
-    FipsServiceStatus::NonApprovedMode,
-    FipsServiceStatus::NonApprovedMode
+    FipsServiceStatus::NonApproved,
+    FipsServiceStatus::NonApproved
 );
 
 macro_rules! randnonce_api {
@@ -127,13 +127,13 @@ macro_rules! randnonce_api {
                 let mut in_out = Vec::from(TEST_MESSAGE);
                 let nonce = assert_fips_status_indicator!(
                     key.seal_in_place_append_tag(Aad::empty(), &mut in_out),
-                    FipsServiceStatus::ApprovedMode
+                    FipsServiceStatus::Approved
                 )
                 .unwrap();
 
                 let in_out = assert_fips_status_indicator!(
                     key.open_in_place(nonce, Aad::empty(), &mut in_out),
-                    FipsServiceStatus::ApprovedMode
+                    FipsServiceStatus::Approved
                 )
                 .unwrap();
 
@@ -145,7 +145,7 @@ macro_rules! randnonce_api {
 
                 let (nonce, tag) = assert_fips_status_indicator!(
                     key.seal_in_place_separate_tag(Aad::empty(), &mut in_out),
-                    FipsServiceStatus::ApprovedMode
+                    FipsServiceStatus::Approved
                 )
                 .unwrap();
 
@@ -153,7 +153,7 @@ macro_rules! randnonce_api {
 
                 let in_out = assert_fips_status_indicator!(
                     key.open_in_place(nonce, Aad::empty(), &mut in_out),
-                    FipsServiceStatus::ApprovedMode
+                    FipsServiceStatus::Approved
                 )
                 .unwrap();
 
@@ -201,7 +201,7 @@ macro_rules! tls_nonce_api {
                     Aad::empty(),
                     &mut in_out,
                 ),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Approved
             )
             .unwrap();
 
@@ -209,7 +209,7 @@ macro_rules! tls_nonce_api {
 
             let in_out = assert_fips_status_indicator!(
                 key.open_in_place(Nonce::from(&TEST_NONCE_96_BIT), Aad::empty(), &mut in_out),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Approved
             )
             .unwrap();
 

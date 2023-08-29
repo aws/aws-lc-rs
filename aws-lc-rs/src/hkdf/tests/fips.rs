@@ -23,13 +23,13 @@ macro_rules! hkdf_extract_expand_api {
             // Will not set indicator function
             let salt = assert_fips_status_indicator!(
                 Salt::new($alg, &salt[..]),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Unset
             );
 
             // Will not set the indicator function
             let prk = assert_fips_status_indicator!(
                 salt.extract(&[5, 6, 7, 8]),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Unset
             );
 
             let info: Vec<u8> = vec![42u8; $info_len];
@@ -38,7 +38,7 @@ macro_rules! hkdf_extract_expand_api {
             // Will not set the inidcator function
             let okm = assert_fips_status_indicator!(
                 prk.expand(info_slices.as_ref(), $alg),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Unset
             )
             .unwrap();
 
@@ -53,56 +53,56 @@ macro_rules! hkdf_extract_expand_api {
 hkdf_extract_expand_api!(
     test_sha1_hkdf_extract_expand_api,
     HKDF_SHA1_FOR_LEGACY_USE_ONLY,
-    FipsServiceStatus::ApprovedMode,
+    FipsServiceStatus::Approved,
     16,
     16
 );
 hkdf_extract_expand_api!(
     test_sha256_hkdf_extract_expand_api_api,
     HKDF_SHA256,
-    FipsServiceStatus::ApprovedMode,
+    FipsServiceStatus::Approved,
     16,
     16
 );
 hkdf_extract_expand_api!(
     test_sha384_hkdf_extract_expand_api,
     HKDF_SHA384,
-    FipsServiceStatus::ApprovedMode,
+    FipsServiceStatus::Approved,
     16,
     16
 );
 hkdf_extract_expand_api!(
     test_sha512_hkdf_extract_expand_api,
     HKDF_SHA512,
-    FipsServiceStatus::ApprovedMode,
+    FipsServiceStatus::Approved,
     16,
     16
 );
 hkdf_extract_expand_api!(
     test_sha1_hkdf_extract_expand_api_invalid_nonce,
     HKDF_SHA1_FOR_LEGACY_USE_ONLY,
-    FipsServiceStatus::NonApprovedMode,
+    FipsServiceStatus::NonApproved,
     0,
     16
 );
 hkdf_extract_expand_api!(
     test_sha256_hkdf_extract_expand_api_invalid_nonce,
     HKDF_SHA256,
-    FipsServiceStatus::NonApprovedMode,
+    FipsServiceStatus::NonApproved,
     0,
     16
 );
 hkdf_extract_expand_api!(
     test_sha384_hkdf_extract_expand_api_invalid_nonce,
     HKDF_SHA384,
-    FipsServiceStatus::NonApprovedMode,
+    FipsServiceStatus::NonApproved,
     0,
     16
 );
 hkdf_extract_expand_api!(
     test_sha512_hkdf_extract_expand_api_invalid_nonce,
     HKDF_SHA512,
-    FipsServiceStatus::NonApprovedMode,
+    FipsServiceStatus::NonApproved,
     0,
     16
 );
@@ -119,7 +119,7 @@ macro_rules! hkdf_expand_api {
             // Will not set the inidcator function
             let okm = assert_fips_status_indicator!(
                 prk.expand(info_slices.as_ref(), $alg),
-                FipsServiceStatus::ApprovedMode
+                FipsServiceStatus::Unset
             )
             .unwrap();
 
@@ -135,27 +135,27 @@ hkdf_expand_api!(
     sha1,
     HKDF_SHA1_FOR_LEGACY_USE_ONLY,
     &TEST_KEY_128_BIT[..],
-    FipsServiceStatus::ApprovedMode,
+    FipsServiceStatus::Approved,
     16
 );
 hkdf_expand_api!(
     sha256,
     HKDF_SHA256,
     &TEST_KEY_128_BIT[..],
-    FipsServiceStatus::ApprovedMode,
+    FipsServiceStatus::Approved,
     16
 );
 hkdf_expand_api!(
     sha384,
     HKDF_SHA384,
     &TEST_KEY_128_BIT[..],
-    FipsServiceStatus::ApprovedMode,
+    FipsServiceStatus::Approved,
     16
 );
 hkdf_expand_api!(
     sha512,
     HKDF_SHA512,
     &TEST_KEY_128_BIT[..],
-    FipsServiceStatus::ApprovedMode,
+    FipsServiceStatus::Approved,
     16
 );
