@@ -94,7 +94,7 @@ pub(crate) fn aead_seal_separate_scatter(
 }
 
 /// AES-128 in GCM mode with 128-bit tags and 96 bit nonces.
-pub static AES_128_GCM: Algorithm = Algorithm {
+pub const AES_128_GCM: Algorithm = Algorithm {
     init: init_128_aead,
     key_len: AES_128_KEY_LEN,
     id: AlgorithmID::AES_128_GCM,
@@ -102,7 +102,7 @@ pub static AES_128_GCM: Algorithm = Algorithm {
 };
 
 /// AES-256 in GCM mode with 128-bit tags and 96 bit nonces.
-pub static AES_256_GCM: Algorithm = Algorithm {
+pub const AES_256_GCM: Algorithm = Algorithm {
     init: init_256_aead,
     key_len: AES_256_KEY_LEN,
     id: AlgorithmID::AES_256_GCM,
@@ -110,7 +110,7 @@ pub static AES_256_GCM: Algorithm = Algorithm {
 };
 
 /// AES-256 in GCM mode with nonce reuse resistance, 128-bit tags and 96 bit nonces.
-pub static AES_256_GCM_SIV: Algorithm = Algorithm {
+pub const AES_256_GCM_SIV: Algorithm = Algorithm {
     init: init_256_aead_siv,
     key_len: AES_256_KEY_LEN,
     id: AlgorithmID::AES_256_GCM_SIV,
@@ -118,7 +118,7 @@ pub static AES_256_GCM_SIV: Algorithm = Algorithm {
 };
 
 /// AES-128 in GCM mode with nonce reuse resistance, 128-bit tags and 96 bit nonces.
-pub static AES_128_GCM_SIV: Algorithm = Algorithm {
+pub const AES_128_GCM_SIV: Algorithm = Algorithm {
     init: init_128_aead_siv,
     key_len: AES_128_KEY_LEN,
     id: AlgorithmID::AES_128_GCM_SIV,
