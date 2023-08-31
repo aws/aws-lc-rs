@@ -14,7 +14,7 @@ use crate::error;
 /// The keys are 256 bits long and the nonces are 96 bits long.
 ///
 /// [RFC 7539]: https://tools.ietf.org/html/rfc7539
-pub static CHACHA20_POLY1305: Algorithm = Algorithm {
+pub const CHACHA20_POLY1305: Algorithm = Algorithm {
     init: init_chacha_aead,
     key_len: KEY_LEN,
     id: AlgorithmID::CHACHA20_POLY1305,
