@@ -14,6 +14,7 @@ include = [
     "/aws-lc/**/*.pl",
     "/aws-lc/**/*.h",
     "/aws-lc/**/*.S",
+    "/aws-lc/**/*.asm",
     "/aws-lc/**/CMakeLists.txt",
     "/aws-lc/**/*.cmake",
     "/aws-lc/**/*.errordata",
