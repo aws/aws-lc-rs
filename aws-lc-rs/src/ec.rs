@@ -9,6 +9,7 @@ use core::fmt;
 
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 
+use crate::fips::indicator_check;
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
 #[cfg(feature = "fips")]
@@ -210,7 +211,7 @@ fn verify_asn1_signature(
         return Err(Unspecified);
     }
 
-    if 1 != unsafe {
+    if 1 != indicator_check!(unsafe {
         EVP_DigestVerify(
             md_ctx.as_mut_ptr(),
             signature.as_ptr(),
@@ -218,7 +219,7 @@ fn verify_asn1_signature(
             msg.as_ptr(),
             msg.len(),
         )
-    } {
+    }) {
         return Err(Unspecified);
     }
 
@@ -265,7 +266,7 @@ unsafe fn validate_ec_key(
     }
 
     #[cfg(feature = "fips")]
-    if 1 != EC_KEY_check_fips(*ec_key) {
+    if 1 != indicator_check!(EC_KEY_check_fips(*ec_key)) {
         return Err(KeyRejected::inconsistent_components());
     }
 
@@ -370,7 +371,7 @@ pub(crate) fn ec_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified
 
     let mut pkey = null_mut::<EVP_PKEY>();
 
-    if 1 != unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) } {
+    if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) }) {
         return Err(Unspecified);
     }
 

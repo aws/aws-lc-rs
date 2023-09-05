@@ -58,17 +58,18 @@ impl VerificationAlgorithm for EdDSAParameters {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), Unspecified> {
-        unsafe {
-            if 1 != ED25519_verify(
+        if 1 != unsafe {
+            ED25519_verify(
                 msg.as_ptr(),
                 msg.len(),
                 signature.as_ptr(),
                 public_key.as_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            Ok(())
+            )
+        } {
+            return Err(Unspecified);
         }
+        crate::fips::set_fips_service_status_unapproved();
+        Ok(())
     }
 }
 
@@ -116,6 +117,8 @@ impl KeyPair for Ed25519KeyPair {
 }
 
 pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<EVP_PKEY>, ()> {
+    // TODO: Should we drop support for using the provided rng in a minor release?
+
     let mut seed = [0u8; ED25519_SEED_LEN];
     rng.fill(&mut seed)?;
 
@@ -127,6 +130,10 @@ pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<EVP_PK
         seed.as_ptr(),
     );
     seed.zeroize();
+
+    // ED25519_keypair_from_seed doesn't set FIPS indicator, and Ed25119 is not approved anyways at this time.
+    // Seems like it could be approved for use in the future per FIPS 186-5 and CMVP guidance.
+    crate::fips::set_fips_service_status_unapproved();
 
     LcPtr::new(EVP_PKEY_new_raw_private_key(
         EVP_PKEY_ED25519,
@@ -295,23 +302,26 @@ impl Ed25519KeyPair {
 
     #[inline]
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
-        unsafe {
-            let mut sig_bytes = MaybeUninit::<[u8; ED25519_SIGNATURE_LEN]>::uninit();
-            if 1 != ED25519_sign(
+        let mut sig_bytes = MaybeUninit::<[u8; ED25519_SIGNATURE_LEN]>::uninit();
+        if 1 != unsafe {
+            ED25519_sign(
                 sig_bytes.as_mut_ptr().cast(),
                 msg.as_ptr(),
                 msg.len(),
                 self.private_key.as_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let sig_bytes = sig_bytes.assume_init();
-
-            Ok(Signature::new(|slice| {
-                slice[0..ED25519_SIGNATURE_LEN].copy_from_slice(&sig_bytes);
-                ED25519_SIGNATURE_LEN
-            }))
+            )
+        } {
+            return Err(Unspecified);
         }
+
+        crate::fips::set_fips_service_status_unapproved();
+
+        let sig_bytes = unsafe { sig_bytes.assume_init() };
+
+        Ok(Signature::new(|slice| {
+            slice[0..ED25519_SIGNATURE_LEN].copy_from_slice(&sig_bytes);
+            ED25519_SIGNATURE_LEN
+        }))
     }
 }
 

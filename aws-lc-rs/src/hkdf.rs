@@ -34,6 +34,7 @@
 //! ```
 
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use crate::{digest, hmac};
 use aws_lc::{HKDF_expand, HKDF};
 use core::fmt;
@@ -205,7 +206,7 @@ impl PrkMode {
 
         match &self {
             PrkMode::Expand { key_bytes, key_len } => unsafe {
-                if 1 != HKDF_expand(
+                if 1 != indicator_check!(HKDF_expand(
                     out.as_mut_ptr(),
                     out.len(),
                     digest,
@@ -213,7 +214,7 @@ impl PrkMode {
                     *key_len,
                     info.as_ptr(),
                     info.len(),
-                ) {
+                )) {
                     return Err(Unspecified);
                 }
             },
@@ -222,7 +223,7 @@ impl PrkMode {
                 salt,
                 salt_len,
             } => {
-                if 1 != unsafe {
+                if 1 != indicator_check!(unsafe {
                     HKDF(
                         out.as_mut_ptr(),
                         out.len(),
@@ -234,7 +235,7 @@ impl PrkMode {
                         info.as_ptr(),
                         info.len(),
                     )
-                } {
+                }) {
                     return Err(Unspecified);
                 }
             }
@@ -422,6 +423,9 @@ impl<L: KeyType> Okm<'_, L> {
 #[cfg(test)]
 mod tests {
     use crate::hkdf::{Salt, HKDF_SHA256, HKDF_SHA384};
+
+    #[cfg(feature = "fips")]
+    mod fips;
 
     #[test]
     fn hkdf_coverage() {

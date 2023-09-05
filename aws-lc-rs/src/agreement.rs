@@ -53,6 +53,7 @@ use crate::ec::{
     ec_group_from_nid, ec_key_from_public_point, ec_key_generate, ec_point_from_bytes,
 };
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::{ec, test};
@@ -384,7 +385,7 @@ pub(crate) fn generate_x25519() -> Result<LcPtr<EVP_PKEY>, Unspecified> {
 
     let mut pkey: *mut EVP_PKEY = null_mut();
 
-    if 1 != unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) } {
+    if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) }) {
         return Err(Unspecified);
     }
 
@@ -572,7 +573,9 @@ fn ec_key_ecdh<'a>(
 
     let mut out_key_len = buffer.len();
 
-    if 1 != unsafe { EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len) } {
+    if 1 != indicator_check!(unsafe {
+        EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len)
+    }) {
         return Err(());
     }
 
@@ -610,7 +613,9 @@ fn x25519_diffie_hellman<'a>(
 
     let mut out_key_len = buffer.len();
 
-    if 1 != unsafe { EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len) } {
+    if 1 != indicator_check!(unsafe {
+        EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len)
+    }) {
         return Err(());
     }
 
@@ -623,6 +628,9 @@ fn x25519_diffie_hellman<'a>(
 mod tests {
     use crate::error::Unspecified;
     use crate::{agreement, rand, test, test_file};
+
+    #[cfg(feature = "fips")]
+    mod fips;
 
     #[test]
     fn test_agreement_ecdh_x25519_rfc_iterated() {

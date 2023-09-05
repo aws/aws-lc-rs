@@ -67,7 +67,7 @@
 //! assert_eq!(plaintext, decrypted_plaintext);
 //! ```
 
-use crate::{derive_debug_via_id, hkdf, iv::FixedLength};
+use crate::{derive_debug_via_id, fips::indicator_check, hkdf, iv::FixedLength};
 use std::{fmt::Debug, ptr::null, sync::Mutex};
 
 use crate::error::Unspecified;
@@ -1262,7 +1262,7 @@ where
 
         debug_assert_eq!(nonce.len(), alg.nonce_len());
 
-        if 1 != unsafe {
+        if 1 != indicator_check!(unsafe {
             EVP_AEAD_CTX_seal(
                 *ctx.as_ref().as_const(),
                 mut_in_out.as_mut_ptr(),
@@ -1275,7 +1275,7 @@ where
                 aad_str.as_ptr(),
                 aad_str.len(),
             )
-        } {
+        }) {
             return Err(Unspecified);
         }
     }
@@ -1303,7 +1303,7 @@ where
         let plaintext_len = in_out.as_mut().len();
         let in_out = in_out.as_mut();
 
-        if 1 != unsafe {
+        if 1 != indicator_check!(unsafe {
             EVP_AEAD_CTX_seal_scatter(
                 *key.as_ref().as_const(),
                 in_out.as_mut_ptr(),
@@ -1319,7 +1319,7 @@ where
                 aad_str.as_ptr(),
                 aad_str.len(),
             )
-        } {
+        }) {
             return Err(Unspecified);
         }
     }
@@ -1353,7 +1353,7 @@ pub(crate) fn aead_seal_separate(
 
         debug_assert_eq!(nonce.len(), alg.nonce_len());
 
-        if 1 != unsafe {
+        if 1 != indicator_check!(unsafe {
             EVP_AEAD_CTX_seal_scatter(
                 *ctx.as_ref().as_const(),
                 in_out.as_mut_ptr(),
@@ -1369,7 +1369,7 @@ pub(crate) fn aead_seal_separate(
                 aad_slice.as_ptr(),
                 aad_slice.len(),
             )
-        } {
+        }) {
             return Err(Unspecified);
         }
     }
@@ -1391,7 +1391,7 @@ pub(crate) fn aead_seal_separate_randnonce(
 
     let mut out_tag_len = MaybeUninit::<usize>::uninit();
 
-    if 1 != unsafe {
+    if 1 != indicator_check!(unsafe {
         EVP_AEAD_CTX_seal_scatter(
             *ctx.as_ref().as_const(),
             in_out.as_mut_ptr(),
@@ -1407,7 +1407,7 @@ pub(crate) fn aead_seal_separate_randnonce(
             aad_slice.as_ptr(),
             aad_slice.len(),
         )
-    } {
+    }) {
         return Err(Unspecified);
     }
 
@@ -1441,7 +1441,7 @@ pub(crate) fn aead_open_combined(
 
     let aad_str = aad.0;
     let mut out_len = MaybeUninit::<usize>::uninit();
-    if 1 != unsafe {
+    if 1 != indicator_check!(unsafe {
         EVP_AEAD_CTX_open(
             *ctx.as_ref().as_const(),
             in_out.as_mut_ptr(),
@@ -1454,7 +1454,7 @@ pub(crate) fn aead_open_combined(
             aad_str.as_ptr(),
             aad_str.len(),
         )
-    } {
+    }) {
         return Err(Unspecified);
     }
 
@@ -1489,7 +1489,7 @@ pub(crate) fn aead_open_combined_randnonce(
 
     let aad_str = aad.0;
 
-    if 1 != unsafe {
+    if 1 != indicator_check!(unsafe {
         EVP_AEAD_CTX_open_gather(
             *ctx.as_ref().as_const(),
             in_out.as_mut_ptr(),
@@ -1502,7 +1502,7 @@ pub(crate) fn aead_open_combined_randnonce(
             aad_str.as_ptr(),
             aad_str.len(),
         )
-    } {
+    }) {
         return Err(Unspecified);
     }
 
@@ -1514,6 +1514,9 @@ mod tests {
     use super::*;
     use crate::{iv::FixedLength, test::from_hex};
     use paste::paste;
+
+    #[cfg(feature = "fips")]
+    mod fips;
 
     const TEST_128_BIT_KEY: &[u8] = &[
         0xb0, 0x37, 0x9f, 0xf8, 0xfb, 0x8e, 0xa6, 0x31, 0xf4, 0x1c, 0xe6, 0x3e, 0xb5, 0xc5, 0x20,

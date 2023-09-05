@@ -10,6 +10,7 @@
 
 use crate::digest::digest_ctx::DigestContext;
 use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
 #[cfg(feature = "ring-io")]
 use crate::io;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
@@ -135,6 +136,7 @@ impl RsaKeyPair {
             Self::new(pkey)
         }
     }
+
     const MIN_RSA_PRIME_BITS: u32 = 1024;
     const MAX_RSA_PRIME_BITS: u32 = 4096;
 
@@ -334,7 +336,7 @@ fn compute_rsa_signature<'a>(
 ) -> Result<&'a mut [u8], Unspecified> {
     let mut out_sig_len = signature.len();
 
-    if 1 != unsafe {
+    if 1 != indicator_check!(unsafe {
         EVP_DigestSign(
             ctx.as_mut_ptr(),
             signature.as_mut_ptr(),
@@ -342,7 +344,7 @@ fn compute_rsa_signature<'a>(
             message.as_ptr(),
             message.len(),
         )
-    } {
+    }) {
         return Err(Unspecified);
     }
 
@@ -628,7 +630,7 @@ fn verify_RSA(
         configure_rsa_pkcs1_pss_padding(pctx)?;
     }
 
-    if 1 != unsafe {
+    if 1 != indicator_check!(unsafe {
         EVP_DigestVerify(
             md_ctx.as_mut_ptr(),
             signature.as_ptr(),
@@ -636,7 +638,7 @@ fn verify_RSA(
             msg.as_ptr(),
             msg.len(),
         )
-    } {
+    }) {
         return Err(Unspecified);
     }
 

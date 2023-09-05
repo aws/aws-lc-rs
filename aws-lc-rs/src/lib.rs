@@ -124,6 +124,7 @@ mod ec;
 mod ed25519;
 mod endian;
 mod evp_pkey;
+mod fips;
 pub mod iv;
 mod ptr;
 mod rsa;
@@ -217,7 +218,7 @@ mod tests {
     #[cfg(not(feature = "fips"))]
     #[test]
     fn test_fips() {
-        assert!(crate::try_fips_mode().is_err());
+        assert!({ crate::try_fips_mode().is_err() });
     }
 
     #[test]
