@@ -325,6 +325,38 @@ jobs:
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
 
+  publish-dry-run:
+    name: publish dry-run
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ windows-2019, ubuntu-latest, macOS-latest ]
+        args:
+          - publish --dry-run
+    steps:
+      - if: ${{ matrix.os == 'windows-2019' }}
+        uses: ilammy/setup-nasm@v1
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: aws-lc-sys
+        working-directory: ./aws-lc-sys
+        run: cargo ${{ matrix.args }}
+      - name: aws-lc-fips-sys
+        if: ${{ matrix.os != 'windows-2019' }}
+        working-directory: ./aws-lc-fips-sys
+        run: cargo ${{ matrix.args }}
+      - name: aws-lc-rs
+        working-directory: ./aws-lc-rs
+        run: cargo ${{ matrix.args }}
+
   aws-lc-rs-coverage:
     name: aws-ls-rs coverage
     runs-on: ubuntu-latest
