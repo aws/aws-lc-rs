@@ -1,7 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-
 // Only needed if you need to add additional test cases for signature verifications
 #[allow(dead_code)]
 pub const TEST_P256_PRIVATE_DER: [u8; 121] = [
