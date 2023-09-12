@@ -558,7 +558,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(
+        expected = "source slice length (42) does not match destination slice length (0)"
+    )]
     fn fixed_slice_random_length_mismatch() {
         let fbr = FixedSliceRandom { bytes: &[42u8; 42] };
         let _: Result<(), error::Unspecified> = fbr.fill_impl(&mut []);
@@ -579,7 +581,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "index out of bounds: the len is 0 but the index is 0")]
     fn fixed_slice_sequence_random_no_remaining() {
         let fbr = FixedSliceSequenceRandom {
             bytes: &[],

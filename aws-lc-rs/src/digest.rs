@@ -327,13 +327,13 @@ mod tests {
                         super::max_input_test(&digest::$algorithm_name);
                     }
                     #[test]
-                    #[should_panic]
+                    #[should_panic(expected = "digest update failed")]
                     fn too_long_input_test_block() {
                         super::too_long_input_test_block(&digest::$algorithm_name);
                     }
 
                     #[test]
-                    #[should_panic]
+                    #[should_panic(expected = "digest update failed")]
                     fn too_long_input_test_byte() {
                         super::too_long_input_test_byte(&digest::$algorithm_name);
                     }
