@@ -213,6 +213,8 @@ impl EphemeralPrivateKey {
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
     ///
+    /// # FIPS
+    /// FIPS users should only utilize this method with `ECDH_P256`, `ECDH_P384`, or `ECDH_P521` algorithms.
     pub fn generate(alg: &'static Algorithm, _rng: &dyn SecureRandom) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
@@ -320,7 +322,6 @@ impl EphemeralPrivateKey {
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    ///
     pub fn compute_public_key(&self) -> Result<PublicKey, Unspecified> {
         match &self.inner_key {
             KeyInner::ECDH_P256(evp_pkey)
@@ -501,6 +502,8 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// # Errors
 /// `error_value` on internal failure.
 ///
+/// # FIPS
+/// FIPS users should only utilize this method with `ECDH_P256`, `ECDH_P384`, or `ECDH_P521` keys.
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::missing_panics_doc)]

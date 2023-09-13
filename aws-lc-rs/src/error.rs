@@ -34,7 +34,9 @@ use std::num::TryFromIntError;
 /// }
 ///
 /// impl From<aws_lc_rs::error::Unspecified> for Error {
-///     fn from(_: aws_lc_rs::error::Unspecified) -> Self { Error::CryptoError }
+///     fn from(_: aws_lc_rs::error::Unspecified) -> Self {
+///         Error::CryptoError
+///     }
 /// }
 ///
 /// fn eight_random_bytes() -> Result<[u8; 8], Error> {
@@ -232,23 +234,6 @@ impl From<TryFromIntError> for Unspecified {
 impl From<TryFromIntError> for KeyRejected {
     fn from(_: TryFromIntError) -> Self {
         KeyRejected::unexpected_error()
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct ServiceNotApproved;
-
-impl std::error::Error for ServiceNotApproved {}
-
-impl core::fmt::Display for ServiceNotApproved {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("ServiceNotApproved")
-    }
-}
-
-impl From<ServiceNotApproved> for Unspecified {
-    fn from(_: ServiceNotApproved) -> Self {
-        Self {}
     }
 }
 

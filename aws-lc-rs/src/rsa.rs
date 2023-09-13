@@ -230,6 +230,11 @@ impl RsaKeyPair {
     /// # Errors
     /// `error::Unspecified` on error.
     /// With "fips" feature enabled, errors if digest length is greater than `u32::MAX`.
+    ///
+    /// # FIPS
+    /// FIPS users should utilize this method when meeting the following conditions:
+    /// * RSA Key Sizes: 2048, 3072, 4096
+    /// * Digest Algorithms: SHA256, SHA384, SHA512
     pub fn sign(
         &self,
         padding_alg: &'static dyn RsaEncoding,

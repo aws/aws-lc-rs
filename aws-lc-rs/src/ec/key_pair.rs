@@ -92,7 +92,6 @@ impl EcdsaKeyPair {
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.
-    ///
     pub fn generate_pkcs8(
         alg: &'static EcdsaSigningAlgorithm,
         _rng: &dyn SecureRandom,
@@ -148,6 +147,10 @@ impl EcdsaKeyPair {
     /// # Errors
     /// `error::Unspecified` on internal error.
     ///
+    /// # FIPS
+    /// FIPS users should utilize this method when meeting the following conditions:
+    /// * NIST Elliptic Curves: P256, P384, P521
+    /// * Digest Algorithms: SHA256, SHA384, SHA512
     #[inline]
     pub fn sign(&self, _rng: &dyn SecureRandom, message: &[u8]) -> Result<Signature, Unspecified> {
         let mut md_ctx = DigestContext::new_uninit();

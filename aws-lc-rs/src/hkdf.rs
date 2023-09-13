@@ -22,15 +22,19 @@
 //! let pseudo_random_key = salt.extract(b"secret input keying material");
 //!
 //! // Derive HMAC key
-//! let hmac_key_material = pseudo_random_key.expand(&[b"hmac contextual info"],
-//!         hkdf::HKDF_SHA256.hmac_algorithm()).unwrap();
+//! let hmac_key_material = pseudo_random_key
+//!     .expand(
+//!         &[b"hmac contextual info"],
+//!         hkdf::HKDF_SHA256.hmac_algorithm(),
+//!     )
+//!     .unwrap();
 //! let hmac_key = hmac::Key::from(hmac_key_material);
 //!
 //! // Derive UnboundKey for AES-128-GCM
-//! let aes_keying_material = pseudo_random_key.expand(&[b"aes contextual info"],
-//!         &aead::AES_128_GCM).unwrap();
+//! let aes_keying_material = pseudo_random_key
+//!     .expand(&[b"aes contextual info"], &aead::AES_128_GCM)
+//!     .unwrap();
 //! let aead_unbound_key = aead::UnboundKey::from(aes_keying_material);
-//!
 //! ```
 
 use crate::error::Unspecified;
@@ -406,6 +410,16 @@ impl<L: KeyType> Okm<'_, L> {
     /// `error::Unspecified` if the requested output length differs from the length specified by
     /// `L: KeyType`.
     ///
+    ///# FIPS
+    /// FIPS users should utilize this method when meeting the following conditions:
+    /// * The HKDF algorithm is one of:
+    ///    * `HKDF_SHA1_FOR_LEGACY_USE_ONLY`
+    ///    * `HKDF_SHA256`
+    ///    * `HKDF_SHA384`
+    ///    * `HKDF_SHA512`
+    /// * If the [`Okm`] was constructed from a [`Prk`] created with [`Salt::extract`]:
+    ///    * The `value.len()` passed to [`Salt::new`] was non-zero.
+    ///    * The `info_len` from [`Prk::expand`] was non-zero.
     #[inline]
     pub fn fill(self, out: &mut [u8]) -> Result<(), Unspecified> {
         if out.len() != self.len.len() {

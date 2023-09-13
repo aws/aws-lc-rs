@@ -89,7 +89,6 @@
 //! for ring that provides FIPS support and is compatible with the ring API. Rust developers with
 //! prescribed cryptographic requirements can seamlessly integrate aws-lc-rs into their applications
 //! and deploy them into AWS Regions.
-//!
 
 #![warn(missing_docs)]
 

@@ -12,7 +12,54 @@
 //! [AEAD]: https://eprint.iacr.org/2000/025
 //! [`crypto.cipher.AEAD`]: https://golang.org/pkg/crypto/cipher/#AEAD
 //!
-//! # Examples
+//! # Randomized Nonce API
+//!
+//! [`RandomizedNonceKey`] provides a simplified API interface that doesn't
+//! require the caller to handle construction of a `NonceSequence` or `Nonce` values
+//! themselves. FIPS users should leverage the API provided by this type.
+//!
+//! ```rust
+//! # use std::error::Error;
+//! #
+//! # fn main() -> Result<(), Box<dyn Error>> {
+//! use aws_lc_rs::aead::{Aad, RandomizedNonceKey, AES_128_GCM};
+//!
+//! let key_bytes = &[
+//!     0xa5, 0xf3, 0x8d, 0x0d, 0x2d, 0x7c, 0x48, 0x56, 0xe7, 0xf3, 0xc3, 0x63, 0x0d, 0x40, 0x5b,
+//!     0x9e,
+//! ];
+//!
+//! // Create AES-128-GCM key
+//! let key = RandomizedNonceKey::new(&AES_128_GCM, key_bytes)?;
+//!
+//! let message = "test message";
+//! let mut in_out = Vec::from(message);
+//!
+//! // Seal the plaintext message (in_out) and append the tag to the ciphertext.
+//! // The randomized nonce used for encryption will be returned.
+//! let nonce = key.seal_in_place_append_tag(Aad::empty(), &mut in_out)?;
+//!
+//! // Open the ciphertext message (in_out), using the provided nonce, and validating the tag.
+//! let plaintext = key.open_in_place(nonce, Aad::empty(), &mut in_out)?;
+//!
+//! assert_eq!(message.as_bytes(), plaintext);
+//! #   Ok(())
+//! # }
+//! ```
+//!
+//! # TLS AEAD APIs
+//!
+//! Application developers developing TLS protocol implementations, with FIPS compliance requirements
+//! should use the [`TlsRecordSealingKey`] and [`TlsRecordOpeningKey`] respectively.
+//!
+//! # Nonce Sequence APIs
+//!
+//! The [`UnboundKey`], [`OpeningKey`], [`SealingKey`], and [`LessSafeKey`] types are the
+//! AEAD API's provided for compatability with the original *ring* API.
+//!
+//! Users should prefer [`RandomizedNonceKey`] which provides a simplified experience around
+//! Nonce construction.
+//!
 //! ```
 //! use aws_lc_rs::aead::{
 //!     nonce_sequence, Aad, BoundKey, OpeningKey, SealingKey, UnboundKey, AES_128_GCM,
@@ -168,6 +215,12 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
     /// overwritten in an unspecified way.
+    ///
+    /// # FIPS
+    /// FIPS users should only utilize this method with `AES_128_GCM` or `AES_256_GCM` algorithms.
+    ///
+    /// Prefer [`RandomizedNonceKey::open_in_place`] for FIPS usage, as it provides API symmetry with
+    /// sealing operations.
     #[inline]
     pub fn open_in_place<'in_out, A>(
         &mut self,
@@ -225,6 +278,12 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
     /// overwritten in an unspecified way.
+    ///
+    /// # FIPS
+    /// FIPS users should only utilize this method with `AES_128_GCM` or `AES_256_GCM` algorithms.
+    ///
+    /// Prefer [`RandomizedNonceKey::open_in_place`] for FIPS usage, as it provides API symmetry with
+    /// sealing operations.
     #[inline]
     pub fn open_within<'in_out, A>(
         &mut self,
@@ -325,6 +384,11 @@ impl<N: NonceSequence> SealingKey<N> {
     ///
     /// # Errors
     /// See `seal_in_place_append_tag`
+    ///
+    /// # FIPS
+    /// FIPS users should not use this method.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_append_tag`] for FIPS usage.
     #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
     #[inline]
     pub fn seal_in_place<A, InOut>(
@@ -350,6 +414,11 @@ impl<N: NonceSequence> SealingKey<N> {
     /// ```
     /// # Errors
     /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
+    ///
+    /// # FIPS
+    /// FIPS users should not use this method.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_append_tag`] for FIPS usage.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_append_tag<A, InOut>(
@@ -385,6 +454,11 @@ impl<N: NonceSequence> SealingKey<N> {
     ///
     /// # Errors
     /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
+    ///
+    /// # FIPS
+    /// FIPS users should not use this method.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_separate_tag`] for FIPS approved usage.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_separate_tag<A>(
@@ -619,6 +693,12 @@ impl LessSafeKey {
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
+    ///
+    /// # FIPS
+    /// FIPS users should only utilize this method with `AES_128_GCM` or `AES_256_GCM` algorithms.
+    ///
+    /// Prefer [`RandomizedNonceKey::open_in_place`] for FIPS usage, as it provides API symmetry with
+    /// sealing operations.
     #[inline]
     pub fn open_in_place<'in_out, A>(
         &self,
@@ -638,6 +718,12 @@ impl LessSafeKey {
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
+    ///
+    /// # FIPS
+    /// FIPS users should only utilize this method with `AES_128_GCM` or `AES_256_GCM` algorithms.
+    ///
+    /// Prefer [`RandomizedNonceKey::open_in_place`] for FIPS usage, as it provides API symmetry with
+    /// sealing operations.
     #[inline]
     pub fn open_within<'in_out, A>(
         &self,
@@ -660,6 +746,11 @@ impl LessSafeKey {
     }
 
     /// Deprecated. Renamed to `seal_in_place_append_tag()`.
+    ///
+    /// # FIPS
+    /// FIPS users should not use this method.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_append_tag`] for FIPS usage.
     #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
     #[inline]
     #[allow(clippy::missing_errors_doc)]
@@ -683,6 +774,11 @@ impl LessSafeKey {
     ///
     /// # Errors
     /// `error::Unspecified` if encryption operation fails.
+    ///
+    /// # FIPS
+    /// FIPS users should not use this method.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_append_tag`] for FIPS usage.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_append_tag<A, InOut>(
@@ -712,6 +808,11 @@ impl LessSafeKey {
     ///
     /// # Errors
     /// `error::Unspecified` if encryption operation fails.
+    ///
+    /// # FIPS
+    /// FIPS users should not use this method.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_separate_tag`] for FIPS usage.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_separate_tag<A>(
@@ -791,6 +892,10 @@ impl Debug for LessSafeKey {
 }
 
 /// AEAD Cipher key using a randomized nonce.
+///
+/// # FIPS
+/// `RandomizedNonceKey` encapsulates APIs that follow FIPS guidance, handling
+/// generation of nonce values, and only supports the `AES_128_GCM` and `AES_256_GCM` algorithms.
 pub struct RandomizedNonceKey {
     ctx: AeadCtx,
     algorithm: &'static Algorithm,
@@ -818,9 +923,12 @@ impl RandomizedNonceKey {
         Ok(Self { ctx, algorithm })
     }
 
-    /// Like [`OpeningKey::open_in_place()`], except it accepts an arbitrary nonce.
-    ///
-    /// `nonce` must be unique for every use of the key to open data.
+    /// Authenticates and decrypts (“opens”) data in place.
+    //
+    // aad is the additional authenticated data (AAD), if any.
+    //
+    // On input, in_out must be the ciphertext followed by the tag. When open_in_place() returns Ok(plaintext),
+    // the input ciphertext has been overwritten by the plaintext; plaintext will refer to the plaintext without the tag.
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
@@ -837,9 +945,11 @@ impl RandomizedNonceKey {
         self.open_within(nonce, aad, in_out, 0..)
     }
 
-    /// Like [`OpeningKey::open_within()`], except it accepts an arbitrary nonce.
+    /// Authenticates and decrypts (“opens”) data in place, with a shift.
     ///
-    /// `nonce` must be unique for every use of the key to open data.
+    /// `aad` is the additional authenticated data (AAD), if any.
+    ///
+    /// See [`OpeningKey::open_within`] for details on `ciphertext_and_tag` argument usage.
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
@@ -864,10 +974,17 @@ impl RandomizedNonceKey {
         )
     }
 
-    /// Like [`SealingKey::seal_in_place_append_tag()`], except it accepts an
-    /// arbitrary nonce.
+    /// Encrypts and signs (“seals”) data in place, appending the tag to the
+    /// resulting ciphertext.
     ///
-    /// `nonce` must be unique for every use of the key to seal data.
+    /// `key.seal_in_place_append_tag(aad, in_out)` is equivalent to:
+    ///
+    /// ```skip
+    /// key.seal_in_place_separate_tag(aad, in_out.as_mut())
+    ///     .map(|tag| in_out.extend(tag.as_ref()))
+    /// ```
+    ///
+    /// The Nonce used for the operation is randomly generated, and returned to the caller.
     ///
     /// # Errors
     /// `error::Unspecified` if encryption operation fails.
@@ -891,10 +1008,19 @@ impl RandomizedNonceKey {
         )
     }
 
-    /// Like `SealingKey::seal_in_place_separate_tag()`, except it accepts an
-    /// arbitrary nonce.
+    /// Encrypts and signs (“seals”) data in place.
     ///
-    /// `nonce` must be unique for every use of the key to seal data.
+    /// `aad` is the additional authenticated data (AAD), if any. This is
+    /// authenticated but not encrypted. The type `A` could be a byte slice
+    /// `&[u8]`, a byte array `[u8; N]` for some constant `N`, `Vec<u8>`, etc.
+    /// If there is no AAD then use `Aad::empty()`.
+    ///
+    /// The plaintext is given as the input value of `in_out`. `seal_in_place()`
+    /// will overwrite the plaintext with the ciphertext and return the tag.
+    /// For most protocols, the caller must append the tag to the ciphertext.
+    /// The tag will be `self.algorithm.tag_len()` bytes long.
+    ///
+    /// The Nonce used for the operation is randomly generated, and returned to the caller.
     ///
     /// # Errors
     /// `error::Unspecified` if encryption operation fails.
@@ -931,7 +1057,7 @@ impl RandomizedNonceKey {
 }
 
 /// The Transport Layer Security (TLS) protocol version.
-pub enum TLSProtocolId {
+pub enum TlsProtocolId {
     /// TLS 1.2 (RFC 5246)
     TLS12,
 
@@ -940,7 +1066,12 @@ pub enum TLSProtocolId {
 }
 
 /// AEAD Encryption key used for TLS protocol record encryption.
-pub struct TLSRecordSealingKey {
+///
+/// # FIPS
+/// This type encapsulates encryption operations for TLS AEAD algorithms following FIPS implementation guidance.
+/// The API only supports `AES_128_GCM` and `AES_256_GCM`, and validates that the provides nonce values
+/// are monotonically increasing for each invocation.
+pub struct TlsRecordSealingKey {
     // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
     // or force this type to !Sync. Since this is an implementation detail of AWS-LC
@@ -949,7 +1080,7 @@ pub struct TLSRecordSealingKey {
     algorithm: &'static Algorithm,
 }
 
-impl TLSRecordSealingKey {
+impl TlsRecordSealingKey {
     /// New TLS record sealing key. Only supports `AES_128_GCM` and `AES_256_GCM`.
     ///
     /// # Errors
@@ -957,26 +1088,26 @@ impl TLSRecordSealingKey {
     /// or if an unsupported algorithm is provided.
     pub fn new(
         algorithm: &'static Algorithm,
-        protocol: TLSProtocolId,
+        protocol: TlsProtocolId,
         key_bytes: &[u8],
     ) -> Result<Self, Unspecified> {
         let ctx = Mutex::new(match (algorithm.id, protocol) {
-            (AlgorithmID::AES_128_GCM, TLSProtocolId::TLS12) => AeadCtx::aes_128_gcm_tls12(
+            (AlgorithmID::AES_128_GCM, TlsProtocolId::TLS12) => AeadCtx::aes_128_gcm_tls12(
                 key_bytes,
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Seal,
             ),
-            (AlgorithmID::AES_128_GCM, TLSProtocolId::TLS13) => AeadCtx::aes_128_gcm_tls13(
+            (AlgorithmID::AES_128_GCM, TlsProtocolId::TLS13) => AeadCtx::aes_128_gcm_tls13(
                 key_bytes,
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Seal,
             ),
-            (AlgorithmID::AES_256_GCM, TLSProtocolId::TLS12) => AeadCtx::aes_256_gcm_tls12(
+            (AlgorithmID::AES_256_GCM, TlsProtocolId::TLS12) => AeadCtx::aes_256_gcm_tls12(
                 key_bytes,
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Seal,
             ),
-            (AlgorithmID::AES_256_GCM, TLSProtocolId::TLS13) => AeadCtx::aes_256_gcm_tls13(
+            (AlgorithmID::AES_256_GCM, TlsProtocolId::TLS13) => AeadCtx::aes_256_gcm_tls13(
                 key_bytes,
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Seal,
@@ -1022,6 +1153,43 @@ impl TLSRecordSealingKey {
         .map(|_| ())
     }
 
+    /// Encrypts and signs (“seals”) data in place.
+    ///
+    /// `aad` is the additional authenticated data (AAD), if any. This is
+    /// authenticated but not encrypted. The type `A` could be a byte slice
+    /// `&[u8]`, a byte array `[u8; N]` for some constant `N`, `Vec<u8>`, etc.
+    /// If there is no AAD then use `Aad::empty()`.
+    ///
+    /// The plaintext is given as the input value of `in_out`. `seal_in_place()`
+    /// will overwrite the plaintext with the ciphertext and return the tag.
+    /// For most protocols, the caller must append the tag to the ciphertext.
+    /// The tag will be `self.algorithm.tag_len()` bytes long.
+    ///
+    /// The Nonce used for the operation is randomly generated, and returned to the caller.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if encryption operation fails.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_separate_tag<A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &mut [u8],
+    ) -> Result<(Nonce, Tag), Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        let ctx = self.ctx.lock().map_err(|_| Unspecified)?;
+        seal_in_place_separate_tag(
+            self.algorithm,
+            &ctx,
+            Some(nonce),
+            Aad::from(aad.as_ref()),
+            in_out,
+        )
+    }
+
     /// The key's AEAD algorithm.
     #[inline]
     #[must_use]
@@ -1031,7 +1199,10 @@ impl TLSRecordSealingKey {
 }
 
 /// AEAD Encryption key used for TLS protocol record encryption.
-pub struct TLSRecordOpeningKey {
+///
+/// # FIPS
+/// This type encapsulates decryption operations for TLS AEAD algorithms following FIPS implementation guidance.
+pub struct TlsRecordOpeningKey {
     // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
     // or force this type to !Sync. Since this is an implementation detail of AWS-LC
@@ -1040,7 +1211,7 @@ pub struct TLSRecordOpeningKey {
     algorithm: &'static Algorithm,
 }
 
-impl TLSRecordOpeningKey {
+impl TlsRecordOpeningKey {
     /// New TLS record opening key. Only supports `AES_128_GCM` and `AES_256_GCM` Algorithms.
     ///
     /// # Errors
@@ -1048,26 +1219,26 @@ impl TLSRecordOpeningKey {
     /// or if an unsupported algorithm is provided.
     pub fn new(
         algorithm: &'static Algorithm,
-        protocol: TLSProtocolId,
+        protocol: TlsProtocolId,
         key_bytes: &[u8],
     ) -> Result<Self, Unspecified> {
         let ctx = Mutex::new(match (algorithm.id, protocol) {
-            (AlgorithmID::AES_128_GCM, TLSProtocolId::TLS12) => AeadCtx::aes_128_gcm_tls12(
+            (AlgorithmID::AES_128_GCM, TlsProtocolId::TLS12) => AeadCtx::aes_128_gcm_tls12(
                 key_bytes,
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Open,
             ),
-            (AlgorithmID::AES_128_GCM, TLSProtocolId::TLS13) => AeadCtx::aes_128_gcm_tls13(
+            (AlgorithmID::AES_128_GCM, TlsProtocolId::TLS13) => AeadCtx::aes_128_gcm_tls13(
                 key_bytes,
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Open,
             ),
-            (AlgorithmID::AES_256_GCM, TLSProtocolId::TLS12) => AeadCtx::aes_256_gcm_tls12(
+            (AlgorithmID::AES_256_GCM, TlsProtocolId::TLS12) => AeadCtx::aes_256_gcm_tls12(
                 key_bytes,
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Open,
             ),
-            (AlgorithmID::AES_256_GCM, TLSProtocolId::TLS13) => AeadCtx::aes_256_gcm_tls13(
+            (AlgorithmID::AES_256_GCM, TlsProtocolId::TLS13) => AeadCtx::aes_256_gcm_tls13(
                 key_bytes,
                 algorithm.tag_len(),
                 aead_ctx::AeadDirection::Open,
@@ -1664,8 +1835,8 @@ mod tests {
             paste! {
                 #[test]
                 fn [<test_ $name _tls_aead_unsupported>]() {
-                    assert!(TLSRecordSealingKey::new($alg, $proto, $key).is_err());
-                    assert!(TLSRecordOpeningKey::new($alg, $proto, $key).is_err());
+                    assert!(TlsRecordSealingKey::new($alg, $proto, $key).is_err());
+                    assert!(TlsRecordOpeningKey::new($alg, $proto, $key).is_err());
                 }
             }
         };
@@ -1674,10 +1845,10 @@ mod tests {
                 #[test]
                 fn [<test_ $name>]() {
                     let sealing_key =
-                        TLSRecordSealingKey::new($alg, $proto, $key).unwrap();
+                        TlsRecordSealingKey::new($alg, $proto, $key).unwrap();
 
                     let opening_key =
-                        TLSRecordOpeningKey::new($alg, $proto, $key).unwrap();
+                        TlsRecordOpeningKey::new($alg, $proto, $key).unwrap();
 
                     for case in TLS_NONCE_TEST_CASES {
                         let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
@@ -1725,7 +1896,7 @@ mod tests {
     test_tls_aead!(
         aes_128_gcm_tls12,
         &AES_128_GCM,
-        TLSProtocolId::TLS12,
+        TlsProtocolId::TLS12,
         TEST_128_BIT_KEY,
         &16,
         &12
@@ -1733,7 +1904,7 @@ mod tests {
     test_tls_aead!(
         aes_128_gcm_tls13,
         &AES_128_GCM,
-        TLSProtocolId::TLS13,
+        TlsProtocolId::TLS13,
         TEST_128_BIT_KEY,
         &16,
         &12
@@ -1741,7 +1912,7 @@ mod tests {
     test_tls_aead!(
         aes_256_gcm_tls12,
         &AES_256_GCM,
-        TLSProtocolId::TLS12,
+        TlsProtocolId::TLS12,
         TEST_256_BIT_KEY,
         &16,
         &12
@@ -1749,7 +1920,7 @@ mod tests {
     test_tls_aead!(
         aes_256_gcm_tls13,
         &AES_256_GCM,
-        TLSProtocolId::TLS13,
+        TlsProtocolId::TLS13,
         TEST_256_BIT_KEY,
         &16,
         &12
@@ -1757,13 +1928,13 @@ mod tests {
     test_tls_aead!(
         chacha20_poly1305_tls12,
         &CHACHA20_POLY1305,
-        TLSProtocolId::TLS12,
+        TlsProtocolId::TLS12,
         TEST_256_BIT_KEY
     );
     test_tls_aead!(
         chacha20_poly1305_tls13,
         &CHACHA20_POLY1305,
-        TLSProtocolId::TLS13,
+        TlsProtocolId::TLS13,
         TEST_256_BIT_KEY
     );
 }

@@ -40,8 +40,8 @@
 //! ## Using the one-shot API:
 //!
 //! ```
-//! use aws_lc_rs::{digest, hmac, rand};
 //! use aws_lc_rs::rand::SecureRandom;
+//! use aws_lc_rs::{digest, hmac, rand};
 //!
 //! let msg = "hello, world";
 //!
@@ -64,8 +64,8 @@
 //!
 //! ## Using the multi-part API:
 //! ```
-//! use aws_lc_rs::{digest, hmac, rand};
 //! use aws_lc_rs::rand::SecureRandom;
+//! use aws_lc_rs::{digest, hmac, rand};
 //!
 //! let parts = ["hello", ", ", "world"];
 //!
@@ -230,7 +230,6 @@ impl Key {
     ///
     /// # Errors
     /// `error::Unspecified` is the `rng` fails.
-    ///
     pub fn generate(
         algorithm: Algorithm,
         rng: &dyn crate::rand::SecureRandom,
@@ -419,6 +418,10 @@ impl Context {
 ///
 /// It is generally not safe to implement HMAC verification by comparing the
 /// return value of `sign` to a tag. Use `verify` for verification instead.
+///
+/// # FIPS
+/// FIPS users should only utilize this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
+/// `HMAC_SHA384`, or `HMAC_SHA512` algorithms.
 #[inline]
 #[must_use]
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
@@ -438,6 +441,9 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 /// # Errors
 /// `error::Unspecified` if the inputs are not verified.
 ///
+/// # FIPS
+/// FIPS users should only utilize this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
+/// `HMAC_SHA384`, or `HMAC_SHA512` algorithms.
 #[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
     constant_time::verify_slices_are_equal(sign(key, data).as_ref(), tag)
