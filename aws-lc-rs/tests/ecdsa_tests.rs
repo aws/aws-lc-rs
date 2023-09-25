@@ -460,7 +460,7 @@ fn test_private_key() {
         let key_pair_doc = EcdsaKeyPair::generate_pkcs8(signing_alg, &rnd).unwrap();
         let key_pair = EcdsaKeyPair::from_pkcs8(signing_alg, key_pair_doc.as_ref()).unwrap();
 
-        let private_key = key_pair.private_key().unwrap();
+        let private_key = key_pair.private_key().to_integer().unwrap();
         let public_key = key_pair.public_key();
 
         let key_pair_copy = EcdsaKeyPair::from_private_key_and_public_key(
