@@ -114,6 +114,7 @@ impl AlgorithmID {
     }
 }
 
+/// Elliptic curve public key.
 #[derive(Clone)]
 pub struct PublicKey(Box<[u8]>);
 
