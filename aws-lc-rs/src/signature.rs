@@ -245,9 +245,11 @@ use std::fmt::{Debug, Formatter};
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
-pub use crate::ec::key_pair::EcdsaKeyPair;
+pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
 use crate::ec::EcdsaSignatureFormat;
-pub use crate::ec::{EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
+pub use crate::ec::{
+    EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
+};
 pub use crate::ed25519::{Ed25519KeyPair, EdDSAParameters, ED25519_PUBLIC_KEY_LEN};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of

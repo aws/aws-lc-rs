@@ -87,6 +87,21 @@ impl EcdsaKeyPair {
         })
     }
 
+    /// Generates a new key pair.
+    ///
+    /// # Errors
+    /// `error::Unspecified` on internal error.
+    ///
+    pub fn generate(alg: &'static EcdsaSigningAlgorithm) -> Result<Self, Unspecified> {
+        unsafe {
+            let evp_pkey = generate_key(alg.0.id.nid())?;
+            let ec_key = evp_pkey.get_ec_key()?;
+            validate_ec_key(&ec_key.as_const(), alg.id.nid())?;
+
+            Ok(Self::new(alg, ec_key)?)
+        }
+    }
+
     /// Constructs an ECDSA key pair by parsing an unencrypted PKCS#8 v1
     /// id-ecPublicKey `ECPrivateKey` key.
     ///
@@ -123,11 +138,7 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         _rng: &dyn SecureRandom,
     ) -> Result<Document, Unspecified> {
-        unsafe {
-            let evp_pkey = generate_key(alg.0.id.nid())?;
-
-            evp_pkey.marshall_private_key(Version::V1)
-        }
+        Self::generate(alg)?.to_pkcs8v1()
     }
 
     /// Serializes this `EcdsaKeyPair` into a PKCS#8 v1 document.
@@ -135,7 +146,7 @@ impl EcdsaKeyPair {
     /// # Errors
     /// `error::Unspecified` on internal error.
     ///
-    pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
+    pub fn to_pkcs8v1(&self) -> Result<Document, Unspecified> {
         unsafe {
             let evp_pkey = LcPtr::new(EVP_PKEY_new())?;
             if 1 != EVP_PKEY_set1_EC_KEY(*evp_pkey, *self.ec_key) {
@@ -187,7 +198,7 @@ impl EcdsaKeyPair {
     ///
     /// # Errors
     /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
-    pub fn private_key(&self) -> Result<PrivateKey, Unspecified> {
+    pub fn private_key(&self) -> Result<PrivateKey<'_>, Unspecified> {
         unsafe {
             let mut priv_key_bytes = [0u8; SCALAR_MAX_BYTES];
 
@@ -225,7 +236,7 @@ impl EcdsaKeyPair {
     }
 }
 
-#[derive(Clone)]
+/// Elliptic curve private key.
 pub struct PrivateKey<'a>(&'a EcdsaKeyPair, Box<[u8]>);
 
 impl Drop for PrivateKey<'_> {
