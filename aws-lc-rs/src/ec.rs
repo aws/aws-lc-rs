@@ -113,27 +113,31 @@ impl AlgorithmID {
 
 /// Elliptic curve public key.
 #[derive(Clone)]
-pub struct PublicKey(Box<[u8]>);
+pub struct PublicKey {
+    octets: Box<[u8]>,
+    der: Box<[u8]>,
+}
+
+impl PublicKey {
+    /// Provides the public key as a DER-encoded SubjectPublicKeyInfo structure.
+    pub fn as_der(&self) -> &[u8] {
+        &self.der
+    }
+}
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "EcdsaPublicKey(\"{}\")",
-            test::to_hex(self.0.as_ref())
+            test::to_hex(self.octets.as_ref())
         ))
-    }
-}
-
-impl PublicKey {
-    fn new(pubkey_box: Box<[u8]>) -> Self {
-        PublicKey(pubkey_box)
     }
 }
 
 impl AsRef<[u8]> for PublicKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
+        self.octets.as_ref()
     }
 }
 
@@ -243,7 +247,23 @@ pub(crate) fn marshal_public_key(ec_key: &ConstPointer<EC_KEY>) -> Result<Public
     let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
     unsafe {
         let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, ec_key)?;
-        Ok(PublicKey::new(pub_key_bytes[0..key_len].into()))
+
+        let der = {
+            let mut buffer = std::ptr::null_mut::<u8>();
+            let len = aws_lc::i2d_EC_PUBKEY(**ec_key, &mut buffer);
+            if len < 0 {
+                return Err(Unspecified);
+            }
+            let buffer = LcPtr::new(buffer)?;
+            std::slice::from_raw_parts(*buffer, len.try_into()?)
+                .to_vec()
+                .into_boxed_slice()
+        };
+
+        Ok(PublicKey {
+            octets: pub_key_bytes[0..key_len].into(),
+            der,
+        })
     }
 }
 
