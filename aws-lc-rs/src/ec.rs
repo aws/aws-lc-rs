@@ -116,27 +116,32 @@ impl AlgorithmID {
 
 /// Elliptic curve public key.
 #[derive(Clone)]
-pub struct PublicKey(Box<[u8]>);
+pub struct PublicKey {
+    octets: Box<[u8]>,
+    der: Box<[u8]>,
+}
+
+impl PublicKey {
+    /// Provides the public key as a DER-encoded `SubjectPublicKeyInfo` structure.
+    #[must_use]
+    pub fn as_der(&self) -> &[u8] {
+        &self.der
+    }
+}
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "EcdsaPublicKey(\"{}\")",
-            test::to_hex(self.0.as_ref())
+            test::to_hex(self.octets.as_ref())
         ))
-    }
-}
-
-impl PublicKey {
-    fn new(pubkey_box: Box<[u8]>) -> Self {
-        PublicKey(pubkey_box)
     }
 }
 
 impl AsRef<[u8]> for PublicKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
+        self.octets.as_ref()
     }
 }
 
@@ -307,13 +312,29 @@ pub(crate) unsafe fn marshal_public_key_to_buffer(
 }
 
 pub(crate) fn marshal_public_key(
-    evp_pkey: &ConstPointer<EVP_PKEY>,
+    evp_key: &ConstPointer<EVP_PKEY>,
 ) -> Result<PublicKey, Unspecified> {
+    let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
     unsafe {
-        let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
-        let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey)?;
-        let pub_key = Vec::from(&pub_key_bytes[0..key_len]);
-        Ok(PublicKey::new(pub_key.into_boxed_slice()))
+        let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_key)?;
+
+        let der = {
+            let mut buffer = std::ptr::null_mut::<u8>();
+            let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_key))?;
+            let len = aws_lc::i2d_EC_PUBKEY(*ec_key, &mut buffer);
+            if len < 0 {
+                return Err(Unspecified);
+            }
+            let buffer = LcPtr::new(buffer)?;
+            std::slice::from_raw_parts(*buffer, len.try_into()?)
+                .to_vec()
+                .into_boxed_slice()
+        };
+
+        Ok(PublicKey {
+            octets: pub_key_bytes[0..key_len].into(),
+            der,
+        })
     }
 }
 
