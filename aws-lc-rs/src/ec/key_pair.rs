@@ -3,6 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::buffer::PrivateBuffer;
 use crate::ec::{
     validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey, SCALAR_MAX_BYTES,
 };
@@ -23,7 +24,6 @@ use aws_lc::{
 use std::fmt;
 
 use std::fmt::{Debug, Formatter};
-use zeroize::Zeroize;
 
 /// An ECDSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
@@ -192,24 +192,9 @@ impl EcdsaKeyPair {
         }
     }
 
-    /// Exposes the private key encoded as a big-endian fixed-length integer.
-    ///
-    /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
-    ///
-    /// # Errors
-    /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
-    pub fn private_key(&self) -> Result<PrivateKey<'_>, Unspecified> {
-        unsafe {
-            let mut priv_key_bytes = [0u8; SCALAR_MAX_BYTES];
-
-            let key_len = ec::marshal_private_key_to_buffer(
-                self.algorithm.id,
-                &mut priv_key_bytes,
-                &self.ec_key.as_const(),
-            )?;
-
-            Ok(PrivateKey::new(self, priv_key_bytes[0..key_len].into()))
-        }
+    /// Access functions related to the private key.
+    pub fn private_key(&self) -> PrivateKey<'_> {
+        PrivateKey(self)
     }
 
     /// Returns the signature of the message using a random nonce.
@@ -237,32 +222,45 @@ impl EcdsaKeyPair {
 }
 
 /// Elliptic curve private key.
-pub struct PrivateKey<'a>(&'a EcdsaKeyPair, Box<[u8]>);
+#[derive(Debug)]
+pub struct PrivateKey<'a>(&'a EcdsaKeyPair);
 
-impl Drop for PrivateKey<'_> {
-    fn drop(&mut self) {
-        self.1.zeroize();
+impl PrivateKey<'_> {
+    /// Exposes the private key encoded as a big-endian fixed-length integer.
+    ///
+    /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if serialization failed.
+    pub fn to_integer(&self) -> Result<PrivateBuffer, Unspecified> {
+        unsafe {
+            let mut priv_key_bytes = [0u8; SCALAR_MAX_BYTES];
+
+            let key_len = ec::marshal_private_key_to_buffer(
+                self.0.algorithm.id,
+                &mut priv_key_bytes,
+                &self.0.ec_key.as_const(),
+            )?;
+            Ok(PrivateBuffer::new(&mut priv_key_bytes[..key_len]))
+        }
+    }
+
+    /// Encode the private key via DER into bytes.
+    ///
+    /// # Errors
+    /// `error::Unspecified`  if serialization failed.
+    pub fn to_der(&self) -> Result<PrivateBuffer, Unspecified> {
+        unsafe {
+            let mut outp = std::ptr::null_mut::<u8>();
+            let length = aws_lc::i2d_ECPrivateKey(*self.0.ec_key, &mut outp);
+            if length < 0 {
+                return Err(Unspecified);
+            }
+            let outp = LcPtr::new(outp)?;
+            Ok(PrivateBuffer::new(std::slice::from_raw_parts_mut(
+                *outp,
+                length as usize,
+            )))
+        }
     }
 }
-
-impl Debug for PrivateKey<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-        f.write_str("EcdsaPrivateKey()")
-    }
-}
-
-impl<'a> PrivateKey<'a> {
-    fn new(key_pair: &'a EcdsaKeyPair, box_bytes: Box<[u8]>) -> Self {
-        PrivateKey(key_pair, box_bytes)
-    }
-}
-
-impl AsRef<[u8]> for PrivateKey<'_> {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        self.1.as_ref()
-    }
-}
-
-unsafe impl Send for PrivateKey<'_> {}
-unsafe impl Sync for PrivateKey<'_> {}
