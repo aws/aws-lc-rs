@@ -192,6 +192,38 @@ impl EcdsaKeyPair {
         }
     }
 
+    /// Deserialize a DER private key and produce an ECDSA key.
+    ///
+    /// This function will attempt to automatically detect the underlying key format, and
+    /// supports the unencrypted PKCS#8 PrivateKeyInfo structures as well as key type specific
+    /// formats.
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
+    pub fn from_private_key_der(
+        alg: &'static EcdsaSigningAlgorithm,
+        private_key: &[u8],
+    ) -> Result<Self, KeyRejected> {
+        unsafe {
+            let mut out = std::ptr::null_mut();
+            if aws_lc::d2i_AutoPrivateKey(
+                &mut out,
+                &mut private_key.as_ptr(),
+                private_key.len().try_into().unwrap(),
+            )
+            .is_null()
+            {
+                // FIXME: unclear which error or if we can get more detail
+                return Err(KeyRejected::unexpected_error());
+            }
+            let evp_pkey = LcPtr::new(out)?;
+            let ec_key = evp_pkey.get_ec_key()?;
+            validate_ec_key(&ec_key.as_const(), alg.id.nid())?;
+
+            Ok(Self::new(alg, ec_key)?)
+        }
+    }
+
     /// Access functions related to the private key.
     pub fn private_key(&self) -> PrivateKey<'_> {
         PrivateKey(self)
