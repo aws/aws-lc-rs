@@ -12,8 +12,12 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef BORINGSSL_PREFIX
+#define BORINGSSL_PREFIX aws_lc_0_11_0
+#endif
+    
 #if !defined(__APPLE__)
-#include <boringssl_prefix_symbols.h>
+#include <openssl/boringssl_prefix_symbols.h>
 #else
 // On iOS and macOS, we need to treat assembly symbols differently from other
 // symbols. The linker expects symbols to be prefixed with an underscore.
@@ -353,6 +357,7 @@
 #define _BN_CTX_free BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BN_CTX_free)
 #define _BN_CTX_get BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BN_CTX_get)
 #define _BN_CTX_new BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BN_CTX_new)
+#define _BN_CTX_secure_new BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BN_CTX_secure_new)
 #define _BN_CTX_start BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BN_CTX_start)
 #define _BN_GENCB_call BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BN_GENCB_call)
 #define _BN_GENCB_free BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BN_GENCB_free)
@@ -1777,6 +1782,7 @@
 #define _RAND_keep_random_devices_open BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, RAND_keep_random_devices_open)
 #define _RAND_load_file BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, RAND_load_file)
 #define _RAND_poll BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, RAND_poll)
+#define _RAND_priv_bytes BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, RAND_priv_bytes)
 #define _RAND_pseudo_bytes BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, RAND_pseudo_bytes)
 #define _RAND_seed BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, RAND_seed)
 #define _RAND_set_rand_method BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, RAND_set_rand_method)
@@ -1937,7 +1943,6 @@
 #define _SSL_CIPHER_get_name BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CIPHER_get_name)
 #define _SSL_CIPHER_get_prf_nid BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CIPHER_get_prf_nid)
 #define _SSL_CIPHER_get_protocol_id BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CIPHER_get_protocol_id)
-#define _SSL_CIPHER_get_value BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CIPHER_get_value)
 #define _SSL_CIPHER_get_version BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CIPHER_get_version)
 #define _SSL_CIPHER_is_aead BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CIPHER_is_aead)
 #define _SSL_CIPHER_is_block_cipher BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CIPHER_is_block_cipher)
@@ -2027,8 +2032,6 @@
 #define _SSL_CTX_set0_client_CAs BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set0_client_CAs)
 #define _SSL_CTX_set0_verify_cert_store BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set0_verify_cert_store)
 #define _SSL_CTX_set1_chain BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set1_chain)
-#define _SSL_CTX_set1_curves BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set1_curves)
-#define _SSL_CTX_set1_curves_list BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set1_curves_list)
 #define _SSL_CTX_set1_ech_keys BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set1_ech_keys)
 #define _SSL_CTX_set1_groups BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set1_groups)
 #define _SSL_CTX_set1_groups_list BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set1_groups_list)
@@ -2224,7 +2227,7 @@
 #define _SSL_get1_session BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get1_session)
 #define _SSL_get_SSL_CTX BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_SSL_CTX)
 #define _SSL_get_all_cipher_names BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_all_cipher_names)
-#define _SSL_get_all_curve_names BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_all_curve_names)
+#define _SSL_get_all_group_names BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_all_group_names)
 #define _SSL_get_all_signature_algorithm_names BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_all_signature_algorithm_names)
 #define _SSL_get_all_standard_cipher_names BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_all_standard_cipher_names)
 #define _SSL_get_all_version_names BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_all_version_names)
@@ -2237,8 +2240,6 @@
 #define _SSL_get_current_cipher BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_current_cipher)
 #define _SSL_get_current_compression BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_current_compression)
 #define _SSL_get_current_expansion BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_current_expansion)
-#define _SSL_get_curve_id BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_curve_id)
-#define _SSL_get_curve_name BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_curve_name)
 #define _SSL_get_default_timeout BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_default_timeout)
 #define _SSL_get_early_data_reason BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_early_data_reason)
 #define _SSL_get_error BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_error)
@@ -2248,6 +2249,8 @@
 #define _SSL_get_extms_support BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_extms_support)
 #define _SSL_get_fd BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_fd)
 #define _SSL_get_finished BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_finished)
+#define _SSL_get_group_id BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_group_id)
+#define _SSL_get_group_name BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_group_name)
 #define _SSL_get_info_callback BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_info_callback)
 #define _SSL_get_ivs BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_ivs)
 #define _SSL_get_key_block_len BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_get_key_block_len)
@@ -2344,8 +2347,6 @@
 #define _SSL_set0_verify_cert_store BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set0_verify_cert_store)
 #define _SSL_set0_wbio BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set0_wbio)
 #define _SSL_set1_chain BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set1_chain)
-#define _SSL_set1_curves BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set1_curves)
-#define _SSL_set1_curves_list BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set1_curves_list)
 #define _SSL_set1_delegated_credential BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set1_delegated_credential)
 #define _SSL_set1_ech_config_list BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set1_ech_config_list)
 #define _SSL_set1_groups BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set1_groups)
@@ -3202,6 +3203,7 @@
 #define _bio_socket_nbio BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bio_socket_nbio)
 #define _bn_abs_sub_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_abs_sub_consttime)
 #define _bn_add_words BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_add_words)
+#define _bn_big_endian_to_words BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_big_endian_to_words)
 #define _bn_copy_words BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_copy_words)
 #define _bn_div_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_div_consttime)
 #define _bn_div_words BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_div_words)
@@ -3270,6 +3272,7 @@
 #define _bn_uadd_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_uadd_consttime)
 #define _bn_usub_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_usub_consttime)
 #define _bn_wexpand BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_wexpand)
+#define _bn_words_to_big_endian BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_words_to_big_endian)
 #define _boringssl_self_test_hmac_sha256 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, boringssl_self_test_hmac_sha256)
 #define _boringssl_self_test_sha256 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, boringssl_self_test_sha256)
 #define _c2i_ASN1_BIT_STRING BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, c2i_ASN1_BIT_STRING)

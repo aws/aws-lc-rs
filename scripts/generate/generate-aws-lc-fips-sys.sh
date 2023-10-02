@@ -29,7 +29,7 @@ validate_crate_version "${REPO_ROOT}/aws-lc-fips-sys"
 SCRIPT_ARGS=(-c aws-lc-fips-sys)
 
 "${SCRIPT_DIR}"/_run_supported_symbol_builds.sh -f "${SCRIPT_ARGS[@]}"
-"${SCRIPT_DIR}"/_generate_prefix_headers.sh "${SCRIPT_ARGS[@]}"
+"${SCRIPT_DIR}"/_generate_prefix_headers.sh -f "${SCRIPT_ARGS[@]}"
 # TODO: Can we trigger this in docker and still get the confirmation prompt? -a STDIN does not work correctly here
 #docker run -v "$(pwd)":"$(pwd)" -w "$(pwd)" --rm --platform linux/amd64 rust:linux-x86_64 /bin/bash -c "${SCRIPT_DIR}/_verify_crate_api_diff.sh ${SCRIPT_ARGS[*]}"
 "${SCRIPT_DIR}"/_verify_crate_api_diff.sh "${SCRIPT_ARGS[@]}"

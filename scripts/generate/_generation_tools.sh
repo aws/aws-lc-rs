@@ -118,7 +118,7 @@ function check_running_on_macos {
 }
 
 function assert_docker_status {
-  if ! docker stats --no-stream &>/dev/null; then
+  if ! docker ps &>/dev/null; then
     echo Please start the Docker daemon to continue.
     exit 1
   fi

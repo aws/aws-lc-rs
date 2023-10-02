@@ -5,7 +5,8 @@ FROM --platform=linux/386 rust:latest
 
 SHELL ["/bin/bash", "-c"]
 
-ARG GO_VERSION=go1.20.1
+ARG GO_VERSION=go1.21.1
+ARG GOPROXY=direct
 
 RUN apt-get update && \
     apt-get -y install clang libclang1 cmake golang && \
@@ -14,7 +15,7 @@ RUN apt-get update && \
     rustup component add rustfmt clippy && \
     cargo install rust-script && \
     git config --global --add safe.directory '*' && \
-    go get golang.org/dl/${GO_VERSION} && \
+    go install golang.org/dl/${GO_VERSION}@latest && \
     $HOME/go/bin/${GO_VERSION} download && \
     apt-get autoremove --purge -y && \
     apt-get clean && \

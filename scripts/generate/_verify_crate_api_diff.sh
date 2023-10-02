@@ -51,7 +51,9 @@ fi
 
 TEMP_TARGET_DIR=$(mktemp -d)
 
-go env -w GOPROXY=direct
+if [[ -z "${GOPROXY:+x}" ]]; then
+  export GOPROXY=direct
+fi
 
 env AWS_LC_RUST_INTERNAL_BINDGEN=1 cargo build --target-dir "${TEMP_TARGET_DIR}" --features bindgen
 if ! cargo +nightly-2023-01-04 public-api --target-dir "${TEMP_TARGET_DIR}" diff --deny changed --deny removed "${PUBLISHED_CRATE_VERSION}"; then

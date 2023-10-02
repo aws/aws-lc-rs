@@ -22,8 +22,13 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token)
 curl --head -H "Authorization: Bearer $TOKEN" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest
 
+EXTRA_ARGS=()
+if [[ -n "${GOPROXY:+x}" ]]; then
+    EXTRA_ARGS=("--build-arg" "GOPROXY=${GOPROXY}" "${EXTRA_ARGS[@]}")
+fi
+
 pushd "${REPO_ROOT}/docker" &>/dev/null
-docker build -t rust:linux-386 linux-386 --load
-docker build -t rust:linux-arm64 linux-arm64 --load
-docker build -t rust:linux-x86_64 linux-x86_64 --load
+docker build -t rust:linux-386 linux-386 --load "${EXTRA_ARGS[@]}"
+docker build -t rust:linux-arm64 linux-arm64 --load "${EXTRA_ARGS[@]}"
+docker build -t rust:linux-x86_64 linux-x86_64 --load "${EXTRA_ARGS[@]}"
 popd &>/dev/null
