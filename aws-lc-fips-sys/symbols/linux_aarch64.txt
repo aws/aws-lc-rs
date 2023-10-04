@@ -479,6 +479,11 @@ CAST_S_table4
 CAST_S_table5
 CAST_S_table6
 CAST_S_table7
+CAST_cbc_encrypt
+CAST_decrypt
+CAST_ecb_encrypt
+CAST_encrypt
+CAST_set_key
 CBB_add_asn1
 CBB_add_asn1_bool
 CBB_add_asn1_int64
@@ -634,6 +639,7 @@ CRYPTO_get_ex_new_index
 CRYPTO_get_fork_generation
 CRYPTO_get_lock_name
 CRYPTO_get_locking_callback
+CRYPTO_get_seed_entropy
 CRYPTO_get_thread_local
 CRYPTO_ghash_init
 CRYPTO_has_asm
@@ -1268,6 +1274,8 @@ EVP_bf_cbc
 EVP_bf_cfb
 EVP_bf_ecb
 EVP_blake2b256
+EVP_cast5_cbc
+EVP_cast5_ecb
 EVP_cleanup
 EVP_des_cbc
 EVP_des_ecb
@@ -1694,7 +1702,9 @@ RAND_enable_fork_unsafe_buffering
 RAND_file_name
 RAND_get_rand_method
 RAND_get_system_entropy_for_custom_prng
+RAND_load_entropy
 RAND_load_file
+RAND_module_entropy_depleted
 RAND_poll
 RAND_pseudo_bytes
 RAND_seed
@@ -3003,6 +3013,12 @@ aes_nohw_decrypt
 aes_nohw_encrypt
 aes_nohw_set_decrypt_key
 aes_nohw_set_encrypt_key
+aesv8_gcm_8x_dec_128
+aesv8_gcm_8x_dec_192
+aesv8_gcm_8x_dec_256
+aesv8_gcm_8x_enc_128
+aesv8_gcm_8x_enc_192
+aesv8_gcm_8x_enc_256
 asn1_bit_string_length
 asn1_do_adb
 asn1_enc_free
