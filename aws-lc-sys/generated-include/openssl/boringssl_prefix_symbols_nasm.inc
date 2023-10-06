@@ -12,6 +12,10 @@
 ; OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 ; CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+%ifndef BORINGSSL_PREFIX
+%define BORINGSSL_PREFIX aws_lc_0_11_0
+%endif
+
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
 %ifidn __OUTPUT_FORMAT__, win32
 %xdefine _ACCESS_DESCRIPTION_free _ %+ BORINGSSL_PREFIX %+ _ACCESS_DESCRIPTION_free
@@ -345,6 +349,7 @@
 %xdefine _BN_CTX_free _ %+ BORINGSSL_PREFIX %+ _BN_CTX_free
 %xdefine _BN_CTX_get _ %+ BORINGSSL_PREFIX %+ _BN_CTX_get
 %xdefine _BN_CTX_new _ %+ BORINGSSL_PREFIX %+ _BN_CTX_new
+%xdefine _BN_CTX_secure_new _ %+ BORINGSSL_PREFIX %+ _BN_CTX_secure_new
 %xdefine _BN_CTX_start _ %+ BORINGSSL_PREFIX %+ _BN_CTX_start
 %xdefine _BN_GENCB_call _ %+ BORINGSSL_PREFIX %+ _BN_GENCB_call
 %xdefine _BN_GENCB_free _ %+ BORINGSSL_PREFIX %+ _BN_GENCB_free
@@ -1769,6 +1774,7 @@
 %xdefine _RAND_keep_random_devices_open _ %+ BORINGSSL_PREFIX %+ _RAND_keep_random_devices_open
 %xdefine _RAND_load_file _ %+ BORINGSSL_PREFIX %+ _RAND_load_file
 %xdefine _RAND_poll _ %+ BORINGSSL_PREFIX %+ _RAND_poll
+%xdefine _RAND_priv_bytes _ %+ BORINGSSL_PREFIX %+ _RAND_priv_bytes
 %xdefine _RAND_pseudo_bytes _ %+ BORINGSSL_PREFIX %+ _RAND_pseudo_bytes
 %xdefine _RAND_seed _ %+ BORINGSSL_PREFIX %+ _RAND_seed
 %xdefine _RAND_set_rand_method _ %+ BORINGSSL_PREFIX %+ _RAND_set_rand_method
@@ -1929,7 +1935,6 @@
 %xdefine _SSL_CIPHER_get_name _ %+ BORINGSSL_PREFIX %+ _SSL_CIPHER_get_name
 %xdefine _SSL_CIPHER_get_prf_nid _ %+ BORINGSSL_PREFIX %+ _SSL_CIPHER_get_prf_nid
 %xdefine _SSL_CIPHER_get_protocol_id _ %+ BORINGSSL_PREFIX %+ _SSL_CIPHER_get_protocol_id
-%xdefine _SSL_CIPHER_get_value _ %+ BORINGSSL_PREFIX %+ _SSL_CIPHER_get_value
 %xdefine _SSL_CIPHER_get_version _ %+ BORINGSSL_PREFIX %+ _SSL_CIPHER_get_version
 %xdefine _SSL_CIPHER_is_aead _ %+ BORINGSSL_PREFIX %+ _SSL_CIPHER_is_aead
 %xdefine _SSL_CIPHER_is_block_cipher _ %+ BORINGSSL_PREFIX %+ _SSL_CIPHER_is_block_cipher
@@ -2019,8 +2024,6 @@
 %xdefine _SSL_CTX_set0_client_CAs _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set0_client_CAs
 %xdefine _SSL_CTX_set0_verify_cert_store _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set0_verify_cert_store
 %xdefine _SSL_CTX_set1_chain _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set1_chain
-%xdefine _SSL_CTX_set1_curves _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set1_curves
-%xdefine _SSL_CTX_set1_curves_list _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set1_curves_list
 %xdefine _SSL_CTX_set1_ech_keys _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set1_ech_keys
 %xdefine _SSL_CTX_set1_groups _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set1_groups
 %xdefine _SSL_CTX_set1_groups_list _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set1_groups_list
@@ -2216,7 +2219,7 @@
 %xdefine _SSL_get1_session _ %+ BORINGSSL_PREFIX %+ _SSL_get1_session
 %xdefine _SSL_get_SSL_CTX _ %+ BORINGSSL_PREFIX %+ _SSL_get_SSL_CTX
 %xdefine _SSL_get_all_cipher_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_cipher_names
-%xdefine _SSL_get_all_curve_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_curve_names
+%xdefine _SSL_get_all_group_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_group_names
 %xdefine _SSL_get_all_signature_algorithm_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_signature_algorithm_names
 %xdefine _SSL_get_all_standard_cipher_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_standard_cipher_names
 %xdefine _SSL_get_all_version_names _ %+ BORINGSSL_PREFIX %+ _SSL_get_all_version_names
@@ -2229,8 +2232,6 @@
 %xdefine _SSL_get_current_cipher _ %+ BORINGSSL_PREFIX %+ _SSL_get_current_cipher
 %xdefine _SSL_get_current_compression _ %+ BORINGSSL_PREFIX %+ _SSL_get_current_compression
 %xdefine _SSL_get_current_expansion _ %+ BORINGSSL_PREFIX %+ _SSL_get_current_expansion
-%xdefine _SSL_get_curve_id _ %+ BORINGSSL_PREFIX %+ _SSL_get_curve_id
-%xdefine _SSL_get_curve_name _ %+ BORINGSSL_PREFIX %+ _SSL_get_curve_name
 %xdefine _SSL_get_default_timeout _ %+ BORINGSSL_PREFIX %+ _SSL_get_default_timeout
 %xdefine _SSL_get_early_data_reason _ %+ BORINGSSL_PREFIX %+ _SSL_get_early_data_reason
 %xdefine _SSL_get_error _ %+ BORINGSSL_PREFIX %+ _SSL_get_error
@@ -2240,6 +2241,8 @@
 %xdefine _SSL_get_extms_support _ %+ BORINGSSL_PREFIX %+ _SSL_get_extms_support
 %xdefine _SSL_get_fd _ %+ BORINGSSL_PREFIX %+ _SSL_get_fd
 %xdefine _SSL_get_finished _ %+ BORINGSSL_PREFIX %+ _SSL_get_finished
+%xdefine _SSL_get_group_id _ %+ BORINGSSL_PREFIX %+ _SSL_get_group_id
+%xdefine _SSL_get_group_name _ %+ BORINGSSL_PREFIX %+ _SSL_get_group_name
 %xdefine _SSL_get_info_callback _ %+ BORINGSSL_PREFIX %+ _SSL_get_info_callback
 %xdefine _SSL_get_ivs _ %+ BORINGSSL_PREFIX %+ _SSL_get_ivs
 %xdefine _SSL_get_key_block_len _ %+ BORINGSSL_PREFIX %+ _SSL_get_key_block_len
@@ -2336,8 +2339,6 @@
 %xdefine _SSL_set0_verify_cert_store _ %+ BORINGSSL_PREFIX %+ _SSL_set0_verify_cert_store
 %xdefine _SSL_set0_wbio _ %+ BORINGSSL_PREFIX %+ _SSL_set0_wbio
 %xdefine _SSL_set1_chain _ %+ BORINGSSL_PREFIX %+ _SSL_set1_chain
-%xdefine _SSL_set1_curves _ %+ BORINGSSL_PREFIX %+ _SSL_set1_curves
-%xdefine _SSL_set1_curves_list _ %+ BORINGSSL_PREFIX %+ _SSL_set1_curves_list
 %xdefine _SSL_set1_delegated_credential _ %+ BORINGSSL_PREFIX %+ _SSL_set1_delegated_credential
 %xdefine _SSL_set1_ech_config_list _ %+ BORINGSSL_PREFIX %+ _SSL_set1_ech_config_list
 %xdefine _SSL_set1_groups _ %+ BORINGSSL_PREFIX %+ _SSL_set1_groups
@@ -3194,6 +3195,7 @@
 %xdefine _bio_socket_nbio _ %+ BORINGSSL_PREFIX %+ _bio_socket_nbio
 %xdefine _bn_abs_sub_consttime _ %+ BORINGSSL_PREFIX %+ _bn_abs_sub_consttime
 %xdefine _bn_add_words _ %+ BORINGSSL_PREFIX %+ _bn_add_words
+%xdefine _bn_big_endian_to_words _ %+ BORINGSSL_PREFIX %+ _bn_big_endian_to_words
 %xdefine _bn_copy_words _ %+ BORINGSSL_PREFIX %+ _bn_copy_words
 %xdefine _bn_div_consttime _ %+ BORINGSSL_PREFIX %+ _bn_div_consttime
 %xdefine _bn_div_words _ %+ BORINGSSL_PREFIX %+ _bn_div_words
@@ -3262,6 +3264,7 @@
 %xdefine _bn_uadd_consttime _ %+ BORINGSSL_PREFIX %+ _bn_uadd_consttime
 %xdefine _bn_usub_consttime _ %+ BORINGSSL_PREFIX %+ _bn_usub_consttime
 %xdefine _bn_wexpand _ %+ BORINGSSL_PREFIX %+ _bn_wexpand
+%xdefine _bn_words_to_big_endian _ %+ BORINGSSL_PREFIX %+ _bn_words_to_big_endian
 %xdefine _boringssl_self_test_hmac_sha256 _ %+ BORINGSSL_PREFIX %+ _boringssl_self_test_hmac_sha256
 %xdefine _boringssl_self_test_sha256 _ %+ BORINGSSL_PREFIX %+ _boringssl_self_test_sha256
 %xdefine _c2i_ASN1_BIT_STRING _ %+ BORINGSSL_PREFIX %+ _c2i_ASN1_BIT_STRING
@@ -4266,6 +4269,7 @@
 %xdefine BN_CTX_free BORINGSSL_PREFIX %+ _BN_CTX_free
 %xdefine BN_CTX_get BORINGSSL_PREFIX %+ _BN_CTX_get
 %xdefine BN_CTX_new BORINGSSL_PREFIX %+ _BN_CTX_new
+%xdefine BN_CTX_secure_new BORINGSSL_PREFIX %+ _BN_CTX_secure_new
 %xdefine BN_CTX_start BORINGSSL_PREFIX %+ _BN_CTX_start
 %xdefine BN_GENCB_call BORINGSSL_PREFIX %+ _BN_GENCB_call
 %xdefine BN_GENCB_free BORINGSSL_PREFIX %+ _BN_GENCB_free
@@ -5690,6 +5694,7 @@
 %xdefine RAND_keep_random_devices_open BORINGSSL_PREFIX %+ _RAND_keep_random_devices_open
 %xdefine RAND_load_file BORINGSSL_PREFIX %+ _RAND_load_file
 %xdefine RAND_poll BORINGSSL_PREFIX %+ _RAND_poll
+%xdefine RAND_priv_bytes BORINGSSL_PREFIX %+ _RAND_priv_bytes
 %xdefine RAND_pseudo_bytes BORINGSSL_PREFIX %+ _RAND_pseudo_bytes
 %xdefine RAND_seed BORINGSSL_PREFIX %+ _RAND_seed
 %xdefine RAND_set_rand_method BORINGSSL_PREFIX %+ _RAND_set_rand_method
@@ -5850,7 +5855,6 @@
 %xdefine SSL_CIPHER_get_name BORINGSSL_PREFIX %+ _SSL_CIPHER_get_name
 %xdefine SSL_CIPHER_get_prf_nid BORINGSSL_PREFIX %+ _SSL_CIPHER_get_prf_nid
 %xdefine SSL_CIPHER_get_protocol_id BORINGSSL_PREFIX %+ _SSL_CIPHER_get_protocol_id
-%xdefine SSL_CIPHER_get_value BORINGSSL_PREFIX %+ _SSL_CIPHER_get_value
 %xdefine SSL_CIPHER_get_version BORINGSSL_PREFIX %+ _SSL_CIPHER_get_version
 %xdefine SSL_CIPHER_is_aead BORINGSSL_PREFIX %+ _SSL_CIPHER_is_aead
 %xdefine SSL_CIPHER_is_block_cipher BORINGSSL_PREFIX %+ _SSL_CIPHER_is_block_cipher
@@ -5940,8 +5944,6 @@
 %xdefine SSL_CTX_set0_client_CAs BORINGSSL_PREFIX %+ _SSL_CTX_set0_client_CAs
 %xdefine SSL_CTX_set0_verify_cert_store BORINGSSL_PREFIX %+ _SSL_CTX_set0_verify_cert_store
 %xdefine SSL_CTX_set1_chain BORINGSSL_PREFIX %+ _SSL_CTX_set1_chain
-%xdefine SSL_CTX_set1_curves BORINGSSL_PREFIX %+ _SSL_CTX_set1_curves
-%xdefine SSL_CTX_set1_curves_list BORINGSSL_PREFIX %+ _SSL_CTX_set1_curves_list
 %xdefine SSL_CTX_set1_ech_keys BORINGSSL_PREFIX %+ _SSL_CTX_set1_ech_keys
 %xdefine SSL_CTX_set1_groups BORINGSSL_PREFIX %+ _SSL_CTX_set1_groups
 %xdefine SSL_CTX_set1_groups_list BORINGSSL_PREFIX %+ _SSL_CTX_set1_groups_list
@@ -6137,7 +6139,7 @@
 %xdefine SSL_get1_session BORINGSSL_PREFIX %+ _SSL_get1_session
 %xdefine SSL_get_SSL_CTX BORINGSSL_PREFIX %+ _SSL_get_SSL_CTX
 %xdefine SSL_get_all_cipher_names BORINGSSL_PREFIX %+ _SSL_get_all_cipher_names
-%xdefine SSL_get_all_curve_names BORINGSSL_PREFIX %+ _SSL_get_all_curve_names
+%xdefine SSL_get_all_group_names BORINGSSL_PREFIX %+ _SSL_get_all_group_names
 %xdefine SSL_get_all_signature_algorithm_names BORINGSSL_PREFIX %+ _SSL_get_all_signature_algorithm_names
 %xdefine SSL_get_all_standard_cipher_names BORINGSSL_PREFIX %+ _SSL_get_all_standard_cipher_names
 %xdefine SSL_get_all_version_names BORINGSSL_PREFIX %+ _SSL_get_all_version_names
@@ -6150,8 +6152,6 @@
 %xdefine SSL_get_current_cipher BORINGSSL_PREFIX %+ _SSL_get_current_cipher
 %xdefine SSL_get_current_compression BORINGSSL_PREFIX %+ _SSL_get_current_compression
 %xdefine SSL_get_current_expansion BORINGSSL_PREFIX %+ _SSL_get_current_expansion
-%xdefine SSL_get_curve_id BORINGSSL_PREFIX %+ _SSL_get_curve_id
-%xdefine SSL_get_curve_name BORINGSSL_PREFIX %+ _SSL_get_curve_name
 %xdefine SSL_get_default_timeout BORINGSSL_PREFIX %+ _SSL_get_default_timeout
 %xdefine SSL_get_early_data_reason BORINGSSL_PREFIX %+ _SSL_get_early_data_reason
 %xdefine SSL_get_error BORINGSSL_PREFIX %+ _SSL_get_error
@@ -6161,6 +6161,8 @@
 %xdefine SSL_get_extms_support BORINGSSL_PREFIX %+ _SSL_get_extms_support
 %xdefine SSL_get_fd BORINGSSL_PREFIX %+ _SSL_get_fd
 %xdefine SSL_get_finished BORINGSSL_PREFIX %+ _SSL_get_finished
+%xdefine SSL_get_group_id BORINGSSL_PREFIX %+ _SSL_get_group_id
+%xdefine SSL_get_group_name BORINGSSL_PREFIX %+ _SSL_get_group_name
 %xdefine SSL_get_info_callback BORINGSSL_PREFIX %+ _SSL_get_info_callback
 %xdefine SSL_get_ivs BORINGSSL_PREFIX %+ _SSL_get_ivs
 %xdefine SSL_get_key_block_len BORINGSSL_PREFIX %+ _SSL_get_key_block_len
@@ -6257,8 +6259,6 @@
 %xdefine SSL_set0_verify_cert_store BORINGSSL_PREFIX %+ _SSL_set0_verify_cert_store
 %xdefine SSL_set0_wbio BORINGSSL_PREFIX %+ _SSL_set0_wbio
 %xdefine SSL_set1_chain BORINGSSL_PREFIX %+ _SSL_set1_chain
-%xdefine SSL_set1_curves BORINGSSL_PREFIX %+ _SSL_set1_curves
-%xdefine SSL_set1_curves_list BORINGSSL_PREFIX %+ _SSL_set1_curves_list
 %xdefine SSL_set1_delegated_credential BORINGSSL_PREFIX %+ _SSL_set1_delegated_credential
 %xdefine SSL_set1_ech_config_list BORINGSSL_PREFIX %+ _SSL_set1_ech_config_list
 %xdefine SSL_set1_groups BORINGSSL_PREFIX %+ _SSL_set1_groups
@@ -7115,6 +7115,7 @@
 %xdefine bio_socket_nbio BORINGSSL_PREFIX %+ _bio_socket_nbio
 %xdefine bn_abs_sub_consttime BORINGSSL_PREFIX %+ _bn_abs_sub_consttime
 %xdefine bn_add_words BORINGSSL_PREFIX %+ _bn_add_words
+%xdefine bn_big_endian_to_words BORINGSSL_PREFIX %+ _bn_big_endian_to_words
 %xdefine bn_copy_words BORINGSSL_PREFIX %+ _bn_copy_words
 %xdefine bn_div_consttime BORINGSSL_PREFIX %+ _bn_div_consttime
 %xdefine bn_div_words BORINGSSL_PREFIX %+ _bn_div_words
@@ -7183,6 +7184,7 @@
 %xdefine bn_uadd_consttime BORINGSSL_PREFIX %+ _bn_uadd_consttime
 %xdefine bn_usub_consttime BORINGSSL_PREFIX %+ _bn_usub_consttime
 %xdefine bn_wexpand BORINGSSL_PREFIX %+ _bn_wexpand
+%xdefine bn_words_to_big_endian BORINGSSL_PREFIX %+ _bn_words_to_big_endian
 %xdefine boringssl_self_test_hmac_sha256 BORINGSSL_PREFIX %+ _boringssl_self_test_hmac_sha256
 %xdefine boringssl_self_test_sha256 BORINGSSL_PREFIX %+ _boringssl_self_test_sha256
 %xdefine c2i_ASN1_BIT_STRING BORINGSSL_PREFIX %+ _c2i_ASN1_BIT_STRING

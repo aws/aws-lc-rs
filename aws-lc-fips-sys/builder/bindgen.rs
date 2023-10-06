@@ -62,12 +62,12 @@ fn prepare_clang_args(manifest_dir: &Path, build_prefix: Option<&str>) -> Vec<St
     clang_args
 }
 
-const COPYRIGHT: &str = r#"
+const COPYRIGHT: &str = r"
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-"#;
+";
 
-const PRELUDE: &str = r#"
+const PRELUDE: &str = r"
 #![allow(
     unused_imports,
     non_camel_case_types,
@@ -86,7 +86,7 @@ const PRELUDE: &str = r#"
     clippy::used_underscore_binding,
     clippy::useless_transmute
 )]
-"#;
+";
 
 #[derive(Default)]
 pub(crate) struct BindingOptions<'a> {
