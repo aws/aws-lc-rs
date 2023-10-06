@@ -63,8 +63,5 @@ bindgen = { version = "0.68.1" }
 libc = "0.2"
 paste = "1.0.11"
 
-[dev-dependencies]
-openssl = { version = "0.10" }
-
 [package.metadata.aws-lc-sys]
 commit-hash = "aa90e509f2e940916fbe9fdd469a4c90c51824f6"
