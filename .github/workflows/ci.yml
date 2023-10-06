@@ -148,9 +148,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [ stable ]
+        rust: [ 1.72.1 ] # TODO: return to stable
         os: [ ubuntu-latest ]
         target:
+          - arm-unknown-linux-gnueabihf
           - aarch64-unknown-linux-gnu
           - i686-unknown-linux-gnu
           - powerpc64le-unknown-linux-gnu
