@@ -20,7 +20,7 @@ untrusted = { version = "0.7" }
 [dev-dependencies]
 paste = "1.0.13"
 criterion = { version = "0.5.0", features = ["csv_output"] }
-ring = "0.16"
+ring = "0.17"
 openssl = { version = "0.10.52", features = ["vendored"] }
 
 [[bench]]
