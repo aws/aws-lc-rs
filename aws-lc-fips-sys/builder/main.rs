@@ -153,7 +153,7 @@ fn get_cmake_config(manifest_dir: &PathBuf) -> cmake::Config {
     cmake::Config::new(manifest_dir)
 }
 
-fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cmake::Config {
+fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: String) -> cmake::Config {
     let mut cmake_cfg = get_cmake_config(manifest_dir);
 
     if OutputLibType::default() == OutputLibType::Dynamic {
@@ -171,14 +171,12 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
         }
     }
 
-    if let Some(symbol_prefix) = build_prefix {
-        cmake_cfg.define("BORINGSSL_PREFIX", symbol_prefix);
-        let include_path = manifest_dir.join("generated-include");
-        cmake_cfg.define(
-            "BORINGSSL_PREFIX_HEADERS",
-            include_path.display().to_string(),
-        );
-    }
+    cmake_cfg.define("BORINGSSL_PREFIX", build_prefix);
+    let include_path = manifest_dir.join("generated-include");
+    cmake_cfg.define(
+        "BORINGSSL_PREFIX_HEADERS",
+        include_path.display().to_string(),
+    );
 
     // Build flags that minimize our crate size.
     cmake_cfg.define("BUILD_TESTING", "OFF");
@@ -201,7 +199,7 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: Option<&str>) -> cm
 }
 
 fn build_rust_wrapper(manifest_dir: &PathBuf) -> PathBuf {
-    prepare_cmake_build(manifest_dir, Some(&prefix_string()))
+    prepare_cmake_build(manifest_dir, prefix_string())
         .configure_arg("--no-warn-unused-cli")
         .build()
 }
@@ -215,7 +213,7 @@ fn build_rust_wrapper(manifest_dir: &PathBuf) -> PathBuf {
 ))]
 fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf) {
     let options = bindgen::BindingOptions {
-        build_prefix: Some(prefix),
+        build_prefix: prefix,
         include_ssl: cfg!(feature = "ssl"),
         disable_prelude: true,
     };
@@ -232,7 +230,7 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &str, src_bindings_path: &
     bindgen::generate_bindings(
         manifest_dir,
         &bindgen::BindingOptions {
-            build_prefix: Some(prefix),
+            build_prefix: prefix,
             include_ssl: false,
             ..Default::default()
         },
@@ -243,7 +241,7 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &str, src_bindings_path: &
     bindgen::generate_bindings(
         manifest_dir,
         &bindgen::BindingOptions {
-            build_prefix: Some(prefix),
+            build_prefix: prefix,
             include_ssl: true,
             ..Default::default()
         },

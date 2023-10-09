@@ -524,10 +524,10 @@ mod tests {
     #[test]
     fn test_from_pkcs8() {
         let input = from_dirty_hex(
-            r#"308187020100301306072a8648ce3d020106082a8648ce3d030107046d306b0201010420090460075f15d
+            r"308187020100301306072a8648ce3d020106082a8648ce3d030107046d306b0201010420090460075f15d
             2a256248000fb02d83ad77593dde4ae59fc5e96142dffb2bd07a14403420004cf0d13a3a7577231ea1b66cf4
             021cd54f21f4ac4f5f2fdd28e05bc7d2bd099d1374cd08d2ef654d6f04498db462f73e0282058dd661a4c9b0
-            437af3f7af6e724"#,
+            437af3f7af6e724",
         );
 
         let result = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, &input);
@@ -548,12 +548,12 @@ mod tests {
         let alg = &signature::ECDSA_P256_SHA256_ASN1;
         let msg = "";
         let public_key = from_dirty_hex(
-            r#"0430345fd47ea21a11129be651b0884bfac698377611acc9f689458e1
-        3b9ed7d4b9d7599a68dcf125e7f31055ccb374cd04f6d6fd2b217438a63f6f667d50ef2f0"#,
+            r"0430345fd47ea21a11129be651b0884bfac698377611acc9f689458e1
+        3b9ed7d4b9d7599a68dcf125e7f31055ccb374cd04f6d6fd2b217438a63f6f667d50ef2f0",
         );
         let sig = from_dirty_hex(
-            r#"30440220341f6779b75e98bb42e01095dd48356cbf9002dc704ac8bd2a8240b8
-        8d3796c60220555843b1b4e264fe6ffe6e2b705a376c05c09404303ffe5d2711f3e3b3a010a1"#,
+            r"30440220341f6779b75e98bb42e01095dd48356cbf9002dc704ac8bd2a8240b8
+        8d3796c60220555843b1b4e264fe6ffe6e2b705a376c05c09404303ffe5d2711f3e3b3a010a1",
         );
         let actual_result =
             signature::UnparsedPublicKey::new(alg, &public_key).verify(msg.as_bytes(), &sig);

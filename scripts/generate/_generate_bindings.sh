@@ -36,7 +36,9 @@ TEMP_TARGET_DIR=$(mktemp -d)
 
 pushd "${CRATE_DIR}" &>/dev/null
 
-go env -w GOPROXY=direct
+if [[ -z "${GOPROXY:+x}" ]]; then
+  export GOPROXY=direct
+fi
 
 cargo clean --target-dir "${TEMP_TARGET_DIR}"
 # Sets AWS_LC_RUST_INTERNAL_BINDGEN=1 which will cause the generation bindings for a specific platform. This feature
