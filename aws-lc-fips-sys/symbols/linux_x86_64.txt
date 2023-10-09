@@ -479,6 +479,11 @@ CAST_S_table4
 CAST_S_table5
 CAST_S_table6
 CAST_S_table7
+CAST_cbc_encrypt
+CAST_decrypt
+CAST_ecb_encrypt
+CAST_encrypt
+CAST_set_key
 CBB_add_asn1
 CBB_add_asn1_bool
 CBB_add_asn1_int64
@@ -634,6 +639,7 @@ CRYPTO_get_ex_new_index
 CRYPTO_get_fork_generation
 CRYPTO_get_lock_name
 CRYPTO_get_locking_callback
+CRYPTO_get_seed_entropy
 CRYPTO_get_thread_local
 CRYPTO_ghash_init
 CRYPTO_has_asm
@@ -1270,6 +1276,8 @@ EVP_bf_cbc
 EVP_bf_cfb
 EVP_bf_ecb
 EVP_blake2b256
+EVP_cast5_cbc
+EVP_cast5_ecb
 EVP_cleanup
 EVP_des_cbc
 EVP_des_ecb
@@ -1698,7 +1706,9 @@ RAND_enable_fork_unsafe_buffering
 RAND_file_name
 RAND_get_rand_method
 RAND_get_system_entropy_for_custom_prng
+RAND_load_entropy
 RAND_load_file
+RAND_module_entropy_depleted
 RAND_poll
 RAND_pseudo_bytes
 RAND_seed
@@ -2970,6 +2980,8 @@ aes256gcmsiv_enc_msg_x4
 aes256gcmsiv_enc_msg_x8
 aes256gcmsiv_kdf
 aes_ctr_set_key
+aes_gcm_decrypt_avx512
+aes_gcm_encrypt_avx512
 aes_hw_cbc_encrypt
 aes_hw_ctr32_encrypt_blocks
 aes_hw_decrypt
@@ -3109,6 +3121,7 @@ cbs_get_utf32_be
 cbs_get_utf8
 chacha20_poly1305_open
 chacha20_poly1305_seal
+crypto_gcm_avx512_enabled
 crypto_gcm_clmul_enabled
 d2i_ACCESS_DESCRIPTION
 d2i_ASN1_BIT_STRING
@@ -3347,17 +3360,21 @@ ecp_nistz256_sqr_mont
 ed25519_asn1_meth
 ed25519_pkey_meth
 gcm_ghash_avx
+gcm_ghash_avx512
 gcm_ghash_clmul
 gcm_ghash_nohw
 gcm_ghash_ssse3
 gcm_gmult_avx
+gcm_gmult_avx512
 gcm_gmult_clmul
 gcm_gmult_nohw
 gcm_gmult_ssse3
 gcm_init_avx
+gcm_init_avx512
 gcm_init_clmul
 gcm_init_nohw
 gcm_init_ssse3
+gcm_setiv_avx512
 i2a_ACCESS_DESCRIPTION
 i2a_ASN1_ENUMERATED
 i2a_ASN1_INTEGER

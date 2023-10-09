@@ -34,29 +34,35 @@ impl ParseCallbacks for StripPrefixCallback {
     }
 }
 
-fn prepare_clang_args(manifest_dir: &Path, build_prefix: Option<&str>) -> Vec<String> {
-    let mut clang_args: Vec<String> = vec![
-        "-I".to_string(),
+fn add_header_include_path(args: &mut Vec<String>, path: String) {
+    args.push("-I".to_string());
+    args.push(path);
+}
+
+fn prepare_clang_args(manifest_dir: &Path) -> Vec<String> {
+    let mut clang_args: Vec<String> = Vec::new();
+
+    add_header_include_path(
+        &mut clang_args,
         get_rust_include_path(manifest_dir).display().to_string(),
-        "-I".to_string(),
+    );
+
+    add_header_include_path(
+        &mut clang_args,
+        get_generated_include_path(manifest_dir)
+            .display()
+            .to_string(),
+    );
+
+    add_header_include_path(
+        &mut clang_args,
         get_aws_lc_include_path(manifest_dir).display().to_string(),
-    ];
+    );
 
     if let Some(include_paths) = get_aws_lc_fips_sys_includes_path() {
         for path in include_paths {
-            clang_args.push("-I".to_string());
-            clang_args.push(path.display().to_string());
+            add_header_include_path(&mut clang_args, path.display().to_string());
         }
-    }
-
-    if let Some(prefix) = build_prefix {
-        clang_args.push(format!("-DBORINGSSL_PREFIX={prefix}"));
-        clang_args.push("-I".to_string());
-        clang_args.push(
-            get_generated_include_path(manifest_dir)
-                .display()
-                .to_string(),
-        );
     }
 
     clang_args
@@ -90,13 +96,13 @@ const PRELUDE: &str = r"
 
 #[derive(Default)]
 pub(crate) struct BindingOptions<'a> {
-    pub build_prefix: Option<&'a str>,
+    pub build_prefix: &'a str,
     pub include_ssl: bool,
     pub disable_prelude: bool,
 }
 
 fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions<'_>) -> bindgen::Builder {
-    let clang_args = prepare_clang_args(manifest_dir, options.build_prefix);
+    let clang_args = prepare_clang_args(manifest_dir);
 
     let mut builder = bindgen::Builder::default()
         .derive_copy(true)
@@ -130,9 +136,7 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions<'_>) -
         builder = builder.clang_arg("-DAWS_LC_RUST_INCLUDE_SSL");
     }
 
-    if let Some(ps) = &options.build_prefix {
-        builder = builder.parse_callbacks(Box::new(StripPrefixCallback::new(ps)));
-    }
+    builder = builder.parse_callbacks(Box::new(StripPrefixCallback::new(options.build_prefix)));
 
     builder
 }
