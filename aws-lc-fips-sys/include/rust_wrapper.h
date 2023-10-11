@@ -106,4 +106,12 @@ int ERR_GET_FUNC_RUST(uint32_t packed_error);
 #include "openssl/ssl3.h"
 #endif
 
+// The TLS PRF API is exported in AWS-LC main branch, but in the current FIPS branch, this API is defined in a private header.
+extern int CRYPTO_tls1_prf(const EVP_MD *digest,
+                           uint8_t *out, size_t out_len,
+                           const uint8_t *secret, size_t secret_len,
+                           const char *label, size_t label_len,
+                           const uint8_t *seed1, size_t seed1_len,
+                           const uint8_t *seed2, size_t seed2_len);
+
 #endif  // OPENSSL_HEADER_RUST_WRAPPER_H

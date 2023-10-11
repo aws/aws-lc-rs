@@ -32788,6 +32788,22 @@ extern "C" {
     #[link_name = "\u{1}aws_lc_fips_0_11_0_SSL_CIPHER_get_value"]
     pub fn SSL_CIPHER_get_value(cipher: *const SSL_CIPHER) -> u16;
 }
+extern "C" {
+    #[link_name = "\u{1}aws_lc_fips_0_11_0_CRYPTO_tls1_prf"]
+    pub fn CRYPTO_tls1_prf(
+        digest: *const EVP_MD,
+        out: *mut u8,
+        out_len: usize,
+        secret: *const u8,
+        secret_len: usize,
+        label: *const ::std::os::raw::c_char,
+        label_len: usize,
+        seed1: *const u8,
+        seed1_len: usize,
+        seed2: *const u8,
+        seed2_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct CRYPTO_dynlock_value {
