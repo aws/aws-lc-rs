@@ -3181,6 +3181,9 @@ pub const HRSS_CIPHERTEXT_BYTES: i32 = 1138;
 pub const HRSS_KEY_BYTES: i32 = 32;
 pub const HRSS_POLY3_BYTES: i32 = 140;
 pub const HRSS_PRIVATE_KEY_BYTES: i32 = 1452;
+pub const EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND: i32 = 0;
+pub const EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY: i32 = 1;
+pub const EVP_PKEY_HKDEF_MODE_EXPAND_ONLY: i32 = 2;
 pub const MD4_CBLOCK: i32 = 64;
 pub const MD4_DIGEST_LENGTH: i32 = 16;
 pub const OBJ_NAME_TYPE_MD_METH: i32 = 1;
@@ -18440,6 +18443,60 @@ extern "C" {
     pub fn HRSS_parse_public_key(
         out: *mut HRSS_public_key,
         in_: *const u8,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_11_0_CRYPTO_tls1_prf"]
+    pub fn CRYPTO_tls1_prf(
+        digest: *const EVP_MD,
+        out: *mut u8,
+        out_len: usize,
+        secret: *const u8,
+        secret_len: usize,
+        label: *const ::std::os::raw::c_char,
+        label_len: usize,
+        seed1: *const u8,
+        seed1_len: usize,
+        seed2: *const u8,
+        seed2_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_11_0_EVP_PKEY_CTX_hkdf_mode"]
+    pub fn EVP_PKEY_CTX_hkdf_mode(
+        ctx: *mut EVP_PKEY_CTX,
+        mode: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_11_0_EVP_PKEY_CTX_set_hkdf_md"]
+    pub fn EVP_PKEY_CTX_set_hkdf_md(
+        ctx: *mut EVP_PKEY_CTX,
+        md: *const EVP_MD,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_11_0_EVP_PKEY_CTX_set1_hkdf_key"]
+    pub fn EVP_PKEY_CTX_set1_hkdf_key(
+        ctx: *mut EVP_PKEY_CTX,
+        key: *const u8,
+        key_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_11_0_EVP_PKEY_CTX_set1_hkdf_salt"]
+    pub fn EVP_PKEY_CTX_set1_hkdf_salt(
+        ctx: *mut EVP_PKEY_CTX,
+        salt: *const u8,
+        salt_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_11_0_EVP_PKEY_CTX_add1_hkdf_info"]
+    pub fn EVP_PKEY_CTX_add1_hkdf_info(
+        ctx: *mut EVP_PKEY_CTX,
+        info: *const u8,
+        info_len: usize,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
