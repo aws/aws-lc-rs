@@ -160,9 +160,6 @@ jobs:
           - armv7-linux-androideabi
           - aarch64-linux-android
     steps:
-      - name: Set CROSS_CMAKE_SYSTEM_PROCESSOR
-        if: ${{ matrix.target == 'powerpc64le-unknown-linux-gnu' }}
-        run: echo CROSS_CMAKE_SYSTEM_PROCESSOR=ppc64le >> $GITHUB_ENV
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
