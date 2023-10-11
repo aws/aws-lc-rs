@@ -69,6 +69,7 @@ int ERR_GET_FUNC_RUST(uint32_t packed_error);
 #include "openssl/hmac.h"
 #include "openssl/hpke.h"
 #include "openssl/hrss.h"
+#include "openssl/kdf.h"
 #include "openssl/lhash.h"
 #include "openssl/md4.h"
 #include "openssl/md5.h"
