@@ -211,7 +211,7 @@ impl Ed25519KeyPair {
         evp_pkey.marshall_private_key(Version::V1)
     }
 
-    /// Serializes this `Ed25519KeyPair` into a PKCS#8 v2 document.
+    /// Serializes this `Ed25519KeyPair` into a PKCS#8 v1 document.
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.
