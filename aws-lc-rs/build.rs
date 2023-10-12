@@ -1,6 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use std::env;
+
 fn main() {
     let mutually_exclusives_count = [cfg!(feature = "non-fips"), cfg!(feature = "fips")]
         .iter()
@@ -27,8 +29,16 @@ fn main() {
         std::process::exit(1);
     }
 
-    // Force tests to run single threaded if running PQ KATs
-    if cfg!(feature = "test_pq_kat") {
+    // For PQ KEM KATs we need to enable a private aws-lc API.
+    // If AWS_LC_RUST_PRIVATE_INTERNALS=1 is set and bingen is enabled then enable our
+    // configuration to allow the tests to be built and enabled.
+    // Additionally these APIs are not thread safe. So force tests to run single threaded.
+    if env::var("AWS_LC_RUST_PRIVATE_INTERNALS")
+        .unwrap_or("0".into())
+        .eq("1")
+        && cfg!(feature = "bindgen")
+    {
+        println!("cargo:rustc-cfg=private_api");
         println!("cargo:rustc-env=RUST_TEST_THREADS=1");
     }
 }

@@ -162,7 +162,7 @@ impl KemAlgorithm {
 #[derive(Debug)]
 pub struct KemPrivateKey {
     algorithm: &'static KemAlgorithm,
-    pkey: LcPtr<*mut EVP_PKEY>,
+    pkey: LcPtr<EVP_PKEY>,
     priv_key: Box<[u8]>,
 }
 
@@ -317,7 +317,7 @@ impl AsRef<[u8]> for KemPrivateKey {
 #[derive(Debug)]
 pub struct KemPublicKey {
     algorithm: &'static KemAlgorithm,
-    pkey: LcPtr<*mut EVP_PKEY>,
+    pkey: LcPtr<EVP_PKEY>,
     pub_key: Box<[u8]>,
 }
 
@@ -409,7 +409,7 @@ impl AsRef<[u8]> for KemPublicKey {
 
 // Returns an LcPtr to an EVP_PKEY
 #[inline]
-unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecified> {
+unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let ctx = LcPtr::new(EVP_PKEY_CTX_new_id(EVP_PKEY_KEM, null_mut()))?;
     if 1 != EVP_PKEY_CTX_kem_set_params(*ctx, nid) || 1 != EVP_PKEY_keygen_init(*ctx) {
         return Err(Unspecified);
@@ -424,160 +424,92 @@ unsafe fn kem_key_generate(nid: c_int) -> Result<LcPtr<*mut EVP_PKEY>, Unspecifi
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "test_pq_kat")]
-    use crate::{
-        aws_lc::{
-            pq_custom_randombytes_init_for_testing,
-            pq_custom_randombytes_use_deterministic_for_testing,
-        },
-        error::Unspecified,
-        test, test_file,
-    };
     use crate::{
         error::KeyRejected,
         kem::{KemPrivateKey, KemPublicKey, KYBER1024_R3, KYBER512_R3, KYBER768_R3},
     };
 
-    #[cfg(feature = "test_pq_kat")]
+    #[cfg(private_api)]
+    macro_rules! kem_kat_test {
+        ($file:literal, $alg:expr) => {
+            use crate::{
+                aws_lc::{
+                    pq_custom_randombytes_init_for_testing,
+                    pq_custom_randombytes_use_deterministic_for_testing,
+                },
+                error::Unspecified,
+                test, test_file,
+            };
+            test::run(test_file!($file), |_section, test_case| {
+                let seed = test_case.consume_bytes("seed");
+                let public_key_bytes = test_case.consume_bytes("pk");
+                let secret_key_bytes = test_case.consume_bytes("sk");
+                let ciphertext_bytes = test_case.consume_bytes("ct");
+                let shared_secret_bytes = test_case.consume_bytes("ss");
+
+                // Set randomness generation in deterministic mode.
+                unsafe {
+                    pq_custom_randombytes_use_deterministic_for_testing();
+                    pq_custom_randombytes_init_for_testing(seed.as_ptr());
+                }
+
+                let priv_key = KemPrivateKey::generate($alg).unwrap();
+
+                assert_eq!(priv_key.as_ref(), secret_key_bytes);
+
+                let pub_key = priv_key.compute_public_key().unwrap();
+                assert_eq!(pub_key.as_ref(), public_key_bytes);
+
+                let (mut ciphertext, bob_shared_secret) = pub_key
+                    .encapsulate(Unspecified, |ciphertext, shared_secret| {
+                        Ok((ciphertext.to_vec(), shared_secret.to_vec()))
+                    })
+                    .unwrap();
+                assert_eq!(ciphertext, ciphertext_bytes);
+                assert_eq!(bob_shared_secret, shared_secret_bytes);
+
+                let alice_shared_secret = priv_key
+                    .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
+                        Ok(shared_secret.to_vec())
+                    })
+                    .unwrap();
+                assert_eq!(alice_shared_secret, shared_secret_bytes);
+
+                Ok(())
+            });
+        };
+    }
+
+    #[cfg(private_api)]
     #[test]
     fn test_kem_kyber512() {
-        test::run(
-            test_file!("../tests/data/kyber512r3.txt"),
-            |_section, test_case| {
-                let seed = test_case.consume_bytes("seed");
-                let public_key_bytes = test_case.consume_bytes("pk");
-                let secret_key_bytes = test_case.consume_bytes("sk");
-                let ciphertext_bytes = test_case.consume_bytes("ct");
-                let shared_secret_bytes = test_case.consume_bytes("ss");
-
-                // Set randomness generation in deterministic mode.
-                unsafe {
-                    pq_custom_randombytes_use_deterministic_for_testing();
-                    pq_custom_randombytes_init_for_testing(seed.as_ptr());
-                }
-
-                let priv_key = KemPrivateKey::generate(&KYBER512_R3).unwrap();
-
-                assert_eq!(priv_key.as_ref(), secret_key_bytes);
-
-                let pub_key = priv_key.compute_public_key().unwrap();
-                assert_eq!(pub_key.as_ref(), public_key_bytes);
-
-                let (mut ciphertext, bob_shared_secret) = pub_key
-                    .encapsulate(Unspecified, |ciphertext, shared_secret| {
-                        Ok((ciphertext.to_vec(), shared_secret.to_vec()))
-                    })
-                    .unwrap();
-                assert_eq!(ciphertext, ciphertext_bytes);
-                assert_eq!(bob_shared_secret, shared_secret_bytes);
-
-                let alice_shared_secret = priv_key
-                    .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
-                        Ok(shared_secret.to_vec())
-                    })
-                    .unwrap();
-                assert_eq!(alice_shared_secret, shared_secret_bytes);
-
-                Ok(())
-            },
-        );
+        kem_kat_test!("../tests/data/kyber512r3.txt", &KYBER512_R3);
     }
 
-    #[cfg(feature = "test_pq_kat")]
+    #[cfg(private_api)]
     #[test]
     fn test_kem_kyber768() {
-        test::run(
-            test_file!("../tests/data/kyber768r3.txt"),
-            |_section, test_case| {
-                let seed = test_case.consume_bytes("seed");
-                let public_key_bytes = test_case.consume_bytes("pk");
-                let secret_key_bytes = test_case.consume_bytes("sk");
-                let ciphertext_bytes = test_case.consume_bytes("ct");
-                let shared_secret_bytes = test_case.consume_bytes("ss");
-
-                // Set randomness generation in deterministic mode.
-                unsafe {
-                    pq_custom_randombytes_use_deterministic_for_testing();
-                    pq_custom_randombytes_init_for_testing(seed.as_ptr());
-                }
-
-                let priv_key = KemPrivateKey::generate(&KYBER768_R3).unwrap();
-
-                assert_eq!(priv_key.as_ref(), secret_key_bytes);
-
-                let pub_key = priv_key.compute_public_key().unwrap();
-                assert_eq!(pub_key.as_ref(), public_key_bytes);
-
-                let (mut ciphertext, bob_shared_secret) = pub_key
-                    .encapsulate(Unspecified, |ciphertext, shared_secret| {
-                        Ok((ciphertext.to_vec(), shared_secret.to_vec()))
-                    })
-                    .unwrap();
-                assert_eq!(ciphertext, ciphertext_bytes);
-                assert_eq!(bob_shared_secret, shared_secret_bytes);
-
-                let alice_shared_secret = priv_key
-                    .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
-                        Ok(shared_secret.to_vec())
-                    })
-                    .unwrap();
-                assert_eq!(alice_shared_secret, shared_secret_bytes);
-
-                Ok(())
-            },
-        );
+        kem_kat_test!("../tests/data/kyber768r3.txt", &KYBER768_R3);
     }
 
-    #[cfg(feature = "test_pq_kat")]
+    #[cfg(private_api)]
     #[test]
     fn test_kem_kyber1024() {
-        test::run(
-            test_file!("../tests/data/kyber1024r3.txt"),
-            |_section, test_case| {
-                let seed = test_case.consume_bytes("seed");
-                let public_key_bytes = test_case.consume_bytes("pk");
-                let secret_key_bytes = test_case.consume_bytes("sk");
-                let ciphertext_bytes = test_case.consume_bytes("ct");
-                let shared_secret_bytes = test_case.consume_bytes("ss");
-
-                // Set randomness generation in deterministic mode.
-                unsafe {
-                    pq_custom_randombytes_use_deterministic_for_testing();
-                    pq_custom_randombytes_init_for_testing(seed.as_ptr());
-                }
-
-                let priv_key = KemPrivateKey::generate(&KYBER1024_R3).unwrap();
-
-                assert_eq!(priv_key.as_ref(), secret_key_bytes);
-
-                let pub_key = priv_key.compute_public_key().unwrap();
-                assert_eq!(pub_key.as_ref(), public_key_bytes);
-
-                let (mut ciphertext, bob_shared_secret) = pub_key
-                    .encapsulate(Unspecified, |ciphertext, shared_secret| {
-                        Ok((ciphertext.to_vec(), shared_secret.to_vec()))
-                    })
-                    .unwrap();
-                assert_eq!(ciphertext, ciphertext_bytes);
-                assert_eq!(bob_shared_secret, shared_secret_bytes);
-
-                let alice_shared_secret = priv_key
-                    .decapsulate(&mut ciphertext, Unspecified, |shared_secret| {
-                        Ok(shared_secret.to_vec())
-                    })
-                    .unwrap();
-                assert_eq!(alice_shared_secret, shared_secret_bytes);
-
-                Ok(())
-            },
-        );
+        kem_kat_test!("../tests/data/kyber1024r3.txt", &KYBER1024_R3);
     }
 
     #[test]
-    fn test_kem_privkey_serialize() {
+    fn test_kem_serialize() {
         for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
             let priv_key = KemPrivateKey::generate(algorithm).unwrap();
             assert_eq!(priv_key.algorithm(), algorithm);
+
+            let pub_key = priv_key.compute_public_key().unwrap();
+            let pubkey_raw_bytes = pub_key.as_ref();
+            let pub_key_from_bytes = KemPublicKey::new(algorithm, pubkey_raw_bytes).unwrap();
+
+            assert_eq!(pub_key.as_ref(), pub_key_from_bytes.as_ref());
+            assert_eq!(pub_key.algorithm(), pub_key_from_bytes.algorithm());
 
             let privkey_raw_bytes = priv_key.as_ref();
             let priv_key_from_bytes = KemPrivateKey::new(algorithm, privkey_raw_bytes).unwrap();
@@ -588,23 +520,7 @@ mod tests {
     }
 
     #[test]
-    fn test_kem_pubkey_serialize() {
-        for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
-            let priv_key = KemPrivateKey::generate(algorithm).unwrap();
-            assert_eq!(priv_key.algorithm(), algorithm);
-
-            let pub_key = priv_key.compute_public_key().unwrap();
-
-            let pubkey_raw_bytes = pub_key.as_ref();
-            let pub_key_from_bytes = KemPublicKey::new(algorithm, pubkey_raw_bytes).unwrap();
-
-            assert_eq!(pub_key.as_ref(), pub_key_from_bytes.as_ref());
-            assert_eq!(pub_key.algorithm(), pub_key_from_bytes.algorithm());
-        }
-    }
-
-    #[test]
-    fn test_kem_privkey_wrong_size() {
+    fn test_kem_wrong_sizes() {
         for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
             let too_long_bytes = vec![0u8; algorithm.secret_key_size() + 1];
             let long_priv_key_from_bytes = KemPrivateKey::new(algorithm, &too_long_bytes);
@@ -613,23 +529,18 @@ mod tests {
                 Some(KeyRejected::too_large())
             );
 
-            let too_short_bytes = vec![0u8; algorithm.secret_key_size() - 1];
-            let short_priv_key_from_bytes = KemPrivateKey::new(algorithm, &too_short_bytes);
-            assert_eq!(
-                short_priv_key_from_bytes.err(),
-                Some(KeyRejected::too_small())
-            );
-        }
-    }
-
-    #[test]
-    fn test_kem_pubkey_wrong_size() {
-        for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
             let too_long_bytes = vec![0u8; algorithm.public_key_size() + 1];
             let long_pub_key_from_bytes = KemPublicKey::new(algorithm, &too_long_bytes);
             assert_eq!(
                 long_pub_key_from_bytes.err(),
                 Some(KeyRejected::too_large())
+            );
+
+            let too_short_bytes = vec![0u8; algorithm.secret_key_size() - 1];
+            let short_priv_key_from_bytes = KemPrivateKey::new(algorithm, &too_short_bytes);
+            assert_eq!(
+                short_priv_key_from_bytes.err(),
+                Some(KeyRejected::too_small())
             );
 
             let too_short_bytes = vec![0u8; algorithm.public_key_size() - 1];

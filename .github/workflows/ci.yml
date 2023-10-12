@@ -220,7 +220,10 @@ jobs:
           - --no-default-features --features non-fips,ring-io
           - --no-default-features --features non-fips,ring-sig-verify
           - --no-default-features --features non-fips,alloc
-          - --no-default-features --features non-fips,test_pq_kat
+          - --no-default-features --features non-fips,bindgen
+        include:
+          - args: --no-default-features --features non-fips,bindgen
+            envs: AWS_LC_RUST_PRIVATE_INTERNALS=1
     steps:
       - uses: actions/checkout@v3
         with:
@@ -233,6 +236,10 @@ jobs:
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
+      - name: Run cargo test w/ environment
+        if: ${{ matrix.envs }}
+        working-directory: ./aws-lc-rs
+        run: env ${{ matrix.envs }} cargo test ${{ matrix.args }}
       - name: Run extra tests
         working-directory: ./aws-lc-rs-testing
         run: cargo test --all-targets
@@ -255,6 +262,9 @@ jobs:
           - --no-default-features --features fips,ring-sig-verify
           - --no-default-features --features fips,alloc
           - --no-default-features --features fips,bindgen
+        include:
+          - args: --no-default-features --features fips,bindgen
+            envs: AWS_LC_RUST_PRIVATE_INTERNALS=1
     steps:
       - uses: actions/checkout@v3
         with:
@@ -269,6 +279,9 @@ jobs:
         # Doc-tests fail to link with dynamic build
         # See: https://github.com/rust-lang/cargo/issues/8531
         run: cargo test --tests ${{ matrix.args }}
+      - name: Run cargo test w/ environment
+        if: ${{ matrix.envs }}
+        run: env ${{ matrix.envs }} cargo test --tests ${{ matrix.args }}
 
   bindgen-test:
     name: aws-lc-rs bindgen-tests
