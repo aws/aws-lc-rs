@@ -1,35 +1,52 @@
 //! This module exposes a buffer type used in crate APIs returning private keys and other "private"
 //! contents.
 
+#![allow(clippy::module_name_repetitions)]
+
+use std::borrow::Cow;
 use std::fmt;
+use std::marker::PhantomData;
 
 use zeroize::Zeroize;
 
-/// This is a buffer type for private contents (e.g., private key bytes) which is zeroed on drop.
-#[allow(clippy::module_name_repetitions)]
-pub struct PrivateBuffer(Box<[u8]>);
+/// This is a buffer type for some data exposed by various APIs in this crate.
+///
+/// `T` acts as a discriminant between different kinds of data.
+///
+/// The buffer will be zeroed on drop if it is owned.
+pub struct Buffer<'a, T>(Cow<'a, [u8]>, PhantomData<T>);
 
-impl PrivateBuffer {
-    pub(crate) fn new(slice: &mut [u8]) -> PrivateBuffer {
-        let ret = PrivateBuffer(slice.to_vec().into_boxed_slice());
-        slice.zeroize();
-        ret
-    }
-}
-
-impl Drop for PrivateBuffer {
+impl<'a, T> Drop for Buffer<'a, T> {
     fn drop(&mut self) {
-        self.0.zeroize();
+        if let Cow::Owned(b) = &mut self.0 {
+            b.zeroize();
+        }
     }
 }
 
-impl fmt::Debug for PrivateBuffer {
+impl<'a, T> Buffer<'a, T> {
+    pub(crate) fn new(owned: Vec<u8>) -> Buffer<'a, T> {
+        Buffer(Cow::Owned(owned), PhantomData)
+    }
+
+    pub(crate) fn take_from_slice(slice: &mut [u8]) -> Buffer<'a, T> {
+        let owned = slice.to_vec();
+        slice.zeroize();
+        Buffer(Cow::Owned(owned), PhantomData)
+    }
+
+    pub(crate) fn public_from_slice(slice: &[u8]) -> Buffer<'_, T> {
+        Buffer(Cow::Borrowed(slice), PhantomData)
+    }
+}
+
+impl<T> fmt::Debug for Buffer<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        f.write_str("PrivateBuffer()")
+        f.write_str("Buffer(...)")
     }
 }
 
-impl AsRef<[u8]> for PrivateBuffer {
+impl<T> AsRef<[u8]> for Buffer<'_, T> {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()

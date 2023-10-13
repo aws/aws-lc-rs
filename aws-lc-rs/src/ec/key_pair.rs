@@ -3,16 +3,15 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::buffer::PrivateBuffer;
+use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{
     evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
-    SCALAR_MAX_BYTES,
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 use crate::{digest, ec};
@@ -174,11 +173,13 @@ impl EcdsaKeyPair {
     /// Deserialize a DER private key and produce an ECDSA key.
     ///
     /// This function will attempt to automatically detect the underlying key format, and
-    /// supports the unencrypted PKCS#8 PrivateKeyInfo structures as well as key type specific
+    /// supports the unencrypted PKCS#8 `PrivateKeyInfo` structures as well as key type specific
     /// formats.
     ///
     /// # Errors
     /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
+    ///
+    /// # Panics
     pub fn from_private_key_der(
         alg: &'static EcdsaSigningAlgorithm,
         private_key: &[u8],
@@ -188,7 +189,10 @@ impl EcdsaKeyPair {
             if aws_lc::d2i_AutoPrivateKey(
                 &mut out,
                 &mut private_key.as_ptr(),
-                private_key.len().try_into().unwrap(),
+                private_key
+                    .len()
+                    .try_into()
+                    .map_err(|_| KeyRejected::too_large())?,
             )
             .is_null()
             {
@@ -196,10 +200,9 @@ impl EcdsaKeyPair {
                 return Err(KeyRejected::unexpected_error());
             }
             let evp_pkey = LcPtr::new(out)?;
-            let ec_key = evp_pkey.get_ec_key()?;
-            validate_ec_key(&ec_key.as_const(), alg.id.nid())?;
+            validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
 
-            Ok(Self::new(alg, ec_key)?)
+            Ok(Self::new(alg, evp_pkey)?)
         }
     }
 
@@ -300,6 +303,16 @@ fn compute_ecdsa_signature<'a>(
 #[derive(Debug)]
 pub struct PrivateKey<'a>(&'a EcdsaKeyPair);
 
+/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
+pub struct EcPrivateKeyBuffer {
+    _priv: (),
+}
+
+/// Elliptic curve private key data encoded as DER.
+pub struct EcPrivateKeyDer {
+    _priv: (),
+}
+
 impl PrivateKey<'_> {
     /// Exposes the private key encoded as a big-endian fixed-length integer.
     ///
@@ -307,16 +320,13 @@ impl PrivateKey<'_> {
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    pub fn to_integer(&self) -> Result<PrivateBuffer, Unspecified> {
+    pub fn to_buffer(&self) -> Result<Buffer<'static, EcPrivateKeyBuffer>, Unspecified> {
         unsafe {
-            let mut priv_key_bytes = [0u8; SCALAR_MAX_BYTES];
-
-            let key_len = ec::marshal_private_key_to_buffer(
+            let buffer = ec::marshal_private_key_to_buffer(
                 self.0.algorithm.id,
-                &mut priv_key_bytes,
                 &self.0.evp_pkey.as_const(),
             )?;
-            Ok(PrivateBuffer::new(&mut priv_key_bytes[..key_len]))
+            Ok(Buffer::<EcPrivateKeyBuffer>::new(buffer))
         }
     }
 
@@ -324,19 +334,15 @@ impl PrivateKey<'_> {
     ///
     /// # Errors
     /// `error::Unspecified`  if serialization failed.
-    pub fn to_der(&self) -> Result<PrivateBuffer, Unspecified> {
+    pub fn to_der(&self) -> Result<Buffer<'static, EcPrivateKeyDer>, Unspecified> {
         unsafe {
             let mut outp = std::ptr::null_mut::<u8>();
-            let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(self.0.evp_pkey.as_const_ptr()))?;
-            let length = aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp);
-            if length < 0 {
-                return Err(Unspecified);
-            }
+            let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.0.evp_pkey))?;
+            let length = usize::try_from(aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp))
+                .map_err(|_| Unspecified)?;
             let outp = LcPtr::new(outp)?;
-            #[allow(clippy::cast_sign_loss)]
-            Ok(PrivateBuffer::new(std::slice::from_raw_parts_mut(
-                *outp,
-                length as usize,
+            Ok(Buffer::take_from_slice(std::slice::from_raw_parts_mut(
+                *outp, length,
             )))
         }
     }
