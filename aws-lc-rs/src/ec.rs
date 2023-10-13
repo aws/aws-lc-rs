@@ -3,6 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::buffer::Buffer;
 use crate::error::{KeyRejected, Unspecified};
 use core::fmt;
 
@@ -118,10 +119,17 @@ pub struct PublicKey {
     der: Box<[u8]>,
 }
 
+/// An elliptic curve public key as a DER-encoded `SubjectPublicKeyInfo` structure
+#[allow(clippy::module_name_repetitions)]
+pub struct EcPublicKeyDer {
+    _priv: (),
+}
+
 impl PublicKey {
-    /// Provides the public key as a DER-encoded SubjectPublicKeyInfo structure.
-    pub fn as_der(&self) -> &[u8] {
-        &self.der
+    /// Provides the public key as a DER-encoded `SubjectPublicKeyInfo` structure.
+    #[must_use]
+    pub fn as_der(&self) -> Buffer<'_, EcPublicKeyDer> {
+        Buffer::public_from_slice(&self.der)
     }
 }
 
@@ -214,9 +222,8 @@ unsafe fn validate_ec_key(
 
 pub(crate) unsafe fn marshal_private_key_to_buffer(
     alg_id: &'static AlgorithmID,
-    buffer: &mut [u8; SCALAR_MAX_BYTES],
     ec_key: &ConstPointer<EC_KEY>,
-) -> Result<usize, Unspecified> {
+) -> Result<Vec<u8>, Unspecified> {
     let private_bn = ConstPointer::new(EC_KEY_get0_private_key(**ec_key))?;
     let private_size: usize = ecdsa_fixed_number_byte_size(alg_id);
     {
@@ -224,11 +231,13 @@ pub(crate) unsafe fn marshal_private_key_to_buffer(
         debug_assert!(size <= private_size);
     }
 
+    let mut buffer = vec![0u8; SCALAR_MAX_BYTES];
     if 1 != BN_bn2bin_padded(buffer.as_mut_ptr(), private_size, *private_bn) {
         return Err(Unspecified);
     }
+    buffer.truncate(private_size);
 
-    Ok(private_size)
+    Ok(buffer)
 }
 
 pub(crate) unsafe fn marshal_public_key_to_buffer(
