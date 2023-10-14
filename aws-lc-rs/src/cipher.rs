@@ -423,7 +423,8 @@ impl PaddedBlockEncryptingKey {
     /// * [`Unspecified`]: Returned if there is an error cosntructing a `PaddedBlockEncryptingKey`.
     ///
     /// # FIPS
-    /// This mode utilizes cryptographic implementations that follow FIPS implementation guidance.
+    /// This constructor functiion should be used with an `UnboundCipherKey` constructed with either
+    /// `AES_128` or `AES_256` algorithms.
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         PaddedBlockEncryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
     }
@@ -512,6 +513,10 @@ impl PaddedBlockDecryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
+    ///
+    /// # FIPS
+    /// This constructor functiion should be used with an `UnboundCipherKey` constructed with either
+    /// `AES_128` or `AES_256` algorithms.
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockDecryptingKey, Unspecified> {
         PaddedBlockDecryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
     }
@@ -584,6 +589,10 @@ impl EncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
+    ///
+    /// # FIPS
+    /// This constructor functiion should be used with an `UnboundCipherKey` constructed with either
+    /// `AES_128` or `AES_256` algorithms.
     pub fn ctr(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
         EncryptingKey::new(key, OperatingMode::CTR)
     }
@@ -660,7 +669,8 @@ impl DecryptingKey {
     /// * [`Unspecified`]: Returned if there is an error during decryption.
     ///
     /// # FIPS
-    /// This mode utilizes cryptographic functions that follow FIPS implementation guidance.
+    /// This constructor functiion should be used with an `UnboundCipherKey` constructed with either
+    /// `AES_128` or `AES_256` algorithms.
     pub fn ctr(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
         DecryptingKey::new(key, OperatingMode::CTR)
     }

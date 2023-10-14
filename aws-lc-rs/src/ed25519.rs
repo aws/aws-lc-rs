@@ -296,7 +296,7 @@ impl Ed25519KeyPair {
     /// Panics if the message is unable to be signed
     ///
     /// # FIPS
-    /// FIPS users should not use this method.
+    /// This function should not be used.
     #[inline]
     #[must_use]
     pub fn sign(&self, msg: &[u8]) -> Signature {

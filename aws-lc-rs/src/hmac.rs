@@ -387,6 +387,10 @@ impl Context {
     ///
     /// # Panics
     /// Panics if the HMAC calculation cannot be finalized
+    ///
+    /// # FIPS
+    /// Use this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
+    /// `HMAC_SHA384`, or `HMAC_SHA512` algorithms.
     #[inline]
     #[must_use]
     pub fn sign(self) -> Tag {
@@ -420,7 +424,7 @@ impl Context {
 /// return value of `sign` to a tag. Use `verify` for verification instead.
 ///
 /// # FIPS
-/// FIPS users should only utilize this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
+/// Use this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
 /// `HMAC_SHA384`, or `HMAC_SHA512` algorithms.
 #[inline]
 #[must_use]
@@ -442,7 +446,7 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 /// `error::Unspecified` if the inputs are not verified.
 ///
 /// # FIPS
-/// FIPS users should only utilize this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
+/// Use this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
 /// `HMAC_SHA384`, or `HMAC_SHA512` algorithms.
 #[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {

@@ -124,7 +124,7 @@ impl Context {
     /// Panics if the digest is unable to be finalized
     ///
     /// # FIPS
-    /// FIPS users should only utilize this method with the following algorithms:
+    /// This function should only be used with the following algorithms:
     /// * `SHA1_FOR_LEGACY_USE_ONLY`
     /// * `SHA224`
     /// * `SHA256`
@@ -169,7 +169,7 @@ impl Context {
 /// Returns the digest of `data` using the given digest algorithm.
 ///
 /// # FIPS
-/// FIPS users should only utilize this method with the following algorithms:
+/// This function should only be used with the following algorithms:
 /// * `SHA1_FOR_LEGACY_USE_ONLY`
 /// * `SHA224`
 /// * `SHA256`

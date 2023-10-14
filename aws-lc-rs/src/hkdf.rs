@@ -121,6 +121,14 @@ impl Salt {
     ///
     /// # Panics
     /// `new` panics if the salt length exceeds the limit
+    ///
+    /// # FIPS
+    /// * The provided `Algorithm` should be one of these following:
+    ///   * `HKDF_SHA1_FOR_LEGACY_USE_ONLY`
+    ///   * `HKDF_SHA256`
+    ///   * `HKDF_SHA384`
+    ///   * `HKDF_SHA512`
+    /// * `value.len() > 0` is true
     #[must_use]
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
         Salt::try_new(algorithm, value).expect("Salt length limit exceeded.")
@@ -306,6 +314,11 @@ impl Prk {
     ///
     /// # Panics
     /// Panics if the given Prk length exceeds the limit
+    ///
+    /// # FIPS
+    /// This function should not be used.
+    ///
+    /// See [`Salt::extract`].
     #[must_use]
     pub fn new_less_safe(algorithm: Algorithm, value: &[u8]) -> Self {
         Prk::try_new_less_safe(algorithm, value).expect("Prk length limit exceeded.")
@@ -330,6 +343,11 @@ impl Prk {
     ///
     /// # Errors
     /// `error::Unspecified` if (and only if) `len` is too large.
+    ///
+    /// # FIPS
+    /// * `Prk` should be constructed using `Salt::extract` prior to calling
+    /// this method.
+    /// * After concatination of the `info` slices the resulting `[u8].len() > 0` is true.
     #[inline]
     pub fn expand<'a, L: KeyType>(
         &'a self,
@@ -411,13 +429,13 @@ impl<L: KeyType> Okm<'_, L> {
     /// `L: KeyType`.
     ///
     ///# FIPS
-    /// FIPS users should utilize this method when meeting the following conditions:
+    /// The following conditions should be met:
     /// * The HKDF algorithm is one of:
     ///    * `HKDF_SHA1_FOR_LEGACY_USE_ONLY`
     ///    * `HKDF_SHA256`
     ///    * `HKDF_SHA384`
     ///    * `HKDF_SHA512`
-    /// * If the [`Okm`] was constructed from a [`Prk`] created with [`Salt::extract`]:
+    /// * The [`Okm`] was constructed from a [`Prk`] created with [`Salt::extract`] and:
     ///    * The `value.len()` passed to [`Salt::new`] was non-zero.
     ///    * The `info_len` from [`Prk::expand`] was non-zero.
     #[inline]

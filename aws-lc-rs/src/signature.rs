@@ -307,6 +307,12 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     ///
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
+    ///
+    /// # FIPS
+    /// Use this method when meeting the following conditions:
+    /// * RSA Key Sizes: 1024, 2048, 3072, 4096
+    /// * NIST Elliptic Curves: P256, P384, P521
+    /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
     #[cfg(feature = "ring-sig-verify")]
     #[deprecated(note = "please use `VerificationAlgorithm::verify_sig` instead")]
     fn verify(
@@ -323,7 +329,7 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     /// `error::Unspecified` if inputs not verified.
     ///
     /// # FIPS
-    /// FIPS users should utilize this method when meeting the following conditions:
+    /// Use this method when meeting the following conditions:
     /// * RSA Key Sizes: 1024, 2048, 3072, 4096
     /// * NIST Elliptic Curves: P256, P384, P521
     /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
@@ -370,6 +376,11 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     ///
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
+    ///
+    /// # FIPS
+    /// * RSA Key Sizes: 1024, 2048, 3072, 4096
+    /// * NIST Elliptic Curves: P256, P384, P521
+    /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
     #[inline]
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
         self.algorithm
