@@ -157,7 +157,7 @@ impl Ed25519KeyPair {
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     ///
     /// # FIPS
-    /// FIPS users should not use this method.
+    /// This function should not be used.
     pub fn generate_pkcs8(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
         let evp_pkey = unsafe { generate_key()? };
         evp_pkey.marshall_private_key(Version::V2)
@@ -176,7 +176,7 @@ impl Ed25519KeyPair {
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     ///
     /// # FIPS
-    /// FIPS users should not use this method.
+    /// This method should not be used.
     pub fn generate_pkcs8v1(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
         let evp_pkey = unsafe { generate_key()? };
         evp_pkey.marshall_private_key(Version::V1)
@@ -296,7 +296,7 @@ impl Ed25519KeyPair {
     /// Panics if the message is unable to be signed
     ///
     /// # FIPS
-    /// This function should not be used.
+    /// This method should not be used.
     #[inline]
     #[must_use]
     pub fn sign(&self, msg: &[u8]) -> Signature {

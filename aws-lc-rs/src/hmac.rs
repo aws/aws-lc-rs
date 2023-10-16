@@ -200,6 +200,14 @@ impl Clone for LcHmacCtx {
 }
 
 /// A key to use for HMAC signing.
+///
+/// # FIPS
+/// Use one of the following algorithms:
+/// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+/// * `HMAC_SHA224`
+/// * `HMAC_SHA256`
+/// * `HMAC_SHA384`
+/// * `HMAC_SHA512`
 #[derive(Clone)]
 pub struct Key {
     pub(crate) algorithm: Algorithm,
@@ -230,6 +238,14 @@ impl Key {
     ///
     /// # Errors
     /// `error::Unspecified` is the `rng` fails.
+    ///
+    /// # FIPS
+    /// Use one of the following algorithms:
+    /// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+    /// * `HMAC_SHA224`
+    /// * `HMAC_SHA256`
+    /// * `HMAC_SHA384`
+    /// * `HMAC_SHA512`
     pub fn generate(
         algorithm: Algorithm,
         rng: &dyn crate::rand::SecureRandom,
@@ -389,8 +405,12 @@ impl Context {
     /// Panics if the HMAC calculation cannot be finalized
     ///
     /// # FIPS
-    /// Use this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
-    /// `HMAC_SHA384`, or `HMAC_SHA512` algorithms.
+    /// Use this method with one of the following algorithms:
+    /// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+    /// * `HMAC_SHA224`
+    /// * `HMAC_SHA256`
+    /// * `HMAC_SHA384`
+    /// * `HMAC_SHA512`
     #[inline]
     #[must_use]
     pub fn sign(self) -> Tag {
@@ -424,8 +444,12 @@ impl Context {
 /// return value of `sign` to a tag. Use `verify` for verification instead.
 ///
 /// # FIPS
-/// Use this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
-/// `HMAC_SHA384`, or `HMAC_SHA512` algorithms.
+/// Use this method with one of the following algorithms:
+/// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+/// * `HMAC_SHA224`
+/// * `HMAC_SHA256`
+/// * `HMAC_SHA384`
+/// * `HMAC_SHA512`
 #[inline]
 #[must_use]
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
@@ -446,8 +470,12 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 /// `error::Unspecified` if the inputs are not verified.
 ///
 /// # FIPS
-/// Use this method with `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`,
-/// `HMAC_SHA384`, or `HMAC_SHA512` algorithms.
+/// Use this method with one of the following algorithms:
+/// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+/// * `HMAC_SHA224`
+/// * `HMAC_SHA256`
+/// * `HMAC_SHA384`
+/// * `HMAC_SHA512`
 #[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
     constant_time::verify_slices_are_equal(sign(key, data).as_ref(), tag)

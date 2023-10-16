@@ -76,7 +76,7 @@ impl Secret {
 
     /// Calculates `len` bytes of TLS PRF using the configured [`Algorithm`], and returns [`Secret`] of length `len`.
     ///
-    /// In this function calling convention `seed1` and `seed2` will be concatenated together: `seed1 || seed2`.
+    /// In this method call signature `seed1` and `seed2` will be concatenated together: `seed1 || seed2`.
     ///
     /// See [RFC5246](https://datatracker.ietf.org/doc/html/rfc5246#section-5)
     ///
