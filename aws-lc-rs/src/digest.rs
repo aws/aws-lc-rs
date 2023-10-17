@@ -51,7 +51,7 @@ use std::os::raw::c_uint;
 /// A context for multi-step (Init-Update-Finish) digest calculations.
 ///
 /// # FIPS
-/// Context should only be used with the following algorithms:
+/// Context must be used with one of the following algorithms:
 /// * `SHA1_FOR_LEGACY_USE_ONLY`
 /// * `SHA224`
 /// * `SHA256`
@@ -169,7 +169,7 @@ impl Context {
 /// Returns the digest of `data` using the given digest algorithm.
 ///
 /// # FIPS
-/// This function should only be used with the following algorithms:
+/// This function must only be used with one of the following algorithms:
 /// * `SHA1_FOR_LEGACY_USE_ONLY`
 /// * `SHA224`
 /// * `SHA256`

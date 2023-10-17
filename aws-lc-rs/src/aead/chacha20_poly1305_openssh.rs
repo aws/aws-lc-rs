@@ -21,7 +21,7 @@
 //! [RFC 4253]: https://tools.ietf.org/html/rfc4253
 //!
 //! # FIPS
-//! The APIs offered in this module should not be used.
+//! The APIs offered in this module must not be used.
 
 use super::{poly1305, Nonce, Tag};
 use crate::cipher::block::BLOCK_LEN;
@@ -53,7 +53,7 @@ impl SealingKey {
     /// is encrypted with `K_1` and `ciphertext` is encrypted by `K_2`.
     ///
     /// # FIPS
-    /// This method should not be used.
+    /// This method must not be used.
     #[inline]
     pub fn seal_in_place(
         &self,
@@ -100,7 +100,7 @@ impl OpeningKey {
     /// called.
     ///
     /// # FIPS
-    /// This method should not be used.
+    /// This method must not be used.
     #[inline]
     #[must_use]
     pub fn decrypt_packet_length(
@@ -130,7 +130,7 @@ impl OpeningKey {
     /// `error::Unspecified` when ciphertext is invalid
     ///
     /// # FIPS
-    /// This method should not be used.
+    /// This method must not be used.
     #[inline]
     pub fn open_in_place<'a>(
         &self,

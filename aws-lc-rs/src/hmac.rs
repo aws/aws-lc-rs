@@ -202,7 +202,7 @@ impl Clone for LcHmacCtx {
 /// A key to use for HMAC signing.
 ///
 /// # FIPS
-/// Use one of the following algorithms:
+/// Use this type with one of the following algorithms:
 /// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
 /// * `HMAC_SHA224`
 /// * `HMAC_SHA256`
@@ -240,7 +240,7 @@ impl Key {
     /// `error::Unspecified` is the `rng` fails.
     ///
     /// # FIPS
-    /// Use one of the following algorithms:
+    /// Use this function with one of the following algorithms:
     /// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
     /// * `HMAC_SHA224`
     /// * `HMAC_SHA256`
@@ -401,9 +401,6 @@ impl Context {
     /// the return value of `sign` to a tag. Use `verify` for verification
     /// instead.
     ///
-    /// # Panics
-    /// Panics if the HMAC calculation cannot be finalized
-    ///
     /// # FIPS
     /// Use this method with one of the following algorithms:
     /// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
@@ -411,6 +408,9 @@ impl Context {
     /// * `HMAC_SHA256`
     /// * `HMAC_SHA384`
     /// * `HMAC_SHA512`
+    ///
+    /// # Panics
+    /// Panics if the HMAC calculation cannot be finalized
     #[inline]
     #[must_use]
     pub fn sign(self) -> Tag {
@@ -444,7 +444,7 @@ impl Context {
 /// return value of `sign` to a tag. Use `verify` for verification instead.
 ///
 /// # FIPS
-/// Use this method with one of the following algorithms:
+/// Use this function with one of the following algorithms:
 /// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
 /// * `HMAC_SHA224`
 /// * `HMAC_SHA256`
@@ -470,7 +470,7 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 /// `error::Unspecified` if the inputs are not verified.
 ///
 /// # FIPS
-/// Use this method with one of the following algorithms:
+/// Use this function with one of the following algorithms:
 /// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
 /// * `HMAC_SHA224`
 /// * `HMAC_SHA256`

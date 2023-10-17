@@ -210,14 +210,14 @@ impl EphemeralPrivateKey {
     /// # *ring* Compatibility
     ///  Our implementation ignores the `SecureRandom` parameter.
     ///
-    /// # Errors
-    /// `error::Unspecified` when operation fails due to internal error.
-    ///
     /// # FIPS
-    /// Use this method with the following algorithms:
+    /// Use this function with one of the following algorithms:
     /// * `ECDH_P256`
     /// * `ECDH_P384`
     /// * `ECDH_P521`
+    ///
+    /// # Errors
+    /// `error::Unspecified` when operation fails due to internal error.
     pub fn generate(alg: &'static Algorithm, _rng: &dyn SecureRandom) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
@@ -502,14 +502,14 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// key material from the key agreement operation and then returns what `kdf`
 /// returns.
 ///
-/// # Errors
-/// `error_value` on internal failure.
-///
 /// # FIPS
 /// Use this function with one of the following key algorithms:
 /// * `ECDH_P256`
 /// * `ECDH_P384`
 /// * `ECDH_P521`
+///
+/// # Errors
+/// `error_value` on internal failure.
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::missing_panics_doc)]

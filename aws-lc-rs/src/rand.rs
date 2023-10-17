@@ -152,11 +152,12 @@ impl sealed::SecureRandom for SystemRandom {
 }
 
 /// Fills `dest` with random bytes.
-/// # Errors
-/// `error::Unspecified` if unable to fill `dest`.
-///
+/// 
 /// # FIPS
 /// Use this for retrieving random bytes or [`SystemRandom`].
+/// 
+/// # Errors
+/// `error::Unspecified` if unable to fill `dest`.
 pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
     if 1 != indicator_check!(unsafe { RAND_bytes(dest.as_mut_ptr(), dest.len()) }) {
         return Err(Unspecified);

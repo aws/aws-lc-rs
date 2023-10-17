@@ -168,8 +168,8 @@ const MAX_USIZE32: u64 = u32::MAX as u64;
 /// algorithm's output length, per the PBKDF2 specification.
 ///
 /// # FIPS
-/// Use this method when meeting the following conditions:
-/// * Algorithms:
+/// The following conditions must be met:
+/// * Algorithm is one of the following:
 ///   * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
 ///   * `HMAC_SHA224`
 ///   * `HMAC_SHA256`
@@ -244,9 +244,9 @@ fn try_derive(
 /// algorithm's output length, per the PBKDF2 specification.
 ///
 /// # FIPS
-/// Use this method when meeting the following conditions
-/// * Algorithms:
-///   *`HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+/// The following conditions must be met:
+/// * Algorithm is one of the following:
+///   * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
 ///   * `HMAC_SHA224`
 ///   * `HMAC_SHA256`
 ///   * `HMAC_SHA384`

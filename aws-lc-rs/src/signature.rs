@@ -305,14 +305,14 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     /// Verify the signature `signature` of message `msg` with the public key
     /// `public_key`.
     ///
-    /// # Errors
-    /// `error::Unspecified` if inputs not verified.
-    ///
     /// # FIPS
-    /// Use this method when meeting the following conditions:
+    /// The following conditions must be met:
     /// * RSA Key Sizes: 1024, 2048, 3072, 4096
     /// * NIST Elliptic Curves: P256, P384, P521
     /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    ///
+    /// # Errors
+    /// `error::Unspecified` if inputs not verified.
     #[cfg(feature = "ring-sig-verify")]
     #[deprecated(note = "please use `VerificationAlgorithm::verify_sig` instead")]
     fn verify(
@@ -325,14 +325,14 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     /// Verify the signature `signature` of message `msg` with the public key
     /// `public_key`.
     ///
-    /// # Errors
-    /// `error::Unspecified` if inputs not verified.
-    ///
     /// # FIPS
-    /// Use this method when meeting the following conditions:
+    /// The following conditions must be met:
     /// * RSA Key Sizes: 1024, 2048, 3072, 4096
     /// * NIST Elliptic Curves: P256, P384, P521
     /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    ///
+    /// # Errors
+    /// `error::Unspecified` if inputs not verified.
     fn verify_sig(
         &self,
         public_key: &[u8],
@@ -374,13 +374,14 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     ///
     /// See the [`crate::signature`] module-level documentation for examples.
     ///
-    /// # Errors
-    /// `error::Unspecified` if inputs not verified.
-    ///
     /// # FIPS
+    /// The following conditions must be met:
     /// * RSA Key Sizes: 1024, 2048, 3072, 4096
     /// * NIST Elliptic Curves: P256, P384, P521
     /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    /// 
+    /// # Errors
+    /// `error::Unspecified` if inputs not verified.
     #[inline]
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
         self.algorithm
