@@ -97,6 +97,16 @@ impl AlgorithmID {
             AlgorithmID::X25519 => 32,
         }
     }
+
+    #[inline]
+    fn pub_key_len_compressed(&self) -> usize {
+        match self {
+            AlgorithmID::ECDH_P256 => 33,
+            AlgorithmID::ECDH_P384 => 49,
+            AlgorithmID::ECDH_P521 => 67,
+            AlgorithmID::X25519 => 32,
+        }
+    }
 }
 
 impl Debug for AlgorithmID {
@@ -321,7 +331,7 @@ impl EphemeralPrivateKey {
         })
     }
 
-    /// Computes the public key from the private key.
+    /// Computes the public key from the private key in uncompressed format.
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
@@ -341,22 +351,54 @@ impl EphemeralPrivateKey {
                     })
                 }
             }
-            KeyInner::X25519(priv_key) => {
+            KeyInner::X25519(priv_key) => self.compute_x25519_public_key(priv_key),
+        }
+    }
+
+    fn compute_x25519_public_key(
+        &self,
+        priv_key: &LcPtr<EVP_PKEY>,
+    ) -> Result<PublicKey, Unspecified> {
+        let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
+        let mut out_len = buffer.len();
+
+        if 1 != unsafe {
+            EVP_PKEY_get_raw_public_key(**priv_key, buffer.as_mut_ptr(), &mut out_len)
+        } {
+            return Err(Unspecified);
+        }
+
+        Ok(PublicKey {
+            alg: self.algorithm(),
+            public_key: buffer,
+            len: out_len,
+        })
+    }
+
+    /// Computes the public key from the private key in compressed format.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when operation fails due to internal error.
+    ///
+    pub fn compute_public_key_compressed(&self) -> Result<PublicKey, Unspecified> {
+        match &self.inner_key {
+            KeyInner::ECDH_P256(ec_key)
+            | KeyInner::ECDH_P384(ec_key)
+            | KeyInner::ECDH_P521(ec_key) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
-                let mut out_len = buffer.len();
-
-                if 1 != unsafe {
-                    EVP_PKEY_get_raw_public_key(**priv_key, buffer.as_mut_ptr(), &mut out_len)
-                } {
-                    return Err(Unspecified);
+                unsafe {
+                    let key_len = ec::marshal_public_key_to_buffer_compressed(
+                        &mut buffer,
+                        &ec_key.as_const(),
+                    )?;
+                    Ok(PublicKey {
+                        alg: self.algorithm(),
+                        public_key: buffer,
+                        len: key_len,
+                    })
                 }
-
-                Ok(PublicKey {
-                    alg: self.algorithm(),
-                    public_key: buffer,
-                    len: out_len,
-                })
             }
+            KeyInner::X25519(priv_key) => self.compute_x25519_public_key(priv_key),
         }
     }
 
@@ -529,8 +571,13 @@ where
     if peer_public_key.alg != expected_alg {
         return Err(error_value);
     }
+
     let peer_pub_bytes = peer_public_key.bytes.as_ref();
-    if peer_pub_bytes.len() != expected_pub_key_len {
+    let peer_pub_bytes_len = peer_pub_bytes.len();
+
+    if peer_pub_bytes_len != expected_pub_key_len
+        && peer_pub_bytes_len != expected_alg.id.pub_key_len_compressed()
+    {
         return Err(error_value);
     }
 
@@ -956,7 +1003,13 @@ mod tests {
                         assert_eq!(my_private.algorithm(), alg);
 
                         let computed_public = my_private.compute_public_key().unwrap();
-                        assert_eq!(computed_public.as_ref(), &my_public[..]);
+                        if computed_public.as_ref().len() == my_public.len() {
+                            assert_eq!(computed_public.as_ref(), &my_public[..]);
+                        } else {
+                            let computed_public =
+                                my_private.compute_public_key_compressed().unwrap();
+                            assert_eq!(computed_public.as_ref(), &my_public[..]);
+                        }
 
                         assert_eq!(my_private.algorithm(), alg);
 

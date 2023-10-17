@@ -336,7 +336,34 @@ pub(crate) unsafe fn marshal_public_key_to_buffer(
 
     let ec_point = ConstPointer::new(EC_KEY_get0_public_key(ec_key))?;
 
-    let out_len = ec_point_to_bytes(&ec_group, &ec_point, buffer)?;
+    let out_len = ec_point_to_bytes(
+        &ec_group,
+        &ec_point,
+        buffer,
+        point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED,
+    )?;
+    Ok(out_len)
+}
+
+pub(crate) unsafe fn marshal_public_key_to_buffer_compressed(
+    buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
+    evp_pkey: &ConstPointer<EVP_PKEY>,
+) -> Result<usize, Unspecified> {
+    let ec_key = EVP_PKEY_get0_EC_KEY(**evp_pkey);
+    if ec_key.is_null() {
+        return Err(Unspecified);
+    }
+
+    let ec_group = ConstPointer::new(EC_KEY_get0_group(ec_key))?;
+
+    let ec_point = ConstPointer::new(EC_KEY_get0_public_key(ec_key))?;
+
+    let out_len = ec_point_to_bytes(
+        &ec_group,
+        &ec_point,
+        buffer,
+        point_conversion_form_t::POINT_CONVERSION_COMPRESSED,
+    )?;
     Ok(out_len)
 }
 
@@ -506,9 +533,8 @@ unsafe fn ec_point_to_bytes(
     ec_group: &ConstPointer<EC_GROUP>,
     ec_point: &ConstPointer<EC_POINT>,
     buf: &mut [u8; PUBLIC_KEY_MAX_LEN],
+    pt_conv_form: point_conversion_form_t,
 ) -> Result<usize, Unspecified> {
-    let pt_conv_form = point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED;
-
     let out_len = EC_POINT_point2oct(
         **ec_group,
         **ec_point,
