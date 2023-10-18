@@ -119,6 +119,15 @@ impl Salt {
     /// Constructing a `Salt` is relatively expensive so it is good to reuse a
     /// `Salt` object instead of re-constructing `Salt`s with the same value.
     ///
+    /// # FIPS
+    /// The following conditions must be met:
+    /// * Algorithm is one of the following:
+    ///   * `HKDF_SHA1_FOR_LEGACY_USE_ONLY`
+    ///   * `HKDF_SHA256`
+    ///   * `HKDF_SHA384`
+    ///   * `HKDF_SHA512`
+    /// * `value.len() > 0` is true
+    ///
     /// # Panics
     /// `new` panics if the salt length exceeds the limit
     #[must_use]
@@ -304,6 +313,11 @@ impl Prk {
     /// intentionally wants to leak the PRK secret, e.g. to implement
     /// `SSLKEYLOGFILE` functionality.
     ///
+    /// # FIPS
+    /// This function must not be used.
+    ///
+    /// See [`Salt::extract`].
+    ///
     /// # Panics
     /// Panics if the given Prk length exceeds the limit
     #[must_use]
@@ -330,6 +344,12 @@ impl Prk {
     ///
     /// # Errors
     /// `error::Unspecified` if (and only if) `len` is too large.
+    ///
+    /// # FIPS
+    /// The following conditions must be met:
+    /// * `Prk` must be constructed using `Salt::extract` prior to calling
+    /// this method.
+    /// * After concatination of the `info` slices the resulting `[u8].len() > 0` is true.
     #[inline]
     pub fn expand<'a, L: KeyType>(
         &'a self,
@@ -406,20 +426,20 @@ impl<L: KeyType> Okm<'_, L> {
     /// Fills `out` with the output of the HKDF-Expand operation for the given
     /// inputs.
     ///
-    /// # Errors
-    /// `error::Unspecified` if the requested output length differs from the length specified by
-    /// `L: KeyType`.
-    ///
-    ///# FIPS
-    /// FIPS users should utilize this method when meeting the following conditions:
-    /// * The HKDF algorithm is one of:
+    /// # FIPS
+    /// The following conditions must be met:
+    /// * Algorithm is one of the following:
     ///    * `HKDF_SHA1_FOR_LEGACY_USE_ONLY`
     ///    * `HKDF_SHA256`
     ///    * `HKDF_SHA384`
     ///    * `HKDF_SHA512`
-    /// * If the [`Okm`] was constructed from a [`Prk`] created with [`Salt::extract`]:
+    /// * The [`Okm`] was constructed from a [`Prk`] created with [`Salt::extract`] and:
     ///    * The `value.len()` passed to [`Salt::new`] was non-zero.
     ///    * The `info_len` from [`Prk::expand`] was non-zero.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the requested output length differs from the length specified by
+    /// `L: KeyType`.
     #[inline]
     pub fn fill(self, out: &mut [u8]) -> Result<(), Unspecified> {
         if out.len() != self.len.len() {

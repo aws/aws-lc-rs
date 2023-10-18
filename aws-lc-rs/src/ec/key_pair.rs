@@ -148,7 +148,7 @@ impl EcdsaKeyPair {
     /// `error::Unspecified` on internal error.
     ///
     /// # FIPS
-    /// FIPS users should utilize this method when meeting the following conditions:
+    /// The following conditions must be met:
     /// * NIST Elliptic Curves: P256, P384, P521
     /// * Digest Algorithms: SHA256, SHA384, SHA512
     #[inline]

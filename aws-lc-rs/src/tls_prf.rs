@@ -2,6 +2,28 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 //! TLS 1.2 PRF API's for usage in [RFC 5246](https://www.rfc-editor.org/rfc/rfc5246) and [RFC 7627](https://www.rfc-editor.org/rfc/rfc7627).
+//!
+//! # Example
+//!
+//! ```rust
+//! # use std::error::Error;
+//! #
+//! # fn main() -> Result<(), Box<dyn Error>> {
+//! use aws_lc_rs::tls_prf::{Secret, P_SHA256};
+//!
+//! let pre_master_secret = &[42; 32]; // Value is established during key exchange
+//! let session_hash = &[7; 32]; // Session hash of handshake log
+//!
+//! let secret = Secret::new(&P_SHA256, pre_master_secret)?;
+//!
+//! let derived_secret = secret.derive(b"extended master secret", session_hash, 48)?;
+//!
+//! let derived_secret_bytes = derived_secret.as_ref();
+//!
+//! assert_eq!(derived_secret_bytes.len(), 48);
+//! # Ok(())
+//! # }
+//! ```
 
 use crate::{
     digest::match_digest_type, digest::AlgorithmID, error::Unspecified, fips::indicator_check,
@@ -54,7 +76,7 @@ impl Secret {
 
     /// Calculates `len` bytes of TLS PRF using the configured [`Algorithm`], and returns [`Secret`] of length `len`.
     ///
-    /// In this function calling convention `seed1` and `seed2` will be concatenated together: `seed1 || seed2`.
+    /// In this method, `seed1` and `seed2` will be concatenated together: `seed1 || seed2`.
     ///
     /// See [RFC5246](https://datatracker.ietf.org/doc/html/rfc5246#section-5)
     ///

@@ -168,8 +168,12 @@ const MAX_USIZE32: u64 = u32::MAX as u64;
 /// algorithm's output length, per the PBKDF2 specification.
 ///
 /// # FIPS
-/// FIPS users should utilize this method when meeting the following conditions:
-/// * Algorithms: `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`, `HMAC_SHA384`, or `HMAC_SHA512`.
+/// The following conditions must be met:
+/// * Algorithm is one of the following:
+///   * `PBKDF2_HMAC_SHA1`
+///   * `PBKDF2_HMAC_SHA256`
+///   * `PBKDF2_HMAC_SHA384`
+///   * `PBKDF2_HMAC_SHA512`
 /// * `salt.len()` >= 16
 /// * `sercet.len()` >= 14
 /// * `iterations` >= 1000
@@ -239,10 +243,14 @@ fn try_derive(
 /// algorithm's output length, per the PBKDF2 specification.
 ///
 /// # FIPS
-/// FIPS users should utilize this method when meeting the following conditions
-/// * Algorithms: `HMAC_SHA1_FOR_LEGACY_USE_ONLY`, `HMAC_SHA224`, `HMAC_SHA256`, `HMAC_SHA384`, or `HMAC_SHA512`.
+/// The following conditions must be met:
+/// * Algorithm is one of the following:
+///   * `PBKDF2_HMAC_SHA1`
+///   * `PBKDF2_HMAC_SHA256`
+///   * `PBKDF2_HMAC_SHA384`
+///   * `PBKDF2_HMAC_SHA512`
 /// * `salt.len()` >= 16
-/// * `sercet.len()` >= 14
+/// * `secret.len()` >= 14
 /// * `iterations` >= 1000
 #[inline]
 pub fn verify(

@@ -16,7 +16,7 @@
 //!
 //! [`RandomizedNonceKey`] provides a simplified API interface that doesn't
 //! require the caller to handle construction of a `NonceSequence` or `Nonce` values
-//! themselves. FIPS users should leverage the API provided by this type.
+//! themselves.
 //!
 //! ```rust
 //! # use std::error::Error;
@@ -49,8 +49,8 @@
 //!
 //! # TLS AEAD APIs
 //!
-//! Application developers developing TLS protocol implementations, with FIPS compliance requirements
-//! should use the [`TlsRecordSealingKey`] and [`TlsRecordOpeningKey`] respectively.
+//! Systems developers creating TLS protocol implementations should use
+//! [`TlsRecordSealingKey`] and [`TlsRecordOpeningKey`] respectively for AEAD.
 //!
 //! # Nonce Sequence APIs
 //!
@@ -175,6 +175,9 @@ pub trait BoundKey<N: NonceSequence>: Debug {
 ///
 /// Intentionally not `Clone` or `Copy` since cloning would allow duplication
 /// of the nonce sequence.
+///
+/// # FIPS
+/// Prefer [`RandomizedNonceKey`] for opening operations.
 pub struct OpeningKey<N: NonceSequence> {
     key: UnboundKey,
     nonce_sequence: N,
@@ -212,15 +215,17 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// has been overwritten by the plaintext; `plaintext` will refer to the
     /// plaintext without the tag.
     ///
+    /// # FIPS
+    /// Use this method with one of the following algorithms:
+    /// * `AES_128_GCM`
+    /// * `AES_256_GCM`
+    ///
+    /// Prefer [`RandomizedNonceKey::open_in_place`], as it provides API symmetry
+    /// with sealing operations.
+    ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
     /// overwritten in an unspecified way.
-    ///
-    /// # FIPS
-    /// FIPS users should only utilize this method with `AES_128_GCM` or `AES_256_GCM` algorithms.
-    ///
-    /// Prefer [`RandomizedNonceKey::open_in_place`] for FIPS usage, as it provides API symmetry with
-    /// sealing operations.
     #[inline]
     pub fn open_in_place<'in_out, A>(
         &mut self,
@@ -275,15 +280,17 @@ impl<N: NonceSequence> OpeningKey<N> {
     ///
     /// This reassembly be accomplished with three calls to `open_within()`.
     ///
+    /// # FIPS
+    /// Use this method with one of the following algorithms:
+    /// * `AES_128_GCM`
+    /// * `AES_256_GCM`
+    ///
+    /// Prefer [`RandomizedNonceKey::open_within`], as it provides API symmetry
+    /// with sealing operations.
+    ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
     /// overwritten in an unspecified way.
-    ///
-    /// # FIPS
-    /// FIPS users should only utilize this method with `AES_128_GCM` or `AES_256_GCM` algorithms.
-    ///
-    /// Prefer [`RandomizedNonceKey::open_in_place`] for FIPS usage, as it provides API symmetry with
-    /// sealing operations.
     #[inline]
     pub fn open_within<'in_out, A>(
         &mut self,
@@ -352,6 +359,9 @@ fn open_within<'in_out, A: AsRef<[u8]>>(
 ///
 /// Intentionally not `Clone` or `Copy` since cloning would allow duplication
 /// of the nonce sequence.
+///
+/// # FIPS
+/// Prefer [`RandomizedNonceKey`] for sealing operations.
 pub struct SealingKey<N: NonceSequence> {
     key: UnboundKey,
     nonce_sequence: N,
@@ -382,13 +392,13 @@ impl<N: NonceSequence> Debug for SealingKey<N> {
 impl<N: NonceSequence> SealingKey<N> {
     /// Deprecated. Renamed to `seal_in_place_append_tag`.
     ///
+    /// # FIPS
+    /// This method must not be used.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_append_tag`].
+    ///
     /// # Errors
     /// See `seal_in_place_append_tag`
-    ///
-    /// # FIPS
-    /// FIPS users should not use this method.
-    ///
-    /// See [`RandomizedNonceKey::seal_in_place_append_tag`] for FIPS usage.
     #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
     #[inline]
     pub fn seal_in_place<A, InOut>(
@@ -412,13 +422,14 @@ impl<N: NonceSequence> SealingKey<N> {
     /// key.seal_in_place_separate_tag(aad, in_out.as_mut())
     ///     .map(|tag| in_out.extend(tag.as_ref()))
     /// ```
-    /// # Errors
-    /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
     ///
     /// # FIPS
-    /// FIPS users should not use this method.
+    /// This method must not be used.
     ///
-    /// See [`RandomizedNonceKey::seal_in_place_append_tag`] for FIPS usage.
+    /// See [`RandomizedNonceKey::seal_in_place_append_tag`].
+    ///
+    /// # Errors
+    /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_append_tag<A, InOut>(
@@ -452,13 +463,13 @@ impl<N: NonceSequence> SealingKey<N> {
     /// For most protocols, the caller must append the tag to the ciphertext.
     /// The tag will be `self.algorithm.tag_len()` bytes long.
     ///
+    /// # FIPS
+    /// This method must not be used.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_separate_tag`].
+    ///
     /// # Errors
     /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
-    ///
-    /// # FIPS
-    /// FIPS users should not use this method.
-    ///
-    /// See [`RandomizedNonceKey::seal_in_place_separate_tag`] for FIPS approved usage.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_separate_tag<A>(
@@ -675,7 +686,16 @@ impl hkdf::KeyType for &'static Algorithm {
 /// Immutable keys for use in situations where `OpeningKey`/`SealingKey` and
 /// `NonceSequence` cannot reasonably be used.
 ///
-/// Prefer to use `OpeningKey`/`SealingKey` and `NonceSequence` when practical.
+/// Prefer [`RandomizedNonceKey`] when practical.
+///
+/// # FIPS
+/// The following conditions must be met:
+/// * `UnboundKey`'s algorithm is one of:
+///   * `AES_128_GCM`
+///   * `AES_256_GCM`
+/// * Use `open_in_place` or `open_within` only.
+///
+/// Use [`RandomizedNonceKey`].
 pub struct LessSafeKey {
     key: UnboundKey,
 }
@@ -691,14 +711,16 @@ impl LessSafeKey {
     ///
     /// `nonce` must be unique for every use of the key to open data.
     ///
+    /// # FIPS
+    /// Use this method with one of the following algorithms:
+    /// * `AES_128_GCM`
+    /// * `AES_256_GCM`
+    ///
+    /// Prefer [`RandomizedNonceKey::open_in_place`] as it provides API symmetry with
+    /// sealing operations.
+    ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
-    ///
-    /// # FIPS
-    /// FIPS users should only utilize this method with `AES_128_GCM` or `AES_256_GCM` algorithms.
-    ///
-    /// Prefer [`RandomizedNonceKey::open_in_place`] for FIPS usage, as it provides API symmetry with
-    /// sealing operations.
     #[inline]
     pub fn open_in_place<'in_out, A>(
         &self,
@@ -716,14 +738,16 @@ impl LessSafeKey {
     ///
     /// `nonce` must be unique for every use of the key to open data.
     ///
+    /// # FIPS
+    /// Use this method with one of the following algorithms:
+    /// * `AES_128_GCM`
+    /// * `AES_256_GCM`
+    ///
+    /// Prefer [`RandomizedNonceKey::open_in_place`], as it provides API symmetry
+    /// with sealing operations.
+    ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
-    ///
-    /// # FIPS
-    /// FIPS users should only utilize this method with `AES_128_GCM` or `AES_256_GCM` algorithms.
-    ///
-    /// Prefer [`RandomizedNonceKey::open_in_place`] for FIPS usage, as it provides API symmetry with
-    /// sealing operations.
     #[inline]
     pub fn open_within<'in_out, A>(
         &self,
@@ -748,9 +772,9 @@ impl LessSafeKey {
     /// Deprecated. Renamed to `seal_in_place_append_tag()`.
     ///
     /// # FIPS
-    /// FIPS users should not use this method.
+    /// This method must not be used.
     ///
-    /// See [`RandomizedNonceKey::seal_in_place_append_tag`] for FIPS usage.
+    /// See [`RandomizedNonceKey::seal_in_place_append_tag`].
     #[deprecated(note = "Renamed to `seal_in_place_append_tag`.")]
     #[inline]
     #[allow(clippy::missing_errors_doc)]
@@ -772,13 +796,13 @@ impl LessSafeKey {
     ///
     /// `nonce` must be unique for every use of the key to seal data.
     ///
+    /// # FIPS
+    /// This method must not be used.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_append_tag`].
+    ///
     /// # Errors
     /// `error::Unspecified` if encryption operation fails.
-    ///
-    /// # FIPS
-    /// FIPS users should not use this method.
-    ///
-    /// See [`RandomizedNonceKey::seal_in_place_append_tag`] for FIPS usage.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_append_tag<A, InOut>(
@@ -806,13 +830,13 @@ impl LessSafeKey {
     ///
     /// `nonce` must be unique for every use of the key to seal data.
     ///
+    /// # FIPS
+    /// This method must not be used.
+    ///
+    /// See [`RandomizedNonceKey::seal_in_place_separate_tag`].
+    ///
     /// # Errors
     /// `error::Unspecified` if encryption operation fails.
-    ///
-    /// # FIPS
-    /// FIPS users should not use this method.
-    ///
-    /// See [`RandomizedNonceKey::seal_in_place_separate_tag`] for FIPS usage.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_separate_tag<A>(
@@ -848,9 +872,11 @@ impl LessSafeKey {
     ///
     /// `nonce` must be unique for every use of the key to seal data.
     ///
+    /// # FIPS
+    /// This method must not be used.
+    ///
     /// # Errors
     /// `error::Unspecified` if encryption operation fails.
-    ///
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_scatter<A>(
@@ -893,9 +919,14 @@ impl Debug for LessSafeKey {
 
 /// AEAD Cipher key using a randomized nonce.
 ///
+/// `RandomizedNonceKey` handles generation random nonce values.
+///
+/// The following algorithms are supported:
+/// * `AES_128_GCM`
+/// * `AES_256_GCM`
+///
 /// # FIPS
-/// `RandomizedNonceKey` encapsulates APIs that follow FIPS guidance, handling
-/// generation of nonce values, and only supports the `AES_128_GCM` and `AES_256_GCM` algorithms.
+/// Use this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey`.
 pub struct RandomizedNonceKey {
     ctx: AeadCtx,
     algorithm: &'static Algorithm,
@@ -1067,10 +1098,15 @@ pub enum TlsProtocolId {
 
 /// AEAD Encryption key used for TLS protocol record encryption.
 ///
+/// This type encapsulates encryption operations for TLS AEAD algorithms.
+/// It validates that the provides nonce values are monotonically increasing for each invocation.
+///
+/// The following algorithms are supported:
+/// * `AES_128_GCM`
+/// * `AES_256_GCM`
+///
 /// # FIPS
-/// This type encapsulates encryption operations for TLS AEAD algorithms following FIPS implementation guidance.
-/// The API only supports `AES_128_GCM` and `AES_256_GCM`, and validates that the provides nonce values
-/// are monotonically increasing for each invocation.
+/// Use this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey`.
 pub struct TlsRecordSealingKey {
     // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
@@ -1200,8 +1236,15 @@ impl TlsRecordSealingKey {
 
 /// AEAD Encryption key used for TLS protocol record encryption.
 ///
+/// This type encapsulates decryption operations for TLS AEAD algorithms.
+/// It validates that the provided nonce values are monotonically increasing for each invocation.
+///
+/// The following algorithms are supported:
+/// * `AES_128_GCM`
+/// * `AES_256_GCM`
+///
 /// # FIPS
-/// This type encapsulates decryption operations for TLS AEAD algorithms following FIPS implementation guidance.
+/// Use this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey`.
 pub struct TlsRecordOpeningKey {
     // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
