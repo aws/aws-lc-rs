@@ -293,17 +293,19 @@ unsafe fn ec_key_from_public_private(
     ec_group: &LcPtr<EC_GROUP>,
     public_ec_point: &LcPtr<EC_POINT>,
     private_bignum: &DetachableLcPtr<BIGNUM>,
-) -> Result<LcPtr<EC_KEY>, ()> {
+) -> Result<LcPtr<EC_KEY>, KeyRejected> {
     let ec_key = LcPtr::new(EC_KEY_new())?;
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
-        return Err(());
+        return Err(KeyRejected::unexpected_error());
     }
     if 1 != EC_KEY_set_public_key(*ec_key, **public_ec_point) {
-        return Err(());
+        return Err(KeyRejected::unexpected_error());
     }
     if 1 != EC_KEY_set_private_key(*ec_key, **private_bignum) {
-        return Err(());
+        return Err(KeyRejected::unexpected_error());
     }
+    let nid = EC_GROUP_get_curve_name(ec_group.as_const_ptr());
+    validate_ec_key(&ec_key.as_const(), nid)?;
     Ok(ec_key)
 }
 
