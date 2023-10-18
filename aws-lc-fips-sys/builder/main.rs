@@ -23,6 +23,13 @@ pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("aws-lc").join("include")
 }
 
+pub(crate) fn get_aws_lc_rand_extra_path(manifest_dir: &Path) -> PathBuf {
+    manifest_dir
+        .join("aws-lc")
+        .join("crypto")
+        .join("rand_extra")
+}
+
 pub(crate) fn get_rust_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("include")
 }
@@ -162,7 +169,7 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: String) -> cmake::C
         cmake_cfg.define("BUILD_SHARED_LIBS", "0");
     }
 
-    let opt_level = env::var("OPT_LEVEL").unwrap_or_else(|_| "0".to_string());
+    let opt_level = get_env_flag("OPT_LEVEL", "0");
     if opt_level.ne("0") {
         if opt_level.eq("1") || opt_level.eq("2") {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
@@ -292,9 +299,12 @@ fn main() {
 
     let mut is_bindgen_required = cfg!(feature = "bindgen");
 
-    let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
-        .unwrap_or_else(|_| String::from("0"))
-        .eq("1");
+    let is_internal_generate = is_internal_generate_enabled();
+
+    assert!(
+        !(is_internal_generate && is_private_api_enabled()),
+        "AWS_LC_RUST_PRIVATE_INTERNALS=1 is not supported when AWS_LC_RUST_INTERNAL_BINDGEN=1"
+    );
 
     let pregenerated = !is_bindgen_required || is_internal_generate;
 
@@ -377,6 +387,14 @@ fn main() {
     ] {
         println!("cargo:include={}", include_path.display());
     }
+
+    if is_private_api_enabled() {
+        println!(
+            "cargo:include={}",
+            get_aws_lc_rand_extra_path(&manifest_dir).display()
+        );
+    }
+
     if let Some(include_paths) = get_aws_lc_fips_sys_includes_path() {
         for path in include_paths {
             println!("cargo:include={}", path.display());
@@ -409,4 +427,19 @@ fn check_dependencies() {
         !missing_dependency,
         "Required build dependency is missing. Halting build."
     );
+}
+
+fn is_internal_generate_enabled() -> bool {
+    get_env_flag("AWS_LC_RUST_INTERNAL_BINDGEN", "0").eq("1")
+}
+
+fn is_private_api_enabled() -> bool {
+    get_env_flag("AWS_LC_RUST_PRIVATE_INTERNALS", "0").eq("1")
+}
+
+fn get_env_flag<T>(key: &'static str, default: T) -> String
+where
+    T: Into<String>,
+{
+    env::var(key).unwrap_or(default.into())
 }
