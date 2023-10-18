@@ -379,7 +379,7 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     /// * RSA Key Sizes: 1024, 2048, 3072, 4096
     /// * NIST Elliptic Curves: P256, P384, P521
     /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
-    /// 
+    ///
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
     #[inline]

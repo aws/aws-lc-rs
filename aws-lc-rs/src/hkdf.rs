@@ -127,7 +127,7 @@ impl Salt {
     ///   * `HKDF_SHA384`
     ///   * `HKDF_SHA512`
     /// * `value.len() > 0` is true
-    /// 
+    ///
     /// # Panics
     /// `new` panics if the salt length exceeds the limit
     #[must_use]
@@ -312,12 +312,12 @@ impl Prk {
     /// Usually one can avoid using this. It is useful when the application
     /// intentionally wants to leak the PRK secret, e.g. to implement
     /// `SSLKEYLOGFILE` functionality.
-    /// 
+    ///
     /// # FIPS
     /// This function must not be used.
     ///
     /// See [`Salt::extract`].
-    /// 
+    ///
     /// # Panics
     /// Panics if the given Prk length exceeds the limit
     #[must_use]
@@ -436,7 +436,7 @@ impl<L: KeyType> Okm<'_, L> {
     /// * The [`Okm`] was constructed from a [`Prk`] created with [`Salt::extract`] and:
     ///    * The `value.len()` passed to [`Salt::new`] was non-zero.
     ///    * The `info_len` from [`Prk::expand`] was non-zero.
-    /// 
+    ///
     /// # Errors
     /// `error::Unspecified` if the requested output length differs from the length specified by
     /// `L: KeyType`.
