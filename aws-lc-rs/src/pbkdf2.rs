@@ -170,11 +170,10 @@ const MAX_USIZE32: u64 = u32::MAX as u64;
 /// # FIPS
 /// The following conditions must be met:
 /// * Algorithm is one of the following:
-///   * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
-///   * `HMAC_SHA224`
-///   * `HMAC_SHA256`
-///   * `HMAC_SHA384`
-///   * `HMAC_SHA512`
+///   * `PBKDF2_HMAC_SHA1`
+///   * `PBKDF2_HMAC_SHA256`
+///   * `PBKDF2_HMAC_SHA384`
+///   * `PBKDF2_HMAC_SHA512`
 /// * `salt.len()` >= 16
 /// * `sercet.len()` >= 14
 /// * `iterations` >= 1000
@@ -246,11 +245,10 @@ fn try_derive(
 /// # FIPS
 /// The following conditions must be met:
 /// * Algorithm is one of the following:
-///   * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
-///   * `HMAC_SHA224`
-///   * `HMAC_SHA256`
-///   * `HMAC_SHA384`
-///   * `HMAC_SHA512`
+///   * `PBKDF2_HMAC_SHA1`
+///   * `PBKDF2_HMAC_SHA256`
+///   * `PBKDF2_HMAC_SHA384`
+///   * `PBKDF2_HMAC_SHA512`
 /// * `salt.len()` >= 16
 /// * `secret.len()` >= 14
 /// * `iterations` >= 1000
