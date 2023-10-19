@@ -51,9 +51,9 @@ impl SealingKey {
     /// `padding_length||payload||random padding`. It will be overwritten by
     /// `encrypted_packet_length||ciphertext`, where `encrypted_packet_length`
     /// is encrypted with `K_1` and `ciphertext` is encrypted by `K_2`.
-    ///
-    /// # FIPS
-    /// This method must not be used.
+    //
+    // # FIPS
+    // This method must not be used.
     #[inline]
     pub fn seal_in_place(
         &self,
@@ -98,9 +98,9 @@ impl OpeningKey {
     ///
     /// Importantly, the result won't be authenticated until `open_in_place` is
     /// called.
-    ///
-    /// # FIPS
-    /// This method must not be used.
+    //
+    // # FIPS
+    // This method must not be used.
     #[inline]
     #[must_use]
     pub fn decrypt_packet_length(
@@ -128,9 +128,9 @@ impl OpeningKey {
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid
-    ///
-    /// # FIPS
-    /// This method must not be used.
+    //
+    // # FIPS
+    // This method must not be used.
     #[inline]
     pub fn open_in_place<'a>(
         &self,

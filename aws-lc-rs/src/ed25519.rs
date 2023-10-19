@@ -153,9 +153,9 @@ impl Ed25519KeyPair {
     ///
     /// Our implementation ignores the `SecureRandom` parameter.
     ///
-    /// # FIPS
-    /// This function must not be used.
-    ///
+    // # FIPS
+    // This function must not be used.
+    //
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     pub fn generate_pkcs8(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
@@ -172,9 +172,9 @@ impl Ed25519KeyPair {
     /// # *ring* Compatibility
     ///  Our implementation ignores the `SecureRandom` parameter.
     ///
-    /// # FIPS
-    /// This function must not be used.
-    ///
+    // # FIPS
+    // This function must not be used.
+    //
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     pub fn generate_pkcs8v1(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
@@ -292,9 +292,9 @@ impl Ed25519KeyPair {
 
     /// Returns the signature of the message msg.
     ///
-    /// # FIPS
-    /// This method must not be used.
-    ///
+    // # FIPS
+    // This method must not be used.
+    //
     /// # Panics
     /// Panics if the message is unable to be signed
     #[inline]

@@ -227,11 +227,11 @@ impl RsaKeyPair {
     /// # *ring* Compatibility
     /// Our implementation ignores the `SecureRandom` parameter.
     ///
-    /// # FIPS
-    /// The following conditions must be met:
-    /// * RSA Key Sizes: 2048, 3072, 4096
-    /// * Digest Algorithms: SHA256, SHA384, SHA512
-    ///
+    // # FIPS
+    // The following conditions must be met:
+    // * RSA Key Sizes: 2048, 3072, 4096
+    // * Digest Algorithms: SHA256, SHA384, SHA512
+    //
     /// # Errors
     /// `error::Unspecified` on error.
     /// With "fips" feature enabled, errors if digest length is greater than `u32::MAX`.
