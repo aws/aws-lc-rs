@@ -17,7 +17,7 @@ use aws_lc::EC_KEY_generate_key;
 use aws_lc::EC_KEY_generate_key_fips;
 use aws_lc::{
     ECDSA_do_sign, EC_KEY_new_by_curve_name, EVP_PKEY_assign_EC_KEY, EVP_PKEY_new,
-    EVP_PKEY_set1_EC_KEY, EC_KEY, EVP_PKEY,
+    EVP_PKEY_set1_EC_KEY, EC_KEY, EVP_PKEY, EVP_PKEY_EC,
 };
 use std::fmt;
 
@@ -206,7 +206,8 @@ impl EcdsaKeyPair {
     ) -> Result<Self, KeyRejected> {
         unsafe {
             let mut out = std::ptr::null_mut();
-            if aws_lc::d2i_AutoPrivateKey(
+            if aws_lc::d2i_PrivateKey(
+                EVP_PKEY_EC,
                 &mut out,
                 &mut private_key.as_ptr(),
                 private_key
