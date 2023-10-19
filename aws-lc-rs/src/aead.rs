@@ -1137,7 +1137,7 @@ impl TlsRecordSealingKey {
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_append_tag<A, InOut>(
-        &self,
+        &mut self,
         nonce: Nonce,
         aad: Aad<A>,
         in_out: &mut InOut,
@@ -1176,7 +1176,7 @@ impl TlsRecordSealingKey {
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_in_place_separate_tag<A>(
-        &self,
+        &mut self,
         nonce: Nonce,
         aad: Aad<A>,
         in_out: &mut [u8],
@@ -1205,7 +1205,6 @@ impl TlsRecordSealingKey {
 /// AEAD Encryption key used for TLS protocol record encryption.
 ///
 /// This type encapsulates decryption operations for TLS AEAD algorithms.
-/// It validates that the provided nonce values are monotonically increasing for each invocation.
 ///
 /// The following algorithms are supported:
 /// * `AES_128_GCM`
@@ -1217,7 +1216,7 @@ pub struct TlsRecordOpeningKey {
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
     // or force this type to !Sync. Since this is an implementation detail of AWS-LC
     // we have optex to manage this behavior internally.
-    ctx: Mutex<AeadCtx>,
+    ctx: AeadCtx,
     algorithm: &'static Algorithm,
 }
 
@@ -1232,7 +1231,7 @@ impl TlsRecordOpeningKey {
         protocol: TlsProtocolId,
         key_bytes: &[u8],
     ) -> Result<Self, Unspecified> {
-        let ctx = Mutex::new(match (algorithm.id, protocol) {
+        let ctx = match (algorithm.id, protocol) {
             (AlgorithmID::AES_128_GCM, TlsProtocolId::TLS12) => AeadCtx::aes_128_gcm_tls12(
                 key_bytes,
                 algorithm.tag_len(),
@@ -1259,7 +1258,7 @@ impl TlsRecordOpeningKey {
                 | AlgorithmID::CHACHA20_POLY1305,
                 _,
             ) => Err(Unspecified),
-        }?);
+        }?;
         Ok(Self { ctx, algorithm })
     }
 
@@ -1280,8 +1279,7 @@ impl TlsRecordOpeningKey {
     where
         A: AsRef<[u8]>,
     {
-        let ctx = self.ctx.lock().map_err(|_| Unspecified)?;
-        open_within(self.algorithm, &ctx, nonce, aad, in_out, 0..)
+        open_within(self.algorithm, &self.ctx, nonce, aad, in_out, 0..)
     }
 
     /// The key's AEAD algorithm.
@@ -1831,7 +1829,7 @@ mod tests {
             paste! {
                 #[test]
                 fn [<test_ $name>]() {
-                    let sealing_key =
+                    let mut sealing_key =
                         TlsRecordSealingKey::new($alg, $proto, $key).unwrap();
 
                     let opening_key =
