@@ -971,36 +971,7 @@ impl RandomizedNonceKey {
     where
         A: AsRef<[u8]>,
     {
-        self.open_within(nonce, aad, in_out, 0..)
-    }
-
-    /// Authenticates and decrypts (“opens”) data in place, with a shift.
-    ///
-    /// `aad` is the additional authenticated data (AAD), if any.
-    ///
-    /// See [`OpeningKey::open_within`] for details on `ciphertext_and_tag` argument usage.
-    ///
-    /// # Errors
-    /// `error::Unspecified` when ciphertext is invalid.
-    #[inline]
-    pub fn open_within<'in_out, A>(
-        &self,
-        nonce: Nonce,
-        aad: Aad<A>,
-        in_out: &'in_out mut [u8],
-        ciphertext_and_tag: RangeFrom<usize>,
-    ) -> Result<&'in_out mut [u8], Unspecified>
-    where
-        A: AsRef<[u8]>,
-    {
-        open_within(
-            self.algorithm,
-            &self.ctx,
-            nonce,
-            aad,
-            in_out,
-            ciphertext_and_tag,
-        )
+        open_within(self.algorithm, &self.ctx, nonce, aad, in_out, 0..)
     }
 
     /// Encrypts and signs (“seals”) data in place, appending the tag to the
@@ -1309,31 +1280,8 @@ impl TlsRecordOpeningKey {
     where
         A: AsRef<[u8]>,
     {
-        self.open_within(nonce, aad, in_out, 0..)
-    }
-
-    /// Accepts a Noce and Aad construction that is unique for this TLS record
-    /// opening operation.
-    ///
-    /// `nonce` must be unique for every use of the key to open data.
-    ///
-    /// See [`OpeningKey::open_within`] for details on `ciphertext_and_tag` argument usage.
-    ///
-    /// # Errors
-    /// `error::Unspecified` when ciphertext is invalid.
-    #[inline]
-    pub fn open_within<'in_out, A>(
-        &self,
-        nonce: Nonce,
-        aad: Aad<A>,
-        in_out: &'in_out mut [u8],
-        ciphertext_and_tag: RangeFrom<usize>,
-    ) -> Result<&'in_out mut [u8], Unspecified>
-    where
-        A: AsRef<[u8]>,
-    {
         let ctx = self.ctx.lock().map_err(|_| Unspecified)?;
-        open_within(self.algorithm, &ctx, nonce, aad, in_out, ciphertext_and_tag)
+        open_within(self.algorithm, &ctx, nonce, aad, in_out, 0..)
     }
 
     /// The key's AEAD algorithm.
