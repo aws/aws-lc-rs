@@ -15,7 +15,7 @@ use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 use crate::{digest, ec};
-use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY};
+use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY, EVP_PKEY_EC};
 use std::fmt;
 use std::mem::MaybeUninit;
 use std::ptr::{null, null_mut};
@@ -186,7 +186,8 @@ impl EcdsaKeyPair {
     ) -> Result<Self, KeyRejected> {
         unsafe {
             let mut out = std::ptr::null_mut();
-            if aws_lc::d2i_AutoPrivateKey(
+            if aws_lc::d2i_PrivateKey(
+                EVP_PKEY_EC,
                 &mut out,
                 &mut private_key.as_ptr(),
                 private_key
