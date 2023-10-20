@@ -58,10 +58,10 @@ use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::{ec, test};
 use aws_lc::{
-    EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_assign_EC_KEY, EVP_PKEY_derive,
-    EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen,
-    EVP_PKEY_keygen_init, EVP_PKEY_new, EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1,
-    NID_secp384r1, NID_secp521r1, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+    EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init,
+    EVP_PKEY_derive_set_peer, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
+    EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY,
+    EVP_PKEY_X25519, NID_X25519,
 };
 
 use core::fmt;

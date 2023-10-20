@@ -25,7 +25,7 @@ use aws_lc::{
     EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY,
     EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new,
     NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP,
-    EC_KEY, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
+    EC_POINT, EVP_PKEY, EVP_PKEY_EC,
 };
 
 #[cfg(test)]
