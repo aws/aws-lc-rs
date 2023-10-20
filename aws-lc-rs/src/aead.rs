@@ -115,7 +115,7 @@
 //! ```
 
 use crate::{derive_debug_via_id, fips::indicator_check, hkdf, iv::FixedLength};
-use std::{fmt::Debug, ptr::null, sync::Mutex};
+use std::{fmt::Debug, ptr::null};
 
 use crate::error::Unspecified;
 use aead_ctx::AeadCtx;
@@ -387,7 +387,7 @@ impl<N: NonceSequence> Debug for SealingKey<N> {
 
 impl<N: NonceSequence> SealingKey<N> {
     /// Deprecated. Renamed to `seal_in_place_append_tag`.
-    /// 
+    ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_append_tag`].
     ///
     // # FIPS
@@ -418,7 +418,7 @@ impl<N: NonceSequence> SealingKey<N> {
     /// key.seal_in_place_separate_tag(aad, in_out.as_mut())
     ///     .map(|tag| in_out.extend(tag.as_ref()))
     /// ```
-    /// 
+    ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_append_tag`].
     ///
     // # FIPS
@@ -460,7 +460,7 @@ impl<N: NonceSequence> SealingKey<N> {
     /// The tag will be `self.algorithm.tag_len()` bytes long.
     ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_separate_tag`].
-    /// 
+    ///
     // # FIPS
     // This method must not be used.
     //
@@ -706,7 +706,7 @@ impl LessSafeKey {
     /// `nonce` must be unique for every use of the key to open data.
     ///
     /// Prefer [`RandomizedNonceKey::open_in_place`].
-    /// 
+    ///
     // # FIPS
     // Use this method with one of the following algorithms:
     // * `AES_128_GCM`
@@ -730,7 +730,7 @@ impl LessSafeKey {
     /// Like [`OpeningKey::open_within()`], except it accepts an arbitrary nonce.
     ///
     /// `nonce` must be unique for every use of the key to open data.
-    /// 
+    ///
     /// Prefer [`RandomizedNonceKey::open_in_place`].
     ///
     // # FIPS
@@ -764,7 +764,7 @@ impl LessSafeKey {
     /// Deprecated. Renamed to `seal_in_place_append_tag()`.
     ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_append_tag`].
-    /// 
+    ///
     // # FIPS
     // This method must not be used.
     //
@@ -788,7 +788,7 @@ impl LessSafeKey {
     /// arbitrary nonce.
     ///
     /// `nonce` must be unique for every use of the key to seal data.
-    /// 
+    ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_append_tag`].
     ///
     // # FIPS
@@ -822,7 +822,7 @@ impl LessSafeKey {
     /// arbitrary nonce.
     ///
     /// `nonce` must be unique for every use of the key to seal data.
-    /// 
+    ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_separate_tag`].
     ///
     // # FIPS
@@ -1074,7 +1074,7 @@ pub struct TlsRecordSealingKey {
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
     // or force this type to !Sync. Since this is an implementation detail of AWS-LC
     // we have optex to manage this behavior internally.
-    ctx: Mutex<AeadCtx>,
+    ctx: AeadCtx,
     algorithm: &'static Algorithm,
 }
 
@@ -1089,7 +1089,7 @@ impl TlsRecordSealingKey {
         protocol: TlsProtocolId,
         key_bytes: &[u8],
     ) -> Result<Self, Unspecified> {
-        let ctx = Mutex::new(match (algorithm.id, protocol) {
+        let ctx = match (algorithm.id, protocol) {
             (AlgorithmID::AES_128_GCM, TlsProtocolId::TLS12) => AeadCtx::aes_128_gcm_tls12(
                 key_bytes,
                 algorithm.tag_len(),
@@ -1116,7 +1116,7 @@ impl TlsRecordSealingKey {
                 | AlgorithmID::CHACHA20_POLY1305,
                 _,
             ) => Err(Unspecified),
-        }?);
+        }?;
         Ok(Self { ctx, algorithm })
     }
 
@@ -1140,10 +1140,9 @@ impl TlsRecordSealingKey {
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
-        let ctx = self.ctx.lock().map_err(|_| Unspecified)?;
         seal_in_place_append_tag(
             self.algorithm,
-            &ctx,
+            &self.ctx,
             Some(nonce),
             Aad::from(aad.as_ref()),
             in_out,
@@ -1178,10 +1177,9 @@ impl TlsRecordSealingKey {
     where
         A: AsRef<[u8]>,
     {
-        let ctx = self.ctx.lock().map_err(|_| Unspecified)?;
         seal_in_place_separate_tag(
             self.algorithm,
-            &ctx,
+            &self.ctx,
             Some(nonce),
             Aad::from(aad.as_ref()),
             in_out,
