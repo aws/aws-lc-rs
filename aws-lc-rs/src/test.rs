@@ -293,7 +293,6 @@ pub struct File<'a> {
 ///
 /// # Panics
 /// Panics on test failure.
-///
 #[allow(clippy::needless_pass_by_value)]
 pub fn run<F>(test_file: File, mut f: F)
 where

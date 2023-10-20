@@ -15,7 +15,6 @@ use aws_lc::CRYPTO_memcmp;
 ///
 /// # Errors
 /// `error::Unspecified` when `a` and `b` differ.
-///
 #[inline]
 pub fn verify_slices_are_equal(a: &[u8], b: &[u8]) -> Result<(), error::Unspecified> {
     if a.len() != b.len() {

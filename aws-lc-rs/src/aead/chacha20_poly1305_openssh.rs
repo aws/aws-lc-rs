@@ -19,6 +19,9 @@
 //! [chacha20-poly1305@openssh.com]:
 //!    http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL.chacha20poly1305?annotate=HEAD
 //! [RFC 4253]: https://tools.ietf.org/html/rfc4253
+//!
+//! # FIPS
+//! The APIs offered in this module must not be used.
 
 use super::{poly1305, Nonce, Tag};
 use crate::cipher::block::BLOCK_LEN;
@@ -48,6 +51,9 @@ impl SealingKey {
     /// `padding_length||payload||random padding`. It will be overwritten by
     /// `encrypted_packet_length||ciphertext`, where `encrypted_packet_length`
     /// is encrypted with `K_1` and `ciphertext` is encrypted by `K_2`.
+    //
+    // # FIPS
+    // This method must not be used.
     #[inline]
     pub fn seal_in_place(
         &self,
@@ -68,7 +74,8 @@ impl SealingKey {
                 .encrypt_in_place(nonce.as_ref(), data_and_padding_in_out, 1);
         }
 
-        let Tag(tag) = poly1305::sign(poly_key, plaintext_in_ciphertext_out);
+        let Tag(tag, tag_len) = poly1305::sign(poly_key, plaintext_in_ciphertext_out);
+        debug_assert_eq!(TAG_LEN, tag_len);
         tag_out.copy_from_slice(tag.as_ref());
     }
 }
@@ -91,6 +98,9 @@ impl OpeningKey {
     ///
     /// Importantly, the result won't be authenticated until `open_in_place` is
     /// called.
+    //
+    // # FIPS
+    // This method must not be used.
     #[inline]
     #[must_use]
     pub fn decrypt_packet_length(
@@ -118,7 +128,9 @@ impl OpeningKey {
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid
-    ///
+    //
+    // # FIPS
+    // This method must not be used.
     #[inline]
     pub fn open_in_place<'a>(
         &self,
@@ -177,7 +189,7 @@ pub const TAG_LEN: usize = BLOCK_LEN;
 
 #[inline]
 fn verify(key: poly1305::Key, msg: &[u8], tag: &[u8; TAG_LEN]) -> Result<(), error::Unspecified> {
-    let Tag(calculated_tag) = poly1305::sign(key, msg);
+    let Tag(calculated_tag, _) = poly1305::sign(key, msg);
     constant_time::verify_slices_are_equal(calculated_tag.as_ref(), tag)
 }
 

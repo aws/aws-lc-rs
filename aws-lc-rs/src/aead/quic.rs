@@ -36,7 +36,6 @@ impl HeaderProtectionKey {
     ///
     /// # Errors
     /// `error::Unspecified` when `key_bytes` length is not `algorithm.key_len`
-    ///
     pub fn new(
         algorithm: &'static Algorithm,
         key_bytes: &[u8],
@@ -51,7 +50,6 @@ impl HeaderProtectionKey {
     ///
     /// # Errors
     /// `error::Unspecified` when `sample` length is not `self.algorithm().sample_len()`.
-    ///
     #[inline]
     pub fn new_mask(&self, sample: &[u8]) -> Result<[u8; 5], error::Unspecified> {
         let sample = <&[u8; SAMPLE_LEN]>::try_from(sample)?;

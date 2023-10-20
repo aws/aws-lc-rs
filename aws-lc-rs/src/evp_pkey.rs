@@ -13,6 +13,7 @@ use aws_lc::{
 };
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
+use std::ptr::null_mut;
 
 impl TryFrom<&[u8]> for LcPtr<EVP_PKEY> {
     type Error = KeyRejected;
@@ -70,6 +71,7 @@ impl LcPtr<EVP_PKEY> {
         unsafe { EVP_PKEY_bits(**self) }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn get_ec_key(&self) -> Result<LcPtr<EC_KEY>, KeyRejected> {
         unsafe {
             LcPtr::new(EVP_PKEY_get1_EC_KEY(**self)).map_err(|()| KeyRejected::wrong_algorithm())
@@ -99,19 +101,15 @@ impl LcPtr<EVP_PKEY> {
                 }
             }
 
-            let mut pkcs8_bytes_ptr = MaybeUninit::<*mut u8>::uninit();
+            let mut pkcs8_bytes_ptr = null_mut::<u8>();
             let mut out_len = MaybeUninit::<usize>::uninit();
-            if 1 != CBB_finish(
-                cbb.as_mut_ptr(),
-                pkcs8_bytes_ptr.as_mut_ptr(),
-                out_len.as_mut_ptr(),
-            ) {
+            if 1 != CBB_finish(cbb.as_mut_ptr(), &mut pkcs8_bytes_ptr, out_len.as_mut_ptr()) {
                 return Err(Unspecified);
             }
-            let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr.assume_init())?;
+            let pkcs8_bytes_ptr = LcPtr::new(pkcs8_bytes_ptr)?;
             let out_len = out_len.assume_init();
 
-            let bytes_slice = std::slice::from_raw_parts(*pkcs8_bytes_ptr, out_len);
+            let bytes_slice = pkcs8_bytes_ptr.as_slice(out_len);
             let mut pkcs8_bytes = [0u8; PKCS8_DOCUMENT_MAX_LEN];
             pkcs8_bytes[0..out_len].copy_from_slice(bytes_slice);
 

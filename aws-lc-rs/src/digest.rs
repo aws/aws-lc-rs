@@ -28,9 +28,10 @@
 //! ```
 
 #![allow(non_snake_case)]
+use crate::fips::indicator_check;
 use crate::{debug, derive_debug_via_id};
 
-mod digest_ctx;
+pub(crate) mod digest_ctx;
 mod sha;
 use crate::error::Unspecified;
 use crate::ptr::ConstPointer;
@@ -48,7 +49,15 @@ use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
 
 /// A context for multi-step (Init-Update-Finish) digest calculations.
-///
+//
+// # FIPS
+// Context must be used with one of the following algorithms:
+// * `SHA1_FOR_LEGACY_USE_ONLY`
+// * `SHA224`
+// * `SHA256`
+// * `SHA384`
+// * `SHA512`
+// * `SHA512_256`
 #[derive(Clone)]
 pub struct Context {
     /// The context's algorithm.
@@ -103,6 +112,7 @@ impl Context {
             self.msg_len = msg_len;
             self.max_input_reached = self.msg_len == self.algorithm.max_input_len;
 
+            // Doesn't require boundary_check! guard
             if 1 != EVP_DigestUpdate(
                 self.digest_ctx.as_mut_ptr(),
                 data.as_ptr().cast(),
@@ -131,14 +141,14 @@ impl Context {
     fn try_finish(mut self) -> Result<Digest, Unspecified> {
         let mut output = [0u8; MAX_OUTPUT_LEN];
         let mut out_len = MaybeUninit::<c_uint>::uninit();
-        unsafe {
-            if 1 != EVP_DigestFinal(
+        if 1 != indicator_check!(unsafe {
+            EVP_DigestFinal(
                 self.digest_ctx.as_mut_ptr(),
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
+            )
+        }) {
+            return Err(Unspecified);
         }
 
         Ok(Digest {
@@ -158,6 +168,15 @@ impl Context {
 
 /// Returns the digest of `data` using the given digest algorithm.
 ///
+// # FIPS
+// This function must only be used with one of the following algorithms:
+// * `SHA1_FOR_LEGACY_USE_ONLY`
+// * `SHA224`
+// * `SHA256`
+// * `SHA384`
+// * `SHA512`
+// * `SHA512_256`
+//
 /// # Examples:
 ///
 /// ```
@@ -245,8 +264,6 @@ pub struct Algorithm {
     one_shot_hash: fn(msg: &[u8], output: &mut [u8]),
 
     pub(crate) id: AlgorithmID,
-
-    pub(crate) hash_nid: i32,
 }
 
 unsafe impl Send for Algorithm {}
@@ -306,6 +323,9 @@ pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<EVP_
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "fips")]
+    mod fips;
+
     mod max_input {
         extern crate alloc;
 

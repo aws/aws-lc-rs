@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 //! Implementations of `NonceSequence` for use with `BoundKey`s.
-//!
-//!
 
 mod counter32;
 mod counter64;

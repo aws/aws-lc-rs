@@ -104,6 +104,7 @@
 //! }
 
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use crate::{constant_time, digest, hmac};
 use aws_lc::PKCS5_PBKDF2_HMAC;
 use core::num::NonZeroU32;
@@ -165,6 +166,17 @@ const MAX_USIZE32: u64 = u32::MAX as u64;
 ///
 /// `derive` panics if `out.len()` is larger than (2**32 - 1) * the digest
 /// algorithm's output length, per the PBKDF2 specification.
+//
+// # FIPS
+// The following conditions must be met:
+// * Algorithm is one of the following:
+//   * `PBKDF2_HMAC_SHA1`
+//   * `PBKDF2_HMAC_SHA256`
+//   * `PBKDF2_HMAC_SHA384`
+//   * `PBKDF2_HMAC_SHA512`
+// * `salt.len()` >= 16
+// * `sercet.len()` >= 14
+// * `iterations` >= 1000
 #[inline]
 pub fn derive(
     algorithm: Algorithm,
@@ -189,8 +201,8 @@ fn try_derive(
         "derived key too long"
     );
 
-    unsafe {
-        if 1 != PKCS5_PBKDF2_HMAC(
+    if 1 != indicator_check!(unsafe {
+        PKCS5_PBKDF2_HMAC(
             secret.as_ptr().cast(),
             secret.len(),
             salt.as_ptr(),
@@ -199,9 +211,9 @@ fn try_derive(
             *digest::match_digest_type(&algorithm.algorithm.digest_algorithm().id),
             out.len(),
             out.as_mut_ptr(),
-        ) {
-            return Err(Unspecified);
-        };
+        )
+    }) {
+        return Err(Unspecified);
     }
     Ok(())
 }
@@ -229,7 +241,17 @@ fn try_derive(
 ///
 /// `verify` panics if `previously_derived.len()` is larger than (2**32 - 1) * the digest
 /// algorithm's output length, per the PBKDF2 specification.
-///
+//
+// # FIPS
+// The following conditions must be met:
+// * Algorithm is one of the following:
+//   * `PBKDF2_HMAC_SHA1`
+//   * `PBKDF2_HMAC_SHA256`
+//   * `PBKDF2_HMAC_SHA384`
+//   * `PBKDF2_HMAC_SHA512`
+// * `salt.len()` >= 16
+// * `secret.len()` >= 14
+// * `iterations` >= 1000
 #[inline]
 pub fn verify(
     algorithm: Algorithm,
@@ -248,20 +270,8 @@ pub fn verify(
 
     // Create a vector with the expected output length.
     let mut derived_buf = vec![0u8; previously_derived.len()];
-    unsafe {
-        if 1 != PKCS5_PBKDF2_HMAC(
-            secret.as_ptr().cast(),
-            secret.len(),
-            salt.as_ptr(),
-            salt.len(),
-            iterations.get(),
-            *digest::match_digest_type(&algorithm.algorithm.digest_algorithm().id),
-            previously_derived.len(),
-            derived_buf.as_mut_ptr(),
-        ) {
-            return Err(Unspecified);
-        };
-    }
+
+    try_derive(algorithm, iterations, salt, secret, &mut derived_buf)?;
 
     let result = constant_time::verify_slices_are_equal(&derived_buf, previously_derived);
     derived_buf.zeroize();
@@ -272,6 +282,9 @@ pub fn verify(
 mod tests {
     use crate::pbkdf2;
     use core::num::NonZeroU32;
+
+    #[cfg(feature = "fips")]
+    mod fips;
 
     #[test]
     fn pbkdf2_coverage() {
