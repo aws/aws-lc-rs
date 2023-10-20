@@ -12,6 +12,7 @@ use super::{
 };
 
 /// The Transport Layer Security (TLS) protocol version.
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TlsProtocolId {
     /// TLS 1.2 (RFC 5246)
@@ -31,6 +32,7 @@ pub enum TlsProtocolId {
 /// * `AES_256_GCM`
 ///
 /// Prefer this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey` for TLS protocol implementations.
+#[allow(clippy::module_name_repetitions)]
 pub struct TlsRecordSealingKey {
     // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
@@ -187,6 +189,7 @@ impl Debug for TlsRecordSealingKey {
 /// * `AES_256_GCM`
 ///
 /// Prefer this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey` for TLS protocol implementations.
+#[allow(clippy::module_name_repetitions)]
 pub struct TlsRecordOpeningKey {
     // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,

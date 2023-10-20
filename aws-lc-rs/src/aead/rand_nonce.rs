@@ -6,7 +6,7 @@ use std::fmt::Debug;
 
 use super::{
     aead_ctx::AeadCtx, open_within, seal_in_place_append_tag, seal_in_place_separate_tag, Aad,
-    Algorithm, AlgorithmID, Nonce, Tag, TlsRecordSealingKey, NONCE_LEN,
+    Algorithm, AlgorithmID, Nonce, Tag, NONCE_LEN,
 };
 
 /// AEAD Cipher key using a randomized nonce.

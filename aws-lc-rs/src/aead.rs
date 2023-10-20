@@ -872,7 +872,7 @@ impl LessSafeKey {
     // # FIPS
     // This method must not be used.
     //
-    // # Errors
+    /// # Errors
     /// `error::Unspecified` if encryption operation fails.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
@@ -1293,7 +1293,6 @@ pub(crate) fn aead_open_combined_randnonce(
 mod tests {
     use super::*;
     use crate::{iv::FixedLength, test::from_hex};
-    use paste::paste;
 
     #[cfg(feature = "fips")]
     mod fips;
