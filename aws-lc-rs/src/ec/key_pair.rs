@@ -5,7 +5,7 @@
 
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{
-    ec_key_generate, validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
+    evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
@@ -76,7 +76,7 @@ impl EcdsaKeyPair {
         unsafe {
             let evp_pkey = LcPtr::try_from(pkcs8)?;
 
-            validate_ec_key(&evp_pkey.as_const(), alg.id.nid())?;
+            validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
 
             let key_pair = Self::new(alg, evp_pkey)?;
 
@@ -96,7 +96,7 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         _rng: &dyn SecureRandom,
     ) -> Result<Document, Unspecified> {
-        let evp_pkey = ec_key_generate(alg.0.id.nid())?;
+        let evp_pkey = evp_key_generate(alg.0.id.nid())?;
 
         evp_pkey.marshall_private_key(Version::V1)
     }
@@ -131,7 +131,7 @@ impl EcdsaKeyPair {
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let private_bn = DetachableLcPtr::try_from(private_key)?;
             let evp_pkey =
-                ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
+                ec::evp_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
 
             let key_pair = Self::new(alg, evp_pkey)?;
             Ok(key_pair)

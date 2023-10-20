@@ -233,13 +233,13 @@ fn evp_pkey_from_public_key(
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let ec_group = unsafe { ec_group_from_nid(alg.nid())? };
     let ec_point = unsafe { ec_point_from_bytes(&ec_group, public_key)? };
-    let pkey = unsafe { ec_key_from_public_point(&ec_group, &ec_point)? };
+    let pkey = unsafe { evp_pkey_from_public_point(&ec_group, &ec_point)? };
 
     Ok(pkey)
 }
 
 #[inline]
-unsafe fn validate_ec_key(
+unsafe fn validate_evp_key(
     evp_pkey: &ConstPointer<EVP_PKEY>,
     expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
@@ -294,7 +294,7 @@ pub(crate) fn marshal_public_key(
 }
 
 #[inline]
-pub(crate) unsafe fn ec_key_from_public_point(
+pub(crate) unsafe fn evp_pkey_from_public_point(
     ec_group: &LcPtr<EC_GROUP>,
     public_ec_point: &LcPtr<EC_POINT>,
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
@@ -315,13 +315,13 @@ pub(crate) unsafe fn ec_key_from_public_point(
 
     ec_key.detach();
 
-    validate_ec_key(&pkey.as_const(), nid)?;
+    validate_evp_key(&pkey.as_const(), nid)?;
 
     Ok(pkey)
 }
 
 #[cfg(test)]
-pub(crate) unsafe fn ec_key_from_private(
+pub(crate) unsafe fn evp_pkey_from_private(
     ec_group: &ConstPointer<EC_GROUP>,
     private_big_num: &ConstPointer<BIGNUM>,
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
@@ -356,13 +356,13 @@ pub(crate) unsafe fn ec_key_from_private(
     ec_key.detach();
 
     // Validate the EC_KEY before returning it.
-    validate_ec_key(&pkey.as_const(), expected_curve_nid)?;
+    validate_evp_key(&pkey.as_const(), expected_curve_nid)?;
 
     Ok(pkey)
 }
 
 #[inline]
-pub(crate) fn ec_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+pub(crate) fn evp_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_EC, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
@@ -385,7 +385,7 @@ pub(crate) fn ec_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified
 }
 
 #[inline]
-unsafe fn ec_key_from_public_private(
+unsafe fn evp_key_from_public_private(
     ec_group: &LcPtr<EC_GROUP>,
     public_ec_point: &LcPtr<EC_POINT>,
     private_bignum: &DetachableLcPtr<BIGNUM>,
@@ -409,7 +409,7 @@ unsafe fn ec_key_from_public_private(
     ec_key.detach();
 
     let nid = EC_GROUP_get_curve_name(ec_group.as_const_ptr());
-    validate_ec_key(&evp_pkey.as_const(), nid)?;
+    validate_evp_key(&evp_pkey.as_const(), nid)?;
 
     Ok(evp_pkey)
 }

@@ -50,7 +50,7 @@
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
 use crate::ec::{
-    ec_group_from_nid, ec_key_from_public_point, ec_key_generate, ec_point_from_bytes,
+    ec_group_from_nid, evp_pkey_from_public_point, evp_key_generate, ec_point_from_bytes,
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
@@ -227,19 +227,19 @@ impl EphemeralPrivateKey {
                 })
             }
             AlgorithmID::ECDH_P256 => {
-                let ec_key = ec_key_generate(ECDH_P256.id.nid())?;
+                let ec_key = evp_key_generate(ECDH_P256.id.nid())?;
                 Ok(EphemeralPrivateKey {
                     inner_key: KeyInner::ECDH_P256(ec_key),
                 })
             }
             AlgorithmID::ECDH_P384 => {
-                let ec_key = ec_key_generate(ECDH_P384.id.nid())?;
+                let ec_key = evp_key_generate(ECDH_P384.id.nid())?;
                 Ok(EphemeralPrivateKey {
                     inner_key: KeyInner::ECDH_P384(ec_key),
                 })
             }
             AlgorithmID::ECDH_P521 => {
-                let ec_key = ec_key_generate(ECDH_P521.id.nid())?;
+                let ec_key = evp_key_generate(ECDH_P521.id.nid())?;
                 Ok(EphemeralPrivateKey {
                     inner_key: KeyInner::ECDH_P521(ec_key),
                 })
@@ -375,7 +375,7 @@ fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<EVP_PKEY>, Uns
     let ec_group = unsafe { ec_group_from_nid(nid)? };
     let priv_key = DetachableLcPtr::try_from(priv_key)?;
 
-    let pkey = unsafe { ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())? };
+    let pkey = unsafe { ec::evp_pkey_from_private(&ec_group.as_const(), &priv_key.as_const())? };
 
     Ok(pkey)
 }
@@ -562,7 +562,7 @@ fn ec_key_ecdh<'a>(
 ) -> Result<&'a [u8], ()> {
     let ec_group = unsafe { ec_group_from_nid(nid)? };
     let pub_key_point = unsafe { ec_point_from_bytes(&ec_group, peer_pub_key_bytes) }?;
-    let pub_key = unsafe { ec_key_from_public_point(&ec_group, &pub_key_point) }?;
+    let pub_key = unsafe { evp_pkey_from_public_point(&ec_group, &pub_key_point) }?;
 
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
 
