@@ -189,7 +189,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ macos-13 ]
+        os: [ macos-13-xlarge ]
         target: [ aarch64-apple-ios-sim ]
     steps:
       - uses: actions/checkout@v3
@@ -214,7 +214,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, macos-12, macos-13 ]
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
         args:
           - --all-targets
           - --release --all-targets
@@ -278,7 +278,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, macos-12, macos-13 ]
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
         args:
           - --no-default-features --features aws-lc-sys,bindgen
           - --release --all-targets --features bindgen
@@ -332,7 +332,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ windows-2019, ubuntu-latest, macos-12, macos-13 ]
+        os: [ windows-2019, ubuntu-latest, macos-12, macos-13-xlarge ]
         args:
           - publish --dry-run
     steps:
@@ -461,7 +461,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-12, macos-13 ]
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -482,7 +482,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-12, macos-13 ]
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -512,7 +512,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-12, macos-13 ]
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
         static: [ 0, 1 ]
     steps:
       - uses: actions/checkout@v3
