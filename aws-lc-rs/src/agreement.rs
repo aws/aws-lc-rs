@@ -51,21 +51,26 @@
 //! ```
 use crate::ec::{
     ec_group_from_nid, ec_point_from_bytes, evp_key_generate, evp_pkey_from_public_point,
+    marshal_x509_public_key_to_buffer,
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
-use crate::ptr::LcPtr;
+use crate::hex;
+use crate::ptr::{ConstPointer, LcPtr};
+use crate::public_key::evp_pkey_from_x509_pubkey;
 use crate::rand::SecureRandom;
-use crate::{ec, hex};
+use crate::{ec, public_key};
 use aws_lc::{
-    EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init,
-    EVP_PKEY_derive_set_peer, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
+    d2i_X509_PUBKEY, i2d_PUBKEY, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_derive,
+    EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY,
+    EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
     EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY,
-    EVP_PKEY_X25519, NID_X25519,
+    EVP_PKEY_X25519, NID_X25519, X25519_PUBLIC_VALUE_LEN,
 };
 
 use core::fmt;
 use std::fmt::{Debug, Formatter};
+use std::os::raw::{c_long, c_uchar};
 use std::ptr::null_mut;
 
 #[allow(non_camel_case_types)]
@@ -360,6 +365,37 @@ impl EphemeralPrivateKey {
         }
     }
 
+    /// Computes the public key in X509 DER encoding format from the private key.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when operation fails due to internal error.
+    pub fn compute_x509_pubkey(&self) -> Result<Vec<u8>, Unspecified> {
+        let mut buffer = std::ptr::null_mut::<u8>();
+        match &self.inner_key {
+            KeyInner::ECDH_P256(evp_pkey)
+            | KeyInner::ECDH_P384(evp_pkey)
+            | KeyInner::ECDH_P521(evp_pkey) => {
+                let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(**evp_pkey) })?;
+                let len = unsafe { aws_lc::i2d_EC_PUBKEY(*ec_key, &mut buffer) };
+                if len < 0 {
+                    return Err(Unspecified);
+                }
+                let buffer = LcPtr::new(buffer)?;
+                let der = unsafe { std::slice::from_raw_parts(*buffer, len.try_into()?).to_vec() };
+                Ok(der)
+            }
+            KeyInner::X25519(priv_key) => {
+                let len = unsafe { i2d_PUBKEY(**priv_key, &mut buffer) };
+                if len < 0 {
+                    return Err(Unspecified);
+                }
+                let buffer = LcPtr::new(buffer)?;
+                let der = unsafe { std::slice::from_raw_parts(*buffer, len.try_into()?).to_vec() };
+                Ok(der)
+            }
+        }
+    }
+
     /// The algorithm for the private key.
     #[inline]
     #[must_use]
@@ -446,6 +482,7 @@ impl Clone for PublicKey {
 pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
     alg: &'static Algorithm,
     bytes: B,
+    encoding: &'static public_key::Encoding,
 }
 
 impl<B: Copy + AsRef<[u8]>> Copy for UnparsedPublicKey<B> {}
@@ -461,20 +498,30 @@ impl<B: Debug + AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
 }
 
 impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
-    /// Constructs a new `UnparsedPublicKey`.
+    /// Constructs a new `UnparsedPublicKey` with [`public_key::OCTET_STRING`] encoding.
     pub fn new(algorithm: &'static Algorithm, bytes: B) -> Self {
         UnparsedPublicKey {
             alg: algorithm,
             bytes,
+            encoding: &public_key::OCTET_STRING,
         }
     }
 
-    /// The agreement algorithm associated with this public key
+    /// Constructs a new `UnparsedPublicKey` with [`public_key::X509`] encoding.
+    pub fn new_with_x509(algorithm: &'static Algorithm, bytes: B) -> Self {
+        UnparsedPublicKey {
+            alg: algorithm,
+            bytes,
+            encoding: &public_key::X509,
+        }
+    }
+
+    /// The agreement algorithm associated with this public key.
     pub fn algorithm(&self) -> &'static Algorithm {
         self.alg
     }
 
-    /// The bytes provided for this public key
+    /// The bytes provided for this public key.
     pub fn bytes(&self) -> &B {
         &self.bytes
     }
@@ -523,30 +570,68 @@ where
     F: FnOnce(&[u8]) -> Result<R, E>,
 {
     let expected_alg = my_private_key.algorithm();
-    let expected_pub_key_len = expected_alg.id.pub_key_len();
     let expected_nid = expected_alg.id.nid();
 
     if peer_public_key.alg != expected_alg {
         return Err(error_value);
     }
     let peer_pub_bytes = peer_public_key.bytes.as_ref();
-    if peer_pub_bytes.len() != expected_pub_key_len {
-        return Err(error_value);
+    if peer_public_key.encoding == &public_key::OCTET_STRING {
+        let expected_pub_key_len = expected_alg.id.pub_key_len();
+        let peer_pub_bytes_len = peer_pub_bytes.len();
+        if peer_pub_bytes_len != expected_pub_key_len {
+            return Err(error_value);
+        }
     }
 
     let mut buffer = [0u8; MAX_AGREEMENT_SECRET_LEN];
 
     let secret: &[u8] = match &my_private_key.inner_key {
-        KeyInner::X25519(priv_key) => {
-            x25519_diffie_hellman(&mut buffer, priv_key, peer_pub_bytes).or(Err(error_value))?
-        }
-        KeyInner::ECDH_P256(priv_key)
-        | KeyInner::ECDH_P384(priv_key)
-        | KeyInner::ECDH_P521(priv_key) => {
-            ec_key_ecdh(&mut buffer, priv_key, peer_pub_bytes, expected_nid).or(Err(error_value))?
+        KeyInner::X25519(priv_key, ..) => match peer_public_key.encoding.id {
+            public_key::EncodingID::OctetString => {
+                x25519_diffie_hellman(&mut buffer, priv_key, peer_pub_bytes)
+                    .map_err(|()| error_value)?;
+                &buffer[0..X25519_SHARED_KEY_LEN]
+            }
+            public_key::EncodingID::X509 => {
+                x25519_dh_with_x509_peer_pubkey(peer_pub_bytes, &mut buffer, priv_key)
+                    .map_err(|()| error_value)?;
+                &buffer[0..X25519_SHARED_KEY_LEN]
+            }
+        },
+        KeyInner::ECDH_P256(ec_key) | KeyInner::ECDH_P384(ec_key) | KeyInner::ECDH_P521(ec_key) => {
+            let pub_key_bytes = peer_public_key.bytes.as_ref();
+            ec_key_ecdh(
+                &mut buffer,
+                ec_key,
+                pub_key_bytes,
+                peer_public_key.encoding,
+                expected_nid,
+            )
+            .or(Err(error_value))?
         }
     };
     kdf(secret)
+}
+
+#[inline]
+fn x25519_dh_with_x509_peer_pubkey(
+    peer_x509_pubkey: &[u8],
+    shared_secret: &mut [u8; MAX_AGREEMENT_SECRET_LEN],
+    priv_key: &LcPtr<EVP_PKEY>,
+) -> Result<(), ()> {
+    let len = c_long::try_from(peer_x509_pubkey.len()).map_err(|_| ())?;
+    let x509_pubkey = LcPtr::new(unsafe {
+        d2i_X509_PUBKEY(
+            null_mut(),
+            &mut peer_x509_pubkey.as_ptr() as *mut *const c_uchar,
+            len,
+        )
+    })?;
+    let mut peer_octstr_pubkey = [0u8; X25519_PUBLIC_VALUE_LEN as usize];
+    marshal_x509_public_key_to_buffer(&mut peer_octstr_pubkey, &x509_pubkey)?;
+    x25519_diffie_hellman(shared_secret, priv_key, &peer_octstr_pubkey)?;
+    Ok(())
 }
 
 // Current max secret length is P-521's.
@@ -558,11 +643,17 @@ fn ec_key_ecdh<'a>(
     buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
     priv_key: &LcPtr<EVP_PKEY>,
     peer_pub_key_bytes: &[u8],
+    peer_pub_key_bytes_encoding: &public_key::Encoding,
     nid: i32,
 ) -> Result<&'a [u8], ()> {
-    let ec_group = unsafe { ec_group_from_nid(nid)? };
-    let pub_key_point = unsafe { ec_point_from_bytes(&ec_group, peer_pub_key_bytes) }?;
-    let pub_key = unsafe { evp_pkey_from_public_point(&ec_group, &pub_key_point) }?;
+    let pub_key = match peer_pub_key_bytes_encoding.id {
+        public_key::EncodingID::OctetString => {
+            let ec_group = unsafe { ec_group_from_nid(nid)? };
+            let pub_key_point = unsafe { ec_point_from_bytes(&ec_group, peer_pub_key_bytes)? };
+            unsafe { evp_pkey_from_public_point(&ec_group, &pub_key_point)? }
+        }
+        public_key::EncodingID::X509 => evp_pkey_from_x509_pubkey(peer_pub_key_bytes)?,
+    };
 
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
 
@@ -590,11 +681,11 @@ fn ec_key_ecdh<'a>(
 }
 
 #[inline]
-fn x25519_diffie_hellman<'a>(
-    buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
+fn x25519_diffie_hellman(
+    buffer: &mut [u8; MAX_AGREEMENT_SECRET_LEN],
     priv_key: &LcPtr<EVP_PKEY>,
     peer_pub_key: &[u8],
-) -> Result<&'a [u8], ()> {
+) -> Result<(), ()> {
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx) } {
@@ -623,14 +714,18 @@ fn x25519_diffie_hellman<'a>(
     }
 
     debug_assert!(out_key_len == X25519_SHARED_KEY_LEN);
-
-    Ok(&buffer[0..X25519_SHARED_KEY_LEN])
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::agreement::Algorithm;
     use crate::error::Unspecified;
+    use crate::rand::SystemRandom;
     use crate::{agreement, rand, test, test_file};
+    use aws_lc::EVP_DecodeBase64;
+    use base64::engine::general_purpose;
+    use base64::Engine;
 
     #[cfg(feature = "fips")]
     mod fips;
@@ -1036,5 +1131,112 @@ mod tests {
         agreement::agree_ephemeral(private_key, &public_key, Unspecified, |agreed_value| {
             Ok(Vec::from(agreed_value))
         })
+    }
+
+    fn agreement_agree_ephemeral_x509_peer_pubkey_(
+        x509_peer_public_key: &str,
+        algorithm: &'static Algorithm,
+        rng: &SystemRandom,
+    ) {
+        const SUCCESS: i32 = 1;
+        let in_ = x509_peer_public_key.as_bytes();
+        let max_out: usize = in_.len() * 3 / 4;
+        let mut out = vec![0u8; max_out];
+        let mut out_len: usize = 0;
+        // EVP_DecodeBase64 decodes in_len bytes from base64 and writes *out_len bytes to out.
+        // max_out is the size of the output buffer.
+        // If it is not enough for the maximum output size, the operation fails.
+        // It returns one on success or zero on error.
+        let ret = unsafe {
+            EVP_DecodeBase64(
+                out.as_mut_ptr(),
+                &mut out_len,
+                max_out,
+                in_.as_ptr(),
+                in_.len(),
+            )
+        };
+        assert_eq!(ret, SUCCESS);
+        assert!(out_len <= max_out);
+        out.truncate(out_len);
+        let my_private_key = agreement::EphemeralPrivateKey::generate(algorithm, rng)
+            .expect("Failed to generate key");
+        let x509_pubkey = my_private_key
+            .compute_x509_pubkey()
+            .expect("Failed to compute x509 public key");
+        let expected_x509_key_len = match algorithm.id {
+            agreement::AlgorithmID::ECDH_P256 => 91,
+            agreement::AlgorithmID::ECDH_P384 => 120,
+            agreement::AlgorithmID::ECDH_P521 => 158,
+            agreement::AlgorithmID::X25519 => 44,
+        };
+        assert_eq!(x509_pubkey.len(), expected_x509_key_len);
+        let b64 = general_purpose::STANDARD.encode(&x509_pubkey);
+        // Useful to print out the X509 public key in base64 as input to other libraries, such as bc-fips
+        println!("{:?} x509 pubkey: {b64}", algorithm.id);
+
+        let peer_public_key =
+            { agreement::UnparsedPublicKey::new_with_x509(algorithm, out.as_slice()) };
+        agreement::agree_ephemeral(
+            my_private_key,
+            &peer_public_key,
+            Unspecified,
+            |key_material| {
+                let expected_key_len = match algorithm.id {
+                    agreement::AlgorithmID::ECDH_P256 | agreement::AlgorithmID::X25519 => 32,
+                    agreement::AlgorithmID::ECDH_P384 => 48,
+                    agreement::AlgorithmID::ECDH_P521 => 66,
+                };
+                assert_eq!(key_material.len(), expected_key_len);
+                Ok(())
+            },
+        )
+        .expect("Failed in agree_ephemeral");
+    }
+
+    #[test]
+    fn agreement_agree_ephemeral_x509_peer_pubkey() {
+        const ECDH_P256_X509_PEER_PUBLIC_KEY: &str = concat!(
+            "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAECKby9ft1JuAokk2umfeafRyOL1pN",
+            "Z3T+LVvb5Cx6f/ngOdL2vJM2hQy9S962OodCQq0ZnhXE4KjnvycuFvCvOg==",
+        );
+        const ECDH_P384_X509_PEER_PUBLIC_KEY: &str = concat!(
+            "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEInBNE3e20bBl8ZM9zbxPWP0oF7/vRTou",
+            "BNayEEitfB2HUQ45TltlAvq2LbaF08687o5jQOAJfDA6T5mKn6/19MwX5zI7Wt7/",
+            "xCYH0kg7Bz26I1hi6XfhQ49Owhh0BMKH",
+        );
+        const ECDH_P521_X509_PEER_PUBLIC_KEY: &str = concat!(
+            "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQA/KHBKOQAB4kAyQ/ED7GdO+ICswP7s",
+            "stFf7nljB5Unbu5fTpVTwqR1GGWWBnnew58gSU1h5ECwSOpMY7vfGbIGHUAIZ0V9Y",
+            "j3Foo+FvAoE4dog1Gy+LpK+cXbacpZhQQrzBnWMeicZjs3R7esCymjjtULEZjVple",
+            "HDYiVLAHdHIzfYdo=",
+        );
+        const X25519_X509_PEER_PUBLIC_KEY: &str =
+            concat!("MCowBQYDK2VuAyEAXei13Z9eh6EzPZ+OvAFha+rIMANFwT6IN5w6tMm9A0Y=",);
+
+        let rng = rand::SystemRandom::new();
+        agreement_agree_ephemeral_x509_peer_pubkey_(
+            ECDH_P256_X509_PEER_PUBLIC_KEY,
+            &agreement::ECDH_P256,
+            &rng,
+        );
+
+        agreement_agree_ephemeral_x509_peer_pubkey_(
+            ECDH_P384_X509_PEER_PUBLIC_KEY,
+            &agreement::ECDH_P384,
+            &rng,
+        );
+
+        agreement_agree_ephemeral_x509_peer_pubkey_(
+            ECDH_P521_X509_PEER_PUBLIC_KEY,
+            &agreement::ECDH_P521,
+            &rng,
+        );
+
+        agreement_agree_ephemeral_x509_peer_pubkey_(
+            X25519_X509_PEER_PUBLIC_KEY,
+            &agreement::X25519,
+            &rng,
+        );
     }
 }

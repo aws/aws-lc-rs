@@ -4,9 +4,10 @@
 use std::ops::Deref;
 
 use aws_lc::{
-    BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_AEAD_CTX_free,
-    EVP_PKEY_CTX_free, EVP_PKEY_free, OPENSSL_free, RSA_free, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY,
-    EC_POINT, EVP_AEAD_CTX, EVP_PKEY, EVP_PKEY_CTX, RSA,
+    BIO_free, BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free,
+    EVP_AEAD_CTX_free, EVP_PKEY_CTX_free, EVP_PKEY_free, OPENSSL_free, RSA_free, X509_PUBKEY_free,
+    BIGNUM, BIO, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_AEAD_CTX, EVP_PKEY, EVP_PKEY_CTX, RSA,
+    X509_PUBKEY,
 };
 
 use mirai_annotations::verify_unreachable;
@@ -198,18 +199,20 @@ macro_rules! create_pointer {
 }
 
 // `OPENSSL_free` and the other `XXX_free` functions perform a zeroization of the memory when it's
-// freed. This is different than functions of the same name in OpenSSL which generally do not zero
+// freed. This is different than functions of the same name in OpenSSL which generally do not zerorise
 // memory.
-create_pointer!(u8, OPENSSL_free);
-create_pointer!(EC_GROUP, EC_GROUP_free);
-create_pointer!(EC_POINT, EC_POINT_free);
-create_pointer!(EC_KEY, EC_KEY_free);
-create_pointer!(ECDSA_SIG, ECDSA_SIG_free);
 create_pointer!(BIGNUM, BN_free);
+create_pointer!(BIO, BIO_free);
+create_pointer!(EC_GROUP, EC_GROUP_free);
+create_pointer!(EC_KEY, EC_KEY_free);
+create_pointer!(EC_POINT, EC_POINT_free);
+create_pointer!(ECDSA_SIG, ECDSA_SIG_free);
+create_pointer!(EVP_AEAD_CTX, EVP_AEAD_CTX_free);
 create_pointer!(EVP_PKEY, EVP_PKEY_free);
 create_pointer!(EVP_PKEY_CTX, EVP_PKEY_CTX_free);
 create_pointer!(RSA, RSA_free);
-create_pointer!(EVP_AEAD_CTX, EVP_AEAD_CTX_free);
+create_pointer!(X509_PUBKEY, X509_PUBKEY_free);
+create_pointer!(u8, OPENSSL_free);
 
 #[cfg(test)]
 mod tests {
