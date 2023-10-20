@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::{error::Unspecified, iv::FixedLength};
+use std::fmt::Debug;
 
 use super::{
     aead_ctx::AeadCtx, open_within, seal_in_place_append_tag, seal_in_place_separate_tag, Aad,
-    Algorithm, AlgorithmID, Nonce, Tag, NONCE_LEN,
+    Algorithm, AlgorithmID, Nonce, Tag, TlsRecordSealingKey, NONCE_LEN,
 };
 
 /// AEAD Cipher key using a randomized nonce.
@@ -16,7 +17,7 @@ use super::{
 /// * `AES_128_GCM`
 /// * `AES_256_GCM`
 ///
-/// Use this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey`.
+/// Prefer this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey`.
 pub struct RandomizedNonceKey {
     ctx: AeadCtx,
     algorithm: &'static Algorithm,
@@ -145,6 +146,15 @@ impl RandomizedNonceKey {
     #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
+    }
+}
+
+#[allow(clippy::missing_fields_in_debug)]
+impl Debug for RandomizedNonceKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RandomizedNonceKey")
+            .field("algorithm", &self.algorithm)
+            .finish()
     }
 }
 
