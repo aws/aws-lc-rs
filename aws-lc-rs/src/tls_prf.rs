@@ -25,6 +25,8 @@
 //! # }
 //! ```
 
+use std::fmt::Debug;
+
 use crate::{
     digest::match_digest_type, digest::AlgorithmID, error::Unspecified, fips::indicator_check,
 };
@@ -34,6 +36,12 @@ use aws_lc::CRYPTO_tls1_prf;
 
 /// The TLS PRF `P_hash` Algorithm
 pub struct Algorithm(AlgorithmID);
+
+impl Debug for Algorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(&self.0, f)
+    }
+}
 
 /// SHA-256 `P_hash` algorithm
 pub const P_SHA256: Algorithm = Algorithm(AlgorithmID::SHA256);
@@ -118,6 +126,15 @@ impl<const L: usize> TryFrom<Secret> for [u8; L] {
         ret.copy_from_slice(&value.secret);
 
         Ok(ret)
+    }
+}
+
+#[allow(clippy::missing_fields_in_debug)]
+impl Debug for Secret {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Secret")
+            .field("algorithm", &self.algorithm)
+            .finish()
     }
 }
 
