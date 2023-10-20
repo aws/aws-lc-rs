@@ -191,7 +191,7 @@ macro_rules! tls_nonce_api {
     ($name:ident, $alg:expr, $proto:expr, $key:expr) => {
         #[test]
         fn $name() {
-            let key = TlsRecordSealingKey::new($alg, $proto, $key).unwrap();
+            let mut key = TlsRecordSealingKey::new($alg, $proto, $key).unwrap();
 
             let mut in_out = Vec::from(TEST_MESSAGE);
 

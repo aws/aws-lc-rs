@@ -166,17 +166,17 @@ const MAX_USIZE32: u64 = u32::MAX as u64;
 ///
 /// `derive` panics if `out.len()` is larger than (2**32 - 1) * the digest
 /// algorithm's output length, per the PBKDF2 specification.
-///
-/// # FIPS
-/// The following conditions must be met:
-/// * Algorithm is one of the following:
-///   * `PBKDF2_HMAC_SHA1`
-///   * `PBKDF2_HMAC_SHA256`
-///   * `PBKDF2_HMAC_SHA384`
-///   * `PBKDF2_HMAC_SHA512`
-/// * `salt.len()` >= 16
-/// * `sercet.len()` >= 14
-/// * `iterations` >= 1000
+//
+// # FIPS
+// The following conditions must be met:
+// * Algorithm is one of the following:
+//   * `PBKDF2_HMAC_SHA1`
+//   * `PBKDF2_HMAC_SHA256`
+//   * `PBKDF2_HMAC_SHA384`
+//   * `PBKDF2_HMAC_SHA512`
+// * `salt.len()` >= 16
+// * `sercet.len()` >= 14
+// * `iterations` >= 1000
 #[inline]
 pub fn derive(
     algorithm: Algorithm,
@@ -241,17 +241,17 @@ fn try_derive(
 ///
 /// `verify` panics if `previously_derived.len()` is larger than (2**32 - 1) * the digest
 /// algorithm's output length, per the PBKDF2 specification.
-///
-/// # FIPS
-/// The following conditions must be met:
-/// * Algorithm is one of the following:
-///   * `PBKDF2_HMAC_SHA1`
-///   * `PBKDF2_HMAC_SHA256`
-///   * `PBKDF2_HMAC_SHA384`
-///   * `PBKDF2_HMAC_SHA512`
-/// * `salt.len()` >= 16
-/// * `secret.len()` >= 14
-/// * `iterations` >= 1000
+//
+// # FIPS
+// The following conditions must be met:
+// * Algorithm is one of the following:
+//   * `PBKDF2_HMAC_SHA1`
+//   * `PBKDF2_HMAC_SHA256`
+//   * `PBKDF2_HMAC_SHA384`
+//   * `PBKDF2_HMAC_SHA512`
+// * `salt.len()` >= 16
+// * `secret.len()` >= 14
+// * `iterations` >= 1000
 #[inline]
 pub fn verify(
     algorithm: Algorithm,

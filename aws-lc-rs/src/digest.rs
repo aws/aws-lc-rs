@@ -49,15 +49,15 @@ use std::mem::MaybeUninit;
 use std::os::raw::c_uint;
 
 /// A context for multi-step (Init-Update-Finish) digest calculations.
-///
-/// # FIPS
-/// Context must be used with one of the following algorithms:
-/// * `SHA1_FOR_LEGACY_USE_ONLY`
-/// * `SHA224`
-/// * `SHA256`
-/// * `SHA384`
-/// * `SHA512`
-/// * `SHA512_256`
+//
+// # FIPS
+// Context must be used with one of the following algorithms:
+// * `SHA1_FOR_LEGACY_USE_ONLY`
+// * `SHA224`
+// * `SHA256`
+// * `SHA384`
+// * `SHA512`
+// * `SHA512_256`
 #[derive(Clone)]
 pub struct Context {
     /// The context's algorithm.
@@ -168,15 +168,15 @@ impl Context {
 
 /// Returns the digest of `data` using the given digest algorithm.
 ///
-/// # FIPS
-/// This function must only be used with one of the following algorithms:
-/// * `SHA1_FOR_LEGACY_USE_ONLY`
-/// * `SHA224`
-/// * `SHA256`
-/// * `SHA384`
-/// * `SHA512`
-/// * `SHA512_256`
-///
+// # FIPS
+// This function must only be used with one of the following algorithms:
+// * `SHA1_FOR_LEGACY_USE_ONLY`
+// * `SHA224`
+// * `SHA256`
+// * `SHA384`
+// * `SHA512`
+// * `SHA512_256`
+//
 /// # Examples:
 ///
 /// ```

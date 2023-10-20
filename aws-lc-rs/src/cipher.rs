@@ -419,11 +419,11 @@ impl PaddedBlockEncryptingKey {
     /// Constructs a new `PaddedBlockEncryptingKey` cipher with chaining block cipher (CBC) mode.
     /// Plaintext data is padded following the PKCS#7 scheme.
     ///
-    /// # FIPS
-    /// Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
-    /// * `AES_128`
-    /// * `AES_256`
-    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error cosntructing a `PaddedBlockEncryptingKey`.
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockEncryptingKey, Unspecified> {
@@ -512,11 +512,11 @@ impl PaddedBlockDecryptingKey {
     /// Constructs a new `PaddedBlockDecryptingKey` cipher with chaining block cipher (CBC) mode.
     /// Decrypted data is unpadded following the PKCS#7 scheme.
     ///
-    /// # FIPS
-    /// Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
-    /// * `AES_128`
-    /// * `AES_256`
-    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockDecryptingKey, Unspecified> {
@@ -589,11 +589,11 @@ pub struct EncryptingKey {
 impl EncryptingKey {
     /// Constructs an `EncryptingKey` operating in counter (CTR) mode using the provided key.
     ///
-    /// # FIPS
-    /// Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
-    /// * `AES_128`
-    /// * `AES_256`
-    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
     pub fn ctr(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
@@ -668,11 +668,11 @@ pub struct DecryptingKey {
 impl DecryptingKey {
     /// Constructs a cipher decrypting key operating in counter (CTR) mode using the provided key and context.
     ///
-    /// # FIPS
-    /// Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
-    /// * `AES_128`
-    /// * `AES_256`
-    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
     pub fn ctr(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {

@@ -121,9 +121,9 @@ impl<T> RandomlyConstructable for T where T: sealed::RandomlyConstructable {}
 /// underlying *AWS-LC* libcrypto.
 ///
 /// A single `SystemRandom` may be shared across multiple threads safely.
-///
-/// # FIPS
-/// Use this implementation for retrieving random bytes.
+//
+// # FIPS
+// Use this implementation for retrieving random bytes.
 #[derive(Clone, Debug)]
 pub struct SystemRandom(());
 
@@ -153,9 +153,9 @@ impl sealed::SecureRandom for SystemRandom {
 
 /// Fills `dest` with random bytes.
 ///
-/// # FIPS
-/// Use this for retrieving random bytes or [`SystemRandom`].
-///
+// # FIPS
+// Use this for retrieving random bytes or [`SystemRandom`].
+//
 /// # Errors
 /// `error::Unspecified` if unable to fill `dest`.
 pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {

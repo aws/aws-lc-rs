@@ -305,12 +305,12 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     /// Verify the signature `signature` of message `msg` with the public key
     /// `public_key`.
     ///
-    /// # FIPS
-    /// The following conditions must be met:
-    /// * RSA Key Sizes: 1024, 2048, 3072, 4096
-    /// * NIST Elliptic Curves: P256, P384, P521
-    /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
-    ///
+    // # FIPS
+    // The following conditions must be met:
+    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+    // * NIST Elliptic Curves: P256, P384, P521
+    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
     #[cfg(feature = "ring-sig-verify")]
@@ -325,12 +325,12 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     /// Verify the signature `signature` of message `msg` with the public key
     /// `public_key`.
     ///
-    /// # FIPS
-    /// The following conditions must be met:
-    /// * RSA Key Sizes: 1024, 2048, 3072, 4096
-    /// * NIST Elliptic Curves: P256, P384, P521
-    /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
-    ///
+    // # FIPS
+    // The following conditions must be met:
+    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+    // * NIST Elliptic Curves: P256, P384, P521
+    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
     fn verify_sig(
@@ -374,12 +374,12 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     ///
     /// See the [`crate::signature`] module-level documentation for examples.
     ///
-    /// # FIPS
-    /// The following conditions must be met:
-    /// * RSA Key Sizes: 1024, 2048, 3072, 4096
-    /// * NIST Elliptic Curves: P256, P384, P521
-    /// * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
-    ///
+    // # FIPS
+    // The following conditions must be met:
+    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+    // * NIST Elliptic Curves: P256, P384, P521
+    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
     #[inline]

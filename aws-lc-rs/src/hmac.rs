@@ -200,14 +200,14 @@ impl Clone for LcHmacCtx {
 }
 
 /// A key to use for HMAC signing.
-///
-/// # FIPS
-/// Use this type with one of the following algorithms:
-/// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
-/// * `HMAC_SHA224`
-/// * `HMAC_SHA256`
-/// * `HMAC_SHA384`
-/// * `HMAC_SHA512`
+//
+// # FIPS
+// Use this type with one of the following algorithms:
+// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+// * `HMAC_SHA224`
+// * `HMAC_SHA256`
+// * `HMAC_SHA384`
+// * `HMAC_SHA512`
 #[derive(Clone)]
 pub struct Key {
     pub(crate) algorithm: Algorithm,
@@ -236,16 +236,17 @@ impl Key {
     ///
     /// [RFC 2104 Section 3]: https://tools.ietf.org/html/rfc2104#section-3
     ///
+    //
+    // # FIPS
+    // Use this function with one of the following algorithms:
+    // * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+    // * `HMAC_SHA224`
+    // * `HMAC_SHA256`
+    // * `HMAC_SHA384`
+    // * `HMAC_SHA512`
+    //
     /// # Errors
     /// `error::Unspecified` is the `rng` fails.
-    ///
-    /// # FIPS
-    /// Use this function with one of the following algorithms:
-    /// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
-    /// * `HMAC_SHA224`
-    /// * `HMAC_SHA256`
-    /// * `HMAC_SHA384`
-    /// * `HMAC_SHA512`
     pub fn generate(
         algorithm: Algorithm,
         rng: &dyn crate::rand::SecureRandom,
@@ -401,14 +402,14 @@ impl Context {
     /// the return value of `sign` to a tag. Use `verify` for verification
     /// instead.
     ///
-    /// # FIPS
-    /// Use this method with one of the following algorithms:
-    /// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
-    /// * `HMAC_SHA224`
-    /// * `HMAC_SHA256`
-    /// * `HMAC_SHA384`
-    /// * `HMAC_SHA512`
-    ///
+    // # FIPS
+    // Use this method with one of the following algorithms:
+    // * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+    // * `HMAC_SHA224`
+    // * `HMAC_SHA256`
+    // * `HMAC_SHA384`
+    // * `HMAC_SHA512`
+    //
     /// # Panics
     /// Panics if the HMAC calculation cannot be finalized
     #[inline]
@@ -442,14 +443,14 @@ impl Context {
 ///
 /// It is generally not safe to implement HMAC verification by comparing the
 /// return value of `sign` to a tag. Use `verify` for verification instead.
-///
-/// # FIPS
-/// Use this function with one of the following algorithms:
-/// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
-/// * `HMAC_SHA224`
-/// * `HMAC_SHA256`
-/// * `HMAC_SHA384`
-/// * `HMAC_SHA512`
+//
+// # FIPS
+// Use this function with one of the following algorithms:
+// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+// * `HMAC_SHA224`
+// * `HMAC_SHA256`
+// * `HMAC_SHA384`
+// * `HMAC_SHA512`
 #[inline]
 #[must_use]
 pub fn sign(key: &Key, data: &[u8]) -> Tag {
@@ -468,14 +469,14 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 ///
 /// # Errors
 /// `error::Unspecified` if the inputs are not verified.
-///
-/// # FIPS
-/// Use this function with one of the following algorithms:
-/// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
-/// * `HMAC_SHA224`
-/// * `HMAC_SHA256`
-/// * `HMAC_SHA384`
-/// * `HMAC_SHA512`
+//
+// # FIPS
+// Use this function with one of the following algorithms:
+// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+// * `HMAC_SHA224`
+// * `HMAC_SHA256`
+// * `HMAC_SHA384`
+// * `HMAC_SHA512`
 #[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
     constant_time::verify_slices_are_equal(sign(key, data).as_ref(), tag)
