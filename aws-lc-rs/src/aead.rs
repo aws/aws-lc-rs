@@ -133,11 +133,13 @@ mod nonce;
 pub mod nonce_sequence;
 mod poly1305;
 pub mod quic;
+mod rand_nonce;
 
 pub use self::{
     aes_gcm::{AES_128_GCM, AES_128_GCM_SIV, AES_256_GCM, AES_256_GCM_SIV},
     chacha::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},
+    rand_nonce::RandomizedNonceKey,
 };
 
 /// A sequences of unique nonces.
@@ -910,146 +912,6 @@ impl Debug for LessSafeKey {
     }
 }
 
-/// AEAD Cipher key using a randomized nonce.
-///
-/// `RandomizedNonceKey` handles generation random nonce values.
-///
-/// The following algorithms are supported:
-/// * `AES_128_GCM`
-/// * `AES_256_GCM`
-///
-/// Use this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey`.
-pub struct RandomizedNonceKey {
-    ctx: AeadCtx,
-    algorithm: &'static Algorithm,
-}
-
-impl RandomizedNonceKey {
-    /// New Random Nonce Sequence
-    /// # Errors
-    pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
-        let ctx = match algorithm.id {
-            AlgorithmID::AES_128_GCM => AeadCtx::aes_128_gcm_randnonce(
-                key_bytes,
-                algorithm.tag_len(),
-                algorithm.nonce_len(),
-            ),
-            AlgorithmID::AES_256_GCM => AeadCtx::aes_256_gcm_randnonce(
-                key_bytes,
-                algorithm.tag_len(),
-                algorithm.nonce_len(),
-            ),
-            AlgorithmID::AES_128_GCM_SIV
-            | AlgorithmID::AES_256_GCM_SIV
-            | AlgorithmID::CHACHA20_POLY1305 => return Err(Unspecified),
-        }?;
-        Ok(Self { ctx, algorithm })
-    }
-
-    /// Authenticates and decrypts (“opens”) data in place.
-    //
-    // aad is the additional authenticated data (AAD), if any.
-    //
-    // On input, in_out must be the ciphertext followed by the tag. When open_in_place() returns Ok(plaintext),
-    // the input ciphertext has been overwritten by the plaintext; plaintext will refer to the plaintext without the tag.
-    ///
-    /// # Errors
-    /// `error::Unspecified` when ciphertext is invalid.
-    #[inline]
-    pub fn open_in_place<'in_out, A>(
-        &self,
-        nonce: Nonce,
-        aad: Aad<A>,
-        in_out: &'in_out mut [u8],
-    ) -> Result<&'in_out mut [u8], Unspecified>
-    where
-        A: AsRef<[u8]>,
-    {
-        open_within(self.algorithm, &self.ctx, nonce, aad, in_out, 0..)
-    }
-
-    /// Encrypts and signs (“seals”) data in place, appending the tag to the
-    /// resulting ciphertext.
-    ///
-    /// `key.seal_in_place_append_tag(aad, in_out)` is equivalent to:
-    ///
-    /// ```skip
-    /// key.seal_in_place_separate_tag(aad, in_out.as_mut())
-    ///     .map(|tag| in_out.extend(tag.as_ref()))
-    /// ```
-    ///
-    /// The Nonce used for the operation is randomly generated, and returned to the caller.
-    ///
-    /// # Errors
-    /// `error::Unspecified` if encryption operation fails.
-    #[inline]
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn seal_in_place_append_tag<'a, A, InOut>(
-        &self,
-        aad: Aad<A>,
-        in_out: &'a mut InOut,
-    ) -> Result<Nonce, Unspecified>
-    where
-        A: AsRef<[u8]>,
-        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
-    {
-        seal_in_place_append_tag(
-            self.algorithm,
-            &self.ctx,
-            None,
-            Aad::from(aad.as_ref()),
-            in_out,
-        )
-    }
-
-    /// Encrypts and signs (“seals”) data in place.
-    ///
-    /// `aad` is the additional authenticated data (AAD), if any. This is
-    /// authenticated but not encrypted. The type `A` could be a byte slice
-    /// `&[u8]`, a byte array `[u8; N]` for some constant `N`, `Vec<u8>`, etc.
-    /// If there is no AAD then use `Aad::empty()`.
-    ///
-    /// The plaintext is given as the input value of `in_out`. `seal_in_place()`
-    /// will overwrite the plaintext with the ciphertext and return the tag.
-    /// For most protocols, the caller must append the tag to the ciphertext.
-    /// The tag will be `self.algorithm.tag_len()` bytes long.
-    ///
-    /// The Nonce used for the operation is randomly generated, and returned to the caller.
-    ///
-    /// # Errors
-    /// `error::Unspecified` if encryption operation fails.
-    #[inline]
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn seal_in_place_separate_tag<A>(
-        &self,
-        aad: Aad<A>,
-        in_out: &mut [u8],
-    ) -> Result<(Nonce, Tag), Unspecified>
-    where
-        A: AsRef<[u8]>,
-    {
-        let nonce = if let AlgorithmID::CHACHA20_POLY1305 = self.algorithm.id {
-            Some(Nonce(FixedLength::<NONCE_LEN>::new()?))
-        } else {
-            None
-        };
-        seal_in_place_separate_tag(
-            self.algorithm,
-            &self.ctx,
-            nonce,
-            Aad::from(aad.as_ref()),
-            in_out,
-        )
-    }
-
-    /// The key's AEAD algorithm.
-    #[inline]
-    #[must_use]
-    pub fn algorithm(&self) -> &'static Algorithm {
-        self.algorithm
-    }
-}
-
 /// The Transport Layer Security (TLS) protocol version.
 pub enum TlsProtocolId {
     /// TLS 1.2 (RFC 5246)
@@ -1727,65 +1589,6 @@ mod tests {
 
         assert_eq!(plaintext, in_out[..plaintext.len()]);
     }
-
-    macro_rules! test_randnonce {
-        ($name:ident, $alg:expr, $key:expr) => {
-            paste! {
-                #[test]
-                fn [<test_ $name _randnonce_unsupported>]() {
-                    assert!(RandomizedNonceKey::new($alg, $key).is_err());
-                }
-            }
-        };
-        ($name:ident, $alg:expr, $key:expr, $expect_tag_len:expr, $expect_nonce_len:expr) => {
-            paste! {
-                #[test]
-                fn [<test_ $name _randnonce>]() {
-                    let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
-                    let rand_nonce_key =
-                        RandomizedNonceKey::new($alg, $key).unwrap();
-
-                    assert_eq!($alg, rand_nonce_key.algorithm());
-                    assert_eq!(*$expect_tag_len, $alg.tag_len());
-                    assert_eq!(*$expect_nonce_len, $alg.nonce_len());
-
-                    let mut in_out = Vec::from(plaintext.as_slice());
-
-                    let nonce = rand_nonce_key
-                        .seal_in_place_append_tag(Aad::empty(), &mut in_out)
-                        .unwrap();
-
-                    assert_ne!(plaintext, in_out[..plaintext.len()]);
-
-                    rand_nonce_key
-                        .open_in_place(nonce, Aad::empty(), &mut in_out)
-                        .unwrap();
-
-                    assert_eq!(plaintext, in_out[..plaintext.len()]);
-
-                    let mut in_out = Vec::from(plaintext.as_slice());
-
-                    let (nonce, tag) = rand_nonce_key
-                        .seal_in_place_separate_tag(Aad::empty(), &mut in_out)
-                        .unwrap();
-
-                    assert_ne!(plaintext, in_out[..plaintext.len()]);
-
-                    in_out.extend(tag.as_ref());
-
-                    rand_nonce_key
-                        .open_in_place(nonce, Aad::empty(), &mut in_out)
-                        .unwrap();
-
-                    assert_eq!(plaintext, in_out[..plaintext.len()]);
-                }
-            }
-        };
-    }
-
-    test_randnonce!(aes_128_gcm, &AES_128_GCM, TEST_128_BIT_KEY, &16, &12);
-    test_randnonce!(aes_256_gcm, &AES_256_GCM, TEST_256_BIT_KEY, &16, &12);
-    test_randnonce!(chacha20_poly1305, &CHACHA20_POLY1305, TEST_256_BIT_KEY);
 
     struct TlsNonceTestCase {
         nonce: &'static str,
