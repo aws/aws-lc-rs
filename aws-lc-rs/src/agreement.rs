@@ -562,19 +562,13 @@ fn ec_key_ecdh<'a>(
 ) -> Result<&'a [u8], ()> {
     let ec_group = unsafe { ec_group_from_nid(nid)? };
     let pub_key_point = unsafe { ec_point_from_bytes(&ec_group, peer_pub_key_bytes) }?;
-    let peer_ec_key = unsafe { ec_key_from_public_point(&ec_group, &pub_key_point) }?;
+    let pub_key = unsafe { ec_key_from_public_point(&ec_group, &pub_key_point) }?;
 
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx) } {
         return Err(());
     };
-
-    let pub_key = LcPtr::new(unsafe { EVP_PKEY_new() })?;
-    if 1 != unsafe { EVP_PKEY_assign_EC_KEY(*pub_key, *peer_ec_key) } {
-        return Err(());
-    }
-    peer_ec_key.detach();
 
     if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx, *pub_key) } {
         return Err(());

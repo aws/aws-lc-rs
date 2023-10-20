@@ -132,7 +132,6 @@ impl EcdsaKeyPair {
             let private_bn = DetachableLcPtr::try_from(private_key)?;
             let evp_pkey =
                 ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
-            validate_ec_key(&evp_pkey.as_const(), alg.id.nid())?;
 
             let key_pair = Self::new(alg, evp_pkey)?;
             Ok(key_pair)

@@ -7,7 +7,7 @@ use crate::digest::digest_ctx::DigestContext;
 use crate::error::{KeyRejected, Unspecified};
 use core::fmt;
 
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
 
 use crate::fips::indicator_check;
 use crate::signature::{Signature, VerificationAlgorithm};
@@ -233,15 +233,7 @@ fn evp_pkey_from_public_key(
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let ec_group = unsafe { ec_group_from_nid(alg.nid())? };
     let ec_point = unsafe { ec_point_from_bytes(&ec_group, public_key)? };
-    let ec_key = unsafe { ec_key_from_public_point(&ec_group, &ec_point)? };
-
-    let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
-
-    if 1 != unsafe { EVP_PKEY_assign_EC_KEY(*pkey, *ec_key) } {
-        return Err(Unspecified);
-    }
-
-    ec_key.detach();
+    let pkey = unsafe { ec_key_from_public_point(&ec_group, &ec_point)? };
 
     Ok(pkey)
 }
@@ -305,7 +297,8 @@ pub(crate) fn marshal_public_key(
 pub(crate) unsafe fn ec_key_from_public_point(
     ec_group: &LcPtr<EC_GROUP>,
     public_ec_point: &LcPtr<EC_POINT>,
-) -> Result<DetachableLcPtr<EC_KEY>, Unspecified> {
+) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+    let nid = EC_GROUP_get_curve_name(ec_group.as_const_ptr());
     let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(Unspecified);
@@ -313,7 +306,18 @@ pub(crate) unsafe fn ec_key_from_public_point(
     if 1 != EC_KEY_set_public_key(*ec_key, **public_ec_point) {
         return Err(Unspecified);
     }
-    Ok(ec_key)
+
+    let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
+
+    if 1 != unsafe { EVP_PKEY_assign_EC_KEY(*pkey, *ec_key) } {
+        return Err(Unspecified);
+    }
+
+    ec_key.detach();
+
+    validate_ec_key(&pkey.as_const(), nid)?;
+
+    Ok(pkey)
 }
 
 #[cfg(test)]
@@ -385,23 +389,27 @@ unsafe fn ec_key_from_public_private(
     ec_group: &LcPtr<EC_GROUP>,
     public_ec_point: &LcPtr<EC_POINT>,
     private_bignum: &DetachableLcPtr<BIGNUM>,
-) -> Result<LcPtr<EVP_PKEY>, ()> {
+) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
-        return Err(());
+        return Err(KeyRejected::unexpected_error());
     }
     if 1 != EC_KEY_set_public_key(*ec_key, **public_ec_point) {
-        return Err(());
+        return Err(KeyRejected::unexpected_error());
     }
     if 1 != EC_KEY_set_private_key(*ec_key, **private_bignum) {
-        return Err(());
+        return Err(KeyRejected::unexpected_error());
     }
 
     let evp_pkey = LcPtr::new(EVP_PKEY_new())?;
+
     if 1 != EVP_PKEY_assign_EC_KEY(*evp_pkey, *ec_key) {
-        return Err(());
+        return Err(KeyRejected::unexpected_error());
     }
     ec_key.detach();
+
+    let nid = EC_GROUP_get_curve_name(ec_group.as_const_ptr());
+    validate_ec_key(&evp_pkey.as_const(), nid)?;
 
     Ok(evp_pkey)
 }
