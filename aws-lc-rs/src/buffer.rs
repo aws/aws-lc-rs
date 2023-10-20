@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
 //! This module exposes a buffer type used in crate APIs returning private keys and other "private"
 //! contents.
 
