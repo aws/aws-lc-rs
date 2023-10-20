@@ -189,8 +189,8 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ macos-latest ]
-        target: [ aarch64-apple-ios ]
+        os: [ macos-13 ]
+        target: [ aarch64-apple-ios-sim ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -201,9 +201,11 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
           target: ${{ matrix.target }}
-      - name: Run cargo build
+      - name: Run cargo test
         working-directory: ./aws-lc-rs
-        run: cargo build --features bindgen --target ${{ matrix.target }}
+        run: cargo test --features bindgen --target ${{ matrix.target }}
+        env:
+          DYLD_ROOT_PATH: "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot"
 
   aws-lc-rs-test:
     name: aws-lc-rs tests
@@ -212,7 +214,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ ubuntu-latest, macos-12, macos-13 ]
         args:
           - --all-targets
           - --release --all-targets
@@ -246,7 +248,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ ubuntu-latest, macos-12 ]
         args:
           - --release --all-targets --features fips
           - --no-default-features --features fips
@@ -276,7 +278,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ ubuntu-latest, macos-12, macos-13 ]
         args:
           - --no-default-features --features aws-lc-sys,bindgen
           - --release --all-targets --features bindgen
@@ -330,7 +332,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ windows-2019, ubuntu-latest, macOS-latest ]
+        os: [ windows-2019, ubuntu-latest, macos-12, macos-13 ]
         args:
           - publish --dry-run
     steps:
@@ -459,7 +461,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ ubuntu-latest, macos-12, macos-13 ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -480,7 +482,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ ubuntu-latest, macos-12, macos-13 ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -510,7 +512,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ ubuntu-latest, macos-12, macos-13 ]
         static: [ 0, 1 ]
     steps:
       - uses: actions/checkout@v3
@@ -533,7 +535,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ ubuntu-latest, macos-12 ]
         static: [ 0, 1 ]
     steps:
       - uses: actions/checkout@v3
@@ -546,7 +548,7 @@ jobs:
           override: true
       - name: Run cargo test
         working-directory: ./aws-lc-rs
-        if: ${{ matrix.os != 'macOS-latest' || matrix.static != 1 }}
+        if: ${{ matrix.os == 'ubuntu-latest' || matrix.static != 1 }}
         # Doc-tests fail to link with dynamic build
         # See: https://github.com/rust-lang/cargo/issues/8531
         run: AWS_LC_FIPS_SYS_STATIC=${{ matrix.static }} cargo test --tests --features fips
