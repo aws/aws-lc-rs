@@ -50,7 +50,7 @@
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
 use crate::ec::{
-    ec_group_from_nid, evp_pkey_from_public_point, evp_key_generate, ec_point_from_bytes,
+    ec_group_from_nid, ec_point_from_bytes, evp_key_generate, evp_pkey_from_public_point,
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
