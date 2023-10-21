@@ -98,7 +98,7 @@ a few more packages may be needed. The listing below shows the steps needed for 
 building and testing our project locally.
 ```shell
 # Install dependencies needed for build and testing
-sudo yum install -y cmake3 clang git clang-libs golang openssl-devel
+sudo yum install -y cmake3 clang git clang-libs golang openssl-devel perl-CPAN perl-FindBin
 
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
