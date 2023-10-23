@@ -377,12 +377,15 @@ jobs:
           command: install
           args: cargo-llvm-cov
 
-      # TODO: add bot to post coverage details to PR, or upload results to AWS
-      # account. Using --html can give us more insight which regions are missing
-      # coverage immediately.
       - name: Run coverage
         working-directory: ./aws-lc-rs
-        run: cargo llvm-cov --workspace --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-(fips-)?sys/.*"
+        run: cargo llvm-cov --workspace --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --lcov --output-path ${{ runner.temp }}/lcov.info
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          file: ${{ runner.temp }}/lcov.info
 
   mirai-analysis:
     runs-on: ubuntu-latest
