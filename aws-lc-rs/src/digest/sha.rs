@@ -4,10 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::digest::{Algorithm, AlgorithmID, Context};
-use aws_lc::{
-    NID_sha1, NID_sha224, NID_sha256, NID_sha384, NID_sha3_256, NID_sha3_384, NID_sha3_512,
-    NID_sha512, NID_sha512_256,
-};
 
 /// The length of a block for SHA-1, in bytes.
 const SHA1_BLOCK_LEN: usize = 512 / 8;
@@ -73,8 +69,6 @@ pub static SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
     one_shot_hash: sha1_digest,
 
     id: AlgorithmID::SHA1,
-
-    hash_nid: NID_sha1,
 };
 
 /// SHA-224 as specified in [FIPS 180-4].
@@ -93,8 +87,6 @@ pub static SHA224: Algorithm = Algorithm {
     one_shot_hash: sha224_digest,
 
     id: AlgorithmID::SHA224,
-
-    hash_nid: NID_sha224,
 };
 
 /// SHA-256 as specified in [FIPS 180-4].
@@ -110,8 +102,6 @@ pub static SHA256: Algorithm = Algorithm {
     one_shot_hash: sha256_digest,
 
     id: AlgorithmID::SHA256,
-
-    hash_nid: NID_sha256,
 };
 
 /// SHA-384 as specified in [FIPS 180-4].
@@ -130,7 +120,6 @@ pub static SHA384: Algorithm = Algorithm {
     one_shot_hash: sha384_digest,
 
     id: AlgorithmID::SHA384,
-    hash_nid: NID_sha384,
 };
 
 /// SHA-512 as specified in [FIPS 180-4].
@@ -146,7 +135,6 @@ pub static SHA512: Algorithm = Algorithm {
     one_shot_hash: sha512_digest,
 
     id: AlgorithmID::SHA512,
-    hash_nid: NID_sha512,
 };
 
 /// SHA-512/256 as specified in [FIPS 180-4].
@@ -162,7 +150,6 @@ pub static SHA512_256: Algorithm = Algorithm {
     one_shot_hash: sha512_256_digest,
 
     id: AlgorithmID::SHA512_256,
-    hash_nid: NID_sha512_256,
 };
 
 /// SHA3-256 as specified in [FIPS 202].
@@ -178,7 +165,6 @@ pub static SHA3_256: Algorithm = Algorithm {
     one_shot_hash: sha3_256_digest,
 
     id: AlgorithmID::SHA3_256,
-    hash_nid: NID_sha3_256,
 };
 
 /// SHA3-384 as specified in [FIPS 202].
@@ -194,7 +180,6 @@ pub static SHA3_384: Algorithm = Algorithm {
     one_shot_hash: sha3_384_digest,
 
     id: AlgorithmID::SHA3_384,
-    hash_nid: NID_sha3_384,
 };
 
 /// SHA3-512 as specified in [FIPS 202].
@@ -210,7 +195,6 @@ pub static SHA3_512: Algorithm = Algorithm {
     one_shot_hash: sha3_512_digest,
 
     id: AlgorithmID::SHA3_512,
-    hash_nid: NID_sha3_512,
 };
 
 fn sha1_digest(msg: &[u8], output: &mut [u8]) {

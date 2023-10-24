@@ -4,14 +4,16 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
 use crate::{constant_time, sealed, test};
 use aws_lc::{
-    ED25519_keypair_from_seed, ED25519_sign, ED25519_verify, EVP_PKEY_get_raw_private_key,
-    EVP_PKEY_get_raw_public_key, EVP_PKEY_new_raw_private_key, EVP_PKEY, EVP_PKEY_ED25519,
+    ED25519_keypair_from_seed, ED25519_sign, ED25519_verify, EVP_PKEY_CTX_new_id,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen,
+    EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_ED25519,
 };
 use std::fmt;
 use std::fmt::{Debug, Formatter};
@@ -20,7 +22,6 @@ use std::ptr::null_mut;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
-use zeroize::Zeroize;
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
@@ -58,17 +59,18 @@ impl VerificationAlgorithm for EdDSAParameters {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), Unspecified> {
-        unsafe {
-            if 1 != ED25519_verify(
+        if 1 != unsafe {
+            ED25519_verify(
                 msg.as_ptr(),
                 msg.len(),
                 signature.as_ptr(),
                 public_key.as_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            Ok(())
+            )
+        } {
+            return Err(Unspecified);
         }
+        crate::fips::set_fips_service_status_unapproved();
+        Ok(())
     }
 }
 
@@ -115,25 +117,22 @@ impl KeyPair for Ed25519KeyPair {
     }
 }
 
-pub(crate) unsafe fn generate_key(rng: &dyn SecureRandom) -> Result<LcPtr<EVP_PKEY>, ()> {
-    let mut seed = [0u8; ED25519_SEED_LEN];
-    rng.fill(&mut seed)?;
+pub(crate) unsafe fn generate_key() -> Result<LcPtr<EVP_PKEY>, ()> {
+    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, null_mut()) })?;
 
-    let mut public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
-    let mut private_key = MaybeUninit::<[u8; ED25519_PRIVATE_KEY_LEN]>::uninit();
-    ED25519_keypair_from_seed(
-        public_key.as_mut_ptr().cast(),
-        private_key.as_mut_ptr().cast(),
-        seed.as_ptr(),
-    );
-    seed.zeroize();
+    if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
+        return Err(());
+    }
 
-    LcPtr::new(EVP_PKEY_new_raw_private_key(
-        EVP_PKEY_ED25519,
-        null_mut(),
-        private_key.assume_init().as_ptr(),
-        ED25519_PRIVATE_KEY_SEED_LEN,
-    ))
+    let mut pkey = null_mut::<EVP_PKEY>();
+
+    if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) }) {
+        return Err(());
+    }
+
+    let pkey = LcPtr::new(pkey)?;
+
+    Ok(pkey)
 }
 
 impl Ed25519KeyPair {
@@ -152,10 +151,15 @@ impl Ed25519KeyPair {
     /// The aws-lc-ring implementation produces PKCS#8 v2 encoded documents that are compliant per
     /// the RFC specification.
     ///
+    /// Our implementation ignores the `SecureRandom` parameter.
+    ///
+    // # FIPS
+    // This function must not be used.
+    //
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
-    pub fn generate_pkcs8(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
-        let evp_pkey = unsafe { generate_key(rng)? };
+    pub fn generate_pkcs8(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
+        let evp_pkey = unsafe { generate_key()? };
         evp_pkey.marshall_private_key(Version::V2)
     }
 
@@ -165,10 +169,16 @@ impl Ed25519KeyPair {
     /// The PKCS#8 document will be a v1 `PrivateKeyInfo` structure (RFC5208). Use this method
     /// when needing to produce documents that are compatible with the OpenSSL CLI.
     ///
+    /// # *ring* Compatibility
+    ///  Our implementation ignores the `SecureRandom` parameter.
+    ///
+    // # FIPS
+    // This function must not be used.
+    //
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
-    pub fn generate_pkcs8v1(rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
-        let evp_pkey = unsafe { generate_key(rng)? };
+    pub fn generate_pkcs8v1(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
+        let evp_pkey = unsafe { generate_key()? };
         evp_pkey.marshall_private_key(Version::V1)
     }
 
@@ -185,7 +195,6 @@ impl Ed25519KeyPair {
     ///
     /// # Errors
     /// `error::KeyRejected` if parse error, or if key is otherwise unacceptable.
-    ///
     pub fn from_seed_and_public_key(seed: &[u8], public_key: &[u8]) -> Result<Self, KeyRejected> {
         if seed.len() < ED25519_SEED_LEN {
             return Err(KeyRejected::inconsistent_components());
@@ -229,7 +238,6 @@ impl Ed25519KeyPair {
     ///
     /// # Errors
     /// `error::KeyRejected` on parse error, or if key is otherwise unacceptable.
-    ///
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         Self::parse_pkcs8(pkcs8)
     }
@@ -249,7 +257,6 @@ impl Ed25519KeyPair {
     ///
     /// # Errors
     /// `error::KeyRejected` on parse error, or if key is otherwise unacceptable.
-    ///
     pub fn from_pkcs8_maybe_unchecked(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         Self::parse_pkcs8(pkcs8)
     }
@@ -285,6 +292,9 @@ impl Ed25519KeyPair {
 
     /// Returns the signature of the message msg.
     ///
+    // # FIPS
+    // This method must not be used.
+    //
     /// # Panics
     /// Panics if the message is unable to be signed
     #[inline]
@@ -295,23 +305,26 @@ impl Ed25519KeyPair {
 
     #[inline]
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
-        unsafe {
-            let mut sig_bytes = MaybeUninit::<[u8; ED25519_SIGNATURE_LEN]>::uninit();
-            if 1 != ED25519_sign(
+        let mut sig_bytes = MaybeUninit::<[u8; ED25519_SIGNATURE_LEN]>::uninit();
+        if 1 != unsafe {
+            ED25519_sign(
                 sig_bytes.as_mut_ptr().cast(),
                 msg.as_ptr(),
                 msg.len(),
                 self.private_key.as_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let sig_bytes = sig_bytes.assume_init();
-
-            Ok(Signature::new(|slice| {
-                slice[0..ED25519_SIGNATURE_LEN].copy_from_slice(&sig_bytes);
-                ED25519_SIGNATURE_LEN
-            }))
+            )
+        } {
+            return Err(Unspecified);
         }
+
+        crate::fips::set_fips_service_status_unapproved();
+
+        let sig_bytes = unsafe { sig_bytes.assume_init() };
+
+        Ok(Signature::new(|slice| {
+            slice[0..ED25519_SIGNATURE_LEN].copy_from_slice(&sig_bytes);
+            ED25519_SIGNATURE_LEN
+        }))
     }
 }
 

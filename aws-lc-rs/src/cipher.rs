@@ -143,6 +143,7 @@ pub(crate) mod chacha;
 pub(crate) mod key;
 
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use crate::hkdf;
 use crate::hkdf::KeyType;
 use crate::iv::{FixedLength, IV_LEN_128_BIT};
@@ -418,6 +419,11 @@ impl PaddedBlockEncryptingKey {
     /// Constructs a new `PaddedBlockEncryptingKey` cipher with chaining block cipher (CBC) mode.
     /// Plaintext data is padded following the PKCS#7 scheme.
     ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error cosntructing a `PaddedBlockEncryptingKey`.
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockEncryptingKey, Unspecified> {
@@ -506,6 +512,11 @@ impl PaddedBlockDecryptingKey {
     /// Constructs a new `PaddedBlockDecryptingKey` cipher with chaining block cipher (CBC) mode.
     /// Decrypted data is unpadded following the PKCS#7 scheme.
     ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockDecryptingKey, Unspecified> {
@@ -578,6 +589,11 @@ pub struct EncryptingKey {
 impl EncryptingKey {
     /// Constructs an `EncryptingKey` operating in counter (CTR) mode using the provided key.
     ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
     pub fn ctr(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
@@ -652,6 +668,11 @@ pub struct DecryptingKey {
 impl DecryptingKey {
     /// Constructs a cipher decrypting key operating in counter (CTR) mode using the provided key and context.
     ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
     pub fn ctr(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
@@ -843,7 +864,7 @@ fn decrypt_aes_cbc_mode<'in_out>(
 fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_out: &mut [u8]) {
     let mut num = MaybeUninit::<u32>::new(0);
 
-    unsafe {
+    indicator_check!(unsafe {
         AES_ctr128_encrypt(
             in_out.as_ptr(),
             in_out.as_mut_ptr(),
@@ -853,13 +874,13 @@ fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_
             block_buffer.as_mut_ptr(),
             num.as_mut_ptr(),
         );
-    };
+    });
 
     Zeroize::zeroize(block_buffer);
 }
 
 fn aes_cbc_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
-    unsafe {
+    indicator_check!(unsafe {
         AES_cbc_encrypt(
             in_out.as_ptr(),
             in_out.as_mut_ptr(),
@@ -868,11 +889,11 @@ fn aes_cbc_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
             iv.as_mut_ptr(),
             AES_ENCRYPT,
         );
-    }
+    });
 }
 
 fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
-    unsafe {
+    indicator_check!(unsafe {
         AES_cbc_encrypt(
             in_out.as_ptr(),
             in_out.as_mut_ptr(),
@@ -881,13 +902,16 @@ fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
             iv.as_mut_ptr(),
             AES_DECRYPT,
         );
-    }
+    });
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::test::from_hex;
+
+    #[cfg(feature = "fips")]
+    mod fips;
 
     #[test]
     fn test_debug() {

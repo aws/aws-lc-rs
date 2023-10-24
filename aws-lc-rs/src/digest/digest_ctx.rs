@@ -7,26 +7,33 @@ use aws_lc::{EVP_DigestInit_ex, EVP_MD_CTX_cleanup, EVP_MD_CTX_copy, EVP_MD_CTX_
 use std::mem::MaybeUninit;
 use std::ptr::null_mut;
 
-pub(super) struct DigestContext(EVP_MD_CTX);
+pub(crate) struct DigestContext(EVP_MD_CTX);
 
 impl DigestContext {
     pub fn new(algorithm: &'static Algorithm) -> Result<DigestContext, Unspecified> {
         let evp_md_type = match_digest_type(&algorithm.id);
-        let mut dc = MaybeUninit::<EVP_MD_CTX>::uninit();
+        let mut dc = Self::new_uninit();
         unsafe {
-            EVP_MD_CTX_init(dc.as_mut_ptr());
             if 1 != EVP_DigestInit_ex(dc.as_mut_ptr(), *evp_md_type, null_mut()) {
                 return Err(Unspecified);
             };
-            Ok(Self(dc.assume_init()))
+            Ok(dc)
         }
     }
 
-    pub(super) fn as_mut_ptr(&mut self) -> *mut EVP_MD_CTX {
+    pub fn new_uninit() -> DigestContext {
+        let mut dc = MaybeUninit::<EVP_MD_CTX>::uninit();
+        unsafe {
+            EVP_MD_CTX_init(dc.as_mut_ptr());
+            Self(dc.assume_init())
+        }
+    }
+
+    pub(crate) fn as_mut_ptr(&mut self) -> *mut EVP_MD_CTX {
         &mut self.0
     }
 
-    pub(super) fn as_ptr(&self) -> *const EVP_MD_CTX {
+    pub(crate) fn as_ptr(&self) -> *const EVP_MD_CTX {
         &self.0
     }
 }

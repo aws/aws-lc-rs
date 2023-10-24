@@ -50,24 +50,23 @@
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
 use crate::ec::{
-    ec_group_from_nid, ec_key_from_public_point, ec_key_generate, ec_point_from_bytes,
+    ec_group_from_nid, ec_point_from_bytes, evp_key_generate, evp_pkey_from_public_point,
 };
 use crate::error::Unspecified;
-#[cfg(test)]
-use crate::ptr::DetachableLcPtr;
-use crate::ptr::{ConstPointer, LcPtr};
+use crate::fips::indicator_check;
+use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::{ec, test};
 use aws_lc::{
-    ECDH_compute_key, EC_GROUP_cmp, EC_GROUP_get_curve_name, EC_GROUP_get_degree,
-    EC_KEY_get0_group, EC_KEY_get0_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
-    X25519_keypair, X25519_public_from_private, EC_KEY, NID_X25519,
+    EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init,
+    EVP_PKEY_derive_set_peer, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
+    EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY,
+    EVP_PKEY_X25519, NID_X25519,
 };
 
 use core::fmt;
 use std::fmt::{Debug, Formatter};
 use std::ptr::null_mut;
-use zeroize::Zeroize;
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq)]
@@ -150,29 +149,20 @@ pub static ECDH_P521: Algorithm = Algorithm {
 pub static X25519: Algorithm = Algorithm {
     id: AlgorithmID::X25519,
 };
+#[cfg(test)]
 const X25519_PRIVATE_KEY_LEN: usize = aws_lc::X25519_PRIVATE_KEY_LEN as usize;
 #[cfg(test)]
 const ECDH_P256_PRIVATE_KEY_LEN: usize = 32;
 #[cfg(test)]
 const ECDH_P384_PRIVATE_KEY_LEN: usize = 48;
 const ECDH_P521_PRIVATE_KEY_LEN: usize = 66;
-const X25519_PUBLIC_VALUE_LEN: usize = aws_lc::X25519_PUBLIC_VALUE_LEN as usize;
 const X25519_SHARED_KEY_LEN: usize = aws_lc::X25519_SHARED_KEY_LEN as usize;
 #[allow(non_camel_case_types)]
 enum KeyInner {
-    ECDH_P256(LcPtr<EC_KEY>),
-    ECDH_P384(LcPtr<EC_KEY>),
-    ECDH_P521(LcPtr<EC_KEY>),
-    X25519([u8; X25519_PRIVATE_KEY_LEN]),
-}
-
-impl Drop for KeyInner {
-    fn drop(&mut self) {
-        if let KeyInner::X25519(private) = self {
-            private.zeroize();
-        }
-        // LcPtr's Drop implementation will call EC_KEY_free
-    }
+    ECDH_P256(LcPtr<EVP_PKEY>),
+    ECDH_P384(LcPtr<EVP_PKEY>),
+    ECDH_P521(LcPtr<EVP_PKEY>),
+    X25519(LcPtr<EVP_PKEY>),
 }
 
 /// An ephemeral private key for use (only) with `agree_ephemeral`. The
@@ -220,39 +210,40 @@ impl EphemeralPrivateKey {
     /// # *ring* Compatibility
     ///  Our implementation ignores the `SecureRandom` parameter.
     ///
+    // # FIPS
+    // Use this function with one of the following algorithms:
+    // * `ECDH_P256`
+    // * `ECDH_P384`
+    // * `ECDH_P521`
+    //
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    ///
     pub fn generate(alg: &'static Algorithm, _rng: &dyn SecureRandom) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
-                let mut priv_key = [0u8; X25519_PRIVATE_KEY_LEN];
-                let mut pub_key = [0u8; X25519_PUBLIC_VALUE_LEN];
-                unsafe {
-                    X25519_keypair(pub_key.as_mut_ptr(), priv_key.as_mut_ptr());
-                }
+                let priv_key = generate_x25519()?;
                 Ok(EphemeralPrivateKey {
                     inner_key: KeyInner::X25519(priv_key),
                 })
             }
-            AlgorithmID::ECDH_P256 => unsafe {
-                let ec_key = ec_key_generate(ECDH_P256.id.nid())?;
+            AlgorithmID::ECDH_P256 => {
+                let ec_key = evp_key_generate(ECDH_P256.id.nid())?;
                 Ok(EphemeralPrivateKey {
-                    inner_key: KeyInner::ECDH_P256(LcPtr::from(ec_key)),
+                    inner_key: KeyInner::ECDH_P256(ec_key),
                 })
-            },
-            AlgorithmID::ECDH_P384 => unsafe {
-                let ec_key = ec_key_generate(ECDH_P384.id.nid())?;
+            }
+            AlgorithmID::ECDH_P384 => {
+                let ec_key = evp_key_generate(ECDH_P384.id.nid())?;
                 Ok(EphemeralPrivateKey {
-                    inner_key: KeyInner::ECDH_P384(LcPtr::from(ec_key)),
+                    inner_key: KeyInner::ECDH_P384(ec_key),
                 })
-            },
-            AlgorithmID::ECDH_P521 => unsafe {
-                let ec_key = ec_key_generate(ECDH_P521.id.nid())?;
+            }
+            AlgorithmID::ECDH_P521 => {
+                let ec_key = evp_key_generate(ECDH_P521.id.nid())?;
                 Ok(EphemeralPrivateKey {
-                    inner_key: KeyInner::ECDH_P521(LcPtr::from(ec_key)),
+                    inner_key: KeyInner::ECDH_P521(ec_key),
                 })
-            },
+            }
         }
     }
 
@@ -266,7 +257,7 @@ impl EphemeralPrivateKey {
             AlgorithmID::X25519 => {
                 let mut priv_key = [0u8; X25519_PRIVATE_KEY_LEN];
                 rng.fill(&mut priv_key)?;
-                Ok(Self::from_x25519_private_key(&priv_key))
+                Self::from_x25519_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P256 => {
                 let mut priv_key = [0u8; ECDH_P256_PRIVATE_KEY_LEN];
@@ -287,67 +278,62 @@ impl EphemeralPrivateKey {
     }
 
     #[cfg(test)]
-    fn from_x25519_private_key(priv_key: &[u8; X25519_PRIVATE_KEY_LEN]) -> Self {
-        let inner_key = KeyInner::X25519(*priv_key);
-        EphemeralPrivateKey { inner_key }
+    fn from_x25519_private_key(
+        priv_key: &[u8; X25519_PRIVATE_KEY_LEN],
+    ) -> Result<Self, Unspecified> {
+        use aws_lc::EVP_PKEY_new_raw_private_key;
+
+        let pkey = LcPtr::new(unsafe {
+            EVP_PKEY_new_raw_private_key(
+                EVP_PKEY_X25519,
+                null_mut(),
+                priv_key.as_ptr(),
+                priv_key.len(),
+            )
+        })?;
+
+        Ok(EphemeralPrivateKey {
+            inner_key: KeyInner::X25519(pkey),
+        })
     }
 
     #[cfg(test)]
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
-        unsafe {
-            let ec_group = ec_group_from_nid(ECDH_P256.id.nid())?;
-            let priv_key = DetachableLcPtr::try_from(priv_key)?;
-
-            let ec_key = ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())?;
-            let ec_key = LcPtr::from(ec_key);
-            Ok(EphemeralPrivateKey {
-                inner_key: KeyInner::ECDH_P256(ec_key),
-            })
-        }
+        let pkey = from_ec_private_key(priv_key, ECDH_P256.id.nid())?;
+        Ok(EphemeralPrivateKey {
+            inner_key: KeyInner::ECDH_P256(pkey),
+        })
     }
 
     #[cfg(test)]
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
-        unsafe {
-            let ec_group = ec_group_from_nid(ECDH_P384.id.nid())?;
-            let priv_key = DetachableLcPtr::try_from(priv_key)?;
-
-            let ec_key = ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())?;
-            let ec_key = LcPtr::from(ec_key);
-            Ok(EphemeralPrivateKey {
-                inner_key: KeyInner::ECDH_P384(ec_key),
-            })
-        }
+        let pkey = from_ec_private_key(priv_key, ECDH_P384.id.nid())?;
+        Ok(EphemeralPrivateKey {
+            inner_key: KeyInner::ECDH_P384(pkey),
+        })
     }
 
     #[cfg(test)]
     fn from_p521_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
-        unsafe {
-            let ec_group = ec_group_from_nid(ECDH_P521.id.nid())?;
-            let priv_key = DetachableLcPtr::try_from(priv_key)?;
-
-            let ec_key = ec::ec_key_from_private(&ec_group.as_const(), &priv_key.as_const())?;
-            let ec_key = LcPtr::from(ec_key);
-            Ok(EphemeralPrivateKey {
-                inner_key: KeyInner::ECDH_P521(ec_key),
-            })
-        }
+        let pkey = from_ec_private_key(priv_key, ECDH_P521.id.nid())?;
+        Ok(EphemeralPrivateKey {
+            inner_key: KeyInner::ECDH_P521(pkey),
+        })
     }
 
     /// Computes the public key from the private key.
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    ///
     pub fn compute_public_key(&self) -> Result<PublicKey, Unspecified> {
         match &self.inner_key {
-            KeyInner::ECDH_P256(ec_key)
-            | KeyInner::ECDH_P384(ec_key)
-            | KeyInner::ECDH_P521(ec_key) => {
+            KeyInner::ECDH_P256(evp_pkey)
+            | KeyInner::ECDH_P384(evp_pkey)
+            | KeyInner::ECDH_P521(evp_pkey) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
                 unsafe {
                     let key_len =
-                        ec::marshal_public_key_to_buffer(&mut buffer, &ec_key.as_const())?;
+                        ec::marshal_public_key_to_buffer(&mut buffer, &evp_pkey.as_const())?;
                     Ok(PublicKey {
                         alg: self.algorithm(),
                         public_key: buffer,
@@ -357,14 +343,18 @@ impl EphemeralPrivateKey {
             }
             KeyInner::X25519(priv_key) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
-                unsafe {
-                    X25519_public_from_private(buffer.as_mut_ptr(), priv_key.as_ptr());
+                let mut out_len = buffer.len();
+
+                if 1 != unsafe {
+                    EVP_PKEY_get_raw_public_key(**priv_key, buffer.as_mut_ptr(), &mut out_len)
+                } {
+                    return Err(Unspecified);
                 }
 
                 Ok(PublicKey {
                     alg: self.algorithm(),
                     public_key: buffer,
-                    len: X25519_PUBLIC_VALUE_LEN,
+                    len: out_len,
                 })
             }
         }
@@ -376,6 +366,36 @@ impl EphemeralPrivateKey {
     pub fn algorithm(&self) -> &'static Algorithm {
         self.inner_key.algorithm()
     }
+}
+
+#[cfg(test)]
+fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+    use crate::ptr::DetachableLcPtr;
+
+    let ec_group = unsafe { ec_group_from_nid(nid)? };
+    let priv_key = DetachableLcPtr::try_from(priv_key)?;
+
+    let pkey = unsafe { ec::evp_pkey_from_private(&ec_group.as_const(), &priv_key.as_const())? };
+
+    Ok(pkey)
+}
+
+pub(crate) fn generate_x25519() -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, null_mut()) })?;
+
+    if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
+        return Err(Unspecified);
+    }
+
+    let mut pkey: *mut EVP_PKEY = null_mut();
+
+    if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) }) {
+        return Err(Unspecified);
+    }
+
+    let pkey = LcPtr::new(pkey)?;
+
+    Ok(pkey)
 }
 
 const MAX_PUBLIC_KEY_LEN: usize = ec::PUBLIC_KEY_MAX_LEN;
@@ -482,9 +502,14 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// key material from the key agreement operation and then returns what `kdf`
 /// returns.
 ///
+// # FIPS
+// Use this function with one of the following key algorithms:
+// * `ECDH_P256`
+// * `ECDH_P384`
+// * `ECDH_P521`
+//
 /// # Errors
 /// `error_value` on internal failure.
-///
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::missing_panics_doc)]
@@ -512,23 +537,13 @@ where
     let mut buffer = [0u8; MAX_AGREEMENT_SECRET_LEN];
 
     let secret: &[u8] = match &my_private_key.inner_key {
-        KeyInner::X25519(priv_key, ..) => {
-            let mut pub_key = [0u8; X25519_PUBLIC_VALUE_LEN];
-            pub_key.copy_from_slice(peer_pub_bytes);
-            unsafe {
-                let result = x25519_diffie_hellman(&mut buffer, priv_key, &pub_key);
-                if result.is_err() {
-                    return Err(error_value);
-                }
-                &buffer[0..X25519_SHARED_KEY_LEN]
-            }
+        KeyInner::X25519(priv_key) => {
+            x25519_diffie_hellman(&mut buffer, priv_key, peer_pub_bytes).or(Err(error_value))?
         }
-        KeyInner::ECDH_P256(ec_key) | KeyInner::ECDH_P384(ec_key) | KeyInner::ECDH_P521(ec_key) => {
-            let pub_key_bytes = peer_public_key.bytes.as_ref();
-            unsafe {
-                ec_key_ecdh(&mut buffer, ec_key.as_const(), pub_key_bytes, expected_nid)
-                    .or(Err(error_value))?
-            }
+        KeyInner::ECDH_P256(priv_key)
+        | KeyInner::ECDH_P384(priv_key)
+        | KeyInner::ECDH_P521(priv_key) => {
+            ec_key_ecdh(&mut buffer, priv_key, peer_pub_bytes, expected_nid).or(Err(error_value))?
         }
     };
     kdf(secret)
@@ -539,71 +554,86 @@ const MAX_AGREEMENT_SECRET_LEN: usize = ECDH_P521_PRIVATE_KEY_LEN;
 
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
-unsafe fn ec_key_ecdh<'a>(
+fn ec_key_ecdh<'a>(
     buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
-    priv_ec_key: ConstPointer<EC_KEY>,
+    priv_key: &LcPtr<EVP_PKEY>,
     peer_pub_key_bytes: &[u8],
     nid: i32,
 ) -> Result<&'a [u8], ()> {
-    let ec_group = ec_group_from_nid(nid)?;
-    let pub_key_point = ec_point_from_bytes(&ec_group, peer_pub_key_bytes)?;
-    let peer_ec_key = ec_key_from_public_point(&ec_group, &pub_key_point)?;
+    let ec_group = unsafe { ec_group_from_nid(nid)? };
+    let pub_key_point = unsafe { ec_point_from_bytes(&ec_group, peer_pub_key_bytes) }?;
+    let pub_key = unsafe { evp_pkey_from_public_point(&ec_group, &pub_key_point) }?;
 
-    let priv_group = ConstPointer::new(EC_KEY_get0_group(*priv_ec_key))?;
-    let priv_nid = EC_GROUP_get_curve_name(*priv_group);
+    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
 
-    let supported_curves = [NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1];
-    if !supported_curves.contains(&priv_nid as &i32) {
+    if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx) } {
+        return Err(());
+    };
+
+    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx, *pub_key) } {
         return Err(());
     }
 
-    let peer_group = ConstPointer::new(EC_KEY_get0_group(*peer_ec_key))?;
-    if 0 != EC_GROUP_cmp(*priv_group, *peer_group, null_mut()) {
+    let mut out_key_len = buffer.len();
+
+    if 1 != indicator_check!(unsafe {
+        EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len)
+    }) {
         return Err(());
     }
 
-    let peer_pub_key = ConstPointer::new(EC_KEY_get0_public_key(*peer_ec_key))?;
-
-    let field_size = EC_GROUP_get_degree(*priv_group) as usize;
-    let max_secret_len = (field_size + 7) / 8;
-
-    let outlen = ECDH_compute_key(
-        buffer.as_mut_ptr().cast(),
-        max_secret_len,
-        *peer_pub_key,
-        *priv_ec_key,
-        None,
-    );
-    if 0 >= outlen {
+    if 0 == out_key_len {
         return Err(());
     }
-    #[allow(clippy::cast_sign_loss)]
-    let outlen = outlen as usize;
 
-    Ok(&buffer[0..outlen])
+    Ok(&buffer[0..out_key_len])
 }
 
 #[inline]
-unsafe fn x25519_diffie_hellman(
-    out_shared_key: &mut [u8],
-    priv_key: &[u8; X25519_PRIVATE_KEY_LEN],
-    peer_pub_key: &[u8; X25519_PUBLIC_VALUE_LEN],
-) -> Result<(), ()> {
-    debug_assert!(out_shared_key.len() >= X25519_SHARED_KEY_LEN);
-    if 1 != aws_lc::X25519(
-        out_shared_key.as_mut_ptr(),
-        priv_key.as_ptr(),
-        peer_pub_key.as_ptr(),
-    ) {
+fn x25519_diffie_hellman<'a>(
+    buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
+    priv_key: &LcPtr<EVP_PKEY>,
+    peer_pub_key: &[u8],
+) -> Result<&'a [u8], ()> {
+    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
+
+    if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx) } {
+        return Err(());
+    };
+
+    let pub_key = LcPtr::new(unsafe {
+        EVP_PKEY_new_raw_public_key(
+            EVP_PKEY_X25519,
+            null_mut(),
+            peer_pub_key.as_ptr(),
+            peer_pub_key.len(),
+        )
+    })?;
+
+    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx, *pub_key) } {
         return Err(());
     }
-    Ok(())
+
+    let mut out_key_len = buffer.len();
+
+    if 1 != indicator_check!(unsafe {
+        EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len)
+    }) {
+        return Err(());
+    }
+
+    debug_assert!(out_key_len == X25519_SHARED_KEY_LEN);
+
+    Ok(&buffer[0..X25519_SHARED_KEY_LEN])
 }
 
 #[cfg(test)]
 mod tests {
     use crate::error::Unspecified;
     use crate::{agreement, rand, test, test_file};
+
+    #[cfg(feature = "fips")]
+    mod fips;
 
     #[test]
     fn test_agreement_ecdh_x25519_rfc_iterated() {

@@ -30,13 +30,14 @@
 //!
 //! // Using `rand::generate`
 //! let random_array = rand::generate(&rng).unwrap();
-//! let more_rand_bytes : [u8; 64] = random_array.expose();
+//! let more_rand_bytes: [u8; 64] = random_array.expose();
 //! ```
 use aws_lc::RAND_bytes;
 use std::fmt::Debug;
 
 use crate::error;
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
@@ -44,7 +45,6 @@ pub trait SecureRandom: sealed::SecureRandom {
     ///
     /// # Errors
     /// `error::Unspecified` if unable to fill `dest`.
-    ///
     fn fill(&self, dest: &mut [u8]) -> Result<(), Unspecified>;
 }
 
@@ -76,7 +76,6 @@ impl<T: RandomlyConstructable> Random<T> {
 ///
 /// # Errors
 /// `error::Unspecified` if unable to fill buffer.
-///
 #[inline]
 pub fn generate<T: RandomlyConstructable>(
     rng: &dyn SecureRandom,
@@ -122,6 +121,9 @@ impl<T> RandomlyConstructable for T where T: sealed::RandomlyConstructable {}
 /// underlying *AWS-LC* libcrypto.
 ///
 /// A single `SystemRandom` may be shared across multiple threads safely.
+//
+// # FIPS
+// Use this implementation for retrieving random bytes.
 #[derive(Clone, Debug)]
 pub struct SystemRandom(());
 
@@ -150,16 +152,17 @@ impl sealed::SecureRandom for SystemRandom {
 }
 
 /// Fills `dest` with random bytes.
+///
+// # FIPS
+// Use this for retrieving random bytes or [`SystemRandom`].
+//
 /// # Errors
 /// `error::Unspecified` if unable to fill `dest`.
 pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
-    unsafe {
-        if 1 == RAND_bytes(dest.as_mut_ptr(), dest.len()) {
-            Ok(())
-        } else {
-            Err(error::Unspecified)
-        }
+    if 1 != indicator_check!(unsafe { RAND_bytes(dest.as_mut_ptr(), dest.len()) }) {
+        return Err(Unspecified);
     }
+    Ok(())
 }
 
 #[cfg(test)]

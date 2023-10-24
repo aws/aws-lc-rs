@@ -34,7 +34,9 @@ use std::num::TryFromIntError;
 /// }
 ///
 /// impl From<aws_lc_rs::error::Unspecified> for Error {
-///     fn from(_: aws_lc_rs::error::Unspecified) -> Self { Error::CryptoError }
+///     fn from(_: aws_lc_rs::error::Unspecified) -> Self {
+///         Error::CryptoError
+///     }
 /// }
 ///
 /// fn eight_random_bytes() -> Result<[u8; 8], Error> {

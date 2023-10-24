@@ -89,7 +89,6 @@
 //! for ring that provides FIPS support and is compatible with the ring API. Rust developers with
 //! prescribed cryptographic requirements can seamlessly integrate aws-lc-rs into their applications
 //! and deploy them into AWS Regions.
-//!
 
 #![warn(missing_docs)]
 
@@ -124,11 +123,13 @@ mod ec;
 mod ed25519;
 mod endian;
 mod evp_pkey;
+mod fips;
 pub mod iv;
 #[allow(clippy::module_name_repetitions)]
 pub mod kem;
 mod ptr;
 mod rsa;
+pub mod tls_prf;
 
 pub(crate) use debug::derive_debug_via_id;
 
@@ -219,7 +220,7 @@ mod tests {
     #[cfg(not(feature = "fips"))]
     #[test]
     fn test_fips() {
-        assert!(crate::try_fips_mode().is_err());
+        assert!({ crate::try_fips_mode().is_err() });
     }
 
     #[test]

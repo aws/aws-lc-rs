@@ -52,6 +52,8 @@ pub(crate) fn encrypt_block_chacha20(
         counter,
     )?;
 
+    crate::fips::set_fips_service_status_unapproved();
+
     Ok(Block::from(&cipher_text))
 }
 
@@ -76,7 +78,7 @@ pub(crate) fn encrypt_chacha20(
             nonce.as_ptr(),
             counter,
         );
-    }
+    };
     Ok(())
 }
 
@@ -98,6 +100,7 @@ pub(crate) fn encrypt_in_place_chacha20(
             counter,
         );
     }
+    crate::fips::set_fips_service_status_unapproved();
 }
 
 #[cfg(test)]

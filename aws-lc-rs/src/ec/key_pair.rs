@@ -3,21 +3,21 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::ec::{validate_ec_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
+use crate::digest::digest_ctx::DigestContext;
+use crate::ec::{
+    evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
+};
 use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
 use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 use crate::{digest, ec};
-#[cfg(not(feature = "fips"))]
-use aws_lc::EC_KEY_generate_key;
-#[cfg(feature = "fips")]
-use aws_lc::EC_KEY_generate_key_fips;
-use aws_lc::{
-    ECDSA_do_sign, EC_KEY_new_by_curve_name, EVP_PKEY_assign_EC_KEY, EVP_PKEY_new, EC_KEY, EVP_PKEY,
-};
+use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY};
 use std::fmt;
+use std::mem::MaybeUninit;
+use std::ptr::{null, null_mut};
 
 use std::fmt::{Debug, Formatter};
 
@@ -25,7 +25,7 @@ use std::fmt::{Debug, Formatter};
 #[allow(clippy::module_name_repetitions)]
 pub struct EcdsaKeyPair {
     algorithm: &'static EcdsaSigningAlgorithm,
-    ec_key: LcPtr<EC_KEY>,
+    evp_pkey: LcPtr<EVP_PKEY>,
     pubkey: PublicKey,
 }
 
@@ -48,38 +48,17 @@ impl KeyPair for EcdsaKeyPair {
     }
 }
 
-pub(crate) unsafe fn generate_key(nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(EC_KEY_new_by_curve_name(nid))?;
-
-    #[cfg(feature = "fips")]
-    if 1 != EC_KEY_generate_key_fips(*ec_key) {
-        return Err(Unspecified);
-    }
-
-    #[cfg(not(feature = "fips"))]
-    if 1 != EC_KEY_generate_key(*ec_key) {
-        return Err(Unspecified);
-    }
-
-    let evp_pkey = LcPtr::new(EVP_PKEY_new())?;
-    if 1 != EVP_PKEY_assign_EC_KEY(*evp_pkey, *ec_key) {
-        return Err(Unspecified);
-    }
-    ec_key.detach();
-
-    Ok(evp_pkey)
-}
-
 impl EcdsaKeyPair {
+    #[allow(clippy::needless_pass_by_value)]
     unsafe fn new(
         algorithm: &'static EcdsaSigningAlgorithm,
-        ec_key: LcPtr<EC_KEY>,
+        evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
-        let pubkey = ec::marshal_public_key(&ec_key.as_const())?;
+        let pubkey = ec::marshal_public_key(&evp_pkey.as_const())?;
 
         Ok(Self {
             algorithm,
-            ec_key,
+            evp_pkey,
             pubkey,
         })
     }
@@ -97,11 +76,9 @@ impl EcdsaKeyPair {
         unsafe {
             let evp_pkey = LcPtr::try_from(pkcs8)?;
 
-            let ec_key = evp_pkey.get_ec_key()?;
+            validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
 
-            validate_ec_key(&ec_key.as_const(), alg.id.nid())?;
-
-            let key_pair = Self::new(alg, ec_key)?;
+            let key_pair = Self::new(alg, evp_pkey)?;
 
             Ok(key_pair)
         }
@@ -115,16 +92,13 @@ impl EcdsaKeyPair {
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.
-    ///
     pub fn generate_pkcs8(
         alg: &'static EcdsaSigningAlgorithm,
         _rng: &dyn SecureRandom,
     ) -> Result<Document, Unspecified> {
-        unsafe {
-            let evp_pkey = generate_key(alg.0.id.nid())?;
+        let evp_pkey = evp_key_generate(alg.0.id.nid())?;
 
-            evp_pkey.marshall_private_key(Version::V1)
-        }
+        evp_pkey.marshall_private_key(Version::V1)
     }
 
     /// Constructs an ECDSA key pair from the private key and public key bytes
@@ -156,8 +130,10 @@ impl EcdsaKeyPair {
             let public_ec_point = ec::ec_point_from_bytes(&ec_group, public_key)
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let private_bn = DetachableLcPtr::try_from(private_key)?;
-            let ec_key = ec::ec_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
-            let key_pair = Self::new(alg, ec_key)?;
+            let evp_pkey =
+                ec::evp_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
+
+            let key_pair = Self::new(alg, evp_pkey)?;
             Ok(key_pair)
         }
     }
@@ -169,19 +145,82 @@ impl EcdsaKeyPair {
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.
-    ///
+    //
+    // # FIPS
+    // The following conditions must be met:
+    // * NIST Elliptic Curves: P256, P384, P521
+    // * Digest Algorithms: SHA256, SHA384, SHA512
     #[inline]
     pub fn sign(&self, _rng: &dyn SecureRandom, message: &[u8]) -> Result<Signature, Unspecified> {
-        unsafe {
-            let digest = digest::digest(self.algorithm.digest, message);
-            let digest = digest.as_ref();
-            let ecdsa_sig = LcPtr::new(ECDSA_do_sign(digest.as_ptr(), digest.len(), *self.ec_key))?;
-            match self.algorithm.sig_format {
-                EcdsaSignatureFormat::ASN1 => ec::ecdsa_sig_to_asn1(&ecdsa_sig),
-                EcdsaSignatureFormat::Fixed => {
-                    ec::ecdsa_sig_to_fixed(self.algorithm.id, &ecdsa_sig)
-                }
-            }
+        let mut md_ctx = DigestContext::new_uninit();
+
+        let digest = digest::match_digest_type(&self.algorithm.digest.id);
+
+        if 1 != unsafe {
+            EVP_DigestSignInit(
+                md_ctx.as_mut_ptr(),
+                null_mut(),
+                *digest,
+                null_mut(),
+                *self.evp_pkey,
+            )
+        } {
+            return Err(Unspecified);
         }
+
+        let mut out_sig = vec![0u8; get_signature_length(&mut md_ctx)?];
+
+        let out_sig = compute_ecdsa_signature(&mut md_ctx, message, out_sig.as_mut_slice())?;
+
+        Ok(match self.algorithm.sig_format {
+            EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
+                slice[..out_sig.len()].copy_from_slice(out_sig);
+                out_sig.len()
+            }),
+            EcdsaSignatureFormat::Fixed => ec::ecdsa_asn1_to_fixed(self.algorithm.id, out_sig)?,
+        })
     }
+}
+
+#[inline]
+fn get_signature_length(ctx: &mut DigestContext) -> Result<usize, Unspecified> {
+    let mut out_sig_len = MaybeUninit::<usize>::uninit();
+
+    // determine signature size
+    if 1 != unsafe {
+        EVP_DigestSign(
+            ctx.as_mut_ptr(),
+            null_mut(),
+            out_sig_len.as_mut_ptr(),
+            null(),
+            0,
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    Ok(unsafe { out_sig_len.assume_init() })
+}
+
+#[inline]
+fn compute_ecdsa_signature<'a>(
+    ctx: &mut DigestContext,
+    message: &[u8],
+    signature: &'a mut [u8],
+) -> Result<&'a mut [u8], Unspecified> {
+    let mut out_sig_len = signature.len();
+
+    if 1 != indicator_check!(unsafe {
+        EVP_DigestSign(
+            ctx.as_mut_ptr(),
+            signature.as_mut_ptr(),
+            &mut out_sig_len,
+            message.as_ptr(),
+            message.len(),
+        )
+    }) {
+        return Err(Unspecified);
+    }
+
+    Ok(&mut signature[0..out_sig_len])
 }

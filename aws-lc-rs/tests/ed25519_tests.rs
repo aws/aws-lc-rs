@@ -32,20 +32,7 @@ fn test_signature_ed25519() {
 
             let expected_sig = test_case.consume_bytes("SIG");
 
-            {
-                let key_pair =
-                    Ed25519KeyPair::from_seed_and_public_key(&seed, &public_key).unwrap();
-                let actual_sig = key_pair.sign(&msg);
-                assert_eq!(&expected_sig[..], actual_sig.as_ref());
-            }
-
-            // Test PKCS#8 generation, parsing, and private-to-public calculations.
-            let rng = test::rand::FixedSliceRandom { bytes: &seed };
-            let pkcs8 = Ed25519KeyPair::generate_pkcs8v1(&rng).unwrap();
-            let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(pkcs8.as_ref()).unwrap();
-            assert_eq!(public_key, key_pair.public_key().as_ref());
-
-            // Test Signature generation.
+            let key_pair = Ed25519KeyPair::from_seed_and_public_key(&seed, &public_key).unwrap();
             let actual_sig = key_pair.sign(&msg);
             assert_eq!(&expected_sig[..], actual_sig.as_ref());
 
