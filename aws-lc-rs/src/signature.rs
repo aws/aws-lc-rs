@@ -257,7 +257,9 @@ use crate::ec::EcdsaSignatureFormat;
 pub use crate::ec::{
     EcPublicKeyDer, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
 };
-pub use crate::ed25519::{Ed25519KeyPair, EdDSAParameters, ED25519_PUBLIC_KEY_LEN};
+pub use crate::ed25519::{
+    Ed25519KeyPair, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
+};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component

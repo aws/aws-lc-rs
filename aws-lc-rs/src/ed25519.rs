@@ -20,6 +20,7 @@ use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ptr::null_mut;
 
+use crate::buffer::Buffer;
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 use zeroize::Zeroize;
@@ -99,12 +100,25 @@ impl Drop for Ed25519KeyPair {
 
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
+/// The seed value for the `EdDSA` signature scheme using Curve25519
 pub struct Seed<'a>(&'a Ed25519KeyPair);
 
-impl AsRef<[u8]> for Seed<'_> {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        &self.0.private_key[..ED25519_PRIVATE_KEY_SEED_LEN]
+/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
+#[allow(clippy::module_name_repetitions)]
+pub struct Ed25519SeedBuffer {
+    _priv: (),
+}
+
+impl Seed<'_> {
+    /// Exposes the seed encoded as a big-endian fixed-length integer.
+    ///
+    /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if serialization failed.
+    pub fn to_buffer(&self) -> Result<Buffer<'static, Ed25519SeedBuffer>, Unspecified> {
+        let buffer = Vec::from(&self.0.private_key[..ED25519_PRIVATE_KEY_SEED_LEN]);
+        Ok(Buffer::<Ed25519SeedBuffer>::new(buffer))
     }
 }
 
@@ -383,7 +397,7 @@ impl Ed25519KeyPair {
         }))
     }
 
-    /// Provides the private key "seed" for this Ed25519 key pair.
+    /// Provides the private key "seed" for this `Ed25519` key pair.
     ///
     /// For serialization of the key pair, `Ed25519KeyPair::to_pkcs8()` is preferred.
     ///

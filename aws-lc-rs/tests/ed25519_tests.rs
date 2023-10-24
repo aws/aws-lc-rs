@@ -222,11 +222,12 @@ fn test_seed() {
 
     let key_pair = Ed25519KeyPair::from_pkcs8(key_pair_doc.as_ref()).unwrap();
     let seed = key_pair.seed().unwrap();
+    let seed_buffer = seed.to_buffer().unwrap();
 
     let pub_key = key_pair.public_key();
 
     let key_pair_copy =
-        Ed25519KeyPair::from_seed_and_public_key(seed.as_ref(), pub_key.as_ref()).unwrap();
+        Ed25519KeyPair::from_seed_and_public_key(seed_buffer.as_ref(), pub_key.as_ref()).unwrap();
     let key_pair_copy_doc = key_pair_copy.to_pkcs8().unwrap();
 
     assert_eq!(key_pair_doc.as_ref(), key_pair_copy_doc.as_ref());
