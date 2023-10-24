@@ -56,6 +56,7 @@ impl EcdsaKeyPair {
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
         let pubkey = ec::marshal_public_key(&evp_pkey.as_const())?;
+
         Ok(Self {
             algorithm,
             evp_pkey,
@@ -70,7 +71,7 @@ impl EcdsaKeyPair {
     ///
     pub fn generate(alg: &'static EcdsaSigningAlgorithm) -> Result<Self, Unspecified> {
         unsafe {
-            let evp_pkey = ec::evp_key_generate(alg.0.id.nid())?;
+            let evp_pkey = evp_key_generate(alg.0.id.nid())?;
             validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
 
             Ok(Self::new(alg, evp_pkey)?)
@@ -113,15 +114,6 @@ impl EcdsaKeyPair {
         let evp_pkey = evp_key_generate(alg.0.id.nid())?;
 
         evp_pkey.marshall_private_key(Version::V1)
-    }
-
-    /// Serializes this `EcdsaKeyPair` into a PKCS#8 v1 document.
-    ///
-    /// # Errors
-    /// `error::Unspecified` on internal error.
-    ///
-    pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
-        self.evp_pkey.marshall_private_key(Version::V1)
     }
 
     /// Serializes this `EcdsaKeyPair` into a PKCS#8 v1 document.

@@ -190,7 +190,7 @@ impl Ed25519KeyPair {
     /// # Errors
     /// `error::Unspecified` on internal error.
     ///
-    pub fn to_pkcs8v2(&self) -> Result<Document, Unspecified> {
+    pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
         unsafe {
             let evp_pkey: LcPtr<EVP_PKEY> = LcPtr::new(EVP_PKEY_new_raw_private_key(
                 EVP_PKEY_ED25519,
