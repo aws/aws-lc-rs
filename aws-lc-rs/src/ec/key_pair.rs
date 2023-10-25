@@ -72,7 +72,6 @@ impl EcdsaKeyPair {
     pub fn generate(alg: &'static EcdsaSigningAlgorithm) -> Result<Self, Unspecified> {
         unsafe {
             let evp_pkey = evp_key_generate(alg.0.id.nid())?;
-            validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
 
             Ok(Self::new(alg, evp_pkey)?)
         }
@@ -111,9 +110,9 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         _rng: &dyn SecureRandom,
     ) -> Result<Document, Unspecified> {
-        let evp_pkey = evp_key_generate(alg.0.id.nid())?;
+        let key_pair = Self::generate(alg)?;
 
-        evp_pkey.marshall_private_key(Version::V1)
+        key_pair.to_pkcs8v1()
     }
 
     /// Serializes this `EcdsaKeyPair` into a PKCS#8 v1 document.
