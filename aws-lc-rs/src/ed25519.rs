@@ -79,7 +79,7 @@ impl VerificationAlgorithm for EdDSAParameters {
 /// An Ed25519 key pair, for signing.
 #[allow(clippy::module_name_repetitions)]
 pub struct Ed25519KeyPair {
-    private_key: [u8; ED25519_PRIVATE_KEY_LEN],
+    private_key: Box<[u8; ED25519_PRIVATE_KEY_LEN]>,
     public_key: PublicKey,
 }
 
@@ -281,15 +281,17 @@ impl Ed25519KeyPair {
                 seed.as_ptr(),
             );
             let derived_public_key = derived_public_key.assume_init();
-            let private_key = private_key.assume_init();
+            let mut private_key = private_key.assume_init();
 
             constant_time::verify_slices_are_equal(public_key, &derived_public_key)
                 .map_err(|_| KeyRejected::inconsistent_components())?;
 
-            Ok(Self {
-                private_key,
+            let key_pair = Self {
+                private_key: Box::new(private_key),
                 public_key: PublicKey(derived_public_key),
-            })
+            };
+            private_key.zeroize();
+            Ok(key_pair)
         }
     }
 
@@ -352,9 +354,10 @@ impl Ed25519KeyPair {
             private_key[ED25519_PRIVATE_KEY_SEED_LEN..].copy_from_slice(&public_key);
 
             let key_pair = Self {
-                private_key,
+                private_key: Box::new(private_key),
                 public_key: PublicKey(public_key),
             };
+            private_key.zeroize();
 
             Ok(key_pair)
         }
