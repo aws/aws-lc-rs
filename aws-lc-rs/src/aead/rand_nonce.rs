@@ -1,13 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{error::Unspecified, iv::FixedLength};
-use std::fmt::Debug;
+use crate::error::Unspecified;
+use core::fmt::Debug;
 
-use super::{
-    aead_ctx::AeadCtx, open_within, seal_in_place_append_tag, seal_in_place_separate_tag, Aad,
-    Algorithm, AlgorithmID, Nonce, Tag, NONCE_LEN,
-};
+use super::{aead_ctx::AeadCtx, Aad, Algorithm, AlgorithmID, Nonce, Tag, UnboundKey};
 
 /// AEAD Cipher key using a randomized nonce.
 ///
@@ -19,7 +16,7 @@ use super::{
 ///
 /// Prefer this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey`.
 pub struct RandomizedNonceKey {
-    ctx: AeadCtx,
+    key: UnboundKey,
     algorithm: &'static Algorithm,
 }
 
@@ -42,7 +39,10 @@ impl RandomizedNonceKey {
             | AlgorithmID::AES_256_GCM_SIV
             | AlgorithmID::CHACHA20_POLY1305 => return Err(Unspecified),
         }?;
-        Ok(Self { ctx, algorithm })
+        Ok(Self {
+            key: UnboundKey::from(ctx),
+            algorithm,
+        })
     }
 
     /// Authenticates and decrypts (“opens”) data in place.
@@ -55,6 +55,7 @@ impl RandomizedNonceKey {
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
     #[inline]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn open_in_place<'in_out, A>(
         &self,
         nonce: Nonce,
@@ -64,7 +65,7 @@ impl RandomizedNonceKey {
     where
         A: AsRef<[u8]>,
     {
-        open_within(self.algorithm, &self.ctx, nonce, aad, in_out, 0..)
+        self.key.open_within(nonce, aad.as_ref(), in_out, 0..)
     }
 
     /// Encrypts and signs (“seals”) data in place, appending the tag to the
@@ -92,13 +93,8 @@ impl RandomizedNonceKey {
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
-        seal_in_place_append_tag(
-            self.algorithm,
-            &self.ctx,
-            None,
-            Aad::from(aad.as_ref()),
-            in_out,
-        )
+        self.key
+            .seal_in_place_append_tag(None, aad.as_ref(), in_out)
     }
 
     /// Encrypts and signs (“seals”) data in place.
@@ -127,18 +123,8 @@ impl RandomizedNonceKey {
     where
         A: AsRef<[u8]>,
     {
-        let nonce = if let AlgorithmID::CHACHA20_POLY1305 = self.algorithm.id {
-            Some(Nonce(FixedLength::<NONCE_LEN>::new()?))
-        } else {
-            None
-        };
-        seal_in_place_separate_tag(
-            self.algorithm,
-            &self.ctx,
-            nonce,
-            Aad::from(aad.as_ref()),
-            in_out,
-        )
+        self.key
+            .seal_in_place_separate_tag(None, aad.as_ref(), in_out)
     }
 
     /// The key's AEAD algorithm.
