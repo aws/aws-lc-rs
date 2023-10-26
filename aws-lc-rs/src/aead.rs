@@ -279,7 +279,7 @@ impl<N: NonceSequence> OpeningKey<N> {
     ///
     /// This reassembly be accomplished with three calls to `open_within()`.
     ///
-    /// Prefer [`RandomizedNonceKey::open_within`].
+    /// Prefer [`RandomizedNonceKey::open_in_place`].
     ///
     // # FIPS
     // Use this method with one of the following algorithms:
