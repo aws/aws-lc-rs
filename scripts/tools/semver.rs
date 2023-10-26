@@ -3,38 +3,82 @@
 //! SPDX-License-Identifier: Apache-2.0 OR ISC
 //! ```cargo
 //! [dependencies]
-//! clap = { version = "4.2.2", features = ["derive"] }
-//! regex = "1.7.3"
-//! semver = "1.0.17"
+//! clap = { version = "4", features = ["derive"] }
+//! regex = "1"
+//! semver = "1"
 //! ```
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
+use regex::Regex;
+use std::error::Error;
 
 #[derive(Parser)]
 #[command(about)]
 struct Args {
-    tags: Vec<String>,
+    #[command(subcommand)]
+    release: Release,
 }
 
-fn main() {
+#[derive(Subcommand, Clone)]
+enum Release {
+    Main { tags: Vec<String> },
+    FipsV2 { tags: Vec<String> },
+}
+
+// regex from https://semver.org/
+const SEMVER: &str = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$";
+
+fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
-    let input: Vec<String> = args.tags;
+    let latest = match args.release {
+        Release::Main { tags } => get_latest_main(tags)?,
+        Release::FipsV2 { tags } => get_latest_fips(tags, 2)?,
+    };
 
-    // Modified regex from https://semver.org/
-    let re = regex::Regex::new(
-        r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$",
-    ).unwrap();
+    println!("{latest}");
+    Ok(())
+}
 
-    let mut tags: Vec<semver::Version> = input
+fn get_latest_main(tags: Vec<String>) -> Result<String, Box<dyn Error>> {
+    let re = Regex::new(SEMVER)?;
+    let mut tags: Vec<semver::Version> = tags
         .into_iter()
+        .filter(|t| t.starts_with("v"))
+        .map(|t| String::from(t.strip_prefix("v").expect("prefix must be present")))
         .filter(|t| re.is_match(t))
-        .map(|t| semver::Version::parse(t.strip_prefix("v").unwrap()).unwrap())
+        .map(|t| semver::Version::parse(&t).expect("semver parse must not fail"))
         .collect();
 
     tags.sort();
 
-    let latest = tags.pop().unwrap();
+    let latest = tags.pop().ok_or("latest tag not found")?;
 
-    println!("v{latest}")
+    Ok(format!("v{latest}"))
+}
+
+fn get_latest_fips(tags: Vec<String>, major: u64) -> Result<String, Box<dyn Error>> {
+    const FIPS_TAG_PREFIX: &str = "AWS-LC-FIPS-";
+
+    let re = Regex::new(SEMVER)?;
+
+    let mut tags: Vec<semver::Version> = tags
+        .into_iter()
+        .filter(|t| t.starts_with(FIPS_TAG_PREFIX))
+        .map(|t| {
+            String::from(
+                t.strip_prefix(FIPS_TAG_PREFIX)
+                    .expect("prefix must be present"),
+            )
+        })
+        .filter(|t| re.is_match(t))
+        .map(|t| semver::Version::parse(&t).unwrap())
+        .filter(|t| t.major == major)
+        .collect();
+
+    tags.sort();
+
+    let latest = tags.pop().ok_or("latest tag not found")?;
+
+    Ok(format!("{FIPS_TAG_PREFIX}{latest}"))
 }
