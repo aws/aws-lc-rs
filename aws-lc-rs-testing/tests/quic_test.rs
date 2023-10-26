@@ -6,10 +6,10 @@ use aws_lc_rs::{hkdf, test};
 
 #[test]
 fn test_key_type_header_protection_key() {
-    let key_bytes = test::from_dirty_hex(r#"d480429666d48b400633921c5407d1d1"#);
-    let info = test::from_dirty_hex(r#"f0f1f2f3f4f5f6f7f8f9"#);
+    let key_bytes = test::from_dirty_hex(r"d480429666d48b400633921c5407d1d1");
+    let info = test::from_dirty_hex(r"f0f1f2f3f4f5f6f7f8f9");
     let info_wrap = [info.as_slice()];
-    let sample = test::from_dirty_hex(r#"b0b1b2b3b4b5b6b7b8b9babbbcbdbebf"#);
+    let sample = test::from_dirty_hex(r"b0b1b2b3b4b5b6b7b8b9babbbcbdbebf");
 
     let prk = hkdf::Prk::new_less_safe(hkdf::HKDF_SHA256, &key_bytes);
     let okm = prk.expand(&info_wrap, &AES_128).unwrap();
