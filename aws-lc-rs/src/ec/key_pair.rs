@@ -292,8 +292,13 @@ fn compute_ecdsa_signature<'a>(
 }
 
 /// Elliptic curve private key.
-#[derive(Debug)]
 pub struct PrivateKey<'a>(&'a EcdsaKeyPair);
+
+impl Debug for PrivateKey<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str(&format!("EcdsaPrivateKey({:?})", self.0.algorithm.id))
+    }
+}
 
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
 pub struct EcPrivateKeyBuffer {

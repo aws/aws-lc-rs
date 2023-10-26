@@ -578,7 +578,7 @@ unsafe fn ecdsa_sig_from_fixed(
 #[cfg(test)]
 mod tests {
     use crate::ec::key_pair::EcdsaKeyPair;
-    use crate::signature::ECDSA_P256_SHA256_FIXED_SIGNING;
+    use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
     use crate::test::from_dirty_hex;
     use crate::{signature, test};
 
@@ -592,7 +592,26 @@ mod tests {
         );
 
         let result = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, &input);
-        result.unwrap();
+        assert!(result.is_ok());
+        let key_pair = result.unwrap();
+        assert_eq!("EcdsaKeyPair { public_key: EcdsaPublicKey(\"04cf0d13a3a7577231ea1b66cf4021cd54f21f4ac4f5f2fdd28e05bc7d2bd099d1374cd08d2ef654d6f04498db462f73e0282058dd661a4c9b0437af3f7af6e724\") }", 
+                   format!("{key_pair:?}"));
+        assert_eq!(
+            "EcdsaPrivateKey(ECDSA_P256)",
+            format!("{:?}", key_pair.private_key())
+        );
+        let pub_key = key_pair.public_key();
+        let der_pub_key = pub_key.as_der();
+
+        assert_eq!(
+            from_dirty_hex(
+                r"3059301306072a8648ce3d020106082a8648ce3d03010703420004cf0d13a3a7577231ea1b66cf402
+                1cd54f21f4ac4f5f2fdd28e05bc7d2bd099d1374cd08d2ef654d6f04498db462f73e0282058dd661a4c9
+                b0437af3f7af6e724",
+            )
+            .as_slice(),
+            der_pub_key.as_ref()
+        );
     }
 
     #[test]
@@ -616,8 +635,9 @@ mod tests {
             r"30440220341f6779b75e98bb42e01095dd48356cbf9002dc704ac8bd2a8240b8
         8d3796c60220555843b1b4e264fe6ffe6e2b705a376c05c09404303ffe5d2711f3e3b3a010a1",
         );
-        let actual_result =
-            signature::UnparsedPublicKey::new(alg, &public_key).verify(msg.as_bytes(), &sig);
+        let unparsed_pub_key = signature::UnparsedPublicKey::new(alg, &public_key);
+
+        let actual_result = unparsed_pub_key.verify(msg.as_bytes(), &sig);
         assert!(actual_result.is_ok(), "Key: {}", test::to_hex(public_key));
     }
 }

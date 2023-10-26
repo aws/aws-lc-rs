@@ -422,14 +422,20 @@ mod tests {
     fn test_generate_pkcs8() {
         let rng = SystemRandom::new();
         let document = Ed25519KeyPair::generate_pkcs8(&rng).unwrap();
-        let _: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
-        let _: Ed25519KeyPair =
+        let kp1: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let kp2: Ed25519KeyPair =
             Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
+        assert_eq!(kp1.private_key.as_slice(), kp2.private_key.as_slice());
+        assert_eq!(kp1.public_key.as_ref(), kp2.public_key.as_ref());
 
         let document = Ed25519KeyPair::generate_pkcs8v1(&rng).unwrap();
-        let _: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
-        let _: Ed25519KeyPair =
+        let kp1: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let kp2: Ed25519KeyPair =
             Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
+        assert_eq!(kp1.private_key.as_slice(), kp2.private_key.as_slice());
+        assert_eq!(kp1.public_key.as_ref(), kp2.public_key.as_ref());
+        let seed = kp1.seed().unwrap();
+        assert_eq!("Ed25519Seed()", format!("{seed:?}"));
     }
 
     #[test]
