@@ -13,7 +13,7 @@ use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
-use crate::signature::{KeyPair, Signature};
+use crate::signature::{EcdsaPublicKey, KeyPair, Signature};
 use crate::{digest, ec};
 use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY, EVP_PKEY_EC};
 use std::fmt;
@@ -44,7 +44,8 @@ impl KeyPair for EcdsaKeyPair {
     type PublicKey = PublicKey;
 
     #[inline]
-    fn public_key(&self) -> &Self::PublicKey {
+    /// Provides the public key.
+    fn public_key(&self) -> &EcdsaPublicKey {
         &self.pubkey
     }
 }
@@ -161,11 +162,13 @@ impl EcdsaKeyPair {
         }
     }
 
-    /// Deserialize a DER private key and produce an ECDSA key.
+    /// Deserializes a DER-encoded private key structure to produce a `EcdsaKeyPair`.
     ///
-    /// This function will attempt to automatically detect the underlying key format, and
-    /// supports the unencrypted PKCS#8 `PrivateKeyInfo` structures as well as key type specific
-    /// formats.
+    /// This function is typically used to deserialize RFC 5915 encoded private keys, but it will
+    /// attempt to automatically detect other key formats. This function supports unencrypted
+    /// PKCS#8 `PrivateKeyInfo` structures as well as key type specific formats.
+    ///
+    /// See `EcdsaPrivateKey::to_der`.
     ///
     /// # Errors
     /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
@@ -301,12 +304,12 @@ impl Debug for PrivateKey<'_> {
 }
 
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub struct EcPrivateKeyBuffer {
+pub struct EcPrivateKeyBin {
     _priv: (),
 }
 
-/// Elliptic curve private key data encoded as DER.
-pub struct EcPrivateKeyDer {
+/// Elliptic curve private key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
+pub struct EcPrivateKeyRfc5915Der {
     _priv: (),
 }
 
@@ -317,21 +320,21 @@ impl PrivateKey<'_> {
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    pub fn to_buffer(&self) -> Result<Buffer<'static, EcPrivateKeyBuffer>, Unspecified> {
+    pub fn to_bin(&self) -> Result<Buffer<'static, EcPrivateKeyBin>, Unspecified> {
         unsafe {
             let buffer = ec::marshal_private_key_to_buffer(
                 self.0.algorithm.id,
                 &self.0.evp_pkey.as_const(),
             )?;
-            Ok(Buffer::<EcPrivateKeyBuffer>::new(buffer))
+            Ok(Buffer::<EcPrivateKeyBin>::new(buffer))
         }
     }
 
-    /// Encode the private key via DER into bytes.
+    /// Serializes the key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
     ///
     /// # Errors
     /// `error::Unspecified`  if serialization failed.
-    pub fn to_der(&self) -> Result<Buffer<'static, EcPrivateKeyDer>, Unspecified> {
+    pub fn to_der(&self) -> Result<Buffer<'static, EcPrivateKeyRfc5915Der>, Unspecified> {
         unsafe {
             let mut outp = std::ptr::null_mut::<u8>();
             let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.0.evp_pkey))?;

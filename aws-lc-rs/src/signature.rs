@@ -250,16 +250,20 @@ use std::fmt::{Debug, Formatter};
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
-pub use crate::ec::key_pair::{
-    EcPrivateKeyBuffer, EcPrivateKeyDer, EcdsaKeyPair, PrivateKey as EcdsaPrivateKey,
-};
+pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
 use crate::ec::EcdsaSignatureFormat;
 pub use crate::ec::{
-    EcPublicKeyDer, EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
+    EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
 };
 pub use crate::ed25519::{
     Ed25519KeyPair, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
 };
+
+/// A module containing types that indicate the encoding of a `buffer::Buffer`
+pub mod encoding {
+    pub use crate::ec::key_pair::{EcPrivateKeyBin, EcPrivateKeyRfc5915Der};
+    pub use crate::ec::EcPublicKeyX509Der;
+}
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component

@@ -460,24 +460,27 @@ fn test_private_key() {
         let key_pair_doc = EcdsaKeyPair::generate_pkcs8(signing_alg, &rnd).unwrap();
         let key_pair = EcdsaKeyPair::from_pkcs8(signing_alg, key_pair_doc.as_ref()).unwrap();
 
-        let private_key = key_pair.private_key().to_buffer().unwrap();
-        let public_key = key_pair.public_key();
+        {
+            let private_key = key_pair.private_key().to_bin().unwrap();
+            let public_key = key_pair.public_key();
+            let key_pair_copy = EcdsaKeyPair::from_private_key_and_public_key(
+                signing_alg,
+                private_key.as_ref(),
+                public_key.as_ref(),
+            )
+            .unwrap();
+            let key_pair_copy_doc = key_pair_copy.to_pkcs8v1().unwrap();
+            assert_eq!(key_pair_doc.as_ref(), key_pair_copy_doc.as_ref());
+        }
+        {
+            let private_key_der = key_pair.private_key().to_der().unwrap();
+            assert_eq!("Buffer(...)", format!("{private_key_der:?}"));
+            assert!(EcdsaKeyPair::from_pkcs8(signing_alg, private_key_der.as_ref()).is_err());
 
-        let key_pair_copy = EcdsaKeyPair::from_private_key_and_public_key(
-            signing_alg,
-            private_key.as_ref(),
-            public_key.as_ref(),
-        )
-        .unwrap();
-        let key_pair_copy_doc = key_pair_copy.to_pkcs8v1().unwrap();
-        assert_eq!(key_pair_doc.as_ref(), key_pair_copy_doc.as_ref());
-
-        let key_pair_copy = EcdsaKeyPair::from_private_key_der(
-            signing_alg,
-            key_pair.private_key().to_der().unwrap().as_ref(),
-        )
-        .unwrap();
-        let key_pair_copy_doc = key_pair_copy.to_pkcs8v1().unwrap();
-        assert_eq!(key_pair_doc.as_ref(), key_pair_copy_doc.as_ref());
+            let key_pair_copy =
+                EcdsaKeyPair::from_private_key_der(signing_alg, private_key_der.as_ref()).unwrap();
+            let key_pair_copy_doc = key_pair_copy.to_pkcs8v1().unwrap();
+            assert_eq!(key_pair_doc.as_ref(), key_pair_copy_doc.as_ref());
+        }
     }
 }

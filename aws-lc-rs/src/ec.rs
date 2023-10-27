@@ -122,16 +122,16 @@ pub struct PublicKey {
     der: Box<[u8]>,
 }
 
-/// An elliptic curve public key as a DER-encoded `SubjectPublicKeyInfo` structure
+/// An elliptic curve public key as a DER-encoded (X509) `SubjectPublicKeyInfo` structure
 #[allow(clippy::module_name_repetitions)]
-pub struct EcPublicKeyDer {
+pub struct EcPublicKeyX509Der {
     _priv: (),
 }
 
 impl PublicKey {
-    /// Provides the public key as a DER-encoded `SubjectPublicKeyInfo` structure.
+    /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
     #[must_use]
-    pub fn as_der(&self) -> Buffer<'_, EcPublicKeyDer> {
+    pub fn as_der(&self) -> Buffer<'_, EcPublicKeyX509Der> {
         Buffer::public_from_slice(&self.der)
     }
 }
@@ -147,6 +147,9 @@ impl Debug for PublicKey {
 
 impl AsRef<[u8]> for PublicKey {
     #[inline]
+    /// Serializes the public key in an uncompressed form (X9.62) using the
+    /// Octet-String-to-Elliptic-Curve-Point algorithm in
+    /// [SEC 1: Elliptic Curve Cryptography, Version 2.0].
     fn as_ref(&self) -> &[u8] {
         self.octets.as_ref()
     }
@@ -320,15 +323,15 @@ pub(crate) unsafe fn marshal_public_key_to_buffer(
 }
 
 pub(crate) fn marshal_public_key(
-    evp_key: &ConstPointer<EVP_PKEY>,
+    evp_pkey: &ConstPointer<EVP_PKEY>,
 ) -> Result<PublicKey, Unspecified> {
     let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
     unsafe {
-        let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_key)?;
+        let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey)?;
 
         let der = {
             let mut buffer = std::ptr::null_mut::<u8>();
-            let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_key))?;
+            let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
             let len = aws_lc::i2d_EC_PUBKEY(*ec_key, &mut buffer);
             if len < 0 {
                 return Err(Unspecified);
