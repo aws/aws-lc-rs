@@ -214,6 +214,8 @@
 %xdefine _AUTHORITY_KEYID_new _ %+ BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_new
 %xdefine _AWSLC_non_fips_pkey_evp_asn1_methods _ %+ BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_asn1_methods
 %xdefine _AWSLC_non_fips_pkey_evp_methods _ %+ BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_methods
+%xdefine _AWSLC_thread_local_clear _ %+ BORINGSSL_PREFIX %+ _AWSLC_thread_local_clear
+%xdefine _AWSLC_thread_local_shutdown _ %+ BORINGSSL_PREFIX %+ _AWSLC_thread_local_shutdown
 %xdefine _BASIC_CONSTRAINTS_free _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_free
 %xdefine _BASIC_CONSTRAINTS_it _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_it
 %xdefine _BASIC_CONSTRAINTS_new _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_new
@@ -4073,6 +4075,8 @@
 %xdefine AUTHORITY_KEYID_new BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_new
 %xdefine AWSLC_non_fips_pkey_evp_asn1_methods BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_asn1_methods
 %xdefine AWSLC_non_fips_pkey_evp_methods BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_methods
+%xdefine AWSLC_thread_local_clear BORINGSSL_PREFIX %+ _AWSLC_thread_local_clear
+%xdefine AWSLC_thread_local_shutdown BORINGSSL_PREFIX %+ _AWSLC_thread_local_shutdown
 %xdefine BASIC_CONSTRAINTS_free BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_free
 %xdefine BASIC_CONSTRAINTS_it BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_it
 %xdefine BASIC_CONSTRAINTS_new BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_new
