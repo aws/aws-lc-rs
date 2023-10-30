@@ -108,8 +108,8 @@ where
 pub const AWSLC_VERSION_NAME: &[u8; 7] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
-pub const AWSLC_API_VERSION: i32 = 22;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.16.0\0";
+pub const AWSLC_API_VERSION: i32 = 23;
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.17.0\0";
 pub const SHA_CBLOCK: i32 = 64;
 pub const SHA_DIGEST_LENGTH: i32 = 20;
 pub const SHA224_CBLOCK: i32 = 64;
@@ -120,12 +120,13 @@ pub const SHA384_CBLOCK: i32 = 128;
 pub const SHA384_DIGEST_LENGTH: i32 = 48;
 pub const SHA512_CBLOCK: i32 = 128;
 pub const SHA512_DIGEST_LENGTH: i32 = 64;
+pub const SHA512_224_DIGEST_LENGTH: i32 = 28;
 pub const SHA512_256_DIGEST_LENGTH: i32 = 32;
 pub const CRYPTO_LOCK: i32 = 1;
 pub const CRYPTO_UNLOCK: i32 = 2;
 pub const CRYPTO_READ: i32 = 4;
 pub const CRYPTO_WRITE: i32 = 8;
-pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.16.0)\0";
+pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.17.0)\0";
 pub const OPENSSL_VERSION: i32 = 0;
 pub const OPENSSL_CFLAGS: i32 = 1;
 pub const OPENSSL_BUILT_ON: i32 = 2;
@@ -172,6 +173,7 @@ pub const BIO_CB_CTRL: i32 = 6;
 pub const BIO_CB_RETURN: i32 = 128;
 pub const BIO_NOCLOSE: i32 = 0;
 pub const BIO_CLOSE: i32 = 1;
+pub const BIO_FP_TEXT: i32 = 16;
 pub const BIO_CTRL_DGRAM_QUERY_MTU: i32 = 40;
 pub const BIO_CTRL_DGRAM_SET_MTU: i32 = 42;
 pub const BIO_CTRL_DGRAM_MTU_EXCEEDED: i32 = 43;
@@ -294,7 +296,6 @@ pub const BIO_R_UNSUPPORTED_METHOD: i32 = 115;
 pub const BIO_R_WRITE_TO_READ_ONLY_BIO: i32 = 116;
 pub const BN_BITS2: i32 = 64;
 pub const BN_DEC_FMT1: &[u8; 4] = b"%lu\0";
-pub const BN_DEC_FMT2: &[u8; 7] = b"%019lu\0";
 pub const BN_HEX_FMT1: &[u8; 4] = b"%lx\0";
 pub const BN_HEX_FMT2: &[u8; 7] = b"%016lx\0";
 pub const BN_RAND_TOP_ANY: i32 = -1;
@@ -720,7 +721,6 @@ pub const EVP_MD_CTX_FLAG_NON_FIPS_ALLOW: i32 = 0;
 pub const DIGEST_R_INPUT_NOT_INITIALIZED: i32 = 100;
 pub const DIGEST_R_DECODE_ERROR: i32 = 101;
 pub const DIGEST_R_UNKNOWN_HASH: i32 = 102;
-pub const ENGINE_R_OPERATION_NOT_SUPPORTED: i32 = 100;
 pub const DSA_R_BAD_Q_VALUE: i32 = 100;
 pub const DSA_R_MISSING_PARAMETERS: i32 = 101;
 pub const DSA_R_MODULUS_TOO_LARGE: i32 = 102;
@@ -732,6 +732,7 @@ pub const DSA_R_INVALID_PARAMETERS: i32 = 107;
 pub const DSA_R_TOO_MANY_ITERATIONS: i32 = 108;
 pub const OPENSSL_EC_EXPLICIT_CURVE: i32 = 0;
 pub const OPENSSL_EC_NAMED_CURVE: i32 = 1;
+pub const ENGINE_R_OPERATION_NOT_SUPPORTED: i32 = 100;
 pub const EC_PKEY_NO_PARAMETERS: i32 = 1;
 pub const EC_PKEY_NO_PUBKEY: i32 = 2;
 pub const ECDSA_FLAG_OPAQUE: i32 = 1;
@@ -3148,6 +3149,15 @@ pub const SN_ffdhe2048: &[u8; 10] = b"ffdhe2048\0";
 pub const NID_ffdhe2048: i32 = 976;
 pub const SN_ffdhe4096: &[u8; 10] = b"ffdhe4096\0";
 pub const NID_ffdhe4096: i32 = 977;
+pub const SN_sha512_224: &[u8; 11] = b"SHA512-224\0";
+pub const LN_sha512_224: &[u8; 11] = b"sha512-224\0";
+pub const NID_sha512_224: i32 = 978;
+pub const SN_shake128: &[u8; 9] = b"SHAKE128\0";
+pub const LN_shake128: &[u8; 9] = b"shake128\0";
+pub const NID_shake128: i32 = 979;
+pub const SN_shake256: &[u8; 9] = b"SHAKE256\0";
+pub const LN_shake256: &[u8; 9] = b"shake256\0";
+pub const NID_shake256: i32 = 980;
 pub const EVP_PKEY_NONE: i32 = 0;
 pub const EVP_PKEY_RSA: i32 = 6;
 pub const EVP_PKEY_RSA_PSS: i32 = 912;
@@ -4243,6 +4253,11 @@ pub const SSL_MODE_ENABLE_FALSE_START: i32 = 128;
 pub const SSL_MODE_CBC_RECORD_SPLITTING: i32 = 256;
 pub const SSL_MODE_NO_SESSION_CREATION: i32 = 512;
 pub const SSL_MODE_SEND_FALLBACK_SCSV: i32 = 1024;
+pub const SSL_BUILD_CHAIN_FLAG_UNTRUSTED: i32 = 1;
+pub const SSL_BUILD_CHAIN_FLAG_NO_ROOT: i32 = 2;
+pub const SSL_BUILD_CHAIN_FLAG_CHECK: i32 = 4;
+pub const SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR: i32 = 8;
+pub const SSL_BUILD_CHAIN_FLAG_CLEAR_ERROR: i32 = 16;
 pub const SSL_SIGN_RSA_PKCS1_SHA1: i32 = 513;
 pub const SSL_SIGN_RSA_PKCS1_SHA256: i32 = 1025;
 pub const SSL_SIGN_RSA_PKCS1_SHA384: i32 = 1281;
@@ -5283,6 +5298,11 @@ pub struct dh_st {
     _unused: [u8; 0],
 }
 pub type DH = dh_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct dsa_st {
+    _unused: [u8; 0],
+}
 pub type DSA = dsa_st;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -5921,6 +5941,26 @@ impl Default for sha512_state_st {
             s.assume_init()
         }
     }
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_SHA512_224_Init"]
+    pub fn SHA512_224_Init(sha: *mut SHA512_CTX) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_SHA512_224_Update"]
+    pub fn SHA512_224_Update(
+        sha: *mut SHA512_CTX,
+        data: *const ::std::os::raw::c_void,
+        len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_SHA512_224_Final"]
+    pub fn SHA512_224_Final(out: *mut u8, sha: *mut SHA512_CTX) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_SHA512_224"]
+    pub fn SHA512_224(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_SHA512_256_Init"]
@@ -7206,8 +7246,8 @@ pub type OPENSSL_sk_call_copy_func = ::std::option::Option<
 pub type OPENSSL_sk_call_cmp_func = ::std::option::Option<
     unsafe extern "C" fn(
         arg1: OPENSSL_sk_cmp_func,
-        arg2: *const *const ::std::os::raw::c_void,
-        arg3: *const *const ::std::os::raw::c_void,
+        arg2: *const ::std::os::raw::c_void,
+        arg3: *const ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int,
 >;
 pub type OPENSSL_sk_call_delete_if_func = ::std::option::Option<
@@ -7218,203 +7258,133 @@ pub type OPENSSL_sk_call_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone)]
 pub struct stack_st {
-    pub num: usize,
-    pub data: *mut *mut ::std::os::raw::c_void,
-    pub sorted: ::std::os::raw::c_int,
-    pub num_alloc: usize,
-    pub comp: OPENSSL_sk_cmp_func,
+    _unused: [u8; 0],
 }
-#[test]
-fn bindgen_test_layout_stack_st() {
-    const UNINIT: ::std::mem::MaybeUninit<stack_st> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<stack_st>(),
-        40usize,
-        concat!("Size of: ", stringify!(stack_st))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<stack_st>(),
-        8usize,
-        concat!("Alignment of ", stringify!(stack_st))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).num) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(stack_st),
-            "::",
-            stringify!(num)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(stack_st),
-            "::",
-            stringify!(data)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).sorted) as usize - ptr as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(stack_st),
-            "::",
-            stringify!(sorted)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).num_alloc) as usize - ptr as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(stack_st),
-            "::",
-            stringify!(num_alloc)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).comp) as usize - ptr as usize },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(stack_st),
-            "::",
-            stringify!(comp)
-        )
-    );
-}
-impl Default for stack_st {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
-pub type _STACK = stack_st;
+pub type OPENSSL_STACK = stack_st;
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_new"]
-    pub fn sk_new(comp: OPENSSL_sk_cmp_func) -> *mut _STACK;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_new"]
+    pub fn OPENSSL_sk_new(comp: OPENSSL_sk_cmp_func) -> *mut OPENSSL_STACK;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_new_null"]
-    pub fn sk_new_null() -> *mut _STACK;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_new_null"]
+    pub fn OPENSSL_sk_new_null() -> *mut OPENSSL_STACK;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_num"]
-    pub fn sk_num(sk: *const _STACK) -> usize;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_num"]
+    pub fn OPENSSL_sk_num(sk: *const OPENSSL_STACK) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_zero"]
-    pub fn sk_zero(sk: *mut _STACK);
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_zero"]
+    pub fn OPENSSL_sk_zero(sk: *mut OPENSSL_STACK);
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_value"]
-    pub fn sk_value(sk: *const _STACK, i: usize) -> *mut ::std::os::raw::c_void;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_value"]
+    pub fn OPENSSL_sk_value(sk: *const OPENSSL_STACK, i: usize) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_set"]
-    pub fn sk_set(
-        sk: *mut _STACK,
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_set"]
+    pub fn OPENSSL_sk_set(
+        sk: *mut OPENSSL_STACK,
         i: usize,
         p: *mut ::std::os::raw::c_void,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_free"]
-    pub fn sk_free(sk: *mut _STACK);
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_free"]
+    pub fn OPENSSL_sk_free(sk: *mut OPENSSL_STACK);
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_pop_free_ex"]
-    pub fn sk_pop_free_ex(
-        sk: *mut _STACK,
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_pop_free_ex"]
+    pub fn OPENSSL_sk_pop_free_ex(
+        sk: *mut OPENSSL_STACK,
         call_free_func: OPENSSL_sk_call_free_func,
         free_func: OPENSSL_sk_free_func,
     );
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_insert"]
-    pub fn sk_insert(sk: *mut _STACK, p: *mut ::std::os::raw::c_void, where_: usize) -> usize;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_insert"]
+    pub fn OPENSSL_sk_insert(
+        sk: *mut OPENSSL_STACK,
+        p: *mut ::std::os::raw::c_void,
+        where_: usize,
+    ) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_delete"]
-    pub fn sk_delete(sk: *mut _STACK, where_: usize) -> *mut ::std::os::raw::c_void;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_delete"]
+    pub fn OPENSSL_sk_delete(sk: *mut OPENSSL_STACK, where_: usize) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_delete_ptr"]
-    pub fn sk_delete_ptr(
-        sk: *mut _STACK,
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_delete_ptr"]
+    pub fn OPENSSL_sk_delete_ptr(
+        sk: *mut OPENSSL_STACK,
         p: *const ::std::os::raw::c_void,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_delete_if"]
-    pub fn sk_delete_if(
-        sk: *mut _STACK,
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_delete_if"]
+    pub fn OPENSSL_sk_delete_if(
+        sk: *mut OPENSSL_STACK,
         call_func: OPENSSL_sk_call_delete_if_func,
         func: OPENSSL_sk_delete_if_func,
         data: *mut ::std::os::raw::c_void,
     );
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_find"]
-    pub fn sk_find(
-        sk: *const _STACK,
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_find"]
+    pub fn OPENSSL_sk_find(
+        sk: *const OPENSSL_STACK,
         out_index: *mut usize,
         p: *const ::std::os::raw::c_void,
         call_cmp_func: OPENSSL_sk_call_cmp_func,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_shift"]
-    pub fn sk_shift(sk: *mut _STACK) -> *mut ::std::os::raw::c_void;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_shift"]
+    pub fn OPENSSL_sk_shift(sk: *mut OPENSSL_STACK) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_push"]
-    pub fn sk_push(sk: *mut _STACK, p: *mut ::std::os::raw::c_void) -> usize;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_push"]
+    pub fn OPENSSL_sk_push(sk: *mut OPENSSL_STACK, p: *mut ::std::os::raw::c_void) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_pop"]
-    pub fn sk_pop(sk: *mut _STACK) -> *mut ::std::os::raw::c_void;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_pop"]
+    pub fn OPENSSL_sk_pop(sk: *mut OPENSSL_STACK) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_dup"]
-    pub fn sk_dup(sk: *const _STACK) -> *mut _STACK;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_dup"]
+    pub fn OPENSSL_sk_dup(sk: *const OPENSSL_STACK) -> *mut OPENSSL_STACK;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_sort"]
-    pub fn sk_sort(sk: *mut _STACK, call_cmp_func: OPENSSL_sk_call_cmp_func);
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_sort"]
+    pub fn OPENSSL_sk_sort(sk: *mut OPENSSL_STACK, call_cmp_func: OPENSSL_sk_call_cmp_func);
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_is_sorted"]
-    pub fn sk_is_sorted(sk: *const _STACK) -> ::std::os::raw::c_int;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_is_sorted"]
+    pub fn OPENSSL_sk_is_sorted(sk: *const OPENSSL_STACK) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_set_cmp_func"]
-    pub fn sk_set_cmp_func(sk: *mut _STACK, comp: OPENSSL_sk_cmp_func) -> OPENSSL_sk_cmp_func;
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_set_cmp_func"]
+    pub fn OPENSSL_sk_set_cmp_func(
+        sk: *mut OPENSSL_STACK,
+        comp: OPENSSL_sk_cmp_func,
+    ) -> OPENSSL_sk_cmp_func;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_sk_deep_copy"]
-    pub fn sk_deep_copy(
-        sk: *const _STACK,
+    #[link_name = "\u{1}aws_lc_0_11_0_OPENSSL_sk_deep_copy"]
+    pub fn OPENSSL_sk_deep_copy(
+        sk: *const OPENSSL_STACK,
         call_copy_func: OPENSSL_sk_call_copy_func,
         copy_func: OPENSSL_sk_copy_func,
         call_free_func: OPENSSL_sk_call_free_func,
         free_func: OPENSSL_sk_free_func,
-    ) -> *mut _STACK;
+    ) -> *mut OPENSSL_STACK;
 }
+pub type _STACK = OPENSSL_STACK;
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_sk_pop_free"]
-    pub fn sk_pop_free(sk: *mut _STACK, free_func: OPENSSL_sk_free_func);
+    pub fn sk_pop_free(sk: *mut OPENSSL_STACK, free_func: OPENSSL_sk_free_func);
 }
 pub type OPENSSL_STRING = *mut ::std::os::raw::c_char;
 #[repr(C)]
@@ -7691,12 +7661,9 @@ extern "C" {
 }
 pub type bio_info_cb = ::std::option::Option<
     unsafe extern "C" fn(
-        bio: *mut BIO,
-        event: ::std::os::raw::c_int,
-        parg: *const ::std::os::raw::c_char,
-        cmd: ::std::os::raw::c_int,
-        larg: ::std::os::raw::c_long,
-        return_value: ::std::os::raw::c_long,
+        b: *mut BIO,
+        state: ::std::os::raw::c_int,
+        res: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_long,
 >;
 pub type BIO_callback_fn_ex = ::std::option::Option<
@@ -10625,6 +10592,13 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_ASN1_TIME_to_tm"]
     pub fn ASN1_TIME_to_tm(t: *const ASN1_TIME, out: *mut tm) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_ASN1_TIME_set_string_X509"]
+    pub fn ASN1_TIME_set_string_X509(
+        s: *mut ASN1_TIME,
+        str_: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_ASN1_TIME_to_time_t"]
@@ -14483,6 +14457,10 @@ extern "C" {
     pub fn EVP_sha512() -> *const EVP_MD;
 }
 extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_EVP_sha512_224"]
+    pub fn EVP_sha512_224() -> *const EVP_MD;
+}
+extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_EVP_sha512_256"]
     pub fn EVP_sha512_256() -> *const EVP_MD;
 }
@@ -14501,6 +14479,14 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_EVP_sha3_512"]
     pub fn EVP_sha3_512() -> *const EVP_MD;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_EVP_shake128"]
+    pub fn EVP_shake128() -> *const EVP_MD;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_EVP_shake256"]
+    pub fn EVP_shake256() -> *const EVP_MD;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_EVP_blake2b256"]
@@ -14595,7 +14581,7 @@ extern "C" {
         data: *const ::std::os::raw::c_void,
         len: usize,
         md_out: *mut u8,
-        md_out_size: *mut ::std::os::raw::c_uint,
+        out_size: *mut ::std::os::raw::c_uint,
         type_: *const EVP_MD,
         impl_: *mut ENGINE,
     ) -> ::std::os::raw::c_int;
@@ -14779,88 +14765,6 @@ impl Default for env_md_ctx_st {
             s.assume_init()
         }
     }
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_new"]
-    pub fn ENGINE_new() -> *mut ENGINE;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_free"]
-    pub fn ENGINE_free(engine: *mut ENGINE) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_set_RSA_method"]
-    pub fn ENGINE_set_RSA_method(
-        engine: *mut ENGINE,
-        method: *const RSA_METHOD,
-        method_size: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_get_RSA_method"]
-    pub fn ENGINE_get_RSA_method(engine: *const ENGINE) -> *mut RSA_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_set_ECDSA_method"]
-    pub fn ENGINE_set_ECDSA_method(
-        engine: *mut ENGINE,
-        method: *const ECDSA_METHOD,
-        method_size: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_get_ECDSA_method"]
-    pub fn ENGINE_get_ECDSA_method(engine: *const ENGINE) -> *mut ECDSA_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_METHOD_ref"]
-    pub fn METHOD_ref(method: *mut ::std::os::raw::c_void);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_11_0_METHOD_unref"]
-    pub fn METHOD_unref(method: *mut ::std::os::raw::c_void);
-}
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
-pub struct openssl_method_common_st {
-    pub references: ::std::os::raw::c_int,
-    pub is_static: ::std::os::raw::c_char,
-}
-#[test]
-fn bindgen_test_layout_openssl_method_common_st() {
-    const UNINIT: ::std::mem::MaybeUninit<openssl_method_common_st> =
-        ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<openssl_method_common_st>(),
-        8usize,
-        concat!("Size of: ", stringify!(openssl_method_common_st))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<openssl_method_common_st>(),
-        4usize,
-        concat!("Alignment of ", stringify!(openssl_method_common_st))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).references) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(openssl_method_common_st),
-            "::",
-            stringify!(references)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).is_static) as usize - ptr as usize },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(openssl_method_common_st),
-            "::",
-            stringify!(is_static)
-        )
-    );
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_DSA_new"]
@@ -15187,151 +15091,6 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_i2d_DSAparams"]
     pub fn i2d_DSAparams(in_: *const DSA, outp: *mut *mut u8) -> ::std::os::raw::c_int;
-}
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct dsa_st {
-    pub version: ::std::os::raw::c_long,
-    pub p: *mut BIGNUM,
-    pub q: *mut BIGNUM,
-    pub g: *mut BIGNUM,
-    pub pub_key: *mut BIGNUM,
-    pub priv_key: *mut BIGNUM,
-    pub flags: ::std::os::raw::c_int,
-    pub method_mont_lock: CRYPTO_MUTEX,
-    pub method_mont_p: *mut BN_MONT_CTX,
-    pub method_mont_q: *mut BN_MONT_CTX,
-    pub references: CRYPTO_refcount_t,
-    pub ex_data: CRYPTO_EX_DATA,
-}
-#[test]
-fn bindgen_test_layout_dsa_st() {
-    const UNINIT: ::std::mem::MaybeUninit<dsa_st> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<dsa_st>(),
-        144usize,
-        concat!("Size of: ", stringify!(dsa_st))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<dsa_st>(),
-        8usize,
-        concat!("Alignment of ", stringify!(dsa_st))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).version) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(dsa_st),
-            "::",
-            stringify!(version)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).p) as usize - ptr as usize },
-        8usize,
-        concat!("Offset of field: ", stringify!(dsa_st), "::", stringify!(p))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).q) as usize - ptr as usize },
-        16usize,
-        concat!("Offset of field: ", stringify!(dsa_st), "::", stringify!(q))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).g) as usize - ptr as usize },
-        24usize,
-        concat!("Offset of field: ", stringify!(dsa_st), "::", stringify!(g))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).pub_key) as usize - ptr as usize },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(dsa_st),
-            "::",
-            stringify!(pub_key)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).priv_key) as usize - ptr as usize },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(dsa_st),
-            "::",
-            stringify!(priv_key)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize },
-        48usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(dsa_st),
-            "::",
-            stringify!(flags)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).method_mont_lock) as usize - ptr as usize },
-        56usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(dsa_st),
-            "::",
-            stringify!(method_mont_lock)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).method_mont_p) as usize - ptr as usize },
-        112usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(dsa_st),
-            "::",
-            stringify!(method_mont_p)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).method_mont_q) as usize - ptr as usize },
-        120usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(dsa_st),
-            "::",
-            stringify!(method_mont_q)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).references) as usize - ptr as usize },
-        128usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(dsa_st),
-            "::",
-            stringify!(references)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).ex_data) as usize - ptr as usize },
-        136usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(dsa_st),
-            "::",
-            stringify!(ex_data)
-        )
-    );
-}
-impl Default for dsa_st {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
 }
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -15714,6 +15473,88 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_EC_POINT_clear_free"]
     pub fn EC_POINT_clear_free(point: *mut EC_POINT);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_new"]
+    pub fn ENGINE_new() -> *mut ENGINE;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_free"]
+    pub fn ENGINE_free(engine: *mut ENGINE) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_set_RSA_method"]
+    pub fn ENGINE_set_RSA_method(
+        engine: *mut ENGINE,
+        method: *const RSA_METHOD,
+        method_size: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_get_RSA_method"]
+    pub fn ENGINE_get_RSA_method(engine: *const ENGINE) -> *mut RSA_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_set_ECDSA_method"]
+    pub fn ENGINE_set_ECDSA_method(
+        engine: *mut ENGINE,
+        method: *const ECDSA_METHOD,
+        method_size: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_ENGINE_get_ECDSA_method"]
+    pub fn ENGINE_get_ECDSA_method(engine: *const ENGINE) -> *mut ECDSA_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_METHOD_ref"]
+    pub fn METHOD_ref(method: *mut ::std::os::raw::c_void);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_METHOD_unref"]
+    pub fn METHOD_unref(method: *mut ::std::os::raw::c_void);
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+pub struct openssl_method_common_st {
+    pub references: ::std::os::raw::c_int,
+    pub is_static: ::std::os::raw::c_char,
+}
+#[test]
+fn bindgen_test_layout_openssl_method_common_st() {
+    const UNINIT: ::std::mem::MaybeUninit<openssl_method_common_st> =
+        ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<openssl_method_common_st>(),
+        8usize,
+        concat!("Size of: ", stringify!(openssl_method_common_st))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<openssl_method_common_st>(),
+        4usize,
+        concat!("Alignment of ", stringify!(openssl_method_common_st))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).references) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(openssl_method_common_st),
+            "::",
+            stringify!(references)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).is_static) as usize - ptr as usize },
+        4usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(openssl_method_common_st),
+            "::",
+            stringify!(is_static)
+        )
+    );
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_EC_KEY_new"]
@@ -23316,7 +23157,7 @@ extern "C" {
                 arg3: ::std::os::raw::c_int,
             ) -> ::std::os::raw::c_int,
         >,
-        name: *mut ::std::os::raw::c_char,
+        name: *const ::std::os::raw::c_char,
         arg1: ::std::os::raw::c_int,
         arg2: *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int;
@@ -28679,7 +28520,8 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_X509_PURPOSE_get_by_sname"]
-    pub fn X509_PURPOSE_get_by_sname(sname: *mut ::std::os::raw::c_char) -> ::std::os::raw::c_int;
+    pub fn X509_PURPOSE_get_by_sname(sname: *const ::std::os::raw::c_char)
+        -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_X509_PURPOSE_get_by_id"]
@@ -28698,8 +28540,8 @@ extern "C" {
                 arg3: ::std::os::raw::c_int,
             ) -> ::std::os::raw::c_int,
         >,
-        name: *mut ::std::os::raw::c_char,
-        sname: *mut ::std::os::raw::c_char,
+        name: *const ::std::os::raw::c_char,
+        sname: *const ::std::os::raw::c_char,
         arg: *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int;
 }
@@ -29222,6 +29064,20 @@ extern "C" {
     pub fn SSL_add1_chain_cert(ssl: *mut SSL, x509: *mut X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_SSL_CTX_build_cert_chain"]
+    pub fn SSL_CTX_build_cert_chain(
+        ctx: *mut SSL_CTX,
+        flags: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_SSL_build_cert_chain"]
+    pub fn SSL_build_cert_chain(
+        ssl: *mut SSL,
+        flags: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_SSL_CTX_clear_chain_certs"]
     pub fn SSL_CTX_clear_chain_certs(ctx: *mut SSL_CTX) -> ::std::os::raw::c_int;
 }
@@ -29711,6 +29567,10 @@ extern "C" {
     pub fn SSL_CIPHER_get_auth_nid(cipher: *const SSL_CIPHER) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_SSL_CIPHER_get_handshake_digest"]
+    pub fn SSL_CIPHER_get_handshake_digest(cipher: *const SSL_CIPHER) -> *const EVP_MD;
+}
+extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_SSL_CIPHER_get_prf_nid"]
     pub fn SSL_CIPHER_get_prf_nid(cipher: *const SSL_CIPHER) -> ::std::os::raw::c_int;
 }
@@ -29862,6 +29722,10 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_SSL_get_current_cipher"]
     pub fn SSL_get_current_cipher(ssl: *const SSL) -> *const SSL_CIPHER;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_11_0_SSL_get_client_ciphers"]
+    pub fn SSL_get_client_ciphers(ssl: *const SSL) -> *mut stack_st_SSL_CIPHER;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_11_0_SSL_session_reused"]

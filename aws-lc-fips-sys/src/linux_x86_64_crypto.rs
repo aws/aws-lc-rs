@@ -109,7 +109,7 @@ pub const AWSLC_VERSION_NAME: &[u8; 7] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
 pub const AWSLC_API_VERSION: i32 = 20;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 6] = b"1.4.0\0";
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 6] = b"2.0.0\0";
 pub const ERR_FLAG_STRING: i32 = 1;
 pub const ERR_FLAG_MALLOCED: i32 = 2;
 pub const ERR_R_FATAL: i32 = 64;
@@ -3538,7 +3538,7 @@ pub const RIPEMD160_CBLOCK: i32 = 64;
 pub const RIPEMD160_LBLOCK: i32 = 16;
 pub const RIPEMD160_DIGEST_LENGTH: i32 = 20;
 pub const AWSLC_MODE_STRING: &[u8; 8] = b"AWS-LC \0";
-pub const AWSLC_VERSION_STRING: &[u8; 13] = b"AWS-LC 1.4.0\0";
+pub const AWSLC_VERSION_STRING: &[u8; 13] = b"AWS-LC 2.0.0\0";
 pub const TRUST_TOKEN_MAX_PRIVATE_KEY_SIZE: i32 = 512;
 pub const TRUST_TOKEN_MAX_PUBLIC_KEY_SIZE: i32 = 512;
 pub const TRUST_TOKEN_R_KEYGEN_FAILURE: i32 = 100;
@@ -5602,6 +5602,14 @@ impl Default for crypto_mutex_st {
 }
 pub type CRYPTO_MUTEX = crypto_mutex_st;
 pub type CRYPTO_refcount_t = u32;
+extern "C" {
+    #[link_name = "\u{1}aws_lc_fips_0_11_0_AWSLC_thread_local_clear"]
+    pub fn AWSLC_thread_local_clear() -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_fips_0_11_0_AWSLC_thread_local_shutdown"]
+    pub fn AWSLC_thread_local_shutdown() -> ::std::os::raw::c_int;
+}
 extern "C" {
     #[link_name = "\u{1}aws_lc_fips_0_11_0_CRYPTO_num_locks"]
     pub fn CRYPTO_num_locks() -> ::std::os::raw::c_int;

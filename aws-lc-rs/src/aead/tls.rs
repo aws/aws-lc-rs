@@ -1,15 +1,12 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::fmt::Debug;
-
-use crate::error::Unspecified;
-
 use super::{
     aead_ctx::{self, AeadCtx},
-    open_within, seal_in_place_append_tag, seal_in_place_separate_tag, Aad, Algorithm, AlgorithmID,
-    Nonce, Tag,
+    Aad, Algorithm, AlgorithmID, Nonce, Tag, UnboundKey,
 };
+use crate::error::Unspecified;
+use core::fmt::Debug;
 
 /// The Transport Layer Security (TLS) protocol version.
 #[allow(clippy::module_name_repetitions)]
@@ -38,8 +35,7 @@ pub struct TlsRecordSealingKey {
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
     // or force this type to !Sync. Since this is an implementation detail of AWS-LC
     // we have optex to manage this behavior internally.
-    ctx: AeadCtx,
-    algorithm: &'static Algorithm,
+    key: UnboundKey,
     protocol: TlsProtocolId,
 }
 
@@ -83,8 +79,7 @@ impl TlsRecordSealingKey {
             ) => Err(Unspecified),
         }?;
         Ok(Self {
-            ctx,
-            algorithm,
+            key: UnboundKey::from(ctx),
             protocol,
         })
     }
@@ -109,14 +104,9 @@ impl TlsRecordSealingKey {
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
-        seal_in_place_append_tag(
-            self.algorithm,
-            &self.ctx,
-            Some(nonce),
-            Aad::from(aad.as_ref()),
-            in_out,
-        )
-        .map(|_| ())
+        self.key
+            .seal_in_place_append_tag(Some(nonce), aad.as_ref(), in_out)
+            .map(|_| ())
     }
 
     /// Encrypts and signs (“seals”) data in place.
@@ -146,21 +136,16 @@ impl TlsRecordSealingKey {
     where
         A: AsRef<[u8]>,
     {
-        seal_in_place_separate_tag(
-            self.algorithm,
-            &self.ctx,
-            Some(nonce),
-            Aad::from(aad.as_ref()),
-            in_out,
-        )
-        .map(|(_, tag)| tag)
+        self.key
+            .seal_in_place_separate_tag(Some(nonce), aad.as_ref(), in_out)
+            .map(|(_, tag)| tag)
     }
 
     /// The key's AEAD algorithm.
     #[inline]
     #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
-        self.algorithm
+        self.key.algorithm()
     }
 
     /// The key's associated `TlsProtocolId`.
@@ -174,7 +159,7 @@ impl TlsRecordSealingKey {
 impl Debug for TlsRecordSealingKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TlsRecordSealingKey")
-            .field("algorithm", &self.algorithm)
+            .field("key", &self.key)
             .field("protocol", &self.protocol)
             .finish()
     }
@@ -195,8 +180,7 @@ pub struct TlsRecordOpeningKey {
     // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
     // or force this type to !Sync. Since this is an implementation detail of AWS-LC
     // we have optex to manage this behavior internally.
-    ctx: AeadCtx,
-    algorithm: &'static Algorithm,
+    key: UnboundKey,
     protocol: TlsProtocolId,
 }
 
@@ -240,8 +224,7 @@ impl TlsRecordOpeningKey {
             ) => Err(Unspecified),
         }?;
         Ok(Self {
-            ctx,
-            algorithm,
+            key: UnboundKey::from(ctx),
             protocol,
         })
     }
@@ -254,6 +237,7 @@ impl TlsRecordOpeningKey {
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
     #[inline]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn open_in_place<'in_out, A>(
         &self,
         nonce: Nonce,
@@ -263,14 +247,14 @@ impl TlsRecordOpeningKey {
     where
         A: AsRef<[u8]>,
     {
-        open_within(self.algorithm, &self.ctx, nonce, aad, in_out, 0..)
+        self.key.open_within(nonce, aad.as_ref(), in_out, 0..)
     }
 
     /// The key's AEAD algorithm.
     #[inline]
     #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
-        self.algorithm
+        self.key.algorithm()
     }
 
     /// The key's associated `TlsProtocolId`.
@@ -284,7 +268,7 @@ impl TlsRecordOpeningKey {
 impl Debug for TlsRecordOpeningKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TlsRecordOpeningKey")
-            .field("algorithm", &self.algorithm)
+            .field("key", &self.key)
             .field("protocol", &self.protocol)
             .finish()
     }

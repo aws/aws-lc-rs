@@ -11,100 +11,60 @@ use mirai_annotations::unrecoverable;
 
 #[test]
 fn aead_aes_gcm_128() {
-    test_aead(
+    test_aead_all(
         &aead::AES_128_GCM,
-        seal_with_key,
-        open_with_key,
-        test_file!("data/aead_aes_128_gcm_tests.txt"),
-    );
-    test_aead(
-        &aead::AES_128_GCM,
-        seal_with_less_safe_key,
-        open_with_less_safe_key,
-        test_file!("data/aead_aes_128_gcm_tests.txt"),
-    );
-    test_aead(
-        &aead::AES_128_GCM,
-        seal_with_less_safe_key_scatter,
-        open_with_less_safe_key,
         test_file!("data/aead_aes_128_gcm_tests.txt"),
     );
 }
 
 #[test]
 fn aead_aes_gcm_256() {
-    test_aead(
+    test_aead_all(
         &aead::AES_256_GCM,
-        seal_with_key,
-        open_with_key,
-        test_file!("data/aead_aes_256_gcm_tests.txt"),
-    );
-    test_aead(
-        &aead::AES_256_GCM,
-        seal_with_less_safe_key,
-        open_with_less_safe_key,
-        test_file!("data/aead_aes_256_gcm_tests.txt"),
-    );
-    test_aead(
-        &aead::AES_256_GCM,
-        seal_with_less_safe_key_scatter,
-        open_with_less_safe_key,
         test_file!("data/aead_aes_256_gcm_tests.txt"),
     );
 }
 
 #[test]
 fn aead_aes_gcm_siv_256() {
-    test_aead(
+    test_aead_all(
         &aead::AES_256_GCM_SIV,
-        seal_with_key,
-        open_with_key,
-        test_file!("data/aes_256_gcm_siv_tests.txt"),
-    );
-    test_aead(
-        &aead::AES_256_GCM_SIV,
-        seal_with_less_safe_key,
-        open_with_less_safe_key,
         test_file!("data/aes_256_gcm_siv_tests.txt"),
     );
 }
 
 #[test]
 fn aead_aes_gcm_siv_128() {
-    test_aead(
+    test_aead_all(
         &aead::AES_128_GCM_SIV,
-        seal_with_key,
-        open_with_key,
-        test_file!("data/aes_128_gcm_siv_tests.txt"),
-    );
-    test_aead(
-        &aead::AES_128_GCM_SIV,
-        seal_with_less_safe_key,
-        open_with_less_safe_key,
         test_file!("data/aes_128_gcm_siv_tests.txt"),
     );
 }
 
 #[test]
 fn aead_chacha20_poly1305() {
-    test_aead(
+    test_aead_all(
         &aead::CHACHA20_POLY1305,
-        seal_with_key,
-        open_with_key,
         test_file!("data/aead_chacha20_poly1305_tests.txt"),
     );
-    test_aead(
-        &aead::CHACHA20_POLY1305,
-        seal_with_less_safe_key,
-        open_with_less_safe_key,
-        test_file!("data/aead_chacha20_poly1305_tests.txt"),
-    );
-    test_aead(
-        &aead::CHACHA20_POLY1305,
-        seal_with_less_safe_key_scatter,
-        open_with_less_safe_key,
-        test_file!("data/aead_chacha20_poly1305_tests.txt"),
-    );
+}
+
+/// Tests all combinations of sealer and opener functions
+fn test_aead_all(aead_alg: &'static aead::Algorithm, test_file: test::File) {
+    let mut sealers = vec![seal_with_key, seal_with_less_safe_key];
+    let mut openers = vec![open_with_key, open_with_less_safe_key];
+
+    // SIV doesn't support scatter/gather APIs
+    if !(aead_alg == &aead::AES_128_GCM_SIV || aead_alg == &aead::AES_256_GCM_SIV) {
+        sealers.push(seal_with_less_safe_key_scatter);
+        openers.push(open_with_less_safe_key_gather);
+    }
+
+    for seal in &sealers {
+        for open in &openers {
+            test_aead(aead_alg, seal, open, test_file);
+        }
+    }
 }
 
 #[allow(clippy::too_many_lines)]
@@ -461,6 +421,27 @@ fn open_with_less_safe_key<'a>(
 ) -> Result<&'a mut [u8], error::Unspecified> {
     let key = make_less_safe_key(algorithm, key);
     key.open_within(nonce, aad, in_out, ciphertext_and_tag)
+}
+
+fn open_with_less_safe_key_gather<'a>(
+    algorithm: &'static aead::Algorithm,
+    key: &[u8],
+    nonce: aead::Nonce,
+    aad: aead::Aad<&[u8]>,
+    in_out: &'a mut [u8],
+    ciphertext_and_tag: RangeFrom<usize>,
+) -> Result<&'a mut [u8], error::Unspecified> {
+    let key = make_less_safe_key(algorithm, key);
+
+    // clone the ciphertext and tag to a separate buffer, since it doesn't get modified in place
+    let ciphertext = in_out[ciphertext_and_tag].to_vec();
+    let (in_ciphertext, in_tag) = ciphertext.split_at(ciphertext.len() - algorithm.tag_len());
+
+    let out_plaintext = &mut in_out[..in_ciphertext.len()];
+
+    key.open_separate_gather(nonce, aad, in_ciphertext, in_tag, out_plaintext)?;
+
+    Ok(out_plaintext)
 }
 
 #[allow(clippy::range_plus_one)]

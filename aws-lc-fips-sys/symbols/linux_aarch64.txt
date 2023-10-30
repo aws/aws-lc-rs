@@ -194,6 +194,8 @@ AUTHORITY_KEYID_it
 AUTHORITY_KEYID_new
 AWSLC_non_fips_pkey_evp_asn1_methods
 AWSLC_non_fips_pkey_evp_methods
+AWSLC_thread_local_clear
+AWSLC_thread_local_shutdown
 BASIC_CONSTRAINTS_free
 BASIC_CONSTRAINTS_it
 BASIC_CONSTRAINTS_new
