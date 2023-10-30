@@ -12,14 +12,14 @@
 //! ```
 //! use aws_lc_rs::{
 //!     error::Unspecified,
-//!     kem::{PrivateKey, PublicKey, KYBER512_R3},
+//!     kem::{Ciphertext, PrivateKey, PublicKey, KYBER512_R3},
 //! };
 //!
 //! // Alice generates their (private) decapsulation key.
 //! let priv_key = PrivateKey::generate(&KYBER512_R3)?;
 //!
 //! // Alices computes the (public) encapsulation key.
-//! let pub_key = priv_key.compute_public_key()?;
+//! let pub_key = priv_key.public_key()?;
 //!
 //! // Alice sends the public key bytes to bob through some
 //! // protocol message.
@@ -29,25 +29,17 @@
 //! let retrieved_pub_key = PublicKey::new(&KYBER512_R3, pub_key_bytes)?;
 //!
 //! // Bob executes the encapsulation algorithm to to produce their copy of the secret, and associated ciphertext.
-//! let (mut ciphertext, bob_secret) = retrieved_pub_key.encapsulate(Unspecified, |ct, ss| {
-//!     let ciphertext: Vec<u8> = Vec::from(ct);
-//!     let secret: Vec<u8> = Vec::from(ss);
-//!     // In real applications, a KDF would be applied to derive
-//!     // the session keys from the shared secret. We omit that here.
-//!     Ok((ciphertext, secret))
-//! })?;
+//! let (ciphertext, bob_secret) = retrieved_pub_key.encapsulate()?;
+//!
+//! // Alice recieves ciphertext bytes from bob
+//! let ciphertext_bytes = ciphertext.as_ref();
 //!
 //! // Bob sends Alice the ciphertext computed from the encapsulation algorithm, Alice runs decapsulation to derive their
 //! // copy of the secret.
-//! let alice_secret = priv_key.decapsulate(&mut ciphertext, Unspecified, |ss| {
-//!     let secret: Vec<u8> = Vec::from(ss);
-//!     // In real applications, a KDF would be applied to derive
-//!     // the session keys from the shared secret. We omit that here.
-//!     Ok(secret)
-//! })?;
+//! let alice_secret = priv_key.decapsulate(Ciphertext::from(ciphertext_bytes))?;
 //!
 //! // Alice and Bob have now arrived to the same secret
-//! assert_eq!(alice_secret, bob_secret);
+//! assert_eq!(alice_secret.as_ref(), bob_secret.as_ref());
 //!
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
@@ -63,8 +55,8 @@ use aws_lc::{
     EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM, NID_KYBER1024_R3, NID_KYBER512_R3,
     NID_KYBER768_R3,
 };
-use std::cmp::Ordering;
-use std::ptr::null_mut;
+use std::{borrow::Cow, ptr::null_mut};
+use std::{cmp::Ordering, ops::Deref};
 use zeroize::Zeroize;
 
 // Key lengths defined as stated on the CRYSTALS website:
@@ -219,7 +211,7 @@ impl PrivateKey {
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    pub fn compute_public_key(&self) -> Result<PublicKey, Unspecified> {
+    pub fn public_key(&self) -> Result<PublicKey, Unspecified> {
         let mut public_key_size = self.algorithm.public_key_size();
         let mut pubkey_bytes = vec![0u8; public_key_size];
         if 1 != unsafe {
@@ -256,17 +248,9 @@ impl PrivateKey {
     /// from the operation and then returns what `kdf` returns.
     ///
     /// # Errors
-    /// `error_value` when operation fails due to internal error.
-    #[allow(clippy::missing_panics_doc)]
-    pub fn decapsulate<F, R, E>(
-        &self,
-        ciphertext: &mut [u8],
-        error_value: E,
-        kdf: F,
-    ) -> Result<R, E>
-    where
-        F: FnOnce(&[u8]) -> Result<R, E>,
-    {
+    /// `Unspecified` when operation fails due to internal error.
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn decapsulate(&self, ciphertext: Ciphertext<'_>) -> Result<SharedSecret, Unspecified> {
         let mut shared_secret_len = self.algorithm.shared_secret_size();
         let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
@@ -274,7 +258,7 @@ impl PrivateKey {
         let ctx = if let Ok(ctx) = ctx {
             ctx
         } else {
-            return Err(error_value);
+            return Err(Unspecified);
         };
 
         if 1 != unsafe {
@@ -282,21 +266,24 @@ impl PrivateKey {
                 *ctx,
                 shared_secret.as_mut_ptr(),
                 &mut shared_secret_len,
-                ciphertext.as_mut_ptr(),
+                // AWS-LC incorrectly has this as an unqualified `uint8_t *`, it should be qualified with const
+                ciphertext.as_ptr() as *mut u8,
                 ciphertext.len(),
             )
         } {
-            return Err(error_value);
+            return Err(Unspecified);
         }
 
-        kdf(&shared_secret)
+        shared_secret.truncate(shared_secret_len);
+
+        Ok(SharedSecret(shared_secret.into_boxed_slice()))
     }
 
     /// Creates a new KEM private key from raw bytes. This method is NOT meant to generate
     /// a new private key, rather it restores a `KemPrivateKey` that was previously converted
     /// to raw bytes.
     ///
-    /// `alg` is the `KemAlgorithm` to be associated with the generated `KemPrivateKey`
+    /// `alg` is the `Algorithm` to be associated with the generated `KemPrivateKey`
     ///
     /// `bytes` is a slice of raw bytes representing a `KemPrivateKey`
     ///
@@ -355,22 +342,13 @@ impl PublicKey {
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    #[allow(clippy::missing_panics_doc)]
-    pub fn encapsulate<F, R, E>(&self, error_value: E, kdf: F) -> Result<R, E>
-    where
-        F: FnOnce(&[u8], &[u8]) -> Result<R, E>,
-    {
+    pub fn encapsulate<'a>(&self) -> Result<(Ciphertext<'a>, SharedSecret), Unspecified> {
         let mut ciphertext_len = self.algorithm.ciphertext_size();
         let mut shared_secret_len = self.algorithm.shared_secret_size();
         let mut ciphertext: Vec<u8> = vec![0u8; ciphertext_len];
         let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
-        let ctx =
-            if let Ok(ctx) = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) }) {
-                ctx
-            } else {
-                return Err(error_value);
-            };
+        let ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) })?;
 
         if 1 != unsafe {
             EVP_PKEY_encapsulate(
@@ -381,10 +359,16 @@ impl PublicKey {
                 &mut shared_secret_len,
             )
         } {
-            return Err(error_value);
+            return Err(Unspecified);
         }
 
-        kdf(&ciphertext, &shared_secret)
+        ciphertext.truncate(ciphertext_len);
+        shared_secret.truncate(shared_secret_len);
+
+        Ok((
+            Ciphertext::new(ciphertext),
+            SharedSecret(shared_secret.into_boxed_slice()),
+        ))
     }
 
     /// Creates a new KEM public key from raw bytes. This method is MUST NOT be used to generate
@@ -423,6 +407,57 @@ impl Drop for PublicKey {
 impl AsRef<[u8]> for PublicKey {
     fn as_ref(&self) -> &[u8] {
         &self.pub_key
+    }
+}
+
+/// A set of encrypted bytes produced by [`PublicKey::encapsulate`], and used as an input to [`PrivateKey::decapsulate`].
+pub struct Ciphertext<'a>(Cow<'a, [u8]>);
+
+impl<'a> Ciphertext<'a> {
+    fn new(value: Vec<u8>) -> Ciphertext<'a> {
+        Self(Cow::Owned(value))
+    }
+}
+
+impl<'a> Drop for Ciphertext<'a> {
+    fn drop(&mut self) {
+        if let Cow::Owned(ref mut v) = self.0 {
+            v.zeroize();
+        }
+    }
+}
+
+impl<'a> Deref for Ciphertext<'a> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        match self.0 {
+            Cow::Borrowed(v) => v,
+            Cow::Owned(ref v) => v.as_ref(),
+        }
+    }
+}
+
+impl<'a> From<&'a [u8]> for Ciphertext<'a> {
+    fn from(value: &'a [u8]) -> Self {
+        Self(Cow::Borrowed(value))
+    }
+}
+
+/// The cryptograpic shared secret output from the KEM encapsulate / decapsulate process.
+pub struct SharedSecret(Box<[u8]>);
+
+impl Drop for SharedSecret {
+    fn drop(&mut self) {
+        self.0.zeroize();
+    }
+}
+
+impl Deref for SharedSecret {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref()
     }
 }
 
@@ -525,7 +560,7 @@ mod tests {
             let priv_key = PrivateKey::generate(algorithm).unwrap();
             assert_eq!(priv_key.algorithm(), algorithm);
 
-            let pub_key = priv_key.compute_public_key().unwrap();
+            let pub_key = priv_key.public_key().unwrap();
             let pubkey_raw_bytes = pub_key.as_ref();
             let pub_key_from_bytes = PublicKey::new(algorithm, pubkey_raw_bytes).unwrap();
 
