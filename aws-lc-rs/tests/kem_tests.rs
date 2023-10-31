@@ -1,11 +1,23 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::kem::{PrivateKey, PublicKey, KYBER1024_R3, KYBER512_R3, KYBER768_R3};
+#![cfg(feature = "unstable")]
+
+use aws_lc_rs::{
+    kem::{Algorithm, PrivateKey, PublicKey},
+    unstable::kem::{get_algorithm, AlgorithmId},
+};
+
+static UNSTABLE_ALGORITHMS: &[Option<&Algorithm<AlgorithmId>>] = &[
+    get_algorithm(AlgorithmId::Kyber512_R3),
+    get_algorithm(AlgorithmId::Kyber768_R3),
+    get_algorithm(AlgorithmId::Kyber1024_R3),
+];
 
 #[test]
 fn test_kem_e2e() {
-    for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
+    for algorithm in UNSTABLE_ALGORITHMS {
+        let algorithm = algorithm.unwrap();
         let priv_key = PrivateKey::generate(algorithm).unwrap();
         assert_eq!(priv_key.algorithm(), algorithm);
 
@@ -24,7 +36,8 @@ fn test_kem_e2e() {
 
 #[test]
 fn test_serialized_kem_e2e() {
-    for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
+    for algorithm in UNSTABLE_ALGORITHMS {
+        let algorithm = algorithm.unwrap();
         let priv_key = PrivateKey::generate(algorithm).unwrap();
         assert_eq!(priv_key.algorithm(), algorithm);
 

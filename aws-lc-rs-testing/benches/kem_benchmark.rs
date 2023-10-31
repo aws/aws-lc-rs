@@ -1,13 +1,21 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::kem::{PrivateKey, KYBER1024_R3, KYBER512_R3, KYBER768_R3};
+use aws_lc_rs::{
+    kem::PrivateKey,
+    unstable::kem::{get_algorithm, AlgorithmId},
+};
 use criterion::{criterion_group, criterion_main, Criterion};
 
-static ALGORITHMS: &[&aws_lc_rs::kem::Algorithm] = &[&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3];
+const UNSTABLE_ALGORITHMS: &[Option<&aws_lc_rs::kem::Algorithm<AlgorithmId>>] = &[
+    get_algorithm(AlgorithmId::Kyber512_R3),
+    get_algorithm(AlgorithmId::Kyber768_R3),
+    get_algorithm(AlgorithmId::Kyber1024_R3),
+];
 
 fn bench_kem_keygen(c: &mut Criterion) {
-    for ele in ALGORITHMS {
+    for ele in UNSTABLE_ALGORITHMS {
+        let ele = ele.unwrap();
         let bench_group_name = format!("KEM/{:?}/keygen", ele.id());
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {
@@ -19,7 +27,8 @@ fn bench_kem_keygen(c: &mut Criterion) {
 }
 
 fn bench_kem_encapsulate(c: &mut Criterion) {
-    for ele in ALGORITHMS {
+    for ele in UNSTABLE_ALGORITHMS {
+        let ele = ele.unwrap();
         let bench_group_name = format!("KEM/{:?}/encapsulate", ele.id());
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {
@@ -36,7 +45,8 @@ fn bench_kem_encapsulate(c: &mut Criterion) {
 }
 
 fn bench_kem_decapsulate(c: &mut Criterion) {
-    for ele in ALGORITHMS {
+    for ele in UNSTABLE_ALGORITHMS {
+        let ele = ele.unwrap();
         let bench_group_name = format!("KEM/{:?}/decapsulate", ele.id());
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {

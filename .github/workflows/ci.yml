@@ -177,10 +177,10 @@ jobs:
       - name: Cross-compilation
         if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'i686-unknown-linux-gnu' }}
         working-directory: ./aws-lc-rs
-        run: cross test --target ${{ matrix.target }}
+        run: cross test --features unstable --target ${{ matrix.target }}
       - name: Cross-compilation w/ bindgen
         working-directory: ./aws-lc-rs
-        run: cross test --release --features bindgen --target ${{ matrix.target }}
+        run: cross test --release --features bindgen,unstable --target ${{ matrix.target }}
 
   aws-lc-rs-platform-build:
     name: Cross-platform build
@@ -203,7 +203,7 @@ jobs:
           target: ${{ matrix.target }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
-        run: cargo test --features bindgen --target ${{ matrix.target }}
+        run: cargo test --features bindgen,unstable --target ${{ matrix.target }}
         env:
           DYLD_ROOT_PATH: "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot"
 
@@ -216,15 +216,15 @@ jobs:
         rust: [ stable ]
         os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
         args:
-          - --all-targets
-          - --release --all-targets
-          - --no-default-features --features non-fips
-          - --no-default-features --features non-fips,ring-io
-          - --no-default-features --features non-fips,ring-sig-verify
-          - --no-default-features --features non-fips,alloc
-          - --no-default-features --features non-fips,bindgen
+          - --all-targets --features unstable
+          - --release --all-targets --features unstable
+          - --no-default-features --features non-fips,unstable
+          - --no-default-features --features non-fips,ring-io,unstable
+          - --no-default-features --features non-fips,ring-sig-verify,unstable
+          - --no-default-features --features non-fips,alloc,unstable
+          - --no-default-features --features non-fips,bindgen,unstable
         include:
-          - args: --no-default-features --features non-fips,bindgen
+          - args: --no-default-features --features non-fips,bindgen,unstable
             envs: AWS_LC_RUST_PRIVATE_INTERNALS=1
     steps:
       - uses: actions/checkout@v3
@@ -258,14 +258,14 @@ jobs:
         rust: [ stable ]
         os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
         args:
-          - --release --all-targets --features fips
-          - --no-default-features --features fips
-          - --no-default-features --features fips,ring-io
-          - --no-default-features --features fips,ring-sig-verify
-          - --no-default-features --features fips,alloc
-          - --no-default-features --features fips,bindgen
+          - --release --all-targets --features fips,unstable
+          - --no-default-features --features fips,unstable
+          - --no-default-features --features fips,ring-io,unstable
+          - --no-default-features --features fips,ring-sig-verify,unstable
+          - --no-default-features --features fips,alloc,unstable
+          - --no-default-features --features fips,bindgen,unstable
         include:
-          - args: --no-default-features --features fips,bindgen
+          - args: --no-default-features --features fips,bindgen,unstable
             envs: AWS_LC_RUST_PRIVATE_INTERNALS=1
     steps:
       - uses: actions/checkout@v3
@@ -297,8 +297,8 @@ jobs:
         rust: [ stable ]
         os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
         args:
-          - --no-default-features --features aws-lc-sys,bindgen
-          - --release --all-targets --features bindgen
+          - --no-default-features --features aws-lc-sys,bindgen,unstable
+          - --release --all-targets --features bindgen,unstable
     steps:
       - uses: actions/checkout@v3
         with:
@@ -321,13 +321,13 @@ jobs:
         rust: [ stable ]
         os: [ windows-2019 ]
         args:
-          - --all-targets
-          - --all-targets --features bindgen
-          - --release --all-targets
-          - --no-default-features --features non-fips
-          - --no-default-features --features non-fips,ring-io
-          - --no-default-features --features non-fips,ring-sig-verify
-          - --no-default-features --features non-fips,alloc
+          - --all-targets --features unstable
+          - --all-targets --features bindgen,unstable
+          - --release --all-targets --features unstable
+          - --no-default-features --features non-fips,unstable
+          - --no-default-features --features non-fips,ring-io,unstable
+          - --no-default-features --features non-fips,ring-sig-verify,unstable
+          - --no-default-features --features non-fips,alloc,unstable
     steps:
       - uses: ilammy/setup-nasm@v1
       - uses: actions/checkout@v3
@@ -402,7 +402,7 @@ jobs:
 
       - name: Run coverage
         working-directory: ./aws-lc-rs
-        run: cargo llvm-cov --workspace --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --lcov --output-path ${{ runner.temp }}/lcov.info
+        run: cargo llvm-cov --workspace --features unstable --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --lcov --output-path ${{ runner.temp }}/lcov.info
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         env:

@@ -131,6 +131,7 @@ pub mod kem;
 mod ptr;
 mod rsa;
 pub mod tls_prf;
+pub mod unstable;
 
 pub(crate) use debug::derive_debug_via_id;
 
