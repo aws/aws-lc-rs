@@ -91,6 +91,7 @@
 //! and deploy them into AWS Regions.
 
 #![warn(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "fips")]
 extern crate aws_lc_fips_sys as aws_lc;
@@ -106,6 +107,7 @@ pub mod digest;
 pub mod error;
 pub mod hkdf;
 pub mod hmac;
+#[cfg_attr(docsrs, doc(cfg(feature = "ring-io")))]
 #[cfg(feature = "ring-io")]
 pub mod io;
 pub mod pbkdf2;
@@ -148,6 +150,7 @@ pub fn init() {
     });
 }
 
+#[cfg_attr(docsrs, doc(cfg(feature = "fips")))]
 #[cfg(feature = "fips")]
 /// Panics if the underlying implementation is not FIPS, otherwise it returns.
 ///

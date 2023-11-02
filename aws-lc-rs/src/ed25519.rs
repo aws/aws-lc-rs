@@ -39,6 +39,7 @@ impl sealed::Sealed for EdDSAParameters {}
 
 impl VerificationAlgorithm for EdDSAParameters {
     #[inline]
+    #[cfg_attr(docsrs, doc(cfg(feature = "ring-sig-verify")))]
     #[cfg(feature = "ring-sig-verify")]
     fn verify(
         &self,

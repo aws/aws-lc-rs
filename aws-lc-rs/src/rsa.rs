@@ -19,8 +19,6 @@ use crate::signature::{KeyPair, VerificationAlgorithm};
 use crate::{cbs, digest, rand, test};
 #[cfg(feature = "fips")]
 use aws_lc::RSA_check_fips;
-#[cfg(not(feature = "fips"))]
-use aws_lc::RSA_check_key;
 use aws_lc::{
     EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
     EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_assign_RSA,
@@ -188,6 +186,7 @@ impl RsaKeyPair {
 }
 
 impl VerificationAlgorithm for RsaParameters {
+    #[cfg_attr(docsrs, doc(cfg(feature = "ring-sig-verify")))]
     #[cfg(feature = "ring-sig-verify")]
     fn verify(
         &self,
@@ -438,6 +437,7 @@ impl AsRef<[u8]> for RsaSubjectPublicKey {
     }
 }
 
+#[cfg_attr(docsrs, doc(cfg(feature = "ring-io")))]
 #[cfg(feature = "ring-io")]
 impl RsaSubjectPublicKey {
     /// The public modulus (n).
