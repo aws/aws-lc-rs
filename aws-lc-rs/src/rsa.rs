@@ -140,6 +140,10 @@ impl RsaKeyPair {
     const MIN_RSA_PRIME_BITS: u32 = 1024;
     const MAX_RSA_PRIME_BITS: u32 = 4096;
 
+    /// ⚠️ Function assumes that `aws_lc::RSA_check_key` / `aws_lc::RSA_validate_key` has already been invoked beforehand.
+    /// `aws_lc::RSA_validate_key` is already invoked by `aws_lc::EVP_parse_private_key` / `aws_lc::RSA_parse_private_key`.
+    /// If the `EVP_PKEY` was constructed through another mechanism, then the key should be validated through the use of
+    /// one those verifier functions first.
     unsafe fn validate_rsa_pkey(rsa: &LcPtr<EVP_PKEY>) -> Result<(), KeyRejected> {
         let rsa = rsa.get_rsa()?.as_const();
 
@@ -170,11 +174,10 @@ impl RsaKeyPair {
             Ordering::Equal | Ordering::Greater => Ok(()),
         }?;
 
-        #[cfg(not(feature = "fips"))]
-        if 1 != RSA_check_key(*rsa) {
-            return Err(KeyRejected::inconsistent_components());
-        }
-
+        // For the FIPS feature this will perform the necessary public-key validaiton steps and pairwise consistency tests.
+        // TODO: This also result in another call to `aws_lc::RSA_validate_key`, meaning duplicate effort is performed
+        // even after having already performing this operation during key parsing. Ideally the FIPS specific checks
+        // could be pulled out and invoked seperatly from the standard checks.
         #[cfg(feature = "fips")]
         if 1 != RSA_check_fips(*rsa as *mut RSA) {
             return Err(KeyRejected::inconsistent_components());
