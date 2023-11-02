@@ -271,6 +271,7 @@ unsafe impl Send for Algorithm {}
 impl Algorithm {
     /// The length of a finalized digest.
     #[inline]
+    #[must_use]
     pub fn output_len(&self) -> usize {
         self.output_len
     }
@@ -286,12 +287,16 @@ impl Algorithm {
     /// kept for compatibility with the original *ring* implementation.
     #[deprecated]
     #[inline]
+    #[must_use]
     pub fn chaining_len(&self) -> usize {
+        // clippy warns on deprecated functions accessing deprecated fields
+        #![allow(deprecated)]
         self.chaining_len
     }
 
     /// The internal block length.
     #[inline]
+    #[must_use]
     pub fn block_len(&self) -> usize {
         self.block_len
     }
