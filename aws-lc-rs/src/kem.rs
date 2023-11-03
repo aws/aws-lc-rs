@@ -17,7 +17,7 @@
 //! };
 //!
 //! // Alice generates their (private) decapsulation key.
-//! let priv_key = PrivateKey::generate(get_algorithm(AlgorithmId::Kyber512_R3).unwrap())?;
+//! let priv_key = PrivateKey::generate(get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?)?;
 //!
 //! // Alices computes the (public) encapsulation key.
 //! let pub_key = priv_key.public_key()?;
@@ -27,7 +27,7 @@
 //! let pub_key_bytes = pub_key.as_ref();
 //!
 //! // Bob constructs the (public) encapsulation key from the key bytes provided by Alice.
-//! let retrieved_pub_key = PublicKey::new(get_algorithm(AlgorithmId::Kyber512_R3)?, pub_key_bytes)?;
+//! let retrieved_pub_key = PublicKey::new(get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?, pub_key_bytes)?;
 //!
 //! // Bob executes the encapsulation algorithm to to produce their copy of the secret, and associated ciphertext.
 //! let (ciphertext, bob_secret) = retrieved_pub_key.encapsulate()?;
@@ -55,22 +55,20 @@ use aws_lc::{
     EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_keygen,
     EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM,
 };
-use std::{borrow::Cow, cmp::Ordering, fmt::Debug, ops::Deref, ptr::null_mut};
+use std::{borrow::Cow, cmp::Ordering, fmt::Debug, ptr::null_mut};
 use zeroize::Zeroize;
 
 /// An identifier for a KEM algorithm.
-pub trait AlgorithmIdentifier: Copy + Clone + Debug + PartialEq + sealed::Sealed + 'static {
+pub trait AlgorithmIdentifier:
+    Copy + Clone + Debug + PartialEq + crate::sealed::Sealed + 'static
+{
     /// Returns the algorithm's associated AWS-LC nid.
     fn nid(self) -> i32;
 }
 
-pub(crate) mod sealed {
-    pub trait Sealed {}
-}
-
 /// A KEM algorithm
 #[derive(Debug, PartialEq)]
-pub struct Algorithm<Id>
+pub struct Algorithm<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
 {
@@ -132,7 +130,7 @@ where
 /// A serializable private key usable with KEMs. This can be randomly generated with `KemPrivateKey::generate`
 /// or constructed from raw bytes.
 #[derive(Debug)]
-pub struct PrivateKey<Id>
+pub struct PrivateKey<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
 {
@@ -140,6 +138,21 @@ where
     evp_pkey: LcPtr<EVP_PKEY>,
     priv_key: Box<[u8]>,
 }
+
+/// Identifier for a KEM algorithm.
+///
+/// See [`crate::unstable::kem::AlgorithmId`] and [`crate::unstable::kem::get_algorithm`] for
+/// access to algorithms not subject to semantic versioning gurantees.
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum AlgorithmId {}
+
+impl AlgorithmIdentifier for AlgorithmId {
+    fn nid(self) -> i32 {
+        unreachable!()
+    }
+}
+impl crate::sealed::Sealed for AlgorithmId {}
 
 impl<Id> PrivateKey<Id>
 where
@@ -229,6 +242,8 @@ where
             return Err(Unspecified);
         };
 
+        let ciphertext = ciphertext.as_ref();
+
         if 1 != unsafe {
             EVP_PKEY_decapsulate(
                 *ctx,
@@ -257,7 +272,8 @@ where
     ///
     /// # Errors
     /// `error::KeyRejected` when operation fails during key creation.
-    pub fn new(alg: &'static Algorithm<Id>, bytes: &[u8]) -> Result<Self, KeyRejected> {
+    #[allow(dead_code)]
+    pub(crate) fn new(alg: &'static Algorithm<Id>, bytes: &[u8]) -> Result<Self, KeyRejected> {
         match bytes.len().cmp(&alg.secret_key_size()) {
             Ordering::Less => Err(KeyRejected::too_small()),
             Ordering::Greater => Err(KeyRejected::too_large()),
@@ -294,8 +310,9 @@ where
 
 /// A serializable public key usable with KEMS. This can be constructed
 /// from a `KemPrivateKey` or constructed from raw bytes.
+#[allow(private_bounds)]
 #[derive(Debug)]
-pub struct PublicKey<Id>
+pub struct PublicKey<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
 {
@@ -304,6 +321,7 @@ where
     pub_key: Box<[u8]>,
 }
 
+#[allow(private_bounds)]
 impl<Id> PublicKey<Id>
 where
     Id: AlgorithmIdentifier,
@@ -322,7 +340,7 @@ where
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    pub fn encapsulate<'a>(&self) -> Result<(Ciphertext<'a>, SharedSecret), Unspecified> {
+    pub fn encapsulate(&self) -> Result<(Ciphertext<'static>, SharedSecret), Unspecified> {
         let mut ciphertext_len = self.algorithm.ciphertext_size();
         let mut shared_secret_len = self.algorithm.shared_secret_size();
         let mut ciphertext: Vec<u8> = vec![0u8; ciphertext_len];
@@ -347,7 +365,7 @@ where
 
         Ok((
             Ciphertext::new(ciphertext),
-            SharedSecret(shared_secret.into_boxed_slice()),
+            SharedSecret::new(shared_secret.into_boxed_slice()),
         ))
     }
 
@@ -413,10 +431,8 @@ impl<'a> Drop for Ciphertext<'a> {
     }
 }
 
-impl<'a> Deref for Ciphertext<'a> {
-    type Target = [u8];
-
-    fn deref(&self) -> &Self::Target {
+impl<'a> AsRef<[u8]> for Ciphertext<'a> {
+    fn as_ref(&self) -> &[u8] {
         match self.0 {
             Cow::Borrowed(v) => v,
             Cow::Owned(ref v) => v.as_ref(),
@@ -433,16 +449,20 @@ impl<'a> From<&'a [u8]> for Ciphertext<'a> {
 /// The cryptograpic shared secret output from the KEM encapsulate / decapsulate process.
 pub struct SharedSecret(Box<[u8]>);
 
+impl SharedSecret {
+    fn new(value: Box<[u8]>) -> Self {
+        Self(value)
+    }
+}
+
 impl Drop for SharedSecret {
     fn drop(&mut self) {
         self.0.zeroize();
     }
 }
 
-impl Deref for SharedSecret {
-    type Target = [u8];
-
-    fn deref(&self) -> &Self::Target {
+impl AsRef<[u8]> for SharedSecret {
+    fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
     }
 }
@@ -462,4 +482,28 @@ fn kem_key_generate(nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
         return Err(Unspecified);
     }
     Ok(LcPtr::new(key_raw)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Ciphertext, SharedSecret};
+
+    #[test]
+    fn ciphertext() {
+        let ciphertext_bytes = vec![42u8; 4];
+        let ciphertext = Ciphertext::from(ciphertext_bytes.as_ref());
+        assert_eq!(ciphertext.as_ref(), &[42, 42, 42, 42]);
+        drop(ciphertext);
+
+        let ciphertext_bytes = vec![42u8; 4];
+        let ciphertext = Ciphertext::<'static>::new(ciphertext_bytes);
+        assert_eq!(ciphertext.as_ref(), &[42, 42, 42, 42]);
+    }
+
+    #[test]
+    fn shared_secret() {
+        let secret_bytes = vec![42u8; 4];
+        let shared_secret = SharedSecret::new(secret_bytes.into_boxed_slice());
+        assert_eq!(shared_secret.as_ref(), &[42, 42, 42, 42]);
+    }
 }
