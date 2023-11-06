@@ -61,10 +61,10 @@ cmake = "0.1.48"
 dunce = "1.0"
 
 [target.'cfg(any(all(target_os = "linux", target_arch = "x86_64"), all(target_os = "linux", target_arch = "aarch64")))'.build-dependencies]
-bindgen = { version = "0.68.1", optional = true }
+bindgen = { version = "0.69.1", optional = true }
 
 [target.'cfg(not(any(all(target_os = "linux", target_arch = "x86_64"), all(target_os = "linux", target_arch = "aarch64"))))'.build-dependencies]
-bindgen = { version = "0.66.1" }
+bindgen = { version = "0.69.1" }
 
 [dependencies]
 libc = "0.2"
