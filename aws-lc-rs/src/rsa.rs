@@ -186,7 +186,6 @@ impl RsaKeyPair {
 }
 
 impl VerificationAlgorithm for RsaParameters {
-    #[cfg_attr(docsrs, doc(cfg(feature = "ring-sig-verify")))]
     #[cfg(feature = "ring-sig-verify")]
     fn verify(
         &self,
@@ -437,7 +436,6 @@ impl AsRef<[u8]> for RsaSubjectPublicKey {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "ring-io")))]
 #[cfg(feature = "ring-io")]
 impl RsaSubjectPublicKey {
     /// The public modulus (n).

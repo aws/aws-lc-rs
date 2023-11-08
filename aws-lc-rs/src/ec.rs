@@ -141,7 +141,6 @@ unsafe impl Sync for PublicKey {}
 
 impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
     #[inline]
-    #[cfg_attr(docsrs, doc(cfg(feature = "ring-sig-verify")))]
     #[cfg(feature = "ring-sig-verify")]
     fn verify(
         &self,

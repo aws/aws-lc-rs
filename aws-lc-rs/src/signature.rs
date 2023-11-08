@@ -313,7 +313,6 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     //
     /// # Errors
     /// `error::Unspecified` if inputs not verified.
-    #[cfg_attr(docsrs, doc(cfg(feature = "ring-sig-verify")))]
     #[cfg(feature = "ring-sig-verify")]
     #[deprecated(note = "please use `VerificationAlgorithm::verify_sig` instead")]
     fn verify(
