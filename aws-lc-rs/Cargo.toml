@@ -22,6 +22,10 @@ exclude = [
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[package.metadata.docs.rs]
+features = ["fips"]
+rustc-args = ["--cfg", "docsrs"]
+
 [features]
 alloc = []
 default = ["aws-lc-sys", "alloc", "ring-io", "ring-sig-verify"]

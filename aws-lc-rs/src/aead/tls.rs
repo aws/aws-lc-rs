@@ -11,6 +11,7 @@ use core::fmt::Debug;
 /// The Transport Layer Security (TLS) protocol version.
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[non_exhaustive]
 pub enum TlsProtocolId {
     /// TLS 1.2 (RFC 5246)
     TLS12,
