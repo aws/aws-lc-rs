@@ -67,7 +67,7 @@ pub trait AlgorithmIdentifier:
 }
 
 /// A KEM algorithm
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub struct Algorithm<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
@@ -83,7 +83,7 @@ impl<Id> Algorithm<Id>
 where
     Id: AlgorithmIdentifier,
 {
-    #[cfg(feature = "unstable")]
+    #[allow(dead_code)]
     pub(crate) const fn new(
         id: Id,
         secret_key_size: usize,
@@ -127,9 +127,17 @@ where
     }
 }
 
+impl<Id> Debug for Algorithm<Id>
+where
+    Id: AlgorithmIdentifier,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(&self.id, f)
+    }
+}
+
 /// A serializable private key usable with KEMs. This can be randomly generated with `KemPrivateKey::generate`
 /// or constructed from raw bytes.
-#[derive(Debug)]
 pub struct PrivateKey<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
@@ -152,6 +160,7 @@ impl AlgorithmIdentifier for AlgorithmId {
         unreachable!()
     }
 }
+
 impl crate::sealed::Sealed for AlgorithmId {}
 
 impl<Id> PrivateKey<Id>
@@ -308,10 +317,19 @@ where
     }
 }
 
+impl<Id> Debug for PrivateKey<Id>
+where
+    Id: AlgorithmIdentifier,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PrivateKey")
+            .field("algorithm", &self.algorithm)
+            .finish_non_exhaustive()
+    }
+}
+
 /// A serializable public key usable with KEMS. This can be constructed
 /// from a `KemPrivateKey` or constructed from raw bytes.
-#[allow(private_bounds)]
-#[derive(Debug)]
 pub struct PublicKey<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
@@ -321,7 +339,6 @@ where
     pub_key: Box<[u8]>,
 }
 
-#[allow(private_bounds)]
 impl<Id> PublicKey<Id>
 where
     Id: AlgorithmIdentifier,
@@ -414,6 +431,17 @@ where
     }
 }
 
+impl<Id> Debug for PublicKey<Id>
+where
+    Id: AlgorithmIdentifier,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PublicKey")
+            .field("algorithm", &self.algorithm)
+            .finish_non_exhaustive()
+    }
+}
+
 /// A set of encrypted bytes produced by [`PublicKey::encapsulate`], and used as an input to [`PrivateKey::decapsulate`].
 pub struct Ciphertext<'a>(Cow<'a, [u8]>);
 
@@ -486,7 +514,20 @@ fn kem_key_generate(nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Ciphertext, SharedSecret};
+    use super::{Algorithm, AlgorithmIdentifier, Ciphertext, SharedSecret};
+
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    enum TestAlgorithmId {
+        Foo,
+    }
+
+    impl AlgorithmIdentifier for TestAlgorithmId {
+        fn nid(self) -> i32 {
+            42
+        }
+    }
+
+    impl crate::sealed::Sealed for TestAlgorithmId {}
 
     #[test]
     fn ciphertext() {
@@ -505,5 +546,17 @@ mod tests {
         let secret_bytes = vec![42u8; 4];
         let shared_secret = SharedSecret::new(secret_bytes.into_boxed_slice());
         assert_eq!(shared_secret.as_ref(), &[42, 42, 42, 42]);
+    }
+
+    #[test]
+    fn algorithm_new() {
+        let alg = Algorithm::new(TestAlgorithmId::Foo, 1, 2, 3, 4);
+
+        assert_eq!(alg.id(), TestAlgorithmId::Foo);
+        assert_eq!(alg.id().nid(), 42);
+        assert_eq!(alg.secret_key_size(), 1);
+        assert_eq!(alg.public_key_size(), 2);
+        assert_eq!(alg.ciphertext_size(), 3);
+        assert_eq!(alg.shared_secret_size(), 4);
     }
 }

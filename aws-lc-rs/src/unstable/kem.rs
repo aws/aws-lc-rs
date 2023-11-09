@@ -46,6 +46,8 @@
 //! ```
 //!
 
+use core::fmt::Debug;
+
 use crate::kem::Algorithm;
 use aws_lc::{NID_KYBER1024_R3, NID_KYBER512_R3, NID_KYBER768_R3};
 
@@ -315,5 +317,22 @@ mod tests {
             let alg = get_algorithm(id).expect("algorithm retrievable");
             assert_eq!(alg.id(), id);
         }
+    }
+
+    #[test]
+    fn test_debug_fmt() {
+        let alg = get_algorithm(AlgorithmId::Kyber512_R3).expect("algorithm retrievable");
+        let private = PrivateKey::generate(alg).expect("successful generation");
+        assert_eq!(
+            format!("{private:?}"),
+            "PrivateKey { algorithm: Kyber512_R3, .. }"
+        );
+        assert_eq!(
+            format!(
+                "{:?}",
+                private.public_key().expect("public key retrievable")
+            ),
+            "PublicKey { algorithm: Kyber512_R3, .. }"
+        );
     }
 }
