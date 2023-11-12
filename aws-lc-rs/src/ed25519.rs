@@ -35,6 +35,10 @@ pub(crate) const ED25519_PRIVATE_KEY_SEED_LEN: usize =
     aws_lc::ED25519_PRIVATE_KEY_SEED_LEN as usize;
 const ED25519_SIGNATURE_LEN: usize = aws_lc::ED25519_SIGNATURE_LEN as usize;
 const ED25519_SEED_LEN: usize = 32;
+// Hex equivalent: 0x302a300506032b6570032100
+const ED25519_X509_PUBLIC_KEY_PREFIX: [u8; 12] = [48, 42, 48, 5, 6, 3, 43, 101, 112, 3, 33, 0];
+const ED25519_X509_PUBLIC_KEY_LEN: usize =
+    ED25519_X509_PUBLIC_KEY_PREFIX.len() + ED25519_PUBLIC_KEY_LEN;
 
 /// Parameters for `EdDSA` signing and verification.
 #[derive(Debug)]
@@ -76,6 +80,21 @@ impl VerificationAlgorithm for EdDSAParameters {
         }
         crate::fips::set_fips_service_status_unapproved();
         Ok(())
+    }
+
+    fn verify_sig_with_x509_pubkey(
+        &self,
+        public_key: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        if public_key.len() == ED25519_X509_PUBLIC_KEY_LEN
+            && public_key[..12] == ED25519_X509_PUBLIC_KEY_PREFIX
+        {
+            self.verify_sig(&public_key[12..], msg, signature)
+        } else {
+            Err(Unspecified)
+        }
     }
 }
 
@@ -419,9 +438,12 @@ impl Ed25519KeyPair {
 #[cfg(test)]
 mod tests {
 
+    use base64::engine::general_purpose;
+    use base64::Engine;
+
     use crate::ed25519::Ed25519KeyPair;
     use crate::rand::SystemRandom;
-    use crate::test;
+    use crate::{signature, test};
 
     #[test]
     fn test_generate_pkcs8() {
@@ -485,5 +507,25 @@ mod tests {
                 format!("{key_pair:?}")
             );
         }
+    }
+
+    #[test]
+    fn verify_ed25519_signature() {
+        const MESSAGE: &[u8] = b"hello, world";
+        // Generated using "ED25519" from BC-FIPS
+        let b64_x509_pubkey = "MCowBQYDK2VwAyEAo7urSMCwnkczfz1hxyj15uE+ja/nK0aOenoNCtqE+9Q=";
+        let b64_sig = "ZLiMhsOeHjGmnO+B3CzUe8B6Hl1O9j/aaDJqPU4lZZHtmxZxCQIN1lGqvFTP9c6AxRblTlftPK/oZF2xNM+5Ag==";
+        let x509_pubkey = general_purpose::STANDARD
+            .decode(b64_x509_pubkey)
+            .expect("Invalid base64 encoding");
+        let signature = general_purpose::STANDARD
+            .decode(b64_sig)
+            .expect("Invalid base64 encoding");
+        // Verify the signature.
+        let public_key =
+            signature::UnparsedPublicKey::new_with_x509(&signature::ED25519, &x509_pubkey);
+        public_key
+            .verify(MESSAGE, &signature)
+            .expect("Signature verification failure");
     }
 }

@@ -21,6 +21,10 @@ pub(crate) use self::signature::RsaVerificationAlgorithmId;
 
 #[cfg(test)]
 mod tests {
+    use base64::{engine::general_purpose, Engine};
+
+    use crate::signature;
+
     #[cfg(feature = "ring-io")]
     #[test]
     fn test_rsa() {
@@ -74,5 +78,38 @@ mod tests {
             "{ RSA_PSS_2048_8192_SHA256 }",
             format!("{:?}", signature::RSA_PSS_2048_8192_SHA256)
         );
+    }
+
+    #[test]
+    fn verify_rsa_signature() {
+        const MESSAGE: &[u8] = b"hello, world";
+        // Generated using "SHA384withRSA" from BC-FIPS
+        let b64_x509_pubkey = concat!(
+            "MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAzmMMJclDHPi+YvGUNjDtvGV+x40Fou5Nv0+c+uBH/xaO3+D",
+            "VDp/psg11UsA/haODPTNdFASqxu76/m1BLGmf+2MiLc1RNhvFJYTTJADsPtzObroBhXOhv1HYycB14JYFDFGJ0Bn/uf",
+            "tGyEn7wWHulcclTPRUg4F5i/MzzfiXimsn8sMme2hZXvlFvwjuSp6BGHCqu2DfXHY16BDZsEtK+DpABz8mGCN/D7ilc",
+            "8feSeyCc5wbFSbRgkJXRPYxuqg0icTQDCwx6OWdcNPRaQq5ty2HLG2PXmSDomtwsKPuAwvEqOy0BgZ0VjW0nCwMH1e/",
+            "jFvZqXDI7Sf9dWw3eMtc6jk9cTat+AdcvgtvFIEEcH9k48q+pFvfGQ8YBSbZBrYyCWZxPKuDOSuQHO682WX2mAsG1cY",
+            "Y+cLrsH2asqsCKCAwKcz43IucqqvEFqtnwpnkCIlGxqHWGbVrWTxmcC1qEM9Xkik2xJcXHGKmtMnoPgnsHiV7vVoglK",
+            "iDUfDyi5VTAgMBAAE=");
+        let b64_sig = concat!(
+            "y0NNWwHRLA0B2MvQ63QKcBYvlIx7gOxQXDh0IRdTryQ2pYuod3w1k5STGR3f+CTm83wp/MvBnCEEvnlxruK5Vrz3g1h",
+            "ThneUnZGwPo1MwCgvVLmR6RtoXy9+5M4BBcl/PqJTQcWo92RsbxEGVEVzsH6CNBAf4QDVW5ox1g5HjH4HsTutyezdE0",
+            "cmsHwz6IRiMeyuGWvs9sXECiIeripVpoHD7qz1TpvJPHA+wpvwDOUxJppk2naP5cVY+B0jRzTJ1TmX0IM1KMSrN/J5m",
+            "vkHm5TsyWkRBj6GD+4fsibSsF5W6vLSLJtQAk4dFpaafGcCgKsGSzpU605DeaHhrVOUnrAmLLCN5uIBRkGmekKowPkJ",
+            "AsdHP04nJ7QwQoIjxcaX9WJpPotcaqaKGdGf4xy2QIYRnhoRDq9DXfl6Wckqh6z4wz+R6gUr1wS3X5SiYvSgjEYQOYE",
+            "6A1xo+cpuPBpWuj9eL77QZBsn0rGwJSJNr4ds7gfIk7tYfkNcI/C7MFOh");
+        let x509_pubkey = general_purpose::STANDARD
+            .decode(b64_x509_pubkey)
+            .expect("Invalid base64 encoding");
+        let signature = general_purpose::STANDARD
+            .decode(b64_sig)
+            .expect("Invalid base64 encoding");
+        // Verify the signature.
+        let public_key = signature::UnparsedPublicKey::new_with_x509(
+            &signature::RSA_PKCS1_2048_8192_SHA384,
+            &x509_pubkey,
+        );
+        public_key.verify(MESSAGE, &signature).unwrap();
     }
 }

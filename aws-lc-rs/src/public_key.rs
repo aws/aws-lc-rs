@@ -22,7 +22,7 @@ pub(crate) enum EncodingID {
 
 /// Encoding of bytes
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct Encoding {
+pub struct Encoding {
     /// Encoding ID
     pub(crate) id: EncodingID,
 }

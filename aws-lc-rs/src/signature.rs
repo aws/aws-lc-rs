@@ -250,9 +250,12 @@ pub use crate::rsa::{
     KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey, RsaParameters,
 };
 
-use crate::rsa::{
-    signature::{RsaSignatureEncoding, RsaSigningAlgorithmId},
-    RsaVerificationAlgorithmId,
+use crate::{
+    public_key,
+    rsa::{
+        signature::{RsaSignatureEncoding, RsaSigningAlgorithmId},
+        RsaVerificationAlgorithmId,
+    },
 };
 
 pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
@@ -335,7 +338,7 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
     ) -> Result<(), error::Unspecified>;
 
     /// Verify the signature `signature` of message `msg` with the public key
-    /// `public_key`.
+    /// `public_key` in Octet String encoding.
     ///
     // # FIPS
     // The following conditions must be met:
@@ -351,6 +354,24 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), error::Unspecified>;
+
+    /// Verify the signature `signature` of message `msg` with the public key
+    /// `public_key` in X509 DER encoding.
+    ///
+    // # FIPS
+    // The following conditions must be met:
+    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+    // * NIST Elliptic Curves: P256, P384, P521
+    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    //
+    /// # Errors
+    /// `error::Unspecified` if inputs not verified.
+    fn verify_sig_with_x509_pubkey(
+        &self,
+        public_key: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), error::Unspecified>;
 }
 
 /// An unparsed, possibly malformed, public key for signature verification.
@@ -358,6 +379,7 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
 pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
     algorithm: &'static dyn VerificationAlgorithm,
     bytes: B,
+    encoding: &'static public_key::Encoding,
 }
 
 impl<B: Copy + AsRef<[u8]>> Copy for UnparsedPublicKey<B> {}
@@ -373,12 +395,28 @@ impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
 }
 
 impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
-    /// Construct a new `UnparsedPublicKey`.
+    /// Construct a new `UnparsedPublicKey` with [`public_key::OCTET_STRING`] encoding.
     ///
     /// No validation of `bytes` is done until `verify()` is called.
     #[inline]
     pub fn new(algorithm: &'static dyn VerificationAlgorithm, bytes: B) -> Self {
-        Self { algorithm, bytes }
+        Self {
+            algorithm,
+            bytes,
+            encoding: &public_key::OCTET_STRING,
+        }
+    }
+
+    /// Construct a new `UnparsedPublicKey` with [`public_key::X509`] encoding.
+    ///
+    /// No validation of `bytes` is done until `verify()` is called.
+    #[inline]
+    pub fn new_with_x509(algorithm: &'static dyn VerificationAlgorithm, bytes: B) -> Self {
+        Self {
+            algorithm,
+            bytes,
+            encoding: &public_key::X509,
+        }
     }
 
     /// Parses the public key and verifies `signature` is a valid signature of
@@ -396,8 +434,16 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     /// `error::Unspecified` if inputs not verified.
     #[inline]
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
-        self.algorithm
-            .verify_sig(self.bytes.as_ref(), message, signature)
+        match &self.encoding.id {
+            public_key::EncodingID::OctetString => {
+                self.algorithm
+                    .verify_sig(self.bytes.as_ref(), message, signature)
+            }
+            public_key::EncodingID::X509 => {
+                self.algorithm
+                    .verify_sig_with_x509_pubkey(self.bytes.as_ref(), message, signature)
+            }
+        }
     }
 }
 

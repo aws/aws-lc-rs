@@ -53,3 +53,4 @@ regex = "1.6.0"
 lazy_static = "1.4.0"
 clap = { version = "4.1.8", features = ["derive"] }
 hex = "0.4.3"
+base64 = "0"

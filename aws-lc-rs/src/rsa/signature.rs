@@ -20,6 +20,7 @@ use crate::{
     error::Unspecified,
     fips::indicator_check,
     ptr::{ConstPointer, DetachableLcPtr, LcPtr},
+    public_key::evp_pkey_from_x509_pubkey,
     sealed::Sealed,
     signature::VerificationAlgorithm,
 };
@@ -92,6 +93,23 @@ impl VerificationAlgorithm for RsaParameters {
                 self.bit_size_range(),
             )
         }
+    }
+
+    fn verify_sig_with_x509_pubkey(
+        &self,
+        public_key: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        let rsa = evp_pkey_from_x509_pubkey(public_key)?;
+        verify_RSA(
+            self.digest_algorithm(),
+            self.padding(),
+            &rsa,
+            msg,
+            signature,
+            self.bit_size_range(),
+        )
     }
 }
 

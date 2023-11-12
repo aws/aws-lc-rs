@@ -8,13 +8,18 @@ use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 use std::os::raw::{c_int, c_uint};
+
 #[cfg(test)]
 use std::ptr::null;
+
 use std::ptr::null_mut;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
+use crate::fips::indicator_check;
+use crate::signature::{Signature, VerificationAlgorithm};
+use crate::{digest, public_key, sealed};
 #[cfg(feature = "fips")]
 use aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
@@ -22,9 +27,9 @@ use aws_lc::EC_KEY_check_key;
 #[cfg(test)]
 use aws_lc::EC_POINT_mul;
 use aws_lc::{
-    point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
-    ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes,
-    EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
+    point_conversion_form_t, BIO_new, BIO_s_mem, BN_bn2bin_padded, BN_num_bytes,
+    ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0,
+    ECDSA_SIG_to_bytes, EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
     EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
     EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new, EC_POINT_oct2point,
     EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new_id,
@@ -37,10 +42,12 @@ use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
 use crate::encoding::AsDer;
 use crate::error::{KeyRejected, Unspecified};
-use crate::fips::indicator_check;
+use crate::hex;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
-use crate::signature::{Signature, VerificationAlgorithm};
-use crate::{digest, hex, sealed};
+use aws_lc::d2i_PUBKEY_bio;
+use aws_lc::BIO_write;
+
+use std::os::raw::c_void;
 
 pub(crate) mod key_pair;
 
@@ -200,12 +207,48 @@ impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
         signature: &[u8],
     ) -> Result<(), Unspecified> {
         match self.sig_format {
-            EcdsaSignatureFormat::ASN1 => {
-                verify_asn1_signature(self.id, self.digest, public_key, msg, signature)
-            }
-            EcdsaSignatureFormat::Fixed => {
-                verify_fixed_signature(self.id, self.digest, public_key, msg, signature)
-            }
+            EcdsaSignatureFormat::ASN1 => verify_asn1_signature(
+                self.id,
+                self.digest,
+                public_key,
+                &public_key::OCTET_STRING,
+                msg,
+                signature,
+            ),
+            EcdsaSignatureFormat::Fixed => verify_fixed_signature(
+                self.id,
+                self.digest,
+                public_key,
+                &public_key::OCTET_STRING,
+                msg,
+                signature,
+            ),
+        }
+    }
+
+    fn verify_sig_with_x509_pubkey(
+        &self,
+        public_key: &[u8],
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), crate::error::Unspecified> {
+        match self.sig_format {
+            EcdsaSignatureFormat::ASN1 => verify_asn1_signature(
+                self.id,
+                self.digest,
+                public_key,
+                &public_key::X509,
+                msg,
+                signature,
+            ),
+            EcdsaSignatureFormat::Fixed => verify_fixed_signature(
+                self.id,
+                self.digest,
+                public_key,
+                &public_key::X509,
+                msg,
+                signature,
+            ),
         }
     }
 }
@@ -214,6 +257,7 @@ fn verify_fixed_signature(
     alg: &'static AlgorithmID,
     digest: &'static digest::Algorithm,
     public_key: &[u8],
+    encoding: &public_key::Encoding,
     msg: &[u8],
     signature: &[u8],
 ) -> Result<(), Unspecified> {
@@ -227,17 +271,21 @@ fn verify_fixed_signature(
     }
     let out_bytes = LcPtr::new(out_bytes)?;
     let signature = unsafe { out_bytes.as_slice(out_bytes_len.assume_init()) };
-    verify_asn1_signature(alg, digest, public_key, msg, signature)
+    verify_asn1_signature(alg, digest, public_key, encoding, msg, signature)
 }
 
 fn verify_asn1_signature(
     alg: &'static AlgorithmID,
     digest: &'static digest::Algorithm,
     public_key: &[u8],
+    encoding: &public_key::Encoding,
     msg: &[u8],
     signature: &[u8],
 ) -> Result<(), Unspecified> {
-    let pkey = evp_pkey_from_public_key(alg, public_key)?;
+    let pkey = match encoding.id {
+        public_key::EncodingID::OctetString => evp_pkey_from_public_key(alg, public_key)?,
+        public_key::EncodingID::X509 => evp_pkey_from_x509_pubkey(public_key)?,
+    };
 
     let mut md_ctx = DigestContext::new_uninit();
 
@@ -380,6 +428,23 @@ pub(crate) unsafe fn evp_pkey_from_public_point(
     validate_evp_key(&pkey.as_const(), nid)?;
 
     Ok(pkey)
+}
+
+#[inline]
+pub(crate) fn evp_pkey_from_x509_pubkey(
+    pubkey_data: &[u8],
+) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+    // Create a memory BIO and write the public key data to it
+    let mem_bio = LcPtr::new(unsafe { BIO_new(BIO_s_mem()) })?;
+    let len = match c_int::try_from(pubkey_data.len()) {
+        Ok(len) => len,
+        Err(_) => return Err(Unspecified),
+    };
+    if unsafe { BIO_write(*mem_bio, pubkey_data.as_ptr().cast::<c_void>(), len) } <= 0 {
+        return Err(Unspecified);
+    }
+    // Use d2i_PUBKEY_bio to read the public key from the memory BIO
+    Ok(LcPtr::new(unsafe { d2i_PUBKEY_bio(*mem_bio, null_mut()) })?)
 }
 
 #[cfg(test)]
@@ -589,6 +654,9 @@ mod tests {
     use crate::encoding::AsDer;
     use crate::signature::EcPublicKeyX509Der;
     use crate::signature::EcdsaKeyPair;
+    use base64::engine::general_purpose;
+    use base64::Engine;
+
     use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
     use crate::test::from_dirty_hex;
     use crate::{signature, test};
@@ -650,5 +718,33 @@ mod tests {
 
         let actual_result = unparsed_pub_key.verify(msg.as_bytes(), &sig);
         assert!(actual_result.is_ok(), "Key: {}", test::to_hex(public_key));
+    }
+
+    #[test]
+    fn test_p384_verify_with_x509_pubkey() {
+        let alg = &signature::ECDSA_P384_SHA384_ASN1;
+        let msg = "hello, world";
+
+        // Generated from bc-fips using "SHA384withECDSA"
+        let x509_pubkey_b64 = concat!(
+            "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEPhS06qHiqNSnyanUSHHMMebqu2h4Ho3oSwlNfLOtCXlIsm91",
+            "684Hor2X1b056aWGymprw8W6cXn/d6O2Y6x0FGu0uJnEEkvsIAwzu+stRHzgxuiky633R7zsSIfI+rsc",
+        );
+        let x509_pubkey = general_purpose::STANDARD
+            .decode(x509_pubkey_b64)
+            .expect("Invalid base64 encoding");
+        let unparsed_pub_key =
+            signature::UnparsedPublicKey::new_with_x509(alg, x509_pubkey.as_slice());
+
+        // Output from bc-fips
+        let sig_b64 = concat!(
+            "MGYCMQCBzjtJuLZol+KWCN6Tsv+FBENp1QpOlfVpOSlBB82LpGn3fMcQcAnopkrTwqJA0gICMQDfHqOr",
+            "Kebqy7qOj26odws7oROlIParYYl9FfLWGjIysipMk51ZbakcUVDVuDHu3QY="
+        );
+        let sig = general_purpose::STANDARD
+            .decode(sig_b64)
+            .expect("Invalid base64 encoding");
+        let actual_result = unparsed_pub_key.verify(msg.as_bytes(), sig.as_slice());
+        assert!(actual_result.is_ok(), "Key: {x509_pubkey_b64}");
     }
 }
