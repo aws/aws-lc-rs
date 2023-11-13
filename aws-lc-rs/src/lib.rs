@@ -91,6 +91,7 @@
 //! and deploy them into AWS Regions.
 
 #![warn(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
 #[cfg(feature = "fips")]
 extern crate aws_lc_fips_sys as aws_lc;

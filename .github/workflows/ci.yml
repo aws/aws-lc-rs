@@ -353,6 +353,10 @@ jobs:
         args:
           - publish --dry-run
     steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - run: go version
       - if: ${{ matrix.os == 'windows-2019' }}
         uses: ilammy/setup-nasm@v1
       - uses: actions/checkout@v3

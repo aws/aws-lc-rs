@@ -268,6 +268,40 @@ pub struct Algorithm {
 
 unsafe impl Send for Algorithm {}
 
+impl Algorithm {
+    /// The length of a finalized digest.
+    #[inline]
+    #[must_use]
+    pub fn output_len(&self) -> usize {
+        self.output_len
+    }
+
+    /// The size of the chaining value of the digest function, in bytes. For
+    /// non-truncated algorithms (SHA-1, SHA-256, SHA-512), this is equal to
+    /// `output_len`. For truncated algorithms (e.g. SHA-224, SHA-384, SHA-512/256),
+    /// this is equal to the length before truncation. This is mostly helpful
+    /// for determining the size of an HMAC key that is appropriate for the
+    /// digest algorithm.
+    ///
+    /// This function isn't actually used in *aws-lc-rs*, and is only
+    /// kept for compatibility with the original *ring* implementation.
+    #[deprecated]
+    #[inline]
+    #[must_use]
+    pub fn chaining_len(&self) -> usize {
+        // clippy warns on deprecated functions accessing deprecated fields
+        #![allow(deprecated)]
+        self.chaining_len
+    }
+
+    /// The internal block length.
+    #[inline]
+    #[must_use]
+    pub fn block_len(&self) -> usize {
+        self.block_len
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) enum AlgorithmID {
     SHA1,
