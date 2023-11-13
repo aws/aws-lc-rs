@@ -12,39 +12,40 @@
 //! ```
 //! use aws_lc_rs::{
 //!     error::Unspecified,
-//!     kem::{Ciphertext, PrivateKey, PublicKey},
+//!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
 //!     unstable::kem::{AlgorithmId, get_algorithm}
 //! };
 //!
+//! let kyber512_r3 = get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?;
+//!
 //! // Alice generates their (private) decapsulation key.
-//! let priv_key = PrivateKey::generate(get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?)?;
+//! let decapsulation_key = DecapsulationKey::generate(kyber512_r3)?;
 //!
 //! // Alices computes the (public) encapsulation key.
-//! let pub_key = priv_key.public_key()?;
+//! let encapsulation_key = decapsulation_key.encapsulation_key()?;
 //!
 //! // Alice sends the public key bytes to bob through some
 //! // protocol message.
-//! let pub_key_bytes = pub_key.as_ref();
+//! let encapsulation_key_bytes = encapsulation_key.as_ref();
 //!
 //! // Bob constructs the (public) encapsulation key from the key bytes provided by Alice.
-//! let retrieved_pub_key = PublicKey::new(get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?, pub_key_bytes)?;
+//! let retrieved_encapsulation_key = EncapsulationKey::new(kyber512_r3, encapsulation_key_bytes)?;
 //!
 //! // Bob executes the encapsulation algorithm to to produce their copy of the secret, and associated ciphertext.
-//! let (ciphertext, bob_secret) = retrieved_pub_key.encapsulate()?;
+//! let (ciphertext, bob_secret) = retrieved_encapsulation_key.encapsulate()?;
 //!
 //! // Alice recieves ciphertext bytes from bob
 //! let ciphertext_bytes = ciphertext.as_ref();
 //!
 //! // Bob sends Alice the ciphertext computed from the encapsulation algorithm, Alice runs decapsulation to derive their
 //! // copy of the secret.
-//! let alice_secret = priv_key.decapsulate(Ciphertext::from(ciphertext_bytes))?;
+//! let alice_secret = decapsulation_key.decapsulate(Ciphertext::from(ciphertext_bytes))?;
 //!
 //! // Alice and Bob have now arrived to the same secret
 //! assert_eq!(alice_secret.as_ref(), bob_secret.as_ref());
 //!
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
-//!
 
 use core::fmt::Debug;
 
@@ -139,7 +140,7 @@ pub const fn get_algorithm(id: AlgorithmId) -> Option<&'static Algorithm<Algorit
 mod tests {
     use crate::{
         error::KeyRejected,
-        kem::{PrivateKey, PublicKey},
+        kem::{DecapsulationKey, EncapsulationKey},
     };
 
     use super::{get_algorithm, AlgorithmId, KYBER1024_R3, KYBER512_R3, KYBER768_R3};
@@ -207,18 +208,18 @@ mod tests {
     #[test]
     fn test_kem_serialize() {
         for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
-            let priv_key = PrivateKey::generate(algorithm).unwrap();
+            let priv_key = DecapsulationKey::generate(algorithm).unwrap();
             assert_eq!(priv_key.algorithm(), algorithm);
 
-            let pub_key = priv_key.public_key().unwrap();
+            let pub_key = priv_key.encapsulation_key().unwrap();
             let pubkey_raw_bytes = pub_key.as_ref();
-            let pub_key_from_bytes = PublicKey::new(algorithm, pubkey_raw_bytes).unwrap();
+            let pub_key_from_bytes = EncapsulationKey::new(algorithm, pubkey_raw_bytes).unwrap();
 
             assert_eq!(pub_key.as_ref(), pub_key_from_bytes.as_ref());
             assert_eq!(pub_key.algorithm(), pub_key_from_bytes.algorithm());
 
             let privkey_raw_bytes = priv_key.as_ref();
-            let priv_key_from_bytes = PrivateKey::new(algorithm, privkey_raw_bytes).unwrap();
+            let priv_key_from_bytes = DecapsulationKey::new(algorithm, privkey_raw_bytes).unwrap();
 
             assert_eq!(priv_key.as_ref(), priv_key_from_bytes.as_ref());
             assert_eq!(priv_key.algorithm(), priv_key_from_bytes.algorithm());
@@ -229,28 +230,28 @@ mod tests {
     fn test_kem_wrong_sizes() {
         for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
             let too_long_bytes = vec![0u8; algorithm.secret_key_size() + 1];
-            let long_priv_key_from_bytes = PrivateKey::new(algorithm, &too_long_bytes);
+            let long_priv_key_from_bytes = DecapsulationKey::new(algorithm, &too_long_bytes);
             assert_eq!(
                 long_priv_key_from_bytes.err(),
                 Some(KeyRejected::too_large())
             );
 
             let too_long_bytes = vec![0u8; algorithm.public_key_size() + 1];
-            let long_pub_key_from_bytes = PublicKey::new(algorithm, &too_long_bytes);
+            let long_pub_key_from_bytes = EncapsulationKey::new(algorithm, &too_long_bytes);
             assert_eq!(
                 long_pub_key_from_bytes.err(),
                 Some(KeyRejected::too_large())
             );
 
             let too_short_bytes = vec![0u8; algorithm.secret_key_size() - 1];
-            let short_priv_key_from_bytes = PrivateKey::new(algorithm, &too_short_bytes);
+            let short_priv_key_from_bytes = DecapsulationKey::new(algorithm, &too_short_bytes);
             assert_eq!(
                 short_priv_key_from_bytes.err(),
                 Some(KeyRejected::too_small())
             );
 
             let too_short_bytes = vec![0u8; algorithm.public_key_size() - 1];
-            let short_pub_key_from_bytes = PublicKey::new(algorithm, &too_short_bytes);
+            let short_pub_key_from_bytes = EncapsulationKey::new(algorithm, &too_short_bytes);
             assert_eq!(
                 short_pub_key_from_bytes.err(),
                 Some(KeyRejected::too_small())
@@ -261,10 +262,10 @@ mod tests {
     #[test]
     fn test_kem_e2e() {
         for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
-            let priv_key = PrivateKey::generate(algorithm).unwrap();
+            let priv_key = DecapsulationKey::generate(algorithm).unwrap();
             assert_eq!(priv_key.algorithm(), algorithm);
 
-            let pub_key = priv_key.public_key().unwrap();
+            let pub_key = priv_key.encapsulation_key().unwrap();
 
             let (alice_ciphertext, alice_secret) =
                 pub_key.encapsulate().expect("encapsulate successful");
@@ -280,24 +281,24 @@ mod tests {
     #[test]
     fn test_serialized_kem_e2e() {
         for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
-            let priv_key = PrivateKey::generate(algorithm).unwrap();
+            let priv_key = DecapsulationKey::generate(algorithm).unwrap();
             assert_eq!(priv_key.algorithm(), algorithm);
 
             // Generate private key bytes to possibly save for later
             let privkey_raw_bytes = priv_key.as_ref();
 
-            let pub_key = priv_key.public_key().unwrap();
+            let pub_key = priv_key.encapsulation_key().unwrap();
 
             // Generate public key bytes to send to bob
             let pub_key_bytes = pub_key.as_ref();
 
-            let retrieved_pub_key = PublicKey::new(algorithm, pub_key_bytes).unwrap();
+            let retrieved_pub_key = EncapsulationKey::new(algorithm, pub_key_bytes).unwrap();
             let (ciphertext, bob_secret) = retrieved_pub_key
                 .encapsulate()
                 .expect("encapsulate successful");
 
             // Retrieve private key from stored raw bytes
-            let retrieved_priv_key = PrivateKey::new(algorithm, privkey_raw_bytes).unwrap();
+            let retrieved_priv_key = DecapsulationKey::new(algorithm, privkey_raw_bytes).unwrap();
 
             let alice_secret = retrieved_priv_key
                 .decapsulate(ciphertext)
@@ -322,7 +323,7 @@ mod tests {
     #[test]
     fn test_debug_fmt() {
         let alg = get_algorithm(AlgorithmId::Kyber512_R3).expect("algorithm retrievable");
-        let private = PrivateKey::generate(alg).expect("successful generation");
+        let private = DecapsulationKey::generate(alg).expect("successful generation");
         assert_eq!(
             format!("{private:?}"),
             "PrivateKey { algorithm: Kyber512_R3, .. }"
@@ -330,7 +331,7 @@ mod tests {
         assert_eq!(
             format!(
                 "{:?}",
-                private.public_key().expect("public key retrievable")
+                private.encapsulation_key().expect("public key retrievable")
             ),
             "PublicKey { algorithm: Kyber512_R3, .. }"
         );

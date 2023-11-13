@@ -12,32 +12,34 @@
 //! ```ignore
 //! use aws_lc_rs::{
 //!     error::Unspecified,
-//!     kem::{Ciphertext, PrivateKey, PublicKey},
+//!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
 //!     unstable::kem::{AlgorithmId, get_algorithm}
 //! };
 //!
+//! let kyber512_r3 = get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?;
+//!
 //! // Alice generates their (private) decapsulation key.
-//! let priv_key = PrivateKey::generate(get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?)?;
+//! let decapsulation_key = DecapsulationKey::generate(kyber512_r3)?;
 //!
 //! // Alices computes the (public) encapsulation key.
-//! let pub_key = priv_key.public_key()?;
+//! let encapsulation_key = decapsulation_key.encapsulation_key()?;
 //!
 //! // Alice sends the public key bytes to bob through some
 //! // protocol message.
-//! let pub_key_bytes = pub_key.as_ref();
+//! let encapsulation_key_bytes = encapsulation_key.as_ref();
 //!
 //! // Bob constructs the (public) encapsulation key from the key bytes provided by Alice.
-//! let retrieved_pub_key = PublicKey::new(get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?, pub_key_bytes)?;
+//! let retrieved_encapsulation_key = EncapsulationKey::new(kyber512_r3, encapsulation_key_bytes)?;
 //!
 //! // Bob executes the encapsulation algorithm to to produce their copy of the secret, and associated ciphertext.
-//! let (ciphertext, bob_secret) = retrieved_pub_key.encapsulate()?;
+//! let (ciphertext, bob_secret) = retrieved_encapsulation_key.encapsulate()?;
 //!
 //! // Alice recieves ciphertext bytes from bob
 //! let ciphertext_bytes = ciphertext.as_ref();
 //!
 //! // Bob sends Alice the ciphertext computed from the encapsulation algorithm, Alice runs decapsulation to derive their
 //! // copy of the secret.
-//! let alice_secret = priv_key.decapsulate(Ciphertext::from(ciphertext_bytes))?;
+//! let alice_secret = decapsulation_key.decapsulate(Ciphertext::from(ciphertext_bytes))?;
 //!
 //! // Alice and Bob have now arrived to the same secret
 //! assert_eq!(alice_secret.as_ref(), bob_secret.as_ref());
@@ -138,7 +140,7 @@ where
 
 /// A serializable private key usable with KEMs. This can be randomly generated with `KemPrivateKey::generate`
 /// or constructed from raw bytes.
-pub struct PrivateKey<Id = AlgorithmId>
+pub struct DecapsulationKey<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
 {
@@ -163,7 +165,7 @@ impl AlgorithmIdentifier for AlgorithmId {
 
 impl crate::sealed::Sealed for AlgorithmId {}
 
-impl<Id> PrivateKey<Id>
+impl<Id> DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
@@ -184,7 +186,7 @@ where
         } {
             return Err(Unspecified);
         }
-        Ok(PrivateKey {
+        Ok(DecapsulationKey {
             algorithm: alg,
             evp_pkey: kyber_key,
             priv_key: priv_key_bytes.into(),
@@ -201,7 +203,7 @@ where
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    pub fn public_key(&self) -> Result<PublicKey<Id>, Unspecified> {
+    pub fn encapsulation_key(&self) -> Result<EncapsulationKey<Id>, Unspecified> {
         let mut public_key_size = self.algorithm.public_key_size();
         let mut pubkey_bytes = vec![0u8; public_key_size];
         if 1 != unsafe {
@@ -222,7 +224,7 @@ where
             )
         })?;
 
-        Ok(PublicKey {
+        Ok(EncapsulationKey {
             algorithm: self.algorithm,
             evp_pkey: pubkey,
             pub_key: pubkey_bytes.into(),
@@ -291,7 +293,7 @@ where
         let privkey = LcPtr::new(unsafe {
             EVP_PKEY_kem_new_raw_secret_key(alg.id.nid(), bytes.as_ptr(), bytes.len())
         })?;
-        Ok(PrivateKey {
+        Ok(DecapsulationKey {
             algorithm: alg,
             evp_pkey: privkey,
             priv_key: bytes.into(),
@@ -299,7 +301,7 @@ where
     }
 }
 
-impl<Id> Drop for PrivateKey<Id>
+impl<Id> Drop for DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
@@ -308,7 +310,7 @@ where
     }
 }
 
-impl<Id> AsRef<[u8]> for PrivateKey<Id>
+impl<Id> AsRef<[u8]> for DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
@@ -317,7 +319,7 @@ where
     }
 }
 
-impl<Id> Debug for PrivateKey<Id>
+impl<Id> Debug for DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
@@ -330,7 +332,7 @@ where
 
 /// A serializable public key usable with KEMS. This can be constructed
 /// from a `KemPrivateKey` or constructed from raw bytes.
-pub struct PublicKey<Id = AlgorithmId>
+pub struct EncapsulationKey<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
 {
@@ -339,7 +341,7 @@ where
     pub_key: Box<[u8]>,
 }
 
-impl<Id> PublicKey<Id>
+impl<Id> EncapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
@@ -405,7 +407,7 @@ where
         let pubkey = LcPtr::new(unsafe {
             EVP_PKEY_kem_new_raw_public_key(alg.id.nid(), bytes.as_ptr(), bytes.len())
         })?;
-        Ok(PublicKey {
+        Ok(EncapsulationKey {
             algorithm: alg,
             evp_pkey: pubkey,
             pub_key: bytes.into(),
@@ -413,7 +415,7 @@ where
     }
 }
 
-impl<Id> Drop for PublicKey<Id>
+impl<Id> Drop for EncapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
@@ -422,7 +424,7 @@ where
     }
 }
 
-impl<Id> AsRef<[u8]> for PublicKey<Id>
+impl<Id> AsRef<[u8]> for EncapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
@@ -431,7 +433,7 @@ where
     }
 }
 
-impl<Id> Debug for PublicKey<Id>
+impl<Id> Debug for EncapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {

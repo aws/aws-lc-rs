@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::{
-    kem::PrivateKey,
+    kem::DecapsulationKey,
     unstable::kem::{get_algorithm, AlgorithmId},
 };
 use criterion::{criterion_group, criterion_main, Criterion};
@@ -20,7 +20,7 @@ fn bench_kem_keygen(c: &mut Criterion) {
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_rs::kem::PrivateKey::generate(ele).unwrap();
+                aws_lc_rs::kem::DecapsulationKey::generate(ele).unwrap();
             });
         });
     }
@@ -34,8 +34,8 @@ fn bench_kem_encapsulate(c: &mut Criterion) {
         group.bench_function("AWS-LC", |b| {
             b.iter_batched(
                 || {
-                    let private = PrivateKey::generate(ele).unwrap();
-                    private.public_key().unwrap()
+                    let private = DecapsulationKey::generate(ele).unwrap();
+                    private.encapsulation_key().unwrap()
                 },
                 |key| key.encapsulate(),
                 criterion::BatchSize::LargeInput,
@@ -52,8 +52,8 @@ fn bench_kem_decapsulate(c: &mut Criterion) {
         group.bench_function("AWS-LC", |b| {
             b.iter_batched(
                 || {
-                    let private = PrivateKey::generate(ele).unwrap();
-                    let public = private.public_key().unwrap();
+                    let private = DecapsulationKey::generate(ele).unwrap();
+                    let public = private.encapsulation_key().unwrap();
                     let (ciphertext, _) = public.encapsulate().unwrap();
                     (private, ciphertext)
                 },
