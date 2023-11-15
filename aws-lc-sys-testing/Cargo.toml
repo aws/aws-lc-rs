@@ -1,0 +1,11 @@
+[package]
+name = "aws-lc-sys-testing"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+aws-lc-sys = { path = "../aws-lc-sys" }
+
+[build-dependencies]
+cc = "1"
