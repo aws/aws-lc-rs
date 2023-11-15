@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
 fn main() {
     // ensure that the include path is exported and set up correctly
     cc::Build::new()
