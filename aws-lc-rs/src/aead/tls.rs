@@ -7,6 +7,7 @@ use super::{
 };
 use crate::error::Unspecified;
 use core::fmt::Debug;
+use core::ops::RangeFrom;
 
 /// The Transport Layer Security (TLS) protocol version.
 #[allow(clippy::module_name_repetitions)]
@@ -251,6 +252,26 @@ impl TlsRecordOpeningKey {
         self.key.open_within(nonce, aad.as_ref(), in_out, 0..)
     }
 
+    /// See [`super::OpeningKey::open_within()`] for details.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn open_within<'in_out, A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        in_out: &'in_out mut [u8],
+        ciphertext_and_tag: RangeFrom<usize>,
+    ) -> Result<&'in_out mut [u8], Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.key
+            .open_within(nonce, aad.as_ref(), in_out, ciphertext_and_tag)
+    }
+
     /// The key's AEAD algorithm.
     #[inline]
     #[must_use]
@@ -364,6 +385,10 @@ mod tests {
 
                         assert_ne!(plaintext, in_out[..plaintext.len()]);
 
+                        // copy ciphertext with prefix, to exercise `open_within`
+                        let mut offset_cipher_text = vec![ 1, 2, 3, 4 ];
+                        offset_cipher_text.extend_from_slice(&in_out);
+
                         opening_key
                             .open_in_place(
                                 Nonce::try_assume_unique_for_key(nonce_bytes).unwrap(),
@@ -373,6 +398,15 @@ mod tests {
                             .unwrap();
 
                         assert_eq!(plaintext, in_out[..plaintext.len()]);
+
+                        opening_key
+                            .open_within(
+                                         Nonce::try_assume_unique_for_key(nonce_bytes).unwrap(),
+                                         Aad::empty(),
+                                         &mut offset_cipher_text,
+                                         4..)
+                            .unwrap();
+                        assert_eq!(plaintext, offset_cipher_text[..plaintext.len()]);
                     }
                 }
             }
