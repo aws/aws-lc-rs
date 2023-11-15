@@ -207,6 +207,30 @@ jobs:
         env:
           DYLD_ROOT_PATH: "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot"
 
+  sys-crate-tests:
+    name: sys crate tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-12 ]
+        features: [ aws-lc-sys, aws-lc-fips-sys ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: stable
+          override: true
+      - name: Run cargo test
+        working-directory: ./sys-testing
+        run: cargo test --features ${{ matrix.features }} --no-default-features
+      - name: Run cargo run
+        working-directory: ./sys-testing
+        run: cargo run --features ${{ matrix.features }} --no-default-features
+
   aws-lc-rs-test:
     name: aws-lc-rs tests
     runs-on: ${{ matrix.os }}

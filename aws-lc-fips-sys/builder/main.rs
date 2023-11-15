@@ -89,17 +89,16 @@ impl OutputLibType {
 
 impl OutputLib {
     fn libname(self, prefix: Option<&str>) -> String {
-        format!(
-            "{}{}",
-            if let Some(pfix) = prefix { pfix } else { "" },
-            match self {
-                OutputLib::Crypto => "crypto",
-                OutputLib::Ssl => "ssl",
-                OutputLib::RustWrapper => {
-                    "rust_wrapper"
-                }
-            }
-        )
+        let name = match self {
+            OutputLib::Crypto => "crypto",
+            OutputLib::Ssl => "ssl",
+            OutputLib::RustWrapper => "rust_wrapper",
+        };
+        if let Some(prefix) = prefix {
+            format!("{prefix}_{name}")
+        } else {
+            name.to_string()
+        }
     }
 }
 
@@ -199,7 +198,7 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: String) -> cmake::C
 }
 
 fn build_rust_wrapper(manifest_dir: &PathBuf) -> PathBuf {
-    prepare_cmake_build(manifest_dir, prefix_string())
+    prepare_cmake_build(manifest_dir, prefix_string() + "_")
         .configure_arg("--no-warn-unused-cli")
         .build()
 }
@@ -370,18 +369,10 @@ fn main() {
         RustWrapper.libname(Some(&prefix))
     );
 
-    for include_path in [
-        get_rust_include_path(&manifest_dir),
-        get_generated_include_path(&manifest_dir),
-        get_aws_lc_include_path(&manifest_dir),
-    ] {
-        println!("cargo:include={}", include_path.display());
-    }
-    if let Some(include_paths) = get_aws_lc_fips_sys_includes_path() {
-        for path in include_paths {
-            println!("cargo:include={}", path.display());
-        }
-    }
+    println!(
+        "cargo:include={}",
+        setup_include_paths(&out_dir, &manifest_dir).display()
+    );
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
@@ -409,4 +400,40 @@ fn check_dependencies() {
         !missing_dependency,
         "Required build dependency is missing. Halting build."
     );
+}
+
+fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
+    let mut include_paths = vec![
+        get_rust_include_path(manifest_dir),
+        get_generated_include_path(manifest_dir),
+        get_aws_lc_include_path(manifest_dir),
+    ];
+
+    if let Some(extra_paths) = get_aws_lc_fips_sys_includes_path() {
+        include_paths.extend(extra_paths);
+    }
+
+    let include_dir = out_dir.join("include");
+    std::fs::create_dir_all(&include_dir).unwrap();
+
+    // iterate over all of the include paths and copy them into the final output
+    for path in include_paths {
+        for child in std::fs::read_dir(path).into_iter().flatten().flatten() {
+            if child.file_type().map_or(false, |t| t.is_file()) {
+                let _ = std::fs::copy(
+                    child.path(),
+                    include_dir.join(child.path().file_name().unwrap()),
+                );
+                continue;
+            }
+
+            // prefer the earliest paths
+            let options = fs_extra::dir::CopyOptions::new()
+                .skip_exist(true)
+                .copy_inside(true);
+            let _ = fs_extra::dir::copy(child.path(), &include_dir, &options);
+        }
+    }
+
+    include_dir
 }
