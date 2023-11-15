@@ -231,10 +231,7 @@ impl TlsRecordOpeningKey {
         })
     }
 
-    /// Accepts a Noce and Aad construction that is unique for this TLS record
-    /// opening operation.
-    ///
-    /// `nonce` must be unique for every use of the key to open data.
+    /// See [`super::OpeningKey::open_in_place()`] for details.
     ///
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
