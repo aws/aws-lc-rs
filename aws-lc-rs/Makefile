@@ -24,19 +24,19 @@ coverage:
 	cargo llvm-cov --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-sys/*"
 
 test:
-	cargo test --all-targets --features ring-benchmarks
+	cargo test --all-targets --features unstable
 	cargo test --release --all-targets
-	cargo test --release --all-targets --features bindgen
+	cargo test --release --all-targets --features bindgen,unstable
 ifeq ($(UNAME_S),Linux)
-	cargo test --release --all-targets --features fips
-	cargo test --no-default-features --features fips
-	env AWS_LC_RUST_PRIVATE_INTERNALS=1 cargo test --no-default-features --features fips,bindgen
+	cargo test --release --all-targets --features fips,unstable
+	cargo test --no-default-features --features fips,unstable
+	env AWS_LC_RUST_PRIVATE_INTERNALS=1 cargo test --no-default-features --features fips,bindgen,unstable
 endif
-	cargo test --no-default-features --features aws-lc-sys
-	cargo test --no-default-features --features aws-lc-sys,ring-sig-verify
-	cargo test --no-default-features --features aws-lc-sys,ring-io
-	cargo test --no-default-features --features aws-lc-sys,alloc
-	env AWS_LC_RUST_PRIVATE_INTERNALS=1 cargo test --no-default-features --features aws-lc-sys,bindgen
+	cargo test --no-default-features --features aws-lc-sys,unstable
+	cargo test --no-default-features --features aws-lc-sys,ring-sig-verify,unstable
+	cargo test --no-default-features --features aws-lc-sys,ring-io,unstable
+	cargo test --no-default-features --features aws-lc-sys,alloc,unstable
+	env AWS_LC_RUST_PRIVATE_INTERNALS=1 cargo test --no-default-features --features aws-lc-sys,bindgen,unstable
 
 msrv:
 	cargo msrv verify
