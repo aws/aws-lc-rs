@@ -9,6 +9,7 @@ aws-lc-sys = { path = "../aws-lc-sys" }
 
 [build-dependencies]
 cc = "1"
+toml_edit = "0.21"
 
 [package.metadata.cargo-udeps.ignore]
 normal = [ "aws-lc-sys" ] # the sys crate is only used through a C library build
