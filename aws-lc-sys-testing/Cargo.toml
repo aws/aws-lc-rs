@@ -1,0 +1,15 @@
+[package]
+name = "aws-lc-sys-testing"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+aws-lc-sys = { path = "../aws-lc-sys" }
+
+[build-dependencies]
+cc = "1"
+toml_edit = "0.21"
+
+[package.metadata.cargo-udeps.ignore]
+normal = [ "aws-lc-sys" ] # the sys crate is only used through a C library build
