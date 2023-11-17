@@ -8,10 +8,20 @@
 [Documentation](https://github.com/aws/aws-lc).
 
 ## FIPS
-This crate uses [AWS-LC](https://github.com/aws/aws-lc/tree/fips-2022-11-02), which been submitted to an accredited lab
-for FIPS validation testing, and upon completion will be submitted to NIST for certification. Once NIST grants a
-validation certificate to AWS-LC, we will make an announcement to Rust developers on how to leverage the FIPS mode
-using [aws-lc-rs](https://crates.io/crates/aws-lc-rs).
+
+This crate provides bindings to [AWS-LC-FIPS 2.x](https://github.com/aws/aws-lc/tree/fips-2022-11-02), which has completed
+FIPS validation testing by an accredited lab and has been submitted to NIST for certification. The static build of AWS-LC-FIPS
+is used.
+
+| Supported Targets |
+| --- |
+| x86_64-unknown-linux-gnu |
+| aarch64-unknown-linux-gnu |
+
+Refer to the [NIST Cryptographic Module Validation Program's Modules In Progress List](https://csrc.nist.gov/Projects/cryptographic-module-validation-program/modules-in-process/Modules-In-Process-List)
+for the latest status of the static or dynamic AWS-LC Cryptographic Module. A complete list of supported operating environments will be
+made available in the vendor security policy once the validation certificate has been issued. We will also update our release notes
+and documentation to reflect any changes in FIPS certification status.
 
 ## Release Support
 
