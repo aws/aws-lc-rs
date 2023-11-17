@@ -128,23 +128,14 @@ impl KeyRejected {
         KeyRejected("InconsistentComponents")
     }
 
-    //pub(crate) fn invalid_component() -> Self {
-    //    KeyRejected("InvalidComponent")
-    //}
-
     #[inline]
     pub(crate) fn invalid_encoding() -> Self {
         KeyRejected("InvalidEncoding")
     }
 
-    // XXX: See the comment at the call site.
-    //pub(crate) fn rng_failed() -> Self {
-    //    KeyRejected("RNG failed")
-    //}
-
-    //pub(crate) fn public_key_is_missing() -> Self {
-    //    KeyRejected("PublicKeyIsMissing")
-    //}
+    pub(crate) fn unsupported_size() -> Self {
+        KeyRejected("UnsupportedSize")
+    }
 
     pub(crate) fn too_small() -> Self {
         KeyRejected("TooSmall")
@@ -154,20 +145,16 @@ impl KeyRejected {
         KeyRejected("TooLarge")
     }
 
-    //pub(crate) fn version_not_supported() -> Self {
-    //    KeyRejected("VersionNotSupported")
-    //}
-
     pub(crate) fn wrong_algorithm() -> Self {
         KeyRejected("WrongAlgorithm")
     }
 
-    pub(crate) fn private_modulus_len_not_multiple_of_512_bits() -> Self {
-        KeyRejected("PrivateModulusLenNotMultipleOf512Bits")
-    }
-
     pub(crate) fn unexpected_error() -> Self {
         KeyRejected("UnexpectedError")
+    }
+
+    pub(crate) fn unspecified() -> Self {
+        KeyRejected("Unspecified")
     }
 }
 
@@ -236,6 +223,12 @@ impl From<TryFromIntError> for Unspecified {
 impl From<TryFromIntError> for KeyRejected {
     fn from(_: TryFromIntError) -> Self {
         KeyRejected::unexpected_error()
+    }
+}
+
+impl From<Unspecified> for KeyRejected {
+    fn from(_: Unspecified) -> Self {
+        Self::unspecified()
     }
 }
 

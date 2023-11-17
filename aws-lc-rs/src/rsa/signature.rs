@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use core::{
+use std::{
     fmt::{self, Debug, Formatter},
     mem::MaybeUninit,
     ops::RangeInclusive,
@@ -10,22 +10,26 @@ use core::{
 
 use aws_lc::{
     EVP_DigestSign, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_set_rsa_padding,
-    EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_get0_RSA, RSA_bits, RSA_get0_n,
-    RSA_parse_public_key, EVP_PKEY, EVP_PKEY_CTX, RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
+    EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_get0_RSA, RSA_bits, RSA_get0_n, EVP_PKEY,
+    EVP_PKEY_CTX, RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
 };
 
 use crate::{
-    cbs,
     digest::{self, digest_ctx::DigestContext},
     error::Unspecified,
     fips::indicator_check,
-    ptr::{ConstPointer, DetachableLcPtr, LcPtr},
+    ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer},
     sealed::Sealed,
     signature::VerificationAlgorithm,
 };
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
+
+use super::{
+    encoding,
+    key::{RsaEvpPkey, UsageContext},
+};
 
 #[allow(non_camel_case_types)]
 #[allow(clippy::module_name_repetitions)]
@@ -81,17 +85,18 @@ impl VerificationAlgorithm for RsaParameters {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), Unspecified> {
-        unsafe {
-            let rsa = super::key::build_public_RSA_PKEY(public_key)?;
-            verify_RSA(
-                self.digest_algorithm(),
-                self.padding(),
-                &rsa,
-                msg,
-                signature,
-                self.bit_size_range(),
-            )
-        }
+        let rsa = RsaEvpPkey::from_rfc8017_public_key_der(
+            public_key,
+            UsageContext::SignatureVerification,
+        )?;
+        verify_rsa_signature(
+            self.digest_algorithm(),
+            self.padding(),
+            &rsa.key,
+            msg,
+            signature,
+            self.bit_size_range(),
+        )
     }
 }
 
@@ -118,13 +123,8 @@ impl RsaParameters {
     /// # Errors
     /// `error::Unspecified` on parse error.
     pub fn public_modulus_len(public_key: &[u8]) -> Result<u32, Unspecified> {
-        unsafe {
-            let mut cbs = cbs::build_CBS(public_key);
-            let rsa = LcPtr::new(RSA_parse_public_key(&mut cbs))?;
-            let mod_len = RSA_bits(*rsa);
-
-            Ok(mod_len)
-        }
+        let rsa = encoding::rfc8017::decode_public_key_der(public_key)?;
+        Ok(unsafe { RSA_bits(rsa.get_rsa()?.as_const_ptr()) })
     }
 
     #[must_use]
@@ -252,8 +252,7 @@ pub(crate) fn configure_rsa_pkcs1_pss_padding(pctx: *mut EVP_PKEY_CTX) -> Result
 }
 
 #[inline]
-#[allow(non_snake_case)]
-pub(crate) fn verify_RSA(
+pub(crate) fn verify_rsa_signature(
     algorithm: &'static digest::Algorithm,
     padding: &'static RsaPadding,
     public_key: &LcPtr<EVP_PKEY>,

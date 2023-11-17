@@ -101,21 +101,6 @@ impl<P: Pointer> DetachablePointer<P> {
     }
 }
 
-impl<P: Pointer> DetachablePointer<P> {
-    #[inline]
-    pub fn as_const(&self) -> ConstPointer<P::T> {
-        match &self.pointer {
-            Some(pointer) => ConstPointer {
-                ptr: pointer.as_const_ptr(),
-            },
-            None => {
-                // Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                verify_unreachable!()
-            }
-        }
-    }
-}
-
 impl<P: Pointer> From<DetachablePointer<P>> for ManagedPointer<P> {
     #[inline]
     fn from(mut dptr: DetachablePointer<P>) -> Self {
@@ -235,10 +220,6 @@ mod tests {
             DetachablePointer::try_from(num).unwrap();
         let debug = format!("{detachable_ptr:?}");
         assert!(debug.contains("DetachablePointer { pointer: Some("));
-
-        let const_ptr: ConstPointer<BIGNUM> = detachable_ptr.as_const();
-        let debug = format!("{const_ptr:?}");
-        assert!(debug.contains("ConstPointer { ptr:"));
 
         let lc_ptr = ManagedPointer::new(detachable_ptr.detach()).unwrap();
         let debug = format!("{lc_ptr:?}");
