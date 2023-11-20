@@ -91,6 +91,7 @@
 //! and deploy them into AWS Regions.
 
 #![warn(missing_docs)]
+#![warn(clippy::exhaustive_enums)]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
 #[cfg(feature = "fips")]

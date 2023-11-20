@@ -13,6 +13,7 @@ use crate::error;
 pub const CONSTRUCTED: u8 = 1 << 5;
 pub const CONTEXT_SPECIFIC: u8 = 2 << 6;
 
+#[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u8)]
 pub enum Tag {
