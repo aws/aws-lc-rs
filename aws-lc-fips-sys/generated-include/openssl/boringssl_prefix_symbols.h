@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_11_1
+#define BORINGSSL_PREFIX aws_lc_fips_0_11_2
 #endif
 
 // BORINGSSL_ADD_PREFIX pastes two identifiers into one. It performs one
