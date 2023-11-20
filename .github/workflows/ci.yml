@@ -608,3 +608,23 @@ jobs:
       - name: Verify msrv
         working-directory: ./aws-lc-rs
         run: cargo msrv verify
+
+  minimal-versions:
+    name: Resolve the dependencies to the minimum SemVer version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          lfs: true
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: nightly
+          override: true
+      - name: Setup to use minimal versions
+        working-directory: ./aws-lc-rs
+        run: cargo update -Z minimal-versions
+      - name: Build with minimal versions
+        working-directory: ./aws-lc-rs
+        run: cargo --locked check
