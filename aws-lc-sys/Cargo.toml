@@ -63,6 +63,10 @@ bindgen.workspace = true
 [dependencies]
 libc.workspace = true
 paste.workspace = true
+regex.workspace = true
+lazy_static.workspace = true
+clap.workspace = true
+hex.workspace = true
 
 [package.metadata.aws-lc-sys]
 commit-hash = "aa90e509f2e940916fbe9fdd469a4c90c51824f6"
