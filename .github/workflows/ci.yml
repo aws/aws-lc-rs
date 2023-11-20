@@ -526,6 +526,11 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: Install cargo-download
+        uses: actions-rs/cargo@v1.0.3
+        with:
+          command: install
+          args: cargo-download
       - name: Run rustls integration
         working-directory: ./aws-lc-rs
         run: |
