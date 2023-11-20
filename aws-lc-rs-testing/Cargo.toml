@@ -2,8 +2,9 @@
 name = "aws-lc-rs-testing"
 authors = ["AWS-LibCrypto"]
 version = "0.1.0"
-edition = "2021"
-rust-version = "1.60"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 publish = false
 
 [features]

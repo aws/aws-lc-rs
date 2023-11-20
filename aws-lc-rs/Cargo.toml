@@ -2,14 +2,13 @@
 name = "aws-lc-rs"
 authors = ["AWS-LibCrypto"]
 version = "1.5.1"
-edition = "2021"
-rust-version = "1.60"
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
 keywords = ["crypto", "cryptography", "security"]
-license = "ISC AND (Apache-2.0 OR ISC)"
 description = "aws-lc-rs is a cryptographic library using AWS-LC for its cryptographic operations. This library strives to be API-compatible with the popular Rust library named ring."
 documentation = "https://docs.rs/crate/aws-lc-rs"
 homepage = "https://github.com/awslabs/aws-lc-rs"
-repository = "https://github.com/awslabs/aws-lc-rs"
 # Exclude tests and test data from published crate
 exclude = [
     "third_party/NIST/*",
@@ -19,6 +18,9 @@ exclude = [
     "*.der",
     "*.bin",
 ]
+# workspace inheritance not yet supported by cargo msrv:
+# https://github.com/foresterre/cargo-msrv/issues/590
+rust-version = "1.64.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -49,7 +51,7 @@ mirai-annotations.workspace = true
 
 [dev-dependencies]
 paste.workspace = true
-regex = "1.6.0"
-lazy_static = "1.4.0"
-clap = { version = "4.1.8", features = ["derive"] }
-hex = "0.4.3"
+regex.workspace = true
+lazy_static.workspace = true
+clap.workspace =  true
+hex.workspace = true

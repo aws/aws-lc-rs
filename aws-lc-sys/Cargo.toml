@@ -4,10 +4,10 @@ description = "AWS-LC is a general-purpose cryptographic library maintained by t
 version = "0.12.0"
 links = "aws_lc_0_12_0"
 authors = ["AWS-LC"]
-edition = "2021"
-repository = "https://github.com/aws/aws-lc-rs"
-license = "ISC AND (Apache-2.0 OR ISC)"
-rust-version = "1.60.0"
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+rust-version.workspace = true
 include = [
     "LICENSE",
     "/aws-lc/**/*.c",
