@@ -622,9 +622,9 @@ jobs:
         with:
           toolchain: nightly
           override: true
-      - name: Setup to use minimal versions
+      - name: Setup to use direct dependencies' minimal versions
         working-directory: ./aws-lc-rs
-        run: cargo update -Z minimal-versions
+        run: cargo update -Z direct-minimal-versions
       - name: Build with minimal versions
         working-directory: ./aws-lc-rs
         run: cargo --locked check
