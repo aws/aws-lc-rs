@@ -103,7 +103,6 @@ extern crate core;
 
 pub mod aead;
 pub mod agreement;
-mod buffer;
 pub mod constant_time;
 pub mod digest;
 pub mod error;
@@ -118,6 +117,7 @@ pub mod signature;
 pub mod test;
 
 mod bn;
+mod buffer;
 mod cbb;
 mod cbs;
 pub mod cipher;
@@ -127,6 +127,7 @@ mod ed25519;
 mod endian;
 mod evp_pkey;
 mod fips;
+mod hex;
 pub mod iv;
 mod ptr;
 mod rsa;

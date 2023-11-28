@@ -259,7 +259,7 @@ pub use crate::ed25519::{
     Ed25519KeyPair, Ed25519SeedBin, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
 };
 use crate::rsa;
-use crate::{digest, ec, error, sealed, test};
+use crate::{digest, ec, error, hex, sealed};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component
@@ -361,7 +361,7 @@ impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
         f.write_str(&format!(
             "UnparsedPublicKey {{ algorithm: {:?}, bytes: \"{}\" }}",
             self.algorithm,
-            test::to_hex(self.bytes.as_ref())
+            hex::encode(self.bytes.as_ref())
         ))
     }
 }
