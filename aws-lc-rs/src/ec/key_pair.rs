@@ -56,7 +56,7 @@ impl EcdsaKeyPair {
         algorithm: &'static EcdsaSigningAlgorithm,
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
-        let pubkey = ec::marshal_public_key(&evp_pkey.as_const())?;
+        let pubkey = ec::marshal_public_key(&evp_pkey.as_const(), algorithm)?;
 
         Ok(Self {
             algorithm,
@@ -303,15 +303,17 @@ impl Debug for PrivateKey<'_> {
     }
 }
 
+pub struct EcPrivateKeyBinType {
+    _priv: (),
+}
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub struct EcPrivateKeyBin {
-    _priv: (),
-}
+pub type EcPrivateKeyBin<'a> = Buffer<'a, EcPrivateKeyBinType>;
 
-/// Elliptic curve private key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
-pub struct EcPrivateKeyRfc5915Der {
+pub struct EcPrivateKeyRfc5915DerType {
     _priv: (),
 }
+/// Elliptic curve private key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
+pub type EcPrivateKeyRfc5915Der<'a> = Buffer<'a, EcPrivateKeyRfc5915DerType>;
 
 impl PrivateKey<'_> {
     /// Exposes the private key encoded as a big-endian fixed-length integer.
@@ -320,13 +322,13 @@ impl PrivateKey<'_> {
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    pub fn to_bin(&self) -> Result<Buffer<'static, EcPrivateKeyBin>, Unspecified> {
+    pub fn to_bin(&self) -> Result<EcPrivateKeyBin<'static>, Unspecified> {
         unsafe {
             let buffer = ec::marshal_private_key_to_buffer(
                 self.0.algorithm.id,
                 &self.0.evp_pkey.as_const(),
             )?;
-            Ok(Buffer::<EcPrivateKeyBin>::new(buffer))
+            Ok(EcPrivateKeyBin::new(buffer))
         }
     }
 
@@ -334,7 +336,7 @@ impl PrivateKey<'_> {
     ///
     /// # Errors
     /// `error::Unspecified`  if serialization failed.
-    pub fn to_der(&self) -> Result<Buffer<'static, EcPrivateKeyRfc5915Der>, Unspecified> {
+    pub fn to_der(&self) -> Result<EcPrivateKeyRfc5915Der<'static>, Unspecified> {
         unsafe {
             let mut outp = std::ptr::null_mut::<u8>();
             let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.0.evp_pkey))?;

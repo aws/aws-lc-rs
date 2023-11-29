@@ -103,11 +103,13 @@ impl Drop for Ed25519KeyPair {
 /// The seed value for the `EdDSA` signature scheme using Curve25519
 pub struct Seed<'a>(&'a Ed25519KeyPair);
 
-/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
 #[allow(clippy::module_name_repetitions)]
-pub struct Ed25519SeedBuffer {
+pub struct Ed25519SeedBufferType {
     _priv: (),
 }
+/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
+#[allow(clippy::module_name_repetitions)]
+pub type Ed25519SeedBuffer<'a> = Buffer<'a, Ed25519SeedBufferType>;
 
 impl Seed<'_> {
     /// Exposes the seed encoded as a big-endian fixed-length integer.
@@ -116,9 +118,9 @@ impl Seed<'_> {
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    pub fn to_buffer(&self) -> Result<Buffer<'static, Ed25519SeedBuffer>, Unspecified> {
+    pub fn to_buffer(&self) -> Result<Ed25519SeedBuffer, Unspecified> {
         let buffer = Vec::from(&self.0.private_key[..ED25519_PRIVATE_KEY_SEED_LEN]);
-        Ok(Buffer::<Ed25519SeedBuffer>::new(buffer))
+        Ok(Ed25519SeedBuffer::new(buffer))
     }
 }
 

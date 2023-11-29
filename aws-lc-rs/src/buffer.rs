@@ -38,6 +38,8 @@ impl<'a, T> Buffer<'a, T> {
         Buffer(Cow::Owned(owned), PhantomData)
     }
 
+    // TODO: remove this "allow" once this is used.
+    #[allow(dead_code)]
     pub(crate) fn public_from_slice(slice: &[u8]) -> Buffer<'_, T> {
         Buffer(Cow::Borrowed(slice), PhantomData)
     }

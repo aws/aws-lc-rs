@@ -118,21 +118,41 @@ impl AlgorithmID {
 /// Elliptic curve public key.
 #[derive(Clone)]
 pub struct PublicKey {
+    algorithm: &'static EcdsaSigningAlgorithm,
     octets: Box<[u8]>,
-    der: Box<[u8]>,
 }
 
-/// An elliptic curve public key as a DER-encoded (X509) `SubjectPublicKeyInfo` structure
 #[allow(clippy::module_name_repetitions)]
-pub struct EcPublicKeyX509Der {
+pub struct EcPublicKeyX509DerType {
     _priv: (),
 }
+/// An elliptic curve public key as a DER-encoded (X509) `SubjectPublicKeyInfo` structure
+#[allow(clippy::module_name_repetitions)]
+pub type EcPublicKeyX509Der<'a> = Buffer<'a, EcPublicKeyX509DerType>;
 
 impl PublicKey {
     /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
-    #[must_use]
-    pub fn as_der(&self) -> Buffer<'_, EcPublicKeyX509Der> {
-        Buffer::public_from_slice(&self.der)
+    /// # Errors
+    /// Returns an error if the underlying implementation is unable to marshal the point.
+    pub fn as_der(&self) -> Result<EcPublicKeyX509Der<'_>, Unspecified> {
+        let ec_group = unsafe { LcPtr::new(EC_GROUP_new_by_curve_name(self.algorithm.id.nid()))? };
+        let ec_point = unsafe { ec_point_from_bytes(&ec_group, self.as_ref())? };
+        let ec_key = unsafe { LcPtr::new(EC_KEY_new())? };
+        if 1 != unsafe { EC_KEY_set_group(*ec_key, *ec_group) } {
+            return Err(Unspecified);
+        }
+        if 1 != unsafe { EC_KEY_set_public_key(*ec_key, *ec_point) } {
+            return Err(Unspecified);
+        }
+        let mut buffer = null_mut::<u8>();
+        let len = unsafe { aws_lc::i2d_EC_PUBKEY(*ec_key, &mut buffer) };
+        if len < 0 || buffer.is_null() {
+            return Err(Unspecified);
+        }
+        let buffer = LcPtr::new(buffer)?;
+        let mut der = unsafe { std::slice::from_raw_parts(*buffer, len.try_into()?) }.to_owned();
+
+        Ok(Buffer::take_from_slice(&mut der))
     }
 }
 
@@ -324,27 +344,15 @@ pub(crate) unsafe fn marshal_public_key_to_buffer(
 
 pub(crate) fn marshal_public_key(
     evp_pkey: &ConstPointer<EVP_PKEY>,
+    algorithm: &'static EcdsaSigningAlgorithm,
 ) -> Result<PublicKey, Unspecified> {
     let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
     unsafe {
         let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey)?;
 
-        let der = {
-            let mut buffer = std::ptr::null_mut::<u8>();
-            let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
-            let len = aws_lc::i2d_EC_PUBKEY(*ec_key, &mut buffer);
-            if len < 0 {
-                return Err(Unspecified);
-            }
-            let buffer = LcPtr::new(buffer)?;
-            std::slice::from_raw_parts(*buffer, len.try_into()?)
-                .to_vec()
-                .into_boxed_slice()
-        };
-
         Ok(PublicKey {
+            algorithm,
             octets: pub_key_bytes[0..key_len].into(),
-            der,
         })
     }
 }
@@ -604,7 +612,7 @@ mod tests {
             format!("{:?}", key_pair.private_key())
         );
         let pub_key = key_pair.public_key();
-        let der_pub_key = pub_key.as_der();
+        let der_pub_key = pub_key.as_der().unwrap();
 
         assert_eq!(
             from_dirty_hex(
