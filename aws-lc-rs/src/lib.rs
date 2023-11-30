@@ -103,7 +103,7 @@ extern crate core;
 
 pub mod aead;
 pub mod agreement;
-pub mod buffer;
+mod buffer;
 pub mod constant_time;
 pub mod digest;
 pub mod error;

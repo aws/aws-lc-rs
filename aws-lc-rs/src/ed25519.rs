@@ -109,7 +109,7 @@ pub struct Ed25519SeedBufferType {
 }
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
 #[allow(clippy::module_name_repetitions)]
-pub type Ed25519SeedBuffer<'a> = Buffer<'a, Ed25519SeedBufferType>;
+pub type Ed25519SeedBin<'a> = Buffer<'a, Ed25519SeedBufferType>;
 
 impl Seed<'_> {
     /// Exposes the seed encoded as a big-endian fixed-length integer.
@@ -118,9 +118,9 @@ impl Seed<'_> {
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    pub fn to_buffer(&self) -> Result<Ed25519SeedBuffer, Unspecified> {
+    pub fn to_buffer(&self) -> Result<Ed25519SeedBin, Unspecified> {
         let buffer = Vec::from(&self.0.private_key[..ED25519_PRIVATE_KEY_SEED_LEN]);
-        Ok(Ed25519SeedBuffer::new(buffer))
+        Ok(Ed25519SeedBin::new(buffer))
     }
 }
 
