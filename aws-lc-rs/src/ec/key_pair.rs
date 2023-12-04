@@ -15,9 +15,9 @@ use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{
     evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
 };
+use crate::encoding::{AsBigEndian, AsDer};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
-use crate::fmt::{AsBin, AsDer};
 use crate::pkcs8::{Document, Version};
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
@@ -317,14 +317,14 @@ pub struct EcPrivateKeyRfc5915DerType {
 /// Elliptic curve private key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
 pub type EcPrivateKeyRfc5915Der = Buffer<'static, EcPrivateKeyRfc5915DerType>;
 
-impl AsBin<EcPrivateKeyBin> for PrivateKey<'_> {
+impl AsBigEndian<EcPrivateKeyBin> for PrivateKey<'_> {
     /// Exposes the private key encoded as a big-endian fixed-length integer.
     ///
     /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    fn as_bin(&self) -> Result<EcPrivateKeyBin, Unspecified> {
+    fn as_be_bytes(&self) -> Result<EcPrivateKeyBin, Unspecified> {
         unsafe {
             let buffer = ec::marshal_private_key_to_buffer(
                 self.0.algorithm.id,

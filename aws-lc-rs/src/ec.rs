@@ -35,9 +35,9 @@ use aws_lc::{
 
 use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
+use crate::encoding::AsDer;
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
-use crate::fmt::AsDer;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
 use crate::signature::{Signature, VerificationAlgorithm};
 use crate::{digest, sealed, test};
@@ -315,11 +315,10 @@ pub(crate) unsafe fn marshal_private_key_to_buffer(
         debug_assert!(size <= private_size);
     }
 
-    let mut buffer = vec![0u8; SCALAR_MAX_BYTES];
+    let mut buffer = vec![0u8; private_size];
     if 1 != BN_bn2bin_padded(buffer.as_mut_ptr(), private_size, *private_bn) {
         return Err(Unspecified);
     }
-    buffer.truncate(private_size);
 
     Ok(buffer)
 }
@@ -587,7 +586,7 @@ unsafe fn ecdsa_sig_from_fixed(
 
 #[cfg(test)]
 mod tests {
-    use crate::fmt::AsDer;
+    use crate::encoding::AsDer;
     use crate::signature::EcPublicKeyX509Der;
     use crate::signature::EcdsaKeyPair;
     use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};

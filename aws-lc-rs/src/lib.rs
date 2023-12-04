@@ -202,7 +202,7 @@ mod sealed {
     pub trait Sealed {}
 }
 /// Serialization formats
-pub mod fmt {
+pub mod encoding {
     /// Trait for structs that can be serialized into a DER format.
     pub trait AsDer<T> {
         /// Serializes into a DER format.
@@ -212,13 +212,13 @@ pub mod fmt {
         fn as_der(&self) -> Result<T, crate::error::Unspecified>;
     }
 
-    /// Trait for structs that can be serialized into a binary format
-    pub trait AsBin<T> {
-        /// Serializes into a binary format.
+    /// Trait for values that can be serialized into a big-endian format
+    pub trait AsBigEndian<T> {
+        /// Serializes into a big-endian format.
         ///
         /// # Errors
         /// Returns Unspecified if serialization fails.
-        fn as_bin(&self) -> Result<T, crate::error::Unspecified>;
+        fn as_be_bytes(&self) -> Result<T, crate::error::Unspecified>;
     }
 }
 

@@ -3,7 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::fmt::AsBin;
+use aws_lc_rs::encoding::AsBigEndian;
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::signature::Ed25519SeedBin;
 use aws_lc_rs::{
@@ -224,7 +224,7 @@ fn test_seed() {
 
     let key_pair = Ed25519KeyPair::from_pkcs8(key_pair_doc.as_ref()).unwrap();
     let seed = key_pair.seed().unwrap();
-    let seed_buffer: Ed25519SeedBin = seed.as_bin().unwrap();
+    let seed_buffer: Ed25519SeedBin = seed.as_be_bytes().unwrap();
 
     let pub_key = key_pair.public_key();
 

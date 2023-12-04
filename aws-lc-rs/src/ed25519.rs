@@ -19,9 +19,9 @@ use aws_lc::{
 };
 
 use crate::buffer::Buffer;
+use crate::encoding::AsBigEndian;
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
-use crate::fmt::AsBin;
 use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
@@ -114,14 +114,14 @@ pub struct Ed25519SeedBufferType {
 #[allow(clippy::module_name_repetitions)]
 pub type Ed25519SeedBin = Buffer<'static, Ed25519SeedBufferType>;
 
-impl AsBin<Ed25519SeedBin> for Seed<'_> {
+impl AsBigEndian<Ed25519SeedBin> for Seed<'_> {
     /// Exposes the seed encoded as a big-endian fixed-length integer.
     ///
     /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    fn as_bin(&self) -> Result<Ed25519SeedBin, Unspecified> {
+    fn as_be_bytes(&self) -> Result<Ed25519SeedBin, Unspecified> {
         let buffer = Vec::from(&self.0.private_key[..ED25519_PRIVATE_KEY_SEED_LEN]);
         Ok(Ed25519SeedBin::new(buffer))
     }

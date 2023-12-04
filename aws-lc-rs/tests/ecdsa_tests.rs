@@ -3,10 +3,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::fmt::AsBin;
+use aws_lc_rs::encoding::AsBigEndian;
 use aws_lc_rs::signature::EcPrivateKeyRfc5915Der;
 use aws_lc_rs::{
-    fmt::AsDer,
+    encoding::AsDer,
     rand::SystemRandom,
     signature::{self, EcdsaKeyPair, KeyPair, Signature, UnparsedPublicKey},
     test, test_file,
@@ -464,7 +464,7 @@ fn test_private_key() {
         let key_pair = EcdsaKeyPair::from_pkcs8(signing_alg, key_pair_doc.as_ref()).unwrap();
 
         {
-            let private_key = key_pair.private_key().as_bin().unwrap();
+            let private_key = key_pair.private_key().as_be_bytes().unwrap();
             let public_key = key_pair.public_key();
             let key_pair_copy = EcdsaKeyPair::from_private_key_and_public_key(
                 signing_alg,
