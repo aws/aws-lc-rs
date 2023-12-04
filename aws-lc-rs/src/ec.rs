@@ -3,20 +3,24 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::buffer::Buffer;
-use crate::digest::digest_ctx::DigestContext;
-use crate::error::{KeyRejected, Unspecified};
 use core::fmt;
+use std::fmt::{Debug, Formatter};
+use std::mem::MaybeUninit;
+use std::ops::Deref;
+use std::os::raw::{c_int, c_uint};
+#[cfg(test)]
+use std::ptr::null;
+use std::ptr::null_mut;
 
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
+#[cfg(feature = "ring-sig-verify")]
+use untrusted::Input;
 
-use crate::fips::indicator_check;
-use crate::signature::{Signature, VerificationAlgorithm};
-use crate::{digest, sealed, test};
 #[cfg(feature = "fips")]
 use aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::EC_KEY_check_key;
+#[cfg(test)]
+use aws_lc::EC_POINT_mul;
 use aws_lc::{
     point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
     ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes,
@@ -29,19 +33,14 @@ use aws_lc::{
     NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
 };
 
-#[cfg(test)]
-use aws_lc::EC_POINT_mul;
-
-use std::fmt::{Debug, Formatter};
-use std::mem::MaybeUninit;
-use std::ops::Deref;
-use std::os::raw::{c_int, c_uint};
-#[cfg(test)]
-use std::ptr::null;
-use std::ptr::null_mut;
-
-#[cfg(feature = "ring-sig-verify")]
-use untrusted::Input;
+use crate::buffer::Buffer;
+use crate::digest::digest_ctx::DigestContext;
+use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
+use crate::fmt::AsDer;
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
+use crate::signature::{Signature, VerificationAlgorithm};
+use crate::{digest, sealed, test};
 
 pub(crate) mod key_pair;
 
@@ -128,13 +127,13 @@ pub struct EcPublicKeyX509DerType {
 }
 /// An elliptic curve public key as a DER-encoded (X509) `SubjectPublicKeyInfo` structure
 #[allow(clippy::module_name_repetitions)]
-pub type EcPublicKeyX509Der<'a> = Buffer<'a, EcPublicKeyX509DerType>;
+pub type EcPublicKeyX509Der = Buffer<'static, EcPublicKeyX509DerType>;
 
-impl PublicKey {
+impl AsDer<EcPublicKeyX509Der> for PublicKey {
     /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
     /// # Errors
     /// Returns an error if the underlying implementation is unable to marshal the point.
-    pub fn as_der(&self) -> Result<EcPublicKeyX509Der<'_>, Unspecified> {
+    fn as_der(&self) -> Result<EcPublicKeyX509Der, Unspecified> {
         let ec_group = unsafe { LcPtr::new(EC_GROUP_new_by_curve_name(self.algorithm.id.nid()))? };
         let ec_point = unsafe { ec_point_from_bytes(&ec_group, self.as_ref())? };
         let ec_key = unsafe { LcPtr::new(EC_KEY_new())? };
@@ -588,7 +587,9 @@ unsafe fn ecdsa_sig_from_fixed(
 
 #[cfg(test)]
 mod tests {
-    use crate::ec::key_pair::EcdsaKeyPair;
+    use crate::fmt::AsDer;
+    use crate::signature::EcPublicKeyX509Der;
+    use crate::signature::EcdsaKeyPair;
     use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
     use crate::test::from_dirty_hex;
     use crate::{signature, test};
@@ -612,7 +613,7 @@ mod tests {
             format!("{:?}", key_pair.private_key())
         );
         let pub_key = key_pair.public_key();
-        let der_pub_key = pub_key.as_der().unwrap();
+        let der_pub_key: EcPublicKeyX509Der = pub_key.as_der().unwrap();
 
         assert_eq!(
             from_dirty_hex(

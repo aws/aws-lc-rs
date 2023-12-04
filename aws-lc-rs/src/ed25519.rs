@@ -3,27 +3,30 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::error::{KeyRejected, Unspecified};
-use crate::fips::indicator_check;
-use crate::pkcs8::{Document, Version};
-use crate::ptr::LcPtr;
-use crate::rand::SecureRandom;
-use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
-use crate::{constant_time, sealed, test};
-use aws_lc::{
-    ED25519_keypair_from_seed, ED25519_sign, ED25519_verify, EVP_PKEY_CTX_new_id,
-    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen,
-    EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY, EVP_PKEY_ED25519,
-};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ptr::null_mut;
 
-use crate::buffer::Buffer;
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 use zeroize::Zeroize;
+
+use aws_lc::{
+    ED25519_keypair_from_seed, ED25519_sign, ED25519_verify, EVP_PKEY_CTX_new_id,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen,
+    EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY, EVP_PKEY_ED25519,
+};
+
+use crate::buffer::Buffer;
+use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
+use crate::fmt::AsBin;
+use crate::pkcs8::{Document, Version};
+use crate::ptr::LcPtr;
+use crate::rand::SecureRandom;
+use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
+use crate::{constant_time, sealed, test};
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
@@ -109,16 +112,16 @@ pub struct Ed25519SeedBufferType {
 }
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
 #[allow(clippy::module_name_repetitions)]
-pub type Ed25519SeedBin<'a> = Buffer<'a, Ed25519SeedBufferType>;
+pub type Ed25519SeedBin = Buffer<'static, Ed25519SeedBufferType>;
 
-impl Seed<'_> {
+impl AsBin<Ed25519SeedBin> for Seed<'_> {
     /// Exposes the seed encoded as a big-endian fixed-length integer.
     ///
     /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    pub fn to_buffer(&self) -> Result<Ed25519SeedBin, Unspecified> {
+    fn as_bin(&self) -> Result<Ed25519SeedBin, Unspecified> {
         let buffer = Vec::from(&self.0.private_key[..ED25519_PRIVATE_KEY_SEED_LEN]);
         Ok(Ed25519SeedBin::new(buffer))
     }

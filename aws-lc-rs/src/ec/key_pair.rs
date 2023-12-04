@@ -3,6 +3,13 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use std::fmt;
+use std::fmt::{Debug, Formatter};
+use std::mem::MaybeUninit;
+use std::ptr::{null, null_mut};
+
+use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY, EVP_PKEY_EC};
+
 use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{
@@ -10,17 +17,12 @@ use crate::ec::{
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
+use crate::fmt::{AsBin, AsDer};
 use crate::pkcs8::{Document, Version};
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
 use crate::signature::{EcdsaPublicKey, KeyPair, Signature};
 use crate::{digest, ec};
-use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY, EVP_PKEY_EC};
-use std::fmt;
-use std::mem::MaybeUninit;
-use std::ptr::{null, null_mut};
-
-use std::fmt::{Debug, Formatter};
 
 /// An ECDSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
@@ -168,7 +170,7 @@ impl EcdsaKeyPair {
     /// attempt to automatically detect other key formats. This function supports unencrypted
     /// PKCS#8 `PrivateKeyInfo` structures as well as key type specific formats.
     ///
-    /// See `EcdsaPrivateKey::to_der`.
+    /// See `EcdsaPrivateKey::as_der`.
     ///
     /// # Errors
     /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
@@ -307,22 +309,22 @@ pub struct EcPrivateKeyBinType {
     _priv: (),
 }
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub type EcPrivateKeyBin<'a> = Buffer<'a, EcPrivateKeyBinType>;
+pub type EcPrivateKeyBin = Buffer<'static, EcPrivateKeyBinType>;
 
 pub struct EcPrivateKeyRfc5915DerType {
     _priv: (),
 }
 /// Elliptic curve private key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
-pub type EcPrivateKeyRfc5915Der<'a> = Buffer<'a, EcPrivateKeyRfc5915DerType>;
+pub type EcPrivateKeyRfc5915Der = Buffer<'static, EcPrivateKeyRfc5915DerType>;
 
-impl PrivateKey<'_> {
+impl AsBin<EcPrivateKeyBin> for PrivateKey<'_> {
     /// Exposes the private key encoded as a big-endian fixed-length integer.
     ///
     /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    pub fn to_bin(&self) -> Result<EcPrivateKeyBin<'static>, Unspecified> {
+    fn as_bin(&self) -> Result<EcPrivateKeyBin, Unspecified> {
         unsafe {
             let buffer = ec::marshal_private_key_to_buffer(
                 self.0.algorithm.id,
@@ -331,14 +333,16 @@ impl PrivateKey<'_> {
             Ok(EcPrivateKeyBin::new(buffer))
         }
     }
+}
 
+impl AsDer<EcPrivateKeyRfc5915Der> for PrivateKey<'_> {
     /// Serializes the key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
     ///
     /// # Errors
     /// `error::Unspecified`  if serialization failed.
-    pub fn to_der(&self) -> Result<EcPrivateKeyRfc5915Der<'static>, Unspecified> {
+    fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der, Unspecified> {
         unsafe {
-            let mut outp = std::ptr::null_mut::<u8>();
+            let mut outp = null_mut::<u8>();
             let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.0.evp_pkey))?;
             let length = usize::try_from(aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp))
                 .map_err(|_| Unspecified)?;
