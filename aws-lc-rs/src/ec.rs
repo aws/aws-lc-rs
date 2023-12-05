@@ -3,34 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::digest::digest_ctx::DigestContext;
-use crate::error::{KeyRejected, Unspecified};
 use core::fmt;
-
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
-
-use crate::fips::indicator_check;
-use crate::signature::{Signature, VerificationAlgorithm};
-use crate::{digest, sealed, test};
-#[cfg(feature = "fips")]
-use aws_lc::EC_KEY_check_fips;
-#[cfg(not(feature = "fips"))]
-use aws_lc::EC_KEY_check_key;
-use aws_lc::{
-    point_conversion_form_t, ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s,
-    ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EC_GROUP_get_curve_name,
-    EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_public_key, EC_KEY_new,
-    EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new,
-    EC_POINT_oct2point, EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY,
-    EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new,
-    NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP,
-    EC_POINT, EVP_PKEY, EVP_PKEY_EC,
-};
-
-#[cfg(test)]
-use aws_lc::EC_POINT_mul;
-
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
@@ -42,12 +15,39 @@ use std::ptr::null_mut;
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
+#[cfg(feature = "fips")]
+use aws_lc::EC_KEY_check_fips;
+#[cfg(not(feature = "fips"))]
+use aws_lc::EC_KEY_check_key;
+#[cfg(test)]
+use aws_lc::EC_POINT_mul;
+use aws_lc::{
+    point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
+    ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes,
+    EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
+    EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
+    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new, EC_POINT_oct2point,
+    EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new_id,
+    EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY,
+    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new, NID_X9_62_prime256v1, NID_secp256k1,
+    NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
+};
+
+use crate::buffer::Buffer;
+use crate::digest::digest_ctx::DigestContext;
+use crate::encoding::AsDer;
+use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
+use crate::signature::{Signature, VerificationAlgorithm};
+use crate::{digest, sealed, test};
+
 pub(crate) mod key_pair;
 
 const ELEM_MAX_BITS: usize = 521;
-pub const ELEM_MAX_BYTES: usize = (ELEM_MAX_BITS + 7) / 8;
+pub(crate) const ELEM_MAX_BYTES: usize = (ELEM_MAX_BITS + 7) / 8;
 
-pub const SCALAR_MAX_BYTES: usize = ELEM_MAX_BYTES;
+pub(crate) const SCALAR_MAX_BYTES: usize = ELEM_MAX_BYTES;
 
 /// The maximum length, in bytes, of an encoded public key.
 pub(crate) const PUBLIC_KEY_MAX_LEN: usize = 1 + (2 * ELEM_MAX_BYTES);
@@ -114,25 +114,63 @@ impl AlgorithmID {
     }
 }
 
+/// Elliptic curve public key.
 #[derive(Clone)]
-pub struct PublicKey(Box<[u8]>);
+pub struct PublicKey {
+    algorithm: &'static EcdsaSigningAlgorithm,
+    octets: Box<[u8]>,
+}
 
-impl Debug for PublicKey {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-        f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.0.as_ref())))
+#[allow(clippy::module_name_repetitions)]
+pub struct EcPublicKeyX509DerType {
+    _priv: (),
+}
+/// An elliptic curve public key as a DER-encoded (X509) `SubjectPublicKeyInfo` structure
+#[allow(clippy::module_name_repetitions)]
+pub type EcPublicKeyX509Der = Buffer<'static, EcPublicKeyX509DerType>;
+
+impl AsDer<EcPublicKeyX509Der> for PublicKey {
+    /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
+    /// # Errors
+    /// Returns an error if the underlying implementation is unable to marshal the point.
+    fn as_der(&self) -> Result<EcPublicKeyX509Der, Unspecified> {
+        let ec_group = unsafe { LcPtr::new(EC_GROUP_new_by_curve_name(self.algorithm.id.nid()))? };
+        let ec_point = unsafe { ec_point_from_bytes(&ec_group, self.as_ref())? };
+        let ec_key = unsafe { LcPtr::new(EC_KEY_new())? };
+        if 1 != unsafe { EC_KEY_set_group(*ec_key, *ec_group) } {
+            return Err(Unspecified);
+        }
+        if 1 != unsafe { EC_KEY_set_public_key(*ec_key, *ec_point) } {
+            return Err(Unspecified);
+        }
+        let mut buffer = null_mut::<u8>();
+        let len = unsafe { aws_lc::i2d_EC_PUBKEY(*ec_key, &mut buffer) };
+        if len < 0 || buffer.is_null() {
+            return Err(Unspecified);
+        }
+        let buffer = LcPtr::new(buffer)?;
+        let der = unsafe { std::slice::from_raw_parts(*buffer, len.try_into()?) }.to_owned();
+
+        Ok(Buffer::new(der))
     }
 }
 
-impl PublicKey {
-    fn new(pubkey_box: Box<[u8]>) -> Self {
-        PublicKey(pubkey_box)
+impl Debug for PublicKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+        f.write_str(&format!(
+            "EcdsaPublicKey(\"{}\")",
+            test::to_hex(self.octets.as_ref())
+        ))
     }
 }
 
 impl AsRef<[u8]> for PublicKey {
     #[inline]
+    /// Serializes the public key in an uncompressed form (X9.62) using the
+    /// Octet-String-to-Elliptic-Curve-Point algorithm in
+    /// [SEC 1: Elliptic Curve Cryptography, Version 2.0].
     fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
+        self.octets.as_ref()
     }
 }
 
@@ -265,6 +303,26 @@ unsafe fn validate_evp_key(
     Ok(())
 }
 
+pub(crate) unsafe fn marshal_private_key_to_buffer(
+    alg_id: &'static AlgorithmID,
+    evp_pkey: &ConstPointer<EVP_PKEY>,
+) -> Result<Vec<u8>, Unspecified> {
+    let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
+    let private_bn = ConstPointer::new(EC_KEY_get0_private_key(*ec_key))?;
+    let private_size: usize = ecdsa_fixed_number_byte_size(alg_id);
+    {
+        let size: usize = BN_num_bytes(*private_bn).try_into()?;
+        debug_assert!(size <= private_size);
+    }
+
+    let mut buffer = vec![0u8; private_size];
+    if 1 != BN_bn2bin_padded(buffer.as_mut_ptr(), private_size, *private_bn) {
+        return Err(Unspecified);
+    }
+
+    Ok(buffer)
+}
+
 pub(crate) unsafe fn marshal_public_key_to_buffer(
     buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
     evp_pkey: &ConstPointer<EVP_PKEY>,
@@ -284,12 +342,16 @@ pub(crate) unsafe fn marshal_public_key_to_buffer(
 
 pub(crate) fn marshal_public_key(
     evp_pkey: &ConstPointer<EVP_PKEY>,
+    algorithm: &'static EcdsaSigningAlgorithm,
 ) -> Result<PublicKey, Unspecified> {
+    let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
     unsafe {
-        let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
         let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey)?;
-        let pub_key = Vec::from(&pub_key_bytes[0..key_len]);
-        Ok(PublicKey::new(pub_key.into_boxed_slice()))
+
+        Ok(PublicKey {
+            algorithm,
+            octets: pub_key_bytes[0..key_len].into(),
+        })
     }
 }
 
@@ -524,8 +586,10 @@ unsafe fn ecdsa_sig_from_fixed(
 
 #[cfg(test)]
 mod tests {
-    use crate::ec::key_pair::EcdsaKeyPair;
-    use crate::signature::ECDSA_P256_SHA256_FIXED_SIGNING;
+    use crate::encoding::AsDer;
+    use crate::signature::EcPublicKeyX509Der;
+    use crate::signature::EcdsaKeyPair;
+    use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
     use crate::test::from_dirty_hex;
     use crate::{signature, test};
 
@@ -539,7 +603,26 @@ mod tests {
         );
 
         let result = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, &input);
-        result.unwrap();
+        assert!(result.is_ok());
+        let key_pair = result.unwrap();
+        assert_eq!("EcdsaKeyPair { public_key: EcdsaPublicKey(\"04cf0d13a3a7577231ea1b66cf4021cd54f21f4ac4f5f2fdd28e05bc7d2bd099d1374cd08d2ef654d6f04498db462f73e0282058dd661a4c9b0437af3f7af6e724\") }", 
+                   format!("{key_pair:?}"));
+        assert_eq!(
+            "EcdsaPrivateKey(ECDSA_P256)",
+            format!("{:?}", key_pair.private_key())
+        );
+        let pub_key = key_pair.public_key();
+        let der_pub_key: EcPublicKeyX509Der = pub_key.as_der().unwrap();
+
+        assert_eq!(
+            from_dirty_hex(
+                r"3059301306072a8648ce3d020106082a8648ce3d03010703420004cf0d13a3a7577231ea1b66cf402
+                1cd54f21f4ac4f5f2fdd28e05bc7d2bd099d1374cd08d2ef654d6f04498db462f73e0282058dd661a4c9
+                b0437af3f7af6e724",
+            )
+            .as_slice(),
+            der_pub_key.as_ref()
+        );
     }
 
     #[test]
@@ -563,8 +646,9 @@ mod tests {
             r"30440220341f6779b75e98bb42e01095dd48356cbf9002dc704ac8bd2a8240b8
         8d3796c60220555843b1b4e264fe6ffe6e2b705a376c05c09404303ffe5d2711f3e3b3a010a1",
         );
-        let actual_result =
-            signature::UnparsedPublicKey::new(alg, &public_key).verify(msg.as_bytes(), &sig);
+        let unparsed_pub_key = signature::UnparsedPublicKey::new(alg, &public_key);
+
+        let actual_result = unparsed_pub_key.verify(msg.as_bytes(), &sig);
         assert!(actual_result.is_ok(), "Key: {}", test::to_hex(public_key));
     }
 }

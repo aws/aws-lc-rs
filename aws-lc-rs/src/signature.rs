@@ -239,21 +239,27 @@
 //!     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
 //! }
 //! ```
-use crate::rsa;
+use std::fmt::{Debug, Formatter};
+
+#[cfg(feature = "ring-sig-verify")]
+use untrusted::Input;
+
 use rsa::{RSASigningAlgorithmId, RSAVerificationAlgorithmId, RsaSignatureEncoding};
 pub use rsa::{
     RsaEncoding, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey,
 };
 
-use crate::{digest, ec, error, sealed, test};
-use std::fmt::{Debug, Formatter};
-#[cfg(feature = "ring-sig-verify")]
-use untrusted::Input;
-
-pub use crate::ec::key_pair::EcdsaKeyPair;
+pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
 use crate::ec::EcdsaSignatureFormat;
-pub use crate::ec::{EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
-pub use crate::ed25519::{Ed25519KeyPair, EdDSAParameters, ED25519_PUBLIC_KEY_LEN};
+pub use crate::ec::{
+    key_pair::EcPrivateKeyBin, key_pair::EcPrivateKeyRfc5915Der, EcPublicKeyX509Der,
+    EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
+};
+pub use crate::ed25519::{
+    Ed25519KeyPair, Ed25519SeedBin, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
+};
+use crate::rsa;
+use crate::{digest, ec, error, sealed, test};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component
@@ -708,9 +714,10 @@ pub static ED25519: EdDSAParameters = EdDSAParameters {};
 
 #[cfg(test)]
 mod tests {
+    use regex::Regex;
+
     use crate::rand::{generate, SystemRandom};
     use crate::signature::{UnparsedPublicKey, ED25519};
-    use regex::Regex;
 
     #[cfg(feature = "fips")]
     mod fips;
