@@ -40,7 +40,7 @@ use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
 use crate::signature::{Signature, VerificationAlgorithm};
-use crate::{digest, sealed, test};
+use crate::{digest, hex, sealed};
 
 pub(crate) mod key_pair;
 
@@ -159,7 +159,7 @@ impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "EcdsaPublicKey(\"{}\")",
-            test::to_hex(self.octets.as_ref())
+            hex::encode(self.octets.as_ref())
         ))
     }
 }

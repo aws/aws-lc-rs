@@ -16,7 +16,7 @@ use crate::io;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::sealed::Sealed;
 use crate::signature::{KeyPair, VerificationAlgorithm};
-use crate::{cbs, digest, rand, test};
+use crate::{cbs, digest, hex, rand};
 #[cfg(feature = "fips")]
 use aws_lc::RSA_check_fips;
 use aws_lc::{
@@ -425,7 +425,7 @@ impl Debug for RsaSubjectPublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "RsaSubjectPublicKey(\"{}\")",
-            test::to_hex(self.key.as_ref())
+            hex::encode(self.key.as_ref())
         ))
     }
 }

@@ -56,7 +56,7 @@ use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
-use crate::{ec, test};
+use crate::{ec, hex};
 use aws_lc::{
     EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init,
     EVP_PKEY_derive_set_peer, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
@@ -420,7 +420,7 @@ impl Debug for PublicKey {
         f.write_str(&format!(
             "PublicKey {{ algorithm: {:?}, bytes: \"{}\" }}",
             self.alg,
-            test::to_hex(&self.public_key[0..self.len])
+            hex::encode(&self.public_key[0..self.len])
         ))
     }
 }
@@ -455,7 +455,7 @@ impl<B: Debug + AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
         f.write_str(&format!(
             "UnparsedPublicKey {{ algorithm: {:?}, bytes: {:?} }}",
             self.alg,
-            test::to_hex(self.bytes.as_ref())
+            hex::encode(self.bytes.as_ref())
         ))
     }
 }
@@ -851,6 +851,7 @@ mod tests {
 
     #[test]
     fn agreement_traits() {
+        use crate::test;
         use regex;
         use regex::Regex;
 

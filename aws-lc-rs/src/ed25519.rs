@@ -26,7 +26,7 @@ use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
-use crate::{constant_time, sealed, test};
+use crate::{constant_time, hex, sealed};
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
@@ -90,7 +90,7 @@ impl Debug for Ed25519KeyPair {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "Ed25519KeyPair {{ public_key: PublicKey(\"{}\") }}",
-            test::to_hex(&self.public_key)
+            hex::encode(&self.public_key)
         ))
     }
 }
@@ -146,7 +146,7 @@ impl AsRef<[u8]> for PublicKey {
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.0)))
+        f.write_str(&format!("PublicKey(\"{}\")", hex::encode(self.0)))
     }
 }
 
