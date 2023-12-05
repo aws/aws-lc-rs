@@ -149,9 +149,9 @@ impl AsDer<EcPublicKeyX509Der> for PublicKey {
             return Err(Unspecified);
         }
         let buffer = LcPtr::new(buffer)?;
-        let mut der = unsafe { std::slice::from_raw_parts(*buffer, len.try_into()?) }.to_owned();
+        let der = unsafe { std::slice::from_raw_parts(*buffer, len.try_into()?) }.to_owned();
 
-        Ok(Buffer::take_from_slice(&mut der))
+        Ok(Buffer::new(der))
     }
 }
 
