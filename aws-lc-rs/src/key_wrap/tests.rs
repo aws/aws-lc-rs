@@ -6,45 +6,45 @@
 #[cfg(feature = "fips")]
 mod fips;
 
-use super::{Algorithm, AlgorithmId, KeyEncryptionKey, WrappingMode, AES_128, AES_256};
+use crate::key_wrap::nist_sp_800_38f::AesKek;
 
-macro_rules! algorithm_test {
+use super::{BlockCipher, BlockCipherId, KeyWrap, KeyWrapPadded, AES_128, AES_256};
+
+macro_rules! block_cipher_test {
     ($name:ident, $alg:expr, $id:expr, $key_len:literal) => {
         #[test]
         fn $name() {
-            let x: &'static Algorithm = $alg;
+            let x: &dyn BlockCipher = $alg;
             assert_eq!($id, x.id());
             assert_eq!($alg.key_len(), $key_len);
         }
     };
 }
 
-algorithm_test!(aes_128_algorithm, &AES_128, AlgorithmId::Aes128, 16);
-algorithm_test!(aes_256_algorithm, &AES_256, AlgorithmId::Aes256, 32);
+block_cipher_test!(aes_128_cipher, &AES_128, BlockCipherId::Aes128, 16);
+block_cipher_test!(aes_256_cipher, &AES_256, BlockCipherId::Aes256, 32);
 
 #[test]
 fn key_encryption_key_debug_impl() {
-    let kek =
-        KeyEncryptionKey::new(&AES_128, &[42u8; 16], WrappingMode::Padded).expect("key created");
+    let kek = AesKek::new(&AES_128, &[42u8; 16]).expect("key created");
 
     assert_eq!(
-        "KeyEncryptionKey { algorithm: Aes128, mode: Padded }",
+        "KeyEncryptionKey { cipher: Aes128, .. }",
         format!("{kek:?}")
     );
 }
 
-macro_rules! key_wrap_test {
-    ($name:ident, $alg:expr, $mode:expr, $key:expr, $plaintext:expr, $expect:expr) => {
+macro_rules! nist_aes_key_wrap_test {
+    ($name:ident, $alg:expr, $key:expr, $plaintext:expr, $expect:expr) => {
         #[test]
         fn $name() {
             const K: &[u8] = $key;
             const P: &[u8] = $plaintext;
             const C: &[u8] = $expect;
 
-            let kek = KeyEncryptionKey::new($alg, K, $mode).expect("key creation successful");
+            let kek = AesKek::new($alg, K).expect("key creation successful");
 
-            assert_eq!($alg.id(), kek.algorithm().id());
-            assert_eq!($mode, kek.wrapping_mode());
+            assert_eq!($alg.id(), kek.block_cipher_id());
 
             let mut output = vec![0u8; C.len()];
 
@@ -52,7 +52,7 @@ macro_rules! key_wrap_test {
 
             assert_eq!(wrapped, C);
 
-            let kek = KeyEncryptionKey::new($alg, K, $mode).expect("key creation successful");
+            let kek = AesKek::new($alg, K).expect("key creation successful");
 
             let mut output = vec![
                 0u8;
@@ -70,28 +70,69 @@ macro_rules! key_wrap_test {
     };
 }
 
-macro_rules! key_unwrap_test {
-    ($name:ident, $alg:expr, $mode:expr, $key:expr, $ciphertext:expr) => {
+macro_rules! nist_aes_key_wrap_with_padding_test {
+    ($name:ident, $alg:expr, $key:expr, $plaintext:expr, $expect:expr) => {
+        #[test]
+        fn $name() {
+            const K: &[u8] = $key;
+            const P: &[u8] = $plaintext;
+            const C: &[u8] = $expect;
+
+            let kek = AesKek::new($alg, K).expect("key creation successful");
+
+            assert_eq!($alg.id(), kek.block_cipher_id());
+
+            let mut output = vec![0u8; C.len()];
+
+            let wrapped = Vec::from(
+                kek.wrap_with_padding(P, &mut output)
+                    .expect("wrap successful"),
+            );
+
+            assert_eq!(wrapped, C);
+
+            let kek = AesKek::new($alg, K).expect("key creation successful");
+
+            let mut output = vec![
+                0u8;
+                if P.len() % 8 != 0 {
+                    P.len() + (8 - (P.len() % 8))
+                } else {
+                    P.len()
+                }
+            ];
+
+            let unwrapped = kek
+                .unwrap_with_padding(&wrapped, &mut output)
+                .expect("wrap successful");
+
+            assert_eq!(unwrapped, P);
+        }
+    };
+}
+
+macro_rules! nist_aes_key_unwrap_test {
+    ($name:ident, $alg:expr, $key:expr, $ciphertext:expr) => {
         #[test]
         fn $name() {
             const K: &[u8] = $key;
             const C: &[u8] = $ciphertext;
 
-            let kek = KeyEncryptionKey::new($alg, K, $mode).expect("key creation successful");
+            let kek = AesKek::new($alg, K).expect("key creation successful");
 
             let mut output = vec![0u8; C.len()];
 
             kek.unwrap(C, &mut output).expect_err("unwrap to fail");
         }
     };
-    ($name:ident, $alg:expr, $mode:expr, $key:expr, $ciphertext:expr, $expect:expr) => {
+    ($name:ident, $alg:expr, $key:expr, $ciphertext:expr, $expect:expr) => {
         #[test]
         fn $name() {
             const K: &[u8] = $key;
             const C: &[u8] = $ciphertext;
             const P: &[u8] = $expect;
 
-            let kek = KeyEncryptionKey::new($alg, K, $mode).expect("key creation successful");
+            let kek = AesKek::new($alg, K).expect("key creation successful");
 
             let mut output = vec![
                 0u8;
@@ -106,7 +147,7 @@ macro_rules! key_unwrap_test {
 
             assert_eq!(unwrapped, P);
 
-            let kek = KeyEncryptionKey::new($alg, K, $mode).expect("key creation successful");
+            let kek = AesKek::new($alg, K).expect("key creation successful");
 
             let mut output = vec![0u8; C.len()];
 
@@ -117,10 +158,62 @@ macro_rules! key_unwrap_test {
     };
 }
 
-key_wrap_test!(
+macro_rules! nist_aes_key_unwrap_with_padding_test {
+    ($name:ident, $alg:expr, $key:expr, $ciphertext:expr) => {
+        #[test]
+        fn $name() {
+            const K: &[u8] = $key;
+            const C: &[u8] = $ciphertext;
+
+            let kek = AesKek::new($alg, K).expect("key creation successful");
+
+            let mut output = vec![0u8; C.len()];
+
+            kek.unwrap_with_padding(C, &mut output)
+                .expect_err("unwrap to fail");
+        }
+    };
+    ($name:ident, $alg:expr, $key:expr, $ciphertext:expr, $expect:expr) => {
+        #[test]
+        fn $name() {
+            const K: &[u8] = $key;
+            const C: &[u8] = $ciphertext;
+            const P: &[u8] = $expect;
+
+            let kek = AesKek::new($alg, K).expect("key creation successful");
+
+            let mut output = vec![
+                0u8;
+                if P.len() % 8 != 0 {
+                    P.len() + (8 - (P.len() % 8))
+                } else {
+                    P.len()
+                }
+            ];
+
+            let unwrapped = Vec::from(
+                kek.unwrap_with_padding(C, &mut output)
+                    .expect("unwrap successful"),
+            );
+
+            assert_eq!(unwrapped, P);
+
+            let kek = AesKek::new($alg, K).expect("key creation successful");
+
+            let mut output = vec![0u8; C.len()];
+
+            let wrapped = kek
+                .wrap_with_padding(&unwrapped, &mut output)
+                .expect("wrap successful");
+
+            assert_eq!(wrapped, C);
+        }
+    };
+}
+
+nist_aes_key_wrap_with_padding_test!(
     kwp_ae_aes128_8bit_len,
     &AES_128,
-    WrappingMode::Padded,
     &[
         0x6d, 0xec, 0xf1, 0x0a, 0x1c, 0xaf, 0x8e, 0x3b, 0x80, 0xc7, 0xa4, 0xbe, 0x8c, 0x9c, 0x84,
         0xe8,
@@ -132,10 +225,9 @@ key_wrap_test!(
     ]
 );
 
-key_wrap_test!(
+nist_aes_key_wrap_with_padding_test!(
     kwp_ae_aes128_248bit_len,
     &AES_128,
-    WrappingMode::Padded,
     &[
         0xbe, 0x96, 0xdc, 0x19, 0x5e, 0xc0, 0x34, 0xd6, 0x16, 0x48, 0x6e, 0xd7, 0x0e, 0x97, 0xfe,
         0x83
@@ -152,10 +244,9 @@ key_wrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_with_padding_test!(
     kwp_ad_aes128_8bit_len,
     &AES_128,
-    WrappingMode::Padded,
     &[
         0x49, 0x31, 0x9c, 0x33, 0x12, 0x31, 0xcd, 0x6b, 0xf7, 0x4c, 0x2f, 0x70, 0xb0, 0x7f, 0xcc,
         0x5c
@@ -167,10 +258,9 @@ key_unwrap_test!(
     &[0xe4]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_with_padding_test!(
     kwp_ad_aes128_8bit_len_fail,
     &AES_128,
-    WrappingMode::Padded,
     &[
         0x7a, 0x3f, 0x4d, 0x97, 0x05, 0x01, 0xbf, 0x86, 0x14, 0x7e, 0x91, 0x5f, 0xe1, 0xb9, 0x03,
         0x18
@@ -181,10 +271,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_with_padding_test!(
     kwp_ad_aes128_248bit_len,
     &AES_128,
-    WrappingMode::Padded,
     &[
         0x28, 0x90, 0x23, 0x37, 0x90, 0x78, 0xb8, 0x21, 0xfc, 0x24, 0xf7, 0x18, 0xbd, 0xc9, 0x43,
         0x31
@@ -201,10 +290,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_with_padding_test!(
     kwp_ad_aes128_248bit_len_fail,
     &AES_128,
-    WrappingMode::Padded,
     &[
         0x69, 0x29, 0x11, 0x7e, 0x6c, 0xb1, 0x8e, 0xa4, 0xa2, 0x98, 0x58, 0x86, 0xf0, 0x8c, 0x0a,
         0xe1
@@ -216,10 +304,9 @@ key_unwrap_test!(
     ]
 );
 
-key_wrap_test!(
+nist_aes_key_wrap_test!(
     kw_ae_aes128_128bit_len,
     &AES_128,
-    WrappingMode::Unpadded,
     &[
         0x75, 0x75, 0xda, 0x3a, 0x93, 0x60, 0x7c, 0xc2, 0xbf, 0xd8, 0xce, 0xc7, 0xaa, 0xdf, 0xd9,
         0xa6
@@ -234,10 +321,9 @@ key_wrap_test!(
     ]
 );
 
-key_wrap_test!(
+nist_aes_key_wrap_test!(
     kw_ae_aes128_256bit_len,
     &AES_128,
-    WrappingMode::Unpadded,
     &[
         0xe5, 0xd0, 0x58, 0xe7, 0xf1, 0xc2, 0x2c, 0x01, 0x6c, 0x4e, 0x1c, 0xc9, 0xb2, 0x6b, 0x9f,
         0x8f
@@ -254,10 +340,9 @@ key_wrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_test!(
     kw_ad_aes128_128bit_len,
     &AES_128,
-    WrappingMode::Unpadded,
     &[
         0x1c, 0xbd, 0x2f, 0x79, 0x07, 0x8b, 0x95, 0x00, 0xfa, 0xe2, 0x36, 0x96, 0x31, 0x19, 0x53,
         0xeb
@@ -272,10 +357,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_test!(
     kw_ad_aes128_128bit_len_fail,
     &AES_128,
-    WrappingMode::Unpadded,
     &[
         0x5e, 0xa3, 0x0c, 0x21, 0xdb, 0x36, 0xc0, 0x57, 0x72, 0x94, 0xcc, 0x70, 0xd3, 0xb8, 0x69,
         0x70
@@ -286,10 +370,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_test!(
     kw_ad_aes128_256bit_len,
     &AES_128,
-    WrappingMode::Unpadded,
     &[
         0x83, 0xda, 0x6e, 0x02, 0x40, 0x4d, 0x5a, 0xbf, 0xd4, 0x7d, 0x15, 0xda, 0x59, 0x18, 0x40,
         0xe2
@@ -306,10 +389,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_test!(
     kw_ad_aes128_256bit_len_fail,
     &AES_128,
-    WrappingMode::Unpadded,
     &[
         0x84, 0xbc, 0x6c, 0xe7, 0xee, 0x4f, 0xd9, 0xdb, 0x51, 0x25, 0x36, 0x66, 0x9d, 0x06, 0x86,
         0xda
@@ -321,10 +403,9 @@ key_unwrap_test!(
     ]
 );
 
-key_wrap_test!(
+nist_aes_key_wrap_with_padding_test!(
     kwp_ae_aes256_8bit_len,
     &AES_256,
-    WrappingMode::Padded,
     &[
         0x95, 0xda, 0x27, 0x00, 0xca, 0x6f, 0xd9, 0xa5, 0x25, 0x54, 0xee, 0x2a, 0x8d, 0xf1, 0x38,
         0x6f, 0x5b, 0x94, 0xa1, 0xa6, 0x0e, 0xd8, 0xa4, 0xae, 0xf6, 0x0a, 0x8d, 0x61, 0xab, 0x5f,
@@ -337,10 +418,9 @@ key_wrap_test!(
     ]
 );
 
-key_wrap_test!(
+nist_aes_key_wrap_with_padding_test!(
     kwp_ae_aes256_248bit_len,
     &AES_256,
-    WrappingMode::Padded,
     &[
         0xe9, 0xbb, 0x7f, 0x44, 0xc7, 0xba, 0xaf, 0xbf, 0x39, 0x2a, 0xb9, 0x12, 0x58, 0x9a, 0x2f,
         0x8d, 0xb5, 0x32, 0x68, 0x10, 0x6e, 0xaf, 0xb7, 0x46, 0x89, 0xbb, 0x18, 0x33, 0x13, 0x6e,
@@ -358,10 +438,9 @@ key_wrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_with_padding_test!(
     kwp_ad_aes256_8bit_len,
     &AES_256,
-    WrappingMode::Padded,
     &[
         0x20, 0xe4, 0xff, 0x6a, 0x88, 0xff, 0xa9, 0xa2, 0x81, 0x8b, 0x81, 0x70, 0x27, 0x93, 0xd8,
         0xa0, 0x16, 0x72, 0x2c, 0x2f, 0xa1, 0xff, 0x44, 0x5f, 0x24, 0xb9, 0xdb, 0x29, 0x3c, 0xb1,
@@ -374,10 +453,9 @@ key_unwrap_test!(
     &[0xd2]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_with_padding_test!(
     kwp_ad_aes256_8bit_len_fail,
     &AES_256,
-    WrappingMode::Padded,
     &[
         0xc3, 0x2c, 0xb3, 0xe1, 0xe4, 0x1a, 0x4b, 0x9f, 0x4d, 0xe7, 0x99, 0x89, 0x95, 0x78, 0x66,
         0xf5, 0xdd, 0x48, 0xdb, 0xa3, 0x8c, 0x22, 0xa6, 0xeb, 0xb8, 0x0e, 0x14, 0xc8, 0x4b, 0xdd,
@@ -389,10 +467,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_with_padding_test!(
     kwp_ad_aes256_248bit_len,
     &AES_256,
-    WrappingMode::Padded,
     &[
         0x09, 0xab, 0x42, 0x86, 0xa8, 0x45, 0xc1, 0x8b, 0xb4, 0x81, 0xda, 0x91, 0xc3, 0x9a, 0x58,
         0xfd, 0x52, 0xed, 0x78, 0xd5, 0x49, 0x73, 0xfc, 0x41, 0xf2, 0x51, 0x63, 0xa0, 0xc3, 0x3f,
@@ -410,10 +487,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_with_padding_test!(
     kwp_ad_aes256_248bit_len_fail,
     &AES_256,
-    WrappingMode::Padded,
     &[
         0x8c, 0x35, 0xfb, 0x77, 0x76, 0x6d, 0x04, 0xf4, 0x8d, 0x5b, 0x52, 0x27, 0x5c, 0x5c, 0x5f,
         0x31, 0xf5, 0x68, 0x07, 0x84, 0x19, 0xe5, 0xc2, 0x33, 0x59, 0x18, 0x96, 0x5f, 0xbe, 0x53,
@@ -426,10 +502,9 @@ key_unwrap_test!(
     ]
 );
 
-key_wrap_test!(
+nist_aes_key_wrap_test!(
     kw_ae_aes256_128bit_len,
     &AES_256,
-    WrappingMode::Unpadded,
     &[
         0xf5, 0x97, 0x82, 0xf1, 0xdc, 0xeb, 0x05, 0x44, 0xa8, 0xda, 0x06, 0xb3, 0x49, 0x69, 0xb9,
         0x21, 0x2b, 0x55, 0xce, 0x6d, 0xcb, 0xdd, 0x09, 0x75, 0xa3, 0x3f, 0x4b, 0x3f, 0x88, 0xb5,
@@ -445,10 +520,9 @@ key_wrap_test!(
     ]
 );
 
-key_wrap_test!(
+nist_aes_key_wrap_test!(
     kw_ae_aes256_256bit_len,
     &AES_256,
-    WrappingMode::Unpadded,
     &[
         0x8b, 0x54, 0xe6, 0xbc, 0x3d, 0x20, 0xe8, 0x23, 0xd9, 0x63, 0x43, 0xdc, 0x77, 0x6c, 0x0d,
         0xb1, 0x0c, 0x51, 0x70, 0x8c, 0xee, 0xcc, 0x9a, 0x38, 0xa1, 0x4b, 0xeb, 0x4c, 0xa5, 0xb8,
@@ -466,10 +540,9 @@ key_wrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_test!(
     kw_ad_aes256_128bit_len,
     &AES_256,
-    WrappingMode::Unpadded,
     &[
         0x80, 0xaa, 0x99, 0x73, 0x27, 0xa4, 0x80, 0x6b, 0x6a, 0x7a, 0x41, 0xa5, 0x2b, 0x86, 0xc3,
         0x71, 0x03, 0x86, 0xf9, 0x32, 0x78, 0x6e, 0xf7, 0x96, 0x76, 0xfa, 0xfb, 0x90, 0xb8, 0x26,
@@ -485,10 +558,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_test!(
     kw_ad_aes256_128bit_len_fail,
     &AES_256,
-    WrappingMode::Unpadded,
     &[
         0x08, 0xc9, 0x36, 0xb2, 0x5b, 0x56, 0x7a, 0x0a, 0xa6, 0x79, 0xc2, 0x9f, 0x20, 0x1b, 0xf8,
         0xb1, 0x90, 0x32, 0x7d, 0xf0, 0xc2, 0x56, 0x3e, 0x39, 0xce, 0xe0, 0x61, 0xf1, 0x49, 0xf4,
@@ -500,10 +572,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_test!(
     kw_ad_aes256_256bit_len,
     &AES_256,
-    WrappingMode::Unpadded,
     &[
         0x04, 0x9c, 0x7b, 0xcb, 0xa0, 0x3e, 0x04, 0x39, 0x5c, 0x2a, 0x22, 0xe6, 0xa9, 0x21, 0x5c,
         0xda, 0xe0, 0xf7, 0x62, 0xb0, 0x77, 0xb1, 0x24, 0x4b, 0x44, 0x31, 0x47, 0xf5, 0x69, 0x57,
@@ -521,10 +592,9 @@ key_unwrap_test!(
     ]
 );
 
-key_unwrap_test!(
+nist_aes_key_unwrap_test!(
     kw_ad_aes256_256bit_len_fail,
     &AES_256,
-    WrappingMode::Unpadded,
     &[
         0x3c, 0x7c, 0x55, 0x9f, 0xb9, 0x9d, 0x2e, 0x3f, 0x82, 0x80, 0xc9, 0xbe, 0x14, 0xb0, 0xf7,
         0xb6, 0x76, 0xa3, 0x20, 0x53, 0xeb, 0xa8, 0xf7, 0xaf, 0xbb, 0x43, 0x04, 0xc1, 0x17, 0xa6,
@@ -538,11 +608,10 @@ key_unwrap_test!(
 );
 
 macro_rules! wrap_input_output_invalid_test {
-    ($name:ident, $mode:expr, $input_len:expr, $output_len:expr) => {
+    ($name:ident, $input_len:expr, $output_len:expr) => {
         #[test]
         fn $name() {
-            let kek = KeyEncryptionKey::new(&AES_128, &[16u8; 16], $mode)
-                .expect("key creation successful");
+            let kek = AesKek::new(&AES_128, &[16u8; 16]).expect("key creation successful");
 
             let input_len: usize = $input_len.try_into().unwrap();
             let output_len: usize = $output_len.try_into().unwrap();
@@ -557,28 +626,22 @@ macro_rules! wrap_input_output_invalid_test {
 }
 
 // Input length < 16
-wrap_input_output_invalid_test!(wrap_input_len_less_than_min, WrappingMode::Unpadded, 15, 23);
+wrap_input_output_invalid_test!(wrap_input_len_less_than_min, 15, 23);
 
 // Input length % 8 != 0
-wrap_input_output_invalid_test!(
-    wrap_input_len_not_multiple_of_eight,
-    WrappingMode::Unpadded,
-    17,
-    25
-);
+wrap_input_output_invalid_test!(wrap_input_len_not_multiple_of_eight, 17, 25);
 
 // Output length < Input length - 8
-wrap_input_output_invalid_test!(wrap_output_len_too_small, WrappingMode::Unpadded, 16, 8);
+wrap_input_output_invalid_test!(wrap_output_len_too_small, 16, 8);
 
 // Input Length == 0
-wrap_input_output_invalid_test!(wrap_padded_input_len_zero, WrappingMode::Padded, 0, 8);
+wrap_input_output_invalid_test!(wrap_padded_input_len_zero, 0, 8);
 
 macro_rules! unwrap_input_output_invalid_test {
-    ($name:ident, $mode:expr, $input_len:expr, $output_len:expr) => {
+    ($name:ident, $input_len:expr, $output_len:expr) => {
         #[test]
         fn $name() {
-            let kek = KeyEncryptionKey::new(&AES_128, &[16u8; 16], $mode)
-                .expect("key creation successful");
+            let kek = AesKek::new(&AES_128, &[16u8; 16]).expect("key creation successful");
 
             let input_len: usize = $input_len.try_into().unwrap();
             let output_len: usize = $output_len.try_into().unwrap();
@@ -592,37 +655,35 @@ macro_rules! unwrap_input_output_invalid_test {
     };
 }
 
+macro_rules! unwrap_with_padding_input_output_invalid_test {
+    ($name:ident, $input_len:expr, $output_len:expr) => {
+        #[test]
+        fn $name() {
+            let kek = AesKek::new(&AES_128, &[16u8; 16]).expect("key creation successful");
+
+            let input_len: usize = $input_len.try_into().unwrap();
+            let output_len: usize = $output_len.try_into().unwrap();
+
+            let input = vec![42u8; input_len];
+            let mut output = vec![0u8; output_len];
+
+            kek.unwrap_with_padding(input.as_slice(), output.as_mut_slice())
+                .expect_err("failure");
+        }
+    };
+}
+
 // Input length < 24
-unwrap_input_output_invalid_test!(
-    unwrap_input_len_smaller_than_min,
-    WrappingMode::Unpadded,
-    16,
-    16
-);
+unwrap_input_output_invalid_test!(unwrap_input_len_smaller_than_min, 16, 16);
 
 // Input length % 8 != 0
-unwrap_input_output_invalid_test!(
-    unwrap_input_len_not_multiple_of_eight,
-    WrappingMode::Unpadded,
-    31,
-    31
-);
+unwrap_input_output_invalid_test!(unwrap_input_len_not_multiple_of_eight, 31, 31);
 
 // Output length < Input length - 8
-unwrap_input_output_invalid_test!(unwrap_output_len_too_small, WrappingMode::Unpadded, 24, 15);
+unwrap_input_output_invalid_test!(unwrap_output_len_too_small, 24, 15);
 
 // Input length < 16 (AES Block Length)
-unwrap_input_output_invalid_test!(
-    unwrap_padded_input_len_smaller_than_min,
-    WrappingMode::Padded,
-    15,
-    15
-);
+unwrap_with_padding_input_output_invalid_test!(unwrap_padded_input_len_smaller_than_min, 15, 15);
 
 // Output length < Input length - 8
-unwrap_input_output_invalid_test!(
-    unwrap_padded_output_len_too_small,
-    WrappingMode::Padded,
-    24,
-    15
-);
+unwrap_with_padding_input_output_invalid_test!(unwrap_padded_output_len_too_small, 24, 15);

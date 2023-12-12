@@ -2,7 +2,7 @@
 
 use crate::{
     fips::{assert_fips_status_indicator, FipsServiceStatus},
-    key_wrap::{KeyEncryptionKey, WrappingMode, AES_128, AES_256},
+    key_wrap::{nist_sp_800_38f::AesKek, KeyWrap, KeyWrapPadded, AES_128, AES_256},
 };
 
 const K_128: &[u8] = &[
@@ -18,14 +18,14 @@ const P: &[u8] = &[
     0xf2, 0x64, 0x5b, 0xa4, 0xba, 0xed, 0xa7, 0xec, 0xbc, 0x12, 0xa6, 0xad, 0x46, 0x76, 0x95, 0xa0,
 ];
 
-macro_rules! key_wrap_test {
-    ($name:ident, $alg:expr, $mode:expr, $key:expr, $plaintext:expr) => {
+macro_rules! nist_aes_key_wrap_test {
+    ($name:ident, $alg:expr, $key:expr, $plaintext:expr) => {
         #[test]
         fn $name() {
             let k = $key;
             let p = $plaintext;
 
-            let kek = KeyEncryptionKey::new($alg, k, $mode).expect("key creation successful");
+            let kek = AesKek::new($alg, k).expect("key creation successful");
 
             let mut output = vec![0u8; p.len() + 15];
 
@@ -34,7 +34,7 @@ macro_rules! key_wrap_test {
                 FipsServiceStatus::Approved
             ));
 
-            let kek = KeyEncryptionKey::new($alg, k, $mode).expect("key creation successful");
+            let kek = AesKek::new($alg, k).expect("key creation successful");
 
             let mut output = vec![
                 0u8;
@@ -53,7 +53,44 @@ macro_rules! key_wrap_test {
     };
 }
 
-key_wrap_test!(kwp_aes128, &AES_128, WrappingMode::Padded, K_128, P);
-key_wrap_test!(kw_aes128, &AES_128, WrappingMode::Unpadded, K_128, P);
-key_wrap_test!(kwp_aes256, &AES_256, WrappingMode::Padded, K_256, P);
-key_wrap_test!(kw_aes256, &AES_256, WrappingMode::Unpadded, K_256, P);
+macro_rules! nist_aes_key_wrap_with_padding_test {
+    ($name:ident, $alg:expr, $key:expr, $plaintext:expr) => {
+        #[test]
+        fn $name() {
+            let k = $key;
+            let p = $plaintext;
+
+            let kek = AesKek::new($alg, k).expect("key creation successful");
+
+            let mut output = vec![0u8; p.len() + 15];
+
+            let wrapped = Vec::from(assert_fips_status_indicator!(
+                kek.wrap_with_padding(P, &mut output)
+                    .expect("wrap successful"),
+                FipsServiceStatus::Approved
+            ));
+
+            let kek = AesKek::new($alg, k).expect("key creation successful");
+
+            let mut output = vec![
+                0u8;
+                if p.len() % 8 != 0 {
+                    p.len() + (8 - (p.len() % 8))
+                } else {
+                    p.len()
+                }
+            ];
+
+            let _unwrapped = assert_fips_status_indicator!(
+                kek.unwrap_with_padding(&wrapped, &mut output)
+                    .expect("wrap successful"),
+                FipsServiceStatus::Approved
+            );
+        }
+    };
+}
+
+nist_aes_key_wrap_with_padding_test!(kwp_aes128, &AES_128, K_128, P);
+nist_aes_key_wrap_test!(kw_aes128, &AES_128, K_128, P);
+nist_aes_key_wrap_with_padding_test!(kwp_aes256, &AES_256, K_256, P);
+nist_aes_key_wrap_test!(kw_aes256, &AES_256, K_256, P);
