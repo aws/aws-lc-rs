@@ -3,16 +3,16 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::signature::{KeyPair, RsaParameters, RsaSubjectPublicKey};
+use aws_lc_rs::signature::{KeyPair, RsaKeyPair, RsaParameters, RsaPublicKey};
 use aws_lc_rs::test::to_hex_upper;
-use aws_lc_rs::{rand, signature, signature::RsaKeyPair, test, test_file};
+use aws_lc_rs::{rand, signature, test, test_file};
 
 #[test]
 fn rsa_traits() {
     test::compile_time_assert_send::<RsaKeyPair>();
     test::compile_time_assert_sync::<RsaKeyPair>();
-    test::compile_time_assert_send::<signature::RsaSubjectPublicKey>();
-    test::compile_time_assert_sync::<signature::RsaSubjectPublicKey>();
+    test::compile_time_assert_send::<signature::RsaPublicKey>();
+    test::compile_time_assert_sync::<signature::RsaPublicKey>();
     test::compile_time_assert_send::<signature::RsaPublicKeyComponents<&[u8]>>();
     test::compile_time_assert_sync::<signature::RsaPublicKeyComponents<&[u8]>>();
     test::compile_time_assert_send::<signature::RsaPublicKeyComponents<Vec<u8>>>();
@@ -249,7 +249,7 @@ fn rsa_test_public_key_coverage() {
 
     // Test `Clone`.
     #[allow(let_underscore_drop)]
-    let _: RsaSubjectPublicKey = pubkey.clone();
+    let _: RsaPublicKey = pubkey.clone();
 
     #[cfg(feature = "ring-io")]
     assert_eq!(

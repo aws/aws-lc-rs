@@ -138,7 +138,7 @@ mod fips;
 mod hex;
 pub mod iv;
 mod ptr;
-mod rsa;
+pub mod rsa;
 pub mod tls_prf;
 
 pub(crate) use debug::derive_debug_via_id;
