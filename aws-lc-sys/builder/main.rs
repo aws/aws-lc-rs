@@ -264,6 +264,10 @@ fn target_arch() -> String {
     env::var("CARGO_CFG_TARGET_ARCH").unwrap()
 }
 
+fn target_env() -> String {
+    env::var("CARGO_CFG_TARGET_ENV").unwrap()
+}
+
 fn target_vendor() -> String {
     env::var("CARGO_CFG_TARGET_VENDOR").unwrap()
 }
@@ -273,9 +277,9 @@ fn target() -> String {
 }
 
 macro_rules! cfg_bindgen_platform {
-    ($binding:ident, $os:literal, $arch:literal, $additional:expr) => {
+    ($binding:ident, $os:literal, $arch:literal, $env:literal, $additional:expr) => {
         let $binding = {
-            (target_os() == $os && target_arch() == $arch && $additional)
+            (target_os() == $os && target_arch() == $arch && target_env() == $env && $additional)
                 .then(|| {
                     emit_rustc_cfg(concat!($os, "_", $arch));
                     true
@@ -297,10 +301,10 @@ fn main() {
 
     let pregenerated = !is_bindgen_required || is_internal_generate;
 
-    cfg_bindgen_platform!(linux_x86, "linux", "x86", pregenerated);
-    cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", pregenerated);
-    cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", pregenerated);
-    cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", pregenerated);
+    cfg_bindgen_platform!(linux_x86, "linux", "x86", "gnu", pregenerated);
+    cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", "gnu", pregenerated);
+    cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", "gnu", pregenerated);
+    cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", "", pregenerated);
 
     if !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
         emit_rustc_cfg("use_bindgen_generated");
