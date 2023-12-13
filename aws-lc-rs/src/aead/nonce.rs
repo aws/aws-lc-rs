@@ -3,10 +3,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::endian::{ArrayEncoding, BigEndian, Encoding};
+use crate::endian::{ArrayEncoding, BigEndian, Encoding, LittleEndian};
 use crate::error;
 use crate::iv::FixedLength;
-use std::mem::transmute_copy;
 
 /// A nonce for a single AEAD opening or sealing operation.
 ///
@@ -51,21 +50,37 @@ impl From<&[u8; NONCE_LEN]> for Nonce {
     }
 }
 
+#[allow(useless_deprecated)] // https://github.com/rust-lang/rust/issues/39935
+#[deprecated]
 impl From<&[u32; NONCE_LEN / 4]> for Nonce {
     #[inline]
     fn from(values: &[u32; NONCE_LEN / 4]) -> Self {
-        unsafe {
-            let bytes: [u8; NONCE_LEN] = transmute_copy(values);
-            Nonce(FixedLength::from(bytes))
+        let mut nonce = [LittleEndian::ZERO; NONCE_LEN / 4];
+        for i in 0..(NONCE_LEN / 4) {
+            nonce[i] = LittleEndian::from(values[i]);
         }
+        Nonce::from(&nonce)
+    }
+}
+
+impl From<&[BigEndian<u32>; NONCE_LEN / 4]> for Nonce {
+    #[inline]
+    fn from(values: &[BigEndian<u32>; NONCE_LEN / 4]) -> Self {
+        Nonce(FixedLength::from(values.as_byte_array()))
+    }
+}
+
+impl From<&[LittleEndian<u32>; NONCE_LEN / 4]> for Nonce {
+    #[inline]
+    fn from(nonce: &[LittleEndian<u32>; NONCE_LEN / 4]) -> Self {
+        Nonce(FixedLength::from(nonce.as_byte_array()))
     }
 }
 
 impl From<BigEndian<u32>> for Nonce {
     #[inline]
     fn from(number: BigEndian<u32>) -> Self {
-        let nonce = [BigEndian::ZERO, BigEndian::ZERO, number];
-        Nonce(FixedLength::from(*(nonce.as_byte_array())))
+        Nonce::from([BigEndian::ZERO, BigEndian::ZERO, number].as_byte_array())
     }
 }
 

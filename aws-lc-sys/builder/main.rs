@@ -142,6 +142,13 @@ fn get_cmake_config(manifest_dir: &PathBuf) -> cmake::Config {
 fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: String) -> cmake::Config {
     let mut cmake_cfg = get_cmake_config(manifest_dir);
 
+    if ["powerpc64", "powerpc"]
+        .iter()
+        .any(|arch| target_arch().eq_ignore_ascii_case(arch))
+    {
+        cmake_cfg.define("ENABLE_EXPERIMENTAL_BIG_ENDIAN_SUPPORT", "1");
+    }
+
     if OutputLibType::default() == OutputLibType::Dynamic {
         cmake_cfg.define("BUILD_SHARED_LIBS", "1");
     } else {
