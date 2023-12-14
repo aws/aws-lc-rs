@@ -26,8 +26,11 @@ pub trait ArrayEncoding<T> {
 
 /// Work around the inability to implement `from` for arrays of `Encoding`s
 /// due to the coherence rules.
-pub trait FromByteArray<T> {
-    fn from_byte_array(a: &T) -> Self;
+pub trait FromArray<const N: usize, T>
+where
+    Self: Sized,
+{
+    fn from_array(a: &[T; N]) -> [Self; N];
 }
 
 macro_rules! define_endian {
@@ -39,6 +42,8 @@ macro_rules! define_endian {
 }
 
 macro_rules! impl_array_encoding {
+    // This may be converted to use const generics once generic_const_exprs is stable.
+    // https://github.com/rust-lang/rust/issues/76560
     ($endian:ident, $base:ident, $elems:expr) => {
         impl ArrayEncoding<[u8; $elems * core::mem::size_of::<$base>()]>
             for [$endian<$base>; $elems]
@@ -70,6 +75,16 @@ macro_rules! impl_endian {
             }
         }
 
+        impl<const N: usize> FromArray<N, $base> for $endian<$base> {
+            fn from_array(value: &[$base; N]) -> [Self; N] {
+                let mut result: [$endian<$base>; N] = [$endian::ZERO; N];
+                for i in 0..N {
+                    result[i] = $endian::from(value[i]);
+                }
+                return result;
+            }
+        }
+
         impl_array_encoding!($endian, $base, 1);
         impl_array_encoding!($endian, $base, 2);
         impl_array_encoding!($endian, $base, 3);
@@ -95,5 +110,22 @@ mod tests {
         let x2 = x;
         assert_eq!(u32::from(x), 1);
         assert_eq!(u32::from(x2), 1);
+    }
+
+    #[test]
+    fn test_endian_from_ary() {
+        let be: [BigEndian<u32>; 2] =
+            BigEndian::<u32>::from_array(&[0x_AABB_CCDD_u32, 0x_2233_4455_u32]);
+        let le: [LittleEndian<u32>; 2] =
+            LittleEndian::<u32>::from_array(&[0x_DDCC_BBAA_u32, 0x_5544_3322_u32]);
+        assert_eq!(be.as_byte_array(), le.as_byte_array());
+
+        let be: [BigEndian<u64>; 2] =
+            BigEndian::<u64>::from_array(&[0x_AABB_CCDD_EEFF_0011_u64, 0x_2233_4455_6677_8899_u64]);
+        let le: [LittleEndian<u64>; 2] = LittleEndian::<u64>::from_array(&[
+            0x_1100_FFEE_DDCC_BBAA_u64,
+            0x_9988_7766_5544_3322_u64,
+        ]);
+        assert_eq!(be.as_byte_array(), le.as_byte_array());
     }
 }
