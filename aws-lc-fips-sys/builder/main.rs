@@ -168,6 +168,10 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: String) -> cmake::C
         } else {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
         }
+    } else if target_os() != "windows" {
+        // The Windows/FIPS build rejects "debug" profile
+        // https://github.com/aws/aws-lc/blob/main/CMakeLists.txt#L656
+        cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
     }
 
     cmake_cfg.define("BORINGSSL_PREFIX", build_prefix);
