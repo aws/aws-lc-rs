@@ -113,7 +113,7 @@ mod tests {
     }
 
     #[test]
-    fn test_endian_from_ary() {
+    fn test_endian_from_array() {
         let be: [BigEndian<u32>; 2] =
             BigEndian::<u32>::from_array(&[0x_AABB_CCDD_u32, 0x_2233_4455_u32]);
         let le: [LittleEndian<u32>; 2] =
