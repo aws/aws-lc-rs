@@ -1,0 +1,21 @@
+[package]
+name = "sys-testing"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[features]
+default = ["aws-lc-sys"]
+aws-lc-sys = ["dep:aws-lc-sys"]
+aws-lc-fips-sys = ["dep:aws-lc-fips-sys"]
+
+[dependencies]
+aws-lc-sys = { path = "../aws-lc-sys", optional = true }
+aws-lc-fips-sys = { path = "../aws-lc-fips-sys", optional = true }
+
+[build-dependencies]
+cc = "1"
+toml_edit = "0.21"
+
+[package.metadata.cargo-udeps.ignore]
+normal = [ "aws-lc-sys", "aws-lc-fips-sys" ] # the sys crate is only used through a C library build

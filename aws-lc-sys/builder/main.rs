@@ -91,17 +91,16 @@ impl OutputLibType {
 
 impl OutputLib {
     fn libname(self, prefix: Option<&str>) -> String {
-        format!(
-            "{}{}",
-            if let Some(pfix) = prefix { pfix } else { "" },
-            match self {
-                OutputLib::Crypto => "crypto",
-                OutputLib::Ssl => "ssl",
-                OutputLib::RustWrapper => {
-                    "rust_wrapper"
-                }
-            }
-        )
+        let name = match self {
+            OutputLib::Crypto => "crypto",
+            OutputLib::Ssl => "ssl",
+            OutputLib::RustWrapper => "rust_wrapper",
+        };
+        if let Some(prefix) = prefix {
+            format!("{prefix}_{name}")
+        } else {
+            name.to_string()
+        }
     }
 }
 
@@ -149,6 +148,13 @@ fn get_cmake_config(manifest_dir: &PathBuf) -> cmake::Config {
 
 fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: String) -> cmake::Config {
     let mut cmake_cfg = get_cmake_config(manifest_dir);
+
+    if ["powerpc64", "powerpc"]
+        .iter()
+        .any(|arch| target_arch().eq_ignore_ascii_case(arch))
+    {
+        cmake_cfg.define("ENABLE_EXPERIMENTAL_BIG_ENDIAN_SUPPORT", "1");
+    }
 
     if OutputLibType::default() == OutputLibType::Dynamic {
         cmake_cfg.define("BUILD_SHARED_LIBS", "1");
@@ -207,7 +213,7 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: String) -> cmake::C
 }
 
 fn build_rust_wrapper(manifest_dir: &PathBuf) -> PathBuf {
-    prepare_cmake_build(manifest_dir, prefix_string())
+    prepare_cmake_build(manifest_dir, prefix_string() + "_")
         .configure_arg("--no-warn-unused-cli")
         .build()
 }
@@ -272,6 +278,10 @@ fn target_arch() -> String {
     env::var("CARGO_CFG_TARGET_ARCH").unwrap()
 }
 
+fn target_env() -> String {
+    env::var("CARGO_CFG_TARGET_ENV").unwrap()
+}
+
 fn target_vendor() -> String {
     env::var("CARGO_CFG_TARGET_VENDOR").unwrap()
 }
@@ -281,9 +291,9 @@ fn target() -> String {
 }
 
 macro_rules! cfg_bindgen_platform {
-    ($binding:ident, $os:literal, $arch:literal, $additional:expr) => {
+    ($binding:ident, $os:literal, $arch:literal, $env:literal, $additional:expr) => {
         let $binding = {
-            (target_os() == $os && target_arch() == $arch && $additional)
+            (target_os() == $os && target_arch() == $arch && target_env() == $env && $additional)
                 .then(|| {
                     emit_rustc_cfg(concat!($os, "_", $arch));
                     true
@@ -308,10 +318,10 @@ fn main() {
 
     let pregenerated = !is_bindgen_required || is_internal_generate;
 
-    cfg_bindgen_platform!(linux_x86, "linux", "x86", pregenerated);
-    cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", pregenerated);
-    cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", pregenerated);
-    cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", pregenerated);
+    cfg_bindgen_platform!(linux_x86, "linux", "x86", "gnu", pregenerated);
+    cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", "gnu", pregenerated);
+    cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", "gnu", pregenerated);
+    cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", "", pregenerated);
 
     if !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
         emit_rustc_cfg("use_bindgen_generated");
@@ -384,26 +394,10 @@ fn main() {
         RustWrapper.libname(Some(&prefix))
     );
 
-    for include_path in [
-        get_rust_include_path(&manifest_dir),
-        get_generated_include_path(&manifest_dir),
-        get_aws_lc_include_path(&manifest_dir),
-    ] {
-        println!("cargo:include={}", include_path.display());
-    }
-
-    if is_private_api_enabled() {
-        println!(
-            "cargo:include={}",
-            get_aws_lc_rand_extra_path(&manifest_dir).display()
-        );
-    }
-
-    if let Some(include_paths) = get_aws_lc_sys_includes_path() {
-        for path in include_paths {
-            println!("cargo:include={}", path.display());
-        }
-    }
+    println!(
+        "cargo:include={}",
+        setup_include_paths(&out_dir, &manifest_dir).display()
+    );
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
@@ -424,6 +418,46 @@ fn check_dependencies() {
         !missing_dependency,
         "Required build dependency is missing. Halting build."
     );
+}
+
+fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
+    let mut include_paths = vec![
+        get_rust_include_path(manifest_dir),
+        get_generated_include_path(manifest_dir),
+        get_aws_lc_include_path(manifest_dir),
+    ];
+
+    if is_private_api_enabled() {
+        include_paths.push(get_aws_lc_rand_extra_path(manifest_dir));
+    }
+
+    if let Some(extra_paths) = get_aws_lc_sys_includes_path() {
+        include_paths.extend(extra_paths);
+    }
+
+    let include_dir = out_dir.join("include");
+    std::fs::create_dir_all(&include_dir).unwrap();
+
+    // iterate over all of the include paths and copy them into the final output
+    for path in include_paths {
+        for child in std::fs::read_dir(path).into_iter().flatten().flatten() {
+            if child.file_type().map_or(false, |t| t.is_file()) {
+                let _ = std::fs::copy(
+                    child.path(),
+                    include_dir.join(child.path().file_name().unwrap()),
+                );
+                continue;
+            }
+
+            // prefer the earliest paths
+            let options = fs_extra::dir::CopyOptions::new()
+                .skip_exist(true)
+                .copy_inside(true);
+            let _ = fs_extra::dir::copy(child.path(), &include_dir, &options);
+        }
+    }
+
+    include_dir
 }
 
 fn is_internal_generate_enabled() -> bool {

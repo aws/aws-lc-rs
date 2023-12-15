@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_11_0
+#define BORINGSSL_PREFIX aws_lc_0_12_1
 #endif
     
 #if !defined(__APPLE__)
@@ -2706,11 +2706,13 @@
 #define _X509_NAME_print_ex BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_NAME_print_ex)
 #define _X509_NAME_print_ex_fp BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_NAME_print_ex_fp)
 #define _X509_NAME_set BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_NAME_set)
+#define _X509_OBJECT_free BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_free)
 #define _X509_OBJECT_free_contents BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_free_contents)
 #define _X509_OBJECT_get0_X509 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_get0_X509)
 #define _X509_OBJECT_get0_X509_CRL BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_get0_X509_CRL)
 #define _X509_OBJECT_get_type BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_get_type)
 #define _X509_OBJECT_idx_by_subject BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_idx_by_subject)
+#define _X509_OBJECT_new BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_new)
 #define _X509_OBJECT_retrieve_by_subject BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_retrieve_by_subject)
 #define _X509_OBJECT_retrieve_match BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_retrieve_match)
 #define _X509_OBJECT_up_ref_count BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_OBJECT_up_ref_count)
@@ -2810,6 +2812,7 @@
 #define _X509_STORE_CTX_get0_untrusted BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_CTX_get0_untrusted)
 #define _X509_STORE_CTX_get1_chain BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_CTX_get1_chain)
 #define _X509_STORE_CTX_get1_issuer BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_CTX_get1_issuer)
+#define _X509_STORE_CTX_get_by_subject BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_CTX_get_by_subject)
 #define _X509_STORE_CTX_get_chain BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_CTX_get_chain)
 #define _X509_STORE_CTX_get_current_cert BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_CTX_get_current_cert)
 #define _X509_STORE_CTX_get_error BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_CTX_get_error)
@@ -2844,7 +2847,6 @@
 #define _X509_STORE_get0_param BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_get0_param)
 #define _X509_STORE_get1_certs BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_get1_certs)
 #define _X509_STORE_get1_crls BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_get1_crls)
-#define _X509_STORE_get_by_subject BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_get_by_subject)
 #define _X509_STORE_get_cert_crl BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_get_cert_crl)
 #define _X509_STORE_get_check_crl BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_get_check_crl)
 #define _X509_STORE_get_check_issued BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, X509_STORE_get_check_issued)
@@ -3260,7 +3262,6 @@
 #define _bn_minimal_width BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_minimal_width)
 #define _bn_mod_add_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mod_add_consttime)
 #define _bn_mod_add_words BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mod_add_words)
-#define _bn_mod_exp_base_2_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mod_exp_base_2_consttime)
 #define _bn_mod_exp_mont_small BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mod_exp_mont_small)
 #define _bn_mod_inverse0_prime_mont_small BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mod_inverse0_prime_mont_small)
 #define _bn_mod_inverse_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mod_inverse_consttime)
@@ -3272,6 +3273,7 @@
 #define _bn_mod_sub_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mod_sub_consttime)
 #define _bn_mod_sub_words BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mod_sub_words)
 #define _bn_mod_u16_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mod_u16_consttime)
+#define _bn_mont_ctx_set_RR_consttime BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mont_ctx_set_RR_consttime)
 #define _bn_mont_n0 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mont_n0)
 #define _bn_mul_add_words BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mul_add_words)
 #define _bn_mul_comba4 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, bn_mul_comba4)
@@ -3575,6 +3577,7 @@
 #define _ecp_nistz256_sub BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, ecp_nistz256_sub)
 #define _ed25519_asn1_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, ed25519_asn1_meth)
 #define _ed25519_pkey_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, ed25519_pkey_meth)
+#define _ed25519_public_key_from_hashed_seed_nohw BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, ed25519_public_key_from_hashed_seed_nohw)
 #define _fe_carry BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, fe_carry)
 #define _fe_neg BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, fe_neg)
 #define _gcm_ghash_avx BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, gcm_ghash_avx)
@@ -3951,6 +3954,7 @@
 #define _x25519_sc_reduce BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x25519_sc_reduce)
 #define _x25519_scalar_mult_generic_nohw BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x25519_scalar_mult_generic_nohw)
 #define _x509V3_add_value_asn1_string BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509V3_add_value_asn1_string)
+#define _x509_check_cert_time BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509_check_cert_time)
 #define _x509_digest_sign_algorithm BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509_digest_sign_algorithm)
 #define _x509_digest_verify_init BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509_digest_verify_init)
 #define _x509_print_rsa_pss_params BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509_print_rsa_pss_params)

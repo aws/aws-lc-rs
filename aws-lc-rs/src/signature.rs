@@ -239,21 +239,33 @@
 //!     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
 //! }
 //! ```
-use crate::rsa;
-use rsa::{RSASigningAlgorithmId, RSAVerificationAlgorithmId, RsaSignatureEncoding};
-pub use rsa::{
-    RsaEncoding, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey,
-};
-
-use crate::{digest, ec, error, sealed, test};
 use std::fmt::{Debug, Formatter};
+
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
-pub use crate::ec::key_pair::EcdsaKeyPair;
+pub use crate::rsa::{
+    key::{PublicKey as RsaPublicKey, PublicKeyComponents as RsaPublicKeyComponents},
+    signature::RsaEncoding,
+    KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey, RsaParameters,
+};
+
+use crate::rsa::{
+    signature::{RsaSignatureEncoding, RsaSigningAlgorithmId},
+    RsaVerificationAlgorithmId,
+};
+
+pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
 use crate::ec::EcdsaSignatureFormat;
-pub use crate::ec::{EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm};
-pub use crate::ed25519::{Ed25519KeyPair, EdDSAParameters, ED25519_PUBLIC_KEY_LEN};
+pub use crate::ec::{
+    key_pair::EcPrivateKeyBin, key_pair::EcPrivateKeyRfc5915Der, EcPublicKeyX509Der,
+    EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
+};
+pub use crate::ed25519::{
+    Ed25519KeyPair, Ed25519SeedBin, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
+};
+use crate::rsa;
+use crate::{digest, ec, error, hex, sealed};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component
@@ -355,7 +367,7 @@ impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
         f.write_str(&format!(
             "UnparsedPublicKey {{ algorithm: {:?}, bytes: \"{}\" }}",
             self.algorithm,
-            test::to_hex(self.bytes.as_ref())
+            hex::encode(self.bytes.as_ref())
         ))
     }
 }
@@ -390,133 +402,133 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 }
 
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-1.
-pub static RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
+pub static RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     1024..=8192,
-    &RSAVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
+    &RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
 );
 
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-256.
-pub static RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
+pub static RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA256,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     1024..=8192,
-    &RSAVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
+    &RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
 );
 
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-512.
-pub static RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
+pub static RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA512,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     1024..=8192,
-    &RSAVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
+    &RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-1.
-pub static RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters(
+pub static RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
-    &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
+    &RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-256.
-pub static RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters(
+pub static RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters::new(
     &digest::SHA256,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
-    &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA256,
+    &RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA256,
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-384.
-pub static RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters(
+pub static RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters::new(
     &digest::SHA384,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
-    &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA384,
+    &RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA384,
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-512.
-pub static RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters(
+pub static RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters::new(
     &digest::SHA512,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
-    &RSAVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA512,
+    &RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA512,
 );
 
 /// Verification of signatures using RSA keys of 3072-8192 bits, PKCS#1.5 padding, and SHA-384.
-pub static RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters(
+pub static RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters::new(
     &digest::SHA384,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     3072..=8192,
-    &RSAVerificationAlgorithmId::RSA_PKCS1_3072_8192_SHA384,
+    &RsaVerificationAlgorithmId::RSA_PKCS1_3072_8192_SHA384,
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-256.
-pub static RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters(
+pub static RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters::new(
     &digest::SHA256,
-    &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
-    &RSAVerificationAlgorithmId::RSA_PSS_2048_8192_SHA256,
+    &RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA256,
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-384.
-pub static RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters(
+pub static RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters::new(
     &digest::SHA384,
-    &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
-    &RSAVerificationAlgorithmId::RSA_PSS_2048_8192_SHA384,
+    &RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA384,
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-512.
-pub static RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters(
+pub static RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters::new(
     &digest::SHA512,
-    &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
-    &RSAVerificationAlgorithmId::RSA_PSS_2048_8192_SHA512,
+    &RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA512,
 );
 
 /// RSA PSS padding using SHA-256 for RSA signatures.
-pub static RSA_PSS_SHA256: RsaSignatureEncoding = RsaSignatureEncoding(
+pub static RSA_PSS_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA256,
-    &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
-    &RSASigningAlgorithmId::RSA_PSS_SHA256,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
+    &RsaSigningAlgorithmId::RSA_PSS_SHA256,
 );
 
 /// RSA PSS padding using SHA-384 for RSA signatures.
-pub static RSA_PSS_SHA384: RsaSignatureEncoding = RsaSignatureEncoding(
+pub static RSA_PSS_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA384,
-    &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
-    &RSASigningAlgorithmId::RSA_PSS_SHA384,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
+    &RsaSigningAlgorithmId::RSA_PSS_SHA384,
 );
 
 /// RSA PSS padding using SHA-512 for RSA signatures.
-pub static RSA_PSS_SHA512: RsaSignatureEncoding = RsaSignatureEncoding(
+pub static RSA_PSS_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA512,
-    &rsa::RsaPadding::RSA_PKCS1_PSS_PADDING,
-    &RSASigningAlgorithmId::RSA_PSS_SHA512,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
+    &RsaSigningAlgorithmId::RSA_PSS_SHA512,
 );
 
 /// PKCS#1 1.5 padding using SHA-256 for RSA signatures.
-pub static RSA_PKCS1_SHA256: RsaSignatureEncoding = RsaSignatureEncoding(
+pub static RSA_PKCS1_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA256,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
-    &RSASigningAlgorithmId::RSA_PKCS1_SHA256,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+    &RsaSigningAlgorithmId::RSA_PKCS1_SHA256,
 );
 
 /// PKCS#1 1.5 padding using SHA-384 for RSA signatures.
-pub static RSA_PKCS1_SHA384: RsaSignatureEncoding = RsaSignatureEncoding(
+pub static RSA_PKCS1_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA384,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
-    &RSASigningAlgorithmId::RSA_PKCS1_SHA384,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+    &RsaSigningAlgorithmId::RSA_PKCS1_SHA384,
 );
 
 /// PKCS#1 1.5 padding using SHA-512 for RSA signatures.
-pub static RSA_PKCS1_SHA512: RsaSignatureEncoding = RsaSignatureEncoding(
+pub static RSA_PKCS1_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA512,
-    &rsa::RsaPadding::RSA_PKCS1_PADDING,
-    &RSASigningAlgorithmId::RSA_PKCS1_SHA512,
+    &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+    &RsaSigningAlgorithmId::RSA_PKCS1_SHA512,
 );
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
@@ -708,9 +720,10 @@ pub static ED25519: EdDSAParameters = EdDSAParameters {};
 
 #[cfg(test)]
 mod tests {
+    use regex::Regex;
+
     use crate::rand::{generate, SystemRandom};
     use crate::signature::{UnparsedPublicKey, ED25519};
-    use regex::Regex;
 
     #[cfg(feature = "fips")]
     mod fips;

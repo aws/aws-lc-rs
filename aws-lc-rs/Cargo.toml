@@ -1,7 +1,7 @@
 [package]
 name = "aws-lc-rs"
 authors = ["AWS-LibCrypto"]
-version = "1.4.0"
+version = "1.5.2"
 edition = "2021"
 rust-version = "1.60"
 keywords = ["crypto", "cryptography", "security"]
@@ -23,8 +23,7 @@ exclude = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [package.metadata.docs.rs]
-features = ["fips"]
-rustc-args = ["--cfg", "docsrs"]
+rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 alloc = []
@@ -44,9 +43,9 @@ fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { version = "0.7.1", optional = true }
-aws-lc-sys = { version = "0.11.0", path = "../aws-lc-sys", optional = true }
-aws-lc-fips-sys = { version = "0.11.0", path = "../aws-lc-fips-sys", optional = true }
-zeroize = "1"
+aws-lc-sys = { version = "0.12.1", path = "../aws-lc-sys", optional = true }
+aws-lc-fips-sys = { version = "0.11.2", path = "../aws-lc-fips-sys", optional = true }
+zeroize = "1.7"
 mirai-annotations = "1.12.0"
 
 [dev-dependencies]

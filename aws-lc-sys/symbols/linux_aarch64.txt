@@ -2673,11 +2673,13 @@ X509_NAME_print
 X509_NAME_print_ex
 X509_NAME_print_ex_fp
 X509_NAME_set
+X509_OBJECT_free
 X509_OBJECT_free_contents
 X509_OBJECT_get0_X509
 X509_OBJECT_get0_X509_CRL
 X509_OBJECT_get_type
 X509_OBJECT_idx_by_subject
+X509_OBJECT_new
 X509_OBJECT_retrieve_by_subject
 X509_OBJECT_retrieve_match
 X509_OBJECT_up_ref_count
@@ -2777,6 +2779,7 @@ X509_STORE_CTX_get0_store
 X509_STORE_CTX_get0_untrusted
 X509_STORE_CTX_get1_chain
 X509_STORE_CTX_get1_issuer
+X509_STORE_CTX_get_by_subject
 X509_STORE_CTX_get_chain
 X509_STORE_CTX_get_current_cert
 X509_STORE_CTX_get_error
@@ -2811,7 +2814,6 @@ X509_STORE_get0_objects
 X509_STORE_get0_param
 X509_STORE_get1_certs
 X509_STORE_get1_crls
-X509_STORE_get_by_subject
 X509_STORE_get_cert_crl
 X509_STORE_get_check_crl
 X509_STORE_get_check_issued
@@ -3151,7 +3153,6 @@ bn_miller_rabin_iteration
 bn_minimal_width
 bn_mod_add_consttime
 bn_mod_add_words
-bn_mod_exp_base_2_consttime
 bn_mod_exp_mont_small
 bn_mod_inverse0_prime_mont_small
 bn_mod_inverse_consttime
@@ -3163,6 +3164,7 @@ bn_mod_mul_montgomery_small
 bn_mod_sub_consttime
 bn_mod_sub_words
 bn_mod_u16_consttime
+bn_mont_ctx_set_RR_consttime
 bn_mont_n0
 bn_mul_add_words
 bn_mul_comba4
@@ -3458,6 +3460,7 @@ ecp_nistz256_sqr_mont
 ecp_nistz256_sub
 ed25519_asn1_meth
 ed25519_pkey_meth
+ed25519_public_key_from_hashed_seed_nohw
 fe_carry
 fe_neg
 gcm_ghash_neon
@@ -3814,6 +3817,7 @@ x25519_public_from_private_nohw
 x25519_sc_reduce
 x25519_scalar_mult_generic_nohw
 x509V3_add_value_asn1_string
+x509_check_cert_time
 x509_digest_sign_algorithm
 x509_digest_verify_init
 x509_print_rsa_pss_params

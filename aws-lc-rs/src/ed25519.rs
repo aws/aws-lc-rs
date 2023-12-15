@@ -3,18 +3,6 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::error::{KeyRejected, Unspecified};
-use crate::fips::indicator_check;
-use crate::pkcs8::{Document, Version};
-use crate::ptr::LcPtr;
-use crate::rand::SecureRandom;
-use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
-use crate::{constant_time, sealed, test};
-use aws_lc::{
-    ED25519_keypair_from_seed, ED25519_sign, ED25519_verify, EVP_PKEY_CTX_new_id,
-    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen,
-    EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_ED25519,
-};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
@@ -22,6 +10,23 @@ use std::ptr::null_mut;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
+use zeroize::Zeroize;
+
+use aws_lc::{
+    ED25519_keypair_from_seed, ED25519_sign, ED25519_verify, EVP_PKEY_CTX_new_id,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen,
+    EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY, EVP_PKEY_ED25519,
+};
+
+use crate::buffer::Buffer;
+use crate::encoding::AsBigEndian;
+use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
+use crate::pkcs8::{Document, Version};
+use crate::ptr::LcPtr;
+use crate::rand::SecureRandom;
+use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
+use crate::{constant_time, hex, sealed};
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
@@ -77,7 +82,7 @@ impl VerificationAlgorithm for EdDSAParameters {
 /// An Ed25519 key pair, for signing.
 #[allow(clippy::module_name_repetitions)]
 pub struct Ed25519KeyPair {
-    private_key: [u8; ED25519_PRIVATE_KEY_LEN],
+    private_key: Box<[u8; ED25519_PRIVATE_KEY_LEN]>,
     public_key: PublicKey,
 }
 
@@ -85,27 +90,63 @@ impl Debug for Ed25519KeyPair {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
             "Ed25519KeyPair {{ public_key: PublicKey(\"{}\") }}",
-            test::to_hex(&self.public_key)
+            hex::encode(&self.public_key)
         ))
+    }
+}
+
+impl Drop for Ed25519KeyPair {
+    fn drop(&mut self) {
+        self.private_key.zeroize();
     }
 }
 
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
-pub struct PublicKey {
-    public_key: [u8; ED25519_PUBLIC_KEY_LEN],
+/// The seed value for the `EdDSA` signature scheme using Curve25519
+pub struct Seed<'a>(&'a Ed25519KeyPair);
+
+#[allow(clippy::module_name_repetitions)]
+pub struct Ed25519SeedBufferType {
+    _priv: (),
 }
+/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
+#[allow(clippy::module_name_repetitions)]
+pub type Ed25519SeedBin = Buffer<'static, Ed25519SeedBufferType>;
+
+impl AsBigEndian<Ed25519SeedBin> for Seed<'_> {
+    /// Exposes the seed encoded as a big-endian fixed-length integer.
+    ///
+    /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if serialization failed.
+    fn as_be_bytes(&self) -> Result<Ed25519SeedBin, Unspecified> {
+        let buffer = Vec::from(&self.0.private_key[..ED25519_PRIVATE_KEY_SEED_LEN]);
+        Ok(Ed25519SeedBin::new(buffer))
+    }
+}
+
+impl Debug for Seed<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str("Ed25519Seed()")
+    }
+}
+
+#[derive(Clone)]
+#[allow(clippy::module_name_repetitions)]
+pub struct PublicKey([u8; ED25519_PUBLIC_KEY_LEN]);
 
 impl AsRef<[u8]> for PublicKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        &self.public_key
+        &self.0
     }
 }
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(&format!("PublicKey(\"{}\")", test::to_hex(self.public_key)))
+        f.write_str(&format!("PublicKey(\"{}\")", hex::encode(self.0)))
     }
 }
 
@@ -163,6 +204,24 @@ impl Ed25519KeyPair {
         evp_pkey.marshall_private_key(Version::V2)
     }
 
+    /// Serializes this `Ed25519KeyPair` into a PKCS#8 v2 document.
+    ///
+    /// # Errors
+    /// `error::Unspecified` on internal error.
+    ///
+    pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
+        unsafe {
+            let evp_pkey: LcPtr<EVP_PKEY> = LcPtr::new(EVP_PKEY_new_raw_private_key(
+                EVP_PKEY_ED25519,
+                null_mut(),
+                self.private_key.as_ref().as_ptr(),
+                ED25519_PRIVATE_KEY_SEED_LEN,
+            ))?;
+
+            evp_pkey.marshall_private_key(Version::V2)
+        }
+    }
+
     /// Generates a `Ed25519KeyPair` using the `rng` provided, then serializes that key as a
     /// PKCS#8 document.
     ///
@@ -180,6 +239,24 @@ impl Ed25519KeyPair {
     pub fn generate_pkcs8v1(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
         let evp_pkey = unsafe { generate_key()? };
         evp_pkey.marshall_private_key(Version::V1)
+    }
+
+    /// Serializes this `Ed25519KeyPair` into a PKCS#8 v1 document.
+    ///
+    /// # Errors
+    /// `error::Unspecified` on internal error.
+    ///
+    pub fn to_pkcs8v1(&self) -> Result<Document, Unspecified> {
+        unsafe {
+            let evp_pkey: LcPtr<EVP_PKEY> = LcPtr::new(EVP_PKEY_new_raw_private_key(
+                EVP_PKEY_ED25519,
+                null_mut(),
+                self.private_key.as_ref().as_ptr(),
+                ED25519_PRIVATE_KEY_SEED_LEN,
+            ))?;
+
+            evp_pkey.marshall_private_key(Version::V1)
+        }
     }
 
     /// Constructs an Ed25519 key pair from the private key seed `seed` and its
@@ -209,17 +286,17 @@ impl Ed25519KeyPair {
                 seed.as_ptr(),
             );
             let derived_public_key = derived_public_key.assume_init();
-            let private_key = private_key.assume_init();
+            let mut private_key = private_key.assume_init();
 
             constant_time::verify_slices_are_equal(public_key, &derived_public_key)
                 .map_err(|_| KeyRejected::inconsistent_components())?;
 
-            Ok(Self {
-                private_key,
-                public_key: PublicKey {
-                    public_key: derived_public_key,
-                },
-            })
+            let key_pair = Self {
+                private_key: Box::new(private_key),
+                public_key: PublicKey(derived_public_key),
+            };
+            private_key.zeroize();
+            Ok(key_pair)
         }
     }
 
@@ -282,9 +359,10 @@ impl Ed25519KeyPair {
             private_key[ED25519_PRIVATE_KEY_SEED_LEN..].copy_from_slice(&public_key);
 
             let key_pair = Self {
-                private_key,
-                public_key: PublicKey { public_key },
+                private_key: Box::new(private_key),
+                public_key: PublicKey(public_key),
             };
+            private_key.zeroize();
 
             Ok(key_pair)
         }
@@ -326,25 +404,43 @@ impl Ed25519KeyPair {
             ED25519_SIGNATURE_LEN
         }))
     }
+
+    /// Provides the private key "seed" for this `Ed25519` key pair.
+    ///
+    /// For serialization of the key pair, `Ed25519KeyPair::to_pkcs8()` is preferred.
+    ///
+    /// # Errors
+    /// Currently the function cannot fail, but it might in future implementations.
+    pub fn seed(&self) -> Result<Seed, Unspecified> {
+        Ok(Seed(self))
+    }
 }
 
 #[cfg(test)]
 mod tests {
+
     use crate::ed25519::Ed25519KeyPair;
+    use crate::rand::SystemRandom;
     use crate::test;
 
     #[test]
     fn test_generate_pkcs8() {
-        let rng = crate::rand::SystemRandom::new();
+        let rng = SystemRandom::new();
         let document = Ed25519KeyPair::generate_pkcs8(&rng).unwrap();
-        let _: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
-        let _: Ed25519KeyPair =
+        let kp1: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let kp2: Ed25519KeyPair =
             Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
+        assert_eq!(kp1.private_key.as_slice(), kp2.private_key.as_slice());
+        assert_eq!(kp1.public_key.as_ref(), kp2.public_key.as_ref());
 
         let document = Ed25519KeyPair::generate_pkcs8v1(&rng).unwrap();
-        let _: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
-        let _: Ed25519KeyPair =
+        let kp1: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+        let kp2: Ed25519KeyPair =
             Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
+        assert_eq!(kp1.private_key.as_slice(), kp2.private_key.as_slice());
+        assert_eq!(kp1.public_key.as_ref(), kp2.public_key.as_ref());
+        let seed = kp1.seed().unwrap();
+        assert_eq!("Ed25519Seed()", format!("{seed:?}"));
     }
 
     #[test]

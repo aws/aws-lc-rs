@@ -117,6 +117,11 @@ use mirai_annotations::unrecoverable;
 
 use crate::{digest, error};
 
+pub use crate::hex::{
+    decode as from_hex, decode_dirty as from_dirty_hex, encode as to_hex,
+    encode_upper as to_hex_upper,
+};
+
 extern crate std;
 
 /// `compile_time_assert_clone::<T>();` fails to compile if `T` doesn't
@@ -341,57 +346,6 @@ where
     assert!(!failed, "Test failed.");
 }
 
-pub fn to_hex_upper<T: AsRef<[u8]>>(bytes: T) -> String {
-    to_hex(bytes).to_ascii_uppercase()
-}
-
-pub fn to_hex<T: AsRef<[u8]>>(bytes: T) -> String {
-    let bytes = bytes.as_ref();
-    let mut encoding = String::with_capacity(2 * bytes.len());
-    for byte in bytes {
-        let upper_val = byte >> 4u8;
-        let lower_val = byte & 0x0f;
-        encoding.push(char::from_digit(u32::from(upper_val), 16).unwrap());
-        encoding.push(char::from_digit(u32::from(lower_val), 16).unwrap());
-    }
-    encoding
-}
-
-pub fn from_hex(hex_str: &str) -> Result<Vec<u8>, String> {
-    let mut bytes = Vec::<u8>::with_capacity(hex_str.len() / 2 + 1);
-    let mut current_byte = b'\0';
-    let mut index: u32 = 0;
-    for ch in hex_str.chars() {
-        if !ch.is_ascii_hexdigit() {
-            return Err("Invalid hex string".to_string());
-        }
-        #[allow(clippy::cast_possible_truncation)]
-        let value = ch.to_digit(16).unwrap() as u8;
-        if index % 2 == 0 {
-            current_byte = value << 4;
-        } else {
-            current_byte |= value;
-            bytes.push(current_byte);
-        }
-
-        if let Some(idx) = index.checked_add(1) {
-            index = idx;
-        } else {
-            break;
-        }
-    }
-    if index % 2 == 1 {
-        bytes.push(current_byte);
-    }
-    Ok(bytes)
-}
-
-#[must_use]
-pub fn from_dirty_hex(hex_str: &str) -> Vec<u8> {
-    let clean: String = hex_str.chars().filter(char::is_ascii_hexdigit).collect();
-    from_hex(clean.as_str()).unwrap()
-}
-
 fn parse_test_case(
     current_section: &mut String,
     lines: &mut dyn Iterator<Item = &str>,
@@ -422,7 +376,7 @@ fn parse_test_case(
             }
 
             // A blank line ends a test case if the test case isn't empty.
-            Some(line) if line.is_empty() => {
+            Some("") => {
                 if !is_first_line {
                     return Some(TestCase { attributes });
                 }

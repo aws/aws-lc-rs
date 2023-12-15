@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_11_0
+#define BORINGSSL_PREFIX aws_lc_fips_0_11_2
 #endif
     
 #if !defined(__APPLE__)
