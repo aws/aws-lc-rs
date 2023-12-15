@@ -162,6 +162,8 @@ fn prepare_cmake_build(manifest_dir: &PathBuf, build_prefix: String) -> cmake::C
         } else {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
         }
+    } else {
+        cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
     }
 
     cmake_cfg.define("BORINGSSL_PREFIX", build_prefix);
