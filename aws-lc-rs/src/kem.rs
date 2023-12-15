@@ -284,6 +284,10 @@ where
     }
 }
 
+unsafe impl<Id> Send for DecapsulationKey<Id> where Id: AlgorithmIdentifier {}
+
+unsafe impl<Id> Sync for DecapsulationKey<Id> where Id: AlgorithmIdentifier {}
+
 impl<Id> Drop for DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
@@ -398,6 +402,10 @@ where
     }
 }
 
+unsafe impl<Id> Send for EncapsulationKey<Id> where Id: AlgorithmIdentifier {}
+
+unsafe impl<Id> Sync for EncapsulationKey<Id> where Id: AlgorithmIdentifier {}
+
 impl<Id> Drop for EncapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
@@ -499,20 +507,7 @@ fn kem_key_generate(nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Algorithm, AlgorithmIdentifier, Ciphertext, SharedSecret};
-
-    #[derive(Clone, Copy, Debug, PartialEq)]
-    enum TestAlgorithmId {
-        Foo,
-    }
-
-    impl AlgorithmIdentifier for TestAlgorithmId {
-        fn nid(self) -> i32 {
-            42
-        }
-    }
-
-    impl crate::sealed::Sealed for TestAlgorithmId {}
+    use super::{Ciphertext, SharedSecret};
 
     #[test]
     fn ciphertext() {
