@@ -311,6 +311,7 @@ jobs:
         # See: https://github.com/rust-lang/cargo/issues/8531
         run: cargo test --tests ${{ matrix.args }}
       - name: Run cargo test w/ environment
+        working-directory: ./aws-lc-rs
         if: ${{ matrix.envs }}
         run: env ${{ matrix.envs }} cargo test --tests ${{ matrix.args }}
 
