@@ -74,34 +74,17 @@ pub struct Algorithm<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
 {
-    id: Id,
-    secret_key_size: usize,
-    public_key_size: usize,
-    ciphertext_size: usize,
-    shared_secret_size: usize,
+    pub(crate) id: Id,
+    pub(crate) secret_key_size: usize,
+    pub(crate) public_key_size: usize,
+    pub(crate) ciphertext_size: usize,
+    pub(crate) shared_secret_size: usize,
 }
 
 impl<Id> Algorithm<Id>
 where
     Id: AlgorithmIdentifier,
 {
-    #[allow(dead_code)]
-    pub(crate) const fn new(
-        id: Id,
-        secret_key_size: usize,
-        public_key_size: usize,
-        ciphertext_size: usize,
-        shared_secret_size: usize,
-    ) -> Self {
-        Self {
-            id,
-            secret_key_size,
-            public_key_size,
-            ciphertext_size,
-            shared_secret_size,
-        }
-    }
-
     /// Returns the identifier for this algorithm.
     #[must_use]
     pub fn id(&self) -> Id {
@@ -548,17 +531,5 @@ mod tests {
         let secret_bytes = vec![42u8; 4];
         let shared_secret = SharedSecret::new(secret_bytes.into_boxed_slice());
         assert_eq!(shared_secret.as_ref(), &[42, 42, 42, 42]);
-    }
-
-    #[test]
-    fn algorithm_new() {
-        let alg = Algorithm::new(TestAlgorithmId::Foo, 1, 2, 3, 4);
-
-        assert_eq!(alg.id(), TestAlgorithmId::Foo);
-        assert_eq!(alg.id().nid(), 42);
-        assert_eq!(alg.secret_key_size(), 1);
-        assert_eq!(alg.public_key_size(), 2);
-        assert_eq!(alg.ciphertext_size(), 3);
-        assert_eq!(alg.shared_secret_size(), 4);
     }
 }

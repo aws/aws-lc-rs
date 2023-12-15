@@ -71,31 +71,31 @@ const KYBER1024_R3_PUBLIC_KEY_LENGTH: usize = 1568;
 const KYBER1024_R3_SHARED_SECRET_LENGTH: usize = 32;
 
 /// NIST Round 3 submission of the Kyber-512 algorithm.
-const KYBER512_R3: Algorithm<AlgorithmId> = Algorithm::new(
-    AlgorithmId::Kyber512_R3,
-    KYBER512_R3_SECRET_KEY_LENGTH,
-    KYBER512_R3_PUBLIC_KEY_LENGTH,
-    KYBER512_R3_CIPHERTEXT_LENGTH,
-    KYBER512_R3_SHARED_SECRET_LENGTH,
-);
+const KYBER512_R3: Algorithm<AlgorithmId> = Algorithm {
+    id: AlgorithmId::Kyber512_R3,
+    secret_key_size: KYBER512_R3_SECRET_KEY_LENGTH,
+    public_key_size: KYBER512_R3_PUBLIC_KEY_LENGTH,
+    ciphertext_size: KYBER512_R3_CIPHERTEXT_LENGTH,
+    shared_secret_size: KYBER512_R3_SHARED_SECRET_LENGTH,
+};
 
 /// NIST Round 3 submission of the Kyber-768 algorithm.
-const KYBER768_R3: Algorithm<AlgorithmId> = Algorithm::new(
-    AlgorithmId::Kyber768_R3,
-    KYBER768_R3_SECRET_KEY_LENGTH,
-    KYBER768_R3_PUBLIC_KEY_LENGTH,
-    KYBER768_R3_CIPHERTEXT_LENGTH,
-    KYBER768_R3_SHARED_SECRET_LENGTH,
-);
+const KYBER768_R3: Algorithm<AlgorithmId> = Algorithm {
+    id: AlgorithmId::Kyber768_R3,
+    secret_key_size: KYBER768_R3_SECRET_KEY_LENGTH,
+    public_key_size: KYBER768_R3_PUBLIC_KEY_LENGTH,
+    ciphertext_size: KYBER768_R3_CIPHERTEXT_LENGTH,
+    shared_secret_size: KYBER768_R3_SHARED_SECRET_LENGTH,
+};
 
 /// NIST Round 3 submission of the Kyber-1024 algorithm.
-const KYBER1024_R3: Algorithm<AlgorithmId> = Algorithm::new(
-    AlgorithmId::Kyber1024_R3,
-    KYBER1024_R3_SECRET_KEY_LENGTH,
-    KYBER1024_R3_PUBLIC_KEY_LENGTH,
-    KYBER1024_R3_CIPHERTEXT_LENGTH,
-    KYBER1024_R3_SHARED_SECRET_LENGTH,
-);
+const KYBER1024_R3: Algorithm<AlgorithmId> = Algorithm {
+    id: AlgorithmId::Kyber1024_R3,
+    secret_key_size: KYBER1024_R3_SECRET_KEY_LENGTH,
+    public_key_size: KYBER1024_R3_PUBLIC_KEY_LENGTH,
+    ciphertext_size: KYBER1024_R3_CIPHERTEXT_LENGTH,
+    shared_secret_size: KYBER1024_R3_SHARED_SECRET_LENGTH,
+};
 
 /// Identifier for an unstable KEM algorithm.
 #[allow(non_camel_case_types)]
