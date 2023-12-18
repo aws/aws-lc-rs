@@ -208,7 +208,7 @@ mod tests {
     };
     use crate::aead::Nonce;
     use crate::cipher::chacha::ChaCha20Key;
-    use crate::endian::LittleEndian;
+    use crate::endian::{BigEndian, FromArray, LittleEndian};
     use crate::test;
 
     #[test]
@@ -229,12 +229,15 @@ mod tests {
         }
 
         {
-            let x = LittleEndian::from(45u32);
-            let y = LittleEndian::from(897);
-            let z = LittleEndian::from(4567);
-            let iv = Nonce::from(&[x, y, z]);
+            let iv = Nonce::from(&LittleEndian::<u32>::from_array(&[45u32, 897, 4567]));
             let poly1305_key = derive_poly1305_key(&chacha_key, iv);
             assert_eq!(&expected_poly1305_key, &poly1305_key.key_and_nonce);
+        }
+
+        {
+            let iv = Nonce::from(&BigEndian::<u32>::from_array(&[45u32, 897, 4567]));
+            let poly1305_key = derive_poly1305_key(&chacha_key, iv);
+            assert_ne!(&expected_poly1305_key, &poly1305_key.key_and_nonce);
         }
     }
 

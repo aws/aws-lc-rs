@@ -3,7 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::endian::{ArrayEncoding, BigEndian, Encoding, LittleEndian};
+use crate::endian::{ArrayEncoding, BigEndian, Encoding, FromArray, LittleEndian};
 use crate::error;
 use crate::iv::FixedLength;
 
@@ -55,11 +55,7 @@ impl From<&[u8; NONCE_LEN]> for Nonce {
 impl From<&[u32; NONCE_LEN / 4]> for Nonce {
     #[inline]
     fn from(values: &[u32; NONCE_LEN / 4]) -> Self {
-        let mut nonce = [LittleEndian::ZERO; NONCE_LEN / 4];
-        for i in 0..(NONCE_LEN / 4) {
-            nonce[i] = LittleEndian::from(values[i]);
-        }
-        Nonce::from(&nonce)
+        Nonce::from(&LittleEndian::<u32>::from_array(values))
     }
 }
 
