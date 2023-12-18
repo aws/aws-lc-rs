@@ -14,6 +14,14 @@ pub(crate) struct CmakeBuilder {
     output_lib_type: OutputLibType,
 }
 
+fn test_perl_command() -> bool {
+    test_command("perl".as_ref(), &["--version".as_ref()])
+}
+
+fn test_go_command() -> bool {
+    test_command("go".as_ref(), &["version".as_ref()])
+}
+
 fn find_cmake_command() -> Option<&'static OsStr> {
     if test_command("cmake3".as_ref(), &["--version".as_ref()]) {
         Some("cmake3".as_ref())
@@ -77,7 +85,9 @@ impl CmakeBuilder {
             } else {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
             }
-        } else {
+        } else if target_os() != "windows" {
+            // The Windows/FIPS build rejects "debug" profile
+            // https://github.com/aws/aws-lc/blob/main/CMakeLists.txt#L656
             cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
         }
 
@@ -97,9 +107,6 @@ impl CmakeBuilder {
         } else {
             cmake_cfg.define("BUILD_LIBSSL", "OFF");
         }
-        // Build flags that minimize our dependencies.
-        cmake_cfg.define("DISABLE_PERL", "ON");
-        cmake_cfg.define("DISABLE_GO", "ON");
 
         if target_vendor() == "apple" {
             if target_os().trim() == "ios" {
@@ -112,6 +119,7 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
             }
         }
+        cmake_cfg.define("FIPS", "1");
 
         if cfg!(feature = "asan") {
             env::set_var("CC", "/usr/bin/clang");
@@ -134,7 +142,14 @@ impl CmakeBuilder {
 impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
         let mut missing_dependency = false;
-
+        if !test_go_command() {
+            eprintln!("Missing dependency: Go is required for FIPS.");
+            missing_dependency = true;
+        }
+        if !test_perl_command() {
+            eprintln!("Missing dependency: perl is required for FIPS.");
+            missing_dependency = true;
+        }
         if let Some(cmake_cmd) = find_cmake_command() {
             env::set_var("CMAKE", cmake_cmd);
         } else {
