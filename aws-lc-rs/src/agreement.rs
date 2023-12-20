@@ -49,13 +49,16 @@
 //!
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
+mod ephemeral;
+
+pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
+
 use crate::ec::{
     ec_group_from_nid, ec_point_from_bytes, evp_key_generate, evp_pkey_from_public_point,
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::ptr::LcPtr;
-use crate::rand::SecureRandom;
 use crate::{ec, hex};
 use aws_lc::{
     EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init,
@@ -165,10 +168,10 @@ enum KeyInner {
     X25519(LcPtr<EVP_PKEY>),
 }
 
-/// An ephemeral private key for use (only) with `agree_ephemeral`. The
-/// signature of `agree_ephemeral` ensures that an `EphemeralPrivateKey` can be
-/// used for at most one key agreement.
-pub struct EphemeralPrivateKey {
+/// A private key for use (only) with `agree`. The
+/// signature of `agree` allows `PrivateKey` to be
+/// used for more than one key agreement.
+pub struct PrivateKey {
     inner_key: KeyInner,
 }
 
@@ -184,7 +187,7 @@ impl KeyInner {
     }
 }
 
-unsafe impl Send for EphemeralPrivateKey {}
+unsafe impl Send for PrivateKey {}
 
 // https://github.com/awslabs/aws-lc/blob/main/include/openssl/ec_key.h#L88
 // An |EC_KEY| object represents a public or private EC key. A given object may
@@ -192,23 +195,20 @@ unsafe impl Send for EphemeralPrivateKey {}
 // no other thread is concurrently calling a mutating function. Unless otherwise
 // documented, functions which take a |const| pointer are non-mutating and
 // functions which take a non-|const| pointer are mutating.
-unsafe impl Sync for EphemeralPrivateKey {}
+unsafe impl Sync for PrivateKey {}
 
-impl Debug for EphemeralPrivateKey {
+impl Debug for PrivateKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(
-            "EphemeralPrivateKey {{ algorithm: {:?} }}",
+            "PrivateKey {{ algorithm: {:?} }}",
             self.inner_key.algorithm()
         ))
     }
 }
 
-impl EphemeralPrivateKey {
+impl PrivateKey {
     #[inline]
-    /// Generate a new ephemeral private key for the given algorithm.
-    ///
-    /// # *ring* Compatibility
-    ///  Our implementation ignores the `SecureRandom` parameter.
+    /// Generate a new private key for the given algorithm.
     ///
     // # FIPS
     // Use this function with one of the following algorithms:
@@ -218,29 +218,29 @@ impl EphemeralPrivateKey {
     //
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
-    pub fn generate(alg: &'static Algorithm, _rng: &dyn SecureRandom) -> Result<Self, Unspecified> {
+    pub fn generate(alg: &'static Algorithm) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
                 let priv_key = generate_x25519()?;
-                Ok(EphemeralPrivateKey {
+                Ok(PrivateKey {
                     inner_key: KeyInner::X25519(priv_key),
                 })
             }
             AlgorithmID::ECDH_P256 => {
                 let ec_key = evp_key_generate(ECDH_P256.id.nid())?;
-                Ok(EphemeralPrivateKey {
+                Ok(PrivateKey {
                     inner_key: KeyInner::ECDH_P256(ec_key),
                 })
             }
             AlgorithmID::ECDH_P384 => {
                 let ec_key = evp_key_generate(ECDH_P384.id.nid())?;
-                Ok(EphemeralPrivateKey {
+                Ok(PrivateKey {
                     inner_key: KeyInner::ECDH_P384(ec_key),
                 })
             }
             AlgorithmID::ECDH_P521 => {
                 let ec_key = evp_key_generate(ECDH_P521.id.nid())?;
-                Ok(EphemeralPrivateKey {
+                Ok(PrivateKey {
                     inner_key: KeyInner::ECDH_P521(ec_key),
                 })
             }
@@ -251,7 +251,7 @@ impl EphemeralPrivateKey {
     #[allow(clippy::missing_errors_doc)]
     pub fn generate_for_test(
         alg: &'static Algorithm,
-        rng: &dyn SecureRandom,
+        rng: &dyn crate::rand::SecureRandom,
     ) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
@@ -292,7 +292,7 @@ impl EphemeralPrivateKey {
             )
         })?;
 
-        Ok(EphemeralPrivateKey {
+        Ok(PrivateKey {
             inner_key: KeyInner::X25519(pkey),
         })
     }
@@ -300,7 +300,7 @@ impl EphemeralPrivateKey {
     #[cfg(test)]
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = from_ec_private_key(priv_key, ECDH_P256.id.nid())?;
-        Ok(EphemeralPrivateKey {
+        Ok(PrivateKey {
             inner_key: KeyInner::ECDH_P256(pkey),
         })
     }
@@ -308,7 +308,7 @@ impl EphemeralPrivateKey {
     #[cfg(test)]
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = from_ec_private_key(priv_key, ECDH_P384.id.nid())?;
-        Ok(EphemeralPrivateKey {
+        Ok(PrivateKey {
             inner_key: KeyInner::ECDH_P384(pkey),
         })
     }
@@ -316,7 +316,7 @@ impl EphemeralPrivateKey {
     #[cfg(test)]
     fn from_p521_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = from_ec_private_key(priv_key, ECDH_P521.id.nid())?;
-        Ok(EphemeralPrivateKey {
+        Ok(PrivateKey {
             inner_key: KeyInner::ECDH_P521(pkey),
         })
     }
@@ -480,16 +480,14 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     }
 }
 
-/// Performs a key agreement with an ephemeral private key and the given public
-/// key.
+/// Performs a key agreement with a private key and the given public key.
 ///
-/// `my_private_key` is the ephemeral private key to use. Since it is moved, it
-/// will not be usable after calling `agree_ephemeral`, thus guaranteeing that
-/// the key is used for only one key agreement.
+/// `my_private_key` is the private key to use. Only a reference to the key
+/// is required, allowing the key to continue to be used.
 ///
-/// `peer_public_key` is the peer's public key. `agree_ephemeral` will return
+/// `peer_public_key` is the peer's public key. `agree` will return
 /// `Err(error_value)` if it does not match `my_private_key's` algorithm/curve.
-/// `agree_ephemeral` verifies that it is encoded in the standard form for the
+/// `agree` verifies that it is encoded in the standard form for the
 /// algorithm and that the key is *valid*; see the algorithm's documentation for
 /// details on how keys are to be encoded and what constitutes a valid key for
 /// that algorithm.
@@ -498,7 +496,7 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// called, e.g. when decoding of the peer's public key fails or when the public
 /// key is otherwise invalid.
 ///
-/// After the key agreement is done, `agree_ephemeral` calls `kdf` with the raw
+/// After the key agreement is done, `agree` calls `kdf` with the raw
 /// key material from the key agreement operation and then returns what `kdf`
 /// returns.
 ///
@@ -511,10 +509,9 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// # Errors
 /// `error_value` on internal failure.
 #[inline]
-#[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::missing_panics_doc)]
-pub fn agree_ephemeral<B: AsRef<[u8]>, F, R, E>(
-    my_private_key: EphemeralPrivateKey,
+pub fn agree<B: AsRef<[u8]>, F, R, E>(
+    my_private_key: &PrivateKey,
     peer_public_key: &UnparsedPublicKey<B>,
     error_value: E,
     kdf: F,
@@ -703,7 +700,7 @@ mod tests {
 
         let my_private = {
             let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-            agreement::EphemeralPrivateKey::generate_for_test(alg, &rng).unwrap()
+            agreement::PrivateKey::generate_for_test(alg, &rng).unwrap()
         };
 
         let my_public = test::from_dirty_hex(
@@ -720,11 +717,17 @@ mod tests {
 
         assert_eq!(computed_public.algorithm(), alg);
 
-        let result = agreement::agree_ephemeral(my_private, &peer_public, (), |key_material| {
+        let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
             assert_eq!(key_material, &output[..]);
             Ok(())
         });
         assert_eq!(result, Ok(()));
+
+        let result2 = agreement::agree(&my_private, &peer_public, (), |key_material| {
+            assert_eq!(key_material, &output[..]);
+            Ok(())
+        });
+        assert_eq!(result2, Ok(()));
     }
 
     #[test]
@@ -857,13 +860,24 @@ mod tests {
 
         let rng = rand::SystemRandom::new();
         let private_key =
-            agreement::EphemeralPrivateKey::generate_for_test(&agreement::ECDH_P256, &rng).unwrap();
+            agreement::PrivateKey::generate_for_test(&agreement::ECDH_P256, &rng).unwrap();
 
-        test::compile_time_assert_send::<agreement::EphemeralPrivateKey>();
-        //test::compile_time_assert_sync::<agreement::EphemeralPrivateKey>();
+        test::compile_time_assert_send::<agreement::PrivateKey>();
+        test::compile_time_assert_sync::<agreement::PrivateKey>();
 
         assert_eq!(
             format!("{:?}", &private_key),
+            "PrivateKey { algorithm: Algorithm { curve: P256 } }"
+        );
+
+        let ephemeral_private_key =
+            agreement::EphemeralPrivateKey::generate_for_test(&agreement::ECDH_P256, &rng).unwrap();
+
+        test::compile_time_assert_send::<agreement::EphemeralPrivateKey>();
+        test::compile_time_assert_sync::<agreement::EphemeralPrivateKey>();
+
+        assert_eq!(
+            format!("{:?}", &ephemeral_private_key),
             "EphemeralPrivateKey { algorithm: Algorithm { curve: P256 } }"
         );
 
