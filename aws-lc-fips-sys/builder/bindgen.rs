@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::{
-    get_aws_lc_fips_sys_includes_path, get_aws_lc_include_path, get_aws_lc_rand_extra_path,
-    get_generated_include_path, get_rust_include_path, is_private_api_enabled,
+    get_aws_lc_fips_sys_includes_path, get_aws_lc_include_path, get_generated_include_path,
+    get_rust_include_path,
 };
 use bindgen::callbacks::{ItemInfo, ParseCallbacks};
 use std::fmt::Debug;
@@ -58,15 +58,6 @@ fn prepare_clang_args(manifest_dir: &Path) -> Vec<String> {
         &mut clang_args,
         get_aws_lc_include_path(manifest_dir).display().to_string(),
     );
-
-    if is_private_api_enabled() {
-        clang_args.push("-I".to_string());
-        clang_args.push(
-            get_aws_lc_rand_extra_path(manifest_dir)
-                .display()
-                .to_string(),
-        );
-    }
 
     if let Some(include_paths) = get_aws_lc_fips_sys_includes_path() {
         for path in include_paths {
@@ -143,12 +134,6 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions<'_>) -
 
     if options.include_ssl {
         builder = builder.clang_arg("-DAWS_LC_RUST_INCLUDE_SSL");
-    }
-
-    if is_private_api_enabled() {
-        builder = builder
-            .clang_arg("-DAWS_LC_RUST_PRIVATE_INTERNALS")
-            .allowlist_file(r".*(/|\\)pq_custom_randombytes\.h");
     }
 
     builder = builder.parse_callbacks(Box::new(StripPrefixCallback::new(options.build_prefix)));

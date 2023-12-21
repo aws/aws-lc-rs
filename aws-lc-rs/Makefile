@@ -30,13 +30,11 @@ test:
 ifeq ($(UNAME_S),Linux)
 	cargo test --release --all-targets --features fips,unstable
 	cargo test --no-default-features --features fips,unstable
-	env AWS_LC_RUST_PRIVATE_INTERNALS=1 cargo test --no-default-features --features fips,bindgen,unstable
 endif
 	cargo test --no-default-features --features aws-lc-sys,unstable
 	cargo test --no-default-features --features aws-lc-sys,ring-sig-verify,unstable
 	cargo test --no-default-features --features aws-lc-sys,ring-io,unstable
 	cargo test --no-default-features --features aws-lc-sys,alloc,unstable
-	env AWS_LC_RUST_PRIVATE_INTERNALS=1 cargo test --no-default-features --features aws-lc-sys,bindgen,unstable
 
 msrv:
 	cargo msrv verify

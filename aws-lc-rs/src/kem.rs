@@ -8,9 +8,10 @@
 //! Note that this example uses the Kyber-512 Round 3 algorithm, but other algorithms can be used
 //! in the exact same way by substituting
 //! `kem::<desired_algorithm_here>` for `kem::KYBER512_R3`.
-//!
+//! 
 //! ```ignore
 //! use aws_lc_rs::{
+//!     encoding::AsDer,
 //!     error::Unspecified,
 //!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
 //!     unstable::kem::{AlgorithmId, get_algorithm}
@@ -23,10 +24,12 @@
 //!
 //! // Alices computes the (public) encapsulation key.
 //! let encapsulation_key = decapsulation_key.encapsulation_key()?;
+//! 
+//! let encapsulation_key_der = encapsulation_key.as_der()?;
 //!
-//! // Alice sends the public key bytes to bob through some
+//! // Alice sends the encapsulation key bytes to bob through some
 //! // protocol message.
-//! let encapsulation_key_bytes = encapsulation_key.as_ref();
+//! let encapsulation_key_bytes = encapsulation_key_der.as_ref();
 //!
 //! // Bob constructs the (public) encapsulation key from the key bytes provided by Alice.
 //! let retrieved_encapsulation_key = EncapsulationKey::new(kyber512_r3, encapsulation_key_bytes)?;
@@ -47,6 +50,8 @@
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
 use crate::{
+    buffer::Buffer,
+    encoding::AsDer,
     error::{KeyRejected, Unspecified},
     ptr::LcPtr,
     ptr::Pointer,
@@ -55,7 +60,7 @@ use aws_lc::{
     EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
     EVP_PKEY_encapsulate, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
     EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_keygen,
-    EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM,
+    EVP_PKEY_keygen_init, EVP_PKEY_up_ref, EVP_PKEY, EVP_PKEY_KEM,
 };
 use std::{borrow::Cow, cmp::Ordering, fmt::Debug, ptr::null_mut};
 use zeroize::Zeroize;
@@ -75,8 +80,8 @@ where
     Id: AlgorithmIdentifier,
 {
     pub(crate) id: Id,
-    pub(crate) secret_key_size: usize,
-    pub(crate) public_key_size: usize,
+    pub(crate) decapsulate_key_size: usize,
+    pub(crate) encapsulate_key_size: usize,
     pub(crate) ciphertext_size: usize,
     pub(crate) shared_secret_size: usize,
 }
@@ -92,13 +97,13 @@ where
     }
 
     #[inline]
-    pub(crate) fn secret_key_size(&self) -> usize {
-        self.secret_key_size
+    pub(crate) fn decapsulate_key_size(&self) -> usize {
+        self.decapsulate_key_size
     }
 
     #[inline]
-    pub(crate) fn public_key_size(&self) -> usize {
-        self.public_key_size
+    pub(crate) fn encapsulate_key_size(&self) -> usize {
+        self.encapsulate_key_size
     }
 
     #[inline]
@@ -121,15 +126,13 @@ where
     }
 }
 
-/// A serializable private key usable with KEMs. This can be randomly generated with `KemPrivateKey::generate`
-/// or constructed from raw bytes.
+/// A serializable decapulsation key usable with KEMs. This can be randomly generated with `DecapsulationKey::generate`.
 pub struct DecapsulationKey<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
 {
     algorithm: &'static Algorithm<Id>,
     evp_pkey: LcPtr<EVP_PKEY>,
-    priv_key: Box<[u8]>,
 }
 
 /// Identifier for a KEM algorithm.
@@ -152,12 +155,12 @@ impl<Id> DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
-    /// Generate a new KEM private key for the given algorithm.
+    /// Generate a new KEM decapsulation key for the given algorithm.
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
     pub fn generate(alg: &'static Algorithm<Id>) -> Result<Self, Unspecified> {
-        let mut secret_key_size = alg.secret_key_size();
+        let mut secret_key_size = alg.decapsulate_key_size();
         let mut priv_key_bytes = vec![0u8; secret_key_size];
         let kyber_key = kem_key_generate(alg.id.nid())?;
         if 1 != unsafe {
@@ -172,55 +175,43 @@ where
         Ok(DecapsulationKey {
             algorithm: alg,
             evp_pkey: kyber_key,
-            priv_key: priv_key_bytes.into(),
         })
     }
 
-    /// Return the algorithm associated with the given KEM private key.
+    /// Return the algorithm associated with the given KEM decapsulation key.
     #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm<Id> {
         self.algorithm
     }
 
-    /// Computes the KEM public key from the KEM private key
+    /// Computes the KEM encapsulation key from the KEM decapsulation key.
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
+    #[allow(clippy::missing_panics_doc)]
     pub fn encapsulation_key(&self) -> Result<EncapsulationKey<Id>, Unspecified> {
-        let mut public_key_size = self.algorithm.public_key_size();
-        let mut pubkey_bytes = vec![0u8; public_key_size];
-        if 1 != unsafe {
-            EVP_PKEY_get_raw_public_key(
-                self.evp_pkey.as_const_ptr(),
-                pubkey_bytes.as_mut_ptr(),
-                &mut public_key_size,
-            )
-        } {
+        // This is pedantic this function always returns 1
+        if 1 != unsafe { EVP_PKEY_up_ref(*self.evp_pkey) } {
             return Err(Unspecified);
-        }
+        };
 
-        let pubkey = LcPtr::new(unsafe {
-            EVP_PKEY_kem_new_raw_public_key(
-                self.algorithm.id.nid(),
-                pubkey_bytes.as_ptr(),
-                public_key_size,
-            )
-        })?;
+        let evp_pkey = if let Ok(ptr) = LcPtr::new(*self.evp_pkey) {
+            ptr
+        } else {
+            // This should NEVER be reached, it would imply self.evp_pkey is now null since the last call!
+            panic!();
+        };
 
         Ok(EncapsulationKey {
             algorithm: self.algorithm,
-            evp_pkey: pubkey,
-            pub_key: pubkey_bytes.into(),
+            evp_pkey,
         })
     }
 
-    /// Performs the decapsulate operation using the current KEM private key on the given ciphertext.
+    /// Performs the decapsulate operation using this KEM decapsulation key on the given ciphertext.
     ///
-    /// `ciphertext` is the ciphertext generated by the encapsulate operation using the KEM public key
-    /// associated with the current KEM private key.
-    ///
-    /// After the decapsulation is finished, `decapsulate` calls `kdf` with the raw shared secret
-    /// from the operation and then returns what `kdf` returns.
+    /// `ciphertext` is the ciphertext generated by the encapsulate operation using the KEM encapsulation key
+    /// associated with this KEM decapsulation key.
     ///
     /// # Errors
     /// `Unspecified` when operation fails due to internal error.
@@ -256,19 +247,9 @@ where
         Ok(SharedSecret(shared_secret.into_boxed_slice()))
     }
 
-    /// Creates a new KEM private key from raw bytes. This method is NOT meant to generate
-    /// a new private key, rather it restores a `KemPrivateKey` that was previously converted
-    /// to raw bytes.
-    ///
-    /// `alg` is the `Algorithm` to be associated with the generated `KemPrivateKey`
-    ///
-    /// `bytes` is a slice of raw bytes representing a `KemPrivateKey`
-    ///
-    /// # Errors
-    /// `error::KeyRejected` when operation fails during key creation.
     #[allow(dead_code)]
     pub(crate) fn new(alg: &'static Algorithm<Id>, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        match bytes.len().cmp(&alg.secret_key_size()) {
+        match bytes.len().cmp(&alg.decapsulate_key_size()) {
             Ordering::Less => Err(KeyRejected::too_small()),
             Ordering::Greater => Err(KeyRejected::too_large()),
             Ordering::Equal => Ok(()),
@@ -279,7 +260,6 @@ where
         Ok(DecapsulationKey {
             algorithm: alg,
             evp_pkey: privkey,
-            priv_key: bytes.into(),
         })
     }
 }
@@ -288,57 +268,47 @@ unsafe impl<Id> Send for DecapsulationKey<Id> where Id: AlgorithmIdentifier {}
 
 unsafe impl<Id> Sync for DecapsulationKey<Id> where Id: AlgorithmIdentifier {}
 
-impl<Id> Drop for DecapsulationKey<Id>
-where
-    Id: AlgorithmIdentifier,
-{
-    fn drop(&mut self) {
-        self.priv_key.zeroize();
-    }
-}
-
-impl<Id> AsRef<[u8]> for DecapsulationKey<Id>
-where
-    Id: AlgorithmIdentifier,
-{
-    fn as_ref(&self) -> &[u8] {
-        &self.priv_key
-    }
-}
-
 impl<Id> Debug for DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("PrivateKey")
+        f.debug_struct("DecapsulationKey")
             .field("algorithm", &self.algorithm)
             .finish_non_exhaustive()
     }
 }
 
-/// A serializable public key usable with KEMS. This can be constructed
-/// from a `KemPrivateKey` or constructed from raw bytes.
+mod encoding {
+    pub struct PublicKeyBinDerType {
+        _priv: (),
+    }
+}
+
+/// A KEM Encapsulation Key Big-Endian number representation encoded using DER.
+pub type EncapsulationKeyBinDer = Buffer<'static, encoding::PublicKeyBinDerType>;
+
+/// A serializable encapsulation key usable with KEM algoruthms. Constructed
+/// from either a `DecapsulationKey` or raw bytes.
 pub struct EncapsulationKey<Id = AlgorithmId>
 where
     Id: AlgorithmIdentifier,
 {
     algorithm: &'static Algorithm<Id>,
     evp_pkey: LcPtr<EVP_PKEY>,
-    pub_key: Box<[u8]>,
 }
 
 impl<Id> EncapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
-    /// Return the algorithm associated with the given KEM public key.
+    /// Return the algorithm associated with the given KEM encapsulation key.
     #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm<Id> {
         self.algorithm
     }
 
-    /// Performs the encapsulate operation using the current KEM public key, generating a ciphertext
+    /// Performs the encapsulate operation using this KEM encapsulation key, generating a ciphertext
     /// and associated shared secret.
     ///
     /// After the encapsulation is finished, `encapsulate` calls `kdf` with the ciphertext and raw shared secret
@@ -375,18 +345,18 @@ where
         ))
     }
 
-    /// Creates a new KEM public key from raw bytes. This method is MUST NOT be used to generate
-    /// a new public key, rather it should be used to construct `PublicKey` that was previously serialized
+    /// Creates a new KEM encapsulation key from raw bytes. This method MUST NOT be used to generate
+    /// a new encapsulation key, rather it MUST be used to construct `EncapsulationKey` previously serialized
     /// to raw bytes.
     ///
-    /// `alg` is the [`Algorithm`] to be associated with the generated `PublicKey`
+    /// `alg` is the [`Algorithm`] to be associated with the generated `EncapsulationKey`.
     ///
-    /// `bytes` is a slice of raw bytes representing a `PublicKey`
+    /// `bytes` is a slice of raw bytes representing a `EncapsulationKey`.
     ///
     /// # Errors
     /// `error::KeyRejected` when operation fails during key creation.
     pub fn new(alg: &'static Algorithm<Id>, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        match bytes.len().cmp(&alg.public_key_size()) {
+        match bytes.len().cmp(&alg.encapsulate_key_size()) {
             Ordering::Less => Err(KeyRejected::too_small()),
             Ordering::Greater => Err(KeyRejected::too_large()),
             Ordering::Equal => Ok(()),
@@ -397,7 +367,6 @@ where
         Ok(EncapsulationKey {
             algorithm: alg,
             evp_pkey: pubkey,
-            pub_key: bytes.into(),
         })
     }
 }
@@ -406,21 +375,26 @@ unsafe impl<Id> Send for EncapsulationKey<Id> where Id: AlgorithmIdentifier {}
 
 unsafe impl<Id> Sync for EncapsulationKey<Id> where Id: AlgorithmIdentifier {}
 
-impl<Id> Drop for EncapsulationKey<Id>
+impl<Id> AsDer<EncapsulationKeyBinDer> for EncapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
-    fn drop(&mut self) {
-        self.pub_key.zeroize();
-    }
-}
+    fn as_der(&self) -> Result<EncapsulationKeyBinDer, Unspecified> {
+        let mut public_key_size = self.algorithm.encapsulate_key_size();
+        let mut pubkey_bytes = vec![0u8; public_key_size];
+        if 1 != unsafe {
+            EVP_PKEY_get_raw_public_key(
+                self.evp_pkey.as_const_ptr(),
+                pubkey_bytes.as_mut_ptr(),
+                &mut public_key_size,
+            )
+        } {
+            return Err(Unspecified);
+        }
 
-impl<Id> AsRef<[u8]> for EncapsulationKey<Id>
-where
-    Id: AlgorithmIdentifier,
-{
-    fn as_ref(&self) -> &[u8] {
-        &self.pub_key
+        pubkey_bytes.truncate(public_key_size);
+
+        Ok(Buffer::new(pubkey_bytes))
     }
 }
 
@@ -429,13 +403,13 @@ where
     Id: AlgorithmIdentifier,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("PublicKey")
+        f.debug_struct("EncapsulationKey")
             .field("algorithm", &self.algorithm)
             .finish_non_exhaustive()
     }
 }
 
-/// A set of encrypted bytes produced by [`PublicKey::encapsulate`], and used as an input to [`PrivateKey::decapsulate`].
+/// A set of encrypted bytes produced by [`EncapsulationKey::encapsulate`], and used as an input to [`DecapsulationKey::decapsulate`].
 pub struct Ciphertext<'a>(Cow<'a, [u8]>);
 
 impl<'a> Ciphertext<'a> {
