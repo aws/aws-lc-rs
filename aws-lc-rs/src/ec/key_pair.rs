@@ -8,7 +8,7 @@ use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ptr::{null, null_mut};
 
-use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY, EVP_PKEY_EC};
+use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY};
 
 use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
@@ -54,7 +54,7 @@ impl KeyPair for EcdsaKeyPair {
 
 impl EcdsaKeyPair {
     #[allow(clippy::needless_pass_by_value)]
-    unsafe fn new(
+    fn new(
         algorithm: &'static EcdsaSigningAlgorithm,
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
@@ -73,11 +73,9 @@ impl EcdsaKeyPair {
     /// `error::Unspecified` on internal error.
     ///
     pub fn generate(alg: &'static EcdsaSigningAlgorithm) -> Result<Self, Unspecified> {
-        unsafe {
-            let evp_pkey = evp_key_generate(alg.0.id.nid())?;
+        let evp_pkey = evp_key_generate(alg.0.id.nid())?;
 
-            Ok(Self::new(alg, evp_pkey)?)
-        }
+        Ok(Self::new(alg, evp_pkey)?)
     }
 
     /// Constructs an ECDSA key pair by parsing an unencrypted PKCS#8 v1
@@ -157,7 +155,7 @@ impl EcdsaKeyPair {
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let private_bn = DetachableLcPtr::try_from(private_key)?;
             let evp_pkey =
-                ec::evp_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
+                ec::evp_key_from_public_private(&ec_group, Some(&public_ec_point), &private_bn)?;
 
             let key_pair = Self::new(alg, evp_pkey)?;
             Ok(key_pair)
@@ -180,27 +178,9 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         private_key: &[u8],
     ) -> Result<Self, KeyRejected> {
-        unsafe {
-            let mut out = std::ptr::null_mut();
-            if aws_lc::d2i_PrivateKey(
-                EVP_PKEY_EC,
-                &mut out,
-                &mut private_key.as_ptr(),
-                private_key
-                    .len()
-                    .try_into()
-                    .map_err(|_| KeyRejected::too_large())?,
-            )
-            .is_null()
-            {
-                // FIXME: unclear which error or if we can get more detail
-                return Err(KeyRejected::unexpected_error());
-            }
-            let evp_pkey = LcPtr::new(out)?;
-            validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
+        let evp_pkey = unsafe { ec::unmarshal_der_to_private_key(private_key, alg.id.nid())? };
 
-            Ok(Self::new(alg, evp_pkey)?)
-        }
+        Ok(Self::new(alg, evp_pkey)?)
     }
 
     /// Access functions related to the private key.

@@ -56,17 +56,23 @@ pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 use crate::ec::{
     ec_group_from_nid, ec_point_from_bytes, evp_key_generate, evp_pkey_from_public_point,
 };
-use crate::error::Unspecified;
+use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
-use crate::ptr::LcPtr;
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
 use crate::{ec, hex};
 use aws_lc::{
     EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init,
-    EVP_PKEY_derive_set_peer, EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
-    EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY,
-    EVP_PKEY_X25519, NID_X25519,
+    EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
+    EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
+    EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1,
+    NID_secp521r1, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
 
+use crate::buffer::Buffer;
+use crate::ed25519::ED25519_PRIVATE_KEY_SEED_LEN;
+use crate::encoding::{
+    AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
+};
 use core::fmt;
 use std::fmt::{Debug, Formatter};
 use std::ptr::null_mut;
@@ -98,6 +104,16 @@ impl AlgorithmID {
             AlgorithmID::ECDH_P384 => 97,
             AlgorithmID::ECDH_P521 => 133,
             AlgorithmID::X25519 => 32,
+        }
+    }
+
+    #[inline]
+    fn private_key_size(&self) -> usize {
+        match self {
+            AlgorithmID::ECDH_P256 => 32,
+            AlgorithmID::ECDH_P384 => 48,
+            AlgorithmID::ECDH_P521 => 66,
+            AlgorithmID::X25519 => ED25519_PRIVATE_KEY_SEED_LEN,
         }
     }
 }
@@ -152,7 +168,6 @@ pub static ECDH_P521: Algorithm = Algorithm {
 pub static X25519: Algorithm = Algorithm {
     id: AlgorithmID::X25519,
 };
-#[cfg(test)]
 const X25519_PRIVATE_KEY_LEN: usize = aws_lc::X25519_PRIVATE_KEY_LEN as usize;
 #[cfg(test)]
 const ECDH_P256_PRIVATE_KEY_LEN: usize = 32;
@@ -185,6 +200,15 @@ impl KeyInner {
             KeyInner::X25519(..) => &X25519,
         }
     }
+
+    fn get_evp_pkey(&self) -> &LcPtr<EVP_PKEY> {
+        match self {
+            KeyInner::ECDH_P256(evp_pkey)
+            | KeyInner::ECDH_P384(evp_pkey)
+            | KeyInner::ECDH_P521(evp_pkey)
+            | KeyInner::X25519(evp_pkey) => evp_pkey,
+        }
+    }
 }
 
 unsafe impl Send for PrivateKey {}
@@ -207,6 +231,23 @@ impl Debug for PrivateKey {
 }
 
 impl PrivateKey {
+    fn new(alg: &'static Algorithm, evp_pkey: LcPtr<EVP_PKEY>) -> Self {
+        match alg.id {
+            AlgorithmID::X25519 => Self {
+                inner_key: KeyInner::X25519(evp_pkey),
+            },
+            AlgorithmID::ECDH_P256 => Self {
+                inner_key: KeyInner::ECDH_P256(evp_pkey),
+            },
+            AlgorithmID::ECDH_P384 => Self {
+                inner_key: KeyInner::ECDH_P384(evp_pkey),
+            },
+            AlgorithmID::ECDH_P521 => Self {
+                inner_key: KeyInner::ECDH_P521(evp_pkey),
+            },
+        }
+    }
+
     #[inline]
     /// Generate a new private key for the given algorithm.
     ///
@@ -219,32 +260,67 @@ impl PrivateKey {
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
     pub fn generate(alg: &'static Algorithm) -> Result<Self, Unspecified> {
-        match alg.id {
-            AlgorithmID::X25519 => {
-                let priv_key = generate_x25519()?;
-                Ok(PrivateKey {
-                    inner_key: KeyInner::X25519(priv_key),
-                })
-            }
-            AlgorithmID::ECDH_P256 => {
-                let ec_key = evp_key_generate(ECDH_P256.id.nid())?;
-                Ok(PrivateKey {
-                    inner_key: KeyInner::ECDH_P256(ec_key),
-                })
-            }
-            AlgorithmID::ECDH_P384 => {
-                let ec_key = evp_key_generate(ECDH_P384.id.nid())?;
-                Ok(PrivateKey {
-                    inner_key: KeyInner::ECDH_P384(ec_key),
-                })
-            }
-            AlgorithmID::ECDH_P521 => {
-                let ec_key = evp_key_generate(ECDH_P521.id.nid())?;
-                Ok(PrivateKey {
-                    inner_key: KeyInner::ECDH_P521(ec_key),
-                })
-            }
+        let evp_pkey = match alg.id {
+            AlgorithmID::X25519 => generate_x25519()?,
+            _ => evp_key_generate(alg.id.nid())?,
+        };
+        Ok(Self::new(alg, evp_pkey))
+    }
+
+    /// Deserializes a DER-encoded private key structure to produce a `agreement::PrivateKey`.
+    ///
+    /// This function is typically used to deserialize RFC 5915 encoded private keys, but it will
+    /// attempt to automatically detect other key formats. This function supports unencrypted
+    /// PKCS#8 `PrivateKeyInfo` structures as well as key type specific formats.
+    ///
+    /// X25519 keys are not supported. See `PrivateKey::as_der`.
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
+    ///
+    /// # Panics
+    pub fn from_private_key_der(
+        alg: &'static Algorithm,
+        key_bytes: &[u8],
+    ) -> Result<Self, KeyRejected> {
+        if AlgorithmID::X25519 == alg.id {
+            return Err(KeyRejected::invalid_encoding());
         }
+        let evp_pkey = unsafe { ec::unmarshal_der_to_private_key(key_bytes, alg.id.nid())? };
+        Ok(Self::new(alg, evp_pkey))
+    }
+
+    /// Constructs an ECDH key from private key bytes
+    ///
+    /// The private key must encoded as a big-endian fixed-length integer. For
+    /// example, a P-256 private key must be 32 bytes prefixed with leading
+    /// zeros as needed.
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if parsing failed or key otherwise unacceptable.
+    pub fn from_private_key(
+        alg: &'static Algorithm,
+        key_bytes: &[u8],
+    ) -> Result<Self, KeyRejected> {
+        let evp_pkey = if AlgorithmID::X25519 == alg.id {
+            LcPtr::new(unsafe {
+                EVP_PKEY_new_raw_private_key(
+                    EVP_PKEY_X25519,
+                    null_mut(),
+                    key_bytes.as_ptr(),
+                    X25519_PRIVATE_KEY_LEN,
+                )
+            })?
+        } else {
+            let ec_group = unsafe { ec_group_from_nid(alg.id.nid())? };
+            let private_bn = DetachableLcPtr::try_from(key_bytes)?;
+
+            unsafe {
+                ec::evp_pkey_from_private(&ec_group.as_const(), &private_bn.as_const())
+                    .map_err(|_| KeyRejected::invalid_encoding())?
+            }
+        };
+        Ok(Self::new(alg, evp_pkey))
     }
 
     #[cfg(test)]
@@ -281,8 +357,6 @@ impl PrivateKey {
     fn from_x25519_private_key(
         priv_key: &[u8; X25519_PRIVATE_KEY_LEN],
     ) -> Result<Self, Unspecified> {
-        use aws_lc::EVP_PKEY_new_raw_private_key;
-
         let pkey = LcPtr::new(unsafe {
             EVP_PKEY_new_raw_private_key(
                 EVP_PKEY_X25519,
@@ -368,10 +442,80 @@ impl PrivateKey {
     }
 }
 
+impl AsDer<EcPrivateKeyRfc5915Der> for PrivateKey {
+    /// Serializes the key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
+    ///
+    /// X25519 is not supported.
+    ///
+    /// # Errors
+    /// `error::Unspecified`  if serialization failed.
+    fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der, Unspecified> {
+        if AlgorithmID::X25519 == self.inner_key.algorithm().id {
+            return Err(Unspecified);
+        }
+
+        let mut outp = null_mut::<u8>();
+        let ec_key = {
+            ConstPointer::new(unsafe {
+                EVP_PKEY_get0_EC_KEY(self.inner_key.get_evp_pkey().as_const_ptr())
+            })?
+        };
+        let length = usize::try_from(unsafe { aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp) })
+            .map_err(|_| Unspecified)?;
+        let outp = LcPtr::new(outp)?;
+        Ok(Buffer::take_from_slice(unsafe {
+            std::slice::from_raw_parts_mut(*outp, length)
+        }))
+    }
+}
+
+impl AsBigEndian<EcPrivateKeyBin> for PrivateKey {
+    /// Exposes the private key encoded as a big-endian fixed-length integer.
+    ///
+    /// X25519 is not supported.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if serialization failed.
+    fn as_be_bytes(&self) -> Result<EcPrivateKeyBin, Unspecified> {
+        if AlgorithmID::X25519 == self.inner_key.algorithm().id {
+            return Err(Unspecified);
+        }
+        let buffer = unsafe {
+            ec::marshal_private_key_to_buffer(
+                self.inner_key.algorithm().id.private_key_size(),
+                &self.inner_key.get_evp_pkey().as_const(),
+            )?
+        };
+        Ok(EcPrivateKeyBin::new(buffer))
+    }
+}
+
+impl AsBigEndian<Curve25519SeedBin> for PrivateKey {
+    /// Exposes the seed encoded as a big-endian fixed-length integer.
+    ///
+    /// Only X25519 is supported.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if serialization failed.
+    fn as_be_bytes(&self) -> Result<Curve25519SeedBin, Unspecified> {
+        if AlgorithmID::X25519 != self.inner_key.algorithm().id {
+            return Err(Unspecified);
+        }
+        let evp_pkey = self.inner_key.get_evp_pkey().as_const();
+        let mut buffer = [0u8; ED25519_PRIVATE_KEY_SEED_LEN];
+        let mut out_len = ED25519_PRIVATE_KEY_SEED_LEN;
+        if 1 != unsafe {
+            EVP_PKEY_get_raw_private_key(*evp_pkey, buffer.as_mut_ptr(), &mut out_len)
+        } {
+            return Err(Unspecified);
+        }
+        debug_assert_eq!(32, out_len);
+        Ok(Curve25519SeedBin::new(Vec::from(buffer)))
+    }
+}
+
 #[cfg(test)]
 fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    use crate::ptr::DetachableLcPtr;
-
     let ec_group = unsafe { ec_group_from_nid(nid)? };
     let priv_key = DetachableLcPtr::try_from(priv_key)?;
 
@@ -626,63 +770,13 @@ fn x25519_diffie_hellman<'a>(
 
 #[cfg(test)]
 mod tests {
-    use crate::error::Unspecified;
-    use crate::{agreement, rand, test, test_file};
-
-    #[cfg(feature = "fips")]
-    mod fips;
-
-    #[test]
-    fn test_agreement_ecdh_x25519_rfc_iterated() {
-        fn expect_iterated_x25519(
-            expected_result: &str,
-            range: core::ops::Range<usize>,
-            k: &mut Vec<u8>,
-            u: &mut Vec<u8>,
-        ) {
-            for _ in range {
-                let new_k = x25519(k, u);
-                *u = k.clone();
-                *k = new_k;
-            }
-            assert_eq!(&h(expected_result), k);
-        }
-
-        let mut k = h("0900000000000000000000000000000000000000000000000000000000000000");
-        let mut u = k.clone();
-
-        expect_iterated_x25519(
-            "422c8e7a6227d7bca1350b3e2bb7279f7897b87bb6854b783c60e80311ae3079",
-            0..1,
-            &mut k,
-            &mut u,
-        );
-        expect_iterated_x25519(
-            "684cf59ba83309552800ef566f2f4d3c1c3887c49360e3875f2eb94d99532c51",
-            1..1_000,
-            &mut k,
-            &mut u,
-        );
-
-        // The spec gives a test vector for 1,000,000 iterations but it takes
-        // too long to do 1,000,000 iterations by default right now. This
-        // 10,000 iteration vector is self-computed.
-        expect_iterated_x25519(
-            "2c125a20f639d504a7703d2e223c79a79de48c4ee8c23379aa19a62ecd211815",
-            1_000..10_000,
-            &mut k,
-            &mut u,
-        );
-
-        if cfg!(feature = "slow_tests") {
-            expect_iterated_x25519(
-                "7c3911e0ab2586fd864497297e575e6f3bc601c0883c30df5f4dd2d24f665424",
-                10_000..1_000_000,
-                &mut k,
-                &mut u,
-            );
-        }
-    }
+    use crate::agreement::{
+        PrivateKey, PublicKey, UnparsedPublicKey, ECDH_P256, ECDH_P384, ECDH_P521, X25519,
+    };
+    use crate::encoding::{
+        AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
+    };
+    use crate::{agreement, rand, test};
 
     #[test]
     fn test_agreement_x25519() {
@@ -700,7 +794,7 @@ mod tests {
 
         let my_private = {
             let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-            agreement::PrivateKey::generate_for_test(alg, &rng).unwrap()
+            PrivateKey::generate_for_test(alg, &rng).unwrap()
         };
 
         let my_public = test::from_dirty_hex(
@@ -712,22 +806,35 @@ mod tests {
 
         assert_eq!(my_private.algorithm(), alg);
 
+        let be_private_key_buffer: Curve25519SeedBin = my_private.as_be_bytes().unwrap();
+        let be_private_key =
+            PrivateKey::from_private_key(&X25519, be_private_key_buffer.as_ref()).unwrap();
+        {
+            let result = agreement::agree(&be_private_key, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
         let computed_public = my_private.compute_public_key().unwrap();
         assert_eq!(computed_public.as_ref(), &my_public[..]);
 
         assert_eq!(computed_public.algorithm(), alg);
-
-        let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
-            assert_eq!(key_material, &output[..]);
-            Ok(())
-        });
-        assert_eq!(result, Ok(()));
-
-        let result2 = agreement::agree(&my_private, &peer_public, (), |key_material| {
-            assert_eq!(key_material, &output[..]);
-            Ok(())
-        });
-        assert_eq!(result2, Ok(()));
+        {
+            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+        {
+            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
     }
 
     #[test]
@@ -748,7 +855,7 @@ mod tests {
 
         let my_private = {
             let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-            agreement::EphemeralPrivateKey::generate_for_test(alg, &rng).unwrap()
+            PrivateKey::generate_for_test(alg, &rng).unwrap()
         };
 
         let my_public = test::from_dirty_hex(
@@ -760,16 +867,48 @@ mod tests {
 
         assert_eq!(my_private.algorithm(), alg);
 
+        let be_private_key_buffer: EcPrivateKeyBin = my_private.as_be_bytes().unwrap();
+        let be_private_key =
+            PrivateKey::from_private_key(&ECDH_P256, be_private_key_buffer.as_ref()).unwrap();
+        {
+            let result = agreement::agree(&be_private_key, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
+        let der_private_key_buffer: EcPrivateKeyRfc5915Der = my_private.as_der().unwrap();
+        let der_private_key =
+            PrivateKey::from_private_key_der(&ECDH_P256, der_private_key_buffer.as_ref()).unwrap();
+        {
+            let result = agreement::agree(&der_private_key, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
         let computed_public = my_private.compute_public_key().unwrap();
         assert_eq!(computed_public.as_ref(), &my_public[..]);
 
         assert_eq!(computed_public.algorithm(), alg);
 
-        let result = agreement::agree_ephemeral(my_private, &peer_public, (), |key_material| {
-            assert_eq!(key_material, &output[..]);
-            Ok(())
-        });
-        assert_eq!(result, Ok(()));
+        {
+            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
+        {
+            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
     }
 
     #[test]
@@ -788,7 +927,7 @@ mod tests {
 
         let my_private = {
             let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-            agreement::EphemeralPrivateKey::generate_for_test(alg, &rng).unwrap()
+            PrivateKey::generate_for_test(alg, &rng).unwrap()
         };
 
         let my_public = test::from_dirty_hex(
@@ -800,16 +939,40 @@ mod tests {
 
         assert_eq!(my_private.algorithm(), alg);
 
+        let be_private_key_buffer: EcPrivateKeyBin = my_private.as_be_bytes().unwrap();
+        let be_private_key =
+            PrivateKey::from_private_key(&ECDH_P384, be_private_key_buffer.as_ref()).unwrap();
+        {
+            let result = agreement::agree(&be_private_key, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
+        let der_private_key_buffer: EcPrivateKeyRfc5915Der = my_private.as_der().unwrap();
+        let der_private_key =
+            PrivateKey::from_private_key_der(&ECDH_P384, der_private_key_buffer.as_ref()).unwrap();
+        {
+            let result = agreement::agree(&der_private_key, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
         let computed_public = my_private.compute_public_key().unwrap();
         assert_eq!(computed_public.as_ref(), &my_public[..]);
 
         assert_eq!(computed_public.algorithm(), alg);
 
-        let result = agreement::agree_ephemeral(my_private, &peer_public, (), |key_material| {
-            assert_eq!(key_material, &output[..]);
-            Ok(())
-        });
-        assert_eq!(result, Ok(()));
+        {
+            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
     }
 
     #[test]
@@ -828,7 +991,7 @@ mod tests {
 
         let my_private = {
             let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-            agreement::EphemeralPrivateKey::generate_for_test(alg, &rng).unwrap()
+            agreement::PrivateKey::generate_for_test(alg, &rng).unwrap()
         };
 
         let my_public = test::from_dirty_hex(
@@ -840,16 +1003,46 @@ mod tests {
 
         assert_eq!(my_private.algorithm(), alg);
 
+        let be_private_key_buffer: EcPrivateKeyBin = my_private.as_be_bytes().unwrap();
+        let be_private_key =
+            PrivateKey::from_private_key(&ECDH_P521, be_private_key_buffer.as_ref()).unwrap();
+        {
+            let result = agreement::agree(&be_private_key, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
+        let der_private_key_buffer: EcPrivateKeyRfc5915Der = my_private.as_der().unwrap();
+        let der_private_key =
+            PrivateKey::from_private_key_der(&ECDH_P521, der_private_key_buffer.as_ref()).unwrap();
+        {
+            let result = agreement::agree(&der_private_key, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
         let computed_public = my_private.compute_public_key().unwrap();
         assert_eq!(computed_public.as_ref(), &my_public[..]);
 
         assert_eq!(computed_public.algorithm(), alg);
-
-        let result = agreement::agree_ephemeral(my_private, &peer_public, (), |key_material| {
-            assert_eq!(key_material, &output[..]);
-            Ok(())
-        });
-        assert_eq!(result, Ok(()));
+        {
+            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+        {
+            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
     }
 
     #[test]
@@ -859,26 +1052,24 @@ mod tests {
         use regex::Regex;
 
         let rng = rand::SystemRandom::new();
-        let private_key =
-            agreement::PrivateKey::generate_for_test(&agreement::ECDH_P256, &rng).unwrap();
+        let private_key = PrivateKey::generate_for_test(&ECDH_P256, &rng).unwrap();
 
-        test::compile_time_assert_send::<agreement::PrivateKey>();
-        test::compile_time_assert_sync::<agreement::PrivateKey>();
+        test::compile_time_assert_send::<PrivateKey>();
+        test::compile_time_assert_sync::<PrivateKey>();
 
         assert_eq!(
             format!("{:?}", &private_key),
             "PrivateKey { algorithm: Algorithm { curve: P256 } }"
         );
 
-        let ephemeral_private_key =
-            agreement::EphemeralPrivateKey::generate_for_test(&agreement::ECDH_P256, &rng).unwrap();
+        let ephemeral_private_key = PrivateKey::generate_for_test(&ECDH_P256, &rng).unwrap();
 
-        test::compile_time_assert_send::<agreement::EphemeralPrivateKey>();
-        test::compile_time_assert_sync::<agreement::EphemeralPrivateKey>();
+        test::compile_time_assert_send::<PrivateKey>();
+        test::compile_time_assert_sync::<PrivateKey>();
 
         assert_eq!(
             format!("{:?}", &ephemeral_private_key),
-            "EphemeralPrivateKey { algorithm: Algorithm { curve: P256 } }"
+            "PrivateKey { algorithm: Algorithm { curve: P256 } }"
         );
 
         let public_key = private_key.compute_public_key().unwrap();
@@ -898,25 +1089,25 @@ mod tests {
         assert_eq!(public_key.as_ref(), pubkey_clone.as_ref());
         assert_eq!(pubkey_debug, format!("{:?}", &pubkey_clone));
 
-        test::compile_time_assert_clone::<agreement::PublicKey>();
-        test::compile_time_assert_send::<agreement::PublicKey>();
-        //test::compile_time_assert_sync::<agreement::PublicKey>();
+        test::compile_time_assert_clone::<PublicKey>();
+        test::compile_time_assert_send::<PublicKey>();
+        test::compile_time_assert_sync::<PublicKey>();
 
         // Verify `PublicKey` implements `Debug`.
         //
         // TODO: Test the actual output.
         let _: &dyn core::fmt::Debug = &public_key;
 
-        test::compile_time_assert_clone::<agreement::UnparsedPublicKey<&[u8]>>();
-        test::compile_time_assert_copy::<agreement::UnparsedPublicKey<&[u8]>>();
-        test::compile_time_assert_sync::<agreement::UnparsedPublicKey<&[u8]>>();
+        test::compile_time_assert_clone::<UnparsedPublicKey<&[u8]>>();
+        test::compile_time_assert_copy::<UnparsedPublicKey<&[u8]>>();
+        test::compile_time_assert_sync::<UnparsedPublicKey<&[u8]>>();
 
-        test::compile_time_assert_clone::<agreement::UnparsedPublicKey<Vec<u8>>>();
-        test::compile_time_assert_sync::<agreement::UnparsedPublicKey<Vec<u8>>>();
+        test::compile_time_assert_clone::<UnparsedPublicKey<Vec<u8>>>();
+        test::compile_time_assert_sync::<UnparsedPublicKey<Vec<u8>>>();
 
         let bytes = [0x01, 0x02, 0x03];
 
-        let unparsed_public_key = agreement::UnparsedPublicKey::new(&agreement::X25519, &bytes);
+        let unparsed_public_key = UnparsedPublicKey::new(&X25519, &bytes);
         let unparsed_pubkey_clone = unparsed_public_key;
         assert_eq!(
             format!("{unparsed_public_key:?}"),
@@ -927,8 +1118,7 @@ mod tests {
             r#"UnparsedPublicKey { algorithm: Algorithm { curve: Curve25519 }, bytes: "010203" }"#
         );
 
-        let unparsed_public_key =
-            agreement::UnparsedPublicKey::new(&agreement::X25519, Vec::from(bytes));
+        let unparsed_public_key = UnparsedPublicKey::new(&X25519, Vec::from(bytes));
         #[allow(clippy::redundant_clone)]
         let unparsed_pubkey_clone = unparsed_public_key.clone();
         assert_eq!(
@@ -939,116 +1129,5 @@ mod tests {
             format!("{unparsed_pubkey_clone:?}"),
             r#"UnparsedPublicKey { algorithm: Algorithm { curve: Curve25519 }, bytes: "010203" }"#
         );
-    }
-
-    #[test]
-    fn agreement_agree_ephemeral() {
-        let rng = rand::SystemRandom::new();
-
-        test::run(
-            test_file!("data/agreement_tests.txt"),
-            |section, test_case| {
-                assert_eq!(section, "");
-
-                let curve_name = test_case.consume_string("Curve");
-                let alg = alg_from_curve_name(&curve_name);
-                let peer_public =
-                    agreement::UnparsedPublicKey::new(alg, test_case.consume_bytes("PeerQ"));
-
-                match test_case.consume_optional_string("Error") {
-                    None => {
-                        let my_private_bytes = test_case.consume_bytes("D");
-                        let my_private = {
-                            let rng = test::rand::FixedSliceRandom {
-                                bytes: &my_private_bytes,
-                            };
-                            agreement::EphemeralPrivateKey::generate_for_test(alg, &rng)?
-                        };
-                        let my_public = test_case.consume_bytes("MyQ");
-                        let output = test_case.consume_bytes("Output");
-
-                        assert_eq!(my_private.algorithm(), alg);
-
-                        let computed_public = my_private.compute_public_key().unwrap();
-                        assert_eq!(computed_public.as_ref(), &my_public[..]);
-
-                        assert_eq!(my_private.algorithm(), alg);
-
-                        let result = agreement::agree_ephemeral(
-                            my_private,
-                            &peer_public,
-                            (),
-                            |key_material| {
-                                assert_eq!(key_material, &output[..]);
-                                Ok(())
-                            },
-                        );
-                        assert_eq!(
-                            result,
-                            Ok(()),
-                            "Failed on private key: {:?}",
-                            test::to_hex(my_private_bytes)
-                        );
-                    }
-
-                    Some(_) => {
-                        fn kdf_not_called(_: &[u8]) -> Result<(), ()> {
-                            panic!(
-                                "The KDF was called during ECDH when the peer's \
-                         public key is invalid."
-                            );
-                        }
-                        let dummy_private_key =
-                            agreement::EphemeralPrivateKey::generate(alg, &rng)?;
-                        assert!(agreement::agree_ephemeral(
-                            dummy_private_key,
-                            &peer_public,
-                            (),
-                            kdf_not_called
-                        )
-                        .is_err());
-                    }
-                }
-
-                Ok(())
-            },
-        );
-    }
-
-    fn h(s: &str) -> Vec<u8> {
-        match test::from_hex(s) {
-            Ok(v) => v,
-            Err(msg) => {
-                panic!("{msg} in {s}");
-            }
-        }
-    }
-
-    fn alg_from_curve_name(curve_name: &str) -> &'static agreement::Algorithm {
-        if curve_name == "P-256" {
-            &agreement::ECDH_P256
-        } else if curve_name == "P-384" {
-            &agreement::ECDH_P384
-        } else if curve_name == "P-521" {
-            &agreement::ECDH_P521
-        } else if curve_name == "X25519" {
-            &agreement::X25519
-        } else {
-            panic!("Unsupported curve: {curve_name}");
-        }
-    }
-
-    fn x25519(private_key: &[u8], public_key: &[u8]) -> Vec<u8> {
-        x25519_(private_key, public_key).unwrap()
-    }
-
-    fn x25519_(private_key: &[u8], public_key: &[u8]) -> Result<Vec<u8>, Unspecified> {
-        let rng = test::rand::FixedSliceRandom { bytes: private_key };
-        let private_key =
-            agreement::EphemeralPrivateKey::generate_for_test(&agreement::X25519, &rng)?;
-        let public_key = agreement::UnparsedPublicKey::new(&agreement::X25519, public_key);
-        agreement::agree_ephemeral(private_key, &public_key, Unspecified, |agreed_value| {
-            Ok(Vec::from(agreed_value))
-        })
     }
 }

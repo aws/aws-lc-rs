@@ -18,7 +18,7 @@ use aws_lc::{
     EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY, EVP_PKEY_ED25519,
 };
 
-use crate::encoding::{AsBigEndian, Ed25519SeedBin};
+use crate::encoding::{AsBigEndian, Curve25519SeedBin};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
@@ -105,16 +105,16 @@ impl Drop for Ed25519KeyPair {
 /// The seed value for the `EdDSA` signature scheme using Curve25519
 pub struct Seed<'a>(&'a Ed25519KeyPair);
 
-impl AsBigEndian<Ed25519SeedBin> for Seed<'_> {
+impl AsBigEndian<Curve25519SeedBin> for Seed<'_> {
     /// Exposes the seed encoded as a big-endian fixed-length integer.
     ///
     /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    fn as_be_bytes(&self) -> Result<Ed25519SeedBin, Unspecified> {
+    fn as_be_bytes(&self) -> Result<Curve25519SeedBin, Unspecified> {
         let buffer = Vec::from(&self.0.private_key[..ED25519_PRIVATE_KEY_SEED_LEN]);
-        Ok(Ed25519SeedBin::new(buffer))
+        Ok(Curve25519SeedBin::new(buffer))
     }
 }
 

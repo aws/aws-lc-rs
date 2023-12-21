@@ -5,7 +5,8 @@
 
 use crate::buffer::Buffer;
 use crate::encoding::types::{
-    EcPrivateKeyBinType, EcPrivateKeyRfc5915DerType, EcPublicKeyX509DerType, Ed25519SeedBufferType,
+    Curve25519SeedBufferType, EcPrivateKeyBinType, EcPrivateKeyRfc5915DerType,
+    EcPublicKeyX509DerType,
 };
 
 mod types {
@@ -21,7 +22,7 @@ mod types {
         _priv: (),
     }
 
-    pub struct Ed25519SeedBufferType {
+    pub struct Curve25519SeedBufferType {
         _priv: (),
     }
 }
@@ -54,4 +55,4 @@ pub type EcPrivateKeyRfc5915Der = Buffer<'static, EcPrivateKeyRfc5915DerType>;
 pub type EcPublicKeyX509Der = Buffer<'static, EcPublicKeyX509DerType>;
 
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub type Ed25519SeedBin = Buffer<'static, Ed25519SeedBufferType>;
+pub type Curve25519SeedBin = Buffer<'static, Curve25519SeedBufferType>;

@@ -8,7 +8,6 @@ use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 use std::os::raw::{c_int, c_uint};
-#[cfg(test)]
 use std::ptr::null;
 use std::ptr::null_mut;
 
@@ -19,14 +18,12 @@ use untrusted::Input;
 use aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::EC_KEY_check_key;
-#[cfg(test)]
-use aws_lc::EC_POINT_mul;
 use aws_lc::{
     point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
     ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes,
     EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
     EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
-    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new, EC_POINT_oct2point,
+    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, EC_POINT_oct2point,
     EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new_id,
     EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY,
     EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new, NID_X9_62_prime256v1, NID_secp256k1,
@@ -321,6 +318,26 @@ pub(crate) unsafe fn marshal_private_key_to_buffer(
 
     Ok(buffer)
 }
+
+pub(crate) unsafe fn unmarshal_der_to_private_key(
+    key_bytes: &[u8],
+    nid: i32,
+) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
+    let mut out = null_mut();
+    let evp_pkey = LcPtr::new(aws_lc::d2i_PrivateKey(
+        EVP_PKEY_EC,
+        &mut out,
+        &mut key_bytes.as_ptr(),
+        key_bytes
+            .len()
+            .try_into()
+            .map_err(|_| KeyRejected::too_large())?,
+    ))?;
+    validate_evp_key(&evp_pkey.as_const(), nid)?;
+
+    Ok(evp_pkey)
+}
+
 pub(crate) unsafe fn marshal_public_key_to_buffer(
     buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
     evp_pkey: &ConstPointer<EVP_PKEY>,
@@ -383,7 +400,6 @@ pub(crate) unsafe fn evp_pkey_from_public_point(
     Ok(pkey)
 }
 
-#[cfg(test)]
 pub(crate) unsafe fn evp_pkey_from_private(
     ec_group: &ConstPointer<EC_GROUP>,
     private_big_num: &ConstPointer<BIGNUM>,
@@ -448,17 +464,19 @@ pub(crate) fn evp_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecifie
 }
 
 #[inline]
-unsafe fn evp_key_from_public_private(
+pub(crate) unsafe fn evp_key_from_public_private(
     ec_group: &LcPtr<EC_GROUP>,
-    public_ec_point: &LcPtr<EC_POINT>,
+    public_ec_point: Option<&LcPtr<EC_POINT>>,
     private_bignum: &DetachableLcPtr<BIGNUM>,
 ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
     if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
         return Err(KeyRejected::unexpected_error());
     }
-    if 1 != EC_KEY_set_public_key(*ec_key, **public_ec_point) {
-        return Err(KeyRejected::unexpected_error());
+    if let Some(ec_point) = public_ec_point {
+        if 1 != EC_KEY_set_public_key(*ec_key, **ec_point) {
+            return Err(KeyRejected::unexpected_error());
+        }
     }
     if 1 != EC_KEY_set_private_key(*ec_key, **private_bignum) {
         return Err(KeyRejected::unexpected_error());
