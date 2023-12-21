@@ -280,13 +280,13 @@ where
 }
 
 mod encoding {
-    pub struct PublicKeyBinDerType {
+    pub struct EncapsulationKeyBinDerType {
         _priv: (),
     }
 }
 
 /// A KEM Encapsulation Key Big-Endian number representation encoded using DER.
-pub type EncapsulationKeyBinDer = Buffer<'static, encoding::PublicKeyBinDerType>;
+pub type EncapsulationKeyBinDer = Buffer<'static, encoding::EncapsulationKeyBinDerType>;
 
 /// A serializable encapsulation key usable with KEM algoruthms. Constructed
 /// from either a `DecapsulationKey` or raw bytes.
@@ -380,21 +380,21 @@ where
     Id: AlgorithmIdentifier,
 {
     fn as_der(&self) -> Result<EncapsulationKeyBinDer, Unspecified> {
-        let mut public_key_size = self.algorithm.encapsulate_key_size();
-        let mut pubkey_bytes = vec![0u8; public_key_size];
+        let mut encapsulate_key_size = self.algorithm.encapsulate_key_size();
+        let mut encapsulate_bytes = vec![0u8; encapsulate_key_size];
         if 1 != unsafe {
             EVP_PKEY_get_raw_public_key(
                 self.evp_pkey.as_const_ptr(),
-                pubkey_bytes.as_mut_ptr(),
-                &mut public_key_size,
+                encapsulate_bytes.as_mut_ptr(),
+                &mut encapsulate_key_size,
             )
         } {
             return Err(Unspecified);
         }
 
-        pubkey_bytes.truncate(public_key_size);
+        encapsulate_bytes.truncate(encapsulate_key_size);
 
-        Ok(Buffer::new(pubkey_bytes))
+        Ok(Buffer::new(encapsulate_bytes))
     }
 }
 
