@@ -15,7 +15,7 @@ use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{
     evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
 };
-use crate::encoding::{AsBigEndian, AsDer};
+use crate::encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915Der};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
@@ -305,18 +305,6 @@ impl Debug for PrivateKey<'_> {
     }
 }
 
-pub struct EcPrivateKeyBinType {
-    _priv: (),
-}
-/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub type EcPrivateKeyBin = Buffer<'static, EcPrivateKeyBinType>;
-
-pub struct EcPrivateKeyRfc5915DerType {
-    _priv: (),
-}
-/// Elliptic curve private key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
-pub type EcPrivateKeyRfc5915Der = Buffer<'static, EcPrivateKeyRfc5915DerType>;
-
 impl AsBigEndian<EcPrivateKeyBin> for PrivateKey<'_> {
     /// Exposes the private key encoded as a big-endian fixed-length integer.
     ///
@@ -327,7 +315,7 @@ impl AsBigEndian<EcPrivateKeyBin> for PrivateKey<'_> {
     fn as_be_bytes(&self) -> Result<EcPrivateKeyBin, Unspecified> {
         unsafe {
             let buffer = ec::marshal_private_key_to_buffer(
-                self.0.algorithm.id,
+                self.0.algorithm.id.private_key_size(),
                 &self.0.evp_pkey.as_const(),
             )?;
             Ok(EcPrivateKeyBin::new(buffer))

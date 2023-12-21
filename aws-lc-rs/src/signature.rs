@@ -258,11 +258,10 @@ use crate::rsa::{
 pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
 use crate::ec::EcdsaSignatureFormat;
 pub use crate::ec::{
-    key_pair::EcPrivateKeyBin, key_pair::EcPrivateKeyRfc5915Der, EcPublicKeyX509Der,
     EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
 };
 pub use crate::ed25519::{
-    Ed25519KeyPair, Ed25519SeedBin, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
+    Ed25519KeyPair, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
 };
 use crate::rsa;
 use crate::{digest, ec, error, hex, sealed};

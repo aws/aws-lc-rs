@@ -3,9 +3,8 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::encoding::AsBigEndian;
+use aws_lc_rs::encoding::{AsBigEndian, Ed25519SeedBin};
 use aws_lc_rs::rand::SystemRandom;
-use aws_lc_rs::signature::Ed25519SeedBin;
 use aws_lc_rs::{
     error,
     signature::{self, Ed25519KeyPair, KeyPair},

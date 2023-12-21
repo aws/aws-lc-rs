@@ -30,12 +30,13 @@ use aws_lc::{
     EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new_id,
     EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY,
     EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new, NID_X9_62_prime256v1, NID_secp256k1,
-    NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
+    NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY,
+    EVP_PKEY_EC,
 };
 
 use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
-use crate::encoding::AsDer;
+use crate::encoding::{AsDer, EcPublicKeyX509Der};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
@@ -112,6 +113,13 @@ impl AlgorithmID {
             AlgorithmID::ECDSA_P256K1 => NID_secp256k1,
         }
     }
+    pub(crate) fn private_key_size(&self) -> usize {
+        match self {
+            AlgorithmID::ECDSA_P256 | AlgorithmID::ECDSA_P256K1 => 32,
+            AlgorithmID::ECDSA_P384 => 48,
+            AlgorithmID::ECDSA_P521 => 66,
+        }
+    }
 }
 
 /// Elliptic curve public key.
@@ -120,14 +128,6 @@ pub struct PublicKey {
     algorithm: &'static EcdsaSigningAlgorithm,
     octets: Box<[u8]>,
 }
-
-#[allow(clippy::module_name_repetitions)]
-pub struct EcPublicKeyX509DerType {
-    _priv: (),
-}
-/// An elliptic curve public key as a DER-encoded (X509) `SubjectPublicKeyInfo` structure
-#[allow(clippy::module_name_repetitions)]
-pub type EcPublicKeyX509Der = Buffer<'static, EcPublicKeyX509DerType>;
 
 impl AsDer<EcPublicKeyX509Der> for PublicKey {
     /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
@@ -304,12 +304,11 @@ unsafe fn validate_evp_key(
 }
 
 pub(crate) unsafe fn marshal_private_key_to_buffer(
-    alg_id: &'static AlgorithmID,
+    private_size: usize,
     evp_pkey: &ConstPointer<EVP_PKEY>,
 ) -> Result<Vec<u8>, Unspecified> {
     let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
     let private_bn = ConstPointer::new(EC_KEY_get0_private_key(*ec_key))?;
-    let private_size: usize = ecdsa_fixed_number_byte_size(alg_id);
     {
         let size: usize = BN_num_bytes(*private_bn).try_into()?;
         debug_assert!(size <= private_size);
@@ -322,19 +321,21 @@ pub(crate) unsafe fn marshal_private_key_to_buffer(
 
     Ok(buffer)
 }
-
 pub(crate) unsafe fn marshal_public_key_to_buffer(
     buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
     evp_pkey: &ConstPointer<EVP_PKEY>,
 ) -> Result<usize, Unspecified> {
-    let ec_key = EVP_PKEY_get0_EC_KEY(**evp_pkey);
-    if ec_key.is_null() {
-        return Err(Unspecified);
-    }
+    let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
+    marshal_ec_public_key_to_buffer(buffer, &ec_key)
+}
 
-    let ec_group = ConstPointer::new(EC_KEY_get0_group(ec_key))?;
+pub(crate) unsafe fn marshal_ec_public_key_to_buffer(
+    buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
+    ec_key: &ConstPointer<EC_KEY>,
+) -> Result<usize, Unspecified> {
+    let ec_group = ConstPointer::new(EC_KEY_get0_group(**ec_key))?;
 
-    let ec_point = ConstPointer::new(EC_KEY_get0_public_key(ec_key))?;
+    let ec_point = ConstPointer::new(EC_KEY_get0_public_key(**ec_key))?;
 
     let out_len = ec_point_to_bytes(&ec_group, &ec_point, buffer)?;
     Ok(out_len)
@@ -526,7 +527,7 @@ unsafe fn ec_point_to_bytes(
 
 #[inline]
 fn ecdsa_asn1_to_fixed(alg_id: &'static AlgorithmID, sig: &[u8]) -> Result<Signature, Unspecified> {
-    let expected_number_size = ecdsa_fixed_number_byte_size(alg_id);
+    let expected_number_size = alg_id.private_key_size();
 
     let ecdsa_sig = LcPtr::new(unsafe { ECDSA_SIG_from_bytes(sig.as_ptr(), sig.len()) })?;
 
@@ -553,20 +554,11 @@ fn ecdsa_asn1_to_fixed(alg_id: &'static AlgorithmID, sig: &[u8]) -> Result<Signa
 }
 
 #[inline]
-const fn ecdsa_fixed_number_byte_size(alg_id: &'static AlgorithmID) -> usize {
-    match alg_id {
-        AlgorithmID::ECDSA_P256 | AlgorithmID::ECDSA_P256K1 => 32,
-        AlgorithmID::ECDSA_P384 => 48,
-        AlgorithmID::ECDSA_P521 => 66,
-    }
-}
-
-#[inline]
 unsafe fn ecdsa_sig_from_fixed(
     alg_id: &'static AlgorithmID,
     signature: &[u8],
 ) -> Result<LcPtr<ECDSA_SIG>, ()> {
-    let num_size_bytes = ecdsa_fixed_number_byte_size(alg_id);
+    let num_size_bytes = alg_id.private_key_size();
     if signature.len() != 2 * num_size_bytes {
         return Err(());
     }
@@ -586,8 +578,7 @@ unsafe fn ecdsa_sig_from_fixed(
 
 #[cfg(test)]
 mod tests {
-    use crate::encoding::AsDer;
-    use crate::signature::EcPublicKeyX509Der;
+    use crate::encoding::{AsDer, EcPublicKeyX509Der};
     use crate::signature::EcdsaKeyPair;
     use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
     use crate::test::from_dirty_hex;

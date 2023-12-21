@@ -18,8 +18,7 @@ use aws_lc::{
     EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY, EVP_PKEY_ED25519,
 };
 
-use crate::buffer::Buffer;
-use crate::encoding::AsBigEndian;
+use crate::encoding::{AsBigEndian, Ed25519SeedBin};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
@@ -105,14 +104,6 @@ impl Drop for Ed25519KeyPair {
 #[allow(clippy::module_name_repetitions)]
 /// The seed value for the `EdDSA` signature scheme using Curve25519
 pub struct Seed<'a>(&'a Ed25519KeyPair);
-
-#[allow(clippy::module_name_repetitions)]
-pub struct Ed25519SeedBufferType {
-    _priv: (),
-}
-/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-#[allow(clippy::module_name_repetitions)]
-pub type Ed25519SeedBin = Buffer<'static, Ed25519SeedBufferType>;
 
 impl AsBigEndian<Ed25519SeedBin> for Seed<'_> {
     /// Exposes the seed encoded as a big-endian fixed-length integer.
