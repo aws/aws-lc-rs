@@ -8,7 +8,7 @@
 //! Note that this example uses the Kyber-512 Round 3 algorithm, but other algorithms can be used
 //! in the exact same way by substituting
 //! `kem::<desired_algorithm_here>` for `kem::KYBER512_R3`.
-//! 
+//!
 //! ```ignore
 //! use aws_lc_rs::{
 //!     encoding::AsDer,
@@ -24,7 +24,7 @@
 //!
 //! // Alices computes the (public) encapsulation key.
 //! let encapsulation_key = decapsulation_key.encapsulation_key()?;
-//! 
+//!
 //! let encapsulation_key_der = encapsulation_key.as_der()?;
 //!
 //! // Alice sends the encapsulation key bytes to bob through some

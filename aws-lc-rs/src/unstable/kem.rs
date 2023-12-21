@@ -24,7 +24,7 @@
 //!
 //! // Alices computes the (public) encapsulation key.
 //! let encapsulation_key = decapsulation_key.encapsulation_key()?;
-//! 
+//!
 //! let encapsulation_key_der = encapsulation_key.as_der()?;
 //!
 //! // Alice sends the encapsulation key bytes to bob through some
