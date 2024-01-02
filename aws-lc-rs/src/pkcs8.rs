@@ -7,25 +7,29 @@
 //!
 //! [RFC 5208]: https://tools.ietf.org/html/rfc5208.
 
-use crate::ec;
 use zeroize::Zeroize;
 
 /// A generated PKCS#8 document.
 pub struct Document {
-    pub(crate) bytes: [u8; ec::PKCS8_DOCUMENT_MAX_LEN],
-    pub(crate) len: usize,
+    bytes: Box<[u8]>,
+}
+
+impl Document {
+    pub(crate) fn new(bytes: Box<[u8]>) -> Self {
+        Self { bytes }
+    }
 }
 
 impl AsRef<[u8]> for Document {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        &self.bytes[..self.len]
+        &self.bytes
     }
 }
 
 impl Drop for Document {
     fn drop(&mut self) {
-        self.bytes.zeroize();
+        self.bytes.as_mut().zeroize();
     }
 }
 
