@@ -27,7 +27,7 @@ mod types {
     }
 }
 
-/// Trait for structs that can be serialized into a DER format.
+/// Trait for types that can be serialized into a DER format.
 pub trait AsDer<T> {
     /// Serializes into a DER format.
     ///

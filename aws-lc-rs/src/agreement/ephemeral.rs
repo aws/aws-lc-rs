@@ -130,10 +130,10 @@ mod tests {
                 *u = k.clone();
                 *k = new_k;
             }
-            assert_eq!(&h(expected_result), k);
+            assert_eq!(&from_hex(expected_result), k);
         }
 
-        let mut k = h("0900000000000000000000000000000000000000000000000000000000000000");
+        let mut k = from_hex("0900000000000000000000000000000000000000000000000000000000000000");
         let mut u = k.clone();
 
         expect_iterated_x25519(
@@ -423,7 +423,7 @@ mod tests {
         );
     }
 
-    fn h(s: &str) -> Vec<u8> {
+    fn from_hex(s: &str) -> Vec<u8> {
         match test::from_hex(s) {
             Ok(v) => v,
             Err(msg) => {
@@ -447,10 +447,10 @@ mod tests {
     }
 
     fn x25519(private_key: &[u8], public_key: &[u8]) -> Vec<u8> {
-        x25519_(private_key, public_key).unwrap()
+        try_x25519(private_key, public_key).unwrap()
     }
 
-    fn x25519_(private_key: &[u8], public_key: &[u8]) -> Result<Vec<u8>, Unspecified> {
+    fn try_x25519(private_key: &[u8], public_key: &[u8]) -> Result<Vec<u8>, Unspecified> {
         let rng = test::rand::FixedSliceRandom { bytes: private_key };
         let private_key =
             agreement::EphemeralPrivateKey::generate_for_test(&agreement::X25519, &rng)?;

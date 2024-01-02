@@ -69,7 +69,6 @@ use aws_lc::{
 };
 
 use crate::buffer::Buffer;
-use crate::ed25519::ED25519_PRIVATE_KEY_SEED_LEN;
 use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
 };
@@ -88,7 +87,7 @@ enum AlgorithmID {
 
 impl AlgorithmID {
     #[inline]
-    fn nid(&self) -> i32 {
+    const fn nid(&self) -> i32 {
         match self {
             AlgorithmID::ECDH_P256 => NID_X9_62_prime256v1,
             AlgorithmID::ECDH_P384 => NID_secp384r1,
@@ -98,7 +97,7 @@ impl AlgorithmID {
     }
 
     #[inline]
-    fn pub_key_len(&self) -> usize {
+    const fn pub_key_len(&self) -> usize {
         match self {
             AlgorithmID::ECDH_P256 => 65,
             AlgorithmID::ECDH_P384 => 97,
@@ -108,12 +107,11 @@ impl AlgorithmID {
     }
 
     #[inline]
-    fn private_key_size(&self) -> usize {
+    const fn private_key_len(&self) -> usize {
         match self {
-            AlgorithmID::ECDH_P256 => 32,
+            AlgorithmID::ECDH_P256 | AlgorithmID::X25519 => 32,
             AlgorithmID::ECDH_P384 => 48,
             AlgorithmID::ECDH_P521 => 66,
-            AlgorithmID::X25519 => ED25519_PRIVATE_KEY_SEED_LEN,
         }
     }
 }
@@ -143,17 +141,17 @@ impl Debug for Algorithm {
 }
 
 /// ECDH using the NSA Suite B P-256 (secp256r1) curve.
-pub static ECDH_P256: Algorithm = Algorithm {
+pub const ECDH_P256: Algorithm = Algorithm {
     id: AlgorithmID::ECDH_P256,
 };
 
 /// ECDH using the NSA Suite B P-384 (secp384r1) curve.
-pub static ECDH_P384: Algorithm = Algorithm {
+pub const ECDH_P384: Algorithm = Algorithm {
     id: AlgorithmID::ECDH_P384,
 };
 
 /// ECDH using the NSA Suite B P-521 (secp521r1) curve.
-pub static ECDH_P521: Algorithm = Algorithm {
+pub const ECDH_P521: Algorithm = Algorithm {
     id: AlgorithmID::ECDH_P521,
 };
 
@@ -165,16 +163,10 @@ pub static ECDH_P521: Algorithm = Algorithm {
 ///
 /// [RFC 7748]: https://tools.ietf.org/html/rfc7748
 /// [RFC 7748 section 6.1]: https://tools.ietf.org/html/rfc7748#section-6.1
-pub static X25519: Algorithm = Algorithm {
+pub const X25519: Algorithm = Algorithm {
     id: AlgorithmID::X25519,
 };
-const X25519_PRIVATE_KEY_LEN: usize = aws_lc::X25519_PRIVATE_KEY_LEN as usize;
-#[cfg(test)]
-const ECDH_P256_PRIVATE_KEY_LEN: usize = 32;
-#[cfg(test)]
-const ECDH_P384_PRIVATE_KEY_LEN: usize = 48;
-const ECDH_P521_PRIVATE_KEY_LEN: usize = 66;
-const X25519_SHARED_KEY_LEN: usize = aws_lc::X25519_SHARED_KEY_LEN as usize;
+
 #[allow(non_camel_case_types)]
 enum KeyInner {
     ECDH_P256(LcPtr<EVP_PKEY>),
@@ -308,7 +300,7 @@ impl PrivateKey {
                     EVP_PKEY_X25519,
                     null_mut(),
                     key_bytes.as_ptr(),
-                    X25519_PRIVATE_KEY_LEN,
+                    AlgorithmID::X25519.private_key_len(),
                 )
             })?
         } else {
@@ -331,22 +323,22 @@ impl PrivateKey {
     ) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
-                let mut priv_key = [0u8; X25519_PRIVATE_KEY_LEN];
+                let mut priv_key = [0u8; AlgorithmID::X25519.private_key_len()];
                 rng.fill(&mut priv_key)?;
                 Self::from_x25519_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P256 => {
-                let mut priv_key = [0u8; ECDH_P256_PRIVATE_KEY_LEN];
+                let mut priv_key = [0u8; AlgorithmID::ECDH_P256.private_key_len()];
                 rng.fill(&mut priv_key)?;
                 Self::from_p256_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P384 => {
-                let mut priv_key = [0u8; ECDH_P384_PRIVATE_KEY_LEN];
+                let mut priv_key = [0u8; AlgorithmID::ECDH_P384.private_key_len()];
                 rng.fill(&mut priv_key)?;
                 Self::from_p384_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P521 => {
-                let mut priv_key = [0u8; ECDH_P521_PRIVATE_KEY_LEN];
+                let mut priv_key = [0u8; AlgorithmID::ECDH_P521.private_key_len()];
                 rng.fill(&mut priv_key)?;
                 Self::from_p521_private_key(&priv_key)
             }
@@ -355,7 +347,7 @@ impl PrivateKey {
 
     #[cfg(test)]
     fn from_x25519_private_key(
-        priv_key: &[u8; X25519_PRIVATE_KEY_LEN],
+        priv_key: &[u8; AlgorithmID::X25519.private_key_len()],
     ) -> Result<Self, Unspecified> {
         let pkey = LcPtr::new(unsafe {
             EVP_PKEY_new_raw_private_key(
@@ -482,7 +474,7 @@ impl AsBigEndian<EcPrivateKeyBin> for PrivateKey {
         }
         let buffer = unsafe {
             ec::marshal_private_key_to_buffer(
-                self.inner_key.algorithm().id.private_key_size(),
+                self.inner_key.algorithm().id.private_key_len(),
                 &self.inner_key.get_evp_pkey().as_const(),
             )?
         };
@@ -502,8 +494,8 @@ impl AsBigEndian<Curve25519SeedBin> for PrivateKey {
             return Err(Unspecified);
         }
         let evp_pkey = self.inner_key.get_evp_pkey().as_const();
-        let mut buffer = [0u8; ED25519_PRIVATE_KEY_SEED_LEN];
-        let mut out_len = ED25519_PRIVATE_KEY_SEED_LEN;
+        let mut buffer = [0u8; AlgorithmID::X25519.private_key_len()];
+        let mut out_len = AlgorithmID::X25519.private_key_len();
         if 1 != unsafe {
             EVP_PKEY_get_raw_private_key(*evp_pkey, buffer.as_mut_ptr(), &mut out_len)
         } {
@@ -691,7 +683,7 @@ where
 }
 
 // Current max secret length is P-521's.
-const MAX_AGREEMENT_SECRET_LEN: usize = ECDH_P521_PRIVATE_KEY_LEN;
+const MAX_AGREEMENT_SECRET_LEN: usize = AlgorithmID::ECDH_P521.private_key_len();
 
 #[inline]
 #[allow(clippy::needless_pass_by_value)]
@@ -763,9 +755,9 @@ fn x25519_diffie_hellman<'a>(
         return Err(());
     }
 
-    debug_assert!(out_key_len == X25519_SHARED_KEY_LEN);
+    debug_assert!(out_key_len == AlgorithmID::X25519.pub_key_len());
 
-    Ok(&buffer[0..X25519_SHARED_KEY_LEN])
+    Ok(&buffer[0..AlgorithmID::X25519.pub_key_len()])
 }
 
 #[cfg(test)]
