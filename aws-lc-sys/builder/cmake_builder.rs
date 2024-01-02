@@ -114,9 +114,9 @@ impl CmakeBuilder {
         }
 
         if cfg!(feature = "asan") {
-            env::set_var("CC", "/usr/bin/clang");
-            env::set_var("CXX", "/usr/bin/clang++");
-            env::set_var("ASM", "/usr/bin/clang");
+            env::set_var("CC", "clang");
+            env::set_var("CXX", "clang++");
+            env::set_var("ASM", "clang");
 
             cmake_cfg.define("ASAN", "1");
         }
