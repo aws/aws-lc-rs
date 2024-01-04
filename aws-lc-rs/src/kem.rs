@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 //! Key-Encapsulation Mechanisms (KEMs), including support for Kyber Round 3 Submission.
-//!
+//! 
 //! # Example
 //!
 //! Note that this example uses the Kyber-512 Round 3 algorithm, but other algorithms can be used
@@ -195,12 +195,7 @@ where
             return Err(Unspecified);
         };
 
-        let evp_pkey = if let Ok(ptr) = LcPtr::new(*self.evp_pkey) {
-            ptr
-        } else {
-            // This should NEVER be reached, it would imply self.evp_pkey is now null since the last call!
-            panic!();
-        };
+        let evp_pkey = LcPtr::new(*self.evp_pkey).expect("AWS-LC EVP_PKEY should not be null");
 
         Ok(EncapsulationKey {
             algorithm: self.algorithm,
@@ -220,12 +215,7 @@ where
         let mut shared_secret_len = self.algorithm.shared_secret_size();
         let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
-        let ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) });
-        let ctx = if let Ok(ctx) = ctx {
-            ctx
-        } else {
-            return Err(Unspecified);
-        };
+        let ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) })?;
 
         let ciphertext = ciphertext.as_ref();
 
@@ -245,22 +235,6 @@ where
         shared_secret.truncate(shared_secret_len);
 
         Ok(SharedSecret(shared_secret.into_boxed_slice()))
-    }
-
-    #[allow(dead_code)]
-    pub(crate) fn new(alg: &'static Algorithm<Id>, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        match bytes.len().cmp(&alg.decapsulate_key_size()) {
-            Ordering::Less => Err(KeyRejected::too_small()),
-            Ordering::Greater => Err(KeyRejected::too_large()),
-            Ordering::Equal => Ok(()),
-        }?;
-        let privkey = LcPtr::new(unsafe {
-            EVP_PKEY_kem_new_raw_secret_key(alg.id.nid(), bytes.as_ptr(), bytes.len())
-        })?;
-        Ok(DecapsulationKey {
-            algorithm: alg,
-            evp_pkey: privkey,
-        })
     }
 }
 
@@ -288,7 +262,7 @@ mod encoding {
 /// A KEM Encapsulation Key Big-Endian number representation encoded using DER.
 pub type EncapsulationKeyBinDer = Buffer<'static, encoding::EncapsulationKeyBinDerType>;
 
-/// A serializable encapsulation key usable with KEM algoruthms. Constructed
+/// A serializable encapsulation key usable with KEM algorithms. Constructed
 /// from either a `DecapsulationKey` or raw bytes.
 pub struct EncapsulationKey<Id = AlgorithmId>
 where
@@ -409,7 +383,8 @@ where
     }
 }
 
-/// A set of encrypted bytes produced by [`EncapsulationKey::encapsulate`], and used as an input to [`DecapsulationKey::decapsulate`].
+/// A set of encrypted bytes produced by [`EncapsulationKey::encapsulate`],
+/// and used as an input to [`DecapsulationKey::decapsulate`].
 pub struct Ciphertext<'a>(Cow<'a, [u8]>);
 
 impl<'a> Ciphertext<'a> {
@@ -441,7 +416,7 @@ impl<'a> From<&'a [u8]> for Ciphertext<'a> {
     }
 }
 
-/// The cryptograpic shared secret output from the KEM encapsulate / decapsulate process.
+/// The cryptographic shared secret output from the KEM encapsulate / decapsulate process.
 pub struct SharedSecret(Box<[u8]>);
 
 impl SharedSecret {

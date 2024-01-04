@@ -171,25 +171,11 @@ mod tests {
     #[test]
     fn test_kem_wrong_sizes() {
         for algorithm in [&KYBER512_R3, &KYBER768_R3, &KYBER1024_R3] {
-            let too_long_bytes = vec![0u8; algorithm.decapsulate_key_size() + 1];
-            let long_priv_key_from_bytes = DecapsulationKey::new(algorithm, &too_long_bytes);
-            assert_eq!(
-                long_priv_key_from_bytes.err(),
-                Some(KeyRejected::too_large())
-            );
-
             let too_long_bytes = vec![0u8; algorithm.encapsulate_key_size() + 1];
             let long_pub_key_from_bytes = EncapsulationKey::new(algorithm, &too_long_bytes);
             assert_eq!(
                 long_pub_key_from_bytes.err(),
                 Some(KeyRejected::too_large())
-            );
-
-            let too_short_bytes = vec![0u8; algorithm.decapsulate_key_size() - 1];
-            let short_priv_key_from_bytes = DecapsulationKey::new(algorithm, &too_short_bytes);
-            assert_eq!(
-                short_priv_key_from_bytes.err(),
-                Some(KeyRejected::too_small())
             );
 
             let too_short_bytes = vec![0u8; algorithm.encapsulate_key_size() - 1];
