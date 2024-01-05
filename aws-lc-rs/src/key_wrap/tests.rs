@@ -54,14 +54,7 @@ macro_rules! nist_aes_key_wrap_test {
 
             let kek = AesKek::new($alg, K).expect("key creation successful");
 
-            let mut output = vec![
-                0u8;
-                if P.len() % 8 != 0 {
-                    P.len() + (8 - (P.len() % 8))
-                } else {
-                    P.len()
-                }
-            ];
+            let mut output = vec![0u8; C.len()];
 
             let unwrapped = kek.unwrap(&wrapped, &mut output).expect("wrap successful");
 
@@ -93,14 +86,7 @@ macro_rules! nist_aes_key_wrap_with_padding_test {
 
             let kek = AesKek::new($alg, K).expect("key creation successful");
 
-            let mut output = vec![
-                0u8;
-                if P.len() % 8 != 0 {
-                    P.len() + (8 - (P.len() % 8))
-                } else {
-                    P.len()
-                }
-            ];
+            let mut output = vec![0u8; C.len()];
 
             let unwrapped = kek
                 .unwrap_with_padding(&wrapped, &mut output)
@@ -134,14 +120,7 @@ macro_rules! nist_aes_key_unwrap_test {
 
             let kek = AesKek::new($alg, K).expect("key creation successful");
 
-            let mut output = vec![
-                0u8;
-                if P.len() % 8 != 0 {
-                    P.len() + (8 - (P.len() % 8))
-                } else {
-                    P.len()
-                }
-            ];
+            let mut output = vec![0u8; C.len()];
 
             let unwrapped = Vec::from(kek.unwrap(C, &mut output).expect("unwrap successful"));
 
@@ -182,14 +161,7 @@ macro_rules! nist_aes_key_unwrap_with_padding_test {
 
             let kek = AesKek::new($alg, K).expect("key creation successful");
 
-            let mut output = vec![
-                0u8;
-                if P.len() % 8 != 0 {
-                    P.len() + (8 - (P.len() % 8))
-                } else {
-                    P.len()
-                }
-            ];
+            let mut output = vec![0u8; C.len()];
 
             let unwrapped = Vec::from(
                 kek.unwrap_with_padding(C, &mut output)
@@ -634,9 +606,6 @@ wrap_input_output_invalid_test!(wrap_input_len_not_multiple_of_eight, 17, 25);
 // Output length < Input length - 8
 wrap_input_output_invalid_test!(wrap_output_len_too_small, 16, 8);
 
-// Input Length == 0
-wrap_input_output_invalid_test!(wrap_padded_input_len_zero, 0, 8);
-
 macro_rules! unwrap_input_output_invalid_test {
     ($name:ident, $input_len:expr, $output_len:expr) => {
         #[test]
@@ -655,6 +624,41 @@ macro_rules! unwrap_input_output_invalid_test {
     };
 }
 
+// Input length < 24
+unwrap_input_output_invalid_test!(unwrap_input_len_smaller_than_min, 16, 16);
+
+// Input length % 8 != 0
+unwrap_input_output_invalid_test!(unwrap_input_len_not_multiple_of_eight, 31, 31);
+
+// Output length < Input length - 8
+unwrap_input_output_invalid_test!(unwrap_output_len_too_small, 24, 15);
+
+macro_rules! wrap_with_padding_input_output_invalid_test {
+    ($name:ident, $input_len:expr, $output_len:expr) => {
+        #[test]
+        fn $name() {
+            let kek = AesKek::new(&AES_128, &[16u8; 16]).expect("key creation successful");
+
+            let input_len: usize = $input_len.try_into().unwrap();
+            let output_len: usize = $output_len.try_into().unwrap();
+
+            let input = vec![42u8; input_len];
+            let mut output = vec![0u8; output_len];
+
+            kek.wrap_with_padding(input.as_slice(), output.as_mut_slice())
+                .expect_err("failure");
+        }
+    };
+}
+
+// Input length == 0
+wrap_with_padding_input_output_invalid_test!(wrap_with_padding_input_len_zero, 0, 16);
+
+// Output length is not sufficent for required padding
+// In this example an input length of 6 would require 2 additional bytes of padding, plus the additional
+// 8 bytes from the wrapping algorithm (So minimum of 16 bytes).
+wrap_with_padding_input_output_invalid_test!(wrap_with_padding_output_len_too_small, 6, 15);
+
 macro_rules! unwrap_with_padding_input_output_invalid_test {
     ($name:ident, $input_len:expr, $output_len:expr) => {
         #[test]
@@ -672,15 +676,6 @@ macro_rules! unwrap_with_padding_input_output_invalid_test {
         }
     };
 }
-
-// Input length < 24
-unwrap_input_output_invalid_test!(unwrap_input_len_smaller_than_min, 16, 16);
-
-// Input length % 8 != 0
-unwrap_input_output_invalid_test!(unwrap_input_len_not_multiple_of_eight, 31, 31);
-
-// Output length < Input length - 8
-unwrap_input_output_invalid_test!(unwrap_output_len_too_small, 24, 15);
 
 // Input length < 16 (AES Block Length)
 unwrap_with_padding_input_output_invalid_test!(unwrap_padded_input_len_smaller_than_min, 15, 15);
