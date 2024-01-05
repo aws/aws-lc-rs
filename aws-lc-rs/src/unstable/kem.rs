@@ -11,7 +11,6 @@
 //!
 //! ```
 //! use aws_lc_rs::{
-//!     encoding::AsDer,
 //!     error::Unspecified,
 //!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
 //!     unstable::kem::{AlgorithmId, get_algorithm}
@@ -25,11 +24,11 @@
 //! // Alices computes the (public) encapsulation key.
 //! let encapsulation_key = decapsulation_key.encapsulation_key()?;
 //!
-//! let encapsulation_key_der = encapsulation_key.as_der()?;
+//! let encapsulation_key_bytes = encapsulation_key.key_bytes()?;
 //!
 //! // Alice sends the encapsulation key bytes to bob through some
 //! // protocol message.
-//! let encapsulation_key_bytes = encapsulation_key_der.as_ref();
+//! let encapsulation_key_bytes = encapsulation_key_bytes.as_ref();
 //!
 //! // Bob constructs the (public) encapsulation key from the key bytes provided by Alice.
 //! let retrieved_encapsulation_key = EncapsulationKey::new(kyber512_r3, encapsulation_key_bytes)?;
@@ -142,7 +141,6 @@ pub const fn get_algorithm(id: AlgorithmId) -> Option<&'static Algorithm<Algorit
 #[cfg(test)]
 mod tests {
     use crate::{
-        encoding::AsDer,
         error::KeyRejected,
         kem::{DecapsulationKey, EncapsulationKey},
     };
@@ -156,13 +154,13 @@ mod tests {
             assert_eq!(priv_key.algorithm(), algorithm);
 
             let pub_key = priv_key.encapsulation_key().unwrap();
-            let pubkey_raw_bytes = pub_key.as_der().unwrap();
+            let pubkey_raw_bytes = pub_key.key_bytes().unwrap();
             let pub_key_from_bytes =
                 EncapsulationKey::new(algorithm, pubkey_raw_bytes.as_ref()).unwrap();
 
             assert_eq!(
-                pub_key.as_der().unwrap().as_ref(),
-                pub_key_from_bytes.as_der().unwrap().as_ref()
+                pub_key.key_bytes().unwrap().as_ref(),
+                pub_key_from_bytes.key_bytes().unwrap().as_ref()
             );
             assert_eq!(pub_key.algorithm(), pub_key_from_bytes.algorithm());
         }
@@ -215,7 +213,7 @@ mod tests {
             let pub_key = priv_key.encapsulation_key().unwrap();
 
             // Generate public key bytes to send to bob
-            let pub_key_bytes = pub_key.as_der().unwrap();
+            let pub_key_bytes = pub_key.key_bytes().unwrap();
 
             // Test that priv_key's EVP_PKEY isn't entirely freed since we remove this pub_key's reference.
             drop(pub_key);

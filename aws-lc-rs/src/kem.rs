@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 //! Key-Encapsulation Mechanisms (KEMs), including support for Kyber Round 3 Submission.
-//! 
+//!
 //! # Example
 //!
 //! Note that this example uses the Kyber-512 Round 3 algorithm, but other algorithms can be used
@@ -11,7 +11,6 @@
 //!
 //! ```ignore
 //! use aws_lc_rs::{
-//!     encoding::AsDer,
 //!     error::Unspecified,
 //!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
 //!     unstable::kem::{AlgorithmId, get_algorithm}
@@ -25,11 +24,11 @@
 //! // Alices computes the (public) encapsulation key.
 //! let encapsulation_key = decapsulation_key.encapsulation_key()?;
 //!
-//! let encapsulation_key_der = encapsulation_key.as_der()?;
+//! let encapsulation_key_bytes = encapsulation_key.key_bytes()?;
 //!
 //! // Alice sends the encapsulation key bytes to bob through some
 //! // protocol message.
-//! let encapsulation_key_bytes = encapsulation_key_der.as_ref();
+//! let encapsulation_key_bytes = encapsulation_key_bytes.as_ref();
 //!
 //! // Bob constructs the (public) encapsulation key from the key bytes provided by Alice.
 //! let retrieved_encapsulation_key = EncapsulationKey::new(kyber512_r3, encapsulation_key_bytes)?;
@@ -51,7 +50,6 @@
 //! ```
 use crate::{
     buffer::Buffer,
-    encoding::AsDer,
     error::{KeyRejected, Unspecified},
     ptr::LcPtr,
     ptr::Pointer,
@@ -59,8 +57,8 @@ use crate::{
 use aws_lc::{
     EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
     EVP_PKEY_encapsulate, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
-    EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY_keygen,
-    EVP_PKEY_keygen_init, EVP_PKEY_up_ref, EVP_PKEY, EVP_PKEY_KEM,
+    EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_up_ref,
+    EVP_PKEY, EVP_PKEY_KEM,
 };
 use std::{borrow::Cow, cmp::Ordering, fmt::Debug, ptr::null_mut};
 use zeroize::Zeroize;
@@ -253,14 +251,14 @@ where
     }
 }
 
-mod encoding {
-    pub struct EncapsulationKeyBinDerType {
+mod types {
+    pub struct EncapsulationKeyBytesType {
         _priv: (),
     }
 }
 
-/// A KEM Encapsulation Key Big-Endian number representation encoded using DER.
-pub type EncapsulationKeyBinDer = Buffer<'static, encoding::EncapsulationKeyBinDerType>;
+/// KEM Encapsulation Key Bytes.
+pub type EncapsulationKeyBytes = Buffer<'static, types::EncapsulationKeyBytesType>;
 
 /// A serializable encapsulation key usable with KEM algorithms. Constructed
 /// from either a `DecapsulationKey` or raw bytes.
@@ -319,6 +317,25 @@ where
         ))
     }
 
+    /// Returns the `EnscapsulationKey` bytes.
+    pub fn key_bytes(&self) -> Result<EncapsulationKeyBytes, Unspecified> {
+        let mut encapsulate_key_size = self.algorithm.encapsulate_key_size();
+        let mut encapsulate_bytes = vec![0u8; encapsulate_key_size];
+        if 1 != unsafe {
+            EVP_PKEY_get_raw_public_key(
+                self.evp_pkey.as_const_ptr(),
+                encapsulate_bytes.as_mut_ptr(),
+                &mut encapsulate_key_size,
+            )
+        } {
+            return Err(Unspecified);
+        }
+
+        encapsulate_bytes.truncate(encapsulate_key_size);
+
+        Ok(Buffer::new(encapsulate_bytes))
+    }
+
     /// Creates a new KEM encapsulation key from raw bytes. This method MUST NOT be used to generate
     /// a new encapsulation key, rather it MUST be used to construct `EncapsulationKey` previously serialized
     /// to raw bytes.
@@ -348,29 +365,6 @@ where
 unsafe impl<Id> Send for EncapsulationKey<Id> where Id: AlgorithmIdentifier {}
 
 unsafe impl<Id> Sync for EncapsulationKey<Id> where Id: AlgorithmIdentifier {}
-
-impl<Id> AsDer<EncapsulationKeyBinDer> for EncapsulationKey<Id>
-where
-    Id: AlgorithmIdentifier,
-{
-    fn as_der(&self) -> Result<EncapsulationKeyBinDer, Unspecified> {
-        let mut encapsulate_key_size = self.algorithm.encapsulate_key_size();
-        let mut encapsulate_bytes = vec![0u8; encapsulate_key_size];
-        if 1 != unsafe {
-            EVP_PKEY_get_raw_public_key(
-                self.evp_pkey.as_const_ptr(),
-                encapsulate_bytes.as_mut_ptr(),
-                &mut encapsulate_key_size,
-            )
-        } {
-            return Err(Unspecified);
-        }
-
-        encapsulate_bytes.truncate(encapsulate_key_size);
-
-        Ok(Buffer::new(encapsulate_bytes))
-    }
-}
 
 impl<Id> Debug for EncapsulationKey<Id>
 where
