@@ -46,13 +46,13 @@ pub trait AsBigEndian<T> {
 }
 
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub type EcPrivateKeyBin = Buffer<'static, EcPrivateKeyBinType>;
+pub type EcPrivateKeyBin<'a> = Buffer<'a, EcPrivateKeyBinType>;
 
 /// Elliptic curve private key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
-pub type EcPrivateKeyRfc5915Der = Buffer<'static, EcPrivateKeyRfc5915DerType>;
+pub type EcPrivateKeyRfc5915Der<'a> = Buffer<'a, EcPrivateKeyRfc5915DerType>;
 
 /// An elliptic curve public key as a DER-encoded (X509) `SubjectPublicKeyInfo` structure
-pub type EcPublicKeyX509Der = Buffer<'static, EcPublicKeyX509DerType>;
+pub type EcPublicKeyX509Der<'a> = Buffer<'a, EcPublicKeyX509DerType>;
 
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub type Curve25519SeedBin = Buffer<'static, Curve25519SeedBufferType>;
+pub type Curve25519SeedBin<'a> = Buffer<'a, Curve25519SeedBufferType>;

@@ -285,14 +285,14 @@ impl Debug for PrivateKey<'_> {
     }
 }
 
-impl AsBigEndian<EcPrivateKeyBin> for PrivateKey<'_> {
+impl AsBigEndian<EcPrivateKeyBin<'static>> for PrivateKey<'_> {
     /// Exposes the private key encoded as a big-endian fixed-length integer.
     ///
     /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    fn as_be_bytes(&self) -> Result<EcPrivateKeyBin, Unspecified> {
+    fn as_be_bytes(&self) -> Result<EcPrivateKeyBin<'static>, Unspecified> {
         unsafe {
             let buffer = ec::marshal_private_key_to_buffer(
                 self.0.algorithm.id.private_key_size(),
@@ -303,12 +303,12 @@ impl AsBigEndian<EcPrivateKeyBin> for PrivateKey<'_> {
     }
 }
 
-impl AsDer<EcPrivateKeyRfc5915Der> for PrivateKey<'_> {
+impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey<'_> {
     /// Serializes the key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
     ///
     /// # Errors
     /// `error::Unspecified`  if serialization failed.
-    fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der, Unspecified> {
+    fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der<'static>, Unspecified> {
         unsafe {
             let mut outp = null_mut::<u8>();
             let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.0.evp_pkey))?;

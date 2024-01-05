@@ -434,14 +434,14 @@ impl PrivateKey {
     }
 }
 
-impl AsDer<EcPrivateKeyRfc5915Der> for PrivateKey {
+impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
     /// Serializes the key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
     ///
     /// X25519 is not supported.
     ///
     /// # Errors
     /// `error::Unspecified`  if serialization failed.
-    fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der, Unspecified> {
+    fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der<'static>, Unspecified> {
         if AlgorithmID::X25519 == self.inner_key.algorithm().id {
             return Err(Unspecified);
         }
@@ -461,14 +461,14 @@ impl AsDer<EcPrivateKeyRfc5915Der> for PrivateKey {
     }
 }
 
-impl AsBigEndian<EcPrivateKeyBin> for PrivateKey {
+impl AsBigEndian<EcPrivateKeyBin<'static>> for PrivateKey {
     /// Exposes the private key encoded as a big-endian fixed-length integer.
     ///
     /// X25519 is not supported.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    fn as_be_bytes(&self) -> Result<EcPrivateKeyBin, Unspecified> {
+    fn as_be_bytes(&self) -> Result<EcPrivateKeyBin<'static>, Unspecified> {
         if AlgorithmID::X25519 == self.inner_key.algorithm().id {
             return Err(Unspecified);
         }
@@ -482,14 +482,14 @@ impl AsBigEndian<EcPrivateKeyBin> for PrivateKey {
     }
 }
 
-impl AsBigEndian<Curve25519SeedBin> for PrivateKey {
+impl AsBigEndian<Curve25519SeedBin<'static>> for PrivateKey {
     /// Exposes the seed encoded as a big-endian fixed-length integer.
     ///
     /// Only X25519 is supported.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    fn as_be_bytes(&self) -> Result<Curve25519SeedBin, Unspecified> {
+    fn as_be_bytes(&self) -> Result<Curve25519SeedBin<'static>, Unspecified> {
         if AlgorithmID::X25519 != self.inner_key.algorithm().id {
             return Err(Unspecified);
         }

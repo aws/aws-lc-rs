@@ -126,11 +126,11 @@ pub struct PublicKey {
     octets: Box<[u8]>,
 }
 
-impl AsDer<EcPublicKeyX509Der> for PublicKey {
+impl AsDer<EcPublicKeyX509Der<'static>> for PublicKey {
     /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
     /// # Errors
     /// Returns an error if the underlying implementation is unable to marshal the point.
-    fn as_der(&self) -> Result<EcPublicKeyX509Der, Unspecified> {
+    fn as_der(&self) -> Result<EcPublicKeyX509Der<'static>, Unspecified> {
         let ec_group = unsafe { LcPtr::new(EC_GROUP_new_by_curve_name(self.algorithm.id.nid()))? };
         let ec_point = unsafe { ec_point_from_bytes(&ec_group, self.as_ref())? };
         let ec_key = unsafe { LcPtr::new(EC_KEY_new())? };
