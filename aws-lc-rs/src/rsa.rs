@@ -3,7 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-//! TODO: FIX ME
+//! RSA Signature and Encryption Support.
 
 // *R* and *r* in Montgomery math refer to different things, so we always use
 // `R` to refer to *R* to avoid confusion, even when that's against the normal
