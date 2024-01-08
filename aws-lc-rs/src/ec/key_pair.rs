@@ -13,7 +13,7 @@ use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY}
 use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{
-    evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
+    evp_key_generate, verify_evp_key_nid, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
 };
 use crate::encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915Der};
 use crate::error::{KeyRejected, Unspecified};
@@ -88,15 +88,13 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         pkcs8: &[u8],
     ) -> Result<Self, KeyRejected> {
-        unsafe {
-            let evp_pkey = LcPtr::try_from(pkcs8)?;
+        let evp_pkey = LcPtr::try_from(pkcs8)?;
 
-            validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
+        verify_evp_key_nid(&evp_pkey.as_const(), alg.id.nid())?;
 
-            let key_pair = Self::new(alg, evp_pkey)?;
+        let key_pair = Self::new(alg, evp_pkey)?;
 
-            Ok(key_pair)
-        }
+        Ok(key_pair)
     }
 
     /// Generates a new key pair and returns the key pair serialized as a

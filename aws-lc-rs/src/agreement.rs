@@ -294,6 +294,9 @@ impl PrivateKey {
         alg: &'static Algorithm,
         key_bytes: &[u8],
     ) -> Result<Self, KeyRejected> {
+        if key_bytes.len() != alg.id.private_key_len() {
+            return Err(KeyRejected::wrong_algorithm());
+        }
         let evp_pkey = if AlgorithmID::X25519 == alg.id {
             LcPtr::new(unsafe {
                 EVP_PKEY_new_raw_private_key(

@@ -273,19 +273,37 @@ fn evp_pkey_from_public_key(
     Ok(pkey)
 }
 
+fn verify_ec_key_nid(
+    ec_key: &ConstPointer<EC_KEY>,
+    expected_curve_nid: i32,
+) -> Result<(), KeyRejected> {
+    let ec_group = ConstPointer::new(unsafe { EC_KEY_get0_group(**ec_key) })?;
+    let key_nid = unsafe { EC_GROUP_get_curve_name(*ec_group) };
+
+    if key_nid != expected_curve_nid {
+        return Err(KeyRejected::wrong_algorithm());
+    }
+    Ok(())
+}
+
+#[inline]
+pub(crate) fn verify_evp_key_nid(
+    evp_pkey: &ConstPointer<EVP_PKEY>,
+    expected_curve_nid: i32,
+) -> Result<(), KeyRejected> {
+    let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(**evp_pkey) })?;
+    verify_ec_key_nid(&ec_key, expected_curve_nid)?;
+
+    Ok(())
+}
+
 #[inline]
 unsafe fn validate_evp_key(
     evp_pkey: &ConstPointer<EVP_PKEY>,
     expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
     let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
-
-    let ec_group = ConstPointer::new(EC_KEY_get0_group(*ec_key))?;
-    let key_nid = EC_GROUP_get_curve_name(*ec_group);
-
-    if key_nid != expected_curve_nid {
-        return Err(KeyRejected::wrong_algorithm());
-    }
+    verify_ec_key_nid(&ec_key, expected_curve_nid)?;
 
     #[cfg(not(feature = "fips"))]
     if 1 != EC_KEY_check_key(*ec_key) {
@@ -333,7 +351,7 @@ pub(crate) unsafe fn unmarshal_der_to_private_key(
             .try_into()
             .map_err(|_| KeyRejected::too_large())?,
     ))?;
-    validate_evp_key(&evp_pkey.as_const(), nid)?;
+    verify_evp_key_nid(&evp_pkey.as_const(), nid)?;
 
     Ok(evp_pkey)
 }
