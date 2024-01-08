@@ -230,6 +230,10 @@ where
             return Err(Unspecified);
         }
 
+        // This is currently pedantic but done for safety in-case the shared_secret buffer
+        // size changes in the future. `EVP_PKEY_decapsulate` updates `shared_secret_len` with
+        // the length of the shared secret in the event the buffer provided was larger then the secret.
+        // This truncates the buffer to the proper length to match the shared secret written.
         shared_secret.truncate(shared_secret_len);
 
         Ok(SharedSecret(shared_secret.into_boxed_slice()))
@@ -308,6 +312,11 @@ where
             return Err(Unspecified);
         }
 
+        // The following two steps are currently pedantic but done for safety in-case the buffer allocation
+        // sizes change in the future. `EVP_PKEY_encapsulate` updates `ciphertext_len` and `shared_secret_len` with
+        // the length of the ciphertext and shared secret respectivly in the event the buffer provided for each was 
+        // larger then the actual values. Thus these two steps truncate the buffers to the proper length to match the
+        // value lengths written.
         ciphertext.truncate(ciphertext_len);
         shared_secret.truncate(shared_secret_len);
 
