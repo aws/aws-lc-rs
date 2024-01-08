@@ -18,3 +18,5 @@ deps/aws-lc-sys/src/bindings.rs
 
 **/target
 /Cargo.lock
+
+lcov.info

@@ -118,6 +118,7 @@ pub mod hkdf;
 pub mod hmac;
 #[cfg(feature = "ring-io")]
 pub mod io;
+pub mod key_wrap;
 pub mod pbkdf2;
 pub mod pkcs8;
 pub mod rand;

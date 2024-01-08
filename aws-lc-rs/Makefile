@@ -21,7 +21,7 @@ asan-fips:
 	RUST_BACKTRACE=1 ASAN_OPTIONS=detect_leaks=1 RUSTFLAGS=-Zsanitizer=address RUSTDOCFLAGS=-Zsanitizer=address cargo +nightly test --lib --bins --tests --examples --target `rustc -vV | sed -n 's|host: ||p'` --no-default-features --features fips,asan
 
 coverage:
-	cargo llvm-cov --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-sys/*"
+	cargo llvm-cov --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc-sys/*" --lcov --output-path lcov.info
 
 test:
 	cargo test --all-targets --features ring-benchmarks
