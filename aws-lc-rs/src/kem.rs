@@ -287,9 +287,6 @@ where
     /// Performs the encapsulate operation using this KEM encapsulation key, generating a ciphertext
     /// and associated shared secret.
     ///
-    /// After the encapsulation is finished, `encapsulate` calls `kdf` with the ciphertext and raw shared secret
-    /// from the operation and then returns what `kdf` returns.
-    ///
     /// # Errors
     /// `error::Unspecified` when operation fails due to internal error.
     pub fn encapsulate(&self) -> Result<(Ciphertext<'static>, SharedSecret), Unspecified> {
