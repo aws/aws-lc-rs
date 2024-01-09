@@ -287,6 +287,7 @@ fn verify_ec_key_nid(
 }
 
 #[inline]
+#[cfg(not(feature = "fips"))]
 pub(crate) fn verify_evp_key_nid(
     evp_pkey: &ConstPointer<EVP_PKEY>,
     expected_curve_nid: i32,
@@ -298,20 +299,20 @@ pub(crate) fn verify_evp_key_nid(
 }
 
 #[inline]
-unsafe fn validate_evp_key(
+fn validate_evp_key(
     evp_pkey: &ConstPointer<EVP_PKEY>,
     expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
-    let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
+    let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(**evp_pkey) })?;
     verify_ec_key_nid(&ec_key, expected_curve_nid)?;
 
     #[cfg(not(feature = "fips"))]
-    if 1 != EC_KEY_check_key(*ec_key) {
+    if 1 != unsafe { EC_KEY_check_key(*ec_key) } {
         return Err(KeyRejected::inconsistent_components());
     }
 
     #[cfg(feature = "fips")]
-    if 1 != indicator_check!(EC_KEY_check_fips(*ec_key)) {
+    if 1 != indicator_check!(unsafe { EC_KEY_check_fips(*ec_key) }) {
         return Err(KeyRejected::inconsistent_components());
     }
 
@@ -342,6 +343,7 @@ pub(crate) unsafe fn unmarshal_der_to_private_key(
     nid: i32,
 ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     let mut out = null_mut();
+    // `d2i_PrivateKey` -> ... -> `EC_KEY_parse_private_key` -> `EC_KEY_check_key`
     let evp_pkey = LcPtr::new(aws_lc::d2i_PrivateKey(
         EVP_PKEY_EC,
         &mut out,
@@ -351,7 +353,10 @@ pub(crate) unsafe fn unmarshal_der_to_private_key(
             .try_into()
             .map_err(|_| KeyRejected::too_large())?,
     ))?;
+    #[cfg(not(feature = "fips"))]
     verify_evp_key_nid(&evp_pkey.as_const(), nid)?;
+    #[cfg(feature = "fips")]
+    validate_evp_key(&evp_pkey.as_const(), nid)?;
 
     Ok(evp_pkey)
 }
