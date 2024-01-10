@@ -2,7 +2,6 @@
 
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-#
 
 set -e
 
@@ -11,8 +10,8 @@ AWS_LC_RS_FILES=$(find "$PWD" -type f \( -name "*.rs" -o -name "*.sh" \) -not \(
 FAILED=0
 
 for file in $AWS_LC_RS_FILES; do
-    # The word "Copyright" should appear at least once in the first 4 lines of every file
-    COUNT=`head -n 4 "${file}" | grep "Copyright" | wc -l`;
+    # The word "Copyright" should appear at least once in the first 25 lines of every file
+    COUNT=`head -n 25 "${file}" | grep "Copyright" | wc -l`;
     if [ "${COUNT}" -eq "0" ]; then
         FAILED=1;
         echo "Copyright Check Failed: $file";
