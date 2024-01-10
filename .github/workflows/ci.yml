@@ -24,19 +24,16 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          profile: minimal
-          override: true
           components: rustfmt
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
 
       - name: Run cargo fmt
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: fmt
-          args: -- --check --verbose
+        run : cargo fmt -- --check --verbose
 
   clippy:
     runs-on: ubuntu-latest
@@ -56,13 +53,13 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          profile: minimal
-          override: true
           components: clippy
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run cargo clippy
         working-directory: ${{ matrix.crate_dir }}
         run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
@@ -79,17 +76,14 @@ jobs:
         with:
           fetch-depth: 0
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: nightly-2023-08-25
-          profile: minimal
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cargo-public-api
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: cargo-public-api
+        run: cargo install cargo-public-api
       - name: Perform API Diff (Target Branch)
         if: matrix.diff_target == 'branch'
         working-directory: ${{ matrix.crate_dir }}
@@ -122,18 +116,15 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          profile: minimal
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
 
       - name: Install cargo-udeps
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: cargo-udeps
+        run: cargo install cargo-udeps
 
       - name: Run cargo udeps
         # we only use openssl when the openssl-benchmarks feature is enabled.
@@ -165,17 +156,15 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
           target: ${{ matrix.target }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cross
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: cross --git https://github.com/cross-rs/cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
       - name: Cross-compilation
         if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'i686-unknown-linux-gnu' }}
         working-directory: ./aws-lc-rs
@@ -197,12 +186,13 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
           target: ${{ matrix.target }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test --features bindgen --target ${{ matrix.target }}
@@ -221,11 +211,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@stable
         id: toolchain
-        with:
-          toolchain: stable
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run cargo test
         working-directory: ./sys-testing
         run: cargo test --features ${{ matrix.features }} --no-default-features
@@ -252,11 +241,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -286,11 +276,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
@@ -315,11 +306,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -345,11 +337,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -374,11 +367,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: aws-lc-sys
         working-directory: ./aws-lc-sys
         run: cargo ${{ matrix.args }}
@@ -399,18 +393,16 @@ jobs:
           submodules: 'recursive'
           lfs: true
 
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          override: true
           components: llvm-tools-preview
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
 
       - name: Install cargo-llvm-cov
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
 
       - name: Run coverage
         working-directory: ./aws-lc-rs
@@ -430,12 +422,13 @@ jobs:
           submodules: 'recursive'
           lfs: true
 
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ env.MIRAI_TOOLCHAIN }}
-          profile: minimal
           components: rust-src, rustc-dev, llvm-tools-preview
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
 
       - name: Cache Cargo
         uses: actions/cache@v3.0.5
@@ -478,11 +471,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run address sanitizers
         env:
           ASAN_OPTIONS: detect_leaks=1
@@ -502,11 +496,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@stable
         id: toolchain
-        with:
-          toolchain: stable
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run s2n-quic integration
         working-directory: ./aws-lc-rs
         run: |
@@ -523,16 +516,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@stable
         id: toolchain
-        with:
-          toolchain: stable
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cargo-download
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: cargo-download
+        run: cargo install cargo-download
       - name: Run rustls integration
         working-directory: ./aws-lc-rs
         run: |
@@ -578,11 +567,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@stable
         id: toolchain
-        with:
-          toolchain: stable
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         # Doc-tests fail to link with dynamic build
@@ -601,11 +589,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@stable
         id: toolchain
-        with:
-          toolchain: stable
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
@@ -625,11 +612,14 @@ jobs:
           submodules: 'recursive'
           lfs: true
 
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+
       - name: Install cargo-msrv
-        uses: actions-rs/cargo@v1.0.3
-        with:
-          command: install
-          args: cargo-msrv
+        run: cargo install cargo-msrv
 
       - name: Verify msrv
         working-directory: ./aws-lc-rs
@@ -643,11 +633,10 @@ jobs:
         with:
           submodules: 'recursive'
           lfs: true
-      - uses: actions-rs/toolchain@v1.0.7
+      - uses: dtolnay/rust-toolchain@nightly
         id: toolchain
-        with:
-          toolchain: nightly
-          override: true
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Setup to use minimal versions
         working-directory: ./aws-lc-rs
         run: cargo update -Z minimal-versions
