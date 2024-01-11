@@ -234,6 +234,7 @@ where
         // size changes in the future. `EVP_PKEY_decapsulate` updates `shared_secret_len` with
         // the length of the shared secret in the event the buffer provided was larger then the secret.
         // This truncates the buffer to the proper length to match the shared secret written.
+        debug_assert_eq!(shared_secret_len, shared_secret.len());
         shared_secret.truncate(shared_secret_len);
 
         Ok(SharedSecret(shared_secret.into_boxed_slice()))
@@ -311,10 +312,12 @@ where
 
         // The following two steps are currently pedantic but done for safety in-case the buffer allocation
         // sizes change in the future. `EVP_PKEY_encapsulate` updates `ciphertext_len` and `shared_secret_len` with
-        // the length of the ciphertext and shared secret respectivly in the event the buffer provided for each was 
+        // the length of the ciphertext and shared secret respectivly in the event the buffer provided for each was
         // larger then the actual values. Thus these two steps truncate the buffers to the proper length to match the
         // value lengths written.
+        debug_assert_eq!(ciphertext_len, ciphertext.len());
         ciphertext.truncate(ciphertext_len);
+        debug_assert_eq!(shared_secret_len, shared_secret.len());
         shared_secret.truncate(shared_secret_len);
 
         Ok((
@@ -324,6 +327,9 @@ where
     }
 
     /// Returns the `EnscapsulationKey` bytes.
+    ///
+    /// # Errors
+    /// * `Unspecified`: Any failure to retrieve the `EnscapsulationKey` bytes.
     pub fn key_bytes(&self) -> Result<EncapsulationKeyBytes, Unspecified> {
         let mut encapsulate_key_size = self.algorithm.encapsulate_key_size();
         let mut encapsulate_bytes = vec![0u8; encapsulate_key_size];
@@ -337,6 +343,11 @@ where
             return Err(Unspecified);
         }
 
+        // This is currently pedantic but done for safety in-case the encapsulation key
+        // size changes in the future. `EVP_PKEY_get_raw_public_key` writes the total length
+        // to `encapsulate_key_size` in the event that the buffer we provide is larger then
+        // required.
+        debug_assert_eq!(encapsulate_key_size, encapsulate_bytes.len());
         encapsulate_bytes.truncate(encapsulate_key_size);
 
         Ok(Buffer::new(encapsulate_bytes))
