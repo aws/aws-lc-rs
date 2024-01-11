@@ -138,9 +138,12 @@ mod evp_pkey;
 mod fips;
 mod hex;
 pub mod iv;
+#[allow(clippy::module_name_repetitions)]
+pub mod kem;
 mod ptr;
 pub mod rsa;
 pub mod tls_prf;
+pub mod unstable;
 
 pub(crate) use debug::derive_debug_via_id;
 

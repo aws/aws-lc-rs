@@ -33,6 +33,7 @@ ring-sig-verify = ["dep:untrusted"]
 bindgen = ["aws-lc-sys?/bindgen", "aws-lc-fips-sys?/bindgen"]
 asan = ["aws-lc-sys?/asan", "aws-lc-fips-sys?/asan"]
 test_logging = []
+unstable = []
 
 # require non-FIPS
 non-fips = ["aws-lc-sys"]

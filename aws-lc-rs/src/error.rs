@@ -112,7 +112,7 @@ impl From<core::array::TryFromSliceError> for Unspecified {
 ///    being used.
 ///
 ///  * Unexpected errors: Report this as a bug.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct KeyRejected(&'static str);
 
 impl KeyRejected {
