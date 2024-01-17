@@ -131,9 +131,9 @@ impl AsDer<EcPublicKeyX509Der<'static>> for PublicKey {
     /// # Errors
     /// Returns an error if the underlying implementation is unable to marshal the point.
     fn as_der(&self) -> Result<EcPublicKeyX509Der<'static>, Unspecified> {
-        let ec_group = unsafe { LcPtr::new(EC_GROUP_new_by_curve_name(self.algorithm.id.nid()))? };
-        let ec_point = unsafe { ec_point_from_bytes(&ec_group, self.as_ref())? };
-        let ec_key = unsafe { LcPtr::new(EC_KEY_new())? };
+        let ec_group = LcPtr::new(unsafe { EC_GROUP_new_by_curve_name(self.algorithm.id.nid()) })?;
+        let ec_point = ec_point_from_bytes(&ec_group, self.as_ref())?;
+        let ec_key = LcPtr::new(unsafe { EC_KEY_new() })?;
         if 1 != unsafe { EC_KEY_set_group(*ec_key, *ec_group) } {
             return Err(Unspecified);
         }
@@ -266,9 +266,9 @@ fn evp_pkey_from_public_key(
     alg: &'static AlgorithmID,
     public_key: &[u8],
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ec_group = unsafe { ec_group_from_nid(alg.nid())? };
-    let ec_point = unsafe { ec_point_from_bytes(&ec_group, public_key)? };
-    let pkey = unsafe { evp_pkey_from_public_point(&ec_group, &ec_point)? };
+    let ec_group = ec_group_from_nid(alg.nid())?;
+    let ec_point = ec_point_from_bytes(&ec_group, public_key)?;
+    let pkey = evp_pkey_from_public_point(&ec_group, &ec_point)?;
 
     Ok(pkey)
 }
@@ -397,16 +397,16 @@ pub(crate) fn marshal_public_key(
 }
 
 #[inline]
-pub(crate) unsafe fn evp_pkey_from_public_point(
+pub(crate) fn evp_pkey_from_public_point(
     ec_group: &LcPtr<EC_GROUP>,
     public_ec_point: &LcPtr<EC_POINT>,
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let nid = EC_GROUP_get_curve_name(ec_group.as_const_ptr());
-    let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
-    if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
+    let nid = unsafe { EC_GROUP_get_curve_name(ec_group.as_const_ptr()) };
+    let ec_key = DetachableLcPtr::new(unsafe { EC_KEY_new() })?;
+    if 1 != unsafe { EC_KEY_set_group(*ec_key, **ec_group) } {
         return Err(Unspecified);
     }
-    if 1 != EC_KEY_set_public_key(*ec_key, **public_ec_point) {
+    if 1 != unsafe { EC_KEY_set_public_key(*ec_key, **public_ec_point) } {
         return Err(Unspecified);
     }
 
@@ -423,32 +423,34 @@ pub(crate) unsafe fn evp_pkey_from_public_point(
     Ok(pkey)
 }
 
-pub(crate) unsafe fn evp_pkey_from_private(
+pub(crate) fn evp_pkey_from_private(
     ec_group: &ConstPointer<EC_GROUP>,
     private_big_num: &ConstPointer<BIGNUM>,
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(EC_KEY_new())?;
-    if 1 != EC_KEY_set_group(*ec_key, **ec_group) {
+    let ec_key = DetachableLcPtr::new(unsafe { EC_KEY_new() })?;
+    if 1 != unsafe { EC_KEY_set_group(*ec_key, **ec_group) } {
         return Err(Unspecified);
     }
-    if 1 != EC_KEY_set_private_key(*ec_key, **private_big_num) {
+    if 1 != unsafe { EC_KEY_set_private_key(*ec_key, **private_big_num) } {
         return Err(Unspecified);
     }
-    let pub_key = LcPtr::new(EC_POINT_new(**ec_group))?;
-    if 1 != EC_POINT_mul(
-        **ec_group,
-        *pub_key,
-        **private_big_num,
-        null(),
-        null(),
-        null_mut(),
-    ) {
+    let pub_key = LcPtr::new(unsafe { EC_POINT_new(**ec_group) })?;
+    if 1 != unsafe {
+        EC_POINT_mul(
+            **ec_group,
+            *pub_key,
+            **private_big_num,
+            null(),
+            null(),
+            null_mut(),
+        )
+    } {
         return Err(Unspecified);
     }
-    if 1 != EC_KEY_set_public_key(*ec_key, *pub_key) {
+    if 1 != unsafe { EC_KEY_set_public_key(*ec_key, *pub_key) } {
         return Err(Unspecified);
     }
-    let expected_curve_nid = EC_GROUP_get_curve_name(**ec_group);
+    let expected_curve_nid = unsafe { EC_GROUP_get_curve_name(**ec_group) };
 
     let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
 
@@ -519,24 +521,26 @@ pub(crate) unsafe fn evp_key_from_public_private(
 }
 
 #[inline]
-pub(crate) unsafe fn ec_group_from_nid(nid: i32) -> Result<LcPtr<EC_GROUP>, ()> {
-    LcPtr::new(EC_GROUP_new_by_curve_name(nid))
+pub(crate) fn ec_group_from_nid(nid: i32) -> Result<LcPtr<EC_GROUP>, ()> {
+    LcPtr::new(unsafe { EC_GROUP_new_by_curve_name(nid) })
 }
 
 #[inline]
-pub(crate) unsafe fn ec_point_from_bytes(
+pub(crate) fn ec_point_from_bytes(
     ec_group: &LcPtr<EC_GROUP>,
     bytes: &[u8],
 ) -> Result<LcPtr<EC_POINT>, Unspecified> {
-    let ec_point = LcPtr::new(EC_POINT_new(**ec_group))?;
+    let ec_point = LcPtr::new(unsafe { EC_POINT_new(**ec_group) })?;
 
-    if 1 != EC_POINT_oct2point(
-        **ec_group,
-        *ec_point,
-        bytes.as_ptr(),
-        bytes.len(),
-        null_mut(),
-    ) {
+    if 1 != unsafe {
+        EC_POINT_oct2point(
+            **ec_group,
+            *ec_point,
+            bytes.as_ptr(),
+            bytes.len(),
+            null_mut(),
+        )
+    } {
         return Err(Unspecified);
     }
 

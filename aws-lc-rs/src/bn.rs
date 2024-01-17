@@ -1,11 +1,19 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::ptr::{ConstPointer, DetachableLcPtr};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use aws_lc::{BN_bin2bn, BN_bn2bin, BN_cmp, BN_new, BN_num_bits, BN_num_bytes, BN_set_u64, BIGNUM};
 use mirai_annotations::unrecoverable;
 use std::cmp::Ordering;
 use std::ptr::null_mut;
+
+impl TryFrom<&[u8]> for LcPtr<BIGNUM> {
+    type Error = ();
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        unsafe { LcPtr::new(BN_bin2bn(bytes.as_ptr(), bytes.len(), null_mut())) }
+    }
+}
 
 impl TryFrom<&[u8]> for DetachableLcPtr<BIGNUM> {
     type Error = ();

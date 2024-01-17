@@ -58,14 +58,14 @@ use crate::ec::{
 };
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
+use crate::ptr::{ConstPointer, LcPtr, Pointer};
 use crate::{ec, hex};
 use aws_lc::{
     EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init,
     EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
     EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
     EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1,
-    NID_secp521r1, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+    NID_secp521r1, BIGNUM, EC_GROUP, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
 
 use crate::buffer::Buffer;
@@ -307,13 +307,11 @@ impl PrivateKey {
                 )
             })?
         } else {
-            let ec_group = unsafe { ec_group_from_nid(alg.id.nid())? };
-            let private_bn = DetachableLcPtr::try_from(key_bytes)?;
+            let ec_group: LcPtr<EC_GROUP> = ec_group_from_nid(alg.id.nid())?;
+            let private_bn: LcPtr<BIGNUM> = LcPtr::try_from(key_bytes)?;
 
-            unsafe {
-                ec::evp_pkey_from_private(&ec_group.as_const(), &private_bn.as_const())
-                    .map_err(|_| KeyRejected::invalid_encoding())?
-            }
+            ec::evp_pkey_from_private(&ec_group.as_const(), &private_bn.as_const())
+                .map_err(|_| KeyRejected::invalid_encoding())?
         };
         Ok(Self::new(alg, evp_pkey))
     }
@@ -511,10 +509,10 @@ impl AsBigEndian<Curve25519SeedBin<'static>> for PrivateKey {
 
 #[cfg(test)]
 fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ec_group = unsafe { ec_group_from_nid(nid)? };
-    let priv_key = DetachableLcPtr::try_from(priv_key)?;
+    let ec_group: LcPtr<EC_GROUP> = ec_group_from_nid(nid)?;
+    let priv_key: LcPtr<BIGNUM> = LcPtr::try_from(priv_key)?;
 
-    let pkey = unsafe { ec::evp_pkey_from_private(&ec_group.as_const(), &priv_key.as_const())? };
+    let pkey = ec::evp_pkey_from_private(&ec_group.as_const(), &priv_key.as_const())?;
 
     Ok(pkey)
 }
@@ -696,9 +694,9 @@ fn ec_key_ecdh<'a>(
     peer_pub_key_bytes: &[u8],
     nid: i32,
 ) -> Result<&'a [u8], ()> {
-    let ec_group = unsafe { ec_group_from_nid(nid)? };
-    let pub_key_point = unsafe { ec_point_from_bytes(&ec_group, peer_pub_key_bytes) }?;
-    let pub_key = unsafe { evp_pkey_from_public_point(&ec_group, &pub_key_point) }?;
+    let ec_group = ec_group_from_nid(nid)?;
+    let pub_key_point = ec_point_from_bytes(&ec_group, peer_pub_key_bytes)?;
+    let pub_key = evp_pkey_from_public_point(&ec_group, &pub_key_point)?;
 
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
 
