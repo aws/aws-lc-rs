@@ -671,4 +671,5 @@ jobs:
         run: cargo +nightly careful test
       - name: Run tests w/ FIPS
         working-directory: ./aws-lc-rs
-        run: cargo +nightly careful test --features fips,bindgen
+        # Rust doc tests dislike dynamic linking
+        run: cargo +nightly careful test --tests --features fips,bindgen
