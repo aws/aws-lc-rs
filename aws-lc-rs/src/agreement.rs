@@ -764,7 +764,8 @@ fn x25519_diffie_hellman<'a>(
 #[cfg(test)]
 mod tests {
     use crate::agreement::{
-        PrivateKey, PublicKey, UnparsedPublicKey, ECDH_P256, ECDH_P384, ECDH_P521, X25519,
+        agree, Algorithm, PrivateKey, PublicKey, UnparsedPublicKey, ECDH_P256, ECDH_P384,
+        ECDH_P521, X25519,
     };
     use crate::encoding::{
         AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
@@ -827,6 +828,36 @@ mod tests {
                 Ok(())
             });
             assert_eq!(result, Ok(()));
+        }
+    }
+
+    #[test]
+    fn test_agreement_invalid_keys() {
+        fn test_with_key(alg: &'static Algorithm, my_private_key: &PrivateKey, test_key: &[u8]) {
+            assert!(PrivateKey::from_private_key(alg, test_key).is_err());
+            assert!(PrivateKey::from_private_key_der(alg, test_key).is_err());
+            assert!(agree(
+                my_private_key,
+                &UnparsedPublicKey::new(alg, test_key),
+                (),
+                |_| Ok(())
+            )
+            .is_err());
+        }
+
+        let alg_variants: [&'static Algorithm; 4] = [&X25519, &ECDH_P256, &ECDH_P384, &ECDH_P521];
+
+        for alg in alg_variants {
+            let my_private_key = PrivateKey::generate(alg).unwrap();
+
+            let empty_key = [];
+            test_with_key(alg, &my_private_key, &empty_key);
+
+            let wrong_size_key: [u8; 31] = [
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                23, 24, 25, 26, 27, 28, 29, 30,
+            ];
+            test_with_key(alg, &my_private_key, &wrong_size_key);
         }
     }
 
