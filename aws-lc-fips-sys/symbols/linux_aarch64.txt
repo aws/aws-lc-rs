@@ -223,6 +223,8 @@ BIO_free
 BIO_free_all
 BIO_get_callback_arg
 BIO_get_data
+BIO_get_ex_data
+BIO_get_ex_new_index
 BIO_get_fd
 BIO_get_fp
 BIO_get_init
@@ -288,6 +290,7 @@ BIO_set_conn_hostname
 BIO_set_conn_int_port
 BIO_set_conn_port
 BIO_set_data
+BIO_set_ex_data
 BIO_set_fd
 BIO_set_flags
 BIO_set_fp
@@ -1491,6 +1494,7 @@ OCSP_response_get1_basic
 OCSP_response_status
 OCSP_single_get0_status
 OPENSSL_add_all_algorithms_conf
+OPENSSL_asprintf
 OPENSSL_built_in_curves
 OPENSSL_cleanse
 OPENSSL_cleanup
@@ -1533,6 +1537,8 @@ OPENSSL_strnlen
 OPENSSL_timegm
 OPENSSL_tm_to_posix
 OPENSSL_tolower
+OPENSSL_vasprintf
+OPENSSL_vasprintf_internal
 OTHERNAME_cmp
 OTHERNAME_free
 OTHERNAME_it
@@ -1920,6 +1926,7 @@ SSL_CTX_get_num_tickets
 SSL_CTX_get_options
 SSL_CTX_get_quiet_shutdown
 SSL_CTX_get_read_ahead
+SSL_CTX_get_security_level
 SSL_CTX_get_session_cache_mode
 SSL_CTX_get_timeout
 SSL_CTX_get_tlsext_ticket_keys
@@ -2011,6 +2018,7 @@ SSL_CTX_set_read_ahead
 SSL_CTX_set_record_protocol_version
 SSL_CTX_set_retain_only_sha256_of_client_certs
 SSL_CTX_set_reverify_on_resume
+SSL_CTX_set_security_level
 SSL_CTX_set_select_certificate_cb
 SSL_CTX_set_session_cache_mode
 SSL_CTX_set_session_id_context

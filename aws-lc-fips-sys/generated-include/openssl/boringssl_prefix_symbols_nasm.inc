@@ -13,7 +13,7 @@
 ; CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_11_2
+%define BORINGSSL_PREFIX aws_lc_fips_0_12_0
 %endif
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -243,6 +243,8 @@
 %xdefine _BIO_free_all _ %+ BORINGSSL_PREFIX %+ _BIO_free_all
 %xdefine _BIO_get_callback_arg _ %+ BORINGSSL_PREFIX %+ _BIO_get_callback_arg
 %xdefine _BIO_get_data _ %+ BORINGSSL_PREFIX %+ _BIO_get_data
+%xdefine _BIO_get_ex_data _ %+ BORINGSSL_PREFIX %+ _BIO_get_ex_data
+%xdefine _BIO_get_ex_new_index _ %+ BORINGSSL_PREFIX %+ _BIO_get_ex_new_index
 %xdefine _BIO_get_fd _ %+ BORINGSSL_PREFIX %+ _BIO_get_fd
 %xdefine _BIO_get_fp _ %+ BORINGSSL_PREFIX %+ _BIO_get_fp
 %xdefine _BIO_get_init _ %+ BORINGSSL_PREFIX %+ _BIO_get_init
@@ -308,6 +310,7 @@
 %xdefine _BIO_set_conn_int_port _ %+ BORINGSSL_PREFIX %+ _BIO_set_conn_int_port
 %xdefine _BIO_set_conn_port _ %+ BORINGSSL_PREFIX %+ _BIO_set_conn_port
 %xdefine _BIO_set_data _ %+ BORINGSSL_PREFIX %+ _BIO_set_data
+%xdefine _BIO_set_ex_data _ %+ BORINGSSL_PREFIX %+ _BIO_set_ex_data
 %xdefine _BIO_set_fd _ %+ BORINGSSL_PREFIX %+ _BIO_set_fd
 %xdefine _BIO_set_flags _ %+ BORINGSSL_PREFIX %+ _BIO_set_flags
 %xdefine _BIO_set_fp _ %+ BORINGSSL_PREFIX %+ _BIO_set_fp
@@ -1513,6 +1516,7 @@
 %xdefine _OCSP_response_status _ %+ BORINGSSL_PREFIX %+ _OCSP_response_status
 %xdefine _OCSP_single_get0_status _ %+ BORINGSSL_PREFIX %+ _OCSP_single_get0_status
 %xdefine _OPENSSL_add_all_algorithms_conf _ %+ BORINGSSL_PREFIX %+ _OPENSSL_add_all_algorithms_conf
+%xdefine _OPENSSL_asprintf _ %+ BORINGSSL_PREFIX %+ _OPENSSL_asprintf
 %xdefine _OPENSSL_built_in_curves _ %+ BORINGSSL_PREFIX %+ _OPENSSL_built_in_curves
 %xdefine _OPENSSL_cleanse _ %+ BORINGSSL_PREFIX %+ _OPENSSL_cleanse
 %xdefine _OPENSSL_cleanup _ %+ BORINGSSL_PREFIX %+ _OPENSSL_cleanup
@@ -1557,6 +1561,8 @@
 %xdefine _OPENSSL_timegm _ %+ BORINGSSL_PREFIX %+ _OPENSSL_timegm
 %xdefine _OPENSSL_tm_to_posix _ %+ BORINGSSL_PREFIX %+ _OPENSSL_tm_to_posix
 %xdefine _OPENSSL_tolower _ %+ BORINGSSL_PREFIX %+ _OPENSSL_tolower
+%xdefine _OPENSSL_vasprintf _ %+ BORINGSSL_PREFIX %+ _OPENSSL_vasprintf
+%xdefine _OPENSSL_vasprintf_internal _ %+ BORINGSSL_PREFIX %+ _OPENSSL_vasprintf_internal
 %xdefine _OTHERNAME_cmp _ %+ BORINGSSL_PREFIX %+ _OTHERNAME_cmp
 %xdefine _OTHERNAME_free _ %+ BORINGSSL_PREFIX %+ _OTHERNAME_free
 %xdefine _OTHERNAME_it _ %+ BORINGSSL_PREFIX %+ _OTHERNAME_it
@@ -1945,6 +1951,7 @@
 %xdefine _SSL_CTX_get_options _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_get_options
 %xdefine _SSL_CTX_get_quiet_shutdown _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_get_quiet_shutdown
 %xdefine _SSL_CTX_get_read_ahead _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_get_read_ahead
+%xdefine _SSL_CTX_get_security_level _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_get_security_level
 %xdefine _SSL_CTX_get_session_cache_mode _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_get_session_cache_mode
 %xdefine _SSL_CTX_get_timeout _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_get_timeout
 %xdefine _SSL_CTX_get_tlsext_ticket_keys _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_get_tlsext_ticket_keys
@@ -2036,6 +2043,7 @@
 %xdefine _SSL_CTX_set_record_protocol_version _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_record_protocol_version
 %xdefine _SSL_CTX_set_retain_only_sha256_of_client_certs _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_retain_only_sha256_of_client_certs
 %xdefine _SSL_CTX_set_reverify_on_resume _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_reverify_on_resume
+%xdefine _SSL_CTX_set_security_level _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_security_level
 %xdefine _SSL_CTX_set_select_certificate_cb _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_select_certificate_cb
 %xdefine _SSL_CTX_set_session_cache_mode _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_session_cache_mode
 %xdefine _SSL_CTX_set_session_id_context _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_session_id_context
@@ -4104,6 +4112,8 @@
 %xdefine BIO_free_all BORINGSSL_PREFIX %+ _BIO_free_all
 %xdefine BIO_get_callback_arg BORINGSSL_PREFIX %+ _BIO_get_callback_arg
 %xdefine BIO_get_data BORINGSSL_PREFIX %+ _BIO_get_data
+%xdefine BIO_get_ex_data BORINGSSL_PREFIX %+ _BIO_get_ex_data
+%xdefine BIO_get_ex_new_index BORINGSSL_PREFIX %+ _BIO_get_ex_new_index
 %xdefine BIO_get_fd BORINGSSL_PREFIX %+ _BIO_get_fd
 %xdefine BIO_get_fp BORINGSSL_PREFIX %+ _BIO_get_fp
 %xdefine BIO_get_init BORINGSSL_PREFIX %+ _BIO_get_init
@@ -4169,6 +4179,7 @@
 %xdefine BIO_set_conn_int_port BORINGSSL_PREFIX %+ _BIO_set_conn_int_port
 %xdefine BIO_set_conn_port BORINGSSL_PREFIX %+ _BIO_set_conn_port
 %xdefine BIO_set_data BORINGSSL_PREFIX %+ _BIO_set_data
+%xdefine BIO_set_ex_data BORINGSSL_PREFIX %+ _BIO_set_ex_data
 %xdefine BIO_set_fd BORINGSSL_PREFIX %+ _BIO_set_fd
 %xdefine BIO_set_flags BORINGSSL_PREFIX %+ _BIO_set_flags
 %xdefine BIO_set_fp BORINGSSL_PREFIX %+ _BIO_set_fp
@@ -5374,6 +5385,7 @@
 %xdefine OCSP_response_status BORINGSSL_PREFIX %+ _OCSP_response_status
 %xdefine OCSP_single_get0_status BORINGSSL_PREFIX %+ _OCSP_single_get0_status
 %xdefine OPENSSL_add_all_algorithms_conf BORINGSSL_PREFIX %+ _OPENSSL_add_all_algorithms_conf
+%xdefine OPENSSL_asprintf BORINGSSL_PREFIX %+ _OPENSSL_asprintf
 %xdefine OPENSSL_built_in_curves BORINGSSL_PREFIX %+ _OPENSSL_built_in_curves
 %xdefine OPENSSL_cleanse BORINGSSL_PREFIX %+ _OPENSSL_cleanse
 %xdefine OPENSSL_cleanup BORINGSSL_PREFIX %+ _OPENSSL_cleanup
@@ -5418,6 +5430,8 @@
 %xdefine OPENSSL_timegm BORINGSSL_PREFIX %+ _OPENSSL_timegm
 %xdefine OPENSSL_tm_to_posix BORINGSSL_PREFIX %+ _OPENSSL_tm_to_posix
 %xdefine OPENSSL_tolower BORINGSSL_PREFIX %+ _OPENSSL_tolower
+%xdefine OPENSSL_vasprintf BORINGSSL_PREFIX %+ _OPENSSL_vasprintf
+%xdefine OPENSSL_vasprintf_internal BORINGSSL_PREFIX %+ _OPENSSL_vasprintf_internal
 %xdefine OTHERNAME_cmp BORINGSSL_PREFIX %+ _OTHERNAME_cmp
 %xdefine OTHERNAME_free BORINGSSL_PREFIX %+ _OTHERNAME_free
 %xdefine OTHERNAME_it BORINGSSL_PREFIX %+ _OTHERNAME_it
@@ -5806,6 +5820,7 @@
 %xdefine SSL_CTX_get_options BORINGSSL_PREFIX %+ _SSL_CTX_get_options
 %xdefine SSL_CTX_get_quiet_shutdown BORINGSSL_PREFIX %+ _SSL_CTX_get_quiet_shutdown
 %xdefine SSL_CTX_get_read_ahead BORINGSSL_PREFIX %+ _SSL_CTX_get_read_ahead
+%xdefine SSL_CTX_get_security_level BORINGSSL_PREFIX %+ _SSL_CTX_get_security_level
 %xdefine SSL_CTX_get_session_cache_mode BORINGSSL_PREFIX %+ _SSL_CTX_get_session_cache_mode
 %xdefine SSL_CTX_get_timeout BORINGSSL_PREFIX %+ _SSL_CTX_get_timeout
 %xdefine SSL_CTX_get_tlsext_ticket_keys BORINGSSL_PREFIX %+ _SSL_CTX_get_tlsext_ticket_keys
@@ -5897,6 +5912,7 @@
 %xdefine SSL_CTX_set_record_protocol_version BORINGSSL_PREFIX %+ _SSL_CTX_set_record_protocol_version
 %xdefine SSL_CTX_set_retain_only_sha256_of_client_certs BORINGSSL_PREFIX %+ _SSL_CTX_set_retain_only_sha256_of_client_certs
 %xdefine SSL_CTX_set_reverify_on_resume BORINGSSL_PREFIX %+ _SSL_CTX_set_reverify_on_resume
+%xdefine SSL_CTX_set_security_level BORINGSSL_PREFIX %+ _SSL_CTX_set_security_level
 %xdefine SSL_CTX_set_select_certificate_cb BORINGSSL_PREFIX %+ _SSL_CTX_set_select_certificate_cb
 %xdefine SSL_CTX_set_session_cache_mode BORINGSSL_PREFIX %+ _SSL_CTX_set_session_cache_mode
 %xdefine SSL_CTX_set_session_id_context BORINGSSL_PREFIX %+ _SSL_CTX_set_session_id_context
