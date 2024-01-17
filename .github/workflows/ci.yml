@@ -666,6 +666,9 @@ jobs:
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cargo-careful
         run: cargo install cargo-careful
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
       - name: Run tests
         working-directory: ./aws-lc-rs
         run: cargo +nightly careful test
