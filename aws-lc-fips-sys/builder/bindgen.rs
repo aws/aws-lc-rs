@@ -90,7 +90,8 @@ const PRELUDE: &str = r"
     clippy::too_many_lines,
     clippy::unreadable_literal,
     clippy::used_underscore_binding,
-    clippy::useless_transmute
+    clippy::useless_transmute,
+    clippy::pub_underscore_fields
 )]
 ";
 
