@@ -65,7 +65,7 @@ use aws_lc::{
     EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
     EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
     EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1,
-    NID_secp521r1, BIGNUM, EC_GROUP, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+    NID_secp521r1, BIGNUM, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
 
 use crate::buffer::Buffer;
@@ -307,8 +307,8 @@ impl PrivateKey {
                 )
             })?
         } else {
-            let ec_group: LcPtr<EC_GROUP> = ec_group_from_nid(alg.id.nid())?;
-            let private_bn: LcPtr<BIGNUM> = LcPtr::try_from(key_bytes)?;
+            let ec_group = ec_group_from_nid(alg.id.nid())?;
+            let private_bn = LcPtr::<BIGNUM>::try_from(key_bytes)?;
 
             ec::evp_pkey_from_private(&ec_group.as_const(), &private_bn.as_const())
                 .map_err(|_| KeyRejected::invalid_encoding())?
@@ -509,8 +509,8 @@ impl AsBigEndian<Curve25519SeedBin<'static>> for PrivateKey {
 
 #[cfg(test)]
 fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ec_group: LcPtr<EC_GROUP> = ec_group_from_nid(nid)?;
-    let priv_key: LcPtr<BIGNUM> = LcPtr::try_from(priv_key)?;
+    let ec_group = ec_group_from_nid(nid)?;
+    let priv_key = LcPtr::<BIGNUM>::try_from(priv_key)?;
 
     let pkey = ec::evp_pkey_from_private(&ec_group.as_const(), &priv_key.as_const())?;
 

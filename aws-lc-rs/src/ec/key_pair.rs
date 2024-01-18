@@ -92,7 +92,7 @@ impl EcdsaKeyPair {
         pkcs8: &[u8],
     ) -> Result<Self, KeyRejected> {
         // Includes a call to `EC_KEY_check_key`
-        let evp_pkey: LcPtr<EVP_PKEY> = LcPtr::try_from(pkcs8)?;
+        let evp_pkey = LcPtr::<EVP_PKEY>::try_from(pkcs8)?;
 
         #[cfg(not(feature = "fips"))]
         verify_evp_key_nid(&evp_pkey.as_const(), alg.id.nid())?;

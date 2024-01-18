@@ -607,8 +607,8 @@ unsafe fn ecdsa_sig_from_fixed(
     if signature.len() != 2 * num_size_bytes {
         return Err(());
     }
-    let r_bn = DetachableLcPtr::try_from(&signature[..num_size_bytes])?;
-    let s_bn = DetachableLcPtr::try_from(&signature[num_size_bytes..])?;
+    let r_bn = DetachableLcPtr::<BIGNUM>::try_from(&signature[..num_size_bytes])?;
+    let s_bn = DetachableLcPtr::<BIGNUM>::try_from(&signature[num_size_bytes..])?;
 
     let ecdsa_sig = LcPtr::new(ECDSA_SIG_new())?;
 
