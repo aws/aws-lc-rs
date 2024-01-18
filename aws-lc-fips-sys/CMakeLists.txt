@@ -18,9 +18,10 @@ if (BUILD_SHARED_LIBS AND FIPS)
     # as cmake crate will postfix the C/CXX flags after our disablement nullifying them.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-function-sections -fno-data-sections")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-function-sections -fno-data-sections")
-endif ()
+endif()
 
 add_subdirectory(aws-lc aws-lc EXCLUDE_FROM_ALL)
+
 if (BUILD_LIBSSL)
     add_definitions(-DAWS_LC_RUST_INCLUDE_SSL)
 endif()
@@ -38,6 +39,7 @@ set(FINAL_ARTIFACTS_DIRECTORY ${CMAKE_BINARY_DIR}/artifacts)
 # location to find the artifacts cross-platform.
 set_my_target_properties(
         ARCHIVE_OUTPUT_DIRECTORY ${FINAL_ARTIFACTS_DIRECTORY}
+        RUNTIME_OUTPUT_DIRECTORY ${FINAL_ARTIFACTS_DIRECTORY}
         LIBRARY_OUTPUT_DIRECTORY ${FINAL_ARTIFACTS_DIRECTORY})
 
 # Based on https://stackoverflow.com/a/7750816 as some generators, like MSVC, will try to prefix the output directory
@@ -46,12 +48,14 @@ foreach (OUT_NAME ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER ${OUT_NAME} OUT_NAME)
     set_my_target_properties(
             ARCHIVE_OUTPUT_DIRECTORY_${OUT_NAME} ${FINAL_ARTIFACTS_DIRECTORY}
+            RUNTIME_OUTPUT_DIRECTORY_${OUT_NAME} ${FINAL_ARTIFACTS_DIRECTORY}
             LIBRARY_OUTPUT_DIRECTORY_${OUT_NAME} ${FINAL_ARTIFACTS_DIRECTORY})
 endforeach ()
 
 if (BORINGSSL_PREFIX)
     if (MSVC)
         set(TARGET_PREFIX "${BORINGSSL_PREFIX}")
+        set_my_target_properties(IMPORT_PREFIX ${TARGET_PREFIX})
     else()
         set(TARGET_PREFIX "lib${BORINGSSL_PREFIX}")
     endif()

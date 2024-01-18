@@ -3,6 +3,7 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{target, target_arch, target_os, target_vendor, test_command, OutputLibType};
+use std::collections::HashMap;
 use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
@@ -15,17 +16,22 @@ pub(crate) struct CmakeBuilder {
 }
 
 fn test_perl_command() -> bool {
-    test_command("perl".as_ref(), &["--version".as_ref()])
+    test_command("perl".as_ref(), &["--version".as_ref()]).status
 }
 
 fn test_go_command() -> bool {
-    test_command("go".as_ref(), &["version".as_ref()])
+    test_command("go".as_ref(), &["version".as_ref()]).status
+}
+
+fn test_ninja_command() -> bool {
+    test_command("ninja".as_ref(), &["--version".as_ref()]).status
+        || test_command("ninja-build".as_ref(), &["--version".as_ref()]).status
 }
 
 fn find_cmake_command() -> Option<&'static OsStr> {
-    if test_command("cmake3".as_ref(), &["--version".as_ref()]) {
+    if test_command("cmake3".as_ref(), &["--version".as_ref()]).status {
         Some("cmake3".as_ref())
-    } else if test_command("cmake".as_ref(), &["--version".as_ref()]) {
+    } else if test_command("cmake".as_ref(), &["--version".as_ref()]).status {
         Some("cmake".as_ref())
     } else {
         None
@@ -85,10 +91,24 @@ impl CmakeBuilder {
             } else {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
             }
-        } else if target_os() != "windows" {
+        } else if target_os() == "windows" {
             // The Windows/FIPS build rejects "debug" profile
             // https://github.com/aws/aws-lc/blob/main/CMakeLists.txt#L656
+            cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
+        } else {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
+        }
+
+        if target_os() == "windows" {
+            cmake_cfg.generator("Ninja");
+            let env_map = self
+                .collect_vcvarsall_bat()
+                .map_err(|x| panic!("{}", x))
+                .unwrap();
+            for (key, value) in env_map {
+                println!("ENV-{}={}", key.as_str(), value.as_str());
+                cmake_cfg.env(key, value);
+            }
         }
 
         if let Some(prefix) = &self.build_prefix {
@@ -137,11 +157,31 @@ impl CmakeBuilder {
             .configure_arg("--no-warn-unused-cli")
             .build()
     }
+
+    fn collect_vcvarsall_bat(&self) -> Result<HashMap<String, String>, String> {
+        let mut map: HashMap<String, String> = HashMap::new();
+        let script_path = self.manifest_dir.join("builder").join("printenv.bat");
+        let result = test_command(script_path.as_os_str(), &[]);
+        if !result.status {
+            return Err("Failed to run vccarsall.bat.".to_owned());
+        }
+        let lines = result.output.lines();
+        for line in lines {
+            if let Some((var, val)) = line.split_once('=') {
+                map.insert(var.to_string(), val.to_string());
+            }
+        }
+        Ok(map)
+    }
 }
 
 impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
         let mut missing_dependency = false;
+        if target_os() == "windows" && test_ninja_command() {
+            eprintln!("Missing dependency: Ninja is required for FIPS on Windows.");
+            missing_dependency = true;
+        }
         if !test_go_command() {
             eprintln!("Missing dependency: Go is required for FIPS.");
             missing_dependency = true;
