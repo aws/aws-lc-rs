@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_11_2
+#define BORINGSSL_PREFIX aws_lc_fips_0_12_0
 #endif
     
 #if !defined(__APPLE__)
@@ -251,6 +251,8 @@
 #define _BIO_free_all BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_free_all)
 #define _BIO_get_callback_arg BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_callback_arg)
 #define _BIO_get_data BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_data)
+#define _BIO_get_ex_data BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_ex_data)
+#define _BIO_get_ex_new_index BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_ex_new_index)
 #define _BIO_get_fd BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_fd)
 #define _BIO_get_fp BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_fp)
 #define _BIO_get_init BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_init)
@@ -316,6 +318,7 @@
 #define _BIO_set_conn_int_port BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_set_conn_int_port)
 #define _BIO_set_conn_port BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_set_conn_port)
 #define _BIO_set_data BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_set_data)
+#define _BIO_set_ex_data BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_set_ex_data)
 #define _BIO_set_fd BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_set_fd)
 #define _BIO_set_flags BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_set_flags)
 #define _BIO_set_fp BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_set_fp)
@@ -1521,6 +1524,7 @@
 #define _OCSP_response_status BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OCSP_response_status)
 #define _OCSP_single_get0_status BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OCSP_single_get0_status)
 #define _OPENSSL_add_all_algorithms_conf BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_add_all_algorithms_conf)
+#define _OPENSSL_asprintf BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_asprintf)
 #define _OPENSSL_built_in_curves BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_built_in_curves)
 #define _OPENSSL_cleanse BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_cleanse)
 #define _OPENSSL_cleanup BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_cleanup)
@@ -1565,6 +1569,8 @@
 #define _OPENSSL_timegm BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_timegm)
 #define _OPENSSL_tm_to_posix BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_tm_to_posix)
 #define _OPENSSL_tolower BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_tolower)
+#define _OPENSSL_vasprintf BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_vasprintf)
+#define _OPENSSL_vasprintf_internal BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_vasprintf_internal)
 #define _OTHERNAME_cmp BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OTHERNAME_cmp)
 #define _OTHERNAME_free BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OTHERNAME_free)
 #define _OTHERNAME_it BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OTHERNAME_it)
@@ -1953,6 +1959,7 @@
 #define _SSL_CTX_get_options BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_get_options)
 #define _SSL_CTX_get_quiet_shutdown BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_get_quiet_shutdown)
 #define _SSL_CTX_get_read_ahead BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_get_read_ahead)
+#define _SSL_CTX_get_security_level BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_get_security_level)
 #define _SSL_CTX_get_session_cache_mode BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_get_session_cache_mode)
 #define _SSL_CTX_get_timeout BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_get_timeout)
 #define _SSL_CTX_get_tlsext_ticket_keys BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_get_tlsext_ticket_keys)
@@ -2044,6 +2051,7 @@
 #define _SSL_CTX_set_record_protocol_version BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set_record_protocol_version)
 #define _SSL_CTX_set_retain_only_sha256_of_client_certs BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set_retain_only_sha256_of_client_certs)
 #define _SSL_CTX_set_reverify_on_resume BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set_reverify_on_resume)
+#define _SSL_CTX_set_security_level BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set_security_level)
 #define _SSL_CTX_set_select_certificate_cb BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set_select_certificate_cb)
 #define _SSL_CTX_set_session_cache_mode BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set_session_cache_mode)
 #define _SSL_CTX_set_session_id_context BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_CTX_set_session_id_context)
