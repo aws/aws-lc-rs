@@ -21,7 +21,7 @@ impl TryFrom<&[u8]> for LcPtr<EVP_PKEY> {
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         unsafe {
             let mut cbs = cbs::build_CBS(bytes);
-
+            // `EVP_parse_private_key` -> ... -> `eckey_priv_decode` -> ... -> `EC_KEY_check_key`
             LcPtr::new(EVP_parse_private_key(&mut cbs))
                 .map_err(|()| KeyRejected::invalid_encoding())
         }

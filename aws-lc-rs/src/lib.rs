@@ -133,6 +133,7 @@ pub mod cipher;
 mod debug;
 mod ec;
 mod ed25519;
+pub mod encoding;
 mod endian;
 mod evp_pkey;
 mod fips;
@@ -213,26 +214,6 @@ mod sealed {
     // impl sealed::Sealed for MyType {}
     // ```
     pub trait Sealed {}
-}
-/// Serialization formats
-pub mod encoding {
-    /// Trait for structs that can be serialized into a DER format.
-    pub trait AsDer<T> {
-        /// Serializes into a DER format.
-        ///
-        /// # Errors
-        /// Returns Unspecified if serialization fails.
-        fn as_der(&self) -> Result<T, crate::error::Unspecified>;
-    }
-
-    /// Trait for values that can be serialized into a big-endian format
-    pub trait AsBigEndian<T> {
-        /// Serializes into a big-endian format.
-        ///
-        /// # Errors
-        /// Returns Unspecified if serialization fails.
-        fn as_be_bytes(&self) -> Result<T, crate::error::Unspecified>;
-    }
 }
 
 #[cfg(test)]
