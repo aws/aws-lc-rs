@@ -18,8 +18,7 @@ use aws_lc::{
     EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY, EVP_PKEY_ED25519,
 };
 
-use crate::buffer::Buffer;
-use crate::encoding::AsBigEndian;
+use crate::encoding::{AsBigEndian, Curve25519SeedBin};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
@@ -106,24 +105,16 @@ impl Drop for Ed25519KeyPair {
 /// The seed value for the `EdDSA` signature scheme using Curve25519
 pub struct Seed<'a>(&'a Ed25519KeyPair);
 
-#[allow(clippy::module_name_repetitions)]
-pub struct Ed25519SeedBufferType {
-    _priv: (),
-}
-/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-#[allow(clippy::module_name_repetitions)]
-pub type Ed25519SeedBin = Buffer<'static, Ed25519SeedBufferType>;
-
-impl AsBigEndian<Ed25519SeedBin> for Seed<'_> {
+impl AsBigEndian<Curve25519SeedBin<'static>> for Seed<'_> {
     /// Exposes the seed encoded as a big-endian fixed-length integer.
     ///
     /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    fn as_be_bytes(&self) -> Result<Ed25519SeedBin, Unspecified> {
+    fn as_be_bytes(&self) -> Result<Curve25519SeedBin<'static>, Unspecified> {
         let buffer = Vec::from(&self.0.private_key[..ED25519_PRIVATE_KEY_SEED_LEN]);
-        Ok(Ed25519SeedBin::new(buffer))
+        Ok(Curve25519SeedBin::new(buffer))
     }
 }
 
@@ -247,16 +238,16 @@ impl Ed25519KeyPair {
     /// `error::Unspecified` on internal error.
     ///
     pub fn to_pkcs8v1(&self) -> Result<Document, Unspecified> {
-        unsafe {
-            let evp_pkey: LcPtr<EVP_PKEY> = LcPtr::new(EVP_PKEY_new_raw_private_key(
+        let evp_pkey: LcPtr<EVP_PKEY> = LcPtr::new(unsafe {
+            EVP_PKEY_new_raw_private_key(
                 EVP_PKEY_ED25519,
                 null_mut(),
                 self.private_key.as_ref().as_ptr(),
                 ED25519_PRIVATE_KEY_SEED_LEN,
-            ))?;
+            )
+        })?;
 
-            evp_pkey.marshall_private_key(Version::V1)
-        }
+        evp_pkey.marshall_private_key(Version::V1)
     }
 
     /// Constructs an Ed25519 key pair from the private key seed `seed` and its
@@ -277,27 +268,27 @@ impl Ed25519KeyPair {
             return Err(KeyRejected::inconsistent_components());
         }
 
+        let mut derived_public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
+        let mut private_key = MaybeUninit::<[u8; ED25519_PRIVATE_KEY_LEN]>::uninit();
         unsafe {
-            let mut derived_public_key = MaybeUninit::<[u8; ED25519_PUBLIC_KEY_LEN]>::uninit();
-            let mut private_key = MaybeUninit::<[u8; ED25519_PRIVATE_KEY_LEN]>::uninit();
             ED25519_keypair_from_seed(
                 derived_public_key.as_mut_ptr().cast(),
                 private_key.as_mut_ptr().cast(),
                 seed.as_ptr(),
             );
-            let derived_public_key = derived_public_key.assume_init();
-            let mut private_key = private_key.assume_init();
-
-            constant_time::verify_slices_are_equal(public_key, &derived_public_key)
-                .map_err(|_| KeyRejected::inconsistent_components())?;
-
-            let key_pair = Self {
-                private_key: Box::new(private_key),
-                public_key: PublicKey(derived_public_key),
-            };
-            private_key.zeroize();
-            Ok(key_pair)
         }
+        let derived_public_key = unsafe { derived_public_key.assume_init() };
+        let mut private_key = unsafe { private_key.assume_init() };
+
+        constant_time::verify_slices_are_equal(public_key, &derived_public_key)
+            .map_err(|_| KeyRejected::inconsistent_components())?;
+
+        let key_pair = Self {
+            private_key: Box::new(private_key),
+            public_key: PublicKey(derived_public_key),
+        };
+        private_key.zeroize();
+        Ok(key_pair)
     }
 
     /// Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v1 or v2
@@ -339,33 +330,34 @@ impl Ed25519KeyPair {
     }
 
     fn parse_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        unsafe {
-            let evp_pkey = LcPtr::try_from(pkcs8)?;
+        let evp_pkey = LcPtr::<EVP_PKEY>::try_from(pkcs8)?;
 
-            evp_pkey.validate_as_ed25519()?;
+        evp_pkey.validate_as_ed25519()?;
 
-            let mut private_key = [0u8; ED25519_PRIVATE_KEY_LEN];
-            let mut out_len: usize = ED25519_PRIVATE_KEY_LEN;
-            if 1 != EVP_PKEY_get_raw_private_key(*evp_pkey, private_key.as_mut_ptr(), &mut out_len)
-            {
-                return Err(KeyRejected::wrong_algorithm());
-            }
-
-            let mut public_key = [0u8; ED25519_PUBLIC_KEY_LEN];
-            let mut out_len: usize = ED25519_PUBLIC_KEY_LEN;
-            if 1 != EVP_PKEY_get_raw_public_key(*evp_pkey, public_key.as_mut_ptr(), &mut out_len) {
-                return Err(KeyRejected::wrong_algorithm());
-            }
-            private_key[ED25519_PRIVATE_KEY_SEED_LEN..].copy_from_slice(&public_key);
-
-            let key_pair = Self {
-                private_key: Box::new(private_key),
-                public_key: PublicKey(public_key),
-            };
-            private_key.zeroize();
-
-            Ok(key_pair)
+        let mut private_key = [0u8; ED25519_PRIVATE_KEY_LEN];
+        let mut out_len: usize = ED25519_PRIVATE_KEY_LEN;
+        if 1 != unsafe {
+            EVP_PKEY_get_raw_private_key(*evp_pkey, private_key.as_mut_ptr(), &mut out_len)
+        } {
+            return Err(KeyRejected::wrong_algorithm());
         }
+
+        let mut public_key = [0u8; ED25519_PUBLIC_KEY_LEN];
+        let mut out_len: usize = ED25519_PUBLIC_KEY_LEN;
+        if 1 != unsafe {
+            EVP_PKEY_get_raw_public_key(*evp_pkey, public_key.as_mut_ptr(), &mut out_len)
+        } {
+            return Err(KeyRejected::wrong_algorithm());
+        }
+        private_key[ED25519_PRIVATE_KEY_SEED_LEN..].copy_from_slice(&public_key);
+
+        let key_pair = Self {
+            private_key: Box::new(private_key),
+            public_key: PublicKey(public_key),
+        };
+        private_key.zeroize();
+
+        Ok(key_pair)
     }
 
     /// Returns the signature of the message msg.

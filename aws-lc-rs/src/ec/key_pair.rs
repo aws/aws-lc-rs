@@ -8,14 +8,17 @@ use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::ptr::{null, null_mut};
 
-use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY, EVP_PKEY_EC};
+use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY};
 
 use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
-use crate::ec::{
-    evp_key_generate, validate_evp_key, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey,
-};
-use crate::encoding::{AsBigEndian, AsDer};
+#[cfg(feature = "fips")]
+use crate::ec::validate_evp_key;
+#[cfg(not(feature = "fips"))]
+use crate::ec::verify_evp_key_nid;
+use crate::ec::{evp_key_generate, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
+
+use crate::encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915Der};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
@@ -54,7 +57,7 @@ impl KeyPair for EcdsaKeyPair {
 
 impl EcdsaKeyPair {
     #[allow(clippy::needless_pass_by_value)]
-    unsafe fn new(
+    fn new(
         algorithm: &'static EcdsaSigningAlgorithm,
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
@@ -73,11 +76,9 @@ impl EcdsaKeyPair {
     /// `error::Unspecified` on internal error.
     ///
     pub fn generate(alg: &'static EcdsaSigningAlgorithm) -> Result<Self, Unspecified> {
-        unsafe {
-            let evp_pkey = evp_key_generate(alg.0.id.nid())?;
+        let evp_pkey = evp_key_generate(alg.0.id.nid())?;
 
-            Ok(Self::new(alg, evp_pkey)?)
-        }
+        Ok(Self::new(alg, evp_pkey)?)
     }
 
     /// Constructs an ECDSA key pair by parsing an unencrypted PKCS#8 v1
@@ -90,15 +91,17 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         pkcs8: &[u8],
     ) -> Result<Self, KeyRejected> {
-        unsafe {
-            let evp_pkey = LcPtr::try_from(pkcs8)?;
+        // Includes a call to `EC_KEY_check_key`
+        let evp_pkey = LcPtr::<EVP_PKEY>::try_from(pkcs8)?;
 
-            validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
+        #[cfg(not(feature = "fips"))]
+        verify_evp_key_nid(&evp_pkey.as_const(), alg.id.nid())?;
+        #[cfg(feature = "fips")]
+        validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
 
-            let key_pair = Self::new(alg, evp_pkey)?;
+        let key_pair = Self::new(alg, evp_pkey)?;
 
-            Ok(key_pair)
-        }
+        Ok(key_pair)
     }
 
     /// Generates a new key pair and returns the key pair serialized as a
@@ -157,7 +160,7 @@ impl EcdsaKeyPair {
                 .map_err(|_| KeyRejected::invalid_encoding())?;
             let private_bn = DetachableLcPtr::try_from(private_key)?;
             let evp_pkey =
-                ec::evp_key_from_public_private(&ec_group, &public_ec_point, &private_bn)?;
+                ec::evp_key_from_public_private(&ec_group, Some(&public_ec_point), &private_bn)?;
 
             let key_pair = Self::new(alg, evp_pkey)?;
             Ok(key_pair)
@@ -180,27 +183,9 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         private_key: &[u8],
     ) -> Result<Self, KeyRejected> {
-        unsafe {
-            let mut out = std::ptr::null_mut();
-            if aws_lc::d2i_PrivateKey(
-                EVP_PKEY_EC,
-                &mut out,
-                &mut private_key.as_ptr(),
-                private_key
-                    .len()
-                    .try_into()
-                    .map_err(|_| KeyRejected::too_large())?,
-            )
-            .is_null()
-            {
-                // FIXME: unclear which error or if we can get more detail
-                return Err(KeyRejected::unexpected_error());
-            }
-            let evp_pkey = LcPtr::new(out)?;
-            validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
+        let evp_pkey = unsafe { ec::unmarshal_der_to_private_key(private_key, alg.id.nid())? };
 
-            Ok(Self::new(alg, evp_pkey)?)
-        }
+        Ok(Self::new(alg, evp_pkey)?)
     }
 
     /// Access functions related to the private key.
@@ -305,29 +290,17 @@ impl Debug for PrivateKey<'_> {
     }
 }
 
-pub struct EcPrivateKeyBinType {
-    _priv: (),
-}
-/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub type EcPrivateKeyBin = Buffer<'static, EcPrivateKeyBinType>;
-
-pub struct EcPrivateKeyRfc5915DerType {
-    _priv: (),
-}
-/// Elliptic curve private key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
-pub type EcPrivateKeyRfc5915Der = Buffer<'static, EcPrivateKeyRfc5915DerType>;
-
-impl AsBigEndian<EcPrivateKeyBin> for PrivateKey<'_> {
+impl AsBigEndian<EcPrivateKeyBin<'static>> for PrivateKey<'_> {
     /// Exposes the private key encoded as a big-endian fixed-length integer.
     ///
     /// For most use-cases, `EcdsaKeyPair::to_pkcs8()` should be preferred.
     ///
     /// # Errors
     /// `error::Unspecified` if serialization failed.
-    fn as_be_bytes(&self) -> Result<EcPrivateKeyBin, Unspecified> {
+    fn as_be_bytes(&self) -> Result<EcPrivateKeyBin<'static>, Unspecified> {
         unsafe {
             let buffer = ec::marshal_private_key_to_buffer(
-                self.0.algorithm.id,
+                self.0.algorithm.id.private_key_size(),
                 &self.0.evp_pkey.as_const(),
             )?;
             Ok(EcPrivateKeyBin::new(buffer))
@@ -335,12 +308,12 @@ impl AsBigEndian<EcPrivateKeyBin> for PrivateKey<'_> {
     }
 }
 
-impl AsDer<EcPrivateKeyRfc5915Der> for PrivateKey<'_> {
+impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey<'_> {
     /// Serializes the key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
     ///
     /// # Errors
     /// `error::Unspecified`  if serialization failed.
-    fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der, Unspecified> {
+    fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der<'static>, Unspecified> {
         unsafe {
             let mut outp = null_mut::<u8>();
             let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.0.evp_pkey))?;

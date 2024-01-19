@@ -13,7 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_11_2
+#define BORINGSSL_PREFIX aws_lc_fips_0_12_0
 #endif
 
 // BORINGSSL_ADD_PREFIX pastes two identifiers into one. It performs one
@@ -246,6 +246,8 @@
 #define BIO_free_all BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_free_all)
 #define BIO_get_callback_arg BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_get_callback_arg)
 #define BIO_get_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_get_data)
+#define BIO_get_ex_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_get_ex_data)
+#define BIO_get_ex_new_index BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_get_ex_new_index)
 #define BIO_get_fd BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_get_fd)
 #define BIO_get_fp BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_get_fp)
 #define BIO_get_init BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_get_init)
@@ -311,6 +313,7 @@
 #define BIO_set_conn_int_port BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_set_conn_int_port)
 #define BIO_set_conn_port BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_set_conn_port)
 #define BIO_set_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_set_data)
+#define BIO_set_ex_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_set_ex_data)
 #define BIO_set_fd BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_set_fd)
 #define BIO_set_flags BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_set_flags)
 #define BIO_set_fp BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_set_fp)
@@ -1516,6 +1519,7 @@
 #define OCSP_response_status BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OCSP_response_status)
 #define OCSP_single_get0_status BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OCSP_single_get0_status)
 #define OPENSSL_add_all_algorithms_conf BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_add_all_algorithms_conf)
+#define OPENSSL_asprintf BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_asprintf)
 #define OPENSSL_built_in_curves BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_built_in_curves)
 #define OPENSSL_cleanse BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_cleanse)
 #define OPENSSL_cleanup BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_cleanup)
@@ -1560,6 +1564,8 @@
 #define OPENSSL_timegm BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_timegm)
 #define OPENSSL_tm_to_posix BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_tm_to_posix)
 #define OPENSSL_tolower BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_tolower)
+#define OPENSSL_vasprintf BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_vasprintf)
+#define OPENSSL_vasprintf_internal BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_vasprintf_internal)
 #define OTHERNAME_cmp BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OTHERNAME_cmp)
 #define OTHERNAME_free BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OTHERNAME_free)
 #define OTHERNAME_it BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OTHERNAME_it)
@@ -1948,6 +1954,7 @@
 #define SSL_CTX_get_options BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_get_options)
 #define SSL_CTX_get_quiet_shutdown BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_get_quiet_shutdown)
 #define SSL_CTX_get_read_ahead BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_get_read_ahead)
+#define SSL_CTX_get_security_level BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_get_security_level)
 #define SSL_CTX_get_session_cache_mode BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_get_session_cache_mode)
 #define SSL_CTX_get_timeout BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_get_timeout)
 #define SSL_CTX_get_tlsext_ticket_keys BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_get_tlsext_ticket_keys)
@@ -2039,6 +2046,7 @@
 #define SSL_CTX_set_record_protocol_version BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_set_record_protocol_version)
 #define SSL_CTX_set_retain_only_sha256_of_client_certs BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_set_retain_only_sha256_of_client_certs)
 #define SSL_CTX_set_reverify_on_resume BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_set_reverify_on_resume)
+#define SSL_CTX_set_security_level BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_set_security_level)
 #define SSL_CTX_set_select_certificate_cb BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_set_select_certificate_cb)
 #define SSL_CTX_set_session_cache_mode BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_set_session_cache_mode)
 #define SSL_CTX_set_session_id_context BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_CTX_set_session_id_context)
