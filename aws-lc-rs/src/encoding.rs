@@ -9,6 +9,8 @@ use crate::encoding::types::{
     EcPublicKeyX509DerType,
 };
 
+use self::types::Pkcs8V1DerType;
+
 mod types {
     pub struct EcPrivateKeyBinType {
         _priv: (),
@@ -23,6 +25,10 @@ mod types {
     }
 
     pub struct Curve25519SeedBufferType {
+        _priv: (),
+    }
+
+    pub struct Pkcs8V1DerType {
         _priv: (),
     }
 }
@@ -56,3 +62,6 @@ pub type EcPublicKeyX509Der<'a> = Buffer<'a, EcPublicKeyX509DerType>;
 
 /// Elliptic curve private key data encoded as a big-endian fixed-length integer.
 pub type Curve25519SeedBin<'a> = Buffer<'a, Curve25519SeedBufferType>;
+
+/// A PKCS#8 v1 (RFC 5208) DER encoded structure.
+pub type Pkcs8V1Der<'a> = Buffer<'a, Pkcs8V1DerType>;

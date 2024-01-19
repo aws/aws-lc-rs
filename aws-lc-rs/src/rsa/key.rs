@@ -10,7 +10,11 @@ use core::{
     ptr::null_mut,
 };
 
-use crate::fips::indicator_check;
+use crate::{
+    buffer::Buffer,
+    encoding::{AsDer, Pkcs8V1Der},
+    fips::indicator_check,
+};
 
 #[cfg(feature = "fips")]
 use aws_lc::RSA_check_fips;
@@ -29,6 +33,7 @@ use untrusted::Input;
 use zeroize::Zeroize;
 
 use super::{
+    encoding,
     signature::{compute_rsa_signature, RsaEncoding, RsaPadding},
     RsaParameters,
 };
@@ -43,10 +48,6 @@ use crate::{
     rand,
     sealed::Sealed,
 };
-
-// Based on a meassurement of a PKCS#8 v1 document containing an RSA-8192 key with an additional 1% capacity buffer
-// rounded to an even 64-bit words (4678 + 1% + padding ≈ 4728).
-pub(super) const PKCS8_FIXED_CAPACITY_BUFFER: usize = 4728;
 
 /// RSA key-size.
 #[allow(clippy::module_name_repetitions)]
@@ -139,12 +140,14 @@ impl KeyPair {
     /// # Errors
     /// * `Unspecified`: Any key generation failure.
     #[cfg(feature = "fips")]
-    pub fn generate_fips(size: SignatureKeySize) -> Result<Self, Unspecified> {
+    pub fn generate_fips(size: KeySize) -> Result<Self, Unspecified> {
         let private_key = generate_rsa_key(size.bit_len(), true)?;
         Self::new(private_key).map_err(|_| Unspecified)
     }
 
     /// Parses an unencrypted PKCS#8-encoded RSA private key.
+    /// 
+    /// A RSA keypair may be generated using [`KeyPair::generate`].
     ///
     /// Only two-prime (not multi-prime) keys are supported. The public modulus
     /// (n) must be at least 2047 bits. The public modulus must be no larger
@@ -193,7 +196,7 @@ impl KeyPair {
     /// not acceptable.
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
         unsafe {
-            let evp_pkey = LcPtr::try_from(pkcs8)?;
+            let evp_pkey = encoding::pkcs8::decode_der(pkcs8)?;
             Self::validate_rsa_pkey(&evp_pkey)?;
             Self::new(evp_pkey)
         }
@@ -354,6 +357,12 @@ impl crate::signature::KeyPair for KeyPair {
 
     fn public_key(&self) -> &Self::PublicKey {
         &self.serialized_public_key
+    }
+}
+
+impl AsDer<Pkcs8V1Der<'static>> for KeyPair {
+    fn as_der(&self) -> Result<Pkcs8V1Der<'static>, Unspecified> {
+        Ok(Buffer::new(encoding::pkcs8::encode_v1_der(&self.evp_pkey)?))
     }
 }
 
@@ -604,4 +613,71 @@ pub(super) fn generate_rsa_key(
     rsa.detach();
 
     Ok(evp_pkey)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{KeyPair, KeySize, PublicKeyComponents};
+    use crate::encoding::AsDer;
+
+    macro_rules! generate_encode_decode {
+        ($name:ident, $size:expr) => {
+            #[test]
+            fn $name() {
+                let private_key = KeyPair::generate($size).expect("generation");
+
+                let pkcs8v1 = private_key.as_der().expect("encoded");
+
+                let private_key = KeyPair::from_pkcs8(pkcs8v1.as_ref()).expect("decoded");
+
+                let public_key = crate::signature::KeyPair::public_key(&private_key);
+
+                let _ = public_key.as_ref();
+            }
+        };
+    }
+
+    generate_encode_decode!(rsa2048_generate_encode_decode, KeySize::Rsa2048);
+    generate_encode_decode!(rsa3072_generate_encode_decode, KeySize::Rsa3072);
+    generate_encode_decode!(rsa4096_generate_encode_decode, KeySize::Rsa4096);
+    generate_encode_decode!(rsa8192_generate_encode_decode, KeySize::Rsa8192);
+
+    macro_rules! generate_fips_encode_decode {
+        ($name:ident, $size:expr) => {
+            #[cfg(feature = "fips")]
+            #[test]
+            fn $name() {
+                let private_key = KeyPair::generate_fips($size).expect("generation");
+
+                let pkcs8v1 = private_key.as_der().expect("encoded");
+
+                let private_key = KeyPair::from_pkcs8(pkcs8v1.as_ref()).expect("decoded");
+
+                let public_key = crate::signature::KeyPair::public_key(&private_key);
+
+                let _ = public_key.as_ref();
+            }
+        };
+        ($name:ident, $size:expr, false) => {
+            #[cfg(feature = "fips")]
+            #[test]
+            fn $name() {
+                let _ = KeyPair::generate_fips($size).expect_err("should fail for key size");
+            }
+        };
+    }
+
+    generate_fips_encode_decode!(rsa2048_generate_fips_encode_decode, KeySize::Rsa2048);
+    generate_fips_encode_decode!(rsa3072_generate_fips_encode_decode, KeySize::Rsa3072);
+    generate_fips_encode_decode!(rsa4096_generate_fips_encode_decode, KeySize::Rsa4096);
+    generate_fips_encode_decode!(rsa8192_generate_fips_encode_decode, KeySize::Rsa8192, false);
+
+    #[test]
+    fn public_key_components_clone_debug() {
+        let pkc = PublicKeyComponents::<&[u8]> {
+            n: &[0x63, 0x61, 0x6d, 0x65, 0x6c, 0x6f, 0x74],
+            e: &[0x61, 0x76, 0x61, 0x6c, 0x6f, 0x6e],
+        };
+        assert_eq!("RsaPublicKeyComponents { n: [99, 97, 109, 101, 108, 111, 116], e: [97, 118, 97, 108, 111, 110] }", format!("{pkc:?}"));
+    }
 }

@@ -12,6 +12,7 @@ use std::ptr::null_mut;
 pub(crate) struct LcCBB<'a>(CBB, PhantomData<&'a CBB>);
 
 impl LcCBB<'static> {
+    #[allow(dead_code)]
     pub(crate) fn new(initial_capacity: usize) -> LcCBB<'static> {
         let mut cbb = MaybeUninit::<CBB>::uninit();
         let cbb = unsafe {
@@ -21,6 +22,7 @@ impl LcCBB<'static> {
         Self(cbb, PhantomData)
     }
 
+    #[allow(dead_code)]
     pub(crate) fn into_buffer<'a, T>(mut self) -> Result<Buffer<'a, T>, Unspecified> {
         let mut out_data = null_mut::<u8>();
         let mut out_len: usize = 0;
