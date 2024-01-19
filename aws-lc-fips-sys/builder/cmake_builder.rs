@@ -106,7 +106,6 @@ impl CmakeBuilder {
                 .map_err(|x| panic!("{}", x))
                 .unwrap();
             for (key, value) in env_map {
-                println!("ENV-{}={}", key.as_str(), value.as_str());
                 cmake_cfg.env(key, value);
             }
         }
@@ -178,7 +177,7 @@ impl CmakeBuilder {
 impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
         let mut missing_dependency = false;
-        if target_os() == "windows" && test_ninja_command() {
+        if target_os() == "windows" && !test_ninja_command() {
             eprintln!("Missing dependency: Ninja is required for FIPS on Windows.");
             missing_dependency = true;
         }

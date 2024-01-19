@@ -8,9 +8,9 @@
 
 #ifdef _WIN32
 #define BORINGSSL_SHARED_LIBRARY
-#define AWS_LC_FIPS_SYS_EXPORT __declspec(dllexport)
+#define AWS_LC_SYS_EXPORT __declspec(dllexport)
 #else
-#define AWS_LC_FIPS_SYS_EXPORT __attribute__((visibility("default")))
+#define AWS_LC_SYS_EXPORT __attribute__((visibility("default")))
 #endif
 
 #include <openssl/err.h>
@@ -23,9 +23,9 @@ extern "C" {
 // The following functions are wrappers over inline functions and macros in
 // BoringSSL, which bindgen cannot currently correctly bind. These wrappers
 // ensure changes to the functions remain in lockstep with the Rust versions.
-AWS_LC_FIPS_SYS_EXPORT int ERR_GET_LIB_RUST(uint32_t packed_error);
-AWS_LC_FIPS_SYS_EXPORT int ERR_GET_REASON_RUST(uint32_t packed_error);
-AWS_LC_FIPS_SYS_EXPORT int ERR_GET_FUNC_RUST(uint32_t packed_error);
+AWS_LC_SYS_EXPORT int ERR_GET_LIB_RUST(uint32_t packed_error);
+AWS_LC_SYS_EXPORT int ERR_GET_REASON_RUST(uint32_t packed_error);
+AWS_LC_SYS_EXPORT int ERR_GET_FUNC_RUST(uint32_t packed_error);
 
 
 #if defined(__cplusplus)
