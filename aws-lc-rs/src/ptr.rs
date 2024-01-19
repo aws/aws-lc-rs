@@ -40,6 +40,11 @@ impl<P: Pointer> ManagedPointer<P> {
     pub unsafe fn as_slice(&self, len: usize) -> &[P::T] {
         std::slice::from_raw_parts(self.pointer.as_const_ptr(), len)
     }
+
+    #[allow(clippy::mut_from_ref)]
+    pub unsafe fn as_slice_mut(&self, len: usize) -> &mut [P::T] {
+        std::slice::from_raw_parts_mut(self.pointer.as_mut_ptr(), len)
+    }
 }
 
 impl<P: Pointer> Drop for ManagedPointer<P> {
@@ -160,6 +165,7 @@ pub(crate) trait Pointer {
 
     fn free(&mut self);
     fn as_const_ptr(&self) -> *const Self::T;
+    fn as_mut_ptr(&self) -> *mut Self::T;
 }
 
 pub(crate) trait IntoPointer<P> {
@@ -190,8 +196,14 @@ macro_rules! create_pointer {
                 }
             }
 
+            #[inline]
             fn as_const_ptr(&self) -> *const Self::T {
                 self.cast()
+            }
+
+            #[inline]
+            fn as_mut_ptr(&self) -> *mut Self::T {
+                *self
             }
         }
     };

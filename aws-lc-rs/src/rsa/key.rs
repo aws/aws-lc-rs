@@ -10,12 +10,15 @@ use core::{
     ptr::null_mut,
 };
 
+use crate::fips::indicator_check;
+
 #[cfg(feature = "fips")]
 use aws_lc::RSA_check_fips;
 use aws_lc::{
-    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_get0_e, RSA_get0_n, RSA_get0_p,
-    RSA_get0_q, RSA_new, RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes,
-    RSA_set0_key, RSA_size, EVP_PKEY, EVP_PKEY_CTX, RSA,
+    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_generate_key_ex,
+    RSA_generate_key_fips, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new,
+    RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_size,
+    BIGNUM, EVP_PKEY, EVP_PKEY_CTX, RSA, RSA_F4,
 };
 
 use mirai_annotations::verify_unreachable;
@@ -40,6 +43,53 @@ use crate::{
     rand,
     sealed::Sealed,
 };
+
+// Based on a meassurement of a PKCS#8 v1 document containing an RSA-8192 key with an additional 1% capacity buffer
+// rounded to an even 64-bit words (4678 + 1% + padding ≈ 4728).
+pub(super) const PKCS8_FIXED_CAPACITY_BUFFER: usize = 4728;
+
+/// RSA key-size.
+#[allow(clippy::module_name_repetitions)]
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum KeySize {
+    /// 2048-bit key
+    Rsa2048,
+
+    /// 3072-bit key
+    Rsa3072,
+
+    /// 4096-bit key
+    Rsa4096,
+
+    /// 8192-bit key
+    Rsa8192,
+}
+
+impl KeySize {
+    /// Returns the size of the key in bytes.
+    #[inline]
+    #[must_use]
+    pub fn len(self) -> usize {
+        match self {
+            Self::Rsa2048 => 256,
+            Self::Rsa3072 => 384,
+            Self::Rsa4096 => 512,
+            Self::Rsa8192 => 1024,
+        }
+    }
+
+    /// Returns the key size in bits.
+    #[inline]
+    fn bit_len(self) -> i32 {
+        match self {
+            Self::Rsa2048 => 2048,
+            Self::Rsa3072 => 3072,
+            Self::Rsa4096 => 4096,
+            Self::Rsa8192 => 8192,
+        }
+    }
+}
 
 /// An RSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]
@@ -68,6 +118,30 @@ impl KeyPair {
                 serialized_public_key,
             })
         }
+    }
+
+    /// Generate a RSA `KeyPair` of the specified key-strength.
+    ///
+    /// # Errors
+    /// * `Unspecified`: Any key generation failure.
+    pub fn generate(size: KeySize) -> Result<Self, Unspecified> {
+        let private_key = generate_rsa_key(size.bit_len(), false)?;
+        Self::new(private_key).map_err(|_| Unspecified)
+    }
+
+    /// Generate a RSA `KeyPair` of the specified key-strength.
+    ///
+    /// Supports the following key sizes:
+    /// * `SignatureKeySize::Rsa2048`
+    /// * `SignatureKeySize::Rsa3072`
+    /// * `SignatureKeySize::Rsa4096`
+    ///
+    /// # Errors
+    /// * `Unspecified`: Any key generation failure.
+    #[cfg(feature = "fips")]
+    pub fn generate_fips(size: SignatureKeySize) -> Result<Self, Unspecified> {
+        let private_key = generate_rsa_key(size.bit_len(), true)?;
+        Self::new(private_key).map_err(|_| Unspecified)
     }
 
     /// Parses an unencrypted PKCS#8-encoded RSA private key.
@@ -498,4 +572,36 @@ unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, 
     let pubkey_slice = pubkey_bytes.as_slice(outlen);
     let pubkey_vec = Vec::from(pubkey_slice);
     Ok(pubkey_vec.into_boxed_slice())
+}
+
+pub(super) fn generate_rsa_key(
+    size: std::os::raw::c_int,
+    fips: bool,
+) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+    // We explicitly don't use `EVP_PKEY_keygen`, as it will force usage of either the FIPS or non-FIPS
+    // keygen function based on the whether the build of AWS-LC had FIPS enbaled. Rather we delegate to the desired
+    // generation function.
+
+    let rsa = DetachableLcPtr::new(unsafe { RSA_new() })?;
+
+    if 1 != if fips {
+        indicator_check!(unsafe { RSA_generate_key_fips(*rsa, size, null_mut()) })
+    } else {
+        // Safety: RSA_F4 == 65537, RSA_F4 an i32 is safe to cast to u64
+        debug_assert_eq!(RSA_F4 as u64, 65537u64);
+        let e: DetachableLcPtr<BIGNUM> = (RSA_F4 as u64).try_into()?;
+        unsafe { RSA_generate_key_ex(*rsa, size, *e, null_mut()) }
+    } {
+        return Err(Unspecified);
+    }
+
+    let evp_pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
+
+    if 1 != unsafe { EVP_PKEY_assign_RSA(*evp_pkey, *rsa) } {
+        return Err(Unspecified);
+    };
+
+    rsa.detach();
+
+    Ok(evp_pkey)
 }

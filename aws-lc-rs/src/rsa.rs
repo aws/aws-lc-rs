@@ -10,6 +10,7 @@
 // naming conventions. Also the standard camelCase names are used for `KeyPair`
 // components.
 
+mod encoding;
 pub(crate) mod key;
 pub(crate) mod signature;
 
