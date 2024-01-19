@@ -223,6 +223,8 @@ BIO_free
 BIO_free_all
 BIO_get_callback_arg
 BIO_get_data
+BIO_get_ex_data
+BIO_get_ex_new_index
 BIO_get_fd
 BIO_get_fp
 BIO_get_init
@@ -252,6 +254,7 @@ BIO_meth_set_gets
 BIO_meth_set_puts
 BIO_meth_set_read
 BIO_meth_set_write
+BIO_method_name
 BIO_method_type
 BIO_new
 BIO_new_bio_pair
@@ -288,6 +291,7 @@ BIO_set_conn_hostname
 BIO_set_conn_int_port
 BIO_set_conn_port
 BIO_set_data
+BIO_set_ex_data
 BIO_set_fd
 BIO_set_flags
 BIO_set_fp
@@ -575,6 +579,7 @@ CERTIFICATEPOLICIES_it
 CERTIFICATEPOLICIES_new
 CMAC_CTX_copy
 CMAC_CTX_free
+CMAC_CTX_get0_cipher_ctx
 CMAC_CTX_new
 CMAC_Final
 CMAC_Init
@@ -698,6 +703,7 @@ DES_ecb_encrypt
 DES_ede2_cbc_encrypt
 DES_ede3_cbc_encrypt
 DES_encrypt3
+DES_key_sched
 DES_ncbc_encrypt
 DES_set_key
 DES_set_odd_parity
@@ -721,7 +727,9 @@ DH_get0_pub_key
 DH_get0_q
 DH_get_2048_256
 DH_get_rfc7919_2048
+DH_get_rfc7919_3072
 DH_get_rfc7919_4096
+DH_get_rfc7919_8192
 DH_marshal_parameters
 DH_new
 DH_new_by_nid
@@ -777,6 +785,8 @@ DSA_new
 DSA_parse_parameters
 DSA_parse_private_key
 DSA_parse_public_key
+DSA_print
+DSA_print_fp
 DSA_set0_key
 DSA_set0_pqg
 DSA_set_ex_data
@@ -901,6 +911,11 @@ EC_POINT_set_to_infinity
 EC_curve_nid2nist
 EC_curve_nist2nid
 EC_get_builtin_curves
+EC_group_p224
+EC_group_p256
+EC_group_p384
+EC_group_p521
+EC_group_secp256k1
 EC_hash_to_curve_p256_xmd_sha256_sswu
 EC_hash_to_curve_p384_xmd_sha384_sswu
 ED25519_keypair
@@ -910,6 +925,7 @@ ED25519_verify
 EDIPARTYNAME_free
 EDIPARTYNAME_it
 EDIPARTYNAME_new
+ENGINE_cleanup
 ENGINE_free
 ENGINE_get_ECDSA_method
 ENGINE_get_RSA_method
@@ -1107,8 +1123,12 @@ EVP_MD_block_size
 EVP_MD_do_all
 EVP_MD_do_all_sorted
 EVP_MD_flags
+EVP_MD_get0_name
+EVP_MD_get_pkey_type
 EVP_MD_meth_get_flags
+EVP_MD_name
 EVP_MD_nid
+EVP_MD_pkey_type
 EVP_MD_size
 EVP_MD_type
 EVP_MD_unstable_sha3_enable
@@ -1182,6 +1202,7 @@ EVP_PKEY_get1_tls_encodedpoint
 EVP_PKEY_get_raw_private_key
 EVP_PKEY_get_raw_public_key
 EVP_PKEY_hkdf_pkey_meth
+EVP_PKEY_hmac_pkey_meth
 EVP_PKEY_id
 EVP_PKEY_is_opaque
 EVP_PKEY_kem_check_key
@@ -1192,6 +1213,7 @@ EVP_PKEY_keygen
 EVP_PKEY_keygen_init
 EVP_PKEY_missing_parameters
 EVP_PKEY_new
+EVP_PKEY_new_mac_key
 EVP_PKEY_new_raw_private_key
 EVP_PKEY_new_raw_public_key
 EVP_PKEY_paramgen
@@ -1292,6 +1314,7 @@ EVP_bf_ecb
 EVP_blake2b256
 EVP_cast5_cbc
 EVP_cast5_ecb
+EVP_chacha20_poly1305
 EVP_cleanup
 EVP_des_cbc
 EVP_des_ecb
@@ -1386,6 +1409,7 @@ HMAC_CTX_reset
 HMAC_Final
 HMAC_Init
 HMAC_Init_ex
+HMAC_KEY_new
 HMAC_Update
 HMAC_size
 HRSS_decap
@@ -1540,7 +1564,6 @@ OCSP_set_max_response_length
 OCSP_single_get0_status
 OPENSSL_add_all_algorithms_conf
 OPENSSL_asprintf
-OPENSSL_built_in_curves
 OPENSSL_cleanse
 OPENSSL_cleanup
 OPENSSL_clear_free
@@ -1781,6 +1804,7 @@ RAND_pseudo_bytes
 RAND_seed
 RAND_set_rand_method
 RAND_status
+RAND_write_file
 RC4
 RC4_set_key
 RIPEMD160
@@ -1849,6 +1873,7 @@ RSA_padding_check_PKCS1_type_2
 RSA_parse_private_key
 RSA_parse_public_key
 RSA_print
+RSA_print_fp
 RSA_private_decrypt
 RSA_private_encrypt
 RSA_private_key_from_bytes
@@ -2030,6 +2055,8 @@ SSL_CTX_set0_chain
 SSL_CTX_set0_client_CAs
 SSL_CTX_set0_verify_cert_store
 SSL_CTX_set1_chain
+SSL_CTX_set1_curves
+SSL_CTX_set1_curves_list
 SSL_CTX_set1_ech_keys
 SSL_CTX_set1_groups
 SSL_CTX_set1_groups_list
@@ -2226,6 +2253,7 @@ SSL_get0_verified_chain
 SSL_get1_session
 SSL_get_SSL_CTX
 SSL_get_all_cipher_names
+SSL_get_all_curve_names
 SSL_get_all_group_names
 SSL_get_all_signature_algorithm_names
 SSL_get_all_standard_cipher_names
@@ -2240,6 +2268,8 @@ SSL_get_client_random
 SSL_get_current_cipher
 SSL_get_current_compression
 SSL_get_current_expansion
+SSL_get_curve_id
+SSL_get_curve_name
 SSL_get_default_timeout
 SSL_get_early_data_reason
 SSL_get_error
@@ -2347,6 +2377,8 @@ SSL_set0_rbio
 SSL_set0_verify_cert_store
 SSL_set0_wbio
 SSL_set1_chain
+SSL_set1_curves
+SSL_set1_curves_list
 SSL_set1_delegated_credential
 SSL_set1_ech_config_list
 SSL_set1_groups
@@ -2438,6 +2470,7 @@ SSL_use_RSAPrivateKey_ASN1
 SSL_use_RSAPrivateKey_file
 SSL_use_certificate
 SSL_use_certificate_ASN1
+SSL_use_certificate_chain_file
 SSL_use_certificate_file
 SSL_use_psk_identity_hint
 SSL_used_hello_retry_request
@@ -3151,6 +3184,8 @@ bn_mod_mul_montgomery_small
 bn_mod_sub_consttime
 bn_mod_sub_words
 bn_mod_u16_consttime
+bn_mont_ctx_cleanup
+bn_mont_ctx_init
 bn_mont_ctx_set_RR_consttime
 bn_mont_n0
 bn_mul_add_words
@@ -3351,9 +3386,6 @@ ec_GFp_mont_felem_mul
 ec_GFp_mont_felem_reduce
 ec_GFp_mont_felem_sqr
 ec_GFp_mont_felem_to_bytes
-ec_GFp_mont_group_finish
-ec_GFp_mont_group_init
-ec_GFp_mont_group_set_curve
 ec_GFp_mont_init_precomp
 ec_GFp_mont_mul
 ec_GFp_mont_mul_base
@@ -3364,9 +3396,7 @@ ec_GFp_nistp_recode_scalar_bits
 ec_GFp_simple_cmp_x_coordinate
 ec_GFp_simple_felem_from_bytes
 ec_GFp_simple_felem_to_bytes
-ec_GFp_simple_group_finish
 ec_GFp_simple_group_get_curve
-ec_GFp_simple_group_init
 ec_GFp_simple_group_set_curve
 ec_GFp_simple_invert
 ec_GFp_simple_is_at_infinity
@@ -3388,13 +3418,13 @@ ec_felem_equal
 ec_felem_from_bytes
 ec_felem_neg
 ec_felem_non_zero_mask
+ec_felem_one
 ec_felem_select
 ec_felem_sub
 ec_felem_to_bignum
 ec_felem_to_bytes
 ec_get_x_coordinate_as_bytes
 ec_get_x_coordinate_as_scalar
-ec_group_new
 ec_hash_to_curve_p256_xmd_sha256_sswu
 ec_hash_to_curve_p384_xmd_sha384_sswu
 ec_hash_to_curve_p384_xmd_sha512_sswu_draft07
@@ -3452,8 +3482,12 @@ ecp_nistz256_sqr_mont
 ed25519_asn1_meth
 ed25519_pkey_meth
 ed25519_public_key_from_hashed_seed_nohw
-fe_carry
-fe_neg
+ed25519_public_key_from_hashed_seed_s2n_bignum
+ed25519_sha512
+ed25519_sign_nohw
+ed25519_sign_s2n_bignum
+ed25519_verify_nohw
+ed25519_verify_s2n_bignum
 gcm_ghash_avx
 gcm_ghash_avx512
 gcm_ghash_clmul
@@ -3470,8 +3504,7 @@ gcm_init_clmul
 gcm_init_nohw
 gcm_init_ssse3
 gcm_setiv_avx512
-ge_double_scalarmult_vartime
-ge_p3_tobytes
+hmac_asn1_meth
 i2a_ACCESS_DESCRIPTION
 i2a_ASN1_ENUMERATED
 i2a_ASN1_INTEGER
@@ -3704,7 +3737,6 @@ rsaz_1024_scatter5_avx2
 rsaz_1024_sqr_avx2
 s2i_ASN1_INTEGER
 s2i_ASN1_OCTET_STRING
-sc_muladd
 sha1_block_data_order
 sha1_func
 sha224_func
@@ -3753,6 +3785,7 @@ sk_X509_pop_free
 sk_X509_shift
 sk_X509_value
 sk_pop_free
+used_for_hmac
 v2i_GENERAL_NAME
 v2i_GENERAL_NAMES
 v2i_GENERAL_NAME_ex
@@ -3817,8 +3850,10 @@ x25519_ge_sub
 x25519_ge_tobytes
 x25519_pkey_meth
 x25519_public_from_private_nohw
+x25519_public_from_private_s2n_bignum
 x25519_sc_reduce
 x25519_scalar_mult_generic_nohw
+x25519_scalar_mult_generic_s2n_bignum
 x509V3_add_value_asn1_string
 x509_check_cert_time
 x509_digest_sign_algorithm
