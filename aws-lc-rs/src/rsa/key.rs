@@ -146,7 +146,7 @@ impl KeyPair {
     }
 
     /// Parses an unencrypted PKCS#8-encoded RSA private key.
-    /// 
+    ///
     /// A RSA keypair may be generated using [`KeyPair::generate`].
     ///
     /// Only two-prime (not multi-prime) keys are supported. The public modulus
@@ -591,14 +591,14 @@ pub(super) fn generate_rsa_key(
     // keygen function based on the whether the build of AWS-LC had FIPS enbaled. Rather we delegate to the desired
     // generation function.
 
+    const RSA_F4: u64 = 65537;
+
     let rsa = DetachableLcPtr::new(unsafe { RSA_new() })?;
 
     if 1 != if fips {
         indicator_check!(unsafe { RSA_generate_key_fips(*rsa, size, null_mut()) })
     } else {
-        // Safety: RSA_F4 == 65537, RSA_F4 an i32 is safe to cast to u64
-        debug_assert_eq!(RSA_F4 as u64, 65537u64);
-        let e: DetachableLcPtr<BIGNUM> = (RSA_F4 as u64).try_into()?;
+        let e: LcPtr<BIGNUM> = RSA_F4.try_into()?;
         unsafe { RSA_generate_key_ex(*rsa, size, *e, null_mut()) }
     } {
         return Err(Unspecified);
