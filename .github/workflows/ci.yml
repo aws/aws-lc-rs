@@ -645,3 +645,34 @@ jobs:
         working-directory: ./aws-lc-rs
         run: cargo --locked check
 
+  careful:
+    name: Run carefully
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-12
+          - macos-13-xlarge
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          lfs: true
+      - uses: dtolnay/rust-toolchain@nightly
+        id: toolchain
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install cargo-careful
+        run: cargo install cargo-careful
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Run tests
+        working-directory: ./aws-lc-rs
+        run: cargo +nightly careful test
+      - name: Run tests w/ FIPS
+        working-directory: ./aws-lc-rs
+        # Rust doc tests dislike dynamic linking
+        run: cargo +nightly careful test --tests --features fips,bindgen
