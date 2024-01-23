@@ -1,4 +1,4 @@
-name: cross-compilation
+name: cross
 
 on:
   push:
