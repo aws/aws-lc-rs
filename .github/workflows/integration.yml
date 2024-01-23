@@ -1,0 +1,58 @@
+name: integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches:
+      - '*'
+
+env:
+  RUST_BACKTRACE: 1
+  # We can pin the version if nightly is too unstable.
+  # Otherwise, we test against the latest version.
+  RUST_NIGHTLY_TOOLCHAIN: nightly
+
+jobs:
+  s2n-quic-integration:
+    name: s2n-quic-integration
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Run s2n-quic integration
+        working-directory: ./aws-lc-rs
+        run: |
+          ./scripts/run-s2n-quic-integration.sh
+
+  rustls-integration:
+    name: rustls-integration
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install cargo-download
+        run: cargo install cargo-download
+      - name: Run rustls integration
+        working-directory: ./aws-lc-rs
+        run: |
+          ./scripts/run-rustls-integration.sh
+

@@ -1,0 +1,245 @@
+name: analysis
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches:
+      - '*'
+
+env:
+  RUST_BACKTRACE: 1
+  # We can pin the version if nightly is too unstable.
+  # Otherwise, we test against the latest version.
+  RUST_NIGHTLY_TOOLCHAIN: nightly
+  # Mirai version tag, updates this whenever a new version
+  # is released.
+  MIRAI_TOOLCHAIN: nightly-2023-05-09
+  MIRAI_TAG: v1.1.8
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: rustfmt
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+
+      - name: Run cargo fmt
+        run : cargo fmt -- --check --verbose
+
+  clippy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rs" ]
+        features:
+          - "--features bindgen"
+          - "--features bindgen,fips"
+        exclude:
+          - crate_dir: aws-lc-sys
+            features: "--features bindgen,fips"
+          - crate_dir: aws-lc-fips-sys
+            features: "--features bindgen,fips"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: clippy
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Run cargo clippy
+        working-directory: ${{ matrix.crate_dir }}
+        run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
+
+  apidiff:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rs" ]
+        diff_target: [ "branch", "published" ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: nightly-2023-08-25
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install cargo-public-api
+        run: cargo install cargo-public-api
+      - name: Perform API Diff (Target Branch)
+        if: matrix.diff_target == 'branch'
+        working-directory: ${{ matrix.crate_dir }}
+        run: cargo public-api diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+      - name: Perform API Diff (Published)
+        if: matrix.diff_target == 'published'
+        working-directory: ${{ matrix.crate_dir }}
+        shell: bash
+        run: |
+          CRATE_NAME="${{ matrix.crate_dir }}"
+          CRATE_VERSION=$(cargo search --limit 1 ${CRATE_NAME} | head -n 1 | sed -e 's/[^"]*"\([^"]*\)".*/\1/')
+          cargo public-api diff --deny changed --deny removed "${CRATE_VERSION}"
+
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v3
+        with:
+          allow-licenses: Apache-2.0, ISC, MIT, MIT-0
+
+  udeps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+
+      - name: Install cargo-udeps
+        run: cargo install cargo-udeps
+
+      - name: Run cargo udeps
+        # we only use openssl when the openssl-benchmarks feature is enabled.
+        # openssl is a dev-dependency so it can't be optional.
+        run: cargo udeps --workspace --all-targets --features openssl-benchmarks
+        env:
+          RUSTC_WRAPPER: ""
+
+  mirai-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          lfs: true
+
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ env.MIRAI_TOOLCHAIN }}
+          components: rust-src, rustc-dev, llvm-tools-preview
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+
+      - name: Cache Cargo
+        uses: actions/cache@v3.0.5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-mirai-${{ env.MIRAI_TAG }}
+
+      # https://github.com/facebookexperimental/MIRAI/blob/main/documentation/InstallationGuide.md#installing-mirai-into-cargo
+      - name: Install MIRAI
+        run: |
+          MIRAI_TMP_SRC=$(mktemp -d)
+          git clone --depth 1 --branch ${{ env.MIRAI_TAG }} https://github.com/facebookexperimental/MIRAI.git ${MIRAI_TMP_SRC}
+          pushd ${MIRAI_TMP_SRC}
+          cargo install --force --path ./checker --no-default-features
+          popd
+          rm -rf ${MIRAI_TMP_SRC}
+
+      - name: Run MIRAI
+        working-directory: ./aws-lc-rs
+        run: |
+          cargo mirai
+
+  minimal-versions:
+    name: Resolve the dependencies to the minimum SemVer version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          lfs: true
+      - uses: dtolnay/rust-toolchain@nightly
+        id: toolchain
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Setup to use minimal versions
+        working-directory: ./aws-lc-rs
+        run: cargo update -Z minimal-versions
+      - name: Build with minimal versions
+        working-directory: ./aws-lc-rs
+        run: cargo --locked check
+
+  msrv:
+    name: Minimum Supported Rust Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          lfs: true
+
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+
+      - name: Install cargo-msrv
+        run: cargo install cargo-msrv
+
+      - name: Verify msrv
+        working-directory: ./aws-lc-rs
+        run: cargo msrv verify
+
+  copyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check
+        run: |
+          ./scripts/tools/copyright_check.sh
+
+  semver-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Check semver (Default Features)
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          package: aws-lc-rs
+          feature-group: default-features
+      - name: Check semver (FIPS)
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          package: aws-lc-rs
+          feature-group: only-explicit-features
+          features: fips
