@@ -22,7 +22,7 @@ use aws_lc::{
     EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_generate_key_ex,
     RSA_generate_key_fips, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new,
     RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_size,
-    BIGNUM, EVP_PKEY, EVP_PKEY_CTX, RSA, RSA_F4,
+    BIGNUM, EVP_PKEY, EVP_PKEY_CTX, RSA,
 };
 
 use mirai_annotations::verify_unreachable;
@@ -619,6 +619,14 @@ pub(super) fn generate_rsa_key(
 mod tests {
     use super::{KeyPair, KeySize, PublicKeyComponents};
     use crate::encoding::AsDer;
+
+    #[test]
+    fn keysize_len() {
+        assert_eq!(KeySize::Rsa2048.len(), 256);
+        assert_eq!(KeySize::Rsa3072.len(), 384);
+        assert_eq!(KeySize::Rsa4096.len(), 512);
+        assert_eq!(KeySize::Rsa8192.len(), 1024);
+    }
 
     macro_rules! generate_encode_decode {
         ($name:ident, $size:expr) => {
