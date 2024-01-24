@@ -3,7 +3,11 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::signature::{KeyPair, RsaKeyPair, RsaParameters, RsaPublicKey};
+use aws_lc_rs::encoding::AsDer;
+use aws_lc_rs::rsa::KeySize;
+use aws_lc_rs::signature::{
+    KeyPair, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey,
+};
 use aws_lc_rs::test::to_hex_upper;
 use aws_lc_rs::{rand, signature, test, test_file};
 
@@ -11,8 +15,8 @@ use aws_lc_rs::{rand, signature, test, test_file};
 fn rsa_traits() {
     test::compile_time_assert_send::<RsaKeyPair>();
     test::compile_time_assert_sync::<RsaKeyPair>();
-    test::compile_time_assert_send::<signature::RsaPublicKey>();
-    test::compile_time_assert_sync::<signature::RsaPublicKey>();
+    test::compile_time_assert_send::<signature::RsaSubjectPublicKey>();
+    test::compile_time_assert_sync::<signature::RsaSubjectPublicKey>();
     test::compile_time_assert_send::<signature::RsaPublicKeyComponents<&[u8]>>();
     test::compile_time_assert_sync::<signature::RsaPublicKeyComponents<&[u8]>>();
     test::compile_time_assert_send::<signature::RsaPublicKeyComponents<Vec<u8>>>();
@@ -249,7 +253,7 @@ fn rsa_test_public_key_coverage() {
 
     // Test `Clone`.
     #[allow(let_underscore_drop)]
-    let _: RsaPublicKey = pubkey.clone();
+    let _: RsaSubjectPublicKey = pubkey.clone();
 
     #[cfg(feature = "ring-io")]
     assert_eq!(
@@ -266,4 +270,73 @@ fn rsa_test_public_key_coverage() {
         format!("RsaKeyPair {{ public_key: {:?} }}", key_pair.public_key()),
         format!("{key_pair:?}")
     );
+}
+
+#[test]
+fn keysize_len() {
+    assert_eq!(KeySize::Rsa2048.len(), 256);
+    assert_eq!(KeySize::Rsa3072.len(), 384);
+    assert_eq!(KeySize::Rsa4096.len(), 512);
+    assert_eq!(KeySize::Rsa8192.len(), 1024);
+}
+
+macro_rules! generate_encode_decode {
+    ($name:ident, $size:expr) => {
+        #[test]
+        fn $name() {
+            let private_key = RsaKeyPair::generate($size).expect("generation");
+
+            let pkcs8v1 = private_key.as_der().expect("encoded");
+
+            let private_key = RsaKeyPair::from_pkcs8(pkcs8v1.as_ref()).expect("decoded");
+
+            let public_key = crate::signature::KeyPair::public_key(&private_key);
+
+            let _ = public_key.as_ref();
+        }
+    };
+}
+
+generate_encode_decode!(rsa2048_generate_encode_decode, KeySize::Rsa2048);
+generate_encode_decode!(rsa3072_generate_encode_decode, KeySize::Rsa3072);
+generate_encode_decode!(rsa4096_generate_encode_decode, KeySize::Rsa4096);
+generate_encode_decode!(rsa8192_generate_encode_decode, KeySize::Rsa8192);
+
+macro_rules! generate_fips_encode_decode {
+    ($name:ident, $size:expr) => {
+        #[cfg(feature = "fips")]
+        #[test]
+        fn $name() {
+            let private_key = KeyPair::generate_fips($size).expect("generation");
+
+            let pkcs8v1 = private_key.as_der().expect("encoded");
+
+            let private_key = KeyPair::from_pkcs8(pkcs8v1.as_ref()).expect("decoded");
+
+            let public_key = crate::signature::KeyPair::public_key(&private_key);
+
+            let _ = public_key.as_ref();
+        }
+    };
+    ($name:ident, $size:expr, false) => {
+        #[cfg(feature = "fips")]
+        #[test]
+        fn $name() {
+            let _ = KeyPair::generate_fips($size).expect_err("should fail for key size");
+        }
+    };
+}
+
+generate_fips_encode_decode!(rsa2048_generate_fips_encode_decode, KeySize::Rsa2048);
+generate_fips_encode_decode!(rsa3072_generate_fips_encode_decode, KeySize::Rsa3072);
+generate_fips_encode_decode!(rsa4096_generate_fips_encode_decode, KeySize::Rsa4096);
+generate_fips_encode_decode!(rsa8192_generate_fips_encode_decode, KeySize::Rsa8192, false);
+
+#[test]
+fn public_key_components_clone_debug() {
+    let pkc = RsaPublicKeyComponents::<&[u8]> {
+        n: &[0x63, 0x61, 0x6d, 0x65, 0x6c, 0x6f, 0x74],
+        e: &[0x61, 0x76, 0x61, 0x6c, 0x6f, 0x6e],
+    };
+    assert_eq!("RsaPublicKeyComponents { n: [99, 97, 109, 101, 108, 111, 116], e: [97, 118, 97, 108, 111, 110] }", format!("{pkc:?}"));
 }

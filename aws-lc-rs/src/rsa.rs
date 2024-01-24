@@ -14,7 +14,7 @@ mod encoding;
 pub(crate) mod key;
 pub(crate) mod signature;
 
-pub use self::key::{KeyPair, PublicKey, PublicKeyComponents};
+pub use self::key::{KeyPair, KeySize, PublicKey, PublicKeyComponents};
 #[allow(clippy::module_name_repetitions)]
 pub use self::signature::RsaParameters;
 
