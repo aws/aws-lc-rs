@@ -15,9 +15,9 @@ pub(crate) struct CmakeBuilder {
 }
 
 fn find_cmake_command() -> Option<&'static OsStr> {
-    if test_command("cmake3".as_ref(), &["--version".as_ref()]) {
+    if test_command("cmake3".as_ref(), &["--version".as_ref()]).status {
         Some("cmake3".as_ref())
-    } else if test_command("cmake".as_ref(), &["--version".as_ref()]) {
+    } else if test_command("cmake".as_ref(), &["--version".as_ref()]).status {
         Some("cmake".as_ref())
     } else {
         None

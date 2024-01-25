@@ -49,3 +49,36 @@ jobs:
         # Doc-tests fail to link with dynamic build
         # See: https://github.com/rust-lang/cargo/issues/8531
         run: cargo test --tests ${{ matrix.args }}
+  windows-fips-test:
+    name: aws-lc-rs windows-fips-tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ windows-2019, windows-2022 ]
+        args:
+          - --all-targets --features fips,unstable
+          - --all-targets --features fips,bindgen,unstable
+          - --release --all-targets --features fips,unstable
+          - --no-default-features --features fips,unstable
+          - --no-default-features --features fips,ring-io,unstable
+          - --no-default-features --features fips,ring-sig-verify,unstable
+          - --no-default-features --features fips,alloc,unstable
+    steps:
+      - uses: ilammy/setup-nasm@v1
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: actions-rs/toolchain@v1.0.7
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v4
+      - name: Run cargo test
+        working-directory: ./aws-lc-rs
+        # Doc-tests fail to link with dynamic build
+        # See: https://github.com/rust-lang/cargo/issues/8531
+        run: cargo test --tests ${{ matrix.args }}

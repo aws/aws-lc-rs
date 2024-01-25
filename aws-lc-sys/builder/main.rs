@@ -57,8 +57,7 @@ enum OutputLibType {
 
 impl Default for OutputLibType {
     fn default() -> Self {
-        let build_type_result = env::var("AWS_LC_SYS_STATIC");
-        if let Ok(build_type) = build_type_result {
+        if let Ok(build_type) = env::var("AWS_LC_SYS_STATIC") {
             eprintln!("AWS_LC_SYS_STATIC={build_type}");
             // If the environment variable is set, we ignore every other factor.
             let build_type = build_type.to_lowercase();
@@ -109,11 +108,26 @@ fn target_platform_prefix(name: &str) -> String {
     format!("{}_{}_{}", env::consts::OS, env::consts::ARCH, name)
 }
 
-fn test_command(executable: &OsStr, args: &[&OsStr]) -> bool {
-    if let Ok(output) = Command::new(executable).args(args).output() {
-        return output.status.success();
+pub(crate) struct TestCommandResult {
+    #[allow(dead_code)]
+    output: Box<str>,
+    status: bool,
+}
+
+fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
+    if let Ok(result) = Command::new(executable).args(args).output() {
+        let output = String::from_utf8(result.stdout)
+            .unwrap_or_default()
+            .into_boxed_str();
+        return TestCommandResult {
+            output,
+            status: result.status.success(),
+        };
     }
-    false
+    TestCommandResult {
+        output: String::new().into_boxed_str(),
+        status: false,
+    }
 }
 
 #[cfg(any(
