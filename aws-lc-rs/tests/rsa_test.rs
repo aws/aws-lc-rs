@@ -307,11 +307,11 @@ macro_rules! generate_fips_encode_decode {
         #[cfg(feature = "fips")]
         #[test]
         fn $name() {
-            let private_key = KeyPair::generate_fips($size).expect("generation");
+            let private_key = RsaKeyPair::generate_fips($size).expect("generation");
 
             let pkcs8v1 = private_key.as_der().expect("encoded");
 
-            let private_key = KeyPair::from_pkcs8(pkcs8v1.as_ref()).expect("decoded");
+            let private_key = RsaKeyPair::from_pkcs8(pkcs8v1.as_ref()).expect("decoded");
 
             let public_key = crate::signature::KeyPair::public_key(&private_key);
 
@@ -322,7 +322,7 @@ macro_rules! generate_fips_encode_decode {
         #[cfg(feature = "fips")]
         #[test]
         fn $name() {
-            let _ = KeyPair::generate_fips($size).expect_err("should fail for key size");
+            let _ = RsaKeyPair::generate_fips($size).expect_err("should fail for key size");
         }
     };
 }
