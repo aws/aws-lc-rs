@@ -11,7 +11,6 @@ use core::{
 };
 
 use crate::{
-    buffer::Buffer,
     encoding::{AsDer, Pkcs8V1Der},
     fips::indicator_check,
 };
@@ -363,7 +362,9 @@ impl crate::signature::KeyPair for KeyPair {
 
 impl AsDer<Pkcs8V1Der<'static>> for KeyPair {
     fn as_der(&self) -> Result<Pkcs8V1Der<'static>, Unspecified> {
-        Ok(Buffer::new(encoding::pkcs8::encode_v1_der(&self.evp_pkey)?))
+        Ok(Pkcs8V1Der::new(encoding::pkcs8::encode_v1_der(
+            &self.evp_pkey,
+        )?))
     }
 }
 

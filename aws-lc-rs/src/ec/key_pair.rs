@@ -10,7 +10,6 @@ use std::ptr::{null, null_mut};
 
 use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY};
 
-use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
 #[cfg(feature = "fips")]
 use crate::ec::validate_evp_key;
@@ -320,9 +319,9 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey<'_> {
             let length = usize::try_from(aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp))
                 .map_err(|_| Unspecified)?;
             let outp = LcPtr::new(outp)?;
-            Ok(Buffer::take_from_slice(std::slice::from_raw_parts_mut(
-                *outp, length,
-            )))
+            Ok(EcPrivateKeyRfc5915Der::take_from_slice(
+                std::slice::from_raw_parts_mut(*outp, length),
+            ))
         }
     }
 }

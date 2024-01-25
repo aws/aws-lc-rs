@@ -68,7 +68,6 @@ use aws_lc::{
     NID_secp521r1, BIGNUM, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
 
-use crate::buffer::Buffer;
 use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
 };
@@ -456,7 +455,7 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
         let length = usize::try_from(unsafe { aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp) })
             .map_err(|_| Unspecified)?;
         let outp = LcPtr::new(outp)?;
-        Ok(Buffer::take_from_slice(unsafe {
+        Ok(EcPrivateKeyRfc5915Der::take_from_slice(unsafe {
             std::slice::from_raw_parts_mut(*outp, length)
         }))
     }

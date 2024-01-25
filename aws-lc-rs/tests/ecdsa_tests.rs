@@ -476,7 +476,7 @@ fn test_private_key() {
         }
         {
             let private_key_der: EcPrivateKeyRfc5915Der = key_pair.private_key().as_der().unwrap();
-            assert_eq!("Buffer(...)", format!("{private_key_der:?}"));
+            assert_eq!("EcPrivateKeyRfc5915Der", format!("{private_key_der:?}"));
             assert!(EcdsaKeyPair::from_pkcs8(signing_alg, private_key_der.as_ref()).is_err());
 
             let key_pair_copy =
