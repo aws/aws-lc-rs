@@ -67,6 +67,7 @@ pub enum KeySize {
     Rsa8192,
 }
 
+#[allow(clippy::len_without_is_empty)]
 impl KeySize {
     /// Returns the size of the key in bytes.
     #[inline]
