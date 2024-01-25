@@ -15,6 +15,7 @@ env:
 
 jobs:
   aws-lc-rs-cross-test:
+    if: github.repository == 'aws/aws-lc-rs'
     name: aws-lc-rs cross tests
     runs-on: ${{ matrix.os }}
     strategy:
@@ -57,6 +58,7 @@ jobs:
         run: cross test --release --features bindgen,unstable --target ${{ matrix.target }}
 
   aws-lc-rs-platform-build:
+    if: github.repository == 'aws/aws-lc-rs'
     name: Cross-platform build
     runs-on: ${{ matrix.os }}
     strategy:
@@ -81,4 +83,3 @@ jobs:
         run: cargo test --features bindgen,unstable --target ${{ matrix.target }}
         env:
           DYLD_ROOT_PATH: "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot"
-
