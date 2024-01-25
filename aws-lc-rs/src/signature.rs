@@ -245,9 +245,8 @@ use std::fmt::{Debug, Formatter};
 use untrusted::Input;
 
 pub use crate::rsa::{
-    key::{PublicKey as RsaPublicKey, PublicKeyComponents as RsaPublicKeyComponents},
-    signature::RsaEncoding,
-    KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey, RsaParameters,
+    signature::RsaEncoding, KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey,
+    PublicKeyComponents as RsaPublicKeyComponents, RsaParameters,
 };
 
 use crate::rsa::{
