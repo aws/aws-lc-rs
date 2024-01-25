@@ -7,7 +7,7 @@
 //! ```rust
 //! # use std::error::Error;
 //! # fn main() -> Result<(), Box<dyn Error>> {
-//! use aws_lc_rs::key_wrap::{nist_sp_800_38f::AesKek, KeyWrapPadded, AES_128};
+//! use aws_lc_rs::key_wrap::{AesKek, KeyWrapPadded, AES_128};
 //!
 //! const KEY: &[u8] = &[
 //!     0xa8, 0xe0, 0x6d, 0xa6, 0x25, 0xa6, 0x5b, 0x25, 0xcf, 0x50, 0x30, 0x82, 0x68, 0x30, 0xb6,
@@ -31,9 +31,13 @@
 //! # Ok(())
 //! # }
 //! ```
-use core::fmt::Debug;
 
-use crate::{error::Unspecified, sealed::Sealed};
+use crate::{error::Unspecified, fips::indicator_check, sealed::Sealed};
+use aws_lc::{
+    AES_set_decrypt_key, AES_set_encrypt_key, AES_unwrap_key, AES_unwrap_key_padded, AES_wrap_key,
+    AES_wrap_key_padded, AES_KEY,
+};
+use core::{fmt::Debug, mem::MaybeUninit, ptr::null};
 
 mod tests;
 
@@ -151,274 +155,261 @@ pub trait KeyWrapPadded: Sealed {
     ) -> Result<&'output mut [u8], Unspecified>;
 }
 
-/// NIST SP 800-38F key-wrap algorithms.
+/// AES Key Encryption Key.
+pub type AesKek = KeyEncryptionKey<AesBlockCipher>;
+
+/// The key-encryption key used with the selected cipher algorithn to wrap or unwrap a key.
+///
+/// Implements the NIST SP 800-38F key wrapping algoirthm.
 ///
 /// The NIST specification is similar to that of RFC 3394 but with the following caveats:
 /// * Specifies a maxiumum plaintext length that can be accepted.
 /// * Allows implementations to specify a subset of valid lengths accepted.
 /// * Allows for the usage of other 128-bit block ciphers other than AES.
-pub mod nist_sp_800_38f {
-    use super::{AesBlockCipher, BlockCipher, BlockCipherId, KeyWrap, KeyWrapPadded};
-    use crate::{error::Unspecified, fips::indicator_check, sealed::Sealed};
-    use aws_lc::{
-        AES_set_decrypt_key, AES_set_encrypt_key, AES_unwrap_key, AES_unwrap_key_padded,
-        AES_wrap_key, AES_wrap_key_padded, AES_KEY,
-    };
-    use core::{fmt::Debug, mem::MaybeUninit, ptr::null};
+pub struct KeyEncryptionKey<Cipher: BlockCipher> {
+    cipher: &'static Cipher,
+    key: Box<[u8]>,
+}
 
-    /// AES Key Encryption Key.
-    pub type AesKek = KeyEncryptionKey<AesBlockCipher>;
+impl<Cipher: BlockCipher> KeyEncryptionKey<Cipher> {
+    /// Construct a new Key Encryption Key.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Any error that occurs constructing the key encryption key.
+    pub fn new(cipher: &'static Cipher, key: &[u8]) -> Result<Self, Unspecified> {
+        if key.len() != cipher.key_len() {
+            return Err(Unspecified);
+        }
 
-    /// The key-encryption key used with the selected cipher algorithn to wrap or unwrap a key.
-    pub struct KeyEncryptionKey<Cipher: BlockCipher> {
-        cipher: &'static Cipher,
-        key: Box<[u8]>,
+        let key = Vec::from(key).into_boxed_slice();
+
+        Ok(Self { cipher, key })
     }
 
-    impl<Cipher: BlockCipher> KeyEncryptionKey<Cipher> {
-        /// Construct a new Key Encryption Key.
-        ///
-        /// # Errors
-        /// * [`Unspecified`]: Any error that occurs constructing the key encryption key.
-        pub fn new(cipher: &'static Cipher, key: &[u8]) -> Result<Self, Unspecified> {
-            if key.len() != cipher.key_len() {
-                return Err(Unspecified);
-            }
+    /// Returns the block cipher algorithm identifier configured for the key.
+    #[must_use]
+    pub fn block_cipher_id(&self) -> BlockCipherId {
+        self.cipher.id()
+    }
+}
 
-            let key = Vec::from(key).into_boxed_slice();
+impl<Cipher: BlockCipher> Sealed for KeyEncryptionKey<Cipher> {}
 
-            Ok(Self { cipher, key })
+impl KeyWrap for KeyEncryptionKey<AesBlockCipher> {
+    /// Peforms the key wrap encryption algorithm using `KeyEncryptionKey`'s configured block cipher.
+    /// It wraps `plaintext` and writes the corresponding ciphertext to `output`.
+    ///
+    /// # Validation
+    /// * `plaintext.len()` must be a multiple of eight
+    /// * `output.len() >= (input.len() + 8)`
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
+    /// the allowed input size, or for other unspecified reasons.
+    fn wrap<'output>(
+        self,
+        plaintext: &[u8],
+        output: &'output mut [u8],
+    ) -> Result<&'output mut [u8], Unspecified> {
+        if output.len() < plaintext.len() + 8 {
+            return Err(Unspecified);
         }
 
-        /// Returns the block cipher algorithm identifier configured for the key.
-        #[must_use]
-        pub fn block_cipher_id(&self) -> BlockCipherId {
-            self.cipher.id()
+        let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
+
+        let key_bits: u32 = (self.key.len() * 8).try_into().map_err(|_| Unspecified)?;
+
+        if 0 != unsafe { AES_set_encrypt_key(self.key.as_ptr(), key_bits, aes_key.as_mut_ptr()) } {
+            return Err(Unspecified);
         }
+
+        let aes_key = unsafe { aes_key.assume_init() };
+
+        // AWS-LC validates the following:
+        // * in_len <= INT_MAX - 8
+        // * in_len >= 16
+        // * in_len % 8 == 0
+        let out_len = indicator_check!(unsafe {
+            AES_wrap_key(
+                &aes_key,
+                null(),
+                output.as_mut_ptr(),
+                plaintext.as_ptr(),
+                plaintext.len(),
+            )
+        });
+
+        if out_len == -1 {
+            return Err(Unspecified);
+        }
+
+        let out_len: usize = out_len.try_into().map_err(|_| Unspecified)?;
+
+        debug_assert_eq!(out_len, plaintext.len() + 8);
+
+        Ok(&mut output[..out_len])
     }
 
-    impl<Cipher: BlockCipher> Sealed for KeyEncryptionKey<Cipher> {}
-
-    impl KeyWrap for KeyEncryptionKey<AesBlockCipher> {
-        /// Peforms the key wrap encryption algorithm using `KeyEncryptionKey`'s configured block cipher.
-        /// It wraps `plaintext` and writes the corresponding ciphertext to `output`.
-        ///
-        /// # Validation
-        /// * `plaintext.len()` must be a multiple of eight
-        /// * `output.len() >= (input.len() + 8)`
-        ///
-        /// # Errors
-        /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
-        /// the allowed input size, or for other unspecified reasons.
-        fn wrap<'output>(
-            self,
-            plaintext: &[u8],
-            output: &'output mut [u8],
-        ) -> Result<&'output mut [u8], Unspecified> {
-            if output.len() < plaintext.len() + 8 {
-                return Err(Unspecified);
-            }
-
-            let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
-
-            let key_bits: u32 = (self.key.len() * 8).try_into().map_err(|_| Unspecified)?;
-
-            if 0 != unsafe {
-                AES_set_encrypt_key(self.key.as_ptr(), key_bits, aes_key.as_mut_ptr())
-            } {
-                return Err(Unspecified);
-            }
-
-            let aes_key = unsafe { aes_key.assume_init() };
-
-            // AWS-LC validates the following:
-            // * in_len <= INT_MAX - 8
-            // * in_len >= 16
-            // * in_len % 8 == 0
-            let out_len = indicator_check!(unsafe {
-                AES_wrap_key(
-                    &aes_key,
-                    null(),
-                    output.as_mut_ptr(),
-                    plaintext.as_ptr(),
-                    plaintext.len(),
-                )
-            });
-
-            if out_len == -1 {
-                return Err(Unspecified);
-            }
-
-            let out_len: usize = out_len.try_into().map_err(|_| Unspecified)?;
-
-            debug_assert_eq!(out_len, plaintext.len() + 8);
-
-            Ok(&mut output[..out_len])
+    /// Peforms the key wrap decryption algorithm using `KeyEncryptionKey`'s configured block cipher.
+    /// It unwraps `ciphertext` and writes the corresponding plaintext to `output`.
+    ///
+    /// # Validation
+    /// * `ciphertext.len()` must be a multiple of 8
+    /// * `output.len() >= (input.len() - 8)`
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
+    /// the allowed input size, or for other unspecified reasons.
+    fn unwrap<'output>(
+        self,
+        ciphertext: &[u8],
+        output: &'output mut [u8],
+    ) -> Result<&'output mut [u8], Unspecified> {
+        if output.len() < ciphertext.len() - 8 {
+            return Err(Unspecified);
         }
 
-        /// Peforms the key wrap decryption algorithm using `KeyEncryptionKey`'s configured block cipher.
-        /// It unwraps `ciphertext` and writes the corresponding plaintext to `output`.
-        ///
-        /// # Validation
-        /// * `ciphertext.len()` must be a multiple of 8
-        /// * `output.len() >= (input.len() - 8)`
-        ///
-        /// # Errors
-        /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
-        /// the allowed input size, or for other unspecified reasons.
-        fn unwrap<'output>(
-            self,
-            ciphertext: &[u8],
-            output: &'output mut [u8],
-        ) -> Result<&'output mut [u8], Unspecified> {
-            if output.len() < ciphertext.len() - 8 {
-                return Err(Unspecified);
-            }
+        let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
 
-            let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
-
-            if 0 != unsafe {
-                AES_set_decrypt_key(
-                    self.key.as_ptr(),
-                    (self.key.len() * 8).try_into().map_err(|_| Unspecified)?,
-                    aes_key.as_mut_ptr(),
-                )
-            } {
-                return Err(Unspecified);
-            }
-
-            let aes_key = unsafe { aes_key.assume_init() };
-
-            // AWS-LC validates the following:
-            // * in_len < INT_MAX
-            // * in_len > 24
-            // * in_len % 8 == 0
-            let out_len = indicator_check!(unsafe {
-                AES_unwrap_key(
-                    &aes_key,
-                    null(),
-                    output.as_mut_ptr(),
-                    ciphertext.as_ptr(),
-                    ciphertext.len(),
-                )
-            });
-
-            if out_len == -1 {
-                return Err(Unspecified);
-            }
-
-            let out_len: usize = out_len.try_into().map_err(|_| Unspecified)?;
-
-            debug_assert_eq!(out_len, ciphertext.len() - 8);
-
-            Ok(&mut output[..out_len])
+        if 0 != unsafe {
+            AES_set_decrypt_key(
+                self.key.as_ptr(),
+                (self.key.len() * 8).try_into().map_err(|_| Unspecified)?,
+                aes_key.as_mut_ptr(),
+            )
+        } {
+            return Err(Unspecified);
         }
+
+        let aes_key = unsafe { aes_key.assume_init() };
+
+        // AWS-LC validates the following:
+        // * in_len < INT_MAX
+        // * in_len > 24
+        // * in_len % 8 == 0
+        let out_len = indicator_check!(unsafe {
+            AES_unwrap_key(
+                &aes_key,
+                null(),
+                output.as_mut_ptr(),
+                ciphertext.as_ptr(),
+                ciphertext.len(),
+            )
+        });
+
+        if out_len == -1 {
+            return Err(Unspecified);
+        }
+
+        let out_len: usize = out_len.try_into().map_err(|_| Unspecified)?;
+
+        debug_assert_eq!(out_len, ciphertext.len() - 8);
+
+        Ok(&mut output[..out_len])
+    }
+}
+
+impl KeyWrapPadded for KeyEncryptionKey<AesBlockCipher> {
+    /// Peforms the key wrap padding encryption algorithm using `KeyEncryptionKey`'s configured block cipher.
+    /// It wraps and pads `plaintext` writes the corresponding ciphertext to `output`.
+    ///
+    /// # Validation
+    /// * `output.len() >= (input.len() + 15)`
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
+    /// the allowed input size, or for other unspecified reasons.
+    fn wrap_with_padding<'output>(
+        self,
+        plaintext: &[u8],
+        output: &'output mut [u8],
+    ) -> Result<&'output mut [u8], Unspecified> {
+        let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
+
+        let key_bits: u32 = (self.key.len() * 8).try_into().map_err(|_| Unspecified)?;
+
+        if 0 != unsafe { AES_set_encrypt_key(self.key.as_ptr(), key_bits, aes_key.as_mut_ptr()) } {
+            return Err(Unspecified);
+        }
+
+        let aes_key = unsafe { aes_key.assume_init() };
+
+        let mut out_len: usize = 0;
+
+        // AWS-LC validates the following:
+        // * in_len != 0
+        // * in_len <= INT_MAX
+        // * max_out >= required_padding + 8
+        if 1 != indicator_check!(unsafe {
+            AES_wrap_key_padded(
+                &aes_key,
+                output.as_mut_ptr(),
+                &mut out_len,
+                output.len(),
+                plaintext.as_ptr(),
+                plaintext.len(),
+            )
+        }) {
+            return Err(Unspecified);
+        }
+
+        Ok(&mut output[..out_len])
     }
 
-    impl KeyWrapPadded for KeyEncryptionKey<AesBlockCipher> {
-        /// Peforms the key wrap padding encryption algorithm using `KeyEncryptionKey`'s configured block cipher.
-        /// It wraps and pads `plaintext` writes the corresponding ciphertext to `output`.
-        ///
-        /// # Validation
-        /// * `output.len() >= (input.len() + 15)`
-        ///
-        /// # Errors
-        /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
-        /// the allowed input size, or for other unspecified reasons.
-        fn wrap_with_padding<'output>(
-            self,
-            plaintext: &[u8],
-            output: &'output mut [u8],
-        ) -> Result<&'output mut [u8], Unspecified> {
-            let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
+    /// Peforms the key wrap padding decryption algorithm using `KeyEncryptionKey`'s configured block cipher.
+    /// It unwraps the padded `ciphertext` and writes the corresponding plaintext to `output`.
+    ///
+    /// # Sizing `output`
+    /// `output.len() >= input.len()`.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
+    /// the allowed input size, or for other unspecified reasons.
+    fn unwrap_with_padding<'output>(
+        self,
+        ciphertext: &[u8],
+        output: &'output mut [u8],
+    ) -> Result<&'output mut [u8], Unspecified> {
+        let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
 
-            let key_bits: u32 = (self.key.len() * 8).try_into().map_err(|_| Unspecified)?;
-
-            if 0 != unsafe {
-                AES_set_encrypt_key(self.key.as_ptr(), key_bits, aes_key.as_mut_ptr())
-            } {
-                return Err(Unspecified);
-            }
-
-            let aes_key = unsafe { aes_key.assume_init() };
-
-            let mut out_len: usize = 0;
-
-            // AWS-LC validates the following:
-            // * in_len != 0
-            // * in_len <= INT_MAX
-            // * max_out >= required_padding + 8
-            if 1 != indicator_check!(unsafe {
-                AES_wrap_key_padded(
-                    &aes_key,
-                    output.as_mut_ptr(),
-                    &mut out_len,
-                    output.len(),
-                    plaintext.as_ptr(),
-                    plaintext.len(),
-                )
-            }) {
-                return Err(Unspecified);
-            }
-
-            Ok(&mut output[..out_len])
+        if 0 != unsafe {
+            AES_set_decrypt_key(
+                self.key.as_ptr(),
+                (self.key.len() * 8).try_into().map_err(|_| Unspecified)?,
+                aes_key.as_mut_ptr(),
+            )
+        } {
+            return Err(Unspecified);
         }
 
-        /// Peforms the key wrap padding decryption algorithm using `KeyEncryptionKey`'s configured block cipher.
-        /// It unwraps the padded `ciphertext` and writes the corresponding plaintext to `output`.
-        ///
-        /// # Sizing `output`
-        /// `output.len() >= input.len()`.
-        ///
-        /// # Errors
-        /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
-        /// the allowed input size, or for other unspecified reasons.
-        fn unwrap_with_padding<'output>(
-            self,
-            ciphertext: &[u8],
-            output: &'output mut [u8],
-        ) -> Result<&'output mut [u8], Unspecified> {
-            let mut aes_key = MaybeUninit::<AES_KEY>::uninit();
+        let aes_key = unsafe { aes_key.assume_init() };
 
-            if 0 != unsafe {
-                AES_set_decrypt_key(
-                    self.key.as_ptr(),
-                    (self.key.len() * 8).try_into().map_err(|_| Unspecified)?,
-                    aes_key.as_mut_ptr(),
-                )
-            } {
-                return Err(Unspecified);
-            }
+        let mut out_len: usize = 0;
 
-            let aes_key = unsafe { aes_key.assume_init() };
+        // AWS-LC validates the following:
+        // * in_len >= AES_BLOCK_SIZE
+        // * max_out >= in_len - 8
+        if 1 != indicator_check!(unsafe {
+            AES_unwrap_key_padded(
+                &aes_key,
+                output.as_mut_ptr(),
+                &mut out_len,
+                output.len(),
+                ciphertext.as_ptr(),
+                ciphertext.len(),
+            )
+        }) {
+            return Err(Unspecified);
+        };
 
-            let mut out_len: usize = 0;
-
-            // AWS-LC validates the following:
-            // * in_len >= AES_BLOCK_SIZE
-            // * max_out >= in_len - 8
-            if 1 != indicator_check!(unsafe {
-                AES_unwrap_key_padded(
-                    &aes_key,
-                    output.as_mut_ptr(),
-                    &mut out_len,
-                    output.len(),
-                    ciphertext.as_ptr(),
-                    ciphertext.len(),
-                )
-            }) {
-                return Err(Unspecified);
-            };
-
-            Ok(&mut output[..out_len])
-        }
+        Ok(&mut output[..out_len])
     }
+}
 
-    impl<Cipher: BlockCipher> Debug for KeyEncryptionKey<Cipher> {
-        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
-            f.debug_struct("KeyEncryptionKey")
-                .field("cipher", &self.cipher)
-                .finish_non_exhaustive()
-        }
+impl<Cipher: BlockCipher> Debug for KeyEncryptionKey<Cipher> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("KeyEncryptionKey")
+            .field("cipher", &self.cipher)
+            .finish_non_exhaustive()
     }
 }

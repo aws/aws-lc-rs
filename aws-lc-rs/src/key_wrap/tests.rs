@@ -6,7 +6,7 @@
 #[cfg(feature = "fips")]
 mod fips;
 
-use crate::key_wrap::nist_sp_800_38f::AesKek;
+use crate::key_wrap::AesKek;
 
 use super::{BlockCipher, BlockCipherId, KeyWrap, KeyWrapPadded, AES_128, AES_256};
 

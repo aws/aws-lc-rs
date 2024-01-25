@@ -24,7 +24,7 @@ use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use crate::rand::SecureRandom;
-use crate::signature::{EcdsaPublicKey, KeyPair, Signature};
+use crate::signature::{KeyPair, Signature};
 use crate::{digest, ec};
 
 /// An ECDSA key pair, used for signing.
@@ -50,7 +50,7 @@ impl KeyPair for EcdsaKeyPair {
 
     #[inline]
     /// Provides the public key.
-    fn public_key(&self) -> &EcdsaPublicKey {
+    fn public_key(&self) -> &Self::PublicKey {
         &self.pubkey
     }
 }

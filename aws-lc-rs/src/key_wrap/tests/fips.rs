@@ -5,7 +5,7 @@
 
 use crate::{
     fips::{assert_fips_status_indicator, FipsServiceStatus},
-    key_wrap::{nist_sp_800_38f::AesKek, KeyWrap, KeyWrapPadded, AES_128, AES_256},
+    key_wrap::{AesKek, KeyWrap, KeyWrapPadded, AES_128, AES_256},
 };
 
 const K_128: &[u8] = &[
