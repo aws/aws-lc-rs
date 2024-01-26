@@ -31,6 +31,7 @@ jobs:
         run: cargo doc --features fips,unstable --no-deps --workspace
       - name: Copy docs
         run: |
+          mkdir -p book/book/rustdocs/${{ github.ref_name }}
           cp --recursive target/doc -t book/book/rustdocs/${{ github.ref_name }}
       - name: Deploy Docs
         uses: JamesIves/github-pages-deploy-action@v4
