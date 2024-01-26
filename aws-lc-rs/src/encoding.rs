@@ -4,34 +4,58 @@
 //! Serialization formats
 
 use crate::buffer::Buffer;
-use crate::encoding::types::{
-    Curve25519SeedBufferType, EcPrivateKeyBinType, EcPrivateKeyRfc5915DerType,
-    EcPublicKeyX509DerType,
-};
+use paste::paste;
 
-use self::types::Pkcs8V1DerType;
+macro_rules! generated_encodings {
+    ($($name:ident),*) => { paste! {
+        use core::fmt::{Debug, Error, Formatter};
+        use core::ops::Deref;
+        mod buffer_type {
+            $(
+                pub struct [<$name Type>] {
+                    _priv: (),
+                }
+            )*
+        }
+        $(
+            /// Serialized bytes
+            pub struct $name<'a>(Buffer<'a, buffer_type::[<$name Type>]>);
 
-mod types {
-    pub struct EcPrivateKeyBinType {
-        _priv: (),
-    }
+            impl<'a> Deref for $name<'a> {
+                type Target = Buffer<'a, buffer_type::[<$name Type>]>;
 
-    pub struct EcPrivateKeyRfc5915DerType {
-        _priv: (),
-    }
+                fn deref(&self) -> &Self::Target {
+                    &self.0
+                }
+            }
 
-    pub struct EcPublicKeyX509DerType {
-        _priv: (),
-    }
+            impl $name<'static> {
+                #[allow(dead_code)]
+                pub(crate) fn new(owned: Vec<u8>) -> Self {
+                    Self(Buffer::new(owned))
+                }
+                #[allow(dead_code)]
+                pub(crate) fn take_from_slice(owned: &mut [u8]) -> Self {
+                    Self(Buffer::take_from_slice(owned))
+                }
+            }
 
-    pub struct Curve25519SeedBufferType {
-        _priv: (),
-    }
-
-    pub struct Pkcs8V1DerType {
-        _priv: (),
-    }
+            impl Debug for $name<'_> {
+                fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+                    f.debug_struct(stringify!($name)).finish()
+                }
+            }
+        )*
+    }}
 }
+pub(crate) use generated_encodings;
+generated_encodings!(
+    EcPrivateKeyBin,
+    EcPrivateKeyRfc5915Der,
+    EcPublicKeyX509Der,
+    Curve25519SeedBin,
+    Pkcs8V1Der
+);
 
 /// Trait for types that can be serialized into a DER format.
 pub trait AsDer<T> {
@@ -50,18 +74,3 @@ pub trait AsBigEndian<T> {
     /// Returns Unspecified if serialization fails.
     fn as_be_bytes(&self) -> Result<T, crate::error::Unspecified>;
 }
-
-/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub type EcPrivateKeyBin<'a> = Buffer<'a, EcPrivateKeyBinType>;
-
-/// Elliptic curve private key as a DER-encoded `ECPrivateKey` (RFC 5915) structure.
-pub type EcPrivateKeyRfc5915Der<'a> = Buffer<'a, EcPrivateKeyRfc5915DerType>;
-
-/// An elliptic curve public key as a DER-encoded (X509) `SubjectPublicKeyInfo` structure
-pub type EcPublicKeyX509Der<'a> = Buffer<'a, EcPublicKeyX509DerType>;
-
-/// Elliptic curve private key data encoded as a big-endian fixed-length integer.
-pub type Curve25519SeedBin<'a> = Buffer<'a, Curve25519SeedBufferType>;
-
-/// A PKCS#8 v1 (RFC 5208) DER encoded structure.
-pub type Pkcs8V1Der<'a> = Buffer<'a, Pkcs8V1DerType>;

@@ -31,7 +31,6 @@ use aws_lc::{
     EVP_PKEY_EC,
 };
 
-use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
 use crate::encoding::{AsDer, EcPublicKeyX509Der};
 use crate::error::{KeyRejected, Unspecified};
@@ -148,7 +147,7 @@ impl AsDer<EcPublicKeyX509Der<'static>> for PublicKey {
         let buffer = LcPtr::new(buffer)?;
         let der = unsafe { std::slice::from_raw_parts(*buffer, len.try_into()?) }.to_owned();
 
-        Ok(Buffer::new(der))
+        Ok(EcPublicKeyX509Der::new(der))
     }
 }
 
@@ -641,7 +640,7 @@ mod tests {
         let result = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, &input);
         assert!(result.is_ok());
         let key_pair = result.unwrap();
-        assert_eq!("EcdsaKeyPair { public_key: EcdsaPublicKey(\"04cf0d13a3a7577231ea1b66cf4021cd54f21f4ac4f5f2fdd28e05bc7d2bd099d1374cd08d2ef654d6f04498db462f73e0282058dd661a4c9b0437af3f7af6e724\") }", 
+        assert_eq!("EcdsaKeyPair { public_key: EcdsaPublicKey(\"04cf0d13a3a7577231ea1b66cf4021cd54f21f4ac4f5f2fdd28e05bc7d2bd099d1374cd08d2ef654d6f04498db462f73e0282058dd661a4c9b0437af3f7af6e724\") }",
                    format!("{key_pair:?}"));
         assert_eq!(
             "EcdsaPrivateKey(ECDSA_P256)",

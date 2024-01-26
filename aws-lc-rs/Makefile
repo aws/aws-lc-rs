@@ -39,6 +39,9 @@ endif
 msrv:
 	cargo msrv verify
 
+clippy:
+	cargo +nightly clippy --all-targets --features bindgen,fips,unstable -- -W clippy::all  -W clippy::pedantic
+
 ci: format clippy msrv test coverage api-diff-pub
 
-.PHONY: asan asan-fips asan-release ci clippy coverage test msrv
+.PHONY: asan asan-fips asan-release ci clippy coverage test msrv clippy

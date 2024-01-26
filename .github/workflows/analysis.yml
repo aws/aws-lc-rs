@@ -40,15 +40,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rs" ]
+        # By default, Clippy will lint he dependencies
+        crate_dir: ["aws-lc-rs"]
         features:
-          - "--features bindgen"
-          - "--features bindgen,fips"
-        exclude:
-          - crate_dir: aws-lc-sys
-            features: "--features bindgen,fips"
-          - crate_dir: aws-lc-fips-sys
-            features: "--features bindgen,fips"
+          - "--features bindgen,unstable"
+          - "--features bindgen,unstable,fips"
     steps:
       - uses: actions/checkout@v3
         with:
