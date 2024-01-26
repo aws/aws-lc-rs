@@ -1,28 +1,41 @@
-name: Deploy User Guide
+name: Deploy Documentation
 on:
   push:
     branches:
       - main
+    tags:
+      - v1.*
 jobs:
   deploy-user-guide:
+    if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
-      - name: Install Rust Toolchain
+          submodules: 'recursive'
+      - name: Install Stable Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+      - name: Install Nightly Rust Toolchain
+        uses: dtolnay/rust-toolchain@nightly
         id: toolchain
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
       - name: Build and Test User Guide
         run: |
           curl -L https://github.com/rust-lang/mdBook/releases/download/v0.4.34/mdbook-v0.4.34-x86_64-unknown-linux-gnu.tar.gz | tar xz
           ./mdbook build book
           ./mdbook test book
-      - name: Deploy User Guide
+      - name: Build Documentation
+        run: cargo +nightly doc --features fips,unstable --no-deps --workspace
+      - name: Copy docs
+        run: |
+          cp --recursive target/doc -t book/book/rustdocs/${{ github.ref_name }}
+      - name: Deploy Docs
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages
-          FOLDER: book/book
+          folder: book/book

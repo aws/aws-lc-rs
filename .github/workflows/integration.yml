@@ -15,6 +15,7 @@ env:
 
 jobs:
   s2n-quic-integration:
+    if: github.repository == 'aws/aws-lc-rs'
     name: s2n-quic-integration
     runs-on: ${{ matrix.os }}
     strategy:
@@ -35,6 +36,7 @@ jobs:
           ./scripts/run-s2n-quic-integration.sh
 
   rustls-integration:
+    if: github.repository == 'aws/aws-lc-rs'
     name: rustls-integration
     runs-on: ${{ matrix.os }}
     strategy:
@@ -55,4 +57,3 @@ jobs:
         working-directory: ./aws-lc-rs
         run: |
           ./scripts/run-rustls-integration.sh
-

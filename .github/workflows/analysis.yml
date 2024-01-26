@@ -65,6 +65,7 @@ jobs:
         run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
   apidiff:
+    if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -110,6 +111,7 @@ jobs:
           allow-licenses: Apache-2.0, ISC, MIT, MIT-0
 
   udeps:
+    if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -134,6 +136,7 @@ jobs:
           RUSTC_WRAPPER: ""
 
   mirai-analysis:
+    if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -176,6 +179,7 @@ jobs:
           cargo mirai
 
   minimal-versions:
+    if: github.repository == 'aws/aws-lc-rs'
     name: Resolve the dependencies to the minimum SemVer version
     runs-on: ubuntu-latest
     steps:
