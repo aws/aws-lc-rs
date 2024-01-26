@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AlgorithmId"],"struct":["Algorithm","Ciphertext","DecapsulationKey","EncapsulationKey","EncapsulationKeyBytes","SharedSecret"],"trait":["AlgorithmIdentifier"]};
