@@ -14,9 +14,6 @@ jobs:
         with:
           persist-credentials: false
           submodules: 'recursive'
-      - name: Install Stable Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
-        id: toolchain
       - name: Install Nightly Rust Toolchain
         uses: dtolnay/rust-toolchain@nightly
         id: toolchain
@@ -31,7 +28,7 @@ jobs:
           ./mdbook build book
           ./mdbook test book
       - name: Build Documentation
-        run: cargo +nightly doc --features fips,unstable --no-deps --workspace
+        run: cargo doc --features fips,unstable --no-deps --workspace
       - name: Copy docs
         run: |
           cp --recursive target/doc -t book/book/rustdocs/${{ github.ref_name }}
