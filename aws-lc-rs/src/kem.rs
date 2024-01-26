@@ -50,6 +50,7 @@
 //! ```
 use crate::{
     buffer::Buffer,
+    encoding::generated_encodings,
     error::{KeyRejected, Unspecified},
     ptr::LcPtr,
     ptr::Pointer,
@@ -60,7 +61,7 @@ use aws_lc::{
     EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_up_ref,
     EVP_PKEY, EVP_PKEY_KEM,
 };
-use std::{borrow::Cow, cmp::Ordering, fmt::Debug, ptr::null_mut};
+use std::{borrow::Cow, cmp::Ordering, ptr::null_mut};
 use zeroize::Zeroize;
 
 /// An identifier for a KEM algorithm.
@@ -256,14 +257,8 @@ where
     }
 }
 
-mod types {
-    pub struct EncapsulationKeyBytesType {
-        _priv: (),
-    }
-}
-
-/// KEM Encapsulation Key Bytes.
-pub type EncapsulationKeyBytes = Buffer<'static, types::EncapsulationKeyBytesType>;
+use paste::paste;
+generated_encodings!(EncapsulationKeyBytes);
 
 /// A serializable encapsulation key usable with KEM algorithms. Constructed
 /// from either a `DecapsulationKey` or raw bytes.
@@ -330,7 +325,7 @@ where
     ///
     /// # Errors
     /// * `Unspecified`: Any failure to retrieve the `EnscapsulationKey` bytes.
-    pub fn key_bytes(&self) -> Result<EncapsulationKeyBytes, Unspecified> {
+    pub fn key_bytes(&self) -> Result<EncapsulationKeyBytes<'static>, Unspecified> {
         let mut encapsulate_key_size = self.algorithm.encapsulate_key_size();
         let mut encapsulate_bytes = vec![0u8; encapsulate_key_size];
         if 1 != unsafe {
@@ -350,7 +345,7 @@ where
         debug_assert_eq!(encapsulate_key_size, encapsulate_bytes.len());
         encapsulate_bytes.truncate(encapsulate_key_size);
 
-        Ok(Buffer::new(encapsulate_bytes))
+        Ok(EncapsulationKeyBytes::new(encapsulate_bytes))
     }
 
     /// Creates a new KEM encapsulation key from raw bytes. This method MUST NOT be used to generate

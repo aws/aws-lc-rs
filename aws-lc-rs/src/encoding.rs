@@ -3,19 +3,14 @@
 
 //! Serialization formats
 
-use self::types::Pkcs8V1DerType;
 use crate::buffer::Buffer;
-use crate::encoding::types::{
-    Curve25519SeedBinType, EcPrivateKeyBinType, EcPrivateKeyRfc5915DerType, EcPublicKeyX509DerType,
-};
-use core::fmt::{Debug, Error, Formatter};
-use core::ops::Deref;
-
 use paste::paste;
 
 macro_rules! generated_encodings {
-    ($($name:ident),*) => {paste! {
-        mod types {
+    ($($name:ident),*) => { paste! {
+        use core::fmt::{Debug, Error, Formatter};
+        use core::ops::Deref;
+        mod buffer_type {
             $(
                 pub struct [<$name Type>] {
                     _priv: (),
@@ -24,10 +19,10 @@ macro_rules! generated_encodings {
         }
         $(
             /// Serialized bytes
-            pub struct $name<'a>(Buffer<'a, [<$name Type>]>);
+            pub struct $name<'a>(Buffer<'a, buffer_type::[<$name Type>]>);
 
             impl<'a> Deref for $name<'a> {
-                type Target = Buffer<'a, [<$name Type>]>;
+                type Target = Buffer<'a, buffer_type::[<$name Type>]>;
 
                 fn deref(&self) -> &Self::Target {
                     &self.0
@@ -49,11 +44,11 @@ macro_rules! generated_encodings {
                 fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
                     f.debug_struct(stringify!($name)).finish()
                 }
-
             }
         )*
     }}
 }
+pub(crate) use generated_encodings;
 generated_encodings!(
     EcPrivateKeyBin,
     EcPrivateKeyRfc5915Der,
