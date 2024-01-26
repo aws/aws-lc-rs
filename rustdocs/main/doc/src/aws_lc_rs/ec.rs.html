@@ -723,7 +723,7 @@
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::digest::digest_ctx::DigestContext;
-<span class="kw">use </span><span class="kw">crate</span>::encoding::{AsDer, EcPublicKeyX509Der};
+<span class="kw">use </span><span class="kw">crate</span>::encoding::{AsDer, PublicKeyX509Der};
 <span class="kw">use </span><span class="kw">crate</span>::error::{KeyRejected, Unspecified};
 <span class="kw">use </span><span class="kw">crate</span>::fips::indicator_check;
 <span class="kw">use </span><span class="kw">crate</span>::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
@@ -816,11 +816,11 @@
     octets: Box&lt;[u8]&gt;,
 }
 
-<span class="kw">impl </span>AsDer&lt;EcPublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;&gt; <span class="kw">for </span>PublicKey {
+<span class="kw">impl </span>AsDer&lt;PublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;&gt; <span class="kw">for </span>PublicKey {
     <span class="doccomment">/// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
     /// # Errors
     /// Returns an error if the underlying implementation is unable to marshal the point.
-    </span><span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EcPublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;, Unspecified&gt; {
+    </span><span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;PublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;, Unspecified&gt; {
         <span class="kw">let </span>ec_group = LcPtr::new(<span class="kw">unsafe </span>{ EC_GROUP_new_by_curve_name(<span class="self">self</span>.algorithm.id.nid()) })<span class="question-mark">?</span>;
         <span class="kw">let </span>ec_point = ec_point_from_bytes(<span class="kw-2">&amp;</span>ec_group, <span class="self">self</span>.as_ref())<span class="question-mark">?</span>;
         <span class="kw">let </span>ec_key = LcPtr::new(<span class="kw">unsafe </span>{ EC_KEY_new() })<span class="question-mark">?</span>;
@@ -838,7 +838,7 @@
         <span class="kw">let </span>buffer = LcPtr::new(buffer)<span class="question-mark">?</span>;
         <span class="kw">let </span>der = <span class="kw">unsafe </span>{ std::slice::from_raw_parts(<span class="kw-2">*</span>buffer, len.try_into()<span class="question-mark">?</span>) }.to_owned();
 
-        <span class="prelude-val">Ok</span>(EcPublicKeyX509Der::new(der))
+        <span class="prelude-val">Ok</span>(PublicKeyX509Der::new(der))
     }
 }
 
@@ -1313,7 +1313,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span><span class="kw">crate</span>::encoding::{AsDer, EcPublicKeyX509Der};
+    <span class="kw">use </span><span class="kw">crate</span>::encoding::{AsDer, PublicKeyX509Der};
     <span class="kw">use </span><span class="kw">crate</span>::signature::EcdsaKeyPair;
     <span class="kw">use </span><span class="kw">crate</span>::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
     <span class="kw">use </span><span class="kw">crate</span>::test::from_dirty_hex;
@@ -1338,7 +1338,7 @@
             <span class="macro">format!</span>(<span class="string">"{:?}"</span>, key_pair.private_key())
         );
         <span class="kw">let </span>pub_key = key_pair.public_key();
-        <span class="kw">let </span>der_pub_key: EcPublicKeyX509Der = pub_key.as_der().unwrap();
+        <span class="kw">let </span>der_pub_key: PublicKeyX509Der = pub_key.as_der().unwrap();
 
         <span class="macro">assert_eq!</span>(
             from_dirty_hex(

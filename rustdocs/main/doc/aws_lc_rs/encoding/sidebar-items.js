@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Curve25519SeedBin","EcPrivateKeyBin","EcPrivateKeyRfc5915Der","EcPublicKeyX509Der","Pkcs8V1Der"],"trait":["AsBigEndian","AsDer"]};
+window.SIDEBAR_ITEMS = {"struct":["Curve25519SeedBin","EcPrivateKeyBin","EcPrivateKeyRfc5915Der","Pkcs8V1Der","PublicKeyX509Der"],"trait":["AsBigEndian","AsDer"]};
