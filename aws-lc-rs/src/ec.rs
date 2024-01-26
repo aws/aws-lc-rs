@@ -32,7 +32,7 @@ use aws_lc::{
 };
 
 use crate::digest::digest_ctx::DigestContext;
-use crate::encoding::{AsDer, EcPublicKeyX509Der};
+use crate::encoding::{AsDer, PublicKeyX509Der};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
@@ -125,11 +125,11 @@ pub struct PublicKey {
     octets: Box<[u8]>,
 }
 
-impl AsDer<EcPublicKeyX509Der<'static>> for PublicKey {
+impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
     /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
     /// # Errors
     /// Returns an error if the underlying implementation is unable to marshal the point.
-    fn as_der(&self) -> Result<EcPublicKeyX509Der<'static>, Unspecified> {
+    fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
         let ec_group = LcPtr::new(unsafe { EC_GROUP_new_by_curve_name(self.algorithm.id.nid()) })?;
         let ec_point = ec_point_from_bytes(&ec_group, self.as_ref())?;
         let ec_key = LcPtr::new(unsafe { EC_KEY_new() })?;
@@ -147,7 +147,7 @@ impl AsDer<EcPublicKeyX509Der<'static>> for PublicKey {
         let buffer = LcPtr::new(buffer)?;
         let der = unsafe { std::slice::from_raw_parts(*buffer, len.try_into()?) }.to_owned();
 
-        Ok(EcPublicKeyX509Der::new(der))
+        Ok(PublicKeyX509Der::new(der))
     }
 }
 
@@ -622,7 +622,7 @@ unsafe fn ecdsa_sig_from_fixed(
 
 #[cfg(test)]
 mod tests {
-    use crate::encoding::{AsDer, EcPublicKeyX509Der};
+    use crate::encoding::{AsDer, PublicKeyX509Der};
     use crate::signature::EcdsaKeyPair;
     use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
     use crate::test::from_dirty_hex;
@@ -647,7 +647,7 @@ mod tests {
             format!("{:?}", key_pair.private_key())
         );
         let pub_key = key_pair.public_key();
-        let der_pub_key: EcPublicKeyX509Der = pub_key.as_der().unwrap();
+        let der_pub_key: PublicKeyX509Der = pub_key.as_der().unwrap();
 
         assert_eq!(
             from_dirty_hex(
