@@ -2,6 +2,7 @@
 setlocal EnableDelayedExpansion
 for /f "usebackq tokens=* delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do (
     set "VS_PATH=%%i\VC\Auxiliary\Build\"
+    echo FOUND: "!VS_PATH!"
     goto FoundVS
 )
 
