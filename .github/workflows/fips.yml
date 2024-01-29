@@ -60,7 +60,6 @@ jobs:
         rust: [ stable ]
         os: [ windows-2019, windows-latest ]
     steps:
-      - uses: ilammy/setup-nasm@v1
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
@@ -69,6 +68,7 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           override: true
+      - uses: ilammy/setup-nasm@v1
       - name: Install ninja-build tool
         uses: seanmiddleditch/gha-setup-ninja@v4
       - name: Run cargo test
