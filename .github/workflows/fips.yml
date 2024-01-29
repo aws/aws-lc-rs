@@ -60,23 +60,27 @@ jobs:
         rust: [ stable ]
         os: [ windows-2019, windows-latest ]
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout sources
+        uses: actions/checkout@v4
         with:
+          persist-credentials: false
           submodules: 'recursive'
-      - uses: actions-rs/toolchain@v1.0.7
-        id: toolchain
+      - name: Install ${{ matrix.rust }} toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
-      - uses: ilammy/setup-nasm@v1
-      - name: Install ninja-build tool
+      - name: Install NASM for aws-lc-rs on Windows
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
+      - name: Install ninja-build tool for aws-lc-fips-sys on Windows
+        if: runner.os == 'Windows'
         uses: seanmiddleditch/gha-setup-ninja@v4
-      - name: Run cargo test
-        working-directory: ./aws-lc-rs
-        run: cargo test --tests
-      - name: Run cargo test
-        working-directory: ./aws-lc-rs
-        run: cargo test --tests --release --features fips
-      - name: Run cargo test
-        working-directory: ./aws-lc-rs
-        run: cargo test --tests --features fips
+
+      - name: cargo build (debug; default features)
+        run: cargo build
+
+      - name: cargo test (release; all features)
+        run: cargo test --release --features fips
+        env:
+          RUST_BACKTRACE: 1
