@@ -165,6 +165,7 @@ impl CmakeBuilder {
             eprintln!("{}", result.output);
             return Err("Failed to run vccarsall.bat.".to_owned());
         }
+        eprintln!("{}", result.output);
         let lines = result.output.lines();
         for line in lines {
             if let Some((var, val)) = line.split_once('=') {

@@ -1,13 +1,22 @@
 @echo off
 setlocal EnableDelayedExpansion
+
+set "TOP_DIR=%ProgramFiles(x86)%\Microsoft Visual Studio"
 for /f "usebackq tokens=* delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do (
-    set "VS_PATH=%%i\VC\Auxiliary\Build\"
-    echo FOUND: "!VS_PATH!"
-    goto FoundVS
+    set "TOP_DIR=%%i"
+    echo VS Installation: "!TOP_DIR!"
+    if exist "!TOP_DIR!\VC\Auxiliary\Build\vcvarsall.bat" (
+        set "VS_PATH=!TOP_DIR!\VC\Auxiliary\Build\"
+        echo FOUND in Installation: "!VS_PATH!"
+        goto FoundVS
+    )
+    goto SearchVS
 )
 
 echo Visual Studio installation not found using vswhere. Searching in default directories...
-for /R "%ProgramFiles(x86)%\Microsoft Visual Studio" %%a in (vcvarsall.bat) do (
+
+:SearchVS
+for /R "%TOP_DIR%" %%a in (vcvarsall.bat) do (
     if exist "%%~fa" (
         set "VS_PATH=%%~dpa"
         echo FOUND: "!VS_PATH!"
