@@ -162,8 +162,10 @@ impl CmakeBuilder {
         let script_path = self.manifest_dir.join("builder").join("printenv.bat");
         let result = test_command(script_path.as_os_str(), &[]);
         if !result.status {
+            eprintln!("{}", result.output);
             return Err("Failed to run vccarsall.bat.".to_owned());
         }
+        eprintln!("{}", result.output);
         let lines = result.output.lines();
         for line in lines {
             if let Some((var, val)) = line.split_once('=') {
