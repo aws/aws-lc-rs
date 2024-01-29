@@ -59,14 +59,6 @@ jobs:
       matrix:
         rust: [ stable ]
         os: [ windows-2019, windows-latest ]
-        args:
-          - --all-targets --features fips,unstable
-          - --all-targets --features fips,bindgen,unstable
-          - --release --all-targets --features fips,unstable
-          - --no-default-features --features fips,unstable
-          - --no-default-features --features fips,ring-io,unstable
-          - --no-default-features --features fips,ring-sig-verify,unstable
-          - --no-default-features --features fips,alloc,unstable
     steps:
       - uses: ilammy/setup-nasm@v1
       - uses: actions/checkout@v3
@@ -81,6 +73,10 @@ jobs:
         uses: seanmiddleditch/gha-setup-ninja@v4
       - name: Run cargo test
         working-directory: ./aws-lc-rs
-        # Doc-tests fail to link with dynamic build
-        # See: https://github.com/rust-lang/cargo/issues/8531
-        run: cargo test --tests ${{ matrix.args }}
+        run: cargo test --tests
+      - name: Run cargo test
+        working-directory: ./aws-lc-rs
+        run: cargo test --tests --release --features fips
+      - name: Run cargo test
+        working-directory: ./aws-lc-rs
+        run: cargo test --tests --features fips
