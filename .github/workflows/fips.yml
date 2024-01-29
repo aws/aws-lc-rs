@@ -58,7 +58,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ windows-2019, windows-2022 ]
+        os: [ windows-2019, windows-latest ]
         args:
           - --all-targets --features fips,unstable
           - --all-targets --features fips,bindgen,unstable
