@@ -7,7 +7,7 @@ authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"
 license = "ISC AND (Apache-2.0 OR ISC)"
-rust-version = "1.60.0"
+rust-version = "1.61.0"
 include = [
     "LICENSE",
     "/aws-lc/**/*.c",
