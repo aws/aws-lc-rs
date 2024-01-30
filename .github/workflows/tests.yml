@@ -106,44 +106,6 @@ jobs:
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
 
-  publish-dry-run:
-    if: github.repository == 'aws/aws-lc-rs'
-    name: publish dry-run
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: [ stable ]
-        os: [ windows-2019, ubuntu-latest, macos-12, macos-13-xlarge ]
-        args:
-          - publish --dry-run
-    steps:
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '>=1.18'
-      - run: go version
-      - if: ${{ matrix.os == 'windows-2019' }}
-        uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
-      - name: aws-lc-sys
-        working-directory: ./aws-lc-sys
-        run: cargo ${{ matrix.args }}
-      - name: aws-lc-fips-sys
-        if: ${{ matrix.os != 'windows-2019' }}
-        working-directory: ./aws-lc-fips-sys
-        run: cargo ${{ matrix.args }}
-      - name: aws-lc-rs
-        working-directory: ./aws-lc-rs
-        run: cargo ${{ matrix.args }}
-
   aws-lc-rs-coverage:
     name: aws-ls-rs coverage
     runs-on: ubuntu-latest
