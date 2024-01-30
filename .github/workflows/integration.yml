@@ -90,3 +90,38 @@ jobs:
       - name: Run cargo run
         working-directory: ./sys-testing
         run: cargo run --features ${{ matrix.features }} --no-default-features
+
+  publish-dry-run:
+    if: github.repository == 'aws/aws-lc-rs'
+    name: publish dry-run
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ windows-latest, ubuntu-latest, macos-12, macos-13-xlarge ]
+        crate: [ aws-lc-sys, aws-lc-rs, aws-lc-fips-sys ]
+        args:
+          - publish --dry-run
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - run: go version
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: ilammy/setup-nasm@v1
+      - name: Install ninja-build tool
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: seanmiddleditch/gha-setup-ninja@v4
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: ${{ matrix.crate }}
+        working-directory: ./${{ matrix.crate }}
+        run: cargo ${{ matrix.args }}
