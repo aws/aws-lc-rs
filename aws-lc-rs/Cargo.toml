@@ -43,7 +43,7 @@ non-fips = ["aws-lc-sys"]
 fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
-untrusted = { version = "0.7.1", optional = true }
+untrusted = { version = "0.9.0", optional = true }
 aws-lc-sys = { version = "0.13.0", path = "../aws-lc-sys", optional = true }
 aws-lc-fips-sys = { version = "0.12.0", path = "../aws-lc-fips-sys", optional = true }
 zeroize = "1.7"

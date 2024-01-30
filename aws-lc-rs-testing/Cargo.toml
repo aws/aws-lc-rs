@@ -15,7 +15,7 @@ asan = ["aws-lc-rs/asan"]
 
 [dependencies]
 aws-lc-rs = { version = "1.0", path = "../aws-lc-rs", features = ["ring-sig-verify", "unstable"] }
-untrusted = { version = "0.7" }
+untrusted = { version = "0.9" }
 
 [dev-dependencies]
 paste = "1.0.13"

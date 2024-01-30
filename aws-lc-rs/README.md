@@ -43,7 +43,7 @@ Enable feature to access the  `io`  module.
 
 ##### ring-sig-verify (default)
 Enable feature to preserve compatibility with ring's `signature::VerificationAlgorithm::verify`
-function. This adds a requirement on `untrusted = "0.7.1"`.
+function. This adds a requirement on the `untrusted` crate.
 
 ##### fips
 Enable this feature to have aws-lc-rs use the [*aws-lc-fips-sys*](https://crates.io/crates/aws-lc-fips-sys)
