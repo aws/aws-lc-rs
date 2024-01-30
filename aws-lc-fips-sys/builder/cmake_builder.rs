@@ -163,7 +163,7 @@ impl CmakeBuilder {
         let result = test_command(script_path.as_os_str(), &[]);
         if !result.status {
             eprintln!("{}", result.output);
-            return Err("Failed to run vccarsall.bat.".to_owned());
+            return Err("Failed to run vcvarsall.bat.".to_owned());
         }
         eprintln!("{}", result.output);
         let lines = result.output.lines();
