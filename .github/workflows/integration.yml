@@ -153,12 +153,11 @@ jobs:
         if: runner.os == 'Windows'
         uses: seanmiddleditch/gha-setup-ninja@v4
 
-      - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-
-      - name: Install cargo-msrv
-        run: cargo install cargo-msrv
+      - name: Install MSRV Rust version
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.61.0 # TODO: dynamically identify MSRV
 
       - name: Verify msrv
         working-directory: ./aws-lc-rs
-        run: cargo msrv --log-level debug --log-target stdout verify -- cargo check --features bindgen
+        run:  cargo +1.61.0 check --features bindgen
