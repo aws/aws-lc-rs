@@ -51,7 +51,11 @@ mirai-annotations = "1.12.0"
 paste = "1.0"
 
 [dev-dependencies]
-regex = "1.6.0"
 lazy_static = "1.4.0"
 clap = { version = "4.1.8", features = ["derive"] }
 hex = "0.4.3"
+
+# Pinned dependencies to preserve Rust 1.61 as MSRV
+regex = "~1.9.6"
+regex-automata = "~0.3.9"
+regex-syntax = "~0.7.5"

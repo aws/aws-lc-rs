@@ -54,11 +54,16 @@ cmake = "0.1.48"
 dunce = "1.0"
 fs_extra = "1.3"
 
+# Pinned dependencies to preserve Rust 1.61 as MSRV
+regex = "~1.9.6"
+regex-automata = "~0.3.9"
+regex-syntax = "~0.7.5"
+
 [target.'cfg(any(all(target_os = "macos", target_arch = "x86_64"), all(target_os = "linux", target_arch = "x86", target_env="gnu"), all(target_os = "linux", target_arch = "x86_64", target_env="gnu"), all(target_os = "linux", target_arch = "aarch64", target_env="gnu")))'.build-dependencies]
-bindgen = { version = "0.69.1", optional = true }
+bindgen = { version = "0.69.2", default-features = false, features = ['prettyplease', 'logging'], optional = true }
 
 [target.'cfg(not(any(all(target_os = "macos", target_arch = "x86_64"), all(target_os = "linux", target_arch = "x86", target_env="gnu"), all(target_os = "linux", target_arch = "x86_64", target_env="gnu"), all(target_os = "linux", target_arch = "aarch64", target_env="gnu"))))'.build-dependencies]
-bindgen = { version = "0.69.2" }
+bindgen = { version = "0.69.2", default-features = false, features = ['prettyplease', 'logging'] }
 
 
 [dependencies]
