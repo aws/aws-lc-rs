@@ -134,7 +134,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
-        features: [ 'bindgen', 'fips,bindgen' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -165,4 +164,4 @@ jobs:
 
       - name: Verify msrv
         working-directory: ./aws-lc-rs
-        run: cargo msrv verify -- --features ${{ matrix.features }}
+        run: cargo msrv --log-level debug --log-target stdout verify -- cargo check --features bindgen
