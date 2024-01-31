@@ -149,7 +149,7 @@ impl KeyPair for Ed25519KeyPair {
     }
 }
 
-pub(crate) unsafe fn generate_key() -> Result<LcPtr<EVP_PKEY>, ()> {
+pub(crate) fn generate_key() -> Result<LcPtr<EVP_PKEY>, ()> {
     let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, null_mut()) })?;
 
     if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
@@ -191,7 +191,7 @@ impl Ed25519KeyPair {
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     pub fn generate_pkcs8(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
-        let evp_pkey = unsafe { generate_key()? };
+        let evp_pkey = generate_key()?;
         evp_pkey.marshall_private_key(Version::V2)
     }
 
@@ -228,7 +228,7 @@ impl Ed25519KeyPair {
     /// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     pub fn generate_pkcs8v1(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
-        let evp_pkey = unsafe { generate_key()? };
+        let evp_pkey = generate_key()?;
         evp_pkey.marshall_private_key(Version::V1)
     }
 
