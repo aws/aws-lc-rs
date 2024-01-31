@@ -7,7 +7,7 @@ authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"
 license = "ISC AND (Apache-2.0 OR ISC)"
-rust-version = "1.60.0"
+rust-version = "1.61.0"
 include = [
     "LICENSE",
     "/aws-lc/**/*.c",
@@ -61,8 +61,6 @@ bindgen = { version = "0.69.2", optional = true }
 bindgen = { version = "0.69.2" }
 
 [dev-dependencies]
-# Pinned dependency to preserve MSRV: ??? <= rust-version < 1.61.0
-memchr = "=2.6.2"
 # Pinned dependency to preserve MSRV: ??? <= rust-version < 1.63.0
 which = "=4.4.0"
 # Pinned dependency to preserve MSRV: ??? <= rust-version < 1.70.0
