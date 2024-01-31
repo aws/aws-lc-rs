@@ -6,10 +6,13 @@ publish = false
 
 [features]
 default = ["aws-lc-sys"]
+aws-lc-rs = ["dep:aws-lc-rs"]
+aws-lc-rs-fips = ["aws-lc-rs", "aws-lc-rs/fips"]
 aws-lc-sys = ["dep:aws-lc-sys"]
 aws-lc-fips-sys = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
+aws-lc-rs = { path = "../aws-lc-rs", optional = true }
 aws-lc-sys = { path = "../aws-lc-sys", optional = true }
 aws-lc-fips-sys = { path = "../aws-lc-fips-sys", optional = true }
 
@@ -18,4 +21,4 @@ cc = "1"
 toml_edit = "0.21"
 
 [package.metadata.cargo-udeps.ignore]
-normal = [ "aws-lc-sys", "aws-lc-fips-sys" ] # the sys crate is only used through a C library build
+normal = [ "aws-lc-rs", "aws-lc-sys", "aws-lc-fips-sys" ] # the sys crate is only used through a C library build

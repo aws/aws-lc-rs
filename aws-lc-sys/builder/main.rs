@@ -294,6 +294,12 @@ fn main() {
         setup_include_paths(&out_dir, &manifest_dir).display()
     );
 
+    // export the artifact names
+    println!("cargo:libcrypto={}_crypto", prefix_string());
+    if cfg!(feature = "ssl") {
+        println!("cargo:libssl={}_ssl", prefix_string());
+    }
+
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
     println!("cargo:rerun-if-env-changed=AWS_LC_SYS_STATIC");

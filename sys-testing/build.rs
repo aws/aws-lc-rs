@@ -4,20 +4,30 @@
 use toml_edit::Document;
 
 fn main() {
-    if cfg!(all(feature = "aws-lc-sys", feature = "aws-lc-fips-sys")) {
-        panic!("only one sys crate can be built at a time")
-    } else if cfg!(feature = "aws-lc-sys") {
-        let aws_lc_sys_links = get_package_links_property("../aws-lc-sys/Cargo.toml");
-        build_and_link(aws_lc_sys_links.as_ref(), "aws_lc_sys");
-        return;
-    } else if cfg!(feature = "aws-lc-fips-sys") {
-        let aws_lc_fips_sys_links = get_package_links_property("../aws-lc-fips-sys/Cargo.toml");
-        build_and_link(aws_lc_fips_sys_links.as_ref(), "aws_lc_fips");
-        return;
+    let mut deps = vec![];
+
+    macro_rules! select_dep {
+        ($dep:literal) => {
+            if cfg!(feature = $dep) {
+                deps.push($dep);
+            }
+        };
     }
-    panic!(
-        "select a sys crate for testing using --features aws-lc-sys or --features aws-lc-fips-sys"
-    )
+
+    select_dep!("aws-lc-rs");
+    select_dep!("aws-lc-sys");
+    select_dep!("aws-lc-fips-sys");
+
+    assert_eq!(
+        deps.len(),
+        1,
+        "exactly one dependency is allowed at a time, got {deps:?}"
+    );
+
+    let dep = deps.pop().unwrap();
+    let aws_lc_sys_links = get_package_links_property(&format!("../{dep}/Cargo.toml"));
+    let dep_snake_case = dep.replace('-', "_");
+    build_and_link(aws_lc_sys_links.as_ref(), &dep_snake_case);
 }
 
 fn build_and_link(links: &str, target_name: &str) {
@@ -25,10 +35,15 @@ fn build_and_link(links: &str, target_name: &str) {
     cc::Build::new()
         .include(env(format!("DEP_{}_INCLUDE", links.to_uppercase())))
         .file("src/testing.c")
-        .compile(target_name);
+        .compile(&format!("testing_{target_name}"));
+
+    // make sure the root was exported
+    let root = env(format!("DEP_{}_ROOT", links.to_uppercase()));
+    println!("cargo:rustc-link-search={root}");
 
     // ensure the libcrypto artifact is linked
-    println!("cargo:rustc-link-lib={links}_crypto");
+    let libcrypto = env(format!("DEP_{}_LIBCRYPTO", links.to_uppercase()));
+    println!("cargo:rustc-link-lib={libcrypto}");
 }
 
 fn get_package_links_property(cargo_toml_path: &str) -> String {
