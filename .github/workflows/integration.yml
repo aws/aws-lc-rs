@@ -144,11 +144,6 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
 
-      - name: Setup Go >=v1.18
-        uses: actions/setup-go@v4
-        with:
-          go-version: '>=1.18'
-
       - name: Install ninja-build tool
         if: runner.os == 'Windows'
         uses: seanmiddleditch/gha-setup-ninja@v4
