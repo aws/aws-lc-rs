@@ -25,9 +25,9 @@ fn main() {
     );
 
     let dep = deps.pop().unwrap();
-    let aws_lc_sys_links = get_package_links_property(&format!("../{dep}/Cargo.toml"));
+    let dep_links = get_package_links_property(&format!("../{dep}/Cargo.toml"));
     let dep_snake_case = dep.replace('-', "_");
-    build_and_link(aws_lc_sys_links.as_ref(), &dep_snake_case);
+    build_and_link(dep_links.as_ref(), &dep_snake_case);
 }
 
 fn build_and_link(links: &str, target_name: &str) {

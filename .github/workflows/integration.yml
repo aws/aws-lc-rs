@@ -58,7 +58,7 @@ jobs:
         run: |
           ./scripts/run-rustls-integration.sh
 
-  sys-crate-tests:
+  links-crate-tests:
     if: github.repository == 'aws/aws-lc-rs'
     name: sys crate tests
     runs-on: ${{ matrix.os }}
@@ -85,10 +85,10 @@ jobs:
       - name: Install ninja-build tool
         uses: seanmiddleditch/gha-setup-ninja@v4
       - name: Run cargo test
-        working-directory: ./sys-testing
+        working-directory: ./links-testing
         run: cargo test --features ${{ matrix.features }} --no-default-features
       - name: Run cargo run
-        working-directory: ./sys-testing
+        working-directory: ./links-testing
         run: cargo run --features ${{ matrix.features }} --no-default-features
 
   publish-dry-run:
