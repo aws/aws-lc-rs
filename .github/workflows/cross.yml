@@ -48,6 +48,10 @@ jobs:
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cross
         run: cargo install cross ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '--locked') || '' }} --git https://github.com/cross-rs/cross
+      - if: ${{ matrix.target == 'riscv64gc-unknown-linux-gnu' }}
+        run: |
+          cargo update
+          cargo update -p clap --precise 4.4.18
       - name: Cross-compilation
         if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'i686-unknown-linux-gnu' }}
         working-directory: ./aws-lc-rs
