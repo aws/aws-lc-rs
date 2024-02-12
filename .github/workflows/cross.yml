@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [ 1.72.1 ] # TODO: return to stable
+        rust: [ stable ]
         os: [ ubuntu-latest ]
         target:
           - arm-unknown-linux-gnueabihf
