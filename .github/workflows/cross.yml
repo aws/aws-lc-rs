@@ -21,7 +21,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [ 1.72.1 ] # TODO: return to stable
         os: [ ubuntu-latest ]
         target:
           - arm-unknown-linux-gnueabihf
@@ -43,12 +42,16 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
-          toolchain: ${{ matrix.rust }}
+          toolchain:  ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '1.72.1') || 'stable' }}
           target: ${{ matrix.target }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
+        run: cargo install cross ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '--locked') || '' }} --git https://github.com/cross-rs/cross
+      - if: ${{ matrix.target == 'riscv64gc-unknown-linux-gnu' }}
+        run: |
+          cargo update
+          cargo update -p clap --precise 4.4.18
       - name: Cross-compilation
         if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'i686-unknown-linux-gnu' }}
         working-directory: ./aws-lc-rs
