@@ -42,7 +42,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
-          toolchain:  ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '1.72.1') || 'stable' }}
+          toolchain: ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '1.72.1') || 'stable' }}
           target: ${{ matrix.target }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
@@ -69,7 +69,6 @@ jobs:
       matrix:
         rust: [ stable ]
         os: [ macos-13-xlarge ]
-        target: [ aarch64-apple-ios-sim ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -78,11 +77,10 @@ jobs:
         id: toolchain
         with:
           toolchain: ${{ matrix.rust }}
-          target: ${{ matrix.target }}
+          target: aarch64-apple-ios-sim
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
-      - name: Run cargo test
-        working-directory: ./aws-lc-rs
-        run: cargo test --features bindgen,unstable --target ${{ matrix.target }}
-        env:
-          DYLD_ROOT_PATH: "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot"
+      - name: Install bash
+        run: brew install bash
+      - name: iOS Simulator Runner
+        run: ./scripts/ci/ios-simulator-runner.sh
