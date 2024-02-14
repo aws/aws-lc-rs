@@ -632,7 +632,7 @@
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>generate_key() -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, ()&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generate_key() -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, ()&gt; {
     <span class="kw">let </span>pkey_ctx = LcPtr::new(<span class="kw">unsafe </span>{ EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, null_mut()) })<span class="question-mark">?</span>;
 
     <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_keygen_init(<span class="kw-2">*</span>pkey_ctx) } {
@@ -674,7 +674,7 @@
     </span><span class="doccomment">/// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     </span><span class="kw">pub fn </span>generate_pkcs8(_rng: <span class="kw-2">&amp;</span><span class="kw">dyn </span>SecureRandom) -&gt; <span class="prelude-ty">Result</span>&lt;Document, Unspecified&gt; {
-        <span class="kw">let </span>evp_pkey = <span class="kw">unsafe </span>{ generate_key()<span class="question-mark">? </span>};
+        <span class="kw">let </span>evp_pkey = generate_key()<span class="question-mark">?</span>;
         evp_pkey.marshall_private_key(Version::V2)
     }
 
@@ -711,7 +711,7 @@
     </span><span class="doccomment">/// # Errors
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     </span><span class="kw">pub fn </span>generate_pkcs8v1(_rng: <span class="kw-2">&amp;</span><span class="kw">dyn </span>SecureRandom) -&gt; <span class="prelude-ty">Result</span>&lt;Document, Unspecified&gt; {
-        <span class="kw">let </span>evp_pkey = <span class="kw">unsafe </span>{ generate_key()<span class="question-mark">? </span>};
+        <span class="kw">let </span>evp_pkey = generate_key()<span class="question-mark">?</span>;
         evp_pkey.marshall_private_key(Version::V1)
     }
 
