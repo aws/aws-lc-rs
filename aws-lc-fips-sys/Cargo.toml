@@ -7,7 +7,7 @@ authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"
 license = "ISC AND (Apache-2.0 OR ISC)"
-rust-version = "1.60.0"
+rust-version = "1.61.0"
 include = [
     "LICENSE",
     "/aws-lc/**/*.c",
@@ -64,10 +64,10 @@ dunce = "1.0"
 fs_extra = "1.3"
 
 [target.'cfg(any(all(target_os = "linux", target_arch = "x86_64", target_env="gnu"), all(target_os = "linux", target_arch = "aarch64", target_env="gnu")))'.build-dependencies]
-bindgen = { version = "0.69.1", optional = true }
+bindgen = { version = "0.69.2", optional = true }
 
 [target.'cfg(not(any(all(target_os = "linux", target_arch = "x86_64", target_env="gnu"), all(target_os = "linux", target_arch = "aarch64", target_env="gnu"))))'.build-dependencies]
-bindgen = { version = "0.69.1" }
+bindgen = { version = "0.69.2" }
 
 [dependencies]
 libc = "0.2"

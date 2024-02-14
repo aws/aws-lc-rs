@@ -125,3 +125,34 @@ jobs:
       - name: ${{ matrix.crate }}
         working-directory: ./${{ matrix.crate }}
         run: cargo ${{ matrix.args }}
+
+  msrv:
+    name: Minimum Supported Rust Version
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+          lfs: true
+
+      - name: Install NASM on Windows
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
+      - name: Install ninja-build tool
+        if: runner.os == 'Windows'
+        uses: seanmiddleditch/gha-setup-ninja@v4
+
+      - name: Install MSRV Rust version
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.61.0 # TODO: dynamically identify MSRV
+
+      - name: Verify msrv
+        working-directory: ./aws-lc-rs
+        run:  cargo +1.61.0 check --features bindgen

@@ -5,7 +5,7 @@ version = "1.6.2"
 # this crate re-exports whatever sys crate that was selected
 links = "aws_lc_rs_1_6_2_sys"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.61.0"
 keywords = ["crypto", "cryptography", "security"]
 license = "ISC AND (Apache-2.0 OR ISC)"
 description = "aws-lc-rs is a cryptographic library using AWS-LC for its cryptographic operations. This library strives to be API-compatible with the popular Rust library named ring."
@@ -53,7 +53,20 @@ mirai-annotations = "1.12.0"
 paste = "1.0"
 
 [dev-dependencies]
-regex = "1.6.0"
 lazy_static = "1.4.0"
 clap = { version = "4.1.8", features = ["derive"] }
 hex = "0.4.3"
+
+# Pinned dependency to preserve MSRV: ??? <= rust-version < 1.63.0
+which = "=4.4.0"
+# Pinned dependency to preserve MSRV: ??? <= rust-version < 1.70.0
+home = "=0.5.5"
+# Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
+regex = "~1.9.6"
+# Pinned dependency to preserve MSRV: ??? <= rust-version < 1.65.0
+regex-automata = "~0.3.9"
+# Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
+regex-syntax = "~0.7.5"
+
+[package.metadata.cargo-udeps.ignore]
+development = [ "which", "home", "regex", "regex-automata", "regex-syntax"]
