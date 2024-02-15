@@ -60,7 +60,7 @@ hex = "0.4.3"
 # Pinned dependency to preserve MSRV: ??? <= rust-version < 1.63.0
 which = "=4.4.0"
 # Pinned dependency to preserve MSRV: ??? <= rust-version < 1.70.0
-home = "=0.5.5"
+home = "=0.5.9"
 # Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
 regex = "~1.9.6"
 # Pinned dependency to preserve MSRV: ??? <= rust-version < 1.65.0
