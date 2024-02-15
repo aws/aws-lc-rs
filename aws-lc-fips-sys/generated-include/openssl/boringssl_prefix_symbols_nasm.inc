@@ -13,7 +13,7 @@
 ; CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_12_1
+%define BORINGSSL_PREFIX aws_lc_fips_0_12_3
 %endif
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
