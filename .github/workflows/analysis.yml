@@ -76,11 +76,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
-          toolchain: nightly-2023-08-25
+          toolchain: nightly
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cargo-public-api
-        run: cargo install cargo-public-api
+        run: cargo install --locked cargo-public-api
       - name: Perform API Diff (Target Branch)
         if: matrix.diff_target == 'branch'
         working-directory: ${{ matrix.crate_dir }}
@@ -148,17 +148,6 @@ jobs:
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
 
-      - name: Cache Cargo
-        uses: actions/cache@v3.0.5
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-mirai-${{ env.MIRAI_TAG }}
-
       # https://github.com/facebookexperimental/MIRAI/blob/main/documentation/InstallationGuide.md#installing-mirai-into-cargo
       - name: Install MIRAI
         run: |
@@ -172,6 +161,8 @@ jobs:
       - name: Run MIRAI
         working-directory: ./aws-lc-rs
         run: |
+          cargo update
+          cargo update -p clap --precise 4.4.18
           cargo mirai
 
   minimal-versions:
