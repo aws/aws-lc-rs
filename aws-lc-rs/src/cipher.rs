@@ -148,9 +148,9 @@ use crate::hkdf;
 use crate::hkdf::KeyType;
 use crate::iv::{FixedLength, IV_LEN_128_BIT};
 use aws_lc::{AES_cbc_encrypt, AES_ctr128_encrypt, AES_DECRYPT, AES_ENCRYPT, AES_KEY};
+use core::fmt::Debug;
+use core::mem::MaybeUninit;
 use key::SymmetricCipherKey;
-use std::fmt::Debug;
-use std::mem::MaybeUninit;
 use zeroize::Zeroize;
 
 /// The cipher block padding strategy.
@@ -258,7 +258,7 @@ macro_rules! define_cipher_context {
         }
 
         impl Debug for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 match self {
                     Self::Iv128(_) => write!(f, "Iv128"),
                 }
@@ -492,7 +492,7 @@ impl PaddedBlockEncryptingKey {
 }
 
 impl Debug for PaddedBlockEncryptingKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("PaddedBlockEncryptingKey")
             .field("key", &self.key)
             .field("mode", &self.mode)
@@ -571,7 +571,7 @@ impl PaddedBlockDecryptingKey {
 }
 
 impl Debug for PaddedBlockDecryptingKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("PaddedBlockDecryptingKey")
             .field("key", &self.key)
             .field("mode", &self.mode)
@@ -651,7 +651,7 @@ impl EncryptingKey {
 }
 
 impl Debug for EncryptingKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("EncryptingKey")
             .field("key", &self.key)
             .field("mode", &self.mode)
@@ -712,7 +712,7 @@ impl DecryptingKey {
 }
 
 impl Debug for DecryptingKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("DecryptingKey")
             .field("key", &self.key)
             .field("mode", &self.mode)

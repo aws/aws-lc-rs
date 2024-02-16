@@ -1,8 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::mem::size_of;
-use std::ptr::null_mut;
+use core::mem::size_of;
+use core::ptr::null_mut;
 
 use crate::cipher::chacha;
 

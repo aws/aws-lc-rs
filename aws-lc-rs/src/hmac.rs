@@ -102,9 +102,9 @@ use aws_lc::{
     HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_CTX_init, HMAC_Final, HMAC_Init_ex, HMAC_Update,
     HMAC_CTX,
 };
-use std::mem::MaybeUninit;
-use std::os::raw::c_uint;
-use std::ptr::null_mut;
+use core::ffi::c_uint;
+use core::mem::MaybeUninit;
+use core::ptr::null_mut;
 
 /// A deprecated alias for `Tag`.
 #[deprecated]

@@ -40,9 +40,9 @@
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::{digest, hmac};
+use alloc::sync::Arc;
 use aws_lc::{HKDF_expand, HKDF};
 use core::fmt;
-use std::sync::Arc;
 use zeroize::Zeroize;
 
 /// An HKDF algorithm.
@@ -269,7 +269,7 @@ impl core::fmt::Debug for PrkMode {
 
 struct ZeroizeBoxSlice<T: Zeroize>(Box<[T]>);
 
-impl<T: Zeroize> std::ops::Deref for ZeroizeBoxSlice<T> {
+impl<T: Zeroize> core::ops::Deref for ZeroizeBoxSlice<T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {

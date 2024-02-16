@@ -3,13 +3,13 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use core::ffi::{c_int, c_uint};
 use core::fmt;
-use std::fmt::{Debug, Formatter};
-use std::mem::MaybeUninit;
-use std::ops::Deref;
-use std::os::raw::{c_int, c_uint};
-use std::ptr::null;
-use std::ptr::null_mut;
+use core::fmt::{Debug, Formatter};
+use core::mem::MaybeUninit;
+use core::ops::Deref;
+use core::ptr::null;
+use core::ptr::null_mut;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
@@ -145,7 +145,7 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
             return Err(Unspecified);
         }
         let buffer = LcPtr::new(buffer)?;
-        let der = unsafe { std::slice::from_raw_parts(*buffer, len.try_into()?) }.to_owned();
+        let der = unsafe { core::slice::from_raw_parts(*buffer, len.try_into()?) }.to_owned();
 
         Ok(PublicKeyX509Der::new(der))
     }

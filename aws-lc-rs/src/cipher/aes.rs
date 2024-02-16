@@ -8,7 +8,7 @@ use crate::{
     fips::indicator_check,
 };
 use aws_lc::{AES_ecb_encrypt, AES_ENCRYPT, AES_KEY};
-use std::mem::MaybeUninit;
+use core::mem::MaybeUninit;
 
 /// Length of an AES-128 key in bytes.
 pub const AES_128_KEY_LEN: usize = 16;

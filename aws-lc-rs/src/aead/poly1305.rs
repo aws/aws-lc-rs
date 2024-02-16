@@ -8,7 +8,7 @@
 use super::{Tag, TAG_LEN};
 use crate::cipher::block::BLOCK_LEN;
 use aws_lc::{CRYPTO_poly1305_finish, CRYPTO_poly1305_init, CRYPTO_poly1305_update};
-use std::mem::MaybeUninit;
+use core::mem::MaybeUninit;
 
 /// A Poly1305 key.
 pub(super) struct Key {

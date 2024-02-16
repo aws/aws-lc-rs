@@ -586,7 +586,7 @@ unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, 
 }
 
 pub(super) fn generate_rsa_key(
-    size: std::os::raw::c_int,
+    size: core::ffi::c_int,
     fips: bool,
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     // We explicitly don't use `EVP_PKEY_keygen`, as it will force usage of either the FIPS or non-FIPS

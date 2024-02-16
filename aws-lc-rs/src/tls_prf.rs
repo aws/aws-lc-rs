@@ -25,7 +25,7 @@
 //! # }
 //! ```
 
-use std::fmt::Debug;
+use core::fmt::Debug;
 
 use crate::{
     digest::match_digest_type, digest::AlgorithmID, error::Unspecified, fips::indicator_check,
@@ -38,7 +38,7 @@ use aws_lc::CRYPTO_tls1_prf;
 pub struct Algorithm(AlgorithmID);
 
 impl Debug for Algorithm {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.0, f)
     }
 }
@@ -131,7 +131,7 @@ impl<const L: usize> TryFrom<Secret> for [u8; L] {
 
 #[allow(clippy::missing_fields_in_debug)]
 impl Debug for Secret {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Secret")
             .field("algorithm", &self.algorithm)
             .finish()
@@ -186,7 +186,7 @@ fn prf(
 
 #[cfg(test)]
 mod tests {
-    use std::ffi::CString;
+    use alloc::ffi::CString;
 
     use super::{Secret, P_SHA256, P_SHA384, P_SHA512};
 

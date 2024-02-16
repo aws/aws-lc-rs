@@ -162,7 +162,7 @@ fn cipher_new_mask(
                 .map_err(|_| error::Unspecified)?;
             let input = block::Block::zero();
             unsafe {
-                let counter = std::mem::transmute::<[u8; 4], u32>(*counter_bytes).to_le();
+                let counter = core::mem::transmute::<[u8; 4], u32>(*counter_bytes).to_le();
                 encrypt_block_chacha20(raw_key, input, nonce, counter)?
             }
         }

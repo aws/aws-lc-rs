@@ -6,9 +6,9 @@
 
 #![allow(clippy::module_name_repetitions)]
 
-use std::borrow::Cow;
-use std::fmt;
-use std::marker::PhantomData;
+use alloc::borrow::Cow;
+use core::fmt;
+use core::marker::PhantomData;
 
 use zeroize::Zeroize;
 

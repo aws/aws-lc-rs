@@ -114,6 +114,7 @@ extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 use mirai_annotations::unrecoverable;
+use std::error::Error;
 
 use crate::{digest, error};
 
@@ -152,7 +153,7 @@ pub fn compile_time_assert_sync<T: Sync>() {}
 /// `compile_time_assert_std_error_error::<T>();` fails to compile if `T`
 /// doesn't implement `std::error::Error`.
 #[allow(clippy::extra_unused_type_parameters)]
-pub fn compile_time_assert_std_error_error<T: std::error::Error>() {}
+pub fn compile_time_assert_std_error_error<T: Error>() {}
 
 /// A test case. A test case consists of a set of named attributes. Every
 /// attribute in the test case must be consumed exactly once; this helps catch
@@ -333,11 +334,11 @@ where
         #[cfg(feature = "test_logging")]
         {
             if let Err(msg) = result {
-                std::println!("{}: {}", test_file.file_name, msg);
+                println!("{}: {}", test_file.file_name, msg);
 
                 for (name, value, consumed) in test_case.attributes {
                     let consumed_str = if consumed { "" } else { " (unconsumed)" };
-                    std::println!("{}{} = {}", name, consumed_str, value);
+                    println!("{}{} = {}", name, consumed_str, value);
                 }
             };
         }
@@ -359,7 +360,7 @@ fn parse_test_case(
         #[cfg(feature = "test_logging")]
         {
             if let Some(text) = &line {
-                std::println!("Line: {}", text);
+                println!("Line: {}", text);
             }
         }
 
@@ -494,7 +495,7 @@ mod tests {
     use crate::test::rand::{FixedByteRandom, FixedSliceRandom, FixedSliceSequenceRandom};
     use crate::test::{from_dirty_hex, to_hex_upper};
     use crate::{error, test};
-    use std::cell::UnsafeCell;
+    use core::cell::UnsafeCell;
 
     #[test]
     fn fixed_byte_random() {

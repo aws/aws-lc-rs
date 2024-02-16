@@ -239,7 +239,7 @@
 //!     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
 //! }
 //! ```
-use std::fmt::{Debug, Formatter};
+use core::fmt::{Debug, Formatter};
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
@@ -361,7 +361,7 @@ pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
 impl<B: Copy + AsRef<[u8]>> Copy for UnparsedPublicKey<B> {}
 
 impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.write_str(&format!(
             "UnparsedPublicKey {{ algorithm: {:?}, bytes: \"{}\" }}",
             self.algorithm,
