@@ -3,13 +3,15 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use core::ffi::{c_int, c_uint};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::mem::MaybeUninit;
 use core::ops::Deref;
 use core::ptr::null;
 use core::ptr::null_mut;
+// TODO: Uncomment when MSRV >= 1.64
+// use core::ffi::{c_int, c_uint};
+use std::os::raw::{c_int, c_uint};
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
