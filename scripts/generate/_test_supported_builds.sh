@@ -21,6 +21,24 @@ IGNORE_MACOS=0
 RELATIVE_CRATE_PATH=""
 CRATE_TEST_SCRIPT="${SCRIPT_DIR}/_crate_test_build.sh"
 
+while getopts c:f option; do
+  case $option in
+  c)
+    RELATIVE_CRATE_PATH="${OPTARG}"
+    ;;
+  f)
+    GENERATE_FIPS=1
+    ;;
+  m)
+    IGNORE_MACOS=1
+    ;;
+  ?)
+    usage
+    exit 1
+    ;;
+  esac
+done
+
 if [[ -z "${RELATIVE_CRATE_PATH}" ]]; then
   echo "Relative crate path must be provided"
   exit 1
