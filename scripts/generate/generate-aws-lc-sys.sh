@@ -4,12 +4,6 @@
 
 set -e
 
-IGNORE_DIRTY=0
-IGNORE_BRANCH=0
-IGNORE_UPSTREAM=0
-IGNORE_MACOS=0
-SKIP_TEST=0
-
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
@@ -25,8 +19,8 @@ pushd "${REPO_ROOT}" &>/dev/null
 check_workspace $IGNORE_DIRTY
 check_branch $IGNORE_BRANCH $IGNORE_UPSTREAM
 
-IS_MACOS_HOST=$(check_running_on_macos [[ $IGNORE_MACOS -eq 0 ]])
-if [[ $IS_MACOS_HOST -ne 0 ]]; then
+IS_MACOS_HOST=$(check_running_on_macos ${IGNORE_MACOS})
+if [[ $IS_MACOS_HOST -ne 1 ]]; then
   echo Script is not running on macOS!
 fi
 

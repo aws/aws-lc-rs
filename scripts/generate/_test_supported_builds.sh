@@ -21,24 +21,6 @@ IGNORE_MACOS=0
 RELATIVE_CRATE_PATH=""
 CRATE_TEST_SCRIPT="${SCRIPT_DIR}/_crate_test_build.sh"
 
-while getopts c:f option; do
-  case $option in
-  c)
-    RELATIVE_CRATE_PATH="${OPTARG}"
-    ;;
-  f)
-    GENERATE_FIPS=1
-    ;;
-  m)
-    IGNORE_MACOS=1
-    ;;
-  ?)
-    usage
-    exit 1
-    ;;
-  esac
-done
-
 if [[ -z "${RELATIVE_CRATE_PATH}" ]]; then
   echo "Relative crate path must be provided"
   exit 1
@@ -51,8 +33,8 @@ pushd "${REPO_ROOT}" &>/dev/null
 pids=''
 if [[ "${GENERATE_FIPS}" -eq 0 ]]; then
   ### Test crate on Mac
-  IS_MACOS_HOST=$(check_running_on_macos [[ $IGNORE_MACOS -eq 0 ]])
-  if [[ $IS_MACOS_HOST -eq 0 ]]; then
+  IS_MACOS_HOST=$(check_running_on_macos ${IGNORE_MACOS})
+  if [[ $IS_MACOS_HOST -eq 1 ]]; then
     ${CRATE_TEST_SCRIPT} -c "${RELATIVE_CRATE_PATH}" &
   else
     echo Script is not running on macOS.

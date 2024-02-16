@@ -7,6 +7,12 @@ function usage {
   echo
 }
 
+IGNORE_DIRTY=0
+IGNORE_BRANCH=0
+IGNORE_UPSTREAM=0
+IGNORE_MACOS=0
+SKIP_TEST=0
+
 function generation_options {
   while getopts "dbums" option; do
     case ${option} in
@@ -20,9 +26,11 @@ function generation_options {
       IGNORE_UPSTREAM=1
       ;;
     m)
+      # shellcheck disable=SC2034
       IGNORE_MACOS=1
       ;;
     s)
+      # shellcheck disable=SC2034
       SKIP_TEST=1
       ;;
     *)
@@ -51,7 +59,9 @@ function check_workspace {
 }
 
 function check_branch {
-  local IGNORE_BRANCH=$1
+  # TODO: determine expectations for branch name
+  # Always ignore branch
+  local IGNORE_BRANCH=1
   local IGNORE_UPSTREAM=$2
   local CURRENT_BRANCH
 
@@ -102,19 +112,20 @@ function check_branch {
   fi
 }
 
-# If host is macOS returns successfully (zero value return)
+# If host is macOS, echos 1 and returns successfully (zero value return)
 function check_running_on_macos {
-  local FAIL_NON_MACOS=$1
+  local ALLOW_NON_MACOS=$1
   if [[ "$(uname)" =~ [Dd]arwin ]]; then
+    echo "1"
     return 0
   fi
-  if [[ $FAIL_NON_MACOS -eq 1 ]]; then
-    echo Script is not running on macOS.
-    echo Aborting. Use '-m' to ignore.
-    echo
-    exit 1
+  echo "0"
+  >&2 echo Script is not running on macOS.
+  if [[ $ALLOW_NON_MACOS -ne 1 ]]; then
+    return 1
   fi
-  return 1
+  >&2 echo Ignoring script not running on macOS
+  return 0
 }
 
 function assert_docker_status {
@@ -127,12 +138,12 @@ function assert_docker_status {
 function parse_version {
   local VERSION="${1}"
   echo Version: "${VERSION}"
-  echo "${VERSION}" | egrep -q '^[0-9]+\.[0-9]+\.[0-9]+$'
+  echo "${VERSION}" | grep -E -q '^[0-9]+\.[0-9]+\.[0-9]+$'
 }
 
 function prompt_yes_no {
   while true; do
-    read -p "$1 (y/n): " yn
+    read -rp "$1 (y/n): " yn
     case $yn in
     [Yy]*) break ;;
     [Nn]*) return 1 ;;
@@ -147,7 +158,7 @@ function validate_crate_version {
   local REPO_ROOT
   REPO_ROOT=$(git rev-parse --show-toplevel)
 
-  pushd "${CRATE_DIR}" &>/dev/null
+  pushd "${CRATE_DIR}" &>/dev/null || exit 1
 
   local CRATE_NAME
   CRATE_NAME=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -n)
@@ -155,7 +166,7 @@ function validate_crate_version {
   local CRATE_VERSION
   CRATE_VERSION=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -v)
 
-  PUBLISHED_CRATE_VERSION=$(cargo search "${CRATE_NAME}" | egrep "^${CRATE_NAME} " | sed -e 's/.*"\(.*\)".*/\1/')
+  PUBLISHED_CRATE_VERSION=$(cargo search "${CRATE_NAME}" | grep -E "^${CRATE_NAME} " | sed -e 's/.*"\(.*\)".*/\1/')
 
   if ! parse_version "${PUBLISHED_CRATE_VERSION}"; then
     echo Could not find current version of published crate.
@@ -174,7 +185,7 @@ function validate_crate_version {
     exit 1
   fi
 
-  popd &>/dev/null # "${CRATE_DIR}"
+  popd &>/dev/null || exit 1 # "${CRATE_DIR}"
 
   echo
   echo "Generating crate with version: ${CRATE_VERSION}"
@@ -185,8 +196,8 @@ function submodule_commit_metadata {
   local REPO_ROOT
   REPO_ROOT=$(git rev-parse --show-toplevel)
 
-  pushd "${REPO_ROOT}" &>/dev/null
-  COMMIT_HASH=$(git submodule status -- ${CRATE_DIR}/aws-lc | sed -e 's/.\([0-9a-f]*\).*/\1/')
-  perl -pi -e "s/commit-hash .*/commit-hash = \"${COMMIT_HASH}\"/" ${CRATE_DIR}/Cargo.toml
-  popd &>/dev/null
+  pushd "${REPO_ROOT}" &>/dev/null || exit 1
+  COMMIT_HASH=$(git submodule status -- "${CRATE_DIR}"/aws-lc | sed -e 's/.\([0-9a-f]*\).*/\1/')
+  perl -pi -e "s/commit-hash .*/commit-hash = \"${COMMIT_HASH}\"/" "${CRATE_DIR}"/Cargo.toml
+  popd &>/dev/null || exit 1
 }

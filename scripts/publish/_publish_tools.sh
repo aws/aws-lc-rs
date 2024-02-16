@@ -24,6 +24,11 @@ function publish_options {
   done
 }
 
+# Finds the version of the crate based on current working directory
+function crate_version_prefix {
+  grep -E '^version =' ./Cargo.toml | sed -e 's/.*"\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)"/\1_\2_\3/'
+}
+
 function run_prepublish_checks {
   local SCRIPT_DIR
   SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
