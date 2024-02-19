@@ -26,7 +26,9 @@ function publish_options {
 
 # Finds the version of the crate based on current working directory
 function crate_version_prefix {
-  grep -E '^version =' ./Cargo.toml | sed -e 's/.*"\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)"/\1_\2_\3/'
+  local REPO_ROOT
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+  "${REPO_ROOT}"/scripts/tools/cargo-dig.rs -v | sed -e 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)/\1_\2_\3/'
 }
 
 function run_prepublish_checks {
