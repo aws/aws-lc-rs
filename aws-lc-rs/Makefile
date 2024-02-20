@@ -2,7 +2,7 @@ include ../Makefile
 
 UNAME_S := $(shell uname -s)
 
-AWS_LC_RS_COVERAGE_FEATURES := unstable,ring-sig-verify,ring-io
+AWS_LC_RS_COV_EXTRA_FEATURES := unstable
 
 asan:
 # TODO: This build target produces linker error on Mac.
@@ -23,10 +23,10 @@ asan-fips:
 	RUST_BACKTRACE=1 ASAN_OPTIONS=detect_leaks=1 RUSTFLAGS=-Zsanitizer=address RUSTDOCFLAGS=-Zsanitizer=address cargo +nightly test --lib --bins --tests --examples --target `rustc -vV | sed -n 's|host: ||p'` --no-default-features --features fips,asan
 
 coverage:
-	cargo llvm-cov --features "${AWS_LC_RS_COVERAGE_FEATURES}" --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc(-fips|)-sys/*" --lcov --output-path lcov.info
+	cargo llvm-cov --features "${AWS_LC_RS_COV_EXTRA_FEATURES}" --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc(-fips|)-sys/*" --lcov --output-path lcov.info
 
 coverage-fips:
-	cargo llvm-cov --features "${AWS_LC_RS_COVERAGE_FEATURES},fips" --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc(-fips|)-sys/*" --lcov --output-path lcov.info
+	cargo llvm-cov --features "${AWS_LC_RS_COV_EXTRA_FEATURES},fips" --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc(-fips|)-sys/*" --lcov --output-path lcov.info
 
 test:
 	cargo test --all-targets --features unstable

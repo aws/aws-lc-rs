@@ -128,10 +128,10 @@ jobs:
 
       - name: Run coverage
         working-directory: ./aws-lc-rs
-        run: cargo llvm-cov --workspace --features unstable,ring-sig-verify,ring-io --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --lcov --output-path ${{ runner.temp }}/lcov.info
+        run: cargo llvm-cov --workspace --features unstable --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --lcov --output-path ${{ runner.temp }}/lcov.info
       - name: Run FIPS coverage
         working-directory: ./aws-lc-rs
-        run: cargo llvm-cov --workspace --features unstable,ring-sig-verify,ring-io,fips --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --lcov --output-path ${{ runner.temp }}/lcov-fips.info
+        run: cargo llvm-cov --workspace --features unstable --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --lcov --output-path ${{ runner.temp }}/lcov-fips.info
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         env:
