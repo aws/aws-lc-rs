@@ -190,6 +190,14 @@ impl PrivateDecryptingKey {
 
     /// Decrypts the contents in `ciphertext` and writes the corresponding plaintext to `output`.
     ///
+    /// # Sizing `output`
+    /// For `OAEP_SHA1_MGF1SHA1`, `OAEP_SHA256_MGF1SHA256`, `OAEP_SHA384_MGF1SHA384`, `OAEP_SHA512_MGF1SHA512` a safe
+    /// `output` length is the key size in bytes. The RSA key size in bytes can be retrieved using [`Self::key_size`].
+    /// The actual output length will at most `rsaKeySizeBytes - (2 * hashLengthBytes) - 2`.
+    ///
+    /// # Errors
+    /// * `Unspecified` for any error that occurs while decrypting `ciphertext`.
+    ///
     /// # Errors
     /// * `Unspecified` for any error that occurs while decrypting `ciphertext`.
     pub fn decrypt<'output>(
@@ -266,6 +274,11 @@ impl PublicEncryptingKey {
     }
 
     /// Encrypts the contents in `plaintext` and writes the corresponding ciphertext to `output`.
+    ///
+    /// # Sizing `output`
+    /// For `OAEP_SHA1_MGF1SHA1`, `OAEP_SHA256_MGF1SHA256`, `OAEP_SHA384_MGF1SHA384`, `OAEP_SHA512_MGF1SHA512` the
+    /// length of `output` must be the RSA key size in bytes. The RSA key size in bytes can be retrieved using
+    /// [`Self::key_size`].
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs while decrypting `ciphertext`.
