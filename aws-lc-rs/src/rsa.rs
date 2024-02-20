@@ -77,6 +77,9 @@ pub(crate) use self::signature::RsaVerificationAlgorithmId;
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "fips")]
+    mod fips;
+
     #[cfg(feature = "ring-io")]
     #[test]
     fn test_rsa() {

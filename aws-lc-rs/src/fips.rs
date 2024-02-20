@@ -126,7 +126,11 @@ pub(crate) use indicator_check;
 macro_rules! check_fips_service_status {
     ($function:expr) => {{
         use $crate::fips::get_fips_service_status;
+        // Clear the current indicator status first by retrieving it
+        let _ = get_fips_service_status();
+        // do the expression
         let result = $function;
+        // Check indicator after expression
         get_fips_service_status().map(|()| result)
     }};
 }
