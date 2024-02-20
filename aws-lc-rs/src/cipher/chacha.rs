@@ -107,7 +107,6 @@ pub(crate) fn encrypt_in_place_chacha20(
 mod tests {
     use super::*;
     use crate::{test, test_file};
-    use core::convert::TryInto;
 
     const MAX_ALIGNMENT: usize = 15;
 

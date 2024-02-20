@@ -3,8 +3,6 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-#[cfg(feature = "bindgen")]
-use std::default::Default;
 use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};

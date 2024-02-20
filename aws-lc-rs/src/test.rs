@@ -112,7 +112,6 @@
 
 extern crate alloc;
 
-use alloc::{string::String, vec::Vec};
 use mirai_annotations::unrecoverable;
 use std::error::Error;
 

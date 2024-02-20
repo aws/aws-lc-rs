@@ -86,7 +86,6 @@ pub(super) fn sign(key: Key, input: &[u8]) -> Tag {
 mod tests {
     use super::*;
     use crate::{test, test_file};
-    use core::convert::TryInto;
 
     // Adapted from BoringSSL's crypto/poly1305/poly1305_test.cc.
     #[test]

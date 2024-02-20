@@ -13,7 +13,6 @@ use crate::cipher::chacha::encrypt_block_chacha20;
 use crate::cipher::key::SymmetricCipherKey;
 use crate::hkdf::KeyType;
 use crate::{derive_debug_via_id, error, hkdf};
-use core::convert::TryFrom;
 
 /// A key for generating QUIC Header Protection masks.
 pub struct HeaderProtectionKey {
