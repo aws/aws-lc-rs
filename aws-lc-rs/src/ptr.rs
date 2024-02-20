@@ -210,7 +210,7 @@ create_pointer!(EVP_AEAD_CTX, EVP_AEAD_CTX_free);
 
 #[cfg(test)]
 mod tests {
-    use crate::ptr::{ConstPointer, DetachablePointer, ManagedPointer};
+    use crate::ptr::{DetachablePointer, ManagedPointer};
     use aws_lc::BIGNUM;
 
     #[test]

@@ -7,8 +7,6 @@ use crate::{
     fips::indicator_check,
     ptr::LcPtr,
 };
-#[cfg(feature = "fips")]
-use aws_lc::RSA_check_fips;
 use aws_lc::{
     EVP_PKEY_CTX_new, EVP_PKEY_CTX_set_rsa_mgf1_md, EVP_PKEY_CTX_set_rsa_oaep_md,
     EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_decrypt, EVP_PKEY_decrypt_init, EVP_PKEY_encrypt,
@@ -254,7 +252,7 @@ impl PublicEncryptingKey {
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs deserializing from bytes.
-    pub fn from_der(value: &[u8]) -> Result<PublicEncryptingKey, Unspecified> {
+    pub fn from_der(value: &[u8]) -> Result<PublicEncryptingKey, KeyRejected> {
         Ok(Self(RsaEvpPkey::from_rfc5280_public_key_der(
             value,
             UsageContext::Encryption,

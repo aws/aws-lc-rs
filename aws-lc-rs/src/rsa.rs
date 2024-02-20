@@ -4,6 +4,54 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 //! RSA Signature and Encryption Support.
+//!
+//! # OAEP Encryption / Decryption
+//!
+//! ```rust
+//! # use std::error::Error;
+//! # fn main() -> Result<(), Box<dyn Error>> {
+//! use aws_lc_rs::{
+//!     encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
+//!     rsa::{KeySize, OAEP_SHA256_MGF1SHA256, PublicEncryptingKey, PrivateDecryptingKey}
+//! };
+//!
+//! // Generate a RSA 2048-bit key.
+//! let private_key = PrivateDecryptingKey::generate(KeySize::Rsa2048)?;
+//!
+//! // Serialize the RSA private key to DER encoded PKCS#8 format for later usage.
+//! let private_key_der = AsDer::<Pkcs8V1Der>::as_der(&private_key)?;
+//! let private_key_der_bytes = private_key_der.as_ref();
+//!
+//! // Load a RSA private key from DER encoded PKCS#8 document.
+//! let private_key = PrivateDecryptingKey::from_pkcs8(private_key_der_bytes)?;
+//!
+//! // Retrieve the RSA public key
+//! let public_key = private_key.public_key()?;
+//!
+//! // Serialize the RSA public key to DER encoded X.509 SubjectPublicKeyInfo for later usage.
+//! let public_key_der = AsDer::<PublicKeyX509Der>::as_der(&public_key)?;
+//! let public_key_der_bytes = public_key_der.as_ref();
+//!
+//! // Load a RSA public key from DER encoded X.509 SubjectPublicKeyInfo.
+//! let public_key = PublicEncryptingKey::from_der(public_key_der_bytes)?;
+//!
+//! let message = b"hello world";
+//! let mut ciphertext = vec![0u8; KeySize::Rsa2048.len()]; // Output will be the size of the RSA key length in bytes rounded up.
+//!
+//! // Encrypt a message with the public key.
+//! let ciphertext = public_key.encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext)?;
+//!
+//! assert_ne!(message, ciphertext);
+//!
+//! // Decrypt a message with the private key.
+//! let mut plaintext = vec![0u8; KeySize::Rsa2048.len()]; // Plaintext output will be at most RSA Key length bytes - 2 * HashLength − 2 bytes
+//! let plaintext = private_key.decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext)?;
+//!
+//! assert_eq!(message, plaintext);
+//!
+//! # Ok(())
+//! # }
+//! ```
 
 // *R* and *r* in Montgomery math refer to different things, so we always use
 // `R` to refer to *R* to avoid confusion, even when that's against the normal

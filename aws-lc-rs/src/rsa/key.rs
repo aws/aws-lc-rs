@@ -196,7 +196,6 @@ impl KeyPair {
     ///
     /// # *ring* Compatibility
     /// Our implementation ignores the `SecureRandom` parameter.
-    ///
     // # FIPS
     // The following conditions must be met:
     // * RSA Key Sizes: 2048, 3072, 4096
