@@ -29,7 +29,7 @@ impl AsRef<[u8]> for Document {
 
 impl Drop for Document {
     fn drop(&mut self) {
-        self.bytes.zeroize();
+        self.bytes.as_mut().zeroize();
     }
 }
 
