@@ -72,8 +72,8 @@ use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
 };
 use core::fmt;
-use std::fmt::{Debug, Formatter};
-use std::ptr::null_mut;
+use core::fmt::{Debug, Formatter};
+use core::ptr::null_mut;
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq)]
@@ -456,7 +456,7 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
             .map_err(|_| Unspecified)?;
         let outp = LcPtr::new(outp)?;
         Ok(EcPrivateKeyRfc5915Der::take_from_slice(unsafe {
-            std::slice::from_raw_parts_mut(*outp, length)
+            core::slice::from_raw_parts_mut(*outp, length)
         }))
     }
 }

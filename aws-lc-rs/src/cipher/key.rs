@@ -7,8 +7,10 @@ use crate::cipher::chacha::ChaCha20Key;
 use crate::cipher::{AES_128_KEY_LEN, AES_256_KEY_LEN};
 use crate::error::Unspecified;
 use aws_lc::{AES_set_decrypt_key, AES_set_encrypt_key, AES_KEY};
+use core::mem::{size_of, MaybeUninit};
 use core::ptr::copy_nonoverlapping;
-use std::mem::{size_of, MaybeUninit};
+// TODO: Uncomment when MSRV >= 1.64
+// use core::ffi::c_uint;
 use std::os::raw::c_uint;
 use zeroize::Zeroize;
 

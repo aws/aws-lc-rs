@@ -8,7 +8,7 @@
 use super::{Tag, TAG_LEN};
 use crate::cipher::block::BLOCK_LEN;
 use aws_lc::{CRYPTO_poly1305_finish, CRYPTO_poly1305_init, CRYPTO_poly1305_update};
-use std::mem::MaybeUninit;
+use core::mem::MaybeUninit;
 
 /// A Poly1305 key.
 pub(super) struct Key {
@@ -86,7 +86,6 @@ pub(super) fn sign(key: Key, input: &[u8]) -> Tag {
 mod tests {
     use super::*;
     use crate::{test, test_file};
-    use core::convert::TryInto;
 
     // Adapted from BoringSSL's crypto/poly1305/poly1305_test.cc.
     #[test]

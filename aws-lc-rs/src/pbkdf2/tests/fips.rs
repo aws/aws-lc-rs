@@ -3,7 +3,7 @@
 
 #![cfg(debug_assertions)]
 
-use std::num::NonZeroU32;
+use core::num::NonZeroU32;
 
 use crate::{
     fips::{assert_fips_status_indicator, FipsServiceStatus},

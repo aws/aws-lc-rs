@@ -109,7 +109,7 @@
 //!     .open_in_place(aad, &mut in_out_buffer)
 //!     .expect("Decryption failed");
 //!
-//! let decrypted_plaintext = std::str::from_utf8(&in_out_buffer[0..plaintext_len]).unwrap();
+//! let decrypted_plaintext = core::str::from_utf8(&in_out_buffer[0..plaintext_len]).unwrap();
 //!
 //! assert_eq!(plaintext, decrypted_plaintext);
 //! ```

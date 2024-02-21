@@ -105,10 +105,10 @@
 #[cfg(feature = "fips")]
 extern crate aws_lc_fips_sys as aws_lc;
 
+extern crate alloc;
 #[cfg(not(feature = "fips"))]
 extern crate aws_lc_sys as aws_lc;
 extern crate core;
-
 pub mod aead;
 pub mod agreement;
 pub mod constant_time;
@@ -147,12 +147,14 @@ pub mod tls_prf;
 pub mod unstable;
 
 pub(crate) use debug::derive_debug_via_id;
+// TODO: Uncomment when MSRV >= 1.64
+// use core::ffi::CStr;
+use std::ffi::CStr;
 
 use aws_lc::{
     CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, ERR_GET_FUNC, ERR_GET_LIB,
     ERR_GET_REASON,
 };
-use std::ffi::CStr;
 use std::sync::Once;
 
 static START: Once = Once::new();

@@ -4,8 +4,8 @@
 use crate::digest::{match_digest_type, Algorithm};
 use crate::error::Unspecified;
 use aws_lc::{EVP_DigestInit_ex, EVP_MD_CTX_cleanup, EVP_MD_CTX_copy, EVP_MD_CTX_init, EVP_MD_CTX};
-use std::mem::MaybeUninit;
-use std::ptr::null_mut;
+use core::mem::MaybeUninit;
+use core::ptr::null_mut;
 
 pub(crate) struct DigestContext(EVP_MD_CTX);
 

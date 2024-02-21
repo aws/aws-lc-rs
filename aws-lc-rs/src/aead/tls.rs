@@ -159,7 +159,7 @@ impl TlsRecordSealingKey {
 
 #[allow(clippy::missing_fields_in_debug)]
 impl Debug for TlsRecordSealingKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("TlsRecordSealingKey")
             .field("key", &self.key)
             .field("protocol", &self.protocol)
@@ -285,7 +285,7 @@ impl TlsRecordOpeningKey {
 
 #[allow(clippy::missing_fields_in_debug)]
 impl Debug for TlsRecordOpeningKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("TlsRecordOpeningKey")
             .field("key", &self.key)
             .field("protocol", &self.protocol)

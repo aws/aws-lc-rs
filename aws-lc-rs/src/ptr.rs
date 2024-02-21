@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::ops::Deref;
+use core::ops::Deref;
 
 use aws_lc::{
     BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_AEAD_CTX_free,
@@ -38,12 +38,12 @@ impl<P: Pointer> ManagedPointer<P> {
     }
 
     pub unsafe fn as_slice(&self, len: usize) -> &[P::T] {
-        std::slice::from_raw_parts(self.pointer.as_const_ptr(), len)
+        core::slice::from_raw_parts(self.pointer.as_const_ptr(), len)
     }
 
     #[allow(clippy::mut_from_ref)]
     pub unsafe fn as_slice_mut(&self, len: usize) -> &mut [P::T] {
-        std::slice::from_raw_parts_mut(self.pointer.as_mut_ptr(), len)
+        core::slice::from_raw_parts_mut(self.pointer.as_mut_ptr(), len)
     }
 }
 

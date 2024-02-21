@@ -28,7 +28,6 @@ use crate::cipher::block::BLOCK_LEN;
 use crate::cipher::chacha::{self, ChaCha20Key};
 use crate::iv::FixedLength;
 use crate::{constant_time, endian::BigEndian, error};
-use core::convert::TryInto;
 
 /// A key for sealing packets.
 pub struct SealingKey {

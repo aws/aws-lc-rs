@@ -3,10 +3,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::fmt;
-use std::fmt::{Debug, Formatter};
-use std::mem::MaybeUninit;
-use std::ptr::{null, null_mut};
+use core::fmt;
+use core::fmt::{Debug, Formatter};
+use core::mem::MaybeUninit;
+use core::ptr::{null, null_mut};
 
 use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY};
 
@@ -320,7 +320,7 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey<'_> {
                 .map_err(|_| Unspecified)?;
             let outp = LcPtr::new(outp)?;
             Ok(EcPrivateKeyRfc5915Der::take_from_slice(
-                std::slice::from_raw_parts_mut(*outp, length),
+                core::slice::from_raw_parts_mut(*outp, length),
             ))
         }
     }

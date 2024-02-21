@@ -9,6 +9,9 @@ use core::{
     mem::MaybeUninit,
     ptr::null_mut,
 };
+// TODO: Uncomment when MSRV >= 1.64
+// use core::ffi::c_int;
+use std::os::raw::c_int;
 
 use crate::{
     encoding::{AsDer, Pkcs8V1Der},
@@ -585,10 +588,7 @@ unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, 
     Ok(pubkey_vec.into_boxed_slice())
 }
 
-pub(super) fn generate_rsa_key(
-    size: std::os::raw::c_int,
-    fips: bool,
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+pub(super) fn generate_rsa_key(size: c_int, fips: bool) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     // We explicitly don't use `EVP_PKEY_keygen`, as it will force usage of either the FIPS or non-FIPS
     // keygen function based on the whether the build of AWS-LC had FIPS enbaled. Rather we delegate to the desired
     // generation function.

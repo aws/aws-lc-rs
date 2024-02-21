@@ -33,7 +33,7 @@
 //! let more_rand_bytes: [u8; 64] = random_array.expose();
 //! ```
 use aws_lc::RAND_bytes;
-use std::fmt::Debug;
+use core::fmt::Debug;
 
 use crate::error;
 use crate::error::Unspecified;
@@ -168,7 +168,7 @@ pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
 #[cfg(test)]
 mod tests {
     use crate::rand;
-    use std::array::IntoIter;
+    use core::array::IntoIter;
 
     use crate::rand::{generate, SecureRandom, SystemRandom};
 

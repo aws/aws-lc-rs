@@ -5,9 +5,9 @@ use crate::buffer::Buffer;
 use crate::error::Unspecified;
 use crate::ptr::LcPtr;
 use aws_lc::{CBB_cleanup, CBB_finish, CBB_init, CBB_init_fixed, CBB};
-use std::marker::PhantomData;
-use std::mem::MaybeUninit;
-use std::ptr::null_mut;
+use core::marker::PhantomData;
+use core::mem::MaybeUninit;
+use core::ptr::null_mut;
 
 pub(crate) struct LcCBB<'a>(CBB, PhantomData<&'a CBB>);
 

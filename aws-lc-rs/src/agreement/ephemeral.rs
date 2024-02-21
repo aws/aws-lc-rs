@@ -5,7 +5,7 @@ use crate::agreement::{agree, Algorithm, PrivateKey, PublicKey, UnparsedPublicKe
 use crate::error::Unspecified;
 use crate::rand::SecureRandom;
 use core::fmt;
-use std::fmt::{Debug, Formatter};
+use core::fmt::{Debug, Formatter};
 
 /// An ephemeral private key for use (only) with `agree_ephemeral`. The
 /// signature of `agree_ephemeral` ensures that an `PrivateKey` can be

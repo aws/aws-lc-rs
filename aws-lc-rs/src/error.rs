@@ -7,7 +7,9 @@
 
 extern crate std;
 
-use std::num::TryFromIntError;
+use core::num::TryFromIntError;
+// The Error trait is not in core: https://github.com/rust-lang/rust/issues/103765
+use std::error::Error;
 
 /// An error with absolutely no details.
 ///
@@ -169,24 +171,24 @@ impl KeyRejected {
     }
 }
 
-impl std::error::Error for KeyRejected {
-    fn cause(&self) -> Option<&dyn std::error::Error> {
-        None
-    }
-
+impl Error for KeyRejected {
     fn description(&self) -> &str {
         self.description_()
     }
-}
 
-impl std::error::Error for Unspecified {
-    #[inline]
-    fn cause(&self) -> Option<&dyn std::error::Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         None
     }
+}
 
+impl Error for Unspecified {
     fn description(&self) -> &str {
         "Unspecified"
+    }
+
+    #[inline]
+    fn cause(&self) -> Option<&dyn Error> {
+        None
     }
 }
 

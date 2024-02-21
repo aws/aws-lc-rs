@@ -24,7 +24,7 @@ pub(crate) fn set_fips_service_status_unapproved() {
 
 #[cfg(all(feature = "fips", debug_assertions))]
 pub(crate) mod indicator {
-    use std::cell::Cell;
+    use core::cell::Cell;
 
     thread_local! {
         static STATUS_INDICATOR: Cell<Option<bool>> = const { Cell::new(None) };

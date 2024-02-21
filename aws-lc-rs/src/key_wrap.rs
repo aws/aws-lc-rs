@@ -86,7 +86,7 @@ impl BlockCipher for AesBlockCipher {
 impl Sealed for AesBlockCipher {}
 
 impl Debug for AesBlockCipher {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.id, f)
     }
 }
@@ -407,7 +407,7 @@ impl KeyWrapPadded for KeyEncryptionKey<AesBlockCipher> {
 }
 
 impl<Cipher: BlockCipher> Debug for KeyEncryptionKey<Cipher> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("KeyEncryptionKey")
             .field("cipher", &self.cipher)
             .finish_non_exhaustive()

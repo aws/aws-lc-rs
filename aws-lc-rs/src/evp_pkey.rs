@@ -11,6 +11,8 @@ use aws_lc::{
     EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id, EVP_marshal_private_key,
     EVP_marshal_private_key_v2, EVP_parse_private_key, EC_KEY, EVP_PKEY, RSA,
 };
+// TODO: Uncomment when MSRV >= 1.64
+// use core::ffi::c_int;
 use std::os::raw::c_int;
 
 impl TryFrom<&[u8]> for LcPtr<EVP_PKEY> {

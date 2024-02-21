@@ -55,13 +55,14 @@ use crate::{
     ptr::LcPtr,
     ptr::Pointer,
 };
+use alloc::borrow::Cow;
 use aws_lc::{
     EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
     EVP_PKEY_encapsulate, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
     EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_up_ref,
     EVP_PKEY, EVP_PKEY_KEM,
 };
-use std::{borrow::Cow, cmp::Ordering, ptr::null_mut};
+use core::{cmp::Ordering, ptr::null_mut};
 use zeroize::Zeroize;
 
 /// An identifier for a KEM algorithm.
@@ -120,7 +121,7 @@ impl<Id> Debug for Algorithm<Id>
 where
     Id: AlgorithmIdentifier,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         Debug::fmt(&self.id, f)
     }
 }
@@ -250,7 +251,7 @@ impl<Id> Debug for DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("DecapsulationKey")
             .field("algorithm", &self.algorithm)
             .finish_non_exhaustive()
@@ -382,7 +383,7 @@ impl<Id> Debug for EncapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("EncapsulationKey")
             .field("algorithm", &self.algorithm)
             .finish_non_exhaustive()

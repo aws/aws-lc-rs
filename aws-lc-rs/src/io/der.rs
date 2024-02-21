@@ -202,7 +202,6 @@ pub fn positive_integer<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::error;
     use untrusted::Input;
 
     fn with_good_i<F, R>(value: &[u8], f: F)

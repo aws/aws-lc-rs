@@ -3,10 +3,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::fmt;
-use std::fmt::{Debug, Formatter};
-use std::mem::MaybeUninit;
-use std::ptr::null_mut;
+use core::fmt;
+use core::fmt::{Debug, Formatter};
+use core::mem::MaybeUninit;
+use core::ptr::null_mut;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;

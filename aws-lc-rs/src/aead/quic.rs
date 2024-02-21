@@ -13,7 +13,6 @@ use crate::cipher::chacha::encrypt_block_chacha20;
 use crate::cipher::key::SymmetricCipherKey;
 use crate::hkdf::KeyType;
 use crate::{derive_debug_via_id, error, hkdf};
-use core::convert::TryFrom;
 
 /// A key for generating QUIC Header Protection masks.
 pub struct HeaderProtectionKey {
@@ -162,7 +161,7 @@ fn cipher_new_mask(
                 .map_err(|_| error::Unspecified)?;
             let input = block::Block::zero();
             unsafe {
-                let counter = std::mem::transmute::<[u8; 4], u32>(*counter_bytes).to_le();
+                let counter = core::mem::transmute::<[u8; 4], u32>(*counter_bytes).to_le();
                 encrypt_block_chacha20(raw_key, input, nonce, counter)?
             }
         }
