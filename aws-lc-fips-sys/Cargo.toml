@@ -22,6 +22,7 @@ include = [
     "/aws-lc/**/*.go",
     "/aws-lc/go.mod",
     "/aws-lc/go.sum",
+    "/aws-lc/**/*.lds",
     "!/aws-lc/bindings/**",
     "!/aws-lc/docs/**",
     "!/aws-lc/fuzz/**",
