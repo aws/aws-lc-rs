@@ -8,6 +8,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 SIM_IMAGE_LIST_PATH='/Library/Developer/CoreSimulator/Images/images.plist'
 SIM_IMAGE_MOUNT_BASE='/Volumes'
+SIM_IMAGE_PATTERN='iOS-17'
 
 if [[ ! -r "${SIM_IMAGE_LIST_PATH}" ]]; then
   echo ERROR: Image list not found: "${SIM_IMAGE_LIST_PATH}"
@@ -46,14 +47,14 @@ IMAGE_BUILD=''
 
 
 for i in $(seq 0 "${IMAGE_LIST_LAST_IDX}"); do
-  if [[ $(plist_image_id_for "${i}") = *iOS-17* ]]; then
+  if [[ $(plist_image_id_for "${i}") == *"${SIM_IMAGE_PATTERN}"* ]]; then
     IMAGE_PATH=$(plist_image_path_for "${i}")
     IMAGE_BUILD=$(plist_image_build_for "${i}")
   fi
 done
 
 if [[ -z ${IMAGE_PATH} ]]; then
-  echo ERROR: iOS 17 image not found.
+  echo ERROR: ${SIM_IMAGE_PATTERN} image not found.
   exit 1
 fi
 
