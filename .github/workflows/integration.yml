@@ -125,6 +125,8 @@ jobs:
       - name: ${{ matrix.crate }}
         working-directory: ./${{ matrix.crate }}
         run: cargo ${{ matrix.args }}
+      - name: Clean
+        run: cargo clean
       - name: Force Linux shared build
         working-directory: ./aws-lc-rs
         if: ${{ matrix.os == 'ubuntu-latest' }}
