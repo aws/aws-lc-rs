@@ -33,7 +33,7 @@ jobs:
         run: rustup override set ${{ steps.toolchain.outputs.name }}
 
       - name: Run cargo fmt
-        run : cargo fmt -- --check --verbose
+        run: cargo fmt -- --check --verbose
 
   clippy:
     runs-on: ubuntu-latest
@@ -41,10 +41,11 @@ jobs:
       fail-fast: false
       matrix:
         # By default, Clippy will lint he dependencies
-        crate_dir: ["aws-lc-rs"]
+        crate_dir: [ "aws-lc-rs" ]
         features:
           - "--features bindgen,unstable"
           - "--features bindgen,unstable,fips"
+          - "--no-default-features --features aws-lc-sys"
     steps:
       - uses: actions/checkout@v3
         with:
