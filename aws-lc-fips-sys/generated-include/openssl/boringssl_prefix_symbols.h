@@ -12,9 +12,14 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef BORINGSSL_PREFIX_SYMBOLS_H
+
+#define BORINGSSL_PREFIX_SYMBOLS_H	
+
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_12_3
-#endif
+#define BORINGSSL_PREFIX aws_lc_fips_0_12_4
+#endif // BORINGSSL_PREFIX
+
 
 // BORINGSSL_ADD_PREFIX pastes two identifiers into one. It performs one
 // iteration of macro expansion on its arguments before pasting.
@@ -3889,3 +3894,5 @@
 #define x509v3_hex_to_bytes BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509v3_hex_to_bytes)
 #define x509v3_looks_like_dns_name BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509v3_looks_like_dns_name)
 #define x86_64_assembly_implementation_FOR_TESTING BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x86_64_assembly_implementation_FOR_TESTING)
+
+#endif // BORINGSSL_PREFIX_SYMBOLS_H

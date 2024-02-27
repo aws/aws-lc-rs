@@ -12,13 +12,17 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_12_3
-#endif
-    
 #if !defined(__APPLE__)
 #include <openssl/boringssl_prefix_symbols.h>
 #else
+#ifndef BORINGSSL_PREFIX_SYMBOLS_ASM_H
+
+#define BORINGSSL_PREFIX_SYMBOLS_ASM_H
+
+#ifndef BORINGSSL_PREFIX
+#define BORINGSSL_PREFIX aws_lc_fips_0_12_4
+#endif // BORINGSSL_PREFIX
+
 // On iOS and macOS, we need to treat assembly symbols differently from other
 // symbols. The linker expects symbols to be prefixed with an underscore.
 // Perlasm thus generates symbol with this underscore applied. Our macros must,
@@ -3894,4 +3898,6 @@
 #define _x509v3_hex_to_bytes BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509v3_hex_to_bytes)
 #define _x509v3_looks_like_dns_name BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x509v3_looks_like_dns_name)
 #define _x86_64_assembly_implementation_FOR_TESTING BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, x86_64_assembly_implementation_FOR_TESTING)
-#endif
+
+#endif // BORINGSSL_PREFIX_SYMBOLS_ASM_H
+#endif // !defined(__APPLE__)

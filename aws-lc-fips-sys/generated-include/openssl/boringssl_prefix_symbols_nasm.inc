@@ -12,12 +12,17 @@
 ; OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 ; CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+%ifndef BORINGSSL_PREFIX_SYMBOLS_NASM_INC
+
+%define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
+
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_12_3
-%endif
+%define BORINGSSL_PREFIX aws_lc_fips_0_12_4
+%endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
 %ifidn __OUTPUT_FORMAT__, win32
+
 %xdefine _ACCESS_DESCRIPTION_free _ %+ BORINGSSL_PREFIX %+ _ACCESS_DESCRIPTION_free
 %xdefine _ACCESS_DESCRIPTION_it _ %+ BORINGSSL_PREFIX %+ _ACCESS_DESCRIPTION_it
 %xdefine _ACCESS_DESCRIPTION_new _ %+ BORINGSSL_PREFIX %+ _ACCESS_DESCRIPTION_new
@@ -7755,4 +7760,6 @@
 %xdefine x509v3_hex_to_bytes BORINGSSL_PREFIX %+ _x509v3_hex_to_bytes
 %xdefine x509v3_looks_like_dns_name BORINGSSL_PREFIX %+ _x509v3_looks_like_dns_name
 %xdefine x86_64_assembly_implementation_FOR_TESTING BORINGSSL_PREFIX %+ _x86_64_assembly_implementation_FOR_TESTING
-%endif
+
+%endif ; __OUTPUT_FORMAT__
+%endif ; BORINGSSL_PREFIX_SYMBOLS_NASM_INC
