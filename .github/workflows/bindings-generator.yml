@@ -1,0 +1,139 @@
+name: Auto-generate Bindings
+
+on:
+  push:
+    branches:
+      - 'generate/aws-lc-sys-*'
+
+env:
+  GIT_AUTHOR_NAME: "aws-lc-sys-bindings-generator"
+  GIT_AUTHOR_EMAIL: "aws-lc-github-bot@amazon.com"
+  GIT_COMMITTER_NAME: "aws-lc-sys-bindings-generator"
+  GIT_COMMITTER_EMAIL: "aws-lc-github-bot@amazon.com"
+
+jobs:
+  collect-symbols-and-commit:
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.ref_name }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Install current Bash on macOS
+        if: runner.os == 'macOS'
+        run: brew install bash coreutils
+      - name: No-prefix build for ${{ matrix.os }}
+        env:
+          AWS_LC_SYS_INTERNAL_NO_PREFIX: "1"
+        run: |
+          cargo test -p aws-lc-sys --features bindgen,ssl
+      - name: Collect symbols
+        run: |
+          ./scripts/build/collect_symbols.sh
+      - name: Commit & Push changes
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols from ${{ matrix.os }}"
+  collect-cross-symbols-and-commit:
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target: [ aarch64-unknown-linux-gnu, i686-unknown-linux-gnu, aarch64-unknown-linux-musl, x86_64-unknown-linux-musl ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.ref_name }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Install cross
+        run: cargo install cross --locked --git https://github.com/cross-rs/cross
+      - name: No-prefix build for ${{ matrix.target }}
+        env:
+          AWS_LC_SYS_INTERNAL_NO_PREFIX: "1"
+        run: |
+          cross test -p aws-lc-sys --features bindgen,ssl --target ${{ matrix.target }}
+      - name: Collect symbols
+        run: |
+          ./scripts/build/collect_symbols.sh -t ${{ matrix.target }}
+      - name: Commit & Push changes
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols for ${{ matrix.target }}"
+  generate-headers-and-commit:
+    needs: [ collect-cross-symbols-and-commit, collect-symbols-and-commit ]
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.ref_name }}
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Generate Prefix Headers
+        run: ./scripts/generate/_generate_prefix_headers.sh -c aws-lc-sys
+      - name: Update sys-crate metadata
+        run: ./scripts/ci/update_sys_crate_metadata.sh aws-lc-sys
+      - name: Commit & Push changes
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated headers"
+  generate-bindings-and-commit:
+    needs: generate-headers-and-commit
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.ref_name }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install current Bash on macOS
+        if: runner.os == 'macOS'
+        run: brew install bash coreutils
+      - name: Generate bindings for ${{ matrix.os }}
+        env:
+          AWS_LC_RUST_INTERNAL_BINDGEN: "1"
+        run: |
+          cargo test -p aws-lc-sys --features bindgen,ssl
+      - name: Commit & Push changes
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings from ${{ matrix.os }}"
+  generate-cross-bindings-and-commit:
+    needs: generate-headers-and-commit
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ aarch64-unknown-linux-gnu, i686-unknown-linux-gnu, aarch64-unknown-linux-musl, x86_64-unknown-linux-musl ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.ref_name }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cross
+        run: cargo install cross --locked --git https://github.com/cross-rs/cross
+      - name: Generate bindings for ${{ matrix.target }}
+        env:
+          AWS_LC_RUST_INTERNAL_BINDGEN: "1"
+        run: |
+          cross test -p aws-lc-sys --features bindgen,ssl --target ${{ matrix.target }}
+      - name: Commit & Push changes
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings for ${{ matrix.target }}"

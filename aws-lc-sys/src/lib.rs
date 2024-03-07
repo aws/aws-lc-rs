@@ -24,35 +24,41 @@ macro_rules! platform_binding {
     };
 }
 
-platform_binding!(linux_x86);
+platform_binding!(i686_unknown_linux_gnu);
 
-platform_binding!(linux_x86_64);
+platform_binding!(x86_64_unknown_linux_gnu);
 
-platform_binding!(linux_aarch64);
+platform_binding!(aarch64_unknown_linux_gnu);
 
-platform_binding!(macos_x86_64);
+platform_binding!(x86_64_unknown_linux_musl);
+
+platform_binding!(aarch64_unknown_linux_musl);
+
+platform_binding!(x86_64_apple_darwin);
+
+platform_binding!(aarch64_apple_darwin);
 
 #[cfg(use_bindgen_generated)]
+#[allow(
+    unused_imports,
+    non_camel_case_types,
+    non_snake_case,
+    non_upper_case_globals,
+    improper_ctypes,
+    clippy::cast_lossless,
+    clippy::cast_possible_truncation,
+    clippy::default_trait_access,
+    clippy::must_use_candidate,
+    clippy::not_unsafe_ptr_arg_deref,
+    clippy::ptr_as_ptr,
+    clippy::semicolon_if_nothing_returned,
+    clippy::too_many_lines,
+    clippy::unreadable_literal,
+    clippy::used_underscore_binding,
+    clippy::useless_transmute,
+    clippy::pub_underscore_fields
+)]
 mod generated {
-    #![allow(
-        unused_imports,
-        non_camel_case_types,
-        non_snake_case,
-        non_upper_case_globals,
-        improper_ctypes,
-        clippy::cast_lossless,
-        clippy::cast_possible_truncation,
-        clippy::default_trait_access,
-        clippy::must_use_candidate,
-        clippy::not_unsafe_ptr_arg_deref,
-        clippy::ptr_as_ptr,
-        clippy::semicolon_if_nothing_returned,
-        clippy::too_many_lines,
-        clippy::unreadable_literal,
-        clippy::used_underscore_binding,
-        clippy::useless_transmute,
-        clippy::pub_underscore_fields
-    )]
 
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }

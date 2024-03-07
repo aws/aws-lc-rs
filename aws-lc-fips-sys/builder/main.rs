@@ -3,7 +3,6 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::env;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -33,9 +32,8 @@ pub(crate) fn get_generated_include_path(manifest_dir: &Path) -> PathBuf {
 }
 
 pub(crate) fn get_aws_lc_fips_sys_includes_path() -> Option<Vec<PathBuf>> {
-    env::var("AWS_LC_FIPS_SYS_INCLUDES")
+    option_env("AWS_LC_FIPS_SYS_INCLUDES")
         .map(|colon_delim_paths| colon_delim_paths.split(':').map(PathBuf::from).collect())
-        .ok()
 }
 
 #[allow(dead_code)]
@@ -53,24 +51,47 @@ enum OutputLibType {
     Dynamic,
 }
 
+fn cargo_env<N: AsRef<str>>(name: N) -> String {
+    let name = name.as_ref();
+    std::env::var(name).unwrap_or_else(|_| panic!("missing env var {name:?}"))
+}
+fn option_env<N: AsRef<str>>(name: N) -> Option<String> {
+    let name = name.as_ref();
+    eprintln!("cargo:rerun-if-env-changed={}", name);
+    std::env::var(name).ok()
+}
+
+fn env_var_to_bool(name: &str) -> Option<bool> {
+    let build_type_result = option_env(name);
+    if let Some(env_var_value) = build_type_result {
+        eprintln!("{name}={env_var_value}");
+        // If the environment variable is set, we ignore every other factor.
+        let env_var_value = env_var_value.to_lowercase();
+        if env_var_value.starts_with('0')
+            || env_var_value.starts_with('n')
+            || env_var_value.starts_with("off")
+        {
+            Some(false)
+        } else {
+            // Otherwise, if the variable is set, assume true
+            Some(true)
+        }
+    } else {
+        None
+    }
+}
+
 impl Default for OutputLibType {
     fn default() -> Self {
-        if let Ok(build_type) = env::var("AWS_LC_FIPS_SYS_STATIC") {
-            eprintln!("AWS_LC_FIPS_SYS_STATIC={build_type}");
-            // If the environment variable is set, we ignore every other factor.
-            let build_type = build_type.to_lowercase();
-            if build_type.starts_with('0')
-                || build_type.starts_with('n')
-                || build_type.starts_with("off")
-            {
-                // Only dynamic if the value is set and is a "negative" value
-                return OutputLibType::Dynamic;
+        if let Some(stc_lib) = env_var_to_bool("AWS_LC_FIPS_SYS_STATIC") {
+            if stc_lib {
+                OutputLibType::Static
+            } else {
+                OutputLibType::Dynamic
             }
-
-            return OutputLibType::Static;
-        }
-
-        if target_os() == "linux" && (target_arch() == "x86_64" || target_arch() == "aarch64") {
+        } else if target_os() == "linux"
+            && (target_arch() == "x86_64" || target_arch() == "aarch64")
+        {
             OutputLibType::Static
         } else {
             OutputLibType::Dynamic
@@ -110,7 +131,12 @@ fn prefix_string() -> String {
 
 #[cfg(feature = "bindgen")]
 fn target_platform_prefix(name: &str) -> String {
-    format!("{}_{}_{}", env::consts::OS, env::consts::ARCH, name)
+    format!(
+        "{}_{}_{}",
+        target_os(),
+        target_arch().replace('-', "_"),
+        name
+    )
 }
 
 pub(crate) struct TestCommandResult {
@@ -185,25 +211,33 @@ fn emit_rustc_cfg(cfg: &str) {
 }
 
 fn target_os() -> String {
-    env::var("CARGO_CFG_TARGET_OS").unwrap()
+    cargo_env("CARGO_CFG_TARGET_OS")
 }
 
 fn target_arch() -> String {
-    env::var("CARGO_CFG_TARGET_ARCH").unwrap()
+    cargo_env("CARGO_CFG_TARGET_ARCH")
 }
 
 fn target_env() -> String {
-    env::var("CARGO_CFG_TARGET_ENV").unwrap()
+    cargo_env("CARGO_CFG_TARGET_ENV")
 }
 
 #[allow(unused)]
 fn target_vendor() -> String {
-    env::var("CARGO_CFG_TARGET_VENDOR").unwrap()
+    cargo_env("CARGO_CFG_TARGET_VENDOR")
 }
 
 #[allow(unused)]
 fn target() -> String {
-    env::var("TARGET").unwrap()
+    cargo_env("TARGET")
+}
+
+fn out_dir() -> PathBuf {
+    PathBuf::from(cargo_env("OUT_DIR"))
+}
+
+fn current_dir() -> PathBuf {
+    std::env::current_dir().unwrap()
 }
 
 macro_rules! cfg_bindgen_platform {
@@ -228,9 +262,7 @@ fn main() {
     let mut is_bindgen_required = cfg!(feature = "bindgen");
     let output_lib_type = OutputLibType::default();
 
-    let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
-        .unwrap_or_else(|_| String::from("0"))
-        .eq("1");
+    let is_internal_generate = env_var_to_bool("AWS_LC_RUST_INTERNAL_BINDGEN").unwrap_or(false);
 
     let pregenerated = !is_bindgen_required || is_internal_generate;
 
@@ -238,19 +270,16 @@ fn main() {
     cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", "gnu", pregenerated);
 
     if !(linux_x86_64 || linux_aarch64) {
-        emit_rustc_cfg("use_bindgen_generated");
         is_bindgen_required = true;
     }
 
-    let manifest_dir = env::current_dir().unwrap();
+    let manifest_dir = current_dir();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
     let prefix = prefix_string();
-    let out_dir_str = env::var("OUT_DIR").unwrap();
-    let out_dir = Path::new(out_dir_str.as_str()).to_path_buf();
 
     let builder = CmakeBuilder::new(
         manifest_dir.clone(),
-        out_dir.clone(),
+        out_dir(),
         Some(prefix.clone()),
         output_lib_type,
     );
@@ -275,8 +304,9 @@ fn main() {
             ))
         ))]
         {
-            let gen_bindings_path = Path::new(&env::var("OUT_DIR").unwrap()).join("bindings.rs");
+            let gen_bindings_path = out_dir().join("bindings.rs");
             generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
+            emit_rustc_cfg("use_bindgen_generated");
             bindings_available = true;
         }
     } else {
@@ -291,7 +321,7 @@ fn main() {
 
     println!(
         "cargo:include={}",
-        setup_include_paths(&out_dir, &manifest_dir).display()
+        setup_include_paths(&out_dir(), &manifest_dir).display()
     );
 
     // export the artifact names
@@ -302,7 +332,6 @@ fn main() {
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
-    println!("cargo:rerun-if-env-changed=AWS_LC_FIPS_SYS_STATIC");
 }
 
 fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
@@ -319,7 +348,7 @@ fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
     let include_dir = out_dir.join("include");
     std::fs::create_dir_all(&include_dir).unwrap();
 
-    // iterate over all of the include paths and copy them into the final output
+    // iterate over all the include paths and copy them into the final output
     for path in include_paths {
         for child in std::fs::read_dir(path).into_iter().flatten().flatten() {
             if child.file_type().map_or(false, |t| t.is_file()) {
