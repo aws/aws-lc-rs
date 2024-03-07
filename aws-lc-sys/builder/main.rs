@@ -13,10 +13,13 @@ use cmake_builder::CmakeBuilder;
 #[cfg(any(
     feature = "bindgen",
     not(any(
-        all(target_os = "macos", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "x86"),
-        all(target_os = "linux", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "aarch64")
+        target = "aarch64-apple-darwin",
+        target = "x86_64-apple-darwin",
+        target = "aarch64-unknown-linux-gnu",
+        target = "i686-unknown-linux-gnu",
+        target = "x86_64-unknown-linux-gnu",
+        target = "aarch64-unknown-linux-musl",
+        target = "x86_64-unknown-linux-musl"
     ))
 ))]
 mod bindgen;
@@ -55,21 +58,34 @@ enum OutputLibType {
     Dynamic,
 }
 
+fn env_var_to_bool(name: &str) -> Option<bool> {
+    let build_type_result = env::var(name);
+    if let Ok(env_var_value) = build_type_result {
+        eprintln!("{name}={env_var_value}");
+        // If the environment variable is set, we ignore every other factor.
+        let env_var_value = env_var_value.to_lowercase();
+        if env_var_value.starts_with('0')
+            || env_var_value.starts_with('n')
+            || env_var_value.starts_with("off")
+        {
+            Some(false)
+        } else {
+            // Otherwise, if the variable is set, assume true
+            Some(true)
+        }
+    } else {
+        None
+    }
+}
+
 impl Default for OutputLibType {
     fn default() -> Self {
-        if let Ok(build_type) = env::var("AWS_LC_SYS_STATIC") {
-            eprintln!("AWS_LC_SYS_STATIC={build_type}");
-            // If the environment variable is set, we ignore every other factor.
-            let build_type = build_type.to_lowercase();
-            if build_type.starts_with('0')
-                || build_type.starts_with('n')
-                || build_type.starts_with("off")
-            {
-                // Only dynamic if the value is set and is a "negative" value
-                return OutputLibType::Dynamic;
-            }
+        if Some(false) == env_var_to_bool("AWS_LC_SYS_STATIC") {
+            // Only dynamic if the value is set and is a "negative" value
+            OutputLibType::Dynamic
+        } else {
+            OutputLibType::Static
         }
-        OutputLibType::Static
     }
 }
 
@@ -105,7 +121,7 @@ fn prefix_string() -> String {
 
 #[cfg(feature = "bindgen")]
 fn target_platform_prefix(name: &str) -> String {
-    format!("{}_{}_{}", env::consts::OS, env::consts::ARCH, name)
+    format!("{}_{}", target().replace('-', "_"), name)
 }
 
 pub(crate) struct TestCommandResult {
@@ -133,13 +149,16 @@ fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
 #[cfg(any(
     feature = "bindgen",
     not(any(
-        all(target_os = "macos", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "x86"),
-        all(target_os = "linux", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "aarch64")
+        target = "aarch64-apple-darwin",
+        target = "x86_64-apple-darwin",
+        target = "aarch64-unknown-linux-gnu",
+        target = "i686-unknown-linux-gnu",
+        target = "x86_64-unknown-linux-gnu",
+        target = "aarch64-unknown-linux-musl",
+        target = "x86_64-unknown-linux-musl"
     ))
 ))]
-fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf) {
+fn generate_bindings(manifest_dir: &Path, prefix: Option<String>, bindings_path: &PathBuf) {
     let options = bindgen::BindingOptions {
         build_prefix: prefix,
         include_ssl: cfg!(feature = "ssl"),
@@ -154,11 +173,11 @@ fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf)
 }
 
 #[cfg(feature = "bindgen")]
-fn generate_src_bindings(manifest_dir: &Path, prefix: &str, src_bindings_path: &Path) {
+fn generate_src_bindings(manifest_dir: &Path, prefix: Option<String>, src_bindings_path: &Path) {
     bindgen::generate_bindings(
         manifest_dir,
         &bindgen::BindingOptions {
-            build_prefix: prefix,
+            build_prefix: prefix.clone(),
             include_ssl: false,
             ..Default::default()
         },
@@ -179,6 +198,7 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &str, src_bindings_path: &
 }
 
 fn emit_rustc_cfg(cfg: &str) {
+    let cfg = cfg.replace('-', "_");
     println!("cargo:rustc-cfg={cfg}");
 }
 
@@ -190,6 +210,7 @@ fn target_arch() -> String {
     env::var("CARGO_CFG_TARGET_ARCH").unwrap()
 }
 
+#[allow(dead_code)]
 fn target_env() -> String {
     env::var("CARGO_CFG_TARGET_ENV").unwrap()
 }
@@ -203,11 +224,11 @@ fn target() -> String {
 }
 
 macro_rules! cfg_bindgen_platform {
-    ($binding:ident, $os:literal, $arch:literal, $env:literal, $additional:expr) => {
+    ($binding:ident, $target:literal, $additional:expr) => {
         let $binding = {
-            (target_os() == $os && target_arch() == $arch && target_env() == $env && $additional)
+            (target() == $target && $additional)
                 .then(|| {
-                    emit_rustc_cfg(concat!($os, "_", $arch));
+                    emit_rustc_cfg(&$target.replace('-', "_"));
                     true
                 })
                 .unwrap_or(false)
@@ -221,36 +242,70 @@ trait Builder {
 }
 
 fn main() {
-    let mut is_bindgen_required = cfg!(feature = "bindgen");
-    let output_lib_type = OutputLibType::default();
-
-    let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
-        .unwrap_or_else(|_| String::from("0"))
-        .eq("1");
+    let is_internal_no_prefix =
+        env_var_to_bool("AWS_LC_SYS_INTERNAL_NO_PREFIX").unwrap_or_else(|| false);
+    let is_internal_generate =
+        env_var_to_bool("AWS_LC_RUST_INTERNAL_BINDGEN").unwrap_or_else(|| false);
+    let mut is_bindgen_required =
+        is_internal_no_prefix || is_internal_generate || cfg!(feature = "bindgen");
 
     let pregenerated = !is_bindgen_required || is_internal_generate;
 
-    cfg_bindgen_platform!(linux_x86, "linux", "x86", "gnu", pregenerated);
-    cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", "gnu", pregenerated);
-    cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", "gnu", pregenerated);
-    cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", "", pregenerated);
+    cfg_bindgen_platform!(
+        i686_unknown_linux_gnu,
+        "i686-unknown-linux-gnu",
+        pregenerated
+    );
+    cfg_bindgen_platform!(
+        x86_64_unknown_linux_gnu,
+        "x86_64-unknown-linux-gnu",
+        pregenerated
+    );
+    cfg_bindgen_platform!(
+        aarch64_unknown_linux_gnu,
+        "aarch64-unknown-linux-gnu",
+        pregenerated
+    );
+    cfg_bindgen_platform!(
+        x86_64_unknown_linux_musl,
+        "x86_64-unknown-linux-musl",
+        pregenerated
+    );
+    cfg_bindgen_platform!(
+        aarch64_unknown_linux_musl,
+        "aarch64-unknown-linux-musl",
+        pregenerated
+    );
+    cfg_bindgen_platform!(x86_64_apple_darwin, "x86_64-apple-darwin", pregenerated);
+    cfg_bindgen_platform!(aarch64_apple_darwin, "aarch64-apple-darwin", pregenerated);
 
-    if !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
-        emit_rustc_cfg("use_bindgen_generated");
+    if !(i686_unknown_linux_gnu
+        || x86_64_unknown_linux_gnu
+        || aarch64_unknown_linux_gnu
+        || x86_64_unknown_linux_musl
+        || aarch64_unknown_linux_musl
+        || x86_64_apple_darwin
+        || aarch64_apple_darwin)
+    {
         is_bindgen_required = true;
     }
 
     let manifest_dir = env::current_dir().unwrap();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
-    let prefix = prefix_string();
+    let prefix_str = prefix_string();
+    let prefix = if is_internal_no_prefix {
+        None
+    } else {
+        Some(prefix_str)
+    };
     let out_dir_str = env::var("OUT_DIR").unwrap();
     let out_dir = Path::new(out_dir_str.as_str()).to_path_buf();
 
     let builder = CmakeBuilder::new(
         manifest_dir.clone(),
         out_dir.clone(),
-        Some(prefix.clone()),
-        output_lib_type,
+        prefix.clone(),
+        OutputLibType::default(),
     );
 
     builder.check_dependencies().unwrap();
@@ -261,22 +316,26 @@ fn main() {
         #[cfg(feature = "bindgen")]
         {
             let src_bindings_path = Path::new(&manifest_dir).join("src");
-            generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
+            generate_src_bindings(&manifest_dir, prefix, &src_bindings_path);
             bindings_available = true;
         }
     } else if is_bindgen_required {
         #[cfg(any(
             feature = "bindgen",
             not(any(
-                all(target_os = "macos", target_arch = "x86_64"),
-                all(target_os = "linux", target_arch = "x86"),
-                all(target_os = "linux", target_arch = "x86_64"),
-                all(target_os = "linux", target_arch = "aarch64")
+                target = "aarch64-apple-darwin",
+                target = "x86_64-apple-darwin",
+                target = "aarch64-unknown-linux-gnu",
+                target = "i686-unknown-linux-gnu",
+                target = "x86_64-unknown-linux-gnu",
+                target = "aarch64-unknown-linux-musl",
+                target = "x86_64-unknown-linux-musl"
             ))
         ))]
         {
             let gen_bindings_path = Path::new(&env::var("OUT_DIR").unwrap()).join("bindings.rs");
-            generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
+            generate_bindings(&manifest_dir, prefix, &gen_bindings_path);
+            emit_rustc_cfg("use_bindgen_generated");
             bindings_available = true;
         }
     } else {
@@ -303,6 +362,8 @@ fn main() {
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
     println!("cargo:rerun-if-env-changed=AWS_LC_SYS_STATIC");
+    println!("cargo:rerun-if-env-changed=AWS_LC_SYS_INTERNAL_NO_PREFIX");
+    println!("cargo:rerun-if-env-changed=AWS_LC_RUST_INTERNAL_BINDGEN");
 }
 
 fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
@@ -319,7 +380,7 @@ fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
     let include_dir = out_dir.join("include");
     std::fs::create_dir_all(&include_dir).unwrap();
 
-    // iterate over all of the include paths and copy them into the final output
+    // iterate over all the include paths and copy them into the final output
     for path in include_paths {
         for child in std::fs::read_dir(path).into_iter().flatten().flatten() {
             if child.file_type().map_or(false, |t| t.is_file()) {

@@ -24,13 +24,19 @@ macro_rules! platform_binding {
     };
 }
 
-platform_binding!(linux_x86);
+platform_binding!(i686_unknown_linux_gnu);
 
-platform_binding!(linux_x86_64);
+platform_binding!(x86_64_unknown_linux_gnu);
 
-platform_binding!(linux_aarch64);
+platform_binding!(aarch64_unknown_linux_gnu);
 
-platform_binding!(macos_x86_64);
+platform_binding!(x86_64_unknown_linux_musl);
+
+platform_binding!(aarch64_unknown_linux_musl);
+
+platform_binding!(x86_64_apple_darwin);
+
+platform_binding!(aarch64_apple_darwin);
 
 #[cfg(use_bindgen_generated)]
 mod generated {
