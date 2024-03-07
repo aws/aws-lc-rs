@@ -120,10 +120,13 @@ fn test_chacha20_poly1305() {
         "123456789abcdef",
     );
     let in_out = from_hex("123456789abcdef0").unwrap();
+    test_aead_append_within(&config, &in_out).unwrap();
 
     #[cfg(feature = "alloc")]
-    test_aead_separate_in_place(&config, &mut in_out).unwrap();
-    test_aead_append_within(&config, &in_out).unwrap();
+    {
+        let mut in_out = in_out.clone();
+        test_aead_separate_in_place(&config, &mut in_out).unwrap();
+    }
 }
 
 fn test_aead_separate_in_place(
