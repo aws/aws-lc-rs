@@ -12,12 +12,10 @@ use cmake_builder::CmakeBuilder;
 
 #[cfg(any(
     feature = "bindgen",
-    not(any(
-        all(target_os = "macos", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "x86"),
-        all(target_os = "linux", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "aarch64")
-    ))
+    any(
+        not(any(target_os = "macos", target_os = "linux")),
+        not(any(target_arch = "x86_64", target_arch = "aarch64", target_arch = "x86"))
+    )
 ))]
 mod bindgen;
 mod cmake_builder;
@@ -55,21 +53,34 @@ enum OutputLibType {
     Dynamic,
 }
 
+fn env_var_to_bool(name: &str) -> Option<bool> {
+    let build_type_result = env::var(name);
+    if let Ok(env_var_value) = build_type_result {
+        eprintln!("{name}={env_var_value}");
+        // If the environment variable is set, we ignore every other factor.
+        let env_var_value = env_var_value.to_lowercase();
+        if env_var_value.starts_with('0')
+            || env_var_value.starts_with('n')
+            || env_var_value.starts_with("off")
+        {
+            Some(false)
+        } else {
+            // Otherwise, if the variable is set, assume true
+            Some(true)
+        }
+    } else {
+        None
+    }
+}
+
 impl Default for OutputLibType {
     fn default() -> Self {
-        if let Ok(build_type) = env::var("AWS_LC_SYS_STATIC") {
-            eprintln!("AWS_LC_SYS_STATIC={build_type}");
-            // If the environment variable is set, we ignore every other factor.
-            let build_type = build_type.to_lowercase();
-            if build_type.starts_with('0')
-                || build_type.starts_with('n')
-                || build_type.starts_with("off")
-            {
-                // Only dynamic if the value is set and is a "negative" value
-                return OutputLibType::Dynamic;
-            }
+        if Some(false) == env_var_to_bool("AWS_LC_SYS_STATIC") {
+            // Only dynamic if the value is set and is a "negative" value
+            OutputLibType::Dynamic
+        } else {
+            OutputLibType::Static
         }
-        OutputLibType::Static
     }
 }
 
@@ -132,12 +143,10 @@ fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
 
 #[cfg(any(
     feature = "bindgen",
-    not(any(
-        all(target_os = "macos", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "x86"),
-        all(target_os = "linux", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "aarch64")
-    ))
+    any(
+        not(any(target_os = "macos", target_os = "linux")),
+        not(any(target_arch = "x86_64", target_arch = "aarch64", target_arch = "x86"))
+    )
 ))]
 fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf) {
     let options = bindgen::BindingOptions {
@@ -234,9 +243,9 @@ fn main() {
     cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", "gnu", pregenerated);
     cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", "gnu", pregenerated);
     cfg_bindgen_platform!(macos_x86_64, "macos", "x86_64", "", pregenerated);
+    cfg_bindgen_platform!(macos_aarch64, "macos", "aarch64", "", pregenerated);
 
-    if !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64) {
-        emit_rustc_cfg("use_bindgen_generated");
+    if !(linux_x86 || linux_x86_64 || linux_aarch64 || macos_x86_64 || macos_aarch64) {
         is_bindgen_required = true;
     }
 
@@ -267,16 +276,15 @@ fn main() {
     } else if is_bindgen_required {
         #[cfg(any(
             feature = "bindgen",
-            not(any(
-                all(target_os = "macos", target_arch = "x86_64"),
-                all(target_os = "linux", target_arch = "x86"),
-                all(target_os = "linux", target_arch = "x86_64"),
-                all(target_os = "linux", target_arch = "aarch64")
-            ))
+            any(
+                not(any(target_os = "macos", target_os = "linux")),
+                not(any(target_arch = "x86_64", target_arch = "aarch64", target_arch = "x86"))
+            )
         ))]
         {
             let gen_bindings_path = Path::new(&env::var("OUT_DIR").unwrap()).join("bindings.rs");
             generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
+            emit_rustc_cfg("use_bindgen_generated");
             bindings_available = true;
         }
     } else {

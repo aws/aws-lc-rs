@@ -32,6 +32,8 @@ platform_binding!(linux_aarch64);
 
 platform_binding!(macos_x86_64);
 
+platform_binding!(macos_aarch64);
+
 #[cfg(use_bindgen_generated)]
 mod generated {
     #![allow(

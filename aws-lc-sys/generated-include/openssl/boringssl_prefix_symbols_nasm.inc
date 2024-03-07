@@ -3278,6 +3278,7 @@
 %xdefine _beeu_mod_inverse_vartime _ %+ BORINGSSL_PREFIX %+ _beeu_mod_inverse_vartime
 %xdefine _bio_clear_socket_error _ %+ BORINGSSL_PREFIX %+ _bio_clear_socket_error
 %xdefine _bio_errno_should_retry _ %+ BORINGSSL_PREFIX %+ _bio_errno_should_retry
+%xdefine _bio_fd_should_retry _ %+ BORINGSSL_PREFIX %+ _bio_fd_should_retry
 %xdefine _bio_ip_and_port_to_socket_and_addr _ %+ BORINGSSL_PREFIX %+ _bio_ip_and_port_to_socket_and_addr
 %xdefine _bio_sock_error _ %+ BORINGSSL_PREFIX %+ _bio_sock_error
 %xdefine _bio_socket_nbio _ %+ BORINGSSL_PREFIX %+ _bio_socket_nbio
@@ -3904,6 +3905,7 @@
 %xdefine _sk_SSL_CIPHER_call_cmp_func _ %+ BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_call_cmp_func
 %xdefine _sk_SSL_CIPHER_delete _ %+ BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_delete
 %xdefine _sk_SSL_CIPHER_dup _ %+ BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_dup
+%xdefine _sk_SSL_CIPHER_find _ %+ BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_find
 %xdefine _sk_SSL_CIPHER_find_awslc _ %+ BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_find_awslc
 %xdefine _sk_SSL_CIPHER_new_null _ %+ BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_new_null
 %xdefine _sk_SSL_CIPHER_num _ %+ BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_num
@@ -3913,6 +3915,7 @@
 %xdefine _sk_X509_NAME_call_copy_func _ %+ BORINGSSL_PREFIX %+ _sk_X509_NAME_call_copy_func
 %xdefine _sk_X509_NAME_call_free_func _ %+ BORINGSSL_PREFIX %+ _sk_X509_NAME_call_free_func
 %xdefine _sk_X509_NAME_deep_copy _ %+ BORINGSSL_PREFIX %+ _sk_X509_NAME_deep_copy
+%xdefine _sk_X509_NAME_find _ %+ BORINGSSL_PREFIX %+ _sk_X509_NAME_find
 %xdefine _sk_X509_NAME_find_awslc _ %+ BORINGSSL_PREFIX %+ _sk_X509_NAME_find_awslc
 %xdefine _sk_X509_NAME_new _ %+ BORINGSSL_PREFIX %+ _sk_X509_NAME_new
 %xdefine _sk_X509_NAME_new_null _ %+ BORINGSSL_PREFIX %+ _sk_X509_NAME_new_null
@@ -7271,6 +7274,7 @@
 %xdefine beeu_mod_inverse_vartime BORINGSSL_PREFIX %+ _beeu_mod_inverse_vartime
 %xdefine bio_clear_socket_error BORINGSSL_PREFIX %+ _bio_clear_socket_error
 %xdefine bio_errno_should_retry BORINGSSL_PREFIX %+ _bio_errno_should_retry
+%xdefine bio_fd_should_retry BORINGSSL_PREFIX %+ _bio_fd_should_retry
 %xdefine bio_ip_and_port_to_socket_and_addr BORINGSSL_PREFIX %+ _bio_ip_and_port_to_socket_and_addr
 %xdefine bio_sock_error BORINGSSL_PREFIX %+ _bio_sock_error
 %xdefine bio_socket_nbio BORINGSSL_PREFIX %+ _bio_socket_nbio
@@ -7897,6 +7901,7 @@
 %xdefine sk_SSL_CIPHER_call_cmp_func BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_call_cmp_func
 %xdefine sk_SSL_CIPHER_delete BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_delete
 %xdefine sk_SSL_CIPHER_dup BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_dup
+%xdefine sk_SSL_CIPHER_find BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_find
 %xdefine sk_SSL_CIPHER_find_awslc BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_find_awslc
 %xdefine sk_SSL_CIPHER_new_null BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_new_null
 %xdefine sk_SSL_CIPHER_num BORINGSSL_PREFIX %+ _sk_SSL_CIPHER_num
@@ -7906,6 +7911,7 @@
 %xdefine sk_X509_NAME_call_copy_func BORINGSSL_PREFIX %+ _sk_X509_NAME_call_copy_func
 %xdefine sk_X509_NAME_call_free_func BORINGSSL_PREFIX %+ _sk_X509_NAME_call_free_func
 %xdefine sk_X509_NAME_deep_copy BORINGSSL_PREFIX %+ _sk_X509_NAME_deep_copy
+%xdefine sk_X509_NAME_find BORINGSSL_PREFIX %+ _sk_X509_NAME_find
 %xdefine sk_X509_NAME_find_awslc BORINGSSL_PREFIX %+ _sk_X509_NAME_find_awslc
 %xdefine sk_X509_NAME_new BORINGSSL_PREFIX %+ _sk_X509_NAME_new
 %xdefine sk_X509_NAME_new_null BORINGSSL_PREFIX %+ _sk_X509_NAME_new_null
