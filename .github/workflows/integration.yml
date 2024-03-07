@@ -128,7 +128,7 @@ jobs:
       - name: Clean
         run: cargo clean
       - name: Force Linux shared build
-        working-directory: ./aws-lc-rs
+        working-directory: ./${{ matrix.crate }}
         if: ${{ matrix.os == 'ubuntu-latest' }}
         # Doc-tests fail to link with dynamic build
         # See: https://github.com/rust-lang/cargo/issues/8531
