@@ -1098,6 +1098,7 @@ EVP_HPKE_KEY_free
 EVP_HPKE_KEY_generate
 EVP_HPKE_KEY_init
 EVP_HPKE_KEY_kem
+EVP_HPKE_KEY_move
 EVP_HPKE_KEY_new
 EVP_HPKE_KEY_private_key
 EVP_HPKE_KEY_public_key
@@ -1278,6 +1279,7 @@ EVP_aead_xchacha20_poly1305
 EVP_aes_128_cbc
 EVP_aes_128_cbc_hmac_sha1
 EVP_aes_128_cbc_hmac_sha256
+EVP_aes_128_ccm
 EVP_aes_128_cfb
 EVP_aes_128_cfb1
 EVP_aes_128_cfb128
@@ -1287,6 +1289,7 @@ EVP_aes_128_ecb
 EVP_aes_128_gcm
 EVP_aes_128_ofb
 EVP_aes_192_cbc
+EVP_aes_192_ccm
 EVP_aes_192_cfb
 EVP_aes_192_cfb1
 EVP_aes_192_cfb128
@@ -1298,6 +1301,7 @@ EVP_aes_192_ofb
 EVP_aes_256_cbc
 EVP_aes_256_cbc_hmac_sha1
 EVP_aes_256_cbc_hmac_sha256
+EVP_aes_256_ccm
 EVP_aes_256_cfb
 EVP_aes_256_cfb1
 EVP_aes_256_cfb128
@@ -1476,6 +1480,7 @@ OBJ_dup
 OBJ_find_sigid_algs
 OBJ_find_sigid_by_algs
 OBJ_get0_data
+OBJ_get_undef
 OBJ_length
 OBJ_ln2nid
 OBJ_nid2cbb
@@ -1564,6 +1569,7 @@ OCSP_set_max_response_length
 OCSP_single_get0_status
 OPENSSL_add_all_algorithms_conf
 OPENSSL_asprintf
+OPENSSL_calloc
 OPENSSL_cleanse
 OPENSSL_cleanup
 OPENSSL_clear_free
@@ -1635,6 +1641,7 @@ OPENSSL_tm_to_posix
 OPENSSL_tolower
 OPENSSL_vasprintf
 OPENSSL_vasprintf_internal
+OPENSSL_zalloc
 OTHERNAME_free
 OTHERNAME_it
 OTHERNAME_new
@@ -1745,6 +1752,7 @@ PKCS12_free
 PKCS12_get_key_and_certs
 PKCS12_parse
 PKCS12_verify_mac
+PKCS1_MGF1
 PKCS5_PBKDF2_HMAC
 PKCS5_PBKDF2_HMAC_SHA1
 PKCS5_pbe2_decrypt_init
@@ -2392,6 +2400,7 @@ SSL_set1_verify_cert_store
 SSL_set_SSL_CTX
 SSL_set_accept_state
 SSL_set_alpn_protos
+SSL_set_alps_use_new_codepoint
 SSL_set_bio
 SSL_set_cert_cb
 SSL_set_chain_and_key
@@ -2713,6 +2722,8 @@ X509_OBJECT_idx_by_subject
 X509_OBJECT_new
 X509_OBJECT_retrieve_by_subject
 X509_OBJECT_retrieve_match
+X509_OBJECT_set1_X509
+X509_OBJECT_set1_X509_CRL
 X509_OBJECT_up_ref_count
 X509_PKEY_free
 X509_PKEY_new
@@ -2857,6 +2868,7 @@ X509_STORE_get_lookup_crls
 X509_STORE_get_verify
 X509_STORE_get_verify_cb
 X509_STORE_load_locations
+X509_STORE_lock
 X509_STORE_new
 X509_STORE_set1_param
 X509_STORE_set_cert_crl
@@ -2875,6 +2887,7 @@ X509_STORE_set_purpose
 X509_STORE_set_trust
 X509_STORE_set_verify
 X509_STORE_set_verify_cb
+X509_STORE_unlock
 X509_STORE_up_ref
 X509_TRUST_add
 X509_TRUST_cleanup
@@ -3146,10 +3159,11 @@ awslc_api_version_num
 awslc_version_string
 beeu_mod_inverse_vartime
 bio_clear_socket_error
-bio_fd_should_retry
+bio_errno_should_retry
 bio_ip_and_port_to_socket_and_addr
 bio_sock_error
 bio_socket_nbio
+bio_socket_should_retry
 bn_abs_sub_consttime
 bn_add_words
 bn_assert_fits_in_bytes
@@ -3759,7 +3773,7 @@ sk_SRTP_PROTECTION_PROFILE_push
 sk_SSL_CIPHER_call_cmp_func
 sk_SSL_CIPHER_delete
 sk_SSL_CIPHER_dup
-sk_SSL_CIPHER_find
+sk_SSL_CIPHER_find_awslc
 sk_SSL_CIPHER_new_null
 sk_SSL_CIPHER_num
 sk_SSL_CIPHER_push
@@ -3768,7 +3782,7 @@ sk_X509_NAME_call_cmp_func
 sk_X509_NAME_call_copy_func
 sk_X509_NAME_call_free_func
 sk_X509_NAME_deep_copy
-sk_X509_NAME_find
+sk_X509_NAME_find_awslc
 sk_X509_NAME_new
 sk_X509_NAME_new_null
 sk_X509_NAME_num
@@ -3837,6 +3851,8 @@ vpaes_decrypt
 vpaes_encrypt
 vpaes_set_decrypt_key
 vpaes_set_encrypt_key
+wip_do_not_use_rsa_check_key
+wip_do_not_use_rsa_check_key_fips
 x25519_asn1_meth
 x25519_ge_add
 x25519_ge_frombytes_vartime
