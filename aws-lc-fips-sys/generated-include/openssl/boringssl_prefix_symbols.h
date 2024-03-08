@@ -17,7 +17,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_12_4
+#define BORINGSSL_PREFIX aws_lc_fips_0_12_5
 #endif // BORINGSSL_PREFIX
 
 
@@ -1524,6 +1524,7 @@
 #define OCSP_response_status BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OCSP_response_status)
 #define OCSP_single_get0_status BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OCSP_single_get0_status)
 #define OPENSSL_add_all_algorithms_conf BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_add_all_algorithms_conf)
+#define OPENSSL_armcap_P BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_armcap_P)
 #define OPENSSL_asprintf BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_asprintf)
 #define OPENSSL_built_in_curves BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_built_in_curves)
 #define OPENSSL_cleanse BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, OPENSSL_cleanse)

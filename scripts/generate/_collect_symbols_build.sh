@@ -20,11 +20,7 @@ function cmake_build_options() {
 }
 
 function filter_symbols() {
-  if [[ "${GENERATE_FIPS}" -eq 0 ]]; then
-    grep -v "^_\?bignum_" | grep -v "_\?curve25519_x25519" | grep -v "_\?edwards25519_" | grep -v "pqcrystals"
-  else
-    grep -v "^_\?bignum_" | grep -v "_\?curve25519_x25519" | grep -v "_\?edwards25519_" | grep -v "pqcrystals" | grep -v "OPENSSL_armcap_P"
-  fi
+  grep -v "^_\?bignum_" | grep -v "_\?curve25519_x25519" | grep -v "_\?edwards25519_" | grep -v "pqcrystals"
 }
 
 REPO_ROOT=$(git rev-parse --show-toplevel)

@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_12_4
+%define BORINGSSL_PREFIX aws_lc_fips_0_12_5
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -1521,6 +1521,7 @@
 %xdefine _OCSP_response_status _ %+ BORINGSSL_PREFIX %+ _OCSP_response_status
 %xdefine _OCSP_single_get0_status _ %+ BORINGSSL_PREFIX %+ _OCSP_single_get0_status
 %xdefine _OPENSSL_add_all_algorithms_conf _ %+ BORINGSSL_PREFIX %+ _OPENSSL_add_all_algorithms_conf
+%xdefine _OPENSSL_armcap_P _ %+ BORINGSSL_PREFIX %+ _OPENSSL_armcap_P
 %xdefine _OPENSSL_asprintf _ %+ BORINGSSL_PREFIX %+ _OPENSSL_asprintf
 %xdefine _OPENSSL_built_in_curves _ %+ BORINGSSL_PREFIX %+ _OPENSSL_built_in_curves
 %xdefine _OPENSSL_cleanse _ %+ BORINGSSL_PREFIX %+ _OPENSSL_cleanse
@@ -5390,6 +5391,7 @@
 %xdefine OCSP_response_status BORINGSSL_PREFIX %+ _OCSP_response_status
 %xdefine OCSP_single_get0_status BORINGSSL_PREFIX %+ _OCSP_single_get0_status
 %xdefine OPENSSL_add_all_algorithms_conf BORINGSSL_PREFIX %+ _OPENSSL_add_all_algorithms_conf
+%xdefine OPENSSL_armcap_P BORINGSSL_PREFIX %+ _OPENSSL_armcap_P
 %xdefine OPENSSL_asprintf BORINGSSL_PREFIX %+ _OPENSSL_asprintf
 %xdefine OPENSSL_built_in_curves BORINGSSL_PREFIX %+ _OPENSSL_built_in_curves
 %xdefine OPENSSL_cleanse BORINGSSL_PREFIX %+ _OPENSSL_cleanse
