@@ -1494,6 +1494,7 @@ OCSP_response_get1_basic
 OCSP_response_status
 OCSP_single_get0_status
 OPENSSL_add_all_algorithms_conf
+OPENSSL_armcap_P
 OPENSSL_asprintf
 OPENSSL_built_in_curves
 OPENSSL_cleanse

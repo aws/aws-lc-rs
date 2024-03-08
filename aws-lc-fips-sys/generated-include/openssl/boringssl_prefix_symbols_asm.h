@@ -20,7 +20,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_ASM_H
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_12_4
+#define BORINGSSL_PREFIX aws_lc_fips_0_12_5
 #endif // BORINGSSL_PREFIX
 
 // On iOS and macOS, we need to treat assembly symbols differently from other
@@ -1528,6 +1528,7 @@
 #define _OCSP_response_status BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OCSP_response_status)
 #define _OCSP_single_get0_status BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OCSP_single_get0_status)
 #define _OPENSSL_add_all_algorithms_conf BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_add_all_algorithms_conf)
+#define _OPENSSL_armcap_P BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_armcap_P)
 #define _OPENSSL_asprintf BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_asprintf)
 #define _OPENSSL_built_in_curves BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_built_in_curves)
 #define _OPENSSL_cleanse BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, OPENSSL_cleanse)
