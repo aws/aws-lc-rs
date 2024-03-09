@@ -20,11 +20,13 @@ use crate::{
 
 #[cfg(feature = "fips")]
 use aws_lc::RSA_check_fips;
+#[cfg(feature = "ring-io")]
+use aws_lc::RSA_get0_n;
 use aws_lc::{
     EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_generate_key_ex,
-    RSA_generate_key_fips, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new,
-    RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_size,
-    BIGNUM, EVP_PKEY, EVP_PKEY_CTX, RSA,
+    RSA_generate_key_fips, RSA_get0_e, RSA_get0_p, RSA_get0_q, RSA_new, RSA_parse_private_key,
+    RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
+    EVP_PKEY_CTX, RSA,
 };
 
 use mirai_annotations::verify_unreachable;
