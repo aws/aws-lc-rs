@@ -618,6 +618,8 @@
 <a href="#616" id="616">616</a>
 <a href="#617" id="617">617</a>
 <a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -640,11 +642,13 @@
 
 <span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
 </span><span class="kw">use </span>aws_lc::RSA_check_fips;
+<span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
+</span><span class="kw">use </span>aws_lc::RSA_get0_n;
 <span class="kw">use </span>aws_lc::{
     EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_generate_key_ex,
-    RSA_generate_key_fips, RSA_get0_e, RSA_get0_n, RSA_get0_p, RSA_get0_q, RSA_new,
-    RSA_parse_private_key, RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_size,
-    BIGNUM, EVP_PKEY, EVP_PKEY_CTX, RSA,
+    RSA_generate_key_fips, RSA_get0_e, RSA_get0_p, RSA_get0_q, RSA_new, RSA_parse_private_key,
+    RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
+    EVP_PKEY_CTX, RSA,
 };
 
 <span class="kw">use </span>mirai_annotations::verify_unreachable;
