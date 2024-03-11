@@ -15,17 +15,7 @@ publish_options "$@"
 
 pushd "${CRATE_DIR}" &>/dev/null
 
-CRATE_VERSION_PREFIX=$(crate_version_prefix "${CRATE_DIR}")
-CRATE_PREFIX="aws_lc_${CRATE_VERSION_PREFIX}"
-EXPECTED_MACRO_LINE="#define BORINGSSL_PREFIX ${CRATE_PREFIX}"
-PREFIX_INCLUDE_PATH="${CRATE_DIR}"/generated-include/openssl/boringssl_prefix_symbols_asm.h
-
-if ! grep "${EXPECTED_MACRO_LINE}" "${PREFIX_INCLUDE_PATH}"; then
-  echo
-  echo ERROR: Expected prefix macro not found in: "${PREFIX_INCLUDE_PATH}"
-  echo "${EXPECTED_MACRO_LINE}"
-  exit 1
-fi
+sanity_check_sys_crate "${CRATE_DIR}"
 
 run_prepublish_checks -c "${CRATE_NAME}"
 publish_crate "${CRATE_NAME}" ${PUBLISH}

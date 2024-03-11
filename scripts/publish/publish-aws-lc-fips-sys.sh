@@ -16,17 +16,7 @@ publish_options "$@"
 
 pushd "${CRATE_DIR}" &>/dev/null
 
-CRATE_VERSION_PREFIX=$(crate_version_prefix "${CRATE_DIR}")
-CRATE_PREFIX="aws_lc_fips_${CRATE_VERSION_PREFIX}"
-EXPECTED_MACRO_LINE="#define BORINGSSL_PREFIX ${CRATE_PREFIX}"
-PREFIX_INCLUDE_PATH="${CRATE_DIR}"/generated-include/openssl/boringssl_prefix_symbols_asm.h
-
-if ! grep "${EXPECTED_MACRO_LINE}" "${PREFIX_INCLUDE_PATH}"; then
-  echo
-  echo ERROR: Expected prefix macro not found in: "${PREFIX_INCLUDE_PATH}"
-  echo "${EXPECTED_MACRO_LINE}"
-  exit 1
-fi
+sanity_check_sys_crate "${CRATE_DIR}"
 
 cat << HERE > ./aws-lc/go.mod
 module boringssl.googlesource.com/boringssl

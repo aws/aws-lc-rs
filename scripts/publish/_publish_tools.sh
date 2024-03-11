@@ -31,6 +31,34 @@ function crate_version_prefix {
   "${REPO_ROOT}"/scripts/tools/cargo-dig.rs -v | sed -e 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)/\1_\2_\3/'
 }
 
+function sanity_check_sys_crate {
+  local CRATE_DIR="${1}"
+  local CRATE_NAME=$(basename "${CRATE_DIR}")
+  local PREFIX=$(echo "${CRATE_NAME}" | sed -e 's/-/_/g' | sed -e 's/^\(.*\)_sys/\1/')
+
+  local CRATE_VERSION_PREFIX=$(crate_version_prefix "${CRATE_DIR}")
+  local CRATE_PREFIX="${PREFIX}_${CRATE_VERSION_PREFIX}"
+  local EXPECTED_MACRO_LINE="#define BORINGSSL_PREFIX ${CRATE_PREFIX}"
+  local PREFIX_INCLUDE_PATH="${CRATE_DIR}"/generated-include/openssl/boringssl_prefix_symbols_asm.h
+  local EXPECTED_LINKS_LINE="links = \"${CRATE_PREFIX}\""
+
+  if ! grep "${EXPECTED_LINKS_LINE}" "${CRATE_DIR}/Cargo.toml"; then
+    echo
+    echo ERROR: Expected 'links' line not found in: "${CRATE_DIR}/Cargo.toml"
+    echo "${EXPECTED_LINKS_LINE}"
+    exit 1
+  fi
+
+  if ! grep "${EXPECTED_MACRO_LINE}" "${PREFIX_INCLUDE_PATH}"; then
+    echo
+    echo ERROR: Expected prefix macro not found in: "${PREFIX_INCLUDE_PATH}"
+    echo "${EXPECTED_MACRO_LINE}"
+    exit 1
+  fi
+
+  echo Sanity check: SUCCESS
+}
+
 function run_prepublish_checks {
   local SCRIPT_DIR
   SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
