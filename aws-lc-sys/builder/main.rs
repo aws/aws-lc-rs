@@ -62,7 +62,7 @@ fn cargo_env<N: AsRef<str>>(name: N) -> String {
 }
 fn option_env<N: AsRef<str>>(name: N) -> Option<String> {
     let name = name.as_ref();
-    eprintln!("cargo:rerun-if-env-changed={}", name);
+    eprintln!("cargo:rerun-if-env-changed={name}");
     std::env::var(name).ok()
 }
 
@@ -357,7 +357,8 @@ fn main() {
 
     assert!(
         bindings_available,
-        "aws-lc-sys build failed. Please enable the 'bindgen' feature on aws-lc-rs or aws-lc-sys"
+        "aws-lc-sys build failed. Please enable the 'bindgen' feature on aws-lc-rs or aws-lc-sys.\
+        For more information, see the aws-lc-rs User Guide: https://aws.github.io/aws-lc-rs/index.html"
     );
     builder.build().unwrap();
 

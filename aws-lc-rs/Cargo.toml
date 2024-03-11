@@ -67,6 +67,8 @@ regex = "~1.9.6"
 regex-automata = "~0.3.9"
 # Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
 regex-syntax = "~0.7.5"
+# Pinned to avoid build failure in older versions
+proc-macro2 = "1.0.60"
 
 [package.metadata.cargo-udeps.ignore]
-development = ["which", "home", "regex", "regex-automata", "regex-syntax"]
+development = ["which", "home", "regex", "regex-automata", "regex-syntax", "proc-macro2"]
