@@ -55,8 +55,8 @@ pushd "${REPO_ROOT}" &>/dev/null
 pids=''
 if [[ "${GENERATE_FIPS}" -eq 0 ]]; then
   ## macOS symbols
-  IS_MACOS_HOST=$(check_running_on_macos [[ $IGNORE_MACOS -eq 0 ]])
-  if [[ $IS_MACOS_HOST -eq 0 ]]; then
+  IS_MACOS_HOST=$(check_running_on_macos ${IGNORE_MACOS})
+  if [[ $IS_MACOS_HOST -eq 1 ]]; then
     ${COLLECT_SYMBOLS_SCRIPT} -c "${RELATIVE_CRATE_PATH}" &
   else
     echo Script is not running on macOS.
