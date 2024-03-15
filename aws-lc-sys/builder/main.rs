@@ -8,6 +8,7 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use crate::cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;
 
 #[cfg(any(
@@ -20,6 +21,7 @@ use cmake_builder::CmakeBuilder;
     ))
 ))]
 mod bindgen;
+mod cc_builder;
 mod cmake_builder;
 
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
@@ -55,21 +57,34 @@ enum OutputLibType {
     Dynamic,
 }
 
+fn env_var_to_bool(name: &str) -> Option<bool> {
+    let build_type_result = env::var(name);
+    if let Ok(env_var_value) = build_type_result {
+        eprintln!("{name}={env_var_value}");
+        // If the environment variable is set, we ignore every other factor.
+        let env_var_value = env_var_value.to_lowercase();
+        if env_var_value.starts_with('0')
+            || env_var_value.starts_with('n')
+            || env_var_value.starts_with("off")
+        {
+            Some(false)
+        } else {
+            // Otherwise, if the variable is set, assume true
+            Some(true)
+        }
+    } else {
+        None
+    }
+}
+
 impl Default for OutputLibType {
     fn default() -> Self {
-        if let Ok(build_type) = env::var("AWS_LC_SYS_STATIC") {
-            eprintln!("AWS_LC_SYS_STATIC={build_type}");
-            // If the environment variable is set, we ignore every other factor.
-            let build_type = build_type.to_lowercase();
-            if build_type.starts_with('0')
-                || build_type.starts_with('n')
-                || build_type.starts_with("off")
-            {
-                // Only dynamic if the value is set and is a "negative" value
-                return OutputLibType::Dynamic;
-            }
+        if Some(false) == env_var_to_bool("AWS_LC_SYS_STATIC") {
+            // Only dynamic if the value is set and is a "negative" value
+            OutputLibType::Dynamic
+        } else {
+            OutputLibType::Static
         }
-        OutputLibType::Static
     }
 }
 
@@ -202,6 +217,45 @@ fn target() -> String {
     env::var("TARGET").unwrap()
 }
 
+fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> Box<dyn Builder> {
+    let cmake_builder_builder = || {
+        Box::new(CmakeBuilder::new(
+            manifest_dir.to_path_buf(),
+            out_dir.to_path_buf(),
+            prefix.clone(),
+            OutputLibType::default(),
+        ))
+    };
+
+    let cc_builder_builder = || {
+        Box::new(CcBuilder::new(
+            manifest_dir.to_path_buf(),
+            out_dir.to_path_buf(),
+            prefix.clone(),
+            OutputLibType::default(),
+        ))
+    };
+
+    if let Some(val) = env_var_to_bool("AWS_LC_SYS_CMAKE_BUILDER") {
+        let builder: Box<dyn Builder> = if val {
+            cmake_builder_builder()
+        } else {
+            cc_builder_builder()
+        };
+        builder.check_dependencies().unwrap();
+        builder
+    } else {
+        let cc_builder = cc_builder_builder();
+        if cc_builder.check_dependencies().is_ok() {
+            cc_builder
+        } else {
+            let cmake_builder = cmake_builder_builder();
+            cmake_builder.check_dependencies().unwrap();
+            cmake_builder
+        }
+    }
+}
+
 macro_rules! cfg_bindgen_platform {
     ($binding:ident, $os:literal, $arch:literal, $env:literal, $additional:expr) => {
         let $binding = {
@@ -222,7 +276,6 @@ trait Builder {
 
 fn main() {
     let mut is_bindgen_required = cfg!(feature = "bindgen");
-    let output_lib_type = OutputLibType::default();
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
         .unwrap_or_else(|_| String::from("0"))
@@ -245,15 +298,7 @@ fn main() {
     let prefix = prefix_string();
     let out_dir_str = env::var("OUT_DIR").unwrap();
     let out_dir = Path::new(out_dir_str.as_str()).to_path_buf();
-
-    let builder = CmakeBuilder::new(
-        manifest_dir.clone(),
-        out_dir.clone(),
-        Some(prefix.clone()),
-        output_lib_type,
-    );
-
-    builder.check_dependencies().unwrap();
+    let builder = get_builder(&Some(prefix.clone()), &manifest_dir, &out_dir);
 
     #[allow(unused_assignments)]
     let mut bindings_available = false;
@@ -303,6 +348,7 @@ fn main() {
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
     println!("cargo:rerun-if-env-changed=AWS_LC_SYS_STATIC");
+    println!("cargo:rerun-if-env-changed=AWS_LC_SYS_CMAKE_BUILDER");
 }
 
 fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {

@@ -67,6 +67,11 @@ regex = "~1.9.6"
 regex-automata = "~0.3.9"
 # Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
 regex-syntax = "~0.7.5"
+# Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.64.0
+serde_spanned = "=0.6.1"
+# Pinned dependency to preserve MSRV: ???  <= rust-version < 1.63.0
+jobserver = "=0.1.26"
+
 
 [package.metadata.cargo-udeps.ignore]
-development = [ "which", "home", "regex", "regex-automata", "regex-syntax"]
+development = ["which", "home", "regex", "regex-automata", "regex-syntax", "serde_spanned", "jobserver"]

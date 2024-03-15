@@ -1,0 +1,42 @@
+name: Auto-generate CC Build TOML
+
+on:
+  push:
+    branches:
+      - 'generate/aws-lc-sys-*'
+
+jobs:
+  generate-and-commit:
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install current Bash on macOS
+        if: runner.os == 'macOS'
+        run: brew install bash coreutils
+      - name: Run Generate for ${{ matrix.os }}
+        run: |
+          ./scripts/build/generate_build_toml.sh
+      - name: Run Generate for aarch64-unknown-linux-gnu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          ./scripts/build/generate_build_toml.sh -t aarch64-unknown-linux-gnu
+      - name: Commit & Push changes
+        env:
+          GIT_AUTHOR_NAME: "cc-toml-generator"
+          GIT_AUTHOR_EMAIL: "aws-lc-github-bot@amazon.com"
+          GIT_COMMITTER_NAME: "cc-toml-generator"
+          GIT_COMMITTER_EMAIL: "aws-lc-github-bot@amazon.com"
+        run: |
+          git add .
+          git commit --allow-empty -m "CC toml from ${{ matrix.os }}"
+          git pull --rebase
+          git push

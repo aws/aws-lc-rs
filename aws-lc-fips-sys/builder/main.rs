@@ -53,24 +53,37 @@ enum OutputLibType {
     Dynamic,
 }
 
+fn env_var_to_bool(name: &str) -> Option<bool> {
+    let build_type_result = env::var(name);
+    if let Ok(env_var_value) = build_type_result {
+        eprintln!("{name}={env_var_value}");
+        // If the environment variable is set, we ignore every other factor.
+        let env_var_value = env_var_value.to_lowercase();
+        if env_var_value.starts_with('0')
+            || env_var_value.starts_with('n')
+            || env_var_value.starts_with("off")
+        {
+            Some(false)
+        } else {
+            // Otherwise, if the variable is set, assume true
+            Some(true)
+        }
+    } else {
+        None
+    }
+}
+
 impl Default for OutputLibType {
     fn default() -> Self {
-        if let Ok(build_type) = env::var("AWS_LC_FIPS_SYS_STATIC") {
-            eprintln!("AWS_LC_FIPS_SYS_STATIC={build_type}");
-            // If the environment variable is set, we ignore every other factor.
-            let build_type = build_type.to_lowercase();
-            if build_type.starts_with('0')
-                || build_type.starts_with('n')
-                || build_type.starts_with("off")
-            {
-                // Only dynamic if the value is set and is a "negative" value
-                return OutputLibType::Dynamic;
+        if let Some(val) = env_var_to_bool("AWS_LC_FIPS_SYS_STATIC") {
+            if val {
+                OutputLibType::Static
+            } else {
+                OutputLibType::Dynamic
             }
-
-            return OutputLibType::Static;
-        }
-
-        if target_os() == "linux" && (target_arch() == "x86_64" || target_arch() == "aarch64") {
+        } else if target_os() == "linux"
+            && (target_arch() == "x86_64" || target_arch() == "aarch64")
+        {
             OutputLibType::Static
         } else {
             OutputLibType::Dynamic
@@ -196,7 +209,6 @@ fn target_env() -> String {
     env::var("CARGO_CFG_TARGET_ENV").unwrap()
 }
 
-#[allow(unused)]
 fn target_vendor() -> String {
     env::var("CARGO_CFG_TARGET_VENDOR").unwrap()
 }
@@ -204,6 +216,21 @@ fn target_vendor() -> String {
 #[allow(unused)]
 fn target() -> String {
     env::var("TARGET").unwrap()
+}
+
+fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> Box<dyn Builder> {
+    let cmake_builder_builder = || {
+        Box::new(CmakeBuilder::new(
+            manifest_dir.to_path_buf(),
+            out_dir.to_path_buf(),
+            prefix.clone(),
+            OutputLibType::default(),
+        ))
+    };
+
+    let cmake_builder = cmake_builder_builder();
+    cmake_builder.check_dependencies().unwrap();
+    cmake_builder
 }
 
 macro_rules! cfg_bindgen_platform {
@@ -226,7 +253,6 @@ trait Builder {
 
 fn main() {
     let mut is_bindgen_required = cfg!(feature = "bindgen");
-    let output_lib_type = OutputLibType::default();
 
     let is_internal_generate = env::var("AWS_LC_RUST_INTERNAL_BINDGEN")
         .unwrap_or_else(|_| String::from("0"))
@@ -247,15 +273,7 @@ fn main() {
     let prefix = prefix_string();
     let out_dir_str = env::var("OUT_DIR").unwrap();
     let out_dir = Path::new(out_dir_str.as_str()).to_path_buf();
-
-    let builder = CmakeBuilder::new(
-        manifest_dir.clone(),
-        out_dir.clone(),
-        Some(prefix.clone()),
-        output_lib_type,
-    );
-
-    builder.check_dependencies().unwrap();
+    let builder = get_builder(&Some(prefix.clone()), &manifest_dir, &out_dir);
 
     #[allow(unused_assignments)]
     let mut bindings_available = false;
@@ -285,7 +303,7 @@ fn main() {
 
     assert!(
         bindings_available,
-        "aws-lc-fip-sys build failed. Please enable the 'bindgen' feature on aws-lc-rs or aws-lc-fips-sys"
+        "aws-lc-fips-sys build failed. Please enable the 'bindgen' feature on aws-lc-rs or aws-lc-fips-sys"
     );
     builder.build().unwrap();
 

@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
-use crate::{target, target_arch, target_os, target_vendor, test_command, OutputLibType};
+use crate::{
+    env_var_to_bool, target, target_arch, target_os, target_vendor, test_command, OutputLibType,
+};
 use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
@@ -110,6 +112,16 @@ impl CmakeBuilder {
             }
             if target_arch().trim() == "aarch64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
+            }
+        }
+        if Some(true) == env_var_to_bool("AWS_LC_SYS_CC_TOML_GENERATOR") {
+            if target_vendor() == "apple" {
+                cmake_cfg.define(
+                    "CMAKE_C_FLAGS",
+                    "-ginline-line-tables -grecord-gcc-switches",
+                );
+            } else if target_os() == "linux" {
+                cmake_cfg.define("CMAKE_C_FLAGS", "-grecord-gcc-switches");
             }
         }
 

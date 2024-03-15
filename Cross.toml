@@ -1,0 +1,4 @@
+[build.env]
+passthrough = [
+    "AWS_LC_SYS_CC_TOML_GENERATOR", "AWS_LC_SYS_CMAKE_BUILDER", "AWS_LC_RUST_INTERNAL_BINDGEN"
+]
