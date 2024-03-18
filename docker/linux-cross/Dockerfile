@@ -1,5 +1,14 @@
 ARG CROSS_BASE_IMAGE
 FROM $CROSS_BASE_IMAGE
 
+ARG DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && \
-    apt-get install --assume-yes --no-install-recommends libclang-dev clang
+    apt-get install --assume-yes --no-install-recommends  software-properties-common && \
+    add-apt-repository --yes ppa:longsleep/golang-backports && \
+    apt-get update && \
+    apt-get install --assume-yes --no-install-recommends build-essential cmake golang-go && \
+    git config --global --add safe.directory '*' && \
+    rm -rf /tmp/*
+
+ENV GOCACHE=/tmp

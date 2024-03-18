@@ -1,4 +1,4 @@
-name: Auto-generate Bindings
+name: Auto-generate aws-lc-sys Bindings
 
 on:
   push:
@@ -38,7 +38,7 @@ jobs:
           cargo test -p aws-lc-sys --features bindgen,ssl
       - name: Collect symbols
         run: |
-          ./scripts/build/collect_symbols.sh
+          ./scripts/build/collect_symbols.sh -c aws-lc-sys
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols from ${{ matrix.os }}"
   collect-cross-symbols-and-commit:
@@ -66,7 +66,7 @@ jobs:
           cross test -p aws-lc-sys --features bindgen,ssl --target ${{ matrix.target }}
       - name: Collect symbols
         run: |
-          ./scripts/build/collect_symbols.sh -t ${{ matrix.target }}
+          ./scripts/build/collect_symbols.sh -c aws-lc-sys -t ${{ matrix.target }}
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols for ${{ matrix.target }}"
   generate-headers-and-commit:
@@ -94,7 +94,6 @@ jobs:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 1
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-12, macos-13-xlarge ]

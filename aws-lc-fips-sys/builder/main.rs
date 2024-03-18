@@ -12,8 +12,12 @@ use cmake_builder::CmakeBuilder;
 #[cfg(any(
     feature = "bindgen",
     not(any(
-        all(target_os = "linux", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "aarch64")
+        target = "aarch64-apple-darwin",
+        target = "x86_64-apple-darwin",
+        target = "aarch64-unknown-linux-gnu",
+        target = "x86_64-unknown-linux-gnu",
+        target = "aarch64-unknown-linux-musl",
+        target = "x86_64-unknown-linux-musl"
     ))
 ))]
 mod bindgen;
@@ -131,17 +135,13 @@ fn prefix_string() -> String {
 
 #[cfg(feature = "bindgen")]
 fn target_platform_prefix(name: &str) -> String {
-    format!(
-        "{}_{}_{}",
-        target_os(),
-        target_arch().replace('-', "_"),
-        name
-    )
+    format!("{}_{}", target().replace('-', "_"), name)
 }
 
 pub(crate) struct TestCommandResult {
     output: Box<str>,
     status: bool,
+    executed: bool,
 }
 
 fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
@@ -152,22 +152,28 @@ fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
         return TestCommandResult {
             output,
             status: result.status.success(),
+            executed: true,
         };
     }
     TestCommandResult {
         output: String::new().into_boxed_str(),
         status: false,
+        executed: false,
     }
 }
 
 #[cfg(any(
     feature = "bindgen",
     not(any(
-        all(target_os = "linux", target_arch = "x86_64"),
-        all(target_os = "linux", target_arch = "aarch64")
+        target = "aarch64-apple-darwin",
+        target = "x86_64-apple-darwin",
+        target = "aarch64-unknown-linux-gnu",
+        target = "x86_64-unknown-linux-gnu",
+        target = "aarch64-unknown-linux-musl",
+        target = "x86_64-unknown-linux-musl"
     ))
 ))]
-fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf) {
+fn generate_bindings(manifest_dir: &Path, prefix: Option<String>, bindings_path: &PathBuf) {
     let options = bindgen::BindingOptions {
         build_prefix: prefix,
         include_ssl: cfg!(feature = "ssl"),
@@ -182,11 +188,11 @@ fn generate_bindings(manifest_dir: &Path, prefix: &str, bindings_path: &PathBuf)
 }
 
 #[cfg(feature = "bindgen")]
-fn generate_src_bindings(manifest_dir: &Path, prefix: &str, src_bindings_path: &Path) {
+fn generate_src_bindings(manifest_dir: &Path, prefix: Option<String>, src_bindings_path: &Path) {
     bindgen::generate_bindings(
         manifest_dir,
         &bindgen::BindingOptions {
-            build_prefix: prefix,
+            build_prefix: prefix.clone(),
             include_ssl: false,
             ..Default::default()
         },
@@ -207,6 +213,7 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &str, src_bindings_path: &
 }
 
 fn emit_rustc_cfg(cfg: &str) {
+    let cfg = cfg.replace('-', "_");
     println!("cargo:rustc-cfg={cfg}");
 }
 
@@ -218,6 +225,7 @@ fn target_arch() -> String {
     cargo_env("CARGO_CFG_TARGET_ARCH")
 }
 
+#[allow(unused)]
 fn target_env() -> String {
     cargo_env("CARGO_CFG_TARGET_ENV")
 }
@@ -241,11 +249,11 @@ fn current_dir() -> PathBuf {
 }
 
 macro_rules! cfg_bindgen_platform {
-    ($binding:ident, $os:literal, $arch:literal, $env:literal, $additional:expr) => {
+    ($binding:ident, $target:literal, $additional:expr) => {
         let $binding = {
-            (target_os() == $os && target_arch() == $arch && target_env() == $env && $additional)
+            (target() == $target && $additional)
                 .then(|| {
-                    emit_rustc_cfg(concat!($os, "_", $arch));
+                    emit_rustc_cfg(&$target.replace('-', "_"));
                     true
                 })
                 .unwrap_or(false)
@@ -258,30 +266,63 @@ trait Builder {
     fn build(&self) -> Result<(), String>;
 }
 
+#[allow(clippy::too_many_lines)]
 fn main() {
-    let mut is_bindgen_required = cfg!(feature = "bindgen");
-    let output_lib_type = OutputLibType::default();
-
+    let is_internal_no_prefix =
+        env_var_to_bool("AWS_LC_FIPS_SYS_INTERNAL_NO_PREFIX").unwrap_or(false);
     let is_internal_generate = env_var_to_bool("AWS_LC_RUST_INTERNAL_BINDGEN").unwrap_or(false);
+    let mut is_bindgen_required =
+        is_internal_no_prefix || is_internal_generate || cfg!(feature = "bindgen");
 
     let pregenerated = !is_bindgen_required || is_internal_generate;
 
-    cfg_bindgen_platform!(linux_x86_64, "linux", "x86_64", "gnu", pregenerated);
-    cfg_bindgen_platform!(linux_aarch64, "linux", "aarch64", "gnu", pregenerated);
+    cfg_bindgen_platform!(
+        x86_64_unknown_linux_gnu,
+        "x86_64-unknown-linux-gnu",
+        pregenerated
+    );
+    cfg_bindgen_platform!(
+        aarch64_unknown_linux_gnu,
+        "aarch64-unknown-linux-gnu",
+        pregenerated
+    );
+    cfg_bindgen_platform!(
+        x86_64_unknown_linux_musl,
+        "x86_64-unknown-linux-musl",
+        pregenerated
+    );
+    cfg_bindgen_platform!(
+        aarch64_unknown_linux_musl,
+        "aarch64-unknown-linux-musl",
+        pregenerated
+    );
+    cfg_bindgen_platform!(x86_64_apple_darwin, "x86_64-apple-darwin", pregenerated);
+    cfg_bindgen_platform!(aarch64_apple_darwin, "aarch64-apple-darwin", pregenerated);
 
-    if !(linux_x86_64 || linux_aarch64) {
+    if !(x86_64_unknown_linux_gnu
+        || aarch64_unknown_linux_gnu
+        || x86_64_unknown_linux_musl
+        || aarch64_unknown_linux_musl
+        || x86_64_apple_darwin
+        || aarch64_apple_darwin)
+    {
         is_bindgen_required = true;
     }
 
     let manifest_dir = current_dir();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
-    let prefix = prefix_string();
+    let prefix_str = prefix_string();
+    let prefix = if is_internal_no_prefix {
+        None
+    } else {
+        Some(prefix_str)
+    };
 
     let builder = CmakeBuilder::new(
         manifest_dir.clone(),
         out_dir(),
-        Some(prefix.clone()),
-        output_lib_type,
+        prefix.clone(),
+        OutputLibType::default(),
     );
 
     builder.check_dependencies().unwrap();
@@ -292,20 +333,24 @@ fn main() {
         #[cfg(feature = "bindgen")]
         {
             let src_bindings_path = Path::new(&manifest_dir).join("src");
-            generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
+            generate_src_bindings(&manifest_dir, prefix, &src_bindings_path);
             bindings_available = true;
         }
     } else if is_bindgen_required {
         #[cfg(any(
             feature = "bindgen",
             not(any(
-                all(target_os = "linux", target_arch = "x86_64"),
-                all(target_os = "linux", target_arch = "aarch64")
+                target = "aarch64-apple-darwin",
+                target = "x86_64-apple-darwin",
+                target = "aarch64-unknown-linux-gnu",
+                target = "x86_64-unknown-linux-gnu",
+                target = "aarch64-unknown-linux-musl",
+                target = "x86_64-unknown-linux-musl"
             ))
         ))]
         {
             let gen_bindings_path = out_dir().join("bindings.rs");
-            generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
+            generate_bindings(&manifest_dir, prefix, &gen_bindings_path);
             emit_rustc_cfg("use_bindgen_generated");
             bindings_available = true;
         }

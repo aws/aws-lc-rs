@@ -10,10 +10,12 @@ git commit --allow-empty -m "${1}"
 
 set +e
 
-MAX_ITERS=5
+MAX_ITERS=10
 COUNTER=0
 PUSH_SUCCESS=0
+MAX_WAIT=7
 while [[ ${PUSH_SUCCESS} -eq 0 && ${COUNTER} -lt ${MAX_ITERS} ]]; do
+  sleep $((RANDOM % MAX_WAIT))
   git pull --rebase
   git push
   if [ ${?} -eq 0 ]; then

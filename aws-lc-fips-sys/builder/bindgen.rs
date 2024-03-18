@@ -39,7 +39,7 @@ fn add_header_include_path(args: &mut Vec<String>, path: String) {
     args.push(path);
 }
 
-fn prepare_clang_args(manifest_dir: &Path) -> Vec<String> {
+fn prepare_clang_args(manifest_dir: &Path, options: &BindingOptions) -> Vec<String> {
     let mut clang_args: Vec<String> = Vec::new();
 
     add_header_include_path(
@@ -47,12 +47,14 @@ fn prepare_clang_args(manifest_dir: &Path) -> Vec<String> {
         get_rust_include_path(manifest_dir).display().to_string(),
     );
 
-    add_header_include_path(
-        &mut clang_args,
-        get_generated_include_path(manifest_dir)
-            .display()
-            .to_string(),
-    );
+    if options.build_prefix.is_some() {
+        add_header_include_path(
+            &mut clang_args,
+            get_generated_include_path(manifest_dir)
+                .display()
+                .to_string(),
+        );
+    }
 
     add_header_include_path(
         &mut clang_args,
@@ -96,14 +98,14 @@ const PRELUDE: &str = r"
 ";
 
 #[derive(Default)]
-pub(crate) struct BindingOptions<'a> {
-    pub build_prefix: &'a str,
+pub(crate) struct BindingOptions {
+    pub build_prefix: Option<String>,
     pub include_ssl: bool,
     pub disable_prelude: bool,
 }
 
-fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions<'_>) -> bindgen::Builder {
-    let clang_args = prepare_clang_args(manifest_dir);
+fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bindgen::Builder {
+    let clang_args = prepare_clang_args(manifest_dir, options);
 
     let mut builder = bindgen::Builder::default()
         .derive_copy(true)
@@ -136,15 +138,17 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions<'_>) -
     if options.include_ssl {
         builder = builder.clang_arg("-DAWS_LC_RUST_INCLUDE_SSL");
     }
-
-    builder = builder.parse_callbacks(Box::new(StripPrefixCallback::new(options.build_prefix)));
+    if let Some(prefix) = &options.build_prefix {
+        let callbacks = StripPrefixCallback::new(prefix.as_str());
+        builder = builder.parse_callbacks(Box::new(callbacks));
+    }
 
     builder
 }
 
 pub(crate) fn generate_bindings(
     manifest_dir: &Path,
-    options: &BindingOptions<'_>,
+    options: &BindingOptions,
 ) -> bindgen::Bindings {
     prepare_bindings_builder(manifest_dir, options)
         .generate()
