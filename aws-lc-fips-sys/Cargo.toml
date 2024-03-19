@@ -71,7 +71,7 @@ bindgen = { version = "0.69.2", optional = true }
 bindgen = { version = "0.69.2" }
 
 [dependencies]
-libc = "0.2"
+libc = "0.2.121"
 paste = "1.0.11"
 
 [package.metadata.aws-lc-fips-sys]

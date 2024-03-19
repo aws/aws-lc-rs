@@ -127,7 +127,7 @@ mod tests {
         ) {
             for _ in range {
                 let new_k = x25519(k, u);
-                *u = k.clone();
+                u.clone_from(k);
                 *k = new_k;
             }
             assert_eq!(&from_hex(expected_result), k);

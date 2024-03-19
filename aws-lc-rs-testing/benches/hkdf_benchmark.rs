@@ -50,7 +50,7 @@ macro_rules! benchmark_hkdf {
             }
 
             /// The extracted PRK length we expand from will always be the output length of the
-            /// used digest algorithm. The len defined for My() is only used to define length of
+            /// used digest algorithm. The len defined for `My()` is only used to define length of
             /// the expected buffer output.
             pub fn run_hkdf_expand(prk: &hkdf::Prk, info_value: &[&[u8]]) {
                 let _result: My<Vec<u8>> =
