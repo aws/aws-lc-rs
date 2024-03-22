@@ -28,6 +28,7 @@ jobs:
         os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
         args:
           - --release --all-targets --features fips,unstable
+          - --profile release-lto --all-targets --features fips,unstable
           - --no-default-features --features fips,unstable
           - --no-default-features --features fips,ring-io,unstable
           - --no-default-features --features fips,ring-sig-verify,unstable

@@ -54,11 +54,9 @@ jobs:
           cargo update -p clap --precise 4.4.18
       - name: Cross-compilation
         if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'i686-unknown-linux-gnu' || matrix.target == 'x86_64-unknown-linux-musl' || matrix.target == 'aarch64-unknown-linux-musl'}}
-        working-directory: ./aws-lc-rs
-        run: cross test --features unstable --target ${{ matrix.target }}
+        run: cross test -p aws-lc-rs --features unstable --target ${{ matrix.target }}
       - name: Cross-compilation w/ bindgen
-        working-directory: ./aws-lc-rs
-        run: cross test --release --features bindgen,unstable --target ${{ matrix.target }}
+        run: cross test -p aws-lc-rs --release --features bindgen,unstable --target ${{ matrix.target }}
 
   aws-lc-rs-platform-build:
     if: github.repository == 'aws/aws-lc-rs'

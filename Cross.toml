@@ -1,4 +1,8 @@
+[build]
+dockerfile = "./docker/linux-cross/Dockerfile"
+
 [build.env]
 passthrough = [
-    "AWS_LC_SYS_INTERNAL_NO_PREFIX", "AWS_LC_RUST_INTERNAL_BINDGEN"
+    "AWS_LC_SYS_INTERNAL_NO_PREFIX", "AWS_LC_RUST_INTERNAL_BINDGEN", "AWS_LC_FIPS_SYS_INTERNAL_NO_PREFIX", "GOPROXY",
+    "AWS_LC_FIPS_SYS_STATIC", "AWS_LC_SYS_STATIC"
 ]

@@ -20,7 +20,11 @@ fn test_perl_command() -> bool {
 }
 
 fn test_go_command() -> bool {
-    test_command("go".as_ref(), &["version".as_ref()]).status
+    let result = test_command("go".as_ref(), &["version".as_ref()]);
+    if !result.status && result.executed {
+        eprintln!("Go stdout:\n--------\n{}\n--------", result.output);
+    }
+    result.status
 }
 
 fn test_ninja_command() -> bool {
