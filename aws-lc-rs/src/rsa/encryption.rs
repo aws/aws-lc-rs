@@ -193,10 +193,7 @@ impl PrivateDecryptingKey {
     /// # Sizing `output`
     /// For `OAEP_SHA1_MGF1SHA1`, `OAEP_SHA256_MGF1SHA256`, `OAEP_SHA384_MGF1SHA384`, `OAEP_SHA512_MGF1SHA512` a safe
     /// `output` length is the key size in bytes. The RSA key size in bytes can be retrieved using [`Self::key_size`].
-    /// The actual output length will at most `rsaKeySizeBytes - (2 * hashLengthBytes) - 2`.
-    ///
-    /// # Errors
-    /// * `Unspecified` for any error that occurs while decrypting `ciphertext`.
+    /// The actual output length will at most `rsaKeySizeBytes - (2 * oaepHashLengthBytes) - 2`.
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs while decrypting `ciphertext`.
