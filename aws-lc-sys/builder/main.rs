@@ -283,6 +283,10 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
         };
         builder.check_dependencies().unwrap();
         return builder;
+    } else if is_no_asm() {
+        let builder = cmake_builder_builder();
+        builder.check_dependencies().unwrap();
+        return builder;
     } else if !is_bindgen_required() {
         let cc_builder = cc_builder_builder();
         if cc_builder.check_dependencies().is_ok() {
@@ -303,6 +307,7 @@ static mut PREGENERATED: bool = false;
 static mut AWS_LC_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_SYS_INTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_EXTERNAL_BINDGEN: bool = false;
+static mut AWS_LC_SYS_NO_ASM: bool = false;
 
 fn initialize() {
     unsafe {
@@ -311,6 +316,7 @@ fn initialize() {
             env_var_to_bool("AWS_LC_SYS_INTERNAL_BINDGEN").unwrap_or(false);
         AWS_LC_SYS_EXTERNAL_BINDGEN =
             env_var_to_bool("AWS_LC_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
+        AWS_LC_SYS_NO_ASM = env_var_to_bool("AWS_LC_SYS_NO_ASM").unwrap_or(false);
     }
 
     if !is_external_bindgen() && (is_internal_bindgen() || !has_bindgen_feature()) {
@@ -352,6 +358,10 @@ fn is_internal_bindgen() -> bool {
 
 fn is_external_bindgen() -> bool {
     unsafe { AWS_LC_SYS_EXTERNAL_BINDGEN }
+}
+
+fn is_no_asm() -> bool {
+    unsafe { AWS_LC_SYS_NO_ASM }
 }
 
 fn has_bindgen_feature() -> bool {

@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
-use crate::{execute_command, target, target_arch, target_os, target_vendor, OutputLibType};
+use crate::{
+    cargo_env, execute_command, is_no_asm, target, target_arch, target_os, target_vendor,
+    OutputLibType,
+};
 use std::collections::HashMap;
 use std::env;
 use std::ffi::OsStr;
@@ -84,10 +87,18 @@ impl CmakeBuilder {
         } else {
             cmake_cfg.define("BUILD_SHARED_LIBS", "0");
         }
+        let opt_level = cargo_env("OPT_LEVEL");
 
-        let opt_level = env::var("OPT_LEVEL").unwrap_or_else(|_| "0".to_string());
-        if opt_level.ne("0") {
-            if opt_level.eq("1") || opt_level.eq("2") {
+        if is_no_asm() {
+            if opt_level == "0" {
+                cmake_cfg.define("OPENSSL_NO_ASM", "1");
+            } else {
+                panic!("AWS_LC_FIPS_SYS_NO_ASM only allowed for debug builds!")
+            }
+        }
+
+        if opt_level != "0" {
+            if opt_level == "1" || opt_level == "2" {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
             } else {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
@@ -192,7 +203,11 @@ impl crate::Builder for CmakeBuilder {
             eprintln!("Missing dependency: perl is required for FIPS.");
             missing_dependency = true;
         }
-        if target_os() == "windows" && target_arch() == "x86_64" && !test_nasm_command() {
+        if target_os() == "windows"
+            && target_arch() == "x86_64"
+            && !test_nasm_command()
+            && !is_no_asm()
+        {
             eprintln!("Missing dependency: nasm is required for FIPS.");
             missing_dependency = true;
         }

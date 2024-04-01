@@ -275,7 +275,7 @@ static mut PREGENERATED: bool = false;
 static mut AWS_LC_FIPS_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_FIPS_SYS_INTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN: bool = false;
-
+static mut AWS_LC_FIPS_SYS_NO_ASM: bool = false;
 fn initialize() {
     unsafe {
         AWS_LC_FIPS_SYS_NO_PREFIX = env_var_to_bool("AWS_LC_FIPS_SYS_NO_PREFIX").unwrap_or(false);
@@ -283,6 +283,7 @@ fn initialize() {
             env_var_to_bool("AWS_LC_FIPS_SYS_INTERNAL_BINDGEN").unwrap_or(false);
         AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN =
             env_var_to_bool("AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
+        AWS_LC_FIPS_SYS_NO_ASM = env_var_to_bool("AWS_LC_FIPS_SYS_NO_ASM").unwrap_or(false);
     }
 
     if !is_external_bindgen() && (is_internal_bindgen() || !has_bindgen_feature()) {
@@ -323,6 +324,10 @@ fn is_internal_bindgen() -> bool {
 
 fn is_external_bindgen() -> bool {
     unsafe { AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN }
+}
+
+fn is_no_asm() -> bool {
+    unsafe { AWS_LC_FIPS_SYS_NO_ASM }
 }
 
 fn has_bindgen_feature() -> bool {
