@@ -12,13 +12,12 @@ use cmake_builder::CmakeBuilder;
 #[cfg(any(
     feature = "bindgen",
     not(any(
-        target = "aarch64-apple-darwin",
-        target = "x86_64-apple-darwin",
-        target = "aarch64-unknown-linux-gnu",
-        target = "i686-unknown-linux-gnu",
-        target = "x86_64-unknown-linux-gnu",
-        target = "aarch64-unknown-linux-musl",
-        target = "x86_64-unknown-linux-musl"
+        all(
+            any(target_arch = "x86_64", target_arch = "aarch64"),
+            any(target_os = "linux", target_os = "macos"),
+            any(target_env = "gnu", target_env = "musl", target_env = "")
+        ),
+        all(target_arch = "i686", target_os = "linux", target_env = "gnu")
     ))
 ))]
 mod bindgen;
@@ -127,7 +126,17 @@ fn prefix_string() -> String {
     format!("aws_lc_{}", VERSION.to_string().replace('.', "_"))
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(
+    feature = "bindgen",
+    not(any(
+        all(
+            any(target_arch = "x86_64", target_arch = "aarch64"),
+            any(target_os = "linux", target_os = "macos"),
+            any(target_env = "gnu", target_env = "musl", target_env = "")
+        ),
+        all(target_arch = "i686", target_os = "linux", target_env = "gnu")
+    ))
+))]
 fn target_platform_prefix(name: &str) -> String {
     format!("{}_{}", target().replace('-', "_"), name)
 }
@@ -157,13 +166,12 @@ fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
 #[cfg(any(
     feature = "bindgen",
     not(any(
-        target = "aarch64-apple-darwin",
-        target = "x86_64-apple-darwin",
-        target = "aarch64-unknown-linux-gnu",
-        target = "i686-unknown-linux-gnu",
-        target = "x86_64-unknown-linux-gnu",
-        target = "aarch64-unknown-linux-musl",
-        target = "x86_64-unknown-linux-musl"
+        all(
+            any(target_arch = "x86_64", target_arch = "aarch64"),
+            any(target_os = "linux", target_os = "macos"),
+            any(target_env = "gnu", target_env = "musl", target_env = "")
+        ),
+        all(target_arch = "i686", target_os = "linux", target_env = "gnu")
     ))
 ))]
 fn generate_bindings(manifest_dir: &Path, prefix: Option<String>, bindings_path: &PathBuf) {
@@ -336,13 +344,12 @@ fn main() {
         #[cfg(any(
             feature = "bindgen",
             not(any(
-                target = "aarch64-apple-darwin",
-                target = "x86_64-apple-darwin",
-                target = "aarch64-unknown-linux-gnu",
-                target = "i686-unknown-linux-gnu",
-                target = "x86_64-unknown-linux-gnu",
-                target = "aarch64-unknown-linux-musl",
-                target = "x86_64-unknown-linux-musl"
+                all(
+                    any(target_arch = "x86_64", target_arch = "aarch64"),
+                    any(target_os = "linux", target_os = "macos"),
+                    any(target_env = "gnu", target_env = "musl", target_env = "")
+                ),
+                all(target_arch = "i686", target_os = "linux", target_env = "gnu")
             ))
         ))]
         {

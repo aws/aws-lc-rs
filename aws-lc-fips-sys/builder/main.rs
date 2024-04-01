@@ -11,13 +11,10 @@ use cmake_builder::CmakeBuilder;
 
 #[cfg(any(
     feature = "bindgen",
-    not(any(
-        target = "aarch64-apple-darwin",
-        target = "x86_64-apple-darwin",
-        target = "aarch64-unknown-linux-gnu",
-        target = "x86_64-unknown-linux-gnu",
-        target = "aarch64-unknown-linux-musl",
-        target = "x86_64-unknown-linux-musl"
+    not(all(
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        any(target_os = "linux", target_os = "macos"),
+        any(target_env = "gnu", target_env = "musl", target_env = "")
     ))
 ))]
 mod bindgen;
@@ -133,7 +130,14 @@ fn prefix_string() -> String {
     format!("aws_lc_fips_{}", VERSION.to_string().replace('.', "_"))
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(
+    feature = "bindgen",
+    not(all(
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        any(target_os = "linux", target_os = "macos"),
+        any(target_env = "gnu", target_env = "musl", target_env = "")
+    ))
+))]
 fn target_platform_prefix(name: &str) -> String {
     format!("{}_{}", target().replace('-', "_"), name)
 }
@@ -164,13 +168,10 @@ fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
 
 #[cfg(any(
     feature = "bindgen",
-    not(any(
-        target = "aarch64-apple-darwin",
-        target = "x86_64-apple-darwin",
-        target = "aarch64-unknown-linux-gnu",
-        target = "x86_64-unknown-linux-gnu",
-        target = "aarch64-unknown-linux-musl",
-        target = "x86_64-unknown-linux-musl"
+    not(all(
+        any(target_arch = "x86_64", target_arch = "aarch64"),
+        any(target_os = "linux", target_os = "macos"),
+        any(target_env = "gnu", target_env = "musl", target_env = "")
     ))
 ))]
 fn generate_bindings(manifest_dir: &Path, prefix: Option<String>, bindings_path: &PathBuf) {
@@ -339,13 +340,10 @@ fn main() {
     } else if is_bindgen_required {
         #[cfg(any(
             feature = "bindgen",
-            not(any(
-                target = "aarch64-apple-darwin",
-                target = "x86_64-apple-darwin",
-                target = "aarch64-unknown-linux-gnu",
-                target = "x86_64-unknown-linux-gnu",
-                target = "aarch64-unknown-linux-musl",
-                target = "x86_64-unknown-linux-musl"
+            not(all(
+                any(target_arch = "x86_64", target_arch = "aarch64"),
+                any(target_os = "linux", target_os = "macos"),
+                any(target_env = "gnu", target_env = "musl", target_env = "")
             ))
         ))]
         {
