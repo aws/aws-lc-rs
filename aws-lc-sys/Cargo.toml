@@ -1,7 +1,7 @@
 [package]
 name = "aws-lc-sys"
 description = "AWS-LC is a general-purpose cryptographic library maintained by the AWS Cryptography team for AWS and their customers. It іs based on code from the Google BoringSSL project and the OpenSSL project."
-version = "0.14.0"
+version = "0.14.1"
 links = "aws_lc_0_14_0"
 authors = ["AWS-LC"]
 edition = "2021"
