@@ -138,15 +138,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
       - name: Run cargo tree
+        if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          if cargo tree -e build -p aws-lc-sys | grep -q bindgen; then exit 1; else exit 0; fi
+          if cargo tree -e build -p aws-lc-sys | grep -q bindgen; then 
+            exit 1 # bindgen should not be listed
+          else 
+            exit 0
+          fi
+      - name: Run cargo tree
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          $output = cargo tree -e build -p aws-lc-sys | Select-String -Pattern "bindgen"
+          if ($null -eq $output) {
+            exit 1  # bindgen should be listed
+          } else {
+            exit 0
+          }
 
   mirai-analysis:
     if: github.repository == 'aws/aws-lc-rs'
