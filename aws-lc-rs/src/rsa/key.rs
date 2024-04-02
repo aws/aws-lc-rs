@@ -223,7 +223,7 @@ impl KeyPair {
                 &mut pctx,
                 *digest,
                 null_mut(),
-                *self.rsa_evp_pkey.key,
+                *self.rsa_evp_pkey.evp_pkey,
             )
         } {
             return Err(Unspecified);
@@ -252,7 +252,7 @@ impl KeyPair {
     #[must_use]
     pub fn public_modulus_len(&self) -> usize {
         // This was already validated to be an RSA key so this can't fail
-        match self.rsa_evp_pkey.key.get_rsa() {
+        match self.rsa_evp_pkey.evp_pkey.get_rsa() {
             Ok(rsa) => {
                 // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
                 unsafe { (RSA_size(*rsa)) as usize }
@@ -308,10 +308,10 @@ impl Drop for PublicKey {
 
 impl PublicKey {
     pub(super) unsafe fn new(rsa_evp_pkey: &RsaEvpPkey) -> Result<Self, ()> {
-        let key = encoding::rfc8017::encode_public_key_der(&rsa_evp_pkey.key)?;
+        let key = encoding::rfc8017::encode_public_key_der(&rsa_evp_pkey.evp_pkey)?;
         #[cfg(feature = "ring-io")]
         {
-            let pubkey = rsa_evp_pkey.key.get_rsa().map_err(|_| ())?;
+            let pubkey = rsa_evp_pkey.evp_pkey.get_rsa().map_err(|_| ())?;
             let modulus = ConstPointer::new(RSA_get0_n(*pubkey))?;
             let modulus = modulus.to_be_bytes().into_boxed_slice();
             let exponent = ConstPointer::new(RSA_get0_e(*pubkey))?;
@@ -540,14 +540,14 @@ pub(super) enum RsaEvpPkeyType {
 }
 
 pub(super) struct RsaEvpPkey {
-    pub(super) key: LcPtr<EVP_PKEY>,
+    pub(super) evp_pkey: LcPtr<EVP_PKEY>,
     typ: RsaEvpPkeyType,
 }
 
 impl RsaEvpPkey {
     pub fn new(key: LcPtr<EVP_PKEY>, usage: UsageContext) -> Result<Self, KeyRejected> {
         let typ = usage.validate_key_usage(&key)?;
-        Ok(Self { key, typ })
+        Ok(Self { evp_pkey: key, typ })
     }
 
     pub fn from_pkcs8(pkcs8: &[u8], usage: UsageContext) -> Result<Self, KeyRejected> {
@@ -585,16 +585,25 @@ impl RsaEvpPkey {
     #[must_use]
     pub fn is_valid_fips_key(&self) -> bool {
         // This should always be an RSA key and must-never panic.
-        let rsa_key = self.key.get_rsa().unwrap();
+        let rsa_key = self.evp_pkey.get_rsa().unwrap();
 
         1 == unsafe { RSA_check_fips(*rsa_key) }
     }
 
     pub fn key_size(&self) -> usize {
         // Safety: RSA modulous byte sizes supported fit an usize
-        unsafe { EVP_PKEY_size(self.key.as_const_ptr()) }
+        unsafe { EVP_PKEY_size(self.evp_pkey.as_const_ptr()) }
             .try_into()
-            .expect("modulous should fit in usize")
+            .expect("modulous to fit in usize")
+    }
+}
+
+impl Clone for RsaEvpPkey {
+    fn clone(&self) -> Self {
+        Self {
+            evp_pkey: self.evp_pkey.clone(),
+            typ: self.typ,
+        }
     }
 }
 
@@ -604,7 +613,7 @@ impl AsDer<PublicKeyX509Der<'_>> for RsaEvpPkey {
     /// # Errors
     /// * `Unspecified` for any error that occurs serializing to bytes.
     fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
-        encoding::rfc5280::encode_public_key_der(&self.key)
+        encoding::rfc5280::encode_public_key_der(&self.evp_pkey)
     }
 }
 
@@ -613,7 +622,9 @@ impl AsDer<Pkcs8V1Der<'_>> for RsaEvpPkey {
         if self.typ != RsaEvpPkeyType::Private {
             verify_unreachable!();
         }
-        Ok(Pkcs8V1Der::new(encoding::pkcs8::encode_v1_der(&self.key)?))
+        Ok(Pkcs8V1Der::new(encoding::pkcs8::encode_v1_der(
+            &self.evp_pkey,
+        )?))
     }
 }
 

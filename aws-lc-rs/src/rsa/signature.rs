@@ -92,7 +92,7 @@ impl VerificationAlgorithm for RsaParameters {
         verify_rsa_signature(
             self.digest_algorithm(),
             self.padding(),
-            &rsa.key,
+            &rsa.evp_pkey,
             msg,
             signature,
             self.bit_size_range(),

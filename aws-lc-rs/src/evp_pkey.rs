@@ -8,8 +8,9 @@ use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
 use aws_lc::{
-    EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id, EVP_marshal_private_key,
-    EVP_marshal_private_key_v2, EVP_parse_private_key, EC_KEY, EVP_PKEY, RSA,
+    EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id, EVP_PKEY_up_ref,
+    EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_parse_private_key, EC_KEY, EVP_PKEY,
+    RSA,
 };
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_int;
@@ -110,5 +111,15 @@ impl LcPtr<EVP_PKEY> {
         buffer.truncate(out_len);
 
         Ok(Document::new(buffer.into_boxed_slice()))
+    }
+}
+
+impl Clone for LcPtr<EVP_PKEY> {
+    fn clone(&self) -> Self {
+        assert!(
+            1 == unsafe { EVP_PKEY_up_ref(**self) },
+            "infallible AWS_LC function"
+        );
+        Self::new(**self).expect("non-null AWS-LC EVP_PKEY pointer")
     }
 }

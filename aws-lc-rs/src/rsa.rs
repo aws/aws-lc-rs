@@ -12,7 +12,7 @@
 //! # fn main() -> Result<(), Box<dyn Error>> {
 //! use aws_lc_rs::{
 //!     encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
-//!     rsa::{KeySize, OAEP_SHA256_MGF1SHA256, PublicEncryptingKey, PrivateDecryptingKey}
+//!     rsa::{KeySize, OAEP_SHA256_MGF1SHA256, OaepPublicEncryptingKey, OaepPrivateDecryptingKey, PublicEncryptingKey, PrivateDecryptingKey}
 //! };
 //!
 //! // Generate a RSA 2048-bit key.
@@ -34,18 +34,24 @@
 //!
 //! // Load a RSA public key from DER encoded X.509 SubjectPublicKeyInfo.
 //! let public_key = PublicEncryptingKey::from_der(public_key_der_bytes)?;
+//! 
+//! // Construct a RSA-OAEP public encrypting key
+//! let public_key = OaepPublicEncryptingKey::new(public_key)?;
 //!
 //! let message = b"hello world";
 //! let mut ciphertext = vec![0u8; KeySize::Rsa2048.len()]; // Output will be the size of the RSA key length in bytes rounded up.
 //!
 //! // Encrypt a message with the public key.
-//! let ciphertext = public_key.encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext)?;
+//! let ciphertext = public_key.encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext, None)?;
 //!
 //! assert_ne!(message, ciphertext);
+//! 
+//! // Construct a RSA-OAEP private decrypting key
+//! let private_key = OaepPrivateDecryptingKey::new(private_key)?;
 //!
 //! // Decrypt a message with the private key.
 //! let mut plaintext = vec![0u8; KeySize::Rsa2048.len()]; // Plaintext output will be at most RSA Key length bytes - 2 * HashLength − 2 bytes
-//! let plaintext = private_key.decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext)?;
+//! let plaintext = private_key.decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)?;
 //!
 //! assert_eq!(message, plaintext);
 //!
@@ -67,8 +73,9 @@ pub(crate) mod signature;
 pub use self::signature::RsaParameters;
 pub use self::{
     encryption::{
-        EncryptionAlgorithm, EncryptionAlgorithmId, PrivateDecryptingKey, PublicEncryptingKey,
-        OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
+        EncryptionAlgorithmId, OaepAlgorithm, OaepPrivateDecryptingKey, OaepPublicEncryptingKey,
+        PrivateDecryptingKey, PublicEncryptingKey, OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256,
+        OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
     },
     key::{KeyPair, KeySize, PublicKey, PublicKeyComponents},
 };
