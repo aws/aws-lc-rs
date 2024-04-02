@@ -1,9 +1,9 @@
 [package]
 name = "aws-lc-rs"
 authors = ["AWS-LibCrypto"]
-version = "1.6.3"
+version = "1.6.4"
 # this crate re-exports whatever sys crate that was selected
-links = "aws_lc_rs_1_6_3_sys"
+links = "aws_lc_rs_1_6_4_sys"
 edition = "2021"
 rust-version = "1.61.0"
 keywords = ["crypto", "cryptography", "security"]
