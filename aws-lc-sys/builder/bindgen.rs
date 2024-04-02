@@ -1,5 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
+#![cfg(feature = "bindgen")]
 
 use crate::{
     get_aws_lc_include_path, get_aws_lc_sys_includes_path, get_generated_include_path,
