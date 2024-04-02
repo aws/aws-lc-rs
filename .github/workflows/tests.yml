@@ -190,9 +190,6 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run cargo test
         # Doc-tests fail to link with dynamic build
         # See: https://github.com/rust-lang/cargo/issues/8531
@@ -242,9 +239,8 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v4
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
@@ -269,19 +265,25 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Run cargo test
         run: cargo test -p aws-lc-rs
       - name: Release build
+        if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          cargo build -p aws-lc-rs --release
-          if [[ $? -eq 0 ]]; then
+          if cargo build -p aws-lc-rs --release; then
             exit 1
           else
             exit 0
           fi
+      - name: Release build
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          if (cargo build -p aws-lc-rs --release) {
+            exit 1
+          } else {
+            exit 0
+          }
 
   build-env-fips-no-asm-test:
     if: github.repository_owner == 'aws'
@@ -298,23 +300,30 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v4
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
       - name: Run cargo test
-        if: ${{ matrix.os == 'ubuntu-latest' || matrix.static != 1 }}
-        run: cargo test -p aws-lc-rs --no-default-features --features fips
+        run: cargo test -p aws-lc-rs --tests --no-default-features --features fips
       - name: Release build
+        if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          cargo build -p aws-lc-rs --release --no-default-features --features fips
-          if [[ $? -eq 0 ]]; then
+          if cargo build -p aws-lc-rs --release --no-default-features --features fips; then
             exit 1
           else
             exit 0
           fi
+      - name: Release build
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          if (cargo build -p aws-lc-rs --release --no-default-features --features fips) {
+            exit 1
+          } else {
+            exit 0
+          }
 
   build-env-fips-external-bindgen-test:
     if: github.repository_owner == 'aws'
