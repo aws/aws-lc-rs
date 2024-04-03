@@ -135,31 +135,33 @@ fn target_platform_prefix(name: &str) -> String {
 
 pub(crate) struct TestCommandResult {
     #[allow(dead_code)]
-    error: Box<str>,
+    stderr: Box<str>,
     #[allow(dead_code)]
-    output: Box<str>,
+    stdout: Box<str>,
     executed: bool,
     status: bool,
 }
 
 fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
-    if let Ok(result) = Command::new(executable).args(args).output() {
-        let error = String::from_utf8(result.stderr)
+    if let Ok(mut result) = Command::new(executable).args(args).output() {
+        result.stderr.truncate(4112);
+        let stderr = String::from_utf8(result.stderr)
             .unwrap_or_default()
             .into_boxed_str();
-        let output = String::from_utf8(result.stdout)
+        result.stdout.truncate(4112);
+        let stdout = String::from_utf8(result.stdout)
             .unwrap_or_default()
             .into_boxed_str();
         return TestCommandResult {
-            error,
-            output,
+            stderr,
+            stdout,
             executed: true,
             status: result.status.success(),
         };
     }
     TestCommandResult {
-        error: String::new().into_boxed_str(),
-        output: String::new().into_boxed_str(),
+        stderr: String::new().into_boxed_str(),
+        stdout: String::new().into_boxed_str(),
         executed: false,
         status: false,
     }
@@ -228,7 +230,7 @@ fn target_arch() -> String {
     cargo_env("CARGO_CFG_TARGET_ARCH")
 }
 
-#[allow(dead_code)]
+#[allow(unused)]
 fn target_env() -> String {
     cargo_env("CARGO_CFG_TARGET_ENV")
 }
