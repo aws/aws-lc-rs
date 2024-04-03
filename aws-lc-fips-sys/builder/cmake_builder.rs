@@ -22,7 +22,7 @@ fn test_perl_command() -> bool {
 fn test_go_command() -> bool {
     let result = test_command("go".as_ref(), &["version".as_ref()]);
     if !result.status && result.executed {
-        eprintln!("Go stdout:\n--------\n{}\n--------", result.output);
+        eprintln!("Go stdout:\n--------\n{}\n--------", result.stdout);
     }
     result.status
 }
@@ -166,11 +166,11 @@ impl CmakeBuilder {
         let script_path = self.manifest_dir.join("builder").join("printenv.bat");
         let result = test_command(script_path.as_os_str(), &[]);
         if !result.status {
-            eprintln!("{}", result.output);
+            eprintln!("{}", result.stdout);
             return Err("Failed to run vcvarsall.bat.".to_owned());
         }
-        eprintln!("{}", result.output);
-        let lines = result.output.lines();
+        eprintln!("{}", result.stdout);
+        let lines = result.stdout.lines();
         for line in lines {
             if let Some((var, val)) = line.split_once('=') {
                 map.insert(var.to_string(), val.to_string());

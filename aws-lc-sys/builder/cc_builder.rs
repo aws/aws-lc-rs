@@ -222,8 +222,8 @@ impl CcBuilder {
             memcmp_compiler.path(),
             memcmp_args.as_slice(),
             memcmp_compile_result.executed,
-            memcmp_compile_result.error,
-            memcmp_compile_result.output
+            memcmp_compile_result.stderr,
+            memcmp_compile_result.stdout
         );
 
         if cargo_env("HOST") == target() {
@@ -239,8 +239,8 @@ impl CcBuilder {
                 ",
                 memcmp_compiler.path().display(),
                 memcmp_compile_result.executed,
-                memcmp_compile_result.error,
-                memcmp_compile_result.output
+                memcmp_compile_result.stderr,
+                memcmp_compile_result.stdout
             );
         }
         let _ = fs::remove_file(exec_path);
