@@ -169,6 +169,7 @@ impl CcBuilder {
     }
 
     fn compiler_check(&self, cc_build: &mut cc::Build, basename: &str, flag: &str) {
+        let output_path = self.out_dir.join(format!("{basename}.o"));
         if let Ok(()) = cc::Build::default()
             .file(
                 self.manifest_dir
@@ -179,10 +180,11 @@ impl CcBuilder {
             )
             .flag("-Wno-unused-parameter")
             .warnings_into_errors(true)
-            .try_compile(basename)
+            .try_compile(output_path.as_os_str().to_str().unwrap())
         {
             cc_build.define(flag, "1");
         }
+        let _ = fs::remove_file(output_path);
     }
 
     fn memcmp_check(&self) {
@@ -208,24 +210,40 @@ impl CcBuilder {
             .collect();
         let memcmp_compile_result =
             test_command(memcmp_compiler.path().as_os_str(), memcmp_args.as_slice());
-        if !memcmp_compile_result.status {
-            eprintln!("COMPILER: {:?}", memcmp_compiler.path());
-            eprintln!("ARGS: {:?}", memcmp_args.as_slice());
-            eprintln!("EXECUTED: {}", memcmp_compile_result.executed);
-            eprintln!("ERROR: {}", memcmp_compile_result.error);
-            eprintln!("OUTPUT: {}", memcmp_compile_result.output);
-            panic!("Failed to compile {basename}");
-        }
+        assert!(
+            memcmp_compile_result.status,
+            "COMPILER: {:?}\
+            ARGS: {:?}\
+            EXECUTED: {}\
+            ERROR: {}\
+            OUTPUT: {}\
+            Failed to compile {basename}
+            ",
+            memcmp_compiler.path(),
+            memcmp_args.as_slice(),
+            memcmp_compile_result.executed,
+            memcmp_compile_result.error,
+            memcmp_compile_result.output
+        );
 
         if cargo_env("HOST") == target() {
+            let result = test_command(exec_path.as_os_str(), &[]);
             assert!(
-                !test_command(exec_path.as_os_str(), &[]).status,
+                result.status,
                 "Your compiler ({}) is not supported due to a memcmp related bug reported in \
-            https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189.\n\
-            We strongly recommend against using this compiler.",
-                memcmp_compiler.path().display()
+                https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189.\
+                We strongly recommend against using this compiler.\
+                EXECUTED: {} \
+                ERROR: {} \
+                OUTPUT: {} \
+                ",
+                memcmp_compiler.path().display(),
+                memcmp_compile_result.executed,
+                memcmp_compile_result.error,
+                memcmp_compile_result.output
             );
         }
+        let _ = fs::remove_file(exec_path);
     }
     fn compiler_checks(&self, cc_build: &mut cc::Build) {
         self.compiler_check(cc_build, "stdalign_check", "AWS_LC_STDALIGN_AVAILABLE");

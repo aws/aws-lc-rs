@@ -135,22 +135,32 @@ fn target_platform_prefix(name: &str) -> String {
 
 pub(crate) struct TestCommandResult {
     #[allow(dead_code)]
+    error: Box<str>,
+    #[allow(dead_code)]
     output: Box<str>,
+    executed: bool,
     status: bool,
 }
 
 fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     if let Ok(result) = Command::new(executable).args(args).output() {
+        let error = String::from_utf8(result.stderr)
+            .unwrap_or_default()
+            .into_boxed_str();
         let output = String::from_utf8(result.stdout)
             .unwrap_or_default()
             .into_boxed_str();
         return TestCommandResult {
+            error,
             output,
+            executed: true,
             status: result.status.success(),
         };
     }
     TestCommandResult {
+        error: String::new().into_boxed_str(),
         output: String::new().into_boxed_str(),
+        executed: false,
         status: false,
     }
 }
