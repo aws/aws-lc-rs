@@ -130,14 +130,7 @@ fn prefix_string() -> String {
     format!("aws_lc_fips_{}", VERSION.to_string().replace('.', "_"))
 }
 
-#[cfg(any(
-    feature = "bindgen",
-    not(all(
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        any(target_os = "linux", target_os = "macos"),
-        any(target_env = "gnu", target_env = "musl", target_env = "")
-    ))
-))]
+#[cfg(feature = "bindgen")]
 fn target_platform_prefix(name: &str) -> String {
     format!("{}_{}", target().replace('-', "_"), name)
 }

@@ -9,7 +9,10 @@ mod x86_64_apple_darwin;
 mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
-use crate::{env_var_to_bool, target, target_arch, target_os, target_vendor, OutputLibType};
+use crate::{
+    cargo_env, env_var_to_bool, out_dir, target, target_arch, target_os, target_vendor,
+    test_command, OutputLibType,
+};
 use std::path::PathBuf;
 
 pub(crate) struct CcBuilder {
@@ -148,7 +151,7 @@ impl CcBuilder {
         }
     }
 
-    fn build_library(&self, lib: &Library) -> Result<(), String> {
+    fn build_library(&self, lib: &Library) {
         let mut cc_build = self.create_builder();
 
         self.add_all_files(lib, &mut cc_build);
@@ -156,13 +159,82 @@ impl CcBuilder {
         for flag in lib.flags {
             cc_build.flag(flag);
         }
+        self.compiler_checks(&mut cc_build);
 
         if let Some(prefix) = &self.build_prefix {
             cc_build.compile(format!("{}_crypto", prefix.as_str()).as_str());
         } else {
-            cc_build.compile(&lib.name);
+            cc_build.compile(lib.name);
         }
-        Ok(())
+    }
+
+    fn compiler_check(&self, cc_build: &mut cc::Build, basename: &str, flag: &str) {
+        if let Ok(()) = cc::Build::default()
+            .file(
+                self.manifest_dir
+                    .join("aws-lc")
+                    .join("tests")
+                    .join("compiler_features_tests")
+                    .join(format!("{basename}.c")),
+            )
+            .flag("-Wno-unused-parameter")
+            .warnings_into_errors(true)
+            .try_compile(basename)
+        {
+            cc_build.define(flag, "1");
+        }
+    }
+
+    fn memcmp_check(&self) {
+        let basename = "memcmp_invalid_stripped_check";
+        let exec_path = out_dir().join(basename);
+        let memcmp_build = cc::Build::default();
+        let memcmp_compiler = memcmp_build.get_compiler();
+        let mut memcmp_compile_args = Vec::from(memcmp_compiler.args());
+        memcmp_compile_args.push(
+            self.manifest_dir
+                .join("aws-lc")
+                .join("tests")
+                .join("compiler_features_tests")
+                .join(format!("{basename}.c"))
+                .into_os_string(),
+        );
+        memcmp_compile_args.push("-Wno-unused-parameter".into());
+        memcmp_compile_args.push("-o".into());
+        memcmp_compile_args.push(exec_path.clone().into_os_string());
+        let memcmp_args: Vec<_> = memcmp_compile_args
+            .iter()
+            .map(std::ffi::OsString::as_os_str)
+            .collect();
+        let memcmp_compile_result =
+            test_command(memcmp_compiler.path().as_os_str(), memcmp_args.as_slice());
+        if !memcmp_compile_result.status {
+            eprintln!("COMPILER: {:?}", memcmp_compiler.path());
+            eprintln!("ARGS: {:?}", memcmp_args.as_slice());
+            eprintln!("EXECUTED: {}", memcmp_compile_result.executed);
+            eprintln!("ERROR: {}", memcmp_compile_result.error);
+            eprintln!("OUTPUT: {}", memcmp_compile_result.output);
+            panic!("Failed to compile {basename}");
+        }
+
+        if cargo_env("HOST") == target() {
+            assert!(
+                !test_command(exec_path.as_os_str(), &[]).status,
+                "Your compiler ({}) is not supported due to a memcmp related bug reported in \
+            https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189.\n\
+            We strongly recommend against using this compiler.",
+                memcmp_compiler.path().display()
+            );
+        }
+    }
+    fn compiler_checks(&self, cc_build: &mut cc::Build) {
+        self.compiler_check(cc_build, "stdalign_check", "AWS_LC_STDALIGN_AVAILABLE");
+        self.compiler_check(
+            cc_build,
+            "builtin_swap_check",
+            "AWS_LC_BUILTIN_SWAP_SUPPORTED",
+        );
+        self.memcmp_check();
     }
 }
 
@@ -188,6 +260,7 @@ impl crate::Builder for CcBuilder {
         println!("cargo:root={}", self.out_dir.display());
         let platform_config = PlatformConfig::default();
         let libcrypto = platform_config.libcrypto();
-        self.build_library(&libcrypto)
+        self.build_library(&libcrypto);
+        Ok(())
     }
 }
