@@ -133,10 +133,6 @@ impl KeyRejected {
         KeyRejected("InvalidEncoding")
     }
 
-    pub(crate) fn unsupported_size() -> Self {
-        KeyRejected("UnsupportedSize")
-    }
-
     pub(crate) fn too_small() -> Self {
         KeyRejected("TooSmall")
     }

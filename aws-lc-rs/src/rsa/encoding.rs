@@ -3,12 +3,8 @@
 
 /// PKCS#8 Encoding Functions
 pub(in crate::rsa) mod pkcs8 {
-    use crate::{
-        cbb::LcCBB,
-        error::{KeyRejected, Unspecified},
-        ptr::LcPtr,
-    };
-    use aws_lc::{EVP_marshal_private_key, EVP_PKEY};
+    use crate::{cbb::LcCBB, cbs, error::Unspecified, ptr::LcPtr, rsa::key::is_rsa_key};
+    use aws_lc::{EVP_marshal_private_key, EVP_parse_private_key, EVP_PKEY};
 
     // Based on a measurement of a PKCS#8 v1 document containing an RSA-8192 key with an additional 1% capacity buffer
     // rounded to an even 64-bit words (4678 + 1% + padding ≈ 4728).
@@ -20,7 +16,6 @@ pub(in crate::rsa) mod pkcs8 {
             let mut cbb = LcCBB::new_fixed(<&mut [u8; PKCS8_FIXED_CAPACITY_BUFFER]>::try_from(
                 buffer.as_mut_slice(),
             )?);
-
             if 1 != unsafe { EVP_marshal_private_key(cbb.as_mut_ptr(), *key.as_const()) } {
                 return Err(Unspecified);
             }
@@ -33,8 +28,13 @@ pub(in crate::rsa) mod pkcs8 {
     }
 
     // Supports v1 and v2 encodings through a single API entry-point.
-    pub(in crate::rsa) fn decode_der(pkcs8: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-        LcPtr::try_from(pkcs8)
+    pub(in crate::rsa) fn decode_der(pkcs8: &[u8]) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+        let mut cbs = unsafe { cbs::build_CBS(pkcs8) };
+        let key = LcPtr::new(unsafe { EVP_parse_private_key(&mut cbs) })?;
+        if !is_rsa_key(&key) {
+            return Err(Unspecified);
+        }
+        Ok(key)
     }
 }
 
@@ -44,7 +44,7 @@ pub(in crate::rsa) mod pkcs8 {
 pub(in crate::rsa) mod rfc8017 {
     use crate::{
         cbs,
-        error::{KeyRejected, Unspecified},
+        error::Unspecified,
         ptr::{DetachableLcPtr, LcPtr},
     };
     use aws_lc::{
@@ -56,15 +56,15 @@ pub(in crate::rsa) mod rfc8017 {
     /// DER encode a RSA public key to `RSAPublicKey` structure.
     pub(in crate::rsa) unsafe fn encode_public_key_der(
         pubkey: &LcPtr<EVP_PKEY>,
-    ) -> Result<Box<[u8]>, ()> {
+    ) -> Result<Box<[u8]>, Unspecified> {
         let mut pubkey_bytes = null_mut::<u8>();
         let mut outlen: usize = 0;
         if 1 != RSA_public_key_to_bytes(
             &mut pubkey_bytes,
             &mut outlen,
-            *pubkey.get_rsa().map_err(|_| Unspecified)?.as_const(),
+            *pubkey.get_rsa()?.as_const(),
         ) {
-            return Err(());
+            return Err(Unspecified);
         }
         let pubkey_bytes = LcPtr::new(pubkey_bytes)?;
         let pubkey_slice = pubkey_bytes.as_slice(outlen);
@@ -76,7 +76,7 @@ pub(in crate::rsa) mod rfc8017 {
     #[inline]
     pub(in crate::rsa) fn decode_public_key_der(
         public_key: &[u8],
-    ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
+    ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
         let mut cbs = unsafe { cbs::build_CBS(public_key) };
 
         let rsa = DetachableLcPtr::new(unsafe { RSA_parse_public_key(&mut cbs) })?;
@@ -84,7 +84,7 @@ pub(in crate::rsa) mod rfc8017 {
         let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
 
         if 1 != unsafe { EVP_PKEY_assign_RSA(*pkey, *rsa) } {
-            return Err(KeyRejected::unspecified());
+            return Err(Unspecified);
         }
 
         rsa.detach();
@@ -118,11 +118,8 @@ pub(in crate::rsa) mod rfc8017 {
 /// Encodings that use the `SubjectPublicKeyInfo` structure.
 pub(in crate::rsa) mod rfc5280 {
     use crate::{
-        cbb::LcCBB,
-        cbs,
-        encoding::PublicKeyX509Der,
-        error::{KeyRejected, Unspecified},
-        ptr::LcPtr,
+        cbb::LcCBB, cbs, encoding::PublicKeyX509Der, error::Unspecified, ptr::LcPtr,
+        rsa::key::is_rsa_key,
     };
     use aws_lc::{EVP_marshal_public_key, EVP_parse_public_key, EVP_PKEY};
 
@@ -140,8 +137,12 @@ pub(in crate::rsa) mod rfc5280 {
 
     pub(in crate::rsa) fn decode_public_key_der(
         value: &[u8],
-    ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
+    ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
         let mut der = unsafe { cbs::build_CBS(value) };
-        Ok(LcPtr::new(unsafe { EVP_parse_public_key(&mut der) })?)
+        let key = LcPtr::new(unsafe { EVP_parse_public_key(&mut der) })?;
+        if !is_rsa_key(&key) {
+            return Err(Unspecified);
+        }
+        Ok(key)
     }
 }

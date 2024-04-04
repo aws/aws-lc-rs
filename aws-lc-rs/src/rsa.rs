@@ -26,7 +26,7 @@
 //! let private_key = PrivateDecryptingKey::from_pkcs8(private_key_der_bytes)?;
 //!
 //! // Retrieve the RSA public key
-//! let public_key = private_key.public_key()?;
+//! let public_key = private_key.public_key();
 //!
 //! // Serialize the RSA public key to DER encoded X.509 SubjectPublicKeyInfo for later usage.
 //! let public_key_der = AsDer::<PublicKeyX509Der>::as_der(&public_key)?;

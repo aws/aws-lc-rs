@@ -3,7 +3,7 @@
 
 use crate::{
     encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
-    error::{KeyRejected, Unspecified},
+    error::Unspecified,
     fips::indicator_check,
     ptr::{DetachableLcPtr, LcPtr},
 };
@@ -17,7 +17,8 @@ use core::{fmt::Debug, mem::size_of_val, ptr::null_mut};
 use mirai_annotations::verify_unreachable;
 
 use super::{
-    key::{generate_rsa_key, RsaEvpPkey, UsageContext},
+    encoding,
+    key::{generate_rsa_key, is_rsa_key, key_size, key_size_bits},
     KeySize,
 };
 
@@ -102,11 +103,22 @@ impl Debug for OaepAlgorithm {
 }
 
 /// An RSA private key used for decrypting ciphertext encrypted by a [`PublicEncryptingKey`].
-pub struct PrivateDecryptingKey(RsaEvpPkey);
+pub struct PrivateDecryptingKey(LcPtr<EVP_PKEY>);
 
 impl PrivateDecryptingKey {
-    fn new(key: LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
-        Ok(Self(RsaEvpPkey::new(key, UsageContext::Decryption)?))
+    fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
+        Self::validate_key(&evp_pkey)?;
+        Ok(Self(evp_pkey))
+    }
+
+    fn validate_key(key: &LcPtr<EVP_PKEY>) -> Result<(), Unspecified> {
+        if !is_rsa_key(key) {
+            return Err(Unspecified);
+        };
+        match key_size_bits(key) {
+            2048..=8192 => Ok(()),
+            _ => Err(Unspecified),
+        }
     }
 
     /// Generate a new RSA private key for use with asymmetrical encryption.
@@ -139,33 +151,31 @@ impl PrivateDecryptingKey {
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs during deserialization of this key from PKCS#8.
-    pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
+    pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, Unspecified> {
         let evp_pkey = LcPtr::try_from(pkcs8)?;
-        Self::new(evp_pkey).map_err(|_| KeyRejected::unexpected_error())
+        Self::new(evp_pkey)
     }
 
     /// Returns a boolean indicator if this RSA key is an approved FIPS 140-3 key.
     #[cfg(feature = "fips")]
-    #[allow(clippy::missing_panics_doc)]
     #[must_use]
     pub fn is_valid_fips_key(&self) -> bool {
-        self.0.is_valid_fips_key()
+        super::key::is_valid_fips_key(&self.0)
     }
 
     /// Returns the RSA key size in bytes.
     #[must_use]
     pub fn key_size(&self) -> usize {
-        self.0.key_size()
+        key_size(&self.0)
     }
 
     /// Retrieves the `PublicEncryptingKey` corresponding with this `PrivateDecryptingKey`.
-    /// # Errors
-    /// * `Unspecified` for any error that occurs computing the public key.
-    pub fn public_key(&self) -> Result<PublicEncryptingKey, Unspecified> {
-        Ok(PublicEncryptingKey(RsaEvpPkey::new(
-            self.0.evp_pkey.clone(),
-            UsageContext::Encryption,
-        )?))
+    #[must_use]
+    #[allow(clippy::missing_panics_doc)]
+    pub fn public_key(&self) -> PublicEncryptingKey {
+        PublicEncryptingKey::new(self.0.clone()).expect(
+            "PublicEncryptingKey key size to be supported by PrivateDecryptingKey key sizes",
+        )
     }
 }
 
@@ -177,7 +187,7 @@ impl Debug for PrivateDecryptingKey {
 
 impl AsDer<Pkcs8V1Der<'static>> for PrivateDecryptingKey {
     fn as_der(&self) -> Result<Pkcs8V1Der<'static>, Unspecified> {
-        AsDer::<Pkcs8V1Der<'_>>::as_der(&self.0)
+        Ok(Pkcs8V1Der::new(encoding::pkcs8::encode_v1_der(&self.0)?))
     }
 }
 
@@ -188,24 +198,36 @@ impl Clone for PrivateDecryptingKey {
 }
 
 /// An RSA public key used for encrypting plaintext that is decrypted by a [`PrivateDecryptingKey`].
-pub struct PublicEncryptingKey(RsaEvpPkey);
+pub struct PublicEncryptingKey(LcPtr<EVP_PKEY>);
 
 impl PublicEncryptingKey {
+    fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
+        Self::validate_key(&evp_pkey)?;
+        Ok(Self(evp_pkey))
+    }
+
+    fn validate_key(key: &LcPtr<EVP_PKEY>) -> Result<(), Unspecified> {
+        if !is_rsa_key(key) {
+            return Err(Unspecified);
+        };
+        match key_size_bits(key) {
+            2048..=8192 => Ok(()),
+            _ => Err(Unspecified),
+        }
+    }
+
     /// Construct a `PublicEncryptingKey` from X.509 `SubjectPublicKeyInfo` DER encoded bytes.
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs deserializing from bytes.
-    pub fn from_der(value: &[u8]) -> Result<Self, KeyRejected> {
-        Ok(Self(RsaEvpPkey::from_rfc5280_public_key_der(
-            value,
-            UsageContext::Encryption,
-        )?))
+    pub fn from_der(value: &[u8]) -> Result<Self, Unspecified> {
+        Ok(Self(encoding::rfc5280::decode_public_key_der(value)?))
     }
 
     /// Returns the RSA key size in bytes.
     #[must_use]
     pub fn key_size(&self) -> usize {
-        self.0.key_size()
+        key_size(&self.0)
     }
 }
 
@@ -235,7 +257,7 @@ impl OaepPublicEncryptingKey {
     }
 
     /// Encrypts the contents in `plaintext` and writes the corresponding ciphertext to `output`.
-    /// 
+    ///
     /// # Max Plaintext Length
     /// The provided length of `plaintext` must be at most [`Self::max_plaintext_size`].
     ///
@@ -253,8 +275,7 @@ impl OaepPublicEncryptingKey {
         output: &'output mut [u8],
         label: Option<&[u8]>,
     ) -> Result<&'output mut [u8], Unspecified> {
-        let pkey_ctx =
-            LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.public_key.0.evp_pkey, null_mut()) })?;
+        let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.public_key.0, null_mut()) })?;
 
         if 1 != unsafe { EVP_PKEY_encrypt_init(*pkey_ctx) } {
             return Err(Unspecified);
@@ -333,8 +354,7 @@ impl OaepPrivateDecryptingKey {
         output: &'output mut [u8],
         label: Option<&[u8]>,
     ) -> Result<&'output mut [u8], Unspecified> {
-        let pkey_ctx =
-            LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.private_key.0.evp_pkey, null_mut()) })?;
+        let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.private_key.0, null_mut()) })?;
 
         if 1 != unsafe { EVP_PKEY_decrypt_init(*pkey_ctx) } {
             return Err(Unspecified);
@@ -434,7 +454,7 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicEncryptingKey {
     /// # Errors
     /// * `Unspecified` for any error that occurs serializing to bytes.
     fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
-        AsDer::<PublicKeyX509Der<'_>>::as_der(&self.0)
+        encoding::rfc5280::encode_public_key_der(&self.0)
     }
 }
 

@@ -26,10 +26,7 @@ use crate::{
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
-use super::{
-    encoding,
-    key::{RsaEvpPkey, UsageContext},
-};
+use super::encoding;
 
 #[allow(non_camel_case_types)]
 #[allow(clippy::module_name_repetitions)]
@@ -85,14 +82,11 @@ impl VerificationAlgorithm for RsaParameters {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), Unspecified> {
-        let rsa = RsaEvpPkey::from_rfc8017_public_key_der(
-            public_key,
-            UsageContext::SignatureVerification,
-        )?;
+        let evp_pkey = encoding::rfc8017::decode_public_key_der(public_key)?;
         verify_rsa_signature(
             self.digest_algorithm(),
             self.padding(),
-            &rsa.evp_pkey,
+            &evp_pkey,
             msg,
             signature,
             self.bit_size_range(),
