@@ -71,8 +71,6 @@ jobs:
         with:
           toolchain: stable
           target: aarch64-apple-ios-sim
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install bash
         run: brew install bash
       - name: iOS Simulator Runner
@@ -91,7 +89,5 @@ jobs:
         with:
           toolchain: stable
           target: x86_64-apple-ios
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Build for `x86_64-apple-ios`
-        run: cargo build -p aws-lc-rs --features bindgen
+        run: cargo build -p aws-lc-rs --target x86_64-apple-ios --features bindgen
