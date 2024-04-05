@@ -22,6 +22,13 @@ pub(crate) fn set_fips_service_status_unapproved() {
     indicator::set_unapproved();
 }
 
+#[allow(dead_code)]
+#[cfg(all(feature = "fips", debug_assertions))]
+#[inline]
+pub(crate) fn clear_fips_service_status() {
+    indicator::clear();
+}
+
 #[cfg(all(feature = "fips", debug_assertions))]
 pub(crate) mod indicator {
     use core::cell::Cell;
@@ -46,6 +53,10 @@ pub(crate) mod indicator {
 
     pub fn set_unapproved() {
         STATUS_INDICATOR.with(|v| v.set(Some(false)));
+    }
+
+    pub fn clear() {
+        STATUS_INDICATOR.with(|v| v.set(None));
     }
 }
 
@@ -125,9 +136,9 @@ pub(crate) use indicator_check;
 #[cfg(all(feature = "fips", debug_assertions))]
 macro_rules! check_fips_service_status {
     ($function:expr) => {{
-        use $crate::fips::get_fips_service_status;
         // Clear the current indicator status first by retrieving it
-        let _ = get_fips_service_status();
+        use $crate::fips::{clear_fips_service_status, get_fips_service_status};
+        clear_fips_service_status();
         // do the expression
         let result = $function;
         // Check indicator after expression

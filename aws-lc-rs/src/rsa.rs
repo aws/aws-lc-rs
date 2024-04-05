@@ -34,23 +34,24 @@
 //!
 //! // Load a RSA public key from DER encoded X.509 SubjectPublicKeyInfo.
 //! let public_key = PublicEncryptingKey::from_der(public_key_der_bytes)?;
-//! 
+//!
 //! // Construct a RSA-OAEP public encrypting key
 //! let public_key = OaepPublicEncryptingKey::new(public_key)?;
 //!
+//! // The maximum size plaintext can be determined by calling `OaepPublicEncryptingKey::max_plaintext_size`
 //! let message = b"hello world";
-//! let mut ciphertext = vec![0u8; KeySize::Rsa2048.len()]; // Output will be the size of the RSA key length in bytes rounded up.
+//! let mut ciphertext = vec![0u8; public_key.max_ciphertext_size()]; // Output will be the size of the RSA key length in bytes rounded up.
 //!
-//! // Encrypt a message with the public key.
+//! // Encrypt a message with the public key without the optional label provided.
 //! let ciphertext = public_key.encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext, None)?;
 //!
 //! assert_ne!(message, ciphertext);
-//! 
+//!
 //! // Construct a RSA-OAEP private decrypting key
 //! let private_key = OaepPrivateDecryptingKey::new(private_key)?;
 //!
 //! // Decrypt a message with the private key.
-//! let mut plaintext = vec![0u8; KeySize::Rsa2048.len()]; // Plaintext output will be at most RSA Key length bytes - 2 * HashLength − 2 bytes
+//! let mut plaintext = vec![0u8; private_key.key_size_bytes()];
 //! let plaintext = private_key.decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)?;
 //!
 //! assert_eq!(message, plaintext);

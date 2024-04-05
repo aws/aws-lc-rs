@@ -277,14 +277,6 @@ fn rsa_test_public_key_coverage() {
     );
 }
 
-#[test]
-fn keysize_len() {
-    assert_eq!(KeySize::Rsa2048.len(), 256);
-    assert_eq!(KeySize::Rsa3072.len(), 384);
-    assert_eq!(KeySize::Rsa4096.len(), 512);
-    assert_eq!(KeySize::Rsa8192.len(), 1024);
-}
-
 macro_rules! generate_encode_decode {
     ($name:ident, $size:expr) => {
         #[test]
@@ -460,26 +452,38 @@ macro_rules! round_trip_algorithm {
             let private_key = PrivateDecryptingKey::generate($keysize).expect("generation");
             let public_key = private_key.public_key();
 
-            assert_eq!(private_key.key_size(), $keysize.len());
-            assert_eq!(public_key.key_size(), $keysize.len());
+            let (byte_len, bit_len) = match $keysize {
+                KeySize::Rsa2048 => (256, 2048),
+                KeySize::Rsa3072 => (384, 3072),
+                KeySize::Rsa4096 => (512, 4096),
+                KeySize::Rsa8192 => (1024, 8192),
+                _ => panic!("missing KeySize match arm"),
+            };
+
+            assert_eq!(private_key.key_size_bytes(), byte_len);
+            assert_eq!(public_key.key_size_bytes(), byte_len);
+            assert_eq!(private_key.key_size_bits(), bit_len);
+            assert_eq!(public_key.key_size_bits(), bit_len);
 
             let public_key = OaepPublicEncryptingKey::new(public_key)
                 .expect("RSA-OAEP public key from public key");
             let private_key = OaepPrivateDecryptingKey::new(private_key)
                 .expect("RSA-OAEP private key from private key");
 
-            assert_eq!(private_key.key_size(), $keysize.len());
-            assert_eq!(public_key.key_size(), $keysize.len());
+            assert_eq!(private_key.key_size_bytes(), byte_len);
+            assert_eq!(public_key.key_size_bytes(), byte_len);
+            assert_eq!(private_key.key_size_bits(), bit_len);
+            assert_eq!(public_key.key_size_bits(), bit_len);
 
             // fixed message, None (empty label)
             {
-                let mut ciphertext = vec![0u8; private_key.key_size()];
+                let mut ciphertext = vec![0u8; public_key.max_ciphertext_size()];
 
                 let ciphertext = public_key
                     .encrypt($alg, MESSAGE, ciphertext.as_mut(), None)
                     .expect("encrypted");
 
-                let mut plaintext = vec![0u8; private_key.key_size()];
+                let mut plaintext = vec![0u8; private_key.key_size_bytes()];
 
                 let plaintext = private_key
                     .decrypt($alg, ciphertext, &mut plaintext, None)
@@ -490,13 +494,13 @@ macro_rules! round_trip_algorithm {
 
             // fixed message, Some(&[0u8; 0])
             {
-                let mut ciphertext = vec![0u8; private_key.key_size()];
+                let mut ciphertext = vec![0u8; public_key.max_ciphertext_size()];
 
                 let ciphertext = public_key
                     .encrypt($alg, MESSAGE, ciphertext.as_mut(), Some(&[0u8; 0]))
                     .expect("encrypted");
 
-                let mut plaintext = vec![0u8; private_key.key_size()];
+                let mut plaintext = vec![0u8; private_key.key_size_bytes()];
 
                 let plaintext = private_key
                     .decrypt($alg, ciphertext, &mut plaintext, Some(&[0u8; 0]))
@@ -507,7 +511,7 @@ macro_rules! round_trip_algorithm {
 
             // fixed message, Some(label)
             {
-                let mut ciphertext = vec![0u8; private_key.key_size()];
+                let mut ciphertext = vec![0u8; public_key.max_ciphertext_size()];
 
                 let label: &[u8] = br"Testing Data Label";
 
@@ -515,7 +519,7 @@ macro_rules! round_trip_algorithm {
                     .encrypt($alg, MESSAGE, ciphertext.as_mut(), Some(label))
                     .expect("encrypted");
 
-                let mut plaintext = vec![0u8; private_key.key_size()];
+                let mut plaintext = vec![0u8; private_key.key_size_bytes()];
 
                 let plaintext = private_key
                     .decrypt($alg, ciphertext, &mut plaintext, Some(label))
@@ -527,13 +531,13 @@ macro_rules! round_trip_algorithm {
             // zero-length message
             {
                 let message: &[u8] = &[1u8; 0];
-                let mut ciphertext = vec![0u8; private_key.key_size()];
+                let mut ciphertext = vec![0u8; public_key.max_ciphertext_size()];
 
                 let ciphertext = public_key
                     .encrypt($alg, message, ciphertext.as_mut(), None)
                     .expect("encrypted");
 
-                let mut plaintext = vec![0u8; public_key.key_size()];
+                let mut plaintext = vec![0u8; private_key.key_size_bytes()];
 
                 let plaintext = private_key
                     .decrypt($alg, ciphertext, &mut plaintext, None)
@@ -545,13 +549,13 @@ macro_rules! round_trip_algorithm {
             // max_plaintext_size message
             {
                 let message = vec![1u8; public_key.max_plaintext_size($alg)];
-                let mut ciphertext = vec![0u8; private_key.key_size()];
+                let mut ciphertext = vec![0u8; public_key.max_ciphertext_size()];
 
                 let ciphertext = public_key
                     .encrypt($alg, &message, ciphertext.as_mut(), None)
                     .expect("encrypted");
 
-                let mut plaintext = vec![0u8; public_key.key_size()];
+                let mut plaintext = vec![0u8; private_key.key_size_bytes()];
 
                 let plaintext = private_key
                     .decrypt($alg, ciphertext, &mut plaintext, None)
@@ -563,7 +567,7 @@ macro_rules! round_trip_algorithm {
             // max_plaintext_size+1 message
             {
                 let message = vec![1u8; public_key.max_plaintext_size($alg) + 1];
-                let mut ciphertext = vec![0u8; private_key.key_size()];
+                let mut ciphertext = vec![0u8; private_key.key_size_bytes()];
 
                 public_key
                     .encrypt($alg, &message, ciphertext.as_mut(), None)
@@ -696,13 +700,13 @@ fn clone_then_drop() {
     drop(private_key);
     drop(public_key);
 
-    let mut ciphertext = vec![0u8; oaep_priv_key.key_size()];
+    let mut ciphertext = vec![0u8; oaep_pub_key.max_ciphertext_size()];
 
     let ciphertext = oaep_pub_key
         .encrypt(&OAEP_SHA256_MGF1SHA256, MESSAGE, ciphertext.as_mut(), None)
         .expect("encrypted");
 
-    let mut plaintext = vec![0u8; oaep_priv_key.key_size()];
+    let mut plaintext = vec![0u8; oaep_priv_key.key_size_bytes()];
 
     let plaintext = oaep_priv_key
         .decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)
@@ -715,14 +719,20 @@ fn clone_then_drop() {
 fn encrypt_decrypt_key_size() {
     let private_key = PrivateDecryptingKey::generate(KeySize::Rsa2048).expect("generation");
     let public_key = private_key.public_key();
-    assert_eq!(private_key.key_size(), public_key.key_size());
+    assert_eq!(private_key.key_size_bytes(), public_key.key_size_bytes());
+    assert_eq!(private_key.key_size_bits(), public_key.key_size_bits());
 
     let oaep_priv_key =
         OaepPrivateDecryptingKey::new(private_key.clone()).expect("oaep private key");
     let oaep_pub_key = OaepPublicEncryptingKey::new(public_key.clone()).expect("oaep public key");
-    assert_eq!(oaep_priv_key.key_size(), oaep_pub_key.key_size());
+    assert_eq!(
+        oaep_priv_key.key_size_bytes(),
+        oaep_pub_key.key_size_bytes()
+    );
+    assert_eq!(oaep_priv_key.key_size_bits(), oaep_pub_key.key_size_bits());
 
-    assert_eq!(private_key.key_size(), oaep_priv_key.key_size());
+    assert_eq!(private_key.key_size_bytes(), oaep_priv_key.key_size_bytes());
+    assert_eq!(private_key.key_size_bits(), oaep_priv_key.key_size_bits());
 }
 
 #[test]
@@ -755,12 +765,12 @@ fn min_encrypt_key() {
 
     let message: &[u8] = br"foo bar baz";
 
-    let mut ciphertext = vec![0u8; oaep_parsed_private.key_size()];
+    let mut ciphertext = vec![0u8; oaep_parsed_public.max_ciphertext_size()];
     let ciphertext = oaep_parsed_public
         .encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext, None)
         .expect("encrypted");
 
-    let mut plaintext = vec![0u8; oaep_parsed_public.key_size()];
+    let mut plaintext = vec![0u8; oaep_parsed_private.key_size_bytes()];
     let plaintext = oaep_parsed_private
         .decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)
         .expect("decrypted");
@@ -792,12 +802,12 @@ fn max_encrypt_key() {
 
     let message: &[u8] = br"foo bar baz";
 
-    let mut ciphertext = vec![0u8; oaep_parsed_private.key_size()];
+    let mut ciphertext = vec![0u8; oaep_parsed_public.max_ciphertext_size()];
     let ciphertext = oaep_parsed_public
         .encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext, None)
         .expect("encrypted");
 
-    let mut plaintext = vec![0u8; oaep_parsed_public.key_size()];
+    let mut plaintext = vec![0u8; oaep_parsed_private.key_size_bytes()];
     let plaintext = oaep_parsed_private
         .decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)
         .expect("decrypted");

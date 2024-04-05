@@ -3,7 +3,7 @@
 
 use crate::{
     encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
-    error::Unspecified,
+    error::{KeyRejected, Unspecified},
     fips::indicator_check,
     ptr::{DetachableLcPtr, LcPtr},
 };
@@ -18,7 +18,7 @@ use mirai_annotations::verify_unreachable;
 
 use super::{
     encoding,
-    key::{generate_rsa_key, is_rsa_key, key_size, key_size_bits},
+    key::{generate_rsa_key, is_rsa_key, key_size_bits, key_size_bytes},
     KeySize,
 };
 
@@ -126,7 +126,7 @@ impl PrivateDecryptingKey {
     /// # Errors
     /// * `Unspecified` for any error that occurs during the generation of the RSA keypair.
     pub fn generate(size: KeySize) -> Result<Self, Unspecified> {
-        let key = generate_rsa_key(size.bit_len(), false)?;
+        let key = generate_rsa_key(size.bits(), false)?;
         Self::new(key)
     }
 
@@ -141,7 +141,7 @@ impl PrivateDecryptingKey {
     /// * `Unspecified`: Any key generation failure.
     #[cfg(feature = "fips")]
     pub fn generate_fips(size: KeySize) -> Result<Self, Unspecified> {
-        let key = generate_rsa_key(size.bit_len(), true)?;
+        let key = generate_rsa_key(size.bits(), true)?;
         Self::new(key)
     }
 
@@ -151,9 +151,9 @@ impl PrivateDecryptingKey {
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs during deserialization of this key from PKCS#8.
-    pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, Unspecified> {
-        let evp_pkey = LcPtr::try_from(pkcs8)?;
-        Self::new(evp_pkey)
+    pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
+        let key = encoding::pkcs8::decode_der(pkcs8)?;
+        Ok(Self::new(key)?)
     }
 
     /// Returns a boolean indicator if this RSA key is an approved FIPS 140-3 key.
@@ -165,8 +165,14 @@ impl PrivateDecryptingKey {
 
     /// Returns the RSA key size in bytes.
     #[must_use]
-    pub fn key_size(&self) -> usize {
-        key_size(&self.0)
+    pub fn key_size_bytes(&self) -> usize {
+        key_size_bytes(&self.0)
+    }
+
+    /// Returns the RSA key size in bits.
+    #[must_use]
+    pub fn key_size_bits(&self) -> usize {
+        key_size_bits(&self.0)
     }
 
     /// Retrieves the `PublicEncryptingKey` corresponding with this `PrivateDecryptingKey`.
@@ -220,14 +226,20 @@ impl PublicEncryptingKey {
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs deserializing from bytes.
-    pub fn from_der(value: &[u8]) -> Result<Self, Unspecified> {
+    pub fn from_der(value: &[u8]) -> Result<Self, KeyRejected> {
         Ok(Self(encoding::rfc5280::decode_public_key_der(value)?))
     }
 
     /// Returns the RSA key size in bytes.
     #[must_use]
-    pub fn key_size(&self) -> usize {
-        key_size(&self.0)
+    pub fn key_size_bytes(&self) -> usize {
+        key_size_bytes(&self.0)
+    }
+
+    /// Returns the RSA key size in bits.
+    #[must_use]
+    pub fn key_size_bits(&self) -> usize {
+        key_size_bits(&self.0)
     }
 }
 
@@ -307,14 +319,36 @@ impl OaepPublicEncryptingKey {
 
     /// Returns the RSA key size in bytes.
     #[must_use]
-    pub fn key_size(&self) -> usize {
-        self.public_key.key_size()
+    pub fn key_size_bytes(&self) -> usize {
+        self.public_key.key_size_bytes()
+    }
+
+    /// Returns the RSA key size in bits.
+    #[must_use]
+    pub fn key_size_bits(&self) -> usize {
+        self.public_key.key_size_bits()
     }
 
     /// Returns the max plaintext that could be decrypted using this key and with the provided algorithm.
     #[must_use]
     pub fn max_plaintext_size(&self, algorithm: &'static OaepAlgorithm) -> usize {
-        max_plaintext_size(self.key_size(), algorithm)
+        #[allow(unreachable_patterns)]
+        let hash_len: usize = match algorithm.id() {
+            EncryptionAlgorithmId::OaepSha1Mgf1sha1 => 20,
+            EncryptionAlgorithmId::OaepSha256Mgf1sha256 => 32,
+            EncryptionAlgorithmId::OaepSha384Mgf1sha384 => 48,
+            EncryptionAlgorithmId::OaepSha512Mgf1sha512 => 64,
+            _ => verify_unreachable!(),
+        };
+
+        // The RSA-OAEP algorithms we support use the hashing algorithm for the hash and mgf1 functions.
+        self.key_size_bytes() - 2 * hash_len - 2
+    }
+
+    /// Returns the max ciphertext size that will be output by the `Self::encrypt`.
+    #[must_use]
+    pub fn max_ciphertext_size(&self) -> usize {
+        self.key_size_bytes()
     }
 }
 
@@ -386,8 +420,14 @@ impl OaepPrivateDecryptingKey {
 
     /// Returns the RSA key size in bytes.
     #[must_use]
-    pub fn key_size(&self) -> usize {
-        self.private_key.key_size()
+    pub fn key_size_bytes(&self) -> usize {
+        self.private_key.key_size_bytes()
+    }
+
+    /// Returns the RSA key size in bits.
+    #[must_use]
+    pub fn key_size_bits(&self) -> usize {
+        self.private_key.key_size_bits()
     }
 }
 
@@ -423,8 +463,11 @@ fn configure_oaep_crypto_operation(
         &[0u8; 0]
     };
 
-    // No need to set the label if it is zero-length, AWS-LC will handle this correctly.
     if label.is_empty() {
+        // Safety: Don't pass zero-length slice pointers to C code :)
+        if 1 != unsafe { EVP_PKEY_CTX_set0_rsa_oaep_label(**evp_pkey_ctx, null_mut(), 0) } {
+            return Err(Unspecified);
+        }
         return Ok(());
     }
 
@@ -442,7 +485,7 @@ fn configure_oaep_crypto_operation(
         return Err(Unspecified);
     };
 
-    // AWS-LC owns the allocaiton now, so we detach it to avoid freeing it here when label_ptr goes out of scope.
+    // AWS-LC owns the allocation now, so we detach it to avoid freeing it here when label_ptr goes out of scope.
     label_ptr.detach();
 
     Ok(())
@@ -456,19 +499,4 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicEncryptingKey {
     fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
         encoding::rfc5280::encode_public_key_der(&self.0)
     }
-}
-
-#[inline]
-fn max_plaintext_size(key_size: usize, algorithm: &'static OaepAlgorithm) -> usize {
-    #[allow(unreachable_patterns)]
-    let hash_len: usize = match algorithm.id() {
-        EncryptionAlgorithmId::OaepSha1Mgf1sha1 => 20,
-        EncryptionAlgorithmId::OaepSha256Mgf1sha256 => 32,
-        EncryptionAlgorithmId::OaepSha384Mgf1sha384 => 48,
-        EncryptionAlgorithmId::OaepSha512Mgf1sha512 => 64,
-        _ => verify_unreachable!(),
-    };
-
-    // The RSA-OAEP algorithms we support use the hashing algorithm for the hash and mgf1 functions.
-    key_size - 2 * hash_len - 2
 }

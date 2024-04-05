@@ -116,9 +116,10 @@ impl LcPtr<EVP_PKEY> {
 
 impl Clone for LcPtr<EVP_PKEY> {
     fn clone(&self) -> Self {
-        assert!(
-            1 == unsafe { EVP_PKEY_up_ref(**self) },
-            "infallible AWS_LC function"
+        assert_eq!(
+            1,
+            unsafe { EVP_PKEY_up_ref(**self) },
+            "infallible AWS-LC function"
         );
         Self::new(**self).expect("non-null AWS-LC EVP_PKEY pointer")
     }
