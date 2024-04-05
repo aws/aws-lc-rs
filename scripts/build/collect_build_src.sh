@@ -149,7 +149,7 @@ function verify_source_files() {
     done
 }
 
-function generate_toml() {
+function generate_output() {
     TIMESTAMP="$(date -u)"
     cat << EOF
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -160,6 +160,7 @@ use crate::cc_builder::Library;
 
 pub(super) const CRYPTO_LIBRARY: Library = Library {
     name: "crypto",
+    // This attribute is intentionally let blank
     flags: &[],
     sources: &[
 EOF
@@ -207,7 +208,7 @@ verify_source_files "${PROCESSED_SRC_FILES[@]}"
 RUST_TRIPLE=$(target_filename)
 BUILD_CFG_PATH="${BUILD_CFG_DIR}/${RUST_TRIPLE}.rs"
 
-generate_toml ${PROCESSED_SRC_FILES[@]} > ${BUILD_CFG_PATH}
+generate_output ${PROCESSED_SRC_FILES[@]} > ${BUILD_CFG_PATH}
 
 echo
 echo Build configuration written to: ${BUILD_CFG_PATH}

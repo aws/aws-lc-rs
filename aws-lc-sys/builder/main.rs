@@ -142,13 +142,14 @@ pub(crate) struct TestCommandResult {
     status: bool,
 }
 
+const MAX_CMD_OUTPUT_SIZE: usize = 1 << 12;
 fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     if let Ok(mut result) = Command::new(executable).args(args).output() {
-        result.stderr.truncate(4112);
+        result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);
         let stderr = String::from_utf8(result.stderr)
             .unwrap_or_default()
             .into_boxed_str();
-        result.stdout.truncate(4112);
+        result.stdout.truncate(MAX_CMD_OUTPUT_SIZE);
         let stdout = String::from_utf8(result.stdout)
             .unwrap_or_default()
             .into_boxed_str();
