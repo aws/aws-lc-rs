@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use toml_edit::Document;
+use toml_edit::DocumentMut;
 
 fn main() {
     let mut deps = vec![];
@@ -48,7 +48,7 @@ fn build_and_link(links: &str, target_name: &str) {
 
 fn get_package_links_property(cargo_toml_path: &str) -> String {
     let cargo_toml = std::fs::read_to_string(cargo_toml_path).unwrap();
-    let cargo_toml = cargo_toml.parse::<Document>().unwrap();
+    let cargo_toml = cargo_toml.parse::<DocumentMut>().unwrap();
 
     let links = cargo_toml["package"]["links"].as_str().unwrap();
 
