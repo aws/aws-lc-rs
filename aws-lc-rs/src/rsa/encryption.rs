@@ -261,32 +261,32 @@ pub struct OaepPublicEncryptingKey {
 }
 
 impl OaepPublicEncryptingKey {
-    /// Construcsts an `OaepPublicEncryptingKey` from a `PublicEncryptingKey`.
+    /// Constructs an `OaepPublicEncryptingKey` from a `PublicEncryptingKey`.
     /// # Errors
     /// * `Unspecified`: Any error that occurs while attempting to construct an RSA-OAEP public key.
     pub fn new(public_key: PublicEncryptingKey) -> Result<Self, Unspecified> {
         Ok(Self { public_key })
     }
 
-    /// Encrypts the contents in `plaintext` and writes the corresponding ciphertext to `output`.
+    /// Encrypts the contents in `plaintext` and writes the corresponding ciphertext to `ciphertext`.
+    /// Returns the subslice of `ciphertext` containing the ciphertext output.
     ///
     /// # Max Plaintext Length
     /// The provided length of `plaintext` must be at most [`Self::max_plaintext_size`].
     ///
     /// # Sizing `output`
-    /// For `OAEP_SHA1_MGF1SHA1`, `OAEP_SHA256_MGF1SHA256`, `OAEP_SHA384_MGF1SHA384`, `OAEP_SHA512_MGF1SHA512` the
-    /// length of `output` must be the RSA key size in bytes. The RSA key size in bytes can be retrieved using
-    /// [`Self::key_size`].
+    /// For `OAEP_SHA1_MGF1SHA1`, `OAEP_SHA256_MGF1SHA256`, `OAEP_SHA384_MGF1SHA384`, `OAEP_SHA512_MGF1SHA512` The
+    /// length of `output` must be greater then or equal to [`Self::ciphertext_size`].
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs while encrypting `plaintext`.
-    pub fn encrypt<'output>(
+    pub fn encrypt<'ciphertext>(
         &self,
         algorithm: &'static OaepAlgorithm,
         plaintext: &[u8],
-        output: &'output mut [u8],
+        ciphertext: &'ciphertext mut [u8],
         label: Option<&[u8]>,
-    ) -> Result<&'output mut [u8], Unspecified> {
+    ) -> Result<&'ciphertext mut [u8], Unspecified> {
         let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.public_key.0, null_mut()) })?;
 
         if 1 != unsafe { EVP_PKEY_encrypt_init(*pkey_ctx) } {
@@ -300,12 +300,12 @@ impl OaepPublicEncryptingKey {
             label,
         )?;
 
-        let mut out_len = output.len();
+        let mut out_len = ciphertext.len();
 
         if 1 != indicator_check!(unsafe {
             EVP_PKEY_encrypt(
                 *pkey_ctx,
-                output.as_mut_ptr(),
+                ciphertext.as_mut_ptr(),
                 &mut out_len,
                 plaintext.as_ptr(),
                 plaintext.len(),
@@ -314,7 +314,7 @@ impl OaepPublicEncryptingKey {
             return Err(Unspecified);
         };
 
-        Ok(&mut output[..out_len])
+        Ok(&mut ciphertext[..out_len])
     }
 
     /// Returns the RSA key size in bytes.
@@ -345,9 +345,9 @@ impl OaepPublicEncryptingKey {
         self.key_size_bytes() - 2 * hash_len - 2
     }
 
-    /// Returns the max ciphertext size that will be output by the `Self::encrypt`.
+    /// Returns the max ciphertext size that will be output by `Self::encrypt`.
     #[must_use]
-    pub fn max_ciphertext_size(&self) -> usize {
+    pub fn ciphertext_size(&self) -> usize {
         self.key_size_bytes()
     }
 }
@@ -355,8 +355,7 @@ impl OaepPublicEncryptingKey {
 impl Debug for OaepPublicEncryptingKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("OaepPublicEncryptingKey")
-            .field("public_key", &self.public_key)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -366,28 +365,32 @@ pub struct OaepPrivateDecryptingKey {
 }
 
 impl OaepPrivateDecryptingKey {
-    /// Construcsts an `OaepPrivateDecryptingKey` from a `PrivateDecryptingKey`.
+    /// Constructs an `OaepPrivateDecryptingKey` from a `PrivateDecryptingKey`.
     /// # Errors
     /// * `Unspecified`: Any error that occurs while attempting to construct an RSA-OAEP public key.
     pub fn new(private_key: PrivateDecryptingKey) -> Result<Self, Unspecified> {
         Ok(Self { private_key })
     }
 
-    /// Decrypts the contents in `ciphertext` and writes the corresponding plaintext to `output`.
+    /// Decrypts the contents in `ciphertext` and writes the corresponding plaintext to `plaintext`.
+    /// Returns the subslice of `plaintext` containing the plaintext output.
+    ///
+    /// # Max Ciphertext Length
+    /// The provided length of `ciphertext` must be [`Self::key_size_bytes`].
     ///
     /// # Sizing `output`
     /// For `OAEP_SHA1_MGF1SHA1`, `OAEP_SHA256_MGF1SHA256`, `OAEP_SHA384_MGF1SHA384`, `OAEP_SHA512_MGF1SHA512`. The
-    /// length of `output` must be equal to [`Self::key_size`].
+    /// length of `output` must be greater then or equal to [`Self::min_output_size`].
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs while decrypting `ciphertext`.
-    pub fn decrypt<'output>(
+    pub fn decrypt<'plaintext>(
         &self,
         algorithm: &'static OaepAlgorithm,
         ciphertext: &[u8],
-        output: &'output mut [u8],
+        plaintext: &'plaintext mut [u8],
         label: Option<&[u8]>,
-    ) -> Result<&'output mut [u8], Unspecified> {
+    ) -> Result<&'plaintext mut [u8], Unspecified> {
         let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.private_key.0, null_mut()) })?;
 
         if 1 != unsafe { EVP_PKEY_decrypt_init(*pkey_ctx) } {
@@ -401,12 +404,12 @@ impl OaepPrivateDecryptingKey {
             label,
         )?;
 
-        let mut out_len = output.len();
+        let mut out_len = plaintext.len();
 
         if 1 != indicator_check!(unsafe {
             EVP_PKEY_decrypt(
                 *pkey_ctx,
-                output.as_mut_ptr(),
+                plaintext.as_mut_ptr(),
                 &mut out_len,
                 ciphertext.as_ptr(),
                 ciphertext.len(),
@@ -415,7 +418,7 @@ impl OaepPrivateDecryptingKey {
             return Err(Unspecified);
         };
 
-        Ok(&mut output[..out_len])
+        Ok(&mut plaintext[..out_len])
     }
 
     /// Returns the RSA key size in bytes.
@@ -429,13 +432,18 @@ impl OaepPrivateDecryptingKey {
     pub fn key_size_bits(&self) -> usize {
         self.private_key.key_size_bits()
     }
+
+    /// Returns the minimum plaintext buffer size required for `Self::decrypt`.
+    #[must_use]
+    pub fn min_output_size(&self) -> usize {
+        self.key_size_bytes()
+    }
 }
 
 impl Debug for OaepPrivateDecryptingKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("OaepPrivateDecryptingKey")
-            .field("private_key", &self.private_key)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 

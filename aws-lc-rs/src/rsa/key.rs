@@ -65,6 +65,18 @@ pub enum KeySize {
 
 #[allow(clippy::len_without_is_empty)]
 impl KeySize {
+    /// Returns the size of the key in bytes.
+    #[inline]
+    #[must_use]
+    pub fn len(self) -> usize {
+        match self {
+            Self::Rsa2048 => 256,
+            Self::Rsa3072 => 384,
+            Self::Rsa4096 => 512,
+            Self::Rsa8192 => 1024,
+        }
+    }
+
     /// Returns the key size in bits.
     #[inline]
     pub(super) fn bits(self) -> i32 {
