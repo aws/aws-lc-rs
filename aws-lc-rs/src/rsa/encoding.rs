@@ -55,7 +55,7 @@ pub(in crate::rsa) mod rfc8017 {
         ptr::{DetachableLcPtr, LcPtr},
     };
     use aws_lc::{
-        EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_parse_private_key, RSA_parse_public_key,
+        EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_parse_private_key, RSA_public_key_from_bytes,
         RSA_public_key_to_bytes, EVP_PKEY,
     };
     use std::ptr::null_mut;
@@ -84,9 +84,9 @@ pub(in crate::rsa) mod rfc8017 {
     pub(in crate::rsa) fn decode_public_key_der(
         public_key: &[u8],
     ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-        let mut cbs = unsafe { cbs::build_CBS(public_key) };
-
-        let rsa = DetachableLcPtr::new(unsafe { RSA_parse_public_key(&mut cbs) })?;
+        let rsa = DetachableLcPtr::new(unsafe {
+            RSA_public_key_from_bytes(public_key.as_ptr(), public_key.len())
+        })?;
 
         let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
 
@@ -130,14 +130,19 @@ pub(in crate::rsa) mod rfc5280 {
         encoding::PublicKeyX509Der,
         error::{KeyRejected, Unspecified},
         ptr::LcPtr,
-        rsa::key::is_rsa_key,
+        rsa::key::{is_rsa_key, key_size_bytes},
     };
     use aws_lc::{EVP_marshal_public_key, EVP_parse_public_key, EVP_PKEY};
 
     pub(in crate::rsa) fn encode_public_key_der(
         key: &LcPtr<EVP_PKEY>,
     ) -> Result<PublicKeyX509Der<'static>, Unspecified> {
-        let mut der = LcCBB::new(1024);
+        // Data shows that the SubjectPublicKeyInfo is roughly 356% to 375% increase in size comapred to the RSA key
+        // size in bytes for keys ranging from 2048-bit to 4096-bit. So size the initial capacity to be roughly
+        // 400% as a consernative estimate to avoid needing to reallocate for any key in that range.
+        let key_size_bytes = key_size_bytes(key);
+
+        let mut der = LcCBB::new(key_size_bytes + (key_size_bytes * 4));
 
         if 1 != unsafe { EVP_marshal_public_key(der.as_mut_ptr(), **key) } {
             return Err(Unspecified);

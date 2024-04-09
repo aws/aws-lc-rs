@@ -121,7 +121,13 @@ impl PrivateDecryptingKey {
         }
     }
 
-    /// Generate a new RSA private key for use with asymmetrical encryption.
+    /// Generate a new RSA private key pair for use with asymmetrical encryption.
+    ///
+    /// Supports the following key sizes:
+    /// * `KeySize::Rsa2048`
+    /// * `KeySize::Rsa3072`
+    /// * `KeySize::Rsa4096`
+    /// * `KeySize::Rsa8192`
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs during the generation of the RSA keypair.
@@ -130,12 +136,12 @@ impl PrivateDecryptingKey {
         Self::new(key)
     }
 
-    /// Generate a RSA `KeyPair` of the specified key-strength.
+    /// Generate a new RSA private key pair for use with asymmetrical encryption.
     ///
     /// Supports the following key sizes:
-    /// * `EncryptionKeySize::Rsa2048`
-    /// * `EncryptionKeySize::Rsa3072`
-    /// * `EncryptionKeySize::Rsa4096`
+    /// * `KeySize::Rsa2048`
+    /// * `KeySize::Rsa3072`
+    /// * `KeySize::Rsa4096`
     ///
     /// # Errors
     /// * `Unspecified`: Any key generation failure.

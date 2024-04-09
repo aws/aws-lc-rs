@@ -59,7 +59,6 @@ fn test_signature_rsa_pkcs1_sign() {
     let rng = rand::SystemRandom::new();
     test::run(
         test_file!("data/rsa_pkcs1_sign_tests.txt"),
-        // test_file!("data/debug.txt"),
         |section, test_case| {
             assert_eq!(section, "");
             let digest_name = test_case.consume_string("Digest");
