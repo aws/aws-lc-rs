@@ -37,7 +37,7 @@ pub(in crate::rsa) mod pkcs8 {
     pub(in crate::rsa) fn decode_der(pkcs8: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
         let mut cbs = unsafe { cbs::build_CBS(pkcs8) };
         let key = LcPtr::new(unsafe { EVP_parse_private_key(&mut cbs) })
-            .map_err(|()| KeyRejected::unspecified())?;
+            .map_err(|()| KeyRejected::invalid_encoding())?;
         if !is_rsa_key(&key) {
             return Err(KeyRejected::unspecified());
         }
