@@ -60,4 +60,8 @@ if (BORINGSSL_PREFIX)
         set(TARGET_PREFIX "lib${BORINGSSL_PREFIX}")
     endif()
     set_my_target_properties(PREFIX ${TARGET_PREFIX})
+
+    # This BORINGSSL_PREFIX has an "_" appended, so we must remove it
+    string(REGEX REPLACE "_$" "" BORINGSSL_PREFIX_MACRO ${BORINGSSL_PREFIX})
+    add_definitions(-DBORINGSSL_PREFIX=${BORINGSSL_PREFIX_MACRO})
 endif ()
