@@ -6,26 +6,29 @@
 #ifndef OPENSSL_HEADER_RUST_WRAPPER_H
 #define OPENSSL_HEADER_RUST_WRAPPER_H
 
-#ifdef _WIN32
-#define BORINGSSL_SHARED_LIBRARY
-#define AWS_LC_FIPS_SYS_EXPORT __declspec(dllexport)
-#else
-#define AWS_LC_FIPS_SYS_EXPORT __attribute__((visibility("default")))
-#endif
-
 #include <openssl/err.h>
+
+#define AWS_LC_WRAPPER_ADD_PREFIX(a, b) AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b)
+#define AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b) a ## _ ## b
+
+#if defined(BORINGSSL_PREFIX)
+
+#define ERR_GET_LIB_RUST AWS_LC_WRAPPER_ADD_PREFIX(BORINGSSL_PREFIX, ERR_GET_LIB_RUST)
+#define ERR_GET_REASON_RUST AWS_LC_WRAPPER_ADD_PREFIX(BORINGSSL_PREFIX, ERR_GET_REASON_RUST)
+#define ERR_GET_FUNC_RUST AWS_LC_WRAPPER_ADD_PREFIX(BORINGSSL_PREFIX, ERR_GET_FUNC_RUST)
+
+#endif  // BORINGSSL_PREFIX
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-
 // The following functions are wrappers over inline functions and macros in
 // BoringSSL, which bindgen cannot currently correctly bind. These wrappers
 // ensure changes to the functions remain in lockstep with the Rust versions.
-AWS_LC_FIPS_SYS_EXPORT int ERR_GET_LIB_RUST(uint32_t packed_error);
-AWS_LC_FIPS_SYS_EXPORT int ERR_GET_REASON_RUST(uint32_t packed_error);
-AWS_LC_FIPS_SYS_EXPORT int ERR_GET_FUNC_RUST(uint32_t packed_error);
+OPENSSL_EXPORT int ERR_GET_LIB_RUST(uint32_t packed_error);
+OPENSSL_EXPORT int ERR_GET_REASON_RUST(uint32_t packed_error);
+OPENSSL_EXPORT int ERR_GET_FUNC_RUST(uint32_t packed_error);
 
 
 #if defined(__cplusplus)

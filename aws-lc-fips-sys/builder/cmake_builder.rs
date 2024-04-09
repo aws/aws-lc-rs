@@ -22,7 +22,7 @@ fn test_perl_command() -> bool {
 fn test_go_command() -> bool {
     let result = test_command("go".as_ref(), &["version".as_ref()]);
     if !result.status && result.executed {
-        eprintln!("Go stdout:\n--------\n{}\n--------", result.stdout);
+        eprintln!("Go stderr:\n--------\n{}\n--------", result.stderr);
     }
     result.status
 }
