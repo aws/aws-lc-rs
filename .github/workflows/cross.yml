@@ -58,15 +58,10 @@ jobs:
       - name: Cross-compilation w/ bindgen
         run: cross test -p aws-lc-rs --release --features bindgen,unstable --target ${{ matrix.target }}
 
-  aws-lc-rs-platform-build:
+  aws-lc-rs-ios-aarch64:
     if: github.repository == 'aws/aws-lc-rs'
-    name: Cross-platform build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: [ stable ]
-        os: [ macos-13-xlarge ]
+    name: iOS aarch64 cross-platform build
+    runs-on: macos-13-xlarge
     steps:
       - uses: actions/checkout@v3
         with:
@@ -74,11 +69,25 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
-          toolchain: ${{ matrix.rust }}
+          toolchain: stable
           target: aarch64-apple-ios-sim
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install bash
         run: brew install bash
       - name: iOS Simulator Runner
         run: ./scripts/ci/ios-simulator-runner.sh
+
+  aws-lc-rs-ios-x86_64:
+    if: github.repository == 'aws/aws-lc-rs'
+    name: iOS x86-64 cross-platform build
+    runs-on: macos-13-xlarge
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+          target: x86_64-apple-ios
+      - name: Build for `x86_64-apple-ios`
+        run: cargo build -p aws-lc-rs --target x86_64-apple-ios --features bindgen

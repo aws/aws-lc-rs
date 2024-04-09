@@ -102,14 +102,22 @@ impl CmakeBuilder {
         cmake_cfg.define("DISABLE_GO", "ON");
 
         if target_vendor() == "apple" {
-            if target_os().trim() == "ios" {
+            if target_os().to_lowercase() == "ios" {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
-                if target().trim().ends_with("-ios-sim") {
+                if target().ends_with("-ios-sim") || target_arch() == "x86_64" {
                     cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
+                } else {
+                    cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphoneos");
                 }
+                cmake_cfg.define("CMAKE_THREAD_LIBS_INIT", "-lpthread");
             }
-            if target_arch().trim() == "aarch64" {
+            if target_arch() == "aarch64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
+                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "arm64");
+            }
+            if target_arch() == "x86_64" {
+                cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
+                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
             }
         }
 
