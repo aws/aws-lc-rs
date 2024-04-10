@@ -1,6 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+// NOTE: This module is intended to produce an equivalent "libcrypto" static library to the one
+// produced by the CMake. Changes to CMake relating to compiler checks and/or special build flags
+// may require modifications to the logic in this module.
+
 mod aarch64_apple_darwin;
 mod aarch64_unknown_linux_gnu;
 mod aarch64_unknown_linux_musl;
@@ -168,6 +172,9 @@ impl CcBuilder {
         }
     }
 
+    // This performs basic checks of compiler capabilities and sets an appropriate flag on success.
+    // This should be kept in alignment with the checks performed by AWS-LC's CMake build.
+    // See: https://github.com/search?q=repo%3Aaws%2Faws-lc%20check_compiler&type=code
     fn compiler_check(&self, cc_build: &mut cc::Build, basename: &str, flag: &str) {
         let output_path = self.out_dir.join(format!("{basename}.o"));
         if let Ok(()) = cc::Build::default()
@@ -187,6 +194,11 @@ impl CcBuilder {
         let _ = fs::remove_file(output_path);
     }
 
+    // This checks whether the compiler contains a critical bug that causes `memcmp` to erroneously
+    // consider two regions of memory to be equal when they're not.
+    // See GCC bug report: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189
+    // This should be kept in alignment with the same check performed by the CMake build.
+    // See: https://github.com/search?q=repo%3Aaws%2Faws-lc%20check_run&type=code
     fn memcmp_check(&self) {
         let basename = "memcmp_invalid_stripped_check";
         let exec_path = out_dir().join(basename);
@@ -226,6 +238,7 @@ impl CcBuilder {
             memcmp_compile_result.stdout
         );
 
+        // We can only execute the binary when the host and target platforms match.
         if cargo_env("HOST") == target() {
             let result = test_command(exec_path.as_os_str(), &[]);
             assert!(

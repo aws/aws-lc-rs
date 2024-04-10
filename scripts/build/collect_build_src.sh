@@ -2,6 +2,11 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0 OR ISC
 
+# This shell script performs a target-specific CMake static build of libcrypto. It extracts from that build artifact
+# debug information on the complete set of source files utilized for the build and then generates a target-specific
+# Rust source file (e.g., `x86_64_unknown_linux_gnu.rs`) that lists the files for subsequent use by the `cc_builder`
+# module for consumer builds where CMake might not be available.
+
 set -ex
 set -o pipefail
 
