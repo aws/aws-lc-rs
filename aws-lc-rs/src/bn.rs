@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
-use aws_lc::{BN_bin2bn, BN_bn2bin, BN_cmp, BN_new, BN_num_bits, BN_num_bytes, BN_set_u64, BIGNUM};
-use core::cmp::Ordering;
+use aws_lc::{BN_bin2bn, BN_bn2bin, BN_new, BN_num_bits, BN_num_bytes, BN_set_u64, BIGNUM};
 use core::ptr::null_mut;
 use mirai_annotations::unrecoverable;
 
@@ -62,13 +61,6 @@ impl ConstPointer<BIGNUM> {
             }
             byte_vec.set_len(out_bytes);
             byte_vec
-        }
-    }
-
-    pub(crate) fn compare(&self, other: &ConstPointer<BIGNUM>) -> Ordering {
-        unsafe {
-            let result = BN_cmp(**self, **other);
-            result.cmp(&0)
         }
     }
 

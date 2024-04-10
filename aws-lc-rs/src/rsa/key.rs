@@ -3,55 +3,47 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use core::{
-    cmp::Ordering,
-    fmt::{self, Debug, Formatter},
-    mem::MaybeUninit,
-    ptr::null_mut,
-};
-// TODO: Uncomment when MSRV >= 1.64
-// use core::ffi::c_int;
-use std::os::raw::c_int;
-
-use crate::{
-    encoding::{AsDer, Pkcs8V1Der},
-    fips::indicator_check,
-};
-
-#[cfg(feature = "fips")]
-use aws_lc::RSA_check_fips;
-#[cfg(feature = "ring-io")]
-use aws_lc::RSA_get0_n;
-use aws_lc::{
-    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_generate_key_ex,
-    RSA_generate_key_fips, RSA_get0_e, RSA_get0_p, RSA_get0_q, RSA_new, RSA_parse_private_key,
-    RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
-    EVP_PKEY_CTX, RSA,
-};
-
-use mirai_annotations::verify_unreachable;
-
-#[cfg(feature = "ring-io")]
-use untrusted::Input;
-
-use zeroize::Zeroize;
-
 use super::{
     encoding,
     signature::{compute_rsa_signature, RsaEncoding, RsaPadding},
     RsaParameters,
 };
-
 #[cfg(feature = "ring-io")]
 use crate::io;
+#[cfg(feature = "ring-io")]
+use crate::ptr::ConstPointer;
 use crate::{
-    cbs, digest,
+    digest::{self},
+    encoding::{AsDer, Pkcs8V1Der},
     error::{KeyRejected, Unspecified},
+    fips::indicator_check,
     hex,
-    ptr::{ConstPointer, DetachableLcPtr, LcPtr},
+    ptr::{DetachableLcPtr, LcPtr, Pointer},
     rand,
     sealed::Sealed,
 };
+#[cfg(feature = "fips")]
+use aws_lc::RSA_check_fips;
+use aws_lc::{
+    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
+    RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
+    EVP_PKEY_CTX,
+};
+#[cfg(feature = "ring-io")]
+use aws_lc::{RSA_get0_e, RSA_get0_n};
+use core::{
+    fmt::{self, Debug, Formatter},
+    ptr::null_mut,
+};
+
+// TODO: Uncomment when MSRV >= 1.64
+// use core::ffi::c_int;
+use std::os::raw::c_int;
+
+use mirai_annotations::verify_unreachable;
+#[cfg(feature = "ring-io")]
+use untrusted::Input;
+use zeroize::Zeroize;
 
 /// RSA key-size.
 #[allow(clippy::module_name_repetitions)]
@@ -87,7 +79,7 @@ impl KeySize {
 
     /// Returns the key size in bits.
     #[inline]
-    fn bit_len(self) -> i32 {
+    pub(super) fn bits(self) -> i32 {
         match self {
             Self::Rsa2048 => 2048,
             Self::Rsa3072 => 3072,
@@ -106,8 +98,8 @@ pub struct KeyPair {
     // other thread is concurrently calling a mutating function. Unless otherwise
     // documented, functions which take a |const| pointer are non-mutating and
     // functions which take a non-|const| pointer are mutating.
-    evp_pkey: LcPtr<EVP_PKEY>,
-    serialized_public_key: PublicKey,
+    pub(super) evp_pkey: LcPtr<EVP_PKEY>,
+    pub(super) serialized_public_key: PublicKey,
 }
 
 impl Sealed for KeyPair {}
@@ -116,14 +108,12 @@ unsafe impl Sync for KeyPair {}
 
 impl KeyPair {
     fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, KeyRejected> {
-        unsafe {
-            let rsa_key = evp_pkey.get_rsa()?;
-            let serialized_public_key = PublicKey::new(&rsa_key.as_const())?;
-            Ok(KeyPair {
-                evp_pkey,
-                serialized_public_key,
-            })
-        }
+        KeyPair::validate_private_key(&evp_pkey)?;
+        let serialized_public_key = unsafe { PublicKey::new(&evp_pkey)? };
+        Ok(KeyPair {
+            evp_pkey,
+            serialized_public_key,
+        })
     }
 
     /// Generate a RSA `KeyPair` of the specified key-strength.
@@ -131,8 +121,8 @@ impl KeyPair {
     /// # Errors
     /// * `Unspecified`: Any key generation failure.
     pub fn generate(size: KeySize) -> Result<Self, Unspecified> {
-        let private_key = generate_rsa_key(size.bit_len(), false)?;
-        Self::new(private_key).map_err(|_| Unspecified)
+        let private_key = generate_rsa_key(size.bits(), false)?;
+        Ok(Self::new(private_key)?)
     }
 
     /// Generate a RSA `KeyPair` of the specified key-strength.
@@ -146,65 +136,28 @@ impl KeyPair {
     /// * `Unspecified`: Any key generation failure.
     #[cfg(feature = "fips")]
     pub fn generate_fips(size: KeySize) -> Result<Self, Unspecified> {
-        let private_key = generate_rsa_key(size.bit_len(), true)?;
-        Self::new(private_key).map_err(|_| Unspecified)
+        let private_key = generate_rsa_key(size.bits(), true)?;
+        Ok(Self::new(private_key)?)
     }
 
-    /// Parses an unencrypted PKCS#8-encoded RSA private key.
+    /// Parses an unencrypted PKCS#8 DER encoded RSA private key.
     ///
-    /// A RSA keypair may be generated using [`KeyPair::generate`].
+    /// Keys can be generated using [`KeyPair::generate`].
     ///
-    /// Only two-prime (not multi-prime) keys are supported. The public modulus
-    /// (n) must be at least 2047 bits. The public modulus must be no larger
-    /// than 4096 bits. It is recommended that the public modulus be exactly
-    /// 2048 or 3072 bits. The public exponent must be at least 65537.
+    /// # *ring*-compatibility
     ///
-    /// The following will generate a 2048-bit RSA private key of the correct form using
-    /// OpenSSL's command line tool:
-    ///
-    /// ```sh
-    ///    openssl genpkey -algorithm RSA \
-    ///        -pkeyopt rsa_keygen_bits:2048 \
-    ///        -pkeyopt rsa_keygen_pubexp:65537 | \
-    ///      openssl pkcs8 -topk8 -nocrypt -outform der > rsa-2048-private-key.pk8
-    /// ```
-    ///
-    /// The following will generate a 3072-bit RSA private key of the correct form:
-    ///
-    /// ```sh
-    ///    openssl genpkey -algorithm RSA \
-    ///        -pkeyopt rsa_keygen_bits:3072 \
-    ///        -pkeyopt rsa_keygen_pubexp:65537 | \
-    ///      openssl pkcs8 -topk8 -nocrypt -outform der > rsa-3072-private-key.pk8
-    /// ```
-    ///
-    /// Often, keys generated for use in OpenSSL-based software are stored in
-    /// the Base64 “PEM” format without the PKCS#8 wrapper. Such keys can be
-    /// converted to binary PKCS#8 form using the OpenSSL command line tool like
-    /// this:
-    ///
-    /// ```sh
-    /// openssl pkcs8 -topk8 -nocrypt -outform der \
-    ///     -in rsa-2048-private-key.pem > rsa-2048-private-key.pk8
-    /// ```
-    ///
-    /// Base64 (“PEM”) PKCS#8-encoded keys can be converted to the binary PKCS#8
-    /// form like this:
-    ///
-    /// ```sh
-    /// openssl pkcs8 -nocrypt -outform der \
-    ///     -in rsa-2048-private-key.pem > rsa-2048-private-key.pk8
-    /// ```
+    /// *aws-lc-rs* does not impose the same limitations that *ring* does for
+    /// RSA keys. Thus signatures may be generated by keys that are not accepted
+    /// by *ring*. In particular:
+    /// * RSA private keys ranging between 2048-bit keys and 8192-bit keys are supported.
+    /// * The public exponent does not have a required minimum size.
     ///
     /// # Errors
     /// `error::KeyRejected` if bytes do not encode an RSA private key or if the key is otherwise
     /// not acceptable.
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        unsafe {
-            let evp_pkey = encoding::pkcs8::decode_der(pkcs8)?;
-            Self::validate_rsa_pkey(&evp_pkey)?;
-            Self::new(evp_pkey)
-        }
+        let key = encoding::pkcs8::decode_der(pkcs8)?;
+        Self::new(key)
     }
 
     /// Parses a DER-encoded `RSAPrivateKey` structure (RFC 8017).
@@ -212,60 +165,25 @@ impl KeyPair {
     /// # Errors
     /// `error:KeyRejected` on error.
     pub fn from_der(input: &[u8]) -> Result<Self, KeyRejected> {
-        unsafe {
-            let pkey = build_private_RSA_PKEY(input)?;
-            Self::validate_rsa_pkey(&pkey)?;
-            Self::new(pkey)
-        }
+        let key = encoding::rfc8017::decode_private_key_der(input)?;
+        Self::new(key)
     }
 
-    const MIN_RSA_PRIME_BITS: u32 = 1024;
-    const MAX_RSA_PRIME_BITS: u32 = 4096;
+    /// Returns a boolean indicator if this RSA key is an approved FIPS 140-3 key.
+    #[cfg(feature = "fips")]
+    #[must_use]
+    pub fn is_valid_fips_key(&self) -> bool {
+        is_valid_fips_key(&self.evp_pkey)
+    }
 
-    /// ⚠️ Function assumes that `aws_lc::RSA_check_key` / `aws_lc::RSA_validate_key` has already been invoked beforehand.
-    /// `aws_lc::RSA_validate_key` is already invoked by `aws_lc::EVP_parse_private_key` / `aws_lc::RSA_parse_private_key`.
-    /// If the `EVP_PKEY` was constructed through another mechanism, then the key should be validated through the use of
-    /// one those verifier functions first.
-    unsafe fn validate_rsa_pkey(rsa: &LcPtr<EVP_PKEY>) -> Result<(), KeyRejected> {
-        let rsa = rsa.get_rsa()?.as_const();
-
-        let p = ConstPointer::new(RSA_get0_p(*rsa))?;
-        let q = ConstPointer::new(RSA_get0_q(*rsa))?;
-        let p_bits = p.num_bits();
-        let q_bits = q.num_bits();
-
-        if p_bits != q_bits {
-            return Err(KeyRejected::inconsistent_components());
+    fn validate_private_key(key: &LcPtr<EVP_PKEY>) -> Result<(), KeyRejected> {
+        if !is_rsa_key(key) {
+            return Err(KeyRejected::unspecified());
+        };
+        match key_size_bits(key) {
+            2048..=8192 => Ok(()),
+            _ => Err(KeyRejected::unspecified()),
         }
-
-        if p_bits < Self::MIN_RSA_PRIME_BITS {
-            return Err(KeyRejected::too_small());
-        }
-        if p_bits > Self::MAX_RSA_PRIME_BITS {
-            return Err(KeyRejected::too_large());
-        }
-
-        if p_bits % 512 != 0 {
-            return Err(KeyRejected::private_modulus_len_not_multiple_of_512_bits());
-        }
-
-        let e = ConstPointer::new(RSA_get0_e(*rsa))?;
-        let min_exponent = DetachableLcPtr::try_from(65537)?;
-        match e.compare(&min_exponent.as_const()) {
-            Ordering::Less => Err(KeyRejected::too_small()),
-            Ordering::Equal | Ordering::Greater => Ok(()),
-        }?;
-
-        // For the FIPS feature this will perform the necessary public-key validaiton steps and pairwise consistency tests.
-        // TODO: This also result in another call to `aws_lc::RSA_validate_key`, meaning duplicate effort is performed
-        // even after having already performing this operation during key parsing. Ideally the FIPS specific checks
-        // could be pulled out and invoked seperatly from the standard checks.
-        #[cfg(feature = "fips")]
-        if 1 != RSA_check_fips(*rsa as *mut RSA) {
-            return Err(KeyRejected::inconsistent_components());
-        }
-
-        Ok(())
     }
 
     /// Sign `msg`. `msg` is digested using the digest algorithm from
@@ -281,7 +199,6 @@ impl KeyPair {
     ///
     /// # *ring* Compatibility
     /// Our implementation ignores the `SecureRandom` parameter.
-    ///
     // # FIPS
     // The following conditions must be met:
     // * RSA Key Sizes: 2048, 3072, 4096
@@ -373,44 +290,6 @@ impl AsDer<Pkcs8V1Der<'static>> for KeyPair {
     }
 }
 
-#[inline]
-#[allow(non_snake_case)]
-unsafe fn build_private_RSA_PKEY(private_key: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-    let mut cbs = cbs::build_CBS(private_key);
-
-    let rsa = DetachableLcPtr::new(RSA_parse_private_key(&mut cbs))?;
-
-    let pkey = LcPtr::new(EVP_PKEY_new())?;
-
-    if 1 != EVP_PKEY_assign_RSA(*pkey, *rsa) {
-        return Err(KeyRejected::unexpected_error());
-    }
-
-    rsa.detach();
-
-    Ok(pkey)
-}
-
-#[inline]
-#[allow(non_snake_case)]
-pub(super) unsafe fn build_public_RSA_PKEY(
-    public_key: &[u8],
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let mut cbs = cbs::build_CBS(public_key);
-
-    let rsa = DetachableLcPtr::new(RSA_parse_public_key(&mut cbs))?;
-
-    let pkey = LcPtr::new(EVP_PKEY_new())?;
-
-    if 1 != EVP_PKEY_assign_RSA(*pkey, *rsa) {
-        return Err(Unspecified);
-    }
-
-    rsa.detach();
-
-    Ok(pkey)
-}
-
 /// A serialized RSA public key.
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
@@ -433,13 +312,14 @@ impl Drop for PublicKey {
 }
 
 impl PublicKey {
-    pub(super) unsafe fn new(pubkey: &ConstPointer<RSA>) -> Result<Self, ()> {
-        let key = serialize_RSA_pubkey(pubkey)?;
+    pub(super) unsafe fn new(evp_pkey: &LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
+        let key = encoding::rfc8017::encode_public_key_der(evp_pkey)?;
         #[cfg(feature = "ring-io")]
         {
-            let modulus = ConstPointer::new(RSA_get0_n(**pubkey))?;
+            let pubkey = evp_pkey.get_rsa()?;
+            let modulus = ConstPointer::new(RSA_get0_n(*pubkey))?;
             let modulus = modulus.to_be_bytes().into_boxed_slice();
-            let exponent = ConstPointer::new(RSA_get0_e(**pubkey))?;
+            let exponent = ConstPointer::new(RSA_get0_e(*pubkey))?;
             let exponent = exponent.to_be_bytes().into_boxed_slice();
             Ok(PublicKey {
                 key,
@@ -518,9 +398,8 @@ impl<B> PublicKeyComponents<B>
 where
     B: AsRef<[u8]> + Debug,
 {
-    #[allow(non_snake_case)]
     #[inline]
-    unsafe fn build_RSA(&self) -> Result<LcPtr<EVP_PKEY>, ()> {
+    unsafe fn build_rsa(&self) -> Result<LcPtr<EVP_PKEY>, ()> {
         let n_bytes = self.n.as_ref();
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
             return Err(());
@@ -563,8 +442,8 @@ where
         signature: &[u8],
     ) -> Result<(), Unspecified> {
         unsafe {
-            let rsa = self.build_RSA()?;
-            super::signature::verify_RSA(
+            let rsa = self.build_rsa()?;
+            super::signature::verify_rsa_signature(
                 params.digest_algorithm(),
                 params.padding(),
                 &rsa,
@@ -574,20 +453,6 @@ where
             )
         }
     }
-}
-
-#[allow(non_snake_case)]
-unsafe fn serialize_RSA_pubkey(pubkey: &ConstPointer<RSA>) -> Result<Box<[u8]>, ()> {
-    let mut pubkey_bytes = null_mut::<u8>();
-    let mut outlen = MaybeUninit::<usize>::uninit();
-    if 1 != RSA_public_key_to_bytes(&mut pubkey_bytes, outlen.as_mut_ptr(), **pubkey) {
-        return Err(());
-    }
-    let pubkey_bytes = LcPtr::new(pubkey_bytes)?;
-    let outlen = outlen.assume_init();
-    let pubkey_slice = pubkey_bytes.as_slice(outlen);
-    let pubkey_vec = Vec::from(pubkey_slice);
-    Ok(pubkey_vec.into_boxed_slice())
 }
 
 pub(super) fn generate_rsa_key(size: c_int, fips: bool) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
@@ -617,4 +482,31 @@ pub(super) fn generate_rsa_key(size: c_int, fips: bool) -> Result<LcPtr<EVP_PKEY
     rsa.detach();
 
     Ok(evp_pkey)
+}
+
+#[cfg(feature = "fips")]
+#[must_use]
+pub(super) fn is_valid_fips_key(key: &LcPtr<EVP_PKEY>) -> bool {
+    // This should always be an RSA key and must-never panic.
+    let rsa_key = key.get_rsa().expect("RSA EVP_PKEY");
+
+    1 == unsafe { RSA_check_fips(*rsa_key) }
+}
+
+pub(super) fn key_size_bytes(key: &LcPtr<EVP_PKEY>) -> usize {
+    // Safety: RSA modulous byte sizes supported fit an usize
+    unsafe { EVP_PKEY_size(key.as_const_ptr()) }
+        .try_into()
+        .expect("modulous to fit in usize")
+}
+
+pub(super) fn key_size_bits(key: &LcPtr<EVP_PKEY>) -> usize {
+    // Safety: RSA modulous byte sizes supported fit an usize
+    unsafe { EVP_PKEY_bits(key.as_const_ptr()) }
+        .try_into()
+        .expect("modulous to fit in usize")
+}
+
+pub(super) fn is_rsa_key(key: &LcPtr<EVP_PKEY>) -> bool {
+    key.get_rsa().is_ok()
 }

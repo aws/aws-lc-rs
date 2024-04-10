@@ -4,6 +4,61 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 //! RSA Signature and Encryption Support.
+//!
+//! # OAEP Encryption / Decryption
+//!
+//! ```rust
+//! # use std::error::Error;
+//! # fn main() -> Result<(), Box<dyn Error>> {
+//! use aws_lc_rs::{
+//!     encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
+//!     rsa::{KeySize, OAEP_SHA256_MGF1SHA256, OaepPublicEncryptingKey, OaepPrivateDecryptingKey, PublicEncryptingKey, PrivateDecryptingKey}
+//! };
+//!
+//! // Generate a RSA 2048-bit key.
+//! let private_key = PrivateDecryptingKey::generate(KeySize::Rsa2048)?;
+//!
+//! // Serialize the RSA private key to DER encoded PKCS#8 format for later usage.
+//! let private_key_der = AsDer::<Pkcs8V1Der>::as_der(&private_key)?;
+//! let private_key_der_bytes = private_key_der.as_ref();
+//!
+//! // Load a RSA private key from DER encoded PKCS#8 document.
+//! let private_key = PrivateDecryptingKey::from_pkcs8(private_key_der_bytes)?;
+//!
+//! // Retrieve the RSA public key
+//! let public_key = private_key.public_key();
+//!
+//! // Serialize the RSA public key to DER encoded X.509 SubjectPublicKeyInfo for later usage.
+//! let public_key_der = AsDer::<PublicKeyX509Der>::as_der(&public_key)?;
+//! let public_key_der_bytes = public_key_der.as_ref();
+//!
+//! // Load a RSA public key from DER encoded X.509 SubjectPublicKeyInfo.
+//! let public_key = PublicEncryptingKey::from_der(public_key_der_bytes)?;
+//!
+//! // Construct a RSA-OAEP public encrypting key
+//! let public_key = OaepPublicEncryptingKey::new(public_key)?;
+//!
+//! // The maximum size plaintext can be determined by calling `OaepPublicEncryptingKey::max_plaintext_size`
+//! let message = b"hello world";
+//! let mut ciphertext = vec![0u8; public_key.ciphertext_size()]; // Output will be the size of the RSA key length in bytes rounded up.
+//!
+//! // Encrypt a message with the public key without the optional label provided.
+//! let ciphertext = public_key.encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext, None)?;
+//!
+//! assert_ne!(message, ciphertext);
+//!
+//! // Construct a RSA-OAEP private decrypting key
+//! let private_key = OaepPrivateDecryptingKey::new(private_key)?;
+//!
+//! // Decrypt a message with the private key.
+//! let mut plaintext = vec![0u8; private_key.min_output_size()];
+//! let plaintext = private_key.decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)?;
+//!
+//! assert_eq!(message, plaintext);
+//!
+//! # Ok(())
+//! # }
+//! ```
 
 // *R* and *r* in Montgomery math refer to different things, so we always use
 // `R` to refer to *R* to avoid confusion, even when that's against the normal
@@ -11,17 +66,28 @@
 // components.
 
 mod encoding;
+mod encryption;
 pub(crate) mod key;
 pub(crate) mod signature;
 
-pub use self::key::{KeyPair, KeySize, PublicKey, PublicKeyComponents};
 #[allow(clippy::module_name_repetitions)]
 pub use self::signature::RsaParameters;
+pub use self::{
+    encryption::{
+        EncryptionAlgorithmId, OaepAlgorithm, OaepPrivateDecryptingKey, OaepPublicEncryptingKey,
+        PrivateDecryptingKey, PublicEncryptingKey, OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256,
+        OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
+    },
+    key::{KeyPair, KeySize, PublicKey, PublicKeyComponents},
+};
 
 pub(crate) use self::signature::RsaVerificationAlgorithmId;
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "fips")]
+    mod fips;
+
     #[cfg(feature = "ring-io")]
     #[test]
     fn test_rsa() {

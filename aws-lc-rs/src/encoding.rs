@@ -45,6 +45,12 @@ macro_rules! generated_encodings {
                     f.debug_struct(stringify!($name)).finish()
                 }
             }
+
+            impl<'a> From<Buffer<'a, buffer_type::[<$name Type>]>> for $name<'a> {
+                fn from(value: Buffer<'a, buffer_type::[<$name Type>]>) -> Self {
+                    Self(value)
+                }
+            }
         )*
     }}
 }

@@ -3,8 +3,12 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::encoding::AsDer;
-use aws_lc_rs::rsa::KeySize;
+use aws_lc_rs::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
+use aws_lc_rs::rsa::{
+    EncryptionAlgorithmId, KeySize, OaepPrivateDecryptingKey, OaepPublicEncryptingKey,
+    PrivateDecryptingKey, PublicEncryptingKey, OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256,
+    OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
+};
 use aws_lc_rs::signature::{
     KeyPair, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey,
 };
@@ -309,6 +313,8 @@ macro_rules! generate_fips_encode_decode {
         fn $name() {
             let private_key = RsaKeyPair::generate_fips($size).expect("generation");
 
+            assert_eq!(true, private_key.is_valid_fips_key());
+
             let pkcs8v1 = private_key.as_der().expect("encoded");
 
             let private_key = RsaKeyPair::from_pkcs8(pkcs8v1.as_ref()).expect("decoded");
@@ -332,6 +338,84 @@ generate_fips_encode_decode!(rsa3072_generate_fips_encode_decode, KeySize::Rsa30
 generate_fips_encode_decode!(rsa4096_generate_fips_encode_decode, KeySize::Rsa4096);
 generate_fips_encode_decode!(rsa8192_generate_fips_encode_decode, KeySize::Rsa8192, false);
 
+macro_rules! encryption_generate_encode_decode {
+    ($name:ident, $size:expr) => {
+        #[test]
+        fn $name() {
+            let private_key = PrivateDecryptingKey::generate($size).expect("generation");
+
+            let pkcs8v1 = private_key.as_der().expect("encoded");
+
+            let private_key = PrivateDecryptingKey::from_pkcs8(pkcs8v1.as_ref()).expect("decoded");
+
+            let public_key = private_key.public_key();
+
+            drop(private_key);
+
+            let public_key_der = public_key.as_der().expect("encoded");
+
+            let _public_key =
+                PublicEncryptingKey::from_der(public_key_der.as_ref()).expect("decoded");
+        }
+    };
+}
+
+encryption_generate_encode_decode!(rsa2048_encryption_generate_encode_decode, KeySize::Rsa2048);
+encryption_generate_encode_decode!(rsa3072_encryption_generate_encode_decode, KeySize::Rsa3072);
+encryption_generate_encode_decode!(rsa4096_encryption_generate_encode_decode, KeySize::Rsa4096);
+encryption_generate_encode_decode!(rsa8192_encryption_generate_encode_decode, KeySize::Rsa8192);
+
+macro_rules! encryption_generate_fips_encode_decode {
+    ($name:ident, $size:expr) => {
+        #[cfg(feature = "fips")]
+        #[test]
+        fn $name() {
+            let private_key = PrivateDecryptingKey::generate_fips($size).expect("generation");
+
+            assert_eq!(true, private_key.is_valid_fips_key());
+
+            let pkcs8v1 = private_key.as_der().expect("encoded");
+
+            let private_key = PrivateDecryptingKey::from_pkcs8(pkcs8v1.as_ref()).expect("decoded");
+
+            let public_key = private_key.public_key();
+
+            drop(private_key);
+
+            let public_key_der = public_key.as_der().expect("encoded");
+
+            let _public_key =
+                PublicEncryptingKey::from_der(public_key_der.as_ref()).expect("decoded");
+        }
+    };
+    ($name:ident, $size:expr, false) => {
+        #[cfg(feature = "fips")]
+        #[test]
+        fn $name() {
+            let _ =
+                PrivateDecryptingKey::generate_fips($size).expect_err("should fail for key size");
+        }
+    };
+}
+
+encryption_generate_fips_encode_decode!(
+    rsa2048_encryption_generate_fips_encode_decode,
+    KeySize::Rsa2048
+);
+encryption_generate_fips_encode_decode!(
+    rsa3072_encryption_generate_fips_encode_decode,
+    KeySize::Rsa3072
+);
+encryption_generate_fips_encode_decode!(
+    rsa4096_encryption_generate_fips_encode_decode,
+    KeySize::Rsa4096
+);
+encryption_generate_fips_encode_decode!(
+    rsa8192_encryption_generate_fips_encode_decode,
+    KeySize::Rsa8192,
+    false
+);
+
 #[test]
 fn public_key_components_clone_debug() {
     let pkc = RsaPublicKeyComponents::<&[u8]> {
@@ -339,4 +423,407 @@ fn public_key_components_clone_debug() {
         e: &[0x61, 0x76, 0x61, 0x6c, 0x6f, 0x6e],
     };
     assert_eq!("RsaPublicKeyComponents { n: [99, 97, 109, 101, 108, 111, 116], e: [97, 118, 97, 108, 111, 110] }", format!("{pkc:?}"));
+}
+
+#[test]
+fn encryption_algorithm_id() {
+    assert_eq!(
+        OAEP_SHA1_MGF1SHA1.id(),
+        EncryptionAlgorithmId::OaepSha1Mgf1sha1
+    );
+    assert_eq!(
+        OAEP_SHA256_MGF1SHA256.id(),
+        EncryptionAlgorithmId::OaepSha256Mgf1sha256
+    );
+    assert_eq!(
+        OAEP_SHA384_MGF1SHA384.id(),
+        EncryptionAlgorithmId::OaepSha384Mgf1sha384
+    );
+    assert_eq!(
+        OAEP_SHA512_MGF1SHA512.id(),
+        EncryptionAlgorithmId::OaepSha512Mgf1sha512
+    );
+}
+
+#[test]
+fn encryption_algorithm_debug() {
+    assert_eq!("OaepSha1Mgf1sha1", format!("{OAEP_SHA1_MGF1SHA1:?}"));
+}
+
+macro_rules! round_trip_algorithm {
+    ($name:ident, $alg:expr, $keysize:expr) => {
+        #[test]
+        fn $name() {
+            const MESSAGE: &[u8] = b"Hello World!";
+
+            let private_key = PrivateDecryptingKey::generate($keysize).expect("generation");
+            let public_key = private_key.public_key();
+
+            let (byte_len, bit_len) = match $keysize {
+                KeySize::Rsa2048 => (256, 2048),
+                KeySize::Rsa3072 => (384, 3072),
+                KeySize::Rsa4096 => (512, 4096),
+                KeySize::Rsa8192 => (1024, 8192),
+                _ => panic!("missing KeySize match arm"),
+            };
+
+            assert_eq!(private_key.key_size_bytes(), byte_len);
+            assert_eq!(public_key.key_size_bytes(), byte_len);
+            assert_eq!(private_key.key_size_bits(), bit_len);
+            assert_eq!(public_key.key_size_bits(), bit_len);
+
+            let public_key = OaepPublicEncryptingKey::new(public_key)
+                .expect("RSA-OAEP public key from public key");
+            let private_key = OaepPrivateDecryptingKey::new(private_key)
+                .expect("RSA-OAEP private key from private key");
+
+            assert_eq!(private_key.key_size_bytes(), byte_len);
+            assert_eq!(public_key.key_size_bytes(), byte_len);
+            assert_eq!(private_key.key_size_bits(), bit_len);
+            assert_eq!(public_key.key_size_bits(), bit_len);
+
+            // fixed message, None (empty label)
+            {
+                let mut ciphertext = vec![0u8; public_key.ciphertext_size()];
+
+                let ciphertext = public_key
+                    .encrypt($alg, MESSAGE, ciphertext.as_mut(), None)
+                    .expect("encrypted");
+
+                let mut plaintext = vec![0u8; private_key.min_output_size()];
+
+                let plaintext = private_key
+                    .decrypt($alg, ciphertext, &mut plaintext, None)
+                    .expect("decrypted");
+
+                assert_eq!(MESSAGE, plaintext);
+            }
+
+            // fixed message, Some(&[0u8; 0])
+            {
+                let mut ciphertext = vec![0u8; public_key.ciphertext_size()];
+
+                let ciphertext = public_key
+                    .encrypt($alg, MESSAGE, ciphertext.as_mut(), Some(&[0u8; 0]))
+                    .expect("encrypted");
+
+                let mut plaintext = vec![0u8; private_key.min_output_size()];
+
+                let plaintext = private_key
+                    .decrypt($alg, ciphertext, &mut plaintext, Some(&[0u8; 0]))
+                    .expect("decrypted");
+
+                assert_eq!(MESSAGE, plaintext);
+            }
+
+            // fixed message, Some(label)
+            {
+                let mut ciphertext = vec![0u8; public_key.ciphertext_size()];
+
+                let label: &[u8] = br"Testing Data Label";
+
+                let ciphertext = public_key
+                    .encrypt($alg, MESSAGE, ciphertext.as_mut(), Some(label))
+                    .expect("encrypted");
+
+                let mut plaintext = vec![0u8; private_key.min_output_size()];
+
+                let plaintext = private_key
+                    .decrypt($alg, ciphertext, &mut plaintext, Some(label))
+                    .expect("decrypted");
+
+                assert_eq!(MESSAGE, plaintext);
+            }
+
+            // zero-length message
+            {
+                let message: &[u8] = &[1u8; 0];
+                let mut ciphertext = vec![0u8; public_key.ciphertext_size()];
+
+                let ciphertext = public_key
+                    .encrypt($alg, message, ciphertext.as_mut(), None)
+                    .expect("encrypted");
+
+                let mut plaintext = vec![0u8; private_key.min_output_size()];
+
+                let plaintext = private_key
+                    .decrypt($alg, ciphertext, &mut plaintext, None)
+                    .expect("decrypted");
+
+                assert_eq!(message, plaintext);
+            }
+
+            // max_plaintext_size message
+            {
+                let message = vec![1u8; public_key.max_plaintext_size($alg)];
+                let mut ciphertext = vec![0u8; public_key.ciphertext_size()];
+
+                let ciphertext = public_key
+                    .encrypt($alg, &message, ciphertext.as_mut(), None)
+                    .expect("encrypted");
+
+                let mut plaintext = vec![0u8; private_key.min_output_size()];
+
+                let plaintext = private_key
+                    .decrypt($alg, ciphertext, &mut plaintext, None)
+                    .expect("decrypted");
+
+                assert_eq!(message, plaintext);
+            }
+
+            // max_plaintext_size+1 message
+            {
+                let message = vec![1u8; public_key.max_plaintext_size($alg) + 1];
+                let mut ciphertext = vec![0u8; private_key.min_output_size()];
+
+                public_key
+                    .encrypt($alg, &message, ciphertext.as_mut(), None)
+                    .expect_err("plaintext too large");
+            }
+        }
+    };
+}
+
+round_trip_algorithm!(
+    rsa2048_oaep_sha1_mgf1sha1,
+    &OAEP_SHA1_MGF1SHA1,
+    KeySize::Rsa2048
+);
+round_trip_algorithm!(
+    rsa3072_oaep_sha1_mgf1sha1,
+    &OAEP_SHA1_MGF1SHA1,
+    KeySize::Rsa3072
+);
+round_trip_algorithm!(
+    rsa4096_oaep_sha1_mgf1sha1,
+    &OAEP_SHA1_MGF1SHA1,
+    KeySize::Rsa4096
+);
+round_trip_algorithm!(
+    rsa8192_oaep_sha1_mgf1sha1,
+    &OAEP_SHA1_MGF1SHA1,
+    KeySize::Rsa8192
+);
+
+round_trip_algorithm!(
+    rsa2048_oaep_sha256_mgf1sha256,
+    &OAEP_SHA256_MGF1SHA256,
+    KeySize::Rsa2048
+);
+round_trip_algorithm!(
+    rsa3072_oaep_sha256_mgf1sha256,
+    &OAEP_SHA256_MGF1SHA256,
+    KeySize::Rsa3072
+);
+round_trip_algorithm!(
+    rsa4096_oaep_sha256_mgf1sha256,
+    &OAEP_SHA256_MGF1SHA256,
+    KeySize::Rsa4096
+);
+round_trip_algorithm!(
+    rsa8192_oaep_sha256_mgf1sha256,
+    &OAEP_SHA256_MGF1SHA256,
+    KeySize::Rsa8192
+);
+
+round_trip_algorithm!(
+    rsa2048_oaep_sha384_mgf1sha384,
+    &OAEP_SHA384_MGF1SHA384,
+    KeySize::Rsa2048
+);
+round_trip_algorithm!(
+    rsa3072_oaep_sha384_mgf1sha384,
+    &OAEP_SHA384_MGF1SHA384,
+    KeySize::Rsa3072
+);
+round_trip_algorithm!(
+    rsa4096_oaep_sha384_mgf1sha384,
+    &OAEP_SHA384_MGF1SHA384,
+    KeySize::Rsa4096
+);
+round_trip_algorithm!(
+    rsa8192_oaep_sha384_mgf1sha384,
+    &OAEP_SHA384_MGF1SHA384,
+    KeySize::Rsa8192
+);
+
+round_trip_algorithm!(
+    rsa2048_oaep_sha512_mgf1sha512,
+    &OAEP_SHA512_MGF1SHA512,
+    KeySize::Rsa2048
+);
+round_trip_algorithm!(
+    rsa3072_oaep_sha512_mgf1sha512,
+    &OAEP_SHA512_MGF1SHA512,
+    KeySize::Rsa3072
+);
+round_trip_algorithm!(
+    rsa4096_oaep_sha512_mgf1sha512,
+    &OAEP_SHA512_MGF1SHA512,
+    KeySize::Rsa4096
+);
+round_trip_algorithm!(
+    rsa8192_oaep_sha512_mgf1sha512,
+    &OAEP_SHA512_MGF1SHA512,
+    KeySize::Rsa8192
+);
+
+#[test]
+fn encrypting_keypair_debug() {
+    let private_key = PrivateDecryptingKey::generate(KeySize::Rsa2048).expect("generation");
+
+    assert_eq!("PrivateDecryptingKey", format!("{:?}", &private_key));
+
+    let public_key = private_key.public_key();
+
+    assert_eq!("PublicEncryptingKey", format!("{:?}", &public_key));
+
+    let private_key = OaepPrivateDecryptingKey::new(private_key).expect("oaep private key");
+
+    assert_eq!(
+        "OaepPrivateDecryptingKey { .. }",
+        format!("{:?}", &private_key)
+    );
+
+    let public_key = OaepPublicEncryptingKey::new(public_key).expect("oaep public key");
+
+    assert_eq!(
+        "OaepPublicEncryptingKey { .. }",
+        format!("{:?}", &public_key)
+    );
+}
+
+#[test]
+fn clone_then_drop() {
+    const MESSAGE: &[u8] = b"Hello World!";
+
+    let private_key = PrivateDecryptingKey::generate(KeySize::Rsa2048).expect("generation");
+    let public_key = private_key.public_key();
+
+    let oaep_priv_key =
+        OaepPrivateDecryptingKey::new(private_key.clone()).expect("oaep private key");
+    let oaep_pub_key = OaepPublicEncryptingKey::new(public_key.clone()).expect("oaep public key");
+
+    drop(private_key);
+    drop(public_key);
+
+    let mut ciphertext = vec![0u8; oaep_pub_key.ciphertext_size()];
+
+    let ciphertext = oaep_pub_key
+        .encrypt(&OAEP_SHA256_MGF1SHA256, MESSAGE, ciphertext.as_mut(), None)
+        .expect("encrypted");
+
+    let mut plaintext = vec![0u8; oaep_priv_key.key_size_bytes()];
+
+    let plaintext = oaep_priv_key
+        .decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)
+        .expect("decrypted");
+
+    assert_eq!(MESSAGE, plaintext);
+}
+
+#[test]
+fn encrypt_decrypt_key_size() {
+    let private_key = PrivateDecryptingKey::generate(KeySize::Rsa2048).expect("generation");
+    let public_key = private_key.public_key();
+    assert_eq!(private_key.key_size_bytes(), public_key.key_size_bytes());
+    assert_eq!(private_key.key_size_bits(), public_key.key_size_bits());
+
+    let oaep_priv_key =
+        OaepPrivateDecryptingKey::new(private_key.clone()).expect("oaep private key");
+    let oaep_pub_key = OaepPublicEncryptingKey::new(public_key.clone()).expect("oaep public key");
+    assert_eq!(
+        oaep_priv_key.key_size_bytes(),
+        oaep_pub_key.key_size_bytes()
+    );
+    assert_eq!(oaep_priv_key.key_size_bits(), oaep_pub_key.key_size_bits());
+
+    assert_eq!(private_key.key_size_bytes(), oaep_priv_key.key_size_bytes());
+    assert_eq!(private_key.key_size_bits(), oaep_priv_key.key_size_bits());
+}
+
+#[test]
+fn too_small_encrypt_key() {
+    const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_1024.p8");
+    PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect_err("key too small");
+}
+
+#[test]
+fn min_encrypt_key() {
+    const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_2048.p8");
+    const PUBLIC_KEY: &[u8] = include_bytes!("data/rsa_test_public_key_2048.x509");
+
+    let parsed_private_key = PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect("key supported");
+    let parsed_public_key = PublicEncryptingKey::from_der(PUBLIC_KEY).expect("key supported");
+
+    let public_key = parsed_private_key.public_key();
+
+    let private_key_bytes =
+        AsDer::<Pkcs8V1Der>::as_der(&parsed_private_key).expect("serializeable");
+    let public_key_bytes = AsDer::<PublicKeyX509Der>::as_der(&public_key).expect("serializeable");
+
+    assert_eq!(PRIVATE_KEY, private_key_bytes.as_ref());
+    assert_eq!(PUBLIC_KEY, public_key_bytes.as_ref());
+
+    let oaep_parsed_private =
+        OaepPrivateDecryptingKey::new(parsed_private_key.clone()).expect("supported key");
+    let oaep_parsed_public =
+        OaepPublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
+
+    let message: &[u8] = br"foo bar baz";
+
+    let mut ciphertext = vec![0u8; oaep_parsed_public.ciphertext_size()];
+    let ciphertext = oaep_parsed_public
+        .encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext, None)
+        .expect("encrypted");
+
+    let mut plaintext = vec![0u8; oaep_parsed_private.key_size_bytes()];
+    let plaintext = oaep_parsed_private
+        .decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)
+        .expect("decrypted");
+
+    assert_eq!(message, plaintext);
+}
+
+#[test]
+fn max_encrypt_key() {
+    const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_8192.p8");
+    const PUBLIC_KEY: &[u8] = include_bytes!("data/rsa_test_public_key_8192.x509");
+
+    let parsed_private_key = PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect("key supported");
+    let parsed_public_key = PublicEncryptingKey::from_der(PUBLIC_KEY).expect("key supported");
+
+    let public_key = parsed_private_key.public_key();
+
+    let private_key_bytes =
+        AsDer::<Pkcs8V1Der>::as_der(&parsed_private_key).expect("serializeable");
+    let public_key_bytes = AsDer::<PublicKeyX509Der>::as_der(&public_key).expect("serializeable");
+
+    assert_eq!(PRIVATE_KEY, private_key_bytes.as_ref());
+    assert_eq!(PUBLIC_KEY, public_key_bytes.as_ref());
+
+    let oaep_parsed_private =
+        OaepPrivateDecryptingKey::new(parsed_private_key.clone()).expect("supported key");
+    let oaep_parsed_public =
+        OaepPublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
+
+    let message: &[u8] = br"foo bar baz";
+
+    let mut ciphertext = vec![0u8; oaep_parsed_public.ciphertext_size()];
+    let ciphertext = oaep_parsed_public
+        .encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext, None)
+        .expect("encrypted");
+
+    let mut plaintext = vec![0u8; oaep_parsed_private.key_size_bytes()];
+    let plaintext = oaep_parsed_private
+        .decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)
+        .expect("decrypted");
+
+    assert_eq!(message, plaintext);
+}
+
+#[test]
+fn too_big_encrypt_key() {
+    const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_16384.p8");
+    PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect_err("key too big");
 }
