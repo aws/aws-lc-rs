@@ -130,39 +130,43 @@ fn prefix_string() -> String {
     format!("aws_lc_fips_{}", VERSION.to_string().replace('.', "_"))
 }
 
-#[cfg(any(
-    feature = "bindgen",
-    not(all(
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        any(target_os = "linux", target_os = "macos"),
-        any(target_env = "gnu", target_env = "musl", target_env = "")
-    ))
-))]
+#[cfg(feature = "bindgen")]
 fn target_platform_prefix(name: &str) -> String {
     format!("{}_{}", target().replace('-', "_"), name)
 }
 
 pub(crate) struct TestCommandResult {
-    output: Box<str>,
-    status: bool,
+    #[allow(dead_code)]
+    stderr: Box<str>,
+    #[allow(dead_code)]
+    stdout: Box<str>,
     executed: bool,
+    status: bool,
 }
 
+const MAX_CMD_OUTPUT_SIZE: usize = 1 << 12;
 fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
-    if let Ok(result) = Command::new(executable).args(args).output() {
-        let output = String::from_utf8(result.stdout)
+    if let Ok(mut result) = Command::new(executable).args(args).output() {
+        result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);
+        let stderr = String::from_utf8(result.stderr)
+            .unwrap_or_default()
+            .into_boxed_str();
+        result.stdout.truncate(MAX_CMD_OUTPUT_SIZE);
+        let stdout = String::from_utf8(result.stdout)
             .unwrap_or_default()
             .into_boxed_str();
         return TestCommandResult {
-            output,
-            status: result.status.success(),
+            stderr,
+            stdout,
             executed: true,
+            status: result.status.success(),
         };
     }
     TestCommandResult {
-        output: String::new().into_boxed_str(),
-        status: false,
+        stderr: String::new().into_boxed_str(),
+        stdout: String::new().into_boxed_str(),
         executed: false,
+        status: false,
     }
 }
 
@@ -249,17 +253,13 @@ fn current_dir() -> PathBuf {
     std::env::current_dir().unwrap()
 }
 
-macro_rules! cfg_bindgen_platform {
-    ($binding:ident, $target:literal, $additional:expr) => {
-        let $binding = {
-            (target() == $target && $additional)
-                .then(|| {
-                    emit_rustc_cfg(&$target.replace('-', "_"));
-                    true
-                })
-                .unwrap_or(false)
-        };
-    };
+fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> Box<dyn Builder> {
+    Box::new(CmakeBuilder::new(
+        manifest_dir.to_path_buf(),
+        out_dir.to_path_buf(),
+        prefix.clone(),
+        OutputLibType::default(),
+    ))
 }
 
 trait Builder {
@@ -267,77 +267,87 @@ trait Builder {
     fn build(&self) -> Result<(), String>;
 }
 
-#[allow(clippy::too_many_lines)]
-fn main() {
-    let is_internal_no_prefix =
-        env_var_to_bool("AWS_LC_FIPS_SYS_INTERNAL_NO_PREFIX").unwrap_or(false);
-    let is_internal_generate = env_var_to_bool("AWS_LC_RUST_INTERNAL_BINDGEN").unwrap_or(false);
-    let mut is_bindgen_required =
-        is_internal_no_prefix || is_internal_generate || cfg!(feature = "bindgen");
+static mut PREGENERATED: bool = false;
+static mut AWS_LC_SYS_INTERNAL_NO_PREFIX: bool = false;
+static mut AWS_LC_RUST_INTERNAL_BINDGEN: bool = false;
 
-    let pregenerated = !is_bindgen_required || is_internal_generate;
-
-    cfg_bindgen_platform!(
-        x86_64_unknown_linux_gnu,
-        "x86_64-unknown-linux-gnu",
-        pregenerated
-    );
-    cfg_bindgen_platform!(
-        aarch64_unknown_linux_gnu,
-        "aarch64-unknown-linux-gnu",
-        pregenerated
-    );
-    cfg_bindgen_platform!(
-        x86_64_unknown_linux_musl,
-        "x86_64-unknown-linux-musl",
-        pregenerated
-    );
-    cfg_bindgen_platform!(
-        aarch64_unknown_linux_musl,
-        "aarch64-unknown-linux-musl",
-        pregenerated
-    );
-    cfg_bindgen_platform!(x86_64_apple_darwin, "x86_64-apple-darwin", pregenerated);
-    cfg_bindgen_platform!(aarch64_apple_darwin, "aarch64-apple-darwin", pregenerated);
-
-    if !(x86_64_unknown_linux_gnu
-        || aarch64_unknown_linux_gnu
-        || x86_64_unknown_linux_musl
-        || aarch64_unknown_linux_musl
-        || x86_64_apple_darwin
-        || aarch64_apple_darwin)
-    {
-        is_bindgen_required = true;
+fn initialize() {
+    unsafe {
+        AWS_LC_SYS_INTERNAL_NO_PREFIX =
+            env_var_to_bool("AWS_LC_SYS_INTERNAL_NO_PREFIX").unwrap_or(false);
+        AWS_LC_RUST_INTERNAL_BINDGEN =
+            env_var_to_bool("AWS_LC_RUST_INTERNAL_BINDGEN").unwrap_or(false);
     }
+
+    if is_internal_generate() || !has_bindgen_feature() {
+        let target = target();
+        let supported_platform = match target.as_str() {
+            "x86_64-unknown-linux-gnu"
+            | "aarch64-unknown-linux-gnu"
+            | "x86_64-unknown-linux-musl"
+            | "aarch64-unknown-linux-musl"
+            | "x86_64-apple-darwin"
+            | "aarch64-apple-darwin" => Some(target),
+            _ => None,
+        };
+        if let Some(platform) = supported_platform {
+            emit_rustc_cfg(platform.as_str());
+            unsafe {
+                PREGENERATED = true;
+            }
+        }
+    }
+}
+
+fn is_bindgen_required() -> bool {
+    is_internal_no_prefix()
+        || is_internal_generate()
+        || has_bindgen_feature()
+        || !has_pregenerated()
+}
+
+fn is_internal_no_prefix() -> bool {
+    unsafe { AWS_LC_SYS_INTERNAL_NO_PREFIX }
+}
+
+fn is_internal_generate() -> bool {
+    unsafe { AWS_LC_RUST_INTERNAL_BINDGEN }
+}
+
+fn has_bindgen_feature() -> bool {
+    cfg!(feature = "bindgen")
+}
+
+fn has_pregenerated() -> bool {
+    unsafe { PREGENERATED }
+}
+
+fn main() {
+    initialize();
 
     let manifest_dir = current_dir();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
     let prefix_str = prefix_string();
-    let prefix = if is_internal_no_prefix {
+    let prefix = if is_internal_no_prefix() {
         None
     } else {
         Some(prefix_str)
     };
 
-    let builder = CmakeBuilder::new(
-        manifest_dir.clone(),
-        out_dir(),
-        prefix.clone(),
-        OutputLibType::default(),
-    );
+    let builder = get_builder(&prefix, &manifest_dir, &out_dir());
 
     builder.check_dependencies().unwrap();
 
     #[allow(unused_assignments)]
     let mut bindings_available = false;
-    if is_internal_generate {
+    if is_internal_generate() {
         #[cfg(feature = "bindgen")]
         {
             let src_bindings_path = Path::new(&manifest_dir).join("src");
             generate_src_bindings(&manifest_dir, prefix, &src_bindings_path);
             bindings_available = true;
         }
-    } else if is_bindgen_required {
+    } else if is_bindgen_required() {
         #[cfg(any(
             feature = "bindgen",
             not(all(
