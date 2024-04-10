@@ -137,12 +137,13 @@ pub(in crate::rsa) mod rfc5280 {
     pub(in crate::rsa) fn encode_public_key_der(
         key: &LcPtr<EVP_PKEY>,
     ) -> Result<PublicKeyX509Der<'static>, Unspecified> {
-        // Data shows that the SubjectPublicKeyInfo is roughly 356% to 375% increase in size comapred to the RSA key
+        // Data shows that the SubjectPublicKeyInfo is roughly 356% to 375% increase in size compared to the RSA key
         // size in bytes for keys ranging from 2048-bit to 4096-bit. So size the initial capacity to be roughly
-        // 400% as a consernative estimate to avoid needing to reallocate for any key in that range.
+        // 400% as a conservative estimate to avoid needing to reallocate for any key in that range.
         let key_size_bytes = key_size_bytes(key);
 
-        let mut der = LcCBB::new(key_size_bytes + (key_size_bytes * 4));
+        // key_size_bytes * 5 == key_size_bytes * (1 + 400%)
+        let mut der = LcCBB::new(key_size_bytes * 5);
 
         if 1 != unsafe { EVP_marshal_public_key(der.as_mut_ptr(), **key) } {
             return Err(Unspecified);
