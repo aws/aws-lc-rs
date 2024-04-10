@@ -70,20 +70,11 @@
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
-<a href="#71" id="71">71</a>
-<a href="#72" id="72">72</a>
-<a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="kw">use </span><span class="kw">crate</span>::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
-<span class="kw">use </span>aws_lc::{BN_bin2bn, BN_bn2bin, BN_cmp, BN_new, BN_num_bits, BN_num_bytes, BN_set_u64, BIGNUM};
-<span class="kw">use </span>core::cmp::Ordering;
+<span class="kw">use </span>aws_lc::{BN_bin2bn, BN_bn2bin, BN_new, BN_num_bits, BN_num_bytes, BN_set_u64, BIGNUM};
 <span class="kw">use </span>core::ptr::null_mut;
 <span class="kw">use </span>mirai_annotations::unrecoverable;
 
@@ -142,13 +133,6 @@
             }
             byte_vec.set_len(out_bytes);
             byte_vec
-        }
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>compare(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>ConstPointer&lt;BIGNUM&gt;) -&gt; Ordering {
-        <span class="kw">unsafe </span>{
-            <span class="kw">let </span>result = BN_cmp(<span class="kw-2">**</span><span class="self">self</span>, <span class="kw-2">**</span>other);
-            result.cmp(<span class="kw-2">&amp;</span><span class="number">0</span>)
         }
     }
 

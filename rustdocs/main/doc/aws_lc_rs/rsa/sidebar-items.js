@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["KeySize"],"struct":["KeyPair","PublicKey","PublicKeyComponents","RsaParameters"]};
+window.SIDEBAR_ITEMS = {"constant":["OAEP_SHA1_MGF1SHA1","OAEP_SHA256_MGF1SHA256","OAEP_SHA384_MGF1SHA384","OAEP_SHA512_MGF1SHA512"],"enum":["EncryptionAlgorithmId","KeySize"],"struct":["KeyPair","OaepAlgorithm","OaepPrivateDecryptingKey","OaepPublicEncryptingKey","PrivateDecryptingKey","PublicEncryptingKey","PublicKey","PublicKeyComponents","RsaParameters"]};

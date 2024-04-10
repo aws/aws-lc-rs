@@ -228,25 +228,6 @@
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
-<a href="#238" id="238">238</a>
-<a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
-<a href="#243" id="243">243</a>
-<a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
@@ -347,21 +328,6 @@
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>detach(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; P {
         <span class="self">self</span>.pointer.take().unwrap()
-    }
-}
-
-<span class="kw">impl</span>&lt;P: Pointer&gt; DetachablePointer&lt;P&gt; {
-    <span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>as_const(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ConstPointer&lt;P::T&gt; {
-        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.pointer {
-            <span class="prelude-val">Some</span>(pointer) =&gt; ConstPointer {
-                ptr: pointer.as_const_ptr(),
-            },
-            <span class="prelude-val">None </span>=&gt; {
-                <span class="comment">// Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                </span><span class="macro">verify_unreachable!</span>()
-            }
-        }
     }
 }
 
@@ -474,7 +440,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span><span class="kw">crate</span>::ptr::{ConstPointer, DetachablePointer, ManagedPointer};
+    <span class="kw">use </span><span class="kw">crate</span>::ptr::{DetachablePointer, ManagedPointer};
     <span class="kw">use </span>aws_lc::BIGNUM;
 
     <span class="attr">#[test]
@@ -484,10 +450,6 @@
             DetachablePointer::try_from(num).unwrap();
         <span class="kw">let </span>debug = <span class="macro">format!</span>(<span class="string">"{detachable_ptr:?}"</span>);
         <span class="macro">assert!</span>(debug.contains(<span class="string">"DetachablePointer { pointer: Some("</span>));
-
-        <span class="kw">let </span>const_ptr: ConstPointer&lt;BIGNUM&gt; = detachable_ptr.as_const();
-        <span class="kw">let </span>debug = <span class="macro">format!</span>(<span class="string">"{const_ptr:?}"</span>);
-        <span class="macro">assert!</span>(debug.contains(<span class="string">"ConstPointer { ptr:"</span>));
 
         <span class="kw">let </span>lc_ptr = ManagedPointer::new(detachable_ptr.detach()).unwrap();
         <span class="kw">let </span>debug = <span class="macro">format!</span>(<span class="string">"{lc_ptr:?}"</span>);

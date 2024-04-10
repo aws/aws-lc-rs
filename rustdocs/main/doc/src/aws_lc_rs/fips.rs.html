@@ -177,6 +177,21 @@
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
@@ -199,6 +214,13 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_fips_service_status_unapproved() {
     <span class="attr">#[cfg(all(feature = <span class="string">"fips"</span>, debug_assertions))]
     </span>indicator::set_unapproved();
+}
+
+<span class="attr">#[allow(dead_code)]
+#[cfg(all(feature = <span class="string">"fips"</span>, debug_assertions))]
+#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>clear_fips_service_status() {
+    indicator::clear();
 }
 
 <span class="attr">#[cfg(all(feature = <span class="string">"fips"</span>, debug_assertions))]
@@ -225,6 +247,10 @@
 
     <span class="kw">pub fn </span>set_unapproved() {
         STATUS_INDICATOR.with(|v| v.set(<span class="prelude-val">Some</span>(<span class="bool-val">false</span>)));
+    }
+
+    <span class="kw">pub fn </span>clear() {
+        STATUS_INDICATOR.with(|v| v.set(<span class="prelude-val">None</span>));
     }
 }
 
@@ -304,9 +330,13 @@
 #[cfg(all(feature = <span class="string">"fips"</span>, debug_assertions))]
 </span><span class="macro">macro_rules!</span> check_fips_service_status {
     (<span class="macro-nonterminal">$function</span>:expr) =&gt; {{
-        <span class="kw">use </span><span class="macro-nonterminal">$crate::fips::get_fips_service_status</span>;
-        <span class="kw">let </span>result = <span class="macro-nonterminal">$function</span>;
-        get_fips_service_status().map(|()| result)
+        <span class="comment">// Clear the current indicator status first by retrieving it
+        </span><span class="kw">use </span><span class="macro-nonterminal">$crate::fips</span>::{clear_fips_service_status, get_fips_service_status};
+        clear_fips_service_status();
+        <span class="comment">// do the expression
+        </span><span class="kw">let </span>result = <span class="macro-nonterminal">$function</span>;
+        <span class="comment">// Check indicator after expression
+        </span>get_fips_service_status().map(|()| result)
     }};
 }
 

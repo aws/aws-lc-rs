@@ -512,168 +512,52 @@
 <a href="#510" id="510">510</a>
 <a href="#511" id="511">511</a>
 <a href="#512" id="512">512</a>
-<a href="#513" id="513">513</a>
-<a href="#514" id="514">514</a>
-<a href="#515" id="515">515</a>
-<a href="#516" id="516">516</a>
-<a href="#517" id="517">517</a>
-<a href="#518" id="518">518</a>
-<a href="#519" id="519">519</a>
-<a href="#520" id="520">520</a>
-<a href="#521" id="521">521</a>
-<a href="#522" id="522">522</a>
-<a href="#523" id="523">523</a>
-<a href="#524" id="524">524</a>
-<a href="#525" id="525">525</a>
-<a href="#526" id="526">526</a>
-<a href="#527" id="527">527</a>
-<a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
-<a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
-<a href="#541" id="541">541</a>
-<a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-<a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a>
-<a href="#553" id="553">553</a>
-<a href="#554" id="554">554</a>
-<a href="#555" id="555">555</a>
-<a href="#556" id="556">556</a>
-<a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
-<a href="#559" id="559">559</a>
-<a href="#560" id="560">560</a>
-<a href="#561" id="561">561</a>
-<a href="#562" id="562">562</a>
-<a href="#563" id="563">563</a>
-<a href="#564" id="564">564</a>
-<a href="#565" id="565">565</a>
-<a href="#566" id="566">566</a>
-<a href="#567" id="567">567</a>
-<a href="#568" id="568">568</a>
-<a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
-<a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
-<a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
-<a href="#612" id="612">612</a>
-<a href="#613" id="613">613</a>
-<a href="#614" id="614">614</a>
-<a href="#615" id="615">615</a>
-<a href="#616" id="616">616</a>
-<a href="#617" id="617">617</a>
-<a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-</span><span class="kw">use </span>core::{
-    cmp::Ordering,
-    fmt::{<span class="self">self</span>, Debug, Formatter},
-    mem::MaybeUninit,
-    ptr::null_mut,
-};
-<span class="comment">// TODO: Uncomment when MSRV &gt;= 1.64
-// use core::ffi::c_int;
-</span><span class="kw">use </span>std::os::raw::c_int;
-
-<span class="kw">use crate</span>::{
-    encoding::{AsDer, Pkcs8V1Der},
-    fips::indicator_check,
-};
-
-<span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
-</span><span class="kw">use </span>aws_lc::RSA_check_fips;
-<span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
-</span><span class="kw">use </span>aws_lc::RSA_get0_n;
-<span class="kw">use </span>aws_lc::{
-    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_generate_key_ex,
-    RSA_generate_key_fips, RSA_get0_e, RSA_get0_p, RSA_get0_q, RSA_new, RSA_parse_private_key,
-    RSA_parse_public_key, RSA_public_key_to_bytes, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
-    EVP_PKEY_CTX, RSA,
-};
-
-<span class="kw">use </span>mirai_annotations::verify_unreachable;
-
-<span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
-</span><span class="kw">use </span>untrusted::Input;
-
-<span class="kw">use </span>zeroize::Zeroize;
-
-<span class="kw">use super</span>::{
+</span><span class="kw">use super</span>::{
     encoding,
     signature::{compute_rsa_signature, RsaEncoding, RsaPadding},
     RsaParameters,
 };
-
 <span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::io;
+<span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::ptr::ConstPointer;
 <span class="kw">use crate</span>::{
-    cbs, digest,
+    digest::{<span class="self">self</span>},
+    encoding::{AsDer, Pkcs8V1Der},
     error::{KeyRejected, Unspecified},
+    fips::indicator_check,
     hex,
-    ptr::{ConstPointer, DetachableLcPtr, LcPtr},
+    ptr::{DetachableLcPtr, LcPtr, Pointer},
     rand,
     sealed::Sealed,
 };
+<span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
+</span><span class="kw">use </span>aws_lc::RSA_check_fips;
+<span class="kw">use </span>aws_lc::{
+    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
+    RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
+    EVP_PKEY_CTX,
+};
+<span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
+</span><span class="kw">use </span>aws_lc::{RSA_get0_e, RSA_get0_n};
+<span class="kw">use </span>core::{
+    fmt::{<span class="self">self</span>, Debug, Formatter},
+    ptr::null_mut,
+};
+
+<span class="comment">// TODO: Uncomment when MSRV &gt;= 1.64
+// use core::ffi::c_int;
+</span><span class="kw">use </span>std::os::raw::c_int;
+
+<span class="kw">use </span>mirai_annotations::verify_unreachable;
+<span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
+</span><span class="kw">use </span>untrusted::Input;
+<span class="kw">use </span>zeroize::Zeroize;
 
 <span class="doccomment">/// RSA key-size.
 </span><span class="attr">#[allow(clippy::module_name_repetitions)]
@@ -709,7 +593,7 @@
 
     <span class="doccomment">/// Returns the key size in bits.
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>bit_len(<span class="self">self</span>) -&gt; i32 {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>bits(<span class="self">self</span>) -&gt; i32 {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Rsa2048 =&gt; <span class="number">2048</span>,
             <span class="self">Self</span>::Rsa3072 =&gt; <span class="number">3072</span>,
@@ -728,8 +612,8 @@
     // other thread is concurrently calling a mutating function. Unless otherwise
     // documented, functions which take a |const| pointer are non-mutating and
     // functions which take a non-|const| pointer are mutating.
-    </span>evp_pkey: LcPtr&lt;EVP_PKEY&gt;,
-    serialized_public_key: PublicKey,
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) evp_pkey: LcPtr&lt;EVP_PKEY&gt;,
+    <span class="kw">pub</span>(<span class="kw">super</span>) serialized_public_key: PublicKey,
 }
 
 <span class="kw">impl </span>Sealed <span class="kw">for </span>KeyPair {}
@@ -738,14 +622,12 @@
 
 <span class="kw">impl </span>KeyPair {
     <span class="kw">fn </span>new(evp_pkey: LcPtr&lt;EVP_PKEY&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
-        <span class="kw">unsafe </span>{
-            <span class="kw">let </span>rsa_key = evp_pkey.get_rsa()<span class="question-mark">?</span>;
-            <span class="kw">let </span>serialized_public_key = PublicKey::new(<span class="kw-2">&amp;</span>rsa_key.as_const())<span class="question-mark">?</span>;
-            <span class="prelude-val">Ok</span>(KeyPair {
-                evp_pkey,
-                serialized_public_key,
-            })
-        }
+        KeyPair::validate_private_key(<span class="kw-2">&amp;</span>evp_pkey)<span class="question-mark">?</span>;
+        <span class="kw">let </span>serialized_public_key = <span class="kw">unsafe </span>{ PublicKey::new(<span class="kw-2">&amp;</span>evp_pkey)<span class="question-mark">? </span>};
+        <span class="prelude-val">Ok</span>(KeyPair {
+            evp_pkey,
+            serialized_public_key,
+        })
     }
 
     <span class="doccomment">/// Generate a RSA `KeyPair` of the specified key-strength.
@@ -753,8 +635,8 @@
     /// # Errors
     /// * `Unspecified`: Any key generation failure.
     </span><span class="kw">pub fn </span>generate(size: KeySize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
-        <span class="kw">let </span>private_key = generate_rsa_key(size.bit_len(), <span class="bool-val">false</span>)<span class="question-mark">?</span>;
-        <span class="self">Self</span>::new(private_key).map_err(|<span class="kw">_</span>| Unspecified)
+        <span class="kw">let </span>private_key = generate_rsa_key(size.bits(), <span class="bool-val">false</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(private_key)<span class="question-mark">?</span>)
     }
 
     <span class="doccomment">/// Generate a RSA `KeyPair` of the specified key-strength.
@@ -768,65 +650,28 @@
     /// * `Unspecified`: Any key generation failure.
     </span><span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
     </span><span class="kw">pub fn </span>generate_fips(size: KeySize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
-        <span class="kw">let </span>private_key = generate_rsa_key(size.bit_len(), <span class="bool-val">true</span>)<span class="question-mark">?</span>;
-        <span class="self">Self</span>::new(private_key).map_err(|<span class="kw">_</span>| Unspecified)
+        <span class="kw">let </span>private_key = generate_rsa_key(size.bits(), <span class="bool-val">true</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(private_key)<span class="question-mark">?</span>)
     }
 
-    <span class="doccomment">/// Parses an unencrypted PKCS#8-encoded RSA private key.
+    <span class="doccomment">/// Parses an unencrypted PKCS#8 DER encoded RSA private key.
     ///
-    /// A RSA keypair may be generated using [`KeyPair::generate`].
+    /// Keys can be generated using [`KeyPair::generate`].
     ///
-    /// Only two-prime (not multi-prime) keys are supported. The public modulus
-    /// (n) must be at least 2047 bits. The public modulus must be no larger
-    /// than 4096 bits. It is recommended that the public modulus be exactly
-    /// 2048 or 3072 bits. The public exponent must be at least 65537.
+    /// # *ring*-compatibility
     ///
-    /// The following will generate a 2048-bit RSA private key of the correct form using
-    /// OpenSSL's command line tool:
-    ///
-    /// ```sh
-    ///    openssl genpkey -algorithm RSA \
-    ///        -pkeyopt rsa_keygen_bits:2048 \
-    ///        -pkeyopt rsa_keygen_pubexp:65537 | \
-    ///      openssl pkcs8 -topk8 -nocrypt -outform der &gt; rsa-2048-private-key.pk8
-    /// ```
-    ///
-    /// The following will generate a 3072-bit RSA private key of the correct form:
-    ///
-    /// ```sh
-    ///    openssl genpkey -algorithm RSA \
-    ///        -pkeyopt rsa_keygen_bits:3072 \
-    ///        -pkeyopt rsa_keygen_pubexp:65537 | \
-    ///      openssl pkcs8 -topk8 -nocrypt -outform der &gt; rsa-3072-private-key.pk8
-    /// ```
-    ///
-    /// Often, keys generated for use in OpenSSL-based software are stored in
-    /// the Base64 “PEM” format without the PKCS#8 wrapper. Such keys can be
-    /// converted to binary PKCS#8 form using the OpenSSL command line tool like
-    /// this:
-    ///
-    /// ```sh
-    /// openssl pkcs8 -topk8 -nocrypt -outform der \
-    ///     -in rsa-2048-private-key.pem &gt; rsa-2048-private-key.pk8
-    /// ```
-    ///
-    /// Base64 (“PEM”) PKCS#8-encoded keys can be converted to the binary PKCS#8
-    /// form like this:
-    ///
-    /// ```sh
-    /// openssl pkcs8 -nocrypt -outform der \
-    ///     -in rsa-2048-private-key.pem &gt; rsa-2048-private-key.pk8
-    /// ```
+    /// *aws-lc-rs* does not impose the same limitations that *ring* does for
+    /// RSA keys. Thus signatures may be generated by keys that are not accepted
+    /// by *ring*. In particular:
+    /// * RSA private keys ranging between 2048-bit keys and 8192-bit keys are supported.
+    /// * The public exponent does not have a required minimum size.
     ///
     /// # Errors
     /// `error::KeyRejected` if bytes do not encode an RSA private key or if the key is otherwise
     /// not acceptable.
     </span><span class="kw">pub fn </span>from_pkcs8(pkcs8: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
-        <span class="kw">unsafe </span>{
-            <span class="kw">let </span>evp_pkey = encoding::pkcs8::decode_der(pkcs8)<span class="question-mark">?</span>;
-            <span class="self">Self</span>::validate_rsa_pkey(<span class="kw-2">&amp;</span>evp_pkey)<span class="question-mark">?</span>;
-            <span class="self">Self</span>::new(evp_pkey)
-        }
+        <span class="kw">let </span>key = encoding::pkcs8::decode_der(pkcs8)<span class="question-mark">?</span>;
+        <span class="self">Self</span>::new(key)
     }
 
     <span class="doccomment">/// Parses a DER-encoded `RSAPrivateKey` structure (RFC 8017).
@@ -834,60 +679,25 @@
     /// # Errors
     /// `error:KeyRejected` on error.
     </span><span class="kw">pub fn </span>from_der(input: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
-        <span class="kw">unsafe </span>{
-            <span class="kw">let </span>pkey = build_private_RSA_PKEY(input)<span class="question-mark">?</span>;
-            <span class="self">Self</span>::validate_rsa_pkey(<span class="kw-2">&amp;</span>pkey)<span class="question-mark">?</span>;
-            <span class="self">Self</span>::new(pkey)
-        }
+        <span class="kw">let </span>key = encoding::rfc8017::decode_private_key_der(input)<span class="question-mark">?</span>;
+        <span class="self">Self</span>::new(key)
     }
 
-    <span class="kw">const </span>MIN_RSA_PRIME_BITS: u32 = <span class="number">1024</span>;
-    <span class="kw">const </span>MAX_RSA_PRIME_BITS: u32 = <span class="number">4096</span>;
+    <span class="doccomment">/// Returns a boolean indicator if this RSA key is an approved FIPS 140-3 key.
+    </span><span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
+    #[must_use]
+    </span><span class="kw">pub fn </span>is_valid_fips_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        is_valid_fips_key(<span class="kw-2">&amp;</span><span class="self">self</span>.evp_pkey)
+    }
 
-    <span class="doccomment">/// ⚠️ Function assumes that `aws_lc::RSA_check_key` / `aws_lc::RSA_validate_key` has already been invoked beforehand.
-    /// `aws_lc::RSA_validate_key` is already invoked by `aws_lc::EVP_parse_private_key` / `aws_lc::RSA_parse_private_key`.
-    /// If the `EVP_PKEY` was constructed through another mechanism, then the key should be validated through the use of
-    /// one those verifier functions first.
-    </span><span class="kw">unsafe fn </span>validate_rsa_pkey(rsa: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), KeyRejected&gt; {
-        <span class="kw">let </span>rsa = rsa.get_rsa()<span class="question-mark">?</span>.as_const();
-
-        <span class="kw">let </span>p = ConstPointer::new(RSA_get0_p(<span class="kw-2">*</span>rsa))<span class="question-mark">?</span>;
-        <span class="kw">let </span>q = ConstPointer::new(RSA_get0_q(<span class="kw-2">*</span>rsa))<span class="question-mark">?</span>;
-        <span class="kw">let </span>p_bits = p.num_bits();
-        <span class="kw">let </span>q_bits = q.num_bits();
-
-        <span class="kw">if </span>p_bits != q_bits {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::inconsistent_components());
+    <span class="kw">fn </span>validate_private_key(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), KeyRejected&gt; {
+        <span class="kw">if </span>!is_rsa_key(key) {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::unspecified());
+        };
+        <span class="kw">match </span>key_size_bits(key) {
+            <span class="number">2048</span>..=<span class="number">8192 </span>=&gt; <span class="prelude-val">Ok</span>(()),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(KeyRejected::unspecified()),
         }
-
-        <span class="kw">if </span>p_bits &lt; <span class="self">Self</span>::MIN_RSA_PRIME_BITS {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::too_small());
-        }
-        <span class="kw">if </span>p_bits &gt; <span class="self">Self</span>::MAX_RSA_PRIME_BITS {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::too_large());
-        }
-
-        <span class="kw">if </span>p_bits % <span class="number">512 </span>!= <span class="number">0 </span>{
-            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::private_modulus_len_not_multiple_of_512_bits());
-        }
-
-        <span class="kw">let </span>e = ConstPointer::new(RSA_get0_e(<span class="kw-2">*</span>rsa))<span class="question-mark">?</span>;
-        <span class="kw">let </span>min_exponent = DetachableLcPtr::try_from(<span class="number">65537</span>)<span class="question-mark">?</span>;
-        <span class="kw">match </span>e.compare(<span class="kw-2">&amp;</span>min_exponent.as_const()) {
-            Ordering::Less =&gt; <span class="prelude-val">Err</span>(KeyRejected::too_small()),
-            Ordering::Equal | Ordering::Greater =&gt; <span class="prelude-val">Ok</span>(()),
-        }<span class="question-mark">?</span>;
-
-        <span class="comment">// For the FIPS feature this will perform the necessary public-key validaiton steps and pairwise consistency tests.
-        // TODO: This also result in another call to `aws_lc::RSA_validate_key`, meaning duplicate effort is performed
-        // even after having already performing this operation during key parsing. Ideally the FIPS specific checks
-        // could be pulled out and invoked seperatly from the standard checks.
-        </span><span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
-        </span><span class="kw">if </span><span class="number">1 </span>!= RSA_check_fips(<span class="kw-2">*</span>rsa <span class="kw">as </span><span class="kw-2">*mut </span>RSA) {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::inconsistent_components());
-        }
-
-        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// Sign `msg`. `msg` is digested using the digest algorithm from
@@ -903,7 +713,6 @@
     ///
     /// # *ring* Compatibility
     /// Our implementation ignores the `SecureRandom` parameter.
-    ///
     </span><span class="comment">// # FIPS
     // The following conditions must be met:
     // * RSA Key Sizes: 2048, 3072, 4096
@@ -995,44 +804,6 @@
     }
 }
 
-<span class="attr">#[inline]
-#[allow(non_snake_case)]
-</span><span class="kw">unsafe fn </span>build_private_RSA_PKEY(private_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, KeyRejected&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>cbs = cbs::build_CBS(private_key);
-
-    <span class="kw">let </span>rsa = DetachableLcPtr::new(RSA_parse_private_key(<span class="kw-2">&amp;mut </span>cbs))<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>pkey = LcPtr::new(EVP_PKEY_new())<span class="question-mark">?</span>;
-
-    <span class="kw">if </span><span class="number">1 </span>!= EVP_PKEY_assign_RSA(<span class="kw-2">*</span>pkey, <span class="kw-2">*</span>rsa) {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::unexpected_error());
-    }
-
-    rsa.detach();
-
-    <span class="prelude-val">Ok</span>(pkey)
-}
-
-<span class="attr">#[inline]
-#[allow(non_snake_case)]
-</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>build_public_RSA_PKEY(
-    public_key: <span class="kw-2">&amp;</span>[u8],
-) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>cbs = cbs::build_CBS(public_key);
-
-    <span class="kw">let </span>rsa = DetachableLcPtr::new(RSA_parse_public_key(<span class="kw-2">&amp;mut </span>cbs))<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>pkey = LcPtr::new(EVP_PKEY_new())<span class="question-mark">?</span>;
-
-    <span class="kw">if </span><span class="number">1 </span>!= EVP_PKEY_assign_RSA(<span class="kw-2">*</span>pkey, <span class="kw-2">*</span>rsa) {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-    }
-
-    rsa.detach();
-
-    <span class="prelude-val">Ok</span>(pkey)
-}
-
 <span class="doccomment">/// A serialized RSA public key.
 </span><span class="attr">#[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
@@ -1055,13 +826,14 @@
 }
 
 <span class="kw">impl </span>PublicKey {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>new(pubkey: <span class="kw-2">&amp;</span>ConstPointer&lt;RSA&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, ()&gt; {
-        <span class="kw">let </span>key = serialize_RSA_pubkey(pubkey)<span class="question-mark">?</span>;
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>new(evp_pkey: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="kw">let </span>key = encoding::rfc8017::encode_public_key_der(evp_pkey)<span class="question-mark">?</span>;
         <span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
         </span>{
-            <span class="kw">let </span>modulus = ConstPointer::new(RSA_get0_n(<span class="kw-2">**</span>pubkey))<span class="question-mark">?</span>;
+            <span class="kw">let </span>pubkey = evp_pkey.get_rsa()<span class="question-mark">?</span>;
+            <span class="kw">let </span>modulus = ConstPointer::new(RSA_get0_n(<span class="kw-2">*</span>pubkey))<span class="question-mark">?</span>;
             <span class="kw">let </span>modulus = modulus.to_be_bytes().into_boxed_slice();
-            <span class="kw">let </span>exponent = ConstPointer::new(RSA_get0_e(<span class="kw-2">**</span>pubkey))<span class="question-mark">?</span>;
+            <span class="kw">let </span>exponent = ConstPointer::new(RSA_get0_e(<span class="kw-2">*</span>pubkey))<span class="question-mark">?</span>;
             <span class="kw">let </span>exponent = exponent.to_be_bytes().into_boxed_slice();
             <span class="prelude-val">Ok</span>(PublicKey {
                 key,
@@ -1140,9 +912,8 @@
 <span class="kw">where
     </span>B: AsRef&lt;[u8]&gt; + Debug,
 {
-    <span class="attr">#[allow(non_snake_case)]
-    #[inline]
-    </span><span class="kw">unsafe fn </span>build_RSA(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, ()&gt; {
+    <span class="attr">#[inline]
+    </span><span class="kw">unsafe fn </span>build_rsa(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, ()&gt; {
         <span class="kw">let </span>n_bytes = <span class="self">self</span>.n.as_ref();
         <span class="kw">if </span>n_bytes.is_empty() || n_bytes[<span class="number">0</span>] == <span class="number">0u8 </span>{
             <span class="kw">return </span><span class="prelude-val">Err</span>(());
@@ -1185,8 +956,8 @@
         signature: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
         <span class="kw">unsafe </span>{
-            <span class="kw">let </span>rsa = <span class="self">self</span>.build_RSA()<span class="question-mark">?</span>;
-            <span class="kw">super</span>::signature::verify_RSA(
+            <span class="kw">let </span>rsa = <span class="self">self</span>.build_rsa()<span class="question-mark">?</span>;
+            <span class="kw">super</span>::signature::verify_rsa_signature(
                 params.digest_algorithm(),
                 params.padding(),
                 <span class="kw-2">&amp;</span>rsa,
@@ -1196,20 +967,6 @@
             )
         }
     }
-}
-
-<span class="attr">#[allow(non_snake_case)]
-</span><span class="kw">unsafe fn </span>serialize_RSA_pubkey(pubkey: <span class="kw-2">&amp;</span>ConstPointer&lt;RSA&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;[u8]&gt;, ()&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>pubkey_bytes = null_mut::&lt;u8&gt;();
-    <span class="kw">let </span><span class="kw-2">mut </span>outlen = MaybeUninit::&lt;usize&gt;::uninit();
-    <span class="kw">if </span><span class="number">1 </span>!= RSA_public_key_to_bytes(<span class="kw-2">&amp;mut </span>pubkey_bytes, outlen.as_mut_ptr(), <span class="kw-2">**</span>pubkey) {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(());
-    }
-    <span class="kw">let </span>pubkey_bytes = LcPtr::new(pubkey_bytes)<span class="question-mark">?</span>;
-    <span class="kw">let </span>outlen = outlen.assume_init();
-    <span class="kw">let </span>pubkey_slice = pubkey_bytes.as_slice(outlen);
-    <span class="kw">let </span>pubkey_vec = Vec::from(pubkey_slice);
-    <span class="prelude-val">Ok</span>(pubkey_vec.into_boxed_slice())
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>generate_rsa_key(size: c_int, fips: bool) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
@@ -1239,5 +996,32 @@
     rsa.detach();
 
     <span class="prelude-val">Ok</span>(evp_pkey)
+}
+
+<span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
+#[must_use]
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_valid_fips_key(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; bool {
+    <span class="comment">// This should always be an RSA key and must-never panic.
+    </span><span class="kw">let </span>rsa_key = key.get_rsa().expect(<span class="string">"RSA EVP_PKEY"</span>);
+
+    <span class="number">1 </span>== <span class="kw">unsafe </span>{ RSA_check_fips(<span class="kw-2">*</span>rsa_key) }
+}
+
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>key_size_bytes(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; usize {
+    <span class="comment">// Safety: RSA modulous byte sizes supported fit an usize
+    </span><span class="kw">unsafe </span>{ EVP_PKEY_size(key.as_const_ptr()) }
+        .try_into()
+        .expect(<span class="string">"modulous to fit in usize"</span>)
+}
+
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>key_size_bits(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; usize {
+    <span class="comment">// Safety: RSA modulous byte sizes supported fit an usize
+    </span><span class="kw">unsafe </span>{ EVP_PKEY_bits(key.as_const_ptr()) }
+        .try_into()
+        .expect(<span class="string">"modulous to fit in usize"</span>)
+}
+
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_rsa_key(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; bool {
+    key.get_rsa().is_ok()
 }
 </code></pre></div></section></main></body></html>

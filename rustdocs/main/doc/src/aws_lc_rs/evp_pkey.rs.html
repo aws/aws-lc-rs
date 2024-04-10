@@ -114,6 +114,18 @@
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
@@ -124,8 +136,9 @@
 <span class="kw">use </span><span class="kw">crate</span>::pkcs8::{Document, Version};
 <span class="kw">use </span><span class="kw">crate</span>::ptr::LcPtr;
 <span class="kw">use </span>aws_lc::{
-    EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id, EVP_marshal_private_key,
-    EVP_marshal_private_key_v2, EVP_parse_private_key, EC_KEY, EVP_PKEY, RSA,
+    EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id, EVP_PKEY_up_ref,
+    EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_parse_private_key, EC_KEY, EVP_PKEY,
+    RSA,
 };
 <span class="comment">// TODO: Uncomment when MSRV &gt;= 1.64
 // use core::ffi::c_int;
@@ -226,6 +239,17 @@
         buffer.truncate(out_len);
 
         <span class="prelude-val">Ok</span>(Document::new(buffer.into_boxed_slice()))
+    }
+}
+
+<span class="kw">impl </span>Clone <span class="kw">for </span>LcPtr&lt;EVP_PKEY&gt; {
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">assert_eq!</span>(
+            <span class="number">1</span>,
+            <span class="kw">unsafe </span>{ EVP_PKEY_up_ref(<span class="kw-2">**</span><span class="self">self</span>) },
+            <span class="string">"infallible AWS-LC function"
+        </span>);
+        <span class="self">Self</span>::new(<span class="kw-2">**</span><span class="self">self</span>).expect(<span class="string">"non-null AWS-LC EVP_PKEY pointer"</span>)
     }
 }
 </code></pre></div></section></main></body></html>

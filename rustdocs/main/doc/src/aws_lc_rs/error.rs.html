@@ -269,17 +269,6 @@
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2021 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -410,25 +399,12 @@
         KeyRejected(<span class="string">"InconsistentComponents"</span>)
     }
 
-    <span class="comment">//pub(crate) fn invalid_component() -&gt; Self {
-    //    KeyRejected("InvalidComponent")
-    //}
-
-    </span><span class="attr">#[inline]
+    <span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>invalid_encoding() -&gt; <span class="self">Self </span>{
         KeyRejected(<span class="string">"InvalidEncoding"</span>)
     }
 
-    <span class="comment">// XXX: See the comment at the call site.
-    //pub(crate) fn rng_failed() -&gt; Self {
-    //    KeyRejected("RNG failed")
-    //}
-
-    //pub(crate) fn public_key_is_missing() -&gt; Self {
-    //    KeyRejected("PublicKeyIsMissing")
-    //}
-
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>too_small() -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>too_small() -&gt; <span class="self">Self </span>{
         KeyRejected(<span class="string">"TooSmall"</span>)
     }
 
@@ -436,20 +412,16 @@
         KeyRejected(<span class="string">"TooLarge"</span>)
     }
 
-    <span class="comment">//pub(crate) fn version_not_supported() -&gt; Self {
-    //    KeyRejected("VersionNotSupported")
-    //}
-
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>wrong_algorithm() -&gt; <span class="self">Self </span>{
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>wrong_algorithm() -&gt; <span class="self">Self </span>{
         KeyRejected(<span class="string">"WrongAlgorithm"</span>)
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>private_modulus_len_not_multiple_of_512_bits() -&gt; <span class="self">Self </span>{
-        KeyRejected(<span class="string">"PrivateModulusLenNotMultipleOf512Bits"</span>)
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unexpected_error() -&gt; <span class="self">Self </span>{
         KeyRejected(<span class="string">"UnexpectedError"</span>)
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>unspecified() -&gt; <span class="self">Self </span>{
+        KeyRejected(<span class="string">"Unspecified"</span>)
     }
 }
 
@@ -518,6 +490,12 @@
 <span class="kw">impl </span>From&lt;TryFromIntError&gt; <span class="kw">for </span>KeyRejected {
     <span class="kw">fn </span>from(<span class="kw">_</span>: TryFromIntError) -&gt; <span class="self">Self </span>{
         KeyRejected::unexpected_error()
+    }
+}
+
+<span class="kw">impl </span>From&lt;Unspecified&gt; <span class="kw">for </span>KeyRejected {
+    <span class="kw">fn </span>from(<span class="kw">_</span>: Unspecified) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::unspecified()
     }
 }
 

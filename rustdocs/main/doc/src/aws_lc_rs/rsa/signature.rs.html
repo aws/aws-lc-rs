@@ -320,17 +320,10 @@
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-</span><span class="kw">use </span>core::{
+</span><span class="kw">use </span>std::{
     fmt::{<span class="self">self</span>, Debug, Formatter},
     mem::MaybeUninit,
     ops::RangeInclusive,
@@ -339,22 +332,23 @@
 
 <span class="kw">use </span>aws_lc::{
     EVP_DigestSign, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_set_rsa_padding,
-    EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_get0_RSA, RSA_bits, RSA_get0_n,
-    RSA_parse_public_key, EVP_PKEY, EVP_PKEY_CTX, RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
+    EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_get0_RSA, RSA_bits, RSA_get0_n, EVP_PKEY,
+    EVP_PKEY_CTX, RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
 };
 
 <span class="kw">use crate</span>::{
-    cbs,
     digest::{<span class="self">self</span>, digest_ctx::DigestContext},
     error::Unspecified,
     fips::indicator_check,
-    ptr::{ConstPointer, DetachableLcPtr, LcPtr},
+    ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer},
     sealed::Sealed,
     signature::VerificationAlgorithm,
 };
 
 <span class="attr">#[cfg(feature = <span class="string">"ring-sig-verify"</span>)]
 </span><span class="kw">use </span>untrusted::Input;
+
+<span class="kw">use </span><span class="kw">super</span>::encoding;
 
 <span class="attr">#[allow(non_camel_case_types)]
 #[allow(clippy::module_name_repetitions)]
@@ -410,17 +404,15 @@
         msg: <span class="kw-2">&amp;</span>[u8],
         signature: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-        <span class="kw">unsafe </span>{
-            <span class="kw">let </span>rsa = <span class="kw">super</span>::key::build_public_RSA_PKEY(public_key)<span class="question-mark">?</span>;
-            verify_RSA(
-                <span class="self">self</span>.digest_algorithm(),
-                <span class="self">self</span>.padding(),
-                <span class="kw-2">&amp;</span>rsa,
-                msg,
-                signature,
-                <span class="self">self</span>.bit_size_range(),
-            )
-        }
+        <span class="kw">let </span>evp_pkey = encoding::rfc8017::decode_public_key_der(public_key)<span class="question-mark">?</span>;
+        verify_rsa_signature(
+            <span class="self">self</span>.digest_algorithm(),
+            <span class="self">self</span>.padding(),
+            <span class="kw-2">&amp;</span>evp_pkey,
+            msg,
+            signature,
+            <span class="self">self</span>.bit_size_range(),
+        )
     }
 }
 
@@ -447,13 +439,8 @@
     /// # Errors
     /// `error::Unspecified` on parse error.
     </span><span class="kw">pub fn </span>public_modulus_len(public_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;u32, Unspecified&gt; {
-        <span class="kw">unsafe </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>cbs = cbs::build_CBS(public_key);
-            <span class="kw">let </span>rsa = LcPtr::new(RSA_parse_public_key(<span class="kw-2">&amp;mut </span>cbs))<span class="question-mark">?</span>;
-            <span class="kw">let </span>mod_len = RSA_bits(<span class="kw-2">*</span>rsa);
-
-            <span class="prelude-val">Ok</span>(mod_len)
-        }
+        <span class="kw">let </span>rsa = encoding::rfc8017::decode_public_key_der(public_key)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ RSA_bits(rsa.get_rsa()<span class="question-mark">?</span>.as_const_ptr()) })
     }
 
     <span class="attr">#[must_use]
@@ -581,8 +568,7 @@
 }
 
 <span class="attr">#[inline]
-#[allow(non_snake_case)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>verify_RSA(
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>verify_rsa_signature(
     algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>digest::Algorithm,
     padding: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>RsaPadding,
     public_key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
