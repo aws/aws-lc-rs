@@ -40,6 +40,7 @@ jobs:
           - powerpc-unknown-linux-gnu
           - x86_64-unknown-linux-musl
           - aarch64-unknown-linux-musl
+          - s390x-unknown-linux-gnu
     steps:
       - uses: actions/checkout@v3
         with:
