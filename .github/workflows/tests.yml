@@ -2,10 +2,15 @@ name: tests
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - '*'
+      - '!generate/aws-lc-*'
   pull_request:
     branches:
       - '*'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 env:
   RUST_BACKTRACE: 1
@@ -16,7 +21,7 @@ env:
 jobs:
 
   aws-lc-rs-test:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: aws-lc-rs tests
     runs-on: ${{ matrix.os }}
     strategy:
@@ -49,7 +54,7 @@ jobs:
         run: cargo test --all-targets
 
   bindgen-test:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: aws-lc-rs bindgen-tests
     runs-on: ${{ matrix.os }}
     strategy:
@@ -75,7 +80,7 @@ jobs:
         run: cargo test ${{ matrix.args }}
 
   windows-test:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: aws-lc-rs windows-tests
     runs-on: ${{ matrix.os }}
     strategy:
@@ -140,7 +145,7 @@ jobs:
           files: ${{ runner.temp }}/lcov.info,${{ runner.temp }}/lcov-fips.info
 
   aws-lc-rs-asan:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: aws-lc-rs asan
     strategy:
       matrix:
@@ -170,7 +175,7 @@ jobs:
         run: cargo test ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
 
   build-env-test:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: aws-lc-rs build-env-test
     runs-on: ${{ matrix.os }}
     strategy:
@@ -193,7 +198,7 @@ jobs:
         run: AWS_LC_SYS_STATIC=${{ matrix.static }}  cargo test --tests
 
   build-env-fips-test:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: aws-lc-rs build-env-fips-test
     runs-on: ${{ matrix.os }}
     strategy:
@@ -220,7 +225,7 @@ jobs:
         run: AWS_LC_FIPS_SYS_STATIC=${{ matrix.static }} cargo test --tests --features fips
 
   careful:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: Run carefully
     runs-on: ${{ matrix.os }}
     strategy:

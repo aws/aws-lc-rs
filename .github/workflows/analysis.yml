@@ -2,10 +2,15 @@ name: analysis
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - '*'
+      - '!generate/aws-lc-*'
   pull_request:
     branches:
       - '*'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 env:
   RUST_BACKTRACE: 1
@@ -19,6 +24,7 @@ env:
 
 jobs:
   rustfmt:
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -36,6 +42,7 @@ jobs:
         run: cargo fmt -- --check --verbose
 
   clippy:
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -62,7 +69,7 @@ jobs:
         run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
   apidiff:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -96,6 +103,7 @@ jobs:
           cargo public-api diff --deny changed --deny removed "${CRATE_VERSION}"
 
   dependency-review:
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
@@ -108,7 +116,7 @@ jobs:
           allow-licenses: Apache-2.0, ISC, MIT, MIT-0
 
   udeps:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -133,7 +141,7 @@ jobs:
           RUSTC_WRAPPER: ""
 
   bindgen-dependency:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -164,7 +172,7 @@ jobs:
           }
 
   bindgen-fips-dependency:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -195,7 +203,7 @@ jobs:
           }
 
   mirai-analysis:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -229,7 +237,7 @@ jobs:
           cargo mirai
 
   minimal-versions:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: Resolve the dependencies to the minimum SemVer version
     runs-on: ubuntu-latest
     steps:
@@ -249,6 +257,7 @@ jobs:
         run: cargo --locked check
 
   copyright:
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -258,6 +267,7 @@ jobs:
           ./scripts/tools/copyright_check.sh
 
   semver-checks:
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

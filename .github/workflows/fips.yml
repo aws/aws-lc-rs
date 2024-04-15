@@ -2,10 +2,15 @@ name: fips
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - '*'
+      - '!generate/aws-lc-*'
   pull_request:
     branches:
       - '*'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 env:
   RUST_BACKTRACE: 1
@@ -15,7 +20,7 @@ env:
 
 jobs:
   fips-test:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: aws-lc-rs fips-tests
     runs-on: ${{ matrix.os }}
     env:
@@ -52,7 +57,7 @@ jobs:
         # See: https://github.com/rust-lang/cargo/issues/8531
         run: cargo test --tests ${{ matrix.args }}
   windows-fips-test:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: aws-lc-rs windows-fips-tests
     runs-on: ${{ matrix.os }}
     strategy:

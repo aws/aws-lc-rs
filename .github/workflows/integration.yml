@@ -2,10 +2,15 @@ name: integration
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - '*'
+      - '!generate/aws-lc-*'
   pull_request:
     branches:
       - '*'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 env:
   RUST_BACKTRACE: 1
@@ -15,7 +20,7 @@ env:
 
 jobs:
   s2n-quic-integration:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: s2n-quic-integration
     runs-on: ${{ matrix.os }}
     strategy:
@@ -36,7 +41,7 @@ jobs:
           ./scripts/run-s2n-quic-integration.sh
 
   rustls-integration:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: rustls-integration
     runs-on: ${{ matrix.os }}
     strategy:
@@ -59,7 +64,7 @@ jobs:
           ./scripts/run-rustls-integration.sh
 
   links-crate-tests:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: sys crate tests
     runs-on: ${{ matrix.os }}
     strategy:
@@ -92,7 +97,7 @@ jobs:
         run: cargo run --features ${{ matrix.features }} --no-default-features
 
   publish-dry-run:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: publish dry-run
     runs-on: ${{ matrix.os }}
     strategy:
@@ -136,7 +141,7 @@ jobs:
 
   msrv:
     name: Minimum Supported Rust Version
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
