@@ -14,6 +14,10 @@ pub(crate) struct CmakeBuilder {
     output_lib_type: OutputLibType,
 }
 
+fn test_nasm_command() -> bool {
+    test_command("nasm".as_ref(), &["-version".as_ref()]).status
+}
+
 fn find_cmake_command() -> Option<&'static OsStr> {
     if test_command("cmake3".as_ref(), &["--version".as_ref()]).status {
         Some("cmake3".as_ref())
@@ -149,6 +153,10 @@ impl crate::Builder for CmakeBuilder {
             eprintln!("Missing dependency: cmake");
             missing_dependency = true;
         };
+        if target_os() == "windows" && target_arch() == "x86_64" && !test_nasm_command() {
+            eprintln!("Missing dependency: nasm");
+            missing_dependency = true;
+        }
 
         if missing_dependency {
             return Err("Required build dependency is missing. Halting build.".to_owned());
