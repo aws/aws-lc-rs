@@ -2,10 +2,15 @@ name: cross
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - '*'
+      - '!generate/aws-lc-*'
   pull_request:
     branches:
       - '*'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 env:
   RUST_BACKTRACE: 1
@@ -15,7 +20,7 @@ env:
 
 jobs:
   aws-lc-rs-cross-test:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: aws-lc-rs cross tests
     runs-on: ${{ matrix.os }}
     strategy:
@@ -59,7 +64,7 @@ jobs:
         run: cross test -p aws-lc-rs --release --features bindgen,unstable --target ${{ matrix.target }}
 
   aws-lc-rs-ios-aarch64:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: iOS aarch64 cross-platform build
     runs-on: macos-13-xlarge
     steps:
@@ -77,7 +82,7 @@ jobs:
         run: ./scripts/ci/ios-simulator-runner.sh
 
   aws-lc-rs-ios-x86_64:
-    if: github.repository == 'aws/aws-lc-rs'
+    if: github.repository_owner == 'aws'
     name: iOS x86-64 cross-platform build
     runs-on: macos-13-xlarge
     steps:
