@@ -1,11 +1,12 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Wed Apr  3 12:59:01 UTC 2024
+// Tue Apr 16 16:48:10 UTC 2024
 
 use crate::cc_builder::Library;
 
 pub(super) const CRYPTO_LIBRARY: Library = Library {
     name: "crypto",
+    // This attribute is intentionally let blank
     flags: &[],
     sources: &[
         "crypto/asn1/a_bitstr.c",
@@ -170,6 +171,7 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/refcount_lock.c",
         "crypto/refcount_win.c",
         "crypto/rsa_extra/rsa_asn1.c",
+        "crypto/rsa_extra/rsa_crypt.c",
         "crypto/rsa_extra/rsa_print.c",
         "crypto/rsa_extra/rsassa_pss_asn1.c",
         "crypto/siphash/siphash.c",
@@ -220,9 +222,7 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/x509/x_attrib.c",
         "crypto/x509/x_crl.c",
         "crypto/x509/x_exten.c",
-        "crypto/x509/x_info.c",
         "crypto/x509/x_name.c",
-        "crypto/x509/x_pkey.c",
         "crypto/x509/x_pubkey.c",
         "crypto/x509/x_req.c",
         "crypto/x509/x_sig.c",
