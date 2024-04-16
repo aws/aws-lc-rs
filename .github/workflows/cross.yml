@@ -96,3 +96,20 @@ jobs:
           target: x86_64-apple-ios
       - name: Build for `x86_64-apple-ios`
         run: cargo build -p aws-lc-rs --target x86_64-apple-ios --features bindgen
+
+  aws-lc-rs-windows-mingw:
+    if: github.repository == 'aws/aws-lc-rs'
+    name: x86_64-pc-windows-gnu
+    runs-on: windows-latest
+    steps:
+      - uses: ilammy/setup-nasm@v1
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-gnu
+      - name: Test on `x86_64-pc-windows-gnu`
+        run: cargo test -p aws-lc-rs --target x86_64-pc-windows-gnu --features bindgen

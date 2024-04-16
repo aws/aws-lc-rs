@@ -32,6 +32,10 @@ fn test_ninja_command() -> bool {
         || test_command("ninja-build".as_ref(), &["--version".as_ref()]).status
 }
 
+fn test_nasm_command() -> bool {
+    test_command("nasm".as_ref(), &["-version".as_ref()]).status
+}
+
 fn find_cmake_command() -> Option<&'static OsStr> {
     if test_command("cmake3".as_ref(), &["--version".as_ref()]).status {
         Some("cmake3".as_ref())
@@ -193,6 +197,10 @@ impl crate::Builder for CmakeBuilder {
         }
         if !test_perl_command() {
             eprintln!("Missing dependency: perl is required for FIPS.");
+            missing_dependency = true;
+        }
+        if target_os() == "windows" && target_arch() == "x86_64" && !test_nasm_command() {
+            eprintln!("Missing dependency: nasm is required for FIPS.");
             missing_dependency = true;
         }
         if let Some(cmake_cmd) = find_cmake_command() {
