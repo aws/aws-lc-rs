@@ -61,13 +61,6 @@ impl CmakeBuilder {
     fn prepare_cmake_build(&self) -> cmake::Config {
         let mut cmake_cfg = self.get_cmake_config();
 
-        if ["powerpc64", "powerpc"]
-            .iter()
-            .any(|arch| target_arch().eq_ignore_ascii_case(arch))
-        {
-            cmake_cfg.define("ENABLE_EXPERIMENTAL_BIG_ENDIAN_SUPPORT", "1");
-        }
-
         if OutputLibType::default() == OutputLibType::Dynamic {
             cmake_cfg.define("BUILD_SHARED_LIBS", "1");
         } else {
