@@ -178,7 +178,7 @@ fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
         any(target_env = "gnu", target_env = "musl", target_env = "")
     ))
 ))]
-fn generate_bindings(manifest_dir: &Path, prefix: Option<String>, bindings_path: &PathBuf) {
+fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
     let options = BindingOptions {
         build_prefix: prefix.clone(),
         include_ssl: cfg!(feature = "ssl"),
@@ -193,7 +193,7 @@ fn generate_bindings(manifest_dir: &Path, prefix: Option<String>, bindings_path:
 }
 
 #[cfg(feature = "bindgen")]
-fn generate_src_bindings(manifest_dir: &Path, prefix: Option<String>, src_bindings_path: &Path) {
+fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindings_path: &Path) {
     bindgen::generate_bindings(
         manifest_dir,
         &BindingOptions {
@@ -220,6 +220,10 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: Option<String>, src_bindin
 fn emit_rustc_cfg(cfg: &str) {
     let cfg = cfg.replace('-', "_");
     println!("cargo:rustc-cfg={cfg}");
+}
+
+fn emit_warning(message: &str) {
+    println!("cargo:warning={message}");
 }
 
 fn target_os() -> String {
@@ -350,8 +354,9 @@ fn main() {
     if is_internal_bindgen() {
         #[cfg(feature = "bindgen")]
         {
+            emit_warning(&format!("Generating src bindings. Platform: {}", target()));
             let src_bindings_path = Path::new(&manifest_dir).join("src");
-            generate_src_bindings(&manifest_dir, prefix.clone(), &src_bindings_path);
+            generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
             bindings_available = true;
         }
     } else if is_bindgen_required() {
@@ -364,8 +369,12 @@ fn main() {
             ))
         ))]
         if !is_external_bindgen() {
+            emit_warning(&format!(
+                "Generating bindings - internal bindgen. Platform: {}",
+                target()
+            ));
             let gen_bindings_path = out_dir().join("bindings.rs");
-            generate_bindings(&manifest_dir, prefix.clone(), &gen_bindings_path);
+            generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
             emit_rustc_cfg("use_bindgen_generated");
             bindings_available = true;
         }
@@ -374,6 +383,10 @@ fn main() {
     }
 
     if !bindings_available && !cfg!(feature = "ssl") {
+        emit_warning(&format!(
+            "Generating bindings - external bindgen. Platform: {}",
+            target()
+        ));
         let gen_bindings_path = out_dir().join("bindings.rs");
         let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
         match result {
@@ -454,7 +467,7 @@ pub(crate) struct BindingOptions {
 fn invoke_external_bindgen(
     manifest_dir: &Path,
     prefix: &Option<String>,
-    gen_bindings_path: &PathBuf,
+    gen_bindings_path: &Path,
 ) -> Result<(), String> {
     if !test_command("bindgen".as_ref(), &["--version".as_ref()]).status {
         return Err("External bindgen command not found.".to_string());
