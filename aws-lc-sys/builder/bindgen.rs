@@ -1,10 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{
-    get_aws_lc_include_path, get_aws_lc_sys_includes_path, get_generated_include_path,
-    get_rust_include_path,
-};
+use crate::{get_rust_include_path, BindingOptions, COPYRIGHT};
 use bindgen::callbacks::{ItemInfo, ParseCallbacks};
 use std::fmt::Debug;
 use std::path::Path;
@@ -34,47 +31,6 @@ impl ParseCallbacks for StripPrefixCallback {
     }
 }
 
-fn add_header_include_path(args: &mut Vec<String>, path: String) {
-    args.push("-I".to_string());
-    args.push(path);
-}
-
-fn prepare_clang_args(manifest_dir: &Path, options: &BindingOptions) -> Vec<String> {
-    let mut clang_args: Vec<String> = Vec::new();
-
-    add_header_include_path(
-        &mut clang_args,
-        get_rust_include_path(manifest_dir).display().to_string(),
-    );
-
-    if options.build_prefix.is_some() {
-        add_header_include_path(
-            &mut clang_args,
-            get_generated_include_path(manifest_dir)
-                .display()
-                .to_string(),
-        );
-    }
-
-    add_header_include_path(
-        &mut clang_args,
-        get_aws_lc_include_path(manifest_dir).display().to_string(),
-    );
-
-    if let Some(include_paths) = get_aws_lc_sys_includes_path() {
-        for path in include_paths {
-            add_header_include_path(&mut clang_args, path.display().to_string());
-        }
-    }
-
-    clang_args
-}
-
-const COPYRIGHT: &str = r"
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0 OR ISC
-";
-
 const PRELUDE: &str = r"
 #![allow(
     unused_imports,
@@ -97,15 +53,8 @@ const PRELUDE: &str = r"
 )]
 ";
 
-#[derive(Default)]
-pub(crate) struct BindingOptions {
-    pub build_prefix: Option<String>,
-    pub include_ssl: bool,
-    pub disable_prelude: bool,
-}
-
 fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bindgen::Builder {
-    let clang_args = prepare_clang_args(manifest_dir, options);
+    let clang_args = crate::prepare_clang_args(manifest_dir, options);
 
     let mut builder = bindgen::Builder::default()
         .derive_copy(true)
