@@ -96,7 +96,7 @@ jobs:
           toolchain: stable
           target: x86_64-apple-ios
       - name: Build for `x86_64-apple-ios`
-        run: cargo build -p aws-lc-rs --target x86_64-apple-ios --features bindgen
+        run: cargo build -p aws-lc-rs --release --target x86_64-apple-ios --features bindgen
 
   aws-lc-rs-windows-mingw:
     if: github.repository_owner == 'aws'
@@ -113,4 +113,4 @@ jobs:
           toolchain: stable
           target: x86_64-pc-windows-gnu
       - name: Test on `x86_64-pc-windows-gnu`
-        run: cargo test -p aws-lc-rs --target x86_64-pc-windows-gnu --features bindgen
+        run: cargo test -p aws-lc-rs --release --target x86_64-pc-windows-gnu --features bindgen
