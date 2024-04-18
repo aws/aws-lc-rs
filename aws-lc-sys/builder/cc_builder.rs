@@ -14,8 +14,8 @@ mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
 use crate::{
-    cargo_env, env_var_to_bool, out_dir, target, target_arch, target_os, target_vendor,
-    test_command, OutputLibType,
+    cargo_env, env_var_to_bool, execute_command, out_dir, target, target_arch, target_os,
+    target_vendor, OutputLibType,
 };
 use std::path::PathBuf;
 
@@ -221,7 +221,7 @@ impl CcBuilder {
             .map(std::ffi::OsString::as_os_str)
             .collect();
         let memcmp_compile_result =
-            test_command(memcmp_compiler.path().as_os_str(), memcmp_args.as_slice());
+            execute_command(memcmp_compiler.path().as_os_str(), memcmp_args.as_slice());
         assert!(
             memcmp_compile_result.status,
             "COMPILER: {:?}\
@@ -240,7 +240,7 @@ impl CcBuilder {
 
         // We can only execute the binary when the host and target platforms match.
         if cargo_env("HOST") == target() {
-            let result = test_command(exec_path.as_os_str(), &[]);
+            let result = execute_command(exec_path.as_os_str(), &[]);
             assert!(
                 result.status,
                 "Your compiler ({}) is not supported due to a memcmp related bug reported in \

@@ -143,7 +143,7 @@ pub(crate) struct TestCommandResult {
 }
 
 const MAX_CMD_OUTPUT_SIZE: usize = 1 << 12;
-fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
+fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     if let Ok(mut result) = Command::new(executable).args(args).output() {
         result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);
         let stderr = String::from_utf8(result.stderr)
@@ -501,7 +501,7 @@ fn invoke_external_bindgen(
     prefix: &Option<String>,
     gen_bindings_path: &Path,
 ) -> Result<(), String> {
-    if !test_command("bindgen".as_ref(), &["--version".as_ref()]).status {
+    if !execute_command("bindgen".as_ref(), &["--version".as_ref()]).status {
         return Err("External bindgen command not found.".to_string());
     }
     let options = BindingOptions {
@@ -528,6 +528,10 @@ fn invoke_external_bindgen(
         bindgen_params.extend(vec!["--prefix-link-name", sym_prefix.as_str()]);
     }
 
+    // These flags needs to be kept in sync with the setup in bindgen::prepare_bindings_builder
+    // If `bindgen-cli` makes backwards incompatible changes, we will update the parameters below
+    // to conform with the most recent release. We will guide consumers to likewise use the
+    // latest version of bindgen-cli.
     bindgen_params.extend(vec![
         "--rust-target",
         r"1.59",
@@ -556,7 +560,7 @@ fn invoke_external_bindgen(
     let cmd_params: Vec<OsString> = bindgen_params.iter().map(OsString::from).collect();
     let cmd_params: Vec<&OsStr> = cmd_params.iter().map(OsString::as_os_str).collect();
 
-    let result = test_command("bindgen".as_ref(), cmd_params.as_ref());
+    let result = execute_command("bindgen".as_ref(), cmd_params.as_ref());
     if !result.status {
         return Err(format!(
             "\n\n\
