@@ -3,7 +3,7 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    target, target_arch, target_env, target_os, target_vendor, test_command, OutputLibType,
+    execute_command, target, target_arch, target_env, target_os, target_vendor, OutputLibType,
 };
 use std::env;
 use std::ffi::OsStr;
@@ -17,18 +17,18 @@ pub(crate) struct CmakeBuilder {
 }
 
 fn test_ninja_command() -> bool {
-    test_command("ninja".as_ref(), &["--version".as_ref()]).status
-        || test_command("ninja-build".as_ref(), &["--version".as_ref()]).status
+    execute_command("ninja".as_ref(), &["--version".as_ref()]).status
+        || execute_command("ninja-build".as_ref(), &["--version".as_ref()]).status
 }
 
 fn test_nasm_command() -> bool {
-    test_command("nasm".as_ref(), &["-version".as_ref()]).status
+    execute_command("nasm".as_ref(), &["-version".as_ref()]).status
 }
 
 fn find_cmake_command() -> Option<&'static OsStr> {
-    if test_command("cmake3".as_ref(), &["--version".as_ref()]).status {
+    if execute_command("cmake3".as_ref(), &["--version".as_ref()]).status {
         Some("cmake3".as_ref())
-    } else if test_command("cmake".as_ref(), &["--version".as_ref()]).status {
+    } else if execute_command("cmake".as_ref(), &["--version".as_ref()]).status {
         Some("cmake".as_ref())
     } else {
         None
