@@ -511,8 +511,18 @@ fn invoke_external_bindgen(
     prefix: &Option<String>,
     gen_bindings_path: &Path,
 ) -> Result<(), String> {
-    if !execute_command("bindgen".as_ref(), &["--version".as_ref()]).status {
-        return Err("External bindgen command not found.".to_string());
+    let result = execute_command("bindgen".as_ref(), &["--version".as_ref()]);
+    if !result.status {
+        if !result.executed {
+            eprintln!(
+                "Consider installing the bindgen-cli: \
+            `cargo install --force --locked bindgen-cli`\
+            \n\
+            See our User Guide for more information about bindgen:\
+            https://aws.github.io/aws-lc-rs/index.html"
+            )
+        }
+        return Err("External bindgen command failed.".to_string());
     }
     let options = BindingOptions {
         build_prefix: None,
