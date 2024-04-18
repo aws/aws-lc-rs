@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
-use crate::{target, target_arch, target_os, target_vendor, test_command, OutputLibType};
+use crate::{execute_command, target, target_arch, target_os, target_vendor, OutputLibType};
 use std::collections::HashMap;
 use std::env;
 use std::ffi::OsStr;
@@ -16,11 +16,11 @@ pub(crate) struct CmakeBuilder {
 }
 
 fn test_perl_command() -> bool {
-    test_command("perl".as_ref(), &["--version".as_ref()]).status
+    execute_command("perl".as_ref(), &["--version".as_ref()]).status
 }
 
 fn test_go_command() -> bool {
-    let result = test_command("go".as_ref(), &["version".as_ref()]);
+    let result = execute_command("go".as_ref(), &["version".as_ref()]);
     if !result.status && result.executed {
         eprintln!("Go stderr:\n--------\n{}\n--------", result.stderr);
     }
@@ -28,18 +28,18 @@ fn test_go_command() -> bool {
 }
 
 fn test_ninja_command() -> bool {
-    test_command("ninja".as_ref(), &["--version".as_ref()]).status
-        || test_command("ninja-build".as_ref(), &["--version".as_ref()]).status
+    execute_command("ninja".as_ref(), &["--version".as_ref()]).status
+        || execute_command("ninja-build".as_ref(), &["--version".as_ref()]).status
 }
 
 fn test_nasm_command() -> bool {
-    test_command("nasm".as_ref(), &["-version".as_ref()]).status
+    execute_command("nasm".as_ref(), &["-version".as_ref()]).status
 }
 
 fn find_cmake_command() -> Option<&'static OsStr> {
-    if test_command("cmake3".as_ref(), &["--version".as_ref()]).status {
+    if execute_command("cmake3".as_ref(), &["--version".as_ref()]).status {
         Some("cmake3".as_ref())
-    } else if test_command("cmake".as_ref(), &["--version".as_ref()]).status {
+    } else if execute_command("cmake".as_ref(), &["--version".as_ref()]).status {
         Some("cmake".as_ref())
     } else {
         None
@@ -161,7 +161,7 @@ impl CmakeBuilder {
     fn collect_vcvarsall_bat(&self) -> Result<HashMap<String, String>, String> {
         let mut map: HashMap<String, String> = HashMap::new();
         let script_path = self.manifest_dir.join("builder").join("printenv.bat");
-        let result = test_command(script_path.as_os_str(), &[]);
+        let result = execute_command(script_path.as_os_str(), &[]);
         if !result.status {
             eprintln!("{}", result.stdout);
             return Err("Failed to run vcvarsall.bat.".to_owned());
