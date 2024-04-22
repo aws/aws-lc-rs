@@ -6,34 +6,6 @@
 #ifndef OPENSSL_HEADER_RUST_WRAPPER_H
 #define OPENSSL_HEADER_RUST_WRAPPER_H
 
-#include <openssl/err.h>
-
-#define AWS_LC_WRAPPER_ADD_PREFIX(a, b) AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b)
-#define AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b) a ## _ ## b
-
-#if defined(BORINGSSL_PREFIX)
-
-#define ERR_GET_LIB_RUST AWS_LC_WRAPPER_ADD_PREFIX(BORINGSSL_PREFIX, ERR_GET_LIB_RUST)
-#define ERR_GET_REASON_RUST AWS_LC_WRAPPER_ADD_PREFIX(BORINGSSL_PREFIX, ERR_GET_REASON_RUST)
-#define ERR_GET_FUNC_RUST AWS_LC_WRAPPER_ADD_PREFIX(BORINGSSL_PREFIX, ERR_GET_FUNC_RUST)
-
-#endif  // BORINGSSL_PREFIX
-
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-// The following functions are wrappers over inline functions and macros in
-// BoringSSL, which bindgen cannot currently correctly bind. These wrappers
-// ensure changes to the functions remain in lockstep with the Rust versions.
-OPENSSL_EXPORT int ERR_GET_LIB_RUST(uint32_t packed_error);
-OPENSSL_EXPORT int ERR_GET_REASON_RUST(uint32_t packed_error);
-OPENSSL_EXPORT int ERR_GET_FUNC_RUST(uint32_t packed_error);
-
-#if defined(__cplusplus)
-}  // extern C
-#endif
-
 #include "openssl/is_awslc.h"
 #include "openssl/aes.h"
 #include "openssl/asn1.h"
@@ -110,6 +82,36 @@ OPENSSL_EXPORT int ERR_GET_FUNC_RUST(uint32_t packed_error);
 #if defined(AWS_LC_RUST_INCLUDE_SSL)
 #include "openssl/ssl.h"
 #include "openssl/ssl3.h"
+#endif
+
+#ifdef _WIN32
+#define AWS_LC_SYS_EXPORT __declspec(dllexport)
+#else
+#define AWS_LC_SYS_EXPORT __attribute__((visibility("default")))
+#endif
+
+#define AWS_LC_WRAPPER_ADD_PREFIX(a, b) AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b)
+#define AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b) a ## _ ## b
+
+#if defined(BORINGSSL_PREFIX)
+#define ERR_GET_LIB_RUST AWS_LC_WRAPPER_ADD_PREFIX(BORINGSSL_PREFIX, ERR_GET_LIB_RUST)
+#define ERR_GET_REASON_RUST AWS_LC_WRAPPER_ADD_PREFIX(BORINGSSL_PREFIX, ERR_GET_REASON_RUST)
+#define ERR_GET_FUNC_RUST AWS_LC_WRAPPER_ADD_PREFIX(BORINGSSL_PREFIX, ERR_GET_FUNC_RUST)
+#endif  // BORINGSSL_PREFIX
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+// The following functions are wrappers over inline functions and macros in
+// BoringSSL, which bindgen cannot currently correctly bind. These wrappers
+// ensure changes to the functions remain in lockstep with the Rust versions.
+AWS_LC_SYS_EXPORT int ERR_GET_LIB_RUST(uint32_t packed_error);
+AWS_LC_SYS_EXPORT int ERR_GET_REASON_RUST(uint32_t packed_error);
+AWS_LC_SYS_EXPORT int ERR_GET_FUNC_RUST(uint32_t packed_error);
+
+#if defined(__cplusplus)
+}  // extern C
 #endif
 
 #endif  // OPENSSL_HEADER_RUST_WRAPPER_H

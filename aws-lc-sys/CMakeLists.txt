@@ -13,6 +13,10 @@ function(set_my_target_properties ...)
     endif()
 endfunction()
 
+if(BUILD_SHARED_LIBS)
+    add_definitions(-DBORINGSSL_SHARED_LIBRARY)
+endif()
+
 add_subdirectory(aws-lc aws-lc EXCLUDE_FROM_ALL)
 
 if (BUILD_LIBSSL)
