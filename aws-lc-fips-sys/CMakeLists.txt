@@ -18,6 +18,7 @@ if (BUILD_SHARED_LIBS AND FIPS)
     # as cmake crate will postfix the C/CXX flags after our disablement nullifying them.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-function-sections -fno-data-sections")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-function-sections -fno-data-sections")
+    add_definitions(-DBORINGSSL_SHARED_LIBRARY)
 endif()
 
 add_subdirectory(aws-lc aws-lc EXCLUDE_FROM_ALL)
