@@ -17,6 +17,10 @@ pub(crate) struct CmakeBuilder {
     output_lib_type: OutputLibType,
 }
 
+fn test_clang_cl_command() -> bool {
+    execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
+}
+
 fn test_ninja_command() -> bool {
     execute_command("ninja".as_ref(), &["--version".as_ref()]).status
         || execute_command("ninja-build".as_ref(), &["--version".as_ref()]).status
@@ -139,6 +143,20 @@ impl CmakeBuilder {
             cmake_cfg.generator("Ninja");
         }
 
+        if target_os() == "windows" && target_arch() == "aarch64" && target_env() == "msvc" {
+            cmake_cfg.generator("Ninja");
+            cmake_cfg.define("CMAKE_C_COMPILER", "clang-cl");
+            cmake_cfg.define("CMAKE_CXX_COMPILER", "clang-cl");
+            cmake_cfg.define("CMAKE_ASM_COMPILER", "clang-cl");
+            #[cfg(not(target_arch = "aarch64"))]
+            {
+                // Only needed when cross-compiling
+                cmake_cfg.define("CMAKE_C_COMPILER_TARGET", "arm64-pc-windows-msvc");
+                cmake_cfg.define("CMAKE_CXX_COMPILER_TARGET", "arm64-pc-windows-msvc");
+                cmake_cfg.define("CMAKE_ASM_COMPILER_TARGET", "arm64-pc-windows-msvc");
+            }
+        }
+
         if cfg!(feature = "asan") {
             env::set_var("CC", "clang");
             env::set_var("CXX", "clang++");
@@ -161,17 +179,25 @@ impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
         let mut missing_dependency = false;
 
-        if target_os() == "windows"
-            && target_arch() == "x86_64"
-            && !test_nasm_command()
-            && !is_no_asm()
-        {
-            eprintln!(
-                "Consider setting `AWS_LC_SYS_NO_ASM` in the environment for development builds.\
-            See User Guide about the limitations: https://aws.github.io/aws-lc-rs/index.html"
-            );
-            eprintln!("Missing dependency: nasm");
-            missing_dependency = true;
+        if target_os() == "windows" {
+            if target_arch() == "x86_64" && !test_nasm_command() && !is_no_asm() {
+                eprintln!(
+                    "Consider setting `AWS_LC_SYS_NO_ASM` in the environment for development builds.\
+                See User Guide about the limitations: https://aws.github.io/aws-lc-rs/index.html"
+                );
+                eprintln!("Missing dependency: nasm");
+                missing_dependency = true;
+            }
+            if target_arch() == "aarch64" && target_env() == "msvc" {
+                if !test_ninja_command() {
+                    eprintln!("Missing dependency: ninja");
+                    missing_dependency = true;
+                }
+                if !test_clang_cl_command() {
+                    eprintln!("Missing dependency: clang-cl");
+                    missing_dependency = true;
+                }
+            }
         }
         if let Some(cmake_cmd) = find_cmake_command() {
             env::set_var("CMAKE", cmake_cmd);
