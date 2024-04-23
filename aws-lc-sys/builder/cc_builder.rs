@@ -14,9 +14,10 @@ mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
 use crate::{
-    cargo_env, env_var_to_bool, out_dir, target, target_arch, target_os, target_vendor,
+    cargo_env, env_var_to_bool, option_env, out_dir, target, target_arch, target_os, target_vendor,
     test_command, OutputLibType,
 };
+use std::env;
 use std::path::PathBuf;
 
 pub(crate) struct CcBuilder {
@@ -98,9 +99,14 @@ impl CcBuilder {
 
     fn create_builder(&self) -> cc::Build {
         let mut cc_build = cc::Build::default();
+        if cc_build.get_compiler().is_like_msvc() {
+            // MSVC does not support c99
+            cc_build.std("c11");
+        } else {
+            cc_build.std("c99");
+        }
         cc_build
             .out_dir(&self.out_dir)
-            .flag("-std=c99")
             .flag("-Wno-unused-parameter")
             .cpp(false)
             .shared_flag(false)
@@ -113,22 +119,43 @@ impl CcBuilder {
                 .define("BORINGSSL_IMPLEMENTATION", "1")
                 .define("BORINGSSL_PREFIX", prefix.as_str());
         }
-        self.add_includes(&mut cc_build);
+        cc_build.includes(self.include_dirs());
         cc_build
     }
 
-    fn add_includes(&self, cc_build: &mut cc::Build) {
-        cc_build
-            .include(self.manifest_dir.join("include"))
-            .include(self.manifest_dir.join("generated-include"))
-            .include(self.manifest_dir.join("aws-lc").join("include"))
-            .include(
-                self.manifest_dir
-                    .join("aws-lc")
-                    .join("third_party")
-                    .join("s2n-bignum")
-                    .join("include"),
-            );
+    fn include_dirs(&self) -> Vec<String> {
+        vec![
+            self.manifest_dir.join("include").display().to_string(),
+            self.manifest_dir
+                .join("generated-include")
+                .display()
+                .to_string(),
+            self.manifest_dir
+                .join("aws-lc")
+                .join("include")
+                .display()
+                .to_string(),
+            self.manifest_dir
+                .join("aws-lc")
+                .join("third_party")
+                .join("s2n-bignum")
+                .join("include")
+                .display()
+                .to_string(),
+        ]
+    }
+
+    fn initialize_cflags(&self) {
+        // CFLAGS takes precedence over the include directories specified by our project.
+        // See: https://github.com/rust-lang/cc-rs/issues/1020
+        if let Some(cflags) = option_env("CFLAGS") {
+            let include_dirs = self.include_dirs();
+            let mut include_str = "-I ".to_owned();
+            include_str.push_str(include_dirs.join(" -I ").as_str());
+            include_str.push(' ');
+            include_str.push_str(&cflags);
+            env::set_var("CFLAGS", include_str);
+        }
     }
 
     fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) {
@@ -289,6 +316,7 @@ impl crate::Builder for CcBuilder {
 
     fn build(&self) -> Result<(), String> {
         println!("cargo:root={}", self.out_dir.display());
+        self.initialize_cflags();
         let platform_config = PlatformConfig::default();
         let libcrypto = platform_config.libcrypto();
         self.build_library(&libcrypto);
