@@ -70,7 +70,7 @@ regex-syntax = "~0.7.5"
 # Pinned to avoid build failure in older versions
 proc-macro2 = "1.0.60"
 # Pinned dependency to preserve MSRV: ???  <= rust-version < 1.63.0
-jobserver = "=0.1.26"
+jobserver = "=0.1.31"
 
 [package.metadata.cargo-udeps.ignore]
 development = ["which", "home", "regex", "regex-automata", "regex-syntax", "proc-macro2", "jobserver"]
