@@ -304,6 +304,8 @@ macro_rules! generate_encode_decode {
 generate_encode_decode!(rsa2048_generate_encode_decode, KeySize::Rsa2048);
 generate_encode_decode!(rsa3072_generate_encode_decode, KeySize::Rsa3072);
 generate_encode_decode!(rsa4096_generate_encode_decode, KeySize::Rsa4096);
+// RSA8192 tests are not run in dev (debug) builds because it is too slow.
+#[cfg(not(debug_assertions))]
 generate_encode_decode!(rsa8192_generate_encode_decode, KeySize::Rsa8192);
 
 macro_rules! generate_fips_encode_decode {
@@ -336,6 +338,8 @@ macro_rules! generate_fips_encode_decode {
 generate_fips_encode_decode!(rsa2048_generate_fips_encode_decode, KeySize::Rsa2048);
 generate_fips_encode_decode!(rsa3072_generate_fips_encode_decode, KeySize::Rsa3072);
 generate_fips_encode_decode!(rsa4096_generate_fips_encode_decode, KeySize::Rsa4096);
+// RSA8192 tests are not run in dev (debug) builds because it is too slow.
+#[cfg(not(debug_assertions))]
 generate_fips_encode_decode!(rsa8192_generate_fips_encode_decode, KeySize::Rsa8192, false);
 
 macro_rules! encryption_generate_encode_decode {
@@ -363,6 +367,8 @@ macro_rules! encryption_generate_encode_decode {
 encryption_generate_encode_decode!(rsa2048_encryption_generate_encode_decode, KeySize::Rsa2048);
 encryption_generate_encode_decode!(rsa3072_encryption_generate_encode_decode, KeySize::Rsa3072);
 encryption_generate_encode_decode!(rsa4096_encryption_generate_encode_decode, KeySize::Rsa4096);
+// RSA8192 tests are not run in dev (debug) builds because it is too slow.
+#[cfg(not(debug_assertions))]
 encryption_generate_encode_decode!(rsa8192_encryption_generate_encode_decode, KeySize::Rsa8192);
 
 macro_rules! encryption_generate_fips_encode_decode {
@@ -410,6 +416,8 @@ encryption_generate_fips_encode_decode!(
     rsa4096_encryption_generate_fips_encode_decode,
     KeySize::Rsa4096
 );
+// RSA8192 tests are not run in dev (debug) builds because it is too slow.
+#[cfg(not(debug_assertions))]
 encryption_generate_fips_encode_decode!(
     rsa8192_encryption_generate_fips_encode_decode,
     KeySize::Rsa8192,
@@ -599,6 +607,8 @@ round_trip_algorithm!(
     &OAEP_SHA1_MGF1SHA1,
     KeySize::Rsa4096
 );
+// RSA8192 tests are not run in dev (debug) builds because it is too slow.
+#[cfg(not(debug_assertions))]
 round_trip_algorithm!(
     rsa8192_oaep_sha1_mgf1sha1,
     &OAEP_SHA1_MGF1SHA1,
@@ -620,6 +630,8 @@ round_trip_algorithm!(
     &OAEP_SHA256_MGF1SHA256,
     KeySize::Rsa4096
 );
+// RSA8192 tests are not run in dev (debug) builds because it is too slow.
+#[cfg(not(debug_assertions))]
 round_trip_algorithm!(
     rsa8192_oaep_sha256_mgf1sha256,
     &OAEP_SHA256_MGF1SHA256,
@@ -641,6 +653,8 @@ round_trip_algorithm!(
     &OAEP_SHA384_MGF1SHA384,
     KeySize::Rsa4096
 );
+// RSA8192 tests are not run in dev (debug) builds because it is too slow.
+#[cfg(not(debug_assertions))]
 round_trip_algorithm!(
     rsa8192_oaep_sha384_mgf1sha384,
     &OAEP_SHA384_MGF1SHA384,
@@ -662,6 +676,8 @@ round_trip_algorithm!(
     &OAEP_SHA512_MGF1SHA512,
     KeySize::Rsa4096
 );
+// RSA8192 tests are not run in dev (debug) builds because it is too slow.
+#[cfg(not(debug_assertions))]
 round_trip_algorithm!(
     rsa8192_oaep_sha512_mgf1sha512,
     &OAEP_SHA512_MGF1SHA512,
