@@ -452,7 +452,7 @@ impl PaddedBlockEncryptingKey {
     }
 
     /// Pads and encrypts data provided in `in_out` in-place.
-    /// Returns a references to the encryted data.
+    /// Returns a references to the encrypted data.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if encryption fails.
@@ -618,11 +618,11 @@ impl EncryptingKey {
     }
 
     /// Encrypts the data provided in `in_out` in-place.
-    /// Returns a references to the decrypted data.
+    /// Returns a references to the encrypted data.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
-    /// and `in_out.len()` is not. Otherwise returned if encryption fails.
+    /// and `in_out.len()` is not. Otherwise, returned if encryption fails.
     pub fn encrypt(&self, in_out: &mut [u8]) -> Result<DecryptionContext, Unspecified> {
         let context = self.key.algorithm.new_encryption_context(self.mode)?;
         self.less_safe_encrypt(in_out, context)
