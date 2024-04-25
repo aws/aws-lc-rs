@@ -1,4 +1,5 @@
 use crate::cipher;
+use crate::cipher::key::SymmetricCipherKey;
 use crate::cipher::{
     Algorithm, DecryptionContext, EncryptionContext, OperatingMode, UnboundCipherKey,
     MAX_CIPHER_BLOCK_LEN,
@@ -65,7 +66,8 @@ impl PaddingStrategy {
 
 /// A cipher encryption key that performs block padding.
 pub struct PaddedBlockEncryptingKey {
-    key: UnboundCipherKey,
+    algorithm: &'static Algorithm,
+    key: SymmetricCipherKey,
     mode: OperatingMode,
     padding: PaddingStrategy,
 }
@@ -91,13 +93,20 @@ impl PaddedBlockEncryptingKey {
         mode: OperatingMode,
         padding: PaddingStrategy,
     ) -> Result<PaddedBlockEncryptingKey, Unspecified> {
-        Ok(PaddedBlockEncryptingKey { key, mode, padding })
+        let algorithm = key.algorithm();
+        let key = key.try_into()?;
+        Ok(PaddedBlockEncryptingKey {
+            algorithm,
+            key,
+            mode,
+            padding,
+        })
     }
 
     /// Returns the cipher algorithm.
     #[must_use]
     pub fn algorithm(&self) -> &Algorithm {
-        self.key.algorithm()
+        self.algorithm
     }
 
     /// Returns the cipher operating mode.
@@ -115,7 +124,7 @@ impl PaddedBlockEncryptingKey {
     where
         InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
     {
-        let context = self.key.algorithm.new_encryption_context(self.mode)?;
+        let context = self.algorithm.new_encryption_context(self.mode)?;
         self.less_safe_encrypt(in_out, context)
     }
 
@@ -133,7 +142,6 @@ impl PaddedBlockEncryptingKey {
         InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
     {
         if !self
-            .key
             .algorithm()
             .is_valid_encryption_context(self.mode, &context)
         {
@@ -142,14 +150,20 @@ impl PaddedBlockEncryptingKey {
 
         self.padding
             .add_padding(self.algorithm().block_len(), in_out)?;
-        cipher::encrypt(&self.key, self.mode, in_out.as_mut(), context)
+        cipher::encrypt(
+            self.algorithm(),
+            &self.key,
+            self.mode,
+            in_out.as_mut(),
+            context,
+        )
     }
 }
 
 impl Debug for PaddedBlockEncryptingKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("PaddedBlockEncryptingKey")
-            .field("key", &self.key)
+            .field("algorithm", &self.algorithm)
             .field("mode", &self.mode)
             .field("padding", &self.padding)
             .finish()
@@ -158,7 +172,8 @@ impl Debug for PaddedBlockEncryptingKey {
 
 /// A cipher decryption key that performs block padding.
 pub struct PaddedBlockDecryptingKey {
-    key: UnboundCipherKey,
+    algorithm: &'static Algorithm,
+    key: SymmetricCipherKey,
     mode: OperatingMode,
     padding: PaddingStrategy,
 }
@@ -184,13 +199,20 @@ impl PaddedBlockDecryptingKey {
         mode: OperatingMode,
         padding: PaddingStrategy,
     ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
-        Ok(PaddedBlockDecryptingKey { key, mode, padding })
+        let algorithm = key.algorithm();
+        let key = key.try_into()?;
+        Ok(PaddedBlockDecryptingKey {
+            algorithm,
+            key,
+            mode,
+            padding,
+        })
     }
 
     /// Returns the cipher algorithm.
     #[must_use]
     pub fn algorithm(&self) -> &Algorithm {
-        self.key.algorithm()
+        self.algorithm
     }
 
     /// Returns the cipher operating mode.
@@ -210,7 +232,6 @@ impl PaddedBlockDecryptingKey {
         context: DecryptionContext,
     ) -> Result<&'in_out mut [u8], Unspecified> {
         if !self
-            .key
             .algorithm()
             .is_valid_decryption_context(self.mode, &context)
         {
@@ -219,7 +240,7 @@ impl PaddedBlockDecryptingKey {
 
         let block_len = self.algorithm().block_len();
         let padding = self.padding;
-        let mut in_out = cipher::decrypt(&self.key, self.mode, in_out, context)?;
+        let mut in_out = cipher::decrypt(self.algorithm, &self.key, self.mode, in_out, context)?;
         in_out = padding.remove_padding(block_len, in_out)?;
         Ok(in_out)
     }
@@ -228,7 +249,7 @@ impl PaddedBlockDecryptingKey {
 impl Debug for PaddedBlockDecryptingKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("PaddedBlockDecryptingKey")
-            .field("key", &self.key)
+            .field("algorithm", &self.algorithm)
             .field("mode", &self.mode)
             .field("padding", &self.padding)
             .finish()
