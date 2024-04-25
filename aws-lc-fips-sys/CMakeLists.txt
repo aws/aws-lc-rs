@@ -18,6 +18,7 @@ if (BUILD_SHARED_LIBS AND FIPS)
     # as cmake crate will postfix the C/CXX flags after our disablement nullifying them.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-function-sections -fno-data-sections")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-function-sections -fno-data-sections")
+    add_definitions(-DBORINGSSL_SHARED_LIBRARY)
 endif()
 
 add_subdirectory(aws-lc aws-lc EXCLUDE_FROM_ALL)
@@ -60,4 +61,8 @@ if (BORINGSSL_PREFIX)
         set(TARGET_PREFIX "lib${BORINGSSL_PREFIX}")
     endif()
     set_my_target_properties(PREFIX ${TARGET_PREFIX})
+
+    # This BORINGSSL_PREFIX has an "_" appended, so we must remove it
+    string(REGEX REPLACE "_$" "" BORINGSSL_PREFIX_MACRO ${BORINGSSL_PREFIX})
+    add_definitions(-DBORINGSSL_PREFIX=${BORINGSSL_PREFIX_MACRO})
 endif ()

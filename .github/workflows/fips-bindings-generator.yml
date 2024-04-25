@@ -33,7 +33,7 @@ jobs:
         run: brew install bash coreutils
       - name: No-prefix build for ${{ matrix.os }}
         env:
-          AWS_LC_FIPS_SYS_INTERNAL_NO_PREFIX: "1"
+          AWS_LC_FIPS_SYS_NO_PREFIX: "1"
         run: |
           cargo test -p aws-lc-fips-sys --features bindgen,ssl
       - name: Collect symbols
@@ -61,7 +61,7 @@ jobs:
         run: cargo install cross --locked --git https://github.com/cross-rs/cross
       - name: No-prefix build for ${{ matrix.target }}
         env:
-          AWS_LC_FIPS_SYS_INTERNAL_NO_PREFIX: "1"
+          AWS_LC_FIPS_SYS_NO_PREFIX: "1"
         run: |
           cross test -p aws-lc-fips-sys --features bindgen,ssl --target ${{ matrix.target }}
       - name: Collect symbols
@@ -111,7 +111,7 @@ jobs:
         run: brew install bash coreutils
       - name: Generate bindings for ${{ matrix.os }}
         env:
-          AWS_LC_RUST_INTERNAL_BINDGEN: "1"
+          AWS_LC_FIPS_SYS_INTERNAL_BINDGEN: "1"
         run: |
           cargo test -p aws-lc-fips-sys --features bindgen,ssl
       - name: Commit & Push changes
@@ -134,7 +134,7 @@ jobs:
         run: cargo install cross --locked --git https://github.com/cross-rs/cross
       - name: Generate bindings for ${{ matrix.target }}
         env:
-          AWS_LC_RUST_INTERNAL_BINDGEN: "1"
+          AWS_LC_FIPS_SYS_INTERNAL_BINDGEN: "1"
         run: |
           cross test -p aws-lc-fips-sys --features bindgen,ssl --target ${{ matrix.target }}
       - name: Commit & Push changes

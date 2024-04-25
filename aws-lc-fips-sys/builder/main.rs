@@ -3,7 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -145,7 +145,7 @@ pub(crate) struct TestCommandResult {
 }
 
 const MAX_CMD_OUTPUT_SIZE: usize = 1 << 12;
-fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
+fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     if let Ok(mut result) = Command::new(executable).args(args).output() {
         result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);
         let stderr = String::from_utf8(result.stderr)
@@ -178,9 +178,9 @@ fn test_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
         any(target_env = "gnu", target_env = "musl", target_env = "")
     ))
 ))]
-fn generate_bindings(manifest_dir: &Path, prefix: Option<String>, bindings_path: &PathBuf) {
-    let options = bindgen::BindingOptions {
-        build_prefix: prefix,
+fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
+    let options = BindingOptions {
+        build_prefix: prefix.clone(),
         include_ssl: cfg!(feature = "ssl"),
         disable_prelude: true,
     };
@@ -193,10 +193,10 @@ fn generate_bindings(manifest_dir: &Path, prefix: Option<String>, bindings_path:
 }
 
 #[cfg(feature = "bindgen")]
-fn generate_src_bindings(manifest_dir: &Path, prefix: Option<String>, src_bindings_path: &Path) {
+fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindings_path: &Path) {
     bindgen::generate_bindings(
         manifest_dir,
-        &bindgen::BindingOptions {
+        &BindingOptions {
             build_prefix: prefix.clone(),
             include_ssl: false,
             ..Default::default()
@@ -207,8 +207,8 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: Option<String>, src_bindin
 
     bindgen::generate_bindings(
         manifest_dir,
-        &bindgen::BindingOptions {
-            build_prefix: prefix,
+        &BindingOptions {
+            build_prefix: prefix.clone(),
             include_ssl: true,
             ..Default::default()
         },
@@ -220,6 +220,10 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: Option<String>, src_bindin
 fn emit_rustc_cfg(cfg: &str) {
     let cfg = cfg.replace('-', "_");
     println!("cargo:rustc-cfg={cfg}");
+}
+
+fn emit_warning(message: &str) {
+    println!("cargo:warning={message}");
 }
 
 fn target_os() -> String {
@@ -268,18 +272,20 @@ trait Builder {
 }
 
 static mut PREGENERATED: bool = false;
-static mut AWS_LC_SYS_INTERNAL_NO_PREFIX: bool = false;
-static mut AWS_LC_RUST_INTERNAL_BINDGEN: bool = false;
+static mut AWS_LC_FIPS_SYS_NO_PREFIX: bool = false;
+static mut AWS_LC_FIPS_SYS_INTERNAL_BINDGEN: bool = false;
+static mut AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN: bool = false;
 
 fn initialize() {
     unsafe {
-        AWS_LC_SYS_INTERNAL_NO_PREFIX =
-            env_var_to_bool("AWS_LC_SYS_INTERNAL_NO_PREFIX").unwrap_or(false);
-        AWS_LC_RUST_INTERNAL_BINDGEN =
-            env_var_to_bool("AWS_LC_RUST_INTERNAL_BINDGEN").unwrap_or(false);
+        AWS_LC_FIPS_SYS_NO_PREFIX = env_var_to_bool("AWS_LC_FIPS_SYS_NO_PREFIX").unwrap_or(false);
+        AWS_LC_FIPS_SYS_INTERNAL_BINDGEN =
+            env_var_to_bool("AWS_LC_FIPS_SYS_INTERNAL_BINDGEN").unwrap_or(false);
+        AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN =
+            env_var_to_bool("AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
     }
 
-    if is_internal_generate() || !has_bindgen_feature() {
+    if !is_external_bindgen() && (is_internal_bindgen() || !has_bindgen_feature()) {
         let target = target();
         let supported_platform = match target.as_str() {
             "x86_64-unknown-linux-gnu"
@@ -300,18 +306,23 @@ fn initialize() {
 }
 
 fn is_bindgen_required() -> bool {
-    is_internal_no_prefix()
-        || is_internal_generate()
+    is_no_prefix()
+        || is_internal_bindgen()
+        || is_external_bindgen()
         || has_bindgen_feature()
         || !has_pregenerated()
 }
 
-fn is_internal_no_prefix() -> bool {
-    unsafe { AWS_LC_SYS_INTERNAL_NO_PREFIX }
+fn is_no_prefix() -> bool {
+    unsafe { AWS_LC_FIPS_SYS_NO_PREFIX }
 }
 
-fn is_internal_generate() -> bool {
-    unsafe { AWS_LC_RUST_INTERNAL_BINDGEN }
+fn is_internal_bindgen() -> bool {
+    unsafe { AWS_LC_FIPS_SYS_INTERNAL_BINDGEN }
+}
+
+fn is_external_bindgen() -> bool {
+    unsafe { AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN }
 }
 
 fn has_bindgen_feature() -> bool {
@@ -328,7 +339,7 @@ fn main() {
     let manifest_dir = current_dir();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
     let prefix_str = prefix_string();
-    let prefix = if is_internal_no_prefix() {
+    let prefix = if is_no_prefix() {
         None
     } else {
         Some(prefix_str)
@@ -340,11 +351,12 @@ fn main() {
 
     #[allow(unused_assignments)]
     let mut bindings_available = false;
-    if is_internal_generate() {
+    if is_internal_bindgen() {
         #[cfg(feature = "bindgen")]
         {
+            emit_warning(&format!("Generating src bindings. Platform: {}", target()));
             let src_bindings_path = Path::new(&manifest_dir).join("src");
-            generate_src_bindings(&manifest_dir, prefix, &src_bindings_path);
+            generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
             bindings_available = true;
         }
     } else if is_bindgen_required() {
@@ -356,14 +368,34 @@ fn main() {
                 any(target_env = "gnu", target_env = "musl", target_env = "")
             ))
         ))]
-        {
+        if !is_external_bindgen() {
+            emit_warning(&format!(
+                "Generating bindings - internal bindgen. Platform: {}",
+                target()
+            ));
             let gen_bindings_path = out_dir().join("bindings.rs");
-            generate_bindings(&manifest_dir, prefix, &gen_bindings_path);
+            generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
             emit_rustc_cfg("use_bindgen_generated");
             bindings_available = true;
         }
     } else {
         bindings_available = true;
+    }
+
+    if !bindings_available && !cfg!(feature = "ssl") {
+        emit_warning(&format!(
+            "Generating bindings - external bindgen. Platform: {}",
+            target()
+        ));
+        let gen_bindings_path = out_dir().join("bindings.rs");
+        let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
+        match result {
+            Ok(()) => {
+                emit_rustc_cfg("use_bindgen_generated");
+                bindings_available = true;
+            }
+            Err(msg) => eprintln!("Failure invoking external bindgen! {msg}"),
+        }
     }
 
     assert!(
@@ -423,3 +455,135 @@ fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
 
     include_dir
 }
+
+#[derive(Default)]
+#[allow(dead_code)]
+pub(crate) struct BindingOptions {
+    pub build_prefix: Option<String>,
+    pub include_ssl: bool,
+    pub disable_prelude: bool,
+}
+
+fn invoke_external_bindgen(
+    manifest_dir: &Path,
+    prefix: &Option<String>,
+    gen_bindings_path: &Path,
+) -> Result<(), String> {
+    if !execute_command("bindgen".as_ref(), &["--version".as_ref()]).status {
+        return Err("External bindgen command not found.".to_string());
+    }
+    let options = BindingOptions {
+        // We collect the symbols w/o the prefix added
+        build_prefix: None,
+        include_ssl: false,
+        disable_prelude: true,
+    };
+
+    let clang_args = prepare_clang_args(manifest_dir, &options);
+    let header = get_rust_include_path(manifest_dir)
+        .join("rust_wrapper.h")
+        .display()
+        .to_string();
+
+    let sym_prefix: String;
+    let mut bindgen_params = vec![];
+    if let Some(prefix_str) = prefix {
+        sym_prefix = if target_os().to_lowercase() == "macos" || target_os().to_lowercase() == "ios"
+        {
+            format!("_{prefix_str}_")
+        } else {
+            format!("{prefix_str}_")
+        };
+        bindgen_params.extend(vec!["--prefix-link-name", sym_prefix.as_str()]);
+    }
+
+    // These flags needs to be kept in sync with the setup in bindgen::prepare_bindings_builder
+    // If `bindgen-cli` makes backwards incompatible changes, we will update the parameters below
+    // to conform with the most recent release. We will guide consumers to likewise use the
+    // latest version of bindgen-cli.
+    bindgen_params.extend(vec![
+        "--rust-target",
+        r"1.59",
+        "--with-derive-default",
+        "--with-derive-eq",
+        "--allowlist-file",
+        r".*(/|\\)openssl(/|\\)[^/\\]+\.h",
+        "--allowlist-file",
+        r".*(/|\\)rust_wrapper\.h",
+        "--rustified-enum",
+        r"point_conversion_form_t",
+        "--default-macro-constant-type",
+        r"signed",
+        "--formatter",
+        r"rustfmt",
+        "--output",
+        gen_bindings_path.to_str().unwrap(),
+        "--raw-line",
+        COPYRIGHT,
+        header.as_str(),
+        "--",
+    ]);
+    clang_args
+        .iter()
+        .for_each(|x| bindgen_params.push(x.as_str()));
+    let cmd_params: Vec<OsString> = bindgen_params.iter().map(OsString::from).collect();
+    let cmd_params: Vec<&OsStr> = cmd_params.iter().map(OsString::as_os_str).collect();
+
+    let result = execute_command("bindgen".as_ref(), cmd_params.as_ref());
+    if !result.status {
+        return Err(format!(
+            "\n\n\
+            bindgen-PARAMS: {}\n\
+            bindgen-STDOUT: {}\n\
+            bindgen-STDERR: {}",
+            bindgen_params.join(" "),
+            result.stdout.as_ref(),
+            result.stderr.as_ref()
+        ));
+    }
+    Ok(())
+}
+
+fn add_header_include_path(args: &mut Vec<String>, path: String) {
+    args.push("-I".to_string());
+    args.push(path);
+}
+
+fn prepare_clang_args(manifest_dir: &Path, options: &BindingOptions) -> Vec<String> {
+    let mut clang_args: Vec<String> = Vec::new();
+
+    add_header_include_path(
+        &mut clang_args,
+        get_rust_include_path(manifest_dir).display().to_string(),
+    );
+
+    if options.build_prefix.is_some() {
+        // NOTE: It's possible that the prefix embedded in the header files doesn't match the prefix
+        // specified. This only happens when the version number as changed in Cargo.toml, but the
+        // new headers have not yet been generated.
+        add_header_include_path(
+            &mut clang_args,
+            get_generated_include_path(manifest_dir)
+                .display()
+                .to_string(),
+        );
+    }
+
+    add_header_include_path(
+        &mut clang_args,
+        get_aws_lc_include_path(manifest_dir).display().to_string(),
+    );
+
+    if let Some(include_paths) = get_aws_lc_fips_sys_includes_path() {
+        for path in include_paths {
+            add_header_include_path(&mut clang_args, path.display().to_string());
+        }
+    }
+
+    clang_args
+}
+
+const COPYRIGHT: &str = r"
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+";
