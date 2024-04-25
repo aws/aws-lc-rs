@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
-use crate::{target, target_arch, target_os, target_vendor, test_command, OutputLibType};
+use crate::{
+    execute_command, target, target_arch, target_env, target_os, target_vendor, OutputLibType,
+};
 use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
@@ -14,14 +16,19 @@ pub(crate) struct CmakeBuilder {
     output_lib_type: OutputLibType,
 }
 
+fn test_ninja_command() -> bool {
+    execute_command("ninja".as_ref(), &["--version".as_ref()]).status
+        || execute_command("ninja-build".as_ref(), &["--version".as_ref()]).status
+}
+
 fn test_nasm_command() -> bool {
-    test_command("nasm".as_ref(), &["-version".as_ref()]).status
+    execute_command("nasm".as_ref(), &["-version".as_ref()]).status
 }
 
 fn find_cmake_command() -> Option<&'static OsStr> {
-    if test_command("cmake3".as_ref(), &["--version".as_ref()]).status {
+    if execute_command("cmake3".as_ref(), &["--version".as_ref()]).status {
         Some("cmake3".as_ref())
-    } else if test_command("cmake".as_ref(), &["--version".as_ref()]).status {
+    } else if execute_command("cmake".as_ref(), &["--version".as_ref()]).status {
         Some("cmake".as_ref())
     } else {
         None
@@ -117,6 +124,10 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
             }
         }
+        if (target_env() != "msvc") && test_ninja_command() {
+            // Use Ninja if available
+            cmake_cfg.generator("Ninja");
+        }
 
         if cfg!(feature = "asan") {
             env::set_var("CC", "clang");
@@ -140,16 +151,16 @@ impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
         let mut missing_dependency = false;
 
+        if target_os() == "windows" && target_arch() == "x86_64" && !test_nasm_command() {
+            eprintln!("Missing dependency: nasm");
+            missing_dependency = true;
+        }
         if let Some(cmake_cmd) = find_cmake_command() {
             env::set_var("CMAKE", cmake_cmd);
         } else {
             eprintln!("Missing dependency: cmake");
             missing_dependency = true;
         };
-        if target_os() == "windows" && target_arch() == "x86_64" && !test_nasm_command() {
-            eprintln!("Missing dependency: nasm");
-            missing_dependency = true;
-        }
 
         if missing_dependency {
             return Err("Required build dependency is missing. Halting build.".to_owned());
