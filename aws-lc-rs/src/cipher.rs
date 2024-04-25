@@ -464,7 +464,7 @@ impl Debug for EncryptingKey {
         f.debug_struct("EncryptingKey")
             .field("algorithm", self.algorithm)
             .field("mode", &self.mode)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -532,7 +532,7 @@ impl Debug for DecryptingKey {
         f.debug_struct("DecryptingKey")
             .field("algorithm", &self.algorithm)
             .field("mode", &self.mode)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -556,14 +556,10 @@ fn encrypt(
 
     match mode {
         OperatingMode::CBC => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                encrypt_aes_cbc_mode(&key, context, in_out)
-            }
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => encrypt_aes_cbc_mode(key, context, in_out),
         },
         OperatingMode::CTR => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                encrypt_aes_ctr_mode(&key, context, in_out)
-            }
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => encrypt_aes_ctr_mode(key, context, in_out),
         },
     }
 }
@@ -757,7 +753,7 @@ mod tests {
                 UnboundCipherKey::new(&AES_128, key_bytes).unwrap(),
             )
             .unwrap();
-            assert_eq!("PaddedBlockEncryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CBC, padding: PKCS7 }", format!("{key:?}"));
+            assert_eq!("PaddedBlockEncryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CBC, padding: PKCS7, .. }", format!("{key:?}"));
             let mut data = vec![0u8; 16];
             let context = key.encrypt(&mut data).unwrap();
             assert_eq!("Iv128", format!("{context:?}"));
@@ -765,20 +761,20 @@ mod tests {
                 UnboundCipherKey::new(&AES_128, key_bytes).unwrap(),
             )
             .unwrap();
-            assert_eq!("PaddedBlockDecryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CBC, padding: PKCS7 }", format!("{key:?}"));
+            assert_eq!("PaddedBlockDecryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CBC, padding: PKCS7, .. }", format!("{key:?}"));
         }
 
         {
             let key_bytes = &[0u8; 16];
             let key =
                 EncryptingKey::ctr(UnboundCipherKey::new(&AES_128, key_bytes).unwrap()).unwrap();
-            assert_eq!("EncryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CTR }", format!("{key:?}"));
+            assert_eq!("EncryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CTR, .. }", format!("{key:?}"));
             let mut data = vec![0u8; 16];
             let context = key.encrypt(&mut data).unwrap();
             assert_eq!("Iv128", format!("{context:?}"));
             let key =
                 DecryptingKey::ctr(UnboundCipherKey::new(&AES_128, key_bytes).unwrap()).unwrap();
-            assert_eq!("DecryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CTR }", format!("{key:?}"));
+            assert_eq!("DecryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CTR, .. }", format!("{key:?}"));
         }
     }
 

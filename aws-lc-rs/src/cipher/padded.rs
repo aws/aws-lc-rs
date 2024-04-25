@@ -166,7 +166,7 @@ impl Debug for PaddedBlockEncryptingKey {
             .field("algorithm", &self.algorithm)
             .field("mode", &self.mode)
             .field("padding", &self.padding)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -252,7 +252,7 @@ impl Debug for PaddedBlockDecryptingKey {
             .field("algorithm", &self.algorithm)
             .field("mode", &self.mode)
             .field("padding", &self.padding)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
