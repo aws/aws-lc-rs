@@ -150,7 +150,11 @@ use crate::fips::indicator_check;
 use crate::hkdf;
 use crate::hkdf::KeyType;
 use crate::iv::{FixedLength, IV_LEN_128_BIT};
-use aws_lc::{AES_cbc_encrypt, AES_ctr128_encrypt, AES_DECRYPT, AES_ENCRYPT, AES_KEY};
+use crate::ptr::ConstPointer;
+use aws_lc::{
+    AES_cbc_encrypt, AES_ctr128_encrypt, EVP_aes_128_cbc, EVP_aes_128_ctr, EVP_aes_256_cbc,
+    EVP_aes_256_ctr, AES_DECRYPT, AES_ENCRYPT, AES_KEY, EVP_CIPHER,
+};
 use core::fmt::Debug;
 use core::mem::MaybeUninit;
 use key::SymmetricCipherKey;
@@ -182,6 +186,19 @@ pub enum OperatingMode {
 
     /// Counter (CTR) mode.
     CTR,
+}
+
+impl OperatingMode {
+    #[allow(dead_code)]
+    fn evp_cipher(&self, algorithm: &Algorithm) -> ConstPointer<EVP_CIPHER> {
+        ConstPointer::new(match (self, algorithm.id) {
+            (OperatingMode::CBC, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cbc() },
+            (OperatingMode::CTR, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ctr() },
+            (OperatingMode::CBC, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cbc() },
+            (OperatingMode::CTR, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ctr() },
+        })
+        .unwrap()
+    }
 }
 
 macro_rules! define_cipher_context {
