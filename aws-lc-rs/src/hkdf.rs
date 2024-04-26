@@ -78,7 +78,7 @@ const MAX_HKDF_SALT_LEN: usize = 80;
 /// General Info length's for HKDF don't normally exceed 256 bits.
 /// We set the limit to something tolerable, so that the memory passed into |`HKDF_expand`| is
 /// allocated on the stack.
-const MAX_HKDF_INFO_LEN: usize = 80;
+const MAX_HKDF_INFO_LEN: usize = 102;
 
 /// The maximum output size of a PRK computed by |`HKDF_extract`| is the maximum digest
 /// size that can be outputted by *AWS-LC*.
