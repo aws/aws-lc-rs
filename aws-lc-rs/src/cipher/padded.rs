@@ -10,7 +10,7 @@ use core::fmt::Debug;
 /// The cipher block padding strategy.
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum PaddingStrategy {
+pub(crate) enum PaddingStrategy {
     /// PKCS#7 Padding. ([See RFC 5652](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3))
     PKCS7,
 }
@@ -259,8 +259,8 @@ impl Debug for PaddedBlockDecryptingKey {
 #[cfg(test)]
 mod tests {
     use crate::cipher::{
-        Algorithm, EncryptionContext, OperatingMode, PaddedBlockDecryptingKey,
-        PaddedBlockEncryptingKey, PaddingStrategy, UnboundCipherKey, AES_128, AES_256,
+        padded::PaddingStrategy, Algorithm, EncryptionContext, OperatingMode,
+        PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
     };
     use crate::iv::FixedLength;
     use crate::test::from_hex;

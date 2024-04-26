@@ -143,7 +143,7 @@ pub(crate) mod chacha;
 pub(crate) mod key;
 mod padded;
 
-pub use padded::{PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, PaddingStrategy};
+pub use padded::{PaddedBlockDecryptingKey, PaddedBlockEncryptingKey};
 
 use crate::buffer::Buffer;
 use crate::error::Unspecified;
