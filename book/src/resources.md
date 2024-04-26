@@ -15,6 +15,11 @@ future release. Please [contact us] about any bugs you find in our build process
   build to use (`1`) or not use (`0`) the `bindgen-cli` instead of the pre-generated or internally generated bindings.
 * `AWS_LC_SYS_NO_PREFIX` | `AWS_LC_FIPS_SYS_NO_PREFIX` -- value can be set to `1` to force the build to not prefix the
   library nor the symbols it contains.
+* `AWS_LC_SYS_NO_ASM` | `AWS_LC_FIPS_SYS_NO_ASM` -- value can be set to `1` to force the build to use C-language
+  implementations for all cryptographic operations. Our optimized hardware-specific assembly implementations will not
+  be used. This option is only available for unoptimized (i.e., `OPT_LEVEL = "0"` or "debug") builds.
+  **WARNING**: Performance on most platforms is extremely limited by this option. Certain security
+  properties, such as resistance to timing attacks, can only be provided when assembly code is used.
 
 ## Links
 

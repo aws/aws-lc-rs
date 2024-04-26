@@ -33,6 +33,12 @@ Use the following instructions to download **Visual Studio Build Tools 2017**.
 2. Add the NASM installation directory to your PATH
     * `set PATH="C:\Program Files\NASM;%PATH%"`
 
+### No-assembly build
+
+It is possible to avoid the NASM requirement by setting the `AWS_LC_SYS_NO_ASM`/`AWS_LC_FIPS_SYS_NO_ASM` environment
+variables. However, this severely impacts performance and can only be used for un-optimized/debug builds. See the
+notes in our [troubleshooting section](../resources.md#troubleshooting).
+
 ## Ninja
 
 1. [Download](https://github.com/ninja-build/ninja/releases) and install Ninja
