@@ -3,7 +3,8 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    execute_command, target, target_arch, target_env, target_os, target_vendor, OutputLibType,
+    cargo_env, execute_command, is_no_asm, target, target_arch, target_env, target_os,
+    target_vendor, OutputLibType,
 };
 use std::env;
 use std::ffi::OsStr;
@@ -105,6 +106,15 @@ impl CmakeBuilder {
         cmake_cfg.define("DISABLE_PERL", "ON");
         cmake_cfg.define("DISABLE_GO", "ON");
 
+        if is_no_asm() {
+            let opt_level = cargo_env("OPT_LEVEL");
+            if opt_level == "0" {
+                cmake_cfg.define("OPENSSL_NO_ASM", "1");
+            } else {
+                panic!("AWS_LC_SYS_NO_ASM only allowed for debug builds!")
+            }
+        }
+
         if target_vendor() == "apple" {
             if target_os().to_lowercase() == "ios" {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
@@ -151,7 +161,11 @@ impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
         let mut missing_dependency = false;
 
-        if target_os() == "windows" && target_arch() == "x86_64" && !test_nasm_command() {
+        if target_os() == "windows"
+            && target_arch() == "x86_64"
+            && !test_nasm_command()
+            && !is_no_asm()
+        {
             eprintln!("Missing dependency: nasm");
             missing_dependency = true;
         }
