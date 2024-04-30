@@ -483,7 +483,7 @@ fn invoke_external_bindgen(
             \n\
             See our User Guide for more information about bindgen:\
             https://aws.github.io/aws-lc-rs/index.html"
-            )
+            );
         }
         return Err("External bindgen command failed.".to_string());
     }
