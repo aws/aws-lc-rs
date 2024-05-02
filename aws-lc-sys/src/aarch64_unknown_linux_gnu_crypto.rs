@@ -110,7 +110,7 @@ pub const AWSLC_VERSION_NAME: &[u8; 7] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
 pub const AWSLC_API_VERSION: i32 = 28;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.25.0\0";
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.26.0\0";
 pub const AES_ENCRYPT: i32 = 1;
 pub const AES_DECRYPT: i32 = 0;
 pub const AES_MAXNR: i32 = 14;
@@ -131,7 +131,7 @@ pub const CRYPTO_LOCK: i32 = 1;
 pub const CRYPTO_UNLOCK: i32 = 2;
 pub const CRYPTO_READ: i32 = 4;
 pub const CRYPTO_WRITE: i32 = 8;
-pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.25.0)\0";
+pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.26.0)\0";
 pub const OPENSSL_VERSION: i32 = 0;
 pub const OPENSSL_CFLAGS: i32 = 1;
 pub const OPENSSL_BUILT_ON: i32 = 2;
@@ -3253,6 +3253,8 @@ pub const SN_ffdhe3072: &[u8; 10] = b"ffdhe3072\0";
 pub const NID_ffdhe3072: i32 = 983;
 pub const SN_ffdhe8192: &[u8; 10] = b"ffdhe8192\0";
 pub const NID_ffdhe8192: i32 = 984;
+pub const SN_MLKEM512IPD: &[u8; 12] = b"MLKEM512IPD\0";
+pub const NID_MLKEM512IPD: i32 = 985;
 pub const OBJ_NAME_TYPE_MD_METH: i32 = 1;
 pub const OBJ_NAME_TYPE_CIPHER_METH: i32 = 2;
 pub const OBJ_R_UNKNOWN_NID: i32 = 100;
@@ -3266,6 +3268,7 @@ pub const EVP_PKEY_X25519: i32 = 948;
 pub const EVP_PKEY_HKDF: i32 = 969;
 pub const EVP_PKEY_HMAC: i32 = 855;
 pub const EVP_PKEY_KEM: i32 = 970;
+pub const PKCS5_SALT_LEN: i32 = 8;
 pub const EVP_PKEY_RSA2: i32 = 19;
 pub const EVP_PKEY_X448: i32 = 961;
 pub const EVP_PKEY_ED448: i32 = 960;
@@ -3462,6 +3465,11 @@ pub const X509_FLAG_NO_SIGDUMP: i32 = 512;
 pub const X509_FLAG_NO_AUX: i32 = 1024;
 pub const X509_FLAG_NO_ATTRIBUTES: i32 = 2048;
 pub const X509_FLAG_NO_IDS: i32 = 4096;
+pub const X509V3_EXT_UNKNOWN_MASK: i32 = 983040;
+pub const X509V3_EXT_DEFAULT: i32 = 0;
+pub const X509V3_EXT_ERROR_UNKNOWN: i32 = 65536;
+pub const X509V3_EXT_PARSE_UNKNOWN: i32 = 131072;
+pub const X509V3_EXT_DUMP_UNKNOWN: i32 = 196608;
 pub const XN_FLAG_COMPAT: i32 = 0;
 pub const XN_FLAG_SEP_MASK: i32 = 983040;
 pub const XN_FLAG_SEP_COMMA_PLUS: i32 = 65536;
@@ -3475,9 +3483,7 @@ pub const XN_FLAG_SPC_EQ: i32 = 8388608;
 pub const XN_FLAG_DUMP_UNKNOWN_FIELDS: i32 = 16777216;
 pub const XN_FLAG_RFC2253: i32 = 17892119;
 pub const XN_FLAG_ONELINE: i32 = 8520479;
-pub const X509_FILETYPE_PEM: i32 = 1;
-pub const X509_FILETYPE_ASN1: i32 = 2;
-pub const X509_FILETYPE_DEFAULT: i32 = 3;
+pub const X509V3_CTX_TEST: i32 = 1;
 pub const X509v3_KU_DIGITAL_SIGNATURE: i32 = 128;
 pub const X509v3_KU_NON_REPUDIATION: i32 = 64;
 pub const X509v3_KU_KEY_ENCIPHERMENT: i32 = 32;
@@ -3510,6 +3516,9 @@ pub const X509_LU_CRL: i32 = 2;
 pub const X509_LU_PKEY: i32 = 3;
 pub const X509_L_FILE_LOAD: i32 = 1;
 pub const X509_L_ADD_DIR: i32 = 2;
+pub const X509_FILETYPE_PEM: i32 = 1;
+pub const X509_FILETYPE_ASN1: i32 = 2;
+pub const X509_FILETYPE_DEFAULT: i32 = 3;
 pub const X509_V_OK: i32 = 0;
 pub const X509_V_ERR_UNSPECIFIED: i32 = 1;
 pub const X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: i32 = 2;
@@ -3669,7 +3678,6 @@ pub const X509_PURPOSE_OCSP_HELPER: i32 = 8;
 pub const X509_PURPOSE_TIMESTAMP_SIGN: i32 = 9;
 pub const X509_PURPOSE_MIN: i32 = 1;
 pub const X509_PURPOSE_MAX: i32 = 9;
-pub const X509V3_CTX_TEST: i32 = 1;
 pub const X509V3_ADD_OP_MASK: i32 = 15;
 pub const X509V3_ADD_DEFAULT: i32 = 0;
 pub const X509V3_ADD_APPEND: i32 = 1;
@@ -3678,11 +3686,6 @@ pub const X509V3_ADD_REPLACE_EXISTING: i32 = 3;
 pub const X509V3_ADD_KEEP_EXISTING: i32 = 4;
 pub const X509V3_ADD_DELETE: i32 = 5;
 pub const X509V3_ADD_SILENT: i32 = 16;
-pub const X509V3_EXT_UNKNOWN_MASK: i32 = 983040;
-pub const X509V3_EXT_DEFAULT: i32 = 0;
-pub const X509V3_EXT_ERROR_UNKNOWN: i32 = 65536;
-pub const X509V3_EXT_PARSE_UNKNOWN: i32 = 131072;
-pub const X509V3_EXT_DUMP_UNKNOWN: i32 = 196608;
 pub const X509_CHECK_FLAG_NO_WILDCARDS: i32 = 2;
 pub const X509_CHECK_FLAG_NEVER_CHECK_SUBJECT: i32 = 32;
 pub const X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS: i32 = 0;
@@ -3883,6 +3886,7 @@ pub type AUTHORITY_KEYID = AUTHORITY_KEYID_st;
 pub type BASIC_CONSTRAINTS = BASIC_CONSTRAINTS_st;
 pub type DIST_POINT = DIST_POINT_st;
 pub type DSA_SIG = DSA_SIG_st;
+pub type GENERAL_NAME = GENERAL_NAME_st;
 pub type ISSUING_DIST_POINT = ISSUING_DIST_POINT_st;
 pub type NAME_CONSTRAINTS = NAME_CONSTRAINTS_st;
 pub type NETSCAPE_SPKAC = Netscape_spkac_st;
@@ -7783,6 +7787,10 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_BN_get_u64"]
     pub fn BN_get_u64(bn: *const BIGNUM, out: *mut u64) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_BN_get_flags"]
+    pub fn BN_get_flags(bn: *const BIGNUM, flags: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_BN_parse_asn1_unsigned"]
@@ -12403,6 +12411,10 @@ extern "C" {
     pub fn EVP_CIPHER_nid(cipher: *const EVP_CIPHER) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_EVP_CIPHER_name"]
+    pub fn EVP_CIPHER_name(cipher: *const EVP_CIPHER) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_EVP_CIPHER_block_size"]
     pub fn EVP_CIPHER_block_size(cipher: *const EVP_CIPHER) -> ::std::os::raw::c_uint;
 }
@@ -15848,6 +15860,16 @@ impl Default for obj_name_st {
     }
 }
 pub type OBJ_NAME = obj_name_st;
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_OBJ_NAME_do_all_sorted"]
+    pub fn OBJ_NAME_do_all_sorted(
+        type_: ::std::os::raw::c_int,
+        callback: ::std::option::Option<
+            unsafe extern "C" fn(arg1: *const OBJ_NAME, arg: *mut ::std::os::raw::c_void),
+        >,
+        arg: *mut ::std::os::raw::c_void,
+    );
+}
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_OBJ_cleanup"]
     pub fn OBJ_cleanup();
@@ -21229,6 +21251,38 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_print"]
+    pub fn X509V3_EXT_print(
+        out: *mut BIO,
+        ext: *const X509_EXTENSION,
+        flag: ::std::os::raw::c_ulong,
+        indent: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_print_fp"]
+    pub fn X509V3_EXT_print_fp(
+        out: *mut FILE,
+        ext: *const X509_EXTENSION,
+        flag: ::std::os::raw::c_int,
+        indent: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_extensions_print"]
+    pub fn X509V3_extensions_print(
+        out: *mut BIO,
+        title: *const ::std::os::raw::c_char,
+        exts: *const stack_st_X509_EXTENSION,
+        flag: ::std::os::raw::c_ulong,
+        indent: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_GENERAL_NAME_print"]
+    pub fn GENERAL_NAME_print(out: *mut BIO, gen: *const GENERAL_NAME) -> ::std::os::raw::c_int;
+}
+extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_pubkey_digest"]
     pub fn X509_pubkey_digest(
         x509: *const X509,
@@ -21843,6 +21897,187 @@ extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_INFO_free"]
     pub fn X509_INFO_free(info: *mut X509_INFO);
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct v3_ext_ctx {
+    pub flags: ::std::os::raw::c_int,
+    pub issuer_cert: *const X509,
+    pub subject_cert: *const X509,
+    pub subject_req: *const X509_REQ,
+    pub crl: *const X509_CRL,
+    pub db: *const CONF,
+}
+#[test]
+fn bindgen_test_layout_v3_ext_ctx() {
+    const UNINIT: ::std::mem::MaybeUninit<v3_ext_ctx> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<v3_ext_ctx>(),
+        48usize,
+        concat!("Size of: ", stringify!(v3_ext_ctx))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<v3_ext_ctx>(),
+        8usize,
+        concat!("Alignment of ", stringify!(v3_ext_ctx))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_ctx),
+            "::",
+            stringify!(flags)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).issuer_cert) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_ctx),
+            "::",
+            stringify!(issuer_cert)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).subject_cert) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_ctx),
+            "::",
+            stringify!(subject_cert)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).subject_req) as usize - ptr as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_ctx),
+            "::",
+            stringify!(subject_req)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).crl) as usize - ptr as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_ctx),
+            "::",
+            stringify!(crl)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).db) as usize - ptr as usize },
+        40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_ctx),
+            "::",
+            stringify!(db)
+        )
+    );
+}
+impl Default for v3_ext_ctx {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_set_ctx"]
+    pub fn X509V3_set_ctx(
+        ctx: *mut X509V3_CTX,
+        issuer: *const X509,
+        subject: *const X509,
+        req: *const X509_REQ,
+        crl: *const X509_CRL,
+        flags: ::std::os::raw::c_int,
+    );
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_set_nconf"]
+    pub fn X509V3_set_nconf(ctx: *mut X509V3_CTX, conf: *const CONF);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_nconf"]
+    pub fn X509V3_EXT_nconf(
+        conf: *const CONF,
+        ctx: *const X509V3_CTX,
+        name: *const ::std::os::raw::c_char,
+        value: *const ::std::os::raw::c_char,
+    ) -> *mut X509_EXTENSION;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_nconf_nid"]
+    pub fn X509V3_EXT_nconf_nid(
+        conf: *const CONF,
+        ctx: *const X509V3_CTX,
+        ext_nid: ::std::os::raw::c_int,
+        value: *const ::std::os::raw::c_char,
+    ) -> *mut X509_EXTENSION;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_conf_nid"]
+    pub fn X509V3_EXT_conf_nid(
+        conf: *mut lhash_st_CONF_VALUE,
+        ctx: *const X509V3_CTX,
+        ext_nid: ::std::os::raw::c_int,
+        value: *const ::std::os::raw::c_char,
+    ) -> *mut X509_EXTENSION;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_add_nconf_sk"]
+    pub fn X509V3_EXT_add_nconf_sk(
+        conf: *const CONF,
+        ctx: *const X509V3_CTX,
+        section: *const ::std::os::raw::c_char,
+        sk: *mut *mut stack_st_X509_EXTENSION,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_add_nconf"]
+    pub fn X509V3_EXT_add_nconf(
+        conf: *const CONF,
+        ctx: *const X509V3_CTX,
+        section: *const ::std::os::raw::c_char,
+        cert: *mut X509,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_REQ_add_nconf"]
+    pub fn X509V3_EXT_REQ_add_nconf(
+        conf: *const CONF,
+        ctx: *const X509V3_CTX,
+        section: *const ::std::os::raw::c_char,
+        req: *mut X509_REQ,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_CRL_add_nconf"]
+    pub fn X509V3_EXT_CRL_add_nconf(
+        conf: *const CONF,
+        ctx: *const X509V3_CTX,
+        section: *const ::std::os::raw::c_char,
+        crl: *mut X509_CRL,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_conf"]
+    pub fn X509V3_EXT_conf(
+        conf: *mut lhash_st_CONF_VALUE,
+        ctx: *mut X509V3_CTX,
+        name: *const ::std::os::raw::c_char,
+        value: *const ::std::os::raw::c_char,
+    ) -> *mut X509_EXTENSION;
+}
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_get_notBefore"]
     pub fn X509_get_notBefore(x509: *const X509) -> *mut ASN1_TIME;
@@ -21900,6 +22135,14 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_STORE_CTX_cleanup"]
     pub fn X509_STORE_CTX_cleanup(ctx: *mut X509_STORE_CTX);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_add_standard_extensions"]
+    pub fn X509V3_add_standard_extensions() -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_parse_list"]
+    pub fn X509V3_parse_list(line: *const ::std::os::raw::c_char) -> *mut stack_st_CONF_VALUE;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -22312,12 +22555,28 @@ extern "C" {
     pub fn X509_STORE_CTX_set_depth(ctx: *mut X509_STORE_CTX, depth: ::std::os::raw::c_int);
 }
 extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509_LOOKUP_load_file"]
+    pub fn X509_LOOKUP_load_file(
+        lookup: *mut X509_LOOKUP,
+        path: *const ::std::os::raw::c_char,
+        type_: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_16_0_X509_LOOKUP_add_dir"]
+    pub fn X509_LOOKUP_add_dir(
+        lookup: *mut X509_LOOKUP,
+        path: *const ::std::os::raw::c_char,
+        type_: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_OBJECT_new"]
     pub fn X509_OBJECT_new() -> *mut X509_OBJECT;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_OBJECT_free"]
-    pub fn X509_OBJECT_free(a: *mut X509_OBJECT);
+    pub fn X509_OBJECT_free(obj: *mut X509_OBJECT);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_OBJECT_get_type"]
@@ -22381,7 +22640,7 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_STORE_set_flags"]
     pub fn X509_STORE_set_flags(
-        ctx: *mut X509_STORE,
+        store: *mut X509_STORE,
         flags: ::std::os::raw::c_ulong,
     ) -> ::std::os::raw::c_int;
 }
@@ -22490,16 +22749,16 @@ extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_STORE_add_lookup"]
     pub fn X509_STORE_add_lookup(
         v: *mut X509_STORE,
-        m: *mut X509_LOOKUP_METHOD,
+        m: *const X509_LOOKUP_METHOD,
     ) -> *mut X509_LOOKUP;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_LOOKUP_hash_dir"]
-    pub fn X509_LOOKUP_hash_dir() -> *mut X509_LOOKUP_METHOD;
+    pub fn X509_LOOKUP_hash_dir() -> *const X509_LOOKUP_METHOD;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_LOOKUP_file"]
-    pub fn X509_LOOKUP_file() -> *mut X509_LOOKUP_METHOD;
+    pub fn X509_LOOKUP_file() -> *const X509_LOOKUP_METHOD;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_STORE_add_cert"]
@@ -22790,12 +23049,6 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509_VERIFY_PARAM_get0_peername"]
-    pub fn X509_VERIFY_PARAM_get0_peername(
-        arg1: *mut X509_VERIFY_PARAM,
-    ) -> *mut ::std::os::raw::c_char;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_VERIFY_PARAM_set1_email"]
     pub fn X509_VERIFY_PARAM_set1_email(
         param: *mut X509_VERIFY_PARAM,
@@ -22821,12 +23074,6 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_VERIFY_PARAM_get_depth"]
     pub fn X509_VERIFY_PARAM_get_depth(param: *const X509_VERIFY_PARAM) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509_VERIFY_PARAM_lookup"]
-    pub fn X509_VERIFY_PARAM_lookup(
-        name: *const ::std::os::raw::c_char,
-    ) -> *const X509_VERIFY_PARAM;
 }
 pub type X509V3_EXT_METHOD = v3_ext_method;
 pub type X509V3_EXT_NEW =
@@ -23477,7 +23724,6 @@ impl Default for GENERAL_NAME_st {
         }
     }
 }
-pub type GENERAL_NAME = GENERAL_NAME_st;
 pub type sk_GENERAL_NAME_free_func =
     ::std::option::Option<unsafe extern "C" fn(arg1: *mut GENERAL_NAME)>;
 pub type sk_GENERAL_NAME_copy_func =
@@ -24732,10 +24978,6 @@ extern "C" {
     ) -> *mut stack_st_CONF_VALUE;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_GENERAL_NAME_print"]
-    pub fn GENERAL_NAME_print(out: *mut BIO, gen: *const GENERAL_NAME) -> ::std::os::raw::c_int;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_GENERAL_NAMES_new"]
     pub fn GENERAL_NAMES_new() -> *mut GENERAL_NAMES;
 }
@@ -25306,187 +25548,6 @@ extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509V3_conf_free"]
     pub fn X509V3_conf_free(val: *mut CONF_VALUE);
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct v3_ext_ctx {
-    pub flags: ::std::os::raw::c_int,
-    pub issuer_cert: *const X509,
-    pub subject_cert: *const X509,
-    pub subject_req: *const X509_REQ,
-    pub crl: *const X509_CRL,
-    pub db: *const CONF,
-}
-#[test]
-fn bindgen_test_layout_v3_ext_ctx() {
-    const UNINIT: ::std::mem::MaybeUninit<v3_ext_ctx> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<v3_ext_ctx>(),
-        48usize,
-        concat!("Size of: ", stringify!(v3_ext_ctx))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<v3_ext_ctx>(),
-        8usize,
-        concat!("Alignment of ", stringify!(v3_ext_ctx))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_ctx),
-            "::",
-            stringify!(flags)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).issuer_cert) as usize - ptr as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_ctx),
-            "::",
-            stringify!(issuer_cert)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).subject_cert) as usize - ptr as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_ctx),
-            "::",
-            stringify!(subject_cert)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).subject_req) as usize - ptr as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_ctx),
-            "::",
-            stringify!(subject_req)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).crl) as usize - ptr as usize },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_ctx),
-            "::",
-            stringify!(crl)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).db) as usize - ptr as usize },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_ctx),
-            "::",
-            stringify!(db)
-        )
-    );
-}
-impl Default for v3_ext_ctx {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_set_ctx"]
-    pub fn X509V3_set_ctx(
-        ctx: *mut X509V3_CTX,
-        issuer: *const X509,
-        subject: *const X509,
-        req: *const X509_REQ,
-        crl: *const X509_CRL,
-        flags: ::std::os::raw::c_int,
-    );
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_set_nconf"]
-    pub fn X509V3_set_nconf(ctx: *mut X509V3_CTX, conf: *const CONF);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_nconf"]
-    pub fn X509V3_EXT_nconf(
-        conf: *const CONF,
-        ctx: *const X509V3_CTX,
-        name: *const ::std::os::raw::c_char,
-        value: *const ::std::os::raw::c_char,
-    ) -> *mut X509_EXTENSION;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_nconf_nid"]
-    pub fn X509V3_EXT_nconf_nid(
-        conf: *const CONF,
-        ctx: *const X509V3_CTX,
-        ext_nid: ::std::os::raw::c_int,
-        value: *const ::std::os::raw::c_char,
-    ) -> *mut X509_EXTENSION;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_conf_nid"]
-    pub fn X509V3_EXT_conf_nid(
-        conf: *mut lhash_st_CONF_VALUE,
-        ctx: *const X509V3_CTX,
-        ext_nid: ::std::os::raw::c_int,
-        value: *const ::std::os::raw::c_char,
-    ) -> *mut X509_EXTENSION;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_conf"]
-    pub fn X509V3_EXT_conf(
-        conf: *mut lhash_st_CONF_VALUE,
-        ctx: *mut X509V3_CTX,
-        name: *const ::std::os::raw::c_char,
-        value: *const ::std::os::raw::c_char,
-    ) -> *mut X509_EXTENSION;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_add_nconf_sk"]
-    pub fn X509V3_EXT_add_nconf_sk(
-        conf: *const CONF,
-        ctx: *const X509V3_CTX,
-        section: *const ::std::os::raw::c_char,
-        sk: *mut *mut stack_st_X509_EXTENSION,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_add_nconf"]
-    pub fn X509V3_EXT_add_nconf(
-        conf: *const CONF,
-        ctx: *const X509V3_CTX,
-        section: *const ::std::os::raw::c_char,
-        cert: *mut X509,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_REQ_add_nconf"]
-    pub fn X509V3_EXT_REQ_add_nconf(
-        conf: *const CONF,
-        ctx: *const X509V3_CTX,
-        section: *const ::std::os::raw::c_char,
-        req: *mut X509_REQ,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_CRL_add_nconf"]
-    pub fn X509V3_EXT_CRL_add_nconf(
-        conf: *const CONF,
-        ctx: *const X509V3_CTX,
-        section: *const ::std::os::raw::c_char,
-        crl: *mut X509_CRL,
-    ) -> ::std::os::raw::c_int;
-}
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_i2s_ASN1_INTEGER"]
     pub fn i2s_ASN1_INTEGER(
@@ -25534,14 +25595,6 @@ extern "C" {
     pub fn X509V3_EXT_get_nid(nid: ::std::os::raw::c_int) -> *const X509V3_EXT_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_add_standard_extensions"]
-    pub fn X509V3_add_standard_extensions() -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_parse_list"]
-    pub fn X509V3_parse_list(line: *const ::std::os::raw::c_char) -> *mut stack_st_CONF_VALUE;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_d2i"]
     pub fn X509V3_EXT_d2i(ext: *const X509_EXTENSION) -> *mut ::std::os::raw::c_void;
 }
@@ -25580,43 +25633,6 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_val_prn"]
-    pub fn X509V3_EXT_val_prn(
-        out: *mut BIO,
-        val: *const stack_st_CONF_VALUE,
-        indent: ::std::os::raw::c_int,
-        ml: ::std::os::raw::c_int,
-    );
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_print"]
-    pub fn X509V3_EXT_print(
-        out: *mut BIO,
-        ext: *const X509_EXTENSION,
-        flag: ::std::os::raw::c_ulong,
-        indent: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_EXT_print_fp"]
-    pub fn X509V3_EXT_print_fp(
-        out: *mut FILE,
-        ext: *const X509_EXTENSION,
-        flag: ::std::os::raw::c_int,
-        indent: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_16_0_X509V3_extensions_print"]
-    pub fn X509V3_extensions_print(
-        out: *mut BIO,
-        title: *const ::std::os::raw::c_char,
-        exts: *const stack_st_X509_EXTENSION,
-        flag: ::std::os::raw::c_ulong,
-        indent: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_check_ca"]
     pub fn X509_check_ca(x: *mut X509) -> ::std::os::raw::c_int;
 }
@@ -25649,15 +25665,15 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_get_extension_flags"]
-    pub fn X509_get_extension_flags(x: *mut X509) -> u32;
+    pub fn X509_get_extension_flags(x509: *mut X509) -> u32;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_get_key_usage"]
-    pub fn X509_get_key_usage(x: *mut X509) -> u32;
+    pub fn X509_get_key_usage(x509: *mut X509) -> u32;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_get_extended_key_usage"]
-    pub fn X509_get_extended_key_usage(x: *mut X509) -> u32;
+    pub fn X509_get_extended_key_usage(x509: *mut X509) -> u32;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_16_0_X509_get0_subject_key_id"]
