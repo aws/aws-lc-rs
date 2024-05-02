@@ -84,7 +84,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="requirements/index.html"><strong aria-hidden="true">1.</strong> Requirements</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="requirements/linux.html"><strong aria-hidden="true">1.1.</strong> Linux</a></li><li class="chapter-item expanded "><a href="requirements/macos.html"><strong aria-hidden="true">1.2.</strong> macOS</a></li><li class="chapter-item expanded "><a href="requirements/windows.html"><strong aria-hidden="true">1.3.</strong> Windows</a></li></ol></li><li class="chapter-item expanded "><a href="platform_support.html"><strong aria-hidden="true">2.</strong> Platform Support</a></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">3.</strong> FAQ</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="resources.html">Resources</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="requirements/index.html"><strong aria-hidden="true">1.</strong> Requirements</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="requirements/linux.html"><strong aria-hidden="true">1.1.</strong> Linux</a></li><li class="chapter-item expanded "><a href="requirements/apple.html"><strong aria-hidden="true">1.2.</strong> macOS/iOS</a></li><li class="chapter-item expanded "><a href="requirements/windows.html"><strong aria-hidden="true">1.3.</strong> Windows</a></li></ol></li><li class="chapter-item expanded "><a href="platform_support.html"><strong aria-hidden="true">2.</strong> Platform Support</a></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">3.</strong> FAQ</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="resources.html">Resources</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -168,20 +168,22 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
-<p><a href="https://crates.io/crates/aws-lc-rs"><img src="https://img.shields.io/badge/aws--lc--rs-crates.io-important" alt="aws-lc-rs" /></a>
-<a href="https://crates.io/crates/aws-lc-sys"><img src="https://img.shields.io/badge/aws--lc--sys-crates.io-important" alt="aws-lc-sys" /></a>
-<a href="https://crates.io/crates/aws-lc-fips-sys"><img src="https://img.shields.io/badge/aws--lc--fips--sys-crates.io-important" alt="aws-lc-fips-sys" /></a></p>
-<p><code>aws-lc-rs</code> is a cryptographic library using AWS-LC for its cryptographic operations.
-This library strives to be API-compatible with the popular Rust library named ring.
-It uses either the auto-generated <code>aws-lc-sys</code> or <code>aws-lc-fips-sys</code> Foreign Function Interface (FFI) crates
-for binding to AWS Libcrypto (AWS-LC) for the cryptographic implementations.</p>
+<p><a href="https://crates.io/crates/aws-lc-rs"><img src="https://img.shields.io/crates/v/aws-lc-rs?label=aws-lc-rs" alt="aws-lc-rs" /></a>
+<a href="https://crates.io/crates/aws-lc-sys"><img src="https://img.shields.io/crates/v/aws-lc-sys?label=aws-lc-sys" alt="aws-lc-sys" /></a>
+<a href="https://crates.io/crates/aws-lc-fips-sys"><img src="https://img.shields.io/crates/v/aws-lc-fips-sys?label=aws-lc-fips-sys" alt="aws-lc-fips-sys" /></a></p>
+<p><strong><a href="https://crates.io/crates/aws-lc-rs">aws-lc-rs</a></strong> is a cryptographic library using AWS Libcrypto (<a href="https://github.com/aws/aws-lc">AWS-LC</a>)
+for its cryptographic operations. This library strives to be API-compatible with the popular Rust library
+named <a href="https://github.com/briansmith/ring">ring</a> (<a href="https://docs.rs/ring/0.16.20/ring/index.html">v0.16</a>).
+It uses one of our auto-generated Foreign Function Interface (FFI) crates
+(either <strong><a href="https://crates.io/crates/aws-lc-sys">aws-lc-sys</a></strong> or <strong><a href="https://crates.io/crates/aws-lc-fips-sys">aws-lc-fips-sys</a></strong>) for binding to AWS-LC for the cryptographic implementations.</p>
 <h2 id="motivation"><a class="header" href="#motivation">Motivation</a></h2>
 <p>Rust developers increasingly need to deploy applications that meet US and Canadian government cryptographic
 requirements. We evaluated how to deliver FIPS validated cryptography in idiomatic and performant Rust, built around our
-AWS-LC offering. We found that the popular ring (v0.16) library fulfilled much of the cryptographic needs in the Rust
+AWS-LC offering. We found that the popular ring library fulfilled much of the cryptographic needs in the Rust
 community, but it did not meet the needs of developers with FIPS requirements. Our intention is to contribute a drop-in
-replacement for ring that provides FIPS support and is compatible with the ring API. Rust developers with prescribed
-cryptographic requirements can seamlessly integrate aws-lc-rs into their applications and deploy them into AWS Regions.</p>
+replacement for ring that provides FIPS support and is compatible with the ring (v0.16) API. Rust developers with
+prescribed cryptographic requirements can seamlessly integrate aws-lc-rs into their applications and deploy them into
+AWS Regions.</p>
 <h2 id="questions-feedback-and-contributing"><a class="header" href="#questions-feedback-and-contributing">Questions, Feedback and Contributing</a></h2>
 <ul>
 <li><a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">Submit an non-security Bug/Issue/Request</a></li>
@@ -193,80 +195,125 @@ cryptographic requirements can seamlessly integrate aws-lc-rs into their applica
 follow our <em>Security Notification Process</em> below.</p>
 <h2 id="security-notification-process"><a class="header" href="#security-notification-process">Security Notification Process</a></h2>
 <p>If you discover a potential security issue in <em>AWS-LC</em> or <em>aws-lc-rs</em>, we ask that you notify AWS
-Security via our
-<a href="https://aws.amazon.com/security/vulnerability-reporting/">vulnerability reporting page</a>.
+Security via our <a href="https://aws.amazon.com/security/vulnerability-reporting/">vulnerability reporting page</a>.
 Please do <strong>not</strong> create a public GitHub issue.</p>
 <p>If you package or distribute <em>aws-lc-rs</em>, or use <em>aws-lc-rs</em> as part of a large multi-user service,
 you may be eligible for pre-notification of future <em>aws-lc-rs</em> releases.
 Please contact aws-lc-pre-notifications@amazon.com.</p>
 <h2 id="license"><a class="header" href="#license">License</a></h2>
-<p>This library is licensed under the Apache-2.0 or the ISC License.</p>
+<p><a href="https://crates.io/crates/aws-lc-rs">aws-lc-rs</a> is licensed under the Apache-2.0 or the ISC License.
+The <a href="https://crates.io/crates/aws-lc-sys">aws-lc-sys</a> and <a href="https://crates.io/crates/aws-lc-fips-sys">aws-lc-fips-sys</a> libraries contain code from <a href="https://github.com/aws/aws-lc">AWS-LC</a> and are licensed under
+the ISC AND ( Apache-2.0 OR ISC ) AND OpenSSL licenses.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="requirements"><a class="header" href="#requirements">Requirements</a></h1>
 <p>This page outlines the requirements for using <code>aws-lc-rs</code> on each target platform.</p>
-<p><code>aws-lc-rs</code> uses <a href="https://crates.io/crates/aws-lc-sys">aws-lc-sys</a> or <a href="https://crates.io/crates/aws-lc-fips-sys">aws-lc-fips-sys</a> raw FFI bindings to <a href="https://github.com/aws/aws-lc">AWS-LC</a>, and thus
-a minimal set of additional build environments in order to compile your Rust application.</p>
+<p><code>aws-lc-rs</code> uses <a href="https://crates.io/crates/aws-lc-sys">aws-lc-sys</a> or <a href="https://crates.io/crates/aws-lc-fips-sys">aws-lc-fips-sys</a> to provide raw FFI bindings to <a href="https://github.com/aws/aws-lc">AWS-LC</a>. Thus,
+there are additional build tools required for building these crates into your Rust application.</p>
 <ul>
-<li><a href="requirements/linux.html">Linux</a></li>
-<li><a href="requirements/macos.html">macOS</a></li>
-<li><a href="requirements/windows.html">Windows</a></li>
+<li><a href="requirements/linux">Linux</a></li>
+<li><a href="requirements/apple">macOS &amp; iOS</a></li>
+<li><a href="requirements/windows">Windows</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="linux-requirements"><a class="header" href="#linux-requirements">Linux Requirements</a></h1>
+<p>Unless the &quot;fips&quot; feature is enabled, building aws-lc-rs v1.7.0 (or later) for the following targets should only require
+a C/C++ compiler.</p>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th><th>bindgen required?</th></tr></thead><tbody>
+<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
+<tr><td><code>aarch64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
+<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
+<tr><td><code>x86_64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
+<tr><td><code>i686-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td><strong>Not Supported</strong></td><td>No</td></tr>
+<tr><td><em>Other</em></td><td>C/C++ Compiler &amp; CMake</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
+</tbody></table>
+</div>
 <h2 id="cc-compiler"><a class="header" href="#cc-compiler">C/C++ Compiler</a></h2>
 <h3 id="amazon-linux-al2023"><a class="header" href="#amazon-linux-al2023">Amazon Linux (AL2023)</a></h3>
-<pre><code class="language-shell">sudo dnf install -y gcc gcc-c++
+<pre><code class="language-shell">sudo dnf groupinstall -y &quot;Development Tools&quot;
 </code></pre>
 <h4 id="ubuntu-2204-lts"><a class="header" href="#ubuntu-2204-lts">Ubuntu (22.04 LTS)</a></h4>
-<pre><code class="language-shell">sudo apt-get install -y gcc g++
+<pre><code class="language-shell">sudo apt-get install -y build-essential
 </code></pre>
-<h2 id="cmake"><a class="header" href="#cmake">CMake</a></h2>
+<h2 id="cmake--go"><a class="header" href="#cmake--go">CMake &amp; Go</a></h2>
 <h4 id="amazon-linux-al2023-1"><a class="header" href="#amazon-linux-al2023-1">Amazon Linux (AL2023)</a></h4>
-<pre><code class="language-shell">sudo dnf install -y cmake
+<pre><code class="language-shell">sudo dnf install -y cmake golang
 </code></pre>
 <h4 id="ubuntu-2204-lts-1"><a class="header" href="#ubuntu-2204-lts-1">Ubuntu (22.04 LTS)</a></h4>
-<pre><code class="language-shell">sudo apt-get install -y cmake
+<pre><code class="language-shell">sudo apt-get install -y cmake golang
 </code></pre>
-<h2 id="llvm-when-building-with-bindgen-feature"><a class="header" href="#llvm-when-building-with-bindgen-feature">LLVM (When building with <code>bindgen</code> feature)</a></h2>
-<h3 id="amazon-linux-al2023-2"><a class="header" href="#amazon-linux-al2023-2">Amazon Linux (AL2023)</a></h3>
+<h2 id="bindgen"><a class="header" href="#bindgen">Bindgen</a></h2>
+<p>On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
+See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">requirements</a> page in
+<a href="https://rust-lang.github.io/rust-bindgen/">The bindgen User Guide</a> for instructions.</p>
+<h3 id="libclang--llvm"><a class="header" href="#libclang--llvm">libclang / LLVM</a></h3>
+<h4 id="amazon-linux-al2023-2"><a class="header" href="#amazon-linux-al2023-2">Amazon Linux (AL2023)</a></h4>
 <pre><code class="language-shell">sudo dnf install -y clang-libs
 </code></pre>
 <h4 id="ubuntu-2204-lts-2"><a class="header" href="#ubuntu-2204-lts-2">Ubuntu (22.04 LTS)</a></h4>
 <pre><code class="language-shell">sudo apt-get install -y libclang1
 </code></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="macos-requirements"><a class="header" href="#macos-requirements">macOS Requirements</a></h1>
+<h3 id="bindgen-cli"><a class="header" href="#bindgen-cli">bindgen-cli</a></h3>
+<pre><code class="language-shell">cargo install --force --locked bindgen-cli
+</code></pre>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<p>See our <a href="requirements/../resources.html#troubleshooting">troubleshooting section</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="macos--ios-requirements"><a class="header" href="#macos--ios-requirements">macOS &amp; iOS Requirements</a></h1>
+<p>Unless the &quot;fips&quot; feature is enabled, building aws-lc-rs v1.7.0 (or later) for macOS targets should only require
+a C/C++ compiler. Builds for iOS will also require CMake.</p>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th><th>bindgen required?</th></tr></thead><tbody>
+<tr><td><code>aarch64-apple-darwin</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
+<tr><td><code>x86_64-apple-darwin</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
+<tr><td><code>aarch64-apple-ios</code></td><td>C/C++ Compiler &amp; CMake</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
+<tr><td><code>x86_64-apple-ios</code></td><td>C/C++ Compiler &amp; CMake</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
+</tbody></table>
+</div>
 <h2 id="cc-compiler-1"><a class="header" href="#cc-compiler-1">C/C++ Compiler</a></h2>
 <p>Install <a href="https://developer.apple.com/xcode/resources/">Command Line Tools for Xcode</a> which a provides a C/C++ compiler environment (LLVM).</p>
-<h2 id="cmake-1"><a class="header" href="#cmake-1">CMake</a></h2>
+<h2 id="cmake"><a class="header" href="#cmake">CMake</a></h2>
 <h3 id="macports"><a class="header" href="#macports">MacPorts</a></h3>
 <pre><code class="language-shell">sudo port install cmake
 </code></pre>
 <h3 id="homebrew"><a class="header" href="#homebrew">Homebrew</a></h3>
 <pre><code class="language-shell">brew install cmake
 </code></pre>
-<h2 id="llvm-when-building-with-bindgen-feature-1"><a class="header" href="#llvm-when-building-with-bindgen-feature-1">LLVM (When building with <code>bindgen</code> feature)</a></h2>
+<h2 id="bindgen-1"><a class="header" href="#bindgen-1">Bindgen</a></h2>
+<p>On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
+See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">requirements</a> page in
+<a href="https://rust-lang.github.io/rust-bindgen/">The bindgen User Guide</a> for instructions.</p>
+<h4 id=""><a class="header" href="#"></a></h4>
 <h3 id="macports-1"><a class="header" href="#macports-1">MacPorts</a></h3>
 <pre><code class="language-shell">sudo port install clang
 </code></pre>
 <h3 id="homebrew-1"><a class="header" href="#homebrew-1">Homebrew</a></h3>
 <pre><code class="language-shell">brew install llvm
 </code></pre>
+<h3 id="bindgen-cli-1"><a class="header" href="#bindgen-cli-1">bindgen-cli</a></h3>
+<pre><code class="language-shell">cargo install --force --locked bindgen-cli
+</code></pre>
+<h2 id="troubleshooting-1"><a class="header" href="#troubleshooting-1">Troubleshooting</a></h2>
+<p>See our <a href="requirements/../resources.html#troubleshooting">troubleshooting section</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="windows-requirements"><a class="header" href="#windows-requirements">Windows Requirements</a></h1>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th><th>bindgen required?</th></tr></thead><tbody>
+<tr><td><code>x86_64-pc-windows-msvc</code></td><td>C/C++ Compiler, CMake &amp; NASM</td><td>C/C++ Compiler, CMake, NASM, Go &amp; Ninja</td><td><strong><em>Yes</em></strong></td></tr>
+<tr><td><code>x86_64-pc-windows-gnu</code></td><td>C/C++ Compiler, CMake &amp; NASM</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
+<tr><td><code>aarch64-pc-windows-msvc</code></td><td><strong>Not Yet Supported</strong></td><td><strong>Not Supported</strong></td><td>N/A</td></tr>
+<tr><td><em>Other</em></td><td><strong>Not Supported</strong></td><td><strong>Not Supported</strong></td><td>N/A</td></tr>
+</tbody></table>
+</div>
 <h2 id="cc-compiler-2"><a class="header" href="#cc-compiler-2">C/C++ Compiler</a></h2>
 <p>Use the following instructions to download <strong>Visual Studio Build Tools 2017</strong>.</p>
-<p><strong>NOTE</strong>: Visual Studio Build Tools 2022 is <strong>NOT</strong> supported at this time.</p>
 <ol>
-<li>Download the <a href="https://aka.ms/vs/15/release/vs_BuildTools.exe">Build Tools for Visual Studio</a> installer.</li>
+<li>Download the <a href="https://aka.ms/vs/17/release/vs_BuildTools.exe">Build Tools for Visual Studio</a> installer.</li>
 <li>Execute the installer.</li>
 <li>If you have an existing installation chose <code>Modify</code> on the existing installation.</li>
 <li>Under <code>Workloads</code> select <code>Visual C++ build tools</code></li>
 <li>Under <code>Individual componenets</code> select
 <ul>
-<li><code>C++/CLI support</code> </li>
+<li><code>C++/CLI support</code></li>
 <li><code>C++ CMake tools for Windows</code></li>
 </ul>
 </li>
 <li>Confirm selections and click <code>Install</code></li>
 </ol>
-<h2 id="cmake-2"><a class="header" href="#cmake-2">CMake</a></h2>
+<h2 id="cmake-1"><a class="header" href="#cmake-1">CMake</a></h2>
 <ol>
 <li><a href="https://cmake.org/download/">Download</a> Windows CMake Installer</li>
 <li>Execute the installer</li>
@@ -285,7 +332,24 @@ a minimal set of additional build environments in order to compile your Rust app
 </ul>
 </li>
 </ol>
-<h2 id="llvm-when-building-with-bindgen-feature-2"><a class="header" href="#llvm-when-building-with-bindgen-feature-2">LLVM (When building with <code>bindgen</code> feature)</a></h2>
+<h3 id="no-assembly-build"><a class="header" href="#no-assembly-build">No-assembly build</a></h3>
+<p>It is possible to avoid the NASM requirement by setting the <code>AWS_LC_SYS_NO_ASM</code>/<code>AWS_LC_FIPS_SYS_NO_ASM</code> environment
+variables. However, this severely impacts performance and can only be used for un-optimized/debug builds. See the
+notes in our <a href="requirements/../resources.html#troubleshooting">troubleshooting section</a>.</p>
+<h2 id="ninja"><a class="header" href="#ninja">Ninja</a></h2>
+<ol>
+<li><a href="https://github.com/ninja-build/ninja/releases">Download</a> and install Ninja</li>
+<li>Add the Ninja installation directory to your PATH
+<ul>
+<li><code>set PATH=&quot;C:\ninja\ninja_build;%PATH%&quot;</code></li>
+</ul>
+</li>
+</ol>
+<h2 id="bindgen-2"><a class="header" href="#bindgen-2">Bindgen</a></h2>
+<p>On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
+See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">requirements</a> page in
+[The bindgen User Guide] for instructions.</p>
+<h3 id="libclang--llvm-1"><a class="header" href="#libclang--llvm-1">libclang / LLVM</a></h3>
 <ol>
 <li>Download <a href="https://github.com/llvm/llvm-project/releases/tag/llvmorg-15.0.6">LLVM Installer</a></li>
 <li>Execute the installer</li>
@@ -295,45 +359,98 @@ a minimal set of additional build environments in order to compile your Rust app
 </ul>
 </li>
 </ol>
+<h3 id="bindgen-cli-2"><a class="header" href="#bindgen-cli-2">bindgen-cli</a></h3>
+<pre><code class="language-shell">cargo install --force --locked bindgen-cli
+</code></pre>
+<h2 id="troubleshooting-2"><a class="header" href="#troubleshooting-2">Troubleshooting</a></h2>
+<p>See our <a href="requirements/../resources.html#troubleshooting">troubleshooting section</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="platform-support"><a class="header" href="#platform-support">Platform Support</a></h1>
-<h2 id="platforms-with-pre-generated-bindings"><a class="header" href="#platforms-with-pre-generated-bindings">Platforms with pre-generated bindings</a></h2>
+<h2 id="pre-generated-bindings"><a class="header" href="#pre-generated-bindings">Pre-generated bindings</a></h2>
 <p><code>aws-lc-rs</code> can utilize pre-generated bindings when operating on the following
-operating systems and CPU architecture combinations.</p>
-<div class="table-wrapper"><table><thead><tr><th>OS</th><th>Architecture</th></tr></thead><tbody>
-<tr><td>macOS</td><td>x86-64</td></tr>
-<tr><td>Linux</td><td>x86-64</td></tr>
-<tr><td>Linux</td><td>x86</td></tr>
-<tr><td>Linux</td><td>aarch64</td></tr>
+build targets.</p>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><code>aws-lc-sys</code></th><th><code>aws-lc-fips-sys</code></th></tr></thead><tbody>
+<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>aarch64-unknown-linux-musl</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>x86_64-unknown-linux-musl</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>i686-unknown-linux-gnu</code></td><td>X</td><td></td></tr>
+<tr><td><code>aarch64-apple-darwin</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>x86_64-apple-darwin</code></td><td>X</td><td>X</td></tr>
 </tbody></table>
 </div>
-<h2 id="supported-via-bindgen-feature"><a class="header" href="#supported-via-bindgen-feature">Supported via <code>bindgen</code> feature.</a></h2>
-<p><code>aws-lc-rs</code> can be utilized on the following platforms when built with the <code>bindgen</code> crate feature.</p>
-<p>In addition to requiring a C/C++ compiler and CMake, LLVM is required to be installed.</p>
+<h2 id="tested-platforms"><a class="header" href="#tested-platforms">Tested platforms</a></h2>
+<p>In addition to the ones listed above, the  <code>aws-lc-rs</code> CI builds and/or tests with the following platforms.
+All platforms listed below require <code>CMake</code> to be available in the build environment.
+They also require bindings to be generated during the build process.</p>
+<h3 id="bindgen-3"><a class="header" href="#bindgen-3">bindgen</a></h3>
+<p>One of the following options must be used for bindings generation.
+See <a href="requirements/README.html">requirements</a> page for more information.</p>
+<ul>
+<li>Enable <code>bindgen</code> feature in your <code>Cargo.toml</code>:</li>
+</ul>
 <pre><code class="language-toml">[dependencies]
-aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;]}
+aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;] }
 </code></pre>
-<div class="table-wrapper"><table><thead><tr><th>OS</th><th>Architecture</th></tr></thead><tbody>
-<tr><td>Windows</td><td>x86-64</td></tr>
-<tr><td>macOS</td><td>aarch64</td></tr>
+<p><em><strong>-- OR --</strong></em></p>
+<ul>
+<li>Install <code>bindgen-cli</code> in the build envionment:</li>
+</ul>
+<pre><code class="language-shell">cargo install --force --locked bindgen-cli
+</code></pre>
+<h3 id="platforms"><a class="header" href="#platforms">Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th></tr></thead><tbody>
+<tr><td><code>aarch64-apple-ios</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>aarch64-linux-android</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>armv7-linux-androideabi</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>arm-linux-androideabi</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>arm-unknown-linux-gnueabihf</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>powerpc64le-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>powerpc64-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>powerpc-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>riscv64gc-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>s390x-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>x86_64-apple-ios</code></td><td>X</td><td></td></tr>
+<tr><td><code>x86_64-pc-windows-gnu</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>x86_64-pc-windows-msvc</code></td><td>X</td><td>X</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="frequently-asked-questions"><a class="header" href="#frequently-asked-questions">Frequently Asked Questions</a></h1>
 <h2 id="what-are-the-differences-between-aws-lc-rs-and-ring"><a class="header" href="#what-are-the-differences-between-aws-lc-rs-and-ring">What are the differences between <code>aws-lc-rs</code> and <code>ring</code>?</a></h2>
-<p>While we aim to be API-compatible with <code>ring</code> there are some differences in our implementation. Please review the
-<a href="https://docs.rs/aws-lc-rs/1.0.1/aws_lc_rs/#ring-compatibility">ring-compatibility</a> section of our
-<a href="https://docs.rs/aws-lc-rs/1.0.1/aws_lc_rs/#ring-compatibility">API reference guide</a>.</p>
+<p>While we aim to be API-compatible with <code>ring</code> v0.16 there are some differences in our implementation. Please review the
+<a href="https://docs.rs/aws-lc-rs/latest/aws_lc_rs/#ring-compatibility">ring-compatibility</a> section of our <a href="https://docs.rs/aws-lc-rs/latest/aws_lc_rs">API reference guide</a>.</p>
 <h2 id="can-i-run-aws-lc-rs-on-x-platform-or-architecture"><a class="header" href="#can-i-run-aws-lc-rs-on-x-platform-or-architecture">Can I run <code>aws-lc-rs</code> on X platform or architecture?</a></h2>
 <p>The answer to this question is dependent on several factors based on the target environment:</p>
 <ul>
 <li>Must be a platform and CPU architecture supported by <a href="https://github.com/aws/aws-lc">AWS-LC</a>.</li>
 <li>Must be a platform supported by the Rust compiler with support for the full standard library.
-See the Rust compiler's <a href="https://doc.rust-lang.org/rustc/platform-support.html">platform support</a> documentation.</li>
+See the <a href="https://doc.rust-lang.org/rustc/platform-support.html">Rust compiler's platform support</a> documentation.</li>
 <li>If the underlying <code>aws-lc-sys</code> or <code>aws-lc-fips-sys</code> crates don't have pre-generated bindings for the desired platform
-then you must use the <code>bindgen</code> crate feature of <code>aws-lc-rs</code> to enable generation of the FFI bindings for the desired
-platform and architecture. See <a href="requirements/README.html">Requirements</a> for more details on what build dependencies are 
+then you must use the <code>bindgen</code> crate feature of <code>aws-lc-rs</code>, or have the <a href="https://crates.io/crates/bindgen-cli">bindgen-cli</a> installed, to enable
+generation of the FFI bindings for the desired platform and architecture.</li>
+<li>See <a href="requirements/README.html">Requirements</a> for more details on what build dependencies are
 required for target platforms.</li>
 </ul>
 <p>If there is a platform or architecture you are interested in seeing support for, please create a GitHub <a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">issue</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="resources"><a class="header" href="#resources">Resources</a></h1>
+<h2 id="troubleshooting-3"><a class="header" href="#troubleshooting-3">Troubleshooting</a></h2>
+<p>There are a few environment variables that may help in diagnosing/remdiating build problem. These affect the way that
+<code>aws-lc-sys</code> or <code>aws-lc-fips-sys</code> build the underlying AWS-LC library.</p>
+<p>None of the environment variables below are officially supported, and any one of them might be removed or changed on a
+future release. Please <a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">contact us</a> about any bugs you find in our build process.</p>
+<ul>
+<li><code>AWS_LC_SYS_STATIC</code> | <code>AWS_LC_FIPS_SYS_STATIC</code> -- value can be set to <code>0</code> or <code>1</code> to force the resulting build
+artifact to be shared library (e.g., <code>*.so</code>) or static library (e.g., <code>*.a</code>).</li>
+<li><code>AWS_LC_SYS_CMAKE_BUILDER</code> -- value can be set to <code>1</code> or <code>0</code> to force the build to use (<code>1</code>) or not use (<code>0</code>) CMake.</li>
+<li><code>AWS_LC_SYS_EXTERNAL_BINDGEN | ``AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN</code> -- value can be set to <code>1</code> or <code>0</code> to force the
+build to use (<code>1</code>) or not use (<code>0</code>) the <code>bindgen-cli</code> instead of the pre-generated or internally generated bindings.</li>
+<li><code>AWS_LC_SYS_NO_PREFIX</code> | <code>AWS_LC_FIPS_SYS_NO_PREFIX</code> -- value can be set to <code>1</code> to force the build to not prefix the
+library nor the symbols it contains.</li>
+<li><code>AWS_LC_SYS_NO_ASM</code> | <code>AWS_LC_FIPS_SYS_NO_ASM</code> -- value can be set to <code>1</code> to force the build to use C-language
+implementations for all cryptographic operations. Our optimized hardware-specific assembly implementations will not
+be used. This option is only available for unoptimized (i.e., <code>OPT_LEVEL = &quot;0&quot;</code> or &quot;debug&quot;) builds.
+<strong>WARNING</strong>: Performance on most platforms is extremely limited by this option. Certain security
+properties, such as resistance to timing attacks, can only be provided when assembly code is used.</li>
+</ul>
+<h2 id="links"><a class="header" href="#links">Links</a></h2>
 <ul>
 <li><a href="https://docs.rs/aws-lc-rs/latest">API Reference Guide</a></li>
 <li><a href="https://github.com/awslabs/aws-lc-rs">GitHub Repository</a></li>
