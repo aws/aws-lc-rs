@@ -209,7 +209,7 @@ impl crate::Builder for CmakeBuilder {
             && !is_no_asm()
         {
             eprintln!(
-                "Consider setting `AWS_LC_FIPS_SYS_NO_ASM` in the environment.\
+                "Consider setting `AWS_LC_FIPS_SYS_NO_ASM` in the environment for development builds.\
             See User Guide about the limitations: https://aws.github.io/aws-lc-rs/index.html"
             );
             eprintln!("Missing dependency: nasm is required for FIPS.");

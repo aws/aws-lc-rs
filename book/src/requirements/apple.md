@@ -1,7 +1,7 @@
 # macOS & iOS Requirements
 
-Unless the "fips" feature is enabled, building aws-lc-rs v1.7.0 (or later) for the following targets should only require
-a C/C++ compiler.
+Unless the "fips" feature is enabled, building aws-lc-rs v1.7.0 (or later) for macOS targets should only require
+a C/C++ compiler. Builds for iOS will also require CMake.
 
 | Platform               | *default*              | **fips**                   | bindgen required? |
 |------------------------|------------------------|----------------------------|-------------------|
@@ -9,7 +9,6 @@ a C/C++ compiler.
 | `x86_64-apple-darwin`  | C/C++ Compiler         | C/C++ Compiler, CMake & Go | No                |
 | `aarch64-apple-ios`    | C/C++ Compiler & CMake | **Not Supported**          | **_Yes_**         |
 | `x86_64-apple-ios`     | C/C++ Compiler & CMake | **Not Supported**          | **_Yes_**         |
-| _Other_                | C/C++ Compiler & CMake | **Not Supported**          | **_Yes_**         |
 
 ## C/C++ Compiler
 
