@@ -258,7 +258,7 @@ impl KeyPair {
         match self.evp_pkey.get_rsa() {
             Ok(rsa) => {
                 // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
-                unsafe { (RSA_size(*rsa)) as usize }
+                unsafe { RSA_size(*rsa) as usize }
             }
             Err(_) => verify_unreachable!(),
         }

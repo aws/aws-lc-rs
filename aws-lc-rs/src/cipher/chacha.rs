@@ -170,7 +170,7 @@ mod tests {
 
         for alignment in 0..=MAX_ALIGNMENT {
             buf[..alignment].fill(ARBITRARY);
-            let buf = &mut buf[..(input.len())];
+            let buf = &mut buf[..input.len()];
             buf.copy_from_slice(input);
             let nonce = &nonce;
 

@@ -19,12 +19,12 @@ use aws_lc_rs::{rand, signature, test, test_file};
 fn rsa_traits() {
     test::compile_time_assert_send::<RsaKeyPair>();
     test::compile_time_assert_sync::<RsaKeyPair>();
-    test::compile_time_assert_send::<signature::RsaSubjectPublicKey>();
-    test::compile_time_assert_sync::<signature::RsaSubjectPublicKey>();
-    test::compile_time_assert_send::<signature::RsaPublicKeyComponents<&[u8]>>();
-    test::compile_time_assert_sync::<signature::RsaPublicKeyComponents<&[u8]>>();
-    test::compile_time_assert_send::<signature::RsaPublicKeyComponents<Vec<u8>>>();
-    test::compile_time_assert_sync::<signature::RsaPublicKeyComponents<Vec<u8>>>();
+    test::compile_time_assert_send::<RsaSubjectPublicKey>();
+    test::compile_time_assert_sync::<RsaSubjectPublicKey>();
+    test::compile_time_assert_send::<RsaPublicKeyComponents<&[u8]>>();
+    test::compile_time_assert_sync::<RsaPublicKeyComponents<&[u8]>>();
+    test::compile_time_assert_send::<RsaPublicKeyComponents<Vec<u8>>>();
+    test::compile_time_assert_sync::<RsaPublicKeyComponents<Vec<u8>>>();
 }
 
 #[test]
@@ -230,7 +230,7 @@ fn test_signature_rsa_primitive_verification() {
             let msg = test_case.consume_bytes("Msg");
             let sig = test_case.consume_bytes("Sig");
             let expected = test_case.consume_string("Result");
-            let public_key = signature::RsaPublicKeyComponents { n: &n, e: &e };
+            let public_key = RsaPublicKeyComponents { n: &n, e: &e };
             let result = public_key.verify(&signature::RSA_PKCS1_2048_8192_SHA256, &msg, &sig);
             assert_eq!(
                 result.is_ok(),

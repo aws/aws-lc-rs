@@ -20,7 +20,7 @@ fn bench_kem_keygen(c: &mut Criterion) {
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {
             b.iter(|| {
-                aws_lc_rs::kem::DecapsulationKey::generate(ele).unwrap();
+                DecapsulationKey::generate(ele).unwrap();
             });
         });
     }

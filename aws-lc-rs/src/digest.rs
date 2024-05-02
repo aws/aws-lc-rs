@@ -423,7 +423,7 @@ mod tests {
             digest::Context {
                 algorithm: alg,
                 digest_ctx: DigestContext::new(alg).unwrap(),
-                msg_len: (alg.max_input_len - block_len + 1),
+                msg_len: alg.max_input_len - block_len + 1,
                 max_input_reached: false,
             }
         }

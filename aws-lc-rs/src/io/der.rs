@@ -296,7 +296,7 @@ mod tests {
                     positive_integer(input)?
                         .big_endian_without_leading_zero_as_input()
                         .as_slice_less_safe(),
-                    untrusted::Input::from(&test_out[..]).as_slice_less_safe()
+                    Input::from(&test_out[..]).as_slice_less_safe()
                 );
                 Ok(())
             });

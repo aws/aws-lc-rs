@@ -769,12 +769,12 @@ mod tests {
     use crate::encoding::{
         AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
     };
-    use crate::{agreement, rand, test};
+    use crate::{rand, test};
 
     #[test]
     fn test_agreement_x25519() {
-        let alg = &agreement::X25519;
-        let peer_public = agreement::UnparsedPublicKey::new(
+        let alg = &X25519;
+        let peer_public = UnparsedPublicKey::new(
             alg,
             test::from_dirty_hex(
                 "e6db6867583030db3594c1a424b15f7c726624ec26b3353b10a903a6d0ab1c4c",
@@ -803,7 +803,7 @@ mod tests {
         let be_private_key =
             PrivateKey::from_private_key(&X25519, be_private_key_buffer.as_ref()).unwrap();
         {
-            let result = agreement::agree(&be_private_key, &peer_public, (), |key_material| {
+            let result = agree(&be_private_key, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -815,14 +815,14 @@ mod tests {
 
         assert_eq!(computed_public.algorithm(), alg);
         {
-            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+            let result = agree(&my_private, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
             assert_eq!(result, Ok(()));
         }
         {
-            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+            let result = agree(&my_private, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -862,8 +862,8 @@ mod tests {
 
     #[test]
     fn test_agreement_ecdh_p256() {
-        let alg = &agreement::ECDH_P256;
-        let peer_public = agreement::UnparsedPublicKey::new(
+        let alg = &ECDH_P256;
+        let peer_public = UnparsedPublicKey::new(
             alg,
             test::from_dirty_hex(
                 "04D12DFB5289C8D4F81208B70270398C342296970A0BCCB74C736FC7554494BF6356FBF3CA366CC23E8157854C13C58D6AAC23F046ADA30F8353E74F33039872AB",
@@ -894,7 +894,7 @@ mod tests {
         let be_private_key =
             PrivateKey::from_private_key(&ECDH_P256, be_private_key_buffer.as_ref()).unwrap();
         {
-            let result = agreement::agree(&be_private_key, &peer_public, (), |key_material| {
+            let result = agree(&be_private_key, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -905,7 +905,7 @@ mod tests {
         let der_private_key =
             PrivateKey::from_private_key_der(&ECDH_P256, der_private_key_buffer.as_ref()).unwrap();
         {
-            let result = agreement::agree(&der_private_key, &peer_public, (), |key_material| {
+            let result = agree(&der_private_key, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -918,7 +918,7 @@ mod tests {
         assert_eq!(computed_public.algorithm(), alg);
 
         {
-            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+            let result = agree(&my_private, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -926,7 +926,7 @@ mod tests {
         }
 
         {
-            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+            let result = agree(&my_private, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -936,8 +936,8 @@ mod tests {
 
     #[test]
     fn test_agreement_ecdh_p384() {
-        let alg = &agreement::ECDH_P384;
-        let peer_public = agreement::UnparsedPublicKey::new(
+        let alg = &ECDH_P384;
+        let peer_public = UnparsedPublicKey::new(
             alg,
             test::from_dirty_hex(
                 "04E558DBEF53EECDE3D3FCCFC1AEA08A89A987475D12FD950D83CFA41732BC509D0D1AC43A0336DEF96FDA41D0774A3571DCFBEC7AACF3196472169E838430367F66EEBE3C6E70C416DD5F0C68759DD1FFF83FA40142209DFF5EAAD96DB9E6386C",
@@ -966,7 +966,7 @@ mod tests {
         let be_private_key =
             PrivateKey::from_private_key(&ECDH_P384, be_private_key_buffer.as_ref()).unwrap();
         {
-            let result = agreement::agree(&be_private_key, &peer_public, (), |key_material| {
+            let result = agree(&be_private_key, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -977,7 +977,7 @@ mod tests {
         let der_private_key =
             PrivateKey::from_private_key_der(&ECDH_P384, der_private_key_buffer.as_ref()).unwrap();
         {
-            let result = agreement::agree(&der_private_key, &peer_public, (), |key_material| {
+            let result = agree(&der_private_key, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -990,7 +990,7 @@ mod tests {
         assert_eq!(computed_public.algorithm(), alg);
 
         {
-            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+            let result = agree(&my_private, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -1000,8 +1000,8 @@ mod tests {
 
     #[test]
     fn test_agreement_ecdh_p521() {
-        let alg = &agreement::ECDH_P521;
-        let peer_public = agreement::UnparsedPublicKey::new(
+        let alg = &ECDH_P521;
+        let peer_public = UnparsedPublicKey::new(
             alg,
             test::from_dirty_hex(
                 "0401a32099b02c0bd85371f60b0dd20890e6c7af048c8179890fda308b359dbbc2b7a832bb8c6526c4af99a7ea3f0b3cb96ae1eb7684132795c478ad6f962e4a6f446d017627357b39e9d7632a1370b3e93c1afb5c851b910eb4ead0c9d387df67cde85003e0e427552f1cd09059aad0262e235cce5fba8cedc4fdc1463da76dcd4b6d1a46",
@@ -1014,7 +1014,7 @@ mod tests {
 
         let my_private = {
             let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-            agreement::PrivateKey::generate_for_test(alg, &rng).unwrap()
+            PrivateKey::generate_for_test(alg, &rng).unwrap()
         };
 
         let my_public = test::from_dirty_hex(
@@ -1030,7 +1030,7 @@ mod tests {
         let be_private_key =
             PrivateKey::from_private_key(&ECDH_P521, be_private_key_buffer.as_ref()).unwrap();
         {
-            let result = agreement::agree(&be_private_key, &peer_public, (), |key_material| {
+            let result = agree(&be_private_key, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -1041,7 +1041,7 @@ mod tests {
         let der_private_key =
             PrivateKey::from_private_key_der(&ECDH_P521, der_private_key_buffer.as_ref()).unwrap();
         {
-            let result = agreement::agree(&der_private_key, &peer_public, (), |key_material| {
+            let result = agree(&der_private_key, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
@@ -1053,14 +1053,14 @@ mod tests {
 
         assert_eq!(computed_public.algorithm(), alg);
         {
-            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+            let result = agree(&my_private, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
             assert_eq!(result, Ok(()));
         }
         {
-            let result = agreement::agree(&my_private, &peer_public, (), |key_material| {
+            let result = agree(&my_private, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
