@@ -32,7 +32,10 @@ jobs:
           - aarch64-unknown-linux-gnu
           - i686-unknown-linux-gnu
           - powerpc64le-unknown-linux-gnu
-          - riscv64gc-unknown-linux-gnu
+          # Pending fixes upstream:
+          # * https://github.com/cross-rs/cross/issues/1423
+          # * https://github.com/rust-lang/rust/issues/117101
+          #- riscv64gc-unknown-linux-gnu
           - arm-linux-androideabi
           - armv7-linux-androideabi
           - aarch64-linux-android
@@ -48,16 +51,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
-          toolchain: ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '1.72.1') || 'stable' }}
+          toolchain: 'stable'
           target: ${{ matrix.target }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cross
-        run: cargo install cross ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '--locked') || '' }} --git https://github.com/cross-rs/cross
-      - if: ${{ matrix.target == 'riscv64gc-unknown-linux-gnu' }}
-        run: |
-          cargo update
-          cargo update -p clap --precise 4.4.18
+        run: cargo install cross --git https://github.com/cross-rs/cross
       - name: Cross-compilation
         if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'i686-unknown-linux-gnu' || matrix.target == 'x86_64-unknown-linux-musl' || matrix.target == 'aarch64-unknown-linux-musl'}}
         run: cross test -p aws-lc-rs --features unstable --target ${{ matrix.target }}
