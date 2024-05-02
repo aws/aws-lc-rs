@@ -407,6 +407,7 @@
 %xdefine _BN_from_montgomery _ %+ BORINGSSL_PREFIX %+ _BN_from_montgomery
 %xdefine _BN_gcd _ %+ BORINGSSL_PREFIX %+ _BN_gcd
 %xdefine _BN_generate_prime_ex _ %+ BORINGSSL_PREFIX %+ _BN_generate_prime_ex
+%xdefine _BN_get_flags _ %+ BORINGSSL_PREFIX %+ _BN_get_flags
 %xdefine _BN_get_rfc3526_prime_1536 _ %+ BORINGSSL_PREFIX %+ _BN_get_rfc3526_prime_1536
 %xdefine _BN_get_rfc3526_prime_2048 _ %+ BORINGSSL_PREFIX %+ _BN_get_rfc3526_prime_2048
 %xdefine _BN_get_rfc3526_prime_3072 _ %+ BORINGSSL_PREFIX %+ _BN_get_rfc3526_prime_3072
@@ -1051,6 +1052,7 @@
 %xdefine _EVP_CIPHER_iv_length _ %+ BORINGSSL_PREFIX %+ _EVP_CIPHER_iv_length
 %xdefine _EVP_CIPHER_key_length _ %+ BORINGSSL_PREFIX %+ _EVP_CIPHER_key_length
 %xdefine _EVP_CIPHER_mode _ %+ BORINGSSL_PREFIX %+ _EVP_CIPHER_mode
+%xdefine _EVP_CIPHER_name _ %+ BORINGSSL_PREFIX %+ _EVP_CIPHER_name
 %xdefine _EVP_CIPHER_nid _ %+ BORINGSSL_PREFIX %+ _EVP_CIPHER_nid
 %xdefine _EVP_Cipher _ %+ BORINGSSL_PREFIX %+ _EVP_Cipher
 %xdefine _EVP_CipherFinal _ %+ BORINGSSL_PREFIX %+ _EVP_CipherFinal
@@ -1502,6 +1504,7 @@
 %xdefine _NOTICEREF_free _ %+ BORINGSSL_PREFIX %+ _NOTICEREF_free
 %xdefine _NOTICEREF_it _ %+ BORINGSSL_PREFIX %+ _NOTICEREF_it
 %xdefine _NOTICEREF_new _ %+ BORINGSSL_PREFIX %+ _NOTICEREF_new
+%xdefine _OBJ_NAME_do_all_sorted _ %+ BORINGSSL_PREFIX %+ _OBJ_NAME_do_all_sorted
 %xdefine _OBJ_cbs2nid _ %+ BORINGSSL_PREFIX %+ _OBJ_cbs2nid
 %xdefine _OBJ_cleanup _ %+ BORINGSSL_PREFIX %+ _OBJ_cleanup
 %xdefine _OBJ_cmp _ %+ BORINGSSL_PREFIX %+ _OBJ_cmp
@@ -2605,7 +2608,6 @@
 %xdefine _X509V3_EXT_nconf_nid _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_nconf_nid
 %xdefine _X509V3_EXT_print _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_print
 %xdefine _X509V3_EXT_print_fp _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_print_fp
-%xdefine _X509V3_EXT_val_prn _ %+ BORINGSSL_PREFIX %+ _X509V3_EXT_val_prn
 %xdefine _X509V3_NAME_from_section _ %+ BORINGSSL_PREFIX %+ _X509V3_NAME_from_section
 %xdefine _X509V3_add1_i2d _ %+ BORINGSSL_PREFIX %+ _X509V3_add1_i2d
 %xdefine _X509V3_add_standard_extensions _ %+ BORINGSSL_PREFIX %+ _X509V3_add_standard_extensions
@@ -2710,10 +2712,12 @@
 %xdefine _X509_EXTENSION_set_data _ %+ BORINGSSL_PREFIX %+ _X509_EXTENSION_set_data
 %xdefine _X509_EXTENSION_set_object _ %+ BORINGSSL_PREFIX %+ _X509_EXTENSION_set_object
 %xdefine _X509_INFO_free _ %+ BORINGSSL_PREFIX %+ _X509_INFO_free
+%xdefine _X509_LOOKUP_add_dir _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_add_dir
 %xdefine _X509_LOOKUP_ctrl _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_ctrl
 %xdefine _X509_LOOKUP_file _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_file
 %xdefine _X509_LOOKUP_free _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_free
 %xdefine _X509_LOOKUP_hash_dir _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_hash_dir
+%xdefine _X509_LOOKUP_load_file _ %+ BORINGSSL_PREFIX %+ _X509_LOOKUP_load_file
 %xdefine _X509_NAME_ENTRIES_it _ %+ BORINGSSL_PREFIX %+ _X509_NAME_ENTRIES_it
 %xdefine _X509_NAME_ENTRY_create_by_NID _ %+ BORINGSSL_PREFIX %+ _X509_NAME_ENTRY_create_by_NID
 %xdefine _X509_NAME_ENTRY_create_by_OBJ _ %+ BORINGSSL_PREFIX %+ _X509_NAME_ENTRY_create_by_OBJ
@@ -2925,7 +2929,6 @@
 %xdefine _X509_VERIFY_PARAM_add1_host _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_add1_host
 %xdefine _X509_VERIFY_PARAM_clear_flags _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_clear_flags
 %xdefine _X509_VERIFY_PARAM_free _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_free
-%xdefine _X509_VERIFY_PARAM_get0_peername _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get0_peername
 %xdefine _X509_VERIFY_PARAM_get_depth _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get_depth
 %xdefine _X509_VERIFY_PARAM_get_flags _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get_flags
 %xdefine _X509_VERIFY_PARAM_inherit _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_inherit
@@ -3798,6 +3801,7 @@
 %xdefine _kem_kyber1024r3_method _ %+ BORINGSSL_PREFIX %+ _kem_kyber1024r3_method
 %xdefine _kem_kyber512r3_method _ %+ BORINGSSL_PREFIX %+ _kem_kyber512r3_method
 %xdefine _kem_kyber768r3_method _ %+ BORINGSSL_PREFIX %+ _kem_kyber768r3_method
+%xdefine _kem_ml_kem_512_ipd_method _ %+ BORINGSSL_PREFIX %+ _kem_ml_kem_512_ipd_method
 %xdefine _kem_pkey_meth _ %+ BORINGSSL_PREFIX %+ _kem_pkey_meth
 %xdefine _kyber1024r3_decapsulate _ %+ BORINGSSL_PREFIX %+ _kyber1024r3_decapsulate
 %xdefine _kyber1024r3_encapsulate _ %+ BORINGSSL_PREFIX %+ _kyber1024r3_encapsulate
@@ -3810,6 +3814,55 @@
 %xdefine _kyber768r3_keypair _ %+ BORINGSSL_PREFIX %+ _kyber768r3_keypair
 %xdefine _md4_block_data_order _ %+ BORINGSSL_PREFIX %+ _md4_block_data_order
 %xdefine _md5_block_asm_data_order _ %+ BORINGSSL_PREFIX %+ _md5_block_asm_data_order
+%xdefine _ml_kem_512_ipd_decapsulate _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ipd_decapsulate
+%xdefine _ml_kem_512_ipd_encapsulate _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ipd_encapsulate
+%xdefine _ml_kem_512_ipd_keypair _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ipd_keypair
+%xdefine _ml_kem_512_ref_barrett_reduce _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_barrett_reduce
+%xdefine _ml_kem_512_ref_basemul _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_basemul
+%xdefine _ml_kem_512_ref_cmov _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_cmov
+%xdefine _ml_kem_512_ref_dec _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_dec
+%xdefine _ml_kem_512_ref_enc _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_enc
+%xdefine _ml_kem_512_ref_enc_derand _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_enc_derand
+%xdefine _ml_kem_512_ref_gen_matrix _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_gen_matrix
+%xdefine _ml_kem_512_ref_indcpa_dec _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_indcpa_dec
+%xdefine _ml_kem_512_ref_indcpa_enc _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_indcpa_enc
+%xdefine _ml_kem_512_ref_indcpa_keypair_derand _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_indcpa_keypair_derand
+%xdefine _ml_kem_512_ref_invntt _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_invntt
+%xdefine _ml_kem_512_ref_keypair _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_keypair
+%xdefine _ml_kem_512_ref_keypair_derand _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_keypair_derand
+%xdefine _ml_kem_512_ref_kyber_shake128_absorb _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_kyber_shake128_absorb
+%xdefine _ml_kem_512_ref_kyber_shake256_prf _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_kyber_shake256_prf
+%xdefine _ml_kem_512_ref_kyber_shake256_rkprf _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_kyber_shake256_rkprf
+%xdefine _ml_kem_512_ref_montgomery_reduce _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_montgomery_reduce
+%xdefine _ml_kem_512_ref_ntt _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_ntt
+%xdefine _ml_kem_512_ref_poly_add _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_add
+%xdefine _ml_kem_512_ref_poly_basemul_montgomery _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_basemul_montgomery
+%xdefine _ml_kem_512_ref_poly_cbd_eta1 _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_cbd_eta1
+%xdefine _ml_kem_512_ref_poly_cbd_eta2 _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_cbd_eta2
+%xdefine _ml_kem_512_ref_poly_compress _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_compress
+%xdefine _ml_kem_512_ref_poly_decompress _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_decompress
+%xdefine _ml_kem_512_ref_poly_frombytes _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_frombytes
+%xdefine _ml_kem_512_ref_poly_frommsg _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_frommsg
+%xdefine _ml_kem_512_ref_poly_getnoise_eta1 _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_getnoise_eta1
+%xdefine _ml_kem_512_ref_poly_getnoise_eta2 _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_getnoise_eta2
+%xdefine _ml_kem_512_ref_poly_invntt_tomont _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_invntt_tomont
+%xdefine _ml_kem_512_ref_poly_ntt _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_ntt
+%xdefine _ml_kem_512_ref_poly_reduce _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_reduce
+%xdefine _ml_kem_512_ref_poly_sub _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_sub
+%xdefine _ml_kem_512_ref_poly_tobytes _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_tobytes
+%xdefine _ml_kem_512_ref_poly_tomont _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_tomont
+%xdefine _ml_kem_512_ref_poly_tomsg _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_tomsg
+%xdefine _ml_kem_512_ref_polyvec_add _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_add
+%xdefine _ml_kem_512_ref_polyvec_basemul_acc_montgomery _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_basemul_acc_montgomery
+%xdefine _ml_kem_512_ref_polyvec_compress _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_compress
+%xdefine _ml_kem_512_ref_polyvec_decompress _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_decompress
+%xdefine _ml_kem_512_ref_polyvec_frombytes _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_frombytes
+%xdefine _ml_kem_512_ref_polyvec_invntt_tomont _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_invntt_tomont
+%xdefine _ml_kem_512_ref_polyvec_ntt _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_ntt
+%xdefine _ml_kem_512_ref_polyvec_reduce _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_reduce
+%xdefine _ml_kem_512_ref_polyvec_tobytes _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_tobytes
+%xdefine _ml_kem_512_ref_verify _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_verify
+%xdefine _ml_kem_512_ref_zetas _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_zetas
 %xdefine _o2i_ECPublicKey _ %+ BORINGSSL_PREFIX %+ _o2i_ECPublicKey
 %xdefine _pkcs12_iterations_acceptable _ %+ BORINGSSL_PREFIX %+ _pkcs12_iterations_acceptable
 %xdefine _pkcs12_key_gen _ %+ BORINGSSL_PREFIX %+ _pkcs12_key_gen
@@ -4533,6 +4586,7 @@
 %xdefine BN_from_montgomery BORINGSSL_PREFIX %+ _BN_from_montgomery
 %xdefine BN_gcd BORINGSSL_PREFIX %+ _BN_gcd
 %xdefine BN_generate_prime_ex BORINGSSL_PREFIX %+ _BN_generate_prime_ex
+%xdefine BN_get_flags BORINGSSL_PREFIX %+ _BN_get_flags
 %xdefine BN_get_rfc3526_prime_1536 BORINGSSL_PREFIX %+ _BN_get_rfc3526_prime_1536
 %xdefine BN_get_rfc3526_prime_2048 BORINGSSL_PREFIX %+ _BN_get_rfc3526_prime_2048
 %xdefine BN_get_rfc3526_prime_3072 BORINGSSL_PREFIX %+ _BN_get_rfc3526_prime_3072
@@ -5177,6 +5231,7 @@
 %xdefine EVP_CIPHER_iv_length BORINGSSL_PREFIX %+ _EVP_CIPHER_iv_length
 %xdefine EVP_CIPHER_key_length BORINGSSL_PREFIX %+ _EVP_CIPHER_key_length
 %xdefine EVP_CIPHER_mode BORINGSSL_PREFIX %+ _EVP_CIPHER_mode
+%xdefine EVP_CIPHER_name BORINGSSL_PREFIX %+ _EVP_CIPHER_name
 %xdefine EVP_CIPHER_nid BORINGSSL_PREFIX %+ _EVP_CIPHER_nid
 %xdefine EVP_Cipher BORINGSSL_PREFIX %+ _EVP_Cipher
 %xdefine EVP_CipherFinal BORINGSSL_PREFIX %+ _EVP_CipherFinal
@@ -5628,6 +5683,7 @@
 %xdefine NOTICEREF_free BORINGSSL_PREFIX %+ _NOTICEREF_free
 %xdefine NOTICEREF_it BORINGSSL_PREFIX %+ _NOTICEREF_it
 %xdefine NOTICEREF_new BORINGSSL_PREFIX %+ _NOTICEREF_new
+%xdefine OBJ_NAME_do_all_sorted BORINGSSL_PREFIX %+ _OBJ_NAME_do_all_sorted
 %xdefine OBJ_cbs2nid BORINGSSL_PREFIX %+ _OBJ_cbs2nid
 %xdefine OBJ_cleanup BORINGSSL_PREFIX %+ _OBJ_cleanup
 %xdefine OBJ_cmp BORINGSSL_PREFIX %+ _OBJ_cmp
@@ -6731,7 +6787,6 @@
 %xdefine X509V3_EXT_nconf_nid BORINGSSL_PREFIX %+ _X509V3_EXT_nconf_nid
 %xdefine X509V3_EXT_print BORINGSSL_PREFIX %+ _X509V3_EXT_print
 %xdefine X509V3_EXT_print_fp BORINGSSL_PREFIX %+ _X509V3_EXT_print_fp
-%xdefine X509V3_EXT_val_prn BORINGSSL_PREFIX %+ _X509V3_EXT_val_prn
 %xdefine X509V3_NAME_from_section BORINGSSL_PREFIX %+ _X509V3_NAME_from_section
 %xdefine X509V3_add1_i2d BORINGSSL_PREFIX %+ _X509V3_add1_i2d
 %xdefine X509V3_add_standard_extensions BORINGSSL_PREFIX %+ _X509V3_add_standard_extensions
@@ -6836,10 +6891,12 @@
 %xdefine X509_EXTENSION_set_data BORINGSSL_PREFIX %+ _X509_EXTENSION_set_data
 %xdefine X509_EXTENSION_set_object BORINGSSL_PREFIX %+ _X509_EXTENSION_set_object
 %xdefine X509_INFO_free BORINGSSL_PREFIX %+ _X509_INFO_free
+%xdefine X509_LOOKUP_add_dir BORINGSSL_PREFIX %+ _X509_LOOKUP_add_dir
 %xdefine X509_LOOKUP_ctrl BORINGSSL_PREFIX %+ _X509_LOOKUP_ctrl
 %xdefine X509_LOOKUP_file BORINGSSL_PREFIX %+ _X509_LOOKUP_file
 %xdefine X509_LOOKUP_free BORINGSSL_PREFIX %+ _X509_LOOKUP_free
 %xdefine X509_LOOKUP_hash_dir BORINGSSL_PREFIX %+ _X509_LOOKUP_hash_dir
+%xdefine X509_LOOKUP_load_file BORINGSSL_PREFIX %+ _X509_LOOKUP_load_file
 %xdefine X509_NAME_ENTRIES_it BORINGSSL_PREFIX %+ _X509_NAME_ENTRIES_it
 %xdefine X509_NAME_ENTRY_create_by_NID BORINGSSL_PREFIX %+ _X509_NAME_ENTRY_create_by_NID
 %xdefine X509_NAME_ENTRY_create_by_OBJ BORINGSSL_PREFIX %+ _X509_NAME_ENTRY_create_by_OBJ
@@ -7051,7 +7108,6 @@
 %xdefine X509_VERIFY_PARAM_add1_host BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_add1_host
 %xdefine X509_VERIFY_PARAM_clear_flags BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_clear_flags
 %xdefine X509_VERIFY_PARAM_free BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_free
-%xdefine X509_VERIFY_PARAM_get0_peername BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get0_peername
 %xdefine X509_VERIFY_PARAM_get_depth BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get_depth
 %xdefine X509_VERIFY_PARAM_get_flags BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get_flags
 %xdefine X509_VERIFY_PARAM_inherit BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_inherit
@@ -7924,6 +7980,7 @@
 %xdefine kem_kyber1024r3_method BORINGSSL_PREFIX %+ _kem_kyber1024r3_method
 %xdefine kem_kyber512r3_method BORINGSSL_PREFIX %+ _kem_kyber512r3_method
 %xdefine kem_kyber768r3_method BORINGSSL_PREFIX %+ _kem_kyber768r3_method
+%xdefine kem_ml_kem_512_ipd_method BORINGSSL_PREFIX %+ _kem_ml_kem_512_ipd_method
 %xdefine kem_pkey_meth BORINGSSL_PREFIX %+ _kem_pkey_meth
 %xdefine kyber1024r3_decapsulate BORINGSSL_PREFIX %+ _kyber1024r3_decapsulate
 %xdefine kyber1024r3_encapsulate BORINGSSL_PREFIX %+ _kyber1024r3_encapsulate
@@ -7936,6 +7993,55 @@
 %xdefine kyber768r3_keypair BORINGSSL_PREFIX %+ _kyber768r3_keypair
 %xdefine md4_block_data_order BORINGSSL_PREFIX %+ _md4_block_data_order
 %xdefine md5_block_asm_data_order BORINGSSL_PREFIX %+ _md5_block_asm_data_order
+%xdefine ml_kem_512_ipd_decapsulate BORINGSSL_PREFIX %+ _ml_kem_512_ipd_decapsulate
+%xdefine ml_kem_512_ipd_encapsulate BORINGSSL_PREFIX %+ _ml_kem_512_ipd_encapsulate
+%xdefine ml_kem_512_ipd_keypair BORINGSSL_PREFIX %+ _ml_kem_512_ipd_keypair
+%xdefine ml_kem_512_ref_barrett_reduce BORINGSSL_PREFIX %+ _ml_kem_512_ref_barrett_reduce
+%xdefine ml_kem_512_ref_basemul BORINGSSL_PREFIX %+ _ml_kem_512_ref_basemul
+%xdefine ml_kem_512_ref_cmov BORINGSSL_PREFIX %+ _ml_kem_512_ref_cmov
+%xdefine ml_kem_512_ref_dec BORINGSSL_PREFIX %+ _ml_kem_512_ref_dec
+%xdefine ml_kem_512_ref_enc BORINGSSL_PREFIX %+ _ml_kem_512_ref_enc
+%xdefine ml_kem_512_ref_enc_derand BORINGSSL_PREFIX %+ _ml_kem_512_ref_enc_derand
+%xdefine ml_kem_512_ref_gen_matrix BORINGSSL_PREFIX %+ _ml_kem_512_ref_gen_matrix
+%xdefine ml_kem_512_ref_indcpa_dec BORINGSSL_PREFIX %+ _ml_kem_512_ref_indcpa_dec
+%xdefine ml_kem_512_ref_indcpa_enc BORINGSSL_PREFIX %+ _ml_kem_512_ref_indcpa_enc
+%xdefine ml_kem_512_ref_indcpa_keypair_derand BORINGSSL_PREFIX %+ _ml_kem_512_ref_indcpa_keypair_derand
+%xdefine ml_kem_512_ref_invntt BORINGSSL_PREFIX %+ _ml_kem_512_ref_invntt
+%xdefine ml_kem_512_ref_keypair BORINGSSL_PREFIX %+ _ml_kem_512_ref_keypair
+%xdefine ml_kem_512_ref_keypair_derand BORINGSSL_PREFIX %+ _ml_kem_512_ref_keypair_derand
+%xdefine ml_kem_512_ref_kyber_shake128_absorb BORINGSSL_PREFIX %+ _ml_kem_512_ref_kyber_shake128_absorb
+%xdefine ml_kem_512_ref_kyber_shake256_prf BORINGSSL_PREFIX %+ _ml_kem_512_ref_kyber_shake256_prf
+%xdefine ml_kem_512_ref_kyber_shake256_rkprf BORINGSSL_PREFIX %+ _ml_kem_512_ref_kyber_shake256_rkprf
+%xdefine ml_kem_512_ref_montgomery_reduce BORINGSSL_PREFIX %+ _ml_kem_512_ref_montgomery_reduce
+%xdefine ml_kem_512_ref_ntt BORINGSSL_PREFIX %+ _ml_kem_512_ref_ntt
+%xdefine ml_kem_512_ref_poly_add BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_add
+%xdefine ml_kem_512_ref_poly_basemul_montgomery BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_basemul_montgomery
+%xdefine ml_kem_512_ref_poly_cbd_eta1 BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_cbd_eta1
+%xdefine ml_kem_512_ref_poly_cbd_eta2 BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_cbd_eta2
+%xdefine ml_kem_512_ref_poly_compress BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_compress
+%xdefine ml_kem_512_ref_poly_decompress BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_decompress
+%xdefine ml_kem_512_ref_poly_frombytes BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_frombytes
+%xdefine ml_kem_512_ref_poly_frommsg BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_frommsg
+%xdefine ml_kem_512_ref_poly_getnoise_eta1 BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_getnoise_eta1
+%xdefine ml_kem_512_ref_poly_getnoise_eta2 BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_getnoise_eta2
+%xdefine ml_kem_512_ref_poly_invntt_tomont BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_invntt_tomont
+%xdefine ml_kem_512_ref_poly_ntt BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_ntt
+%xdefine ml_kem_512_ref_poly_reduce BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_reduce
+%xdefine ml_kem_512_ref_poly_sub BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_sub
+%xdefine ml_kem_512_ref_poly_tobytes BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_tobytes
+%xdefine ml_kem_512_ref_poly_tomont BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_tomont
+%xdefine ml_kem_512_ref_poly_tomsg BORINGSSL_PREFIX %+ _ml_kem_512_ref_poly_tomsg
+%xdefine ml_kem_512_ref_polyvec_add BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_add
+%xdefine ml_kem_512_ref_polyvec_basemul_acc_montgomery BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_basemul_acc_montgomery
+%xdefine ml_kem_512_ref_polyvec_compress BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_compress
+%xdefine ml_kem_512_ref_polyvec_decompress BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_decompress
+%xdefine ml_kem_512_ref_polyvec_frombytes BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_frombytes
+%xdefine ml_kem_512_ref_polyvec_invntt_tomont BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_invntt_tomont
+%xdefine ml_kem_512_ref_polyvec_ntt BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_ntt
+%xdefine ml_kem_512_ref_polyvec_reduce BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_reduce
+%xdefine ml_kem_512_ref_polyvec_tobytes BORINGSSL_PREFIX %+ _ml_kem_512_ref_polyvec_tobytes
+%xdefine ml_kem_512_ref_verify BORINGSSL_PREFIX %+ _ml_kem_512_ref_verify
+%xdefine ml_kem_512_ref_zetas BORINGSSL_PREFIX %+ _ml_kem_512_ref_zetas
 %xdefine o2i_ECPublicKey BORINGSSL_PREFIX %+ _o2i_ECPublicKey
 %xdefine pkcs12_iterations_acceptable BORINGSSL_PREFIX %+ _pkcs12_iterations_acceptable
 %xdefine pkcs12_key_gen BORINGSSL_PREFIX %+ _pkcs12_key_gen
