@@ -79,4 +79,7 @@ fi
 
 export DYLD_ROOT_PATH
 cd "${REPO_ROOT}"/aws-lc-rs
+
 cargo test --features bindgen,unstable --target aarch64-apple-ios-sim
+
+cargo test --release --features bindgen,unstable --target aarch64-apple-ios-sim
