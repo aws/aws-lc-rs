@@ -18,7 +18,7 @@ use cmake_builder::CmakeBuilder;
             any(target_os = "linux", target_os = "macos"),
             any(target_env = "gnu", target_env = "musl", target_env = "")
         ),
-        all(target_arch = "i686", target_os = "linux", target_env = "gnu")
+        all(target_arch = "x86", target_os = "linux", target_env = "gnu")
     ))
 ))]
 mod bindgen;
@@ -176,7 +176,7 @@ fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
             any(target_os = "linux", target_os = "macos"),
             any(target_env = "gnu", target_env = "musl", target_env = "")
         ),
-        all(target_arch = "i686", target_os = "linux", target_env = "gnu")
+        all(target_arch = "x86", target_os = "linux", target_env = "gnu")
     ))
 ))]
 fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
@@ -372,8 +372,24 @@ fn has_pregenerated() -> bool {
     unsafe { PREGENERATED }
 }
 
+fn prepare_cargo_cfg() {
+    // This is supported in Rust >= 1.77.0
+    // Also remove `#![allow(unexpected_cfgs)]` from src/lib.rs
+    /*
+    println!("cargo::rustc-check-cfg=cfg(use_bindgen_generated)");
+    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_apple_darwin)");
+     */
+}
+
 fn main() {
     initialize();
+    prepare_cargo_cfg();
 
     let manifest_dir = current_dir();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
@@ -407,7 +423,7 @@ fn main() {
                     any(target_os = "linux", target_os = "macos"),
                     any(target_env = "gnu", target_env = "musl", target_env = "")
                 ),
-                all(target_arch = "i686", target_os = "linux", target_env = "gnu")
+                all(target_arch = "x86", target_os = "linux", target_env = "gnu")
             ))
         ))]
         if !is_external_bindgen() {
