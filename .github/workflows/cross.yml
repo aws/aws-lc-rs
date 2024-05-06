@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-22.04 ]
         target:
           - arm-unknown-linux-gnueabihf
           - aarch64-unknown-linux-gnu
