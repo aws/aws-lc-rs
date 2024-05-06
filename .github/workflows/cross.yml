@@ -46,14 +46,17 @@ jobs:
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 'stable'
+      - name: Install cross
+        run: cargo install cross ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '--locked') || '' }} --git https://github.com/cross-rs/cross
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '1.72.1') || 'stable' }}
           target: ${{ matrix.target }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
-      - name: Install cross
-        run: cargo install cross ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '--locked') || '' }} --git https://github.com/cross-rs/cross
       - if: ${{ matrix.target == 'riscv64gc-unknown-linux-gnu' }}
         run: |
           cargo update
