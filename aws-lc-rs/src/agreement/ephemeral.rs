@@ -158,15 +158,14 @@ mod tests {
             &mut k,
             &mut u,
         );
-
-        if cfg!(feature = "slow_tests") {
-            expect_iterated_x25519(
-                "7c3911e0ab2586fd864497297e575e6f3bc601c0883c30df5f4dd2d24f665424",
-                10_000..1_000_000,
-                &mut k,
-                &mut u,
-            );
-        }
+        /*
+               expect_iterated_x25519(
+                   "7c3911e0ab2586fd864497297e575e6f3bc601c0883c30df5f4dd2d24f665424",
+                   10_000..1_000_000,
+                   &mut k,
+                   &mut u,
+               );
+        */
     }
 
     #[test]

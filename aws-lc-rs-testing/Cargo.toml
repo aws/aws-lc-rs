@@ -9,6 +9,7 @@ publish = false
 [features]
 ring-benchmarks = []
 openssl-benchmarks = []
+ring-sig-verify = ["aws-lc-rs/ring-sig-verify"]
 bindgen = ["aws-lc-rs/bindgen"]
 fips = ["aws-lc-rs/fips"]
 asan = ["aws-lc-rs/asan"]
