@@ -83,6 +83,53 @@
 //! # }
 //! ```
 //!
+//! ### AES-128 CBC Streaming Cipher
+//!
+//! ```rust
+//! # use std::error::Error;
+//! #
+//! # fn main() -> Result<(), Box<dyn Error>> {
+//! use aws_lc_rs::cipher::{StreamingDecryptingKey, StreamingEncryptingKey, UnboundCipherKey, AES_128};
+//!
+//! let original_message = "This is a secret message!".as_bytes();
+//!
+//! let key_bytes: &[u8] = &[
+//!     0xff, 0x0b, 0xe5, 0x84, 0x64, 0x0b, 0x00, 0xc8, 0x90, 0x7a, 0x4b, 0xbf, 0x82, 0x7c, 0xb6,
+//!     0xd1,
+//! ];
+//!
+//! // Encrypt
+//! let mut ciphertext_buffer = vec![0u8; original_message.len() + AES_128.block_len()];
+//! let ciphertext_slice = ciphertext_buffer.as_mut_slice();
+//!
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
+//! let mut encrypting_key = StreamingEncryptingKey::cbc_pkcs7(key)?;
+//! let written_slice = encrypting_key.update(original_message, ciphertext_slice)?;
+//! let written_len = written_slice.len();
+//! let remaining_slice = &mut ciphertext_slice[written_len..];
+//! let (context, written_slice) = encrypting_key.finish(remaining_slice)?;
+//! let ciphertext_len = written_len + written_slice.len();
+//! let ciphertext = &ciphertext_slice[0..ciphertext_len];
+//!
+//! // Decrypt
+//! let mut plaintext_buffer = vec![0u8; ciphertext_len + AES_128.block_len()];
+//! let plaintext_slice = plaintext_buffer.as_mut_slice();
+//!
+//! let key = UnboundCipherKey::new(&AES_128, key_bytes)?;
+//! let mut decrypting_key = StreamingDecryptingKey::cbc_pkcs7(key, context)?;
+//! let written_slice = decrypting_key.update(ciphertext, plaintext_slice)?;
+//! let written_len = written_slice.len();
+//! let remaining_slice = &mut plaintext_slice[written_len..];
+//! let written_slice = decrypting_key.finish(remaining_slice)?;
+//! let plaintext_len = written_len + written_slice.len();
+//! let plaintext = &plaintext_slice[0..plaintext_len];
+//!
+//! assert_eq!(original_message, plaintext);
+//! #
+//! # Ok(())
+//! # }
+//! ```
+//!
 //! ## Constructing a `DecryptionContext` for decryption.
 //!
 //! ```rust
@@ -142,8 +189,10 @@ pub(crate) mod block;
 pub(crate) mod chacha;
 pub(crate) mod key;
 mod padded;
+mod streaming;
 
 pub use padded::{PaddedBlockDecryptingKey, PaddedBlockEncryptingKey};
+pub use streaming::{StreamingDecryptingKey, StreamingEncryptingKey};
 
 use crate::buffer::Buffer;
 use crate::error::Unspecified;
@@ -280,7 +329,9 @@ impl Algorithm {
         &self.id
     }
 
-    const fn block_len(&self) -> usize {
+    /// The block length of this cipher algorithm.
+    #[must_use]
+    pub const fn block_len(&self) -> usize {
         self.block_len
     }
 
@@ -905,4 +956,47 @@ mod tests {
         "eca7285d19f3c20e295378460e8729",
         "b5098e5e788de6ac2f2098eb2fc6f8"
     );
+
+    #[test]
+    fn streaming_cipher() {
+        use crate::cipher::{
+            StreamingDecryptingKey, StreamingEncryptingKey, UnboundCipherKey, AES_128,
+        };
+
+        let original_message = "This is a secret message!".as_bytes();
+
+        let key_bytes: &[u8] = &[
+            0xff, 0x0b, 0xe5, 0x84, 0x64, 0x0b, 0x00, 0xc8, 0x90, 0x7a, 0x4b, 0xbf, 0x82, 0x7c,
+            0xb6, 0xd1,
+        ];
+
+        // Encrypt
+        let mut ciphertext_buffer = vec![0u8; original_message.len() + AES_128.block_len()];
+        let ciphertext_slice = ciphertext_buffer.as_mut_slice();
+
+        let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
+        let mut encrypting_key = StreamingEncryptingKey::cbc_pkcs7(key).unwrap();
+        let written_slice = encrypting_key
+            .update(original_message, ciphertext_slice)
+            .unwrap();
+        let written_len = written_slice.len();
+        let remaining_slice = &mut ciphertext_slice[written_len..];
+        let (context, written_slice) = encrypting_key.finish(remaining_slice).unwrap();
+        let ciphertext_len = written_len + written_slice.len();
+        let ciphertext = &ciphertext_slice[0..ciphertext_len];
+
+        // Decrypt
+        let mut plaintext_buffer = vec![0u8; ciphertext_len + AES_128.block_len()];
+        let plaintext_slice = plaintext_buffer.as_mut_slice();
+        let key = UnboundCipherKey::new(&AES_128, key_bytes).unwrap();
+        let mut decrypting_key = StreamingDecryptingKey::cbc_pkcs7(key, context).unwrap();
+        let written_slice = decrypting_key.update(ciphertext, plaintext_slice).unwrap();
+        let written_len = written_slice.len();
+        let remaining_slice = &mut plaintext_slice[written_len..];
+        let written_slice = decrypting_key.finish(remaining_slice).unwrap();
+        let plaintext_len = written_len + written_slice.len();
+        let plaintext = &plaintext_slice[0..plaintext_len];
+
+        assert_eq!(original_message, plaintext);
+    }
 }
