@@ -128,7 +128,7 @@ impl crate::kem::AlgorithmIdentifier for AlgorithmId {
 impl crate::sealed::Sealed for AlgorithmId {}
 
 /// Retrieve an unstable KEM [`Algorithm`] using the [`AlgorithmId`] specified by `id`.
-/// May return [`Option::None`] if support for the algorithm has been removed from the unstable module.
+/// May return [`None`] if support for the algorithm has been removed from the unstable module.
 #[must_use]
 pub const fn get_algorithm(id: AlgorithmId) -> Option<&'static Algorithm<AlgorithmId>> {
     match id {

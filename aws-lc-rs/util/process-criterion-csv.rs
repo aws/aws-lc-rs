@@ -216,11 +216,11 @@ fn numerical_string_compare(a: &str, b: &str) -> Ordering {
                         return ac.cmp(&bc);
                     }
                 } else if bc.is_digit(10) {
-                    if number_compare {
-                        return Ordering::Less;
+                    return if number_compare {
+                        Ordering::Less
                     } else {
-                        return ac.cmp(&bc);
-                    }
+                        ac.cmp(&bc)
+                    };
                 } else if number_compare {
                     return a_num.cmp(&b_num);
                 } else {

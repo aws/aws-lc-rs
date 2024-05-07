@@ -32,12 +32,10 @@
 //! let random_array = rand::generate(&rng).unwrap();
 //! let more_rand_bytes: [u8; 64] = random_array.expose();
 //! ```
-use aws_lc::RAND_bytes;
-use core::fmt::Debug;
-
-use crate::error;
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
+use aws_lc::RAND_bytes;
+use core::fmt::Debug;
 
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
@@ -146,7 +144,7 @@ impl Default for SystemRandom {
 
 impl sealed::SecureRandom for SystemRandom {
     #[inline]
-    fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified> {
+    fn fill_impl(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
         fill(dest)
     }
 }
@@ -158,7 +156,7 @@ impl sealed::SecureRandom for SystemRandom {
 //
 /// # Errors
 /// `error::Unspecified` if unable to fill `dest`.
-pub fn fill(dest: &mut [u8]) -> Result<(), error::Unspecified> {
+pub fn fill(dest: &mut [u8]) -> Result<(), Unspecified> {
     if 1 != indicator_check!(unsafe { RAND_bytes(dest.as_mut_ptr(), dest.len()) }) {
         return Err(Unspecified);
     }

@@ -584,12 +584,9 @@ fn ecdsa_asn1_to_fixed(alg_id: &'static AlgorithmID, sig: &[u8]) -> Result<Signa
     let s_buffer = s_bn.to_be_bytes();
 
     Ok(Signature::new(|slice| {
-        let (r_start, r_end) = (
-            (expected_number_size - r_buffer.len()),
-            expected_number_size,
-        );
+        let (r_start, r_end) = (expected_number_size - r_buffer.len(), expected_number_size);
         let (s_start, s_end) = (
-            (2 * expected_number_size - s_buffer.len()),
+            2 * expected_number_size - s_buffer.len(),
             2 * expected_number_size,
         );
 

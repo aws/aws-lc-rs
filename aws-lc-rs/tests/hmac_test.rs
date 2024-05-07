@@ -60,7 +60,7 @@ fn hmac_test_case_inner(
 
     // One-shot API.
     {
-        let signature = hmac::sign(&key, input);
+        let signature = sign(&key, input);
         assert_eq!(is_ok, signature.as_ref() == output);
         assert_eq!(is_ok, hmac::verify(&key, input, output).is_ok());
     }

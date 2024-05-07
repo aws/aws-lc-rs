@@ -399,7 +399,7 @@ fn parse_test_case(
                 is_first_line = false;
 
                 let parts: Vec<&str> = line.splitn(2, " = ").collect();
-                assert!(parts.len() == 2, "Syntax error: Expected Key = Value.");
+                assert_eq!(parts.len(), 2, "Syntax error: Expected Key = Value.");
 
                 let key = parts[0].trim();
                 let value = parts[1].trim();
@@ -636,7 +636,7 @@ mod tests {
         let mut n = 0;
         test::run(test_file!("test/test_3_tests.txt"), |_, test_case| {
             test_case.consume_string("Key");
-            assert!(n != test_to_fail, "Oh Noes!");
+            assert_ne!(n, test_to_fail, "Oh Noes!");
             n += 1;
             Ok(())
         });

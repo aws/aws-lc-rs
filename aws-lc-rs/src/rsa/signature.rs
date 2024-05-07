@@ -261,7 +261,7 @@ pub(crate) fn verify_rsa_signature(
         return Err(Unspecified);
     }
 
-    let mut md_ctx = digest::digest_ctx::DigestContext::new_uninit();
+    let mut md_ctx = DigestContext::new_uninit();
     let digest = digest::match_digest_type(&algorithm.id);
 
     let mut pctx = null_mut::<EVP_PKEY_CTX>();

@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn std_error() {
-        let key_rejected = super::KeyRejected::wrong_algorithm();
+        let key_rejected = KeyRejected::wrong_algorithm();
         assert!(key_rejected.cause().is_none());
         assert_eq!("WrongAlgorithm", key_rejected.description());
 

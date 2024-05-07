@@ -265,7 +265,7 @@ impl PrkMode {
     }
 }
 
-impl core::fmt::Debug for PrkMode {
+impl fmt::Debug for PrkMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Expand { .. } => f.debug_struct("Expand").finish_non_exhaustive(),
