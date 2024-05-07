@@ -132,17 +132,17 @@ jobs:
         run: cargo install cargo-llvm-cov
 
       - name: Run coverage
-        working-directory: ./aws-lc-rs
-        run: cargo llvm-cov --workspace --features unstable --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --lcov --output-path ${{ runner.temp }}/lcov.info
+        run: cargo llvm-cov -p aws-lc-rs --features unstable --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --codecov --output-path ./codecov.json
       - name: Run FIPS coverage
-        working-directory: ./aws-lc-rs
-        run: cargo llvm-cov --workspace --features unstable,fips --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --lcov --output-path ${{ runner.temp }}/lcov-fips.info
+        run: cargo llvm-cov -p aws-lc-rs --features unstable,fips --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --codecov --output-path ./codecov-fips.json
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@v4
         with:
-          files: ${{ runner.temp }}/lcov.info,${{ runner.temp }}/lcov-fips.info
+          files: ./codecov.json,./codecov-fips.json
+          verbose: true
+          fail_ci_if_error: true
 
   aws-lc-rs-asan:
     if: github.repository_owner == 'aws'
