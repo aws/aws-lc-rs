@@ -686,9 +686,6 @@
 <a href="#686" id="686">686</a>
 <a href="#687" id="687">687</a>
 <a href="#688" id="688">688</a>
-<a href="#689" id="689">689</a>
-<a href="#690" id="690">690</a>
-<a href="#691" id="691">691</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -1275,12 +1272,9 @@
     <span class="kw">let </span>s_buffer = s_bn.to_be_bytes();
 
     <span class="prelude-val">Ok</span>(Signature::new(|slice| {
-        <span class="kw">let </span>(r_start, r_end) = (
-            (expected_number_size - r_buffer.len()),
-            expected_number_size,
-        );
+        <span class="kw">let </span>(r_start, r_end) = (expected_number_size - r_buffer.len(), expected_number_size);
         <span class="kw">let </span>(s_start, s_end) = (
-            (<span class="number">2 </span>* expected_number_size - s_buffer.len()),
+            <span class="number">2 </span>* expected_number_size - s_buffer.len(),
             <span class="number">2 </span>* expected_number_size,
         );
 

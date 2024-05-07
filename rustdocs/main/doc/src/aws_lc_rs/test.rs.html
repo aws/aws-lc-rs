@@ -1058,7 +1058,7 @@
                 is_first_line = <span class="bool-val">false</span>;
 
                 <span class="kw">let </span>parts: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = line.splitn(<span class="number">2</span>, <span class="string">" = "</span>).collect();
-                <span class="macro">assert!</span>(parts.len() == <span class="number">2</span>, <span class="string">"Syntax error: Expected Key = Value."</span>);
+                <span class="macro">assert_eq!</span>(parts.len(), <span class="number">2</span>, <span class="string">"Syntax error: Expected Key = Value."</span>);
 
                 <span class="kw">let </span>key = parts[<span class="number">0</span>].trim();
                 <span class="kw">let </span>value = parts[<span class="number">1</span>].trim();
@@ -1295,7 +1295,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>n = <span class="number">0</span>;
         test::run(<span class="macro">test_file!</span>(<span class="string">"test/test_3_tests.txt"</span>), |<span class="kw">_</span>, test_case| {
             test_case.consume_string(<span class="string">"Key"</span>);
-            <span class="macro">assert!</span>(n != test_to_fail, <span class="string">"Oh Noes!"</span>);
+            <span class="macro">assert_ne!</span>(n, test_to_fail, <span class="string">"Oh Noes!"</span>);
             n += <span class="number">1</span>;
             <span class="prelude-val">Ok</span>(())
         });

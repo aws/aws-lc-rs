@@ -581,7 +581,7 @@
         <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
     }
 
-    <span class="kw">let </span><span class="kw-2">mut </span>md_ctx = digest::digest_ctx::DigestContext::new_uninit();
+    <span class="kw">let </span><span class="kw-2">mut </span>md_ctx = DigestContext::new_uninit();
     <span class="kw">let </span>digest = digest::match_digest_type(<span class="kw-2">&amp;</span>algorithm.id);
 
     <span class="kw">let </span><span class="kw-2">mut </span>pctx = null_mut::&lt;EVP_PKEY_CTX&gt;();

@@ -653,7 +653,7 @@
                     positive_integer(input)<span class="question-mark">?
                         </span>.big_endian_without_leading_zero_as_input()
                         .as_slice_less_safe(),
-                    untrusted::Input::from(<span class="kw-2">&amp;</span>test_out[..]).as_slice_less_safe()
+                    Input::from(<span class="kw-2">&amp;</span>test_out[..]).as_slice_less_safe()
                 );
                 <span class="prelude-val">Ok</span>(())
             });

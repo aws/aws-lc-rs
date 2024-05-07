@@ -355,7 +355,7 @@
 
         <span class="kw">for </span>alignment <span class="kw">in </span><span class="number">0</span>..=MAX_ALIGNMENT {
             buf[..alignment].fill(ARBITRARY);
-            <span class="kw">let </span>buf = <span class="kw-2">&amp;mut </span>buf[..(input.len())];
+            <span class="kw">let </span>buf = <span class="kw-2">&amp;mut </span>buf[..input.len()];
             buf.copy_from_slice(input);
             <span class="kw">let </span>nonce = <span class="kw-2">&amp;</span>nonce;
 

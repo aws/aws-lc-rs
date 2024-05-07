@@ -889,7 +889,7 @@
             digest::Context {
                 algorithm: alg,
                 digest_ctx: DigestContext::new(alg).unwrap(),
-                msg_len: (alg.max_input_len - block_len + <span class="number">1</span>),
+                msg_len: alg.max_input_len - block_len + <span class="number">1</span>,
                 max_input_reached: <span class="bool-val">false</span>,
             }
         }

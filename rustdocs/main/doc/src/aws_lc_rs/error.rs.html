@@ -525,7 +525,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>std_error() {
-        <span class="kw">let </span>key_rejected = <span class="kw">super</span>::KeyRejected::wrong_algorithm();
+        <span class="kw">let </span>key_rejected = KeyRejected::wrong_algorithm();
         <span class="macro">assert!</span>(key_rejected.cause().is_none());
         <span class="macro">assert_eq!</span>(<span class="string">"WrongAlgorithm"</span>, key_rejected.description());
 
