@@ -1,6 +1,14 @@
 [build]
 dockerfile = "./docker/linux-cross/Dockerfile"
 
+[target.x86_64-pc-windows-gnu]
+pre-build = [
+    "apt-get update && apt-get install --assume-yes nasm clang wget",
+    "mkdir -pm755 /etc/apt/keyrings",
+    "wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources",
+    "apt install --assume-yes --install-recommends winehq-stable"
+]
+
 [build.env]
 passthrough = [
     "AWS_LC_SYS_NO_PREFIX", "AWS_LC_FIPS_SYS_NO_PREFIX",

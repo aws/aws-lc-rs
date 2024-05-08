@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-22.04 ]
         target:
           - arm-unknown-linux-gnueabihf
           - aarch64-unknown-linux-gnu
@@ -41,6 +41,7 @@ jobs:
           - x86_64-unknown-linux-musl
           - aarch64-unknown-linux-musl
           - s390x-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
     steps:
       - uses: actions/checkout@v3
         with:
