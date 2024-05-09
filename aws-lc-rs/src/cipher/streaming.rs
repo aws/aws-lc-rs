@@ -21,6 +21,40 @@ pub struct StreamingEncryptingKey {
     context: EncryptionContext,
 }
 
+/// A struct indicating the portion of a buffer written to, and/or not written to, during an
+/// encryption/decryption operation.
+pub struct BufferUpdate<'a> {
+    written: &'a [u8],
+    remainder: &'a mut [u8],
+}
+
+impl<'a> BufferUpdate<'a> {
+    fn new(out_buffer: &'a mut [u8], written_len: usize) -> Self {
+        let (written, remainder) = out_buffer.split_at_mut(written_len);
+        Self { written, remainder }
+    }
+}
+
+impl BufferUpdate<'_> {
+    /// Returns the slice from the buffer that was modified by the operation.
+    #[must_use]
+    pub fn written(&self) -> &[u8] {
+        self.written
+    }
+
+    /// Returns the slice of the buffer that was not modified by the operation.
+    #[must_use]
+    pub fn remainder(&self) -> &[u8] {
+        self.remainder
+    }
+
+    /// Returns a mutable slice of the buffer that was not modified by the operation.
+    #[must_use]
+    pub fn remainder_mut(&mut self) -> &mut [u8] {
+        self.remainder
+    }
+}
+
 impl StreamingEncryptingKey {
     #[allow(clippy::needless_pass_by_value)]
     fn new(
@@ -69,7 +103,7 @@ impl StreamingEncryptingKey {
         &mut self,
         input: &[u8],
         output: &'a mut [u8],
-    ) -> Result<&'a [u8], Unspecified> {
+    ) -> Result<BufferUpdate<'a>, Unspecified> {
         if output.len() < (input.len() + self.algorithm.block_len) {
             return Err(Unspecified);
         }
@@ -88,13 +122,16 @@ impl StreamingEncryptingKey {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
-        Ok(&output[0..outlen])
+        Ok(BufferUpdate::new(output, outlen))
     }
 
     /// Finish the encryption and return the output.
     /// # Errors
     /// Returns an error if the output buffer is too small.
-    pub fn finish(self, output: &mut [u8]) -> Result<(DecryptionContext, &[u8]), Unspecified> {
+    pub fn finish(
+        self,
+        output: &mut [u8],
+    ) -> Result<(DecryptionContext, BufferUpdate), Unspecified> {
         if output.len() < self.algorithm.block_len {
             return Err(Unspecified);
         }
@@ -109,7 +146,7 @@ impl StreamingEncryptingKey {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
-        Ok((self.context.into(), &output[0..outlen]))
+        Ok((self.context.into(), BufferUpdate::new(output, outlen)))
     }
 
     /// Returns the cipher operating mode.
@@ -214,7 +251,7 @@ impl StreamingDecryptingKey {
         &mut self,
         input: &[u8],
         output: &'a mut [u8],
-    ) -> Result<&'a [u8], Unspecified> {
+    ) -> Result<BufferUpdate<'a>, Unspecified> {
         if output.len() < (input.len() + self.algorithm.block_len) {
             return Err(Unspecified);
         }
@@ -233,19 +270,19 @@ impl StreamingDecryptingKey {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
-        Ok(&output[0..outlen])
+        Ok(BufferUpdate::new(output, outlen))
     }
 
     /// Finish the decryption and return the output.
     /// # Errors
     /// Returns an error if the output buffer is too small.
-    pub fn finish(self, output: &mut [u8]) -> Result<&[u8], Unspecified> {
+    pub fn finish(self, output: &mut [u8]) -> Result<BufferUpdate, Unspecified> {
         let mut outlen: i32 = output.len().try_into()?;
         if 1 != unsafe { EVP_DecryptFinal_ex(*self.cipher_ctx, output.as_mut_ptr(), &mut outlen) } {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
-        Ok(&output[0..outlen])
+        Ok(BufferUpdate::new(output, outlen))
     }
 
     /// Returns the cipher operating mode.
@@ -280,9 +317,9 @@ impl StreamingDecryptingKey {
 
 #[cfg(test)]
 mod tests {
-    use crate::cipher::streaming::{StreamingDecryptingKey, StreamingEncryptingKey};
     use crate::cipher::{
-        DecryptionContext, OperatingMode, UnboundCipherKey, AES_256, AES_256_KEY_LEN,
+        DecryptionContext, OperatingMode, StreamingDecryptingKey, StreamingEncryptingKey,
+        UnboundCipherKey, AES_256, AES_256_KEY_LEN,
     };
     use crate::rand::{SecureRandom, SystemRandom};
     use paste::*;
@@ -312,7 +349,7 @@ mod tests {
                 )
                 .unwrap();
             in_idx += step;
-            out_idx += output.len();
+            out_idx += output.written().len();
             if in_idx >= n {
                 break;
             }
@@ -321,7 +358,7 @@ mod tests {
         let (decrypt_iv, output) = encrypting_key
             .finish(&mut ciphertext[out_idx..out_end])
             .unwrap();
-        let outlen = output.len();
+        let outlen = output.written().len();
         ciphertext.truncate(out_idx + outlen);
         match mode {
             OperatingMode::CBC => {
@@ -361,7 +398,7 @@ mod tests {
                 )
                 .unwrap();
             in_idx += step;
-            out_idx += output.len();
+            out_idx += output.written().len();
             if in_idx >= n {
                 break;
             }
@@ -370,7 +407,7 @@ mod tests {
         let output = decrypting_key
             .finish(&mut plaintext[out_idx..out_end])
             .unwrap();
-        let outlen = output.len();
+        let outlen = output.written().len();
         plaintext.truncate(out_idx + outlen);
         match mode {
             OperatingMode::CBC => {
