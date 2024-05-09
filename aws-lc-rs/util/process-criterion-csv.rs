@@ -1,4 +1,9 @@
-#!/usr/bin/env rust-script
+#!/usr/bin/env -S cargo +nightly -Zscript
+---cargo
+[dependencies]
+clap = { version = "4.0.29", features = ["derive"] }
+itertools = "0.10.5"
+---
 //! Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //! SPDX-License-Identifier: Apache-2.0 OR ISC
 //! To run, you will need to install rust-script:
@@ -11,11 +16,7 @@
 //! $ find ./target/criterion -name "raw.csv" | xargs cat | sort | egrep -v "^group" > bench-aarch64-AL2.csv
 //! ```
 //!
-//! ```cargo
-//! [dependencies]
-//! clap = { version = "4.0.29", features = ["derive"] }
-//! itertools = "0.10.5"
-//! ```
+
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
