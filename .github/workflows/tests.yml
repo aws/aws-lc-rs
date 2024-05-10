@@ -37,7 +37,7 @@ jobs:
           - --no-default-features --features non-fips,ring-sig-verify,unstable
           - --no-default-features --features non-fips,alloc,unstable
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -66,7 +66,7 @@ jobs:
           - --no-default-features --features aws-lc-sys,bindgen,unstable
           - --release --all-targets --features bindgen,unstable
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'macos-13-xlarge' }}
@@ -106,9 +106,10 @@ jobs:
           - --no-default-features --features non-fips,ring-io,unstable
           - --no-default-features --features non-fips,ring-sig-verify,unstable
           - --no-default-features --features non-fips,alloc,unstable
+    env:
+      AWS_LC_SYS_PREBUILT_NASM: 1
     steps:
-      - uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -125,7 +126,7 @@ jobs:
     name: aws-ls-rs coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
           lfs: true
@@ -167,7 +168,7 @@ jobs:
           - --no-default-features --features fips,asan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -196,7 +197,7 @@ jobs:
         os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
         static: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -204,6 +205,40 @@ jobs:
         # Doc-tests fail to link with dynamic build
         # See: https://github.com/rust-lang/cargo/issues/8531
         run: cargo test -p aws-lc-rs --tests
+
+  build-env-nasm-test:
+    if: github.repository_owner == 'aws'
+    name: prebuilt NASM verification
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - 'x86_64-pc-windows-msvc'
+          - 'x86_64-pc-windows-gnu'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install NASM
+        uses: ilammy/setup-nasm@v1
+      - name: Remove NASM artifacts
+        shell: bash
+        run: |
+          cargo clean
+          rm ./aws-lc-sys/builder/prebuilt-nasm/*
+      - name: Run cargo test
+        shell: bash
+        run: AWS_LC_SYS_PREBUILT_NASM=0 cargo test --tests -p aws-lc-rs --release --no-default-features --features aws-lc-sys
+      - name: Collect NASM outputs
+        shell: bash
+        run: ./scripts/build/collect_nasm_obj.sh
+      - name: Flag any NASM changes
+        shell: bash
+        run: |
+          git add .
+          git diff --cached --exit-code HEAD -- aws-lc-sys/builder/prebuilt-nasm/*.txt
 
   build-env-external-bindgen-test:
     if: github.repository_owner == 'aws'
@@ -216,14 +251,14 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
     steps:
-      - if: ${{ matrix.os == 'windows-latest' }}
-        uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v4
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: ilammy/setup-nasm@v1
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: seanmiddleditch/gha-setup-ninja@v5
       - name: Install bindgen-cli
         run: cargo install --locked bindgen-cli
       - name: Remove bindings
@@ -245,12 +280,10 @@ jobs:
         os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
         static: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v4
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
@@ -271,7 +304,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -306,15 +339,14 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v4
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
+      - uses: seanmiddleditch/gha-setup-ninja@v5
       - name: Run cargo test
         run: cargo test -p aws-lc-rs --tests --no-default-features --features fips
       - name: Release build
@@ -346,14 +378,14 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
     steps:
-      - if: ${{ matrix.os == 'windows-latest' }}
-        uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: ilammy/setup-nasm@v1
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: seanmiddleditch/gha-setup-ninja@v5
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v4
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
@@ -378,7 +410,7 @@ jobs:
           - macos-12
           - macos-13-xlarge
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
           lfs: true

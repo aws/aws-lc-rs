@@ -270,3 +270,36 @@ jobs:
         run: ./scripts/build/collect_build_src.sh -t ${{ matrix.target }}
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Collected source files for ${{ matrix.target }}"
+  collect-nasm-and-commit:
+    needs: generate-windows-bindings-and-commit
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.ref_name }}
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+          targets: "x86_64-pc-windows-msvc,x86_64-pc-windows-gnu"
+      - uses: ilammy/setup-nasm@v1
+      - name: Build aws-lc-sys
+        shell: bash
+        run: AWS_LC_SYS_PREBUILT_NASM=0 cargo build -p aws-lc-sys --release --target x86_64-pc-windows-msvc
+      - name: Collect NASM object files
+        shell: bash
+        run: ./scripts/build/collect_nasm_obj.sh
+      - name: Clean build
+        shell: bash
+        run: cargo clean
+      - name: Test aws-lc-rs for x86_64-pc-windows-msvc
+        shell: bash
+        run: AWS_LC_SYS_PREBUILT_NASM=1 cargo build -p aws-lc-sys --target x86_64-pc-windows-msvc
+      - name: Test aws-lc-sys for x86_64-pc-windows-gnu
+        shell: bash
+        run: AWS_LC_SYS_PREBUILT_NASM=1 cargo build -p aws-lc-sys --target x86_64-pc-windows-gnu
+      - name: Commit & Push changes
+        shell: bash
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Collected NASM files"
