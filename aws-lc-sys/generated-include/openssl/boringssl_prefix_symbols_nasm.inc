@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_16_0
+%define BORINGSSL_PREFIX aws_lc_0_17_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -301,6 +301,7 @@
 %xdefine _BIO_puts _ %+ BORINGSSL_PREFIX %+ _BIO_puts
 %xdefine _BIO_read _ %+ BORINGSSL_PREFIX %+ _BIO_read
 %xdefine _BIO_read_asn1 _ %+ BORINGSSL_PREFIX %+ _BIO_read_asn1
+%xdefine _BIO_read_ex _ %+ BORINGSSL_PREFIX %+ _BIO_read_ex
 %xdefine _BIO_read_filename _ %+ BORINGSSL_PREFIX %+ _BIO_read_filename
 %xdefine _BIO_reset _ %+ BORINGSSL_PREFIX %+ _BIO_reset
 %xdefine _BIO_rw_filename _ %+ BORINGSSL_PREFIX %+ _BIO_rw_filename
@@ -347,6 +348,7 @@
 %xdefine _BIO_wpending _ %+ BORINGSSL_PREFIX %+ _BIO_wpending
 %xdefine _BIO_write _ %+ BORINGSSL_PREFIX %+ _BIO_write
 %xdefine _BIO_write_all _ %+ BORINGSSL_PREFIX %+ _BIO_write_all
+%xdefine _BIO_write_ex _ %+ BORINGSSL_PREFIX %+ _BIO_write_ex
 %xdefine _BIO_write_filename _ %+ BORINGSSL_PREFIX %+ _BIO_write_filename
 %xdefine _BLAKE2B256 _ %+ BORINGSSL_PREFIX %+ _BLAKE2B256
 %xdefine _BLAKE2B256_Final _ %+ BORINGSSL_PREFIX %+ _BLAKE2B256_Final
@@ -1923,6 +1925,7 @@
 %xdefine _RSA_padding_check_PKCS1_type_1 _ %+ BORINGSSL_PREFIX %+ _RSA_padding_check_PKCS1_type_1
 %xdefine _RSA_parse_private_key _ %+ BORINGSSL_PREFIX %+ _RSA_parse_private_key
 %xdefine _RSA_parse_public_key _ %+ BORINGSSL_PREFIX %+ _RSA_parse_public_key
+%xdefine _RSA_pkey_ctx_ctrl _ %+ BORINGSSL_PREFIX %+ _RSA_pkey_ctx_ctrl
 %xdefine _RSA_print _ %+ BORINGSSL_PREFIX %+ _RSA_print
 %xdefine _RSA_print_fp _ %+ BORINGSSL_PREFIX %+ _RSA_print_fp
 %xdefine _RSA_private_decrypt _ %+ BORINGSSL_PREFIX %+ _RSA_private_decrypt
@@ -2135,6 +2138,7 @@
 %xdefine _SSL_CTX_set_custom_verify _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_custom_verify
 %xdefine _SSL_CTX_set_default_passwd_cb _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_default_passwd_cb
 %xdefine _SSL_CTX_set_default_passwd_cb_userdata _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_default_passwd_cb_userdata
+%xdefine _SSL_CTX_set_default_read_buffer_len _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_default_read_buffer_len
 %xdefine _SSL_CTX_set_default_verify_paths _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_default_verify_paths
 %xdefine _SSL_CTX_set_dh_auto _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_dh_auto
 %xdefine _SSL_CTX_set_dos_protection_cb _ %+ BORINGSSL_PREFIX %+ _SSL_CTX_set_dos_protection_cb
@@ -2457,6 +2461,7 @@
 %xdefine _SSL_set_client_CA_list _ %+ BORINGSSL_PREFIX %+ _SSL_set_client_CA_list
 %xdefine _SSL_set_connect_state _ %+ BORINGSSL_PREFIX %+ _SSL_set_connect_state
 %xdefine _SSL_set_custom_verify _ %+ BORINGSSL_PREFIX %+ _SSL_set_custom_verify
+%xdefine _SSL_set_default_read_buffer_len _ %+ BORINGSSL_PREFIX %+ _SSL_set_default_read_buffer_len
 %xdefine _SSL_set_early_data_enabled _ %+ BORINGSSL_PREFIX %+ _SSL_set_early_data_enabled
 %xdefine _SSL_set_enable_ech_grease _ %+ BORINGSSL_PREFIX %+ _SSL_set_enable_ech_grease
 %xdefine _SSL_set_enforce_rsa_key_usage _ %+ BORINGSSL_PREFIX %+ _SSL_set_enforce_rsa_key_usage
@@ -2895,6 +2900,8 @@
 %xdefine _X509_STORE_get1_certs _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get1_certs
 %xdefine _X509_STORE_get1_crls _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get1_crls
 %xdefine _X509_STORE_get_check_crl _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_check_crl
+%xdefine _X509_STORE_get_ex_data _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_ex_data
+%xdefine _X509_STORE_get_ex_new_index _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_ex_new_index
 %xdefine _X509_STORE_get_get_crl _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_get_crl
 %xdefine _X509_STORE_get_get_issuer _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_get_issuer
 %xdefine _X509_STORE_get_verify_cb _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_verify_cb
@@ -2905,6 +2912,7 @@
 %xdefine _X509_STORE_set_check_crl _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_check_crl
 %xdefine _X509_STORE_set_default_paths _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_default_paths
 %xdefine _X509_STORE_set_depth _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_depth
+%xdefine _X509_STORE_set_ex_data _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_ex_data
 %xdefine _X509_STORE_set_flags _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_flags
 %xdefine _X509_STORE_set_get_crl _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_get_crl
 %xdefine _X509_STORE_set_get_issuer _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_get_issuer
@@ -3906,12 +3914,14 @@
 %xdefine _pqcrystals_kyber1024_ref_cmov _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_cmov
 %xdefine _pqcrystals_kyber1024_ref_dec _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_dec
 %xdefine _pqcrystals_kyber1024_ref_enc _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_enc
+%xdefine _pqcrystals_kyber1024_ref_enc_derand _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_enc_derand
 %xdefine _pqcrystals_kyber1024_ref_gen_matrix _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_gen_matrix
 %xdefine _pqcrystals_kyber1024_ref_indcpa_dec _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_indcpa_dec
 %xdefine _pqcrystals_kyber1024_ref_indcpa_enc _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_indcpa_enc
-%xdefine _pqcrystals_kyber1024_ref_indcpa_keypair _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_indcpa_keypair
+%xdefine _pqcrystals_kyber1024_ref_indcpa_keypair_derand _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_indcpa_keypair_derand
 %xdefine _pqcrystals_kyber1024_ref_invntt _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_invntt
 %xdefine _pqcrystals_kyber1024_ref_keypair _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_keypair
+%xdefine _pqcrystals_kyber1024_ref_keypair_derand _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_keypair_derand
 %xdefine _pqcrystals_kyber1024_ref_kyber_shake128_absorb _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_kyber_shake128_absorb
 %xdefine _pqcrystals_kyber1024_ref_kyber_shake256_prf _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_kyber_shake256_prf
 %xdefine _pqcrystals_kyber1024_ref_montgomery_reduce _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_montgomery_reduce
@@ -3949,12 +3959,14 @@
 %xdefine _pqcrystals_kyber512_ref_cmov _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_cmov
 %xdefine _pqcrystals_kyber512_ref_dec _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_dec
 %xdefine _pqcrystals_kyber512_ref_enc _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_enc
+%xdefine _pqcrystals_kyber512_ref_enc_derand _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_enc_derand
 %xdefine _pqcrystals_kyber512_ref_gen_matrix _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_gen_matrix
 %xdefine _pqcrystals_kyber512_ref_indcpa_dec _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_indcpa_dec
 %xdefine _pqcrystals_kyber512_ref_indcpa_enc _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_indcpa_enc
-%xdefine _pqcrystals_kyber512_ref_indcpa_keypair _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_indcpa_keypair
+%xdefine _pqcrystals_kyber512_ref_indcpa_keypair_derand _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_indcpa_keypair_derand
 %xdefine _pqcrystals_kyber512_ref_invntt _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_invntt
 %xdefine _pqcrystals_kyber512_ref_keypair _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_keypair
+%xdefine _pqcrystals_kyber512_ref_keypair_derand _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_keypair_derand
 %xdefine _pqcrystals_kyber512_ref_kyber_shake128_absorb _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_kyber_shake128_absorb
 %xdefine _pqcrystals_kyber512_ref_kyber_shake256_prf _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_kyber_shake256_prf
 %xdefine _pqcrystals_kyber512_ref_montgomery_reduce _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_montgomery_reduce
@@ -3992,12 +4004,14 @@
 %xdefine _pqcrystals_kyber768_ref_cmov _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_cmov
 %xdefine _pqcrystals_kyber768_ref_dec _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_dec
 %xdefine _pqcrystals_kyber768_ref_enc _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_enc
+%xdefine _pqcrystals_kyber768_ref_enc_derand _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_enc_derand
 %xdefine _pqcrystals_kyber768_ref_gen_matrix _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_gen_matrix
 %xdefine _pqcrystals_kyber768_ref_indcpa_dec _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_indcpa_dec
 %xdefine _pqcrystals_kyber768_ref_indcpa_enc _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_indcpa_enc
-%xdefine _pqcrystals_kyber768_ref_indcpa_keypair _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_indcpa_keypair
+%xdefine _pqcrystals_kyber768_ref_indcpa_keypair_derand _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_indcpa_keypair_derand
 %xdefine _pqcrystals_kyber768_ref_invntt _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_invntt
 %xdefine _pqcrystals_kyber768_ref_keypair _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_keypair
+%xdefine _pqcrystals_kyber768_ref_keypair_derand _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_keypair_derand
 %xdefine _pqcrystals_kyber768_ref_kyber_shake128_absorb _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_kyber_shake128_absorb
 %xdefine _pqcrystals_kyber768_ref_kyber_shake256_prf _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_kyber_shake256_prf
 %xdefine _pqcrystals_kyber768_ref_montgomery_reduce _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_montgomery_reduce
@@ -4480,6 +4494,7 @@
 %xdefine BIO_puts BORINGSSL_PREFIX %+ _BIO_puts
 %xdefine BIO_read BORINGSSL_PREFIX %+ _BIO_read
 %xdefine BIO_read_asn1 BORINGSSL_PREFIX %+ _BIO_read_asn1
+%xdefine BIO_read_ex BORINGSSL_PREFIX %+ _BIO_read_ex
 %xdefine BIO_read_filename BORINGSSL_PREFIX %+ _BIO_read_filename
 %xdefine BIO_reset BORINGSSL_PREFIX %+ _BIO_reset
 %xdefine BIO_rw_filename BORINGSSL_PREFIX %+ _BIO_rw_filename
@@ -4526,6 +4541,7 @@
 %xdefine BIO_wpending BORINGSSL_PREFIX %+ _BIO_wpending
 %xdefine BIO_write BORINGSSL_PREFIX %+ _BIO_write
 %xdefine BIO_write_all BORINGSSL_PREFIX %+ _BIO_write_all
+%xdefine BIO_write_ex BORINGSSL_PREFIX %+ _BIO_write_ex
 %xdefine BIO_write_filename BORINGSSL_PREFIX %+ _BIO_write_filename
 %xdefine BLAKE2B256 BORINGSSL_PREFIX %+ _BLAKE2B256
 %xdefine BLAKE2B256_Final BORINGSSL_PREFIX %+ _BLAKE2B256_Final
@@ -6102,6 +6118,7 @@
 %xdefine RSA_padding_check_PKCS1_type_1 BORINGSSL_PREFIX %+ _RSA_padding_check_PKCS1_type_1
 %xdefine RSA_parse_private_key BORINGSSL_PREFIX %+ _RSA_parse_private_key
 %xdefine RSA_parse_public_key BORINGSSL_PREFIX %+ _RSA_parse_public_key
+%xdefine RSA_pkey_ctx_ctrl BORINGSSL_PREFIX %+ _RSA_pkey_ctx_ctrl
 %xdefine RSA_print BORINGSSL_PREFIX %+ _RSA_print
 %xdefine RSA_print_fp BORINGSSL_PREFIX %+ _RSA_print_fp
 %xdefine RSA_private_decrypt BORINGSSL_PREFIX %+ _RSA_private_decrypt
@@ -6314,6 +6331,7 @@
 %xdefine SSL_CTX_set_custom_verify BORINGSSL_PREFIX %+ _SSL_CTX_set_custom_verify
 %xdefine SSL_CTX_set_default_passwd_cb BORINGSSL_PREFIX %+ _SSL_CTX_set_default_passwd_cb
 %xdefine SSL_CTX_set_default_passwd_cb_userdata BORINGSSL_PREFIX %+ _SSL_CTX_set_default_passwd_cb_userdata
+%xdefine SSL_CTX_set_default_read_buffer_len BORINGSSL_PREFIX %+ _SSL_CTX_set_default_read_buffer_len
 %xdefine SSL_CTX_set_default_verify_paths BORINGSSL_PREFIX %+ _SSL_CTX_set_default_verify_paths
 %xdefine SSL_CTX_set_dh_auto BORINGSSL_PREFIX %+ _SSL_CTX_set_dh_auto
 %xdefine SSL_CTX_set_dos_protection_cb BORINGSSL_PREFIX %+ _SSL_CTX_set_dos_protection_cb
@@ -6636,6 +6654,7 @@
 %xdefine SSL_set_client_CA_list BORINGSSL_PREFIX %+ _SSL_set_client_CA_list
 %xdefine SSL_set_connect_state BORINGSSL_PREFIX %+ _SSL_set_connect_state
 %xdefine SSL_set_custom_verify BORINGSSL_PREFIX %+ _SSL_set_custom_verify
+%xdefine SSL_set_default_read_buffer_len BORINGSSL_PREFIX %+ _SSL_set_default_read_buffer_len
 %xdefine SSL_set_early_data_enabled BORINGSSL_PREFIX %+ _SSL_set_early_data_enabled
 %xdefine SSL_set_enable_ech_grease BORINGSSL_PREFIX %+ _SSL_set_enable_ech_grease
 %xdefine SSL_set_enforce_rsa_key_usage BORINGSSL_PREFIX %+ _SSL_set_enforce_rsa_key_usage
@@ -7074,6 +7093,8 @@
 %xdefine X509_STORE_get1_certs BORINGSSL_PREFIX %+ _X509_STORE_get1_certs
 %xdefine X509_STORE_get1_crls BORINGSSL_PREFIX %+ _X509_STORE_get1_crls
 %xdefine X509_STORE_get_check_crl BORINGSSL_PREFIX %+ _X509_STORE_get_check_crl
+%xdefine X509_STORE_get_ex_data BORINGSSL_PREFIX %+ _X509_STORE_get_ex_data
+%xdefine X509_STORE_get_ex_new_index BORINGSSL_PREFIX %+ _X509_STORE_get_ex_new_index
 %xdefine X509_STORE_get_get_crl BORINGSSL_PREFIX %+ _X509_STORE_get_get_crl
 %xdefine X509_STORE_get_get_issuer BORINGSSL_PREFIX %+ _X509_STORE_get_get_issuer
 %xdefine X509_STORE_get_verify_cb BORINGSSL_PREFIX %+ _X509_STORE_get_verify_cb
@@ -7084,6 +7105,7 @@
 %xdefine X509_STORE_set_check_crl BORINGSSL_PREFIX %+ _X509_STORE_set_check_crl
 %xdefine X509_STORE_set_default_paths BORINGSSL_PREFIX %+ _X509_STORE_set_default_paths
 %xdefine X509_STORE_set_depth BORINGSSL_PREFIX %+ _X509_STORE_set_depth
+%xdefine X509_STORE_set_ex_data BORINGSSL_PREFIX %+ _X509_STORE_set_ex_data
 %xdefine X509_STORE_set_flags BORINGSSL_PREFIX %+ _X509_STORE_set_flags
 %xdefine X509_STORE_set_get_crl BORINGSSL_PREFIX %+ _X509_STORE_set_get_crl
 %xdefine X509_STORE_set_get_issuer BORINGSSL_PREFIX %+ _X509_STORE_set_get_issuer
@@ -8085,12 +8107,14 @@
 %xdefine pqcrystals_kyber1024_ref_cmov BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_cmov
 %xdefine pqcrystals_kyber1024_ref_dec BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_dec
 %xdefine pqcrystals_kyber1024_ref_enc BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_enc
+%xdefine pqcrystals_kyber1024_ref_enc_derand BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_enc_derand
 %xdefine pqcrystals_kyber1024_ref_gen_matrix BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_gen_matrix
 %xdefine pqcrystals_kyber1024_ref_indcpa_dec BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_indcpa_dec
 %xdefine pqcrystals_kyber1024_ref_indcpa_enc BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_indcpa_enc
-%xdefine pqcrystals_kyber1024_ref_indcpa_keypair BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_indcpa_keypair
+%xdefine pqcrystals_kyber1024_ref_indcpa_keypair_derand BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_indcpa_keypair_derand
 %xdefine pqcrystals_kyber1024_ref_invntt BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_invntt
 %xdefine pqcrystals_kyber1024_ref_keypair BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_keypair
+%xdefine pqcrystals_kyber1024_ref_keypair_derand BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_keypair_derand
 %xdefine pqcrystals_kyber1024_ref_kyber_shake128_absorb BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_kyber_shake128_absorb
 %xdefine pqcrystals_kyber1024_ref_kyber_shake256_prf BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_kyber_shake256_prf
 %xdefine pqcrystals_kyber1024_ref_montgomery_reduce BORINGSSL_PREFIX %+ _pqcrystals_kyber1024_ref_montgomery_reduce
@@ -8128,12 +8152,14 @@
 %xdefine pqcrystals_kyber512_ref_cmov BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_cmov
 %xdefine pqcrystals_kyber512_ref_dec BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_dec
 %xdefine pqcrystals_kyber512_ref_enc BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_enc
+%xdefine pqcrystals_kyber512_ref_enc_derand BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_enc_derand
 %xdefine pqcrystals_kyber512_ref_gen_matrix BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_gen_matrix
 %xdefine pqcrystals_kyber512_ref_indcpa_dec BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_indcpa_dec
 %xdefine pqcrystals_kyber512_ref_indcpa_enc BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_indcpa_enc
-%xdefine pqcrystals_kyber512_ref_indcpa_keypair BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_indcpa_keypair
+%xdefine pqcrystals_kyber512_ref_indcpa_keypair_derand BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_indcpa_keypair_derand
 %xdefine pqcrystals_kyber512_ref_invntt BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_invntt
 %xdefine pqcrystals_kyber512_ref_keypair BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_keypair
+%xdefine pqcrystals_kyber512_ref_keypair_derand BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_keypair_derand
 %xdefine pqcrystals_kyber512_ref_kyber_shake128_absorb BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_kyber_shake128_absorb
 %xdefine pqcrystals_kyber512_ref_kyber_shake256_prf BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_kyber_shake256_prf
 %xdefine pqcrystals_kyber512_ref_montgomery_reduce BORINGSSL_PREFIX %+ _pqcrystals_kyber512_ref_montgomery_reduce
@@ -8171,12 +8197,14 @@
 %xdefine pqcrystals_kyber768_ref_cmov BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_cmov
 %xdefine pqcrystals_kyber768_ref_dec BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_dec
 %xdefine pqcrystals_kyber768_ref_enc BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_enc
+%xdefine pqcrystals_kyber768_ref_enc_derand BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_enc_derand
 %xdefine pqcrystals_kyber768_ref_gen_matrix BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_gen_matrix
 %xdefine pqcrystals_kyber768_ref_indcpa_dec BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_indcpa_dec
 %xdefine pqcrystals_kyber768_ref_indcpa_enc BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_indcpa_enc
-%xdefine pqcrystals_kyber768_ref_indcpa_keypair BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_indcpa_keypair
+%xdefine pqcrystals_kyber768_ref_indcpa_keypair_derand BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_indcpa_keypair_derand
 %xdefine pqcrystals_kyber768_ref_invntt BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_invntt
 %xdefine pqcrystals_kyber768_ref_keypair BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_keypair
+%xdefine pqcrystals_kyber768_ref_keypair_derand BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_keypair_derand
 %xdefine pqcrystals_kyber768_ref_kyber_shake128_absorb BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_kyber_shake128_absorb
 %xdefine pqcrystals_kyber768_ref_kyber_shake256_prf BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_kyber_shake256_prf
 %xdefine pqcrystals_kyber768_ref_montgomery_reduce BORINGSSL_PREFIX %+ _pqcrystals_kyber768_ref_montgomery_reduce
