@@ -1,15 +1,15 @@
 # Windows Requirements
 
-| Platform                  | *default*                    | **fips**                                | bindgen required? |
-|---------------------------|------------------------------|-----------------------------------------|-------------------|
-| `x86_64-pc-windows-msvc`  | C/C++ Compiler, CMake & NASM | C/C++ Compiler, CMake, NASM, Go & Ninja | **_Yes_**         | 
-| `x86_64-pc-windows-gnu`   | C/C++ Compiler, CMake & NASM | **Not Supported**                       | **_Yes_**         |
-| `aarch64-pc-windows-msvc` | **Not Yet Supported**        | **Not Supported**                       | N/A               |
-| _Other_                   | **Not Supported**            | **Not Supported**                       | N/A               |
+| Platform                  | *default*                                  | **fips**                                | bindgen required? |
+|---------------------------|--------------------------------------------|-----------------------------------------|-------------------|
+| `x86_64-pc-windows-msvc`  | C/C++ Compiler, CMake & NASM               | C/C++ Compiler, CMake, NASM, Go & Ninja | **_Yes_**         | 
+| `x86_64-pc-windows-gnu`   | C/C++ Compiler, CMake & NASM               | **Not Supported**                       | **_Yes_**         |
+| `aarch64-pc-windows-msvc` | C/C++ Compiler (`clang-cl`), CMake & Ninja | **Not Supported**                       | **_Yes_**         |
+| _Other_                   | **Not Supported**                          | **Not Supported**                       | N/A               |
 
 ## C/C++ Compiler
 
-Use the following instructions to download **Visual Studio Build Tools 2017**.
+Use the following instructions to download **Visual Studio Build Tools 2017** or later.
 
 1. Download the [Build Tools for Visual Studio][WIN_TOOLS] installer.
 2. Execute the installer.
@@ -18,7 +18,10 @@ Use the following instructions to download **Visual Studio Build Tools 2017**.
 5. Under `Individual componenets` select
     * `C++/CLI support`
     * `C++ CMake tools for Windows`
-6. Confirm selections and click `Install`
+6. For ARM64/aarch64 support, also select:
+    * `C++ Clang Compiler for Windows`
+    * `MSBuild support for LLVM (clang-cl) toolset`
+7. Confirm selections and click `Install`
 
 ## CMake
 
