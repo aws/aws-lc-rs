@@ -170,7 +170,7 @@
 <h2 id="what-are-the-differences-between-aws-lc-rs-and-ring"><a class="header" href="#what-are-the-differences-between-aws-lc-rs-and-ring">What are the differences between <code>aws-lc-rs</code> and <code>ring</code>?</a></h2>
 <p>While we aim to be API-compatible with <code>ring</code> v0.16 there are some differences in our implementation. Please review the
 <a href="https://docs.rs/aws-lc-rs/latest/aws_lc_rs/#ring-compatibility">ring-compatibility</a> section of our <a href="https://docs.rs/aws-lc-rs/latest/aws_lc_rs">API reference guide</a>.</p>
-<h2 id="can-i-run-aws-lc-rs-on-x-platform-or-architecture"><a class="header" href="#can-i-run-aws-lc-rs-on-x-platform-or-architecture">Can I run <code>aws-lc-rs</code> on X platform or architecture?</a></h2>
+<h2 id="can-i-run-aws-lc-rs-on-x-platform-or-architecture"><a class="header" href="#can-i-run-aws-lc-rs-on-x-platform-or-architecture">Can I run <code>aws-lc-rs</code> on <em>X</em> platform or architecture?</a></h2>
 <p>The answer to this question is dependent on several factors based on the target environment:</p>
 <ul>
 <li>Must be a platform and CPU architecture supported by <a href="https://github.com/aws/aws-lc">AWS-LC</a>.</li>
@@ -179,8 +179,8 @@ See the <a href="https://doc.rust-lang.org/rustc/platform-support.html">Rust com
 <li>If the underlying <code>aws-lc-sys</code> or <code>aws-lc-fips-sys</code> crates don't have pre-generated bindings for the desired platform
 then you must use the <code>bindgen</code> crate feature of <code>aws-lc-rs</code>, or have the <a href="https://crates.io/crates/bindgen-cli">bindgen-cli</a> installed, to enable
 generation of the FFI bindings for the desired platform and architecture.</li>
-<li>See <a href="requirements/README.html">Requirements</a> for more details on what build dependencies are
-required for target platforms.</li>
+<li>See <a href="requirements/README.html">Requirements</a> and <a href="./platform_suppport.html">Platform Support</a> for more details on
+build requirements for various platforms.</li>
 </ul>
 <p>If there is a platform or architecture you are interested in seeing support for, please create a GitHub <a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">issue</a>.</p>
 

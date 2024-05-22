@@ -170,12 +170,12 @@
 <div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th><th>bindgen required?</th></tr></thead><tbody>
 <tr><td><code>x86_64-pc-windows-msvc</code></td><td>C/C++ Compiler, CMake &amp; NASM</td><td>C/C++ Compiler, CMake, NASM, Go &amp; Ninja</td><td><strong><em>Yes</em></strong></td></tr>
 <tr><td><code>x86_64-pc-windows-gnu</code></td><td>C/C++ Compiler, CMake &amp; NASM</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
-<tr><td><code>aarch64-pc-windows-msvc</code></td><td><strong>Not Yet Supported</strong></td><td><strong>Not Supported</strong></td><td>N/A</td></tr>
+<tr><td><code>aarch64-pc-windows-msvc</code></td><td>C/C++ Compiler (<code>clang-cl</code>), CMake &amp; Ninja</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
 <tr><td><em>Other</em></td><td><strong>Not Supported</strong></td><td><strong>Not Supported</strong></td><td>N/A</td></tr>
 </tbody></table>
 </div>
 <h2 id="cc-compiler"><a class="header" href="#cc-compiler">C/C++ Compiler</a></h2>
-<p>Use the following instructions to download <strong>Visual Studio Build Tools 2017</strong>.</p>
+<p>Use the following instructions to download <strong>Visual Studio Build Tools 2017</strong> or later.</p>
 <ol>
 <li>Download the <a href="https://aka.ms/vs/17/release/vs_BuildTools.exe">Build Tools for Visual Studio</a> installer.</li>
 <li>Execute the installer.</li>
@@ -185,6 +185,12 @@
 <ul>
 <li><code>C++/CLI support</code></li>
 <li><code>C++ CMake tools for Windows</code></li>
+</ul>
+</li>
+<li>For ARM64/aarch64 support, also select:
+<ul>
+<li><code>C++ Clang Compiler for Windows</code></li>
+<li><code>MSBuild support for LLVM (clang-cl) toolset</code></li>
 </ul>
 </li>
 <li>Confirm selections and click <code>Install</code></li>
