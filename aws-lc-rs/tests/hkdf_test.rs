@@ -93,6 +93,24 @@ fn hkdf_output_len_tests() {
 }
 
 #[test]
+fn hkdf_info_len_tests() {
+    for &alg in &[hkdf::HKDF_SHA256, hkdf::HKDF_SHA384, hkdf::HKDF_SHA512] {
+        for info_length in (50..300).step_by(7) {
+            let salt = hkdf::Salt::new(alg, &[]);
+            let prk = salt.extract(&[]); // TODO: enforce minimum length.
+            let info = vec![1u8; info_length];
+            let info = &[info.as_slice()];
+
+            {
+                let okm = prk.expand(info, My(2)).unwrap();
+                let mut buf = [0u8; 2];
+                assert_eq!(okm.fill(&mut buf), Ok(()));
+            }
+        }
+    }
+}
+
+#[test]
 /// Try creating various key types via HKDF.
 fn hkdf_key_types() {
     for &alg in &[
