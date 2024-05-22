@@ -75,17 +75,10 @@ pub static HKDF_SHA512: Algorithm = Algorithm(hmac::HMAC_SHA512);
 /// We set the limit to something tolerable, so that the Salt structure can be stack allocatable.
 const MAX_HKDF_SALT_LEN: usize = 80;
 
-// This is needed so that the precise value can be provided in the documentation.
-macro_rules! max_hkdf_info_len {
-    () => {
-        102
-    };
-}
-
 /// General Info length's for HKDF don't normally exceed 256 bits.
 /// We set the limit to something tolerable, so that the memory passed into |`HKDF_expand`| is
 /// allocated on the stack.
-const MAX_HKDF_INFO_LEN: usize = max_hkdf_info_len!();
+const MAX_HKDF_INFO_STACK_LEN: usize = 102;
 
 /// The maximum output size of a PRK computed by |`HKDF_extract`| is the maximum digest
 /// size that can be outputted by *AWS-LC*.
@@ -350,9 +343,8 @@ impl Prk {
     /// [HKDF-Expand]: https://tools.ietf.org/html/rfc5869#section-2.3
     ///
     /// # Errors
-    /// Returns `error::Unspecified` if either:
+    /// Returns `error::Unspecified` if:
     ///   * `len` is more than 255 times the digest algorithm's output length.
-    #[doc = concat!("  * the combined lengths of the `info` slices is more than ", max_hkdf_info_len!(), " bytes.")]
     // # FIPS
     // The following conditions must be met:
     // * `Prk` must be constructed using `Salt::extract` prior to calling
@@ -368,16 +360,13 @@ impl Prk {
         if len_cached > 255 * self.algorithm.0.digest_algorithm().output_len {
             return Err(Unspecified);
         }
-        let mut info_bytes = [0u8; MAX_HKDF_INFO_LEN];
+        let mut info_bytes: Vec<u8> = Vec::with_capacity(3 * MAX_HKDF_INFO_STACK_LEN);
         let mut info_len = 0;
-        for byte_ary in info {
-            let new_info_len = info_len + byte_ary.len();
-            if new_info_len > MAX_HKDF_INFO_LEN {
-                return Err(Unspecified);
-            }
-            info_bytes[info_len..new_info_len].copy_from_slice(byte_ary);
-            info_len = new_info_len;
+        for &byte_ary in info {
+            info_bytes.extend_from_slice(byte_ary);
+            info_len = info_len + byte_ary.len();
         }
+        let info_bytes = InfoBytes::new(info_bytes.as_slice());
         Ok(Okm {
             prk: self,
             info_bytes,
@@ -401,13 +390,36 @@ impl From<Okm<'_, Algorithm>> for Prk {
     }
 }
 
+#[derive(Zeroize)]
+enum InfoBytes {
+    Stack([u8; MAX_HKDF_INFO_STACK_LEN]),
+    Heap(Box<[u8]>),
+}
+impl InfoBytes {
+    fn new(info: &[u8]) -> Self {
+        if info.len() <= MAX_HKDF_INFO_STACK_LEN {
+            let mut stack_info = [0u8; MAX_HKDF_INFO_STACK_LEN];
+            stack_info[0..info.len()].copy_from_slice(info);
+            Self::Stack(stack_info)
+        } else {
+            Self::Heap(info.into())
+        }
+    }
+    fn as_slice(&self) -> &[u8] {
+        match self {
+            Self::Stack(ary_bytes) => ary_bytes.as_slice(),
+            Self::Heap(box_bytes) => box_bytes.as_ref(),
+        }
+    }
+}
+
 /// An HKDF OKM (Output Keying Material)
 ///
 /// Intentionally not `Clone` or `Copy` as an OKM is generally only safe to
 /// use once.
 pub struct Okm<'a, L: KeyType> {
     prk: &'a Prk,
-    info_bytes: [u8; MAX_HKDF_INFO_LEN],
+    info_bytes: InfoBytes,
     info_len: usize,
     len: L,
 }
@@ -454,9 +466,11 @@ impl<L: KeyType> Okm<'_, L> {
             return Err(Unspecified);
         }
 
-        self.prk
-            .mode
-            .fill(self.prk.algorithm, out, &self.info_bytes[..self.info_len])?;
+        self.prk.mode.fill(
+            self.prk.algorithm,
+            out,
+            &self.info_bytes.as_slice()[..self.info_len],
+        )?;
 
         Ok(())
     }
