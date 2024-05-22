@@ -13,7 +13,7 @@ use aws_lc::{
 };
 use std::ptr::null_mut;
 
-/// A cipher encryption key for streaming encryption operations.
+/// A key for streaming encryption operations.
 pub struct StreamingEncryptingKey {
     algorithm: &'static Algorithm,
     mode: OperatingMode,
@@ -96,18 +96,24 @@ impl StreamingEncryptingKey {
         })
     }
 
-    /// Encrypt the input and return the output.
+    /// Updates the internal state of the key with the provided ciphertext `input`,
+    /// potentially writing bytes of ciphertext to `output`.
+    ///
+    /// The number of bytes written to `output` can be up to `input.len()`
+    /// plus the block length of the algorithm (e.g., 16 bytes for AES).
+    ///
     /// # Errors
-    /// Returns an error if the output buffer is too small.
+    /// * May return an error if the `output` buffer is smaller than the length of
+    ///   the `input` plus the algorithm's block length. Certain cipher modes
+    ///   (such as CTR) may allow the output buffer to be as small as the size
+    ///   of the input in certain circumstances.
+    /// * Returns an error if the length of either `input` or `output` is larger
+    ///   than `i32::MAX`.
     pub fn update<'a>(
         &mut self,
         input: &[u8],
         output: &'a mut [u8],
     ) -> Result<BufferUpdate<'a>, Unspecified> {
-        if output.len() < (input.len() + self.algorithm.block_len) {
-            return Err(Unspecified);
-        }
-
         let mut outlen: i32 = output.len().try_into()?;
         let inlen: i32 = input.len().try_into()?;
         if 1 != unsafe {
@@ -125,16 +131,21 @@ impl StreamingEncryptingKey {
         Ok(BufferUpdate::new(output, outlen))
     }
 
-    /// Finish the encryption and return the output.
+    /// Finishes the encryption operation, writing any remaining ciphertext to
+    /// `output`.
+    ///
+    /// The number of bytes written to `output` can be up to the block length of
+    /// the algorithm (e.g., 16 bytes for AES).
+    ///
     /// # Errors
-    /// Returns an error if the output buffer is too small.
+    /// * May return an error if the `output` buffer is smaller than the algorithm's
+    ///   block length. Certain cipher mode (such as CTR) may allow the output
+    ///   buffer to only be large enough to fit the remainder of the ciphertext.
+    /// * Returns an error if the length of `output` is larger than `i32::MAX`.
     pub fn finish(
         self,
         output: &mut [u8],
     ) -> Result<(DecryptionContext, BufferUpdate), Unspecified> {
-        if output.len() < self.algorithm.block_len {
-            return Err(Unspecified);
-        }
         let mut outlen: i32 = output.len().try_into()?;
         if 1 != unsafe {
             EVP_EncryptFinal_ex(
@@ -155,23 +166,30 @@ impl StreamingEncryptingKey {
         self.mode
     }
 
-    /// Returns the cipher algorithm
+    /// Returns the cipher algorithm.
     #[must_use]
     pub fn algorithm(&self) -> &'static Algorithm {
         self.algorithm
     }
 
-    /// CTR cipher mode
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CTR cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
     /// # Errors
-    /// If the key is not valid for the cipher algorithm
+    /// Returns and error on an internal failure.
     pub fn ctr(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         let context = key.algorithm().new_encryption_context(OperatingMode::CTR)?;
         Self::less_safe_ctr(key, context)
     }
 
-    /// CTR cipher mode
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CTR cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
     /// # Errors
-    /// If the key is not valid for the cipher algorithm
+    /// Returns an error on an internal failure.
     pub fn less_safe_ctr(
         key: UnboundCipherKey,
         context: EncryptionContext,
@@ -179,17 +197,28 @@ impl StreamingEncryptingKey {
         Self::new(key, OperatingMode::CTR, context)
     }
 
-    /// CBC cipher mode
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
+    /// with pkcs7 padding.
+    /// The resulting ciphertext will be longer than the plaintext; padding is added
+    /// to fill the next block of ciphertext.
+    ///
     /// # Errors
-    /// If the key is not valid for the cipher algorithm
+    /// Returns an error on an internal failure.
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         let context = key.algorithm().new_encryption_context(OperatingMode::CBC)?;
         Self::less_safe_cbc_pkcs7(key, context)
     }
 
-    /// CBC cipher mode
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
+    /// with pkcs7 padding.
+    /// The resulting ciphertext will be longer than the plaintext; padding is added
+    /// to fill the next block of ciphertext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
     /// # Errors
-    /// If the key is not valid for the cipher algorithm
+    /// Returns an error on an internal failure.
     pub fn less_safe_cbc_pkcs7(
         key: UnboundCipherKey,
         context: EncryptionContext,
@@ -198,7 +227,7 @@ impl StreamingEncryptingKey {
     }
 }
 
-/// A cipher decryption key for streaming encryption operations.
+/// A key for streaming decryption operations.
 pub struct StreamingDecryptingKey {
     algorithm: &'static Algorithm,
     mode: OperatingMode,
@@ -244,18 +273,23 @@ impl StreamingDecryptingKey {
         })
     }
 
-    /// Decrypt the input and return the output.
+    /// Updates the internal state of the key with the provided ciphertext `input`,
+    /// potentially also writing bytes of plaintext to `output`.
+    /// The number of bytes written to `output` can be up to `input.len()`
+    /// plus the block length of the cipher algorithm (e.g., 16 bytes for AES).
+    ///
     /// # Errors
-    /// Returns an error if the output buffer is too small.
+    /// * May return an error if the `output` buffer is smaller than the length of
+    ///   the `input` plus the algorithm's block length. Certain cipher modes
+    ///   (such as CTR) may allow the output buffer to be as small as the size of
+    ///   the input in certain circumstances.
+    /// * Returns an error if the length of either `input` or `output` is larger
+    ///   than `i32::MAX`.
     pub fn update<'a>(
         &mut self,
         input: &[u8],
         output: &'a mut [u8],
     ) -> Result<BufferUpdate<'a>, Unspecified> {
-        if output.len() < (input.len() + self.algorithm.block_len) {
-            return Err(Unspecified);
-        }
-
         let mut outlen: i32 = output.len().try_into()?;
         let inlen: i32 = input.len().try_into()?;
         if 1 != unsafe {
@@ -273,9 +307,16 @@ impl StreamingDecryptingKey {
         Ok(BufferUpdate::new(output, outlen))
     }
 
-    /// Finish the decryption and return the output.
+    /// Finishes the decryption operation, writing the remaining plaintext to
+    /// `output`.
+    /// The number of bytes written to `output` can be up to the block length of
+    /// the cipher algorithm (e.g., 16 bytes for AES).
+    ///
     /// # Errors
-    /// Returns an error if the output buffer is too small.
+    /// * May return an error if the `output` buffer is smaller than the algorithm's
+    ///   block length. Certain cipher modes (such as CTR) may allow the output buffer
+    ///   to only be large enough to fit the remaining plaintext.
+    /// * Returns an error if the length of `output` is larger than `i32::MAX`.
     pub fn finish(self, output: &mut [u8]) -> Result<BufferUpdate, Unspecified> {
         let mut outlen: i32 = output.len().try_into()?;
         if 1 != unsafe { EVP_DecryptFinal_ex(*self.cipher_ctx, output.as_mut_ptr(), &mut outlen) } {
@@ -297,16 +338,20 @@ impl StreamingDecryptingKey {
         self.algorithm
     }
 
-    /// CTR cipher mode
+    /// Constructs a `StreamingDecryptingKey` for decrypting using the CTR cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
     /// # Errors
-    /// If the key is not valid for the cipher algorithm
+    /// Returns an error on an internal failure.
     pub fn ctr(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CTR, context)
     }
 
-    /// CBC cipher mode
+    /// Constructs a `StreamingDecryptingKey` for decrypting using the CBC cipher mode.
+    /// The resulting plaintext will be shorter than the ciphertext.
+    ///
     /// # Errors
-    /// If the key is not valid for the cipher algorithm
+    /// Returns an error on an internal failure.
     pub fn cbc_pkcs7(
         key: UnboundCipherKey,
         context: DecryptionContext,
