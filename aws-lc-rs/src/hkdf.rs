@@ -76,9 +76,9 @@ pub static HKDF_SHA512: Algorithm = Algorithm(hmac::HMAC_SHA512);
 const MAX_HKDF_SALT_LEN: usize = 80;
 
 /// General Info length's for HKDF don't normally exceed 256 bits.
-/// We set the limit to something tolerable, so that the memory passed into |`HKDF_expand`| is
-/// allocated on the stack.
-const MAX_HKDF_INFO_STACK_LEN: usize = 102;
+/// We set the default capacity to a value larger than should be needed
+/// so that the value passed to |`HKDF_expand`| is only allocated once.
+const HKDF_INFO_DEFAULT_CAPACITY_LEN: usize = 300;
 
 /// The maximum output size of a PRK computed by |`HKDF_extract`| is the maximum digest
 /// size that can be outputted by *AWS-LC*.
@@ -360,7 +360,7 @@ impl Prk {
         if len_cached > 255 * self.algorithm.0.digest_algorithm().output_len {
             return Err(Unspecified);
         }
-        let mut info_bytes: Vec<u8> = Vec::with_capacity(3 * MAX_HKDF_INFO_STACK_LEN);
+        let mut info_bytes: Vec<u8> = Vec::with_capacity(HKDF_INFO_DEFAULT_CAPACITY_LEN);
         let mut info_len = 0;
         for &byte_ary in info {
             info_bytes.extend_from_slice(byte_ary);
