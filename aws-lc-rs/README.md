@@ -19,12 +19,12 @@ using `Cargo.toml`:
 [dependencies]
 aws-lc-rs = "1.0.0"
 ```
-
 Consuming projects will need a C Compiler (Clang or GCC) to build.
 For some platforms, the build may also require CMake.
 Building with the "fips" feature on any platform requires **CMake** and **Go**.
 
 See our [User Guide](https://awslabs.github.io/aws-lc-rs/) for guidance on installing build requirements.
+
 
 ## Feature Flags
 
@@ -100,7 +100,6 @@ and deploy them into AWS Regions.
 For those who would like to contribute to our project or build it directly from our repository,
 a few more packages may be needed. The listing below shows the steps needed for you to begin
 building and testing our project locally.
-
 ```shell
 # Install dependencies needed for build and testing
 sudo yum install -y cmake3 clang git clang-libs golang openssl-devel perl-FindBin
