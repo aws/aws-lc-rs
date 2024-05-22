@@ -505,17 +505,6 @@
 <a href="#505" id="505">505</a>
 <a href="#506" id="506">506</a>
 <a href="#507" id="507">507</a>
-<a href="#508" id="508">508</a>
-<a href="#509" id="509">509</a>
-<a href="#510" id="510">510</a>
-<a href="#511" id="511">511</a>
-<a href="#512" id="512">512</a>
-<a href="#513" id="513">513</a>
-<a href="#514" id="514">514</a>
-<a href="#515" id="515">515</a>
-<a href="#516" id="516">516</a>
-<a href="#517" id="517">517</a>
-<a href="#518" id="518">518</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2015 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -593,17 +582,10 @@
 /// We set the limit to something tolerable, so that the Salt structure can be stack allocatable.
 </span><span class="kw">const </span>MAX_HKDF_SALT_LEN: usize = <span class="number">80</span>;
 
-<span class="comment">// This is needed so that the precise value can be provided in the documentation.
-</span><span class="macro">macro_rules!</span> max_hkdf_info_len {
-    () =&gt; {
-        <span class="number">102
-    </span>};
-}
-
 <span class="doccomment">/// General Info length's for HKDF don't normally exceed 256 bits.
-/// We set the limit to something tolerable, so that the memory passed into |`HKDF_expand`| is
-/// allocated on the stack.
-</span><span class="kw">const </span>MAX_HKDF_INFO_LEN: usize = <span class="macro">max_hkdf_info_len!</span>();
+/// We set the default capacity to a value larger than should be needed
+/// so that the value passed to |`HKDF_expand`| is only allocated once.
+</span><span class="kw">const </span>HKDF_INFO_DEFAULT_CAPACITY_LEN: usize = <span class="number">300</span>;
 
 <span class="doccomment">/// The maximum output size of a PRK computed by |`HKDF_extract`| is the maximum digest
 /// size that can be outputted by *AWS-LC*.
@@ -868,9 +850,8 @@
     /// [HKDF-Expand]: https://tools.ietf.org/html/rfc5869#section-2.3
     ///
     /// # Errors
-    /// Returns `error::Unspecified` if either:
+    /// Returns `error::Unspecified` if:
     ///   * `len` is more than 255 times the digest algorithm's output length.
-    </span><span class="attr">#[doc = <span class="macro">concat!</span>(<span class="string">"  * the combined lengths of the `info` slices is more than "</span>, <span class="macro">max_hkdf_info_len!</span>(), <span class="string">" bytes."</span>)]
     </span><span class="comment">// # FIPS
     // The following conditions must be met:
     // * `Prk` must be constructed using `Salt::extract` prior to calling
@@ -886,16 +867,13 @@
         <span class="kw">if </span>len_cached &gt; <span class="number">255 </span>* <span class="self">self</span>.algorithm.<span class="number">0</span>.digest_algorithm().output_len {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
         }
-        <span class="kw">let </span><span class="kw-2">mut </span>info_bytes = [<span class="number">0u8</span>; MAX_HKDF_INFO_LEN];
+        <span class="kw">let </span><span class="kw-2">mut </span>info_bytes: Vec&lt;u8&gt; = Vec::with_capacity(HKDF_INFO_DEFAULT_CAPACITY_LEN);
         <span class="kw">let </span><span class="kw-2">mut </span>info_len = <span class="number">0</span>;
-        <span class="kw">for </span>byte_ary <span class="kw">in </span>info {
-            <span class="kw">let </span>new_info_len = info_len + byte_ary.len();
-            <span class="kw">if </span>new_info_len &gt; MAX_HKDF_INFO_LEN {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-            }
-            info_bytes[info_len..new_info_len].copy_from_slice(byte_ary);
-            info_len = new_info_len;
+        <span class="kw">for </span><span class="kw-2">&amp;</span>byte_ary <span class="kw">in </span>info {
+            info_bytes.extend_from_slice(byte_ary);
+            info_len += byte_ary.len();
         }
+        <span class="kw">let </span>info_bytes = info_bytes.into_boxed_slice();
         <span class="prelude-val">Ok</span>(Okm {
             prk: <span class="self">self</span>,
             info_bytes,
@@ -925,7 +903,7 @@
 /// use once.
 </span><span class="kw">pub struct </span>Okm&lt;<span class="lifetime">'a</span>, L: KeyType&gt; {
     prk: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Prk,
-    info_bytes: [u8; MAX_HKDF_INFO_LEN],
+    info_bytes: Box&lt;[u8]&gt;,
     info_len: usize,
     len: L,
 }

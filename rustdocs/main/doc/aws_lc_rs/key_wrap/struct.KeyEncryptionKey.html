@@ -18,12 +18,12 @@
     output: &amp;'output mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>]
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&amp;'output mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>], <a class="struct" href="../error/struct.Unspecified.html" title="struct aws_lc_rs::error::Unspecified">Unspecified</a>&gt;</h4></section></summary><div class="docblock"><p>Peforms the key wrap encryption algorithm using <code>KeyEncryptionKey</code>’s configured block cipher.
 It wraps <code>plaintext</code> and writes the corresponding ciphertext to <code>output</code>.</p>
-<h5 id="validation-1"><a class="doc-anchor" href="#validation-1">§</a>Validation</h5>
+<h5 id="validation"><a class="doc-anchor" href="#validation">§</a>Validation</h5>
 <ul>
 <li><code>plaintext.len()</code> must be a multiple of eight</li>
 <li><code>output.len() &gt;= (input.len() + 8)</code></li>
 </ul>
-<h5 id="errors-3"><a class="doc-anchor" href="#errors-3">§</a>Errors</h5>
+<h5 id="errors-1"><a class="doc-anchor" href="#errors-1">§</a>Errors</h5>
 <ul>
 <li><a href="../error/struct.Unspecified.html" title="struct aws_lc_rs::error::Unspecified"><code>Unspecified</code></a>: An error occurred either due to <code>output</code> being insufficiently sized, <code>input</code> exceeding
 the allowed input size, or for other unspecified reasons.</li>
@@ -34,12 +34,12 @@ the allowed input size, or for other unspecified reasons.</li>
     output: &amp;'output mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>]
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&amp;'output mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>], <a class="struct" href="../error/struct.Unspecified.html" title="struct aws_lc_rs::error::Unspecified">Unspecified</a>&gt;</h4></section></summary><div class="docblock"><p>Peforms the key wrap decryption algorithm using <code>KeyEncryptionKey</code>’s configured block cipher.
 It unwraps <code>ciphertext</code> and writes the corresponding plaintext to <code>output</code>.</p>
-<h5 id="validation-2"><a class="doc-anchor" href="#validation-2">§</a>Validation</h5>
+<h5 id="validation-1"><a class="doc-anchor" href="#validation-1">§</a>Validation</h5>
 <ul>
 <li><code>ciphertext.len()</code> must be a multiple of 8</li>
 <li><code>output.len() &gt;= (input.len() - 8)</code></li>
 </ul>
-<h5 id="errors-4"><a class="doc-anchor" href="#errors-4">§</a>Errors</h5>
+<h5 id="errors-2"><a class="doc-anchor" href="#errors-2">§</a>Errors</h5>
 <ul>
 <li><a href="../error/struct.Unspecified.html" title="struct aws_lc_rs::error::Unspecified"><code>Unspecified</code></a>: An error occurred either due to <code>output</code> being insufficiently sized, <code>input</code> exceeding
 the allowed input size, or for other unspecified reasons.</li>
@@ -50,11 +50,11 @@ the allowed input size, or for other unspecified reasons.</li>
     output: &amp;'output mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>]
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;&amp;'output mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>], <a class="struct" href="../error/struct.Unspecified.html" title="struct aws_lc_rs::error::Unspecified">Unspecified</a>&gt;</h4></section></summary><div class="docblock"><p>Peforms the key wrap padding encryption algorithm using <code>KeyEncryptionKey</code>’s configured block cipher.
 It wraps and pads <code>plaintext</code> writes the corresponding ciphertext to <code>output</code>.</p>
-<h5 id="validation"><a class="doc-anchor" href="#validation">§</a>Validation</h5>
+<h5 id="validation-2"><a class="doc-anchor" href="#validation-2">§</a>Validation</h5>
 <ul>
 <li><code>output.len() &gt;= (input.len() + 15)</code></li>
 </ul>
-<h5 id="errors-1"><a class="doc-anchor" href="#errors-1">§</a>Errors</h5>
+<h5 id="errors-3"><a class="doc-anchor" href="#errors-3">§</a>Errors</h5>
 <ul>
 <li><a href="../error/struct.Unspecified.html" title="struct aws_lc_rs::error::Unspecified"><code>Unspecified</code></a>: An error occurred either due to <code>output</code> being insufficiently sized, <code>input</code> exceeding
 the allowed input size, or for other unspecified reasons.</li>
@@ -67,7 +67,7 @@ the allowed input size, or for other unspecified reasons.</li>
 It unwraps the padded <code>ciphertext</code> and writes the corresponding plaintext to <code>output</code>.</p>
 <h5 id="sizing-output"><a class="doc-anchor" href="#sizing-output">§</a>Sizing <code>output</code></h5>
 <p><code>output.len() &gt;= input.len()</code>.</p>
-<h5 id="errors-2"><a class="doc-anchor" href="#errors-2">§</a>Errors</h5>
+<h5 id="errors-4"><a class="doc-anchor" href="#errors-4">§</a>Errors</h5>
 <ul>
 <li><a href="../error/struct.Unspecified.html" title="struct aws_lc_rs::error::Unspecified"><code>Unspecified</code></a>: An error occurred either due to <code>output</code> being insufficiently sized, <code>input</code> exceeding
 the allowed input size, or for other unspecified reasons.</li>
