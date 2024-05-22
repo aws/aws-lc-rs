@@ -366,7 +366,7 @@ impl Prk {
             info_bytes.extend_from_slice(byte_ary);
             info_len += byte_ary.len();
         }
-        let info_bytes = InfoBytes::new(info_bytes.as_slice());
+        let info_bytes = info_bytes.into_boxed_slice();
         Ok(Okm {
             prk: self,
             info_bytes,
@@ -390,38 +390,13 @@ impl From<Okm<'_, Algorithm>> for Prk {
     }
 }
 
-#[derive(Zeroize)]
-enum InfoBytes {
-    Stack([u8; MAX_HKDF_INFO_STACK_LEN]),
-    Heap(Box<[u8]>),
-}
-
-impl InfoBytes {
-    fn new(info: &[u8]) -> Self {
-        if info.len() <= MAX_HKDF_INFO_STACK_LEN {
-            let mut stack_info = [0u8; MAX_HKDF_INFO_STACK_LEN];
-            stack_info[0..info.len()].copy_from_slice(info);
-            Self::Stack(stack_info)
-        } else {
-            Self::Heap(info.into())
-        }
-    }
-
-    fn as_slice(&self) -> &[u8] {
-        match self {
-            Self::Stack(ary_bytes) => ary_bytes.as_slice(),
-            Self::Heap(box_bytes) => box_bytes.as_ref(),
-        }
-    }
-}
-
 /// An HKDF OKM (Output Keying Material)
 ///
 /// Intentionally not `Clone` or `Copy` as an OKM is generally only safe to
 /// use once.
 pub struct Okm<'a, L: KeyType> {
     prk: &'a Prk,
-    info_bytes: InfoBytes,
+    info_bytes: Box<[u8]>,
     info_len: usize,
     len: L,
 }
@@ -468,11 +443,9 @@ impl<L: KeyType> Okm<'_, L> {
             return Err(Unspecified);
         }
 
-        self.prk.mode.fill(
-            self.prk.algorithm,
-            out,
-            &self.info_bytes.as_slice()[..self.info_len],
-        )?;
+        self.prk
+            .mode
+            .fill(self.prk.algorithm, out, &self.info_bytes[..self.info_len])?;
 
         Ok(())
     }
