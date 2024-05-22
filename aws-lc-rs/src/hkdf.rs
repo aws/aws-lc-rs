@@ -395,6 +395,7 @@ enum InfoBytes {
     Stack([u8; MAX_HKDF_INFO_STACK_LEN]),
     Heap(Box<[u8]>),
 }
+
 impl InfoBytes {
     fn new(info: &[u8]) -> Self {
         if info.len() <= MAX_HKDF_INFO_STACK_LEN {
@@ -405,6 +406,7 @@ impl InfoBytes {
             Self::Heap(info.into())
         }
     }
+
     fn as_slice(&self) -> &[u8] {
         match self {
             Self::Stack(ary_bytes) => ary_bytes.as_slice(),
