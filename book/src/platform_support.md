@@ -47,6 +47,7 @@ cargo install --force --locked bindgen-cli
 |---------------------------------|-------|-------|
 | `aarch64-apple-ios`             | X     | X     |
 | `aarch64-linux-android`         | X     | X     |
+| `aarch64-pc-windows-msvc`       | X     |       | 
 | `armv7-linux-androideabi`       | X     | X     | 
 | `arm-linux-androideabi`         | X     | X     |
 | `arm-unknown-linux-gnueabihf`   | X     | X     |

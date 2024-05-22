@@ -5,7 +5,7 @@
 While we aim to be API-compatible with `ring` v0.16 there are some differences in our implementation. Please review the
 [ring-compatibility] section of our [API reference guide].
 
-## Can I run `aws-lc-rs` on X platform or architecture?
+## Can I run `aws-lc-rs` on *X* platform or architecture?
 
 The answer to this question is dependent on several factors based on the target environment:
 
@@ -15,8 +15,8 @@ The answer to this question is dependent on several factors based on the target 
 * If the underlying `aws-lc-sys` or `aws-lc-fips-sys` crates don't have pre-generated bindings for the desired platform
   then you must use the `bindgen` crate feature of `aws-lc-rs`, or have the [bindgen-cli] installed, to enable
   generation of the FFI bindings for the desired platform and architecture.
-* See [Requirements](requirements/README.md) for more details on what build dependencies are
-  required for target platforms.
+* See [Requirements](requirements/README.md) and [Platform Support](./platform_suppport.md) for more details on
+  build requirements for various platforms.
 
 If there is a platform or architecture you are interested in seeing support for, please create a GitHub [issue].
 

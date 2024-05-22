@@ -34,7 +34,8 @@ cargo test
 * [API documentation](https://docs.rs/aws-lc-rs/)
 * [Fork our repo](https://github.com/awslabs/aws-lc-rs/fork)
 
-We use [GitHub Issues](https://github.com/awslabs/aws-lc-rs/issues/new/choose) for managing feature requests, bug reports, or questions about aws-lc-rs API usage.
+We use [GitHub Issues](https://github.com/awslabs/aws-lc-rs/issues/new/choose) for managing feature requests, bug
+reports, or questions about aws-lc-rs API usage.
 
 Otherwise, if you think you might have found a security impacting issue, please instead
 follow our *Security Notification Process* below.
