@@ -364,7 +364,7 @@ impl Prk {
         let mut info_len = 0;
         for &byte_ary in info {
             info_bytes.extend_from_slice(byte_ary);
-            info_len = info_len + byte_ary.len();
+            info_len += byte_ary.len();
         }
         let info_bytes = InfoBytes::new(info_bytes.as_slice());
         Ok(Okm {
