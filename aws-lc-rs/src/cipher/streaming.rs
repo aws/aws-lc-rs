@@ -390,9 +390,7 @@ mod tests {
                 let mut buffer_update = encrypt_key
                     .update(&plaintext, &mut ciphertext_buff)
                     .unwrap();
-                let (decrypt_ctx, _) = encrypt_key
-                    .finish(&mut buffer_update.remainder_mut())
-                    .unwrap();
+                let (decrypt_ctx, _) = encrypt_key.finish(buffer_update.remainder_mut()).unwrap();
 
                 let unbound_key2 = UnboundCipherKey::new(cipher_alg, &key).unwrap();
                 let mut decrypt_key =
@@ -402,9 +400,7 @@ mod tests {
                 let mut buffer_update = decrypt_key
                     .update(&ciphertext_buff, &mut plaintext_buff)
                     .unwrap();
-                let _ = decrypt_key
-                    .finish(&mut buffer_update.remainder_mut())
-                    .unwrap();
+                let _ = decrypt_key.finish(buffer_update.remainder_mut()).unwrap();
 
                 assert_eq!(&plaintext_buff, &plaintext);
             }
@@ -444,9 +440,7 @@ mod tests {
                 let mut buffer_update = decrypt_key
                     .update(&ciphertext_buff[0..ciphertext_len], &mut plaintext_buff)
                     .unwrap();
-                let _ = decrypt_key
-                    .finish(&mut buffer_update.remainder_mut())
-                    .unwrap();
+                let _ = decrypt_key.finish(buffer_update.remainder_mut()).unwrap();
 
                 assert_eq!(&plaintext_buff[0..plaintext_len], &plaintext);
             }
