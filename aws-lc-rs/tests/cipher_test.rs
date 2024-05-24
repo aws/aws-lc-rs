@@ -2,12 +2,172 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::cipher::{
-    DecryptingKey, EncryptingKey, EncryptionContext, OperatingMode, PaddedBlockDecryptingKey,
-    PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
+    DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext, OperatingMode,
+    PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, StreamingDecryptingKey,
+    StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_256,
 };
-use aws_lc_rs::iv::FixedLength;
+use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
 use aws_lc_rs::test::from_hex;
+use paste::paste;
 
+fn step_encrypt(
+    mut encrypting_key: StreamingEncryptingKey,
+    plaintext: &[u8],
+    step: usize,
+) -> (Box<[u8]>, DecryptionContext) {
+    let alg = encrypting_key.algorithm();
+    let mode = encrypting_key.mode();
+    let n = plaintext.len();
+    let mut ciphertext = vec![0u8; n + alg.block_len()];
+
+    let mut in_idx: usize = 0;
+    let mut out_idx: usize = 0;
+    loop {
+        let mut in_end = in_idx + step;
+        if in_end > n {
+            in_end = n;
+        }
+        let out_end = out_idx + (in_end - in_idx) + alg.block_len();
+        let output = encrypting_key
+            .update(
+                &plaintext[in_idx..in_end],
+                &mut ciphertext[out_idx..out_end],
+            )
+            .unwrap();
+        in_idx += step;
+        out_idx += output.written().len();
+        if in_idx >= n {
+            break;
+        }
+    }
+    let out_end = out_idx + alg.block_len();
+    let (decrypt_iv, output) = encrypting_key
+        .finish(&mut ciphertext[out_idx..out_end])
+        .unwrap();
+    let outlen = output.written().len();
+    ciphertext.truncate(out_idx + outlen);
+    match mode {
+        OperatingMode::CBC => {
+            assert!(ciphertext.len() > plaintext.len());
+            assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
+        }
+        OperatingMode::CTR => {
+            assert_eq!(ciphertext.len(), plaintext.len());
+        }
+        _ => panic!("Unknown cipher mode"),
+    }
+
+    (ciphertext.into_boxed_slice(), decrypt_iv)
+}
+
+fn step_decrypt(
+    mut decrypting_key: StreamingDecryptingKey,
+    ciphertext: &[u8],
+    step: usize,
+) -> Box<[u8]> {
+    let alg = decrypting_key.algorithm();
+    let mode = decrypting_key.mode();
+    let n = ciphertext.len();
+    let mut plaintext = vec![0u8; n + alg.block_len()];
+
+    let mut in_idx: usize = 0;
+    let mut out_idx: usize = 0;
+    loop {
+        let mut in_end = in_idx + step;
+        if in_end > n {
+            in_end = n;
+        }
+        let out_end = out_idx + (in_end - in_idx) + alg.block_len();
+        let output = decrypting_key
+            .update(
+                &ciphertext[in_idx..in_end],
+                &mut plaintext[out_idx..out_end],
+            )
+            .unwrap();
+        in_idx += step;
+        out_idx += output.written().len();
+        if in_idx >= n {
+            break;
+        }
+    }
+    let out_end = out_idx + alg.block_len();
+    let output = decrypting_key
+        .finish(&mut plaintext[out_idx..out_end])
+        .unwrap();
+    let outlen = output.written().len();
+    plaintext.truncate(out_idx + outlen);
+    match mode {
+        OperatingMode::CBC => {
+            assert!(ciphertext.len() > plaintext.len());
+            assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
+        }
+        OperatingMode::CTR => {
+            assert_eq!(ciphertext.len(), plaintext.len());
+        }
+        _ => panic!("Unknown cipher mode"),
+    }
+    plaintext.into_boxed_slice()
+}
+
+macro_rules! streaming_cipher_rt {
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $plaintext:literal, $from_step:literal, $to_step:literal) => {
+        paste! {
+        #[test]
+        fn [<$name _streaming>]() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+
+            for step in ($from_step..=$to_step) {
+                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+                let encrypting_key = StreamingEncryptingKey::$constructor(unbound_key).unwrap();
+
+                let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+
+                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+                    let decrypting_key =
+                        StreamingDecryptingKey::$constructor(unbound_key2, decrypt_ctx).unwrap();
+
+                let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                assert_eq!(input.as_slice(), plaintext.as_ref());
+            }
+        }
+        }
+    };
+}
+
+macro_rules! streaming_cipher_kat {
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
+        paste! {
+        #[test]
+        fn [<$name _streaming>]() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
+            let iv = from_hex($iv).unwrap();
+
+            for step in ($from_step..=$to_step) {
+                let ec = EncryptionContext::Iv128(
+                    FixedLength::<IV_LEN_128_BIT>::try_from(iv.as_slice()).unwrap(),
+                );
+
+                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+                    let encrypting_key = StreamingEncryptingKey::[<less_safe_ $constructor>](unbound_key, ec).unwrap();
+
+                let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+
+                assert_eq!(expected_ciphertext.as_slice(), ciphertext.as_ref());
+
+                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+                    let decrypting_key =
+                        StreamingDecryptingKey::$constructor(unbound_key2, decrypt_ctx).unwrap();
+
+                let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                assert_eq!(input.as_slice(), plaintext.as_ref());
+            }
+        }
+        }
+    };
+}
 macro_rules! padded_cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
         #[test]
@@ -38,6 +198,19 @@ macro_rules! padded_cipher_kat {
             let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
             assert_eq!(input.as_slice(), plaintext);
         }
+
+        streaming_cipher_kat!(
+            $name,
+            $alg,
+            $mode,
+            $constructor,
+            $key,
+            $iv,
+            $plaintext,
+            $ciphertext,
+            2,
+            9
+        );
     };
 }
 
@@ -71,6 +244,19 @@ macro_rules! cipher_kat {
             let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
             assert_eq!(input.as_slice(), plaintext);
         }
+
+        streaming_cipher_kat!(
+            $name,
+            $alg,
+            $mode,
+            $constructor,
+            $key,
+            $iv,
+            $plaintext,
+            $ciphertext,
+            2,
+            9
+        );
     };
 }
 
@@ -95,6 +281,8 @@ macro_rules! padded_cipher_rt {
             let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
             assert_eq!(input.as_slice(), plaintext);
         }
+
+        streaming_cipher_rt!($name, $alg, $mode, $constructor, $key, $plaintext, 2, 9);
     };
 }
 
@@ -119,6 +307,7 @@ macro_rules! cipher_rt {
             let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
             assert_eq!(input.as_slice(), plaintext);
         }
+        streaming_cipher_rt!($name, $alg, $mode, $constructor, $key, $plaintext, 2, 9);
     };
 }
 

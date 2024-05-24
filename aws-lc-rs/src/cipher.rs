@@ -107,8 +107,8 @@
 //!
 //! // Encrypt
 //! let mut first_update = encrypting_key
-//! .update(original_message, ciphertext_slice)
-//! .unwrap();
+//!                            .update(original_message, ciphertext_slice)
+//!                            .unwrap();
 //! let first_update_len = first_update.written().len();
 //! let (context, final_update) = encrypting_key.finish(first_update.remainder_mut()).unwrap();
 //! let ciphertext_len = first_update_len + final_update.written().len();

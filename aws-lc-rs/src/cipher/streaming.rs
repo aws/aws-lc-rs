@@ -363,11 +363,95 @@ impl StreamingDecryptingKey {
 #[cfg(test)]
 mod tests {
     use crate::cipher::{
-        DecryptionContext, OperatingMode, StreamingDecryptingKey, StreamingEncryptingKey,
-        UnboundCipherKey, AES_256, AES_256_KEY_LEN,
+        DecryptionContext, EncryptionContext, OperatingMode, StreamingDecryptingKey,
+        StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_256, AES_256_KEY_LEN,
     };
+    use crate::iv::{FixedLength, IV_LEN_128_BIT};
     use crate::rand::{SecureRandom, SystemRandom};
+    use crate::test::from_hex;
     use paste::*;
+
+    #[test]
+    fn test_encrypt_ctr_exact_fit_out_buffer() {
+        let random = SystemRandom::new();
+
+        for plaintext_len in (8..200).step_by(7) {
+            let mut plaintext = vec![0u8; plaintext_len];
+            random.fill(&mut plaintext).unwrap();
+
+            for cipher_alg in [&AES_128, &AES_256] {
+                let mut key = vec![0u8; cipher_alg.key_len];
+                random.fill(&mut key).unwrap();
+
+                let unbound_key = UnboundCipherKey::new(cipher_alg, &key).unwrap();
+                let mut encrypt_key = StreamingEncryptingKey::ctr(unbound_key).unwrap();
+
+                let mut ciphertext_buff = vec![0u8; plaintext_len];
+                let mut buffer_update = encrypt_key
+                    .update(&plaintext, &mut ciphertext_buff)
+                    .unwrap();
+                let (decrypt_ctx, _) = encrypt_key
+                    .finish(&mut buffer_update.remainder_mut())
+                    .unwrap();
+
+                let unbound_key2 = UnboundCipherKey::new(cipher_alg, &key).unwrap();
+                let mut decrypt_key =
+                    StreamingDecryptingKey::ctr(unbound_key2, decrypt_ctx).unwrap();
+
+                let mut plaintext_buff = vec![0u8; plaintext_len];
+                let mut buffer_update = decrypt_key
+                    .update(&ciphertext_buff, &mut plaintext_buff)
+                    .unwrap();
+                let _ = decrypt_key
+                    .finish(&mut buffer_update.remainder_mut())
+                    .unwrap();
+
+                assert_eq!(&plaintext_buff, &plaintext);
+            }
+        }
+    }
+
+    #[test]
+    fn test_encrypt_cbc_exact_fit_out_buffer() {
+        let random = SystemRandom::new();
+
+        for plaintext_len in (8..200).step_by(7) {
+            let mut plaintext = vec![0u8; plaintext_len];
+            random.fill(&mut plaintext).unwrap();
+
+            for cipher_alg in [&AES_128, &AES_256] {
+                let mut key = vec![0u8; cipher_alg.key_len];
+                random.fill(&mut key).unwrap();
+
+                let unbound_key = UnboundCipherKey::new(cipher_alg, &key).unwrap();
+                let mut encrypt_key = StreamingEncryptingKey::cbc_pkcs7(unbound_key).unwrap();
+
+                let mut ciphertext_buff = vec![0u8; plaintext_len + cipher_alg.block_len()];
+                let mut ciphertext_len = 0usize;
+                let mut buffer_update = encrypt_key
+                    .update(&plaintext, &mut ciphertext_buff)
+                    .unwrap();
+                ciphertext_len += buffer_update.written().len();
+                let remaining_buff = buffer_update.remainder_mut();
+                let (decrypt_ctx, buffer_update) = encrypt_key.finish(remaining_buff).unwrap();
+                ciphertext_len += buffer_update.written().len();
+
+                let unbound_key2 = UnboundCipherKey::new(cipher_alg, &key).unwrap();
+                let mut decrypt_key =
+                    StreamingDecryptingKey::cbc_pkcs7(unbound_key2, decrypt_ctx).unwrap();
+
+                let mut plaintext_buff = vec![0u8; plaintext_len + cipher_alg.block_len()];
+                let mut buffer_update = decrypt_key
+                    .update(&ciphertext_buff[0..ciphertext_len], &mut plaintext_buff)
+                    .unwrap();
+                let _ = decrypt_key
+                    .finish(&mut buffer_update.remainder_mut())
+                    .unwrap();
+
+                assert_eq!(&plaintext_buff[0..plaintext_len], &plaintext);
+            }
+        }
+    }
 
     fn step_encrypt(
         mut encrypting_key: StreamingEncryptingKey,
@@ -423,8 +507,8 @@ mod tests {
         ciphertext: &[u8],
         step: usize,
     ) -> Box<[u8]> {
-        let alg = decrypting_key.algorithm;
-        let mode = decrypting_key.mode;
+        let alg = decrypting_key.algorithm();
+        let mode = decrypting_key.mode();
         let n = ciphertext.len();
         let mut plaintext = vec![0u8; n + alg.block_len()];
 
@@ -606,4 +690,157 @@ mod tests {
             );
         }
     }
+
+    macro_rules! streaming_cipher_kat {
+        ($name:ident, $alg:expr, $mode:expr, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
+            #[test]
+            fn $name() {
+                let key = from_hex($key).unwrap();
+                let input = from_hex($plaintext).unwrap();
+                let expected_ciphertext = from_hex($ciphertext).unwrap();
+                let iv = from_hex($iv).unwrap();
+
+                for step in ($from_step..=$to_step) {
+                    let ec = EncryptionContext::Iv128(
+                        FixedLength::<IV_LEN_128_BIT>::try_from(iv.as_slice()).unwrap(),
+                    );
+
+                    let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+
+                    let encrypting_key =
+                        StreamingEncryptingKey::new(unbound_key, $mode, ec).unwrap();
+
+                    let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+
+                    assert_eq!(expected_ciphertext.as_slice(), ciphertext.as_ref());
+
+                    let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+                    let decrypting_key =
+                        StreamingDecryptingKey::new(unbound_key2, $mode, decrypt_ctx).unwrap();
+
+                    let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                    assert_eq!(input.as_slice(), plaintext.as_ref());
+                }
+            }
+        };
+    }
+
+    streaming_cipher_kat!(
+        test_iv_aes_128_ctr_16_bytes,
+        &AES_128,
+        OperatingMode::CTR,
+        "000102030405060708090a0b0c0d0e0f",
+        "00000000000000000000000000000000",
+        "00112233445566778899aabbccddeeff",
+        "c6b01904c3da3df5e7d62bd96d153686",
+        2,
+        9
+    );
+    streaming_cipher_kat!(
+        test_iv_aes_256_ctr_15_bytes,
+        &AES_256,
+        OperatingMode::CTR,
+        "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "00000000000000000000000000000000",
+        "00112233445566778899aabbccddee",
+        "f28122856e1cf9a7216a30d111f399",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_128_ctr_15_bytes,
+        &AES_128,
+        OperatingMode::CTR,
+        "244828580821c1652582c76e34d299f5",
+        "093145d5af233f46072a5eb5adc11aa1",
+        "3ee38cec171e6cf466bf0df98aa0e1",
+        "bd7d928f60e3422d96b3f8cd614eb2",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_256_ctr_15_bytes,
+        &AES_256,
+        OperatingMode::CTR,
+        "0857db8240ea459bdf660b4cced66d1f2d3734ff2de7b81e92740e65e7cc6a1d",
+        "f028ecb053f801102d11fccc9d303a27",
+        "eca7285d19f3c20e295378460e8729",
+        "b5098e5e788de6ac2f2098eb2fc6f8",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_iv_aes_128_cbc_16_bytes,
+        &AES_128,
+        OperatingMode::CBC,
+        "000102030405060708090a0b0c0d0e0f",
+        "00000000000000000000000000000000",
+        "00112233445566778899aabbccddeeff",
+        "69c4e0d86a7b0430d8cdb78070b4c55a9e978e6d16b086570ef794ef97984232",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_iv_aes_256_cbc_15_bytes,
+        &AES_256,
+        OperatingMode::CBC,
+        "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        "00000000000000000000000000000000",
+        "00112233445566778899aabbccddee",
+        "2ddfb635a651a43f582997966840ca0c",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_128_cbc_15_bytes,
+        &AES_128,
+        OperatingMode::CBC,
+        "053304bb3899e1d99db9d29343ea782d",
+        "b5313560244a4822c46c2a0c9d0cf7fd",
+        "a3e4c990356c01f320043c3d8d6f43",
+        "ad96993f248bd6a29760ec7ccda95ee1",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_128_cbc_16_bytes,
+        &AES_128,
+        OperatingMode::CBC,
+        "95af71f1c63e4a1d0b0b1a27fb978283",
+        "89e40797dca70197ff87d3dbb0ef2802",
+        "aece7b5e3c3df1ffc9802d2dfe296dc7",
+        "301b5dab49fb11e919d0d39970d06739301919743304f23f3cbc67d28564b25b",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_256_cbc_15_bytes,
+        &AES_256,
+        OperatingMode::CBC,
+        "d369e03e9752784917cc7bac1db7399598d9555e691861d9dd7b3292a693ef57",
+        "1399bb66b2f6ad99a7f064140eaaa885",
+        "7385f5784b85bf0a97768ddd896d6d",
+        "4351082bac9b4593ae8848cc9dfb5a01",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_256_cbc_16_bytes,
+        &AES_256,
+        OperatingMode::CBC,
+        "d4a8206dcae01242f9db79a4ecfe277d0f7bb8ccbafd8f9809adb39f35aa9b41",
+        "24f6076548fb9d93c8f7ed9f6e661ef9",
+        "a39c1fdf77ea3e1f18178c0ec237c70a",
+        "f1af484830a149ee0387b854d65fe87ca0e62efc1c8e6909d4b9ab8666470453",
+        2,
+        9
+    );
 }
