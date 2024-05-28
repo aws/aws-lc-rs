@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get install --assume-yes --no-install-recommends  software-properties-common && \
     add-apt-repository --yes ppa:longsleep/golang-backports && \
     apt-get update && \
-    apt-get install --assume-yes --no-install-recommends build-essential cmake golang-go && \
+    apt-get install --assume-yes --no-install-recommends build-essential cmake golang-go clang && \
     git config --global --add safe.directory '*' && \
     rm -rf /tmp/*
 

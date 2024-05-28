@@ -28,20 +28,21 @@ jobs:
       matrix:
         os: [ ubuntu-22.04 ]
         target:
-          - arm-unknown-linux-gnueabihf
+          - aarch64-linux-android
           - aarch64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
+          - arm-linux-androideabi
+          - arm-unknown-linux-gnueabihf
+          - armv7-linux-androideabi
+          - armv7-unknown-linux-gnueabihf
           - i686-unknown-linux-gnu
+          - powerpc-unknown-linux-gnu
+          - powerpc64-unknown-linux-gnu
           - powerpc64le-unknown-linux-gnu
           - riscv64gc-unknown-linux-gnu
-          - arm-linux-androideabi
-          - armv7-linux-androideabi
-          - aarch64-linux-android
-          - powerpc64-unknown-linux-gnu
-          - powerpc-unknown-linux-gnu
-          - x86_64-unknown-linux-musl
-          - aarch64-unknown-linux-musl
           - s390x-unknown-linux-gnu
           - x86_64-pc-windows-gnu
+          - x86_64-unknown-linux-musl
     steps:
       - uses: actions/checkout@v3
         with:
@@ -62,11 +63,10 @@ jobs:
         run: |
           cargo update
           cargo update -p clap --precise 4.4.18
-      - name: Cross-compilation
-        if: ${{ matrix.target == 'aarch64-unknown-linux-gnu' || matrix.target == 'i686-unknown-linux-gnu' || matrix.target == 'x86_64-unknown-linux-musl' || matrix.target == 'aarch64-unknown-linux-musl'}}
-        run: cross test -p aws-lc-rs --features unstable --target ${{ matrix.target }}
-      - name: Cross-compilation w/ bindgen
-        run: cross test -p aws-lc-rs --release --features bindgen,unstable --target ${{ matrix.target }}
+      - name: Cross-compilation (build debug)
+        run: cross build -p aws-lc-rs --features unstable --target ${{ matrix.target }}
+      - name: Cross-compilation (test release)
+        run: cross test -p aws-lc-rs --release --features unstable --target ${{ matrix.target }}
 
   aws-lc-rs-ios-aarch64:
     if: github.repository_owner == 'aws'
