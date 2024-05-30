@@ -16,7 +16,7 @@ env:
   RUST_BACKTRACE: 1
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
-  RUST_NIGHTLY_TOOLCHAIN: nightly
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
 
 jobs:
 
@@ -372,8 +372,10 @@ jobs:
         with:
           submodules: 'recursive'
           lfs: true
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cargo-careful
@@ -383,8 +385,8 @@ jobs:
           go-version: '>=1.18'
       - name: Run tests
         working-directory: ./aws-lc-rs
-        run: cargo +nightly careful test
+        run: cargo careful test
       - name: Run tests w/ FIPS
         working-directory: ./aws-lc-rs
         # Rust doc tests dislike dynamic linking
-        run: cargo +nightly careful test --tests --features fips,bindgen
+        run: cargo careful test --tests --features fips,bindgen

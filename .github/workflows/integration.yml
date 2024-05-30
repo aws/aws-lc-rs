@@ -16,7 +16,7 @@ env:
   RUST_BACKTRACE: 1
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
-  RUST_NIGHTLY_TOOLCHAIN: nightly
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
 
 jobs:
   s2n-quic-integration:

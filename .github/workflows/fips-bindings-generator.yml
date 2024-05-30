@@ -10,6 +10,10 @@ env:
   GIT_AUTHOR_EMAIL: "aws-lc-github-bot@amazon.com"
   GIT_COMMITTER_NAME: "aws-lc-fips-sys-bindings-generator"
   GIT_COMMITTER_EMAIL: "aws-lc-github-bot@amazon.com"
+  RUST_BACKTRACE: 1
+  # We can pin the version if nightly is too unstable.
+  # Otherwise, we test against the latest version.
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
 
 jobs:
   collect-symbols-and-commit:
@@ -78,7 +82,9 @@ jobs:
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-go@v4
         with:
