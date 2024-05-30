@@ -3,8 +3,8 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    cargo_env, execute_command, is_no_asm, target, target_arch, target_os, target_vendor,
-    OutputLibType,
+    cargo_env, execute_command, is_no_asm, option_env, target, target_arch, target_os,
+    target_vendor, OutputLibType,
 };
 use std::collections::HashMap;
 use std::env;
@@ -138,6 +138,20 @@ impl CmakeBuilder {
         } else {
             cmake_cfg.define("BUILD_LIBSSL", "OFF");
         }
+        cmake_cfg.define("FIPS", "1");
+
+        if cfg!(feature = "asan") {
+            env::set_var("CC", "clang");
+            env::set_var("CXX", "clang++");
+            env::set_var("ASM", "clang");
+
+            cmake_cfg.define("ASAN", "1");
+        }
+
+        // Allow environment to specify CMake toolchain.
+        if option_env("CMAKE_TOOLCHAIN_FILE").is_some() {
+            return cmake_cfg;
+        }
 
         if target_vendor() == "apple" {
             if target_os().trim() == "ios" {
@@ -149,15 +163,6 @@ impl CmakeBuilder {
             if target_arch().trim() == "aarch64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
             }
-        }
-        cmake_cfg.define("FIPS", "1");
-
-        if cfg!(feature = "asan") {
-            env::set_var("CC", "clang");
-            env::set_var("CXX", "clang++");
-            env::set_var("ASM", "clang");
-
-            cmake_cfg.define("ASAN", "1");
         }
 
         cmake_cfg
