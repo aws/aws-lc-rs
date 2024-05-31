@@ -1,4 +1,4 @@
-#!/usr/bin/env -S cargo +nightly -Zscript
+#!/usr/bin/env -S cargo +nightly-2024-05-22 -Zscript
 ---cargo
 [dependencies]
 clap = { version = "4", features = ["derive"] }
