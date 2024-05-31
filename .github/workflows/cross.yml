@@ -16,7 +16,7 @@ env:
   RUST_BACKTRACE: 1
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
-  RUST_NIGHTLY_TOOLCHAIN: nightly
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
 
 jobs:
   aws-lc-rs-cross-test:
@@ -76,6 +76,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
+      - run: |
+          brew install llvm
+          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
+          echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -94,6 +98,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
+      - run: |
+          brew install llvm
+          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
+          echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:

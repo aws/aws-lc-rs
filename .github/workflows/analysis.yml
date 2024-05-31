@@ -16,7 +16,7 @@ env:
   RUST_BACKTRACE: 1
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
-  RUST_NIGHTLY_TOOLCHAIN: nightly
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
   # Mirai version tag, updates this whenever a new version
   # is released.
   MIRAI_TOOLCHAIN: nightly-2023-05-09
@@ -84,7 +84,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
-          toolchain: nightly
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cargo-public-api
@@ -245,8 +245,10 @@ jobs:
         with:
           submodules: 'recursive'
           lfs: true
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@master
         id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Setup to use minimal versions

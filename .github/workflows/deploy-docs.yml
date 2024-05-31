@@ -1,10 +1,16 @@
-name: Deploy Documentation
+ame: Deploy Documentation
 on:
   push:
     branches:
       - main
     tags:
       - v1.*
+env:
+  RUST_BACKTRACE: 1
+  # We can pin the version if nightly is too unstable.
+  # Otherwise, we test against the latest version.
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
+
 jobs:
   deploy-user-guide:
     if: github.repository == 'aws/aws-lc-rs'
@@ -15,8 +21,10 @@ jobs:
           persist-credentials: false
           submodules: 'recursive'
       - name: Install Nightly Rust Toolchain
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@master
         id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - uses: actions/setup-go@v4
