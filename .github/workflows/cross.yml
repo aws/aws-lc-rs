@@ -80,10 +80,6 @@ jobs:
           brew install llvm
           echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
           echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
-          echo 'export DYLD_LIBRARY_PATH="/opt/homebrew/opt/llvm/lib:$DYLD_LIBRARY_PATH"' >> "$GITHUB_ENV"
-          echo 'export LDFLAGS="-L/opt/homebrew/opt/llvm/lib $LD_FLAGS"' >> "$GITHUB_ENV"
-          echo 'export CPPFLAGS="-I/opt/homebrew/opt/llvm/include $CPPFLAGS"' >> "$GITHUB_ENV"
-          echo 'export CFLAGS="-I/opt/homebrew/opt/llvm/include $CFLAGS"' >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -106,10 +102,6 @@ jobs:
           brew install llvm
           echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
           echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
-          echo 'export DYLD_LIBRARY_PATH="/opt/homebrew/opt/llvm/lib:$DYLD_LIBRARY_PATH"' >> "$GITHUB_ENV"
-          echo 'export LDFLAGS="-L/opt/homebrew/opt/llvm/lib $LD_FLAGS"' >> "$GITHUB_ENV"
-          echo 'export CPPFLAGS="-I/opt/homebrew/opt/llvm/include $CPPFLAGS"' >> "$GITHUB_ENV"
-          echo 'export CFLAGS="-I/opt/homebrew/opt/llvm/include $CFLAGS"' >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
