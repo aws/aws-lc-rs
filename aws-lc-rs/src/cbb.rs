@@ -31,7 +31,7 @@ impl LcCBB<'static> {
             return Err(Unspecified);
         };
 
-        let out_data = LcPtr::new(out_data)?;
+        let mut out_data = LcPtr::new(out_data)?;
 
         // TODO: Need a type to just hold the owned pointer from CBB rather then copying
         Ok(Buffer::take_from_slice(unsafe {
