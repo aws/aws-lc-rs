@@ -169,7 +169,7 @@ impl CmakeBuilder {
             let ndk = env::var("OHOS_NDK_HOME").expect("Try to get ohos ndk home failed.");
             cmake_cfg.define(
                 "CMAKE_TOOLCHAIN_FILE",
-                format!("{}/native/build/cmake/ohos.toolchain.cmake", ndk),
+                format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"),
             );
             cmake_cfg.define("CMAKE_C_FLAGS", "-Wno-unused-command-line-argument");
             cmake_cfg.define("CMAKE_CXX_FLAGS", "-Wno-unused-command-line-argument");
