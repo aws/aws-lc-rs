@@ -63,7 +63,7 @@ impl StreamingEncryptingKey {
         context: EncryptionContext,
     ) -> Result<Self, Unspecified> {
         let algorithm = key.algorithm();
-        let cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
+        let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let cipher = mode.evp_cipher(key.algorithm);
         let key_bytes = key.key_bytes.as_ref();
         debug_assert_eq!(
@@ -100,22 +100,28 @@ impl StreamingEncryptingKey {
     /// potentially writing bytes of ciphertext to `output`.
     ///
     /// The number of bytes written to `output` can be up to `input.len()`
-    /// plus the block length of the algorithm (e.g., 16 bytes for AES).
+    /// plus the block length of the algorithm (e.g., [`Algorithm::block_len`]).
     ///
     /// # Errors
-    /// * May return an error if the `output` buffer is smaller than the length of
-    ///   the `input` plus the algorithm's block length. Certain cipher modes
-    ///   (such as CTR) may allow the output buffer to be as small as the size
-    ///   of the input in certain circumstances.
-    /// * Returns an error if the length of either `input` or `output` is larger
-    ///   than `i32::MAX`.
+    /// * Returns an error if the `output` buffer is smaller than the length of
+    ///   the `input` plus the algorithm's block length (e.g. [`Algorithm::block_len`]) minus one.
+    /// * May return an error if the length of `input` plus the algorithm's block length is larger than `i32::MAX`.
     pub fn update<'a>(
         &mut self,
         input: &[u8],
         output: &'a mut [u8],
     ) -> Result<BufferUpdate<'a>, Unspecified> {
-        let mut outlen: i32 = output.len().try_into()?;
+        let min_outsize = input
+            .len()
+            .checked_add(self.algorithm().block_len())
+            .ok_or(Unspecified)?
+            - 1;
+        if output.len() < min_outsize {
+            return Err(Unspecified);
+        }
+        let mut outlen: i32 = 0;
         let inlen: i32 = input.len().try_into()?;
+
         if 1 != unsafe {
             EVP_EncryptUpdate(
                 self.cipher_ctx.as_mut_ptr(),
@@ -135,18 +141,20 @@ impl StreamingEncryptingKey {
     /// `output`.
     ///
     /// The number of bytes written to `output` can be up to the block length of
-    /// the algorithm (e.g., 16 bytes for AES).
+    /// [`Algorithm::block_len`].
     ///
     /// # Errors
-    /// * May return an error if the `output` buffer is smaller than the algorithm's
-    ///   block length. Certain cipher mode (such as CTR) may allow the output
-    ///   buffer to only be large enough to fit the remainder of the ciphertext.
-    /// * Returns an error if the length of `output` is larger than `i32::MAX`.
+    /// * Returns an error if the `output` buffer is smaller than the algorithm's
+    ///   block length.
     pub fn finish(
-        self,
+        mut self,
         output: &mut [u8],
     ) -> Result<(DecryptionContext, BufferUpdate), Unspecified> {
-        let mut outlen: i32 = output.len().try_into()?;
+        if output.len() < self.algorithm().block_len() {
+            return Err(Unspecified);
+        }
+        let mut outlen: i32 = 0;
+
         if 1 != unsafe {
             EVP_EncryptFinal_ex(
                 self.cipher_ctx.as_mut_ptr(),
@@ -240,7 +248,7 @@ impl StreamingDecryptingKey {
         mode: OperatingMode,
         context: DecryptionContext,
     ) -> Result<Self, Unspecified> {
-        let cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
+        let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let algorithm = key.algorithm();
         let cipher = mode.evp_cipher(key.algorithm);
         let key_bytes = key.key_bytes.as_ref();
@@ -276,22 +284,29 @@ impl StreamingDecryptingKey {
     /// Updates the internal state of the key with the provided ciphertext `input`,
     /// potentially also writing bytes of plaintext to `output`.
     /// The number of bytes written to `output` can be up to `input.len()`
-    /// plus the block length of the cipher algorithm (e.g., 16 bytes for AES).
+    /// plus the block length of the cipher algorithm (e.g., [`Algorithm::block_len`]).
     ///
     /// # Errors
-    /// * May return an error if the `output` buffer is smaller than the length of
-    ///   the `input` plus the algorithm's block length. Certain cipher modes
-    ///   (such as CTR) may allow the output buffer to be as small as the size of
-    ///   the input in certain circumstances.
-    /// * Returns an error if the length of either `input` or `output` is larger
+    /// * Returns an error if the `output` buffer is smaller than the length of
+    ///   the `input` plus the algorithm's block length.
+    /// * May return an error if the length of `input` plus the algorithm's block length is larger
     ///   than `i32::MAX`.
     pub fn update<'a>(
         &mut self,
         input: &[u8],
         output: &'a mut [u8],
     ) -> Result<BufferUpdate<'a>, Unspecified> {
-        let mut outlen: i32 = output.len().try_into()?;
+        let mut outlen: i32 = 0;
         let inlen: i32 = input.len().try_into()?;
+
+        let min_outsize = input
+            .len()
+            .checked_add(self.algorithm().block_len())
+            .ok_or(Unspecified)?;
+        if output.len() < min_outsize {
+            return Err(Unspecified);
+        }
+
         if 1 != unsafe {
             EVP_DecryptUpdate(
                 self.cipher_ctx.as_mut_ptr(),
@@ -310,15 +325,17 @@ impl StreamingDecryptingKey {
     /// Finishes the decryption operation, writing the remaining plaintext to
     /// `output`.
     /// The number of bytes written to `output` can be up to the block length of
-    /// the cipher algorithm (e.g., 16 bytes for AES).
+    /// the cipher algorithm (e.g., [`Algorithm::block_len`]).
     ///
     /// # Errors
-    /// * May return an error if the `output` buffer is smaller than the algorithm's
-    ///   block length. Certain cipher modes (such as CTR) may allow the output buffer
-    ///   to only be large enough to fit the remaining plaintext.
-    /// * Returns an error if the length of `output` is larger than `i32::MAX`.
+    /// * Returns an error if the `output` buffer is smaller than the algorithm's
+    ///   block length.
     pub fn finish(self, output: &mut [u8]) -> Result<BufferUpdate, Unspecified> {
-        let mut outlen: i32 = output.len().try_into()?;
+        if output.len() < self.algorithm().block_len() {
+            return Err(Unspecified);
+        }
+        let mut outlen: i32 = 0;
+
         if 1 != unsafe { EVP_DecryptFinal_ex(*self.cipher_ctx, output.as_mut_ptr(), &mut outlen) } {
             return Err(Unspecified);
         }
@@ -370,82 +387,6 @@ mod tests {
     use crate::rand::{SecureRandom, SystemRandom};
     use crate::test::from_hex;
     use paste::*;
-
-    #[test]
-    fn test_encrypt_ctr_exact_fit_out_buffer() {
-        let random = SystemRandom::new();
-
-        for plaintext_len in (8..200).step_by(7) {
-            let mut plaintext = vec![0u8; plaintext_len];
-            random.fill(&mut plaintext).unwrap();
-
-            for cipher_alg in [&AES_128, &AES_256] {
-                let mut key = vec![0u8; cipher_alg.key_len];
-                random.fill(&mut key).unwrap();
-
-                let unbound_key = UnboundCipherKey::new(cipher_alg, &key).unwrap();
-                let mut encrypt_key = StreamingEncryptingKey::ctr(unbound_key).unwrap();
-
-                let mut ciphertext_buff = vec![0u8; plaintext_len];
-                let mut buffer_update = encrypt_key
-                    .update(&plaintext, &mut ciphertext_buff)
-                    .unwrap();
-                let (decrypt_ctx, _) = encrypt_key.finish(buffer_update.remainder_mut()).unwrap();
-
-                let unbound_key2 = UnboundCipherKey::new(cipher_alg, &key).unwrap();
-                let mut decrypt_key =
-                    StreamingDecryptingKey::ctr(unbound_key2, decrypt_ctx).unwrap();
-
-                let mut plaintext_buff = vec![0u8; plaintext_len];
-                let mut buffer_update = decrypt_key
-                    .update(&ciphertext_buff, &mut plaintext_buff)
-                    .unwrap();
-                let _ = decrypt_key.finish(buffer_update.remainder_mut()).unwrap();
-
-                assert_eq!(&plaintext_buff, &plaintext);
-            }
-        }
-    }
-
-    #[test]
-    fn test_encrypt_cbc_exact_fit_out_buffer() {
-        let random = SystemRandom::new();
-
-        for plaintext_len in (8..200).step_by(7) {
-            let mut plaintext = vec![0u8; plaintext_len];
-            random.fill(&mut plaintext).unwrap();
-
-            for cipher_alg in [&AES_128, &AES_256] {
-                let mut key = vec![0u8; cipher_alg.key_len];
-                random.fill(&mut key).unwrap();
-
-                let unbound_key = UnboundCipherKey::new(cipher_alg, &key).unwrap();
-                let mut encrypt_key = StreamingEncryptingKey::cbc_pkcs7(unbound_key).unwrap();
-
-                let mut ciphertext_buff = vec![0u8; plaintext_len + cipher_alg.block_len()];
-                let mut ciphertext_len = 0usize;
-                let mut buffer_update = encrypt_key
-                    .update(&plaintext, &mut ciphertext_buff)
-                    .unwrap();
-                ciphertext_len += buffer_update.written().len();
-                let remaining_buff = buffer_update.remainder_mut();
-                let (decrypt_ctx, buffer_update) = encrypt_key.finish(remaining_buff).unwrap();
-                ciphertext_len += buffer_update.written().len();
-
-                let unbound_key2 = UnboundCipherKey::new(cipher_alg, &key).unwrap();
-                let mut decrypt_key =
-                    StreamingDecryptingKey::cbc_pkcs7(unbound_key2, decrypt_ctx).unwrap();
-
-                let mut plaintext_buff = vec![0u8; plaintext_len + cipher_alg.block_len()];
-                let mut buffer_update = decrypt_key
-                    .update(&ciphertext_buff[0..ciphertext_len], &mut plaintext_buff)
-                    .unwrap();
-                let _ = decrypt_key.finish(buffer_update.remainder_mut()).unwrap();
-
-                assert_eq!(&plaintext_buff[0..plaintext_len], &plaintext);
-            }
-        }
-    }
 
     fn step_encrypt(
         mut encrypting_key: StreamingEncryptingKey,

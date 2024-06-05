@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use core::ops::Deref;
+use std::ops::DerefMut;
 
 use aws_lc::{
     BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_AEAD_CTX_free,
@@ -25,6 +26,13 @@ impl<P: Pointer> Deref for ManagedPointer<P> {
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.pointer
+    }
+}
+
+impl<P: Pointer> DerefMut for ManagedPointer<P> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.pointer
     }
 }
 
