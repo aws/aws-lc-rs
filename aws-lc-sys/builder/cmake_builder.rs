@@ -3,7 +3,7 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    cargo_env, execute_command, is_no_asm, target, target_arch, target_env, target_os,
+    cargo_env, execute_command, is_no_asm, option_env, target, target_arch, target_env, target_os,
     target_vendor, OutputLibType,
 };
 use std::env;
@@ -119,6 +119,19 @@ impl CmakeBuilder {
             }
         }
 
+        if cfg!(feature = "asan") {
+            env::set_var("CC", "clang");
+            env::set_var("CXX", "clang++");
+            env::set_var("ASM", "clang");
+
+            cmake_cfg.define("ASAN", "1");
+        }
+
+        // Allow environment to specify CMake toolchain.
+        if option_env("CMAKE_TOOLCHAIN_FILE").is_some() {
+            return cmake_cfg;
+        }
+
         if target_vendor() == "apple" {
             if target_os().to_lowercase() == "ios" {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
@@ -143,11 +156,16 @@ impl CmakeBuilder {
             cmake_cfg.generator("Ninja");
         }
 
-        if target_os() == "windows" && target_arch() == "aarch64" && target_env() == "msvc" {
+        if target_os() == "windows"
+            && target_arch() == "aarch64"
+            && target_env() == "msvc"
+            && option_env("CMAKE_TOOLCHAIN_FILE_aarch64_pc_windows_msvc").is_none()
+        {
             cmake_cfg.generator("Ninja");
             cmake_cfg.define("CMAKE_C_COMPILER", "clang-cl");
             cmake_cfg.define("CMAKE_CXX_COMPILER", "clang-cl");
             cmake_cfg.define("CMAKE_ASM_COMPILER", "clang-cl");
+            // If the build host is not aarch64
             #[cfg(not(target_arch = "aarch64"))]
             {
                 // Only needed when cross-compiling
@@ -155,14 +173,6 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_CXX_COMPILER_TARGET", "arm64-pc-windows-msvc");
                 cmake_cfg.define("CMAKE_ASM_COMPILER_TARGET", "arm64-pc-windows-msvc");
             }
-        }
-
-        if cfg!(feature = "asan") {
-            env::set_var("CC", "clang");
-            env::set_var("CXX", "clang++");
-            env::set_var("ASM", "clang");
-
-            cmake_cfg.define("ASAN", "1");
         }
 
         cmake_cfg

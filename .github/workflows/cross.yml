@@ -113,6 +113,31 @@ jobs:
         run: cargo build -p aws-lc-rs --release --target x86_64-apple-ios --features bindgen
 
 
+  cargo-xwin:
+    if: github.repository_owner == 'aws'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install --assume-yes nasm clang ninja-build llvm
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          target: aarch64-pc-windows-msvc
+      - name: Install cargo-xwin and bindgen-cli
+        run: cargo install cargo-xwin bindgen-cli
+      - name: cargo xwin build for `x86_64-pc-windows-msvc`
+        run: cargo xwin build -p aws-lc-rs --release --target x86_64-pc-windows-msvc
+      - name: cargo xwin build for `aarch64-pc-windows-msvc`
+        run: cargo xwin build -p aws-lc-rs --release --target aarch64-pc-windows-msvc
+
   aws-lc-rs-windows-mingw:
     if: github.repository_owner == 'aws'
     name: x86_64-pc-windows-gnu
