@@ -3,7 +3,7 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    cargo_env, execute_command, is_no_asm, option_env, target, target_arch, target_os,
+    cargo_env, execute_command, is_no_asm, target, target_arch, target_env, target_os,
     target_vendor, OutputLibType,
 };
 use std::collections::HashMap;
@@ -163,6 +163,16 @@ impl CmakeBuilder {
             if target_arch().trim() == "aarch64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
             }
+        }
+
+        if target_env() == "ohos" {
+            let ndk = env::var("OHOS_NDK_HOME").expect("Try to get ohos ndk home failed.");
+            cmake_cfg.define(
+                "CMAKE_TOOLCHAIN_FILE",
+                format!("{}/native/build/cmake/ohos.toolchain.cmake", ndk),
+            );
+            cmake_cfg.define("CMAKE_C_FLAGS", "-Wno-unused-command-line-argument");
+            cmake_cfg.define("CMAKE_CXX_FLAGS", "-Wno-unused-command-line-argument");
         }
 
         cmake_cfg
