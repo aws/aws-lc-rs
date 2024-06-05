@@ -3,8 +3,8 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    cargo_env, execute_command, is_no_asm, option_env, target, target_arch, target_env, target_os,
-    target_vendor, OutputLibType,
+    cargo_env, emit_warning, execute_command, is_no_asm, option_env, target, target_arch,
+    target_env, target_os, target_underscored, target_vendor, OutputLibType,
 };
 use std::env;
 use std::ffi::OsStr;
@@ -128,7 +128,9 @@ impl CmakeBuilder {
         }
 
         // Allow environment to specify CMake toolchain.
-        if option_env("CMAKE_TOOLCHAIN_FILE").is_some() {
+        if option_env("CMAKE_TOOLCHAIN_FILE").is_some()
+            || option_env(format!("CMAKE_TOOLCHAIN_FILE_{}", target_underscored())).is_some()
+        {
             return cmake_cfg;
         }
 
@@ -151,16 +153,13 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
             }
         }
+
         if (target_env() != "msvc") && test_ninja_command() {
             // Use Ninja if available
             cmake_cfg.generator("Ninja");
         }
 
-        if target_os() == "windows"
-            && target_arch() == "aarch64"
-            && target_env() == "msvc"
-            && option_env("CMAKE_TOOLCHAIN_FILE_aarch64_pc_windows_msvc").is_none()
-        {
+        if target_underscored() == "aarch64_pc_windows_msvc" {
             cmake_cfg.generator("Ninja");
             cmake_cfg.define("CMAKE_C_COMPILER", "clang-cl");
             cmake_cfg.define("CMAKE_CXX_COMPILER", "clang-cl");
@@ -176,13 +175,17 @@ impl CmakeBuilder {
         }
 
         if target_env() == "ohos" {
-            let ndk = env::var("OHOS_NDK_HOME").expect("Try to get ohos ndk home failed.");
-            cmake_cfg.define(
-                "CMAKE_TOOLCHAIN_FILE",
-                format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"),
-            );
-            cmake_cfg.define("CMAKE_C_FLAGS", "-Wno-unused-command-line-argument");
-            cmake_cfg.define("CMAKE_CXX_FLAGS", "-Wno-unused-command-line-argument");
+            const OHOS_NDK_HOME: &str = "OHOS_NDK_HOME";
+            if let Ok(ndk) = env::var(OHOS_NDK_HOME) {
+                cmake_cfg.define(
+                    "CMAKE_TOOLCHAIN_FILE",
+                    format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"),
+                );
+                cmake_cfg.define("CMAKE_C_FLAGS", "-Wno-unused-command-line-argument");
+                cmake_cfg.define("CMAKE_CXX_FLAGS", "-Wno-unused-command-line-argument");
+            } else {
+                emit_warning(format!("{OHOS_NDK_HOME} not set!").as_str());
+            }
         }
 
         cmake_cfg
