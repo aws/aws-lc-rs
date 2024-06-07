@@ -6,7 +6,7 @@
 use crate::{
     cipher::{
         DecryptingKey, EncryptingKey, PaddedBlockDecryptingKey, PaddedBlockEncryptingKey,
-        UnboundCipherKey, AES_128, AES_256,
+        StreamingDecryptingKey, StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_256,
     },
     fips::{assert_fips_status_indicator, FipsServiceStatus},
 };
@@ -49,15 +49,89 @@ macro_rules! block_api {
     };
 }
 
+macro_rules! streaming_api {
+    ($name:ident, $alg:expr, $encrypt_mode:path, $decrypt_mode:path, $key:expr) => {
+        #[test]
+        fn $name() {
+            let mut key = $encrypt_mode(UnboundCipherKey::new($alg, $key).unwrap()).unwrap();
+
+            let input = TEST_MESSAGE.as_bytes();
+            let mut encrypt_output = vec![0u8; TEST_MESSAGE.len() + $alg.block_len()];
+
+            let mut buffer_update = key.update(&input, &mut encrypt_output).unwrap();
+
+            let outlen = buffer_update.written().len();
+            let (context, buffer_update) = assert_fips_status_indicator!(
+                key.finish(buffer_update.remainder_mut()),
+                FipsServiceStatus::Approved
+            )
+            .unwrap();
+
+            let outlen = outlen + buffer_update.written().len();
+
+            let ciphertext = &encrypt_output[0..outlen];
+            let mut decrypt_output = vec![0u8; outlen + $alg.block_len()];
+            let mut key =
+                $decrypt_mode(UnboundCipherKey::new($alg, $key).unwrap(), context).unwrap();
+
+            let mut buffer_update = key.update(ciphertext, &mut decrypt_output).unwrap();
+
+            let outlen = buffer_update.written().len();
+            let buffer_update = assert_fips_status_indicator!(
+                key.finish(buffer_update.remainder_mut()),
+                FipsServiceStatus::Approved
+            )
+            .unwrap();
+
+            let outlen = outlen + buffer_update.written().len();
+            let plaintext = &decrypt_output[0..outlen];
+
+            assert_eq!(TEST_MESSAGE.as_bytes(), plaintext);
+        }
+    };
+}
+
+streaming_api!(
+    streaming_aes_128_cbc_pkcs7,
+    &AES_128,
+    StreamingEncryptingKey::cbc_pkcs7,
+    StreamingDecryptingKey::cbc_pkcs7,
+    &TEST_KEY_128_BIT
+);
+
+streaming_api!(
+    streaming_aes_128_ctr,
+    &AES_128,
+    StreamingEncryptingKey::ctr,
+    StreamingDecryptingKey::ctr,
+    &TEST_KEY_128_BIT
+);
+
+streaming_api!(
+    streaming_aes_256_cbc_pkcs7,
+    &AES_256,
+    StreamingEncryptingKey::cbc_pkcs7,
+    StreamingDecryptingKey::cbc_pkcs7,
+    &TEST_KEY_256_BIT
+);
+streaming_api!(
+    streaming_aes_256_ctr,
+    &AES_256,
+    StreamingEncryptingKey::ctr,
+    StreamingDecryptingKey::ctr,
+    &TEST_KEY_256_BIT
+);
+
 block_api!(
-    aes_126_cbc_pkcs7,
+    block_aes_128_cbc_pkcs7,
     &AES_128,
     PaddedBlockEncryptingKey::cbc_pkcs7,
     PaddedBlockDecryptingKey::cbc_pkcs7,
     &TEST_KEY_128_BIT
 );
+
 block_api!(
-    aes_126_ctr,
+    block_aes_128_ctr,
     &AES_128,
     EncryptingKey::ctr,
     DecryptingKey::ctr,
@@ -65,14 +139,14 @@ block_api!(
 );
 
 block_api!(
-    aes_256_cbc_pkcs7,
+    block_aes_256_cbc_pkcs7,
     &AES_256,
     PaddedBlockEncryptingKey::cbc_pkcs7,
     PaddedBlockDecryptingKey::cbc_pkcs7,
     &TEST_KEY_256_BIT
 );
 block_api!(
-    aes_256_ctr,
+    block_aes_256_ctr,
     &AES_256,
     EncryptingKey::ctr,
     DecryptingKey::ctr,

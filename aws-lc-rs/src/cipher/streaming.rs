@@ -5,6 +5,7 @@ use crate::cipher::{
     Algorithm, DecryptionContext, EncryptionContext, OperatingMode, UnboundCipherKey,
 };
 use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use crate::ptr::{LcPtr, Pointer};
 use aws_lc::{
     EVP_CIPHER_CTX_new, EVP_CIPHER_iv_length, EVP_CIPHER_key_length, EVP_DecryptFinal_ex,
@@ -76,6 +77,7 @@ impl StreamingEncryptingKey {
             <usize>::try_from(unsafe { EVP_CIPHER_iv_length(*cipher) }).unwrap()
         );
 
+        // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
         if 1 != unsafe {
             EVP_EncryptInit_ex(
                 cipher_ctx.as_mut_ptr(),
@@ -155,13 +157,13 @@ impl StreamingEncryptingKey {
         }
         let mut outlen: i32 = 0;
 
-        if 1 != unsafe {
+        if 1 != indicator_check!(unsafe {
             EVP_EncryptFinal_ex(
                 self.cipher_ctx.as_mut_ptr(),
                 output.as_mut_ptr(),
                 &mut outlen,
             )
-        } {
+        }) {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
@@ -262,6 +264,7 @@ impl StreamingDecryptingKey {
             <usize>::try_from(unsafe { EVP_CIPHER_iv_length(*cipher) }).unwrap()
         );
 
+        // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
         if 1 != unsafe {
             EVP_DecryptInit_ex(
                 cipher_ctx.as_mut_ptr(),
@@ -336,7 +339,9 @@ impl StreamingDecryptingKey {
         }
         let mut outlen: i32 = 0;
 
-        if 1 != unsafe { EVP_DecryptFinal_ex(*self.cipher_ctx, output.as_mut_ptr(), &mut outlen) } {
+        if 1 != indicator_check!(unsafe {
+            EVP_DecryptFinal_ex(*self.cipher_ctx, output.as_mut_ptr(), &mut outlen)
+        }) {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
