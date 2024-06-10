@@ -62,7 +62,7 @@ which = "5.0.0"
 # Pinned dependency to preserve MSRV: ??? <= rust-version < 1.70.0
 home = "=0.5.5"
 # Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
-regex = "~1.9.6"
+regex = "~1.10.5"
 # Pinned dependency to preserve MSRV: ??? <= rust-version < 1.65.0
 regex-automata = "~0.3.9"
 # Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
