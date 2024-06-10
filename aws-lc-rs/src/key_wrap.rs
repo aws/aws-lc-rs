@@ -205,7 +205,7 @@ impl KeyWrap for KeyEncryptionKey<AesBlockCipher> {
     ///
     /// # Errors
     /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
-    /// the allowed input size, or for other unspecified reasons.
+    ///   the allowed input size, or for other unspecified reasons.
     fn wrap<'output>(
         self,
         plaintext: &[u8],
@@ -259,7 +259,7 @@ impl KeyWrap for KeyEncryptionKey<AesBlockCipher> {
     ///
     /// # Errors
     /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
-    /// the allowed input size, or for other unspecified reasons.
+    ///   the allowed input size, or for other unspecified reasons.
     fn unwrap<'output>(
         self,
         ciphertext: &[u8],
@@ -318,7 +318,7 @@ impl KeyWrapPadded for KeyEncryptionKey<AesBlockCipher> {
     ///
     /// # Errors
     /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
-    /// the allowed input size, or for other unspecified reasons.
+    ///   the allowed input size, or for other unspecified reasons.
     fn wrap_with_padding<'output>(
         self,
         plaintext: &[u8],
@@ -364,7 +364,7 @@ impl KeyWrapPadded for KeyEncryptionKey<AesBlockCipher> {
     ///
     /// # Errors
     /// * [`Unspecified`]: An error occurred either due to `output` being insufficiently sized, `input` exceeding
-    /// the allowed input size, or for other unspecified reasons.
+    ///   the allowed input size, or for other unspecified reasons.
     fn unwrap_with_padding<'output>(
         self,
         ciphertext: &[u8],

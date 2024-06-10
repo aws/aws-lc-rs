@@ -355,7 +355,7 @@ impl UnboundCipherKey {
     /// # Errors
     ///
     /// * [`Unspecified`] if `key_bytes.len()` does not match the
-    /// length required by `algorithm`.
+    ///   length required by `algorithm`.
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
         let key_bytes = Buffer::new(key_bytes.to_vec());
         Ok(UnboundCipherKey {
@@ -432,7 +432,7 @@ impl EncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
-    /// and `in_out.len()` is not. Otherwise, returned if encryption fails.
+    ///   and `in_out.len()` is not. Otherwise, returned if encryption fails.
     pub fn encrypt(&self, in_out: &mut [u8]) -> Result<DecryptionContext, Unspecified> {
         let context = self.algorithm.new_encryption_context(self.mode)?;
         self.less_safe_encrypt(in_out, context)
@@ -443,7 +443,7 @@ impl EncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
-    /// and `in_out.len()` is not. Otherwise returned if encryption fails.
+    ///   and `in_out.len()` is not. Otherwise returned if encryption fails.
     pub fn less_safe_encrypt(
         &self,
         in_out: &mut [u8],
@@ -517,7 +517,7 @@ impl DecryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
-    /// and `in_out.len()` is not. Also returned if decryption fails.
+    ///   and `in_out.len()` is not. Also returned if decryption fails.
     pub fn decrypt<'in_out>(
         &self,
         in_out: &'in_out mut [u8],
