@@ -156,6 +156,7 @@ ASN1_VISIBLESTRING_free
 ASN1_VISIBLESTRING_it
 ASN1_VISIBLESTRING_new
 ASN1_digest
+ASN1_dup
 ASN1_generate_v3
 ASN1_get_object
 ASN1_i2d_bio
@@ -1558,6 +1559,7 @@ OCSP_crl_reason_str
 OCSP_id_cmp
 OCSP_id_get0_info
 OCSP_id_issuer_cmp
+OCSP_onereq_get0_id
 OCSP_parse_url
 OCSP_request_add0_id
 OCSP_request_add1_cert
@@ -2656,6 +2658,7 @@ X509_CRL_get_lastUpdate
 X509_CRL_get_nextUpdate
 X509_CRL_get_signature_nid
 X509_CRL_get_version
+X509_CRL_http_nbio
 X509_CRL_it
 X509_CRL_match
 X509_CRL_new
@@ -2748,8 +2751,6 @@ X509_PUBKEY_it
 X509_PUBKEY_new
 X509_PUBKEY_set
 X509_PUBKEY_set0_param
-X509_PURPOSE_add
-X509_PURPOSE_cleanup
 X509_PURPOSE_get0
 X509_PURPOSE_get0_name
 X509_PURPOSE_get0_sname
@@ -2832,7 +2833,9 @@ X509_STORE_CTX_get0_param
 X509_STORE_CTX_get0_parent_ctx
 X509_STORE_CTX_get0_store
 X509_STORE_CTX_get0_untrusted
+X509_STORE_CTX_get1_certs
 X509_STORE_CTX_get1_chain
+X509_STORE_CTX_get1_crls
 X509_STORE_CTX_get1_issuer
 X509_STORE_CTX_get_by_subject
 X509_STORE_CTX_get_chain
@@ -2866,8 +2869,6 @@ X509_STORE_add_lookup
 X509_STORE_free
 X509_STORE_get0_objects
 X509_STORE_get0_param
-X509_STORE_get1_certs
-X509_STORE_get1_crls
 X509_STORE_get_check_crl
 X509_STORE_get_ex_data
 X509_STORE_get_ex_new_index
@@ -2890,8 +2891,6 @@ X509_STORE_set_trust
 X509_STORE_set_verify_cb
 X509_STORE_unlock
 X509_STORE_up_ref
-X509_TRUST_add
-X509_TRUST_cleanup
 X509_TRUST_get0
 X509_TRUST_get0_name
 X509_TRUST_get_by_id
@@ -3050,7 +3049,6 @@ X509v3_get_ext_by_NID
 X509v3_get_ext_by_OBJ
 X509v3_get_ext_by_critical
 X509v3_get_ext_count
-a2i_GENERAL_NAME
 a2i_IPADDRESS
 a2i_IPADDRESS_NC
 abi_test_bad_unwind_temporary
@@ -3152,6 +3150,7 @@ asn1_refcount_dec_and_test_zero
 asn1_refcount_set_one
 asn1_set_choice_selector
 asn1_type_cleanup
+asn1_type_set0_string
 asn1_type_value_as_pointer
 asn1_utctime_to_tm
 awslc_api_version_num
@@ -3309,7 +3308,6 @@ d2i_ECPrivateKey_fp
 d2i_EC_PUBKEY
 d2i_EC_PUBKEY_bio
 d2i_EC_PUBKEY_fp
-d2i_EDIPARTYNAME
 d2i_EXTENDED_KEY_USAGE
 d2i_GENERAL_NAME
 d2i_GENERAL_NAMES
@@ -3327,7 +3325,6 @@ d2i_OCSP_RESPDATA
 d2i_OCSP_RESPONSE
 d2i_OCSP_RESPONSE_bio
 d2i_OCSP_SIGNATURE
-d2i_OTHERNAME
 d2i_PKCS12
 d2i_PKCS12_bio
 d2i_PKCS12_fp
@@ -3446,6 +3443,7 @@ ec_hash_to_scalar_p384_xmd_sha512_draft07
 ec_init_precomp
 ec_jacobian_to_affine
 ec_jacobian_to_affine_batch
+ec_nistp_point_double
 ec_point_byte_len
 ec_point_from_uncompressed
 ec_point_mul_no_self_test
@@ -3518,7 +3516,6 @@ gcm_init_nohw
 gcm_init_ssse3
 gcm_setiv_avx512
 hmac_asn1_meth
-i2a_ACCESS_DESCRIPTION
 i2a_ASN1_ENUMERATED
 i2a_ASN1_INTEGER
 i2a_ASN1_OBJECT
@@ -3576,7 +3573,6 @@ i2d_ECPrivateKey_fp
 i2d_EC_PUBKEY
 i2d_EC_PUBKEY_bio
 i2d_EC_PUBKEY_fp
-i2d_EDIPARTYNAME
 i2d_EXTENDED_KEY_USAGE
 i2d_GENERAL_NAME
 i2d_GENERAL_NAMES
@@ -3594,7 +3590,6 @@ i2d_OCSP_RESPDATA
 i2d_OCSP_RESPONSE
 i2d_OCSP_RESPONSE_bio
 i2d_OCSP_SIGNATURE
-i2d_OTHERNAME
 i2d_PKCS12
 i2d_PKCS12_bio
 i2d_PKCS12_fp
@@ -3743,6 +3738,9 @@ ml_kem_512_ref_polyvec_tobytes
 ml_kem_512_ref_verify
 ml_kem_512_ref_zetas
 o2i_ECPublicKey
+p256_felem_methods
+p384_felem_methods
+p521_felem_methods
 pkcs12_iterations_acceptable
 pkcs12_key_gen
 pkcs12_pbe_encrypt_init
@@ -4083,6 +4081,7 @@ x509v3_a2i_ipadd
 x509v3_bytes_to_hex
 x509v3_cache_extensions
 x509v3_conf_name_matches
+x509v3_ext_free_with_method
 x509v3_hex_to_bytes
 x509v3_looks_like_dns_name
 x86_64_assembly_implementation_FOR_TESTING
