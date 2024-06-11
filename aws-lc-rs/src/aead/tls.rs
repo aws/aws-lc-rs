@@ -46,7 +46,7 @@ impl TlsRecordSealingKey {
     ///
     /// # Errors
     /// * `Unspecified`: Returned if the length of `key_bytes` does not match the chosen algorithm,
-    /// or if an unsupported algorithm is provided.
+    ///   or if an unsupported algorithm is provided.
     pub fn new(
         algorithm: &'static Algorithm,
         protocol: TlsProtocolId,
@@ -191,7 +191,7 @@ impl TlsRecordOpeningKey {
     ///
     /// # Errors
     /// * `Unspecified`: Returned if the length of `key_bytes` does not match the chosen algorithm,
-    /// or if an unsupported algorithm is provided.
+    ///   or if an unsupported algorithm is provided.
     pub fn new(
         algorithm: &'static Algorithm,
         protocol: TlsProtocolId,

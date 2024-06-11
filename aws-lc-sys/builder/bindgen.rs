@@ -33,23 +33,24 @@ impl ParseCallbacks for StripPrefixCallback {
 
 const PRELUDE: &str = r"
 #![allow(
-    unused_imports,
-    non_camel_case_types,
-    non_snake_case,
-    non_upper_case_globals,
-    improper_ctypes,
     clippy::cast_lossless,
     clippy::cast_possible_truncation,
     clippy::default_trait_access,
     clippy::must_use_candidate,
     clippy::not_unsafe_ptr_arg_deref,
     clippy::ptr_as_ptr,
+    clippy::pub_underscore_fields
     clippy::semicolon_if_nothing_returned,
     clippy::too_many_lines,
     clippy::unreadable_literal,
     clippy::used_underscore_binding,
     clippy::useless_transmute,
-    clippy::pub_underscore_fields
+    dead_code,
+    improper_ctypes,
+    non_camel_case_types,
+    non_snake_case,
+    non_upper_case_globals,
+    unused_imports,
 )]
 ";
 
