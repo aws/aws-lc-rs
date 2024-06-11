@@ -119,6 +119,7 @@ ASN1_TIME_it
 ASN1_TIME_new
 ASN1_TIME_print
 ASN1_TIME_set
+ASN1_TIME_set_posix
 ASN1_TIME_set_string
 ASN1_TIME_to_generalizedtime
 ASN1_TIME_to_posix
@@ -2566,6 +2567,7 @@ X509_STORE_CTX_set_ex_data
 X509_STORE_CTX_set_flags
 X509_STORE_CTX_set_purpose
 X509_STORE_CTX_set_time
+X509_STORE_CTX_set_time_posix
 X509_STORE_CTX_set_trust
 X509_STORE_CTX_set_verify_cb
 X509_STORE_CTX_trusted_stack
@@ -2648,6 +2650,7 @@ X509_VERIFY_PARAM_set_flags
 X509_VERIFY_PARAM_set_hostflags
 X509_VERIFY_PARAM_set_purpose
 X509_VERIFY_PARAM_set_time
+X509_VERIFY_PARAM_set_time_posix
 X509_VERIFY_PARAM_set_trust
 X509_VERIFY_PARAM_table_cleanup
 X509_add1_ext_i2d
@@ -2670,6 +2673,7 @@ X509_check_trust
 X509_cmp
 X509_cmp_current_time
 X509_cmp_time
+X509_cmp_time_posix
 X509_delete_ext
 X509_digest
 X509_dup
