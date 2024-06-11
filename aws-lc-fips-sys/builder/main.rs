@@ -249,6 +249,11 @@ fn target() -> String {
     cargo_env("TARGET")
 }
 
+#[allow(unused)]
+fn target_underscored() -> String {
+    target().replace('-', "_")
+}
+
 fn out_dir() -> PathBuf {
     PathBuf::from(cargo_env("OUT_DIR"))
 }
