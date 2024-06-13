@@ -39,7 +39,7 @@ const PRELUDE: &str = r"
     clippy::must_use_candidate,
     clippy::not_unsafe_ptr_arg_deref,
     clippy::ptr_as_ptr,
-    clippy::pub_underscore_fields
+    clippy::pub_underscore_fields,
     clippy::semicolon_if_nothing_returned,
     clippy::too_many_lines,
     clippy::unreadable_literal,
