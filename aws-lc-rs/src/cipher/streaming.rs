@@ -136,6 +136,7 @@ impl StreamingEncryptingKey {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
+        debug_assert!(outlen <= min_outsize);
         Ok(BufferUpdate::new(output, outlen))
     }
 
@@ -167,6 +168,7 @@ impl StreamingEncryptingKey {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
+        debug_assert!(outlen <= self.algorithm().block_len());
         Ok((self.context.into(), BufferUpdate::new(output, outlen)))
     }
 
@@ -322,6 +324,7 @@ impl StreamingDecryptingKey {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
+        debug_assert!(outlen <= min_outsize);
         Ok(BufferUpdate::new(output, outlen))
     }
 
@@ -345,6 +348,7 @@ impl StreamingDecryptingKey {
             return Err(Unspecified);
         }
         let outlen: usize = outlen.try_into()?;
+        debug_assert!(outlen <= self.algorithm().block_len());
         Ok(BufferUpdate::new(output, outlen))
     }
 
