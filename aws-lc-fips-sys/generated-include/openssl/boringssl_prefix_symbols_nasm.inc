@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_12_9
+%define BORINGSSL_PREFIX aws_lc_fips_0_12_10
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -671,6 +671,10 @@
 %xdefine _CRYPTO_get_lock_name _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_lock_name
 %xdefine _CRYPTO_get_locking_callback _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_locking_callback
 %xdefine _CRYPTO_get_seed_entropy _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_seed_entropy
+%xdefine _CRYPTO_get_snapsafe_active _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_active
+%xdefine _CRYPTO_get_snapsafe_generation _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_generation
+%xdefine _CRYPTO_get_snapsafe_supported _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_supported
+%xdefine _CRYPTO_get_sysgenid_path _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_sysgenid_path
 %xdefine _CRYPTO_get_thread_local _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_thread_local
 %xdefine _CRYPTO_ghash_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_ghash_init
 %xdefine _CRYPTO_has_asm _ %+ BORINGSSL_PREFIX %+ _CRYPTO_has_asm
@@ -1338,6 +1342,7 @@
 %xdefine _EVP_md4 _ %+ BORINGSSL_PREFIX %+ _EVP_md4
 %xdefine _EVP_md5 _ %+ BORINGSSL_PREFIX %+ _EVP_md5
 %xdefine _EVP_md5_sha1 _ %+ BORINGSSL_PREFIX %+ _EVP_md5_sha1
+%xdefine _EVP_md_null _ %+ BORINGSSL_PREFIX %+ _EVP_md_null
 %xdefine _EVP_parse_digest_algorithm _ %+ BORINGSSL_PREFIX %+ _EVP_parse_digest_algorithm
 %xdefine _EVP_parse_private_key _ %+ BORINGSSL_PREFIX %+ _EVP_parse_private_key
 %xdefine _EVP_parse_public_key _ %+ BORINGSSL_PREFIX %+ _EVP_parse_public_key
@@ -2319,6 +2324,7 @@
 %xdefine _SSL_set_cert_cb _ %+ BORINGSSL_PREFIX %+ _SSL_set_cert_cb
 %xdefine _SSL_set_chain_and_key _ %+ BORINGSSL_PREFIX %+ _SSL_set_chain_and_key
 %xdefine _SSL_set_cipher_list _ %+ BORINGSSL_PREFIX %+ _SSL_set_cipher_list
+%xdefine _SSL_set_ciphersuites _ %+ BORINGSSL_PREFIX %+ _SSL_set_ciphersuites
 %xdefine _SSL_set_client_CA_list _ %+ BORINGSSL_PREFIX %+ _SSL_set_client_CA_list
 %xdefine _SSL_set_connect_state _ %+ BORINGSSL_PREFIX %+ _SSL_set_connect_state
 %xdefine _SSL_set_custom_verify _ %+ BORINGSSL_PREFIX %+ _SSL_set_custom_verify
@@ -4691,6 +4697,10 @@
 %xdefine CRYPTO_get_lock_name BORINGSSL_PREFIX %+ _CRYPTO_get_lock_name
 %xdefine CRYPTO_get_locking_callback BORINGSSL_PREFIX %+ _CRYPTO_get_locking_callback
 %xdefine CRYPTO_get_seed_entropy BORINGSSL_PREFIX %+ _CRYPTO_get_seed_entropy
+%xdefine CRYPTO_get_snapsafe_active BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_active
+%xdefine CRYPTO_get_snapsafe_generation BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_generation
+%xdefine CRYPTO_get_snapsafe_supported BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_supported
+%xdefine CRYPTO_get_sysgenid_path BORINGSSL_PREFIX %+ _CRYPTO_get_sysgenid_path
 %xdefine CRYPTO_get_thread_local BORINGSSL_PREFIX %+ _CRYPTO_get_thread_local
 %xdefine CRYPTO_ghash_init BORINGSSL_PREFIX %+ _CRYPTO_ghash_init
 %xdefine CRYPTO_has_asm BORINGSSL_PREFIX %+ _CRYPTO_has_asm
@@ -5358,6 +5368,7 @@
 %xdefine EVP_md4 BORINGSSL_PREFIX %+ _EVP_md4
 %xdefine EVP_md5 BORINGSSL_PREFIX %+ _EVP_md5
 %xdefine EVP_md5_sha1 BORINGSSL_PREFIX %+ _EVP_md5_sha1
+%xdefine EVP_md_null BORINGSSL_PREFIX %+ _EVP_md_null
 %xdefine EVP_parse_digest_algorithm BORINGSSL_PREFIX %+ _EVP_parse_digest_algorithm
 %xdefine EVP_parse_private_key BORINGSSL_PREFIX %+ _EVP_parse_private_key
 %xdefine EVP_parse_public_key BORINGSSL_PREFIX %+ _EVP_parse_public_key
@@ -6339,6 +6350,7 @@
 %xdefine SSL_set_cert_cb BORINGSSL_PREFIX %+ _SSL_set_cert_cb
 %xdefine SSL_set_chain_and_key BORINGSSL_PREFIX %+ _SSL_set_chain_and_key
 %xdefine SSL_set_cipher_list BORINGSSL_PREFIX %+ _SSL_set_cipher_list
+%xdefine SSL_set_ciphersuites BORINGSSL_PREFIX %+ _SSL_set_ciphersuites
 %xdefine SSL_set_client_CA_list BORINGSSL_PREFIX %+ _SSL_set_client_CA_list
 %xdefine SSL_set_connect_state BORINGSSL_PREFIX %+ _SSL_set_connect_state
 %xdefine SSL_set_custom_verify BORINGSSL_PREFIX %+ _SSL_set_custom_verify

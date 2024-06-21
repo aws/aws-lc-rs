@@ -20,7 +20,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_ASM_H
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_12_9
+#define BORINGSSL_PREFIX aws_lc_fips_0_12_10
 #endif // BORINGSSL_PREFIX
 
 // On iOS and macOS, we need to treat assembly symbols differently from other
@@ -678,6 +678,10 @@
 #define _CRYPTO_get_lock_name BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_get_lock_name)
 #define _CRYPTO_get_locking_callback BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_get_locking_callback)
 #define _CRYPTO_get_seed_entropy BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_get_seed_entropy)
+#define _CRYPTO_get_snapsafe_active BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_get_snapsafe_active)
+#define _CRYPTO_get_snapsafe_generation BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_get_snapsafe_generation)
+#define _CRYPTO_get_snapsafe_supported BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_get_snapsafe_supported)
+#define _CRYPTO_get_sysgenid_path BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_get_sysgenid_path)
 #define _CRYPTO_get_thread_local BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_get_thread_local)
 #define _CRYPTO_ghash_init BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_ghash_init)
 #define _CRYPTO_has_asm BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_has_asm)
@@ -1345,6 +1349,7 @@
 #define _EVP_md4 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_md4)
 #define _EVP_md5 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_md5)
 #define _EVP_md5_sha1 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_md5_sha1)
+#define _EVP_md_null BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_md_null)
 #define _EVP_parse_digest_algorithm BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_parse_digest_algorithm)
 #define _EVP_parse_private_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_parse_private_key)
 #define _EVP_parse_public_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_parse_public_key)
@@ -2326,6 +2331,7 @@
 #define _SSL_set_cert_cb BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set_cert_cb)
 #define _SSL_set_chain_and_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set_chain_and_key)
 #define _SSL_set_cipher_list BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set_cipher_list)
+#define _SSL_set_ciphersuites BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set_ciphersuites)
 #define _SSL_set_client_CA_list BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set_client_CA_list)
 #define _SSL_set_connect_state BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set_connect_state)
 #define _SSL_set_custom_verify BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, SSL_set_custom_verify)
