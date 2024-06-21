@@ -646,6 +646,10 @@ CRYPTO_get_fork_generation
 CRYPTO_get_lock_name
 CRYPTO_get_locking_callback
 CRYPTO_get_seed_entropy
+CRYPTO_get_snapsafe_active
+CRYPTO_get_snapsafe_generation
+CRYPTO_get_snapsafe_supported
+CRYPTO_get_sysgenid_path
 CRYPTO_get_thread_local
 CRYPTO_ghash_init
 CRYPTO_has_asm
@@ -1313,6 +1317,7 @@ EVP_marshal_public_key
 EVP_md4
 EVP_md5
 EVP_md5_sha1
+EVP_md_null
 EVP_parse_digest_algorithm
 EVP_parse_private_key
 EVP_parse_public_key
@@ -2289,6 +2294,7 @@ SSL_set_bio
 SSL_set_cert_cb
 SSL_set_chain_and_key
 SSL_set_cipher_list
+SSL_set_ciphersuites
 SSL_set_client_CA_list
 SSL_set_connect_state
 SSL_set_custom_verify
