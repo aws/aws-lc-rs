@@ -17,7 +17,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_12_9
+#define BORINGSSL_PREFIX aws_lc_fips_0_12_10
 #endif // BORINGSSL_PREFIX
 
 
@@ -674,6 +674,10 @@
 #define CRYPTO_get_lock_name BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_get_lock_name)
 #define CRYPTO_get_locking_callback BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_get_locking_callback)
 #define CRYPTO_get_seed_entropy BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_get_seed_entropy)
+#define CRYPTO_get_snapsafe_active BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_get_snapsafe_active)
+#define CRYPTO_get_snapsafe_generation BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_get_snapsafe_generation)
+#define CRYPTO_get_snapsafe_supported BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_get_snapsafe_supported)
+#define CRYPTO_get_sysgenid_path BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_get_sysgenid_path)
 #define CRYPTO_get_thread_local BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_get_thread_local)
 #define CRYPTO_ghash_init BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_ghash_init)
 #define CRYPTO_has_asm BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_has_asm)
@@ -1341,6 +1345,7 @@
 #define EVP_md4 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_md4)
 #define EVP_md5 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_md5)
 #define EVP_md5_sha1 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_md5_sha1)
+#define EVP_md_null BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_md_null)
 #define EVP_parse_digest_algorithm BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_parse_digest_algorithm)
 #define EVP_parse_private_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_parse_private_key)
 #define EVP_parse_public_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_parse_public_key)
@@ -2322,6 +2327,7 @@
 #define SSL_set_cert_cb BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_set_cert_cb)
 #define SSL_set_chain_and_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_set_chain_and_key)
 #define SSL_set_cipher_list BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_set_cipher_list)
+#define SSL_set_ciphersuites BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_set_ciphersuites)
 #define SSL_set_client_CA_list BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_set_client_CA_list)
 #define SSL_set_connect_state BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_set_connect_state)
 #define SSL_set_custom_verify BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, SSL_set_custom_verify)
