@@ -17,6 +17,7 @@ env:
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
   RUST_NIGHTLY_TOOLCHAIN: nightly-2024-06-07
+  RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
   # Mirai version tag, updates this whenever a new version
   # is released.
   MIRAI_TOOLCHAIN: nightly-2023-05-09
@@ -287,3 +288,22 @@ jobs:
           package: aws-lc-rs
           feature-group: only-explicit-features
           features: fips
+  metadata-checks:
+    if: github.repository_owner == 'aws'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: aws-lc-rs links
+        run: |
+          VERSION=$(scripts/tools/cargo-dig.rs aws-lc-rs/Cargo.toml -v)
+          LINKS_LINE=$(echo links = \"aws_lc_rs_${VERSION//./_}_sys\")
+          grep "${LINKS_LINE}" aws-lc-rs/Cargo.toml
