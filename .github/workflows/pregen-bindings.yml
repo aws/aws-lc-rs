@@ -1,16 +1,24 @@
 name: Pregeneration Test
+
 on:
   push:
-    branches: [ '*' ]
+    branches:
+      - '*'
+      - '!generate/aws-lc-*'
   pull_request:
-    branches: [ '*' ]
+    branches:
+      - '*'
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
+
 env:
+  RUST_BACKTRACE: 1
+  # We can pin the version if nightly is too unstable.
+  # Otherwise, we test against the latest version.
+  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
   GOPROXY: https://proxy.golang.org,direct
   AWS_LC_SYS_CMAKE_BUILDER: 1
-  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
 jobs:
   bindings:
     if: github.repository_owner == 'aws'
