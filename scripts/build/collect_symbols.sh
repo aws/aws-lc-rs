@@ -61,7 +61,7 @@ function filter_symbols() {
 }
 
 function filter_nm_symbols() {
-  grep -v -E '^_Z' | grep -v 'BORINGSSL_bcm_' | grep -v 'BORINGSSL_integrity_test'
+  grep -v -E '^_Z' | grep -v -E '^\?' | grep -v 'BORINGSSL_bcm_' | grep -v 'BORINGSSL_integrity_test'
 }
 
 function filter_macho_symbols() {
@@ -69,11 +69,7 @@ function filter_macho_symbols() {
 }
 
 function find_libcrypto() {
-  find "${REPO_ROOT}/target" -type f \( -name "lib*crypto.a" -o -name "lib*crypto.so" -o -name "lib*crypto.dylib" \) | grep "${CRATE_NAME}"
-}
-
-function find_libssl() {
-  find "${REPO_ROOT}/target" -type f \( -name "lib*ssl.a" -o -name "lib*ssl.so" -o -name "lib*ssl.dylib" \) | grep "${CRATE_NAME}"
+  find "${REPO_ROOT}/target" -type f \( -name "*crypto.lib" -o -name "lib*crypto.a" -o -name "lib*crypto.so" -o -name "lib*crypto.dylib" \) | grep "${CRATE_NAME}"
 }
 
 LIBCRYPTO_PATH="$(find_libcrypto)"
@@ -82,22 +78,27 @@ if [[ "${?}" -ne 0 ]]; then
   exit 1
 fi
 
-LIBSSL_PATH="$(find_libssl)"
-if [[ "${?}" -ne 0 ]]; then
-  echo "Unable to find libssl"
-  exit 1
-fi
-
 mkdir -p "$(dirname "${SYMBOLS_FILE}")"
 echo Writing symbols to: ${SYMBOLS_FILE}
 
-if [[ "${LIBCRYPTO_PATH}" = *.dylib ]]; then
-  nm --extern-only --defined-only -j  "${LIBCRYPTO_PATH}" "${LIBSSL_PATH}" | grep -v "${REPO_ROOT}" | sort | uniq | filter_macho_symbols | filter_nm_symbols |  filter_symbols >"${SYMBOLS_FILE}"
-elif [[ "${LIBCRYPTO_PATH}" = *.so ]]; then
-  nm --extern-only --defined-only --format=just-symbols  "${LIBCRYPTO_PATH}" "${LIBSSL_PATH}" | grep -v "${REPO_ROOT}" | sort | uniq | filter_nm_symbols | filter_symbols >"${SYMBOLS_FILE}"
+if [[ "${PLATFORM}" = *-msvc ]]; then
+  if [[ "${PLATFORM}" = aarch64-* ]]; then
+    MSVC_ARCH=arm64
+  elif [[ "${PLATFORM}" = i686-* ]]; then
+    MSVC_ARCH=x86
+  else
+    MSVC_ARCH=x64
+  fi
+  DUMPBIN="$(echo /c/Program\ Files/Microsoft\ Visual\ Studio/*/Professional/VC/Tools/MSVC/*/bin/Hostx64/${MSVC_ARCH}/dumpbin.exe | tail -n 1)"
+  PATH="$(dirname "${DUMPBIN}")":"${PATH}"
+  dumpbin //EXPORTS //SYMBOLS  ${LIBCRYPTO_PATH} | grep External | grep SECT1 | sed -e 's/.*External\s*|\s*\(.*\)$/\1/'| egrep '^\w' | sort | uniq | filter_symbols >"${SYMBOLS_FILE}"
+elif [[ "${LIBCRYPTO_PATH}" = *.dylib ]]; then
+  nm --extern-only --defined-only -j  "${LIBCRYPTO_PATH}" | grep -v "${REPO_ROOT}" | sort | uniq | filter_macho_symbols | filter_nm_symbols |  filter_symbols >"${SYMBOLS_FILE}"
+elif [[ "${LIBCRYPTO_PATH}" = *.so || "${LIBCRYPTO_PATH}" = *.lib ]]; then
+  nm --extern-only --defined-only --format=just-symbols  "${LIBCRYPTO_PATH}" | grep -v "${REPO_ROOT}" | sort | uniq | filter_nm_symbols | filter_symbols >"${SYMBOLS_FILE}"
 else
   pushd "${AWS_LC_DIR}"
-  go run -mod readonly "${AWS_LC_DIR}"/util/read_symbols.go "${LIBCRYPTO_PATH}" "${LIBSSL_PATH}" | filter_symbols >"${SYMBOLS_FILE}"
+  go run -mod readonly "${AWS_LC_DIR}"/util/read_symbols.go "${LIBCRYPTO_PATH}" | filter_symbols >"${SYMBOLS_FILE}"
   popd
 fi
 

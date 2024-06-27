@@ -39,12 +39,51 @@ jobs:
         env:
           AWS_LC_SYS_NO_PREFIX: "1"
         run: |
-          cargo test -p aws-lc-sys --features bindgen,ssl
+          cargo test -p aws-lc-sys --features bindgen
       - name: Collect symbols
         run: |
           ./scripts/build/collect_symbols.sh -c aws-lc-sys
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols from ${{ matrix.os }}"
+  collect-windows-symbols-and-commit:
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: windows-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - 'aarch64-pc-windows-msvc'
+          - 'x86_64-pc-windows-msvc'
+          - 'x86_64-pc-windows-gnu'
+          - 'i686-pc-windows-msvc'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.ref_name }}
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+      - uses: ilammy/setup-nasm@v1
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: No-prefix build for ${{ matrix.target }}
+        env:
+          AWS_LC_SYS_NO_PREFIX: "1"
+        run: |
+          cargo ${{ (matrix.target == 'aarch64-pc-windows-msvc' && 'build') || 'test' }} -p aws-lc-sys --features bindgen --target  ${{ matrix.target }}
+      - name: Collect symbols
+        shell: bash
+        run: |
+          ./scripts/build/collect_symbols.sh -c aws-lc-sys -t  ${{ matrix.target }}
+      - name: Commit & Push changes
+        shell: bash
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols from  ${{ matrix.target }}"
   collect-cross-symbols-and-commit:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
@@ -67,14 +106,14 @@ jobs:
         env:
           AWS_LC_SYS_NO_PREFIX: "1"
         run: |
-          cross test -p aws-lc-sys --features bindgen,ssl --target ${{ matrix.target }}
+          cross test -p aws-lc-sys --features bindgen --target ${{ matrix.target }}
       - name: Collect symbols
         run: |
           ./scripts/build/collect_symbols.sh -c aws-lc-sys -t ${{ matrix.target }}
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Symbols for ${{ matrix.target }}"
   generate-headers-and-commit:
-    needs: [ collect-cross-symbols-and-commit, collect-symbols-and-commit ]
+    needs: [ collect-cross-symbols-and-commit, collect-symbols-and-commit, collect-windows-symbols-and-commit ]
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
@@ -116,9 +155,44 @@ jobs:
         env:
           AWS_LC_SYS_INTERNAL_BINDGEN: "1"
         run: |
-          cargo test -p aws-lc-sys --features bindgen,ssl
+          cargo test -p aws-lc-sys --features bindgen
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings from ${{ matrix.os }}"
+  generate-windows-bindings-and-commit:
+    needs: generate-headers-and-commit
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - 'aarch64-pc-windows-msvc'
+          - 'x86_64-pc-windows-msvc'
+          - 'x86_64-pc-windows-gnu'
+          - 'i686-pc-windows-msvc'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.ref_name }}
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+      - uses: ilammy/setup-nasm@v1
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Generate bindings for ${{ matrix.target }}
+        env:
+          AWS_LC_SYS_INTERNAL_BINDGEN: "1"
+        run: |
+          cargo test -p aws-lc-sys --features bindgen --target ${{ matrix.target }}
+      - name: Commit & Push changes
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings for ${{ matrix.target }}"
   generate-cross-bindings-and-commit:
     needs: generate-headers-and-commit
     if: github.repository == 'aws/aws-lc-rs'
@@ -139,7 +213,7 @@ jobs:
         env:
           AWS_LC_SYS_INTERNAL_BINDGEN: "1"
         run: |
-          cross test -p aws-lc-sys --features bindgen,ssl --target ${{ matrix.target }}
+          cross test -p aws-lc-sys --features bindgen --target ${{ matrix.target }}
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings for ${{ matrix.target }}"
   collect-src-and-commit:
