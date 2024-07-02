@@ -145,6 +145,14 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "");
             }
+            if target_arch() == "aarch64" && target_env() == "msvc" {
+                #[cfg(target_arch = "x86_64")]
+                cmake_cfg.generator_toolset("ClangCL,host=x64");
+                #[cfg(target_arch = "x86")]
+                cmake_cfg.generator_toolset("ClangCL,host=x86");
+                #[cfg(not(any(target_arch = "x86_64", target_arch = "x86")))]
+                cmake_cfg.generator_toolset("ClangCL");
+            }
         }
 
         if target_vendor() == "apple" {
@@ -165,13 +173,6 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
             }
-        }
-
-        // Only needed when cross-compiling
-        if target_underscored() == "aarch64_pc_windows_msvc" {
-            cmake_cfg.generator("Ninja");
-            cmake_cfg.define("CMAKE_ASM_COMPILER_TARGET", "arm64-pc-windows-msvc");
-            cmake_cfg.define("CMAKE_ASM_COMPILER", "clang-cl");
         }
 
         if target_env() == "ohos" {
