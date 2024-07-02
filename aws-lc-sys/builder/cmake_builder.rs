@@ -3,8 +3,8 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    cargo_env, emit_warning, execute_command, is_no_asm, option_env, target, target_arch,
-    target_env, target_os, target_underscored, target_vendor, OutputLibType,
+    cargo_env, emit_warning, execute_command, is_crt_static, is_no_asm, option_env, target,
+    target_arch, target_env, target_os, target_underscored, target_vendor, OutputLibType,
 };
 use std::env;
 use std::ffi::OsStr;
@@ -70,9 +70,9 @@ impl CmakeBuilder {
         cmake::Config::new(&self.manifest_dir)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn prepare_cmake_build(&self) -> cmake::Config {
         let mut cmake_cfg = self.get_cmake_config();
-
         if OutputLibType::default() == OutputLibType::Dynamic {
             cmake_cfg.define("BUILD_SHARED_LIBS", "1");
         } else {
@@ -134,6 +134,32 @@ impl CmakeBuilder {
             return cmake_cfg;
         }
 
+        if target_os() == "windows" {
+            // See issue: https://github.com/aws/aws-lc-rs/issues/453
+            if is_crt_static() {
+                cmake_cfg.static_crt(true);
+            } else {
+                cmake_cfg.static_crt(false);
+            }
+            if target_arch() == "x86" && target_env() == "msvc" {
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "");
+                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "");
+            }
+            if target_arch() == "aarch64" && target_env() == "msvc" {
+                cmake_cfg.generator("Ninja");
+                cmake_cfg.define("CMAKE_ASM_COMPILER_TARGET", "arm64-pc-windows-msvc");
+                cmake_cfg.define("CMAKE_ASM_COMPILER", "clang-cl");
+                /* TODO: Determine why assembly files aren't being built w/ default generator
+                #[cfg(target_arch = "x86_64")]
+                cmake_cfg.generator_toolset("ClangCL,host=x64");
+                #[cfg(target_arch = "x86")]
+                cmake_cfg.generator_toolset("ClangCL,host=x86");
+                #[cfg(not(any(target_arch = "x86_64", target_arch = "x86")))]
+                cmake_cfg.generator_toolset("ClangCL");
+                 */
+            }
+        }
+
         if target_vendor() == "apple" {
             if target_os().to_lowercase() == "ios" {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
@@ -151,26 +177,6 @@ impl CmakeBuilder {
             if target_arch() == "x86_64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
-            }
-        }
-
-        if (target_env() != "msvc") && test_ninja_command() {
-            // Use Ninja if available
-            cmake_cfg.generator("Ninja");
-        }
-
-        if target_underscored() == "aarch64_pc_windows_msvc" {
-            cmake_cfg.generator("Ninja");
-            cmake_cfg.define("CMAKE_C_COMPILER", "clang-cl");
-            cmake_cfg.define("CMAKE_CXX_COMPILER", "clang-cl");
-            cmake_cfg.define("CMAKE_ASM_COMPILER", "clang-cl");
-            // If the build host is not aarch64
-            #[cfg(not(target_arch = "aarch64"))]
-            {
-                // Only needed when cross-compiling
-                cmake_cfg.define("CMAKE_C_COMPILER_TARGET", "arm64-pc-windows-msvc");
-                cmake_cfg.define("CMAKE_CXX_COMPILER_TARGET", "arm64-pc-windows-msvc");
-                cmake_cfg.define("CMAKE_ASM_COMPILER_TARGET", "arm64-pc-windows-msvc");
             }
         }
 

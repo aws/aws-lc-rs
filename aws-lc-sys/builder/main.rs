@@ -142,7 +142,7 @@ pub(crate) struct TestCommandResult {
     status: bool,
 }
 
-const MAX_CMD_OUTPUT_SIZE: usize = 1 << 12;
+const MAX_CMD_OUTPUT_SIZE: usize = 1 << 15;
 fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     if let Ok(mut result) = Command::new(executable).args(args).output() {
         result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);
@@ -367,6 +367,11 @@ fn is_external_bindgen() -> bool {
 
 fn is_no_asm() -> bool {
     unsafe { AWS_LC_SYS_NO_ASM }
+}
+
+fn is_crt_static() -> bool {
+    let features = cargo_env("CARGO_CFG_TARGET_FEATURE");
+    features.contains("crt-static")
 }
 
 fn has_bindgen_feature() -> bool {
