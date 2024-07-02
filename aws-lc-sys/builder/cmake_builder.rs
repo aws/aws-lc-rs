@@ -6,7 +6,6 @@ use crate::{
     cargo_env, emit_warning, execute_command, is_crt_static, is_no_asm, option_env, target,
     target_arch, target_env, target_os, target_underscored, target_vendor, OutputLibType,
 };
-use std::collections::HashMap;
 use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
@@ -168,28 +167,11 @@ impl CmakeBuilder {
             }
         }
 
+        // Only needed when cross-compiling
         if target_underscored() == "aarch64_pc_windows_msvc" {
             cmake_cfg.generator("Ninja");
             cmake_cfg.define("CMAKE_ASM_COMPILER_TARGET", "arm64-pc-windows-msvc");
-            // Only needed when cross-compiling
-            let env_map = self
-                .collect_vcvarsall_bat()
-                .map_err(|x| panic!("{}", x))
-                .unwrap();
-            let mut assembler_set = false;
-            for (key, value) in env_map {
-                if key == "VCINSTALLDIR" {
-                    cmake_cfg.define(
-                        "CMAKE_ASM_COMPILER",
-                        format!("{}Tools\\Llvm\\bin\\clang-cl.exe", value),
-                    );
-                    assembler_set = true;
-                }
-                cmake_cfg.env(key, value);
-            }
-            if !assembler_set {
-                panic!("No assmebler set");
-            }
+            cmake_cfg.define("CMAKE_ASM_COMPILER", "clang-cl");
         }
 
         if target_env() == "ohos" {
@@ -213,24 +195,6 @@ impl CmakeBuilder {
         self.prepare_cmake_build()
             .configure_arg("--no-warn-unused-cli")
             .build()
-    }
-
-    fn collect_vcvarsall_bat(&self) -> Result<HashMap<String, String>, String> {
-        let mut map: HashMap<String, String> = HashMap::new();
-        let script_path = self.manifest_dir.join("builder").join("printenv.bat");
-        let result = execute_command(script_path.as_os_str(), &[]);
-        if !result.status {
-            eprintln!("{}", result.stdout);
-            return Err("Failed to run vcvarsall.bat.".to_owned());
-        }
-        eprintln!("{}", result.stdout);
-        let lines = result.stdout.lines();
-        for line in lines {
-            if let Some((var, val)) = line.split_once('=') {
-                map.insert(var.to_string(), val.to_string());
-            }
-        }
-        Ok(map)
     }
 }
 
