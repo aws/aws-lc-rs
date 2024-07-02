@@ -146,12 +146,17 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "");
             }
             if target_arch() == "aarch64" && target_env() == "msvc" {
+                cmake_cfg.generator("Ninja");
+                cmake_cfg.define("CMAKE_ASM_COMPILER_TARGET", "arm64-pc-windows-msvc");
+                cmake_cfg.define("CMAKE_ASM_COMPILER", "clang-cl");
+                /* TODO: Determine why assembly files aren't being built w/ default generator
                 #[cfg(target_arch = "x86_64")]
                 cmake_cfg.generator_toolset("ClangCL,host=x64");
                 #[cfg(target_arch = "x86")]
                 cmake_cfg.generator_toolset("ClangCL,host=x86");
                 #[cfg(not(any(target_arch = "x86_64", target_arch = "x86")))]
                 cmake_cfg.generator_toolset("ClangCL");
+                 */
             }
         }
 
