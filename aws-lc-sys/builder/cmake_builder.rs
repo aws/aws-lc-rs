@@ -181,20 +181,30 @@ impl CmakeBuilder {
                     "CMAKE_TOOLCHAIN_FILE",
                     format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"),
                 );
-                cmake_cfg.define("CMAKE_C_FLAGS", "-Wno-unused-command-line-argument");
-                cmake_cfg.define("CMAKE_CXX_FLAGS", "-Wno-unused-command-line-argument");
-
-                match target_underscored().as_str() {
-                    "armv7_unknown_linux_ohos" => {
-                        cmake_cfg.cflag("-march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON")
-                            .cxxflag("-march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON");
-                    }
-                    "x86_64_unknown_linux_ohos" => {
+                match target().as_str() {
+                    "aarch64-unknown-linux-ohos" => {
                         cmake_cfg
-                            .cflag("-msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON")
-                            .cxxflag("-msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON");
+                            .cflag("-Wno-unused-command-line-argument")
+                            .cxxflag("-Wno-unused-command-line-argument");
                     }
-                    _ => {}
+                    "armv7-unknown-linux-ohos" => {
+                        cmake_cfg
+                        .cflag("-Wno-unused-command-line-argument -march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON")
+                        .cxxflag("-Wno-unused-command-line-argument -march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON")
+                        .asmflag("-march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON");
+                    }
+                    "x86_64-unknown-linux-ohos" => {
+                        cmake_cfg
+                            .cflag("-Wno-unused-command-line-argument -msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON")
+                            .cxxflag("-Wno-unused-command-line-argument -msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON")
+                            .asmflag("-msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON");
+                        // we must set those env for cross-build in apple silicon machine
+                        cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
+                        cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
+                    }
+                    ohos_target => {
+                        emit_warning(format!("Target: {ohos_target} is not support yet!").as_str());
+                    }
                 }
             } else {
                 emit_warning(format!("{OHOS_NDK_HOME} not set!").as_str());
