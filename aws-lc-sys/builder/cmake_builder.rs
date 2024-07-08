@@ -183,6 +183,19 @@ impl CmakeBuilder {
                 );
                 cmake_cfg.define("CMAKE_C_FLAGS", "-Wno-unused-command-line-argument");
                 cmake_cfg.define("CMAKE_CXX_FLAGS", "-Wno-unused-command-line-argument");
+
+                match target_underscored().as_str() {
+                    "armv7_unknown_linux_ohos" => {
+                        cmake_cfg.cflag("-march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON")
+                            .cxxflag("-march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON");
+                    }
+                    "x86_64_unknown_linux_ohos" => {
+                        cmake_cfg
+                            .cflag("-msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON")
+                            .cxxflag("-msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON");
+                    }
+                    _ => {}
+                }
             } else {
                 emit_warning(format!("{OHOS_NDK_HOME} not set!").as_str());
             }
