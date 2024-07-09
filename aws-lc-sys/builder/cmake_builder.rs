@@ -134,16 +134,9 @@ impl CmakeBuilder {
             return cmake_cfg;
         }
 
-        if target_vendor() == "apple" {
-            if target_os().to_lowercase() == "ios" {
-                cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
-                if target().ends_with("-ios-sim") || target_arch() == "x86_64" {
-                    cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
-                } else {
-                    cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphoneos");
-                }
-                cmake_cfg.define("CMAKE_THREAD_LIBS_INIT", "-lpthread");
-            }
+        // If the build environment vendor is Apple
+        #[cfg(target_vendor = "apple")]
+        {
             if target_arch() == "aarch64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "arm64");
@@ -152,6 +145,16 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
             }
+        }
+
+        if target_vendor() == "apple" && target_os().to_lowercase() == "ios" {
+            cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
+            if target().ends_with("-ios-sim") || target_arch() == "x86_64" {
+                cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
+            } else {
+                cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphoneos");
+            }
+            cmake_cfg.define("CMAKE_THREAD_LIBS_INIT", "-lpthread");
         }
 
         if (target_env() != "msvc") && test_ninja_command() {
@@ -175,43 +178,51 @@ impl CmakeBuilder {
         }
 
         if target_env() == "ohos" {
-            const OHOS_NDK_HOME: &str = "OHOS_NDK_HOME";
-            if let Ok(ndk) = env::var(OHOS_NDK_HOME) {
-                cmake_cfg.define(
-                    "CMAKE_TOOLCHAIN_FILE",
-                    format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"),
-                );
-                match target().as_str() {
-                    "aarch64-unknown-linux-ohos" => {
-                        cmake_cfg
-                            .cflag("-Wno-unused-command-line-argument")
-                            .cxxflag("-Wno-unused-command-line-argument");
-                    }
-                    "armv7-unknown-linux-ohos" => {
-                        cmake_cfg
-                        .cflag("-Wno-unused-command-line-argument -march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON")
-                        .cxxflag("-Wno-unused-command-line-argument -march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON")
-                        .asmflag("-march=armv7-a -mfloat-abi=softfp -mtune=generic-armv7-a -mthumb -mfpu=neon -DHAVE_NEON");
-                    }
-                    "x86_64-unknown-linux-ohos" => {
-                        cmake_cfg
-                            .cflag("-Wno-unused-command-line-argument -msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON")
-                            .cxxflag("-Wno-unused-command-line-argument -msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON")
-                            .asmflag("-msse4.1 -DHAVE_NEON_X86 -DHAVE_NEON");
-                        // we must set those env for cross-build in apple silicon machine
-                        cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
-                        cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
-                    }
-                    ohos_target => {
-                        emit_warning(format!("Target: {ohos_target} is not support yet!").as_str());
-                    }
-                }
-            } else {
-                emit_warning(format!("{OHOS_NDK_HOME} not set!").as_str());
-            }
+            Self::configure_open_harmony(&mut cmake_cfg);
         }
 
         cmake_cfg
+    }
+
+    fn configure_open_harmony(cmake_cfg: &mut cmake::Config) {
+        const OHOS_NDK_HOME: &str = "OHOS_NDK_HOME";
+        if let Ok(ndk) = env::var(OHOS_NDK_HOME) {
+            cmake_cfg.define(
+                "CMAKE_TOOLCHAIN_FILE",
+                format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"),
+            );
+            let mut cflags = vec!["-Wno-unused-command-line-argument"];
+            let mut asmflags = vec![];
+            match target().as_str() {
+                "aarch64-unknown-linux-ohos" => {}
+                "armv7-unknown-linux-ohos" => {
+                    const ARM7_FLAGS: [&str; 6] = [
+                        "-march=armv7-a",
+                        "-mfloat-abi=softfp",
+                        "-mtune=generic-armv7-a",
+                        "-mthumb",
+                        "-mfpu=neon",
+                        "-DHAVE_NEON",
+                    ];
+                    cflags.extend(ARM7_FLAGS);
+                    asmflags.extend(ARM7_FLAGS);
+                }
+                "x86_64-unknown-linux-ohos" => {
+                    const X86_64_FLAGS: [&str; 3] = ["-msse4.1", "-DHAVE_NEON_X86", "-DHAVE_NEON"];
+                    cflags.extend(X86_64_FLAGS);
+                    asmflags.extend(X86_64_FLAGS);
+                }
+                ohos_target => {
+                    emit_warning(format!("Target: {ohos_target} is not support yet!").as_str());
+                }
+            }
+            cmake_cfg
+                .cflag(cflags.join(" ").as_str())
+                .cxxflag(cflags.join(" ").as_str())
+                .asmflag(asmflags.join(" ").as_str());
+        } else {
+            emit_warning(format!("{OHOS_NDK_HOME} not set!").as_str());
+        }
     }
 
     fn build_rust_wrapper(&self) -> PathBuf {
