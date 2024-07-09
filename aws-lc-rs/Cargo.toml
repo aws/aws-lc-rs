@@ -73,4 +73,4 @@ proc-macro2 = "1.0.60"
 cc = "=1.0.105"
 
 [package.metadata.cargo-udeps.ignore]
-development = ["which", "home", "regex", "regex-automata", "regex-syntax", "proc-macro2", "jobserver"]
+development = ["which", "home", "regex", "regex-automata", "regex-syntax", "proc-macro2", "jobserver", "cc"]
