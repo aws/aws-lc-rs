@@ -132,45 +132,83 @@ jobs:
           toolchain: stable
           target: aarch64-pc-windows-msvc
       - name: Install cargo-xwin and bindgen-cli
-        run: cargo install cargo-xwin bindgen-cli
+        run: cargo install --locked cargo-xwin bindgen-cli
       - name: cargo xwin build for `x86_64-pc-windows-msvc`
-        run: cargo xwin build -p aws-lc-rs --release --target x86_64-pc-windows-msvc
+        run: cargo xwin build -p aws-lc-rs --release --all-targets --target x86_64-pc-windows-msvc
       - name: cargo xwin build for `aarch64-pc-windows-msvc`
-        run: cargo xwin build -p aws-lc-rs --release --target aarch64-pc-windows-msvc
+        run: cargo xwin build -p aws-lc-rs --release --all-targets --target aarch64-pc-windows-msvc
 
-  aws-lc-rs-windows-mingw:
+  aws-lc-rs-windows-gnu:
     if: github.repository_owner == 'aws'
-    name: x86_64-pc-windows-gnu
+    name: ${{ matrix.target }}
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - 'x86_64-pc-windows-gnu'
+          # TODO: Fails in GitHub CI.  Appears to be related to bindgen.
+          # .../base.h:61:10: fatal error: 'stdlib.h' file not found
+          # - 'i686-pc-windows-gnu'
     steps:
       - uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: stable
-          target: x86_64-pc-windows-gnu
-      - name: Debug Test on `x86_64-pc-windows-gnu`
-        run: cargo test -p aws-lc-rs --target x86_64-pc-windows-gnu --features bindgen
-      - name: Release test on `x86_64-pc-windows-gnu`
-        run: cargo test -p aws-lc-rs --release --target x86_64-pc-windows-gnu --features bindgen
+          target: ${{ matrix.target }}
+      - name: Debug Test on `${{ matrix.target }}`
+        run: cargo test -p aws-lc-rs --target ${{ matrix.target }} --features bindgen
+      - name: Release test on `${{ matrix.target }}`
+        run: cargo test -p aws-lc-rs --release --target ${{ matrix.target }} --features bindgen
 
-  aws-lc-rs-windows-arm64:
-    if: github.repository_owner == 'aws'
-    name: aarch64-pc-windows-msvc
+  aws-lc-rs-windows-msvc:
+    if: ${{ github.repository_owner == 'aws' }}
+    name: ${{ matrix.target }} - ${{ (matrix.crt_static == '1' && 'crt-static and /WX') || '/WX' }}
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - 'x86_64-pc-windows-msvc'
+          - 'i686-pc-windows-msvc'
+          - 'aarch64-pc-windows-msvc'
+        crt_static:
+          - '0'
+          - '1'
     steps:
-      - uses: actions/checkout@v3
+      - name: Install NASM
+        if: ${{ matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'i686-pc-windows-msvc' }}
+        uses: ilammy/setup-nasm@v1
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - name: Install ninja-build tool
+        if: ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
         uses: seanmiddleditch/gha-setup-ninja@v4
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: stable
-          target: aarch64-pc-windows-msvc
-      - name: Build for `aarch64-pc-windows-msvc`
-        run: cargo build -p aws-lc-rs --target aarch64-pc-windows-msvc --features bindgen
+          target: ${{ matrix.target }}
+      - name: Set ACTION_CARGO
+        run: |
+          if ('${{ matrix.target }}' -like '*aarch64*') {
+            echo "ACTION_CARGO=build" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            echo "ACTION_CARGO=test" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+      - name: Set RUSTFLAGS
+        run: |
+          if ('${{ matrix.crt_static }}' -eq '1') {
+            echo "RUSTFLAGS=-Clink-arg=/WX -Ctarget-feature=+crt-static" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            echo "RUSTFLAGS=-Clink-arg=/WX" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+      - name: Debug build
+        run: cargo ${{ env.ACTION_CARGO }} -p aws-lc-rs --all-targets --target ${{ matrix.target }} --features bindgen
+      - name: Release Build for ${{ matrix.target }}
+        run: cargo ${{ env.ACTION_CARGO }} --release -p aws-lc-rs --all-targets --target ${{ matrix.target }}

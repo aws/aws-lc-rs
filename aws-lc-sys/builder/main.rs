@@ -142,7 +142,7 @@ pub(crate) struct TestCommandResult {
     status: bool,
 }
 
-const MAX_CMD_OUTPUT_SIZE: usize = 1 << 12;
+const MAX_CMD_OUTPUT_SIZE: usize = 1 << 15;
 fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     if let Ok(mut result) = Command::new(executable).args(args).output() {
         result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);
@@ -390,6 +390,11 @@ fn prepare_cargo_cfg() {
     println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
     println!("cargo::rustc-check-cfg=cfg(aarch64_apple_darwin)");
      */
+}
+
+fn is_crt_static() -> bool {
+    let features = cargo_env("CARGO_CFG_TARGET_FEATURE");
+    features.contains("crt-static")
 }
 
 fn main() {
