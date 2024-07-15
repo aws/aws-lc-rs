@@ -714,9 +714,11 @@ DES_ecb_encrypt
 DES_ede2_cbc_encrypt
 DES_ede3_cbc_encrypt
 DES_encrypt3
+DES_is_weak_key
 DES_key_sched
 DES_ncbc_encrypt
 DES_set_key
+DES_set_key_unchecked
 DES_set_odd_parity
 DH_bits
 DH_check
@@ -839,6 +841,7 @@ ECDSA_sign
 ECDSA_sign_with_nonce_and_leak_private_key_for_testing
 ECDSA_size
 ECDSA_verify
+ECPKParameters_print
 EC_GFp_mont_method
 EC_GFp_nistp224_method
 EC_GFp_nistp256_method
@@ -850,12 +853,14 @@ EC_GROUP_dup
 EC_GROUP_free
 EC_GROUP_get0_generator
 EC_GROUP_get0_order
+EC_GROUP_get0_seed
 EC_GROUP_get_asn1_flag
 EC_GROUP_get_cofactor
 EC_GROUP_get_curve_GFp
 EC_GROUP_get_curve_name
 EC_GROUP_get_degree
 EC_GROUP_get_order
+EC_GROUP_get_seed_len
 EC_GROUP_method_of
 EC_GROUP_new_by_curve_name
 EC_GROUP_new_curve_GFp
@@ -863,6 +868,7 @@ EC_GROUP_order_bits
 EC_GROUP_set_asn1_flag
 EC_GROUP_set_generator
 EC_GROUP_set_point_conversion_form
+EC_GROUP_set_seed
 EC_KEY_check_fips
 EC_KEY_check_key
 EC_KEY_derive_from_secret
@@ -898,6 +904,7 @@ EC_KEY_set_public_key_affine_coordinates
 EC_KEY_up_ref
 EC_METHOD_get_field_type
 EC_POINT_add
+EC_POINT_bn2point
 EC_POINT_clear_free
 EC_POINT_cmp
 EC_POINT_copy
@@ -1707,6 +1714,7 @@ PEM_read_bio_DHparams
 PEM_read_bio_DSAPrivateKey
 PEM_read_bio_DSA_PUBKEY
 PEM_read_bio_DSAparams
+PEM_read_bio_ECPKParameters
 PEM_read_bio_ECPrivateKey
 PEM_read_bio_EC_PUBKEY
 PEM_read_bio_PKCS7
@@ -1750,6 +1758,7 @@ PEM_write_bio_DHparams
 PEM_write_bio_DSAPrivateKey
 PEM_write_bio_DSA_PUBKEY
 PEM_write_bio_DSAparams
+PEM_write_bio_ECPKParameters
 PEM_write_bio_ECPrivateKey
 PEM_write_bio_EC_PUBKEY
 PEM_write_bio_PKCS7
@@ -3310,6 +3319,7 @@ d2i_DSA_PUBKEY_fp
 d2i_DSA_SIG
 d2i_DSAparams
 d2i_ECDSA_SIG
+d2i_ECPKParameters
 d2i_ECParameters
 d2i_ECPrivateKey
 d2i_ECPrivateKey_bio
@@ -3525,6 +3535,7 @@ gcm_init_clmul
 gcm_init_nohw
 gcm_init_ssse3
 gcm_setiv_avx512
+generate_table
 hmac_asn1_meth
 i2a_ASN1_ENUMERATED
 i2a_ASN1_INTEGER
@@ -3576,6 +3587,7 @@ i2d_DSA_PUBKEY_fp
 i2d_DSA_SIG
 i2d_DSAparams
 i2d_ECDSA_SIG
+i2d_ECPKParameters
 i2d_ECParameters
 i2d_ECPrivateKey
 i2d_ECPrivateKey_bio
@@ -3756,9 +3768,9 @@ ml_kem_512_ref_polyvec_tobytes
 ml_kem_512_ref_verify
 ml_kem_512_ref_zetas
 o2i_ECPublicKey
-p256_felem_methods
-p384_felem_methods
-p521_felem_methods
+p256_methods
+p384_methods
+p521_methods
 pkcs12_iterations_acceptable
 pkcs12_key_gen
 pkcs12_pbe_encrypt_init
@@ -3968,6 +3980,7 @@ rsaz_1024_scatter5_avx2
 rsaz_1024_sqr_avx2
 s2i_ASN1_INTEGER
 s2i_ASN1_OCTET_STRING
+scalar_rwnaf
 sha1_block_data_order
 sha1_func
 sha224_func
