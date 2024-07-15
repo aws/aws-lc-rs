@@ -21,11 +21,6 @@ fn test_clang_cl_command() -> bool {
     execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
 }
 
-fn test_ninja_command() -> bool {
-    execute_command("ninja".as_ref(), &["--version".as_ref()]).status
-        || execute_command("ninja-build".as_ref(), &["--version".as_ref()]).status
-}
-
 fn test_nasm_command() -> bool {
     execute_command("nasm".as_ref(), &["-version".as_ref()]).status
 }
@@ -263,15 +258,9 @@ impl crate::Builder for CmakeBuilder {
                 eprintln!("Missing dependency: nasm");
                 missing_dependency = true;
             }
-            if target_arch() == "aarch64" && target_env() == "msvc" {
-                if !test_ninja_command() {
-                    eprintln!("Missing dependency: ninja");
-                    missing_dependency = true;
-                }
-                if !test_clang_cl_command() {
-                    eprintln!("Missing dependency: clang-cl");
-                    missing_dependency = true;
-                }
+            if target_arch() == "aarch64" && target_env() == "msvc" && !test_clang_cl_command() {
+                eprintln!("Missing dependency: clang-cl");
+                missing_dependency = true;
             }
         }
         if let Some(cmake_cmd) = find_cmake_command() {
