@@ -10,8 +10,8 @@ use core::ops::Deref;
 use core::ptr::null;
 use core::ptr::null_mut;
 // TODO: Uncomment when MSRV >= 1.64
-// use core::ffi::{c_int, c_uint};
-use std::os::raw::{c_int, c_uint};
+// use core::ffi::c_int;
+use std::os::raw::c_int;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
@@ -67,7 +67,6 @@ pub const PKCS8_DOCUMENT_MAX_LEN: usize = 42 + SCALAR_MAX_BYTES + PUBLIC_KEY_MAX
 pub struct EcdsaVerificationAlgorithm {
     pub(super) id: &'static AlgorithmID,
     pub(super) digest: &'static digest::Algorithm,
-    pub(super) bits: c_uint,
     pub(super) sig_format: EcdsaSignatureFormat,
 }
 
