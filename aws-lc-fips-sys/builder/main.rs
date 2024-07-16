@@ -144,7 +144,7 @@ pub(crate) struct TestCommandResult {
     status: bool,
 }
 
-const MAX_CMD_OUTPUT_SIZE: usize = 1 << 14;
+const MAX_CMD_OUTPUT_SIZE: usize = 1 << 15;
 fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     if let Ok(mut result) = Command::new(executable).args(args).output() {
         result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);

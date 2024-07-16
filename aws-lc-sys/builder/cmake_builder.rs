@@ -3,8 +3,8 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    cargo_env, emit_warning, execute_command, is_no_asm, option_env, target, target_arch,
-    target_env, target_os, target_underscored, target_vendor, OutputLibType,
+    cargo_env, emit_warning, execute_command, is_crt_static, is_no_asm, option_env, target,
+    target_arch, target_env, target_os, target_underscored, target_vendor, OutputLibType,
 };
 use std::env;
 use std::ffi::OsStr;
@@ -19,11 +19,6 @@ pub(crate) struct CmakeBuilder {
 
 fn test_clang_cl_command() -> bool {
     execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
-}
-
-fn test_ninja_command() -> bool {
-    execute_command("ninja".as_ref(), &["--version".as_ref()]).status
-        || execute_command("ninja-build".as_ref(), &["--version".as_ref()]).status
 }
 
 fn test_nasm_command() -> bool {
@@ -70,6 +65,7 @@ impl CmakeBuilder {
         cmake::Config::new(&self.manifest_dir)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn prepare_cmake_build(&self) -> cmake::Config {
         let mut cmake_cfg = self.get_cmake_config();
 
@@ -134,6 +130,11 @@ impl CmakeBuilder {
             return cmake_cfg;
         }
 
+        // See issue: https://github.com/aws/aws-lc-rs/issues/453
+        if target_os() == "windows" {
+            Self::configure_windows(&mut cmake_cfg);
+        }
+
         // If the build environment vendor is Apple
         #[cfg(target_vendor = "apple")]
         {
@@ -157,31 +158,43 @@ impl CmakeBuilder {
             cmake_cfg.define("CMAKE_THREAD_LIBS_INIT", "-lpthread");
         }
 
-        if (target_env() != "msvc") && test_ninja_command() {
-            // Use Ninja if available
-            cmake_cfg.generator("Ninja");
-        }
-
-        if target_underscored() == "aarch64_pc_windows_msvc" {
-            cmake_cfg.generator("Ninja");
-            cmake_cfg.define("CMAKE_C_COMPILER", "clang-cl");
-            cmake_cfg.define("CMAKE_CXX_COMPILER", "clang-cl");
-            cmake_cfg.define("CMAKE_ASM_COMPILER", "clang-cl");
-            // If the build host is not aarch64
-            #[cfg(not(target_arch = "aarch64"))]
-            {
-                // Only needed when cross-compiling
-                cmake_cfg.define("CMAKE_C_COMPILER_TARGET", "arm64-pc-windows-msvc");
-                cmake_cfg.define("CMAKE_CXX_COMPILER_TARGET", "arm64-pc-windows-msvc");
-                cmake_cfg.define("CMAKE_ASM_COMPILER_TARGET", "arm64-pc-windows-msvc");
-            }
-        }
-
         if target_env() == "ohos" {
             Self::configure_open_harmony(&mut cmake_cfg);
         }
 
         cmake_cfg
+    }
+
+    fn configure_windows(cmake_cfg: &mut cmake::Config) {
+        match (target_env().as_str(), target_arch().as_str()) {
+            ("msvc", "aarch64") => {
+                cmake_cfg.generator_toolset(format!(
+                    "ClangCL{}",
+                    if cfg!(target_arch = "x86_64") {
+                        ",host=x64"
+                    } else {
+                        ""
+                    }
+                ));
+                cmake_cfg.static_crt(is_crt_static());
+                cmake_cfg.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
+                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "ARM64");
+            }
+            ("msvc", "x86") => {
+                cmake_cfg.static_crt(is_crt_static());
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "");
+                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "");
+            }
+            ("msvc", _) => {
+                cmake_cfg.static_crt(is_crt_static());
+            }
+            ("gnu", "x86") => {
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
+                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86");
+            }
+            _ => {}
+        }
     }
 
     fn configure_open_harmony(cmake_cfg: &mut cmake::Config) {
@@ -245,15 +258,9 @@ impl crate::Builder for CmakeBuilder {
                 eprintln!("Missing dependency: nasm");
                 missing_dependency = true;
             }
-            if target_arch() == "aarch64" && target_env() == "msvc" {
-                if !test_ninja_command() {
-                    eprintln!("Missing dependency: ninja");
-                    missing_dependency = true;
-                }
-                if !test_clang_cl_command() {
-                    eprintln!("Missing dependency: clang-cl");
-                    missing_dependency = true;
-                }
+            if target_arch() == "aarch64" && target_env() == "msvc" && !test_clang_cl_command() {
+                eprintln!("Missing dependency: clang-cl");
+                missing_dependency = true;
             }
         }
         if let Some(cmake_cmd) = find_cmake_command() {
