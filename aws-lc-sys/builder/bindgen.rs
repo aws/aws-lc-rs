@@ -62,7 +62,7 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bi
         .derive_debug(true)
         .derive_default(true)
         .derive_eq(true)
-        .allowlist_file(r".*(/|\\)openssl(/|\\)[^/\\]+\.h")
+        .allowlist_file(r".*(/|\\)openssl((/|\\)[^/\\]+)+\.h")
         .allowlist_file(r".*(/|\\)rust_wrapper\.h")
         .rustified_enum(r"point_conversion_form_t")
         .default_macro_constant_type(bindgen::MacroTypeVariation::Signed)
