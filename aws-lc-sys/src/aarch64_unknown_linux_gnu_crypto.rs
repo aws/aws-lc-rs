@@ -27341,6 +27341,27 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    #[link_name = "\u{1}aws_lc_0_20_0_EVP_PKEY_keygen_deterministic"]
+    pub fn EVP_PKEY_keygen_deterministic(
+        ctx: *mut EVP_PKEY_CTX,
+        out_pkey: *mut *mut EVP_PKEY,
+        seed: *const u8,
+        seed_len: *mut usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_20_0_EVP_PKEY_encapsulate_deterministic"]
+    pub fn EVP_PKEY_encapsulate_deterministic(
+        ctx: *mut EVP_PKEY_CTX,
+        ciphertext: *mut u8,
+        ciphertext_len: *mut usize,
+        shared_secret: *mut u8,
+        shared_secret_len: *mut usize,
+        seed: *const u8,
+        seed_len: *mut usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
     #[link_name = "\u{1}aws_lc_0_20_0_ERR_GET_LIB_RUST"]
     pub fn ERR_GET_LIB_RUST(packed_error: u32) -> ::std::os::raw::c_int;
 }
