@@ -343,6 +343,7 @@ impl Debug for PublicKey {
 }
 
 impl AsRef<[u8]> for PublicKey {
+    /// DER encode a RSA public key to (RFC 8017) `RSAPublicKey` structure.
     fn as_ref(&self) -> &[u8] {
         self.key.as_ref()
     }
