@@ -75,4 +75,4 @@ libc = "0.2.121"
 paste = "1.0.11"
 
 [package.metadata.aws-lc-fips-sys]
-commit-hash = "c166b19e8778b5efa98b6dce5004bfd194e67ab5"
+commit-hash = "533fb66f9ed6467449ea65d1d10e344d3b7c9125"
