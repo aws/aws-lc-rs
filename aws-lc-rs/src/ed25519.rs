@@ -130,6 +130,7 @@ pub struct PublicKey([u8; ED25519_PUBLIC_KEY_LEN]);
 
 impl AsRef<[u8]> for PublicKey {
     #[inline]
+    /// Returns the "raw" bytes of the ED25519 public key
     fn as_ref(&self) -> &[u8] {
         &self.0
     }

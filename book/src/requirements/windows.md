@@ -4,7 +4,7 @@
 |---------------------------|--------------------------------------------|-----------------------------------------|-------------------|
 | `x86_64-pc-windows-msvc`  | C/C++ Compiler, CMake & NASM               | C/C++ Compiler, CMake, NASM, Go & Ninja | **_Yes_**         | 
 | `x86_64-pc-windows-gnu`   | C/C++ Compiler, CMake & NASM               | **Not Supported**                       | **_Yes_**         |
-| `aarch64-pc-windows-msvc` | C/C++ Compiler (`clang-cl`), CMake & Ninja | **Not Supported**                       | **_Yes_**         |
+| `aarch64-pc-windows-msvc` | C/C++ Compiler (MSVC's `clang-cl`) & CMake | **Not Supported**                       | **_Yes_**         |
 | _Other_                   | **Not Supported**                          | **Not Supported**                       | N/A               |
 
 ## C/C++ Compiler

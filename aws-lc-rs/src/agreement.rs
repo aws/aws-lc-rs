@@ -562,6 +562,9 @@ impl Debug for PublicKey {
 }
 
 impl AsRef<[u8]> for PublicKey {
+    /// Serializes the public key in an uncompressed form (X9.62) using the
+    /// Octet-String-to-Elliptic-Curve-Point algorithm in
+    /// [SEC 1: Elliptic Curve Cryptography, Version 2.0].
     fn as_ref(&self) -> &[u8] {
         &self.public_key[0..self.len]
     }
