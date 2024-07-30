@@ -7,7 +7,7 @@ use crate::{
     target_arch, target_env, target_os, target_underscored, target_vendor, OutputLibType,
 };
 use std::env;
-use std::ffi::OsStr;
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 pub(crate) struct CmakeBuilder {
@@ -25,11 +25,21 @@ fn test_nasm_command() -> bool {
     execute_command("nasm".as_ref(), &["-version".as_ref()]).status
 }
 
-fn find_cmake_command() -> Option<&'static OsStr> {
-    if execute_command("cmake3".as_ref(), &["--version".as_ref()]).status {
-        Some("cmake3".as_ref())
+fn find_cmake_command() -> Option<OsString> {
+    if let Some(cmake) = option_env("CMAKE") {
+        emit_warning(&format!(
+            "CMAKE environment variable set: {}",
+            cmake.clone()
+        ));
+        if execute_command(cmake.as_ref(), &["--version".as_ref()]).status {
+            Some(cmake.into())
+        } else {
+            None
+        }
+    } else if execute_command("cmake3".as_ref(), &["--version".as_ref()]).status {
+        Some("cmake3".into())
     } else if execute_command("cmake".as_ref(), &["--version".as_ref()]).status {
-        Some("cmake".as_ref())
+        Some("cmake".into())
     } else {
         None
     }
@@ -124,10 +134,23 @@ impl CmakeBuilder {
         }
 
         // Allow environment to specify CMake toolchain.
-        if option_env("CMAKE_TOOLCHAIN_FILE").is_some()
-            || option_env(format!("CMAKE_TOOLCHAIN_FILE_{}", target_underscored())).is_some()
-        {
+        if let Some(toolchain) = option_env("CMAKE_TOOLCHAIN_FILE").or(option_env(format!(
+            "CMAKE_TOOLCHAIN_FILE_{}",
+            target_underscored()
+        ))) {
+            emit_warning(&format!(
+                "CMAKE_TOOLCHAIN_FILE environment variable set: {toolchain}"
+            ));
             return cmake_cfg;
+        }
+
+        if let Some(cc) = option_env("CC") {
+            emit_warning(&format!("CC environment variable set: {}", cc.clone()));
+            cmake_cfg.define("CMAKE_C_COMPILER", cc);
+        }
+        if let Some(cxx) = option_env("CXX") {
+            emit_warning(&format!("CXX environment variable set: {}", cxx.clone()));
+            cmake_cfg.define("CMAKE_CXX_COMPILER", cxx);
         }
 
         // See issue: https://github.com/aws/aws-lc-rs/issues/453
@@ -145,6 +168,24 @@ impl CmakeBuilder {
             if target_arch() == "x86_64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
+            }
+        }
+
+        if target_os() == "android" {
+            cmake_cfg.define("CMAKE_SYSTEM_NAME", "Android");
+
+            let target = target();
+            let proc = target.split('-').next().unwrap();
+            match proc {
+                "armv7" => {
+                    cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "armv7-a");
+                }
+                "arm" => {
+                    cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "armv6");
+                }
+                _ => {
+                    cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", proc);
+                }
             }
         }
 
