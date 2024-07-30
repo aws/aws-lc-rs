@@ -51,7 +51,16 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        target: [ aarch64-unknown-linux-gnu, i686-unknown-linux-gnu, aarch64-unknown-linux-musl, x86_64-unknown-linux-musl ]
+        target:
+          - aarch64-unknown-linux-gnu
+          - i686-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
+          - x86_64-unknown-linux-musl
+          # collect symbols from additional platforms, although we won't generate bindings for them
+          - arm-unknown-linux-gnueabi
+          - armv7-unknown-linux-gnueabihf
+          - powerpc-unknown-linux-gnu
+          - powerpc64le-unknown-linux-gnu
     steps:
       - uses: actions/checkout@v4
         with:

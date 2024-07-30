@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_20_0
+%define BORINGSSL_PREFIX aws_lc_0_20_1
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -690,20 +690,26 @@
 %xdefine _CRYPTO_get_thread_local _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_thread_local
 %xdefine _CRYPTO_ghash_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_ghash_init
 %xdefine _CRYPTO_has_asm _ %+ BORINGSSL_PREFIX %+ _CRYPTO_has_asm
+%xdefine _CRYPTO_has_broken_NEON _ %+ BORINGSSL_PREFIX %+ _CRYPTO_has_broken_NEON
 %xdefine _CRYPTO_hchacha20 _ %+ BORINGSSL_PREFIX %+ _CRYPTO_hchacha20
 %xdefine _CRYPTO_init_sysrand _ %+ BORINGSSL_PREFIX %+ _CRYPTO_init_sysrand
+%xdefine _CRYPTO_is_PPC64LE_vcrypto_capable _ %+ BORINGSSL_PREFIX %+ _CRYPTO_is_PPC64LE_vcrypto_capable
 %xdefine _CRYPTO_is_confidential_build _ %+ BORINGSSL_PREFIX %+ _CRYPTO_is_confidential_build
 %xdefine _CRYPTO_library_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_library_init
 %xdefine _CRYPTO_malloc _ %+ BORINGSSL_PREFIX %+ _CRYPTO_malloc
 %xdefine _CRYPTO_malloc_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_malloc_init
 %xdefine _CRYPTO_memcmp _ %+ BORINGSSL_PREFIX %+ _CRYPTO_memcmp
+%xdefine _CRYPTO_needs_hwcap2_workaround _ %+ BORINGSSL_PREFIX %+ _CRYPTO_needs_hwcap2_workaround
 %xdefine _CRYPTO_new_ex_data _ %+ BORINGSSL_PREFIX %+ _CRYPTO_new_ex_data
 %xdefine _CRYPTO_num_locks _ %+ BORINGSSL_PREFIX %+ _CRYPTO_num_locks
 %xdefine _CRYPTO_ofb128_encrypt _ %+ BORINGSSL_PREFIX %+ _CRYPTO_ofb128_encrypt
 %xdefine _CRYPTO_once _ %+ BORINGSSL_PREFIX %+ _CRYPTO_once
 %xdefine _CRYPTO_poly1305_finish _ %+ BORINGSSL_PREFIX %+ _CRYPTO_poly1305_finish
+%xdefine _CRYPTO_poly1305_finish_neon _ %+ BORINGSSL_PREFIX %+ _CRYPTO_poly1305_finish_neon
 %xdefine _CRYPTO_poly1305_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_poly1305_init
+%xdefine _CRYPTO_poly1305_init_neon _ %+ BORINGSSL_PREFIX %+ _CRYPTO_poly1305_init_neon
 %xdefine _CRYPTO_poly1305_update _ %+ BORINGSSL_PREFIX %+ _CRYPTO_poly1305_update
+%xdefine _CRYPTO_poly1305_update_neon _ %+ BORINGSSL_PREFIX %+ _CRYPTO_poly1305_update_neon
 %xdefine _CRYPTO_pre_sandbox_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_pre_sandbox_init
 %xdefine _CRYPTO_rdrand _ %+ BORINGSSL_PREFIX %+ _CRYPTO_rdrand
 %xdefine _CRYPTO_rdrand_multiple8_buf _ %+ BORINGSSL_PREFIX %+ _CRYPTO_rdrand_multiple8_buf
@@ -1661,6 +1667,7 @@
 %xdefine _OPENSSL_memdup _ %+ BORINGSSL_PREFIX %+ _OPENSSL_memdup
 %xdefine _OPENSSL_no_config _ %+ BORINGSSL_PREFIX %+ _OPENSSL_no_config
 %xdefine _OPENSSL_posix_to_tm _ %+ BORINGSSL_PREFIX %+ _OPENSSL_posix_to_tm
+%xdefine _OPENSSL_ppc64le_hwcap2 _ %+ BORINGSSL_PREFIX %+ _OPENSSL_ppc64le_hwcap2
 %xdefine _OPENSSL_realloc _ %+ BORINGSSL_PREFIX %+ _OPENSSL_realloc
 %xdefine _OPENSSL_secure_clear_free _ %+ BORINGSSL_PREFIX %+ _OPENSSL_secure_clear_free
 %xdefine _OPENSSL_secure_malloc _ %+ BORINGSSL_PREFIX %+ _OPENSSL_secure_malloc
@@ -3105,6 +3112,15 @@
 %xdefine _a2i_IPADDRESS_NC _ %+ BORINGSSL_PREFIX %+ _a2i_IPADDRESS_NC
 %xdefine _abi_test_bad_unwind_temporary _ %+ BORINGSSL_PREFIX %+ _abi_test_bad_unwind_temporary
 %xdefine _abi_test_bad_unwind_wrong_register _ %+ BORINGSSL_PREFIX %+ _abi_test_bad_unwind_wrong_register
+%xdefine _abi_test_clobber_cr0 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_cr0
+%xdefine _abi_test_clobber_cr1 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_cr1
+%xdefine _abi_test_clobber_cr2 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_cr2
+%xdefine _abi_test_clobber_cr3 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_cr3
+%xdefine _abi_test_clobber_cr4 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_cr4
+%xdefine _abi_test_clobber_cr5 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_cr5
+%xdefine _abi_test_clobber_cr6 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_cr6
+%xdefine _abi_test_clobber_cr7 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_cr7
+%xdefine _abi_test_clobber_ctr _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_ctr
 %xdefine _abi_test_clobber_d0 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_d0
 %xdefine _abi_test_clobber_d1 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_d1
 %xdefine _abi_test_clobber_d10 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_d10
@@ -3144,12 +3160,69 @@
 %xdefine _abi_test_clobber_edi _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_edi
 %xdefine _abi_test_clobber_edx _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_edx
 %xdefine _abi_test_clobber_esi _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_esi
+%xdefine _abi_test_clobber_f0 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f0
+%xdefine _abi_test_clobber_f1 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f1
+%xdefine _abi_test_clobber_f10 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f10
+%xdefine _abi_test_clobber_f11 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f11
+%xdefine _abi_test_clobber_f12 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f12
+%xdefine _abi_test_clobber_f13 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f13
+%xdefine _abi_test_clobber_f14 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f14
+%xdefine _abi_test_clobber_f15 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f15
+%xdefine _abi_test_clobber_f16 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f16
+%xdefine _abi_test_clobber_f17 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f17
+%xdefine _abi_test_clobber_f18 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f18
+%xdefine _abi_test_clobber_f19 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f19
+%xdefine _abi_test_clobber_f2 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f2
+%xdefine _abi_test_clobber_f20 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f20
+%xdefine _abi_test_clobber_f21 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f21
+%xdefine _abi_test_clobber_f22 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f22
+%xdefine _abi_test_clobber_f23 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f23
+%xdefine _abi_test_clobber_f24 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f24
+%xdefine _abi_test_clobber_f25 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f25
+%xdefine _abi_test_clobber_f26 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f26
+%xdefine _abi_test_clobber_f27 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f27
+%xdefine _abi_test_clobber_f28 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f28
+%xdefine _abi_test_clobber_f29 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f29
+%xdefine _abi_test_clobber_f3 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f3
+%xdefine _abi_test_clobber_f30 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f30
+%xdefine _abi_test_clobber_f31 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f31
+%xdefine _abi_test_clobber_f4 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f4
+%xdefine _abi_test_clobber_f5 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f5
+%xdefine _abi_test_clobber_f6 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f6
+%xdefine _abi_test_clobber_f7 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f7
+%xdefine _abi_test_clobber_f8 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f8
+%xdefine _abi_test_clobber_f9 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_f9
+%xdefine _abi_test_clobber_lr _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_lr
+%xdefine _abi_test_clobber_r0 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r0
+%xdefine _abi_test_clobber_r1 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r1
 %xdefine _abi_test_clobber_r10 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r10
 %xdefine _abi_test_clobber_r11 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r11
 %xdefine _abi_test_clobber_r12 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r12
 %xdefine _abi_test_clobber_r13 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r13
 %xdefine _abi_test_clobber_r14 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r14
 %xdefine _abi_test_clobber_r15 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r15
+%xdefine _abi_test_clobber_r16 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r16
+%xdefine _abi_test_clobber_r17 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r17
+%xdefine _abi_test_clobber_r18 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r18
+%xdefine _abi_test_clobber_r19 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r19
+%xdefine _abi_test_clobber_r2 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r2
+%xdefine _abi_test_clobber_r20 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r20
+%xdefine _abi_test_clobber_r21 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r21
+%xdefine _abi_test_clobber_r22 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r22
+%xdefine _abi_test_clobber_r23 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r23
+%xdefine _abi_test_clobber_r24 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r24
+%xdefine _abi_test_clobber_r25 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r25
+%xdefine _abi_test_clobber_r26 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r26
+%xdefine _abi_test_clobber_r27 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r27
+%xdefine _abi_test_clobber_r28 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r28
+%xdefine _abi_test_clobber_r29 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r29
+%xdefine _abi_test_clobber_r3 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r3
+%xdefine _abi_test_clobber_r30 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r30
+%xdefine _abi_test_clobber_r31 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r31
+%xdefine _abi_test_clobber_r4 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r4
+%xdefine _abi_test_clobber_r5 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r5
+%xdefine _abi_test_clobber_r6 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r6
+%xdefine _abi_test_clobber_r7 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r7
 %xdefine _abi_test_clobber_r8 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r8
 %xdefine _abi_test_clobber_r9 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_r9
 %xdefine _abi_test_clobber_rax _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_rax
@@ -3159,13 +3232,45 @@
 %xdefine _abi_test_clobber_rdi _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_rdi
 %xdefine _abi_test_clobber_rdx _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_rdx
 %xdefine _abi_test_clobber_rsi _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_rsi
+%xdefine _abi_test_clobber_v0 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v0
+%xdefine _abi_test_clobber_v1 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v1
+%xdefine _abi_test_clobber_v10 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v10
 %xdefine _abi_test_clobber_v10_upper _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v10_upper
+%xdefine _abi_test_clobber_v11 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v11
 %xdefine _abi_test_clobber_v11_upper _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v11_upper
+%xdefine _abi_test_clobber_v12 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v12
 %xdefine _abi_test_clobber_v12_upper _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v12_upper
+%xdefine _abi_test_clobber_v13 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v13
 %xdefine _abi_test_clobber_v13_upper _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v13_upper
+%xdefine _abi_test_clobber_v14 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v14
 %xdefine _abi_test_clobber_v14_upper _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v14_upper
+%xdefine _abi_test_clobber_v15 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v15
 %xdefine _abi_test_clobber_v15_upper _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v15_upper
+%xdefine _abi_test_clobber_v16 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v16
+%xdefine _abi_test_clobber_v17 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v17
+%xdefine _abi_test_clobber_v18 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v18
+%xdefine _abi_test_clobber_v19 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v19
+%xdefine _abi_test_clobber_v2 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v2
+%xdefine _abi_test_clobber_v20 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v20
+%xdefine _abi_test_clobber_v21 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v21
+%xdefine _abi_test_clobber_v22 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v22
+%xdefine _abi_test_clobber_v23 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v23
+%xdefine _abi_test_clobber_v24 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v24
+%xdefine _abi_test_clobber_v25 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v25
+%xdefine _abi_test_clobber_v26 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v26
+%xdefine _abi_test_clobber_v27 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v27
+%xdefine _abi_test_clobber_v28 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v28
+%xdefine _abi_test_clobber_v29 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v29
+%xdefine _abi_test_clobber_v3 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v3
+%xdefine _abi_test_clobber_v30 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v30
+%xdefine _abi_test_clobber_v31 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v31
+%xdefine _abi_test_clobber_v4 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v4
+%xdefine _abi_test_clobber_v5 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v5
+%xdefine _abi_test_clobber_v6 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v6
+%xdefine _abi_test_clobber_v7 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v7
+%xdefine _abi_test_clobber_v8 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v8
 %xdefine _abi_test_clobber_v8_upper _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v8_upper
+%xdefine _abi_test_clobber_v9 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v9
 %xdefine _abi_test_clobber_v9_upper _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_v9_upper
 %xdefine _abi_test_clobber_x0 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_x0
 %xdefine _abi_test_clobber_x1 _ %+ BORINGSSL_PREFIX %+ _abi_test_clobber_x1
@@ -3379,6 +3484,8 @@
 %xdefine _bn_words_to_little_endian _ %+ BORINGSSL_PREFIX %+ _bn_words_to_little_endian
 %xdefine _boringssl_self_test_hmac_sha256 _ %+ BORINGSSL_PREFIX %+ _boringssl_self_test_hmac_sha256
 %xdefine _boringssl_self_test_sha256 _ %+ BORINGSSL_PREFIX %+ _boringssl_self_test_sha256
+%xdefine _bsaes_cbc_encrypt _ %+ BORINGSSL_PREFIX %+ _bsaes_cbc_encrypt
+%xdefine _bsaes_ctr32_encrypt_blocks _ %+ BORINGSSL_PREFIX %+ _bsaes_ctr32_encrypt_blocks
 %xdefine _c2i_ASN1_BIT_STRING _ %+ BORINGSSL_PREFIX %+ _c2i_ASN1_BIT_STRING
 %xdefine _c2i_ASN1_INTEGER _ %+ BORINGSSL_PREFIX %+ _c2i_ASN1_INTEGER
 %xdefine _c2i_ASN1_OBJECT _ %+ BORINGSSL_PREFIX %+ _c2i_ASN1_OBJECT
@@ -3649,6 +3756,7 @@
 %xdefine _gcm_ghash_clmul _ %+ BORINGSSL_PREFIX %+ _gcm_ghash_clmul
 %xdefine _gcm_ghash_neon _ %+ BORINGSSL_PREFIX %+ _gcm_ghash_neon
 %xdefine _gcm_ghash_nohw _ %+ BORINGSSL_PREFIX %+ _gcm_ghash_nohw
+%xdefine _gcm_ghash_p8 _ %+ BORINGSSL_PREFIX %+ _gcm_ghash_p8
 %xdefine _gcm_ghash_ssse3 _ %+ BORINGSSL_PREFIX %+ _gcm_ghash_ssse3
 %xdefine _gcm_ghash_v8 _ %+ BORINGSSL_PREFIX %+ _gcm_ghash_v8
 %xdefine _gcm_gmult_avx _ %+ BORINGSSL_PREFIX %+ _gcm_gmult_avx
@@ -3656,6 +3764,7 @@
 %xdefine _gcm_gmult_clmul _ %+ BORINGSSL_PREFIX %+ _gcm_gmult_clmul
 %xdefine _gcm_gmult_neon _ %+ BORINGSSL_PREFIX %+ _gcm_gmult_neon
 %xdefine _gcm_gmult_nohw _ %+ BORINGSSL_PREFIX %+ _gcm_gmult_nohw
+%xdefine _gcm_gmult_p8 _ %+ BORINGSSL_PREFIX %+ _gcm_gmult_p8
 %xdefine _gcm_gmult_ssse3 _ %+ BORINGSSL_PREFIX %+ _gcm_gmult_ssse3
 %xdefine _gcm_gmult_v8 _ %+ BORINGSSL_PREFIX %+ _gcm_gmult_v8
 %xdefine _gcm_init_avx _ %+ BORINGSSL_PREFIX %+ _gcm_init_avx
@@ -3663,6 +3772,7 @@
 %xdefine _gcm_init_clmul _ %+ BORINGSSL_PREFIX %+ _gcm_init_clmul
 %xdefine _gcm_init_neon _ %+ BORINGSSL_PREFIX %+ _gcm_init_neon
 %xdefine _gcm_init_nohw _ %+ BORINGSSL_PREFIX %+ _gcm_init_nohw
+%xdefine _gcm_init_p8 _ %+ BORINGSSL_PREFIX %+ _gcm_init_p8
 %xdefine _gcm_init_ssse3 _ %+ BORINGSSL_PREFIX %+ _gcm_init_ssse3
 %xdefine _gcm_init_v8 _ %+ BORINGSSL_PREFIX %+ _gcm_init_v8
 %xdefine _gcm_setiv_avx512 _ %+ BORINGSSL_PREFIX %+ _gcm_setiv_avx512
@@ -3900,6 +4010,8 @@
 %xdefine _ml_kem_512_ref_verify _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_verify
 %xdefine _ml_kem_512_ref_zetas _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_ref_zetas
 %xdefine _o2i_ECPublicKey _ %+ BORINGSSL_PREFIX %+ _o2i_ECPublicKey
+%xdefine _openssl_poly1305_neon2_addmulmod _ %+ BORINGSSL_PREFIX %+ _openssl_poly1305_neon2_addmulmod
+%xdefine _openssl_poly1305_neon2_blocks _ %+ BORINGSSL_PREFIX %+ _openssl_poly1305_neon2_blocks
 %xdefine _p256_methods _ %+ BORINGSSL_PREFIX %+ _p256_methods
 %xdefine _p384_methods _ %+ BORINGSSL_PREFIX %+ _p384_methods
 %xdefine _p521_methods _ %+ BORINGSSL_PREFIX %+ _p521_methods
@@ -4118,9 +4230,11 @@
 %xdefine _sha1_func _ %+ BORINGSSL_PREFIX %+ _sha1_func
 %xdefine _sha224_func _ %+ BORINGSSL_PREFIX %+ _sha224_func
 %xdefine _sha256_block_data_order _ %+ BORINGSSL_PREFIX %+ _sha256_block_data_order
+%xdefine _sha256_block_data_order_neon _ %+ BORINGSSL_PREFIX %+ _sha256_block_data_order_neon
 %xdefine _sha256_func _ %+ BORINGSSL_PREFIX %+ _sha256_func
 %xdefine _sha384_func _ %+ BORINGSSL_PREFIX %+ _sha384_func
 %xdefine _sha512_block_data_order _ %+ BORINGSSL_PREFIX %+ _sha512_block_data_order
+%xdefine _sha512_block_data_order_neon _ %+ BORINGSSL_PREFIX %+ _sha512_block_data_order_neon
 %xdefine _sha512_func _ %+ BORINGSSL_PREFIX %+ _sha512_func
 %xdefine _sk_CRYPTO_BUFFER_call_copy_func _ %+ BORINGSSL_PREFIX %+ _sk_CRYPTO_BUFFER_call_copy_func
 %xdefine _sk_CRYPTO_BUFFER_call_free_func _ %+ BORINGSSL_PREFIX %+ _sk_CRYPTO_BUFFER_call_free_func
@@ -4213,7 +4327,9 @@
 %xdefine _vpaes_cbc_encrypt _ %+ BORINGSSL_PREFIX %+ _vpaes_cbc_encrypt
 %xdefine _vpaes_ctr32_encrypt_blocks _ %+ BORINGSSL_PREFIX %+ _vpaes_ctr32_encrypt_blocks
 %xdefine _vpaes_decrypt _ %+ BORINGSSL_PREFIX %+ _vpaes_decrypt
+%xdefine _vpaes_decrypt_key_to_bsaes _ %+ BORINGSSL_PREFIX %+ _vpaes_decrypt_key_to_bsaes
 %xdefine _vpaes_encrypt _ %+ BORINGSSL_PREFIX %+ _vpaes_encrypt
+%xdefine _vpaes_encrypt_key_to_bsaes _ %+ BORINGSSL_PREFIX %+ _vpaes_encrypt_key_to_bsaes
 %xdefine _vpaes_set_decrypt_key _ %+ BORINGSSL_PREFIX %+ _vpaes_set_decrypt_key
 %xdefine _vpaes_set_encrypt_key _ %+ BORINGSSL_PREFIX %+ _vpaes_set_encrypt_key
 %xdefine _x25519_asn1_meth _ %+ BORINGSSL_PREFIX %+ _x25519_asn1_meth
@@ -4918,20 +5034,26 @@
 %xdefine CRYPTO_get_thread_local BORINGSSL_PREFIX %+ _CRYPTO_get_thread_local
 %xdefine CRYPTO_ghash_init BORINGSSL_PREFIX %+ _CRYPTO_ghash_init
 %xdefine CRYPTO_has_asm BORINGSSL_PREFIX %+ _CRYPTO_has_asm
+%xdefine CRYPTO_has_broken_NEON BORINGSSL_PREFIX %+ _CRYPTO_has_broken_NEON
 %xdefine CRYPTO_hchacha20 BORINGSSL_PREFIX %+ _CRYPTO_hchacha20
 %xdefine CRYPTO_init_sysrand BORINGSSL_PREFIX %+ _CRYPTO_init_sysrand
+%xdefine CRYPTO_is_PPC64LE_vcrypto_capable BORINGSSL_PREFIX %+ _CRYPTO_is_PPC64LE_vcrypto_capable
 %xdefine CRYPTO_is_confidential_build BORINGSSL_PREFIX %+ _CRYPTO_is_confidential_build
 %xdefine CRYPTO_library_init BORINGSSL_PREFIX %+ _CRYPTO_library_init
 %xdefine CRYPTO_malloc BORINGSSL_PREFIX %+ _CRYPTO_malloc
 %xdefine CRYPTO_malloc_init BORINGSSL_PREFIX %+ _CRYPTO_malloc_init
 %xdefine CRYPTO_memcmp BORINGSSL_PREFIX %+ _CRYPTO_memcmp
+%xdefine CRYPTO_needs_hwcap2_workaround BORINGSSL_PREFIX %+ _CRYPTO_needs_hwcap2_workaround
 %xdefine CRYPTO_new_ex_data BORINGSSL_PREFIX %+ _CRYPTO_new_ex_data
 %xdefine CRYPTO_num_locks BORINGSSL_PREFIX %+ _CRYPTO_num_locks
 %xdefine CRYPTO_ofb128_encrypt BORINGSSL_PREFIX %+ _CRYPTO_ofb128_encrypt
 %xdefine CRYPTO_once BORINGSSL_PREFIX %+ _CRYPTO_once
 %xdefine CRYPTO_poly1305_finish BORINGSSL_PREFIX %+ _CRYPTO_poly1305_finish
+%xdefine CRYPTO_poly1305_finish_neon BORINGSSL_PREFIX %+ _CRYPTO_poly1305_finish_neon
 %xdefine CRYPTO_poly1305_init BORINGSSL_PREFIX %+ _CRYPTO_poly1305_init
+%xdefine CRYPTO_poly1305_init_neon BORINGSSL_PREFIX %+ _CRYPTO_poly1305_init_neon
 %xdefine CRYPTO_poly1305_update BORINGSSL_PREFIX %+ _CRYPTO_poly1305_update
+%xdefine CRYPTO_poly1305_update_neon BORINGSSL_PREFIX %+ _CRYPTO_poly1305_update_neon
 %xdefine CRYPTO_pre_sandbox_init BORINGSSL_PREFIX %+ _CRYPTO_pre_sandbox_init
 %xdefine CRYPTO_rdrand BORINGSSL_PREFIX %+ _CRYPTO_rdrand
 %xdefine CRYPTO_rdrand_multiple8_buf BORINGSSL_PREFIX %+ _CRYPTO_rdrand_multiple8_buf
@@ -5889,6 +6011,7 @@
 %xdefine OPENSSL_memdup BORINGSSL_PREFIX %+ _OPENSSL_memdup
 %xdefine OPENSSL_no_config BORINGSSL_PREFIX %+ _OPENSSL_no_config
 %xdefine OPENSSL_posix_to_tm BORINGSSL_PREFIX %+ _OPENSSL_posix_to_tm
+%xdefine OPENSSL_ppc64le_hwcap2 BORINGSSL_PREFIX %+ _OPENSSL_ppc64le_hwcap2
 %xdefine OPENSSL_realloc BORINGSSL_PREFIX %+ _OPENSSL_realloc
 %xdefine OPENSSL_secure_clear_free BORINGSSL_PREFIX %+ _OPENSSL_secure_clear_free
 %xdefine OPENSSL_secure_malloc BORINGSSL_PREFIX %+ _OPENSSL_secure_malloc
@@ -7333,6 +7456,15 @@
 %xdefine a2i_IPADDRESS_NC BORINGSSL_PREFIX %+ _a2i_IPADDRESS_NC
 %xdefine abi_test_bad_unwind_temporary BORINGSSL_PREFIX %+ _abi_test_bad_unwind_temporary
 %xdefine abi_test_bad_unwind_wrong_register BORINGSSL_PREFIX %+ _abi_test_bad_unwind_wrong_register
+%xdefine abi_test_clobber_cr0 BORINGSSL_PREFIX %+ _abi_test_clobber_cr0
+%xdefine abi_test_clobber_cr1 BORINGSSL_PREFIX %+ _abi_test_clobber_cr1
+%xdefine abi_test_clobber_cr2 BORINGSSL_PREFIX %+ _abi_test_clobber_cr2
+%xdefine abi_test_clobber_cr3 BORINGSSL_PREFIX %+ _abi_test_clobber_cr3
+%xdefine abi_test_clobber_cr4 BORINGSSL_PREFIX %+ _abi_test_clobber_cr4
+%xdefine abi_test_clobber_cr5 BORINGSSL_PREFIX %+ _abi_test_clobber_cr5
+%xdefine abi_test_clobber_cr6 BORINGSSL_PREFIX %+ _abi_test_clobber_cr6
+%xdefine abi_test_clobber_cr7 BORINGSSL_PREFIX %+ _abi_test_clobber_cr7
+%xdefine abi_test_clobber_ctr BORINGSSL_PREFIX %+ _abi_test_clobber_ctr
 %xdefine abi_test_clobber_d0 BORINGSSL_PREFIX %+ _abi_test_clobber_d0
 %xdefine abi_test_clobber_d1 BORINGSSL_PREFIX %+ _abi_test_clobber_d1
 %xdefine abi_test_clobber_d10 BORINGSSL_PREFIX %+ _abi_test_clobber_d10
@@ -7372,12 +7504,69 @@
 %xdefine abi_test_clobber_edi BORINGSSL_PREFIX %+ _abi_test_clobber_edi
 %xdefine abi_test_clobber_edx BORINGSSL_PREFIX %+ _abi_test_clobber_edx
 %xdefine abi_test_clobber_esi BORINGSSL_PREFIX %+ _abi_test_clobber_esi
+%xdefine abi_test_clobber_f0 BORINGSSL_PREFIX %+ _abi_test_clobber_f0
+%xdefine abi_test_clobber_f1 BORINGSSL_PREFIX %+ _abi_test_clobber_f1
+%xdefine abi_test_clobber_f10 BORINGSSL_PREFIX %+ _abi_test_clobber_f10
+%xdefine abi_test_clobber_f11 BORINGSSL_PREFIX %+ _abi_test_clobber_f11
+%xdefine abi_test_clobber_f12 BORINGSSL_PREFIX %+ _abi_test_clobber_f12
+%xdefine abi_test_clobber_f13 BORINGSSL_PREFIX %+ _abi_test_clobber_f13
+%xdefine abi_test_clobber_f14 BORINGSSL_PREFIX %+ _abi_test_clobber_f14
+%xdefine abi_test_clobber_f15 BORINGSSL_PREFIX %+ _abi_test_clobber_f15
+%xdefine abi_test_clobber_f16 BORINGSSL_PREFIX %+ _abi_test_clobber_f16
+%xdefine abi_test_clobber_f17 BORINGSSL_PREFIX %+ _abi_test_clobber_f17
+%xdefine abi_test_clobber_f18 BORINGSSL_PREFIX %+ _abi_test_clobber_f18
+%xdefine abi_test_clobber_f19 BORINGSSL_PREFIX %+ _abi_test_clobber_f19
+%xdefine abi_test_clobber_f2 BORINGSSL_PREFIX %+ _abi_test_clobber_f2
+%xdefine abi_test_clobber_f20 BORINGSSL_PREFIX %+ _abi_test_clobber_f20
+%xdefine abi_test_clobber_f21 BORINGSSL_PREFIX %+ _abi_test_clobber_f21
+%xdefine abi_test_clobber_f22 BORINGSSL_PREFIX %+ _abi_test_clobber_f22
+%xdefine abi_test_clobber_f23 BORINGSSL_PREFIX %+ _abi_test_clobber_f23
+%xdefine abi_test_clobber_f24 BORINGSSL_PREFIX %+ _abi_test_clobber_f24
+%xdefine abi_test_clobber_f25 BORINGSSL_PREFIX %+ _abi_test_clobber_f25
+%xdefine abi_test_clobber_f26 BORINGSSL_PREFIX %+ _abi_test_clobber_f26
+%xdefine abi_test_clobber_f27 BORINGSSL_PREFIX %+ _abi_test_clobber_f27
+%xdefine abi_test_clobber_f28 BORINGSSL_PREFIX %+ _abi_test_clobber_f28
+%xdefine abi_test_clobber_f29 BORINGSSL_PREFIX %+ _abi_test_clobber_f29
+%xdefine abi_test_clobber_f3 BORINGSSL_PREFIX %+ _abi_test_clobber_f3
+%xdefine abi_test_clobber_f30 BORINGSSL_PREFIX %+ _abi_test_clobber_f30
+%xdefine abi_test_clobber_f31 BORINGSSL_PREFIX %+ _abi_test_clobber_f31
+%xdefine abi_test_clobber_f4 BORINGSSL_PREFIX %+ _abi_test_clobber_f4
+%xdefine abi_test_clobber_f5 BORINGSSL_PREFIX %+ _abi_test_clobber_f5
+%xdefine abi_test_clobber_f6 BORINGSSL_PREFIX %+ _abi_test_clobber_f6
+%xdefine abi_test_clobber_f7 BORINGSSL_PREFIX %+ _abi_test_clobber_f7
+%xdefine abi_test_clobber_f8 BORINGSSL_PREFIX %+ _abi_test_clobber_f8
+%xdefine abi_test_clobber_f9 BORINGSSL_PREFIX %+ _abi_test_clobber_f9
+%xdefine abi_test_clobber_lr BORINGSSL_PREFIX %+ _abi_test_clobber_lr
+%xdefine abi_test_clobber_r0 BORINGSSL_PREFIX %+ _abi_test_clobber_r0
+%xdefine abi_test_clobber_r1 BORINGSSL_PREFIX %+ _abi_test_clobber_r1
 %xdefine abi_test_clobber_r10 BORINGSSL_PREFIX %+ _abi_test_clobber_r10
 %xdefine abi_test_clobber_r11 BORINGSSL_PREFIX %+ _abi_test_clobber_r11
 %xdefine abi_test_clobber_r12 BORINGSSL_PREFIX %+ _abi_test_clobber_r12
 %xdefine abi_test_clobber_r13 BORINGSSL_PREFIX %+ _abi_test_clobber_r13
 %xdefine abi_test_clobber_r14 BORINGSSL_PREFIX %+ _abi_test_clobber_r14
 %xdefine abi_test_clobber_r15 BORINGSSL_PREFIX %+ _abi_test_clobber_r15
+%xdefine abi_test_clobber_r16 BORINGSSL_PREFIX %+ _abi_test_clobber_r16
+%xdefine abi_test_clobber_r17 BORINGSSL_PREFIX %+ _abi_test_clobber_r17
+%xdefine abi_test_clobber_r18 BORINGSSL_PREFIX %+ _abi_test_clobber_r18
+%xdefine abi_test_clobber_r19 BORINGSSL_PREFIX %+ _abi_test_clobber_r19
+%xdefine abi_test_clobber_r2 BORINGSSL_PREFIX %+ _abi_test_clobber_r2
+%xdefine abi_test_clobber_r20 BORINGSSL_PREFIX %+ _abi_test_clobber_r20
+%xdefine abi_test_clobber_r21 BORINGSSL_PREFIX %+ _abi_test_clobber_r21
+%xdefine abi_test_clobber_r22 BORINGSSL_PREFIX %+ _abi_test_clobber_r22
+%xdefine abi_test_clobber_r23 BORINGSSL_PREFIX %+ _abi_test_clobber_r23
+%xdefine abi_test_clobber_r24 BORINGSSL_PREFIX %+ _abi_test_clobber_r24
+%xdefine abi_test_clobber_r25 BORINGSSL_PREFIX %+ _abi_test_clobber_r25
+%xdefine abi_test_clobber_r26 BORINGSSL_PREFIX %+ _abi_test_clobber_r26
+%xdefine abi_test_clobber_r27 BORINGSSL_PREFIX %+ _abi_test_clobber_r27
+%xdefine abi_test_clobber_r28 BORINGSSL_PREFIX %+ _abi_test_clobber_r28
+%xdefine abi_test_clobber_r29 BORINGSSL_PREFIX %+ _abi_test_clobber_r29
+%xdefine abi_test_clobber_r3 BORINGSSL_PREFIX %+ _abi_test_clobber_r3
+%xdefine abi_test_clobber_r30 BORINGSSL_PREFIX %+ _abi_test_clobber_r30
+%xdefine abi_test_clobber_r31 BORINGSSL_PREFIX %+ _abi_test_clobber_r31
+%xdefine abi_test_clobber_r4 BORINGSSL_PREFIX %+ _abi_test_clobber_r4
+%xdefine abi_test_clobber_r5 BORINGSSL_PREFIX %+ _abi_test_clobber_r5
+%xdefine abi_test_clobber_r6 BORINGSSL_PREFIX %+ _abi_test_clobber_r6
+%xdefine abi_test_clobber_r7 BORINGSSL_PREFIX %+ _abi_test_clobber_r7
 %xdefine abi_test_clobber_r8 BORINGSSL_PREFIX %+ _abi_test_clobber_r8
 %xdefine abi_test_clobber_r9 BORINGSSL_PREFIX %+ _abi_test_clobber_r9
 %xdefine abi_test_clobber_rax BORINGSSL_PREFIX %+ _abi_test_clobber_rax
@@ -7387,13 +7576,45 @@
 %xdefine abi_test_clobber_rdi BORINGSSL_PREFIX %+ _abi_test_clobber_rdi
 %xdefine abi_test_clobber_rdx BORINGSSL_PREFIX %+ _abi_test_clobber_rdx
 %xdefine abi_test_clobber_rsi BORINGSSL_PREFIX %+ _abi_test_clobber_rsi
+%xdefine abi_test_clobber_v0 BORINGSSL_PREFIX %+ _abi_test_clobber_v0
+%xdefine abi_test_clobber_v1 BORINGSSL_PREFIX %+ _abi_test_clobber_v1
+%xdefine abi_test_clobber_v10 BORINGSSL_PREFIX %+ _abi_test_clobber_v10
 %xdefine abi_test_clobber_v10_upper BORINGSSL_PREFIX %+ _abi_test_clobber_v10_upper
+%xdefine abi_test_clobber_v11 BORINGSSL_PREFIX %+ _abi_test_clobber_v11
 %xdefine abi_test_clobber_v11_upper BORINGSSL_PREFIX %+ _abi_test_clobber_v11_upper
+%xdefine abi_test_clobber_v12 BORINGSSL_PREFIX %+ _abi_test_clobber_v12
 %xdefine abi_test_clobber_v12_upper BORINGSSL_PREFIX %+ _abi_test_clobber_v12_upper
+%xdefine abi_test_clobber_v13 BORINGSSL_PREFIX %+ _abi_test_clobber_v13
 %xdefine abi_test_clobber_v13_upper BORINGSSL_PREFIX %+ _abi_test_clobber_v13_upper
+%xdefine abi_test_clobber_v14 BORINGSSL_PREFIX %+ _abi_test_clobber_v14
 %xdefine abi_test_clobber_v14_upper BORINGSSL_PREFIX %+ _abi_test_clobber_v14_upper
+%xdefine abi_test_clobber_v15 BORINGSSL_PREFIX %+ _abi_test_clobber_v15
 %xdefine abi_test_clobber_v15_upper BORINGSSL_PREFIX %+ _abi_test_clobber_v15_upper
+%xdefine abi_test_clobber_v16 BORINGSSL_PREFIX %+ _abi_test_clobber_v16
+%xdefine abi_test_clobber_v17 BORINGSSL_PREFIX %+ _abi_test_clobber_v17
+%xdefine abi_test_clobber_v18 BORINGSSL_PREFIX %+ _abi_test_clobber_v18
+%xdefine abi_test_clobber_v19 BORINGSSL_PREFIX %+ _abi_test_clobber_v19
+%xdefine abi_test_clobber_v2 BORINGSSL_PREFIX %+ _abi_test_clobber_v2
+%xdefine abi_test_clobber_v20 BORINGSSL_PREFIX %+ _abi_test_clobber_v20
+%xdefine abi_test_clobber_v21 BORINGSSL_PREFIX %+ _abi_test_clobber_v21
+%xdefine abi_test_clobber_v22 BORINGSSL_PREFIX %+ _abi_test_clobber_v22
+%xdefine abi_test_clobber_v23 BORINGSSL_PREFIX %+ _abi_test_clobber_v23
+%xdefine abi_test_clobber_v24 BORINGSSL_PREFIX %+ _abi_test_clobber_v24
+%xdefine abi_test_clobber_v25 BORINGSSL_PREFIX %+ _abi_test_clobber_v25
+%xdefine abi_test_clobber_v26 BORINGSSL_PREFIX %+ _abi_test_clobber_v26
+%xdefine abi_test_clobber_v27 BORINGSSL_PREFIX %+ _abi_test_clobber_v27
+%xdefine abi_test_clobber_v28 BORINGSSL_PREFIX %+ _abi_test_clobber_v28
+%xdefine abi_test_clobber_v29 BORINGSSL_PREFIX %+ _abi_test_clobber_v29
+%xdefine abi_test_clobber_v3 BORINGSSL_PREFIX %+ _abi_test_clobber_v3
+%xdefine abi_test_clobber_v30 BORINGSSL_PREFIX %+ _abi_test_clobber_v30
+%xdefine abi_test_clobber_v31 BORINGSSL_PREFIX %+ _abi_test_clobber_v31
+%xdefine abi_test_clobber_v4 BORINGSSL_PREFIX %+ _abi_test_clobber_v4
+%xdefine abi_test_clobber_v5 BORINGSSL_PREFIX %+ _abi_test_clobber_v5
+%xdefine abi_test_clobber_v6 BORINGSSL_PREFIX %+ _abi_test_clobber_v6
+%xdefine abi_test_clobber_v7 BORINGSSL_PREFIX %+ _abi_test_clobber_v7
+%xdefine abi_test_clobber_v8 BORINGSSL_PREFIX %+ _abi_test_clobber_v8
 %xdefine abi_test_clobber_v8_upper BORINGSSL_PREFIX %+ _abi_test_clobber_v8_upper
+%xdefine abi_test_clobber_v9 BORINGSSL_PREFIX %+ _abi_test_clobber_v9
 %xdefine abi_test_clobber_v9_upper BORINGSSL_PREFIX %+ _abi_test_clobber_v9_upper
 %xdefine abi_test_clobber_x0 BORINGSSL_PREFIX %+ _abi_test_clobber_x0
 %xdefine abi_test_clobber_x1 BORINGSSL_PREFIX %+ _abi_test_clobber_x1
@@ -7607,6 +7828,8 @@
 %xdefine bn_words_to_little_endian BORINGSSL_PREFIX %+ _bn_words_to_little_endian
 %xdefine boringssl_self_test_hmac_sha256 BORINGSSL_PREFIX %+ _boringssl_self_test_hmac_sha256
 %xdefine boringssl_self_test_sha256 BORINGSSL_PREFIX %+ _boringssl_self_test_sha256
+%xdefine bsaes_cbc_encrypt BORINGSSL_PREFIX %+ _bsaes_cbc_encrypt
+%xdefine bsaes_ctr32_encrypt_blocks BORINGSSL_PREFIX %+ _bsaes_ctr32_encrypt_blocks
 %xdefine c2i_ASN1_BIT_STRING BORINGSSL_PREFIX %+ _c2i_ASN1_BIT_STRING
 %xdefine c2i_ASN1_INTEGER BORINGSSL_PREFIX %+ _c2i_ASN1_INTEGER
 %xdefine c2i_ASN1_OBJECT BORINGSSL_PREFIX %+ _c2i_ASN1_OBJECT
@@ -7877,6 +8100,7 @@
 %xdefine gcm_ghash_clmul BORINGSSL_PREFIX %+ _gcm_ghash_clmul
 %xdefine gcm_ghash_neon BORINGSSL_PREFIX %+ _gcm_ghash_neon
 %xdefine gcm_ghash_nohw BORINGSSL_PREFIX %+ _gcm_ghash_nohw
+%xdefine gcm_ghash_p8 BORINGSSL_PREFIX %+ _gcm_ghash_p8
 %xdefine gcm_ghash_ssse3 BORINGSSL_PREFIX %+ _gcm_ghash_ssse3
 %xdefine gcm_ghash_v8 BORINGSSL_PREFIX %+ _gcm_ghash_v8
 %xdefine gcm_gmult_avx BORINGSSL_PREFIX %+ _gcm_gmult_avx
@@ -7884,6 +8108,7 @@
 %xdefine gcm_gmult_clmul BORINGSSL_PREFIX %+ _gcm_gmult_clmul
 %xdefine gcm_gmult_neon BORINGSSL_PREFIX %+ _gcm_gmult_neon
 %xdefine gcm_gmult_nohw BORINGSSL_PREFIX %+ _gcm_gmult_nohw
+%xdefine gcm_gmult_p8 BORINGSSL_PREFIX %+ _gcm_gmult_p8
 %xdefine gcm_gmult_ssse3 BORINGSSL_PREFIX %+ _gcm_gmult_ssse3
 %xdefine gcm_gmult_v8 BORINGSSL_PREFIX %+ _gcm_gmult_v8
 %xdefine gcm_init_avx BORINGSSL_PREFIX %+ _gcm_init_avx
@@ -7891,6 +8116,7 @@
 %xdefine gcm_init_clmul BORINGSSL_PREFIX %+ _gcm_init_clmul
 %xdefine gcm_init_neon BORINGSSL_PREFIX %+ _gcm_init_neon
 %xdefine gcm_init_nohw BORINGSSL_PREFIX %+ _gcm_init_nohw
+%xdefine gcm_init_p8 BORINGSSL_PREFIX %+ _gcm_init_p8
 %xdefine gcm_init_ssse3 BORINGSSL_PREFIX %+ _gcm_init_ssse3
 %xdefine gcm_init_v8 BORINGSSL_PREFIX %+ _gcm_init_v8
 %xdefine gcm_setiv_avx512 BORINGSSL_PREFIX %+ _gcm_setiv_avx512
@@ -8128,6 +8354,8 @@
 %xdefine ml_kem_512_ref_verify BORINGSSL_PREFIX %+ _ml_kem_512_ref_verify
 %xdefine ml_kem_512_ref_zetas BORINGSSL_PREFIX %+ _ml_kem_512_ref_zetas
 %xdefine o2i_ECPublicKey BORINGSSL_PREFIX %+ _o2i_ECPublicKey
+%xdefine openssl_poly1305_neon2_addmulmod BORINGSSL_PREFIX %+ _openssl_poly1305_neon2_addmulmod
+%xdefine openssl_poly1305_neon2_blocks BORINGSSL_PREFIX %+ _openssl_poly1305_neon2_blocks
 %xdefine p256_methods BORINGSSL_PREFIX %+ _p256_methods
 %xdefine p384_methods BORINGSSL_PREFIX %+ _p384_methods
 %xdefine p521_methods BORINGSSL_PREFIX %+ _p521_methods
@@ -8346,9 +8574,11 @@
 %xdefine sha1_func BORINGSSL_PREFIX %+ _sha1_func
 %xdefine sha224_func BORINGSSL_PREFIX %+ _sha224_func
 %xdefine sha256_block_data_order BORINGSSL_PREFIX %+ _sha256_block_data_order
+%xdefine sha256_block_data_order_neon BORINGSSL_PREFIX %+ _sha256_block_data_order_neon
 %xdefine sha256_func BORINGSSL_PREFIX %+ _sha256_func
 %xdefine sha384_func BORINGSSL_PREFIX %+ _sha384_func
 %xdefine sha512_block_data_order BORINGSSL_PREFIX %+ _sha512_block_data_order
+%xdefine sha512_block_data_order_neon BORINGSSL_PREFIX %+ _sha512_block_data_order_neon
 %xdefine sha512_func BORINGSSL_PREFIX %+ _sha512_func
 %xdefine sk_CRYPTO_BUFFER_call_copy_func BORINGSSL_PREFIX %+ _sk_CRYPTO_BUFFER_call_copy_func
 %xdefine sk_CRYPTO_BUFFER_call_free_func BORINGSSL_PREFIX %+ _sk_CRYPTO_BUFFER_call_free_func
@@ -8441,7 +8671,9 @@
 %xdefine vpaes_cbc_encrypt BORINGSSL_PREFIX %+ _vpaes_cbc_encrypt
 %xdefine vpaes_ctr32_encrypt_blocks BORINGSSL_PREFIX %+ _vpaes_ctr32_encrypt_blocks
 %xdefine vpaes_decrypt BORINGSSL_PREFIX %+ _vpaes_decrypt
+%xdefine vpaes_decrypt_key_to_bsaes BORINGSSL_PREFIX %+ _vpaes_decrypt_key_to_bsaes
 %xdefine vpaes_encrypt BORINGSSL_PREFIX %+ _vpaes_encrypt
+%xdefine vpaes_encrypt_key_to_bsaes BORINGSSL_PREFIX %+ _vpaes_encrypt_key_to_bsaes
 %xdefine vpaes_set_decrypt_key BORINGSSL_PREFIX %+ _vpaes_set_decrypt_key
 %xdefine vpaes_set_encrypt_key BORINGSSL_PREFIX %+ _vpaes_set_encrypt_key
 %xdefine x25519_asn1_meth BORINGSSL_PREFIX %+ _x25519_asn1_meth
