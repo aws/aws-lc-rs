@@ -175,7 +175,7 @@ impl CmakeBuilder {
             cmake_cfg.define("CMAKE_SYSTEM_NAME", "Android");
 
             let target = target();
-            let proc = target.split('-').find(|_| true).unwrap();
+            let proc = target.split('-').next().unwrap();
             match proc {
                 "armv7" => {
                     cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "armv7-a");
