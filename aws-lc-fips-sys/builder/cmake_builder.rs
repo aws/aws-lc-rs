@@ -137,6 +137,8 @@ impl CmakeBuilder {
             cmake_cfg.define("ASAN", "1");
         }
 
+        cmake_cfg.define("CMAKE_C_STANDARD", "11");
+
         // Allow environment to specify CMake toolchain.
         if option_env("CMAKE_TOOLCHAIN_FILE").is_some()
             || option_env(format!("CMAKE_TOOLCHAIN_FILE_{}", target_underscored())).is_some()
