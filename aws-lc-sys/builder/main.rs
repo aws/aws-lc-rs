@@ -16,9 +16,15 @@ use cmake_builder::CmakeBuilder;
     not(any(
         all(
             any(target_arch = "x86_64", target_arch = "aarch64"),
-            any(target_os = "linux", target_os = "macos"),
-            any(target_env = "gnu", target_env = "musl", target_env = "")
+            any(target_os = "linux", target_os = "macos", target_os = "windows"),
+            any(
+                target_env = "gnu",
+                target_env = "musl",
+                target_env = "msvc",
+                target_env = ""
+            )
         ),
+        all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
         all(target_arch = "x86", target_os = "linux", target_env = "gnu")
     ))
 ))]
@@ -174,9 +180,15 @@ fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     not(any(
         all(
             any(target_arch = "x86_64", target_arch = "aarch64"),
-            any(target_os = "linux", target_os = "macos"),
-            any(target_env = "gnu", target_env = "musl", target_env = "")
+            any(target_os = "linux", target_os = "macos", target_os = "windows"),
+            any(
+                target_env = "gnu",
+                target_env = "musl",
+                target_env = "msvc",
+                target_env = ""
+            )
         ),
+        all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
         all(target_arch = "x86", target_os = "linux", target_env = "gnu")
     ))
 ))]
@@ -204,19 +216,8 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
             ..Default::default()
         },
     )
-        .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
-        .expect("write bindings");
-
-    bindgen::generate_bindings(
-        manifest_dir,
-        &BindingOptions {
-            build_prefix: prefix.clone(),
-            include_ssl: true,
-            ..Default::default()
-        },
-    )
-        .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto_ssl"))))
-        .expect("write bindings");
+    .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
+    .expect("write bindings");
 }
 
 fn emit_rustc_cfg(cfg: &str) {
@@ -332,13 +333,17 @@ fn initialize() {
     if !is_external_bindgen() && (is_internal_bindgen() || !has_bindgen_feature()) {
         let target = target();
         let supported_platform = match target.as_str() {
-            "i686-unknown-linux-gnu"
-            | "x86_64-unknown-linux-gnu"
+            "aarch64-apple-darwin"
+            | "aarch64-pc-windows-msvc"
             | "aarch64-unknown-linux-gnu"
-            | "x86_64-unknown-linux-musl"
             | "aarch64-unknown-linux-musl"
+            | "i686-pc-windows-msvc"
+            | "i686-unknown-linux-gnu"
             | "x86_64-apple-darwin"
-            | "aarch64-apple-darwin" => Some(target),
+            | "x86_64-pc-windows-gnu"
+            | "x86_64-pc-windows-msvc"
+            | "x86_64-unknown-linux-gnu"
+            | "x86_64-unknown-linux-musl" => Some(target),
             _ => None,
         };
         if let Some(platform) = supported_platform {
@@ -394,13 +399,17 @@ fn prepare_cargo_cfg() {
     // Also remove `#![allow(unexpected_cfgs)]` from src/lib.rs
     /*
     println!("cargo::rustc-check-cfg=cfg(use_bindgen_generated)");
-    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
     println!("cargo::rustc-check-cfg=cfg(aarch64_apple_darwin)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+    println!("cargo::rustc-check-cfg=cfg(i686_pc_windows_msvc)");
+    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_pc-windows-gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
      */
 }
 
@@ -442,9 +451,15 @@ fn main() {
             not(any(
                 all(
                     any(target_arch = "x86_64", target_arch = "aarch64"),
-                    any(target_os = "linux", target_os = "macos"),
-                    any(target_env = "gnu", target_env = "musl", target_env = "")
+                    any(target_os = "linux", target_os = "macos", target_os = "windows"),
+                    any(
+                        target_env = "gnu",
+                        target_env = "musl",
+                        target_env = "msvc",
+                        target_env = ""
+                    )
                 ),
+                all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
                 all(target_arch = "x86", target_os = "linux", target_env = "gnu")
             ))
         ))]
@@ -571,7 +586,7 @@ fn verify_bindgen() -> Result<(), String> {
     let mut major_version: u32 = 0;
     let mut minor_version: u32 = 0;
     let mut patch_version: u32 = 0;
-    let bindgen_version = result.stdout.split(' ').skip(1).next();
+    let bindgen_version = result.stdout.split(' ').nth(1);
     if let Some(version) = bindgen_version {
         let version_parts: Vec<&str> = version.trim().split('.').collect();
         if version_parts.len() == 3 {
@@ -583,13 +598,13 @@ fn verify_bindgen() -> Result<(), String> {
     // We currently expect to support all bindgen versions >= 0.69.3
     if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 3)) {
         eprintln!(
-            "bindgen-cli was used. Detected version was: {}.{}.{} \n\
+            "bindgen-cli was used. Detected version was: \
+            {major_version}.{minor_version}.{patch_version} \n\
         If this is not the latest version, consider upgrading : \
         `cargo install --force --locked bindgen-cli`\
         \n\
         See our User Guide for more information about bindgen:\
-        https://aws.github.io/aws-lc-rs/index.html",
-            major_version, minor_version, patch_version
+        https://aws.github.io/aws-lc-rs/index.html"
         );
     }
     Ok(())
