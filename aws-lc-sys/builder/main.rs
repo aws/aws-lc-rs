@@ -15,9 +15,15 @@ use cmake_builder::CmakeBuilder;
     not(any(
         all(
             any(target_arch = "x86_64", target_arch = "aarch64"),
-            any(target_os = "linux", target_os = "macos"),
-            any(target_env = "gnu", target_env = "musl", target_env = "")
+            any(target_os = "linux", target_os = "macos", target_os = "windows"),
+            any(
+                target_env = "gnu",
+                target_env = "musl",
+                target_env = "msvc",
+                target_env = ""
+            )
         ),
+        all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
         all(target_arch = "x86", target_os = "linux", target_env = "gnu")
     ))
 ))]
@@ -173,9 +179,15 @@ fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     not(any(
         all(
             any(target_arch = "x86_64", target_arch = "aarch64"),
-            any(target_os = "linux", target_os = "macos"),
-            any(target_env = "gnu", target_env = "musl", target_env = "")
+            any(target_os = "linux", target_os = "macos", target_os = "windows"),
+            any(
+                target_env = "gnu",
+                target_env = "musl",
+                target_env = "msvc",
+                target_env = ""
+            )
         ),
+        all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
         all(target_arch = "x86", target_os = "linux", target_env = "gnu")
     ))
 ))]
@@ -327,13 +339,17 @@ fn initialize() {
     if !is_external_bindgen() && (is_internal_bindgen() || !has_bindgen_feature()) {
         let target = target();
         let supported_platform = match target.as_str() {
-            "i686-unknown-linux-gnu"
-            | "x86_64-unknown-linux-gnu"
+            "aarch64-apple-darwin"
+            | "aarch64-pc-windows-msvc"
             | "aarch64-unknown-linux-gnu"
-            | "x86_64-unknown-linux-musl"
             | "aarch64-unknown-linux-musl"
+            | "i686-pc-windows-msvc"
+            | "i686-unknown-linux-gnu"
             | "x86_64-apple-darwin"
-            | "aarch64-apple-darwin" => Some(target),
+            | "x86_64-pc-windows-gnu"
+            | "x86_64-pc-windows-msvc"
+            | "x86_64-unknown-linux-gnu"
+            | "x86_64-unknown-linux-musl" => Some(target),
             _ => None,
         };
         if let Some(platform) = supported_platform {
@@ -382,13 +398,17 @@ fn prepare_cargo_cfg() {
     // Also remove `#![allow(unexpected_cfgs)]` from src/lib.rs
     /*
     println!("cargo::rustc-check-cfg=cfg(use_bindgen_generated)");
-    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
     println!("cargo::rustc-check-cfg=cfg(aarch64_apple_darwin)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+    println!("cargo::rustc-check-cfg=cfg(i686_pc_windows_msvc)");
+    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_pc-windows-gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
      */
 }
 
@@ -427,13 +447,22 @@ fn main() {
     } else if is_bindgen_required() {
         #[cfg(any(
             feature = "bindgen",
-            not(any(
-                all(
-                    any(target_arch = "x86_64", target_arch = "aarch64"),
-                    any(target_os = "linux", target_os = "macos"),
-                    any(target_env = "gnu", target_env = "musl", target_env = "")
-                ),
-                all(target_arch = "x86", target_os = "linux", target_env = "gnu")
+            not(all(
+                not(feature = "ssl"),
+                any(
+                    all(
+                        any(target_arch = "x86_64", target_arch = "aarch64"),
+                        any(target_os = "linux", target_os = "macos", target_os = "windows"),
+                        any(
+                            target_env = "gnu",
+                            target_env = "musl",
+                            target_env = "msvc",
+                            target_env = ""
+                        )
+                    ),
+                    all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
+                    all(target_arch = "x86", target_os = "linux", target_env = "gnu")
+                )
             ))
         ))]
         if !is_external_bindgen() {
