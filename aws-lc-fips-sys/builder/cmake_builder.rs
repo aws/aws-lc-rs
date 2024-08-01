@@ -4,7 +4,7 @@
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     cargo_env, emit_warning, execute_command, is_no_asm, option_env, target, target_arch,
-    target_env, target_os, target_underscored, target_vendor, OutputLibType,
+    target_env, target_family, target_os, target_underscored, target_vendor, OutputLibType,
 };
 use std::collections::HashMap;
 use std::env;
@@ -102,6 +102,12 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
             } else {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
+                if target_family() == "unix" || target_env() == "gnu" {
+                    cmake_cfg.cflag(format!(
+                        "-ffile-prefix-map={}=",
+                        self.manifest_dir.display()
+                    ));
+                }
             }
         } else if target_os() == "windows" {
             // The Windows/FIPS build rejects "debug" profile
