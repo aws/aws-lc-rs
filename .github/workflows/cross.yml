@@ -209,3 +209,24 @@ jobs:
         run: cargo ${{ env.ACTION_CARGO }} -p aws-lc-rs --all-targets --target ${{ matrix.target }} --features bindgen
       - name: Release Build for ${{ matrix.target }}
         run: cargo ${{ env.ACTION_CARGO }} --release -p aws-lc-rs --all-targets --target ${{ matrix.target }}
+  freebsd:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs freebsd test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Prepare VM
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: 13.2
+          usesh: true
+          copyback: false
+          prepare: |
+            pkg install -y git gmake bash sudo cmake-core llvm-devel-lite curl rust-bindgen-cli
+          run: |
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+             . "$HOME/.cargo/env"
+            export AWS_LC_SYS_EXTERNAL_BINDGEN=1
+            cargo test -p aws-lc-rs
