@@ -304,7 +304,7 @@ impl Algorithm {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum AlgorithmID {
     SHA1,
     SHA224,
