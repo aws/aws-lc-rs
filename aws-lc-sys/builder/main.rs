@@ -6,6 +6,7 @@
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::{fmt, fmt::Debug};
 
 use cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;
@@ -353,6 +354,12 @@ fn is_bindgen_required() -> bool {
         || !has_pregenerated()
 }
 
+fn internal_bindgen_supported() -> bool {
+    // TODO: internal bindgen creates invalid bindings on FreeBSD
+    // See: https://github.com/aws/aws-lc-rs/issues/476
+    target_os() != "freebsd"
+}
+
 fn is_no_prefix() -> bool {
     unsafe { AWS_LC_SYS_NO_PREFIX }
 }
@@ -436,7 +443,7 @@ fn main() {
                 all(target_arch = "x86", target_os = "linux", target_env = "gnu")
             ))
         ))]
-        if !is_external_bindgen() {
+        if internal_bindgen_supported() && !is_external_bindgen() {
             emit_warning(&format!(
                 "Generating bindings - internal bindgen. Platform: {}",
                 target()
@@ -532,6 +539,16 @@ pub(crate) struct BindingOptions {
     pub disable_prelude: bool,
 }
 
+impl Debug for BindingOptions {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("BindingOptions")
+            .field("build_prefix", &self.build_prefix)
+            .field("include_ssl", &self.include_ssl)
+            .field("disable_prelude", &self.disable_prelude)
+            .finish()
+    }
+}
+
 fn invoke_external_bindgen(
     manifest_dir: &Path,
     prefix: &Option<String>,
@@ -579,25 +596,28 @@ fn invoke_external_bindgen(
     // to conform with the most recent release. We will guide consumers to likewise use the
     // latest version of bindgen-cli.
     bindgen_params.extend(vec![
-        "--rust-target",
-        r"1.59",
-        "--with-derive-default",
-        "--with-derive-eq",
         "--allowlist-file",
-        r".*(/|\\)openssl(/|\\)[^/\\]+\.h",
+        r".*(/|\\)openssl((/|\\)[^/\\]+)+\.h",
         "--allowlist-file",
         r".*(/|\\)rust_wrapper\.h",
         "--rustified-enum",
         r"point_conversion_form_t",
         "--default-macro-constant-type",
         r"signed",
-        "--formatter",
-        r"rustfmt",
-        "--output",
-        gen_bindings_path.to_str().unwrap(),
+        "--with-derive-default",
+        "--with-derive-partialeq",
+        "--with-derive-eq",
         "--raw-line",
         COPYRIGHT,
+        "--generate",
+        "functions,types,vars,methods,constructors,destructors",
         header.as_str(),
+        "--rust-target",
+        r"1.59",
+        "--output",
+        gen_bindings_path.to_str().unwrap(),
+        "--formatter",
+        r"rustfmt",
         "--",
     ]);
     clang_args
