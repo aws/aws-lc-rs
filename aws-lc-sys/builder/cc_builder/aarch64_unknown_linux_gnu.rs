@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Tue Jul 30 17:39:12 UTC 2024
+// Thu Aug  1 23:59:13 UTC 2024
 
 use crate::cc_builder::Library;
 
@@ -133,7 +133,9 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/lhash/lhash.c",
         "crypto/mem.c",
         "crypto/ml_kem/ml_kem.c",
+        "crypto/ml_kem/ml_kem_1024_ipd.c",
         "crypto/ml_kem/ml_kem_512_ipd.c",
+        "crypto/ml_kem/ml_kem_768_ipd.c",
         "crypto/obj/obj.c",
         "crypto/obj/obj_xref.c",
         "crypto/ocsp/ocsp_asn.c",
