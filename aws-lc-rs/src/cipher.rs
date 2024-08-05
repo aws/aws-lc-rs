@@ -483,7 +483,8 @@ impl EncryptingKey {
     }
 
     /// Encrypts the data provided in `in_out` in-place.
-    /// Returns a references to the encrypted data.
+    /// Returns a [`DecryptionContext`] with the randomly generated IV that was used to encrypt
+    /// the data provided.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
@@ -496,7 +497,7 @@ impl EncryptingKey {
     /// Encrypts the data provided in `in_out` in-place using the provided `EncryptionContext`.
     /// This is considered "less safe" because the caller could potentially construct
     /// a `EncryptionContext` from a previously used IV (initialization vector).
-    /// Returns a references to the decrypted data.
+    /// Returns a [`DecryptionContext`] produced from the provided `EncryptionContext`.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
