@@ -167,9 +167,9 @@ jobs:
         run: |
           $output = cargo tree -e build -p aws-lc-sys | Select-String -Pattern "bindgen"
           if ($null -eq $output) {
-            exit 1  # bindgen should be listed
+            exit 0  # bindgen should not be listed
           } else {
-            exit 0
+            exit 1
           }
 
   bindgen-fips-dependency:
