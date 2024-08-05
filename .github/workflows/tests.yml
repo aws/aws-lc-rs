@@ -386,6 +386,9 @@ jobs:
         id: toolchain
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get install --no-install-recommends -y binutils
       - if: ${{ matrix.os == 'macos-13-xlarge' }}
         run: |
           brew install llvm
