@@ -228,6 +228,10 @@ fn emit_warning(message: &str) {
     println!("cargo:warning={message}");
 }
 
+fn target_family() -> String {
+    cargo_env("CARGO_CFG_TARGET_FAMILY")
+}
+
 fn target_os() -> String {
     cargo_env("CARGO_CFG_TARGET_OS")
 }
