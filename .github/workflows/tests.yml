@@ -16,7 +16,7 @@ env:
   RUST_BACKTRACE: 1
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
-  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
+  RUST_NIGHTLY_TOOLCHAIN: nightly
 
 jobs:
 
@@ -386,6 +386,7 @@ jobs:
         id: toolchain
         with:
           toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: 'rust-src'
       - if: ${{ matrix.os == 'macos-13-xlarge' }}
         run: |
           brew install llvm
@@ -399,7 +400,7 @@ jobs:
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cargo-careful
-        run: cargo install cargo-careful
+        run: cargo install --locked cargo-careful
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'

@@ -74,9 +74,11 @@ pub(crate) mod signature;
 pub use self::signature::RsaParameters;
 pub use self::{
     encryption::{
-        EncryptionAlgorithmId, OaepAlgorithm, OaepPrivateDecryptingKey, OaepPublicEncryptingKey,
-        PrivateDecryptingKey, PublicEncryptingKey, OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256,
-        OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
+        oaep::{
+            OaepAlgorithm, OaepPrivateDecryptingKey, OaepPublicEncryptingKey, OAEP_SHA1_MGF1SHA1,
+            OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
+        },
+        EncryptionAlgorithmId, PrivateDecryptingKey, PublicEncryptingKey,
     },
     key::{KeyPair, KeySize, PublicKey, PublicKeyComponents},
 };
