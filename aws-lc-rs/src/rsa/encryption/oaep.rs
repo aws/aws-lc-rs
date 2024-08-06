@@ -290,11 +290,7 @@ fn configure_oaep_crypto_operation(
         return Err(Unspecified);
     };
 
-    let label = if let Some(label) = label {
-        label
-    } else {
-        &[0u8; 0]
-    };
+    let label = label.unwrap_or(&[0u8; 0]);
 
     if label.is_empty() {
         // Safety: Don't pass zero-length slice pointers to C code :)
