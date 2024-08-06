@@ -100,7 +100,7 @@ impl CcBuilder {
         let mut cc_build = cc::Build::default();
         cc_build
             .out_dir(&self.out_dir)
-            .flag("-std=c99")
+            .flag("-std=c11")
             .flag("-Wno-unused-parameter")
             .cpp(false)
             .shared_flag(false)
