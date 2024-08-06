@@ -196,8 +196,6 @@ AUTHORITY_KEYID_it
 AUTHORITY_KEYID_new
 AWSLC_non_fips_pkey_evp_asn1_methods
 AWSLC_non_fips_pkey_evp_methods
-AWSLC_thread_local_clear
-AWSLC_thread_local_shutdown
 BASIC_CONSTRAINTS_free
 BASIC_CONSTRAINTS_it
 BASIC_CONSTRAINTS_new
@@ -636,7 +634,6 @@ CRYPTO_chacha_20
 CRYPTO_cleanup_all_ex_data
 CRYPTO_ctr128_encrypt
 CRYPTO_ctr128_encrypt_ctr32
-CRYPTO_fork_detect_ignore_madv_wipeonfork_for_testing
 CRYPTO_free
 CRYPTO_free_ex_data
 CRYPTO_gcm128_aad
@@ -697,7 +694,6 @@ CRYPTO_set_mem_functions
 CRYPTO_set_thread_local
 CRYPTO_sysrand
 CRYPTO_sysrand_for_seed
-CRYPTO_sysrand_if_available
 CRYPTO_tls1_prf
 CRYPTO_xts128_encrypt
 CTR_DRBG_clear
@@ -832,7 +828,6 @@ ECDSA_size
 ECDSA_verify
 ECPKParameters_print
 EC_GFp_mont_method
-EC_GFp_nistp224_method
 EC_GFp_nistp256_method
 EC_GFp_nistp384_method
 EC_GFp_nistp521_method
@@ -1828,7 +1823,6 @@ RAND_bytes
 RAND_bytes_with_additional_data
 RAND_cleanup
 RAND_egd
-RAND_enable_fork_unsafe_buffering
 RAND_file_name
 RAND_get_rand_method
 RAND_get_system_entropy_for_custom_prng
@@ -2523,8 +2517,11 @@ X509v3_get_ext_by_NID
 X509v3_get_ext_by_OBJ
 X509v3_get_ext_by_critical
 X509v3_get_ext_count
+__local_stdio_printf_options
+__local_stdio_scanf_options
 a2i_IPADDRESS
 a2i_IPADDRESS_NC
+abi_test_bad_unwind_epilog
 abi_test_bad_unwind_temporary
 abi_test_bad_unwind_wrong_register
 abi_test_clobber_r10
@@ -2969,12 +2966,9 @@ ecp_nistz256_sqr_mont
 ed25519_asn1_meth
 ed25519_pkey_meth
 ed25519_public_key_from_hashed_seed_nohw
-ed25519_public_key_from_hashed_seed_s2n_bignum
 ed25519_sha512
 ed25519_sign_nohw
-ed25519_sign_s2n_bignum
 ed25519_verify_nohw
-ed25519_verify_s2n_bignum
 gcm_ghash_avx
 gcm_ghash_avx512
 gcm_ghash_clmul
@@ -3170,6 +3164,7 @@ kyber768r3_encapsulate
 kyber768r3_encapsulate_deterministic
 kyber768r3_keypair
 kyber768r3_keypair_deterministic
+library_init_constructor
 md4_block_data_order
 md5_block_asm_data_order
 ml_kem_1024_ipd_decapsulate
@@ -3329,6 +3324,7 @@ o2i_ECPublicKey
 p256_methods
 p384_methods
 p521_methods
+p_thread_callback_boringssl
 pkcs12_iterations_acceptable
 pkcs12_key_gen
 pkcs12_pbe_encrypt_init
@@ -3362,7 +3358,6 @@ pmbtoken_pst1_issuer_key_from_bytes
 pmbtoken_pst1_read
 pmbtoken_pst1_sign
 pmbtoken_pst1_unblind
-poly_Rq_mul
 pq_custom_randombytes
 pq_custom_randombytes_init_for_testing
 pq_custom_randombytes_use_deterministic_for_testing
@@ -3623,10 +3618,8 @@ x25519_ge_sub
 x25519_ge_tobytes
 x25519_pkey_meth
 x25519_public_from_private_nohw
-x25519_public_from_private_s2n_bignum
 x25519_sc_reduce
 x25519_scalar_mult_generic_nohw
-x25519_scalar_mult_generic_s2n_bignum
 x509V3_add_value_asn1_string
 x509_check_cert_time
 x509_check_issued_with_callback
