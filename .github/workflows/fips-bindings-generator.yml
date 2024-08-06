@@ -13,7 +13,8 @@ env:
   RUST_BACKTRACE: 1
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
-  RUST_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
+  RUST_NIGHTLY_TOOLCHAIN: nightly
+  RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
 
 jobs:
   collect-symbols-and-commit:
@@ -84,7 +85,7 @@ jobs:
           ref: ${{ github.ref_name }}
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          toolchain: ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-go@v4
         with:
