@@ -233,7 +233,8 @@ impl CmakeBuilder {
             }
             _ => {}
         }
-        if target_arch() == "x86_64" && Some(true) == allow_prebuilt_nasm() {
+        if target_arch() == "x86_64" && !test_nasm_command() && Some(true) == allow_prebuilt_nasm()
+        {
             emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             emit_warning("!!!   Using pre-built NASM binaries   !!!");
             emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
