@@ -1156,4 +1156,50 @@ mod tests {
             r#"UnparsedPublicKey { algorithm: Algorithm { curve: Curve25519 }, bytes: "010203" }"#
         );
     }
+
+    #[test]
+    fn test_agreement_random() {
+        let test_algorithms = [&ECDH_P256, &ECDH_P384, &ECDH_P521, &X25519];
+
+        for alg in test_algorithms {
+            test_agreement_random_helper(alg);
+        }
+    }
+
+    fn test_agreement_random_helper(alg: &'static Algorithm) {
+        let peer_private = PrivateKey::generate(alg).unwrap();
+        let my_private = PrivateKey::generate(alg).unwrap();
+
+        let peer_public_keys = [UnparsedPublicKey::new(
+            alg,
+            peer_private.compute_public_key().unwrap(),
+        )];
+
+        let my_public_keys = [UnparsedPublicKey::new(
+            alg,
+            my_private.compute_public_key().unwrap(),
+        )];
+
+        let mut results: Vec<Vec<u8>> = Vec::new();
+
+        for peer_public in peer_public_keys {
+            let result = agree(&my_private, &peer_public, (), |key_material| {
+                results.push(key_material.to_vec());
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
+        for my_public in my_public_keys {
+            let result = agree(&peer_private, &my_public, (), |key_material| {
+                results.push(key_material.to_vec());
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+        assert_eq!(results.len(), 2);
+        for consecutive_results in results.windows(2) {
+            assert_eq!(consecutive_results[0], consecutive_results[1]);
+        }
+    }
 }
