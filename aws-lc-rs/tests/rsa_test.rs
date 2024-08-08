@@ -6,8 +6,8 @@
 use aws_lc_rs::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
 use aws_lc_rs::rsa::{
     EncryptionAlgorithmId, KeySize, OaepPrivateDecryptingKey, OaepPublicEncryptingKey,
-    PrivateDecryptingKey, PublicEncryptingKey, OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256,
-    OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
+    Pkcs1PrivateDecryptingKey, Pkcs1PublicEncryptingKey, PrivateDecryptingKey, PublicEncryptingKey,
+    OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
 };
 use aws_lc_rs::signature::{
     KeyPair, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey,
@@ -458,7 +458,7 @@ fn encryption_algorithm_debug() {
     assert_eq!("OaepSha1Mgf1sha1", format!("{OAEP_SHA1_MGF1SHA1:?}"));
 }
 
-macro_rules! round_trip_algorithm {
+macro_rules! round_trip_oaep_algorithm {
     ($name:ident, $alg:expr, $keysize:expr) => {
         #[test]
         fn $name() {
@@ -592,93 +592,93 @@ macro_rules! round_trip_algorithm {
     };
 }
 
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa2048_oaep_sha1_mgf1sha1,
     &OAEP_SHA1_MGF1SHA1,
     KeySize::Rsa2048
 );
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa3072_oaep_sha1_mgf1sha1,
     &OAEP_SHA1_MGF1SHA1,
     KeySize::Rsa3072
 );
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa4096_oaep_sha1_mgf1sha1,
     &OAEP_SHA1_MGF1SHA1,
     KeySize::Rsa4096
 );
 // RSA8192 tests are not run in dev (debug) builds because it is too slow.
 #[cfg(not(debug_assertions))]
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa8192_oaep_sha1_mgf1sha1,
     &OAEP_SHA1_MGF1SHA1,
     KeySize::Rsa8192
 );
 
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa2048_oaep_sha256_mgf1sha256,
     &OAEP_SHA256_MGF1SHA256,
     KeySize::Rsa2048
 );
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa3072_oaep_sha256_mgf1sha256,
     &OAEP_SHA256_MGF1SHA256,
     KeySize::Rsa3072
 );
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa4096_oaep_sha256_mgf1sha256,
     &OAEP_SHA256_MGF1SHA256,
     KeySize::Rsa4096
 );
 // RSA8192 tests are not run in dev (debug) builds because it is too slow.
 #[cfg(not(debug_assertions))]
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa8192_oaep_sha256_mgf1sha256,
     &OAEP_SHA256_MGF1SHA256,
     KeySize::Rsa8192
 );
 
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa2048_oaep_sha384_mgf1sha384,
     &OAEP_SHA384_MGF1SHA384,
     KeySize::Rsa2048
 );
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa3072_oaep_sha384_mgf1sha384,
     &OAEP_SHA384_MGF1SHA384,
     KeySize::Rsa3072
 );
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa4096_oaep_sha384_mgf1sha384,
     &OAEP_SHA384_MGF1SHA384,
     KeySize::Rsa4096
 );
 // RSA8192 tests are not run in dev (debug) builds because it is too slow.
 #[cfg(not(debug_assertions))]
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa8192_oaep_sha384_mgf1sha384,
     &OAEP_SHA384_MGF1SHA384,
     KeySize::Rsa8192
 );
 
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa2048_oaep_sha512_mgf1sha512,
     &OAEP_SHA512_MGF1SHA512,
     KeySize::Rsa2048
 );
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa3072_oaep_sha512_mgf1sha512,
     &OAEP_SHA512_MGF1SHA512,
     KeySize::Rsa3072
 );
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa4096_oaep_sha512_mgf1sha512,
     &OAEP_SHA512_MGF1SHA512,
     KeySize::Rsa4096
 );
 // RSA8192 tests are not run in dev (debug) builds because it is too slow.
 #[cfg(not(debug_assertions))]
-round_trip_algorithm!(
+round_trip_oaep_algorithm!(
     rsa8192_oaep_sha512_mgf1sha512,
     &OAEP_SHA512_MGF1SHA512,
     KeySize::Rsa8192
@@ -694,18 +694,36 @@ fn encrypting_keypair_debug() {
 
     assert_eq!("PublicEncryptingKey", format!("{:?}", &public_key));
 
-    let private_key = OaepPrivateDecryptingKey::new(private_key).expect("oaep private key");
+    let oaep_private_key =
+        OaepPrivateDecryptingKey::new(private_key.clone()).expect("oaep private key");
 
     assert_eq!(
         "OaepPrivateDecryptingKey { .. }",
-        format!("{:?}", &private_key)
+        format!("{:?}", &oaep_private_key)
     );
 
-    let public_key = OaepPublicEncryptingKey::new(public_key).expect("oaep public key");
+    let oaep_public_key =
+        OaepPublicEncryptingKey::new(public_key.clone()).expect("oaep public key");
 
     assert_eq!(
         "OaepPublicEncryptingKey { .. }",
-        format!("{:?}", &public_key)
+        format!("{:?}", &oaep_public_key)
+    );
+
+    let pkcs1_private_key =
+        Pkcs1PrivateDecryptingKey::new(private_key.clone()).expect("oaep private key");
+
+    assert_eq!(
+        "Pkcs1PrivateDecryptingKey { .. }",
+        format!("{:?}", &pkcs1_private_key)
+    );
+
+    let pkcs1_public_key =
+        Pkcs1PublicEncryptingKey::new(public_key.clone()).expect("oaep public key");
+
+    assert_eq!(
+        "Pkcs1PublicEncryptingKey { .. }",
+        format!("{:?}", &pkcs1_public_key)
     );
 }
 
@@ -786,16 +804,35 @@ fn min_encrypt_key() {
     let oaep_parsed_public =
         OaepPublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
 
-    let message: &[u8] = br"foo bar baz";
+    let message = vec![42u8; oaep_parsed_public.max_plaintext_size(&OAEP_SHA256_MGF1SHA256)];
 
     let mut ciphertext = vec![0u8; oaep_parsed_public.ciphertext_size()];
     let ciphertext = oaep_parsed_public
-        .encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext, None)
+        .encrypt(&OAEP_SHA256_MGF1SHA256, &message, &mut ciphertext, None)
         .expect("encrypted");
 
-    let mut plaintext = vec![0u8; oaep_parsed_private.key_size_bytes()];
+    let mut plaintext = vec![0u8; oaep_parsed_private.min_output_size()];
     let plaintext = oaep_parsed_private
         .decrypt(&OAEP_SHA256_MGF1SHA256, ciphertext, &mut plaintext, None)
+        .expect("decrypted");
+
+    assert_eq!(message, plaintext);
+
+    let pkcs1_parsed_private =
+        Pkcs1PrivateDecryptingKey::new(parsed_private_key.clone()).expect("supported key");
+    let pkcs1_parsed_public =
+        Pkcs1PublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
+
+    let message = vec![42u8; pkcs1_parsed_public.max_plaintext_size()];
+
+    let mut ciphertext = vec![0u8; pkcs1_parsed_public.ciphertext_size()];
+    let ciphertext = pkcs1_parsed_public
+        .encrypt(&message, &mut ciphertext)
+        .expect("encrypted");
+
+    let mut plaintext = vec![0u8; pkcs1_parsed_private.min_output_size()];
+    let plaintext = pkcs1_parsed_private
+        .decrypt(ciphertext, &mut plaintext)
         .expect("decrypted");
 
     assert_eq!(message, plaintext);
@@ -823,11 +860,11 @@ fn max_encrypt_key() {
     let oaep_parsed_public =
         OaepPublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
 
-    let message: &[u8] = br"foo bar baz";
+    let message = vec![42u8; oaep_parsed_public.max_plaintext_size(&OAEP_SHA256_MGF1SHA256)];
 
     let mut ciphertext = vec![0u8; oaep_parsed_public.ciphertext_size()];
     let ciphertext = oaep_parsed_public
-        .encrypt(&OAEP_SHA256_MGF1SHA256, message, &mut ciphertext, None)
+        .encrypt(&OAEP_SHA256_MGF1SHA256, &message, &mut ciphertext, None)
         .expect("encrypted");
 
     let mut plaintext = vec![0u8; oaep_parsed_private.key_size_bytes()];
@@ -836,10 +873,146 @@ fn max_encrypt_key() {
         .expect("decrypted");
 
     assert_eq!(message, plaintext);
+
+    let pkcs1_parsed_private =
+        Pkcs1PrivateDecryptingKey::new(parsed_private_key.clone()).expect("supported key");
+    let pkcs1_parsed_public =
+        Pkcs1PublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
+
+    let message = vec![42u8; pkcs1_parsed_public.max_plaintext_size()];
+
+    let mut ciphertext = vec![0u8; pkcs1_parsed_public.ciphertext_size()];
+    let ciphertext = pkcs1_parsed_public
+        .encrypt(&message, &mut ciphertext)
+        .expect("encrypted");
+
+    let mut plaintext = vec![0u8; pkcs1_parsed_private.min_output_size()];
+    let plaintext = pkcs1_parsed_private
+        .decrypt(ciphertext, &mut plaintext)
+        .expect("decrypted");
+
+    assert_eq!(message, plaintext);
+}
+
+#[test]
+fn errors_on_larger_than_max_plaintext() {
+    const PUBLIC_KEY: &[u8] = include_bytes!("data/rsa_test_public_key_2048.x509");
+
+    let parsed_public_key = PublicEncryptingKey::from_der(PUBLIC_KEY).expect("key supported");
+
+    let oaep_parsed_public =
+        OaepPublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
+
+    let message = vec![42u8; oaep_parsed_public.max_plaintext_size(&OAEP_SHA256_MGF1SHA256) + 1];
+
+    let mut ciphertext = vec![0u8; oaep_parsed_public.ciphertext_size()];
+    oaep_parsed_public
+        .encrypt(&OAEP_SHA256_MGF1SHA256, &message, &mut ciphertext, None)
+        .expect_err("plaintext too large");
+
+    let pkcs1_parsed_public =
+        Pkcs1PublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
+
+    let message = vec![42u8; pkcs1_parsed_public.max_plaintext_size() + 1];
+
+    let mut ciphertext = vec![0u8; pkcs1_parsed_public.ciphertext_size()];
+    pkcs1_parsed_public
+        .encrypt(&message, &mut ciphertext)
+        .expect_err("plaintext too large");
 }
 
 #[test]
 fn too_big_encrypt_key() {
     const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_16384.p8");
     PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect_err("key too big");
+}
+
+macro_rules! round_trip_pkcs1_encryption {
+    ($name:ident, $keysize:expr) => {
+        #[test]
+        fn $name() {
+            const MESSAGE: &[u8] = b"Hello World";
+
+            let priv_key = PrivateDecryptingKey::generate($keysize).expect("key generated");
+            let pub_key = priv_key.public_key();
+
+            let priv_key =
+                Pkcs1PrivateDecryptingKey::new(priv_key).expect("construct PKCS1 private key");
+
+            let pub_key =
+                Pkcs1PublicEncryptingKey::new(pub_key).expect("construct PKCS1 private key");
+
+            let (byte_len, bit_len) = match $keysize {
+                KeySize::Rsa2048 => (256, 2048),
+                KeySize::Rsa3072 => (384, 3072),
+                KeySize::Rsa4096 => (512, 4096),
+                KeySize::Rsa8192 => (1024, 8192),
+                _ => panic!("missing KeySize match arm"),
+            };
+
+            assert_eq!(priv_key.key_size_bytes(), byte_len);
+            assert_eq!(pub_key.key_size_bytes(), byte_len);
+            assert_eq!(priv_key.key_size_bits(), bit_len);
+            assert_eq!(pub_key.key_size_bits(), bit_len);
+
+            let mut ciphertext = vec![0u8; pub_key.ciphertext_size()];
+
+            let ciphertext: &[u8] = pub_key
+                .encrypt(MESSAGE, &mut ciphertext)
+                .expect("encrypted");
+
+            let mut plaintext = vec![0u8; priv_key.min_output_size()];
+
+            let plaintext: &[u8] = priv_key
+                .decrypt(ciphertext, &mut plaintext)
+                .expect("decrypt");
+
+            assert_eq!(MESSAGE, plaintext);
+        }
+    };
+}
+
+round_trip_pkcs1_encryption!(rsa2048_pkcs1_encryption, KeySize::Rsa2048);
+round_trip_pkcs1_encryption!(rsa3072_pkcs1_encryption, KeySize::Rsa3072);
+round_trip_pkcs1_encryption!(rsa4096_pkcs1_encryption, KeySize::Rsa4096);
+#[cfg(not(debug_assertions))]
+round_trip_pkcs1_encryption!(rsa8192_pkcs1_encryption, KeySize::Rsa8192);
+
+// Generated by `echo -n "OpenSSL KAT" | openssl pkeyutl -inkey rsa_test_public_key_2048.x509 -pubin -encrypt -pkeyopt rsa_padding_mode:pkcs1 | xxd -i`
+#[test]
+fn rsa2048_pkcs1_openssl_kat() {
+    const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_2048.p8");
+
+    const EXPECTED_MESSAGE: &[u8] = b"OpenSSL KAT";
+    const CIPHERTEXT: &[u8] = &[
+        0x79, 0xc3, 0xf1, 0x0a, 0x69, 0xc7, 0x0b, 0x19, 0xc1, 0xfd, 0x62, 0xbe, 0x24, 0x85, 0x31,
+        0xc1, 0x1d, 0x6c, 0x85, 0x34, 0x03, 0x78, 0x4a, 0x7e, 0xbe, 0xb8, 0xa2, 0xe5, 0xac, 0x79,
+        0xaf, 0x1c, 0x6a, 0xff, 0x2f, 0xa5, 0xff, 0xaa, 0x5b, 0xb9, 0x6f, 0xa1, 0xaa, 0x42, 0x72,
+        0xa5, 0x87, 0x92, 0x05, 0x97, 0xb4, 0xef, 0x42, 0x02, 0xd3, 0xc4, 0x9f, 0x6e, 0xe3, 0xed,
+        0x51, 0xba, 0x52, 0xcf, 0x44, 0x14, 0xf8, 0x47, 0x53, 0x8c, 0xfc, 0x12, 0x0d, 0x53, 0x13,
+        0x11, 0x00, 0x7f, 0x87, 0xf7, 0xb5, 0x56, 0xdc, 0xd7, 0xe9, 0xf4, 0xc5, 0xb0, 0x34, 0x85,
+        0x10, 0x8a, 0x04, 0xe4, 0x62, 0x38, 0x91, 0xa4, 0xb3, 0x5e, 0x98, 0x15, 0x89, 0x98, 0xf2,
+        0xf7, 0x4f, 0xb1, 0x30, 0xa2, 0x09, 0x23, 0x38, 0x43, 0x22, 0x58, 0xec, 0x3c, 0xeb, 0x8d,
+        0x62, 0x75, 0x9f, 0xa9, 0x83, 0x0d, 0xe0, 0x43, 0x5a, 0x1c, 0xd5, 0xdb, 0xc6, 0x2c, 0x97,
+        0x19, 0xfd, 0xa7, 0xb5, 0x71, 0x1b, 0x87, 0xab, 0x3d, 0xf2, 0x3c, 0x42, 0xc2, 0xea, 0xd8,
+        0x57, 0x2a, 0x80, 0xdc, 0xc1, 0x00, 0x66, 0xa5, 0xf0, 0x95, 0x51, 0x56, 0xe8, 0x66, 0x8e,
+        0xe9, 0x8e, 0x2a, 0xa6, 0x37, 0x16, 0xeb, 0xbf, 0xe5, 0x12, 0x25, 0x67, 0x0e, 0xc0, 0x3d,
+        0x3c, 0x58, 0x15, 0x16, 0x54, 0x15, 0x04, 0xa2, 0xa2, 0x26, 0x46, 0x81, 0x36, 0x64, 0xc0,
+        0x7f, 0x6a, 0x04, 0x10, 0x2a, 0x7f, 0x08, 0x6d, 0x4b, 0x23, 0x12, 0x30, 0x9b, 0x0c, 0xb4,
+        0xa5, 0x10, 0x80, 0xaa, 0xf0, 0xe3, 0xf3, 0x1e, 0x3b, 0x59, 0x1d, 0x52, 0x68, 0x8e, 0xb9,
+        0x9c, 0x89, 0x97, 0x46, 0xfb, 0x06, 0x32, 0xd6, 0xc2, 0x1c, 0x81, 0x8c, 0xa6, 0xf4, 0xa7,
+        0xf8, 0xda, 0xb4, 0x4b, 0xd2, 0x49, 0x17, 0xd6, 0x6c, 0x19, 0xe3, 0xa1, 0xbd, 0xe3, 0x5a,
+        0x99,
+    ];
+
+    let private_key = PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect("private key");
+    let private_key = Pkcs1PrivateDecryptingKey::new(private_key).expect("private key");
+
+    let mut plaintext = vec![0u8; private_key.min_output_size()];
+
+    let plaintext = private_key
+        .decrypt(CIPHERTEXT, &mut plaintext)
+        .expect("decrypt");
+
+    assert_eq!(EXPECTED_MESSAGE, plaintext);
 }
