@@ -16,9 +16,15 @@ use cmake_builder::CmakeBuilder;
     not(any(
         all(
             any(target_arch = "x86_64", target_arch = "aarch64"),
-            any(target_os = "linux", target_os = "macos"),
-            any(target_env = "gnu", target_env = "musl", target_env = "")
+            any(target_os = "linux", target_os = "macos", target_os = "windows"),
+            any(
+                target_env = "gnu",
+                target_env = "musl",
+                target_env = "msvc",
+                target_env = ""
+            )
         ),
+        all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
         all(target_arch = "x86", target_os = "linux", target_env = "gnu")
     ))
 ))]
@@ -174,9 +180,15 @@ fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     not(any(
         all(
             any(target_arch = "x86_64", target_arch = "aarch64"),
-            any(target_os = "linux", target_os = "macos"),
-            any(target_env = "gnu", target_env = "musl", target_env = "")
+            any(target_os = "linux", target_os = "macos", target_os = "windows"),
+            any(
+                target_env = "gnu",
+                target_env = "musl",
+                target_env = "msvc",
+                target_env = ""
+            )
         ),
+        all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
         all(target_arch = "x86", target_os = "linux", target_env = "gnu")
     ))
 ))]
@@ -205,17 +217,6 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
         },
     )
     .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
-    .expect("write bindings");
-
-    bindgen::generate_bindings(
-        manifest_dir,
-        &BindingOptions {
-            build_prefix: prefix.clone(),
-            include_ssl: true,
-            ..Default::default()
-        },
-    )
-    .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto_ssl"))))
     .expect("write bindings");
 }
 
@@ -314,6 +315,7 @@ static mut AWS_LC_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_SYS_INTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_EXTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_NO_ASM: bool = false;
+static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
 
 fn initialize() {
     unsafe {
@@ -323,18 +325,23 @@ fn initialize() {
         AWS_LC_SYS_EXTERNAL_BINDGEN =
             env_var_to_bool("AWS_LC_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
         AWS_LC_SYS_NO_ASM = env_var_to_bool("AWS_LC_SYS_NO_ASM").unwrap_or(false);
+        AWS_LC_SYS_PREBUILT_NASM = env_var_to_bool("AWS_LC_SYS_PREBUILT_NASM");
     }
 
     if !is_external_bindgen() && (is_internal_bindgen() || !has_bindgen_feature()) {
         let target = target();
         let supported_platform = match target.as_str() {
-            "i686-unknown-linux-gnu"
-            | "x86_64-unknown-linux-gnu"
+            "aarch64-apple-darwin"
+            | "aarch64-pc-windows-msvc"
             | "aarch64-unknown-linux-gnu"
-            | "x86_64-unknown-linux-musl"
             | "aarch64-unknown-linux-musl"
+            | "i686-pc-windows-msvc"
+            | "i686-unknown-linux-gnu"
             | "x86_64-apple-darwin"
-            | "aarch64-apple-darwin" => Some(target),
+            | "x86_64-pc-windows-gnu"
+            | "x86_64-pc-windows-msvc"
+            | "x86_64-unknown-linux-gnu"
+            | "x86_64-unknown-linux-musl" => Some(target),
             _ => None,
         };
         if let Some(platform) = supported_platform {
@@ -354,6 +361,7 @@ fn is_bindgen_required() -> bool {
         || !has_pregenerated()
 }
 
+#[allow(dead_code)]
 fn internal_bindgen_supported() -> bool {
     // TODO: internal bindgen creates invalid bindings on FreeBSD
     // See: https://github.com/aws/aws-lc-rs/issues/476
@@ -376,6 +384,10 @@ fn is_no_asm() -> bool {
     unsafe { AWS_LC_SYS_NO_ASM }
 }
 
+fn allow_prebuilt_nasm() -> Option<bool> {
+    unsafe { AWS_LC_SYS_PREBUILT_NASM }
+}
+
 fn has_bindgen_feature() -> bool {
     cfg!(feature = "bindgen")
 }
@@ -384,18 +396,26 @@ fn has_pregenerated() -> bool {
     unsafe { PREGENERATED }
 }
 
+fn test_nasm_command() -> bool {
+    execute_command("nasm".as_ref(), &["-version".as_ref()]).status
+}
+
 fn prepare_cargo_cfg() {
     // This is supported in Rust >= 1.77.0
     // Also remove `#![allow(unexpected_cfgs)]` from src/lib.rs
     /*
     println!("cargo::rustc-check-cfg=cfg(use_bindgen_generated)");
-    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
     println!("cargo::rustc-check-cfg=cfg(aarch64_apple_darwin)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+    println!("cargo::rustc-check-cfg=cfg(i686_pc_windows_msvc)");
+    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_pc-windows-gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
      */
 }
 
@@ -437,9 +457,15 @@ fn main() {
             not(any(
                 all(
                     any(target_arch = "x86_64", target_arch = "aarch64"),
-                    any(target_os = "linux", target_os = "macos"),
-                    any(target_env = "gnu", target_env = "musl", target_env = "")
+                    any(target_os = "linux", target_os = "macos", target_os = "windows"),
+                    any(
+                        target_env = "gnu",
+                        target_env = "musl",
+                        target_env = "msvc",
+                        target_env = ""
+                    )
                 ),
+                all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
                 all(target_arch = "x86", target_os = "linux", target_env = "gnu")
             ))
         ))]

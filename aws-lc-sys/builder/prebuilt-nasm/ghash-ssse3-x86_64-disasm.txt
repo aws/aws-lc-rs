@@ -1,0 +1,302 @@
+Microsoft (R) COFF/PE Dumper Version 14.40.33813.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file ghash-ssse3-x86_64.obj
+
+File Type: COFF OBJECT
+
+aws_lc_0_21_0_gcm_gmult_ssse3:
+  0000000000000000: 48 83 EC 28        sub         rsp,28h
+L$SEH_prolog_gcm_gmult_ssse3_2:
+  0000000000000004: 66 0F 7F 34 24     movdqa      xmmword ptr [rsp],xmm6
+L$SEH_prolog_gcm_gmult_ssse3_3:
+  0000000000000009: 66 44 0F 7F 54 24  movdqa      xmmword ptr [rsp+10h],xmm10
+                    10
+L$SEH_prolog_gcm_gmult_ssse3_4:
+  0000000000000010: F3 0F 6F 01        movdqu      xmm0,xmmword ptr [rcx]
+  0000000000000014: 66 44 0F 6F 15 00  movdqa      xmm10,xmmword ptr [.rdata]
+                    00 00 00
+  000000000000001D: 66 0F 6F 15 10 00  movdqa      xmm2,xmmword ptr [.rdata+10h]
+                    00 00
+  0000000000000025: 66 41 0F 38 00 C2  pshufb      xmm0,xmm10
+  000000000000002B: 66 0F 6F CA        movdqa      xmm1,xmm2
+  000000000000002F: 66 0F DF C8        pandn       xmm1,xmm0
+  0000000000000033: 66 0F 72 D1 04     psrld       xmm1,4
+  0000000000000038: 66 0F DB C2        pand        xmm0,xmm2
+  000000000000003C: 66 0F EF D2        pxor        xmm2,xmm2
+  0000000000000040: 66 0F EF DB        pxor        xmm3,xmm3
+  0000000000000044: B8 05 00 00 00     mov         eax,5
+L$oop_row_1:
+  0000000000000049: 66 0F 6F 22        movdqa      xmm4,xmmword ptr [rdx]
+  000000000000004D: 48 8D 52 10        lea         rdx,[rdx+10h]
+  0000000000000051: 66 0F 6F F2        movdqa      xmm6,xmm2
+  0000000000000055: 66 0F 3A 0F F3 01  palignr     xmm6,xmm3,1
+  000000000000005B: 66 0F 6F DE        movdqa      xmm3,xmm6
+  000000000000005F: 66 0F 73 DA 01     psrldq      xmm2,1
+  0000000000000064: 66 0F 6F EC        movdqa      xmm5,xmm4
+  0000000000000068: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  000000000000006D: 66 0F 38 00 E9     pshufb      xmm5,xmm1
+  0000000000000072: 66 0F EF D5        pxor        xmm2,xmm5
+  0000000000000076: 66 0F 6F EC        movdqa      xmm5,xmm4
+  000000000000007A: 66 0F 73 F5 3C     psllq       xmm5,3Ch
+  000000000000007F: 66 0F 6F F5        movdqa      xmm6,xmm5
+  0000000000000083: 66 0F 73 FE 08     pslldq      xmm6,8
+  0000000000000088: 66 0F EF DE        pxor        xmm3,xmm6
+  000000000000008C: 66 0F 73 DD 08     psrldq      xmm5,8
+  0000000000000091: 66 0F EF D5        pxor        xmm2,xmm5
+  0000000000000095: 66 0F 73 D4 04     psrlq       xmm4,4
+  000000000000009A: 66 0F EF D4        pxor        xmm2,xmm4
+  000000000000009E: 48 83 E8 01        sub         rax,1
+  00000000000000A2: 0F 85 A1 FF FF FF  jne         L$oop_row_1
+  00000000000000A8: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000000AC: 66 0F 73 D3 01     psrlq       xmm3,1
+  00000000000000B1: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000000B5: 66 0F 73 D3 01     psrlq       xmm3,1
+  00000000000000BA: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000000BE: 66 0F 73 D3 05     psrlq       xmm3,5
+  00000000000000C3: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000000C7: 66 0F EF DB        pxor        xmm3,xmm3
+  00000000000000CB: B8 05 00 00 00     mov         eax,5
+L$oop_row_2:
+  00000000000000D0: 66 0F 6F 22        movdqa      xmm4,xmmword ptr [rdx]
+  00000000000000D4: 48 8D 52 10        lea         rdx,[rdx+10h]
+  00000000000000D8: 66 0F 6F F2        movdqa      xmm6,xmm2
+  00000000000000DC: 66 0F 3A 0F F3 01  palignr     xmm6,xmm3,1
+  00000000000000E2: 66 0F 6F DE        movdqa      xmm3,xmm6
+  00000000000000E6: 66 0F 73 DA 01     psrldq      xmm2,1
+  00000000000000EB: 66 0F 6F EC        movdqa      xmm5,xmm4
+  00000000000000EF: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  00000000000000F4: 66 0F 38 00 E9     pshufb      xmm5,xmm1
+  00000000000000F9: 66 0F EF D5        pxor        xmm2,xmm5
+  00000000000000FD: 66 0F 6F EC        movdqa      xmm5,xmm4
+  0000000000000101: 66 0F 73 F5 3C     psllq       xmm5,3Ch
+  0000000000000106: 66 0F 6F F5        movdqa      xmm6,xmm5
+  000000000000010A: 66 0F 73 FE 08     pslldq      xmm6,8
+  000000000000010F: 66 0F EF DE        pxor        xmm3,xmm6
+  0000000000000113: 66 0F 73 DD 08     psrldq      xmm5,8
+  0000000000000118: 66 0F EF D5        pxor        xmm2,xmm5
+  000000000000011C: 66 0F 73 D4 04     psrlq       xmm4,4
+  0000000000000121: 66 0F EF D4        pxor        xmm2,xmm4
+  0000000000000125: 48 83 E8 01        sub         rax,1
+  0000000000000129: 0F 85 A1 FF FF FF  jne         L$oop_row_2
+  000000000000012F: 66 0F EF D3        pxor        xmm2,xmm3
+  0000000000000133: 66 0F 73 D3 01     psrlq       xmm3,1
+  0000000000000138: 66 0F EF D3        pxor        xmm2,xmm3
+  000000000000013C: 66 0F 73 D3 01     psrlq       xmm3,1
+  0000000000000141: 66 0F EF D3        pxor        xmm2,xmm3
+  0000000000000145: 66 0F 73 D3 05     psrlq       xmm3,5
+  000000000000014A: 66 0F EF D3        pxor        xmm2,xmm3
+  000000000000014E: 66 0F EF DB        pxor        xmm3,xmm3
+  0000000000000152: B8 06 00 00 00     mov         eax,6
+L$oop_row_3:
+  0000000000000157: 66 0F 6F 22        movdqa      xmm4,xmmword ptr [rdx]
+  000000000000015B: 48 8D 52 10        lea         rdx,[rdx+10h]
+  000000000000015F: 66 0F 6F F2        movdqa      xmm6,xmm2
+  0000000000000163: 66 0F 3A 0F F3 01  palignr     xmm6,xmm3,1
+  0000000000000169: 66 0F 6F DE        movdqa      xmm3,xmm6
+  000000000000016D: 66 0F 73 DA 01     psrldq      xmm2,1
+  0000000000000172: 66 0F 6F EC        movdqa      xmm5,xmm4
+  0000000000000176: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  000000000000017B: 66 0F 38 00 E9     pshufb      xmm5,xmm1
+  0000000000000180: 66 0F EF D5        pxor        xmm2,xmm5
+  0000000000000184: 66 0F 6F EC        movdqa      xmm5,xmm4
+  0000000000000188: 66 0F 73 F5 3C     psllq       xmm5,3Ch
+  000000000000018D: 66 0F 6F F5        movdqa      xmm6,xmm5
+  0000000000000191: 66 0F 73 FE 08     pslldq      xmm6,8
+  0000000000000196: 66 0F EF DE        pxor        xmm3,xmm6
+  000000000000019A: 66 0F 73 DD 08     psrldq      xmm5,8
+  000000000000019F: 66 0F EF D5        pxor        xmm2,xmm5
+  00000000000001A3: 66 0F 73 D4 04     psrlq       xmm4,4
+  00000000000001A8: 66 0F EF D4        pxor        xmm2,xmm4
+  00000000000001AC: 48 83 E8 01        sub         rax,1
+  00000000000001B0: 0F 85 A1 FF FF FF  jne         L$oop_row_3
+  00000000000001B6: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000001BA: 66 0F 73 D3 01     psrlq       xmm3,1
+  00000000000001BF: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000001C3: 66 0F 73 D3 01     psrlq       xmm3,1
+  00000000000001C8: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000001CC: 66 0F 73 D3 05     psrlq       xmm3,5
+  00000000000001D1: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000001D5: 66 0F EF DB        pxor        xmm3,xmm3
+  00000000000001D9: 66 41 0F 38 00 D2  pshufb      xmm2,xmm10
+  00000000000001DF: F3 0F 7F 11        movdqu      xmmword ptr [rcx],xmm2
+  00000000000001E3: 66 0F EF C0        pxor        xmm0,xmm0
+  00000000000001E7: 66 0F EF C9        pxor        xmm1,xmm1
+  00000000000001EB: 66 0F EF D2        pxor        xmm2,xmm2
+  00000000000001EF: 66 0F EF DB        pxor        xmm3,xmm3
+  00000000000001F3: 66 0F EF E4        pxor        xmm4,xmm4
+  00000000000001F7: 66 0F EF ED        pxor        xmm5,xmm5
+  00000000000001FB: 66 0F EF F6        pxor        xmm6,xmm6
+  00000000000001FF: 66 0F 6F 34 24     movdqa      xmm6,xmmword ptr [rsp]
+  0000000000000204: 66 44 0F 6F 54 24  movdqa      xmm10,xmmword ptr [rsp+10h]
+                    10
+  000000000000020B: 48 83 C4 28        add         rsp,28h
+  000000000000020F: F3 C3              rep ret
+L$SEH_end_gcm_gmult_ssse3_5:
+  0000000000000211: 90                 nop
+  0000000000000212: 90                 nop
+  0000000000000213: 90                 nop
+  0000000000000214: 90                 nop
+  0000000000000215: 90                 nop
+  0000000000000216: 90                 nop
+  0000000000000217: 90                 nop
+  0000000000000218: 90                 nop
+  0000000000000219: 90                 nop
+  000000000000021A: 90                 nop
+  000000000000021B: 90                 nop
+  000000000000021C: 90                 nop
+  000000000000021D: 90                 nop
+  000000000000021E: 90                 nop
+  000000000000021F: 90                 nop
+aws_lc_0_21_0_gcm_ghash_ssse3:
+  0000000000000220: 48 83 EC 38        sub         rsp,38h
+L$SEH_prolog_gcm_ghash_ssse3_2:
+  0000000000000224: 66 0F 7F 34 24     movdqa      xmmword ptr [rsp],xmm6
+L$SEH_prolog_gcm_ghash_ssse3_3:
+  0000000000000229: 66 44 0F 7F 54 24  movdqa      xmmword ptr [rsp+10h],xmm10
+                    10
+L$SEH_prolog_gcm_ghash_ssse3_4:
+  0000000000000230: 66 44 0F 7F 5C 24  movdqa      xmmword ptr [rsp+20h],xmm11
+                    20
+L$SEH_prolog_gcm_ghash_ssse3_5:
+  0000000000000237: F3 0F 6F 01        movdqu      xmm0,xmmword ptr [rcx]
+  000000000000023B: 66 44 0F 6F 15 00  movdqa      xmm10,xmmword ptr [.rdata]
+                    00 00 00
+  0000000000000244: 66 44 0F 6F 1D 10  movdqa      xmm11,xmmword ptr [.rdata+10h]
+                    00 00 00
+  000000000000024D: 49 83 E1 F0        and         r9,0FFFFFFFFFFFFFFF0h
+  0000000000000251: 66 41 0F 38 00 C2  pshufb      xmm0,xmm10
+  0000000000000257: 66 0F EF DB        pxor        xmm3,xmm3
+L$oop_ghash:
+  000000000000025B: F3 41 0F 6F 08     movdqu      xmm1,xmmword ptr [r8]
+  0000000000000260: 66 41 0F 38 00 CA  pshufb      xmm1,xmm10
+  0000000000000266: 66 0F EF C1        pxor        xmm0,xmm1
+  000000000000026A: 66 41 0F 6F CB     movdqa      xmm1,xmm11
+  000000000000026F: 66 0F DF C8        pandn       xmm1,xmm0
+  0000000000000273: 66 0F 72 D1 04     psrld       xmm1,4
+  0000000000000278: 66 41 0F DB C3     pand        xmm0,xmm11
+  000000000000027D: 66 0F EF D2        pxor        xmm2,xmm2
+  0000000000000281: B8 05 00 00 00     mov         eax,5
+L$oop_row_4:
+  0000000000000286: 66 0F 6F 22        movdqa      xmm4,xmmword ptr [rdx]
+  000000000000028A: 48 8D 52 10        lea         rdx,[rdx+10h]
+  000000000000028E: 66 0F 6F F2        movdqa      xmm6,xmm2
+  0000000000000292: 66 0F 3A 0F F3 01  palignr     xmm6,xmm3,1
+  0000000000000298: 66 0F 6F DE        movdqa      xmm3,xmm6
+  000000000000029C: 66 0F 73 DA 01     psrldq      xmm2,1
+  00000000000002A1: 66 0F 6F EC        movdqa      xmm5,xmm4
+  00000000000002A5: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  00000000000002AA: 66 0F 38 00 E9     pshufb      xmm5,xmm1
+  00000000000002AF: 66 0F EF D5        pxor        xmm2,xmm5
+  00000000000002B3: 66 0F 6F EC        movdqa      xmm5,xmm4
+  00000000000002B7: 66 0F 73 F5 3C     psllq       xmm5,3Ch
+  00000000000002BC: 66 0F 6F F5        movdqa      xmm6,xmm5
+  00000000000002C0: 66 0F 73 FE 08     pslldq      xmm6,8
+  00000000000002C5: 66 0F EF DE        pxor        xmm3,xmm6
+  00000000000002C9: 66 0F 73 DD 08     psrldq      xmm5,8
+  00000000000002CE: 66 0F EF D5        pxor        xmm2,xmm5
+  00000000000002D2: 66 0F 73 D4 04     psrlq       xmm4,4
+  00000000000002D7: 66 0F EF D4        pxor        xmm2,xmm4
+  00000000000002DB: 48 83 E8 01        sub         rax,1
+  00000000000002DF: 0F 85 A1 FF FF FF  jne         L$oop_row_4
+  00000000000002E5: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000002E9: 66 0F 73 D3 01     psrlq       xmm3,1
+  00000000000002EE: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000002F2: 66 0F 73 D3 01     psrlq       xmm3,1
+  00000000000002F7: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000002FB: 66 0F 73 D3 05     psrlq       xmm3,5
+  0000000000000300: 66 0F EF D3        pxor        xmm2,xmm3
+  0000000000000304: 66 0F EF DB        pxor        xmm3,xmm3
+  0000000000000308: B8 05 00 00 00     mov         eax,5
+L$oop_row_5:
+  000000000000030D: 66 0F 6F 22        movdqa      xmm4,xmmword ptr [rdx]
+  0000000000000311: 48 8D 52 10        lea         rdx,[rdx+10h]
+  0000000000000315: 66 0F 6F F2        movdqa      xmm6,xmm2
+  0000000000000319: 66 0F 3A 0F F3 01  palignr     xmm6,xmm3,1
+  000000000000031F: 66 0F 6F DE        movdqa      xmm3,xmm6
+  0000000000000323: 66 0F 73 DA 01     psrldq      xmm2,1
+  0000000000000328: 66 0F 6F EC        movdqa      xmm5,xmm4
+  000000000000032C: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  0000000000000331: 66 0F 38 00 E9     pshufb      xmm5,xmm1
+  0000000000000336: 66 0F EF D5        pxor        xmm2,xmm5
+  000000000000033A: 66 0F 6F EC        movdqa      xmm5,xmm4
+  000000000000033E: 66 0F 73 F5 3C     psllq       xmm5,3Ch
+  0000000000000343: 66 0F 6F F5        movdqa      xmm6,xmm5
+  0000000000000347: 66 0F 73 FE 08     pslldq      xmm6,8
+  000000000000034C: 66 0F EF DE        pxor        xmm3,xmm6
+  0000000000000350: 66 0F 73 DD 08     psrldq      xmm5,8
+  0000000000000355: 66 0F EF D5        pxor        xmm2,xmm5
+  0000000000000359: 66 0F 73 D4 04     psrlq       xmm4,4
+  000000000000035E: 66 0F EF D4        pxor        xmm2,xmm4
+  0000000000000362: 48 83 E8 01        sub         rax,1
+  0000000000000366: 0F 85 A1 FF FF FF  jne         L$oop_row_5
+  000000000000036C: 66 0F EF D3        pxor        xmm2,xmm3
+  0000000000000370: 66 0F 73 D3 01     psrlq       xmm3,1
+  0000000000000375: 66 0F EF D3        pxor        xmm2,xmm3
+  0000000000000379: 66 0F 73 D3 01     psrlq       xmm3,1
+  000000000000037E: 66 0F EF D3        pxor        xmm2,xmm3
+  0000000000000382: 66 0F 73 D3 05     psrlq       xmm3,5
+  0000000000000387: 66 0F EF D3        pxor        xmm2,xmm3
+  000000000000038B: 66 0F EF DB        pxor        xmm3,xmm3
+  000000000000038F: B8 06 00 00 00     mov         eax,6
+L$oop_row_6:
+  0000000000000394: 66 0F 6F 22        movdqa      xmm4,xmmword ptr [rdx]
+  0000000000000398: 48 8D 52 10        lea         rdx,[rdx+10h]
+  000000000000039C: 66 0F 6F F2        movdqa      xmm6,xmm2
+  00000000000003A0: 66 0F 3A 0F F3 01  palignr     xmm6,xmm3,1
+  00000000000003A6: 66 0F 6F DE        movdqa      xmm3,xmm6
+  00000000000003AA: 66 0F 73 DA 01     psrldq      xmm2,1
+  00000000000003AF: 66 0F 6F EC        movdqa      xmm5,xmm4
+  00000000000003B3: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  00000000000003B8: 66 0F 38 00 E9     pshufb      xmm5,xmm1
+  00000000000003BD: 66 0F EF D5        pxor        xmm2,xmm5
+  00000000000003C1: 66 0F 6F EC        movdqa      xmm5,xmm4
+  00000000000003C5: 66 0F 73 F5 3C     psllq       xmm5,3Ch
+  00000000000003CA: 66 0F 6F F5        movdqa      xmm6,xmm5
+  00000000000003CE: 66 0F 73 FE 08     pslldq      xmm6,8
+  00000000000003D3: 66 0F EF DE        pxor        xmm3,xmm6
+  00000000000003D7: 66 0F 73 DD 08     psrldq      xmm5,8
+  00000000000003DC: 66 0F EF D5        pxor        xmm2,xmm5
+  00000000000003E0: 66 0F 73 D4 04     psrlq       xmm4,4
+  00000000000003E5: 66 0F EF D4        pxor        xmm2,xmm4
+  00000000000003E9: 48 83 E8 01        sub         rax,1
+  00000000000003ED: 0F 85 A1 FF FF FF  jne         L$oop_row_6
+  00000000000003F3: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000003F7: 66 0F 73 D3 01     psrlq       xmm3,1
+  00000000000003FC: 66 0F EF D3        pxor        xmm2,xmm3
+  0000000000000400: 66 0F 73 D3 01     psrlq       xmm3,1
+  0000000000000405: 66 0F EF D3        pxor        xmm2,xmm3
+  0000000000000409: 66 0F 73 D3 05     psrlq       xmm3,5
+  000000000000040E: 66 0F EF D3        pxor        xmm2,xmm3
+  0000000000000412: 66 0F EF DB        pxor        xmm3,xmm3
+  0000000000000416: 66 0F 6F C2        movdqa      xmm0,xmm2
+  000000000000041A: 48 8D 92 00 FF FF  lea         rdx,[rdx-100h]
+                    FF
+  0000000000000421: 4D 8D 40 10        lea         r8,[r8+10h]
+  0000000000000425: 49 83 E9 10        sub         r9,10h
+  0000000000000429: 0F 85 2C FE FF FF  jne         L$oop_ghash
+  000000000000042F: 66 41 0F 38 00 C2  pshufb      xmm0,xmm10
+  0000000000000435: F3 0F 7F 01        movdqu      xmmword ptr [rcx],xmm0
+  0000000000000439: 66 0F EF C0        pxor        xmm0,xmm0
+  000000000000043D: 66 0F EF C9        pxor        xmm1,xmm1
+  0000000000000441: 66 0F EF D2        pxor        xmm2,xmm2
+  0000000000000445: 66 0F EF DB        pxor        xmm3,xmm3
+  0000000000000449: 66 0F EF E4        pxor        xmm4,xmm4
+  000000000000044D: 66 0F EF ED        pxor        xmm5,xmm5
+  0000000000000451: 66 0F EF F6        pxor        xmm6,xmm6
+  0000000000000455: 66 0F 6F 34 24     movdqa      xmm6,xmmword ptr [rsp]
+  000000000000045A: 66 44 0F 6F 54 24  movdqa      xmm10,xmmword ptr [rsp+10h]
+                    10
+  0000000000000461: 66 44 0F 6F 5C 24  movdqa      xmm11,xmmword ptr [rsp+20h]
+                    20
+  0000000000000468: 48 83 C4 38        add         rsp,38h
+  000000000000046C: F3 C3              rep ret
+
+  Summary
+
+          1C .debug$T
+          18 .pdata
+          20 .rdata
+         46E .text
+          20 .xdata

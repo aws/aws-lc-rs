@@ -16,6 +16,10 @@ env:
   RUST_NIGHTLY_TOOLCHAIN: nightly
   RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   collect-symbols-and-commit:
     if: github.repository == 'aws/aws-lc-rs'
