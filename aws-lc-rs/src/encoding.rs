@@ -58,6 +58,8 @@ pub(crate) use generated_encodings;
 generated_encodings!(
     EcPrivateKeyBin,
     EcPrivateKeyRfc5915Der,
+    EcPublicKeyUncompressedBin,
+    EcPublicKeyCompressedBin,
     PublicKeyX509Der,
     Curve25519SeedBin,
     Pkcs8V1Der

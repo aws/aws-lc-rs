@@ -60,7 +60,7 @@ impl EcdsaKeyPair {
         algorithm: &'static EcdsaSigningAlgorithm,
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
-        let pubkey = ec::marshal_public_key(&evp_pkey.as_const(), algorithm)?;
+        let pubkey = ec::public_key_from_evp_pkey(&evp_pkey, algorithm)?;
 
         Ok(Self {
             algorithm,

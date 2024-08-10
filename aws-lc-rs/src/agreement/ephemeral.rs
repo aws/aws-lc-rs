@@ -114,6 +114,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::agreement::{AlgorithmID, PublicKey};
+    use crate::encoding::{
+        AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
+    };
     use crate::error::Unspecified;
     use crate::{agreement, rand, test, test_file};
 
@@ -348,6 +352,49 @@ mod tests {
         );
     }
 
+    fn check_computed_public_key(
+        algorithm: &AlgorithmID,
+        expected_format: &str,
+        expected_public_key_bytes: &[u8],
+        computed_public: &PublicKey,
+    ) {
+        match (algorithm, expected_format) {
+            (_, "X509") => {
+                let der = AsDer::<PublicKeyX509Der>::as_der(computed_public)
+                    .expect("serialize to uncompressed format");
+                assert_eq!(
+                    expected_public_key_bytes,
+                    der.as_ref(),
+                    "hex: {:x?}",
+                    der.as_ref()
+                );
+            }
+            (
+                AlgorithmID::ECDH_P256 | AlgorithmID::ECDH_P384 | AlgorithmID::ECDH_P521,
+                "COMPRESSED",
+            ) => {
+                let bin = AsBigEndian::<EcPublicKeyCompressedBin>::as_be_bytes(computed_public)
+                    .expect("serialize to compressed format");
+                assert_eq!(expected_public_key_bytes, bin.as_ref());
+            }
+            (
+                AlgorithmID::ECDH_P256 | AlgorithmID::ECDH_P384 | AlgorithmID::ECDH_P521,
+                "UNCOMPRESSED" | "",
+            ) => {
+                let bin = AsBigEndian::<EcPublicKeyUncompressedBin>::as_be_bytes(computed_public)
+                    .expect("serialize to uncompressed format");
+                assert_eq!(expected_public_key_bytes, bin.as_ref());
+                assert_eq!(expected_public_key_bytes, computed_public.as_ref());
+            }
+            (AlgorithmID::X25519, "") => {
+                assert_eq!(expected_public_key_bytes, computed_public.as_ref());
+            }
+            (ai, pf) => {
+                panic!("Unexpected PeerFormat={pf:?} for {ai:?}")
+            }
+        }
+    }
+
     #[test]
     fn agreement_agree_ephemeral() {
         let rng = rand::SystemRandom::new();
@@ -361,6 +408,10 @@ mod tests {
                 let alg = alg_from_curve_name(&curve_name);
                 let peer_public =
                     agreement::UnparsedPublicKey::new(alg, test_case.consume_bytes("PeerQ"));
+
+                let myq_format = test_case
+                    .consume_optional_string("MyQFormat")
+                    .unwrap_or_default();
 
                 if test_case.consume_optional_string("Error").is_none() {
                     let my_private_bytes = test_case.consume_bytes("D");
@@ -376,7 +427,8 @@ mod tests {
                     assert_eq!(my_private.algorithm(), alg);
 
                     let computed_public = my_private.compute_public_key().unwrap();
-                    assert_eq!(computed_public.as_ref(), &my_public[..]);
+
+                    check_computed_public_key(&alg.id, &myq_format, &my_public, &computed_public);
 
                     assert_eq!(my_private.algorithm(), alg);
 
