@@ -113,6 +113,18 @@ impl CcBuilder {
                 .define("BORINGSSL_IMPLEMENTATION", "1")
                 .define("BORINGSSL_PREFIX", prefix.as_str());
         }
+
+        let opt_level = cargo_env("OPT_LEVEL");
+        match opt_level.as_str() {
+            "0" | "1" | "2" => {}
+            _ => {
+                cc_build.flag(format!(
+                    "-ffile-prefix-map={}=",
+                    self.manifest_dir.display()
+                ));
+            }
+        }
+
         self.add_includes(&mut cc_build);
         cc_build
     }
