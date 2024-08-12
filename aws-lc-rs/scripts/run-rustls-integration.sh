@@ -72,7 +72,6 @@ popd &>/dev/null # "${RUSTLS_WEBPKI_DIR}"
 
 pushd "${RUSTLS_DIR}"
 git checkout "${RUSTLS_COMMIT}"
-pushd ./rustls
 # Update the Cargo.toml to use the GitHub repository reference under test.
 RUSTLS_RCGEN_STRING="^rcgen = { .* }"
 RUSTLS_RCGEN_PATH_STRING="rcgen = { path = \"${RUSTLS_RCGEN_DIR}/rcgen\" , default-features = false, features = [\"aws_lc_rs\", \"pem\"] }"
@@ -88,6 +87,8 @@ fi
 # Trigger Cargo to generate the lock file
 cargo update
 cargo update "aws-lc-rs@${AWS_LC_RS_VERSION}"
+pushd ./rustls
+
 # Print the dependency tree for debug purposes, if we did everything right there
 # should only be one aws-lc-rs version. Otherwise this will fail sine there are multiple versions
 cargo tree -i aws-lc-rs --features aws_lc_rs
