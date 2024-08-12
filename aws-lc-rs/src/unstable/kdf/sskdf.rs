@@ -3,86 +3,172 @@
 
 #![allow(clippy::module_name_repetitions)]
 
+use aws_lc::EVP_MD;
+#[cfg(not(feature = "fips"))]
 use aws_lc::{SSKDF_digest, SSKDF_hmac};
+
+#[cfg(feature = "fips")]
+use stubs::{SSKDF_digest, SSKDF_hmac};
 
 use crate::{
     digest::{match_digest_type, AlgorithmID},
     error::Unspecified,
+    ptr::ConstPointer,
 };
 
-/// SSKDF with HMAC-SHA1
-pub const SSKDF_HMAC_SHA1: SskdfHmacAlgorithm = SskdfHmacAlgorithm {
-    id: SskdfAlgorithmId::HmacSha1,
-    digest: AlgorithmID::SHA1,
-};
+#[cfg(feature = "fips")]
+mod stubs {
+    #[allow(non_snake_case)]
+    pub(super) unsafe fn SSKDF_digest(
+        _out_key: *mut u8,
+        _out_len: usize,
+        _digest: *const aws_lc::EVP_MD,
+        _secret: *const u8,
+        _secret_len: usize,
+        _info: *const u8,
+        _info_len: usize,
+    ) -> std::os::raw::c_int {
+        0
+    }
+
+    #[allow(clippy::too_many_arguments, non_snake_case)]
+    pub(super) unsafe fn SSKDF_hmac(
+        _out_key: *mut u8,
+        _out_len: usize,
+        _digest: *const aws_lc::EVP_MD,
+        _secret: *const u8,
+        _secret_len: usize,
+        _info: *const u8,
+        _info_len: usize,
+        _salt: *const u8,
+        _salt_len: usize,
+    ) -> std::os::raw::c_int {
+        0
+    }
+}
 
 /// SSKDF with HMAC-SHA224
-pub const SSKDF_HMAC_SHA224: SskdfHmacAlgorithm = SskdfHmacAlgorithm {
-    id: SskdfAlgorithmId::HmacSha224,
-    digest: AlgorithmID::SHA224,
+#[allow(dead_code)]
+const SSKDF_HMAC_SHA224: SskdfHmacAlgorithm = SskdfHmacAlgorithm {
+    id: SskdfHmacAlgorithmId::Sha224,
 };
 
 /// SSKDF with HMAC-SHA256
-pub const SSKDF_HMAC_SHA256: SskdfHmacAlgorithm = SskdfHmacAlgorithm {
-    id: SskdfAlgorithmId::HmacSha256,
-    digest: AlgorithmID::SHA256,
+#[allow(dead_code)]
+const SSKDF_HMAC_SHA256: SskdfHmacAlgorithm = SskdfHmacAlgorithm {
+    id: SskdfHmacAlgorithmId::Sha256,
 };
 
 /// SSKDF with HMAC-SHA384
-pub const SSKDF_HMAC_SHA384: SskdfHmacAlgorithm = SskdfHmacAlgorithm {
-    id: SskdfAlgorithmId::HmacSha384,
-    digest: AlgorithmID::SHA384,
+#[allow(dead_code)]
+const SSKDF_HMAC_SHA384: SskdfHmacAlgorithm = SskdfHmacAlgorithm {
+    id: SskdfHmacAlgorithmId::Sha384,
 };
 
 /// SSKDF with HMAC-SHA512
-pub const SSKDF_HMAC_SHA512: SskdfHmacAlgorithm = SskdfHmacAlgorithm {
-    id: SskdfAlgorithmId::HmacSha512,
-    digest: AlgorithmID::SHA512,
-};
-
-/// SSKDF with SHA1
-pub const SSKDF_DIGEST_SHA1: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
-    id: SskdfAlgorithmId::DigestSha1,
-    digest: AlgorithmID::SHA1,
+#[allow(dead_code)]
+const SSKDF_HMAC_SHA512: SskdfHmacAlgorithm = SskdfHmacAlgorithm {
+    id: SskdfHmacAlgorithmId::Sha512,
 };
 
 /// SSKDF with SHA224
-pub const SSKDF_DIGEST_SHA224: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
-    id: SskdfAlgorithmId::DigestSha224,
-    digest: AlgorithmID::SHA224,
+#[allow(dead_code)]
+const SSKDF_DIGEST_SHA224: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
+    id: SskdfDigestAlgorithmId::Sha224,
 };
 
 /// SSKDF with SHA256
-pub const SSKDF_DIGEST_SHA256: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
-    id: SskdfAlgorithmId::DigestSha256,
-    digest: AlgorithmID::SHA256,
+#[allow(dead_code)]
+const SSKDF_DIGEST_SHA256: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
+    id: SskdfDigestAlgorithmId::Sha256,
 };
 
 /// SSKDF with SHA384
-pub const SSKDF_DIGEST_SHA384: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
-    id: SskdfAlgorithmId::DigestSha384,
-    digest: AlgorithmID::SHA384,
+#[allow(dead_code)]
+const SSKDF_DIGEST_SHA384: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
+    id: SskdfDigestAlgorithmId::Sha384,
 };
 
 /// SSKDF with SHA512
-pub const SSKDF_DIGEST_SHA512: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
-    id: SskdfAlgorithmId::DigestSha512,
-    digest: AlgorithmID::SHA512,
+#[allow(dead_code)]
+const SSKDF_DIGEST_SHA512: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
+    id: SskdfDigestAlgorithmId::Sha512,
 };
+
+/// Retrieve an unstable [`SskdfHmacAlgorithm`] using the [`SskdfAlgorithmId`] specified by `id`.
+/// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
+#[must_use]
+pub const fn get_sskdf_hmac_algorithm(
+    id: SskdfHmacAlgorithmId,
+) -> Option<&'static SskdfHmacAlgorithm> {
+    #[cfg(feature = "fips")]
+    {
+        let _ = id;
+        None
+    }
+    #[cfg(not(feature = "fips"))]
+    {
+        match id {
+            SskdfHmacAlgorithmId::Sha224 => Some(&SSKDF_HMAC_SHA224),
+            SskdfHmacAlgorithmId::Sha256 => Some(&SSKDF_HMAC_SHA256),
+            SskdfHmacAlgorithmId::Sha384 => Some(&SSKDF_HMAC_SHA384),
+            SskdfHmacAlgorithmId::Sha512 => Some(&SSKDF_HMAC_SHA512),
+        }
+    }
+}
+
+/// Retrieve an unstable [`SskdfDigestAlgorithm`] using the [`SskdfAlgorithmId`] specified by `id`.
+/// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
+#[must_use]
+pub const fn get_sskdf_digest_algorithm(
+    id: SskdfDigestAlgorithmId,
+) -> Option<&'static SskdfDigestAlgorithm> {
+    #[cfg(feature = "fips")]
+    {
+        let _ = id;
+        None
+    }
+    #[cfg(not(feature = "fips"))]
+    {
+        match id {
+            SskdfDigestAlgorithmId::Sha224 => Some(&SSKDF_DIGEST_SHA224),
+            SskdfDigestAlgorithmId::Sha256 => Some(&SSKDF_DIGEST_SHA256),
+            SskdfDigestAlgorithmId::Sha384 => Some(&SSKDF_DIGEST_SHA384),
+            SskdfDigestAlgorithmId::Sha512 => Some(&SSKDF_DIGEST_SHA512),
+        }
+    }
+}
 
 /// SSKDF algorithm using HMAC
 pub struct SskdfHmacAlgorithm {
-    id: SskdfAlgorithmId,
-    digest: AlgorithmID,
+    id: SskdfHmacAlgorithmId,
 }
 
 impl SskdfHmacAlgorithm {
-    /// Returns the SSKDF Algorithm Identifier
+    /// Returns the SSKDF HMAC Algorithm Identifier
     #[must_use]
-    pub fn id(&self) -> SskdfAlgorithmId {
+    pub fn id(&self) -> SskdfHmacAlgorithmId {
         self.id
     }
+
+    #[must_use]
+    fn get_evp_md(&self) -> ConstPointer<EVP_MD> {
+        match_digest_type(match self.id {
+            SskdfHmacAlgorithmId::Sha224 => &AlgorithmID::SHA224,
+            SskdfHmacAlgorithmId::Sha256 => &AlgorithmID::SHA256,
+            SskdfHmacAlgorithmId::Sha384 => &AlgorithmID::SHA384,
+            SskdfHmacAlgorithmId::Sha512 => &AlgorithmID::SHA512,
+        })
+    }
 }
+
+impl PartialEq for SskdfHmacAlgorithm {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for SskdfHmacAlgorithm {}
 
 impl core::fmt::Debug for SskdfHmacAlgorithm {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -92,17 +178,34 @@ impl core::fmt::Debug for SskdfHmacAlgorithm {
 
 /// SSKDF algorithm using digest
 pub struct SskdfDigestAlgorithm {
-    id: SskdfAlgorithmId,
-    digest: AlgorithmID,
+    id: SskdfDigestAlgorithmId,
 }
 
 impl SskdfDigestAlgorithm {
     /// Returns the SSKDF Algorithm Identifier
     #[must_use]
-    pub fn id(&self) -> SskdfAlgorithmId {
+    pub fn id(&self) -> SskdfDigestAlgorithmId {
         self.id
     }
+
+    #[must_use]
+    fn get_evp_md(&self) -> ConstPointer<EVP_MD> {
+        match_digest_type(match self.id {
+            SskdfDigestAlgorithmId::Sha224 => &AlgorithmID::SHA224,
+            SskdfDigestAlgorithmId::Sha256 => &AlgorithmID::SHA256,
+            SskdfDigestAlgorithmId::Sha384 => &AlgorithmID::SHA384,
+            SskdfDigestAlgorithmId::Sha512 => &AlgorithmID::SHA512,
+        })
+    }
 }
+
+impl PartialEq for SskdfDigestAlgorithm {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for SskdfDigestAlgorithm {}
 
 impl core::fmt::Debug for SskdfDigestAlgorithm {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -110,39 +213,38 @@ impl core::fmt::Debug for SskdfDigestAlgorithm {
     }
 }
 
-/// Single-step (One-step) Key Derivation Function Algorithm Identifier
+/// Single-step (One-step) Key Derivation Function Digest Algorithm Identifier
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum SskdfAlgorithmId {
-    /// SSKDF with SHA1
-    DigestSha1,
-
+pub enum SskdfDigestAlgorithmId {
     /// SSKDF with SHA224
-    DigestSha224,
+    Sha224,
 
     /// SSKDF with SHA256
-    DigestSha256,
+    Sha256,
 
     /// SSKDF with SHA384
-    DigestSha384,
+    Sha384,
 
     /// SSKDF with SHA512
-    DigestSha512,
+    Sha512,
+}
 
-    /// SSKDF with HMAC-SHA1
-    HmacSha1,
-
+/// Single-step (One-step) Key Derivation Function HMAC Algorithm Identifier
+#[non_exhaustive]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum SskdfHmacAlgorithmId {
     /// SSKDF with HMAC-SHA224
-    HmacSha224,
+    Sha224,
 
     /// SSKDF with HMAC-SHA256
-    HmacSha256,
+    Sha256,
 
     /// SSKDF with HMAC-SHA384
-    HmacSha384,
+    Sha384,
 
     /// SSKDF with HMAC-SHA512
-    HmacSha512,
+    Sha512,
 }
 
 /// # Single-step Key Derivation Function using HMAC
@@ -178,7 +280,7 @@ pub fn sskdf_hmac(
     salt: &[u8],
     output: &mut [u8],
 ) -> Result<(), Unspecified> {
-    let evp_md = match_digest_type(&algorithm.digest);
+    let evp_md = algorithm.get_evp_md();
     let out_len = output.len();
     if 1 != unsafe {
         SSKDF_hmac(
@@ -226,7 +328,7 @@ pub fn sskdf_digest(
     info: &[u8],
     output: &mut [u8],
 ) -> Result<(), Unspecified> {
-    let evp_md = match_digest_type(&algorithm.digest);
+    let evp_md = algorithm.get_evp_md();
     let out_len = output.len();
     if 1 != unsafe {
         SSKDF_digest(

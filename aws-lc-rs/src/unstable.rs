@@ -9,6 +9,5 @@
 //! Features contained within this module, or child modules are subject to changes, relocation,
 //! or removal across minor releases, and thus are not subject to semantic versioning policies.
 
-#[cfg(not(feature = "fips"))]
 pub mod kdf;
 pub mod kem;

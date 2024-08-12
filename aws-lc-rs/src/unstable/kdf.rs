@@ -15,7 +15,15 @@
 //! # use std::error::Error;
 //! #
 //! # fn main() -> Result<(), Box<dyn Error>> {
-//! use aws_lc_rs::unstable::kdf::{kbkdf_ctr_hmac, KBKDF_CTR_HMAC_SHA256};
+//! # #[cfg(feature = "fips")]
+//! # return Ok(());
+//! use aws_lc_rs::{
+//!     error::Unspecified,
+//!     unstable::kdf::{
+//!         get_kbkdf_ctr_hmac_algorithm, kbkdf_ctr_hmac, KbkdfCtrHmacAlgorithm,
+//!         KbkdfCtrHmacAlgorithmId,
+//!     },
+//! };
 //!
 //! const OUTPUT_KEY_LEN: usize = 16;
 //!
@@ -32,7 +40,10 @@
 //!
 //! let mut output_key = [0u8; OUTPUT_KEY_LEN];
 //!
-//! kbkdf_ctr_hmac(&KBKDF_CTR_HMAC_SHA256, key, info, &mut output_key)?;
+//! let kbkdf_ctr_hmac_sha256: &KbkdfCtrHmacAlgorithm =
+//!     get_kbkdf_ctr_hmac_algorithm(KbkdfCtrHmacAlgorithmId::Sha256).ok_or(Unspecified)?;
+//!
+//! kbkdf_ctr_hmac(kbkdf_ctr_hmac_sha256, key, info, &mut output_key)?;
 //!
 //! assert_eq!(
 //!     output_key,
@@ -48,10 +59,18 @@
 //!
 //! ##  Example: Usage with HMAC-SHA256 PRF using NIST FixedInfo Construction
 //!
-//! ```
+//! ```rust
 //! # use std::error::Error;
 //! # fn main() -> Result<(), Box<dyn Error>> {
-//! use aws_lc_rs::unstable::kdf::{kbkdf_ctr_hmac, KBKDF_CTR_HMAC_SHA256};
+//! # #[cfg(feature = "fips")]
+//! # return Ok(());
+//! use aws_lc_rs::{
+//!     error::Unspecified,
+//!     unstable::kdf::{
+//!         get_kbkdf_ctr_hmac_algorithm, kbkdf_ctr_hmac, KbkdfCtrHmacAlgorithm,
+//!         KbkdfCtrHmacAlgorithmId,
+//!     },
+//! };
 //!
 //! const OUTPUT_KEY_LEN: usize = 16;
 //!
@@ -79,7 +98,10 @@
 //!
 //! let mut output_key = [0u8; OUTPUT_KEY_LEN];
 //!
-//! kbkdf_ctr_hmac(&KBKDF_CTR_HMAC_SHA256, key, &info, &mut output_key)?;
+//! let kbkdf_ctr_hmac_sha256: &KbkdfCtrHmacAlgorithm =
+//!     get_kbkdf_ctr_hmac_algorithm(KbkdfCtrHmacAlgorithmId::Sha256).ok_or(Unspecified)?;
+//!
+//! kbkdf_ctr_hmac(kbkdf_ctr_hmac_sha256, key, &info, &mut output_key)?;
 //!
 //! assert_eq!(
 //!     output_key,
@@ -104,7 +126,14 @@
 //! ```rust
 //! # use std::error::Error;
 //! # fn main() -> Result<(), Box<dyn Error>> {
-//! use aws_lc_rs::unstable::kdf::{sskdf_digest, SSKDF_DIGEST_SHA256};
+//! # #[cfg(feature = "fips")]
+//! # return Ok(());
+//! use aws_lc_rs::{
+//!     error::Unspecified,
+//!     unstable::kdf::{
+//!         get_sskdf_digest_algorithm, sskdf_digest, SskdfDigestAlgorithm, SskdfDigestAlgorithmId,
+//!     },
+//! };
 //!
 //! const OUTPUT_KEY_LEN: usize = 16;
 //!
@@ -121,7 +150,10 @@
 //!
 //! let mut output_key = [0u8; OUTPUT_KEY_LEN];
 //!
-//! sskdf_digest(&SSKDF_DIGEST_SHA256, shared_secret, info, &mut output_key)?;
+//! let sskdf_digest_sha256: &SskdfDigestAlgorithm =
+//!     get_sskdf_digest_algorithm(SskdfDigestAlgorithmId::Sha256).ok_or(Unspecified)?;
+//!
+//! sskdf_digest(sskdf_digest_sha256, shared_secret, info, &mut output_key)?;
 //!
 //! assert_eq!(
 //!     output_key,
@@ -139,7 +171,14 @@
 //! ```rust
 //! # use std::error::Error;
 //! # fn main() -> Result<(), Box<dyn Error>> {
-//! use aws_lc_rs::unstable::kdf::{sskdf_hmac, SSKDF_HMAC_SHA256};
+//! # #[cfg(feature = "fips")]
+//! # return Ok(());
+//! use aws_lc_rs::{
+//!     error::Unspecified,
+//!     unstable::kdf::{
+//!         get_sskdf_hmac_algorithm, sskdf_hmac, SskdfHmacAlgorithm, SskdfHmacAlgorithmId,
+//!     },
+//! };
 //!
 //! const OUTPUT_KEY_LEN: usize = 16;
 //!
@@ -161,8 +200,11 @@
 //!
 //! let mut output_key = [0u8; OUTPUT_KEY_LEN];
 //!
+//! let sskdf_hmac_sha256: &SskdfHmacAlgorithm =
+//!     get_sskdf_hmac_algorithm(SskdfHmacAlgorithmId::Sha256).ok_or(Unspecified)?;
+//!
 //! sskdf_hmac(
-//!     &SSKDF_HMAC_SHA256,
+//!     sskdf_hmac_sha256,
 //!     shared_secret,
 //!     info,
 //!     salt,
@@ -184,103 +226,234 @@ mod kbkdf;
 mod sskdf;
 
 pub use kbkdf::{
-    kbkdf_ctr_hmac, KbkdfAlgorithmId, KbkdfCtrHmacAlgorithm, KBKDF_CTR_HMAC_SHA1,
-    KBKDF_CTR_HMAC_SHA224, KBKDF_CTR_HMAC_SHA256, KBKDF_CTR_HMAC_SHA384, KBKDF_CTR_HMAC_SHA512,
+    get_kbkdf_ctr_hmac_algorithm, kbkdf_ctr_hmac, KbkdfCtrHmacAlgorithm, KbkdfCtrHmacAlgorithmId,
 };
 
 pub use sskdf::{
-    sskdf_digest, sskdf_hmac, SskdfAlgorithmId, SskdfDigestAlgorithm, SskdfHmacAlgorithm,
-    SSKDF_DIGEST_SHA1, SSKDF_DIGEST_SHA224, SSKDF_DIGEST_SHA256, SSKDF_DIGEST_SHA384,
-    SSKDF_DIGEST_SHA512, SSKDF_HMAC_SHA1, SSKDF_HMAC_SHA224, SSKDF_HMAC_SHA256, SSKDF_HMAC_SHA384,
-    SSKDF_HMAC_SHA512,
+    get_sskdf_digest_algorithm, get_sskdf_hmac_algorithm, sskdf_digest, sskdf_hmac,
+    SskdfDigestAlgorithm, SskdfDigestAlgorithmId, SskdfHmacAlgorithm, SskdfHmacAlgorithmId,
 };
 
 #[cfg(test)]
 mod tests {
-    use crate::unstable::kdf::{
-        kbkdf_ctr_hmac, sskdf_digest, sskdf_hmac, SskdfAlgorithmId, KBKDF_CTR_HMAC_SHA256,
-        SSKDF_DIGEST_SHA1, SSKDF_DIGEST_SHA224, SSKDF_DIGEST_SHA256, SSKDF_DIGEST_SHA384,
-        SSKDF_DIGEST_SHA512, SSKDF_HMAC_SHA1, SSKDF_HMAC_SHA224, SSKDF_HMAC_SHA256,
-        SSKDF_HMAC_SHA384, SSKDF_HMAC_SHA512,
-    };
-
-    #[test]
-    fn zero_length_output() {
-        let mut output = vec![0u8; 0];
-        assert!(sskdf_hmac(&SSKDF_HMAC_SHA256, &[0u8; 16], &[], &[], &mut output).is_err());
-        assert!(sskdf_digest(&SSKDF_DIGEST_SHA256, &[0u8; 16], &[], &mut output).is_err());
-        assert!(kbkdf_ctr_hmac(&KBKDF_CTR_HMAC_SHA256, &[0u8; 16], &[], &mut output).is_err());
-    }
-
-    #[test]
-    fn zero_length_secret() {
-        let mut output = vec![0u8; 16];
-        assert!(sskdf_hmac(&SSKDF_HMAC_SHA256, &[], &[], &[], &mut output).is_err());
-        assert!(sskdf_digest(&SSKDF_DIGEST_SHA256, &[], &[], &mut output).is_err());
-        assert!(kbkdf_ctr_hmac(&KBKDF_CTR_HMAC_SHA256, &[], &[], &mut output).is_err());
-    }
-
-    macro_rules! test_id_and_debug {
-        ($name:ident, $alg:expr, $expect:expr) => {
-            #[test]
-            fn $name() {
-                let id = $alg.id();
-                let expect = $expect;
-                assert_eq!(id, expect);
-                assert_eq!(format!("{id:?}"), format!("{expect:?}"));
-            }
+    #[cfg(not(feature = "fips"))]
+    mod notfips {
+        use crate::unstable::kdf::{
+            get_kbkdf_ctr_hmac_algorithm, get_sskdf_digest_algorithm, get_sskdf_hmac_algorithm,
+            kbkdf, kbkdf_ctr_hmac, sskdf::SskdfHmacAlgorithmId, sskdf_digest, sskdf_hmac,
+            KbkdfCtrHmacAlgorithmId, SskdfDigestAlgorithmId,
         };
+
+        #[test]
+        fn zero_length_output() {
+            let mut output = vec![0u8; 0];
+            assert!(sskdf_hmac(
+                get_sskdf_hmac_algorithm(SskdfHmacAlgorithmId::Sha256)
+                    .expect("algorithm supported"),
+                &[0u8; 16],
+                &[],
+                &[],
+                &mut output
+            )
+            .is_err());
+            assert!(sskdf_digest(
+                get_sskdf_digest_algorithm(SskdfDigestAlgorithmId::Sha256)
+                    .expect("algorithm supported"),
+                &[0u8; 16],
+                &[],
+                &mut output
+            )
+            .is_err());
+            assert!(kbkdf_ctr_hmac(
+                get_kbkdf_ctr_hmac_algorithm(KbkdfCtrHmacAlgorithmId::Sha256)
+                    .expect("algorithm supported"),
+                &[0u8; 16],
+                &[],
+                &mut output
+            )
+            .is_err());
+        }
+
+        #[test]
+        fn zero_length_secret() {
+            let mut output = vec![0u8; 16];
+            assert!(sskdf_hmac(
+                get_sskdf_hmac_algorithm(SskdfHmacAlgorithmId::Sha256)
+                    .expect("algorithm supported"),
+                &[],
+                &[],
+                &[],
+                &mut output
+            )
+            .is_err());
+            assert!(sskdf_digest(
+                get_sskdf_digest_algorithm(SskdfDigestAlgorithmId::Sha256)
+                    .expect("algorithm supported"),
+                &[],
+                &[],
+                &mut output
+            )
+            .is_err());
+            assert!(kbkdf_ctr_hmac(
+                get_kbkdf_ctr_hmac_algorithm(KbkdfCtrHmacAlgorithmId::Sha256)
+                    .expect("algorithm supported"),
+                &[],
+                &[],
+                &mut output
+            )
+            .is_err());
+        }
+
+        #[test]
+        fn sskdf_digest_test() {
+            for id in [
+                SskdfDigestAlgorithmId::Sha224,
+                SskdfDigestAlgorithmId::Sha256,
+                SskdfDigestAlgorithmId::Sha384,
+                SskdfDigestAlgorithmId::Sha512,
+            ] {
+                let alg = get_sskdf_digest_algorithm(id).expect("supported");
+                assert_eq!(id, alg.id());
+                assert_eq!(format!("{id:?}"), format!("{alg:?}"));
+                assert_eq!(format!("{id:?}"), format!("{:?}", alg.id()));
+                let mut output = vec![0u8; 32];
+                sskdf_digest(alg, &[1u8; 32], &[2u8; 32], &mut output).expect("success");
+            }
+        }
+
+        #[test]
+        fn sskdf_hmac_test() {
+            for id in [
+                SskdfHmacAlgorithmId::Sha224,
+                SskdfHmacAlgorithmId::Sha256,
+                SskdfHmacAlgorithmId::Sha384,
+                SskdfHmacAlgorithmId::Sha512,
+            ] {
+                let alg = get_sskdf_hmac_algorithm(id).expect("supported");
+                assert_eq!(id, alg.id());
+                assert_eq!(format!("{id:?}"), format!("{alg:?}"));
+                assert_eq!(format!("{id:?}"), format!("{:?}", alg.id()));
+                let mut output = vec![0u8; 32];
+                sskdf_hmac(alg, &[1u8; 32], &[2u8; 32], &[3u8; 32], &mut output).expect("success");
+            }
+        }
+
+        #[test]
+        fn kbkdf_ctr_hmac_test() {
+            for id in [
+                KbkdfCtrHmacAlgorithmId::Sha224,
+                KbkdfCtrHmacAlgorithmId::Sha256,
+                KbkdfCtrHmacAlgorithmId::Sha384,
+                KbkdfCtrHmacAlgorithmId::Sha512,
+            ] {
+                let alg = get_kbkdf_ctr_hmac_algorithm(id).expect("supported");
+                assert_eq!(id, alg.id());
+                assert_eq!(format!("{id:?}"), format!("{alg:?}"));
+                assert_eq!(format!("{id:?}"), format!("{:?}", alg.id()));
+                let mut output = vec![0u8; 32];
+                kbkdf_ctr_hmac(alg, &[1u8; 32], &[2u8; 32], &mut output).expect("success");
+            }
+        }
+
+        #[test]
+        fn algorithm_equality() {
+            let alg1 = get_kbkdf_ctr_hmac_algorithm(KbkdfCtrHmacAlgorithmId::Sha256).unwrap();
+            let alg2 = get_kbkdf_ctr_hmac_algorithm(KbkdfCtrHmacAlgorithmId::Sha256).unwrap();
+            assert_eq!(alg1, alg2);
+            let alg2 = get_kbkdf_ctr_hmac_algorithm(KbkdfCtrHmacAlgorithmId::Sha512).unwrap();
+            assert_ne!(alg1, alg2);
+
+            let alg1 = get_sskdf_digest_algorithm(SskdfDigestAlgorithmId::Sha256).unwrap();
+            let alg2 = get_sskdf_digest_algorithm(SskdfDigestAlgorithmId::Sha256).unwrap();
+            assert_eq!(alg1, alg2);
+            let alg2 = get_sskdf_digest_algorithm(SskdfDigestAlgorithmId::Sha512).unwrap();
+            assert_ne!(alg1, alg2);
+
+            let alg1 = get_sskdf_hmac_algorithm(SskdfHmacAlgorithmId::Sha256).unwrap();
+            let alg2 = get_sskdf_hmac_algorithm(SskdfHmacAlgorithmId::Sha256).unwrap();
+            assert_eq!(alg1, alg2);
+            let alg2 = get_sskdf_hmac_algorithm(SskdfHmacAlgorithmId::Sha512).unwrap();
+            assert_ne!(alg1, alg2);
+        }
     }
 
-    test_id_and_debug!(
-        sskdf_digest_sha1_id,
-        SSKDF_DIGEST_SHA1,
-        SskdfAlgorithmId::DigestSha1
-    );
-    test_id_and_debug!(
-        sskdf_digest_sha224_id,
-        SSKDF_DIGEST_SHA224,
-        SskdfAlgorithmId::DigestSha224
-    );
-    test_id_and_debug!(
-        sskdf_digest_sha256_id,
-        SSKDF_DIGEST_SHA256,
-        SskdfAlgorithmId::DigestSha256
-    );
-    test_id_and_debug!(
-        sskdf_digest_sha384_id,
-        SSKDF_DIGEST_SHA384,
-        SskdfAlgorithmId::DigestSha384
-    );
-    test_id_and_debug!(
-        sskdf_digest_sha512_id,
-        SSKDF_DIGEST_SHA512,
-        SskdfAlgorithmId::DigestSha512
-    );
+    #[cfg(feature = "fips")]
+    mod fips {
+        use crate::unstable::kdf::{
+            get_kbkdf_ctr_hmac_algorithm, get_sskdf_digest_algorithm, get_sskdf_hmac_algorithm,
+            KbkdfCtrHmacAlgorithmId, SskdfDigestAlgorithmId, SskdfHmacAlgorithmId,
+        };
 
-    test_id_and_debug!(
-        sskdf_hmac_sha1_id,
-        SSKDF_HMAC_SHA1,
-        SskdfAlgorithmId::HmacSha1
-    );
-    test_id_and_debug!(
-        sskdf_hmac_sha224_id,
-        SSKDF_HMAC_SHA224,
-        SskdfAlgorithmId::HmacSha224
-    );
-    test_id_and_debug!(
-        sskdf_hmac_sha256_id,
-        SSKDF_HMAC_SHA256,
-        SskdfAlgorithmId::HmacSha256
-    );
-    test_id_and_debug!(
-        sskdf_hmac_sha384_id,
-        SSKDF_HMAC_SHA384,
-        SskdfAlgorithmId::HmacSha384
-    );
-    test_id_and_debug!(
-        sskdf_hmac_sha512_id,
-        SSKDF_HMAC_SHA512,
-        SskdfAlgorithmId::HmacSha512
-    );
+        macro_rules! assert_get_unsupported_algorithm {
+            ($name:ident, $getter:path, $alg:expr) => {
+                #[test]
+                fn $name() {
+                    assert_eq!(None, $getter($alg));
+                }
+            };
+        }
+
+        assert_get_unsupported_algorithm!(
+            get_sskdf_hmac_algorithm_hmac_sha224,
+            get_sskdf_hmac_algorithm,
+            SskdfHmacAlgorithmId::Sha224
+        );
+        assert_get_unsupported_algorithm!(
+            get_sskdf_hmac_algorithm_hmac_sha256,
+            get_sskdf_hmac_algorithm,
+            SskdfHmacAlgorithmId::Sha256
+        );
+        assert_get_unsupported_algorithm!(
+            get_sskdf_hmac_algorithm_hmac_sha384,
+            get_sskdf_hmac_algorithm,
+            SskdfHmacAlgorithmId::Sha384
+        );
+        assert_get_unsupported_algorithm!(
+            get_sskdf_hmac_algorithm_hmac_sha512,
+            get_sskdf_hmac_algorithm,
+            SskdfHmacAlgorithmId::Sha512
+        );
+
+        assert_get_unsupported_algorithm!(
+            get_sskdf_digest_algorithm_sha224,
+            get_sskdf_digest_algorithm,
+            SskdfDigestAlgorithmId::Sha224
+        );
+        assert_get_unsupported_algorithm!(
+            get_sskdf_digest_algorithm_sha256,
+            get_sskdf_digest_algorithm,
+            SskdfDigestAlgorithmId::Sha256
+        );
+        assert_get_unsupported_algorithm!(
+            get_sskdf_digest_algorithm_sha384,
+            get_sskdf_digest_algorithm,
+            SskdfDigestAlgorithmId::Sha384
+        );
+        assert_get_unsupported_algorithm!(
+            get_sskdf_digest_algorithm_sha512,
+            get_sskdf_digest_algorithm,
+            SskdfDigestAlgorithmId::Sha512
+        );
+
+        assert_get_unsupported_algorithm!(
+            get_kbkdf_ctr_hmac_algorithm_sha224,
+            get_kbkdf_ctr_hmac_algorithm,
+            KbkdfCtrHmacAlgorithmId::Sha224
+        );
+        assert_get_unsupported_algorithm!(
+            get_kbkdf_ctr_hmac_algorithm_sha256,
+            get_kbkdf_ctr_hmac_algorithm,
+            KbkdfCtrHmacAlgorithmId::Sha256
+        );
+        assert_get_unsupported_algorithm!(
+            get_kbkdf_ctr_hmac_algorithm_sha384,
+            get_kbkdf_ctr_hmac_algorithm,
+            KbkdfCtrHmacAlgorithmId::Sha384
+        );
+        assert_get_unsupported_algorithm!(
+            get_kbkdf_ctr_hmac_algorithm_sha512,
+            get_kbkdf_ctr_hmac_algorithm,
+            KbkdfCtrHmacAlgorithmId::Sha512
+        );
+    }
 }

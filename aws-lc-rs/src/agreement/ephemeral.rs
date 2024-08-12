@@ -362,59 +362,50 @@ mod tests {
                 let peer_public =
                     agreement::UnparsedPublicKey::new(alg, test_case.consume_bytes("PeerQ"));
 
-                match test_case.consume_optional_string("Error") {
-                    None => {
-                        let my_private_bytes = test_case.consume_bytes("D");
-                        let my_private = {
-                            let rng = test::rand::FixedSliceRandom {
-                                bytes: &my_private_bytes,
-                            };
-                            agreement::EphemeralPrivateKey::generate_for_test(alg, &rng)?
+                if test_case.consume_optional_string("Error").is_none() {
+                    let my_private_bytes = test_case.consume_bytes("D");
+                    let my_private = {
+                        let rng = test::rand::FixedSliceRandom {
+                            bytes: &my_private_bytes,
                         };
-                        let my_public = test_case.consume_bytes("MyQ");
-                        let output = test_case.consume_bytes("Output");
+                        agreement::EphemeralPrivateKey::generate_for_test(alg, &rng)?
+                    };
+                    let my_public = test_case.consume_bytes("MyQ");
+                    let output = test_case.consume_bytes("Output");
 
-                        assert_eq!(my_private.algorithm(), alg);
+                    assert_eq!(my_private.algorithm(), alg);
 
-                        let computed_public = my_private.compute_public_key().unwrap();
-                        assert_eq!(computed_public.as_ref(), &my_public[..]);
+                    let computed_public = my_private.compute_public_key().unwrap();
+                    assert_eq!(computed_public.as_ref(), &my_public[..]);
 
-                        assert_eq!(my_private.algorithm(), alg);
+                    assert_eq!(my_private.algorithm(), alg);
 
-                        let result = agreement::agree_ephemeral(
-                            my_private,
-                            &peer_public,
-                            (),
-                            |key_material| {
-                                assert_eq!(key_material, &output[..]);
-                                Ok(())
-                            },
-                        );
-                        assert_eq!(
-                            result,
-                            Ok(()),
-                            "Failed on private key: {:?}",
-                            test::to_hex(my_private_bytes)
-                        );
-                    }
-
-                    Some(_) => {
-                        fn kdf_not_called(_: &[u8]) -> Result<(), ()> {
-                            panic!(
-                                "The KDF was called during ECDH when the peer's \
+                    let result =
+                        agreement::agree_ephemeral(my_private, &peer_public, (), |key_material| {
+                            assert_eq!(key_material, &output[..]);
+                            Ok(())
+                        });
+                    assert_eq!(
+                        result,
+                        Ok(()),
+                        "Failed on private key: {:?}",
+                        test::to_hex(my_private_bytes)
+                    );
+                } else {
+                    fn kdf_not_called(_: &[u8]) -> Result<(), ()> {
+                        panic!(
+                            "The KDF was called during ECDH when the peer's \
                          public key is invalid."
-                            );
-                        }
-                        let dummy_private_key =
-                            agreement::EphemeralPrivateKey::generate(alg, &rng)?;
-                        assert!(agreement::agree_ephemeral(
-                            dummy_private_key,
-                            &peer_public,
-                            (),
-                            kdf_not_called
-                        )
-                        .is_err());
+                        );
                     }
+                    let dummy_private_key = agreement::EphemeralPrivateKey::generate(alg, &rng)?;
+                    assert!(agreement::agree_ephemeral(
+                        dummy_private_key,
+                        &peer_public,
+                        (),
+                        kdf_not_called
+                    )
+                    .is_err());
                 }
 
                 Ok(())
