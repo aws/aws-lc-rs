@@ -204,8 +204,8 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
             ..Default::default()
         },
     )
-    .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
-    .expect("write bindings");
+        .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
+        .expect("write bindings");
 
     bindgen::generate_bindings(
         manifest_dir,
@@ -215,8 +215,8 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
             ..Default::default()
         },
     )
-    .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto_ssl"))))
-    .expect("write bindings");
+        .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto_ssl"))))
+        .expect("write bindings");
 }
 
 fn emit_rustc_cfg(cfg: &str) {
@@ -358,6 +358,7 @@ fn is_bindgen_required() -> bool {
         || !has_pregenerated()
 }
 
+#[allow(dead_code)]
 fn internal_bindgen_supported() -> bool {
     // TODO: internal bindgen creates invalid bindings on FreeBSD
     // See: https://github.com/aws/aws-lc-rs/issues/476
@@ -553,11 +554,7 @@ impl Debug for BindingOptions {
     }
 }
 
-fn invoke_external_bindgen(
-    manifest_dir: &Path,
-    prefix: &Option<String>,
-    gen_bindings_path: &Path,
-) -> Result<(), String> {
+fn verify_bindgen() -> Result<(), String> {
     let result = execute_command("bindgen".as_ref(), &["--version".as_ref()]);
     if !result.status {
         if !result.executed {
@@ -571,6 +568,40 @@ fn invoke_external_bindgen(
         }
         return Err("External bindgen command failed.".to_string());
     }
+    let mut major_version: u32 = 0;
+    let mut minor_version: u32 = 0;
+    let mut patch_version: u32 = 0;
+    let bindgen_version = result.stdout.split(' ').skip(1).next();
+    if let Some(version) = bindgen_version {
+        let version_parts: Vec<&str> = version.trim().split('.').collect();
+        if version_parts.len() == 3 {
+            major_version = version_parts[0].parse::<u32>().unwrap_or(0);
+            minor_version = version_parts[1].parse::<u32>().unwrap_or(0);
+            patch_version = version_parts[2].parse::<u32>().unwrap_or(0);
+        }
+    }
+    // We currently expect to support all bindgen versions >= 0.69.3
+    if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 3)) {
+        eprintln!(
+            "bindgen-cli was used. Detected version was: {}.{}.{} \n\
+        If this is not the latest version, consider upgrading : \
+        `cargo install --force --locked bindgen-cli`\
+        \n\
+        See our User Guide for more information about bindgen:\
+        https://aws.github.io/aws-lc-rs/index.html",
+            major_version, minor_version, patch_version
+        );
+    }
+    Ok(())
+}
+
+fn invoke_external_bindgen(
+    manifest_dir: &Path,
+    prefix: &Option<String>,
+    gen_bindings_path: &Path,
+) -> Result<(), String> {
+    verify_bindgen()?;
+
     let options = BindingOptions {
         build_prefix: None,
         include_ssl: false,
