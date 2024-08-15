@@ -299,7 +299,7 @@ pub fn sskdf_hmac(
 ///
 /// This algorithm may be referred to as "Single-Step KDF" or "NIST Concatenation KDF" by other
 /// implementors.
-/// 
+///
 /// ## Input Validation and Defaults
 /// * `output.len()`, `secret.len()`, `info.len()` each must be <= 2^30.
 /// * `output.len() > 0 and `secret.len() > 0`

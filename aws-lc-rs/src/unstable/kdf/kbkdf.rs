@@ -133,7 +133,7 @@ pub enum KbkdfCtrHmacAlgorithmId {
 }
 
 /// # Key-based Key Derivation Function (KBKDF) in Counter Mode with HMAC PRF
-/// 
+///
 /// ## Input Validation and Defaults
 /// * `output.len() > 0 and `secret.len() > 0`
 /// * `output.len() <= usize::MAX - DIGEST_LENGTH`
