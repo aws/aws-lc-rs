@@ -56,7 +56,7 @@ const KBKDF_CTR_HMAC_SHA512: KbkdfCtrHmacAlgorithm = KbkdfCtrHmacAlgorithm {
     id: KbkdfCtrHmacAlgorithmId::Sha512,
 };
 
-/// Retrieve an unstable [`KbkdfCtrHmacAlgorithm`] using the [`KbkdfAlgorithmId`] specified by `id`.
+/// Retrieve an unstable [`KbkdfCtrHmacAlgorithm`] using the [`KbkdfCtrHmacAlgorithmId`] specified by `id`.
 /// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
 #[must_use]
 pub const fn get_kbkdf_ctr_hmac_algorithm(
@@ -133,26 +133,24 @@ pub enum KbkdfCtrHmacAlgorithmId {
 }
 
 /// # Key-based Key Derivation Function (KBKDF) in Counter Mode with HMAC PRF
+/// 
+/// ## Input Validation and Defaults
+/// * `output.len() > 0 and `secret.len() > 0`
+/// * `output.len() <= usize::MAX - DIGEST_LENGTH`
+/// * The requested `output.len()` would result in overflowing the counter.
 ///
 /// ## Implementation Notes
 ///
 /// This implementation adheres to the algorithm specified in Section 4.1 of the
 /// NIST Special Publication 800-108 Revision 1 Update 1 published on August
-/// 2022. The parameters relevant to the specification are as follows:
-/// * `output.len() * 8` is analogous to `L` in the specification.
-/// * `r` the length of the binary representation of the counter `i`
-///   referred to by the specification. `r` is 32 bits in this implementation.
-/// * `K_IN` is analogous to `secret`.
-/// * The iteration counter `i` is place before the fixed info.
-/// * `PRF` refers to HMAC in this implementation.
+/// 2022. Using HMAC as the PRF function. In this implementation:
+/// * The counter is 32-bits and is represented in big-endian format
+/// * The counter is placed before the fixed info string
 ///
 /// Specification available at <https://doi.org/10.6028/NIST.SP.800-108r1-upd1>
 ///
 /// # Errors
-/// `Unspecified` is returned if an error has occurred. This can occur due to the following reasons:
-/// * `secret.len() == 0 || output.len() == 0`
-/// * `output.len() > usize::MAX - DIGEST_LENGTH`
-/// * The requested `output.len()` exceeds the `u32::MAX` counter `i`.
+/// `Unspecified` is returned if input validation fails or an unexpected error occurs.
 pub fn kbkdf_ctr_hmac(
     algorithm: &'static KbkdfCtrHmacAlgorithm,
     secret: &[u8],

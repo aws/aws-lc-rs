@@ -95,7 +95,7 @@ const SSKDF_DIGEST_SHA512: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
     id: SskdfDigestAlgorithmId::Sha512,
 };
 
-/// Retrieve an unstable [`SskdfHmacAlgorithm`] using the [`SskdfAlgorithmId`] specified by `id`.
+/// Retrieve an unstable [`SskdfHmacAlgorithm`] using the [`SskdfHmacAlgorithmId`] specified by `id`.
 /// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
 #[must_use]
 pub const fn get_sskdf_hmac_algorithm(
@@ -117,7 +117,7 @@ pub const fn get_sskdf_hmac_algorithm(
     }
 }
 
-/// Retrieve an unstable [`SskdfDigestAlgorithm`] using the [`SskdfAlgorithmId`] specified by `id`.
+/// Retrieve an unstable [`SskdfDigestAlgorithm`] using the [`SskdfDigestAlgorithmId`] specified by `id`.
 /// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
 #[must_use]
 pub const fn get_sskdf_digest_algorithm(
@@ -252,27 +252,22 @@ pub enum SskdfHmacAlgorithmId {
 /// This algorithm may be referred to as "Single-Step KDF" or "NIST Concatenation KDF" by other
 /// implementors.
 ///
+/// ## Input Validation and Defaults
+/// * `output.len()`, `secret.len()`, `info.len()` each must be <= 2^30.
+/// * The default salt, an all zero byte string with length equal to the digest block length, is used
+///   if `salt.len() == 0`.
+/// * `output.len() > 0 and `secret.len() > 0`
+///
 /// ## Implementation Notes
 ///
 /// This implementation adheres to the algorithm specified in Section 4 of the
-/// NIST Special Publication 800-56C Revision 2 published on August 2020. The
-/// parameters relevant to the specification are as follows:
-/// * Auxillary Function H is Option 2
-/// * `output.len()`, `secret.len()`, `info.len()` each must be <= 2^30
-/// * `output.len()` and `secret.len()` > 0
-/// * `output.len()`, `secret.len()` are analogous to `L` and `Z` respectively in the
-///   specification.
-/// * `info` refers to `FixedInfo` in the specification.
-/// * `salt.len() == 0` will result in a default salt being used which will be an all-zero byte string
-///   whose length is equal to the length of the specified digest input block length in
-///   bytes.
+/// NIST Special Publication 800-56C Revision 2 published on August 2020.
+/// Using Option 2 for the auxiliary function H.
 ///
 /// Specification is available at <https://doi.org/10.6028/NIST.SP.800-56Cr2>
 ///
 /// # Errors
-/// `Unspecified` is returned under the following conditions:
-/// * Either `output.len()`, `secret.len()`, or `info.len()` are > 2^30.
-/// * `output.len() == 0 || secret.len() == 0`
+/// `Unspecified` is returned if input validation fails or an unexpected error occurs.
 pub fn sskdf_hmac(
     algorithm: &'static SskdfHmacAlgorithm,
     secret: &[u8],
@@ -304,24 +299,21 @@ pub fn sskdf_hmac(
 ///
 /// This algorithm may be referred to as "Single-Step KDF" or "NIST Concatenation KDF" by other
 /// implementors.
+/// 
+/// ## Input Validation and Defaults
+/// * `output.len()`, `secret.len()`, `info.len()` each must be <= 2^30.
+/// * `output.len() > 0 and `secret.len() > 0`
 ///
 /// ## Implementation Notes
+///
 /// This implementation adheres to the algorithm specified in Section 4 of the
-/// NIST Special Publication 800-56C Revision 2 published on August 2020. The
-/// parameters relevant to the specification are as follows:
-/// * Auxillary Function H is Option 1
-/// * `output.len()`, `secret.len()`, `info.len()` each must be <= 2^30
-/// * `output.len()` and `secret.len()` > 0
-/// * `output.len()`, `secret.len()` are analogous to `L` and `Z` respectively in the
-///   specification.
-/// * `info` refers to `FixedInfo` in the specification.
+/// NIST Special Publication 800-56C Revision 2 published on August 2020.
+/// Using Option 1 for the auxiliary function H.
 ///
 /// Specification is available at <https://doi.org/10.6028/NIST.SP.800-56Cr2>
 ///
 /// # Errors
-/// `Unspecified` is returned under the following conditions:
-/// * Either `output.len()`, `secret.len()`, or `info.len()` are > 2^30.
-/// * `output.len() == 0 || secret.len() == 0`
+/// `Unspecified` is returned if input validation fails or an unexpected error occurs.
 pub fn sskdf_digest(
     algorithm: &'static SskdfDigestAlgorithm,
     secret: &[u8],
