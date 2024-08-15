@@ -31,7 +31,7 @@ impl Pkcs1PublicEncryptingKey {
     /// The provided length of `plaintext` must be at most [`Self::max_plaintext_size`].
     ///
     /// # Sizing `output`
-    /// The length of `output` must be greater then or equal to [`Self::ciphertext_size`].
+    /// The length of `output` must be greater than or equal to [`Self::ciphertext_size`].
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs while encrypting `plaintext`.
@@ -77,7 +77,7 @@ impl Pkcs1PublicEncryptingKey {
         self.public_key.key_size_bits()
     }
 
-    /// Returns the max plaintext that could be encrypted using this key and with the provided algorithm.
+    /// Returns the max plaintext that could be encrypted using this key.
     #[must_use]
     pub fn max_plaintext_size(&self) -> usize {
         const RSA_PKCS1_PADDING_SIZE: usize = 11; // crypto/fipsmodule/rsa/internal.h
@@ -118,7 +118,7 @@ impl Pkcs1PrivateDecryptingKey {
     /// The provided length of `ciphertext` must be [`Self::key_size_bytes`].
     ///
     /// # Sizing `output`
-    /// The length of `output` must be greater then or equal to [`Self::min_output_size`].
+    /// The length of `output` must be greater than or equal to [`Self::min_output_size`].
     ///
     /// # Errors
     /// * `Unspecified` for any error that occurs while decrypting `ciphertext`.
