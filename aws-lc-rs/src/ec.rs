@@ -21,7 +21,7 @@ use aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::EC_KEY_check_key;
 use aws_lc::{
-    point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
+    d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
     ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes,
     EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
     EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
@@ -319,40 +319,42 @@ fn validate_evp_key(
     Ok(())
 }
 
-pub(crate) unsafe fn marshal_private_key_to_buffer(
+pub(crate) fn marshal_private_key_to_buffer(
     private_size: usize,
     evp_pkey: &ConstPointer<EVP_PKEY>,
 ) -> Result<Vec<u8>, Unspecified> {
-    let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
-    let private_bn = ConstPointer::new(EC_KEY_get0_private_key(*ec_key))?;
+    let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(**evp_pkey) })?;
+    let private_bn = ConstPointer::new(unsafe { EC_KEY_get0_private_key(*ec_key) })?;
     {
-        let size: usize = BN_num_bytes(*private_bn).try_into()?;
+        let size: usize = unsafe { BN_num_bytes(*private_bn).try_into()? };
         debug_assert!(size <= private_size);
     }
 
     let mut buffer = vec![0u8; private_size];
-    if 1 != BN_bn2bin_padded(buffer.as_mut_ptr(), private_size, *private_bn) {
+    if 1 != unsafe { BN_bn2bin_padded(buffer.as_mut_ptr(), private_size, *private_bn) } {
         return Err(Unspecified);
     }
 
     Ok(buffer)
 }
 
-pub(crate) unsafe fn unmarshal_der_to_private_key(
+pub(crate) fn unmarshal_der_to_private_key(
     key_bytes: &[u8],
     nid: i32,
 ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     let mut out = null_mut();
     // `d2i_PrivateKey` -> ... -> `EC_KEY_parse_private_key` -> `EC_KEY_check_key`
-    let evp_pkey = LcPtr::new(aws_lc::d2i_PrivateKey(
-        EVP_PKEY_EC,
-        &mut out,
-        &mut key_bytes.as_ptr(),
-        key_bytes
-            .len()
-            .try_into()
-            .map_err(|_| KeyRejected::too_large())?,
-    ))?;
+    let evp_pkey = LcPtr::new(unsafe {
+        d2i_PrivateKey(
+            EVP_PKEY_EC,
+            &mut out,
+            &mut key_bytes.as_ptr(),
+            key_bytes
+                .len()
+                .try_into()
+                .map_err(|_| KeyRejected::too_large())?,
+        )
+    })?;
     #[cfg(not(feature = "fips"))]
     verify_evp_key_nid(&evp_pkey.as_const(), nid)?;
     #[cfg(feature = "fips")]
@@ -361,21 +363,21 @@ pub(crate) unsafe fn unmarshal_der_to_private_key(
     Ok(evp_pkey)
 }
 
-pub(crate) unsafe fn marshal_public_key_to_buffer(
+pub(crate) fn marshal_public_key_to_buffer(
     buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
     evp_pkey: &ConstPointer<EVP_PKEY>,
 ) -> Result<usize, Unspecified> {
-    let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(**evp_pkey))?;
+    let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(**evp_pkey) })?;
     marshal_ec_public_key_to_buffer(buffer, &ec_key)
 }
 
-pub(crate) unsafe fn marshal_ec_public_key_to_buffer(
+pub(crate) fn marshal_ec_public_key_to_buffer(
     buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
     ec_key: &ConstPointer<EC_KEY>,
 ) -> Result<usize, Unspecified> {
-    let ec_group = ConstPointer::new(EC_KEY_get0_group(**ec_key))?;
+    let ec_group = ConstPointer::new(unsafe { EC_KEY_get0_group(**ec_key) })?;
 
-    let ec_point = ConstPointer::new(EC_KEY_get0_public_key(**ec_key))?;
+    let ec_point = ConstPointer::new(unsafe { EC_KEY_get0_public_key(**ec_key) })?;
 
     let out_len = ec_point_to_bytes(&ec_group, &ec_point, buffer)?;
     Ok(out_len)
@@ -386,14 +388,12 @@ pub(crate) fn marshal_public_key(
     algorithm: &'static EcdsaSigningAlgorithm,
 ) -> Result<PublicKey, Unspecified> {
     let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
-    unsafe {
-        let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey)?;
+    let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey)?;
 
-        Ok(PublicKey {
-            algorithm,
-            octets: pub_key_bytes[0..key_len].into(),
-        })
-    }
+    Ok(PublicKey {
+        algorithm,
+        octets: pub_key_bytes[0..key_len].into(),
+    })
 }
 
 #[inline]
@@ -548,21 +548,23 @@ pub(crate) fn ec_point_from_bytes(
 }
 
 #[inline]
-unsafe fn ec_point_to_bytes(
+fn ec_point_to_bytes(
     ec_group: &ConstPointer<EC_GROUP>,
     ec_point: &ConstPointer<EC_POINT>,
     buf: &mut [u8; PUBLIC_KEY_MAX_LEN],
 ) -> Result<usize, Unspecified> {
     let pt_conv_form = point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED;
 
-    let out_len = EC_POINT_point2oct(
-        **ec_group,
-        **ec_point,
-        pt_conv_form,
-        buf.as_mut_ptr(),
-        PUBLIC_KEY_MAX_LEN,
-        null_mut(),
-    );
+    let out_len = unsafe {
+        EC_POINT_point2oct(
+            **ec_group,
+            **ec_point,
+            pt_conv_form,
+            buf.as_mut_ptr(),
+            PUBLIC_KEY_MAX_LEN,
+            null_mut(),
+        )
+    };
     if out_len == 0 {
         return Err(Unspecified);
     }

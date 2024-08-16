@@ -182,7 +182,7 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         private_key: &[u8],
     ) -> Result<Self, KeyRejected> {
-        let evp_pkey = unsafe { ec::unmarshal_der_to_private_key(private_key, alg.id.nid())? };
+        let evp_pkey = ec::unmarshal_der_to_private_key(private_key, alg.id.nid())?;
 
         Ok(Self::new(alg, evp_pkey)?)
     }
@@ -297,13 +297,11 @@ impl AsBigEndian<EcPrivateKeyBin<'static>> for PrivateKey<'_> {
     /// # Errors
     /// `error::Unspecified` if serialization failed.
     fn as_be_bytes(&self) -> Result<EcPrivateKeyBin<'static>, Unspecified> {
-        unsafe {
-            let buffer = ec::marshal_private_key_to_buffer(
-                self.0.algorithm.id.private_key_size(),
-                &self.0.evp_pkey.as_const(),
-            )?;
-            Ok(EcPrivateKeyBin::new(buffer))
-        }
+        let buffer = ec::marshal_private_key_to_buffer(
+            self.0.algorithm.id.private_key_size(),
+            &self.0.evp_pkey.as_const(),
+        )?;
+        Ok(EcPrivateKeyBin::new(buffer))
     }
 }
 

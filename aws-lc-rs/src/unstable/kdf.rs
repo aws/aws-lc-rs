@@ -240,7 +240,7 @@ mod tests {
     mod notfips {
         use crate::unstable::kdf::{
             get_kbkdf_ctr_hmac_algorithm, get_sskdf_digest_algorithm, get_sskdf_hmac_algorithm,
-            kbkdf, kbkdf_ctr_hmac, sskdf::SskdfHmacAlgorithmId, sskdf_digest, sskdf_hmac,
+            kbkdf_ctr_hmac, sskdf::SskdfHmacAlgorithmId, sskdf_digest, sskdf_hmac,
             KbkdfCtrHmacAlgorithmId, SskdfDigestAlgorithmId,
         };
 
