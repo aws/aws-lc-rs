@@ -153,7 +153,7 @@ mod tests {
         let input_block: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::try_from(input).unwrap();
 
         let aes128 = SymmetricCipherKey::aes128(key.as_slice()).unwrap();
-        let result = aes128.encrypt_block(Block::from(&input_block));
+        let result = aes128.encrypt_block(Block::from(input_block));
 
         assert_eq!(expected_result.as_slice(), result.as_ref());
     }
@@ -167,7 +167,7 @@ mod tests {
         let input_block: [u8; BLOCK_LEN] = <[u8; BLOCK_LEN]>::try_from(input).unwrap();
 
         let aes128 = SymmetricCipherKey::aes256(key.as_slice()).unwrap();
-        let result = aes128.encrypt_block(Block::from(&input_block));
+        let result = aes128.encrypt_block(Block::from(input_block));
 
         assert_eq!(expected_result.as_slice(), result.as_ref());
     }
