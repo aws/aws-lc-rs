@@ -7,10 +7,10 @@ use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
+use std::marker::PhantomData;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
-use zeroize::Zeroize;
 
 use aws_lc::{
     CBS_init, EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
@@ -34,7 +34,6 @@ use crate::{constant_time, hex, sealed};
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
-pub(crate) const ED25519_PRIVATE_KEY_LEN: usize = aws_lc::ED25519_PRIVATE_KEY_LEN as usize;
 pub(crate) const ED25519_PRIVATE_KEY_SEED_LEN: usize =
     aws_lc::ED25519_PRIVATE_KEY_SEED_LEN as usize;
 const ED25519_SIGNATURE_LEN: usize = aws_lc::ED25519_SIGNATURE_LEN as usize;
@@ -137,7 +136,6 @@ fn try_ed25519_public_key_from_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>
 #[allow(clippy::module_name_repetitions)]
 pub struct Ed25519KeyPair {
     evp_pkey: LcPtr<EVP_PKEY>,
-    private_key_bytes: Box<[u8; ED25519_PRIVATE_KEY_LEN]>,
     public_key: PublicKey,
 }
 
@@ -150,16 +148,13 @@ impl Debug for Ed25519KeyPair {
     }
 }
 
-impl Drop for Ed25519KeyPair {
-    fn drop(&mut self) {
-        self.private_key_bytes.zeroize();
-    }
-}
-
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
 /// The seed value for the `EdDSA` signature scheme using Curve25519
-pub struct Seed<'a>(&'a Ed25519KeyPair);
+pub struct Seed<'a> {
+    bytes: Box<[u8]>,
+    phantom: PhantomData<&'a [u8]>,
+}
 
 impl AsBigEndian<Curve25519SeedBin<'static>> for Seed<'_> {
     /// Exposes the seed encoded as a big-endian fixed-length integer.
@@ -169,8 +164,7 @@ impl AsBigEndian<Curve25519SeedBin<'static>> for Seed<'_> {
     /// # Errors
     /// `error::Unspecified` if serialization failed.
     fn as_be_bytes(&self) -> Result<Curve25519SeedBin<'static>, Unspecified> {
-        let buffer = Vec::from(&self.0.private_key_bytes[..ED25519_PRIVATE_KEY_SEED_LEN]);
-        Ok(Curve25519SeedBin::new(buffer))
+        Ok(Curve25519SeedBin::new(self.bytes.to_vec()))
     }
 }
 
@@ -358,44 +352,16 @@ impl Ed25519KeyPair {
         }
         debug_assert_eq!(derived_public_key.len(), out_len);
 
-        let mut private_key = [0u8; ED25519_PRIVATE_KEY_LEN];
-        debug_assert_eq!(
-            ED25519_PRIVATE_KEY_LEN,
-            ED25519_PRIVATE_KEY_SEED_LEN + ED25519_PUBLIC_KEY_LEN
-        );
-        let mut out_len: usize = private_key.len();
-        if 1 != unsafe {
-            EVP_PKEY_get_raw_private_key(
-                *evp_pkey.as_const(),
-                private_key.as_mut_ptr(),
-                &mut out_len,
-            )
-        } {
-            return Err(KeyRejected::unspecified());
-        }
-        debug_assert_eq!(ED25519_PRIVATE_KEY_SEED_LEN, out_len); // The output should be the 32-byte private seed length
+        constant_time::verify_slices_are_equal(public_key, &derived_public_key)
+            .map_err(|_| KeyRejected::inconsistent_components())?;
 
-        private_key
-            [ED25519_PRIVATE_KEY_SEED_LEN..ED25519_PRIVATE_KEY_SEED_LEN + ED25519_PUBLIC_KEY_LEN]
-            .copy_from_slice(&derived_public_key);
-
-        constant_time::verify_slices_are_equal(
-            public_key,
-            &private_key[ED25519_PRIVATE_KEY_SEED_LEN
-                ..ED25519_PRIVATE_KEY_SEED_LEN + ED25519_PUBLIC_KEY_LEN],
-        )
-        .map_err(|_| KeyRejected::inconsistent_components())?;
-
-        let key_pair = Self {
-            private_key_bytes: Box::new(private_key),
+        Ok(Self {
             public_key: PublicKey {
                 public_key_bytes: derived_public_key,
                 evp_pkey: evp_pkey.clone(),
             },
             evp_pkey,
-        };
-        private_key.zeroize();
-        Ok(key_pair)
+        })
     }
 
     /// Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v1 or v2
@@ -441,14 +407,6 @@ impl Ed25519KeyPair {
 
         evp_pkey.validate_as_ed25519()?;
 
-        let mut private_key = [0u8; ED25519_PRIVATE_KEY_LEN];
-        let mut out_len: usize = ED25519_PRIVATE_KEY_LEN;
-        if 1 != unsafe {
-            EVP_PKEY_get_raw_private_key(*evp_pkey, private_key.as_mut_ptr(), &mut out_len)
-        } {
-            return Err(KeyRejected::wrong_algorithm());
-        }
-
         let mut public_key = [0u8; ED25519_PUBLIC_KEY_LEN];
         let mut out_len: usize = ED25519_PUBLIC_KEY_LEN;
         if 1 != unsafe {
@@ -456,19 +414,15 @@ impl Ed25519KeyPair {
         } {
             return Err(KeyRejected::wrong_algorithm());
         }
-        private_key[ED25519_PRIVATE_KEY_SEED_LEN..].copy_from_slice(&public_key);
+        debug_assert_eq!(public_key.len(), out_len);
 
-        let key_pair = Self {
-            private_key_bytes: Box::new(private_key),
+        Ok(Self {
             public_key: PublicKey {
                 public_key_bytes: public_key,
                 evp_pkey: evp_pkey.clone(),
             },
             evp_pkey,
-        };
-        private_key.zeroize();
-
-        Ok(key_pair)
+        })
     }
 
     /// Returns the signature of the message msg.
@@ -534,8 +488,23 @@ impl Ed25519KeyPair {
     ///
     /// # Errors
     /// Currently the function cannot fail, but it might in future implementations.
-    pub fn seed(&self) -> Result<Seed, Unspecified> {
-        Ok(Seed(self))
+    pub fn seed(&self) -> Result<Seed<'static>, Unspecified> {
+        let mut private_key_bytes = vec![0u8; ED25519_PRIVATE_KEY_SEED_LEN];
+        let mut out_len: usize = private_key_bytes.len();
+        if 1 != unsafe {
+            EVP_PKEY_get_raw_private_key(
+                *self.evp_pkey,
+                private_key_bytes.as_mut_ptr(),
+                &mut out_len,
+            )
+        } {
+            return Err(Unspecified);
+        }
+        debug_assert_eq!(private_key_bytes.len(), out_len);
+        Ok(Seed {
+            bytes: private_key_bytes.into_boxed_slice(),
+            phantom: PhantomData,
+        })
     }
 }
 
@@ -567,7 +536,7 @@ impl AsDer<Pkcs8V2Der<'static>> for Ed25519KeyPair {
 mod tests {
 
     use crate::ed25519::Ed25519KeyPair;
-    use crate::encoding::{AsDer, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der};
+    use crate::encoding::{AsBigEndian, AsDer, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der};
     use crate::rand::SystemRandom;
     use crate::signature::KeyPair;
     use crate::{hex, test};
@@ -584,8 +553,8 @@ mod tests {
         let kp2: Ed25519KeyPair =
             Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
         assert_eq!(
-            kp1.private_key_bytes.as_slice(),
-            kp2.private_key_bytes.as_slice()
+            kp1.seed().unwrap().as_be_bytes().unwrap().as_ref(),
+            kp2.seed().unwrap().as_be_bytes().unwrap().as_ref(),
         );
         assert_eq!(kp1.public_key.as_ref(), kp2.public_key.as_ref());
 
@@ -598,8 +567,8 @@ mod tests {
         let kp2: Ed25519KeyPair =
             Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
         assert_eq!(
-            kp1.private_key_bytes.as_slice(),
-            kp2.private_key_bytes.as_slice()
+            kp1.seed().unwrap().as_be_bytes().unwrap().as_ref(),
+            kp2.seed().unwrap().as_be_bytes().unwrap().as_ref(),
         );
         assert_eq!(kp1.public_key.as_ref(), kp2.public_key.as_ref());
         let seed = kp1.seed().unwrap();
