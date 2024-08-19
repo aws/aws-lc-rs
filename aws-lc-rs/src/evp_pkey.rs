@@ -5,7 +5,7 @@ use crate::cbb::LcCBB;
 use crate::cbs;
 use crate::ec::PKCS8_DOCUMENT_MAX_LEN;
 use crate::error::{KeyRejected, Unspecified};
-use crate::pkcs8::{Document, Version};
+use crate::pkcs8::Version;
 use crate::ptr::LcPtr;
 use aws_lc::{
     EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id, EVP_PKEY_up_ref,
@@ -85,7 +85,7 @@ impl LcPtr<EVP_PKEY> {
         }
     }
 
-    pub(crate) fn marshall_private_key(&self, version: Version) -> Result<Document, Unspecified> {
+    pub(crate) fn marshall_private_key(&self, version: Version) -> Result<Box<[u8]>, Unspecified> {
         let mut buffer = vec![0u8; PKCS8_DOCUMENT_MAX_LEN];
 
         let out_len = {
@@ -110,7 +110,7 @@ impl LcPtr<EVP_PKEY> {
 
         buffer.truncate(out_len);
 
-        Ok(Document::new(buffer.into_boxed_slice()))
+        Ok(buffer.into_boxed_slice())
     }
 }
 

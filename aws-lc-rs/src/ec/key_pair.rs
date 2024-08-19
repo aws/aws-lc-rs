@@ -126,7 +126,9 @@ impl EcdsaKeyPair {
     /// `error::Unspecified` on internal error.
     ///
     pub fn to_pkcs8v1(&self) -> Result<Document, Unspecified> {
-        self.evp_pkey.marshall_private_key(Version::V1)
+        Ok(Document::new(
+            self.evp_pkey.marshall_private_key(Version::V1)?,
+        ))
     }
 
     /// Constructs an ECDSA key pair from the private key and public key bytes

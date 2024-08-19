@@ -62,7 +62,8 @@ generated_encodings!(
     EcPublicKeyCompressedBin,
     PublicKeyX509Der,
     Curve25519SeedBin,
-    Pkcs8V1Der
+    Pkcs8V1Der,
+    Pkcs8V2Der
 );
 
 /// Trait for types that can be serialized into a DER format.
