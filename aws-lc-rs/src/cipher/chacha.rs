@@ -54,7 +54,7 @@ pub(crate) fn encrypt_block_chacha20(
 
     crate::fips::set_fips_service_status_unapproved();
 
-    Ok(Block::from(&cipher_text))
+    Ok(Block::from(cipher_text))
 }
 
 #[inline]

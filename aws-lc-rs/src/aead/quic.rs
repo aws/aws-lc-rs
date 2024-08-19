@@ -145,7 +145,7 @@ fn cipher_new_mask(
     cipher_key: &SymmetricCipherKey,
     sample: Sample,
 ) -> Result<[u8; 5], error::Unspecified> {
-    let block = block::Block::from(&sample);
+    let block = block::Block::from(sample);
 
     let encrypted_block = match cipher_key {
         SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {

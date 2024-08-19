@@ -29,6 +29,6 @@ pub(crate) fn encrypt_block_aes(aes_key: &AES_KEY, block: Block) -> Block {
             AES_ENCRYPT,
         ));
 
-        Block::from(&cipher_text.assume_init())
+        Block::from(cipher_text.assume_init())
     }
 }
