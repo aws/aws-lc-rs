@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 pub(super) mod oaep;
+pub(super) mod pkcs1;
 
 use super::{
     encoding,

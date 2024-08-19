@@ -78,6 +78,7 @@ pub use self::{
             OaepAlgorithm, OaepPrivateDecryptingKey, OaepPublicEncryptingKey, OAEP_SHA1_MGF1SHA1,
             OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
         },
+        pkcs1::{Pkcs1PrivateDecryptingKey, Pkcs1PublicEncryptingKey},
         EncryptionAlgorithmId, PrivateDecryptingKey, PublicEncryptingKey,
     },
     key::{KeyPair, KeySize, PublicKey, PublicKeyComponents},
