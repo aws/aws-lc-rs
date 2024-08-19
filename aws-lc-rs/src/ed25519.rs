@@ -208,6 +208,9 @@ unsafe impl Send for PublicKey {}
 unsafe impl Sync for PublicKey {}
 
 impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
+    /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
+    /// # Errors
+    /// Returns an error if the public key fails to marshal to X.509.
     fn as_der(&self) -> Result<PublicKeyX509Der<'static>, crate::error::Unspecified> {
         // Initial size of 44 based on:
         // 0:d=0  hl=2 l=  42 cons: SEQUENCE
@@ -537,6 +540,10 @@ impl Ed25519KeyPair {
 }
 
 impl AsDer<Pkcs8V1Der<'static>> for Ed25519KeyPair {
+    /// Serializes this `Ed25519KeyPair` into a PKCS#8 v1 document.
+    ///
+    /// # Errors
+    /// `error::Unspecified` on internal error.
     fn as_der(&self) -> Result<Pkcs8V1Der<'static>, crate::error::Unspecified> {
         Ok(Pkcs8V1Der::new(
             self.evp_pkey.marshall_private_key(Version::V1)?.into_vec(),
@@ -545,6 +552,10 @@ impl AsDer<Pkcs8V1Der<'static>> for Ed25519KeyPair {
 }
 
 impl AsDer<Pkcs8V2Der<'static>> for Ed25519KeyPair {
+    /// Serializes this `Ed25519KeyPair` into a PKCS#8 v1 document.
+    ///
+    /// # Errors
+    /// `error::Unspecified` on internal error.
     fn as_der(&self) -> Result<Pkcs8V2Der<'static>, crate::error::Unspecified> {
         Ok(Pkcs8V2Der::new(
             self.evp_pkey.marshall_private_key(Version::V2)?.into_vec(),
