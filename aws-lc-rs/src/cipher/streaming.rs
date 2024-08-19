@@ -6,7 +6,7 @@ use crate::cipher::{
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
-use crate::ptr::{LcPtr, Pointer};
+use crate::ptr::LcPtr;
 use aws_lc::{
     EVP_CIPHER_CTX_new, EVP_CIPHER_iv_length, EVP_CIPHER_key_length, EVP_DecryptFinal_ex,
     EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_EncryptFinal_ex, EVP_EncryptInit_ex,
@@ -80,7 +80,7 @@ impl StreamingEncryptingKey {
         // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
         if 1 != unsafe {
             EVP_EncryptInit_ex(
-                cipher_ctx.as_mut_ptr(),
+                *cipher_ctx.as_mut(),
                 *cipher,
                 null_mut(),
                 key_bytes.as_ptr(),
@@ -126,7 +126,7 @@ impl StreamingEncryptingKey {
 
         if 1 != unsafe {
             EVP_EncryptUpdate(
-                self.cipher_ctx.as_mut_ptr(),
+                *self.cipher_ctx.as_mut(),
                 output.as_mut_ptr(),
                 &mut outlen,
                 input.as_ptr(),
@@ -159,11 +159,7 @@ impl StreamingEncryptingKey {
         let mut outlen: i32 = 0;
 
         if 1 != indicator_check!(unsafe {
-            EVP_EncryptFinal_ex(
-                self.cipher_ctx.as_mut_ptr(),
-                output.as_mut_ptr(),
-                &mut outlen,
-            )
+            EVP_EncryptFinal_ex(*self.cipher_ctx.as_mut(), output.as_mut_ptr(), &mut outlen)
         }) {
             return Err(Unspecified);
         }
@@ -269,7 +265,7 @@ impl StreamingDecryptingKey {
         // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
         if 1 != unsafe {
             EVP_DecryptInit_ex(
-                cipher_ctx.as_mut_ptr(),
+                *cipher_ctx.as_mut(),
                 *cipher,
                 null_mut(),
                 key_bytes.as_ptr(),
@@ -314,7 +310,7 @@ impl StreamingDecryptingKey {
 
         if 1 != unsafe {
             EVP_DecryptUpdate(
-                self.cipher_ctx.as_mut_ptr(),
+                *self.cipher_ctx.as_mut(),
                 output.as_mut_ptr(),
                 &mut outlen,
                 input.as_ptr(),
@@ -336,14 +332,14 @@ impl StreamingDecryptingKey {
     /// # Errors
     /// * Returns an error if the `output` buffer is smaller than the algorithm's
     ///   block length.
-    pub fn finish(self, output: &mut [u8]) -> Result<BufferUpdate, Unspecified> {
+    pub fn finish(mut self, output: &mut [u8]) -> Result<BufferUpdate, Unspecified> {
         if output.len() < self.algorithm().block_len() {
             return Err(Unspecified);
         }
         let mut outlen: i32 = 0;
 
         if 1 != indicator_check!(unsafe {
-            EVP_DecryptFinal_ex(*self.cipher_ctx, output.as_mut_ptr(), &mut outlen)
+            EVP_DecryptFinal_ex(*self.cipher_ctx.as_mut(), output.as_mut_ptr(), &mut outlen)
         }) {
             return Err(Unspecified);
         }

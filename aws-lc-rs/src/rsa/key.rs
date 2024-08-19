@@ -18,7 +18,7 @@ use crate::{
     error::{KeyRejected, Unspecified},
     fips::indicator_check,
     hex,
-    ptr::{DetachableLcPtr, LcPtr, Pointer},
+    ptr::{DetachableLcPtr, LcPtr},
     rand,
     sealed::Sealed,
 };
@@ -221,12 +221,15 @@ impl KeyPair {
         let digest = digest::match_digest_type(&encoding.digest_algorithm().id);
 
         if 1 != unsafe {
+            // EVP_DigestSignInit does not mutate |pkey| for thread-safety purposes and may be
+            // used concurrently with other non-mutating functions on |pkey|.
+            // https://github.com/aws/aws-lc/blob/9b4b5a15a97618b5b826d742419ccd54c819fa42/include/openssl/evp.h#L297-L313
             EVP_DigestSignInit(
                 md_ctx.as_mut_ptr(),
                 &mut pctx,
                 *digest,
                 null_mut(),
-                *self.evp_pkey,
+                *self.evp_pkey.as_mut_unsafe(),
             )
         } {
             return Err(Unspecified);
@@ -258,7 +261,7 @@ impl KeyPair {
         match self.evp_pkey.get_rsa() {
             Ok(rsa) => {
                 // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
-                unsafe { RSA_size(*rsa) as usize }
+                unsafe { RSA_size(*rsa.as_const()) as usize }
             }
             Err(_) => verify_unreachable!(),
         }
@@ -317,9 +320,9 @@ impl PublicKey {
         #[cfg(feature = "ring-io")]
         {
             let pubkey = evp_pkey.get_rsa()?;
-            let modulus = ConstPointer::new(unsafe { RSA_get0_n(*pubkey) })?;
+            let modulus = ConstPointer::new(unsafe { RSA_get0_n(*pubkey.as_const()) })?;
             let modulus = modulus.to_be_bytes().into_boxed_slice();
-            let exponent = ConstPointer::new(unsafe { RSA_get0_e(*pubkey) })?;
+            let exponent = ConstPointer::new(unsafe { RSA_get0_e(*pubkey.as_const()) })?;
             let exponent = exponent.to_be_bytes().into_boxed_slice();
             Ok(PublicKey {
                 key,
@@ -420,8 +423,8 @@ where
         n_bn.detach();
         e_bn.detach();
 
-        let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
-        if 1 != unsafe { EVP_PKEY_assign_RSA(*pkey, *rsa) } {
+        let mut pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
+        if 1 != unsafe { EVP_PKEY_assign_RSA(*pkey.as_mut(), *rsa) } {
             return Err(());
         }
         rsa.detach();
@@ -461,20 +464,20 @@ pub(super) fn generate_rsa_key(size: c_int, fips: bool) -> Result<LcPtr<EVP_PKEY
 
     const RSA_F4: u64 = 65537;
 
-    let rsa = DetachableLcPtr::new(unsafe { RSA_new() })?;
+    let mut rsa = DetachableLcPtr::new(unsafe { RSA_new() })?;
 
     if 1 != if fips {
-        indicator_check!(unsafe { RSA_generate_key_fips(*rsa, size, null_mut()) })
+        indicator_check!(unsafe { RSA_generate_key_fips(*rsa.as_mut(), size, null_mut()) })
     } else {
         let e: LcPtr<BIGNUM> = RSA_F4.try_into()?;
-        unsafe { RSA_generate_key_ex(*rsa, size, *e, null_mut()) }
+        unsafe { RSA_generate_key_ex(*rsa.as_mut(), size, *e.as_const(), null_mut()) }
     } {
         return Err(Unspecified);
     }
 
-    let evp_pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
+    let mut evp_pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
 
-    if 1 != unsafe { EVP_PKEY_assign_RSA(*evp_pkey, *rsa) } {
+    if 1 != unsafe { EVP_PKEY_assign_RSA(*evp_pkey.as_mut(), *rsa) } {
         return Err(Unspecified);
     };
 
@@ -489,19 +492,19 @@ pub(super) fn is_valid_fips_key(key: &LcPtr<EVP_PKEY>) -> bool {
     // This should always be an RSA key and must-never panic.
     let rsa_key = key.get_rsa().expect("RSA EVP_PKEY");
 
-    1 == unsafe { RSA_check_fips(*rsa_key) }
+    1 == unsafe { RSA_check_fips(*rsa_key.as_mut_unsafe()) }
 }
 
 pub(super) fn key_size_bytes(key: &LcPtr<EVP_PKEY>) -> usize {
     // Safety: RSA modulous byte sizes supported fit an usize
-    unsafe { EVP_PKEY_size(key.as_const_ptr()) }
+    unsafe { EVP_PKEY_size(*key.as_const()) }
         .try_into()
         .expect("modulous to fit in usize")
 }
 
 pub(super) fn key_size_bits(key: &LcPtr<EVP_PKEY>) -> usize {
     // Safety: RSA modulous byte sizes supported fit an usize
-    unsafe { EVP_PKEY_bits(key.as_const_ptr()) }
+    unsafe { EVP_PKEY_bits(*key.as_const()) }
         .try_into()
         .expect("modulous to fit in usize")
 }

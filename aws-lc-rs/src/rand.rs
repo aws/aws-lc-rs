@@ -176,7 +176,7 @@ mod tests {
         let rng = SystemRandom::new();
         rng.fill(&mut random_array).unwrap();
 
-        let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
+        let (mean, variance) = mean_variance(&mut random_array.into_iter());
         assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
         assert!(variance > 8f64);
         println!("Mean: {mean} Variance: {variance}");
@@ -187,7 +187,7 @@ mod tests {
         let mut random_array: [u8; 173] = [0u8; 173];
         rand::fill(&mut random_array).unwrap();
 
-        let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
+        let (mean, variance) = mean_variance(&mut random_array.into_iter());
         assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
         assert!(variance > 8f64);
         println!("Mean: {mean} Variance: {variance}");
@@ -198,18 +198,15 @@ mod tests {
         let rando = SystemRandom::new();
         let random_array = generate(&rando).unwrap();
         let random_array: [u8; 173] = random_array.expose();
-        let (mean, variance) = mean_variance(&mut random_array.into_iter()).unwrap();
+        let (mean, variance) = mean_variance(&mut random_array.into_iter());
         assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
         assert!(variance > 8f64);
         println!("Mean: {mean} Variance: {variance}");
     }
 
-    fn mean_variance<T: Into<f64>, const N: usize>(
-        iterable: &mut IntoIter<T, N>,
-    ) -> Option<(f64, f64)> {
+    fn mean_variance<T: Into<f64>, const N: usize>(iterable: &mut IntoIter<T, N>) -> (f64, f64) {
         let iter = iterable;
         let mean: Option<T> = iter.next();
-        mean.as_ref()?;
         let mut mean = mean.unwrap().into();
         let mut var_squared = 0f64;
         let mut count = 1f64;
@@ -222,6 +219,6 @@ mod tests {
                 var_squared + ((value - prev_mean) * (value - mean) - var_squared) / count;
         }
 
-        Some((mean, var_squared.sqrt()))
+        (mean, var_squared.sqrt())
     }
 }

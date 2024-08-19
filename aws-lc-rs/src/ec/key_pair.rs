@@ -214,12 +214,15 @@ impl EcdsaKeyPair {
         let digest = digest::match_digest_type(&self.algorithm.digest.id);
 
         if 1 != unsafe {
+            // EVP_DigestSignInit does not mutate |pkey| for thread-safety purposes and may be
+            // used concurrently with other non-mutating functions on |pkey|.
+            // https://github.com/aws/aws-lc/blob/9b4b5a15a97618b5b826d742419ccd54c819fa42/include/openssl/evp.h#L297-L313
             EVP_DigestSignInit(
                 md_ctx.as_mut_ptr(),
                 null_mut(),
                 *digest,
                 null_mut(),
-                *self.evp_pkey,
+                *self.evp_pkey.as_mut_unsafe(),
             )
         } {
             return Err(Unspecified);
@@ -315,12 +318,12 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey<'_> {
     fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der<'static>, Unspecified> {
         unsafe {
             let mut outp = null_mut::<u8>();
-            let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.0.evp_pkey))?;
+            let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.0.evp_pkey.as_const()))?;
             let length = usize::try_from(aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp))
                 .map_err(|_| Unspecified)?;
-            let outp = LcPtr::new(outp)?;
+            let mut outp = LcPtr::new(outp)?;
             Ok(EcPrivateKeyRfc5915Der::take_from_slice(
-                core::slice::from_raw_parts_mut(*outp, length),
+                core::slice::from_raw_parts_mut(*outp.as_mut(), length),
             ))
         }
     }

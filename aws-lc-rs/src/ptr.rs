@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use core::ops::Deref;
-use std::ops::DerefMut;
 
 use aws_lc::{
     BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_AEAD_CTX_free,
@@ -19,21 +18,6 @@ pub(crate) type DetachableLcPtr<T> = DetachablePointer<*mut T>;
 #[derive(Debug)]
 pub(crate) struct ManagedPointer<P: Pointer> {
     pointer: P,
-}
-
-impl<P: Pointer> Deref for ManagedPointer<P> {
-    type Target = P;
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.pointer
-    }
-}
-
-impl<P: Pointer> DerefMut for ManagedPointer<P> {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.pointer
-    }
 }
 
 impl<P: Pointer> ManagedPointer<P> {
@@ -68,6 +52,36 @@ impl<P: Pointer> ManagedPointer<P> {
     pub fn as_const(&self) -> ConstPointer<P::T> {
         ConstPointer {
             ptr: self.pointer.as_const_ptr(),
+        }
+    }
+
+    #[inline]
+    pub unsafe fn as_mut_unsafe(&self) -> MutPointer<P::T> {
+        MutPointer {
+            ptr: self.pointer.as_const_ptr() as *mut P::T,
+        }
+    }
+
+    #[inline]
+    pub fn as_mut(&mut self) -> MutPointer<P::T> {
+        MutPointer {
+            ptr: self.pointer.as_mut_ptr(),
+        }
+    }
+}
+
+impl<P: Pointer> DetachablePointer<P> {
+    #[inline]
+    pub fn as_const(&self) -> ConstPointer<P::T> {
+        ConstPointer {
+            ptr: self.pointer.as_ref().unwrap().as_const_ptr(),
+        }
+    }
+
+    #[inline]
+    pub fn as_mut(&mut self) -> MutPointer<P::T> {
+        MutPointer {
+            ptr: self.pointer.as_mut().unwrap().as_mut_ptr(),
         }
     }
 }
@@ -148,6 +162,19 @@ impl<T> ConstPointer<T> {
 
 impl<T> Deref for ConstPointer<T> {
     type Target = *const T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ptr
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct MutPointer<T> {
+    ptr: *mut T,
+}
+
+impl<T> Deref for MutPointer<T> {
+    type Target = *mut T;
 
     fn deref(&self) -> &Self::Target {
         &self.ptr

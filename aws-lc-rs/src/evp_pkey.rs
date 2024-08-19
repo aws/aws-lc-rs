@@ -8,13 +8,14 @@ use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Version;
 use crate::ptr::LcPtr;
 use aws_lc::{
-    EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id, EVP_PKEY_up_ref,
-    EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_parse_private_key, EC_KEY, EVP_PKEY,
-    RSA,
+    EVP_PKEY_CTX_new, EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id,
+    EVP_PKEY_up_ref, EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_parse_private_key,
+    EC_KEY, EVP_PKEY, EVP_PKEY_CTX, RSA,
 };
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_int;
 use std::os::raw::c_int;
+use std::ptr::null_mut;
 
 impl TryFrom<&[u8]> for LcPtr<EVP_PKEY> {
     type Error = KeyRejected;
@@ -65,23 +66,25 @@ impl LcPtr<EVP_PKEY> {
     // EVP_PKEY_X448 = 961;
     // EVP_PKEY_ED448 = 960;
     pub(crate) fn id(&self) -> i32 {
-        unsafe { EVP_PKEY_id(**self) }
+        unsafe { EVP_PKEY_id(*self.as_const()) }
     }
 
     pub(crate) fn bits(&self) -> i32 {
-        unsafe { EVP_PKEY_bits(**self) }
+        unsafe { EVP_PKEY_bits(*self.as_const()) }
     }
 
     #[allow(dead_code)]
     pub(crate) fn get_ec_key(&self) -> Result<LcPtr<EC_KEY>, KeyRejected> {
         unsafe {
-            LcPtr::new(EVP_PKEY_get1_EC_KEY(**self)).map_err(|()| KeyRejected::wrong_algorithm())
+            LcPtr::new(EVP_PKEY_get1_EC_KEY(*self.as_const()))
+                .map_err(|()| KeyRejected::wrong_algorithm())
         }
     }
 
     pub(crate) fn get_rsa(&self) -> Result<LcPtr<RSA>, KeyRejected> {
         unsafe {
-            LcPtr::new(EVP_PKEY_get1_RSA(**self)).map_err(|()| KeyRejected::wrong_algorithm())
+            LcPtr::new(EVP_PKEY_get1_RSA(*self.as_const()))
+                .map_err(|()| KeyRejected::wrong_algorithm())
         }
     }
 
@@ -95,12 +98,14 @@ impl LcPtr<EVP_PKEY> {
 
             match version {
                 Version::V1 => {
-                    if 1 != unsafe { EVP_marshal_private_key(cbb.as_mut_ptr(), **self) } {
+                    if 1 != unsafe { EVP_marshal_private_key(cbb.as_mut_ptr(), *self.as_const()) } {
                         return Err(Unspecified);
                     }
                 }
                 Version::V2 => {
-                    if 1 != unsafe { EVP_marshal_private_key_v2(cbb.as_mut_ptr(), **self) } {
+                    if 1 != unsafe {
+                        EVP_marshal_private_key_v2(cbb.as_mut_ptr(), *self.as_const())
+                    } {
                         return Err(Unspecified);
                     }
                 }
@@ -112,15 +117,25 @@ impl LcPtr<EVP_PKEY> {
 
         Ok(buffer.into_boxed_slice())
     }
+
+    #[allow(non_snake_case)]
+    pub(crate) fn create_EVP_PKEY_CTX(&self) -> Result<LcPtr<EVP_PKEY_CTX>, ()> {
+        // The only modification made by EVP_PKEY_CTX_new to `priv_key` is to increment its
+        // refcount. The modification is made while holding a global lock:
+        // https://github.com/aws/aws-lc/blob/61503f7fe72457e12d3446853a5452d175560c49/crypto/refcount_lock.c#L29
+        LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.as_mut_unsafe(), null_mut()) })
+    }
 }
 
 impl Clone for LcPtr<EVP_PKEY> {
     fn clone(&self) -> Self {
+        // EVP_PKEY_up_ref increments the refcount while holding a global lock:
+        // https://github.com/aws/aws-lc/blob/61503f7fe72457e12d3446853a5452d175560c49/crypto/refcount_lock.c#L29
         assert_eq!(
             1,
-            unsafe { EVP_PKEY_up_ref(**self) },
+            unsafe { EVP_PKEY_up_ref(*self.as_mut_unsafe()) },
             "infallible AWS-LC function"
         );
-        Self::new(**self).expect("non-null AWS-LC EVP_PKEY pointer")
+        Self::new(unsafe { *self.as_mut_unsafe() }).expect("non-null AWS-LC EVP_PKEY pointer")
     }
 }

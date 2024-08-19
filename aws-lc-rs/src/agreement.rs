@@ -57,15 +57,15 @@ use crate::cbb::LcCBB;
 use crate::ec::{ec_group_from_nid, evp_key_generate};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
-use crate::ptr::{ConstPointer, LcPtr, Pointer};
+use crate::ptr::{ConstPointer, LcPtr};
 use crate::{ec, hex};
 use aws_lc::{
-    CBS_init, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_derive,
-    EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY,
-    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen,
-    EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key,
-    EVP_marshal_public_key, EVP_parse_public_key, NID_X9_62_prime256v1, NID_secp384r1,
-    NID_secp521r1, BIGNUM, CBS, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+    CBS_init, EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_derive, EVP_PKEY_derive_init,
+    EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
+    EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
+    EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_marshal_public_key,
+    EVP_parse_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, CBS,
+    EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
 
 use crate::encoding::{
@@ -433,7 +433,11 @@ impl PrivateKey {
                 let mut out_len = buffer.len();
 
                 if 1 != unsafe {
-                    EVP_PKEY_get_raw_public_key(**priv_key, buffer.as_mut_ptr(), &mut out_len)
+                    EVP_PKEY_get_raw_public_key(
+                        *priv_key.as_const(),
+                        buffer.as_mut_ptr(),
+                        &mut out_len,
+                    )
                 } {
                     return Err(Unspecified);
                 }
@@ -470,14 +474,14 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
         let mut outp = null_mut::<u8>();
         let ec_key = {
             ConstPointer::new(unsafe {
-                EVP_PKEY_get0_EC_KEY(self.inner_key.get_evp_pkey().as_const_ptr())
+                EVP_PKEY_get0_EC_KEY(*self.inner_key.get_evp_pkey().as_const())
             })?
         };
         let length = usize::try_from(unsafe { aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp) })
             .map_err(|_| Unspecified)?;
-        let outp = LcPtr::new(outp)?;
+        let mut outp = LcPtr::new(outp)?;
         Ok(EcPrivateKeyRfc5915Der::take_from_slice(unsafe {
-            core::slice::from_raw_parts_mut(*outp, length)
+            core::slice::from_raw_parts_mut(*outp.as_mut(), length)
         }))
     }
 }
@@ -536,15 +540,15 @@ fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<EVP_PKEY>, Uns
 }
 
 pub(crate) fn generate_x25519() -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, null_mut()) })?;
+    let mut pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, null_mut()) })?;
 
-    if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
+    if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx.as_mut()) } {
         return Err(Unspecified);
     }
 
     let mut pkey: *mut EVP_PKEY = null_mut();
 
-    if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) }) {
+    if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx.as_mut(), &mut pkey) }) {
         return Err(Unspecified);
     }
 
@@ -613,12 +617,11 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
             | KeyInner::ECDH_P521(evp_pkey)
             | KeyInner::X25519(evp_pkey) => {
                 let key_size_bytes =
-                    TryInto::<usize>::try_into(unsafe { EVP_PKEY_bits(evp_pkey.as_const_ptr()) })
+                    TryInto::<usize>::try_into(unsafe { EVP_PKEY_bits(*evp_pkey.as_const()) })
                         .expect("fit in usize")
                         * 8;
                 let mut der = LcCBB::new(key_size_bytes * 5);
-                if 1 != unsafe { EVP_marshal_public_key(der.as_mut_ptr(), evp_pkey.as_const_ptr()) }
-                {
+                if 1 != unsafe { EVP_marshal_public_key(der.as_mut_ptr(), *evp_pkey.as_const()) } {
                     return Err(Unspecified);
                 };
                 Ok(PublicKeyX509Der::from(der.into_buffer()?))
@@ -638,7 +641,7 @@ impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
             | KeyInner::ECDH_P521(evp_pkey) => evp_pkey,
             KeyInner::X25519(_) => return Err(Unspecified),
         };
-        let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(evp_pkey.as_const_ptr()) })?;
+        let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(*evp_pkey.as_const()) })?;
 
         let mut buffer = vec![0u8; self.algorithm().id.compressed_pub_key_len()];
 
@@ -785,22 +788,22 @@ fn ec_key_ecdh<'a>(
     peer_pub_key_bytes: &[u8],
     nid: i32,
 ) -> Result<&'a [u8], ()> {
-    let pub_key = ec::try_parse_public_key_bytes(peer_pub_key_bytes, nid)?;
+    let mut pub_key = ec::try_parse_public_key_bytes(peer_pub_key_bytes, nid)?;
 
-    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
+    let mut pkey_ctx = priv_key.create_EVP_PKEY_CTX()?;
 
-    if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx) } {
+    if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx.as_mut()) } {
         return Err(());
     };
 
-    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx, *pub_key) } {
+    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx.as_mut(), *pub_key.as_mut()) } {
         return Err(());
     }
 
     let mut out_key_len = buffer.len();
 
     if 1 != indicator_check!(unsafe {
-        EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len)
+        EVP_PKEY_derive(*pkey_ctx.as_mut(), buffer.as_mut_ptr(), &mut out_key_len)
     }) {
         return Err(());
     }
@@ -818,22 +821,22 @@ fn x25519_diffie_hellman<'a>(
     priv_key: &LcPtr<EVP_PKEY>,
     peer_pub_key: &[u8],
 ) -> Result<&'a [u8], ()> {
-    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(**priv_key, null_mut()) })?;
+    let mut pkey_ctx = priv_key.create_EVP_PKEY_CTX()?;
 
-    if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx) } {
+    if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx.as_mut()) } {
         return Err(());
     };
 
-    let pub_key = try_parse_x25519_public_key_bytes(peer_pub_key)?;
+    let mut pub_key = try_parse_x25519_public_key_bytes(peer_pub_key)?;
 
-    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx, *pub_key) } {
+    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx.as_mut(), *pub_key.as_mut()) } {
         return Err(());
     }
 
     let mut out_key_len = buffer.len();
 
     if 1 != indicator_check!(unsafe {
-        EVP_PKEY_derive(*pkey_ctx, buffer.as_mut_ptr(), &mut out_key_len)
+        EVP_PKEY_derive(*pkey_ctx.as_mut(), buffer.as_mut_ptr(), &mut out_key_len)
     }) {
         return Err(());
     }
@@ -878,7 +881,7 @@ fn try_parse_x25519_subject_public_key_info_bytes(
         }
     };
     let evp_pkey = LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })?;
-    if EVP_PKEY_X25519 != unsafe { EVP_PKEY_id(*evp_pkey) } {
+    if EVP_PKEY_X25519 != unsafe { EVP_PKEY_id(*evp_pkey.as_const()) } {
         return Err(Unspecified);
     }
     Ok(evp_pkey)

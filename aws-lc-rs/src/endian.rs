@@ -14,8 +14,10 @@ where
     const ZERO: Self;
 }
 
+use core::mem::size_of_val;
+
 pub fn as_byte_slice<E: Encoding<T>, T>(x: &[E]) -> &[u8] {
-    unsafe { core::slice::from_raw_parts(x.as_ptr().cast::<u8>(), core::mem::size_of_val(x)) }
+    unsafe { core::slice::from_raw_parts(x.as_ptr().cast::<u8>(), size_of_val(x)) }
 }
 
 /// Work around the inability to implement `AsRef` for arrays of `Encoding`s

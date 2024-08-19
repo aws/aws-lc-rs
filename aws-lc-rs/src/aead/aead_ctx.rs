@@ -220,15 +220,15 @@ impl AeadCtx {
 
         // We are performing the allocation ourselves as EVP_AEAD_CTX_new will call EVP_AEAD_CTX_init by default
         // and this avoid having to zero and reinitalize again if we need to set an explicit direction.
-        let aead_ctx: LcPtr<EVP_AEAD_CTX> =
+        let mut aead_ctx: LcPtr<EVP_AEAD_CTX> =
             LcPtr::new(unsafe { OPENSSL_malloc(size_of::<EVP_AEAD_CTX>()) }.cast())?;
 
-        unsafe { EVP_AEAD_CTX_zero(*aead_ctx) };
+        unsafe { EVP_AEAD_CTX_zero(*aead_ctx.as_mut()) };
 
         if 1 != match direction {
             Some(direction) => unsafe {
                 EVP_AEAD_CTX_init_with_direction(
-                    *aead_ctx,
+                    *aead_ctx.as_mut(),
                     aead,
                     key_bytes.as_ptr(),
                     key_bytes.len(),
@@ -238,7 +238,7 @@ impl AeadCtx {
             },
             None => unsafe {
                 EVP_AEAD_CTX_init(
-                    *aead_ctx,
+                    *aead_ctx.as_mut(),
                     aead,
                     key_bytes.as_ptr(),
                     key_bytes.len(),

@@ -10,10 +10,10 @@ use crate::{
     ptr::{DetachableLcPtr, LcPtr},
 };
 use aws_lc::{
-    EVP_PKEY_CTX_new, EVP_PKEY_CTX_set0_rsa_oaep_label, EVP_PKEY_CTX_set_rsa_mgf1_md,
-    EVP_PKEY_CTX_set_rsa_oaep_md, EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_decrypt,
-    EVP_PKEY_decrypt_init, EVP_PKEY_encrypt, EVP_PKEY_encrypt_init, EVP_sha1, EVP_sha256,
-    EVP_sha384, EVP_sha512, OPENSSL_malloc, EVP_MD, EVP_PKEY_CTX, RSA_PKCS1_OAEP_PADDING,
+    EVP_PKEY_CTX_set0_rsa_oaep_label, EVP_PKEY_CTX_set_rsa_mgf1_md, EVP_PKEY_CTX_set_rsa_oaep_md,
+    EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_decrypt, EVP_PKEY_decrypt_init, EVP_PKEY_encrypt,
+    EVP_PKEY_encrypt_init, EVP_sha1, EVP_sha256, EVP_sha384, EVP_sha512, OPENSSL_malloc, EVP_MD,
+    EVP_PKEY_CTX, RSA_PKCS1_OAEP_PADDING,
 };
 use core::{fmt::Debug, mem::size_of_val, ptr::null_mut};
 use mirai_annotations::verify_unreachable;
@@ -112,14 +112,14 @@ impl OaepPublicEncryptingKey {
         ciphertext: &'ciphertext mut [u8],
         label: Option<&[u8]>,
     ) -> Result<&'ciphertext mut [u8], Unspecified> {
-        let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.public_key.0, null_mut()) })?;
+        let mut pkey_ctx = self.public_key.0.create_EVP_PKEY_CTX()?;
 
-        if 1 != unsafe { EVP_PKEY_encrypt_init(*pkey_ctx) } {
+        if 1 != unsafe { EVP_PKEY_encrypt_init(*pkey_ctx.as_mut()) } {
             return Err(Unspecified);
         }
 
         configure_oaep_crypto_operation(
-            &pkey_ctx,
+            &mut pkey_ctx,
             algorithm.oaep_hash_fn(),
             algorithm.mgf1_hash_fn(),
             label,
@@ -129,7 +129,7 @@ impl OaepPublicEncryptingKey {
 
         if 1 != indicator_check!(unsafe {
             EVP_PKEY_encrypt(
-                *pkey_ctx,
+                *pkey_ctx.as_mut(),
                 ciphertext.as_mut_ptr(),
                 &mut out_len,
                 plaintext.as_ptr(),
@@ -216,14 +216,14 @@ impl OaepPrivateDecryptingKey {
         plaintext: &'plaintext mut [u8],
         label: Option<&[u8]>,
     ) -> Result<&'plaintext mut [u8], Unspecified> {
-        let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.private_key.0, null_mut()) })?;
+        let mut pkey_ctx = self.private_key.0.create_EVP_PKEY_CTX()?;
 
-        if 1 != unsafe { EVP_PKEY_decrypt_init(*pkey_ctx) } {
+        if 1 != unsafe { EVP_PKEY_decrypt_init(*pkey_ctx.as_mut()) } {
             return Err(Unspecified);
         }
 
         configure_oaep_crypto_operation(
-            &pkey_ctx,
+            &mut pkey_ctx,
             algorithm.oaep_hash_fn(),
             algorithm.mgf1_hash_fn(),
             label,
@@ -233,7 +233,7 @@ impl OaepPrivateDecryptingKey {
 
         if 1 != indicator_check!(unsafe {
             EVP_PKEY_decrypt(
-                *pkey_ctx,
+                *pkey_ctx.as_mut(),
                 plaintext.as_mut_ptr(),
                 &mut out_len,
                 ciphertext.as_ptr(),
@@ -273,20 +273,21 @@ impl Debug for OaepPrivateDecryptingKey {
 }
 
 fn configure_oaep_crypto_operation(
-    evp_pkey_ctx: &LcPtr<EVP_PKEY_CTX>,
+    evp_pkey_ctx: &mut LcPtr<EVP_PKEY_CTX>,
     oaep_hash_fn: OaepHashFn,
     mgf1_hash_fn: Mgf1HashFn,
     label: Option<&[u8]>,
 ) -> Result<(), Unspecified> {
-    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(**evp_pkey_ctx, RSA_PKCS1_OAEP_PADDING) } {
+    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(*evp_pkey_ctx.as_mut(), RSA_PKCS1_OAEP_PADDING) }
+    {
         return Err(Unspecified);
     };
 
-    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_oaep_md(**evp_pkey_ctx, oaep_hash_fn()) } {
+    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_oaep_md(*evp_pkey_ctx.as_mut(), oaep_hash_fn()) } {
         return Err(Unspecified);
     };
 
-    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_mgf1_md(**evp_pkey_ctx, mgf1_hash_fn()) } {
+    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_mgf1_md(*evp_pkey_ctx.as_mut(), mgf1_hash_fn()) } {
         return Err(Unspecified);
     };
 
@@ -294,23 +295,26 @@ fn configure_oaep_crypto_operation(
 
     if label.is_empty() {
         // Safety: Don't pass zero-length slice pointers to C code :)
-        if 1 != unsafe { EVP_PKEY_CTX_set0_rsa_oaep_label(**evp_pkey_ctx, null_mut(), 0) } {
+        if 1 != unsafe { EVP_PKEY_CTX_set0_rsa_oaep_label(*evp_pkey_ctx.as_mut(), null_mut(), 0) } {
             return Err(Unspecified);
         }
         return Ok(());
     }
 
     // AWS-LC takes ownership of the label memory, and will call OPENSSL_free, so we are forced to copy it for now.
-    let label_ptr =
+    let mut label_ptr =
         DetachableLcPtr::<u8>::new(unsafe { OPENSSL_malloc(size_of_val(label)) }.cast())?;
 
     {
         // memcpy the label data into the AWS-LC allocation
-        let label_ptr = unsafe { core::slice::from_raw_parts_mut(*label_ptr, label.len()) };
+        let label_ptr =
+            unsafe { core::slice::from_raw_parts_mut(*label_ptr.as_mut(), label.len()) };
         label_ptr.copy_from_slice(label);
     }
 
-    if 1 != unsafe { EVP_PKEY_CTX_set0_rsa_oaep_label(**evp_pkey_ctx, *label_ptr, label.len()) } {
+    if 1 != unsafe {
+        EVP_PKEY_CTX_set0_rsa_oaep_label(*evp_pkey_ctx.as_mut(), *label_ptr, label.len())
+    } {
         return Err(Unspecified);
     };
 

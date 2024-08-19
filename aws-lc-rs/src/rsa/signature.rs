@@ -18,7 +18,7 @@ use crate::{
     digest::{self, digest_ctx::DigestContext},
     error::Unspecified,
     fips::indicator_check,
-    ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer},
+    ptr::{ConstPointer, DetachableLcPtr, LcPtr},
     sealed::Sealed,
     signature::VerificationAlgorithm,
 };
@@ -118,7 +118,7 @@ impl RsaParameters {
     /// `error::Unspecified` on parse error.
     pub fn public_modulus_len(public_key: &[u8]) -> Result<u32, Unspecified> {
         let rsa = encoding::rfc8017::decode_public_key_der(public_key)?;
-        Ok(unsafe { RSA_bits(rsa.get_rsa()?.as_const_ptr()) })
+        Ok(unsafe { RSA_bits(*rsa.get_rsa()?.as_const()) })
     }
 
     #[must_use]
@@ -254,8 +254,8 @@ pub(crate) fn verify_rsa_signature(
     signature: &[u8],
     allowed_bit_size: &RangeInclusive<u32>,
 ) -> Result<(), Unspecified> {
-    let rsa = DetachableLcPtr::new(unsafe { EVP_PKEY_get0_RSA(**public_key) })?;
-    let n = ConstPointer::new(unsafe { RSA_get0_n(rsa.detach()) })?;
+    let rsa = ConstPointer::new(unsafe { EVP_PKEY_get0_RSA(*public_key.as_const()) })?;
+    let n = ConstPointer::new(unsafe { RSA_get0_n(*rsa) })?;
     let n_bits = n.num_bits();
     if !allowed_bit_size.contains(&n_bits) {
         return Err(Unspecified);
@@ -267,12 +267,15 @@ pub(crate) fn verify_rsa_signature(
     let mut pctx = null_mut::<EVP_PKEY_CTX>();
 
     if 1 != unsafe {
+        // EVP_DigestVerifyInit does not mutate |pkey| for thread-safety purposes and may be
+        // used concurrently with other non-mutating functions on |pkey|.
+        // https://github.com/aws/aws-lc/blob/9b4b5a15a97618b5b826d742419ccd54c819fa42/include/openssl/evp.h#L353-L369
         EVP_DigestVerifyInit(
             md_ctx.as_mut_ptr(),
             &mut pctx,
             *digest,
             null_mut(),
-            **public_key,
+            *public_key.as_mut_unsafe(),
         )
     } {
         return Err(Unspecified);

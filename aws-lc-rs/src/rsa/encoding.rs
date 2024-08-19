@@ -90,9 +90,9 @@ pub(in crate::rsa) mod rfc8017 {
             RSA_public_key_from_bytes(public_key.as_ptr(), public_key.len())
         })?;
 
-        let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
+        let mut pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
 
-        if 1 != unsafe { EVP_PKEY_assign_RSA(*pkey, *rsa) } {
+        if 1 != unsafe { EVP_PKEY_assign_RSA(*pkey.as_mut(), *rsa) } {
             return Err(KeyRejected::unspecified());
         }
 
@@ -110,9 +110,9 @@ pub(in crate::rsa) mod rfc8017 {
 
         let rsa = DetachableLcPtr::new(unsafe { RSA_parse_private_key(&mut cbs) })?;
 
-        let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
+        let mut pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
 
-        if 1 != unsafe { EVP_PKEY_assign_RSA(*pkey, *rsa) } {
+        if 1 != unsafe { EVP_PKEY_assign_RSA(*pkey.as_mut(), *rsa) } {
             return Err(KeyRejected::unspecified());
         }
 
@@ -147,7 +147,7 @@ pub(in crate::rsa) mod rfc5280 {
         // key_size_bytes * 5 == key_size_bytes * (1 + 400%)
         let mut der = LcCBB::new(key_size_bytes * 5);
 
-        if 1 != unsafe { EVP_marshal_public_key(der.as_mut_ptr(), **key) } {
+        if 1 != unsafe { EVP_marshal_public_key(der.as_mut_ptr(), *key.as_const()) } {
             return Err(Unspecified);
         };
 
