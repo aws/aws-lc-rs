@@ -255,12 +255,12 @@ impl CcBuilder {
             let result = execute_command(exec_path.as_os_str(), &[]);
             assert!(
                 result.status,
-                "Your compiler ({}) is not supported due to a memcmp related bug reported in \
-                https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189.\
-                We strongly recommend against using this compiler.\
-                EXECUTED: {} \
-                ERROR: {} \
-                OUTPUT: {} \
+                "### COMPILER BUG DETECTED ###\nYour compiler ({}) is not supported due to a memcmp related bug reported in \
+                https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189. \
+                We strongly recommend against using this compiler. \n\
+                EXECUTED: {}\n\
+                ERROR: {}\n\
+                OUTPUT: {}\n\
                 ",
                 memcmp_compiler.path().display(),
                 memcmp_compile_result.executed,
