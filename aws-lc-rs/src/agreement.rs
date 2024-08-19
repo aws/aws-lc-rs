@@ -266,7 +266,6 @@ impl PrivateKey {
 
     #[inline]
     /// Generate a new private key for the given algorithm.
-    ///
     // # FIPS
     // Use this function with one of the following algorithms:
     // * `ECDH_P256`
@@ -604,6 +603,9 @@ impl Clone for PublicKey {
 }
 
 impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
+    /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
+    /// # Errors
+    /// Returns an error if the public key fails to marshal to X.509.
     fn as_der(&self) -> Result<PublicKeyX509Der<'static>, crate::error::Unspecified> {
         match &self.inner_key {
             KeyInner::ECDH_P256(evp_pkey)
@@ -626,6 +628,9 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
 }
 
 impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
+    /// Provides the public key elliptic curve point to a compressed point format.
+    /// # Errors
+    /// Returns an error if the underlying implementation is unable to marshal the public key to this format.
     fn as_be_bytes(&self) -> Result<EcPublicKeyCompressedBin<'static>, crate::error::Unspecified> {
         let evp_pkey = match &self.inner_key {
             KeyInner::ECDH_P256(evp_pkey)
@@ -648,7 +653,12 @@ impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
 }
 
 impl AsBigEndian<EcPublicKeyUncompressedBin<'static>> for PublicKey {
-    /// Equivalent to [`PublicKey::as_ref`], except that it provides you a copy instead of a reference.
+    /// Provides the public key elliptic curve point to a compressed point format.
+    ///
+    /// Equivalent to [`PublicKey::as_ref`] for ECDH key types, except that it provides you a copy instead of a reference.
+    ///
+    /// # Errors
+    /// Returns an error if the underlying implementation is unable to marshal the public key to this format.
     fn as_be_bytes(
         &self,
     ) -> Result<EcPublicKeyUncompressedBin<'static>, crate::error::Unspecified> {
@@ -721,7 +731,6 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// After the key agreement is done, `agree` calls `kdf` with the raw
 /// key material from the key agreement operation and then returns what `kdf`
 /// returns.
-///
 // # FIPS
 // Use this function with one of the following key algorithms:
 // * `ECDH_P256`
@@ -837,16 +846,11 @@ fn x25519_diffie_hellman<'a>(
 pub(crate) fn try_parse_x25519_public_key_bytes(
     key_bytes: &[u8],
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    if let Ok(key) = try_parse_x25519_subject_public_key_info_bytes(key_bytes) {
-        return Ok(key);
-    }
-    if let Ok(key) = try_parse_public_key_raw_bytes(key_bytes) {
-        return Ok(key);
-    }
-    Err(Unspecified)
+    try_parse_x25519_subject_public_key_info_bytes(key_bytes)
+        .or(try_parse_x25519_public_key_raw_bytes(key_bytes))
 }
 
-fn try_parse_public_key_raw_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+fn try_parse_x25519_public_key_raw_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let expected_pub_key_len = X25519.id.pub_key_len();
     if key_bytes.len() != expected_pub_key_len {
         return Err(Unspecified);

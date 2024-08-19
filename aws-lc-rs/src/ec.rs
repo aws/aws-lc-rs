@@ -143,7 +143,7 @@ pub struct PublicKey {
 impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
     /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
     /// # Errors
-    /// Returns an error if the underlying implementation is unable to marshal the point.
+    /// Returns an error if the public key fails to marshal to X.509.
     fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
         let ec_group = LcPtr::new(unsafe { EC_GROUP_new_by_curve_name(self.algorithm.id.nid()) })?;
         let ec_point = ec_point_from_bytes(&ec_group, self.as_ref())?;
@@ -167,6 +167,9 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
 }
 
 impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
+    /// Provides the public key elliptic curve point to a compressed point bytes format.
+    /// # Errors
+    /// Returns an error if the public key fails to marshal.
     fn as_be_bytes(&self) -> Result<EcPublicKeyCompressedBin<'static>, crate::error::Unspecified> {
         let ec_key =
             ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(self.evp_pkey.as_const_ptr()) })?;
@@ -184,6 +187,9 @@ impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
 }
 
 impl AsBigEndian<EcPublicKeyUncompressedBin<'static>> for PublicKey {
+    /// Provides the public key elliptic curve point to an uncompressed point bytes format.
+    /// # Errors
+    /// Returns an error if the public key fails to marshal.
     fn as_be_bytes(
         &self,
     ) -> Result<EcPublicKeyUncompressedBin<'static>, crate::error::Unspecified> {
@@ -438,11 +444,16 @@ pub(crate) fn try_parse_public_key_bytes(
     key_bytes: &[u8],
     expected_curve_nid: i32,
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    if let Ok(key) = try_parse_subject_public_key_info_bytes(key_bytes) {
-        return Ok(validate_evp_key(&key.as_const(), expected_curve_nid).map(|()| key)?);
-    }
-    // try_parse_public_key_raw_bytes calls `validate_evp_key` already
-    try_parse_public_key_raw_bytes(key_bytes, expected_curve_nid)
+    try_parse_subject_public_key_info_bytes(key_bytes)
+        .and_then(|key| {
+            validate_evp_key(&key.as_const(), expected_curve_nid)
+                .map(|()| key)
+                .map_err(|_| Unspecified)
+        })
+        .or(try_parse_public_key_raw_bytes(
+            key_bytes,
+            expected_curve_nid,
+        ))
 }
 
 fn try_parse_subject_public_key_info_bytes(

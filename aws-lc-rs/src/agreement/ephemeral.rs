@@ -28,7 +28,6 @@ impl EphemeralPrivateKey {
     ///
     /// # *ring* Compatibility
     ///  Our implementation ignores the `SecureRandom` parameter.
-    ///
     // # FIPS
     // Use this function with one of the following algorithms:
     // * `ECDH_P256`
@@ -87,7 +86,6 @@ impl EphemeralPrivateKey {
 /// After the key agreement is done, `agree_ephemeral` calls `kdf` with the raw
 /// key material from the key agreement operation and then returns what `kdf`
 /// returns.
-///
 // # FIPS
 // Use this function with one of the following key algorithms:
 // * `ECDH_P256`
