@@ -6,8 +6,8 @@ use core::mem::MaybeUninit;
 
 #[inline]
 #[allow(non_snake_case)]
-pub unsafe fn build_CBS(data: &[u8]) -> CBS {
+pub fn build_CBS(data: &[u8]) -> CBS {
     let mut cbs = MaybeUninit::<CBS>::uninit();
-    CBS_init(cbs.as_mut_ptr(), data.as_ptr(), data.len());
-    cbs.assume_init()
+    unsafe { CBS_init(cbs.as_mut_ptr(), data.as_ptr(), data.len()) };
+    unsafe { cbs.assume_init() }
 }

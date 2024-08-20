@@ -109,7 +109,7 @@ unsafe impl Sync for KeyPair {}
 impl KeyPair {
     fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, KeyRejected> {
         KeyPair::validate_private_key(&evp_pkey)?;
-        let serialized_public_key = unsafe { PublicKey::new(&evp_pkey)? };
+        let serialized_public_key = PublicKey::new(&evp_pkey)?;
         Ok(KeyPair {
             evp_pkey,
             serialized_public_key,
@@ -312,14 +312,14 @@ impl Drop for PublicKey {
 }
 
 impl PublicKey {
-    pub(super) unsafe fn new(evp_pkey: &LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
+    pub(super) fn new(evp_pkey: &LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
         let key = encoding::rfc8017::encode_public_key_der(evp_pkey)?;
         #[cfg(feature = "ring-io")]
         {
             let pubkey = evp_pkey.get_rsa()?;
-            let modulus = ConstPointer::new(RSA_get0_n(*pubkey))?;
+            let modulus = ConstPointer::new(unsafe { RSA_get0_n(*pubkey) })?;
             let modulus = modulus.to_be_bytes().into_boxed_slice();
-            let exponent = ConstPointer::new(RSA_get0_e(*pubkey))?;
+            let exponent = ConstPointer::new(unsafe { RSA_get0_e(*pubkey) })?;
             let exponent = exponent.to_be_bytes().into_boxed_slice();
             Ok(PublicKey {
                 key,
@@ -400,7 +400,7 @@ where
     B: AsRef<[u8]> + Debug,
 {
     #[inline]
-    unsafe fn build_rsa(&self) -> Result<LcPtr<EVP_PKEY>, ()> {
+    fn build_rsa(&self) -> Result<LcPtr<EVP_PKEY>, ()> {
         let n_bytes = self.n.as_ref();
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
             return Err(());
@@ -413,15 +413,15 @@ where
         }
         let e_bn = DetachableLcPtr::try_from(e_bytes)?;
 
-        let rsa = DetachableLcPtr::new(RSA_new())?;
-        if 1 != RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) {
+        let rsa = DetachableLcPtr::new(unsafe { RSA_new() })?;
+        if 1 != unsafe { RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) } {
             return Err(());
         }
         n_bn.detach();
         e_bn.detach();
 
-        let pkey = LcPtr::new(EVP_PKEY_new())?;
-        if 1 != EVP_PKEY_assign_RSA(*pkey, *rsa) {
+        let pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
+        if 1 != unsafe { EVP_PKEY_assign_RSA(*pkey, *rsa) } {
             return Err(());
         }
         rsa.detach();
@@ -442,17 +442,15 @@ where
         message: &[u8],
         signature: &[u8],
     ) -> Result<(), Unspecified> {
-        unsafe {
-            let rsa = self.build_rsa()?;
-            super::signature::verify_rsa_signature(
-                params.digest_algorithm(),
-                params.padding(),
-                &rsa,
-                message,
-                signature,
-                params.bit_size_range(),
-            )
-        }
+        let rsa = self.build_rsa()?;
+        super::signature::verify_rsa_signature(
+            params.digest_algorithm(),
+            params.padding(),
+            &rsa,
+            message,
+            signature,
+            params.bit_size_range(),
+        )
     }
 }
 

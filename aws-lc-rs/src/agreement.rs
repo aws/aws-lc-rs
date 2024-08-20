@@ -277,7 +277,7 @@ impl PrivateKey {
         if AlgorithmID::X25519 == alg.id {
             return Err(KeyRejected::invalid_encoding());
         }
-        let evp_pkey = unsafe { ec::unmarshal_der_to_private_key(key_bytes, alg.id.nid())? };
+        let evp_pkey = ec::unmarshal_der_to_private_key(key_bytes, alg.id.nid())?;
         Ok(Self::new(alg, evp_pkey))
     }
 
@@ -397,15 +397,12 @@ impl PrivateKey {
             | KeyInner::ECDH_P384(evp_pkey)
             | KeyInner::ECDH_P521(evp_pkey) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
-                unsafe {
-                    let key_len =
-                        ec::marshal_public_key_to_buffer(&mut buffer, &evp_pkey.as_const())?;
-                    Ok(PublicKey {
-                        alg: self.algorithm(),
-                        public_key: buffer,
-                        len: key_len,
-                    })
-                }
+                let key_len = ec::marshal_public_key_to_buffer(&mut buffer, &evp_pkey.as_const())?;
+                Ok(PublicKey {
+                    alg: self.algorithm(),
+                    public_key: buffer,
+                    len: key_len,
+                })
             }
             KeyInner::X25519(priv_key) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
@@ -472,12 +469,10 @@ impl AsBigEndian<EcPrivateKeyBin<'static>> for PrivateKey {
         if AlgorithmID::X25519 == self.inner_key.algorithm().id {
             return Err(Unspecified);
         }
-        let buffer = unsafe {
-            ec::marshal_private_key_to_buffer(
-                self.inner_key.algorithm().id.private_key_len(),
-                &self.inner_key.get_evp_pkey().as_const(),
-            )?
-        };
+        let buffer = ec::marshal_private_key_to_buffer(
+            self.inner_key.algorithm().id.private_key_len(),
+            &self.inner_key.get_evp_pkey().as_const(),
+        )?;
         Ok(EcPrivateKeyBin::new(buffer))
     }
 }
