@@ -21,9 +21,9 @@ use aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::EC_KEY_check_key;
 use aws_lc::{
-    d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, CBS_init, ECDSA_SIG_from_bytes,
-    ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes,
-    EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
+    d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, CBS_init,
+    ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0,
+    ECDSA_SIG_to_bytes, EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
     EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
     EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, EC_POINT_oct2point,
     EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new_id,
@@ -176,7 +176,7 @@ impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
 
         let mut buffer = vec![0u8; self.algorithm.0.id.compressed_pub_key_len()];
 
-        let out_len = unsafe { marshal_ec_public_key_to_buffer(&mut buffer, &ec_key, true) }?;
+        let out_len = marshal_ec_public_key_to_buffer(&mut buffer, &ec_key, true)?;
 
         debug_assert_eq!(buffer.len(), out_len);
 

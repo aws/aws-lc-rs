@@ -642,7 +642,7 @@ impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
 
         let mut buffer = vec![0u8; self.algorithm().id.compressed_pub_key_len()];
 
-        let out_len = unsafe { ec::marshal_ec_public_key_to_buffer(&mut buffer, &ec_key, true) }?;
+        let out_len = ec::marshal_ec_public_key_to_buffer(&mut buffer, &ec_key, true)?;
 
         debug_assert_eq!(buffer.len(), out_len);
 
