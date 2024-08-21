@@ -1,0 +1,688 @@
+Microsoft (R) COFF/PE Dumper Version 14.40.33813.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file trampoline-x86_64.obj
+
+File Type: COFF OBJECT
+
+aws_lc_0_21_0_abi_test_trampoline:
+  0000000000000000: 48 81 EC 58 01 00  sub         rsp,158h
+                    00
+L$SEH_prolog_abi_test_trampoline_2:
+  0000000000000007: 48 89 5C 24 70     mov         qword ptr [rsp+70h],rbx
+L$SEH_prolog_abi_test_trampoline_3:
+  000000000000000C: 48 89 6C 24 78     mov         qword ptr [rsp+78h],rbp
+L$SEH_prolog_abi_test_trampoline_4:
+  0000000000000011: 48 89 BC 24 80 00  mov         qword ptr [rsp+0000000000000080h],rdi
+                    00 00
+L$SEH_prolog_abi_test_trampoline_5:
+  0000000000000019: 48 89 B4 24 88 00  mov         qword ptr [rsp+0000000000000088h],rsi
+                    00 00
+L$SEH_prolog_abi_test_trampoline_6:
+  0000000000000021: 4C 89 A4 24 90 00  mov         qword ptr [rsp+0000000000000090h],r12
+                    00 00
+L$SEH_prolog_abi_test_trampoline_7:
+  0000000000000029: 4C 89 AC 24 98 00  mov         qword ptr [rsp+0000000000000098h],r13
+                    00 00
+L$SEH_prolog_abi_test_trampoline_8:
+  0000000000000031: 4C 89 B4 24 A0 00  mov         qword ptr [rsp+00000000000000A0h],r14
+                    00 00
+L$SEH_prolog_abi_test_trampoline_9:
+  0000000000000039: 4C 89 BC 24 A8 00  mov         qword ptr [rsp+00000000000000A8h],r15
+                    00 00
+L$SEH_prolog_abi_test_trampoline_10:
+  0000000000000041: 66 0F 7F B4 24 B0  movdqa      xmmword ptr [rsp+00000000000000B0h],xmm6
+                    00 00 00
+L$SEH_prolog_abi_test_trampoline_11:
+  000000000000004A: 66 0F 7F BC 24 C0  movdqa      xmmword ptr [rsp+00000000000000C0h],xmm7
+                    00 00 00
+L$SEH_prolog_abi_test_trampoline_12:
+  0000000000000053: 66 44 0F 7F 84 24  movdqa      xmmword ptr [rsp+00000000000000D0h],xmm8
+                    D0 00 00 00
+L$SEH_prolog_abi_test_trampoline_13:
+  000000000000005D: 66 44 0F 7F 8C 24  movdqa      xmmword ptr [rsp+00000000000000E0h],xmm9
+                    E0 00 00 00
+L$SEH_prolog_abi_test_trampoline_14:
+  0000000000000067: 66 44 0F 7F 94 24  movdqa      xmmword ptr [rsp+00000000000000F0h],xmm10
+                    F0 00 00 00
+L$SEH_prolog_abi_test_trampoline_15:
+  0000000000000071: 66 44 0F 7F 9C 24  movdqa      xmmword ptr [rsp+0000000000000100h],xmm11
+                    00 01 00 00
+L$SEH_prolog_abi_test_trampoline_16:
+  000000000000007B: 66 44 0F 7F A4 24  movdqa      xmmword ptr [rsp+0000000000000110h],xmm12
+                    10 01 00 00
+L$SEH_prolog_abi_test_trampoline_17:
+  0000000000000085: 66 44 0F 7F AC 24  movdqa      xmmword ptr [rsp+0000000000000120h],xmm13
+                    20 01 00 00
+L$SEH_prolog_abi_test_trampoline_18:
+  000000000000008F: 66 44 0F 7F B4 24  movdqa      xmmword ptr [rsp+0000000000000130h],xmm14
+                    30 01 00 00
+L$SEH_prolog_abi_test_trampoline_19:
+  0000000000000099: 66 44 0F 7F BC 24  movdqa      xmmword ptr [rsp+0000000000000140h],xmm15
+                    40 01 00 00
+L$SEH_prolog_abi_test_trampoline_20:
+  00000000000000A3: 48 8B 1A           mov         rbx,qword ptr [rdx]
+  00000000000000A6: 48 8B 6A 08        mov         rbp,qword ptr [rdx+8]
+  00000000000000AA: 48 8B 7A 10        mov         rdi,qword ptr [rdx+10h]
+  00000000000000AE: 48 8B 72 18        mov         rsi,qword ptr [rdx+18h]
+  00000000000000B2: 4C 8B 62 20        mov         r12,qword ptr [rdx+20h]
+  00000000000000B6: 4C 8B 6A 28        mov         r13,qword ptr [rdx+28h]
+  00000000000000BA: 4C 8B 72 30        mov         r14,qword ptr [rdx+30h]
+  00000000000000BE: 4C 8B 7A 38        mov         r15,qword ptr [rdx+38h]
+  00000000000000C2: 66 0F 6F 72 40     movdqa      xmm6,xmmword ptr [rdx+40h]
+  00000000000000C7: 66 0F 6F 7A 50     movdqa      xmm7,xmmword ptr [rdx+50h]
+  00000000000000CC: 66 44 0F 6F 42 60  movdqa      xmm8,xmmword ptr [rdx+60h]
+  00000000000000D2: 66 44 0F 6F 4A 70  movdqa      xmm9,xmmword ptr [rdx+70h]
+  00000000000000D8: 66 44 0F 6F 92 80  movdqa      xmm10,xmmword ptr [rdx+0000000000000080h]
+                    00 00 00
+  00000000000000E1: 66 44 0F 6F 9A 90  movdqa      xmm11,xmmword ptr [rdx+0000000000000090h]
+                    00 00 00
+  00000000000000EA: 66 44 0F 6F A2 A0  movdqa      xmm12,xmmword ptr [rdx+00000000000000A0h]
+                    00 00 00
+  00000000000000F3: 66 44 0F 6F AA B0  movdqa      xmm13,xmmword ptr [rdx+00000000000000B0h]
+                    00 00 00
+  00000000000000FC: 66 44 0F 6F B2 C0  movdqa      xmm14,xmmword ptr [rdx+00000000000000C0h]
+                    00 00 00
+  0000000000000105: 66 44 0F 6F BA D0  movdqa      xmm15,xmmword ptr [rdx+00000000000000D0h]
+                    00 00 00
+  000000000000010E: 48 89 4C 24 58     mov         qword ptr [rsp+58h],rcx
+  0000000000000113: 48 89 54 24 60     mov         qword ptr [rsp+60h],rdx
+  0000000000000118: 4D 89 C2           mov         r10,r8
+  000000000000011B: 4D 89 CB           mov         r11,r9
+  000000000000011E: 49 FF CB           dec         r11
+  0000000000000121: 0F 88 62 00 00 00  js          L$args_done
+  0000000000000127: 49 8B 0A           mov         rcx,qword ptr [r10]
+  000000000000012A: 49 83 C2 08        add         r10,8
+  000000000000012E: 49 FF CB           dec         r11
+  0000000000000131: 0F 88 52 00 00 00  js          L$args_done
+  0000000000000137: 49 8B 12           mov         rdx,qword ptr [r10]
+  000000000000013A: 49 83 C2 08        add         r10,8
+  000000000000013E: 49 FF CB           dec         r11
+  0000000000000141: 0F 88 42 00 00 00  js          L$args_done
+  0000000000000147: 4D 8B 02           mov         r8,qword ptr [r10]
+  000000000000014A: 49 83 C2 08        add         r10,8
+  000000000000014E: 49 FF CB           dec         r11
+  0000000000000151: 0F 88 32 00 00 00  js          L$args_done
+  0000000000000157: 4D 8B 0A           mov         r9,qword ptr [r10]
+  000000000000015A: 49 83 C2 08        add         r10,8
+  000000000000015E: 48 8D 44 24 20     lea         rax,[rsp+20h]
+L$args_loop:
+  0000000000000163: 49 FF CB           dec         r11
+  0000000000000166: 0F 88 1D 00 00 00  js          L$args_done
+  000000000000016C: 4C 89 5C 24 68     mov         qword ptr [rsp+68h],r11
+  0000000000000171: 4D 8B 1A           mov         r11,qword ptr [r10]
+  0000000000000174: 4C 89 18           mov         qword ptr [rax],r11
+  0000000000000177: 4C 8B 5C 24 68     mov         r11,qword ptr [rsp+68h]
+  000000000000017C: 49 83 C2 08        add         r10,8
+  0000000000000180: 48 83 C0 08        add         rax,8
+  0000000000000184: E9 DA FF FF FF     jmp         L$args_loop
+L$args_done:
+  0000000000000189: 48 8B 44 24 58     mov         rax,qword ptr [rsp+58h]
+  000000000000018E: 4C 8B 94 24 80 01  mov         r10,qword ptr [rsp+0000000000000180h]
+                    00 00
+  0000000000000196: 4D 85 D2           test        r10,r10
+  0000000000000199: 0F 84 1C 00 00 00  je          L$no_unwind
+  000000000000019F: 9C                 pushfq
+  00000000000001A0: 48 81 0C 24 00 01  or          qword ptr [rsp],100h
+                    00 00
+  00000000000001A8: 9D                 popfq
+  00000000000001A9: 90                 nop
+aws_lc_0_21_0_abi_test_unwind_start:
+  00000000000001AA: FF D0              call        rax
+aws_lc_0_21_0_abi_test_unwind_return:
+  00000000000001AC: 9C                 pushfq
+  00000000000001AD: 48 81 24 24 FF FE  and         qword ptr [rsp],0FFFFFFFFFFFFFEFFh
+                    FF FF
+  00000000000001B5: 9D                 popfq
+aws_lc_0_21_0_abi_test_unwind_stop:
+  00000000000001B6: E9 02 00 00 00     jmp         L$call_done
+L$no_unwind:
+  00000000000001BB: FF D0              call        rax
+L$call_done:
+  00000000000001BD: 48 8B 54 24 60     mov         rdx,qword ptr [rsp+60h]
+  00000000000001C2: 48 89 1A           mov         qword ptr [rdx],rbx
+  00000000000001C5: 48 89 6A 08        mov         qword ptr [rdx+8],rbp
+  00000000000001C9: 48 89 7A 10        mov         qword ptr [rdx+10h],rdi
+  00000000000001CD: 48 89 72 18        mov         qword ptr [rdx+18h],rsi
+  00000000000001D1: 4C 89 62 20        mov         qword ptr [rdx+20h],r12
+  00000000000001D5: 4C 89 6A 28        mov         qword ptr [rdx+28h],r13
+  00000000000001D9: 4C 89 72 30        mov         qword ptr [rdx+30h],r14
+  00000000000001DD: 4C 89 7A 38        mov         qword ptr [rdx+38h],r15
+  00000000000001E1: 66 0F 7F 72 40     movdqa      xmmword ptr [rdx+40h],xmm6
+  00000000000001E6: 66 0F 7F 7A 50     movdqa      xmmword ptr [rdx+50h],xmm7
+  00000000000001EB: 66 44 0F 7F 42 60  movdqa      xmmword ptr [rdx+60h],xmm8
+  00000000000001F1: 66 44 0F 7F 4A 70  movdqa      xmmword ptr [rdx+70h],xmm9
+  00000000000001F7: 66 44 0F 7F 92 80  movdqa      xmmword ptr [rdx+0000000000000080h],xmm10
+                    00 00 00
+  0000000000000200: 66 44 0F 7F 9A 90  movdqa      xmmword ptr [rdx+0000000000000090h],xmm11
+                    00 00 00
+  0000000000000209: 66 44 0F 7F A2 A0  movdqa      xmmword ptr [rdx+00000000000000A0h],xmm12
+                    00 00 00
+  0000000000000212: 66 44 0F 7F AA B0  movdqa      xmmword ptr [rdx+00000000000000B0h],xmm13
+                    00 00 00
+  000000000000021B: 66 44 0F 7F B2 C0  movdqa      xmmword ptr [rdx+00000000000000C0h],xmm14
+                    00 00 00
+  0000000000000224: 66 44 0F 7F BA D0  movdqa      xmmword ptr [rdx+00000000000000D0h],xmm15
+                    00 00 00
+  000000000000022D: 48 8B 5C 24 70     mov         rbx,qword ptr [rsp+70h]
+  0000000000000232: 48 8B 6C 24 78     mov         rbp,qword ptr [rsp+78h]
+  0000000000000237: 48 8B BC 24 80 00  mov         rdi,qword ptr [rsp+0000000000000080h]
+                    00 00
+  000000000000023F: 48 8B B4 24 88 00  mov         rsi,qword ptr [rsp+0000000000000088h]
+                    00 00
+  0000000000000247: 4C 8B A4 24 90 00  mov         r12,qword ptr [rsp+0000000000000090h]
+                    00 00
+  000000000000024F: 4C 8B AC 24 98 00  mov         r13,qword ptr [rsp+0000000000000098h]
+                    00 00
+  0000000000000257: 4C 8B B4 24 A0 00  mov         r14,qword ptr [rsp+00000000000000A0h]
+                    00 00
+  000000000000025F: 4C 8B BC 24 A8 00  mov         r15,qword ptr [rsp+00000000000000A8h]
+                    00 00
+  0000000000000267: 66 0F 6F B4 24 B0  movdqa      xmm6,xmmword ptr [rsp+00000000000000B0h]
+                    00 00 00
+  0000000000000270: 66 0F 6F BC 24 C0  movdqa      xmm7,xmmword ptr [rsp+00000000000000C0h]
+                    00 00 00
+  0000000000000279: 66 44 0F 6F 84 24  movdqa      xmm8,xmmword ptr [rsp+00000000000000D0h]
+                    D0 00 00 00
+  0000000000000283: 66 44 0F 6F 8C 24  movdqa      xmm9,xmmword ptr [rsp+00000000000000E0h]
+                    E0 00 00 00
+  000000000000028D: 66 44 0F 6F 94 24  movdqa      xmm10,xmmword ptr [rsp+00000000000000F0h]
+                    F0 00 00 00
+  0000000000000297: 66 44 0F 6F 9C 24  movdqa      xmm11,xmmword ptr [rsp+0000000000000100h]
+                    00 01 00 00
+  00000000000002A1: 66 44 0F 6F A4 24  movdqa      xmm12,xmmword ptr [rsp+0000000000000110h]
+                    10 01 00 00
+  00000000000002AB: 66 44 0F 6F AC 24  movdqa      xmm13,xmmword ptr [rsp+0000000000000120h]
+                    20 01 00 00
+  00000000000002B5: 66 44 0F 6F B4 24  movdqa      xmm14,xmmword ptr [rsp+0000000000000130h]
+                    30 01 00 00
+  00000000000002BF: 66 44 0F 6F BC 24  movdqa      xmm15,xmmword ptr [rsp+0000000000000140h]
+                    40 01 00 00
+  00000000000002C9: 48 81 C4 58 01 00  add         rsp,158h
+                    00
+  00000000000002D0: F3 C3              rep ret
+L$SEH_end_abi_test_trampoline_21:
+  00000000000002D2: 90                 nop
+  00000000000002D3: 90                 nop
+  00000000000002D4: 90                 nop
+  00000000000002D5: 90                 nop
+  00000000000002D6: 90                 nop
+  00000000000002D7: 90                 nop
+  00000000000002D8: 90                 nop
+  00000000000002D9: 90                 nop
+  00000000000002DA: 90                 nop
+  00000000000002DB: 90                 nop
+  00000000000002DC: 90                 nop
+  00000000000002DD: 90                 nop
+  00000000000002DE: 90                 nop
+  00000000000002DF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_rax:
+  00000000000002E0: 48 31 C0           xor         rax,rax
+  00000000000002E3: F3 C3              rep ret
+  00000000000002E5: 90                 nop
+  00000000000002E6: 90                 nop
+  00000000000002E7: 90                 nop
+  00000000000002E8: 90                 nop
+  00000000000002E9: 90                 nop
+  00000000000002EA: 90                 nop
+  00000000000002EB: 90                 nop
+  00000000000002EC: 90                 nop
+  00000000000002ED: 90                 nop
+  00000000000002EE: 90                 nop
+  00000000000002EF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_rbx:
+  00000000000002F0: 48 31 DB           xor         rbx,rbx
+  00000000000002F3: F3 C3              rep ret
+  00000000000002F5: 90                 nop
+  00000000000002F6: 90                 nop
+  00000000000002F7: 90                 nop
+  00000000000002F8: 90                 nop
+  00000000000002F9: 90                 nop
+  00000000000002FA: 90                 nop
+  00000000000002FB: 90                 nop
+  00000000000002FC: 90                 nop
+  00000000000002FD: 90                 nop
+  00000000000002FE: 90                 nop
+  00000000000002FF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_rcx:
+  0000000000000300: 48 31 C9           xor         rcx,rcx
+  0000000000000303: F3 C3              rep ret
+  0000000000000305: 90                 nop
+  0000000000000306: 90                 nop
+  0000000000000307: 90                 nop
+  0000000000000308: 90                 nop
+  0000000000000309: 90                 nop
+  000000000000030A: 90                 nop
+  000000000000030B: 90                 nop
+  000000000000030C: 90                 nop
+  000000000000030D: 90                 nop
+  000000000000030E: 90                 nop
+  000000000000030F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_rdx:
+  0000000000000310: 48 31 D2           xor         rdx,rdx
+  0000000000000313: F3 C3              rep ret
+  0000000000000315: 90                 nop
+  0000000000000316: 90                 nop
+  0000000000000317: 90                 nop
+  0000000000000318: 90                 nop
+  0000000000000319: 90                 nop
+  000000000000031A: 90                 nop
+  000000000000031B: 90                 nop
+  000000000000031C: 90                 nop
+  000000000000031D: 90                 nop
+  000000000000031E: 90                 nop
+  000000000000031F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_rdi:
+  0000000000000320: 48 31 FF           xor         rdi,rdi
+  0000000000000323: F3 C3              rep ret
+  0000000000000325: 90                 nop
+  0000000000000326: 90                 nop
+  0000000000000327: 90                 nop
+  0000000000000328: 90                 nop
+  0000000000000329: 90                 nop
+  000000000000032A: 90                 nop
+  000000000000032B: 90                 nop
+  000000000000032C: 90                 nop
+  000000000000032D: 90                 nop
+  000000000000032E: 90                 nop
+  000000000000032F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_rsi:
+  0000000000000330: 48 31 F6           xor         rsi,rsi
+  0000000000000333: F3 C3              rep ret
+  0000000000000335: 90                 nop
+  0000000000000336: 90                 nop
+  0000000000000337: 90                 nop
+  0000000000000338: 90                 nop
+  0000000000000339: 90                 nop
+  000000000000033A: 90                 nop
+  000000000000033B: 90                 nop
+  000000000000033C: 90                 nop
+  000000000000033D: 90                 nop
+  000000000000033E: 90                 nop
+  000000000000033F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_rbp:
+  0000000000000340: 48 31 ED           xor         rbp,rbp
+  0000000000000343: F3 C3              rep ret
+  0000000000000345: 90                 nop
+  0000000000000346: 90                 nop
+  0000000000000347: 90                 nop
+  0000000000000348: 90                 nop
+  0000000000000349: 90                 nop
+  000000000000034A: 90                 nop
+  000000000000034B: 90                 nop
+  000000000000034C: 90                 nop
+  000000000000034D: 90                 nop
+  000000000000034E: 90                 nop
+  000000000000034F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_r8:
+  0000000000000350: 4D 31 C0           xor         r8,r8
+  0000000000000353: F3 C3              rep ret
+  0000000000000355: 90                 nop
+  0000000000000356: 90                 nop
+  0000000000000357: 90                 nop
+  0000000000000358: 90                 nop
+  0000000000000359: 90                 nop
+  000000000000035A: 90                 nop
+  000000000000035B: 90                 nop
+  000000000000035C: 90                 nop
+  000000000000035D: 90                 nop
+  000000000000035E: 90                 nop
+  000000000000035F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_r9:
+  0000000000000360: 4D 31 C9           xor         r9,r9
+  0000000000000363: F3 C3              rep ret
+  0000000000000365: 90                 nop
+  0000000000000366: 90                 nop
+  0000000000000367: 90                 nop
+  0000000000000368: 90                 nop
+  0000000000000369: 90                 nop
+  000000000000036A: 90                 nop
+  000000000000036B: 90                 nop
+  000000000000036C: 90                 nop
+  000000000000036D: 90                 nop
+  000000000000036E: 90                 nop
+  000000000000036F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_r10:
+  0000000000000370: 4D 31 D2           xor         r10,r10
+  0000000000000373: F3 C3              rep ret
+  0000000000000375: 90                 nop
+  0000000000000376: 90                 nop
+  0000000000000377: 90                 nop
+  0000000000000378: 90                 nop
+  0000000000000379: 90                 nop
+  000000000000037A: 90                 nop
+  000000000000037B: 90                 nop
+  000000000000037C: 90                 nop
+  000000000000037D: 90                 nop
+  000000000000037E: 90                 nop
+  000000000000037F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_r11:
+  0000000000000380: 4D 31 DB           xor         r11,r11
+  0000000000000383: F3 C3              rep ret
+  0000000000000385: 90                 nop
+  0000000000000386: 90                 nop
+  0000000000000387: 90                 nop
+  0000000000000388: 90                 nop
+  0000000000000389: 90                 nop
+  000000000000038A: 90                 nop
+  000000000000038B: 90                 nop
+  000000000000038C: 90                 nop
+  000000000000038D: 90                 nop
+  000000000000038E: 90                 nop
+  000000000000038F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_r12:
+  0000000000000390: 4D 31 E4           xor         r12,r12
+  0000000000000393: F3 C3              rep ret
+  0000000000000395: 90                 nop
+  0000000000000396: 90                 nop
+  0000000000000397: 90                 nop
+  0000000000000398: 90                 nop
+  0000000000000399: 90                 nop
+  000000000000039A: 90                 nop
+  000000000000039B: 90                 nop
+  000000000000039C: 90                 nop
+  000000000000039D: 90                 nop
+  000000000000039E: 90                 nop
+  000000000000039F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_r13:
+  00000000000003A0: 4D 31 ED           xor         r13,r13
+  00000000000003A3: F3 C3              rep ret
+  00000000000003A5: 90                 nop
+  00000000000003A6: 90                 nop
+  00000000000003A7: 90                 nop
+  00000000000003A8: 90                 nop
+  00000000000003A9: 90                 nop
+  00000000000003AA: 90                 nop
+  00000000000003AB: 90                 nop
+  00000000000003AC: 90                 nop
+  00000000000003AD: 90                 nop
+  00000000000003AE: 90                 nop
+  00000000000003AF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_r14:
+  00000000000003B0: 4D 31 F6           xor         r14,r14
+  00000000000003B3: F3 C3              rep ret
+  00000000000003B5: 90                 nop
+  00000000000003B6: 90                 nop
+  00000000000003B7: 90                 nop
+  00000000000003B8: 90                 nop
+  00000000000003B9: 90                 nop
+  00000000000003BA: 90                 nop
+  00000000000003BB: 90                 nop
+  00000000000003BC: 90                 nop
+  00000000000003BD: 90                 nop
+  00000000000003BE: 90                 nop
+  00000000000003BF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_r15:
+  00000000000003C0: 4D 31 FF           xor         r15,r15
+  00000000000003C3: F3 C3              rep ret
+  00000000000003C5: 90                 nop
+  00000000000003C6: 90                 nop
+  00000000000003C7: 90                 nop
+  00000000000003C8: 90                 nop
+  00000000000003C9: 90                 nop
+  00000000000003CA: 90                 nop
+  00000000000003CB: 90                 nop
+  00000000000003CC: 90                 nop
+  00000000000003CD: 90                 nop
+  00000000000003CE: 90                 nop
+  00000000000003CF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm0:
+  00000000000003D0: 66 0F EF C0        pxor        xmm0,xmm0
+  00000000000003D4: F3 C3              rep ret
+  00000000000003D6: 90                 nop
+  00000000000003D7: 90                 nop
+  00000000000003D8: 90                 nop
+  00000000000003D9: 90                 nop
+  00000000000003DA: 90                 nop
+  00000000000003DB: 90                 nop
+  00000000000003DC: 90                 nop
+  00000000000003DD: 90                 nop
+  00000000000003DE: 90                 nop
+  00000000000003DF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm1:
+  00000000000003E0: 66 0F EF C9        pxor        xmm1,xmm1
+  00000000000003E4: F3 C3              rep ret
+  00000000000003E6: 90                 nop
+  00000000000003E7: 90                 nop
+  00000000000003E8: 90                 nop
+  00000000000003E9: 90                 nop
+  00000000000003EA: 90                 nop
+  00000000000003EB: 90                 nop
+  00000000000003EC: 90                 nop
+  00000000000003ED: 90                 nop
+  00000000000003EE: 90                 nop
+  00000000000003EF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm2:
+  00000000000003F0: 66 0F EF D2        pxor        xmm2,xmm2
+  00000000000003F4: F3 C3              rep ret
+  00000000000003F6: 90                 nop
+  00000000000003F7: 90                 nop
+  00000000000003F8: 90                 nop
+  00000000000003F9: 90                 nop
+  00000000000003FA: 90                 nop
+  00000000000003FB: 90                 nop
+  00000000000003FC: 90                 nop
+  00000000000003FD: 90                 nop
+  00000000000003FE: 90                 nop
+  00000000000003FF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm3:
+  0000000000000400: 66 0F EF DB        pxor        xmm3,xmm3
+  0000000000000404: F3 C3              rep ret
+  0000000000000406: 90                 nop
+  0000000000000407: 90                 nop
+  0000000000000408: 90                 nop
+  0000000000000409: 90                 nop
+  000000000000040A: 90                 nop
+  000000000000040B: 90                 nop
+  000000000000040C: 90                 nop
+  000000000000040D: 90                 nop
+  000000000000040E: 90                 nop
+  000000000000040F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm4:
+  0000000000000410: 66 0F EF E4        pxor        xmm4,xmm4
+  0000000000000414: F3 C3              rep ret
+  0000000000000416: 90                 nop
+  0000000000000417: 90                 nop
+  0000000000000418: 90                 nop
+  0000000000000419: 90                 nop
+  000000000000041A: 90                 nop
+  000000000000041B: 90                 nop
+  000000000000041C: 90                 nop
+  000000000000041D: 90                 nop
+  000000000000041E: 90                 nop
+  000000000000041F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm5:
+  0000000000000420: 66 0F EF ED        pxor        xmm5,xmm5
+  0000000000000424: F3 C3              rep ret
+  0000000000000426: 90                 nop
+  0000000000000427: 90                 nop
+  0000000000000428: 90                 nop
+  0000000000000429: 90                 nop
+  000000000000042A: 90                 nop
+  000000000000042B: 90                 nop
+  000000000000042C: 90                 nop
+  000000000000042D: 90                 nop
+  000000000000042E: 90                 nop
+  000000000000042F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm6:
+  0000000000000430: 66 0F EF F6        pxor        xmm6,xmm6
+  0000000000000434: F3 C3              rep ret
+  0000000000000436: 90                 nop
+  0000000000000437: 90                 nop
+  0000000000000438: 90                 nop
+  0000000000000439: 90                 nop
+  000000000000043A: 90                 nop
+  000000000000043B: 90                 nop
+  000000000000043C: 90                 nop
+  000000000000043D: 90                 nop
+  000000000000043E: 90                 nop
+  000000000000043F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm7:
+  0000000000000440: 66 0F EF FF        pxor        xmm7,xmm7
+  0000000000000444: F3 C3              rep ret
+  0000000000000446: 90                 nop
+  0000000000000447: 90                 nop
+  0000000000000448: 90                 nop
+  0000000000000449: 90                 nop
+  000000000000044A: 90                 nop
+  000000000000044B: 90                 nop
+  000000000000044C: 90                 nop
+  000000000000044D: 90                 nop
+  000000000000044E: 90                 nop
+  000000000000044F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm8:
+  0000000000000450: 66 45 0F EF C0     pxor        xmm8,xmm8
+  0000000000000455: F3 C3              rep ret
+  0000000000000457: 90                 nop
+  0000000000000458: 90                 nop
+  0000000000000459: 90                 nop
+  000000000000045A: 90                 nop
+  000000000000045B: 90                 nop
+  000000000000045C: 90                 nop
+  000000000000045D: 90                 nop
+  000000000000045E: 90                 nop
+  000000000000045F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm9:
+  0000000000000460: 66 45 0F EF C9     pxor        xmm9,xmm9
+  0000000000000465: F3 C3              rep ret
+  0000000000000467: 90                 nop
+  0000000000000468: 90                 nop
+  0000000000000469: 90                 nop
+  000000000000046A: 90                 nop
+  000000000000046B: 90                 nop
+  000000000000046C: 90                 nop
+  000000000000046D: 90                 nop
+  000000000000046E: 90                 nop
+  000000000000046F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm10:
+  0000000000000470: 66 45 0F EF D2     pxor        xmm10,xmm10
+  0000000000000475: F3 C3              rep ret
+  0000000000000477: 90                 nop
+  0000000000000478: 90                 nop
+  0000000000000479: 90                 nop
+  000000000000047A: 90                 nop
+  000000000000047B: 90                 nop
+  000000000000047C: 90                 nop
+  000000000000047D: 90                 nop
+  000000000000047E: 90                 nop
+  000000000000047F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm11:
+  0000000000000480: 66 45 0F EF DB     pxor        xmm11,xmm11
+  0000000000000485: F3 C3              rep ret
+  0000000000000487: 90                 nop
+  0000000000000488: 90                 nop
+  0000000000000489: 90                 nop
+  000000000000048A: 90                 nop
+  000000000000048B: 90                 nop
+  000000000000048C: 90                 nop
+  000000000000048D: 90                 nop
+  000000000000048E: 90                 nop
+  000000000000048F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm12:
+  0000000000000490: 66 45 0F EF E4     pxor        xmm12,xmm12
+  0000000000000495: F3 C3              rep ret
+  0000000000000497: 90                 nop
+  0000000000000498: 90                 nop
+  0000000000000499: 90                 nop
+  000000000000049A: 90                 nop
+  000000000000049B: 90                 nop
+  000000000000049C: 90                 nop
+  000000000000049D: 90                 nop
+  000000000000049E: 90                 nop
+  000000000000049F: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm13:
+  00000000000004A0: 66 45 0F EF ED     pxor        xmm13,xmm13
+  00000000000004A5: F3 C3              rep ret
+  00000000000004A7: 90                 nop
+  00000000000004A8: 90                 nop
+  00000000000004A9: 90                 nop
+  00000000000004AA: 90                 nop
+  00000000000004AB: 90                 nop
+  00000000000004AC: 90                 nop
+  00000000000004AD: 90                 nop
+  00000000000004AE: 90                 nop
+  00000000000004AF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm14:
+  00000000000004B0: 66 45 0F EF F6     pxor        xmm14,xmm14
+  00000000000004B5: F3 C3              rep ret
+  00000000000004B7: 90                 nop
+  00000000000004B8: 90                 nop
+  00000000000004B9: 90                 nop
+  00000000000004BA: 90                 nop
+  00000000000004BB: 90                 nop
+  00000000000004BC: 90                 nop
+  00000000000004BD: 90                 nop
+  00000000000004BE: 90                 nop
+  00000000000004BF: 90                 nop
+aws_lc_0_21_0_abi_test_clobber_xmm15:
+  00000000000004C0: 66 45 0F EF FF     pxor        xmm15,xmm15
+  00000000000004C5: F3 C3              rep ret
+  00000000000004C7: 90                 nop
+  00000000000004C8: 90                 nop
+  00000000000004C9: 90                 nop
+  00000000000004CA: 90                 nop
+  00000000000004CB: 90                 nop
+  00000000000004CC: 90                 nop
+  00000000000004CD: 90                 nop
+  00000000000004CE: 90                 nop
+  00000000000004CF: 90                 nop
+aws_lc_0_21_0_abi_test_bad_unwind_wrong_register:
+  00000000000004D0: 41 54              push        r12
+L$SEH_prolog_abi_test_bad_unwind_wrong_register_2:
+  00000000000004D2: 90                 nop
+  00000000000004D3: 41 5C              pop         r12
+  00000000000004D5: F3 C3              rep ret
+L$SEH_end_abi_test_bad_unwind_wrong_register_3:
+  00000000000004D7: 90                 nop
+  00000000000004D8: 90                 nop
+  00000000000004D9: 90                 nop
+  00000000000004DA: 90                 nop
+  00000000000004DB: 90                 nop
+  00000000000004DC: 90                 nop
+  00000000000004DD: 90                 nop
+  00000000000004DE: 90                 nop
+  00000000000004DF: 90                 nop
+aws_lc_0_21_0_abi_test_bad_unwind_temporary:
+  00000000000004E0: 41 54              push        r12
+L$SEH_prolog_abi_test_bad_unwind_temporary_2:
+  00000000000004E2: 4C 89 E0           mov         rax,r12
+  00000000000004E5: 48 FF C0           inc         rax
+  00000000000004E8: 48 89 04 24        mov         qword ptr [rsp],rax
+  00000000000004EC: 4C 89 24 24        mov         qword ptr [rsp],r12
+  00000000000004F0: 41 5C              pop         r12
+  00000000000004F2: F3 C3              rep ret
+aws_lc_0_21_0_abi_test_get_and_clear_direction_flag:
+  00000000000004F4: 9C                 pushfq
+  00000000000004F5: 58                 pop         rax
+  00000000000004F6: 48 25 00 04 00 00  and         rax,400h
+  00000000000004FC: 48 C1 E8 0A        shr         rax,0Ah
+  0000000000000500: FC                 cld
+  0000000000000501: F3 C3              rep ret
+aws_lc_0_21_0_abi_test_set_direction_flag:
+  0000000000000503: FD                 std
+  0000000000000504: F3 C3              rep ret
+  0000000000000506: 90                 nop
+  0000000000000507: 90                 nop
+  0000000000000508: 90                 nop
+  0000000000000509: 90                 nop
+  000000000000050A: 90                 nop
+  000000000000050B: 90                 nop
+  000000000000050C: 90                 nop
+  000000000000050D: 90                 nop
+  000000000000050E: 90                 nop
+  000000000000050F: 90                 nop
+aws_lc_0_21_0_abi_test_bad_unwind_epilog:
+  0000000000000510: 41 54              push        r12
+L$SEH_prolog_abi_test_bad_unwind_epilog_2:
+  0000000000000512: 90                 nop
+  0000000000000513: 41 5C              pop         r12
+  0000000000000515: 90                 nop
+  0000000000000516: F3 C3              rep ret
+
+  Summary
+
+          1C .debug$T
+          30 .pdata
+         518 .text
+          62 .xdata

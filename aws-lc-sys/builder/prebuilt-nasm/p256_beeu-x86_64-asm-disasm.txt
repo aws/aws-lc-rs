@@ -1,0 +1,222 @@
+Microsoft (R) COFF/PE Dumper Version 14.40.33813.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file p256_beeu-x86_64-asm.obj
+
+File Type: COFF OBJECT
+
+aws_lc_0_21_0_beeu_mod_inverse_vartime:
+  0000000000000000: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
+  0000000000000005: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
+  000000000000000A: 48 89 E0           mov         rax,rsp
+L$SEH_begin_beeu_mod_inverse_vartime:
+  000000000000000D: 48 89 CF           mov         rdi,rcx
+  0000000000000010: 48 89 D6           mov         rsi,rdx
+  0000000000000013: 4C 89 C2           mov         rdx,r8
+  0000000000000016: 4C 89 C9           mov         rcx,r9
+  0000000000000019: 4C 8B 44 24 28     mov         r8,qword ptr [rsp+28h]
+  000000000000001E: 4C 8B 4C 24 30     mov         r9,qword ptr [rsp+30h]
+  0000000000000023: 55                 push        rbp
+  0000000000000024: 41 54              push        r12
+  0000000000000026: 41 55              push        r13
+  0000000000000028: 41 56              push        r14
+  000000000000002A: 41 57              push        r15
+  000000000000002C: 53                 push        rbx
+  000000000000002D: 56                 push        rsi
+  000000000000002E: 48 83 EC 50        sub         rsp,50h
+  0000000000000032: 48 89 3C 24        mov         qword ptr [rsp],rdi
+  0000000000000036: 41 B8 01 00 00 00  mov         r8d,1
+  000000000000003C: 4D 31 C9           xor         r9,r9
+  000000000000003F: 4D 31 D2           xor         r10,r10
+  0000000000000042: 4D 31 DB           xor         r11,r11
+  0000000000000045: 48 31 FF           xor         rdi,rdi
+  0000000000000048: 4D 31 E4           xor         r12,r12
+  000000000000004B: 4D 31 ED           xor         r13,r13
+  000000000000004E: 4D 31 F6           xor         r14,r14
+  0000000000000051: 4D 31 FF           xor         r15,r15
+  0000000000000054: 48 31 ED           xor         rbp,rbp
+  0000000000000057: C5 FA 6F 06        vmovdqu     xmm0,xmmword ptr [rsi]
+  000000000000005B: C5 FA 6F 4E 10     vmovdqu     xmm1,xmmword ptr [rsi+10h]
+  0000000000000060: C5 FA 7F 44 24 30  vmovdqu     xmmword ptr [rsp+30h],xmm0
+  0000000000000066: C5 FA 7F 4C 24 40  vmovdqu     xmmword ptr [rsp+40h],xmm1
+  000000000000006C: C5 FA 6F 02        vmovdqu     xmm0,xmmword ptr [rdx]
+  0000000000000070: C5 FA 6F 4A 10     vmovdqu     xmm1,xmmword ptr [rdx+10h]
+  0000000000000075: C5 FA 7F 44 24 10  vmovdqu     xmmword ptr [rsp+10h],xmm0
+  000000000000007B: C5 FA 7F 4C 24 20  vmovdqu     xmmword ptr [rsp+20h],xmm1
+L$beeu_loop:
+  0000000000000081: 48 31 DB           xor         rbx,rbx
+  0000000000000084: 48 0B 5C 24 30     or          rbx,qword ptr [rsp+30h]
+  0000000000000089: 48 0B 5C 24 38     or          rbx,qword ptr [rsp+38h]
+  000000000000008E: 48 0B 5C 24 40     or          rbx,qword ptr [rsp+40h]
+  0000000000000093: 48 0B 5C 24 48     or          rbx,qword ptr [rsp+48h]
+  0000000000000098: 0F 84 C8 01 00 00  je          L$beeu_loop_end
+  000000000000009E: B9 01 00 00 00     mov         ecx,1
+L$beeu_shift_loop_XB:
+  00000000000000A3: 48 89 CB           mov         rbx,rcx
+  00000000000000A6: 48 23 5C 24 30     and         rbx,qword ptr [rsp+30h]
+  00000000000000AB: 0F 85 48 00 00 00  jne         L$beeu_shift_loop_end_XB
+  00000000000000B1: BB 01 00 00 00     mov         ebx,1
+  00000000000000B6: 4C 21 C3           and         rbx,r8
+  00000000000000B9: 0F 84 13 00 00 00  je          L$shift1_0
+  00000000000000BF: 4C 03 02           add         r8,qword ptr [rdx]
+  00000000000000C2: 4C 13 4A 08        adc         r9,qword ptr [rdx+8]
+  00000000000000C6: 4C 13 52 10        adc         r10,qword ptr [rdx+10h]
+  00000000000000CA: 4C 13 5A 18        adc         r11,qword ptr [rdx+18h]
+  00000000000000CE: 48 83 D7 00        adc         rdi,0
+L$shift1_0:
+  00000000000000D2: 4D 0F AC C8 01     shrd        r8,r9,1
+  00000000000000D7: 4D 0F AC D1 01     shrd        r9,r10,1
+  00000000000000DC: 4D 0F AC DA 01     shrd        r10,r11,1
+  00000000000000E1: 49 0F AC FB 01     shrd        r11,rdi,1
+  00000000000000E6: 48 D1 EF           shr         rdi,1
+  00000000000000E9: 48 D1 E1           shl         rcx,1
+  00000000000000EC: 48 81 F9 00 00 00  cmp         rcx,8000000h
+                    08
+  00000000000000F3: 0F 85 AA FF FF FF  jne         L$beeu_shift_loop_XB
+L$beeu_shift_loop_end_XB:
+  00000000000000F9: 48 0F BC C9        bsf         rcx,rcx
+  00000000000000FD: 48 85 C9           test        rcx,rcx
+  0000000000000100: 0F 84 29 00 00 00  je          L$beeu_no_shift_XB
+  0000000000000106: 48 8B 44 24 38     mov         rax,qword ptr [rsp+38h]
+  000000000000010B: 48 8B 5C 24 40     mov         rbx,qword ptr [rsp+40h]
+  0000000000000110: 48 8B 74 24 48     mov         rsi,qword ptr [rsp+48h]
+  0000000000000115: 48 0F AD 44 24 30  shrd        qword ptr [rsp+30h],rax,cl
+  000000000000011B: 48 0F AD 5C 24 38  shrd        qword ptr [rsp+38h],rbx,cl
+  0000000000000121: 48 0F AD 74 24 40  shrd        qword ptr [rsp+40h],rsi,cl
+  0000000000000127: 48 D3 EE           shr         rsi,cl
+  000000000000012A: 48 89 74 24 48     mov         qword ptr [rsp+48h],rsi
+L$beeu_no_shift_XB:
+  000000000000012F: B9 01 00 00 00     mov         ecx,1
+L$beeu_shift_loop_YA:
+  0000000000000134: 48 89 CB           mov         rbx,rcx
+  0000000000000137: 48 23 5C 24 10     and         rbx,qword ptr [rsp+10h]
+  000000000000013C: 0F 85 48 00 00 00  jne         L$beeu_shift_loop_end_YA
+  0000000000000142: BB 01 00 00 00     mov         ebx,1
+  0000000000000147: 4C 21 E3           and         rbx,r12
+  000000000000014A: 0F 84 13 00 00 00  je          L$shift1_1
+  0000000000000150: 4C 03 22           add         r12,qword ptr [rdx]
+  0000000000000153: 4C 13 6A 08        adc         r13,qword ptr [rdx+8]
+  0000000000000157: 4C 13 72 10        adc         r14,qword ptr [rdx+10h]
+  000000000000015B: 4C 13 7A 18        adc         r15,qword ptr [rdx+18h]
+  000000000000015F: 48 83 D5 00        adc         rbp,0
+L$shift1_1:
+  0000000000000163: 4D 0F AC EC 01     shrd        r12,r13,1
+  0000000000000168: 4D 0F AC F5 01     shrd        r13,r14,1
+  000000000000016D: 4D 0F AC FE 01     shrd        r14,r15,1
+  0000000000000172: 49 0F AC EF 01     shrd        r15,rbp,1
+  0000000000000177: 48 D1 ED           shr         rbp,1
+  000000000000017A: 48 D1 E1           shl         rcx,1
+  000000000000017D: 48 81 F9 00 00 00  cmp         rcx,8000000h
+                    08
+  0000000000000184: 0F 85 AA FF FF FF  jne         L$beeu_shift_loop_YA
+L$beeu_shift_loop_end_YA:
+  000000000000018A: 48 0F BC C9        bsf         rcx,rcx
+  000000000000018E: 48 85 C9           test        rcx,rcx
+  0000000000000191: 0F 84 29 00 00 00  je          L$beeu_no_shift_YA
+  0000000000000197: 48 8B 44 24 18     mov         rax,qword ptr [rsp+18h]
+  000000000000019C: 48 8B 5C 24 20     mov         rbx,qword ptr [rsp+20h]
+  00000000000001A1: 48 8B 74 24 28     mov         rsi,qword ptr [rsp+28h]
+  00000000000001A6: 48 0F AD 44 24 10  shrd        qword ptr [rsp+10h],rax,cl
+  00000000000001AC: 48 0F AD 5C 24 18  shrd        qword ptr [rsp+18h],rbx,cl
+  00000000000001B2: 48 0F AD 74 24 20  shrd        qword ptr [rsp+20h],rsi,cl
+  00000000000001B8: 48 D3 EE           shr         rsi,cl
+  00000000000001BB: 48 89 74 24 28     mov         qword ptr [rsp+28h],rsi
+L$beeu_no_shift_YA:
+  00000000000001C0: 48 8B 44 24 30     mov         rax,qword ptr [rsp+30h]
+  00000000000001C5: 48 8B 5C 24 38     mov         rbx,qword ptr [rsp+38h]
+  00000000000001CA: 48 8B 74 24 40     mov         rsi,qword ptr [rsp+40h]
+  00000000000001CF: 48 8B 4C 24 48     mov         rcx,qword ptr [rsp+48h]
+  00000000000001D4: 48 2B 44 24 10     sub         rax,qword ptr [rsp+10h]
+  00000000000001D9: 48 1B 5C 24 18     sbb         rbx,qword ptr [rsp+18h]
+  00000000000001DE: 48 1B 74 24 20     sbb         rsi,qword ptr [rsp+20h]
+  00000000000001E3: 48 1B 4C 24 28     sbb         rcx,qword ptr [rsp+28h]
+  00000000000001E8: 0F 83 50 00 00 00  jae         L$beeu_B_bigger_than_A
+  00000000000001EE: 48 8B 44 24 10     mov         rax,qword ptr [rsp+10h]
+  00000000000001F3: 48 8B 5C 24 18     mov         rbx,qword ptr [rsp+18h]
+  00000000000001F8: 48 8B 74 24 20     mov         rsi,qword ptr [rsp+20h]
+  00000000000001FD: 48 8B 4C 24 28     mov         rcx,qword ptr [rsp+28h]
+  0000000000000202: 48 2B 44 24 30     sub         rax,qword ptr [rsp+30h]
+  0000000000000207: 48 1B 5C 24 38     sbb         rbx,qword ptr [rsp+38h]
+  000000000000020C: 48 1B 74 24 40     sbb         rsi,qword ptr [rsp+40h]
+  0000000000000211: 48 1B 4C 24 48     sbb         rcx,qword ptr [rsp+48h]
+  0000000000000216: 48 89 44 24 10     mov         qword ptr [rsp+10h],rax
+  000000000000021B: 48 89 5C 24 18     mov         qword ptr [rsp+18h],rbx
+  0000000000000220: 48 89 74 24 20     mov         qword ptr [rsp+20h],rsi
+  0000000000000225: 48 89 4C 24 28     mov         qword ptr [rsp+28h],rcx
+  000000000000022A: 4D 01 C4           add         r12,r8
+  000000000000022D: 4D 11 CD           adc         r13,r9
+  0000000000000230: 4D 11 D6           adc         r14,r10
+  0000000000000233: 4D 11 DF           adc         r15,r11
+  0000000000000236: 48 11 FD           adc         rbp,rdi
+  0000000000000239: E9 43 FE FF FF     jmp         L$beeu_loop
+L$beeu_B_bigger_than_A:
+  000000000000023E: 48 89 44 24 30     mov         qword ptr [rsp+30h],rax
+  0000000000000243: 48 89 5C 24 38     mov         qword ptr [rsp+38h],rbx
+  0000000000000248: 48 89 74 24 40     mov         qword ptr [rsp+40h],rsi
+  000000000000024D: 48 89 4C 24 48     mov         qword ptr [rsp+48h],rcx
+  0000000000000252: 4D 01 E0           add         r8,r12
+  0000000000000255: 4D 11 E9           adc         r9,r13
+  0000000000000258: 4D 11 F2           adc         r10,r14
+  000000000000025B: 4D 11 FB           adc         r11,r15
+  000000000000025E: 48 11 EF           adc         rdi,rbp
+  0000000000000261: E9 1B FE FF FF     jmp         L$beeu_loop
+L$beeu_loop_end:
+  0000000000000266: 48 8B 5C 24 10     mov         rbx,qword ptr [rsp+10h]
+  000000000000026B: 48 83 EB 01        sub         rbx,1
+  000000000000026F: 48 0B 5C 24 18     or          rbx,qword ptr [rsp+18h]
+  0000000000000274: 48 0B 5C 24 20     or          rbx,qword ptr [rsp+20h]
+  0000000000000279: 48 0B 5C 24 28     or          rbx,qword ptr [rsp+28h]
+  000000000000027E: 0F 85 82 00 00 00  jne         L$beeu_err
+  0000000000000284: 4C 8B 02           mov         r8,qword ptr [rdx]
+  0000000000000287: 4C 8B 4A 08        mov         r9,qword ptr [rdx+8]
+  000000000000028B: 4C 8B 52 10        mov         r10,qword ptr [rdx+10h]
+  000000000000028F: 4C 8B 5A 18        mov         r11,qword ptr [rdx+18h]
+  0000000000000293: 48 31 FF           xor         rdi,rdi
+L$beeu_reduction_loop:
+  0000000000000296: 4C 89 64 24 10     mov         qword ptr [rsp+10h],r12
+  000000000000029B: 4C 89 6C 24 18     mov         qword ptr [rsp+18h],r13
+  00000000000002A0: 4C 89 74 24 20     mov         qword ptr [rsp+20h],r14
+  00000000000002A5: 4C 89 7C 24 28     mov         qword ptr [rsp+28h],r15
+  00000000000002AA: 48 89 6C 24 30     mov         qword ptr [rsp+30h],rbp
+  00000000000002AF: 4D 29 C4           sub         r12,r8
+  00000000000002B2: 4D 19 CD           sbb         r13,r9
+  00000000000002B5: 4D 19 D6           sbb         r14,r10
+  00000000000002B8: 4D 19 DF           sbb         r15,r11
+  00000000000002BB: 48 83 DD 00        sbb         rbp,0
+  00000000000002BF: 4C 0F 42 64 24 10  cmovb       r12,qword ptr [rsp+10h]
+  00000000000002C5: 4C 0F 42 6C 24 18  cmovb       r13,qword ptr [rsp+18h]
+  00000000000002CB: 4C 0F 42 74 24 20  cmovb       r14,qword ptr [rsp+20h]
+  00000000000002D1: 4C 0F 42 7C 24 28  cmovb       r15,qword ptr [rsp+28h]
+  00000000000002D7: 0F 83 B9 FF FF FF  jae         L$beeu_reduction_loop
+  00000000000002DD: 4D 29 E0           sub         r8,r12
+  00000000000002E0: 4D 19 E9           sbb         r9,r13
+  00000000000002E3: 4D 19 F2           sbb         r10,r14
+  00000000000002E6: 4D 19 FB           sbb         r11,r15
+L$beeu_save:
+  00000000000002E9: 48 8B 3C 24        mov         rdi,qword ptr [rsp]
+  00000000000002ED: 4C 89 07           mov         qword ptr [rdi],r8
+  00000000000002F0: 4C 89 4F 08        mov         qword ptr [rdi+8],r9
+  00000000000002F4: 4C 89 57 10        mov         qword ptr [rdi+10h],r10
+  00000000000002F8: 4C 89 5F 18        mov         qword ptr [rdi+18h],r11
+  00000000000002FC: B8 01 00 00 00     mov         eax,1
+  0000000000000301: E9 03 00 00 00     jmp         L$beeu_finish
+L$beeu_err:
+  0000000000000306: 48 31 C0           xor         rax,rax
+L$beeu_finish:
+  0000000000000309: 48 83 C4 50        add         rsp,50h
+  000000000000030D: 5E                 pop         rsi
+  000000000000030E: 5B                 pop         rbx
+  000000000000030F: 41 5F              pop         r15
+  0000000000000311: 41 5E              pop         r14
+  0000000000000313: 41 5D              pop         r13
+  0000000000000315: 41 5C              pop         r12
+  0000000000000317: 5D                 pop         rbp
+  0000000000000318: 48 8B 7C 24 08     mov         rdi,qword ptr [rsp+8]
+  000000000000031D: 48 8B 74 24 10     mov         rsi,qword ptr [rsp+10h]
+  0000000000000322: F3 C3              rep ret
+
+  Summary
+
+          1C .debug$T
+         324 .text
