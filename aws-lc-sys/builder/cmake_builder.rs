@@ -3,7 +3,7 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, is_crt_static, is_no_asm,
+    allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, get_cflags, is_crt_static, is_no_asm,
     option_env, requested_c_std, target, target_arch, target_env, target_family, target_os,
     target_underscored, target_vendor, test_nasm_command, CStdRequested, OutputLibType,
 };
@@ -143,6 +143,10 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_C_STANDARD", "11");
             }
             CStdRequested::None => {}
+        }
+
+        if !get_cflags().is_empty() {
+            cmake_cfg.cflag(get_cflags());
         }
 
         // Allow environment to specify CMake toolchain.

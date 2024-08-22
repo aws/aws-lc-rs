@@ -21,12 +21,11 @@ env:
 jobs:
   aws-lc-rs-cross-test:
     if: github.repository_owner == 'aws'
-    name: aws-lc-rs cross tests
-    runs-on: ${{ matrix.os }}
+    name: cross tests ${{ matrix.target }}
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-22.04 ]
         target:
           - aarch64-linux-android
           - aarch64-unknown-linux-gnu
@@ -51,18 +50,21 @@ jobs:
         with:
           toolchain: 'stable'
       - name: Install cross
-        run: cargo install cross ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '--locked') || '' }} --git https://github.com/cross-rs/cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
-          toolchain: ${{ (matrix.target == 'riscv64gc-unknown-linux-gnu'  && '1.72.1') || 'stable' }}
+          toolchain: 'stable'
           target: ${{ matrix.target }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
+      # The flag below is set to avoid the following error with GCC 11.4.0 on the riscv64 platform:
+      #   /home/runner/work/aws-lc-rs/aws-lc-rs/aws-lc-sys/aws-lc/crypto/pem/pem_lib.c:707:11: error: 'strncmp' of strings of length 1 and 9 and bound of 9 evaluates to nonzero [-Werror=string-compare]
+      #    707 |       if (strncmp(buf, "-----END ", 9) == 0) {
+      #        |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
       - if: ${{ matrix.target == 'riscv64gc-unknown-linux-gnu' }}
         run: |
-          cargo update
-          cargo update -p clap --precise 4.4.18
+          echo 'AWS_LC_SYS_CFLAGS="-Wno-string-compare"' >> "$GITHUB_ENV"
       - name: Cross-compilation (build debug)
         run: cross build -p aws-lc-rs --features unstable --target ${{ matrix.target }}
       - name: Cross-compilation (test release)

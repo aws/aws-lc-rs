@@ -14,7 +14,7 @@ mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
 use crate::{
-    cargo_env, env_var_to_bool, execute_command, out_dir, requested_c_std, target, target_arch,
+    cargo_env, env_var_to_bool, execute_command, get_cflags, out_dir, requested_c_std, target, target_arch,
     target_os, target_vendor, CStdRequested, OutputLibType,
 };
 use std::path::PathBuf;
@@ -130,6 +130,12 @@ impl CcBuilder {
                     self.manifest_dir.display()
                 ));
             }
+        }
+
+        if !get_cflags().is_empty() {
+            get_cflags().split(' ').for_each(|flag| {
+                cc_build.flag_if_supported(flag);
+            });
         }
 
         self.add_includes(&mut cc_build);

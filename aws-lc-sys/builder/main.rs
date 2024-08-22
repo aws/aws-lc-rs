@@ -218,6 +218,8 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
     )
     .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
     .expect("write bindings");
+
+
 }
 
 fn emit_rustc_cfg(cfg: &str) {
@@ -343,6 +345,7 @@ static mut AWS_LC_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_SYS_INTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_EXTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_NO_ASM: bool = false;
+static mut AWS_LC_SYS_CFLAGS: String = String::new();
 static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
 
 static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
@@ -355,6 +358,7 @@ fn initialize() {
         AWS_LC_SYS_EXTERNAL_BINDGEN =
             env_var_to_bool("AWS_LC_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
         AWS_LC_SYS_NO_ASM = env_var_to_bool("AWS_LC_SYS_NO_ASM").unwrap_or(false);
+        AWS_LC_SYS_CFLAGS = option_env("AWS_LC_SYS_CFLAGS").unwrap_or(String::new());
         AWS_LC_SYS_PREBUILT_NASM = env_var_to_bool("AWS_LC_SYS_PREBUILT_NASM");
         AWS_LC_SYS_C_STD = CStdRequested::from_env();
     }
@@ -413,6 +417,10 @@ fn is_external_bindgen() -> bool {
 
 fn is_no_asm() -> bool {
     unsafe { AWS_LC_SYS_NO_ASM }
+}
+
+fn get_cflags() -> &'static str {
+    unsafe { AWS_LC_SYS_CFLAGS.as_str() }
 }
 
 fn allow_prebuilt_nasm() -> Option<bool> {
