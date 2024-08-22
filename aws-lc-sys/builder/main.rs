@@ -358,7 +358,7 @@ fn initialize() {
         AWS_LC_SYS_EXTERNAL_BINDGEN =
             env_var_to_bool("AWS_LC_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
         AWS_LC_SYS_NO_ASM = env_var_to_bool("AWS_LC_SYS_NO_ASM").unwrap_or(false);
-        AWS_LC_SYS_CFLAGS = option_env("AWS_LC_SYS_CFLAGS").unwrap_or(String::new());
+        AWS_LC_SYS_CFLAGS = option_env("AWS_LC_SYS_CFLAGS").unwrap_or_default();
         AWS_LC_SYS_PREBUILT_NASM = env_var_to_bool("AWS_LC_SYS_PREBUILT_NASM");
         AWS_LC_SYS_C_STD = CStdRequested::from_env();
     }
