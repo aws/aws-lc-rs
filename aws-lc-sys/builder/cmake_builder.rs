@@ -146,7 +146,11 @@ impl CmakeBuilder {
         }
 
         if !get_cflags().is_empty() {
-            cmake_cfg.cflag(get_cflags());
+            let cflags = get_cflags();
+            emit_warning(&format!(
+                "AWS_LC_SYS_CFLAGS found. Setting CFLAGS: '{cflags}'"
+            ));
+            env::set_var("CFLAGS", cflags);
         }
 
         // Allow environment to specify CMake toolchain.
