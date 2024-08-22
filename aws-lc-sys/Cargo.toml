@@ -47,7 +47,7 @@ build = "builder/main.rs"
 
 [features]
 asan = []
-ssl = []
+ssl = ['bindgen']
 bindgen = ["dep:bindgen"] # Generate the bindings on the targetted platform as a fallback mechanism.
 
 [build-dependencies]
@@ -56,10 +56,10 @@ dunce = "1.0"
 fs_extra = "1.3"
 cc = { version = "1.0.83", features = ["parallel"] }
 
-[target.'cfg(any(all(any(target_arch = "x86_64", target_arch = "aarch64"), any(target_os = "linux", target_os = "macos"), any(target_env = "gnu", target_env = "musl", target_env = "")), all(target_arch = "x86", target_os = "linux", target_env = "gnu")))'.build-dependencies]
+[target.'cfg(any(all(any(target_arch="x86_64",target_arch="aarch64"),any(target_os="linux",target_os="macos",target_os="windows"),any(target_env="gnu",target_env="musl",target_env="msvc",target_env="")),all(target_arch="x86",target_os="windows",target_env="msvc"),all(target_arch="x86",target_os="linux",target_env="gnu")))'.build-dependencies]
 bindgen = { version = "0.69.2", optional = true }
 
-[target.'cfg(not(any(all(any(target_arch = "x86_64", target_arch = "aarch64"), any(target_os = "linux", target_os = "macos"), any(target_env = "gnu", target_env = "musl", target_env = "")), all(target_arch = "x86", target_os = "linux", target_env = "gnu"))))'.build-dependencies]
+[target.'cfg(not(any(all(any(target_arch="x86_64",target_arch="aarch64"),any(target_os="linux",target_os="macos",target_os="windows"),any(target_env="gnu",target_env="musl",target_env="msvc",target_env="")),all(target_arch="x86",target_os="windows",target_env="msvc"),all(target_arch="x86",target_os="linux",target_env="gnu"))))'.build-dependencies]
 bindgen = { version = "0.69.2" }
 
 [dependencies]

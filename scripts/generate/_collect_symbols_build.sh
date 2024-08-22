@@ -78,7 +78,7 @@ ${CMAKE} --build . --target clean
 ${CMAKE} --build . --target crypto ssl
 
 pushd "${AWS_LC_DIR}" &>/dev/null
-go run -mod readonly "${AWS_LC_DIR}"/util/read_symbols.go "${TEMP_BUILD_DIR}/crypto/libcrypto.a" "${TEMP_BUILD_DIR}/ssl/libssl.a" | filter_symbols >"${SYMBOLS_FILE}"
+go run -mod readonly "${AWS_LC_DIR}"/util/read_symbols.go "${TEMP_BUILD_DIR}/crypto/libcrypto.a" | filter_symbols >"${SYMBOLS_FILE}"
 popd &>/dev/null # ${AWS_LC_DIR}
 
 popd &>/dev/null # ${TEMP_BUILD_DIR}
