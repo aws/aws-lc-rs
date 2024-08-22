@@ -21,20 +21,22 @@ use aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
 use aws_lc::EC_KEY_check_key;
 use aws_lc::{
-    d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
-    ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes,
-    EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
+    d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, CBS_init,
+    ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0,
+    ECDSA_SIG_to_bytes, EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
     EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
     EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, EC_POINT_oct2point,
     EC_POINT_point2oct, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new_id,
     EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY,
-    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new, NID_X9_62_prime256v1, NID_secp256k1,
-    NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY,
-    EVP_PKEY_EC,
+    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new, EVP_parse_public_key,
+    NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1, BIGNUM, CBS, ECDSA_SIG,
+    EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
 };
 
 use crate::digest::digest_ctx::DigestContext;
-use crate::encoding::{AsDer, PublicKeyX509Der};
+use crate::encoding::{
+    AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
+};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr, Pointer};
@@ -117,19 +119,31 @@ impl AlgorithmID {
             AlgorithmID::ECDSA_P521 => 66,
         }
     }
+    // Compressed public key length in bytes
+    #[inline]
+    const fn compressed_pub_key_len(&self) -> usize {
+        match self {
+            AlgorithmID::ECDSA_P256 | AlgorithmID::ECDSA_P256K1 => {
+                compressed_public_key_size_bytes(256)
+            }
+            AlgorithmID::ECDSA_P384 => compressed_public_key_size_bytes(384),
+            AlgorithmID::ECDSA_P521 => compressed_public_key_size_bytes(521),
+        }
+    }
 }
 
 /// Elliptic curve public key.
 #[derive(Clone)]
 pub struct PublicKey {
     algorithm: &'static EcdsaSigningAlgorithm,
+    evp_pkey: LcPtr<EVP_PKEY>,
     octets: Box<[u8]>,
 }
 
 impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
     /// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
     /// # Errors
-    /// Returns an error if the underlying implementation is unable to marshal the point.
+    /// Returns an error if the public key fails to marshal to X.509.
     fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
         let ec_group = LcPtr::new(unsafe { EC_GROUP_new_by_curve_name(self.algorithm.id.nid()) })?;
         let ec_point = ec_point_from_bytes(&ec_group, self.as_ref())?;
@@ -149,6 +163,39 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
         let der = unsafe { core::slice::from_raw_parts(*buffer, len.try_into()?) }.to_owned();
 
         Ok(PublicKeyX509Der::new(der))
+    }
+}
+
+impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
+    /// Provides the public key elliptic curve point to a compressed point bytes format.
+    /// # Errors
+    /// Returns an error if the public key fails to marshal.
+    fn as_be_bytes(&self) -> Result<EcPublicKeyCompressedBin<'static>, crate::error::Unspecified> {
+        let ec_key =
+            ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(self.evp_pkey.as_const_ptr()) })?;
+
+        let mut buffer = vec![0u8; self.algorithm.0.id.compressed_pub_key_len()];
+
+        let out_len = marshal_ec_public_key_to_buffer(&mut buffer, &ec_key, true)?;
+
+        debug_assert_eq!(buffer.len(), out_len);
+
+        buffer.truncate(out_len);
+
+        Ok(EcPublicKeyCompressedBin::new(buffer))
+    }
+}
+
+impl AsBigEndian<EcPublicKeyUncompressedBin<'static>> for PublicKey {
+    /// Provides the public key elliptic curve point to an uncompressed point bytes format.
+    /// # Errors
+    /// Returns an error if the public key fails to marshal.
+    fn as_be_bytes(
+        &self,
+    ) -> Result<EcPublicKeyUncompressedBin<'static>, crate::error::Unspecified> {
+        let mut uncompressed_bytes = vec![0u8; self.octets.len()];
+        uncompressed_bytes.copy_from_slice(&self.octets);
+        Ok(EcPublicKeyUncompressedBin::new(uncompressed_bytes))
     }
 }
 
@@ -234,7 +281,7 @@ fn verify_asn1_signature(
     msg: &[u8],
     signature: &[u8],
 ) -> Result<(), Unspecified> {
-    let pkey = evp_pkey_from_public_key(alg, public_key)?;
+    let pkey = try_parse_public_key_bytes(public_key, alg.nid())?;
 
     let mut md_ctx = DigestContext::new_uninit();
 
@@ -259,18 +306,6 @@ fn verify_asn1_signature(
     }
 
     Ok(())
-}
-
-#[inline]
-fn evp_pkey_from_public_key(
-    alg: &'static AlgorithmID,
-    public_key: &[u8],
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ec_group = ec_group_from_nid(alg.nid())?;
-    let ec_point = ec_point_from_bytes(&ec_group, public_key)?;
-    let pkey = evp_pkey_from_public_point(&ec_group, &ec_point)?;
-
-    Ok(pkey)
 }
 
 fn verify_ec_key_nid(
@@ -364,36 +399,84 @@ pub(crate) fn unmarshal_der_to_private_key(
 }
 
 pub(crate) fn marshal_public_key_to_buffer(
-    buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
-    evp_pkey: &ConstPointer<EVP_PKEY>,
+    buffer: &mut [u8],
+    evp_pkey: &LcPtr<EVP_PKEY>,
+    compressed: bool,
 ) -> Result<usize, Unspecified> {
-    let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(**evp_pkey) })?;
-    marshal_ec_public_key_to_buffer(buffer, &ec_key)
+    let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(evp_pkey.as_const_ptr()) })?;
+    marshal_ec_public_key_to_buffer(buffer, &ec_key, compressed)
 }
 
 pub(crate) fn marshal_ec_public_key_to_buffer(
-    buffer: &mut [u8; PUBLIC_KEY_MAX_LEN],
+    buffer: &mut [u8],
     ec_key: &ConstPointer<EC_KEY>,
+    compressed: bool,
 ) -> Result<usize, Unspecified> {
     let ec_group = ConstPointer::new(unsafe { EC_KEY_get0_group(**ec_key) })?;
 
     let ec_point = ConstPointer::new(unsafe { EC_KEY_get0_public_key(**ec_key) })?;
 
-    let out_len = ec_point_to_bytes(&ec_group, &ec_point, buffer)?;
+    let point_conversion_form = if compressed {
+        point_conversion_form_t::POINT_CONVERSION_COMPRESSED
+    } else {
+        point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED
+    };
+
+    let out_len = ec_point_to_bytes(&ec_group, &ec_point, buffer, point_conversion_form)?;
     Ok(out_len)
 }
 
-pub(crate) fn marshal_public_key(
-    evp_pkey: &ConstPointer<EVP_PKEY>,
+pub(crate) fn public_key_from_evp_pkey(
+    evp_pkey: &LcPtr<EVP_PKEY>,
     algorithm: &'static EcdsaSigningAlgorithm,
 ) -> Result<PublicKey, Unspecified> {
     let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
-    let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey)?;
+    let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey, false)?;
 
     Ok(PublicKey {
+        evp_pkey: evp_pkey.clone(),
         algorithm,
         octets: pub_key_bytes[0..key_len].into(),
     })
+}
+
+pub(crate) fn try_parse_public_key_bytes(
+    key_bytes: &[u8],
+    expected_curve_nid: i32,
+) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+    try_parse_subject_public_key_info_bytes(key_bytes)
+        .and_then(|key| {
+            validate_evp_key(&key.as_const(), expected_curve_nid)
+                .map(|()| key)
+                .map_err(|_| Unspecified)
+        })
+        .or(try_parse_public_key_raw_bytes(
+            key_bytes,
+            expected_curve_nid,
+        ))
+}
+
+fn try_parse_subject_public_key_info_bytes(
+    key_bytes: &[u8],
+) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+    // Try to parse as SubjectPublicKeyInfo first
+    let mut cbs = {
+        let mut cbs = MaybeUninit::<CBS>::uninit();
+        unsafe {
+            CBS_init(cbs.as_mut_ptr(), key_bytes.as_ptr(), key_bytes.len());
+            cbs.assume_init()
+        }
+    };
+    Ok(LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })?)
+}
+
+fn try_parse_public_key_raw_bytes(
+    key_bytes: &[u8],
+    expected_curve_nid: i32,
+) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+    let ec_group = ec_group_from_nid(expected_curve_nid)?;
+    let pub_key_point = ec_point_from_bytes(&ec_group, key_bytes)?;
+    evp_pkey_from_public_point(&ec_group, &pub_key_point)
 }
 
 #[inline]
@@ -551,17 +634,17 @@ pub(crate) fn ec_point_from_bytes(
 fn ec_point_to_bytes(
     ec_group: &ConstPointer<EC_GROUP>,
     ec_point: &ConstPointer<EC_POINT>,
-    buf: &mut [u8; PUBLIC_KEY_MAX_LEN],
+    buf: &mut [u8],
+    pt_conv_form: point_conversion_form_t,
 ) -> Result<usize, Unspecified> {
-    let pt_conv_form = point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED;
-
+    let buf_len = buf.len();
     let out_len = unsafe {
         EC_POINT_point2oct(
             **ec_group,
             **ec_point,
             pt_conv_form,
             buf.as_mut_ptr(),
-            PUBLIC_KEY_MAX_LEN,
+            buf_len,
             null_mut(),
         )
     };
@@ -620,10 +703,22 @@ unsafe fn ecdsa_sig_from_fixed(
     Ok(ecdsa_sig)
 }
 
+#[inline]
+pub(crate) const fn compressed_public_key_size_bytes(curve_field_bits: usize) -> usize {
+    1 + (curve_field_bits + 7) / 8
+}
+
+#[inline]
+pub(crate) const fn uncompressed_public_key_size_bytes(curve_field_bits: usize) -> usize {
+    1 + 2 * ((curve_field_bits + 7) / 8)
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::encoding::{AsDer, PublicKeyX509Der};
-    use crate::signature::EcdsaKeyPair;
+    use crate::encoding::{
+        AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
+    };
+    use crate::signature::{EcdsaKeyPair, UnparsedPublicKey, ECDSA_P256_SHA256_FIXED};
     use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
     use crate::test::from_dirty_hex;
     use crate::{signature, test};
@@ -685,5 +780,35 @@ mod tests {
 
         let actual_result = unparsed_pub_key.verify(msg.as_bytes(), &sig);
         assert!(actual_result.is_ok(), "Key: {}", test::to_hex(public_key));
+    }
+
+    #[test]
+    fn public_key_formats() {
+        const MESSAGE: &[u8] = b"message to be signed";
+
+        let key_pair = EcdsaKeyPair::generate(&ECDSA_P256_SHA256_FIXED_SIGNING).unwrap();
+        let public_key = key_pair.public_key();
+        let as_ref_bytes = public_key.as_ref();
+        let compressed = AsBigEndian::<EcPublicKeyCompressedBin>::as_be_bytes(public_key).unwrap();
+        let uncompressed =
+            AsBigEndian::<EcPublicKeyUncompressedBin>::as_be_bytes(public_key).unwrap();
+        let pub_x509 = AsDer::<PublicKeyX509Der>::as_der(public_key).unwrap();
+        assert_eq!(as_ref_bytes, uncompressed.as_ref());
+        assert_ne!(compressed.as_ref()[0], 0x04);
+
+        let rng = crate::rand::SystemRandom::new();
+
+        let signature = key_pair.sign(&rng, MESSAGE).unwrap();
+
+        for pub_key_bytes in [
+            as_ref_bytes,
+            compressed.as_ref(),
+            uncompressed.as_ref(),
+            pub_x509.as_ref(),
+        ] {
+            UnparsedPublicKey::new(&ECDSA_P256_SHA256_FIXED, pub_key_bytes)
+                .verify(MESSAGE, signature.as_ref())
+                .unwrap();
+        }
     }
 }
