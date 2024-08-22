@@ -14,13 +14,14 @@ use untrusted::Input;
 
 use aws_lc::{
     CBS_init, EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_MD_CTX_init, EVP_PKEY_CTX_new_id, EVP_PKEY_get_raw_private_key,
-    EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
-    EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_marshal_public_key,
-    EVP_parse_public_key, CBS, EVP_MD_CTX, EVP_PKEY, EVP_PKEY_ED25519,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id,
+    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key,
+    EVP_PKEY_new_raw_public_key, EVP_marshal_public_key, EVP_parse_public_key, CBS, EVP_PKEY,
+    EVP_PKEY_ED25519,
 };
 
 use crate::cbb::LcCBB;
+use crate::digest::digest_ctx::DigestContext;
 use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der,
 };
@@ -69,17 +70,11 @@ impl VerificationAlgorithm for EdDSAParameters {
     ) -> Result<(), Unspecified> {
         let public_key = try_ed25519_public_key_from_bytes(public_key)?;
 
-        let mut evp_md_ctx = {
-            let mut evp_md_ctx = MaybeUninit::<EVP_MD_CTX>::uninit();
-            unsafe {
-                EVP_MD_CTX_init(evp_md_ctx.as_mut_ptr());
-                evp_md_ctx.assume_init()
-            }
-        };
+        let mut evp_md_ctx = DigestContext::new_uninit();
 
         if 1 != unsafe {
             EVP_DigestVerifyInit(
-                &mut evp_md_ctx,
+                evp_md_ctx.as_mut_ptr(),
                 null_mut(),
                 null_mut(),
                 null_mut(),
@@ -91,7 +86,7 @@ impl VerificationAlgorithm for EdDSAParameters {
 
         if 1 != indicator_check!(unsafe {
             EVP_DigestVerify(
-                &mut evp_md_ctx,
+                evp_md_ctx.as_mut_ptr(),
                 signature.as_ptr(),
                 signature.len(),
                 msg.as_ptr(),
@@ -441,17 +436,12 @@ impl Ed25519KeyPair {
     #[inline]
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
         let mut sig_bytes = [0u8; ED25519_SIGNATURE_LEN];
-        let mut evp_md_ctx = {
-            let mut evp_md_ctx = MaybeUninit::<EVP_MD_CTX>::uninit();
-            unsafe {
-                EVP_MD_CTX_init(evp_md_ctx.as_mut_ptr());
-                evp_md_ctx.assume_init()
-            }
-        };
+
+        let mut evp_md_ctx = DigestContext::new_uninit();
 
         if 1 != unsafe {
             EVP_DigestSignInit(
-                &mut evp_md_ctx,
+                evp_md_ctx.as_mut_ptr(),
                 null_mut(),
                 null_mut(),
                 null_mut(),
@@ -464,7 +454,7 @@ impl Ed25519KeyPair {
         let mut out_sig_len = sig_bytes.len();
         if 1 != indicator_check!(unsafe {
             EVP_DigestSign(
-                &mut evp_md_ctx,
+                evp_md_ctx.as_mut_ptr(),
                 sig_bytes.as_mut_ptr().cast(),
                 &mut out_sig_len,
                 msg.as_ptr(),
