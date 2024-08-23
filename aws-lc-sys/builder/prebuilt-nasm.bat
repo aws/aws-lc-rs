@@ -1,3 +1,5 @@
+REM -- Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+REM -- SPDX-License-Identifier: Apache-2.0 OR ISC
 @echo off
 set "ScriptDir=%~dp0"
 set "ScriptDir=%ScriptDir:~0,-1%"
