@@ -319,6 +319,7 @@ static mut AWS_LC_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_SYS_INTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_EXTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_NO_ASM: bool = false;
+static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
 
 fn initialize() {
     unsafe {
@@ -328,6 +329,7 @@ fn initialize() {
         AWS_LC_SYS_EXTERNAL_BINDGEN =
             env_var_to_bool("AWS_LC_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
         AWS_LC_SYS_NO_ASM = env_var_to_bool("AWS_LC_SYS_NO_ASM").unwrap_or(false);
+        AWS_LC_SYS_PREBUILT_NASM = env_var_to_bool("AWS_LC_SYS_PREBUILT_NASM");
     }
 
     if !is_external_bindgen() && (is_internal_bindgen() || !has_bindgen_feature()) {
@@ -386,12 +388,20 @@ fn is_no_asm() -> bool {
     unsafe { AWS_LC_SYS_NO_ASM }
 }
 
+fn allow_prebuilt_nasm() -> Option<bool> {
+    unsafe { AWS_LC_SYS_PREBUILT_NASM }
+}
+
 fn has_bindgen_feature() -> bool {
     cfg!(feature = "bindgen")
 }
 
 fn has_pregenerated() -> bool {
     unsafe { PREGENERATED }
+}
+
+fn test_nasm_command() -> bool {
+    execute_command("nasm".as_ref(), &["-version".as_ref()]).status
 }
 
 fn prepare_cargo_cfg() {

@@ -1,0 +1,1182 @@
+Microsoft (R) COFF/PE Dumper Version 14.40.33813.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file vpaes-x86_64.obj
+
+File Type: COFF OBJECT
+
+_vpaes_encrypt_core:
+  0000000000000000: 49 89 D1           mov         r9,rdx
+  0000000000000003: 41 BB 10 00 00 00  mov         r11d,10h
+  0000000000000009: 8B 82 F0 00 00 00  mov         eax,dword ptr [rdx+0F0h]
+  000000000000000F: 66 41 0F 6F C9     movdqa      xmm1,xmm9
+  0000000000000014: 66 0F 6F 15 30 00  movdqa      xmm2,xmmword ptr [.rdata+30h]
+                    00 00
+  000000000000001C: 66 0F DF C8        pandn       xmm1,xmm0
+  0000000000000020: F3 41 0F 6F 29     movdqu      xmm5,xmmword ptr [r9]
+  0000000000000025: 66 0F 72 D1 04     psrld       xmm1,4
+  000000000000002A: 66 41 0F DB C1     pand        xmm0,xmm9
+  000000000000002F: 66 0F 38 00 D0     pshufb      xmm2,xmm0
+  0000000000000034: 66 0F 6F 05 40 00  movdqa      xmm0,xmmword ptr [.rdata+40h]
+                    00 00
+  000000000000003C: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  0000000000000041: 66 0F EF D5        pxor        xmm2,xmm5
+  0000000000000045: 49 83 C1 10        add         r9,10h
+  0000000000000049: 66 0F EF C2        pxor        xmm0,xmm2
+  000000000000004D: 4C 8D 15 F0 00 00  lea         r10,[.rdata+0F0h]
+                    00
+  0000000000000054: E9 77 00 00 00     jmp         L$enc_entry
+  0000000000000059: 90                 nop
+  000000000000005A: 90                 nop
+  000000000000005B: 90                 nop
+  000000000000005C: 90                 nop
+  000000000000005D: 90                 nop
+  000000000000005E: 90                 nop
+  000000000000005F: 90                 nop
+L$enc_loop:
+  0000000000000060: 66 41 0F 6F E5     movdqa      xmm4,xmm13
+  0000000000000065: 66 41 0F 6F C4     movdqa      xmm0,xmm12
+  000000000000006A: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  000000000000006F: 66 0F 38 00 C3     pshufb      xmm0,xmm3
+  0000000000000074: 66 0F EF E5        pxor        xmm4,xmm5
+  0000000000000078: 66 41 0F 6F EF     movdqa      xmm5,xmm15
+  000000000000007D: 66 0F EF C4        pxor        xmm0,xmm4
+  0000000000000081: 66 43 0F 6F 4C 13  movdqa      xmm1,xmmword ptr [r11+r10-40h]
+                    C0
+  0000000000000088: 66 0F 38 00 EA     pshufb      xmm5,xmm2
+  000000000000008D: 66 43 0F 6F 24 13  movdqa      xmm4,xmmword ptr [r11+r10]
+  0000000000000093: 66 41 0F 6F D6     movdqa      xmm2,xmm14
+  0000000000000098: 66 0F 38 00 D3     pshufb      xmm2,xmm3
+  000000000000009D: 66 0F 6F D8        movdqa      xmm3,xmm0
+  00000000000000A1: 66 0F EF D5        pxor        xmm2,xmm5
+  00000000000000A5: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  00000000000000AA: 49 83 C1 10        add         r9,10h
+  00000000000000AE: 66 0F EF C2        pxor        xmm0,xmm2
+  00000000000000B2: 66 0F 38 00 DC     pshufb      xmm3,xmm4
+  00000000000000B7: 49 83 C3 10        add         r11,10h
+  00000000000000BB: 66 0F EF D8        pxor        xmm3,xmm0
+  00000000000000BF: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  00000000000000C4: 49 83 E3 30        and         r11,30h
+  00000000000000C8: 48 83 E8 01        sub         rax,1
+  00000000000000CC: 66 0F EF C3        pxor        xmm0,xmm3
+L$enc_entry:
+  00000000000000D0: 66 41 0F 6F C9     movdqa      xmm1,xmm9
+  00000000000000D5: 66 41 0F 6F EB     movdqa      xmm5,xmm11
+  00000000000000DA: 66 0F DF C8        pandn       xmm1,xmm0
+  00000000000000DE: 66 0F 72 D1 04     psrld       xmm1,4
+  00000000000000E3: 66 41 0F DB C1     pand        xmm0,xmm9
+  00000000000000E8: 66 0F 38 00 E8     pshufb      xmm5,xmm0
+  00000000000000ED: 66 41 0F 6F DA     movdqa      xmm3,xmm10
+  00000000000000F2: 66 0F EF C1        pxor        xmm0,xmm1
+  00000000000000F6: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  00000000000000FB: 66 41 0F 6F E2     movdqa      xmm4,xmm10
+  0000000000000100: 66 0F EF DD        pxor        xmm3,xmm5
+  0000000000000104: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  0000000000000109: 66 41 0F 6F D2     movdqa      xmm2,xmm10
+  000000000000010E: 66 0F EF E5        pxor        xmm4,xmm5
+  0000000000000112: 66 0F 38 00 D3     pshufb      xmm2,xmm3
+  0000000000000117: 66 41 0F 6F DA     movdqa      xmm3,xmm10
+  000000000000011C: 66 0F EF D0        pxor        xmm2,xmm0
+  0000000000000120: 66 0F 38 00 DC     pshufb      xmm3,xmm4
+  0000000000000125: F3 41 0F 6F 29     movdqu      xmm5,xmmword ptr [r9]
+  000000000000012A: 66 0F EF D9        pxor        xmm3,xmm1
+  000000000000012E: 0F 85 2C FF FF FF  jne         L$enc_loop
+  0000000000000134: 66 41 0F 6F 62 A0  movdqa      xmm4,xmmword ptr [r10-60h]
+  000000000000013A: 66 41 0F 6F 42 B0  movdqa      xmm0,xmmword ptr [r10-50h]
+  0000000000000140: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  0000000000000145: 66 0F EF E5        pxor        xmm4,xmm5
+  0000000000000149: 66 0F 38 00 C3     pshufb      xmm0,xmm3
+  000000000000014E: 66 43 0F 6F 4C 13  movdqa      xmm1,xmmword ptr [r11+r10+40h]
+                    40
+  0000000000000155: 66 0F EF C4        pxor        xmm0,xmm4
+  0000000000000159: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  000000000000015E: F3 C3              rep ret
+_vpaes_encrypt_core_2x:
+  0000000000000160: 49 89 D1           mov         r9,rdx
+  0000000000000163: 41 BB 10 00 00 00  mov         r11d,10h
+  0000000000000169: 8B 82 F0 00 00 00  mov         eax,dword ptr [rdx+0F0h]
+  000000000000016F: 66 41 0F 6F C9     movdqa      xmm1,xmm9
+  0000000000000174: 66 41 0F 6F F9     movdqa      xmm7,xmm9
+  0000000000000179: 66 0F 6F 15 30 00  movdqa      xmm2,xmmword ptr [.rdata+30h]
+                    00 00
+  0000000000000181: 66 44 0F 6F C2     movdqa      xmm8,xmm2
+  0000000000000186: 66 0F DF C8        pandn       xmm1,xmm0
+  000000000000018A: 66 0F DF FE        pandn       xmm7,xmm6
+  000000000000018E: F3 41 0F 6F 29     movdqu      xmm5,xmmword ptr [r9]
+  0000000000000193: 66 0F 72 D1 04     psrld       xmm1,4
+  0000000000000198: 66 0F 72 D7 04     psrld       xmm7,4
+  000000000000019D: 66 41 0F DB C1     pand        xmm0,xmm9
+  00000000000001A2: 66 41 0F DB F1     pand        xmm6,xmm9
+  00000000000001A7: 66 0F 38 00 D0     pshufb      xmm2,xmm0
+  00000000000001AC: 66 44 0F 38 00 C6  pshufb      xmm8,xmm6
+  00000000000001B2: 66 0F 6F 05 40 00  movdqa      xmm0,xmmword ptr [.rdata+40h]
+                    00 00
+  00000000000001BA: 66 0F 6F F0        movdqa      xmm6,xmm0
+  00000000000001BE: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  00000000000001C3: 66 0F 38 00 F7     pshufb      xmm6,xmm7
+  00000000000001C8: 66 0F EF D5        pxor        xmm2,xmm5
+  00000000000001CC: 66 44 0F EF C5     pxor        xmm8,xmm5
+  00000000000001D1: 49 83 C1 10        add         r9,10h
+  00000000000001D5: 66 0F EF C2        pxor        xmm0,xmm2
+  00000000000001D9: 66 41 0F EF F0     pxor        xmm6,xmm8
+  00000000000001DE: 4C 8D 15 F0 00 00  lea         r10,[.rdata+0F0h]
+                    00
+  00000000000001E5: E9 E0 00 00 00     jmp         L$enc2x_entry
+  00000000000001EA: 90                 nop
+  00000000000001EB: 90                 nop
+  00000000000001EC: 90                 nop
+  00000000000001ED: 90                 nop
+  00000000000001EE: 90                 nop
+  00000000000001EF: 90                 nop
+L$enc2x_loop:
+  00000000000001F0: 66 0F 6F 25 50 00  movdqa      xmm4,xmmword ptr [.rdata+50h]
+                    00 00
+  00000000000001F8: 66 0F 6F 05 60 00  movdqa      xmm0,xmmword ptr [.rdata+60h]
+                    00 00
+  0000000000000200: 66 44 0F 6F E4     movdqa      xmm12,xmm4
+  0000000000000205: 66 0F 6F F0        movdqa      xmm6,xmm0
+  0000000000000209: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  000000000000020E: 66 45 0F 38 00 E0  pshufb      xmm12,xmm8
+  0000000000000214: 66 0F 38 00 C3     pshufb      xmm0,xmm3
+  0000000000000219: 66 41 0F 38 00 F3  pshufb      xmm6,xmm11
+  000000000000021F: 66 0F EF E5        pxor        xmm4,xmm5
+  0000000000000223: 66 44 0F EF E5     pxor        xmm12,xmm5
+  0000000000000228: 66 0F 6F 2D 70 00  movdqa      xmm5,xmmword ptr [.rdata+70h]
+                    00 00
+  0000000000000230: 66 44 0F 6F ED     movdqa      xmm13,xmm5
+  0000000000000235: 66 0F EF C4        pxor        xmm0,xmm4
+  0000000000000239: 66 41 0F EF F4     pxor        xmm6,xmm12
+  000000000000023E: 66 43 0F 6F 4C 13  movdqa      xmm1,xmmword ptr [r11+r10-40h]
+                    C0
+  0000000000000245: 66 0F 38 00 EA     pshufb      xmm5,xmm2
+  000000000000024A: 66 45 0F 38 00 E8  pshufb      xmm13,xmm8
+  0000000000000250: 66 43 0F 6F 24 13  movdqa      xmm4,xmmword ptr [r11+r10]
+  0000000000000256: 66 0F 6F 15 80 00  movdqa      xmm2,xmmword ptr [.rdata+80h]
+                    00 00
+  000000000000025E: 66 44 0F 6F C2     movdqa      xmm8,xmm2
+  0000000000000263: 66 0F 38 00 D3     pshufb      xmm2,xmm3
+  0000000000000268: 66 45 0F 38 00 C3  pshufb      xmm8,xmm11
+  000000000000026E: 66 0F 6F D8        movdqa      xmm3,xmm0
+  0000000000000272: 66 44 0F 6F DE     movdqa      xmm11,xmm6
+  0000000000000277: 66 0F EF D5        pxor        xmm2,xmm5
+  000000000000027B: 66 45 0F EF C5     pxor        xmm8,xmm13
+  0000000000000280: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  0000000000000285: 66 0F 38 00 F1     pshufb      xmm6,xmm1
+  000000000000028A: 49 83 C1 10        add         r9,10h
+  000000000000028E: 66 0F EF C2        pxor        xmm0,xmm2
+  0000000000000292: 66 41 0F EF F0     pxor        xmm6,xmm8
+  0000000000000297: 66 0F 38 00 DC     pshufb      xmm3,xmm4
+  000000000000029C: 66 44 0F 38 00 DC  pshufb      xmm11,xmm4
+  00000000000002A2: 49 83 C3 10        add         r11,10h
+  00000000000002A6: 66 0F EF D8        pxor        xmm3,xmm0
+  00000000000002AA: 66 44 0F EF DE     pxor        xmm11,xmm6
+  00000000000002AF: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  00000000000002B4: 66 0F 38 00 F1     pshufb      xmm6,xmm1
+  00000000000002B9: 49 83 E3 30        and         r11,30h
+  00000000000002BD: 48 83 E8 01        sub         rax,1
+  00000000000002C1: 66 0F EF C3        pxor        xmm0,xmm3
+  00000000000002C5: 66 41 0F EF F3     pxor        xmm6,xmm11
+L$enc2x_entry:
+  00000000000002CA: 66 41 0F 6F C9     movdqa      xmm1,xmm9
+  00000000000002CF: 66 41 0F 6F F9     movdqa      xmm7,xmm9
+  00000000000002D4: 66 0F 6F 2D 10 00  movdqa      xmm5,xmmword ptr [.rdata+10h]
+                    00 00
+  00000000000002DC: 66 44 0F 6F ED     movdqa      xmm13,xmm5
+  00000000000002E1: 66 0F DF C8        pandn       xmm1,xmm0
+  00000000000002E5: 66 0F DF FE        pandn       xmm7,xmm6
+  00000000000002E9: 66 0F 72 D1 04     psrld       xmm1,4
+  00000000000002EE: 66 0F 72 D7 04     psrld       xmm7,4
+  00000000000002F3: 66 41 0F DB C1     pand        xmm0,xmm9
+  00000000000002F8: 66 41 0F DB F1     pand        xmm6,xmm9
+  00000000000002FD: 66 0F 38 00 E8     pshufb      xmm5,xmm0
+  0000000000000302: 66 44 0F 38 00 EE  pshufb      xmm13,xmm6
+  0000000000000308: 66 41 0F 6F DA     movdqa      xmm3,xmm10
+  000000000000030D: 66 45 0F 6F DA     movdqa      xmm11,xmm10
+  0000000000000312: 66 0F EF C1        pxor        xmm0,xmm1
+  0000000000000316: 66 0F EF F7        pxor        xmm6,xmm7
+  000000000000031A: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  000000000000031F: 66 44 0F 38 00 DF  pshufb      xmm11,xmm7
+  0000000000000325: 66 41 0F 6F E2     movdqa      xmm4,xmm10
+  000000000000032A: 66 45 0F 6F E2     movdqa      xmm12,xmm10
+  000000000000032F: 66 0F EF DD        pxor        xmm3,xmm5
+  0000000000000333: 66 45 0F EF DD     pxor        xmm11,xmm13
+  0000000000000338: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  000000000000033D: 66 44 0F 38 00 E6  pshufb      xmm12,xmm6
+  0000000000000343: 66 41 0F 6F D2     movdqa      xmm2,xmm10
+  0000000000000348: 66 45 0F 6F C2     movdqa      xmm8,xmm10
+  000000000000034D: 66 0F EF E5        pxor        xmm4,xmm5
+  0000000000000351: 66 45 0F EF E5     pxor        xmm12,xmm13
+  0000000000000356: 66 0F 38 00 D3     pshufb      xmm2,xmm3
+  000000000000035B: 66 45 0F 38 00 C3  pshufb      xmm8,xmm11
+  0000000000000361: 66 41 0F 6F DA     movdqa      xmm3,xmm10
+  0000000000000366: 66 45 0F 6F DA     movdqa      xmm11,xmm10
+  000000000000036B: 66 0F EF D0        pxor        xmm2,xmm0
+  000000000000036F: 66 44 0F EF C6     pxor        xmm8,xmm6
+  0000000000000374: 66 0F 38 00 DC     pshufb      xmm3,xmm4
+  0000000000000379: 66 45 0F 38 00 DC  pshufb      xmm11,xmm12
+  000000000000037F: F3 41 0F 6F 29     movdqu      xmm5,xmmword ptr [r9]
+  0000000000000384: 66 0F EF D9        pxor        xmm3,xmm1
+  0000000000000388: 66 44 0F EF DF     pxor        xmm11,xmm7
+  000000000000038D: 0F 85 5D FE FF FF  jne         L$enc2x_loop
+  0000000000000393: 66 41 0F 6F 62 A0  movdqa      xmm4,xmmword ptr [r10-60h]
+  0000000000000399: 66 41 0F 6F 42 B0  movdqa      xmm0,xmmword ptr [r10-50h]
+  000000000000039F: 66 44 0F 6F E4     movdqa      xmm12,xmm4
+  00000000000003A4: 66 0F 6F F0        movdqa      xmm6,xmm0
+  00000000000003A8: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  00000000000003AD: 66 45 0F 38 00 E0  pshufb      xmm12,xmm8
+  00000000000003B3: 66 0F EF E5        pxor        xmm4,xmm5
+  00000000000003B7: 66 44 0F EF E5     pxor        xmm12,xmm5
+  00000000000003BC: 66 0F 38 00 C3     pshufb      xmm0,xmm3
+  00000000000003C1: 66 41 0F 38 00 F3  pshufb      xmm6,xmm11
+  00000000000003C7: 66 43 0F 6F 4C 13  movdqa      xmm1,xmmword ptr [r11+r10+40h]
+                    40
+  00000000000003CE: 66 0F EF C4        pxor        xmm0,xmm4
+  00000000000003D2: 66 41 0F EF F4     pxor        xmm6,xmm12
+  00000000000003D7: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  00000000000003DC: 66 0F 38 00 F1     pshufb      xmm6,xmm1
+  00000000000003E1: F3 C3              rep ret
+  00000000000003E3: 90                 nop
+  00000000000003E4: 90                 nop
+  00000000000003E5: 90                 nop
+  00000000000003E6: 90                 nop
+  00000000000003E7: 90                 nop
+  00000000000003E8: 90                 nop
+  00000000000003E9: 90                 nop
+  00000000000003EA: 90                 nop
+  00000000000003EB: 90                 nop
+  00000000000003EC: 90                 nop
+  00000000000003ED: 90                 nop
+  00000000000003EE: 90                 nop
+  00000000000003EF: 90                 nop
+_vpaes_decrypt_core:
+  00000000000003F0: 49 89 D1           mov         r9,rdx
+  00000000000003F3: 8B 82 F0 00 00 00  mov         eax,dword ptr [rdx+0F0h]
+  00000000000003F9: 66 41 0F 6F C9     movdqa      xmm1,xmm9
+  00000000000003FE: 66 0F 6F 15 50 02  movdqa      xmm2,xmmword ptr [.rdata+250h]
+                    00 00
+  0000000000000406: 66 0F DF C8        pandn       xmm1,xmm0
+  000000000000040A: 49 89 C3           mov         r11,rax
+  000000000000040D: 66 0F 72 D1 04     psrld       xmm1,4
+  0000000000000412: F3 41 0F 6F 29     movdqu      xmm5,xmmword ptr [r9]
+  0000000000000417: 49 C1 E3 04        shl         r11,4
+  000000000000041B: 66 41 0F DB C1     pand        xmm0,xmm9
+  0000000000000420: 66 0F 38 00 D0     pshufb      xmm2,xmm0
+  0000000000000425: 66 0F 6F 05 60 02  movdqa      xmm0,xmmword ptr [.rdata+260h]
+                    00 00
+  000000000000042D: 49 83 F3 30        xor         r11,30h
+  0000000000000431: 4C 8D 15 90 02 00  lea         r10,[.rdata+290h]
+                    00
+  0000000000000438: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  000000000000043D: 49 83 E3 30        and         r11,30h
+  0000000000000441: 66 0F EF D5        pxor        xmm2,xmm5
+  0000000000000445: 66 0F 6F 2D E0 00  movdqa      xmm5,xmmword ptr [.rdata+0E0h]
+                    00 00
+  000000000000044D: 66 0F EF C2        pxor        xmm0,xmm2
+  0000000000000451: 49 83 C1 10        add         r9,10h
+  0000000000000455: 4D 01 D3           add         r11,r10
+  0000000000000458: E9 97 00 00 00     jmp         L$dec_entry
+  000000000000045D: 90                 nop
+  000000000000045E: 90                 nop
+  000000000000045F: 90                 nop
+L$dec_loop:
+  0000000000000460: 66 41 0F 6F 62 E0  movdqa      xmm4,xmmword ptr [r10-20h]
+  0000000000000466: 66 41 0F 6F 4A F0  movdqa      xmm1,xmmword ptr [r10-10h]
+  000000000000046C: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  0000000000000471: 66 0F 38 00 CB     pshufb      xmm1,xmm3
+  0000000000000476: 66 0F EF C4        pxor        xmm0,xmm4
+  000000000000047A: 66 41 0F 6F 22     movdqa      xmm4,xmmword ptr [r10]
+  000000000000047F: 66 0F EF C1        pxor        xmm0,xmm1
+  0000000000000483: 66 41 0F 6F 4A 10  movdqa      xmm1,xmmword ptr [r10+10h]
+  0000000000000489: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  000000000000048E: 66 0F 38 00 C5     pshufb      xmm0,xmm5
+  0000000000000493: 66 0F 38 00 CB     pshufb      xmm1,xmm3
+  0000000000000498: 66 0F EF C4        pxor        xmm0,xmm4
+  000000000000049C: 66 41 0F 6F 62 20  movdqa      xmm4,xmmword ptr [r10+20h]
+  00000000000004A2: 66 0F EF C1        pxor        xmm0,xmm1
+  00000000000004A6: 66 41 0F 6F 4A 30  movdqa      xmm1,xmmword ptr [r10+30h]
+  00000000000004AC: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  00000000000004B1: 66 0F 38 00 C5     pshufb      xmm0,xmm5
+  00000000000004B6: 66 0F 38 00 CB     pshufb      xmm1,xmm3
+  00000000000004BB: 66 0F EF C4        pxor        xmm0,xmm4
+  00000000000004BF: 66 41 0F 6F 62 40  movdqa      xmm4,xmmword ptr [r10+40h]
+  00000000000004C5: 66 0F EF C1        pxor        xmm0,xmm1
+  00000000000004C9: 66 41 0F 6F 4A 50  movdqa      xmm1,xmmword ptr [r10+50h]
+  00000000000004CF: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  00000000000004D4: 66 0F 38 00 C5     pshufb      xmm0,xmm5
+  00000000000004D9: 66 0F 38 00 CB     pshufb      xmm1,xmm3
+  00000000000004DE: 66 0F EF C4        pxor        xmm0,xmm4
+  00000000000004E2: 49 83 C1 10        add         r9,10h
+  00000000000004E6: 66 0F 3A 0F ED 0C  palignr     xmm5,xmm5,0Ch
+  00000000000004EC: 66 0F EF C1        pxor        xmm0,xmm1
+  00000000000004F0: 48 83 E8 01        sub         rax,1
+L$dec_entry:
+  00000000000004F4: 66 41 0F 6F C9     movdqa      xmm1,xmm9
+  00000000000004F9: 66 0F DF C8        pandn       xmm1,xmm0
+  00000000000004FD: 66 41 0F 6F D3     movdqa      xmm2,xmm11
+  0000000000000502: 66 0F 72 D1 04     psrld       xmm1,4
+  0000000000000507: 66 41 0F DB C1     pand        xmm0,xmm9
+  000000000000050C: 66 0F 38 00 D0     pshufb      xmm2,xmm0
+  0000000000000511: 66 41 0F 6F DA     movdqa      xmm3,xmm10
+  0000000000000516: 66 0F EF C1        pxor        xmm0,xmm1
+  000000000000051A: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  000000000000051F: 66 41 0F 6F E2     movdqa      xmm4,xmm10
+  0000000000000524: 66 0F EF DA        pxor        xmm3,xmm2
+  0000000000000528: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  000000000000052D: 66 0F EF E2        pxor        xmm4,xmm2
+  0000000000000531: 66 41 0F 6F D2     movdqa      xmm2,xmm10
+  0000000000000536: 66 0F 38 00 D3     pshufb      xmm2,xmm3
+  000000000000053B: 66 41 0F 6F DA     movdqa      xmm3,xmm10
+  0000000000000540: 66 0F EF D0        pxor        xmm2,xmm0
+  0000000000000544: 66 0F 38 00 DC     pshufb      xmm3,xmm4
+  0000000000000549: F3 41 0F 6F 01     movdqu      xmm0,xmmword ptr [r9]
+  000000000000054E: 66 0F EF D9        pxor        xmm3,xmm1
+  0000000000000552: 0F 85 08 FF FF FF  jne         L$dec_loop
+  0000000000000558: 66 41 0F 6F 62 60  movdqa      xmm4,xmmword ptr [r10+60h]
+  000000000000055E: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  0000000000000563: 66 0F EF E0        pxor        xmm4,xmm0
+  0000000000000567: 66 41 0F 6F 42 70  movdqa      xmm0,xmmword ptr [r10+70h]
+  000000000000056D: 66 41 0F 6F 93 A0  movdqa      xmm2,xmmword ptr [r11-160h]
+                    FE FF FF
+  0000000000000576: 66 0F 38 00 C3     pshufb      xmm0,xmm3
+  000000000000057B: 66 0F EF C4        pxor        xmm0,xmm4
+  000000000000057F: 66 0F 38 00 C2     pshufb      xmm0,xmm2
+  0000000000000584: F3 C3              rep ret
+  0000000000000586: 90                 nop
+  0000000000000587: 90                 nop
+  0000000000000588: 90                 nop
+  0000000000000589: 90                 nop
+  000000000000058A: 90                 nop
+  000000000000058B: 90                 nop
+  000000000000058C: 90                 nop
+  000000000000058D: 90                 nop
+  000000000000058E: 90                 nop
+  000000000000058F: 90                 nop
+_vpaes_schedule_core:
+  0000000000000590: E8 1B 0A 00 00     call        _vpaes_preheat
+  0000000000000595: 66 44 0F 6F 05 70  movdqa      xmm8,xmmword ptr [.rdata+170h]
+                    01 00 00
+  000000000000059E: F3 0F 6F 07        movdqu      xmm0,xmmword ptr [rdi]
+  00000000000005A2: 66 0F 6F D8        movdqa      xmm3,xmm0
+  00000000000005A6: 4C 8D 1D 30 00 00  lea         r11,[.rdata+30h]
+                    00
+  00000000000005AD: E8 5E 02 00 00     call        _vpaes_schedule_transform
+  00000000000005B2: 66 0F 6F F8        movdqa      xmm7,xmm0
+  00000000000005B6: 4C 8D 15 30 01 00  lea         r10,[.rdata+130h]
+                    00
+  00000000000005BD: 48 85 C9           test        rcx,rcx
+  00000000000005C0: 0F 85 09 00 00 00  jne         L$schedule_am_decrypting
+  00000000000005C6: F3 0F 7F 02        movdqu      xmmword ptr [rdx],xmm0
+  00000000000005CA: E9 13 00 00 00     jmp         L$schedule_go
+L$schedule_am_decrypting:
+  00000000000005CF: 66 43 0F 6F 0C 10  movdqa      xmm1,xmmword ptr [r8+r10]
+  00000000000005D5: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  00000000000005DA: F3 0F 7F 1A        movdqu      xmmword ptr [rdx],xmm3
+  00000000000005DE: 49 83 F0 30        xor         r8,30h
+L$schedule_go:
+  00000000000005E2: 81 FE C0 00 00 00  cmp         esi,0C0h
+  00000000000005E8: 0F 87 92 00 00 00  ja          L$schedule_256
+  00000000000005EE: 0F 84 2C 00 00 00  je          L$schedule_192
+L$schedule_128:
+  00000000000005F4: BE 0A 00 00 00     mov         esi,0Ah
+L$oop_schedule_128:
+  00000000000005F9: E8 52 01 00 00     call        _vpaes_schedule_round
+  00000000000005FE: 48 FF CE           dec         rsi
+  0000000000000601: 0F 84 C9 00 00 00  je          L$schedule_mangle_last
+  0000000000000607: E8 34 02 00 00     call        _vpaes_schedule_mangle
+  000000000000060C: E9 E8 FF FF FF     jmp         L$oop_schedule_128
+  0000000000000611: 90                 nop
+  0000000000000612: 90                 nop
+  0000000000000613: 90                 nop
+  0000000000000614: 90                 nop
+  0000000000000615: 90                 nop
+  0000000000000616: 90                 nop
+  0000000000000617: 90                 nop
+  0000000000000618: 90                 nop
+  0000000000000619: 90                 nop
+  000000000000061A: 90                 nop
+  000000000000061B: 90                 nop
+  000000000000061C: 90                 nop
+  000000000000061D: 90                 nop
+  000000000000061E: 90                 nop
+  000000000000061F: 90                 nop
+L$schedule_192:
+  0000000000000620: F3 0F 6F 47 08     movdqu      xmm0,xmmword ptr [rdi+8]
+  0000000000000625: E8 E6 01 00 00     call        _vpaes_schedule_transform
+  000000000000062A: 66 0F 6F F0        movdqa      xmm6,xmm0
+  000000000000062E: 66 0F EF E4        pxor        xmm4,xmm4
+  0000000000000632: 0F 12 F4           movhlps     xmm6,xmm4
+  0000000000000635: BE 04 00 00 00     mov         esi,4
+L$oop_schedule_192:
+  000000000000063A: E8 11 01 00 00     call        _vpaes_schedule_round
+  000000000000063F: 66 0F 3A 0F C6 08  palignr     xmm0,xmm6,8
+  0000000000000645: E8 F6 01 00 00     call        _vpaes_schedule_mangle
+  000000000000064A: E8 E1 00 00 00     call        _vpaes_schedule_192_smear
+  000000000000064F: E8 EC 01 00 00     call        _vpaes_schedule_mangle
+  0000000000000654: E8 F7 00 00 00     call        _vpaes_schedule_round
+  0000000000000659: 48 FF CE           dec         rsi
+  000000000000065C: 0F 84 6E 00 00 00  je          L$schedule_mangle_last
+  0000000000000662: E8 D9 01 00 00     call        _vpaes_schedule_mangle
+  0000000000000667: E8 C4 00 00 00     call        _vpaes_schedule_192_smear
+  000000000000066C: E9 C9 FF FF FF     jmp         L$oop_schedule_192
+  0000000000000671: 90                 nop
+  0000000000000672: 90                 nop
+  0000000000000673: 90                 nop
+  0000000000000674: 90                 nop
+  0000000000000675: 90                 nop
+  0000000000000676: 90                 nop
+  0000000000000677: 90                 nop
+  0000000000000678: 90                 nop
+  0000000000000679: 90                 nop
+  000000000000067A: 90                 nop
+  000000000000067B: 90                 nop
+  000000000000067C: 90                 nop
+  000000000000067D: 90                 nop
+  000000000000067E: 90                 nop
+  000000000000067F: 90                 nop
+L$schedule_256:
+  0000000000000680: F3 0F 6F 47 10     movdqu      xmm0,xmmword ptr [rdi+10h]
+  0000000000000685: E8 86 01 00 00     call        _vpaes_schedule_transform
+  000000000000068A: BE 07 00 00 00     mov         esi,7
+L$oop_schedule_256:
+  000000000000068F: E8 AC 01 00 00     call        _vpaes_schedule_mangle
+  0000000000000694: 66 0F 6F F0        movdqa      xmm6,xmm0
+  0000000000000698: E8 B3 00 00 00     call        _vpaes_schedule_round
+  000000000000069D: 48 FF CE           dec         rsi
+  00000000000006A0: 0F 84 2A 00 00 00  je          L$schedule_mangle_last
+  00000000000006A6: E8 95 01 00 00     call        _vpaes_schedule_mangle
+  00000000000006AB: 66 0F 70 C0 FF     pshufd      xmm0,xmm0,0FFh
+  00000000000006B0: 66 0F 6F EF        movdqa      xmm5,xmm7
+  00000000000006B4: 66 0F 6F FE        movdqa      xmm7,xmm6
+  00000000000006B8: E8 B4 00 00 00     call        _vpaes_schedule_low_round
+  00000000000006BD: 66 0F 6F FD        movdqa      xmm7,xmm5
+  00000000000006C1: E9 C9 FF FF FF     jmp         L$oop_schedule_256
+  00000000000006C6: 90                 nop
+  00000000000006C7: 90                 nop
+  00000000000006C8: 90                 nop
+  00000000000006C9: 90                 nop
+  00000000000006CA: 90                 nop
+  00000000000006CB: 90                 nop
+  00000000000006CC: 90                 nop
+  00000000000006CD: 90                 nop
+  00000000000006CE: 90                 nop
+  00000000000006CF: 90                 nop
+L$schedule_mangle_last:
+  00000000000006D0: 4C 8D 1D B0 01 00  lea         r11,[.rdata+1B0h]
+                    00
+  00000000000006D7: 48 85 C9           test        rcx,rcx
+  00000000000006DA: 0F 85 16 00 00 00  jne         L$schedule_mangle_last_dec
+  00000000000006E0: 66 43 0F 6F 0C 10  movdqa      xmm1,xmmword ptr [r8+r10]
+  00000000000006E6: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  00000000000006EB: 4C 8D 1D 90 01 00  lea         r11,[.rdata+190h]
+                    00
+  00000000000006F2: 48 83 C2 20        add         rdx,20h
+L$schedule_mangle_last_dec:
+  00000000000006F6: 48 83 C2 F0        add         rdx,0FFFFFFFFFFFFFFF0h
+  00000000000006FA: 66 0F EF 05 80 01  pxor        xmm0,xmmword ptr [.rdata+180h]
+                    00 00
+  0000000000000702: E8 09 01 00 00     call        _vpaes_schedule_transform
+  0000000000000707: F3 0F 7F 02        movdqu      xmmword ptr [rdx],xmm0
+  000000000000070B: 66 0F EF C0        pxor        xmm0,xmm0
+  000000000000070F: 66 0F EF C9        pxor        xmm1,xmm1
+  0000000000000713: 66 0F EF D2        pxor        xmm2,xmm2
+  0000000000000717: 66 0F EF DB        pxor        xmm3,xmm3
+  000000000000071B: 66 0F EF E4        pxor        xmm4,xmm4
+  000000000000071F: 66 0F EF ED        pxor        xmm5,xmm5
+  0000000000000723: 66 0F EF F6        pxor        xmm6,xmm6
+  0000000000000727: 66 0F EF FF        pxor        xmm7,xmm7
+  000000000000072B: F3 C3              rep ret
+  000000000000072D: 90                 nop
+  000000000000072E: 90                 nop
+  000000000000072F: 90                 nop
+_vpaes_schedule_192_smear:
+  0000000000000730: 66 0F 70 CE 80     pshufd      xmm1,xmm6,80h
+  0000000000000735: 66 0F 70 C7 FE     pshufd      xmm0,xmm7,0FEh
+  000000000000073A: 66 0F EF F1        pxor        xmm6,xmm1
+  000000000000073E: 66 0F EF C9        pxor        xmm1,xmm1
+  0000000000000742: 66 0F EF F0        pxor        xmm6,xmm0
+  0000000000000746: 66 0F 6F C6        movdqa      xmm0,xmm6
+  000000000000074A: 0F 12 F1           movhlps     xmm6,xmm1
+  000000000000074D: F3 C3              rep ret
+  000000000000074F: 90                 nop
+_vpaes_schedule_round:
+  0000000000000750: 66 0F EF C9        pxor        xmm1,xmm1
+  0000000000000754: 66 41 0F 3A 0F C8  palignr     xmm1,xmm8,0Fh
+                    0F
+  000000000000075B: 66 45 0F 3A 0F C0  palignr     xmm8,xmm8,0Fh
+                    0F
+  0000000000000762: 66 0F EF F9        pxor        xmm7,xmm1
+  0000000000000766: 66 0F 70 C0 FF     pshufd      xmm0,xmm0,0FFh
+  000000000000076B: 66 0F 3A 0F C0 01  palignr     xmm0,xmm0,1
+_vpaes_schedule_low_round:
+  0000000000000771: 66 0F 6F CF        movdqa      xmm1,xmm7
+  0000000000000775: 66 0F 73 FF 04     pslldq      xmm7,4
+  000000000000077A: 66 0F EF F9        pxor        xmm7,xmm1
+  000000000000077E: 66 0F 6F CF        movdqa      xmm1,xmm7
+  0000000000000782: 66 0F 73 FF 08     pslldq      xmm7,8
+  0000000000000787: 66 0F EF F9        pxor        xmm7,xmm1
+  000000000000078B: 66 0F EF 3D 80 01  pxor        xmm7,xmmword ptr [.rdata+180h]
+                    00 00
+  0000000000000793: 66 41 0F 6F C9     movdqa      xmm1,xmm9
+  0000000000000798: 66 0F DF C8        pandn       xmm1,xmm0
+  000000000000079C: 66 0F 72 D1 04     psrld       xmm1,4
+  00000000000007A1: 66 41 0F DB C1     pand        xmm0,xmm9
+  00000000000007A6: 66 41 0F 6F D3     movdqa      xmm2,xmm11
+  00000000000007AB: 66 0F 38 00 D0     pshufb      xmm2,xmm0
+  00000000000007B0: 66 0F EF C1        pxor        xmm0,xmm1
+  00000000000007B4: 66 41 0F 6F DA     movdqa      xmm3,xmm10
+  00000000000007B9: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  00000000000007BE: 66 0F EF DA        pxor        xmm3,xmm2
+  00000000000007C2: 66 41 0F 6F E2     movdqa      xmm4,xmm10
+  00000000000007C7: 66 0F 38 00 E0     pshufb      xmm4,xmm0
+  00000000000007CC: 66 0F EF E2        pxor        xmm4,xmm2
+  00000000000007D0: 66 41 0F 6F D2     movdqa      xmm2,xmm10
+  00000000000007D5: 66 0F 38 00 D3     pshufb      xmm2,xmm3
+  00000000000007DA: 66 0F EF D0        pxor        xmm2,xmm0
+  00000000000007DE: 66 41 0F 6F DA     movdqa      xmm3,xmm10
+  00000000000007E3: 66 0F 38 00 DC     pshufb      xmm3,xmm4
+  00000000000007E8: 66 0F EF D9        pxor        xmm3,xmm1
+  00000000000007EC: 66 41 0F 6F E5     movdqa      xmm4,xmm13
+  00000000000007F1: 66 0F 38 00 E2     pshufb      xmm4,xmm2
+  00000000000007F6: 66 41 0F 6F C4     movdqa      xmm0,xmm12
+  00000000000007FB: 66 0F 38 00 C3     pshufb      xmm0,xmm3
+  0000000000000800: 66 0F EF C4        pxor        xmm0,xmm4
+  0000000000000804: 66 0F EF C7        pxor        xmm0,xmm7
+  0000000000000808: 66 0F 6F F8        movdqa      xmm7,xmm0
+  000000000000080C: F3 C3              rep ret
+  000000000000080E: 90                 nop
+  000000000000080F: 90                 nop
+_vpaes_schedule_transform:
+  0000000000000810: 66 41 0F 6F C9     movdqa      xmm1,xmm9
+  0000000000000815: 66 0F DF C8        pandn       xmm1,xmm0
+  0000000000000819: 66 0F 72 D1 04     psrld       xmm1,4
+  000000000000081E: 66 41 0F DB C1     pand        xmm0,xmm9
+  0000000000000823: 66 41 0F 6F 13     movdqa      xmm2,xmmword ptr [r11]
+  0000000000000828: 66 0F 38 00 D0     pshufb      xmm2,xmm0
+  000000000000082D: 66 41 0F 6F 43 10  movdqa      xmm0,xmmword ptr [r11+10h]
+  0000000000000833: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  0000000000000838: 66 0F EF C2        pxor        xmm0,xmm2
+  000000000000083C: F3 C3              rep ret
+  000000000000083E: 90                 nop
+  000000000000083F: 90                 nop
+_vpaes_schedule_mangle:
+  0000000000000840: 66 0F 6F E0        movdqa      xmm4,xmm0
+  0000000000000844: 66 0F 6F 2D B0 00  movdqa      xmm5,xmmword ptr [.rdata+0B0h]
+                    00 00
+  000000000000084C: 48 85 C9           test        rcx,rcx
+  000000000000084F: 0F 85 3B 00 00 00  jne         L$schedule_mangle_dec
+  0000000000000855: 48 83 C2 10        add         rdx,10h
+  0000000000000859: 66 0F EF 25 80 01  pxor        xmm4,xmmword ptr [.rdata+180h]
+                    00 00
+  0000000000000861: 66 0F 38 00 E5     pshufb      xmm4,xmm5
+  0000000000000866: 66 0F 6F DC        movdqa      xmm3,xmm4
+  000000000000086A: 66 0F 38 00 E5     pshufb      xmm4,xmm5
+  000000000000086F: 66 0F EF DC        pxor        xmm3,xmm4
+  0000000000000873: 66 0F 38 00 E5     pshufb      xmm4,xmm5
+  0000000000000878: 66 0F EF DC        pxor        xmm3,xmm4
+  000000000000087C: E9 AF 00 00 00     jmp         L$schedule_mangle_both
+  0000000000000881: 90                 nop
+  0000000000000882: 90                 nop
+  0000000000000883: 90                 nop
+  0000000000000884: 90                 nop
+  0000000000000885: 90                 nop
+  0000000000000886: 90                 nop
+  0000000000000887: 90                 nop
+  0000000000000888: 90                 nop
+  0000000000000889: 90                 nop
+  000000000000088A: 90                 nop
+  000000000000088B: 90                 nop
+  000000000000088C: 90                 nop
+  000000000000088D: 90                 nop
+  000000000000088E: 90                 nop
+  000000000000088F: 90                 nop
+L$schedule_mangle_dec:
+  0000000000000890: 4C 8D 1D D0 01 00  lea         r11,[.rdata+1D0h]
+                    00
+  0000000000000897: 66 41 0F 6F C9     movdqa      xmm1,xmm9
+  000000000000089C: 66 0F DF CC        pandn       xmm1,xmm4
+  00000000000008A0: 66 0F 72 D1 04     psrld       xmm1,4
+  00000000000008A5: 66 41 0F DB E1     pand        xmm4,xmm9
+  00000000000008AA: 66 41 0F 6F 13     movdqa      xmm2,xmmword ptr [r11]
+  00000000000008AF: 66 0F 38 00 D4     pshufb      xmm2,xmm4
+  00000000000008B4: 66 41 0F 6F 5B 10  movdqa      xmm3,xmmword ptr [r11+10h]
+  00000000000008BA: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  00000000000008BF: 66 0F EF DA        pxor        xmm3,xmm2
+  00000000000008C3: 66 0F 38 00 DD     pshufb      xmm3,xmm5
+  00000000000008C8: 66 41 0F 6F 53 20  movdqa      xmm2,xmmword ptr [r11+20h]
+  00000000000008CE: 66 0F 38 00 D4     pshufb      xmm2,xmm4
+  00000000000008D3: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000008D7: 66 41 0F 6F 5B 30  movdqa      xmm3,xmmword ptr [r11+30h]
+  00000000000008DD: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  00000000000008E2: 66 0F EF DA        pxor        xmm3,xmm2
+  00000000000008E6: 66 0F 38 00 DD     pshufb      xmm3,xmm5
+  00000000000008EB: 66 41 0F 6F 53 40  movdqa      xmm2,xmmword ptr [r11+40h]
+  00000000000008F1: 66 0F 38 00 D4     pshufb      xmm2,xmm4
+  00000000000008F6: 66 0F EF D3        pxor        xmm2,xmm3
+  00000000000008FA: 66 41 0F 6F 5B 50  movdqa      xmm3,xmmword ptr [r11+50h]
+  0000000000000900: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  0000000000000905: 66 0F EF DA        pxor        xmm3,xmm2
+  0000000000000909: 66 0F 38 00 DD     pshufb      xmm3,xmm5
+  000000000000090E: 66 41 0F 6F 53 60  movdqa      xmm2,xmmword ptr [r11+60h]
+  0000000000000914: 66 0F 38 00 D4     pshufb      xmm2,xmm4
+  0000000000000919: 66 0F EF D3        pxor        xmm2,xmm3
+  000000000000091D: 66 41 0F 6F 5B 70  movdqa      xmm3,xmmword ptr [r11+70h]
+  0000000000000923: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  0000000000000928: 66 0F EF DA        pxor        xmm3,xmm2
+  000000000000092C: 48 83 C2 F0        add         rdx,0FFFFFFFFFFFFFFF0h
+L$schedule_mangle_both:
+  0000000000000930: 66 43 0F 6F 0C 10  movdqa      xmm1,xmmword ptr [r8+r10]
+  0000000000000936: 66 0F 38 00 D9     pshufb      xmm3,xmm1
+  000000000000093B: 49 83 C0 F0        add         r8,0FFFFFFFFFFFFFFF0h
+  000000000000093F: 49 83 E0 30        and         r8,30h
+  0000000000000943: F3 0F 7F 1A        movdqu      xmmword ptr [rdx],xmm3
+  0000000000000947: F3 C3              rep ret
+  0000000000000949: 90                 nop
+  000000000000094A: 90                 nop
+  000000000000094B: 90                 nop
+  000000000000094C: 90                 nop
+  000000000000094D: 90                 nop
+  000000000000094E: 90                 nop
+  000000000000094F: 90                 nop
+aws_lc_0_21_0_vpaes_set_encrypt_key:
+  0000000000000950: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
+  0000000000000955: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
+  000000000000095A: 48 89 E0           mov         rax,rsp
+L$SEH_begin_vpaes_set_encrypt_key:
+  000000000000095D: 48 89 CF           mov         rdi,rcx
+  0000000000000960: 48 89 D6           mov         rsi,rdx
+  0000000000000963: 4C 89 C2           mov         rdx,r8
+  0000000000000966: 48 8D A4 24 48 FF  lea         rsp,[rsp-0B8h]
+                    FF FF
+  000000000000096E: 0F 29 74 24 10     movaps      xmmword ptr [rsp+10h],xmm6
+  0000000000000973: 0F 29 7C 24 20     movaps      xmmword ptr [rsp+20h],xmm7
+  0000000000000978: 44 0F 29 44 24 30  movaps      xmmword ptr [rsp+30h],xmm8
+  000000000000097E: 44 0F 29 4C 24 40  movaps      xmmword ptr [rsp+40h],xmm9
+  0000000000000984: 44 0F 29 54 24 50  movaps      xmmword ptr [rsp+50h],xmm10
+  000000000000098A: 44 0F 29 5C 24 60  movaps      xmmword ptr [rsp+60h],xmm11
+  0000000000000990: 44 0F 29 64 24 70  movaps      xmmword ptr [rsp+70h],xmm12
+  0000000000000996: 44 0F 29 AC 24 80  movaps      xmmword ptr [rsp+80h],xmm13
+                    00 00 00
+  000000000000099F: 44 0F 29 B4 24 90  movaps      xmmword ptr [rsp+90h],xmm14
+                    00 00 00
+  00000000000009A8: 44 0F 29 BC 24 A0  movaps      xmmword ptr [rsp+0A0h],xmm15
+                    00 00 00
+L$enc_key_body:
+  00000000000009B1: 89 F0              mov         eax,esi
+  00000000000009B3: C1 E8 05           shr         eax,5
+  00000000000009B6: 83 C0 05           add         eax,5
+  00000000000009B9: 89 82 F0 00 00 00  mov         dword ptr [rdx+0F0h],eax
+  00000000000009BF: B9 00 00 00 00     mov         ecx,0
+  00000000000009C4: 41 B8 30 00 00 00  mov         r8d,30h
+  00000000000009CA: E8 C1 FB FF FF     call        _vpaes_schedule_core
+  00000000000009CF: 0F 28 74 24 10     movaps      xmm6,xmmword ptr [rsp+10h]
+  00000000000009D4: 0F 28 7C 24 20     movaps      xmm7,xmmword ptr [rsp+20h]
+  00000000000009D9: 44 0F 28 44 24 30  movaps      xmm8,xmmword ptr [rsp+30h]
+  00000000000009DF: 44 0F 28 4C 24 40  movaps      xmm9,xmmword ptr [rsp+40h]
+  00000000000009E5: 44 0F 28 54 24 50  movaps      xmm10,xmmword ptr [rsp+50h]
+  00000000000009EB: 44 0F 28 5C 24 60  movaps      xmm11,xmmword ptr [rsp+60h]
+  00000000000009F1: 44 0F 28 64 24 70  movaps      xmm12,xmmword ptr [rsp+70h]
+  00000000000009F7: 44 0F 28 AC 24 80  movaps      xmm13,xmmword ptr [rsp+80h]
+                    00 00 00
+  0000000000000A00: 44 0F 28 B4 24 90  movaps      xmm14,xmmword ptr [rsp+90h]
+                    00 00 00
+  0000000000000A09: 44 0F 28 BC 24 A0  movaps      xmm15,xmmword ptr [rsp+0A0h]
+                    00 00 00
+  0000000000000A12: 48 8D A4 24 B8 00  lea         rsp,[rsp+0B8h]
+                    00 00
+L$enc_key_epilogue:
+  0000000000000A1A: 31 C0              xor         eax,eax
+  0000000000000A1C: 48 8B 7C 24 08     mov         rdi,qword ptr [rsp+8]
+  0000000000000A21: 48 8B 74 24 10     mov         rsi,qword ptr [rsp+10h]
+  0000000000000A26: F3 C3              rep ret
+L$SEH_end_vpaes_set_encrypt_key:
+  0000000000000A28: 90                 nop
+  0000000000000A29: 90                 nop
+  0000000000000A2A: 90                 nop
+  0000000000000A2B: 90                 nop
+  0000000000000A2C: 90                 nop
+  0000000000000A2D: 90                 nop
+  0000000000000A2E: 90                 nop
+  0000000000000A2F: 90                 nop
+aws_lc_0_21_0_vpaes_set_decrypt_key:
+  0000000000000A30: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
+  0000000000000A35: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
+  0000000000000A3A: 48 89 E0           mov         rax,rsp
+L$SEH_begin_vpaes_set_decrypt_key:
+  0000000000000A3D: 48 89 CF           mov         rdi,rcx
+  0000000000000A40: 48 89 D6           mov         rsi,rdx
+  0000000000000A43: 4C 89 C2           mov         rdx,r8
+  0000000000000A46: 48 8D A4 24 48 FF  lea         rsp,[rsp-0B8h]
+                    FF FF
+  0000000000000A4E: 0F 29 74 24 10     movaps      xmmword ptr [rsp+10h],xmm6
+  0000000000000A53: 0F 29 7C 24 20     movaps      xmmword ptr [rsp+20h],xmm7
+  0000000000000A58: 44 0F 29 44 24 30  movaps      xmmword ptr [rsp+30h],xmm8
+  0000000000000A5E: 44 0F 29 4C 24 40  movaps      xmmword ptr [rsp+40h],xmm9
+  0000000000000A64: 44 0F 29 54 24 50  movaps      xmmword ptr [rsp+50h],xmm10
+  0000000000000A6A: 44 0F 29 5C 24 60  movaps      xmmword ptr [rsp+60h],xmm11
+  0000000000000A70: 44 0F 29 64 24 70  movaps      xmmword ptr [rsp+70h],xmm12
+  0000000000000A76: 44 0F 29 AC 24 80  movaps      xmmword ptr [rsp+80h],xmm13
+                    00 00 00
+  0000000000000A7F: 44 0F 29 B4 24 90  movaps      xmmword ptr [rsp+90h],xmm14
+                    00 00 00
+  0000000000000A88: 44 0F 29 BC 24 A0  movaps      xmmword ptr [rsp+0A0h],xmm15
+                    00 00 00
+L$dec_key_body:
+  0000000000000A91: 89 F0              mov         eax,esi
+  0000000000000A93: C1 E8 05           shr         eax,5
+  0000000000000A96: 83 C0 05           add         eax,5
+  0000000000000A99: 89 82 F0 00 00 00  mov         dword ptr [rdx+0F0h],eax
+  0000000000000A9F: C1 E0 04           shl         eax,4
+  0000000000000AA2: 48 8D 54 02 10     lea         rdx,[rdx+rax+10h]
+  0000000000000AA7: B9 01 00 00 00     mov         ecx,1
+  0000000000000AAC: 41 89 F0           mov         r8d,esi
+  0000000000000AAF: 41 D1 E8           shr         r8d,1
+  0000000000000AB2: 41 83 E0 20        and         r8d,20h
+  0000000000000AB6: 41 83 F0 20        xor         r8d,20h
+  0000000000000ABA: E8 D1 FA FF FF     call        _vpaes_schedule_core
+  0000000000000ABF: 0F 28 74 24 10     movaps      xmm6,xmmword ptr [rsp+10h]
+  0000000000000AC4: 0F 28 7C 24 20     movaps      xmm7,xmmword ptr [rsp+20h]
+  0000000000000AC9: 44 0F 28 44 24 30  movaps      xmm8,xmmword ptr [rsp+30h]
+  0000000000000ACF: 44 0F 28 4C 24 40  movaps      xmm9,xmmword ptr [rsp+40h]
+  0000000000000AD5: 44 0F 28 54 24 50  movaps      xmm10,xmmword ptr [rsp+50h]
+  0000000000000ADB: 44 0F 28 5C 24 60  movaps      xmm11,xmmword ptr [rsp+60h]
+  0000000000000AE1: 44 0F 28 64 24 70  movaps      xmm12,xmmword ptr [rsp+70h]
+  0000000000000AE7: 44 0F 28 AC 24 80  movaps      xmm13,xmmword ptr [rsp+80h]
+                    00 00 00
+  0000000000000AF0: 44 0F 28 B4 24 90  movaps      xmm14,xmmword ptr [rsp+90h]
+                    00 00 00
+  0000000000000AF9: 44 0F 28 BC 24 A0  movaps      xmm15,xmmword ptr [rsp+0A0h]
+                    00 00 00
+  0000000000000B02: 48 8D A4 24 B8 00  lea         rsp,[rsp+0B8h]
+                    00 00
+L$dec_key_epilogue:
+  0000000000000B0A: 31 C0              xor         eax,eax
+  0000000000000B0C: 48 8B 7C 24 08     mov         rdi,qword ptr [rsp+8]
+  0000000000000B11: 48 8B 74 24 10     mov         rsi,qword ptr [rsp+10h]
+  0000000000000B16: F3 C3              rep ret
+L$SEH_end_vpaes_set_decrypt_key:
+  0000000000000B18: 90                 nop
+  0000000000000B19: 90                 nop
+  0000000000000B1A: 90                 nop
+  0000000000000B1B: 90                 nop
+  0000000000000B1C: 90                 nop
+  0000000000000B1D: 90                 nop
+  0000000000000B1E: 90                 nop
+  0000000000000B1F: 90                 nop
+aws_lc_0_21_0_vpaes_encrypt:
+  0000000000000B20: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
+  0000000000000B25: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
+  0000000000000B2A: 48 89 E0           mov         rax,rsp
+L$SEH_begin_vpaes_encrypt:
+  0000000000000B2D: 48 89 CF           mov         rdi,rcx
+  0000000000000B30: 48 89 D6           mov         rsi,rdx
+  0000000000000B33: 4C 89 C2           mov         rdx,r8
+  0000000000000B36: 48 8D A4 24 48 FF  lea         rsp,[rsp-0B8h]
+                    FF FF
+  0000000000000B3E: 0F 29 74 24 10     movaps      xmmword ptr [rsp+10h],xmm6
+  0000000000000B43: 0F 29 7C 24 20     movaps      xmmword ptr [rsp+20h],xmm7
+  0000000000000B48: 44 0F 29 44 24 30  movaps      xmmword ptr [rsp+30h],xmm8
+  0000000000000B4E: 44 0F 29 4C 24 40  movaps      xmmword ptr [rsp+40h],xmm9
+  0000000000000B54: 44 0F 29 54 24 50  movaps      xmmword ptr [rsp+50h],xmm10
+  0000000000000B5A: 44 0F 29 5C 24 60  movaps      xmmword ptr [rsp+60h],xmm11
+  0000000000000B60: 44 0F 29 64 24 70  movaps      xmmword ptr [rsp+70h],xmm12
+  0000000000000B66: 44 0F 29 AC 24 80  movaps      xmmword ptr [rsp+80h],xmm13
+                    00 00 00
+  0000000000000B6F: 44 0F 29 B4 24 90  movaps      xmmword ptr [rsp+90h],xmm14
+                    00 00 00
+  0000000000000B78: 44 0F 29 BC 24 A0  movaps      xmmword ptr [rsp+0A0h],xmm15
+                    00 00 00
+L$enc_body:
+  0000000000000B81: F3 0F 6F 07        movdqu      xmm0,xmmword ptr [rdi]
+  0000000000000B85: E8 26 04 00 00     call        _vpaes_preheat
+  0000000000000B8A: E8 71 F4 FF FF     call        _vpaes_encrypt_core
+  0000000000000B8F: F3 0F 7F 06        movdqu      xmmword ptr [rsi],xmm0
+  0000000000000B93: 0F 28 74 24 10     movaps      xmm6,xmmword ptr [rsp+10h]
+  0000000000000B98: 0F 28 7C 24 20     movaps      xmm7,xmmword ptr [rsp+20h]
+  0000000000000B9D: 44 0F 28 44 24 30  movaps      xmm8,xmmword ptr [rsp+30h]
+  0000000000000BA3: 44 0F 28 4C 24 40  movaps      xmm9,xmmword ptr [rsp+40h]
+  0000000000000BA9: 44 0F 28 54 24 50  movaps      xmm10,xmmword ptr [rsp+50h]
+  0000000000000BAF: 44 0F 28 5C 24 60  movaps      xmm11,xmmword ptr [rsp+60h]
+  0000000000000BB5: 44 0F 28 64 24 70  movaps      xmm12,xmmword ptr [rsp+70h]
+  0000000000000BBB: 44 0F 28 AC 24 80  movaps      xmm13,xmmword ptr [rsp+80h]
+                    00 00 00
+  0000000000000BC4: 44 0F 28 B4 24 90  movaps      xmm14,xmmword ptr [rsp+90h]
+                    00 00 00
+  0000000000000BCD: 44 0F 28 BC 24 A0  movaps      xmm15,xmmword ptr [rsp+0A0h]
+                    00 00 00
+  0000000000000BD6: 48 8D A4 24 B8 00  lea         rsp,[rsp+0B8h]
+                    00 00
+L$enc_epilogue:
+  0000000000000BDE: 48 8B 7C 24 08     mov         rdi,qword ptr [rsp+8]
+  0000000000000BE3: 48 8B 74 24 10     mov         rsi,qword ptr [rsp+10h]
+  0000000000000BE8: F3 C3              rep ret
+L$SEH_end_vpaes_encrypt:
+  0000000000000BEA: 90                 nop
+  0000000000000BEB: 90                 nop
+  0000000000000BEC: 90                 nop
+  0000000000000BED: 90                 nop
+  0000000000000BEE: 90                 nop
+  0000000000000BEF: 90                 nop
+aws_lc_0_21_0_vpaes_decrypt:
+  0000000000000BF0: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
+  0000000000000BF5: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
+  0000000000000BFA: 48 89 E0           mov         rax,rsp
+L$SEH_begin_vpaes_decrypt:
+  0000000000000BFD: 48 89 CF           mov         rdi,rcx
+  0000000000000C00: 48 89 D6           mov         rsi,rdx
+  0000000000000C03: 4C 89 C2           mov         rdx,r8
+  0000000000000C06: 48 8D A4 24 48 FF  lea         rsp,[rsp-0B8h]
+                    FF FF
+  0000000000000C0E: 0F 29 74 24 10     movaps      xmmword ptr [rsp+10h],xmm6
+  0000000000000C13: 0F 29 7C 24 20     movaps      xmmword ptr [rsp+20h],xmm7
+  0000000000000C18: 44 0F 29 44 24 30  movaps      xmmword ptr [rsp+30h],xmm8
+  0000000000000C1E: 44 0F 29 4C 24 40  movaps      xmmword ptr [rsp+40h],xmm9
+  0000000000000C24: 44 0F 29 54 24 50  movaps      xmmword ptr [rsp+50h],xmm10
+  0000000000000C2A: 44 0F 29 5C 24 60  movaps      xmmword ptr [rsp+60h],xmm11
+  0000000000000C30: 44 0F 29 64 24 70  movaps      xmmword ptr [rsp+70h],xmm12
+  0000000000000C36: 44 0F 29 AC 24 80  movaps      xmmword ptr [rsp+80h],xmm13
+                    00 00 00
+  0000000000000C3F: 44 0F 29 B4 24 90  movaps      xmmword ptr [rsp+90h],xmm14
+                    00 00 00
+  0000000000000C48: 44 0F 29 BC 24 A0  movaps      xmmword ptr [rsp+0A0h],xmm15
+                    00 00 00
+L$dec_body:
+  0000000000000C51: F3 0F 6F 07        movdqu      xmm0,xmmword ptr [rdi]
+  0000000000000C55: E8 56 03 00 00     call        _vpaes_preheat
+  0000000000000C5A: E8 91 F7 FF FF     call        _vpaes_decrypt_core
+  0000000000000C5F: F3 0F 7F 06        movdqu      xmmword ptr [rsi],xmm0
+  0000000000000C63: 0F 28 74 24 10     movaps      xmm6,xmmword ptr [rsp+10h]
+  0000000000000C68: 0F 28 7C 24 20     movaps      xmm7,xmmword ptr [rsp+20h]
+  0000000000000C6D: 44 0F 28 44 24 30  movaps      xmm8,xmmword ptr [rsp+30h]
+  0000000000000C73: 44 0F 28 4C 24 40  movaps      xmm9,xmmword ptr [rsp+40h]
+  0000000000000C79: 44 0F 28 54 24 50  movaps      xmm10,xmmword ptr [rsp+50h]
+  0000000000000C7F: 44 0F 28 5C 24 60  movaps      xmm11,xmmword ptr [rsp+60h]
+  0000000000000C85: 44 0F 28 64 24 70  movaps      xmm12,xmmword ptr [rsp+70h]
+  0000000000000C8B: 44 0F 28 AC 24 80  movaps      xmm13,xmmword ptr [rsp+80h]
+                    00 00 00
+  0000000000000C94: 44 0F 28 B4 24 90  movaps      xmm14,xmmword ptr [rsp+90h]
+                    00 00 00
+  0000000000000C9D: 44 0F 28 BC 24 A0  movaps      xmm15,xmmword ptr [rsp+0A0h]
+                    00 00 00
+  0000000000000CA6: 48 8D A4 24 B8 00  lea         rsp,[rsp+0B8h]
+                    00 00
+L$dec_epilogue:
+  0000000000000CAE: 48 8B 7C 24 08     mov         rdi,qword ptr [rsp+8]
+  0000000000000CB3: 48 8B 74 24 10     mov         rsi,qword ptr [rsp+10h]
+  0000000000000CB8: F3 C3              rep ret
+L$SEH_end_vpaes_decrypt:
+  0000000000000CBA: 90                 nop
+  0000000000000CBB: 90                 nop
+  0000000000000CBC: 90                 nop
+  0000000000000CBD: 90                 nop
+  0000000000000CBE: 90                 nop
+  0000000000000CBF: 90                 nop
+aws_lc_0_21_0_vpaes_cbc_encrypt:
+  0000000000000CC0: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
+  0000000000000CC5: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
+  0000000000000CCA: 48 89 E0           mov         rax,rsp
+L$SEH_begin_vpaes_cbc_encrypt:
+  0000000000000CCD: 48 89 CF           mov         rdi,rcx
+  0000000000000CD0: 48 89 D6           mov         rsi,rdx
+  0000000000000CD3: 4C 89 C2           mov         rdx,r8
+  0000000000000CD6: 4C 89 C9           mov         rcx,r9
+  0000000000000CD9: 4C 8B 44 24 28     mov         r8,qword ptr [rsp+28h]
+  0000000000000CDE: 4C 8B 4C 24 30     mov         r9,qword ptr [rsp+30h]
+  0000000000000CE3: 48 87 D1           xchg        rdx,rcx
+  0000000000000CE6: 48 83 E9 10        sub         rcx,10h
+  0000000000000CEA: 0F 82 18 01 00 00  jb          L$cbc_abort
+  0000000000000CF0: 48 8D A4 24 48 FF  lea         rsp,[rsp-0B8h]
+                    FF FF
+  0000000000000CF8: 0F 29 74 24 10     movaps      xmmword ptr [rsp+10h],xmm6
+  0000000000000CFD: 0F 29 7C 24 20     movaps      xmmword ptr [rsp+20h],xmm7
+  0000000000000D02: 44 0F 29 44 24 30  movaps      xmmword ptr [rsp+30h],xmm8
+  0000000000000D08: 44 0F 29 4C 24 40  movaps      xmmword ptr [rsp+40h],xmm9
+  0000000000000D0E: 44 0F 29 54 24 50  movaps      xmmword ptr [rsp+50h],xmm10
+  0000000000000D14: 44 0F 29 5C 24 60  movaps      xmmword ptr [rsp+60h],xmm11
+  0000000000000D1A: 44 0F 29 64 24 70  movaps      xmmword ptr [rsp+70h],xmm12
+  0000000000000D20: 44 0F 29 AC 24 80  movaps      xmmword ptr [rsp+80h],xmm13
+                    00 00 00
+  0000000000000D29: 44 0F 29 B4 24 90  movaps      xmmword ptr [rsp+90h],xmm14
+                    00 00 00
+  0000000000000D32: 44 0F 29 BC 24 A0  movaps      xmmword ptr [rsp+0A0h],xmm15
+                    00 00 00
+L$cbc_body:
+  0000000000000D3B: F3 41 0F 6F 30     movdqu      xmm6,xmmword ptr [r8]
+  0000000000000D40: 48 29 FE           sub         rsi,rdi
+  0000000000000D43: E8 68 02 00 00     call        _vpaes_preheat
+  0000000000000D48: 41 83 F9 00        cmp         r9d,0
+  0000000000000D4C: 0F 84 3E 00 00 00  je          L$cbc_dec_loop
+  0000000000000D52: E9 09 00 00 00     jmp         L$cbc_enc_loop
+  0000000000000D57: 90                 nop
+  0000000000000D58: 90                 nop
+  0000000000000D59: 90                 nop
+  0000000000000D5A: 90                 nop
+  0000000000000D5B: 90                 nop
+  0000000000000D5C: 90                 nop
+  0000000000000D5D: 90                 nop
+  0000000000000D5E: 90                 nop
+  0000000000000D5F: 90                 nop
+L$cbc_enc_loop:
+  0000000000000D60: F3 0F 6F 07        movdqu      xmm0,xmmword ptr [rdi]
+  0000000000000D64: 66 0F EF C6        pxor        xmm0,xmm6
+  0000000000000D68: E8 93 F2 FF FF     call        _vpaes_encrypt_core
+  0000000000000D6D: 66 0F 6F F0        movdqa      xmm6,xmm0
+  0000000000000D71: F3 0F 7F 04 3E     movdqu      xmmword ptr [rsi+rdi],xmm0
+  0000000000000D76: 48 8D 7F 10        lea         rdi,[rdi+10h]
+  0000000000000D7A: 48 83 E9 10        sub         rcx,10h
+  0000000000000D7E: 0F 83 DC FF FF FF  jae         L$cbc_enc_loop
+  0000000000000D84: E9 2F 00 00 00     jmp         L$cbc_done
+  0000000000000D89: 90                 nop
+  0000000000000D8A: 90                 nop
+  0000000000000D8B: 90                 nop
+  0000000000000D8C: 90                 nop
+  0000000000000D8D: 90                 nop
+  0000000000000D8E: 90                 nop
+  0000000000000D8F: 90                 nop
+L$cbc_dec_loop:
+  0000000000000D90: F3 0F 6F 07        movdqu      xmm0,xmmword ptr [rdi]
+  0000000000000D94: 66 0F 6F F8        movdqa      xmm7,xmm0
+  0000000000000D98: E8 53 F6 FF FF     call        _vpaes_decrypt_core
+  0000000000000D9D: 66 0F EF C6        pxor        xmm0,xmm6
+  0000000000000DA1: 66 0F 6F F7        movdqa      xmm6,xmm7
+  0000000000000DA5: F3 0F 7F 04 3E     movdqu      xmmword ptr [rsi+rdi],xmm0
+  0000000000000DAA: 48 8D 7F 10        lea         rdi,[rdi+10h]
+  0000000000000DAE: 48 83 E9 10        sub         rcx,10h
+  0000000000000DB2: 0F 83 D8 FF FF FF  jae         L$cbc_dec_loop
+L$cbc_done:
+  0000000000000DB8: F3 41 0F 7F 30     movdqu      xmmword ptr [r8],xmm6
+  0000000000000DBD: 0F 28 74 24 10     movaps      xmm6,xmmword ptr [rsp+10h]
+  0000000000000DC2: 0F 28 7C 24 20     movaps      xmm7,xmmword ptr [rsp+20h]
+  0000000000000DC7: 44 0F 28 44 24 30  movaps      xmm8,xmmword ptr [rsp+30h]
+  0000000000000DCD: 44 0F 28 4C 24 40  movaps      xmm9,xmmword ptr [rsp+40h]
+  0000000000000DD3: 44 0F 28 54 24 50  movaps      xmm10,xmmword ptr [rsp+50h]
+  0000000000000DD9: 44 0F 28 5C 24 60  movaps      xmm11,xmmword ptr [rsp+60h]
+  0000000000000DDF: 44 0F 28 64 24 70  movaps      xmm12,xmmword ptr [rsp+70h]
+  0000000000000DE5: 44 0F 28 AC 24 80  movaps      xmm13,xmmword ptr [rsp+80h]
+                    00 00 00
+  0000000000000DEE: 44 0F 28 B4 24 90  movaps      xmm14,xmmword ptr [rsp+90h]
+                    00 00 00
+  0000000000000DF7: 44 0F 28 BC 24 A0  movaps      xmm15,xmmword ptr [rsp+0A0h]
+                    00 00 00
+  0000000000000E00: 48 8D A4 24 B8 00  lea         rsp,[rsp+0B8h]
+                    00 00
+L$cbc_abort:
+  0000000000000E08: 48 8B 7C 24 08     mov         rdi,qword ptr [rsp+8]
+  0000000000000E0D: 48 8B 74 24 10     mov         rsi,qword ptr [rsp+10h]
+  0000000000000E12: F3 C3              rep ret
+L$SEH_end_vpaes_cbc_encrypt:
+  0000000000000E14: 90                 nop
+  0000000000000E15: 90                 nop
+  0000000000000E16: 90                 nop
+  0000000000000E17: 90                 nop
+  0000000000000E18: 90                 nop
+  0000000000000E19: 90                 nop
+  0000000000000E1A: 90                 nop
+  0000000000000E1B: 90                 nop
+  0000000000000E1C: 90                 nop
+  0000000000000E1D: 90                 nop
+  0000000000000E1E: 90                 nop
+  0000000000000E1F: 90                 nop
+aws_lc_0_21_0_vpaes_ctr32_encrypt_blocks:
+  0000000000000E20: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
+  0000000000000E25: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
+  0000000000000E2A: 48 89 E0           mov         rax,rsp
+L$SEH_begin_vpaes_ctr32_encrypt_blocks:
+  0000000000000E2D: 48 89 CF           mov         rdi,rcx
+  0000000000000E30: 48 89 D6           mov         rsi,rdx
+  0000000000000E33: 4C 89 C2           mov         rdx,r8
+  0000000000000E36: 4C 89 C9           mov         rcx,r9
+  0000000000000E39: 4C 8B 44 24 28     mov         r8,qword ptr [rsp+28h]
+  0000000000000E3E: 48 87 D1           xchg        rdx,rcx
+  0000000000000E41: 48 85 C9           test        rcx,rcx
+  0000000000000E44: 0F 84 57 01 00 00  je          L$ctr32_abort
+  0000000000000E4A: 48 8D A4 24 48 FF  lea         rsp,[rsp-0B8h]
+                    FF FF
+  0000000000000E52: 0F 29 74 24 10     movaps      xmmword ptr [rsp+10h],xmm6
+  0000000000000E57: 0F 29 7C 24 20     movaps      xmmword ptr [rsp+20h],xmm7
+  0000000000000E5C: 44 0F 29 44 24 30  movaps      xmmword ptr [rsp+30h],xmm8
+  0000000000000E62: 44 0F 29 4C 24 40  movaps      xmmword ptr [rsp+40h],xmm9
+  0000000000000E68: 44 0F 29 54 24 50  movaps      xmmword ptr [rsp+50h],xmm10
+  0000000000000E6E: 44 0F 29 5C 24 60  movaps      xmmword ptr [rsp+60h],xmm11
+  0000000000000E74: 44 0F 29 64 24 70  movaps      xmmword ptr [rsp+70h],xmm12
+  0000000000000E7A: 44 0F 29 AC 24 80  movaps      xmmword ptr [rsp+80h],xmm13
+                    00 00 00
+  0000000000000E83: 44 0F 29 B4 24 90  movaps      xmmword ptr [rsp+90h],xmm14
+                    00 00 00
+  0000000000000E8C: 44 0F 29 BC 24 A0  movaps      xmmword ptr [rsp+0A0h],xmm15
+                    00 00 00
+L$ctr32_body:
+  0000000000000E95: F3 41 0F 6F 00     movdqu      xmm0,xmmword ptr [r8]
+  0000000000000E9A: 66 44 0F 6F 05 20  movdqa      xmm8,xmmword ptr [.rdata+320h]
+                    03 00 00
+  0000000000000EA3: 48 29 FE           sub         rsi,rdi
+  0000000000000EA6: E8 05 01 00 00     call        _vpaes_preheat
+  0000000000000EAB: 66 0F 6F F0        movdqa      xmm6,xmm0
+  0000000000000EAF: 66 0F 38 00 35 10  pshufb      xmm6,xmmword ptr [.rdata+310h]
+                    03 00 00
+  0000000000000EB8: 48 F7 C1 01 00 00  test        rcx,1
+                    00
+  0000000000000EBF: 0F 84 25 00 00 00  je          L$ctr32_prep_loop
+  0000000000000EC5: F3 0F 6F 3F        movdqu      xmm7,xmmword ptr [rdi]
+  0000000000000EC9: E8 32 F1 FF FF     call        _vpaes_encrypt_core
+  0000000000000ECE: 66 0F EF C7        pxor        xmm0,xmm7
+  0000000000000ED2: 66 41 0F FE F0     paddd       xmm6,xmm8
+  0000000000000ED7: F3 0F 7F 04 3E     movdqu      xmmword ptr [rsi+rdi],xmm0
+  0000000000000EDC: 48 83 E9 01        sub         rcx,1
+  0000000000000EE0: 48 8D 7F 10        lea         rdi,[rdi+10h]
+  0000000000000EE4: 0F 84 6C 00 00 00  je          L$ctr32_done
+L$ctr32_prep_loop:
+  0000000000000EEA: 66 44 0F 6F F6     movdqa      xmm14,xmm6
+  0000000000000EEF: 66 44 0F 6F FE     movdqa      xmm15,xmm6
+  0000000000000EF4: 66 45 0F FE F8     paddd       xmm15,xmm8
+L$ctr32_loop:
+  0000000000000EF9: 66 0F 6F 0D 10 03  movdqa      xmm1,xmmword ptr [.rdata+310h]
+                    00 00
+  0000000000000F01: 66 41 0F 6F C6     movdqa      xmm0,xmm14
+  0000000000000F06: 66 41 0F 6F F7     movdqa      xmm6,xmm15
+  0000000000000F0B: 66 0F 38 00 C1     pshufb      xmm0,xmm1
+  0000000000000F10: 66 0F 38 00 F1     pshufb      xmm6,xmm1
+  0000000000000F15: E8 46 F2 FF FF     call        _vpaes_encrypt_core_2x
+  0000000000000F1A: F3 0F 6F 0F        movdqu      xmm1,xmmword ptr [rdi]
+  0000000000000F1E: F3 0F 6F 57 10     movdqu      xmm2,xmmword ptr [rdi+10h]
+  0000000000000F23: 66 0F 6F 1D 30 03  movdqa      xmm3,xmmword ptr [.rdata+330h]
+                    00 00
+  0000000000000F2B: 66 0F EF C1        pxor        xmm0,xmm1
+  0000000000000F2F: 66 0F EF F2        pxor        xmm6,xmm2
+  0000000000000F33: 66 44 0F FE F3     paddd       xmm14,xmm3
+  0000000000000F38: 66 44 0F FE FB     paddd       xmm15,xmm3
+  0000000000000F3D: F3 0F 7F 04 3E     movdqu      xmmword ptr [rsi+rdi],xmm0
+  0000000000000F42: F3 0F 7F 74 3E 10  movdqu      xmmword ptr [rsi+rdi+10h],xmm6
+  0000000000000F48: 48 83 E9 02        sub         rcx,2
+  0000000000000F4C: 48 8D 7F 20        lea         rdi,[rdi+20h]
+  0000000000000F50: 0F 85 A3 FF FF FF  jne         L$ctr32_loop
+L$ctr32_done:
+  0000000000000F56: 0F 28 74 24 10     movaps      xmm6,xmmword ptr [rsp+10h]
+  0000000000000F5B: 0F 28 7C 24 20     movaps      xmm7,xmmword ptr [rsp+20h]
+  0000000000000F60: 44 0F 28 44 24 30  movaps      xmm8,xmmword ptr [rsp+30h]
+  0000000000000F66: 44 0F 28 4C 24 40  movaps      xmm9,xmmword ptr [rsp+40h]
+  0000000000000F6C: 44 0F 28 54 24 50  movaps      xmm10,xmmword ptr [rsp+50h]
+  0000000000000F72: 44 0F 28 5C 24 60  movaps      xmm11,xmmword ptr [rsp+60h]
+  0000000000000F78: 44 0F 28 64 24 70  movaps      xmm12,xmmword ptr [rsp+70h]
+  0000000000000F7E: 44 0F 28 AC 24 80  movaps      xmm13,xmmword ptr [rsp+80h]
+                    00 00 00
+  0000000000000F87: 44 0F 28 B4 24 90  movaps      xmm14,xmmword ptr [rsp+90h]
+                    00 00 00
+  0000000000000F90: 44 0F 28 BC 24 A0  movaps      xmm15,xmmword ptr [rsp+0A0h]
+                    00 00 00
+  0000000000000F99: 48 8D A4 24 B8 00  lea         rsp,[rsp+0B8h]
+                    00 00
+L$ctr32_abort:
+  0000000000000FA1: 48 8B 7C 24 08     mov         rdi,qword ptr [rsp+8]
+  0000000000000FA6: 48 8B 74 24 10     mov         rsi,qword ptr [rsp+10h]
+  0000000000000FAB: F3 C3              rep ret
+L$SEH_end_vpaes_ctr32_encrypt_blocks:
+  0000000000000FAD: 90                 nop
+  0000000000000FAE: 90                 nop
+  0000000000000FAF: 90                 nop
+_vpaes_preheat:
+  0000000000000FB0: 4C 8D 15 20 00 00  lea         r10,[.rdata+20h]
+                    00
+  0000000000000FB7: 66 45 0F 6F 52 E0  movdqa      xmm10,xmmword ptr [r10-20h]
+  0000000000000FBD: 66 45 0F 6F 5A F0  movdqa      xmm11,xmmword ptr [r10-10h]
+  0000000000000FC3: 66 45 0F 6F 0A     movdqa      xmm9,xmmword ptr [r10]
+  0000000000000FC8: 66 45 0F 6F 6A 30  movdqa      xmm13,xmmword ptr [r10+30h]
+  0000000000000FCE: 66 45 0F 6F 62 40  movdqa      xmm12,xmmword ptr [r10+40h]
+  0000000000000FD4: 66 45 0F 6F 7A 50  movdqa      xmm15,xmmword ptr [r10+50h]
+  0000000000000FDA: 66 45 0F 6F 72 60  movdqa      xmm14,xmmword ptr [r10+60h]
+  0000000000000FE0: F3 C3              rep ret
+  0000000000000FE2: 90                 nop
+  0000000000000FE3: 90                 nop
+  0000000000000FE4: 90                 nop
+  0000000000000FE5: 90                 nop
+  0000000000000FE6: 90                 nop
+  0000000000000FE7: 90                 nop
+  0000000000000FE8: 90                 nop
+  0000000000000FE9: 90                 nop
+  0000000000000FEA: 90                 nop
+  0000000000000FEB: 90                 nop
+  0000000000000FEC: 90                 nop
+  0000000000000FED: 90                 nop
+  0000000000000FEE: 90                 nop
+  0000000000000FEF: 90                 nop
+se_handler:
+  0000000000000FF0: 56                 push        rsi
+  0000000000000FF1: 57                 push        rdi
+  0000000000000FF2: 53                 push        rbx
+  0000000000000FF3: 55                 push        rbp
+  0000000000000FF4: 41 54              push        r12
+  0000000000000FF6: 41 55              push        r13
+  0000000000000FF8: 41 56              push        r14
+  0000000000000FFA: 41 57              push        r15
+  0000000000000FFC: 9C                 pushfq
+  0000000000000FFD: 48 83 EC 40        sub         rsp,40h
+  0000000000001001: 49 8B 40 78        mov         rax,qword ptr [r8+78h]
+  0000000000001005: 49 8B 98 F8 00 00  mov         rbx,qword ptr [r8+0F8h]
+                    00
+  000000000000100C: 49 8B 71 08        mov         rsi,qword ptr [r9+8]
+  0000000000001010: 4D 8B 59 38        mov         r11,qword ptr [r9+38h]
+  0000000000001014: 45 8B 13           mov         r10d,dword ptr [r11]
+  0000000000001017: 4E 8D 14 16        lea         r10,[rsi+r10]
+  000000000000101B: 4C 39 D3           cmp         rbx,r10
+  000000000000101E: 0F 82 33 00 00 00  jb          L$in_prologue
+  0000000000001024: 49 8B 80 98 00 00  mov         rax,qword ptr [r8+98h]
+                    00
+  000000000000102B: 45 8B 53 04        mov         r10d,dword ptr [r11+4]
+  000000000000102F: 4E 8D 14 16        lea         r10,[rsi+r10]
+  0000000000001033: 4C 39 D3           cmp         rbx,r10
+  0000000000001036: 0F 83 1B 00 00 00  jae         L$in_prologue
+  000000000000103C: 48 8D 70 10        lea         rsi,[rax+10h]
+  0000000000001040: 49 8D B8 00 02 00  lea         rdi,[r8+200h]
+                    00
+  0000000000001047: B9 14 00 00 00     mov         ecx,14h
+  000000000000104C: FC                 cld
+  000000000000104D: F3 48 A5           rep movs    qword ptr [rdi],qword ptr [rsi]
+  0000000000001050: 48 8D 80 B8 00 00  lea         rax,[rax+0B8h]
+                    00
+L$in_prologue:
+  0000000000001057: 48 8B 78 08        mov         rdi,qword ptr [rax+8]
+  000000000000105B: 48 8B 70 10        mov         rsi,qword ptr [rax+10h]
+  000000000000105F: 49 89 80 98 00 00  mov         qword ptr [r8+98h],rax
+                    00
+  0000000000001066: 49 89 B0 A8 00 00  mov         qword ptr [r8+0A8h],rsi
+                    00
+  000000000000106D: 49 89 B8 B0 00 00  mov         qword ptr [r8+0B0h],rdi
+                    00
+  0000000000001074: 49 8B 79 28        mov         rdi,qword ptr [r9+28h]
+  0000000000001078: 4C 89 C6           mov         rsi,r8
+  000000000000107B: B9 9A 00 00 00     mov         ecx,9Ah
+  0000000000001080: FC                 cld
+  0000000000001081: F3 48 A5           rep movs    qword ptr [rdi],qword ptr [rsi]
+  0000000000001084: 4C 89 CE           mov         rsi,r9
+  0000000000001087: 48 31 C9           xor         rcx,rcx
+  000000000000108A: 48 8B 56 08        mov         rdx,qword ptr [rsi+8]
+  000000000000108E: 4C 8B 06           mov         r8,qword ptr [rsi]
+  0000000000001091: 4C 8B 4E 10        mov         r9,qword ptr [rsi+10h]
+  0000000000001095: 4C 8B 56 28        mov         r10,qword ptr [rsi+28h]
+  0000000000001099: 4C 8D 5E 38        lea         r11,[rsi+38h]
+  000000000000109D: 4C 8D 66 18        lea         r12,[rsi+18h]
+  00000000000010A1: 4C 89 54 24 20     mov         qword ptr [rsp+20h],r10
+  00000000000010A6: 4C 89 5C 24 28     mov         qword ptr [rsp+28h],r11
+  00000000000010AB: 4C 89 64 24 30     mov         qword ptr [rsp+30h],r12
+  00000000000010B0: 48 89 4C 24 38     mov         qword ptr [rsp+38h],rcx
+  00000000000010B5: FF 15 00 00 00 00  call        qword ptr [__imp_RtlVirtualUnwind]
+  00000000000010BB: B8 01 00 00 00     mov         eax,1
+  00000000000010C0: 48 83 C4 40        add         rsp,40h
+  00000000000010C4: 9D                 popfq
+  00000000000010C5: 41 5F              pop         r15
+  00000000000010C7: 41 5E              pop         r14
+  00000000000010C9: 41 5D              pop         r13
+  00000000000010CB: 41 5C              pop         r12
+  00000000000010CD: 5D                 pop         rbp
+  00000000000010CE: 5B                 pop         rbx
+  00000000000010CF: 5F                 pop         rdi
+  00000000000010D0: 5E                 pop         rsi
+  00000000000010D1: F3 C3              rep ret
+
+  Summary
+
+          1C .debug$T
+          48 .pdata
+         3C0 .rdata
+        10D3 .text
+          60 .xdata

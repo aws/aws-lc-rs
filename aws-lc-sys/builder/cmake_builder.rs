@@ -3,9 +3,9 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    cargo_env, emit_warning, execute_command, is_crt_static, is_no_asm, option_env, target,
-    target_arch, target_env, target_family, target_os, target_underscored, target_vendor,
-    OutputLibType,
+    allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, is_crt_static, is_no_asm,
+    option_env, target, target_arch, target_env, target_family, target_os, target_underscored,
+    target_vendor, test_nasm_command, OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -20,10 +20,6 @@ pub(crate) struct CmakeBuilder {
 
 fn test_clang_cl_command() -> bool {
     execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
-}
-
-fn test_nasm_command() -> bool {
-    execute_command("nasm".as_ref(), &["-version".as_ref()]).status
 }
 
 fn find_cmake_command() -> Option<OsString> {
@@ -162,7 +158,7 @@ impl CmakeBuilder {
 
         // See issue: https://github.com/aws/aws-lc-rs/issues/453
         if target_os() == "windows" {
-            Self::configure_windows(&mut cmake_cfg);
+            self.configure_windows(&mut cmake_cfg);
         }
 
         // If the build environment vendor is Apple
@@ -213,7 +209,7 @@ impl CmakeBuilder {
         cmake_cfg
     }
 
-    fn configure_windows(cmake_cfg: &mut cmake::Config) {
+    fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
         match (target_env().as_str(), target_arch().as_str()) {
             ("msvc", "aarch64") => {
                 cmake_cfg.generator_toolset(format!(
@@ -242,6 +238,23 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86");
             }
             _ => {}
+        }
+        if target_arch() == "x86_64" && !test_nasm_command() && Some(true) == allow_prebuilt_nasm()
+        {
+            emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            emit_warning("!!!   Using pre-built NASM binaries   !!!");
+            emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+            let script_path = self
+                .manifest_dir
+                .join("builder")
+                .join("prebuilt-nasm.bat")
+                .display()
+                .to_string();
+            let script_path = script_path.replace('\\', "/");
+
+            cmake_cfg.define("CMAKE_ASM_NASM_COMPILER", script_path.as_str());
+            cmake_cfg.define("CMAKE_VERBOSE_MAKEFILE", "1");
         }
     }
 
@@ -298,10 +311,14 @@ impl crate::Builder for CmakeBuilder {
         let mut missing_dependency = false;
 
         if target_os() == "windows" {
-            if target_arch() == "x86_64" && !test_nasm_command() && !is_no_asm() {
+            if target_arch() == "x86_64"
+                && !is_no_asm()
+                && !test_nasm_command()
+                && Some(true) != allow_prebuilt_nasm()
+            {
                 eprintln!(
-                    "Consider setting `AWS_LC_SYS_NO_ASM` in the environment for development builds.\
-                See User Guide about the limitations: https://aws.github.io/aws-lc-rs/index.html"
+                    "Consider setting `AWS_LC_SYS_PREBUILT_NASM` in the build environment.\
+                See User Guide: https://aws.github.io/aws-lc-rs/index.html"
                 );
                 eprintln!("Missing dependency: nasm");
                 missing_dependency = true;
