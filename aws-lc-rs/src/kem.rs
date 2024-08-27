@@ -53,14 +53,12 @@ use crate::{
     encoding::generated_encodings,
     error::{KeyRejected, Unspecified},
     ptr::LcPtr,
-    ptr::Pointer,
 };
 use alloc::borrow::Cow;
 use aws_lc::{
-    EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
-    EVP_PKEY_encapsulate, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
-    EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_up_ref,
-    EVP_PKEY, EVP_PKEY_KEM,
+    EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate, EVP_PKEY_encapsulate,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_kem_new_raw_public_key,
+    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM,
 };
 use core::{cmp::Ordering, ptr::null_mut};
 use zeroize::Zeroize;
@@ -165,7 +163,7 @@ where
         let kyber_key = kem_key_generate(alg.id.nid())?;
         if 1 != unsafe {
             EVP_PKEY_get_raw_private_key(
-                kyber_key.as_const_ptr(),
+                *kyber_key.as_const(),
                 priv_key_bytes.as_mut_ptr(),
                 &mut secret_key_size,
             )
@@ -190,12 +188,7 @@ where
     /// `error::Unspecified` when operation fails due to internal error.
     #[allow(clippy::missing_panics_doc)]
     pub fn encapsulation_key(&self) -> Result<EncapsulationKey<Id>, Unspecified> {
-        // This is pedantic this function always returns 1
-        if 1 != unsafe { EVP_PKEY_up_ref(*self.evp_pkey) } {
-            return Err(Unspecified);
-        };
-
-        let evp_pkey = LcPtr::new(*self.evp_pkey).expect("AWS-LC EVP_PKEY should not be null");
+        let evp_pkey = self.evp_pkey.clone();
 
         Ok(EncapsulationKey {
             algorithm: self.algorithm,
@@ -215,13 +208,13 @@ where
         let mut shared_secret_len = self.algorithm.shared_secret_size();
         let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
-        let ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) })?;
+        let mut ctx = self.evp_pkey.create_EVP_PKEY_CTX()?;
 
         let ciphertext = ciphertext.as_ref();
 
         if 1 != unsafe {
             EVP_PKEY_decapsulate(
-                *ctx,
+                *ctx.as_mut(),
                 shared_secret.as_mut_ptr(),
                 &mut shared_secret_len,
                 // AWS-LC incorrectly has this as an unqualified `uint8_t *`, it should be qualified with const
@@ -259,6 +252,7 @@ where
 }
 
 use paste::paste;
+
 generated_encodings!(EncapsulationKeyBytes);
 
 /// A serializable encapsulation key usable with KEM algorithms. Constructed
@@ -292,11 +286,11 @@ where
         let mut ciphertext: Vec<u8> = vec![0u8; ciphertext_len];
         let mut shared_secret: Vec<u8> = vec![0u8; shared_secret_len];
 
-        let ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.evp_pkey, null_mut()) })?;
+        let mut ctx = self.evp_pkey.create_EVP_PKEY_CTX()?;
 
         if 1 != unsafe {
             EVP_PKEY_encapsulate(
-                *ctx,
+                *ctx.as_mut(),
                 ciphertext.as_mut_ptr(),
                 &mut ciphertext_len,
                 shared_secret.as_mut_ptr(),
@@ -331,7 +325,7 @@ where
         let mut encapsulate_bytes = vec![0u8; encapsulate_key_size];
         if 1 != unsafe {
             EVP_PKEY_get_raw_public_key(
-                self.evp_pkey.as_const_ptr(),
+                *self.evp_pkey.as_const(),
                 encapsulate_bytes.as_mut_ptr(),
                 &mut encapsulate_key_size,
             )
@@ -447,15 +441,15 @@ impl AsRef<[u8]> for SharedSecret {
 // Returns an LcPtr to an EVP_PKEY
 #[inline]
 fn kem_key_generate(nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_KEM, null_mut()) })?;
-    if 1 != unsafe { EVP_PKEY_CTX_kem_set_params(*ctx, nid) }
-        || 1 != unsafe { EVP_PKEY_keygen_init(*ctx) }
+    let mut ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_KEM, null_mut()) })?;
+    if 1 != unsafe { EVP_PKEY_CTX_kem_set_params(*ctx.as_mut(), nid) }
+        || 1 != unsafe { EVP_PKEY_keygen_init(*ctx.as_mut()) }
     {
         return Err(Unspecified);
     }
 
     let mut key_raw: *mut EVP_PKEY = null_mut();
-    if 1 != unsafe { EVP_PKEY_keygen(*ctx, &mut key_raw) } {
+    if 1 != unsafe { EVP_PKEY_keygen(*ctx.as_mut(), &mut key_raw) } {
         return Err(Unspecified);
     }
     Ok(LcPtr::new(key_raw)?)

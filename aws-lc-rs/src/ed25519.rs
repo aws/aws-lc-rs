@@ -78,7 +78,7 @@ impl VerificationAlgorithm for EdDSAParameters {
                 null_mut(),
                 null_mut(),
                 null_mut(),
-                *public_key,
+                *public_key.as_mut_unsafe(),
             )
         } {
             return Err(Unspecified);
@@ -207,7 +207,7 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
         // 4:d=2  hl=2 l=   3 prim:   OBJECT            :ED25519
         // 9:d=1  hl=2 l=  33 prim:  BIT STRING
         let mut cbb = LcCBB::new(44);
-        if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), *self.evp_pkey) } {
+        if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), *self.evp_pkey.as_const()) } {
             return Err(Unspecified);
         }
         Ok(PublicKeyX509Der::from(cbb.into_buffer()?))
@@ -226,15 +226,15 @@ unsafe impl Send for Ed25519KeyPair {}
 unsafe impl Sync for Ed25519KeyPair {}
 
 pub(crate) fn generate_key() -> Result<LcPtr<EVP_PKEY>, ()> {
-    let pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, null_mut()) })?;
+    let mut pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, null_mut()) })?;
 
-    if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx) } {
+    if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx.as_mut()) } {
         return Err(());
     }
 
     let mut pkey = null_mut::<EVP_PKEY>();
 
-    if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx, &mut pkey) }) {
+    if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx.as_mut(), &mut pkey) }) {
         return Err(());
     }
 
@@ -405,7 +405,7 @@ impl Ed25519KeyPair {
         let mut public_key = [0u8; ED25519_PUBLIC_KEY_LEN];
         let mut out_len: usize = ED25519_PUBLIC_KEY_LEN;
         if 1 != unsafe {
-            EVP_PKEY_get_raw_public_key(*evp_pkey, public_key.as_mut_ptr(), &mut out_len)
+            EVP_PKEY_get_raw_public_key(*evp_pkey.as_const(), public_key.as_mut_ptr(), &mut out_len)
         } {
             return Err(KeyRejected::wrong_algorithm());
         }
@@ -445,7 +445,7 @@ impl Ed25519KeyPair {
                 null_mut(),
                 null_mut(),
                 null_mut(),
-                *self.evp_pkey,
+                *self.evp_pkey.as_mut_unsafe(),
             )
         } {
             return Err(Unspecified);
@@ -483,7 +483,7 @@ impl Ed25519KeyPair {
         let mut out_len: usize = private_key_bytes.len();
         if 1 != unsafe {
             EVP_PKEY_get_raw_private_key(
-                *self.evp_pkey,
+                *self.evp_pkey.as_const(),
                 private_key_bytes.as_mut_ptr(),
                 &mut out_len,
             )
@@ -524,7 +524,6 @@ impl AsDer<Pkcs8V2Der<'static>> for Ed25519KeyPair {
 
 #[cfg(test)]
 mod tests {
-
     use crate::ed25519::Ed25519KeyPair;
     use crate::encoding::{AsBigEndian, AsDer, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der};
     use crate::rand::SystemRandom;
