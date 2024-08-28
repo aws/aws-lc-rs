@@ -421,6 +421,15 @@ fn get_cflags() -> &'static str {
     unsafe { AWS_LC_SYS_CFLAGS.as_str() }
 }
 
+fn use_prebuilt_nasm() -> bool {
+    target_os() == "windows"
+        && target_arch() == "x86_64"
+        && !is_no_asm()
+        && !test_nasm_command()
+        && (Some(true) == allow_prebuilt_nasm()
+            || (allow_prebuilt_nasm().is_none() && cfg!(feature = "prebuilt-nasm")))
+}
+
 fn allow_prebuilt_nasm() -> Option<bool> {
     unsafe { AWS_LC_SYS_PREBUILT_NASM }
 }

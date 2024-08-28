@@ -36,6 +36,8 @@ include = [
     "/aws-lc/util/fipstools/**/*.c",
     "/CMakeLists.txt",
     "/builder/**/*.rs",
+    "/builder/**/*.bat",
+    "/builder/**/*.obj",
     "/Cargo.toml",
     "/generated-include/**",
     "/include/**",
@@ -49,6 +51,7 @@ build = "builder/main.rs"
 asan = []
 ssl = ['bindgen']
 bindgen = ["dep:bindgen"] # Generate the bindings on the targetted platform as a fallback mechanism.
+prebuilt-nasm = []
 
 [build-dependencies]
 cmake = "0.1.48"

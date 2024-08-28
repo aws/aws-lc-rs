@@ -5,7 +5,8 @@ use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, get_cflags, is_crt_static,
     is_no_asm, option_env, requested_c_std, target, target_arch, target_env, target_family,
-    target_os, target_underscored, target_vendor, test_nasm_command, CStdRequested, OutputLibType,
+    target_os, target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm,
+    CStdRequested, OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -256,8 +257,7 @@ impl CmakeBuilder {
             }
             _ => {}
         }
-        if target_arch() == "x86_64" && !test_nasm_command() && Some(true) == allow_prebuilt_nasm()
-        {
+        if use_prebuilt_nasm() {
             emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             emit_warning("!!!   Using pre-built NASM binaries   !!!");
             emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -271,7 +271,6 @@ impl CmakeBuilder {
             let script_path = script_path.replace('\\', "/");
 
             cmake_cfg.define("CMAKE_ASM_NASM_COMPILER", script_path.as_str());
-            cmake_cfg.define("CMAKE_VERBOSE_MAKEFILE", "1");
         }
     }
 
@@ -327,12 +326,15 @@ impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
         let mut missing_dependency = false;
 
-        if target_os() == "windows" {
-            if target_arch() == "x86_64"
-                && !is_no_asm()
-                && !test_nasm_command()
-                && Some(true) != allow_prebuilt_nasm()
-            {
+        if target_os() == "windows" && target_arch() == "x86-64" {
+            if is_no_asm() && Some(true) == allow_prebuilt_nasm() {
+                eprintln!(
+                    "Build environment has both `AWS_LC_SYS_PREBUILT_NASM` and `AWS_LC_SYS_NO_ASM` set.\
+                Please remove one of these environment variables.
+                See User Guide: https://aws.github.io/aws-lc-rs/index.html"
+                );
+            }
+            if !is_no_asm() && !test_nasm_command() && !use_prebuilt_nasm() {
                 eprintln!(
                     "Consider setting `AWS_LC_SYS_PREBUILT_NASM` in the build environment.\
                 See User Guide: https://aws.github.io/aws-lc-rs/index.html"

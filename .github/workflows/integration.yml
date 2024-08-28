@@ -141,6 +141,44 @@ jobs:
         # See: https://github.com/rust-lang/cargo/issues/8531
         run: AWS_LC_SYS_STATIC=0 AWS_LC_FIPS_SYS_STATIC=0 cargo publish --dry-run
 
+  ## Verify that prebuilt-nasm objects were published properly
+  publish-dry-run-prebuild-nasm:
+    if: github.repository_owner == 'aws'
+    name: publish dry-run prebuilt-nasm
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [ aws-lc-sys, aws-lc-rs ]
+        args:
+          - publish --dry-run
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - run: go version
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Verify NASM not available
+        shell: bash
+        run: |
+          if nasm --version; then
+             exit 1
+          else
+            exit 0;
+          fi
+      - name: ${{ matrix.crate }}
+        working-directory: ./${{ matrix.crate }}
+        shell: bash
+        run: AWS_LC_SYS_PREBUILT_NASM=1 cargo publish --dry-run
+
   msrv:
     name: Minimum Supported Rust Version
     if: github.repository_owner == 'aws'
