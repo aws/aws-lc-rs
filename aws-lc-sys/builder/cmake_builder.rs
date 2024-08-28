@@ -3,9 +3,9 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, get_cflags, is_crt_static, is_no_asm,
-    option_env, requested_c_std, target, target_arch, target_env, target_family, target_os,
-    target_underscored, target_vendor, test_nasm_command, CStdRequested, OutputLibType,
+    allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, get_cflags, is_crt_static,
+    is_no_asm, option_env, requested_c_std, target, target_arch, target_env, target_family,
+    target_os, target_underscored, target_vendor, test_nasm_command, CStdRequested, OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;

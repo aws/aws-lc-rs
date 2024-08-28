@@ -218,8 +218,6 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
     )
     .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
     .expect("write bindings");
-
-
 }
 
 fn emit_rustc_cfg(cfg: &str) {

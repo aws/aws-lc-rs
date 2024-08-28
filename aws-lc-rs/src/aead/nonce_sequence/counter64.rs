@@ -6,6 +6,7 @@ use crate::error::Unspecified;
 use crate::iv::FixedLength;
 
 /// `Counter64` is an implementation of the `NonceSequence` trait.
+///
 /// The internal state of a `Counter64` is a 64-bit unsigned counter that
 /// increments on each call to `advance` and an optional 4-byte identifier. Counter and identifier
 /// values are used to construct each nonce.

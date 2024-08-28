@@ -14,8 +14,8 @@ mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
 use crate::{
-    cargo_env, emit_warning, env_var_to_bool, execute_command, get_cflags, out_dir, requested_c_std, target,
-    target_arch, target_os, target_vendor, CStdRequested, OutputLibType,
+    cargo_env, emit_warning, env_var_to_bool, execute_command, get_cflags, out_dir,
+    requested_c_std, target, target_arch, target_os, target_vendor, CStdRequested, OutputLibType,
 };
 use std::path::PathBuf;
 
