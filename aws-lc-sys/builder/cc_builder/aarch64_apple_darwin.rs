@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Wed Aug 21 22:12:32 UTC 2024
+// Wed Aug 28 14:44:16 UTC 2024
 
 use crate::cc_builder::Library;
 
@@ -164,7 +164,7 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/rand_extra/pq_custom_randombytes.c",
         "crypto/rand_extra/rand_extra.c",
         "crypto/rc4/rc4.c",
-        "crypto/refcount_lock.c",
+        "crypto/refcount_c11.c",
         "crypto/rsa_extra/rsa_asn1.c",
         "crypto/rsa_extra/rsa_crypt.c",
         "crypto/rsa_extra/rsa_print.c",
