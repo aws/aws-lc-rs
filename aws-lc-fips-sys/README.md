@@ -30,10 +30,18 @@ The platforms which `aws-lc-fips-sys` builds on is limited to the platforms wher
 
 ### Pregenerated Bindings Availability
 
-CPU|OS
--------------|-------------
-x86-64|Linux
-arm-64|Linux
+Targets
+---------------------
+aarch64_apple_darwin
+aarch64_unknown_linux_gnu
+aarch64_unknown_linux_musl
+x86_64_apple_darwin
+x86_64_unknown_linux_gnu
+x86_64_unknown_linux_musl
+
+### Prebuilt NASM objects
+
+Prebuilt NASM objects are *not* available for this crate.
 
 ### Tested AWS-LC FIPS Build Environments
 

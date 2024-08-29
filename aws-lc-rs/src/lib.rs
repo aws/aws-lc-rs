@@ -5,7 +5,7 @@
 
 #![allow(clippy::doc_markdown)]
 //! A [*ring*](https://github.com/briansmith/ring)-compatible crypto library using the cryptographic
-//! operations provided by [*AWS-LC*](https://github.com/awslabs/aws-lc). It uses either the
+//! operations provided by [*AWS-LC*](https://github.com/aws/aws-lc). It uses either the
 //! auto-generated [*aws-lc-sys*](https://crates.io/crates/aws-lc-sys) or
 //! [*aws-lc-fips-sys*](https://crates.io/crates/aws-lc-fips-sys)
 //! Foreign Function Interface (FFI) crates found in this repository for invoking *AWS-LC*.
@@ -20,12 +20,12 @@
 //! [dependencies]
 //! aws-lc-rs = "1.0.0"
 //! ```
+//!
 //! Consuming projects will need a C Compiler (Clang or GCC) to build.
 //! For some platforms, the build may also require CMake.
 //! Building with the "fips" feature on any platform requires **CMake** and **Go**.
 //!
-//! See our [User Guide](https://awslabs.github.io/aws-lc-rs/) for guidance on installing build requirements.
-//!
+//! See our [User Guide](https://aws.github.io/aws-lc-rs/) for guidance on installing build requirements.
 //!
 //! # Feature Flags
 //!
@@ -70,6 +70,41 @@
 //! the pre-generated bindings. This feature requires `libclang` to be installed. See the
 //! [requirements](https://rust-lang.github.io/rust-bindgen/requirements.html)
 //! for [rust-bindgen](https://github.com/rust-lang/rust-bindgen)
+//!
+//! #### prebuilt-nasm
+//!
+//! Enables the use of our prebuilt NASM objects in certain situations. This only affect builds for
+//! the Windows/x86-64 platforms. This feature is ignored if the "fips" feature is also enabled.
+//! Use of prebuilt NASM objects will be prevented if either:
+//! a NASM assembler is installed in the build environment
+//! and/or `AWS_LC_SYS_PREBUILT_NASM` is set with a value of 0.
+//!
+//! Be aware that [features are additive](https://doc.rust-lang.org/cargo/reference/features.html#feature-unification);
+//! by enabling this feature, it is enabled for crates within the same build.
+//!
+//! # Use of prebuilt NASM objects
+//!
+//! For Windows x86 and x86-64, the AWS-LC assembly code requires NASM to build. On these platforms,
+//! we recommend that you install [the NASM assembler](https://www.nasm.us/). If a NASM assembler is
+//! found during the build process, then it *will* be used to compile the assembly files. However,
+//! if a NASM assembler is not found, then the (non-"fips") build may fail except in the following case:
+//!
+//! * You are building for `x86-64` and either:
+//!    * The `AWS_LC_SYS_PREBUILT_NASM` environment variable is found and has a value of "1" (or the value is empty); OR
+//!    * `AWS_LC_SYS_PREBUILT_NASM` is *not found* in the environment AND the "prebuilt-nasm" feature has been enabled.
+//!
+//! If the above cases apply, then our prebuilt NASM objects may be used for the build. To prevent our prebuilt NASM
+//! objects from being used, please install NASM and/or set `AWS_LC_SYS_PREBUILT_NASM=0` in your build environment to prevent their use.
+//!
+//! ## About prebuilt NASM objects
+//!
+//! Our prebuilt NASM objects are generated using the same automation that produces our pregenerated bindings. See our
+//! [GitHub workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/sys-bindings-generator.yml).
+//! The prebuilt NASM objects are checked into our repository
+//! and are [available for inspection](https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/builder/prebuilt-nasm).
+//! For each PR submitted,
+//! [our CI verifies](https://github.com/aws/aws-lc-rs/blob/8fb6869fc7bde92529a5cca40cf79513820984f7/.github/workflows/tests.yml#L209-L241)
+//! that the NASM objects newly built from source match the NASM objects currently in the repository.
 //!
 //! # *ring*-compatibility
 //!
