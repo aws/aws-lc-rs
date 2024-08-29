@@ -20,6 +20,13 @@ future release. Please [contact us] about any bugs you find in our build process
   be used. This option is only available for unoptimized (i.e., `OPT_LEVEL = "0"` or "debug") builds.
   **WARNING**: Performance on most platforms is extremely limited by this option. Certain security
   properties, such as resistance to timing attacks, can only be provided when assembly code is used.
+* `AWS_LC_SYS_PREBUILT_NASM` -- value can be set to `1` to *allow* the build to use our prebuilt NASM objects.
+  The value can be set to `0` to *prevent* our prebuilt NASM objects from being used. See the section on
+  [Prebuilt NASM objects](requirements/windows.md#prebuilt-nasm-objects) for more information.
+* `AWS_LC_SYS_CFLAGS` -- if value is set, it will be used as the value of `CFLAGS` in the environment when the AWS-LC
+  build is performed.
+* `AWS_LC_SYS_C_STD` -- value can be set to determine the C standard used by the C compiler. It may be set to
+  either `99` for C99 or `11` for C11. On most platforms, C11 will be used by default.
 
 ## Links
 
