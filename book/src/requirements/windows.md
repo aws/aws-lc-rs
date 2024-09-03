@@ -63,7 +63,9 @@ The prebuilt NASM objects are checked into our repository
 and are [available for inspection](https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/builder/prebuilt-nasm).
 For each PR submitted,
 [our CI verifies](https://github.com/aws/aws-lc-rs/blob/8fb6869fc7bde92529a5cca40cf79513820984f7/.github/workflows/tests.yml#L209-L241)
-that the NASM objects newly built from source match the NASM objects currently in the repository.### No-assembly build
+that the NASM objects newly built from source match the NASM objects currently in the repository.
+
+### No-assembly build
 
 It is possible to avoid the NASM requirement by setting the `AWS_LC_SYS_NO_ASM`/`AWS_LC_FIPS_SYS_NO_ASM` environment
 variables. However, this severely impacts performance and can only be used for un-optimized/debug builds. See the
@@ -94,6 +96,12 @@ See the [requirements](https://rust-lang.github.io/rust-bindgen/requirements.htm
 ```shell
 cargo install --force --locked bindgen-cli
 ```
+
+## FIPS build
+
+Building with the "fips" feature on this platform will result in the creation of shared libraries (named like
+`aws_lc_fips_0_xx_yy_crypto.dll` and `aws_lc_fips_0_xx_yy_rust_wrapper.dll`). These shared libraries will likely need to
+be distributed alongside any executable that depends on **aws-lc-rs**.
 
 ## Troubleshooting
 
