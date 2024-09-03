@@ -111,7 +111,7 @@ pub const AWSLC_VERSION_NAME: &[u8; 7] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
 pub const AWSLC_API_VERSION: i32 = 29;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.33.0\0";
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.34.2\0";
 pub const AES_ENCRYPT: i32 = 1;
 pub const AES_DECRYPT: i32 = 0;
 pub const AES_MAXNR: i32 = 14;
@@ -132,7 +132,7 @@ pub const CRYPTO_LOCK: i32 = 1;
 pub const CRYPTO_UNLOCK: i32 = 2;
 pub const CRYPTO_READ: i32 = 4;
 pub const CRYPTO_WRITE: i32 = 8;
-pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.33.0)\0";
+pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.34.2)\0";
 pub const OPENSSL_VERSION: i32 = 0;
 pub const OPENSSL_CFLAGS: i32 = 1;
 pub const OPENSSL_BUILT_ON: i32 = 2;
@@ -3283,6 +3283,14 @@ pub const EVP_PKEY_DH: i32 = 28;
 pub const HKDF_R_OUTPUT_TOO_LARGE: i32 = 100;
 pub const MD5_CBLOCK: i32 = 64;
 pub const MD5_DIGEST_LENGTH: i32 = 16;
+pub const HMAC_MD5_PRECOMPUTED_KEY_SIZE: i32 = 32;
+pub const HMAC_SHA1_PRECOMPUTED_KEY_SIZE: i32 = 40;
+pub const HMAC_SHA224_PRECOMPUTED_KEY_SIZE: i32 = 64;
+pub const HMAC_SHA256_PRECOMPUTED_KEY_SIZE: i32 = 64;
+pub const HMAC_SHA384_PRECOMPUTED_KEY_SIZE: i32 = 128;
+pub const HMAC_SHA512_PRECOMPUTED_KEY_SIZE: i32 = 128;
+pub const HMAC_SHA512_224_PRECOMPUTED_KEY_SIZE: i32 = 128;
+pub const HMAC_SHA512_256_PRECOMPUTED_KEY_SIZE: i32 = 128;
 pub const HMAC_MAX_PRECOMPUTED_KEY_SIZE: i32 = 128;
 pub const HMAC_R_MISSING_PARAMETERS: i32 = 100;
 pub const HMAC_R_BUFFER_TOO_SMALL: i32 = 102;
@@ -3501,63 +3509,6 @@ pub const GEN_EDIPARTY: i32 = 5;
 pub const GEN_URI: i32 = 6;
 pub const GEN_IPADD: i32 = 7;
 pub const GEN_RID: i32 = 8;
-pub const X509_FLAG_COMPAT: i32 = 0;
-pub const X509_FLAG_NO_HEADER: i32 = 1;
-pub const X509_FLAG_NO_VERSION: i32 = 2;
-pub const X509_FLAG_NO_SERIAL: i32 = 4;
-pub const X509_FLAG_NO_SIGNAME: i32 = 8;
-pub const X509_FLAG_NO_ISSUER: i32 = 16;
-pub const X509_FLAG_NO_VALIDITY: i32 = 32;
-pub const X509_FLAG_NO_SUBJECT: i32 = 64;
-pub const X509_FLAG_NO_PUBKEY: i32 = 128;
-pub const X509_FLAG_NO_EXTENSIONS: i32 = 256;
-pub const X509_FLAG_NO_SIGDUMP: i32 = 512;
-pub const X509_FLAG_NO_AUX: i32 = 1024;
-pub const X509_FLAG_NO_ATTRIBUTES: i32 = 2048;
-pub const X509_FLAG_NO_IDS: i32 = 4096;
-pub const X509V3_EXT_UNKNOWN_MASK: i32 = 983040;
-pub const X509V3_EXT_DEFAULT: i32 = 0;
-pub const X509V3_EXT_ERROR_UNKNOWN: i32 = 65536;
-pub const X509V3_EXT_PARSE_UNKNOWN: i32 = 131072;
-pub const X509V3_EXT_DUMP_UNKNOWN: i32 = 196608;
-pub const XN_FLAG_COMPAT: i32 = 0;
-pub const XN_FLAG_SEP_MASK: i32 = 983040;
-pub const XN_FLAG_SEP_COMMA_PLUS: i32 = 65536;
-pub const XN_FLAG_SEP_CPLUS_SPC: i32 = 131072;
-pub const XN_FLAG_SEP_SPLUS_SPC: i32 = 196608;
-pub const XN_FLAG_SEP_MULTILINE: i32 = 262144;
-pub const XN_FLAG_DN_REV: i32 = 1048576;
-pub const XN_FLAG_FN_MASK: i32 = 6291456;
-pub const XN_FLAG_FN_SN: i32 = 0;
-pub const XN_FLAG_FN_LN: i32 = 2097152;
-pub const XN_FLAG_FN_OID: i32 = 4194304;
-pub const XN_FLAG_FN_NONE: i32 = 6291456;
-pub const XN_FLAG_SPC_EQ: i32 = 8388608;
-pub const XN_FLAG_DUMP_UNKNOWN_FIELDS: i32 = 16777216;
-pub const XN_FLAG_FN_ALIGN: i32 = 33554432;
-pub const XN_FLAG_RFC2253: i32 = 17892119;
-pub const XN_FLAG_ONELINE: i32 = 8520479;
-pub const XN_FLAG_MULTILINE: i32 = 44302342;
-pub const X509V3_CTX_TEST: i32 = 1;
-pub const X509_TRUST_DEFAULT: i32 = -1;
-pub const X509_TRUST_COMPAT: i32 = 1;
-pub const X509_TRUST_SSL_CLIENT: i32 = 2;
-pub const X509_TRUST_SSL_SERVER: i32 = 3;
-pub const X509_TRUST_EMAIL: i32 = 4;
-pub const X509_TRUST_OBJECT_SIGN: i32 = 5;
-pub const X509_TRUST_TSA: i32 = 8;
-pub const X509_TRUST_TRUSTED: i32 = 1;
-pub const X509_TRUST_REJECTED: i32 = 2;
-pub const X509_TRUST_UNTRUSTED: i32 = 3;
-pub const X509_LU_NONE: i32 = 0;
-pub const X509_LU_X509: i32 = 1;
-pub const X509_LU_CRL: i32 = 2;
-pub const X509_LU_PKEY: i32 = 3;
-pub const X509_L_FILE_LOAD: i32 = 1;
-pub const X509_L_ADD_DIR: i32 = 2;
-pub const X509_FILETYPE_PEM: i32 = 1;
-pub const X509_FILETYPE_ASN1: i32 = 2;
-pub const X509_FILETYPE_DEFAULT: i32 = 3;
 pub const X509_V_OK: i32 = 0;
 pub const X509_V_ERR_UNSPECIFIED: i32 = 1;
 pub const X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: i32 = 2;
@@ -3619,6 +3570,78 @@ pub const X509_V_ERR_IP_ADDRESS_MISMATCH: i32 = 64;
 pub const X509_V_ERR_INVALID_CALL: i32 = 65;
 pub const X509_V_ERR_STORE_LOOKUP: i32 = 66;
 pub const X509_V_ERR_NAME_CONSTRAINTS_WITHOUT_SANS: i32 = 67;
+pub const X509_CHECK_FLAG_NO_WILDCARDS: i32 = 2;
+pub const X509_CHECK_FLAG_NEVER_CHECK_SUBJECT: i32 = 32;
+pub const X509_PURPOSE_SSL_CLIENT: i32 = 1;
+pub const X509_PURPOSE_SSL_SERVER: i32 = 2;
+pub const X509_PURPOSE_NS_SSL_SERVER: i32 = 3;
+pub const X509_PURPOSE_SMIME_SIGN: i32 = 4;
+pub const X509_PURPOSE_SMIME_ENCRYPT: i32 = 5;
+pub const X509_PURPOSE_CRL_SIGN: i32 = 6;
+pub const X509_PURPOSE_ANY: i32 = 7;
+pub const X509_PURPOSE_OCSP_HELPER: i32 = 8;
+pub const X509_PURPOSE_TIMESTAMP_SIGN: i32 = 9;
+pub const X509_TRUST_COMPAT: i32 = 1;
+pub const X509_TRUST_SSL_CLIENT: i32 = 2;
+pub const X509_TRUST_SSL_SERVER: i32 = 3;
+pub const X509_TRUST_EMAIL: i32 = 4;
+pub const X509_TRUST_OBJECT_SIGN: i32 = 5;
+pub const X509_TRUST_TSA: i32 = 8;
+pub const X509_FLAG_COMPAT: i32 = 0;
+pub const X509_FLAG_NO_HEADER: i32 = 1;
+pub const X509_FLAG_NO_VERSION: i32 = 2;
+pub const X509_FLAG_NO_SERIAL: i32 = 4;
+pub const X509_FLAG_NO_SIGNAME: i32 = 8;
+pub const X509_FLAG_NO_ISSUER: i32 = 16;
+pub const X509_FLAG_NO_VALIDITY: i32 = 32;
+pub const X509_FLAG_NO_SUBJECT: i32 = 64;
+pub const X509_FLAG_NO_PUBKEY: i32 = 128;
+pub const X509_FLAG_NO_EXTENSIONS: i32 = 256;
+pub const X509_FLAG_NO_SIGDUMP: i32 = 512;
+pub const X509_FLAG_NO_AUX: i32 = 1024;
+pub const X509_FLAG_NO_ATTRIBUTES: i32 = 2048;
+pub const X509_FLAG_NO_IDS: i32 = 4096;
+pub const X509V3_EXT_UNKNOWN_MASK: i32 = 983040;
+pub const X509V3_EXT_DEFAULT: i32 = 0;
+pub const X509V3_EXT_ERROR_UNKNOWN: i32 = 65536;
+pub const X509V3_EXT_PARSE_UNKNOWN: i32 = 131072;
+pub const X509V3_EXT_DUMP_UNKNOWN: i32 = 196608;
+pub const XN_FLAG_COMPAT: i32 = 0;
+pub const XN_FLAG_SEP_MASK: i32 = 983040;
+pub const XN_FLAG_SEP_COMMA_PLUS: i32 = 65536;
+pub const XN_FLAG_SEP_CPLUS_SPC: i32 = 131072;
+pub const XN_FLAG_SEP_SPLUS_SPC: i32 = 196608;
+pub const XN_FLAG_SEP_MULTILINE: i32 = 262144;
+pub const XN_FLAG_DN_REV: i32 = 1048576;
+pub const XN_FLAG_FN_MASK: i32 = 6291456;
+pub const XN_FLAG_FN_SN: i32 = 0;
+pub const XN_FLAG_FN_LN: i32 = 2097152;
+pub const XN_FLAG_FN_OID: i32 = 4194304;
+pub const XN_FLAG_FN_NONE: i32 = 6291456;
+pub const XN_FLAG_SPC_EQ: i32 = 8388608;
+pub const XN_FLAG_DUMP_UNKNOWN_FIELDS: i32 = 16777216;
+pub const XN_FLAG_FN_ALIGN: i32 = 33554432;
+pub const XN_FLAG_RFC2253: i32 = 17892119;
+pub const XN_FLAG_ONELINE: i32 = 8520479;
+pub const XN_FLAG_MULTILINE: i32 = 44302342;
+pub const X509_TRUST_TRUSTED: i32 = 1;
+pub const X509_TRUST_REJECTED: i32 = 2;
+pub const X509_TRUST_UNTRUSTED: i32 = 3;
+pub const X509V3_CTX_TEST: i32 = 1;
+pub const X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT: i32 = 0;
+pub const X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS: i32 = 0;
+pub const X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS: i32 = 0;
+pub const X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS: i32 = 0;
+pub const X509_TRUST_DEFAULT: i32 = -1;
+pub const X509_LU_NONE: i32 = 0;
+pub const X509_LU_X509: i32 = 1;
+pub const X509_LU_CRL: i32 = 2;
+pub const X509_LU_PKEY: i32 = 3;
+pub const X509_L_FILE_LOAD: i32 = 1;
+pub const X509_L_ADD_DIR: i32 = 2;
+pub const X509_FILETYPE_PEM: i32 = 1;
+pub const X509_FILETYPE_ASN1: i32 = 2;
+pub const X509_FILETYPE_DEFAULT: i32 = 3;
 pub const X509_V_FLAG_CB_ISSUER_CHECK: i32 = 1;
 pub const X509_V_FLAG_USE_CHECK_TIME: i32 = 2;
 pub const X509_V_FLAG_CRL_CHECK: i32 = 4;
@@ -3650,15 +3673,6 @@ pub const NS_SSL_CA: i32 = 4;
 pub const NS_SMIME_CA: i32 = 2;
 pub const NS_OBJSIGN_CA: i32 = 1;
 pub const NS_ANY_CA: i32 = 7;
-pub const X509_PURPOSE_SSL_CLIENT: i32 = 1;
-pub const X509_PURPOSE_SSL_SERVER: i32 = 2;
-pub const X509_PURPOSE_NS_SSL_SERVER: i32 = 3;
-pub const X509_PURPOSE_SMIME_SIGN: i32 = 4;
-pub const X509_PURPOSE_SMIME_ENCRYPT: i32 = 5;
-pub const X509_PURPOSE_CRL_SIGN: i32 = 6;
-pub const X509_PURPOSE_ANY: i32 = 7;
-pub const X509_PURPOSE_OCSP_HELPER: i32 = 8;
-pub const X509_PURPOSE_TIMESTAMP_SIGN: i32 = 9;
 pub const X509V3_ADD_OP_MASK: i32 = 15;
 pub const X509V3_ADD_DEFAULT: i32 = 0;
 pub const X509V3_ADD_APPEND: i32 = 1;
@@ -3667,12 +3681,6 @@ pub const X509V3_ADD_REPLACE_EXISTING: i32 = 3;
 pub const X509V3_ADD_KEEP_EXISTING: i32 = 4;
 pub const X509V3_ADD_DELETE: i32 = 5;
 pub const X509V3_ADD_SILENT: i32 = 16;
-pub const X509_CHECK_FLAG_NO_WILDCARDS: i32 = 2;
-pub const X509_CHECK_FLAG_NEVER_CHECK_SUBJECT: i32 = 32;
-pub const X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS: i32 = 0;
-pub const X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT: i32 = 0;
-pub const X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS: i32 = 0;
-pub const X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS: i32 = 0;
 pub const X509_R_AKID_MISMATCH: i32 = 100;
 pub const X509_R_BAD_PKCS7_VERSION: i32 = 101;
 pub const X509_R_BAD_X509_FILETYPE: i32 = 102;
@@ -13395,24 +13403,6 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_DES_decrypt3"]
-    pub fn DES_decrypt3(
-        data: *mut u32,
-        ks1: *const DES_key_schedule,
-        ks2: *const DES_key_schedule,
-        ks3: *const DES_key_schedule,
-    );
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_DES_encrypt3"]
-    pub fn DES_encrypt3(
-        data: *mut u32,
-        ks1: *const DES_key_schedule,
-        ks2: *const DES_key_schedule,
-        ks3: *const DES_key_schedule,
-    );
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_21_0_DH_new"]
     pub fn DH_new() -> *mut DH;
 }
@@ -21416,6 +21406,331 @@ extern "C" {
         idx: ::std::os::raw::c_int,
     ) -> *mut ASN1_TYPE;
 }
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_new"]
+    pub fn X509_STORE_new() -> *mut X509_STORE;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_up_ref"]
+    pub fn X509_STORE_up_ref(store: *mut X509_STORE) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_free"]
+    pub fn X509_STORE_free(store: *mut X509_STORE);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_add_cert"]
+    pub fn X509_STORE_add_cert(store: *mut X509_STORE, x509: *mut X509) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_add_crl"]
+    pub fn X509_STORE_add_crl(store: *mut X509_STORE, crl: *mut X509_CRL) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_get0_param"]
+    pub fn X509_STORE_get0_param(store: *mut X509_STORE) -> *mut X509_VERIFY_PARAM;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set1_param"]
+    pub fn X509_STORE_set1_param(
+        store: *mut X509_STORE,
+        param: *const X509_VERIFY_PARAM,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set_flags"]
+    pub fn X509_STORE_set_flags(
+        store: *mut X509_STORE,
+        flags: ::std::os::raw::c_ulong,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set_depth"]
+    pub fn X509_STORE_set_depth(
+        store: *mut X509_STORE,
+        depth: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set_purpose"]
+    pub fn X509_STORE_set_purpose(
+        store: *mut X509_STORE,
+        purpose: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set_trust"]
+    pub fn X509_STORE_set_trust(
+        store: *mut X509_STORE,
+        trust: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_new"]
+    pub fn X509_STORE_CTX_new() -> *mut X509_STORE_CTX;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_free"]
+    pub fn X509_STORE_CTX_free(ctx: *mut X509_STORE_CTX);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_init"]
+    pub fn X509_STORE_CTX_init(
+        ctx: *mut X509_STORE_CTX,
+        store: *mut X509_STORE,
+        x509: *mut X509,
+        chain: *mut stack_st_X509,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_verify_cert"]
+    pub fn X509_verify_cert(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_chain"]
+    pub fn X509_STORE_CTX_get0_chain(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get1_chain"]
+    pub fn X509_STORE_CTX_get1_chain(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_cert"]
+    pub fn X509_STORE_CTX_set_cert(c: *mut X509_STORE_CTX, x: *mut X509);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get_error"]
+    pub fn X509_STORE_CTX_get_error(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_error"]
+    pub fn X509_STORE_CTX_set_error(ctx: *mut X509_STORE_CTX, err: ::std::os::raw::c_int);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_verify_cert_error_string"]
+    pub fn X509_verify_cert_error_string(
+        err: ::std::os::raw::c_long,
+    ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get_error_depth"]
+    pub fn X509_STORE_CTX_get_error_depth(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get_current_cert"]
+    pub fn X509_STORE_CTX_get_current_cert(ctx: *mut X509_STORE_CTX) -> *mut X509;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_current_issuer"]
+    pub fn X509_STORE_CTX_get0_current_issuer(ctx: *mut X509_STORE_CTX) -> *mut X509;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_current_crl"]
+    pub fn X509_STORE_CTX_get0_current_crl(ctx: *mut X509_STORE_CTX) -> *mut X509_CRL;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_store"]
+    pub fn X509_STORE_CTX_get0_store(ctx: *mut X509_STORE_CTX) -> *mut X509_STORE;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_cert"]
+    pub fn X509_STORE_CTX_get0_cert(ctx: *mut X509_STORE_CTX) -> *mut X509;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_untrusted"]
+    pub fn X509_STORE_CTX_get0_untrusted(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set0_trusted_stack"]
+    pub fn X509_STORE_CTX_set0_trusted_stack(ctx: *mut X509_STORE_CTX, sk: *mut stack_st_X509);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set0_crls"]
+    pub fn X509_STORE_CTX_set0_crls(ctx: *mut X509_STORE_CTX, sk: *mut stack_st_X509_CRL);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_default"]
+    pub fn X509_STORE_CTX_set_default(
+        ctx: *mut X509_STORE_CTX,
+        name: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_param"]
+    pub fn X509_STORE_CTX_get0_param(ctx: *mut X509_STORE_CTX) -> *mut X509_VERIFY_PARAM;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set0_param"]
+    pub fn X509_STORE_CTX_set0_param(ctx: *mut X509_STORE_CTX, param: *mut X509_VERIFY_PARAM);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_flags"]
+    pub fn X509_STORE_CTX_set_flags(ctx: *mut X509_STORE_CTX, flags: ::std::os::raw::c_ulong);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_time"]
+    pub fn X509_STORE_CTX_set_time(
+        ctx: *mut X509_STORE_CTX,
+        flags: ::std::os::raw::c_ulong,
+        t: time_t,
+    );
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_time_posix"]
+    pub fn X509_STORE_CTX_set_time_posix(
+        ctx: *mut X509_STORE_CTX,
+        flags: ::std::os::raw::c_ulong,
+        t: i64,
+    );
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_depth"]
+    pub fn X509_STORE_CTX_set_depth(ctx: *mut X509_STORE_CTX, depth: ::std::os::raw::c_int);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_purpose"]
+    pub fn X509_STORE_CTX_set_purpose(
+        ctx: *mut X509_STORE_CTX,
+        purpose: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_trust"]
+    pub fn X509_STORE_CTX_set_trust(
+        ctx: *mut X509_STORE_CTX,
+        trust: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_new"]
+    pub fn X509_VERIFY_PARAM_new() -> *mut X509_VERIFY_PARAM;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_free"]
+    pub fn X509_VERIFY_PARAM_free(param: *mut X509_VERIFY_PARAM);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_inherit"]
+    pub fn X509_VERIFY_PARAM_inherit(
+        to: *mut X509_VERIFY_PARAM,
+        from: *const X509_VERIFY_PARAM,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1"]
+    pub fn X509_VERIFY_PARAM_set1(
+        to: *mut X509_VERIFY_PARAM,
+        from: *const X509_VERIFY_PARAM,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_flags"]
+    pub fn X509_VERIFY_PARAM_set_flags(
+        param: *mut X509_VERIFY_PARAM,
+        flags: ::std::os::raw::c_ulong,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_clear_flags"]
+    pub fn X509_VERIFY_PARAM_clear_flags(
+        param: *mut X509_VERIFY_PARAM,
+        flags: ::std::os::raw::c_ulong,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_get_flags"]
+    pub fn X509_VERIFY_PARAM_get_flags(param: *const X509_VERIFY_PARAM) -> ::std::os::raw::c_ulong;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_depth"]
+    pub fn X509_VERIFY_PARAM_set_depth(param: *mut X509_VERIFY_PARAM, depth: ::std::os::raw::c_int);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_get_depth"]
+    pub fn X509_VERIFY_PARAM_get_depth(param: *const X509_VERIFY_PARAM) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_time"]
+    pub fn X509_VERIFY_PARAM_set_time(param: *mut X509_VERIFY_PARAM, t: time_t);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_time_posix"]
+    pub fn X509_VERIFY_PARAM_set_time_posix(param: *mut X509_VERIFY_PARAM, t: i64);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_add0_policy"]
+    pub fn X509_VERIFY_PARAM_add0_policy(
+        param: *mut X509_VERIFY_PARAM,
+        policy: *mut ASN1_OBJECT,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_policies"]
+    pub fn X509_VERIFY_PARAM_set1_policies(
+        param: *mut X509_VERIFY_PARAM,
+        policies: *const stack_st_ASN1_OBJECT,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_host"]
+    pub fn X509_VERIFY_PARAM_set1_host(
+        param: *mut X509_VERIFY_PARAM,
+        name: *const ::std::os::raw::c_char,
+        name_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_add1_host"]
+    pub fn X509_VERIFY_PARAM_add1_host(
+        param: *mut X509_VERIFY_PARAM,
+        name: *const ::std::os::raw::c_char,
+        name_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_hostflags"]
+    pub fn X509_VERIFY_PARAM_set_hostflags(
+        param: *mut X509_VERIFY_PARAM,
+        flags: ::std::os::raw::c_uint,
+    );
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_email"]
+    pub fn X509_VERIFY_PARAM_set1_email(
+        param: *mut X509_VERIFY_PARAM,
+        email: *const ::std::os::raw::c_char,
+        email_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_ip"]
+    pub fn X509_VERIFY_PARAM_set1_ip(
+        param: *mut X509_VERIFY_PARAM,
+        ip: *const u8,
+        ip_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_ip_asc"]
+    pub fn X509_VERIFY_PARAM_set1_ip_asc(
+        param: *mut X509_VERIFY_PARAM,
+        ipasc: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_purpose"]
+    pub fn X509_VERIFY_PARAM_set_purpose(
+        param: *mut X509_VERIFY_PARAM,
+        purpose: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_trust"]
+    pub fn X509_VERIFY_PARAM_set_trust(
+        param: *mut X509_VERIFY_PARAM,
+        trust: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Netscape_spki_st {
@@ -22494,6 +22809,30 @@ extern "C" {
         flags: ::std::os::raw::c_uint,
     ) -> ::std::os::raw::c_int;
 }
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get1_issuer"]
+    pub fn X509_STORE_CTX_get1_issuer(
+        out_issuer: *mut *mut X509,
+        ctx: *mut X509_STORE_CTX,
+        x509: *mut X509,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_check_purpose"]
+    pub fn X509_check_purpose(
+        x509: *mut X509,
+        purpose: ::std::os::raw::c_int,
+        ca: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_check_trust"]
+    pub fn X509_check_trust(
+        x509: *mut X509,
+        id: ::std::os::raw::c_int,
+        flags: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct private_key_st {
@@ -23191,12 +23530,6 @@ pub type sk_X509_TRUST_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_verify_cert_error_string"]
-    pub fn X509_verify_cert_error_string(
-        err: ::std::os::raw::c_long,
-    ) -> *const ::std::os::raw::c_char;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_21_0_X509_get_default_cert_area"]
     pub fn X509_get_default_cert_area() -> *const ::std::os::raw::c_char;
 }
@@ -23244,18 +23577,6 @@ extern "C" {
     pub fn X509_CRL_match(a: *const X509_CRL, b: *const X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_verify_cert"]
-    pub fn X509_verify_cert(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_check_trust"]
-    pub fn X509_check_trust(
-        x: *mut X509,
-        id: ::std::os::raw::c_int,
-        flags: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_21_0_X509_TRUST_get_count"]
     pub fn X509_TRUST_get_count() -> ::std::os::raw::c_int;
 }
@@ -23300,17 +23621,6 @@ pub type sk_X509_OBJECT_delete_if_func = ::std::option::Option<
         arg2: *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int,
 >;
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set_depth"]
-    pub fn X509_STORE_set_depth(
-        store: *mut X509_STORE,
-        depth: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_depth"]
-    pub fn X509_STORE_CTX_set_depth(ctx: *mut X509_STORE_CTX, depth: ::std::os::raw::c_int);
-}
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_21_0_X509_LOOKUP_load_file"]
     pub fn X509_LOOKUP_load_file(
@@ -23367,18 +23677,6 @@ extern "C" {
     pub fn X509_STORE_unlock(v: *mut X509_STORE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_new"]
-    pub fn X509_STORE_new() -> *mut X509_STORE;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_up_ref"]
-    pub fn X509_STORE_up_ref(store: *mut X509_STORE) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_free"]
-    pub fn X509_STORE_free(store: *mut X509_STORE);
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_get0_objects"]
     pub fn X509_STORE_get0_objects(st: *mut X509_STORE) -> *mut stack_st_X509_OBJECT;
 }
@@ -23397,75 +23695,6 @@ extern "C" {
     ) -> *mut stack_st_X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set_flags"]
-    pub fn X509_STORE_set_flags(
-        store: *mut X509_STORE,
-        flags: ::std::os::raw::c_ulong,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set_purpose"]
-    pub fn X509_STORE_set_purpose(
-        store: *mut X509_STORE,
-        purpose: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set_trust"]
-    pub fn X509_STORE_set_trust(
-        store: *mut X509_STORE,
-        trust: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set1_param"]
-    pub fn X509_STORE_set1_param(
-        store: *mut X509_STORE,
-        param: *const X509_VERIFY_PARAM,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_get0_param"]
-    pub fn X509_STORE_get0_param(store: *mut X509_STORE) -> *mut X509_VERIFY_PARAM;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_new"]
-    pub fn X509_STORE_CTX_new() -> *mut X509_STORE_CTX;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get1_issuer"]
-    pub fn X509_STORE_CTX_get1_issuer(
-        issuer: *mut *mut X509,
-        ctx: *mut X509_STORE_CTX,
-        x: *mut X509,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_free"]
-    pub fn X509_STORE_CTX_free(ctx: *mut X509_STORE_CTX);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_init"]
-    pub fn X509_STORE_CTX_init(
-        ctx: *mut X509_STORE_CTX,
-        store: *mut X509_STORE,
-        x509: *mut X509,
-        chain: *mut stack_st_X509,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set0_trusted_stack"]
-    pub fn X509_STORE_CTX_set0_trusted_stack(ctx: *mut X509_STORE_CTX, sk: *mut stack_st_X509);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_store"]
-    pub fn X509_STORE_CTX_get0_store(ctx: *mut X509_STORE_CTX) -> *mut X509_STORE;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_cert"]
-    pub fn X509_STORE_CTX_get0_cert(ctx: *mut X509_STORE_CTX) -> *mut X509;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_add_lookup"]
     pub fn X509_STORE_add_lookup(
         v: *mut X509_STORE,
@@ -23481,12 +23710,13 @@ extern "C" {
     pub fn X509_LOOKUP_file() -> *const X509_LOOKUP_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_add_cert"]
-    pub fn X509_STORE_add_cert(ctx: *mut X509_STORE, x: *mut X509) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_add_crl"]
-    pub fn X509_STORE_add_crl(ctx: *mut X509_STORE, x: *mut X509_CRL) -> ::std::os::raw::c_int;
+    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get_by_subject"]
+    pub fn X509_STORE_CTX_get_by_subject(
+        vs: *mut X509_STORE_CTX,
+        type_: ::std::os::raw::c_int,
+        name: *mut X509_NAME,
+        ret: *mut X509_OBJECT,
+    ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_21_0_X509_LOOKUP_ctrl"]
@@ -23533,247 +23763,6 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_set_default_paths"]
     pub fn X509_STORE_set_default_paths(ctx: *mut X509_STORE) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get_error"]
-    pub fn X509_STORE_CTX_get_error(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_error"]
-    pub fn X509_STORE_CTX_set_error(ctx: *mut X509_STORE_CTX, s: ::std::os::raw::c_int);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get_error_depth"]
-    pub fn X509_STORE_CTX_get_error_depth(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get_current_cert"]
-    pub fn X509_STORE_CTX_get_current_cert(ctx: *mut X509_STORE_CTX) -> *mut X509;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_current_issuer"]
-    pub fn X509_STORE_CTX_get0_current_issuer(ctx: *mut X509_STORE_CTX) -> *mut X509;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_current_crl"]
-    pub fn X509_STORE_CTX_get0_current_crl(ctx: *mut X509_STORE_CTX) -> *mut X509_CRL;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_chain"]
-    pub fn X509_STORE_CTX_get0_chain(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get1_chain"]
-    pub fn X509_STORE_CTX_get1_chain(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_cert"]
-    pub fn X509_STORE_CTX_set_cert(c: *mut X509_STORE_CTX, x: *mut X509);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_untrusted"]
-    pub fn X509_STORE_CTX_get0_untrusted(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set0_crls"]
-    pub fn X509_STORE_CTX_set0_crls(c: *mut X509_STORE_CTX, sk: *mut stack_st_X509_CRL);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_purpose"]
-    pub fn X509_STORE_CTX_set_purpose(
-        ctx: *mut X509_STORE_CTX,
-        purpose: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_trust"]
-    pub fn X509_STORE_CTX_set_trust(
-        ctx: *mut X509_STORE_CTX,
-        trust: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_purpose_inherit"]
-    pub fn X509_STORE_CTX_purpose_inherit(
-        ctx: *mut X509_STORE_CTX,
-        def_purpose: ::std::os::raw::c_int,
-        purpose: ::std::os::raw::c_int,
-        trust: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_flags"]
-    pub fn X509_STORE_CTX_set_flags(ctx: *mut X509_STORE_CTX, flags: ::std::os::raw::c_ulong);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_time"]
-    pub fn X509_STORE_CTX_set_time(
-        ctx: *mut X509_STORE_CTX,
-        flags: ::std::os::raw::c_ulong,
-        t: time_t,
-    );
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_time_posix"]
-    pub fn X509_STORE_CTX_set_time_posix(
-        ctx: *mut X509_STORE_CTX,
-        flags: ::std::os::raw::c_ulong,
-        t: i64,
-    );
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get0_param"]
-    pub fn X509_STORE_CTX_get0_param(ctx: *mut X509_STORE_CTX) -> *mut X509_VERIFY_PARAM;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set0_param"]
-    pub fn X509_STORE_CTX_set0_param(ctx: *mut X509_STORE_CTX, param: *mut X509_VERIFY_PARAM);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_set_default"]
-    pub fn X509_STORE_CTX_set_default(
-        ctx: *mut X509_STORE_CTX,
-        name: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_STORE_CTX_get_by_subject"]
-    pub fn X509_STORE_CTX_get_by_subject(
-        vs: *mut X509_STORE_CTX,
-        type_: ::std::os::raw::c_int,
-        name: *mut X509_NAME,
-        ret: *mut X509_OBJECT,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_new"]
-    pub fn X509_VERIFY_PARAM_new() -> *mut X509_VERIFY_PARAM;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_free"]
-    pub fn X509_VERIFY_PARAM_free(param: *mut X509_VERIFY_PARAM);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_inherit"]
-    pub fn X509_VERIFY_PARAM_inherit(
-        to: *mut X509_VERIFY_PARAM,
-        from: *const X509_VERIFY_PARAM,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1"]
-    pub fn X509_VERIFY_PARAM_set1(
-        to: *mut X509_VERIFY_PARAM,
-        from: *const X509_VERIFY_PARAM,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_flags"]
-    pub fn X509_VERIFY_PARAM_set_flags(
-        param: *mut X509_VERIFY_PARAM,
-        flags: ::std::os::raw::c_ulong,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_clear_flags"]
-    pub fn X509_VERIFY_PARAM_clear_flags(
-        param: *mut X509_VERIFY_PARAM,
-        flags: ::std::os::raw::c_ulong,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_get_flags"]
-    pub fn X509_VERIFY_PARAM_get_flags(param: *const X509_VERIFY_PARAM) -> ::std::os::raw::c_ulong;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_purpose"]
-    pub fn X509_VERIFY_PARAM_set_purpose(
-        param: *mut X509_VERIFY_PARAM,
-        purpose: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_trust"]
-    pub fn X509_VERIFY_PARAM_set_trust(
-        param: *mut X509_VERIFY_PARAM,
-        trust: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_depth"]
-    pub fn X509_VERIFY_PARAM_set_depth(param: *mut X509_VERIFY_PARAM, depth: ::std::os::raw::c_int);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_time"]
-    pub fn X509_VERIFY_PARAM_set_time(param: *mut X509_VERIFY_PARAM, t: time_t);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_time_posix"]
-    pub fn X509_VERIFY_PARAM_set_time_posix(param: *mut X509_VERIFY_PARAM, t: i64);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_add0_policy"]
-    pub fn X509_VERIFY_PARAM_add0_policy(
-        param: *mut X509_VERIFY_PARAM,
-        policy: *mut ASN1_OBJECT,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_policies"]
-    pub fn X509_VERIFY_PARAM_set1_policies(
-        param: *mut X509_VERIFY_PARAM,
-        policies: *const stack_st_ASN1_OBJECT,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_host"]
-    pub fn X509_VERIFY_PARAM_set1_host(
-        param: *mut X509_VERIFY_PARAM,
-        name: *const ::std::os::raw::c_char,
-        namelen: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_add1_host"]
-    pub fn X509_VERIFY_PARAM_add1_host(
-        param: *mut X509_VERIFY_PARAM,
-        name: *const ::std::os::raw::c_char,
-        name_len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set_hostflags"]
-    pub fn X509_VERIFY_PARAM_set_hostflags(
-        param: *mut X509_VERIFY_PARAM,
-        flags: ::std::os::raw::c_uint,
-    );
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_email"]
-    pub fn X509_VERIFY_PARAM_set1_email(
-        param: *mut X509_VERIFY_PARAM,
-        email: *const ::std::os::raw::c_char,
-        emaillen: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_ip"]
-    pub fn X509_VERIFY_PARAM_set1_ip(
-        param: *mut X509_VERIFY_PARAM,
-        ip: *const ::std::os::raw::c_uchar,
-        iplen: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_set1_ip_asc"]
-    pub fn X509_VERIFY_PARAM_set1_ip_asc(
-        param: *mut X509_VERIFY_PARAM,
-        ipasc: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_VERIFY_PARAM_get_depth"]
-    pub fn X509_VERIFY_PARAM_get_depth(param: *const X509_VERIFY_PARAM) -> ::std::os::raw::c_int;
 }
 pub type X509V3_EXT_NEW =
     ::std::option::Option<unsafe extern "C" fn() -> *mut ::std::os::raw::c_void>;
@@ -25713,14 +25702,6 @@ extern "C" {
         value: *mut ::std::os::raw::c_void,
         crit: ::std::os::raw::c_int,
         flags: ::std::os::raw::c_ulong,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_21_0_X509_check_purpose"]
-    pub fn X509_check_purpose(
-        x: *mut X509,
-        id: ::std::os::raw::c_int,
-        ca: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {

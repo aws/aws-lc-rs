@@ -1,4 +1,3 @@
-Microsoft (R) COFF/PE Dumper Version 14.40.33813.0
 Copyright (C) Microsoft Corporation.  All rights reserved.
 
 
@@ -253,65 +252,85 @@ L$SEH_prolog_gcm_ghash_clmul_12:
   0000000000000397: 49 83 E9 10        sub         r9,10h
   000000000000039B: 0F 84 75 05 00 00  je          L$odd_tail
   00000000000003A1: F3 0F 6F 72 10     movdqu      xmm6,xmmword ptr [rdx+10h]
-  00000000000003A6: 48 8D 05 00 00 00  lea         rax,[aws_lc_0_21_0_OPENSSL_ia32cap_P]
-                    00
-  00000000000003AD: 8B 40 04           mov         eax,dword ptr [rax+4]
-  00000000000003B0: 49 83 F9 30        cmp         r9,30h
-  00000000000003B4: 0F 82 48 03 00 00  jb          L$skip4x
-  00000000000003BA: 25 00 00 40 04     and         eax,4400000h
-  00000000000003BF: 3D 00 00 40 00     cmp         eax,400000h
-  00000000000003C4: 0F 84 38 03 00 00  je          L$skip4x
-  00000000000003CA: 49 83 E9 30        sub         r9,30h
-  00000000000003CE: 48 B8 00 E0 C0 20  mov         rax,0A040608020C0E000h
+  00000000000003A6: 49 83 F9 30        cmp         r9,30h
+  00000000000003AA: 0F 82 52 03 00 00  jb          L$skip4x
+  00000000000003B0: 49 83 E9 30        sub         r9,30h
+  00000000000003B4: 48 B8 00 E0 C0 20  mov         rax,0A040608020C0E000h
                     80 60 40 A0
-  00000000000003D8: F3 44 0F 6F 72 30  movdqu      xmm14,xmmword ptr [rdx+30h]
-  00000000000003DE: F3 44 0F 6F 7A 40  movdqu      xmm15,xmmword ptr [rdx+40h]
-  00000000000003E4: F3 41 0F 6F 58 30  movdqu      xmm3,xmmword ptr [r8+30h]
-  00000000000003EA: F3 45 0F 6F 58 20  movdqu      xmm11,xmmword ptr [r8+20h]
-  00000000000003F0: 66 41 0F 38 00 DA  pshufb      xmm3,xmm10
-  00000000000003F6: 66 45 0F 38 00 DA  pshufb      xmm11,xmm10
-  00000000000003FC: 66 0F 6F EB        movdqa      xmm5,xmm3
-  0000000000000400: 66 0F 70 E3 4E     pshufd      xmm4,xmm3,4Eh
-  0000000000000405: 66 0F EF E3        pxor        xmm4,xmm3
-  0000000000000409: 66 0F 3A 44 DA 00  pclmulqdq   xmm3,xmm2,0
-  000000000000040F: 66 0F 3A 44 EA 11  pclmulqdq   xmm5,xmm2,11h
-  0000000000000415: 66 0F 3A 44 E7 00  pclmulqdq   xmm4,xmm7,0
-  000000000000041B: 66 45 0F 6F EB     movdqa      xmm13,xmm11
-  0000000000000420: 66 45 0F 70 E3 4E  pshufd      xmm12,xmm11,4Eh
-  0000000000000426: 66 45 0F EF E3     pxor        xmm12,xmm11
-  000000000000042B: 66 44 0F 3A 44 DE  pclmulqdq   xmm11,xmm6,0
+  00000000000003BE: F3 44 0F 6F 72 30  movdqu      xmm14,xmmword ptr [rdx+30h]
+  00000000000003C4: F3 44 0F 6F 7A 40  movdqu      xmm15,xmmword ptr [rdx+40h]
+  00000000000003CA: F3 41 0F 6F 58 30  movdqu      xmm3,xmmword ptr [r8+30h]
+  00000000000003D0: F3 45 0F 6F 58 20  movdqu      xmm11,xmmword ptr [r8+20h]
+  00000000000003D6: 66 41 0F 38 00 DA  pshufb      xmm3,xmm10
+  00000000000003DC: 66 45 0F 38 00 DA  pshufb      xmm11,xmm10
+  00000000000003E2: 66 0F 6F EB        movdqa      xmm5,xmm3
+  00000000000003E6: 66 0F 70 E3 4E     pshufd      xmm4,xmm3,4Eh
+  00000000000003EB: 66 0F EF E3        pxor        xmm4,xmm3
+  00000000000003EF: 66 0F 3A 44 DA 00  pclmulqdq   xmm3,xmm2,0
+  00000000000003F5: 66 0F 3A 44 EA 11  pclmulqdq   xmm5,xmm2,11h
+  00000000000003FB: 66 0F 3A 44 E7 00  pclmulqdq   xmm4,xmm7,0
+  0000000000000401: 66 45 0F 6F EB     movdqa      xmm13,xmm11
+  0000000000000406: 66 45 0F 70 E3 4E  pshufd      xmm12,xmm11,4Eh
+  000000000000040C: 66 45 0F EF E3     pxor        xmm12,xmm11
+  0000000000000411: 66 44 0F 3A 44 DE  pclmulqdq   xmm11,xmm6,0
                     00
-  0000000000000432: 66 44 0F 3A 44 EE  pclmulqdq   xmm13,xmm6,11h
+  0000000000000418: 66 44 0F 3A 44 EE  pclmulqdq   xmm13,xmm6,11h
                     11
-  0000000000000439: 66 44 0F 3A 44 E7  pclmulqdq   xmm12,xmm7,10h
+  000000000000041F: 66 44 0F 3A 44 E7  pclmulqdq   xmm12,xmm7,10h
                     10
-  0000000000000440: 41 0F 57 DB        xorps       xmm3,xmm11
-  0000000000000444: 41 0F 57 ED        xorps       xmm5,xmm13
-  0000000000000448: 0F 10 7A 50        movups      xmm7,xmmword ptr [rdx+50h]
-  000000000000044C: 41 0F 57 E4        xorps       xmm4,xmm12
-  0000000000000450: F3 45 0F 6F 58 10  movdqu      xmm11,xmmword ptr [r8+10h]
-  0000000000000456: F3 45 0F 6F 00     movdqu      xmm8,xmmword ptr [r8]
-  000000000000045B: 66 45 0F 38 00 DA  pshufb      xmm11,xmm10
-  0000000000000461: 66 45 0F 38 00 C2  pshufb      xmm8,xmm10
-  0000000000000467: 66 45 0F 6F EB     movdqa      xmm13,xmm11
-  000000000000046C: 66 45 0F 70 E3 4E  pshufd      xmm12,xmm11,4Eh
-  0000000000000472: 66 41 0F EF C0     pxor        xmm0,xmm8
-  0000000000000477: 66 45 0F EF E3     pxor        xmm12,xmm11
-  000000000000047C: 66 45 0F 3A 44 DE  pclmulqdq   xmm11,xmm14,0
+  0000000000000426: 41 0F 57 DB        xorps       xmm3,xmm11
+  000000000000042A: 41 0F 57 ED        xorps       xmm5,xmm13
+  000000000000042E: 0F 10 7A 50        movups      xmm7,xmmword ptr [rdx+50h]
+  0000000000000432: 41 0F 57 E4        xorps       xmm4,xmm12
+  0000000000000436: F3 45 0F 6F 58 10  movdqu      xmm11,xmmword ptr [r8+10h]
+  000000000000043C: F3 45 0F 6F 00     movdqu      xmm8,xmmword ptr [r8]
+  0000000000000441: 66 45 0F 38 00 DA  pshufb      xmm11,xmm10
+  0000000000000447: 66 45 0F 38 00 C2  pshufb      xmm8,xmm10
+  000000000000044D: 66 45 0F 6F EB     movdqa      xmm13,xmm11
+  0000000000000452: 66 45 0F 70 E3 4E  pshufd      xmm12,xmm11,4Eh
+  0000000000000458: 66 41 0F EF C0     pxor        xmm0,xmm8
+  000000000000045D: 66 45 0F EF E3     pxor        xmm12,xmm11
+  0000000000000462: 66 45 0F 3A 44 DE  pclmulqdq   xmm11,xmm14,0
                     00
-  0000000000000483: 66 0F 6F C8        movdqa      xmm1,xmm0
-  0000000000000487: 66 44 0F 70 C0 4E  pshufd      xmm8,xmm0,4Eh
-  000000000000048D: 66 44 0F EF C0     pxor        xmm8,xmm0
-  0000000000000492: 66 45 0F 3A 44 EE  pclmulqdq   xmm13,xmm14,11h
+  0000000000000469: 66 0F 6F C8        movdqa      xmm1,xmm0
+  000000000000046D: 66 44 0F 70 C0 4E  pshufd      xmm8,xmm0,4Eh
+  0000000000000473: 66 44 0F EF C0     pxor        xmm8,xmm0
+  0000000000000478: 66 45 0F 3A 44 EE  pclmulqdq   xmm13,xmm14,11h
                     11
-  0000000000000499: 66 44 0F 3A 44 E7  pclmulqdq   xmm12,xmm7,0
+  000000000000047F: 66 44 0F 3A 44 E7  pclmulqdq   xmm12,xmm7,0
                     00
-  00000000000004A0: 41 0F 57 DB        xorps       xmm3,xmm11
-  00000000000004A4: 41 0F 57 ED        xorps       xmm5,xmm13
-  00000000000004A8: 4D 8D 40 40        lea         r8,[r8+40h]
-  00000000000004AC: 49 83 E9 40        sub         r9,40h
-  00000000000004B0: 0F 82 8F 01 00 00  jb          L$tail4x
-  00000000000004B6: E9 05 00 00 00     jmp         L$mod4_loop
+  0000000000000486: 41 0F 57 DB        xorps       xmm3,xmm11
+  000000000000048A: 41 0F 57 ED        xorps       xmm5,xmm13
+  000000000000048E: 4D 8D 40 40        lea         r8,[r8+40h]
+  0000000000000492: 49 83 E9 40        sub         r9,40h
+  0000000000000496: 0F 82 A9 01 00 00  jb          L$tail4x
+  000000000000049C: E9 1F 00 00 00     jmp         L$mod4_loop
+  00000000000004A1: 90                 nop
+  00000000000004A2: 90                 nop
+  00000000000004A3: 90                 nop
+  00000000000004A4: 90                 nop
+  00000000000004A5: 90                 nop
+  00000000000004A6: 90                 nop
+  00000000000004A7: 90                 nop
+  00000000000004A8: 90                 nop
+  00000000000004A9: 90                 nop
+  00000000000004AA: 90                 nop
+  00000000000004AB: 90                 nop
+  00000000000004AC: 90                 nop
+  00000000000004AD: 90                 nop
+  00000000000004AE: 90                 nop
+  00000000000004AF: 90                 nop
+  00000000000004B0: 90                 nop
+  00000000000004B1: 90                 nop
+  00000000000004B2: 90                 nop
+  00000000000004B3: 90                 nop
+  00000000000004B4: 90                 nop
+  00000000000004B5: 90                 nop
+  00000000000004B6: 90                 nop
+  00000000000004B7: 90                 nop
+  00000000000004B8: 90                 nop
+  00000000000004B9: 90                 nop
+  00000000000004BA: 90                 nop
   00000000000004BB: 90                 nop
   00000000000004BC: 90                 nop
   00000000000004BD: 90                 nop

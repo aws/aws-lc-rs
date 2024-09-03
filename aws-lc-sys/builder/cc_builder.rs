@@ -14,8 +14,8 @@ mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
 use crate::{
-    cargo_env, env_var_to_bool, execute_command, out_dir, target, target_arch, target_os,
-    target_vendor, OutputLibType,
+    cargo_env, env_var_to_bool, execute_command, out_dir, requested_c_std, target, target_arch,
+    target_os, target_vendor, CStdRequested, OutputLibType,
 };
 use std::path::PathBuf;
 
@@ -96,15 +96,22 @@ impl CcBuilder {
         }
     }
 
+    fn apply_c_std(cc_build: &mut cc::Build) {
+        match requested_c_std() {
+            CStdRequested::C99 => cc_build.std("c99"),
+            _ => cc_build.std("c11"),
+        };
+    }
+
     fn create_builder(&self) -> cc::Build {
         let mut cc_build = cc::Build::default();
         cc_build
             .out_dir(&self.out_dir)
-            .flag("-std=c99")
             .flag("-Wno-unused-parameter")
             .cpp(false)
             .shared_flag(false)
             .static_flag(true);
+        CcBuilder::apply_c_std(&mut cc_build);
         if target_os() == "linux" {
             cc_build.define("_XOPEN_SOURCE", "700").flag("-lpthread");
         }

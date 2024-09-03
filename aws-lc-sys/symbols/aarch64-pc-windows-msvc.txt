@@ -1502,6 +1502,8 @@ OBJ_obj2txt
 OBJ_sn2nid
 OBJ_txt2nid
 OBJ_txt2obj
+OCSP_BASICRESP_add_ext
+OCSP_BASICRESP_delete_ext
 OCSP_BASICRESP_free
 OCSP_BASICRESP_get_ext
 OCSP_BASICRESP_get_ext_by_NID
@@ -1533,7 +1535,9 @@ OCSP_REQ_CTX_nbio
 OCSP_REQ_CTX_nbio_d2i
 OCSP_REQ_CTX_new
 OCSP_REQ_CTX_set1_req
+OCSP_RESPBYTES_free
 OCSP_RESPBYTES_it
+OCSP_RESPBYTES_new
 OCSP_RESPDATA_free
 OCSP_RESPDATA_it
 OCSP_RESPDATA_new
@@ -1542,7 +1546,9 @@ OCSP_RESPONSE_free
 OCSP_RESPONSE_it
 OCSP_RESPONSE_new
 OCSP_RESPONSE_print
+OCSP_REVOKEDINFO_free
 OCSP_REVOKEDINFO_it
+OCSP_REVOKEDINFO_new
 OCSP_SIGNATURE_free
 OCSP_SIGNATURE_it
 OCSP_SIGNATURE_new
@@ -1554,12 +1560,16 @@ OCSP_SINGLERESP_get_ext_count
 OCSP_SINGLERESP_it
 OCSP_SINGLERESP_new
 OCSP_basic_add1_cert
+OCSP_basic_add1_nonce
+OCSP_basic_add1_status
+OCSP_basic_sign
 OCSP_basic_verify
 OCSP_cert_id_new
 OCSP_cert_status_str
 OCSP_cert_to_id
 OCSP_check_nonce
 OCSP_check_validity
+OCSP_copy_nonce
 OCSP_crl_reason_str
 OCSP_id_cmp
 OCSP_id_get0_info
@@ -1578,6 +1588,7 @@ OCSP_resp_count
 OCSP_resp_find
 OCSP_resp_find_status
 OCSP_resp_get0
+OCSP_response_create
 OCSP_response_get1_basic
 OCSP_response_status
 OCSP_response_status_str
@@ -2319,7 +2330,6 @@ X509_STORE_CTX_get_ex_data
 X509_STORE_CTX_get_ex_new_index
 X509_STORE_CTX_init
 X509_STORE_CTX_new
-X509_STORE_CTX_purpose_inherit
 X509_STORE_CTX_set0_crls
 X509_STORE_CTX_set0_param
 X509_STORE_CTX_set0_trusted_stack
@@ -2796,9 +2806,11 @@ d2i_OCSP_ONEREQ
 d2i_OCSP_REQINFO
 d2i_OCSP_REQUEST
 d2i_OCSP_REQUEST_bio
+d2i_OCSP_RESPBYTES
 d2i_OCSP_RESPDATA
 d2i_OCSP_RESPONSE
 d2i_OCSP_RESPONSE_bio
+d2i_OCSP_REVOKEDINFO
 d2i_OCSP_SIGNATURE
 d2i_OCSP_SINGLERESP
 d2i_PKCS12
@@ -3057,9 +3069,11 @@ i2d_OCSP_ONEREQ
 i2d_OCSP_REQINFO
 i2d_OCSP_REQUEST
 i2d_OCSP_REQUEST_bio
+i2d_OCSP_RESPBYTES
 i2d_OCSP_RESPDATA
 i2d_OCSP_RESPONSE
 i2d_OCSP_RESPONSE_bio
+i2d_OCSP_REVOKEDINFO
 i2d_OCSP_SIGNATURE
 i2d_OCSP_SINGLERESP
 i2d_PKCS12

@@ -1544,6 +1544,8 @@
 %xdefine _OBJ_sn2nid _ %+ BORINGSSL_PREFIX %+ _OBJ_sn2nid
 %xdefine _OBJ_txt2nid _ %+ BORINGSSL_PREFIX %+ _OBJ_txt2nid
 %xdefine _OBJ_txt2obj _ %+ BORINGSSL_PREFIX %+ _OBJ_txt2obj
+%xdefine _OCSP_BASICRESP_add_ext _ %+ BORINGSSL_PREFIX %+ _OCSP_BASICRESP_add_ext
+%xdefine _OCSP_BASICRESP_delete_ext _ %+ BORINGSSL_PREFIX %+ _OCSP_BASICRESP_delete_ext
 %xdefine _OCSP_BASICRESP_free _ %+ BORINGSSL_PREFIX %+ _OCSP_BASICRESP_free
 %xdefine _OCSP_BASICRESP_get_ext _ %+ BORINGSSL_PREFIX %+ _OCSP_BASICRESP_get_ext
 %xdefine _OCSP_BASICRESP_get_ext_by_NID _ %+ BORINGSSL_PREFIX %+ _OCSP_BASICRESP_get_ext_by_NID
@@ -1575,7 +1577,9 @@
 %xdefine _OCSP_REQ_CTX_nbio_d2i _ %+ BORINGSSL_PREFIX %+ _OCSP_REQ_CTX_nbio_d2i
 %xdefine _OCSP_REQ_CTX_new _ %+ BORINGSSL_PREFIX %+ _OCSP_REQ_CTX_new
 %xdefine _OCSP_REQ_CTX_set1_req _ %+ BORINGSSL_PREFIX %+ _OCSP_REQ_CTX_set1_req
+%xdefine _OCSP_RESPBYTES_free _ %+ BORINGSSL_PREFIX %+ _OCSP_RESPBYTES_free
 %xdefine _OCSP_RESPBYTES_it _ %+ BORINGSSL_PREFIX %+ _OCSP_RESPBYTES_it
+%xdefine _OCSP_RESPBYTES_new _ %+ BORINGSSL_PREFIX %+ _OCSP_RESPBYTES_new
 %xdefine _OCSP_RESPDATA_free _ %+ BORINGSSL_PREFIX %+ _OCSP_RESPDATA_free
 %xdefine _OCSP_RESPDATA_it _ %+ BORINGSSL_PREFIX %+ _OCSP_RESPDATA_it
 %xdefine _OCSP_RESPDATA_new _ %+ BORINGSSL_PREFIX %+ _OCSP_RESPDATA_new
@@ -1584,7 +1588,9 @@
 %xdefine _OCSP_RESPONSE_it _ %+ BORINGSSL_PREFIX %+ _OCSP_RESPONSE_it
 %xdefine _OCSP_RESPONSE_new _ %+ BORINGSSL_PREFIX %+ _OCSP_RESPONSE_new
 %xdefine _OCSP_RESPONSE_print _ %+ BORINGSSL_PREFIX %+ _OCSP_RESPONSE_print
+%xdefine _OCSP_REVOKEDINFO_free _ %+ BORINGSSL_PREFIX %+ _OCSP_REVOKEDINFO_free
 %xdefine _OCSP_REVOKEDINFO_it _ %+ BORINGSSL_PREFIX %+ _OCSP_REVOKEDINFO_it
+%xdefine _OCSP_REVOKEDINFO_new _ %+ BORINGSSL_PREFIX %+ _OCSP_REVOKEDINFO_new
 %xdefine _OCSP_SIGNATURE_free _ %+ BORINGSSL_PREFIX %+ _OCSP_SIGNATURE_free
 %xdefine _OCSP_SIGNATURE_it _ %+ BORINGSSL_PREFIX %+ _OCSP_SIGNATURE_it
 %xdefine _OCSP_SIGNATURE_new _ %+ BORINGSSL_PREFIX %+ _OCSP_SIGNATURE_new
@@ -1596,12 +1602,16 @@
 %xdefine _OCSP_SINGLERESP_it _ %+ BORINGSSL_PREFIX %+ _OCSP_SINGLERESP_it
 %xdefine _OCSP_SINGLERESP_new _ %+ BORINGSSL_PREFIX %+ _OCSP_SINGLERESP_new
 %xdefine _OCSP_basic_add1_cert _ %+ BORINGSSL_PREFIX %+ _OCSP_basic_add1_cert
+%xdefine _OCSP_basic_add1_nonce _ %+ BORINGSSL_PREFIX %+ _OCSP_basic_add1_nonce
+%xdefine _OCSP_basic_add1_status _ %+ BORINGSSL_PREFIX %+ _OCSP_basic_add1_status
+%xdefine _OCSP_basic_sign _ %+ BORINGSSL_PREFIX %+ _OCSP_basic_sign
 %xdefine _OCSP_basic_verify _ %+ BORINGSSL_PREFIX %+ _OCSP_basic_verify
 %xdefine _OCSP_cert_id_new _ %+ BORINGSSL_PREFIX %+ _OCSP_cert_id_new
 %xdefine _OCSP_cert_status_str _ %+ BORINGSSL_PREFIX %+ _OCSP_cert_status_str
 %xdefine _OCSP_cert_to_id _ %+ BORINGSSL_PREFIX %+ _OCSP_cert_to_id
 %xdefine _OCSP_check_nonce _ %+ BORINGSSL_PREFIX %+ _OCSP_check_nonce
 %xdefine _OCSP_check_validity _ %+ BORINGSSL_PREFIX %+ _OCSP_check_validity
+%xdefine _OCSP_copy_nonce _ %+ BORINGSSL_PREFIX %+ _OCSP_copy_nonce
 %xdefine _OCSP_crl_reason_str _ %+ BORINGSSL_PREFIX %+ _OCSP_crl_reason_str
 %xdefine _OCSP_id_cmp _ %+ BORINGSSL_PREFIX %+ _OCSP_id_cmp
 %xdefine _OCSP_id_get0_info _ %+ BORINGSSL_PREFIX %+ _OCSP_id_get0_info
@@ -1620,6 +1630,7 @@
 %xdefine _OCSP_resp_find _ %+ BORINGSSL_PREFIX %+ _OCSP_resp_find
 %xdefine _OCSP_resp_find_status _ %+ BORINGSSL_PREFIX %+ _OCSP_resp_find_status
 %xdefine _OCSP_resp_get0 _ %+ BORINGSSL_PREFIX %+ _OCSP_resp_get0
+%xdefine _OCSP_response_create _ %+ BORINGSSL_PREFIX %+ _OCSP_response_create
 %xdefine _OCSP_response_get1_basic _ %+ BORINGSSL_PREFIX %+ _OCSP_response_get1_basic
 %xdefine _OCSP_response_status _ %+ BORINGSSL_PREFIX %+ _OCSP_response_status
 %xdefine _OCSP_response_status_str _ %+ BORINGSSL_PREFIX %+ _OCSP_response_status_str
@@ -2365,7 +2376,6 @@
 %xdefine _X509_STORE_CTX_get_ex_new_index _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_get_ex_new_index
 %xdefine _X509_STORE_CTX_init _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_init
 %xdefine _X509_STORE_CTX_new _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_new
-%xdefine _X509_STORE_CTX_purpose_inherit _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_purpose_inherit
 %xdefine _X509_STORE_CTX_set0_crls _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_set0_crls
 %xdefine _X509_STORE_CTX_set0_param _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_set0_param
 %xdefine _X509_STORE_CTX_set0_trusted_stack _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_set0_trusted_stack
@@ -3026,9 +3036,11 @@
 %xdefine _d2i_OCSP_REQINFO _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_REQINFO
 %xdefine _d2i_OCSP_REQUEST _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_REQUEST
 %xdefine _d2i_OCSP_REQUEST_bio _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_REQUEST_bio
+%xdefine _d2i_OCSP_RESPBYTES _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_RESPBYTES
 %xdefine _d2i_OCSP_RESPDATA _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_RESPDATA
 %xdefine _d2i_OCSP_RESPONSE _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_RESPONSE
 %xdefine _d2i_OCSP_RESPONSE_bio _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_RESPONSE_bio
+%xdefine _d2i_OCSP_REVOKEDINFO _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_REVOKEDINFO
 %xdefine _d2i_OCSP_SIGNATURE _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_SIGNATURE
 %xdefine _d2i_OCSP_SINGLERESP _ %+ BORINGSSL_PREFIX %+ _d2i_OCSP_SINGLERESP
 %xdefine _d2i_PKCS12 _ %+ BORINGSSL_PREFIX %+ _d2i_PKCS12
@@ -3307,9 +3319,11 @@
 %xdefine _i2d_OCSP_REQINFO _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_REQINFO
 %xdefine _i2d_OCSP_REQUEST _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_REQUEST
 %xdefine _i2d_OCSP_REQUEST_bio _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_REQUEST_bio
+%xdefine _i2d_OCSP_RESPBYTES _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_RESPBYTES
 %xdefine _i2d_OCSP_RESPDATA _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_RESPDATA
 %xdefine _i2d_OCSP_RESPONSE _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_RESPONSE
 %xdefine _i2d_OCSP_RESPONSE_bio _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_RESPONSE_bio
+%xdefine _i2d_OCSP_REVOKEDINFO _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_REVOKEDINFO
 %xdefine _i2d_OCSP_SIGNATURE _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_SIGNATURE
 %xdefine _i2d_OCSP_SINGLERESP _ %+ BORINGSSL_PREFIX %+ _i2d_OCSP_SINGLERESP
 %xdefine _i2d_PKCS12 _ %+ BORINGSSL_PREFIX %+ _i2d_PKCS12
@@ -5422,6 +5436,8 @@
 %xdefine OBJ_sn2nid BORINGSSL_PREFIX %+ _OBJ_sn2nid
 %xdefine OBJ_txt2nid BORINGSSL_PREFIX %+ _OBJ_txt2nid
 %xdefine OBJ_txt2obj BORINGSSL_PREFIX %+ _OBJ_txt2obj
+%xdefine OCSP_BASICRESP_add_ext BORINGSSL_PREFIX %+ _OCSP_BASICRESP_add_ext
+%xdefine OCSP_BASICRESP_delete_ext BORINGSSL_PREFIX %+ _OCSP_BASICRESP_delete_ext
 %xdefine OCSP_BASICRESP_free BORINGSSL_PREFIX %+ _OCSP_BASICRESP_free
 %xdefine OCSP_BASICRESP_get_ext BORINGSSL_PREFIX %+ _OCSP_BASICRESP_get_ext
 %xdefine OCSP_BASICRESP_get_ext_by_NID BORINGSSL_PREFIX %+ _OCSP_BASICRESP_get_ext_by_NID
@@ -5453,7 +5469,9 @@
 %xdefine OCSP_REQ_CTX_nbio_d2i BORINGSSL_PREFIX %+ _OCSP_REQ_CTX_nbio_d2i
 %xdefine OCSP_REQ_CTX_new BORINGSSL_PREFIX %+ _OCSP_REQ_CTX_new
 %xdefine OCSP_REQ_CTX_set1_req BORINGSSL_PREFIX %+ _OCSP_REQ_CTX_set1_req
+%xdefine OCSP_RESPBYTES_free BORINGSSL_PREFIX %+ _OCSP_RESPBYTES_free
 %xdefine OCSP_RESPBYTES_it BORINGSSL_PREFIX %+ _OCSP_RESPBYTES_it
+%xdefine OCSP_RESPBYTES_new BORINGSSL_PREFIX %+ _OCSP_RESPBYTES_new
 %xdefine OCSP_RESPDATA_free BORINGSSL_PREFIX %+ _OCSP_RESPDATA_free
 %xdefine OCSP_RESPDATA_it BORINGSSL_PREFIX %+ _OCSP_RESPDATA_it
 %xdefine OCSP_RESPDATA_new BORINGSSL_PREFIX %+ _OCSP_RESPDATA_new
@@ -5462,7 +5480,9 @@
 %xdefine OCSP_RESPONSE_it BORINGSSL_PREFIX %+ _OCSP_RESPONSE_it
 %xdefine OCSP_RESPONSE_new BORINGSSL_PREFIX %+ _OCSP_RESPONSE_new
 %xdefine OCSP_RESPONSE_print BORINGSSL_PREFIX %+ _OCSP_RESPONSE_print
+%xdefine OCSP_REVOKEDINFO_free BORINGSSL_PREFIX %+ _OCSP_REVOKEDINFO_free
 %xdefine OCSP_REVOKEDINFO_it BORINGSSL_PREFIX %+ _OCSP_REVOKEDINFO_it
+%xdefine OCSP_REVOKEDINFO_new BORINGSSL_PREFIX %+ _OCSP_REVOKEDINFO_new
 %xdefine OCSP_SIGNATURE_free BORINGSSL_PREFIX %+ _OCSP_SIGNATURE_free
 %xdefine OCSP_SIGNATURE_it BORINGSSL_PREFIX %+ _OCSP_SIGNATURE_it
 %xdefine OCSP_SIGNATURE_new BORINGSSL_PREFIX %+ _OCSP_SIGNATURE_new
@@ -5474,12 +5494,16 @@
 %xdefine OCSP_SINGLERESP_it BORINGSSL_PREFIX %+ _OCSP_SINGLERESP_it
 %xdefine OCSP_SINGLERESP_new BORINGSSL_PREFIX %+ _OCSP_SINGLERESP_new
 %xdefine OCSP_basic_add1_cert BORINGSSL_PREFIX %+ _OCSP_basic_add1_cert
+%xdefine OCSP_basic_add1_nonce BORINGSSL_PREFIX %+ _OCSP_basic_add1_nonce
+%xdefine OCSP_basic_add1_status BORINGSSL_PREFIX %+ _OCSP_basic_add1_status
+%xdefine OCSP_basic_sign BORINGSSL_PREFIX %+ _OCSP_basic_sign
 %xdefine OCSP_basic_verify BORINGSSL_PREFIX %+ _OCSP_basic_verify
 %xdefine OCSP_cert_id_new BORINGSSL_PREFIX %+ _OCSP_cert_id_new
 %xdefine OCSP_cert_status_str BORINGSSL_PREFIX %+ _OCSP_cert_status_str
 %xdefine OCSP_cert_to_id BORINGSSL_PREFIX %+ _OCSP_cert_to_id
 %xdefine OCSP_check_nonce BORINGSSL_PREFIX %+ _OCSP_check_nonce
 %xdefine OCSP_check_validity BORINGSSL_PREFIX %+ _OCSP_check_validity
+%xdefine OCSP_copy_nonce BORINGSSL_PREFIX %+ _OCSP_copy_nonce
 %xdefine OCSP_crl_reason_str BORINGSSL_PREFIX %+ _OCSP_crl_reason_str
 %xdefine OCSP_id_cmp BORINGSSL_PREFIX %+ _OCSP_id_cmp
 %xdefine OCSP_id_get0_info BORINGSSL_PREFIX %+ _OCSP_id_get0_info
@@ -5498,6 +5522,7 @@
 %xdefine OCSP_resp_find BORINGSSL_PREFIX %+ _OCSP_resp_find
 %xdefine OCSP_resp_find_status BORINGSSL_PREFIX %+ _OCSP_resp_find_status
 %xdefine OCSP_resp_get0 BORINGSSL_PREFIX %+ _OCSP_resp_get0
+%xdefine OCSP_response_create BORINGSSL_PREFIX %+ _OCSP_response_create
 %xdefine OCSP_response_get1_basic BORINGSSL_PREFIX %+ _OCSP_response_get1_basic
 %xdefine OCSP_response_status BORINGSSL_PREFIX %+ _OCSP_response_status
 %xdefine OCSP_response_status_str BORINGSSL_PREFIX %+ _OCSP_response_status_str
@@ -6243,7 +6268,6 @@
 %xdefine X509_STORE_CTX_get_ex_new_index BORINGSSL_PREFIX %+ _X509_STORE_CTX_get_ex_new_index
 %xdefine X509_STORE_CTX_init BORINGSSL_PREFIX %+ _X509_STORE_CTX_init
 %xdefine X509_STORE_CTX_new BORINGSSL_PREFIX %+ _X509_STORE_CTX_new
-%xdefine X509_STORE_CTX_purpose_inherit BORINGSSL_PREFIX %+ _X509_STORE_CTX_purpose_inherit
 %xdefine X509_STORE_CTX_set0_crls BORINGSSL_PREFIX %+ _X509_STORE_CTX_set0_crls
 %xdefine X509_STORE_CTX_set0_param BORINGSSL_PREFIX %+ _X509_STORE_CTX_set0_param
 %xdefine X509_STORE_CTX_set0_trusted_stack BORINGSSL_PREFIX %+ _X509_STORE_CTX_set0_trusted_stack
@@ -6904,9 +6928,11 @@
 %xdefine d2i_OCSP_REQINFO BORINGSSL_PREFIX %+ _d2i_OCSP_REQINFO
 %xdefine d2i_OCSP_REQUEST BORINGSSL_PREFIX %+ _d2i_OCSP_REQUEST
 %xdefine d2i_OCSP_REQUEST_bio BORINGSSL_PREFIX %+ _d2i_OCSP_REQUEST_bio
+%xdefine d2i_OCSP_RESPBYTES BORINGSSL_PREFIX %+ _d2i_OCSP_RESPBYTES
 %xdefine d2i_OCSP_RESPDATA BORINGSSL_PREFIX %+ _d2i_OCSP_RESPDATA
 %xdefine d2i_OCSP_RESPONSE BORINGSSL_PREFIX %+ _d2i_OCSP_RESPONSE
 %xdefine d2i_OCSP_RESPONSE_bio BORINGSSL_PREFIX %+ _d2i_OCSP_RESPONSE_bio
+%xdefine d2i_OCSP_REVOKEDINFO BORINGSSL_PREFIX %+ _d2i_OCSP_REVOKEDINFO
 %xdefine d2i_OCSP_SIGNATURE BORINGSSL_PREFIX %+ _d2i_OCSP_SIGNATURE
 %xdefine d2i_OCSP_SINGLERESP BORINGSSL_PREFIX %+ _d2i_OCSP_SINGLERESP
 %xdefine d2i_PKCS12 BORINGSSL_PREFIX %+ _d2i_PKCS12
@@ -7185,9 +7211,11 @@
 %xdefine i2d_OCSP_REQINFO BORINGSSL_PREFIX %+ _i2d_OCSP_REQINFO
 %xdefine i2d_OCSP_REQUEST BORINGSSL_PREFIX %+ _i2d_OCSP_REQUEST
 %xdefine i2d_OCSP_REQUEST_bio BORINGSSL_PREFIX %+ _i2d_OCSP_REQUEST_bio
+%xdefine i2d_OCSP_RESPBYTES BORINGSSL_PREFIX %+ _i2d_OCSP_RESPBYTES
 %xdefine i2d_OCSP_RESPDATA BORINGSSL_PREFIX %+ _i2d_OCSP_RESPDATA
 %xdefine i2d_OCSP_RESPONSE BORINGSSL_PREFIX %+ _i2d_OCSP_RESPONSE
 %xdefine i2d_OCSP_RESPONSE_bio BORINGSSL_PREFIX %+ _i2d_OCSP_RESPONSE_bio
+%xdefine i2d_OCSP_REVOKEDINFO BORINGSSL_PREFIX %+ _i2d_OCSP_REVOKEDINFO
 %xdefine i2d_OCSP_SIGNATURE BORINGSSL_PREFIX %+ _i2d_OCSP_SIGNATURE
 %xdefine i2d_OCSP_SINGLERESP BORINGSSL_PREFIX %+ _i2d_OCSP_SINGLERESP
 %xdefine i2d_PKCS12 BORINGSSL_PREFIX %+ _i2d_PKCS12

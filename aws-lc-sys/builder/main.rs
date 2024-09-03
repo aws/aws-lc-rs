@@ -314,12 +314,38 @@ trait Builder {
     fn build(&self) -> Result<(), String>;
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum CStdRequested {
+    C99,
+    C11,
+    None,
+}
+
+impl CStdRequested {
+    fn from_env() -> Self {
+        if let Some(val) = option_env("AWS_LC_SYS_C_STD") {
+            let cstd = match val.as_str() {
+                "99" => CStdRequested::C99,
+                "11" => CStdRequested::C11,
+                _ => CStdRequested::None,
+            };
+            emit_warning(&format!(
+                "AWS_LC_SYS_C_STD environment variable set: {cstd:?}"
+            ));
+            return cstd;
+        }
+        CStdRequested::None
+    }
+}
+
 static mut PREGENERATED: bool = false;
 static mut AWS_LC_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_SYS_INTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_EXTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_NO_ASM: bool = false;
 static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
+
+static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
 
 fn initialize() {
     unsafe {
@@ -330,6 +356,7 @@ fn initialize() {
             env_var_to_bool("AWS_LC_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
         AWS_LC_SYS_NO_ASM = env_var_to_bool("AWS_LC_SYS_NO_ASM").unwrap_or(false);
         AWS_LC_SYS_PREBUILT_NASM = env_var_to_bool("AWS_LC_SYS_PREBUILT_NASM");
+        AWS_LC_SYS_C_STD = CStdRequested::from_env();
     }
 
     if !is_external_bindgen() && (is_internal_bindgen() || !has_bindgen_feature()) {
@@ -390,6 +417,10 @@ fn is_no_asm() -> bool {
 
 fn allow_prebuilt_nasm() -> Option<bool> {
     unsafe { AWS_LC_SYS_PREBUILT_NASM }
+}
+
+fn requested_c_std() -> CStdRequested {
+    unsafe { AWS_LC_SYS_C_STD }
 }
 
 fn has_bindgen_feature() -> bool {

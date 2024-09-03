@@ -43,6 +43,8 @@ jobs:
       - name: No-prefix build for ${{ matrix.os }}
         env:
           AWS_LC_SYS_NO_PREFIX: "1"
+          # Ensure that we collect symbols unique to C99 builds
+          AWS_LC_SYS_C_STD: "99"
         run: |
           cargo test -p aws-lc-sys --features bindgen
       - name: Collect symbols

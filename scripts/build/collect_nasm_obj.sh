@@ -25,5 +25,5 @@ for nasm_file in `find aws-lc-sys/aws-lc/generated-src/win-x86_64/ -name "*.asm"
   cp "${NASM_OBJ}" "${PREBUILT_NASM_DIR}"
   # We remove the '.debug$S' value, which indicates the size of the debug section. This value can change across builds
   # because it typically contains full source file paths that vary by build environment
-  "${DUMPBIN}" //DISASM "${PREBUILT_NASM_DIR}"/"${OBJNAME/.asm/.obj}" | grep -v '.debug$S' | sed -e "s/^Dump of file.*/Dump of file ${OBJNAME/.asm/.obj}/" > "${PREBUILT_NASM_DIR}"/"${OBJNAME/.asm/}"-disasm.txt
+  "${DUMPBIN}" //DISASM "${PREBUILT_NASM_DIR}"/"${OBJNAME/.asm/.obj}" | grep -v '.debug$S' | grep -v 'Dumper Version' | sed -e "s/^Dump of file.*/Dump of file ${OBJNAME/.asm/.obj}/" > "${PREBUILT_NASM_DIR}"/"${OBJNAME/.asm/}"-disasm.txt
 done

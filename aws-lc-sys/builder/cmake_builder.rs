@@ -4,8 +4,8 @@
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, is_crt_static, is_no_asm,
-    option_env, target, target_arch, target_env, target_family, target_os, target_underscored,
-    target_vendor, test_nasm_command, OutputLibType,
+    option_env, requested_c_std, target, target_arch, target_env, target_family, target_os,
+    target_underscored, target_vendor, test_nasm_command, CStdRequested, OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -134,6 +134,15 @@ impl CmakeBuilder {
             env::set_var("ASM", "clang");
 
             cmake_cfg.define("ASAN", "1");
+        }
+        match requested_c_std() {
+            CStdRequested::C99 => {
+                cmake_cfg.define("CMAKE_C_STANDARD", "99");
+            }
+            CStdRequested::C11 => {
+                cmake_cfg.define("CMAKE_C_STANDARD", "11");
+            }
+            CStdRequested::None => {}
         }
 
         // Allow environment to specify CMake toolchain.
