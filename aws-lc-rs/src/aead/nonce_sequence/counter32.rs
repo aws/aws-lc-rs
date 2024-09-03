@@ -6,6 +6,7 @@ use crate::error::Unspecified;
 use crate::iv::FixedLength;
 
 /// `Counter32` is an implementation of the `NonceSequence` trait.
+///
 /// The internal state of a `Counter32` is a 32-bit unsigned counter that
 /// increments on each call to `advance` and an optional 8-byte identifier. Counter and identifier
 /// values are used to construct each nonce.

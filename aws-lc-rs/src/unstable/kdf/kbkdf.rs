@@ -57,6 +57,7 @@ const KBKDF_CTR_HMAC_SHA512: KbkdfCtrHmacAlgorithm = KbkdfCtrHmacAlgorithm {
 };
 
 /// Retrieve an unstable [`KbkdfCtrHmacAlgorithm`] using the [`KbkdfCtrHmacAlgorithmId`] specified by `id`.
+///
 /// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
 #[must_use]
 pub const fn get_kbkdf_ctr_hmac_algorithm(

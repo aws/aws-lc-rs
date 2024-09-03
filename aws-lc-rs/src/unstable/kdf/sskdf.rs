@@ -96,6 +96,7 @@ const SSKDF_DIGEST_SHA512: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
 };
 
 /// Retrieve an unstable [`SskdfHmacAlgorithm`] using the [`SskdfHmacAlgorithmId`] specified by `id`.
+///
 /// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
 #[must_use]
 pub const fn get_sskdf_hmac_algorithm(
@@ -118,6 +119,7 @@ pub const fn get_sskdf_hmac_algorithm(
 }
 
 /// Retrieve an unstable [`SskdfDigestAlgorithm`] using the [`SskdfDigestAlgorithmId`] specified by `id`.
+///
 /// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
 #[must_use]
 pub const fn get_sskdf_digest_algorithm(
