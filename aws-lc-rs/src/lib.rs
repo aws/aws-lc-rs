@@ -91,7 +91,7 @@
 //! if a NASM assembler is not available, and the "fips" feature is not enabled, then the build fails unless one of the following conditions are true:
 //!
 //! * You are building for `x86-64` and either:
-//!    * The `AWS_LC_SYS_PREBUILT_NASM` environment variable is found and has a value of "1" (or the value is empty); OR
+//!    * The `AWS_LC_SYS_PREBUILT_NASM` environment variable is found and has a value of "1"; OR
 //!    * `AWS_LC_SYS_PREBUILT_NASM` is *not found* in the environment AND the "prebuilt-nasm" feature has been enabled.
 //!
 //! If the above cases apply, then the crate provided prebuilt NASM objects will be used for the build. To prevent usage of prebuilt NASM
