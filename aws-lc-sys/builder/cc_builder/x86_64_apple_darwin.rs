@@ -165,6 +165,7 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/rand_extra/rand_extra.c",
         "crypto/rc4/rc4.c",
         "crypto/refcount_c11.c",
+        "crypto/refcount_lock.c",
         "crypto/rsa_extra/rsa_asn1.c",
         "crypto/rsa_extra/rsa_crypt.c",
         "crypto/rsa_extra/rsa_print.c",

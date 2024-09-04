@@ -53,6 +53,31 @@ jobs:
         working-directory: ./aws-lc-rs-testing
         run: cargo test --all-targets
 
+  aws-lc-rs-c-std-test:
+    if: github.repository_owner == 'aws'
+    name: C-std test ${{ matrix.os }} - ${{ matrix.c_std }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
+        c_std: [ "11", "99" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+      - name: Run cargo test
+        working-directory: ./aws-lc-rs
+        env:
+          AWS_LC_SYS_PREBUILT_NASM: 1
+          AWS_LC_SYS_C_STD: ${{ matrix.c_std }}
+        run: cargo test --all-targets --features unstable
+
   bindgen-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs bindgen-tests
