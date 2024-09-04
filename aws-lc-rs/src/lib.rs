@@ -73,37 +73,38 @@
 //!
 //! #### prebuilt-nasm
 //!
-//! Enables the use of our prebuilt NASM objects in certain situations. This only affect builds for
-//! the Windows/x86-64 platforms. This feature is ignored if the "fips" feature is also enabled.
-//! Use of prebuilt NASM objects will be prevented if either:
-//! a NASM assembler is installed in the build environment
-//! and/or `AWS_LC_SYS_PREBUILT_NASM` is set with a value of 0.
+//! Enables the use of crate provided prebuilt NASM objects under certain conditions. This only affects builds for
+//! Windows x86-64 platforms. This feature is ignored if the "fips" feature is also enabled.
+//!
+//! Use of prebuilt NASM objects is prevented if either of the following conditions are true:
+//! * The NASM assembler is detected in the build environment
+//! * `AWS_LC_SYS_PREBUILT_NASM` environment variable is set with a value of `0`
 //!
 //! Be aware that [features are additive](https://doc.rust-lang.org/cargo/reference/features.html#feature-unification);
 //! by enabling this feature, it is enabled for crates within the same build.
 //!
 //! # Use of prebuilt NASM objects
 //!
-//! For Windows x86 and x86-64, the AWS-LC assembly code requires NASM to build. On these platforms,
-//! we recommend that you install [the NASM assembler](https://www.nasm.us/). If a NASM assembler is
-//! found during the build process, then it *will* be used to compile the assembly files. However,
-//! if a NASM assembler is not found, then the (non-"fips") build may fail except in the following case:
+//! For Windows x86 and x86-64, NASM is required for assembly code compilation. On these platforms,
+//! we recommend that you install [the NASM assembler](https://www.nasm.us/). If NASM is
+//! detected in the build environment *it is used* to compile the assembly files. However,
+//! if a NASM assembler is not available, and the "fips" feature is not enabled, then the build fails unless one of the following conditions are true:
 //!
 //! * You are building for `x86-64` and either:
 //!    * The `AWS_LC_SYS_PREBUILT_NASM` environment variable is found and has a value of "1" (or the value is empty); OR
 //!    * `AWS_LC_SYS_PREBUILT_NASM` is *not found* in the environment AND the "prebuilt-nasm" feature has been enabled.
 //!
-//! If the above cases apply, then our prebuilt NASM objects may be used for the build. To prevent our prebuilt NASM
-//! objects from being used, please install NASM and/or set `AWS_LC_SYS_PREBUILT_NASM=0` in your build environment to prevent their use.
+//! If the above cases apply, then the crate provided prebuilt NASM objects will be used for the build. To prevent usage of prebuilt NASM
+//! objects, install NASM in the build environment and/or set the variable `AWS_LC_SYS_PREBUILT_NASM` to `0` in the build environment to prevent their use.
 //!
 //! ## About prebuilt NASM objects
 //!
-//! Our prebuilt NASM objects are generated using the same automation that produces our pregenerated bindings. See our
-//! [GitHub workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/sys-bindings-generator.yml).
-//! The prebuilt NASM objects are checked into our repository
+//! Prebuilt NASM objects are generated using automation similar to the crate provided pregenerated bindings. See the repositories
+//! [GitHub workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/sys-bindings-generator.yml) for more information.
+//! The prebuilt NASM objects are checked into the repository
 //! and are [available for inspection](https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/builder/prebuilt-nasm).
 //! For each PR submitted,
-//! [our CI verifies](https://github.com/aws/aws-lc-rs/blob/8fb6869fc7bde92529a5cca40cf79513820984f7/.github/workflows/tests.yml#L209-L241)
+//! [CI verifies](https://github.com/aws/aws-lc-rs/blob/8fb6869fc7bde92529a5cca40cf79513820984f7/.github/workflows/tests.yml#L209-L241)
 //! that the NASM objects newly built from source match the NASM objects currently in the repository.
 //!
 //! # *ring*-compatibility
