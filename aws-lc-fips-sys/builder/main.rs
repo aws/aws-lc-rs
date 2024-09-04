@@ -3,6 +3,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use core::fmt;
+use core::fmt::Debug;
+use std::env;
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -90,7 +93,7 @@ impl Default for OutputLibType {
             } else {
                 OutputLibType::Dynamic
             }
-        } else if target_os() == "linux"
+        } else if (target_os() == "linux" || target_os().ends_with("bsd"))
             && (target_arch() == "x86_64" || target_arch() == "aarch64")
         {
             OutputLibType::Static
@@ -204,17 +207,6 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
     )
     .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
     .expect("write bindings");
-
-    bindgen::generate_bindings(
-        manifest_dir,
-        &BindingOptions {
-            build_prefix: prefix.clone(),
-            include_ssl: true,
-            ..Default::default()
-        },
-    )
-    .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto_ssl"))))
-    .expect("write bindings");
 }
 
 fn emit_rustc_cfg(cfg: &str) {
@@ -313,6 +305,7 @@ fn initialize() {
             }
         }
     }
+    env::set_var("GOFLAGS", "-buildvcs=false");
 }
 
 fn is_bindgen_required() -> bool {
@@ -321,6 +314,13 @@ fn is_bindgen_required() -> bool {
         || is_external_bindgen()
         || has_bindgen_feature()
         || !has_pregenerated()
+}
+
+#[allow(dead_code)]
+fn internal_bindgen_supported() -> bool {
+    // TODO: internal bindgen creates invalid bindings on FreeBSD
+    // See: https://github.com/aws/aws-lc-rs/issues/476
+    target_os() != "freebsd"
 }
 
 fn is_no_prefix() -> bool {
@@ -351,14 +351,14 @@ fn prepare_cargo_cfg() {
     // This is supported in Rust >= 1.77.0
     // Also remove `#![allow(unexpected_cfgs)]` from src/lib.rs
     /*
-    println!("cargo::rustc-check-cfg=cfg(use_bindgen_generated)");
-    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
     println!("cargo::rustc-check-cfg=cfg(aarch64_apple_darwin)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(use_bindgen_generated)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
+    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
      */
 }
 
@@ -398,7 +398,7 @@ fn main() {
                 any(target_env = "gnu", target_env = "musl", target_env = "")
             ))
         ))]
-        if !is_external_bindgen() {
+        if internal_bindgen_supported() && !is_external_bindgen() {
             emit_warning(&format!(
                 "Generating bindings - internal bindgen. Platform: {}",
                 target()
@@ -494,11 +494,17 @@ pub(crate) struct BindingOptions {
     pub disable_prelude: bool,
 }
 
-fn invoke_external_bindgen(
-    manifest_dir: &Path,
-    prefix: &Option<String>,
-    gen_bindings_path: &Path,
-) -> Result<(), String> {
+impl Debug for BindingOptions {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("BindingOptions")
+            .field("build_prefix", &self.build_prefix)
+            .field("include_ssl", &self.include_ssl)
+            .field("disable_prelude", &self.disable_prelude)
+            .finish()
+    }
+}
+
+fn verify_bindgen() -> Result<(), String> {
     let result = execute_command("bindgen".as_ref(), &["--version".as_ref()]);
     if !result.status {
         if !result.executed {
@@ -512,6 +518,40 @@ fn invoke_external_bindgen(
         }
         return Err("External bindgen command failed.".to_string());
     }
+    let mut major_version: u32 = 0;
+    let mut minor_version: u32 = 0;
+    let mut patch_version: u32 = 0;
+    let bindgen_version = result.stdout.split(' ').nth(1);
+    if let Some(version) = bindgen_version {
+        let version_parts: Vec<&str> = version.trim().split('.').collect();
+        if version_parts.len() == 3 {
+            major_version = version_parts[0].parse::<u32>().unwrap_or(0);
+            minor_version = version_parts[1].parse::<u32>().unwrap_or(0);
+            patch_version = version_parts[2].parse::<u32>().unwrap_or(0);
+        }
+    }
+    // We currently expect to support all bindgen versions >= 0.69.3
+    if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 3)) {
+        eprintln!(
+            "bindgen-cli was used. Detected version was: \
+            {major_version}.{minor_version}.{patch_version} \n\
+        If this is not the latest version, consider upgrading : \
+        `cargo install --force --locked bindgen-cli`\
+        \n\
+        See our User Guide for more information about bindgen:\
+        https://aws.github.io/aws-lc-rs/index.html"
+        );
+    }
+    Ok(())
+}
+
+fn invoke_external_bindgen(
+    manifest_dir: &Path,
+    prefix: &Option<String>,
+    gen_bindings_path: &Path,
+) -> Result<(), String> {
+    verify_bindgen()?;
+
     let options = BindingOptions {
         // We collect the symbols w/o the prefix added
         build_prefix: None,
@@ -542,25 +582,28 @@ fn invoke_external_bindgen(
     // to conform with the most recent release. We will guide consumers to likewise use the
     // latest version of bindgen-cli.
     bindgen_params.extend(vec![
-        "--rust-target",
-        r"1.59",
-        "--with-derive-default",
-        "--with-derive-eq",
         "--allowlist-file",
-        r".*(/|\\)openssl(/|\\)[^/\\]+\.h",
+        r".*(/|\\)openssl((/|\\)[^/\\]+)+\.h",
         "--allowlist-file",
         r".*(/|\\)rust_wrapper\.h",
         "--rustified-enum",
         r"point_conversion_form_t",
         "--default-macro-constant-type",
         r"signed",
-        "--formatter",
-        r"rustfmt",
-        "--output",
-        gen_bindings_path.to_str().unwrap(),
+        "--with-derive-default",
+        "--with-derive-partialeq",
+        "--with-derive-eq",
         "--raw-line",
         COPYRIGHT,
+        "--generate",
+        "functions,types,vars,methods,constructors,destructors",
         header.as_str(),
+        "--rust-target",
+        r"1.59",
+        "--output",
+        gen_bindings_path.to_str().unwrap(),
+        "--formatter",
+        r"rustfmt",
         "--",
     ]);
     clang_args
