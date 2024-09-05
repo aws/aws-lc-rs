@@ -17,7 +17,7 @@ repository for invoking *AWS-LC*.
 ### [aws-lc-rs](aws-lc-rs/README.md)
 
 A *ring*-compatible crypto library using the cryptographic operations provided by
-[*AWS-LC*](https://github.com/awslabs/aws-lc) using either *aws-lc-sys* or *aws-lc-fips-sys*.
+[*AWS-LC*](https://github.com/aws/aws-lc) using either *aws-lc-sys* or *aws-lc-fips-sys*.
 
 ### [aws-lc-sys](aws-lc-sys/README.md)
 
@@ -54,11 +54,11 @@ cryptographic requirements can seamlessly integrate aws-lc-rs into their applica
 
 ## Questions, Feedback and Contributing
 
-* [Submit an non-security Bug/Issue/Request](https://github.com/awslabs/aws-lc-rs/issues/new/choose)
+* [Submit an non-security Bug/Issue/Request](https://github.com/aws/aws-lc-rs/issues/new/choose)
 * [API documentation](https://docs.rs/aws-lc-rs/)
-* [Fork our repo](https://github.com/awslabs/aws-lc-rs/fork)
+* [Fork our repo](https://github.com/aws/aws-lc-rs/fork)
 
-We use [GitHub Issues](https://github.com/awslabs/aws-lc-rs/issues/new/choose) for managing feature requests, bug
+We use [GitHub Issues](https://github.com/aws/aws-lc-rs/issues/new/choose) for managing feature requests, bug
 reports, or questions about aws-lc-rs API usage.
 
 Otherwise, if you think you might have found a security impacting issue, please instead

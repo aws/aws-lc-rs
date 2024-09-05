@@ -49,4 +49,7 @@ clippy:
 
 ci: format clippy msrv test coverage api-diff-pub
 
+readme:
+	cargo readme | tee README.md
+
 .PHONY: asan asan-fips asan-release ci clippy coverage coverage-fips test msrv clippy

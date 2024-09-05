@@ -77,21 +77,28 @@ fn option_env<N: AsRef<str>>(name: N) -> Option<String> {
 fn env_var_to_bool(name: &str) -> Option<bool> {
     let build_type_result = option_env(name);
     if let Some(env_var_value) = build_type_result {
-        eprintln!("{name}={env_var_value}");
-        // If the environment variable is set, we ignore every other factor.
+        eprintln!("Evaluating: {name}='{env_var_value}'");
+
         let env_var_value = env_var_value.to_lowercase();
         if env_var_value.starts_with('0')
             || env_var_value.starts_with('n')
             || env_var_value.starts_with("off")
+            || env_var_value.starts_with('f')
         {
-            Some(false)
-        } else {
-            // Otherwise, if the variable is set, assume true
-            Some(true)
+            eprintln!("Parsed: {name}=false");
+            return Some(false);
         }
-    } else {
-        None
+        if env_var_value.starts_with(|c: char| c.is_ascii_digit())
+            || env_var_value.starts_with('y')
+            || env_var_value.starts_with("on")
+            || env_var_value.starts_with('t')
+        {
+            eprintln!("Parsed: {name}=true");
+            return Some(true);
+        }
+        eprintln!("Parsed: {name}=unknown");
     }
+    None
 }
 
 impl Default for OutputLibType {
@@ -419,6 +426,15 @@ fn is_no_asm() -> bool {
 
 fn get_cflags() -> &'static str {
     unsafe { AWS_LC_SYS_CFLAGS.as_str() }
+}
+
+fn use_prebuilt_nasm() -> bool {
+    target_os() == "windows"
+        && target_arch() == "x86_64"
+        && !is_no_asm()
+        && !test_nasm_command()
+        && (Some(true) == allow_prebuilt_nasm()
+            || (allow_prebuilt_nasm().is_none() && cfg!(feature = "prebuilt-nasm")))
 }
 
 fn allow_prebuilt_nasm() -> Option<bool> {

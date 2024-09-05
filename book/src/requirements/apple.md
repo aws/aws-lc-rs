@@ -54,6 +54,12 @@ brew install llvm
 cargo install --force --locked bindgen-cli
 ```
 
+## FIPS build
+
+Building with the "fips" feature on this platform will result in the creation of shared libraries (named like
+`libaws_lc_fips_0_xx_yy_crypto.dylib` and `libaws_lc_fips_0_xx_yy_rust_wrapper.dylib`). These shared libraries will
+likely need to be distributed alongside any executable that depends on **aws-lc-rs**.
+
 ## Troubleshooting
 
 See our [troubleshooting section](../resources.md#troubleshooting).

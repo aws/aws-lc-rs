@@ -10,8 +10,8 @@ keywords = ["crypto", "cryptography", "security"]
 license = "ISC AND (Apache-2.0 OR ISC)"
 description = "aws-lc-rs is a cryptographic library using AWS-LC for its cryptographic operations. This library strives to be API-compatible with the popular Rust library named ring."
 documentation = "https://docs.rs/crate/aws-lc-rs"
-homepage = "https://github.com/awslabs/aws-lc-rs"
-repository = "https://github.com/awslabs/aws-lc-rs"
+homepage = "https://github.com/aws/aws-lc-rs"
+repository = "https://github.com/aws/aws-lc-rs"
 # Exclude tests and test data from published crate
 exclude = [
     "third_party/NIST/*",
@@ -37,6 +37,7 @@ bindgen = ["aws-lc-sys?/bindgen", "aws-lc-fips-sys?/bindgen"]
 asan = ["aws-lc-sys?/asan", "aws-lc-fips-sys?/asan"]
 test_logging = []
 unstable = []
+prebuilt-nasm = ["aws-lc-sys?/prebuilt-nasm"]
 
 # require non-FIPS
 non-fips = ["aws-lc-sys"]

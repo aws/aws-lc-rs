@@ -238,6 +238,36 @@ jobs:
         # See: https://github.com/rust-lang/cargo/issues/8531
         run: cargo test -p aws-lc-rs --tests
 
+  build-prebuild-nasm-test:
+    if: github.repository_owner == 'aws'
+    name: prebuilt-nasm usage
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - 'x86_64-pc-windows-msvc'
+          - 'x86_64-pc-windows-gnu'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify NASM not available
+        shell: bash
+        run: |
+          if nasm --version; then
+             exit 1
+          else
+            exit 0;
+          fi
+      - name: Run cargo test w/ prebuilt-nasm feature
+        shell: bash
+        run: cargo test --tests -p aws-lc-rs --release --no-default-features --features aws-lc-sys,prebuilt-nasm
+      - name: Run cargo test w/ AWS_LC_SYS_PREBUILT_NASM=1
+        shell: bash
+        run: AWS_LC_SYS_PREBUILT_NASM=1 cargo test --tests -p aws-lc-rs --release --no-default-features --features aws-lc-sys
+
   build-env-nasm-test:
     if: github.repository_owner == 'aws'
     name: prebuilt NASM verification
