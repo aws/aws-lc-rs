@@ -202,6 +202,11 @@ if [ $? -eq 1 ]; then
   echo "Error: collect_source_files failed"
   exit 1
 fi
+
+# Both "refcount_lock.c" and "refcount_c11.c" should always be listed, even though only one may provide implementations
+SOURCE_FILES+=("crypto/refcount_lock.c")
+SOURCE_FILES+=("crypto/refcount_c11.c")
+
 PROCESSED_SRC_FILES=($(process_source_files "${SOURCE_FILES[@]}"))
 if [ $? -eq 1 ]; then
   echo "Error: process_source_files failed"
