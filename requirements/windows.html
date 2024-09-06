@@ -168,12 +168,17 @@
                     <main>
                         <h1 id="windows-requirements"><a class="header" href="#windows-requirements">Windows Requirements</a></h1>
 <div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th><th>bindgen required?</th></tr></thead><tbody>
-<tr><td><code>x86_64-pc-windows-msvc</code></td><td>C/C++ Compiler, CMake &amp; NASM</td><td>C/C++ Compiler, CMake, NASM, Go &amp; Ninja</td><td><strong><em>Yes</em></strong></td></tr>
-<tr><td><code>x86_64-pc-windows-gnu</code></td><td>C/C++ Compiler, CMake &amp; NASM</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
-<tr><td><code>aarch64-pc-windows-msvc</code></td><td>C/C++ Compiler (<code>clang-cl</code>), CMake &amp; Ninja</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
+<tr><td><code>x86_64-pc-windows-msvc</code></td><td>C/C++ Compiler, CMake &amp; *NASM</td><td>C/C++ Compiler, CMake, NASM, Go &amp; Ninja</td><td>No</td></tr>
+<tr><td><code>x86_64-pc-windows-gnu</code></td><td>C/C++ Compiler, CMake &amp; *NASM</td><td><strong>Not Supported</strong></td><td>No</td></tr>
+<tr><td><code>i686-pc-windows-msvc</code></td><td>C/C++ Compiler, CMake &amp; NASM</td><td><strong>Not Supported</strong></td><td>No</td></tr>
+<tr><td><code>aarch64-pc-windows-msvc</code></td><td>C/C++ Compiler (MSVC's <code>clang-cl</code>) &amp; CMake</td><td><strong>Not Supported</strong></td><td>No</td></tr>
 <tr><td><em>Other</em></td><td><strong>Not Supported</strong></td><td><strong>Not Supported</strong></td><td>N/A</td></tr>
 </tbody></table>
 </div>
+<ul>
+<li>The NASM assembler is recommended on <code>x86-64</code> platforms. NASM is required for <code>x86</code> and for &quot;fips&quot; builds. See the
+<a href="#prebuilt-nasm-objects">Prebuilt NASM objects</a> section below.</li>
+</ul>
 <h2 id="cc-compiler"><a class="header" href="#cc-compiler">C/C++ Compiler</a></h2>
 <p>Use the following instructions to download <strong>Visual Studio Build Tools 2017</strong> or later.</p>
 <ol>
@@ -214,6 +219,34 @@
 </ul>
 </li>
 </ol>
+<h3 id="use-of-prebuilt-nasm-objects"><a class="header" href="#use-of-prebuilt-nasm-objects">Use of prebuilt NASM objects</a></h3>
+<p>For Windows x86 and x86-64, NASM is required for assembly code compilation. On these platforms,
+we recommend that you install <a href="https://www.nasm.us/">the NASM assembler</a>. If NASM is
+detected in the build environment <em>it is used</em> to compile the assembly files. However,
+if a NASM assembler is not available, and the &quot;fips&quot; feature is not enabled, then the build fails unless one of the
+following conditions are true:</p>
+<ul>
+<li>You are building for <code>x86-64</code> and either:
+<ul>
+<li>The <code>AWS_LC_SYS_PREBUILT_NASM</code> environment variable is found and has a value of &quot;1&quot;; OR</li>
+<li><code>AWS_LC_SYS_PREBUILT_NASM</code> is <em>not found</em> in the environment AND the &quot;prebuilt-nasm&quot; feature has been enabled.</li>
+</ul>
+</li>
+</ul>
+<p>If the above cases apply, then the crate provided prebuilt NASM objects will be used for the build. To prevent usage of
+prebuilt NASM
+objects, install NASM in the build environment and/or set the variable <code>AWS_LC_SYS_PREBUILT_NASM</code> to <code>0</code> in the build
+environment to prevent their use.</p>
+<h4 id="about-prebuilt-nasm-objects"><a class="header" href="#about-prebuilt-nasm-objects">About prebuilt NASM objects</a></h4>
+<p>Prebuilt NASM objects are generated using automation similar to the crate provided pregenerated bindings. See the
+repositories
+<a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/sys-bindings-generator.yml">GitHub workflow configuration</a>
+for more information.
+The prebuilt NASM objects are checked into the repository
+and are <a href="https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/builder/prebuilt-nasm">available for inspection</a>.
+For each PR submitted,
+<a href="https://github.com/aws/aws-lc-rs/blob/8fb6869fc7bde92529a5cca40cf79513820984f7/.github/workflows/tests.yml#L209-L241">CI verifies</a>
+that the NASM objects newly built from source match the NASM objects currently in the repository.</p>
 <h3 id="no-assembly-build"><a class="header" href="#no-assembly-build">No-assembly build</a></h3>
 <p>It is possible to avoid the NASM requirement by setting the <code>AWS_LC_SYS_NO_ASM</code>/<code>AWS_LC_FIPS_SYS_NO_ASM</code> environment
 variables. However, this severely impacts performance and can only be used for un-optimized/debug builds. See the
@@ -228,7 +261,8 @@ notes in our <a href="../resources.html#troubleshooting">troubleshooting section
 </li>
 </ol>
 <h2 id="bindgen"><a class="header" href="#bindgen">Bindgen</a></h2>
-<p>On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
+<p>Bindgen is not required for most Windows targets, but it can still be used if needed.
+Using <code>bindgen</code> requires a <code>libclang</code> or <code>llvm</code> package to be installed.
 See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">requirements</a> page in
 [The bindgen User Guide] for instructions.</p>
 <h3 id="libclang--llvm"><a class="header" href="#libclang--llvm">libclang / LLVM</a></h3>
@@ -244,6 +278,10 @@ See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">req
 <h3 id="bindgen-cli"><a class="header" href="#bindgen-cli">bindgen-cli</a></h3>
 <pre><code class="language-shell">cargo install --force --locked bindgen-cli
 </code></pre>
+<h2 id="fips-build"><a class="header" href="#fips-build">FIPS build</a></h2>
+<p>Building with the &quot;fips&quot; feature on this platform will result in the creation of shared libraries (named like
+<code>aws_lc_fips_0_xx_yy_crypto.dll</code> and <code>aws_lc_fips_0_xx_yy_rust_wrapper.dll</code>). These shared libraries will likely need to
+be distributed alongside any executable that depends on <strong>aws-lc-rs</strong>.</p>
 <h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
 <p>See our <a href="../resources.html#troubleshooting">troubleshooting section</a>.</p>
 

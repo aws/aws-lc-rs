@@ -185,6 +185,13 @@ implementations for all cryptographic operations. Our optimized hardware-specifi
 be used. This option is only available for unoptimized (i.e., <code>OPT_LEVEL = &quot;0&quot;</code> or &quot;debug&quot;) builds.
 <strong>WARNING</strong>: Performance on most platforms is extremely limited by this option. Certain security
 properties, such as resistance to timing attacks, can only be provided when assembly code is used.</li>
+<li><code>AWS_LC_SYS_PREBUILT_NASM</code> -- value can be set to <code>1</code> to <em>allow</em> the build to use our prebuilt NASM objects.
+The value can be set to <code>0</code> to <em>prevent</em> our prebuilt NASM objects from being used. See the section on
+<a href="requirements/windows.html#prebuilt-nasm-objects">Prebuilt NASM objects</a> for more information.</li>
+<li><code>AWS_LC_SYS_CFLAGS</code> -- if value is set, it will be used as the value of <code>CFLAGS</code> in the environment when the AWS-LC
+build is performed.</li>
+<li><code>AWS_LC_SYS_C_STD</code> -- value can be set to determine the C standard used by the C compiler. It may be set to
+either <code>99</code> for C99 or <code>11</code> for C11. On most platforms, C11 will be used by default.</li>
 </ul>
 <h2 id="links"><a class="header" href="#links">Links</a></h2>
 <ul>
