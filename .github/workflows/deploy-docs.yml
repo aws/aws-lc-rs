@@ -1,4 +1,4 @@
-ame: Deploy Documentation
+name: Deploy Documentation
 on:
   push:
     branches:

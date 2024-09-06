@@ -80,7 +80,7 @@ Use of prebuilt NASM objects is prevented if either of the following conditions 
 * `AWS_LC_SYS_PREBUILT_NASM` environment variable is set with a value of `0`
 
 Be aware that [features are additive](https://doc.rust-lang.org/cargo/reference/features.html#feature-unification);
-by enabling this feature, it is enabled for crates within the same build.
+by enabling this feature, it is enabled for all crates within the same build.
 
 ## Use of prebuilt NASM objects
 
