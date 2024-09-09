@@ -325,8 +325,7 @@ impl CmakeBuilder {
 impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
         let mut missing_dependency = false;
-
-        if target_os() == "windows" && target_arch() == "x86-64" {
+        if target_os() == "windows" && target_arch() == "x86_64" {
             if is_no_asm() && Some(true) == allow_prebuilt_nasm() {
                 eprintln!(
                     "Build environment has both `AWS_LC_SYS_PREBUILT_NASM` and `AWS_LC_SYS_NO_ASM` set.\
@@ -336,7 +335,7 @@ impl crate::Builder for CmakeBuilder {
             }
             if !is_no_asm() && !test_nasm_command() && !use_prebuilt_nasm() {
                 eprintln!(
-                    "Consider setting `AWS_LC_SYS_PREBUILT_NASM` in the build environment.\
+                    "Consider installing NASM or setting `AWS_LC_SYS_PREBUILT_NASM` in the build environment.\
                 See User Guide: https://aws.github.io/aws-lc-rs/index.html"
                 );
                 eprintln!("Missing dependency: nasm");
