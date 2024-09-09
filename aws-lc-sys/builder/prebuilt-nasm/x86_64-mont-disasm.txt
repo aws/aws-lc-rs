@@ -5,7 +5,7 @@ Dump of file x86_64-mont.obj
 
 File Type: COFF OBJECT
 
-aws_lc_0_21_0_bn_mul_mont:
+aws_lc_0_21_1_bn_mul_mont:
   0000000000000000: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
   0000000000000005: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
   000000000000000A: 48 89 E0           mov         rax,rsp
@@ -23,7 +23,7 @@ L$SEH_begin_bn_mul_mont:
   0000000000000030: 0F 85 3A 00 00 00  jne         L$mul_enter
   0000000000000036: 41 83 F9 08        cmp         r9d,8
   000000000000003A: 0F 82 30 00 00 00  jb          L$mul_enter
-  0000000000000040: 4C 8D 1D 00 00 00  lea         r11,[aws_lc_0_21_0_OPENSSL_ia32cap_P]
+  0000000000000040: 4C 8D 1D 00 00 00  lea         r11,[aws_lc_0_21_1_OPENSSL_ia32cap_P]
                     00
   0000000000000047: 45 8B 5B 08        mov         r11d,dword ptr [r11+8]
   000000000000004B: 48 39 F2           cmp         rdx,rsi
@@ -813,13 +813,13 @@ L$sqr8x_body:
   00000000000009BA: 66 0F EF C0        pxor        xmm0,xmm0
   00000000000009BE: 66 48 0F 6E CF     movq        xmm1,rdi
   00000000000009C3: 66 49 0F 6E DA     movq        xmm3,r10
-  00000000000009C8: 48 8D 05 00 00 00  lea         rax,[aws_lc_0_21_0_OPENSSL_ia32cap_P]
+  00000000000009C8: 48 8D 05 00 00 00  lea         rax,[aws_lc_0_21_1_OPENSSL_ia32cap_P]
                     00
   00000000000009CF: 8B 40 08           mov         eax,dword ptr [rax+8]
   00000000000009D2: 25 00 01 08 00     and         eax,80100h
   00000000000009D7: 3D 00 01 08 00     cmp         eax,80100h
   00000000000009DC: 0F 85 1E 00 00 00  jne         L$sqr8x_nox
-  00000000000009E2: E8 00 00 00 00     call        aws_lc_0_21_0_bn_sqrx8x_internal
+  00000000000009E2: E8 00 00 00 00     call        aws_lc_0_21_1_bn_sqrx8x_internal
   00000000000009E7: 49 8D 1C 08        lea         rbx,[r8+rcx]
   00000000000009EB: 49 89 C9           mov         r9,rcx
   00000000000009EE: 48 89 CA           mov         rdx,rcx
@@ -828,7 +828,7 @@ L$sqr8x_body:
   00000000000009FA: E9 21 00 00 00     jmp         L$sqr8x_sub
   00000000000009FF: 90                 nop
 L$sqr8x_nox:
-  0000000000000A00: E8 00 00 00 00     call        aws_lc_0_21_0_bn_sqr8x_internal
+  0000000000000A00: E8 00 00 00 00     call        aws_lc_0_21_1_bn_sqr8x_internal
   0000000000000A05: 4A 8D 1C 0F        lea         rbx,[rdi+r9]
   0000000000000A09: 4C 89 C9           mov         rcx,r9
   0000000000000A0C: 4C 89 CA           mov         rdx,r9
