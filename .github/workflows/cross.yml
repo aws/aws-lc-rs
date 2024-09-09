@@ -70,6 +70,39 @@ jobs:
       - name: Cross-compilation (test release)
         run: cross test -p aws-lc-rs --release --features unstable --target ${{ matrix.target }}
 
+
+  aws-lc-rs-cross-0_2_5-test:
+    if: github.repository_owner == 'aws'
+    name: cross tests ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    env:
+      CROSS_CONFIG: './Cross.toml.x86_64-unknown-linux-gnu'
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 'stable'
+      - name: Install cross
+        run: cargo install cross --locked --version 0.2.5
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: 'stable'
+          target: ${{ matrix.target }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Cross-compilation (build debug)
+        run: cross build -p aws-lc-rs --features unstable --target ${{ matrix.target }}
+      - name: Cross-compilation (test release)
+        run: cross test -p aws-lc-rs --release --features unstable --target ${{ matrix.target }}
+
   aws-lc-rs-ios-aarch64:
     if: github.repository_owner == 'aws'
     name: iOS aarch64 cross-platform build

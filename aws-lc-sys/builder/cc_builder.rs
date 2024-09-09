@@ -125,10 +125,16 @@ impl CcBuilder {
         match opt_level.as_str() {
             "0" | "1" | "2" => {}
             _ => {
-                cc_build.flag(format!(
-                    "-ffile-prefix-map={}=",
-                    self.manifest_dir.display()
-                ));
+                let file_prefix_map_option =
+                    format!("-ffile-prefix-map={}=", self.manifest_dir.display());
+                if let Ok(true) = cc_build.is_flag_supported(&file_prefix_map_option) {
+                    cc_build.flag(file_prefix_map_option);
+                } else {
+                    cc_build.flag_if_supported(format!(
+                        "-fdebug-prefix-map={}=",
+                        self.manifest_dir.display()
+                    ));
+                }
             }
         }
 
