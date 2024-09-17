@@ -5,8 +5,8 @@ Dump of file aesni-sha256-x86_64.obj
 
 File Type: COFF OBJECT
 
-aws_lc_0_21_1_aesni_cbc_sha256_enc:
-  0000000000000000: 4C 8D 1D 00 00 00  lea         r11,[aws_lc_0_21_1_OPENSSL_ia32cap_P]
+aws_lc_0_22_0_aesni_cbc_sha256_enc:
+  0000000000000000: 4C 8D 1D 00 00 00  lea         r11,[aws_lc_0_22_0_OPENSSL_ia32cap_P]
                     00
   0000000000000007: B8 01 00 00 00     mov         eax,1
   000000000000000C: 48 83 F9 00        cmp         rcx,0
@@ -4799,7 +4799,6 @@ L$in_prologue:
 
   Summary
 
-          1C .debug$T
           30 .pdata
          2B6 .rdata
         4753 .text
