@@ -70,4 +70,4 @@ libc = "0.2.121"
 paste = "1.0.11"
 
 [package.metadata.aws-lc-sys]
-commit-hash = "2f1879759b2e0fc70592665bdf10087b64f44b7d"
+commit-hash = "d3a598c1b419d49b5b08f0677add4581572e2edc"
