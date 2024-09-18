@@ -121,6 +121,11 @@ impl CcBuilder {
                 .define("BORINGSSL_PREFIX", prefix.as_str());
         }
 
+        let compiler = cc_build.get_compiler();
+        if target_arch() == "x86" && (compiler.is_like_clang() || compiler.is_like_gnu()) {
+            cc_build.flag_if_supported("-msse2");
+        }
+
         let opt_level = cargo_env("OPT_LEVEL");
         match opt_level.as_str() {
             "0" | "1" | "2" => {}

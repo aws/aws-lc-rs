@@ -90,10 +90,12 @@ impl CmakeBuilder {
             } else {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
                 if target_family() == "unix" || target_env() == "gnu" {
-                    cmake_cfg.cflag(format!(
-                        "-ffile-prefix-map={}=",
-                        self.manifest_dir.display()
-                    ));
+                    // This flag is not supported on GCC < v8.1
+                    // TODO: re-enable this
+                    // cmake_cfg.cflag(format!(
+                    //     "-ffile-prefix-map={}=",
+                    //     self.manifest_dir.display()
+                    // ));
                 }
             }
         } else {

@@ -72,6 +72,8 @@ jobs:
   apidiff:
     if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: 1
     strategy:
       fail-fast: false
       matrix:
