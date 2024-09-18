@@ -20,7 +20,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_ASM_H
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_21_1
+#define BORINGSSL_PREFIX aws_lc_0_21_2
 #endif // BORINGSSL_PREFIX
 
 // On iOS and macOS, we need to treat assembly symbols differently from other
