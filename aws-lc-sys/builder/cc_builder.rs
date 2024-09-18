@@ -14,8 +14,9 @@ mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
 use crate::{
-    cargo_env, emit_warning, env_var_to_bool, execute_command, get_cflags, out_dir,
-    requested_c_std, target, target_arch, target_os, target_vendor, CStdRequested, OutputLibType,
+    cargo_env, emit_warning, env_var_to_bool, execute_command, get_cflags, is_no_asm, option_env,
+    out_dir, requested_c_std, target, target_arch, target_env, target_os, target_vendor,
+    CStdRequested, OutputLibType,
 };
 use std::path::PathBuf;
 
@@ -96,29 +97,53 @@ impl CcBuilder {
         }
     }
 
-    fn apply_c_std(cc_build: &mut cc::Build) {
-        match requested_c_std() {
-            CStdRequested::C99 => cc_build.std("c99"),
-            _ => cc_build.std("c11"),
-        };
-    }
-
-    fn create_builder(&self) -> cc::Build {
+    pub(crate) fn create_builder(&self) -> cc::Build {
         let mut cc_build = cc::Build::default();
-        cc_build
-            .out_dir(&self.out_dir)
-            .flag("-Wno-unused-parameter")
-            .cpp(false)
-            .shared_flag(false)
-            .static_flag(true);
-        CcBuilder::apply_c_std(&mut cc_build);
-        if target_os() == "linux" {
-            cc_build.define("_XOPEN_SOURCE", "700").flag("-lpthread");
+        cc_build.out_dir(&self.out_dir).cpp(false);
+
+        let compiler = cc_build.get_compiler();
+        if compiler.is_like_gnu() || compiler.is_like_clang() {
+            cc_build.flag("-Wno-unused-parameter");
+            if target_os() == "linux" || target_env() == "gnu" {
+                cc_build.define("_XOPEN_SOURCE", "700").flag("-lpthread");
+            }
         }
+
         if let Some(prefix) = &self.build_prefix {
             cc_build
                 .define("BORINGSSL_IMPLEMENTATION", "1")
                 .define("BORINGSSL_PREFIX", prefix.as_str());
+        }
+        self.add_includes(&mut cc_build);
+
+        cc_build
+    }
+
+    pub(crate) fn prepare_builder(&self) -> cc::Build {
+        let mut cc_build = self.create_builder();
+        match requested_c_std() {
+            CStdRequested::C99 => {
+                cc_build.std("c99");
+            }
+            CStdRequested::C11 => {
+                cc_build.std("c11");
+            }
+            CStdRequested::None => {
+                if target_env() == "msvc" && target_arch() == "aarch64" {
+                    // clang-cl (not "clang") will be used.
+                } else if self.compiler_check(&mut cc_build, "c11", "") {
+                    cc_build.std("c11");
+                } else {
+                    cc_build.std("c99");
+                }
+            }
+        };
+
+        if let Some(cc) = option_env("CC") {
+            emit_warning(&format!("CC environment variable set: {}", cc.clone()));
+        }
+        if let Some(cxx) = option_env("CXX") {
+            emit_warning(&format!("CXX environment variable set: {}", cxx.clone()));
         }
 
         let compiler = cc_build.get_compiler();
@@ -128,17 +153,28 @@ impl CcBuilder {
 
         let opt_level = cargo_env("OPT_LEVEL");
         match opt_level.as_str() {
-            "0" | "1" | "2" => {}
+            "0" | "1" | "2" => {
+                if is_no_asm() {
+                    emit_warning("AWS_LC_SYS_NO_ASM found. Disabling assembly code usage.");
+                    cc_build.define("OPENSSL_NO_ASM", "1");
+                }
+            }
             _ => {
-                let file_prefix_map_option =
-                    format!("-ffile-prefix-map={}=", self.manifest_dir.display());
-                if let Ok(true) = cc_build.is_flag_supported(&file_prefix_map_option) {
-                    cc_build.flag(file_prefix_map_option);
-                } else {
-                    cc_build.flag_if_supported(format!(
-                        "-fdebug-prefix-map={}=",
-                        self.manifest_dir.display()
-                    ));
+                assert!(
+                    !is_no_asm(),
+                    "AWS_LC_SYS_NO_ASM only allowed for debug builds!"
+                );
+                if compiler.is_like_gnu() || compiler.is_like_clang() {
+                    let file_prefix_map_option =
+                        format!("-ffile-prefix-map={}=", self.manifest_dir.display());
+                    if let Ok(true) = cc_build.is_flag_supported(&file_prefix_map_option) {
+                        cc_build.flag(file_prefix_map_option);
+                    } else {
+                        cc_build.flag_if_supported(format!(
+                            "-fdebug-prefix-map={}=",
+                            self.manifest_dir.display()
+                        ));
+                    }
                 }
             }
         }
@@ -151,7 +187,6 @@ impl CcBuilder {
             env::set_var("CFLAGS", cflags);
         }
 
-        self.add_includes(&mut cc_build);
         cc_build
     }
 
@@ -194,7 +229,7 @@ impl CcBuilder {
     }
 
     fn build_library(&self, lib: &Library) {
-        let mut cc_build = self.create_builder();
+        let mut cc_build = self.prepare_builder();
 
         self.add_all_files(lib, &mut cc_build);
 
@@ -213,9 +248,10 @@ impl CcBuilder {
     // This performs basic checks of compiler capabilities and sets an appropriate flag on success.
     // This should be kept in alignment with the checks performed by AWS-LC's CMake build.
     // See: https://github.com/search?q=repo%3Aaws%2Faws-lc%20check_compiler&type=code
-    fn compiler_check(&self, cc_build: &mut cc::Build, basename: &str, flag: &str) {
-        let output_path = self.out_dir.join(format!("{basename}.o"));
-        if let Ok(()) = cc::Build::default()
+    fn compiler_check(&self, cc_build: &mut cc::Build, basename: &str, flag: &str) -> bool {
+        let mut ret_val = false;
+        let output_path = format!("{basename}.o");
+        let result = cc::Build::default()
             .file(
                 self.manifest_dir
                     .join("aws-lc")
@@ -225,11 +261,21 @@ impl CcBuilder {
             )
             .flag("-Wno-unused-parameter")
             .warnings_into_errors(true)
-            .try_compile(output_path.as_os_str().to_str().unwrap())
-        {
-            cc_build.define(flag, "1");
+            .try_compile(output_path.as_str());
+
+        if let Ok(()) = result {
+            if !flag.is_empty() {
+                cc_build.define(flag, "1");
+            }
+            ret_val = true;
         }
         let _ = fs::remove_file(output_path);
+        emit_warning(&format!(
+            "Compilation of '{basename}.c' {} - {:?}.",
+            if ret_val { "succeeded" } else { "failed" },
+            &result
+        ));
+        ret_val
     }
 
     // This checks whether the compiler contains a critical bug that causes `memcmp` to erroneously
