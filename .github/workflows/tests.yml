@@ -53,16 +53,58 @@ jobs:
         working-directory: ./aws-lc-rs-testing
         run: cargo test --all-targets
 
-  aws-lc-rs-c-std-test:
+  aws-lc-rs-1804-gcc:
     if: github.repository_owner == 'aws'
-    name: C-std test ${{ matrix.os }} - ${{ matrix.c_std }}
-    runs-on: ${{ matrix.os }}
+    name: GCC ${{ matrix.gcc_version }} - Force CMake ${{ matrix.cmake }}
+    runs-on: ubuntu-20.04
+    container:
+      image: ubuntu:18.04
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
     strategy:
       fail-fast: false
       matrix:
-        rust: [ stable ]
-        os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
-        c_std: [ "11", "99" ]
+        cmake: [ '0', '1' ]
+        gcc_version: [ '4.8', '5', '6' ]
+    steps:
+      - run: |
+          apt-get update
+          apt-get install -y build-essential git cmake curl sudo
+          curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
+          dpkg -i powershell_7.2.23-1.deb_amd64.deb
+          apt-get install -f
+          rm powershell_7.2.23-1.deb_amd64.deb
+      - name: Checkout
+        run: |
+          git config --global --add safe.directory '*'
+          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
+          git fetch origin ${{ github.sha }}
+          git checkout -b ci-job ${{ github.sha }}
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+      - name: Set up GCC
+        uses: egor-tensin/setup-gcc@v1.3
+        with:
+          version: ${{ matrix.gcc_version }}
+          platform: x64
+      - name: Run cargo test (debug)
+        run: cargo test -p aws-lc-rs --all-targets --features unstable
+      - name: Run cargo test (release)
+        run: cargo test -p aws-lc-rs --release --all-targets --features unstable
+
+  aws-lc-rs-2004-gcc:
+    if: github.repository_owner == 'aws'
+    name: GCC ${{ matrix.gcc_version }} - Force CMake ${{ matrix.cmake }}
+    runs-on: ubuntu-20.04
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cmake: [ '0', '1' ]
+        gcc_version: [ '7', '8' ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -71,14 +113,64 @@ jobs:
         id: toolchain
         with:
           toolchain: stable
-      - name: Run cargo test
+      - name: Set up GCC
+        uses: egor-tensin/setup-gcc@v1.3
+        with:
+          version: ${{ matrix.gcc_version }}
+          platform: x64
+      - name: Run cargo test (debug)
+        run: cargo test -p aws-lc-rs --all-targets --features unstable
+      - name: Run cargo test (release)
+        run: cargo test -p aws-lc-rs --release --all-targets --features unstable
+      - if: ${{ matrix.gcc_version == '8' }}
+        name: Verify paths found in debug build
+        run: |
+          DEBUG_LIBCRYPTO=$(find ./target/debug -name "libaws_lc_*_crypto.a")
+          if strings ${DEBUG_LIBCRYPTO} | grep runner; then 
+            exit 0; # SUCCESS
+          else
+            exit 1; # FAIL - we expected to find "runner"  (i.e., a path)
+          fi
+      - if: ${{ matrix.gcc_version == '8' }}
+        name: Verify paths not found in release build
+        run: |
+          RELEASE_LIBCRYPTO=$(find ./target/release -name "libaws_lc_*_crypto.a")
+          if strings ${RELEASE_LIBCRYPTO} | grep runner; then 
+            exit 1; # FAIL - we did not expect to find "runner" (i.e., a path)
+          else
+            exit 0; # SUCCESS
+          fi
+
+  aws-lc-rs-c-std-test:
+    if: github.repository_owner == 'aws'
+    name: C-std ${{ matrix.os }} - ${{ matrix.c_std }} - Force CMake ${{ matrix.cmake }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
+        c_std: [ "11", "99" ]
+        cmake: [ '0', '1' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+      - run: |
+          echo 'export AWS_LC_SYS_CMAKE_BUILDER=${{ matrix.cmake }}' >> "$GITHUB_ENV"
+      - if: ${{ (matrix.cmake == '1' && matrix.c_std == '99') || matrix.os != 'windows-latest' }}
+        name: Run cargo test
         # Windows build currently fails when forcing C11:
         # ```
         # C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.41.34120\include\vcruntime_c11_stdatomic.h(36,24):
         #   error C2061: syntax error: identifier 'atomic_bool' [D:\a\aws-lc-rs\aws-lc-rs\target\debug\build\aws-lc-sys-491cb29895f6cb6c\out\build\aws-lc\crypto\crypto_objects.vcxproj]
         # ```
         # https://devblogs.microsoft.com/cppblog/c11-atomics-in-visual-studio-2022-version-17-5-preview-2/
-        if: ${{ matrix.c_std != '11' || matrix.os != 'windows-latest' }}
+
         working-directory: ./aws-lc-rs
         env:
           AWS_LC_SYS_PREBUILT_NASM: 1
@@ -104,12 +196,12 @@ jobs:
       - if: ${{ matrix.os == 'macos-13-xlarge' }}
         run: |
           brew install llvm
-          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
+          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> "$GITHUB_ENV"
           echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
       - if: ${{ matrix.os == 'macos-12' }}
         run: |
           brew install llvm
-          echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"'
+          echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> "$GITHUB_ENV"
           echo 'export LIBCLANG_PATH=/usr/local/opt/llvm' >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
