@@ -255,7 +255,7 @@ jobs:
       - name: Prepare VM
         uses: vmactions/freebsd-vm@v1
         with:
-          release: 13.2
+          release: 14.1
           usesh: true
           copyback: false
           prepare: |
