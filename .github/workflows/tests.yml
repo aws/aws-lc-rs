@@ -122,6 +122,8 @@ jobs:
         run: cargo test -p aws-lc-rs --all-targets --features unstable
       - name: Run cargo test (release)
         run: cargo test -p aws-lc-rs --release --all-targets --features unstable
+      # The steps below verify that we're successfully using `-ffile-prefix-map`
+      # to remove build environment paths from the resulting library.
       - if: ${{ matrix.gcc_version == '8' }}
         name: Verify paths found in debug build
         run: |
