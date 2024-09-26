@@ -156,6 +156,7 @@ impl OaepPublicEncryptingKey {
 
     /// Returns the max plaintext that could be decrypted using this key and with the provided algorithm.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub fn max_plaintext_size(&self, algorithm: &'static OaepAlgorithm) -> usize {
         #[allow(unreachable_patterns)]
         let hash_len: usize = match algorithm.id() {
