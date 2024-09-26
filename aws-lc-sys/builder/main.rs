@@ -236,6 +236,7 @@ fn emit_warning(message: &str) {
     println!("cargo:warning={message}");
 }
 
+#[allow(dead_code)]
 fn target_family() -> String {
     cargo_env("CARGO_CFG_TARGET_FAMILY")
 }
@@ -424,6 +425,7 @@ fn is_no_asm() -> bool {
     unsafe { AWS_LC_SYS_NO_ASM }
 }
 
+#[allow(static_mut_refs)]
 fn get_cflags() -> &'static str {
     unsafe { AWS_LC_SYS_CFLAGS.as_str() }
 }

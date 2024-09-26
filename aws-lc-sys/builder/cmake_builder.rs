@@ -1,12 +1,13 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, get_cflags, is_crt_static,
-    is_no_asm, option_env, requested_c_std, target, target_arch, target_env, target_family,
-    target_os, target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm,
-    CStdRequested, OutputLibType,
+    is_no_asm, option_env, requested_c_std, target, target_arch, target_env, target_os,
+    target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm, CStdRequested,
+    OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -89,18 +90,26 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
             } else {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
-                if target_family() == "unix" || target_env() == "gnu" {
-                    // This flag is not supported on GCC < v8.1
-                    // TODO: re-enable this
-                    // cmake_cfg.cflag(format!(
-                    //     "-ffile-prefix-map={}=",
-                    //     self.manifest_dir.display()
-                    // ));
-                }
             }
         } else {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
         }
+
+        // Use the compiler options identified by CcBuilder
+        let cc_builder = CcBuilder::new(
+            self.manifest_dir.clone(),
+            self.out_dir.clone(),
+            self.build_prefix.clone(),
+            self.output_lib_type,
+        );
+        let mut cflags = OsString::new();
+        cflags.push(cc_builder.prepare_builder().get_compiler().cflags_env());
+        if !get_cflags().is_empty() {
+            cflags.push(" ");
+            cflags.push(get_cflags());
+        }
+        emit_warning(&format!("Setting CFLAGS: {cflags:?}"));
+        env::set_var("CFLAGS", cflags);
 
         if let Some(prefix) = &self.build_prefix {
             cmake_cfg.define("BORINGSSL_PREFIX", format!("{prefix}_"));
@@ -148,14 +157,6 @@ impl CmakeBuilder {
             CStdRequested::None => {}
         }
 
-        if !get_cflags().is_empty() {
-            let cflags = get_cflags();
-            emit_warning(&format!(
-                "AWS_LC_SYS_CFLAGS found. Setting CFLAGS: '{cflags}'"
-            ));
-            env::set_var("CFLAGS", cflags);
-        }
-
         // Allow environment to specify CMake toolchain.
         if let Some(toolchain) = option_env("CMAKE_TOOLCHAIN_FILE").or(option_env(format!(
             "CMAKE_TOOLCHAIN_FILE_{}",
@@ -165,15 +166,6 @@ impl CmakeBuilder {
                 "CMAKE_TOOLCHAIN_FILE environment variable set: {toolchain}"
             ));
             return cmake_cfg;
-        }
-
-        if let Some(cc) = option_env("CC") {
-            emit_warning(&format!("CC environment variable set: {}", cc.clone()));
-            cmake_cfg.define("CMAKE_C_COMPILER", cc);
-        }
-        if let Some(cxx) = option_env("CXX") {
-            emit_warning(&format!("CXX environment variable set: {}", cxx.clone()));
-            cmake_cfg.define("CMAKE_CXX_COMPILER", cxx);
         }
 
         // See issue: https://github.com/aws/aws-lc-rs/issues/453
