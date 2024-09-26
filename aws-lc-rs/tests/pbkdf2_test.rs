@@ -5,6 +5,7 @@
 
 use aws_lc_rs::{digest, error, pbkdf2, test, test_file};
 use core::num::NonZeroU32;
+use mirai_annotations::unrecoverable;
 
 /// Test vectors from `BoringSSL`, Go, and other sources.
 #[test]
@@ -35,7 +36,7 @@ fn pbkdf2_tests() {
         let verify_expected_result = match verify_expected_result.as_str() {
             "OK" => Ok(()),
             "Err" => Err(error::Unspecified),
-            _ => panic!("Unsupported value of \"Verify\""),
+            _ => unrecoverable!("Unsupported value of \"Verify\""),
         };
 
         {
