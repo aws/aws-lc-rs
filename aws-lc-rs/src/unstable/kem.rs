@@ -9,17 +9,15 @@
 //!
 //! # Example
 //!
-//! ```
+//! ```ignore
 //! use aws_lc_rs::{
 //!     error::Unspecified,
 //!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
-//!     unstable::kem::{AlgorithmId, get_algorithm}
+//!     unstable::kem::{AlgorithmId, ML_KEM_512}
 //! };
 //!
-//! let kyber512_r3 = get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?;
-//!
 //! // Alice generates their (private) decapsulation key.
-//! let decapsulation_key = DecapsulationKey::generate(kyber512_r3)?;
+//! let decapsulation_key = DecapsulationKey::generate(&ML_KEM_512)?;
 //!
 //! // Alices computes the (public) encapsulation key.
 //! let encapsulation_key = decapsulation_key.encapsulation_key()?;
@@ -31,12 +29,12 @@
 //! let encapsulation_key_bytes = encapsulation_key_bytes.as_ref();
 //!
 //! // Bob constructs the (public) encapsulation key from the key bytes provided by Alice.
-//! let retrieved_encapsulation_key = EncapsulationKey::new(kyber512_r3, encapsulation_key_bytes)?;
+//! let retrieved_encapsulation_key = EncapsulationKey::new(&ML_KEM_512, encapsulation_key_bytes)?;
 //!
 //! // Bob executes the encapsulation algorithm to to produce their copy of the secret, and associated ciphertext.
 //! let (ciphertext, bob_secret) = retrieved_encapsulation_key.encapsulate()?;
 //!
-//! // Alice recieves ciphertext bytes from bob
+//! // Alice receives ciphertext bytes from bob
 //! let ciphertext_bytes = ciphertext.as_ref();
 //!
 //! // Bob sends Alice the ciphertext computed from the encapsulation algorithm, Alice runs decapsulation to derive their
@@ -53,6 +51,9 @@ use core::fmt::Debug;
 
 use crate::kem::Algorithm;
 use aws_lc::{NID_KYBER1024_R3, NID_KYBER512_R3, NID_KYBER768_R3};
+
+#[cfg(not(feature = "fips"))]
+pub use crate::kem::semistable::{ML_KEM_1024, ML_KEM_512, ML_KEM_768};
 
 // Key lengths defined as stated on the CRYSTALS website:
 // https://pq-crystals.org/kyber/
@@ -73,6 +74,7 @@ const KYBER1024_R3_PUBLIC_KEY_LENGTH: usize = 1568;
 const KYBER1024_R3_SHARED_SECRET_LENGTH: usize = 32;
 
 /// NIST Round 3 submission of the Kyber-512 algorithm.
+#[allow(deprecated)]
 const KYBER512_R3: Algorithm<AlgorithmId> = Algorithm {
     id: AlgorithmId::Kyber512_R3,
     decapsulate_key_size: KYBER512_R3_SECRET_KEY_LENGTH,
@@ -82,6 +84,7 @@ const KYBER512_R3: Algorithm<AlgorithmId> = Algorithm {
 };
 
 /// NIST Round 3 submission of the Kyber-768 algorithm.
+#[allow(deprecated)]
 const KYBER768_R3: Algorithm<AlgorithmId> = Algorithm {
     id: AlgorithmId::Kyber768_R3,
     decapsulate_key_size: KYBER768_R3_SECRET_KEY_LENGTH,
@@ -91,6 +94,7 @@ const KYBER768_R3: Algorithm<AlgorithmId> = Algorithm {
 };
 
 /// NIST Round 3 submission of the Kyber-1024 algorithm.
+#[allow(deprecated)]
 const KYBER1024_R3: Algorithm<AlgorithmId> = Algorithm {
     id: AlgorithmId::Kyber1024_R3,
     decapsulate_key_size: KYBER1024_R3_SECRET_KEY_LENGTH,
@@ -105,18 +109,22 @@ const KYBER1024_R3: Algorithm<AlgorithmId> = Algorithm {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum AlgorithmId {
     /// NIST Round 3 submission of the Kyber-512 algorithm.
+    #[deprecated]
     Kyber512_R3,
 
     /// NIST Round 3 submission of the Kyber-768 algorithm.
+    #[deprecated]
     Kyber768_R3,
 
     /// NIST Round 3 submission of the Kyber-1024 algorithm.
+    #[deprecated]
     Kyber1024_R3,
 }
 
 impl crate::kem::AlgorithmIdentifier for AlgorithmId {
     #[inline]
     fn nid(self) -> i32 {
+        #[allow(deprecated)]
         match self {
             AlgorithmId::Kyber512_R3 => NID_KYBER512_R3,
             AlgorithmId::Kyber768_R3 => NID_KYBER768_R3,
@@ -131,6 +139,7 @@ impl crate::sealed::Sealed for AlgorithmId {}
 /// May return [`None`] if support for the algorithm has been removed from the unstable module.
 #[must_use]
 pub const fn get_algorithm(id: AlgorithmId) -> Option<&'static Algorithm<AlgorithmId>> {
+    #[allow(deprecated)]
     match id {
         AlgorithmId::Kyber512_R3 => Some(&KYBER512_R3),
         AlgorithmId::Kyber768_R3 => Some(&KYBER768_R3),
@@ -140,6 +149,8 @@ pub const fn get_algorithm(id: AlgorithmId) -> Option<&'static Algorithm<Algorit
 
 #[cfg(test)]
 mod tests {
+    #![allow(deprecated)]
+
     use crate::{
         error::KeyRejected,
         kem::{DecapsulationKey, EncapsulationKey},
