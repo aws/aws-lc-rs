@@ -14,6 +14,22 @@ function cleanup() {
 
 trap cleanup EXIT
 
+#TODO: Call this function for all uses of sed
+function sed_replace {
+  local filepath="${1}";
+  shift
+  while [[ $# -gt 0 ]]; do
+      local pattern="${1}";
+      if [[ "$(uname)" == "Darwin" ]]; then
+      	sed -i '' -e "${pattern}" "${filepath}"
+      else
+      	sed -i -e "${pattern}" "${filepath}"
+      fi
+      shift
+  done
+}
+
+
 # Get aws-lc-rs version
 pushd "${ROOT}/aws-lc-rs"
 AWS_LC_RS_VERSION=$(cargo read-manifest | jq .version -r)
@@ -44,7 +60,10 @@ git clone https://github.com/rustls/rustls.git "${RUSTLS_DIR}"
 # Update rcgen to use the GitHub repository reference under test.
 pushd "${RUSTLS_RCGEN_DIR}"
 git checkout "${RUSTLS_RCGEN_COMMIT}"
-cargo add --path "${ROOT}/aws-lc-rs" --package rcgen
+rm Cargo.lock
+RCGEN_AWS_LC_RS_STRING="^aws-lc-rs = .*"
+RCGEN_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
+sed_replace ./Cargo.toml "s|${RCGEN_AWS_LC_RS_STRING}|${RCGEN_AWS_LC_RS_PATH_STRING}|g"
 cargo add --path "${ROOT}/aws-lc-rs" --package rustls-cert-gen
 cargo update
 cargo update "aws-lc-rs@${AWS_LC_RS_VERSION}"
@@ -54,6 +73,7 @@ popd &>/dev/null # "${RUSTLS_RCGEN_DIR}"
 # Update rustls-webpki to use the GitHub repository reference under test.
 pushd "${RUSTLS_WEBPKI_DIR}"
 git checkout "${RUSTLS_WEBPKI_COMMIT}"
+rm Cargo.lock
 WEBPKI_RCGEN_STRING="^rcgen = { .* }"
 WEBPKI_RCGEN_PATH_STRING="rcgen = { path = \"${RUSTLS_RCGEN_DIR}/rcgen\" , default-features = false, features = [\"aws_lc_rs\"] }"
 WEBPKI_AWS_LC_RS_STRING="^aws-lc-rs = { version.* }"
@@ -72,13 +92,16 @@ popd &>/dev/null # "${RUSTLS_WEBPKI_DIR}"
 
 pushd "${RUSTLS_DIR}"
 git checkout "${RUSTLS_COMMIT}"
+rm Cargo.lock
 # Update the Cargo.toml to use the GitHub repository reference under test.
 RUSTLS_RCGEN_STRING="^rcgen = { .* }"
 RUSTLS_RCGEN_PATH_STRING="rcgen = { path = \"${RUSTLS_RCGEN_DIR}/rcgen\" , default-features = false, features = [\"aws_lc_rs\", \"pem\"] }"
 RUSTLS_AWS_LC_RS_STRING="^aws-lc-rs = { version.* }"
 RUSTLS_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", optional = true, default-features = false, features = [\"aws-lc-sys\"] }"
+RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"unstable\", \"aws-lc-sys\"] }"
 RUSTLS_WEBPKI_STRING="^webpki = { package.* }"
 RUSTLS_WEBPKI_PATH_STRING="webpki = { package = \"rustls-webpki\", path = \"${RUSTLS_WEBPKI_DIR}\", features = [\"alloc\"], default-features = false }"
+sed_replace ./rustls-post-quantum/Cargo.toml "s|${RUSTLS_AWS_LC_RS_STRING}|${RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING}|g"
 if [[ "$(uname)" == "Darwin" ]]; then
 	find ./ -type f  -name "Cargo.toml" | xargs sed -i '' -e "s|${RUSTLS_RCGEN_STRING}|${RUSTLS_RCGEN_PATH_STRING}|g" -e "s|${RUSTLS_AWS_LC_RS_STRING}|${RUSTLS_AWS_LC_RS_PATH_STRING}|g" -e "s|${RUSTLS_WEBPKI_STRING}|${RUSTLS_WEBPKI_PATH_STRING}|g"
 else
