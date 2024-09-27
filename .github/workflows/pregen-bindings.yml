@@ -88,23 +88,23 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y --no-install-recommends install cmake gcc clang ninja-build golang
-      - name: Regenerate aws-lc-sys crate
-        working-directory: ./aws-lc-sys
+      - name: Regenerate aws-lc-fips-sys crate
+        working-directory: ./aws-lc-fips-sys
         run: |
           rm -rf symbols/*
           rm -rf generated-include/openssl/*
-          ../scripts/generate/_collect_symbols_build.sh -c aws-lc-fips-sys
-          ../scripts/generate/_generate_prefix_headers.sh -c aws-lc-fips-sys
+          ../scripts/generate/_collect_symbols_build.sh -c aws-lc-fips-sys -f
+          ../scripts/generate/_generate_prefix_headers.sh -c aws-lc-fips-sys -f
           ../scripts/generate/_generate_bindings.sh -c aws-lc-fips-sys
-      - name: aws-lc-sys build
+      - name: aws-lc-fips-sys build
         working-directory: ./aws-lc-fips-sys
         run: |
           cargo build
-      - name: aws-lc-sys test
+      - name: aws-lc-fips-sys test
         working-directory: ./aws-lc-fips-sys
         run: |
           cargo test
-      - name: aws-lc-sys packaging
+      - name: aws-lc-fips-sys packaging
         working-directory: ./aws-lc-fips-sys
         run: |
           cargo package --allow-dirty
