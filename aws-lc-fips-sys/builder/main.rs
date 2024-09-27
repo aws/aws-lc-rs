@@ -3,6 +3,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+#![cfg_attr(clippy, feature(custom_inner_attributes))]
+#![cfg_attr(clippy, clippy::msrv = "1.77")]
+
 use core::fmt;
 use core::fmt::Debug;
 use std::env;
@@ -68,21 +71,28 @@ fn option_env<N: AsRef<str>>(name: N) -> Option<String> {
 fn env_var_to_bool(name: &str) -> Option<bool> {
     let build_type_result = option_env(name);
     if let Some(env_var_value) = build_type_result {
-        eprintln!("{name}={env_var_value}");
-        // If the environment variable is set, we ignore every other factor.
+        eprintln!("Evaluating: {name}='{env_var_value}'");
+
         let env_var_value = env_var_value.to_lowercase();
         if env_var_value.starts_with('0')
             || env_var_value.starts_with('n')
             || env_var_value.starts_with("off")
+            || env_var_value.starts_with('f')
         {
-            Some(false)
-        } else {
-            // Otherwise, if the variable is set, assume true
-            Some(true)
+            eprintln!("Parsed: {name}=false");
+            return Some(false);
         }
-    } else {
-        None
+        if env_var_value.starts_with(|c: char| c.is_ascii_digit())
+            || env_var_value.starts_with('y')
+            || env_var_value.starts_with("on")
+            || env_var_value.starts_with('t')
+        {
+            eprintln!("Parsed: {name}=true");
+            return Some(true);
+        }
+        eprintln!("Parsed: {name}=unknown");
     }
+    None
 }
 
 impl Default for OutputLibType {
@@ -349,17 +359,16 @@ fn has_pregenerated() -> bool {
 
 fn prepare_cargo_cfg() {
     // This is supported in Rust >= 1.77.0
-    // Also remove `#![allow(unexpected_cfgs)]` from src/lib.rs
-    /*
-    println!("cargo::rustc-check-cfg=cfg(aarch64_apple_darwin)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(use_bindgen_generated)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
-     */
+    if cfg!(clippy) {
+        println!("cargo:rustc-check-cfg=cfg(aarch64_apple_darwin)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+        println!("cargo:rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(use_bindgen_generated)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_apple_darwin)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
+    }
 }
 
 fn main() {

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-
+#![cfg_attr(not(clippy), allow(unexpected_cfgs))]
+#![cfg_attr(not(clippy), allow(unknown_lints))]
 #![allow(clippy::doc_markdown)]
 //! A [*ring*](https://github.com/briansmith/ring)-compatible crypto library using the cryptographic
 //! operations provided by [*AWS-LC*](https://github.com/aws/aws-lc). It uses either the

@@ -3,10 +3,13 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+#![cfg_attr(clippy, feature(custom_inner_attributes))]
+#![cfg_attr(clippy, clippy::msrv = "1.77")]
+
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::{fmt, fmt::Debug};
+use std::{env, fmt, fmt::Debug};
 
 use cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;
@@ -460,22 +463,20 @@ fn test_nasm_command() -> bool {
 }
 
 fn prepare_cargo_cfg() {
-    // This is supported in Rust >= 1.77.0
-    // Also remove `#![allow(unexpected_cfgs)]` from src/lib.rs
-    /*
-    println!("cargo::rustc-check-cfg=cfg(use_bindgen_generated)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_apple_darwin)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(i686_pc_windows_msvc)");
-    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_pc-windows-gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
-     */
+    if cfg!(clippy) {
+        println!("cargo:rustc-check-cfg=cfg(use_bindgen_generated)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_apple_darwin)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+        println!("cargo:rustc-check-cfg=cfg(i686_pc_windows_msvc)");
+        println!("cargo:rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_apple_darwin)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_pc_windows_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
+    }
 }
 
 fn is_crt_static() -> bool {
