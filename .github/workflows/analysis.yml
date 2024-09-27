@@ -237,7 +237,7 @@ jobs:
         run: |
           cargo update
           cargo update -p libc --precise 0.2.156
-          cargo mirai
+          cargo +${{ env.MIRAI_TOOLCHAIN }} mirai
 
   minimal-versions:
     if: github.repository_owner == 'aws'
