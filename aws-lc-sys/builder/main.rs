@@ -3,6 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+// Clippy can only be run on nightly toolchain
 #![cfg_attr(clippy, feature(custom_inner_attributes))]
 #![cfg_attr(clippy, clippy::msrv = "1.77")]
 
