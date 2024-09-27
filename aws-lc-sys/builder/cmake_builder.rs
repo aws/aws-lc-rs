@@ -256,10 +256,16 @@ impl CmakeBuilder {
             emit_warning("!!!   Using pre-built NASM binaries   !!!");
             emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
+            let script_name = if cfg!(target_os = "windows") {
+                "prebuilt-nasm.bat"
+            } else {
+                "prebuilt-nasm.sh"
+            };
+
             let script_path = self
                 .manifest_dir
                 .join("builder")
-                .join("prebuilt-nasm.bat")
+                .join(script_name)
                 .display()
                 .to_string();
             let script_path = script_path.replace('\\', "/");

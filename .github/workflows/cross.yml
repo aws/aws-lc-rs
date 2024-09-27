@@ -269,3 +269,20 @@ jobs:
              . "$HOME/.cargo/env"
             cargo test -p aws-lc-rs
             cargo test -p aws-lc-rs --no-default-features --features=fips
+  cross-x86_64-pc-windows-gnu:
+    if: github.repository_owner == 'aws'
+    name: cross (prebuilt nasm) - x86_64-pc-windows-gnu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+        with:
+          toolchain: 'stable'
+          target: x86_64-pc-windows-gnu
+      - name: Install mingw
+        run: sudo apt-get update && sudo apt-get install --assume-yes mingw-w64
+      - name: Run cargo test
+        run: cargo build -p aws-lc-rs --features prebuilt-nasm --target x86_64-pc-windows-gnu
