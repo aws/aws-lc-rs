@@ -153,6 +153,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install build dependencies
+        # cargo-xwin apparently require ninja-build
         run: |
           sudo apt-get update && sudo apt-get install --assume-yes nasm clang ninja-build llvm
       - uses: actions/checkout@v3

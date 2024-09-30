@@ -408,14 +408,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
-      - if: ${{ matrix.os == 'windows-latest' }}
-        uses: seanmiddleditch/gha-setup-ninja@v5
       - name: Install bindgen-cli
         run: cargo install --locked bindgen-cli
       - name: Remove bindings
         run: |
-          rm ./aws-lc-fips-sys/src/x86_64* 
-          rm ./aws-lc-fips-sys/src/aarch64*
+          rm ./aws-lc-sys/src/x86_64* 
+          rm ./aws-lc-sys/src/aarch64*
       - name: Run cargo test
         run: cargo test --tests -p aws-lc-rs --no-default-features --features aws-lc-sys
 

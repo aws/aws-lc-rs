@@ -198,10 +198,6 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
 
-      - name: Install ninja-build tool
-        if: runner.os == 'Windows'
-        uses: seanmiddleditch/gha-setup-ninja@v4
-
       - name: Install MSRV Rust version
         uses: dtolnay/rust-toolchain@stable
         with:
