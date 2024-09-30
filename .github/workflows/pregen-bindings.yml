@@ -39,7 +39,7 @@ jobs:
       - name: Install OS Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y --no-install-recommends install cmake gcc clang ninja-build golang
+          sudo apt-get -y --no-install-recommends install cmake gcc clang golang
       - name: Regenerate aws-lc-sys crate
         working-directory: ./aws-lc-sys
         run: |
@@ -87,7 +87,7 @@ jobs:
       - name: Install OS Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y --no-install-recommends install cmake gcc clang ninja-build golang
+          sudo apt-get -y --no-install-recommends install cmake gcc clang golang
       - name: Regenerate aws-lc-fips-sys crate
         working-directory: ./aws-lc-fips-sys
         run: |

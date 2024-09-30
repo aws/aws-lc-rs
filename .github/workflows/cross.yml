@@ -106,7 +106,7 @@ jobs:
   aws-lc-rs-ios-aarch64:
     if: github.repository_owner == 'aws'
     name: iOS aarch64 cross-platform build
-    runs-on: macos-13-xlarge
+    runs-on: macos-14-xlarge
     steps:
       - uses: actions/checkout@v3
         with:
@@ -128,7 +128,7 @@ jobs:
   aws-lc-rs-ios-x86_64:
     if: github.repository_owner == 'aws'
     name: iOS x86-64 cross-platform build
-    runs-on: macos-13-xlarge
+    runs-on: macos-14-xlarge
     steps:
       - uses: actions/checkout@v3
         with:
@@ -153,6 +153,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install build dependencies
+        # cargo-xwin apparently require ninja-build
         run: |
           sudo apt-get update && sudo apt-get install --assume-yes nasm clang ninja-build llvm
       - uses: actions/checkout@v3
@@ -251,7 +252,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [13.4, 14.1]
+        version: [ 13.4, 14.1 ]
     steps:
       - uses: actions/checkout@v4
         with:

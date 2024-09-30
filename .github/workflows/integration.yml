@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
+        os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
     env:
       GIT_CLONE_PROTECTION_ACTIVE: false
     steps:
@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-12, macos-13-xlarge ]
+        os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -72,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
         features: [ aws-lc-rs, aws-lc-rs-fips, aws-lc-sys, aws-lc-fips-sys ]
     steps:
       - uses: actions/checkout@v3
@@ -106,7 +106,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ windows-latest, ubuntu-latest, macos-12, macos-13-xlarge ]
+        os: [ windows-latest, ubuntu-latest, macos-13, macos-14-xlarge ]
         crate: [ aws-lc-sys, aws-lc-rs, aws-lc-fips-sys ]
         args:
           - publish --dry-run
@@ -182,32 +182,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-12, macos-13-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
           lfs: true
 
-      - if: ${{ matrix.os == 'macos-13-xlarge' }}
+      - if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
           brew install llvm
           echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
           echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
-
-      - if: ${{ matrix.os == 'macos-12' }}
-        run: |
-          brew install llvm
-          echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"'
-          echo 'export LIBCLANG_PATH=/usr/local/opt/llvm' >> "$GITHUB_ENV"
-
       - name: Install NASM on Windows
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
-
-      - name: Install ninja-build tool
-        if: runner.os == 'Windows'
-        uses: seanmiddleditch/gha-setup-ninja@v4
 
       - name: Install MSRV Rust version
         uses: dtolnay/rust-toolchain@stable
