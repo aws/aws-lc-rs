@@ -69,7 +69,12 @@ jobs:
     steps:
       - run: |
           apt-get update
-          apt-get install -y build-essential git cmake curl sudo
+          apt-get install -y ca-certificates
+          apt-get install -y cmake curl sudo
+          apt-get install -y --no-install-recommends gpg-agent software-properties-common
+          apt-add-repository --yes ppa:git-core/ppa
+          apt-get update
+          apt-get install -y build-essential git
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
           dpkg -i powershell_7.2.23-1.deb_amd64.deb
           apt-get install -f
@@ -79,7 +84,7 @@ jobs:
           git config --global --add safe.directory '*'
           git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
           git fetch origin ${{ github.sha }}
-          git checkout -b ci-job ${{ github.sha }}
+          git checkout --recurse-submodules -b ci-job ${{ github.sha }}
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
