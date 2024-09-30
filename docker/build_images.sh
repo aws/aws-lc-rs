@@ -31,4 +31,5 @@ pushd "${REPO_ROOT}/docker" &>/dev/null
 docker build -t rust:linux-386 linux-386 --load "${EXTRA_ARGS[@]}"
 docker build -t rust:linux-arm64 linux-arm64 --load "${EXTRA_ARGS[@]}"
 docker build -t rust:linux-x86_64 linux-x86_64 --load "${EXTRA_ARGS[@]}"
+docker build -t ubuntu:18.04 ubuntu-18.04 --load "${EXTRA_ARGS[@]}"
 popd &>/dev/null
