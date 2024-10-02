@@ -11,9 +11,8 @@
 //!
 //! ```ignore
 //! use aws_lc_rs::{
-//!     error::Unspecified,
 //!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
-//!     unstable::kem::{AlgorithmId, ML_KEM_512}
+//!     unstable::kem::{ML_KEM_512}
 //! };
 //!
 //! // Alice generates their (private) decapsulation key.
