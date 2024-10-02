@@ -44,7 +44,7 @@ jobs:
         env:
           AWS_LC_FIPS_SYS_NO_PREFIX: "1"
         run: |
-          cargo test -p aws-lc-fips-sys --features bindgen,ssl
+          cargo test -p aws-lc-fips-sys --features bindgen
       - name: Collect symbols
         run: |
           ./scripts/build/collect_symbols.sh -c aws-lc-fips-sys
@@ -72,7 +72,7 @@ jobs:
         env:
           AWS_LC_FIPS_SYS_NO_PREFIX: "1"
         run: |
-          cross test -p aws-lc-fips-sys --features bindgen,ssl --target ${{ matrix.target }}
+          cross test -p aws-lc-fips-sys --features bindgen --target ${{ matrix.target }}
       - name: Collect symbols
         run: |
           ./scripts/build/collect_symbols.sh -c aws-lc-fips-sys -t ${{ matrix.target }}
@@ -124,7 +124,7 @@ jobs:
         env:
           AWS_LC_FIPS_SYS_PREGENERATING_BINDINGS: "1"
         run: |
-          cargo test -p aws-lc-fips-sys --features bindgen,ssl
+          cargo test -p aws-lc-fips-sys --features bindgen
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings from ${{ matrix.os }}"
   generate-cross-bindings-and-commit:
@@ -147,6 +147,6 @@ jobs:
         env:
           AWS_LC_FIPS_SYS_PREGENERATING_BINDINGS: "1"
         run: |
-          cross test -p aws-lc-fips-sys --features bindgen,ssl --target ${{ matrix.target }}
+          cross test -p aws-lc-fips-sys --features bindgen --target ${{ matrix.target }}
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings for ${{ matrix.target }}"
