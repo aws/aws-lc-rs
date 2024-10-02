@@ -641,7 +641,7 @@ mod tests {
 
             let alice_secret = priv_key
                 .decapsulate(ciphertext)
-                .expect("encapsulate successful");
+                .expect("decapsulate successful");
 
             assert_eq!(alice_secret.as_ref(), bob_secret.as_ref());
         }
