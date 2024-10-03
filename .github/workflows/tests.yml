@@ -179,15 +179,7 @@ jobs:
           toolchain: stable
       - run: |
           echo 'export AWS_LC_SYS_CMAKE_BUILDER=${{ matrix.cmake }}' >> "$GITHUB_ENV"
-      - if: ${{ (matrix.cmake == '1' && matrix.c_std == '99') || matrix.os != 'windows-latest' }}
-        name: Run cargo test
-        # Windows build currently fails when forcing C11:
-        # ```
-        # C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.41.34120\include\vcruntime_c11_stdatomic.h(36,24):
-        #   error C2061: syntax error: identifier 'atomic_bool' [D:\a\aws-lc-rs\aws-lc-rs\target\debug\build\aws-lc-sys-491cb29895f6cb6c\out\build\aws-lc\crypto\crypto_objects.vcxproj]
-        # ```
-        # https://devblogs.microsoft.com/cppblog/c11-atomics-in-visual-studio-2022-version-17-5-preview-2/
-
+      - name: Run cargo test
         working-directory: ./aws-lc-rs
         env:
           AWS_LC_SYS_PREBUILT_NASM: 1
