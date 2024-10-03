@@ -261,7 +261,17 @@
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="doccomment">//! Unstable KEM Algorithms for usage with the [`crate::kem`] module.
@@ -272,17 +282,14 @@
 //!
 //! # Example
 //!
-//! ```
+//! ```ignore
 //! use aws_lc_rs::{
-//!     error::Unspecified,
 //!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
-//!     unstable::kem::{AlgorithmId, get_algorithm}
+//!     unstable::kem::{ML_KEM_512}
 //! };
 //!
-//! let kyber512_r3 = get_algorithm(AlgorithmId::Kyber512_R3).ok_or(Unspecified)?;
-//!
 //! // Alice generates their (private) decapsulation key.
-//! let decapsulation_key = DecapsulationKey::generate(kyber512_r3)?;
+//! let decapsulation_key = DecapsulationKey::generate(&amp;ML_KEM_512)?;
 //!
 //! // Alices computes the (public) encapsulation key.
 //! let encapsulation_key = decapsulation_key.encapsulation_key()?;
@@ -294,12 +301,12 @@
 //! let encapsulation_key_bytes = encapsulation_key_bytes.as_ref();
 //!
 //! // Bob constructs the (public) encapsulation key from the key bytes provided by Alice.
-//! let retrieved_encapsulation_key = EncapsulationKey::new(kyber512_r3, encapsulation_key_bytes)?;
+//! let retrieved_encapsulation_key = EncapsulationKey::new(&amp;ML_KEM_512, encapsulation_key_bytes)?;
 //!
 //! // Bob executes the encapsulation algorithm to to produce their copy of the secret, and associated ciphertext.
 //! let (ciphertext, bob_secret) = retrieved_encapsulation_key.encapsulate()?;
 //!
-//! // Alice recieves ciphertext bytes from bob
+//! // Alice receives ciphertext bytes from bob
 //! let ciphertext_bytes = ciphertext.as_ref();
 //!
 //! // Bob sends Alice the ciphertext computed from the encapsulation algorithm, Alice runs decapsulation to derive their
@@ -316,6 +323,9 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::kem::Algorithm;
 <span class="kw">use </span>aws_lc::{NID_KYBER1024_R3, NID_KYBER512_R3, NID_KYBER768_R3};
+
+<span class="attr">#[cfg(not(feature = <span class="string">"fips"</span>))]
+</span><span class="kw">pub use </span><span class="kw">crate</span>::kem::semistable::{ML_KEM_1024, ML_KEM_512, ML_KEM_768};
 
 <span class="comment">// Key lengths defined as stated on the CRYSTALS website:
 // https://pq-crystals.org/kyber/
@@ -336,6 +346,7 @@
 <span class="kw">const </span>KYBER1024_R3_SHARED_SECRET_LENGTH: usize = <span class="number">32</span>;
 
 <span class="doccomment">/// NIST Round 3 submission of the Kyber-512 algorithm.
+</span><span class="attr">#[allow(deprecated)]
 </span><span class="kw">const </span>KYBER512_R3: Algorithm&lt;AlgorithmId&gt; = Algorithm {
     id: AlgorithmId::Kyber512_R3,
     decapsulate_key_size: KYBER512_R3_SECRET_KEY_LENGTH,
@@ -345,6 +356,7 @@
 };
 
 <span class="doccomment">/// NIST Round 3 submission of the Kyber-768 algorithm.
+</span><span class="attr">#[allow(deprecated)]
 </span><span class="kw">const </span>KYBER768_R3: Algorithm&lt;AlgorithmId&gt; = Algorithm {
     id: AlgorithmId::Kyber768_R3,
     decapsulate_key_size: KYBER768_R3_SECRET_KEY_LENGTH,
@@ -354,6 +366,7 @@
 };
 
 <span class="doccomment">/// NIST Round 3 submission of the Kyber-1024 algorithm.
+</span><span class="attr">#[allow(deprecated)]
 </span><span class="kw">const </span>KYBER1024_R3: Algorithm&lt;AlgorithmId&gt; = Algorithm {
     id: AlgorithmId::Kyber1024_R3,
     decapsulate_key_size: KYBER1024_R3_SECRET_KEY_LENGTH,
@@ -368,19 +381,23 @@
 #[derive(Clone, Copy, Debug, PartialEq)]
 </span><span class="kw">pub enum </span>AlgorithmId {
     <span class="doccomment">/// NIST Round 3 submission of the Kyber-512 algorithm.
+    </span><span class="attr">#[deprecated]
     </span>Kyber512_R3,
 
     <span class="doccomment">/// NIST Round 3 submission of the Kyber-768 algorithm.
+    </span><span class="attr">#[deprecated]
     </span>Kyber768_R3,
 
     <span class="doccomment">/// NIST Round 3 submission of the Kyber-1024 algorithm.
+    </span><span class="attr">#[deprecated]
     </span>Kyber1024_R3,
 }
 
 <span class="kw">impl </span><span class="kw">crate</span>::kem::AlgorithmIdentifier <span class="kw">for </span>AlgorithmId {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>nid(<span class="self">self</span>) -&gt; i32 {
-        <span class="kw">match </span><span class="self">self </span>{
+        <span class="attr">#[allow(deprecated)]
+        </span><span class="kw">match </span><span class="self">self </span>{
             AlgorithmId::Kyber512_R3 =&gt; NID_KYBER512_R3,
             AlgorithmId::Kyber768_R3 =&gt; NID_KYBER768_R3,
             AlgorithmId::Kyber1024_R3 =&gt; NID_KYBER1024_R3,
@@ -394,7 +411,8 @@
 /// May return [`None`] if support for the algorithm has been removed from the unstable module.
 </span><span class="attr">#[must_use]
 </span><span class="kw">pub const fn </span>get_algorithm(id: AlgorithmId) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>Algorithm&lt;AlgorithmId&gt;&gt; {
-    <span class="kw">match </span>id {
+    <span class="attr">#[allow(deprecated)]
+    </span><span class="kw">match </span>id {
         AlgorithmId::Kyber512_R3 =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>KYBER512_R3),
         AlgorithmId::Kyber768_R3 =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>KYBER768_R3),
         AlgorithmId::Kyber1024_R3 =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>KYBER1024_R3),
@@ -403,7 +421,9 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use crate</span>::{
+    <span class="attr">#![allow(deprecated)]
+
+    </span><span class="kw">use crate</span>::{
         error::KeyRejected,
         kem::{DecapsulationKey, EncapsulationKey},
     };
