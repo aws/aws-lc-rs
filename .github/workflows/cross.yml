@@ -252,7 +252,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ 13.4, 14.1 ]
+        target: [ 13.4, 14.1 ]
     steps:
       - uses: actions/checkout@v4
         with:
