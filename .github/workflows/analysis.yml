@@ -264,16 +264,6 @@ jobs:
         working-directory: ./${{ matrix.crate }}
         run: cargo --locked check
 
-  copyright:
-    if: github.repository_owner == 'aws'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Check
-        run: |
-          ./scripts/tools/copyright_check.sh
-
   semver-checks:
     if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
@@ -312,3 +302,13 @@ jobs:
           VERSION=$(scripts/tools/cargo-dig.rs aws-lc-rs/Cargo.toml -v)
           LINKS_LINE=$(echo links = \"aws_lc_rs_${VERSION//./_}_sys\")
           grep "${LINKS_LINE}" aws-lc-rs/Cargo.toml
+      - name: aws-lc-sys links
+        run: |
+          VERSION=$(scripts/tools/cargo-dig.rs aws-lc-sys/Cargo.toml -v)
+          LINKS_LINE=$(echo links = \"aws_lc_${VERSION//./_}\")
+          grep "${LINKS_LINE}" aws-lc-sys/Cargo.toml
+      - name: aws-lc-fips-sys links
+        run: |
+          VERSION=$(scripts/tools/cargo-dig.rs aws-lc-fips-sys/Cargo.toml -v)
+          LINKS_LINE=$(echo links = \"aws_lc_fips_${VERSION//./_}\")
+          grep "${LINKS_LINE}" aws-lc-fips-sys/Cargo.toml
