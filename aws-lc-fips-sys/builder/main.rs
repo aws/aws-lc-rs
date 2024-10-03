@@ -394,7 +394,10 @@ fn main() {
     if is_pregenerating_bindings() {
         #[cfg(feature = "bindgen")]
         {
-            emit_warning(&format!("Generating src bindings. Platform: {}", target()));
+            emit_warning(&format!(
+                "Generating src bindings. Platform: '{}' Prefix: '{prefix:?}'",
+                target()
+            ));
             let src_bindings_path = Path::new(&manifest_dir).join("src");
             generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
             bindings_available = true;
