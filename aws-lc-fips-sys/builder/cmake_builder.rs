@@ -8,7 +8,7 @@ use crate::{
 };
 use std::collections::HashMap;
 use std::env;
-use std::ffi::OsStr;
+use std::ffi::OsString;
 use std::path::PathBuf;
 
 pub(crate) struct CmakeBuilder {
@@ -39,11 +39,21 @@ fn test_nasm_command() -> bool {
     execute_command("nasm".as_ref(), &["-version".as_ref()]).status
 }
 
-fn find_cmake_command() -> Option<&'static OsStr> {
-    if execute_command("cmake3".as_ref(), &["--version".as_ref()]).status {
-        Some("cmake3".as_ref())
+fn find_cmake_command() -> Option<OsString> {
+    if let Some(cmake) = option_env("CMAKE") {
+        emit_warning(&format!(
+            "CMAKE environment variable set: {}",
+            cmake.clone()
+        ));
+        if execute_command(cmake.as_ref(), &["--version".as_ref()]).status {
+            Some(cmake.into())
+        } else {
+            None
+        }
+    } else if execute_command("cmake3".as_ref(), &["--version".as_ref()]).status {
+        Some("cmake3".into())
     } else if execute_command("cmake".as_ref(), &["--version".as_ref()]).status {
-        Some("cmake".as_ref())
+        Some("cmake".into())
     } else {
         None
     }
@@ -87,18 +97,10 @@ impl CmakeBuilder {
         } else {
             cmake_cfg.define("BUILD_SHARED_LIBS", "0");
         }
+
         let opt_level = cargo_env("OPT_LEVEL");
-
-        if is_no_asm() {
-            if opt_level == "0" {
-                cmake_cfg.define("OPENSSL_NO_ASM", "1");
-            } else {
-                panic!("AWS_LC_FIPS_SYS_NO_ASM only allowed for debug builds!")
-            }
-        }
-
-        if opt_level != "0" {
-            if opt_level == "1" || opt_level == "2" {
+        if opt_level.ne("0") {
+            if opt_level.eq("1") || opt_level.eq("2") {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
             } else {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
@@ -153,6 +155,15 @@ impl CmakeBuilder {
         }
         cmake_cfg.define("FIPS", "1");
 
+        if is_no_asm() {
+            let opt_level = cargo_env("OPT_LEVEL");
+            if opt_level == "0" {
+                cmake_cfg.define("OPENSSL_NO_ASM", "1");
+            } else {
+                panic!("AWS_LC_SYS_NO_ASM only allowed for debug builds!")
+            }
+        }
+
         if cfg!(feature = "asan") {
             env::set_var("CC", "clang");
             env::set_var("CXX", "clang++");
@@ -162,9 +173,13 @@ impl CmakeBuilder {
         }
 
         // Allow environment to specify CMake toolchain.
-        if option_env("CMAKE_TOOLCHAIN_FILE").is_some()
-            || option_env(format!("CMAKE_TOOLCHAIN_FILE_{}", target_underscored())).is_some()
-        {
+        if let Some(toolchain) = option_env("CMAKE_TOOLCHAIN_FILE").or(option_env(format!(
+            "CMAKE_TOOLCHAIN_FILE_{}",
+            target_underscored()
+        ))) {
+            emit_warning(&format!(
+                "CMAKE_TOOLCHAIN_FILE environment variable set: {toolchain}"
+            ));
             return cmake_cfg;
         }
 
