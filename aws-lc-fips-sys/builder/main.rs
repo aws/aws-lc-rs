@@ -336,12 +336,20 @@ fn is_bindgen_required() -> bool {
 bindgen_available!(
     fn internal_bindgen_supported() -> bool {
         let cv = bindgen::clang_version();
-        if let Some((major, _)) = cv.parsed {
+        if let Some((major, minor)) = cv.parsed {
             if major >= 19 {
-                return false;
+                emit_warning(&format!(
+                    "Clang v{major}.{minor} detected. Will not use internal bindgen."
+                ));
+                false
+            } else {
+                emit_warning(&format!("Clang v{major}.{minor} detected."));
+                true
             }
+        } else {
+            emit_warning(&format!("Clang version: {}", cv.full));
+            true
         }
-        true
     }
 );
 
