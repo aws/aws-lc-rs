@@ -401,13 +401,13 @@ pub struct Okm<'a, L: KeyType> {
     len: L,
 }
 
-impl<'a, L: KeyType> fmt::Debug for Okm<'a, L> {
+impl<L: KeyType> fmt::Debug for Okm<'_, L> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("hkdf::Okm").field("prk", &self.prk).finish()
     }
 }
 
-impl<'a, L: KeyType> Drop for Okm<'a, L> {
+impl<L: KeyType> Drop for Okm<'_, L> {
     fn drop(&mut self) {
         self.info_bytes.zeroize();
     }

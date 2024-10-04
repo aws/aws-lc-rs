@@ -19,7 +19,7 @@ use zeroize::Zeroize;
 /// The buffer will be zeroed on drop if it is owned.
 pub struct Buffer<'a, T>(Cow<'a, [u8]>, PhantomData<T>);
 
-impl<'a, T> Drop for Buffer<'a, T> {
+impl<T> Drop for Buffer<'_, T> {
     fn drop(&mut self) {
         if let Cow::Owned(b) = &mut self.0 {
             b.zeroize();
