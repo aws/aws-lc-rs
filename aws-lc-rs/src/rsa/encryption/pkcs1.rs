@@ -79,9 +79,12 @@ impl Pkcs1PublicEncryptingKey {
 
     /// Returns the max plaintext that could be encrypted using this key.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub fn max_plaintext_size(&self) -> usize {
         const RSA_PKCS1_PADDING_SIZE: usize = 11; // crypto/fipsmodule/rsa/internal.h
-        self.key_size_bytes() - RSA_PKCS1_PADDING_SIZE
+        self.key_size_bytes()
+            .checked_sub(RSA_PKCS1_PADDING_SIZE)
+            .unwrap()
     }
 
     /// Returns the max ciphertext size that will be output by `Self::encrypt`.
