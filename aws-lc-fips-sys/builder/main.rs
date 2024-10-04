@@ -16,15 +16,27 @@ use std::process::Command;
 
 use cmake_builder::CmakeBuilder;
 
-#[cfg(any(
-    feature = "bindgen",
-    not(all(
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        any(target_os = "linux", target_os = "macos"),
-        any(target_env = "gnu", target_env = "musl", target_env = "")
-    ))
-))]
-mod bindgen;
+macro_rules! bindgen_available {
+    ($top:ident, $item:item) => {
+        #[allow(clippy::non_minimal_cfg)]
+        #[cfg($top(any(
+            feature = "bindgen",
+            not(all(
+                any(target_arch = "x86_64", target_arch = "aarch64"),
+                any(target_os = "linux", target_os = "macos"),
+                any(target_env = "gnu", target_env = "musl", target_env = "")
+            ))
+        )))]
+        $item
+    };
+    ($item:item) => {
+        bindgen_available!(any, $item);
+    };
+}
+
+bindgen_available!(
+    mod sys_bindgen;
+);
 mod cmake_builder;
 
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
@@ -184,31 +196,25 @@ fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     }
 }
 
-#[cfg(any(
-    feature = "bindgen",
-    not(all(
-        any(target_arch = "x86_64", target_arch = "aarch64"),
-        any(target_os = "linux", target_os = "macos"),
-        any(target_env = "gnu", target_env = "musl", target_env = "")
-    ))
-))]
-fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
-    let options = BindingOptions {
-        build_prefix: prefix.clone(),
-        include_ssl: cfg!(feature = "ssl"),
-        disable_prelude: true,
-    };
+bindgen_available!(
+    fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
+        let options = BindingOptions {
+            build_prefix: prefix.clone(),
+            include_ssl: cfg!(feature = "ssl"),
+            disable_prelude: true,
+        };
 
-    let bindings = bindgen::generate_bindings(manifest_dir, &options);
+        let bindings = sys_bindgen::generate_bindings(manifest_dir, &options);
 
-    bindings
-        .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
-        .expect("written bindings");
-}
+        bindings
+            .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
+            .expect("written bindings");
+    }
+);
 
 #[cfg(feature = "bindgen")]
 fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindings_path: &Path) {
-    bindgen::generate_bindings(
+    sys_bindgen::generate_bindings(
         manifest_dir,
         &BindingOptions {
             build_prefix: prefix.clone(),
@@ -327,12 +333,17 @@ fn is_bindgen_required() -> bool {
         || !has_pregenerated()
 }
 
-#[allow(dead_code)]
-fn internal_bindgen_supported() -> bool {
-    // TODO: internal bindgen creates invalid bindings on FreeBSD
-    // See: https://github.com/aws/aws-lc-rs/issues/476
-    target_os() != "freebsd"
-}
+bindgen_available!(
+    fn internal_bindgen_supported() -> bool {
+        let cv = bindgen::clang_version();
+        if let Some((major, _)) = cv.parsed {
+            if major >= 19 {
+                return false;
+            }
+        }
+        true
+    }
+);
 
 fn is_no_prefix() -> bool {
     unsafe { AWS_LC_FIPS_SYS_NO_PREFIX }
@@ -372,6 +383,30 @@ fn prepare_cargo_cfg() {
     }
 }
 
+bindgen_available!(
+    fn handle_bindgen(manifest_dir: &PathBuf, prefix: &Option<String>) -> bool {
+        if internal_bindgen_supported() && !is_external_bindgen() {
+            emit_warning(&format!(
+                "Generating bindings - internal bindgen. Platform: {}",
+                target()
+            ));
+            let gen_bindings_path = out_dir().join("bindings.rs");
+            generate_bindings(manifest_dir, prefix, &gen_bindings_path);
+            emit_rustc_cfg("use_bindgen_generated");
+            true
+        } else {
+            false
+        }
+    }
+);
+
+bindgen_available!(
+    not,
+    fn handle_bindgen(_manifest_dir: &PathBuf, _prefix: &Option<String>) -> bool {
+        false
+    }
+);
+
 fn main() {
     initialize();
     prepare_cargo_cfg();
@@ -386,6 +421,8 @@ fn main() {
     };
 
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
+    emit_warning("Building with: CMake");
+    emit_warning(&format!("Symbol Prefix: {:?}", &prefix));
 
     builder.check_dependencies().unwrap();
 
@@ -403,24 +440,7 @@ fn main() {
             bindings_available = true;
         }
     } else if is_bindgen_required() {
-        #[cfg(any(
-            feature = "bindgen",
-            not(all(
-                any(target_arch = "x86_64", target_arch = "aarch64"),
-                any(target_os = "linux", target_os = "macos"),
-                any(target_env = "gnu", target_env = "musl", target_env = "")
-            ))
-        ))]
-        if internal_bindgen_supported() && !is_external_bindgen() {
-            emit_warning(&format!(
-                "Generating bindings - internal bindgen. Platform: {}",
-                target()
-            ));
-            let gen_bindings_path = out_dir().join("bindings.rs");
-            generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
-            emit_rustc_cfg("use_bindgen_generated");
-            bindings_available = true;
-        }
+        bindings_available = handle_bindgen(&manifest_dir, &prefix);
     } else {
         bindings_available = true;
     }
