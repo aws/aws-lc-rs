@@ -465,7 +465,7 @@ impl<'a> Ciphertext<'a> {
     }
 }
 
-impl<'a> Drop for Ciphertext<'a> {
+impl Drop for Ciphertext<'_> {
     fn drop(&mut self) {
         if let Cow::Owned(ref mut v) = self.0 {
             v.zeroize();
@@ -473,7 +473,7 @@ impl<'a> Drop for Ciphertext<'a> {
     }
 }
 
-impl<'a> AsRef<[u8]> for Ciphertext<'a> {
+impl AsRef<[u8]> for Ciphertext<'_> {
     fn as_ref(&self) -> &[u8] {
         match self.0 {
             Cow::Borrowed(v) => v,
