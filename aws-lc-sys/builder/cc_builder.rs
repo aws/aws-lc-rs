@@ -255,7 +255,7 @@ impl CcBuilder {
         let mut ret_val = false;
         let output_dir = self.out_dir.join(format!("out-{basename}"));
         let mut cc_build = self.create_builder();
-        let result = cc_build
+        cc_build
             .file(
                 self.manifest_dir
                     .join("aws-lc")
@@ -263,10 +263,14 @@ impl CcBuilder {
                     .join("compiler_features_tests")
                     .join(format!("{basename}.c")),
             )
-            .flag("-Wno-unused-parameter")
             .warnings_into_errors(true)
-            .out_dir(&output_dir)
-            .try_compile_intermediates();
+            .out_dir(&output_dir);
+
+        let compiler = cc_build.get_compiler();
+        if compiler.is_like_gnu() || compiler.is_like_clang() {
+            cc_build.flag("-Wno-unused-parameter");
+        }
+        let result = cc_build.try_compile_intermediates();
 
         if result.is_ok() {
             if !flag.is_empty() {
@@ -295,6 +299,10 @@ impl CcBuilder {
         let exec_path = out_dir().join(basename);
         let memcmp_build = cc::Build::default();
         let memcmp_compiler = memcmp_build.get_compiler();
+        if !memcmp_compiler.is_like_clang() && !memcmp_compiler.is_like_gnu() {
+            // The logic below assumes a Clang or GCC compiler is in use
+            return;
+        }
         let mut memcmp_compile_args = Vec::from(memcmp_compiler.args());
         memcmp_compile_args.push(
             self.manifest_dir
