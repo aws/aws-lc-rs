@@ -264,7 +264,7 @@ jobs:
           usesh: true
           copyback: false
           prepare: |
-            pkg install -y git gmake bash sudo cmake-core llvm-devel-lite curl rust-bindgen-cli go
+            pkg install -y git gmake bash sudo cmake-core llvm-devel-lite curl go
           run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
              . "$HOME/.cargo/env"
