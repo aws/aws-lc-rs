@@ -187,21 +187,7 @@ impl CmakeBuilder {
         }
 
         if target_os() == "android" {
-            cmake_cfg.define("CMAKE_SYSTEM_NAME", "Android");
-
-            let target = target();
-            let proc = target.split('-').next().unwrap();
-            match proc {
-                "armv7" => {
-                    cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "armv7-a");
-                }
-                "arm" => {
-                    cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "armv6");
-                }
-                _ => {
-                    cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", proc);
-                }
-            }
+            self.configure_android(&mut cmake_cfg);
         }
 
         if target_vendor() == "apple" && target_os().to_lowercase() == "ios" {
@@ -219,6 +205,29 @@ impl CmakeBuilder {
         }
 
         cmake_cfg
+    }
+
+    fn configure_android(&self, _cmake_cfg: &mut cmake::Config) {
+        // If we leave CMAKE_SYSTEM_PROCESSOR unset, then cmake-rs should handle properly setting
+        // CMAKE_SYSTEM_NAME and CMAKE_SYSTEM_PROCESSOR:
+        // https://github.com/rust-lang/cmake-rs/blob/b689783b5448966e810d515c798465f2e0ab56fd/src/lib.rs#L450-L499
+
+        // Log relevant environment variables.
+        if let Some(value) = option_env("ANDROID_NDK_ROOT") {
+            emit_warning(&format!("Found ANDROID_NDK_ROOT={value}"));
+        } else {
+            emit_warning("ANDROID_NDK_ROOT not set.");
+        }
+        if let Some(value) = option_env("ANDROID_NDK") {
+            emit_warning(&format!("Found ANDROID_NDK={value}"));
+        } else {
+            emit_warning("ANDROID_NDK not set.");
+        }
+        if let Some(value) = option_env("ANDROID_STANDALONE_TOOLCHAIN") {
+            emit_warning(&format!("Found ANDROID_STANDALONE_TOOLCHAIN={value}"));
+        } else {
+            emit_warning("ANDROID_STANDALONE_TOOLCHAIN not set.");
+        }
     }
 
     fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
