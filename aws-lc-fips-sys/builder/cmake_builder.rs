@@ -102,11 +102,29 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
             } else {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
-                if target_family() == "unix" || target_env() == "gnu" {
-                    cmake_cfg.cflag(format!(
-                        "-ffile-prefix-map={}=",
-                        self.manifest_dir.display()
-                    ));
+                // TODO: Due to the nature of the FIPS build (e.g., its dynamic generation of
+                // assembly files and its custom compilation commands within CMake), not all
+                // source paths are stripped from the resulting binary.
+                emit_warning(
+                    "NOTICE: Build environment source paths might be visible in release binary.",
+                );
+                let parent_dir = self.manifest_dir.parent();
+                if parent_dir.is_some() && (target_family() == "unix" || target_env() == "gnu") {
+                    let parent_dir = parent_dir.unwrap();
+                    let cc_build = cc::Build::new();
+                    let flag = format!("-ffile-prefix-map={}=", parent_dir.display());
+                    if let Ok(true) = cc_build.is_flag_supported(&flag) {
+                        emit_warning(&format!("Using flag: {}", &flag));
+                        cmake_cfg.asmflag(&flag);
+                        cmake_cfg.cflag(&flag);
+                    } else {
+                        let flag = format!("-fdebug-prefix-map={}=", parent_dir.display());
+                        if let Ok(true) = cc_build.is_flag_supported(&flag) {
+                            emit_warning(&format!("Using flag: {}", &flag));
+                            cmake_cfg.asmflag(&flag);
+                            cmake_cfg.cflag(&flag);
+                        }
+                    }
                 }
             }
         } else if target_os() == "windows" {

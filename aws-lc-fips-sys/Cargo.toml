@@ -63,6 +63,7 @@ bindgen = ["dep:bindgen"] # Generate the bindings on the targetted platform as a
 cmake = "0.1.48"
 dunce = "1.0"
 fs_extra = "1.3"
+cc = "1.0.100"
 
 [target.'cfg(all(any(target_arch = "x86_64", target_arch = "aarch64"), any(target_os = "linux", target_os = "macos"), any(target_env = "gnu", target_env = "musl", target_env = "")))'.build-dependencies]
 bindgen = { version = "0.69.2", optional = true }
