@@ -160,15 +160,17 @@ impl CcBuilder {
                     "AWS_LC_SYS_NO_ASM only allowed for debug builds!"
                 );
                 if compiler.is_like_gnu() || compiler.is_like_clang() {
-                    let file_prefix_map_option =
-                        format!("-ffile-prefix-map={}=", self.manifest_dir.display());
-                    if let Ok(true) = cc_build.is_flag_supported(&file_prefix_map_option) {
-                        cc_build.flag(file_prefix_map_option);
+                    let flag = format!("-ffile-prefix-map={}=", self.manifest_dir.display());
+                    if let Ok(true) = cc_build.is_flag_supported(&flag) {
+                        emit_warning(&format!("Using flag: {}", &flag));
+                        cc_build.flag(flag);
                     } else {
-                        cc_build.flag_if_supported(format!(
-                            "-fdebug-prefix-map={}=",
-                            self.manifest_dir.display()
-                        ));
+                        emit_warning("NOTICE: Build environment source paths might be visible in release binary.");
+                        let flag = format!("-fdebug-prefix-map={}=", self.manifest_dir.display());
+                        if let Ok(true) = cc_build.is_flag_supported(&flag) {
+                            emit_warning(&format!("Using flag: {}", &flag));
+                            cc_build.flag(flag);
+                        }
                     }
                 }
             }

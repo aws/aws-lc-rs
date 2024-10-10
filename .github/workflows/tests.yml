@@ -55,7 +55,7 @@ jobs:
 
   aws-lc-rs-1804-gcc:
     if: github.repository_owner == 'aws'
-    name: GCC ${{ matrix.gcc_version }} - Force CMake ${{ matrix.cmake }}
+    name: GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
     runs-on: ubuntu-20.04
     container:
       image: ubuntu:18.04
@@ -66,6 +66,7 @@ jobs:
       matrix:
         cmake: [ '0', '1' ]
         gcc_version: [ '4.8', '5', '6' ]
+        fips: [ '0', '1' ]
     steps:
       - run: |
           apt-get update
@@ -73,8 +74,9 @@ jobs:
           apt-get install -y cmake curl sudo
           apt-get install -y --no-install-recommends gpg-agent software-properties-common
           apt-add-repository --yes ppa:git-core/ppa
+          add-apt-repository --yes ppa:longsleep/golang-backports
           apt-get update
-          apt-get install -y build-essential git
+          apt-get install -y build-essential git golang-go
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
           dpkg -i powershell_7.2.23-1.deb_amd64.deb
           apt-get install -f
@@ -95,13 +97,13 @@ jobs:
           version: ${{ matrix.gcc_version }}
           platform: x64
       - name: Run cargo test (debug)
-        run: cargo test -p aws-lc-rs --all-targets --features unstable
+        run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       - name: Run cargo test (release)
-        run: cargo test -p aws-lc-rs --release --all-targets --features unstable
+        run: cargo test -p aws-lc-rs --release --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
 
   aws-lc-rs-2004-gcc:
     if: github.repository_owner == 'aws'
-    name: GCC ${{ matrix.gcc_version }} - Force CMake ${{ matrix.cmake }}
+    name: GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
     runs-on: ubuntu-20.04
     env:
       AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
@@ -110,6 +112,7 @@ jobs:
       matrix:
         cmake: [ '0', '1' ]
         gcc_version: [ '7', '8' ]
+        fips: [ '0', '1' ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -123,10 +126,14 @@ jobs:
         with:
           version: ${{ matrix.gcc_version }}
           platform: x64
+      - if: matrix.fips == '1'
+        uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
       - name: Run cargo test (debug)
-        run: cargo test -p aws-lc-rs --all-targets --features unstable
+        run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       - name: Run cargo test (release)
-        run: cargo test -p aws-lc-rs --release --all-targets --features unstable
+        run: cargo test -p aws-lc-rs --release --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       # The steps below verify that we're successfully using `-ffile-prefix-map`
       # to remove build environment paths from the resulting library.
       - if: ${{ matrix.gcc_version == '8' }}
@@ -138,7 +145,10 @@ jobs:
           else
             exit 1; # FAIL - we expected to find "runner"  (i.e., a path)
           fi
-      - if: ${{ matrix.gcc_version == '8' }}
+      # TODO: Due to the nature of the FIPS build (e.g., its dynamic generation of
+      # assembly files and its custom compilation commands within CMake), not all
+      # source paths are stripped from the resulting binary.
+      - if: ${{ matrix.gcc_version == '8' && matrix.fips == '0' }}
         name: Verify paths not found in release build
         run: |
           RELEASE_LIBCRYPTO=$(find ./target/release -name "libaws_lc_*_crypto.a")
