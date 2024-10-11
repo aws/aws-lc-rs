@@ -17,7 +17,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_fips_0_12_12
+#define BORINGSSL_PREFIX aws_lc_fips_0_12_13
 #endif // BORINGSSL_PREFIX
 
 
