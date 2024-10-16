@@ -104,8 +104,12 @@ impl CcBuilder {
         let compiler = cc_build.get_compiler();
         if compiler.is_like_gnu() || compiler.is_like_clang() {
             cc_build.flag("-Wno-unused-parameter");
-            if target_os() == "linux" || target_env() == "gnu" {
-                cc_build.define("_XOPEN_SOURCE", "700").flag("-lpthread");
+            if target_os() == "linux"
+                || target_os().ends_with("bsd")
+                || target_env() == "gnu"
+                || target_env() == "musl"
+            {
+                cc_build.define("_XOPEN_SOURCE", "700").flag("-pthread");
             }
         }
 
