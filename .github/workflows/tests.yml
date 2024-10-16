@@ -602,3 +602,33 @@ jobs:
         working-directory: ./aws-lc-rs
         # Rust doc tests dislike dynamic linking
         run: cargo careful test --tests --features fips,bindgen
+
+  clang-19-bindgen:
+    if: github.repository_owner == 'aws'
+    name: Clang 19.1 + bindgen tests
+    runs-on: macos-14-xlarge
+    env:
+      LIBCLANG_PATH: /opt/homebrew/opt/llvm/lib
+      LLVM_CONFIG_PATH: /opt/homebrew/opt/llvm/llvm-config
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+      - run: |
+          brew update
+          brew uninstall --force llvm
+          brew install llvm@19
+          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> "$GITHUB_ENV"
+      - name: aws-lc-sys bindgen build
+        working-directory: ./aws-lc-sys
+        run: cargo test --features bindgen
+      - name: aws-lc-fips-sys bindgen build
+        working-directory: ./aws-lc-fips-sys
+        run: cargo test --features bindgen
