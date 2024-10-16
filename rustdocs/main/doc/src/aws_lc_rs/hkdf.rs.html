@@ -908,13 +908,13 @@
     len: L,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, L: KeyType&gt; fmt::Debug <span class="kw">for </span>Okm&lt;<span class="lifetime">'a</span>, L&gt; {
+<span class="kw">impl</span>&lt;L: KeyType&gt; fmt::Debug <span class="kw">for </span>Okm&lt;<span class="lifetime">'_</span>, L&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
         f.debug_struct(<span class="string">"hkdf::Okm"</span>).field(<span class="string">"prk"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.prk).finish()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, L: KeyType&gt; Drop <span class="kw">for </span>Okm&lt;<span class="lifetime">'a</span>, L&gt; {
+<span class="kw">impl</span>&lt;L: KeyType&gt; Drop <span class="kw">for </span>Okm&lt;<span class="lifetime">'_</span>, L&gt; {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="self">self</span>.info_bytes.zeroize();
     }
