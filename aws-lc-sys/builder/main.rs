@@ -486,7 +486,7 @@ fn is_crt_static() -> bool {
 }
 
 bindgen_available!(
-    fn handle_bindgen(manifest_dir: &PathBuf, prefix: &Option<String>) -> bool {
+    fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
         if internal_bindgen_supported() && !is_external_bindgen() {
             emit_warning(&format!(
                 "Generating bindings - internal bindgen. Platform: {}",
