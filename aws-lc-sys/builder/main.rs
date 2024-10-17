@@ -504,7 +504,7 @@ bindgen_available!(
 
 bindgen_available!(
     not,
-    fn handle_bindgen(_manifest_dir: &PathBuf, _prefix: &Option<String>) -> bool {
+    fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
         false
     }
 );
