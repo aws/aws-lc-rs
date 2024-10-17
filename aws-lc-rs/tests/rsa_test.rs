@@ -581,7 +581,8 @@ macro_rules! round_trip_oaep_algorithm {
 
             // max_plaintext_size+1 message
             {
-                let message = vec![1u8; public_key.max_plaintext_size($alg) + 1];
+                let msg_len: usize = public_key.max_plaintext_size($alg).checked_add(1).unwrap();
+                let message = vec![1u8; msg_len];
                 let mut ciphertext = vec![0u8; private_key.min_output_size()];
 
                 public_key
@@ -903,7 +904,13 @@ fn errors_on_larger_than_max_plaintext() {
     let oaep_parsed_public =
         OaepPublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
 
-    let message = vec![42u8; oaep_parsed_public.max_plaintext_size(&OAEP_SHA256_MGF1SHA256) + 1];
+    let message = vec![
+        42u8;
+        oaep_parsed_public
+            .max_plaintext_size(&OAEP_SHA256_MGF1SHA256)
+            .checked_add(1)
+            .unwrap()
+    ];
 
     let mut ciphertext = vec![0u8; oaep_parsed_public.ciphertext_size()];
     oaep_parsed_public
@@ -913,7 +920,13 @@ fn errors_on_larger_than_max_plaintext() {
     let pkcs1_parsed_public =
         Pkcs1PublicEncryptingKey::new(parsed_public_key.clone()).expect("supported key");
 
-    let message = vec![42u8; pkcs1_parsed_public.max_plaintext_size() + 1];
+    let message = vec![
+        42u8;
+        pkcs1_parsed_public
+            .max_plaintext_size()
+            .checked_add(1)
+            .unwrap()
+    ];
 
     let mut ciphertext = vec![0u8; pkcs1_parsed_public.ciphertext_size()];
     pkcs1_parsed_public

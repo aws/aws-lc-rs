@@ -27,7 +27,11 @@ fn step_encrypt(
         if in_end > n {
             in_end = n;
         }
-        let out_end = out_idx + (in_end - in_idx) + alg.block_len();
+        let out_end = out_idx
+            .checked_add(in_end - in_idx)
+            .unwrap()
+            .checked_add(alg.block_len())
+            .unwrap();
         let output = encrypting_key
             .update(
                 &plaintext[in_idx..in_end],
@@ -35,17 +39,17 @@ fn step_encrypt(
             )
             .unwrap();
         in_idx += step;
-        out_idx += output.written().len();
+        out_idx = out_idx.checked_add(output.written().len()).unwrap();
         if in_idx >= n {
             break;
         }
     }
-    let out_end = out_idx + alg.block_len();
+    let out_end = out_idx.checked_add(alg.block_len()).unwrap();
     let (decrypt_iv, output) = encrypting_key
         .finish(&mut ciphertext[out_idx..out_end])
         .unwrap();
     let outlen = output.written().len();
-    ciphertext.truncate(out_idx + outlen);
+    ciphertext.truncate(out_idx.checked_add(outlen).unwrap());
     match mode {
         OperatingMode::CBC => {
             assert!(ciphertext.len() > plaintext.len());
@@ -77,7 +81,11 @@ fn step_decrypt(
         if in_end > n {
             in_end = n;
         }
-        let out_end = out_idx + (in_end - in_idx) + alg.block_len();
+        let out_end = out_idx
+            .checked_add(in_end - in_idx)
+            .unwrap()
+            .checked_add(alg.block_len())
+            .unwrap();
         let output = decrypting_key
             .update(
                 &ciphertext[in_idx..in_end],
@@ -85,21 +93,21 @@ fn step_decrypt(
             )
             .unwrap();
         in_idx += step;
-        out_idx += output.written().len();
+        out_idx = out_idx.checked_add(output.written().len()).unwrap();
         if in_idx >= n {
             break;
         }
     }
-    let out_end = out_idx + alg.block_len();
+    let out_end = out_idx.checked_add(alg.block_len()).unwrap();
     let output = decrypting_key
         .finish(&mut plaintext[out_idx..out_end])
         .unwrap();
     let outlen = output.written().len();
-    plaintext.truncate(out_idx + outlen);
+    plaintext.truncate(out_idx.checked_add(outlen).unwrap());
     match mode {
         OperatingMode::CBC => {
             assert!(ciphertext.len() > plaintext.len());
-            assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
+            assert!(ciphertext.len() <= plaintext.len().checked_add(alg.block_len()).unwrap());
         }
         OperatingMode::CTR => {
             assert_eq!(ciphertext.len(), plaintext.len());

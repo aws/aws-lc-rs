@@ -156,6 +156,7 @@ impl OaepPublicEncryptingKey {
 
     /// Returns the max plaintext that could be decrypted using this key and with the provided algorithm.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub fn max_plaintext_size(&self, algorithm: &'static OaepAlgorithm) -> usize {
         #[allow(unreachable_patterns)]
         let hash_len: usize = match algorithm.id() {
@@ -167,7 +168,11 @@ impl OaepPublicEncryptingKey {
         };
 
         // The RSA-OAEP algorithms we support use the hashing algorithm for the hash and mgf1 functions.
-        self.key_size_bytes() - 2 * hash_len - 2
+        self.key_size_bytes()
+            .checked_sub(2 * hash_len)
+            .unwrap()
+            .checked_sub(2)
+            .unwrap()
     }
 
     /// Returns the max ciphertext size that will be output by `Self::encrypt`.

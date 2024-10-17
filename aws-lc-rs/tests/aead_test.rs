@@ -476,7 +476,7 @@ fn test_aead_key_sizes(aead_alg: &'static aead::Algorithm) {
 #[test]
 fn test_aead_nonce_sizes() {
     let nonce_len = NONCE_LEN;
-    let nonce = vec![0u8; nonce_len * 2];
+    let nonce = vec![0u8; nonce_len.checked_mul(2).unwrap()];
 
     assert!(Nonce::try_assume_unique_for_key(&nonce[..nonce_len]).is_ok());
     assert!(Nonce::try_assume_unique_for_key(&nonce[..(nonce_len - 1)]).is_err());

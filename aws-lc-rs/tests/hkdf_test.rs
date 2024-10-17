@@ -55,7 +55,9 @@ fn hkdf_output_len_tests() {
             assert_eq!(&result.0, &[]);
         }
 
-        let max_out_len = MAX_BLOCKS * alg.hmac_algorithm().digest_algorithm().output_len;
+        let max_out_len = MAX_BLOCKS
+            .checked_mul(alg.hmac_algorithm().digest_algorithm().output_len)
+            .unwrap();
 
         {
             // Test maximum length output succeeds.
@@ -66,7 +68,9 @@ fn hkdf_output_len_tests() {
 
         {
             // Test too-large output fails.
-            assert!(prk.expand(&[b"info"], My(max_out_len + 1)).is_err());
+            assert!(prk
+                .expand(&[b"info"], My(max_out_len.checked_add(1).unwrap()))
+                .is_err());
         }
 
         {
