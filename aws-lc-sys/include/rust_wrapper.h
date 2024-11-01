@@ -51,6 +51,7 @@
 #include "openssl/md4.h"
 #include "openssl/md5.h"
 #include "openssl/mem.h"
+#include "openssl/ocsp.h"
 #include "openssl/obj.h"
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
