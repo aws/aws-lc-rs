@@ -188,11 +188,9 @@ impl CmakeBuilder {
         {
             if target_arch() == "aarch64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
-                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "arm64");
             }
             if target_arch() == "x86_64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
-                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
             }
         }
 
