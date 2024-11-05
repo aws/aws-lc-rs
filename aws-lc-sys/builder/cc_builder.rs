@@ -394,7 +394,7 @@ impl crate::Builder for CcBuilder {
         Ok(())
     }
 
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "CC"
     }
 }

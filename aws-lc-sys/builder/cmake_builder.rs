@@ -400,7 +400,7 @@ impl crate::Builder for CmakeBuilder {
         Ok(())
     }
 
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "CMake"
     }
 }
