@@ -179,7 +179,7 @@ fn test_aead<Seal, Open>(
         // Debug builds are too slow for this, so for those builds, only
         // test a smaller subset.
 
-        let mut more_comprehensive_in_prefix_lengths = [0; 4096];
+        let mut more_comprehensive_in_prefix_lengths = vec![0; 4096].into_boxed_slice();
         let in_prefix_lengths = if cfg!(debug_assertions) {
             &MINIMAL_IN_PREFIX_LENS[..]
         } else {

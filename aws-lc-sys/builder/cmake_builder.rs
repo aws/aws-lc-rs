@@ -207,6 +207,7 @@ impl CmakeBuilder {
         cmake_cfg
     }
 
+    #[allow(clippy::unused_self)]
     fn configure_android(&self, _cmake_cfg: &mut cmake::Config) {
         // If we leave CMAKE_SYSTEM_PROCESSOR unset, then cmake-rs should handle properly setting
         // CMAKE_SYSTEM_NAME and CMAKE_SYSTEM_PROCESSOR:
@@ -399,7 +400,7 @@ impl crate::Builder for CmakeBuilder {
         Ok(())
     }
 
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "CMake"
     }
 }

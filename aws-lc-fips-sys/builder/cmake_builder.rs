@@ -89,6 +89,7 @@ impl CmakeBuilder {
         cmake::Config::new(&self.manifest_dir)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn prepare_cmake_build(&self) -> cmake::Config {
         let mut cmake_cfg = self.get_cmake_config();
 

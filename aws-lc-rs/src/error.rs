@@ -165,6 +165,7 @@ impl Error for KeyRejected {
 }
 
 impl Error for Unspecified {
+    #[allow(clippy::unnecessary_literal_bound)]
     fn description(&self) -> &str {
         "Unspecified"
     }
