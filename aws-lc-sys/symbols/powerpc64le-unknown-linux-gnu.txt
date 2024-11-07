@@ -215,9 +215,12 @@ BIO_ctrl
 BIO_ctrl_get_read_request
 BIO_ctrl_get_write_guarantee
 BIO_ctrl_pending
+BIO_destroy_bio_pair
 BIO_do_connect
 BIO_eof
 BIO_f_base64
+BIO_f_cipher
+BIO_f_md
 BIO_find_type
 BIO_flush
 BIO_free
@@ -289,6 +292,7 @@ BIO_s_socket
 BIO_seek
 BIO_set_callback_arg
 BIO_set_callback_ex
+BIO_set_cipher
 BIO_set_close
 BIO_set_conn_hostname
 BIO_set_conn_int_port
@@ -849,9 +853,11 @@ EC_GROUP_get_curve_GFp
 EC_GROUP_get_curve_name
 EC_GROUP_get_degree
 EC_GROUP_get_order
+EC_GROUP_get_point_conversion_form
 EC_GROUP_get_seed_len
 EC_GROUP_method_of
 EC_GROUP_new_by_curve_name
+EC_GROUP_new_by_curve_name_mutable
 EC_GROUP_new_curve_GFp
 EC_GROUP_order_bits
 EC_GROUP_set_asn1_flag
@@ -1179,6 +1185,8 @@ EVP_PKEY_CTX_set1_hkdf_salt
 EVP_PKEY_CTX_set_app_data
 EVP_PKEY_CTX_set_cb
 EVP_PKEY_CTX_set_dh_pad
+EVP_PKEY_CTX_set_dh_paramgen_generator
+EVP_PKEY_CTX_set_dh_paramgen_prime_len
 EVP_PKEY_CTX_set_dsa_paramgen_bits
 EVP_PKEY_CTX_set_dsa_paramgen_q_bits
 EVP_PKEY_CTX_set_ec_param_enc
@@ -1451,7 +1459,9 @@ HMAC_Final
 HMAC_Init
 HMAC_Init_ex
 HMAC_Init_from_precomputed_key
+HMAC_KEY_copy
 HMAC_KEY_new
+HMAC_KEY_set
 HMAC_Update
 HMAC_get_precomputed_key
 HMAC_set_precomputed_key_export
@@ -3001,6 +3011,7 @@ dh_compute_key_padded_no_self_test
 dh_pkey_meth
 dsa_asn1_meth
 dsa_check_key
+dsa_internal_paramgen
 dummy_func_for_constructor
 ec_GFp_mont_add
 ec_GFp_mont_dbl
@@ -3101,6 +3112,7 @@ ed25519_public_key_from_hashed_seed_nohw
 ed25519_sha512
 ed25519_sign_nohw
 ed25519_verify_nohw
+evp_pkey_set_cb_translate
 evp_pkey_set_method
 gcm_ghash_nohw
 gcm_ghash_p8
