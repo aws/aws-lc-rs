@@ -16,6 +16,58 @@ use std::{env, fmt, fmt::Debug};
 use cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;
 
+// These should generally match those found in aws-lc/include/openssl/opensslconf.h
+const OSSL_CONF_DEFINES: &[&str] = &[
+    "OPENSSL_NO_ASYNC",
+    "OPENSSL_NO_BF",
+    "OPENSSL_NO_BLAKE2",
+    "OPENSSL_NO_BUF_FREELISTS",
+    "OPENSSL_NO_CAMELLIA",
+    "OPENSSL_NO_CAPIENG",
+    "OPENSSL_NO_CAST",
+    "OPENSSL_NO_CMS",
+    "OPENSSL_NO_COMP",
+    "OPENSSL_NO_CRYPTO_MDEBUG",
+    "OPENSSL_NO_CT",
+    "OPENSSL_NO_DANE",
+    "OPENSSL_NO_DEPRECATED",
+    "OPENSSL_NO_DGRAM",
+    "OPENSSL_NO_DYNAMIC_ENGINE",
+    "OPENSSL_NO_EC_NISTP_64_GCC_128",
+    "OPENSSL_NO_EC2M",
+    "OPENSSL_NO_EGD",
+    "OPENSSL_NO_ENGINE",
+    "OPENSSL_NO_GMP",
+    "OPENSSL_NO_GOST",
+    "OPENSSL_NO_HEARTBEATS",
+    "OPENSSL_NO_HW",
+    "OPENSSL_NO_IDEA",
+    "OPENSSL_NO_JPAKE",
+    "OPENSSL_NO_KRB5",
+    "OPENSSL_NO_MD2",
+    "OPENSSL_NO_MDC2",
+    "OPENSSL_NO_OCB",
+    "OPENSSL_NO_RC2",
+    "OPENSSL_NO_RC5",
+    "OPENSSL_NO_RFC3779",
+    "OPENSSL_NO_RIPEMD",
+    "OPENSSL_NO_RMD160",
+    "OPENSSL_NO_SCTP",
+    "OPENSSL_NO_SEED",
+    "OPENSSL_NO_SM2",
+    "OPENSSL_NO_SM3",
+    "OPENSSL_NO_SM4",
+    "OPENSSL_NO_SRP",
+    "OPENSSL_NO_SSL_TRACE",
+    "OPENSSL_NO_SSL2",
+    "OPENSSL_NO_SSL3",
+    "OPENSSL_NO_SSL3_METHOD",
+    "OPENSSL_NO_STATIC_ENGINE",
+    "OPENSSL_NO_STORE",
+    "OPENSSL_NO_TS",
+    "OPENSSL_NO_WHIRLPOOL",
+];
+
 macro_rules! bindgen_available {
     ($top:ident, $item:item) => {
         #[allow(clippy::non_minimal_cfg)]
@@ -580,6 +632,8 @@ fn main() {
     if cfg!(feature = "ssl") {
         println!("cargo:libssl={}_ssl", prefix_string());
     }
+
+    println!("cargo:conf={}", OSSL_CONF_DEFINES.join(","));
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
