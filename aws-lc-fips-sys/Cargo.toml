@@ -1,8 +1,8 @@
 [package]
 name = "aws-lc-fips-sys"
 description = "AWS-LC is a general-purpose cryptographic library maintained by the AWS Cryptography team for AWS and their customers. This is the FIPS validated version of AWS-LC."
-version = "0.12.13"
-links = "aws_lc_fips_0_12_13"
+version = "0.13.0"
+links = "aws_lc_fips_0_13_0"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"

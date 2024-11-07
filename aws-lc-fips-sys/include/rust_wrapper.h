@@ -52,6 +52,7 @@
 #include "openssl/obj.h"
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
+#include "openssl/ocsp.h"
 #include "openssl/opensslconf.h"
 #include "openssl/opensslv.h"
 #include "openssl/ossl_typ.h"
