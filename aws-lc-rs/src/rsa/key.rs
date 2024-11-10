@@ -14,6 +14,7 @@ use crate::io;
 use crate::ptr::ConstPointer;
 use crate::{
     digest::{self},
+    rsa::{PublicEncryptingKey},
     encoding::{AsDer, Pkcs8V1Der},
     error::{KeyRejected, Unspecified},
     fips::indicator_check,
@@ -429,6 +430,16 @@ where
         rsa.detach();
 
         Ok(pkey)
+    }
+
+    /// Builds a `PublicEncryptingKey` from the public key components.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the key failed to verify.
+    pub fn build_encrypting_key(&self) -> Result<PublicEncryptingKey, Unspecified> {
+        let rsa = self.build_rsa()?;
+
+        PublicEncryptingKey::new(rsa)
     }
 
     /// Verifies that `signature` is a valid signature of `message` using `self`
