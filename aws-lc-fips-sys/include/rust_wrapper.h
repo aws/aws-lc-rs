@@ -98,6 +98,16 @@ AWS_LC_FIPS_SYS_EXPORT int CRYPTO_tls1_prf(const EVP_MD *digest,
                            const uint8_t *seed1, size_t seed1_len,
                            const uint8_t *seed2, size_t seed2_len);
 
+// The AES_cfb1_encrypt is not exported in a public header on the FIPS branch currently.
+AWS_LC_FIPS_SYS_EXPORT void AES_cfb1_encrypt(const uint8_t *in, uint8_t *out,
+                                             size_t bits, const AES_KEY *key,
+                                             uint8_t *ivec, int *num, int enc);
+
+// The AES_cfb8_encrypt is not exported in a public header on the FIPS branch currently.
+AWS_LC_FIPS_SYS_EXPORT void AES_cfb8_encrypt(const uint8_t *in, uint8_t *out,
+                                             size_t len, const AES_KEY *key,
+                                             uint8_t *ivec, int *num, int enc);
+
 #define AWS_LC_WRAPPER_ADD_PREFIX(a, b) AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b)
 #define AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b) a ## _ ## b
 
