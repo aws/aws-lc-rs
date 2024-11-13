@@ -670,13 +670,8 @@ fn encrypt(
 ) -> Result<DecryptionContext, Unspecified> {
     let block_len = algorithm.block_len();
 
-    match mode {
-        OperatingMode::CBC => {
-            if (in_out.len() % block_len) != 0 {
-                return Err(Unspecified);
-            }
-        }
-        _ => {}
+    if mode == OperatingMode::CBC && (in_out.len() % block_len) != 0 {
+        return Err(Unspecified);
     }
 
     match mode {
@@ -704,13 +699,8 @@ fn decrypt<'in_out>(
 ) -> Result<&'in_out mut [u8], Unspecified> {
     let block_len = algorithm.block_len();
 
-    match mode {
-        OperatingMode::CBC => {
-            if (in_out.len() % block_len) != 0 {
-                return Err(Unspecified);
-            }
-        }
-        _ => {}
+    if mode == OperatingMode::CBC && (in_out.len() % block_len) != 0 {
+        return Err(Unspecified);
     }
 
     match mode {
@@ -816,6 +806,7 @@ fn decrypt_aes_cbc_mode<'in_out>(
     Ok(in_out)
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn encrypt_aes_cfb_mode(
     key: &SymmetricCipherKey,
     mode: OperatingMode,
@@ -848,6 +839,7 @@ fn encrypt_aes_cfb_mode(
     Ok(context.into())
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn decrypt_aes_cfb_mode<'in_out>(
     key: &SymmetricCipherKey,
     mode: OperatingMode,

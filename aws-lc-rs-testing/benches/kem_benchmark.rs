@@ -7,6 +7,7 @@ use aws_lc_rs::{
 };
 use criterion::{criterion_group, criterion_main, Criterion};
 
+#[allow(deprecated)]
 const UNSTABLE_ALGORITHMS: &[Option<&aws_lc_rs::kem::Algorithm<AlgorithmId>>] = &[
     get_algorithm(AlgorithmId::Kyber512_R3),
     get_algorithm(AlgorithmId::Kyber768_R3),
