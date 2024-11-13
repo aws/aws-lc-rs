@@ -470,11 +470,7 @@ mod tests {
                 assert!(ciphertext.len() > plaintext.len());
                 assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
             }
-            OperatingMode::CTR => {
-                assert_eq!(ciphertext.len(), plaintext.len());
-            }
-            // TODO: Hopefully support CFB1, and CFB8
-            OperatingMode::CFB128 => {
+            _ => {
                 assert_eq!(ciphertext.len(), plaintext.len());
             }
         }
@@ -523,11 +519,7 @@ mod tests {
                 assert!(ciphertext.len() > plaintext.len());
                 assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
             }
-            OperatingMode::CTR => {
-                assert_eq!(ciphertext.len(), plaintext.len());
-            }
-            // TODO: Hopefully support CFB1, and CFB8
-            OperatingMode::CFB128 => {
+            _ => {
                 assert_eq!(ciphertext.len(), plaintext.len());
             }
         }

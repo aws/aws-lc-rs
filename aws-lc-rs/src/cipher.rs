@@ -134,7 +134,7 @@
 //! # Ok(())
 //! # }
 //! ```
-//! 
+//!
 //! ### AES-128 CFB 128-bit mode
 //!
 //! ```rust
@@ -671,13 +671,12 @@ fn encrypt(
     let block_len = algorithm.block_len();
 
     match mode {
-        // TODO: Hopefully support CFB1, and CFB8
-        OperatingMode::CTR | OperatingMode::CFB128 => {}
-        _ => {
+        OperatingMode::CBC => {
             if (in_out.len() % block_len) != 0 {
                 return Err(Unspecified);
             }
         }
+        _ => {}
     }
 
     match mode {
@@ -706,13 +705,12 @@ fn decrypt<'in_out>(
     let block_len = algorithm.block_len();
 
     match mode {
-        // TODO: Hopefully support CFB1, and CFB8
-        OperatingMode::CTR | OperatingMode::CFB128 => {}
-        _ => {
+        OperatingMode::CBC => {
             if (in_out.len() % block_len) != 0 {
                 return Err(Unspecified);
             }
         }
+        _ => {}
     }
 
     match mode {
@@ -741,7 +739,7 @@ fn encrypt_aes_ctr_mode(
         SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
             enc_key
         }
-        _ => return Err(Unspecified),
+        _ => unreachable!(),
     };
 
     let mut iv = {
@@ -777,7 +775,7 @@ fn encrypt_aes_cbc_mode(
         SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
             enc_key
         }
-        _ => return Err(Unspecified),
+        _ => unreachable!(),
     };
 
     let mut iv = {
@@ -803,7 +801,7 @@ fn decrypt_aes_cbc_mode<'in_out>(
         SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
             dec_key
         }
-        _ => return Err(Unspecified),
+        _ => unreachable!(),
     };
 
     let mut iv = {
@@ -829,7 +827,7 @@ fn encrypt_aes_cfb_mode(
         SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
             enc_key
         }
-        _ => return Err(Unspecified),
+        _ => unreachable!(),
     };
 
     let mut iv = {
@@ -841,10 +839,7 @@ fn encrypt_aes_cfb_mode(
     let cfb_encrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
         // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => aes_cfb128_encrypt,
-        _ => {
-            // this indicates a programming error and shouldn't happen
-            return Err(Unspecified);
-        }
+        _ => unreachable!(),
     };
 
     cfb_encrypt(key, &mut iv, in_out);
@@ -864,7 +859,7 @@ fn decrypt_aes_cfb_mode<'in_out>(
         SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
             enc_key
         }
-        _ => return Err(Unspecified),
+        _ => unreachable!(),
     };
 
     let mut iv = {
@@ -876,10 +871,7 @@ fn decrypt_aes_cfb_mode<'in_out>(
     let cfb_decrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
         // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => aes_cfb128_decrypt,
-        _ => {
-            // this indicates a programming error and shouldn't happen
-            return Err(Unspecified);
-        }
+        _ => unreachable!(),
     };
 
     cfb_decrypt(key, &mut iv, in_out);
