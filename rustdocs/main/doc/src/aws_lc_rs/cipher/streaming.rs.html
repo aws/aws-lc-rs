@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/cipher/streaming.rs`."><title>streaming.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-590a400c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (fbab78289 2024-11-04)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/cipher/</div>streaming.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/cipher/streaming.rs`."><title>streaming.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (f7273e004 2024-11-12)" data-channel="nightly" data-search-js="search-853ef39b.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/cipher/</div>streaming.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -784,7 +784,147 @@
 <a href="#783" id="783">783</a>
 <a href="#784" id="784">784</a>
 <a href="#785" id="785">785</a>
-<a href="#786" id="786">786</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="kw">use </span><span class="kw">crate</span>::cipher::{
@@ -1003,6 +1143,33 @@
         <span class="self">Self</span>::less_safe_cbc_pkcs7(key, context)
     }
 
+    <span class="doccomment">/// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// # Errors
+    /// Returns and error on an internal failure.
+    </span><span class="kw">pub fn </span>cfb128(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="kw">let </span>context = key
+            .algorithm()
+            .new_encryption_context(OperatingMode::CFB128)<span class="question-mark">?</span>;
+        <span class="self">Self</span>::less_safe_cfb128(key, context)
+    }
+
+    <span class="doccomment">/// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    </span><span class="kw">pub fn </span>less_safe_cfb128(
+        key: UnboundCipherKey,
+        context: EncryptionContext,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="self">Self</span>::new(key, OperatingMode::CFB128, context)
+    }
+
     <span class="doccomment">/// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
     /// with pkcs7 padding.
     /// The resulting ciphertext will be longer than the plaintext; padding is added
@@ -1166,6 +1333,15 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
         <span class="self">Self</span>::new(key, OperatingMode::CBC, context)
     }
+
+    <span class="comment">// Constructs a `StreamingDecryptingKey` for decrypting using the CFB128 cipher mode.
+    </span><span class="doccomment">/// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    </span><span class="kw">pub fn </span>cfb128(key: UnboundCipherKey, context: DecryptionContext) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="self">Self</span>::new(key, OperatingMode::CFB128, context)
+    }
 }
 
 <span class="attr">#[cfg(test)]
@@ -1220,7 +1396,7 @@
                 <span class="macro">assert!</span>(ciphertext.len() &gt; plaintext.len());
                 <span class="macro">assert!</span>(ciphertext.len() &lt;= plaintext.len() + alg.block_len());
             }
-            OperatingMode::CTR =&gt; {
+            <span class="kw">_ </span>=&gt; {
                 <span class="macro">assert_eq!</span>(ciphertext.len(), plaintext.len());
             }
         }
@@ -1269,7 +1445,7 @@
                 <span class="macro">assert!</span>(ciphertext.len() &gt; plaintext.len());
                 <span class="macro">assert!</span>(ciphertext.len() &lt;= plaintext.len() + alg.block_len());
             }
-            OperatingMode::CTR =&gt; {
+            <span class="kw">_ </span>=&gt; {
                 <span class="macro">assert_eq!</span>(ciphertext.len(), plaintext.len());
             }
         }
@@ -1305,6 +1481,7 @@
 
     <span class="macro">helper_stream_step_encrypt_test!</span>(cbc_pkcs7);
     <span class="macro">helper_stream_step_encrypt_test!</span>(ctr);
+    <span class="macro">helper_stream_step_encrypt_test!</span>(cfb128);
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_step_cbc() {
@@ -1409,6 +1586,61 @@
                 <span class="number">256</span>,
             );
             helper_test_ctr_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                <span class="number">1</span>,
+            );
+        }
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_step_cfb128() {
+        <span class="kw">let </span>random = SystemRandom::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>key = [<span class="number">0u8</span>; AES_256_KEY_LEN];
+        random.fill(<span class="kw-2">&amp;mut </span>key).unwrap();
+
+        <span class="kw">let </span>encrypting_key_creator = || {
+            <span class="kw">let </span>key = UnboundCipherKey::new(<span class="kw-2">&amp;</span>AES_256, <span class="kw-2">&amp;</span>key.clone()).unwrap();
+            StreamingEncryptingKey::cfb128(key).unwrap()
+        };
+        <span class="kw">let </span>decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+            <span class="kw">let </span>key = UnboundCipherKey::new(<span class="kw-2">&amp;</span>AES_256, <span class="kw-2">&amp;</span>key.clone()).unwrap();
+            StreamingDecryptingKey::cfb128(key, decryption_ctx).unwrap()
+        };
+
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">13</span>..=<span class="number">21 </span>{
+            <span class="kw">for </span>j <span class="kw">in </span><span class="number">124</span>..=<span class="number">131 </span>{
+                helper_test_cfb128_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    i,
+                );
+            }
+            <span class="kw">for </span>j <span class="kw">in </span><span class="number">124</span>..=<span class="number">131 </span>{
+                helper_test_cfb128_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    j - i,
+                );
+            }
+        }
+        <span class="kw">for </span>j <span class="kw">in </span><span class="number">124</span>..=<span class="number">131 </span>{
+            helper_test_cfb128_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                j,
+            );
+            helper_test_cfb128_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                <span class="number">256</span>,
+            );
+            helper_test_cfb128_stream_encrypt_step_n_bytes(
                 encrypting_key_creator,
                 decrypting_key_creator,
                 j,
@@ -1566,6 +1798,54 @@
         <span class="string">"24f6076548fb9d93c8f7ed9f6e661ef9"</span>,
         <span class="string">"a39c1fdf77ea3e1f18178c0ec237c70a"</span>,
         <span class="string">"f1af484830a149ee0387b854d65fe87ca0e62efc1c8e6909d4b9ab8666470453"</span>,
+        <span class="number">2</span>,
+        <span class="number">9
+    </span>);
+
+    <span class="macro">streaming_cipher_kat!</span>(
+        test_openssl_aes_128_cfb128_16_bytes,
+        <span class="kw-2">&amp;</span>AES_128,
+        OperatingMode::CFB128,
+        <span class="string">"5c353f739429bbd48b7e3f9a76facf4d"</span>,
+        <span class="string">"7b2c7ce17a9b6a59a9e64253b98c8cd1"</span>,
+        <span class="string">"add1bcebeaabe9423d4e916400e877c5"</span>,
+        <span class="string">"8440ec442e4135a613ddb2ce26107e10"</span>,
+        <span class="number">2</span>,
+        <span class="number">9
+    </span>);
+
+    <span class="macro">streaming_cipher_kat!</span>(
+        test_openssl_aes_128_cfb128_15_bytes,
+        <span class="kw-2">&amp;</span>AES_128,
+        OperatingMode::CFB128,
+        <span class="string">"e1f39d70ad378efc1ac318aa8ac4489f"</span>,
+        <span class="string">"ec78c3d54fff2fe09678c7883024ddce"</span>,
+        <span class="string">"b8c905004b2a92a323769f1b8dc1b2"</span>,
+        <span class="string">"964c3e9bf8bf2a3cca02d8e2e75608"</span>,
+        <span class="number">2</span>,
+        <span class="number">9
+    </span>);
+
+    <span class="macro">streaming_cipher_kat!</span>(
+        test_openssl_aes_256_cfb128_16_bytes,
+        <span class="kw-2">&amp;</span>AES_256,
+        OperatingMode::CFB128,
+        <span class="string">"0e8117d0984d6acb957a5d6ca526a12fa612ce5de2daadebd42c14d28a0a192e"</span>,
+        <span class="string">"09147a153b230a40cd7bf4197ad0e825"</span>,
+        <span class="string">"13f4540a4e06394148ade31a6f678787"</span>,
+        <span class="string">"250e590e47b7613b7d0a53f684e970d6"</span>,
+        <span class="number">2</span>,
+        <span class="number">9
+    </span>);
+
+    <span class="macro">streaming_cipher_kat!</span>(
+        test_openssl_aes_256_cfb128_15_bytes,
+        <span class="kw-2">&amp;</span>AES_256,
+        OperatingMode::CFB128,
+        <span class="string">"5cb17d8d5b9dbd81e4f1e0a2c82ebf36cf61156388fb7abf99d4526622858225"</span>,
+        <span class="string">"13c77415ec24f3e2f784f228478a85be"</span>,
+        <span class="string">"3efa583df4405aab61e18155aa7e0d"</span>,
+        <span class="string">"c1f2ffe8aa5064199e8f4f1b388303"</span>,
         <span class="number">2</span>,
         <span class="number">9
     </span>);
