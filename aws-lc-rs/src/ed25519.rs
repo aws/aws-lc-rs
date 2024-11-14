@@ -244,6 +244,31 @@ pub(crate) fn generate_key() -> Result<LcPtr<EVP_PKEY>, ()> {
 }
 
 impl Ed25519KeyPair {
+    /// Generates a new key pair and returns the key pair.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if key generation fails.
+    pub fn generate() -> Result<Self, Unspecified> {
+        let evp_pkey = generate_key()?;
+
+        let mut public_key = [0u8; ED25519_PUBLIC_KEY_LEN];
+        let mut out_len: usize = ED25519_PUBLIC_KEY_LEN;
+        if 1 != unsafe {
+            EVP_PKEY_get_raw_public_key(*evp_pkey.as_const(), public_key.as_mut_ptr(), &mut out_len)
+        } {
+            return Err(Unspecified);
+        }
+        debug_assert_eq!(public_key.len(), out_len);
+
+        Ok(Self {
+            public_key: PublicKey {
+                public_key_bytes: public_key,
+                evp_pkey: evp_pkey.clone(),
+            },
+            evp_pkey,
+        })
+    }
+
     /// Generates a new key pair and returns the key pair serialized as a
     /// PKCS#8 document.
     ///
@@ -527,8 +552,20 @@ mod tests {
     use crate::ed25519::Ed25519KeyPair;
     use crate::encoding::{AsBigEndian, AsDer, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der};
     use crate::rand::SystemRandom;
-    use crate::signature::KeyPair;
+    use crate::signature::{KeyPair, UnparsedPublicKey, ED25519};
     use crate::{hex, test};
+
+    #[test]
+    fn test_generate() {
+        const MESSAGE: &[u8] = b"test message";
+        let key_pair = Ed25519KeyPair::generate().unwrap();
+        let public_key = key_pair.public_key();
+        let signature = key_pair.sign(MESSAGE);
+        let unparsed_public_key = UnparsedPublicKey::new(&ED25519, public_key.as_ref());
+        let _ = unparsed_public_key
+            .verify(MESSAGE, signature.as_ref())
+            .unwrap();
+    }
 
     #[test]
     fn test_generate_pkcs8() {
