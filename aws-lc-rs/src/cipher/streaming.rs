@@ -217,6 +217,33 @@ impl StreamingEncryptingKey {
         Self::less_safe_cbc_pkcs7(key, context)
     }
 
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// # Errors
+    /// Returns and error on an internal failure.
+    pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        let context = key
+            .algorithm()
+            .new_encryption_context(OperatingMode::CFB128)?;
+        Self::less_safe_cfb128(key, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    pub fn less_safe_cfb128(
+        key: UnboundCipherKey,
+        context: EncryptionContext,
+    ) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB128, context)
+    }
+
     /// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
     /// with pkcs7 padding.
     /// The resulting ciphertext will be longer than the plaintext; padding is added
@@ -380,6 +407,15 @@ impl StreamingDecryptingKey {
     ) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CBC, context)
     }
+
+    // Constructs a `StreamingDecryptingKey` for decrypting using the CFB128 cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    pub fn cfb128(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB128, context)
+    }
 }
 
 #[cfg(test)]
@@ -434,7 +470,7 @@ mod tests {
                 assert!(ciphertext.len() > plaintext.len());
                 assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
             }
-            OperatingMode::CTR => {
+            _ => {
                 assert_eq!(ciphertext.len(), plaintext.len());
             }
         }
@@ -483,7 +519,7 @@ mod tests {
                 assert!(ciphertext.len() > plaintext.len());
                 assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
             }
-            OperatingMode::CTR => {
+            _ => {
                 assert_eq!(ciphertext.len(), plaintext.len());
             }
         }
@@ -519,6 +555,7 @@ mod tests {
 
     helper_stream_step_encrypt_test!(cbc_pkcs7);
     helper_stream_step_encrypt_test!(ctr);
+    helper_stream_step_encrypt_test!(cfb128);
 
     #[test]
     fn test_step_cbc() {
@@ -623,6 +660,61 @@ mod tests {
                 256,
             );
             helper_test_ctr_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                1,
+            );
+        }
+    }
+
+    #[test]
+    fn test_step_cfb128() {
+        let random = SystemRandom::new();
+        let mut key = [0u8; AES_256_KEY_LEN];
+        random.fill(&mut key).unwrap();
+
+        let encrypting_key_creator = || {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingEncryptingKey::cfb128(key).unwrap()
+        };
+        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingDecryptingKey::cfb128(key, decryption_ctx).unwrap()
+        };
+
+        for i in 13..=21 {
+            for j in 124..=131 {
+                helper_test_cfb128_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    i,
+                );
+            }
+            for j in 124..=131 {
+                helper_test_cfb128_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    j - i,
+                );
+            }
+        }
+        for j in 124..=131 {
+            helper_test_cfb128_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                j,
+            );
+            helper_test_cfb128_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                256,
+            );
+            helper_test_cfb128_stream_encrypt_step_n_bytes(
                 encrypting_key_creator,
                 decrypting_key_creator,
                 j,
@@ -780,6 +872,54 @@ mod tests {
         "24f6076548fb9d93c8f7ed9f6e661ef9",
         "a39c1fdf77ea3e1f18178c0ec237c70a",
         "f1af484830a149ee0387b854d65fe87ca0e62efc1c8e6909d4b9ab8666470453",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_128_cfb128_16_bytes,
+        &AES_128,
+        OperatingMode::CFB128,
+        "5c353f739429bbd48b7e3f9a76facf4d",
+        "7b2c7ce17a9b6a59a9e64253b98c8cd1",
+        "add1bcebeaabe9423d4e916400e877c5",
+        "8440ec442e4135a613ddb2ce26107e10",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_128_cfb128_15_bytes,
+        &AES_128,
+        OperatingMode::CFB128,
+        "e1f39d70ad378efc1ac318aa8ac4489f",
+        "ec78c3d54fff2fe09678c7883024ddce",
+        "b8c905004b2a92a323769f1b8dc1b2",
+        "964c3e9bf8bf2a3cca02d8e2e75608",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_256_cfb128_16_bytes,
+        &AES_256,
+        OperatingMode::CFB128,
+        "0e8117d0984d6acb957a5d6ca526a12fa612ce5de2daadebd42c14d28a0a192e",
+        "09147a153b230a40cd7bf4197ad0e825",
+        "13f4540a4e06394148ade31a6f678787",
+        "250e590e47b7613b7d0a53f684e970d6",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_256_cfb128_15_bytes,
+        &AES_256,
+        OperatingMode::CFB128,
+        "5cb17d8d5b9dbd81e4f1e0a2c82ebf36cf61156388fb7abf99d4526622858225",
+        "13c77415ec24f3e2f784f228478a85be",
+        "3efa583df4405aab61e18155aa7e0d",
+        "c1f2ffe8aa5064199e8f4f1b388303",
         2,
         9
     );
