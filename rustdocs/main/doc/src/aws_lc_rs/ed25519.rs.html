@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ed25519.rs`."><title>ed25519.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (f7273e004 2024-11-12)" data-channel="nightly" data-search-js="search-853ef39b.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>ed25519.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ed25519.rs`."><title>ed25519.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (8adb4b30f 2024-11-13)" data-channel="nightly" data-search-js="search-853ef39b.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>ed25519.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -624,7 +624,44 @@
 <a href="#623" id="623">623</a>
 <a href="#624" id="624">624</a>
 <a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
@@ -870,6 +907,31 @@
 }
 
 <span class="kw">impl </span>Ed25519KeyPair {
+    <span class="doccomment">/// Generates a new key pair and returns the key pair.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if key generation fails.
+    </span><span class="kw">pub fn </span>generate() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="kw">let </span>evp_pkey = generate_key()<span class="question-mark">?</span>;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>public_key = [<span class="number">0u8</span>; ED25519_PUBLIC_KEY_LEN];
+        <span class="kw">let </span><span class="kw-2">mut </span>out_len: usize = ED25519_PUBLIC_KEY_LEN;
+        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
+            EVP_PKEY_get_raw_public_key(<span class="kw-2">*</span>evp_pkey.as_const(), public_key.as_mut_ptr(), <span class="kw-2">&amp;mut </span>out_len)
+        } {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+        }
+        <span class="macro">debug_assert_eq!</span>(public_key.len(), out_len);
+
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            public_key: PublicKey {
+                public_key_bytes: public_key,
+                evp_pkey: evp_pkey.clone(),
+            },
+            evp_pkey,
+        })
+    }
+
     <span class="doccomment">/// Generates a new key pair and returns the key pair serialized as a
     /// PKCS#8 document.
     ///
@@ -1153,8 +1215,20 @@
     <span class="kw">use </span><span class="kw">crate</span>::ed25519::Ed25519KeyPair;
     <span class="kw">use </span><span class="kw">crate</span>::encoding::{AsBigEndian, AsDer, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der};
     <span class="kw">use </span><span class="kw">crate</span>::rand::SystemRandom;
-    <span class="kw">use </span><span class="kw">crate</span>::signature::KeyPair;
+    <span class="kw">use </span><span class="kw">crate</span>::signature::{KeyPair, UnparsedPublicKey, ED25519};
     <span class="kw">use crate</span>::{hex, test};
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_generate() {
+        <span class="kw">const </span>MESSAGE: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"test message"</span>;
+        <span class="kw">let </span>key_pair = Ed25519KeyPair::generate().unwrap();
+        <span class="kw">let </span>public_key = key_pair.public_key();
+        <span class="kw">let </span>signature = key_pair.sign(MESSAGE);
+        <span class="kw">let </span>unparsed_public_key = UnparsedPublicKey::new(<span class="kw-2">&amp;</span>ED25519, public_key.as_ref());
+        <span class="kw">let _ </span>= unparsed_public_key
+            .verify(MESSAGE, signature.as_ref())
+            .unwrap();
+    }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_generate_pkcs8() {
