@@ -131,7 +131,7 @@ jobs:
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: ${{ matrix.crate }}
         working-directory: ./${{ matrix.crate }}
-        run: cargo ${{ matrix.args }}
+        run: CFLAGS="-Wno-overriding-t-option" cargo ${{ matrix.args }}
       - name: Clean
         run: cargo clean
       - name: Force Linux shared build
