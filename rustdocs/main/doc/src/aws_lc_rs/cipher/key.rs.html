@@ -172,11 +172,11 @@
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-</span><span class="kw">use </span><span class="kw">crate</span>::cipher::aes::encrypt_block_aes;
-<span class="kw">use </span><span class="kw">crate</span>::cipher::block::Block;
+</span><span class="kw">use </span><span class="kw">crate</span>::cipher::block::Block;
 <span class="kw">use </span><span class="kw">crate</span>::cipher::chacha::ChaCha20Key;
 <span class="kw">use </span><span class="kw">crate</span>::cipher::{AES_128_KEY_LEN, AES_256_KEY_LEN};
 <span class="kw">use </span><span class="kw">crate</span>::error::Unspecified;
@@ -307,7 +307,9 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>encrypt_block(<span class="kw-2">&amp;</span><span class="self">self</span>, block: Block) -&gt; Block {
         <span class="kw">match </span><span class="self">self </span>{
             SymmetricCipherKey::Aes128 { enc_key, .. }
-            | SymmetricCipherKey::Aes256 { enc_key, .. } =&gt; encrypt_block_aes(enc_key, block),
+            | SymmetricCipherKey::Aes256 { enc_key, .. } =&gt; {
+                <span class="kw">super</span>::aes::encrypt_block(enc_key, block)
+            }
             SymmetricCipherKey::ChaCha20 { .. } =&gt; <span class="macro">panic!</span>(<span class="string">"Unsupported algorithm!"</span>),
         }
     }

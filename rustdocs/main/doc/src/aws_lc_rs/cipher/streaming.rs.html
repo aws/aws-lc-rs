@@ -924,7 +924,214 @@
 <a href="#923" id="923">923</a>
 <a href="#924" id="924">924</a>
 <a href="#925" id="925">925</a>
-<a href="#926" id="926">926</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
+<a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
+<a href="#1020" id="1020">1020</a>
+<a href="#1021" id="1021">1021</a>
+<a href="#1022" id="1022">1022</a>
+<a href="#1023" id="1023">1023</a>
+<a href="#1024" id="1024">1024</a>
+<a href="#1025" id="1025">1025</a>
+<a href="#1026" id="1026">1026</a>
+<a href="#1027" id="1027">1027</a>
+<a href="#1028" id="1028">1028</a>
+<a href="#1029" id="1029">1029</a>
+<a href="#1030" id="1030">1030</a>
+<a href="#1031" id="1031">1031</a>
+<a href="#1032" id="1032">1032</a>
+<a href="#1033" id="1033">1033</a>
+<a href="#1034" id="1034">1034</a>
+<a href="#1035" id="1035">1035</a>
+<a href="#1036" id="1036">1036</a>
+<a href="#1037" id="1037">1037</a>
+<a href="#1038" id="1038">1038</a>
+<a href="#1039" id="1039">1039</a>
+<a href="#1040" id="1040">1040</a>
+<a href="#1041" id="1041">1041</a>
+<a href="#1042" id="1042">1042</a>
+<a href="#1043" id="1043">1043</a>
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="kw">use </span><span class="kw">crate</span>::cipher::{
@@ -936,9 +1143,11 @@
 <span class="kw">use </span>aws_lc::{
     EVP_CIPHER_CTX_new, EVP_CIPHER_iv_length, EVP_CIPHER_key_length, EVP_DecryptFinal_ex,
     EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_EncryptFinal_ex, EVP_EncryptInit_ex,
-    EVP_EncryptUpdate, EVP_CIPHER_CTX,
+    EVP_EncryptUpdate, EVP_CIPHER, EVP_CIPHER_CTX,
 };
-<span class="kw">use </span>std::ptr::null_mut;
+<span class="kw">use </span>std::ptr::{null, null_mut};
+
+<span class="kw">use </span><span class="kw">super</span>::ConstPointer;
 
 <span class="doccomment">/// A key for streaming encryption operations.
 </span><span class="kw">pub struct </span>StreamingEncryptingKey {
@@ -982,6 +1191,62 @@
     }
 }
 
+<span class="kw">fn </span>evp_encrypt_init(
+    cipher_ctx: <span class="kw-2">&amp;mut </span>LcPtr&lt;EVP_CIPHER_CTX&gt;,
+    cipher: <span class="kw-2">&amp;</span>ConstPointer&lt;EVP_CIPHER&gt;,
+    key: <span class="kw-2">&amp;</span>[u8],
+    iv: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
+    <span class="kw">let </span>iv_ptr: <span class="kw-2">*const </span>u8 = <span class="kw">if let </span><span class="prelude-val">Some</span>(iv) = iv {
+        iv.as_ptr()
+    } <span class="kw">else </span>{
+        null()
+    };
+
+    <span class="comment">// AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
+    </span><span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
+        EVP_EncryptInit_ex(
+            <span class="kw-2">*</span>cipher_ctx.as_mut(),
+            <span class="kw-2">**</span>cipher,
+            null_mut(),
+            key.as_ptr(),
+            iv_ptr,
+        )
+    } {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+    }
+
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="kw">fn </span>evp_decrypt_init(
+    cipher_ctx: <span class="kw-2">&amp;mut </span>LcPtr&lt;EVP_CIPHER_CTX&gt;,
+    cipher: <span class="kw-2">&amp;</span>ConstPointer&lt;EVP_CIPHER&gt;,
+    key: <span class="kw-2">&amp;</span>[u8],
+    iv: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
+    <span class="kw">let </span>iv_ptr: <span class="kw-2">*const </span>u8 = <span class="kw">if let </span><span class="prelude-val">Some</span>(iv) = iv {
+        iv.as_ptr()
+    } <span class="kw">else </span>{
+        null()
+    };
+
+    <span class="comment">// AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
+    </span><span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
+        EVP_DecryptInit_ex(
+            <span class="kw-2">*</span>cipher_ctx.as_mut(),
+            <span class="kw-2">**</span>cipher,
+            null_mut(),
+            key.as_ptr(),
+            iv_ptr,
+        )
+    } {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+    }
+
+    <span class="prelude-val">Ok</span>(())
+}
+
 <span class="kw">impl </span>StreamingEncryptingKey {
     <span class="attr">#[allow(clippy::needless_pass_by_value)]
     </span><span class="kw">fn </span>new(
@@ -997,23 +1262,19 @@
             key_bytes.len(),
             &lt;usize&gt;::try_from(<span class="kw">unsafe </span>{ EVP_CIPHER_key_length(<span class="kw-2">*</span>cipher) }).unwrap()
         );
-        <span class="kw">let </span>iv = &lt;<span class="kw-2">&amp;</span>[u8]&gt;::try_from(<span class="kw-2">&amp;</span>context)<span class="question-mark">?</span>;
-        <span class="macro">debug_assert_eq!</span>(
-            iv.len(),
-            &lt;usize&gt;::try_from(<span class="kw">unsafe </span>{ EVP_CIPHER_iv_length(<span class="kw-2">*</span>cipher) }).unwrap()
-        );
 
-        <span class="comment">// AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
-        </span><span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-            EVP_EncryptInit_ex(
-                <span class="kw-2">*</span>cipher_ctx.as_mut(),
-                <span class="kw-2">*</span>cipher,
-                null_mut(),
-                key_bytes.as_ptr(),
-                iv.as_ptr(),
-            )
-        } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+        <span class="kw">match </span><span class="kw-2">&amp;</span>context {
+            ctx @ EncryptionContext::Iv128(..) =&gt; {
+                <span class="kw">let </span>iv = &lt;<span class="kw-2">&amp;</span>[u8]&gt;::try_from(ctx)<span class="question-mark">?</span>;
+                <span class="macro">debug_assert_eq!</span>(
+                    iv.len(),
+                    &lt;usize&gt;::try_from(<span class="kw">unsafe </span>{ EVP_CIPHER_iv_length(<span class="kw-2">*</span>cipher) }).unwrap()
+                );
+                evp_encrypt_init(<span class="kw-2">&amp;mut </span>cipher_ctx, <span class="kw-2">&amp;</span>cipher, key_bytes, <span class="prelude-val">Some</span>(iv))<span class="question-mark">?</span>;
+            }
+            EncryptionContext::None =&gt; {
+                evp_encrypt_init(<span class="kw-2">&amp;mut </span>cipher_ctx, <span class="kw-2">&amp;</span>cipher, key_bytes, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+            }
         }
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
@@ -1155,6 +1416,20 @@
         <span class="self">Self</span>::less_safe_cfb128(key, context)
     }
 
+    <span class="doccomment">/// Constructs a `StreamingEncryptingKey` for encrypting using ECB cipher mode with PKCS7 padding.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    </span><span class="kw">pub fn </span>ecb_pkcs7(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="kw">let </span>context = key.algorithm().new_encryption_context(OperatingMode::ECB)<span class="question-mark">?</span>;
+        <span class="self">Self</span>::new(key, OperatingMode::ECB, context)
+    }
+
     <span class="doccomment">/// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
     /// The resulting ciphertext will be the same length as the plaintext.
     ///
@@ -1209,23 +1484,19 @@
             key_bytes.len(),
             &lt;usize&gt;::try_from(<span class="kw">unsafe </span>{ EVP_CIPHER_key_length(<span class="kw-2">*</span>cipher) }).unwrap()
         );
-        <span class="kw">let </span>iv = &lt;<span class="kw-2">&amp;</span>[u8]&gt;::try_from(<span class="kw-2">&amp;</span>context)<span class="question-mark">?</span>;
-        <span class="macro">debug_assert_eq!</span>(
-            iv.len(),
-            &lt;usize&gt;::try_from(<span class="kw">unsafe </span>{ EVP_CIPHER_iv_length(<span class="kw-2">*</span>cipher) }).unwrap()
-        );
 
-        <span class="comment">// AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
-        </span><span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-            EVP_DecryptInit_ex(
-                <span class="kw-2">*</span>cipher_ctx.as_mut(),
-                <span class="kw-2">*</span>cipher,
-                null_mut(),
-                key_bytes.as_ptr(),
-                iv.as_ptr(),
-            )
-        } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+        <span class="kw">match </span><span class="kw-2">&amp;</span>context {
+            ctx @ DecryptionContext::Iv128(..) =&gt; {
+                <span class="kw">let </span>iv = &lt;<span class="kw-2">&amp;</span>[u8]&gt;::try_from(ctx)<span class="question-mark">?</span>;
+                <span class="macro">debug_assert_eq!</span>(
+                    iv.len(),
+                    &lt;usize&gt;::try_from(<span class="kw">unsafe </span>{ EVP_CIPHER_iv_length(<span class="kw-2">*</span>cipher) }).unwrap()
+                );
+                evp_decrypt_init(<span class="kw-2">&amp;mut </span>cipher_ctx, <span class="kw-2">&amp;</span>cipher, key_bytes, <span class="prelude-val">Some</span>(iv))<span class="question-mark">?</span>;
+            }
+            DecryptionContext::None =&gt; {
+                evp_decrypt_init(<span class="kw-2">&amp;mut </span>cipher_ctx, <span class="kw-2">&amp;</span>cipher, key_bytes, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
+            }
         }
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
@@ -1342,6 +1613,22 @@
     </span><span class="kw">pub fn </span>cfb128(key: UnboundCipherKey, context: DecryptionContext) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
         <span class="self">Self</span>::new(key, OperatingMode::CFB128, context)
     }
+
+    <span class="doccomment">/// Constructs a `StreamingDecryptingKey` for decrypting using the ECB cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    </span><span class="kw">pub fn </span>ecb_pkcs7(
+        key: UnboundCipherKey,
+        context: DecryptionContext,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="self">Self</span>::new(key, OperatingMode::ECB, context)
+    }
 }
 
 <span class="attr">#[cfg(test)]
@@ -1392,7 +1679,7 @@
         <span class="kw">let </span>outlen = output.written().len();
         ciphertext.truncate(out_idx + outlen);
         <span class="kw">match </span>mode {
-            OperatingMode::CBC =&gt; {
+            OperatingMode::CBC | OperatingMode::ECB =&gt; {
                 <span class="macro">assert!</span>(ciphertext.len() &gt; plaintext.len());
                 <span class="macro">assert!</span>(ciphertext.len() &lt;= plaintext.len() + alg.block_len());
             }
@@ -1441,7 +1728,7 @@
         <span class="kw">let </span>outlen = output.written().len();
         plaintext.truncate(out_idx + outlen);
         <span class="kw">match </span>mode {
-            OperatingMode::CBC =&gt; {
+            OperatingMode::CBC | OperatingMode::ECB =&gt; {
                 <span class="macro">assert!</span>(ciphertext.len() &gt; plaintext.len());
                 <span class="macro">assert!</span>(ciphertext.len() &lt;= plaintext.len() + alg.block_len());
             }
@@ -1482,6 +1769,7 @@
     <span class="macro">helper_stream_step_encrypt_test!</span>(cbc_pkcs7);
     <span class="macro">helper_stream_step_encrypt_test!</span>(ctr);
     <span class="macro">helper_stream_step_encrypt_test!</span>(cfb128);
+    <span class="macro">helper_stream_step_encrypt_test!</span>(ecb_pkcs7);
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_step_cbc() {
@@ -1649,6 +1937,61 @@
         }
     }
 
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_step_ecb_pkcs7() {
+        <span class="kw">let </span>random = SystemRandom::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>key = [<span class="number">0u8</span>; AES_256_KEY_LEN];
+        random.fill(<span class="kw-2">&amp;mut </span>key).unwrap();
+
+        <span class="kw">let </span>encrypting_key_creator = || {
+            <span class="kw">let </span>key = UnboundCipherKey::new(<span class="kw-2">&amp;</span>AES_256, <span class="kw-2">&amp;</span>key.clone()).unwrap();
+            StreamingEncryptingKey::ecb_pkcs7(key).unwrap()
+        };
+        <span class="kw">let </span>decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+            <span class="kw">let </span>key = UnboundCipherKey::new(<span class="kw-2">&amp;</span>AES_256, <span class="kw-2">&amp;</span>key.clone()).unwrap();
+            StreamingDecryptingKey::ecb_pkcs7(key, decryption_ctx).unwrap()
+        };
+
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">13</span>..=<span class="number">21 </span>{
+            <span class="kw">for </span>j <span class="kw">in </span><span class="number">124</span>..=<span class="number">131 </span>{
+                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    i,
+                );
+            }
+            <span class="kw">for </span>j <span class="kw">in </span><span class="number">124</span>..=<span class="number">131 </span>{
+                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    j - i,
+                );
+            }
+        }
+        <span class="kw">for </span>j <span class="kw">in </span><span class="number">124</span>..=<span class="number">131 </span>{
+            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                j,
+            );
+            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                <span class="number">256</span>,
+            );
+            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                <span class="number">1</span>,
+            );
+        }
+    }
+
     <span class="macro">macro_rules!</span> streaming_cipher_kat {
         (<span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$alg</span>:expr, <span class="macro-nonterminal">$mode</span>:expr, <span class="macro-nonterminal">$key</span>:literal, <span class="macro-nonterminal">$iv</span>: literal, <span class="macro-nonterminal">$plaintext</span>:literal, <span class="macro-nonterminal">$ciphertext</span>:literal, <span class="macro-nonterminal">$from_step</span>:literal, <span class="macro-nonterminal">$to_step</span>:literal) =&gt; {
             <span class="attr">#[test]
@@ -1667,6 +2010,33 @@
 
                     <span class="kw">let </span>encrypting_key =
                         StreamingEncryptingKey::new(unbound_key, <span class="macro-nonterminal">$mode</span>, ec).unwrap();
+
+                    <span class="kw">let </span>(ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, <span class="kw-2">&amp;</span>input, step);
+
+                    <span class="macro">assert_eq!</span>(expected_ciphertext.as_slice(), ciphertext.as_ref());
+
+                    <span class="kw">let </span>unbound_key2 = UnboundCipherKey::new(<span class="macro-nonterminal">$alg</span>, <span class="kw-2">&amp;</span>key).unwrap();
+                    <span class="kw">let </span>decrypting_key =
+                        StreamingDecryptingKey::new(unbound_key2, <span class="macro-nonterminal">$mode</span>, decrypt_ctx).unwrap();
+
+                    <span class="kw">let </span>plaintext = step_decrypt(decrypting_key, <span class="kw-2">&amp;</span>ciphertext, step);
+                    <span class="macro">assert_eq!</span>(input.as_slice(), plaintext.as_ref());
+                }
+            }
+        };
+        (<span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$alg</span>:expr, <span class="macro-nonterminal">$mode</span>:expr, <span class="macro-nonterminal">$key</span>:literal, <span class="macro-nonterminal">$plaintext</span>:literal, <span class="macro-nonterminal">$ciphertext</span>:literal, <span class="macro-nonterminal">$from_step</span>:literal, <span class="macro-nonterminal">$to_step</span>:literal) =&gt; {
+            <span class="attr">#[test]
+            </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
+                <span class="kw">let </span>key = from_hex(<span class="macro-nonterminal">$key</span>).unwrap();
+                <span class="kw">let </span>input = from_hex(<span class="macro-nonterminal">$plaintext</span>).unwrap();
+                <span class="kw">let </span>expected_ciphertext = from_hex(<span class="macro-nonterminal">$ciphertext</span>).unwrap();
+
+                <span class="kw">for </span>step <span class="kw">in </span>(<span class="macro-nonterminal">$from_step</span>..=<span class="macro-nonterminal">$to_step</span>) {
+                    <span class="kw">let </span>unbound_key = UnboundCipherKey::new(<span class="macro-nonterminal">$alg</span>, <span class="kw-2">&amp;</span>key).unwrap();
+
+                    <span class="kw">let </span>encrypting_key =
+                        StreamingEncryptingKey::new(unbound_key, <span class="macro-nonterminal">$mode</span>, EncryptionContext::None)
+                            .unwrap();
 
                     <span class="kw">let </span>(ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, <span class="kw-2">&amp;</span>input, step);
 
@@ -1846,6 +2216,50 @@
         <span class="string">"13c77415ec24f3e2f784f228478a85be"</span>,
         <span class="string">"3efa583df4405aab61e18155aa7e0d"</span>,
         <span class="string">"c1f2ffe8aa5064199e8f4f1b388303"</span>,
+        <span class="number">2</span>,
+        <span class="number">9
+    </span>);
+
+    <span class="macro">streaming_cipher_kat!</span>(
+        test_openssl_aes_128_ecb_pkcs7_16_bytes,
+        <span class="kw-2">&amp;</span>AES_128,
+        OperatingMode::ECB,
+        <span class="string">"a1b7cd124f9824a1532d8440f8136788"</span>,
+        <span class="string">"388118e6848b0cea97401707a754d7a1"</span>,
+        <span class="string">"19b7c7f5d9c2bda3f957e9e7d20847828d5eb5624bcbf221014063a87b38d133"</span>,
+        <span class="number">2</span>,
+        <span class="number">9
+    </span>);
+
+    <span class="macro">streaming_cipher_kat!</span>(
+        test_openssl_aes_128_ecb_pkcs7_15_bytes,
+        <span class="kw-2">&amp;</span>AES_128,
+        OperatingMode::ECB,
+        <span class="string">"d10e12accb837aaffbb284448e53138c"</span>,
+        <span class="string">"b21cfd1c9e6e7e6e912c82c7dd1aa8"</span>,
+        <span class="string">"3d1168e61df34b51c6ab6745c20ee881"</span>,
+        <span class="number">2</span>,
+        <span class="number">9
+    </span>);
+
+    <span class="macro">streaming_cipher_kat!</span>(
+        test_openssl_aes_256_ecb_pkcs7_16_bytes,
+        <span class="kw-2">&amp;</span>AES_256,
+        OperatingMode::ECB,
+        <span class="string">"0600f4ad4eda4bc8e3e99592abdfce7eb08fee0ccc801c5ccee26134bcaafbbd"</span>,
+        <span class="string">"516b45cb1342239a549bd8c1d5998f98"</span>,
+        <span class="string">"854c593555a213e4a862c6f66aa4a79631faca131eba6f163e5cd3940e9c0a57"</span>,
+        <span class="number">2</span>,
+        <span class="number">9
+    </span>);
+
+    <span class="macro">streaming_cipher_kat!</span>(
+        test_openssl_aes_256_ecb_pkcs7_15_bytes,
+        <span class="kw-2">&amp;</span>AES_256,
+        OperatingMode::ECB,
+        <span class="string">"80f235756c8f70094ae1f99a95a599c27c4452a4b8412fd934e2b253f7098508"</span>,
+        <span class="string">"2235590b90190d7a1dc2464a0205ad"</span>,
+        <span class="string">"8547d8ac8dc6d9cebb2dc77a7034bb67"</span>,
         <span class="number">2</span>,
         <span class="number">9
     </span>);

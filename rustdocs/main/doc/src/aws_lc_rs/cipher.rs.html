@@ -1077,80 +1077,7 @@
 <a href="#1076" id="1076">1076</a>
 <a href="#1077" id="1077">1077</a>
 <a href="#1078" id="1078">1078</a>
-<a href="#1079" id="1079">1079</a>
-<a href="#1080" id="1080">1080</a>
-<a href="#1081" id="1081">1081</a>
-<a href="#1082" id="1082">1082</a>
-<a href="#1083" id="1083">1083</a>
-<a href="#1084" id="1084">1084</a>
-<a href="#1085" id="1085">1085</a>
-<a href="#1086" id="1086">1086</a>
-<a href="#1087" id="1087">1087</a>
-<a href="#1088" id="1088">1088</a>
-<a href="#1089" id="1089">1089</a>
-<a href="#1090" id="1090">1090</a>
-<a href="#1091" id="1091">1091</a>
-<a href="#1092" id="1092">1092</a>
-<a href="#1093" id="1093">1093</a>
-<a href="#1094" id="1094">1094</a>
-<a href="#1095" id="1095">1095</a>
-<a href="#1096" id="1096">1096</a>
-<a href="#1097" id="1097">1097</a>
-<a href="#1098" id="1098">1098</a>
-<a href="#1099" id="1099">1099</a>
-<a href="#1100" id="1100">1100</a>
-<a href="#1101" id="1101">1101</a>
-<a href="#1102" id="1102">1102</a>
-<a href="#1103" id="1103">1103</a>
-<a href="#1104" id="1104">1104</a>
-<a href="#1105" id="1105">1105</a>
-<a href="#1106" id="1106">1106</a>
-<a href="#1107" id="1107">1107</a>
-<a href="#1108" id="1108">1108</a>
-<a href="#1109" id="1109">1109</a>
-<a href="#1110" id="1110">1110</a>
-<a href="#1111" id="1111">1111</a>
-<a href="#1112" id="1112">1112</a>
-<a href="#1113" id="1113">1113</a>
-<a href="#1114" id="1114">1114</a>
-<a href="#1115" id="1115">1115</a>
-<a href="#1116" id="1116">1116</a>
-<a href="#1117" id="1117">1117</a>
-<a href="#1118" id="1118">1118</a>
-<a href="#1119" id="1119">1119</a>
-<a href="#1120" id="1120">1120</a>
-<a href="#1121" id="1121">1121</a>
-<a href="#1122" id="1122">1122</a>
-<a href="#1123" id="1123">1123</a>
-<a href="#1124" id="1124">1124</a>
-<a href="#1125" id="1125">1125</a>
-<a href="#1126" id="1126">1126</a>
-<a href="#1127" id="1127">1127</a>
-<a href="#1128" id="1128">1128</a>
-<a href="#1129" id="1129">1129</a>
-<a href="#1130" id="1130">1130</a>
-<a href="#1131" id="1131">1131</a>
-<a href="#1132" id="1132">1132</a>
-<a href="#1133" id="1133">1133</a>
-<a href="#1134" id="1134">1134</a>
-<a href="#1135" id="1135">1135</a>
-<a href="#1136" id="1136">1136</a>
-<a href="#1137" id="1137">1137</a>
-<a href="#1138" id="1138">1138</a>
-<a href="#1139" id="1139">1139</a>
-<a href="#1140" id="1140">1140</a>
-<a href="#1141" id="1141">1141</a>
-<a href="#1142" id="1142">1142</a>
-<a href="#1143" id="1143">1143</a>
-<a href="#1144" id="1144">1144</a>
-<a href="#1145" id="1145">1145</a>
-<a href="#1146" id="1146">1146</a>
-<a href="#1147" id="1147">1147</a>
-<a href="#1148" id="1148">1148</a>
-<a href="#1149" id="1149">1149</a>
-<a href="#1150" id="1150">1150</a>
-<a href="#1151" id="1151">1151</a>
-<a href="#1152" id="1152">1152</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2018 Brian Smith.
+<a href="#1079" id="1079">1079</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2018 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
@@ -1382,38 +1309,35 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::buffer::Buffer;
 <span class="kw">use </span><span class="kw">crate</span>::error::Unspecified;
-<span class="kw">use </span><span class="kw">crate</span>::fips::indicator_check;
 <span class="kw">use </span><span class="kw">crate</span>::hkdf;
 <span class="kw">use </span><span class="kw">crate</span>::hkdf::KeyType;
 <span class="kw">use </span><span class="kw">crate</span>::iv::{FixedLength, IV_LEN_128_BIT};
 <span class="kw">use </span><span class="kw">crate</span>::ptr::ConstPointer;
 <span class="kw">use </span>aws_lc::{
-    AES_cbc_encrypt, AES_cfb128_encrypt, AES_ctr128_encrypt, EVP_aes_128_cbc, EVP_aes_128_cfb128,
-    EVP_aes_128_ctr, EVP_aes_256_cbc, EVP_aes_256_cfb128, EVP_aes_256_ctr, AES_DECRYPT,
-    AES_ENCRYPT, AES_KEY, EVP_CIPHER,
+    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_256_cbc,
+    EVP_aes_256_cfb128, EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
 };
 <span class="kw">use </span>core::fmt::Debug;
 <span class="kw">use </span>key::SymmetricCipherKey;
-<span class="kw">use </span>zeroize::Zeroize;
 
 <span class="doccomment">/// The number of bytes in an AES 128-bit key
-</span><span class="kw">pub const </span>AES_128_KEY_LEN: usize = <span class="number">16</span>;
+</span><span class="kw">pub use </span><span class="kw">crate</span>::cipher::aes::AES_128_KEY_LEN;
 
 <span class="doccomment">/// The number of bytes in an AES 256-bit key
-</span><span class="kw">pub const </span>AES_256_KEY_LEN: usize = <span class="number">32</span>;
+</span><span class="kw">pub use </span><span class="kw">crate</span>::cipher::aes::AES_256_KEY_LEN;
 
 <span class="kw">const </span>MAX_CIPHER_KEY_LEN: usize = AES_256_KEY_LEN;
 
 <span class="doccomment">/// The number of bytes for an AES-CBC initialization vector (IV)
-</span><span class="kw">pub const </span>AES_CBC_IV_LEN: usize = <span class="number">16</span>;
+</span><span class="kw">pub use </span><span class="kw">crate</span>::cipher::aes::AES_CBC_IV_LEN;
 
 <span class="doccomment">/// The number of bytes for an AES-CTR initialization vector (IV)
-</span><span class="kw">pub const </span>AES_CTR_IV_LEN: usize = <span class="number">16</span>;
+</span><span class="kw">pub use </span><span class="kw">crate</span>::cipher::aes::AES_CTR_IV_LEN;
 
 <span class="doccomment">/// The number of bytes for an AES-CFB initialization vector (IV)
-</span><span class="kw">pub const </span>AES_CFB_IV_LEN: usize = <span class="number">16</span>;
+</span><span class="kw">pub use </span><span class="kw">crate</span>::cipher::aes::AES_CFB_IV_LEN;
 
-<span class="kw">const </span>AES_BLOCK_LEN: usize = <span class="number">16</span>;
+<span class="kw">use </span><span class="kw">crate</span>::cipher::aes::AES_BLOCK_LEN;
 
 <span class="kw">const </span>MAX_CIPHER_BLOCK_LEN: usize = AES_BLOCK_LEN;
 
@@ -1429,6 +1353,9 @@
 
     <span class="doccomment">/// CFB 128-bit mode.
     </span>CFB128,
+
+    <span class="doccomment">/// Electronic Code Book (ECB) mode.
+    </span>ECB,
 }
 
 <span class="kw">impl </span>OperatingMode {
@@ -1438,9 +1365,11 @@
             (OperatingMode::CBC, AlgorithmId::Aes128) =&gt; <span class="kw">unsafe </span>{ EVP_aes_128_cbc() },
             (OperatingMode::CTR, AlgorithmId::Aes128) =&gt; <span class="kw">unsafe </span>{ EVP_aes_128_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes128) =&gt; <span class="kw">unsafe </span>{ EVP_aes_128_cfb128() },
+            (OperatingMode::ECB, AlgorithmId::Aes128) =&gt; <span class="kw">unsafe </span>{ EVP_aes_128_ecb() },
             (OperatingMode::CBC, AlgorithmId::Aes256) =&gt; <span class="kw">unsafe </span>{ EVP_aes_256_cbc() },
             (OperatingMode::CTR, AlgorithmId::Aes256) =&gt; <span class="kw">unsafe </span>{ EVP_aes_256_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes256) =&gt; <span class="kw">unsafe </span>{ EVP_aes_256_cfb128() },
+            (OperatingMode::ECB, AlgorithmId::Aes256) =&gt; <span class="kw">unsafe </span>{ EVP_aes_256_ecb() },
         })
         .unwrap()
     }
@@ -1453,6 +1382,9 @@
         </span><span class="kw">pub enum </span><span class="macro-nonterminal">$name </span>{
             <span class="doccomment">/// A 128-bit Initialization Vector.
             </span>Iv128(FixedLength&lt;IV_LEN_128_BIT&gt;),
+
+            <span class="doccomment">/// No Cipher Context
+            </span><span class="prelude-val">None</span>,
         }
 
         <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="macro-nonterminal">$name</span>&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8] {
@@ -1461,6 +1393,7 @@
             <span class="kw">fn </span>try_from(value: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="macro-nonterminal">$name</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
                 <span class="kw">match </span>value {
                     <span class="macro-nonterminal">$name::Iv128</span>(iv) =&gt; <span class="prelude-val">Ok</span>(iv.as_ref()),
+                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Unspecified),
                 }
             }
         }
@@ -1469,6 +1402,7 @@
             <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
                 <span class="kw">match </span><span class="self">self </span>{
                     <span class="self">Self</span>::Iv128(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"Iv128"</span>),
+                    <span class="self">Self</span>::None =&gt; <span class="macro">write!</span>(f, <span class="string">"None"</span>),
                 }
             }
         }
@@ -1477,6 +1411,7 @@
             <span class="kw">fn </span>from(value: <span class="macro-nonterminal">$other</span>) -&gt; <span class="self">Self </span>{
                 <span class="kw">match </span>value {
                     <span class="macro-nonterminal">$other::Iv128</span>(iv) =&gt; <span class="macro-nonterminal">$name::Iv128</span>(iv),
+                    <span class="macro-nonterminal">$other::None </span>=&gt; <span class="macro-nonterminal">$name::None</span>,
                 }
             }
         }
@@ -1540,6 +1475,7 @@
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 =&gt; {
                     <span class="prelude-val">Ok</span>(EncryptionContext::Iv128(FixedLength::new()<span class="question-mark">?</span>))
                 }
+                OperatingMode::ECB =&gt; <span class="prelude-val">Ok</span>(EncryptionContext::None),
             },
         }
     }
@@ -1551,6 +1487,9 @@
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 =&gt; {
                     <span class="macro">matches!</span>(input, EncryptionContext::Iv128(<span class="kw">_</span>))
                 }
+                OperatingMode::ECB =&gt; {
+                    <span class="macro">matches!</span>(input, EncryptionContext::None)
+                }
             },
         }
     }
@@ -1561,6 +1500,9 @@
             AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; <span class="kw">match </span>mode {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 =&gt; {
                     <span class="macro">matches!</span>(input, DecryptionContext::Iv128(<span class="kw">_</span>))
+                }
+                OperatingMode::ECB =&gt; {
+                    <span class="macro">matches!</span>(input, DecryptionContext::None)
                 }
             },
         }
@@ -1648,8 +1590,8 @@
     //
     </span><span class="doccomment">/// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
-    </span><span class="kw">pub fn </span>ctr(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;EncryptingKey, Unspecified&gt; {
-        EncryptingKey::new(key, OperatingMode::CTR)
+    </span><span class="kw">pub fn </span>ctr(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="self">Self</span>::new(key, OperatingMode::CTR)
     }
 
     <span class="doccomment">/// Constructs an `EncryptingKey` operating in cipher feedback 128-bit mode (CFB128) using the provided key.
@@ -1661,15 +1603,32 @@
     //
     </span><span class="doccomment">/// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
-    </span><span class="kw">pub fn </span>cfb128(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;EncryptingKey, Unspecified&gt; {
-        EncryptingKey::new(key, OperatingMode::CFB128)
+    </span><span class="kw">pub fn </span>cfb128(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="self">Self</span>::new(key, OperatingMode::CFB128)
+    }
+
+    <span class="doccomment">/// Constructs an `EncryptingKey` operating in electronic code book mode (ECB) using the provided key.
+    /// 
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    </span><span class="comment">// # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    </span><span class="doccomment">/// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
+    </span><span class="kw">pub fn </span>ecb(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="self">Self</span>::new(key, OperatingMode::ECB)
     }
 
     <span class="attr">#[allow(clippy::unnecessary_wraps)]
-    </span><span class="kw">fn </span>new(key: UnboundCipherKey, mode: OperatingMode) -&gt; <span class="prelude-ty">Result</span>&lt;EncryptingKey, Unspecified&gt; {
+    </span><span class="kw">fn </span>new(key: UnboundCipherKey, mode: OperatingMode) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
         <span class="kw">let </span>algorithm = key.algorithm();
         <span class="kw">let </span>key = key.try_into()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(EncryptingKey {
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             algorithm,
             key,
             mode,
@@ -1691,6 +1650,9 @@
     <span class="doccomment">/// Encrypts the data provided in `in_out` in-place.
     /// Returns a [`DecryptionContext`] with the randomly generated IV that was used to encrypt
     /// the data provided.
+    /// 
+    /// If `EncryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
+    /// of the block length.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
@@ -1704,6 +1666,9 @@
     /// This is considered "less safe" because the caller could potentially construct
     /// a `EncryptionContext` from a previously used IV (initialization vector).
     /// Returns a [`DecryptionContext`] produced from the provided `EncryptionContext`.
+    /// 
+    /// If `EncryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
+    /// of the block length.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
@@ -1750,7 +1715,7 @@
     </span><span class="doccomment">/// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
     </span><span class="kw">pub fn </span>ctr(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;DecryptingKey, Unspecified&gt; {
-        DecryptingKey::new(key, OperatingMode::CTR)
+        <span class="self">Self</span>::new(key, OperatingMode::CTR)
     }
 
     <span class="doccomment">/// Constructs a cipher decrypting key operating in cipher feedback 128-bit mode (CFB128) using the provided key and context.
@@ -1762,15 +1727,32 @@
     //
     </span><span class="doccomment">/// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
-    </span><span class="kw">pub fn </span>cfb128(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;DecryptingKey, Unspecified&gt; {
-        DecryptingKey::new(key, OperatingMode::CFB128)
+    </span><span class="kw">pub fn </span>cfb128(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="self">Self</span>::new(key, OperatingMode::CFB128)
+    }
+
+    <span class="doccomment">/// Constructs an `DecryptingKey` operating in electronic code book (ECB) mode using the provided key.
+    ///
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    </span><span class="comment">// # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    </span><span class="doccomment">/// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the `DecryptingKey`.
+    </span><span class="kw">pub fn </span>ecb(key: UnboundCipherKey) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
+        <span class="self">Self</span>::new(key, OperatingMode::ECB)
     }
 
     <span class="attr">#[allow(clippy::unnecessary_wraps)]
-    </span><span class="kw">fn </span>new(key: UnboundCipherKey, mode: OperatingMode) -&gt; <span class="prelude-ty">Result</span>&lt;DecryptingKey, Unspecified&gt; {
+    </span><span class="kw">fn </span>new(key: UnboundCipherKey, mode: OperatingMode) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
         <span class="kw">let </span>algorithm = key.algorithm();
         <span class="kw">let </span>key = key.try_into()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(DecryptingKey {
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             algorithm,
             key,
             mode,
@@ -1791,6 +1773,9 @@
 
     <span class="doccomment">/// Decrypts the data provided in `in_out` in-place.
     /// Returns a references to the decrypted data.
+    /// 
+    /// If `DecryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
+    /// of the block length.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
@@ -1822,21 +1807,35 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;DecryptionContext, Unspecified&gt; {
     <span class="kw">let </span>block_len = algorithm.block_len();
 
-    <span class="kw">if </span>mode == OperatingMode::CBC &amp;&amp; (in_out.len() % block_len) != <span class="number">0 </span>{
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+    <span class="kw">match </span>mode {
+        OperatingMode::CBC | OperatingMode::ECB =&gt; {
+            <span class="kw">if </span>in_out.len() % block_len != <span class="number">0 </span>{
+                <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+            }
+        }
+        <span class="kw">_ </span>=&gt; {}
     }
 
     <span class="kw">match </span>mode {
         OperatingMode::CBC =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; encrypt_aes_cbc_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+                aes::encrypt_cbc_mode(key, context, in_out)
+            }
         },
         OperatingMode::CTR =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; encrypt_aes_ctr_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+                aes::encrypt_ctr_mode(key, context, in_out)
+            }
         },
         <span class="comment">// TODO: Hopefully support CFB1, and CFB8
         </span>OperatingMode::CFB128 =&gt; <span class="kw">match </span>algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
-                encrypt_aes_cfb_mode(key, mode, context, in_out)
+                aes::encrypt_cfb_mode(key, mode, context, in_out)
+            }
+        },
+        OperatingMode::ECB =&gt; <span class="kw">match </span>algorithm.id() {
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+                aes::encrypt_ecb_mode(key, context, in_out)
             }
         },
     }
@@ -1851,252 +1850,38 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'in_out </span><span class="kw-2">mut </span>[u8], Unspecified&gt; {
     <span class="kw">let </span>block_len = algorithm.block_len();
 
-    <span class="kw">if </span>mode == OperatingMode::CBC &amp;&amp; (in_out.len() % block_len) != <span class="number">0 </span>{
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+    <span class="kw">match </span>mode {
+        OperatingMode::CBC | OperatingMode::ECB =&gt; {
+            <span class="kw">if </span>in_out.len() % block_len != <span class="number">0 </span>{
+                <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+            }
+        }
+        <span class="kw">_ </span>=&gt; {}
     }
 
     <span class="kw">match </span>mode {
         OperatingMode::CBC =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; decrypt_aes_cbc_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+                aes::decrypt_cbc_mode(key, context, in_out)
+            }
         },
         OperatingMode::CTR =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; decrypt_aes_ctr_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+                aes::decrypt_ctr_mode(key, context, in_out)
+            }
         },
         <span class="comment">// TODO: Hopefully support CFB1, and CFB8
         </span>OperatingMode::CFB128 =&gt; <span class="kw">match </span>algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
-                decrypt_aes_cfb_mode(key, mode, context, in_out)
+                aes::decrypt_cfb_mode(key, mode, context, in_out)
+            }
+        },
+        OperatingMode::ECB =&gt; <span class="kw">match </span>algorithm.id() {
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+                aes::decrypt_ecb_mode(key, context, in_out)
             }
         },
     }
-}
-
-<span class="kw">fn </span>encrypt_aes_ctr_mode(
-    key: <span class="kw-2">&amp;</span>SymmetricCipherKey,
-    context: EncryptionContext,
-    in_out: <span class="kw-2">&amp;mut </span>[u8],
-) -&gt; <span class="prelude-ty">Result</span>&lt;DecryptionContext, Unspecified&gt; {
-    <span class="attr">#[allow(clippy::match_wildcard_for_single_variants)]
-    </span><span class="kw">let </span>key = <span class="kw">match </span><span class="kw-2">&amp;</span>key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } =&gt; {
-            enc_key
-        }
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-    };
-
-    <span class="kw">let </span><span class="kw-2">mut </span>iv = {
-        <span class="kw">let </span><span class="kw-2">mut </span>iv = [<span class="number">0u8</span>; AES_CTR_IV_LEN];
-        iv.copy_from_slice((<span class="kw-2">&amp;</span>context).try_into()<span class="question-mark">?</span>);
-        iv
-    };
-
-    <span class="kw">let </span><span class="kw-2">mut </span>buffer = [<span class="number">0u8</span>; AES_BLOCK_LEN];
-
-    aes_ctr128_encrypt(key, <span class="kw-2">&amp;mut </span>iv, <span class="kw-2">&amp;mut </span>buffer, in_out);
-    iv.zeroize();
-
-    <span class="prelude-val">Ok</span>(context.into())
-}
-
-<span class="kw">fn </span>decrypt_aes_ctr_mode&lt;<span class="lifetime">'in_out</span>&gt;(
-    key: <span class="kw-2">&amp;</span>SymmetricCipherKey,
-    context: DecryptionContext,
-    in_out: <span class="kw-2">&amp;</span><span class="lifetime">'in_out </span><span class="kw-2">mut </span>[u8],
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'in_out </span><span class="kw-2">mut </span>[u8], Unspecified&gt; {
-    <span class="comment">// it's the same in CTR, just providing a nice named wrapper to match
-    </span>encrypt_aes_ctr_mode(key, context.into(), in_out).map(|<span class="kw">_</span>| in_out)
-}
-
-<span class="kw">fn </span>encrypt_aes_cbc_mode(
-    key: <span class="kw-2">&amp;</span>SymmetricCipherKey,
-    context: EncryptionContext,
-    in_out: <span class="kw-2">&amp;mut </span>[u8],
-) -&gt; <span class="prelude-ty">Result</span>&lt;DecryptionContext, Unspecified&gt; {
-    <span class="attr">#[allow(clippy::match_wildcard_for_single_variants)]
-    </span><span class="kw">let </span>key = <span class="kw">match </span><span class="kw-2">&amp;</span>key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } =&gt; {
-            enc_key
-        }
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-    };
-
-    <span class="kw">let </span><span class="kw-2">mut </span>iv = {
-        <span class="kw">let </span><span class="kw-2">mut </span>iv = [<span class="number">0u8</span>; AES_CBC_IV_LEN];
-        iv.copy_from_slice((<span class="kw-2">&amp;</span>context).try_into()<span class="question-mark">?</span>);
-        iv
-    };
-
-    aes_cbc_encrypt(key, <span class="kw-2">&amp;mut </span>iv, in_out);
-    iv.zeroize();
-
-    <span class="prelude-val">Ok</span>(context.into())
-}
-
-<span class="attr">#[allow(clippy::needless_pass_by_value)]
-</span><span class="kw">fn </span>decrypt_aes_cbc_mode&lt;<span class="lifetime">'in_out</span>&gt;(
-    key: <span class="kw-2">&amp;</span>SymmetricCipherKey,
-    context: DecryptionContext,
-    in_out: <span class="kw-2">&amp;</span><span class="lifetime">'in_out </span><span class="kw-2">mut </span>[u8],
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'in_out </span><span class="kw-2">mut </span>[u8], Unspecified&gt; {
-    <span class="attr">#[allow(clippy::match_wildcard_for_single_variants)]
-    </span><span class="kw">let </span>key = <span class="kw">match </span><span class="kw-2">&amp;</span>key {
-        SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } =&gt; {
-            dec_key
-        }
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-    };
-
-    <span class="kw">let </span><span class="kw-2">mut </span>iv = {
-        <span class="kw">let </span><span class="kw-2">mut </span>iv = [<span class="number">0u8</span>; AES_CBC_IV_LEN];
-        iv.copy_from_slice((<span class="kw-2">&amp;</span>context).try_into()<span class="question-mark">?</span>);
-        iv
-    };
-
-    aes_cbc_decrypt(key, <span class="kw-2">&amp;mut </span>iv, in_out);
-    iv.zeroize();
-
-    <span class="prelude-val">Ok</span>(in_out)
-}
-
-<span class="attr">#[allow(clippy::needless_pass_by_value)]
-</span><span class="kw">fn </span>encrypt_aes_cfb_mode(
-    key: <span class="kw-2">&amp;</span>SymmetricCipherKey,
-    mode: OperatingMode,
-    context: EncryptionContext,
-    in_out: <span class="kw-2">&amp;mut </span>[u8],
-) -&gt; <span class="prelude-ty">Result</span>&lt;DecryptionContext, Unspecified&gt; {
-    <span class="attr">#[allow(clippy::match_wildcard_for_single_variants)]
-    </span><span class="kw">let </span>key = <span class="kw">match </span><span class="kw-2">&amp;</span>key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } =&gt; {
-            enc_key
-        }
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-    };
-
-    <span class="kw">let </span><span class="kw-2">mut </span>iv = {
-        <span class="kw">let </span><span class="kw-2">mut </span>iv = [<span class="number">0u8</span>; AES_CFB_IV_LEN];
-        iv.copy_from_slice((<span class="kw-2">&amp;</span>context).try_into()<span class="question-mark">?</span>);
-        iv
-    };
-
-    <span class="kw">let </span>cfb_encrypt: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>AES_KEY, <span class="kw-2">&amp;mut </span>[u8], <span class="kw-2">&amp;mut </span>[u8]) = <span class="kw">match </span>mode {
-        <span class="comment">// TODO: Hopefully support CFB1, and CFB8
-        </span>OperatingMode::CFB128 =&gt; aes_cfb128_encrypt,
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-    };
-
-    cfb_encrypt(key, <span class="kw-2">&amp;mut </span>iv, in_out);
-    iv.zeroize();
-
-    <span class="prelude-val">Ok</span>(context.into())
-}
-
-<span class="attr">#[allow(clippy::needless_pass_by_value)]
-</span><span class="kw">fn </span>decrypt_aes_cfb_mode&lt;<span class="lifetime">'in_out</span>&gt;(
-    key: <span class="kw-2">&amp;</span>SymmetricCipherKey,
-    mode: OperatingMode,
-    context: DecryptionContext,
-    in_out: <span class="kw-2">&amp;</span><span class="lifetime">'in_out </span><span class="kw-2">mut </span>[u8],
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'in_out </span><span class="kw-2">mut </span>[u8], Unspecified&gt; {
-    <span class="attr">#[allow(clippy::match_wildcard_for_single_variants)]
-    </span><span class="kw">let </span>key = <span class="kw">match </span><span class="kw-2">&amp;</span>key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } =&gt; {
-            enc_key
-        }
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-    };
-
-    <span class="kw">let </span><span class="kw-2">mut </span>iv = {
-        <span class="kw">let </span><span class="kw-2">mut </span>iv = [<span class="number">0u8</span>; AES_CFB_IV_LEN];
-        iv.copy_from_slice((<span class="kw-2">&amp;</span>context).try_into()<span class="question-mark">?</span>);
-        iv
-    };
-
-    <span class="kw">let </span>cfb_decrypt: <span class="kw">fn</span>(<span class="kw-2">&amp;</span>AES_KEY, <span class="kw-2">&amp;mut </span>[u8], <span class="kw-2">&amp;mut </span>[u8]) = <span class="kw">match </span>mode {
-        <span class="comment">// TODO: Hopefully support CFB1, and CFB8
-        </span>OperatingMode::CFB128 =&gt; aes_cfb128_decrypt,
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-    };
-
-    cfb_decrypt(key, <span class="kw-2">&amp;mut </span>iv, in_out);
-
-    iv.zeroize();
-
-    <span class="prelude-val">Ok</span>(in_out)
-}
-
-<span class="kw">fn </span>aes_ctr128_encrypt(key: <span class="kw-2">&amp;</span>AES_KEY, iv: <span class="kw-2">&amp;mut </span>[u8], block_buffer: <span class="kw-2">&amp;mut </span>[u8], in_out: <span class="kw-2">&amp;mut </span>[u8]) {
-    <span class="kw">let </span><span class="kw-2">mut </span>num: u32 = <span class="number">0</span>;
-
-    <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
-        AES_ctr128_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            block_buffer.as_mut_ptr(),
-            <span class="kw-2">&amp;mut </span>num,
-        );
-    });
-
-    Zeroize::zeroize(block_buffer);
-}
-
-<span class="kw">fn </span>aes_cbc_encrypt(key: <span class="kw-2">&amp;</span>AES_KEY, iv: <span class="kw-2">&amp;mut </span>[u8], in_out: <span class="kw-2">&amp;mut </span>[u8]) {
-    <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
-        AES_cbc_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            AES_ENCRYPT,
-        );
-    });
-}
-
-<span class="kw">fn </span>aes_cbc_decrypt(key: <span class="kw-2">&amp;</span>AES_KEY, iv: <span class="kw-2">&amp;mut </span>[u8], in_out: <span class="kw-2">&amp;mut </span>[u8]) {
-    <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
-        AES_cbc_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            AES_DECRYPT,
-        );
-    });
-}
-
-<span class="kw">fn </span>aes_cfb128_encrypt(key: <span class="kw-2">&amp;</span>AES_KEY, iv: <span class="kw-2">&amp;mut </span>[u8], in_out: <span class="kw-2">&amp;mut </span>[u8]) {
-    <span class="kw">let </span><span class="kw-2">mut </span>num: i32 = <span class="number">0</span>;
-    <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
-        AES_cfb128_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            <span class="kw-2">&amp;mut </span>num,
-            AES_ENCRYPT,
-        );
-    });
-}
-
-<span class="kw">fn </span>aes_cfb128_decrypt(key: <span class="kw-2">&amp;</span>AES_KEY, iv: <span class="kw-2">&amp;mut </span>[u8], in_out: <span class="kw-2">&amp;mut </span>[u8]) {
-    <span class="kw">let </span><span class="kw-2">mut </span>num: i32 = <span class="number">0</span>;
-    <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
-        AES_cfb128_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            <span class="kw-2">&amp;mut </span>num,
-            AES_DECRYPT,
-        );
-    });
 }
 
 <span class="attr">#[cfg(test)]
@@ -2193,12 +1978,35 @@
     }
 
     <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_aes_128_cfb128() {
+        <span class="kw">let </span>key = from_hex(<span class="string">"000102030405060708090a0b0c0d0e0f"</span>).unwrap();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..=<span class="number">50 </span>{
+            helper_test_cipher_n_bytes(key.as_slice(), <span class="kw-2">&amp;</span>AES_128, OperatingMode::CFB128, i);
+        }
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_aes_256_cfb128() {
+        <span class="kw">let </span>key =
+            from_hex(<span class="string">"000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f"</span>).unwrap();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..=<span class="number">50 </span>{
+            helper_test_cipher_n_bytes(key.as_slice(), <span class="kw-2">&amp;</span>AES_256, OperatingMode::CFB128, i);
+        }
+    }
+
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_aes_256_ctr() {
         <span class="kw">let </span>key =
             from_hex(<span class="string">"000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f"</span>).unwrap();
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..=<span class="number">50 </span>{
             helper_test_cipher_n_bytes(key.as_slice(), <span class="kw-2">&amp;</span>AES_256, OperatingMode::CTR, i);
         }
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_aes_128_ecb() {
+        <span class="kw">let </span>key = from_hex(<span class="string">"000102030405060708090a0b0c0d0e0f"</span>).unwrap();
+        <span class="kw">_ </span>= key;
     }
 
     <span class="macro">macro_rules!</span> cipher_kat {
@@ -2230,6 +2038,34 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>in_out = input.clone();
 
                 <span class="kw">let </span>context = encrypting_key.less_safe_encrypt(<span class="kw-2">&amp;mut </span>in_out, ec).unwrap();
+
+                <span class="macro">assert_eq!</span>(expected_ciphertext, in_out);
+
+                <span class="kw">let </span>unbound_key2 = UnboundCipherKey::new(alg, <span class="kw-2">&amp;</span>key).unwrap();
+                <span class="kw">let </span>decrypting_key = DecryptingKey::new(unbound_key2, <span class="macro-nonterminal">$mode</span>).unwrap();
+
+                <span class="kw">let </span>plaintext = decrypting_key.decrypt(<span class="kw-2">&amp;mut </span>in_out, context).unwrap();
+                <span class="macro">assert_eq!</span>(input.as_slice(), plaintext);
+            }
+        };
+        (<span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$alg</span>:expr, <span class="macro-nonterminal">$mode</span>:expr, <span class="macro-nonterminal">$key</span>:literal, <span class="macro-nonterminal">$plaintext</span>:literal, <span class="macro-nonterminal">$ciphertext</span>:literal) =&gt; {
+            <span class="attr">#[test]
+            </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
+                <span class="kw">let </span>key = from_hex(<span class="macro-nonterminal">$key</span>).unwrap();
+                <span class="kw">let </span>input = from_hex(<span class="macro-nonterminal">$plaintext</span>).unwrap();
+                <span class="kw">let </span>expected_ciphertext = from_hex(<span class="macro-nonterminal">$ciphertext</span>).unwrap();
+
+                <span class="kw">let </span>alg = <span class="macro-nonterminal">$alg</span>;
+
+                <span class="kw">let </span>unbound_key = UnboundCipherKey::new(alg, <span class="kw-2">&amp;</span>key).unwrap();
+
+                <span class="kw">let </span>encrypting_key = EncryptingKey::new(unbound_key, <span class="macro-nonterminal">$mode</span>).unwrap();
+
+                <span class="kw">let </span><span class="kw-2">mut </span>in_out = input.clone();
+
+                <span class="kw">let </span>context = encrypting_key
+                    .less_safe_encrypt(<span class="kw-2">&amp;mut </span>in_out, EncryptionContext::None)
+                    .unwrap();
 
                 <span class="macro">assert_eq!</span>(expected_ciphertext, in_out);
 
@@ -2300,6 +2136,24 @@
         <span class="string">"000102030405060708090a0b0c0d0e0f"</span>,
         <span class="string">"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710"</span>,
         <span class="string">"dc7e84bfda79164b7ecd8486985d386039ffed143b28b1c832113c6331e5407bdf10132415e54b92a13ed0a8267ae2f975a385741ab9cef82031623d55b1e471"
+    </span>);
+
+    <span class="macro">cipher_kat!</span>(
+        test_sp800_38a_ecb_aes128,
+        <span class="kw-2">&amp;</span>AES_128,
+        OperatingMode::ECB,
+        <span class="string">"2b7e151628aed2a6abf7158809cf4f3c"</span>,
+        <span class="string">"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710"</span>,
+        <span class="string">"3ad77bb40d7a3660a89ecaf32466ef97f5d3d58503b9699de785895a96fdbaaf43b1cd7f598ece23881b00e3ed0306887b0c785e27e8ad3f8223207104725dd4"
+    </span>);
+
+    <span class="macro">cipher_kat!</span>(
+        test_sp800_38a_ecb_aes256,
+        <span class="kw-2">&amp;</span>AES_256,
+        OperatingMode::ECB,
+        <span class="string">"603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4"</span>,
+        <span class="string">"6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710"</span>,
+        <span class="string">"f3eed1bdb5d2a03c064b5a7e3db181f8591ccb10d410ed26dc5ba74a31362870b6ed21b99ca6f4f9f153e7b1beafed1d23304b7a39f9f3ff067d8d8f9e24ecc7"
     </span>);
 }
 </code></pre></div></section></main></body></html>

@@ -195,7 +195,7 @@
 //!
 //! See draft-ietf-quic-tls.
 
-</span><span class="kw">use </span><span class="kw">crate</span>::cipher::aes::encrypt_block_aes;
+</span><span class="kw">use </span><span class="kw">crate</span>::cipher::aes::encrypt_block;
 <span class="kw">use </span><span class="kw">crate</span>::cipher::block;
 <span class="kw">use </span><span class="kw">crate</span>::cipher::chacha::encrypt_block_chacha20;
 <span class="kw">use </span><span class="kw">crate</span>::cipher::key::SymmetricCipherKey;
@@ -337,7 +337,7 @@
 
     <span class="kw">let </span>encrypted_block = <span class="kw">match </span>cipher_key {
         SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } =&gt; {
-            encrypt_block_aes(enc_key, block)
+            encrypt_block(enc_key, block)
         }
         SymmetricCipherKey::ChaCha20 { raw_key } =&gt; {
             <span class="kw">let </span>plaintext = block.as_ref();
