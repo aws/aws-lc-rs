@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Thu Nov  7 21:54:32 UTC 2024
+// Fri Nov 15 14:10:29 UTC 2024
 
 use crate::cc_builder::Library;
 
@@ -101,6 +101,7 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/evp_extra/evp_asn1.c",
         "crypto/evp_extra/p_dh.c",
         "crypto/evp_extra/p_dh_asn1.c",
+        "crypto/evp_extra/p_dsa.c",
         "crypto/evp_extra/p_dsa_asn1.c",
         "crypto/evp_extra/p_ec_asn1.c",
         "crypto/evp_extra/p_ed25519_asn1.c",
