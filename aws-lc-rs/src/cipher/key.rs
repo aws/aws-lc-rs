@@ -1,7 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::cipher::aes::encrypt_block_aes;
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 use crate::cipher::{AES_128_KEY_LEN, AES_256_KEY_LEN};
@@ -133,7 +132,9 @@ impl SymmetricCipherKey {
     pub(crate) fn encrypt_block(&self, block: Block) -> Block {
         match self {
             SymmetricCipherKey::Aes128 { enc_key, .. }
-            | SymmetricCipherKey::Aes256 { enc_key, .. } => encrypt_block_aes(enc_key, block),
+            | SymmetricCipherKey::Aes256 { enc_key, .. } => {
+                super::aes::encrypt_block(enc_key, block)
+            }
             SymmetricCipherKey::ChaCha20 { .. } => panic!("Unsupported algorithm!"),
         }
     }
