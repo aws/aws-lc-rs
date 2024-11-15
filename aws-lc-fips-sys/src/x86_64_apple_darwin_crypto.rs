@@ -3457,107 +3457,6 @@ pub const X509_R_NO_CERTIFICATE_FOUND: i32 = 141;
 pub const X509_R_NO_CERTIFICATE_OR_CRL_FOUND: i32 = 142;
 pub const X509_R_NO_CRL_FOUND: i32 = 143;
 pub const X509_R_INVALID_POLICY_EXTENSION: i32 = 144;
-pub const PEM_BUFSIZE: i32 = 1024;
-pub const PEM_STRING_X509_OLD: &[u8; 17] = b"X509 CERTIFICATE\0";
-pub const PEM_STRING_X509: &[u8; 12] = b"CERTIFICATE\0";
-pub const PEM_STRING_X509_PAIR: &[u8; 17] = b"CERTIFICATE PAIR\0";
-pub const PEM_STRING_X509_TRUSTED: &[u8; 20] = b"TRUSTED CERTIFICATE\0";
-pub const PEM_STRING_X509_REQ_OLD: &[u8; 24] = b"NEW CERTIFICATE REQUEST\0";
-pub const PEM_STRING_X509_REQ: &[u8; 20] = b"CERTIFICATE REQUEST\0";
-pub const PEM_STRING_X509_CRL: &[u8; 9] = b"X509 CRL\0";
-pub const PEM_STRING_EVP_PKEY: &[u8; 16] = b"ANY PRIVATE KEY\0";
-pub const PEM_STRING_PUBLIC: &[u8; 11] = b"PUBLIC KEY\0";
-pub const PEM_STRING_RSA: &[u8; 16] = b"RSA PRIVATE KEY\0";
-pub const PEM_STRING_RSA_PUBLIC: &[u8; 15] = b"RSA PUBLIC KEY\0";
-pub const PEM_STRING_DSA: &[u8; 16] = b"DSA PRIVATE KEY\0";
-pub const PEM_STRING_DSA_PUBLIC: &[u8; 15] = b"DSA PUBLIC KEY\0";
-pub const PEM_STRING_EC: &[u8; 15] = b"EC PRIVATE KEY\0";
-pub const PEM_STRING_PKCS7: &[u8; 6] = b"PKCS7\0";
-pub const PEM_STRING_PKCS7_SIGNED: &[u8; 20] = b"PKCS #7 SIGNED DATA\0";
-pub const PEM_STRING_PKCS8: &[u8; 22] = b"ENCRYPTED PRIVATE KEY\0";
-pub const PEM_STRING_PKCS8INF: &[u8; 12] = b"PRIVATE KEY\0";
-pub const PEM_STRING_DHPARAMS: &[u8; 14] = b"DH PARAMETERS\0";
-pub const PEM_STRING_SSL_SESSION: &[u8; 23] = b"SSL SESSION PARAMETERS\0";
-pub const PEM_STRING_DSAPARAMS: &[u8; 15] = b"DSA PARAMETERS\0";
-pub const PEM_STRING_ECDSA_PUBLIC: &[u8; 17] = b"ECDSA PUBLIC KEY\0";
-pub const PEM_STRING_ECPRIVATEKEY: &[u8; 15] = b"EC PRIVATE KEY\0";
-pub const PEM_STRING_CMS: &[u8; 4] = b"CMS\0";
-pub const PEM_TYPE_ENCRYPTED: i32 = 10;
-pub const PEM_TYPE_MIC_ONLY: i32 = 20;
-pub const PEM_TYPE_MIC_CLEAR: i32 = 30;
-pub const PEM_TYPE_CLEAR: i32 = 40;
-pub const PEM_R_BAD_BASE64_DECODE: i32 = 100;
-pub const PEM_R_BAD_DECRYPT: i32 = 101;
-pub const PEM_R_BAD_END_LINE: i32 = 102;
-pub const PEM_R_BAD_IV_CHARS: i32 = 103;
-pub const PEM_R_BAD_PASSWORD_READ: i32 = 104;
-pub const PEM_R_CIPHER_IS_NULL: i32 = 105;
-pub const PEM_R_ERROR_CONVERTING_PRIVATE_KEY: i32 = 106;
-pub const PEM_R_NOT_DEK_INFO: i32 = 107;
-pub const PEM_R_NOT_ENCRYPTED: i32 = 108;
-pub const PEM_R_NOT_PROC_TYPE: i32 = 109;
-pub const PEM_R_NO_START_LINE: i32 = 110;
-pub const PEM_R_READ_KEY: i32 = 111;
-pub const PEM_R_SHORT_HEADER: i32 = 112;
-pub const PEM_R_UNSUPPORTED_CIPHER: i32 = 113;
-pub const PEM_R_UNSUPPORTED_ENCRYPTION: i32 = 114;
-pub const PKCS12_DEFAULT_ITER: i32 = 2048;
-pub const PKCS8_R_BAD_PKCS12_DATA: i32 = 100;
-pub const PKCS8_R_BAD_PKCS12_VERSION: i32 = 101;
-pub const PKCS8_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER: i32 = 102;
-pub const PKCS8_R_CRYPT_ERROR: i32 = 103;
-pub const PKCS8_R_DECODE_ERROR: i32 = 104;
-pub const PKCS8_R_ENCODE_ERROR: i32 = 105;
-pub const PKCS8_R_ENCRYPT_ERROR: i32 = 106;
-pub const PKCS8_R_ERROR_SETTING_CIPHER_PARAMS: i32 = 107;
-pub const PKCS8_R_INCORRECT_PASSWORD: i32 = 108;
-pub const PKCS8_R_KEYGEN_FAILURE: i32 = 109;
-pub const PKCS8_R_KEY_GEN_ERROR: i32 = 110;
-pub const PKCS8_R_METHOD_NOT_SUPPORTED: i32 = 111;
-pub const PKCS8_R_MISSING_MAC: i32 = 112;
-pub const PKCS8_R_MULTIPLE_PRIVATE_KEYS_IN_PKCS12: i32 = 113;
-pub const PKCS8_R_PKCS12_PUBLIC_KEY_INTEGRITY_NOT_SUPPORTED: i32 = 114;
-pub const PKCS8_R_PKCS12_TOO_DEEPLY_NESTED: i32 = 115;
-pub const PKCS8_R_PRIVATE_KEY_DECODE_ERROR: i32 = 116;
-pub const PKCS8_R_PRIVATE_KEY_ENCODE_ERROR: i32 = 117;
-pub const PKCS8_R_TOO_LONG: i32 = 118;
-pub const PKCS8_R_UNKNOWN_ALGORITHM: i32 = 119;
-pub const PKCS8_R_UNKNOWN_CIPHER: i32 = 120;
-pub const PKCS8_R_UNKNOWN_CIPHER_ALGORITHM: i32 = 121;
-pub const PKCS8_R_UNKNOWN_DIGEST: i32 = 122;
-pub const PKCS8_R_UNKNOWN_HASH: i32 = 123;
-pub const PKCS8_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM: i32 = 124;
-pub const PKCS8_R_UNSUPPORTED_KEYLENGTH: i32 = 125;
-pub const PKCS8_R_UNSUPPORTED_SALT_TYPE: i32 = 126;
-pub const PKCS8_R_UNSUPPORTED_CIPHER: i32 = 127;
-pub const PKCS8_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION: i32 = 128;
-pub const PKCS8_R_BAD_ITERATION_COUNT: i32 = 129;
-pub const PKCS8_R_UNSUPPORTED_PRF: i32 = 130;
-pub const PKCS8_R_INVALID_CHARACTERS: i32 = 131;
-pub const PKCS8_R_UNSUPPORTED_OPTIONS: i32 = 132;
-pub const PKCS8_R_AMBIGUOUS_FRIENDLY_NAME: i32 = 133;
-pub const RIPEMD160_CBLOCK: i32 = 64;
-pub const RIPEMD160_LBLOCK: i32 = 16;
-pub const RIPEMD160_DIGEST_LENGTH: i32 = 20;
-pub const AWSLC_MODE_STRING: &[u8; 8] = b"AWS-LC \0";
-pub const AWSLC_VERSION_STRING: &[u8; 14] = b"AWS-LC 2.0.15\0";
-pub const TRUST_TOKEN_MAX_PRIVATE_KEY_SIZE: i32 = 512;
-pub const TRUST_TOKEN_MAX_PUBLIC_KEY_SIZE: i32 = 512;
-pub const TRUST_TOKEN_R_KEYGEN_FAILURE: i32 = 100;
-pub const TRUST_TOKEN_R_BUFFER_TOO_SMALL: i32 = 101;
-pub const TRUST_TOKEN_R_OVER_BATCHSIZE: i32 = 102;
-pub const TRUST_TOKEN_R_DECODE_ERROR: i32 = 103;
-pub const TRUST_TOKEN_R_SRR_SIGNATURE_ERROR: i32 = 104;
-pub const TRUST_TOKEN_R_DECODE_FAILURE: i32 = 105;
-pub const TRUST_TOKEN_R_INVALID_METADATA: i32 = 106;
-pub const TRUST_TOKEN_R_TOO_MANY_KEYS: i32 = 107;
-pub const TRUST_TOKEN_R_NO_KEYS_CONFIGURED: i32 = 108;
-pub const TRUST_TOKEN_R_INVALID_KEY_ID: i32 = 109;
-pub const TRUST_TOKEN_R_INVALID_TOKEN: i32 = 110;
-pub const TRUST_TOKEN_R_BAD_VALIDITY_CHECK: i32 = 111;
-pub const TRUST_TOKEN_R_NO_SRR_KEY_CONFIGURED: i32 = 112;
-pub const TRUST_TOKEN_R_INVALID_METADATA_KEY: i32 = 113;
-pub const TRUST_TOKEN_R_INVALID_PROOF: i32 = 114;
 pub const X509V3_EXT_DYNAMIC: i32 = 1;
 pub const X509V3_EXT_CTX_DEP: i32 = 2;
 pub const X509V3_EXT_MULTILINE: i32 = 4;
@@ -3726,6 +3625,134 @@ pub const X509V3_R_UNSUPPORTED_TYPE: i32 = 161;
 pub const X509V3_R_USER_TOO_LONG: i32 = 162;
 pub const X509V3_R_INVALID_VALUE: i32 = 163;
 pub const X509V3_R_TRAILING_DATA_IN_EXTENSION: i32 = 164;
+pub const OCSP_NOINTERN: i32 = 2;
+pub const OCSP_NOCHAIN: i32 = 8;
+pub const OCSP_NOEXPLICIT: i32 = 32;
+pub const OCSP_RESPONSE_STATUS_SUCCESSFUL: i32 = 0;
+pub const OCSP_RESPONSE_STATUS_MALFORMEDREQUEST: i32 = 1;
+pub const OCSP_RESPONSE_STATUS_INTERNALERROR: i32 = 2;
+pub const OCSP_RESPONSE_STATUS_TRYLATER: i32 = 3;
+pub const OCSP_RESPONSE_STATUS_SIGREQUIRED: i32 = 5;
+pub const OCSP_RESPONSE_STATUS_UNAUTHORIZED: i32 = 6;
+pub const V_OCSP_RESPID_NAME: i32 = 0;
+pub const V_OCSP_RESPID_KEY: i32 = 1;
+pub const V_OCSP_CERTSTATUS_GOOD: i32 = 0;
+pub const V_OCSP_CERTSTATUS_REVOKED: i32 = 1;
+pub const V_OCSP_CERTSTATUS_UNKNOWN: i32 = 2;
+pub const OCSP_R_CERTIFICATE_VERIFY_ERROR: i32 = 101;
+pub const OCSP_R_DIGEST_ERR: i32 = 102;
+pub const OCSP_R_MISSING_OCSPSIGNING_USAGE: i32 = 103;
+pub const OCSP_R_NOT_BASIC_RESPONSE: i32 = 104;
+pub const OCSP_R_NO_CERTIFICATES_IN_CHAIN: i32 = 105;
+pub const OCSP_R_NO_RESPONSE_DATA: i32 = 108;
+pub const OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA: i32 = 111;
+pub const OCSP_R_ROOT_CA_NOT_TRUSTED: i32 = 112;
+pub const OCSP_R_SIGNATURE_FAILURE: i32 = 117;
+pub const OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND: i32 = 118;
+pub const OCSP_R_UNKNOWN_MESSAGE_DIGEST: i32 = 119;
+pub const OCSP_R_UNKNOWN_NID: i32 = 120;
+pub const OCSP_R_NO_SIGNER_KEY: i32 = 130;
+pub const PEM_BUFSIZE: i32 = 1024;
+pub const PEM_STRING_X509_OLD: &[u8; 17] = b"X509 CERTIFICATE\0";
+pub const PEM_STRING_X509: &[u8; 12] = b"CERTIFICATE\0";
+pub const PEM_STRING_X509_PAIR: &[u8; 17] = b"CERTIFICATE PAIR\0";
+pub const PEM_STRING_X509_TRUSTED: &[u8; 20] = b"TRUSTED CERTIFICATE\0";
+pub const PEM_STRING_X509_REQ_OLD: &[u8; 24] = b"NEW CERTIFICATE REQUEST\0";
+pub const PEM_STRING_X509_REQ: &[u8; 20] = b"CERTIFICATE REQUEST\0";
+pub const PEM_STRING_X509_CRL: &[u8; 9] = b"X509 CRL\0";
+pub const PEM_STRING_EVP_PKEY: &[u8; 16] = b"ANY PRIVATE KEY\0";
+pub const PEM_STRING_PUBLIC: &[u8; 11] = b"PUBLIC KEY\0";
+pub const PEM_STRING_RSA: &[u8; 16] = b"RSA PRIVATE KEY\0";
+pub const PEM_STRING_RSA_PUBLIC: &[u8; 15] = b"RSA PUBLIC KEY\0";
+pub const PEM_STRING_DSA: &[u8; 16] = b"DSA PRIVATE KEY\0";
+pub const PEM_STRING_DSA_PUBLIC: &[u8; 15] = b"DSA PUBLIC KEY\0";
+pub const PEM_STRING_EC: &[u8; 15] = b"EC PRIVATE KEY\0";
+pub const PEM_STRING_PKCS7: &[u8; 6] = b"PKCS7\0";
+pub const PEM_STRING_PKCS7_SIGNED: &[u8; 20] = b"PKCS #7 SIGNED DATA\0";
+pub const PEM_STRING_PKCS8: &[u8; 22] = b"ENCRYPTED PRIVATE KEY\0";
+pub const PEM_STRING_PKCS8INF: &[u8; 12] = b"PRIVATE KEY\0";
+pub const PEM_STRING_DHPARAMS: &[u8; 14] = b"DH PARAMETERS\0";
+pub const PEM_STRING_SSL_SESSION: &[u8; 23] = b"SSL SESSION PARAMETERS\0";
+pub const PEM_STRING_DSAPARAMS: &[u8; 15] = b"DSA PARAMETERS\0";
+pub const PEM_STRING_ECDSA_PUBLIC: &[u8; 17] = b"ECDSA PUBLIC KEY\0";
+pub const PEM_STRING_ECPRIVATEKEY: &[u8; 15] = b"EC PRIVATE KEY\0";
+pub const PEM_STRING_CMS: &[u8; 4] = b"CMS\0";
+pub const PEM_TYPE_ENCRYPTED: i32 = 10;
+pub const PEM_TYPE_MIC_ONLY: i32 = 20;
+pub const PEM_TYPE_MIC_CLEAR: i32 = 30;
+pub const PEM_TYPE_CLEAR: i32 = 40;
+pub const PEM_R_BAD_BASE64_DECODE: i32 = 100;
+pub const PEM_R_BAD_DECRYPT: i32 = 101;
+pub const PEM_R_BAD_END_LINE: i32 = 102;
+pub const PEM_R_BAD_IV_CHARS: i32 = 103;
+pub const PEM_R_BAD_PASSWORD_READ: i32 = 104;
+pub const PEM_R_CIPHER_IS_NULL: i32 = 105;
+pub const PEM_R_ERROR_CONVERTING_PRIVATE_KEY: i32 = 106;
+pub const PEM_R_NOT_DEK_INFO: i32 = 107;
+pub const PEM_R_NOT_ENCRYPTED: i32 = 108;
+pub const PEM_R_NOT_PROC_TYPE: i32 = 109;
+pub const PEM_R_NO_START_LINE: i32 = 110;
+pub const PEM_R_READ_KEY: i32 = 111;
+pub const PEM_R_SHORT_HEADER: i32 = 112;
+pub const PEM_R_UNSUPPORTED_CIPHER: i32 = 113;
+pub const PEM_R_UNSUPPORTED_ENCRYPTION: i32 = 114;
+pub const PKCS12_DEFAULT_ITER: i32 = 2048;
+pub const PKCS8_R_BAD_PKCS12_DATA: i32 = 100;
+pub const PKCS8_R_BAD_PKCS12_VERSION: i32 = 101;
+pub const PKCS8_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER: i32 = 102;
+pub const PKCS8_R_CRYPT_ERROR: i32 = 103;
+pub const PKCS8_R_DECODE_ERROR: i32 = 104;
+pub const PKCS8_R_ENCODE_ERROR: i32 = 105;
+pub const PKCS8_R_ENCRYPT_ERROR: i32 = 106;
+pub const PKCS8_R_ERROR_SETTING_CIPHER_PARAMS: i32 = 107;
+pub const PKCS8_R_INCORRECT_PASSWORD: i32 = 108;
+pub const PKCS8_R_KEYGEN_FAILURE: i32 = 109;
+pub const PKCS8_R_KEY_GEN_ERROR: i32 = 110;
+pub const PKCS8_R_METHOD_NOT_SUPPORTED: i32 = 111;
+pub const PKCS8_R_MISSING_MAC: i32 = 112;
+pub const PKCS8_R_MULTIPLE_PRIVATE_KEYS_IN_PKCS12: i32 = 113;
+pub const PKCS8_R_PKCS12_PUBLIC_KEY_INTEGRITY_NOT_SUPPORTED: i32 = 114;
+pub const PKCS8_R_PKCS12_TOO_DEEPLY_NESTED: i32 = 115;
+pub const PKCS8_R_PRIVATE_KEY_DECODE_ERROR: i32 = 116;
+pub const PKCS8_R_PRIVATE_KEY_ENCODE_ERROR: i32 = 117;
+pub const PKCS8_R_TOO_LONG: i32 = 118;
+pub const PKCS8_R_UNKNOWN_ALGORITHM: i32 = 119;
+pub const PKCS8_R_UNKNOWN_CIPHER: i32 = 120;
+pub const PKCS8_R_UNKNOWN_CIPHER_ALGORITHM: i32 = 121;
+pub const PKCS8_R_UNKNOWN_DIGEST: i32 = 122;
+pub const PKCS8_R_UNKNOWN_HASH: i32 = 123;
+pub const PKCS8_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM: i32 = 124;
+pub const PKCS8_R_UNSUPPORTED_KEYLENGTH: i32 = 125;
+pub const PKCS8_R_UNSUPPORTED_SALT_TYPE: i32 = 126;
+pub const PKCS8_R_UNSUPPORTED_CIPHER: i32 = 127;
+pub const PKCS8_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION: i32 = 128;
+pub const PKCS8_R_BAD_ITERATION_COUNT: i32 = 129;
+pub const PKCS8_R_UNSUPPORTED_PRF: i32 = 130;
+pub const PKCS8_R_INVALID_CHARACTERS: i32 = 131;
+pub const PKCS8_R_UNSUPPORTED_OPTIONS: i32 = 132;
+pub const PKCS8_R_AMBIGUOUS_FRIENDLY_NAME: i32 = 133;
+pub const RIPEMD160_CBLOCK: i32 = 64;
+pub const RIPEMD160_LBLOCK: i32 = 16;
+pub const RIPEMD160_DIGEST_LENGTH: i32 = 20;
+pub const AWSLC_MODE_STRING: &[u8; 8] = b"AWS-LC \0";
+pub const AWSLC_VERSION_STRING: &[u8; 14] = b"AWS-LC 2.0.15\0";
+pub const TRUST_TOKEN_MAX_PRIVATE_KEY_SIZE: i32 = 512;
+pub const TRUST_TOKEN_MAX_PUBLIC_KEY_SIZE: i32 = 512;
+pub const TRUST_TOKEN_R_KEYGEN_FAILURE: i32 = 100;
+pub const TRUST_TOKEN_R_BUFFER_TOO_SMALL: i32 = 101;
+pub const TRUST_TOKEN_R_OVER_BATCHSIZE: i32 = 102;
+pub const TRUST_TOKEN_R_DECODE_ERROR: i32 = 103;
+pub const TRUST_TOKEN_R_SRR_SIGNATURE_ERROR: i32 = 104;
+pub const TRUST_TOKEN_R_DECODE_FAILURE: i32 = 105;
+pub const TRUST_TOKEN_R_INVALID_METADATA: i32 = 106;
+pub const TRUST_TOKEN_R_TOO_MANY_KEYS: i32 = 107;
+pub const TRUST_TOKEN_R_NO_KEYS_CONFIGURED: i32 = 108;
+pub const TRUST_TOKEN_R_INVALID_KEY_ID: i32 = 109;
+pub const TRUST_TOKEN_R_INVALID_TOKEN: i32 = 110;
+pub const TRUST_TOKEN_R_BAD_VALIDITY_CHECK: i32 = 111;
+pub const TRUST_TOKEN_R_NO_SRR_KEY_CONFIGURED: i32 = 112;
+pub const TRUST_TOKEN_R_INVALID_METADATA_KEY: i32 = 113;
+pub const TRUST_TOKEN_R_INVALID_PROOF: i32 = 114;
 pub type __int64_t = ::std::os::raw::c_longlong;
 pub type __darwin_va_list = __builtin_va_list;
 pub type __darwin_time_t = ::std::os::raw::c_long;
@@ -4277,7 +4304,7 @@ impl Default for aes_key_st {
 }
 pub type AES_KEY = aes_key_st;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_set_encrypt_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_set_encrypt_key"]
     pub fn AES_set_encrypt_key(
         key: *const u8,
         bits: ::std::os::raw::c_uint,
@@ -4285,7 +4312,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_set_decrypt_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_set_decrypt_key"]
     pub fn AES_set_decrypt_key(
         key: *const u8,
         bits: ::std::os::raw::c_uint,
@@ -4293,15 +4320,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_encrypt"]
     pub fn AES_encrypt(in_: *const u8, out: *mut u8, key: *const AES_KEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_decrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_decrypt"]
     pub fn AES_decrypt(in_: *const u8, out: *mut u8, key: *const AES_KEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_ctr128_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_ctr128_encrypt"]
     pub fn AES_ctr128_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -4313,7 +4340,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_ecb_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_ecb_encrypt"]
     pub fn AES_ecb_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -4322,7 +4349,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_cbc_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_cbc_encrypt"]
     pub fn AES_cbc_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -4333,7 +4360,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_ofb128_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_ofb128_encrypt"]
     pub fn AES_ofb128_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -4344,7 +4371,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_cfb128_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_cfb128_encrypt"]
     pub fn AES_cfb128_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -4356,7 +4383,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_wrap_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_wrap_key"]
     pub fn AES_wrap_key(
         key: *const AES_KEY,
         iv: *const u8,
@@ -4366,7 +4393,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_unwrap_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_unwrap_key"]
     pub fn AES_unwrap_key(
         key: *const AES_KEY,
         iv: *const u8,
@@ -4376,7 +4403,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_wrap_key_padded"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_wrap_key_padded"]
     pub fn AES_wrap_key_padded(
         key: *const AES_KEY,
         out: *mut u8,
@@ -4387,7 +4414,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_unwrap_key_padded"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_unwrap_key_padded"]
     pub fn AES_unwrap_key_padded(
         key: *const AES_KEY,
         out: *mut u8,
@@ -4934,27 +4961,27 @@ impl Default for buf_mem_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_MEM_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_MEM_new"]
     pub fn BUF_MEM_new() -> *mut BUF_MEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_MEM_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_MEM_free"]
     pub fn BUF_MEM_free(buf: *mut BUF_MEM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_MEM_reserve"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_MEM_reserve"]
     pub fn BUF_MEM_reserve(buf: *mut BUF_MEM, cap: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_MEM_grow"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_MEM_grow"]
     pub fn BUF_MEM_grow(buf: *mut BUF_MEM, len: usize) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_MEM_grow_clean"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_MEM_grow_clean"]
     pub fn BUF_MEM_grow_clean(buf: *mut BUF_MEM, len: usize) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_MEM_append"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_MEM_append"]
     pub fn BUF_MEM_append(
         buf: *mut BUF_MEM,
         in_: *const ::std::os::raw::c_void,
@@ -4962,29 +4989,29 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_strdup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_strdup"]
     pub fn BUF_strdup(str_: *const ::std::os::raw::c_char) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_strnlen"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_strnlen"]
     pub fn BUF_strnlen(str_: *const ::std::os::raw::c_char, max_len: usize) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_strndup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_strndup"]
     pub fn BUF_strndup(
         str_: *const ::std::os::raw::c_char,
         size: usize,
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_memdup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_memdup"]
     pub fn BUF_memdup(
         data: *const ::std::os::raw::c_void,
         size: usize,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_strlcpy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_strlcpy"]
     pub fn BUF_strlcpy(
         dst: *mut ::std::os::raw::c_char,
         src: *const ::std::os::raw::c_char,
@@ -4992,7 +5019,7 @@ extern "C" {
     ) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BUF_strlcat"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BUF_strlcat"]
     pub fn BUF_strlcat(
         dst: *mut ::std::os::raw::c_char,
         src: *const ::std::os::raw::c_char,
@@ -5000,38 +5027,38 @@ extern "C" {
     ) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_load_BIO_strings"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_load_BIO_strings"]
     pub fn ERR_load_BIO_strings();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_load_ERR_strings"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_load_ERR_strings"]
     pub fn ERR_load_ERR_strings();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_load_crypto_strings"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_load_crypto_strings"]
     pub fn ERR_load_crypto_strings();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_load_RAND_strings"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_load_RAND_strings"]
     pub fn ERR_load_RAND_strings();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_free_strings"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_free_strings"]
     pub fn ERR_free_strings();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_get_error"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_get_error"]
     pub fn ERR_get_error() -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_get_error_line"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_get_error_line"]
     pub fn ERR_get_error_line(
         file: *mut *const ::std::os::raw::c_char,
         line: *mut ::std::os::raw::c_int,
     ) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_get_error_line_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_get_error_line_data"]
     pub fn ERR_get_error_line_data(
         file: *mut *const ::std::os::raw::c_char,
         line: *mut ::std::os::raw::c_int,
@@ -5040,18 +5067,18 @@ extern "C" {
     ) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_peek_error"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_peek_error"]
     pub fn ERR_peek_error() -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_peek_error_line"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_peek_error_line"]
     pub fn ERR_peek_error_line(
         file: *mut *const ::std::os::raw::c_char,
         line: *mut ::std::os::raw::c_int,
     ) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_peek_error_line_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_peek_error_line_data"]
     pub fn ERR_peek_error_line_data(
         file: *mut *const ::std::os::raw::c_char,
         line: *mut ::std::os::raw::c_int,
@@ -5060,18 +5087,18 @@ extern "C" {
     ) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_peek_last_error"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_peek_last_error"]
     pub fn ERR_peek_last_error() -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_peek_last_error_line"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_peek_last_error_line"]
     pub fn ERR_peek_last_error_line(
         file: *mut *const ::std::os::raw::c_char,
         line: *mut ::std::os::raw::c_int,
     ) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_peek_last_error_line_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_peek_last_error_line_data"]
     pub fn ERR_peek_last_error_line_data(
         file: *mut *const ::std::os::raw::c_char,
         line: *mut ::std::os::raw::c_int,
@@ -5080,7 +5107,7 @@ extern "C" {
     ) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_error_string_n"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_error_string_n"]
     pub fn ERR_error_string_n(
         packed_error: u32,
         buf: *mut ::std::os::raw::c_char,
@@ -5088,11 +5115,11 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_lib_error_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_lib_error_string"]
     pub fn ERR_lib_error_string(packed_error: u32) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_reason_error_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_reason_error_string"]
     pub fn ERR_reason_error_string(packed_error: u32) -> *const ::std::os::raw::c_char;
 }
 pub type ERR_print_errors_callback_t = ::std::option::Option<
@@ -5103,30 +5130,30 @@ pub type ERR_print_errors_callback_t = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_print_errors_cb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_print_errors_cb"]
     pub fn ERR_print_errors_cb(
         callback: ERR_print_errors_callback_t,
         ctx: *mut ::std::os::raw::c_void,
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_print_errors_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_print_errors_fp"]
     pub fn ERR_print_errors_fp(file: *mut FILE);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_clear_error"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_clear_error"]
     pub fn ERR_clear_error();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_set_mark"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_set_mark"]
     pub fn ERR_set_mark() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_pop_to_mark"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_pop_to_mark"]
     pub fn ERR_pop_to_mark() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_get_next_error_library"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_get_next_error_library"]
     pub fn ERR_get_next_error_library() -> ::std::os::raw::c_int;
 }
 pub const ERR_LIB_NONE: _bindgen_ty_1 = 1;
@@ -5165,30 +5192,30 @@ pub const ERR_LIB_USER: _bindgen_ty_1 = 33;
 pub const ERR_NUM_LIBS: _bindgen_ty_1 = 34;
 pub type _bindgen_ty_1 = ::std::os::raw::c_uint;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_remove_state"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_remove_state"]
     pub fn ERR_remove_state(pid: ::std::os::raw::c_ulong);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_remove_thread_state"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_remove_thread_state"]
     pub fn ERR_remove_thread_state(tid: *const CRYPTO_THREADID);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_func_error_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_func_error_string"]
     pub fn ERR_func_error_string(packed_error: u32) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_error_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_error_string"]
     pub fn ERR_error_string(
         packed_error: u32,
         buf: *mut ::std::os::raw::c_char,
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_clear_system_error"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_clear_system_error"]
     pub fn ERR_clear_system_error();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_put_error"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_put_error"]
     pub fn ERR_put_error(
         library: ::std::os::raw::c_int,
         unused: ::std::os::raw::c_int,
@@ -5198,15 +5225,15 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_add_error_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_add_error_data"]
     pub fn ERR_add_error_data(count: ::std::os::raw::c_uint, ...);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_add_error_dataf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_add_error_dataf"]
     pub fn ERR_add_error_dataf(format: *const ::std::os::raw::c_char, ...);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_set_error_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_set_error_data"]
     pub fn ERR_set_error_data(data: *mut ::std::os::raw::c_char, flags: ::std::os::raw::c_int);
 }
 pub type OPENSSL_sk_free_func =
@@ -5334,27 +5361,27 @@ impl Default for stack_st {
 }
 pub type _STACK = stack_st;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_new"]
     pub fn sk_new(comp: OPENSSL_sk_cmp_func) -> *mut _STACK;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_new_null"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_new_null"]
     pub fn sk_new_null() -> *mut _STACK;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_num"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_num"]
     pub fn sk_num(sk: *const _STACK) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_zero"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_zero"]
     pub fn sk_zero(sk: *mut _STACK);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_value"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_value"]
     pub fn sk_value(sk: *const _STACK, i: usize) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_set"]
     pub fn sk_set(
         sk: *mut _STACK,
         i: usize,
@@ -5362,11 +5389,11 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_free"]
     pub fn sk_free(sk: *mut _STACK);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_pop_free_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_pop_free_ex"]
     pub fn sk_pop_free_ex(
         sk: *mut _STACK,
         call_free_func: OPENSSL_sk_call_free_func,
@@ -5374,22 +5401,22 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_insert"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_insert"]
     pub fn sk_insert(sk: *mut _STACK, p: *mut ::std::os::raw::c_void, where_: usize) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_delete"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_delete"]
     pub fn sk_delete(sk: *mut _STACK, where_: usize) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_delete_ptr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_delete_ptr"]
     pub fn sk_delete_ptr(
         sk: *mut _STACK,
         p: *const ::std::os::raw::c_void,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_delete_if"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_delete_if"]
     pub fn sk_delete_if(
         sk: *mut _STACK,
         call_func: OPENSSL_sk_call_delete_if_func,
@@ -5398,7 +5425,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_find"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_find"]
     pub fn sk_find(
         sk: *const _STACK,
         out_index: *mut usize,
@@ -5407,35 +5434,35 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_shift"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_shift"]
     pub fn sk_shift(sk: *mut _STACK) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_push"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_push"]
     pub fn sk_push(sk: *mut _STACK, p: *mut ::std::os::raw::c_void) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_pop"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_pop"]
     pub fn sk_pop(sk: *mut _STACK) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_dup"]
     pub fn sk_dup(sk: *const _STACK) -> *mut _STACK;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_sort"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_sort"]
     pub fn sk_sort(sk: *mut _STACK, call_cmp_func: OPENSSL_sk_call_cmp_func);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_is_sorted"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_is_sorted"]
     pub fn sk_is_sorted(sk: *const _STACK) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_set_cmp_func"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_set_cmp_func"]
     pub fn sk_set_cmp_func(sk: *mut _STACK, comp: OPENSSL_sk_cmp_func) -> OPENSSL_sk_cmp_func;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_deep_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_deep_copy"]
     pub fn sk_deep_copy(
         sk: *const _STACK,
         call_copy_func: OPENSSL_sk_call_copy_func,
@@ -5445,7 +5472,7 @@ extern "C" {
     ) -> *mut _STACK;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_sk_pop_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_sk_pop_free"]
     pub fn sk_pop_free(sk: *mut _STACK, free_func: OPENSSL_sk_free_func);
 }
 pub type OPENSSL_STRING = *mut ::std::os::raw::c_char;
@@ -5505,7 +5532,7 @@ pub type CRYPTO_EX_free = ::std::option::Option<
     ),
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_cleanup_all_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_cleanup_all_ex_data"]
     pub fn CRYPTO_cleanup_all_ex_data();
 }
 pub type CRYPTO_EX_dup = ::std::option::Option<
@@ -5561,19 +5588,19 @@ impl Default for crypto_ex_data_st {
 pub type CRYPTO_MUTEX = pthread_rwlock_t;
 pub type CRYPTO_refcount_t = u32;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AWSLC_thread_local_clear"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AWSLC_thread_local_clear"]
     pub fn AWSLC_thread_local_clear() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AWSLC_thread_local_shutdown"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AWSLC_thread_local_shutdown"]
     pub fn AWSLC_thread_local_shutdown() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_num_locks"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_num_locks"]
     pub fn CRYPTO_num_locks() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_set_locking_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_set_locking_callback"]
     pub fn CRYPTO_set_locking_callback(
         func: ::std::option::Option<
             unsafe extern "C" fn(
@@ -5586,7 +5613,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_set_add_lock_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_set_add_lock_callback"]
     pub fn CRYPTO_set_add_lock_callback(
         func: ::std::option::Option<
             unsafe extern "C" fn(
@@ -5600,7 +5627,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_get_locking_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_get_locking_callback"]
     pub fn CRYPTO_get_locking_callback() -> ::std::option::Option<
         unsafe extern "C" fn(
             arg1: ::std::os::raw::c_int,
@@ -5611,29 +5638,29 @@ extern "C" {
     >;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_get_lock_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_get_lock_name"]
     pub fn CRYPTO_get_lock_name(lock_num: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_THREADID_set_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_THREADID_set_callback"]
     pub fn CRYPTO_THREADID_set_callback(
         threadid_func: ::std::option::Option<unsafe extern "C" fn(threadid: *mut CRYPTO_THREADID)>,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_THREADID_set_numeric"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_THREADID_set_numeric"]
     pub fn CRYPTO_THREADID_set_numeric(id: *mut CRYPTO_THREADID, val: ::std::os::raw::c_ulong);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_THREADID_set_pointer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_THREADID_set_pointer"]
     pub fn CRYPTO_THREADID_set_pointer(id: *mut CRYPTO_THREADID, ptr: *mut ::std::os::raw::c_void);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_THREADID_current"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_THREADID_current"]
     pub fn CRYPTO_THREADID_current(id: *mut CRYPTO_THREADID);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_set_id_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_set_id_callback"]
     pub fn CRYPTO_set_id_callback(
         func: ::std::option::Option<unsafe extern "C" fn() -> ::std::os::raw::c_ulong>,
     );
@@ -5689,7 +5716,7 @@ impl Default for CRYPTO_dynlock {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_set_dynlock_create_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_set_dynlock_create_callback"]
     pub fn CRYPTO_set_dynlock_create_callback(
         dyn_create_function: ::std::option::Option<
             unsafe extern "C" fn(
@@ -5700,7 +5727,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_set_dynlock_lock_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_set_dynlock_lock_callback"]
     pub fn CRYPTO_set_dynlock_lock_callback(
         dyn_lock_function: ::std::option::Option<
             unsafe extern "C" fn(
@@ -5713,7 +5740,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_set_dynlock_destroy_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_set_dynlock_destroy_callback"]
     pub fn CRYPTO_set_dynlock_destroy_callback(
         dyn_destroy_function: ::std::option::Option<
             unsafe extern "C" fn(
@@ -5725,7 +5752,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_get_dynlock_create_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_get_dynlock_create_callback"]
     pub fn CRYPTO_get_dynlock_create_callback() -> ::std::option::Option<
         unsafe extern "C" fn(
             arg1: *const ::std::os::raw::c_char,
@@ -5734,7 +5761,7 @@ extern "C" {
     >;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_get_dynlock_lock_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_get_dynlock_lock_callback"]
     pub fn CRYPTO_get_dynlock_lock_callback() -> ::std::option::Option<
         unsafe extern "C" fn(
             arg1: ::std::os::raw::c_int,
@@ -5745,7 +5772,7 @@ extern "C" {
     >;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_get_dynlock_destroy_callback"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_get_dynlock_destroy_callback"]
     pub fn CRYPTO_get_dynlock_destroy_callback() -> ::std::option::Option<
         unsafe extern "C" fn(
             arg1: *mut CRYPTO_dynlock_value,
@@ -5772,23 +5799,23 @@ pub type sk_BIO_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_new"]
     pub fn BIO_new(method: *const BIO_METHOD) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_free"]
     pub fn BIO_free(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_vfree"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_vfree"]
     pub fn BIO_vfree(bio: *mut BIO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_up_ref"]
     pub fn BIO_up_ref(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_read"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_read"]
     pub fn BIO_read(
         bio: *mut BIO,
         data: *mut ::std::os::raw::c_void,
@@ -5796,7 +5823,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_gets"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_gets"]
     pub fn BIO_gets(
         bio: *mut BIO,
         buf: *mut ::std::os::raw::c_char,
@@ -5804,7 +5831,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_write"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_write"]
     pub fn BIO_write(
         bio: *mut BIO,
         data: *const ::std::os::raw::c_void,
@@ -5812,7 +5839,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_write_all"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_write_all"]
     pub fn BIO_write_all(
         bio: *mut BIO,
         data: *const ::std::os::raw::c_void,
@@ -5820,15 +5847,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_puts"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_puts"]
     pub fn BIO_puts(bio: *mut BIO, buf: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_flush"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_flush"]
     pub fn BIO_flush(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_ctrl"]
     pub fn BIO_ctrl(
         bio: *mut BIO,
         cmd: ::std::os::raw::c_int,
@@ -5837,7 +5864,7 @@ extern "C" {
     ) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_ptr_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_ptr_ctrl"]
     pub fn BIO_ptr_ctrl(
         bp: *mut BIO,
         cmd: ::std::os::raw::c_int,
@@ -5845,7 +5872,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_int_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_int_ctrl"]
     pub fn BIO_int_ctrl(
         bp: *mut BIO,
         cmd: ::std::os::raw::c_int,
@@ -5854,67 +5881,67 @@ extern "C" {
     ) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_reset"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_reset"]
     pub fn BIO_reset(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_eof"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_eof"]
     pub fn BIO_eof(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_flags"]
     pub fn BIO_set_flags(bio: *mut BIO, flags: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_test_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_test_flags"]
     pub fn BIO_test_flags(bio: *const BIO, flags: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_should_read"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_should_read"]
     pub fn BIO_should_read(bio: *const BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_should_write"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_should_write"]
     pub fn BIO_should_write(bio: *const BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_should_retry"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_should_retry"]
     pub fn BIO_should_retry(bio: *const BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_should_io_special"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_should_io_special"]
     pub fn BIO_should_io_special(bio: *const BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_retry_reason"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_retry_reason"]
     pub fn BIO_get_retry_reason(bio: *const BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_retry_reason"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_retry_reason"]
     pub fn BIO_set_retry_reason(bio: *mut BIO, reason: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_clear_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_clear_flags"]
     pub fn BIO_clear_flags(bio: *mut BIO, flags: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_retry_read"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_retry_read"]
     pub fn BIO_set_retry_read(bio: *mut BIO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_retry_write"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_retry_write"]
     pub fn BIO_set_retry_write(bio: *mut BIO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_retry_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_retry_flags"]
     pub fn BIO_get_retry_flags(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_clear_retry_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_clear_retry_flags"]
     pub fn BIO_clear_retry_flags(bio: *mut BIO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_method_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_method_type"]
     pub fn BIO_method_type(bio: *const BIO) -> ::std::os::raw::c_int;
 }
 pub type bio_info_cb = ::std::option::Option<
@@ -5940,7 +5967,7 @@ pub type BIO_callback_fn_ex = ::std::option::Option<
     ) -> ::std::os::raw::c_long,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_callback_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_callback_ctrl"]
     pub fn BIO_callback_ctrl(
         bio: *mut BIO,
         cmd: ::std::os::raw::c_int,
@@ -5948,68 +5975,68 @@ extern "C" {
     ) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_pending"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_pending"]
     pub fn BIO_pending(bio: *const BIO) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_ctrl_pending"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_ctrl_pending"]
     pub fn BIO_ctrl_pending(bio: *const BIO) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_wpending"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_wpending"]
     pub fn BIO_wpending(bio: *const BIO) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_close"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_close"]
     pub fn BIO_set_close(bio: *mut BIO, close_flag: ::std::os::raw::c_int)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_number_read"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_number_read"]
     pub fn BIO_number_read(bio: *const BIO) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_number_written"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_number_written"]
     pub fn BIO_number_written(bio: *const BIO) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_callback_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_callback_ex"]
     pub fn BIO_set_callback_ex(bio: *mut BIO, callback_ex: BIO_callback_fn_ex);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_callback_arg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_callback_arg"]
     pub fn BIO_set_callback_arg(bio: *mut BIO, arg: *mut ::std::os::raw::c_char);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_callback_arg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_callback_arg"]
     pub fn BIO_get_callback_arg(bio: *const BIO) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_push"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_push"]
     pub fn BIO_push(bio: *mut BIO, appended_bio: *mut BIO) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_pop"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_pop"]
     pub fn BIO_pop(bio: *mut BIO) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_next"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_next"]
     pub fn BIO_next(bio: *mut BIO) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_free_all"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_free_all"]
     pub fn BIO_free_all(bio: *mut BIO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_find_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_find_type"]
     pub fn BIO_find_type(bio: *mut BIO, type_: ::std::os::raw::c_int) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_copy_next_retry"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_copy_next_retry"]
     pub fn BIO_copy_next_retry(bio: *mut BIO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_printf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_printf"]
     pub fn BIO_printf(
         bio: *mut BIO,
         format: *const ::std::os::raw::c_char,
@@ -6017,7 +6044,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_indent"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_indent"]
     pub fn BIO_indent(
         bio: *mut BIO,
         indent: ::std::os::raw::c_uint,
@@ -6025,7 +6052,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_hexdump"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_hexdump"]
     pub fn BIO_hexdump(
         bio: *mut BIO,
         data: *const u8,
@@ -6034,11 +6061,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_print_errors"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_print_errors"]
     pub fn ERR_print_errors(bio: *mut BIO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_read_asn1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_read_asn1"]
     pub fn BIO_read_asn1(
         bio: *mut BIO,
         out: *mut *mut u8,
@@ -6047,15 +6074,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_s_mem"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_s_mem"]
     pub fn BIO_s_mem() -> *const BIO_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_new_mem_buf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_new_mem_buf"]
     pub fn BIO_new_mem_buf(buf: *const ::std::os::raw::c_void, len: ossl_ssize_t) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_mem_contents"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_mem_contents"]
     pub fn BIO_mem_contents(
         bio: *const BIO,
         out_contents: *mut *const u8,
@@ -6063,11 +6090,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_mem_ptr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_mem_ptr"]
     pub fn BIO_get_mem_ptr(bio: *mut BIO, out: *mut *mut BUF_MEM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_mem_buf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_mem_buf"]
     pub fn BIO_set_mem_buf(
         bio: *mut BIO,
         b: *mut BUF_MEM,
@@ -6075,22 +6102,22 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_mem_eof_return"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_mem_eof_return"]
     pub fn BIO_set_mem_eof_return(
         bio: *mut BIO,
         eof_value: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_s_fd"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_s_fd"]
     pub fn BIO_s_fd() -> *const BIO_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_new_fd"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_new_fd"]
     pub fn BIO_new_fd(fd: ::std::os::raw::c_int, close_flag: ::std::os::raw::c_int) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_fd"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_fd"]
     pub fn BIO_set_fd(
         bio: *mut BIO,
         fd: ::std::os::raw::c_int,
@@ -6098,30 +6125,30 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_fd"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_fd"]
     pub fn BIO_get_fd(bio: *mut BIO, out_fd: *mut ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_s_file"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_s_file"]
     pub fn BIO_s_file() -> *const BIO_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_new_file"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_new_file"]
     pub fn BIO_new_file(
         filename: *const ::std::os::raw::c_char,
         mode: *const ::std::os::raw::c_char,
     ) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_new_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_new_fp"]
     pub fn BIO_new_fp(stream: *mut FILE, close_flag: ::std::os::raw::c_int) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_fp"]
     pub fn BIO_get_fp(bio: *mut BIO, out_file: *mut *mut FILE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_fp"]
     pub fn BIO_set_fp(
         bio: *mut BIO,
         file: *mut FILE,
@@ -6129,89 +6156,89 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_read_filename"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_read_filename"]
     pub fn BIO_read_filename(
         bio: *mut BIO,
         filename: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_write_filename"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_write_filename"]
     pub fn BIO_write_filename(
         bio: *mut BIO,
         filename: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_append_filename"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_append_filename"]
     pub fn BIO_append_filename(
         bio: *mut BIO,
         filename: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_rw_filename"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_rw_filename"]
     pub fn BIO_rw_filename(
         bio: *mut BIO,
         filename: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_tell"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_tell"]
     pub fn BIO_tell(bio: *mut BIO) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_seek"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_seek"]
     pub fn BIO_seek(bio: *mut BIO, offset: ::std::os::raw::c_long) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_s_socket"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_s_socket"]
     pub fn BIO_s_socket() -> *const BIO_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_new_socket"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_new_socket"]
     pub fn BIO_new_socket(fd: ::std::os::raw::c_int, close_flag: ::std::os::raw::c_int)
         -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_s_connect"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_s_connect"]
     pub fn BIO_s_connect() -> *const BIO_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_new_connect"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_new_connect"]
     pub fn BIO_new_connect(host_and_optional_port: *const ::std::os::raw::c_char) -> *mut BIO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_conn_hostname"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_conn_hostname"]
     pub fn BIO_set_conn_hostname(
         bio: *mut BIO,
         host_and_optional_port: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_conn_port"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_conn_port"]
     pub fn BIO_set_conn_port(
         bio: *mut BIO,
         port_str: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_conn_int_port"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_conn_int_port"]
     pub fn BIO_set_conn_int_port(
         bio: *mut BIO,
         port: *const ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_nbio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_nbio"]
     pub fn BIO_set_nbio(bio: *mut BIO, on: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_do_connect"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_do_connect"]
     pub fn BIO_do_connect(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_new_bio_pair"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_new_bio_pair"]
     pub fn BIO_new_bio_pair(
         out1: *mut *mut BIO,
         writebuf1: usize,
@@ -6220,34 +6247,34 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_ctrl_get_read_request"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_ctrl_get_read_request"]
     pub fn BIO_ctrl_get_read_request(bio: *mut BIO) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_ctrl_get_write_guarantee"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_ctrl_get_write_guarantee"]
     pub fn BIO_ctrl_get_write_guarantee(bio: *mut BIO) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_shutdown_wr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_shutdown_wr"]
     pub fn BIO_shutdown_wr(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_new_index"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_new_index"]
     pub fn BIO_get_new_index() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_new"]
     pub fn BIO_meth_new(
         type_: ::std::os::raw::c_int,
         name: *const ::std::os::raw::c_char,
     ) -> *mut BIO_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_free"]
     pub fn BIO_meth_free(method: *mut BIO_METHOD);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_set_create"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_set_create"]
     pub fn BIO_meth_set_create(
         method: *mut BIO_METHOD,
         create: ::std::option::Option<
@@ -6256,13 +6283,13 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_get_create"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_get_create"]
     pub fn BIO_meth_get_create(
         method: *const BIO_METHOD,
     ) -> ::std::option::Option<unsafe extern "C" fn(method: *mut BIO) -> ::std::os::raw::c_int>;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_set_destroy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_set_destroy"]
     pub fn BIO_meth_set_destroy(
         method: *mut BIO_METHOD,
         destroy: ::std::option::Option<
@@ -6271,13 +6298,13 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_get_destroy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_get_destroy"]
     pub fn BIO_meth_get_destroy(
         method: *const BIO_METHOD,
     ) -> ::std::option::Option<unsafe extern "C" fn(method: *mut BIO) -> ::std::os::raw::c_int>;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_set_write"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_set_write"]
     pub fn BIO_meth_set_write(
         method: *mut BIO_METHOD,
         write: ::std::option::Option<
@@ -6290,7 +6317,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_set_read"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_set_read"]
     pub fn BIO_meth_set_read(
         method: *mut BIO_METHOD,
         read: ::std::option::Option<
@@ -6303,7 +6330,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_set_gets"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_set_gets"]
     pub fn BIO_meth_set_gets(
         method: *mut BIO_METHOD,
         gets: ::std::option::Option<
@@ -6316,7 +6343,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_get_gets"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_get_gets"]
     pub fn BIO_meth_get_gets(
         method: *const BIO_METHOD,
     ) -> ::std::option::Option<
@@ -6328,7 +6355,7 @@ extern "C" {
     >;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_set_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_set_ctrl"]
     pub fn BIO_meth_set_ctrl(
         method: *mut BIO_METHOD,
         ctrl: ::std::option::Option<
@@ -6342,7 +6369,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_get_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_get_ctrl"]
     pub fn BIO_meth_get_ctrl(
         method: *const BIO_METHOD,
     ) -> ::std::option::Option<
@@ -6355,7 +6382,7 @@ extern "C" {
     >;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_set_callback_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_set_callback_ctrl"]
     pub fn BIO_meth_set_callback_ctrl(
         method: *mut BIO_METHOD,
         callback_ctrl: ::std::option::Option<
@@ -6368,7 +6395,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_get_callback_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_get_callback_ctrl"]
     pub fn BIO_meth_get_callback_ctrl(
         method: *const BIO_METHOD,
     ) -> ::std::option::Option<
@@ -6380,23 +6407,23 @@ extern "C" {
     >;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_data"]
     pub fn BIO_set_data(bio: *mut BIO, ptr: *mut ::std::os::raw::c_void);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_data"]
     pub fn BIO_get_data(bio: *mut BIO) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_init"]
     pub fn BIO_set_init(bio: *mut BIO, init: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_init"]
     pub fn BIO_get_init(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_ex_new_index"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_ex_new_index"]
     pub fn BIO_get_ex_new_index(
         argl: ::std::os::raw::c_long,
         argp: *mut ::std::os::raw::c_void,
@@ -6406,7 +6433,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_ex_data"]
     pub fn BIO_set_ex_data(
         bio: *mut BIO,
         idx: ::std::os::raw::c_int,
@@ -6414,37 +6441,37 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_ex_data"]
     pub fn BIO_get_ex_data(
         bio: *const BIO,
         idx: ::std::os::raw::c_int,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_f_base64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_f_base64"]
     pub fn BIO_f_base64() -> *const BIO_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_retry_special"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_retry_special"]
     pub fn BIO_set_retry_special(bio: *mut BIO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_write_buffer_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_write_buffer_size"]
     pub fn BIO_set_write_buffer_size(
         bio: *mut BIO,
         buffer_size: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_set_shutdown"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_set_shutdown"]
     pub fn BIO_set_shutdown(bio: *mut BIO, shutdown: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_get_shutdown"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_get_shutdown"]
     pub fn BIO_get_shutdown(bio: *mut BIO) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_set_puts"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_set_puts"]
     pub fn BIO_meth_set_puts(
         method: *mut BIO_METHOD,
         puts: ::std::option::Option<
@@ -6456,7 +6483,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_meth_get_puts"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_meth_get_puts"]
     pub fn BIO_meth_get_puts(
         method: *const BIO_METHOD,
     ) -> ::std::option::Option<
@@ -6826,193 +6853,193 @@ impl Default for bio_st {
 }
 pub type BN_ULONG = u64;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_new"]
     pub fn BN_new() -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_init"]
     pub fn BN_init(bn: *mut BIGNUM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_free"]
     pub fn BN_free(bn: *mut BIGNUM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_clear_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_clear_free"]
     pub fn BN_clear_free(bn: *mut BIGNUM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_dup"]
     pub fn BN_dup(src: *const BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_copy"]
     pub fn BN_copy(dest: *mut BIGNUM, src: *const BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_clear"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_clear"]
     pub fn BN_clear(bn: *mut BIGNUM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_value_one"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_value_one"]
     pub fn BN_value_one() -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_num_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_num_bits"]
     pub fn BN_num_bits(bn: *const BIGNUM) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_num_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_num_bytes"]
     pub fn BN_num_bytes(bn: *const BIGNUM) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_zero"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_zero"]
     pub fn BN_zero(bn: *mut BIGNUM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_one"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_one"]
     pub fn BN_one(bn: *mut BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_set_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_set_word"]
     pub fn BN_set_word(bn: *mut BIGNUM, value: BN_ULONG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_set_u64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_set_u64"]
     pub fn BN_set_u64(bn: *mut BIGNUM, value: u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_set_negative"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_set_negative"]
     pub fn BN_set_negative(bn: *mut BIGNUM, sign: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_is_negative"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_is_negative"]
     pub fn BN_is_negative(bn: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_bin2bn"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_bin2bn"]
     pub fn BN_bin2bn(in_: *const u8, len: usize, ret: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_bn2bin"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_bn2bin"]
     pub fn BN_bn2bin(in_: *const BIGNUM, out: *mut u8) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_le2bn"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_le2bn"]
     pub fn BN_le2bn(in_: *const u8, len: usize, ret: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_bn2le_padded"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_bn2le_padded"]
     pub fn BN_bn2le_padded(out: *mut u8, len: usize, in_: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_bn2bin_padded"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_bn2bin_padded"]
     pub fn BN_bn2bin_padded(out: *mut u8, len: usize, in_: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_bn2cbb_padded"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_bn2cbb_padded"]
     pub fn BN_bn2cbb_padded(out: *mut CBB, len: usize, in_: *const BIGNUM)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_bn2hex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_bn2hex"]
     pub fn BN_bn2hex(bn: *const BIGNUM) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_hex2bn"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_hex2bn"]
     pub fn BN_hex2bn(
         outp: *mut *mut BIGNUM,
         in_: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_bn2dec"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_bn2dec"]
     pub fn BN_bn2dec(a: *const BIGNUM) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_dec2bn"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_dec2bn"]
     pub fn BN_dec2bn(
         outp: *mut *mut BIGNUM,
         in_: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_asc2bn"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_asc2bn"]
     pub fn BN_asc2bn(
         outp: *mut *mut BIGNUM,
         in_: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_print"]
     pub fn BN_print(bio: *mut BIO, a: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_print_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_print_fp"]
     pub fn BN_print_fp(fp: *mut FILE, a: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_get_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_get_word"]
     pub fn BN_get_word(bn: *const BIGNUM) -> BN_ULONG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_get_u64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_get_u64"]
     pub fn BN_get_u64(bn: *const BIGNUM, out: *mut u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_parse_asn1_unsigned"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_parse_asn1_unsigned"]
     pub fn BN_parse_asn1_unsigned(cbs: *mut CBS, ret: *mut BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_marshal_asn1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_marshal_asn1"]
     pub fn BN_marshal_asn1(cbb: *mut CBB, bn: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_CTX_new"]
     pub fn BN_CTX_new() -> *mut BN_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_CTX_free"]
     pub fn BN_CTX_free(ctx: *mut BN_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_CTX_start"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_CTX_start"]
     pub fn BN_CTX_start(ctx: *mut BN_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_CTX_get"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_CTX_get"]
     pub fn BN_CTX_get(ctx: *mut BN_CTX) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_CTX_end"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_CTX_end"]
     pub fn BN_CTX_end(ctx: *mut BN_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_add"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_add"]
     pub fn BN_add(r: *mut BIGNUM, a: *const BIGNUM, b: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_uadd"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_uadd"]
     pub fn BN_uadd(r: *mut BIGNUM, a: *const BIGNUM, b: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_add_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_add_word"]
     pub fn BN_add_word(a: *mut BIGNUM, w: BN_ULONG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_sub"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_sub"]
     pub fn BN_sub(r: *mut BIGNUM, a: *const BIGNUM, b: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_usub"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_usub"]
     pub fn BN_usub(r: *mut BIGNUM, a: *const BIGNUM, b: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_sub_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_sub_word"]
     pub fn BN_sub_word(a: *mut BIGNUM, w: BN_ULONG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mul"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mul"]
     pub fn BN_mul(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7021,15 +7048,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mul_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mul_word"]
     pub fn BN_mul_word(bn: *mut BIGNUM, w: BN_ULONG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_sqr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_sqr"]
     pub fn BN_sqr(r: *mut BIGNUM, a: *const BIGNUM, ctx: *mut BN_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_div"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_div"]
     pub fn BN_div(
         quotient: *mut BIGNUM,
         rem: *mut BIGNUM,
@@ -7039,11 +7066,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_div_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_div_word"]
     pub fn BN_div_word(numerator: *mut BIGNUM, divisor: BN_ULONG) -> BN_ULONG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_sqrt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_sqrt"]
     pub fn BN_sqrt(
         out_sqrt: *mut BIGNUM,
         in_: *const BIGNUM,
@@ -7051,47 +7078,47 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_cmp"]
     pub fn BN_cmp(a: *const BIGNUM, b: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_cmp_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_cmp_word"]
     pub fn BN_cmp_word(a: *const BIGNUM, b: BN_ULONG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_ucmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_ucmp"]
     pub fn BN_ucmp(a: *const BIGNUM, b: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_equal_consttime"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_equal_consttime"]
     pub fn BN_equal_consttime(a: *const BIGNUM, b: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_abs_is_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_abs_is_word"]
     pub fn BN_abs_is_word(bn: *const BIGNUM, w: BN_ULONG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_is_zero"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_is_zero"]
     pub fn BN_is_zero(bn: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_is_one"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_is_one"]
     pub fn BN_is_one(bn: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_is_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_is_word"]
     pub fn BN_is_word(bn: *const BIGNUM, w: BN_ULONG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_is_odd"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_is_odd"]
     pub fn BN_is_odd(bn: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_is_pow2"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_is_pow2"]
     pub fn BN_is_pow2(a: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_lshift"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_lshift"]
     pub fn BN_lshift(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7099,11 +7126,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_lshift1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_lshift1"]
     pub fn BN_lshift1(r: *mut BIGNUM, a: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_rshift"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_rshift"]
     pub fn BN_rshift(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7111,43 +7138,43 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_rshift1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_rshift1"]
     pub fn BN_rshift1(r: *mut BIGNUM, a: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_set_bit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_set_bit"]
     pub fn BN_set_bit(a: *mut BIGNUM, n: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_clear_bit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_clear_bit"]
     pub fn BN_clear_bit(a: *mut BIGNUM, n: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_is_bit_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_is_bit_set"]
     pub fn BN_is_bit_set(a: *const BIGNUM, n: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mask_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mask_bits"]
     pub fn BN_mask_bits(a: *mut BIGNUM, n: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_count_low_zero_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_count_low_zero_bits"]
     pub fn BN_count_low_zero_bits(bn: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_word"]
     pub fn BN_mod_word(a: *const BIGNUM, w: BN_ULONG) -> BN_ULONG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_pow2"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_pow2"]
     pub fn BN_mod_pow2(r: *mut BIGNUM, a: *const BIGNUM, e: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_nnmod_pow2"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_nnmod_pow2"]
     pub fn BN_nnmod_pow2(r: *mut BIGNUM, a: *const BIGNUM, e: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_nnmod"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_nnmod"]
     pub fn BN_nnmod(
         rem: *mut BIGNUM,
         numerator: *const BIGNUM,
@@ -7156,7 +7183,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_add"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_add"]
     pub fn BN_mod_add(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7166,7 +7193,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_add_quick"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_add_quick"]
     pub fn BN_mod_add_quick(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7175,7 +7202,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_sub"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_sub"]
     pub fn BN_mod_sub(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7185,7 +7212,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_sub_quick"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_sub_quick"]
     pub fn BN_mod_sub_quick(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7194,7 +7221,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_mul"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_mul"]
     pub fn BN_mod_mul(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7204,7 +7231,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_sqr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_sqr"]
     pub fn BN_mod_sqr(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7213,7 +7240,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_lshift"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_lshift"]
     pub fn BN_mod_lshift(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7223,7 +7250,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_lshift_quick"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_lshift_quick"]
     pub fn BN_mod_lshift_quick(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7232,7 +7259,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_lshift1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_lshift1"]
     pub fn BN_mod_lshift1(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7241,7 +7268,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_lshift1_quick"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_lshift1_quick"]
     pub fn BN_mod_lshift1_quick(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7249,7 +7276,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_sqrt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_sqrt"]
     pub fn BN_mod_sqrt(
         in_: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7258,7 +7285,7 @@ extern "C" {
     ) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_rand"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_rand"]
     pub fn BN_rand(
         rnd: *mut BIGNUM,
         bits: ::std::os::raw::c_int,
@@ -7267,7 +7294,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_pseudo_rand"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_pseudo_rand"]
     pub fn BN_pseudo_rand(
         rnd: *mut BIGNUM,
         bits: ::std::os::raw::c_int,
@@ -7276,11 +7303,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_rand_range"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_rand_range"]
     pub fn BN_rand_range(rnd: *mut BIGNUM, range: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_rand_range_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_rand_range_ex"]
     pub fn BN_rand_range_ex(
         r: *mut BIGNUM,
         min_inclusive: BN_ULONG,
@@ -7288,7 +7315,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_pseudo_rand_range"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_pseudo_rand_range"]
     pub fn BN_pseudo_rand_range(rnd: *mut BIGNUM, range: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
@@ -7348,15 +7375,15 @@ impl Default for bn_gencb_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_GENCB_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_GENCB_new"]
     pub fn BN_GENCB_new() -> *mut BN_GENCB;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_GENCB_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_GENCB_free"]
     pub fn BN_GENCB_free(callback: *mut BN_GENCB);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_GENCB_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_GENCB_set"]
     pub fn BN_GENCB_set(
         callback: *mut BN_GENCB,
         f: ::std::option::Option<
@@ -7370,7 +7397,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_GENCB_call"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_GENCB_call"]
     pub fn BN_GENCB_call(
         callback: *mut BN_GENCB,
         event: ::std::os::raw::c_int,
@@ -7378,11 +7405,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_GENCB_get_arg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_GENCB_get_arg"]
     pub fn BN_GENCB_get_arg(callback: *const BN_GENCB) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_generate_prime_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_generate_prime_ex"]
     pub fn BN_generate_prime_ex(
         ret: *mut BIGNUM,
         bits: ::std::os::raw::c_int,
@@ -7397,7 +7424,7 @@ pub const bn_primality_result_t_bn_composite: bn_primality_result_t = 1;
 pub const bn_primality_result_t_bn_non_prime_power_composite: bn_primality_result_t = 2;
 pub type bn_primality_result_t = ::std::os::raw::c_uint;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_enhanced_miller_rabin_primality_test"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_enhanced_miller_rabin_primality_test"]
     pub fn BN_enhanced_miller_rabin_primality_test(
         out_result: *mut bn_primality_result_t,
         w: *const BIGNUM,
@@ -7407,7 +7434,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_primality_test"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_primality_test"]
     pub fn BN_primality_test(
         is_probably_prime: *mut ::std::os::raw::c_int,
         candidate: *const BIGNUM,
@@ -7418,7 +7445,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_is_prime_fasttest_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_is_prime_fasttest_ex"]
     pub fn BN_is_prime_fasttest_ex(
         candidate: *const BIGNUM,
         checks: ::std::os::raw::c_int,
@@ -7428,7 +7455,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_is_prime_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_is_prime_ex"]
     pub fn BN_is_prime_ex(
         candidate: *const BIGNUM,
         checks: ::std::os::raw::c_int,
@@ -7437,7 +7464,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_gcd"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_gcd"]
     pub fn BN_gcd(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7446,7 +7473,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_inverse"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_inverse"]
     pub fn BN_mod_inverse(
         out: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7455,7 +7482,7 @@ extern "C" {
     ) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_inverse_blinded"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_inverse_blinded"]
     pub fn BN_mod_inverse_blinded(
         out: *mut BIGNUM,
         out_no_inverse: *mut ::std::os::raw::c_int,
@@ -7465,7 +7492,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_inverse_odd"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_inverse_odd"]
     pub fn BN_mod_inverse_odd(
         out: *mut BIGNUM,
         out_no_inverse: *mut ::std::os::raw::c_int,
@@ -7475,23 +7502,23 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_MONT_CTX_new_for_modulus"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_MONT_CTX_new_for_modulus"]
     pub fn BN_MONT_CTX_new_for_modulus(mod_: *const BIGNUM, ctx: *mut BN_CTX) -> *mut BN_MONT_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_MONT_CTX_new_consttime"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_MONT_CTX_new_consttime"]
     pub fn BN_MONT_CTX_new_consttime(mod_: *const BIGNUM, ctx: *mut BN_CTX) -> *mut BN_MONT_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_MONT_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_MONT_CTX_free"]
     pub fn BN_MONT_CTX_free(mont: *mut BN_MONT_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_MONT_CTX_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_MONT_CTX_copy"]
     pub fn BN_MONT_CTX_copy(to: *mut BN_MONT_CTX, from: *const BN_MONT_CTX) -> *mut BN_MONT_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_to_montgomery"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_to_montgomery"]
     pub fn BN_to_montgomery(
         ret: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7500,7 +7527,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_from_montgomery"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_from_montgomery"]
     pub fn BN_from_montgomery(
         ret: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7509,7 +7536,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_mul_montgomery"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_mul_montgomery"]
     pub fn BN_mod_mul_montgomery(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7519,7 +7546,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_exp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_exp"]
     pub fn BN_exp(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7528,7 +7555,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_exp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_exp"]
     pub fn BN_mod_exp(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7538,7 +7565,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_exp_mont"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_exp_mont"]
     pub fn BN_mod_exp_mont(
         r: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7549,7 +7576,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_exp_mont_consttime"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_exp_mont_consttime"]
     pub fn BN_mod_exp_mont_consttime(
         rr: *mut BIGNUM,
         a: *const BIGNUM,
@@ -7560,15 +7587,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_bn2mpi"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_bn2mpi"]
     pub fn BN_bn2mpi(in_: *const BIGNUM, out: *mut u8) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mpi2bn"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mpi2bn"]
     pub fn BN_mpi2bn(in_: *const u8, len: usize, out: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_exp_mont_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_exp_mont_word"]
     pub fn BN_mod_exp_mont_word(
         r: *mut BIGNUM,
         a: BN_ULONG,
@@ -7579,7 +7606,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_mod_exp2_mont"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_mod_exp2_mont"]
     pub fn BN_mod_exp2_mont(
         r: *mut BIGNUM,
         a1: *const BIGNUM,
@@ -7592,11 +7619,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_MONT_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_MONT_CTX_new"]
     pub fn BN_MONT_CTX_new() -> *mut BN_MONT_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_MONT_CTX_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_MONT_CTX_set"]
     pub fn BN_MONT_CTX_set(
         mont: *mut BN_MONT_CTX,
         mod_: *const BIGNUM,
@@ -7604,7 +7631,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_bn2binpad"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_bn2binpad"]
     pub fn BN_bn2binpad(
         in_: *const BIGNUM,
         out: *mut u8,
@@ -7612,7 +7639,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_secure_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_secure_new"]
     pub fn BN_secure_new() -> *mut BIGNUM;
 }
 #[repr(C)]
@@ -7760,15 +7787,15 @@ impl Default for bn_mont_ctx_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_num_bits_word"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_num_bits_word"]
     pub fn BN_num_bits_word(l: BN_ULONG) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_tag2bit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_tag2bit"]
     pub fn ASN1_tag2bit(tag: ::std::os::raw::c_int) -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_tag2str"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_tag2str"]
     pub fn ASN1_tag2str(tag: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 pub type d2i_of_void = ::std::option::Option<
@@ -7792,15 +7819,15 @@ pub struct ASN1_VALUE_st {
 }
 pub type ASN1_VALUE = ASN1_VALUE_st;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_new"]
     pub fn ASN1_item_new(it: *const ASN1_ITEM) -> *mut ASN1_VALUE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_free"]
     pub fn ASN1_item_free(val: *mut ASN1_VALUE, it: *const ASN1_ITEM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_d2i"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_d2i"]
     pub fn ASN1_item_d2i(
         out: *mut *mut ASN1_VALUE,
         inp: *mut *const ::std::os::raw::c_uchar,
@@ -7809,7 +7836,7 @@ extern "C" {
     ) -> *mut ASN1_VALUE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_i2d"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_i2d"]
     pub fn ASN1_item_i2d(
         val: *mut ASN1_VALUE,
         outp: *mut *mut ::std::os::raw::c_uchar,
@@ -7817,14 +7844,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_dup"]
     pub fn ASN1_item_dup(
         it: *const ASN1_ITEM,
         x: *mut ::std::os::raw::c_void,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_d2i_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_d2i_fp"]
     pub fn ASN1_item_d2i_fp(
         it: *const ASN1_ITEM,
         in_: *mut FILE,
@@ -7832,7 +7859,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_d2i_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_d2i_bio"]
     pub fn ASN1_item_d2i_bio(
         it: *const ASN1_ITEM,
         in_: *mut BIO,
@@ -7840,7 +7867,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_i2d_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_i2d_fp"]
     pub fn ASN1_item_i2d_fp(
         it: *const ASN1_ITEM,
         out: *mut FILE,
@@ -7848,7 +7875,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_i2d_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_i2d_bio"]
     pub fn ASN1_item_i2d_bio(
         it: *const ASN1_ITEM,
         out: *mut BIO,
@@ -7856,14 +7883,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_unpack"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_unpack"]
     pub fn ASN1_item_unpack(
         oct: *const ASN1_STRING,
         it: *const ASN1_ITEM,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_pack"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_pack"]
     pub fn ASN1_item_pack(
         obj: *mut ::std::os::raw::c_void,
         it: *const ASN1_ITEM,
@@ -7871,7 +7898,7 @@ extern "C" {
     ) -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_BOOLEAN"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_BOOLEAN"]
     pub fn d2i_ASN1_BOOLEAN(
         out: *mut ASN1_BOOLEAN,
         inp: *mut *const ::std::os::raw::c_uchar,
@@ -7879,22 +7906,22 @@ extern "C" {
     ) -> ASN1_BOOLEAN;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_BOOLEAN"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_BOOLEAN"]
     pub fn i2d_ASN1_BOOLEAN(
         a: ASN1_BOOLEAN,
         outp: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BOOLEAN_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BOOLEAN_it"]
     pub static ASN1_BOOLEAN_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TBOOLEAN_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TBOOLEAN_it"]
     pub static ASN1_TBOOLEAN_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_FBOOLEAN_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_FBOOLEAN_it"]
     pub static ASN1_FBOOLEAN_it: ASN1_ITEM;
 }
 #[repr(C)]
@@ -7970,54 +7997,54 @@ impl Default for asn1_string_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_type_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_type_new"]
     pub fn ASN1_STRING_type_new(type_: ::std::os::raw::c_int) -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_new"]
     pub fn ASN1_STRING_new() -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_free"]
     pub fn ASN1_STRING_free(str_: *mut ASN1_STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_clear_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_clear_free"]
     pub fn ASN1_STRING_clear_free(str_: *mut ASN1_STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_copy"]
     pub fn ASN1_STRING_copy(
         dst: *mut ASN1_STRING,
         str_: *const ASN1_STRING,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_dup"]
     pub fn ASN1_STRING_dup(str_: *const ASN1_STRING) -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_type"]
     pub fn ASN1_STRING_type(str_: *const ASN1_STRING) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_get0_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_get0_data"]
     pub fn ASN1_STRING_get0_data(str_: *const ASN1_STRING) -> *const ::std::os::raw::c_uchar;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_data"]
     pub fn ASN1_STRING_data(str_: *mut ASN1_STRING) -> *mut ::std::os::raw::c_uchar;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_length"]
     pub fn ASN1_STRING_length(str_: *const ASN1_STRING) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_cmp"]
     pub fn ASN1_STRING_cmp(a: *const ASN1_STRING, b: *const ASN1_STRING) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_set"]
     pub fn ASN1_STRING_set(
         str_: *mut ASN1_STRING,
         data: *const ::std::os::raw::c_void,
@@ -8025,7 +8052,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_set0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_set0"]
     pub fn ASN1_STRING_set0(
         str_: *mut ASN1_STRING,
         data: *mut ::std::os::raw::c_void,
@@ -8033,79 +8060,79 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BMPSTRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BMPSTRING_new"]
     pub fn ASN1_BMPSTRING_new() -> *mut ASN1_BMPSTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALSTRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALSTRING_new"]
     pub fn ASN1_GENERALSTRING_new() -> *mut ASN1_GENERALSTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_IA5STRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_IA5STRING_new"]
     pub fn ASN1_IA5STRING_new() -> *mut ASN1_IA5STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_OCTET_STRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_OCTET_STRING_new"]
     pub fn ASN1_OCTET_STRING_new() -> *mut ASN1_OCTET_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_PRINTABLESTRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_PRINTABLESTRING_new"]
     pub fn ASN1_PRINTABLESTRING_new() -> *mut ASN1_PRINTABLESTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_T61STRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_T61STRING_new"]
     pub fn ASN1_T61STRING_new() -> *mut ASN1_T61STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UNIVERSALSTRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UNIVERSALSTRING_new"]
     pub fn ASN1_UNIVERSALSTRING_new() -> *mut ASN1_UNIVERSALSTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTF8STRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTF8STRING_new"]
     pub fn ASN1_UTF8STRING_new() -> *mut ASN1_UTF8STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_VISIBLESTRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_VISIBLESTRING_new"]
     pub fn ASN1_VISIBLESTRING_new() -> *mut ASN1_VISIBLESTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BMPSTRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BMPSTRING_free"]
     pub fn ASN1_BMPSTRING_free(str_: *mut ASN1_BMPSTRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALSTRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALSTRING_free"]
     pub fn ASN1_GENERALSTRING_free(str_: *mut ASN1_GENERALSTRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_IA5STRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_IA5STRING_free"]
     pub fn ASN1_IA5STRING_free(str_: *mut ASN1_IA5STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_OCTET_STRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_OCTET_STRING_free"]
     pub fn ASN1_OCTET_STRING_free(str_: *mut ASN1_OCTET_STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_PRINTABLESTRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_PRINTABLESTRING_free"]
     pub fn ASN1_PRINTABLESTRING_free(str_: *mut ASN1_PRINTABLESTRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_T61STRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_T61STRING_free"]
     pub fn ASN1_T61STRING_free(str_: *mut ASN1_T61STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UNIVERSALSTRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UNIVERSALSTRING_free"]
     pub fn ASN1_UNIVERSALSTRING_free(str_: *mut ASN1_UNIVERSALSTRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTF8STRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTF8STRING_free"]
     pub fn ASN1_UTF8STRING_free(str_: *mut ASN1_UTF8STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_VISIBLESTRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_VISIBLESTRING_free"]
     pub fn ASN1_VISIBLESTRING_free(str_: *mut ASN1_VISIBLESTRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_BMPSTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_BMPSTRING"]
     pub fn d2i_ASN1_BMPSTRING(
         out: *mut *mut ASN1_BMPSTRING,
         inp: *mut *const u8,
@@ -8113,7 +8140,7 @@ extern "C" {
     ) -> *mut ASN1_BMPSTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_GENERALSTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_GENERALSTRING"]
     pub fn d2i_ASN1_GENERALSTRING(
         out: *mut *mut ASN1_GENERALSTRING,
         inp: *mut *const u8,
@@ -8121,7 +8148,7 @@ extern "C" {
     ) -> *mut ASN1_GENERALSTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_IA5STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_IA5STRING"]
     pub fn d2i_ASN1_IA5STRING(
         out: *mut *mut ASN1_IA5STRING,
         inp: *mut *const u8,
@@ -8129,7 +8156,7 @@ extern "C" {
     ) -> *mut ASN1_IA5STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_OCTET_STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_OCTET_STRING"]
     pub fn d2i_ASN1_OCTET_STRING(
         out: *mut *mut ASN1_OCTET_STRING,
         inp: *mut *const u8,
@@ -8137,7 +8164,7 @@ extern "C" {
     ) -> *mut ASN1_OCTET_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_PRINTABLESTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_PRINTABLESTRING"]
     pub fn d2i_ASN1_PRINTABLESTRING(
         out: *mut *mut ASN1_PRINTABLESTRING,
         inp: *mut *const u8,
@@ -8145,7 +8172,7 @@ extern "C" {
     ) -> *mut ASN1_PRINTABLESTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_T61STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_T61STRING"]
     pub fn d2i_ASN1_T61STRING(
         out: *mut *mut ASN1_T61STRING,
         inp: *mut *const u8,
@@ -8153,7 +8180,7 @@ extern "C" {
     ) -> *mut ASN1_T61STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_UNIVERSALSTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_UNIVERSALSTRING"]
     pub fn d2i_ASN1_UNIVERSALSTRING(
         out: *mut *mut ASN1_UNIVERSALSTRING,
         inp: *mut *const u8,
@@ -8161,7 +8188,7 @@ extern "C" {
     ) -> *mut ASN1_UNIVERSALSTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_UTF8STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_UTF8STRING"]
     pub fn d2i_ASN1_UTF8STRING(
         out: *mut *mut ASN1_UTF8STRING,
         inp: *mut *const u8,
@@ -8169,7 +8196,7 @@ extern "C" {
     ) -> *mut ASN1_UTF8STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_VISIBLESTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_VISIBLESTRING"]
     pub fn d2i_ASN1_VISIBLESTRING(
         out: *mut *mut ASN1_VISIBLESTRING,
         inp: *mut *const u8,
@@ -8177,117 +8204,117 @@ extern "C" {
     ) -> *mut ASN1_VISIBLESTRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_BMPSTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_BMPSTRING"]
     pub fn i2d_ASN1_BMPSTRING(
         in_: *const ASN1_BMPSTRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_GENERALSTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_GENERALSTRING"]
     pub fn i2d_ASN1_GENERALSTRING(
         in_: *const ASN1_GENERALSTRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_IA5STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_IA5STRING"]
     pub fn i2d_ASN1_IA5STRING(
         in_: *const ASN1_IA5STRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_OCTET_STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_OCTET_STRING"]
     pub fn i2d_ASN1_OCTET_STRING(
         in_: *const ASN1_OCTET_STRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_PRINTABLESTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_PRINTABLESTRING"]
     pub fn i2d_ASN1_PRINTABLESTRING(
         in_: *const ASN1_PRINTABLESTRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_T61STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_T61STRING"]
     pub fn i2d_ASN1_T61STRING(
         in_: *const ASN1_T61STRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_UNIVERSALSTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_UNIVERSALSTRING"]
     pub fn i2d_ASN1_UNIVERSALSTRING(
         in_: *const ASN1_UNIVERSALSTRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_UTF8STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_UTF8STRING"]
     pub fn i2d_ASN1_UTF8STRING(
         in_: *const ASN1_UTF8STRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_VISIBLESTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_VISIBLESTRING"]
     pub fn i2d_ASN1_VISIBLESTRING(
         in_: *const ASN1_VISIBLESTRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BMPSTRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BMPSTRING_it"]
     pub static ASN1_BMPSTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALSTRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALSTRING_it"]
     pub static ASN1_GENERALSTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_IA5STRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_IA5STRING_it"]
     pub static ASN1_IA5STRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_OCTET_STRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_OCTET_STRING_it"]
     pub static ASN1_OCTET_STRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_PRINTABLESTRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_PRINTABLESTRING_it"]
     pub static ASN1_PRINTABLESTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_T61STRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_T61STRING_it"]
     pub static ASN1_T61STRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UNIVERSALSTRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UNIVERSALSTRING_it"]
     pub static ASN1_UNIVERSALSTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTF8STRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTF8STRING_it"]
     pub static ASN1_UTF8STRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_VISIBLESTRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_VISIBLESTRING_it"]
     pub static ASN1_VISIBLESTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_OCTET_STRING_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_OCTET_STRING_dup"]
     pub fn ASN1_OCTET_STRING_dup(a: *const ASN1_OCTET_STRING) -> *mut ASN1_OCTET_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_OCTET_STRING_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_OCTET_STRING_cmp"]
     pub fn ASN1_OCTET_STRING_cmp(
         a: *const ASN1_OCTET_STRING,
         b: *const ASN1_OCTET_STRING,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_OCTET_STRING_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_OCTET_STRING_set"]
     pub fn ASN1_OCTET_STRING_set(
         str_: *mut ASN1_OCTET_STRING,
         data: *const ::std::os::raw::c_uchar,
@@ -8295,14 +8322,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_to_UTF8"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_to_UTF8"]
     pub fn ASN1_STRING_to_UTF8(
         out: *mut *mut ::std::os::raw::c_uchar,
         in_: *const ASN1_STRING,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_mbstring_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_mbstring_copy"]
     pub fn ASN1_mbstring_copy(
         out: *mut *mut ASN1_STRING,
         in_: *const u8,
@@ -8312,7 +8339,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_mbstring_ncopy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_mbstring_ncopy"]
     pub fn ASN1_mbstring_ncopy(
         out: *mut *mut ASN1_STRING,
         in_: *const u8,
@@ -8324,7 +8351,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_set_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_set_by_NID"]
     pub fn ASN1_STRING_set_by_NID(
         out: *mut *mut ASN1_STRING,
         in_: *const ::std::os::raw::c_uchar,
@@ -8334,7 +8361,7 @@ extern "C" {
     ) -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_TABLE_add"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_TABLE_add"]
     pub fn ASN1_STRING_TABLE_add(
         nid: ::std::os::raw::c_int,
         minsize: ::std::os::raw::c_long,
@@ -8344,15 +8371,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIRECTORYSTRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIRECTORYSTRING_new"]
     pub fn DIRECTORYSTRING_new() -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIRECTORYSTRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIRECTORYSTRING_free"]
     pub fn DIRECTORYSTRING_free(str_: *mut ASN1_STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DIRECTORYSTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DIRECTORYSTRING"]
     pub fn d2i_DIRECTORYSTRING(
         out: *mut *mut ASN1_STRING,
         inp: *mut *const u8,
@@ -8360,26 +8387,26 @@ extern "C" {
     ) -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DIRECTORYSTRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DIRECTORYSTRING"]
     pub fn i2d_DIRECTORYSTRING(
         in_: *const ASN1_STRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIRECTORYSTRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIRECTORYSTRING_it"]
     pub static DIRECTORYSTRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DISPLAYTEXT_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DISPLAYTEXT_new"]
     pub fn DISPLAYTEXT_new() -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DISPLAYTEXT_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DISPLAYTEXT_free"]
     pub fn DISPLAYTEXT_free(str_: *mut ASN1_STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DISPLAYTEXT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DISPLAYTEXT"]
     pub fn d2i_DISPLAYTEXT(
         out: *mut *mut ASN1_STRING,
         inp: *mut *const u8,
@@ -8387,23 +8414,23 @@ extern "C" {
     ) -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DISPLAYTEXT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DISPLAYTEXT"]
     pub fn i2d_DISPLAYTEXT(in_: *const ASN1_STRING, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DISPLAYTEXT_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DISPLAYTEXT_it"]
     pub static DISPLAYTEXT_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BIT_STRING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BIT_STRING_new"]
     pub fn ASN1_BIT_STRING_new() -> *mut ASN1_BIT_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BIT_STRING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BIT_STRING_free"]
     pub fn ASN1_BIT_STRING_free(str_: *mut ASN1_BIT_STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_BIT_STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_BIT_STRING"]
     pub fn d2i_ASN1_BIT_STRING(
         out: *mut *mut ASN1_BIT_STRING,
         inp: *mut *const u8,
@@ -8411,14 +8438,14 @@ extern "C" {
     ) -> *mut ASN1_BIT_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_BIT_STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_BIT_STRING"]
     pub fn i2d_ASN1_BIT_STRING(
         in_: *const ASN1_BIT_STRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_c2i_ASN1_BIT_STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_c2i_ASN1_BIT_STRING"]
     pub fn c2i_ASN1_BIT_STRING(
         out: *mut *mut ASN1_BIT_STRING,
         inp: *mut *const u8,
@@ -8426,25 +8453,25 @@ extern "C" {
     ) -> *mut ASN1_BIT_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2c_ASN1_BIT_STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2c_ASN1_BIT_STRING"]
     pub fn i2c_ASN1_BIT_STRING(
         in_: *const ASN1_BIT_STRING,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BIT_STRING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BIT_STRING_it"]
     pub static ASN1_BIT_STRING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BIT_STRING_num_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BIT_STRING_num_bytes"]
     pub fn ASN1_BIT_STRING_num_bytes(
         str_: *const ASN1_BIT_STRING,
         out: *mut usize,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BIT_STRING_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BIT_STRING_set"]
     pub fn ASN1_BIT_STRING_set(
         str_: *mut ASN1_BIT_STRING,
         d: *const ::std::os::raw::c_uchar,
@@ -8452,7 +8479,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BIT_STRING_set_bit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BIT_STRING_set_bit"]
     pub fn ASN1_BIT_STRING_set_bit(
         str_: *mut ASN1_BIT_STRING,
         n: ::std::os::raw::c_int,
@@ -8460,14 +8487,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BIT_STRING_get_bit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BIT_STRING_get_bit"]
     pub fn ASN1_BIT_STRING_get_bit(
         str_: *const ASN1_BIT_STRING,
         n: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_BIT_STRING_check"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_BIT_STRING_check"]
     pub fn ASN1_BIT_STRING_check(
         str_: *const ASN1_BIT_STRING,
         flags: *const ::std::os::raw::c_uchar,
@@ -8496,19 +8523,19 @@ pub type sk_ASN1_INTEGER_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_new"]
     pub fn ASN1_INTEGER_new() -> *mut ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_free"]
     pub fn ASN1_INTEGER_free(str_: *mut ASN1_INTEGER);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_dup"]
     pub fn ASN1_INTEGER_dup(x: *const ASN1_INTEGER) -> *mut ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_INTEGER"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_INTEGER"]
     pub fn d2i_ASN1_INTEGER(
         out: *mut *mut ASN1_INTEGER,
         inp: *mut *const u8,
@@ -8516,11 +8543,11 @@ extern "C" {
     ) -> *mut ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_INTEGER"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_INTEGER"]
     pub fn i2d_ASN1_INTEGER(in_: *const ASN1_INTEGER, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_c2i_ASN1_INTEGER"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_c2i_ASN1_INTEGER"]
     pub fn c2i_ASN1_INTEGER(
         in_: *mut *mut ASN1_INTEGER,
         outp: *mut *const u8,
@@ -8528,54 +8555,54 @@ extern "C" {
     ) -> *mut ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2c_ASN1_INTEGER"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2c_ASN1_INTEGER"]
     pub fn i2c_ASN1_INTEGER(in_: *const ASN1_INTEGER, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_it"]
     pub static ASN1_INTEGER_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_set_uint64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_set_uint64"]
     pub fn ASN1_INTEGER_set_uint64(out: *mut ASN1_INTEGER, v: u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_set_int64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_set_int64"]
     pub fn ASN1_INTEGER_set_int64(out: *mut ASN1_INTEGER, v: i64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_get_uint64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_get_uint64"]
     pub fn ASN1_INTEGER_get_uint64(out: *mut u64, a: *const ASN1_INTEGER) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_get_int64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_get_int64"]
     pub fn ASN1_INTEGER_get_int64(out: *mut i64, a: *const ASN1_INTEGER) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_to_ASN1_INTEGER"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_to_ASN1_INTEGER"]
     pub fn BN_to_ASN1_INTEGER(bn: *const BIGNUM, ai: *mut ASN1_INTEGER) -> *mut ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_to_BN"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_to_BN"]
     pub fn ASN1_INTEGER_to_BN(ai: *const ASN1_INTEGER, bn: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_cmp"]
     pub fn ASN1_INTEGER_cmp(
         x: *const ASN1_INTEGER,
         y: *const ASN1_INTEGER,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_new"]
     pub fn ASN1_ENUMERATED_new() -> *mut ASN1_ENUMERATED;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_free"]
     pub fn ASN1_ENUMERATED_free(str_: *mut ASN1_ENUMERATED);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_ENUMERATED"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_ENUMERATED"]
     pub fn d2i_ASN1_ENUMERATED(
         out: *mut *mut ASN1_ENUMERATED,
         inp: *mut *const u8,
@@ -8583,59 +8610,59 @@ extern "C" {
     ) -> *mut ASN1_ENUMERATED;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_ENUMERATED"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_ENUMERATED"]
     pub fn i2d_ASN1_ENUMERATED(
         in_: *const ASN1_ENUMERATED,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_it"]
     pub static ASN1_ENUMERATED_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_set_uint64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_set_uint64"]
     pub fn ASN1_ENUMERATED_set_uint64(out: *mut ASN1_ENUMERATED, v: u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_set_int64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_set_int64"]
     pub fn ASN1_ENUMERATED_set_int64(out: *mut ASN1_ENUMERATED, v: i64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_get_uint64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_get_uint64"]
     pub fn ASN1_ENUMERATED_get_uint64(
         out: *mut u64,
         a: *const ASN1_ENUMERATED,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_get_int64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_get_int64"]
     pub fn ASN1_ENUMERATED_get_int64(
         out: *mut i64,
         a: *const ASN1_ENUMERATED,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_to_ASN1_ENUMERATED"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_to_ASN1_ENUMERATED"]
     pub fn BN_to_ASN1_ENUMERATED(
         bn: *const BIGNUM,
         ai: *mut ASN1_ENUMERATED,
     ) -> *mut ASN1_ENUMERATED;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_to_BN"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_to_BN"]
     pub fn ASN1_ENUMERATED_to_BN(ai: *const ASN1_ENUMERATED, bn: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTCTIME_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTCTIME_new"]
     pub fn ASN1_UTCTIME_new() -> *mut ASN1_UTCTIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTCTIME_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTCTIME_free"]
     pub fn ASN1_UTCTIME_free(str_: *mut ASN1_UTCTIME);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_UTCTIME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_UTCTIME"]
     pub fn d2i_ASN1_UTCTIME(
         out: *mut *mut ASN1_UTCTIME,
         inp: *mut *const u8,
@@ -8643,23 +8670,23 @@ extern "C" {
     ) -> *mut ASN1_UTCTIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_UTCTIME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_UTCTIME"]
     pub fn i2d_ASN1_UTCTIME(in_: *const ASN1_UTCTIME, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTCTIME_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTCTIME_it"]
     pub static ASN1_UTCTIME_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTCTIME_check"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTCTIME_check"]
     pub fn ASN1_UTCTIME_check(a: *const ASN1_UTCTIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTCTIME_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTCTIME_set"]
     pub fn ASN1_UTCTIME_set(s: *mut ASN1_UTCTIME, posix_time: i64) -> *mut ASN1_UTCTIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTCTIME_adj"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTCTIME_adj"]
     pub fn ASN1_UTCTIME_adj(
         s: *mut ASN1_UTCTIME,
         posix_time: i64,
@@ -8668,26 +8695,26 @@ extern "C" {
     ) -> *mut ASN1_UTCTIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTCTIME_set_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTCTIME_set_string"]
     pub fn ASN1_UTCTIME_set_string(
         s: *mut ASN1_UTCTIME,
         str_: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTCTIME_cmp_time_t"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTCTIME_cmp_time_t"]
     pub fn ASN1_UTCTIME_cmp_time_t(s: *const ASN1_UTCTIME, t: time_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALIZEDTIME_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALIZEDTIME_new"]
     pub fn ASN1_GENERALIZEDTIME_new() -> *mut ASN1_GENERALIZEDTIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALIZEDTIME_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALIZEDTIME_free"]
     pub fn ASN1_GENERALIZEDTIME_free(str_: *mut ASN1_GENERALIZEDTIME);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_GENERALIZEDTIME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_GENERALIZEDTIME"]
     pub fn d2i_ASN1_GENERALIZEDTIME(
         out: *mut *mut ASN1_GENERALIZEDTIME,
         inp: *mut *const u8,
@@ -8695,29 +8722,29 @@ extern "C" {
     ) -> *mut ASN1_GENERALIZEDTIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_GENERALIZEDTIME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_GENERALIZEDTIME"]
     pub fn i2d_ASN1_GENERALIZEDTIME(
         in_: *const ASN1_GENERALIZEDTIME,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALIZEDTIME_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALIZEDTIME_it"]
     pub static ASN1_GENERALIZEDTIME_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALIZEDTIME_check"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALIZEDTIME_check"]
     pub fn ASN1_GENERALIZEDTIME_check(a: *const ASN1_GENERALIZEDTIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALIZEDTIME_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALIZEDTIME_set"]
     pub fn ASN1_GENERALIZEDTIME_set(
         s: *mut ASN1_GENERALIZEDTIME,
         posix_time: i64,
     ) -> *mut ASN1_GENERALIZEDTIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALIZEDTIME_adj"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALIZEDTIME_adj"]
     pub fn ASN1_GENERALIZEDTIME_adj(
         s: *mut ASN1_GENERALIZEDTIME,
         posix_time: i64,
@@ -8726,22 +8753,22 @@ extern "C" {
     ) -> *mut ASN1_GENERALIZEDTIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALIZEDTIME_set_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALIZEDTIME_set_string"]
     pub fn ASN1_GENERALIZEDTIME_set_string(
         s: *mut ASN1_GENERALIZEDTIME,
         str_: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_new"]
     pub fn ASN1_TIME_new() -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_free"]
     pub fn ASN1_TIME_free(str_: *mut ASN1_TIME);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_TIME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_TIME"]
     pub fn d2i_ASN1_TIME(
         out: *mut *mut ASN1_TIME,
         inp: *mut *const u8,
@@ -8749,15 +8776,15 @@ extern "C" {
     ) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_TIME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_TIME"]
     pub fn i2d_ASN1_TIME(in_: *const ASN1_TIME, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_it"]
     pub static ASN1_TIME_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_diff"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_diff"]
     pub fn ASN1_TIME_diff(
         out_days: *mut ::std::os::raw::c_int,
         out_seconds: *mut ::std::os::raw::c_int,
@@ -8766,15 +8793,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_set_posix"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_set_posix"]
     pub fn ASN1_TIME_set_posix(s: *mut ASN1_TIME, posix_time: i64) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_set"]
     pub fn ASN1_TIME_set(s: *mut ASN1_TIME, time: time_t) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_adj"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_adj"]
     pub fn ASN1_TIME_adj(
         s: *mut ASN1_TIME,
         posix_time: i64,
@@ -8783,41 +8810,41 @@ extern "C" {
     ) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_check"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_check"]
     pub fn ASN1_TIME_check(t: *const ASN1_TIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_to_generalizedtime"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_to_generalizedtime"]
     pub fn ASN1_TIME_to_generalizedtime(
         t: *const ASN1_TIME,
         out: *mut *mut ASN1_GENERALIZEDTIME,
     ) -> *mut ASN1_GENERALIZEDTIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_set_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_set_string"]
     pub fn ASN1_TIME_set_string(
         s: *mut ASN1_TIME,
         str_: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_to_time_t"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_to_time_t"]
     pub fn ASN1_TIME_to_time_t(t: *const ASN1_TIME, out: *mut time_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_to_posix"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_to_posix"]
     pub fn ASN1_TIME_to_posix(t: *const ASN1_TIME, out: *mut i64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_NULL_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_NULL_new"]
     pub fn ASN1_NULL_new() -> *mut ASN1_NULL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_NULL_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_NULL_free"]
     pub fn ASN1_NULL_free(null: *mut ASN1_NULL);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_NULL"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_NULL"]
     pub fn d2i_ASN1_NULL(
         out: *mut *mut ASN1_NULL,
         inp: *mut *const u8,
@@ -8825,11 +8852,11 @@ extern "C" {
     ) -> *mut ASN1_NULL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_NULL"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_NULL"]
     pub fn i2d_ASN1_NULL(in_: *const ASN1_NULL, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_NULL_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_NULL_it"]
     pub static ASN1_NULL_it: ASN1_ITEM;
 }
 #[repr(C)]
@@ -8854,7 +8881,7 @@ pub type sk_ASN1_OBJECT_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_OBJECT_create"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_OBJECT_create"]
     pub fn ASN1_OBJECT_create(
         nid: ::std::os::raw::c_int,
         data: *const u8,
@@ -8864,11 +8891,11 @@ extern "C" {
     ) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_OBJECT_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_OBJECT_free"]
     pub fn ASN1_OBJECT_free(a: *mut ASN1_OBJECT);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_OBJECT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_OBJECT"]
     pub fn d2i_ASN1_OBJECT(
         out: *mut *mut ASN1_OBJECT,
         inp: *mut *const u8,
@@ -8876,11 +8903,11 @@ extern "C" {
     ) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_OBJECT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_OBJECT"]
     pub fn i2d_ASN1_OBJECT(a: *const ASN1_OBJECT, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_c2i_ASN1_OBJECT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_c2i_ASN1_OBJECT"]
     pub fn c2i_ASN1_OBJECT(
         out: *mut *mut ASN1_OBJECT,
         inp: *mut *const u8,
@@ -8888,7 +8915,7 @@ extern "C" {
     ) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_OBJECT_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_OBJECT_it"]
     pub static ASN1_OBJECT_it: ASN1_ITEM;
 }
 #[repr(C)]
@@ -9222,15 +9249,15 @@ pub type sk_ASN1_TYPE_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TYPE_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TYPE_new"]
     pub fn ASN1_TYPE_new() -> *mut ASN1_TYPE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TYPE_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TYPE_free"]
     pub fn ASN1_TYPE_free(a: *mut ASN1_TYPE);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_TYPE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_TYPE"]
     pub fn d2i_ASN1_TYPE(
         out: *mut *mut ASN1_TYPE,
         inp: *mut *const u8,
@@ -9238,19 +9265,19 @@ extern "C" {
     ) -> *mut ASN1_TYPE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_TYPE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_TYPE"]
     pub fn i2d_ASN1_TYPE(in_: *const ASN1_TYPE, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ANY_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ANY_it"]
     pub static ASN1_ANY_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TYPE_get"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TYPE_get"]
     pub fn ASN1_TYPE_get(a: *const ASN1_TYPE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TYPE_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TYPE_set"]
     pub fn ASN1_TYPE_set(
         a: *mut ASN1_TYPE,
         type_: ::std::os::raw::c_int,
@@ -9258,7 +9285,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TYPE_set1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TYPE_set1"]
     pub fn ASN1_TYPE_set1(
         a: *mut ASN1_TYPE,
         type_: ::std::os::raw::c_int,
@@ -9266,12 +9293,12 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TYPE_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TYPE_cmp"]
     pub fn ASN1_TYPE_cmp(a: *const ASN1_TYPE, b: *const ASN1_TYPE) -> ::std::os::raw::c_int;
 }
 pub type ASN1_SEQUENCE_ANY = stack_st_ASN1_TYPE;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_SEQUENCE_ANY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_SEQUENCE_ANY"]
     pub fn d2i_ASN1_SEQUENCE_ANY(
         out: *mut *mut ASN1_SEQUENCE_ANY,
         inp: *mut *const u8,
@@ -9279,14 +9306,14 @@ extern "C" {
     ) -> *mut ASN1_SEQUENCE_ANY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_SEQUENCE_ANY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_SEQUENCE_ANY"]
     pub fn i2d_ASN1_SEQUENCE_ANY(
         in_: *const ASN1_SEQUENCE_ANY,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_SET_ANY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_SET_ANY"]
     pub fn d2i_ASN1_SET_ANY(
         out: *mut *mut ASN1_SEQUENCE_ANY,
         inp: *mut *const u8,
@@ -9294,33 +9321,33 @@ extern "C" {
     ) -> *mut ASN1_SEQUENCE_ANY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_SET_ANY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_SET_ANY"]
     pub fn i2d_ASN1_SET_ANY(
         in_: *const ASN1_SEQUENCE_ANY,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_UTCTIME_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_UTCTIME_print"]
     pub fn ASN1_UTCTIME_print(out: *mut BIO, a: *const ASN1_UTCTIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_GENERALIZEDTIME_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_GENERALIZEDTIME_print"]
     pub fn ASN1_GENERALIZEDTIME_print(
         out: *mut BIO,
         a: *const ASN1_GENERALIZEDTIME,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_TIME_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_TIME_print"]
     pub fn ASN1_TIME_print(out: *mut BIO, a: *const ASN1_TIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_print"]
     pub fn ASN1_STRING_print(out: *mut BIO, str_: *const ASN1_STRING) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_print_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_print_ex"]
     pub fn ASN1_STRING_print_ex(
         out: *mut BIO,
         str_: *const ASN1_STRING,
@@ -9328,7 +9355,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_print_ex_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_print_ex_fp"]
     pub fn ASN1_STRING_print_ex_fp(
         fp: *mut FILE,
         str_: *const ASN1_STRING,
@@ -9336,19 +9363,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2a_ASN1_INTEGER"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2a_ASN1_INTEGER"]
     pub fn i2a_ASN1_INTEGER(bp: *mut BIO, a: *const ASN1_INTEGER) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2a_ASN1_ENUMERATED"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2a_ASN1_ENUMERATED"]
     pub fn i2a_ASN1_ENUMERATED(bp: *mut BIO, a: *const ASN1_ENUMERATED) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2a_ASN1_OBJECT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2a_ASN1_OBJECT"]
     pub fn i2a_ASN1_OBJECT(bp: *mut BIO, a: *const ASN1_OBJECT) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2a_ASN1_STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2a_ASN1_STRING"]
     pub fn i2a_ASN1_STRING(
         bp: *mut BIO,
         a: *const ASN1_STRING,
@@ -9356,7 +9383,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2t_ASN1_OBJECT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2t_ASN1_OBJECT"]
     pub fn i2t_ASN1_OBJECT(
         buf: *mut ::std::os::raw::c_char,
         buf_len: ::std::os::raw::c_int,
@@ -9364,7 +9391,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_get_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_get_object"]
     pub fn ASN1_get_object(
         inp: *mut *const ::std::os::raw::c_uchar,
         out_length: *mut ::std::os::raw::c_long,
@@ -9374,7 +9401,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_put_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_put_object"]
     pub fn ASN1_put_object(
         outp: *mut *mut ::std::os::raw::c_uchar,
         constructed: ::std::os::raw::c_int,
@@ -9384,11 +9411,11 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_put_eoc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_put_eoc"]
     pub fn ASN1_put_eoc(outp: *mut *mut ::std::os::raw::c_uchar) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_object_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_object_size"]
     pub fn ASN1_object_size(
         constructed: ::std::os::raw::c_int,
         length: ::std::os::raw::c_int,
@@ -9396,33 +9423,33 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_set_default_mask"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_set_default_mask"]
     pub fn ASN1_STRING_set_default_mask(mask: ::std::os::raw::c_ulong);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_set_default_mask_asc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_set_default_mask_asc"]
     pub fn ASN1_STRING_set_default_mask_asc(
         p: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_get_default_mask"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_get_default_mask"]
     pub fn ASN1_STRING_get_default_mask() -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_STRING_TABLE_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_STRING_TABLE_cleanup"]
     pub fn ASN1_STRING_TABLE_cleanup();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_PRINTABLE_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_PRINTABLE_new"]
     pub fn ASN1_PRINTABLE_new() -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_PRINTABLE_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_PRINTABLE_free"]
     pub fn ASN1_PRINTABLE_free(str_: *mut ASN1_STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ASN1_PRINTABLE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ASN1_PRINTABLE"]
     pub fn d2i_ASN1_PRINTABLE(
         out: *mut *mut ASN1_STRING,
         inp: *mut *const u8,
@@ -9430,34 +9457,34 @@ extern "C" {
     ) -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ASN1_PRINTABLE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ASN1_PRINTABLE"]
     pub fn i2d_ASN1_PRINTABLE(in_: *const ASN1_STRING, outp: *mut *mut u8)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_PRINTABLE_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_PRINTABLE_it"]
     pub static ASN1_PRINTABLE_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_set"]
     pub fn ASN1_INTEGER_set(
         a: *mut ASN1_INTEGER,
         v: ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_set"]
     pub fn ASN1_ENUMERATED_set(
         a: *mut ASN1_ENUMERATED,
         v: ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_INTEGER_get"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_INTEGER_get"]
     pub fn ASN1_INTEGER_get(a: *const ASN1_INTEGER) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_ENUMERATED_get"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_ENUMERATED_get"]
     pub fn ASN1_ENUMERATED_get(a: *const ASN1_ENUMERATED) -> ::std::os::raw::c_long;
 }
 pub type ASN1_TEMPLATE = ASN1_TEMPLATE_st;
@@ -10067,7 +10094,7 @@ impl Default for ASN1_AUX_st {
 }
 pub type ASN1_AUX = ASN1_AUX_st;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_SEQUENCE_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_SEQUENCE_it"]
     pub static ASN1_SEQUENCE_it: ASN1_ITEM;
 }
 #[repr(C)]
@@ -10092,19 +10119,19 @@ pub type sk_ASN1_VALUE_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncodeBlock"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncodeBlock"]
     pub fn EVP_EncodeBlock(dst: *mut u8, src: *const u8, src_len: usize) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncodedLength"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncodedLength"]
     pub fn EVP_EncodedLength(out_len: *mut usize, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecodedLength"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecodedLength"]
     pub fn EVP_DecodedLength(out_len: *mut usize, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecodeBase64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecodeBase64"]
     pub fn EVP_DecodeBase64(
         out: *mut u8,
         out_len: *mut usize,
@@ -10114,19 +10141,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_ENCODE_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_ENCODE_CTX_new"]
     pub fn EVP_ENCODE_CTX_new() -> *mut EVP_ENCODE_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_ENCODE_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_ENCODE_CTX_free"]
     pub fn EVP_ENCODE_CTX_free(ctx: *mut EVP_ENCODE_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncodeInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncodeInit"]
     pub fn EVP_EncodeInit(ctx: *mut EVP_ENCODE_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncodeUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncodeUpdate"]
     pub fn EVP_EncodeUpdate(
         ctx: *mut EVP_ENCODE_CTX,
         out: *mut u8,
@@ -10136,7 +10163,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncodeFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncodeFinal"]
     pub fn EVP_EncodeFinal(
         ctx: *mut EVP_ENCODE_CTX,
         out: *mut u8,
@@ -10144,11 +10171,11 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecodeInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecodeInit"]
     pub fn EVP_DecodeInit(ctx: *mut EVP_ENCODE_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecodeUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecodeUpdate"]
     pub fn EVP_DecodeUpdate(
         ctx: *mut EVP_ENCODE_CTX,
         out: *mut u8,
@@ -10158,7 +10185,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecodeFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecodeFinal"]
     pub fn EVP_DecodeFinal(
         ctx: *mut EVP_ENCODE_CTX,
         out: *mut u8,
@@ -10166,7 +10193,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecodeBlock"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecodeBlock"]
     pub fn EVP_DecodeBlock(dst: *mut u8, src: *const u8, src_len: usize) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
@@ -10376,11 +10403,11 @@ impl Default for blake2b_state_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BLAKE2B256_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BLAKE2B256_Init"]
     pub fn BLAKE2B256_Init(b2b: *mut BLAKE2B_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BLAKE2B256_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BLAKE2B256_Update"]
     pub fn BLAKE2B256_Update(
         b2b: *mut BLAKE2B_CTX,
         data: *const ::std::os::raw::c_void,
@@ -10388,11 +10415,11 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BLAKE2B256_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BLAKE2B256_Final"]
     pub fn BLAKE2B256_Final(out: *mut u8, b2b: *mut BLAKE2B_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BLAKE2B256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BLAKE2B256"]
     pub fn BLAKE2B256(data: *const u8, len: usize, out: *mut u8);
 }
 #[repr(C)]
@@ -10447,19 +10474,19 @@ impl Default for bf_key_st {
 }
 pub type BF_KEY = bf_key_st;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BF_set_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BF_set_key"]
     pub fn BF_set_key(key: *mut BF_KEY, len: usize, data: *const u8);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BF_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BF_encrypt"]
     pub fn BF_encrypt(data: *mut u32, key: *const BF_KEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BF_decrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BF_decrypt"]
     pub fn BF_decrypt(data: *mut u32, key: *const BF_KEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BF_ecb_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BF_ecb_encrypt"]
     pub fn BF_ecb_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -10468,7 +10495,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BF_cbc_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BF_cbc_encrypt"]
     pub fn BF_cbc_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -10529,23 +10556,23 @@ impl Default for cbs_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_init"]
     pub fn CBS_init(cbs: *mut CBS, data: *const u8, len: usize);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_skip"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_skip"]
     pub fn CBS_skip(cbs: *mut CBS, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_data"]
     pub fn CBS_data(cbs: *const CBS) -> *const u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_len"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_len"]
     pub fn CBS_len(cbs: *const CBS) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_stow"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_stow"]
     pub fn CBS_stow(
         cbs: *const CBS,
         out_ptr: *mut *mut u8,
@@ -10553,82 +10580,82 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_strdup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_strdup"]
     pub fn CBS_strdup(
         cbs: *const CBS,
         out_ptr: *mut *mut ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_contains_zero_byte"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_contains_zero_byte"]
     pub fn CBS_contains_zero_byte(cbs: *const CBS) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_mem_equal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_mem_equal"]
     pub fn CBS_mem_equal(cbs: *const CBS, data: *const u8, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u8"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u8"]
     pub fn CBS_get_u8(cbs: *mut CBS, out: *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u16"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u16"]
     pub fn CBS_get_u16(cbs: *mut CBS, out: *mut u16) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u16le"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u16le"]
     pub fn CBS_get_u16le(cbs: *mut CBS, out: *mut u16) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u24"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u24"]
     pub fn CBS_get_u24(cbs: *mut CBS, out: *mut u32) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u32"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u32"]
     pub fn CBS_get_u32(cbs: *mut CBS, out: *mut u32) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u32le"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u32le"]
     pub fn CBS_get_u32le(cbs: *mut CBS, out: *mut u32) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u64"]
     pub fn CBS_get_u64(cbs: *mut CBS, out: *mut u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u64le"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u64le"]
     pub fn CBS_get_u64le(cbs: *mut CBS, out: *mut u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_last_u8"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_last_u8"]
     pub fn CBS_get_last_u8(cbs: *mut CBS, out: *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_bytes"]
     pub fn CBS_get_bytes(cbs: *mut CBS, out: *mut CBS, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_copy_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_copy_bytes"]
     pub fn CBS_copy_bytes(cbs: *mut CBS, out: *mut u8, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u8_length_prefixed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u8_length_prefixed"]
     pub fn CBS_get_u8_length_prefixed(cbs: *mut CBS, out: *mut CBS) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u16_length_prefixed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u16_length_prefixed"]
     pub fn CBS_get_u16_length_prefixed(cbs: *mut CBS, out: *mut CBS) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_u24_length_prefixed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_u24_length_prefixed"]
     pub fn CBS_get_u24_length_prefixed(cbs: *mut CBS, out: *mut CBS) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_until_first"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_until_first"]
     pub fn CBS_get_until_first(cbs: *mut CBS, out: *mut CBS, c: u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_asn1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_asn1"]
     pub fn CBS_get_asn1(
         cbs: *mut CBS,
         out: *mut CBS,
@@ -10636,7 +10663,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_asn1_element"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_asn1_element"]
     pub fn CBS_get_asn1_element(
         cbs: *mut CBS,
         out: *mut CBS,
@@ -10644,11 +10671,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_peek_asn1_tag"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_peek_asn1_tag"]
     pub fn CBS_peek_asn1_tag(cbs: *const CBS, tag_value: CBS_ASN1_TAG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_any_asn1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_any_asn1"]
     pub fn CBS_get_any_asn1(
         cbs: *mut CBS,
         out: *mut CBS,
@@ -10656,7 +10683,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_any_asn1_element"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_any_asn1_element"]
     pub fn CBS_get_any_asn1_element(
         cbs: *mut CBS,
         out: *mut CBS,
@@ -10665,7 +10692,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_any_ber_asn1_element"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_any_ber_asn1_element"]
     pub fn CBS_get_any_ber_asn1_element(
         cbs: *mut CBS,
         out: *mut CBS,
@@ -10676,22 +10703,22 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_asn1_uint64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_asn1_uint64"]
     pub fn CBS_get_asn1_uint64(cbs: *mut CBS, out: *mut u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_asn1_int64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_asn1_int64"]
     pub fn CBS_get_asn1_int64(cbs: *mut CBS, out: *mut i64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_asn1_bool"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_asn1_bool"]
     pub fn CBS_get_asn1_bool(
         cbs: *mut CBS,
         out: *mut ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_optional_asn1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_optional_asn1"]
     pub fn CBS_get_optional_asn1(
         cbs: *mut CBS,
         out: *mut CBS,
@@ -10700,7 +10727,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_optional_asn1_octet_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_optional_asn1_octet_string"]
     pub fn CBS_get_optional_asn1_octet_string(
         cbs: *mut CBS,
         out: *mut CBS,
@@ -10709,7 +10736,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_optional_asn1_uint64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_optional_asn1_uint64"]
     pub fn CBS_get_optional_asn1_uint64(
         cbs: *mut CBS,
         out: *mut u64,
@@ -10718,7 +10745,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_optional_asn1_bool"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_optional_asn1_bool"]
     pub fn CBS_get_optional_asn1_bool(
         cbs: *mut CBS,
         out: *mut ::std::os::raw::c_int,
@@ -10727,33 +10754,33 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_is_valid_asn1_bitstring"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_is_valid_asn1_bitstring"]
     pub fn CBS_is_valid_asn1_bitstring(cbs: *const CBS) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_asn1_bitstring_has_bit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_asn1_bitstring_has_bit"]
     pub fn CBS_asn1_bitstring_has_bit(
         cbs: *const CBS,
         bit: ::std::os::raw::c_uint,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_is_valid_asn1_integer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_is_valid_asn1_integer"]
     pub fn CBS_is_valid_asn1_integer(
         cbs: *const CBS,
         out_is_negative: *mut ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_is_unsigned_asn1_integer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_is_unsigned_asn1_integer"]
     pub fn CBS_is_unsigned_asn1_integer(cbs: *const CBS) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_asn1_oid_to_text"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_asn1_oid_to_text"]
     pub fn CBS_asn1_oid_to_text(cbs: *const CBS) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_parse_generalized_time"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_parse_generalized_time"]
     pub fn CBS_parse_generalized_time(
         cbs: *const CBS,
         out_tm: *mut tm,
@@ -10761,7 +10788,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_parse_utc_time"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_parse_utc_time"]
     pub fn CBS_parse_utc_time(
         cbs: *const CBS,
         out_tm: *mut tm,
@@ -10769,7 +10796,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBS_get_optional_asn1_int64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBS_get_optional_asn1_int64"]
     pub fn CBS_get_optional_asn1_int64(
         cbs: *mut CBS,
         out: *mut i64,
@@ -11076,23 +11103,23 @@ impl Default for cbb_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_zero"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_zero"]
     pub fn CBB_zero(cbb: *mut CBB);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_init"]
     pub fn CBB_init(cbb: *mut CBB, initial_capacity: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_init_fixed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_init_fixed"]
     pub fn CBB_init_fixed(cbb: *mut CBB, buf: *mut u8, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_cleanup"]
     pub fn CBB_cleanup(cbb: *mut CBB);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_finish"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_finish"]
     pub fn CBB_finish(
         cbb: *mut CBB,
         out_data: *mut *mut u8,
@@ -11100,40 +11127,40 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_flush"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_flush"]
     pub fn CBB_flush(cbb: *mut CBB) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_data"]
     pub fn CBB_data(cbb: *const CBB) -> *const u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_len"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_len"]
     pub fn CBB_len(cbb: *const CBB) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u8_length_prefixed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u8_length_prefixed"]
     pub fn CBB_add_u8_length_prefixed(
         cbb: *mut CBB,
         out_contents: *mut CBB,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u16_length_prefixed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u16_length_prefixed"]
     pub fn CBB_add_u16_length_prefixed(
         cbb: *mut CBB,
         out_contents: *mut CBB,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u24_length_prefixed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u24_length_prefixed"]
     pub fn CBB_add_u24_length_prefixed(
         cbb: *mut CBB,
         out_contents: *mut CBB,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_asn1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_asn1"]
     pub fn CBB_add_asn1(
         cbb: *mut CBB,
         out_contents: *mut CBB,
@@ -11141,15 +11168,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_bytes"]
     pub fn CBB_add_bytes(cbb: *mut CBB, data: *const u8, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_zeros"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_zeros"]
     pub fn CBB_add_zeros(cbb: *mut CBB, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_space"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_space"]
     pub fn CBB_add_space(
         cbb: *mut CBB,
         out_data: *mut *mut u8,
@@ -11157,55 +11184,55 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_reserve"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_reserve"]
     pub fn CBB_reserve(cbb: *mut CBB, out_data: *mut *mut u8, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_did_write"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_did_write"]
     pub fn CBB_did_write(cbb: *mut CBB, len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u8"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u8"]
     pub fn CBB_add_u8(cbb: *mut CBB, value: u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u16"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u16"]
     pub fn CBB_add_u16(cbb: *mut CBB, value: u16) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u16le"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u16le"]
     pub fn CBB_add_u16le(cbb: *mut CBB, value: u16) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u24"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u24"]
     pub fn CBB_add_u24(cbb: *mut CBB, value: u32) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u32"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u32"]
     pub fn CBB_add_u32(cbb: *mut CBB, value: u32) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u32le"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u32le"]
     pub fn CBB_add_u32le(cbb: *mut CBB, value: u32) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u64"]
     pub fn CBB_add_u64(cbb: *mut CBB, value: u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_u64le"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_u64le"]
     pub fn CBB_add_u64le(cbb: *mut CBB, value: u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_discard_child"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_discard_child"]
     pub fn CBB_discard_child(cbb: *mut CBB);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_asn1_uint64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_asn1_uint64"]
     pub fn CBB_add_asn1_uint64(cbb: *mut CBB, value: u64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_asn1_uint64_with_tag"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_asn1_uint64_with_tag"]
     pub fn CBB_add_asn1_uint64_with_tag(
         cbb: *mut CBB,
         value: u64,
@@ -11213,11 +11240,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_asn1_int64"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_asn1_int64"]
     pub fn CBB_add_asn1_int64(cbb: *mut CBB, value: i64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_asn1_int64_with_tag"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_asn1_int64_with_tag"]
     pub fn CBB_add_asn1_int64_with_tag(
         cbb: *mut CBB,
         value: i64,
@@ -11225,7 +11252,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_asn1_octet_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_asn1_octet_string"]
     pub fn CBB_add_asn1_octet_string(
         cbb: *mut CBB,
         data: *const u8,
@@ -11233,11 +11260,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_asn1_bool"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_asn1_bool"]
     pub fn CBB_add_asn1_bool(cbb: *mut CBB, value: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_add_asn1_oid_from_text"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_add_asn1_oid_from_text"]
     pub fn CBB_add_asn1_oid_from_text(
         cbb: *mut CBB,
         text: *const ::std::os::raw::c_char,
@@ -11245,11 +11272,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CBB_flush_asn1_set_of"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CBB_flush_asn1_set_of"]
     pub fn CBB_flush_asn1_set_of(cbb: *mut CBB) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_chacha_20"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_chacha_20"]
     pub fn CRYPTO_chacha_20(
         out: *mut u8,
         in_: *const u8,
@@ -11260,114 +11287,114 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_rc4"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_rc4"]
     pub fn EVP_rc4() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_des_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_des_cbc"]
     pub fn EVP_des_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_des_ecb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_des_ecb"]
     pub fn EVP_des_ecb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_des_ede"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_des_ede"]
     pub fn EVP_des_ede() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_des_ede3"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_des_ede3"]
     pub fn EVP_des_ede3() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_des_ede_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_des_ede_cbc"]
     pub fn EVP_des_ede_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_des_ede3_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_des_ede3_cbc"]
     pub fn EVP_des_ede3_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_ecb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_ecb"]
     pub fn EVP_aes_128_ecb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_cbc"]
     pub fn EVP_aes_128_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_ctr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_ctr"]
     pub fn EVP_aes_128_ctr() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_ofb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_ofb"]
     pub fn EVP_aes_128_ofb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_ecb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_ecb"]
     pub fn EVP_aes_256_ecb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_cbc"]
     pub fn EVP_aes_256_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_ctr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_ctr"]
     pub fn EVP_aes_256_ctr() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_ofb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_ofb"]
     pub fn EVP_aes_256_ofb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_xts"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_xts"]
     pub fn EVP_aes_256_xts() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_enc_null"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_enc_null"]
     pub fn EVP_enc_null() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_rc2_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_rc2_cbc"]
     pub fn EVP_rc2_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_rc2_40_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_rc2_40_cbc"]
     pub fn EVP_rc2_40_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_get_cipherbynid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_get_cipherbynid"]
     pub fn EVP_get_cipherbynid(nid: ::std::os::raw::c_int) -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_init"]
     pub fn EVP_CIPHER_CTX_init(ctx: *mut EVP_CIPHER_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_new"]
     pub fn EVP_CIPHER_CTX_new() -> *mut EVP_CIPHER_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_cleanup"]
     pub fn EVP_CIPHER_CTX_cleanup(ctx: *mut EVP_CIPHER_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_free"]
     pub fn EVP_CIPHER_CTX_free(ctx: *mut EVP_CIPHER_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_copy"]
     pub fn EVP_CIPHER_CTX_copy(
         out: *mut EVP_CIPHER_CTX,
         in_: *const EVP_CIPHER_CTX,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_reset"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_reset"]
     pub fn EVP_CIPHER_CTX_reset(ctx: *mut EVP_CIPHER_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CipherInit_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CipherInit_ex"]
     pub fn EVP_CipherInit_ex(
         ctx: *mut EVP_CIPHER_CTX,
         cipher: *const EVP_CIPHER,
@@ -11378,7 +11405,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncryptInit_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncryptInit_ex"]
     pub fn EVP_EncryptInit_ex(
         ctx: *mut EVP_CIPHER_CTX,
         cipher: *const EVP_CIPHER,
@@ -11388,7 +11415,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecryptInit_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecryptInit_ex"]
     pub fn EVP_DecryptInit_ex(
         ctx: *mut EVP_CIPHER_CTX,
         cipher: *const EVP_CIPHER,
@@ -11398,7 +11425,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncryptUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncryptUpdate"]
     pub fn EVP_EncryptUpdate(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11408,7 +11435,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncryptFinal_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncryptFinal_ex"]
     pub fn EVP_EncryptFinal_ex(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11416,7 +11443,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecryptUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecryptUpdate"]
     pub fn EVP_DecryptUpdate(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11426,7 +11453,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecryptFinal_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecryptFinal_ex"]
     pub fn EVP_DecryptFinal_ex(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11434,7 +11461,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CipherUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CipherUpdate"]
     pub fn EVP_CipherUpdate(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11444,7 +11471,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CipherFinal_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CipherFinal_ex"]
     pub fn EVP_CipherFinal_ex(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11452,47 +11479,47 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_cipher"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_cipher"]
     pub fn EVP_CIPHER_CTX_cipher(ctx: *const EVP_CIPHER_CTX) -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_nid"]
     pub fn EVP_CIPHER_CTX_nid(ctx: *const EVP_CIPHER_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_encrypting"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_encrypting"]
     pub fn EVP_CIPHER_CTX_encrypting(ctx: *const EVP_CIPHER_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_block_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_block_size"]
     pub fn EVP_CIPHER_CTX_block_size(ctx: *const EVP_CIPHER_CTX) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_key_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_key_length"]
     pub fn EVP_CIPHER_CTX_key_length(ctx: *const EVP_CIPHER_CTX) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_iv_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_iv_length"]
     pub fn EVP_CIPHER_CTX_iv_length(ctx: *const EVP_CIPHER_CTX) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_get_app_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_get_app_data"]
     pub fn EVP_CIPHER_CTX_get_app_data(ctx: *const EVP_CIPHER_CTX) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_set_app_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_set_app_data"]
     pub fn EVP_CIPHER_CTX_set_app_data(ctx: *mut EVP_CIPHER_CTX, data: *mut ::std::os::raw::c_void);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_flags"]
     pub fn EVP_CIPHER_CTX_flags(ctx: *const EVP_CIPHER_CTX) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_mode"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_mode"]
     pub fn EVP_CIPHER_CTX_mode(ctx: *const EVP_CIPHER_CTX) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_ctrl"]
     pub fn EVP_CIPHER_CTX_ctrl(
         ctx: *mut EVP_CIPHER_CTX,
         command: ::std::os::raw::c_int,
@@ -11501,45 +11528,45 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_set_padding"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_set_padding"]
     pub fn EVP_CIPHER_CTX_set_padding(
         ctx: *mut EVP_CIPHER_CTX,
         pad: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_set_key_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_set_key_length"]
     pub fn EVP_CIPHER_CTX_set_key_length(
         ctx: *mut EVP_CIPHER_CTX,
         key_len: ::std::os::raw::c_uint,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_nid"]
     pub fn EVP_CIPHER_nid(cipher: *const EVP_CIPHER) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_block_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_block_size"]
     pub fn EVP_CIPHER_block_size(cipher: *const EVP_CIPHER) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_key_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_key_length"]
     pub fn EVP_CIPHER_key_length(cipher: *const EVP_CIPHER) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_iv_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_iv_length"]
     pub fn EVP_CIPHER_iv_length(cipher: *const EVP_CIPHER) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_flags"]
     pub fn EVP_CIPHER_flags(cipher: *const EVP_CIPHER) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_mode"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_mode"]
     pub fn EVP_CIPHER_mode(cipher: *const EVP_CIPHER) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_BytesToKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_BytesToKey"]
     pub fn EVP_BytesToKey(
         type_: *const EVP_CIPHER,
         md: *const EVP_MD,
@@ -11552,23 +11579,23 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_cbc_hmac_sha1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_cbc_hmac_sha1"]
     pub fn EVP_aes_128_cbc_hmac_sha1() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_cbc_hmac_sha1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_cbc_hmac_sha1"]
     pub fn EVP_aes_256_cbc_hmac_sha1() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_cbc_hmac_sha256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_cbc_hmac_sha256"]
     pub fn EVP_aes_128_cbc_hmac_sha256() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_cbc_hmac_sha256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_cbc_hmac_sha256"]
     pub fn EVP_aes_256_cbc_hmac_sha256() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CipherInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CipherInit"]
     pub fn EVP_CipherInit(
         ctx: *mut EVP_CIPHER_CTX,
         cipher: *const EVP_CIPHER,
@@ -11578,7 +11605,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncryptInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncryptInit"]
     pub fn EVP_EncryptInit(
         ctx: *mut EVP_CIPHER_CTX,
         cipher: *const EVP_CIPHER,
@@ -11587,7 +11614,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecryptInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecryptInit"]
     pub fn EVP_DecryptInit(
         ctx: *mut EVP_CIPHER_CTX,
         cipher: *const EVP_CIPHER,
@@ -11596,7 +11623,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CipherFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CipherFinal"]
     pub fn EVP_CipherFinal(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11604,7 +11631,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_EncryptFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_EncryptFinal"]
     pub fn EVP_EncryptFinal(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11612,7 +11639,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DecryptFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DecryptFinal"]
     pub fn EVP_DecryptFinal(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11620,7 +11647,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_Cipher"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_Cipher"]
     pub fn EVP_Cipher(
         ctx: *mut EVP_CIPHER_CTX,
         out: *mut u8,
@@ -11629,118 +11656,118 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_add_cipher_alias"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_add_cipher_alias"]
     pub fn EVP_add_cipher_alias(
         a: *const ::std::os::raw::c_char,
         b: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_get_cipherbyname"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_get_cipherbyname"]
     pub fn EVP_get_cipherbyname(name: *const ::std::os::raw::c_char) -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_gcm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_gcm"]
     pub fn EVP_aes_128_gcm() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_gcm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_gcm"]
     pub fn EVP_aes_256_gcm() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_192_ecb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_192_ecb"]
     pub fn EVP_aes_192_ecb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_192_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_192_cbc"]
     pub fn EVP_aes_192_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_192_ctr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_192_ctr"]
     pub fn EVP_aes_192_ctr() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_192_gcm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_192_gcm"]
     pub fn EVP_aes_192_gcm() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_192_ofb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_192_ofb"]
     pub fn EVP_aes_192_ofb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_des_ede3_ecb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_des_ede3_ecb"]
     pub fn EVP_des_ede3_ecb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_cfb128"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_cfb128"]
     pub fn EVP_aes_128_cfb128() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_cfb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_cfb"]
     pub fn EVP_aes_128_cfb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_cfb1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_cfb1"]
     pub fn EVP_aes_128_cfb1() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_128_cfb8"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_128_cfb8"]
     pub fn EVP_aes_128_cfb8() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_192_cfb128"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_192_cfb128"]
     pub fn EVP_aes_192_cfb128() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_192_cfb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_192_cfb"]
     pub fn EVP_aes_192_cfb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_192_cfb1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_192_cfb1"]
     pub fn EVP_aes_192_cfb1() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_192_cfb8"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_192_cfb8"]
     pub fn EVP_aes_192_cfb8() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_cfb128"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_cfb128"]
     pub fn EVP_aes_256_cfb128() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_cfb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_cfb"]
     pub fn EVP_aes_256_cfb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_cfb1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_cfb1"]
     pub fn EVP_aes_256_cfb1() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aes_256_cfb8"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aes_256_cfb8"]
     pub fn EVP_aes_256_cfb8() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_bf_ecb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_bf_ecb"]
     pub fn EVP_bf_ecb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_bf_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_bf_cbc"]
     pub fn EVP_bf_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_bf_cfb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_bf_cfb"]
     pub fn EVP_bf_cfb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_cast5_ecb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_cast5_ecb"]
     pub fn EVP_cast5_ecb() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_cast5_cbc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_cast5_cbc"]
     pub fn EVP_cast5_cbc() -> *const EVP_CIPHER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_CTX_set_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_CTX_set_flags"]
     pub fn EVP_CIPHER_CTX_set_flags(ctx: *const EVP_CIPHER_CTX, flags: u32);
 }
 #[repr(C)]
@@ -11977,7 +12004,7 @@ impl Default for evp_cipher_info_st {
 }
 pub type EVP_CIPHER_INFO = evp_cipher_info_st;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AES_CMAC"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AES_CMAC"]
     pub fn AES_CMAC(
         out: *mut u8,
         key: *const u8,
@@ -11987,19 +12014,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CMAC_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CMAC_CTX_new"]
     pub fn CMAC_CTX_new() -> *mut CMAC_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CMAC_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CMAC_CTX_free"]
     pub fn CMAC_CTX_free(ctx: *mut CMAC_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CMAC_CTX_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CMAC_CTX_copy"]
     pub fn CMAC_CTX_copy(out: *mut CMAC_CTX, in_: *const CMAC_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CMAC_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CMAC_Init"]
     pub fn CMAC_Init(
         ctx: *mut CMAC_CTX,
         key: *const ::std::os::raw::c_void,
@@ -12009,15 +12036,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CMAC_Reset"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CMAC_Reset"]
     pub fn CMAC_Reset(ctx: *mut CMAC_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CMAC_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CMAC_Update"]
     pub fn CMAC_Update(ctx: *mut CMAC_CTX, in_: *const u8, in_len: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CMAC_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CMAC_Final"]
     pub fn CMAC_Final(
         ctx: *mut CMAC_CTX,
         out: *mut u8,
@@ -12112,15 +12139,15 @@ pub struct lhash_st_CONF_VALUE {
     _unused: [u8; 0],
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NCONF_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NCONF_new"]
     pub fn NCONF_new(method: *mut ::std::os::raw::c_void) -> *mut CONF;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NCONF_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NCONF_free"]
     pub fn NCONF_free(conf: *mut CONF);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NCONF_load"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NCONF_load"]
     pub fn NCONF_load(
         conf: *mut CONF,
         filename: *const ::std::os::raw::c_char,
@@ -12128,7 +12155,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NCONF_load_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NCONF_load_bio"]
     pub fn NCONF_load_bio(
         conf: *mut CONF,
         bio: *mut BIO,
@@ -12136,14 +12163,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NCONF_get_section"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NCONF_get_section"]
     pub fn NCONF_get_section(
         conf: *const CONF,
         section: *const ::std::os::raw::c_char,
     ) -> *const stack_st_CONF_VALUE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NCONF_get_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NCONF_get_string"]
     pub fn NCONF_get_string(
         conf: *const CONF,
         section: *const ::std::os::raw::c_char,
@@ -12151,7 +12178,7 @@ extern "C" {
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CONF_modules_load_file"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CONF_modules_load_file"]
     pub fn CONF_modules_load_file(
         filename: *const ::std::os::raw::c_char,
         appname: *const ::std::os::raw::c_char,
@@ -12159,23 +12186,23 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CONF_modules_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CONF_modules_free"]
     pub fn CONF_modules_free();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_config"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_config"]
     pub fn OPENSSL_config(config_name: *const ::std::os::raw::c_char);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_no_config"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_no_config"]
     pub fn OPENSSL_no_config();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA1_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA1_Init"]
     pub fn SHA1_Init(sha: *mut SHA_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA1_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA1_Update"]
     pub fn SHA1_Update(
         sha: *mut SHA_CTX,
         data: *const ::std::os::raw::c_void,
@@ -12183,15 +12210,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA1_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA1_Final"]
     pub fn SHA1_Final(out: *mut u8, sha: *mut SHA_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA1"]
     pub fn SHA1(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA1_Transform"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA1_Transform"]
     pub fn SHA1_Transform(sha: *mut SHA_CTX, block: *const u8);
 }
 #[repr(C)]
@@ -12278,11 +12305,11 @@ impl Default for sha_state_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA224_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA224_Init"]
     pub fn SHA224_Init(sha: *mut SHA256_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA224_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA224_Update"]
     pub fn SHA224_Update(
         sha: *mut SHA256_CTX,
         data: *const ::std::os::raw::c_void,
@@ -12290,19 +12317,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA224_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA224_Final"]
     pub fn SHA224_Final(out: *mut u8, sha: *mut SHA256_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA224"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA224"]
     pub fn SHA224(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA256_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA256_Init"]
     pub fn SHA256_Init(sha: *mut SHA256_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA256_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA256_Update"]
     pub fn SHA256_Update(
         sha: *mut SHA256_CTX,
         data: *const ::std::os::raw::c_void,
@@ -12310,19 +12337,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA256_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA256_Final"]
     pub fn SHA256_Final(out: *mut u8, sha: *mut SHA256_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA256"]
     pub fn SHA256(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA256_Transform"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA256_Transform"]
     pub fn SHA256_Transform(sha: *mut SHA256_CTX, block: *const u8);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA256_TransformBlocks"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA256_TransformBlocks"]
     pub fn SHA256_TransformBlocks(state: *mut u32, data: *const u8, num_blocks: usize);
 }
 #[repr(C)]
@@ -12420,11 +12447,11 @@ impl Default for sha256_state_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA384_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA384_Init"]
     pub fn SHA384_Init(sha: *mut SHA512_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA384_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA384_Update"]
     pub fn SHA384_Update(
         sha: *mut SHA512_CTX,
         data: *const ::std::os::raw::c_void,
@@ -12432,19 +12459,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA384_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA384_Final"]
     pub fn SHA384_Final(out: *mut u8, sha: *mut SHA512_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA384"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA384"]
     pub fn SHA384(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA512_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA512_Init"]
     pub fn SHA512_Init(sha: *mut SHA512_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA512_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA512_Update"]
     pub fn SHA512_Update(
         sha: *mut SHA512_CTX,
         data: *const ::std::os::raw::c_void,
@@ -12452,15 +12479,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA512_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA512_Final"]
     pub fn SHA512_Final(out: *mut u8, sha: *mut SHA512_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA512"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA512"]
     pub fn SHA512(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA512_Transform"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA512_Transform"]
     pub fn SHA512_Transform(sha: *mut SHA512_CTX, block: *const u8);
 }
 #[repr(C)]
@@ -12558,11 +12585,11 @@ impl Default for sha512_state_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA512_256_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA512_256_Init"]
     pub fn SHA512_256_Init(sha: *mut SHA512_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA512_256_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA512_256_Update"]
     pub fn SHA512_256_Update(
         sha: *mut SHA512_CTX,
         data: *const ::std::os::raw::c_void,
@@ -12570,34 +12597,34 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA512_256_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA512_256_Final"]
     pub fn SHA512_256_Final(out: *mut u8, sha: *mut SHA512_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SHA512_256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SHA512_256"]
     pub fn SHA512_256(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_malloc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_malloc"]
     pub fn OPENSSL_malloc(size: usize) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_free"]
     pub fn OPENSSL_free(ptr: *mut ::std::os::raw::c_void);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_realloc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_realloc"]
     pub fn OPENSSL_realloc(
         ptr: *mut ::std::os::raw::c_void,
         new_size: usize,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_cleanse"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_cleanse"]
     pub fn OPENSSL_cleanse(ptr: *mut ::std::os::raw::c_void, len: usize);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_memcmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_memcmp"]
     pub fn CRYPTO_memcmp(
         a: *const ::std::os::raw::c_void,
         b: *const ::std::os::raw::c_void,
@@ -12605,34 +12632,34 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_hash32"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_hash32"]
     pub fn OPENSSL_hash32(ptr: *const ::std::os::raw::c_void, len: usize) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_strhash"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_strhash"]
     pub fn OPENSSL_strhash(s: *const ::std::os::raw::c_char) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_strdup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_strdup"]
     pub fn OPENSSL_strdup(s: *const ::std::os::raw::c_char) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_strnlen"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_strnlen"]
     pub fn OPENSSL_strnlen(s: *const ::std::os::raw::c_char, len: usize) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_tolower"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_tolower"]
     pub fn OPENSSL_tolower(c: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_strcasecmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_strcasecmp"]
     pub fn OPENSSL_strcasecmp(
         a: *const ::std::os::raw::c_char,
         b: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_strncasecmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_strncasecmp"]
     pub fn OPENSSL_strncasecmp(
         a: *const ::std::os::raw::c_char,
         b: *const ::std::os::raw::c_char,
@@ -12640,7 +12667,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_snprintf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_snprintf"]
     pub fn BIO_snprintf(
         buf: *mut ::std::os::raw::c_char,
         n: usize,
@@ -12649,7 +12676,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BIO_vsnprintf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BIO_vsnprintf"]
     pub fn BIO_vsnprintf(
         buf: *mut ::std::os::raw::c_char,
         n: usize,
@@ -12658,7 +12685,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_vasprintf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_vasprintf"]
     pub fn OPENSSL_vasprintf(
         str_: *mut *mut ::std::os::raw::c_char,
         format: *const ::std::os::raw::c_char,
@@ -12666,7 +12693,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_asprintf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_asprintf"]
     pub fn OPENSSL_asprintf(
         str_: *mut *mut ::std::os::raw::c_char,
         format: *const ::std::os::raw::c_char,
@@ -12674,21 +12701,21 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_strndup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_strndup"]
     pub fn OPENSSL_strndup(
         str_: *const ::std::os::raw::c_char,
         size: usize,
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_memdup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_memdup"]
     pub fn OPENSSL_memdup(
         data: *const ::std::os::raw::c_void,
         size: usize,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_strlcpy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_strlcpy"]
     pub fn OPENSSL_strlcpy(
         dst: *mut ::std::os::raw::c_char,
         src: *const ::std::os::raw::c_char,
@@ -12696,7 +12723,7 @@ extern "C" {
     ) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_strlcat"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_strlcat"]
     pub fn OPENSSL_strlcat(
         dst: *mut ::std::os::raw::c_char,
         src: *const ::std::os::raw::c_char,
@@ -12704,7 +12731,7 @@ extern "C" {
     ) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_malloc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_malloc"]
     pub fn CRYPTO_malloc(
         size: usize,
         file: *const ::std::os::raw::c_char,
@@ -12712,7 +12739,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_realloc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_realloc"]
     pub fn CRYPTO_realloc(
         ptr: *mut ::std::os::raw::c_void,
         new_size: usize,
@@ -12721,7 +12748,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_free"]
     pub fn CRYPTO_free(
         ptr: *mut ::std::os::raw::c_void,
         file: *const ::std::os::raw::c_char,
@@ -12729,11 +12756,11 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_clear_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_clear_free"]
     pub fn OPENSSL_clear_free(ptr: *mut ::std::os::raw::c_void, len: usize);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_set_mem_functions"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_set_mem_functions"]
     pub fn CRYPTO_set_mem_functions(
         m: ::std::option::Option<
             unsafe extern "C" fn(
@@ -12760,51 +12787,51 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_secure_malloc_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_secure_malloc_init"]
     pub fn CRYPTO_secure_malloc_init(size: usize, min_size: usize) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_secure_malloc_initialized"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_secure_malloc_initialized"]
     pub fn CRYPTO_secure_malloc_initialized() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_secure_used"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_secure_used"]
     pub fn CRYPTO_secure_used() -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_secure_malloc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_secure_malloc"]
     pub fn OPENSSL_secure_malloc(size: usize) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_secure_clear_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_secure_clear_free"]
     pub fn OPENSSL_secure_clear_free(ptr: *mut ::std::os::raw::c_void, len: usize);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_library_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_library_init"]
     pub fn CRYPTO_library_init();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_is_confidential_build"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_is_confidential_build"]
     pub fn CRYPTO_is_confidential_build() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_has_asm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_has_asm"]
     pub fn CRYPTO_has_asm() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BORINGSSL_self_test"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BORINGSSL_self_test"]
     pub fn BORINGSSL_self_test() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BORINGSSL_integrity_test"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BORINGSSL_integrity_test"]
     pub fn BORINGSSL_integrity_test() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_pre_sandbox_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_pre_sandbox_init"]
     pub fn CRYPTO_pre_sandbox_init();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_FIPS_mode"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_FIPS_mode"]
     pub fn FIPS_mode() -> ::std::os::raw::c_int;
 }
 pub const fips_counter_t_fips_counter_evp_aes_128_gcm: fips_counter_t = 0;
@@ -12814,70 +12841,70 @@ pub const fips_counter_t_fips_counter_evp_aes_256_ctr: fips_counter_t = 3;
 pub const fips_counter_t_fips_counter_max: fips_counter_t = 3;
 pub type fips_counter_t = ::std::os::raw::c_uint;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_FIPS_read_counter"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_FIPS_read_counter"]
     pub fn FIPS_read_counter(counter: fips_counter_t) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OpenSSL_version"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OpenSSL_version"]
     pub fn OpenSSL_version(which: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SSLeay_version"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SSLeay_version"]
     pub fn SSLeay_version(which: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SSLeay"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SSLeay"]
     pub fn SSLeay() -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OpenSSL_version_num"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OpenSSL_version_num"]
     pub fn OpenSSL_version_num() -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_awslc_api_version_num"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_awslc_api_version_num"]
     pub fn awslc_api_version_num() -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_malloc_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_malloc_init"]
     pub fn CRYPTO_malloc_init() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_malloc_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_malloc_init"]
     pub fn OPENSSL_malloc_init() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ENGINE_load_builtin_engines"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ENGINE_load_builtin_engines"]
     pub fn ENGINE_load_builtin_engines();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ENGINE_register_all_complete"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ENGINE_register_all_complete"]
     pub fn ENGINE_register_all_complete() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_load_builtin_modules"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_load_builtin_modules"]
     pub fn OPENSSL_load_builtin_modules();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_init_crypto"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_init_crypto"]
     pub fn OPENSSL_init_crypto(
         opts: u64,
         settings: *const OPENSSL_INIT_SETTINGS,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_cleanup"]
     pub fn OPENSSL_cleanup();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_FIPS_mode_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_FIPS_mode_set"]
     pub fn FIPS_mode_set(on: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X25519_keypair"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X25519_keypair"]
     pub fn X25519_keypair(out_public_value: *mut u8, out_private_key: *mut u8);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X25519"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X25519"]
     pub fn X25519(
         out_shared_key: *mut u8,
         private_key: *const u8,
@@ -12885,15 +12912,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X25519_public_from_private"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X25519_public_from_private"]
     pub fn X25519_public_from_private(out_public_value: *mut u8, private_key: *const u8);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ED25519_keypair"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ED25519_keypair"]
     pub fn ED25519_keypair(out_public_key: *mut u8, out_private_key: *mut u8);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ED25519_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ED25519_sign"]
     pub fn ED25519_sign(
         out_sig: *mut u8,
         message: *const u8,
@@ -12902,7 +12929,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ED25519_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ED25519_verify"]
     pub fn ED25519_verify(
         message: *const u8,
         message_len: usize,
@@ -12911,7 +12938,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ED25519_keypair_from_seed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ED25519_keypair_from_seed"]
     pub fn ED25519_keypair_from_seed(
         out_public_key: *mut u8,
         out_private_key: *mut u8,
@@ -12922,7 +12949,7 @@ pub const spake2_role_t_spake2_role_alice: spake2_role_t = 0;
 pub const spake2_role_t_spake2_role_bob: spake2_role_t = 1;
 pub type spake2_role_t = ::std::os::raw::c_uint;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SPAKE2_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SPAKE2_CTX_new"]
     pub fn SPAKE2_CTX_new(
         my_role: spake2_role_t,
         my_name: *const u8,
@@ -12932,11 +12959,11 @@ extern "C" {
     ) -> *mut SPAKE2_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SPAKE2_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SPAKE2_CTX_free"]
     pub fn SPAKE2_CTX_free(ctx: *mut SPAKE2_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SPAKE2_generate_msg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SPAKE2_generate_msg"]
     pub fn SPAKE2_generate_msg(
         ctx: *mut SPAKE2_CTX,
         out: *mut u8,
@@ -12947,7 +12974,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SPAKE2_process_msg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SPAKE2_process_msg"]
     pub fn SPAKE2_process_msg(
         ctx: *mut SPAKE2_CTX,
         out_key: *mut u8,
@@ -13020,15 +13047,15 @@ fn bindgen_test_layout_DES_ks() {
 }
 pub type DES_key_schedule = DES_ks;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DES_set_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DES_set_key"]
     pub fn DES_set_key(key: *const DES_cblock, schedule: *mut DES_key_schedule);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DES_set_odd_parity"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DES_set_odd_parity"]
     pub fn DES_set_odd_parity(key: *mut DES_cblock);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DES_ecb_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DES_ecb_encrypt"]
     pub fn DES_ecb_encrypt(
         in_: *const DES_cblock,
         out: *mut DES_cblock,
@@ -13037,7 +13064,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DES_ncbc_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DES_ncbc_encrypt"]
     pub fn DES_ncbc_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -13048,7 +13075,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DES_ecb3_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DES_ecb3_encrypt"]
     pub fn DES_ecb3_encrypt(
         input: *const DES_cblock,
         output: *mut DES_cblock,
@@ -13059,7 +13086,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DES_ede3_cbc_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DES_ede3_cbc_encrypt"]
     pub fn DES_ede3_cbc_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -13072,7 +13099,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DES_ede2_cbc_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DES_ede2_cbc_encrypt"]
     pub fn DES_ede2_cbc_encrypt(
         in_: *const u8,
         out: *mut u8,
@@ -13084,7 +13111,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DES_decrypt3"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DES_decrypt3"]
     pub fn DES_decrypt3(
         data: *mut u32,
         ks1: *const DES_key_schedule,
@@ -13093,7 +13120,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DES_encrypt3"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DES_encrypt3"]
     pub fn DES_encrypt3(
         data: *mut u32,
         ks1: *const DES_key_schedule,
@@ -13102,43 +13129,43 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_new"]
     pub fn DH_new() -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_free"]
     pub fn DH_free(dh: *mut DH);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_up_ref"]
     pub fn DH_up_ref(dh: *mut DH) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_bits"]
     pub fn DH_bits(dh: *const DH) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_get0_pub_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_get0_pub_key"]
     pub fn DH_get0_pub_key(dh: *const DH) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_get0_priv_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_get0_priv_key"]
     pub fn DH_get0_priv_key(dh: *const DH) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_get0_p"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_get0_p"]
     pub fn DH_get0_p(dh: *const DH) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_get0_q"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_get0_q"]
     pub fn DH_get0_q(dh: *const DH) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_get0_g"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_get0_g"]
     pub fn DH_get0_g(dh: *const DH) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_get0_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_get0_key"]
     pub fn DH_get0_key(
         dh: *const DH,
         out_pub_key: *mut *const BIGNUM,
@@ -13146,7 +13173,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_set0_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_set0_key"]
     pub fn DH_set0_key(
         dh: *mut DH,
         pub_key: *mut BIGNUM,
@@ -13154,7 +13181,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_get0_pqg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_get0_pqg"]
     pub fn DH_get0_pqg(
         dh: *const DH,
         out_p: *mut *const BIGNUM,
@@ -13163,7 +13190,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_set0_pqg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_set0_pqg"]
     pub fn DH_set0_pqg(
         dh: *mut DH,
         p: *mut BIGNUM,
@@ -13172,40 +13199,40 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_set_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_set_length"]
     pub fn DH_set_length(dh: *mut DH, priv_length: ::std::os::raw::c_uint)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_get_rfc7919_2048"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_get_rfc7919_2048"]
     pub fn DH_get_rfc7919_2048() -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_get_rfc3526_prime_1536"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_get_rfc3526_prime_1536"]
     pub fn BN_get_rfc3526_prime_1536(ret: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_get_rfc3526_prime_2048"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_get_rfc3526_prime_2048"]
     pub fn BN_get_rfc3526_prime_2048(ret: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_get_rfc3526_prime_3072"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_get_rfc3526_prime_3072"]
     pub fn BN_get_rfc3526_prime_3072(ret: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_get_rfc3526_prime_4096"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_get_rfc3526_prime_4096"]
     pub fn BN_get_rfc3526_prime_4096(ret: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_get_rfc3526_prime_6144"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_get_rfc3526_prime_6144"]
     pub fn BN_get_rfc3526_prime_6144(ret: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BN_get_rfc3526_prime_8192"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BN_get_rfc3526_prime_8192"]
     pub fn BN_get_rfc3526_prime_8192(ret: *mut BIGNUM) -> *mut BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_generate_parameters_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_generate_parameters_ex"]
     pub fn DH_generate_parameters_ex(
         dh: *mut DH,
         prime_bits: ::std::os::raw::c_int,
@@ -13214,11 +13241,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_generate_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_generate_key"]
     pub fn DH_generate_key(dh: *mut DH) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_compute_key_padded"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_compute_key_padded"]
     pub fn DH_compute_key_padded(
         out: *mut u8,
         peers_key: *const BIGNUM,
@@ -13226,7 +13253,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_compute_key_hashed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_compute_key_hashed"]
     pub fn DH_compute_key_hashed(
         dh: *mut DH,
         out: *mut u8,
@@ -13237,19 +13264,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_size"]
     pub fn DH_size(dh: *const DH) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_num_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_num_bits"]
     pub fn DH_num_bits(dh: *const DH) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_check"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_check"]
     pub fn DH_check(dh: *const DH, out_flags: *mut ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_check_pub_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_check_pub_key"]
     pub fn DH_check_pub_key(
         dh: *const DH,
         pub_key: *const BIGNUM,
@@ -13257,19 +13284,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DHparams_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DHparams_dup"]
     pub fn DHparams_dup(dh: *const DH) -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_parse_parameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_parse_parameters"]
     pub fn DH_parse_parameters(cbs: *mut CBS) -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_marshal_parameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_marshal_parameters"]
     pub fn DH_marshal_parameters(cbb: *mut CBB, dh: *const DH) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_generate_parameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_generate_parameters"]
     pub fn DH_generate_parameters(
         prime_len: ::std::os::raw::c_int,
         generator: ::std::os::raw::c_int,
@@ -13284,7 +13311,7 @@ extern "C" {
     ) -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DHparams"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DHparams"]
     pub fn d2i_DHparams(
         ret: *mut *mut DH,
         inp: *mut *const ::std::os::raw::c_uchar,
@@ -13292,14 +13319,14 @@ extern "C" {
     ) -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DHparams"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DHparams"]
     pub fn i2d_DHparams(
         in_: *const DH,
         outp: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_compute_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_compute_key"]
     pub fn DH_compute_key(
         out: *mut u8,
         peers_key: *const BIGNUM,
@@ -13307,114 +13334,114 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DH_get_2048_256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DH_get_2048_256"]
     pub fn DH_get_2048_256() -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_md4"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_md4"]
     pub fn EVP_md4() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_md5"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_md5"]
     pub fn EVP_md5() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_ripemd160"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_ripemd160"]
     pub fn EVP_ripemd160() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha1"]
     pub fn EVP_sha1() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha224"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha224"]
     pub fn EVP_sha224() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha256"]
     pub fn EVP_sha256() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha384"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha384"]
     pub fn EVP_sha384() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha512"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha512"]
     pub fn EVP_sha512() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha512_256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha512_256"]
     pub fn EVP_sha512_256() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha3_224"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha3_224"]
     pub fn EVP_sha3_224() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha3_256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha3_256"]
     pub fn EVP_sha3_256() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha3_384"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha3_384"]
     pub fn EVP_sha3_384() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_sha3_512"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_sha3_512"]
     pub fn EVP_sha3_512() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_blake2b256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_blake2b256"]
     pub fn EVP_blake2b256() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_md5_sha1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_md5_sha1"]
     pub fn EVP_md5_sha1() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_get_digestbynid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_get_digestbynid"]
     pub fn EVP_get_digestbynid(nid: ::std::os::raw::c_int) -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_get_digestbyobj"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_get_digestbyobj"]
     pub fn EVP_get_digestbyobj(obj: *const ASN1_OBJECT) -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_init"]
     pub fn EVP_MD_CTX_init(ctx: *mut EVP_MD_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_new"]
     pub fn EVP_MD_CTX_new() -> *mut EVP_MD_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_cleanup"]
     pub fn EVP_MD_CTX_cleanup(ctx: *mut EVP_MD_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_cleanse"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_cleanse"]
     pub fn EVP_MD_CTX_cleanse(ctx: *mut EVP_MD_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_free"]
     pub fn EVP_MD_CTX_free(ctx: *mut EVP_MD_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_copy_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_copy_ex"]
     pub fn EVP_MD_CTX_copy_ex(
         out: *mut EVP_MD_CTX,
         in_: *const EVP_MD_CTX,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_move"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_move"]
     pub fn EVP_MD_CTX_move(out: *mut EVP_MD_CTX, in_: *mut EVP_MD_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_reset"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_reset"]
     pub fn EVP_MD_CTX_reset(ctx: *mut EVP_MD_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestInit_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestInit_ex"]
     pub fn EVP_DigestInit_ex(
         ctx: *mut EVP_MD_CTX,
         type_: *const EVP_MD,
@@ -13422,11 +13449,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestInit"]
     pub fn EVP_DigestInit(ctx: *mut EVP_MD_CTX, type_: *const EVP_MD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestUpdate"]
     pub fn EVP_DigestUpdate(
         ctx: *mut EVP_MD_CTX,
         data: *const ::std::os::raw::c_void,
@@ -13434,7 +13461,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestFinal_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestFinal_ex"]
     pub fn EVP_DigestFinal_ex(
         ctx: *mut EVP_MD_CTX,
         md_out: *mut u8,
@@ -13442,7 +13469,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestFinal"]
     pub fn EVP_DigestFinal(
         ctx: *mut EVP_MD_CTX,
         md_out: *mut u8,
@@ -13450,7 +13477,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_Digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_Digest"]
     pub fn EVP_Digest(
         data: *const ::std::os::raw::c_void,
         len: usize,
@@ -13461,75 +13488,75 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_type"]
     pub fn EVP_MD_type(md: *const EVP_MD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_flags"]
     pub fn EVP_MD_flags(md: *const EVP_MD) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_size"]
     pub fn EVP_MD_size(md: *const EVP_MD) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_block_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_block_size"]
     pub fn EVP_MD_block_size(md: *const EVP_MD) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_md"]
     pub fn EVP_MD_CTX_md(ctx: *const EVP_MD_CTX) -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_size"]
     pub fn EVP_MD_CTX_size(ctx: *const EVP_MD_CTX) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_block_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_block_size"]
     pub fn EVP_MD_CTX_block_size(ctx: *const EVP_MD_CTX) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_type"]
     pub fn EVP_MD_CTX_type(ctx: *const EVP_MD_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_parse_digest_algorithm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_parse_digest_algorithm"]
     pub fn EVP_parse_digest_algorithm(cbs: *mut CBS) -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_marshal_digest_algorithm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_marshal_digest_algorithm"]
     pub fn EVP_marshal_digest_algorithm(cbb: *mut CBB, md: *const EVP_MD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_unstable_sha3_enable"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_unstable_sha3_enable"]
     pub fn EVP_MD_unstable_sha3_enable(enable: bool);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_unstable_sha3_is_enabled"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_unstable_sha3_is_enabled"]
     pub fn EVP_MD_unstable_sha3_is_enabled() -> bool;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_copy"]
     pub fn EVP_MD_CTX_copy(out: *mut EVP_MD_CTX, in_: *const EVP_MD_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_add_digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_add_digest"]
     pub fn EVP_add_digest(digest: *const EVP_MD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_get_digestbyname"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_get_digestbyname"]
     pub fn EVP_get_digestbyname(arg1: *const ::std::os::raw::c_char) -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_create"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_create"]
     pub fn EVP_MD_CTX_create() -> *mut EVP_MD_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_destroy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_destroy"]
     pub fn EVP_MD_CTX_destroy(ctx: *mut EVP_MD_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestFinalXOF"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestFinalXOF"]
     pub fn EVP_DigestFinalXOF(
         ctx: *mut EVP_MD_CTX,
         out: *mut u8,
@@ -13537,19 +13564,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_meth_get_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_meth_get_flags"]
     pub fn EVP_MD_meth_get_flags(md: *const EVP_MD) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_set_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_set_flags"]
     pub fn EVP_MD_CTX_set_flags(ctx: *mut EVP_MD_CTX, flags: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_nid"]
     pub fn EVP_MD_nid(md: *const EVP_MD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_CTX_set_pkey_ctx"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_CTX_set_pkey_ctx"]
     pub fn EVP_MD_CTX_set_pkey_ctx(ctx: *mut EVP_MD_CTX, pctx: *mut EVP_PKEY_CTX);
 }
 #[repr(C)]
@@ -13641,19 +13668,19 @@ impl Default for env_md_ctx_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_md_null"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_md_null"]
     pub fn EVP_md_null() -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ENGINE_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ENGINE_new"]
     pub fn ENGINE_new() -> *mut ENGINE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ENGINE_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ENGINE_free"]
     pub fn ENGINE_free(engine: *mut ENGINE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ENGINE_set_RSA_method"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ENGINE_set_RSA_method"]
     pub fn ENGINE_set_RSA_method(
         engine: *mut ENGINE,
         method: *const RSA_METHOD,
@@ -13661,11 +13688,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ENGINE_get_RSA_method"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ENGINE_get_RSA_method"]
     pub fn ENGINE_get_RSA_method(engine: *const ENGINE) -> *mut RSA_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ENGINE_set_ECDSA_method"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ENGINE_set_ECDSA_method"]
     pub fn ENGINE_set_ECDSA_method(
         engine: *mut ENGINE,
         method: *const ECDSA_METHOD,
@@ -13673,15 +13700,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ENGINE_get_ECDSA_method"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ENGINE_get_ECDSA_method"]
     pub fn ENGINE_get_ECDSA_method(engine: *const ENGINE) -> *mut ECDSA_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_METHOD_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_METHOD_ref"]
     pub fn METHOD_ref(method: *mut ::std::os::raw::c_void);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_METHOD_unref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_METHOD_unref"]
     pub fn METHOD_unref(method: *mut ::std::os::raw::c_void);
 }
 #[repr(C)]
@@ -13727,43 +13754,43 @@ fn bindgen_test_layout_openssl_method_common_st() {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_new"]
     pub fn DSA_new() -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_free"]
     pub fn DSA_free(dsa: *mut DSA);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_up_ref"]
     pub fn DSA_up_ref(dsa: *mut DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_bits"]
     pub fn DSA_bits(dsa: *const DSA) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_get0_pub_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_get0_pub_key"]
     pub fn DSA_get0_pub_key(dsa: *const DSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_get0_priv_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_get0_priv_key"]
     pub fn DSA_get0_priv_key(dsa: *const DSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_get0_p"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_get0_p"]
     pub fn DSA_get0_p(dsa: *const DSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_get0_q"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_get0_q"]
     pub fn DSA_get0_q(dsa: *const DSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_get0_g"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_get0_g"]
     pub fn DSA_get0_g(dsa: *const DSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_get0_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_get0_key"]
     pub fn DSA_get0_key(
         dsa: *const DSA,
         out_pub_key: *mut *const BIGNUM,
@@ -13771,7 +13798,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_get0_pqg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_get0_pqg"]
     pub fn DSA_get0_pqg(
         dsa: *const DSA,
         out_p: *mut *const BIGNUM,
@@ -13780,7 +13807,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_set0_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_set0_key"]
     pub fn DSA_set0_key(
         dsa: *mut DSA,
         pub_key: *mut BIGNUM,
@@ -13788,7 +13815,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_set0_pqg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_set0_pqg"]
     pub fn DSA_set0_pqg(
         dsa: *mut DSA,
         p: *mut BIGNUM,
@@ -13797,7 +13824,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_generate_parameters_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_generate_parameters_ex"]
     pub fn DSA_generate_parameters_ex(
         dsa: *mut DSA,
         bits: ::std::os::raw::c_uint,
@@ -13809,11 +13836,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSAparams_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSAparams_dup"]
     pub fn DSAparams_dup(dsa: *const DSA) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_generate_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_generate_key"]
     pub fn DSA_generate_key(dsa: *mut DSA) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
@@ -13867,28 +13894,28 @@ impl Default for DSA_SIG_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_SIG_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_SIG_new"]
     pub fn DSA_SIG_new() -> *mut DSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_SIG_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_SIG_free"]
     pub fn DSA_SIG_free(sig: *mut DSA_SIG);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_SIG_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_SIG_get0"]
     pub fn DSA_SIG_get0(sig: *const DSA_SIG, out_r: *mut *const BIGNUM, out_s: *mut *const BIGNUM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_SIG_set0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_SIG_set0"]
     pub fn DSA_SIG_set0(sig: *mut DSA_SIG, r: *mut BIGNUM, s: *mut BIGNUM)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_do_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_do_sign"]
     pub fn DSA_do_sign(digest: *const u8, digest_len: usize, dsa: *const DSA) -> *mut DSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_do_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_do_verify"]
     pub fn DSA_do_verify(
         digest: *const u8,
         digest_len: usize,
@@ -13897,7 +13924,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_do_check_signature"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_do_check_signature"]
     pub fn DSA_do_check_signature(
         out_valid: *mut ::std::os::raw::c_int,
         digest: *const u8,
@@ -13907,7 +13934,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_sign"]
     pub fn DSA_sign(
         type_: ::std::os::raw::c_int,
         digest: *const u8,
@@ -13918,7 +13945,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_verify"]
     pub fn DSA_verify(
         type_: ::std::os::raw::c_int,
         digest: *const u8,
@@ -13929,7 +13956,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_check_signature"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_check_signature"]
     pub fn DSA_check_signature(
         out_valid: *mut ::std::os::raw::c_int,
         digest: *const u8,
@@ -13940,47 +13967,47 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_size"]
     pub fn DSA_size(dsa: *const DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_SIG_parse"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_SIG_parse"]
     pub fn DSA_SIG_parse(cbs: *mut CBS) -> *mut DSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_SIG_marshal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_SIG_marshal"]
     pub fn DSA_SIG_marshal(cbb: *mut CBB, sig: *const DSA_SIG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_parse_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_parse_public_key"]
     pub fn DSA_parse_public_key(cbs: *mut CBS) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_marshal_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_marshal_public_key"]
     pub fn DSA_marshal_public_key(cbb: *mut CBB, dsa: *const DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_parse_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_parse_private_key"]
     pub fn DSA_parse_private_key(cbs: *mut CBS) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_marshal_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_marshal_private_key"]
     pub fn DSA_marshal_private_key(cbb: *mut CBB, dsa: *const DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_parse_parameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_parse_parameters"]
     pub fn DSA_parse_parameters(cbs: *mut CBS) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_marshal_parameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_marshal_parameters"]
     pub fn DSA_marshal_parameters(cbb: *mut CBB, dsa: *const DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_dup_DH"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_dup_DH"]
     pub fn DSA_dup_DH(dsa: *const DSA) -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_get_ex_new_index"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_get_ex_new_index"]
     pub fn DSA_get_ex_new_index(
         argl: ::std::os::raw::c_long,
         argp: *mut ::std::os::raw::c_void,
@@ -13990,7 +14017,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_set_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_set_ex_data"]
     pub fn DSA_set_ex_data(
         dsa: *mut DSA,
         idx: ::std::os::raw::c_int,
@@ -13998,14 +14025,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DSA_get_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DSA_get_ex_data"]
     pub fn DSA_get_ex_data(
         dsa: *const DSA,
         idx: ::std::os::raw::c_int,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DSA_SIG"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DSA_SIG"]
     pub fn d2i_DSA_SIG(
         out_sig: *mut *mut DSA_SIG,
         inp: *mut *const u8,
@@ -14013,11 +14040,11 @@ extern "C" {
     ) -> *mut DSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DSA_SIG"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DSA_SIG"]
     pub fn i2d_DSA_SIG(in_: *const DSA_SIG, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DSAPublicKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DSAPublicKey"]
     pub fn d2i_DSAPublicKey(
         out: *mut *mut DSA,
         inp: *mut *const u8,
@@ -14025,11 +14052,11 @@ extern "C" {
     ) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DSAPublicKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DSAPublicKey"]
     pub fn i2d_DSAPublicKey(in_: *const DSA, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DSAPrivateKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DSAPrivateKey"]
     pub fn d2i_DSAPrivateKey(
         out: *mut *mut DSA,
         inp: *mut *const u8,
@@ -14037,11 +14064,11 @@ extern "C" {
     ) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DSAPrivateKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DSAPrivateKey"]
     pub fn i2d_DSAPrivateKey(in_: *const DSA, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DSAparams"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DSAparams"]
     pub fn d2i_DSAparams(
         out: *mut *mut DSA,
         inp: *mut *const u8,
@@ -14049,7 +14076,7 @@ extern "C" {
     ) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DSAparams"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DSAparams"]
     pub fn i2d_DSAparams(in_: *const DSA, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
@@ -14205,19 +14232,19 @@ pub enum point_conversion_form_t {
     POINT_CONVERSION_HYBRID = 6,
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_new_by_curve_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_new_by_curve_name"]
     pub fn EC_GROUP_new_by_curve_name(nid: ::std::os::raw::c_int) -> *mut EC_GROUP;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_free"]
     pub fn EC_GROUP_free(group: *mut EC_GROUP);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_dup"]
     pub fn EC_GROUP_dup(a: *const EC_GROUP) -> *mut EC_GROUP;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_cmp"]
     pub fn EC_GROUP_cmp(
         a: *const EC_GROUP,
         b: *const EC_GROUP,
@@ -14225,19 +14252,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_get0_generator"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_get0_generator"]
     pub fn EC_GROUP_get0_generator(group: *const EC_GROUP) -> *const EC_POINT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_get0_order"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_get0_order"]
     pub fn EC_GROUP_get0_order(group: *const EC_GROUP) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_order_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_order_bits"]
     pub fn EC_GROUP_order_bits(group: *const EC_GROUP) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_get_cofactor"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_get_cofactor"]
     pub fn EC_GROUP_get_cofactor(
         group: *const EC_GROUP,
         cofactor: *mut BIGNUM,
@@ -14245,7 +14272,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_get_curve_GFp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_get_curve_GFp"]
     pub fn EC_GROUP_get_curve_GFp(
         group: *const EC_GROUP,
         out_p: *mut BIGNUM,
@@ -14255,53 +14282,53 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_get_curve_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_get_curve_name"]
     pub fn EC_GROUP_get_curve_name(group: *const EC_GROUP) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_get_degree"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_get_degree"]
     pub fn EC_GROUP_get_degree(group: *const EC_GROUP) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_curve_nid2nist"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_curve_nid2nist"]
     pub fn EC_curve_nid2nist(nid: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_curve_nist2nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_curve_nist2nid"]
     pub fn EC_curve_nist2nid(name: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_new"]
     pub fn EC_POINT_new(group: *const EC_GROUP) -> *mut EC_POINT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_free"]
     pub fn EC_POINT_free(point: *mut EC_POINT);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_copy"]
     pub fn EC_POINT_copy(dest: *mut EC_POINT, src: *const EC_POINT) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_dup"]
     pub fn EC_POINT_dup(src: *const EC_POINT, group: *const EC_GROUP) -> *mut EC_POINT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_set_to_infinity"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_set_to_infinity"]
     pub fn EC_POINT_set_to_infinity(
         group: *const EC_GROUP,
         point: *mut EC_POINT,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_is_at_infinity"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_is_at_infinity"]
     pub fn EC_POINT_is_at_infinity(
         group: *const EC_GROUP,
         point: *const EC_POINT,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_is_on_curve"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_is_on_curve"]
     pub fn EC_POINT_is_on_curve(
         group: *const EC_GROUP,
         point: *const EC_POINT,
@@ -14309,7 +14336,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_cmp"]
     pub fn EC_POINT_cmp(
         group: *const EC_GROUP,
         a: *const EC_POINT,
@@ -14318,7 +14345,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_get_affine_coordinates_GFp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_get_affine_coordinates_GFp"]
     pub fn EC_POINT_get_affine_coordinates_GFp(
         group: *const EC_GROUP,
         point: *const EC_POINT,
@@ -14328,7 +14355,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_get_affine_coordinates"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_get_affine_coordinates"]
     pub fn EC_POINT_get_affine_coordinates(
         group: *const EC_GROUP,
         point: *const EC_POINT,
@@ -14338,7 +14365,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_set_affine_coordinates_GFp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_set_affine_coordinates_GFp"]
     pub fn EC_POINT_set_affine_coordinates_GFp(
         group: *const EC_GROUP,
         point: *mut EC_POINT,
@@ -14348,7 +14375,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_set_affine_coordinates"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_set_affine_coordinates"]
     pub fn EC_POINT_set_affine_coordinates(
         group: *const EC_GROUP,
         point: *mut EC_POINT,
@@ -14358,7 +14385,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_point2oct"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_point2oct"]
     pub fn EC_POINT_point2oct(
         group: *const EC_GROUP,
         point: *const EC_POINT,
@@ -14369,7 +14396,7 @@ extern "C" {
     ) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_point2cbb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_point2cbb"]
     pub fn EC_POINT_point2cbb(
         out: *mut CBB,
         group: *const EC_GROUP,
@@ -14379,7 +14406,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_oct2point"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_oct2point"]
     pub fn EC_POINT_oct2point(
         group: *const EC_GROUP,
         point: *mut EC_POINT,
@@ -14389,7 +14416,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_set_compressed_coordinates_GFp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_set_compressed_coordinates_GFp"]
     pub fn EC_POINT_set_compressed_coordinates_GFp(
         group: *const EC_GROUP,
         point: *mut EC_POINT,
@@ -14399,7 +14426,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_add"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_add"]
     pub fn EC_POINT_add(
         group: *const EC_GROUP,
         r: *mut EC_POINT,
@@ -14409,7 +14436,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_dbl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_dbl"]
     pub fn EC_POINT_dbl(
         group: *const EC_GROUP,
         r: *mut EC_POINT,
@@ -14418,7 +14445,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_invert"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_invert"]
     pub fn EC_POINT_invert(
         group: *const EC_GROUP,
         a: *mut EC_POINT,
@@ -14426,7 +14453,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_mul"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_mul"]
     pub fn EC_POINT_mul(
         group: *const EC_GROUP,
         r: *mut EC_POINT,
@@ -14437,7 +14464,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_new_curve_GFp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_new_curve_GFp"]
     pub fn EC_GROUP_new_curve_GFp(
         p: *const BIGNUM,
         a: *const BIGNUM,
@@ -14446,7 +14473,7 @@ extern "C" {
     ) -> *mut EC_GROUP;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_set_generator"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_set_generator"]
     pub fn EC_GROUP_set_generator(
         group: *mut EC_GROUP,
         generator: *const EC_POINT,
@@ -14455,7 +14482,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_get_order"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_get_order"]
     pub fn EC_GROUP_get_order(
         group: *const EC_GROUP,
         order: *mut BIGNUM,
@@ -14463,11 +14490,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_set_asn1_flag"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_set_asn1_flag"]
     pub fn EC_GROUP_set_asn1_flag(group: *mut EC_GROUP, flag: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_get_asn1_flag"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_get_asn1_flag"]
     pub fn EC_GROUP_get_asn1_flag(group: *const EC_GROUP) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
@@ -14477,15 +14504,15 @@ pub struct ec_method_st {
 }
 pub type EC_METHOD = ec_method_st;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_method_of"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_method_of"]
     pub fn EC_GROUP_method_of(group: *const EC_GROUP) -> *const EC_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_METHOD_get_field_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_METHOD_get_field_type"]
     pub fn EC_METHOD_get_field_type(meth: *const EC_METHOD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_GROUP_set_point_conversion_form"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_GROUP_set_point_conversion_form"]
     pub fn EC_GROUP_set_point_conversion_form(group: *mut EC_GROUP, form: point_conversion_form_t);
 }
 #[repr(C)]
@@ -14539,92 +14566,92 @@ impl Default for EC_builtin_curve {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_get_builtin_curves"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_get_builtin_curves"]
     pub fn EC_get_builtin_curves(out_curves: *mut EC_builtin_curve, max_num_curves: usize)
         -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_POINT_clear_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_POINT_clear_free"]
     pub fn EC_POINT_clear_free(point: *mut EC_POINT);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_new"]
     pub fn EC_KEY_new() -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_new_method"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_new_method"]
     pub fn EC_KEY_new_method(engine: *const ENGINE) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_new_by_curve_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_new_by_curve_name"]
     pub fn EC_KEY_new_by_curve_name(nid: ::std::os::raw::c_int) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_free"]
     pub fn EC_KEY_free(key: *mut EC_KEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_dup"]
     pub fn EC_KEY_dup(src: *const EC_KEY) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_up_ref"]
     pub fn EC_KEY_up_ref(key: *mut EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_is_opaque"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_is_opaque"]
     pub fn EC_KEY_is_opaque(key: *const EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_get0_group"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_get0_group"]
     pub fn EC_KEY_get0_group(key: *const EC_KEY) -> *const EC_GROUP;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_set_group"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_set_group"]
     pub fn EC_KEY_set_group(key: *mut EC_KEY, group: *const EC_GROUP) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_get0_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_get0_private_key"]
     pub fn EC_KEY_get0_private_key(key: *const EC_KEY) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_set_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_set_private_key"]
     pub fn EC_KEY_set_private_key(key: *mut EC_KEY, priv_: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_get0_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_get0_public_key"]
     pub fn EC_KEY_get0_public_key(key: *const EC_KEY) -> *const EC_POINT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_set_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_set_public_key"]
     pub fn EC_KEY_set_public_key(key: *mut EC_KEY, pub_: *const EC_POINT) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_get_enc_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_get_enc_flags"]
     pub fn EC_KEY_get_enc_flags(key: *const EC_KEY) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_set_enc_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_set_enc_flags"]
     pub fn EC_KEY_set_enc_flags(key: *mut EC_KEY, flags: ::std::os::raw::c_uint);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_get_conv_form"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_get_conv_form"]
     pub fn EC_KEY_get_conv_form(key: *const EC_KEY) -> point_conversion_form_t;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_set_conv_form"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_set_conv_form"]
     pub fn EC_KEY_set_conv_form(key: *mut EC_KEY, cform: point_conversion_form_t);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_check_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_check_key"]
     pub fn EC_KEY_check_key(key: *const EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_check_fips"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_check_fips"]
     pub fn EC_KEY_check_fips(key: *const EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_set_public_key_affine_coordinates"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_set_public_key_affine_coordinates"]
     pub fn EC_KEY_set_public_key_affine_coordinates(
         key: *mut EC_KEY,
         x: *const BIGNUM,
@@ -14632,7 +14659,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_key2buf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_key2buf"]
     pub fn EC_KEY_key2buf(
         key: *const EC_KEY,
         form: point_conversion_form_t,
@@ -14641,15 +14668,15 @@ extern "C" {
     ) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_generate_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_generate_key"]
     pub fn EC_KEY_generate_key(key: *mut EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_generate_key_fips"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_generate_key_fips"]
     pub fn EC_KEY_generate_key_fips(key: *mut EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_derive_from_secret"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_derive_from_secret"]
     pub fn EC_KEY_derive_from_secret(
         group: *const EC_GROUP,
         secret: *const u8,
@@ -14657,11 +14684,11 @@ extern "C" {
     ) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_parse_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_parse_private_key"]
     pub fn EC_KEY_parse_private_key(cbs: *mut CBS, group: *const EC_GROUP) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_marshal_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_marshal_private_key"]
     pub fn EC_KEY_marshal_private_key(
         cbb: *mut CBB,
         key: *const EC_KEY,
@@ -14669,22 +14696,22 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_parse_curve_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_parse_curve_name"]
     pub fn EC_KEY_parse_curve_name(cbs: *mut CBS) -> *mut EC_GROUP;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_marshal_curve_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_marshal_curve_name"]
     pub fn EC_KEY_marshal_curve_name(
         cbb: *mut CBB,
         group: *const EC_GROUP,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_parse_parameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_parse_parameters"]
     pub fn EC_KEY_parse_parameters(cbs: *mut CBS) -> *mut EC_GROUP;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_get_ex_new_index"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_get_ex_new_index"]
     pub fn EC_KEY_get_ex_new_index(
         argl: ::std::os::raw::c_long,
         argp: *mut ::std::os::raw::c_void,
@@ -14694,7 +14721,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_set_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_set_ex_data"]
     pub fn EC_KEY_set_ex_data(
         r: *mut EC_KEY,
         idx: ::std::os::raw::c_int,
@@ -14702,7 +14729,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_get_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_get_ex_data"]
     pub fn EC_KEY_get_ex_data(
         r: *const EC_KEY,
         idx: ::std::os::raw::c_int,
@@ -14824,11 +14851,11 @@ impl Default for ecdsa_method_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EC_KEY_set_asn1_flag"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EC_KEY_set_asn1_flag"]
     pub fn EC_KEY_set_asn1_flag(key: *mut EC_KEY, flag: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ECPrivateKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ECPrivateKey"]
     pub fn d2i_ECPrivateKey(
         out_key: *mut *mut EC_KEY,
         inp: *mut *const u8,
@@ -14836,11 +14863,11 @@ extern "C" {
     ) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ECPrivateKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ECPrivateKey"]
     pub fn i2d_ECPrivateKey(key: *const EC_KEY, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ECParameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ECParameters"]
     pub fn d2i_ECParameters(
         out_key: *mut *mut EC_KEY,
         inp: *mut *const u8,
@@ -14848,11 +14875,11 @@ extern "C" {
     ) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ECParameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ECParameters"]
     pub fn i2d_ECParameters(key: *const EC_KEY, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_o2i_ECPublicKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_o2i_ECPublicKey"]
     pub fn o2i_ECPublicKey(
         out_key: *mut *mut EC_KEY,
         inp: *mut *const u8,
@@ -14860,14 +14887,14 @@ extern "C" {
     ) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2o_ECPublicKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2o_ECPublicKey"]
     pub fn i2o_ECPublicKey(
         key: *const EC_KEY,
         outp: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDH_compute_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDH_compute_key"]
     pub fn ECDH_compute_key(
         out: *mut ::std::os::raw::c_void,
         outlen: usize,
@@ -14884,7 +14911,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDH_compute_key_fips"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDH_compute_key_fips"]
     pub fn ECDH_compute_key_fips(
         out: *mut u8,
         out_len: usize,
@@ -14893,7 +14920,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_sign"]
     pub fn ECDSA_sign(
         type_: ::std::os::raw::c_int,
         digest: *const u8,
@@ -14904,7 +14931,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_verify"]
     pub fn ECDSA_verify(
         type_: ::std::os::raw::c_int,
         digest: *const u8,
@@ -14915,7 +14942,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_size"]
     pub fn ECDSA_size(key: *const EC_KEY) -> usize;
 }
 #[repr(C)]
@@ -14969,23 +14996,23 @@ impl Default for ecdsa_sig_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_new"]
     pub fn ECDSA_SIG_new() -> *mut ECDSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_free"]
     pub fn ECDSA_SIG_free(sig: *mut ECDSA_SIG);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_get0_r"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_get0_r"]
     pub fn ECDSA_SIG_get0_r(sig: *const ECDSA_SIG) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_get0_s"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_get0_s"]
     pub fn ECDSA_SIG_get0_s(sig: *const ECDSA_SIG) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_get0"]
     pub fn ECDSA_SIG_get0(
         sig: *const ECDSA_SIG,
         out_r: *mut *const BIGNUM,
@@ -14993,7 +15020,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_set0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_set0"]
     pub fn ECDSA_SIG_set0(
         sig: *mut ECDSA_SIG,
         r: *mut BIGNUM,
@@ -15001,7 +15028,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_do_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_do_sign"]
     pub fn ECDSA_do_sign(
         digest: *const u8,
         digest_len: usize,
@@ -15009,7 +15036,7 @@ extern "C" {
     ) -> *mut ECDSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_do_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_do_verify"]
     pub fn ECDSA_do_verify(
         digest: *const u8,
         digest_len: usize,
@@ -15018,19 +15045,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_parse"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_parse"]
     pub fn ECDSA_SIG_parse(cbs: *mut CBS) -> *mut ECDSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_from_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_from_bytes"]
     pub fn ECDSA_SIG_from_bytes(in_: *const u8, in_len: usize) -> *mut ECDSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_marshal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_marshal"]
     pub fn ECDSA_SIG_marshal(cbb: *mut CBB, sig: *const ECDSA_SIG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_to_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_to_bytes"]
     pub fn ECDSA_SIG_to_bytes(
         out_bytes: *mut *mut u8,
         out_len: *mut usize,
@@ -15038,11 +15065,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_SIG_max_len"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_SIG_max_len"]
     pub fn ECDSA_SIG_max_len(order_len: usize) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ECDSA_sign_with_nonce_and_leak_private_key_for_testing"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ECDSA_sign_with_nonce_and_leak_private_key_for_testing"]
     pub fn ECDSA_sign_with_nonce_and_leak_private_key_for_testing(
         digest: *const u8,
         digest_len: usize,
@@ -15052,7 +15079,7 @@ extern "C" {
     ) -> *mut ECDSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ECDSA_SIG"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ECDSA_SIG"]
     pub fn d2i_ECDSA_SIG(
         out: *mut *mut ECDSA_SIG,
         inp: *mut *const u8,
@@ -15060,83 +15087,83 @@ extern "C" {
     ) -> *mut ECDSA_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ECDSA_SIG"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ECDSA_SIG"]
     pub fn i2d_ECDSA_SIG(sig: *const ECDSA_SIG, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_gcm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_gcm"]
     pub fn EVP_aead_aes_128_gcm() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_192_gcm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_192_gcm"]
     pub fn EVP_aead_aes_192_gcm() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_256_gcm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_256_gcm"]
     pub fn EVP_aead_aes_256_gcm() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_chacha20_poly1305"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_chacha20_poly1305"]
     pub fn EVP_aead_chacha20_poly1305() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_xchacha20_poly1305"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_xchacha20_poly1305"]
     pub fn EVP_aead_xchacha20_poly1305() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_ctr_hmac_sha256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_ctr_hmac_sha256"]
     pub fn EVP_aead_aes_128_ctr_hmac_sha256() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_256_ctr_hmac_sha256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_256_ctr_hmac_sha256"]
     pub fn EVP_aead_aes_256_ctr_hmac_sha256() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_gcm_siv"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_gcm_siv"]
     pub fn EVP_aead_aes_128_gcm_siv() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_256_gcm_siv"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_256_gcm_siv"]
     pub fn EVP_aead_aes_256_gcm_siv() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_gcm_randnonce"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_gcm_randnonce"]
     pub fn EVP_aead_aes_128_gcm_randnonce() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_256_gcm_randnonce"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_256_gcm_randnonce"]
     pub fn EVP_aead_aes_256_gcm_randnonce() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_ccm_bluetooth"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_ccm_bluetooth"]
     pub fn EVP_aead_aes_128_ccm_bluetooth() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_ccm_bluetooth_8"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_ccm_bluetooth_8"]
     pub fn EVP_aead_aes_128_ccm_bluetooth_8() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_ccm_matter"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_ccm_matter"]
     pub fn EVP_aead_aes_128_ccm_matter() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_has_aes_hardware"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_has_aes_hardware"]
     pub fn EVP_has_aes_hardware() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_key_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_key_length"]
     pub fn EVP_AEAD_key_length(aead: *const EVP_AEAD) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_nonce_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_nonce_length"]
     pub fn EVP_AEAD_nonce_length(aead: *const EVP_AEAD) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_max_overhead"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_max_overhead"]
     pub fn EVP_AEAD_max_overhead(aead: *const EVP_AEAD) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_max_tag_len"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_max_tag_len"]
     pub fn EVP_AEAD_max_tag_len(aead: *const EVP_AEAD) -> usize;
 }
 #[repr(C)]
@@ -15274,11 +15301,11 @@ impl Default for evp_aead_ctx_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_zero"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_zero"]
     pub fn EVP_AEAD_CTX_zero(ctx: *mut EVP_AEAD_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_new"]
     pub fn EVP_AEAD_CTX_new(
         aead: *const EVP_AEAD,
         key: *const u8,
@@ -15287,11 +15314,11 @@ extern "C" {
     ) -> *mut EVP_AEAD_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_free"]
     pub fn EVP_AEAD_CTX_free(ctx: *mut EVP_AEAD_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_init"]
     pub fn EVP_AEAD_CTX_init(
         ctx: *mut EVP_AEAD_CTX,
         aead: *const EVP_AEAD,
@@ -15302,11 +15329,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_cleanup"]
     pub fn EVP_AEAD_CTX_cleanup(ctx: *mut EVP_AEAD_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_seal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_seal"]
     pub fn EVP_AEAD_CTX_seal(
         ctx: *const EVP_AEAD_CTX,
         out: *mut u8,
@@ -15321,7 +15348,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_open"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_open"]
     pub fn EVP_AEAD_CTX_open(
         ctx: *const EVP_AEAD_CTX,
         out: *mut u8,
@@ -15336,7 +15363,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_seal_scatter"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_seal_scatter"]
     pub fn EVP_AEAD_CTX_seal_scatter(
         ctx: *const EVP_AEAD_CTX,
         out: *mut u8,
@@ -15354,7 +15381,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_open_gather"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_open_gather"]
     pub fn EVP_AEAD_CTX_open_gather(
         ctx: *const EVP_AEAD_CTX,
         out: *mut u8,
@@ -15369,66 +15396,66 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_aead"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_aead"]
     pub fn EVP_AEAD_CTX_aead(ctx: *const EVP_AEAD_CTX) -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_cbc_sha1_tls"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_cbc_sha1_tls"]
     pub fn EVP_aead_aes_128_cbc_sha1_tls() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_cbc_sha1_tls_implicit_iv"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_cbc_sha1_tls_implicit_iv"]
     pub fn EVP_aead_aes_128_cbc_sha1_tls_implicit_iv() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_256_cbc_sha1_tls"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_256_cbc_sha1_tls"]
     pub fn EVP_aead_aes_256_cbc_sha1_tls() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_256_cbc_sha1_tls_implicit_iv"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_256_cbc_sha1_tls_implicit_iv"]
     pub fn EVP_aead_aes_256_cbc_sha1_tls_implicit_iv() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_cbc_sha256_tls"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_cbc_sha256_tls"]
     pub fn EVP_aead_aes_128_cbc_sha256_tls() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_cbc_sha256_tls_implicit_iv"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_cbc_sha256_tls_implicit_iv"]
     pub fn EVP_aead_aes_128_cbc_sha256_tls_implicit_iv() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_des_ede3_cbc_sha1_tls"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_des_ede3_cbc_sha1_tls"]
     pub fn EVP_aead_des_ede3_cbc_sha1_tls() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_des_ede3_cbc_sha1_tls_implicit_iv"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_des_ede3_cbc_sha1_tls_implicit_iv"]
     pub fn EVP_aead_des_ede3_cbc_sha1_tls_implicit_iv() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_null_sha1_tls"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_null_sha1_tls"]
     pub fn EVP_aead_null_sha1_tls() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_gcm_tls12"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_gcm_tls12"]
     pub fn EVP_aead_aes_128_gcm_tls12() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_256_gcm_tls12"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_256_gcm_tls12"]
     pub fn EVP_aead_aes_256_gcm_tls12() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_128_gcm_tls13"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_128_gcm_tls13"]
     pub fn EVP_aead_aes_128_gcm_tls13() -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_aead_aes_256_gcm_tls13"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_aead_aes_256_gcm_tls13"]
     pub fn EVP_aead_aes_256_gcm_tls13() -> *const EVP_AEAD;
 }
 pub const evp_aead_direction_t_evp_aead_open: evp_aead_direction_t = 0;
 pub const evp_aead_direction_t_evp_aead_seal: evp_aead_direction_t = 1;
 pub type evp_aead_direction_t = ::std::os::raw::c_uint;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_init_with_direction"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_init_with_direction"]
     pub fn EVP_AEAD_CTX_init_with_direction(
         ctx: *mut EVP_AEAD_CTX,
         aead: *const EVP_AEAD,
@@ -15439,7 +15466,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_get_iv"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_get_iv"]
     pub fn EVP_AEAD_CTX_get_iv(
         ctx: *const EVP_AEAD_CTX,
         out_iv: *mut *const u8,
@@ -15447,7 +15474,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_CTX_tag_len"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_CTX_tag_len"]
     pub fn EVP_AEAD_CTX_tag_len(
         ctx: *const EVP_AEAD_CTX,
         out_tag_len: *mut usize,
@@ -15456,7 +15483,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_AEAD_get_iv_from_ipv4_nanosecs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_AEAD_get_iv_from_ipv4_nanosecs"]
     pub fn EVP_AEAD_get_iv_from_ipv4_nanosecs(
         ipv4_address: u32,
         nanosecs: u64,
@@ -15464,102 +15491,102 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_new"]
     pub fn EVP_PKEY_new() -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_free"]
     pub fn EVP_PKEY_free(pkey: *mut EVP_PKEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_up_ref"]
     pub fn EVP_PKEY_up_ref(pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_is_opaque"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_is_opaque"]
     pub fn EVP_PKEY_is_opaque(pkey: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_cmp"]
     pub fn EVP_PKEY_cmp(a: *const EVP_PKEY, b: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_copy_parameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_copy_parameters"]
     pub fn EVP_PKEY_copy_parameters(
         to: *mut EVP_PKEY,
         from: *const EVP_PKEY,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_missing_parameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_missing_parameters"]
     pub fn EVP_PKEY_missing_parameters(pkey: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_size"]
     pub fn EVP_PKEY_size(pkey: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_bits"]
     pub fn EVP_PKEY_bits(pkey: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_id"]
     pub fn EVP_PKEY_id(pkey: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_type"]
     pub fn EVP_PKEY_type(nid: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_set1_RSA"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_set1_RSA"]
     pub fn EVP_PKEY_set1_RSA(pkey: *mut EVP_PKEY, key: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_assign_RSA"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_assign_RSA"]
     pub fn EVP_PKEY_assign_RSA(pkey: *mut EVP_PKEY, key: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get0_RSA"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get0_RSA"]
     pub fn EVP_PKEY_get0_RSA(pkey: *const EVP_PKEY) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get1_RSA"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get1_RSA"]
     pub fn EVP_PKEY_get1_RSA(pkey: *const EVP_PKEY) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_set1_DSA"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_set1_DSA"]
     pub fn EVP_PKEY_set1_DSA(pkey: *mut EVP_PKEY, key: *mut DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_assign_DSA"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_assign_DSA"]
     pub fn EVP_PKEY_assign_DSA(pkey: *mut EVP_PKEY, key: *mut DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get0_DSA"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get0_DSA"]
     pub fn EVP_PKEY_get0_DSA(pkey: *const EVP_PKEY) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get1_DSA"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get1_DSA"]
     pub fn EVP_PKEY_get1_DSA(pkey: *const EVP_PKEY) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_set1_EC_KEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_set1_EC_KEY"]
     pub fn EVP_PKEY_set1_EC_KEY(pkey: *mut EVP_PKEY, key: *mut EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_assign_EC_KEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_assign_EC_KEY"]
     pub fn EVP_PKEY_assign_EC_KEY(pkey: *mut EVP_PKEY, key: *mut EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get0_EC_KEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get0_EC_KEY"]
     pub fn EVP_PKEY_get0_EC_KEY(pkey: *const EVP_PKEY) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get1_EC_KEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get1_EC_KEY"]
     pub fn EVP_PKEY_get1_EC_KEY(pkey: *const EVP_PKEY) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_assign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_assign"]
     pub fn EVP_PKEY_assign(
         pkey: *mut EVP_PKEY,
         type_: ::std::os::raw::c_int,
@@ -15567,40 +15594,40 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_set_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_set_type"]
     pub fn EVP_PKEY_set_type(
         pkey: *mut EVP_PKEY,
         type_: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_cmp_parameters"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_cmp_parameters"]
     pub fn EVP_PKEY_cmp_parameters(a: *const EVP_PKEY, b: *const EVP_PKEY)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_parse_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_parse_public_key"]
     pub fn EVP_parse_public_key(cbs: *mut CBS) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_marshal_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_marshal_public_key"]
     pub fn EVP_marshal_public_key(cbb: *mut CBB, key: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_parse_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_parse_private_key"]
     pub fn EVP_parse_private_key(cbs: *mut CBS) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_marshal_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_marshal_private_key"]
     pub fn EVP_marshal_private_key(cbb: *mut CBB, key: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_marshal_private_key_v2"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_marshal_private_key_v2"]
     pub fn EVP_marshal_private_key_v2(cbb: *mut CBB, key: *const EVP_PKEY)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_new_raw_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_new_raw_private_key"]
     pub fn EVP_PKEY_new_raw_private_key(
         type_: ::std::os::raw::c_int,
         unused: *mut ENGINE,
@@ -15609,7 +15636,7 @@ extern "C" {
     ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_new_raw_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_new_raw_public_key"]
     pub fn EVP_PKEY_new_raw_public_key(
         type_: ::std::os::raw::c_int,
         unused: *mut ENGINE,
@@ -15618,7 +15645,7 @@ extern "C" {
     ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get_raw_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get_raw_private_key"]
     pub fn EVP_PKEY_get_raw_private_key(
         pkey: *const EVP_PKEY,
         out: *mut u8,
@@ -15626,7 +15653,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get_raw_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get_raw_public_key"]
     pub fn EVP_PKEY_get_raw_public_key(
         pkey: *const EVP_PKEY,
         out: *mut u8,
@@ -15634,7 +15661,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestSignInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestSignInit"]
     pub fn EVP_DigestSignInit(
         ctx: *mut EVP_MD_CTX,
         pctx: *mut *mut EVP_PKEY_CTX,
@@ -15644,7 +15671,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestSignUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestSignUpdate"]
     pub fn EVP_DigestSignUpdate(
         ctx: *mut EVP_MD_CTX,
         data: *const ::std::os::raw::c_void,
@@ -15652,7 +15679,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestSignFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestSignFinal"]
     pub fn EVP_DigestSignFinal(
         ctx: *mut EVP_MD_CTX,
         out_sig: *mut u8,
@@ -15660,7 +15687,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestSign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestSign"]
     pub fn EVP_DigestSign(
         ctx: *mut EVP_MD_CTX,
         out_sig: *mut u8,
@@ -15670,7 +15697,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestVerifyInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestVerifyInit"]
     pub fn EVP_DigestVerifyInit(
         ctx: *mut EVP_MD_CTX,
         pctx: *mut *mut EVP_PKEY_CTX,
@@ -15680,7 +15707,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestVerifyUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestVerifyUpdate"]
     pub fn EVP_DigestVerifyUpdate(
         ctx: *mut EVP_MD_CTX,
         data: *const ::std::os::raw::c_void,
@@ -15688,7 +15715,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestVerifyFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestVerifyFinal"]
     pub fn EVP_DigestVerifyFinal(
         ctx: *mut EVP_MD_CTX,
         sig: *const u8,
@@ -15696,7 +15723,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_DigestVerify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_DigestVerify"]
     pub fn EVP_DigestVerify(
         ctx: *mut EVP_MD_CTX,
         sig: *const u8,
@@ -15706,7 +15733,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_SignInit_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_SignInit_ex"]
     pub fn EVP_SignInit_ex(
         ctx: *mut EVP_MD_CTX,
         type_: *const EVP_MD,
@@ -15714,11 +15741,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_SignInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_SignInit"]
     pub fn EVP_SignInit(ctx: *mut EVP_MD_CTX, type_: *const EVP_MD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_SignUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_SignUpdate"]
     pub fn EVP_SignUpdate(
         ctx: *mut EVP_MD_CTX,
         data: *const ::std::os::raw::c_void,
@@ -15726,7 +15753,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_SignFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_SignFinal"]
     pub fn EVP_SignFinal(
         ctx: *const EVP_MD_CTX,
         sig: *mut u8,
@@ -15735,7 +15762,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_VerifyInit_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_VerifyInit_ex"]
     pub fn EVP_VerifyInit_ex(
         ctx: *mut EVP_MD_CTX,
         type_: *const EVP_MD,
@@ -15743,11 +15770,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_VerifyInit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_VerifyInit"]
     pub fn EVP_VerifyInit(ctx: *mut EVP_MD_CTX, type_: *const EVP_MD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_VerifyUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_VerifyUpdate"]
     pub fn EVP_VerifyUpdate(
         ctx: *mut EVP_MD_CTX,
         data: *const ::std::os::raw::c_void,
@@ -15755,7 +15782,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_VerifyFinal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_VerifyFinal"]
     pub fn EVP_VerifyFinal(
         ctx: *mut EVP_MD_CTX,
         sig: *const u8,
@@ -15764,7 +15791,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_print_public"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_print_public"]
     pub fn EVP_PKEY_print_public(
         out: *mut BIO,
         pkey: *const EVP_PKEY,
@@ -15773,7 +15800,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_print_private"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_print_private"]
     pub fn EVP_PKEY_print_private(
         out: *mut BIO,
         pkey: *const EVP_PKEY,
@@ -15782,7 +15809,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_print_params"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_print_params"]
     pub fn EVP_PKEY_print_params(
         out: *mut BIO,
         pkey: *const EVP_PKEY,
@@ -15791,7 +15818,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS5_PBKDF2_HMAC"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS5_PBKDF2_HMAC"]
     pub fn PKCS5_PBKDF2_HMAC(
         password: *const ::std::os::raw::c_char,
         password_len: usize,
@@ -15804,7 +15831,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS5_PBKDF2_HMAC_SHA1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS5_PBKDF2_HMAC_SHA1"]
     pub fn PKCS5_PBKDF2_HMAC_SHA1(
         password: *const ::std::os::raw::c_char,
         password_len: usize,
@@ -15816,7 +15843,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PBE_scrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PBE_scrypt"]
     pub fn EVP_PBE_scrypt(
         password: *const ::std::os::raw::c_char,
         password_len: usize,
@@ -15831,31 +15858,31 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_new"]
     pub fn EVP_PKEY_CTX_new(pkey: *mut EVP_PKEY, e: *mut ENGINE) -> *mut EVP_PKEY_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_new_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_new_id"]
     pub fn EVP_PKEY_CTX_new_id(id: ::std::os::raw::c_int, e: *mut ENGINE) -> *mut EVP_PKEY_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_free"]
     pub fn EVP_PKEY_CTX_free(ctx: *mut EVP_PKEY_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_dup"]
     pub fn EVP_PKEY_CTX_dup(ctx: *mut EVP_PKEY_CTX) -> *mut EVP_PKEY_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_get0_pkey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_get0_pkey"]
     pub fn EVP_PKEY_CTX_get0_pkey(ctx: *mut EVP_PKEY_CTX) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_sign_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_sign_init"]
     pub fn EVP_PKEY_sign_init(ctx: *mut EVP_PKEY_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_sign"]
     pub fn EVP_PKEY_sign(
         ctx: *mut EVP_PKEY_CTX,
         sig: *mut u8,
@@ -15865,11 +15892,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_verify_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_verify_init"]
     pub fn EVP_PKEY_verify_init(ctx: *mut EVP_PKEY_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_verify"]
     pub fn EVP_PKEY_verify(
         ctx: *mut EVP_PKEY_CTX,
         sig: *const u8,
@@ -15879,11 +15906,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_encrypt_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_encrypt_init"]
     pub fn EVP_PKEY_encrypt_init(ctx: *mut EVP_PKEY_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_encrypt"]
     pub fn EVP_PKEY_encrypt(
         ctx: *mut EVP_PKEY_CTX,
         out: *mut u8,
@@ -15893,11 +15920,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_decrypt_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_decrypt_init"]
     pub fn EVP_PKEY_decrypt_init(ctx: *mut EVP_PKEY_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_decrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_decrypt"]
     pub fn EVP_PKEY_decrypt(
         ctx: *mut EVP_PKEY_CTX,
         out: *mut u8,
@@ -15907,11 +15934,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_verify_recover_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_verify_recover_init"]
     pub fn EVP_PKEY_verify_recover_init(ctx: *mut EVP_PKEY_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_verify_recover"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_verify_recover"]
     pub fn EVP_PKEY_verify_recover(
         ctx: *mut EVP_PKEY_CTX,
         out: *mut u8,
@@ -15921,18 +15948,18 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_derive_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_derive_init"]
     pub fn EVP_PKEY_derive_init(ctx: *mut EVP_PKEY_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_derive_set_peer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_derive_set_peer"]
     pub fn EVP_PKEY_derive_set_peer(
         ctx: *mut EVP_PKEY_CTX,
         peer: *mut EVP_PKEY,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_derive"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_derive"]
     pub fn EVP_PKEY_derive(
         ctx: *mut EVP_PKEY_CTX,
         key: *mut u8,
@@ -15940,18 +15967,18 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_keygen_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_keygen_init"]
     pub fn EVP_PKEY_keygen_init(ctx: *mut EVP_PKEY_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_keygen"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_keygen"]
     pub fn EVP_PKEY_keygen(
         ctx: *mut EVP_PKEY_CTX,
         out_pkey: *mut *mut EVP_PKEY,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_encapsulate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_encapsulate"]
     pub fn EVP_PKEY_encapsulate(
         ctx: *mut EVP_PKEY_CTX,
         ciphertext: *mut u8,
@@ -15961,7 +15988,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_decapsulate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_decapsulate"]
     pub fn EVP_PKEY_decapsulate(
         ctx: *mut EVP_PKEY_CTX,
         shared_secret: *mut u8,
@@ -15971,102 +15998,102 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_paramgen_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_paramgen_init"]
     pub fn EVP_PKEY_paramgen_init(ctx: *mut EVP_PKEY_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_paramgen"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_paramgen"]
     pub fn EVP_PKEY_paramgen(
         ctx: *mut EVP_PKEY_CTX,
         out_pkey: *mut *mut EVP_PKEY,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_signature_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_signature_md"]
     pub fn EVP_PKEY_CTX_set_signature_md(
         ctx: *mut EVP_PKEY_CTX,
         md: *const EVP_MD,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_get_signature_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_get_signature_md"]
     pub fn EVP_PKEY_CTX_get_signature_md(
         ctx: *mut EVP_PKEY_CTX,
         out_md: *mut *const EVP_MD,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_rsa_padding"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_rsa_padding"]
     pub fn EVP_PKEY_CTX_set_rsa_padding(
         ctx: *mut EVP_PKEY_CTX,
         padding: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_get_rsa_padding"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_get_rsa_padding"]
     pub fn EVP_PKEY_CTX_get_rsa_padding(
         ctx: *mut EVP_PKEY_CTX,
         out_padding: *mut ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_rsa_pss_saltlen"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_rsa_pss_saltlen"]
     pub fn EVP_PKEY_CTX_set_rsa_pss_saltlen(
         ctx: *mut EVP_PKEY_CTX,
         salt_len: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_get_rsa_pss_saltlen"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_get_rsa_pss_saltlen"]
     pub fn EVP_PKEY_CTX_get_rsa_pss_saltlen(
         ctx: *mut EVP_PKEY_CTX,
         out_salt_len: *mut ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_rsa_keygen_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_rsa_keygen_bits"]
     pub fn EVP_PKEY_CTX_set_rsa_keygen_bits(
         ctx: *mut EVP_PKEY_CTX,
         bits: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_rsa_keygen_pubexp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_rsa_keygen_pubexp"]
     pub fn EVP_PKEY_CTX_set_rsa_keygen_pubexp(
         ctx: *mut EVP_PKEY_CTX,
         e: *mut BIGNUM,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_rsa_oaep_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_rsa_oaep_md"]
     pub fn EVP_PKEY_CTX_set_rsa_oaep_md(
         ctx: *mut EVP_PKEY_CTX,
         md: *const EVP_MD,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_get_rsa_oaep_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_get_rsa_oaep_md"]
     pub fn EVP_PKEY_CTX_get_rsa_oaep_md(
         ctx: *mut EVP_PKEY_CTX,
         out_md: *mut *const EVP_MD,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_rsa_mgf1_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_rsa_mgf1_md"]
     pub fn EVP_PKEY_CTX_set_rsa_mgf1_md(
         ctx: *mut EVP_PKEY_CTX,
         md: *const EVP_MD,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_get_rsa_mgf1_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_get_rsa_mgf1_md"]
     pub fn EVP_PKEY_CTX_get_rsa_mgf1_md(
         ctx: *mut EVP_PKEY_CTX,
         out_md: *mut *const EVP_MD,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set0_rsa_oaep_label"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set0_rsa_oaep_label"]
     pub fn EVP_PKEY_CTX_set0_rsa_oaep_label(
         ctx: *mut EVP_PKEY_CTX,
         label: *mut u8,
@@ -16074,28 +16101,28 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_get0_rsa_oaep_label"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_get0_rsa_oaep_label"]
     pub fn EVP_PKEY_CTX_get0_rsa_oaep_label(
         ctx: *mut EVP_PKEY_CTX,
         out_label: *mut *const u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_ec_paramgen_curve_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_ec_paramgen_curve_nid"]
     pub fn EVP_PKEY_CTX_set_ec_paramgen_curve_nid(
         ctx: *mut EVP_PKEY_CTX,
         nid: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_kem_set_params"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_kem_set_params"]
     pub fn EVP_PKEY_CTX_kem_set_params(
         ctx: *mut EVP_PKEY_CTX,
         nid: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_kem_new_raw_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_kem_new_raw_public_key"]
     pub fn EVP_PKEY_kem_new_raw_public_key(
         nid: ::std::os::raw::c_int,
         in_: *const u8,
@@ -16103,7 +16130,7 @@ extern "C" {
     ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_kem_new_raw_secret_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_kem_new_raw_secret_key"]
     pub fn EVP_PKEY_kem_new_raw_secret_key(
         nid: ::std::os::raw::c_int,
         in_: *const u8,
@@ -16111,7 +16138,7 @@ extern "C" {
     ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_kem_new_raw_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_kem_new_raw_key"]
     pub fn EVP_PKEY_kem_new_raw_key(
         nid: ::std::os::raw::c_int,
         in_public: *const u8,
@@ -16121,31 +16148,31 @@ extern "C" {
     ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get0"]
     pub fn EVP_PKEY_get0(pkey: *const EVP_PKEY) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OpenSSL_add_all_algorithms"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OpenSSL_add_all_algorithms"]
     pub fn OpenSSL_add_all_algorithms();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OPENSSL_add_all_algorithms_conf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OPENSSL_add_all_algorithms_conf"]
     pub fn OPENSSL_add_all_algorithms_conf();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OpenSSL_add_all_ciphers"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OpenSSL_add_all_ciphers"]
     pub fn OpenSSL_add_all_ciphers();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OpenSSL_add_all_digests"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OpenSSL_add_all_digests"]
     pub fn OpenSSL_add_all_digests();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_cleanup"]
     pub fn EVP_cleanup();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_CIPHER_do_all_sorted"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_CIPHER_do_all_sorted"]
     pub fn EVP_CIPHER_do_all_sorted(
         callback: ::std::option::Option<
             unsafe extern "C" fn(
@@ -16159,7 +16186,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_MD_do_all_sorted"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_MD_do_all_sorted"]
     pub fn EVP_MD_do_all_sorted(
         callback: ::std::option::Option<
             unsafe extern "C" fn(
@@ -16173,15 +16200,15 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PrivateKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PrivateKey"]
     pub fn i2d_PrivateKey(key: *const EVP_PKEY, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PublicKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PublicKey"]
     pub fn i2d_PublicKey(key: *const EVP_PKEY, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PrivateKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PrivateKey"]
     pub fn d2i_PrivateKey(
         type_: ::std::os::raw::c_int,
         out: *mut *mut EVP_PKEY,
@@ -16190,7 +16217,7 @@ extern "C" {
     ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_AutoPrivateKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_AutoPrivateKey"]
     pub fn d2i_AutoPrivateKey(
         out: *mut *mut EVP_PKEY,
         inp: *mut *const u8,
@@ -16198,7 +16225,7 @@ extern "C" {
     ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PublicKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PublicKey"]
     pub fn d2i_PublicKey(
         type_: ::std::os::raw::c_int,
         out: *mut *mut EVP_PKEY,
@@ -16207,22 +16234,22 @@ extern "C" {
     ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get0_DH"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get0_DH"]
     pub fn EVP_PKEY_get0_DH(pkey: *const EVP_PKEY) -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get1_DH"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get1_DH"]
     pub fn EVP_PKEY_get1_DH(pkey: *const EVP_PKEY) -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_ec_param_enc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_ec_param_enc"]
     pub fn EVP_PKEY_CTX_set_ec_param_enc(
         ctx: *mut EVP_PKEY_CTX,
         encoding: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_set1_tls_encodedpoint"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_set1_tls_encodedpoint"]
     pub fn EVP_PKEY_set1_tls_encodedpoint(
         pkey: *mut EVP_PKEY,
         in_: *const u8,
@@ -16230,40 +16257,40 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_get1_tls_encodedpoint"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_get1_tls_encodedpoint"]
     pub fn EVP_PKEY_get1_tls_encodedpoint(pkey: *const EVP_PKEY, out_ptr: *mut *mut u8) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_base_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_base_id"]
     pub fn EVP_PKEY_base_id(pkey: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_rsa_pss_keygen_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_rsa_pss_keygen_md"]
     pub fn EVP_PKEY_CTX_set_rsa_pss_keygen_md(
         ctx: *mut EVP_PKEY_CTX,
         md: *const EVP_MD,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen"]
     pub fn EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(
         ctx: *mut EVP_PKEY_CTX,
         salt_len: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md"]
     pub fn EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(
         ctx: *mut EVP_PKEY_CTX,
         md: *const EVP_MD,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PUBKEY"]
     pub fn i2d_PUBKEY(pkey: *const EVP_PKEY, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PUBKEY"]
     pub fn d2i_PUBKEY(
         out: *mut *mut EVP_PKEY,
         inp: *mut *const u8,
@@ -16271,11 +16298,11 @@ extern "C" {
     ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSA_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSA_PUBKEY"]
     pub fn i2d_RSA_PUBKEY(rsa: *const RSA, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSA_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSA_PUBKEY"]
     pub fn d2i_RSA_PUBKEY(
         out: *mut *mut RSA,
         inp: *mut *const u8,
@@ -16283,11 +16310,11 @@ extern "C" {
     ) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DSA_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DSA_PUBKEY"]
     pub fn i2d_DSA_PUBKEY(dsa: *const DSA, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DSA_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DSA_PUBKEY"]
     pub fn d2i_DSA_PUBKEY(
         out: *mut *mut DSA,
         inp: *mut *const u8,
@@ -16295,11 +16322,11 @@ extern "C" {
     ) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_EC_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_EC_PUBKEY"]
     pub fn i2d_EC_PUBKEY(ec_key: *const EC_KEY, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_EC_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_EC_PUBKEY"]
     pub fn d2i_EC_PUBKEY(
         out: *mut *mut EC_KEY,
         inp: *mut *const u8,
@@ -16307,14 +16334,14 @@ extern "C" {
     ) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_dsa_paramgen_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_dsa_paramgen_bits"]
     pub fn EVP_PKEY_CTX_set_dsa_paramgen_bits(
         ctx: *mut EVP_PKEY_CTX,
         nbits: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY_CTX_set_dsa_paramgen_q_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY_CTX_set_dsa_paramgen_q_bits"]
     pub fn EVP_PKEY_CTX_set_dsa_paramgen_q_bits(
         ctx: *mut EVP_PKEY_CTX,
         qbits: ::std::os::raw::c_int,
@@ -16488,7 +16515,7 @@ impl Default for evp_pkey_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HKDF"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HKDF"]
     pub fn HKDF(
         out_key: *mut u8,
         out_len: usize,
@@ -16502,7 +16529,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HKDF_extract"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HKDF_extract"]
     pub fn HKDF_extract(
         out_key: *mut u8,
         out_len: *mut usize,
@@ -16514,7 +16541,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HKDF_expand"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HKDF_expand"]
     pub fn HKDF_expand(
         out_key: *mut u8,
         out_len: usize,
@@ -16526,11 +16553,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD5_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD5_Init"]
     pub fn MD5_Init(md5: *mut MD5_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD5_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD5_Update"]
     pub fn MD5_Update(
         md5: *mut MD5_CTX,
         data: *const ::std::os::raw::c_void,
@@ -16538,15 +16565,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD5_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD5_Final"]
     pub fn MD5_Final(out: *mut u8, md5: *mut MD5_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD5"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD5"]
     pub fn MD5(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD5_Transform"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD5_Transform"]
     pub fn MD5_Transform(md5: *mut MD5_CTX, block: *const u8);
 }
 #[repr(C)]
@@ -16633,7 +16660,7 @@ impl Default for md5_state_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC"]
     pub fn HMAC(
         evp_md: *const EVP_MD,
         key: *const ::std::os::raw::c_void,
@@ -16645,27 +16672,27 @@ extern "C" {
     ) -> *mut u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_CTX_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_CTX_init"]
     pub fn HMAC_CTX_init(ctx: *mut HMAC_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_CTX_new"]
     pub fn HMAC_CTX_new() -> *mut HMAC_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_CTX_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_CTX_cleanup"]
     pub fn HMAC_CTX_cleanup(ctx: *mut HMAC_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_CTX_cleanse"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_CTX_cleanse"]
     pub fn HMAC_CTX_cleanse(ctx: *mut HMAC_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_CTX_free"]
     pub fn HMAC_CTX_free(ctx: *mut HMAC_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_Init_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_Init_ex"]
     pub fn HMAC_Init_ex(
         ctx: *mut HMAC_CTX,
         key: *const ::std::os::raw::c_void,
@@ -16675,7 +16702,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_Update"]
     pub fn HMAC_Update(
         ctx: *mut HMAC_CTX,
         data: *const u8,
@@ -16683,7 +16710,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_Final"]
     pub fn HMAC_Final(
         ctx: *mut HMAC_CTX,
         out: *mut u8,
@@ -16691,23 +16718,23 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_size"]
     pub fn HMAC_size(ctx: *const HMAC_CTX) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_CTX_get_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_CTX_get_md"]
     pub fn HMAC_CTX_get_md(ctx: *const HMAC_CTX) -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_CTX_copy_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_CTX_copy_ex"]
     pub fn HMAC_CTX_copy_ex(dest: *mut HMAC_CTX, src: *const HMAC_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_CTX_reset"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_CTX_reset"]
     pub fn HMAC_CTX_reset(ctx: *mut HMAC_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_Init"]
     pub fn HMAC_Init(
         ctx: *mut HMAC_CTX,
         key: *const ::std::os::raw::c_void,
@@ -16716,7 +16743,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HMAC_CTX_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HMAC_CTX_copy"]
     pub fn HMAC_CTX_copy(dest: *mut HMAC_CTX, src: *const HMAC_CTX) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
@@ -16892,82 +16919,82 @@ impl Default for hmac_ctx_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_hpke_x25519_hkdf_sha256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_hpke_x25519_hkdf_sha256"]
     pub fn EVP_hpke_x25519_hkdf_sha256() -> *const EVP_HPKE_KEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEM_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEM_id"]
     pub fn EVP_HPKE_KEM_id(kem: *const EVP_HPKE_KEM) -> u16;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEM_public_key_len"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEM_public_key_len"]
     pub fn EVP_HPKE_KEM_public_key_len(kem: *const EVP_HPKE_KEM) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEM_private_key_len"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEM_private_key_len"]
     pub fn EVP_HPKE_KEM_private_key_len(kem: *const EVP_HPKE_KEM) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEM_enc_len"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEM_enc_len"]
     pub fn EVP_HPKE_KEM_enc_len(kem: *const EVP_HPKE_KEM) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_hpke_hkdf_sha256"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_hpke_hkdf_sha256"]
     pub fn EVP_hpke_hkdf_sha256() -> *const EVP_HPKE_KDF;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KDF_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KDF_id"]
     pub fn EVP_HPKE_KDF_id(kdf: *const EVP_HPKE_KDF) -> u16;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KDF_hkdf_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KDF_hkdf_md"]
     pub fn EVP_HPKE_KDF_hkdf_md(kdf: *const EVP_HPKE_KDF) -> *const EVP_MD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_hpke_aes_128_gcm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_hpke_aes_128_gcm"]
     pub fn EVP_hpke_aes_128_gcm() -> *const EVP_HPKE_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_hpke_aes_256_gcm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_hpke_aes_256_gcm"]
     pub fn EVP_hpke_aes_256_gcm() -> *const EVP_HPKE_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_hpke_chacha20_poly1305"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_hpke_chacha20_poly1305"]
     pub fn EVP_hpke_chacha20_poly1305() -> *const EVP_HPKE_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_AEAD_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_AEAD_id"]
     pub fn EVP_HPKE_AEAD_id(aead: *const EVP_HPKE_AEAD) -> u16;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_AEAD_aead"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_AEAD_aead"]
     pub fn EVP_HPKE_AEAD_aead(aead: *const EVP_HPKE_AEAD) -> *const EVP_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_zero"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_zero"]
     pub fn EVP_HPKE_KEY_zero(key: *mut EVP_HPKE_KEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_cleanup"]
     pub fn EVP_HPKE_KEY_cleanup(key: *mut EVP_HPKE_KEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_new"]
     pub fn EVP_HPKE_KEY_new() -> *mut EVP_HPKE_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_free"]
     pub fn EVP_HPKE_KEY_free(key: *mut EVP_HPKE_KEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_copy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_copy"]
     pub fn EVP_HPKE_KEY_copy(
         dst: *mut EVP_HPKE_KEY,
         src: *const EVP_HPKE_KEY,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_init"]
     pub fn EVP_HPKE_KEY_init(
         key: *mut EVP_HPKE_KEY,
         kem: *const EVP_HPKE_KEM,
@@ -16976,18 +17003,18 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_generate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_generate"]
     pub fn EVP_HPKE_KEY_generate(
         key: *mut EVP_HPKE_KEY,
         kem: *const EVP_HPKE_KEM,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_kem"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_kem"]
     pub fn EVP_HPKE_KEY_kem(key: *const EVP_HPKE_KEY) -> *const EVP_HPKE_KEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_public_key"]
     pub fn EVP_HPKE_KEY_public_key(
         key: *const EVP_HPKE_KEY,
         out: *mut u8,
@@ -16996,7 +17023,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_KEY_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_KEY_private_key"]
     pub fn EVP_HPKE_KEY_private_key(
         key: *const EVP_HPKE_KEY,
         out: *mut u8,
@@ -17005,23 +17032,23 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_zero"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_zero"]
     pub fn EVP_HPKE_CTX_zero(ctx: *mut EVP_HPKE_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_cleanup"]
     pub fn EVP_HPKE_CTX_cleanup(ctx: *mut EVP_HPKE_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_new"]
     pub fn EVP_HPKE_CTX_new() -> *mut EVP_HPKE_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_free"]
     pub fn EVP_HPKE_CTX_free(ctx: *mut EVP_HPKE_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_setup_sender"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_setup_sender"]
     pub fn EVP_HPKE_CTX_setup_sender(
         ctx: *mut EVP_HPKE_CTX,
         out_enc: *mut u8,
@@ -17037,7 +17064,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_setup_sender_with_seed_for_testing"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_setup_sender_with_seed_for_testing"]
     pub fn EVP_HPKE_CTX_setup_sender_with_seed_for_testing(
         ctx: *mut EVP_HPKE_CTX,
         out_enc: *mut u8,
@@ -17055,7 +17082,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_setup_recipient"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_setup_recipient"]
     pub fn EVP_HPKE_CTX_setup_recipient(
         ctx: *mut EVP_HPKE_CTX,
         key: *const EVP_HPKE_KEY,
@@ -17068,7 +17095,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_open"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_open"]
     pub fn EVP_HPKE_CTX_open(
         ctx: *mut EVP_HPKE_CTX,
         out: *mut u8,
@@ -17081,7 +17108,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_seal"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_seal"]
     pub fn EVP_HPKE_CTX_seal(
         ctx: *mut EVP_HPKE_CTX,
         out: *mut u8,
@@ -17094,7 +17121,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_export"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_export"]
     pub fn EVP_HPKE_CTX_export(
         ctx: *const EVP_HPKE_CTX,
         out: *mut u8,
@@ -17104,19 +17131,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_max_overhead"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_max_overhead"]
     pub fn EVP_HPKE_CTX_max_overhead(ctx: *const EVP_HPKE_CTX) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_kem"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_kem"]
     pub fn EVP_HPKE_CTX_kem(ctx: *const EVP_HPKE_CTX) -> *const EVP_HPKE_KEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_aead"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_aead"]
     pub fn EVP_HPKE_CTX_aead(ctx: *const EVP_HPKE_CTX) -> *const EVP_HPKE_AEAD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_HPKE_CTX_kdf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_HPKE_CTX_kdf"]
     pub fn EVP_HPKE_CTX_kdf(ctx: *const EVP_HPKE_CTX) -> *const EVP_HPKE_KDF;
 }
 #[repr(C)]
@@ -17375,7 +17402,7 @@ impl Default for HRSS_public_key {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HRSS_generate_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HRSS_generate_key"]
     pub fn HRSS_generate_key(
         out_pub: *mut HRSS_public_key,
         out_priv: *mut HRSS_private_key,
@@ -17383,7 +17410,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HRSS_encap"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HRSS_encap"]
     pub fn HRSS_encap(
         out_ciphertext: *mut u8,
         out_shared_key: *mut u8,
@@ -17392,7 +17419,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HRSS_decap"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HRSS_decap"]
     pub fn HRSS_decap(
         out_shared_key: *mut u8,
         in_priv: *const HRSS_private_key,
@@ -17401,22 +17428,22 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HRSS_marshal_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HRSS_marshal_public_key"]
     pub fn HRSS_marshal_public_key(out: *mut u8, in_pub: *const HRSS_public_key);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_HRSS_parse_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_HRSS_parse_public_key"]
     pub fn HRSS_parse_public_key(
         out: *mut HRSS_public_key,
         in_: *const u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD4_Init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD4_Init"]
     pub fn MD4_Init(md4: *mut MD4_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD4_Update"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD4_Update"]
     pub fn MD4_Update(
         md4: *mut MD4_CTX,
         data: *const ::std::os::raw::c_void,
@@ -17424,15 +17451,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD4_Final"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD4_Final"]
     pub fn MD4_Final(out: *mut u8, md4: *mut MD4_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD4"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD4"]
     pub fn MD4(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_MD4_Transform"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_MD4_Transform"]
     pub fn MD4_Transform(md4: *mut MD4_CTX, block: *const u8);
 }
 #[repr(C)]
@@ -17519,66 +17546,66 @@ impl Default for md4_state_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_dup"]
     pub fn OBJ_dup(obj: *const ASN1_OBJECT) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_cmp"]
     pub fn OBJ_cmp(a: *const ASN1_OBJECT, b: *const ASN1_OBJECT) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_get0_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_get0_data"]
     pub fn OBJ_get0_data(obj: *const ASN1_OBJECT) -> *const u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_length"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_length"]
     pub fn OBJ_length(obj: *const ASN1_OBJECT) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_obj2nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_obj2nid"]
     pub fn OBJ_obj2nid(obj: *const ASN1_OBJECT) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_cbs2nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_cbs2nid"]
     pub fn OBJ_cbs2nid(cbs: *const CBS) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_sn2nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_sn2nid"]
     pub fn OBJ_sn2nid(short_name: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_ln2nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_ln2nid"]
     pub fn OBJ_ln2nid(long_name: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_txt2nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_txt2nid"]
     pub fn OBJ_txt2nid(s: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_nid2obj"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_nid2obj"]
     pub fn OBJ_nid2obj(nid: ::std::os::raw::c_int) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_nid2sn"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_nid2sn"]
     pub fn OBJ_nid2sn(nid: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_nid2ln"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_nid2ln"]
     pub fn OBJ_nid2ln(nid: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_nid2cbb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_nid2cbb"]
     pub fn OBJ_nid2cbb(out: *mut CBB, nid: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_txt2obj"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_txt2obj"]
     pub fn OBJ_txt2obj(
         s: *const ::std::os::raw::c_char,
         dont_search_names: ::std::os::raw::c_int,
     ) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_obj2txt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_obj2txt"]
     pub fn OBJ_obj2txt(
         out: *mut ::std::os::raw::c_char,
         out_len: ::std::os::raw::c_int,
@@ -17587,7 +17614,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_create"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_create"]
     pub fn OBJ_create(
         oid: *const ::std::os::raw::c_char,
         short_name: *const ::std::os::raw::c_char,
@@ -17595,7 +17622,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_find_sigid_algs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_find_sigid_algs"]
     pub fn OBJ_find_sigid_algs(
         sign_nid: ::std::os::raw::c_int,
         out_digest_nid: *mut ::std::os::raw::c_int,
@@ -17603,7 +17630,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_find_sigid_by_algs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_find_sigid_by_algs"]
     pub fn OBJ_find_sigid_by_algs(
         out_sign_nid: *mut ::std::os::raw::c_int,
         digest_nid: ::std::os::raw::c_int,
@@ -17684,7 +17711,7 @@ impl Default for obj_name_st {
 }
 pub type OBJ_NAME = obj_name_st;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OBJ_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OBJ_cleanup"]
     pub fn OBJ_cleanup();
 }
 #[repr(C)]
@@ -17703,7 +17730,7 @@ pub struct stack_st_X509_CRL {
     _unused: [u8; 0],
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_get_raw_certificates"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_get_raw_certificates"]
     pub fn PKCS7_get_raw_certificates(
         out_certs: *mut stack_st_CRYPTO_BUFFER,
         cbs: *mut CBS,
@@ -17711,47 +17738,47 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_get_certificates"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_get_certificates"]
     pub fn PKCS7_get_certificates(
         out_certs: *mut stack_st_X509,
         cbs: *mut CBS,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_bundle_raw_certificates"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_bundle_raw_certificates"]
     pub fn PKCS7_bundle_raw_certificates(
         out: *mut CBB,
         certs: *const stack_st_CRYPTO_BUFFER,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_bundle_certificates"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_bundle_certificates"]
     pub fn PKCS7_bundle_certificates(
         out: *mut CBB,
         certs: *const stack_st_X509,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_get_CRLs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_get_CRLs"]
     pub fn PKCS7_get_CRLs(out_crls: *mut stack_st_X509_CRL, cbs: *mut CBS)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_bundle_CRLs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_bundle_CRLs"]
     pub fn PKCS7_bundle_CRLs(
         out: *mut CBB,
         crls: *const stack_st_X509_CRL,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_get_PEM_certificates"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_get_PEM_certificates"]
     pub fn PKCS7_get_PEM_certificates(
         out_certs: *mut stack_st_X509,
         pem_bio: *mut BIO,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_get_PEM_CRLs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_get_PEM_CRLs"]
     pub fn PKCS7_get_PEM_CRLs(
         out_crls: *mut stack_st_X509_CRL,
         pem_bio: *mut BIO,
@@ -18045,51 +18072,51 @@ impl Default for PKCS7 {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS7"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS7"]
     pub fn d2i_PKCS7(out: *mut *mut PKCS7, inp: *mut *const u8, len: usize) -> *mut PKCS7;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS7_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS7_bio"]
     pub fn d2i_PKCS7_bio(bio: *mut BIO, out: *mut *mut PKCS7) -> *mut PKCS7;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS7"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS7"]
     pub fn i2d_PKCS7(p7: *const PKCS7, out: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS7_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS7_bio"]
     pub fn i2d_PKCS7_bio(bio: *mut BIO, p7: *const PKCS7) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_free"]
     pub fn PKCS7_free(p7: *mut PKCS7);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_type_is_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_type_is_data"]
     pub fn PKCS7_type_is_data(p7: *const PKCS7) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_type_is_digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_type_is_digest"]
     pub fn PKCS7_type_is_digest(p7: *const PKCS7) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_type_is_encrypted"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_type_is_encrypted"]
     pub fn PKCS7_type_is_encrypted(p7: *const PKCS7) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_type_is_enveloped"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_type_is_enveloped"]
     pub fn PKCS7_type_is_enveloped(p7: *const PKCS7) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_type_is_signed"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_type_is_signed"]
     pub fn PKCS7_type_is_signed(p7: *const PKCS7) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_type_is_signedAndEnveloped"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_type_is_signedAndEnveloped"]
     pub fn PKCS7_type_is_signedAndEnveloped(p7: *const PKCS7) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS7_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS7_sign"]
     pub fn PKCS7_sign(
         sign_cert: *mut X509,
         pkey: *mut EVP_PKEY,
@@ -18115,15 +18142,15 @@ pub type sk_CRYPTO_BUFFER_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_POOL_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_POOL_new"]
     pub fn CRYPTO_BUFFER_POOL_new() -> *mut CRYPTO_BUFFER_POOL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_POOL_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_POOL_free"]
     pub fn CRYPTO_BUFFER_POOL_free(pool: *mut CRYPTO_BUFFER_POOL);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_new"]
     pub fn CRYPTO_BUFFER_new(
         data: *const u8,
         len: usize,
@@ -18131,18 +18158,18 @@ extern "C" {
     ) -> *mut CRYPTO_BUFFER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_alloc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_alloc"]
     pub fn CRYPTO_BUFFER_alloc(out_data: *mut *mut u8, len: usize) -> *mut CRYPTO_BUFFER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_new_from_CBS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_new_from_CBS"]
     pub fn CRYPTO_BUFFER_new_from_CBS(
         cbs: *const CBS,
         pool: *mut CRYPTO_BUFFER_POOL,
     ) -> *mut CRYPTO_BUFFER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_new_from_static_data_unsafe"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_new_from_static_data_unsafe"]
     pub fn CRYPTO_BUFFER_new_from_static_data_unsafe(
         data: *const u8,
         len: usize,
@@ -18150,79 +18177,79 @@ extern "C" {
     ) -> *mut CRYPTO_BUFFER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_free"]
     pub fn CRYPTO_BUFFER_free(buf: *mut CRYPTO_BUFFER);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_up_ref"]
     pub fn CRYPTO_BUFFER_up_ref(buf: *mut CRYPTO_BUFFER) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_data"]
     pub fn CRYPTO_BUFFER_data(buf: *const CRYPTO_BUFFER) -> *const u8;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_len"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_len"]
     pub fn CRYPTO_BUFFER_len(buf: *const CRYPTO_BUFFER) -> usize;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_BUFFER_init_CBS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_BUFFER_init_CBS"]
     pub fn CRYPTO_BUFFER_init_CBS(buf: *const CRYPTO_BUFFER, out: *mut CBS);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_new"]
     pub fn RSA_new() -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_new_method"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_new_method"]
     pub fn RSA_new_method(engine: *const ENGINE) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_free"]
     pub fn RSA_free(rsa: *mut RSA);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_up_ref"]
     pub fn RSA_up_ref(rsa: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_bits"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_bits"]
     pub fn RSA_bits(rsa: *const RSA) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_n"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_n"]
     pub fn RSA_get0_n(rsa: *const RSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_e"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_e"]
     pub fn RSA_get0_e(rsa: *const RSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_d"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_d"]
     pub fn RSA_get0_d(rsa: *const RSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_p"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_p"]
     pub fn RSA_get0_p(rsa: *const RSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_q"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_q"]
     pub fn RSA_get0_q(rsa: *const RSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_dmp1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_dmp1"]
     pub fn RSA_get0_dmp1(rsa: *const RSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_dmq1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_dmq1"]
     pub fn RSA_get0_dmq1(rsa: *const RSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_iqmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_iqmp"]
     pub fn RSA_get0_iqmp(rsa: *const RSA) -> *const BIGNUM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_key"]
     pub fn RSA_get0_key(
         rsa: *const RSA,
         out_n: *mut *const BIGNUM,
@@ -18231,11 +18258,11 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_factors"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_factors"]
     pub fn RSA_get0_factors(rsa: *const RSA, out_p: *mut *const BIGNUM, out_q: *mut *const BIGNUM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_crt_params"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_crt_params"]
     pub fn RSA_get0_crt_params(
         rsa: *const RSA,
         out_dmp1: *mut *const BIGNUM,
@@ -18244,7 +18271,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_set0_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_set0_key"]
     pub fn RSA_set0_key(
         rsa: *mut RSA,
         n: *mut BIGNUM,
@@ -18253,12 +18280,12 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_set0_factors"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_set0_factors"]
     pub fn RSA_set0_factors(rsa: *mut RSA, p: *mut BIGNUM, q: *mut BIGNUM)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_set0_crt_params"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_set0_crt_params"]
     pub fn RSA_set0_crt_params(
         rsa: *mut RSA,
         dmp1: *mut BIGNUM,
@@ -18267,7 +18294,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_generate_key_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_generate_key_ex"]
     pub fn RSA_generate_key_ex(
         rsa: *mut RSA,
         bits: ::std::os::raw::c_int,
@@ -18276,7 +18303,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_generate_key_fips"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_generate_key_fips"]
     pub fn RSA_generate_key_fips(
         rsa: *mut RSA,
         bits: ::std::os::raw::c_int,
@@ -18284,7 +18311,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_encrypt"]
     pub fn RSA_encrypt(
         rsa: *mut RSA,
         out_len: *mut usize,
@@ -18296,7 +18323,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_decrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_decrypt"]
     pub fn RSA_decrypt(
         rsa: *mut RSA,
         out_len: *mut usize,
@@ -18308,7 +18335,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_public_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_public_encrypt"]
     pub fn RSA_public_encrypt(
         flen: usize,
         from: *const u8,
@@ -18318,7 +18345,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_private_decrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_private_decrypt"]
     pub fn RSA_private_decrypt(
         flen: usize,
         from: *const u8,
@@ -18328,7 +18355,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_sign"]
     pub fn RSA_sign(
         hash_nid: ::std::os::raw::c_int,
         digest: *const u8,
@@ -18339,7 +18366,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_sign_pss_mgf1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_sign_pss_mgf1"]
     pub fn RSA_sign_pss_mgf1(
         rsa: *mut RSA,
         out_len: *mut usize,
@@ -18353,7 +18380,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_sign_raw"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_sign_raw"]
     pub fn RSA_sign_raw(
         rsa: *mut RSA,
         out_len: *mut usize,
@@ -18365,7 +18392,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_verify"]
     pub fn RSA_verify(
         hash_nid: ::std::os::raw::c_int,
         digest: *const u8,
@@ -18376,7 +18403,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_verify_pss_mgf1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_verify_pss_mgf1"]
     pub fn RSA_verify_pss_mgf1(
         rsa: *mut RSA,
         digest: *const u8,
@@ -18389,7 +18416,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_verify_raw"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_verify_raw"]
     pub fn RSA_verify_raw(
         rsa: *mut RSA,
         out_len: *mut usize,
@@ -18401,7 +18428,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_private_encrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_private_encrypt"]
     pub fn RSA_private_encrypt(
         flen: usize,
         from: *const u8,
@@ -18411,7 +18438,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_public_decrypt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_public_decrypt"]
     pub fn RSA_public_decrypt(
         flen: usize,
         from: *const u8,
@@ -18421,31 +18448,31 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_size"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_size"]
     pub fn RSA_size(rsa: *const RSA) -> ::std::os::raw::c_uint;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_is_opaque"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_is_opaque"]
     pub fn RSA_is_opaque(rsa: *const RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSAPublicKey_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSAPublicKey_dup"]
     pub fn RSAPublicKey_dup(rsa: *const RSA) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSAPrivateKey_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSAPrivateKey_dup"]
     pub fn RSAPrivateKey_dup(rsa: *const RSA) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_check_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_check_key"]
     pub fn RSA_check_key(rsa: *const RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_check_fips"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_check_fips"]
     pub fn RSA_check_fips(key: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_verify_PKCS1_PSS_mgf1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_verify_PKCS1_PSS_mgf1"]
     pub fn RSA_verify_PKCS1_PSS_mgf1(
         rsa: *const RSA,
         mHash: *const u8,
@@ -18456,7 +18483,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_padding_add_PKCS1_PSS_mgf1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_padding_add_PKCS1_PSS_mgf1"]
     pub fn RSA_padding_add_PKCS1_PSS_mgf1(
         rsa: *const RSA,
         EM: *mut u8,
@@ -18467,7 +18494,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_padding_add_PKCS1_OAEP_mgf1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_padding_add_PKCS1_OAEP_mgf1"]
     pub fn RSA_padding_add_PKCS1_OAEP_mgf1(
         to: *mut u8,
         to_len: usize,
@@ -18480,7 +18507,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_add_pkcs1_prefix"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_add_pkcs1_prefix"]
     pub fn RSA_add_pkcs1_prefix(
         out_msg: *mut *mut u8,
         out_msg_len: *mut usize,
@@ -18491,19 +18518,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_parse_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_parse_public_key"]
     pub fn RSA_parse_public_key(cbs: *mut CBS) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_public_key_from_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_public_key_from_bytes"]
     pub fn RSA_public_key_from_bytes(in_: *const u8, in_len: usize) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_marshal_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_marshal_public_key"]
     pub fn RSA_marshal_public_key(cbb: *mut CBB, rsa: *const RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_public_key_to_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_public_key_to_bytes"]
     pub fn RSA_public_key_to_bytes(
         out_bytes: *mut *mut u8,
         out_len: *mut usize,
@@ -18511,19 +18538,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_parse_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_parse_private_key"]
     pub fn RSA_parse_private_key(cbs: *mut CBS) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_private_key_from_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_private_key_from_bytes"]
     pub fn RSA_private_key_from_bytes(in_: *const u8, in_len: usize) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_marshal_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_marshal_private_key"]
     pub fn RSA_marshal_private_key(cbb: *mut CBB, rsa: *const RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_private_key_to_bytes"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_private_key_to_bytes"]
     pub fn RSA_private_key_to_bytes(
         out_bytes: *mut *mut u8,
         out_len: *mut usize,
@@ -18531,7 +18558,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get_ex_new_index"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get_ex_new_index"]
     pub fn RSA_get_ex_new_index(
         argl: ::std::os::raw::c_long,
         argp: *mut ::std::os::raw::c_void,
@@ -18541,7 +18568,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_set_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_set_ex_data"]
     pub fn RSA_set_ex_data(
         rsa: *mut RSA,
         idx: ::std::os::raw::c_int,
@@ -18549,26 +18576,26 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get_ex_data"]
     pub fn RSA_get_ex_data(
         rsa: *const RSA,
         idx: ::std::os::raw::c_int,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_flags"]
     pub fn RSA_flags(rsa: *const RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_test_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_test_flags"]
     pub fn RSA_test_flags(rsa: *const RSA, flags: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_blinding_on"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_blinding_on"]
     pub fn RSA_blinding_on(rsa: *mut RSA, ctx: *mut BN_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_generate_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_generate_key"]
     pub fn RSA_generate_key(
         bits: ::std::os::raw::c_int,
         e: u64,
@@ -18577,7 +18604,7 @@ extern "C" {
     ) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSAPublicKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSAPublicKey"]
     pub fn d2i_RSAPublicKey(
         out: *mut *mut RSA,
         inp: *mut *const u8,
@@ -18585,11 +18612,11 @@ extern "C" {
     ) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSAPublicKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSAPublicKey"]
     pub fn i2d_RSAPublicKey(in_: *const RSA, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSAPrivateKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSAPrivateKey"]
     pub fn d2i_RSAPrivateKey(
         out: *mut *mut RSA,
         inp: *mut *const u8,
@@ -18597,11 +18624,11 @@ extern "C" {
     ) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSAPrivateKey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSAPrivateKey"]
     pub fn i2d_RSAPrivateKey(in_: *const RSA, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_padding_add_PKCS1_PSS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_padding_add_PKCS1_PSS"]
     pub fn RSA_padding_add_PKCS1_PSS(
         rsa: *const RSA,
         EM: *mut u8,
@@ -18611,7 +18638,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_verify_PKCS1_PSS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_verify_PKCS1_PSS"]
     pub fn RSA_verify_PKCS1_PSS(
         rsa: *const RSA,
         mHash: *const u8,
@@ -18621,7 +18648,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_padding_add_PKCS1_OAEP"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_padding_add_PKCS1_OAEP"]
     pub fn RSA_padding_add_PKCS1_OAEP(
         to: *mut u8,
         to_len: usize,
@@ -18632,7 +18659,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_print"]
     pub fn RSA_print(
         bio: *mut BIO,
         rsa: *const RSA,
@@ -18640,7 +18667,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_get0_pss_params"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_get0_pss_params"]
     pub fn RSA_get0_pss_params(rsa: *const RSA) -> *const RSA_PSS_PARAMS;
 }
 #[repr(C)]
@@ -19141,27 +19168,27 @@ pub type sk_X509_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_it"]
     pub static X509_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_up_ref"]
     pub fn X509_up_ref(x509: *mut X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_chain_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_chain_up_ref"]
     pub fn X509_chain_up_ref(chain: *mut stack_st_X509) -> *mut stack_st_X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_dup"]
     pub fn X509_dup(x509: *mut X509) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_free"]
     pub fn X509_free(x509: *mut X509);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509"]
     pub fn d2i_X509(
         out: *mut *mut X509,
         inp: *mut *const u8,
@@ -19169,51 +19196,51 @@ extern "C" {
     ) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_parse_from_buffer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_parse_from_buffer"]
     pub fn X509_parse_from_buffer(buf: *mut CRYPTO_BUFFER) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509"]
     pub fn i2d_X509(x509: *mut X509, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_version"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_version"]
     pub fn X509_get_version(x509: *const X509) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_serialNumber"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_serialNumber"]
     pub fn X509_get0_serialNumber(x509: *const X509) -> *const ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_notBefore"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_notBefore"]
     pub fn X509_get0_notBefore(x509: *const X509) -> *const ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_notAfter"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_notAfter"]
     pub fn X509_get0_notAfter(x509: *const X509) -> *const ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_issuer_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_issuer_name"]
     pub fn X509_get_issuer_name(x509: *const X509) -> *mut X509_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_subject_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_subject_name"]
     pub fn X509_get_subject_name(x509: *const X509) -> *mut X509_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_X509_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_X509_PUBKEY"]
     pub fn X509_get_X509_PUBKEY(x509: *const X509) -> *mut X509_PUBKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_pubkey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_pubkey"]
     pub fn X509_get_pubkey(x509: *mut X509) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_pubkey_bitstr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_pubkey_bitstr"]
     pub fn X509_get0_pubkey_bitstr(x509: *const X509) -> *mut ASN1_BIT_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_uids"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_uids"]
     pub fn X509_get0_uids(
         x509: *const X509,
         out_issuer_uid: *mut *const ASN1_BIT_STRING,
@@ -19226,15 +19253,15 @@ pub struct stack_st_X509_EXTENSION {
     _unused: [u8; 0],
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_extensions"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_extensions"]
     pub fn X509_get0_extensions(x509: *const X509) -> *const stack_st_X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_ext_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_ext_count"]
     pub fn X509_get_ext_count(x: *const X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_ext_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_ext_by_NID"]
     pub fn X509_get_ext_by_NID(
         x: *const X509,
         nid: ::std::os::raw::c_int,
@@ -19242,7 +19269,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_ext_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_ext_by_OBJ"]
     pub fn X509_get_ext_by_OBJ(
         x: *const X509,
         obj: *const ASN1_OBJECT,
@@ -19250,7 +19277,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_ext_by_critical"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_ext_by_critical"]
     pub fn X509_get_ext_by_critical(
         x: *const X509,
         crit: ::std::os::raw::c_int,
@@ -19258,15 +19285,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_ext"]
     pub fn X509_get_ext(x: *const X509, loc: ::std::os::raw::c_int) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_tbs_sigalg"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_tbs_sigalg"]
     pub fn X509_get0_tbs_sigalg(x509: *const X509) -> *const X509_ALGOR;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_signature"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_signature"]
     pub fn X509_get0_signature(
         out_sig: *mut *const ASN1_BIT_STRING,
         out_alg: *mut *const X509_ALGOR,
@@ -19274,68 +19301,68 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_signature_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_signature_nid"]
     pub fn X509_get_signature_nid(x509: *const X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_tbs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_tbs"]
     pub fn i2d_X509_tbs(
         x509: *mut X509,
         outp: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_new"]
     pub fn X509_new() -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set_version"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set_version"]
     pub fn X509_set_version(
         x509: *mut X509,
         version: ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set_serialNumber"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set_serialNumber"]
     pub fn X509_set_serialNumber(
         x509: *mut X509,
         serial: *const ASN1_INTEGER,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set1_notBefore"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set1_notBefore"]
     pub fn X509_set1_notBefore(x509: *mut X509, tm: *const ASN1_TIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set1_notAfter"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set1_notAfter"]
     pub fn X509_set1_notAfter(x509: *mut X509, tm: *const ASN1_TIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_getm_notBefore"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_getm_notBefore"]
     pub fn X509_getm_notBefore(x509: *mut X509) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_getm_notAfter"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_getm_notAfter"]
     pub fn X509_getm_notAfter(x: *mut X509) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set_issuer_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set_issuer_name"]
     pub fn X509_set_issuer_name(x509: *mut X509, name: *mut X509_NAME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set_subject_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set_subject_name"]
     pub fn X509_set_subject_name(x509: *mut X509, name: *mut X509_NAME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set_pubkey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set_pubkey"]
     pub fn X509_set_pubkey(x509: *mut X509, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_delete_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_delete_ext"]
     pub fn X509_delete_ext(x: *mut X509, loc: ::std::os::raw::c_int) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_add_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_add_ext"]
     pub fn X509_add_ext(
         x: *mut X509,
         ex: *const X509_EXTENSION,
@@ -19343,7 +19370,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_sign"]
     pub fn X509_sign(
         x509: *mut X509,
         pkey: *mut EVP_PKEY,
@@ -19351,25 +19378,25 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_sign_ctx"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_sign_ctx"]
     pub fn X509_sign_ctx(x509: *mut X509, ctx: *mut EVP_MD_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_re_X509_tbs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_re_X509_tbs"]
     pub fn i2d_re_X509_tbs(
         x509: *mut X509,
         outp: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set1_signature_algo"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set1_signature_algo"]
     pub fn X509_set1_signature_algo(
         x509: *mut X509,
         algo: *const X509_ALGOR,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set1_signature_value"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set1_signature_value"]
     pub fn X509_set1_signature_value(
         x509: *mut X509,
         sig: *const u8,
@@ -19377,14 +19404,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_AUX"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_AUX"]
     pub fn i2d_X509_AUX(
         x509: *mut X509,
         outp: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_AUX"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_AUX"]
     pub fn d2i_X509_AUX(
         x509: *mut *mut X509,
         inp: *mut *const ::std::os::raw::c_uchar,
@@ -19392,7 +19419,7 @@ extern "C" {
     ) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_alias_set1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_alias_set1"]
     pub fn X509_alias_set1(
         x509: *mut X509,
         name: *const ::std::os::raw::c_uchar,
@@ -19400,7 +19427,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_keyid_set1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_keyid_set1"]
     pub fn X509_keyid_set1(
         x509: *mut X509,
         id: *const ::std::os::raw::c_uchar,
@@ -19408,14 +19435,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_alias_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_alias_get0"]
     pub fn X509_alias_get0(
         x509: *mut X509,
         out_len: *mut ::std::os::raw::c_int,
     ) -> *mut ::std::os::raw::c_uchar;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_keyid_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_keyid_get0"]
     pub fn X509_keyid_get0(
         x509: *mut X509,
         out_len: *mut ::std::os::raw::c_int,
@@ -19437,23 +19464,23 @@ pub type sk_X509_CRL_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_it"]
     pub static X509_CRL_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_up_ref"]
     pub fn X509_CRL_up_ref(crl: *mut X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_dup"]
     pub fn X509_CRL_dup(crl: *mut X509_CRL) -> *mut X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_free"]
     pub fn X509_CRL_free(crl: *mut X509_CRL);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_CRL"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_CRL"]
     pub fn d2i_X509_CRL(
         out: *mut *mut X509_CRL,
         inp: *mut *const u8,
@@ -19461,23 +19488,23 @@ extern "C" {
     ) -> *mut X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_CRL"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_CRL"]
     pub fn i2d_X509_CRL(crl: *mut X509_CRL, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_version"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_version"]
     pub fn X509_CRL_get_version(crl: *const X509_CRL) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get0_lastUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get0_lastUpdate"]
     pub fn X509_CRL_get0_lastUpdate(crl: *const X509_CRL) -> *const ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get0_nextUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get0_nextUpdate"]
     pub fn X509_CRL_get0_nextUpdate(crl: *const X509_CRL) -> *const ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_issuer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_issuer"]
     pub fn X509_CRL_get_issuer(crl: *const X509_CRL) -> *mut X509_NAME;
 }
 #[repr(C)]
@@ -19486,19 +19513,19 @@ pub struct stack_st_X509_REVOKED {
     _unused: [u8; 0],
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_REVOKED"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_REVOKED"]
     pub fn X509_CRL_get_REVOKED(crl: *mut X509_CRL) -> *mut stack_st_X509_REVOKED;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get0_extensions"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get0_extensions"]
     pub fn X509_CRL_get0_extensions(crl: *const X509_CRL) -> *const stack_st_X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_ext_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_ext_count"]
     pub fn X509_CRL_get_ext_count(x: *const X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_ext_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_ext_by_NID"]
     pub fn X509_CRL_get_ext_by_NID(
         x: *const X509_CRL,
         nid: ::std::os::raw::c_int,
@@ -19506,7 +19533,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_ext_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_ext_by_OBJ"]
     pub fn X509_CRL_get_ext_by_OBJ(
         x: *const X509_CRL,
         obj: *const ASN1_OBJECT,
@@ -19514,7 +19541,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_ext_by_critical"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_ext_by_critical"]
     pub fn X509_CRL_get_ext_by_critical(
         x: *const X509_CRL,
         crit: ::std::os::raw::c_int,
@@ -19522,11 +19549,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_ext"]
     pub fn X509_CRL_get_ext(x: *const X509_CRL, loc: ::std::os::raw::c_int) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get0_signature"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get0_signature"]
     pub fn X509_CRL_get0_signature(
         crl: *const X509_CRL,
         out_sig: *mut *const ASN1_BIT_STRING,
@@ -19534,55 +19561,55 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_signature_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_signature_nid"]
     pub fn X509_CRL_get_signature_nid(crl: *const X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_CRL_tbs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_CRL_tbs"]
     pub fn i2d_X509_CRL_tbs(
         crl: *mut X509_CRL,
         outp: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_new"]
     pub fn X509_CRL_new() -> *mut X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_set_version"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_set_version"]
     pub fn X509_CRL_set_version(
         crl: *mut X509_CRL,
         version: ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_set_issuer_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_set_issuer_name"]
     pub fn X509_CRL_set_issuer_name(
         crl: *mut X509_CRL,
         name: *mut X509_NAME,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_set1_lastUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_set1_lastUpdate"]
     pub fn X509_CRL_set1_lastUpdate(
         crl: *mut X509_CRL,
         tm: *const ASN1_TIME,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_set1_nextUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_set1_nextUpdate"]
     pub fn X509_CRL_set1_nextUpdate(
         crl: *mut X509_CRL,
         tm: *const ASN1_TIME,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_delete_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_delete_ext"]
     pub fn X509_CRL_delete_ext(x: *mut X509_CRL, loc: ::std::os::raw::c_int)
         -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_add_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_add_ext"]
     pub fn X509_CRL_add_ext(
         x: *mut X509_CRL,
         ex: *const X509_EXTENSION,
@@ -19590,7 +19617,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_sign"]
     pub fn X509_CRL_sign(
         crl: *mut X509_CRL,
         pkey: *mut EVP_PKEY,
@@ -19598,25 +19625,25 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_sign_ctx"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_sign_ctx"]
     pub fn X509_CRL_sign_ctx(crl: *mut X509_CRL, ctx: *mut EVP_MD_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_re_X509_CRL_tbs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_re_X509_CRL_tbs"]
     pub fn i2d_re_X509_CRL_tbs(
         crl: *mut X509_CRL,
         outp: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_set1_signature_algo"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_set1_signature_algo"]
     pub fn X509_CRL_set1_signature_algo(
         crl: *mut X509_CRL,
         algo: *const X509_ALGOR,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_set1_signature_value"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_set1_signature_value"]
     pub fn X509_CRL_set1_signature_value(
         crl: *mut X509_CRL,
         sig: *const u8,
@@ -19624,19 +19651,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_it"]
     pub static X509_REQ_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_dup"]
     pub fn X509_REQ_dup(req: *mut X509_REQ) -> *mut X509_REQ;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_free"]
     pub fn X509_REQ_free(req: *mut X509_REQ);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_REQ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_REQ"]
     pub fn d2i_X509_REQ(
         out: *mut *mut X509_REQ,
         inp: *mut *const u8,
@@ -19644,23 +19671,23 @@ extern "C" {
     ) -> *mut X509_REQ;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_REQ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_REQ"]
     pub fn i2d_X509_REQ(req: *mut X509_REQ, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get_version"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get_version"]
     pub fn X509_REQ_get_version(req: *const X509_REQ) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get_subject_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get_subject_name"]
     pub fn X509_REQ_get_subject_name(req: *const X509_REQ) -> *mut X509_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get_pubkey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get_pubkey"]
     pub fn X509_REQ_get_pubkey(req: *mut X509_REQ) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get0_signature"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get0_signature"]
     pub fn X509_REQ_get0_signature(
         req: *const X509_REQ,
         out_sig: *mut *const ASN1_BIT_STRING,
@@ -19668,33 +19695,33 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get_signature_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get_signature_nid"]
     pub fn X509_REQ_get_signature_nid(req: *const X509_REQ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_new"]
     pub fn X509_REQ_new() -> *mut X509_REQ;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_set_version"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_set_version"]
     pub fn X509_REQ_set_version(
         req: *mut X509_REQ,
         version: ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_set_subject_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_set_subject_name"]
     pub fn X509_REQ_set_subject_name(
         req: *mut X509_REQ,
         name: *mut X509_NAME,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_set_pubkey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_set_pubkey"]
     pub fn X509_REQ_set_pubkey(req: *mut X509_REQ, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_sign"]
     pub fn X509_REQ_sign(
         req: *mut X509_REQ,
         pkey: *mut EVP_PKEY,
@@ -19702,22 +19729,22 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_sign_ctx"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_sign_ctx"]
     pub fn X509_REQ_sign_ctx(req: *mut X509_REQ, ctx: *mut EVP_MD_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_re_X509_REQ_tbs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_re_X509_REQ_tbs"]
     pub fn i2d_re_X509_REQ_tbs(req: *mut X509_REQ, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_set1_signature_algo"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_set1_signature_algo"]
     pub fn X509_REQ_set1_signature_algo(
         req: *mut X509_REQ,
         algo: *const X509_ALGOR,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_set1_signature_value"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_set1_signature_value"]
     pub fn X509_REQ_set1_signature_value(
         req: *mut X509_REQ,
         sig: *const u8,
@@ -19767,19 +19794,19 @@ pub type sk_X509_NAME_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_it"]
     pub static X509_NAME_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_new"]
     pub fn X509_NAME_new() -> *mut X509_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_free"]
     pub fn X509_NAME_free(name: *mut X509_NAME);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_NAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_NAME"]
     pub fn d2i_X509_NAME(
         out: *mut *mut X509_NAME,
         inp: *mut *const u8,
@@ -19787,15 +19814,15 @@ extern "C" {
     ) -> *mut X509_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_NAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_NAME"]
     pub fn i2d_X509_NAME(in_: *mut X509_NAME, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_dup"]
     pub fn X509_NAME_dup(name: *mut X509_NAME) -> *mut X509_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_get0_der"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_get0_der"]
     pub fn X509_NAME_get0_der(
         name: *mut X509_NAME,
         out_der: *mut *const u8,
@@ -19803,15 +19830,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_set"]
     pub fn X509_NAME_set(xn: *mut *mut X509_NAME, name: *mut X509_NAME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_entry_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_entry_count"]
     pub fn X509_NAME_entry_count(name: *const X509_NAME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_get_index_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_get_index_by_NID"]
     pub fn X509_NAME_get_index_by_NID(
         name: *const X509_NAME,
         nid: ::std::os::raw::c_int,
@@ -19819,7 +19846,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_get_index_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_get_index_by_OBJ"]
     pub fn X509_NAME_get_index_by_OBJ(
         name: *const X509_NAME,
         obj: *const ASN1_OBJECT,
@@ -19827,21 +19854,21 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_get_entry"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_get_entry"]
     pub fn X509_NAME_get_entry(
         name: *const X509_NAME,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_NAME_ENTRY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_delete_entry"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_delete_entry"]
     pub fn X509_NAME_delete_entry(
         name: *mut X509_NAME,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_NAME_ENTRY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_add_entry"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_add_entry"]
     pub fn X509_NAME_add_entry(
         name: *mut X509_NAME,
         entry: *const X509_NAME_ENTRY,
@@ -19850,7 +19877,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_add_entry_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_add_entry_by_OBJ"]
     pub fn X509_NAME_add_entry_by_OBJ(
         name: *mut X509_NAME,
         obj: *const ASN1_OBJECT,
@@ -19862,7 +19889,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_add_entry_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_add_entry_by_NID"]
     pub fn X509_NAME_add_entry_by_NID(
         name: *mut X509_NAME,
         nid: ::std::os::raw::c_int,
@@ -19874,7 +19901,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_add_entry_by_txt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_add_entry_by_txt"]
     pub fn X509_NAME_add_entry_by_txt(
         name: *mut X509_NAME,
         field: *const ::std::os::raw::c_char,
@@ -19886,19 +19913,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_it"]
     pub static X509_NAME_ENTRY_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_new"]
     pub fn X509_NAME_ENTRY_new() -> *mut X509_NAME_ENTRY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_free"]
     pub fn X509_NAME_ENTRY_free(entry: *mut X509_NAME_ENTRY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_NAME_ENTRY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_NAME_ENTRY"]
     pub fn d2i_X509_NAME_ENTRY(
         out: *mut *mut X509_NAME_ENTRY,
         inp: *mut *const u8,
@@ -19906,33 +19933,33 @@ extern "C" {
     ) -> *mut X509_NAME_ENTRY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_NAME_ENTRY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_NAME_ENTRY"]
     pub fn i2d_X509_NAME_ENTRY(
         in_: *const X509_NAME_ENTRY,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_dup"]
     pub fn X509_NAME_ENTRY_dup(entry: *const X509_NAME_ENTRY) -> *mut X509_NAME_ENTRY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_get_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_get_object"]
     pub fn X509_NAME_ENTRY_get_object(entry: *const X509_NAME_ENTRY) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_set_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_set_object"]
     pub fn X509_NAME_ENTRY_set_object(
         entry: *mut X509_NAME_ENTRY,
         obj: *const ASN1_OBJECT,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_get_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_get_data"]
     pub fn X509_NAME_ENTRY_get_data(entry: *const X509_NAME_ENTRY) -> *mut ASN1_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_set_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_set_data"]
     pub fn X509_NAME_ENTRY_set_data(
         entry: *mut X509_NAME_ENTRY,
         type_: ::std::os::raw::c_int,
@@ -19941,11 +19968,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_set"]
     pub fn X509_NAME_ENTRY_set(entry: *const X509_NAME_ENTRY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_create_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_create_by_OBJ"]
     pub fn X509_NAME_ENTRY_create_by_OBJ(
         out: *mut *mut X509_NAME_ENTRY,
         obj: *const ASN1_OBJECT,
@@ -19955,7 +19982,7 @@ extern "C" {
     ) -> *mut X509_NAME_ENTRY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_create_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_create_by_NID"]
     pub fn X509_NAME_ENTRY_create_by_NID(
         out: *mut *mut X509_NAME_ENTRY,
         nid: ::std::os::raw::c_int,
@@ -19965,7 +19992,7 @@ extern "C" {
     ) -> *mut X509_NAME_ENTRY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_ENTRY_create_by_txt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_ENTRY_create_by_txt"]
     pub fn X509_NAME_ENTRY_create_by_txt(
         out: *mut *mut X509_NAME_ENTRY,
         field: *const ::std::os::raw::c_char,
@@ -19975,19 +20002,19 @@ extern "C" {
     ) -> *mut X509_NAME_ENTRY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_it"]
     pub static X509_EXTENSION_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_new"]
     pub fn X509_EXTENSION_new() -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_free"]
     pub fn X509_EXTENSION_free(ex: *mut X509_EXTENSION);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_EXTENSION"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_EXTENSION"]
     pub fn d2i_X509_EXTENSION(
         out: *mut *mut X509_EXTENSION,
         inp: *mut *const u8,
@@ -19995,18 +20022,18 @@ extern "C" {
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_EXTENSION"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_EXTENSION"]
     pub fn i2d_X509_EXTENSION(
         alg: *const X509_EXTENSION,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_dup"]
     pub fn X509_EXTENSION_dup(ex: *const X509_EXTENSION) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_create_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_create_by_NID"]
     pub fn X509_EXTENSION_create_by_NID(
         ex: *mut *mut X509_EXTENSION,
         nid: ::std::os::raw::c_int,
@@ -20015,7 +20042,7 @@ extern "C" {
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_create_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_create_by_OBJ"]
     pub fn X509_EXTENSION_create_by_OBJ(
         ex: *mut *mut X509_EXTENSION,
         obj: *const ASN1_OBJECT,
@@ -20024,33 +20051,33 @@ extern "C" {
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_get_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_get_object"]
     pub fn X509_EXTENSION_get_object(ex: *const X509_EXTENSION) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_get_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_get_data"]
     pub fn X509_EXTENSION_get_data(ne: *const X509_EXTENSION) -> *mut ASN1_OCTET_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_get_critical"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_get_critical"]
     pub fn X509_EXTENSION_get_critical(ex: *const X509_EXTENSION) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_set_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_set_object"]
     pub fn X509_EXTENSION_set_object(
         ex: *mut X509_EXTENSION,
         obj: *const ASN1_OBJECT,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_set_critical"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_set_critical"]
     pub fn X509_EXTENSION_set_critical(
         ex: *mut X509_EXTENSION,
         crit: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSION_set_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSION_set_data"]
     pub fn X509_EXTENSION_set_data(
         ex: *mut X509_EXTENSION,
         data: *const ASN1_OCTET_STRING,
@@ -20074,11 +20101,11 @@ pub type sk_X509_EXTENSION_delete_if_func = ::std::option::Option<
 >;
 pub type X509_EXTENSIONS = stack_st_X509_EXTENSION;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_EXTENSIONS_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_EXTENSIONS_it"]
     pub static X509_EXTENSIONS_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_EXTENSIONS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_EXTENSIONS"]
     pub fn d2i_X509_EXTENSIONS(
         out: *mut *mut X509_EXTENSIONS,
         inp: *mut *const u8,
@@ -20086,18 +20113,18 @@ extern "C" {
     ) -> *mut X509_EXTENSIONS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_EXTENSIONS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_EXTENSIONS"]
     pub fn i2d_X509_EXTENSIONS(
         alg: *const X509_EXTENSIONS,
         outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509v3_get_ext_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509v3_get_ext_count"]
     pub fn X509v3_get_ext_count(x: *const stack_st_X509_EXTENSION) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509v3_get_ext_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509v3_get_ext_by_NID"]
     pub fn X509v3_get_ext_by_NID(
         x: *const stack_st_X509_EXTENSION,
         nid: ::std::os::raw::c_int,
@@ -20105,7 +20132,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509v3_get_ext_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509v3_get_ext_by_OBJ"]
     pub fn X509v3_get_ext_by_OBJ(
         x: *const stack_st_X509_EXTENSION,
         obj: *const ASN1_OBJECT,
@@ -20113,7 +20140,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509v3_get_ext_by_critical"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509v3_get_ext_by_critical"]
     pub fn X509v3_get_ext_by_critical(
         x: *const stack_st_X509_EXTENSION,
         crit: ::std::os::raw::c_int,
@@ -20121,21 +20148,21 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509v3_get_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509v3_get_ext"]
     pub fn X509v3_get_ext(
         x: *const stack_st_X509_EXTENSION,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509v3_delete_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509v3_delete_ext"]
     pub fn X509v3_delete_ext(
         x: *mut stack_st_X509_EXTENSION,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509v3_add_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509v3_add_ext"]
     pub fn X509v3_add_ext(
         x: *mut *mut stack_st_X509_EXTENSION,
         ex: *const X509_EXTENSION,
@@ -20164,23 +20191,23 @@ pub type sk_X509_ALGOR_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ALGOR_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ALGOR_it"]
     pub static X509_ALGOR_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ALGOR_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ALGOR_new"]
     pub fn X509_ALGOR_new() -> *mut X509_ALGOR;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ALGOR_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ALGOR_dup"]
     pub fn X509_ALGOR_dup(alg: *const X509_ALGOR) -> *mut X509_ALGOR;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ALGOR_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ALGOR_free"]
     pub fn X509_ALGOR_free(alg: *mut X509_ALGOR);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_ALGOR"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_ALGOR"]
     pub fn d2i_X509_ALGOR(
         out: *mut *mut X509_ALGOR,
         inp: *mut *const u8,
@@ -20188,11 +20215,11 @@ extern "C" {
     ) -> *mut X509_ALGOR;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_ALGOR"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_ALGOR"]
     pub fn i2d_X509_ALGOR(alg: *const X509_ALGOR, outp: *mut *mut u8) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ALGOR_set0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ALGOR_set0"]
     pub fn X509_ALGOR_set0(
         alg: *mut X509_ALGOR,
         obj: *mut ASN1_OBJECT,
@@ -20201,7 +20228,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ALGOR_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ALGOR_get0"]
     pub fn X509_ALGOR_get0(
         out_obj: *mut *const ASN1_OBJECT,
         out_param_type: *mut ::std::os::raw::c_int,
@@ -20210,15 +20237,15 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ALGOR_set_md"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ALGOR_set_md"]
     pub fn X509_ALGOR_set_md(alg: *mut X509_ALGOR, md: *const EVP_MD);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ALGOR_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ALGOR_cmp"]
     pub fn X509_ALGOR_cmp(a: *const X509_ALGOR, b: *const X509_ALGOR) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_signature_dump"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_signature_dump"]
     pub fn X509_signature_dump(
         bio: *mut BIO,
         sig: *const ASN1_STRING,
@@ -20226,7 +20253,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_signature_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_signature_print"]
     pub fn X509_signature_print(
         bio: *mut BIO,
         alg: *const X509_ALGOR,
@@ -20234,7 +20261,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_pubkey_digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_pubkey_digest"]
     pub fn X509_pubkey_digest(
         x509: *const X509,
         md: *const EVP_MD,
@@ -20243,7 +20270,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_digest"]
     pub fn X509_digest(
         x509: *const X509,
         md: *const EVP_MD,
@@ -20252,7 +20279,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_digest"]
     pub fn X509_CRL_digest(
         crl: *const X509_CRL,
         md: *const EVP_MD,
@@ -20261,7 +20288,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_digest"]
     pub fn X509_REQ_digest(
         req: *const X509_REQ,
         md: *const EVP_MD,
@@ -20270,7 +20297,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_digest"]
     pub fn X509_NAME_digest(
         name: *const X509_NAME,
         md: *const EVP_MD,
@@ -20279,259 +20306,259 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_bio"]
     pub fn d2i_X509_bio(bp: *mut BIO, x509: *mut *mut X509) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_CRL_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_CRL_bio"]
     pub fn d2i_X509_CRL_bio(bp: *mut BIO, crl: *mut *mut X509_CRL) -> *mut X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_REQ_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_REQ_bio"]
     pub fn d2i_X509_REQ_bio(bp: *mut BIO, req: *mut *mut X509_REQ) -> *mut X509_REQ;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSAPrivateKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSAPrivateKey_bio"]
     pub fn d2i_RSAPrivateKey_bio(bp: *mut BIO, rsa: *mut *mut RSA) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSAPublicKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSAPublicKey_bio"]
     pub fn d2i_RSAPublicKey_bio(bp: *mut BIO, rsa: *mut *mut RSA) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSA_PUBKEY_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSA_PUBKEY_bio"]
     pub fn d2i_RSA_PUBKEY_bio(bp: *mut BIO, rsa: *mut *mut RSA) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DSA_PUBKEY_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DSA_PUBKEY_bio"]
     pub fn d2i_DSA_PUBKEY_bio(bp: *mut BIO, dsa: *mut *mut DSA) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DSAPrivateKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DSAPrivateKey_bio"]
     pub fn d2i_DSAPrivateKey_bio(bp: *mut BIO, dsa: *mut *mut DSA) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_EC_PUBKEY_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_EC_PUBKEY_bio"]
     pub fn d2i_EC_PUBKEY_bio(bp: *mut BIO, eckey: *mut *mut EC_KEY) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ECPrivateKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ECPrivateKey_bio"]
     pub fn d2i_ECPrivateKey_bio(bp: *mut BIO, eckey: *mut *mut EC_KEY) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS8_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS8_bio"]
     pub fn d2i_PKCS8_bio(bp: *mut BIO, p8: *mut *mut X509_SIG) -> *mut X509_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS8_PRIV_KEY_INFO_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS8_PRIV_KEY_INFO_bio"]
     pub fn d2i_PKCS8_PRIV_KEY_INFO_bio(
         bp: *mut BIO,
         p8inf: *mut *mut PKCS8_PRIV_KEY_INFO,
     ) -> *mut PKCS8_PRIV_KEY_INFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PUBKEY_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PUBKEY_bio"]
     pub fn d2i_PUBKEY_bio(bp: *mut BIO, a: *mut *mut EVP_PKEY) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DHparams_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DHparams_bio"]
     pub fn d2i_DHparams_bio(bp: *mut BIO, dh: *mut *mut DH) -> *mut DH;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PrivateKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PrivateKey_bio"]
     pub fn d2i_PrivateKey_bio(bp: *mut BIO, a: *mut *mut EVP_PKEY) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_bio"]
     pub fn i2d_X509_bio(bp: *mut BIO, x509: *mut X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_CRL_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_CRL_bio"]
     pub fn i2d_X509_CRL_bio(bp: *mut BIO, crl: *mut X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_REQ_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_REQ_bio"]
     pub fn i2d_X509_REQ_bio(bp: *mut BIO, req: *mut X509_REQ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSAPrivateKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSAPrivateKey_bio"]
     pub fn i2d_RSAPrivateKey_bio(bp: *mut BIO, rsa: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSAPublicKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSAPublicKey_bio"]
     pub fn i2d_RSAPublicKey_bio(bp: *mut BIO, rsa: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSA_PUBKEY_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSA_PUBKEY_bio"]
     pub fn i2d_RSA_PUBKEY_bio(bp: *mut BIO, rsa: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DSA_PUBKEY_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DSA_PUBKEY_bio"]
     pub fn i2d_DSA_PUBKEY_bio(bp: *mut BIO, dsa: *mut DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DSAPrivateKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DSAPrivateKey_bio"]
     pub fn i2d_DSAPrivateKey_bio(bp: *mut BIO, dsa: *mut DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_EC_PUBKEY_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_EC_PUBKEY_bio"]
     pub fn i2d_EC_PUBKEY_bio(bp: *mut BIO, eckey: *mut EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ECPrivateKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ECPrivateKey_bio"]
     pub fn i2d_ECPrivateKey_bio(bp: *mut BIO, eckey: *mut EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8_bio"]
     pub fn i2d_PKCS8_bio(bp: *mut BIO, p8: *mut X509_SIG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8_PRIV_KEY_INFO_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8_PRIV_KEY_INFO_bio"]
     pub fn i2d_PKCS8_PRIV_KEY_INFO_bio(
         bp: *mut BIO,
         p8inf: *mut PKCS8_PRIV_KEY_INFO,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PrivateKey_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PrivateKey_bio"]
     pub fn i2d_PrivateKey_bio(bp: *mut BIO, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PUBKEY_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PUBKEY_bio"]
     pub fn i2d_PUBKEY_bio(bp: *mut BIO, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DHparams_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DHparams_bio"]
     pub fn i2d_DHparams_bio(bp: *mut BIO, dh: *const DH) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8PrivateKeyInfo_bio"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8PrivateKeyInfo_bio"]
     pub fn i2d_PKCS8PrivateKeyInfo_bio(bp: *mut BIO, key: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_fp"]
     pub fn d2i_X509_fp(fp: *mut FILE, x509: *mut *mut X509) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_CRL_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_CRL_fp"]
     pub fn d2i_X509_CRL_fp(fp: *mut FILE, crl: *mut *mut X509_CRL) -> *mut X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_REQ_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_REQ_fp"]
     pub fn d2i_X509_REQ_fp(fp: *mut FILE, req: *mut *mut X509_REQ) -> *mut X509_REQ;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSAPrivateKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSAPrivateKey_fp"]
     pub fn d2i_RSAPrivateKey_fp(fp: *mut FILE, rsa: *mut *mut RSA) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSAPublicKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSAPublicKey_fp"]
     pub fn d2i_RSAPublicKey_fp(fp: *mut FILE, rsa: *mut *mut RSA) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSA_PUBKEY_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSA_PUBKEY_fp"]
     pub fn d2i_RSA_PUBKEY_fp(fp: *mut FILE, rsa: *mut *mut RSA) -> *mut RSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DSA_PUBKEY_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DSA_PUBKEY_fp"]
     pub fn d2i_DSA_PUBKEY_fp(fp: *mut FILE, dsa: *mut *mut DSA) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DSAPrivateKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DSAPrivateKey_fp"]
     pub fn d2i_DSAPrivateKey_fp(fp: *mut FILE, dsa: *mut *mut DSA) -> *mut DSA;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_EC_PUBKEY_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_EC_PUBKEY_fp"]
     pub fn d2i_EC_PUBKEY_fp(fp: *mut FILE, eckey: *mut *mut EC_KEY) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ECPrivateKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ECPrivateKey_fp"]
     pub fn d2i_ECPrivateKey_fp(fp: *mut FILE, eckey: *mut *mut EC_KEY) -> *mut EC_KEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS8_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS8_fp"]
     pub fn d2i_PKCS8_fp(fp: *mut FILE, p8: *mut *mut X509_SIG) -> *mut X509_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS8_PRIV_KEY_INFO_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS8_PRIV_KEY_INFO_fp"]
     pub fn d2i_PKCS8_PRIV_KEY_INFO_fp(
         fp: *mut FILE,
         p8inf: *mut *mut PKCS8_PRIV_KEY_INFO,
     ) -> *mut PKCS8_PRIV_KEY_INFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PrivateKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PrivateKey_fp"]
     pub fn d2i_PrivateKey_fp(fp: *mut FILE, a: *mut *mut EVP_PKEY) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PUBKEY_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PUBKEY_fp"]
     pub fn d2i_PUBKEY_fp(fp: *mut FILE, a: *mut *mut EVP_PKEY) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_fp"]
     pub fn i2d_X509_fp(fp: *mut FILE, x509: *mut X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_CRL_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_CRL_fp"]
     pub fn i2d_X509_CRL_fp(fp: *mut FILE, crl: *mut X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_REQ_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_REQ_fp"]
     pub fn i2d_X509_REQ_fp(fp: *mut FILE, req: *mut X509_REQ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSAPrivateKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSAPrivateKey_fp"]
     pub fn i2d_RSAPrivateKey_fp(fp: *mut FILE, rsa: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSAPublicKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSAPublicKey_fp"]
     pub fn i2d_RSAPublicKey_fp(fp: *mut FILE, rsa: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSA_PUBKEY_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSA_PUBKEY_fp"]
     pub fn i2d_RSA_PUBKEY_fp(fp: *mut FILE, rsa: *mut RSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DSA_PUBKEY_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DSA_PUBKEY_fp"]
     pub fn i2d_DSA_PUBKEY_fp(fp: *mut FILE, dsa: *mut DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DSAPrivateKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DSAPrivateKey_fp"]
     pub fn i2d_DSAPrivateKey_fp(fp: *mut FILE, dsa: *mut DSA) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_EC_PUBKEY_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_EC_PUBKEY_fp"]
     pub fn i2d_EC_PUBKEY_fp(fp: *mut FILE, eckey: *mut EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ECPrivateKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ECPrivateKey_fp"]
     pub fn i2d_ECPrivateKey_fp(fp: *mut FILE, eckey: *mut EC_KEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8_fp"]
     pub fn i2d_PKCS8_fp(fp: *mut FILE, p8: *mut X509_SIG) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8_PRIV_KEY_INFO_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8_PRIV_KEY_INFO_fp"]
     pub fn i2d_PKCS8_PRIV_KEY_INFO_fp(
         fp: *mut FILE,
         p8inf: *mut PKCS8_PRIV_KEY_INFO,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8PrivateKeyInfo_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8PrivateKeyInfo_fp"]
     pub fn i2d_PKCS8PrivateKeyInfo_fp(fp: *mut FILE, key: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PrivateKey_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PrivateKey_fp"]
     pub fn i2d_PrivateKey_fp(fp: *mut FILE, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PUBKEY_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PUBKEY_fp"]
     pub fn i2d_PUBKEY_fp(fp: *mut FILE, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_find_by_issuer_and_serial"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_find_by_issuer_and_serial"]
     pub fn X509_find_by_issuer_and_serial(
         sk: *const stack_st_X509,
         name: *mut X509_NAME,
@@ -20539,11 +20566,11 @@ extern "C" {
     ) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_find_by_subject"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_find_by_subject"]
     pub fn X509_find_by_subject(sk: *const stack_st_X509, name: *mut X509_NAME) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_ex_new_index"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_ex_new_index"]
     pub fn X509_get_ex_new_index(
         argl: ::std::os::raw::c_long,
         argp: *mut ::std::os::raw::c_void,
@@ -20553,7 +20580,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set_ex_data"]
     pub fn X509_set_ex_data(
         r: *mut X509,
         idx: ::std::os::raw::c_int,
@@ -20561,14 +20588,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_ex_data"]
     pub fn X509_get_ex_data(
         r: *mut X509,
         idx: ::std::os::raw::c_int,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get_ex_new_index"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get_ex_new_index"]
     pub fn X509_STORE_CTX_get_ex_new_index(
         argl: ::std::os::raw::c_long,
         argp: *mut ::std::os::raw::c_void,
@@ -20578,7 +20605,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_ex_data"]
     pub fn X509_STORE_CTX_set_ex_data(
         ctx: *mut X509_STORE_CTX,
         idx: ::std::os::raw::c_int,
@@ -20586,42 +20613,42 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get_ex_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get_ex_data"]
     pub fn X509_STORE_CTX_get_ex_data(
         ctx: *mut X509_STORE_CTX,
         idx: ::std::os::raw::c_int,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_notBefore"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_notBefore"]
     pub fn X509_get_notBefore(x509: *const X509) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_notAfter"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_notAfter"]
     pub fn X509_get_notAfter(x509: *const X509) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set_notBefore"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set_notBefore"]
     pub fn X509_set_notBefore(x509: *mut X509, tm: *const ASN1_TIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_set_notAfter"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_set_notAfter"]
     pub fn X509_set_notAfter(x509: *mut X509, tm: *const ASN1_TIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_lastUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_lastUpdate"]
     pub fn X509_CRL_get_lastUpdate(crl: *mut X509_CRL) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_nextUpdate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_nextUpdate"]
     pub fn X509_CRL_get_nextUpdate(crl: *mut X509_CRL) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_serialNumber"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_serialNumber"]
     pub fn X509_get_serialNumber(x509: *mut X509) -> *mut ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_get_text_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_get_text_by_OBJ"]
     pub fn X509_NAME_get_text_by_OBJ(
         name: *const X509_NAME,
         obj: *const ASN1_OBJECT,
@@ -20630,7 +20657,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_get_text_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_get_text_by_NID"]
     pub fn X509_NAME_get_text_by_NID(
         name: *const X509_NAME,
         nid: ::std::os::raw::c_int,
@@ -21203,11 +21230,11 @@ impl Default for Netscape_spki_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_pathlen"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_pathlen"]
     pub fn X509_get_pathlen(x509: *mut X509) -> ::std::os::raw::c_long;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_SIG_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_SIG_get0"]
     pub fn X509_SIG_get0(
         sig: *const X509_SIG,
         out_alg: *mut *const X509_ALGOR,
@@ -21215,7 +21242,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_SIG_getm"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_SIG_getm"]
     pub fn X509_SIG_getm(
         sig: *mut X509_SIG,
         out_alg: *mut *mut X509_ALGOR,
@@ -21223,54 +21250,54 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_verify_cert_error_string"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_verify_cert_error_string"]
     pub fn X509_verify_cert_error_string(
         err: ::std::os::raw::c_long,
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_verify"]
     pub fn X509_verify(x509: *mut X509, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_verify"]
     pub fn X509_REQ_verify(req: *mut X509_REQ, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_verify"]
     pub fn X509_CRL_verify(crl: *mut X509_CRL, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKI_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKI_verify"]
     pub fn NETSCAPE_SPKI_verify(
         spki: *mut NETSCAPE_SPKI,
         pkey: *mut EVP_PKEY,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKI_b64_decode"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKI_b64_decode"]
     pub fn NETSCAPE_SPKI_b64_decode(
         str_: *const ::std::os::raw::c_char,
         len: ::std::os::raw::c_int,
     ) -> *mut NETSCAPE_SPKI;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKI_b64_encode"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKI_b64_encode"]
     pub fn NETSCAPE_SPKI_b64_encode(spki: *mut NETSCAPE_SPKI) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKI_get_pubkey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKI_get_pubkey"]
     pub fn NETSCAPE_SPKI_get_pubkey(spki: *mut NETSCAPE_SPKI) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKI_set_pubkey"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKI_set_pubkey"]
     pub fn NETSCAPE_SPKI_set_pubkey(
         spki: *mut NETSCAPE_SPKI,
         pkey: *mut EVP_PKEY,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKI_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKI_sign"]
     pub fn NETSCAPE_SPKI_sign(
         spki: *mut NETSCAPE_SPKI,
         pkey: *mut EVP_PKEY,
@@ -21278,27 +21305,27 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_dup"]
     pub fn X509_ATTRIBUTE_dup(xa: *const X509_ATTRIBUTE) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_dup"]
     pub fn X509_REVOKED_dup(rev: *const X509_REVOKED) -> *mut X509_REVOKED;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_cmp_time"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_cmp_time"]
     pub fn X509_cmp_time(s: *const ASN1_TIME, t: *mut time_t) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_cmp_time_posix"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_cmp_time_posix"]
     pub fn X509_cmp_time_posix(s: *const ASN1_TIME, t: i64) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_cmp_current_time"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_cmp_current_time"]
     pub fn X509_cmp_current_time(s: *const ASN1_TIME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_time_adj"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_time_adj"]
     pub fn X509_time_adj(
         s: *mut ASN1_TIME,
         offset_sec: ::std::os::raw::c_long,
@@ -21306,7 +21333,7 @@ extern "C" {
     ) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_time_adj_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_time_adj_ex"]
     pub fn X509_time_adj_ex(
         s: *mut ASN1_TIME,
         offset_day: ::std::os::raw::c_int,
@@ -21315,44 +21342,44 @@ extern "C" {
     ) -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_gmtime_adj"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_gmtime_adj"]
     pub fn X509_gmtime_adj(s: *mut ASN1_TIME, offset_sec: ::std::os::raw::c_long)
         -> *mut ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_default_cert_area"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_default_cert_area"]
     pub fn X509_get_default_cert_area() -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_default_cert_dir"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_default_cert_dir"]
     pub fn X509_get_default_cert_dir() -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_default_cert_file"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_default_cert_file"]
     pub fn X509_get_default_cert_file() -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_default_cert_dir_env"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_default_cert_dir_env"]
     pub fn X509_get_default_cert_dir_env() -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_default_cert_file_env"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_default_cert_file_env"]
     pub fn X509_get_default_cert_file_env() -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_default_private_dir"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_default_private_dir"]
     pub fn X509_get_default_private_dir() -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PUBKEY_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PUBKEY_new"]
     pub fn X509_PUBKEY_new() -> *mut X509_PUBKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PUBKEY_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PUBKEY_free"]
     pub fn X509_PUBKEY_free(a: *mut X509_PUBKEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_PUBKEY"]
     pub fn d2i_X509_PUBKEY(
         a: *mut *mut X509_PUBKEY,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -21360,34 +21387,34 @@ extern "C" {
     ) -> *mut X509_PUBKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_PUBKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_PUBKEY"]
     pub fn i2d_X509_PUBKEY(
         a: *const X509_PUBKEY,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PUBKEY_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PUBKEY_it"]
     pub static X509_PUBKEY_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PUBKEY_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PUBKEY_set"]
     pub fn X509_PUBKEY_set(x: *mut *mut X509_PUBKEY, pkey: *mut EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PUBKEY_get"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PUBKEY_get"]
     pub fn X509_PUBKEY_get(key: *mut X509_PUBKEY) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_SIG_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_SIG_new"]
     pub fn X509_SIG_new() -> *mut X509_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_SIG_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_SIG_free"]
     pub fn X509_SIG_free(a: *mut X509_SIG);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_SIG"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_SIG"]
     pub fn d2i_X509_SIG(
         a: *mut *mut X509_SIG,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -21395,26 +21422,26 @@ extern "C" {
     ) -> *mut X509_SIG;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_SIG"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_SIG"]
     pub fn i2d_X509_SIG(
         a: *const X509_SIG,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_SIG_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_SIG_it"]
     pub static X509_SIG_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_new"]
     pub fn X509_ATTRIBUTE_new() -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_free"]
     pub fn X509_ATTRIBUTE_free(a: *mut X509_ATTRIBUTE);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_ATTRIBUTE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_ATTRIBUTE"]
     pub fn d2i_X509_ATTRIBUTE(
         a: *mut *mut X509_ATTRIBUTE,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -21422,18 +21449,18 @@ extern "C" {
     ) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_ATTRIBUTE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_ATTRIBUTE"]
     pub fn i2d_X509_ATTRIBUTE(
         a: *const X509_ATTRIBUTE,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_it"]
     pub static X509_ATTRIBUTE_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_create"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_create"]
     pub fn X509_ATTRIBUTE_create(
         nid: ::std::os::raw::c_int,
         attrtype: ::std::os::raw::c_int,
@@ -21441,38 +21468,38 @@ extern "C" {
     ) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_add1_trust_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_add1_trust_object"]
     pub fn X509_add1_trust_object(x: *mut X509, obj: *mut ASN1_OBJECT) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_add1_reject_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_add1_reject_object"]
     pub fn X509_add1_reject_object(x: *mut X509, obj: *mut ASN1_OBJECT) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_trust_clear"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_trust_clear"]
     pub fn X509_trust_clear(x: *mut X509);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_reject_clear"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_reject_clear"]
     pub fn X509_reject_clear(x: *mut X509);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_TRUST_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_TRUST_set"]
     pub fn X509_TRUST_set(
         t: *mut ::std::os::raw::c_int,
         trust: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_new"]
     pub fn X509_REVOKED_new() -> *mut X509_REVOKED;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_free"]
     pub fn X509_REVOKED_free(a: *mut X509_REVOKED);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_X509_REVOKED"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_X509_REVOKED"]
     pub fn d2i_X509_REVOKED(
         a: *mut *mut X509_REVOKED,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -21480,25 +21507,25 @@ extern "C" {
     ) -> *mut X509_REVOKED;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_X509_REVOKED"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_X509_REVOKED"]
     pub fn i2d_X509_REVOKED(
         a: *const X509_REVOKED,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_it"]
     pub static X509_REVOKED_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_add0_revoked"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_add0_revoked"]
     pub fn X509_CRL_add0_revoked(
         crl: *mut X509_CRL,
         rev: *mut X509_REVOKED,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get0_by_serial"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get0_by_serial"]
     pub fn X509_CRL_get0_by_serial(
         crl: *mut X509_CRL,
         ret: *mut *mut X509_REVOKED,
@@ -21506,7 +21533,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get0_by_cert"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get0_by_cert"]
     pub fn X509_CRL_get0_by_cert(
         crl: *mut X509_CRL,
         ret: *mut *mut X509_REVOKED,
@@ -21514,23 +21541,23 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PKEY_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PKEY_new"]
     pub fn X509_PKEY_new() -> *mut X509_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PKEY_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PKEY_free"]
     pub fn X509_PKEY_free(a: *mut X509_PKEY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKI_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKI_new"]
     pub fn NETSCAPE_SPKI_new() -> *mut NETSCAPE_SPKI;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKI_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKI_free"]
     pub fn NETSCAPE_SPKI_free(a: *mut NETSCAPE_SPKI);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_NETSCAPE_SPKI"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_NETSCAPE_SPKI"]
     pub fn d2i_NETSCAPE_SPKI(
         a: *mut *mut NETSCAPE_SPKI,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -21538,26 +21565,26 @@ extern "C" {
     ) -> *mut NETSCAPE_SPKI;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_NETSCAPE_SPKI"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_NETSCAPE_SPKI"]
     pub fn i2d_NETSCAPE_SPKI(
         a: *const NETSCAPE_SPKI,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKI_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKI_it"]
     pub static NETSCAPE_SPKI_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKAC_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKAC_new"]
     pub fn NETSCAPE_SPKAC_new() -> *mut NETSCAPE_SPKAC;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKAC_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKAC_free"]
     pub fn NETSCAPE_SPKAC_free(a: *mut NETSCAPE_SPKAC);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_NETSCAPE_SPKAC"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_NETSCAPE_SPKAC"]
     pub fn d2i_NETSCAPE_SPKAC(
         a: *mut *mut NETSCAPE_SPKAC,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -21565,26 +21592,26 @@ extern "C" {
     ) -> *mut NETSCAPE_SPKAC;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_NETSCAPE_SPKAC"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_NETSCAPE_SPKAC"]
     pub fn i2d_NETSCAPE_SPKAC(
         a: *const NETSCAPE_SPKAC,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NETSCAPE_SPKAC_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NETSCAPE_SPKAC_it"]
     pub static NETSCAPE_SPKAC_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_INFO_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_INFO_new"]
     pub fn X509_INFO_new() -> *mut X509_INFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_INFO_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_INFO_free"]
     pub fn X509_INFO_free(a: *mut X509_INFO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_oneline"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_oneline"]
     pub fn X509_NAME_oneline(
         a: *const X509_NAME,
         buf: *mut ::std::os::raw::c_char,
@@ -21592,7 +21619,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_digest"]
     pub fn ASN1_digest(
         i2d: i2d_of_void,
         type_: *const EVP_MD,
@@ -21602,7 +21629,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_digest"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_digest"]
     pub fn ASN1_item_digest(
         it: *const ASN1_ITEM,
         type_: *const EVP_MD,
@@ -21612,7 +21639,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_verify"]
     pub fn ASN1_item_verify(
         it: *const ASN1_ITEM,
         algor1: *const X509_ALGOR,
@@ -21622,7 +21649,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_sign"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_sign"]
     pub fn ASN1_item_sign(
         it: *const ASN1_ITEM,
         algor1: *mut X509_ALGOR,
@@ -21634,7 +21661,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ASN1_item_sign_ctx"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ASN1_item_sign_ctx"]
     pub fn ASN1_item_sign_ctx(
         it: *const ASN1_ITEM,
         algor1: *mut X509_ALGOR,
@@ -21645,15 +21672,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_extension_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_extension_nid"]
     pub fn X509_REQ_extension_nid(nid: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get_extensions"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get_extensions"]
     pub fn X509_REQ_get_extensions(req: *mut X509_REQ) -> *mut stack_st_X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_add_extensions_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_add_extensions_nid"]
     pub fn X509_REQ_add_extensions_nid(
         req: *mut X509_REQ,
         exts: *const stack_st_X509_EXTENSION,
@@ -21661,18 +21688,18 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_add_extensions"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_add_extensions"]
     pub fn X509_REQ_add_extensions(
         req: *mut X509_REQ,
         exts: *const stack_st_X509_EXTENSION,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get_attr_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get_attr_count"]
     pub fn X509_REQ_get_attr_count(req: *const X509_REQ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get_attr_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get_attr_by_NID"]
     pub fn X509_REQ_get_attr_by_NID(
         req: *const X509_REQ,
         nid: ::std::os::raw::c_int,
@@ -21680,7 +21707,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get_attr_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get_attr_by_OBJ"]
     pub fn X509_REQ_get_attr_by_OBJ(
         req: *const X509_REQ,
         obj: *const ASN1_OBJECT,
@@ -21688,28 +21715,28 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get_attr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get_attr"]
     pub fn X509_REQ_get_attr(
         req: *const X509_REQ,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_delete_attr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_delete_attr"]
     pub fn X509_REQ_delete_attr(
         req: *mut X509_REQ,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_add1_attr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_add1_attr"]
     pub fn X509_REQ_add1_attr(
         req: *mut X509_REQ,
         attr: *mut X509_ATTRIBUTE,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_add1_attr_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_add1_attr_by_OBJ"]
     pub fn X509_REQ_add1_attr_by_OBJ(
         req: *mut X509_REQ,
         obj: *const ASN1_OBJECT,
@@ -21719,7 +21746,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_add1_attr_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_add1_attr_by_NID"]
     pub fn X509_REQ_add1_attr_by_NID(
         req: *mut X509_REQ,
         nid: ::std::os::raw::c_int,
@@ -21729,7 +21756,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_add1_attr_by_txt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_add1_attr_by_txt"]
     pub fn X509_REQ_add1_attr_by_txt(
         req: *mut X509_REQ,
         attrname: *const ::std::os::raw::c_char,
@@ -21739,37 +21766,37 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_sort"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_sort"]
     pub fn X509_CRL_sort(crl: *mut X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_get0_serialNumber"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_get0_serialNumber"]
     pub fn X509_REVOKED_get0_serialNumber(revoked: *const X509_REVOKED) -> *const ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_set_serialNumber"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_set_serialNumber"]
     pub fn X509_REVOKED_set_serialNumber(
         revoked: *mut X509_REVOKED,
         serial: *const ASN1_INTEGER,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_get0_revocationDate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_get0_revocationDate"]
     pub fn X509_REVOKED_get0_revocationDate(revoked: *const X509_REVOKED) -> *const ASN1_TIME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_set_revocationDate"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_set_revocationDate"]
     pub fn X509_REVOKED_set_revocationDate(
         revoked: *mut X509_REVOKED,
         tm: *const ASN1_TIME,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_get0_extensions"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_get0_extensions"]
     pub fn X509_REVOKED_get0_extensions(r: *const X509_REVOKED) -> *const stack_st_X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_diff"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_diff"]
     pub fn X509_CRL_diff(
         base: *mut X509_CRL,
         newer: *mut X509_CRL,
@@ -21779,66 +21806,66 @@ extern "C" {
     ) -> *mut X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_check_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_check_private_key"]
     pub fn X509_REQ_check_private_key(
         x509: *mut X509_REQ,
         pkey: *mut EVP_PKEY,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_private_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_private_key"]
     pub fn X509_check_private_key(x509: *mut X509, pkey: *const EVP_PKEY) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_issuer_name_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_issuer_name_cmp"]
     pub fn X509_issuer_name_cmp(a: *const X509, b: *const X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_issuer_name_hash"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_issuer_name_hash"]
     pub fn X509_issuer_name_hash(a: *mut X509) -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_subject_name_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_subject_name_cmp"]
     pub fn X509_subject_name_cmp(a: *const X509, b: *const X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_subject_name_hash"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_subject_name_hash"]
     pub fn X509_subject_name_hash(x: *mut X509) -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_issuer_name_hash_old"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_issuer_name_hash_old"]
     pub fn X509_issuer_name_hash_old(a: *mut X509) -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_subject_name_hash_old"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_subject_name_hash_old"]
     pub fn X509_subject_name_hash_old(x: *mut X509) -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_cmp"]
     pub fn X509_cmp(a: *const X509, b: *const X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_cmp"]
     pub fn X509_NAME_cmp(a: *const X509_NAME, b: *const X509_NAME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_hash"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_hash"]
     pub fn X509_NAME_hash(x: *mut X509_NAME) -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_hash_old"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_hash_old"]
     pub fn X509_NAME_hash_old(x: *mut X509_NAME) -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_cmp"]
     pub fn X509_CRL_cmp(a: *const X509_CRL, b: *const X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_match"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_match"]
     pub fn X509_CRL_match(a: *const X509_CRL, b: *const X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_print_ex_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_print_ex_fp"]
     pub fn X509_print_ex_fp(
         bp: *mut FILE,
         x: *mut X509,
@@ -21847,19 +21874,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_print_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_print_fp"]
     pub fn X509_print_fp(bp: *mut FILE, x: *mut X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_print_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_print_fp"]
     pub fn X509_CRL_print_fp(bp: *mut FILE, x: *mut X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_print_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_print_fp"]
     pub fn X509_REQ_print_fp(bp: *mut FILE, req: *mut X509_REQ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_print_ex_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_print_ex_fp"]
     pub fn X509_NAME_print_ex_fp(
         fp: *mut FILE,
         nm: *const X509_NAME,
@@ -21868,7 +21895,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_print"]
     pub fn X509_NAME_print(
         bp: *mut BIO,
         name: *const X509_NAME,
@@ -21876,7 +21903,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_NAME_print_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_NAME_print_ex"]
     pub fn X509_NAME_print_ex(
         out: *mut BIO,
         nm: *const X509_NAME,
@@ -21885,7 +21912,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_print_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_print_ex"]
     pub fn X509_print_ex(
         bp: *mut BIO,
         x: *mut X509,
@@ -21894,15 +21921,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_print"]
     pub fn X509_print(bp: *mut BIO, x: *mut X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_print"]
     pub fn X509_CRL_print(bp: *mut BIO, x: *mut X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_print_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_print_ex"]
     pub fn X509_REQ_print_ex(
         bp: *mut BIO,
         x: *mut X509_REQ,
@@ -21911,11 +21938,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_print"]
     pub fn X509_REQ_print(bp: *mut BIO, req: *mut X509_REQ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_ext_d2i"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_ext_d2i"]
     pub fn X509_get_ext_d2i(
         x509: *const X509,
         nid: ::std::os::raw::c_int,
@@ -21924,7 +21951,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_add1_ext_i2d"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_add1_ext_i2d"]
     pub fn X509_add1_ext_i2d(
         x: *mut X509,
         nid: ::std::os::raw::c_int,
@@ -21934,7 +21961,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_get_ext_d2i"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_get_ext_d2i"]
     pub fn X509_CRL_get_ext_d2i(
         crl: *const X509_CRL,
         nid: ::std::os::raw::c_int,
@@ -21943,7 +21970,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_CRL_add1_ext_i2d"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_CRL_add1_ext_i2d"]
     pub fn X509_CRL_add1_ext_i2d(
         x: *mut X509_CRL,
         nid: ::std::os::raw::c_int,
@@ -21953,11 +21980,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_get_ext_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_get_ext_count"]
     pub fn X509_REVOKED_get_ext_count(x: *const X509_REVOKED) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_get_ext_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_get_ext_by_NID"]
     pub fn X509_REVOKED_get_ext_by_NID(
         x: *const X509_REVOKED,
         nid: ::std::os::raw::c_int,
@@ -21965,7 +21992,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_get_ext_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_get_ext_by_OBJ"]
     pub fn X509_REVOKED_get_ext_by_OBJ(
         x: *const X509_REVOKED,
         obj: *const ASN1_OBJECT,
@@ -21973,7 +22000,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_get_ext_by_critical"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_get_ext_by_critical"]
     pub fn X509_REVOKED_get_ext_by_critical(
         x: *const X509_REVOKED,
         crit: ::std::os::raw::c_int,
@@ -21981,21 +22008,21 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_get_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_get_ext"]
     pub fn X509_REVOKED_get_ext(
         x: *const X509_REVOKED,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_delete_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_delete_ext"]
     pub fn X509_REVOKED_delete_ext(
         x: *mut X509_REVOKED,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_add_ext"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_add_ext"]
     pub fn X509_REVOKED_add_ext(
         x: *mut X509_REVOKED,
         ex: *const X509_EXTENSION,
@@ -22003,7 +22030,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_get_ext_d2i"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_get_ext_d2i"]
     pub fn X509_REVOKED_get_ext_d2i(
         revoked: *const X509_REVOKED,
         nid: ::std::os::raw::c_int,
@@ -22012,7 +22039,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REVOKED_add1_ext_i2d"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REVOKED_add1_ext_i2d"]
     pub fn X509_REVOKED_add1_ext_i2d(
         x: *mut X509_REVOKED,
         nid: ::std::os::raw::c_int,
@@ -22022,11 +22049,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509at_get_attr_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509at_get_attr_count"]
     pub fn X509at_get_attr_count(x: *const stack_st_X509_ATTRIBUTE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509at_get_attr_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509at_get_attr_by_NID"]
     pub fn X509at_get_attr_by_NID(
         x: *const stack_st_X509_ATTRIBUTE,
         nid: ::std::os::raw::c_int,
@@ -22034,7 +22061,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509at_get_attr_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509at_get_attr_by_OBJ"]
     pub fn X509at_get_attr_by_OBJ(
         sk: *const stack_st_X509_ATTRIBUTE,
         obj: *const ASN1_OBJECT,
@@ -22042,28 +22069,28 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509at_get_attr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509at_get_attr"]
     pub fn X509at_get_attr(
         x: *const stack_st_X509_ATTRIBUTE,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509at_delete_attr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509at_delete_attr"]
     pub fn X509at_delete_attr(
         x: *mut stack_st_X509_ATTRIBUTE,
         loc: ::std::os::raw::c_int,
     ) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509at_add1_attr"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509at_add1_attr"]
     pub fn X509at_add1_attr(
         x: *mut *mut stack_st_X509_ATTRIBUTE,
         attr: *mut X509_ATTRIBUTE,
     ) -> *mut stack_st_X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509at_add1_attr_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509at_add1_attr_by_OBJ"]
     pub fn X509at_add1_attr_by_OBJ(
         x: *mut *mut stack_st_X509_ATTRIBUTE,
         obj: *const ASN1_OBJECT,
@@ -22073,7 +22100,7 @@ extern "C" {
     ) -> *mut stack_st_X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509at_add1_attr_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509at_add1_attr_by_NID"]
     pub fn X509at_add1_attr_by_NID(
         x: *mut *mut stack_st_X509_ATTRIBUTE,
         nid: ::std::os::raw::c_int,
@@ -22083,7 +22110,7 @@ extern "C" {
     ) -> *mut stack_st_X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509at_add1_attr_by_txt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509at_add1_attr_by_txt"]
     pub fn X509at_add1_attr_by_txt(
         x: *mut *mut stack_st_X509_ATTRIBUTE,
         attrname: *const ::std::os::raw::c_char,
@@ -22093,7 +22120,7 @@ extern "C" {
     ) -> *mut stack_st_X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_create_by_NID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_create_by_NID"]
     pub fn X509_ATTRIBUTE_create_by_NID(
         attr: *mut *mut X509_ATTRIBUTE,
         nid: ::std::os::raw::c_int,
@@ -22103,7 +22130,7 @@ extern "C" {
     ) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_create_by_OBJ"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_create_by_OBJ"]
     pub fn X509_ATTRIBUTE_create_by_OBJ(
         attr: *mut *mut X509_ATTRIBUTE,
         obj: *const ASN1_OBJECT,
@@ -22113,7 +22140,7 @@ extern "C" {
     ) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_create_by_txt"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_create_by_txt"]
     pub fn X509_ATTRIBUTE_create_by_txt(
         attr: *mut *mut X509_ATTRIBUTE,
         attrname: *const ::std::os::raw::c_char,
@@ -22123,14 +22150,14 @@ extern "C" {
     ) -> *mut X509_ATTRIBUTE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_set1_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_set1_object"]
     pub fn X509_ATTRIBUTE_set1_object(
         attr: *mut X509_ATTRIBUTE,
         obj: *const ASN1_OBJECT,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_set1_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_set1_data"]
     pub fn X509_ATTRIBUTE_set1_data(
         attr: *mut X509_ATTRIBUTE,
         attrtype: ::std::os::raw::c_int,
@@ -22139,7 +22166,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_get0_data"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_get0_data"]
     pub fn X509_ATTRIBUTE_get0_data(
         attr: *mut X509_ATTRIBUTE,
         idx: ::std::os::raw::c_int,
@@ -22148,34 +22175,34 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_count"]
     pub fn X509_ATTRIBUTE_count(attr: *const X509_ATTRIBUTE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_get0_object"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_get0_object"]
     pub fn X509_ATTRIBUTE_get0_object(attr: *mut X509_ATTRIBUTE) -> *mut ASN1_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_ATTRIBUTE_get0_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_ATTRIBUTE_get0_type"]
     pub fn X509_ATTRIBUTE_get0_type(
         attr: *mut X509_ATTRIBUTE,
         idx: ::std::os::raw::c_int,
     ) -> *mut ASN1_TYPE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_verify_cert"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_verify_cert"]
     pub fn X509_verify_cert(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS8_PRIV_KEY_INFO_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS8_PRIV_KEY_INFO_new"]
     pub fn PKCS8_PRIV_KEY_INFO_new() -> *mut PKCS8_PRIV_KEY_INFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS8_PRIV_KEY_INFO_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS8_PRIV_KEY_INFO_free"]
     pub fn PKCS8_PRIV_KEY_INFO_free(a: *mut PKCS8_PRIV_KEY_INFO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS8_PRIV_KEY_INFO"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS8_PRIV_KEY_INFO"]
     pub fn d2i_PKCS8_PRIV_KEY_INFO(
         a: *mut *mut PKCS8_PRIV_KEY_INFO,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -22183,26 +22210,26 @@ extern "C" {
     ) -> *mut PKCS8_PRIV_KEY_INFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8_PRIV_KEY_INFO"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8_PRIV_KEY_INFO"]
     pub fn i2d_PKCS8_PRIV_KEY_INFO(
         a: *const PKCS8_PRIV_KEY_INFO,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS8_PRIV_KEY_INFO_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS8_PRIV_KEY_INFO_it"]
     pub static PKCS8_PRIV_KEY_INFO_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKCS82PKEY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKCS82PKEY"]
     pub fn EVP_PKCS82PKEY(p8: *const PKCS8_PRIV_KEY_INFO) -> *mut EVP_PKEY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EVP_PKEY2PKCS8"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EVP_PKEY2PKCS8"]
     pub fn EVP_PKEY2PKCS8(pkey: *const EVP_PKEY) -> *mut PKCS8_PRIV_KEY_INFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PUBKEY_set0_param"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PUBKEY_set0_param"]
     pub fn X509_PUBKEY_set0_param(
         pub_: *mut X509_PUBKEY,
         obj: *mut ASN1_OBJECT,
@@ -22213,7 +22240,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PUBKEY_get0_param"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PUBKEY_get0_param"]
     pub fn X509_PUBKEY_get0_param(
         out_obj: *mut *mut ASN1_OBJECT,
         out_key: *mut *const u8,
@@ -22223,11 +22250,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PUBKEY_get0_public_key"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PUBKEY_get0_public_key"]
     pub fn X509_PUBKEY_get0_public_key(pub_: *const X509_PUBKEY) -> *const ASN1_BIT_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_trust"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_trust"]
     pub fn X509_check_trust(
         x: *mut X509,
         id: ::std::os::raw::c_int,
@@ -22235,19 +22262,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_TRUST_get_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_TRUST_get_count"]
     pub fn X509_TRUST_get_count() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_TRUST_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_TRUST_get0"]
     pub fn X509_TRUST_get0(idx: ::std::os::raw::c_int) -> *mut X509_TRUST;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_TRUST_get_by_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_TRUST_get_by_id"]
     pub fn X509_TRUST_get_by_id(id: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_TRUST_add"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_TRUST_add"]
     pub fn X509_TRUST_add(
         id: ::std::os::raw::c_int,
         flags: ::std::os::raw::c_int,
@@ -22264,19 +22291,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_TRUST_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_TRUST_cleanup"]
     pub fn X509_TRUST_cleanup();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_TRUST_get_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_TRUST_get_flags"]
     pub fn X509_TRUST_get_flags(xp: *const X509_TRUST) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_TRUST_get0_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_TRUST_get0_name"]
     pub fn X509_TRUST_get0_name(xp: *const X509_TRUST) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_TRUST_get_trust"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_TRUST_get_trust"]
     pub fn X509_TRUST_get_trust(xp: *const X509_TRUST) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
@@ -22363,15 +22390,15 @@ impl Default for rsa_pss_params_st {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_PSS_PARAMS_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_PSS_PARAMS_new"]
     pub fn RSA_PSS_PARAMS_new() -> *mut RSA_PSS_PARAMS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_PSS_PARAMS_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_PSS_PARAMS_free"]
     pub fn RSA_PSS_PARAMS_free(a: *mut RSA_PSS_PARAMS);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_RSA_PSS_PARAMS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_RSA_PSS_PARAMS"]
     pub fn d2i_RSA_PSS_PARAMS(
         a: *mut *mut RSA_PSS_PARAMS,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -22379,14 +22406,14 @@ extern "C" {
     ) -> *mut RSA_PSS_PARAMS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_RSA_PSS_PARAMS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_RSA_PSS_PARAMS"]
     pub fn i2d_RSA_PSS_PARAMS(
         a: *const RSA_PSS_PARAMS,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RSA_PSS_PARAMS_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RSA_PSS_PARAMS_it"]
     pub static RSA_PSS_PARAMS_it: ASN1_ITEM;
 }
 #[repr(C)]
@@ -22505,18 +22532,18 @@ pub type X509_STORE_CTX_lookup_crls_fn = ::std::option::Option<
 pub type X509_STORE_CTX_cleanup_fn =
     ::std::option::Option<unsafe extern "C" fn(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int>;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_depth"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_depth"]
     pub fn X509_STORE_set_depth(
         store: *mut X509_STORE,
         depth: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_depth"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_depth"]
     pub fn X509_STORE_CTX_set_depth(ctx: *mut X509_STORE_CTX, depth: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_OBJECT_idx_by_subject"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_OBJECT_idx_by_subject"]
     pub fn X509_OBJECT_idx_by_subject(
         h: *mut stack_st_X509_OBJECT,
         type_: ::std::os::raw::c_int,
@@ -22524,7 +22551,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_OBJECT_retrieve_by_subject"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_OBJECT_retrieve_by_subject"]
     pub fn X509_OBJECT_retrieve_by_subject(
         h: *mut stack_st_X509_OBJECT,
         type_: ::std::os::raw::c_int,
@@ -22532,202 +22559,202 @@ extern "C" {
     ) -> *mut X509_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_OBJECT_retrieve_match"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_OBJECT_retrieve_match"]
     pub fn X509_OBJECT_retrieve_match(
         h: *mut stack_st_X509_OBJECT,
         x: *mut X509_OBJECT,
     ) -> *mut X509_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_OBJECT_up_ref_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_OBJECT_up_ref_count"]
     pub fn X509_OBJECT_up_ref_count(a: *mut X509_OBJECT) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_OBJECT_free_contents"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_OBJECT_free_contents"]
     pub fn X509_OBJECT_free_contents(a: *mut X509_OBJECT);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_OBJECT_get_type"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_OBJECT_get_type"]
     pub fn X509_OBJECT_get_type(a: *const X509_OBJECT) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_OBJECT_get0_X509"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_OBJECT_get0_X509"]
     pub fn X509_OBJECT_get0_X509(a: *const X509_OBJECT) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_new"]
     pub fn X509_STORE_new() -> *mut X509_STORE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_up_ref"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_up_ref"]
     pub fn X509_STORE_up_ref(store: *mut X509_STORE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_free"]
     pub fn X509_STORE_free(v: *mut X509_STORE);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get0_objects"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get0_objects"]
     pub fn X509_STORE_get0_objects(st: *mut X509_STORE) -> *mut stack_st_X509_OBJECT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get1_certs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get1_certs"]
     pub fn X509_STORE_get1_certs(st: *mut X509_STORE_CTX, nm: *mut X509_NAME)
         -> *mut stack_st_X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get1_crls"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get1_crls"]
     pub fn X509_STORE_get1_crls(
         st: *mut X509_STORE_CTX,
         nm: *mut X509_NAME,
     ) -> *mut stack_st_X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_flags"]
     pub fn X509_STORE_set_flags(
         ctx: *mut X509_STORE,
         flags: ::std::os::raw::c_ulong,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_purpose"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_purpose"]
     pub fn X509_STORE_set_purpose(
         ctx: *mut X509_STORE,
         purpose: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_trust"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_trust"]
     pub fn X509_STORE_set_trust(
         ctx: *mut X509_STORE,
         trust: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set1_param"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set1_param"]
     pub fn X509_STORE_set1_param(
         ctx: *mut X509_STORE,
         pm: *mut X509_VERIFY_PARAM,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get0_param"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get0_param"]
     pub fn X509_STORE_get0_param(ctx: *mut X509_STORE) -> *mut X509_VERIFY_PARAM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_verify"]
     pub fn X509_STORE_set_verify(ctx: *mut X509_STORE, verify: X509_STORE_CTX_verify_fn);
 }
 extern "C" {
     pub fn X509_STORE_CTX_set_verify(ctx: *mut X509_STORE_CTX, verify: X509_STORE_CTX_verify_fn);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_verify"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_verify"]
     pub fn X509_STORE_get_verify(ctx: *mut X509_STORE) -> X509_STORE_CTX_verify_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_verify_cb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_verify_cb"]
     pub fn X509_STORE_set_verify_cb(ctx: *mut X509_STORE, verify_cb: X509_STORE_CTX_verify_cb);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_verify_cb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_verify_cb"]
     pub fn X509_STORE_get_verify_cb(ctx: *mut X509_STORE) -> X509_STORE_CTX_verify_cb;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_get_issuer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_get_issuer"]
     pub fn X509_STORE_set_get_issuer(
         ctx: *mut X509_STORE,
         get_issuer: X509_STORE_CTX_get_issuer_fn,
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_get_issuer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_get_issuer"]
     pub fn X509_STORE_get_get_issuer(ctx: *mut X509_STORE) -> X509_STORE_CTX_get_issuer_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_check_issued"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_check_issued"]
     pub fn X509_STORE_set_check_issued(
         ctx: *mut X509_STORE,
         check_issued: X509_STORE_CTX_check_issued_fn,
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_check_issued"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_check_issued"]
     pub fn X509_STORE_get_check_issued(ctx: *mut X509_STORE) -> X509_STORE_CTX_check_issued_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_check_revocation"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_check_revocation"]
     pub fn X509_STORE_set_check_revocation(
         ctx: *mut X509_STORE,
         check_revocation: X509_STORE_CTX_check_revocation_fn,
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_check_revocation"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_check_revocation"]
     pub fn X509_STORE_get_check_revocation(
         ctx: *mut X509_STORE,
     ) -> X509_STORE_CTX_check_revocation_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_get_crl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_get_crl"]
     pub fn X509_STORE_set_get_crl(ctx: *mut X509_STORE, get_crl: X509_STORE_CTX_get_crl_fn);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_get_crl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_get_crl"]
     pub fn X509_STORE_get_get_crl(ctx: *mut X509_STORE) -> X509_STORE_CTX_get_crl_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_check_crl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_check_crl"]
     pub fn X509_STORE_set_check_crl(ctx: *mut X509_STORE, check_crl: X509_STORE_CTX_check_crl_fn);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_check_crl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_check_crl"]
     pub fn X509_STORE_get_check_crl(ctx: *mut X509_STORE) -> X509_STORE_CTX_check_crl_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_cert_crl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_cert_crl"]
     pub fn X509_STORE_set_cert_crl(ctx: *mut X509_STORE, cert_crl: X509_STORE_CTX_cert_crl_fn);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_cert_crl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_cert_crl"]
     pub fn X509_STORE_get_cert_crl(ctx: *mut X509_STORE) -> X509_STORE_CTX_cert_crl_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_lookup_certs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_lookup_certs"]
     pub fn X509_STORE_set_lookup_certs(
         ctx: *mut X509_STORE,
         lookup_certs: X509_STORE_CTX_lookup_certs_fn,
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_lookup_certs"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_lookup_certs"]
     pub fn X509_STORE_get_lookup_certs(ctx: *mut X509_STORE) -> X509_STORE_CTX_lookup_certs_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_lookup_crls"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_lookup_crls"]
     pub fn X509_STORE_set_lookup_crls(
         ctx: *mut X509_STORE,
         lookup_crls: X509_STORE_CTX_lookup_crls_fn,
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_lookup_crls"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_lookup_crls"]
     pub fn X509_STORE_get_lookup_crls(ctx: *mut X509_STORE) -> X509_STORE_CTX_lookup_crls_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_cleanup"]
     pub fn X509_STORE_set_cleanup(ctx: *mut X509_STORE, cleanup: X509_STORE_CTX_cleanup_fn);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_cleanup"]
     pub fn X509_STORE_get_cleanup(ctx: *mut X509_STORE) -> X509_STORE_CTX_cleanup_fn;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_new"]
     pub fn X509_STORE_CTX_new() -> *mut X509_STORE_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get1_issuer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get1_issuer"]
     pub fn X509_STORE_CTX_get1_issuer(
         issuer: *mut *mut X509,
         ctx: *mut X509_STORE_CTX,
@@ -22735,15 +22762,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_zero"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_zero"]
     pub fn X509_STORE_CTX_zero(ctx: *mut X509_STORE_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_free"]
     pub fn X509_STORE_CTX_free(ctx: *mut X509_STORE_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_init"]
     pub fn X509_STORE_CTX_init(
         ctx: *mut X509_STORE_CTX,
         store: *mut X509_STORE,
@@ -22752,50 +22779,50 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set0_trusted_stack"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set0_trusted_stack"]
     pub fn X509_STORE_CTX_set0_trusted_stack(ctx: *mut X509_STORE_CTX, sk: *mut stack_st_X509);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_trusted_stack"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_trusted_stack"]
     pub fn X509_STORE_CTX_trusted_stack(ctx: *mut X509_STORE_CTX, sk: *mut stack_st_X509);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_cleanup"]
     pub fn X509_STORE_CTX_cleanup(ctx: *mut X509_STORE_CTX);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get0_store"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get0_store"]
     pub fn X509_STORE_CTX_get0_store(ctx: *mut X509_STORE_CTX) -> *mut X509_STORE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get0_cert"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get0_cert"]
     pub fn X509_STORE_CTX_get0_cert(ctx: *mut X509_STORE_CTX) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_add_lookup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_add_lookup"]
     pub fn X509_STORE_add_lookup(
         v: *mut X509_STORE,
         m: *mut X509_LOOKUP_METHOD,
     ) -> *mut X509_LOOKUP;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_LOOKUP_hash_dir"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_LOOKUP_hash_dir"]
     pub fn X509_LOOKUP_hash_dir() -> *mut X509_LOOKUP_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_LOOKUP_file"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_LOOKUP_file"]
     pub fn X509_LOOKUP_file() -> *mut X509_LOOKUP_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_add_cert"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_add_cert"]
     pub fn X509_STORE_add_cert(ctx: *mut X509_STORE, x: *mut X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_add_crl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_add_crl"]
     pub fn X509_STORE_add_crl(ctx: *mut X509_STORE, x: *mut X509_CRL) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_get_by_subject"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_get_by_subject"]
     pub fn X509_STORE_get_by_subject(
         vs: *mut X509_STORE_CTX,
         type_: ::std::os::raw::c_int,
@@ -22804,7 +22831,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_LOOKUP_ctrl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_LOOKUP_ctrl"]
     pub fn X509_LOOKUP_ctrl(
         ctx: *mut X509_LOOKUP,
         cmd: ::std::os::raw::c_int,
@@ -22814,7 +22841,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_load_cert_file"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_load_cert_file"]
     pub fn X509_load_cert_file(
         ctx: *mut X509_LOOKUP,
         file: *const ::std::os::raw::c_char,
@@ -22822,7 +22849,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_load_crl_file"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_load_crl_file"]
     pub fn X509_load_crl_file(
         ctx: *mut X509_LOOKUP,
         file: *const ::std::os::raw::c_char,
@@ -22830,7 +22857,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_load_cert_crl_file"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_load_cert_crl_file"]
     pub fn X509_load_cert_crl_file(
         ctx: *mut X509_LOOKUP,
         file: *const ::std::os::raw::c_char,
@@ -22838,19 +22865,19 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_LOOKUP_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_LOOKUP_new"]
     pub fn X509_LOOKUP_new(method: *mut X509_LOOKUP_METHOD) -> *mut X509_LOOKUP;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_LOOKUP_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_LOOKUP_free"]
     pub fn X509_LOOKUP_free(ctx: *mut X509_LOOKUP);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_LOOKUP_init"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_LOOKUP_init"]
     pub fn X509_LOOKUP_init(ctx: *mut X509_LOOKUP) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_LOOKUP_by_subject"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_LOOKUP_by_subject"]
     pub fn X509_LOOKUP_by_subject(
         ctx: *mut X509_LOOKUP,
         type_: ::std::os::raw::c_int,
@@ -22859,11 +22886,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_LOOKUP_shutdown"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_LOOKUP_shutdown"]
     pub fn X509_LOOKUP_shutdown(ctx: *mut X509_LOOKUP) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_load_locations"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_load_locations"]
     pub fn X509_STORE_load_locations(
         ctx: *mut X509_STORE,
         file: *const ::std::os::raw::c_char,
@@ -22871,81 +22898,81 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_set_default_paths"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_set_default_paths"]
     pub fn X509_STORE_set_default_paths(ctx: *mut X509_STORE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get_error"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get_error"]
     pub fn X509_STORE_CTX_get_error(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_error"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_error"]
     pub fn X509_STORE_CTX_set_error(ctx: *mut X509_STORE_CTX, s: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get_error_depth"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get_error_depth"]
     pub fn X509_STORE_CTX_get_error_depth(ctx: *mut X509_STORE_CTX) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get_current_cert"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get_current_cert"]
     pub fn X509_STORE_CTX_get_current_cert(ctx: *mut X509_STORE_CTX) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get0_current_issuer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get0_current_issuer"]
     pub fn X509_STORE_CTX_get0_current_issuer(ctx: *mut X509_STORE_CTX) -> *mut X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get0_current_crl"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get0_current_crl"]
     pub fn X509_STORE_CTX_get0_current_crl(ctx: *mut X509_STORE_CTX) -> *mut X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get0_parent_ctx"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get0_parent_ctx"]
     pub fn X509_STORE_CTX_get0_parent_ctx(ctx: *mut X509_STORE_CTX) -> *mut X509_STORE_CTX;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get_chain"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get_chain"]
     pub fn X509_STORE_CTX_get_chain(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get0_chain"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get0_chain"]
     pub fn X509_STORE_CTX_get0_chain(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get1_chain"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get1_chain"]
     pub fn X509_STORE_CTX_get1_chain(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_cert"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_cert"]
     pub fn X509_STORE_CTX_set_cert(c: *mut X509_STORE_CTX, x: *mut X509);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_chain"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_chain"]
     pub fn X509_STORE_CTX_set_chain(c: *mut X509_STORE_CTX, sk: *mut stack_st_X509);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get0_untrusted"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get0_untrusted"]
     pub fn X509_STORE_CTX_get0_untrusted(ctx: *mut X509_STORE_CTX) -> *mut stack_st_X509;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set0_crls"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set0_crls"]
     pub fn X509_STORE_CTX_set0_crls(c: *mut X509_STORE_CTX, sk: *mut stack_st_X509_CRL);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_purpose"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_purpose"]
     pub fn X509_STORE_CTX_set_purpose(
         ctx: *mut X509_STORE_CTX,
         purpose: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_trust"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_trust"]
     pub fn X509_STORE_CTX_set_trust(
         ctx: *mut X509_STORE_CTX,
         trust: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_purpose_inherit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_purpose_inherit"]
     pub fn X509_STORE_CTX_purpose_inherit(
         ctx: *mut X509_STORE_CTX,
         def_purpose: ::std::os::raw::c_int,
@@ -22954,11 +22981,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_flags"]
     pub fn X509_STORE_CTX_set_flags(ctx: *mut X509_STORE_CTX, flags: ::std::os::raw::c_ulong);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_time"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_time"]
     pub fn X509_STORE_CTX_set_time(
         ctx: *mut X509_STORE_CTX,
         flags: ::std::os::raw::c_ulong,
@@ -22966,7 +22993,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_time_posix"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_time_posix"]
     pub fn X509_STORE_CTX_set_time_posix(
         ctx: *mut X509_STORE_CTX,
         flags: ::std::os::raw::c_ulong,
@@ -22974,7 +23001,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_verify_cb"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_verify_cb"]
     pub fn X509_STORE_CTX_set_verify_cb(
         ctx: *mut X509_STORE_CTX,
         verify_cb: ::std::option::Option<
@@ -22986,109 +23013,109 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_get0_param"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_get0_param"]
     pub fn X509_STORE_CTX_get0_param(ctx: *mut X509_STORE_CTX) -> *mut X509_VERIFY_PARAM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set0_param"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set0_param"]
     pub fn X509_STORE_CTX_set0_param(ctx: *mut X509_STORE_CTX, param: *mut X509_VERIFY_PARAM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_STORE_CTX_set_default"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_STORE_CTX_set_default"]
     pub fn X509_STORE_CTX_set_default(
         ctx: *mut X509_STORE_CTX,
         name: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_new"]
     pub fn X509_VERIFY_PARAM_new() -> *mut X509_VERIFY_PARAM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_free"]
     pub fn X509_VERIFY_PARAM_free(param: *mut X509_VERIFY_PARAM);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_inherit"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_inherit"]
     pub fn X509_VERIFY_PARAM_inherit(
         to: *mut X509_VERIFY_PARAM,
         from: *const X509_VERIFY_PARAM,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set1"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set1"]
     pub fn X509_VERIFY_PARAM_set1(
         to: *mut X509_VERIFY_PARAM,
         from: *const X509_VERIFY_PARAM,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set1_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set1_name"]
     pub fn X509_VERIFY_PARAM_set1_name(
         param: *mut X509_VERIFY_PARAM,
         name: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set_flags"]
     pub fn X509_VERIFY_PARAM_set_flags(
         param: *mut X509_VERIFY_PARAM,
         flags: ::std::os::raw::c_ulong,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_clear_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_clear_flags"]
     pub fn X509_VERIFY_PARAM_clear_flags(
         param: *mut X509_VERIFY_PARAM,
         flags: ::std::os::raw::c_ulong,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_get_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_get_flags"]
     pub fn X509_VERIFY_PARAM_get_flags(param: *mut X509_VERIFY_PARAM) -> ::std::os::raw::c_ulong;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set_purpose"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set_purpose"]
     pub fn X509_VERIFY_PARAM_set_purpose(
         param: *mut X509_VERIFY_PARAM,
         purpose: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set_trust"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set_trust"]
     pub fn X509_VERIFY_PARAM_set_trust(
         param: *mut X509_VERIFY_PARAM,
         trust: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set_depth"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set_depth"]
     pub fn X509_VERIFY_PARAM_set_depth(param: *mut X509_VERIFY_PARAM, depth: ::std::os::raw::c_int);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set_time"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set_time"]
     pub fn X509_VERIFY_PARAM_set_time(param: *mut X509_VERIFY_PARAM, t: time_t);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set_time_posix"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set_time_posix"]
     pub fn X509_VERIFY_PARAM_set_time_posix(param: *mut X509_VERIFY_PARAM, t: i64);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_add0_policy"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_add0_policy"]
     pub fn X509_VERIFY_PARAM_add0_policy(
         param: *mut X509_VERIFY_PARAM,
         policy: *mut ASN1_OBJECT,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set1_policies"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set1_policies"]
     pub fn X509_VERIFY_PARAM_set1_policies(
         param: *mut X509_VERIFY_PARAM,
         policies: *const stack_st_ASN1_OBJECT,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set1_host"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set1_host"]
     pub fn X509_VERIFY_PARAM_set1_host(
         param: *mut X509_VERIFY_PARAM,
         name: *const ::std::os::raw::c_char,
@@ -23096,7 +23123,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_add1_host"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_add1_host"]
     pub fn X509_VERIFY_PARAM_add1_host(
         param: *mut X509_VERIFY_PARAM,
         name: *const ::std::os::raw::c_char,
@@ -23104,20 +23131,20 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set_hostflags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set_hostflags"]
     pub fn X509_VERIFY_PARAM_set_hostflags(
         param: *mut X509_VERIFY_PARAM,
         flags: ::std::os::raw::c_uint,
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_get0_peername"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_get0_peername"]
     pub fn X509_VERIFY_PARAM_get0_peername(
         arg1: *mut X509_VERIFY_PARAM,
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set1_email"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set1_email"]
     pub fn X509_VERIFY_PARAM_set1_email(
         param: *mut X509_VERIFY_PARAM,
         email: *const ::std::os::raw::c_char,
@@ -23125,7 +23152,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set1_ip"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set1_ip"]
     pub fn X509_VERIFY_PARAM_set1_ip(
         param: *mut X509_VERIFY_PARAM,
         ip: *const ::std::os::raw::c_uchar,
@@ -23133,1664 +23160,43 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_set1_ip_asc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_set1_ip_asc"]
     pub fn X509_VERIFY_PARAM_set1_ip_asc(
         param: *mut X509_VERIFY_PARAM,
         ipasc: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_get_depth"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_get_depth"]
     pub fn X509_VERIFY_PARAM_get_depth(param: *const X509_VERIFY_PARAM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_get0_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_get0_name"]
     pub fn X509_VERIFY_PARAM_get0_name(
         param: *const X509_VERIFY_PARAM,
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_add0_table"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_add0_table"]
     pub fn X509_VERIFY_PARAM_add0_table(param: *mut X509_VERIFY_PARAM) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_get_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_get_count"]
     pub fn X509_VERIFY_PARAM_get_count() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_get0"]
     pub fn X509_VERIFY_PARAM_get0(id: ::std::os::raw::c_int) -> *const X509_VERIFY_PARAM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_lookup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_lookup"]
     pub fn X509_VERIFY_PARAM_lookup(
         name: *const ::std::os::raw::c_char,
     ) -> *const X509_VERIFY_PARAM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_VERIFY_PARAM_table_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_VERIFY_PARAM_table_cleanup"]
     pub fn X509_VERIFY_PARAM_table_cleanup();
-}
-pub type pem_password_cb = ::std::option::Option<
-    unsafe extern "C" fn(
-        buf: *mut ::std::os::raw::c_char,
-        size: ::std::os::raw::c_int,
-        rwflag: ::std::os::raw::c_int,
-        userdata: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int,
->;
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_get_EVP_CIPHER_INFO"]
-    pub fn PEM_get_EVP_CIPHER_INFO(
-        header: *mut ::std::os::raw::c_char,
-        cipher: *mut EVP_CIPHER_INFO,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_do_header"]
-    pub fn PEM_do_header(
-        cipher: *mut EVP_CIPHER_INFO,
-        data: *mut ::std::os::raw::c_uchar,
-        len: *mut ::std::os::raw::c_long,
-        callback: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio"]
-    pub fn PEM_read_bio(
-        bp: *mut BIO,
-        name: *mut *mut ::std::os::raw::c_char,
-        header: *mut *mut ::std::os::raw::c_char,
-        data: *mut *mut ::std::os::raw::c_uchar,
-        len: *mut ::std::os::raw::c_long,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio"]
-    pub fn PEM_write_bio(
-        bp: *mut BIO,
-        name: *const ::std::os::raw::c_char,
-        hdr: *const ::std::os::raw::c_char,
-        data: *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_bytes_read_bio"]
-    pub fn PEM_bytes_read_bio(
-        pdata: *mut *mut ::std::os::raw::c_uchar,
-        plen: *mut ::std::os::raw::c_long,
-        pnm: *mut *mut ::std::os::raw::c_char,
-        name: *const ::std::os::raw::c_char,
-        bp: *mut BIO,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_ASN1_read_bio"]
-    pub fn PEM_ASN1_read_bio(
-        d2i: d2i_of_void,
-        name: *const ::std::os::raw::c_char,
-        bp: *mut BIO,
-        x: *mut *mut ::std::os::raw::c_void,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_void;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_ASN1_write_bio"]
-    pub fn PEM_ASN1_write_bio(
-        i2d: i2d_of_void,
-        name: *const ::std::os::raw::c_char,
-        bp: *mut BIO,
-        x: *mut ::std::os::raw::c_void,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_X509_INFO_read_bio"]
-    pub fn PEM_X509_INFO_read_bio(
-        bp: *mut BIO,
-        sk: *mut stack_st_X509_INFO,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut stack_st_X509_INFO;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read"]
-    pub fn PEM_read(
-        fp: *mut FILE,
-        name: *mut *mut ::std::os::raw::c_char,
-        header: *mut *mut ::std::os::raw::c_char,
-        data: *mut *mut ::std::os::raw::c_uchar,
-        len: *mut ::std::os::raw::c_long,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write"]
-    pub fn PEM_write(
-        fp: *mut FILE,
-        name: *const ::std::os::raw::c_char,
-        hdr: *const ::std::os::raw::c_char,
-        data: *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_ASN1_read"]
-    pub fn PEM_ASN1_read(
-        d2i: d2i_of_void,
-        name: *const ::std::os::raw::c_char,
-        fp: *mut FILE,
-        x: *mut *mut ::std::os::raw::c_void,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_void;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_ASN1_write"]
-    pub fn PEM_ASN1_write(
-        i2d: i2d_of_void,
-        name: *const ::std::os::raw::c_char,
-        fp: *mut FILE,
-        x: *mut ::std::os::raw::c_void,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        callback: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_X509_INFO_read"]
-    pub fn PEM_X509_INFO_read(
-        fp: *mut FILE,
-        sk: *mut stack_st_X509_INFO,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut stack_st_X509_INFO;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_def_callback"]
-    pub fn PEM_def_callback(
-        buf: *mut ::std::os::raw::c_char,
-        size: ::std::os::raw::c_int,
-        rwflag: ::std::os::raw::c_int,
-        userdata: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_proc_type"]
-    pub fn PEM_proc_type(buf: *mut ::std::os::raw::c_char, type_: ::std::os::raw::c_int);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_dek_info"]
-    pub fn PEM_dek_info(
-        buf: *mut ::std::os::raw::c_char,
-        type_: *const ::std::os::raw::c_char,
-        len: ::std::os::raw::c_int,
-        str_: *mut ::std::os::raw::c_char,
-    );
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_X509"]
-    pub fn PEM_read_bio_X509(
-        bp: *mut BIO,
-        x: *mut *mut X509,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_X509"]
-    pub fn PEM_read_X509(
-        fp: *mut FILE,
-        x: *mut *mut X509,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_X509"]
-    pub fn PEM_write_bio_X509(bp: *mut BIO, x: *mut X509) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_X509"]
-    pub fn PEM_write_X509(fp: *mut FILE, x: *mut X509) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_X509_AUX"]
-    pub fn PEM_read_bio_X509_AUX(
-        bp: *mut BIO,
-        x: *mut *mut X509,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_X509_AUX"]
-    pub fn PEM_read_X509_AUX(
-        fp: *mut FILE,
-        x: *mut *mut X509,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_X509_AUX"]
-    pub fn PEM_write_bio_X509_AUX(bp: *mut BIO, x: *mut X509) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_X509_AUX"]
-    pub fn PEM_write_X509_AUX(fp: *mut FILE, x: *mut X509) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_X509_REQ"]
-    pub fn PEM_read_bio_X509_REQ(
-        bp: *mut BIO,
-        x: *mut *mut X509_REQ,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509_REQ;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_X509_REQ"]
-    pub fn PEM_read_X509_REQ(
-        fp: *mut FILE,
-        x: *mut *mut X509_REQ,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509_REQ;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_X509_REQ"]
-    pub fn PEM_write_bio_X509_REQ(bp: *mut BIO, x: *mut X509_REQ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_X509_REQ"]
-    pub fn PEM_write_X509_REQ(fp: *mut FILE, x: *mut X509_REQ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_X509_REQ_NEW"]
-    pub fn PEM_write_bio_X509_REQ_NEW(bp: *mut BIO, x: *mut X509_REQ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_X509_REQ_NEW"]
-    pub fn PEM_write_X509_REQ_NEW(fp: *mut FILE, x: *mut X509_REQ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_X509_CRL"]
-    pub fn PEM_read_bio_X509_CRL(
-        bp: *mut BIO,
-        x: *mut *mut X509_CRL,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509_CRL;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_X509_CRL"]
-    pub fn PEM_read_X509_CRL(
-        fp: *mut FILE,
-        x: *mut *mut X509_CRL,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509_CRL;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_X509_CRL"]
-    pub fn PEM_write_bio_X509_CRL(bp: *mut BIO, x: *mut X509_CRL) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_X509_CRL"]
-    pub fn PEM_write_X509_CRL(fp: *mut FILE, x: *mut X509_CRL) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_PKCS7"]
-    pub fn PEM_read_bio_PKCS7(
-        bp: *mut BIO,
-        x: *mut *mut PKCS7,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut PKCS7;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_PKCS7"]
-    pub fn PEM_read_PKCS7(
-        fp: *mut FILE,
-        x: *mut *mut PKCS7,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut PKCS7;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_PKCS7"]
-    pub fn PEM_write_bio_PKCS7(bp: *mut BIO, x: *mut PKCS7) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_PKCS7"]
-    pub fn PEM_write_PKCS7(fp: *mut FILE, x: *mut PKCS7) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_PKCS8"]
-    pub fn PEM_read_bio_PKCS8(
-        bp: *mut BIO,
-        x: *mut *mut X509_SIG,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509_SIG;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_PKCS8"]
-    pub fn PEM_read_PKCS8(
-        fp: *mut FILE,
-        x: *mut *mut X509_SIG,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut X509_SIG;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_PKCS8"]
-    pub fn PEM_write_bio_PKCS8(bp: *mut BIO, x: *mut X509_SIG) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_PKCS8"]
-    pub fn PEM_write_PKCS8(fp: *mut FILE, x: *mut X509_SIG) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_PKCS8_PRIV_KEY_INFO"]
-    pub fn PEM_read_bio_PKCS8_PRIV_KEY_INFO(
-        bp: *mut BIO,
-        x: *mut *mut PKCS8_PRIV_KEY_INFO,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut PKCS8_PRIV_KEY_INFO;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_PKCS8_PRIV_KEY_INFO"]
-    pub fn PEM_read_PKCS8_PRIV_KEY_INFO(
-        fp: *mut FILE,
-        x: *mut *mut PKCS8_PRIV_KEY_INFO,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut PKCS8_PRIV_KEY_INFO;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_PKCS8_PRIV_KEY_INFO"]
-    pub fn PEM_write_bio_PKCS8_PRIV_KEY_INFO(
-        bp: *mut BIO,
-        x: *mut PKCS8_PRIV_KEY_INFO,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_PKCS8_PRIV_KEY_INFO"]
-    pub fn PEM_write_PKCS8_PRIV_KEY_INFO(
-        fp: *mut FILE,
-        x: *mut PKCS8_PRIV_KEY_INFO,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_RSAPrivateKey"]
-    pub fn PEM_read_bio_RSAPrivateKey(
-        bp: *mut BIO,
-        x: *mut *mut RSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut RSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_RSAPrivateKey"]
-    pub fn PEM_read_RSAPrivateKey(
-        fp: *mut FILE,
-        x: *mut *mut RSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut RSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_RSAPrivateKey"]
-    pub fn PEM_write_bio_RSAPrivateKey(
-        bp: *mut BIO,
-        x: *mut RSA,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_RSAPrivateKey"]
-    pub fn PEM_write_RSAPrivateKey(
-        fp: *mut FILE,
-        x: *mut RSA,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_RSAPublicKey"]
-    pub fn PEM_read_bio_RSAPublicKey(
-        bp: *mut BIO,
-        x: *mut *mut RSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut RSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_RSAPublicKey"]
-    pub fn PEM_read_RSAPublicKey(
-        fp: *mut FILE,
-        x: *mut *mut RSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut RSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_RSAPublicKey"]
-    pub fn PEM_write_bio_RSAPublicKey(bp: *mut BIO, x: *const RSA) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_RSAPublicKey"]
-    pub fn PEM_write_RSAPublicKey(fp: *mut FILE, x: *const RSA) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_RSA_PUBKEY"]
-    pub fn PEM_read_bio_RSA_PUBKEY(
-        bp: *mut BIO,
-        x: *mut *mut RSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut RSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_RSA_PUBKEY"]
-    pub fn PEM_read_RSA_PUBKEY(
-        fp: *mut FILE,
-        x: *mut *mut RSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut RSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_RSA_PUBKEY"]
-    pub fn PEM_write_bio_RSA_PUBKEY(bp: *mut BIO, x: *mut RSA) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_RSA_PUBKEY"]
-    pub fn PEM_write_RSA_PUBKEY(fp: *mut FILE, x: *mut RSA) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_DSAPrivateKey"]
-    pub fn PEM_read_bio_DSAPrivateKey(
-        bp: *mut BIO,
-        x: *mut *mut DSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut DSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_DSAPrivateKey"]
-    pub fn PEM_read_DSAPrivateKey(
-        fp: *mut FILE,
-        x: *mut *mut DSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut DSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_DSAPrivateKey"]
-    pub fn PEM_write_bio_DSAPrivateKey(
-        bp: *mut BIO,
-        x: *mut DSA,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_DSAPrivateKey"]
-    pub fn PEM_write_DSAPrivateKey(
-        fp: *mut FILE,
-        x: *mut DSA,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_DSA_PUBKEY"]
-    pub fn PEM_read_bio_DSA_PUBKEY(
-        bp: *mut BIO,
-        x: *mut *mut DSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut DSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_DSA_PUBKEY"]
-    pub fn PEM_read_DSA_PUBKEY(
-        fp: *mut FILE,
-        x: *mut *mut DSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut DSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_DSA_PUBKEY"]
-    pub fn PEM_write_bio_DSA_PUBKEY(bp: *mut BIO, x: *mut DSA) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_DSA_PUBKEY"]
-    pub fn PEM_write_DSA_PUBKEY(fp: *mut FILE, x: *mut DSA) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_DSAparams"]
-    pub fn PEM_read_bio_DSAparams(
-        bp: *mut BIO,
-        x: *mut *mut DSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut DSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_DSAparams"]
-    pub fn PEM_read_DSAparams(
-        fp: *mut FILE,
-        x: *mut *mut DSA,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut DSA;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_DSAparams"]
-    pub fn PEM_write_bio_DSAparams(bp: *mut BIO, x: *const DSA) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_DSAparams"]
-    pub fn PEM_write_DSAparams(fp: *mut FILE, x: *const DSA) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_ECPrivateKey"]
-    pub fn PEM_read_bio_ECPrivateKey(
-        bp: *mut BIO,
-        x: *mut *mut EC_KEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EC_KEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_ECPrivateKey"]
-    pub fn PEM_read_ECPrivateKey(
-        fp: *mut FILE,
-        x: *mut *mut EC_KEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EC_KEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_ECPrivateKey"]
-    pub fn PEM_write_bio_ECPrivateKey(
-        bp: *mut BIO,
-        x: *mut EC_KEY,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_ECPrivateKey"]
-    pub fn PEM_write_ECPrivateKey(
-        fp: *mut FILE,
-        x: *mut EC_KEY,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_EC_PUBKEY"]
-    pub fn PEM_read_bio_EC_PUBKEY(
-        bp: *mut BIO,
-        x: *mut *mut EC_KEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EC_KEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_EC_PUBKEY"]
-    pub fn PEM_read_EC_PUBKEY(
-        fp: *mut FILE,
-        x: *mut *mut EC_KEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EC_KEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_EC_PUBKEY"]
-    pub fn PEM_write_bio_EC_PUBKEY(bp: *mut BIO, x: *mut EC_KEY) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_EC_PUBKEY"]
-    pub fn PEM_write_EC_PUBKEY(fp: *mut FILE, x: *mut EC_KEY) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_DHparams"]
-    pub fn PEM_read_bio_DHparams(
-        bp: *mut BIO,
-        x: *mut *mut DH,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut DH;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_DHparams"]
-    pub fn PEM_read_DHparams(
-        fp: *mut FILE,
-        x: *mut *mut DH,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut DH;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_DHparams"]
-    pub fn PEM_write_bio_DHparams(bp: *mut BIO, x: *const DH) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_DHparams"]
-    pub fn PEM_write_DHparams(fp: *mut FILE, x: *const DH) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_PrivateKey"]
-    pub fn PEM_read_bio_PrivateKey(
-        bp: *mut BIO,
-        x: *mut *mut EVP_PKEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EVP_PKEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_PrivateKey"]
-    pub fn PEM_read_PrivateKey(
-        fp: *mut FILE,
-        x: *mut *mut EVP_PKEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EVP_PKEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_PrivateKey"]
-    pub fn PEM_write_bio_PrivateKey(
-        bp: *mut BIO,
-        x: *mut EVP_PKEY,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_PrivateKey"]
-    pub fn PEM_write_PrivateKey(
-        fp: *mut FILE,
-        x: *mut EVP_PKEY,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_uchar,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_bio_PUBKEY"]
-    pub fn PEM_read_bio_PUBKEY(
-        bp: *mut BIO,
-        x: *mut *mut EVP_PKEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EVP_PKEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_read_PUBKEY"]
-    pub fn PEM_read_PUBKEY(
-        fp: *mut FILE,
-        x: *mut *mut EVP_PKEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EVP_PKEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_PUBKEY"]
-    pub fn PEM_write_bio_PUBKEY(bp: *mut BIO, x: *mut EVP_PKEY) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_PUBKEY"]
-    pub fn PEM_write_PUBKEY(fp: *mut FILE, x: *mut EVP_PKEY) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_PKCS8PrivateKey_nid"]
-    pub fn PEM_write_bio_PKCS8PrivateKey_nid(
-        bp: *mut BIO,
-        x: *mut EVP_PKEY,
-        nid: ::std::os::raw::c_int,
-        kstr: *mut ::std::os::raw::c_char,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_bio_PKCS8PrivateKey"]
-    pub fn PEM_write_bio_PKCS8PrivateKey(
-        arg1: *mut BIO,
-        arg2: *mut EVP_PKEY,
-        arg3: *const EVP_CIPHER,
-        arg4: *mut ::std::os::raw::c_char,
-        arg5: ::std::os::raw::c_int,
-        arg6: pem_password_cb,
-        arg7: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8PrivateKey_bio"]
-    pub fn i2d_PKCS8PrivateKey_bio(
-        bp: *mut BIO,
-        x: *mut EVP_PKEY,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_char,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8PrivateKey_nid_bio"]
-    pub fn i2d_PKCS8PrivateKey_nid_bio(
-        bp: *mut BIO,
-        x: *mut EVP_PKEY,
-        nid: ::std::os::raw::c_int,
-        kstr: *mut ::std::os::raw::c_char,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS8PrivateKey_bio"]
-    pub fn d2i_PKCS8PrivateKey_bio(
-        bp: *mut BIO,
-        x: *mut *mut EVP_PKEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EVP_PKEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8PrivateKey_fp"]
-    pub fn i2d_PKCS8PrivateKey_fp(
-        fp: *mut FILE,
-        x: *mut EVP_PKEY,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_char,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS8PrivateKey_nid_fp"]
-    pub fn i2d_PKCS8PrivateKey_nid_fp(
-        fp: *mut FILE,
-        x: *mut EVP_PKEY,
-        nid: ::std::os::raw::c_int,
-        kstr: *mut ::std::os::raw::c_char,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_PKCS8PrivateKey_nid"]
-    pub fn PEM_write_PKCS8PrivateKey_nid(
-        fp: *mut FILE,
-        x: *mut EVP_PKEY,
-        nid: ::std::os::raw::c_int,
-        kstr: *mut ::std::os::raw::c_char,
-        klen: ::std::os::raw::c_int,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS8PrivateKey_fp"]
-    pub fn d2i_PKCS8PrivateKey_fp(
-        fp: *mut FILE,
-        x: *mut *mut EVP_PKEY,
-        cb: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> *mut EVP_PKEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PEM_write_PKCS8PrivateKey"]
-    pub fn PEM_write_PKCS8PrivateKey(
-        fp: *mut FILE,
-        x: *mut EVP_PKEY,
-        enc: *const EVP_CIPHER,
-        kstr: *mut ::std::os::raw::c_char,
-        klen: ::std::os::raw::c_int,
-        cd: pem_password_cb,
-        u: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS8_encrypt"]
-    pub fn PKCS8_encrypt(
-        pbe_nid: ::std::os::raw::c_int,
-        cipher: *const EVP_CIPHER,
-        pass: *const ::std::os::raw::c_char,
-        pass_len: ::std::os::raw::c_int,
-        salt: *const u8,
-        salt_len: usize,
-        iterations: ::std::os::raw::c_int,
-        p8inf: *mut PKCS8_PRIV_KEY_INFO,
-    ) -> *mut X509_SIG;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS8_marshal_encrypted_private_key"]
-    pub fn PKCS8_marshal_encrypted_private_key(
-        out: *mut CBB,
-        pbe_nid: ::std::os::raw::c_int,
-        cipher: *const EVP_CIPHER,
-        pass: *const ::std::os::raw::c_char,
-        pass_len: usize,
-        salt: *const u8,
-        salt_len: usize,
-        iterations: ::std::os::raw::c_int,
-        pkey: *const EVP_PKEY,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS8_decrypt"]
-    pub fn PKCS8_decrypt(
-        pkcs8: *mut X509_SIG,
-        pass: *const ::std::os::raw::c_char,
-        pass_len: ::std::os::raw::c_int,
-    ) -> *mut PKCS8_PRIV_KEY_INFO;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS8_parse_encrypted_private_key"]
-    pub fn PKCS8_parse_encrypted_private_key(
-        cbs: *mut CBS,
-        pass: *const ::std::os::raw::c_char,
-        pass_len: usize,
-    ) -> *mut EVP_PKEY;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS12_get_key_and_certs"]
-    pub fn PKCS12_get_key_and_certs(
-        out_key: *mut *mut EVP_PKEY,
-        out_certs: *mut stack_st_X509,
-        in_: *mut CBS,
-        password: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS12_PBE_add"]
-    pub fn PKCS12_PBE_add();
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS12"]
-    pub fn d2i_PKCS12(
-        out_p12: *mut *mut PKCS12,
-        ber_bytes: *mut *const u8,
-        ber_len: usize,
-    ) -> *mut PKCS12;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS12_bio"]
-    pub fn d2i_PKCS12_bio(bio: *mut BIO, out_p12: *mut *mut PKCS12) -> *mut PKCS12;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PKCS12_fp"]
-    pub fn d2i_PKCS12_fp(fp: *mut FILE, out_p12: *mut *mut PKCS12) -> *mut PKCS12;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS12"]
-    pub fn i2d_PKCS12(p12: *const PKCS12, out: *mut *mut u8) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS12_bio"]
-    pub fn i2d_PKCS12_bio(bio: *mut BIO, p12: *const PKCS12) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PKCS12_fp"]
-    pub fn i2d_PKCS12_fp(fp: *mut FILE, p12: *const PKCS12) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS12_parse"]
-    pub fn PKCS12_parse(
-        p12: *const PKCS12,
-        password: *const ::std::os::raw::c_char,
-        out_pkey: *mut *mut EVP_PKEY,
-        out_cert: *mut *mut X509,
-        out_ca_certs: *mut *mut stack_st_X509,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS12_verify_mac"]
-    pub fn PKCS12_verify_mac(
-        p12: *const PKCS12,
-        password: *const ::std::os::raw::c_char,
-        password_len: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS12_create"]
-    pub fn PKCS12_create(
-        password: *const ::std::os::raw::c_char,
-        name: *const ::std::os::raw::c_char,
-        pkey: *const EVP_PKEY,
-        cert: *mut X509,
-        chain: *const stack_st_X509,
-        key_nid: ::std::os::raw::c_int,
-        cert_nid: ::std::os::raw::c_int,
-        iterations: ::std::os::raw::c_int,
-        mac_iterations: ::std::os::raw::c_int,
-        key_type: ::std::os::raw::c_int,
-    ) -> *mut PKCS12;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PKCS12_free"]
-    pub fn PKCS12_free(p12: *mut PKCS12);
-}
-pub type poly1305_state = [u8; 512usize];
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_poly1305_init"]
-    pub fn CRYPTO_poly1305_init(state: *mut poly1305_state, key: *const u8);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_poly1305_update"]
-    pub fn CRYPTO_poly1305_update(state: *mut poly1305_state, in_: *const u8, in_len: usize);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_poly1305_finish"]
-    pub fn CRYPTO_poly1305_finish(state: *mut poly1305_state, mac: *mut u8);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_bytes"]
-    pub fn RAND_bytes(buf: *mut u8, len: usize) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_get_system_entropy_for_custom_prng"]
-    pub fn RAND_get_system_entropy_for_custom_prng(buf: *mut u8, len: usize);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_cleanup"]
-    pub fn RAND_cleanup();
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_enable_fork_unsafe_buffering"]
-    pub fn RAND_enable_fork_unsafe_buffering(fd: ::std::os::raw::c_int);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_pseudo_bytes"]
-    pub fn RAND_pseudo_bytes(buf: *mut u8, len: usize) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_seed"]
-    pub fn RAND_seed(buf: *const ::std::os::raw::c_void, num: ::std::os::raw::c_int);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_load_file"]
-    pub fn RAND_load_file(
-        path: *const ::std::os::raw::c_char,
-        num: ::std::os::raw::c_long,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_file_name"]
-    pub fn RAND_file_name(
-        buf: *mut ::std::os::raw::c_char,
-        num: usize,
-    ) -> *const ::std::os::raw::c_char;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_add"]
-    pub fn RAND_add(buf: *const ::std::os::raw::c_void, num: ::std::os::raw::c_int, entropy: f64);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_egd"]
-    pub fn RAND_egd(arg1: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_poll"]
-    pub fn RAND_poll() -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_status"]
-    pub fn RAND_status() -> ::std::os::raw::c_int;
-}
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
-pub struct rand_meth_st {
-    pub seed: ::std::option::Option<
-        unsafe extern "C" fn(buf: *const ::std::os::raw::c_void, num: ::std::os::raw::c_int),
-    >,
-    pub bytes: ::std::option::Option<
-        unsafe extern "C" fn(buf: *mut u8, num: usize) -> ::std::os::raw::c_int,
-    >,
-    pub cleanup: ::std::option::Option<unsafe extern "C" fn()>,
-    pub add: ::std::option::Option<
-        unsafe extern "C" fn(
-            buf: *const ::std::os::raw::c_void,
-            num: ::std::os::raw::c_int,
-            entropy: f64,
-        ),
-    >,
-    pub pseudorand: ::std::option::Option<
-        unsafe extern "C" fn(buf: *mut u8, num: usize) -> ::std::os::raw::c_int,
-    >,
-    pub status: ::std::option::Option<unsafe extern "C" fn() -> ::std::os::raw::c_int>,
-}
-#[test]
-fn bindgen_test_layout_rand_meth_st() {
-    const UNINIT: ::std::mem::MaybeUninit<rand_meth_st> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<rand_meth_st>(),
-        48usize,
-        concat!("Size of: ", stringify!(rand_meth_st))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<rand_meth_st>(),
-        8usize,
-        concat!("Alignment of ", stringify!(rand_meth_st))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).seed) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(rand_meth_st),
-            "::",
-            stringify!(seed)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).bytes) as usize - ptr as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(rand_meth_st),
-            "::",
-            stringify!(bytes)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).cleanup) as usize - ptr as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(rand_meth_st),
-            "::",
-            stringify!(cleanup)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).add) as usize - ptr as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(rand_meth_st),
-            "::",
-            stringify!(add)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).pseudorand) as usize - ptr as usize },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(rand_meth_st),
-            "::",
-            stringify!(pseudorand)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).status) as usize - ptr as usize },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(rand_meth_st),
-            "::",
-            stringify!(status)
-        )
-    );
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_SSLeay"]
-    pub fn RAND_SSLeay() -> *mut RAND_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_OpenSSL"]
-    pub fn RAND_OpenSSL() -> *mut RAND_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_get_rand_method"]
-    pub fn RAND_get_rand_method() -> *const RAND_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RAND_set_rand_method"]
-    pub fn RAND_set_rand_method(arg1: *const RAND_METHOD) -> ::std::os::raw::c_int;
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct rc4_key_st {
-    pub x: u32,
-    pub y: u32,
-    pub data: [u32; 256usize],
-}
-#[test]
-fn bindgen_test_layout_rc4_key_st() {
-    const UNINIT: ::std::mem::MaybeUninit<rc4_key_st> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<rc4_key_st>(),
-        1032usize,
-        concat!("Size of: ", stringify!(rc4_key_st))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<rc4_key_st>(),
-        4usize,
-        concat!("Alignment of ", stringify!(rc4_key_st))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).x) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(rc4_key_st),
-            "::",
-            stringify!(x)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).y) as usize - ptr as usize },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(rc4_key_st),
-            "::",
-            stringify!(y)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(rc4_key_st),
-            "::",
-            stringify!(data)
-        )
-    );
-}
-impl Default for rc4_key_st {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RC4_set_key"]
-    pub fn RC4_set_key(rc4key: *mut RC4_KEY, len: ::std::os::raw::c_uint, key: *const u8);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RC4"]
-    pub fn RC4(key: *mut RC4_KEY, len: usize, in_: *const u8, out: *mut u8);
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct RIPEMD160state_st {
-    pub h: [u32; 5usize],
-    pub Nl: u32,
-    pub Nh: u32,
-    pub data: [u8; 64usize],
-    pub num: ::std::os::raw::c_uint,
-}
-#[test]
-fn bindgen_test_layout_RIPEMD160state_st() {
-    const UNINIT: ::std::mem::MaybeUninit<RIPEMD160state_st> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<RIPEMD160state_st>(),
-        96usize,
-        concat!("Size of: ", stringify!(RIPEMD160state_st))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<RIPEMD160state_st>(),
-        4usize,
-        concat!("Alignment of ", stringify!(RIPEMD160state_st))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).h) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(RIPEMD160state_st),
-            "::",
-            stringify!(h)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).Nl) as usize - ptr as usize },
-        20usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(RIPEMD160state_st),
-            "::",
-            stringify!(Nl)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).Nh) as usize - ptr as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(RIPEMD160state_st),
-            "::",
-            stringify!(Nh)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize },
-        28usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(RIPEMD160state_st),
-            "::",
-            stringify!(data)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).num) as usize - ptr as usize },
-        92usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(RIPEMD160state_st),
-            "::",
-            stringify!(num)
-        )
-    );
-}
-impl Default for RIPEMD160state_st {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RIPEMD160_Init"]
-    pub fn RIPEMD160_Init(ctx: *mut RIPEMD160_CTX) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RIPEMD160_Update"]
-    pub fn RIPEMD160_Update(
-        ctx: *mut RIPEMD160_CTX,
-        data: *const ::std::os::raw::c_void,
-        len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RIPEMD160_Final"]
-    pub fn RIPEMD160_Final(out: *mut u8, ctx: *mut RIPEMD160_CTX) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_RIPEMD160"]
-    pub fn RIPEMD160(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_FIPS_service_indicator_before_call"]
-    pub fn FIPS_service_indicator_before_call() -> u64;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_FIPS_service_indicator_after_call"]
-    pub fn FIPS_service_indicator_after_call() -> u64;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_awslc_version_string"]
-    pub fn awslc_version_string() -> *const ::std::os::raw::c_char;
-}
-pub const FIPSStatus_AWSLC_NOT_APPROVED: FIPSStatus = 0;
-pub const FIPSStatus_AWSLC_APPROVED: FIPSStatus = 1;
-pub type FIPSStatus = ::std::os::raw::c_uint;
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_SIPHASH_24"]
-    pub fn SIPHASH_24(key: *const u64, input: *const u8, input_len: usize) -> u64;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_experiment_v1"]
-    pub fn TRUST_TOKEN_experiment_v1() -> *const TRUST_TOKEN_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_experiment_v2_voprf"]
-    pub fn TRUST_TOKEN_experiment_v2_voprf() -> *const TRUST_TOKEN_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_experiment_v2_pmb"]
-    pub fn TRUST_TOKEN_experiment_v2_pmb() -> *const TRUST_TOKEN_METHOD;
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct trust_token_st {
-    pub data: *mut u8,
-    pub len: usize,
-}
-#[test]
-fn bindgen_test_layout_trust_token_st() {
-    const UNINIT: ::std::mem::MaybeUninit<trust_token_st> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<trust_token_st>(),
-        16usize,
-        concat!("Size of: ", stringify!(trust_token_st))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<trust_token_st>(),
-        8usize,
-        concat!("Alignment of ", stringify!(trust_token_st))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(trust_token_st),
-            "::",
-            stringify!(data)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).len) as usize - ptr as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(trust_token_st),
-            "::",
-            stringify!(len)
-        )
-    );
-}
-impl Default for trust_token_st {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct stack_st_TRUST_TOKEN {
-    _unused: [u8; 0],
-}
-pub type sk_TRUST_TOKEN_free_func =
-    ::std::option::Option<unsafe extern "C" fn(arg1: *mut TRUST_TOKEN)>;
-pub type sk_TRUST_TOKEN_copy_func =
-    ::std::option::Option<unsafe extern "C" fn(arg1: *const TRUST_TOKEN) -> *mut TRUST_TOKEN>;
-pub type sk_TRUST_TOKEN_cmp_func = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *mut *const TRUST_TOKEN,
-        arg2: *mut *const TRUST_TOKEN,
-    ) -> ::std::os::raw::c_int,
->;
-pub type sk_TRUST_TOKEN_delete_if_func = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *mut TRUST_TOKEN,
-        arg2: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int,
->;
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_new"]
-    pub fn TRUST_TOKEN_new(data: *const u8, len: usize) -> *mut TRUST_TOKEN;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_free"]
-    pub fn TRUST_TOKEN_free(token: *mut TRUST_TOKEN);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_generate_key"]
-    pub fn TRUST_TOKEN_generate_key(
-        method: *const TRUST_TOKEN_METHOD,
-        out_priv_key: *mut u8,
-        out_priv_key_len: *mut usize,
-        max_priv_key_len: usize,
-        out_pub_key: *mut u8,
-        out_pub_key_len: *mut usize,
-        max_pub_key_len: usize,
-        id: u32,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_derive_key_from_secret"]
-    pub fn TRUST_TOKEN_derive_key_from_secret(
-        method: *const TRUST_TOKEN_METHOD,
-        out_priv_key: *mut u8,
-        out_priv_key_len: *mut usize,
-        max_priv_key_len: usize,
-        out_pub_key: *mut u8,
-        out_pub_key_len: *mut usize,
-        max_pub_key_len: usize,
-        id: u32,
-        secret: *const u8,
-        secret_len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_CLIENT_new"]
-    pub fn TRUST_TOKEN_CLIENT_new(
-        method: *const TRUST_TOKEN_METHOD,
-        max_batchsize: usize,
-    ) -> *mut TRUST_TOKEN_CLIENT;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_CLIENT_free"]
-    pub fn TRUST_TOKEN_CLIENT_free(ctx: *mut TRUST_TOKEN_CLIENT);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_CLIENT_add_key"]
-    pub fn TRUST_TOKEN_CLIENT_add_key(
-        ctx: *mut TRUST_TOKEN_CLIENT,
-        out_key_index: *mut usize,
-        key: *const u8,
-        key_len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_CLIENT_set_srr_key"]
-    pub fn TRUST_TOKEN_CLIENT_set_srr_key(
-        ctx: *mut TRUST_TOKEN_CLIENT,
-        key: *mut EVP_PKEY,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_CLIENT_begin_issuance"]
-    pub fn TRUST_TOKEN_CLIENT_begin_issuance(
-        ctx: *mut TRUST_TOKEN_CLIENT,
-        out: *mut *mut u8,
-        out_len: *mut usize,
-        count: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_CLIENT_begin_issuance_over_message"]
-    pub fn TRUST_TOKEN_CLIENT_begin_issuance_over_message(
-        ctx: *mut TRUST_TOKEN_CLIENT,
-        out: *mut *mut u8,
-        out_len: *mut usize,
-        count: usize,
-        msg: *const u8,
-        msg_len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_CLIENT_finish_issuance"]
-    pub fn TRUST_TOKEN_CLIENT_finish_issuance(
-        ctx: *mut TRUST_TOKEN_CLIENT,
-        out_key_index: *mut usize,
-        response: *const u8,
-        response_len: usize,
-    ) -> *mut stack_st_TRUST_TOKEN;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_CLIENT_begin_redemption"]
-    pub fn TRUST_TOKEN_CLIENT_begin_redemption(
-        ctx: *mut TRUST_TOKEN_CLIENT,
-        out: *mut *mut u8,
-        out_len: *mut usize,
-        token: *const TRUST_TOKEN,
-        data: *const u8,
-        data_len: usize,
-        time: u64,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_CLIENT_finish_redemption"]
-    pub fn TRUST_TOKEN_CLIENT_finish_redemption(
-        ctx: *mut TRUST_TOKEN_CLIENT,
-        out_rr: *mut *mut u8,
-        out_rr_len: *mut usize,
-        out_sig: *mut *mut u8,
-        out_sig_len: *mut usize,
-        response: *const u8,
-        response_len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_ISSUER_new"]
-    pub fn TRUST_TOKEN_ISSUER_new(
-        method: *const TRUST_TOKEN_METHOD,
-        max_batchsize: usize,
-    ) -> *mut TRUST_TOKEN_ISSUER;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_ISSUER_free"]
-    pub fn TRUST_TOKEN_ISSUER_free(ctx: *mut TRUST_TOKEN_ISSUER);
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_ISSUER_add_key"]
-    pub fn TRUST_TOKEN_ISSUER_add_key(
-        ctx: *mut TRUST_TOKEN_ISSUER,
-        key: *const u8,
-        key_len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_ISSUER_set_srr_key"]
-    pub fn TRUST_TOKEN_ISSUER_set_srr_key(
-        ctx: *mut TRUST_TOKEN_ISSUER,
-        key: *mut EVP_PKEY,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_ISSUER_set_metadata_key"]
-    pub fn TRUST_TOKEN_ISSUER_set_metadata_key(
-        ctx: *mut TRUST_TOKEN_ISSUER,
-        key: *const u8,
-        len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_ISSUER_issue"]
-    pub fn TRUST_TOKEN_ISSUER_issue(
-        ctx: *const TRUST_TOKEN_ISSUER,
-        out: *mut *mut u8,
-        out_len: *mut usize,
-        out_tokens_issued: *mut usize,
-        request: *const u8,
-        request_len: usize,
-        public_metadata: u32,
-        private_metadata: u8,
-        max_issuance: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_ISSUER_redeem"]
-    pub fn TRUST_TOKEN_ISSUER_redeem(
-        ctx: *const TRUST_TOKEN_ISSUER,
-        out: *mut *mut u8,
-        out_len: *mut usize,
-        out_token: *mut *mut TRUST_TOKEN,
-        out_client_data: *mut *mut u8,
-        out_client_data_len: *mut usize,
-        out_redemption_time: *mut u64,
-        request: *const u8,
-        request_len: usize,
-        lifetime: u64,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_ISSUER_redeem_raw"]
-    pub fn TRUST_TOKEN_ISSUER_redeem_raw(
-        ctx: *const TRUST_TOKEN_ISSUER,
-        out_public: *mut u32,
-        out_private: *mut u8,
-        out_token: *mut *mut TRUST_TOKEN,
-        out_client_data: *mut *mut u8,
-        out_client_data_len: *mut usize,
-        request: *const u8,
-        request_len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_ISSUER_redeem_over_message"]
-    pub fn TRUST_TOKEN_ISSUER_redeem_over_message(
-        ctx: *const TRUST_TOKEN_ISSUER,
-        out_public: *mut u32,
-        out_private: *mut u8,
-        out_token: *mut *mut TRUST_TOKEN,
-        out_client_data: *mut *mut u8,
-        out_client_data_len: *mut usize,
-        request: *const u8,
-        request_len: usize,
-        msg: *const u8,
-        msg_len: usize,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_TRUST_TOKEN_decode_private_metadata"]
-    pub fn TRUST_TOKEN_decode_private_metadata(
-        method: *const TRUST_TOKEN_METHOD,
-        out_value: *mut u8,
-        key: *const u8,
-        key_len: usize,
-        nonce: *const u8,
-        nonce_len: usize,
-        encrypted_bit: u8,
-    ) -> ::std::os::raw::c_int;
 }
 pub type X509V3_EXT_METHOD = v3_ext_method;
 pub type X509V3_EXT_NEW =
@@ -26489,15 +24895,15 @@ impl Default for PROXY_CERT_INFO_EXTENSION_st {
 }
 pub type PROXY_CERT_INFO_EXTENSION = PROXY_CERT_INFO_EXTENSION_st;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PROXY_POLICY_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PROXY_POLICY_new"]
     pub fn PROXY_POLICY_new() -> *mut PROXY_POLICY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PROXY_POLICY_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PROXY_POLICY_free"]
     pub fn PROXY_POLICY_free(a: *mut PROXY_POLICY);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PROXY_POLICY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PROXY_POLICY"]
     pub fn d2i_PROXY_POLICY(
         a: *mut *mut PROXY_POLICY,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -26505,26 +24911,26 @@ extern "C" {
     ) -> *mut PROXY_POLICY;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PROXY_POLICY"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PROXY_POLICY"]
     pub fn i2d_PROXY_POLICY(
         a: *const PROXY_POLICY,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PROXY_POLICY_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PROXY_POLICY_it"]
     pub static PROXY_POLICY_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PROXY_CERT_INFO_EXTENSION_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PROXY_CERT_INFO_EXTENSION_new"]
     pub fn PROXY_CERT_INFO_EXTENSION_new() -> *mut PROXY_CERT_INFO_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PROXY_CERT_INFO_EXTENSION_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PROXY_CERT_INFO_EXTENSION_free"]
     pub fn PROXY_CERT_INFO_EXTENSION_free(a: *mut PROXY_CERT_INFO_EXTENSION);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_PROXY_CERT_INFO_EXTENSION"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PROXY_CERT_INFO_EXTENSION"]
     pub fn d2i_PROXY_CERT_INFO_EXTENSION(
         a: *mut *mut PROXY_CERT_INFO_EXTENSION,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -26532,14 +24938,14 @@ extern "C" {
     ) -> *mut PROXY_CERT_INFO_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_PROXY_CERT_INFO_EXTENSION"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PROXY_CERT_INFO_EXTENSION"]
     pub fn i2d_PROXY_CERT_INFO_EXTENSION(
         a: *const PROXY_CERT_INFO_EXTENSION,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_PROXY_CERT_INFO_EXTENSION_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PROXY_CERT_INFO_EXTENSION_it"]
     pub static PROXY_CERT_INFO_EXTENSION_it: ASN1_ITEM;
 }
 #[repr(C)]
@@ -26771,15 +25177,15 @@ pub type sk_X509_PURPOSE_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BASIC_CONSTRAINTS_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BASIC_CONSTRAINTS_new"]
     pub fn BASIC_CONSTRAINTS_new() -> *mut BASIC_CONSTRAINTS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BASIC_CONSTRAINTS_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BASIC_CONSTRAINTS_free"]
     pub fn BASIC_CONSTRAINTS_free(a: *mut BASIC_CONSTRAINTS);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_BASIC_CONSTRAINTS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_BASIC_CONSTRAINTS"]
     pub fn d2i_BASIC_CONSTRAINTS(
         a: *mut *mut BASIC_CONSTRAINTS,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -26787,26 +25193,26 @@ extern "C" {
     ) -> *mut BASIC_CONSTRAINTS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_BASIC_CONSTRAINTS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_BASIC_CONSTRAINTS"]
     pub fn i2d_BASIC_CONSTRAINTS(
         a: *const BASIC_CONSTRAINTS,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_BASIC_CONSTRAINTS_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_BASIC_CONSTRAINTS_it"]
     pub static BASIC_CONSTRAINTS_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AUTHORITY_KEYID_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AUTHORITY_KEYID_new"]
     pub fn AUTHORITY_KEYID_new() -> *mut AUTHORITY_KEYID;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AUTHORITY_KEYID_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AUTHORITY_KEYID_free"]
     pub fn AUTHORITY_KEYID_free(a: *mut AUTHORITY_KEYID);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_AUTHORITY_KEYID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_AUTHORITY_KEYID"]
     pub fn d2i_AUTHORITY_KEYID(
         a: *mut *mut AUTHORITY_KEYID,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -26814,26 +25220,26 @@ extern "C" {
     ) -> *mut AUTHORITY_KEYID;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_AUTHORITY_KEYID"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_AUTHORITY_KEYID"]
     pub fn i2d_AUTHORITY_KEYID(
         a: *mut AUTHORITY_KEYID,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AUTHORITY_KEYID_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AUTHORITY_KEYID_it"]
     pub static AUTHORITY_KEYID_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_new"]
     pub fn GENERAL_NAME_new() -> *mut GENERAL_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_free"]
     pub fn GENERAL_NAME_free(a: *mut GENERAL_NAME);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_GENERAL_NAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_GENERAL_NAME"]
     pub fn d2i_GENERAL_NAME(
         a: *mut *mut GENERAL_NAME,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -26841,29 +25247,29 @@ extern "C" {
     ) -> *mut GENERAL_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_GENERAL_NAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_GENERAL_NAME"]
     pub fn i2d_GENERAL_NAME(
         a: *mut GENERAL_NAME,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_it"]
     pub static GENERAL_NAME_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_dup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_dup"]
     pub fn GENERAL_NAME_dup(a: *mut GENERAL_NAME) -> *mut GENERAL_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_cmp"]
     pub fn GENERAL_NAME_cmp(
         a: *const GENERAL_NAME,
         b: *const GENERAL_NAME,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2v_GENERAL_NAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2v_GENERAL_NAME"]
     pub fn i2v_GENERAL_NAME(
         method: *const X509V3_EXT_METHOD,
         gen: *mut GENERAL_NAME,
@@ -26871,19 +25277,19 @@ extern "C" {
     ) -> *mut stack_st_CONF_VALUE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_print"]
     pub fn GENERAL_NAME_print(out: *mut BIO, gen: *mut GENERAL_NAME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAMES_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAMES_new"]
     pub fn GENERAL_NAMES_new() -> *mut GENERAL_NAMES;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAMES_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAMES_free"]
     pub fn GENERAL_NAMES_free(a: *mut GENERAL_NAMES);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_GENERAL_NAMES"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_GENERAL_NAMES"]
     pub fn d2i_GENERAL_NAMES(
         a: *mut *mut GENERAL_NAMES,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -26891,18 +25297,18 @@ extern "C" {
     ) -> *mut GENERAL_NAMES;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_GENERAL_NAMES"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_GENERAL_NAMES"]
     pub fn i2d_GENERAL_NAMES(
         a: *mut GENERAL_NAMES,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAMES_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAMES_it"]
     pub static GENERAL_NAMES_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2v_GENERAL_NAMES"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2v_GENERAL_NAMES"]
     pub fn i2v_GENERAL_NAMES(
         method: *const X509V3_EXT_METHOD,
         gen: *mut GENERAL_NAMES,
@@ -26910,7 +25316,7 @@ extern "C" {
     ) -> *mut stack_st_CONF_VALUE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_v2i_GENERAL_NAMES"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_v2i_GENERAL_NAMES"]
     pub fn v2i_GENERAL_NAMES(
         method: *const X509V3_EXT_METHOD,
         ctx: *const X509V3_CTX,
@@ -26918,15 +25324,15 @@ extern "C" {
     ) -> *mut GENERAL_NAMES;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OTHERNAME_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OTHERNAME_new"]
     pub fn OTHERNAME_new() -> *mut OTHERNAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OTHERNAME_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OTHERNAME_free"]
     pub fn OTHERNAME_free(a: *mut OTHERNAME);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_OTHERNAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OTHERNAME"]
     pub fn d2i_OTHERNAME(
         a: *mut *mut OTHERNAME,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -26934,26 +25340,26 @@ extern "C" {
     ) -> *mut OTHERNAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_OTHERNAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OTHERNAME"]
     pub fn i2d_OTHERNAME(
         a: *const OTHERNAME,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OTHERNAME_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OTHERNAME_it"]
     pub static OTHERNAME_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EDIPARTYNAME_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EDIPARTYNAME_new"]
     pub fn EDIPARTYNAME_new() -> *mut EDIPARTYNAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EDIPARTYNAME_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EDIPARTYNAME_free"]
     pub fn EDIPARTYNAME_free(a: *mut EDIPARTYNAME);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_EDIPARTYNAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_EDIPARTYNAME"]
     pub fn d2i_EDIPARTYNAME(
         a: *mut *mut EDIPARTYNAME,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -26961,22 +25367,22 @@ extern "C" {
     ) -> *mut EDIPARTYNAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_EDIPARTYNAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_EDIPARTYNAME"]
     pub fn i2d_EDIPARTYNAME(
         a: *const EDIPARTYNAME,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EDIPARTYNAME_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EDIPARTYNAME_it"]
     pub static EDIPARTYNAME_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_OTHERNAME_cmp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OTHERNAME_cmp"]
     pub fn OTHERNAME_cmp(a: *mut OTHERNAME, b: *mut OTHERNAME) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_set0_value"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_set0_value"]
     pub fn GENERAL_NAME_set0_value(
         a: *mut GENERAL_NAME,
         type_: ::std::os::raw::c_int,
@@ -26984,14 +25390,14 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_get0_value"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_get0_value"]
     pub fn GENERAL_NAME_get0_value(
         a: *const GENERAL_NAME,
         ptype: *mut ::std::os::raw::c_int,
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_set0_othername"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_set0_othername"]
     pub fn GENERAL_NAME_set0_othername(
         gen: *mut GENERAL_NAME,
         oid: *mut ASN1_OBJECT,
@@ -26999,7 +25405,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_NAME_get0_otherName"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_NAME_get0_otherName"]
     pub fn GENERAL_NAME_get0_otherName(
         gen: *const GENERAL_NAME,
         poid: *mut *mut ASN1_OBJECT,
@@ -27007,14 +25413,14 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2s_ASN1_OCTET_STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2s_ASN1_OCTET_STRING"]
     pub fn i2s_ASN1_OCTET_STRING(
         method: *const X509V3_EXT_METHOD,
         ia5: *const ASN1_OCTET_STRING,
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_s2i_ASN1_OCTET_STRING"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_s2i_ASN1_OCTET_STRING"]
     pub fn s2i_ASN1_OCTET_STRING(
         method: *const X509V3_EXT_METHOD,
         ctx: *const X509V3_CTX,
@@ -27022,15 +25428,15 @@ extern "C" {
     ) -> *mut ASN1_OCTET_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EXTENDED_KEY_USAGE_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EXTENDED_KEY_USAGE_new"]
     pub fn EXTENDED_KEY_USAGE_new() -> *mut EXTENDED_KEY_USAGE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EXTENDED_KEY_USAGE_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EXTENDED_KEY_USAGE_free"]
     pub fn EXTENDED_KEY_USAGE_free(a: *mut EXTENDED_KEY_USAGE);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_EXTENDED_KEY_USAGE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_EXTENDED_KEY_USAGE"]
     pub fn d2i_EXTENDED_KEY_USAGE(
         a: *mut *mut EXTENDED_KEY_USAGE,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27038,33 +25444,33 @@ extern "C" {
     ) -> *mut EXTENDED_KEY_USAGE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_EXTENDED_KEY_USAGE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_EXTENDED_KEY_USAGE"]
     pub fn i2d_EXTENDED_KEY_USAGE(
         a: *const EXTENDED_KEY_USAGE,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_EXTENDED_KEY_USAGE_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_EXTENDED_KEY_USAGE_it"]
     pub static EXTENDED_KEY_USAGE_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2a_ACCESS_DESCRIPTION"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2a_ACCESS_DESCRIPTION"]
     pub fn i2a_ACCESS_DESCRIPTION(
         bp: *mut BIO,
         a: *const ACCESS_DESCRIPTION,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CERTIFICATEPOLICIES_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CERTIFICATEPOLICIES_new"]
     pub fn CERTIFICATEPOLICIES_new() -> *mut CERTIFICATEPOLICIES;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CERTIFICATEPOLICIES_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CERTIFICATEPOLICIES_free"]
     pub fn CERTIFICATEPOLICIES_free(a: *mut CERTIFICATEPOLICIES);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_CERTIFICATEPOLICIES"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_CERTIFICATEPOLICIES"]
     pub fn d2i_CERTIFICATEPOLICIES(
         a: *mut *mut CERTIFICATEPOLICIES,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27072,26 +25478,26 @@ extern "C" {
     ) -> *mut CERTIFICATEPOLICIES;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_CERTIFICATEPOLICIES"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_CERTIFICATEPOLICIES"]
     pub fn i2d_CERTIFICATEPOLICIES(
         a: *const CERTIFICATEPOLICIES,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CERTIFICATEPOLICIES_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CERTIFICATEPOLICIES_it"]
     pub static CERTIFICATEPOLICIES_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICYINFO_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICYINFO_new"]
     pub fn POLICYINFO_new() -> *mut POLICYINFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICYINFO_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICYINFO_free"]
     pub fn POLICYINFO_free(a: *mut POLICYINFO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_POLICYINFO"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_POLICYINFO"]
     pub fn d2i_POLICYINFO(
         a: *mut *mut POLICYINFO,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27099,26 +25505,26 @@ extern "C" {
     ) -> *mut POLICYINFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_POLICYINFO"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_POLICYINFO"]
     pub fn i2d_POLICYINFO(
         a: *const POLICYINFO,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICYINFO_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICYINFO_it"]
     pub static POLICYINFO_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICYQUALINFO_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICYQUALINFO_new"]
     pub fn POLICYQUALINFO_new() -> *mut POLICYQUALINFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICYQUALINFO_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICYQUALINFO_free"]
     pub fn POLICYQUALINFO_free(a: *mut POLICYQUALINFO);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_POLICYQUALINFO"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_POLICYQUALINFO"]
     pub fn d2i_POLICYQUALINFO(
         a: *mut *mut POLICYQUALINFO,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27126,26 +25532,26 @@ extern "C" {
     ) -> *mut POLICYQUALINFO;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_POLICYQUALINFO"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_POLICYQUALINFO"]
     pub fn i2d_POLICYQUALINFO(
         a: *const POLICYQUALINFO,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICYQUALINFO_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICYQUALINFO_it"]
     pub static POLICYQUALINFO_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_USERNOTICE_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_USERNOTICE_new"]
     pub fn USERNOTICE_new() -> *mut USERNOTICE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_USERNOTICE_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_USERNOTICE_free"]
     pub fn USERNOTICE_free(a: *mut USERNOTICE);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_USERNOTICE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_USERNOTICE"]
     pub fn d2i_USERNOTICE(
         a: *mut *mut USERNOTICE,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27153,26 +25559,26 @@ extern "C" {
     ) -> *mut USERNOTICE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_USERNOTICE"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_USERNOTICE"]
     pub fn i2d_USERNOTICE(
         a: *const USERNOTICE,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_USERNOTICE_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_USERNOTICE_it"]
     pub static USERNOTICE_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NOTICEREF_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NOTICEREF_new"]
     pub fn NOTICEREF_new() -> *mut NOTICEREF;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NOTICEREF_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NOTICEREF_free"]
     pub fn NOTICEREF_free(a: *mut NOTICEREF);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_NOTICEREF"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_NOTICEREF"]
     pub fn d2i_NOTICEREF(
         a: *mut *mut NOTICEREF,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27180,26 +25586,26 @@ extern "C" {
     ) -> *mut NOTICEREF;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_NOTICEREF"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_NOTICEREF"]
     pub fn i2d_NOTICEREF(
         a: *const NOTICEREF,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NOTICEREF_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NOTICEREF_it"]
     pub static NOTICEREF_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRL_DIST_POINTS_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRL_DIST_POINTS_new"]
     pub fn CRL_DIST_POINTS_new() -> *mut CRL_DIST_POINTS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRL_DIST_POINTS_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRL_DIST_POINTS_free"]
     pub fn CRL_DIST_POINTS_free(a: *mut CRL_DIST_POINTS);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_CRL_DIST_POINTS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_CRL_DIST_POINTS"]
     pub fn d2i_CRL_DIST_POINTS(
         a: *mut *mut CRL_DIST_POINTS,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27207,26 +25613,26 @@ extern "C" {
     ) -> *mut CRL_DIST_POINTS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_CRL_DIST_POINTS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_CRL_DIST_POINTS"]
     pub fn i2d_CRL_DIST_POINTS(
         a: *mut CRL_DIST_POINTS,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRL_DIST_POINTS_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRL_DIST_POINTS_it"]
     pub static CRL_DIST_POINTS_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIST_POINT_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIST_POINT_new"]
     pub fn DIST_POINT_new() -> *mut DIST_POINT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIST_POINT_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIST_POINT_free"]
     pub fn DIST_POINT_free(a: *mut DIST_POINT);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DIST_POINT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DIST_POINT"]
     pub fn d2i_DIST_POINT(
         a: *mut *mut DIST_POINT,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27234,26 +25640,26 @@ extern "C" {
     ) -> *mut DIST_POINT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DIST_POINT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DIST_POINT"]
     pub fn i2d_DIST_POINT(
         a: *mut DIST_POINT,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIST_POINT_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIST_POINT_it"]
     pub static DIST_POINT_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIST_POINT_NAME_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIST_POINT_NAME_new"]
     pub fn DIST_POINT_NAME_new() -> *mut DIST_POINT_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIST_POINT_NAME_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIST_POINT_NAME_free"]
     pub fn DIST_POINT_NAME_free(a: *mut DIST_POINT_NAME);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_DIST_POINT_NAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_DIST_POINT_NAME"]
     pub fn d2i_DIST_POINT_NAME(
         a: *mut *mut DIST_POINT_NAME,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27261,26 +25667,26 @@ extern "C" {
     ) -> *mut DIST_POINT_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_DIST_POINT_NAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_DIST_POINT_NAME"]
     pub fn i2d_DIST_POINT_NAME(
         a: *mut DIST_POINT_NAME,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIST_POINT_NAME_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIST_POINT_NAME_it"]
     pub static DIST_POINT_NAME_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ISSUING_DIST_POINT_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ISSUING_DIST_POINT_new"]
     pub fn ISSUING_DIST_POINT_new() -> *mut ISSUING_DIST_POINT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ISSUING_DIST_POINT_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ISSUING_DIST_POINT_free"]
     pub fn ISSUING_DIST_POINT_free(a: *mut ISSUING_DIST_POINT);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ISSUING_DIST_POINT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ISSUING_DIST_POINT"]
     pub fn d2i_ISSUING_DIST_POINT(
         a: *mut *mut ISSUING_DIST_POINT,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27288,38 +25694,38 @@ extern "C" {
     ) -> *mut ISSUING_DIST_POINT;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ISSUING_DIST_POINT"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ISSUING_DIST_POINT"]
     pub fn i2d_ISSUING_DIST_POINT(
         a: *mut ISSUING_DIST_POINT,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ISSUING_DIST_POINT_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ISSUING_DIST_POINT_it"]
     pub static ISSUING_DIST_POINT_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_DIST_POINT_set_dpname"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_DIST_POINT_set_dpname"]
     pub fn DIST_POINT_set_dpname(
         dpn: *mut DIST_POINT_NAME,
         iname: *mut X509_NAME,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NAME_CONSTRAINTS_check"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NAME_CONSTRAINTS_check"]
     pub fn NAME_CONSTRAINTS_check(x: *mut X509, nc: *mut NAME_CONSTRAINTS)
         -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ACCESS_DESCRIPTION_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ACCESS_DESCRIPTION_new"]
     pub fn ACCESS_DESCRIPTION_new() -> *mut ACCESS_DESCRIPTION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ACCESS_DESCRIPTION_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ACCESS_DESCRIPTION_free"]
     pub fn ACCESS_DESCRIPTION_free(a: *mut ACCESS_DESCRIPTION);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_ACCESS_DESCRIPTION"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_ACCESS_DESCRIPTION"]
     pub fn d2i_ACCESS_DESCRIPTION(
         a: *mut *mut ACCESS_DESCRIPTION,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27327,26 +25733,26 @@ extern "C" {
     ) -> *mut ACCESS_DESCRIPTION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_ACCESS_DESCRIPTION"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_ACCESS_DESCRIPTION"]
     pub fn i2d_ACCESS_DESCRIPTION(
         a: *mut ACCESS_DESCRIPTION,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ACCESS_DESCRIPTION_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ACCESS_DESCRIPTION_it"]
     pub static ACCESS_DESCRIPTION_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AUTHORITY_INFO_ACCESS_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AUTHORITY_INFO_ACCESS_new"]
     pub fn AUTHORITY_INFO_ACCESS_new() -> *mut AUTHORITY_INFO_ACCESS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AUTHORITY_INFO_ACCESS_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AUTHORITY_INFO_ACCESS_free"]
     pub fn AUTHORITY_INFO_ACCESS_free(a: *mut AUTHORITY_INFO_ACCESS);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_d2i_AUTHORITY_INFO_ACCESS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_AUTHORITY_INFO_ACCESS"]
     pub fn d2i_AUTHORITY_INFO_ACCESS(
         a: *mut *mut AUTHORITY_INFO_ACCESS,
         in_: *mut *const ::std::os::raw::c_uchar,
@@ -27354,70 +25760,70 @@ extern "C" {
     ) -> *mut AUTHORITY_INFO_ACCESS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2d_AUTHORITY_INFO_ACCESS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_AUTHORITY_INFO_ACCESS"]
     pub fn i2d_AUTHORITY_INFO_ACCESS(
         a: *mut AUTHORITY_INFO_ACCESS,
         out: *mut *mut ::std::os::raw::c_uchar,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_AUTHORITY_INFO_ACCESS_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_AUTHORITY_INFO_ACCESS_it"]
     pub static AUTHORITY_INFO_ACCESS_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICY_MAPPING_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICY_MAPPING_it"]
     pub static POLICY_MAPPING_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICY_MAPPING_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICY_MAPPING_new"]
     pub fn POLICY_MAPPING_new() -> *mut POLICY_MAPPING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICY_MAPPING_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICY_MAPPING_free"]
     pub fn POLICY_MAPPING_free(a: *mut POLICY_MAPPING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICY_MAPPINGS_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICY_MAPPINGS_it"]
     pub static POLICY_MAPPINGS_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_SUBTREE_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_SUBTREE_it"]
     pub static GENERAL_SUBTREE_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_SUBTREE_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_SUBTREE_new"]
     pub fn GENERAL_SUBTREE_new() -> *mut GENERAL_SUBTREE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_GENERAL_SUBTREE_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_GENERAL_SUBTREE_free"]
     pub fn GENERAL_SUBTREE_free(a: *mut GENERAL_SUBTREE);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NAME_CONSTRAINTS_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NAME_CONSTRAINTS_it"]
     pub static NAME_CONSTRAINTS_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NAME_CONSTRAINTS_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NAME_CONSTRAINTS_new"]
     pub fn NAME_CONSTRAINTS_new() -> *mut NAME_CONSTRAINTS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_NAME_CONSTRAINTS_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_NAME_CONSTRAINTS_free"]
     pub fn NAME_CONSTRAINTS_free(a: *mut NAME_CONSTRAINTS);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICY_CONSTRAINTS_new"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICY_CONSTRAINTS_new"]
     pub fn POLICY_CONSTRAINTS_new() -> *mut POLICY_CONSTRAINTS;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICY_CONSTRAINTS_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICY_CONSTRAINTS_free"]
     pub fn POLICY_CONSTRAINTS_free(a: *mut POLICY_CONSTRAINTS);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_POLICY_CONSTRAINTS_it"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_POLICY_CONSTRAINTS_it"]
     pub static POLICY_CONSTRAINTS_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_a2i_GENERAL_NAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_a2i_GENERAL_NAME"]
     pub fn a2i_GENERAL_NAME(
         out: *mut GENERAL_NAME,
         method: *const X509V3_EXT_METHOD,
@@ -27428,7 +25834,7 @@ extern "C" {
     ) -> *mut GENERAL_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_v2i_GENERAL_NAME"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_v2i_GENERAL_NAME"]
     pub fn v2i_GENERAL_NAME(
         method: *const X509V3_EXT_METHOD,
         ctx: *const X509V3_CTX,
@@ -27436,7 +25842,7 @@ extern "C" {
     ) -> *mut GENERAL_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_v2i_GENERAL_NAME_ex"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_v2i_GENERAL_NAME_ex"]
     pub fn v2i_GENERAL_NAME_ex(
         out: *mut GENERAL_NAME,
         method: *const X509V3_EXT_METHOD,
@@ -27446,7 +25852,7 @@ extern "C" {
     ) -> *mut GENERAL_NAME;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_conf_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_conf_free"]
     pub fn X509V3_conf_free(val: *mut CONF_VALUE);
 }
 #[repr(C)]
@@ -27544,7 +25950,7 @@ impl Default for v3_ext_ctx {
     }
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_set_ctx"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_set_ctx"]
     pub fn X509V3_set_ctx(
         ctx: *mut X509V3_CTX,
         issuer: *const X509,
@@ -27555,11 +25961,11 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_set_nconf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_set_nconf"]
     pub fn X509V3_set_nconf(ctx: *mut X509V3_CTX, conf: *const CONF);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_nconf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_nconf"]
     pub fn X509V3_EXT_nconf(
         conf: *const CONF,
         ctx: *const X509V3_CTX,
@@ -27568,7 +25974,7 @@ extern "C" {
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_nconf_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_nconf_nid"]
     pub fn X509V3_EXT_nconf_nid(
         conf: *const CONF,
         ctx: *const X509V3_CTX,
@@ -27577,7 +25983,7 @@ extern "C" {
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_conf_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_conf_nid"]
     pub fn X509V3_EXT_conf_nid(
         conf: *mut lhash_st_CONF_VALUE,
         ctx: *const X509V3_CTX,
@@ -27586,7 +25992,7 @@ extern "C" {
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_add_nconf_sk"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_add_nconf_sk"]
     pub fn X509V3_EXT_add_nconf_sk(
         conf: *const CONF,
         ctx: *const X509V3_CTX,
@@ -27595,7 +26001,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_add_nconf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_add_nconf"]
     pub fn X509V3_EXT_add_nconf(
         conf: *const CONF,
         ctx: *const X509V3_CTX,
@@ -27604,7 +26010,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_REQ_add_nconf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_REQ_add_nconf"]
     pub fn X509V3_EXT_REQ_add_nconf(
         conf: *const CONF,
         ctx: *const X509V3_CTX,
@@ -27613,7 +26019,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_CRL_add_nconf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_CRL_add_nconf"]
     pub fn X509V3_EXT_CRL_add_nconf(
         conf: *const CONF,
         ctx: *const X509V3_CTX,
@@ -27622,67 +26028,67 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2s_ASN1_INTEGER"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2s_ASN1_INTEGER"]
     pub fn i2s_ASN1_INTEGER(
         meth: *const X509V3_EXT_METHOD,
         aint: *const ASN1_INTEGER,
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_s2i_ASN1_INTEGER"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_s2i_ASN1_INTEGER"]
     pub fn s2i_ASN1_INTEGER(
         meth: *const X509V3_EXT_METHOD,
         value: *const ::std::os::raw::c_char,
     ) -> *mut ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_i2s_ASN1_ENUMERATED"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2s_ASN1_ENUMERATED"]
     pub fn i2s_ASN1_ENUMERATED(
         meth: *const X509V3_EXT_METHOD,
         aint: *const ASN1_ENUMERATED,
     ) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_add"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_add"]
     pub fn X509V3_EXT_add(ext: *mut X509V3_EXT_METHOD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_add_list"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_add_list"]
     pub fn X509V3_EXT_add_list(extlist: *mut X509V3_EXT_METHOD) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_add_alias"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_add_alias"]
     pub fn X509V3_EXT_add_alias(
         nid_to: ::std::os::raw::c_int,
         nid_from: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_cleanup"]
     pub fn X509V3_EXT_cleanup();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_get"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_get"]
     pub fn X509V3_EXT_get(ext: *const X509_EXTENSION) -> *const X509V3_EXT_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_get_nid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_get_nid"]
     pub fn X509V3_EXT_get_nid(nid: ::std::os::raw::c_int) -> *const X509V3_EXT_METHOD;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_add_standard_extensions"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_add_standard_extensions"]
     pub fn X509V3_add_standard_extensions() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_parse_list"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_parse_list"]
     pub fn X509V3_parse_list(line: *const ::std::os::raw::c_char) -> *mut stack_st_CONF_VALUE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_d2i"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_d2i"]
     pub fn X509V3_EXT_d2i(ext: *const X509_EXTENSION) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_get_d2i"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_get_d2i"]
     pub fn X509V3_get_d2i(
         extensions: *const stack_st_X509_EXTENSION,
         nid: ::std::os::raw::c_int,
@@ -27691,14 +26097,14 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_void;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_free"]
     pub fn X509V3_EXT_free(
         nid: ::std::os::raw::c_int,
         ext_data: *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_i2d"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_i2d"]
     pub fn X509V3_EXT_i2d(
         ext_nid: ::std::os::raw::c_int,
         crit: ::std::os::raw::c_int,
@@ -27706,7 +26112,7 @@ extern "C" {
     ) -> *mut X509_EXTENSION;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_add1_i2d"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_add1_i2d"]
     pub fn X509V3_add1_i2d(
         x: *mut *mut stack_st_X509_EXTENSION,
         nid: ::std::os::raw::c_int,
@@ -27716,7 +26122,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_val_prn"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_val_prn"]
     pub fn X509V3_EXT_val_prn(
         out: *mut BIO,
         val: *const stack_st_CONF_VALUE,
@@ -27725,7 +26131,7 @@ extern "C" {
     );
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_print"]
     pub fn X509V3_EXT_print(
         out: *mut BIO,
         ext: *const X509_EXTENSION,
@@ -27734,7 +26140,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_EXT_print_fp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_EXT_print_fp"]
     pub fn X509V3_EXT_print_fp(
         out: *mut FILE,
         ext: *const X509_EXTENSION,
@@ -27743,7 +26149,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509V3_extensions_print"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509V3_extensions_print"]
     pub fn X509V3_extensions_print(
         out: *mut BIO,
         title: *const ::std::os::raw::c_char,
@@ -27753,11 +26159,11 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_ca"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_ca"]
     pub fn X509_check_ca(x: *mut X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_purpose"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_purpose"]
     pub fn X509_check_purpose(
         x: *mut X509,
         id: ::std::os::raw::c_int,
@@ -27765,70 +26171,70 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_supported_extension"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_supported_extension"]
     pub fn X509_supported_extension(ex: *const X509_EXTENSION) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_set"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_set"]
     pub fn X509_PURPOSE_set(
         p: *mut ::std::os::raw::c_int,
         purpose: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_issued"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_issued"]
     pub fn X509_check_issued(issuer: *mut X509, subject: *mut X509) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_akid"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_akid"]
     pub fn X509_check_akid(issuer: *mut X509, akid: *mut AUTHORITY_KEYID) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_extension_flags"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_extension_flags"]
     pub fn X509_get_extension_flags(x: *mut X509) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_key_usage"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_key_usage"]
     pub fn X509_get_key_usage(x: *mut X509) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get_extended_key_usage"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get_extended_key_usage"]
     pub fn X509_get_extended_key_usage(x: *mut X509) -> u32;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_subject_key_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_subject_key_id"]
     pub fn X509_get0_subject_key_id(x509: *mut X509) -> *const ASN1_OCTET_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_authority_key_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_authority_key_id"]
     pub fn X509_get0_authority_key_id(x509: *mut X509) -> *const ASN1_OCTET_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_authority_issuer"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_authority_issuer"]
     pub fn X509_get0_authority_issuer(x509: *mut X509) -> *const GENERAL_NAMES;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get0_authority_serial"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get0_authority_serial"]
     pub fn X509_get0_authority_serial(x509: *mut X509) -> *const ASN1_INTEGER;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_get_count"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_get_count"]
     pub fn X509_PURPOSE_get_count() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_get0"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_get0"]
     pub fn X509_PURPOSE_get0(idx: ::std::os::raw::c_int) -> *mut X509_PURPOSE;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_get_by_sname"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_get_by_sname"]
     pub fn X509_PURPOSE_get_by_sname(sname: *mut ::std::os::raw::c_char) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_get_by_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_get_by_id"]
     pub fn X509_PURPOSE_get_by_id(id: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_add"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_add"]
     pub fn X509_PURPOSE_add(
         id: ::std::os::raw::c_int,
         trust: ::std::os::raw::c_int,
@@ -27846,43 +26252,43 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_get0_name"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_get0_name"]
     pub fn X509_PURPOSE_get0_name(xp: *const X509_PURPOSE) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_get0_sname"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_get0_sname"]
     pub fn X509_PURPOSE_get0_sname(xp: *const X509_PURPOSE) -> *mut ::std::os::raw::c_char;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_get_trust"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_get_trust"]
     pub fn X509_PURPOSE_get_trust(xp: *const X509_PURPOSE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_cleanup"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_cleanup"]
     pub fn X509_PURPOSE_cleanup();
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_PURPOSE_get_id"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_PURPOSE_get_id"]
     pub fn X509_PURPOSE_get_id(arg1: *const X509_PURPOSE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get1_email"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get1_email"]
     pub fn X509_get1_email(x: *mut X509) -> *mut stack_st_OPENSSL_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_REQ_get1_email"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_REQ_get1_email"]
     pub fn X509_REQ_get1_email(x: *mut X509_REQ) -> *mut stack_st_OPENSSL_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_email_free"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_email_free"]
     pub fn X509_email_free(sk: *mut stack_st_OPENSSL_STRING);
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_get1_ocsp"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_get1_ocsp"]
     pub fn X509_get1_ocsp(x: *mut X509) -> *mut stack_st_OPENSSL_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_host"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_host"]
     pub fn X509_check_host(
         x: *mut X509,
         chk: *const ::std::os::raw::c_char,
@@ -27892,7 +26298,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_email"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_email"]
     pub fn X509_check_email(
         x: *mut X509,
         chk: *const ::std::os::raw::c_char,
@@ -27901,7 +26307,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_ip"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_ip"]
     pub fn X509_check_ip(
         x: *mut X509,
         chk: *const ::std::os::raw::c_uchar,
@@ -27910,7 +26316,7 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_X509_check_ip_asc"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_X509_check_ip_asc"]
     pub fn X509_check_ip_asc(
         x: *mut X509,
         ipasc: *const ::std::os::raw::c_char,
@@ -27918,15 +26324,2062 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_a2i_IPADDRESS"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_a2i_IPADDRESS"]
     pub fn a2i_IPADDRESS(ipasc: *const ::std::os::raw::c_char) -> *mut ASN1_OCTET_STRING;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_a2i_IPADDRESS_NC"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_a2i_IPADDRESS_NC"]
     pub fn a2i_IPADDRESS_NC(ipasc: *const ::std::os::raw::c_char) -> *mut ASN1_OCTET_STRING;
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_cert_id_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_CERTID = ocsp_cert_id_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_responder_id_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_RESPID = ocsp_responder_id_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_signature_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_SIGNATURE = ocsp_signature_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_resp_bytes_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_RESPBYTES = ocsp_resp_bytes_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_revoked_info_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_REVOKEDINFO = ocsp_revoked_info_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_cert_status_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_CERTSTATUS = ocsp_cert_status_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_single_response_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_SINGLERESP = ocsp_single_response_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_response_data_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_RESPDATA = ocsp_response_data_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_response_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_RESPONSE = ocsp_response_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ocsp_basic_response_st {
+    _unused: [u8; 0],
+}
+pub type OCSP_BASICRESP = ocsp_basic_response_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct stack_st_OCSP_CERTID {
+    _unused: [u8; 0],
+}
+pub type sk_OCSP_CERTID_free_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *mut OCSP_CERTID)>;
+pub type sk_OCSP_CERTID_copy_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *const OCSP_CERTID) -> *mut OCSP_CERTID>;
+pub type sk_OCSP_CERTID_cmp_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut *const OCSP_CERTID,
+        arg2: *mut *const OCSP_CERTID,
+    ) -> ::std::os::raw::c_int,
+>;
+pub type sk_OCSP_CERTID_delete_if_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut OCSP_CERTID,
+        arg2: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int,
+>;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct stack_st_OCSP_RESPID {
+    _unused: [u8; 0],
+}
+pub type sk_OCSP_RESPID_free_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *mut OCSP_RESPID)>;
+pub type sk_OCSP_RESPID_copy_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *const OCSP_RESPID) -> *mut OCSP_RESPID>;
+pub type sk_OCSP_RESPID_cmp_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut *const OCSP_RESPID,
+        arg2: *mut *const OCSP_RESPID,
+    ) -> ::std::os::raw::c_int,
+>;
+pub type sk_OCSP_RESPID_delete_if_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut OCSP_RESPID,
+        arg2: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int,
+>;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct stack_st_OCSP_SINGLERESP {
+    _unused: [u8; 0],
+}
+pub type sk_OCSP_SINGLERESP_free_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *mut OCSP_SINGLERESP)>;
+pub type sk_OCSP_SINGLERESP_copy_func = ::std::option::Option<
+    unsafe extern "C" fn(arg1: *const OCSP_SINGLERESP) -> *mut OCSP_SINGLERESP,
+>;
+pub type sk_OCSP_SINGLERESP_cmp_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut *const OCSP_SINGLERESP,
+        arg2: *mut *const OCSP_SINGLERESP,
+    ) -> ::std::os::raw::c_int,
+>;
+pub type sk_OCSP_SINGLERESP_delete_if_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut OCSP_SINGLERESP,
+        arg2: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int,
+>;
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_CRYPTO_tls1_prf"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_SINGLERESP_new"]
+    pub fn OCSP_SINGLERESP_new() -> *mut OCSP_SINGLERESP;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_SINGLERESP_free"]
+    pub fn OCSP_SINGLERESP_free(a: *mut OCSP_SINGLERESP);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OCSP_SINGLERESP"]
+    pub fn d2i_OCSP_SINGLERESP(
+        a: *mut *mut OCSP_SINGLERESP,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_SINGLERESP;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OCSP_SINGLERESP"]
+    pub fn i2d_OCSP_SINGLERESP(
+        a: *mut OCSP_SINGLERESP,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_SINGLERESP_it"]
+    pub static OCSP_SINGLERESP_it: ASN1_ITEM;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_CERTSTATUS_new"]
+    pub fn OCSP_CERTSTATUS_new() -> *mut OCSP_CERTSTATUS;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_CERTSTATUS_free"]
+    pub fn OCSP_CERTSTATUS_free(a: *mut OCSP_CERTSTATUS);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OCSP_CERTSTATUS"]
+    pub fn d2i_OCSP_CERTSTATUS(
+        a: *mut *mut OCSP_CERTSTATUS,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_CERTSTATUS;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OCSP_CERTSTATUS"]
+    pub fn i2d_OCSP_CERTSTATUS(
+        a: *mut OCSP_CERTSTATUS,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_CERTSTATUS_it"]
+    pub static OCSP_CERTSTATUS_it: ASN1_ITEM;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_REVOKEDINFO_new"]
+    pub fn OCSP_REVOKEDINFO_new() -> *mut OCSP_REVOKEDINFO;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_REVOKEDINFO_free"]
+    pub fn OCSP_REVOKEDINFO_free(a: *mut OCSP_REVOKEDINFO);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OCSP_REVOKEDINFO"]
+    pub fn d2i_OCSP_REVOKEDINFO(
+        a: *mut *mut OCSP_REVOKEDINFO,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_REVOKEDINFO;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OCSP_REVOKEDINFO"]
+    pub fn i2d_OCSP_REVOKEDINFO(
+        a: *mut OCSP_REVOKEDINFO,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_REVOKEDINFO_it"]
+    pub static OCSP_REVOKEDINFO_it: ASN1_ITEM;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_BASICRESP_new"]
+    pub fn OCSP_BASICRESP_new() -> *mut OCSP_BASICRESP;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_BASICRESP_free"]
+    pub fn OCSP_BASICRESP_free(a: *mut OCSP_BASICRESP);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OCSP_BASICRESP"]
+    pub fn d2i_OCSP_BASICRESP(
+        a: *mut *mut OCSP_BASICRESP,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_BASICRESP;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OCSP_BASICRESP"]
+    pub fn i2d_OCSP_BASICRESP(
+        a: *mut OCSP_BASICRESP,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_BASICRESP_it"]
+    pub static OCSP_BASICRESP_it: ASN1_ITEM;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPDATA_new"]
+    pub fn OCSP_RESPDATA_new() -> *mut OCSP_RESPDATA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPDATA_free"]
+    pub fn OCSP_RESPDATA_free(a: *mut OCSP_RESPDATA);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OCSP_RESPDATA"]
+    pub fn d2i_OCSP_RESPDATA(
+        a: *mut *mut OCSP_RESPDATA,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_RESPDATA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OCSP_RESPDATA"]
+    pub fn i2d_OCSP_RESPDATA(
+        a: *mut OCSP_RESPDATA,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPDATA_it"]
+    pub static OCSP_RESPDATA_it: ASN1_ITEM;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPID_new"]
+    pub fn OCSP_RESPID_new() -> *mut OCSP_RESPID;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPID_free"]
+    pub fn OCSP_RESPID_free(a: *mut OCSP_RESPID);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OCSP_RESPID"]
+    pub fn d2i_OCSP_RESPID(
+        a: *mut *mut OCSP_RESPID,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_RESPID;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OCSP_RESPID"]
+    pub fn i2d_OCSP_RESPID(
+        a: *mut OCSP_RESPID,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPID_it"]
+    pub static OCSP_RESPID_it: ASN1_ITEM;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPONSE_new"]
+    pub fn OCSP_RESPONSE_new() -> *mut OCSP_RESPONSE;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPONSE_free"]
+    pub fn OCSP_RESPONSE_free(a: *mut OCSP_RESPONSE);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OCSP_RESPONSE"]
+    pub fn d2i_OCSP_RESPONSE(
+        a: *mut *mut OCSP_RESPONSE,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_RESPONSE;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OCSP_RESPONSE"]
+    pub fn i2d_OCSP_RESPONSE(
+        a: *mut OCSP_RESPONSE,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPONSE_it"]
+    pub static OCSP_RESPONSE_it: ASN1_ITEM;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPBYTES_new"]
+    pub fn OCSP_RESPBYTES_new() -> *mut OCSP_RESPBYTES;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPBYTES_free"]
+    pub fn OCSP_RESPBYTES_free(a: *mut OCSP_RESPBYTES);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OCSP_RESPBYTES"]
+    pub fn d2i_OCSP_RESPBYTES(
+        a: *mut *mut OCSP_RESPBYTES,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_RESPBYTES;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OCSP_RESPBYTES"]
+    pub fn i2d_OCSP_RESPBYTES(
+        a: *mut OCSP_RESPBYTES,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_RESPBYTES_it"]
+    pub static OCSP_RESPBYTES_it: ASN1_ITEM;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_CERTID_new"]
+    pub fn OCSP_CERTID_new() -> *mut OCSP_CERTID;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_CERTID_free"]
+    pub fn OCSP_CERTID_free(a: *mut OCSP_CERTID);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_OCSP_CERTID"]
+    pub fn d2i_OCSP_CERTID(
+        a: *mut *mut OCSP_CERTID,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_CERTID;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_OCSP_CERTID"]
+    pub fn i2d_OCSP_CERTID(
+        a: *mut OCSP_CERTID,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_CERTID_it"]
+    pub static OCSP_CERTID_it: ASN1_ITEM;
+}
+extern "C" {
+    pub fn OCSP_SIGNATURE_new() -> *mut OCSP_SIGNATURE;
+}
+extern "C" {
+    pub fn OCSP_SIGNATURE_free(a: *mut OCSP_SIGNATURE);
+}
+extern "C" {
+    pub fn d2i_OCSP_SIGNATURE(
+        a: *mut *mut OCSP_SIGNATURE,
+        in_: *mut *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> *mut OCSP_SIGNATURE;
+}
+extern "C" {
+    pub fn i2d_OCSP_SIGNATURE(
+        a: *mut OCSP_SIGNATURE,
+        out: *mut *mut ::std::os::raw::c_uchar,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub static OCSP_SIGNATURE_it: ASN1_ITEM;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_response_status"]
+    pub fn OCSP_response_status(resp: *mut OCSP_RESPONSE) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_response_get1_basic"]
+    pub fn OCSP_response_get1_basic(resp: *mut OCSP_RESPONSE) -> *mut OCSP_BASICRESP;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_resp_find_status"]
+    pub fn OCSP_resp_find_status(
+        bs: *mut OCSP_BASICRESP,
+        id: *mut OCSP_CERTID,
+        status: *mut ::std::os::raw::c_int,
+        reason: *mut ::std::os::raw::c_int,
+        revtime: *mut *mut ASN1_GENERALIZEDTIME,
+        thisupd: *mut *mut ASN1_GENERALIZEDTIME,
+        nextupd: *mut *mut ASN1_GENERALIZEDTIME,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_basic_verify"]
+    pub fn OCSP_basic_verify(
+        bs: *mut OCSP_BASICRESP,
+        certs: *mut stack_st_X509,
+        st: *mut X509_STORE,
+        flags: ::std::os::raw::c_ulong,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_OCSP_cert_to_id"]
+    pub fn OCSP_cert_to_id(
+        dgst: *const EVP_MD,
+        subject: *const X509,
+        issuer: *const X509,
+    ) -> *mut OCSP_CERTID;
+}
+pub type pem_password_cb = ::std::option::Option<
+    unsafe extern "C" fn(
+        buf: *mut ::std::os::raw::c_char,
+        size: ::std::os::raw::c_int,
+        rwflag: ::std::os::raw::c_int,
+        userdata: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int,
+>;
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_get_EVP_CIPHER_INFO"]
+    pub fn PEM_get_EVP_CIPHER_INFO(
+        header: *mut ::std::os::raw::c_char,
+        cipher: *mut EVP_CIPHER_INFO,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_do_header"]
+    pub fn PEM_do_header(
+        cipher: *mut EVP_CIPHER_INFO,
+        data: *mut ::std::os::raw::c_uchar,
+        len: *mut ::std::os::raw::c_long,
+        callback: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio"]
+    pub fn PEM_read_bio(
+        bp: *mut BIO,
+        name: *mut *mut ::std::os::raw::c_char,
+        header: *mut *mut ::std::os::raw::c_char,
+        data: *mut *mut ::std::os::raw::c_uchar,
+        len: *mut ::std::os::raw::c_long,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio"]
+    pub fn PEM_write_bio(
+        bp: *mut BIO,
+        name: *const ::std::os::raw::c_char,
+        hdr: *const ::std::os::raw::c_char,
+        data: *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_bytes_read_bio"]
+    pub fn PEM_bytes_read_bio(
+        pdata: *mut *mut ::std::os::raw::c_uchar,
+        plen: *mut ::std::os::raw::c_long,
+        pnm: *mut *mut ::std::os::raw::c_char,
+        name: *const ::std::os::raw::c_char,
+        bp: *mut BIO,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_ASN1_read_bio"]
+    pub fn PEM_ASN1_read_bio(
+        d2i: d2i_of_void,
+        name: *const ::std::os::raw::c_char,
+        bp: *mut BIO,
+        x: *mut *mut ::std::os::raw::c_void,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut ::std::os::raw::c_void;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_ASN1_write_bio"]
+    pub fn PEM_ASN1_write_bio(
+        i2d: i2d_of_void,
+        name: *const ::std::os::raw::c_char,
+        bp: *mut BIO,
+        x: *mut ::std::os::raw::c_void,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_X509_INFO_read_bio"]
+    pub fn PEM_X509_INFO_read_bio(
+        bp: *mut BIO,
+        sk: *mut stack_st_X509_INFO,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut stack_st_X509_INFO;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read"]
+    pub fn PEM_read(
+        fp: *mut FILE,
+        name: *mut *mut ::std::os::raw::c_char,
+        header: *mut *mut ::std::os::raw::c_char,
+        data: *mut *mut ::std::os::raw::c_uchar,
+        len: *mut ::std::os::raw::c_long,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write"]
+    pub fn PEM_write(
+        fp: *mut FILE,
+        name: *const ::std::os::raw::c_char,
+        hdr: *const ::std::os::raw::c_char,
+        data: *const ::std::os::raw::c_uchar,
+        len: ::std::os::raw::c_long,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_ASN1_read"]
+    pub fn PEM_ASN1_read(
+        d2i: d2i_of_void,
+        name: *const ::std::os::raw::c_char,
+        fp: *mut FILE,
+        x: *mut *mut ::std::os::raw::c_void,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut ::std::os::raw::c_void;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_ASN1_write"]
+    pub fn PEM_ASN1_write(
+        i2d: i2d_of_void,
+        name: *const ::std::os::raw::c_char,
+        fp: *mut FILE,
+        x: *mut ::std::os::raw::c_void,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        callback: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_X509_INFO_read"]
+    pub fn PEM_X509_INFO_read(
+        fp: *mut FILE,
+        sk: *mut stack_st_X509_INFO,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut stack_st_X509_INFO;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_def_callback"]
+    pub fn PEM_def_callback(
+        buf: *mut ::std::os::raw::c_char,
+        size: ::std::os::raw::c_int,
+        rwflag: ::std::os::raw::c_int,
+        userdata: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_proc_type"]
+    pub fn PEM_proc_type(buf: *mut ::std::os::raw::c_char, type_: ::std::os::raw::c_int);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_dek_info"]
+    pub fn PEM_dek_info(
+        buf: *mut ::std::os::raw::c_char,
+        type_: *const ::std::os::raw::c_char,
+        len: ::std::os::raw::c_int,
+        str_: *mut ::std::os::raw::c_char,
+    );
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_X509"]
+    pub fn PEM_read_bio_X509(
+        bp: *mut BIO,
+        x: *mut *mut X509,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_X509"]
+    pub fn PEM_read_X509(
+        fp: *mut FILE,
+        x: *mut *mut X509,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_X509"]
+    pub fn PEM_write_bio_X509(bp: *mut BIO, x: *mut X509) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_X509"]
+    pub fn PEM_write_X509(fp: *mut FILE, x: *mut X509) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_X509_AUX"]
+    pub fn PEM_read_bio_X509_AUX(
+        bp: *mut BIO,
+        x: *mut *mut X509,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_X509_AUX"]
+    pub fn PEM_read_X509_AUX(
+        fp: *mut FILE,
+        x: *mut *mut X509,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_X509_AUX"]
+    pub fn PEM_write_bio_X509_AUX(bp: *mut BIO, x: *mut X509) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_X509_AUX"]
+    pub fn PEM_write_X509_AUX(fp: *mut FILE, x: *mut X509) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_X509_REQ"]
+    pub fn PEM_read_bio_X509_REQ(
+        bp: *mut BIO,
+        x: *mut *mut X509_REQ,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509_REQ;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_X509_REQ"]
+    pub fn PEM_read_X509_REQ(
+        fp: *mut FILE,
+        x: *mut *mut X509_REQ,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509_REQ;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_X509_REQ"]
+    pub fn PEM_write_bio_X509_REQ(bp: *mut BIO, x: *mut X509_REQ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_X509_REQ"]
+    pub fn PEM_write_X509_REQ(fp: *mut FILE, x: *mut X509_REQ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_X509_REQ_NEW"]
+    pub fn PEM_write_bio_X509_REQ_NEW(bp: *mut BIO, x: *mut X509_REQ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_X509_REQ_NEW"]
+    pub fn PEM_write_X509_REQ_NEW(fp: *mut FILE, x: *mut X509_REQ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_X509_CRL"]
+    pub fn PEM_read_bio_X509_CRL(
+        bp: *mut BIO,
+        x: *mut *mut X509_CRL,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509_CRL;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_X509_CRL"]
+    pub fn PEM_read_X509_CRL(
+        fp: *mut FILE,
+        x: *mut *mut X509_CRL,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509_CRL;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_X509_CRL"]
+    pub fn PEM_write_bio_X509_CRL(bp: *mut BIO, x: *mut X509_CRL) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_X509_CRL"]
+    pub fn PEM_write_X509_CRL(fp: *mut FILE, x: *mut X509_CRL) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_PKCS7"]
+    pub fn PEM_read_bio_PKCS7(
+        bp: *mut BIO,
+        x: *mut *mut PKCS7,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut PKCS7;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_PKCS7"]
+    pub fn PEM_read_PKCS7(
+        fp: *mut FILE,
+        x: *mut *mut PKCS7,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut PKCS7;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_PKCS7"]
+    pub fn PEM_write_bio_PKCS7(bp: *mut BIO, x: *mut PKCS7) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_PKCS7"]
+    pub fn PEM_write_PKCS7(fp: *mut FILE, x: *mut PKCS7) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_PKCS8"]
+    pub fn PEM_read_bio_PKCS8(
+        bp: *mut BIO,
+        x: *mut *mut X509_SIG,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509_SIG;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_PKCS8"]
+    pub fn PEM_read_PKCS8(
+        fp: *mut FILE,
+        x: *mut *mut X509_SIG,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut X509_SIG;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_PKCS8"]
+    pub fn PEM_write_bio_PKCS8(bp: *mut BIO, x: *mut X509_SIG) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_PKCS8"]
+    pub fn PEM_write_PKCS8(fp: *mut FILE, x: *mut X509_SIG) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_PKCS8_PRIV_KEY_INFO"]
+    pub fn PEM_read_bio_PKCS8_PRIV_KEY_INFO(
+        bp: *mut BIO,
+        x: *mut *mut PKCS8_PRIV_KEY_INFO,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut PKCS8_PRIV_KEY_INFO;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_PKCS8_PRIV_KEY_INFO"]
+    pub fn PEM_read_PKCS8_PRIV_KEY_INFO(
+        fp: *mut FILE,
+        x: *mut *mut PKCS8_PRIV_KEY_INFO,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut PKCS8_PRIV_KEY_INFO;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_PKCS8_PRIV_KEY_INFO"]
+    pub fn PEM_write_bio_PKCS8_PRIV_KEY_INFO(
+        bp: *mut BIO,
+        x: *mut PKCS8_PRIV_KEY_INFO,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_PKCS8_PRIV_KEY_INFO"]
+    pub fn PEM_write_PKCS8_PRIV_KEY_INFO(
+        fp: *mut FILE,
+        x: *mut PKCS8_PRIV_KEY_INFO,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_RSAPrivateKey"]
+    pub fn PEM_read_bio_RSAPrivateKey(
+        bp: *mut BIO,
+        x: *mut *mut RSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut RSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_RSAPrivateKey"]
+    pub fn PEM_read_RSAPrivateKey(
+        fp: *mut FILE,
+        x: *mut *mut RSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut RSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_RSAPrivateKey"]
+    pub fn PEM_write_bio_RSAPrivateKey(
+        bp: *mut BIO,
+        x: *mut RSA,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_RSAPrivateKey"]
+    pub fn PEM_write_RSAPrivateKey(
+        fp: *mut FILE,
+        x: *mut RSA,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_RSAPublicKey"]
+    pub fn PEM_read_bio_RSAPublicKey(
+        bp: *mut BIO,
+        x: *mut *mut RSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut RSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_RSAPublicKey"]
+    pub fn PEM_read_RSAPublicKey(
+        fp: *mut FILE,
+        x: *mut *mut RSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut RSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_RSAPublicKey"]
+    pub fn PEM_write_bio_RSAPublicKey(bp: *mut BIO, x: *const RSA) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_RSAPublicKey"]
+    pub fn PEM_write_RSAPublicKey(fp: *mut FILE, x: *const RSA) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_RSA_PUBKEY"]
+    pub fn PEM_read_bio_RSA_PUBKEY(
+        bp: *mut BIO,
+        x: *mut *mut RSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut RSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_RSA_PUBKEY"]
+    pub fn PEM_read_RSA_PUBKEY(
+        fp: *mut FILE,
+        x: *mut *mut RSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut RSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_RSA_PUBKEY"]
+    pub fn PEM_write_bio_RSA_PUBKEY(bp: *mut BIO, x: *mut RSA) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_RSA_PUBKEY"]
+    pub fn PEM_write_RSA_PUBKEY(fp: *mut FILE, x: *mut RSA) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_DSAPrivateKey"]
+    pub fn PEM_read_bio_DSAPrivateKey(
+        bp: *mut BIO,
+        x: *mut *mut DSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut DSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_DSAPrivateKey"]
+    pub fn PEM_read_DSAPrivateKey(
+        fp: *mut FILE,
+        x: *mut *mut DSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut DSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_DSAPrivateKey"]
+    pub fn PEM_write_bio_DSAPrivateKey(
+        bp: *mut BIO,
+        x: *mut DSA,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_DSAPrivateKey"]
+    pub fn PEM_write_DSAPrivateKey(
+        fp: *mut FILE,
+        x: *mut DSA,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_DSA_PUBKEY"]
+    pub fn PEM_read_bio_DSA_PUBKEY(
+        bp: *mut BIO,
+        x: *mut *mut DSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut DSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_DSA_PUBKEY"]
+    pub fn PEM_read_DSA_PUBKEY(
+        fp: *mut FILE,
+        x: *mut *mut DSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut DSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_DSA_PUBKEY"]
+    pub fn PEM_write_bio_DSA_PUBKEY(bp: *mut BIO, x: *mut DSA) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_DSA_PUBKEY"]
+    pub fn PEM_write_DSA_PUBKEY(fp: *mut FILE, x: *mut DSA) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_DSAparams"]
+    pub fn PEM_read_bio_DSAparams(
+        bp: *mut BIO,
+        x: *mut *mut DSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut DSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_DSAparams"]
+    pub fn PEM_read_DSAparams(
+        fp: *mut FILE,
+        x: *mut *mut DSA,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut DSA;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_DSAparams"]
+    pub fn PEM_write_bio_DSAparams(bp: *mut BIO, x: *const DSA) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_DSAparams"]
+    pub fn PEM_write_DSAparams(fp: *mut FILE, x: *const DSA) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_ECPrivateKey"]
+    pub fn PEM_read_bio_ECPrivateKey(
+        bp: *mut BIO,
+        x: *mut *mut EC_KEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EC_KEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_ECPrivateKey"]
+    pub fn PEM_read_ECPrivateKey(
+        fp: *mut FILE,
+        x: *mut *mut EC_KEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EC_KEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_ECPrivateKey"]
+    pub fn PEM_write_bio_ECPrivateKey(
+        bp: *mut BIO,
+        x: *mut EC_KEY,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_ECPrivateKey"]
+    pub fn PEM_write_ECPrivateKey(
+        fp: *mut FILE,
+        x: *mut EC_KEY,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_EC_PUBKEY"]
+    pub fn PEM_read_bio_EC_PUBKEY(
+        bp: *mut BIO,
+        x: *mut *mut EC_KEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EC_KEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_EC_PUBKEY"]
+    pub fn PEM_read_EC_PUBKEY(
+        fp: *mut FILE,
+        x: *mut *mut EC_KEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EC_KEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_EC_PUBKEY"]
+    pub fn PEM_write_bio_EC_PUBKEY(bp: *mut BIO, x: *mut EC_KEY) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_EC_PUBKEY"]
+    pub fn PEM_write_EC_PUBKEY(fp: *mut FILE, x: *mut EC_KEY) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_DHparams"]
+    pub fn PEM_read_bio_DHparams(
+        bp: *mut BIO,
+        x: *mut *mut DH,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut DH;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_DHparams"]
+    pub fn PEM_read_DHparams(
+        fp: *mut FILE,
+        x: *mut *mut DH,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut DH;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_DHparams"]
+    pub fn PEM_write_bio_DHparams(bp: *mut BIO, x: *const DH) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_DHparams"]
+    pub fn PEM_write_DHparams(fp: *mut FILE, x: *const DH) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_PrivateKey"]
+    pub fn PEM_read_bio_PrivateKey(
+        bp: *mut BIO,
+        x: *mut *mut EVP_PKEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EVP_PKEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_PrivateKey"]
+    pub fn PEM_read_PrivateKey(
+        fp: *mut FILE,
+        x: *mut *mut EVP_PKEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EVP_PKEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_PrivateKey"]
+    pub fn PEM_write_bio_PrivateKey(
+        bp: *mut BIO,
+        x: *mut EVP_PKEY,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_PrivateKey"]
+    pub fn PEM_write_PrivateKey(
+        fp: *mut FILE,
+        x: *mut EVP_PKEY,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_uchar,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_bio_PUBKEY"]
+    pub fn PEM_read_bio_PUBKEY(
+        bp: *mut BIO,
+        x: *mut *mut EVP_PKEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EVP_PKEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_read_PUBKEY"]
+    pub fn PEM_read_PUBKEY(
+        fp: *mut FILE,
+        x: *mut *mut EVP_PKEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EVP_PKEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_PUBKEY"]
+    pub fn PEM_write_bio_PUBKEY(bp: *mut BIO, x: *mut EVP_PKEY) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_PUBKEY"]
+    pub fn PEM_write_PUBKEY(fp: *mut FILE, x: *mut EVP_PKEY) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_PKCS8PrivateKey_nid"]
+    pub fn PEM_write_bio_PKCS8PrivateKey_nid(
+        bp: *mut BIO,
+        x: *mut EVP_PKEY,
+        nid: ::std::os::raw::c_int,
+        kstr: *mut ::std::os::raw::c_char,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_bio_PKCS8PrivateKey"]
+    pub fn PEM_write_bio_PKCS8PrivateKey(
+        arg1: *mut BIO,
+        arg2: *mut EVP_PKEY,
+        arg3: *const EVP_CIPHER,
+        arg4: *mut ::std::os::raw::c_char,
+        arg5: ::std::os::raw::c_int,
+        arg6: pem_password_cb,
+        arg7: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8PrivateKey_bio"]
+    pub fn i2d_PKCS8PrivateKey_bio(
+        bp: *mut BIO,
+        x: *mut EVP_PKEY,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_char,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8PrivateKey_nid_bio"]
+    pub fn i2d_PKCS8PrivateKey_nid_bio(
+        bp: *mut BIO,
+        x: *mut EVP_PKEY,
+        nid: ::std::os::raw::c_int,
+        kstr: *mut ::std::os::raw::c_char,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS8PrivateKey_bio"]
+    pub fn d2i_PKCS8PrivateKey_bio(
+        bp: *mut BIO,
+        x: *mut *mut EVP_PKEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EVP_PKEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8PrivateKey_fp"]
+    pub fn i2d_PKCS8PrivateKey_fp(
+        fp: *mut FILE,
+        x: *mut EVP_PKEY,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_char,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS8PrivateKey_nid_fp"]
+    pub fn i2d_PKCS8PrivateKey_nid_fp(
+        fp: *mut FILE,
+        x: *mut EVP_PKEY,
+        nid: ::std::os::raw::c_int,
+        kstr: *mut ::std::os::raw::c_char,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_PKCS8PrivateKey_nid"]
+    pub fn PEM_write_PKCS8PrivateKey_nid(
+        fp: *mut FILE,
+        x: *mut EVP_PKEY,
+        nid: ::std::os::raw::c_int,
+        kstr: *mut ::std::os::raw::c_char,
+        klen: ::std::os::raw::c_int,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS8PrivateKey_fp"]
+    pub fn d2i_PKCS8PrivateKey_fp(
+        fp: *mut FILE,
+        x: *mut *mut EVP_PKEY,
+        cb: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> *mut EVP_PKEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PEM_write_PKCS8PrivateKey"]
+    pub fn PEM_write_PKCS8PrivateKey(
+        fp: *mut FILE,
+        x: *mut EVP_PKEY,
+        enc: *const EVP_CIPHER,
+        kstr: *mut ::std::os::raw::c_char,
+        klen: ::std::os::raw::c_int,
+        cd: pem_password_cb,
+        u: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS8_encrypt"]
+    pub fn PKCS8_encrypt(
+        pbe_nid: ::std::os::raw::c_int,
+        cipher: *const EVP_CIPHER,
+        pass: *const ::std::os::raw::c_char,
+        pass_len: ::std::os::raw::c_int,
+        salt: *const u8,
+        salt_len: usize,
+        iterations: ::std::os::raw::c_int,
+        p8inf: *mut PKCS8_PRIV_KEY_INFO,
+    ) -> *mut X509_SIG;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS8_marshal_encrypted_private_key"]
+    pub fn PKCS8_marshal_encrypted_private_key(
+        out: *mut CBB,
+        pbe_nid: ::std::os::raw::c_int,
+        cipher: *const EVP_CIPHER,
+        pass: *const ::std::os::raw::c_char,
+        pass_len: usize,
+        salt: *const u8,
+        salt_len: usize,
+        iterations: ::std::os::raw::c_int,
+        pkey: *const EVP_PKEY,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS8_decrypt"]
+    pub fn PKCS8_decrypt(
+        pkcs8: *mut X509_SIG,
+        pass: *const ::std::os::raw::c_char,
+        pass_len: ::std::os::raw::c_int,
+    ) -> *mut PKCS8_PRIV_KEY_INFO;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS8_parse_encrypted_private_key"]
+    pub fn PKCS8_parse_encrypted_private_key(
+        cbs: *mut CBS,
+        pass: *const ::std::os::raw::c_char,
+        pass_len: usize,
+    ) -> *mut EVP_PKEY;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS12_get_key_and_certs"]
+    pub fn PKCS12_get_key_and_certs(
+        out_key: *mut *mut EVP_PKEY,
+        out_certs: *mut stack_st_X509,
+        in_: *mut CBS,
+        password: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS12_PBE_add"]
+    pub fn PKCS12_PBE_add();
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS12"]
+    pub fn d2i_PKCS12(
+        out_p12: *mut *mut PKCS12,
+        ber_bytes: *mut *const u8,
+        ber_len: usize,
+    ) -> *mut PKCS12;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS12_bio"]
+    pub fn d2i_PKCS12_bio(bio: *mut BIO, out_p12: *mut *mut PKCS12) -> *mut PKCS12;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_d2i_PKCS12_fp"]
+    pub fn d2i_PKCS12_fp(fp: *mut FILE, out_p12: *mut *mut PKCS12) -> *mut PKCS12;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS12"]
+    pub fn i2d_PKCS12(p12: *const PKCS12, out: *mut *mut u8) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS12_bio"]
+    pub fn i2d_PKCS12_bio(bio: *mut BIO, p12: *const PKCS12) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_i2d_PKCS12_fp"]
+    pub fn i2d_PKCS12_fp(fp: *mut FILE, p12: *const PKCS12) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS12_parse"]
+    pub fn PKCS12_parse(
+        p12: *const PKCS12,
+        password: *const ::std::os::raw::c_char,
+        out_pkey: *mut *mut EVP_PKEY,
+        out_cert: *mut *mut X509,
+        out_ca_certs: *mut *mut stack_st_X509,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS12_verify_mac"]
+    pub fn PKCS12_verify_mac(
+        p12: *const PKCS12,
+        password: *const ::std::os::raw::c_char,
+        password_len: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS12_create"]
+    pub fn PKCS12_create(
+        password: *const ::std::os::raw::c_char,
+        name: *const ::std::os::raw::c_char,
+        pkey: *const EVP_PKEY,
+        cert: *mut X509,
+        chain: *const stack_st_X509,
+        key_nid: ::std::os::raw::c_int,
+        cert_nid: ::std::os::raw::c_int,
+        iterations: ::std::os::raw::c_int,
+        mac_iterations: ::std::os::raw::c_int,
+        key_type: ::std::os::raw::c_int,
+    ) -> *mut PKCS12;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_PKCS12_free"]
+    pub fn PKCS12_free(p12: *mut PKCS12);
+}
+pub type poly1305_state = [u8; 512usize];
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_poly1305_init"]
+    pub fn CRYPTO_poly1305_init(state: *mut poly1305_state, key: *const u8);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_poly1305_update"]
+    pub fn CRYPTO_poly1305_update(state: *mut poly1305_state, in_: *const u8, in_len: usize);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_poly1305_finish"]
+    pub fn CRYPTO_poly1305_finish(state: *mut poly1305_state, mac: *mut u8);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_bytes"]
+    pub fn RAND_bytes(buf: *mut u8, len: usize) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_get_system_entropy_for_custom_prng"]
+    pub fn RAND_get_system_entropy_for_custom_prng(buf: *mut u8, len: usize);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_cleanup"]
+    pub fn RAND_cleanup();
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_enable_fork_unsafe_buffering"]
+    pub fn RAND_enable_fork_unsafe_buffering(fd: ::std::os::raw::c_int);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_pseudo_bytes"]
+    pub fn RAND_pseudo_bytes(buf: *mut u8, len: usize) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_seed"]
+    pub fn RAND_seed(buf: *const ::std::os::raw::c_void, num: ::std::os::raw::c_int);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_load_file"]
+    pub fn RAND_load_file(
+        path: *const ::std::os::raw::c_char,
+        num: ::std::os::raw::c_long,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_file_name"]
+    pub fn RAND_file_name(
+        buf: *mut ::std::os::raw::c_char,
+        num: usize,
+    ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_add"]
+    pub fn RAND_add(buf: *const ::std::os::raw::c_void, num: ::std::os::raw::c_int, entropy: f64);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_egd"]
+    pub fn RAND_egd(arg1: *const ::std::os::raw::c_char) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_poll"]
+    pub fn RAND_poll() -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_status"]
+    pub fn RAND_status() -> ::std::os::raw::c_int;
+}
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+pub struct rand_meth_st {
+    pub seed: ::std::option::Option<
+        unsafe extern "C" fn(buf: *const ::std::os::raw::c_void, num: ::std::os::raw::c_int),
+    >,
+    pub bytes: ::std::option::Option<
+        unsafe extern "C" fn(buf: *mut u8, num: usize) -> ::std::os::raw::c_int,
+    >,
+    pub cleanup: ::std::option::Option<unsafe extern "C" fn()>,
+    pub add: ::std::option::Option<
+        unsafe extern "C" fn(
+            buf: *const ::std::os::raw::c_void,
+            num: ::std::os::raw::c_int,
+            entropy: f64,
+        ),
+    >,
+    pub pseudorand: ::std::option::Option<
+        unsafe extern "C" fn(buf: *mut u8, num: usize) -> ::std::os::raw::c_int,
+    >,
+    pub status: ::std::option::Option<unsafe extern "C" fn() -> ::std::os::raw::c_int>,
+}
+#[test]
+fn bindgen_test_layout_rand_meth_st() {
+    const UNINIT: ::std::mem::MaybeUninit<rand_meth_st> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<rand_meth_st>(),
+        48usize,
+        concat!("Size of: ", stringify!(rand_meth_st))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<rand_meth_st>(),
+        8usize,
+        concat!("Alignment of ", stringify!(rand_meth_st))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).seed) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(rand_meth_st),
+            "::",
+            stringify!(seed)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).bytes) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(rand_meth_st),
+            "::",
+            stringify!(bytes)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).cleanup) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(rand_meth_st),
+            "::",
+            stringify!(cleanup)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).add) as usize - ptr as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(rand_meth_st),
+            "::",
+            stringify!(add)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).pseudorand) as usize - ptr as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(rand_meth_st),
+            "::",
+            stringify!(pseudorand)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).status) as usize - ptr as usize },
+        40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(rand_meth_st),
+            "::",
+            stringify!(status)
+        )
+    );
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_SSLeay"]
+    pub fn RAND_SSLeay() -> *mut RAND_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_OpenSSL"]
+    pub fn RAND_OpenSSL() -> *mut RAND_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_get_rand_method"]
+    pub fn RAND_get_rand_method() -> *const RAND_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RAND_set_rand_method"]
+    pub fn RAND_set_rand_method(arg1: *const RAND_METHOD) -> ::std::os::raw::c_int;
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct rc4_key_st {
+    pub x: u32,
+    pub y: u32,
+    pub data: [u32; 256usize],
+}
+#[test]
+fn bindgen_test_layout_rc4_key_st() {
+    const UNINIT: ::std::mem::MaybeUninit<rc4_key_st> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<rc4_key_st>(),
+        1032usize,
+        concat!("Size of: ", stringify!(rc4_key_st))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<rc4_key_st>(),
+        4usize,
+        concat!("Alignment of ", stringify!(rc4_key_st))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).x) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(rc4_key_st),
+            "::",
+            stringify!(x)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).y) as usize - ptr as usize },
+        4usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(rc4_key_st),
+            "::",
+            stringify!(y)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(rc4_key_st),
+            "::",
+            stringify!(data)
+        )
+    );
+}
+impl Default for rc4_key_st {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RC4_set_key"]
+    pub fn RC4_set_key(rc4key: *mut RC4_KEY, len: ::std::os::raw::c_uint, key: *const u8);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RC4"]
+    pub fn RC4(key: *mut RC4_KEY, len: usize, in_: *const u8, out: *mut u8);
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct RIPEMD160state_st {
+    pub h: [u32; 5usize],
+    pub Nl: u32,
+    pub Nh: u32,
+    pub data: [u8; 64usize],
+    pub num: ::std::os::raw::c_uint,
+}
+#[test]
+fn bindgen_test_layout_RIPEMD160state_st() {
+    const UNINIT: ::std::mem::MaybeUninit<RIPEMD160state_st> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<RIPEMD160state_st>(),
+        96usize,
+        concat!("Size of: ", stringify!(RIPEMD160state_st))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<RIPEMD160state_st>(),
+        4usize,
+        concat!("Alignment of ", stringify!(RIPEMD160state_st))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).h) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(RIPEMD160state_st),
+            "::",
+            stringify!(h)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).Nl) as usize - ptr as usize },
+        20usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(RIPEMD160state_st),
+            "::",
+            stringify!(Nl)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).Nh) as usize - ptr as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(RIPEMD160state_st),
+            "::",
+            stringify!(Nh)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize },
+        28usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(RIPEMD160state_st),
+            "::",
+            stringify!(data)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).num) as usize - ptr as usize },
+        92usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(RIPEMD160state_st),
+            "::",
+            stringify!(num)
+        )
+    );
+}
+impl Default for RIPEMD160state_st {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RIPEMD160_Init"]
+    pub fn RIPEMD160_Init(ctx: *mut RIPEMD160_CTX) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RIPEMD160_Update"]
+    pub fn RIPEMD160_Update(
+        ctx: *mut RIPEMD160_CTX,
+        data: *const ::std::os::raw::c_void,
+        len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RIPEMD160_Final"]
+    pub fn RIPEMD160_Final(out: *mut u8, ctx: *mut RIPEMD160_CTX) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_RIPEMD160"]
+    pub fn RIPEMD160(data: *const u8, len: usize, out: *mut u8) -> *mut u8;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_FIPS_service_indicator_before_call"]
+    pub fn FIPS_service_indicator_before_call() -> u64;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_FIPS_service_indicator_after_call"]
+    pub fn FIPS_service_indicator_after_call() -> u64;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_awslc_version_string"]
+    pub fn awslc_version_string() -> *const ::std::os::raw::c_char;
+}
+pub const FIPSStatus_AWSLC_NOT_APPROVED: FIPSStatus = 0;
+pub const FIPSStatus_AWSLC_APPROVED: FIPSStatus = 1;
+pub type FIPSStatus = ::std::os::raw::c_uint;
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_SIPHASH_24"]
+    pub fn SIPHASH_24(key: *const u64, input: *const u8, input_len: usize) -> u64;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_experiment_v1"]
+    pub fn TRUST_TOKEN_experiment_v1() -> *const TRUST_TOKEN_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_experiment_v2_voprf"]
+    pub fn TRUST_TOKEN_experiment_v2_voprf() -> *const TRUST_TOKEN_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_experiment_v2_pmb"]
+    pub fn TRUST_TOKEN_experiment_v2_pmb() -> *const TRUST_TOKEN_METHOD;
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct trust_token_st {
+    pub data: *mut u8,
+    pub len: usize,
+}
+#[test]
+fn bindgen_test_layout_trust_token_st() {
+    const UNINIT: ::std::mem::MaybeUninit<trust_token_st> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<trust_token_st>(),
+        16usize,
+        concat!("Size of: ", stringify!(trust_token_st))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<trust_token_st>(),
+        8usize,
+        concat!("Alignment of ", stringify!(trust_token_st))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(trust_token_st),
+            "::",
+            stringify!(data)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).len) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(trust_token_st),
+            "::",
+            stringify!(len)
+        )
+    );
+}
+impl Default for trust_token_st {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct stack_st_TRUST_TOKEN {
+    _unused: [u8; 0],
+}
+pub type sk_TRUST_TOKEN_free_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *mut TRUST_TOKEN)>;
+pub type sk_TRUST_TOKEN_copy_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *const TRUST_TOKEN) -> *mut TRUST_TOKEN>;
+pub type sk_TRUST_TOKEN_cmp_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut *const TRUST_TOKEN,
+        arg2: *mut *const TRUST_TOKEN,
+    ) -> ::std::os::raw::c_int,
+>;
+pub type sk_TRUST_TOKEN_delete_if_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut TRUST_TOKEN,
+        arg2: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int,
+>;
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_new"]
+    pub fn TRUST_TOKEN_new(data: *const u8, len: usize) -> *mut TRUST_TOKEN;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_free"]
+    pub fn TRUST_TOKEN_free(token: *mut TRUST_TOKEN);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_generate_key"]
+    pub fn TRUST_TOKEN_generate_key(
+        method: *const TRUST_TOKEN_METHOD,
+        out_priv_key: *mut u8,
+        out_priv_key_len: *mut usize,
+        max_priv_key_len: usize,
+        out_pub_key: *mut u8,
+        out_pub_key_len: *mut usize,
+        max_pub_key_len: usize,
+        id: u32,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_derive_key_from_secret"]
+    pub fn TRUST_TOKEN_derive_key_from_secret(
+        method: *const TRUST_TOKEN_METHOD,
+        out_priv_key: *mut u8,
+        out_priv_key_len: *mut usize,
+        max_priv_key_len: usize,
+        out_pub_key: *mut u8,
+        out_pub_key_len: *mut usize,
+        max_pub_key_len: usize,
+        id: u32,
+        secret: *const u8,
+        secret_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_CLIENT_new"]
+    pub fn TRUST_TOKEN_CLIENT_new(
+        method: *const TRUST_TOKEN_METHOD,
+        max_batchsize: usize,
+    ) -> *mut TRUST_TOKEN_CLIENT;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_CLIENT_free"]
+    pub fn TRUST_TOKEN_CLIENT_free(ctx: *mut TRUST_TOKEN_CLIENT);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_CLIENT_add_key"]
+    pub fn TRUST_TOKEN_CLIENT_add_key(
+        ctx: *mut TRUST_TOKEN_CLIENT,
+        out_key_index: *mut usize,
+        key: *const u8,
+        key_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_CLIENT_set_srr_key"]
+    pub fn TRUST_TOKEN_CLIENT_set_srr_key(
+        ctx: *mut TRUST_TOKEN_CLIENT,
+        key: *mut EVP_PKEY,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_CLIENT_begin_issuance"]
+    pub fn TRUST_TOKEN_CLIENT_begin_issuance(
+        ctx: *mut TRUST_TOKEN_CLIENT,
+        out: *mut *mut u8,
+        out_len: *mut usize,
+        count: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_CLIENT_begin_issuance_over_message"]
+    pub fn TRUST_TOKEN_CLIENT_begin_issuance_over_message(
+        ctx: *mut TRUST_TOKEN_CLIENT,
+        out: *mut *mut u8,
+        out_len: *mut usize,
+        count: usize,
+        msg: *const u8,
+        msg_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_CLIENT_finish_issuance"]
+    pub fn TRUST_TOKEN_CLIENT_finish_issuance(
+        ctx: *mut TRUST_TOKEN_CLIENT,
+        out_key_index: *mut usize,
+        response: *const u8,
+        response_len: usize,
+    ) -> *mut stack_st_TRUST_TOKEN;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_CLIENT_begin_redemption"]
+    pub fn TRUST_TOKEN_CLIENT_begin_redemption(
+        ctx: *mut TRUST_TOKEN_CLIENT,
+        out: *mut *mut u8,
+        out_len: *mut usize,
+        token: *const TRUST_TOKEN,
+        data: *const u8,
+        data_len: usize,
+        time: u64,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_CLIENT_finish_redemption"]
+    pub fn TRUST_TOKEN_CLIENT_finish_redemption(
+        ctx: *mut TRUST_TOKEN_CLIENT,
+        out_rr: *mut *mut u8,
+        out_rr_len: *mut usize,
+        out_sig: *mut *mut u8,
+        out_sig_len: *mut usize,
+        response: *const u8,
+        response_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_ISSUER_new"]
+    pub fn TRUST_TOKEN_ISSUER_new(
+        method: *const TRUST_TOKEN_METHOD,
+        max_batchsize: usize,
+    ) -> *mut TRUST_TOKEN_ISSUER;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_ISSUER_free"]
+    pub fn TRUST_TOKEN_ISSUER_free(ctx: *mut TRUST_TOKEN_ISSUER);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_ISSUER_add_key"]
+    pub fn TRUST_TOKEN_ISSUER_add_key(
+        ctx: *mut TRUST_TOKEN_ISSUER,
+        key: *const u8,
+        key_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_ISSUER_set_srr_key"]
+    pub fn TRUST_TOKEN_ISSUER_set_srr_key(
+        ctx: *mut TRUST_TOKEN_ISSUER,
+        key: *mut EVP_PKEY,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_ISSUER_set_metadata_key"]
+    pub fn TRUST_TOKEN_ISSUER_set_metadata_key(
+        ctx: *mut TRUST_TOKEN_ISSUER,
+        key: *const u8,
+        len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_ISSUER_issue"]
+    pub fn TRUST_TOKEN_ISSUER_issue(
+        ctx: *const TRUST_TOKEN_ISSUER,
+        out: *mut *mut u8,
+        out_len: *mut usize,
+        out_tokens_issued: *mut usize,
+        request: *const u8,
+        request_len: usize,
+        public_metadata: u32,
+        private_metadata: u8,
+        max_issuance: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_ISSUER_redeem"]
+    pub fn TRUST_TOKEN_ISSUER_redeem(
+        ctx: *const TRUST_TOKEN_ISSUER,
+        out: *mut *mut u8,
+        out_len: *mut usize,
+        out_token: *mut *mut TRUST_TOKEN,
+        out_client_data: *mut *mut u8,
+        out_client_data_len: *mut usize,
+        out_redemption_time: *mut u64,
+        request: *const u8,
+        request_len: usize,
+        lifetime: u64,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_ISSUER_redeem_raw"]
+    pub fn TRUST_TOKEN_ISSUER_redeem_raw(
+        ctx: *const TRUST_TOKEN_ISSUER,
+        out_public: *mut u32,
+        out_private: *mut u8,
+        out_token: *mut *mut TRUST_TOKEN,
+        out_client_data: *mut *mut u8,
+        out_client_data_len: *mut usize,
+        request: *const u8,
+        request_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_ISSUER_redeem_over_message"]
+    pub fn TRUST_TOKEN_ISSUER_redeem_over_message(
+        ctx: *const TRUST_TOKEN_ISSUER,
+        out_public: *mut u32,
+        out_private: *mut u8,
+        out_token: *mut *mut TRUST_TOKEN,
+        out_client_data: *mut *mut u8,
+        out_client_data_len: *mut usize,
+        request: *const u8,
+        request_len: usize,
+        msg: *const u8,
+        msg_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_TRUST_TOKEN_decode_private_metadata"]
+    pub fn TRUST_TOKEN_decode_private_metadata(
+        method: *const TRUST_TOKEN_METHOD,
+        out_value: *mut u8,
+        key: *const u8,
+        key_len: usize,
+        nonce: *const u8,
+        nonce_len: usize,
+        encrypted_bit: u8,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_CRYPTO_tls1_prf"]
     pub fn CRYPTO_tls1_prf(
         digest: *const EVP_MD,
         out: *mut u8,
@@ -27942,15 +28395,15 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_GET_LIB_RUST"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_GET_LIB_RUST"]
     pub fn ERR_GET_LIB_RUST(packed_error: u32) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_GET_REASON_RUST"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_GET_REASON_RUST"]
     pub fn ERR_GET_REASON_RUST(packed_error: u32) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}_aws_lc_fips_0_12_13_ERR_GET_FUNC_RUST"]
+    #[link_name = "\u{1}_aws_lc_fips_0_12_14_ERR_GET_FUNC_RUST"]
     pub fn ERR_GET_FUNC_RUST(packed_error: u32) -> ::std::os::raw::c_int;
 }
 pub type __builtin_va_list = [__va_list_tag; 1usize];
