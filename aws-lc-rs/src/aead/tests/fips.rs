@@ -28,7 +28,7 @@ const TEST_NONCE_96_BIT: [u8; 12] = [
     0xe4, 0x39, 0x17, 0x95, 0x86, 0xcd, 0xcd, 0x5a, 0x1b, 0x46, 0x7b, 0x1d,
 ];
 
-const TEST_MESSAGE: &str = "test message";
+const TEST_MESSAGE: &[u8] = "test message".as_bytes();
 
 macro_rules! nonce_sequence_api {
     ($name:ident, $alg:expr, $key:expr, $seal_expect:path, $open_expect:path) => {
@@ -59,7 +59,7 @@ macro_rules! nonce_sequence_api {
                 )
                 .unwrap();
 
-                assert_eq!(TEST_MESSAGE.as_bytes(), result);
+                assert_eq!(TEST_MESSAGE, result);
             }
 
             {
@@ -89,7 +89,7 @@ macro_rules! nonce_sequence_api {
                 )
                 .unwrap();
 
-                assert_eq!(TEST_MESSAGE.as_bytes(), result);
+                assert_eq!(TEST_MESSAGE, result);
             }
         }
     };
@@ -137,7 +137,7 @@ macro_rules! randnonce_api {
                 )
                 .unwrap();
 
-                assert_eq!(TEST_MESSAGE.as_bytes(), in_out);
+                assert_eq!(TEST_MESSAGE, in_out);
             }
 
             {
@@ -157,7 +157,7 @@ macro_rules! randnonce_api {
                 )
                 .unwrap();
 
-                assert_eq!(TEST_MESSAGE.as_bytes(), in_out);
+                assert_eq!(TEST_MESSAGE, in_out);
             }
         }
     };
@@ -213,7 +213,7 @@ macro_rules! tls_nonce_api {
             )
             .unwrap();
 
-            assert_eq!(in_out, TEST_MESSAGE.as_bytes());
+            assert_eq!(in_out, TEST_MESSAGE);
         }
     };
     // Match for unsupported variants

@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Thu Oct  3 17:02:08 UTC 2024
+// Thu Nov  7 21:50:53 UTC 2024
 
 use crate::cc_builder::Library;
 
@@ -145,6 +145,8 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/pem/pem_pkey.c",
         "crypto/pem/pem_x509.c",
         "crypto/pem/pem_xaux.c",
+        "crypto/pkcs7/bio/cipher.c",
+        "crypto/pkcs7/bio/md.c",
         "crypto/pkcs7/pkcs7.c",
         "crypto/pkcs7/pkcs7_asn1.c",
         "crypto/pkcs7/pkcs7_x509.c",

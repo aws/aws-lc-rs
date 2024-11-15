@@ -201,9 +201,9 @@ impl TestCase {
         let s = self.consume_optional_string(key)?;
         let result = if s.starts_with('\"') {
             // The value is a quoted UTF-8 string.
-
+            let s = s.as_bytes();
             let mut bytes = Vec::with_capacity(s.len());
-            let mut s = s.as_bytes().iter().skip(1);
+            let mut s = s.iter().skip(1);
             loop {
                 let b = match s.next() {
                     Some(b'\\') => {

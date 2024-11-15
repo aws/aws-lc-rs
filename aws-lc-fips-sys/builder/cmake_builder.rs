@@ -187,6 +187,7 @@ impl CmakeBuilder {
         // If the build environment vendor is Apple
         #[cfg(target_vendor = "apple")]
         {
+            cmake_cfg.cflag("-Wno-overriding-t-option");
             if target_arch() == "aarch64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "arm64");
