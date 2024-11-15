@@ -562,7 +562,7 @@ mod tests {
         let public_key = key_pair.public_key();
         let signature = key_pair.sign(MESSAGE);
         let unparsed_public_key = UnparsedPublicKey::new(&ED25519, public_key.as_ref());
-        let _ = unparsed_public_key
+        unparsed_public_key
             .verify(MESSAGE, signature.as_ref())
             .unwrap();
     }
