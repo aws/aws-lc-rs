@@ -111,7 +111,7 @@ pub const AWSLC_VERSION_NAME: &[u8; 7] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
 pub const AWSLC_API_VERSION: i32 = 31;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.38.0\0";
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.39.0\0";
 pub const AES_ENCRYPT: i32 = 1;
 pub const AES_DECRYPT: i32 = 0;
 pub const AES_MAXNR: i32 = 14;
@@ -132,7 +132,7 @@ pub const CRYPTO_LOCK: i32 = 1;
 pub const CRYPTO_UNLOCK: i32 = 2;
 pub const CRYPTO_READ: i32 = 4;
 pub const CRYPTO_WRITE: i32 = 8;
-pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.38.0)\0";
+pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.39.0)\0";
 pub const OPENSSL_VERSION: i32 = 0;
 pub const OPENSSL_CFLAGS: i32 = 1;
 pub const OPENSSL_BUILT_ON: i32 = 2;
@@ -3515,6 +3515,14 @@ pub const X509_SIG_INFO_TLS: i32 = 2;
 pub const X509_CRL_VERSION_1: i32 = 0;
 pub const X509_CRL_VERSION_2: i32 = 1;
 pub const X509_REQ_VERSION_1: i32 = 0;
+pub const X509V3_ADD_OP_MASK: i32 = 15;
+pub const X509V3_ADD_DEFAULT: i32 = 0;
+pub const X509V3_ADD_APPEND: i32 = 1;
+pub const X509V3_ADD_REPLACE: i32 = 2;
+pub const X509V3_ADD_REPLACE_EXISTING: i32 = 3;
+pub const X509V3_ADD_KEEP_EXISTING: i32 = 4;
+pub const X509V3_ADD_DELETE: i32 = 5;
+pub const X509V3_ADD_SILENT: i32 = 16;
 pub const GEN_OTHERNAME: i32 = 0;
 pub const GEN_EMAIL: i32 = 1;
 pub const GEN_DNS: i32 = 2;
@@ -3524,6 +3532,10 @@ pub const GEN_EDIPARTY: i32 = 5;
 pub const GEN_URI: i32 = 6;
 pub const GEN_IPADD: i32 = 7;
 pub const GEN_RID: i32 = 8;
+pub const X509_LU_NONE: i32 = 0;
+pub const X509_LU_X509: i32 = 1;
+pub const X509_LU_CRL: i32 = 2;
+pub const X509_LU_PKEY: i32 = 3;
 pub const X509_V_OK: i32 = 0;
 pub const X509_V_ERR_UNSPECIFIED: i32 = 1;
 pub const X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: i32 = 2;
@@ -3623,6 +3635,11 @@ pub const X509_TRUST_OBJECT_SIGN: i32 = 5;
 pub const X509_TRUST_OCSP_SIGN: i32 = 6;
 pub const X509_TRUST_OCSP_REQUEST: i32 = 7;
 pub const X509_TRUST_TSA: i32 = 8;
+pub const X509_FILETYPE_PEM: i32 = 1;
+pub const X509_FILETYPE_ASN1: i32 = 2;
+pub const X509_FILETYPE_DEFAULT: i32 = 3;
+pub const X509_L_FILE_LOAD: i32 = 1;
+pub const X509_L_ADD_DIR: i32 = 2;
 pub const X509_FLAG_COMPAT: i32 = 0;
 pub const X509_FLAG_NO_HEADER: i32 = 1;
 pub const X509_FLAG_NO_VERSION: i32 = 2;
@@ -3663,23 +3680,12 @@ pub const XN_FLAG_MULTILINE: i32 = 44302342;
 pub const X509_TRUST_TRUSTED: i32 = 1;
 pub const X509_TRUST_REJECTED: i32 = 2;
 pub const X509_TRUST_UNTRUSTED: i32 = 3;
+pub const X509V3_EXT_MULTILINE: i32 = 4;
 pub const X509V3_CTX_TEST: i32 = 1;
 pub const X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT: i32 = 0;
 pub const X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS: i32 = 0;
 pub const X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS: i32 = 0;
 pub const X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS: i32 = 0;
-pub const X509_LU_NONE: i32 = 0;
-pub const X509_LU_X509: i32 = 1;
-pub const X509_LU_CRL: i32 = 2;
-pub const X509_LU_PKEY: i32 = 3;
-pub const X509_L_FILE_LOAD: i32 = 1;
-pub const X509_L_ADD_DIR: i32 = 2;
-pub const X509_FILETYPE_PEM: i32 = 1;
-pub const X509_FILETYPE_ASN1: i32 = 2;
-pub const X509_FILETYPE_DEFAULT: i32 = 3;
-pub const X509_V_FLAG_POLICY_MASK: i32 = 1920;
-pub const X509V3_EXT_CTX_DEP: i32 = 2;
-pub const X509V3_EXT_MULTILINE: i32 = 4;
 pub const NS_SSL_CLIENT: i32 = 128;
 pub const NS_SSL_SERVER: i32 = 64;
 pub const NS_SMIME: i32 = 32;
@@ -3688,14 +3694,7 @@ pub const NS_SSL_CA: i32 = 4;
 pub const NS_SMIME_CA: i32 = 2;
 pub const NS_OBJSIGN_CA: i32 = 1;
 pub const NS_ANY_CA: i32 = 7;
-pub const X509V3_ADD_OP_MASK: i32 = 15;
-pub const X509V3_ADD_DEFAULT: i32 = 0;
-pub const X509V3_ADD_APPEND: i32 = 1;
-pub const X509V3_ADD_REPLACE: i32 = 2;
-pub const X509V3_ADD_REPLACE_EXISTING: i32 = 3;
-pub const X509V3_ADD_KEEP_EXISTING: i32 = 4;
-pub const X509V3_ADD_DELETE: i32 = 5;
-pub const X509V3_ADD_SILENT: i32 = 16;
+pub const X509_V_FLAG_POLICY_MASK: i32 = 1920;
 pub const X509_R_AKID_MISMATCH: i32 = 100;
 pub const X509_R_BAD_PKCS7_VERSION: i32 = 101;
 pub const X509_R_BAD_X509_FILETYPE: i32 = 102;
@@ -16726,6 +16725,13 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_EVP_PKEY_CTX_set_dsa_paramgen_md"]
+    pub fn EVP_PKEY_CTX_set_dsa_paramgen_md(
+        ctx: *mut EVP_PKEY_CTX,
+        md: *const EVP_MD,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_EVP_PKEY_CTX_set_dsa_paramgen_q_bits"]
     pub fn EVP_PKEY_CTX_set_dsa_paramgen_q_bits(
         ctx: *mut EVP_PKEY_CTX,
@@ -20787,6 +20793,44 @@ extern "C" {
         loc: ::std::os::raw::c_int,
     ) -> *mut stack_st_X509_EXTENSION;
 }
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_d2i"]
+    pub fn X509V3_EXT_d2i(ext: *const X509_EXTENSION) -> *mut ::std::os::raw::c_void;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_get_d2i"]
+    pub fn X509V3_get_d2i(
+        extensions: *const stack_st_X509_EXTENSION,
+        nid: ::std::os::raw::c_int,
+        out_critical: *mut ::std::os::raw::c_int,
+        out_idx: *mut ::std::os::raw::c_int,
+    ) -> *mut ::std::os::raw::c_void;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_free"]
+    pub fn X509V3_EXT_free(
+        nid: ::std::os::raw::c_int,
+        ext_data: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_i2d"]
+    pub fn X509V3_EXT_i2d(
+        ext_nid: ::std::os::raw::c_int,
+        crit: ::std::os::raw::c_int,
+        ext_struc: *mut ::std::os::raw::c_void,
+    ) -> *mut X509_EXTENSION;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_add1_i2d"]
+    pub fn X509V3_add1_i2d(
+        x: *mut *mut stack_st_X509_EXTENSION,
+        nid: ::std::os::raw::c_int,
+        value: *mut ::std::os::raw::c_void,
+        crit: ::std::os::raw::c_int,
+        flags: ::std::os::raw::c_ulong,
+    ) -> ::std::os::raw::c_int;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct otherName_st {
@@ -21477,6 +21521,43 @@ extern "C" {
         trust: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct stack_st_X509_OBJECT {
+    _unused: [u8; 0],
+}
+pub type sk_X509_OBJECT_free_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *mut X509_OBJECT)>;
+pub type sk_X509_OBJECT_copy_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *const X509_OBJECT) -> *mut X509_OBJECT>;
+pub type sk_X509_OBJECT_cmp_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *const *const X509_OBJECT,
+        arg2: *const *const X509_OBJECT,
+    ) -> ::std::os::raw::c_int,
+>;
+pub type sk_X509_OBJECT_delete_if_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut X509_OBJECT,
+        arg2: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int,
+>;
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_OBJECT_new"]
+    pub fn X509_OBJECT_new() -> *mut X509_OBJECT;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_OBJECT_free"]
+    pub fn X509_OBJECT_free(obj: *mut X509_OBJECT);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_OBJECT_get_type"]
+    pub fn X509_OBJECT_get_type(obj: *const X509_OBJECT) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_OBJECT_get0_X509"]
+    pub fn X509_OBJECT_get0_X509(obj: *const X509_OBJECT) -> *mut X509;
+}
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_CTX_new"]
     pub fn X509_STORE_CTX_new() -> *mut X509_STORE_CTX;
@@ -21742,6 +21823,115 @@ extern "C" {
         param: *mut X509_VERIFY_PARAM,
         trust: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_load_locations"]
+    pub fn X509_STORE_load_locations(
+        store: *mut X509_STORE,
+        file: *const ::std::os::raw::c_char,
+        dir: *const ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_add_lookup"]
+    pub fn X509_STORE_add_lookup(
+        store: *mut X509_STORE,
+        method: *const X509_LOOKUP_METHOD,
+    ) -> *mut X509_LOOKUP;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_hash_dir"]
+    pub fn X509_LOOKUP_hash_dir() -> *const X509_LOOKUP_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_file"]
+    pub fn X509_LOOKUP_file() -> *const X509_LOOKUP_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_load_file"]
+    pub fn X509_LOOKUP_load_file(
+        lookup: *mut X509_LOOKUP,
+        file: *const ::std::os::raw::c_char,
+        type_: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_add_dir"]
+    pub fn X509_LOOKUP_add_dir(
+        lookup: *mut X509_LOOKUP,
+        path: *const ::std::os::raw::c_char,
+        type_: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_ctrl"]
+    pub fn X509_LOOKUP_ctrl(
+        lookup: *mut X509_LOOKUP,
+        cmd: ::std::os::raw::c_int,
+        argc: *const ::std::os::raw::c_char,
+        argl: ::std::os::raw::c_long,
+        ret: *mut *mut ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_load_cert_file"]
+    pub fn X509_load_cert_file(
+        lookup: *mut X509_LOOKUP,
+        file: *const ::std::os::raw::c_char,
+        type_: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_load_crl_file"]
+    pub fn X509_load_crl_file(
+        lookup: *mut X509_LOOKUP,
+        file: *const ::std::os::raw::c_char,
+        type_: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_load_cert_crl_file"]
+    pub fn X509_load_cert_crl_file(
+        lookup: *mut X509_LOOKUP,
+        file: *const ::std::os::raw::c_char,
+        type_: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_NAME_hash"]
+    pub fn X509_NAME_hash(name: *mut X509_NAME) -> u32;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_NAME_hash_old"]
+    pub fn X509_NAME_hash_old(name: *mut X509_NAME) -> u32;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_set_default_paths"]
+    pub fn X509_STORE_set_default_paths(store: *mut X509_STORE) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_area"]
+    pub fn X509_get_default_cert_area() -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_dir"]
+    pub fn X509_get_default_cert_dir() -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_file"]
+    pub fn X509_get_default_cert_file() -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_private_dir"]
+    pub fn X509_get_default_private_dir() -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_dir_env"]
+    pub fn X509_get_default_cert_dir_env() -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_file_env"]
+    pub fn X509_get_default_cert_file_env() -> *const ::std::os::raw::c_char;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -23002,6 +23192,266 @@ extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_INFO_free"]
     pub fn X509_INFO_free(info: *mut X509_INFO);
 }
+pub type X509V3_EXT_NEW =
+    ::std::option::Option<unsafe extern "C" fn() -> *mut ::std::os::raw::c_void>;
+pub type X509V3_EXT_FREE =
+    ::std::option::Option<unsafe extern "C" fn(ext: *mut ::std::os::raw::c_void)>;
+pub type X509V3_EXT_D2I = ::std::option::Option<
+    unsafe extern "C" fn(
+        ext: *mut ::std::os::raw::c_void,
+        inp: *mut *const u8,
+        len: ::std::os::raw::c_long,
+    ) -> *mut ::std::os::raw::c_void,
+>;
+pub type X509V3_EXT_I2D = ::std::option::Option<
+    unsafe extern "C" fn(
+        ext: *mut ::std::os::raw::c_void,
+        outp: *mut *mut u8,
+    ) -> ::std::os::raw::c_int,
+>;
+pub type X509V3_EXT_I2V = ::std::option::Option<
+    unsafe extern "C" fn(
+        method: *const X509V3_EXT_METHOD,
+        ext: *mut ::std::os::raw::c_void,
+        extlist: *mut stack_st_CONF_VALUE,
+    ) -> *mut stack_st_CONF_VALUE,
+>;
+pub type X509V3_EXT_V2I = ::std::option::Option<
+    unsafe extern "C" fn(
+        method: *const X509V3_EXT_METHOD,
+        ctx: *const X509V3_CTX,
+        values: *const stack_st_CONF_VALUE,
+    ) -> *mut ::std::os::raw::c_void,
+>;
+pub type X509V3_EXT_I2S = ::std::option::Option<
+    unsafe extern "C" fn(
+        method: *const X509V3_EXT_METHOD,
+        ext: *mut ::std::os::raw::c_void,
+    ) -> *mut ::std::os::raw::c_char,
+>;
+pub type X509V3_EXT_S2I = ::std::option::Option<
+    unsafe extern "C" fn(
+        method: *const X509V3_EXT_METHOD,
+        ctx: *const X509V3_CTX,
+        str_: *const ::std::os::raw::c_char,
+    ) -> *mut ::std::os::raw::c_void,
+>;
+pub type X509V3_EXT_I2R = ::std::option::Option<
+    unsafe extern "C" fn(
+        method: *const X509V3_EXT_METHOD,
+        ext: *mut ::std::os::raw::c_void,
+        out: *mut BIO,
+        indent: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int,
+>;
+pub type X509V3_EXT_R2I = ::std::option::Option<
+    unsafe extern "C" fn(
+        method: *const X509V3_EXT_METHOD,
+        ctx: *const X509V3_CTX,
+        str_: *const ::std::os::raw::c_char,
+    ) -> *mut ::std::os::raw::c_void,
+>;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct v3_ext_method {
+    pub ext_nid: ::std::os::raw::c_int,
+    pub ext_flags: ::std::os::raw::c_int,
+    pub it: *const ASN1_ITEM_st,
+    pub ext_new: X509V3_EXT_NEW,
+    pub ext_free: X509V3_EXT_FREE,
+    pub d2i: X509V3_EXT_D2I,
+    pub i2d: X509V3_EXT_I2D,
+    pub i2s: X509V3_EXT_I2S,
+    pub s2i: X509V3_EXT_S2I,
+    pub i2v: X509V3_EXT_I2V,
+    pub v2i: X509V3_EXT_V2I,
+    pub i2r: X509V3_EXT_I2R,
+    pub r2i: X509V3_EXT_R2I,
+    pub usr_data: *mut ::std::os::raw::c_void,
+}
+#[test]
+fn bindgen_test_layout_v3_ext_method() {
+    const UNINIT: ::std::mem::MaybeUninit<v3_ext_method> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<v3_ext_method>(),
+        104usize,
+        concat!("Size of: ", stringify!(v3_ext_method))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<v3_ext_method>(),
+        8usize,
+        concat!("Alignment of ", stringify!(v3_ext_method))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).ext_nid) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(ext_nid)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).ext_flags) as usize - ptr as usize },
+        4usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(ext_flags)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).it) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(it)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).ext_new) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(ext_new)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).ext_free) as usize - ptr as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(ext_free)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).d2i) as usize - ptr as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(d2i)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).i2d) as usize - ptr as usize },
+        40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(i2d)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).i2s) as usize - ptr as usize },
+        48usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(i2s)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).s2i) as usize - ptr as usize },
+        56usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(s2i)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).i2v) as usize - ptr as usize },
+        64usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(i2v)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).v2i) as usize - ptr as usize },
+        72usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(v2i)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).i2r) as usize - ptr as usize },
+        80usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(i2r)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).r2i) as usize - ptr as usize },
+        88usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(r2i)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).usr_data) as usize - ptr as usize },
+        96usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(v3_ext_method),
+            "::",
+            stringify!(usr_data)
+        )
+    );
+}
+impl Default for v3_ext_method {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_get"]
+    pub fn X509V3_EXT_get(ext: *const X509_EXTENSION) -> *const X509V3_EXT_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_get_nid"]
+    pub fn X509V3_EXT_get_nid(nid: ::std::os::raw::c_int) -> *const X509V3_EXT_METHOD;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_add"]
+    pub fn X509V3_EXT_add(ext: *mut X509V3_EXT_METHOD) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_add_alias"]
+    pub fn X509V3_EXT_add_alias(
+        nid_to: ::std::os::raw::c_int,
+        nid_from: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct v3_ext_ctx {
@@ -23367,6 +23817,156 @@ extern "C" {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct x509_purpose_st {
+    pub purpose: ::std::os::raw::c_int,
+    pub trust: ::std::os::raw::c_int,
+    pub flags: ::std::os::raw::c_int,
+    pub check_purpose: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: *const x509_purpose_st,
+            arg2: *const X509,
+            arg3: ::std::os::raw::c_int,
+        ) -> ::std::os::raw::c_int,
+    >,
+    pub name: *mut ::std::os::raw::c_char,
+    pub sname: *mut ::std::os::raw::c_char,
+    pub usr_data: *mut ::std::os::raw::c_void,
+}
+#[test]
+fn bindgen_test_layout_x509_purpose_st() {
+    const UNINIT: ::std::mem::MaybeUninit<x509_purpose_st> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<x509_purpose_st>(),
+        48usize,
+        concat!("Size of: ", stringify!(x509_purpose_st))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<x509_purpose_st>(),
+        8usize,
+        concat!("Alignment of ", stringify!(x509_purpose_st))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).purpose) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(x509_purpose_st),
+            "::",
+            stringify!(purpose)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).trust) as usize - ptr as usize },
+        4usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(x509_purpose_st),
+            "::",
+            stringify!(trust)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(x509_purpose_st),
+            "::",
+            stringify!(flags)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).check_purpose) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(x509_purpose_st),
+            "::",
+            stringify!(check_purpose)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).name) as usize - ptr as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(x509_purpose_st),
+            "::",
+            stringify!(name)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).sname) as usize - ptr as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(x509_purpose_st),
+            "::",
+            stringify!(sname)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).usr_data) as usize - ptr as usize },
+        40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(x509_purpose_st),
+            "::",
+            stringify!(usr_data)
+        )
+    );
+}
+impl Default for x509_purpose_st {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type X509_PURPOSE = x509_purpose_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct stack_st_X509_PURPOSE {
+    _unused: [u8; 0],
+}
+pub type sk_X509_PURPOSE_free_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *mut X509_PURPOSE)>;
+pub type sk_X509_PURPOSE_copy_func =
+    ::std::option::Option<unsafe extern "C" fn(arg1: *const X509_PURPOSE) -> *mut X509_PURPOSE>;
+pub type sk_X509_PURPOSE_cmp_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *const *const X509_PURPOSE,
+        arg2: *const *const X509_PURPOSE,
+    ) -> ::std::os::raw::c_int,
+>;
+pub type sk_X509_PURPOSE_delete_if_func = ::std::option::Option<
+    unsafe extern "C" fn(
+        arg1: *mut X509_PURPOSE,
+        arg2: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int,
+>;
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_get0_objects"]
+    pub fn X509_STORE_get0_objects(store: *mut X509_STORE) -> *mut stack_st_X509_OBJECT;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_get_by_sname"]
+    pub fn X509_PURPOSE_get_by_sname(sname: *const ::std::os::raw::c_char)
+        -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_get0"]
+    pub fn X509_PURPOSE_get0(id: ::std::os::raw::c_int) -> *const X509_PURPOSE;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_get_id"]
+    pub fn X509_PURPOSE_get_id(purpose: *const X509_PURPOSE) -> ::std::os::raw::c_int;
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct X509_algor_st {
     pub algorithm: *mut ASN1_OBJECT,
     pub parameter: *mut ASN1_TYPE,
@@ -23542,38 +24142,6 @@ pub type sk_X509_TRUST_delete_if_func = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_area"]
-    pub fn X509_get_default_cert_area() -> *const ::std::os::raw::c_char;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_dir"]
-    pub fn X509_get_default_cert_dir() -> *const ::std::os::raw::c_char;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_file"]
-    pub fn X509_get_default_cert_file() -> *const ::std::os::raw::c_char;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_dir_env"]
-    pub fn X509_get_default_cert_dir_env() -> *const ::std::os::raw::c_char;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_cert_file_env"]
-    pub fn X509_get_default_cert_file_env() -> *const ::std::os::raw::c_char;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_get_default_private_dir"]
-    pub fn X509_get_default_private_dir() -> *const ::std::os::raw::c_char;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_NAME_hash"]
-    pub fn X509_NAME_hash(name: *mut X509_NAME) -> u32;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_NAME_hash_old"]
-    pub fn X509_NAME_hash_old(name: *mut X509_NAME) -> u32;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_TRUST_set"]
     pub fn X509_TRUST_set(
         t: *mut ::std::os::raw::c_int,
@@ -23604,59 +24172,6 @@ extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_TRUST_get_trust"]
     pub fn X509_TRUST_get_trust(xp: *const X509_TRUST) -> ::std::os::raw::c_int;
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct stack_st_X509_OBJECT {
-    _unused: [u8; 0],
-}
-pub type sk_X509_OBJECT_free_func =
-    ::std::option::Option<unsafe extern "C" fn(arg1: *mut X509_OBJECT)>;
-pub type sk_X509_OBJECT_copy_func =
-    ::std::option::Option<unsafe extern "C" fn(arg1: *const X509_OBJECT) -> *mut X509_OBJECT>;
-pub type sk_X509_OBJECT_cmp_func = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *const *const X509_OBJECT,
-        arg2: *const *const X509_OBJECT,
-    ) -> ::std::os::raw::c_int,
->;
-pub type sk_X509_OBJECT_delete_if_func = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *mut X509_OBJECT,
-        arg2: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int,
->;
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_load_file"]
-    pub fn X509_LOOKUP_load_file(
-        lookup: *mut X509_LOOKUP,
-        path: *const ::std::os::raw::c_char,
-        type_: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_add_dir"]
-    pub fn X509_LOOKUP_add_dir(
-        lookup: *mut X509_LOOKUP,
-        path: *const ::std::os::raw::c_char,
-        type_: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_OBJECT_new"]
-    pub fn X509_OBJECT_new() -> *mut X509_OBJECT;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_OBJECT_free"]
-    pub fn X509_OBJECT_free(obj: *mut X509_OBJECT);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_OBJECT_get_type"]
-    pub fn X509_OBJECT_get_type(obj: *const X509_OBJECT) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_OBJECT_get0_X509"]
-    pub fn X509_OBJECT_get0_X509(obj: *const X509_OBJECT) -> *mut X509;
-}
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_OBJECT_get0_X509_CRL"]
     pub fn X509_OBJECT_get0_X509_CRL(a: *const X509_OBJECT) -> *mut X509_CRL;
@@ -23681,10 +24196,6 @@ extern "C" {
     pub fn X509_STORE_unlock(v: *mut X509_STORE) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_get0_objects"]
-    pub fn X509_STORE_get0_objects(st: *mut X509_STORE) -> *mut stack_st_X509_OBJECT;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_CTX_get1_certs"]
     pub fn X509_STORE_CTX_get1_certs(
         st: *mut X509_STORE_CTX,
@@ -23699,21 +24210,6 @@ extern "C" {
     ) -> *mut stack_st_X509_CRL;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_add_lookup"]
-    pub fn X509_STORE_add_lookup(
-        v: *mut X509_STORE,
-        m: *const X509_LOOKUP_METHOD,
-    ) -> *mut X509_LOOKUP;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_hash_dir"]
-    pub fn X509_LOOKUP_hash_dir() -> *const X509_LOOKUP_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_file"]
-    pub fn X509_LOOKUP_file() -> *const X509_LOOKUP_METHOD;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_CTX_get_by_subject"]
     pub fn X509_STORE_CTX_get_by_subject(
         vs: *mut X509_STORE_CTX,
@@ -23722,319 +24218,10 @@ extern "C" {
         ret: *mut X509_OBJECT,
     ) -> ::std::os::raw::c_int;
 }
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_LOOKUP_ctrl"]
-    pub fn X509_LOOKUP_ctrl(
-        ctx: *mut X509_LOOKUP,
-        cmd: ::std::os::raw::c_int,
-        argc: *const ::std::os::raw::c_char,
-        argl: ::std::os::raw::c_long,
-        ret: *mut *mut ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_load_cert_file"]
-    pub fn X509_load_cert_file(
-        ctx: *mut X509_LOOKUP,
-        file: *const ::std::os::raw::c_char,
-        type_: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_load_crl_file"]
-    pub fn X509_load_crl_file(
-        ctx: *mut X509_LOOKUP,
-        file: *const ::std::os::raw::c_char,
-        type_: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_load_cert_crl_file"]
-    pub fn X509_load_cert_crl_file(
-        ctx: *mut X509_LOOKUP,
-        file: *const ::std::os::raw::c_char,
-        type_: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_load_locations"]
-    pub fn X509_STORE_load_locations(
-        ctx: *mut X509_STORE,
-        file: *const ::std::os::raw::c_char,
-        dir: *const ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_STORE_set_default_paths"]
-    pub fn X509_STORE_set_default_paths(ctx: *mut X509_STORE) -> ::std::os::raw::c_int;
-}
-pub type X509V3_EXT_NEW =
-    ::std::option::Option<unsafe extern "C" fn() -> *mut ::std::os::raw::c_void>;
-pub type X509V3_EXT_FREE =
-    ::std::option::Option<unsafe extern "C" fn(arg1: *mut ::std::os::raw::c_void)>;
-pub type X509V3_EXT_D2I = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *mut ::std::os::raw::c_void,
-        arg2: *mut *const ::std::os::raw::c_uchar,
-        arg3: ::std::os::raw::c_long,
-    ) -> *mut ::std::os::raw::c_void,
->;
-pub type X509V3_EXT_I2D = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *mut ::std::os::raw::c_void,
-        arg2: *mut *mut ::std::os::raw::c_uchar,
-    ) -> ::std::os::raw::c_int,
->;
-pub type X509V3_EXT_I2V = ::std::option::Option<
-    unsafe extern "C" fn(
-        method: *const X509V3_EXT_METHOD,
-        ext: *mut ::std::os::raw::c_void,
-        extlist: *mut stack_st_CONF_VALUE,
-    ) -> *mut stack_st_CONF_VALUE,
->;
-pub type X509V3_EXT_V2I = ::std::option::Option<
-    unsafe extern "C" fn(
-        method: *const X509V3_EXT_METHOD,
-        ctx: *const X509V3_CTX,
-        values: *const stack_st_CONF_VALUE,
-    ) -> *mut ::std::os::raw::c_void,
->;
-pub type X509V3_EXT_I2S = ::std::option::Option<
-    unsafe extern "C" fn(
-        method: *const X509V3_EXT_METHOD,
-        ext: *mut ::std::os::raw::c_void,
-    ) -> *mut ::std::os::raw::c_char,
->;
-pub type X509V3_EXT_S2I = ::std::option::Option<
-    unsafe extern "C" fn(
-        method: *const X509V3_EXT_METHOD,
-        ctx: *const X509V3_CTX,
-        str_: *const ::std::os::raw::c_char,
-    ) -> *mut ::std::os::raw::c_void,
->;
-pub type X509V3_EXT_I2R = ::std::option::Option<
-    unsafe extern "C" fn(
-        method: *const X509V3_EXT_METHOD,
-        ext: *mut ::std::os::raw::c_void,
-        out: *mut BIO,
-        indent: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int,
->;
-pub type X509V3_EXT_R2I = ::std::option::Option<
-    unsafe extern "C" fn(
-        method: *const X509V3_EXT_METHOD,
-        ctx: *const X509V3_CTX,
-        str_: *const ::std::os::raw::c_char,
-    ) -> *mut ::std::os::raw::c_void,
->;
-#[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct v3_ext_method {
-    pub ext_nid: ::std::os::raw::c_int,
-    pub ext_flags: ::std::os::raw::c_int,
-    pub it: *const ASN1_ITEM_st,
-    pub ext_new: X509V3_EXT_NEW,
-    pub ext_free: X509V3_EXT_FREE,
-    pub d2i: X509V3_EXT_D2I,
-    pub i2d: X509V3_EXT_I2D,
-    pub i2s: X509V3_EXT_I2S,
-    pub s2i: X509V3_EXT_S2I,
-    pub i2v: X509V3_EXT_I2V,
-    pub v2i: X509V3_EXT_V2I,
-    pub i2r: X509V3_EXT_I2R,
-    pub r2i: X509V3_EXT_R2I,
-    pub usr_data: *mut ::std::os::raw::c_void,
-}
-#[test]
-fn bindgen_test_layout_v3_ext_method() {
-    const UNINIT: ::std::mem::MaybeUninit<v3_ext_method> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<v3_ext_method>(),
-        104usize,
-        concat!("Size of: ", stringify!(v3_ext_method))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<v3_ext_method>(),
-        8usize,
-        concat!("Alignment of ", stringify!(v3_ext_method))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).ext_nid) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(ext_nid)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).ext_flags) as usize - ptr as usize },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(ext_flags)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).it) as usize - ptr as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(it)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).ext_new) as usize - ptr as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(ext_new)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).ext_free) as usize - ptr as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(ext_free)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).d2i) as usize - ptr as usize },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(d2i)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).i2d) as usize - ptr as usize },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(i2d)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).i2s) as usize - ptr as usize },
-        48usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(i2s)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).s2i) as usize - ptr as usize },
-        56usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(s2i)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).i2v) as usize - ptr as usize },
-        64usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(i2v)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).v2i) as usize - ptr as usize },
-        72usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(v2i)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).i2r) as usize - ptr as usize },
-        80usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(i2r)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).r2i) as usize - ptr as usize },
-        88usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(r2i)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).usr_data) as usize - ptr as usize },
-        96usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(v3_ext_method),
-            "::",
-            stringify!(usr_data)
-        )
-    );
-}
-impl Default for v3_ext_method {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct stack_st_X509V3_EXT_METHOD {
-    _unused: [u8; 0],
-}
-pub type sk_X509V3_EXT_METHOD_free_func =
-    ::std::option::Option<unsafe extern "C" fn(arg1: *mut X509V3_EXT_METHOD)>;
-pub type sk_X509V3_EXT_METHOD_copy_func = ::std::option::Option<
-    unsafe extern "C" fn(arg1: *const X509V3_EXT_METHOD) -> *mut X509V3_EXT_METHOD,
->;
-pub type sk_X509V3_EXT_METHOD_cmp_func = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *const *const X509V3_EXT_METHOD,
-        arg2: *const *const X509V3_EXT_METHOD,
-    ) -> ::std::os::raw::c_int,
->;
-pub type sk_X509V3_EXT_METHOD_delete_if_func = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *mut X509V3_EXT_METHOD,
-        arg2: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int,
->;
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct BASIC_CONSTRAINTS_st {
-    pub ca: ::std::os::raw::c_int,
+    pub ca: ASN1_BOOLEAN,
     pub pathlen: *mut ASN1_INTEGER,
 }
 #[test]
@@ -25075,187 +25262,31 @@ impl Default for ISSUING_DIST_POINT_st {
         }
     }
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct x509_purpose_st {
-    pub purpose: ::std::os::raw::c_int,
-    pub trust: ::std::os::raw::c_int,
-    pub flags: ::std::os::raw::c_int,
-    pub check_purpose: ::std::option::Option<
-        unsafe extern "C" fn(
-            arg1: *const x509_purpose_st,
-            arg2: *const X509,
-            arg3: ::std::os::raw::c_int,
-        ) -> ::std::os::raw::c_int,
-    >,
-    pub name: *mut ::std::os::raw::c_char,
-    pub sname: *mut ::std::os::raw::c_char,
-    pub usr_data: *mut ::std::os::raw::c_void,
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_BASIC_CONSTRAINTS_it"]
+    pub static BASIC_CONSTRAINTS_it: ASN1_ITEM;
 }
-#[test]
-fn bindgen_test_layout_x509_purpose_st() {
-    const UNINIT: ::std::mem::MaybeUninit<x509_purpose_st> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<x509_purpose_st>(),
-        48usize,
-        concat!("Size of: ", stringify!(x509_purpose_st))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<x509_purpose_st>(),
-        8usize,
-        concat!("Alignment of ", stringify!(x509_purpose_st))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).purpose) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(x509_purpose_st),
-            "::",
-            stringify!(purpose)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).trust) as usize - ptr as usize },
-        4usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(x509_purpose_st),
-            "::",
-            stringify!(trust)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).flags) as usize - ptr as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(x509_purpose_st),
-            "::",
-            stringify!(flags)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).check_purpose) as usize - ptr as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(x509_purpose_st),
-            "::",
-            stringify!(check_purpose)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).name) as usize - ptr as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(x509_purpose_st),
-            "::",
-            stringify!(name)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).sname) as usize - ptr as usize },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(x509_purpose_st),
-            "::",
-            stringify!(sname)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).usr_data) as usize - ptr as usize },
-        40usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(x509_purpose_st),
-            "::",
-            stringify!(usr_data)
-        )
-    );
-}
-impl Default for x509_purpose_st {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
-pub type X509_PURPOSE = x509_purpose_st;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct stack_st_X509_PURPOSE {
-    _unused: [u8; 0],
-}
-pub type sk_X509_PURPOSE_free_func =
-    ::std::option::Option<unsafe extern "C" fn(arg1: *mut X509_PURPOSE)>;
-pub type sk_X509_PURPOSE_copy_func =
-    ::std::option::Option<unsafe extern "C" fn(arg1: *const X509_PURPOSE) -> *mut X509_PURPOSE>;
-pub type sk_X509_PURPOSE_cmp_func = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *const *const X509_PURPOSE,
-        arg2: *const *const X509_PURPOSE,
-    ) -> ::std::os::raw::c_int,
->;
-pub type sk_X509_PURPOSE_delete_if_func = ::std::option::Option<
-    unsafe extern "C" fn(
-        arg1: *mut X509_PURPOSE,
-        arg2: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int,
->;
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_BASIC_CONSTRAINTS_new"]
     pub fn BASIC_CONSTRAINTS_new() -> *mut BASIC_CONSTRAINTS;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_BASIC_CONSTRAINTS_free"]
-    pub fn BASIC_CONSTRAINTS_free(a: *mut BASIC_CONSTRAINTS);
+    pub fn BASIC_CONSTRAINTS_free(bcons: *mut BASIC_CONSTRAINTS);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_d2i_BASIC_CONSTRAINTS"]
     pub fn d2i_BASIC_CONSTRAINTS(
-        a: *mut *mut BASIC_CONSTRAINTS,
-        in_: *mut *const ::std::os::raw::c_uchar,
+        out: *mut *mut BASIC_CONSTRAINTS,
+        inp: *mut *const u8,
         len: ::std::os::raw::c_long,
     ) -> *mut BASIC_CONSTRAINTS;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_i2d_BASIC_CONSTRAINTS"]
     pub fn i2d_BASIC_CONSTRAINTS(
-        a: *const BASIC_CONSTRAINTS,
-        out: *mut *mut ::std::os::raw::c_uchar,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_BASIC_CONSTRAINTS_it"]
-    pub static BASIC_CONSTRAINTS_it: ASN1_ITEM;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_AUTHORITY_KEYID_new"]
-    pub fn AUTHORITY_KEYID_new() -> *mut AUTHORITY_KEYID;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_AUTHORITY_KEYID_free"]
-    pub fn AUTHORITY_KEYID_free(a: *mut AUTHORITY_KEYID);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_AUTHORITY_KEYID"]
-    pub fn d2i_AUTHORITY_KEYID(
-        a: *mut *mut AUTHORITY_KEYID,
-        in_: *mut *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> *mut AUTHORITY_KEYID;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_AUTHORITY_KEYID"]
-    pub fn i2d_AUTHORITY_KEYID(
-        a: *mut AUTHORITY_KEYID,
-        out: *mut *mut ::std::os::raw::c_uchar,
+        bcons: *const BASIC_CONSTRAINTS,
+        outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -25263,26 +25294,26 @@ extern "C" {
     pub static AUTHORITY_KEYID_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_EXTENDED_KEY_USAGE_new"]
-    pub fn EXTENDED_KEY_USAGE_new() -> *mut EXTENDED_KEY_USAGE;
+    #[link_name = "\u{1}aws_lc_0_23_0_AUTHORITY_KEYID_new"]
+    pub fn AUTHORITY_KEYID_new() -> *mut AUTHORITY_KEYID;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_EXTENDED_KEY_USAGE_free"]
-    pub fn EXTENDED_KEY_USAGE_free(a: *mut EXTENDED_KEY_USAGE);
+    #[link_name = "\u{1}aws_lc_0_23_0_AUTHORITY_KEYID_free"]
+    pub fn AUTHORITY_KEYID_free(akid: *mut AUTHORITY_KEYID);
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_EXTENDED_KEY_USAGE"]
-    pub fn d2i_EXTENDED_KEY_USAGE(
-        a: *mut *mut EXTENDED_KEY_USAGE,
-        in_: *mut *const ::std::os::raw::c_uchar,
+    #[link_name = "\u{1}aws_lc_0_23_0_d2i_AUTHORITY_KEYID"]
+    pub fn d2i_AUTHORITY_KEYID(
+        out: *mut *mut AUTHORITY_KEYID,
+        inp: *mut *const u8,
         len: ::std::os::raw::c_long,
-    ) -> *mut EXTENDED_KEY_USAGE;
+    ) -> *mut AUTHORITY_KEYID;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_EXTENDED_KEY_USAGE"]
-    pub fn i2d_EXTENDED_KEY_USAGE(
-        a: *const EXTENDED_KEY_USAGE,
-        out: *mut *mut ::std::os::raw::c_uchar,
+    #[link_name = "\u{1}aws_lc_0_23_0_i2d_AUTHORITY_KEYID"]
+    pub fn i2d_AUTHORITY_KEYID(
+        akid: *mut AUTHORITY_KEYID,
+        outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -25290,26 +25321,26 @@ extern "C" {
     pub static EXTENDED_KEY_USAGE_it: ASN1_ITEM;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_CERTIFICATEPOLICIES_new"]
-    pub fn CERTIFICATEPOLICIES_new() -> *mut CERTIFICATEPOLICIES;
+    #[link_name = "\u{1}aws_lc_0_23_0_EXTENDED_KEY_USAGE_new"]
+    pub fn EXTENDED_KEY_USAGE_new() -> *mut EXTENDED_KEY_USAGE;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_CERTIFICATEPOLICIES_free"]
-    pub fn CERTIFICATEPOLICIES_free(a: *mut CERTIFICATEPOLICIES);
+    #[link_name = "\u{1}aws_lc_0_23_0_EXTENDED_KEY_USAGE_free"]
+    pub fn EXTENDED_KEY_USAGE_free(eku: *mut EXTENDED_KEY_USAGE);
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_CERTIFICATEPOLICIES"]
-    pub fn d2i_CERTIFICATEPOLICIES(
-        a: *mut *mut CERTIFICATEPOLICIES,
-        in_: *mut *const ::std::os::raw::c_uchar,
+    #[link_name = "\u{1}aws_lc_0_23_0_d2i_EXTENDED_KEY_USAGE"]
+    pub fn d2i_EXTENDED_KEY_USAGE(
+        out: *mut *mut EXTENDED_KEY_USAGE,
+        inp: *mut *const u8,
         len: ::std::os::raw::c_long,
-    ) -> *mut CERTIFICATEPOLICIES;
+    ) -> *mut EXTENDED_KEY_USAGE;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_CERTIFICATEPOLICIES"]
-    pub fn i2d_CERTIFICATEPOLICIES(
-        a: *const CERTIFICATEPOLICIES,
-        out: *mut *mut ::std::os::raw::c_uchar,
+    #[link_name = "\u{1}aws_lc_0_23_0_i2d_EXTENDED_KEY_USAGE"]
+    pub fn i2d_EXTENDED_KEY_USAGE(
+        eku: *const EXTENDED_KEY_USAGE,
+        outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -25317,31 +25348,35 @@ extern "C" {
     pub static CERTIFICATEPOLICIES_it: ASN1_ITEM;
 }
 extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_CERTIFICATEPOLICIES_new"]
+    pub fn CERTIFICATEPOLICIES_new() -> *mut CERTIFICATEPOLICIES;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_CERTIFICATEPOLICIES_free"]
+    pub fn CERTIFICATEPOLICIES_free(policies: *mut CERTIFICATEPOLICIES);
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_d2i_CERTIFICATEPOLICIES"]
+    pub fn d2i_CERTIFICATEPOLICIES(
+        out: *mut *mut CERTIFICATEPOLICIES,
+        inp: *mut *const u8,
+        len: ::std::os::raw::c_long,
+    ) -> *mut CERTIFICATEPOLICIES;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_23_0_i2d_CERTIFICATEPOLICIES"]
+    pub fn i2d_CERTIFICATEPOLICIES(
+        policies: *const CERTIFICATEPOLICIES,
+        outp: *mut *mut u8,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICYINFO_new"]
     pub fn POLICYINFO_new() -> *mut POLICYINFO;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICYINFO_free"]
-    pub fn POLICYINFO_free(a: *mut POLICYINFO);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_POLICYINFO"]
-    pub fn d2i_POLICYINFO(
-        a: *mut *mut POLICYINFO,
-        in_: *mut *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> *mut POLICYINFO;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_POLICYINFO"]
-    pub fn i2d_POLICYINFO(
-        a: *const POLICYINFO,
-        out: *mut *mut ::std::os::raw::c_uchar,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_POLICYINFO_it"]
-    pub static POLICYINFO_it: ASN1_ITEM;
+    pub fn POLICYINFO_free(info: *mut POLICYINFO);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICYQUALINFO_new"]
@@ -25349,26 +25384,7 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICYQUALINFO_free"]
-    pub fn POLICYQUALINFO_free(a: *mut POLICYQUALINFO);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_POLICYQUALINFO"]
-    pub fn d2i_POLICYQUALINFO(
-        a: *mut *mut POLICYQUALINFO,
-        in_: *mut *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> *mut POLICYQUALINFO;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_POLICYQUALINFO"]
-    pub fn i2d_POLICYQUALINFO(
-        a: *const POLICYQUALINFO,
-        out: *mut *mut ::std::os::raw::c_uchar,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_POLICYQUALINFO_it"]
-    pub static POLICYQUALINFO_it: ASN1_ITEM;
+    pub fn POLICYQUALINFO_free(info: *mut POLICYQUALINFO);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_USERNOTICE_new"]
@@ -25376,26 +25392,7 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_USERNOTICE_free"]
-    pub fn USERNOTICE_free(a: *mut USERNOTICE);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_USERNOTICE"]
-    pub fn d2i_USERNOTICE(
-        a: *mut *mut USERNOTICE,
-        in_: *mut *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> *mut USERNOTICE;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_USERNOTICE"]
-    pub fn i2d_USERNOTICE(
-        a: *const USERNOTICE,
-        out: *mut *mut ::std::os::raw::c_uchar,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_USERNOTICE_it"]
-    pub static USERNOTICE_it: ASN1_ITEM;
+    pub fn USERNOTICE_free(notice: *mut USERNOTICE);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_NOTICEREF_new"]
@@ -25403,26 +25400,11 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_NOTICEREF_free"]
-    pub fn NOTICEREF_free(a: *mut NOTICEREF);
+    pub fn NOTICEREF_free(ref_: *mut NOTICEREF);
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_NOTICEREF"]
-    pub fn d2i_NOTICEREF(
-        a: *mut *mut NOTICEREF,
-        in_: *mut *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> *mut NOTICEREF;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_NOTICEREF"]
-    pub fn i2d_NOTICEREF(
-        a: *const NOTICEREF,
-        out: *mut *mut ::std::os::raw::c_uchar,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_NOTICEREF_it"]
-    pub static NOTICEREF_it: ASN1_ITEM;
+    #[link_name = "\u{1}aws_lc_0_23_0_CRL_DIST_POINTS_it"]
+    pub static CRL_DIST_POINTS_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_CRL_DIST_POINTS_new"]
@@ -25430,26 +25412,22 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_CRL_DIST_POINTS_free"]
-    pub fn CRL_DIST_POINTS_free(a: *mut CRL_DIST_POINTS);
+    pub fn CRL_DIST_POINTS_free(crldp: *mut CRL_DIST_POINTS);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_d2i_CRL_DIST_POINTS"]
     pub fn d2i_CRL_DIST_POINTS(
-        a: *mut *mut CRL_DIST_POINTS,
-        in_: *mut *const ::std::os::raw::c_uchar,
+        out: *mut *mut CRL_DIST_POINTS,
+        inp: *mut *const u8,
         len: ::std::os::raw::c_long,
     ) -> *mut CRL_DIST_POINTS;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_i2d_CRL_DIST_POINTS"]
     pub fn i2d_CRL_DIST_POINTS(
-        a: *mut CRL_DIST_POINTS,
-        out: *mut *mut ::std::os::raw::c_uchar,
+        crldp: *mut CRL_DIST_POINTS,
+        outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_CRL_DIST_POINTS_it"]
-    pub static CRL_DIST_POINTS_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_DIST_POINT_new"]
@@ -25457,26 +25435,7 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_DIST_POINT_free"]
-    pub fn DIST_POINT_free(a: *mut DIST_POINT);
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_DIST_POINT"]
-    pub fn d2i_DIST_POINT(
-        a: *mut *mut DIST_POINT,
-        in_: *mut *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> *mut DIST_POINT;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_DIST_POINT"]
-    pub fn i2d_DIST_POINT(
-        a: *mut DIST_POINT,
-        out: *mut *mut ::std::os::raw::c_uchar,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_DIST_POINT_it"]
-    pub static DIST_POINT_it: ASN1_ITEM;
+    pub fn DIST_POINT_free(dp: *mut DIST_POINT);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_DIST_POINT_NAME_new"]
@@ -25484,26 +25443,11 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_DIST_POINT_NAME_free"]
-    pub fn DIST_POINT_NAME_free(a: *mut DIST_POINT_NAME);
+    pub fn DIST_POINT_NAME_free(name: *mut DIST_POINT_NAME);
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_DIST_POINT_NAME"]
-    pub fn d2i_DIST_POINT_NAME(
-        a: *mut *mut DIST_POINT_NAME,
-        in_: *mut *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> *mut DIST_POINT_NAME;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_DIST_POINT_NAME"]
-    pub fn i2d_DIST_POINT_NAME(
-        a: *mut DIST_POINT_NAME,
-        out: *mut *mut ::std::os::raw::c_uchar,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_DIST_POINT_NAME_it"]
-    pub static DIST_POINT_NAME_it: ASN1_ITEM;
+    #[link_name = "\u{1}aws_lc_0_23_0_ISSUING_DIST_POINT_it"]
+    pub static ISSUING_DIST_POINT_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_ISSUING_DIST_POINT_new"]
@@ -25511,26 +25455,22 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_ISSUING_DIST_POINT_free"]
-    pub fn ISSUING_DIST_POINT_free(a: *mut ISSUING_DIST_POINT);
+    pub fn ISSUING_DIST_POINT_free(idp: *mut ISSUING_DIST_POINT);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_d2i_ISSUING_DIST_POINT"]
     pub fn d2i_ISSUING_DIST_POINT(
-        a: *mut *mut ISSUING_DIST_POINT,
-        in_: *mut *const ::std::os::raw::c_uchar,
+        out: *mut *mut ISSUING_DIST_POINT,
+        inp: *mut *const u8,
         len: ::std::os::raw::c_long,
     ) -> *mut ISSUING_DIST_POINT;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_i2d_ISSUING_DIST_POINT"]
     pub fn i2d_ISSUING_DIST_POINT(
-        a: *mut ISSUING_DIST_POINT,
-        out: *mut *mut ::std::os::raw::c_uchar,
+        idp: *mut ISSUING_DIST_POINT,
+        outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_ISSUING_DIST_POINT_it"]
-    pub static ISSUING_DIST_POINT_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_ACCESS_DESCRIPTION_new"]
@@ -25538,26 +25478,11 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_ACCESS_DESCRIPTION_free"]
-    pub fn ACCESS_DESCRIPTION_free(a: *mut ACCESS_DESCRIPTION);
+    pub fn ACCESS_DESCRIPTION_free(desc: *mut ACCESS_DESCRIPTION);
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_d2i_ACCESS_DESCRIPTION"]
-    pub fn d2i_ACCESS_DESCRIPTION(
-        a: *mut *mut ACCESS_DESCRIPTION,
-        in_: *mut *const ::std::os::raw::c_uchar,
-        len: ::std::os::raw::c_long,
-    ) -> *mut ACCESS_DESCRIPTION;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_i2d_ACCESS_DESCRIPTION"]
-    pub fn i2d_ACCESS_DESCRIPTION(
-        a: *mut ACCESS_DESCRIPTION,
-        out: *mut *mut ::std::os::raw::c_uchar,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_ACCESS_DESCRIPTION_it"]
-    pub static ACCESS_DESCRIPTION_it: ASN1_ITEM;
+    #[link_name = "\u{1}aws_lc_0_23_0_AUTHORITY_INFO_ACCESS_it"]
+    pub static AUTHORITY_INFO_ACCESS_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_AUTHORITY_INFO_ACCESS_new"]
@@ -25565,30 +25490,22 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_AUTHORITY_INFO_ACCESS_free"]
-    pub fn AUTHORITY_INFO_ACCESS_free(a: *mut AUTHORITY_INFO_ACCESS);
+    pub fn AUTHORITY_INFO_ACCESS_free(aia: *mut AUTHORITY_INFO_ACCESS);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_d2i_AUTHORITY_INFO_ACCESS"]
     pub fn d2i_AUTHORITY_INFO_ACCESS(
-        a: *mut *mut AUTHORITY_INFO_ACCESS,
-        in_: *mut *const ::std::os::raw::c_uchar,
+        out: *mut *mut AUTHORITY_INFO_ACCESS,
+        inp: *mut *const u8,
         len: ::std::os::raw::c_long,
     ) -> *mut AUTHORITY_INFO_ACCESS;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_i2d_AUTHORITY_INFO_ACCESS"]
     pub fn i2d_AUTHORITY_INFO_ACCESS(
-        a: *mut AUTHORITY_INFO_ACCESS,
-        out: *mut *mut ::std::os::raw::c_uchar,
+        aia: *mut AUTHORITY_INFO_ACCESS,
+        outp: *mut *mut u8,
     ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_AUTHORITY_INFO_ACCESS_it"]
-    pub static AUTHORITY_INFO_ACCESS_it: ASN1_ITEM;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_POLICY_MAPPING_it"]
-    pub static POLICY_MAPPING_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICY_MAPPING_new"]
@@ -25596,15 +25513,11 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICY_MAPPING_free"]
-    pub fn POLICY_MAPPING_free(a: *mut POLICY_MAPPING);
+    pub fn POLICY_MAPPING_free(mapping: *mut POLICY_MAPPING);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICY_MAPPINGS_it"]
     pub static POLICY_MAPPINGS_it: ASN1_ITEM;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_GENERAL_SUBTREE_it"]
-    pub static GENERAL_SUBTREE_it: ASN1_ITEM;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_GENERAL_SUBTREE_new"]
@@ -25612,7 +25525,7 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_GENERAL_SUBTREE_free"]
-    pub fn GENERAL_SUBTREE_free(a: *mut GENERAL_SUBTREE);
+    pub fn GENERAL_SUBTREE_free(subtree: *mut GENERAL_SUBTREE);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_NAME_CONSTRAINTS_it"]
@@ -25624,7 +25537,7 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_NAME_CONSTRAINTS_free"]
-    pub fn NAME_CONSTRAINTS_free(a: *mut NAME_CONSTRAINTS);
+    pub fn NAME_CONSTRAINTS_free(ncons: *mut NAME_CONSTRAINTS);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICY_CONSTRAINTS_new"]
@@ -25632,74 +25545,11 @@ extern "C" {
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICY_CONSTRAINTS_free"]
-    pub fn POLICY_CONSTRAINTS_free(a: *mut POLICY_CONSTRAINTS);
+    pub fn POLICY_CONSTRAINTS_free(pcons: *mut POLICY_CONSTRAINTS);
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_POLICY_CONSTRAINTS_it"]
     pub static POLICY_CONSTRAINTS_it: ASN1_ITEM;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_add"]
-    pub fn X509V3_EXT_add(ext: *mut X509V3_EXT_METHOD) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    pub fn X509V3_EXT_add_list(extlist: *mut X509V3_EXT_METHOD) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_add_alias"]
-    pub fn X509V3_EXT_add_alias(
-        nid_to: ::std::os::raw::c_int,
-        nid_from: ::std::os::raw::c_int,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    pub fn X509V3_EXT_cleanup();
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_get"]
-    pub fn X509V3_EXT_get(ext: *const X509_EXTENSION) -> *const X509V3_EXT_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_get_nid"]
-    pub fn X509V3_EXT_get_nid(nid: ::std::os::raw::c_int) -> *const X509V3_EXT_METHOD;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_d2i"]
-    pub fn X509V3_EXT_d2i(ext: *const X509_EXTENSION) -> *mut ::std::os::raw::c_void;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_get_d2i"]
-    pub fn X509V3_get_d2i(
-        extensions: *const stack_st_X509_EXTENSION,
-        nid: ::std::os::raw::c_int,
-        out_critical: *mut ::std::os::raw::c_int,
-        out_idx: *mut ::std::os::raw::c_int,
-    ) -> *mut ::std::os::raw::c_void;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_free"]
-    pub fn X509V3_EXT_free(
-        nid: ::std::os::raw::c_int,
-        ext_data: *mut ::std::os::raw::c_void,
-    ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_EXT_i2d"]
-    pub fn X509V3_EXT_i2d(
-        ext_nid: ::std::os::raw::c_int,
-        crit: ::std::os::raw::c_int,
-        ext_struc: *mut ::std::os::raw::c_void,
-    ) -> *mut X509_EXTENSION;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509V3_add1_i2d"]
-    pub fn X509V3_add1_i2d(
-        x: *mut *mut stack_st_X509_EXTENSION,
-        nid: ::std::os::raw::c_int,
-        value: *mut ::std::os::raw::c_void,
-        crit: ::std::os::raw::c_int,
-        flags: ::std::os::raw::c_ulong,
-    ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_set"]
@@ -25711,15 +25561,6 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_get_count"]
     pub fn X509_PURPOSE_get_count() -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_get0"]
-    pub fn X509_PURPOSE_get0(idx: ::std::os::raw::c_int) -> *const X509_PURPOSE;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_get_by_sname"]
-    pub fn X509_PURPOSE_get_by_sname(sname: *const ::std::os::raw::c_char)
-        -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_get_by_id"]
@@ -25736,10 +25577,6 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_get_trust"]
     pub fn X509_PURPOSE_get_trust(xp: *const X509_PURPOSE) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_23_0_X509_PURPOSE_get_id"]
-    pub fn X509_PURPOSE_get_id(arg1: *const X509_PURPOSE) -> ::std::os::raw::c_int;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
