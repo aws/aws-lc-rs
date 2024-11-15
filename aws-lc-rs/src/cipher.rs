@@ -230,38 +230,35 @@ pub use streaming::{BufferUpdate, StreamingDecryptingKey, StreamingEncryptingKey
 
 use crate::buffer::Buffer;
 use crate::error::Unspecified;
-use crate::fips::indicator_check;
 use crate::hkdf;
 use crate::hkdf::KeyType;
 use crate::iv::{FixedLength, IV_LEN_128_BIT};
 use crate::ptr::ConstPointer;
 use aws_lc::{
-    AES_cbc_encrypt, AES_cfb128_encrypt, AES_ctr128_encrypt, AES_ecb_encrypt, EVP_aes_128_cbc,
-    EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128,
-    EVP_aes_256_ctr, EVP_aes_256_ecb, AES_DECRYPT, AES_ENCRYPT, AES_KEY, EVP_CIPHER,
+    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_256_cbc,
+    EVP_aes_256_cfb128, EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
 };
 use core::fmt::Debug;
 use key::SymmetricCipherKey;
-use zeroize::Zeroize;
 
 /// The number of bytes in an AES 128-bit key
-pub const AES_128_KEY_LEN: usize = 16;
+pub use crate::cipher::aes::AES_128_KEY_LEN;
 
 /// The number of bytes in an AES 256-bit key
-pub const AES_256_KEY_LEN: usize = 32;
+pub use crate::cipher::aes::AES_256_KEY_LEN;
 
 const MAX_CIPHER_KEY_LEN: usize = AES_256_KEY_LEN;
 
 /// The number of bytes for an AES-CBC initialization vector (IV)
-pub const AES_CBC_IV_LEN: usize = 16;
+pub use crate::cipher::aes::AES_CBC_IV_LEN;
 
 /// The number of bytes for an AES-CTR initialization vector (IV)
-pub const AES_CTR_IV_LEN: usize = 16;
+pub use crate::cipher::aes::AES_CTR_IV_LEN;
 
 /// The number of bytes for an AES-CFB initialization vector (IV)
-pub const AES_CFB_IV_LEN: usize = 16;
+pub use crate::cipher::aes::AES_CFB_IV_LEN;
 
-const AES_BLOCK_LEN: usize = 16;
+use crate::cipher::aes::AES_BLOCK_LEN;
 
 const MAX_CIPHER_BLOCK_LEN: usize = AES_BLOCK_LEN;
 
@@ -532,7 +529,7 @@ impl EncryptingKey {
     }
 
     /// Constructs an `EncryptingKey` operating in electronic code book mode (ECB) using the provided key.
-    ///
+    /// 
     /// # ☠️ ️️️DANGER ☠️
     /// Offered for computability purposes only. This is an extremely dangerous mode, and
     /// very likely not what you want to use.
@@ -574,6 +571,9 @@ impl EncryptingKey {
     /// Encrypts the data provided in `in_out` in-place.
     /// Returns a [`DecryptionContext`] with the randomly generated IV that was used to encrypt
     /// the data provided.
+    /// 
+    /// If `EncryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
+    /// of the block length.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
@@ -587,6 +587,9 @@ impl EncryptingKey {
     /// This is considered "less safe" because the caller could potentially construct
     /// a `EncryptionContext` from a previously used IV (initialization vector).
     /// Returns a [`DecryptionContext`] produced from the provided `EncryptionContext`.
+    /// 
+    /// If `EncryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
+    /// of the block length.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
@@ -691,6 +694,9 @@ impl DecryptingKey {
 
     /// Decrypts the data provided in `in_out` in-place.
     /// Returns a references to the decrypted data.
+    /// 
+    /// If `DecryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
+    /// of the block length.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
@@ -733,19 +739,25 @@ fn encrypt(
 
     match mode {
         OperatingMode::CBC => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => encrypt_aes_cbc_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                aes::encrypt_cbc_mode(key, context, in_out)
+            }
         },
         OperatingMode::CTR => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => encrypt_aes_ctr_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                aes::encrypt_ctr_mode(key, context, in_out)
+            }
         },
         // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                encrypt_aes_cfb_mode(key, mode, context, in_out)
+                aes::encrypt_cfb_mode(key, mode, context, in_out)
             }
         },
         OperatingMode::ECB => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => encrypt_aes_ecb_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                aes::encrypt_ecb_mode(key, context, in_out)
+            }
         },
     }
 }
@@ -770,325 +782,27 @@ fn decrypt<'in_out>(
 
     match mode {
         OperatingMode::CBC => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => decrypt_aes_cbc_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                aes::decrypt_cbc_mode(key, context, in_out)
+            }
         },
         OperatingMode::CTR => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => decrypt_aes_ctr_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                aes::decrypt_ctr_mode(key, context, in_out)
+            }
         },
         // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
-                decrypt_aes_cfb_mode(key, mode, context, in_out)
+                aes::decrypt_cfb_mode(key, mode, context, in_out)
             }
         },
         OperatingMode::ECB => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => decrypt_aes_ecb_mode(key, context, in_out),
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+                aes::decrypt_ecb_mode(key, context, in_out)
+            }
         },
     }
-}
-
-fn encrypt_aes_ctr_mode(
-    key: &SymmetricCipherKey,
-    context: EncryptionContext,
-    in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
-        _ => unreachable!(),
-    };
-
-    let mut iv = {
-        let mut iv = [0u8; AES_CTR_IV_LEN];
-        iv.copy_from_slice((&context).try_into()?);
-        iv
-    };
-
-    let mut buffer = [0u8; AES_BLOCK_LEN];
-
-    aes_ctr128_encrypt(key, &mut iv, &mut buffer, in_out);
-    iv.zeroize();
-
-    Ok(context.into())
-}
-
-fn decrypt_aes_ctr_mode<'in_out>(
-    key: &SymmetricCipherKey,
-    context: DecryptionContext,
-    in_out: &'in_out mut [u8],
-) -> Result<&'in_out mut [u8], Unspecified> {
-    // it's the same in CTR, just providing a nice named wrapper to match
-    encrypt_aes_ctr_mode(key, context.into(), in_out).map(|_| in_out)
-}
-
-fn encrypt_aes_cbc_mode(
-    key: &SymmetricCipherKey,
-    context: EncryptionContext,
-    in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
-        _ => unreachable!(),
-    };
-
-    let mut iv = {
-        let mut iv = [0u8; AES_CBC_IV_LEN];
-        iv.copy_from_slice((&context).try_into()?);
-        iv
-    };
-
-    aes_cbc_encrypt(key, &mut iv, in_out);
-    iv.zeroize();
-
-    Ok(context.into())
-}
-
-#[allow(clippy::needless_pass_by_value)]
-fn decrypt_aes_cbc_mode<'in_out>(
-    key: &SymmetricCipherKey,
-    context: DecryptionContext,
-    in_out: &'in_out mut [u8],
-) -> Result<&'in_out mut [u8], Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
-            dec_key
-        }
-        _ => unreachable!(),
-    };
-
-    let mut iv = {
-        let mut iv = [0u8; AES_CBC_IV_LEN];
-        iv.copy_from_slice((&context).try_into()?);
-        iv
-    };
-
-    aes_cbc_decrypt(key, &mut iv, in_out);
-    iv.zeroize();
-
-    Ok(in_out)
-}
-
-#[allow(clippy::needless_pass_by_value)]
-fn encrypt_aes_cfb_mode(
-    key: &SymmetricCipherKey,
-    mode: OperatingMode,
-    context: EncryptionContext,
-    in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
-        _ => unreachable!(),
-    };
-
-    let mut iv = {
-        let mut iv = [0u8; AES_CFB_IV_LEN];
-        iv.copy_from_slice((&context).try_into()?);
-        iv
-    };
-
-    let cfb_encrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
-        // TODO: Hopefully support CFB1, and CFB8
-        OperatingMode::CFB128 => aes_cfb128_encrypt,
-        _ => unreachable!(),
-    };
-
-    cfb_encrypt(key, &mut iv, in_out);
-    iv.zeroize();
-
-    Ok(context.into())
-}
-
-#[allow(clippy::needless_pass_by_value)]
-fn decrypt_aes_cfb_mode<'in_out>(
-    key: &SymmetricCipherKey,
-    mode: OperatingMode,
-    context: DecryptionContext,
-    in_out: &'in_out mut [u8],
-) -> Result<&'in_out mut [u8], Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
-        _ => unreachable!(),
-    };
-
-    let mut iv = {
-        let mut iv = [0u8; AES_CFB_IV_LEN];
-        iv.copy_from_slice((&context).try_into()?);
-        iv
-    };
-
-    let cfb_decrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
-        // TODO: Hopefully support CFB1, and CFB8
-        OperatingMode::CFB128 => aes_cfb128_decrypt,
-        _ => unreachable!(),
-    };
-
-    cfb_decrypt(key, &mut iv, in_out);
-
-    iv.zeroize();
-
-    Ok(in_out)
-}
-
-#[allow(clippy::needless_pass_by_value, clippy::unnecessary_wraps)]
-fn encrypt_aes_ecb_mode(
-    key: &SymmetricCipherKey,
-    context: EncryptionContext,
-    in_out: &mut [u8],
-) -> Result<DecryptionContext, Unspecified> {
-    if !matches!(context, EncryptionContext::None) {
-        unreachable!();
-    }
-
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
-        _ => unreachable!(),
-    };
-
-    let mut in_out_iter = in_out.chunks_exact_mut(AES_BLOCK_LEN);
-
-    for block in in_out_iter.by_ref() {
-        aes_ecb_encrypt(key, block);
-    }
-
-    // This is a sanity check that should not happen. We validate in `encrypt` that in_out.len() % block_len == 0
-    // for this mode.
-    assert!(in_out_iter.into_remainder().is_empty());
-
-    Ok(context.into())
-}
-
-#[allow(clippy::needless_pass_by_value, clippy::unnecessary_wraps)]
-fn decrypt_aes_ecb_mode<'in_out>(
-    key: &SymmetricCipherKey,
-    context: DecryptionContext,
-    in_out: &'in_out mut [u8],
-) -> Result<&'in_out mut [u8], Unspecified> {
-    if !matches!(context, DecryptionContext::None) {
-        unreachable!();
-    }
-
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
-            dec_key
-        }
-        _ => unreachable!(),
-    };
-
-    {
-        let mut in_out_iter = in_out.chunks_exact_mut(AES_BLOCK_LEN);
-
-        for block in in_out_iter.by_ref() {
-            aes_ecb_decrypt(key, block);
-        }
-
-        // This is a sanity check hat should not fail. We validate in `decrypt` that in_out.len() % block_len == 0 for
-        // this mode.
-        assert!(in_out_iter.into_remainder().is_empty());
-    }
-
-    Ok(in_out)
-}
-
-fn aes_ecb_encrypt(key: &AES_KEY, in_out: &mut [u8]) {
-    indicator_check!(unsafe {
-        AES_ecb_encrypt(in_out.as_ptr(), in_out.as_mut_ptr(), key, AES_ENCRYPT);
-    });
-}
-
-fn aes_ecb_decrypt(key: &AES_KEY, in_out: &mut [u8]) {
-    indicator_check!(unsafe {
-        AES_ecb_encrypt(in_out.as_ptr(), in_out.as_mut_ptr(), key, AES_DECRYPT);
-    });
-}
-
-fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_out: &mut [u8]) {
-    let mut num: u32 = 0;
-
-    indicator_check!(unsafe {
-        AES_ctr128_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            block_buffer.as_mut_ptr(),
-            &mut num,
-        );
-    });
-
-    Zeroize::zeroize(block_buffer);
-}
-
-fn aes_cbc_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
-    indicator_check!(unsafe {
-        AES_cbc_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            AES_ENCRYPT,
-        );
-    });
-}
-
-fn aes_cbc_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
-    indicator_check!(unsafe {
-        AES_cbc_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            AES_DECRYPT,
-        );
-    });
-}
-
-fn aes_cfb128_encrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
-    let mut num: i32 = 0;
-    indicator_check!(unsafe {
-        AES_cfb128_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            &mut num,
-            AES_ENCRYPT,
-        );
-    });
-}
-
-fn aes_cfb128_decrypt(key: &AES_KEY, iv: &mut [u8], in_out: &mut [u8]) {
-    let mut num: i32 = 0;
-    indicator_check!(unsafe {
-        AES_cfb128_encrypt(
-            in_out.as_ptr(),
-            in_out.as_mut_ptr(),
-            in_out.len(),
-            key,
-            iv.as_mut_ptr(),
-            &mut num,
-            AES_DECRYPT,
-        );
-    });
 }
 
 #[cfg(test)]

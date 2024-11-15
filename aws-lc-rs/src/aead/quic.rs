@@ -7,7 +7,7 @@
 //!
 //! See draft-ietf-quic-tls.
 
-use crate::cipher::aes::encrypt_block_aes;
+use crate::cipher::aes::encrypt_block;
 use crate::cipher::block;
 use crate::cipher::chacha::encrypt_block_chacha20;
 use crate::cipher::key::SymmetricCipherKey;
@@ -149,7 +149,7 @@ fn cipher_new_mask(
 
     let encrypted_block = match cipher_key {
         SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            encrypt_block_aes(enc_key, block)
+            encrypt_block(enc_key, block)
         }
         SymmetricCipherKey::ChaCha20 { raw_key } => {
             let plaintext = block.as_ref();

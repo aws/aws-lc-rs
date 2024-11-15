@@ -91,6 +91,10 @@ impl PaddedBlockEncryptingKey {
 
     /// Constructs a new `PaddedBlockEncryptingKey` cipher with electronic code book (ECB) mode.
     /// Plaintext data is padded following the PKCS#7 scheme.
+    /// 
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing a `PaddedBlockEncryptingKey`.
@@ -206,6 +210,10 @@ impl PaddedBlockDecryptingKey {
 
     /// Constructs a new `PaddedBlockDecryptingKey` cipher with electronic code book (ECB) mode.
     /// Decrypted data is unpadded following the PKCS#7 scheme.
+    /// 
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
     ///
     // # FIPS
     // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
