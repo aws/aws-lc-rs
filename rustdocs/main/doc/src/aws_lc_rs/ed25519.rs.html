@@ -1225,7 +1225,7 @@
         <span class="kw">let </span>public_key = key_pair.public_key();
         <span class="kw">let </span>signature = key_pair.sign(MESSAGE);
         <span class="kw">let </span>unparsed_public_key = UnparsedPublicKey::new(<span class="kw-2">&amp;</span>ED25519, public_key.as_ref());
-        <span class="kw">let _ </span>= unparsed_public_key
+        unparsed_public_key
             .verify(MESSAGE, signature.as_ref())
             .unwrap();
     }

@@ -860,9 +860,9 @@
         <span class="kw">let </span>s = <span class="self">self</span>.consume_optional_string(key)<span class="question-mark">?</span>;
         <span class="kw">let </span>result = <span class="kw">if </span>s.starts_with(<span class="string">'\"'</span>) {
             <span class="comment">// The value is a quoted UTF-8 string.
-
-            </span><span class="kw">let </span><span class="kw-2">mut </span>bytes = Vec::with_capacity(s.len());
-            <span class="kw">let </span><span class="kw-2">mut </span>s = s.as_bytes().iter().skip(<span class="number">1</span>);
+            </span><span class="kw">let </span>s = s.as_bytes();
+            <span class="kw">let </span><span class="kw-2">mut </span>bytes = Vec::with_capacity(s.len());
+            <span class="kw">let </span><span class="kw-2">mut </span>s = s.iter().skip(<span class="number">1</span>);
             <span class="kw">loop </span>{
                 <span class="kw">let </span>b = <span class="kw">match </span>s.next() {
                     <span class="prelude-val">Some</span>(<span class="string">b'\\'</span>) =&gt; {
