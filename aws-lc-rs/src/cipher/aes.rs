@@ -33,7 +33,7 @@ pub const AES_BLOCK_LEN: usize = 16;
 pub(crate) fn encrypt_block(aes_key: &AES_KEY, mut block: Block) -> Block {
     {
         let block_ref = block.as_mut();
-        assert!(block_ref.len() == AES_BLOCK_LEN);
+        debug_assert_eq!(block_ref.len(), AES_BLOCK_LEN);
         aes_ecb_encrypt(aes_key, block_ref);
     }
     block
@@ -219,7 +219,7 @@ pub(super) fn encrypt_ecb_mode(
 
     // This is a sanity check that should not happen. We validate in `encrypt` that in_out.len() % block_len == 0
     // for this mode.
-    assert!(in_out_iter.into_remainder().is_empty());
+    debug_assert!(in_out_iter.into_remainder().is_empty());
 
     Ok(context.into())
 }
@@ -251,7 +251,7 @@ pub(super) fn decrypt_ecb_mode<'in_out>(
 
         // This is a sanity check hat should not fail. We validate in `decrypt` that in_out.len() % block_len == 0 for
         // this mode.
-        assert!(in_out_iter.into_remainder().is_empty());
+        debug_assert!(in_out_iter.into_remainder().is_empty());
     }
 
     Ok(in_out)
