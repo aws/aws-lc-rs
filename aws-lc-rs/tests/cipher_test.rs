@@ -47,11 +47,11 @@ fn step_encrypt(
     let outlen = output.written().len();
     ciphertext.truncate(out_idx + outlen);
     match mode {
-        OperatingMode::CBC => {
+        OperatingMode::CBC | OperatingMode::ECB => {
             assert!(ciphertext.len() > plaintext.len());
             assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
         }
-        OperatingMode::CTR => {
+        OperatingMode::CTR | OperatingMode::CFB128 => {
             assert_eq!(ciphertext.len(), plaintext.len());
         }
         _ => panic!("Unknown cipher mode"),
@@ -97,11 +97,11 @@ fn step_decrypt(
     let outlen = output.written().len();
     plaintext.truncate(out_idx + outlen);
     match mode {
-        OperatingMode::CBC => {
+        OperatingMode::CBC | OperatingMode::ECB => {
             assert!(ciphertext.len() > plaintext.len());
             assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
         }
-        OperatingMode::CTR => {
+        OperatingMode::CTR | OperatingMode::CFB128 => {
             assert_eq!(ciphertext.len(), plaintext.len());
         }
         _ => panic!("Unknown cipher mode"),
@@ -126,6 +126,32 @@ macro_rules! streaming_cipher_rt {
                 let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
                     let decrypting_key =
                         StreamingDecryptingKey::$constructor(unbound_key2, decrypt_ctx).unwrap();
+
+                let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                assert_eq!(input.as_slice(), plaintext.as_ref());
+            }
+        }
+        }
+    };
+}
+
+macro_rules! streaming_ecb_pkcs7_rt {
+    ($name:ident, $alg:expr, $key:literal, $plaintext:literal, $from_step:literal, $to_step:literal) => {
+        paste! {
+        #[test]
+        fn [<$name _streaming>]() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+
+            for step in ($from_step..=$to_step) {
+                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+                let encrypting_key = StreamingEncryptingKey::ecb_pkcs7(unbound_key).unwrap();
+
+                let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+
+                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+                    let decrypting_key =
+                        StreamingDecryptingKey::ecb_pkcs7(unbound_key2, decrypt_ctx).unwrap();
 
                 let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
                 assert_eq!(input.as_slice(), plaintext.as_ref());
@@ -168,6 +194,36 @@ macro_rules! streaming_cipher_kat {
         }
     };
 }
+
+macro_rules! streaming_ecb_pkcs7_kat {
+    ($name:ident, $alg:expr, $key:literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
+        paste! {
+        #[test]
+        fn [<$name _streaming>]() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
+
+            for step in ($from_step..=$to_step) {
+                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+                    let encrypting_key = StreamingEncryptingKey::ecb_pkcs7(unbound_key).unwrap();
+
+                let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+
+                assert_eq!(expected_ciphertext.as_slice(), ciphertext.as_ref());
+
+                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+                    let decrypting_key =
+                        StreamingDecryptingKey::ecb_pkcs7(unbound_key2, decrypt_ctx).unwrap();
+
+                let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                assert_eq!(input.as_slice(), plaintext.as_ref());
+            }
+        }
+        }
+    };
+}
+
 macro_rules! padded_cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
         #[test]
@@ -214,6 +270,37 @@ macro_rules! padded_cipher_kat {
     };
 }
 
+macro_rules! padded_ecb_pkcs7_kat {
+    ($name:ident, $alg:expr, $key:literal, $plaintext:literal, $ciphertext:literal) => {
+        #[test]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
+
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+
+            let encrypting_key = PaddedBlockEncryptingKey::ecb_pkcs7(unbound_key).unwrap();
+            assert_eq!(OperatingMode::ECB, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key
+                .less_safe_encrypt(&mut in_out, EncryptionContext::None)
+                .unwrap();
+            assert_eq!(expected_ciphertext.as_slice(), in_out.as_slice());
+
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = PaddedBlockDecryptingKey::ecb_pkcs7(unbound_key2).unwrap();
+            assert_eq!(OperatingMode::ECB, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
+        }
+
+        streaming_ecb_pkcs7_kat!($name, $alg, $key, $plaintext, $ciphertext, 2, 9);
+    };
+}
+
 macro_rules! cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
         #[test]
@@ -257,6 +344,52 @@ macro_rules! cipher_kat {
             2,
             9
         );
+    };
+}
+
+macro_rules! ecb_kat {
+    ($name:ident, $alg:expr, $key:literal, $plaintext:literal, $ciphertext:literal) => {
+        #[test]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
+
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+
+            let encrypting_key = EncryptingKey::ecb(unbound_key).unwrap();
+            assert_eq!(OperatingMode::ECB, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key
+                .less_safe_encrypt(in_out.as_mut_slice(), EncryptionContext::None)
+                .unwrap();
+            assert_eq!(expected_ciphertext.as_slice(), in_out);
+
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = DecryptingKey::ecb(unbound_key2).unwrap();
+            assert_eq!(OperatingMode::ECB, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
+        }
+    };
+    ($name:ident, $alg:expr, $key:literal, $plaintext:literal) => {
+        #[test]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+
+            let encrypting_key = EncryptingKey::ecb(unbound_key).unwrap();
+            assert_eq!(OperatingMode::ECB, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            encrypting_key
+                .less_safe_encrypt(in_out.as_mut_slice(), EncryptionContext::None)
+                .expect_err("expected encryption failure");
+        }
     };
 }
 
@@ -308,6 +441,56 @@ macro_rules! cipher_rt {
             assert_eq!(input.as_slice(), plaintext);
         }
         streaming_cipher_rt!($name, $alg, $mode, $constructor, $key, $plaintext, 2, 9);
+    };
+}
+
+macro_rules! ecb_rt {
+    ($name:ident, $alg:expr, $key:literal, $plaintext:literal) => {
+        #[test]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+
+            let encrypting_key = EncryptingKey::ecb(unbound_key).unwrap();
+            assert_eq!(OperatingMode::ECB, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key.encrypt(in_out.as_mut_slice()).unwrap();
+
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = DecryptingKey::ecb(unbound_key2).unwrap();
+            assert_eq!(OperatingMode::ECB, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
+        }
+    };
+}
+
+macro_rules! padded_ecb_pkcs7_rt {
+    ($name:ident, $alg:expr, $key:literal, $plaintext:literal) => {
+        #[test]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+
+            let encrypting_key = PaddedBlockEncryptingKey::ecb_pkcs7(unbound_key).unwrap();
+            assert_eq!(OperatingMode::ECB, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key.encrypt(&mut in_out).unwrap();
+
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = PaddedBlockDecryptingKey::ecb_pkcs7(unbound_key2).unwrap();
+            assert_eq!(OperatingMode::ECB, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
+        }
+
+        streaming_ecb_pkcs7_rt!($name, $alg, $key, $plaintext, 2, 9);
     };
 }
 
@@ -525,4 +708,152 @@ padded_cipher_rt!(
     cbc_pkcs7,
     "d4a8206dcae01242f9db79a4ecfe277d0f7bb8ccbafd8f9809adb39f35aa9b41",
     "a39c1fdf77ea3e1f18178c0ec237c70a34"
+);
+
+padded_ecb_pkcs7_kat!(
+    test_kat_aes_128_ecb_pkcs7_16_bytes,
+    &AES_128,
+    "4da1ed87937836de98836433b11eb5a7",
+    "61f17a594bd5b55ae3fa8efaae6e83d6",
+    "e5e18734e84530de94b1636d938e5d6f6b4027b4321685a9195b4ddbf25530bf"
+);
+
+padded_ecb_pkcs7_kat!(
+    test_kat_aes_128_ecb_pkcs7_15_bytes,
+    &AES_128,
+    "50f0fb9c8bfcedd0424a4932fdb4578d",
+    "4badb333837326d75406a0cd6149f0",
+    "593a39d148e106ebc4a429b97b5033bc"
+);
+
+padded_ecb_pkcs7_kat!(
+    test_kat_aes_256_ecb_pkcs7_16_bytes,
+    &AES_256,
+    "13b2cc03ba601f45b7b1927a7b8566abfae0d97220cb7d5193725ab12e1b23ac",
+    "6a3867fbd39bd3345df4aec929c8843a",
+    "615c152b5655499a1d94993e9c220a7e9430ed4d48f2c5b408878beed2c90cf7"
+);
+
+padded_ecb_pkcs7_kat!(
+    test_kat_aes_256_ecb_pkcs7_15_bytes,
+    &AES_256,
+    "f636aefc30bfe19e7fda3ea399be6529f102b965523719e7e717648ec8451c86",
+    "8d6e85663f99f22bb293582f81ae45",
+    "f6dc9e368d2cdf6a2e97a022876eb9f2"
+);
+
+ecb_kat!(
+    test_kat_aes_128_ecb_16_bytes,
+    &AES_128,
+    "f8efb984d9e813c96a79020bdfbb6032",
+    "c4a500e39307dbe7727b5b3a36660f70",
+    "1eea416d959f747da26d48d2df11d205"
+);
+
+ecb_kat!(
+    test_kat_aes_128_ecb_15_bytes,
+    &AES_128,
+    "f8efb984d9e813c96a79020bdfbb6032",
+    "c4a500e39307dbe7727b5b3a36660f"
+);
+
+ecb_kat!(
+    test_kat_aes_256_ecb_16_bytes,
+    &AES_256,
+    "d3c9173cbfc65d0e2b6f43ae57c2a6550b756f487bbb7b6404efec69aa74d411",
+    "109082176cf2a9488b0cd887386bb84a",
+    "c8c9fece9883b26c0ca58e610493a318"
+);
+
+ecb_kat!(
+    test_kat_aes_256_ecb_15_bytes,
+    &AES_256,
+    "d3c9173cbfc65d0e2b6f43ae57c2a6550b756f487bbb7b6404efec69aa74d411",
+    "109082176cf2a9488b0cd887386bb8"
+);
+
+ecb_rt!(
+    test_rt_aes_128_16_bytes,
+    &AES_128,
+    "9dfb64e0d2b94ba6df41ef5f72413cb1",
+    "81c7241bbbf37d9b50e5072858fc498d"
+);
+
+ecb_rt!(
+    test_rt_aes_256_16_bytes,
+    &AES_256,
+    "e6be82de1addbf40550abad4b613b2e77dd498ecaeff5251d4773fcfa00cc1f4",
+    "eb80cab07da4d9ce53c27903dd070b28"
+);
+
+padded_ecb_pkcs7_rt!(
+    test_rt_aes_128_ecb_pkcs7_16_bytes,
+    &AES_128,
+    "c6fcad04ac45dc5801277484279396c0",
+    "e6a32546cb537cf589ac65aac84815ae"
+);
+
+padded_ecb_pkcs7_rt!(
+    test_rt_aes_128_ecb_pkcs7_15_bytes,
+    &AES_128,
+    "41647c63411930c483be063ca890472e",
+    "6194b065db9003381c0c736130188e"
+);
+
+padded_ecb_pkcs7_rt!(
+    test_rt_aes_256_ecb_pkcs7_16_bytes,
+    &AES_256,
+    "c0b52e26961ec041bcea9b3d066c42ea97023a7cfb3e1f3b2e3a8a6427284a47",
+    "10420ee900c0045bde1218e17008bdb0"
+);
+
+padded_ecb_pkcs7_rt!(
+    test_rt_aes_256_ecb_pkcs7_15_bytes,
+    &AES_256,
+    "48c8511ea06d6b4f594870cdf30fd60e7a88eee09f62d7c359e26e475292ec64",
+    "9ac8559493ee5274ae9ca03a47618d"
+);
+
+cipher_kat!(
+    test_kat_aes_128_cfb128_16_bytes,
+    &AES_128,
+    OperatingMode::CFB128,
+    cfb128,
+    "679816318e2f095262ee93c4552490a2",
+    "dd41c2fb73e61bdc02da6c70eb5ac729",
+    "6a841482cf079c4a4b8c59b6c6bda6a4",
+    "0cebe979ac61df66bb190bf9ed22e363"
+);
+
+cipher_kat!(
+    test_kat_aes_128_cfb128_15_bytes,
+    &AES_128,
+    OperatingMode::CFB128,
+    cfb128,
+    "27d4285e8315857653833f63b0bcc034",
+    "bbdeef0d1837c33971f04eb0a8cde0a2",
+    "750cf377093fb05f84875a240154f7",
+    "187a9d7d922afa9f3294ad12669df1"
+);
+
+cipher_kat!(
+    test_kat_aes_256_cfb128_16_bytes,
+    &AES_256,
+    OperatingMode::CFB128,
+    cfb128,
+    "c7faca2e29734b069d19c0e95b9a93efa2512925ccebba8622fb321a93d50cd0",
+    "6f5aad20a97c694b0e0c93457f81b5c8",
+    "2bc1196172ca0bad4a349198f8abd925",
+    "21e1e308bfec28a24520a963aa0f4c57"
+);
+
+cipher_kat!(
+    test_kat_aes_256_cfb128_15_bytes,
+    &AES_256,
+    OperatingMode::CFB128,
+    cfb128,
+    "8ac86dfe6fa15d71c5c5c4a88ae182fd3a1636818f6a8bcd62c85a599329649c",
+    "f1b6b55e908d39b769968ae6c3c05c4f",
+    "9c1675a95f573b4504e6bc5275d0df",
+    "b8e816bd9e74adebdacf9036cbda41"
 );

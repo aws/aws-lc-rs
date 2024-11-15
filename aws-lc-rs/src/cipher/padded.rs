@@ -85,8 +85,17 @@ impl PaddedBlockEncryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing a `PaddedBlockEncryptingKey`.
-    pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockEncryptingKey, Unspecified> {
-        PaddedBlockEncryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
+    pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
+    }
+
+    /// Constructs a new `PaddedBlockEncryptingKey` cipher with electronic code book (ECB) mode.
+    /// Plaintext data is padded following the PKCS#7 scheme.
+    ///
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing a `PaddedBlockEncryptingKey`.
+    pub fn ecb_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7)
     }
 
     #[allow(clippy::unnecessary_wraps)]
@@ -97,7 +106,7 @@ impl PaddedBlockEncryptingKey {
     ) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         let algorithm = key.algorithm();
         let key = key.try_into()?;
-        Ok(PaddedBlockEncryptingKey {
+        Ok(Self {
             algorithm,
             key,
             mode,
@@ -191,8 +200,22 @@ impl PaddedBlockDecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
-    pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<PaddedBlockDecryptingKey, Unspecified> {
-        PaddedBlockDecryptingKey::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
+    pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
+    }
+
+    /// Constructs a new `PaddedBlockDecryptingKey` cipher with electronic code book (ECB) mode.
+    /// Decrypted data is unpadded following the PKCS#7 scheme.
+    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
+    pub fn ecb_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7)
     }
 
     #[allow(clippy::unnecessary_wraps)]

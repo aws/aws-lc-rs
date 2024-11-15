@@ -236,9 +236,9 @@ use crate::hkdf::KeyType;
 use crate::iv::{FixedLength, IV_LEN_128_BIT};
 use crate::ptr::ConstPointer;
 use aws_lc::{
-    AES_cbc_encrypt, AES_cfb128_encrypt, AES_ctr128_encrypt, EVP_aes_128_cbc, EVP_aes_128_cfb128,
-    EVP_aes_128_ctr, EVP_aes_256_cbc, EVP_aes_256_cfb128, EVP_aes_256_ctr, AES_DECRYPT,
-    AES_ENCRYPT, AES_KEY, EVP_CIPHER,
+    AES_cbc_encrypt, AES_cfb128_encrypt, AES_ctr128_encrypt, AES_ecb_encrypt, EVP_aes_128_cbc,
+    EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128,
+    EVP_aes_256_ctr, EVP_aes_256_ecb, AES_DECRYPT, AES_ENCRYPT, AES_KEY, EVP_CIPHER,
 };
 use core::fmt::Debug;
 use key::SymmetricCipherKey;
@@ -277,6 +277,9 @@ pub enum OperatingMode {
 
     /// CFB 128-bit mode.
     CFB128,
+
+    /// Electronic Code Book (ECB) mode.
+    ECB,
 }
 
 impl OperatingMode {
@@ -286,9 +289,11 @@ impl OperatingMode {
             (OperatingMode::CBC, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cbc() },
             (OperatingMode::CTR, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cfb128() },
+            (OperatingMode::ECB, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ecb() },
             (OperatingMode::CBC, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cbc() },
             (OperatingMode::CTR, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cfb128() },
+            (OperatingMode::ECB, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ecb() },
         })
         .unwrap()
     }
@@ -301,6 +306,9 @@ macro_rules! define_cipher_context {
         pub enum $name {
             /// A 128-bit Initialization Vector.
             Iv128(FixedLength<IV_LEN_128_BIT>),
+
+            /// No Cipher Context
+            None,
         }
 
         impl<'a> TryFrom<&'a $name> for &'a [u8] {
@@ -309,6 +317,7 @@ macro_rules! define_cipher_context {
             fn try_from(value: &'a $name) -> Result<Self, Unspecified> {
                 match value {
                     $name::Iv128(iv) => Ok(iv.as_ref()),
+                    _ => Err(Unspecified),
                 }
             }
         }
@@ -317,6 +326,7 @@ macro_rules! define_cipher_context {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 match self {
                     Self::Iv128(_) => write!(f, "Iv128"),
+                    Self::None => write!(f, "None"),
                 }
             }
         }
@@ -325,6 +335,7 @@ macro_rules! define_cipher_context {
             fn from(value: $other) -> Self {
                 match value {
                     $other::Iv128(iv) => $name::Iv128(iv),
+                    $other::None => $name::None,
                 }
             }
         }
@@ -388,6 +399,7 @@ impl Algorithm {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
                     Ok(EncryptionContext::Iv128(FixedLength::new()?))
                 }
+                OperatingMode::ECB => Ok(EncryptionContext::None),
             },
         }
     }
@@ -399,6 +411,9 @@ impl Algorithm {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
                     matches!(input, EncryptionContext::Iv128(_))
                 }
+                OperatingMode::ECB => {
+                    matches!(input, EncryptionContext::None)
+                }
             },
         }
     }
@@ -409,6 +424,9 @@ impl Algorithm {
             AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
                     matches!(input, DecryptionContext::Iv128(_))
+                }
+                OperatingMode::ECB => {
+                    matches!(input, DecryptionContext::None)
                 }
             },
         }
@@ -496,8 +514,8 @@ impl EncryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
-    pub fn ctr(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
-        EncryptingKey::new(key, OperatingMode::CTR)
+    pub fn ctr(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CTR)
     }
 
     /// Constructs an `EncryptingKey` operating in cipher feedback 128-bit mode (CFB128) using the provided key.
@@ -509,15 +527,32 @@ impl EncryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
-    pub fn cfb128(key: UnboundCipherKey) -> Result<EncryptingKey, Unspecified> {
-        EncryptingKey::new(key, OperatingMode::CFB128)
+    pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB128)
+    }
+
+    /// Constructs an `EncryptingKey` operating in electronic code book mode (ECB) using the provided key.
+    ///
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
+    pub fn ecb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::ECB)
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn new(key: UnboundCipherKey, mode: OperatingMode) -> Result<EncryptingKey, Unspecified> {
+    fn new(key: UnboundCipherKey, mode: OperatingMode) -> Result<Self, Unspecified> {
         let algorithm = key.algorithm();
         let key = key.try_into()?;
-        Ok(EncryptingKey {
+        Ok(Self {
             algorithm,
             key,
             mode,
@@ -598,7 +633,7 @@ impl DecryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
     pub fn ctr(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
-        DecryptingKey::new(key, OperatingMode::CTR)
+        Self::new(key, OperatingMode::CTR)
     }
 
     /// Constructs a cipher decrypting key operating in cipher feedback 128-bit mode (CFB128) using the provided key and context.
@@ -610,15 +645,32 @@ impl DecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
-    pub fn cfb128(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
-        DecryptingKey::new(key, OperatingMode::CFB128)
+    pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB128)
+    }
+
+    /// Constructs an `DecryptingKey` operating in electronic code book (ECB) mode using the provided key.
+    ///
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the `DecryptingKey`.
+    pub fn ecb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::ECB)
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn new(key: UnboundCipherKey, mode: OperatingMode) -> Result<DecryptingKey, Unspecified> {
+    fn new(key: UnboundCipherKey, mode: OperatingMode) -> Result<Self, Unspecified> {
         let algorithm = key.algorithm();
         let key = key.try_into()?;
-        Ok(DecryptingKey {
+        Ok(Self {
             algorithm,
             key,
             mode,
@@ -670,8 +722,13 @@ fn encrypt(
 ) -> Result<DecryptionContext, Unspecified> {
     let block_len = algorithm.block_len();
 
-    if mode == OperatingMode::CBC && (in_out.len() % block_len) != 0 {
-        return Err(Unspecified);
+    match mode {
+        OperatingMode::CBC | OperatingMode::ECB => {
+            if in_out.len() % block_len != 0 {
+                return Err(Unspecified);
+            }
+        }
+        _ => {}
     }
 
     match mode {
@@ -687,6 +744,9 @@ fn encrypt(
                 encrypt_aes_cfb_mode(key, mode, context, in_out)
             }
         },
+        OperatingMode::ECB => match algorithm.id() {
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => encrypt_aes_ecb_mode(key, context, in_out),
+        },
     }
 }
 
@@ -699,8 +759,13 @@ fn decrypt<'in_out>(
 ) -> Result<&'in_out mut [u8], Unspecified> {
     let block_len = algorithm.block_len();
 
-    if mode == OperatingMode::CBC && (in_out.len() % block_len) != 0 {
-        return Err(Unspecified);
+    match mode {
+        OperatingMode::CBC | OperatingMode::ECB => {
+            if in_out.len() % block_len != 0 {
+                return Err(Unspecified);
+            }
+        }
+        _ => {}
     }
 
     match mode {
@@ -715,6 +780,9 @@ fn decrypt<'in_out>(
             AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
                 decrypt_aes_cfb_mode(key, mode, context, in_out)
             }
+        },
+        OperatingMode::ECB => match algorithm.id() {
+            AlgorithmId::Aes128 | AlgorithmId::Aes256 => decrypt_aes_ecb_mode(key, context, in_out),
         },
     }
 }
@@ -871,6 +939,82 @@ fn decrypt_aes_cfb_mode<'in_out>(
     iv.zeroize();
 
     Ok(in_out)
+}
+
+#[allow(clippy::needless_pass_by_value, clippy::unnecessary_wraps)]
+fn encrypt_aes_ecb_mode(
+    key: &SymmetricCipherKey,
+    context: EncryptionContext,
+    in_out: &mut [u8],
+) -> Result<DecryptionContext, Unspecified> {
+    if !matches!(context, EncryptionContext::None) {
+        unreachable!();
+    }
+
+    #[allow(clippy::match_wildcard_for_single_variants)]
+    let key = match &key {
+        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
+            enc_key
+        }
+        _ => unreachable!(),
+    };
+
+    let mut in_out_iter = in_out.chunks_exact_mut(AES_BLOCK_LEN);
+
+    for block in in_out_iter.by_ref() {
+        aes_ecb_encrypt(key, block);
+    }
+
+    // This is a sanity check that should not happen. We validate in `encrypt` that in_out.len() % block_len == 0
+    // for this mode.
+    assert!(in_out_iter.into_remainder().is_empty());
+
+    Ok(context.into())
+}
+
+#[allow(clippy::needless_pass_by_value, clippy::unnecessary_wraps)]
+fn decrypt_aes_ecb_mode<'in_out>(
+    key: &SymmetricCipherKey,
+    context: DecryptionContext,
+    in_out: &'in_out mut [u8],
+) -> Result<&'in_out mut [u8], Unspecified> {
+    if !matches!(context, DecryptionContext::None) {
+        unreachable!();
+    }
+
+    #[allow(clippy::match_wildcard_for_single_variants)]
+    let key = match &key {
+        SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
+            dec_key
+        }
+        _ => unreachable!(),
+    };
+
+    {
+        let mut in_out_iter = in_out.chunks_exact_mut(AES_BLOCK_LEN);
+
+        for block in in_out_iter.by_ref() {
+            aes_ecb_decrypt(key, block);
+        }
+
+        // This is a sanity check hat should not fail. We validate in `decrypt` that in_out.len() % block_len == 0 for
+        // this mode.
+        assert!(in_out_iter.into_remainder().is_empty());
+    }
+
+    Ok(in_out)
+}
+
+fn aes_ecb_encrypt(key: &AES_KEY, in_out: &mut [u8]) {
+    indicator_check!(unsafe {
+        AES_ecb_encrypt(in_out.as_ptr(), in_out.as_mut_ptr(), key, AES_ENCRYPT);
+    });
+}
+
+fn aes_ecb_decrypt(key: &AES_KEY, in_out: &mut [u8]) {
+    indicator_check!(unsafe {
+        AES_ecb_encrypt(in_out.as_ptr(), in_out.as_mut_ptr(), key, AES_DECRYPT);
+    });
 }
 
 fn aes_ctr128_encrypt(key: &AES_KEY, iv: &mut [u8], block_buffer: &mut [u8], in_out: &mut [u8]) {
@@ -1041,12 +1185,35 @@ mod tests {
     }
 
     #[test]
+    fn test_aes_128_cfb128() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        for i in 0..=50 {
+            helper_test_cipher_n_bytes(key.as_slice(), &AES_128, OperatingMode::CFB128, i);
+        }
+    }
+
+    #[test]
+    fn test_aes_256_cfb128() {
+        let key =
+            from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
+        for i in 0..=50 {
+            helper_test_cipher_n_bytes(key.as_slice(), &AES_256, OperatingMode::CFB128, i);
+        }
+    }
+
+    #[test]
     fn test_aes_256_ctr() {
         let key =
             from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
         for i in 0..=50 {
             helper_test_cipher_n_bytes(key.as_slice(), &AES_256, OperatingMode::CTR, i);
         }
+    }
+
+    #[test]
+    fn test_aes_128_ecb() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        _ = key;
     }
 
     macro_rules! cipher_kat {
@@ -1078,6 +1245,34 @@ mod tests {
                 let mut in_out = input.clone();
 
                 let context = encrypting_key.less_safe_encrypt(&mut in_out, ec).unwrap();
+
+                assert_eq!(expected_ciphertext, in_out);
+
+                let unbound_key2 = UnboundCipherKey::new(alg, &key).unwrap();
+                let decrypting_key = DecryptingKey::new(unbound_key2, $mode).unwrap();
+
+                let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+                assert_eq!(input.as_slice(), plaintext);
+            }
+        };
+        ($name:ident, $alg:expr, $mode:expr, $key:literal, $plaintext:literal, $ciphertext:literal) => {
+            #[test]
+            fn $name() {
+                let key = from_hex($key).unwrap();
+                let input = from_hex($plaintext).unwrap();
+                let expected_ciphertext = from_hex($ciphertext).unwrap();
+
+                let alg = $alg;
+
+                let unbound_key = UnboundCipherKey::new(alg, &key).unwrap();
+
+                let encrypting_key = EncryptingKey::new(unbound_key, $mode).unwrap();
+
+                let mut in_out = input.clone();
+
+                let context = encrypting_key
+                    .less_safe_encrypt(&mut in_out, EncryptionContext::None)
+                    .unwrap();
 
                 assert_eq!(expected_ciphertext, in_out);
 
@@ -1148,5 +1343,23 @@ mod tests {
         "000102030405060708090a0b0c0d0e0f",
         "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
         "dc7e84bfda79164b7ecd8486985d386039ffed143b28b1c832113c6331e5407bdf10132415e54b92a13ed0a8267ae2f975a385741ab9cef82031623d55b1e471"
+    );
+
+    cipher_kat!(
+        test_sp800_38a_ecb_aes128,
+        &AES_128,
+        OperatingMode::ECB,
+        "2b7e151628aed2a6abf7158809cf4f3c",
+        "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+        "3ad77bb40d7a3660a89ecaf32466ef97f5d3d58503b9699de785895a96fdbaaf43b1cd7f598ece23881b00e3ed0306887b0c785e27e8ad3f8223207104725dd4"
+    );
+
+    cipher_kat!(
+        test_sp800_38a_ecb_aes256,
+        &AES_256,
+        OperatingMode::ECB,
+        "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+        "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+        "f3eed1bdb5d2a03c064b5a7e3db181f8591ccb10d410ed26dc5ba74a31362870b6ed21b99ca6f4f9f153e7b1beafed1d23304b7a39f9f3ff067d8d8f9e24ecc7"
     );
 }
