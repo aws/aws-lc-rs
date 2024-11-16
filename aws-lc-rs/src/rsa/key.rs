@@ -14,13 +14,13 @@ use crate::io;
 use crate::ptr::ConstPointer;
 use crate::{
     digest::{self},
-    rsa::{PublicEncryptingKey},
     encoding::{AsDer, Pkcs8V1Der},
     error::{KeyRejected, Unspecified},
     fips::indicator_check,
     hex,
     ptr::{DetachableLcPtr, LcPtr},
     rand,
+    rsa::{PublicEncryptingKey},
     sealed::Sealed,
 };
 #[cfg(feature = "fips")]

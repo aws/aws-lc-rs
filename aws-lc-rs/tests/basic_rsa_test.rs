@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::rand::SystemRandom;
+use aws_lc_rs::rsa::Pkcs1PublicEncryptingKey;
 use aws_lc_rs::signature;
 use aws_lc_rs::signature::RsaKeyPair;
 use aws_lc_rs::test::from_dirty_hex;
@@ -192,4 +193,31 @@ fn test_signature_rsa_primitive_verification() {
     let public_key = signature::RsaPublicKeyComponents { n: &n, e: &e };
     let result = public_key.verify(&signature::RSA_PKCS1_2048_8192_SHA256, &msg, &sig);
     assert!(result.is_ok());
+}
+
+#[test]
+fn test_encryption_rsa_primitive() {
+    let n = from_dirty_hex(
+        r"CEA80475324C1DC8347827818DA58BAC069D3419C614A6EA1AC6A3B510DCD72CC516954905E9FEF908D45
+            E13006ADF27D467A7D83C111D1A5DF15EF293771AEFB920032A5BB989F8E4F5E1B05093D3F130F984C07A772
+            A3683F4DC6FB28A96815B32123CCDD13954F19D5B8B24A103E771A34C328755C65ED64E1924FFD04D30B2142
+            CC262F6E0048FEF6DBC652F21479EA1C4B1D66D28F4D46EF7185E390CBFA2E02380582F3188BB94EBBF05D31
+            487A09AFF01FCBB4CD4BFD1F0A833B38C11813C84360BB53C7D4481031C40BAD8713BB6B835CB08098ED15BA
+            31EE4BA728A8C8E10F7294E1B4163B7AEE57277BFD881A6F9D43E02C6925AA3A043FB7FB78D",
+    );
+
+    let e = from_dirty_hex(r"260445");
+    let msg = from_dirty_hex(r"68656c6c6f2c20776f726c64");
+
+    let public_key = signature::RsaPublicKeyComponents { n: &n, e: &e };
+    let public_encrypting_key = public_key.build_encrypting_key()
+        .unwrap();
+    let pkcs_encrypting_key = Pkcs1PublicEncryptingKey::new(public_encrypting_key)
+        .unwrap();
+
+    let mut encrypted = vec![0u8; pkcs_encrypting_key.ciphertext_size()];
+    pkcs_encrypting_key.encrypt(&msg, &mut encrypted)
+        .unwrap();
+
+    assert_ne!(encrypted, msg);
 }
