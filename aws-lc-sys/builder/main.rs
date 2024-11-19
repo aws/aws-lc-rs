@@ -656,7 +656,7 @@ fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
     // iterate over all the include paths and copy them into the final output
     for path in include_paths {
         for child in std::fs::read_dir(path).into_iter().flatten().flatten() {
-            if child.file_type().map_or(false, |t| t.is_file()) {
+            if child.file_type().is_ok_and(|t| t.is_file()) {
                 let _ = std::fs::copy(
                     child.path(),
                     include_dir.join(child.path().file_name().unwrap()),
