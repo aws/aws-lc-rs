@@ -91,6 +91,8 @@ impl CmakeBuilder {
 
     #[allow(clippy::too_many_lines)]
     fn prepare_cmake_build(&self) -> cmake::Config {
+        env::set_var("GOCACHE", self.out_dir.join("go-build").as_os_str());
+
         let mut cmake_cfg = self.get_cmake_config();
 
         if OutputLibType::default() == OutputLibType::Dynamic {
