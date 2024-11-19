@@ -529,7 +529,7 @@ impl EncryptingKey {
     }
 
     /// Constructs an `EncryptingKey` operating in electronic code book mode (ECB) using the provided key.
-    /// 
+    ///
     /// # ☠️ ️️️DANGER ☠️
     /// Offered for computability purposes only. This is an extremely dangerous mode, and
     /// very likely not what you want to use.
@@ -571,7 +571,7 @@ impl EncryptingKey {
     /// Encrypts the data provided in `in_out` in-place.
     /// Returns a [`DecryptionContext`] with the randomly generated IV that was used to encrypt
     /// the data provided.
-    /// 
+    ///
     /// If `EncryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
     /// of the block length.
     ///
@@ -587,7 +587,7 @@ impl EncryptingKey {
     /// This is considered "less safe" because the caller could potentially construct
     /// a `EncryptionContext` from a previously used IV (initialization vector).
     /// Returns a [`DecryptionContext`] produced from the provided `EncryptionContext`.
-    /// 
+    ///
     /// If `EncryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
     /// of the block length.
     ///
@@ -694,7 +694,7 @@ impl DecryptingKey {
 
     /// Decrypts the data provided in `in_out` in-place.
     /// Returns a references to the decrypted data.
-    /// 
+    ///
     /// If `DecryptingKey` is operating in `OperatingMode::ECB`, then `in_out.len()` must be a multiple
     /// of the block length.
     ///

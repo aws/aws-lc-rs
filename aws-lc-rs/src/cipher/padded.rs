@@ -91,7 +91,7 @@ impl PaddedBlockEncryptingKey {
 
     /// Constructs a new `PaddedBlockEncryptingKey` cipher with electronic code book (ECB) mode.
     /// Plaintext data is padded following the PKCS#7 scheme.
-    /// 
+    ///
     /// # ☠️ ️️️DANGER ☠️
     /// Offered for computability purposes only. This is an extremely dangerous mode, and
     /// very likely not what you want to use.
@@ -210,7 +210,7 @@ impl PaddedBlockDecryptingKey {
 
     /// Constructs a new `PaddedBlockDecryptingKey` cipher with electronic code book (ECB) mode.
     /// Decrypted data is unpadded following the PKCS#7 scheme.
-    /// 
+    ///
     /// # ☠️ ️️️DANGER ☠️
     /// Offered for computability purposes only. This is an extremely dangerous mode, and
     /// very likely not what you want to use.
