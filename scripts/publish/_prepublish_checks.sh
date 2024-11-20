@@ -39,7 +39,7 @@ pushd "${CRATE_DIR}" &>/dev/null
 export GOPROXY=direct
 
 cargo clean --target-dir "${TEMP_TARGET_DIR}"
-cargo clippy --fix --allow-no-vcs
+cargo +nightly clippy --fix --allow-no-vcs
 cargo fmt
 cargo test --target-dir "${TEMP_TARGET_DIR}" # sanity check
 cargo package --target-dir "${TEMP_TARGET_DIR}" --allow-dirty # checks if published package will build.
