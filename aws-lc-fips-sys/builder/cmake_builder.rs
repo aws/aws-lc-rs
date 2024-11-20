@@ -121,13 +121,13 @@ impl CmakeBuilder {
                 if parent_dir.is_some() && (target_family() == "unix" || target_env() == "gnu") {
                     let parent_dir = parent_dir.unwrap();
                     let cc_build = cc::Build::new();
-                    let flag = format!("-ffile-prefix-map={}=", parent_dir.display());
+                    let flag = format!("\"-ffile-prefix-map={}=\"", parent_dir.display());
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {
                         emit_warning(&format!("Using flag: {}", &flag));
                         cmake_cfg.asmflag(&flag);
                         cmake_cfg.cflag(&flag);
                     } else {
-                        let flag = format!("-fdebug-prefix-map={}=", parent_dir.display());
+                        let flag = format!("\"-fdebug-prefix-map={}=\"", parent_dir.display());
                         if let Ok(true) = cc_build.is_flag_supported(&flag) {
                             emit_warning(&format!("Using flag: {}", &flag));
                             cmake_cfg.asmflag(&flag);

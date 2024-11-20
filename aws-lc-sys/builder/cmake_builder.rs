@@ -103,7 +103,25 @@ impl CmakeBuilder {
             self.output_lib_type,
         );
         let mut cflags = OsString::new();
-        cflags.push(cc_builder.prepare_builder().get_compiler().cflags_env());
+        let compiler = cc_builder.prepare_builder().get_compiler();
+        let args = compiler.args();
+        for (i, arg) in args.iter().enumerate() {
+            if i > 0 {
+                cflags.push(" ");
+            }
+            if let Some(arg) = arg.to_str() {
+                if arg.contains(' ') {
+                    cflags.push("\"");
+                    cflags.push(arg);
+                    cflags.push("\"");
+                } else {
+                    cflags.push(arg);
+                }
+            } else {
+                cflags.push(arg);
+            }
+        }
+
         if !get_cflags().is_empty() {
             cflags.push(" ");
             cflags.push(get_cflags());

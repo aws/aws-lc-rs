@@ -188,7 +188,7 @@ impl CcBuilder {
             env::set_var("CFLAGS", cflags);
         }
 
-        if target_os() == "macos" && target_arch() == "x86_64" {
+        if target_os() == "macos" {
             // This compiler error has only been seen on MacOS x86_64:
             // ```
             // clang: error: overriding '-mmacosx-version-min=13.7' option with '--target=x86_64-apple-macosx14.2' [-Werror,-Woverriding-t-option]
