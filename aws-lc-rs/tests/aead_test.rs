@@ -7,7 +7,6 @@ use aws_lc_rs::{aead, error, test, test_file};
 
 use aws_lc_rs::aead::{Nonce, NONCE_LEN};
 use core::ops::RangeFrom;
-use mirai_annotations::unrecoverable;
 
 #[test]
 fn aead_aes_gcm_128() {
@@ -230,7 +229,7 @@ fn test_aead<Seal, Open>(
                     assert_eq!(Err(error::Unspecified), o_result);
                 }
                 Some(error) => {
-                    unrecoverable!("Unexpected error test case: {}", error);
+                    panic!("Unexpected error test case: {}", error);
                 }
             };
         }
