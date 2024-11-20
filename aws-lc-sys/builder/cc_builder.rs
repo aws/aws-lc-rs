@@ -227,7 +227,7 @@ impl CcBuilder {
             let source_path = self.manifest_dir.join("aws-lc").join(source);
             let is_asm = std::path::Path::new(source)
                 .extension()
-                .is_some_and(|ext| ext.eq("S"));
+                .map_or(false, |ext| ext.eq("S"));
             if is_asm && target_vendor() == "apple" && target_arch() == "aarch64" {
                 let mut cc_preprocessor = self.create_builder();
                 cc_preprocessor.file(source_path);

@@ -3,6 +3,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+// Needed until MSRV >= 1.70
+#![allow(clippy::unnecessary_map_or)]
+
 #![allow(clippy::ref_option)]
 // Clippy can only be run on nightly toolchain
 #![cfg_attr(clippy, feature(custom_inner_attributes))]
@@ -481,6 +484,7 @@ fn is_no_asm() -> bool {
     unsafe { AWS_LC_SYS_NO_ASM }
 }
 
+#[allow(unknown_lints)]
 #[allow(static_mut_refs)]
 fn get_cflags() -> &'static str {
     unsafe { AWS_LC_SYS_CFLAGS.as_str() }
@@ -656,7 +660,7 @@ fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
     // iterate over all the include paths and copy them into the final output
     for path in include_paths {
         for child in std::fs::read_dir(path).into_iter().flatten().flatten() {
-            if child.file_type().is_ok_and(|t| t.is_file()) {
+            if child.file_type().map_or(false, |t| t.is_file()) {
                 let _ = std::fs::copy(
                     child.path(),
                     include_dir.join(child.path().file_name().unwrap()),
