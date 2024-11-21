@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::rand::SystemRandom;
-use aws_lc_rs::rsa::Pkcs1PublicEncryptingKey;
+use aws_lc_rs::rsa::{Pkcs1PublicEncryptingKey, PublicEncryptingKey};
 use aws_lc_rs::signature;
 use aws_lc_rs::signature::RsaKeyPair;
 use aws_lc_rs::test::from_dirty_hex;
@@ -210,14 +210,11 @@ fn test_encryption_rsa_primitive() {
     let msg = from_dirty_hex(r"68656c6c6f2c20776f726c64");
 
     let public_key = signature::RsaPublicKeyComponents { n: &n, e: &e };
-    let public_encrypting_key = public_key.build_encrypting_key()
-        .unwrap();
-    let pkcs_encrypting_key = Pkcs1PublicEncryptingKey::new(public_encrypting_key)
-        .unwrap();
+    let public_encrypting_key: PublicEncryptingKey = public_key.try_into().unwrap();
+    let pkcs_encrypting_key = Pkcs1PublicEncryptingKey::new(public_encrypting_key).unwrap();
 
     let mut encrypted = vec![0u8; pkcs_encrypting_key.ciphertext_size()];
-    pkcs_encrypting_key.encrypt(&msg, &mut encrypted)
-        .unwrap();
+    pkcs_encrypting_key.encrypt(&msg, &mut encrypted).unwrap();
 
     assert_ne!(encrypted, msg);
 }
