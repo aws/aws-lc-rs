@@ -217,9 +217,10 @@ impl TestCase {
                         }
                     }
                     Some(b'"') => {
-                        if s.next().is_some() {
-                            panic!("characters after the closing quote of a quoted string.");
-                        }
+                        assert!(
+                            s.next().is_none(),
+                            "characters after the closing quote of a quoted string."
+                        );
                         break;
                     }
                     Some(b) => *b,
@@ -233,7 +234,7 @@ impl TestCase {
             match from_hex(&s) {
                 Ok(s) => s,
                 Err(err_str) => {
-                    panic!("{} in {}", err_str, s);
+                    panic!("{err_str} in {s}");
                 }
             }
         };

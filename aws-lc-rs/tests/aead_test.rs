@@ -229,7 +229,7 @@ fn test_aead<Seal, Open>(
                     assert_eq!(Err(error::Unspecified), o_result);
                 }
                 Some(error) => {
-                    panic!("Unexpected error test case: {}", error);
+                    panic!("Unexpected error test case: {error}");
                 }
             };
         }

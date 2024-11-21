@@ -5,7 +5,6 @@
 
 // Needed until MSRV >= 1.70
 #![allow(clippy::unnecessary_map_or)]
-
 #![allow(clippy::ref_option)]
 // Clippy can only be run on nightly toolchain
 #![cfg_attr(clippy, feature(custom_inner_attributes))]
