@@ -514,7 +514,10 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
-      - name: Run cargo test
+      # FIPS builds for ARM platforms (e.g, macos-14-xlarge) will fail until upstream change is made:
+      # https://github.com/aws/aws-lc/pull/2005
+      - if: matrix.os != 'macos-14-xlarge' || matrix.fips != 1
+        name: Run cargo test
         working-directory: "path has spaces/aws-lc-rs"
         run: cargo test --tests -p aws-lc-rs --no-default-features --features ${{ (matrix.fips == 1 && 'fips') || 'aws-lc-sys' }}
 
