@@ -40,7 +40,6 @@ use core::{
 // use core::ffi::c_int;
 use std::os::raw::c_int;
 
-use mirai_annotations::verify_unreachable;
 #[cfg(feature = "ring-io")]
 use untrusted::Input;
 use zeroize::Zeroize;
@@ -263,7 +262,7 @@ impl KeyPair {
                 // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
                 unsafe { RSA_size(*rsa.as_const()) as usize }
             }
-            Err(_) => verify_unreachable!(),
+            Err(_) => unreachable!(),
         }
     }
 }

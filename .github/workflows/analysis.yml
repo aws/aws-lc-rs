@@ -205,40 +205,6 @@ jobs:
             exit 0
           }
 
-  mirai-analysis:
-    if: github.repository_owner == 'aws'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-          lfs: true
-
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.MIRAI_TOOLCHAIN }}
-          components: rust-src, rustc-dev, llvm-tools-preview
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
-
-      # https://github.com/facebookexperimental/MIRAI/blob/main/documentation/InstallationGuide.md#installing-mirai-into-cargo
-      - name: Install MIRAI
-        run: |
-          MIRAI_TMP_SRC=$(mktemp -d)
-          git clone --depth 1 --branch ${{ env.MIRAI_TAG }} https://github.com/facebookexperimental/MIRAI.git ${MIRAI_TMP_SRC}
-          pushd ${MIRAI_TMP_SRC}
-          cargo install --locked --force --path ./checker --no-default-features
-          popd
-          rm -rf ${MIRAI_TMP_SRC}
-
-      - name: Run MIRAI
-        working-directory: ./aws-lc-rs
-        run: |
-          cargo update
-          cargo update -p clap --precise 4.4.18
-          cargo mirai
-
   minimal-versions:
     if: github.repository_owner == 'aws'
     name: Resolve the dependencies to the minimum SemVer version

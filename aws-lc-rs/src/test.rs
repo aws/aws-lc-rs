@@ -112,7 +112,6 @@
 
 extern crate alloc;
 
-use mirai_annotations::unrecoverable;
 use std::error::Error;
 
 use crate::{digest, error};
@@ -183,7 +182,7 @@ impl TestCase {
             "SHA3_256" => Some(&digest::SHA3_256),
             "SHA3_384" => Some(&digest::SHA3_384),
             "SHA3_512" => Some(&digest::SHA3_512),
-            _ => unrecoverable!("Unsupported digest algorithm: {}", name),
+            _ => unreachable!("Unsupported digest algorithm: {}", name),
         }
     }
 
@@ -213,20 +212,19 @@ impl TestCase {
                             Some(b't') => b'\t',
                             Some(b'n') => b'\n',
                             _ => {
-                                unrecoverable!("Invalid hex escape sequence in string.");
+                                panic!("Invalid hex escape sequence in string.");
                             }
                         }
                     }
                     Some(b'"') => {
-                        if s.next().is_some() {
-                            unrecoverable!(
-                                "characters after the closing quote of a quoted string."
-                            );
-                        }
+                        assert!(
+                            s.next().is_none(),
+                            "characters after the closing quote of a quoted string."
+                        );
                         break;
                     }
                     Some(b) => *b,
-                    None => unrecoverable!("Missing terminating '\"' in string literal."),
+                    None => panic!("Missing terminating '\"' in string literal."),
                 };
                 bytes.push(b);
             }
@@ -236,7 +234,7 @@ impl TestCase {
             match from_hex(&s) {
                 Ok(s) => s,
                 Err(err_str) => {
-                    unrecoverable!("{} in {}", err_str, s);
+                    panic!("{err_str} in {s}");
                 }
             }
         };
