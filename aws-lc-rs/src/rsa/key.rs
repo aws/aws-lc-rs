@@ -20,6 +20,7 @@ use crate::{
     hex,
     ptr::{DetachableLcPtr, LcPtr},
     rand,
+    rsa::PublicEncryptingKey,
     sealed::Sealed,
 };
 #[cfg(feature = "fips")]
@@ -366,7 +367,7 @@ impl PublicKey {
     }
 }
 
-/// Low-level API for the verification of RSA signatures.
+/// Low-level API for RSA public keys.
 ///
 /// When the public key is in DER-encoded PKCS#1 ASN.1 format, it is
 /// recommended to use `aws_lc_rs::signature::verify()` with
@@ -453,6 +454,22 @@ where
             signature,
             params.bit_size_range(),
         )
+    }
+}
+
+impl<B> TryInto<PublicEncryptingKey> for PublicKeyComponents<B>
+where
+    B: AsRef<[u8]> + Debug,
+{
+    type Error = Unspecified;
+
+    /// Try to build a `PublicEncryptingKey` from the public key components.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the key failed to verify.
+    fn try_into(self) -> Result<PublicEncryptingKey, Self::Error> {
+        let rsa = self.build_rsa()?;
+        PublicEncryptingKey::new(rsa)
     }
 }
 
