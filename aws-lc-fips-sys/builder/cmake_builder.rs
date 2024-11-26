@@ -5,6 +5,7 @@ use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     cargo_env, emit_warning, execute_command, is_no_asm, option_env, target, target_arch,
     target_env, target_family, target_os, target_underscored, target_vendor, OutputLibType,
+    TestCommandResult,
 };
 use std::collections::HashMap;
 use std::env;
@@ -105,6 +106,7 @@ impl CmakeBuilder {
             cmake_cfg.define("BUILD_SHARED_LIBS", "0");
         }
 
+        let cc_build = cc::Build::new();
         let opt_level = cargo_env("OPT_LEVEL");
         if opt_level.ne("0") {
             if opt_level.eq("1") || opt_level.eq("2") {
@@ -120,7 +122,7 @@ impl CmakeBuilder {
                 let parent_dir = self.manifest_dir.parent();
                 if parent_dir.is_some() && (target_family() == "unix" || target_env() == "gnu") {
                     let parent_dir = parent_dir.unwrap();
-                    let cc_build = cc::Build::new();
+
                     let flag = format!("\"-ffile-prefix-map={}=\"", parent_dir.display());
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {
                         emit_warning(&format!("Using flag: {}", &flag));
@@ -143,6 +145,8 @@ impl CmakeBuilder {
         } else {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
         }
+
+        Self::verify_compiler_support(&cc_build.get_compiler());
 
         if let Some(prefix) = &self.build_prefix {
             cmake_cfg.define("BORINGSSL_PREFIX", format!("{prefix}_"));
@@ -227,6 +231,59 @@ impl CmakeBuilder {
         }
 
         cmake_cfg
+    }
+
+    fn verify_compiler_support(compiler: &cc::Tool) -> Option<bool> {
+        let compiler_path = compiler.path();
+
+        if compiler.is_like_gnu() || compiler.is_like_clang() {
+            if let TestCommandResult {
+                stderr: _,
+                stdout,
+                executed: true,
+                status: true,
+            } = execute_command(compiler_path.as_os_str(), &["--version".as_ref()])
+            {
+                if let Some(first_line) = stdout.lines().nth(0) {
+                    if let Some((major, minor, patch)) = parse_version(first_line) {
+                        // We don't force a build failure, but we generate a clear message.
+                        if compiler.is_like_gnu() {
+                            emit_warning(&format!("GCC v{major}.{minor}.{patch} detected."));
+                            if major > 13 {
+                                // TODO: Update when FIPS GCC 14 build is fixed
+                                emit_warning("WARNING: FIPS build is known to fail on GCC >= 14. See: https://github.com/aws/aws-lc-rs/issues/569");
+                                return Some(false);
+                            }
+                        }
+                        if compiler.is_like_clang() {
+                            emit_warning(&format!("Clang v{major}.{minor}.{patch} detected."));
+                            if major > 18 {
+                                // TODO: Update when FIPS Clang 19 build is fixed
+                                emit_warning("WARNING: FIPS build is known to fail on Clang >= 19. See: https://github.com/aws/aws-lc-rs/issues/569");
+                                return Some(false);
+                            }
+                        }
+                        return Some(true);
+                    }
+                }
+            }
+        } else if compiler.is_like_msvc() {
+            if let TestCommandResult {
+                stderr,
+                stdout: _,
+                executed: true,
+                status: true,
+            } = execute_command(compiler_path.as_os_str(), &["/help".as_ref()])
+            {
+                if let Some(first_line) = stderr.lines().nth(0) {
+                    if let Some((major, minor, patch)) = parse_version(first_line) {
+                        emit_warning(&format!("MSVC v{major}.{minor}.{patch} detected."));
+                        return Some(true);
+                    }
+                }
+            }
+        }
+        None
     }
 
     fn configure_open_harmony(cmake_cfg: &mut cmake::Config) {
@@ -366,3 +423,40 @@ impl crate::Builder for CmakeBuilder {
         Ok(())
     }
 }
+
+fn parse_version(line: &str) -> Option<(u32, u32, u32)> {
+    let version_pattern = regex::Regex::new(r"\s(\d{1,2})\.(\d{1,2})\.(\d+)").unwrap();
+    let captures = version_pattern.captures(line)?;
+
+    let major_str = captures.get(1)?.as_str();
+    let minor_str = captures.get(2)?.as_str();
+    let patch_str = captures.get(3)?.as_str();
+    let major = major_str.parse::<u32>().ok()?;
+    let minor = minor_str.parse::<u32>().ok()?;
+    let patch = patch_str.parse::<u32>().ok()?;
+
+    Some((major, minor, patch))
+}
+
+// Tests inside build script don't actually get run.
+// These tests and the function above need to be copied elsewhere to test.
+//
+// #[cfg(test)]
+// mod tests {
+//     #[test]
+//     fn test_parse_version() {
+//         let test_cases = [
+//             ("Apple clang version 14.0.0 (clang-1500.1.0.2.5)\n", (14, 0, 0)),
+//             ("gcc (Ubuntu 13.2.0-23ubuntu4) 13.2.0", (13,2,0)),
+//             ("FreeBSD clang version 18.1.5 (https://github.com/llvm/llvm-project.git llvmorg-18.1.5-0-g617a15a9eac9)", (18,1,5)),
+//             ("gcc (GCC) 11.4.1 20230605 (Red Hat 11.4.1-2)", (11, 4, 1)),
+//             ("Microsoft (R) C/C++ Optimizing Compiler Version 19.40.33812 for x64", (19, 40, 33812))
+//         ];
+//         for case in test_cases {
+//             let (major, minor, patch) = super::parse_version(case.0).unwrap();
+//             assert_eq!(major, case.1 .0);
+//             assert_eq!(minor, case.1 .1);
+//             assert_eq!(patch, case.1 .2);
+//         }
+//     }
+// }

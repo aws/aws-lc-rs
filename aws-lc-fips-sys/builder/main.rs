@@ -216,9 +216,7 @@ fn target_platform_prefix(name: &str) -> String {
 }
 
 pub(crate) struct TestCommandResult {
-    #[allow(dead_code)]
     stderr: Box<str>,
-    #[allow(dead_code)]
     stdout: Box<str>,
     executed: bool,
     status: bool,
