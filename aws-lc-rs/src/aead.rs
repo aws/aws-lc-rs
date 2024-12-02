@@ -55,7 +55,7 @@
 //! # Nonce Sequence APIs
 //!
 //! The [`UnboundKey`], [`OpeningKey`], [`SealingKey`], and [`LessSafeKey`] types are the
-//! AEAD API's provided for compatability with the original *ring* API.
+//! AEAD API's provided for compatibility with the original *ring* API.
 //!
 //! Users should prefer [`RandomizedNonceKey`] which provides a simplified experience around
 //! Nonce construction.
@@ -117,6 +117,7 @@
 use crate::{derive_debug_via_id, error::Unspecified, hkdf};
 use aead_ctx::AeadCtx;
 use core::{fmt::Debug, ops::RangeFrom};
+use paste::paste;
 
 mod aead_ctx;
 mod aes_gcm;
@@ -307,6 +308,13 @@ impl<N: NonceSequence> OpeningKey<N> {
             ciphertext_and_tag,
         )
     }
+
+    /// Returns a `OpeningKeyOpMut` with the next computed `Nonce` from the `NonceSequence` for the next operation.
+    /// # Errors
+    /// `Unspecified` if there is a failure computing the nonce for the next operation.
+    pub fn prepare_operation(&mut self) -> Result<OpeningKeyOpMut<'_, N>, Unspecified> {
+        OpeningKeyOpMut::new(self)
+    }
 }
 
 /// An AEAD key for encrypting and signing ("sealing"), bound to a nonce
@@ -431,6 +439,149 @@ impl<N: NonceSequence> SealingKey<N> {
     {
         self.key
             .seal_in_place_separate_tag(Some(self.nonce_sequence.advance()?), aad.as_ref(), in_out)
+            .map(|(_, tag)| tag)
+    }
+
+    /// Returns a `SealingKeyOpMut` with the next computed `Nonce` from the `NonceSequence` for the next operation.
+    /// # Errors
+    /// `Unspecified` if there is a failure computing the nonce for the next operation.
+    pub fn prepare_operation(&mut self) -> Result<SealingKeyOpMut<'_, N>, Unspecified> {
+        SealingKeyOpMut::new(self)
+    }
+}
+
+macro_rules! nonce_sequence_key_iterator {
+    ($name:ident) => {
+        paste! {
+        /// A key operation with a precomputed nonce from a key's associated `NonceSequence`.
+        pub struct [<$name OpMut>]<'a, N: NonceSequence> {
+            key: &'a mut $name<N>,
+            nonce: Nonce,
+        }
+
+        impl<'a, N: NonceSequence> [<$name OpMut>]<'a, N> {
+            fn new(key: &'a mut $name<N>) -> Result<Self, Unspecified> {
+                let nonce = key.nonce_sequence.advance()?;
+                Ok(Self {
+                    key,
+                    nonce,
+                })
+            }
+        }
+
+        impl<'a, N: NonceSequence> Debug for [<$name OpMut>]<'a, N> {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+                f.debug_struct("[<$name OpMut>]").finish_non_exhaustive()
+            }
+        }
+        }
+    };
+}
+
+nonce_sequence_key_iterator!(OpeningKey);
+nonce_sequence_key_iterator!(SealingKey);
+
+impl<N: NonceSequence> OpeningKeyOpMut<'_, N> {
+    /// Returns the Nonce that will be used for this operation.
+    #[must_use]
+    pub fn nonce(&self) -> Nonce {
+        let nonce_bytes = self.nonce.0.as_ref();
+        let nonce: Nonce = Nonce(nonce_bytes.into());
+        nonce
+    }
+
+    /// Authenticates and decrypts (“opens”) data in place.
+    ///
+    /// See [OpeningKey::open_in_place] for additional API information.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
+    /// overwritten in an unspecified way.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn open_in_place<A>(self, aad: Aad<A>, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.open_within(aad, in_out, 0..)
+    }
+
+    /// Authenticates and decrypts (“opens”) data in place, with a shift.
+    ///
+    /// See [OpeningKey::open_within] for additional API information.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may have been
+    /// overwritten in an unspecified way.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn open_within<A>(
+        self,
+        aad: Aad<A>,
+        in_out: &mut [u8],
+        ciphertext_and_tag: RangeFrom<usize>,
+    ) -> Result<&mut [u8], Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.key
+            .key
+            .open_within(self.nonce, aad.as_ref(), in_out, ciphertext_and_tag)
+    }
+}
+
+impl<N: NonceSequence> SealingKeyOpMut<'_, N> {
+    /// Returns the Nonce that will be used for this operation.
+    #[must_use]
+    pub fn nonce(&self) -> Nonce {
+        let nonce_bytes = self.nonce.0.as_ref();
+        let nonce: Nonce = Nonce(nonce_bytes.into());
+        nonce
+    }
+
+    /// Encrypts and signs (“seals”) data in place, appending the tag to the
+    /// resulting ciphertext.
+    ///
+    /// See [SealingKey::seal_in_place_append_tag] for additional API information.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_append_tag<A, InOut>(
+        self,
+        aad: Aad<A>,
+        in_out: &mut InOut,
+    ) -> Result<(), Unspecified>
+    where
+        A: AsRef<[u8]>,
+        InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
+    {
+        self.key
+            .key
+            .seal_in_place_append_tag(Some(self.nonce), aad.as_ref(), in_out)
+            .map(|_| ())
+    }
+
+    /// Encrypts and signs (“seals”) data in place.
+    ///
+    /// See [`SealingKey::seal_in_place_separate_tag`] for additional API information.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when `nonce_sequence` cannot be advanced.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_in_place_separate_tag<A>(
+        self,
+        aad: Aad<A>,
+        in_out: &mut [u8],
+    ) -> Result<Tag, Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.key
+            .key
+            .seal_in_place_separate_tag(Some(self.nonce), aad.as_ref(), in_out)
             .map(|(_, tag)| tag)
     }
 }
@@ -783,6 +934,12 @@ pub struct Tag([u8; MAX_TAG_LEN], usize);
 impl AsRef<[u8]> for Tag {
     fn as_ref(&self) -> &[u8] {
         self.0[..self.1].as_ref()
+    }
+}
+
+impl core::fmt::Debug for Tag {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("Tag").finish()
     }
 }
 

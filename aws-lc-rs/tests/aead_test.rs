@@ -3,9 +3,12 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use aws_lc_rs::aead::nonce_sequence::Counter32Builder;
 use aws_lc_rs::{aead, error, test, test_file};
 
-use aws_lc_rs::aead::{Nonce, NONCE_LEN};
+use aws_lc_rs::aead::{
+    Aad, BoundKey, Nonce, OpeningKey, SealingKey, UnboundKey, AES_128_GCM, NONCE_LEN,
+};
 use core::ops::RangeFrom;
 
 #[test]
@@ -659,4 +662,91 @@ impl aead::NonceSequence for OneNonceSequence {
     fn advance(&mut self) -> Result<Nonce, error::Unspecified> {
         self.0.take().ok_or(error::Unspecified)
     }
+}
+
+#[test]
+fn prepare_operation() {
+    const KEY: &[u8] = &[
+        0x52, 0x05, 0x19, 0x7a, 0xcc, 0x88, 0xdb, 0x78, 0x39, 0x59, 0xbc, 0x03, 0xb8, 0x1d, 0x4a,
+        0x6c,
+    ];
+    const MESSAGE: &[u8] = &[
+        0x52, 0x61, 0x63, 0x63, 0x6f, 0x6f, 0x6e, 0x20, 0x4d, 0x69, 0x73, 0x63, 0x68, 0x69, 0x65,
+        0x66,
+    ];
+    const LIMIT: u32 = 10;
+
+    let mut sk = SealingKey::new(
+        UnboundKey::new(&AES_128_GCM, KEY).unwrap(),
+        Counter32Builder::new().limit(LIMIT).build(),
+    );
+    let mut ok = OpeningKey::new(
+        UnboundKey::new(&AES_128_GCM, KEY).unwrap(),
+        Counter32Builder::new().limit(LIMIT).build(),
+    );
+
+    let mut nonces: Vec<Vec<u8>> = vec![];
+
+    for _ in 0..(LIMIT / 2) {
+        let so = sk.prepare_operation().unwrap();
+        let oo = ok.prepare_operation().unwrap();
+        let so_nonce = Vec::from(so.nonce().as_ref());
+        let oo_nonce = Vec::from(oo.nonce().as_ref());
+
+        assert_eq!(so_nonce.as_slice(), oo_nonce.as_slice());
+        assert!(!nonces.contains(&so_nonce));
+        nonces.push(so_nonce);
+        nonces.push(oo_nonce);
+
+        let mut message: Vec<u8> = vec![];
+        message.extend_from_slice(MESSAGE);
+
+        so.seal_in_place_append_tag(Aad::empty(), &mut message)
+            .unwrap();
+        assert_ne!(MESSAGE, message.as_slice());
+
+        let message = oo.open_in_place(Aad::empty(), &mut message).unwrap();
+        assert_eq!(MESSAGE, message);
+
+        let so = sk.prepare_operation().unwrap();
+        let oo = ok.prepare_operation().unwrap();
+        let so_nonce = Vec::from(so.nonce().as_ref());
+        let oo_nonce = Vec::from(oo.nonce().as_ref());
+
+        assert_eq!(so_nonce.as_slice(), oo_nonce.as_slice());
+        assert!(!nonces.contains(&so_nonce));
+        nonces.push(so_nonce);
+        nonces.push(oo_nonce);
+
+        let mut message: Vec<u8> = vec![];
+        message.extend_from_slice(MESSAGE);
+
+        let tag = so
+            .seal_in_place_separate_tag(Aad::empty(), &mut message)
+            .unwrap();
+        assert_ne!(MESSAGE, message.as_slice());
+        message.extend_from_slice(tag.as_ref());
+
+        let message = oo.open_within(Aad::empty(), &mut message, 0..).unwrap();
+        assert_eq!(MESSAGE, message);
+    }
+
+    let nonce_chunks = nonces.chunks_exact(2);
+    assert_eq!(0, nonce_chunks.remainder().len());
+    for chunk in nonce_chunks {
+        assert_eq!(chunk[0].as_slice(), chunk[1].as_slice());
+    }
+
+    let mut message: Vec<u8> = vec![];
+    message.extend_from_slice(MESSAGE);
+
+    // Subsequent usage should fail now since the sequence is exhausted in each key.
+    sk.prepare_operation().expect_err("sequence limit reached");
+    ok.prepare_operation().expect_err("sequence limit reached");
+    sk.seal_in_place_append_tag(Aad::empty(), &mut message)
+        .expect_err("sequence limit reached");
+    sk.seal_in_place_separate_tag(Aad::empty(), &mut message)
+        .expect_err("sequence limit reached");
+    ok.open_in_place(Aad::empty(), &mut message)
+        .expect_err("sequence limit reached");
 }
