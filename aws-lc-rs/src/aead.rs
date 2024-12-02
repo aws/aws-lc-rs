@@ -450,7 +450,7 @@ impl<N: NonceSequence> SealingKey<N> {
     }
 }
 
-macro_rules! nonce_sequence_key_iterator {
+macro_rules! key_op_mut {
     ($name:ident) => {
         paste! {
         /// A key operation with a precomputed nonce from a key's associated `NonceSequence`.
@@ -478,8 +478,8 @@ macro_rules! nonce_sequence_key_iterator {
     };
 }
 
-nonce_sequence_key_iterator!(OpeningKey);
-nonce_sequence_key_iterator!(SealingKey);
+key_op_mut!(OpeningKey);
+key_op_mut!(SealingKey);
 
 impl<N: NonceSequence> OpeningKeyOpMut<'_, N> {
     /// Returns the Nonce that will be used for this operation.
