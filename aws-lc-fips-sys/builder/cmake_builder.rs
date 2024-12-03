@@ -256,12 +256,8 @@ impl CmakeBuilder {
                             }
                         }
                         if compiler.is_like_clang() {
+                            // AWS-LC-FIPS 2.0 was unable to compile with Clang 19
                             emit_warning(&format!("Clang v{major}.{minor}.{patch} detected."));
-                            if major > 18 {
-                                // TODO: Update when FIPS Clang 19 build is fixed
-                                emit_warning("WARNING: FIPS build is known to fail on Clang >= 19. See: https://github.com/aws/aws-lc-rs/issues/569");
-                                return Some(false);
-                            }
                         }
                         return Some(true);
                     }
@@ -425,7 +421,7 @@ impl crate::Builder for CmakeBuilder {
 }
 
 fn parse_version(line: &str) -> Option<(u32, u32, u32)> {
-    let version_pattern = regex::Regex::new(r"\s(\d{1,2})\.(\d{1,2})\.(\d+)").unwrap();
+    let version_pattern = regex::Regex::new(r"\s(\d{1,2})\.(\d{1,2})\.(\d+)").ok()?;
     let captures = version_pattern.captures(line)?;
 
     let major_str = captures.get(1)?.as_str();
