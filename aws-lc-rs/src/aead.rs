@@ -116,7 +116,7 @@
 
 use crate::{derive_debug_via_id, error::Unspecified, hkdf};
 use aead_ctx::AeadCtx;
-use core::{fmt::Debug, ops::RangeFrom};
+use core::{fmt::Debug, ops::RangeFrom, stringify};
 use paste::paste;
 
 mod aead_ctx;
@@ -450,7 +450,7 @@ impl<N: NonceSequence> SealingKey<N> {
     }
 }
 
-macro_rules! key_op_mut {
+macro_rules! nonce_seq_key_op_mut {
     ($name:ident) => {
         paste! {
         /// A key operation with a precomputed nonce from a key's associated `NonceSequence`.
@@ -471,15 +471,15 @@ macro_rules! key_op_mut {
 
         impl<'a, N: NonceSequence> Debug for [<$name OpMut>]<'a, N> {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-                f.debug_struct("[<$name OpMut>]").finish_non_exhaustive()
+                f.debug_struct(stringify!([<$name OpMut>])).finish_non_exhaustive()
             }
         }
         }
     };
 }
 
-key_op_mut!(OpeningKey);
-key_op_mut!(SealingKey);
+nonce_seq_key_op_mut!(OpeningKey);
+nonce_seq_key_op_mut!(SealingKey);
 
 impl<N: NonceSequence> OpeningKeyOpMut<'_, N> {
     /// Returns the Nonce that will be used for this operation.
@@ -954,6 +954,8 @@ pub const MAX_TAG_LEN: usize = TAG_LEN;
 
 #[cfg(test)]
 mod tests {
+    use nonce_sequence::Counter32Builder;
+
     use super::*;
     use crate::{iv::FixedLength, test::from_hex};
 
@@ -1009,5 +1011,27 @@ mod tests {
             .unwrap();
 
         assert_eq!(plaintext, in_out[..plaintext.len()]);
+    }
+
+    #[test]
+    fn debug_key_op_mut() {
+        let mut sk = SealingKey::new(
+            UnboundKey::new(&AES_128_GCM, &[0u8; 16]).unwrap(),
+            Counter32Builder::new().build(),
+        );
+        let mut ok = OpeningKey::new(
+            UnboundKey::new(&AES_128_GCM, &[0u8; 16]).unwrap(),
+            Counter32Builder::new().build(),
+        );
+        let so = sk.prepare_operation().unwrap();
+        let oo = ok.prepare_operation().unwrap();
+        assert_eq!("SealingKeyOpMut { .. }", format!("{so:?}"));
+        assert_eq!("OpeningKeyOpMut { .. }", format!("{oo:?}"));
+    }
+
+    #[test]
+    fn debug_tag() {
+        let tag = Tag([0u8; MAX_TAG_LEN], MAX_TAG_LEN);
+        assert_eq!("Tag", format!("{tag:?}"))
     }
 }
