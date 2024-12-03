@@ -1032,6 +1032,6 @@ mod tests {
     #[test]
     fn debug_tag() {
         let tag = Tag([0u8; MAX_TAG_LEN], MAX_TAG_LEN);
-        assert_eq!("Tag", format!("{tag:?}"))
+        assert_eq!("Tag", format!("{tag:?}"));
     }
 }
