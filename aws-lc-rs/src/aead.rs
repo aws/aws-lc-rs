@@ -113,6 +113,72 @@
 //!
 //! assert_eq!(plaintext, decrypted_plaintext);
 //! ```
+//!
+//! ## Prepared Nonce API's with Nonce Sequence
+//!
+//! If you prefer to use the [NonceSequence] based API's, and need to know the [Nonce] explicit nonce used for a
+//! cryptographic key operation operation, then [SealingKeyPreparedNonce] and
+//! [OpeningKeyPreparedNonce] are available to you.
+//!
+//! ```rust
+//! # use std::error::Error;
+//! #
+//! # fn main() -> Result<(), Box<dyn Error>> {
+//! use aws_lc_rs::aead::{
+//!     nonce_sequence::Counter32Builder, Aad, BoundKey, OpeningKey, SealingKey, UnboundKey,
+//!     AES_128_GCM,
+//! };
+//! use std::vec::Vec;
+//!
+//! let key_bytes = &[
+//!     0xa5, 0xf3, 0x8d, 0x0d, 0x2d, 0x7c, 0x48, 0x56, 0xe7, 0xf3, 0xc3, 0x63, 0x0d, 0x40, 0x5b,
+//!     0x9e,
+//! ];
+//!
+//! // Create AES-128-GCM SealingKey
+//! let mut sealing_key = SealingKey::new(
+//!     UnboundKey::new(&AES_128_GCM, key_bytes)?,
+//!     Counter32Builder::new()
+//!         .identifier([0, 1, 2, 3, 4, 5, 6, 7])
+//!         .build(),
+//! );
+//!
+//! // Create AES-128-GCM OpeningKey
+//! let mut opening_key = OpeningKey::new(
+//!     UnboundKey::new(&AES_128_GCM, key_bytes)?,
+//!     Counter32Builder::new()
+//!         .identifier([0, 1, 2, 3, 4, 5, 6, 7])
+//!         .build(),
+//! );
+//!
+//! let message = "test message";
+//! let mut in_out = Vec::from(message);
+//!
+//! // Create a SealingKeyPreparedNonce which consumes a nonce from the underlying sequence
+//! let seal_prepared_nonce = sealing_key.prepare_nonce()?;
+//!
+//! // Query the nonce that will be used for our seal operation with our prepared nonce
+//! let seal_nonce_bytes = Vec::from(seal_prepared_nonce.nonce().as_ref());
+//!
+//! // Use the prepared nonce and seal the plaintext
+//! seal_prepared_nonce.seal_in_place_append_tag(Aad::empty(), &mut in_out)?;
+//!
+//! // Create a OpeningKeyPreparedNonce which consumes a nonce from the underlying sequence
+//! let open_prepared_nonce = opening_key.prepare_nonce()?;
+//!
+//! // Query the nonce that will be used for our seal operation with our prepared nonce
+//! let open_nonce_bytes = Vec::from(open_prepared_nonce.nonce().as_ref());
+//!
+//! // Since we initialized the Counter32Builder the same between both builders the nonce here
+//! // will match the one from the opening key.
+//! assert_eq!(seal_nonce_bytes.as_slice(), open_nonce_bytes.as_slice());
+//!
+//! let plaintext = open_prepared_nonce.open_in_place(Aad::empty(), &mut in_out)?;
+//!
+//! assert_eq!(message.as_bytes(), plaintext);
+//! #   Ok(())
+//! # }
+//! ```
 
 use crate::{derive_debug_via_id, error::Unspecified, hkdf};
 use aead_ctx::AeadCtx;
@@ -215,7 +281,6 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// plaintext without the tag.
     ///
     /// Prefer [`RandomizedNonceKey::open_in_place`].
-    ///
     // # FIPS
     // Use this method with one of the following algorithms:
     // * `AES_128_GCM`
@@ -281,7 +346,6 @@ impl<N: NonceSequence> OpeningKey<N> {
     /// This reassembly be accomplished with three calls to `open_within()`.
     ///
     /// Prefer [`RandomizedNonceKey::open_in_place`].
-    ///
     // # FIPS
     // Use this method with one of the following algorithms:
     // * `AES_128_GCM`
@@ -309,11 +373,19 @@ impl<N: NonceSequence> OpeningKey<N> {
         )
     }
 
-    /// Returns a `OpeningKeyOpMut` with the next computed `Nonce` from the `NonceSequence` for the next operation.
+    /// Returns a `OpeningKeyPreparedNonce` containing the next computed `Nonce` consumed from `NonceSequence`.
+    ///
+    /// The encapsulated Nonce will be used **if and only if** either
+    /// [OpeningKeyPreparedNonce::open_in_place] or [OpeningKeyPreparedNonce::open_within]
+    /// are invoked. Dropping `OpeningKeyPreparedNonce` without invoking either method results in the nonce remaining
+    /// consumed and unused within the associated `NonceSequence`. Subsequent calls to [OpeningKey] methods will
+    /// always use a proceeding nonce from the `NonceSequence` regardless of whether
+    /// a `OpeningKeyPreparedNonce` is consumed or not.
+    ///
     /// # Errors
-    /// `Unspecified` if there is a failure computing the nonce for the next operation.
-    pub fn prepare_operation(&mut self) -> Result<OpeningKeyOpMut<'_, N>, Unspecified> {
-        OpeningKeyOpMut::new(self)
+    /// `Unspecified` if there is a failure computing the nonce for the next operation, i.e. `NonceSequence` exhausted.
+    pub fn prepare_nonce(&mut self) -> Result<OpeningKeyPreparedNonce<'_, N>, Unspecified> {
+        OpeningKeyPreparedNonce::new(self)
     }
 }
 
@@ -355,7 +427,6 @@ impl<N: NonceSequence> SealingKey<N> {
     /// Deprecated. Renamed to `seal_in_place_append_tag`.
     ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_append_tag`].
-    ///
     // # FIPS
     // This method must not be used.
     //
@@ -386,7 +457,6 @@ impl<N: NonceSequence> SealingKey<N> {
     /// ```
     ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_append_tag`].
-    ///
     // # FIPS
     // This method must not be used.
     //
@@ -421,7 +491,6 @@ impl<N: NonceSequence> SealingKey<N> {
     /// The tag will be `self.algorithm.tag_len()` bytes long.
     ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_separate_tag`].
-    ///
     // # FIPS
     // This method must not be used.
     //
@@ -442,11 +511,19 @@ impl<N: NonceSequence> SealingKey<N> {
             .map(|(_, tag)| tag)
     }
 
-    /// Returns a `SealingKeyOpMut` with the next computed `Nonce` from the `NonceSequence` for the next operation.
+    /// Returns a `SealingKeyPreparedNonce` containing the next computed `Nonce` consumed from `NonceSequence`.
+    ///
+    /// The encapsulated Nonce will be used **if and only if** either
+    /// [SealingKeyPreparedNonce::seal_in_place_append_tag] or [SealingKeyPreparedNonce::seal_in_place_separate_tag]
+    /// are invoked. Dropping `SealingKeyPreparedNonce` without invoking either method results in the nonce remaining
+    /// consumed and unused within the associated `NonceSequence`. Subsequent calls to [SealingKey] methods will
+    /// always use a proceeding nonce from the `NonceSequence` regardless of whether
+    /// a `SealingKeyPreparedNonce` is consumed or not.
+    ///
     /// # Errors
-    /// `Unspecified` if there is a failure computing the nonce for the next operation.
-    pub fn prepare_operation(&mut self) -> Result<SealingKeyOpMut<'_, N>, Unspecified> {
-        SealingKeyOpMut::new(self)
+    /// `Unspecified` if there is a failure computing the nonce for the next operation, i.e. `NonceSequence` exhausted.
+    pub fn prepare_nonce(&mut self) -> Result<SealingKeyPreparedNonce<'_, N>, Unspecified> {
+        SealingKeyPreparedNonce::new(self)
     }
 }
 
@@ -454,12 +531,12 @@ macro_rules! nonce_seq_key_op_mut {
     ($name:ident) => {
         paste! {
         /// A key operation with a precomputed nonce from a key's associated `NonceSequence`.
-        pub struct [<$name OpMut>]<'a, N: NonceSequence> {
+        pub struct [<$name PreparedNonce>]<'a, N: NonceSequence> {
             key: &'a mut $name<N>,
             nonce: Nonce,
         }
 
-        impl<'a, N: NonceSequence> [<$name OpMut>]<'a, N> {
+        impl<'a, N: NonceSequence> [<$name PreparedNonce>]<'a, N> {
             fn new(key: &'a mut $name<N>) -> Result<Self, Unspecified> {
                 let nonce = key.nonce_sequence.advance()?;
                 Ok(Self {
@@ -469,9 +546,17 @@ macro_rules! nonce_seq_key_op_mut {
             }
         }
 
-        impl<'a, N: NonceSequence> Debug for [<$name OpMut>]<'a, N> {
+        impl<N: NonceSequence> [<$name PreparedNonce>]<'_, N> {
+            /// Returns the prepared Nonce that is used for key methods invoked on [Self].
+            #[must_use]
+            pub fn nonce(&self) -> &Nonce {
+                &self.nonce
+            }
+        }
+
+        impl<N: NonceSequence> Debug for [<$name PreparedNonce>]<'_, N> {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-                f.debug_struct(stringify!([<$name OpMut>])).finish_non_exhaustive()
+                f.debug_struct(stringify!([<$name PreparedNonce>])).finish_non_exhaustive()
             }
         }
         }
@@ -481,15 +566,7 @@ macro_rules! nonce_seq_key_op_mut {
 nonce_seq_key_op_mut!(OpeningKey);
 nonce_seq_key_op_mut!(SealingKey);
 
-impl<N: NonceSequence> OpeningKeyOpMut<'_, N> {
-    /// Returns the Nonce that will be used for this operation.
-    #[must_use]
-    pub fn nonce(&self) -> Nonce {
-        let nonce_bytes = self.nonce.0.as_ref();
-        let nonce: Nonce = Nonce(nonce_bytes.into());
-        nonce
-    }
-
+impl<N: NonceSequence> OpeningKeyPreparedNonce<'_, N> {
     /// Authenticates and decrypts (“opens”) data in place.
     ///
     /// See [OpeningKey::open_in_place] for additional API information.
@@ -530,15 +607,7 @@ impl<N: NonceSequence> OpeningKeyOpMut<'_, N> {
     }
 }
 
-impl<N: NonceSequence> SealingKeyOpMut<'_, N> {
-    /// Returns the Nonce that will be used for this operation.
-    #[must_use]
-    pub fn nonce(&self) -> Nonce {
-        let nonce_bytes = self.nonce.0.as_ref();
-        let nonce: Nonce = Nonce(nonce_bytes.into());
-        nonce
-    }
-
+impl<N: NonceSequence> SealingKeyPreparedNonce<'_, N> {
     /// Encrypts and signs (“seals”) data in place, appending the tag to the
     /// resulting ciphertext.
     ///
@@ -629,7 +698,6 @@ impl hkdf::KeyType for &'static Algorithm {
 /// `NonceSequence` cannot reasonably be used.
 ///
 /// Prefer [`RandomizedNonceKey`] when practical.
-///
 // # FIPS
 // The following conditions must be met:
 // * `UnboundKey`'s algorithm is one of:
@@ -652,7 +720,6 @@ impl LessSafeKey {
     /// `nonce` must be unique for every use of the key to open data.
     ///
     /// Prefer [`RandomizedNonceKey::open_in_place`].
-    ///
     // # FIPS
     // Use this method with one of the following algorithms:
     // * `AES_128_GCM`
@@ -678,7 +745,6 @@ impl LessSafeKey {
     /// `nonce` must be unique for every use of the key to open data.
     ///
     /// Prefer [`RandomizedNonceKey::open_in_place`].
-    ///
     // # FIPS
     // Use this method with one of the following algorithms:
     // * `AES_128_GCM`
@@ -714,7 +780,6 @@ impl LessSafeKey {
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid. In this case, `out_plaintext` may
     /// have been overwritten in an unspecified way.
-    ///
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn open_separate_gather<A>(
@@ -735,7 +800,6 @@ impl LessSafeKey {
     /// Deprecated. Renamed to `seal_in_place_append_tag()`.
     ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_append_tag`].
-    ///
     // # FIPS
     // This method must not be used.
     //
@@ -761,7 +825,6 @@ impl LessSafeKey {
     /// `nonce` must be unique for every use of the key to seal data.
     ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_append_tag`].
-    ///
     // # FIPS
     // This method must not be used.
     //
@@ -790,7 +853,6 @@ impl LessSafeKey {
     /// `nonce` must be unique for every use of the key to seal data.
     ///
     /// Prefer [`RandomizedNonceKey::seal_in_place_separate_tag`].
-    ///
     // # FIPS
     // This method must not be used.
     //
@@ -825,7 +887,6 @@ impl LessSafeKey {
     /// The `extra_out_and_tag` length must be equal to the `extra_len` and `self.algorithm.tag_len()`.
     ///
     /// `nonce` must be unique for every use of the key to seal data.
-    ///
     // # FIPS
     // This method must not be used.
     //
@@ -1014,7 +1075,7 @@ mod tests {
     }
 
     #[test]
-    fn debug_key_op_mut() {
+    fn debug_prepared_nonce() {
         let mut sk = SealingKey::new(
             UnboundKey::new(&AES_128_GCM, &[0u8; 16]).unwrap(),
             Counter32Builder::new().build(),
@@ -1023,10 +1084,10 @@ mod tests {
             UnboundKey::new(&AES_128_GCM, &[0u8; 16]).unwrap(),
             Counter32Builder::new().build(),
         );
-        let so = sk.prepare_operation().unwrap();
-        let oo = ok.prepare_operation().unwrap();
-        assert_eq!("SealingKeyOpMut { .. }", format!("{so:?}"));
-        assert_eq!("OpeningKeyOpMut { .. }", format!("{oo:?}"));
+        let so = sk.prepare_nonce().unwrap();
+        let oo = ok.prepare_nonce().unwrap();
+        assert_eq!("SealingKeyPreparedNonce { .. }", format!("{so:?}"));
+        assert_eq!("OpeningKeyPreparedNonce { .. }", format!("{oo:?}"));
     }
 
     #[test]

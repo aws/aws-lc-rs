@@ -665,7 +665,7 @@ impl aead::NonceSequence for OneNonceSequence {
 }
 
 #[test]
-fn prepare_operation() {
+fn prepare_nonce() {
     const KEY: &[u8] = &[
         0x52, 0x05, 0x19, 0x7a, 0xcc, 0x88, 0xdb, 0x78, 0x39, 0x59, 0xbc, 0x03, 0xb8, 0x1d, 0x4a,
         0x6c,
@@ -688,10 +688,10 @@ fn prepare_operation() {
     let mut nonces: Vec<Vec<u8>> = vec![];
 
     for _ in 0..(LIMIT / 2) {
-        let so = sk.prepare_operation().unwrap();
-        let oo = ok.prepare_operation().unwrap();
-        let so_nonce = Vec::from(so.nonce().as_ref());
-        let oo_nonce = Vec::from(oo.nonce().as_ref());
+        let skpn = sk.prepare_nonce().unwrap();
+        let okpn = ok.prepare_nonce().unwrap();
+        let so_nonce = Vec::from(skpn.nonce().as_ref());
+        let oo_nonce = Vec::from(okpn.nonce().as_ref());
 
         assert_eq!(so_nonce.as_slice(), oo_nonce.as_slice());
         assert!(!nonces.contains(&so_nonce));
@@ -701,15 +701,15 @@ fn prepare_operation() {
         let mut message: Vec<u8> = vec![];
         message.extend_from_slice(MESSAGE);
 
-        so.seal_in_place_append_tag(Aad::empty(), &mut message)
+        skpn.seal_in_place_append_tag(Aad::empty(), &mut message)
             .unwrap();
         assert_ne!(MESSAGE, message.as_slice());
 
-        let message = oo.open_in_place(Aad::empty(), &mut message).unwrap();
+        let message = okpn.open_in_place(Aad::empty(), &mut message).unwrap();
         assert_eq!(MESSAGE, message);
 
-        let so = sk.prepare_operation().unwrap();
-        let oo = ok.prepare_operation().unwrap();
+        let so = sk.prepare_nonce().unwrap();
+        let oo = ok.prepare_nonce().unwrap();
         let so_nonce = Vec::from(so.nonce().as_ref());
         let oo_nonce = Vec::from(oo.nonce().as_ref());
 
@@ -741,8 +741,8 @@ fn prepare_operation() {
     message.extend_from_slice(MESSAGE);
 
     // Subsequent usage should fail now since the sequence is exhausted in each key.
-    sk.prepare_operation().expect_err("sequence limit reached");
-    ok.prepare_operation().expect_err("sequence limit reached");
+    sk.prepare_nonce().expect_err("sequence limit reached");
+    ok.prepare_nonce().expect_err("sequence limit reached");
     sk.seal_in_place_append_tag(Aad::empty(), &mut message)
         .expect_err("sequence limit reached");
     sk.seal_in_place_separate_tag(Aad::empty(), &mut message)
