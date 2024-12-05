@@ -267,21 +267,19 @@ jobs:
 
   build-env-external-bindgen-test:
     if: github.repository_owner == 'aws'
-    name: aws-lc-rs FIPS - External bindgen test
+    name: aws-lc-rs - External bindgen test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     env:
       AWS_LC_SYS_EXTERNAL_BINDGEN: 1
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-      - if: ${{ matrix.os == 'windows-latest' }}
-        uses: ilammy/setup-nasm@v1
       - name: Install bindgen-cli
         run: cargo install --locked bindgen-cli
       - name: Remove bindings
@@ -290,6 +288,39 @@ jobs:
           rm ./aws-lc-sys/src/aarch64*
       - name: Run cargo test
         run: cargo test --tests -p aws-lc-rs --no-default-features --features aws-lc-sys
+
+  build-env-external-bindgen-windows-test:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs - External bindgen test (${{ matrix.target }})
+    runs-on: windows-latest
+    env:
+      AWS_LC_SYS_EXTERNAL_BINDGEN: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ 'i686-pc-windows-gnu', 'i686-pc-windows-msvc', 'x86_64-pc-windows-msvc', 'x86_64-pc-windows-gnu' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+      - uses: ilammy/setup-nasm@v1
+      - name: Install bindgen-cli
+        run: cargo install --locked bindgen-cli
+      - name: Remove bindings
+        run: |
+          rm ./aws-lc-sys/src/x86_64*
+          rm ./aws-lc-sys/src/aarch64*
+          rm ./aws-lc-sys/src/i686*
+      - if: ${{ matrix.target == 'i686-pc-windows-gnu' }}
+        name: Install mingw
+        uses: bwoodsend/setup-winlibs-action@v1
+        with:
+          architecture: i686
+      - name: Run cargo test
+        run: cargo test --tests -p aws-lc-rs --no-default-features --features aws-lc-sys --target ${{ matrix.target }}
 
   build-env-fips-static-test:
     if: github.repository_owner == 'aws'
