@@ -183,9 +183,7 @@ jobs:
       matrix:
         target:
           - 'x86_64-pc-windows-gnu'
-          # TODO: Fails in GitHub CI.  Appears to be related to bindgen.
-          # .../base.h:61:10: fatal error: 'stdlib.h' file not found
-          # - 'i686-pc-windows-gnu'
+          - 'i686-pc-windows-gnu'
     steps:
       - uses: ilammy/setup-nasm@v1
       - uses: actions/checkout@v4
@@ -196,6 +194,11 @@ jobs:
         with:
           toolchain: stable
           target: ${{ matrix.target }}
+      - if: ${{ matrix.target == 'i686-pc-windows-gnu' }}
+        name: Install mingw
+        uses: bwoodsend/setup-winlibs-action@v1
+        with:
+          architecture: i686
       - name: Debug Test on `${{ matrix.target }}`
         run: cargo test -p aws-lc-rs --target ${{ matrix.target }} --features bindgen
       - name: Release test on `${{ matrix.target }}`
