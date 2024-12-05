@@ -4,7 +4,7 @@
 use aws_lc_rs::cipher::{
     DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext, OperatingMode,
     PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, StreamingDecryptingKey,
-    StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_256,
+    StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192, AES_256,
 };
 use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
 use aws_lc_rs::test::from_hex;
@@ -506,6 +506,17 @@ padded_cipher_kat!(
 );
 
 padded_cipher_kat!(
+    test_kat_aes_192_cbc_16_bytes,
+    &AES_192,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "e08c15411774ec4a908b64eadc6ac4199c7cd453f3aaef53",
+    "00000000000000000000000000000000",
+    "00112233445566778899aabbccddeeff",
+    "fc7f57e545e92c0a0b364c3086d49bf0f1a1a203743fbd8af828af46edca074d"
+);
+
+padded_cipher_kat!(
     test_kat_aes_256_cbc_15_bytes,
     &AES_256,
     OperatingMode::CBC,
@@ -525,6 +536,17 @@ cipher_kat!(
     "00000000000000000000000000000000",
     "00112233445566778899aabbccddeeff",
     "c6b01904c3da3df5e7d62bd96d153686"
+);
+
+cipher_kat!(
+    test_kat_aes_192_ctr_16_bytes,
+    &AES_192,
+    OperatingMode::CTR,
+    ctr,
+    "cd62376d5ebb414917f0c78f05266433dc9192a1ec943300",
+    "00000000000000000000000000000000",
+    "00112233445566778899aabbccddeeff",
+    "7f7d07cc05d0e31633fb59df5e34d2d6"
 );
 
 cipher_kat!(
@@ -550,6 +572,17 @@ cipher_kat!(
 );
 
 cipher_kat!(
+    test_kat_aes_192_ctr_15_bytes,
+    &AES_192,
+    OperatingMode::CTR,
+    ctr,
+    "25a39dbfd8034f71a81f9ceb55026e4037f8f6aa30ab44ce",
+    "ffffffffffffffffffffffffffffff80",
+    "3ee38cec171e6cf466bf0df98aa0e1",
+    "56caf80166f076dfee89adc73b71e5"
+);
+
+cipher_kat!(
     test_kat_aes_256_ctr_15_bytes_2,
     &AES_256,
     OperatingMode::CTR,
@@ -569,6 +602,17 @@ padded_cipher_kat!(
     "b5313560244a4822c46c2a0c9d0cf7fd",
     "a3e4c990356c01f320043c3d8d6f43",
     "ad96993f248bd6a29760ec7ccda95ee1"
+);
+
+padded_cipher_kat!(
+    test_kat_aes_192_cbc_15_bytes,
+    &AES_192,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "7001c487cc3e572cfc92f4d0e697d982e8856fdcc957da40",
+    "b5313560244a4822c46c2a0c9d0cf7fd",
+    "a3e4c990356c01f320043c3d8d6f43",
+    "33549957df6ff5cf32ca59b42298f4d5"
 );
 
 padded_cipher_kat!(
@@ -603,6 +647,15 @@ padded_cipher_rt!(
 );
 
 padded_cipher_rt!(
+    test_rt_aes_192_cbc_16_bytes,
+    &AES_192,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "d2926527e0aa9f37b45e2ec2ade5853ef807576104c7ace3",
+    "00112233445566778899aabbccddeeff"
+);
+
+padded_cipher_rt!(
     test_rt_aes_256_cbc_15_bytes,
     &AES_256,
     OperatingMode::CBC,
@@ -621,11 +674,29 @@ cipher_rt!(
 );
 
 cipher_rt!(
+    test_rt_aes_192_ctr_16_bytes,
+    &AES_192,
+    OperatingMode::CTR,
+    ctr,
+    "982215f4e173dfa0fcffe5d3da41c4812c7bcc8ed3540f93",
+    "00112233445566778899aabbccddeeff"
+);
+
+cipher_rt!(
     test_rt_aes_128_ctr_17_bytes,
     &AES_128,
     OperatingMode::CTR,
     ctr,
     "000102030405060708090a0b0c0d0e0f",
+    "00112233445566778899aabbccddeeff01"
+);
+
+cipher_rt!(
+    test_rt_aes_192_ctr_17_bytes,
+    &AES_192,
+    OperatingMode::CTR,
+    ctr,
+    "98c6b8e01e379fbd14e61af6af891596583565f2a27d59e9",
     "00112233445566778899aabbccddeeff01"
 );
 
@@ -644,6 +715,15 @@ cipher_rt!(
     OperatingMode::CTR,
     ctr,
     "244828580821c1652582c76e34d299f5",
+    "3ee38cec171e6cf466bf0df98aa0e1"
+);
+
+cipher_rt!(
+    test_rt_aes_192_ctr_15_bytes,
+    &AES_192,
+    OperatingMode::CTR,
+    ctr,
+    "b3ad5cea1dddc214ca969ac35f37dae1a9a9d1528f89bb35",
     "3ee38cec171e6cf466bf0df98aa0e1"
 );
 
@@ -675,6 +755,15 @@ padded_cipher_rt!(
 );
 
 padded_cipher_rt!(
+    test_rt_aes_192_cbc_15_bytes,
+    &AES_192,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "45899367c3132849763073c435a9288a766c8b9ec2308516",
+    "a3e4c990356c01f320043c3d8d6f43"
+);
+
+padded_cipher_rt!(
     test_rt_aes_128_cbc_16_bytes_2,
     &AES_128,
     OperatingMode::CBC,
@@ -689,6 +778,15 @@ padded_cipher_rt!(
     OperatingMode::CBC,
     cbc_pkcs7,
     "95af71f1c63e4a1d0b0b1a27fb978283",
+    "aece7b5e3c3df1ffc9802d2dfe296dc734"
+);
+
+padded_cipher_rt!(
+    test_rt_192_cbc_17_bytes,
+    &AES_192,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "ec250e04c3903f602647b85a401a1ae7ca2f02f67fa4253e",
     "aece7b5e3c3df1ffc9802d2dfe296dc734"
 );
 
@@ -719,11 +817,27 @@ padded_ecb_pkcs7_kat!(
 );
 
 padded_ecb_pkcs7_kat!(
+    test_kat_aes_192_ecb_pkcs7_16_bytes,
+    &AES_192,
+    "d077a03bd8a38973928ccafe4a9d2f455130bd0af5ae46a9",
+    "61f17a594bd5b55ae3fa8efaae6e83d6",
+    "2379bbaa72d82275688301f5cb6ac1898c1ea2c8cd120dc19cdefcc3d477fce4"
+);
+
+padded_ecb_pkcs7_kat!(
     test_kat_aes_128_ecb_pkcs7_15_bytes,
     &AES_128,
     "50f0fb9c8bfcedd0424a4932fdb4578d",
     "4badb333837326d75406a0cd6149f0",
     "593a39d148e106ebc4a429b97b5033bc"
+);
+
+padded_ecb_pkcs7_kat!(
+    test_kat_aes_192_ecb_pkcs7_15_bytes,
+    &AES_192,
+    "d184c36cf0dddfec39e654195006022237871a47c33d3198",
+    "4badb333837326d75406a0cd6149f0",
+    "45f7cea9d1d21ade4fc31ff0c4ebf4c7"
 );
 
 padded_ecb_pkcs7_kat!(
@@ -751,9 +865,24 @@ ecb_kat!(
 );
 
 ecb_kat!(
+    test_kat_aes_192_ecb_16_bytes,
+    &AES_192,
+    "4c6994ffa9dcdc805b60c2c0095334c42d95a8fc0ca5b080",
+    "c4a500e39307dbe7727b5b3a36660f70",
+    "1f021658980c025396455f7bb7e01d07"
+);
+
+ecb_kat!(
     test_kat_aes_128_ecb_15_bytes,
     &AES_128,
     "f8efb984d9e813c96a79020bdfbb6032",
+    "c4a500e39307dbe7727b5b3a36660f"
+);
+
+ecb_kat!(
+    test_kat_aes_192_ecb_15_bytes,
+    &AES_192,
+    "c88f5b00a4ef9a6840e2acaf33f00a3bdc4e25895303fa72",
     "c4a500e39307dbe7727b5b3a36660f"
 );
 
@@ -780,6 +909,13 @@ ecb_rt!(
 );
 
 ecb_rt!(
+    test_rt_aes_192_16_bytes,
+    &AES_192,
+    "e9f065d7c13573587f7875357dfbb16c53489f6a4bd0f7cd",
+    "81c7241bbbf37d9b50e5072858fc498d"
+);
+
+ecb_rt!(
     test_rt_aes_256_16_bytes,
     &AES_256,
     "e6be82de1addbf40550abad4b613b2e77dd498ecaeff5251d4773fcfa00cc1f4",
@@ -794,9 +930,23 @@ padded_ecb_pkcs7_rt!(
 );
 
 padded_ecb_pkcs7_rt!(
+    test_rt_aes_192_ecb_pkcs7_16_bytes,
+    &AES_192,
+    "15d20f6ebc7e649fd95b76b107e6daba967c8a9484797f29",
+    "e6a32546cb537cf589ac65aac84815ae"
+);
+
+padded_ecb_pkcs7_rt!(
     test_rt_aes_128_ecb_pkcs7_15_bytes,
     &AES_128,
     "41647c63411930c483be063ca890472e",
+    "6194b065db9003381c0c736130188e"
+);
+
+padded_ecb_pkcs7_rt!(
+    test_rt_aes_192_ecb_pkcs7_15_bytes,
+    &AES_192,
+    "a8a282ee31c03fae4f8e9b8930d5473c2ed695a347e88b7c",
     "6194b065db9003381c0c736130188e"
 );
 
@@ -834,6 +984,28 @@ cipher_kat!(
     "bbdeef0d1837c33971f04eb0a8cde0a2",
     "750cf377093fb05f84875a240154f7",
     "187a9d7d922afa9f3294ad12669df1"
+);
+
+cipher_kat!(
+    test_kat_aes_192_cfb128_16_bytes,
+    &AES_192,
+    OperatingMode::CFB128,
+    cfb128,
+    "cd62376d5ebb414917f0c78f05266433dc9192a1ec943300",
+    "dd41c2fb73e61bdc02da6c70eb5ac729",
+    "6a841482cf079c4a4b8c59b6c6bda6a4",
+    "35f27d6902d635ac4f664e2367fcd686"
+);
+
+cipher_kat!(
+    test_kat_aes_192_cfb128_15_bytes,
+    &AES_192,
+    OperatingMode::CFB128,
+    cfb128,
+    "502a6ab36984af268bf423c7f509205207fc1552af4a91e5",
+    "bbdeef0d1837c33971f04eb0a8cde0a2",
+    "750cf377093fb05f84875a240154f7",
+    "6c650820cd06ca89aa96c07e16e717"
 );
 
 cipher_kat!(
