@@ -148,9 +148,9 @@ fn cipher_new_mask(
     let block = block::Block::from(sample);
 
     let encrypted_block = match cipher_key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            encrypt_block(enc_key, block)
-        }
+        SymmetricCipherKey::Aes128 { enc_key, .. }
+        | SymmetricCipherKey::Aes192 { enc_key, .. }
+        | SymmetricCipherKey::Aes256 { enc_key, .. } => encrypt_block(enc_key, block),
         SymmetricCipherKey::ChaCha20 { raw_key } => {
             let plaintext = block.as_ref();
             let counter_bytes: &[u8; 4] = plaintext[0..=3]
