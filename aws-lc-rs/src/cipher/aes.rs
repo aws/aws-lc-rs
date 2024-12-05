@@ -15,6 +15,9 @@ use super::{DecryptionContext, EncryptionContext, OperatingMode, SymmetricCipher
 /// Length of an AES-128 key in bytes.
 pub const AES_128_KEY_LEN: usize = 16;
 
+/// Length of an AES-192 key in bytes.
+pub const AES_192_KEY_LEN: usize = 24;
+
 /// Length of an AES-256 key in bytes.
 pub const AES_256_KEY_LEN: usize = 32;
 
