@@ -760,7 +760,9 @@ fn invoke_external_bindgen(
     let sym_prefix: String;
     let mut bindgen_params = vec![];
     if let Some(prefix_str) = prefix {
-        sym_prefix = if target_os().to_lowercase() == "macos" || target_os().to_lowercase() == "ios"
+        sym_prefix = if target_os().to_lowercase() == "macos"
+            || target_os().to_lowercase() == "ios"
+            || (target_os().to_lowercase() == "windows" && target_arch() == "x86")
         {
             format!("_{prefix_str}_")
         } else {
