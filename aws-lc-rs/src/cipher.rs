@@ -355,14 +355,13 @@ define_cipher_context!(DecryptionContext, EncryptionContext);
 /// Cipher algorithm identifier.
 pub enum AlgorithmId {
     /// AES 128-bit
-    Aes128 = 0,
-
-    // Discriminant explicitly set due to changing implicit discriminant would break semver
-    /// AES 192-bit
-    Aes192 = 2,
+    Aes128,
 
     /// AES 256-bit
-    Aes256 = 1,
+    Aes256,
+
+    /// AES 192-bit
+    Aes192,
 }
 
 /// A cipher algorithm.
