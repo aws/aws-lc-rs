@@ -6,16 +6,16 @@ use core::ptr::null_mut;
 
 use crate::cipher::chacha;
 
-use crate::cipher::aes::{AES_128_KEY_LEN, AES_256_KEY_LEN};
+use crate::cipher::aes::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
 use crate::error::Unspecified;
 use crate::ptr::LcPtr;
 use aws_lc::{
     evp_aead_direction_t, evp_aead_direction_t_evp_aead_open, evp_aead_direction_t_evp_aead_seal,
     EVP_AEAD_CTX_init, EVP_AEAD_CTX_init_with_direction, EVP_AEAD_CTX_zero, EVP_aead_aes_128_gcm,
     EVP_aead_aes_128_gcm_randnonce, EVP_aead_aes_128_gcm_siv, EVP_aead_aes_128_gcm_tls12,
-    EVP_aead_aes_128_gcm_tls13, EVP_aead_aes_256_gcm, EVP_aead_aes_256_gcm_randnonce,
-    EVP_aead_aes_256_gcm_siv, EVP_aead_aes_256_gcm_tls12, EVP_aead_aes_256_gcm_tls13,
-    EVP_aead_chacha20_poly1305, OPENSSL_malloc, EVP_AEAD_CTX,
+    EVP_aead_aes_128_gcm_tls13, EVP_aead_aes_192_gcm, EVP_aead_aes_256_gcm,
+    EVP_aead_aes_256_gcm_randnonce, EVP_aead_aes_256_gcm_siv, EVP_aead_aes_256_gcm_tls12,
+    EVP_aead_aes_256_gcm_tls13, EVP_aead_chacha20_poly1305, OPENSSL_malloc, EVP_AEAD_CTX,
 };
 
 pub(crate) enum AeadDirection {
@@ -39,6 +39,7 @@ impl From<AeadDirection> for evp_aead_direction_t {
 )]
 pub(crate) enum AeadCtx {
     AES_128_GCM(LcPtr<EVP_AEAD_CTX>),
+    AES_192_GCM(LcPtr<EVP_AEAD_CTX>),
     AES_256_GCM(LcPtr<EVP_AEAD_CTX>),
 
     AES_128_GCM_SIV(LcPtr<EVP_AEAD_CTX>),
@@ -72,6 +73,15 @@ impl AeadCtx {
     pub(crate) fn aes_128_gcm_siv(key_bytes: &[u8], tag_len: usize) -> Result<Self, Unspecified> {
         Ok(AeadCtx::AES_128_GCM_SIV(AeadCtx::aes_128_context(
             EVP_aead_aes_128_gcm_siv,
+            key_bytes,
+            tag_len,
+            None,
+        )?))
+    }
+
+    pub(crate) fn aes_192_gcm(key_bytes: &[u8], tag_len: usize) -> Result<Self, Unspecified> {
+        Ok(AeadCtx::AES_192_GCM(AeadCtx::aes_192_context(
+            EVP_aead_aes_192_gcm,
             key_bytes,
             tag_len,
             None,
@@ -198,6 +208,18 @@ impl AeadCtx {
         AeadCtx::build_context(aead, key_bytes, tag_len, direction)
     }
 
+    fn aes_192_context(
+        aead: unsafe extern "C" fn() -> *const aws_lc::evp_aead_st,
+        key_bytes: &[u8],
+        tag_len: usize,
+        direction: Option<AeadDirection>,
+    ) -> Result<LcPtr<EVP_AEAD_CTX>, Unspecified> {
+        if AES_192_KEY_LEN != key_bytes.len() {
+            return Err(Unspecified);
+        }
+        AeadCtx::build_context(aead, key_bytes, tag_len, direction)
+    }
+
     fn aes_256_context(
         aead: unsafe extern "C" fn() -> *const aws_lc::evp_aead_st,
         key_bytes: &[u8],
@@ -258,6 +280,7 @@ impl AsRef<LcPtr<EVP_AEAD_CTX>> for AeadCtx {
     fn as_ref(&self) -> &LcPtr<EVP_AEAD_CTX> {
         match self {
             AeadCtx::AES_128_GCM(ctx)
+            | AeadCtx::AES_192_GCM(ctx)
             | AeadCtx::AES_256_GCM(ctx)
             | AeadCtx::AES_128_GCM_SIV(ctx)
             | AeadCtx::AES_256_GCM_SIV(ctx)

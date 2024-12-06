@@ -6,13 +6,19 @@
 use crate::{
     cipher::{
         DecryptingKey, EncryptingKey, PaddedBlockDecryptingKey, PaddedBlockEncryptingKey,
-        StreamingDecryptingKey, StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_256,
+        StreamingDecryptingKey, StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192,
+        AES_256,
     },
     fips::{assert_fips_status_indicator, FipsServiceStatus},
 };
 
 const TEST_KEY_128_BIT: [u8; 16] = [
     0x9f, 0xd9, 0x41, 0xc3, 0xa6, 0xfe, 0xb9, 0x26, 0x2a, 0x35, 0xa7, 0x44, 0xbb, 0xc0, 0x3a, 0x6a,
+];
+
+const TEST_KEY_192_BIT: [u8; 24] = [
+    0x50, 0x2a, 0x6a, 0xb3, 0x69, 0x84, 0xaf, 0x26, 0x8b, 0xf4, 0x23, 0xc7, 0xf5, 0x09, 0x20, 0x52,
+    0x07, 0xfc, 0x15, 0x52, 0xaf, 0x4a, 0x91, 0xe5,
 ];
 
 const TEST_KEY_256_BIT: [u8; 32] = [
@@ -108,6 +114,22 @@ streaming_api!(
 );
 
 streaming_api!(
+    streaming_aes_192_cbc_pkcs7,
+    &AES_192,
+    StreamingEncryptingKey::cbc_pkcs7,
+    StreamingDecryptingKey::cbc_pkcs7,
+    &TEST_KEY_192_BIT
+);
+
+streaming_api!(
+    streaming_aes_192_ctr,
+    &AES_192,
+    StreamingEncryptingKey::ctr,
+    StreamingDecryptingKey::ctr,
+    &TEST_KEY_192_BIT
+);
+
+streaming_api!(
     streaming_aes_256_cbc_pkcs7,
     &AES_256,
     StreamingEncryptingKey::cbc_pkcs7,
@@ -136,6 +158,22 @@ block_api!(
     EncryptingKey::ctr,
     DecryptingKey::ctr,
     &TEST_KEY_128_BIT
+);
+
+block_api!(
+    block_aes_192_cbc_pkcs7,
+    &AES_192,
+    PaddedBlockEncryptingKey::cbc_pkcs7,
+    PaddedBlockDecryptingKey::cbc_pkcs7,
+    &TEST_KEY_192_BIT
+);
+
+block_api!(
+    block_aes_192_ctr,
+    &AES_192,
+    EncryptingKey::ctr,
+    DecryptingKey::ctr,
+    &TEST_KEY_192_BIT
 );
 
 block_api!(

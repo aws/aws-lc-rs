@@ -75,6 +75,7 @@ impl TlsRecordSealingKey {
             ),
             (
                 AlgorithmID::AES_128_GCM_SIV
+                | AlgorithmID::AES_192_GCM
                 | AlgorithmID::AES_256_GCM_SIV
                 | AlgorithmID::CHACHA20_POLY1305,
                 _,
@@ -220,6 +221,7 @@ impl TlsRecordOpeningKey {
             ),
             (
                 AlgorithmID::AES_128_GCM_SIV
+                | AlgorithmID::AES_192_GCM
                 | AlgorithmID::AES_256_GCM_SIV
                 | AlgorithmID::CHACHA20_POLY1305,
                 _,

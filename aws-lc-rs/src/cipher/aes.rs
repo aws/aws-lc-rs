@@ -15,6 +15,9 @@ use super::{DecryptionContext, EncryptionContext, OperatingMode, SymmetricCipher
 /// Length of an AES-128 key in bytes.
 pub const AES_128_KEY_LEN: usize = 16;
 
+/// Length of an AES-192 key in bytes.
+pub const AES_192_KEY_LEN: usize = 24;
+
 /// Length of an AES-256 key in bytes.
 pub const AES_256_KEY_LEN: usize = 32;
 
@@ -46,9 +49,9 @@ pub(super) fn encrypt_ctr_mode(
 ) -> Result<DecryptionContext, Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
+        SymmetricCipherKey::Aes128 { enc_key, .. }
+        | SymmetricCipherKey::Aes192 { enc_key, .. }
+        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
         _ => unreachable!(),
     };
 
@@ -82,9 +85,9 @@ pub(super) fn encrypt_cbc_mode(
 ) -> Result<DecryptionContext, Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
+        SymmetricCipherKey::Aes128 { enc_key, .. }
+        | SymmetricCipherKey::Aes192 { enc_key, .. }
+        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
         _ => unreachable!(),
     };
 
@@ -108,9 +111,9 @@ pub(super) fn decrypt_cbc_mode<'in_out>(
 ) -> Result<&'in_out mut [u8], Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key {
-        SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
-            dec_key
-        }
+        SymmetricCipherKey::Aes128 { dec_key, .. }
+        | SymmetricCipherKey::Aes192 { dec_key, .. }
+        | SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
         _ => unreachable!(),
     };
 
@@ -135,9 +138,9 @@ pub(super) fn encrypt_cfb_mode(
 ) -> Result<DecryptionContext, Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
+        SymmetricCipherKey::Aes128 { enc_key, .. }
+        | SymmetricCipherKey::Aes192 { enc_key, .. }
+        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
         _ => unreachable!(),
     };
 
@@ -168,9 +171,9 @@ pub(super) fn decrypt_cfb_mode<'in_out>(
 ) -> Result<&'in_out mut [u8], Unspecified> {
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
+        SymmetricCipherKey::Aes128 { enc_key, .. }
+        | SymmetricCipherKey::Aes192 { enc_key, .. }
+        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
         _ => unreachable!(),
     };
 
@@ -205,9 +208,9 @@ pub(super) fn encrypt_ecb_mode(
 
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. } | SymmetricCipherKey::Aes256 { enc_key, .. } => {
-            enc_key
-        }
+        SymmetricCipherKey::Aes128 { enc_key, .. }
+        | SymmetricCipherKey::Aes192 { enc_key, .. }
+        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
         _ => unreachable!(),
     };
 
@@ -236,9 +239,9 @@ pub(super) fn decrypt_ecb_mode<'in_out>(
 
     #[allow(clippy::match_wildcard_for_single_variants)]
     let key = match &key {
-        SymmetricCipherKey::Aes128 { dec_key, .. } | SymmetricCipherKey::Aes256 { dec_key, .. } => {
-            dec_key
-        }
+        SymmetricCipherKey::Aes128 { dec_key, .. }
+        | SymmetricCipherKey::Aes192 { dec_key, .. }
+        | SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
         _ => unreachable!(),
     };
 

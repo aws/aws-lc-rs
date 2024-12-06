@@ -198,7 +198,7 @@ mod tls;
 mod unbound_key;
 
 pub use self::{
-    aes_gcm::{AES_128_GCM, AES_128_GCM_SIV, AES_256_GCM, AES_256_GCM_SIV},
+    aes_gcm::{AES_128_GCM, AES_128_GCM_SIV, AES_192_GCM, AES_256_GCM, AES_256_GCM_SIV},
     chacha::CHACHA20_POLY1305,
     nonce::{Nonce, NONCE_LEN},
     rand_nonce::RandomizedNonceKey,
@@ -972,6 +972,7 @@ derive_debug_via_id!(Algorithm);
 #[allow(non_camel_case_types)]
 enum AlgorithmID {
     AES_128_GCM,
+    AES_192_GCM,
     AES_256_GCM,
     AES_128_GCM_SIV,
     AES_256_GCM_SIV,
