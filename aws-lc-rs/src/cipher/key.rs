@@ -49,105 +49,55 @@ impl Drop for SymmetricCipherKey {
 }
 
 impl SymmetricCipherKey {
+    fn aes(key_bytes: &[u8]) -> Result<(AES_KEY, AES_KEY), Unspecified> {
+        let mut enc_key = MaybeUninit::<AES_KEY>::uninit();
+        let mut dec_key = MaybeUninit::<AES_KEY>::uninit();
+        #[allow(clippy::cast_possible_truncation)]
+        if unsafe {
+            0 != AES_set_encrypt_key(
+                key_bytes.as_ptr(),
+                (key_bytes.len() * 8) as c_uint,
+                enc_key.as_mut_ptr(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+
+        #[allow(clippy::cast_possible_truncation)]
+        if unsafe {
+            0 != AES_set_decrypt_key(
+                key_bytes.as_ptr(),
+                (key_bytes.len() * 8) as c_uint,
+                dec_key.as_mut_ptr(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+        unsafe { Ok((enc_key.assume_init(), dec_key.assume_init())) }
+    }
+
     pub(crate) fn aes128(key_bytes: &[u8]) -> Result<Self, Unspecified> {
         if key_bytes.len() != AES_128_KEY_LEN {
             return Err(Unspecified);
         }
-
-        unsafe {
-            let mut enc_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_encrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                enc_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let enc_key = enc_key.assume_init();
-
-            let mut dec_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_decrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                dec_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let dec_key = dec_key.assume_init();
-
-            let mut kb = MaybeUninit::<[u8; AES_128_KEY_LEN]>::uninit();
-            copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), AES_128_KEY_LEN);
-            Ok(SymmetricCipherKey::Aes128 { enc_key, dec_key })
-        }
+        let (enc_key, dec_key) = SymmetricCipherKey::aes(key_bytes)?;
+        Ok(SymmetricCipherKey::Aes128 { enc_key, dec_key })
     }
 
     pub(crate) fn aes192(key_bytes: &[u8]) -> Result<Self, Unspecified> {
         if key_bytes.len() != AES_192_KEY_LEN {
             return Err(Unspecified);
         }
-
-        unsafe {
-            let mut enc_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_encrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                enc_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let enc_key = enc_key.assume_init();
-
-            let mut dec_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_decrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                dec_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let dec_key = dec_key.assume_init();
-
-            let mut kb = MaybeUninit::<[u8; AES_192_KEY_LEN]>::uninit();
-            copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), AES_192_KEY_LEN);
-            Ok(SymmetricCipherKey::Aes192 { enc_key, dec_key })
-        }
+        let (enc_key, dec_key) = SymmetricCipherKey::aes(key_bytes)?;
+        Ok(SymmetricCipherKey::Aes192 { enc_key, dec_key })
     }
 
     pub(crate) fn aes256(key_bytes: &[u8]) -> Result<Self, Unspecified> {
         if key_bytes.len() != AES_256_KEY_LEN {
             return Err(Unspecified);
         }
-        unsafe {
-            let mut enc_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_encrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                enc_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let enc_key = enc_key.assume_init();
-
-            let mut dec_key = MaybeUninit::<AES_KEY>::uninit();
-            #[allow(clippy::cast_possible_truncation)]
-            if 0 != AES_set_decrypt_key(
-                key_bytes.as_ptr(),
-                (key_bytes.len() * 8) as c_uint,
-                dec_key.as_mut_ptr(),
-            ) {
-                return Err(Unspecified);
-            }
-            let dec_key = dec_key.assume_init();
-
-            let mut kb = MaybeUninit::<[u8; AES_256_KEY_LEN]>::uninit();
-            copy_nonoverlapping(key_bytes.as_ptr(), kb.as_mut_ptr().cast(), AES_256_KEY_LEN);
-            Ok(SymmetricCipherKey::Aes256 { enc_key, dec_key })
-        }
+        let (enc_key, dec_key) = SymmetricCipherKey::aes(key_bytes)?;
+        Ok(SymmetricCipherKey::Aes256 { enc_key, dec_key })
     }
 
     pub(crate) fn chacha20(key_bytes: &[u8]) -> Result<Self, Unspecified> {
