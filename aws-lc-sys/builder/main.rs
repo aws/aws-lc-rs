@@ -699,7 +699,12 @@ impl Debug for BindingOptions {
 fn verify_bindgen() -> Result<(), String> {
     let result = execute_command("bindgen".as_ref(), &["--version".as_ref()]);
     if !result.status {
-        if !result.executed {
+        if result.executed {
+            eprintln!(
+                "bindgen-cli exited with an error status:\nSTDOUT: {}\n\nSTDERR: {}",
+                result.stdout, result.stderr
+            );
+        } else {
             eprintln!(
                 "Consider installing the bindgen-cli: \
             `cargo install --force --locked bindgen-cli`\
@@ -707,11 +712,6 @@ fn verify_bindgen() -> Result<(), String> {
             See our User Guide for more information about bindgen:\
             https://aws.github.io/aws-lc-rs/index.html"
             );
-        } else {
-            eprintln!(
-                "bindgen-cli exited with an error status:\nSTDOUT: {}\n\nSTDERR: {}",
-                result.stdout, result.stderr
-            )
         }
         return Err("External bindgen command failed.".to_string());
     }
