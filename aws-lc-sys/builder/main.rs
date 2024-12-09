@@ -727,7 +727,7 @@ fn verify_bindgen() -> Result<(), String> {
             patch_version = version_parts[2].parse::<u32>().unwrap_or(0);
         }
     }
-    // We currently expect to support all bindgen versions >= 0.69.3
+    // We currently expect to support all bindgen versions >= 0.69.5
     if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 5)) {
         eprintln!(
             "bindgen-cli was used. Detected version was: \
