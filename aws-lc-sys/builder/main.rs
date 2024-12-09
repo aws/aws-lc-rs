@@ -707,6 +707,11 @@ fn verify_bindgen() -> Result<(), String> {
             See our User Guide for more information about bindgen:\
             https://aws.github.io/aws-lc-rs/index.html"
             );
+        } else {
+            eprintln!(
+                "bindgen-cli exited with an error status:\nSTDOUT: {}\n\nSTDERR: {}",
+                result.stdout, result.stderr
+            )
         }
         return Err("External bindgen command failed.".to_string());
     }
@@ -723,11 +728,11 @@ fn verify_bindgen() -> Result<(), String> {
         }
     }
     // We currently expect to support all bindgen versions >= 0.69.3
-    if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 3)) {
+    if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 5)) {
         eprintln!(
             "bindgen-cli was used. Detected version was: \
             {major_version}.{minor_version}.{patch_version} \n\
-        If this is not the latest version, consider upgrading : \
+        Consider upgrading : \
         `cargo install --force --locked bindgen-cli`\
         \n\
         See our User Guide for more information about bindgen:\
