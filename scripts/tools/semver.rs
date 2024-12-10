@@ -23,6 +23,7 @@ struct Args {
 enum Release {
     Main { tags: Vec<String> },
     FipsV2 { tags: Vec<String> },
+    FipsV3 { tags: Vec<String> },
 }
 
 // regex from https://semver.org/
@@ -34,6 +35,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let latest = match args.release {
         Release::Main { tags } => get_latest_main(tags)?,
         Release::FipsV2 { tags } => get_latest_fips(tags, 2)?,
+        Release::FipsV3 { tags } => get_latest_fips(tags, 3)?,
     };
 
     println!("{latest}");
