@@ -2,6 +2,7 @@
 name = "links-testing"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.63.0"
 publish = false
 
 [features]

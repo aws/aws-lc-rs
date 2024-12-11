@@ -203,6 +203,11 @@ jobs:
         with:
           toolchain: 1.63.0 # TODO: dynamically identify MSRV
 
+      - name: Update dependencies
+        run: |
+          cargo +1.63.0 update
+          cargo +1.63.0 tree
+
       - name: Verify msrv
         working-directory: ./aws-lc-rs
         run: cargo +1.63.0 check --features bindgen
