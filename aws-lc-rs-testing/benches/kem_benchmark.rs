@@ -3,20 +3,14 @@
 
 use aws_lc_rs::{
     kem::DecapsulationKey,
-    unstable::kem::{get_algorithm, AlgorithmId},
+    kem::{Algorithm, ML_KEM_1024, ML_KEM_512, ML_KEM_768},
 };
 use criterion::{criterion_group, criterion_main, Criterion};
 
-#[allow(deprecated)]
-const UNSTABLE_ALGORITHMS: &[Option<&aws_lc_rs::kem::Algorithm<AlgorithmId>>] = &[
-    get_algorithm(AlgorithmId::Kyber512_R3),
-    get_algorithm(AlgorithmId::Kyber768_R3),
-    get_algorithm(AlgorithmId::Kyber1024_R3),
-];
+const KEM_ALGORITHMS: &[Algorithm; 3] = &[ML_KEM_512, ML_KEM_768, ML_KEM_1024];
 
 fn bench_kem_keygen(c: &mut Criterion) {
-    for ele in UNSTABLE_ALGORITHMS {
-        let ele = ele.unwrap();
+    for ele in KEM_ALGORITHMS {
         let bench_group_name = format!("KEM/{:?}/keygen", ele.id());
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {
@@ -28,8 +22,7 @@ fn bench_kem_keygen(c: &mut Criterion) {
 }
 
 fn bench_kem_encapsulate(c: &mut Criterion) {
-    for ele in UNSTABLE_ALGORITHMS {
-        let ele = ele.unwrap();
+    for ele in KEM_ALGORITHMS {
         let bench_group_name = format!("KEM/{:?}/encapsulate", ele.id());
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {
@@ -46,8 +39,7 @@ fn bench_kem_encapsulate(c: &mut Criterion) {
 }
 
 fn bench_kem_decapsulate(c: &mut Criterion) {
-    for ele in UNSTABLE_ALGORITHMS {
-        let ele = ele.unwrap();
+    for ele in KEM_ALGORITHMS {
         let bench_group_name = format!("KEM/{:?}/decapsulate", ele.id());
         let mut group = c.benchmark_group(bench_group_name);
         group.bench_function("AWS-LC", |b| {
