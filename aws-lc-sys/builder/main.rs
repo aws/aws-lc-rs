@@ -699,7 +699,12 @@ impl Debug for BindingOptions {
 fn verify_bindgen() -> Result<(), String> {
     let result = execute_command("bindgen".as_ref(), &["--version".as_ref()]);
     if !result.status {
-        if !result.executed {
+        if result.executed {
+            eprintln!(
+                "bindgen-cli exited with an error status:\nSTDOUT: {}\n\nSTDERR: {}",
+                result.stdout, result.stderr
+            );
+        } else {
             eprintln!(
                 "Consider installing the bindgen-cli: \
             `cargo install --force --locked bindgen-cli`\
@@ -722,12 +727,12 @@ fn verify_bindgen() -> Result<(), String> {
             patch_version = version_parts[2].parse::<u32>().unwrap_or(0);
         }
     }
-    // We currently expect to support all bindgen versions >= 0.69.3
-    if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 3)) {
+    // We currently expect to support all bindgen versions >= 0.69.5
+    if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 5)) {
         eprintln!(
             "bindgen-cli was used. Detected version was: \
             {major_version}.{minor_version}.{patch_version} \n\
-        If this is not the latest version, consider upgrading : \
+        Consider upgrading : \
         `cargo install --force --locked bindgen-cli`\
         \n\
         See our User Guide for more information about bindgen:\
