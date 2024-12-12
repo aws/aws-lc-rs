@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-fips-sys/src/x86_64_unknown_linux_gnu_crypto.rs`."><title>x86_64_unknown_linux_gnu_crypto.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_fips_sys" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (33c245b9e 2024-12-10)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_fips_sys/</div>x86_64_unknown_linux_gnu_crypto.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-fips-sys/src/x86_64_unknown_linux_gnu_crypto.rs`."><title>x86_64_unknown_linux_gnu_crypto.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_fips_sys" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (21fe748be 2024-12-11)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_fips_sys/</div>x86_64_unknown_linux_gnu_crypto.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -28332,7 +28332,123 @@
 <a href="#28331" id="28331">28331</a>
 <a href="#28332" id="28332">28332</a>
 <a href="#28333" id="28333">28333</a>
-<a href="#28334" id="28334">28334</a></pre></div><pre class="rust"><code><span class="comment">/* automatically generated by rust-bindgen 0.69.5 */
+<a href="#28334" id="28334">28334</a>
+<a href="#28335" id="28335">28335</a>
+<a href="#28336" id="28336">28336</a>
+<a href="#28337" id="28337">28337</a>
+<a href="#28338" id="28338">28338</a>
+<a href="#28339" id="28339">28339</a>
+<a href="#28340" id="28340">28340</a>
+<a href="#28341" id="28341">28341</a>
+<a href="#28342" id="28342">28342</a>
+<a href="#28343" id="28343">28343</a>
+<a href="#28344" id="28344">28344</a>
+<a href="#28345" id="28345">28345</a>
+<a href="#28346" id="28346">28346</a>
+<a href="#28347" id="28347">28347</a>
+<a href="#28348" id="28348">28348</a>
+<a href="#28349" id="28349">28349</a>
+<a href="#28350" id="28350">28350</a>
+<a href="#28351" id="28351">28351</a>
+<a href="#28352" id="28352">28352</a>
+<a href="#28353" id="28353">28353</a>
+<a href="#28354" id="28354">28354</a>
+<a href="#28355" id="28355">28355</a>
+<a href="#28356" id="28356">28356</a>
+<a href="#28357" id="28357">28357</a>
+<a href="#28358" id="28358">28358</a>
+<a href="#28359" id="28359">28359</a>
+<a href="#28360" id="28360">28360</a>
+<a href="#28361" id="28361">28361</a>
+<a href="#28362" id="28362">28362</a>
+<a href="#28363" id="28363">28363</a>
+<a href="#28364" id="28364">28364</a>
+<a href="#28365" id="28365">28365</a>
+<a href="#28366" id="28366">28366</a>
+<a href="#28367" id="28367">28367</a>
+<a href="#28368" id="28368">28368</a>
+<a href="#28369" id="28369">28369</a>
+<a href="#28370" id="28370">28370</a>
+<a href="#28371" id="28371">28371</a>
+<a href="#28372" id="28372">28372</a>
+<a href="#28373" id="28373">28373</a>
+<a href="#28374" id="28374">28374</a>
+<a href="#28375" id="28375">28375</a>
+<a href="#28376" id="28376">28376</a>
+<a href="#28377" id="28377">28377</a>
+<a href="#28378" id="28378">28378</a>
+<a href="#28379" id="28379">28379</a>
+<a href="#28380" id="28380">28380</a>
+<a href="#28381" id="28381">28381</a>
+<a href="#28382" id="28382">28382</a>
+<a href="#28383" id="28383">28383</a>
+<a href="#28384" id="28384">28384</a>
+<a href="#28385" id="28385">28385</a>
+<a href="#28386" id="28386">28386</a>
+<a href="#28387" id="28387">28387</a>
+<a href="#28388" id="28388">28388</a>
+<a href="#28389" id="28389">28389</a>
+<a href="#28390" id="28390">28390</a>
+<a href="#28391" id="28391">28391</a>
+<a href="#28392" id="28392">28392</a>
+<a href="#28393" id="28393">28393</a>
+<a href="#28394" id="28394">28394</a>
+<a href="#28395" id="28395">28395</a>
+<a href="#28396" id="28396">28396</a>
+<a href="#28397" id="28397">28397</a>
+<a href="#28398" id="28398">28398</a>
+<a href="#28399" id="28399">28399</a>
+<a href="#28400" id="28400">28400</a>
+<a href="#28401" id="28401">28401</a>
+<a href="#28402" id="28402">28402</a>
+<a href="#28403" id="28403">28403</a>
+<a href="#28404" id="28404">28404</a>
+<a href="#28405" id="28405">28405</a>
+<a href="#28406" id="28406">28406</a>
+<a href="#28407" id="28407">28407</a>
+<a href="#28408" id="28408">28408</a>
+<a href="#28409" id="28409">28409</a>
+<a href="#28410" id="28410">28410</a>
+<a href="#28411" id="28411">28411</a>
+<a href="#28412" id="28412">28412</a>
+<a href="#28413" id="28413">28413</a>
+<a href="#28414" id="28414">28414</a>
+<a href="#28415" id="28415">28415</a>
+<a href="#28416" id="28416">28416</a>
+<a href="#28417" id="28417">28417</a>
+<a href="#28418" id="28418">28418</a>
+<a href="#28419" id="28419">28419</a>
+<a href="#28420" id="28420">28420</a>
+<a href="#28421" id="28421">28421</a>
+<a href="#28422" id="28422">28422</a>
+<a href="#28423" id="28423">28423</a>
+<a href="#28424" id="28424">28424</a>
+<a href="#28425" id="28425">28425</a>
+<a href="#28426" id="28426">28426</a>
+<a href="#28427" id="28427">28427</a>
+<a href="#28428" id="28428">28428</a>
+<a href="#28429" id="28429">28429</a>
+<a href="#28430" id="28430">28430</a>
+<a href="#28431" id="28431">28431</a>
+<a href="#28432" id="28432">28432</a>
+<a href="#28433" id="28433">28433</a>
+<a href="#28434" id="28434">28434</a>
+<a href="#28435" id="28435">28435</a>
+<a href="#28436" id="28436">28436</a>
+<a href="#28437" id="28437">28437</a>
+<a href="#28438" id="28438">28438</a>
+<a href="#28439" id="28439">28439</a>
+<a href="#28440" id="28440">28440</a>
+<a href="#28441" id="28441">28441</a>
+<a href="#28442" id="28442">28442</a>
+<a href="#28443" id="28443">28443</a>
+<a href="#28444" id="28444">28444</a>
+<a href="#28445" id="28445">28445</a>
+<a href="#28446" id="28446">28446</a>
+<a href="#28447" id="28447">28447</a>
+<a href="#28448" id="28448">28448</a>
+<a href="#28449" id="28449">28449</a>
+<a href="#28450" id="28450">28450</a></pre></div><pre class="rust"><code><span class="comment">/* automatically generated by rust-bindgen 0.69.5 */
 
 
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -29096,6 +29212,8 @@
 <span class="kw">pub const </span>CONF_R_VARIABLE_HAS_NO_VALUE: i32 = <span class="number">105</span>;
 <span class="kw">pub const </span>CONF_R_VARIABLE_EXPANSION_TOO_LONG: i32 = <span class="number">106</span>;
 <span class="kw">pub const </span>CONF_R_VARIABLE_EXPANSION_NOT_SUPPORTED: i32 = <span class="number">107</span>;
+<span class="kw">pub const </span>CTR_DRBG_ENTROPY_LEN: i32 = <span class="number">48</span>;
+<span class="kw">pub const </span>CTR_DRBG_MAX_GENERATE_LENGTH: i32 = <span class="number">65536</span>;
 <span class="kw">pub const </span>X25519_PRIVATE_KEY_LEN: i32 = <span class="number">32</span>;
 <span class="kw">pub const </span>X25519_PUBLIC_VALUE_LEN: i32 = <span class="number">32</span>;
 <span class="kw">pub const </span>X25519_SHARED_KEY_LEN: i32 = <span class="number">32</span>;
@@ -31656,6 +31774,9 @@
 <span class="kw">pub const </span>HRSS_KEY_BYTES: i32 = <span class="number">32</span>;
 <span class="kw">pub const </span>HRSS_POLY3_BYTES: i32 = <span class="number">140</span>;
 <span class="kw">pub const </span>HRSS_PRIVATE_KEY_BYTES: i32 = <span class="number">1452</span>;
+<span class="kw">pub const </span>EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND: i32 = <span class="number">0</span>;
+<span class="kw">pub const </span>EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY: i32 = <span class="number">1</span>;
+<span class="kw">pub const </span>EVP_PKEY_HKDEF_MODE_EXPAND_ONLY: i32 = <span class="number">2</span>;
 <span class="kw">pub const </span>MD4_CBLOCK: i32 = <span class="number">64</span>;
 <span class="kw">pub const </span>MD4_DIGEST_LENGTH: i32 = <span class="number">16</span>;
 <span class="kw">pub const </span>PKCS7_DETACHED: i32 = <span class="number">64</span>;
@@ -41621,6 +41742,41 @@
     </span><span class="kw">pub fn </span>OPENSSL_no_config();
 }
 <span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_CTR_DRBG_new"</span>]
+    </span><span class="kw">pub fn </span>CTR_DRBG_new(
+        entropy: <span class="kw-2">*const </span>u8,
+        personalization: <span class="kw-2">*const </span>u8,
+        personalization_len: usize,
+    ) -&gt; <span class="kw-2">*mut </span>CTR_DRBG_STATE;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_CTR_DRBG_free"</span>]
+    </span><span class="kw">pub fn </span>CTR_DRBG_free(state: <span class="kw-2">*mut </span>CTR_DRBG_STATE);
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_CTR_DRBG_reseed"</span>]
+    </span><span class="kw">pub fn </span>CTR_DRBG_reseed(
+        drbg: <span class="kw-2">*mut </span>CTR_DRBG_STATE,
+        entropy: <span class="kw-2">*const </span>u8,
+        additional_data: <span class="kw-2">*const </span>u8,
+        additional_data_len: usize,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_CTR_DRBG_generate"</span>]
+    </span><span class="kw">pub fn </span>CTR_DRBG_generate(
+        drbg: <span class="kw-2">*mut </span>CTR_DRBG_STATE,
+        out: <span class="kw-2">*mut </span>u8,
+        out_len: usize,
+        additional_data: <span class="kw-2">*const </span>u8,
+        additional_data_len: usize,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_CTR_DRBG_clear"</span>]
+    </span><span class="kw">pub fn </span>CTR_DRBG_clear(drbg: <span class="kw-2">*mut </span>CTR_DRBG_STATE);
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
     <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_X25519_keypair"</span>]
     </span><span class="kw">pub fn </span>X25519_keypair(out_public_value: <span class="kw-2">*mut </span>u8, out_private_key: <span class="kw-2">*mut </span>u8);
 }
@@ -46279,6 +46435,98 @@
     </span><span class="kw">pub fn </span>HRSS_parse_public_key(
         out: <span class="kw-2">*mut </span>HRSS_public_key,
         in_: <span class="kw-2">*const </span>u8,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_CRYPTO_tls1_prf"</span>]
+    </span><span class="kw">pub fn </span>CRYPTO_tls1_prf(
+        digest: <span class="kw-2">*const </span>EVP_MD,
+        out: <span class="kw-2">*mut </span>u8,
+        out_len: usize,
+        secret: <span class="kw-2">*const </span>u8,
+        secret_len: usize,
+        label: <span class="kw-2">*const </span>::std::os::raw::c_char,
+        label_len: usize,
+        seed1: <span class="kw-2">*const </span>u8,
+        seed1_len: usize,
+        seed2: <span class="kw-2">*const </span>u8,
+        seed2_len: usize,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_SSKDF_digest"</span>]
+    </span><span class="kw">pub fn </span>SSKDF_digest(
+        out_key: <span class="kw-2">*mut </span>u8,
+        out_len: usize,
+        digest: <span class="kw-2">*const </span>EVP_MD,
+        secret: <span class="kw-2">*const </span>u8,
+        secret_len: usize,
+        info: <span class="kw-2">*const </span>u8,
+        info_len: usize,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_SSKDF_hmac"</span>]
+    </span><span class="kw">pub fn </span>SSKDF_hmac(
+        out_key: <span class="kw-2">*mut </span>u8,
+        out_len: usize,
+        digest: <span class="kw-2">*const </span>EVP_MD,
+        secret: <span class="kw-2">*const </span>u8,
+        secret_len: usize,
+        info: <span class="kw-2">*const </span>u8,
+        info_len: usize,
+        salt: <span class="kw-2">*const </span>u8,
+        salt_len: usize,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_KBKDF_ctr_hmac"</span>]
+    </span><span class="kw">pub fn </span>KBKDF_ctr_hmac(
+        out_key: <span class="kw-2">*mut </span>u8,
+        out_len: usize,
+        digest: <span class="kw-2">*const </span>EVP_MD,
+        secret: <span class="kw-2">*const </span>u8,
+        secret_len: usize,
+        info: <span class="kw-2">*const </span>u8,
+        info_len: usize,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_EVP_PKEY_CTX_hkdf_mode"</span>]
+    </span><span class="kw">pub fn </span>EVP_PKEY_CTX_hkdf_mode(
+        ctx: <span class="kw-2">*mut </span>EVP_PKEY_CTX,
+        mode: ::std::os::raw::c_int,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_EVP_PKEY_CTX_set_hkdf_md"</span>]
+    </span><span class="kw">pub fn </span>EVP_PKEY_CTX_set_hkdf_md(
+        ctx: <span class="kw-2">*mut </span>EVP_PKEY_CTX,
+        md: <span class="kw-2">*const </span>EVP_MD,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_EVP_PKEY_CTX_set1_hkdf_key"</span>]
+    </span><span class="kw">pub fn </span>EVP_PKEY_CTX_set1_hkdf_key(
+        ctx: <span class="kw-2">*mut </span>EVP_PKEY_CTX,
+        key: <span class="kw-2">*const </span>u8,
+        key_len: usize,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_EVP_PKEY_CTX_set1_hkdf_salt"</span>]
+    </span><span class="kw">pub fn </span>EVP_PKEY_CTX_set1_hkdf_salt(
+        ctx: <span class="kw-2">*mut </span>EVP_PKEY_CTX,
+        salt: <span class="kw-2">*const </span>u8,
+        salt_len: usize,
+    ) -&gt; ::std::os::raw::c_int;
+}
+<span class="kw">extern </span><span class="string">"C" </span>{
+    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_EVP_PKEY_CTX_add1_hkdf_info"</span>]
+    </span><span class="kw">pub fn </span>EVP_PKEY_CTX_add1_hkdf_info(
+        ctx: <span class="kw-2">*mut </span>EVP_PKEY_CTX,
+        info: <span class="kw-2">*const </span>u8,
+        info_len: usize,
     ) -&gt; ::std::os::raw::c_int;
 }
 <span class="kw">extern </span><span class="string">"C" </span>{
@@ -56558,22 +56806,6 @@
         nonce: <span class="kw-2">*const </span>u8,
         nonce_len: usize,
         encrypted_bit: u8,
-    ) -&gt; ::std::os::raw::c_int;
-}
-<span class="kw">extern </span><span class="string">"C" </span>{
-    <span class="attr">#[link_name = <span class="string">"\u{1}aws_lc_fips_0_13_0_CRYPTO_tls1_prf"</span>]
-    </span><span class="kw">pub fn </span>CRYPTO_tls1_prf(
-        digest: <span class="kw-2">*const </span>EVP_MD,
-        out: <span class="kw-2">*mut </span>u8,
-        out_len: usize,
-        secret: <span class="kw-2">*const </span>u8,
-        secret_len: usize,
-        label: <span class="kw-2">*const </span>::std::os::raw::c_char,
-        label_len: usize,
-        seed1: <span class="kw-2">*const </span>u8,
-        seed1_len: usize,
-        seed2: <span class="kw-2">*const </span>u8,
-        seed2_len: usize,
     ) -&gt; ::std::os::raw::c_int;
 }
 <span class="kw">extern </span><span class="string">"C" </span>{
