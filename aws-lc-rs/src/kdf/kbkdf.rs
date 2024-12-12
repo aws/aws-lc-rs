@@ -3,28 +3,8 @@
 
 #![allow(clippy::module_name_repetitions)]
 
-#[cfg(not(feature = "fips"))]
 use aws_lc::KBKDF_ctr_hmac;
-
 use aws_lc::EVP_MD;
-#[cfg(feature = "fips")]
-use stubs::KBKDF_ctr_hmac;
-
-#[cfg(feature = "fips")]
-mod stubs {
-    #[allow(non_snake_case)]
-    pub(super) unsafe fn KBKDF_ctr_hmac(
-        _out_key: *mut u8,
-        _out_len: usize,
-        _digest: *const aws_lc::EVP_MD,
-        _secret: *const u8,
-        _secret_len: usize,
-        _info: *const u8,
-        _info_len: usize,
-    ) -> std::os::raw::c_int {
-        0
-    }
-}
 
 use crate::{
     digest::{match_digest_type, AlgorithmID},
@@ -56,19 +36,11 @@ const KBKDF_CTR_HMAC_SHA512: KbkdfCtrHmacAlgorithm = KbkdfCtrHmacAlgorithm {
     id: KbkdfCtrHmacAlgorithmId::Sha512,
 };
 
-/// Retrieve an unstable [`KbkdfCtrHmacAlgorithm`] using the [`KbkdfCtrHmacAlgorithmId`] specified by `id`.
-///
-/// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
+/// Retrieve [`KbkdfCtrHmacAlgorithm`] using the [`KbkdfCtrHmacAlgorithmId`] specified by `id`.
 #[must_use]
 pub const fn get_kbkdf_ctr_hmac_algorithm(
     id: KbkdfCtrHmacAlgorithmId,
 ) -> Option<&'static KbkdfCtrHmacAlgorithm> {
-    #[cfg(feature = "fips")]
-    {
-        let _ = id;
-        None
-    }
-    #[cfg(not(feature = "fips"))]
     {
         Some(match id {
             KbkdfCtrHmacAlgorithmId::Sha224 => &KBKDF_CTR_HMAC_SHA224,

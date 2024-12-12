@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 #![cfg(feature = "unstable")]
+#![allow(missing_docs)]
 
 //! Unstable aws-lc-rs features.
 //!

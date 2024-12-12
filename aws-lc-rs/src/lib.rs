@@ -142,13 +142,13 @@
 #![warn(clippy::exhaustive_enums)]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
+extern crate alloc;
 #[cfg(feature = "fips")]
 extern crate aws_lc_fips_sys as aws_lc;
-
-extern crate alloc;
 #[cfg(not(feature = "fips"))]
 extern crate aws_lc_sys as aws_lc;
 extern crate core;
+
 pub mod aead;
 pub mod agreement;
 pub mod constant_time;
@@ -179,6 +179,7 @@ mod evp_pkey;
 mod fips;
 mod hex;
 pub mod iv;
+pub mod kdf;
 #[allow(clippy::module_name_repetitions)]
 pub mod kem;
 mod ptr;
