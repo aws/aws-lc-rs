@@ -26,6 +26,7 @@
 #include "openssl/conf.h"
 #include "openssl/cpu.h"
 #include "openssl/crypto.h"
+#include "openssl/ctrdrbg.h"
 #include "openssl/curve25519.h"
 #include "openssl/des.h"
 #include "openssl/dh.h"
@@ -45,6 +46,7 @@
 #include "openssl/hmac.h"
 #include "openssl/hpke.h"
 #include "openssl/hrss.h"
+#include "openssl/kdf.h"
 #include "openssl/lhash.h"
 #include "openssl/md4.h"
 #include "openssl/md5.h"
@@ -78,6 +80,7 @@
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
 #include "openssl/x509v3.h"
+#include "openssl/experimental/kem_deterministic_api.h"
 
 #if defined(AWS_LC_RUST_INCLUDE_SSL)
 #include "openssl/ssl.h"
@@ -89,14 +92,6 @@
 #else
 #define AWS_LC_FIPS_SYS_EXPORT __attribute__((visibility("default")))
 #endif
-
-// The TLS PRF API is exported in AWS-LC main branch, but in the current FIPS branch, this API is defined in a private header.
-AWS_LC_FIPS_SYS_EXPORT int CRYPTO_tls1_prf(const EVP_MD *digest,
-                           uint8_t *out, size_t out_len,
-                           const uint8_t *secret, size_t secret_len,
-                           const char *label, size_t label_len,
-                           const uint8_t *seed1, size_t seed1_len,
-                           const uint8_t *seed2, size_t seed2_len);
 
 #define AWS_LC_WRAPPER_ADD_PREFIX(a, b) AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b)
 #define AWS_LC_WRAPPER_ADD_PREFIX_INNER(a, b) a ## _ ## b
