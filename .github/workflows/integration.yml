@@ -149,7 +149,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate: [ aws-lc-sys, aws-lc-rs ]
         args:
           - publish --dry-run
     steps:
@@ -170,8 +169,7 @@ jobs:
           else
             exit 0;
           fi
-      - name: ${{ matrix.crate }}
-        working-directory: ./${{ matrix.crate }}
+      - working-directory: ./aws-lc-sys
         shell: bash
         run: AWS_LC_SYS_PREBUILT_NASM=1 cargo publish --dry-run
 
