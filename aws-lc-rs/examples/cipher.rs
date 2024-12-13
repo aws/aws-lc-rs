@@ -28,7 +28,8 @@ use aws_lc_rs::{
     cipher::{
         DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext,
         PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128,
-        AES_128_KEY_LEN, AES_256, AES_256_KEY_LEN, AES_CBC_IV_LEN, AES_CTR_IV_LEN,
+        AES_128_KEY_LEN, AES_192, AES_192_KEY_LEN, AES_256, AES_256_KEY_LEN, AES_CBC_IV_LEN,
+        AES_CTR_IV_LEN,
     },
     iv::FixedLength,
 };
@@ -262,6 +263,7 @@ fn aes_cbc_decrypt(key: String, iv: String, ciphertext: String) -> Result<(), &'
 fn new_unbound_key(key: &[u8]) -> Result<UnboundCipherKey, &'static str> {
     let alg = match key.len() {
         AES_128_KEY_LEN => &AES_128,
+        AES_192_KEY_LEN => &AES_192,
         AES_256_KEY_LEN => &AES_256,
         _ => {
             return Err("invalid aes key length");

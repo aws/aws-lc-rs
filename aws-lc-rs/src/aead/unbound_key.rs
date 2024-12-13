@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use super::{aead_ctx::AeadCtx, Algorithm, Nonce, MAX_KEY_LEN, MAX_TAG_LEN, NONCE_LEN};
-use super::{Tag, AES_128_GCM, AES_128_GCM_SIV, AES_256_GCM, AES_256_GCM_SIV, CHACHA20_POLY1305};
+use super::{
+    Tag, AES_128_GCM, AES_128_GCM_SIV, AES_192_GCM, AES_256_GCM, AES_256_GCM_SIV, CHACHA20_POLY1305,
+};
 use crate::iv::FixedLength;
 use crate::{error::Unspecified, fips::indicator_check, hkdf};
 use aws_lc::{
@@ -479,6 +481,7 @@ impl From<AeadCtx> for UnboundKey {
             | AeadCtx::AES_128_GCM_TLS12(_)
             | AeadCtx::AES_128_GCM_TLS13(_)
             | AeadCtx::AES_128_GCM_RANDNONCE(_) => &AES_128_GCM,
+            AeadCtx::AES_192_GCM(_) => &AES_192_GCM,
             AeadCtx::AES_128_GCM_SIV(_) => &AES_128_GCM_SIV,
             AeadCtx::AES_256_GCM(_)
             | AeadCtx::AES_256_GCM_RANDNONCE(_)

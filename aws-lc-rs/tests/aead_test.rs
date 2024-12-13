@@ -20,6 +20,14 @@ fn aead_aes_gcm_128() {
 }
 
 #[test]
+fn aead_aes_gcm_192() {
+    test_aead_all(
+        &aead::AES_192_GCM,
+        test_file!("data/aead_aes_192_gcm_tests.txt"),
+    );
+}
+
+#[test]
 fn aead_aes_gcm_256() {
     test_aead_all(
         &aead::AES_256_GCM,
