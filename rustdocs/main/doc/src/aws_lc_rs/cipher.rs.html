@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/cipher.rs`."><title>cipher.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (21fe748be 2024-12-11)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>cipher.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/cipher.rs`."><title>cipher.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (d4025ee45 2024-12-12)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>cipher.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -1077,7 +1077,26 @@
 <a href="#1076" id="1076">1076</a>
 <a href="#1077" id="1077">1077</a>
 <a href="#1078" id="1078">1078</a>
-<a href="#1079" id="1079">1079</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2018 Brian Smith.
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2018 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
@@ -1314,14 +1333,18 @@
 <span class="kw">use </span><span class="kw">crate</span>::iv::{FixedLength, IV_LEN_128_BIT};
 <span class="kw">use </span><span class="kw">crate</span>::ptr::ConstPointer;
 <span class="kw">use </span>aws_lc::{
-    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_256_cbc,
-    EVP_aes_256_cfb128, EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
+    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_192_cbc,
+    EVP_aes_192_cfb128, EVP_aes_192_ctr, EVP_aes_192_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128,
+    EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
 };
 <span class="kw">use </span>core::fmt::Debug;
 <span class="kw">use </span>key::SymmetricCipherKey;
 
 <span class="doccomment">/// The number of bytes in an AES 128-bit key
 </span><span class="kw">pub use </span><span class="kw">crate</span>::cipher::aes::AES_128_KEY_LEN;
+
+<span class="doccomment">/// The number of bytes in an AES 192-bit key
+</span><span class="kw">pub use </span><span class="kw">crate</span>::cipher::aes::AES_192_KEY_LEN;
 
 <span class="doccomment">/// The number of bytes in an AES 256-bit key
 </span><span class="kw">pub use </span><span class="kw">crate</span>::cipher::aes::AES_256_KEY_LEN;
@@ -1366,6 +1389,10 @@
             (OperatingMode::CTR, AlgorithmId::Aes128) =&gt; <span class="kw">unsafe </span>{ EVP_aes_128_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes128) =&gt; <span class="kw">unsafe </span>{ EVP_aes_128_cfb128() },
             (OperatingMode::ECB, AlgorithmId::Aes128) =&gt; <span class="kw">unsafe </span>{ EVP_aes_128_ecb() },
+            (OperatingMode::CBC, AlgorithmId::Aes192) =&gt; <span class="kw">unsafe </span>{ EVP_aes_192_cbc() },
+            (OperatingMode::CTR, AlgorithmId::Aes192) =&gt; <span class="kw">unsafe </span>{ EVP_aes_192_ctr() },
+            (OperatingMode::CFB128, AlgorithmId::Aes192) =&gt; <span class="kw">unsafe </span>{ EVP_aes_192_cfb128() },
+            (OperatingMode::ECB, AlgorithmId::Aes192) =&gt; <span class="kw">unsafe </span>{ EVP_aes_192_ecb() },
             (OperatingMode::CBC, AlgorithmId::Aes256) =&gt; <span class="kw">unsafe </span>{ EVP_aes_256_cbc() },
             (OperatingMode::CTR, AlgorithmId::Aes256) =&gt; <span class="kw">unsafe </span>{ EVP_aes_256_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes256) =&gt; <span class="kw">unsafe </span>{ EVP_aes_256_cfb128() },
@@ -1430,6 +1457,9 @@
 
     <span class="doccomment">/// AES 256-bit
     </span>Aes256,
+
+    <span class="doccomment">/// AES 192-bit
+    </span>Aes192,
 }
 
 <span class="doccomment">/// A cipher algorithm.
@@ -1444,6 +1474,13 @@
 </span><span class="kw">pub static </span>AES_128: Algorithm = Algorithm {
     id: AlgorithmId::Aes128,
     key_len: AES_128_KEY_LEN,
+    block_len: AES_BLOCK_LEN,
+};
+
+<span class="doccomment">/// AES 192-bit cipher
+</span><span class="kw">pub static </span>AES_192: Algorithm = Algorithm {
+    id: AlgorithmId::Aes192,
+    key_len: AES_192_KEY_LEN,
     block_len: AES_BLOCK_LEN,
 };
 
@@ -1471,7 +1508,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;EncryptionContext, Unspecified&gt; {
         <span class="kw">match </span><span class="self">self</span>.id {
             <span class="comment">// TODO: Hopefully support CFB1, and CFB8
-            </span>AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; <span class="kw">match </span>mode {
+            </span>AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; <span class="kw">match </span>mode {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 =&gt; {
                     <span class="prelude-val">Ok</span>(EncryptionContext::Iv128(FixedLength::new()<span class="question-mark">?</span>))
                 }
@@ -1483,7 +1520,7 @@
     <span class="kw">fn </span>is_valid_encryption_context(<span class="kw-2">&amp;</span><span class="self">self</span>, mode: OperatingMode, input: <span class="kw-2">&amp;</span>EncryptionContext) -&gt; bool {
         <span class="kw">match </span><span class="self">self</span>.id {
             <span class="comment">// TODO: Hopefully support CFB1, and CFB8
-            </span>AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; <span class="kw">match </span>mode {
+            </span>AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; <span class="kw">match </span>mode {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 =&gt; {
                     <span class="macro">matches!</span>(input, EncryptionContext::Iv128(<span class="kw">_</span>))
                 }
@@ -1497,7 +1534,7 @@
     <span class="kw">fn </span>is_valid_decryption_context(<span class="kw-2">&amp;</span><span class="self">self</span>, mode: OperatingMode, input: <span class="kw-2">&amp;</span>DecryptionContext) -&gt; bool {
         <span class="comment">// TODO: Hopefully support CFB1, and CFB8
         </span><span class="kw">match </span><span class="self">self</span>.id {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; <span class="kw">match </span>mode {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; <span class="kw">match </span>mode {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 =&gt; {
                     <span class="macro">matches!</span>(input, DecryptionContext::Iv128(<span class="kw">_</span>))
                 }
@@ -1568,6 +1605,7 @@
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;SymmetricCipherKey, <span class="self">Self</span>::Error&gt; {
         <span class="kw">match </span><span class="self">self</span>.algorithm.id() {
             AlgorithmId::Aes128 =&gt; SymmetricCipherKey::aes128(<span class="self">self</span>.key_bytes.as_ref()),
+            AlgorithmId::Aes192 =&gt; SymmetricCipherKey::aes192(<span class="self">self</span>.key_bytes.as_ref()),
             AlgorithmId::Aes256 =&gt; SymmetricCipherKey::aes256(<span class="self">self</span>.key_bytes.as_ref()),
         }
     }
@@ -1818,23 +1856,23 @@
 
     <span class="kw">match </span>mode {
         OperatingMode::CBC =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; {
                 aes::encrypt_cbc_mode(key, context, in_out)
             }
         },
         OperatingMode::CTR =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; {
                 aes::encrypt_ctr_mode(key, context, in_out)
             }
         },
         <span class="comment">// TODO: Hopefully support CFB1, and CFB8
         </span>OperatingMode::CFB128 =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; {
                 aes::encrypt_cfb_mode(key, mode, context, in_out)
             }
         },
         OperatingMode::ECB =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; {
                 aes::encrypt_ecb_mode(key, context, in_out)
             }
         },
@@ -1861,23 +1899,23 @@
 
     <span class="kw">match </span>mode {
         OperatingMode::CBC =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; {
                 aes::decrypt_cbc_mode(key, context, in_out)
             }
         },
         OperatingMode::CTR =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; {
                 aes::decrypt_ctr_mode(key, context, in_out)
             }
         },
         <span class="comment">// TODO: Hopefully support CFB1, and CFB8
         </span>OperatingMode::CFB128 =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; {
                 aes::decrypt_cfb_mode(key, mode, context, in_out)
             }
         },
         OperatingMode::ECB =&gt; <span class="kw">match </span>algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 =&gt; {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 =&gt; {
                 aes::decrypt_ecb_mode(key, context, in_out)
             }
         },
