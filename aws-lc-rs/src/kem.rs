@@ -9,10 +9,10 @@
 //! in the exact same way by substituting
 //! `kem::<desired_algorithm_here>` for `kem::KYBER512_R3`.
 //!
-//! ```ignore
+//! ```rust
 //! use aws_lc_rs::{
 //!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
-//!     unstable::kem::{ML_KEM_512}
+//!     kem::{ML_KEM_512}
 //! };
 //!
 //! // Alice generates their (private) decapsulation key.
@@ -60,65 +60,48 @@ use aws_lc::{
 use core::{cmp::Ordering, ptr::null_mut};
 use zeroize::Zeroize;
 
-#[cfg(not(feature = "fips"))]
-pub(crate) mod semistable {
-    #![allow(unused)]
+const ML_KEM_512_SHARED_SECRET_LENGTH: usize = 32;
+const ML_KEM_512_PUBLIC_KEY_LENGTH: usize = 800;
+const ML_KEM_512_SECRET_KEY_LENGTH: usize = 1632;
+const ML_KEM_512_CIPHERTEXT_LENGTH: usize = 768;
 
-    use super::{Algorithm, AlgorithmId};
+const ML_KEM_768_SHARED_SECRET_LENGTH: usize = 32;
+const ML_KEM_768_PUBLIC_KEY_LENGTH: usize = 1184;
+const ML_KEM_768_SECRET_KEY_LENGTH: usize = 2400;
+const ML_KEM_768_CIPHERTEXT_LENGTH: usize = 1088;
 
-    const ML_KEM_512_SHARED_SECRET_LENGTH: usize = 32;
-    const ML_KEM_512_PUBLIC_KEY_LENGTH: usize = 800;
-    const ML_KEM_512_SECRET_KEY_LENGTH: usize = 1632;
-    const ML_KEM_512_CIPHERTEXT_LENGTH: usize = 768;
+const ML_KEM_1024_SHARED_SECRET_LENGTH: usize = 32;
+const ML_KEM_1024_PUBLIC_KEY_LENGTH: usize = 1568;
+const ML_KEM_1024_SECRET_KEY_LENGTH: usize = 3168;
+const ML_KEM_1024_CIPHERTEXT_LENGTH: usize = 1568;
 
-    const ML_KEM_768_SHARED_SECRET_LENGTH: usize = 32;
-    const ML_KEM_768_PUBLIC_KEY_LENGTH: usize = 1184;
-    const ML_KEM_768_SECRET_KEY_LENGTH: usize = 2400;
-    const ML_KEM_768_CIPHERTEXT_LENGTH: usize = 1088;
+/// NIST FIPS 203 ML-KEM-512 algorithm.
+pub const ML_KEM_512: Algorithm<AlgorithmId> = Algorithm {
+    id: AlgorithmId::MlKem512,
+    decapsulate_key_size: ML_KEM_512_SECRET_KEY_LENGTH,
+    encapsulate_key_size: ML_KEM_512_PUBLIC_KEY_LENGTH,
+    ciphertext_size: ML_KEM_512_CIPHERTEXT_LENGTH,
+    shared_secret_size: ML_KEM_512_SHARED_SECRET_LENGTH,
+};
 
-    const ML_KEM_1024_SHARED_SECRET_LENGTH: usize = 32;
-    const ML_KEM_1024_PUBLIC_KEY_LENGTH: usize = 1568;
-    const ML_KEM_1024_SECRET_KEY_LENGTH: usize = 3168;
-    const ML_KEM_1024_CIPHERTEXT_LENGTH: usize = 1568;
+/// NIST FIPS 203 ML-KEM-768 algorithm.
+pub const ML_KEM_768: Algorithm<AlgorithmId> = Algorithm {
+    id: AlgorithmId::MlKem768,
+    decapsulate_key_size: ML_KEM_768_SECRET_KEY_LENGTH,
+    encapsulate_key_size: ML_KEM_768_PUBLIC_KEY_LENGTH,
+    ciphertext_size: ML_KEM_768_CIPHERTEXT_LENGTH,
+    shared_secret_size: ML_KEM_768_SHARED_SECRET_LENGTH,
+};
 
-    /// NIST FIPS 203 ML-KEM-512 algorithm.
-    pub const ML_KEM_512: Algorithm<AlgorithmId> = Algorithm {
-        id: AlgorithmId::MlKem512,
-        decapsulate_key_size: ML_KEM_512_SECRET_KEY_LENGTH,
-        encapsulate_key_size: ML_KEM_512_PUBLIC_KEY_LENGTH,
-        ciphertext_size: ML_KEM_512_CIPHERTEXT_LENGTH,
-        shared_secret_size: ML_KEM_512_SHARED_SECRET_LENGTH,
-    };
+/// NIST FIPS 203 ML-KEM-1024 algorithm.
+pub const ML_KEM_1024: Algorithm<AlgorithmId> = Algorithm {
+    id: AlgorithmId::MlKem1024,
+    decapsulate_key_size: ML_KEM_1024_SECRET_KEY_LENGTH,
+    encapsulate_key_size: ML_KEM_1024_PUBLIC_KEY_LENGTH,
+    ciphertext_size: ML_KEM_1024_CIPHERTEXT_LENGTH,
+    shared_secret_size: ML_KEM_1024_SHARED_SECRET_LENGTH,
+};
 
-    /// NIST FIPS 203 ML-KEM-768 algorithm.
-    pub const ML_KEM_768: Algorithm<AlgorithmId> = Algorithm {
-        id: AlgorithmId::MlKem768,
-        decapsulate_key_size: ML_KEM_768_SECRET_KEY_LENGTH,
-        encapsulate_key_size: ML_KEM_768_PUBLIC_KEY_LENGTH,
-        ciphertext_size: ML_KEM_768_CIPHERTEXT_LENGTH,
-        shared_secret_size: ML_KEM_768_SHARED_SECRET_LENGTH,
-    };
-
-    /// NIST FIPS 203 ML-KEM-1024 algorithm.
-    pub const ML_KEM_1024: Algorithm<AlgorithmId> = Algorithm {
-        id: AlgorithmId::MlKem1024,
-        decapsulate_key_size: ML_KEM_1024_SECRET_KEY_LENGTH,
-        encapsulate_key_size: ML_KEM_1024_PUBLIC_KEY_LENGTH,
-        ciphertext_size: ML_KEM_1024_CIPHERTEXT_LENGTH,
-        shared_secret_size: ML_KEM_1024_SHARED_SECRET_LENGTH,
-    };
-}
-
-#[cfg(feature = "fips")]
-mod missing_nid {
-    pub const NID_MLKEM512: i32 = 988;
-    pub const NID_MLKEM768: i32 = 989;
-    pub const NID_MLKEM1024: i32 = 990;
-}
-
-#[cfg(feature = "fips")]
-use self::missing_nid::{NID_MLKEM1024, NID_MLKEM512, NID_MLKEM768};
-#[cfg(not(feature = "fips"))]
 use aws_lc::{NID_MLKEM1024, NID_MLKEM512, NID_MLKEM768};
 
 /// An identifier for a KEM algorithm.
@@ -192,9 +175,6 @@ where
 }
 
 /// Identifier for a KEM algorithm.
-///
-/// See [`crate::unstable::kem::AlgorithmId`] and [`crate::unstable::kem::get_algorithm`] for
-/// access to algorithms not subject to semantic versioning guarantees.
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum AlgorithmId {
@@ -529,15 +509,10 @@ fn kem_key_generate(nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
 #[cfg(test)]
 mod tests {
     use super::{Ciphertext, SharedSecret};
-
-    #[cfg(not(feature = "fips"))]
+    use super::{DecapsulationKey, EncapsulationKey};
     use crate::error::KeyRejected;
 
-    #[cfg(not(feature = "fips"))]
-    use super::{DecapsulationKey, EncapsulationKey};
-
-    #[cfg(not(feature = "fips"))]
-    use crate::kem::semistable::{ML_KEM_1024, ML_KEM_512, ML_KEM_768};
+    use crate::kem::{ML_KEM_1024, ML_KEM_512, ML_KEM_768};
 
     #[test]
     fn ciphertext() {
@@ -559,7 +534,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "fips"))]
     fn test_kem_serialize() {
         for algorithm in [&ML_KEM_512, &ML_KEM_768, &ML_KEM_1024] {
             let priv_key = DecapsulationKey::generate(algorithm).unwrap();
@@ -579,7 +553,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "fips"))]
     fn test_kem_wrong_sizes() {
         for algorithm in [&ML_KEM_512, &ML_KEM_768, &ML_KEM_1024] {
             let too_long_bytes = vec![0u8; algorithm.encapsulate_key_size() + 1];
@@ -599,7 +572,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "fips"))]
     fn test_kem_e2e() {
         for algorithm in [&ML_KEM_512, &ML_KEM_768, &ML_KEM_1024] {
             let priv_key = DecapsulationKey::generate(algorithm).unwrap();
@@ -619,7 +591,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "fips"))]
     fn test_serialized_kem_e2e() {
         for algorithm in [&ML_KEM_512, &ML_KEM_768, &ML_KEM_1024] {
             let priv_key = DecapsulationKey::generate(algorithm).unwrap();
@@ -648,7 +619,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "fips"))]
     fn test_debug_fmt() {
         let private = DecapsulationKey::generate(&ML_KEM_512).expect("successful generation");
         assert_eq!(
