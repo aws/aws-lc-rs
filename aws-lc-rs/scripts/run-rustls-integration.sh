@@ -97,7 +97,7 @@ rm Cargo.lock
 RUSTLS_RCGEN_STRING="^rcgen = { .* }"
 RUSTLS_RCGEN_PATH_STRING="rcgen = { path = \"${RUSTLS_RCGEN_DIR}/rcgen\" , default-features = false, features = [\"aws_lc_rs\", \"pem\"] }"
 RUSTLS_AWS_LC_RS_STRING="^aws-lc-rs = { version.* }"
-RUSTLS_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", optional = true, default-features = false, features = [\"aws-lc-sys\"] }"
+RUSTLS_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
 RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"unstable\", \"aws-lc-sys\"] }"
 RUSTLS_WEBPKI_STRING="^webpki = { package.* }"
 RUSTLS_WEBPKI_PATH_STRING="webpki = { package = \"rustls-webpki\", path = \"${RUSTLS_WEBPKI_DIR}\", features = [\"alloc\"], default-features = false }"
