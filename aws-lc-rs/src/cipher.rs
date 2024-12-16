@@ -235,14 +235,18 @@ use crate::hkdf::KeyType;
 use crate::iv::{FixedLength, IV_LEN_128_BIT};
 use crate::ptr::ConstPointer;
 use aws_lc::{
-    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_256_cbc,
-    EVP_aes_256_cfb128, EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
+    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_192_cbc,
+    EVP_aes_192_cfb128, EVP_aes_192_ctr, EVP_aes_192_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128,
+    EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
 };
 use core::fmt::Debug;
 use key::SymmetricCipherKey;
 
 /// The number of bytes in an AES 128-bit key
 pub use crate::cipher::aes::AES_128_KEY_LEN;
+
+/// The number of bytes in an AES 192-bit key
+pub use crate::cipher::aes::AES_192_KEY_LEN;
 
 /// The number of bytes in an AES 256-bit key
 pub use crate::cipher::aes::AES_256_KEY_LEN;
@@ -287,6 +291,10 @@ impl OperatingMode {
             (OperatingMode::CTR, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cfb128() },
             (OperatingMode::ECB, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ecb() },
+            (OperatingMode::CBC, AlgorithmId::Aes192) => unsafe { EVP_aes_192_cbc() },
+            (OperatingMode::CTR, AlgorithmId::Aes192) => unsafe { EVP_aes_192_ctr() },
+            (OperatingMode::CFB128, AlgorithmId::Aes192) => unsafe { EVP_aes_192_cfb128() },
+            (OperatingMode::ECB, AlgorithmId::Aes192) => unsafe { EVP_aes_192_ecb() },
             (OperatingMode::CBC, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cbc() },
             (OperatingMode::CTR, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ctr() },
             (OperatingMode::CFB128, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cfb128() },
@@ -351,6 +359,9 @@ pub enum AlgorithmId {
 
     /// AES 256-bit
     Aes256,
+
+    /// AES 192-bit
+    Aes192,
 }
 
 /// A cipher algorithm.
@@ -365,6 +376,13 @@ pub struct Algorithm {
 pub static AES_128: Algorithm = Algorithm {
     id: AlgorithmId::Aes128,
     key_len: AES_128_KEY_LEN,
+    block_len: AES_BLOCK_LEN,
+};
+
+/// AES 192-bit cipher
+pub static AES_192: Algorithm = Algorithm {
+    id: AlgorithmId::Aes192,
+    key_len: AES_192_KEY_LEN,
     block_len: AES_BLOCK_LEN,
 };
 
@@ -392,7 +410,7 @@ impl Algorithm {
     ) -> Result<EncryptionContext, Unspecified> {
         match self.id {
             // TODO: Hopefully support CFB1, and CFB8
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
                     Ok(EncryptionContext::Iv128(FixedLength::new()?))
                 }
@@ -404,7 +422,7 @@ impl Algorithm {
     fn is_valid_encryption_context(&self, mode: OperatingMode, input: &EncryptionContext) -> bool {
         match self.id {
             // TODO: Hopefully support CFB1, and CFB8
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
                     matches!(input, EncryptionContext::Iv128(_))
                 }
@@ -418,7 +436,7 @@ impl Algorithm {
     fn is_valid_decryption_context(&self, mode: OperatingMode, input: &DecryptionContext) -> bool {
         // TODO: Hopefully support CFB1, and CFB8
         match self.id {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => match mode {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
                 OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
                     matches!(input, DecryptionContext::Iv128(_))
                 }
@@ -489,6 +507,7 @@ impl TryInto<SymmetricCipherKey> for UnboundCipherKey {
     fn try_into(self) -> Result<SymmetricCipherKey, Self::Error> {
         match self.algorithm.id() {
             AlgorithmId::Aes128 => SymmetricCipherKey::aes128(self.key_bytes.as_ref()),
+            AlgorithmId::Aes192 => SymmetricCipherKey::aes192(self.key_bytes.as_ref()),
             AlgorithmId::Aes256 => SymmetricCipherKey::aes256(self.key_bytes.as_ref()),
         }
     }
@@ -739,23 +758,23 @@ fn encrypt(
 
     match mode {
         OperatingMode::CBC => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_cbc_mode(key, context, in_out)
             }
         },
         OperatingMode::CTR => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_ctr_mode(key, context, in_out)
             }
         },
         // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_cfb_mode(key, mode, context, in_out)
             }
         },
         OperatingMode::ECB => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_ecb_mode(key, context, in_out)
             }
         },
@@ -782,23 +801,23 @@ fn decrypt<'in_out>(
 
     match mode {
         OperatingMode::CBC => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_cbc_mode(key, context, in_out)
             }
         },
         OperatingMode::CTR => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_ctr_mode(key, context, in_out)
             }
         },
         // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_cfb_mode(key, mode, context, in_out)
             }
         },
         OperatingMode::ECB => match algorithm.id() {
-            AlgorithmId::Aes128 | AlgorithmId::Aes256 => {
+            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_ecb_mode(key, context, in_out)
             }
         },

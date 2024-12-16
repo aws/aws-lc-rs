@@ -111,6 +111,7 @@
 #![doc(hidden)]
 
 extern crate alloc;
+extern crate std;
 
 use std::error::Error;
 
@@ -120,8 +121,6 @@ pub use crate::hex::{
     decode as from_hex, decode_dirty as from_dirty_hex, encode as to_hex,
     encode_upper as to_hex_upper,
 };
-
-extern crate std;
 
 /// `compile_time_assert_clone::<T>();` fails to compile if `T` doesn't
 /// implement `Clone`.
