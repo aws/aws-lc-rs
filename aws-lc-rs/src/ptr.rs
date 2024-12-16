@@ -10,8 +10,6 @@ use aws_lc::{
     RSA,
 };
 
-use mirai_annotations::verify_unreachable;
-
 pub(crate) type LcPtr<T> = ManagedPointer<*mut T>;
 pub(crate) type DetachableLcPtr<T> = DetachablePointer<*mut T>;
 
@@ -100,7 +98,7 @@ impl<P: Pointer> Deref for DetachablePointer<P> {
             Some(pointer) => pointer,
             None => {
                 // Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                verify_unreachable!()
+                unreachable!()
             }
         }
     }
@@ -131,7 +129,7 @@ impl<P: Pointer> From<DetachablePointer<P>> for ManagedPointer<P> {
             Some(pointer) => ManagedPointer { pointer },
             None => {
                 // Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                verify_unreachable!()
+                unreachable!()
             }
         }
     }

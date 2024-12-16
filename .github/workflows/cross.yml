@@ -70,10 +70,43 @@ jobs:
       - name: Cross-compilation (test release)
         run: cross test -p aws-lc-rs --release --features unstable --target ${{ matrix.target }}
 
+
+  aws-lc-rs-cross-0_2_5-test:
+    if: github.repository_owner == 'aws'
+    name: cross tests ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    env:
+      CROSS_CONFIG: './Cross.toml.x86_64-unknown-linux-gnu'
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 'stable'
+      - name: Install cross
+        run: cargo install cross --locked --version 0.2.5
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: 'stable'
+          target: ${{ matrix.target }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Cross-compilation (build debug)
+        run: cross build -p aws-lc-rs --features unstable --target ${{ matrix.target }}
+      - name: Cross-compilation (test release)
+        run: cross test -p aws-lc-rs --release --features unstable --target ${{ matrix.target }}
+
   aws-lc-rs-ios-aarch64:
     if: github.repository_owner == 'aws'
     name: iOS aarch64 cross-platform build
-    runs-on: macos-13-xlarge
+    runs-on: macos-14-xlarge
     steps:
       - uses: actions/checkout@v3
         with:
@@ -95,7 +128,7 @@ jobs:
   aws-lc-rs-ios-x86_64:
     if: github.repository_owner == 'aws'
     name: iOS x86-64 cross-platform build
-    runs-on: macos-13-xlarge
+    runs-on: macos-14-xlarge
     steps:
       - uses: actions/checkout@v3
         with:
@@ -120,6 +153,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install build dependencies
+        # cargo-xwin apparently require ninja-build
         run: |
           sudo apt-get update && sudo apt-get install --assume-yes nasm clang ninja-build llvm
       - uses: actions/checkout@v3
@@ -149,9 +183,7 @@ jobs:
       matrix:
         target:
           - 'x86_64-pc-windows-gnu'
-          # TODO: Fails in GitHub CI.  Appears to be related to bindgen.
-          # .../base.h:61:10: fatal error: 'stdlib.h' file not found
-          # - 'i686-pc-windows-gnu'
+          - 'i686-pc-windows-gnu'
     steps:
       - uses: ilammy/setup-nasm@v1
       - uses: actions/checkout@v4
@@ -162,6 +194,11 @@ jobs:
         with:
           toolchain: stable
           target: ${{ matrix.target }}
+      - if: ${{ matrix.target == 'i686-pc-windows-gnu' }}
+        name: Install mingw
+        uses: bwoodsend/setup-winlibs-action@v1
+        with:
+          architecture: i686
       - name: Debug Test on `${{ matrix.target }}`
         run: cargo test -p aws-lc-rs --target ${{ matrix.target }} --features bindgen
       - name: Release test on `${{ matrix.target }}`
@@ -215,6 +252,10 @@ jobs:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs freebsd test
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ 13.4, 14.1 ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -222,13 +263,30 @@ jobs:
       - name: Prepare VM
         uses: vmactions/freebsd-vm@v1
         with:
-          release: 13.2
+          release: ${{ matrix.target }}
           usesh: true
           copyback: false
           prepare: |
-            pkg install -y git gmake bash sudo cmake-core llvm-devel-lite curl rust-bindgen-cli go
+            pkg install -y git gmake bash sudo cmake-core llvm-devel-lite curl go
           run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
              . "$HOME/.cargo/env"
             cargo test -p aws-lc-rs
             cargo test -p aws-lc-rs --no-default-features --features=fips
+  cross-x86_64-pc-windows-gnu:
+    if: github.repository_owner == 'aws'
+    name: cross (prebuilt nasm) - x86_64-pc-windows-gnu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+        with:
+          toolchain: 'stable'
+          target: x86_64-pc-windows-gnu
+      - name: Install mingw
+        run: sudo apt-get update && sudo apt-get install --assume-yes mingw-w64
+      - name: Run cargo test
+        run: cargo build -p aws-lc-rs --features prebuilt-nasm --target x86_64-pc-windows-gnu

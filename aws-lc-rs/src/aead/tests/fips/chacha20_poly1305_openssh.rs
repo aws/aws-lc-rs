@@ -17,7 +17,7 @@ fn test() {
 
     #[allow(clippy::cast_possible_truncation)]
     message.extend_from_slice({
-        let len = TEST_MESSAGE.as_bytes().len() as u32;
+        let len = TEST_MESSAGE.len() as u32;
         &[
             ((len & 0xFF00_0000) >> 24) as u8,
             ((len & 0xFF_0000) >> 16) as u8,
@@ -25,7 +25,7 @@ fn test() {
             (len & 0xFF) as u8,
         ]
     });
-    message.extend_from_slice(TEST_MESSAGE.as_bytes());
+    message.extend_from_slice(TEST_MESSAGE);
 
     let mut tag = [0u8; 16];
 
@@ -58,5 +58,5 @@ fn test() {
         key.open_in_place(1024, &mut message, &tag).unwrap(),
         FipsServiceStatus::NonApproved
     );
-    assert_eq!(TEST_MESSAGE.as_bytes(), message);
+    assert_eq!(TEST_MESSAGE, message);
 }

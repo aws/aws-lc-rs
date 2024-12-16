@@ -32,14 +32,12 @@ test:
 	cargo test --all-targets --features unstable
 	cargo test --release --all-targets
 	cargo test --release --all-targets --features bindgen,unstable
-ifeq ($(UNAME_S),Linux)
 	cargo test --release --all-targets --features fips,unstable
-	cargo test --no-default-features --features fips,unstable
-endif
-	cargo test --no-default-features --features aws-lc-sys,unstable
-	cargo test --no-default-features --features aws-lc-sys,ring-sig-verify,unstable
-	cargo test --no-default-features --features aws-lc-sys,ring-io,unstable
-	cargo test --no-default-features --features aws-lc-sys,alloc,unstable
+	cargo test --no-default-features --all-targets --features fips,unstable
+	cargo test --no-default-features --all-targets --features aws-lc-sys,unstable
+	cargo test --no-default-features --all-targets --features aws-lc-sys,ring-sig-verify,unstable
+	cargo test --no-default-features --all-targets --features aws-lc-sys,ring-io,unstable
+	cargo test --no-default-features --all-targets --features aws-lc-sys,alloc,unstable
 
 msrv:
 	cargo msrv verify

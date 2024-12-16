@@ -16,7 +16,6 @@ use aws_lc::{
     EVP_PKEY_CTX, RSA_PKCS1_OAEP_PADDING,
 };
 use core::{fmt::Debug, mem::size_of_val, ptr::null_mut};
-use mirai_annotations::verify_unreachable;
 
 /// RSA-OAEP with SHA1 Hash and SHA1 MGF1
 pub const OAEP_SHA1_MGF1SHA1: OaepAlgorithm = OaepAlgorithm {
@@ -163,7 +162,7 @@ impl OaepPublicEncryptingKey {
             EncryptionAlgorithmId::OaepSha256Mgf1sha256 => 32,
             EncryptionAlgorithmId::OaepSha384Mgf1sha384 => 48,
             EncryptionAlgorithmId::OaepSha512Mgf1sha512 => 64,
-            _ => verify_unreachable!(),
+            _ => unreachable!(),
         };
 
         // The RSA-OAEP algorithms we support use the hashing algorithm for the hash and mgf1 functions.

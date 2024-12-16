@@ -120,6 +120,11 @@ behavior is observably different.
   public key component, if present, will be verified to match the one derived from the encoded
   private key.
 
+## Post-Quantum Cryptography
+
+Details on the post-quantum algorithms supported by aws-lc-rs can be found at
+[PQREADME](https://github.com/aws/aws-lc/tree/main/crypto/fipsmodule/PQREADME.md).
+
 ## Motivation
 
 Rust developers increasingly need to deploy applications that meet US and Canadian government

@@ -1,12 +1,13 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, get_cflags, is_crt_static,
-    is_no_asm, option_env, requested_c_std, target, target_arch, target_env, target_family,
-    target_os, target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm,
-    CStdRequested, OutputLibType,
+    is_no_asm, option_env, requested_c_std, target, target_arch, target_env, target_os,
+    target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm, CStdRequested,
+    OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -89,16 +90,44 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
             } else {
                 cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
-                if target_family() == "unix" || target_env() == "gnu" {
-                    cmake_cfg.cflag(format!(
-                        "-ffile-prefix-map={}=",
-                        self.manifest_dir.display()
-                    ));
-                }
             }
         } else {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
         }
+
+        // Use the compiler options identified by CcBuilder
+        let cc_builder = CcBuilder::new(
+            self.manifest_dir.clone(),
+            self.out_dir.clone(),
+            self.build_prefix.clone(),
+            self.output_lib_type,
+        );
+        let mut cflags = OsString::new();
+        let compiler = cc_builder.prepare_builder().get_compiler();
+        let args = compiler.args();
+        for (i, arg) in args.iter().enumerate() {
+            if i > 0 {
+                cflags.push(" ");
+            }
+            if let Some(arg) = arg.to_str() {
+                if arg.contains(' ') {
+                    cflags.push("\"");
+                    cflags.push(arg);
+                    cflags.push("\"");
+                } else {
+                    cflags.push(arg);
+                }
+            } else {
+                cflags.push(arg);
+            }
+        }
+
+        if !get_cflags().is_empty() {
+            cflags.push(" ");
+            cflags.push(get_cflags());
+        }
+        emit_warning(&format!("Setting CFLAGS: {cflags:?}"));
+        env::set_var("CFLAGS", cflags);
 
         if let Some(prefix) = &self.build_prefix {
             cmake_cfg.define("BORINGSSL_PREFIX", format!("{prefix}_"));
@@ -146,14 +175,6 @@ impl CmakeBuilder {
             CStdRequested::None => {}
         }
 
-        if !get_cflags().is_empty() {
-            let cflags = get_cflags();
-            emit_warning(&format!(
-                "AWS_LC_SYS_CFLAGS found. Setting CFLAGS: '{cflags}'"
-            ));
-            env::set_var("CFLAGS", cflags);
-        }
-
         // Allow environment to specify CMake toolchain.
         if let Some(toolchain) = option_env("CMAKE_TOOLCHAIN_FILE").or(option_env(format!(
             "CMAKE_TOOLCHAIN_FILE_{}",
@@ -163,15 +184,6 @@ impl CmakeBuilder {
                 "CMAKE_TOOLCHAIN_FILE environment variable set: {toolchain}"
             ));
             return cmake_cfg;
-        }
-
-        if let Some(cc) = option_env("CC") {
-            emit_warning(&format!("CC environment variable set: {}", cc.clone()));
-            cmake_cfg.define("CMAKE_C_COMPILER", cc);
-        }
-        if let Some(cxx) = option_env("CXX") {
-            emit_warning(&format!("CXX environment variable set: {}", cxx.clone()));
-            cmake_cfg.define("CMAKE_CXX_COMPILER", cxx);
         }
 
         // See issue: https://github.com/aws/aws-lc-rs/issues/453
@@ -193,21 +205,7 @@ impl CmakeBuilder {
         }
 
         if target_os() == "android" {
-            cmake_cfg.define("CMAKE_SYSTEM_NAME", "Android");
-
-            let target = target();
-            let proc = target.split('-').next().unwrap();
-            match proc {
-                "armv7" => {
-                    cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "armv7-a");
-                }
-                "arm" => {
-                    cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "armv6");
-                }
-                _ => {
-                    cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", proc);
-                }
-            }
+            self.configure_android(&mut cmake_cfg);
         }
 
         if target_vendor() == "apple" && target_os().to_lowercase() == "ios" {
@@ -225,6 +223,30 @@ impl CmakeBuilder {
         }
 
         cmake_cfg
+    }
+
+    #[allow(clippy::unused_self)]
+    fn configure_android(&self, _cmake_cfg: &mut cmake::Config) {
+        // If we leave CMAKE_SYSTEM_PROCESSOR unset, then cmake-rs should handle properly setting
+        // CMAKE_SYSTEM_NAME and CMAKE_SYSTEM_PROCESSOR:
+        // https://github.com/rust-lang/cmake-rs/blob/b689783b5448966e810d515c798465f2e0ab56fd/src/lib.rs#L450-L499
+
+        // Log relevant environment variables.
+        if let Some(value) = option_env("ANDROID_NDK_ROOT") {
+            emit_warning(&format!("Found ANDROID_NDK_ROOT={value}"));
+        } else {
+            emit_warning("ANDROID_NDK_ROOT not set.");
+        }
+        if let Some(value) = option_env("ANDROID_NDK") {
+            emit_warning(&format!("Found ANDROID_NDK={value}"));
+        } else {
+            emit_warning("ANDROID_NDK not set.");
+        }
+        if let Some(value) = option_env("ANDROID_STANDALONE_TOOLCHAIN") {
+            emit_warning(&format!("Found ANDROID_STANDALONE_TOOLCHAIN={value}"));
+        } else {
+            emit_warning("ANDROID_STANDALONE_TOOLCHAIN not set.");
+        }
     }
 
     fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
@@ -262,10 +284,16 @@ impl CmakeBuilder {
             emit_warning("!!!   Using pre-built NASM binaries   !!!");
             emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
+            let script_name = if cfg!(target_os = "windows") {
+                "prebuilt-nasm.bat"
+            } else {
+                "prebuilt-nasm.sh"
+            };
+
             let script_path = self
                 .manifest_dir
                 .join("builder")
-                .join("prebuilt-nasm.bat")
+                .join(script_name)
                 .display()
                 .to_string();
             let script_path = script_path.replace('\\', "/");
@@ -325,8 +353,7 @@ impl CmakeBuilder {
 impl crate::Builder for CmakeBuilder {
     fn check_dependencies(&self) -> Result<(), String> {
         let mut missing_dependency = false;
-
-        if target_os() == "windows" && target_arch() == "x86-64" {
+        if target_os() == "windows" && target_arch() == "x86_64" {
             if is_no_asm() && Some(true) == allow_prebuilt_nasm() {
                 eprintln!(
                     "Build environment has both `AWS_LC_SYS_PREBUILT_NASM` and `AWS_LC_SYS_NO_ASM` set.\
@@ -336,7 +363,7 @@ impl crate::Builder for CmakeBuilder {
             }
             if !is_no_asm() && !test_nasm_command() && !use_prebuilt_nasm() {
                 eprintln!(
-                    "Consider setting `AWS_LC_SYS_PREBUILT_NASM` in the build environment.\
+                    "Consider installing NASM or setting `AWS_LC_SYS_PREBUILT_NASM` in the build environment.\
                 See User Guide: https://aws.github.io/aws-lc-rs/index.html"
                 );
                 eprintln!("Missing dependency: nasm");
@@ -389,5 +416,9 @@ impl crate::Builder for CmakeBuilder {
         );
 
         Ok(())
+    }
+
+    fn name(&self) -> &'static str {
+        "CMake"
     }
 }

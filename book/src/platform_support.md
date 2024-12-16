@@ -7,13 +7,17 @@ build targets.
 
 | Platform                     | `aws-lc-sys` | `aws-lc-fips-sys` | 
 |------------------------------|--------------|-------------------|
+| `aarch64-apple-darwin`       | X            | X                 | 
+| `aarch64-pc-windows-msvc`    | X            | **Not Supported** |
 | `aarch64-unknown-linux-gnu`  | X            | X                 |
 | `aarch64-unknown-linux-musl` | X            | X                 |
+| `i686-pc-windows-msvc`       | X            | **Not Supported** |
+| `i686-unknown-linux-gnu`     | X            | **Not Supported** |
+| `x86_64-apple-darwin`        | X            | X                 |             
+| `x86_64-pc-windows-gnu`      | X            | **Not Supported** |
+| `x86_64-pc-windows-msvc`     | X            |                   |
 | `x86_64-unknown-linux-gnu`   | X            | X                 |
 | `x86_64-unknown-linux-musl`  | X            | X                 |
-| `i686-unknown-linux-gnu`     | X            |                   |
-| `aarch64-apple-darwin`       | X            | X                 | 
-| `x86_64-apple-darwin`        | X            | X                 |             
 
 ## Tested platforms
 

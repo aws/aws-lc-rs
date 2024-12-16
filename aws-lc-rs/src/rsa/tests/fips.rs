@@ -81,12 +81,7 @@ generate_key!(rsa2048_signing_generate_key, KeyPair, KeySize::Rsa2048);
 generate_key!(rsa3072_signing_generate_key, KeyPair, KeySize::Rsa3072);
 generate_key!(rsa4096_signing_generate_key, KeyPair, KeySize::Rsa4096);
 
-generate_key!(
-    rsa8192_signing_generate_key,
-    KeyPair,
-    KeySize::Rsa8192,
-    false
-);
+generate_key!(rsa8192_signing_generate_key, KeyPair, KeySize::Rsa8192);
 
 generate_key!(
     rsa2048_encryption_generate_key,
@@ -106,6 +101,5 @@ generate_key!(
 generate_key!(
     rsa8192_encryption_generate_key,
     PrivateDecryptingKey,
-    KeySize::Rsa8192,
-    false
+    KeySize::Rsa8192
 );

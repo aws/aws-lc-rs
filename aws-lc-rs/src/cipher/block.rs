@@ -38,6 +38,14 @@ impl AsRef<[u8; BLOCK_LEN]> for Block {
     }
 }
 
+impl AsMut<[u8; BLOCK_LEN]> for Block {
+    #[allow(clippy::transmute_ptr_to_ptr)]
+    #[inline]
+    fn as_mut(&mut self) -> &mut [u8; BLOCK_LEN] {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -49,6 +57,18 @@ mod tests {
 
         for i in 0..BLOCK_LEN {
             assert_eq!(block_a.as_ref()[i], block_b.as_ref()[i]);
+        }
+    }
+
+    #[test]
+    fn test_block_clone_mut_ref() {
+        use super::{Block, BLOCK_LEN};
+        let mut block_a = Block::from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+        #[allow(clippy::clone_on_copy)]
+        let mut block_b = block_a.clone();
+
+        for i in 0..BLOCK_LEN {
+            assert_eq!(block_a.as_mut()[i], block_b.as_mut()[i]);
         }
     }
 }

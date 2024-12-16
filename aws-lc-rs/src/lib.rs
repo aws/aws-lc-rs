@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-
+#![cfg_attr(not(clippy), allow(unexpected_cfgs))]
+#![cfg_attr(not(clippy), allow(unknown_lints))]
 #![allow(clippy::doc_markdown)]
 //! A [*ring*](https://github.com/briansmith/ring)-compatible crypto library using the cryptographic
 //! operations provided by [*AWS-LC*](https://github.com/aws/aws-lc). It uses either the
@@ -121,6 +122,11 @@
 //!   public key component, if present, will be verified to match the one derived from the encoded
 //!   private key.
 //!
+//! # Post-Quantum Cryptography
+//!
+//! Details on the post-quantum algorithms supported by aws-lc-rs can be found at
+//! [PQREADME](https://github.com/aws/aws-lc/tree/main/crypto/fipsmodule/PQREADME.md).
+//!
 //! # Motivation
 //!
 //! Rust developers increasingly need to deploy applications that meet US and Canadian government
@@ -136,13 +142,13 @@
 #![warn(clippy::exhaustive_enums)]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
+extern crate alloc;
 #[cfg(feature = "fips")]
 extern crate aws_lc_fips_sys as aws_lc;
-
-extern crate alloc;
 #[cfg(not(feature = "fips"))]
 extern crate aws_lc_sys as aws_lc;
 extern crate core;
+
 pub mod aead;
 pub mod agreement;
 pub mod constant_time;
@@ -173,6 +179,7 @@ mod evp_pkey;
 mod fips;
 mod hex;
 pub mod iv;
+pub mod kdf;
 #[allow(clippy::module_name_repetitions)]
 pub mod kem;
 mod ptr;

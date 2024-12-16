@@ -3,32 +3,103 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+// Needed until MSRV >= 1.70
+#![allow(clippy::unnecessary_map_or)]
+#![allow(clippy::ref_option)]
+// Clippy can only be run on nightly toolchain
+#![cfg_attr(clippy, feature(custom_inner_attributes))]
+#![cfg_attr(clippy, clippy::msrv = "1.77")]
+
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::{fmt, fmt::Debug};
+use std::{env, fmt, fmt::Debug};
 
 use cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;
 
-#[cfg(any(
-    feature = "bindgen",
-    not(any(
-        all(
-            any(target_arch = "x86_64", target_arch = "aarch64"),
-            any(target_os = "linux", target_os = "macos", target_os = "windows"),
-            any(
-                target_env = "gnu",
-                target_env = "musl",
-                target_env = "msvc",
-                target_env = ""
-            )
-        ),
-        all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
-        all(target_arch = "x86", target_os = "linux", target_env = "gnu")
-    ))
-))]
-mod bindgen;
+// These should generally match those found in aws-lc/include/openssl/opensslconf.h
+const OSSL_CONF_DEFINES: &[&str] = &[
+    "OPENSSL_NO_ASYNC",
+    "OPENSSL_NO_BF",
+    "OPENSSL_NO_BLAKE2",
+    "OPENSSL_NO_BUF_FREELISTS",
+    "OPENSSL_NO_CAMELLIA",
+    "OPENSSL_NO_CAPIENG",
+    "OPENSSL_NO_CAST",
+    "OPENSSL_NO_CMS",
+    "OPENSSL_NO_COMP",
+    "OPENSSL_NO_CRYPTO_MDEBUG",
+    "OPENSSL_NO_CT",
+    "OPENSSL_NO_DANE",
+    "OPENSSL_NO_DEPRECATED",
+    "OPENSSL_NO_DGRAM",
+    "OPENSSL_NO_DYNAMIC_ENGINE",
+    "OPENSSL_NO_EC_NISTP_64_GCC_128",
+    "OPENSSL_NO_EC2M",
+    "OPENSSL_NO_EGD",
+    "OPENSSL_NO_ENGINE",
+    "OPENSSL_NO_GMP",
+    "OPENSSL_NO_GOST",
+    "OPENSSL_NO_HEARTBEATS",
+    "OPENSSL_NO_HW",
+    "OPENSSL_NO_IDEA",
+    "OPENSSL_NO_JPAKE",
+    "OPENSSL_NO_KRB5",
+    "OPENSSL_NO_MD2",
+    "OPENSSL_NO_MDC2",
+    "OPENSSL_NO_OCB",
+    "OPENSSL_NO_RC2",
+    "OPENSSL_NO_RC5",
+    "OPENSSL_NO_RFC3779",
+    "OPENSSL_NO_RIPEMD",
+    "OPENSSL_NO_RMD160",
+    "OPENSSL_NO_SCTP",
+    "OPENSSL_NO_SEED",
+    "OPENSSL_NO_SM2",
+    "OPENSSL_NO_SM3",
+    "OPENSSL_NO_SM4",
+    "OPENSSL_NO_SRP",
+    "OPENSSL_NO_SSL_TRACE",
+    "OPENSSL_NO_SSL2",
+    "OPENSSL_NO_SSL3",
+    "OPENSSL_NO_SSL3_METHOD",
+    "OPENSSL_NO_STATIC_ENGINE",
+    "OPENSSL_NO_STORE",
+    "OPENSSL_NO_TS",
+    "OPENSSL_NO_WHIRLPOOL",
+];
+
+macro_rules! bindgen_available {
+    ($top:ident, $item:item) => {
+        #[allow(clippy::non_minimal_cfg)]
+        #[cfg($top(any(
+            feature = "bindgen",
+            not(any(
+                all(
+                    any(target_arch = "x86_64", target_arch = "aarch64"),
+                    any(target_os = "linux", target_os = "macos", target_os = "windows"),
+                    any(
+                        target_env = "gnu",
+                        target_env = "musl",
+                        target_env = "msvc",
+                        target_env = ""
+                    )
+                ),
+                all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
+                all(target_arch = "x86", target_os = "linux", target_env = "gnu")
+            ))
+        )))]
+        $item
+    };
+    ($item:item) => {
+        bindgen_available!(any, $item);
+    };
+}
+
+bindgen_available!(
+    mod sys_bindgen;
+);
 mod cc_builder;
 mod cmake_builder;
 
@@ -182,40 +253,25 @@ fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     }
 }
 
-#[cfg(any(
-    feature = "bindgen",
-    not(any(
-        all(
-            any(target_arch = "x86_64", target_arch = "aarch64"),
-            any(target_os = "linux", target_os = "macos", target_os = "windows"),
-            any(
-                target_env = "gnu",
-                target_env = "musl",
-                target_env = "msvc",
-                target_env = ""
-            )
-        ),
-        all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
-        all(target_arch = "x86", target_os = "linux", target_env = "gnu")
-    ))
-))]
-fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
-    let options = BindingOptions {
-        build_prefix: prefix.clone(),
-        include_ssl: cfg!(feature = "ssl"),
-        disable_prelude: true,
-    };
+bindgen_available!(
+    fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
+        let options = BindingOptions {
+            build_prefix: prefix.clone(),
+            include_ssl: cfg!(feature = "ssl"),
+            disable_prelude: true,
+        };
 
-    let bindings = bindgen::generate_bindings(manifest_dir, &options);
+        let bindings = sys_bindgen::generate_bindings(manifest_dir, &options);
 
-    bindings
-        .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
-        .expect("written bindings");
-}
+        bindings
+            .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
+            .expect("written bindings");
+    }
+);
 
 #[cfg(feature = "bindgen")]
 fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindings_path: &Path) {
-    bindgen::generate_bindings(
+    sys_bindgen::generate_bindings(
         manifest_dir,
         &BindingOptions {
             build_prefix: prefix.clone(),
@@ -236,6 +292,7 @@ fn emit_warning(message: &str) {
     println!("cargo:warning={message}");
 }
 
+#[allow(dead_code)]
 fn target_family() -> String {
     cargo_env("CARGO_CFG_TARGET_FAMILY")
 }
@@ -319,6 +376,7 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
 trait Builder {
     fn check_dependencies(&self) -> Result<(), String>;
     fn build(&self) -> Result<(), String>;
+    fn name(&self) -> &str;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -347,7 +405,7 @@ impl CStdRequested {
 
 static mut PREGENERATED: bool = false;
 static mut AWS_LC_SYS_NO_PREFIX: bool = false;
-static mut AWS_LC_SYS_INTERNAL_BINDGEN: bool = false;
+static mut AWS_LC_SYS_PREGENERATING_BINDINGS: bool = false;
 static mut AWS_LC_SYS_EXTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_NO_ASM: bool = false;
 static mut AWS_LC_SYS_CFLAGS: String = String::new();
@@ -358,8 +416,8 @@ static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
 fn initialize() {
     unsafe {
         AWS_LC_SYS_NO_PREFIX = env_var_to_bool("AWS_LC_SYS_NO_PREFIX").unwrap_or(false);
-        AWS_LC_SYS_INTERNAL_BINDGEN =
-            env_var_to_bool("AWS_LC_SYS_INTERNAL_BINDGEN").unwrap_or(false);
+        AWS_LC_SYS_PREGENERATING_BINDINGS =
+            env_var_to_bool("AWS_LC_SYS_PREGENERATING_BINDINGS").unwrap_or(false);
         AWS_LC_SYS_EXTERNAL_BINDGEN =
             env_var_to_bool("AWS_LC_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
         AWS_LC_SYS_NO_ASM = env_var_to_bool("AWS_LC_SYS_NO_ASM").unwrap_or(false);
@@ -368,7 +426,7 @@ fn initialize() {
         AWS_LC_SYS_C_STD = CStdRequested::from_env();
     }
 
-    if !is_external_bindgen() && (is_internal_bindgen() || !has_bindgen_feature()) {
+    if !is_external_bindgen() && (is_pregenerating_bindings() || !has_bindgen_feature()) {
         let target = target();
         let supported_platform = match target.as_str() {
             "aarch64-apple-darwin"
@@ -395,25 +453,26 @@ fn initialize() {
 
 fn is_bindgen_required() -> bool {
     is_no_prefix()
-        || is_internal_bindgen()
+        || is_pregenerating_bindings()
         || is_external_bindgen()
         || has_bindgen_feature()
         || !has_pregenerated()
 }
 
-#[allow(dead_code)]
-fn internal_bindgen_supported() -> bool {
-    // TODO: internal bindgen creates invalid bindings on FreeBSD
-    // See: https://github.com/aws/aws-lc-rs/issues/476
-    target_os() != "freebsd"
-}
+bindgen_available!(
+    fn internal_bindgen_supported() -> bool {
+        let cv = bindgen::clang_version();
+        emit_warning(&format!("Clang version: {}", cv.full));
+        true
+    }
+);
 
 fn is_no_prefix() -> bool {
     unsafe { AWS_LC_SYS_NO_PREFIX }
 }
 
-fn is_internal_bindgen() -> bool {
-    unsafe { AWS_LC_SYS_INTERNAL_BINDGEN }
+fn is_pregenerating_bindings() -> bool {
+    unsafe { AWS_LC_SYS_PREGENERATING_BINDINGS }
 }
 
 fn is_external_bindgen() -> bool {
@@ -424,6 +483,8 @@ fn is_no_asm() -> bool {
     unsafe { AWS_LC_SYS_NO_ASM }
 }
 
+#[allow(unknown_lints)]
+#[allow(static_mut_refs)]
 fn get_cflags() -> &'static str {
     unsafe { AWS_LC_SYS_CFLAGS.as_str() }
 }
@@ -458,28 +519,50 @@ fn test_nasm_command() -> bool {
 }
 
 fn prepare_cargo_cfg() {
-    // This is supported in Rust >= 1.77.0
-    // Also remove `#![allow(unexpected_cfgs)]` from src/lib.rs
-    /*
-    println!("cargo::rustc-check-cfg=cfg(use_bindgen_generated)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_apple_darwin)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
-    println!("cargo::rustc-check-cfg=cfg(i686_pc_windows_msvc)");
-    println!("cargo::rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_apple_darwin)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_pc-windows-gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
-    println!("cargo::rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
-     */
+    if cfg!(clippy) {
+        println!("cargo:rustc-check-cfg=cfg(use_bindgen_generated)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_apple_darwin)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+        println!("cargo:rustc-check-cfg=cfg(i686_pc_windows_msvc)");
+        println!("cargo:rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_apple_darwin)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_pc_windows_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
+    }
 }
 
 fn is_crt_static() -> bool {
     let features = cargo_env("CARGO_CFG_TARGET_FEATURE");
     features.contains("crt-static")
 }
+
+bindgen_available!(
+    fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
+        if internal_bindgen_supported() && !is_external_bindgen() {
+            emit_warning(&format!(
+                "Generating bindings - internal bindgen. Platform: {}",
+                target()
+            ));
+            let gen_bindings_path = out_dir().join("bindings.rs");
+            generate_bindings(manifest_dir, prefix, &gen_bindings_path);
+            emit_rustc_cfg("use_bindgen_generated");
+            true
+        } else {
+            false
+        }
+    }
+);
+
+bindgen_available!(
+    not,
+    fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
+        false
+    }
+);
 
 fn main() {
     initialize();
@@ -495,47 +578,26 @@ fn main() {
     };
 
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
+    emit_warning(&format!("Building with: {}", builder.name()));
+    emit_warning(&format!("Symbol Prefix: {:?}", &prefix));
 
     builder.check_dependencies().unwrap();
 
     #[allow(unused_assignments)]
     let mut bindings_available = false;
-    if is_internal_bindgen() {
+    if is_pregenerating_bindings() {
         #[cfg(feature = "bindgen")]
         {
-            emit_warning(&format!("Generating src bindings. Platform: {}", target()));
+            emit_warning(&format!(
+                "Generating src bindings. Platform: '{}' Prefix: '{prefix:?}'",
+                target()
+            ));
             let src_bindings_path = Path::new(&manifest_dir).join("src");
             generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
             bindings_available = true;
         }
     } else if is_bindgen_required() {
-        #[cfg(any(
-            feature = "bindgen",
-            not(any(
-                all(
-                    any(target_arch = "x86_64", target_arch = "aarch64"),
-                    any(target_os = "linux", target_os = "macos", target_os = "windows"),
-                    any(
-                        target_env = "gnu",
-                        target_env = "musl",
-                        target_env = "msvc",
-                        target_env = ""
-                    )
-                ),
-                all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
-                all(target_arch = "x86", target_os = "linux", target_env = "gnu")
-            ))
-        ))]
-        if internal_bindgen_supported() && !is_external_bindgen() {
-            emit_warning(&format!(
-                "Generating bindings - internal bindgen. Platform: {}",
-                target()
-            ));
-            let gen_bindings_path = out_dir().join("bindings.rs");
-            generate_bindings(&manifest_dir, &prefix, &gen_bindings_path);
-            emit_rustc_cfg("use_bindgen_generated");
-            bindings_available = true;
-        }
+        bindings_available = handle_bindgen(&manifest_dir, &prefix);
     } else {
         bindings_available = true;
     }
@@ -573,6 +635,8 @@ fn main() {
     if cfg!(feature = "ssl") {
         println!("cargo:libssl={}_ssl", prefix_string());
     }
+
+    println!("cargo:conf={}", OSSL_CONF_DEFINES.join(","));
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
@@ -635,7 +699,12 @@ impl Debug for BindingOptions {
 fn verify_bindgen() -> Result<(), String> {
     let result = execute_command("bindgen".as_ref(), &["--version".as_ref()]);
     if !result.status {
-        if !result.executed {
+        if result.executed {
+            eprintln!(
+                "bindgen-cli exited with an error status:\nSTDOUT: {}\n\nSTDERR: {}",
+                result.stdout, result.stderr
+            );
+        } else {
             eprintln!(
                 "Consider installing the bindgen-cli: \
             `cargo install --force --locked bindgen-cli`\
@@ -658,12 +727,12 @@ fn verify_bindgen() -> Result<(), String> {
             patch_version = version_parts[2].parse::<u32>().unwrap_or(0);
         }
     }
-    // We currently expect to support all bindgen versions >= 0.69.3
-    if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 3)) {
+    // We currently expect to support all bindgen versions >= 0.69.5
+    if major_version == 0 && (minor_version < 69 || (minor_version == 69 && patch_version < 5)) {
         eprintln!(
             "bindgen-cli was used. Detected version was: \
             {major_version}.{minor_version}.{patch_version} \n\
-        If this is not the latest version, consider upgrading : \
+        Consider upgrading : \
         `cargo install --force --locked bindgen-cli`\
         \n\
         See our User Guide for more information about bindgen:\
@@ -681,6 +750,7 @@ fn invoke_external_bindgen(
     verify_bindgen()?;
 
     let options = BindingOptions {
+        // We collect the symbols w/o the prefix added
         build_prefix: None,
         include_ssl: false,
         disable_prelude: true,
@@ -695,7 +765,9 @@ fn invoke_external_bindgen(
     let sym_prefix: String;
     let mut bindgen_params = vec![];
     if let Some(prefix_str) = prefix {
-        sym_prefix = if target_os().to_lowercase() == "macos" || target_os().to_lowercase() == "ios"
+        sym_prefix = if target_os().to_lowercase() == "macos"
+            || target_os().to_lowercase() == "ios"
+            || (target_os().to_lowercase() == "windows" && target_arch() == "x86")
         {
             format!("_{prefix_str}_")
         } else {

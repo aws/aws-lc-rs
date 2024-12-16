@@ -81,6 +81,11 @@ at [AWS-LC](https://github.com/aws/aws-lc/issues/new?assignees=&labels=&template
 This crate does not offer the AWS-LC FIPS build. To use AWS-LC FIPS, please use the FIPS version of this crate,
 available at [aws-lc-fips-sys](https://crates.io/crates/aws-lc-fips-sys).
 
+## Post-Quantum Cryptography
+
+Details on the post-quantum algorithms supported by aws-lc-sys can be found at
+[PQREADME](https://github.com/aws/aws-lc/tree/main/crypto/fipsmodule/PQREADME.md).
+
 ## Security Notification Process
 
 If you discover a potential security issue in *AWS-LC* or *aws-lc-sys*, we ask that you notify AWS

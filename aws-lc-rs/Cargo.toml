@@ -1,9 +1,9 @@
 [package]
 name = "aws-lc-rs"
 authors = ["AWS-LibCrypto"]
-version = "1.9.0"
+version = "1.12.0"
 # this crate re-exports whatever sys crate that was selected
-links = "aws_lc_rs_1_9_0_sys"
+links = "aws_lc_rs_1_12_0_sys"
 edition = "2021"
 rust-version = "1.63.0"
 keywords = ["crypto", "cryptography", "security"]
@@ -47,10 +47,9 @@ fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { version = "0.7.1", optional = true }
-aws-lc-sys = { version = "0.21.0", path = "../aws-lc-sys", optional = true }
-aws-lc-fips-sys = { version = "0.12.0", path = "../aws-lc-fips-sys", optional = true }
+aws-lc-sys = { version = "0.24.0", path = "../aws-lc-sys", optional = true }
+aws-lc-fips-sys = { version = "0.13.0", path = "../aws-lc-fips-sys", optional = true }
 zeroize = "1.7"
-mirai-annotations = "1.12.0"
 paste = "1.0.11"
 
 [dev-dependencies]
@@ -63,15 +62,13 @@ which = "5.0.0"
 # Pinned dependency to preserve MSRV: ??? <= rust-version < 1.70.0
 home = "=0.5.5"
 # Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
-regex = "~1.9.6"
+regex = "<1.10.0"
 # Pinned dependency to preserve MSRV: ??? <= rust-version < 1.65.0
 regex-automata = "~0.3.9"
 # Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
 regex-syntax = "~0.7.5"
 # Pinned to avoid build failure in older versions
 proc-macro2 = "1.0.60"
-# Pinned dependency to preserve MSRV: 1.63.0 <= rust-version < 1.67.0
-cc = "=1.0.105"
 
 [package.metadata.cargo-udeps.ignore]
 development = ["which", "home", "regex", "regex-automata", "regex-syntax", "proc-macro2", "jobserver", "cc"]

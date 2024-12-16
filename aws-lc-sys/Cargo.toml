@@ -1,8 +1,8 @@
 [package]
 name = "aws-lc-sys"
 description = "AWS-LC is a general-purpose cryptographic library maintained by the AWS Cryptography team for AWS and their customers. It іs based on code from the Google BoringSSL project and the OpenSSL project."
-version = "0.21.0"
-links = "aws_lc_0_21_0"
+version = "0.24.0"
+links = "aws_lc_0_24_0"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"
@@ -60,14 +60,14 @@ fs_extra = "1.3"
 cc = { version = "1.0.100", features = ["parallel"] }
 
 [target.'cfg(any(all(any(target_arch="x86_64",target_arch="aarch64"),any(target_os="linux",target_os="macos",target_os="windows"),any(target_env="gnu",target_env="musl",target_env="msvc",target_env="")),all(target_arch="x86",target_os="windows",target_env="msvc"),all(target_arch="x86",target_os="linux",target_env="gnu")))'.build-dependencies]
-bindgen = { version = "0.69.2", optional = true }
+bindgen = { version = "0.69.5", optional = true }
 
 [target.'cfg(not(any(all(any(target_arch="x86_64",target_arch="aarch64"),any(target_os="linux",target_os="macos",target_os="windows"),any(target_env="gnu",target_env="musl",target_env="msvc",target_env="")),all(target_arch="x86",target_os="windows",target_env="msvc"),all(target_arch="x86",target_os="linux",target_env="gnu"))))'.build-dependencies]
-bindgen = { version = "0.69.2" }
+bindgen = { version = "0.69.5" }
 
 [dependencies]
 libc = "0.2.121"
 paste = "1.0.11"
 
 [package.metadata.aws-lc-sys]
-commit-hash = "2f1879759b2e0fc70592665bdf10087b64f44b7d"
+commit-hash = "1be42a3e16a53c229690ae8215f0de8e2a1a54e7"

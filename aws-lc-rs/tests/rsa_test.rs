@@ -340,7 +340,7 @@ generate_fips_encode_decode!(rsa3072_generate_fips_encode_decode, KeySize::Rsa30
 generate_fips_encode_decode!(rsa4096_generate_fips_encode_decode, KeySize::Rsa4096);
 // RSA8192 tests are not run in dev (debug) builds because it is too slow.
 #[cfg(not(debug_assertions))]
-generate_fips_encode_decode!(rsa8192_generate_fips_encode_decode, KeySize::Rsa8192, false);
+generate_fips_encode_decode!(rsa8192_generate_fips_encode_decode, KeySize::Rsa8192);
 
 macro_rules! encryption_generate_encode_decode {
     ($name:ident, $size:expr) => {
@@ -420,8 +420,7 @@ encryption_generate_fips_encode_decode!(
 #[cfg(not(debug_assertions))]
 encryption_generate_fips_encode_decode!(
     rsa8192_encryption_generate_fips_encode_decode,
-    KeySize::Rsa8192,
-    false
+    KeySize::Rsa8192
 );
 
 #[test]

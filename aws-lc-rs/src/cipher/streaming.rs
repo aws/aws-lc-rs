@@ -10,9 +10,11 @@ use crate::ptr::LcPtr;
 use aws_lc::{
     EVP_CIPHER_CTX_new, EVP_CIPHER_iv_length, EVP_CIPHER_key_length, EVP_DecryptFinal_ex,
     EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_EncryptFinal_ex, EVP_EncryptInit_ex,
-    EVP_EncryptUpdate, EVP_CIPHER_CTX,
+    EVP_EncryptUpdate, EVP_CIPHER, EVP_CIPHER_CTX,
 };
-use std::ptr::null_mut;
+use std::ptr::{null, null_mut};
+
+use super::ConstPointer;
 
 /// A key for streaming encryption operations.
 pub struct StreamingEncryptingKey {
@@ -56,6 +58,62 @@ impl BufferUpdate<'_> {
     }
 }
 
+fn evp_encrypt_init(
+    cipher_ctx: &mut LcPtr<EVP_CIPHER_CTX>,
+    cipher: &ConstPointer<EVP_CIPHER>,
+    key: &[u8],
+    iv: Option<&[u8]>,
+) -> Result<(), Unspecified> {
+    let iv_ptr: *const u8 = if let Some(iv) = iv {
+        iv.as_ptr()
+    } else {
+        null()
+    };
+
+    // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
+    if 1 != unsafe {
+        EVP_EncryptInit_ex(
+            *cipher_ctx.as_mut(),
+            **cipher,
+            null_mut(),
+            key.as_ptr(),
+            iv_ptr,
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    Ok(())
+}
+
+fn evp_decrypt_init(
+    cipher_ctx: &mut LcPtr<EVP_CIPHER_CTX>,
+    cipher: &ConstPointer<EVP_CIPHER>,
+    key: &[u8],
+    iv: Option<&[u8]>,
+) -> Result<(), Unspecified> {
+    let iv_ptr: *const u8 = if let Some(iv) = iv {
+        iv.as_ptr()
+    } else {
+        null()
+    };
+
+    // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
+    if 1 != unsafe {
+        EVP_DecryptInit_ex(
+            *cipher_ctx.as_mut(),
+            **cipher,
+            null_mut(),
+            key.as_ptr(),
+            iv_ptr,
+        )
+    } {
+        return Err(Unspecified);
+    }
+
+    Ok(())
+}
+
 impl StreamingEncryptingKey {
     #[allow(clippy::needless_pass_by_value)]
     fn new(
@@ -71,23 +129,19 @@ impl StreamingEncryptingKey {
             key_bytes.len(),
             <usize>::try_from(unsafe { EVP_CIPHER_key_length(*cipher) }).unwrap()
         );
-        let iv = <&[u8]>::try_from(&context)?;
-        debug_assert_eq!(
-            iv.len(),
-            <usize>::try_from(unsafe { EVP_CIPHER_iv_length(*cipher) }).unwrap()
-        );
 
-        // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
-        if 1 != unsafe {
-            EVP_EncryptInit_ex(
-                *cipher_ctx.as_mut(),
-                *cipher,
-                null_mut(),
-                key_bytes.as_ptr(),
-                iv.as_ptr(),
-            )
-        } {
-            return Err(Unspecified);
+        match &context {
+            ctx @ EncryptionContext::Iv128(..) => {
+                let iv = <&[u8]>::try_from(ctx)?;
+                debug_assert_eq!(
+                    iv.len(),
+                    <usize>::try_from(unsafe { EVP_CIPHER_iv_length(*cipher) }).unwrap()
+                );
+                evp_encrypt_init(&mut cipher_ctx, &cipher, key_bytes, Some(iv))?;
+            }
+            EncryptionContext::None => {
+                evp_encrypt_init(&mut cipher_ctx, &cipher, key_bytes, None)?;
+            }
         }
 
         Ok(Self {
@@ -217,6 +271,47 @@ impl StreamingEncryptingKey {
         Self::less_safe_cbc_pkcs7(key, context)
     }
 
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// # Errors
+    /// Returns and error on an internal failure.
+    pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        let context = key
+            .algorithm()
+            .new_encryption_context(OperatingMode::CFB128)?;
+        Self::less_safe_cfb128(key, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting using ECB cipher mode with PKCS7 padding.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    pub fn ecb_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        let context = key.algorithm().new_encryption_context(OperatingMode::ECB)?;
+        Self::new(key, OperatingMode::ECB, context)
+    }
+
+    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
+    /// The resulting ciphertext will be the same length as the plaintext.
+    ///
+    /// This is considered less safe because the caller could potentially construct
+    /// an `EncryptionContext` from a previously used initialization vector (IV).
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    pub fn less_safe_cfb128(
+        key: UnboundCipherKey,
+        context: EncryptionContext,
+    ) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB128, context)
+    }
+
     /// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
     /// with pkcs7 padding.
     /// The resulting ciphertext will be longer than the plaintext; padding is added
@@ -256,23 +351,19 @@ impl StreamingDecryptingKey {
             key_bytes.len(),
             <usize>::try_from(unsafe { EVP_CIPHER_key_length(*cipher) }).unwrap()
         );
-        let iv = <&[u8]>::try_from(&context)?;
-        debug_assert_eq!(
-            iv.len(),
-            <usize>::try_from(unsafe { EVP_CIPHER_iv_length(*cipher) }).unwrap()
-        );
 
-        // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
-        if 1 != unsafe {
-            EVP_DecryptInit_ex(
-                *cipher_ctx.as_mut(),
-                *cipher,
-                null_mut(),
-                key_bytes.as_ptr(),
-                iv.as_ptr(),
-            )
-        } {
-            return Err(Unspecified);
+        match &context {
+            ctx @ DecryptionContext::Iv128(..) => {
+                let iv = <&[u8]>::try_from(ctx)?;
+                debug_assert_eq!(
+                    iv.len(),
+                    <usize>::try_from(unsafe { EVP_CIPHER_iv_length(*cipher) }).unwrap()
+                );
+                evp_decrypt_init(&mut cipher_ctx, &cipher, key_bytes, Some(iv))?;
+            }
+            DecryptionContext::None => {
+                evp_decrypt_init(&mut cipher_ctx, &cipher, key_bytes, None)?;
+            }
         }
 
         Ok(Self {
@@ -380,6 +471,31 @@ impl StreamingDecryptingKey {
     ) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CBC, context)
     }
+
+    // Constructs a `StreamingDecryptingKey` for decrypting using the CFB128 cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    pub fn cfb128(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CFB128, context)
+    }
+
+    /// Constructs a `StreamingDecryptingKey` for decrypting using the ECB cipher mode.
+    /// The resulting plaintext will be the same length as the ciphertext.
+    ///
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    /// # Errors
+    /// Returns an error on an internal failure.
+    pub fn ecb_pkcs7(
+        key: UnboundCipherKey,
+        context: DecryptionContext,
+    ) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::ECB, context)
+    }
 }
 
 #[cfg(test)]
@@ -430,11 +546,11 @@ mod tests {
         let outlen = output.written().len();
         ciphertext.truncate(out_idx + outlen);
         match mode {
-            OperatingMode::CBC => {
+            OperatingMode::CBC | OperatingMode::ECB => {
                 assert!(ciphertext.len() > plaintext.len());
                 assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
             }
-            OperatingMode::CTR => {
+            _ => {
                 assert_eq!(ciphertext.len(), plaintext.len());
             }
         }
@@ -479,11 +595,11 @@ mod tests {
         let outlen = output.written().len();
         plaintext.truncate(out_idx + outlen);
         match mode {
-            OperatingMode::CBC => {
+            OperatingMode::CBC | OperatingMode::ECB => {
                 assert!(ciphertext.len() > plaintext.len());
                 assert!(ciphertext.len() <= plaintext.len() + alg.block_len());
             }
-            OperatingMode::CTR => {
+            _ => {
                 assert_eq!(ciphertext.len(), plaintext.len());
             }
         }
@@ -519,6 +635,8 @@ mod tests {
 
     helper_stream_step_encrypt_test!(cbc_pkcs7);
     helper_stream_step_encrypt_test!(ctr);
+    helper_stream_step_encrypt_test!(cfb128);
+    helper_stream_step_encrypt_test!(ecb_pkcs7);
 
     #[test]
     fn test_step_cbc() {
@@ -631,6 +749,116 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_step_cfb128() {
+        let random = SystemRandom::new();
+        let mut key = [0u8; AES_256_KEY_LEN];
+        random.fill(&mut key).unwrap();
+
+        let encrypting_key_creator = || {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingEncryptingKey::cfb128(key).unwrap()
+        };
+        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingDecryptingKey::cfb128(key, decryption_ctx).unwrap()
+        };
+
+        for i in 13..=21 {
+            for j in 124..=131 {
+                helper_test_cfb128_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    i,
+                );
+            }
+            for j in 124..=131 {
+                helper_test_cfb128_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    j - i,
+                );
+            }
+        }
+        for j in 124..=131 {
+            helper_test_cfb128_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                j,
+            );
+            helper_test_cfb128_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                256,
+            );
+            helper_test_cfb128_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                1,
+            );
+        }
+    }
+
+    #[test]
+    fn test_step_ecb_pkcs7() {
+        let random = SystemRandom::new();
+        let mut key = [0u8; AES_256_KEY_LEN];
+        random.fill(&mut key).unwrap();
+
+        let encrypting_key_creator = || {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingEncryptingKey::ecb_pkcs7(key).unwrap()
+        };
+        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingDecryptingKey::ecb_pkcs7(key, decryption_ctx).unwrap()
+        };
+
+        for i in 13..=21 {
+            for j in 124..=131 {
+                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    i,
+                );
+            }
+            for j in 124..=131 {
+                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    j - i,
+                );
+            }
+        }
+        for j in 124..=131 {
+            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                j,
+            );
+            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                256,
+            );
+            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                1,
+            );
+        }
+    }
+
     macro_rules! streaming_cipher_kat {
         ($name:ident, $alg:expr, $mode:expr, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
             #[test]
@@ -649,6 +877,33 @@ mod tests {
 
                     let encrypting_key =
                         StreamingEncryptingKey::new(unbound_key, $mode, ec).unwrap();
+
+                    let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+
+                    assert_eq!(expected_ciphertext.as_slice(), ciphertext.as_ref());
+
+                    let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+                    let decrypting_key =
+                        StreamingDecryptingKey::new(unbound_key2, $mode, decrypt_ctx).unwrap();
+
+                    let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                    assert_eq!(input.as_slice(), plaintext.as_ref());
+                }
+            }
+        };
+        ($name:ident, $alg:expr, $mode:expr, $key:literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
+            #[test]
+            fn $name() {
+                let key = from_hex($key).unwrap();
+                let input = from_hex($plaintext).unwrap();
+                let expected_ciphertext = from_hex($ciphertext).unwrap();
+
+                for step in ($from_step..=$to_step) {
+                    let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+
+                    let encrypting_key =
+                        StreamingEncryptingKey::new(unbound_key, $mode, EncryptionContext::None)
+                            .unwrap();
 
                     let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
 
@@ -780,6 +1035,98 @@ mod tests {
         "24f6076548fb9d93c8f7ed9f6e661ef9",
         "a39c1fdf77ea3e1f18178c0ec237c70a",
         "f1af484830a149ee0387b854d65fe87ca0e62efc1c8e6909d4b9ab8666470453",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_128_cfb128_16_bytes,
+        &AES_128,
+        OperatingMode::CFB128,
+        "5c353f739429bbd48b7e3f9a76facf4d",
+        "7b2c7ce17a9b6a59a9e64253b98c8cd1",
+        "add1bcebeaabe9423d4e916400e877c5",
+        "8440ec442e4135a613ddb2ce26107e10",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_128_cfb128_15_bytes,
+        &AES_128,
+        OperatingMode::CFB128,
+        "e1f39d70ad378efc1ac318aa8ac4489f",
+        "ec78c3d54fff2fe09678c7883024ddce",
+        "b8c905004b2a92a323769f1b8dc1b2",
+        "964c3e9bf8bf2a3cca02d8e2e75608",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_256_cfb128_16_bytes,
+        &AES_256,
+        OperatingMode::CFB128,
+        "0e8117d0984d6acb957a5d6ca526a12fa612ce5de2daadebd42c14d28a0a192e",
+        "09147a153b230a40cd7bf4197ad0e825",
+        "13f4540a4e06394148ade31a6f678787",
+        "250e590e47b7613b7d0a53f684e970d6",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_256_cfb128_15_bytes,
+        &AES_256,
+        OperatingMode::CFB128,
+        "5cb17d8d5b9dbd81e4f1e0a2c82ebf36cf61156388fb7abf99d4526622858225",
+        "13c77415ec24f3e2f784f228478a85be",
+        "3efa583df4405aab61e18155aa7e0d",
+        "c1f2ffe8aa5064199e8f4f1b388303",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_128_ecb_pkcs7_16_bytes,
+        &AES_128,
+        OperatingMode::ECB,
+        "a1b7cd124f9824a1532d8440f8136788",
+        "388118e6848b0cea97401707a754d7a1",
+        "19b7c7f5d9c2bda3f957e9e7d20847828d5eb5624bcbf221014063a87b38d133",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_128_ecb_pkcs7_15_bytes,
+        &AES_128,
+        OperatingMode::ECB,
+        "d10e12accb837aaffbb284448e53138c",
+        "b21cfd1c9e6e7e6e912c82c7dd1aa8",
+        "3d1168e61df34b51c6ab6745c20ee881",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_256_ecb_pkcs7_16_bytes,
+        &AES_256,
+        OperatingMode::ECB,
+        "0600f4ad4eda4bc8e3e99592abdfce7eb08fee0ccc801c5ccee26134bcaafbbd",
+        "516b45cb1342239a549bd8c1d5998f98",
+        "854c593555a213e4a862c6f66aa4a79631faca131eba6f163e5cd3940e9c0a57",
+        2,
+        9
+    );
+
+    streaming_cipher_kat!(
+        test_openssl_aes_256_ecb_pkcs7_15_bytes,
+        &AES_256,
+        OperatingMode::ECB,
+        "80f235756c8f70094ae1f99a95a599c27c4452a4b8412fd934e2b253f7098508",
+        "2235590b90190d7a1dc2464a0205ad",
+        "8547d8ac8dc6d9cebb2dc77a7034bb67",
         2,
         9
     );

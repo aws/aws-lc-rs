@@ -146,7 +146,7 @@ impl Clone for PrivateDecryptingKey {
 pub struct PublicEncryptingKey(LcPtr<EVP_PKEY>);
 
 impl PublicEncryptingKey {
-    fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
+    pub(crate) fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
         Self::validate_key(&evp_pkey)?;
         Ok(Self(evp_pkey))
     }

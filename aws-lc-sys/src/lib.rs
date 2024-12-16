@@ -1,7 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-#![allow(unexpected_cfgs)]
+#![cfg_attr(not(clippy), allow(unexpected_cfgs))]
+#![cfg_attr(not(clippy), allow(unknown_lints))]
 
 use paste::paste;
 use std::os::raw::{c_char, c_long, c_void};

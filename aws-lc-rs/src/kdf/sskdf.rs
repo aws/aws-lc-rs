@@ -4,48 +4,13 @@
 #![allow(clippy::module_name_repetitions)]
 
 use aws_lc::EVP_MD;
-#[cfg(not(feature = "fips"))]
 use aws_lc::{SSKDF_digest, SSKDF_hmac};
-
-#[cfg(feature = "fips")]
-use stubs::{SSKDF_digest, SSKDF_hmac};
 
 use crate::{
     digest::{match_digest_type, AlgorithmID},
     error::Unspecified,
     ptr::ConstPointer,
 };
-
-#[cfg(feature = "fips")]
-mod stubs {
-    #[allow(non_snake_case)]
-    pub(super) unsafe fn SSKDF_digest(
-        _out_key: *mut u8,
-        _out_len: usize,
-        _digest: *const aws_lc::EVP_MD,
-        _secret: *const u8,
-        _secret_len: usize,
-        _info: *const u8,
-        _info_len: usize,
-    ) -> std::os::raw::c_int {
-        0
-    }
-
-    #[allow(clippy::too_many_arguments, non_snake_case)]
-    pub(super) unsafe fn SSKDF_hmac(
-        _out_key: *mut u8,
-        _out_len: usize,
-        _digest: *const aws_lc::EVP_MD,
-        _secret: *const u8,
-        _secret_len: usize,
-        _info: *const u8,
-        _info_len: usize,
-        _salt: *const u8,
-        _salt_len: usize,
-    ) -> std::os::raw::c_int {
-        0
-    }
-}
 
 /// SSKDF with HMAC-SHA224
 #[allow(dead_code)]
@@ -95,19 +60,11 @@ const SSKDF_DIGEST_SHA512: SskdfDigestAlgorithm = SskdfDigestAlgorithm {
     id: SskdfDigestAlgorithmId::Sha512,
 };
 
-/// Retrieve an unstable [`SskdfHmacAlgorithm`] using the [`SskdfHmacAlgorithmId`] specified by `id`.
-///
-/// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
+/// Retrieve [`SskdfHmacAlgorithm`] using the [`SskdfHmacAlgorithmId`] specified by `id`.
 #[must_use]
 pub const fn get_sskdf_hmac_algorithm(
     id: SskdfHmacAlgorithmId,
 ) -> Option<&'static SskdfHmacAlgorithm> {
-    #[cfg(feature = "fips")]
-    {
-        let _ = id;
-        None
-    }
-    #[cfg(not(feature = "fips"))]
     {
         match id {
             SskdfHmacAlgorithmId::Sha224 => Some(&SSKDF_HMAC_SHA224),
@@ -118,19 +75,11 @@ pub const fn get_sskdf_hmac_algorithm(
     }
 }
 
-/// Retrieve an unstable [`SskdfDigestAlgorithm`] using the [`SskdfDigestAlgorithmId`] specified by `id`.
-///
-/// May return [`None`] if the algorithm is not usable with the configured crate feature set (i.e. `fips`).
+/// Retrieve [`SskdfDigestAlgorithm`] using the [`SskdfDigestAlgorithmId`] specified by `id`.
 #[must_use]
 pub const fn get_sskdf_digest_algorithm(
     id: SskdfDigestAlgorithmId,
 ) -> Option<&'static SskdfDigestAlgorithm> {
-    #[cfg(feature = "fips")]
-    {
-        let _ = id;
-        None
-    }
-    #[cfg(not(feature = "fips"))]
     {
         match id {
             SskdfDigestAlgorithmId::Sha224 => Some(&SSKDF_DIGEST_SHA224),

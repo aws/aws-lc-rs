@@ -4,7 +4,6 @@
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use aws_lc::{BN_bin2bn, BN_bn2bin, BN_new, BN_num_bits, BN_num_bytes, BN_set_u64, BIGNUM};
 use core::ptr::null_mut;
-use mirai_annotations::unrecoverable;
 
 impl TryFrom<&[u8]> for LcPtr<BIGNUM> {
     type Error = ();
@@ -56,9 +55,7 @@ impl ConstPointer<BIGNUM> {
             let bn_bytes = BN_num_bytes(**self);
             let mut byte_vec = Vec::with_capacity(bn_bytes as usize);
             let out_bytes = BN_bn2bin(**self, byte_vec.as_mut_ptr());
-            if out_bytes != (bn_bytes as usize) {
-                unrecoverable!("More bytes written than allocated.");
-            }
+            debug_assert_eq!(out_bytes, bn_bytes as usize);
             byte_vec.set_len(out_bytes);
             byte_vec
         }
