@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["fips_mode","init","try_fips_mode"],"macro":["test_file"],"mod":["aead","agreement","cipher","constant_time","digest","encoding","error","hkdf","hmac","io","iv","kem","key_wrap","pbkdf2","pkcs8","rand","rsa","signature","tls_prf","unstable"]};
+window.SIDEBAR_ITEMS = {"fn":["fips_mode","init","try_fips_mode"],"macro":["test_file"],"mod":["aead","agreement","cipher","constant_time","digest","encoding","error","hkdf","hmac","io","iv","kdf","kem","key_wrap","pbkdf2","pkcs8","rand","rsa","signature","tls_prf","unstable"]};

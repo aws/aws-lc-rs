@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["AlgorithmId"],"struct":["Algorithm","Ciphertext","DecapsulationKey","EncapsulationKey","EncapsulationKeyBytes","SharedSecret"],"trait":["AlgorithmIdentifier"]};
+window.SIDEBAR_ITEMS = {"constant":["ML_KEM_1024","ML_KEM_512","ML_KEM_768"],"enum":["AlgorithmId"],"struct":["Algorithm","Ciphertext","DecapsulationKey","EncapsulationKey","EncapsulationKeyBytes","SharedSecret"],"trait":["AlgorithmIdentifier"]};

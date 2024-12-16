@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/kem.rs`."><title>kem.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (d4025ee45 2024-12-12)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>kem.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/kem.rs`."><title>kem.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (c26db435b 2024-12-15)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>kem.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -634,37 +634,7 @@
 <a href="#633" id="633">633</a>
 <a href="#634" id="634">634</a>
 <a href="#635" id="635">635</a>
-<a href="#636" id="636">636</a>
-<a href="#637" id="637">637</a>
-<a href="#638" id="638">638</a>
-<a href="#639" id="639">639</a>
-<a href="#640" id="640">640</a>
-<a href="#641" id="641">641</a>
-<a href="#642" id="642">642</a>
-<a href="#643" id="643">643</a>
-<a href="#644" id="644">644</a>
-<a href="#645" id="645">645</a>
-<a href="#646" id="646">646</a>
-<a href="#647" id="647">647</a>
-<a href="#648" id="648">648</a>
-<a href="#649" id="649">649</a>
-<a href="#650" id="650">650</a>
-<a href="#651" id="651">651</a>
-<a href="#652" id="652">652</a>
-<a href="#653" id="653">653</a>
-<a href="#654" id="654">654</a>
-<a href="#655" id="655">655</a>
-<a href="#656" id="656">656</a>
-<a href="#657" id="657">657</a>
-<a href="#658" id="658">658</a>
-<a href="#659" id="659">659</a>
-<a href="#660" id="660">660</a>
-<a href="#661" id="661">661</a>
-<a href="#662" id="662">662</a>
-<a href="#663" id="663">663</a>
-<a href="#664" id="664">664</a>
-<a href="#665" id="665">665</a>
-<a href="#666" id="666">666</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#636" id="636">636</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="doccomment">//! Key-Encapsulation Mechanisms (KEMs), including support for Kyber Round 3 Submission.
@@ -675,10 +645,10 @@
 //! in the exact same way by substituting
 //! `kem::&lt;desired_algorithm_here&gt;` for `kem::KYBER512_R3`.
 //!
-//! ```ignore
+//! ```rust
 //! use aws_lc_rs::{
 //!     kem::{Ciphertext, DecapsulationKey, EncapsulationKey},
-//!     unstable::kem::{ML_KEM_512}
+//!     kem::{ML_KEM_512}
 //! };
 //!
 //! // Alice generates their (private) decapsulation key.
@@ -726,66 +696,49 @@
 <span class="kw">use </span>core::{cmp::Ordering, ptr::null_mut};
 <span class="kw">use </span>zeroize::Zeroize;
 
-<span class="attr">#[cfg(not(feature = <span class="string">"fips"</span>))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>semistable {
-    <span class="attr">#![allow(unused)]
+<span class="kw">const </span>ML_KEM_512_SHARED_SECRET_LENGTH: usize = <span class="number">32</span>;
+<span class="kw">const </span>ML_KEM_512_PUBLIC_KEY_LENGTH: usize = <span class="number">800</span>;
+<span class="kw">const </span>ML_KEM_512_SECRET_KEY_LENGTH: usize = <span class="number">1632</span>;
+<span class="kw">const </span>ML_KEM_512_CIPHERTEXT_LENGTH: usize = <span class="number">768</span>;
 
-    </span><span class="kw">use super</span>::{Algorithm, AlgorithmId};
+<span class="kw">const </span>ML_KEM_768_SHARED_SECRET_LENGTH: usize = <span class="number">32</span>;
+<span class="kw">const </span>ML_KEM_768_PUBLIC_KEY_LENGTH: usize = <span class="number">1184</span>;
+<span class="kw">const </span>ML_KEM_768_SECRET_KEY_LENGTH: usize = <span class="number">2400</span>;
+<span class="kw">const </span>ML_KEM_768_CIPHERTEXT_LENGTH: usize = <span class="number">1088</span>;
 
-    <span class="kw">const </span>ML_KEM_512_SHARED_SECRET_LENGTH: usize = <span class="number">32</span>;
-    <span class="kw">const </span>ML_KEM_512_PUBLIC_KEY_LENGTH: usize = <span class="number">800</span>;
-    <span class="kw">const </span>ML_KEM_512_SECRET_KEY_LENGTH: usize = <span class="number">1632</span>;
-    <span class="kw">const </span>ML_KEM_512_CIPHERTEXT_LENGTH: usize = <span class="number">768</span>;
+<span class="kw">const </span>ML_KEM_1024_SHARED_SECRET_LENGTH: usize = <span class="number">32</span>;
+<span class="kw">const </span>ML_KEM_1024_PUBLIC_KEY_LENGTH: usize = <span class="number">1568</span>;
+<span class="kw">const </span>ML_KEM_1024_SECRET_KEY_LENGTH: usize = <span class="number">3168</span>;
+<span class="kw">const </span>ML_KEM_1024_CIPHERTEXT_LENGTH: usize = <span class="number">1568</span>;
 
-    <span class="kw">const </span>ML_KEM_768_SHARED_SECRET_LENGTH: usize = <span class="number">32</span>;
-    <span class="kw">const </span>ML_KEM_768_PUBLIC_KEY_LENGTH: usize = <span class="number">1184</span>;
-    <span class="kw">const </span>ML_KEM_768_SECRET_KEY_LENGTH: usize = <span class="number">2400</span>;
-    <span class="kw">const </span>ML_KEM_768_CIPHERTEXT_LENGTH: usize = <span class="number">1088</span>;
+<span class="doccomment">/// NIST FIPS 203 ML-KEM-512 algorithm.
+</span><span class="kw">pub const </span>ML_KEM_512: Algorithm&lt;AlgorithmId&gt; = Algorithm {
+    id: AlgorithmId::MlKem512,
+    decapsulate_key_size: ML_KEM_512_SECRET_KEY_LENGTH,
+    encapsulate_key_size: ML_KEM_512_PUBLIC_KEY_LENGTH,
+    ciphertext_size: ML_KEM_512_CIPHERTEXT_LENGTH,
+    shared_secret_size: ML_KEM_512_SHARED_SECRET_LENGTH,
+};
 
-    <span class="kw">const </span>ML_KEM_1024_SHARED_SECRET_LENGTH: usize = <span class="number">32</span>;
-    <span class="kw">const </span>ML_KEM_1024_PUBLIC_KEY_LENGTH: usize = <span class="number">1568</span>;
-    <span class="kw">const </span>ML_KEM_1024_SECRET_KEY_LENGTH: usize = <span class="number">3168</span>;
-    <span class="kw">const </span>ML_KEM_1024_CIPHERTEXT_LENGTH: usize = <span class="number">1568</span>;
+<span class="doccomment">/// NIST FIPS 203 ML-KEM-768 algorithm.
+</span><span class="kw">pub const </span>ML_KEM_768: Algorithm&lt;AlgorithmId&gt; = Algorithm {
+    id: AlgorithmId::MlKem768,
+    decapsulate_key_size: ML_KEM_768_SECRET_KEY_LENGTH,
+    encapsulate_key_size: ML_KEM_768_PUBLIC_KEY_LENGTH,
+    ciphertext_size: ML_KEM_768_CIPHERTEXT_LENGTH,
+    shared_secret_size: ML_KEM_768_SHARED_SECRET_LENGTH,
+};
 
-    <span class="doccomment">/// NIST FIPS 203 ML-KEM-512 algorithm.
-    </span><span class="kw">pub const </span>ML_KEM_512: Algorithm&lt;AlgorithmId&gt; = Algorithm {
-        id: AlgorithmId::MlKem512,
-        decapsulate_key_size: ML_KEM_512_SECRET_KEY_LENGTH,
-        encapsulate_key_size: ML_KEM_512_PUBLIC_KEY_LENGTH,
-        ciphertext_size: ML_KEM_512_CIPHERTEXT_LENGTH,
-        shared_secret_size: ML_KEM_512_SHARED_SECRET_LENGTH,
-    };
+<span class="doccomment">/// NIST FIPS 203 ML-KEM-1024 algorithm.
+</span><span class="kw">pub const </span>ML_KEM_1024: Algorithm&lt;AlgorithmId&gt; = Algorithm {
+    id: AlgorithmId::MlKem1024,
+    decapsulate_key_size: ML_KEM_1024_SECRET_KEY_LENGTH,
+    encapsulate_key_size: ML_KEM_1024_PUBLIC_KEY_LENGTH,
+    ciphertext_size: ML_KEM_1024_CIPHERTEXT_LENGTH,
+    shared_secret_size: ML_KEM_1024_SHARED_SECRET_LENGTH,
+};
 
-    <span class="doccomment">/// NIST FIPS 203 ML-KEM-768 algorithm.
-    </span><span class="kw">pub const </span>ML_KEM_768: Algorithm&lt;AlgorithmId&gt; = Algorithm {
-        id: AlgorithmId::MlKem768,
-        decapsulate_key_size: ML_KEM_768_SECRET_KEY_LENGTH,
-        encapsulate_key_size: ML_KEM_768_PUBLIC_KEY_LENGTH,
-        ciphertext_size: ML_KEM_768_CIPHERTEXT_LENGTH,
-        shared_secret_size: ML_KEM_768_SHARED_SECRET_LENGTH,
-    };
-
-    <span class="doccomment">/// NIST FIPS 203 ML-KEM-1024 algorithm.
-    </span><span class="kw">pub const </span>ML_KEM_1024: Algorithm&lt;AlgorithmId&gt; = Algorithm {
-        id: AlgorithmId::MlKem1024,
-        decapsulate_key_size: ML_KEM_1024_SECRET_KEY_LENGTH,
-        encapsulate_key_size: ML_KEM_1024_PUBLIC_KEY_LENGTH,
-        ciphertext_size: ML_KEM_1024_CIPHERTEXT_LENGTH,
-        shared_secret_size: ML_KEM_1024_SHARED_SECRET_LENGTH,
-    };
-}
-
-<span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
-</span><span class="kw">mod </span>missing_nid {
-    <span class="kw">pub const </span>NID_MLKEM512: i32 = <span class="number">988</span>;
-    <span class="kw">pub const </span>NID_MLKEM768: i32 = <span class="number">989</span>;
-    <span class="kw">pub const </span>NID_MLKEM1024: i32 = <span class="number">990</span>;
-}
-
-<span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
-</span><span class="kw">use </span><span class="self">self</span>::missing_nid::{NID_MLKEM1024, NID_MLKEM512, NID_MLKEM768};
-<span class="attr">#[cfg(not(feature = <span class="string">"fips"</span>))]
-</span><span class="kw">use </span>aws_lc::{NID_MLKEM1024, NID_MLKEM512, NID_MLKEM768};
+<span class="kw">use </span>aws_lc::{NID_MLKEM1024, NID_MLKEM512, NID_MLKEM768};
 
 <span class="doccomment">/// An identifier for a KEM algorithm.
 </span><span class="kw">pub trait </span>AlgorithmIdentifier:
@@ -858,9 +811,6 @@
 }
 
 <span class="doccomment">/// Identifier for a KEM algorithm.
-///
-/// See [`crate::unstable::kem::AlgorithmId`] and [`crate::unstable::kem::get_algorithm`] for
-/// access to algorithms not subject to semantic versioning guarantees.
 </span><span class="attr">#[non_exhaustive]
 #[derive(Clone, Copy, Debug, PartialEq)]
 </span><span class="kw">pub enum </span>AlgorithmId {
@@ -1195,15 +1145,10 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::{Ciphertext, SharedSecret};
+    <span class="kw">use super</span>::{DecapsulationKey, EncapsulationKey};
+    <span class="kw">use </span><span class="kw">crate</span>::error::KeyRejected;
 
-    <span class="attr">#[cfg(not(feature = <span class="string">"fips"</span>))]
-    </span><span class="kw">use </span><span class="kw">crate</span>::error::KeyRejected;
-
-    <span class="attr">#[cfg(not(feature = <span class="string">"fips"</span>))]
-    </span><span class="kw">use super</span>::{DecapsulationKey, EncapsulationKey};
-
-    <span class="attr">#[cfg(not(feature = <span class="string">"fips"</span>))]
-    </span><span class="kw">use </span><span class="kw">crate</span>::kem::semistable::{ML_KEM_1024, ML_KEM_512, ML_KEM_768};
+    <span class="kw">use </span><span class="kw">crate</span>::kem::{ML_KEM_1024, ML_KEM_512, ML_KEM_768};
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>ciphertext() {
@@ -1225,7 +1170,6 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(not(feature = <span class="string">"fips"</span>))]
     </span><span class="kw">fn </span>test_kem_serialize() {
         <span class="kw">for </span>algorithm <span class="kw">in </span>[<span class="kw-2">&amp;</span>ML_KEM_512, <span class="kw-2">&amp;</span>ML_KEM_768, <span class="kw-2">&amp;</span>ML_KEM_1024] {
             <span class="kw">let </span>priv_key = DecapsulationKey::generate(algorithm).unwrap();
@@ -1245,7 +1189,6 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(not(feature = <span class="string">"fips"</span>))]
     </span><span class="kw">fn </span>test_kem_wrong_sizes() {
         <span class="kw">for </span>algorithm <span class="kw">in </span>[<span class="kw-2">&amp;</span>ML_KEM_512, <span class="kw-2">&amp;</span>ML_KEM_768, <span class="kw-2">&amp;</span>ML_KEM_1024] {
             <span class="kw">let </span>too_long_bytes = <span class="macro">vec!</span>[<span class="number">0u8</span>; algorithm.encapsulate_key_size() + <span class="number">1</span>];
@@ -1265,7 +1208,6 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(not(feature = <span class="string">"fips"</span>))]
     </span><span class="kw">fn </span>test_kem_e2e() {
         <span class="kw">for </span>algorithm <span class="kw">in </span>[<span class="kw-2">&amp;</span>ML_KEM_512, <span class="kw-2">&amp;</span>ML_KEM_768, <span class="kw-2">&amp;</span>ML_KEM_1024] {
             <span class="kw">let </span>priv_key = DecapsulationKey::generate(algorithm).unwrap();
@@ -1285,7 +1227,6 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(not(feature = <span class="string">"fips"</span>))]
     </span><span class="kw">fn </span>test_serialized_kem_e2e() {
         <span class="kw">for </span>algorithm <span class="kw">in </span>[<span class="kw-2">&amp;</span>ML_KEM_512, <span class="kw-2">&amp;</span>ML_KEM_768, <span class="kw-2">&amp;</span>ML_KEM_1024] {
             <span class="kw">let </span>priv_key = DecapsulationKey::generate(algorithm).unwrap();
@@ -1314,7 +1255,6 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(not(feature = <span class="string">"fips"</span>))]
     </span><span class="kw">fn </span>test_debug_fmt() {
         <span class="kw">let </span>private = DecapsulationKey::generate(<span class="kw-2">&amp;</span>ML_KEM_512).expect(<span class="string">"successful generation"</span>);
         <span class="macro">assert_eq!</span>(
