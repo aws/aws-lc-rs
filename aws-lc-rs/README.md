@@ -45,17 +45,30 @@ function. This adds a requirement on `untrusted = "0.7.1"`.
 ##### fips
 
 Enable this feature to have aws-lc-rs use the [*aws-lc-fips-sys*](https://crates.io/crates/aws-lc-fips-sys)
-crate for the cryptographic implementations. The *aws-lc-fips-sys* crate provides bindings to
-[AWS-LC-FIPS 2.x](https://github.com/aws/aws-lc/tree/fips-2022-11-02), which has completed
-FIPS validation testing by an accredited lab and has been submitted to NIST for certification.
-The static build of AWS-LC-FIPS is used.
+crate for the cryptographic implementations. The aws-lc-fips-sys crate provides bindings to the
+latest version of the AWS-LC-FIPS module that has completed FIPS validation testing by an
+accredited lab and has been submitted to NIST for certification. This will continue to be the
+case as we periodically submit new versions of the AWS-LC-FIPS module to NIST for certification.
+Currently, aws-lc-fips-sys binds to
+[AWS-LC-FIPS 3.0.x](https://github.com/aws/aws-lc/tree/fips-2024-09-27).
+
+Consult with your local FIPS compliance team to determine the version of AWS-LC-FIPS module that you require. Consumers
+needing to remain on a previous version of the AWS-LC-FIPS module should pin to specific versions of aws-lc-rs to avoid
+automatically being upgraded to a newer module version.
+(See [cargo’s documentation](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html)
+on how to specify dependency versions.)
+
+| AWS-LC-FIPS module | aws-lc-rs |
+|--------------------|-----------|
+| 2.0.x              | \<1.12.0  |
+| 3.0.x              | *latest*  |
 
 Refer to the
 [NIST Cryptographic Module Validation Program's Modules In Progress List](https://csrc.nist.gov/Projects/cryptographic-module-validation-program/modules-in-process/Modules-In-Process-List)
-for the latest status of the static or dynamic AWS-LC Cryptographic Module. A complete list of supported operating
-environments will be made available in the vendor security policy once the validation certificate has been issued. We
-will also update our release notes
-and documentation to reflect any changes in FIPS certification status.
+for the latest status of the static or dynamic AWS-LC Cryptographic Module. Please see the
+[FIPS.md in the aws-lc repository](https://github.com/aws/aws-lc/blob/main/crypto/fipsmodule/FIPS.md)
+for relevant security policies and information on supported operating environments.
+We will also update our release notes and documentation to reflect any changes in FIPS certification status.
 
 ##### asan
 
