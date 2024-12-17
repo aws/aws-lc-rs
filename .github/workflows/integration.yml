@@ -135,11 +135,11 @@ jobs:
       - name: Clean
         run: cargo clean
       - name: Force Linux shared build
+        env:
+          AWS_LC_SYS_STATIC: 0
+          AWS_LC_FIPS_SYS_STATIC: 0
         working-directory: ./${{ matrix.crate }}
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        # Doc-tests fail to link with dynamic build
-        # See: https://github.com/rust-lang/cargo/issues/8531
-        run: AWS_LC_SYS_STATIC=0 AWS_LC_FIPS_SYS_STATIC=0 cargo publish --dry-run
+        run: cargo publish --dry-run
 
   ## Verify that prebuilt-nasm objects were published properly
   publish-dry-run-prebuild-nasm:

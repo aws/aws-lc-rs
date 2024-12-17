@@ -343,9 +343,7 @@ jobs:
           go-version: '>=1.18'
       - name: Run cargo test
         if: ${{ matrix.os == 'ubuntu-latest' || matrix.static != 1 }}
-        # Doc-tests fail to link with dynamic build
-        # See: https://github.com/rust-lang/cargo/issues/8531
-        run: cargo test -p aws-lc-rs --tests --no-default-features --features fips
+        run: cargo test -p aws-lc-rs --no-default-features --features fips
 
   build-env-no-asm-test:
     if: github.repository_owner == 'aws'
@@ -545,10 +543,10 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
-      # FIPS builds for ARM platforms (e.g, macos-14-xlarge) will fail until upstream change is made:
-      # https://github.com/aws/aws-lc/pull/2005
-      - if: matrix.os != 'macos-14-xlarge' || matrix.fips != 1
-        name: Run cargo test
+      - name: Run cargo test
+        # macOS aarch64 fix for FIPS pending the following PR applied to FIPS branch:
+        # https://github.com/aws/aws-lc/pull/2005
+        if: ${{ matrix.fips == 0 || matrix.os != 'macos-14-xlarge' }}
         working-directory: "path has spaces/aws-lc-rs"
         run: cargo test --tests -p aws-lc-rs --no-default-features --features ${{ (matrix.fips == 1 && 'fips') || 'aws-lc-sys' }}
 

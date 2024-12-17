@@ -53,9 +53,7 @@ jobs:
           go-version: '>=1.18'
       - name: Run cargo test
         working-directory: ./aws-lc-rs
-        # Doc-tests fail to link with dynamic build
-        # See: https://github.com/rust-lang/cargo/issues/8531
-        run: cargo test --tests ${{ matrix.args }}
+        run: cargo test ${{ matrix.args }}
   windows-fips-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs windows-fips-tests
@@ -87,6 +85,4 @@ jobs:
         uses: seanmiddleditch/gha-setup-ninja@v4
       - name: Run cargo test
         working-directory: ./aws-lc-rs
-        # Doc-tests fail to link with dynamic build
-        # See: https://github.com/rust-lang/cargo/issues/8531
-        run: cargo test --tests ${{ matrix.args }}
+        run: cargo test ${{ matrix.args }}
