@@ -243,6 +243,7 @@ mod digest_shavs {
 macro_rules! test_i_u_f {
     ( $test_name:ident, $alg:expr) => {
         #[cfg(not(debug_assertions))]
+        #[cfg(not(disable_slow_tests))]
         // TODO: Get this working on WebAssembly
         #[cfg(not(target_arch = "wasm32"))]
         #[test]
@@ -308,6 +309,7 @@ macro_rules! test_large_digest {
     ( $test_name:ident, $alg:expr, $len:expr, $expected:expr) => {
         // TODO: get this working on WebAssembly.
         #[cfg(not(debug_assertions))]
+        #[cfg(not(disable_slow_tests))]
         #[cfg(not(target_arch = "wasm32"))]
         #[test]
         fn $test_name() {

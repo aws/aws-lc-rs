@@ -23,4 +23,5 @@ passthrough = [
     "AWS_LC_SYS_CC_SRC_COLLECTOR",
     "GOPROXY",
     "AWS_LC_SYS_CFLAGS",
+    "AWS_LC_RS_DISABLE_SLOW_TESTS",
 ]
