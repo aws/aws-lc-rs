@@ -302,10 +302,14 @@ macro_rules! generate_encode_decode {
 }
 
 generate_encode_decode!(rsa2048_generate_encode_decode, KeySize::Rsa2048);
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 generate_encode_decode!(rsa3072_generate_encode_decode, KeySize::Rsa3072);
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 generate_encode_decode!(rsa4096_generate_encode_decode, KeySize::Rsa4096);
-// RSA8192 tests are not run in dev (debug) builds because it is too slow.
-#[cfg(not(debug_assertions))]
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 generate_encode_decode!(rsa8192_generate_encode_decode, KeySize::Rsa8192);
 
 macro_rules! generate_fips_encode_decode {
@@ -336,10 +340,14 @@ macro_rules! generate_fips_encode_decode {
 }
 
 generate_fips_encode_decode!(rsa2048_generate_fips_encode_decode, KeySize::Rsa2048);
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 generate_fips_encode_decode!(rsa3072_generate_fips_encode_decode, KeySize::Rsa3072);
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 generate_fips_encode_decode!(rsa4096_generate_fips_encode_decode, KeySize::Rsa4096);
-// RSA8192 tests are not run in dev (debug) builds because it is too slow.
-#[cfg(not(debug_assertions))]
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 generate_fips_encode_decode!(rsa8192_generate_fips_encode_decode, KeySize::Rsa8192);
 
 macro_rules! encryption_generate_encode_decode {
@@ -365,10 +373,14 @@ macro_rules! encryption_generate_encode_decode {
 }
 
 encryption_generate_encode_decode!(rsa2048_encryption_generate_encode_decode, KeySize::Rsa2048);
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 encryption_generate_encode_decode!(rsa3072_encryption_generate_encode_decode, KeySize::Rsa3072);
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 encryption_generate_encode_decode!(rsa4096_encryption_generate_encode_decode, KeySize::Rsa4096);
-// RSA8192 tests are not run in dev (debug) builds because it is too slow.
-#[cfg(not(debug_assertions))]
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 encryption_generate_encode_decode!(rsa8192_encryption_generate_encode_decode, KeySize::Rsa8192);
 
 macro_rules! encryption_generate_fips_encode_decode {
@@ -408,16 +420,20 @@ encryption_generate_fips_encode_decode!(
     rsa2048_encryption_generate_fips_encode_decode,
     KeySize::Rsa2048
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 encryption_generate_fips_encode_decode!(
     rsa3072_encryption_generate_fips_encode_decode,
     KeySize::Rsa3072
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 encryption_generate_fips_encode_decode!(
     rsa4096_encryption_generate_fips_encode_decode,
     KeySize::Rsa4096
 );
-// RSA8192 tests are not run in dev (debug) builds because it is too slow.
-#[cfg(not(debug_assertions))]
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 encryption_generate_fips_encode_decode!(
     rsa8192_encryption_generate_fips_encode_decode,
     KeySize::Rsa8192
@@ -596,18 +612,22 @@ round_trip_oaep_algorithm!(
     &OAEP_SHA1_MGF1SHA1,
     KeySize::Rsa2048
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa3072_oaep_sha1_mgf1sha1,
     &OAEP_SHA1_MGF1SHA1,
     KeySize::Rsa3072
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa4096_oaep_sha1_mgf1sha1,
     &OAEP_SHA1_MGF1SHA1,
     KeySize::Rsa4096
 );
-// RSA8192 tests are not run in dev (debug) builds because it is too slow.
-#[cfg(not(debug_assertions))]
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa8192_oaep_sha1_mgf1sha1,
     &OAEP_SHA1_MGF1SHA1,
@@ -619,18 +639,22 @@ round_trip_oaep_algorithm!(
     &OAEP_SHA256_MGF1SHA256,
     KeySize::Rsa2048
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa3072_oaep_sha256_mgf1sha256,
     &OAEP_SHA256_MGF1SHA256,
     KeySize::Rsa3072
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa4096_oaep_sha256_mgf1sha256,
     &OAEP_SHA256_MGF1SHA256,
     KeySize::Rsa4096
 );
-// RSA8192 tests are not run in dev (debug) builds because it is too slow.
-#[cfg(not(debug_assertions))]
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa8192_oaep_sha256_mgf1sha256,
     &OAEP_SHA256_MGF1SHA256,
@@ -642,18 +666,22 @@ round_trip_oaep_algorithm!(
     &OAEP_SHA384_MGF1SHA384,
     KeySize::Rsa2048
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa3072_oaep_sha384_mgf1sha384,
     &OAEP_SHA384_MGF1SHA384,
     KeySize::Rsa3072
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa4096_oaep_sha384_mgf1sha384,
     &OAEP_SHA384_MGF1SHA384,
     KeySize::Rsa4096
 );
-// RSA8192 tests are not run in dev (debug) builds because it is too slow.
-#[cfg(not(debug_assertions))]
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa8192_oaep_sha384_mgf1sha384,
     &OAEP_SHA384_MGF1SHA384,
@@ -665,18 +693,22 @@ round_trip_oaep_algorithm!(
     &OAEP_SHA512_MGF1SHA512,
     KeySize::Rsa2048
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa3072_oaep_sha512_mgf1sha512,
     &OAEP_SHA512_MGF1SHA512,
     KeySize::Rsa3072
 );
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa4096_oaep_sha512_mgf1sha512,
     &OAEP_SHA512_MGF1SHA512,
     KeySize::Rsa4096
 );
-// RSA8192 tests are not run in dev (debug) builds because it is too slow.
-#[cfg(not(debug_assertions))]
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_oaep_algorithm!(
     rsa8192_oaep_sha512_mgf1sha512,
     &OAEP_SHA512_MGF1SHA512,
@@ -972,9 +1004,14 @@ macro_rules! round_trip_pkcs1_encryption {
 }
 
 round_trip_pkcs1_encryption!(rsa2048_pkcs1_encryption, KeySize::Rsa2048);
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_pkcs1_encryption!(rsa3072_pkcs1_encryption, KeySize::Rsa3072);
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_pkcs1_encryption!(rsa4096_pkcs1_encryption, KeySize::Rsa4096);
-#[cfg(not(debug_assertions))]
+// Key generation for large RSA keys is very slow
+#[cfg(not(disable_slow_tests))]
 round_trip_pkcs1_encryption!(rsa8192_pkcs1_encryption, KeySize::Rsa8192);
 
 // Generated by `echo -n "OpenSSL KAT" | openssl pkeyutl -inkey rsa_test_public_key_2048.x509 -pubin -encrypt -pkeyopt rsa_padding_mode:pkcs1 | xxd -i`

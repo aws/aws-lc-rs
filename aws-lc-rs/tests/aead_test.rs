@@ -190,7 +190,7 @@ fn test_aead<Seal, Open>(
         // test a smaller subset.
 
         let mut more_comprehensive_in_prefix_lengths = vec![0; 4096].into_boxed_slice();
-        let in_prefix_lengths = if cfg!(debug_assertions) {
+        let in_prefix_lengths = if cfg!(any(debug_assertions, disable_slow_tests)) {
             &MINIMAL_IN_PREFIX_LENS[..]
         } else {
             #[allow(clippy::needless_range_loop)]
