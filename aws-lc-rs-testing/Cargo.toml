@@ -14,11 +14,9 @@ bindgen = ["aws-lc-rs/bindgen"]
 fips = ["aws-lc-rs/fips"]
 asan = ["aws-lc-rs/asan"]
 
-[dependencies]
+[dev-dependencies]
 aws-lc-rs = { version = "1.0", path = "../aws-lc-rs", features = ["ring-sig-verify", "unstable"] }
 untrusted = { version = "0.7.1" }
-
-[dev-dependencies]
 paste = "1.0.11"
 criterion = { version = "0.5.0", features = ["csv_output"] }
 ring = "0.17"

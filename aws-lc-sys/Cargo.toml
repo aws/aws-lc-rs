@@ -66,7 +66,6 @@ bindgen = { version = "0.69.5", optional = true }
 bindgen = { version = "0.69.5" }
 
 [dependencies]
-libc = "0.2.121"
 paste = "1.0.11"
 
 [package.metadata.aws-lc-sys]
