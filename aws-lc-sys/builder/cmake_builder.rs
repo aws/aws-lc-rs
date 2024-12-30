@@ -44,10 +44,6 @@ fn find_cmake_command() -> Option<OsString> {
     }
 }
 
-fn get_platform_output_path() -> PathBuf {
-    PathBuf::new()
-}
-
 impl CmakeBuilder {
     pub(crate) fn new(
         manifest_dir: PathBuf,
@@ -64,10 +60,7 @@ impl CmakeBuilder {
     }
 
     fn artifact_output_dir(&self) -> PathBuf {
-        self.out_dir
-            .join("build")
-            .join("artifacts")
-            .join(get_platform_output_path())
+        self.out_dir.join("build").join("artifacts")
     }
 
     fn get_cmake_config(&self) -> cmake::Config {
