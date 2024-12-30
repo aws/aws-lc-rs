@@ -13,7 +13,8 @@ RUN apt-get update && \
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable && \
     . $HOME/.cargo/env && \
-    cargo install --force --locked bindgen-cli && mv $HOME/.cargo/bin/bindgen /usr/bin && \
+    cargo install --force --locked bindgen-cli && \
+    mv $HOME/.cargo/bin/bindgen /usr/bin && \
     rm -rf $HOME/.cargo
 
 ENV GOCACHE=/tmp
