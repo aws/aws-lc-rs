@@ -1,4 +1,4 @@
-#!/usr/bin/env -S cargo +nightly-2024-05-22 -Zscript
+#!/usr/bin/env -S cargo +nightly -Zscript
 ---cargo
 [dependencies]
 toml = "0.8"

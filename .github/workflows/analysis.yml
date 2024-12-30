@@ -17,7 +17,7 @@ env:
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
   RUST_NIGHTLY_TOOLCHAIN: nightly
-  RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly-2024-05-22
+  RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly
 
 jobs:
   rustfmt:
