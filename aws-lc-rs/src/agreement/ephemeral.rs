@@ -154,6 +154,7 @@ mod tests {
         // The spec gives a test vector for 1,000,000 iterations but it takes
         // too long to do 1,000,000 iterations by default right now. This
         // 10,000 iteration vector is self-computed.
+        #[cfg(not(disable_slow_tests))]
         expect_iterated_x25519(
             "2c125a20f639d504a7703d2e223c79a79de48c4ee8c23379aa19a62ecd211815",
             1_000..10_000,

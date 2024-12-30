@@ -1,12 +1,24 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use std::env;
+
 fn main() {
     let has_mutually_exclusive_features = cfg!(feature = "non-fips") && cfg!(feature = "fips");
     assert!(
         !has_mutually_exclusive_features,
         "`fips` and `non-fips` are mutually exclusive crate features."
     );
+
+    println!("cargo:rustc-check-cfg=cfg(disable_slow_tests)");
+    if let Ok(disable) = env::var("AWS_LC_RS_DISABLE_SLOW_TESTS") {
+        if disable == "1" {
+            println!("cargo:warning=### Slow tests will be disabled! ###");
+            println!("cargo:rustc-cfg=disable_slow_tests");
+        } else {
+            println!("cargo:warning=### Slow tests are enabled: {disable}! ###");
+        }
+    }
 
     // This appears asymmetric, but it reflects the `cfg` statements in lib.rs that
     // require `aws-lc-sys` to be present when "fips" is not enabled.
