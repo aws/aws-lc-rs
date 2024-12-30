@@ -60,9 +60,7 @@ impl CmakeBuilder {
     }
 
     fn artifact_output_dir(&self) -> PathBuf {
-        self.out_dir
-            .join("build")
-            .join("artifacts")
+        self.out_dir.join("build").join("artifacts")
     }
 
     fn get_cmake_config(&self) -> cmake::Config {
