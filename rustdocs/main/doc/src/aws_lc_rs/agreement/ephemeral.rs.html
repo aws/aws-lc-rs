@@ -500,7 +500,8 @@
 <a href="#499" id="499">499</a>
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
-<a href="#502" id="502">502</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="kw">use </span><span class="kw">crate</span>::agreement::{agree, Algorithm, PrivateKey, PublicKey, UnparsedPublicKey};
@@ -656,6 +657,7 @@
         <span class="comment">// The spec gives a test vector for 1,000,000 iterations but it takes
         // too long to do 1,000,000 iterations by default right now. This
         // 10,000 iteration vector is self-computed.
+        </span><span class="attr">#[cfg(not(disable_slow_tests))]
         </span>expect_iterated_x25519(
             <span class="string">"2c125a20f639d504a7703d2e223c79a79de48c4ee8c23379aa19a62ecd211815"</span>,
             <span class="number">1_000</span>..<span class="number">10_000</span>,
