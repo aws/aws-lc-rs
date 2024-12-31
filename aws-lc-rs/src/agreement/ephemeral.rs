@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::agreement::{agree, Algorithm, PrivateKey, PublicKey, UnparsedPublicKey};
+use crate::agreement::{agree, Algorithm, ParsedPublicKey, PrivateKey, PublicKey};
 use crate::error::Unspecified;
 use crate::rand::SecureRandom;
 use core::fmt;
@@ -98,9 +98,9 @@ impl EphemeralPrivateKey {
 #[allow(clippy::needless_pass_by_value)]
 #[allow(clippy::missing_panics_doc)]
 #[allow(clippy::module_name_repetitions)]
-pub fn agree_ephemeral<B: AsRef<[u8]>, F, R, E>(
+pub fn agree_ephemeral<B: TryInto<ParsedPublicKey> + Debug, F, R, E>(
     my_private_key: EphemeralPrivateKey,
-    peer_public_key: &UnparsedPublicKey<B>,
+    peer_public_key: B,
     error_value: E,
     kdf: F,
 ) -> Result<R, E>
@@ -495,8 +495,8 @@ mod tests {
         let rng = test::rand::FixedSliceRandom { bytes: private_key };
         let private_key =
             agreement::EphemeralPrivateKey::generate_for_test(&agreement::X25519, &rng)?;
-        let public_key = agreement::UnparsedPublicKey::new(&agreement::X25519, public_key);
-        agreement::agree_ephemeral(private_key, &public_key, Unspecified, |agreed_value| {
+        let public_key = &agreement::UnparsedPublicKey::new(&agreement::X25519, public_key);
+        agreement::agree_ephemeral(private_key, public_key, Unspecified, |agreed_value| {
             Ok(Vec::from(agreed_value))
         })
     }
