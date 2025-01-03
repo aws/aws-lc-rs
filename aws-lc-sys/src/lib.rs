@@ -24,6 +24,7 @@ macro_rules! platform_binding {
     };
 }
 
+platform_binding!(aarch64_linux_android);
 platform_binding!(aarch64_apple_darwin);
 platform_binding!(aarch64_pc_windows_msvc);
 platform_binding!(aarch64_unknown_linux_gnu);

@@ -27,23 +27,23 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - [aarch64-linux-android, 0]
-          - [aarch64-unknown-linux-gnu, 1]
-          - [aarch64-unknown-linux-musl, 1]
-          - [arm-linux-androideabi, 0]
-          - [arm-unknown-linux-gnueabihf, 0]
-          - [arm-unknown-linux-musleabi, 1]
-          - [arm-unknown-linux-musleabihf, 1]
-          - [armv7-linux-androideabi, 0]
-          - [armv7-unknown-linux-gnueabihf, 0]
-          - [i686-unknown-linux-gnu, 0]
-          - [powerpc-unknown-linux-gnu, 1]
-          - [powerpc64-unknown-linux-gnu, 1]
-          - [powerpc64le-unknown-linux-gnu, 1]
-          - [riscv64gc-unknown-linux-gnu, 0]
-          - [s390x-unknown-linux-gnu, 0]
-          - [x86_64-pc-windows-gnu, 0]
-          - [x86_64-unknown-linux-musl, 0]
+          - [ aarch64-linux-android, 0, 1 ]
+          - [ aarch64-unknown-linux-gnu, 1, 1 ]
+          - [ aarch64-unknown-linux-musl, 1, 1 ]
+          - [ arm-linux-androideabi, 0, 0 ]
+          - [ arm-unknown-linux-gnueabihf, 0, 0 ]
+          - [ arm-unknown-linux-musleabi, 1, 0 ]
+          - [ arm-unknown-linux-musleabihf, 1, 0 ]
+          - [ armv7-linux-androideabi, 0, 0 ]
+          - [ armv7-unknown-linux-gnueabihf, 0, 0 ]
+          - [ i686-unknown-linux-gnu, 0, 1 ]
+          - [ powerpc-unknown-linux-gnu, 1, 0 ]
+          - [ powerpc64-unknown-linux-gnu, 1, 0 ]
+          - [ powerpc64le-unknown-linux-gnu, 1, 0 ]
+          - [ riscv64gc-unknown-linux-gnu, 0, 0 ]
+          - [ s390x-unknown-linux-gnu, 0, 0 ]
+          - [ x86_64-pc-windows-gnu, 0, 1 ]
+          - [ x86_64-unknown-linux-musl, 0, 1 ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -70,6 +70,9 @@ jobs:
       - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
         run: |
           echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
+      - if: ${{ matrix.target[2] == 1 }}
+        run: |
+          echo 'AWS_LC_SYS_EXTERNAL_BINDGEN=0' >> "$GITHUB_ENV"
       - name: Cross-compilation (test release)
         run: cross test -p aws-lc-rs --release --features unstable --target ${{ matrix.target[0] }}
       - if: ${{ matrix.target[1] == 1 }}
@@ -259,7 +262,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [13.4, 14.1]
+        target: [ 13.4, 14.1 ]
     steps:
       - uses: actions/checkout@v4
         with:

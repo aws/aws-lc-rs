@@ -3965,73 +3965,12 @@ pub const TRUST_TOKEN_R_BAD_VALIDITY_CHECK: i32 = 111;
 pub const TRUST_TOKEN_R_NO_SRR_KEY_CONFIGURED: i32 = 112;
 pub const TRUST_TOKEN_R_INVALID_METADATA_KEY: i32 = 113;
 pub const TRUST_TOKEN_R_INVALID_PROOF: i32 = 114;
-pub type time_t = ::std::os::raw::c_long;
+pub type __kernel_long_t = ::std::os::raw::c_long;
+pub type __kernel_time_t = __kernel_long_t;
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct pthread_rwlock_t {
-    pub __u: pthread_rwlock_t__bindgen_ty_1,
-}
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub union pthread_rwlock_t__bindgen_ty_1 {
-    pub __i: [::std::os::raw::c_int; 14usize],
-    pub __vi: [::std::os::raw::c_int; 14usize],
-    pub __p: [*mut ::std::os::raw::c_void; 7usize],
-}
-#[test]
-fn bindgen_test_layout_pthread_rwlock_t__bindgen_ty_1() {
-    const UNINIT: ::std::mem::MaybeUninit<pthread_rwlock_t__bindgen_ty_1> =
-        ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<pthread_rwlock_t__bindgen_ty_1>(),
-        56usize,
-        concat!("Size of: ", stringify!(pthread_rwlock_t__bindgen_ty_1))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<pthread_rwlock_t__bindgen_ty_1>(),
-        8usize,
-        concat!("Alignment of ", stringify!(pthread_rwlock_t__bindgen_ty_1))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).__i) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(pthread_rwlock_t__bindgen_ty_1),
-            "::",
-            stringify!(__i)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).__vi) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(pthread_rwlock_t__bindgen_ty_1),
-            "::",
-            stringify!(__vi)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).__p) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(pthread_rwlock_t__bindgen_ty_1),
-            "::",
-            stringify!(__p)
-        )
-    );
-}
-impl Default for pthread_rwlock_t__bindgen_ty_1 {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
+    pub __private: [i32; 14usize],
 }
 #[test]
 fn bindgen_test_layout_pthread_rwlock_t() {
@@ -4044,29 +3983,29 @@ fn bindgen_test_layout_pthread_rwlock_t() {
     );
     assert_eq!(
         ::std::mem::align_of::<pthread_rwlock_t>(),
-        8usize,
+        4usize,
         concat!("Alignment of ", stringify!(pthread_rwlock_t))
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).__u) as usize - ptr as usize },
+        unsafe { ::std::ptr::addr_of!((*ptr).__private) as usize - ptr as usize },
         0usize,
         concat!(
             "Offset of field: ",
             stringify!(pthread_rwlock_t),
             "::",
-            stringify!(__u)
+            stringify!(__private)
         )
     );
 }
-impl Default for pthread_rwlock_t {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
+pub type __time_t = __kernel_time_t;
+pub type time_t = __time_t;
+pub type va_list = [u64; 4usize];
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct __sFILE {
+    _unused: [u8; 0],
 }
+pub type FILE = __sFILE;
 pub type ossl_ssize_t = isize;
 pub type CBS_ASN1_TAG = u32;
 pub type CRYPTO_THREADID = ::std::os::raw::c_int;
@@ -4912,13 +4851,6 @@ impl Default for tm {
         }
     }
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct _IO_FILE {
-    _unused: [u8; 0],
-}
-pub type FILE = _IO_FILE;
-pub type va_list = [u64; 4usize];
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct buf_mem_st {

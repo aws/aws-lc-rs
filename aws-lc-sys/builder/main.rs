@@ -279,7 +279,7 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
             ..Default::default()
         },
     )
-    .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
+    .write_to_file(src_bindings_path)
     .expect("write bindings");
 }
 
@@ -430,6 +430,7 @@ fn initialize() {
         let target = target();
         let supported_platform = match target.as_str() {
             "aarch64-apple-darwin"
+            | "aarch64-linux-android"
             | "aarch64-pc-windows-msvc"
             | "aarch64-unknown-linux-gnu"
             | "aarch64-unknown-linux-musl"
@@ -521,6 +522,7 @@ fn test_nasm_command() -> bool {
 fn prepare_cargo_cfg() {
     if cfg!(clippy) {
         println!("cargo:rustc-check-cfg=cfg(use_bindgen_generated)");
+        println!("cargo:rustc-check-cfg=cfg(aarch64_linux_android)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_apple_darwin)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
@@ -588,12 +590,14 @@ fn main() {
     if is_pregenerating_bindings() {
         #[cfg(feature = "bindgen")]
         {
-            emit_warning(&format!(
-                "Generating src bindings. Platform: '{}' Prefix: '{prefix:?}'",
-                target()
-            ));
-            let src_bindings_path = Path::new(&manifest_dir).join("src");
-            generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
+            let src_bindings_path = Path::new(&manifest_dir)
+                .join("src")
+                .join(format!("{}.rs", target_platform_prefix("crypto")));
+            if is_external_bindgen() {
+                invoke_external_bindgen(&manifest_dir, &prefix, &src_bindings_path).unwrap();
+            } else {
+                generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
+            }
             bindings_available = true;
         }
     } else if is_bindgen_required() {
@@ -603,10 +607,6 @@ fn main() {
     }
 
     if !bindings_available && !cfg!(feature = "ssl") {
-        emit_warning(&format!(
-            "Generating bindings - external bindgen. Platform: {}",
-            target()
-        ));
         let gen_bindings_path = out_dir().join("bindings.rs");
         let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
         match result {
@@ -748,6 +748,11 @@ fn invoke_external_bindgen(
     gen_bindings_path: &Path,
 ) -> Result<(), String> {
     verify_bindgen()?;
+
+    emit_warning(&format!(
+        "Generating bindings - external bindgen. Platform: {}",
+        target()
+    ));
 
     let options = BindingOptions {
         // We collect the symbols w/o the prefix added
