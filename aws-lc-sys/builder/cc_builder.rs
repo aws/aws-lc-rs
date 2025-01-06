@@ -267,14 +267,20 @@ impl CcBuilder {
         let mut ret_val = false;
         let output_dir = self.out_dir.join(format!("out-{basename}"));
         let mut cc_build = self.create_builder();
+        let source_file = self
+            .manifest_dir
+            .join("aws-lc")
+            .join("tests")
+            .join("compiler_features_tests")
+            .join(format!("{basename}.c"));
+        if !source_file.exists() {
+            emit_warning(&format!(
+                "###### WARNING: MISSING GIT SUBMODULE ###### Did you initialize the repo's git submodules? Unable to find source file: {:?}.",
+                &source_file
+            ));
+        }
         cc_build
-            .file(
-                self.manifest_dir
-                    .join("aws-lc")
-                    .join("tests")
-                    .join("compiler_features_tests")
-                    .join(format!("{basename}.c")),
-            )
+            .file(source_file)
             .warnings_into_errors(true)
             .out_dir(&output_dir);
 

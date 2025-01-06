@@ -22,6 +22,9 @@ if (BUILD_SHARED_LIBS AND FIPS)
 endif()
 
 add_subdirectory(aws-lc aws-lc EXCLUDE_FROM_ALL)
+if(NOT EXISTS aws-lc/CMakeLists.txt)
+message(WARNING "###### WARNING: MISSING GIT SUBMODULE ###### Did you initialize the repo's git submodules? CMakeLists.txt not found.")
+endif()
 
 if (BUILD_LIBSSL)
     add_definitions(-DAWS_LC_RUST_INCLUDE_SSL)
