@@ -86,3 +86,22 @@ jobs:
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
+  cpu-jitter-entropy-test:
+    if: github.repository_owner == 'aws'
+    name: CPU Jitter Entropy Tests
+    runs-on: ubuntu-latest
+    env:
+      AWS_LC_FIPS_SYS_CPU_JITTER_ENTROPY: 1
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: nightly
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Run assert script
+        run: ./scripts/tests/assert_cpu_jitter_entropy.rs
