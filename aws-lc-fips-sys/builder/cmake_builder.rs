@@ -2,11 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
-use crate::{
-    cargo_env, emit_warning, execute_command, is_no_asm, option_env, target, target_arch,
-    target_env, target_family, target_os, target_underscored, target_vendor, OutputLibType,
-    TestCommandResult,
-};
+use crate::{cargo_env, emit_rustc_cfg, emit_warning, execute_command, is_cpu_jitter_entropy, is_no_asm, option_env, target, target_arch, target_env, target_family, target_os, target_underscored, target_vendor, OutputLibType, TestCommandResult};
 use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
@@ -97,6 +93,11 @@ impl CmakeBuilder {
             cmake_cfg.define("BUILD_SHARED_LIBS", "1");
         } else {
             cmake_cfg.define("BUILD_SHARED_LIBS", "0");
+        }
+
+        if is_cpu_jitter_entropy() {
+            cmake_cfg.define("ENABLE_FIPS_ENTROPY_CPU_JITTER", "ON");
+            emit_rustc_cfg("cpu_jitter_entropy");
         }
 
         let cc_build = cc::Build::new();

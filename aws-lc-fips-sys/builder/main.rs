@@ -346,6 +346,7 @@ static mut AWS_LC_FIPS_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_FIPS_SYS_PREGENERATING_BINDINGS: bool = false;
 static mut AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_FIPS_SYS_NO_ASM: bool = false;
+static mut AWS_LC_FIPS_SYS_CPU_JITTER_ENTROPY: bool = false;
 fn initialize() {
     unsafe {
         AWS_LC_FIPS_SYS_NO_PREFIX = env_var_to_bool("AWS_LC_FIPS_SYS_NO_PREFIX").unwrap_or(false);
@@ -354,6 +355,8 @@ fn initialize() {
         AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN =
             env_var_to_bool("AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN").unwrap_or(false);
         AWS_LC_FIPS_SYS_NO_ASM = env_var_to_bool("AWS_LC_FIPS_SYS_NO_ASM").unwrap_or(false);
+        AWS_LC_FIPS_SYS_CPU_JITTER_ENTROPY =
+            env_var_to_bool("AWS_LC_FIPS_SYS_CPU_JITTER_ENTROPY").unwrap_or(false);
     }
 
     if !is_external_bindgen() && (is_pregenerating_bindings() || !has_bindgen_feature()) {
@@ -409,6 +412,10 @@ fn is_no_asm() -> bool {
     unsafe { AWS_LC_FIPS_SYS_NO_ASM }
 }
 
+fn is_cpu_jitter_entropy() -> bool {
+    unsafe { AWS_LC_FIPS_SYS_CPU_JITTER_ENTROPY }
+}
+
 fn has_bindgen_feature() -> bool {
     cfg!(feature = "bindgen")
 }
@@ -423,6 +430,7 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(aarch64_apple_darwin)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+        println!("cargo:rustc-check-cfg=cfg(cpu_jitter_entropy)");
         println!("cargo:rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(use_bindgen_generated)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_apple_darwin)");

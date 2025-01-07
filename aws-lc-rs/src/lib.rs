@@ -233,14 +233,42 @@ pub fn fips_mode() {
 /// Indicates whether the underlying implementation is FIPS.
 ///
 /// # Errors
-/// Return an error if the underlying implementation is not FIPS, otherwise ok
+/// Return an error if the underlying implementation is not FIPS, otherwise Ok.
 pub fn try_fips_mode() -> Result<(), &'static str> {
     init();
-    unsafe {
-        match FIPS_mode() {
-            1 => Ok(()),
-            _ => Err("FIPS mode not enabled!"),
-        }
+    match unsafe { FIPS_mode() } {
+        1 => Ok(()),
+        _ => Err("FIPS mode not enabled!"),
+    }
+}
+
+#[cfg(feature = "fips")]
+/// Panics if the underlying implementation is not using CPU jitter entropy, otherwise it returns.
+///
+/// # Panics
+/// Panics if the underlying implementation is not using CPU jitter entropy.
+pub fn fips_cpu_jitter_entropy() {
+    try_fips_cpu_jitter_entropy().unwrap();
+}
+
+/// Indicates whether the underlying implementation is FIPS.
+///
+/// # Errors
+/// Return an error if the underlying implementation is not using CPU jitter entropy, otherwise Ok.
+pub fn try_fips_cpu_jitter_entropy() -> Result<(), &'static str> {
+    init();
+    // TODO: Delete once FIPS_is_entropy_cpu_jitter() available on FIPS branch
+    // https://github.com/aws/aws-lc/pull/2088
+    #[cfg(feature = "fips")]
+    if aws_lc::CFG_CPU_JITTER_ENTROPY() {
+        Ok(())
+    } else {
+        Err("FIPS CPU Jitter Entropy not enabled!")
+    }
+    #[cfg(not(feature = "fips"))]
+    match unsafe { aws_lc::FIPS_is_entropy_cpu_jitter() } {
+        1 => Ok(()),
+        _ => Err("FIPS CPU Jitter Entropy not enabled!"),
     }
 }
 
@@ -292,12 +320,17 @@ mod tests {
     #[test]
     fn test_fips() {
         assert!({ crate::try_fips_mode().is_err() });
+        assert!({ crate::try_fips_cpu_jitter_entropy().is_err() });
     }
 
     #[test]
     // FIPS mode is disabled for an ASAN build
-    #[cfg(all(feature = "fips", not(feature = "asan")))]
+    #[cfg(feature = "fips")]
     fn test_fips() {
+        #[cfg(not(feature = "asan"))]
         crate::fips_mode();
+        if aws_lc::CFG_CPU_JITTER_ENTROPY() {
+            crate::fips_cpu_jitter_entropy();
+        }
     }
 }
