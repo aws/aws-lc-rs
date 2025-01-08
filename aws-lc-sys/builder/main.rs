@@ -486,7 +486,7 @@ fn is_no_asm() -> bool {
 
 #[allow(unknown_lints)]
 #[allow(static_mut_refs)]
-fn get_cflags() -> &'static str {
+fn get_crate_cflags() -> &'static str {
     unsafe { AWS_LC_SYS_CFLAGS.as_str() }
 }
 
