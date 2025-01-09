@@ -124,14 +124,8 @@
 //! };
 //!
 //! fn main() -> Result<(), aws_lc_rs::error::Unspecified> {
-//!     // Generate a key pair in PKCS#8 (v1) format.
-//!     let rng = rand::SystemRandom::new();
-//!     let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8v1(&rng)?;
-//!
-//!     // Normally the application would store the PKCS#8 file persistently. Later
-//!     // it would read the PKCS#8 file from persistent storage to use it.
-//!
-//!     let key_pair = signature::Ed25519KeyPair::from_pkcs8_maybe_unchecked(pkcs8_bytes.as_ref())?;
+//!     // Generate a new key pair for Ed25519.
+//!     let key_pair = signature::Ed25519KeyPair::generate()?;
 //!
 //!     // Sign the message "hello, world".
 //!     const MESSAGE: &[u8] = b"hello, world";

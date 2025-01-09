@@ -172,7 +172,8 @@ mod tests {
 
     #[test]
     fn test_secure_random_fill() {
-        let mut random_array = [0u8; 173];
+        // Collect enough random values so that the assertions below should never fail again
+        let mut random_array = [0u8; 1009];
         let rng = SystemRandom::new();
         rng.fill(&mut random_array).unwrap();
 
@@ -184,7 +185,8 @@ mod tests {
 
     #[test]
     fn test_rand_fill() {
-        let mut random_array: [u8; 173] = [0u8; 173];
+        // Collect enough random values so that the assertions below should never fail again
+        let mut random_array = [0u8; 1009];
         rand::fill(&mut random_array).unwrap();
 
         let (mean, variance) = mean_variance(&mut random_array.into_iter());
@@ -197,7 +199,8 @@ mod tests {
     fn test_randomly_constructable() {
         let rando = SystemRandom::new();
         let random_array = generate(&rando).unwrap();
-        let random_array: [u8; 173] = random_array.expose();
+        // Collect enough random values so that the assertions below should never fail again
+        let random_array: [u8; 1009] = random_array.expose();
         let (mean, variance) = mean_variance(&mut random_array.into_iter());
         assert!((106f64..150f64).contains(&mean), "Mean: {mean}");
         assert!(variance > 8f64);
