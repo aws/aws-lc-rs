@@ -11,11 +11,12 @@ use core::ptr::{null, null_mut};
 use aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY};
 
 use crate::digest::digest_ctx::DigestContext;
+use crate::ec::evp_key_generate;
+use crate::ec::signature::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 #[cfg(feature = "fips")]
 use crate::ec::validate_evp_key;
 #[cfg(not(feature = "fips"))]
 use crate::ec::verify_evp_key_nid;
-use crate::ec::{evp_key_generate, EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 
 use crate::encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915Der};
 use crate::error::{KeyRejected, Unspecified};
@@ -60,7 +61,7 @@ impl EcdsaKeyPair {
         algorithm: &'static EcdsaSigningAlgorithm,
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
-        let pubkey = ec::public_key_from_evp_pkey(&evp_pkey, algorithm)?;
+        let pubkey = ec::signature::public_key_from_evp_pkey(&evp_pkey, algorithm)?;
 
         Ok(Self {
             algorithm,
