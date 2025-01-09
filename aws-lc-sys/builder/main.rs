@@ -597,6 +597,18 @@ fn main() {
             bindings_available = true;
         }
     } else if is_bindgen_required() {
+        let aws_lc_crypto_dir = Path::new(&manifest_dir).join("aws-lc").join("crypto");
+        if !aws_lc_crypto_dir.exists() {
+            emit_warning("######");
+            emit_warning("###### WARNING: MISSING GIT SUBMODULE ######");
+            emit_warning(&format!(
+                "  -- Did you initialize the repo's git submodules? Unable to find crypto directory: {:?}.",
+                &aws_lc_crypto_dir
+            ));
+            emit_warning("  -- run 'git submodule update --init --recursive' to initialize.");
+            emit_warning("######");
+            emit_warning("######");
+        }
         bindings_available = handle_bindgen(&manifest_dir, &prefix);
     } else {
         bindings_available = true;

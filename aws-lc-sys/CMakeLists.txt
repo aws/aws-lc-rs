@@ -19,7 +19,7 @@ endif()
 
 add_subdirectory(aws-lc aws-lc EXCLUDE_FROM_ALL)
 if(NOT EXISTS aws-lc/CMakeLists.txt)
-message(WARNING "###### WARNING: MISSING GIT SUBMODULE ###### Did you initialize the repo's git submodules? CMakeLists.txt not found.")
+message(WARNING "###### WARNING: MISSING GIT SUBMODULE ###### Did you initialize the repo's git submodules? CMakeLists.txt not found.\n -- run 'git submodule update --init --recursive' to initialize.")
 endif()
 
 if (BUILD_LIBSSL)

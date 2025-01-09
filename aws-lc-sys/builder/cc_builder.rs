@@ -274,10 +274,15 @@ impl CcBuilder {
             .join("compiler_features_tests")
             .join(format!("{basename}.c"));
         if !source_file.exists() {
+            emit_warning("######");
+            emit_warning("###### WARNING: MISSING GIT SUBMODULE ######");
             emit_warning(&format!(
-                "###### WARNING: MISSING GIT SUBMODULE ###### Did you initialize the repo's git submodules? Unable to find source file: {:?}.",
+                "  -- Did you initialize the repo's git submodules? Unable to find source file: {:?}.",
                 &source_file
             ));
+            emit_warning("  -- run 'git submodule update --init --recursive' to initialize.");
+            emit_warning("######");
+            emit_warning("######");
         }
         cc_build
             .file(source_file)
