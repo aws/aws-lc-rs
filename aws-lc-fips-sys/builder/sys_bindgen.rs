@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{get_rust_include_path, BindingOptions, COPYRIGHT};
+use crate::{get_rust_include_path, BindingOptions, COPYRIGHT, PRELUDE};
 use bindgen::callbacks::{ItemInfo, ParseCallbacks};
 use std::fmt::Debug;
 use std::path::Path;
@@ -31,29 +31,6 @@ impl ParseCallbacks for StripPrefixCallback {
     }
 }
 
-const PRELUDE: &str = r"
-#![allow(
-    clippy::cast_lossless,
-    clippy::cast_possible_truncation,
-    clippy::default_trait_access,
-    clippy::must_use_candidate,
-    clippy::not_unsafe_ptr_arg_deref,
-    clippy::ptr_as_ptr,
-    clippy::pub_underscore_fields,
-    clippy::semicolon_if_nothing_returned,
-    clippy::too_many_lines,
-    clippy::unreadable_literal,
-    clippy::used_underscore_binding,
-    clippy::useless_transmute,
-    dead_code,
-    improper_ctypes,
-    non_camel_case_types,
-    non_snake_case,
-    non_upper_case_globals,
-    unused_imports,
-)]
-";
-
 fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bindgen::Builder {
     let clang_args = crate::prepare_clang_args(manifest_dir, options);
 
@@ -62,7 +39,7 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bi
         .derive_debug(true)
         .derive_default(true)
         .derive_eq(true)
-        .allowlist_file(r".*(/|\\)openssl(/|\\)[^/\\]+\.h")
+        .allowlist_file(r".*(/|\\)openssl((/|\\)[^/\\]+)+\.h")
         .allowlist_file(r".*(/|\\)rust_wrapper\.h")
         .rustified_enum(r"point_conversion_form_t")
         .default_macro_constant_type(bindgen::MacroTypeVariation::Signed)

@@ -271,10 +271,28 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
         &BindingOptions {
             build_prefix: prefix.clone(),
             include_ssl: false,
-            ..Default::default()
+            disable_prelude: false,
         },
     )
-    .write_to_file(src_bindings_path.join(format!("{}.rs", target_platform_prefix("crypto"))))
+    .write_to_file(src_bindings_path)
+    .expect("write bindings");
+}
+
+#[allow(unused)]
+fn external_generate_src_bindings(
+    manifest_dir: &Path,
+    prefix: &Option<String>,
+    src_bindings_path: &Path,
+) {
+    invoke_external_bindgen(
+        manifest_dir,
+        &BindingOptions {
+            build_prefix: prefix.clone(),
+            include_ssl: false,
+            disable_prelude: false,
+        },
+        src_bindings_path,
+    )
     .expect("write bindings");
 }
 
@@ -356,7 +374,15 @@ fn initialize() {
         AWS_LC_FIPS_SYS_NO_ASM = env_var_to_bool("AWS_LC_FIPS_SYS_NO_ASM").unwrap_or(false);
     }
 
-    if !is_external_bindgen() && (is_pregenerating_bindings() || !has_bindgen_feature()) {
+    // The conditions below should prevent use of pregenerated bindings in all cases where the
+    // consumer either requires or is requesting bindings generation.
+    if (!is_no_prefix()
+        && !has_bindgen_feature()
+        && !is_external_bindgen()
+        && cfg!(not(feature = "ssl")))
+        || is_pregenerating_bindings()
+    {
+        // We only set the PREGENERATED flag when we know pregenerated bindings are available.
         let target = target();
         let supported_platform = match target.as_str() {
             "x86_64-unknown-linux-gnu"
@@ -479,12 +505,18 @@ fn main() {
     if is_pregenerating_bindings() {
         #[cfg(feature = "bindgen")]
         {
+            let src_bindings_path = Path::new(&manifest_dir)
+                .join("src")
+                .join(format!("{}.rs", target_platform_prefix("crypto")));
             emit_warning(&format!(
-                "Generating src bindings. Platform: '{}' Prefix: '{prefix:?}'",
-                target()
+                "Generating src bindings: {}",
+                &src_bindings_path.display()
             ));
-            let src_bindings_path = Path::new(&manifest_dir).join("src");
-            generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
+            if is_external_bindgen() {
+                external_generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
+            } else {
+                generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
+            }
             bindings_available = true;
         }
     } else if is_bindgen_required() {
@@ -493,13 +525,14 @@ fn main() {
         bindings_available = true;
     }
 
-    if !bindings_available && !cfg!(feature = "ssl") {
-        emit_warning(&format!(
-            "Generating bindings - external bindgen. Platform: {}",
-            target()
-        ));
+    if !bindings_available {
+        let options = BindingOptions {
+            build_prefix: prefix,
+            include_ssl: cfg!(feature = "ssl"),
+            disable_prelude: true,
+        };
         let gen_bindings_path = out_dir().join("bindings.rs");
-        let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
+        let result = invoke_external_bindgen(&manifest_dir, &options, &gen_bindings_path);
         match result {
             Ok(()) => {
                 emit_rustc_cfg("use_bindgen_generated");
@@ -628,30 +661,69 @@ fn verify_bindgen() -> Result<(), String> {
     Ok(())
 }
 
+const PRELUDE: &str = r"
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
+#![allow(
+    clippy::cast_lossless,
+    clippy::cast_possible_truncation,
+    clippy::default_trait_access,
+    clippy::must_use_candidate,
+    clippy::not_unsafe_ptr_arg_deref,
+    clippy::ptr_as_ptr,
+    clippy::pub_underscore_fields,
+    clippy::semicolon_if_nothing_returned,
+    clippy::too_many_lines,
+    clippy::unreadable_literal,
+    clippy::used_underscore_binding,
+    clippy::useless_transmute,
+    dead_code,
+    improper_ctypes,
+    non_camel_case_types,
+    non_snake_case,
+    non_upper_case_globals,
+    unused_imports,
+)]
+";
+
 fn invoke_external_bindgen(
     manifest_dir: &Path,
-    prefix: &Option<String>,
+    options: &BindingOptions,
     gen_bindings_path: &Path,
 ) -> Result<(), String> {
     verify_bindgen()?;
+    emit_warning(&format!(
+        "Generating bindings - external bindgen. Platform: '{}' Prefix: '{:?}'",
+        target(),
+        &options.build_prefix
+    ));
 
-    let options = BindingOptions {
-        // We collect the symbols w/o the prefix added
-        build_prefix: None,
-        include_ssl: false,
-        disable_prelude: true,
-    };
-
-    let clang_args = prepare_clang_args(manifest_dir, &options);
+    let mut clang_args = prepare_clang_args(
+        manifest_dir,
+        &BindingOptions {
+            // For external bindgen, we don't want the prefix headers to be included.
+            // The bindgen-cli will add prefixes to the symbols to form the correct link name.
+            build_prefix: None,
+            include_ssl: options.include_ssl,
+            disable_prelude: options.disable_prelude,
+        },
+    );
     let header = get_rust_include_path(manifest_dir)
         .join("rust_wrapper.h")
         .display()
         .to_string();
 
+    if options.include_ssl {
+        clang_args.extend([String::from("-DAWS_LC_RUST_INCLUDE_SSL")]);
+    }
+
     let sym_prefix: String;
     let mut bindgen_params = vec![];
-    if let Some(prefix_str) = prefix {
-        sym_prefix = if target_os().to_lowercase() == "macos" || target_os().to_lowercase() == "ios"
+    if let Some(prefix_str) = &options.build_prefix {
+        sym_prefix = if target_os().to_lowercase() == "macos"
+            || target_os().to_lowercase() == "ios"
+            || (target_os().to_lowercase() == "windows" && target_arch() == "x86")
         {
             format!("_{prefix_str}_")
         } else {
@@ -687,8 +759,11 @@ fn invoke_external_bindgen(
         gen_bindings_path.to_str().unwrap(),
         "--formatter",
         r"rustfmt",
-        "--",
     ]);
+    if !options.disable_prelude {
+        bindgen_params.extend(["--raw-line", PRELUDE]);
+    }
+    bindgen_params.push("--");
     clang_args
         .iter()
         .for_each(|x| bindgen_params.push(x.as_str()));
