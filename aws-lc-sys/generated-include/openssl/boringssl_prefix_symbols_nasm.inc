@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_24_1
+%define BORINGSSL_PREFIX aws_lc_0_25_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -1466,6 +1466,7 @@
 %xdefine _EXTENDED_KEY_USAGE_free _ %+ BORINGSSL_PREFIX %+ _EXTENDED_KEY_USAGE_free
 %xdefine _EXTENDED_KEY_USAGE_it _ %+ BORINGSSL_PREFIX %+ _EXTENDED_KEY_USAGE_it
 %xdefine _EXTENDED_KEY_USAGE_new _ %+ BORINGSSL_PREFIX %+ _EXTENDED_KEY_USAGE_new
+%xdefine _FIPS_is_entropy_cpu_jitter _ %+ BORINGSSL_PREFIX %+ _FIPS_is_entropy_cpu_jitter
 %xdefine _FIPS_mode _ %+ BORINGSSL_PREFIX %+ _FIPS_mode
 %xdefine _FIPS_mode_set _ %+ BORINGSSL_PREFIX %+ _FIPS_mode_set
 %xdefine _FIPS_read_counter _ %+ BORINGSSL_PREFIX %+ _FIPS_read_counter
@@ -1942,6 +1943,7 @@
 %xdefine _PKCS7_is_detached _ %+ BORINGSSL_PREFIX %+ _PKCS7_is_detached
 %xdefine _PKCS7_it _ %+ BORINGSSL_PREFIX %+ _PKCS7_it
 %xdefine _PKCS7_new _ %+ BORINGSSL_PREFIX %+ _PKCS7_new
+%xdefine _PKCS7_print_ctx _ %+ BORINGSSL_PREFIX %+ _PKCS7_print_ctx
 %xdefine _PKCS7_set_cipher _ %+ BORINGSSL_PREFIX %+ _PKCS7_set_cipher
 %xdefine _PKCS7_set_content _ %+ BORINGSSL_PREFIX %+ _PKCS7_set_content
 %xdefine _PKCS7_set_digest _ %+ BORINGSSL_PREFIX %+ _PKCS7_set_digest
@@ -5416,6 +5418,7 @@
 %xdefine EXTENDED_KEY_USAGE_free BORINGSSL_PREFIX %+ _EXTENDED_KEY_USAGE_free
 %xdefine EXTENDED_KEY_USAGE_it BORINGSSL_PREFIX %+ _EXTENDED_KEY_USAGE_it
 %xdefine EXTENDED_KEY_USAGE_new BORINGSSL_PREFIX %+ _EXTENDED_KEY_USAGE_new
+%xdefine FIPS_is_entropy_cpu_jitter BORINGSSL_PREFIX %+ _FIPS_is_entropy_cpu_jitter
 %xdefine FIPS_mode BORINGSSL_PREFIX %+ _FIPS_mode
 %xdefine FIPS_mode_set BORINGSSL_PREFIX %+ _FIPS_mode_set
 %xdefine FIPS_read_counter BORINGSSL_PREFIX %+ _FIPS_read_counter
@@ -5892,6 +5895,7 @@
 %xdefine PKCS7_is_detached BORINGSSL_PREFIX %+ _PKCS7_is_detached
 %xdefine PKCS7_it BORINGSSL_PREFIX %+ _PKCS7_it
 %xdefine PKCS7_new BORINGSSL_PREFIX %+ _PKCS7_new
+%xdefine PKCS7_print_ctx BORINGSSL_PREFIX %+ _PKCS7_print_ctx
 %xdefine PKCS7_set_cipher BORINGSSL_PREFIX %+ _PKCS7_set_cipher
 %xdefine PKCS7_set_content BORINGSSL_PREFIX %+ _PKCS7_set_content
 %xdefine PKCS7_set_digest BORINGSSL_PREFIX %+ _PKCS7_set_digest

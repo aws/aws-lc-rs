@@ -1433,6 +1433,7 @@ EVP_tls_cbc_remove_padding
 EXTENDED_KEY_USAGE_free
 EXTENDED_KEY_USAGE_it
 EXTENDED_KEY_USAGE_new
+FIPS_is_entropy_cpu_jitter
 FIPS_mode
 FIPS_mode_set
 FIPS_read_counter
@@ -1907,6 +1908,7 @@ PKCS7_get_signer_info
 PKCS7_is_detached
 PKCS7_it
 PKCS7_new
+PKCS7_print_ctx
 PKCS7_set_cipher
 PKCS7_set_content
 PKCS7_set_digest
