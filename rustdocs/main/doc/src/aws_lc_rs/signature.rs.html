@@ -819,13 +819,7 @@
 <a href="#818" id="818">818</a>
 <a href="#819" id="819">819</a>
 <a href="#820" id="820">820</a>
-<a href="#821" id="821">821</a>
-<a href="#822" id="822">822</a>
-<a href="#823" id="823">823</a>
-<a href="#824" id="824">824</a>
-<a href="#825" id="825">825</a>
-<a href="#826" id="826">826</a>
-<a href="#827" id="827">827</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2017 Brian Smith.
+<a href="#821" id="821">821</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2017 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
@@ -951,14 +945,8 @@
 //! };
 //!
 //! fn main() -&gt; Result&lt;(), aws_lc_rs::error::Unspecified&gt; {
-//!     // Generate a key pair in PKCS#8 (v1) format.
-//!     let rng = rand::SystemRandom::new();
-//!     let pkcs8_bytes = signature::Ed25519KeyPair::generate_pkcs8v1(&amp;rng)?;
-//!
-//!     // Normally the application would store the PKCS#8 file persistently. Later
-//!     // it would read the PKCS#8 file from persistent storage to use it.
-//!
-//!     let key_pair = signature::Ed25519KeyPair::from_pkcs8_maybe_unchecked(pkcs8_bytes.as_ref())?;
+//!     // Generate a new key pair for Ed25519.
+//!     let key_pair = signature::Ed25519KeyPair::generate()?;
 //!
 //!     // Sign the message "hello, world".
 //!     const MESSAGE: &amp;[u8] = b"hello, world";
