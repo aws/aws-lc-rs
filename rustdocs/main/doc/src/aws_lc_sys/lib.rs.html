@@ -90,7 +90,8 @@
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="attr">#![cfg_attr(not(clippy), allow(unexpected_cfgs))]
@@ -116,6 +117,7 @@
     };
 }
 
+<span class="macro">platform_binding!</span>(aarch64_linux_android);
 <span class="macro">platform_binding!</span>(aarch64_apple_darwin);
 <span class="macro">platform_binding!</span>(aarch64_pc_windows_msvc);
 <span class="macro">platform_binding!</span>(aarch64_unknown_linux_gnu);
