@@ -4,7 +4,7 @@
 use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, get_cflags, is_crt_static,
+    allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, get_crate_cflags, is_crt_static,
     is_no_asm, option_env, requested_c_std, target, target_arch, target_env, target_os,
     target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm, CStdRequested,
     OutputLibType,
@@ -67,27 +67,7 @@ impl CmakeBuilder {
         cmake::Config::new(&self.manifest_dir)
     }
 
-    #[allow(clippy::too_many_lines)]
-    fn prepare_cmake_build(&self) -> cmake::Config {
-        let mut cmake_cfg = self.get_cmake_config();
-
-        if OutputLibType::default() == OutputLibType::Dynamic {
-            cmake_cfg.define("BUILD_SHARED_LIBS", "1");
-        } else {
-            cmake_cfg.define("BUILD_SHARED_LIBS", "0");
-        }
-
-        let opt_level = cargo_env("OPT_LEVEL");
-        if opt_level.ne("0") {
-            if opt_level.eq("1") || opt_level.eq("2") {
-                cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
-            } else {
-                cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
-            }
-        } else {
-            cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
-        }
-
+    fn collect_compiler_cflags(&self) -> OsString {
         // Use the compiler options identified by CcBuilder
         let cc_builder = CcBuilder::new(
             self.manifest_dir.clone(),
@@ -115,12 +95,29 @@ impl CmakeBuilder {
             }
         }
 
-        if !get_cflags().is_empty() {
-            cflags.push(" ");
-            cflags.push(get_cflags());
+        cflags
+    }
+
+    #[allow(clippy::too_many_lines)]
+    fn prepare_cmake_build(&self) -> cmake::Config {
+        let mut cmake_cfg = self.get_cmake_config();
+
+        if OutputLibType::default() == OutputLibType::Dynamic {
+            cmake_cfg.define("BUILD_SHARED_LIBS", "1");
+        } else {
+            cmake_cfg.define("BUILD_SHARED_LIBS", "0");
         }
-        emit_warning(&format!("Setting CFLAGS: {cflags:?}"));
-        env::set_var("CFLAGS", cflags);
+
+        let opt_level = cargo_env("OPT_LEVEL");
+        if opt_level.ne("0") {
+            if opt_level.eq("1") || opt_level.eq("2") {
+                cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
+            } else {
+                cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
+            }
+        } else {
+            cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
+        }
 
         if let Some(prefix) = &self.build_prefix {
             cmake_cfg.define("BORINGSSL_PREFIX", format!("{prefix}_"));
@@ -168,16 +165,31 @@ impl CmakeBuilder {
             CStdRequested::None => {}
         }
 
+        if target_env() == "ohos" {
+            Self::configure_open_harmony(&mut cmake_cfg, get_crate_cflags());
+            return cmake_cfg;
+        }
+
+        let mut cflags = OsString::from(get_crate_cflags());
+
         // Allow environment to specify CMake toolchain.
-        if let Some(toolchain) = option_env("CMAKE_TOOLCHAIN_FILE").or(option_env(format!(
-            "CMAKE_TOOLCHAIN_FILE_{}",
-            target_underscored()
-        ))) {
+        let toolchain_var_name = format!("CMAKE_TOOLCHAIN_FILE_{}", target_underscored());
+        if let Some(toolchain) =
+            option_env(&toolchain_var_name).or(option_env("CMAKE_TOOLCHAIN_FILE"))
+        {
             emit_warning(&format!(
                 "CMAKE_TOOLCHAIN_FILE environment variable set: {toolchain}"
             ));
+            emit_warning(&format!("Setting CFLAGS: {cflags:?}"));
+            env::set_var("CFLAGS", cflags);
             return cmake_cfg;
         }
+        // We only consider compiler CFLAGS when no cmake toolchain is set
+        let compiler_cflags = self.collect_compiler_cflags();
+        cflags.push(" ");
+        cflags.push(&compiler_cflags);
+        emit_warning(&format!("Setting CFLAGS: {cflags:?}"));
+        env::set_var("CFLAGS", cflags);
 
         // See issue: https://github.com/aws/aws-lc-rs/issues/453
         if target_os() == "windows" {
@@ -209,10 +221,6 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphoneos");
             }
             cmake_cfg.define("CMAKE_THREAD_LIBS_INIT", "-lpthread");
-        }
-
-        if target_env() == "ohos" {
-            Self::configure_open_harmony(&mut cmake_cfg);
         }
 
         cmake_cfg
@@ -295,45 +303,65 @@ impl CmakeBuilder {
         }
     }
 
-    fn configure_open_harmony(cmake_cfg: &mut cmake::Config) {
-        const OHOS_NDK_HOME: &str = "OHOS_NDK_HOME";
-        if let Ok(ndk) = env::var(OHOS_NDK_HOME) {
-            cmake_cfg.define(
-                "CMAKE_TOOLCHAIN_FILE",
-                format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"),
-            );
-            let mut cflags = vec!["-Wno-unused-command-line-argument"];
-            let mut asmflags = vec![];
-            match target().as_str() {
-                "aarch64-unknown-linux-ohos" => {}
-                "armv7-unknown-linux-ohos" => {
-                    const ARM7_FLAGS: [&str; 6] = [
-                        "-march=armv7-a",
-                        "-mfloat-abi=softfp",
-                        "-mtune=generic-armv7-a",
-                        "-mthumb",
-                        "-mfpu=neon",
-                        "-DHAVE_NEON",
-                    ];
-                    cflags.extend(ARM7_FLAGS);
-                    asmflags.extend(ARM7_FLAGS);
-                }
-                "x86_64-unknown-linux-ohos" => {
-                    const X86_64_FLAGS: [&str; 3] = ["-msse4.1", "-DHAVE_NEON_X86", "-DHAVE_NEON"];
-                    cflags.extend(X86_64_FLAGS);
-                    asmflags.extend(X86_64_FLAGS);
-                }
-                ohos_target => {
-                    emit_warning(format!("Target: {ohos_target} is not support yet!").as_str());
-                }
+    fn configure_open_harmony(cmake_cfg: &mut cmake::Config, crate_cflags: &str) {
+        env::set_var("CFLAGS", crate_cflags);
+        let mut cflags = vec!["-Wno-unused-command-line-argument"];
+        let mut asmflags = vec![];
+
+        let toolchain_var_name = format!("CMAKE_TOOLCHAIN_FILE_{}", target_underscored());
+        // If a toolchain is not specified by the environment
+        if option_env(&toolchain_var_name)
+            .or(option_env("CMAKE_TOOLCHAIN_FILE"))
+            .is_none()
+        {
+            if let Ok(ndk) = env::var("OHOS_NDK_HOME") {
+                env::set_var(
+                    toolchain_var_name,
+                    format!("{ndk}/native/build/cmake/ohos.toolchain.cmake"),
+                );
+            } else if let Ok(sdk) = env::var("OHOS_SDK_NATIVE") {
+                env::set_var(
+                    toolchain_var_name,
+                    format!("{sdk}/build/cmake/ohos.toolchain.cmake"),
+                );
+            } else {
+                emit_warning(
+                    "Neither OHOS_NDK_HOME nor OHOS_SDK_NATIVE are set! No toolchain found.",
+                );
             }
-            cmake_cfg
-                .cflag(cflags.join(" ").as_str())
-                .cxxflag(cflags.join(" ").as_str())
-                .asmflag(asmflags.join(" ").as_str());
-        } else {
-            emit_warning(format!("{OHOS_NDK_HOME} not set!").as_str());
         }
+
+        match target().as_str() {
+            "aarch64-unknown-linux-ohos" => {
+                cmake_cfg.define("OHOS_ARCH", "arm64-v8a");
+            }
+            "armv7-unknown-linux-ohos" => {
+                const ARM7_FLAGS: [&str; 6] = [
+                    "-march=armv7-a",
+                    "-mfloat-abi=softfp",
+                    "-mtune=generic-armv7-a",
+                    "-mthumb",
+                    "-mfpu=neon",
+                    "-DHAVE_NEON",
+                ];
+                cflags.extend(ARM7_FLAGS);
+                asmflags.extend(ARM7_FLAGS);
+                cmake_cfg.define("OHOS_ARCH", "armeabi-v7a");
+            }
+            "x86_64-unknown-linux-ohos" => {
+                const X86_64_FLAGS: [&str; 3] = ["-msse4.1", "-DHAVE_NEON_X86", "-DHAVE_NEON"];
+                cflags.extend(X86_64_FLAGS);
+                asmflags.extend(X86_64_FLAGS);
+                cmake_cfg.define("OHOS_ARCH", "x86_64");
+            }
+            ohos_target => {
+                emit_warning(format!("Target: {ohos_target} is not support yet!").as_str());
+            }
+        }
+        cmake_cfg
+            .cflag(cflags.join(" ").as_str())
+            .cxxflag(cflags.join(" ").as_str())
+            .asmflag(asmflags.join(" ").as_str());
     }
 
     fn build_rust_wrapper(&self) -> PathBuf {

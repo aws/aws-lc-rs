@@ -14,9 +14,9 @@ mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
 use crate::{
-    cargo_env, emit_warning, env_var_to_bool, execute_command, get_cflags, is_no_asm, option_env,
-    out_dir, requested_c_std, target, target_arch, target_env, target_os, target_vendor,
-    CStdRequested, OutputLibType,
+    cargo_env, emit_warning, env_var_to_bool, execute_command, get_crate_cflags, is_no_asm,
+    option_env, out_dir, requested_c_std, target, target_arch, target_env, target_os,
+    target_vendor, CStdRequested, OutputLibType,
 };
 use std::path::PathBuf;
 
@@ -180,8 +180,8 @@ impl CcBuilder {
             }
         }
 
-        if !get_cflags().is_empty() {
-            let cflags = get_cflags();
+        if !get_crate_cflags().is_empty() {
+            let cflags = get_crate_cflags();
             emit_warning(&format!(
                 "AWS_LC_SYS_CFLAGS found. Setting CFLAGS: '{cflags}'"
             ));
