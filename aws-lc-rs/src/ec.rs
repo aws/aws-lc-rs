@@ -17,19 +17,20 @@ use aws_lc::EC_KEY_check_fips;
 use aws_lc::EC_KEY_check_key;
 use aws_lc::{
     d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, CBS_init,
-    ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name,
-    EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_private_key, EC_KEY_get0_public_key,
-    EC_KEY_new, EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul,
-    EC_POINT_new, EC_POINT_oct2point, EC_POINT_point2oct, EVP_PKEY_CTX_new_id,
-    EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY,
-    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new, EVP_parse_public_key, BIGNUM, CBS,
-    EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
+    ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_new, ECDSA_SIG_set0,
+    EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name, EC_KEY_get0_group,
+    EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
+    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, EC_POINT_oct2point,
+    EC_POINT_point2oct, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
+    EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
+    EVP_PKEY_new, EVP_parse_public_key, BIGNUM, CBS, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT,
+    EVP_PKEY, EVP_PKEY_EC,
 };
 
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
-use crate::signature::Signature;
+use crate::signature::{Signature, VerificationAlgorithm};
 
 pub(crate) mod key_pair;
 pub(crate) mod signature;
@@ -79,7 +80,7 @@ pub(crate) fn verify_evp_key_nid(
 }
 
 #[inline]
-fn validate_evp_key(
+pub(crate) fn validate_evp_key(
     evp_pkey: &ConstPointer<EVP_PKEY>,
     expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
@@ -171,25 +172,9 @@ pub(crate) fn marshal_ec_public_key_to_buffer(
     Ok(out_len)
 }
 
-pub(crate) fn try_parse_public_key_bytes(
+pub(crate) fn try_parse_subject_public_key_info_bytes(
     key_bytes: &[u8],
-    expected_curve_nid: i32,
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    try_parse_subject_public_key_info_bytes(key_bytes)
-        .and_then(|key| {
-            validate_evp_key(&key.as_const(), expected_curve_nid)
-                .map(|()| key)
-                .map_err(|_| Unspecified)
-        })
-        .or(try_parse_public_key_raw_bytes(
-            key_bytes,
-            expected_curve_nid,
-        ))
-}
-
-fn try_parse_subject_public_key_info_bytes(
-    key_bytes: &[u8],
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     // Try to parse as SubjectPublicKeyInfo first
     let mut cbs = {
         let mut cbs = MaybeUninit::<CBS>::uninit();
@@ -201,10 +186,10 @@ fn try_parse_subject_public_key_info_bytes(
     Ok(LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })?)
 }
 
-fn try_parse_public_key_raw_bytes(
+pub(crate) fn try_parse_public_key_raw_bytes(
     key_bytes: &[u8],
     expected_curve_nid: i32,
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     let ec_group = ec_group_from_nid(expected_curve_nid)?;
     let pub_key_point = ec_point_from_bytes(&ec_group, key_bytes)?;
     evp_pkey_from_public_point(&ec_group, &pub_key_point)
@@ -214,20 +199,20 @@ fn try_parse_public_key_raw_bytes(
 pub(crate) fn evp_pkey_from_public_point(
     ec_group: &LcPtr<EC_GROUP>,
     public_ec_point: &LcPtr<EC_POINT>,
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     let nid = unsafe { EC_GROUP_get_curve_name(*ec_group.as_const()) };
     let ec_key = DetachableLcPtr::new(unsafe { EC_KEY_new() })?;
     if 1 != unsafe { EC_KEY_set_group(*ec_key, *ec_group.as_const()) } {
-        return Err(Unspecified);
+        return Err(KeyRejected::unspecified());
     }
     if 1 != unsafe { EC_KEY_set_public_key(*ec_key, *public_ec_point.as_const()) } {
-        return Err(Unspecified);
+        return Err(KeyRejected::unspecified());
     }
 
     let mut pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
 
     if 1 != unsafe { EVP_PKEY_assign_EC_KEY(*pkey.as_mut(), *ec_key) } {
-        return Err(Unspecified);
+        return Err(KeyRejected::unspecified());
     }
 
     ec_key.detach();
@@ -410,6 +395,29 @@ fn ecdsa_asn1_to_fixed(alg_id: &'static AlgorithmID, sig: &[u8]) -> Result<Signa
         slice[s_start..s_end].copy_from_slice(s_buffer.as_slice());
         2 * expected_number_size
     }))
+}
+
+#[inline]
+unsafe fn ecdsa_sig_from_fixed(
+    alg_id: &'static AlgorithmID,
+    signature: &[u8],
+) -> Result<LcPtr<ECDSA_SIG>, ()> {
+    let num_size_bytes = alg_id.private_key_size();
+    if signature.len() != 2 * num_size_bytes {
+        return Err(());
+    }
+    let mut r_bn = DetachableLcPtr::<BIGNUM>::try_from(&signature[..num_size_bytes])?;
+    let mut s_bn = DetachableLcPtr::<BIGNUM>::try_from(&signature[num_size_bytes..])?;
+
+    let mut ecdsa_sig = LcPtr::new(ECDSA_SIG_new())?;
+
+    if 1 != ECDSA_SIG_set0(*ecdsa_sig.as_mut(), *r_bn.as_mut(), *s_bn.as_mut()) {
+        return Err(());
+    }
+    r_bn.detach();
+    s_bn.detach();
+
+    Ok(ecdsa_sig)
 }
 
 #[inline]

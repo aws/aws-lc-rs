@@ -3,6 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::ec::signature::public_key_from_evp_pkey;
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::mem::MaybeUninit;
@@ -61,7 +62,7 @@ impl EcdsaKeyPair {
         algorithm: &'static EcdsaSigningAlgorithm,
         evp_pkey: LcPtr<EVP_PKEY>,
     ) -> Result<Self, ()> {
-        let pubkey = ec::signature::public_key_from_evp_pkey(&evp_pkey, algorithm)?;
+        let pubkey = public_key_from_evp_pkey(&evp_pkey, algorithm)?;
 
         Ok(Self {
             algorithm,

@@ -51,6 +51,7 @@
 //! ```
 mod ephemeral;
 
+pub use ec::signature::ParsedPublicKeyFormat;
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
 use crate::cbb::LcCBB;
@@ -60,12 +61,11 @@ use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
 use crate::{ec, hex};
 use aws_lc::{
-    CBS_init, EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_derive, EVP_PKEY_derive_init,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_derive, EVP_PKEY_derive_init,
     EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
-    EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
-    EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_marshal_public_key,
-    EVP_parse_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, CBS,
-    EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+    EVP_PKEY_get_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
+    EVP_PKEY_new_raw_private_key, EVP_marshal_public_key, NID_X9_62_prime256v1, NID_secp256k1,
+    NID_secp384r1, NID_secp521r1, BIGNUM, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
 
 use crate::encoding::{
@@ -75,7 +75,6 @@ use crate::encoding::{
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::ptr::null_mut;
-use std::mem::MaybeUninit;
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq)]
@@ -683,6 +682,47 @@ pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
     bytes: B,
 }
 
+/// A parsed public key for key agreement.
+#[derive(Debug)]
+pub struct ParsedPublicKey(ec::signature::ParsedPublicKey);
+
+impl ParsedPublicKey {
+    /// The format of the public key.
+    #[must_use]
+    pub fn format(&self) -> ParsedPublicKeyFormat {
+        self.0.format()
+    }
+    /// The algorithm of the public key.
+    #[must_use]
+    #[allow(non_upper_case_globals)]
+    pub fn alg(&self) -> &'static Algorithm {
+        match self.0.nid() {
+            NID_X25519 => &X25519,
+            NID_secp256k1 => &ECDH_P256,
+            NID_secp384r1 => &ECDH_P384,
+            NID_secp521r1 => &ECDH_P521,
+            _ => unreachable!("Unreachable agreement algorithm nid: {}", self.0.nid()),
+        }
+    }
+    #[allow(dead_code)]
+    fn key(&self) -> &LcPtr<EVP_PKEY> {
+        self.0.key()
+    }
+    fn key_mut(&mut self) -> &mut LcPtr<EVP_PKEY> {
+        self.0.key_mut()
+    }
+}
+
+impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
+    #[allow(dead_code)]
+    fn parse(&self) -> Result<ParsedPublicKey, KeyRejected> {
+        Ok(ParsedPublicKey(ec::signature::ParsedPublicKey::new(
+            &self.bytes,
+            self.alg.id.nid(),
+        )?))
+    }
+}
+
 impl<B: Copy + AsRef<[u8]>> Copy for UnparsedPublicKey<B> {}
 
 impl<B: Debug + AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
@@ -715,6 +755,20 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     }
 }
 
+impl<B: AsRef<[u8]>> TryFrom<&UnparsedPublicKey<B>> for ParsedPublicKey {
+    type Error = KeyRejected;
+    fn try_from(upk: &UnparsedPublicKey<B>) -> Result<Self, Self::Error> {
+        upk.parse()
+    }
+}
+
+impl<B: AsRef<[u8]>> TryFrom<UnparsedPublicKey<B>> for ParsedPublicKey {
+    type Error = KeyRejected;
+    fn try_from(upk: UnparsedPublicKey<B>) -> Result<Self, Self::Error> {
+        upk.parse()
+    }
+}
+
 /// Performs a key agreement with a private key and the given public key.
 ///
 /// `my_private_key` is the private key to use. Only a reference to the key
@@ -744,37 +798,34 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// `error_value` on internal failure.
 #[inline]
 #[allow(clippy::missing_panics_doc)]
-pub fn agree<B: AsRef<[u8]>, F, R, E>(
+pub fn agree<B: TryInto<ParsedPublicKey> + Debug, F, R, E>(
     my_private_key: &PrivateKey,
-    peer_public_key: &UnparsedPublicKey<B>,
+    peer_public_key: B,
     error_value: E,
     kdf: F,
 ) -> Result<R, E>
 where
     F: FnOnce(&[u8]) -> Result<R, E>,
 {
-    let expected_alg = my_private_key.algorithm();
-    let expected_nid = expected_alg.id.nid();
+    let peer_pub_key = peer_public_key.try_into();
+    if let Ok(mut peer_pub_key) = peer_pub_key {
+        let mut buffer = [0u8; MAX_AGREEMENT_SECRET_LEN];
 
-    if peer_public_key.alg != expected_alg {
-        return Err(error_value);
+        let secret: &[u8] = match &my_private_key.inner_key {
+            KeyInner::X25519(priv_key) => {
+                x25519_diffie_hellman(&mut buffer, priv_key, peer_pub_key.key_mut())
+                    .or(Err(error_value))?
+            }
+            KeyInner::ECDH_P256(priv_key)
+            | KeyInner::ECDH_P384(priv_key)
+            | KeyInner::ECDH_P521(priv_key) => {
+                ec_key_ecdh(&mut buffer, priv_key, peer_pub_key.key_mut()).or(Err(error_value))?
+            }
+        };
+        kdf(secret)
+    } else {
+        Err(error_value)
     }
-
-    let peer_pub_bytes = peer_public_key.bytes.as_ref();
-
-    let mut buffer = [0u8; MAX_AGREEMENT_SECRET_LEN];
-
-    let secret: &[u8] = match &my_private_key.inner_key {
-        KeyInner::X25519(priv_key) => {
-            x25519_diffie_hellman(&mut buffer, priv_key, peer_pub_bytes).or(Err(error_value))?
-        }
-        KeyInner::ECDH_P256(priv_key)
-        | KeyInner::ECDH_P384(priv_key)
-        | KeyInner::ECDH_P521(priv_key) => {
-            ec_key_ecdh(&mut buffer, priv_key, peer_pub_bytes, expected_nid).or(Err(error_value))?
-        }
-    };
-    kdf(secret)
 }
 
 // Current max secret length is P-521's.
@@ -785,18 +836,15 @@ const MAX_AGREEMENT_SECRET_LEN: usize = AlgorithmID::ECDH_P521.private_key_len()
 fn ec_key_ecdh<'a>(
     buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
     priv_key: &LcPtr<EVP_PKEY>,
-    peer_pub_key_bytes: &[u8],
-    nid: i32,
+    peer_pub_key: &mut LcPtr<EVP_PKEY>,
 ) -> Result<&'a [u8], ()> {
-    let mut pub_key = ec::try_parse_public_key_bytes(peer_pub_key_bytes, nid)?;
-
     let mut pkey_ctx = priv_key.create_EVP_PKEY_CTX()?;
 
     if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx.as_mut()) } {
         return Err(());
     };
 
-    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx.as_mut(), *pub_key.as_mut()) } {
+    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx.as_mut(), *peer_pub_key.as_mut()) } {
         return Err(());
     }
 
@@ -819,7 +867,7 @@ fn ec_key_ecdh<'a>(
 fn x25519_diffie_hellman<'a>(
     buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
     priv_key: &LcPtr<EVP_PKEY>,
-    peer_pub_key: &[u8],
+    peer_pub_key: &mut LcPtr<EVP_PKEY>,
 ) -> Result<&'a [u8], ()> {
     let mut pkey_ctx = priv_key.create_EVP_PKEY_CTX()?;
 
@@ -827,9 +875,7 @@ fn x25519_diffie_hellman<'a>(
         return Err(());
     };
 
-    let mut pub_key = try_parse_x25519_public_key_bytes(peer_pub_key)?;
-
-    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx.as_mut(), *pub_key.as_mut()) } {
+    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx.as_mut(), *peer_pub_key.as_mut()) } {
         return Err(());
     }
 
@@ -846,53 +892,13 @@ fn x25519_diffie_hellman<'a>(
     Ok(&buffer[0..AlgorithmID::X25519.pub_key_len()])
 }
 
-pub(crate) fn try_parse_x25519_public_key_bytes(
-    key_bytes: &[u8],
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    try_parse_x25519_subject_public_key_info_bytes(key_bytes)
-        .or(try_parse_x25519_public_key_raw_bytes(key_bytes))
-}
-
-fn try_parse_x25519_public_key_raw_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let expected_pub_key_len = X25519.id.pub_key_len();
-    if key_bytes.len() != expected_pub_key_len {
-        return Err(Unspecified);
-    }
-
-    Ok(LcPtr::new(unsafe {
-        EVP_PKEY_new_raw_public_key(
-            EVP_PKEY_X25519,
-            null_mut(),
-            key_bytes.as_ptr(),
-            key_bytes.len(),
-        )
-    })?)
-}
-
-fn try_parse_x25519_subject_public_key_info_bytes(
-    key_bytes: &[u8],
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    // Try to parse as SubjectPublicKeyInfo first
-    let mut cbs = {
-        let mut cbs = MaybeUninit::<CBS>::uninit();
-        unsafe {
-            CBS_init(cbs.as_mut_ptr(), key_bytes.as_ptr(), key_bytes.len());
-            cbs.assume_init()
-        }
-    };
-    let evp_pkey = LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })?;
-    if EVP_PKEY_X25519 != unsafe { EVP_PKEY_id(*evp_pkey.as_const()) } {
-        return Err(Unspecified);
-    }
-    Ok(evp_pkey)
-}
-
 #[cfg(test)]
 mod tests {
     use crate::agreement::{
-        agree, Algorithm, PrivateKey, PublicKey, UnparsedPublicKey, ECDH_P256, ECDH_P384,
-        ECDH_P521, X25519,
+        agree, Algorithm, ParsedPublicKey, PrivateKey, PublicKey, UnparsedPublicKey, ECDH_P256,
+        ECDH_P384, ECDH_P521, X25519,
     };
+    use crate::ec::signature::ParsedPublicKeyFormat;
     use crate::encoding::{
         AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
         EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
@@ -961,15 +967,10 @@ mod tests {
     #[test]
     fn test_agreement_invalid_keys() {
         fn test_with_key(alg: &'static Algorithm, my_private_key: &PrivateKey, test_key: &[u8]) {
+            let public_key = &UnparsedPublicKey::new(alg, test_key);
             assert!(PrivateKey::from_private_key(alg, test_key).is_err());
             assert!(PrivateKey::from_private_key_der(alg, test_key).is_err());
-            assert!(agree(
-                my_private_key,
-                &UnparsedPublicKey::new(alg, test_key),
-                (),
-                |_| Ok(())
-            )
-            .is_err());
+            assert!(agree(my_private_key, public_key, (), |_| Ok(())).is_err());
         }
 
         let alg_variants: [&'static Algorithm; 4] = [&X25519, &ECDH_P256, &ECDH_P384, &ECDH_P521];
@@ -1345,15 +1346,45 @@ mod tests {
 
         if verify_ec_raw_traits {
             let raw = AsBigEndian::<EcPublicKeyCompressedBin>::as_be_bytes(public_key).unwrap();
+            public_key_formats_verifier(
+                public_key.algorithm(),
+                raw.as_ref(),
+                ParsedPublicKeyFormat::Compressed,
+            );
             public_keys.push(raw.as_ref().into());
             let raw = AsBigEndian::<EcPublicKeyUncompressedBin>::as_be_bytes(public_key).unwrap();
+            public_key_formats_verifier(
+                public_key.algorithm(),
+                raw.as_ref(),
+                ParsedPublicKeyFormat::Uncompressed,
+            );
             public_keys.push(raw.as_ref().into());
         }
 
         let peer_x509 = AsDer::<PublicKeyX509Der>::as_der(public_key).unwrap();
+        public_key_formats_verifier(
+            public_key.algorithm(),
+            peer_x509.as_ref(),
+            ParsedPublicKeyFormat::X509,
+        );
         public_keys.push(peer_x509.as_ref().into());
 
         public_keys
+    }
+
+    fn public_key_formats_verifier<B: AsRef<[u8]>>(
+        algorith: &'static Algorithm,
+        pub_key_bytes: B,
+        expected_format: ParsedPublicKeyFormat,
+    ) {
+        let upk = UnparsedPublicKey::new(algorith, pub_key_bytes);
+        let parsed_public_key: ParsedPublicKey = upk.try_into().unwrap();
+        assert_eq!(
+            parsed_public_key.format(),
+            expected_format,
+            "Expected: {expected_format:?} Actual: {:?}",
+            parsed_public_key.format()
+        );
     }
 
     #[test]
