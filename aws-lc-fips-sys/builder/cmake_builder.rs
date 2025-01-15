@@ -60,6 +60,13 @@ fn find_cmake_command() -> Option<OsString> {
     }
 }
 
+fn has_target_cpu_optimization() -> bool {
+    matches!(
+        target_arch().as_str(),
+        "x86_64" | "x86" | "aarch64" | "arm" | "powerpc64"
+    )
+}
+
 impl CmakeBuilder {
     pub(crate) fn new(
         manifest_dir: PathBuf,
@@ -166,6 +173,14 @@ impl CmakeBuilder {
             } else {
                 panic!("AWS_LC_SYS_NO_ASM only allowed for debug builds!")
             }
+        } else if !has_target_cpu_optimization() {
+            emit_warning(&format!(
+                "Assembly optimizations not available for target arch: {}.",
+                target_arch()
+            ));
+            // TODO: This should not be needed once resolved upstream
+            // See: https://github.com/aws/aws-lc-rs/issues/655
+            cmake_cfg.define("OPENSSL_NO_ASM", "1");
         }
 
         if cfg!(feature = "asan") {
