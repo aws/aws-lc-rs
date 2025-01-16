@@ -92,7 +92,13 @@
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="attr">#![cfg_attr(not(clippy), allow(unexpected_cfgs))]
@@ -176,6 +182,12 @@
 #[must_use]
 </span><span class="kw">pub fn </span>ERR_GET_FUNC(packed_error: u32) -&gt; i32 {
     <span class="kw">unsafe </span>{ ERR_GET_FUNC_RUST(packed_error) }
+}
+
+<span class="attr">#[allow(non_snake_case)]
+#[must_use]
+</span><span class="kw">pub fn </span>CFG_CPU_JITTER_ENTROPY() -&gt; bool {
+    <span class="macro">cfg!</span>(cpu_jitter_entropy)
 }
 
 <span class="attr">#[allow(non_snake_case, clippy::not_unsafe_ptr_arg_deref)]
