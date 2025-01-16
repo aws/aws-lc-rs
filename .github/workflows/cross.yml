@@ -297,3 +297,18 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --assume-yes mingw-w64
       - name: Run cargo test
         run: cargo build -p aws-lc-rs --features prebuilt-nasm --target x86_64-pc-windows-gnu
+  open-harmony:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Build Docker Image
+        working-directory: .github/docker_images/ohos-5.0.0
+        run: |
+          ./build_image.sh
+      - name: Build
+        run: |
+          docker run -v "${{ github.workspace }}:/aws_lc_rs" ohos:5.0.0
