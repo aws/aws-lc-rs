@@ -360,7 +360,13 @@ impl Ed25519KeyPair {
 
     /// Constructs an Ed25519 key pair from the private key seed `seed`.
     ///
-    /// It is recommended to use `Ed25519KeyPair::from_pkcs8()` instead.
+    /// It is recommended to use `Ed25519KeyPair::from_pkcs8()` instead. If the public key is
+    /// available, prefer to use `Ed25519KeyPair::from_seed_and_public_key()` as it will verify
+    /// the validity of the key pair.
+    ///
+    /// CAUTION: Both an Ed25519 seed and its public key are 32-bytes. If the bytes of a public key
+    /// are provided this function will create an (effectively) invalid `Ed25519KeyPair`. This
+    /// problem is undetectable by the API.
     ///
     /// # Errors
     /// `error::KeyRejected` if parse error, or if key is otherwise unacceptable.

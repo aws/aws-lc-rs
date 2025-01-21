@@ -103,6 +103,12 @@ fn test_ed25519_from_seed_and_public_key_misuse() {
 
     // Swapped public and private key.
     assert!(Ed25519KeyPair::from_seed_and_public_key(PUBLIC_KEY, PRIVATE_KEY).is_err());
+
+    // From a private seed
+    assert!(Ed25519KeyPair::from_seed_unchecked(PRIVATE_KEY).is_ok());
+
+    // From a truncated private seed
+    assert!(Ed25519KeyPair::from_seed_unchecked(PRIVATE_KEY).is_ok());
 }
 
 #[test]
@@ -236,4 +242,9 @@ fn test_seed() {
     let key_pair_copy_doc = key_pair_copy.to_pkcs8().unwrap();
 
     assert_eq!(key_pair_doc.as_ref(), key_pair_copy_doc.as_ref());
+
+    let key_pair_seed_copy = Ed25519KeyPair::from_seed_unchecked(seed_buffer.as_ref()).unwrap();
+    let key_pair_seed_copy_doc = key_pair_seed_copy.to_pkcs8().unwrap();
+
+    assert_eq!(key_pair_doc.as_ref(), key_pair_seed_copy_doc.as_ref());
 }
