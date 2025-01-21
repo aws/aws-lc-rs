@@ -38,6 +38,10 @@ fn test_signature_ed25519() {
             let actual_sig = key_pair.sign(&msg);
             assert_eq!(&expected_sig[..], actual_sig.as_ref());
 
+            let key_pair_seed = Ed25519KeyPair::from_private_seed(&seed).unwrap();
+            let actual_sig_seed = key_pair_seed.sign(&msg);
+            assert_eq!(&expected_sig[..], actual_sig_seed.as_ref());
+
             // Test Signature verification.
             test_signature_verification(&public_key, &msg, &expected_sig, Ok(()));
 
@@ -99,6 +103,12 @@ fn test_ed25519_from_seed_and_public_key_misuse() {
 
     // Swapped public and private key.
     assert!(Ed25519KeyPair::from_seed_and_public_key(PUBLIC_KEY, PRIVATE_KEY).is_err());
+
+    // From a private seed
+    assert!(Ed25519KeyPair::from_private_seed(PRIVATE_KEY).is_ok());
+
+    // Truncated private seed
+    assert!(Ed25519KeyPair::from_private_seed(&PRIVATE_KEY[0..31]).is_err());
 }
 
 #[test]
@@ -232,4 +242,9 @@ fn test_seed() {
     let key_pair_copy_doc = key_pair_copy.to_pkcs8().unwrap();
 
     assert_eq!(key_pair_doc.as_ref(), key_pair_copy_doc.as_ref());
+
+    let key_pair_seed_copy = Ed25519KeyPair::from_private_seed(seed_buffer.as_ref()).unwrap();
+    let key_pair_seed_copy_doc = key_pair_seed_copy.to_pkcs8().unwrap();
+
+    assert_eq!(key_pair_doc.as_ref(), key_pair_seed_copy_doc.as_ref());
 }

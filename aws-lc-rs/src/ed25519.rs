@@ -384,6 +384,49 @@ impl Ed25519KeyPair {
         })
     }
 
+    /// Constructs an Ed25519 key pair from the private key seed `seed`.
+    ///
+    /// It is recommended to use `Ed25519KeyPair::from_pkcs8()` instead. If the public key is
+    /// available, the prefer to use `Ed25519KeyPair::from_seed_and_public_key()` as it will verify
+    /// the validity of the pair.
+    ///
+    /// CAUTION: Both an Ed25519 seed and its public key are 32-bytes. If the bytes of a public key
+    /// are provided this function will create an invalid `Ed25519KeyPair`. This problem is
+    /// undetectable by the API.
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if parse error, or if key is otherwise unacceptable.
+    pub fn from_private_seed(seed: &[u8]) -> Result<Self, KeyRejected> {
+        if seed.len() < ED25519_SEED_LEN {
+            return Err(KeyRejected::inconsistent_components());
+        }
+
+        let evp_pkey = LcPtr::new(unsafe {
+            EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, null_mut(), seed.as_ptr(), seed.len())
+        })?;
+
+        let mut derived_public_key = [0u8; ED25519_PUBLIC_KEY_LEN];
+        let mut out_len: usize = derived_public_key.len();
+        if 1 != unsafe {
+            EVP_PKEY_get_raw_public_key(
+                *evp_pkey.as_const(),
+                derived_public_key.as_mut_ptr().cast(),
+                &mut out_len,
+            )
+        } {
+            return Err(KeyRejected::unspecified());
+        }
+        debug_assert_eq!(derived_public_key.len(), out_len);
+
+        Ok(Self {
+            public_key: PublicKey {
+                public_key_bytes: derived_public_key,
+                evp_pkey: evp_pkey.clone(),
+            },
+            evp_pkey,
+        })
+    }
+
     /// Constructs an Ed25519 key pair by parsing an unencrypted PKCS#8 v1 or v2
     /// Ed25519 private key.
     ///
