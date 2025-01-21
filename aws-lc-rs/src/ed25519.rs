@@ -351,6 +351,26 @@ impl Ed25519KeyPair {
     /// # Errors
     /// `error::KeyRejected` if parse error, or if key is otherwise unacceptable.
     pub fn from_seed_and_public_key(seed: &[u8], public_key: &[u8]) -> Result<Self, KeyRejected> {
+        let this = Self::from_seed_unchecked(seed)?;
+
+        constant_time::verify_slices_are_equal(public_key, &this.public_key.public_key_bytes)
+            .map_err(|_| KeyRejected::inconsistent_components())?;
+        Ok(this)
+    }
+
+    /// Constructs an Ed25519 key pair from the private key seed `seed`.
+    ///
+    /// It is recommended to use `Ed25519KeyPair::from_pkcs8()` instead. If the public key is
+    /// available, prefer to use `Ed25519KeyPair::from_seed_and_public_key()` as it will verify
+    /// the validity of the key pair.
+    ///
+    /// CAUTION: Both an Ed25519 seed and its public key are 32-bytes. If the bytes of a public key
+    /// are provided this function will create an (effectively) invalid `Ed25519KeyPair`. This
+    /// problem is undetectable by the API.
+    ///
+    /// # Errors
+    /// `error::KeyRejected` if parse error, or if key is otherwise unacceptable.
+    pub fn from_seed_unchecked(seed: &[u8]) -> Result<Self, KeyRejected> {
         if seed.len() < ED25519_SEED_LEN {
             return Err(KeyRejected::inconsistent_components());
         }
@@ -371,9 +391,6 @@ impl Ed25519KeyPair {
             return Err(KeyRejected::unspecified());
         }
         debug_assert_eq!(derived_public_key.len(), out_len);
-
-        constant_time::verify_slices_are_equal(public_key, &derived_public_key)
-            .map_err(|_| KeyRejected::inconsistent_components())?;
 
         Ok(Self {
             public_key: PublicKey {
