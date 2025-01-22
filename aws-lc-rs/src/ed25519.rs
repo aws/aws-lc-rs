@@ -293,7 +293,9 @@ impl Ed25519KeyPair {
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     pub fn generate_pkcs8(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
         let evp_pkey = generate_key()?;
-        Ok(Document::new(evp_pkey.marshall_private_key(Version::V2)?))
+        Ok(Document::new(
+            evp_pkey.marshall_rfc5208_private_key(Version::V2)?,
+        ))
     }
 
     /// Serializes this `Ed25519KeyPair` into a PKCS#8 v2 document.
@@ -303,7 +305,7 @@ impl Ed25519KeyPair {
     ///
     pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
         Ok(Document::new(
-            self.evp_pkey.marshall_private_key(Version::V2)?,
+            self.evp_pkey.marshall_rfc5208_private_key(Version::V2)?,
         ))
     }
 
@@ -323,7 +325,9 @@ impl Ed25519KeyPair {
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     pub fn generate_pkcs8v1(_rng: &dyn SecureRandom) -> Result<Document, Unspecified> {
         let evp_pkey = generate_key()?;
-        Ok(Document::new(evp_pkey.marshall_private_key(Version::V1)?))
+        Ok(Document::new(
+            evp_pkey.marshall_rfc5208_private_key(Version::V1)?,
+        ))
     }
 
     /// Serializes this `Ed25519KeyPair` into a PKCS#8 v1 document.
@@ -333,7 +337,7 @@ impl Ed25519KeyPair {
     ///
     pub fn to_pkcs8v1(&self) -> Result<Document, Unspecified> {
         Ok(Document::new(
-            self.evp_pkey.marshall_private_key(Version::V1)?,
+            self.evp_pkey.marshall_rfc5208_private_key(Version::V1)?,
         ))
     }
 
@@ -440,7 +444,7 @@ impl Ed25519KeyPair {
     }
 
     fn parse_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        let evp_pkey = LcPtr::<EVP_PKEY>::try_from(pkcs8)?;
+        let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8)?;
 
         evp_pkey.validate_as_ed25519()?;
 
@@ -547,7 +551,7 @@ impl AsDer<Pkcs8V1Der<'static>> for Ed25519KeyPair {
     /// `error::Unspecified` on internal error.
     fn as_der(&self) -> Result<Pkcs8V1Der<'static>, crate::error::Unspecified> {
         Ok(Pkcs8V1Der::new(
-            self.evp_pkey.marshall_private_key(Version::V1)?.into_vec(),
+            self.evp_pkey.marshall_rfc5208_private_key(Version::V1)?,
         ))
     }
 }
@@ -559,7 +563,7 @@ impl AsDer<Pkcs8V2Der<'static>> for Ed25519KeyPair {
     /// `error::Unspecified` on internal error.
     fn as_der(&self) -> Result<Pkcs8V2Der<'static>, crate::error::Unspecified> {
         Ok(Pkcs8V2Der::new(
-            self.evp_pkey.marshall_private_key(Version::V2)?.into_vec(),
+            self.evp_pkey.marshall_rfc5208_private_key(Version::V2)?,
         ))
     }
 }

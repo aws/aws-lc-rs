@@ -92,7 +92,7 @@ impl EcdsaKeyPair {
         pkcs8: &[u8],
     ) -> Result<Self, KeyRejected> {
         // Includes a call to `EC_KEY_check_key`
-        let evp_pkey = LcPtr::<EVP_PKEY>::try_from(pkcs8)?;
+        let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8)?;
 
         #[cfg(not(feature = "fips"))]
         verify_evp_key_nid(&evp_pkey.as_const(), alg.id.nid())?;
@@ -128,7 +128,7 @@ impl EcdsaKeyPair {
     ///
     pub fn to_pkcs8v1(&self) -> Result<Document, Unspecified> {
         Ok(Document::new(
-            self.evp_pkey.marshall_private_key(Version::V1)?,
+            self.evp_pkey.marshall_rfc5208_private_key(Version::V1)?,
         ))
     }
 

@@ -4,12 +4,18 @@
 pub(super) mod oaep;
 pub(super) mod pkcs1;
 
-use super::key::{generate_rsa_key, is_rsa_key, key_size_bits, key_size_bytes};
-use super::{encoding, KeySize};
+use super::{
+    encoding,
+    key::{generate_rsa_key, is_rsa_key, key_size_bits, key_size_bytes},
+    KeySize,
+};
+use crate::pkcs8::Version;
+use crate::{
+    encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
+    error::{KeyRejected, Unspecified},
+    ptr::LcPtr,
+};
 use crate::aws_lc::EVP_PKEY;
-use crate::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
-use crate::error::{KeyRejected, Unspecified};
-use crate::ptr::LcPtr;
 use core::fmt::Debug;
 
 /// RSA Encryption Algorithm Identifier
@@ -86,7 +92,8 @@ impl PrivateDecryptingKey {
     /// # Errors
     /// * `Unspecified` for any error that occurs during deserialization of this key from PKCS#8.
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        let key = encoding::pkcs8::decode_der(pkcs8)?;
+        let key = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8)
+            .map_err(|_| KeyRejected::invalid_encoding())?;
         Ok(Self::new(key)?)
     }
 
@@ -127,7 +134,9 @@ impl Debug for PrivateDecryptingKey {
 
 impl AsDer<Pkcs8V1Der<'static>> for PrivateDecryptingKey {
     fn as_der(&self) -> Result<Pkcs8V1Der<'static>, Unspecified> {
-        Ok(Pkcs8V1Der::new(encoding::pkcs8::encode_v1_der(&self.0)?))
+        Ok(Pkcs8V1Der::new(
+            self.0.marshall_rfc5208_private_key(Version::V1)?,
+        ))
     }
 }
 

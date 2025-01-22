@@ -3,12 +3,11 @@
 
 use crate::aws_lc::{
     EVP_PKEY_CTX_new, EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id,
-    EVP_PKEY_up_ref, EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_parse_private_key,
-    EC_KEY, EVP_PKEY, EVP_PKEY_CTX, RSA,
+    EVP_PKEY_up_ref, EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
+    EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY, EVP_PKEY_CTX, RSA,
 };
 use crate::cbb::LcCBB;
 use crate::cbs;
-use crate::ec::PKCS8_DOCUMENT_MAX_LEN;
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Version;
 use crate::ptr::LcPtr;
@@ -16,19 +15,6 @@ use crate::ptr::LcPtr;
 // use core::ffi::c_int;
 use std::os::raw::c_int;
 use std::ptr::null_mut;
-
-impl TryFrom<&[u8]> for LcPtr<EVP_PKEY> {
-    type Error = KeyRejected;
-
-    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        unsafe {
-            let mut cbs = cbs::build_CBS(bytes);
-            // `EVP_parse_private_key` -> ... -> `eckey_priv_decode` -> ... -> `EC_KEY_check_key`
-            LcPtr::new(EVP_parse_private_key(&mut cbs))
-                .map_err(|()| KeyRejected::invalid_encoding())
-        }
-    }
-}
 
 impl LcPtr<EVP_PKEY> {
     pub(crate) fn validate_as_ed25519(&self) -> Result<(), KeyRejected> {
@@ -88,34 +74,34 @@ impl LcPtr<EVP_PKEY> {
         }
     }
 
-    pub(crate) fn marshall_private_key(&self, version: Version) -> Result<Box<[u8]>, Unspecified> {
-        let mut buffer = vec![0u8; PKCS8_DOCUMENT_MAX_LEN];
-
-        let out_len = {
-            let mut cbb = LcCBB::new_fixed(<&mut [u8; PKCS8_DOCUMENT_MAX_LEN]>::try_from(
-                buffer.as_mut_slice(),
-            )?);
-
-            match version {
-                Version::V1 => {
-                    if 1 != unsafe { EVP_marshal_private_key(cbb.as_mut_ptr(), *self.as_const()) } {
-                        return Err(Unspecified);
-                    }
-                }
-                Version::V2 => {
-                    if 1 != unsafe {
-                        EVP_marshal_private_key_v2(cbb.as_mut_ptr(), *self.as_const())
-                    } {
-                        return Err(Unspecified);
-                    }
+    pub(crate) fn marshall_rfc5208_private_key(
+        &self,
+        version: Version,
+    ) -> Result<Vec<u8>, Unspecified> {
+        let key_size_bytes = TryInto::<usize>::try_into(unsafe { EVP_PKEY_bits(*self.as_const()) })
+            .expect("fit in usize")
+            / 8;
+        let mut cbb = LcCBB::new(key_size_bytes * 5);
+        match version {
+            Version::V1 => {
+                if 1 != unsafe { EVP_marshal_private_key(cbb.as_mut_ptr(), *self.as_const()) } {
+                    return Err(Unspecified);
                 }
             }
-            cbb.finish()?
-        };
+            Version::V2 => {
+                if 1 != unsafe { EVP_marshal_private_key_v2(cbb.as_mut_ptr(), *self.as_const()) } {
+                    return Err(Unspecified);
+                }
+            }
+        }
+        cbb.into_vec()
+    }
 
-        buffer.truncate(out_len);
-
-        Ok(buffer.into_boxed_slice())
+    pub(crate) fn parse_rfc5208_private_key(bytes: &[u8]) -> Result<Self, KeyRejected> {
+        let mut cbs = cbs::build_CBS(bytes);
+        // Also checks the validity of the key
+        LcPtr::new(unsafe { EVP_parse_private_key(&mut cbs) })
+            .map_err(|()| KeyRejected::invalid_encoding())
     }
 
     #[allow(non_snake_case)]

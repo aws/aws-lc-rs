@@ -33,6 +33,7 @@ use core::ptr::null_mut;
 // use core::ffi::c_int;
 use std::os::raw::c_int;
 
+use crate::pkcs8::Version;
 #[cfg(feature = "ring-io")]
 use untrusted::Input;
 use zeroize::Zeroize;
@@ -148,7 +149,7 @@ impl KeyPair {
     /// `error::KeyRejected` if bytes do not encode an RSA private key or if the key is otherwise
     /// not acceptable.
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        let key = encoding::pkcs8::decode_der(pkcs8)?;
+        let key = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8)?;
         Self::new(key)
     }
 
@@ -279,9 +280,9 @@ impl crate::signature::KeyPair for KeyPair {
 
 impl AsDer<Pkcs8V1Der<'static>> for KeyPair {
     fn as_der(&self) -> Result<Pkcs8V1Der<'static>, Unspecified> {
-        Ok(Pkcs8V1Der::new(encoding::pkcs8::encode_v1_der(
-            &self.evp_pkey,
-        )?))
+        Ok(Pkcs8V1Der::new(
+            self.evp_pkey.marshall_rfc5208_private_key(Version::V1)?,
+        ))
     }
 }
 

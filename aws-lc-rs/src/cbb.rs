@@ -23,7 +23,7 @@ impl LcCBB<'static> {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn into_buffer<'a, T>(mut self) -> Result<Buffer<'a, T>, Unspecified> {
+    pub(crate) fn into_vec(mut self) -> Result<Vec<u8>, Unspecified> {
         let mut out_data = null_mut::<u8>();
         let mut out_len: usize = 0;
 
@@ -31,20 +31,24 @@ impl LcCBB<'static> {
             return Err(Unspecified);
         };
 
-        let mut out_data = LcPtr::new(out_data)?;
+        let out_data = LcPtr::new(out_data)?;
+        let slice = unsafe { std::slice::from_raw_parts(*out_data.as_const(), out_len) };
+        // `to_vec()` copies the data into a new `Vec`
+        Ok(slice.to_vec())
+    }
 
-        // TODO: Need a type to just hold the owned pointer from CBB rather then copying
-        Ok(Buffer::take_from_slice(unsafe {
-            out_data.as_slice_mut(out_len)
-        }))
+    #[allow(dead_code)]
+    pub(crate) fn into_buffer<'a, T>(self) -> Result<Buffer<'a, T>, Unspecified> {
+        Ok(Buffer::new(self.into_vec()?))
     }
 }
 
+#[allow(dead_code)]
 impl<'a> LcCBB<'a> {
-    pub(crate) fn new_fixed<const N: usize>(buffer: &'a mut [u8; N]) -> LcCBB<'a> {
+    pub(crate) fn new_from_slice(buffer: &'a mut [u8]) -> LcCBB<'a> {
         let mut cbb = MaybeUninit::<CBB>::uninit();
         let cbb = unsafe {
-            CBB_init_fixed(cbb.as_mut_ptr(), buffer.as_mut_ptr(), N);
+            CBB_init_fixed(cbb.as_mut_ptr(), buffer.as_mut_ptr(), buffer.len());
             cbb.assume_init()
         };
         Self(cbb, PhantomData)
@@ -97,7 +101,7 @@ mod tests {
     #[test]
     fn fixed_buffer() {
         let mut buffer = [0u8; 4];
-        let mut cbb = LcCBB::new_fixed(&mut buffer);
+        let mut cbb = LcCBB::new_from_slice(&mut buffer);
         assert_eq!(1, unsafe { CBB_add_asn1_bool(cbb.as_mut_ptr(), 1) });
         let out_len = cbb.finish().expect("cbb finishable");
         assert_eq!(&buffer[..out_len], &[1, 1, 255]);
@@ -106,7 +110,7 @@ mod tests {
     #[test]
     fn fixed_buffer_no_growth() {
         let mut buffer = [0u8; 1];
-        let mut cbb = LcCBB::new_fixed(&mut buffer);
+        let mut cbb = LcCBB::new_from_slice(&mut buffer);
         assert_ne!(1, unsafe { CBB_add_asn1_bool(cbb.as_mut_ptr(), 1) });
     }
 }
