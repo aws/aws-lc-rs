@@ -15,7 +15,7 @@ use crate::{
     error::{KeyRejected, Unspecified},
     ptr::LcPtr,
 };
-use crate::aws_lc::EVP_PKEY;
+use crate::aws_lc::{EVP_PKEY, EVP_PKEY_RSA};
 use core::fmt::Debug;
 
 /// RSA Encryption Algorithm Identifier
@@ -92,8 +92,7 @@ impl PrivateDecryptingKey {
     /// # Errors
     /// * `Unspecified` for any error that occurs during deserialization of this key from PKCS#8.
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        let key = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8)
-            .map_err(|_| KeyRejected::invalid_encoding())?;
+        let key = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8, EVP_PKEY_RSA)?;
         Ok(Self::new(key)?)
     }
 

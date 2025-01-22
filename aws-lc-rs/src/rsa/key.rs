@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-
-use super::signature::{compute_rsa_signature, RsaEncoding, RsaPadding};
-use super::{encoding, RsaParameters};
-#[cfg(feature = "fips")]
-use crate::aws_lc::RSA_check_fips;
+use super::{
+    encoding,
+    signature::{compute_rsa_signature, RsaEncoding, RsaPadding},
+    RsaParameters,
+};
 use crate::aws_lc::{
     EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
     RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
-    EVP_PKEY_CTX,
+    EVP_PKEY_CTX, EVP_PKEY_RSA,
 };
-#[cfg(feature = "ring-io")]
-use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
-use crate::digest::{self};
-use crate::encoding::{AsDer, Pkcs8V1Der};
-use crate::error::{KeyRejected, Unspecified};
+use crate::digest;
+use crate::encoding::AsDer;
+use crate::encoding::Pkcs8V1Der;
+use crate::error::KeyRejected;
+use crate::error::Unspecified;
 use crate::fips::indicator_check;
 #[cfg(feature = "ring-io")]
 use crate::io;
@@ -26,6 +26,10 @@ use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::rsa::PublicEncryptingKey;
 use crate::sealed::Sealed;
 use crate::{hex, rand};
+#[cfg(feature = "fips")]
+use aws_lc::RSA_check_fips;
+#[cfg(feature = "ring-io")]
+use aws_lc::{RSA_get0_e, RSA_get0_n};
 use core::fmt::{self, Debug, Formatter};
 use core::ptr::null_mut;
 
@@ -33,6 +37,7 @@ use core::ptr::null_mut;
 // use core::ffi::c_int;
 use std::os::raw::c_int;
 
+use crate::digest::digest_ctx::DigestContext;
 use crate::pkcs8::Version;
 #[cfg(feature = "ring-io")]
 use untrusted::Input;
@@ -149,7 +154,7 @@ impl KeyPair {
     /// `error::KeyRejected` if bytes do not encode an RSA private key or if the key is otherwise
     /// not acceptable.
     pub fn from_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        let key = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8)?;
+        let key = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8, EVP_PKEY_RSA)?;
         Self::new(key)
     }
 
@@ -209,7 +214,7 @@ impl KeyPair {
     ) -> Result<(), Unspecified> {
         let encoding = padding_alg.encoding();
 
-        let mut md_ctx = digest::digest_ctx::DigestContext::new_uninit();
+        let mut md_ctx = DigestContext::new_uninit();
         let mut pctx = null_mut::<EVP_PKEY_CTX>();
         let digest = digest::match_digest_type(&encoding.digest_algorithm().id);
 

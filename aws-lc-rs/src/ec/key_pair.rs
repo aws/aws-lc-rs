@@ -8,7 +8,7 @@ use core::fmt::{Debug, Formatter};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
 
-use crate::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY};
+use crate::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY, EVP_PKEY_EC};
 
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::evp_key_generate;
@@ -92,7 +92,7 @@ impl EcdsaKeyPair {
         pkcs8: &[u8],
     ) -> Result<Self, KeyRejected> {
         // Includes a call to `EC_KEY_check_key`
-        let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8)?;
+        let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8, EVP_PKEY_EC)?;
 
         #[cfg(not(feature = "fips"))]
         verify_evp_key_nid(&evp_pkey.as_const(), alg.id.nid())?;

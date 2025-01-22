@@ -94,10 +94,10 @@ impl LcPtr<EVP_PKEY> {
         // Also checks the validity of the key
         let evp_pkey = LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })
             .map_err(|()| KeyRejected::invalid_encoding())?;
-        Ok(unsafe { EVP_PKEY_id(*evp_pkey.as_const()) }
+        unsafe { EVP_PKEY_id(*evp_pkey.as_const()) }
             .eq(&evp_pkey_type)
             .then_some(evp_pkey)
-            .ok_or(KeyRejected::wrong_algorithm())?)
+            .ok_or(KeyRejected::wrong_algorithm())
     }
 
     pub(crate) fn marshall_rfc5208_private_key(
@@ -123,11 +123,18 @@ impl LcPtr<EVP_PKEY> {
         cbb.into_vec()
     }
 
-    pub(crate) fn parse_rfc5208_private_key(bytes: &[u8]) -> Result<Self, KeyRejected> {
+    pub(crate) fn parse_rfc5208_private_key(
+        bytes: &[u8],
+        evp_pkey_type: c_int,
+    ) -> Result<Self, KeyRejected> {
         let mut cbs = cbs::build_CBS(bytes);
         // Also checks the validity of the key
-        LcPtr::new(unsafe { EVP_parse_private_key(&mut cbs) })
-            .map_err(|()| KeyRejected::invalid_encoding())
+        let evp_pkey = LcPtr::new(unsafe { EVP_parse_private_key(&mut cbs) })
+            .map_err(|()| KeyRejected::invalid_encoding())?;
+        unsafe { EVP_PKEY_id(*evp_pkey.as_const()) }
+            .eq(&evp_pkey_type)
+            .then_some(evp_pkey)
+            .ok_or(KeyRejected::wrong_algorithm())
     }
 
     #[allow(non_snake_case)]

@@ -429,7 +429,7 @@ impl Ed25519KeyPair {
     }
 
     fn parse_pkcs8(pkcs8: &[u8]) -> Result<Self, KeyRejected> {
-        let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8)?;
+        let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8, EVP_PKEY_ED25519)?;
 
         evp_pkey.validate_as_ed25519()?;
 
