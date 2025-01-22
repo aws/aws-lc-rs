@@ -82,4 +82,4 @@ paste = "1.0.11"
 regex = "~1.9.6"
 
 [package.metadata.aws-lc-fips-sys]
-commit-hash = "8b7a9378b60eb82642df0cc4aa1484c2ba95f3a0"
+commit-hash = "190be0667cf1f7b39bed2c96760f08a6295b652b"
