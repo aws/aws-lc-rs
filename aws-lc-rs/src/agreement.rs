@@ -54,20 +54,19 @@ mod ephemeral;
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
 use crate::aws_lc::{
-    CBS_init, EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_derive, EVP_PKEY_derive_init,
-    EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
-    EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
-    EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_marshal_public_key,
-    EVP_parse_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, CBS,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer,
+    EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
+    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key,
+    EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM,
     EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
-use crate::cbb::LcCBB;
 use crate::ec::{ec_group_from_nid, evp_key_generate};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
 use crate::{ec, hex};
 
+use crate::buffer::Buffer;
 use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
     EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
@@ -75,7 +74,6 @@ use crate::encoding::{
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::ptr::null_mut;
-use std::mem::MaybeUninit;
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq)]
@@ -616,15 +614,8 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
             | KeyInner::ECDH_P384(evp_pkey)
             | KeyInner::ECDH_P521(evp_pkey)
             | KeyInner::X25519(evp_pkey) => {
-                let key_size_bytes =
-                    TryInto::<usize>::try_into(unsafe { EVP_PKEY_bits(*evp_pkey.as_const()) })
-                        .expect("fit in usize")
-                        * 8;
-                let mut der = LcCBB::new(key_size_bytes * 5);
-                if 1 != unsafe { EVP_marshal_public_key(der.as_mut_ptr(), *evp_pkey.as_const()) } {
-                    return Err(Unspecified);
-                };
-                Ok(PublicKeyX509Der::from(der.into_buffer()?))
+                let der = evp_pkey.marshall_rfc5280_public_key()?;
+                Ok(PublicKeyX509Der::from(Buffer::new(der)))
             }
         }
     }
@@ -788,7 +779,7 @@ fn ec_key_ecdh<'a>(
     peer_pub_key_bytes: &[u8],
     nid: i32,
 ) -> Result<&'a [u8], ()> {
-    let mut pub_key = ec::try_parse_public_key_bytes(peer_pub_key_bytes, nid)?;
+    let mut pub_key = ec::try_parse_public_key_bytes(peer_pub_key_bytes, nid).map_err(|_| ())?;
 
     let mut pkey_ctx = priv_key.create_EVP_PKEY_CTX()?;
 
@@ -849,7 +840,7 @@ fn x25519_diffie_hellman<'a>(
 pub(crate) fn try_parse_x25519_public_key_bytes(
     key_bytes: &[u8],
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    try_parse_x25519_subject_public_key_info_bytes(key_bytes)
+    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_X25519)
         .or(try_parse_x25519_public_key_raw_bytes(key_bytes))
 }
 
@@ -867,24 +858,6 @@ fn try_parse_x25519_public_key_raw_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_P
             key_bytes.len(),
         )
     })?)
-}
-
-fn try_parse_x25519_subject_public_key_info_bytes(
-    key_bytes: &[u8],
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    // Try to parse as SubjectPublicKeyInfo first
-    let mut cbs = {
-        let mut cbs = MaybeUninit::<CBS>::uninit();
-        unsafe {
-            CBS_init(cbs.as_mut_ptr(), key_bytes.as_ptr(), key_bytes.len());
-            cbs.assume_init()
-        }
-    };
-    let evp_pkey = LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })?;
-    if EVP_PKEY_X25519 != unsafe { EVP_PKEY_id(*evp_pkey.as_const()) } {
-        return Err(Unspecified);
-    }
-    Ok(evp_pkey)
 }
 
 #[cfg(test)]

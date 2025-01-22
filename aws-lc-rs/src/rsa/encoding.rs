@@ -80,40 +80,25 @@ pub(in crate::rsa) mod rfc8017 {
 ///
 /// Encodings that use the `SubjectPublicKeyInfo` structure.
 pub(in crate::rsa) mod rfc5280 {
-    use crate::cbb::LcCBB;
-    use crate::cbs;
-    use crate::encoding::PublicKeyX509Der;
-    use crate::error::{KeyRejected, Unspecified};
-    use crate::ptr::LcPtr;
-    use crate::rsa::key::{is_rsa_key, key_size_bytes};
-    use crate::aws_lc::{EVP_marshal_public_key, EVP_parse_public_key, EVP_PKEY};
+    use crate::aws_lc::EVP_PKEY_RSA;
+    use crate::buffer::Buffer;
+    use crate::{
+        encoding::PublicKeyX509Der,
+        error::{KeyRejected, Unspecified},
+        ptr::LcPtr,
+    };
+    use crate::aws_lc::EVP_PKEY;
 
     pub(in crate::rsa) fn encode_public_key_der(
         key: &LcPtr<EVP_PKEY>,
     ) -> Result<PublicKeyX509Der<'static>, Unspecified> {
-        // Data shows that the SubjectPublicKeyInfo is roughly 356% to 375% increase in size compared to the RSA key
-        // size in bytes for keys ranging from 2048-bit to 4096-bit. So size the initial capacity to be roughly
-        // 400% as a conservative estimate to avoid needing to reallocate for any key in that range.
-        let key_size_bytes = key_size_bytes(key);
-
-        // key_size_bytes * 5 == key_size_bytes * (1 + 400%)
-        let mut der = LcCBB::new(key_size_bytes * 5);
-
-        if 1 != unsafe { EVP_marshal_public_key(der.as_mut_ptr(), *key.as_const()) } {
-            return Err(Unspecified);
-        };
-
-        Ok(PublicKeyX509Der::from(der.into_buffer()?))
+        let der = key.marshall_rfc5280_public_key()?;
+        Ok(PublicKeyX509Der::from(Buffer::new(der)))
     }
 
     pub(in crate::rsa) fn decode_public_key_der(
         value: &[u8],
     ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-        let mut der = cbs::build_CBS(value);
-        let key = LcPtr::new(unsafe { EVP_parse_public_key(&mut der) })?;
-        if !is_rsa_key(&key) {
-            return Err(KeyRejected::unspecified());
-        }
-        Ok(key)
+        LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(value, EVP_PKEY_RSA)
     }
 }

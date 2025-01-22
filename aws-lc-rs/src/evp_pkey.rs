@@ -74,6 +74,32 @@ impl LcPtr<EVP_PKEY> {
         }
     }
 
+    pub(crate) fn marshall_rfc5280_public_key(&self) -> Result<Vec<u8>, Unspecified> {
+        let key_size_bytes: usize = unsafe { EVP_PKEY_bits(*self.as_const()) / 8 }.try_into()?;
+        // Data shows that the SubjectPublicKeyInfo is roughly 356% to 375% increase in size compared to the RSA key
+        // size in bytes for keys ranging from 2048-bit to 4096-bit. So size the initial capacity to be roughly
+        // 500% as a conservative estimate to avoid needing to reallocate for any key in that range.
+        let mut cbb = LcCBB::new(key_size_bytes * 5);
+        if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), *self.as_const()) } {
+            return Err(Unspecified);
+        };
+        cbb.into_vec()
+    }
+
+    pub(crate) fn parse_rfc5280_public_key(
+        bytes: &[u8],
+        evp_pkey_type: c_int,
+    ) -> Result<Self, KeyRejected> {
+        let mut cbs = cbs::build_CBS(bytes);
+        // Also checks the validity of the key
+        let evp_pkey = LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })
+            .map_err(|()| KeyRejected::invalid_encoding())?;
+        Ok(unsafe { EVP_PKEY_id(*evp_pkey.as_const()) }
+            .eq(&evp_pkey_type)
+            .then_some(evp_pkey)
+            .ok_or(KeyRejected::wrong_algorithm())?)
+    }
+
     pub(crate) fn marshall_rfc5208_private_key(
         &self,
         version: Version,

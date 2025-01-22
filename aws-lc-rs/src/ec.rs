@@ -4,10 +4,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::ec::signature::AlgorithmID;
-use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
 // TODO: Uncomment when MSRV >= 1.64
-// use core::ffi::c_int;
 use std::os::raw::c_int;
 
 #[cfg(feature = "fips")]
@@ -15,14 +13,14 @@ use crate::aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
 use crate::aws_lc::EC_KEY_check_key;
 use crate::aws_lc::{
-    d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, CBS_init,
-    ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name,
-    EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_private_key, EC_KEY_get0_public_key,
-    EC_KEY_new, EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul,
-    EC_POINT_new, EC_POINT_oct2point, EC_POINT_point2oct, EVP_PKEY_CTX_new_id,
+    d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
+    ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name, EC_GROUP_new_by_curve_name,
+    EC_KEY_get0_group, EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new,
+    EC_KEY_set_group, EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new,
+    EC_POINT_oct2point, EC_POINT_point2oct, EVP_PKEY_CTX_new_id,
     EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY,
-    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new, EVP_parse_public_key, BIGNUM, CBS,
-    EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
+    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new, BIGNUM, EC_GROUP, EC_KEY, EC_POINT,
+    EVP_PKEY, EVP_PKEY_EC,
 };
 
 use crate::error::{KeyRejected, Unspecified};
@@ -163,7 +161,8 @@ pub(crate) fn try_parse_public_key_bytes(
     key_bytes: &[u8],
     expected_curve_nid: i32,
 ) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    try_parse_subject_public_key_info_bytes(key_bytes)
+    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
+        .map_err(|_| Unspecified)
         .and_then(|key| {
             validate_evp_key(&key.as_const(), expected_curve_nid)
                 .map(|()| key)
@@ -173,20 +172,6 @@ pub(crate) fn try_parse_public_key_bytes(
             key_bytes,
             expected_curve_nid,
         ))
-}
-
-fn try_parse_subject_public_key_info_bytes(
-    key_bytes: &[u8],
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    // Try to parse as SubjectPublicKeyInfo first
-    let mut cbs = {
-        let mut cbs = MaybeUninit::<CBS>::uninit();
-        unsafe {
-            CBS_init(cbs.as_mut_ptr(), key_bytes.as_ptr(), key_bytes.len());
-            cbs.assume_init()
-        }
-    };
-    Ok(LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })?)
 }
 
 fn try_parse_public_key_raw_bytes(

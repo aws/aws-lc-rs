@@ -5,7 +5,6 @@
 
 use core::fmt;
 use core::fmt::{Debug, Formatter};
-use core::mem::MaybeUninit;
 use core::ptr::null_mut;
 use std::marker::PhantomData;
 
@@ -13,14 +12,13 @@ use std::marker::PhantomData;
 use untrusted::Input;
 
 use crate::aws_lc::{
-    CBS_init, EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_PKEY_CTX_new_id, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id,
+    EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
     EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key,
-    EVP_PKEY_new_raw_public_key, EVP_marshal_public_key, EVP_parse_public_key, CBS, EVP_PKEY,
-    EVP_PKEY_ED25519,
+    EVP_PKEY_new_raw_public_key, EVP_PKEY, EVP_PKEY_ED25519,
 };
 
-use crate::cbb::LcCBB;
+use crate::buffer::Buffer;
 use crate::digest::digest_ctx::DigestContext;
 use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der,
@@ -113,18 +111,8 @@ fn try_ed25519_public_key_from_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>
         })?);
     }
     // Otherwise we support X.509 SubjectPublicKeyInfo formatted keys which are inherently larger
-    let mut cbs = {
-        let mut cbs = MaybeUninit::<CBS>::uninit();
-        unsafe {
-            CBS_init(cbs.as_mut_ptr(), key_bytes.as_ptr(), key_bytes.len());
-            cbs.assume_init()
-        }
-    };
-    let evp_pkey = LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })?;
-    if EVP_PKEY_ED25519 != unsafe { EVP_PKEY_id(*evp_pkey.as_const()) } {
-        return Err(Unspecified);
-    }
-    Ok(evp_pkey)
+    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_ED25519)
+        .map_err(|_| Unspecified)
 }
 
 /// An Ed25519 key pair, for signing.
@@ -206,11 +194,8 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
         // 2:d=1  hl=2 l=   5 cons:  SEQUENCE
         // 4:d=2  hl=2 l=   3 prim:   OBJECT            :ED25519
         // 9:d=1  hl=2 l=  33 prim:  BIT STRING
-        let mut cbb = LcCBB::new(44);
-        if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), *self.evp_pkey.as_const()) } {
-            return Err(Unspecified);
-        }
-        Ok(PublicKeyX509Der::from(cbb.into_buffer()?))
+        let der = self.evp_pkey.marshall_rfc5280_public_key()?;
+        Ok(PublicKeyX509Der::from(Buffer::new(der)))
     }
 }
 
