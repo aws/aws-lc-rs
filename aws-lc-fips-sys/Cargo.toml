@@ -1,8 +1,8 @@
 [package]
 name = "aws-lc-fips-sys"
 description = "AWS-LC is a general-purpose cryptographic library maintained by the AWS Cryptography team for AWS and their customers. This is the FIPS validated version of AWS-LC."
-version = "0.13.1"
-links = "aws_lc_fips_0_13_1"
+version = "0.13.2"
+links = "aws_lc_fips_0_13_2"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"
@@ -57,7 +57,9 @@ build = "builder/main.rs"
 [features]
 asan = []
 ssl = []
-bindgen = ["dep:bindgen"] # Generate the bindings on the targetted platform as a fallback mechanism.
+bindgen = [
+    "dep:bindgen",
+] # Generate the bindings on the targetted platform as a fallback mechanism.
 
 [build-dependencies]
 cmake = "0.1.48"
