@@ -95,13 +95,13 @@
 //! ```
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
-use crate::error::Unspecified;
-use crate::fips::indicator_check;
-use crate::{constant_time, digest, hkdf};
-use aws_lc::{
+use crate::aws_lc::{
     HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_CTX_init, HMAC_Final, HMAC_Init_ex, HMAC_Update,
     HMAC_CTX,
 };
+use crate::error::Unspecified;
+use crate::fips::indicator_check;
+use crate::{constant_time, digest, hkdf};
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
 // TODO: Uncomment when MSRV >= 1.64

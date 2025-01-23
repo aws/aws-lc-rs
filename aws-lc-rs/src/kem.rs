@@ -45,6 +45,11 @@
 //!
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
+use crate::aws_lc::{
+    EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate, EVP_PKEY_encapsulate,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_kem_new_raw_public_key,
+    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM,
+};
 use crate::{
     buffer::Buffer,
     encoding::generated_encodings,
@@ -52,11 +57,6 @@ use crate::{
     ptr::LcPtr,
 };
 use alloc::borrow::Cow;
-use aws_lc::{
-    EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate, EVP_PKEY_encapsulate,
-    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_kem_new_raw_public_key,
-    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM,
-};
 use core::{cmp::Ordering, ptr::null_mut};
 use zeroize::Zeroize;
 
@@ -102,7 +102,7 @@ pub const ML_KEM_1024: Algorithm<AlgorithmId> = Algorithm {
     shared_secret_size: ML_KEM_1024_SHARED_SECRET_LENGTH,
 };
 
-use aws_lc::{NID_MLKEM1024, NID_MLKEM512, NID_MLKEM768};
+use crate::aws_lc::{NID_MLKEM1024, NID_MLKEM512, NID_MLKEM768};
 
 /// An identifier for a KEM algorithm.
 pub trait AlgorithmIdentifier:

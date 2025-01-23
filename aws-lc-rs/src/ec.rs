@@ -12,10 +12,10 @@ use core::ptr::null_mut;
 use std::os::raw::c_int;
 
 #[cfg(feature = "fips")]
-use aws_lc::EC_KEY_check_fips;
+use crate::aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
-use aws_lc::EC_KEY_check_key;
-use aws_lc::{
+use crate::aws_lc::EC_KEY_check_key;
+use crate::aws_lc::{
     d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, CBS_init,
     ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name,
     EC_GROUP_new_by_curve_name, EC_KEY_get0_group, EC_KEY_get0_private_key, EC_KEY_get0_public_key,

@@ -53,13 +53,7 @@ mod ephemeral;
 
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
-use crate::cbb::LcCBB;
-use crate::ec::{ec_group_from_nid, evp_key_generate};
-use crate::error::{KeyRejected, Unspecified};
-use crate::fips::indicator_check;
-use crate::ptr::{ConstPointer, LcPtr};
-use crate::{ec, hex};
-use aws_lc::{
+use crate::aws_lc::{
     CBS_init, EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_derive, EVP_PKEY_derive_init,
     EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
     EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
@@ -67,6 +61,12 @@ use aws_lc::{
     EVP_parse_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, CBS,
     EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
+use crate::cbb::LcCBB;
+use crate::ec::{ec_group_from_nid, evp_key_generate};
+use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
+use crate::ptr::{ConstPointer, LcPtr};
+use crate::{ec, hex};
 
 use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,

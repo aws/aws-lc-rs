@@ -12,7 +12,7 @@ use std::marker::PhantomData;
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
-use aws_lc::{
+use crate::aws_lc::{
     CBS_init, EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
     EVP_PKEY_CTX_new_id, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id,
     EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key,

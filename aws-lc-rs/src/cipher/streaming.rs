@@ -1,17 +1,17 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::aws_lc::{
+    EVP_CIPHER_CTX_new, EVP_CIPHER_iv_length, EVP_CIPHER_key_length, EVP_DecryptFinal_ex,
+    EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_EncryptFinal_ex, EVP_EncryptInit_ex,
+    EVP_EncryptUpdate, EVP_CIPHER, EVP_CIPHER_CTX,
+};
 use crate::cipher::{
     Algorithm, DecryptionContext, EncryptionContext, OperatingMode, UnboundCipherKey,
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::ptr::LcPtr;
-use aws_lc::{
-    EVP_CIPHER_CTX_new, EVP_CIPHER_iv_length, EVP_CIPHER_key_length, EVP_DecryptFinal_ex,
-    EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_EncryptFinal_ex, EVP_EncryptInit_ex,
-    EVP_EncryptUpdate, EVP_CIPHER, EVP_CIPHER_CTX,
-};
 use std::ptr::{null, null_mut};
 
 use super::ConstPointer;

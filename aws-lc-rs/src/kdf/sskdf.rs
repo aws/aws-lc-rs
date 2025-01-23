@@ -3,8 +3,8 @@
 
 #![allow(clippy::module_name_repetitions)]
 
-use aws_lc::EVP_MD;
-use aws_lc::{SSKDF_digest, SSKDF_hmac};
+use crate::aws_lc::EVP_MD;
+use crate::aws_lc::{SSKDF_digest, SSKDF_hmac};
 
 use crate::{
     digest::{match_digest_type, AlgorithmID},
