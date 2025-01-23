@@ -65,13 +65,6 @@ impl<P: Pointer> ManagedPointer<P> {
 
 impl<P: Pointer> DetachablePointer<P> {
     #[inline]
-    pub fn as_const(&self) -> ConstPointer<P::T> {
-        ConstPointer {
-            ptr: self.pointer.as_ref().unwrap().as_const_ptr(),
-        }
-    }
-
-    #[inline]
     pub fn as_mut(&mut self) -> MutPointer<P::T> {
         MutPointer {
             ptr: self.pointer.as_mut().unwrap().as_mut_ptr(),

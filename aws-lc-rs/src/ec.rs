@@ -10,7 +10,7 @@ use std::os::raw::c_int;
 
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+use crate::ptr::{ConstPointer, LcPtr};
 use crate::signature::Signature;
 #[cfg(feature = "fips")]
 use crate::aws_lc::EC_KEY_check_fips;
@@ -19,13 +19,12 @@ use crate::aws_lc::EC_KEY_check_key;
 use crate::aws_lc::{
     d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
     ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name, EC_KEY_get0_group,
-    EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
-    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new, EC_POINT_oct2point,
-    EC_POINT_point2oct, EC_group_p224, EC_group_p256, EC_group_p384, EC_group_p521,
-    EC_group_secp256k1, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
-    EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
-    EVP_PKEY_new, NID_X9_62_prime256v1, NID_secp224r1, NID_secp256k1, NID_secp384r1, NID_secp521r1,
-    BIGNUM, EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
+    EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_POINT_new,
+    EC_POINT_oct2point, EC_POINT_point2oct, EC_group_p224, EC_group_p256, EC_group_p384,
+    EC_group_p521, EC_group_secp256k1, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
+    EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, NID_X9_62_prime256v1,
+    NID_secp224r1, NID_secp256k1, NID_secp384r1, NID_secp521r1, EC_GROUP, EC_KEY, EC_POINT,
+    EVP_PKEY, EVP_PKEY_EC,
 };
 
 pub(crate) mod key_pair;
@@ -190,39 +189,6 @@ pub(crate) fn evp_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecifie
     let pkey = LcPtr::new(pkey)?;
 
     Ok(pkey)
-}
-
-#[inline]
-pub(crate) unsafe fn evp_key_from_public_private(
-    ec_group: &ConstPointer<EC_GROUP>,
-    public_ec_point: Option<&LcPtr<EC_POINT>>,
-    private_bignum: &DetachableLcPtr<BIGNUM>,
-) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-    let mut ec_key = DetachableLcPtr::new(EC_KEY_new())?;
-    let ec_key_ptr = *ec_key.as_mut();
-    if 1 != EC_KEY_set_group(ec_key_ptr, **ec_group) {
-        return Err(KeyRejected::unexpected_error());
-    }
-    if let Some(ec_point) = public_ec_point {
-        if 1 != EC_KEY_set_public_key(*ec_key.as_mut(), *ec_point.as_const()) {
-            return Err(KeyRejected::unexpected_error());
-        }
-    }
-    if 1 != EC_KEY_set_private_key(*ec_key.as_mut(), *private_bignum.as_const()) {
-        return Err(KeyRejected::unexpected_error());
-    }
-
-    let mut evp_pkey = LcPtr::new(EVP_PKEY_new())?;
-
-    if 1 != EVP_PKEY_assign_EC_KEY(*evp_pkey.as_mut(), *ec_key.as_mut()) {
-        return Err(KeyRejected::unexpected_error());
-    }
-    ec_key.detach();
-
-    let nid = EC_GROUP_get_curve_name(**ec_group);
-    validate_evp_key(&evp_pkey.as_const(), nid)?;
-
-    Ok(evp_pkey)
 }
 
 #[inline]
