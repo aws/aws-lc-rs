@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::ec::signature::AlgorithmID;
-use core::ptr::{null, null_mut};
+use core::ptr::null_mut;
 // TODO: Uncomment when MSRV >= 1.64
 use std::os::raw::c_int;
 
@@ -20,7 +20,7 @@ use crate::aws_lc::{
     d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
     ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name, EC_KEY_get0_group,
     EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_KEY_new, EC_KEY_set_group,
-    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_mul, EC_POINT_new, EC_POINT_oct2point,
+    EC_KEY_set_private_key, EC_KEY_set_public_key, EC_POINT_new, EC_POINT_oct2point,
     EC_POINT_point2oct, EC_group_p224, EC_group_p256, EC_group_p384, EC_group_p521,
     EC_group_secp256k1, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
     EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
@@ -65,7 +65,7 @@ pub(crate) fn verify_evp_key_nid(
 }
 
 #[inline]
-fn validate_evp_key(
+pub(crate) fn validate_evp_key(
     evp_pkey: &ConstPointer<EVP_PKEY>,
     expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
@@ -162,89 +162,11 @@ pub(crate) fn try_parse_public_key_bytes(
     expected_curve_nid: i32,
 ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
-        .and_then(|key| validate_evp_key(&key.as_const(), expected_curve_nid).map(|()| key))
-        .or(try_parse_public_key_raw_bytes(
+        .or(LcPtr::<EVP_PKEY>::parse_ec_public_point(
             key_bytes,
             expected_curve_nid,
         ))
-}
-
-fn try_parse_public_key_raw_bytes(
-    key_bytes: &[u8],
-    expected_curve_nid: i32,
-) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-    let ec_group = ec_group_from_nid(expected_curve_nid)?;
-    let pub_key_point = ec_point_from_bytes(&ec_group, key_bytes)?;
-    evp_pkey_from_public_point(&ec_group, &pub_key_point)
-}
-
-#[inline]
-pub(crate) fn evp_pkey_from_public_point(
-    ec_group: &ConstPointer<EC_GROUP>,
-    public_ec_point: &LcPtr<EC_POINT>,
-) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-    let nid = unsafe { EC_GROUP_get_curve_name(**ec_group) };
-    let ec_key = DetachableLcPtr::new(unsafe { EC_KEY_new() })?;
-    if 1 != unsafe { EC_KEY_set_group(*ec_key, **ec_group) } {
-        return Err(KeyRejected::unexpected_error());
-    }
-    if 1 != unsafe { EC_KEY_set_public_key(*ec_key, *public_ec_point.as_const()) } {
-        return Err(KeyRejected::inconsistent_components());
-    }
-
-    let mut pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
-
-    if 1 != unsafe { EVP_PKEY_assign_EC_KEY(*pkey.as_mut(), *ec_key) } {
-        return Err(KeyRejected::unexpected_error());
-    }
-
-    ec_key.detach();
-
-    validate_evp_key(&pkey.as_const(), nid)?;
-
-    Ok(pkey)
-}
-
-pub(crate) fn evp_pkey_from_private(
-    ec_group: &ConstPointer<EC_GROUP>,
-    private_big_num: &ConstPointer<BIGNUM>,
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ec_key = DetachableLcPtr::new(unsafe { EC_KEY_new() })?;
-    if 1 != unsafe { EC_KEY_set_group(*ec_key, **ec_group) } {
-        return Err(Unspecified);
-    }
-    if 1 != unsafe { EC_KEY_set_private_key(*ec_key, **private_big_num) } {
-        return Err(Unspecified);
-    }
-    let mut pub_key = LcPtr::new(unsafe { EC_POINT_new(**ec_group) })?;
-    if 1 != unsafe {
-        EC_POINT_mul(
-            **ec_group,
-            *pub_key.as_mut(),
-            **private_big_num,
-            null(),
-            null(),
-            null_mut(),
-        )
-    } {
-        return Err(Unspecified);
-    }
-    if 1 != unsafe { EC_KEY_set_public_key(*ec_key, *pub_key.as_const()) } {
-        return Err(Unspecified);
-    }
-    let expected_curve_nid = unsafe { EC_GROUP_get_curve_name(**ec_group) };
-
-    let mut pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
-
-    if 1 != unsafe { EVP_PKEY_assign_EC_KEY(*pkey.as_mut(), *ec_key) } {
-        return Err(Unspecified);
-    }
-    ec_key.detach();
-
-    // Validate the EC_KEY before returning it.
-    validate_evp_key(&pkey.as_const(), expected_curve_nid)?;
-
-    Ok(pkey)
+        .and_then(|key| validate_evp_key(&key.as_const(), expected_curve_nid).map(|()| key))
 }
 
 #[inline]

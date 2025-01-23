@@ -57,10 +57,10 @@ use crate::aws_lc::{
     EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer,
     EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
     EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key,
-    EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM,
-    EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+    EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY,
+    EVP_PKEY_X25519, NID_X25519,
 };
-use crate::ec::{ec_group_from_nid, evp_key_generate};
+use crate::ec::evp_key_generate;
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
@@ -328,10 +328,7 @@ impl PrivateKey {
                 )
             })?
         } else {
-            let ec_group = ec_group_from_nid(alg.id.nid())?;
-            let private_bn = LcPtr::<BIGNUM>::try_from(key_bytes)?;
-
-            ec::evp_pkey_from_private(&ec_group, &private_bn.as_const())
+            LcPtr::<EVP_PKEY>::parse_ec_private_bn(key_bytes, alg.id.nid())
                 .map_err(|_| KeyRejected::invalid_encoding())?
         };
         Ok(Self::new(alg, evp_pkey))
@@ -387,7 +384,7 @@ impl PrivateKey {
 
     #[cfg(test)]
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
-        let pkey = from_ec_private_key(priv_key, ECDH_P256.id.nid())?;
+        let pkey = LcPtr::<EVP_PKEY>::parse_ec_private_bn(priv_key, ECDH_P256.id.nid())?;
         Ok(PrivateKey {
             inner_key: KeyInner::ECDH_P256(pkey),
         })
@@ -395,7 +392,7 @@ impl PrivateKey {
 
     #[cfg(test)]
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
-        let pkey = from_ec_private_key(priv_key, ECDH_P384.id.nid())?;
+        let pkey = LcPtr::<EVP_PKEY>::parse_ec_private_bn(priv_key, ECDH_P384.id.nid())?;
         Ok(PrivateKey {
             inner_key: KeyInner::ECDH_P384(pkey),
         })
@@ -403,7 +400,7 @@ impl PrivateKey {
 
     #[cfg(test)]
     fn from_p521_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
-        let pkey = from_ec_private_key(priv_key, ECDH_P521.id.nid())?;
+        let pkey = LcPtr::<EVP_PKEY>::parse_ec_private_bn(priv_key, ECDH_P521.id.nid())?;
         Ok(PrivateKey {
             inner_key: KeyInner::ECDH_P521(pkey),
         })
@@ -525,16 +522,6 @@ impl AsBigEndian<Curve25519SeedBin<'static>> for PrivateKey {
         debug_assert_eq!(32, out_len);
         Ok(Curve25519SeedBin::new(Vec::from(buffer)))
     }
-}
-
-#[cfg(test)]
-fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
-    let ec_group = ec_group_from_nid(nid)?;
-    let priv_key = LcPtr::<BIGNUM>::try_from(priv_key)?;
-
-    let pkey = ec::evp_pkey_from_private(&ec_group, &priv_key.as_const())?;
-
-    Ok(pkey)
 }
 
 pub(crate) fn generate_x25519() -> Result<LcPtr<EVP_PKEY>, Unspecified> {
