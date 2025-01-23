@@ -53,6 +53,11 @@ mod ephemeral;
 
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
+use crate::ec::evp_key_generate;
+use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
+use crate::ptr::{ConstPointer, LcPtr};
+use crate::{ec, hex};
 use crate::aws_lc::{
     EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer,
     EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
@@ -60,11 +65,6 @@ use crate::aws_lc::{
     EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY,
     EVP_PKEY_X25519, NID_X25519,
 };
-use crate::ec::evp_key_generate;
-use crate::error::{KeyRejected, Unspecified};
-use crate::fips::indicator_check;
-use crate::ptr::{ConstPointer, LcPtr};
-use crate::{ec, hex};
 
 use crate::buffer::Buffer;
 use crate::encoding::{
