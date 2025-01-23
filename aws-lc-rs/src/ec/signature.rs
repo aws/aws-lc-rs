@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{
-    i2d_EC_PUBKEY, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EC_GROUP_new_by_curve_name,
-    EC_KEY_new, EC_KEY_set_group, EC_KEY_set_public_key, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_PKEY_get0_EC_KEY, NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1,
-    BIGNUM, ECDSA_SIG, EVP_PKEY,
+    i2d_EC_PUBKEY, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EC_KEY_new, EC_KEY_set_group,
+    EC_KEY_set_public_key, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_get0_EC_KEY,
+    NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EVP_PKEY,
 };
 
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::{
-    compressed_public_key_size_bytes, ec_point_from_bytes, marshal_ec_public_key_to_buffer,
-    marshal_public_key_to_buffer, try_parse_public_key_bytes, PUBLIC_KEY_MAX_LEN,
+    compressed_public_key_size_bytes, ec_group_from_nid, ec_point_from_bytes,
+    marshal_ec_public_key_to_buffer, marshal_public_key_to_buffer, try_parse_public_key_bytes,
+    PUBLIC_KEY_MAX_LEN,
 };
 use crate::encoding::{
     AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
@@ -124,10 +124,10 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
     /// # Errors
     /// Returns an error if the public key fails to marshal to X.509.
     fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
-        let ec_group = LcPtr::new(unsafe { EC_GROUP_new_by_curve_name(self.algorithm.id.nid()) })?;
+        let ec_group = ec_group_from_nid(self.algorithm.id.nid())?;
         let ec_point = ec_point_from_bytes(&ec_group, self.as_ref())?;
         let mut ec_key = LcPtr::new(unsafe { EC_KEY_new() })?;
-        if 1 != unsafe { EC_KEY_set_group(*ec_key.as_mut(), *ec_group.as_const()) } {
+        if 1 != unsafe { EC_KEY_set_group(*ec_key.as_mut(), *ec_group) } {
             return Err(Unspecified);
         }
         if 1 != unsafe { EC_KEY_set_public_key(*ec_key.as_mut(), *ec_point.as_const()) } {

@@ -331,7 +331,7 @@ impl PrivateKey {
             let ec_group = ec_group_from_nid(alg.id.nid())?;
             let private_bn = LcPtr::<BIGNUM>::try_from(key_bytes)?;
 
-            ec::evp_pkey_from_private(&ec_group.as_const(), &private_bn.as_const())
+            ec::evp_pkey_from_private(&ec_group, &private_bn.as_const())
                 .map_err(|_| KeyRejected::invalid_encoding())?
         };
         Ok(Self::new(alg, evp_pkey))
@@ -532,7 +532,7 @@ fn from_ec_private_key(priv_key: &[u8], nid: i32) -> Result<LcPtr<EVP_PKEY>, Uns
     let ec_group = ec_group_from_nid(nid)?;
     let priv_key = LcPtr::<BIGNUM>::try_from(priv_key)?;
 
-    let pkey = ec::evp_pkey_from_private(&ec_group.as_const(), &priv_key.as_const())?;
+    let pkey = ec::evp_pkey_from_private(&ec_group, &priv_key.as_const())?;
 
     Ok(pkey)
 }
