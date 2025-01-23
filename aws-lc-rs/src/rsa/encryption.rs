@@ -9,13 +9,13 @@ use super::{
     key::{generate_rsa_key, is_rsa_key, key_size_bits, key_size_bytes},
     KeySize,
 };
+use crate::aws_lc::{EVP_PKEY, EVP_PKEY_RSA};
 use crate::pkcs8::Version;
 use crate::{
     encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
     error::{KeyRejected, Unspecified},
     ptr::LcPtr,
 };
-use crate::aws_lc::{EVP_PKEY, EVP_PKEY_RSA};
 use core::fmt::Debug;
 
 /// RSA Encryption Algorithm Identifier
@@ -134,7 +134,7 @@ impl Debug for PrivateDecryptingKey {
 impl AsDer<Pkcs8V1Der<'static>> for PrivateDecryptingKey {
     fn as_der(&self) -> Result<Pkcs8V1Der<'static>, Unspecified> {
         Ok(Pkcs8V1Der::new(
-            self.0.marshall_rfc5208_private_key(Version::V1)?,
+            self.0.marshal_rfc5208_private_key(Version::V1)?,
         ))
     }
 }

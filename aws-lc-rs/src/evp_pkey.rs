@@ -78,7 +78,7 @@ impl LcPtr<EVP_PKEY> {
         }
     }
 
-    pub(crate) fn marshall_rfc5280_public_key(&self) -> Result<Vec<u8>, Unspecified> {
+    pub(crate) fn marshal_rfc5280_public_key(&self) -> Result<Vec<u8>, Unspecified> {
         let key_size_bytes: usize = unsafe { EVP_PKEY_bits(*self.as_const()) / 8 }.try_into()?;
         // Data shows that the SubjectPublicKeyInfo is roughly 356% to 375% increase in size compared to the RSA key
         // size in bytes for keys ranging from 2048-bit to 4096-bit. So size the initial capacity to be roughly
@@ -104,7 +104,7 @@ impl LcPtr<EVP_PKEY> {
             .ok_or(KeyRejected::wrong_algorithm())
     }
 
-    pub(crate) fn marshall_rfc5208_private_key(
+    pub(crate) fn marshal_rfc5208_private_key(
         &self,
         version: Version,
     ) -> Result<Vec<u8>, Unspecified> {

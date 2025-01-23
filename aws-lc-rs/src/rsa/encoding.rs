@@ -92,7 +92,7 @@ pub(in crate::rsa) mod rfc5280 {
     pub(in crate::rsa) fn encode_public_key_der(
         key: &LcPtr<EVP_PKEY>,
     ) -> Result<PublicKeyX509Der<'static>, Unspecified> {
-        let der = key.marshall_rfc5280_public_key()?;
+        let der = key.marshal_rfc5280_public_key()?;
         Ok(PublicKeyX509Der::from(Buffer::new(der)))
     }
 

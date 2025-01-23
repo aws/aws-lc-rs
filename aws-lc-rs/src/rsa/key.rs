@@ -12,11 +12,11 @@ use crate::aws_lc::{
     RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
     EVP_PKEY_CTX, EVP_PKEY_RSA,
 };
+#[cfg(feature = "ring-io")]
+use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
 use crate::digest;
 use crate::encoding::AsDer;
 use crate::encoding::Pkcs8V1Der;
-use crate::error::KeyRejected;
-use crate::error::Unspecified;
 use crate::fips::indicator_check;
 #[cfg(feature = "ring-io")]
 use crate::io;
@@ -28,8 +28,6 @@ use crate::sealed::Sealed;
 use crate::{hex, rand};
 #[cfg(feature = "fips")]
 use aws_lc::RSA_check_fips;
-#[cfg(feature = "ring-io")]
-use aws_lc::{RSA_get0_e, RSA_get0_n};
 use core::fmt::{self, Debug, Formatter};
 use core::ptr::null_mut;
 
@@ -38,6 +36,7 @@ use core::ptr::null_mut;
 use std::os::raw::c_int;
 
 use crate::digest::digest_ctx::DigestContext;
+use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Version;
 #[cfg(feature = "ring-io")]
 use untrusted::Input;
@@ -286,7 +285,7 @@ impl crate::signature::KeyPair for KeyPair {
 impl AsDer<Pkcs8V1Der<'static>> for KeyPair {
     fn as_der(&self) -> Result<Pkcs8V1Der<'static>, Unspecified> {
         Ok(Pkcs8V1Der::new(
-            self.evp_pkey.marshall_rfc5208_private_key(Version::V1)?,
+            self.evp_pkey.marshal_rfc5208_private_key(Version::V1)?,
         ))
     }
 }

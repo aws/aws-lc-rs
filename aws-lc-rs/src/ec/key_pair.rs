@@ -130,7 +130,7 @@ impl EcdsaKeyPair {
     ///
     pub fn to_pkcs8v1(&self) -> Result<Document, Unspecified> {
         Ok(Document::new(
-            self.evp_pkey.marshall_rfc5208_private_key(Version::V1)?,
+            self.evp_pkey.marshal_rfc5208_private_key(Version::V1)?,
         ))
     }
 

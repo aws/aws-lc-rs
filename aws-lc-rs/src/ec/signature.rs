@@ -123,7 +123,7 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
     /// # Errors
     /// Returns an error if the public key fails to marshal to X.509.
     fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
-        let der = self.evp_pkey.marshall_rfc5280_public_key()?;
+        let der = self.evp_pkey.marshal_rfc5280_public_key()?;
         Ok(PublicKeyX509Der::new(der))
     }
 }
