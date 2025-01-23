@@ -37,11 +37,11 @@
 //! let aead_unbound_key = aead::UnboundKey::from(aes_keying_material);
 //! ```
 
+use crate::aws_lc::{HKDF_expand, HKDF};
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::{digest, hmac};
 use alloc::sync::Arc;
-use aws_lc::{HKDF_expand, HKDF};
 use core::fmt;
 use zeroize::Zeroize;
 

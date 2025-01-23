@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc::{
+use crate::aws_lc::{
     i2d_EC_PUBKEY, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EC_GROUP_new_by_curve_name,
     EC_KEY_new, EC_KEY_set_group, EC_KEY_set_public_key, EVP_DigestVerify, EVP_DigestVerifyInit,
     EVP_PKEY_get0_EC_KEY, NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1,

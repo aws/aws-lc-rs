@@ -1,10 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::aws_lc::{CBB_cleanup, CBB_finish, CBB_init, CBB_init_fixed, CBB};
 use crate::buffer::Buffer;
 use crate::error::Unspecified;
 use crate::ptr::LcPtr;
-use aws_lc::{CBB_cleanup, CBB_finish, CBB_init, CBB_init_fixed, CBB};
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
@@ -76,7 +76,7 @@ impl Drop for LcCBB<'_> {
 #[cfg(test)]
 mod tests {
     use super::LcCBB;
-    use aws_lc::CBB_add_asn1_bool;
+    use crate::aws_lc::CBB_add_asn1_bool;
 
     #[test]
     fn dynamic_buffer() {

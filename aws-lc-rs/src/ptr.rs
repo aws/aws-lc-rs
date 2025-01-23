@@ -3,7 +3,7 @@
 
 use core::ops::Deref;
 
-use aws_lc::{
+use crate::aws_lc::{
     BN_free, ECDSA_SIG_free, EC_GROUP_free, EC_KEY_free, EC_POINT_free, EVP_AEAD_CTX_free,
     EVP_CIPHER_CTX_free, EVP_PKEY_CTX_free, EVP_PKEY_free, OPENSSL_free, RSA_free, BIGNUM,
     ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_AEAD_CTX, EVP_CIPHER_CTX, EVP_PKEY, EVP_PKEY_CTX,
@@ -245,8 +245,8 @@ create_pointer!(EVP_CIPHER_CTX, EVP_CIPHER_CTX_free);
 
 #[cfg(test)]
 mod tests {
+    use crate::aws_lc::BIGNUM;
     use crate::ptr::{DetachablePointer, ManagedPointer};
-    use aws_lc::BIGNUM;
 
     #[test]
     fn test_debug() {

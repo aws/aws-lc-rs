@@ -8,6 +8,15 @@ use super::{
     signature::{compute_rsa_signature, RsaEncoding, RsaPadding},
     RsaParameters,
 };
+#[cfg(feature = "fips")]
+use crate::aws_lc::RSA_check_fips;
+use crate::aws_lc::{
+    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
+    RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
+    EVP_PKEY_CTX,
+};
+#[cfg(feature = "ring-io")]
+use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
 #[cfg(feature = "ring-io")]
 use crate::io;
 #[cfg(feature = "ring-io")]
@@ -23,15 +32,6 @@ use crate::{
     rsa::PublicEncryptingKey,
     sealed::Sealed,
 };
-#[cfg(feature = "fips")]
-use aws_lc::RSA_check_fips;
-use aws_lc::{
-    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
-    RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
-    EVP_PKEY_CTX,
-};
-#[cfg(feature = "ring-io")]
-use aws_lc::{RSA_get0_e, RSA_get0_n};
 use core::{
     fmt::{self, Debug, Formatter},
     ptr::null_mut,

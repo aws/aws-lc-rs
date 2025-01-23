@@ -32,9 +32,9 @@
 //! let random_array = rand::generate(&rng).unwrap();
 //! let more_rand_bytes: [u8; 64] = random_array.expose();
 //! ```
+use crate::aws_lc::RAND_bytes;
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
-use aws_lc::RAND_bytes;
 use core::fmt::Debug;
 
 /// A secure random number generator.

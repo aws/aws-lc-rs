@@ -5,8 +5,8 @@
 
 //! Constant-time operations.
 
+use crate::aws_lc::CRYPTO_memcmp;
 use crate::error;
-use aws_lc::CRYPTO_memcmp;
 
 /// Returns `Ok(())` if `a == b` and `Err(error::Unspecified)` otherwise.
 ///

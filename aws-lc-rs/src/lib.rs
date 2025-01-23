@@ -205,7 +205,7 @@ pub(crate) use debug::derive_debug_via_id;
 // use core::ffi::CStr;
 use std::ffi::CStr;
 
-use aws_lc::{
+use crate::aws_lc::{
     CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, ERR_GET_FUNC, ERR_GET_LIB,
     ERR_GET_REASON,
 };

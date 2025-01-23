@@ -5,11 +5,11 @@ use super::{aead_ctx::AeadCtx, Algorithm, Nonce, MAX_KEY_LEN, MAX_TAG_LEN, NONCE
 use super::{
     Tag, AES_128_GCM, AES_128_GCM_SIV, AES_192_GCM, AES_256_GCM, AES_256_GCM_SIV, CHACHA20_POLY1305,
 };
-use crate::iv::FixedLength;
-use crate::{error::Unspecified, fips::indicator_check, hkdf};
-use aws_lc::{
+use crate::aws_lc::{
     EVP_AEAD_CTX_open, EVP_AEAD_CTX_open_gather, EVP_AEAD_CTX_seal, EVP_AEAD_CTX_seal_scatter,
 };
+use crate::iv::FixedLength;
+use crate::{error::Unspecified, fips::indicator_check, hkdf};
 use core::fmt::Debug;
 use core::{mem::MaybeUninit, ops::RangeFrom, ptr::null};
 

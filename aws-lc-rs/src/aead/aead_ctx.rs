@@ -6,10 +6,7 @@ use core::ptr::null_mut;
 
 use crate::cipher::chacha;
 
-use crate::cipher::aes::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
-use crate::error::Unspecified;
-use crate::ptr::LcPtr;
-use aws_lc::{
+use crate::aws_lc::{
     evp_aead_direction_t, evp_aead_direction_t_evp_aead_open, evp_aead_direction_t_evp_aead_seal,
     EVP_AEAD_CTX_init, EVP_AEAD_CTX_init_with_direction, EVP_AEAD_CTX_zero, EVP_aead_aes_128_gcm,
     EVP_aead_aes_128_gcm_randnonce, EVP_aead_aes_128_gcm_siv, EVP_aead_aes_128_gcm_tls12,
@@ -17,6 +14,9 @@ use aws_lc::{
     EVP_aead_aes_256_gcm_randnonce, EVP_aead_aes_256_gcm_siv, EVP_aead_aes_256_gcm_tls12,
     EVP_aead_aes_256_gcm_tls13, EVP_aead_chacha20_poly1305, OPENSSL_malloc, EVP_AEAD_CTX,
 };
+use crate::cipher::aes::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
+use crate::error::Unspecified;
+use crate::ptr::LcPtr;
 
 pub(crate) enum AeadDirection {
     Open,

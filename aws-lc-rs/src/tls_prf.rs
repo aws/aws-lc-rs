@@ -32,7 +32,7 @@ use crate::{
 };
 use core::ptr::null;
 
-use aws_lc::CRYPTO_tls1_prf;
+use crate::aws_lc::CRYPTO_tls1_prf;
 
 /// The TLS PRF `P_hash` Algorithm
 pub struct Algorithm(AlgorithmID);
