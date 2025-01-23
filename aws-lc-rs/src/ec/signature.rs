@@ -8,10 +8,10 @@ use crate::aws_lc::{
 };
 
 use crate::digest::digest_ctx::DigestContext;
-use crate::ec::{
-    compressed_public_key_size_bytes, marshal_ec_public_key_to_buffer,
-    marshal_public_key_to_buffer, try_parse_public_key_bytes, PUBLIC_KEY_MAX_LEN,
+use crate::ec::encoding::{
+    marshal_ec_public_key_to_buffer, marshal_public_key_to_buffer, try_parse_public_key_bytes,
 };
+use crate::ec::{compressed_public_key_size_bytes, PUBLIC_KEY_MAX_LEN};
 use crate::encoding::{
     AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
 };

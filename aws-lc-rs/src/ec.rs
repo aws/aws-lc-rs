@@ -8,25 +8,24 @@ use core::ptr::null_mut;
 // TODO: Uncomment when MSRV >= 1.64
 use std::os::raw::c_int;
 
-use crate::error::{KeyRejected, Unspecified};
-use crate::fips::indicator_check;
-use crate::ptr::{ConstPointer, LcPtr};
-use crate::signature::Signature;
 #[cfg(feature = "fips")]
 use crate::aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
 use crate::aws_lc::EC_KEY_check_key;
 use crate::aws_lc::{
-    d2i_PrivateKey, point_conversion_form_t, BN_bn2bin_padded, BN_num_bytes, ECDSA_SIG_from_bytes,
-    ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name, EC_KEY_get0_group,
-    EC_KEY_get0_private_key, EC_KEY_get0_public_key, EC_POINT_new,
-    EC_POINT_oct2point, EC_POINT_point2oct, EC_group_p224, EC_group_p256, EC_group_p384,
-    EC_group_p521, EC_group_secp256k1, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
+    ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name,
+    EC_KEY_get0_group, EC_group_p224, EC_group_p256, EC_group_p384, EC_group_p521,
+    EC_group_secp256k1, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
     EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, NID_X9_62_prime256v1,
-    NID_secp224r1, NID_secp256k1, NID_secp384r1, NID_secp521r1, EC_GROUP, EC_KEY, EC_POINT,
-    EVP_PKEY, EVP_PKEY_EC,
+    NID_secp224r1, NID_secp256k1, NID_secp384r1, NID_secp521r1, EC_GROUP, EC_KEY, EVP_PKEY,
+    EVP_PKEY_EC,
 };
+use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
+use crate::ptr::{ConstPointer, LcPtr};
+use crate::signature::Signature;
 
+pub(crate) mod encoding;
 pub(crate) mod key_pair;
 pub(crate) mod signature;
 
@@ -84,90 +83,6 @@ pub(crate) fn validate_evp_key(
     Ok(())
 }
 
-pub(crate) fn marshal_private_key_to_buffer(
-    private_size: usize,
-    evp_pkey: &ConstPointer<EVP_PKEY>,
-) -> Result<Vec<u8>, Unspecified> {
-    let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(**evp_pkey) })?;
-    let private_bn = ConstPointer::new(unsafe { EC_KEY_get0_private_key(*ec_key) })?;
-    {
-        let size: usize = unsafe { BN_num_bytes(*private_bn).try_into()? };
-        debug_assert!(size <= private_size);
-    }
-
-    let mut buffer = vec![0u8; private_size];
-    if 1 != unsafe { BN_bn2bin_padded(buffer.as_mut_ptr(), private_size, *private_bn) } {
-        return Err(Unspecified);
-    }
-
-    Ok(buffer)
-}
-
-pub(crate) fn unmarshal_der_to_private_key(
-    key_bytes: &[u8],
-    nid: i32,
-) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-    let mut out = null_mut();
-    // `d2i_PrivateKey` -> ... -> `EC_KEY_parse_private_key` -> `EC_KEY_check_key`
-    let evp_pkey = LcPtr::new(unsafe {
-        d2i_PrivateKey(
-            EVP_PKEY_EC,
-            &mut out,
-            &mut key_bytes.as_ptr(),
-            key_bytes
-                .len()
-                .try_into()
-                .map_err(|_| KeyRejected::too_large())?,
-        )
-    })?;
-    #[cfg(not(feature = "fips"))]
-    verify_evp_key_nid(&evp_pkey.as_const(), nid)?;
-    #[cfg(feature = "fips")]
-    validate_evp_key(&evp_pkey.as_const(), nid)?;
-
-    Ok(evp_pkey)
-}
-
-pub(crate) fn marshal_public_key_to_buffer(
-    buffer: &mut [u8],
-    evp_pkey: &LcPtr<EVP_PKEY>,
-    compressed: bool,
-) -> Result<usize, Unspecified> {
-    let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(*evp_pkey.as_const()) })?;
-    marshal_ec_public_key_to_buffer(buffer, &ec_key, compressed)
-}
-
-pub(crate) fn marshal_ec_public_key_to_buffer(
-    buffer: &mut [u8],
-    ec_key: &ConstPointer<EC_KEY>,
-    compressed: bool,
-) -> Result<usize, Unspecified> {
-    let ec_group = ConstPointer::new(unsafe { EC_KEY_get0_group(**ec_key) })?;
-
-    let ec_point = ConstPointer::new(unsafe { EC_KEY_get0_public_key(**ec_key) })?;
-
-    let point_conversion_form = if compressed {
-        point_conversion_form_t::POINT_CONVERSION_COMPRESSED
-    } else {
-        point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED
-    };
-
-    let out_len = ec_point_to_bytes(&ec_group, &ec_point, buffer, point_conversion_form)?;
-    Ok(out_len)
-}
-
-pub(crate) fn try_parse_public_key_bytes(
-    key_bytes: &[u8],
-    expected_curve_nid: i32,
-) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
-        .or(LcPtr::<EVP_PKEY>::parse_ec_public_point(
-            key_bytes,
-            expected_curve_nid,
-        ))
-        .and_then(|key| validate_evp_key(&key.as_const(), expected_curve_nid).map(|()| key))
-}
-
 #[inline]
 pub(crate) fn evp_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let mut pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(EVP_PKEY_EC, null_mut()) })?;
@@ -205,53 +120,6 @@ pub(crate) fn ec_group_from_nid(nid: i32) -> Result<ConstPointer<EC_GROUP>, Unsp
             Err(Unspecified)
         }
     }?)?)
-}
-
-#[inline]
-pub(crate) fn ec_point_from_bytes(
-    ec_group: &ConstPointer<EC_GROUP>,
-    bytes: &[u8],
-) -> Result<LcPtr<EC_POINT>, KeyRejected> {
-    let mut ec_point = LcPtr::new(unsafe { EC_POINT_new(**ec_group) })?;
-
-    if 1 != unsafe {
-        EC_POINT_oct2point(
-            **ec_group,
-            *ec_point.as_mut(),
-            bytes.as_ptr(),
-            bytes.len(),
-            null_mut(),
-        )
-    } {
-        return Err(KeyRejected::invalid_encoding());
-    }
-
-    Ok(ec_point)
-}
-
-#[inline]
-fn ec_point_to_bytes(
-    ec_group: &ConstPointer<EC_GROUP>,
-    ec_point: &ConstPointer<EC_POINT>,
-    buf: &mut [u8],
-    pt_conv_form: point_conversion_form_t,
-) -> Result<usize, Unspecified> {
-    let buf_len = buf.len();
-    let out_len = unsafe {
-        EC_POINT_point2oct(
-            **ec_group,
-            **ec_point,
-            pt_conv_form,
-            buf.as_mut_ptr(),
-            buf_len,
-            null_mut(),
-        )
-    };
-    if out_len == 0 {
-        return Err(Unspecified);
-    }
-
-    Ok(out_len)
 }
 
 #[inline]

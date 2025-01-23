@@ -5,13 +5,13 @@
 ///
 /// PKCS #1: RSA Cryptography Specifications Version 2.2
 pub(in crate::rsa) mod rfc8017 {
-    use crate::cbs;
-    use crate::error::{KeyRejected, Unspecified};
-    use crate::ptr::{DetachableLcPtr, LcPtr};
     use crate::aws_lc::{
         EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_parse_private_key, RSA_public_key_from_bytes,
         RSA_public_key_to_bytes, EVP_PKEY,
     };
+    use crate::cbs;
+    use crate::error::{KeyRejected, Unspecified};
+    use crate::ptr::{DetachableLcPtr, LcPtr};
     use std::ptr::null_mut;
 
     /// DER encode a RSA public key to `RSAPublicKey` structure.
@@ -80,6 +80,7 @@ pub(in crate::rsa) mod rfc8017 {
 ///
 /// Encodings that use the `SubjectPublicKeyInfo` structure.
 pub(in crate::rsa) mod rfc5280 {
+    use crate::aws_lc::EVP_PKEY;
     use crate::aws_lc::EVP_PKEY_RSA;
     use crate::buffer::Buffer;
     use crate::{
@@ -87,7 +88,6 @@ pub(in crate::rsa) mod rfc5280 {
         error::{KeyRejected, Unspecified},
         ptr::LcPtr,
     };
-    use crate::aws_lc::EVP_PKEY;
 
     pub(in crate::rsa) fn encode_public_key_der(
         key: &LcPtr<EVP_PKEY>,

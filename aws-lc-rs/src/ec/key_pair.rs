@@ -13,12 +13,12 @@ use crate::aws_lc::{
 };
 
 use crate::digest::digest_ctx::DigestContext;
-use crate::ec::evp_key_generate;
 use crate::ec::signature::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 #[cfg(feature = "fips")]
 use crate::ec::validate_evp_key;
 #[cfg(not(feature = "fips"))]
 use crate::ec::verify_evp_key_nid;
+use crate::ec::{encoding, evp_key_generate};
 
 use crate::encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915Der};
 use crate::error::{KeyRejected, Unspecified};
@@ -158,8 +158,8 @@ impl EcdsaKeyPair {
         private_key: &[u8],
         public_key: &[u8],
     ) -> Result<Self, KeyRejected> {
-        let priv_evp_pkey = LcPtr::<EVP_PKEY>::parse_ec_private_bn(private_key, alg.id.nid())?;
-        let pub_evp_pkey = LcPtr::<EVP_PKEY>::parse_ec_public_point(public_key, alg.id.nid())?;
+        let priv_evp_pkey = ec::encoding::sec1::parse_sec1_private_bn(private_key, alg.id.nid())?;
+        let pub_evp_pkey = ec::encoding::sec1::parse_sec1_public_point(public_key, alg.id.nid())?;
         // EVP_PKEY_cmp only compare params and public key
         if 1 != unsafe { EVP_PKEY_cmp(*priv_evp_pkey.as_const(), *pub_evp_pkey.as_const()) } {
             return Err(KeyRejected::inconsistent_components());
@@ -185,7 +185,7 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         private_key: &[u8],
     ) -> Result<Self, KeyRejected> {
-        let evp_pkey = ec::unmarshal_der_to_private_key(private_key, alg.id.nid())?;
+        let evp_pkey = encoding::unmarshal_der_to_private_key(private_key, alg.id.nid())?;
 
         Ok(Self::new(alg, evp_pkey)?)
     }
@@ -303,7 +303,7 @@ impl AsBigEndian<EcPrivateKeyBin<'static>> for PrivateKey<'_> {
     /// # Errors
     /// `error::Unspecified` if serialization failed.
     fn as_be_bytes(&self) -> Result<EcPrivateKeyBin<'static>, Unspecified> {
-        let buffer = ec::marshal_private_key_to_buffer(
+        let buffer = encoding::marshal_private_key_to_buffer(
             self.0.algorithm.id.private_key_size(),
             &self.0.evp_pkey.as_const(),
         )?;

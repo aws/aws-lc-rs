@@ -51,6 +51,7 @@
 //! ```
 mod ephemeral;
 
+use crate::ec::encoding::sec1::parse_sec1_private_bn;
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
 use crate::aws_lc::{
@@ -60,7 +61,7 @@ use crate::aws_lc::{
     EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY,
     EVP_PKEY_X25519, NID_X25519,
 };
-use crate::ec::evp_key_generate;
+use crate::ec::{encoding, evp_key_generate};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
@@ -299,7 +300,7 @@ impl PrivateKey {
         if AlgorithmID::X25519 == alg.id {
             return Err(KeyRejected::invalid_encoding());
         }
-        let evp_pkey = ec::unmarshal_der_to_private_key(key_bytes, alg.id.nid())?;
+        let evp_pkey = encoding::unmarshal_der_to_private_key(key_bytes, alg.id.nid())?;
         Ok(Self::new(alg, evp_pkey))
     }
 
@@ -328,7 +329,7 @@ impl PrivateKey {
                 )
             })?
         } else {
-            LcPtr::<EVP_PKEY>::parse_ec_private_bn(key_bytes, alg.id.nid())
+            parse_sec1_private_bn(key_bytes, alg.id.nid())
                 .map_err(|_| KeyRejected::invalid_encoding())?
         };
         Ok(Self::new(alg, evp_pkey))
@@ -384,7 +385,7 @@ impl PrivateKey {
 
     #[cfg(test)]
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
-        let pkey = LcPtr::<EVP_PKEY>::parse_ec_private_bn(priv_key, ECDH_P256.id.nid())?;
+        let pkey = parse_sec1_private_bn(priv_key, ECDH_P256.id.nid())?;
         Ok(PrivateKey {
             inner_key: KeyInner::ECDH_P256(pkey),
         })
@@ -392,7 +393,7 @@ impl PrivateKey {
 
     #[cfg(test)]
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
-        let pkey = LcPtr::<EVP_PKEY>::parse_ec_private_bn(priv_key, ECDH_P384.id.nid())?;
+        let pkey = parse_sec1_private_bn(priv_key, ECDH_P384.id.nid())?;
         Ok(PrivateKey {
             inner_key: KeyInner::ECDH_P384(pkey),
         })
@@ -400,7 +401,7 @@ impl PrivateKey {
 
     #[cfg(test)]
     fn from_p521_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
-        let pkey = LcPtr::<EVP_PKEY>::parse_ec_private_bn(priv_key, ECDH_P521.id.nid())?;
+        let pkey = parse_sec1_private_bn(priv_key, ECDH_P521.id.nid())?;
         Ok(PrivateKey {
             inner_key: KeyInner::ECDH_P521(pkey),
         })
@@ -416,7 +417,7 @@ impl PrivateKey {
             | KeyInner::ECDH_P384(evp_pkey)
             | KeyInner::ECDH_P521(evp_pkey) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
-                let key_len = ec::marshal_public_key_to_buffer(&mut buffer, evp_pkey, false)?;
+                let key_len = encoding::marshal_public_key_to_buffer(&mut buffer, evp_pkey, false)?;
                 Ok(PublicKey {
                     inner_key: self.inner_key.clone(),
                     public_key: buffer,
@@ -492,7 +493,7 @@ impl AsBigEndian<EcPrivateKeyBin<'static>> for PrivateKey {
         if AlgorithmID::X25519 == self.inner_key.algorithm().id {
             return Err(Unspecified);
         }
-        let buffer = ec::marshal_private_key_to_buffer(
+        let buffer = encoding::marshal_private_key_to_buffer(
             self.inner_key.algorithm().id.private_key_len(),
             &self.inner_key.get_evp_pkey().as_const(),
         )?;
@@ -623,7 +624,7 @@ impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
 
         let mut buffer = vec![0u8; self.algorithm().id.compressed_pub_key_len()];
 
-        let out_len = ec::marshal_ec_public_key_to_buffer(&mut buffer, &ec_key, true)?;
+        let out_len = encoding::marshal_ec_public_key_to_buffer(&mut buffer, &ec_key, true)?;
 
         debug_assert_eq!(buffer.len(), out_len);
 
@@ -766,7 +767,8 @@ fn ec_key_ecdh<'a>(
     peer_pub_key_bytes: &[u8],
     nid: i32,
 ) -> Result<&'a [u8], ()> {
-    let mut pub_key = ec::try_parse_public_key_bytes(peer_pub_key_bytes, nid).map_err(|_| ())?;
+    let mut pub_key =
+        encoding::try_parse_public_key_bytes(peer_pub_key_bytes, nid).map_err(|_| ())?;
 
     let mut pkey_ctx = priv_key.create_EVP_PKEY_CTX()?;
 
