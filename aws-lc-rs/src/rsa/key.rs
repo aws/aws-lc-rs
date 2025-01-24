@@ -7,10 +7,12 @@ use super::{
     signature::{compute_rsa_signature, RsaEncoding, RsaPadding},
     RsaParameters,
 };
+#[cfg(feature = "fips")]
+use crate::aws_lc::RSA;
 use crate::aws_lc::{
-    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
-    RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
-    EVP_PKEY_CTX, EVP_PKEY_RSA,
+    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_generate_key_ex,
+    RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY, EVP_PKEY_CTX,
+    EVP_PKEY_RSA, EVP_PKEY_RSA_PSS,
 };
 #[cfg(feature = "ring-io")]
 use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
@@ -177,7 +179,7 @@ impl KeyPair {
         if !is_rsa_key(key) {
             return Err(KeyRejected::unspecified());
         };
-        match key_size_bits(key) {
+        match key.key_size_bits() {
             2048..=8192 => Ok(()),
             _ => Err(KeyRejected::unspecified()),
         }
@@ -258,7 +260,7 @@ impl KeyPair {
         match self.evp_pkey.get_rsa() {
             Ok(rsa) => {
                 // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
-                unsafe { RSA_size(*rsa.as_const()) as usize }
+                unsafe { RSA_size(*rsa) as usize }
             }
             Err(_) => unreachable!(),
         }
@@ -317,9 +319,9 @@ impl PublicKey {
         #[cfg(feature = "ring-io")]
         {
             let pubkey = evp_pkey.get_rsa()?;
-            let modulus = ConstPointer::new(unsafe { RSA_get0_n(*pubkey.as_const()) })?;
+            let modulus = ConstPointer::new(unsafe { RSA_get0_n(*pubkey) })?;
             let modulus = modulus.to_be_bytes().into_boxed_slice();
-            let exponent = ConstPointer::new(unsafe { RSA_get0_e(*pubkey.as_const()) })?;
+            let exponent = ConstPointer::new(unsafe { RSA_get0_e(*pubkey) })?;
             let exponent = exponent.to_be_bytes().into_boxed_slice();
             Ok(PublicKey {
                 key,
@@ -505,23 +507,10 @@ pub(super) fn is_valid_fips_key(key: &LcPtr<EVP_PKEY>) -> bool {
     // This should always be an RSA key and must-never panic.
     let rsa_key = key.get_rsa().expect("RSA EVP_PKEY");
 
-    1 == unsafe { RSA_check_fips(*rsa_key.as_mut_unsafe()) }
-}
-
-pub(super) fn key_size_bytes(key: &LcPtr<EVP_PKEY>) -> usize {
-    // Safety: RSA modulous byte sizes supported fit an usize
-    unsafe { EVP_PKEY_size(*key.as_const()) }
-        .try_into()
-        .expect("modulous to fit in usize")
-}
-
-pub(super) fn key_size_bits(key: &LcPtr<EVP_PKEY>) -> usize {
-    // Safety: RSA modulous byte sizes supported fit an usize
-    unsafe { EVP_PKEY_bits(*key.as_const()) }
-        .try_into()
-        .expect("modulous to fit in usize")
+    1 == unsafe { RSA_check_fips(*rsa_key as *mut RSA) }
 }
 
 pub(super) fn is_rsa_key(key: &LcPtr<EVP_PKEY>) -> bool {
-    key.get_rsa().is_ok()
+    let id = key.id();
+    id == EVP_PKEY_RSA || id == EVP_PKEY_RSA_PSS
 }

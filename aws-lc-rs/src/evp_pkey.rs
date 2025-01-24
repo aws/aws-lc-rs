@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{
-    EVP_PKEY_CTX_new, EVP_PKEY_bits, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_id,
-    EVP_PKEY_up_ref, EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
-    EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY, EVP_PKEY_CTX, RSA,
+    EVP_PKEY_CTX_new, EVP_PKEY_bits, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA, EVP_PKEY_id,
+    EVP_PKEY_size, EVP_PKEY_up_ref, EVP_marshal_private_key, EVP_marshal_private_key_v2,
+    EVP_marshal_public_key, EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY,
+    EVP_PKEY_CTX, RSA,
 };
 use crate::cbb::LcCBB;
 use crate::cbs;
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Version;
-use crate::ptr::LcPtr;
+use crate::ptr::{ConstPointer, LcPtr};
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_int;
 use std::os::raw::c_int;
@@ -27,7 +28,7 @@ impl LcPtr<EVP_PKEY> {
             return Err(KeyRejected::wrong_algorithm());
         }
 
-        let bits = self.bits();
+        let bits: c_int = self.key_size_bits().try_into().unwrap();
         if bits < ED25519_MIN_BITS {
             return Err(KeyRejected::too_small());
         }
@@ -55,31 +56,42 @@ impl LcPtr<EVP_PKEY> {
         unsafe { EVP_PKEY_id(*self.as_const()) }
     }
 
-    pub(crate) fn bits(&self) -> i32 {
+    pub(crate) fn key_size_bytes(&self) -> usize {
+        self.key_size_bits() / 8
+    }
+
+    pub(crate) fn key_size_bits(&self) -> usize {
         unsafe { EVP_PKEY_bits(*self.as_const()) }
+            .try_into()
+            .unwrap()
+    }
+
+    pub(crate) fn signature_size_bytes(&self) -> usize {
+        unsafe { EVP_PKEY_size(*self.as_const()) }
+            .try_into()
+            .unwrap()
     }
 
     #[allow(dead_code)]
-    pub(crate) fn get_ec_key(&self) -> Result<LcPtr<EC_KEY>, KeyRejected> {
+    pub(crate) fn get_ec_key(&self) -> Result<ConstPointer<EC_KEY>, KeyRejected> {
         unsafe {
-            LcPtr::new(EVP_PKEY_get1_EC_KEY(*self.as_const()))
+            ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.as_const()))
                 .map_err(|()| KeyRejected::wrong_algorithm())
         }
     }
 
-    pub(crate) fn get_rsa(&self) -> Result<LcPtr<RSA>, KeyRejected> {
+    pub(crate) fn get_rsa(&self) -> Result<ConstPointer<RSA>, KeyRejected> {
         unsafe {
-            LcPtr::new(EVP_PKEY_get1_RSA(*self.as_const()))
+            ConstPointer::new(EVP_PKEY_get0_RSA(*self.as_const()))
                 .map_err(|()| KeyRejected::wrong_algorithm())
         }
     }
 
     pub(crate) fn marshal_rfc5280_public_key(&self) -> Result<Vec<u8>, Unspecified> {
-        let key_size_bytes: usize = unsafe { EVP_PKEY_bits(*self.as_const()) / 8 }.try_into()?;
         // Data shows that the SubjectPublicKeyInfo is roughly 356% to 375% increase in size compared to the RSA key
         // size in bytes for keys ranging from 2048-bit to 4096-bit. So size the initial capacity to be roughly
         // 500% as a conservative estimate to avoid needing to reallocate for any key in that range.
-        let mut cbb = LcCBB::new(key_size_bytes * 5);
+        let mut cbb = LcCBB::new(self.key_size_bytes() * 5);
         if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), *self.as_const()) } {
             return Err(Unspecified);
         };

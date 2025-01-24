@@ -3,23 +3,20 @@
 
 use crate::aws_lc::{
     ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_PKEY_get0_EC_KEY, NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1,
-    BIGNUM, ECDSA_SIG, EVP_PKEY,
+    NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EVP_PKEY,
 };
 
 use crate::digest::digest_ctx::DigestContext;
-use crate::ec::encoding::{
-    marshal_ec_public_key_to_buffer, marshal_public_key_to_buffer, try_parse_public_key_bytes,
-};
-use crate::ec::{compressed_public_key_size_bytes, PUBLIC_KEY_MAX_LEN};
+use crate::ec::compressed_public_key_size_bytes;
+use crate::ec::encoding::parse_ec_public_key;
 use crate::encoding::{
     AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::signature::VerificationAlgorithm;
-use crate::{digest, sealed};
+use crate::{digest, ec, sealed};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
@@ -85,6 +82,7 @@ impl AlgorithmID {
     }
     // Compressed public key length in bytes
     #[inline]
+    #[allow(dead_code)]
     const fn compressed_pub_key_len(&self) -> usize {
         match self {
             AlgorithmID::ECDSA_P256 | AlgorithmID::ECDSA_P256K1 => {
@@ -99,6 +97,7 @@ impl AlgorithmID {
 /// Elliptic curve public key.
 #[derive(Clone)]
 pub struct PublicKey {
+    #[allow(dead_code)]
     algorithm: &'static EcdsaSigningAlgorithm,
     evp_pkey: LcPtr<EVP_PKEY>,
     octets: Box<[u8]>,
@@ -108,13 +107,12 @@ pub(crate) fn public_key_from_evp_pkey(
     evp_pkey: &LcPtr<EVP_PKEY>,
     algorithm: &'static EcdsaSigningAlgorithm,
 ) -> Result<PublicKey, Unspecified> {
-    let mut pub_key_bytes = [0u8; PUBLIC_KEY_MAX_LEN];
-    let key_len = marshal_public_key_to_buffer(&mut pub_key_bytes, evp_pkey, false)?;
+    let pub_key_bytes = ec::encoding::sec1::marshal_sec1_public_point(evp_pkey, false)?;
 
     Ok(PublicKey {
         evp_pkey: evp_pkey.clone(),
         algorithm,
-        octets: pub_key_bytes[0..key_len].into(),
+        octets: pub_key_bytes.into_boxed_slice(),
     })
 }
 
@@ -133,17 +131,8 @@ impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
     /// # Errors
     /// Returns an error if the public key fails to marshal.
     fn as_be_bytes(&self) -> Result<EcPublicKeyCompressedBin<'static>, crate::error::Unspecified> {
-        let ec_key = ConstPointer::new(unsafe { EVP_PKEY_get0_EC_KEY(*self.evp_pkey.as_const()) })?;
-
-        let mut buffer = vec![0u8; self.algorithm.0.id.compressed_pub_key_len()];
-
-        let out_len = marshal_ec_public_key_to_buffer(&mut buffer, &ec_key, true)?;
-
-        debug_assert_eq!(buffer.len(), out_len);
-
-        buffer.truncate(out_len);
-
-        Ok(EcPublicKeyCompressedBin::new(buffer))
+        let pub_point = ec::encoding::sec1::marshal_sec1_public_point(&self.evp_pkey, true)?;
+        Ok(EcPublicKeyCompressedBin::new(pub_point))
     }
 }
 
@@ -242,7 +231,7 @@ fn verify_asn1_signature(
     msg: &[u8],
     signature: &[u8],
 ) -> Result<(), Unspecified> {
-    let mut pkey = try_parse_public_key_bytes(public_key, alg.nid())?;
+    let mut pkey = parse_ec_public_key(public_key, alg.nid())?;
 
     let mut md_ctx = DigestContext::new_uninit();
 

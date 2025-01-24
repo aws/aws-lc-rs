@@ -6,7 +6,7 @@ pub(super) mod pkcs1;
 
 use super::{
     encoding,
-    key::{generate_rsa_key, is_rsa_key, key_size_bits, key_size_bytes},
+    key::{generate_rsa_key, is_rsa_key},
     KeySize,
 };
 use crate::aws_lc::{EVP_PKEY, EVP_PKEY_RSA};
@@ -49,7 +49,7 @@ impl PrivateDecryptingKey {
         if !is_rsa_key(key) {
             return Err(Unspecified);
         };
-        match key_size_bits(key) {
+        match key.key_size_bits() {
             2048..=8192 => Ok(()),
             _ => Err(Unspecified),
         }
@@ -103,16 +103,16 @@ impl PrivateDecryptingKey {
         super::key::is_valid_fips_key(&self.0)
     }
 
-    /// Returns the RSA key size in bytes.
+    /// Returns the RSA signature size in bytes.
     #[must_use]
     pub fn key_size_bytes(&self) -> usize {
-        key_size_bytes(&self.0)
+        self.0.signature_size_bytes()
     }
 
     /// Returns the RSA key size in bits.
     #[must_use]
     pub fn key_size_bits(&self) -> usize {
-        key_size_bits(&self.0)
+        self.0.key_size_bits()
     }
 
     /// Retrieves the `PublicEncryptingKey` corresponding with this `PrivateDecryptingKey`.
@@ -158,7 +158,7 @@ impl PublicEncryptingKey {
         if !is_rsa_key(key) {
             return Err(Unspecified);
         };
-        match key_size_bits(key) {
+        match key.key_size_bits() {
             2048..=8192 => Ok(()),
             _ => Err(Unspecified),
         }
@@ -172,16 +172,16 @@ impl PublicEncryptingKey {
         Ok(Self(encoding::rfc5280::decode_public_key_der(value)?))
     }
 
-    /// Returns the RSA key size in bytes.
+    /// Returns the RSA signature size in bytes.
     #[must_use]
     pub fn key_size_bytes(&self) -> usize {
-        key_size_bytes(&self.0)
+        self.0.signature_size_bytes()
     }
 
     /// Returns the RSA key size in bits.
     #[must_use]
     pub fn key_size_bits(&self) -> usize {
-        key_size_bits(&self.0)
+        self.0.key_size_bits()
     }
 }
 

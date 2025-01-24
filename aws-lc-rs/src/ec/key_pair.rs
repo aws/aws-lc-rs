@@ -8,9 +8,7 @@ use core::fmt::{Debug, Formatter};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
 
-use crate::aws_lc::{
-    EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_cmp, EVP_PKEY_get0_EC_KEY, EVP_PKEY, EVP_PKEY_EC,
-};
+use crate::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_cmp, EVP_PKEY, EVP_PKEY_EC};
 
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::signature::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
@@ -24,7 +22,7 @@ use crate::encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915De
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::{Document, Version};
-use crate::ptr::{ConstPointer, LcPtr};
+use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature};
 use crate::{digest, ec};
@@ -185,7 +183,7 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         private_key: &[u8],
     ) -> Result<Self, KeyRejected> {
-        let evp_pkey = encoding::unmarshal_der_to_private_key(private_key, alg.id.nid())?;
+        let evp_pkey = ec::encoding::rfc5915::parse_rfc5915_private_key(private_key, alg.id.nid())?;
 
         Ok(Self::new(alg, evp_pkey)?)
     }
@@ -303,10 +301,7 @@ impl AsBigEndian<EcPrivateKeyBin<'static>> for PrivateKey<'_> {
     /// # Errors
     /// `error::Unspecified` if serialization failed.
     fn as_be_bytes(&self) -> Result<EcPrivateKeyBin<'static>, Unspecified> {
-        let buffer = encoding::marshal_private_key_to_buffer(
-            self.0.algorithm.id.private_key_size(),
-            &self.0.evp_pkey.as_const(),
-        )?;
+        let buffer = encoding::sec1::marshal_sec1_private_key(&self.0.evp_pkey)?;
         Ok(EcPrivateKeyBin::new(buffer))
     }
 }
@@ -317,15 +312,7 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey<'_> {
     /// # Errors
     /// `error::Unspecified`  if serialization failed.
     fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der<'static>, Unspecified> {
-        unsafe {
-            let mut outp = null_mut::<u8>();
-            let ec_key = ConstPointer::new(EVP_PKEY_get0_EC_KEY(*self.0.evp_pkey.as_const()))?;
-            let length = usize::try_from(aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp))
-                .map_err(|_| Unspecified)?;
-            let mut outp = LcPtr::new(outp)?;
-            Ok(EcPrivateKeyRfc5915Der::take_from_slice(
-                core::slice::from_raw_parts_mut(*outp.as_mut(), length),
-            ))
-        }
+        let bytes = encoding::rfc5915::marshal_rfc5915_private_key(&self.0.evp_pkey)?;
+        Ok(EcPrivateKeyRfc5915Der::new(bytes))
     }
 }
