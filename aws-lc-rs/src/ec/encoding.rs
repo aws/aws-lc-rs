@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{EVP_PKEY, EVP_PKEY_EC};
+use crate::ec::encoding::sec1::parse_sec1_public_point;
 use crate::ec::validate_evp_key;
 
 use crate::error::KeyRejected;
@@ -251,6 +252,6 @@ pub(crate) fn parse_ec_public_key(
     expected_curve_nid: i32,
 ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
-        .or(sec1::parse_sec1_public_point(key_bytes, expected_curve_nid))
+        .or(parse_sec1_public_point(key_bytes, expected_curve_nid))
         .and_then(|key| validate_evp_key(&key.as_const(), expected_curve_nid).map(|()| key))
 }

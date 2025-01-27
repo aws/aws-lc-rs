@@ -9,6 +9,7 @@ use crate::aws_lc::{
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::compressed_public_key_size_bytes;
 use crate::ec::encoding::parse_ec_public_key;
+use crate::ec::encoding::sec1::marshal_sec1_public_point;
 use crate::encoding::{
     AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
 };
@@ -16,7 +17,7 @@ use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::signature::VerificationAlgorithm;
-use crate::{digest, ec, sealed};
+use crate::{digest, sealed};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
@@ -107,7 +108,7 @@ pub(crate) fn public_key_from_evp_pkey(
     evp_pkey: &LcPtr<EVP_PKEY>,
     algorithm: &'static EcdsaSigningAlgorithm,
 ) -> Result<PublicKey, Unspecified> {
-    let pub_key_bytes = ec::encoding::sec1::marshal_sec1_public_point(evp_pkey, false)?;
+    let pub_key_bytes = marshal_sec1_public_point(evp_pkey, false)?;
 
     Ok(PublicKey {
         evp_pkey: evp_pkey.clone(),
@@ -131,7 +132,7 @@ impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
     /// # Errors
     /// Returns an error if the public key fails to marshal.
     fn as_be_bytes(&self) -> Result<EcPublicKeyCompressedBin<'static>, crate::error::Unspecified> {
-        let pub_point = ec::encoding::sec1::marshal_sec1_public_point(&self.evp_pkey, true)?;
+        let pub_point = marshal_sec1_public_point(&self.evp_pkey, true)?;
         Ok(EcPublicKeyCompressedBin::new(pub_point))
     }
 }

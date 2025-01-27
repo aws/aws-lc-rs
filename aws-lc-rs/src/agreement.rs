@@ -52,7 +52,10 @@
 mod ephemeral;
 
 use crate::ec::encoding;
-use crate::ec::encoding::sec1::{marshal_sec1_private_key, parse_sec1_private_bn};
+use crate::ec::encoding::sec1::{
+    marshal_sec1_private_key, marshal_sec1_public_point, marshal_sec1_public_point_into_buffer,
+    parse_sec1_private_bn,
+};
 use crate::ec::evp_key_generate;
 use crate::error::KeyRejected;
 use crate::error::Unspecified;
@@ -394,11 +397,7 @@ impl PrivateKey {
             | KeyInner::ECDH_P384(evp_pkey)
             | KeyInner::ECDH_P521(evp_pkey) => {
                 let mut public_key = [0u8; MAX_PUBLIC_KEY_LEN];
-                let len = encoding::sec1::marshal_sec1_public_point_into_buffer(
-                    &mut public_key,
-                    evp_pkey,
-                    false,
-                )?;
+                let len = marshal_sec1_public_point_into_buffer(&mut public_key, evp_pkey, false)?;
                 Ok(PublicKey {
                     inner_key: self.inner_key.clone(),
                     public_key,
@@ -579,7 +578,7 @@ impl AsBigEndian<EcPublicKeyCompressedBin<'static>> for PublicKey {
             | KeyInner::ECDH_P521(evp_pkey) => evp_pkey,
             KeyInner::X25519(_) => return Err(Unspecified),
         };
-        let pub_point = encoding::sec1::marshal_sec1_public_point(evp_pkey, true)?;
+        let pub_point = marshal_sec1_public_point(evp_pkey, true)?;
         Ok(EcPublicKeyCompressedBin::new(pub_point))
     }
 }

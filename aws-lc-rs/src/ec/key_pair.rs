@@ -11,13 +11,17 @@ use core::ptr::{null, null_mut};
 use crate::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_cmp, EVP_PKEY, EVP_PKEY_EC};
 
 use crate::digest::digest_ctx::DigestContext;
+use crate::ec::evp_key_generate;
 use crate::ec::signature::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 #[cfg(feature = "fips")]
 use crate::ec::validate_evp_key;
 #[cfg(not(feature = "fips"))]
 use crate::ec::verify_evp_key_nid;
-use crate::ec::{encoding, evp_key_generate};
 
+use crate::ec::encoding::rfc5915::{marshal_rfc5915_private_key, parse_rfc5915_private_key};
+use crate::ec::encoding::sec1::{
+    marshal_sec1_private_key, parse_sec1_private_bn, parse_sec1_public_point,
+};
 use crate::encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915Der};
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
@@ -156,8 +160,8 @@ impl EcdsaKeyPair {
         private_key: &[u8],
         public_key: &[u8],
     ) -> Result<Self, KeyRejected> {
-        let priv_evp_pkey = ec::encoding::sec1::parse_sec1_private_bn(private_key, alg.id.nid())?;
-        let pub_evp_pkey = ec::encoding::sec1::parse_sec1_public_point(public_key, alg.id.nid())?;
+        let priv_evp_pkey = parse_sec1_private_bn(private_key, alg.id.nid())?;
+        let pub_evp_pkey = parse_sec1_public_point(public_key, alg.id.nid())?;
         // EVP_PKEY_cmp only compare params and public key
         if 1 != unsafe { EVP_PKEY_cmp(*priv_evp_pkey.as_const(), *pub_evp_pkey.as_const()) } {
             return Err(KeyRejected::inconsistent_components());
@@ -183,7 +187,7 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         private_key: &[u8],
     ) -> Result<Self, KeyRejected> {
-        let evp_pkey = ec::encoding::rfc5915::parse_rfc5915_private_key(private_key, alg.id.nid())?;
+        let evp_pkey = parse_rfc5915_private_key(private_key, alg.id.nid())?;
 
         Ok(Self::new(alg, evp_pkey)?)
     }
@@ -301,7 +305,7 @@ impl AsBigEndian<EcPrivateKeyBin<'static>> for PrivateKey<'_> {
     /// # Errors
     /// `error::Unspecified` if serialization failed.
     fn as_be_bytes(&self) -> Result<EcPrivateKeyBin<'static>, Unspecified> {
-        let buffer = encoding::sec1::marshal_sec1_private_key(&self.0.evp_pkey)?;
+        let buffer = marshal_sec1_private_key(&self.0.evp_pkey)?;
         Ok(EcPrivateKeyBin::new(buffer))
     }
 }
@@ -312,7 +316,7 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey<'_> {
     /// # Errors
     /// `error::Unspecified`  if serialization failed.
     fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der<'static>, Unspecified> {
-        let bytes = encoding::rfc5915::marshal_rfc5915_private_key(&self.0.evp_pkey)?;
+        let bytes = marshal_rfc5915_private_key(&self.0.evp_pkey)?;
         Ok(EcPrivateKeyRfc5915Der::new(bytes))
     }
 }
