@@ -62,10 +62,8 @@ pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
 use crate::aws_lc::{
     EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer,
-    EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
-    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key,
-    EVP_PKEY_new_raw_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY,
-    EVP_PKEY_X25519, NID_X25519,
+    EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, NID_X9_62_prime256v1,
+    NID_secp384r1, NID_secp521r1, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
 
 use crate::buffer::Buffer;
@@ -314,17 +312,9 @@ impl PrivateKey {
             return Err(KeyRejected::wrong_algorithm());
         }
         let evp_pkey = if AlgorithmID::X25519 == alg.id {
-            LcPtr::new(unsafe {
-                EVP_PKEY_new_raw_private_key(
-                    EVP_PKEY_X25519,
-                    null_mut(),
-                    key_bytes.as_ptr(),
-                    AlgorithmID::X25519.private_key_len(),
-                )
-            })?
+            LcPtr::<EVP_PKEY>::parse_raw_private_key(key_bytes, EVP_PKEY_X25519)?
         } else {
-            parse_sec1_private_bn(key_bytes, alg.id.nid())
-                .map_err(|_| KeyRejected::invalid_encoding())?
+            parse_sec1_private_bn(key_bytes, alg.id.nid())?
         };
         Ok(Self::new(alg, evp_pkey))
     }
@@ -363,14 +353,7 @@ impl PrivateKey {
     fn from_x25519_private_key(
         priv_key: &[u8; AlgorithmID::X25519.private_key_len()],
     ) -> Result<Self, Unspecified> {
-        let pkey = LcPtr::new(unsafe {
-            EVP_PKEY_new_raw_private_key(
-                EVP_PKEY_X25519,
-                null_mut(),
-                priv_key.as_ptr(),
-                priv_key.len(),
-            )
-        })?;
+        let pkey = LcPtr::<EVP_PKEY>::parse_raw_private_key(priv_key, EVP_PKEY_X25519)?;
 
         Ok(PrivateKey {
             inner_key: KeyInner::X25519(pkey),
@@ -424,18 +407,7 @@ impl PrivateKey {
             }
             KeyInner::X25519(priv_key) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
-                let mut out_len = buffer.len();
-
-                if 1 != unsafe {
-                    EVP_PKEY_get_raw_public_key(
-                        *priv_key.as_const(),
-                        buffer.as_mut_ptr(),
-                        &mut out_len,
-                    )
-                } {
-                    return Err(Unspecified);
-                }
-
+                let out_len = priv_key.marshal_raw_public_to_buffer(&mut buffer)?;
                 Ok(PublicKey {
                     inner_key: self.inner_key.clone(),
                     public_key: buffer,
@@ -507,16 +479,8 @@ impl AsBigEndian<Curve25519SeedBin<'static>> for PrivateKey {
         if AlgorithmID::X25519 != self.inner_key.algorithm().id {
             return Err(Unspecified);
         }
-        let evp_pkey = self.inner_key.get_evp_pkey().as_const();
-        let mut buffer = [0u8; AlgorithmID::X25519.private_key_len()];
-        let mut out_len = AlgorithmID::X25519.private_key_len();
-        if 1 != unsafe {
-            EVP_PKEY_get_raw_private_key(*evp_pkey, buffer.as_mut_ptr(), &mut out_len)
-        } {
-            return Err(Unspecified);
-        }
-        debug_assert_eq!(32, out_len);
-        Ok(Curve25519SeedBin::new(Vec::from(buffer)))
+        let evp_pkey = self.inner_key.get_evp_pkey();
+        Ok(Curve25519SeedBin::new(evp_pkey.marshal_raw_private_key()?))
     }
 }
 
@@ -824,14 +788,10 @@ fn try_parse_x25519_public_key_raw_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_P
         return Err(Unspecified);
     }
 
-    Ok(LcPtr::new(unsafe {
-        EVP_PKEY_new_raw_public_key(
-            EVP_PKEY_X25519,
-            null_mut(),
-            key_bytes.as_ptr(),
-            key_bytes.len(),
-        )
-    })?)
+    Ok(LcPtr::<EVP_PKEY>::parse_raw_public_key(
+        key_bytes,
+        EVP_PKEY_X25519,
+    )?)
 }
 
 #[cfg(test)]

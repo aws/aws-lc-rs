@@ -13,9 +13,7 @@ use untrusted::Input;
 
 use crate::aws_lc::{
     EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_PKEY_CTX_new_id, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
-    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key,
-    EVP_PKEY_new_raw_public_key, EVP_PKEY, EVP_PKEY_ED25519,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_ED25519,
 };
 
 use crate::buffer::Buffer;
@@ -33,8 +31,6 @@ use crate::{constant_time, hex, sealed};
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
-pub(crate) const ED25519_PRIVATE_KEY_SEED_LEN: usize =
-    aws_lc::ED25519_PRIVATE_KEY_SEED_LEN as usize;
 const ED25519_SIGNATURE_LEN: usize = aws_lc::ED25519_SIGNATURE_LEN as usize;
 const ED25519_SEED_LEN: usize = 32;
 
@@ -98,21 +94,13 @@ impl VerificationAlgorithm for EdDSAParameters {
     }
 }
 
-fn try_ed25519_public_key_from_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+fn try_ed25519_public_key_from_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     // If the length of key bytes matches the raw public key size then it has to be that
     if key_bytes.len() == ED25519_PUBLIC_KEY_LEN {
-        return Ok(LcPtr::new(unsafe {
-            EVP_PKEY_new_raw_public_key(
-                EVP_PKEY_ED25519,
-                null_mut(),
-                key_bytes.as_ptr(),
-                key_bytes.len(),
-            )
-        })?);
+        return LcPtr::<EVP_PKEY>::parse_raw_public_key(key_bytes, EVP_PKEY_ED25519);
     }
     // Otherwise we support X.509 SubjectPublicKeyInfo formatted keys which are inherently larger
     LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_ED25519)
-        .map_err(|_| Unspecified)
 }
 
 /// An Ed25519 key pair, for signing.
@@ -237,12 +225,7 @@ impl Ed25519KeyPair {
         let evp_pkey = generate_key()?;
 
         let mut public_key = [0u8; ED25519_PUBLIC_KEY_LEN];
-        let mut out_len: usize = ED25519_PUBLIC_KEY_LEN;
-        if 1 != unsafe {
-            EVP_PKEY_get_raw_public_key(*evp_pkey.as_const(), public_key.as_mut_ptr(), &mut out_len)
-        } {
-            return Err(Unspecified);
-        }
+        let out_len: usize = evp_pkey.marshal_raw_public_to_buffer(&mut public_key)?;
         debug_assert_eq!(public_key.len(), out_len);
 
         Ok(Self {
@@ -364,21 +347,10 @@ impl Ed25519KeyPair {
             return Err(KeyRejected::inconsistent_components());
         }
 
-        let evp_pkey = LcPtr::new(unsafe {
-            EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, null_mut(), seed.as_ptr(), seed.len())
-        })?;
+        let evp_pkey = LcPtr::<EVP_PKEY>::parse_raw_private_key(seed, EVP_PKEY_ED25519)?;
 
         let mut derived_public_key = [0u8; ED25519_PUBLIC_KEY_LEN];
-        let mut out_len: usize = derived_public_key.len();
-        if 1 != unsafe {
-            EVP_PKEY_get_raw_public_key(
-                *evp_pkey.as_const(),
-                derived_public_key.as_mut_ptr().cast(),
-                &mut out_len,
-            )
-        } {
-            return Err(KeyRejected::unspecified());
-        }
+        let out_len: usize = evp_pkey.marshal_raw_public_to_buffer(&mut derived_public_key)?;
         debug_assert_eq!(derived_public_key.len(), out_len);
 
         Ok(Self {
@@ -434,12 +406,7 @@ impl Ed25519KeyPair {
         evp_pkey.validate_as_ed25519()?;
 
         let mut public_key = [0u8; ED25519_PUBLIC_KEY_LEN];
-        let mut out_len: usize = ED25519_PUBLIC_KEY_LEN;
-        if 1 != unsafe {
-            EVP_PKEY_get_raw_public_key(*evp_pkey.as_const(), public_key.as_mut_ptr(), &mut out_len)
-        } {
-            return Err(KeyRejected::wrong_algorithm());
-        }
+        let out_len: usize = evp_pkey.marshal_raw_public_to_buffer(&mut public_key)?;
         debug_assert_eq!(public_key.len(), out_len);
 
         Ok(Self {
@@ -510,20 +477,8 @@ impl Ed25519KeyPair {
     /// # Errors
     /// Currently the function cannot fail, but it might in future implementations.
     pub fn seed(&self) -> Result<Seed<'static>, Unspecified> {
-        let mut private_key_bytes = vec![0u8; ED25519_PRIVATE_KEY_SEED_LEN];
-        let mut out_len: usize = private_key_bytes.len();
-        if 1 != unsafe {
-            EVP_PKEY_get_raw_private_key(
-                *self.evp_pkey.as_const(),
-                private_key_bytes.as_mut_ptr(),
-                &mut out_len,
-            )
-        } {
-            return Err(Unspecified);
-        }
-        debug_assert_eq!(private_key_bytes.len(), out_len);
         Ok(Seed {
-            bytes: private_key_bytes.into_boxed_slice(),
+            bytes: self.evp_pkey.marshal_raw_private_key()?.into_boxed_slice(),
             phantom: PhantomData,
         })
     }

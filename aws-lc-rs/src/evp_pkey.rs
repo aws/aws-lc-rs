@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{
-    EVP_PKEY_CTX_new, EVP_PKEY_bits, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA, EVP_PKEY_id,
-    EVP_PKEY_size, EVP_PKEY_up_ref, EVP_marshal_private_key, EVP_marshal_private_key_v2,
-    EVP_marshal_public_key, EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY,
-    EVP_PKEY_CTX, RSA,
+    EVP_PKEY_CTX_new, EVP_PKEY_bits, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id,
+    EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_PKEY_size, EVP_PKEY_up_ref,
+    EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
+    EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY, EVP_PKEY_CTX, RSA,
 };
 use crate::cbb::LcCBB;
 use crate::cbs;
@@ -157,6 +158,79 @@ impl LcPtr<EVP_PKEY> {
         // refcount. The modification is made while holding a global lock:
         // https://github.com/aws/aws-lc/blob/61503f7fe72457e12d3446853a5452d175560c49/crypto/refcount_lock.c#L29
         LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.as_mut_unsafe(), null_mut()) })
+    }
+
+    pub(crate) fn marshal_raw_private_key(&self) -> Result<Vec<u8>, Unspecified> {
+        let mut size = 0;
+        if 1 != unsafe { EVP_PKEY_get_raw_private_key(*self.as_const(), null_mut(), &mut size) } {
+            return Err(Unspecified);
+        }
+        let mut buffer = vec![0u8; size];
+        let buffer_size = self.marshal_raw_private_to_buffer(&mut buffer)?;
+        debug_assert_eq!(buffer_size, size);
+        Ok(buffer)
+    }
+
+    pub(crate) fn marshal_raw_private_to_buffer(
+        &self,
+        buffer: &mut [u8],
+    ) -> Result<usize, Unspecified> {
+        let mut key_len = buffer.len();
+        if 1 == unsafe {
+            EVP_PKEY_get_raw_private_key(*self.as_const(), buffer.as_mut_ptr(), &mut key_len)
+        } {
+            Ok(key_len)
+        } else {
+            Err(Unspecified)
+        }
+    }
+
+    // pub(crate) fn marshal_raw_public_key(&self) -> Result<Vec<u8>, Unspecified> {
+    //     let mut size = 0;
+    //     if 1 != unsafe { EVP_PKEY_get_raw_public_key(*self.as_const(), null_mut(), &mut size) } {
+    //         return Err(Unspecified);
+    //     }
+    //     let mut buffer = vec![0u8; size];
+    //     let buffer_size = self.marshal_raw_public_to_buffer(&mut buffer)?;
+    //     debug_assert_eq!(buffer_size, size);
+    //     Ok(buffer)
+    // }
+
+    pub(crate) fn marshal_raw_public_to_buffer(
+        &self,
+        buffer: &mut [u8],
+    ) -> Result<usize, Unspecified> {
+        let mut key_len = buffer.len();
+        if 1 == unsafe {
+            // `EVP_PKEY_get_raw_public_key` writes the total length
+            // to `encapsulate_key_size` in the event that the buffer we provide is larger then
+            // required.
+            EVP_PKEY_get_raw_public_key(*self.as_const(), buffer.as_mut_ptr(), &mut key_len)
+        } {
+            Ok(key_len)
+        } else {
+            Err(Unspecified)
+        }
+    }
+
+    pub(crate) fn parse_raw_private_key(
+        bytes: &[u8],
+        evp_pkey_type: c_int,
+    ) -> Result<Self, KeyRejected> {
+        Self::new(unsafe {
+            EVP_PKEY_new_raw_private_key(evp_pkey_type, null_mut(), bytes.as_ptr(), bytes.len())
+        })
+        .map_err(|()| KeyRejected::invalid_encoding())
+    }
+
+    pub(crate) fn parse_raw_public_key(
+        bytes: &[u8],
+        evp_pkey_type: c_int,
+    ) -> Result<Self, KeyRejected> {
+        Self::new(unsafe {
+            EVP_PKEY_new_raw_public_key(evp_pkey_type, null_mut(), bytes.as_ptr(), bytes.len())
+        })
+        .map_err(|()| KeyRejected::invalid_encoding())
     }
 }
 
