@@ -185,17 +185,6 @@ impl LcPtr<EVP_PKEY> {
         }
     }
 
-    // pub(crate) fn marshal_raw_public_key(&self) -> Result<Vec<u8>, Unspecified> {
-    //     let mut size = 0;
-    //     if 1 != unsafe { EVP_PKEY_get_raw_public_key(*self.as_const(), null_mut(), &mut size) } {
-    //         return Err(Unspecified);
-    //     }
-    //     let mut buffer = vec![0u8; size];
-    //     let buffer_size = self.marshal_raw_public_to_buffer(&mut buffer)?;
-    //     debug_assert_eq!(buffer_size, size);
-    //     Ok(buffer)
-    // }
-
     pub(crate) fn marshal_raw_public_to_buffer(
         &self,
         buffer: &mut [u8],
