@@ -1,13 +1,13 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aws_lc::{CBB_cleanup, CBB_finish, CBB_init, CBB_init_fixed, CBB};
-use crate::buffer::Buffer;
-use crate::error::Unspecified;
-use crate::ptr::LcPtr;
-use core::marker::PhantomData;
-use core::mem::MaybeUninit;
-use core::ptr::null_mut;
+use crate::{
+    aws_lc::{CBB_cleanup, CBB_finish, CBB_init, CBB_init_fixed, CBB},
+    buffer::Buffer,
+    error::Unspecified,
+    ptr::LcPtr,
+};
+use core::{marker::PhantomData, mem::MaybeUninit, ptr::null_mut};
 
 pub(crate) struct LcCBB<'a>(CBB, PhantomData<&'a CBB>);
 

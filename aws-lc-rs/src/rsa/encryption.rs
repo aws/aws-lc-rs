@@ -9,8 +9,8 @@ use super::{
     key::{generate_rsa_key, is_rsa_key, key_size_bits, key_size_bytes},
     KeySize,
 };
-use crate::aws_lc::EVP_PKEY;
 use crate::{
+    aws_lc::EVP_PKEY,
     encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
     error::{KeyRejected, Unspecified},
     ptr::LcPtr,

@@ -1,11 +1,15 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::agreement::{agree, Algorithm, PrivateKey, PublicKey, UnparsedPublicKey};
-use crate::error::Unspecified;
-use crate::rand::SecureRandom;
-use core::fmt;
-use core::fmt::{Debug, Formatter};
+use crate::{
+    agreement::{agree, Algorithm, PrivateKey, PublicKey, UnparsedPublicKey},
+    error::Unspecified,
+    rand::SecureRandom,
+};
+use core::{
+    fmt,
+    fmt::{Debug, Formatter},
+};
 
 /// An ephemeral private key for use (only) with `agree_ephemeral`. The
 /// signature of `agree_ephemeral` ensures that an `PrivateKey` can be
@@ -112,12 +116,16 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::agreement::{AlgorithmID, PublicKey};
-    use crate::encoding::{
-        AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
+    use crate::{
+        agreement,
+        agreement::{AlgorithmID, PublicKey},
+        encoding::{
+            AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin,
+            PublicKeyX509Der,
+        },
+        error::Unspecified,
+        rand, test, test_file,
     };
-    use crate::error::Unspecified;
-    use crate::{agreement, rand, test, test_file};
 
     #[test]
     fn test_agreement_ecdh_x25519_rfc_iterated() {

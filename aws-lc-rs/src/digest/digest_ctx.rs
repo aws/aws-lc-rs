@@ -1,13 +1,12 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aws_lc::{
-    EVP_DigestInit_ex, EVP_MD_CTX_cleanup, EVP_MD_CTX_copy, EVP_MD_CTX_init, EVP_MD_CTX,
+use crate::{
+    aws_lc::{EVP_DigestInit_ex, EVP_MD_CTX_cleanup, EVP_MD_CTX_copy, EVP_MD_CTX_init, EVP_MD_CTX},
+    digest::{match_digest_type, Algorithm},
+    error::Unspecified,
 };
-use crate::digest::{match_digest_type, Algorithm};
-use crate::error::Unspecified;
-use core::mem::MaybeUninit;
-use core::ptr::null_mut;
+use core::{mem::MaybeUninit, ptr::null_mut};
 
 pub(crate) struct DigestContext(EVP_MD_CTX);
 

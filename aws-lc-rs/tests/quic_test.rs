@@ -3,8 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::aead::quic;
-use aws_lc_rs::{test, test_file};
+use aws_lc_rs::{aead::quic, test, test_file};
 
 #[test]
 fn quic_aes_128() {

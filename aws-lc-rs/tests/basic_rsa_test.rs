@@ -1,11 +1,13 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::rand::SystemRandom;
-use aws_lc_rs::rsa::{Pkcs1PublicEncryptingKey, PublicEncryptingKey};
-use aws_lc_rs::signature;
-use aws_lc_rs::signature::RsaKeyPair;
-use aws_lc_rs::test::from_dirty_hex;
+use aws_lc_rs::{
+    rand::SystemRandom,
+    rsa::{Pkcs1PublicEncryptingKey, PublicEncryptingKey},
+    signature,
+    signature::RsaKeyPair,
+    test::from_dirty_hex,
+};
 
 #[test]
 fn test_rsa_pkcs8() {

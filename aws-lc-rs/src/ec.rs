@@ -4,9 +4,10 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::ec::signature::AlgorithmID;
-use core::mem::MaybeUninit;
-use core::ptr::null;
-use core::ptr::null_mut;
+use core::{
+    mem::MaybeUninit,
+    ptr::{null, null_mut},
+};
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_int;
 use std::os::raw::c_int;
@@ -26,10 +27,12 @@ use crate::aws_lc::{
     EC_GROUP, EC_KEY, EC_POINT, EVP_PKEY, EVP_PKEY_EC,
 };
 
-use crate::error::{KeyRejected, Unspecified};
-use crate::fips::indicator_check;
-use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
-use crate::signature::Signature;
+use crate::{
+    error::{KeyRejected, Unspecified},
+    fips::indicator_check,
+    ptr::{ConstPointer, DetachableLcPtr, LcPtr},
+    signature::Signature,
+};
 
 pub(crate) mod key_pair;
 pub(crate) mod signature;
@@ -424,13 +427,19 @@ pub(crate) const fn uncompressed_public_key_size_bytes(curve_field_bits: usize) 
 
 #[cfg(test)]
 mod tests {
-    use crate::encoding::{
-        AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
+    use crate::{
+        encoding::{
+            AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin,
+            PublicKeyX509Der,
+        },
+        signature,
+        signature::{
+            EcdsaKeyPair, KeyPair, UnparsedPublicKey, ECDSA_P256_SHA256_FIXED,
+            ECDSA_P256_SHA256_FIXED_SIGNING,
+        },
+        test,
+        test::from_dirty_hex,
     };
-    use crate::signature::{EcdsaKeyPair, UnparsedPublicKey, ECDSA_P256_SHA256_FIXED};
-    use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
-    use crate::test::from_dirty_hex;
-    use crate::{signature, test};
 
     #[test]
     fn test_from_pkcs8() {

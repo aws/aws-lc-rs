@@ -53,28 +53,33 @@ mod ephemeral;
 
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
-use crate::aws_lc::{
-    CBS_init, EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_derive, EVP_PKEY_derive_init,
-    EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
-    EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
-    EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_marshal_public_key,
-    EVP_parse_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, CBS,
-    EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+use crate::{
+    aws_lc::{
+        CBS_init, EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_derive, EVP_PKEY_derive_init,
+        EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
+        EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
+        EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_marshal_public_key,
+        EVP_parse_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, CBS,
+        EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+    },
+    cbb::LcCBB,
+    ec,
+    ec::{ec_group_from_nid, evp_key_generate},
+    error::{KeyRejected, Unspecified},
+    fips::indicator_check,
+    hex,
+    ptr::{ConstPointer, LcPtr},
 };
-use crate::cbb::LcCBB;
-use crate::ec::{ec_group_from_nid, evp_key_generate};
-use crate::error::{KeyRejected, Unspecified};
-use crate::fips::indicator_check;
-use crate::ptr::{ConstPointer, LcPtr};
-use crate::{ec, hex};
 
 use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
     EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
 };
-use core::fmt;
-use core::fmt::{Debug, Formatter};
-use core::ptr::null_mut;
+use core::{
+    fmt,
+    fmt::{Debug, Formatter},
+    ptr::null_mut,
+};
 use std::mem::MaybeUninit;
 
 #[allow(non_camel_case_types)]
@@ -889,15 +894,17 @@ fn try_parse_x25519_subject_public_key_info_bytes(
 
 #[cfg(test)]
 mod tests {
-    use crate::agreement::{
-        agree, Algorithm, PrivateKey, PublicKey, UnparsedPublicKey, ECDH_P256, ECDH_P384,
-        ECDH_P521, X25519,
+    use crate::{
+        agreement::{
+            agree, Algorithm, PrivateKey, PublicKey, UnparsedPublicKey, ECDH_P256, ECDH_P384,
+            ECDH_P521, X25519,
+        },
+        encoding::{
+            AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
+            EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
+        },
+        rand, test,
     };
-    use crate::encoding::{
-        AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
-        EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
-    };
-    use crate::{rand, test};
 
     #[test]
     fn test_agreement_x25519() {
@@ -1199,8 +1206,7 @@ mod tests {
     #[test]
     fn agreement_traits() {
         use crate::test;
-        use regex;
-        use regex::Regex;
+        use regex::{self, Regex};
 
         let rng = rand::SystemRandom::new();
         let private_key = PrivateKey::generate_for_test(&ECDH_P256, &rng).unwrap();

@@ -103,10 +103,10 @@
 //!     assert!(db.verify_password("alice", "@74d7]404j|W}6u").is_ok());
 //! }
 
-use crate::aws_lc::PKCS5_PBKDF2_HMAC;
-use crate::error::Unspecified;
-use crate::fips::indicator_check;
-use crate::{constant_time, digest, hmac};
+use crate::{
+    aws_lc::PKCS5_PBKDF2_HMAC, constant_time, digest, error::Unspecified, fips::indicator_check,
+    hmac,
+};
 use core::num::NonZeroU32;
 use zeroize::Zeroize;
 

@@ -248,16 +248,16 @@ use crate::rsa::{
     RsaVerificationAlgorithmId,
 };
 
-pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
-use crate::ec::signature::EcdsaSignatureFormat;
-pub use crate::ec::signature::{
-    EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
+use crate::{digest, ec, ec::signature::EcdsaSignatureFormat, error, hex, rsa, sealed};
+pub use crate::{
+    ec::{
+        key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey},
+        signature::{
+            EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
+        },
+    },
+    ed25519::{Ed25519KeyPair, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN},
 };
-pub use crate::ed25519::{
-    Ed25519KeyPair, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
-};
-use crate::rsa;
-use crate::{digest, ec, error, hex, sealed};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component
@@ -796,8 +796,10 @@ pub static ED25519: EdDSAParameters = EdDSAParameters {};
 mod tests {
     use regex::Regex;
 
-    use crate::rand::{generate, SystemRandom};
-    use crate::signature::{UnparsedPublicKey, ED25519};
+    use crate::{
+        rand::{generate, SystemRandom},
+        signature::{UnparsedPublicKey, ED25519},
+    };
 
     #[cfg(feature = "fips")]
     mod fips;

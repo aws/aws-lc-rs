@@ -10,10 +10,14 @@
 #![cfg_attr(clippy, feature(custom_inner_attributes))]
 #![cfg_attr(clippy, clippy::msrv = "1.77")]
 
-use std::ffi::{OsStr, OsString};
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::{env, fmt, fmt::Debug};
+use std::{
+    env,
+    ffi::{OsStr, OsString},
+    fmt,
+    fmt::Debug,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;

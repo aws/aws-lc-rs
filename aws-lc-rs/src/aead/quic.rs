@@ -7,12 +7,11 @@
 //!
 //! See draft-ietf-quic-tls.
 
-use crate::cipher::aes::encrypt_block;
-use crate::cipher::block;
-use crate::cipher::chacha::encrypt_block_chacha20;
-use crate::cipher::key::SymmetricCipherKey;
-use crate::hkdf::KeyType;
-use crate::{derive_debug_via_id, error, hkdf};
+use crate::{
+    cipher::{aes::encrypt_block, block, chacha::encrypt_block_chacha20, key::SymmetricCipherKey},
+    derive_debug_via_id, error, hkdf,
+    hkdf::KeyType,
+};
 
 /// A key for generating QUIC Header Protection masks.
 pub struct HeaderProtectionKey {
@@ -174,8 +173,10 @@ fn cipher_new_mask(
 
 #[cfg(test)]
 mod test {
-    use crate::aead::quic::{Algorithm, HeaderProtectionKey};
-    use crate::test;
+    use crate::{
+        aead::quic::{Algorithm, HeaderProtectionKey},
+        test,
+    };
 
     #[test]
     fn test_types() {

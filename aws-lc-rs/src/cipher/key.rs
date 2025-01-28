@@ -1,13 +1,17 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aws_lc::{AES_set_decrypt_key, AES_set_encrypt_key, AES_KEY};
-use crate::cipher::block::Block;
-use crate::cipher::chacha::ChaCha20Key;
-use crate::cipher::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
-use crate::error::Unspecified;
-use core::mem::{size_of, MaybeUninit};
-use core::ptr::copy_nonoverlapping;
+use crate::{
+    aws_lc::{AES_set_decrypt_key, AES_set_encrypt_key, AES_KEY},
+    cipher::{
+        block::Block, chacha::ChaCha20Key, AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN,
+    },
+    error::Unspecified,
+};
+use core::{
+    mem::{size_of, MaybeUninit},
+    ptr::copy_nonoverlapping,
+};
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_uint;
 use std::os::raw::c_uint;
@@ -129,9 +133,13 @@ impl SymmetricCipherKey {
 
 #[cfg(test)]
 mod tests {
-    use crate::cipher::block::{Block, BLOCK_LEN};
-    use crate::cipher::key::SymmetricCipherKey;
-    use crate::test::from_hex;
+    use crate::{
+        cipher::{
+            block::{Block, BLOCK_LEN},
+            key::SymmetricCipherKey,
+        },
+        test::from_hex,
+    };
 
     #[test]
     fn test_encrypt_block_aes_128() {

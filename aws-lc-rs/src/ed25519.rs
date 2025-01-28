@@ -3,10 +3,12 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use core::fmt;
-use core::fmt::{Debug, Formatter};
-use core::mem::MaybeUninit;
-use core::ptr::null_mut;
+use core::{
+    fmt,
+    fmt::{Debug, Formatter},
+    mem::MaybeUninit,
+    ptr::null_mut,
+};
 use std::marker::PhantomData;
 
 #[cfg(feature = "ring-sig-verify")]
@@ -20,18 +22,20 @@ use crate::aws_lc::{
     EVP_PKEY_ED25519,
 };
 
-use crate::cbb::LcCBB;
-use crate::digest::digest_ctx::DigestContext;
-use crate::encoding::{
-    AsBigEndian, AsDer, Curve25519SeedBin, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der,
+use crate::{
+    cbb::LcCBB,
+    constant_time,
+    digest::digest_ctx::DigestContext,
+    encoding::{AsBigEndian, AsDer, Curve25519SeedBin, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der},
+    error::{KeyRejected, Unspecified},
+    fips::indicator_check,
+    hex,
+    pkcs8::{Document, Version},
+    ptr::LcPtr,
+    rand::SecureRandom,
+    sealed,
+    signature::{KeyPair, Signature, VerificationAlgorithm},
 };
-use crate::error::{KeyRejected, Unspecified};
-use crate::fips::indicator_check;
-use crate::pkcs8::{Document, Version};
-use crate::ptr::LcPtr;
-use crate::rand::SecureRandom;
-use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
-use crate::{constant_time, hex, sealed};
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
@@ -566,11 +570,14 @@ impl AsDer<Pkcs8V2Der<'static>> for Ed25519KeyPair {
 
 #[cfg(test)]
 mod tests {
-    use crate::ed25519::Ed25519KeyPair;
-    use crate::encoding::{AsBigEndian, AsDer, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der};
-    use crate::rand::SystemRandom;
-    use crate::signature::{KeyPair, UnparsedPublicKey, ED25519};
-    use crate::{hex, test};
+    use crate::{
+        ed25519::Ed25519KeyPair,
+        encoding::{AsBigEndian, AsDer, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der},
+        hex,
+        rand::SystemRandom,
+        signature::{KeyPair, UnparsedPublicKey, ED25519},
+        test,
+    };
 
     #[test]
     fn test_generate() {

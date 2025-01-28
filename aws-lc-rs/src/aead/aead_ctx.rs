@@ -1,22 +1,24 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use core::mem::size_of;
-use core::ptr::null_mut;
+use core::{mem::size_of, ptr::null_mut};
 
 use crate::cipher::chacha;
 
-use crate::aws_lc::{
-    evp_aead_direction_t, evp_aead_direction_t_evp_aead_open, evp_aead_direction_t_evp_aead_seal,
-    EVP_AEAD_CTX_init, EVP_AEAD_CTX_init_with_direction, EVP_AEAD_CTX_zero, EVP_aead_aes_128_gcm,
-    EVP_aead_aes_128_gcm_randnonce, EVP_aead_aes_128_gcm_siv, EVP_aead_aes_128_gcm_tls12,
-    EVP_aead_aes_128_gcm_tls13, EVP_aead_aes_192_gcm, EVP_aead_aes_256_gcm,
-    EVP_aead_aes_256_gcm_randnonce, EVP_aead_aes_256_gcm_siv, EVP_aead_aes_256_gcm_tls12,
-    EVP_aead_aes_256_gcm_tls13, EVP_aead_chacha20_poly1305, OPENSSL_malloc, EVP_AEAD_CTX,
+use crate::{
+    aws_lc::{
+        evp_aead_direction_t, evp_aead_direction_t_evp_aead_open,
+        evp_aead_direction_t_evp_aead_seal, EVP_AEAD_CTX_init, EVP_AEAD_CTX_init_with_direction,
+        EVP_AEAD_CTX_zero, EVP_aead_aes_128_gcm, EVP_aead_aes_128_gcm_randnonce,
+        EVP_aead_aes_128_gcm_siv, EVP_aead_aes_128_gcm_tls12, EVP_aead_aes_128_gcm_tls13,
+        EVP_aead_aes_192_gcm, EVP_aead_aes_256_gcm, EVP_aead_aes_256_gcm_randnonce,
+        EVP_aead_aes_256_gcm_siv, EVP_aead_aes_256_gcm_tls12, EVP_aead_aes_256_gcm_tls13,
+        EVP_aead_chacha20_poly1305, OPENSSL_malloc, EVP_AEAD_CTX,
+    },
+    cipher::aes::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN},
+    error::Unspecified,
+    ptr::LcPtr,
 };
-use crate::cipher::aes::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
-use crate::error::Unspecified;
-use crate::ptr::LcPtr;
 
 pub(crate) enum AeadDirection {
     Open,

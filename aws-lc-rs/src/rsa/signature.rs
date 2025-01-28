@@ -15,7 +15,10 @@ use crate::aws_lc::{
 };
 
 use crate::{
-    digest::{self, digest_ctx::DigestContext},
+    digest::{
+        digest_ctx::DigestContext,
+        {self},
+    },
     error::Unspecified,
     fips::indicator_check,
     ptr::{ConstPointer, DetachableLcPtr, LcPtr},

@@ -6,8 +6,7 @@
 
 //! Initialization Vector (IV) cryptographic primitives
 
-use crate::error::Unspecified;
-use crate::rand;
+use crate::{error::Unspecified, rand};
 use zeroize::Zeroize;
 
 /// Length of a 128-bit IV in bytes.

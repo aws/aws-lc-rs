@@ -10,11 +10,6 @@ use super::{
 };
 #[cfg(feature = "fips")]
 use crate::aws_lc::RSA_check_fips;
-use crate::aws_lc::{
-    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
-    RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
-    EVP_PKEY_CTX,
-};
 #[cfg(feature = "ring-io")]
 use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
 #[cfg(feature = "ring-io")]
@@ -22,6 +17,11 @@ use crate::io;
 #[cfg(feature = "ring-io")]
 use crate::ptr::ConstPointer;
 use crate::{
+    aws_lc::{
+        EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
+        RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM,
+        EVP_PKEY, EVP_PKEY_CTX,
+    },
     digest::{self},
     encoding::{AsDer, Pkcs8V1Der},
     error::{KeyRejected, Unspecified},

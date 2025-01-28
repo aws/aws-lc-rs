@@ -1,13 +1,15 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::cipher::{
-    DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext, OperatingMode,
-    PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, StreamingDecryptingKey,
-    StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192, AES_256,
+use aws_lc_rs::{
+    cipher::{
+        DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext, OperatingMode,
+        PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, StreamingDecryptingKey,
+        StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192, AES_256,
+    },
+    iv::{FixedLength, IV_LEN_128_BIT},
+    test::from_hex,
 };
-use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
-use aws_lc_rs::test::from_hex;
 use paste::paste;
 
 fn step_encrypt(

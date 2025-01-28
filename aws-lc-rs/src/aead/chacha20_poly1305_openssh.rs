@@ -24,10 +24,16 @@
 //! The APIs offered in this module must not be used.
 
 use super::{poly1305, Nonce, Tag};
-use crate::cipher::block::BLOCK_LEN;
-use crate::cipher::chacha::{self, ChaCha20Key};
-use crate::iv::FixedLength;
-use crate::{constant_time, endian::BigEndian, error};
+use crate::{
+    cipher::{
+        block::BLOCK_LEN,
+        chacha::{self, ChaCha20Key},
+    },
+    constant_time,
+    endian::BigEndian,
+    error,
+    iv::FixedLength,
+};
 
 /// A key for sealing packets.
 pub struct SealingKey {
@@ -202,13 +208,17 @@ pub(super) fn derive_poly1305_key(chacha_key: &ChaCha20Key, nonce: Nonce) -> pol
 
 #[cfg(test)]
 mod tests {
-    use crate::aead::chacha20_poly1305_openssh::{
-        derive_poly1305_key, OpeningKey, SealingKey, KEY_LEN, TAG_LEN,
+    use crate::{
+        aead::{
+            chacha20_poly1305_openssh::{
+                derive_poly1305_key, OpeningKey, SealingKey, KEY_LEN, TAG_LEN,
+            },
+            Nonce,
+        },
+        cipher::chacha::ChaCha20Key,
+        endian::{BigEndian, FromArray, LittleEndian},
+        test,
     };
-    use crate::aead::Nonce;
-    use crate::cipher::chacha::ChaCha20Key;
-    use crate::endian::{BigEndian, FromArray, LittleEndian};
-    use crate::test;
 
     #[test]
     fn derive_poly1305_test() {

@@ -94,8 +94,7 @@ mod tests {
     #[cfg(feature = "ring-io")]
     #[test]
     fn test_rsa() {
-        use crate::signature::KeyPair;
-        use crate::test::from_dirty_hex;
+        use crate::{signature::KeyPair, test::from_dirty_hex};
         let rsa_pkcs8_input: Vec<u8> = from_dirty_hex(
             r"308204bd020100300d06092a864886f70d0101010500048204a7308204a30201000282010100b9d7a
         f84fa4184a5f22037ec8aff2db5f78bd8c21e714e579ae57c6398c4950f3a694b17bfccf488766159aec5bb7c2c4

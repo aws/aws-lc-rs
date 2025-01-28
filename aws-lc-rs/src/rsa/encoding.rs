@@ -3,8 +3,8 @@
 
 /// PKCS#8 Encoding Functions
 pub(in crate::rsa) mod pkcs8 {
-    use crate::aws_lc::{EVP_marshal_private_key, EVP_parse_private_key, EVP_PKEY};
     use crate::{
+        aws_lc::{EVP_marshal_private_key, EVP_parse_private_key, EVP_PKEY},
         cbb::LcCBB,
         cbs,
         error::{KeyRejected, Unspecified},
@@ -49,11 +49,11 @@ pub(in crate::rsa) mod pkcs8 {
 ///
 /// PKCS #1: RSA Cryptography Specifications Version 2.2
 pub(in crate::rsa) mod rfc8017 {
-    use crate::aws_lc::{
-        EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_parse_private_key, RSA_public_key_from_bytes,
-        RSA_public_key_to_bytes, EVP_PKEY,
-    };
     use crate::{
+        aws_lc::{
+            EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_parse_private_key, RSA_public_key_from_bytes,
+            RSA_public_key_to_bytes, EVP_PKEY,
+        },
         cbs,
         error::{KeyRejected, Unspecified},
         ptr::{DetachableLcPtr, LcPtr},
@@ -126,8 +126,8 @@ pub(in crate::rsa) mod rfc8017 {
 ///
 /// Encodings that use the `SubjectPublicKeyInfo` structure.
 pub(in crate::rsa) mod rfc5280 {
-    use crate::aws_lc::{EVP_marshal_public_key, EVP_parse_public_key, EVP_PKEY};
     use crate::{
+        aws_lc::{EVP_marshal_public_key, EVP_parse_public_key, EVP_PKEY},
         cbb::LcCBB,
         cbs,
         encoding::PublicKeyX509Der,

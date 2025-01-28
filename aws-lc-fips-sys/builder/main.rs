@@ -10,12 +10,13 @@
 #![cfg_attr(clippy, feature(custom_inner_attributes))]
 #![cfg_attr(clippy, clippy::msrv = "1.77")]
 
-use core::fmt;
-use core::fmt::Debug;
-use std::env;
-use std::ffi::{OsStr, OsString};
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use core::{fmt, fmt::Debug};
+use std::{
+    env,
+    ffi::{OsStr, OsString},
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use cmake_builder::CmakeBuilder;
 

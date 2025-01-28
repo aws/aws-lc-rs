@@ -28,7 +28,9 @@
 use core::fmt::Debug;
 
 use crate::{
-    digest::match_digest_type, digest::AlgorithmID, error::Unspecified, fips::indicator_check,
+    digest::{match_digest_type, AlgorithmID},
+    error::Unspecified,
+    fips::indicator_check,
 };
 use core::ptr::null;
 

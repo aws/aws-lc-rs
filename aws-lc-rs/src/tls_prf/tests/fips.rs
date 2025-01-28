@@ -3,8 +3,10 @@
 
 #![cfg(debug_assertions)]
 
-use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
-use crate::tls_prf::{Secret, P_SHA256, P_SHA384, P_SHA512};
+use crate::{
+    fips::{assert_fips_status_indicator, FipsServiceStatus},
+    tls_prf::{Secret, P_SHA256, P_SHA384, P_SHA512},
+};
 
 macro_rules! prf_test {
     ($name:ident, $alg:expr, $size:expr, $label:expr, $expect:path) => {

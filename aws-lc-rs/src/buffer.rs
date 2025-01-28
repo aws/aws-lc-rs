@@ -7,8 +7,7 @@
 #![allow(clippy::module_name_repetitions)]
 
 use alloc::borrow::Cow;
-use core::fmt;
-use core::marker::PhantomData;
+use core::{fmt, marker::PhantomData};
 
 use zeroize::Zeroize;
 
