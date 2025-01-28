@@ -76,14 +76,11 @@ pub(in crate::rsa) mod rfc8017 {
 ///
 /// Encodings that use the `SubjectPublicKeyInfo` structure.
 pub(in crate::rsa) mod rfc5280 {
-    use crate::aws_lc::EVP_PKEY;
-    use crate::aws_lc::EVP_PKEY_RSA;
+    use crate::aws_lc::{EVP_PKEY, EVP_PKEY_RSA};
     use crate::buffer::Buffer;
-    use crate::{
-        encoding::PublicKeyX509Der,
-        error::{KeyRejected, Unspecified},
-        ptr::LcPtr,
-    };
+    use crate::encoding::PublicKeyX509Der;
+    use crate::error::{KeyRejected, Unspecified};
+    use crate::ptr::LcPtr;
 
     pub(in crate::rsa) fn encode_public_key_der(
         key: &LcPtr<EVP_PKEY>,

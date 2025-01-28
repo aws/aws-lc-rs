@@ -4,18 +4,13 @@
 pub(super) mod oaep;
 pub(super) mod pkcs1;
 
-use super::{
-    encoding,
-    key::{generate_rsa_key, is_rsa_key},
-    KeySize,
-};
+use super::key::{generate_rsa_key, is_rsa_key};
+use super::{encoding, KeySize};
 use crate::aws_lc::{EVP_PKEY, EVP_PKEY_RSA};
+use crate::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
+use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Version;
-use crate::{
-    encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
-    error::{KeyRejected, Unspecified},
-    ptr::LcPtr,
-};
+use crate::ptr::LcPtr;
 use core::fmt::Debug;
 
 /// RSA Encryption Algorithm Identifier

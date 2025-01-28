@@ -21,15 +21,12 @@ pub(crate) mod sec1 {
         EC_GROUP, EC_POINT, EVP_PKEY,
     };
     use crate::cbb::LcCBB;
-    use crate::ec::validate_evp_key;
-    use crate::ec::KeyRejected;
     use crate::ec::{
         compressed_public_key_size_bytes, ec_group_from_nid, uncompressed_public_key_size_bytes,
+        validate_evp_key, KeyRejected,
     };
     use crate::error::Unspecified;
-    use crate::ptr::ConstPointer;
-    use crate::ptr::DetachableLcPtr;
-    use crate::ptr::LcPtr;
+    use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
     use std::ptr::{null, null_mut};
 
     pub(crate) fn parse_sec1_public_point(

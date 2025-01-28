@@ -51,14 +51,12 @@
 //! ```
 mod ephemeral;
 
-use crate::ec::encoding;
 use crate::ec::encoding::sec1::{
     marshal_sec1_private_key, marshal_sec1_public_point, marshal_sec1_public_point_into_buffer,
     parse_sec1_private_bn,
 };
-use crate::ec::evp_key_generate;
-use crate::error::KeyRejected;
-use crate::error::Unspecified;
+use crate::ec::{encoding, evp_key_generate};
+use crate::error::{KeyRejected, Unspecified};
 use crate::hex;
 use crate::ptr::ConstPointer;
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
