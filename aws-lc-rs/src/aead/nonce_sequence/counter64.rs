@@ -1,11 +1,9 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{
-    aead::{Nonce, NonceSequence, NONCE_LEN},
-    error::Unspecified,
-    iv::FixedLength,
-};
+use crate::aead::{Nonce, NonceSequence, NONCE_LEN};
+use crate::error::Unspecified;
+use crate::iv::FixedLength;
 
 /// `Counter64` is an implementation of the `NonceSequence` trait.
 ///
@@ -126,7 +124,8 @@ impl NonceSequence for Counter64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::aead::{nonce_sequence::Counter64Builder, NonceSequence};
+    use crate::aead::nonce_sequence::Counter64Builder;
+    use crate::aead::NonceSequence;
 
     #[test]
     fn test_counter64_identifier() {

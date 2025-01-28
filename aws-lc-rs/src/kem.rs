@@ -45,20 +45,18 @@
 //!
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
 //! ```
-use crate::{
-    aws_lc::{
-        EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate,
-        EVP_PKEY_encapsulate, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key,
-        EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY,
-        EVP_PKEY_KEM,
-    },
-    buffer::Buffer,
-    encoding::generated_encodings,
-    error::{KeyRejected, Unspecified},
-    ptr::LcPtr,
+use crate::aws_lc::{
+    EVP_PKEY_CTX_kem_set_params, EVP_PKEY_CTX_new_id, EVP_PKEY_decapsulate, EVP_PKEY_encapsulate,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_kem_new_raw_public_key,
+    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_KEM,
 };
+use crate::buffer::Buffer;
+use crate::encoding::generated_encodings;
+use crate::error::{KeyRejected, Unspecified};
+use crate::ptr::LcPtr;
 use alloc::borrow::Cow;
-use core::{cmp::Ordering, ptr::null_mut};
+use core::cmp::Ordering;
+use core::ptr::null_mut;
 use zeroize::Zeroize;
 
 const ML_KEM_512_SHARED_SECRET_LENGTH: usize = 32;

@@ -1,16 +1,17 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::cc_builder::CcBuilder;
+use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    allow_prebuilt_nasm, cargo_env,
-    cc_builder::CcBuilder,
-    emit_warning, execute_command, get_crate_cflags, is_crt_static, is_no_asm, option_env,
-    requested_c_std, target, target_arch, target_env, target_os, target_underscored, target_vendor,
-    test_nasm_command, use_prebuilt_nasm, CStdRequested,
-    OutputLib::{Crypto, RustWrapper, Ssl},
+    allow_prebuilt_nasm, cargo_env, emit_warning, execute_command, get_crate_cflags, is_crt_static,
+    is_no_asm, option_env, requested_c_std, target, target_arch, target_env, target_os,
+    target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm, CStdRequested,
     OutputLibType,
 };
-use std::{env, ffi::OsString, path::PathBuf};
+use std::env;
+use std::ffi::OsString;
+use std::path::PathBuf;
 
 pub(crate) struct CmakeBuilder {
     manifest_dir: PathBuf,

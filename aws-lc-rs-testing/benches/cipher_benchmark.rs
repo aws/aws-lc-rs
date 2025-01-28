@@ -1,13 +1,11 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
-    cipher::{
-        DecryptingKey, EncryptingKey, EncryptionContext, OperatingMode, PaddedBlockDecryptingKey,
-        PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
-    },
-    test, test_file,
+use aws_lc_rs::cipher::{
+    DecryptingKey, EncryptingKey, EncryptionContext, OperatingMode, PaddedBlockDecryptingKey,
+    PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
 };
+use aws_lc_rs::{test, test_file};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 macro_rules! openssl_bench {

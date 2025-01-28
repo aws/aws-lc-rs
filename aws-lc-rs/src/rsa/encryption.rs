@@ -4,17 +4,12 @@
 pub(super) mod oaep;
 pub(super) mod pkcs1;
 
-use super::{
-    encoding,
-    key::{generate_rsa_key, is_rsa_key, key_size_bits, key_size_bytes},
-    KeySize,
-};
-use crate::{
-    aws_lc::EVP_PKEY,
-    encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
-    error::{KeyRejected, Unspecified},
-    ptr::LcPtr,
-};
+use super::key::{generate_rsa_key, is_rsa_key, key_size_bits, key_size_bytes};
+use super::{encoding, KeySize};
+use crate::aws_lc::EVP_PKEY;
+use crate::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
+use crate::error::{KeyRejected, Unspecified};
+use crate::ptr::LcPtr;
 use core::fmt::Debug;
 
 /// RSA Encryption Algorithm Identifier

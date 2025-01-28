@@ -3,37 +3,29 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use core::{
-    fmt,
-    fmt::{Debug, Formatter},
-    mem::MaybeUninit,
-    ptr::{null, null_mut},
-};
+use core::fmt;
+use core::fmt::{Debug, Formatter};
+use core::mem::MaybeUninit;
+use core::ptr::{null, null_mut};
 
 use crate::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_get0_EC_KEY, EVP_PKEY};
 
+use crate::digest::digest_ctx::DigestContext;
+use crate::ec::evp_key_generate;
+use crate::ec::signature::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 #[cfg(feature = "fips")]
 use crate::ec::validate_evp_key;
 #[cfg(not(feature = "fips"))]
 use crate::ec::verify_evp_key_nid;
-use crate::{
-    digest::digest_ctx::DigestContext,
-    ec::{
-        evp_key_generate,
-        signature::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey},
-    },
-};
 
-use crate::{
-    digest, ec,
-    encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915Der},
-    error::{KeyRejected, Unspecified},
-    fips::indicator_check,
-    pkcs8::{Document, Version},
-    ptr::{ConstPointer, DetachableLcPtr, LcPtr},
-    rand::SecureRandom,
-    signature::{KeyPair, Signature},
-};
+use crate::encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915Der};
+use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
+use crate::pkcs8::{Document, Version};
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+use crate::rand::SecureRandom;
+use crate::signature::{KeyPair, Signature};
+use crate::{digest, ec};
 
 /// An ECDSA key pair, used for signing.
 #[allow(clippy::module_name_repetitions)]

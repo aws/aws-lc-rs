@@ -8,27 +8,24 @@ use crate::aws_lc::{
     BIGNUM, ECDSA_SIG, EVP_PKEY,
 };
 
-use crate::{
-    digest,
-    digest::digest_ctx::DigestContext,
-    ec::{
-        compressed_public_key_size_bytes, ec_point_from_bytes, marshal_ec_public_key_to_buffer,
-        marshal_public_key_to_buffer, try_parse_public_key_bytes, PUBLIC_KEY_MAX_LEN,
-    },
-    encoding::{
-        AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
-    },
-    error::Unspecified,
-    fips::indicator_check,
-    ptr::{ConstPointer, DetachableLcPtr, LcPtr},
-    sealed,
-    signature::VerificationAlgorithm,
+use crate::digest::digest_ctx::DigestContext;
+use crate::ec::{
+    compressed_public_key_size_bytes, ec_point_from_bytes, marshal_ec_public_key_to_buffer,
+    marshal_public_key_to_buffer, try_parse_public_key_bytes, PUBLIC_KEY_MAX_LEN,
 };
-use core::{
-    fmt,
-    fmt::{Debug, Formatter},
+use crate::encoding::{
+    AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
 };
-use std::{mem::MaybeUninit, ops::Deref, ptr::null_mut};
+use crate::error::Unspecified;
+use crate::fips::indicator_check;
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+use crate::signature::VerificationAlgorithm;
+use crate::{digest, sealed};
+use core::fmt;
+use core::fmt::{Debug, Formatter};
+use std::mem::MaybeUninit;
+use std::ops::Deref;
+use std::ptr::null_mut;
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 

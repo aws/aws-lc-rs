@@ -1,17 +1,17 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{
-    aws_lc::{
-        EVP_CIPHER_CTX_new, EVP_CIPHER_iv_length, EVP_CIPHER_key_length, EVP_DecryptFinal_ex,
-        EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_EncryptFinal_ex, EVP_EncryptInit_ex,
-        EVP_EncryptUpdate, EVP_CIPHER, EVP_CIPHER_CTX,
-    },
-    cipher::{Algorithm, DecryptionContext, EncryptionContext, OperatingMode, UnboundCipherKey},
-    error::Unspecified,
-    fips::indicator_check,
-    ptr::LcPtr,
+use crate::aws_lc::{
+    EVP_CIPHER_CTX_new, EVP_CIPHER_iv_length, EVP_CIPHER_key_length, EVP_DecryptFinal_ex,
+    EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_EncryptFinal_ex, EVP_EncryptInit_ex,
+    EVP_EncryptUpdate, EVP_CIPHER, EVP_CIPHER_CTX,
 };
+use crate::cipher::{
+    Algorithm, DecryptionContext, EncryptionContext, OperatingMode, UnboundCipherKey,
+};
+use crate::error::Unspecified;
+use crate::fips::indicator_check;
+use crate::ptr::LcPtr;
 use std::ptr::{null, null_mut};
 
 use super::ConstPointer;
@@ -500,15 +500,13 @@ impl StreamingDecryptingKey {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        cipher::{
-            DecryptionContext, EncryptionContext, OperatingMode, StreamingDecryptingKey,
-            StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_256, AES_256_KEY_LEN,
-        },
-        iv::{FixedLength, IV_LEN_128_BIT},
-        rand::{SecureRandom, SystemRandom},
-        test::from_hex,
+    use crate::cipher::{
+        DecryptionContext, EncryptionContext, OperatingMode, StreamingDecryptingKey,
+        StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_256, AES_256_KEY_LEN,
     };
+    use crate::iv::{FixedLength, IV_LEN_128_BIT};
+    use crate::rand::{SecureRandom, SystemRandom};
+    use crate::test::from_hex;
     use paste::*;
 
     fn step_encrypt(

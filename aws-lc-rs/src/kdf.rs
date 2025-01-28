@@ -225,10 +225,10 @@ pub use sskdf::{
 
 #[cfg(test)]
 mod tests {
+    use crate::kdf::sskdf::SskdfHmacAlgorithmId;
     use crate::kdf::{
         get_kbkdf_ctr_hmac_algorithm, get_sskdf_digest_algorithm, get_sskdf_hmac_algorithm,
-        kbkdf_ctr_hmac, sskdf::SskdfHmacAlgorithmId, sskdf_digest, sskdf_hmac,
-        KbkdfCtrHmacAlgorithmId, SskdfDigestAlgorithmId,
+        kbkdf_ctr_hmac, sskdf_digest, sskdf_hmac, KbkdfCtrHmacAlgorithmId, SskdfDigestAlgorithmId,
     };
 
     #[test]

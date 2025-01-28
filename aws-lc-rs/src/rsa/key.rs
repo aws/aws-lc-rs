@@ -3,39 +3,31 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use super::{
-    encoding,
-    signature::{compute_rsa_signature, RsaEncoding, RsaPadding},
-    RsaParameters,
-};
+use super::signature::{compute_rsa_signature, RsaEncoding, RsaPadding};
+use super::{encoding, RsaParameters};
 #[cfg(feature = "fips")]
 use crate::aws_lc::RSA_check_fips;
+use crate::aws_lc::{
+    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
+    RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
+    EVP_PKEY_CTX,
+};
 #[cfg(feature = "ring-io")]
 use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
+use crate::digest::{self};
+use crate::encoding::{AsDer, Pkcs8V1Der};
+use crate::error::{KeyRejected, Unspecified};
+use crate::fips::indicator_check;
 #[cfg(feature = "ring-io")]
 use crate::io;
 #[cfg(feature = "ring-io")]
 use crate::ptr::ConstPointer;
-use crate::{
-    aws_lc::{
-        EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
-        RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM,
-        EVP_PKEY, EVP_PKEY_CTX,
-    },
-    digest::{self},
-    encoding::{AsDer, Pkcs8V1Der},
-    error::{KeyRejected, Unspecified},
-    fips::indicator_check,
-    hex,
-    ptr::{DetachableLcPtr, LcPtr},
-    rand,
-    rsa::PublicEncryptingKey,
-    sealed::Sealed,
-};
-use core::{
-    fmt::{self, Debug, Formatter},
-    ptr::null_mut,
-};
+use crate::ptr::{DetachableLcPtr, LcPtr};
+use crate::rsa::PublicEncryptingKey;
+use crate::sealed::Sealed;
+use crate::{hex, rand};
+use core::fmt::{self, Debug, Formatter};
+use core::ptr::null_mut;
 
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_int;

@@ -3,10 +3,8 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
-    rand::{self, SecureRandom as _},
-    test,
-};
+use aws_lc_rs::rand::{self, SecureRandom as _};
+use aws_lc_rs::test;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_test::{wasm_bindgen_test as test, wasm_bindgen_test_configure};

@@ -1,13 +1,12 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-use crate::{
-    cipher,
-    cipher::{
-        key::SymmetricCipherKey, Algorithm, DecryptionContext, EncryptionContext, OperatingMode,
-        UnboundCipherKey, MAX_CIPHER_BLOCK_LEN,
-    },
-    error::Unspecified,
+use crate::cipher;
+use crate::cipher::key::SymmetricCipherKey;
+use crate::cipher::{
+    Algorithm, DecryptionContext, EncryptionContext, OperatingMode, UnboundCipherKey,
+    MAX_CIPHER_BLOCK_LEN,
 };
+use crate::error::Unspecified;
 use core::fmt::Debug;
 
 /// The cipher block padding strategy.
@@ -292,14 +291,13 @@ impl Debug for PaddedBlockDecryptingKey {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        cipher::{
-            padded::PaddingStrategy, Algorithm, EncryptionContext, OperatingMode,
-            PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
-        },
-        iv::FixedLength,
-        test::from_hex,
+    use crate::cipher::padded::PaddingStrategy;
+    use crate::cipher::{
+        Algorithm, EncryptionContext, OperatingMode, PaddedBlockDecryptingKey,
+        PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
     };
+    use crate::iv::FixedLength;
+    use crate::test::from_hex;
 
     fn helper_test_padded_cipher_n_bytes(
         key: &[u8],

@@ -245,10 +245,8 @@ create_pointer!(EVP_CIPHER_CTX, EVP_CIPHER_CTX_free);
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        aws_lc::BIGNUM,
-        ptr::{DetachablePointer, ManagedPointer},
-    };
+    use crate::aws_lc::BIGNUM;
+    use crate::ptr::{DetachablePointer, ManagedPointer};
 
     #[test]
     fn test_debug() {

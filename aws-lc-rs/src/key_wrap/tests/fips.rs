@@ -3,10 +3,8 @@
 
 #![cfg(debug_assertions)]
 
-use crate::{
-    fips::{assert_fips_status_indicator, FipsServiceStatus},
-    key_wrap::{AesKek, KeyWrap, KeyWrapPadded, AES_128, AES_256},
-};
+use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
+use crate::key_wrap::{AesKek, KeyWrap, KeyWrapPadded, AES_128, AES_256};
 
 const K_128: &[u8] = &[
     0x60, 0x43, 0xb2, 0x73, 0xe9, 0x71, 0x26, 0x5e, 0x53, 0x8a, 0x6c, 0xcd, 0x5d, 0x5a, 0x11, 0xe4,

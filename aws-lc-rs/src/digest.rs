@@ -28,18 +28,17 @@
 //! ```
 
 #![allow(non_snake_case)]
-use crate::{debug, derive_debug_via_id, fips::indicator_check};
+use crate::fips::indicator_check;
+use crate::{debug, derive_debug_via_id};
 
 pub(crate) mod digest_ctx;
 mod sha;
-use crate::{
-    aws_lc::{
-        EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha224, EVP_sha256, EVP_sha384,
-        EVP_sha3_256, EVP_sha3_384, EVP_sha3_512, EVP_sha512, EVP_sha512_256, EVP_MD,
-    },
-    error::Unspecified,
-    ptr::ConstPointer,
+use crate::aws_lc::{
+    EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha224, EVP_sha256, EVP_sha384, EVP_sha3_256,
+    EVP_sha3_384, EVP_sha3_512, EVP_sha512, EVP_sha512_256, EVP_MD,
 };
+use crate::error::Unspecified;
+use crate::ptr::ConstPointer;
 use core::mem::MaybeUninit;
 use digest_ctx::DigestContext;
 pub use sha::{
@@ -367,7 +366,8 @@ mod tests {
         extern crate alloc;
 
         use super::super::super::digest;
-        use crate::digest::{digest_ctx::DigestContext, Digest};
+        use crate::digest::digest_ctx::DigestContext;
+        use crate::digest::Digest;
         use alloc::vec;
 
         macro_rules! max_input_tests {

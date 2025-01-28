@@ -3,15 +3,13 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{
-    aws_lc::{
-        AES_cbc_encrypt, AES_cfb128_encrypt, AES_ctr128_encrypt, AES_ecb_encrypt, AES_DECRYPT,
-        AES_ENCRYPT, AES_KEY,
-    },
-    cipher::block::Block,
-    error::Unspecified,
-    fips::indicator_check,
+use crate::aws_lc::{
+    AES_cbc_encrypt, AES_cfb128_encrypt, AES_ctr128_encrypt, AES_ecb_encrypt, AES_DECRYPT,
+    AES_ENCRYPT, AES_KEY,
 };
+use crate::cipher::block::Block;
+use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use zeroize::Zeroize;
 
 use super::{DecryptionContext, EncryptionContext, OperatingMode, SymmetricCipherKey};

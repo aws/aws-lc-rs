@@ -232,7 +232,8 @@ impl From<Unspecified> for KeyRejected {
 #[allow(deprecated, unused_imports)]
 #[cfg(test)]
 mod tests {
-    use crate::{error::KeyRejected, test};
+    use crate::error::KeyRejected;
+    use crate::test;
     use std::error::Error;
 
     #[test]

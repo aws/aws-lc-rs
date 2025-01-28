@@ -1,10 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{
-    aead::quic::{HeaderProtectionKey, AES_128, AES_256, CHACHA20},
-    fips::{assert_fips_status_indicator, FipsServiceStatus},
-};
+use crate::aead::quic::{HeaderProtectionKey, AES_128, AES_256, CHACHA20};
+use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 
 use super::{TEST_KEY_128_BIT, TEST_KEY_256_BIT};
 

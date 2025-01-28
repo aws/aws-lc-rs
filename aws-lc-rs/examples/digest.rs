@@ -12,10 +12,8 @@
 //! ```
 use aws_lc_rs::{digest, test};
 use clap::{Parser, ValueEnum};
-use std::{
-    fs::File,
-    io::{Read, Result},
-};
+use std::fs::File;
+use std::io::{Read, Result};
 
 #[derive(ValueEnum, Clone, Copy, Debug)]
 enum DigestType {

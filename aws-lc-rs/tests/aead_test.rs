@@ -3,7 +3,8 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{aead, aead::nonce_sequence::Counter32Builder, error, test, test_file};
+use aws_lc_rs::aead::nonce_sequence::Counter32Builder;
+use aws_lc_rs::{aead, error, test, test_file};
 
 use aws_lc_rs::aead::{
     Aad, BoundKey, Nonce, OpeningKey, SealingKey, UnboundKey, AES_128_GCM, NONCE_LEN,

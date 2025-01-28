@@ -228,19 +228,17 @@ mod streaming;
 pub use padded::{PaddedBlockDecryptingKey, PaddedBlockEncryptingKey};
 pub use streaming::{BufferUpdate, StreamingDecryptingKey, StreamingEncryptingKey};
 
-use crate::{
-    aws_lc::{
-        EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_192_cbc,
-        EVP_aes_192_cfb128, EVP_aes_192_ctr, EVP_aes_192_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128,
-        EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
-    },
-    buffer::Buffer,
-    error::Unspecified,
-    hkdf,
-    hkdf::KeyType,
-    iv::{FixedLength, IV_LEN_128_BIT},
-    ptr::ConstPointer,
+use crate::aws_lc::{
+    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_192_cbc,
+    EVP_aes_192_cfb128, EVP_aes_192_ctr, EVP_aes_192_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128,
+    EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
 };
+use crate::buffer::Buffer;
+use crate::error::Unspecified;
+use crate::hkdf;
+use crate::hkdf::KeyType;
+use crate::iv::{FixedLength, IV_LEN_128_BIT};
+use crate::ptr::ConstPointer;
 use core::fmt::Debug;
 use key::SymmetricCipherKey;
 

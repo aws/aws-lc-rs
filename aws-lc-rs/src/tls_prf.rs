@@ -27,11 +27,9 @@
 
 use core::fmt::Debug;
 
-use crate::{
-    digest::{match_digest_type, AlgorithmID},
-    error::Unspecified,
-    fips::indicator_check,
-};
+use crate::digest::{match_digest_type, AlgorithmID};
+use crate::error::Unspecified;
+use crate::fips::indicator_check;
 use core::ptr::null;
 
 use crate::aws_lc::CRYPTO_tls1_prf;

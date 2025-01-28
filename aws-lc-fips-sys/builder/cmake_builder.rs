@@ -1,14 +1,16 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     cargo_env, emit_rustc_cfg, emit_warning, execute_command, is_cpu_jitter_entropy, is_no_asm,
     option_env, target, target_arch, target_env, target_family, target_os, target_underscored,
-    target_vendor,
-    OutputLib::{Crypto, RustWrapper, Ssl},
-    OutputLibType, TestCommandResult,
+    target_vendor, OutputLibType, TestCommandResult,
 };
-use std::{collections::HashMap, env, ffi::OsString, path::PathBuf};
+use std::collections::HashMap;
+use std::env;
+use std::ffi::OsString;
+use std::path::PathBuf;
 
 pub(crate) struct CmakeBuilder {
     manifest_dir: PathBuf,

@@ -3,21 +3,17 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
-    encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der},
-    rand,
-    rsa::{
-        EncryptionAlgorithmId, KeySize, OaepPrivateDecryptingKey, OaepPublicEncryptingKey,
-        Pkcs1PrivateDecryptingKey, Pkcs1PublicEncryptingKey, PrivateDecryptingKey,
-        PublicEncryptingKey, OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384,
-        OAEP_SHA512_MGF1SHA512,
-    },
-    signature,
-    signature::{KeyPair, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey},
-    test,
-    test::to_hex_upper,
-    test_file,
+use aws_lc_rs::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
+use aws_lc_rs::rsa::{
+    EncryptionAlgorithmId, KeySize, OaepPrivateDecryptingKey, OaepPublicEncryptingKey,
+    Pkcs1PrivateDecryptingKey, Pkcs1PublicEncryptingKey, PrivateDecryptingKey, PublicEncryptingKey,
+    OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
 };
+use aws_lc_rs::signature::{
+    KeyPair, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey,
+};
+use aws_lc_rs::test::to_hex_upper;
+use aws_lc_rs::{rand, signature, test, test_file};
 
 #[test]
 fn rsa_traits() {

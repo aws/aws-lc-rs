@@ -3,13 +3,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{
-    encoding::{AsBigEndian, Curve25519SeedBin},
-    error,
-    rand::SystemRandom,
-    signature::{self, Ed25519KeyPair, KeyPair},
-    test, test_file,
-};
+use aws_lc_rs::encoding::{AsBigEndian, Curve25519SeedBin};
+use aws_lc_rs::rand::SystemRandom;
+use aws_lc_rs::signature::{self, Ed25519KeyPair, KeyPair};
+use aws_lc_rs::{error, test, test_file};
 
 #[test]
 fn test_ed25519_traits() {

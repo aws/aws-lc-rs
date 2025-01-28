@@ -3,11 +3,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{
-    endian::{ArrayEncoding, BigEndian, Encoding, FromArray, LittleEndian},
-    error,
-    iv::FixedLength,
-};
+use crate::endian::{ArrayEncoding, BigEndian, Encoding, FromArray, LittleEndian};
+use crate::error;
+use crate::iv::FixedLength;
 
 /// A nonce for a single AEAD opening or sealing operation.
 ///
@@ -100,7 +98,8 @@ mod tests {
 
     #[test]
     fn test_nonce_from_byte_array() {
-        use crate::aead::{nonce::IV_LEN, Nonce};
+        use crate::aead::nonce::IV_LEN;
+        use crate::aead::Nonce;
         let iv: [u8; IV_LEN] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
         let nonce = Nonce::from(&iv);
 

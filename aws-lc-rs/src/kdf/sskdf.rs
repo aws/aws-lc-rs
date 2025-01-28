@@ -5,11 +5,9 @@
 
 use crate::aws_lc::{SSKDF_digest, SSKDF_hmac, EVP_MD};
 
-use crate::{
-    digest::{match_digest_type, AlgorithmID},
-    error::Unspecified,
-    ptr::ConstPointer,
-};
+use crate::digest::{match_digest_type, AlgorithmID};
+use crate::error::Unspecified;
+use crate::ptr::ConstPointer;
 
 /// SSKDF with HMAC-SHA224
 #[allow(dead_code)]

@@ -3,7 +3,8 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::{digest, hmac, hmac::sign, test, test_file};
+use aws_lc_rs::hmac::sign;
+use aws_lc_rs::{digest, hmac, test, test_file};
 
 #[test]
 fn hmac_tests() {

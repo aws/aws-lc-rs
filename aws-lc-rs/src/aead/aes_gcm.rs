@@ -3,11 +3,9 @@
 
 use crate::aead::{Algorithm, AlgorithmID};
 
-use crate::{
-    aead::aead_ctx::AeadCtx,
-    cipher::aes::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN},
-    error::Unspecified,
-};
+use crate::aead::aead_ctx::AeadCtx;
+use crate::cipher::aes::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
+use crate::error::Unspecified;
 
 /// AES-128 in GCM mode with 128-bit tags and 96 bit nonces.
 pub const AES_128_GCM: Algorithm = Algorithm {

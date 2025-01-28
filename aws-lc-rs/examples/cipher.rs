@@ -24,15 +24,12 @@
 //! $ cargo run --example cipher -- decrypt --mode cbc --key 6489d8ce0c4facf18b872705a05d5ee4 --iv 5cd56fb752830ec2459889226c5431bd 6311c14e8104730be124ce1e57e51fe3
 //! Hello World
 //! ```
-use aws_lc_rs::{
-    cipher::{
-        DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext,
-        PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128,
-        AES_128_KEY_LEN, AES_192, AES_192_KEY_LEN, AES_256, AES_256_KEY_LEN, AES_CBC_IV_LEN,
-        AES_CTR_IV_LEN,
-    },
-    iv::FixedLength,
+use aws_lc_rs::cipher::{
+    DecryptingKey, DecryptionContext, EncryptingKey, EncryptionContext, PaddedBlockDecryptingKey,
+    PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_128_KEY_LEN, AES_192, AES_192_KEY_LEN,
+    AES_256, AES_256_KEY_LEN, AES_CBC_IV_LEN, AES_CTR_IV_LEN,
 };
+use aws_lc_rs::iv::FixedLength;
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]

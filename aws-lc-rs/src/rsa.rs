@@ -70,19 +70,15 @@ mod encryption;
 pub(crate) mod key;
 pub(crate) mod signature;
 
+pub use self::encryption::oaep::{
+    OaepAlgorithm, OaepPrivateDecryptingKey, OaepPublicEncryptingKey, OAEP_SHA1_MGF1SHA1,
+    OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
+};
+pub use self::encryption::pkcs1::{Pkcs1PrivateDecryptingKey, Pkcs1PublicEncryptingKey};
+pub use self::encryption::{EncryptionAlgorithmId, PrivateDecryptingKey, PublicEncryptingKey};
+pub use self::key::{KeyPair, KeySize, PublicKey, PublicKeyComponents};
 #[allow(clippy::module_name_repetitions)]
 pub use self::signature::RsaParameters;
-pub use self::{
-    encryption::{
-        oaep::{
-            OaepAlgorithm, OaepPrivateDecryptingKey, OaepPublicEncryptingKey, OAEP_SHA1_MGF1SHA1,
-            OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
-        },
-        pkcs1::{Pkcs1PrivateDecryptingKey, Pkcs1PublicEncryptingKey},
-        EncryptionAlgorithmId, PrivateDecryptingKey, PublicEncryptingKey,
-    },
-    key::{KeyPair, KeySize, PublicKey, PublicKeyComponents},
-};
 
 pub(crate) use self::signature::RsaVerificationAlgorithmId;
 
@@ -94,7 +90,8 @@ mod tests {
     #[cfg(feature = "ring-io")]
     #[test]
     fn test_rsa() {
-        use crate::{signature::KeyPair, test::from_dirty_hex};
+        use crate::signature::KeyPair;
+        use crate::test::from_dirty_hex;
         let rsa_pkcs8_input: Vec<u8> = from_dirty_hex(
             r"308204bd020100300d06092a864886f70d0101010500048204a7308204a30201000282010100b9d7a
         f84fa4184a5f22037ec8aff2db5f78bd8c21e714e579ae57c6398c4950f3a694b17bfccf488766159aec5bb7c2c4

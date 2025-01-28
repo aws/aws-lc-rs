@@ -487,16 +487,10 @@ pub mod rand {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        error,
-        rand::sealed::SecureRandom,
-        test,
-        test::{
-            from_dirty_hex,
-            rand::{FixedByteRandom, FixedSliceRandom, FixedSliceSequenceRandom},
-            to_hex_upper,
-        },
-    };
+    use crate::rand::sealed::SecureRandom;
+    use crate::test::rand::{FixedByteRandom, FixedSliceRandom, FixedSliceSequenceRandom};
+    use crate::test::{from_dirty_hex, to_hex_upper};
+    use crate::{error, test};
     use core::cell::UnsafeCell;
 
     #[test]

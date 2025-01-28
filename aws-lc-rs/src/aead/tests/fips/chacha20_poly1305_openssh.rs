@@ -1,10 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{
-    aead::chacha20_poly1305_openssh::{OpeningKey, SealingKey},
-    fips::{assert_fips_status_indicator, FipsServiceStatus},
-};
+use crate::aead::chacha20_poly1305_openssh::{OpeningKey, SealingKey};
+use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 
 use super::TEST_MESSAGE;
 

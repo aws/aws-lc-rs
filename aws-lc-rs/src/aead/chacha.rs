@@ -4,11 +4,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{
-    aead::{aead_ctx::AeadCtx, Algorithm, AlgorithmID},
-    cipher::chacha::KEY_LEN,
-    error,
-};
+use crate::aead::aead_ctx::AeadCtx;
+use crate::aead::{Algorithm, AlgorithmID};
+use crate::cipher::chacha::KEY_LEN;
+use crate::error;
 
 /// ChaCha20-Poly1305 as described in [RFC 7539].
 ///

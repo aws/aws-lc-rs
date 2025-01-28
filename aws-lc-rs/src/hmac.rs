@@ -95,17 +95,15 @@
 //! ```
 //! [RFC 2104]: https://tools.ietf.org/html/rfc2104
 
-use crate::{
-    aws_lc::{
-        HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_CTX_init, HMAC_Final, HMAC_Init_ex, HMAC_Update,
-        HMAC_CTX,
-    },
-    constant_time, digest,
-    error::Unspecified,
-    fips::indicator_check,
-    hkdf,
+use crate::aws_lc::{
+    HMAC_CTX_cleanup, HMAC_CTX_copy_ex, HMAC_CTX_init, HMAC_Final, HMAC_Init_ex, HMAC_Update,
+    HMAC_CTX,
 };
-use core::{mem::MaybeUninit, ptr::null_mut};
+use crate::error::Unspecified;
+use crate::fips::indicator_check;
+use crate::{constant_time, digest, hkdf};
+use core::mem::MaybeUninit;
+use core::ptr::null_mut;
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_uint;
 use std::os::raw::c_uint;
