@@ -1199,8 +1199,7 @@ mod tests {
     #[test]
     fn agreement_traits() {
         use crate::test;
-        use regex;
-        use regex::Regex;
+        use regex::{self, Regex};
 
         let rng = rand::SystemRandom::new();
         let private_key = PrivateKey::generate_for_test(&ECDH_P256, &rng).unwrap();

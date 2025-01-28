@@ -3,14 +3,11 @@
 
 #![cfg(debug_assertions)]
 
-use crate::{
-    cipher::{
-        DecryptingKey, EncryptingKey, PaddedBlockDecryptingKey, PaddedBlockEncryptingKey,
-        StreamingDecryptingKey, StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192,
-        AES_256,
-    },
-    fips::{assert_fips_status_indicator, FipsServiceStatus},
+use crate::cipher::{
+    DecryptingKey, EncryptingKey, PaddedBlockDecryptingKey, PaddedBlockEncryptingKey,
+    StreamingDecryptingKey, StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192, AES_256,
 };
+use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 
 const TEST_KEY_128_BIT: [u8; 16] = [
     0x9f, 0xd9, 0x41, 0xc3, 0xa6, 0xfe, 0xb9, 0x26, 0x2a, 0x35, 0xa7, 0x44, 0xbb, 0xc0, 0x3a, 0x6a,

@@ -291,9 +291,10 @@ impl Debug for PaddedBlockDecryptingKey {
 
 #[cfg(test)]
 mod tests {
+    use crate::cipher::padded::PaddingStrategy;
     use crate::cipher::{
-        padded::PaddingStrategy, Algorithm, EncryptionContext, OperatingMode,
-        PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
+        Algorithm, EncryptionContext, OperatingMode, PaddedBlockDecryptingKey,
+        PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
     };
     use crate::iv::FixedLength;
     use crate::test::from_hex;

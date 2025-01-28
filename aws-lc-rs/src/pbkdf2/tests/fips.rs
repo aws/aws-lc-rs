@@ -5,12 +5,9 @@
 
 use core::num::NonZeroU32;
 
-use crate::{
-    fips::{assert_fips_status_indicator, FipsServiceStatus},
-    pbkdf2::{
-        derive, verify, PBKDF2_HMAC_SHA1, PBKDF2_HMAC_SHA256, PBKDF2_HMAC_SHA384,
-        PBKDF2_HMAC_SHA512,
-    },
+use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
+use crate::pbkdf2::{
+    derive, verify, PBKDF2_HMAC_SHA1, PBKDF2_HMAC_SHA256, PBKDF2_HMAC_SHA384, PBKDF2_HMAC_SHA512,
 };
 
 macro_rules! pbkdf2_api {

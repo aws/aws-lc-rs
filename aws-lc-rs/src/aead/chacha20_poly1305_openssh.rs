@@ -26,8 +26,9 @@
 use super::{poly1305, Nonce, Tag};
 use crate::cipher::block::BLOCK_LEN;
 use crate::cipher::chacha::{self, ChaCha20Key};
+use crate::endian::BigEndian;
 use crate::iv::FixedLength;
-use crate::{constant_time, endian::BigEndian, error};
+use crate::{constant_time, error};
 
 /// A key for sealing packets.
 pub struct SealingKey {

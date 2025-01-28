@@ -4,13 +4,11 @@
 /// PKCS#8 Encoding Functions
 pub(in crate::rsa) mod pkcs8 {
     use crate::aws_lc::{EVP_marshal_private_key, EVP_parse_private_key, EVP_PKEY};
-    use crate::{
-        cbb::LcCBB,
-        cbs,
-        error::{KeyRejected, Unspecified},
-        ptr::LcPtr,
-        rsa::key::is_rsa_key,
-    };
+    use crate::cbb::LcCBB;
+    use crate::cbs;
+    use crate::error::{KeyRejected, Unspecified};
+    use crate::ptr::LcPtr;
+    use crate::rsa::key::is_rsa_key;
 
     // Based on a measurement of a PKCS#8 v1 document containing an RSA-8192 key with an additional 1% capacity buffer
     // rounded to an even 64-bit words (4678 + 1% + padding ≈ 4728).
@@ -53,11 +51,9 @@ pub(in crate::rsa) mod rfc8017 {
         EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_parse_private_key, RSA_public_key_from_bytes,
         RSA_public_key_to_bytes, EVP_PKEY,
     };
-    use crate::{
-        cbs,
-        error::{KeyRejected, Unspecified},
-        ptr::{DetachableLcPtr, LcPtr},
-    };
+    use crate::cbs;
+    use crate::error::{KeyRejected, Unspecified};
+    use crate::ptr::{DetachableLcPtr, LcPtr};
     use std::ptr::null_mut;
 
     /// DER encode a RSA public key to `RSAPublicKey` structure.
@@ -127,14 +123,12 @@ pub(in crate::rsa) mod rfc8017 {
 /// Encodings that use the `SubjectPublicKeyInfo` structure.
 pub(in crate::rsa) mod rfc5280 {
     use crate::aws_lc::{EVP_marshal_public_key, EVP_parse_public_key, EVP_PKEY};
-    use crate::{
-        cbb::LcCBB,
-        cbs,
-        encoding::PublicKeyX509Der,
-        error::{KeyRejected, Unspecified},
-        ptr::LcPtr,
-        rsa::key::{is_rsa_key, key_size_bytes},
-    };
+    use crate::cbb::LcCBB;
+    use crate::cbs;
+    use crate::encoding::PublicKeyX509Der;
+    use crate::error::{KeyRejected, Unspecified};
+    use crate::ptr::LcPtr;
+    use crate::rsa::key::{is_rsa_key, key_size_bytes};
 
     pub(in crate::rsa) fn encode_public_key_der(
         key: &LcPtr<EVP_PKEY>,

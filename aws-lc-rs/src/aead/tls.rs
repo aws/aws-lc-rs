@@ -1,10 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use super::{
-    aead_ctx::{self, AeadCtx},
-    Aad, Algorithm, AlgorithmID, Nonce, Tag, UnboundKey,
-};
+use super::aead_ctx::{self, AeadCtx};
+use super::{Aad, Algorithm, AlgorithmID, Nonce, Tag, UnboundKey};
 use crate::error::Unspecified;
 use core::fmt::Debug;
 use core::ops::RangeFrom;
@@ -298,11 +296,8 @@ impl Debug for TlsRecordOpeningKey {
 #[cfg(test)]
 mod tests {
     use super::{TlsProtocolId, TlsRecordOpeningKey, TlsRecordSealingKey};
-    use crate::{
-        aead::Aad,
-        aead::{Nonce, AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305},
-        test::from_hex,
-    };
+    use crate::aead::{Aad, Nonce, AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305};
+    use crate::test::from_hex;
     use paste::paste;
 
     const TEST_128_BIT_KEY: &[u8] = &[

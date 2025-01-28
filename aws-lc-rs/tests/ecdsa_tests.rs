@@ -3,13 +3,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::encoding::{AsBigEndian, EcPrivateKeyRfc5915Der};
-use aws_lc_rs::{
-    encoding::AsDer,
-    rand::SystemRandom,
-    signature::{self, EcdsaKeyPair, KeyPair, Signature, UnparsedPublicKey},
-    test, test_file,
-};
+use aws_lc_rs::encoding::{AsBigEndian, AsDer, EcPrivateKeyRfc5915Der};
+use aws_lc_rs::rand::SystemRandom;
+use aws_lc_rs::signature::{self, EcdsaKeyPair, KeyPair, Signature, UnparsedPublicKey};
+use aws_lc_rs::{test, test_file};
 
 #[test]
 fn ecdsa_traits() {

@@ -11,9 +11,10 @@
 #![cfg_attr(clippy, clippy::msrv = "1.77")]
 
 use std::ffi::{OsStr, OsString};
+use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::{env, fmt, fmt::Debug};
+use std::{env, fmt};
 
 use cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;

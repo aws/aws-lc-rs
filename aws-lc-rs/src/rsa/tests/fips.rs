@@ -3,10 +3,8 @@
 
 #![cfg(debug_assertions)]
 
-use crate::{
-    fips::{assert_fips_status_indicator, FipsServiceStatus},
-    rsa::{KeyPair, KeySize, PrivateDecryptingKey},
-};
+use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
+use crate::rsa::{KeyPair, KeySize, PrivateDecryptingKey};
 
 macro_rules! generate_key {
     ($name:ident, KeyPair, $size:expr) => {

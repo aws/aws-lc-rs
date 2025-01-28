@@ -5,8 +5,7 @@
 
 use crate::ec::signature::AlgorithmID;
 use core::mem::MaybeUninit;
-use core::ptr::null;
-use core::ptr::null_mut;
+use core::ptr::{null, null_mut};
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_int;
 use std::os::raw::c_int;
@@ -427,8 +426,10 @@ mod tests {
     use crate::encoding::{
         AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
     };
-    use crate::signature::{EcdsaKeyPair, UnparsedPublicKey, ECDSA_P256_SHA256_FIXED};
-    use crate::signature::{KeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
+    use crate::signature::{
+        EcdsaKeyPair, KeyPair, UnparsedPublicKey, ECDSA_P256_SHA256_FIXED,
+        ECDSA_P256_SHA256_FIXED_SIGNING,
+    };
     use crate::test::from_dirty_hex;
     use crate::{signature, test};
 

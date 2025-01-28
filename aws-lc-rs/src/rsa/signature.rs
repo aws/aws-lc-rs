@@ -1,12 +1,10 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use std::{
-    fmt::{self, Debug, Formatter},
-    mem::MaybeUninit,
-    ops::RangeInclusive,
-    ptr::{null, null_mut},
-};
+use std::fmt::{self, Debug, Formatter};
+use std::mem::MaybeUninit;
+use std::ops::RangeInclusive;
+use std::ptr::{null, null_mut};
 
 use crate::aws_lc::{
     EVP_DigestSign, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_set_rsa_padding,
@@ -14,14 +12,13 @@ use crate::aws_lc::{
     EVP_PKEY_CTX, RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
 };
 
-use crate::{
-    digest::{self, digest_ctx::DigestContext},
-    error::Unspecified,
-    fips::indicator_check,
-    ptr::{ConstPointer, DetachableLcPtr, LcPtr},
-    sealed::Sealed,
-    signature::VerificationAlgorithm,
-};
+use crate::digest::digest_ctx::DigestContext;
+use crate::digest::{self};
+use crate::error::Unspecified;
+use crate::fips::indicator_check;
+use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+use crate::sealed::Sealed;
+use crate::signature::VerificationAlgorithm;
 
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;

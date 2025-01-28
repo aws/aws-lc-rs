@@ -3,15 +3,13 @@
 
 #![cfg(debug_assertions)]
 
-use crate::{
-    digest::{SHA1_OUTPUT_LEN, SHA224_OUTPUT_LEN, SHA256_OUTPUT_LEN, SHA512_OUTPUT_LEN},
-    fips::{assert_fips_status_indicator, FipsServiceStatus},
-    hmac::{
-        sign, verify, Key, HMAC_SHA1_FOR_LEGACY_USE_ONLY, HMAC_SHA224, HMAC_SHA256, HMAC_SHA384,
-        HMAC_SHA512,
-    },
-    rand::{self, SystemRandom},
+use crate::digest::{SHA1_OUTPUT_LEN, SHA224_OUTPUT_LEN, SHA256_OUTPUT_LEN, SHA512_OUTPUT_LEN};
+use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
+use crate::hmac::{
+    sign, verify, Key, HMAC_SHA1_FOR_LEGACY_USE_ONLY, HMAC_SHA224, HMAC_SHA256, HMAC_SHA384,
+    HMAC_SHA512,
 };
+use crate::rand::{self, SystemRandom};
 
 const TEST_MESSAGE: &str = "test message";
 

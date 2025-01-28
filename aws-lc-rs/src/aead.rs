@@ -180,9 +180,12 @@
 //! # }
 //! ```
 
-use crate::{derive_debug_via_id, error::Unspecified, hkdf};
+use crate::error::Unspecified;
+use crate::{derive_debug_via_id, hkdf};
 use aead_ctx::AeadCtx;
-use core::{fmt::Debug, ops::RangeFrom, stringify};
+use core::fmt::Debug;
+use core::ops::RangeFrom;
+use core::stringify;
 use paste::paste;
 
 mod aead_ctx;
@@ -197,14 +200,12 @@ mod rand_nonce;
 mod tls;
 mod unbound_key;
 
-pub use self::{
-    aes_gcm::{AES_128_GCM, AES_128_GCM_SIV, AES_192_GCM, AES_256_GCM, AES_256_GCM_SIV},
-    chacha::CHACHA20_POLY1305,
-    nonce::{Nonce, NONCE_LEN},
-    rand_nonce::RandomizedNonceKey,
-    tls::{TlsProtocolId, TlsRecordOpeningKey, TlsRecordSealingKey},
-    unbound_key::UnboundKey,
-};
+pub use self::aes_gcm::{AES_128_GCM, AES_128_GCM_SIV, AES_192_GCM, AES_256_GCM, AES_256_GCM_SIV};
+pub use self::chacha::CHACHA20_POLY1305;
+pub use self::nonce::{Nonce, NONCE_LEN};
+pub use self::rand_nonce::RandomizedNonceKey;
+pub use self::tls::{TlsProtocolId, TlsRecordOpeningKey, TlsRecordSealingKey};
+pub use self::unbound_key::UnboundKey;
 
 /// A sequences of unique nonces.
 ///
@@ -1019,7 +1020,8 @@ mod tests {
     use nonce_sequence::Counter32Builder;
 
     use super::*;
-    use crate::{iv::FixedLength, test::from_hex};
+    use crate::iv::FixedLength;
+    use crate::test::from_hex;
 
     #[cfg(feature = "fips")]
     mod fips;

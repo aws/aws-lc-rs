@@ -4,7 +4,8 @@
 use crate::error::Unspecified;
 use core::fmt::Debug;
 
-use super::{aead_ctx::AeadCtx, Aad, Algorithm, AlgorithmID, Nonce, Tag, UnboundKey};
+use super::aead_ctx::AeadCtx;
+use super::{Aad, Algorithm, AlgorithmID, Nonce, Tag, UnboundKey};
 
 /// AEAD Cipher key using a randomized nonce.
 ///
@@ -148,10 +149,8 @@ impl Debug for RandomizedNonceKey {
 #[cfg(test)]
 mod tests {
     use super::{Aad, RandomizedNonceKey};
-    use crate::{
-        aead::{AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305},
-        test::from_hex,
-    };
+    use crate::aead::{AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305};
+    use crate::test::from_hex;
     use paste::paste;
 
     const TEST_128_BIT_KEY: &[u8] = &[

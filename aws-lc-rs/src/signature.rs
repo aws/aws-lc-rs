@@ -238,15 +238,14 @@ use core::fmt::{Debug, Formatter};
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
+pub use crate::rsa::signature::RsaEncoding;
 pub use crate::rsa::{
-    signature::RsaEncoding, KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey,
+    KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey,
     PublicKeyComponents as RsaPublicKeyComponents, RsaParameters,
 };
 
-use crate::rsa::{
-    signature::{RsaSignatureEncoding, RsaSigningAlgorithmId},
-    RsaVerificationAlgorithmId,
-};
+use crate::rsa::signature::{RsaSignatureEncoding, RsaSigningAlgorithmId};
+use crate::rsa::RsaVerificationAlgorithmId;
 
 pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
 use crate::ec::signature::EcdsaSignatureFormat;
@@ -256,8 +255,7 @@ pub use crate::ec::signature::{
 pub use crate::ed25519::{
     Ed25519KeyPair, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
 };
-use crate::rsa;
-use crate::{digest, ec, error, hex, sealed};
+use crate::{digest, ec, error, hex, rsa, sealed};
 
 /// The longest signature is an ASN.1 P-384 signature where *r* and *s* are of
 /// maximum length with the leading high bit set on each. Then each component
