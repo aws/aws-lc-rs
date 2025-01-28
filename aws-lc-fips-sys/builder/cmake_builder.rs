@@ -93,6 +93,16 @@ impl CmakeBuilder {
     const GOCACHE_DIR_NAME: &'static str = "go-cache";
     #[allow(clippy::too_many_lines)]
     fn prepare_cmake_build(&self) -> cmake::Config {
+        // Set the compiler to clang if CC/CXX are not set
+        // TODO: this is a workaround until aws-lc fixes build on GGC-14
+        // See https://github.com/aws/aws-lc/issues/201
+        if env::var("CC").is_err() {
+            env::set_var("CC", "clang");
+        }
+        if env::var("CXX").is_err() {
+            env::set_var("CXX", "clang++");
+        }
+
         env::set_var(
             "GOCACHE",
             self.out_dir.join(Self::GOCACHE_DIR_NAME).as_os_str(),
