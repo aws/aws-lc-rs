@@ -209,6 +209,10 @@ impl CmakeBuilder {
             cmake_cfg.define("ASAN", "1");
         }
 
+        if let Some(linker) = option_env("AWS_LC_FIPS_SYS_CMAKE_LINKER") {
+            cmake_cfg.define("CMAKE_LINKER", linker);
+        }
+
         // Allow environment to specify CMake toolchain.
         if let Some(toolchain) = option_env("CMAKE_TOOLCHAIN_FILE").or(option_env(format!(
             "CMAKE_TOOLCHAIN_FILE_{}",
