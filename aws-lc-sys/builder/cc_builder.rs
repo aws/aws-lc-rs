@@ -12,6 +12,7 @@ mod i686_unknown_linux_gnu;
 mod x86_64_apple_darwin;
 mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
+mod x86_64_alpine_linux_musl;
 
 use crate::{
     cargo_env, emit_warning, env_var_to_bool, execute_command, get_cflags, is_no_asm, option_env,
@@ -43,6 +44,7 @@ enum PlatformConfig {
     x86_64_apple_darwin,
     x86_64_unknown_linux_gnu,
     x86_64_unknown_linux_musl,
+    x86_64_alpine_linux_musl,
     i686_unknown_linux_gnu,
 }
 
@@ -57,6 +59,7 @@ impl PlatformConfig {
             PlatformConfig::x86_64_apple_darwin => x86_64_apple_darwin::CRYPTO_LIBRARY,
             PlatformConfig::x86_64_unknown_linux_gnu => x86_64_unknown_linux_gnu::CRYPTO_LIBRARY,
             PlatformConfig::x86_64_unknown_linux_musl => x86_64_unknown_linux_musl::CRYPTO_LIBRARY,
+            PlatformConfig::x86_64_alpine_linux_musl => x86_64_alpine_linux_musl::CRYPTO_LIBRARY,
             PlatformConfig::i686_unknown_linux_gnu => i686_unknown_linux_gnu::CRYPTO_LIBRARY,
         }
     }
@@ -70,6 +73,7 @@ impl PlatformConfig {
             "x86_64-apple-darwin" => Some(PlatformConfig::x86_64_apple_darwin),
             "x86_64-unknown-linux-gnu" => Some(PlatformConfig::x86_64_unknown_linux_gnu),
             "x86_64-unknown-linux-musl" => Some(PlatformConfig::x86_64_unknown_linux_musl),
+            "x86_64-alpine-linux-musl" => Some(PlatformConfig::x86_64_alpine_linux_musl),
             "i686-unknown-linux-gnu" => Some(PlatformConfig::i686_unknown_linux_gnu),
             _ => None,
         }

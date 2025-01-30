@@ -36,6 +36,7 @@ platform_binding!(x86_64_pc_windows_gnu);
 platform_binding!(x86_64_pc_windows_msvc);
 platform_binding!(x86_64_unknown_linux_gnu);
 platform_binding!(x86_64_unknown_linux_musl);
+platform_binding!(x86_64_alpine_linux_musl);
 
 #[cfg(use_bindgen_generated)]
 #[allow(

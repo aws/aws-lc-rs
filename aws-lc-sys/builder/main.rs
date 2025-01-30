@@ -440,7 +440,8 @@ fn initialize() {
             | "x86_64-pc-windows-gnu"
             | "x86_64-pc-windows-msvc"
             | "x86_64-unknown-linux-gnu"
-            | "x86_64-unknown-linux-musl" => Some(target),
+            | "x86_64-unknown-linux-musl"
+            | "x86_64-alpine-linux-musl" => Some(target),
             _ => None,
         };
         if let Some(platform) = supported_platform {
@@ -534,6 +535,7 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
+        println!("cargo:rustc-check-cfg=cfg(x86_64_alpine_linux_musl)");
     }
 }
 
