@@ -26,7 +26,7 @@ impl LcCBB<'static> {
 
         if 1 != unsafe { CBB_finish(self.as_mut_ptr(), &mut out_data, &mut out_len) } {
             return Err(Unspecified);
-        };
+        }
 
         let out_data = LcPtr::new(out_data)?;
         let slice = unsafe { std::slice::from_raw_parts(*out_data.as_const(), out_len) };

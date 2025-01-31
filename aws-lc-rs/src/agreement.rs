@@ -720,7 +720,7 @@ fn ec_key_ecdh<'a>(
 
     if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx.as_mut()) } {
         return Err(Unspecified);
-    };
+    }
 
     if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx.as_mut(), *pub_key.as_mut()) } {
         return Err(Unspecified);
@@ -751,7 +751,7 @@ fn x25519_diffie_hellman<'a>(
 
     if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx.as_mut()) } {
         return Err(());
-    };
+    }
 
     let mut pub_key = try_parse_x25519_public_key_bytes(peer_pub_key)?;
 
