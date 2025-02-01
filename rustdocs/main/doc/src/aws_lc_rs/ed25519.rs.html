@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ed25519.rs`."><title>ed25519.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e7950ecc.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (2f348cb7c 2025-01-27)" data-channel="nightly" data-search-js="search-ccb196c1.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>ed25519.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ed25519.rs`."><title>ed25519.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (854f22563 2025-01-31)" data-channel="nightly" data-search-js="search-2d513d54.js" data-settings-js="settings-6dad6058.js" ><script src="../../static.files/storage-302de22f.js"></script><script defer src="../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9b5d7e41.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>ed25519.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -622,70 +622,13 @@
 <a href="#621" id="621">621</a>
 <a href="#622" id="622">622</a>
 <a href="#623" id="623">623</a>
-<a href="#624" id="624">624</a>
-<a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a>
-<a href="#627" id="627">627</a>
-<a href="#628" id="628">628</a>
-<a href="#629" id="629">629</a>
-<a href="#630" id="630">630</a>
-<a href="#631" id="631">631</a>
-<a href="#632" id="632">632</a>
-<a href="#633" id="633">633</a>
-<a href="#634" id="634">634</a>
-<a href="#635" id="635">635</a>
-<a href="#636" id="636">636</a>
-<a href="#637" id="637">637</a>
-<a href="#638" id="638">638</a>
-<a href="#639" id="639">639</a>
-<a href="#640" id="640">640</a>
-<a href="#641" id="641">641</a>
-<a href="#642" id="642">642</a>
-<a href="#643" id="643">643</a>
-<a href="#644" id="644">644</a>
-<a href="#645" id="645">645</a>
-<a href="#646" id="646">646</a>
-<a href="#647" id="647">647</a>
-<a href="#648" id="648">648</a>
-<a href="#649" id="649">649</a>
-<a href="#650" id="650">650</a>
-<a href="#651" id="651">651</a>
-<a href="#652" id="652">652</a>
-<a href="#653" id="653">653</a>
-<a href="#654" id="654">654</a>
-<a href="#655" id="655">655</a>
-<a href="#656" id="656">656</a>
-<a href="#657" id="657">657</a>
-<a href="#658" id="658">658</a>
-<a href="#659" id="659">659</a>
-<a href="#660" id="660">660</a>
-<a href="#661" id="661">661</a>
-<a href="#662" id="662">662</a>
-<a href="#663" id="663">663</a>
-<a href="#664" id="664">664</a>
-<a href="#665" id="665">665</a>
-<a href="#666" id="666">666</a>
-<a href="#667" id="667">667</a>
-<a href="#668" id="668">668</a>
-<a href="#669" id="669">669</a>
-<a href="#670" id="670">670</a>
-<a href="#671" id="671">671</a>
-<a href="#672" id="672">672</a>
-<a href="#673" id="673">673</a>
-<a href="#674" id="674">674</a>
-<a href="#675" id="675">675</a>
-<a href="#676" id="676">676</a>
-<a href="#677" id="677">677</a>
-<a href="#678" id="678">678</a>
-<a href="#679" id="679">679</a>
-<a href="#680" id="680">680</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
+<a href="#624" id="624">624</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="kw">use </span>core::fmt;
 <span class="kw">use </span>core::fmt::{Debug, Formatter};
-<span class="kw">use </span>core::mem::MaybeUninit;
 <span class="kw">use </span>core::ptr::null_mut;
 <span class="kw">use </span>std::marker::PhantomData;
 
@@ -693,14 +636,11 @@
 </span><span class="kw">use </span>untrusted::Input;
 
 <span class="kw">use </span><span class="kw">crate</span>::aws_lc::{
-    CBS_init, EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_PKEY_CTX_new_id, EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id,
-    EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key,
-    EVP_PKEY_new_raw_public_key, EVP_marshal_public_key, EVP_parse_public_key, CBS, EVP_PKEY,
-    EVP_PKEY_ED25519,
+    EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init, EVP_PKEY, EVP_PKEY_ED25519,
 };
 
-<span class="kw">use </span><span class="kw">crate</span>::cbb::LcCBB;
+<span class="kw">use </span><span class="kw">crate</span>::buffer::Buffer;
 <span class="kw">use </span><span class="kw">crate</span>::digest::digest_ctx::DigestContext;
 <span class="kw">use </span><span class="kw">crate</span>::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der,
@@ -715,8 +655,6 @@
 
 <span class="doccomment">/// The length of an Ed25519 public key.
 </span><span class="kw">pub const </span>ED25519_PUBLIC_KEY_LEN: usize = aws_lc::ED25519_PUBLIC_KEY_LEN <span class="kw">as </span>usize;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ED25519_PRIVATE_KEY_SEED_LEN: usize =
-    aws_lc::ED25519_PRIVATE_KEY_SEED_LEN <span class="kw">as </span>usize;
 <span class="kw">const </span>ED25519_SIGNATURE_LEN: usize = aws_lc::ED25519_SIGNATURE_LEN <span class="kw">as </span>usize;
 <span class="kw">const </span>ED25519_SEED_LEN: usize = <span class="number">32</span>;
 
@@ -780,31 +718,13 @@
     }
 }
 
-<span class="kw">fn </span>try_ed25519_public_key_from_bytes(key_bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
+<span class="kw">fn </span>try_ed25519_public_key_from_bytes(key_bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, KeyRejected&gt; {
     <span class="comment">// If the length of key bytes matches the raw public key size then it has to be that
     </span><span class="kw">if </span>key_bytes.len() == ED25519_PUBLIC_KEY_LEN {
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(LcPtr::new(<span class="kw">unsafe </span>{
-            EVP_PKEY_new_raw_public_key(
-                EVP_PKEY_ED25519,
-                null_mut(),
-                key_bytes.as_ptr(),
-                key_bytes.len(),
-            )
-        })<span class="question-mark">?</span>);
+        <span class="kw">return </span>LcPtr::&lt;EVP_PKEY&gt;::parse_raw_public_key(key_bytes, EVP_PKEY_ED25519);
     }
     <span class="comment">// Otherwise we support X.509 SubjectPublicKeyInfo formatted keys which are inherently larger
-    </span><span class="kw">let </span><span class="kw-2">mut </span>cbs = {
-        <span class="kw">let </span><span class="kw-2">mut </span>cbs = MaybeUninit::&lt;CBS&gt;::uninit();
-        <span class="kw">unsafe </span>{
-            CBS_init(cbs.as_mut_ptr(), key_bytes.as_ptr(), key_bytes.len());
-            cbs.assume_init()
-        }
-    };
-    <span class="kw">let </span>evp_pkey = LcPtr::new(<span class="kw">unsafe </span>{ EVP_parse_public_key(<span class="kw-2">&amp;mut </span>cbs) })<span class="question-mark">?</span>;
-    <span class="kw">if </span>EVP_PKEY_ED25519 != <span class="kw">unsafe </span>{ EVP_PKEY_id(<span class="kw-2">*</span>evp_pkey.as_const()) } {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-    }
-    <span class="prelude-val">Ok</span>(evp_pkey)
+    </span>LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5280_public_key(key_bytes, EVP_PKEY_ED25519)
 }
 
 <span class="doccomment">/// An Ed25519 key pair, for signing.
@@ -886,11 +806,8 @@
         // 2:d=1  hl=2 l=   5 cons:  SEQUENCE
         // 4:d=2  hl=2 l=   3 prim:   OBJECT            :ED25519
         // 9:d=1  hl=2 l=  33 prim:  BIT STRING
-        </span><span class="kw">let </span><span class="kw-2">mut </span>cbb = LcCBB::new(<span class="number">44</span>);
-        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_marshal_public_key(cbb.as_mut_ptr(), <span class="kw-2">*</span><span class="self">self</span>.evp_pkey.as_const()) } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-        }
-        <span class="prelude-val">Ok</span>(PublicKeyX509Der::from(cbb.into_buffer()<span class="question-mark">?</span>))
+        </span><span class="kw">let </span>der = <span class="self">self</span>.evp_pkey.marshal_rfc5280_public_key()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(PublicKeyX509Der::from(Buffer::new(der)))
     }
 }
 
@@ -932,12 +849,7 @@
         <span class="kw">let </span>evp_pkey = generate_key()<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>public_key = [<span class="number">0u8</span>; ED25519_PUBLIC_KEY_LEN];
-        <span class="kw">let </span><span class="kw-2">mut </span>out_len: usize = ED25519_PUBLIC_KEY_LEN;
-        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-            EVP_PKEY_get_raw_public_key(<span class="kw-2">*</span>evp_pkey.as_const(), public_key.as_mut_ptr(), <span class="kw-2">&amp;mut </span>out_len)
-        } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-        }
+        <span class="kw">let </span>out_len: usize = evp_pkey.marshal_raw_public_to_buffer(<span class="kw-2">&amp;mut </span>public_key)<span class="question-mark">?</span>;
         <span class="macro">debug_assert_eq!</span>(public_key.len(), out_len);
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
@@ -973,7 +885,9 @@
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     </span><span class="kw">pub fn </span>generate_pkcs8(_rng: <span class="kw-2">&amp;</span><span class="kw">dyn </span>SecureRandom) -&gt; <span class="prelude-ty">Result</span>&lt;Document, Unspecified&gt; {
         <span class="kw">let </span>evp_pkey = generate_key()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(Document::new(evp_pkey.marshall_private_key(Version::V2)<span class="question-mark">?</span>))
+        <span class="prelude-val">Ok</span>(Document::new(
+            evp_pkey.marshal_rfc5208_private_key(Version::V2)<span class="question-mark">?</span>,
+        ))
     }
 
     <span class="doccomment">/// Serializes this `Ed25519KeyPair` into a PKCS#8 v2 document.
@@ -983,7 +897,7 @@
     ///
     </span><span class="kw">pub fn </span>to_pkcs8(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Document, Unspecified&gt; {
         <span class="prelude-val">Ok</span>(Document::new(
-            <span class="self">self</span>.evp_pkey.marshall_private_key(Version::V2)<span class="question-mark">?</span>,
+            <span class="self">self</span>.evp_pkey.marshal_rfc5208_private_key(Version::V2)<span class="question-mark">?</span>,
         ))
     }
 
@@ -1003,7 +917,9 @@
     /// `error::Unspecified` if `rng` cannot provide enough bits or if there's an internal error.
     </span><span class="kw">pub fn </span>generate_pkcs8v1(_rng: <span class="kw-2">&amp;</span><span class="kw">dyn </span>SecureRandom) -&gt; <span class="prelude-ty">Result</span>&lt;Document, Unspecified&gt; {
         <span class="kw">let </span>evp_pkey = generate_key()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(Document::new(evp_pkey.marshall_private_key(Version::V1)<span class="question-mark">?</span>))
+        <span class="prelude-val">Ok</span>(Document::new(
+            evp_pkey.marshal_rfc5208_private_key(Version::V1)<span class="question-mark">?</span>,
+        ))
     }
 
     <span class="doccomment">/// Serializes this `Ed25519KeyPair` into a PKCS#8 v1 document.
@@ -1013,7 +929,7 @@
     ///
     </span><span class="kw">pub fn </span>to_pkcs8v1(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Document, Unspecified&gt; {
         <span class="prelude-val">Ok</span>(Document::new(
-            <span class="self">self</span>.evp_pkey.marshall_private_key(Version::V1)<span class="question-mark">?</span>,
+            <span class="self">self</span>.evp_pkey.marshal_rfc5208_private_key(Version::V1)<span class="question-mark">?</span>,
         ))
     }
 
@@ -1055,21 +971,10 @@
             <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::inconsistent_components());
         }
 
-        <span class="kw">let </span>evp_pkey = LcPtr::new(<span class="kw">unsafe </span>{
-            EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, null_mut(), seed.as_ptr(), seed.len())
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>evp_pkey = LcPtr::&lt;EVP_PKEY&gt;::parse_raw_private_key(seed, EVP_PKEY_ED25519)<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>derived_public_key = [<span class="number">0u8</span>; ED25519_PUBLIC_KEY_LEN];
-        <span class="kw">let </span><span class="kw-2">mut </span>out_len: usize = derived_public_key.len();
-        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-            EVP_PKEY_get_raw_public_key(
-                <span class="kw-2">*</span>evp_pkey.as_const(),
-                derived_public_key.as_mut_ptr().cast(),
-                <span class="kw-2">&amp;mut </span>out_len,
-            )
-        } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::unspecified());
-        }
+        <span class="kw">let </span>out_len: usize = evp_pkey.marshal_raw_public_to_buffer(<span class="kw-2">&amp;mut </span>derived_public_key)<span class="question-mark">?</span>;
         <span class="macro">debug_assert_eq!</span>(derived_public_key.len(), out_len);
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
@@ -1120,17 +1025,12 @@
     }
 
     <span class="kw">fn </span>parse_pkcs8(pkcs8: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
-        <span class="kw">let </span>evp_pkey = LcPtr::&lt;EVP_PKEY&gt;::try_from(pkcs8)<span class="question-mark">?</span>;
+        <span class="kw">let </span>evp_pkey = LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5208_private_key(pkcs8, EVP_PKEY_ED25519)<span class="question-mark">?</span>;
 
         evp_pkey.validate_as_ed25519()<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>public_key = [<span class="number">0u8</span>; ED25519_PUBLIC_KEY_LEN];
-        <span class="kw">let </span><span class="kw-2">mut </span>out_len: usize = ED25519_PUBLIC_KEY_LEN;
-        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-            EVP_PKEY_get_raw_public_key(<span class="kw-2">*</span>evp_pkey.as_const(), public_key.as_mut_ptr(), <span class="kw-2">&amp;mut </span>out_len)
-        } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::wrong_algorithm());
-        }
+        <span class="kw">let </span>out_len: usize = evp_pkey.marshal_raw_public_to_buffer(<span class="kw-2">&amp;mut </span>public_key)<span class="question-mark">?</span>;
         <span class="macro">debug_assert_eq!</span>(public_key.len(), out_len);
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
@@ -1201,20 +1101,8 @@
     /// # Errors
     /// Currently the function cannot fail, but it might in future implementations.
     </span><span class="kw">pub fn </span>seed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Seed&lt;<span class="lifetime">'static</span>&gt;, Unspecified&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>private_key_bytes = <span class="macro">vec!</span>[<span class="number">0u8</span>; ED25519_PRIVATE_KEY_SEED_LEN];
-        <span class="kw">let </span><span class="kw-2">mut </span>out_len: usize = private_key_bytes.len();
-        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-            EVP_PKEY_get_raw_private_key(
-                <span class="kw-2">*</span><span class="self">self</span>.evp_pkey.as_const(),
-                private_key_bytes.as_mut_ptr(),
-                <span class="kw-2">&amp;mut </span>out_len,
-            )
-        } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-        }
-        <span class="macro">debug_assert_eq!</span>(private_key_bytes.len(), out_len);
         <span class="prelude-val">Ok</span>(Seed {
-            bytes: private_key_bytes.into_boxed_slice(),
+            bytes: <span class="self">self</span>.evp_pkey.marshal_raw_private_key()<span class="question-mark">?</span>.into_boxed_slice(),
             phantom: PhantomData,
         })
     }
@@ -1227,7 +1115,7 @@
     /// `error::Unspecified` on internal error.
     </span><span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Pkcs8V1Der&lt;<span class="lifetime">'static</span>&gt;, <span class="kw">crate</span>::error::Unspecified&gt; {
         <span class="prelude-val">Ok</span>(Pkcs8V1Der::new(
-            <span class="self">self</span>.evp_pkey.marshall_private_key(Version::V1)<span class="question-mark">?</span>.into_vec(),
+            <span class="self">self</span>.evp_pkey.marshal_rfc5208_private_key(Version::V1)<span class="question-mark">?</span>,
         ))
     }
 }
@@ -1239,7 +1127,7 @@
     /// `error::Unspecified` on internal error.
     </span><span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Pkcs8V2Der&lt;<span class="lifetime">'static</span>&gt;, <span class="kw">crate</span>::error::Unspecified&gt; {
         <span class="prelude-val">Ok</span>(Pkcs8V2Der::new(
-            <span class="self">self</span>.evp_pkey.marshall_private_key(Version::V2)<span class="question-mark">?</span>.into_vec(),
+            <span class="self">self</span>.evp_pkey.marshal_rfc5208_private_key(Version::V2)<span class="question-mark">?</span>,
         ))
     }
 }

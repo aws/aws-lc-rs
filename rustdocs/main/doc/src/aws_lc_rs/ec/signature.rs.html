@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec/signature.rs`."><title>signature.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e7950ecc.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (2f348cb7c 2025-01-27)" data-channel="nightly" data-search-js="search-ccb196c1.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/ec/</div>signature.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec/signature.rs`."><title>signature.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (854f22563 2025-01-31)" data-channel="nightly" data-search-js="search-2d513d54.js" data-settings-js="settings-6dad6058.js" ><script src="../../../static.files/storage-302de22f.js"></script><script defer src="../../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9b5d7e41.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/ec/</div>signature.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -287,55 +287,24 @@
 <a href="#286" id="286">286</a>
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#289" id="289">289</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="kw">use </span><span class="kw">crate</span>::aws_lc::{
-    i2d_EC_PUBKEY, ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EC_GROUP_new_by_curve_name,
-    EC_KEY_new, EC_KEY_set_group, EC_KEY_set_public_key, EVP_DigestVerify, EVP_DigestVerifyInit,
-    EVP_PKEY_get0_EC_KEY, NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1,
-    BIGNUM, ECDSA_SIG, EVP_PKEY,
+    ECDSA_SIG_new, ECDSA_SIG_set0, ECDSA_SIG_to_bytes, EVP_DigestVerify, EVP_DigestVerifyInit,
+    NID_X9_62_prime256v1, NID_secp256k1, NID_secp384r1, NID_secp521r1, BIGNUM, ECDSA_SIG, EVP_PKEY,
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::digest::digest_ctx::DigestContext;
-<span class="kw">use </span><span class="kw">crate</span>::ec::{
-    compressed_public_key_size_bytes, ec_point_from_bytes, marshal_ec_public_key_to_buffer,
-    marshal_public_key_to_buffer, try_parse_public_key_bytes, PUBLIC_KEY_MAX_LEN,
-};
+<span class="kw">use </span><span class="kw">crate</span>::ec::compressed_public_key_size_bytes;
+<span class="kw">use </span><span class="kw">crate</span>::ec::encoding::parse_ec_public_key;
+<span class="kw">use </span><span class="kw">crate</span>::ec::encoding::sec1::marshal_sec1_public_point;
 <span class="kw">use </span><span class="kw">crate</span>::encoding::{
     AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
 };
 <span class="kw">use </span><span class="kw">crate</span>::error::Unspecified;
 <span class="kw">use </span><span class="kw">crate</span>::fips::indicator_check;
-<span class="kw">use </span><span class="kw">crate</span>::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
+<span class="kw">use </span><span class="kw">crate</span>::ptr::{DetachableLcPtr, LcPtr};
 <span class="kw">use </span><span class="kw">crate</span>::signature::VerificationAlgorithm;
 <span class="kw">use crate</span>::{digest, sealed};
 <span class="kw">use </span>core::fmt;
@@ -403,6 +372,7 @@
     }
     <span class="comment">// Compressed public key length in bytes
     </span><span class="attr">#[inline]
+    #[allow(dead_code)]
     </span><span class="kw">const fn </span>compressed_pub_key_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="kw">match </span><span class="self">self </span>{
             AlgorithmID::ECDSA_P256 | AlgorithmID::ECDSA_P256K1 =&gt; {
@@ -417,7 +387,8 @@
 <span class="doccomment">/// Elliptic curve public key.
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>PublicKey {
-    algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>EcdsaSigningAlgorithm,
+    <span class="attr">#[allow(dead_code)]
+    </span>algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>EcdsaSigningAlgorithm,
     evp_pkey: LcPtr&lt;EVP_PKEY&gt;,
     octets: Box&lt;[u8]&gt;,
 }
@@ -426,13 +397,12 @@
     evp_pkey: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
     algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>EcdsaSigningAlgorithm,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;PublicKey, Unspecified&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>pub_key_bytes = [<span class="number">0u8</span>; PUBLIC_KEY_MAX_LEN];
-    <span class="kw">let </span>key_len = marshal_public_key_to_buffer(<span class="kw-2">&amp;mut </span>pub_key_bytes, evp_pkey, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>pub_key_bytes = marshal_sec1_public_point(evp_pkey, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(PublicKey {
         evp_pkey: evp_pkey.clone(),
         algorithm,
-        octets: pub_key_bytes[<span class="number">0</span>..key_len].into(),
+        octets: pub_key_bytes.into_boxed_slice(),
     })
 }
 
@@ -441,24 +411,7 @@
     /// # Errors
     /// Returns an error if the public key fails to marshal to X.509.
     </span><span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;PublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;, Unspecified&gt; {
-        <span class="kw">let </span>ec_group = LcPtr::new(<span class="kw">unsafe </span>{ EC_GROUP_new_by_curve_name(<span class="self">self</span>.algorithm.id.nid()) })<span class="question-mark">?</span>;
-        <span class="kw">let </span>ec_point = ec_point_from_bytes(<span class="kw-2">&amp;</span>ec_group, <span class="self">self</span>.as_ref())<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>ec_key = LcPtr::new(<span class="kw">unsafe </span>{ EC_KEY_new() })<span class="question-mark">?</span>;
-        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EC_KEY_set_group(<span class="kw-2">*</span>ec_key.as_mut(), <span class="kw-2">*</span>ec_group.as_const()) } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-        }
-        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EC_KEY_set_public_key(<span class="kw-2">*</span>ec_key.as_mut(), <span class="kw-2">*</span>ec_point.as_const()) } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-        }
-        <span class="kw">let </span><span class="kw-2">mut </span>buffer = null_mut::&lt;u8&gt;();
-        <span class="kw">let </span>len = <span class="kw">unsafe </span>{ i2d_EC_PUBKEY(<span class="kw-2">*</span>ec_key.as_const(), <span class="kw-2">&amp;mut </span>buffer) };
-        <span class="kw">if </span>len &lt; <span class="number">0 </span>|| buffer.is_null() {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-        }
-        <span class="kw">let </span>buffer = LcPtr::new(buffer)<span class="question-mark">?</span>;
-        <span class="kw">let </span>der =
-            <span class="kw">unsafe </span>{ core::slice::from_raw_parts(<span class="kw-2">*</span>buffer.as_const(), len.try_into()<span class="question-mark">?</span>) }.to_owned();
-
+        <span class="kw">let </span>der = <span class="self">self</span>.evp_pkey.marshal_rfc5280_public_key()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(PublicKeyX509Der::new(der))
     }
 }
@@ -468,17 +421,8 @@
     /// # Errors
     /// Returns an error if the public key fails to marshal.
     </span><span class="kw">fn </span>as_be_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EcPublicKeyCompressedBin&lt;<span class="lifetime">'static</span>&gt;, <span class="kw">crate</span>::error::Unspecified&gt; {
-        <span class="kw">let </span>ec_key = ConstPointer::new(<span class="kw">unsafe </span>{ EVP_PKEY_get0_EC_KEY(<span class="kw-2">*</span><span class="self">self</span>.evp_pkey.as_const()) })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>buffer = <span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="self">self</span>.algorithm.<span class="number">0</span>.id.compressed_pub_key_len()];
-
-        <span class="kw">let </span>out_len = marshal_ec_public_key_to_buffer(<span class="kw-2">&amp;mut </span>buffer, <span class="kw-2">&amp;</span>ec_key, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
-
-        <span class="macro">debug_assert_eq!</span>(buffer.len(), out_len);
-
-        buffer.truncate(out_len);
-
-        <span class="prelude-val">Ok</span>(EcPublicKeyCompressedBin::new(buffer))
+        <span class="kw">let </span>pub_point = marshal_sec1_public_point(<span class="kw-2">&amp;</span><span class="self">self</span>.evp_pkey, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(EcPublicKeyCompressedBin::new(pub_point))
     }
 }
 
@@ -577,7 +521,7 @@
     msg: <span class="kw-2">&amp;</span>[u8],
     signature: <span class="kw-2">&amp;</span>[u8],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>pkey = try_parse_public_key_bytes(public_key, alg.nid())<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>pkey = parse_ec_public_key(public_key, alg.nid())<span class="question-mark">?</span>;
 
     <span class="kw">let </span><span class="kw-2">mut </span>md_ctx = DigestContext::new_uninit();
 

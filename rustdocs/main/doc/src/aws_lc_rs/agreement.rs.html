@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/agreement.rs`."><title>agreement.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e7950ecc.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (2f348cb7c 2025-01-27)" data-channel="nightly" data-search-js="search-ccb196c1.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>agreement.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/agreement.rs`."><title>agreement.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (854f22563 2025-01-31)" data-channel="nightly" data-search-js="search-2d513d54.js" data-settings-js="settings-6dad6058.js" ><script src="../../static.files/storage-302de22f.js"></script><script defer src="../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9b5d7e41.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>agreement.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -1270,103 +1270,7 @@
 <a href="#1269" id="1269">1269</a>
 <a href="#1270" id="1270">1270</a>
 <a href="#1271" id="1271">1271</a>
-<a href="#1272" id="1272">1272</a>
-<a href="#1273" id="1273">1273</a>
-<a href="#1274" id="1274">1274</a>
-<a href="#1275" id="1275">1275</a>
-<a href="#1276" id="1276">1276</a>
-<a href="#1277" id="1277">1277</a>
-<a href="#1278" id="1278">1278</a>
-<a href="#1279" id="1279">1279</a>
-<a href="#1280" id="1280">1280</a>
-<a href="#1281" id="1281">1281</a>
-<a href="#1282" id="1282">1282</a>
-<a href="#1283" id="1283">1283</a>
-<a href="#1284" id="1284">1284</a>
-<a href="#1285" id="1285">1285</a>
-<a href="#1286" id="1286">1286</a>
-<a href="#1287" id="1287">1287</a>
-<a href="#1288" id="1288">1288</a>
-<a href="#1289" id="1289">1289</a>
-<a href="#1290" id="1290">1290</a>
-<a href="#1291" id="1291">1291</a>
-<a href="#1292" id="1292">1292</a>
-<a href="#1293" id="1293">1293</a>
-<a href="#1294" id="1294">1294</a>
-<a href="#1295" id="1295">1295</a>
-<a href="#1296" id="1296">1296</a>
-<a href="#1297" id="1297">1297</a>
-<a href="#1298" id="1298">1298</a>
-<a href="#1299" id="1299">1299</a>
-<a href="#1300" id="1300">1300</a>
-<a href="#1301" id="1301">1301</a>
-<a href="#1302" id="1302">1302</a>
-<a href="#1303" id="1303">1303</a>
-<a href="#1304" id="1304">1304</a>
-<a href="#1305" id="1305">1305</a>
-<a href="#1306" id="1306">1306</a>
-<a href="#1307" id="1307">1307</a>
-<a href="#1308" id="1308">1308</a>
-<a href="#1309" id="1309">1309</a>
-<a href="#1310" id="1310">1310</a>
-<a href="#1311" id="1311">1311</a>
-<a href="#1312" id="1312">1312</a>
-<a href="#1313" id="1313">1313</a>
-<a href="#1314" id="1314">1314</a>
-<a href="#1315" id="1315">1315</a>
-<a href="#1316" id="1316">1316</a>
-<a href="#1317" id="1317">1317</a>
-<a href="#1318" id="1318">1318</a>
-<a href="#1319" id="1319">1319</a>
-<a href="#1320" id="1320">1320</a>
-<a href="#1321" id="1321">1321</a>
-<a href="#1322" id="1322">1322</a>
-<a href="#1323" id="1323">1323</a>
-<a href="#1324" id="1324">1324</a>
-<a href="#1325" id="1325">1325</a>
-<a href="#1326" id="1326">1326</a>
-<a href="#1327" id="1327">1327</a>
-<a href="#1328" id="1328">1328</a>
-<a href="#1329" id="1329">1329</a>
-<a href="#1330" id="1330">1330</a>
-<a href="#1331" id="1331">1331</a>
-<a href="#1332" id="1332">1332</a>
-<a href="#1333" id="1333">1333</a>
-<a href="#1334" id="1334">1334</a>
-<a href="#1335" id="1335">1335</a>
-<a href="#1336" id="1336">1336</a>
-<a href="#1337" id="1337">1337</a>
-<a href="#1338" id="1338">1338</a>
-<a href="#1339" id="1339">1339</a>
-<a href="#1340" id="1340">1340</a>
-<a href="#1341" id="1341">1341</a>
-<a href="#1342" id="1342">1342</a>
-<a href="#1343" id="1343">1343</a>
-<a href="#1344" id="1344">1344</a>
-<a href="#1345" id="1345">1345</a>
-<a href="#1346" id="1346">1346</a>
-<a href="#1347" id="1347">1347</a>
-<a href="#1348" id="1348">1348</a>
-<a href="#1349" id="1349">1349</a>
-<a href="#1350" id="1350">1350</a>
-<a href="#1351" id="1351">1351</a>
-<a href="#1352" id="1352">1352</a>
-<a href="#1353" id="1353">1353</a>
-<a href="#1354" id="1354">1354</a>
-<a href="#1355" id="1355">1355</a>
-<a href="#1356" id="1356">1356</a>
-<a href="#1357" id="1357">1357</a>
-<a href="#1358" id="1358">1358</a>
-<a href="#1359" id="1359">1359</a>
-<a href="#1360" id="1360">1360</a>
-<a href="#1361" id="1361">1361</a>
-<a href="#1362" id="1362">1362</a>
-<a href="#1363" id="1363">1363</a>
-<a href="#1364" id="1364">1364</a>
-<a href="#1365" id="1365">1365</a>
-<a href="#1366" id="1366">1366</a>
-<a href="#1367" id="1367">1367</a>
-<a href="#1368" id="1368">1368</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2017 Brian Smith.
+<a href="#1272" id="1272">1272</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2017 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
@@ -1419,31 +1323,34 @@
 //! ```
 </span><span class="kw">mod </span>ephemeral;
 
+<span class="kw">use </span><span class="kw">crate</span>::ec::encoding::sec1::{
+    marshal_sec1_private_key, marshal_sec1_public_point, marshal_sec1_public_point_into_buffer,
+    parse_sec1_private_bn,
+};
+<span class="kw">use </span><span class="kw">crate</span>::ec::{encoding, evp_key_generate};
+<span class="kw">use </span><span class="kw">crate</span>::error::{KeyRejected, Unspecified};
+<span class="kw">use </span><span class="kw">crate</span>::hex;
+<span class="kw">use </span><span class="kw">crate</span>::ptr::ConstPointer;
 <span class="kw">pub use </span>ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
 <span class="kw">use </span><span class="kw">crate</span>::aws_lc::{
-    CBS_init, EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_derive, EVP_PKEY_derive_init,
-    EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get_raw_private_key,
-    EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen, EVP_PKEY_keygen_init,
-    EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_marshal_public_key,
-    EVP_parse_public_key, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, BIGNUM, CBS,
-    EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_derive, EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer,
+    EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, NID_X9_62_prime256v1,
+    NID_secp384r1, NID_secp521r1, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
 };
-<span class="kw">use </span><span class="kw">crate</span>::cbb::LcCBB;
-<span class="kw">use </span><span class="kw">crate</span>::ec::{ec_group_from_nid, evp_key_generate};
-<span class="kw">use </span><span class="kw">crate</span>::error::{KeyRejected, Unspecified};
-<span class="kw">use </span><span class="kw">crate</span>::fips::indicator_check;
-<span class="kw">use </span><span class="kw">crate</span>::ptr::{ConstPointer, LcPtr};
-<span class="kw">use crate</span>::{ec, hex};
 
+<span class="kw">use </span><span class="kw">crate</span>::buffer::Buffer;
+<span class="kw">use </span><span class="kw">crate</span>::ec;
+<span class="kw">use </span><span class="kw">crate</span>::ec::encoding::rfc5915::parse_rfc5915_private_key;
 <span class="kw">use </span><span class="kw">crate</span>::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
     EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
 };
+<span class="kw">use </span><span class="kw">crate</span>::fips::indicator_check;
+<span class="kw">use </span><span class="kw">crate</span>::ptr::LcPtr;
 <span class="kw">use </span>core::fmt;
 <span class="kw">use </span>core::fmt::{Debug, Formatter};
 <span class="kw">use </span>core::ptr::null_mut;
-<span class="kw">use </span>std::mem::MaybeUninit;
 
 <span class="attr">#[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq)]
@@ -1472,17 +1379,6 @@
             AlgorithmID::ECDH_P256 =&gt; ec::uncompressed_public_key_size_bytes(<span class="number">256</span>),
             AlgorithmID::ECDH_P384 =&gt; ec::uncompressed_public_key_size_bytes(<span class="number">384</span>),
             AlgorithmID::ECDH_P521 =&gt; ec::uncompressed_public_key_size_bytes(<span class="number">521</span>),
-            AlgorithmID::X25519 =&gt; <span class="number">32</span>,
-        }
-    }
-
-    <span class="comment">// Compressed public key length in bytes
-    </span><span class="attr">#[inline]
-    </span><span class="kw">const fn </span>compressed_pub_key_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="kw">match </span><span class="self">self </span>{
-            AlgorithmID::ECDH_P256 =&gt; ec::compressed_public_key_size_bytes(<span class="number">256</span>),
-            AlgorithmID::ECDH_P384 =&gt; ec::compressed_public_key_size_bytes(<span class="number">384</span>),
-            AlgorithmID::ECDH_P521 =&gt; ec::compressed_public_key_size_bytes(<span class="number">521</span>),
             AlgorithmID::X25519 =&gt; <span class="number">32</span>,
         }
     }
@@ -1669,7 +1565,7 @@
         <span class="kw">if </span>AlgorithmID::X25519 == alg.id {
             <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::invalid_encoding());
         }
-        <span class="kw">let </span>evp_pkey = ec::unmarshal_der_to_private_key(key_bytes, alg.id.nid())<span class="question-mark">?</span>;
+        <span class="kw">let </span>evp_pkey = parse_rfc5915_private_key(key_bytes, alg.id.nid())<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(alg, evp_pkey))
     }
 
@@ -1689,20 +1585,9 @@
             <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::wrong_algorithm());
         }
         <span class="kw">let </span>evp_pkey = <span class="kw">if </span>AlgorithmID::X25519 == alg.id {
-            LcPtr::new(<span class="kw">unsafe </span>{
-                EVP_PKEY_new_raw_private_key(
-                    EVP_PKEY_X25519,
-                    null_mut(),
-                    key_bytes.as_ptr(),
-                    AlgorithmID::X25519.private_key_len(),
-                )
-            })<span class="question-mark">?
+            LcPtr::&lt;EVP_PKEY&gt;::parse_raw_private_key(key_bytes, EVP_PKEY_X25519)<span class="question-mark">?
         </span>} <span class="kw">else </span>{
-            <span class="kw">let </span>ec_group = ec_group_from_nid(alg.id.nid())<span class="question-mark">?</span>;
-            <span class="kw">let </span>private_bn = LcPtr::&lt;BIGNUM&gt;::try_from(key_bytes)<span class="question-mark">?</span>;
-
-            ec::evp_pkey_from_private(<span class="kw-2">&amp;</span>ec_group.as_const(), <span class="kw-2">&amp;</span>private_bn.as_const())
-                .map_err(|<span class="kw">_</span>| KeyRejected::invalid_encoding())<span class="question-mark">?
+            parse_sec1_private_bn(key_bytes, alg.id.nid())<span class="question-mark">?
         </span>};
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(alg, evp_pkey))
     }
@@ -1741,14 +1626,7 @@
     </span><span class="kw">fn </span>from_x25519_private_key(
         priv_key: <span class="kw-2">&amp;</span>[u8; AlgorithmID::X25519.private_key_len()],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
-        <span class="kw">let </span>pkey = LcPtr::new(<span class="kw">unsafe </span>{
-            EVP_PKEY_new_raw_private_key(
-                EVP_PKEY_X25519,
-                null_mut(),
-                priv_key.as_ptr(),
-                priv_key.len(),
-            )
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>pkey = LcPtr::&lt;EVP_PKEY&gt;::parse_raw_private_key(priv_key, EVP_PKEY_X25519)<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(PrivateKey {
             inner_key: KeyInner::X25519(pkey),
@@ -1757,7 +1635,7 @@
 
     <span class="attr">#[cfg(test)]
     </span><span class="kw">fn </span>from_p256_private_key(priv_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
-        <span class="kw">let </span>pkey = from_ec_private_key(priv_key, ECDH_P256.id.nid())<span class="question-mark">?</span>;
+        <span class="kw">let </span>pkey = parse_sec1_private_bn(priv_key, ECDH_P256.id.nid())<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(PrivateKey {
             inner_key: KeyInner::ECDH_P256(pkey),
         })
@@ -1765,7 +1643,7 @@
 
     <span class="attr">#[cfg(test)]
     </span><span class="kw">fn </span>from_p384_private_key(priv_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
-        <span class="kw">let </span>pkey = from_ec_private_key(priv_key, ECDH_P384.id.nid())<span class="question-mark">?</span>;
+        <span class="kw">let </span>pkey = parse_sec1_private_bn(priv_key, ECDH_P384.id.nid())<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(PrivateKey {
             inner_key: KeyInner::ECDH_P384(pkey),
         })
@@ -1773,7 +1651,7 @@
 
     <span class="attr">#[cfg(test)]
     </span><span class="kw">fn </span>from_p521_private_key(priv_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
-        <span class="kw">let </span>pkey = from_ec_private_key(priv_key, ECDH_P521.id.nid())<span class="question-mark">?</span>;
+        <span class="kw">let </span>pkey = parse_sec1_private_bn(priv_key, ECDH_P521.id.nid())<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(PrivateKey {
             inner_key: KeyInner::ECDH_P521(pkey),
         })
@@ -1788,28 +1666,17 @@
             KeyInner::ECDH_P256(evp_pkey)
             | KeyInner::ECDH_P384(evp_pkey)
             | KeyInner::ECDH_P521(evp_pkey) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>buffer = [<span class="number">0u8</span>; MAX_PUBLIC_KEY_LEN];
-                <span class="kw">let </span>key_len = ec::marshal_public_key_to_buffer(<span class="kw-2">&amp;mut </span>buffer, evp_pkey, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
+                <span class="kw">let </span><span class="kw-2">mut </span>public_key = [<span class="number">0u8</span>; MAX_PUBLIC_KEY_LEN];
+                <span class="kw">let </span>len = marshal_sec1_public_point_into_buffer(<span class="kw-2">&amp;mut </span>public_key, evp_pkey, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(PublicKey {
                     inner_key: <span class="self">self</span>.inner_key.clone(),
-                    public_key: buffer,
-                    len: key_len,
+                    public_key,
+                    len,
                 })
             }
             KeyInner::X25519(priv_key) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>buffer = [<span class="number">0u8</span>; MAX_PUBLIC_KEY_LEN];
-                <span class="kw">let </span><span class="kw-2">mut </span>out_len = buffer.len();
-
-                <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-                    EVP_PKEY_get_raw_public_key(
-                        <span class="kw-2">*</span>priv_key.as_const(),
-                        buffer.as_mut_ptr(),
-                        <span class="kw-2">&amp;mut </span>out_len,
-                    )
-                } {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-                }
-
+                <span class="kw">let </span>out_len = priv_key.marshal_raw_public_to_buffer(<span class="kw-2">&amp;mut </span>buffer)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(PublicKey {
                     inner_key: <span class="self">self</span>.inner_key.clone(),
                     public_key: buffer,
@@ -1865,10 +1732,7 @@
         <span class="kw">if </span>AlgorithmID::X25519 == <span class="self">self</span>.inner_key.algorithm().id {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
         }
-        <span class="kw">let </span>buffer = ec::marshal_private_key_to_buffer(
-            <span class="self">self</span>.inner_key.algorithm().id.private_key_len(),
-            <span class="kw-2">&amp;</span><span class="self">self</span>.inner_key.get_evp_pkey().as_const(),
-        )<span class="question-mark">?</span>;
+        <span class="kw">let </span>buffer = marshal_sec1_private_key(<span class="self">self</span>.inner_key.get_evp_pkey())<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(EcPrivateKeyBin::new(buffer))
     }
 }
@@ -1884,27 +1748,9 @@
         <span class="kw">if </span>AlgorithmID::X25519 != <span class="self">self</span>.inner_key.algorithm().id {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
         }
-        <span class="kw">let </span>evp_pkey = <span class="self">self</span>.inner_key.get_evp_pkey().as_const();
-        <span class="kw">let </span><span class="kw-2">mut </span>buffer = [<span class="number">0u8</span>; AlgorithmID::X25519.private_key_len()];
-        <span class="kw">let </span><span class="kw-2">mut </span>out_len = AlgorithmID::X25519.private_key_len();
-        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-            EVP_PKEY_get_raw_private_key(<span class="kw-2">*</span>evp_pkey, buffer.as_mut_ptr(), <span class="kw-2">&amp;mut </span>out_len)
-        } {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-        }
-        <span class="macro">debug_assert_eq!</span>(<span class="number">32</span>, out_len);
-        <span class="prelude-val">Ok</span>(Curve25519SeedBin::new(Vec::from(buffer)))
+        <span class="kw">let </span>evp_pkey = <span class="self">self</span>.inner_key.get_evp_pkey();
+        <span class="prelude-val">Ok</span>(Curve25519SeedBin::new(evp_pkey.marshal_raw_private_key()<span class="question-mark">?</span>))
     }
-}
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">fn </span>from_ec_private_key(priv_key: <span class="kw-2">&amp;</span>[u8], nid: i32) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
-    <span class="kw">let </span>ec_group = ec_group_from_nid(nid)<span class="question-mark">?</span>;
-    <span class="kw">let </span>priv_key = LcPtr::&lt;BIGNUM&gt;::try_from(priv_key)<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>pkey = ec::evp_pkey_from_private(<span class="kw-2">&amp;</span>ec_group.as_const(), <span class="kw-2">&amp;</span>priv_key.as_const())<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(pkey)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generate_x25519() -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
@@ -1984,15 +1830,8 @@
             | KeyInner::ECDH_P384(evp_pkey)
             | KeyInner::ECDH_P521(evp_pkey)
             | KeyInner::X25519(evp_pkey) =&gt; {
-                <span class="kw">let </span>key_size_bytes =
-                    TryInto::&lt;usize&gt;::try_into(<span class="kw">unsafe </span>{ EVP_PKEY_bits(<span class="kw-2">*</span>evp_pkey.as_const()) })
-                        .expect(<span class="string">"fit in usize"</span>)
-                        * <span class="number">8</span>;
-                <span class="kw">let </span><span class="kw-2">mut </span>der = LcCBB::new(key_size_bytes * <span class="number">5</span>);
-                <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_marshal_public_key(der.as_mut_ptr(), <span class="kw-2">*</span>evp_pkey.as_const()) } {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-                };
-                <span class="prelude-val">Ok</span>(PublicKeyX509Der::from(der.into_buffer()<span class="question-mark">?</span>))
+                <span class="kw">let </span>der = evp_pkey.marshal_rfc5280_public_key()<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(PublicKeyX509Der::from(Buffer::new(der)))
             }
         }
     }
@@ -2009,17 +1848,8 @@
             | KeyInner::ECDH_P521(evp_pkey) =&gt; evp_pkey,
             KeyInner::X25519(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified),
         };
-        <span class="kw">let </span>ec_key = ConstPointer::new(<span class="kw">unsafe </span>{ EVP_PKEY_get0_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_const()) })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>buffer = <span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="self">self</span>.algorithm().id.compressed_pub_key_len()];
-
-        <span class="kw">let </span>out_len = ec::marshal_ec_public_key_to_buffer(<span class="kw-2">&amp;mut </span>buffer, <span class="kw-2">&amp;</span>ec_key, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
-
-        <span class="macro">debug_assert_eq!</span>(buffer.len(), out_len);
-
-        buffer.truncate(out_len);
-
-        <span class="prelude-val">Ok</span>(EcPublicKeyCompressedBin::new(buffer))
+        <span class="kw">let </span>pub_point = marshal_sec1_public_point(evp_pkey, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(EcPublicKeyCompressedBin::new(pub_point))
     }
 }
 
@@ -2155,17 +1985,17 @@
     priv_key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
     peer_pub_key_bytes: <span class="kw-2">&amp;</span>[u8],
     nid: i32,
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], ()&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>pub_key = ec::try_parse_public_key_bytes(peer_pub_key_bytes, nid)<span class="question-mark">?</span>;
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], Unspecified&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>pub_key = encoding::parse_ec_public_key(peer_pub_key_bytes, nid)<span class="question-mark">?</span>;
 
     <span class="kw">let </span><span class="kw-2">mut </span>pkey_ctx = priv_key.create_EVP_PKEY_CTX()<span class="question-mark">?</span>;
 
     <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_derive_init(<span class="kw-2">*</span>pkey_ctx.as_mut()) } {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(());
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
     };
 
     <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_derive_set_peer(<span class="kw-2">*</span>pkey_ctx.as_mut(), <span class="kw-2">*</span>pub_key.as_mut()) } {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(());
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
     }
 
     <span class="kw">let </span><span class="kw-2">mut </span>out_key_len = buffer.len();
@@ -2173,11 +2003,11 @@
     <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
         EVP_PKEY_derive(<span class="kw-2">*</span>pkey_ctx.as_mut(), buffer.as_mut_ptr(), <span class="kw-2">&amp;mut </span>out_key_len)
     }) {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(());
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
     }
 
     <span class="kw">if </span><span class="number">0 </span>== out_key_len {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(());
+        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
     }
 
     <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>buffer[<span class="number">0</span>..out_key_len])
@@ -2217,7 +2047,7 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_parse_x25519_public_key_bytes(
     key_bytes: <span class="kw-2">&amp;</span>[u8],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
-    try_parse_x25519_subject_public_key_info_bytes(key_bytes)
+    LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5280_public_key(key_bytes, EVP_PKEY_X25519)
         .or(try_parse_x25519_public_key_raw_bytes(key_bytes))
 }
 
@@ -2227,32 +2057,10 @@
         <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
     }
 
-    <span class="prelude-val">Ok</span>(LcPtr::new(<span class="kw">unsafe </span>{
-        EVP_PKEY_new_raw_public_key(
-            EVP_PKEY_X25519,
-            null_mut(),
-            key_bytes.as_ptr(),
-            key_bytes.len(),
-        )
-    })<span class="question-mark">?</span>)
-}
-
-<span class="kw">fn </span>try_parse_x25519_subject_public_key_info_bytes(
-    key_bytes: <span class="kw-2">&amp;</span>[u8],
-) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
-    <span class="comment">// Try to parse as SubjectPublicKeyInfo first
-    </span><span class="kw">let </span><span class="kw-2">mut </span>cbs = {
-        <span class="kw">let </span><span class="kw-2">mut </span>cbs = MaybeUninit::&lt;CBS&gt;::uninit();
-        <span class="kw">unsafe </span>{
-            CBS_init(cbs.as_mut_ptr(), key_bytes.as_ptr(), key_bytes.len());
-            cbs.assume_init()
-        }
-    };
-    <span class="kw">let </span>evp_pkey = LcPtr::new(<span class="kw">unsafe </span>{ EVP_parse_public_key(<span class="kw-2">&amp;mut </span>cbs) })<span class="question-mark">?</span>;
-    <span class="kw">if </span>EVP_PKEY_X25519 != <span class="kw">unsafe </span>{ EVP_PKEY_id(<span class="kw-2">*</span>evp_pkey.as_const()) } {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-    }
-    <span class="prelude-val">Ok</span>(evp_pkey)
+    <span class="prelude-val">Ok</span>(LcPtr::&lt;EVP_PKEY&gt;::parse_raw_public_key(
+        key_bytes,
+        EVP_PKEY_X25519,
+    )<span class="question-mark">?</span>)
 }
 
 <span class="attr">#[cfg(test)]

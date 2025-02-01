@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/rsa/key.rs`."><title>key.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e7950ecc.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (2f348cb7c 2025-01-27)" data-channel="nightly" data-search-js="search-ccb196c1.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/rsa/</div>key.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/rsa/key.rs`."><title>key.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (854f22563 2025-01-31)" data-channel="nightly" data-search-js="search-2d513d54.js" data-settings-js="settings-6dad6058.js" ><script src="../../../static.files/storage-302de22f.js"></script><script defer src="../../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9b5d7e41.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/rsa/</div>key.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -509,36 +509,22 @@
 <a href="#508" id="508">508</a>
 <a href="#509" id="509">509</a>
 <a href="#510" id="510">510</a>
-<a href="#511" id="511">511</a>
-<a href="#512" id="512">512</a>
-<a href="#513" id="513">513</a>
-<a href="#514" id="514">514</a>
-<a href="#515" id="515">515</a>
-<a href="#516" id="516">516</a>
-<a href="#517" id="517">517</a>
-<a href="#518" id="518">518</a>
-<a href="#519" id="519">519</a>
-<a href="#520" id="520">520</a>
-<a href="#521" id="521">521</a>
-<a href="#522" id="522">522</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
+<a href="#511" id="511">511</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-
 </span><span class="kw">use </span><span class="kw">super</span>::signature::{compute_rsa_signature, RsaEncoding, RsaPadding};
 <span class="kw">use super</span>::{encoding, RsaParameters};
 <span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
-</span><span class="kw">use </span><span class="kw">crate</span>::aws_lc::RSA_check_fips;
+</span><span class="kw">use </span><span class="kw">crate</span>::aws_lc::RSA;
 <span class="kw">use </span><span class="kw">crate</span>::aws_lc::{
-    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_bits, EVP_PKEY_new, EVP_PKEY_size,
-    RSA_generate_key_ex, RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY,
-    EVP_PKEY_CTX,
+    EVP_DigestSignInit, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_generate_key_ex,
+    RSA_generate_key_fips, RSA_new, RSA_set0_key, RSA_size, BIGNUM, EVP_PKEY, EVP_PKEY_CTX,
+    EVP_PKEY_RSA, EVP_PKEY_RSA_PSS,
 };
 <span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::aws_lc::{RSA_get0_e, RSA_get0_n};
-<span class="kw">use </span><span class="kw">crate</span>::digest::{<span class="self">self</span>};
 <span class="kw">use </span><span class="kw">crate</span>::encoding::{AsDer, Pkcs8V1Der};
-<span class="kw">use </span><span class="kw">crate</span>::error::{KeyRejected, Unspecified};
 <span class="kw">use </span><span class="kw">crate</span>::fips::indicator_check;
 <span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::io;
@@ -547,7 +533,9 @@
 <span class="kw">use </span><span class="kw">crate</span>::ptr::{DetachableLcPtr, LcPtr};
 <span class="kw">use </span><span class="kw">crate</span>::rsa::PublicEncryptingKey;
 <span class="kw">use </span><span class="kw">crate</span>::sealed::Sealed;
-<span class="kw">use crate</span>::{hex, rand};
+<span class="kw">use crate</span>::{digest, hex, rand};
+<span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
+</span><span class="kw">use </span>aws_lc::RSA_check_fips;
 <span class="kw">use </span>core::fmt::{<span class="self">self</span>, Debug, Formatter};
 <span class="kw">use </span>core::ptr::null_mut;
 
@@ -555,6 +543,9 @@
 // use core::ffi::c_int;
 </span><span class="kw">use </span>std::os::raw::c_int;
 
+<span class="kw">use </span><span class="kw">crate</span>::digest::digest_ctx::DigestContext;
+<span class="kw">use </span><span class="kw">crate</span>::error::{KeyRejected, Unspecified};
+<span class="kw">use </span><span class="kw">crate</span>::pkcs8::Version;
 <span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
 </span><span class="kw">use </span>untrusted::Input;
 <span class="kw">use </span>zeroize::Zeroize;
@@ -670,7 +661,7 @@
     /// `error::KeyRejected` if bytes do not encode an RSA private key or if the key is otherwise
     /// not acceptable.
     </span><span class="kw">pub fn </span>from_pkcs8(pkcs8: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
-        <span class="kw">let </span>key = encoding::pkcs8::decode_der(pkcs8)<span class="question-mark">?</span>;
+        <span class="kw">let </span>key = LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5208_private_key(pkcs8, EVP_PKEY_RSA)<span class="question-mark">?</span>;
         <span class="self">Self</span>::new(key)
     }
 
@@ -694,7 +685,7 @@
         <span class="kw">if </span>!is_rsa_key(key) {
             <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::unspecified());
         };
-        <span class="kw">match </span>key_size_bits(key) {
+        <span class="kw">match </span>key.key_size_bits() {
             <span class="number">2048</span>..=<span class="number">8192 </span>=&gt; <span class="prelude-val">Ok</span>(()),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(KeyRejected::unspecified()),
         }
@@ -730,7 +721,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
         <span class="kw">let </span>encoding = padding_alg.encoding();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>md_ctx = digest::digest_ctx::DigestContext::new_uninit();
+        <span class="kw">let </span><span class="kw-2">mut </span>md_ctx = DigestContext::new_uninit();
         <span class="kw">let </span><span class="kw-2">mut </span>pctx = null_mut::&lt;EVP_PKEY_CTX&gt;();
         <span class="kw">let </span>digest = digest::match_digest_type(<span class="kw-2">&amp;</span>encoding.digest_algorithm().id);
 
@@ -775,7 +766,7 @@
         </span><span class="kw">match </span><span class="self">self</span>.evp_pkey.get_rsa() {
             <span class="prelude-val">Ok</span>(rsa) =&gt; {
                 <span class="comment">// https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
-                </span><span class="kw">unsafe </span>{ RSA_size(<span class="kw-2">*</span>rsa.as_const()) <span class="kw">as </span>usize }
+                </span><span class="kw">unsafe </span>{ RSA_size(<span class="kw-2">*</span>rsa) <span class="kw">as </span>usize }
             }
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
         }
@@ -801,9 +792,9 @@
 
 <span class="kw">impl </span>AsDer&lt;Pkcs8V1Der&lt;<span class="lifetime">'static</span>&gt;&gt; <span class="kw">for </span>KeyPair {
     <span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Pkcs8V1Der&lt;<span class="lifetime">'static</span>&gt;, Unspecified&gt; {
-        <span class="prelude-val">Ok</span>(Pkcs8V1Der::new(encoding::pkcs8::encode_v1_der(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.evp_pkey,
-        )<span class="question-mark">?</span>))
+        <span class="prelude-val">Ok</span>(Pkcs8V1Der::new(
+            <span class="self">self</span>.evp_pkey.marshal_rfc5208_private_key(Version::V1)<span class="question-mark">?</span>,
+        ))
     }
 }
 
@@ -834,9 +825,9 @@
         <span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
         </span>{
             <span class="kw">let </span>pubkey = evp_pkey.get_rsa()<span class="question-mark">?</span>;
-            <span class="kw">let </span>modulus = ConstPointer::new(<span class="kw">unsafe </span>{ RSA_get0_n(<span class="kw-2">*</span>pubkey.as_const()) })<span class="question-mark">?</span>;
+            <span class="kw">let </span>modulus = ConstPointer::new(<span class="kw">unsafe </span>{ RSA_get0_n(<span class="kw-2">*</span>pubkey) })<span class="question-mark">?</span>;
             <span class="kw">let </span>modulus = modulus.to_be_bytes().into_boxed_slice();
-            <span class="kw">let </span>exponent = ConstPointer::new(<span class="kw">unsafe </span>{ RSA_get0_e(<span class="kw-2">*</span>pubkey.as_const()) })<span class="question-mark">?</span>;
+            <span class="kw">let </span>exponent = ConstPointer::new(<span class="kw">unsafe </span>{ RSA_get0_e(<span class="kw-2">*</span>pubkey) })<span class="question-mark">?</span>;
             <span class="kw">let </span>exponent = exponent.to_be_bytes().into_boxed_slice();
             <span class="prelude-val">Ok</span>(PublicKey {
                 key,
@@ -1022,24 +1013,11 @@
     <span class="comment">// This should always be an RSA key and must-never panic.
     </span><span class="kw">let </span>rsa_key = key.get_rsa().expect(<span class="string">"RSA EVP_PKEY"</span>);
 
-    <span class="number">1 </span>== <span class="kw">unsafe </span>{ RSA_check_fips(<span class="kw-2">*</span>rsa_key.as_mut_unsafe()) }
-}
-
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>key_size_bytes(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; usize {
-    <span class="comment">// Safety: RSA modulous byte sizes supported fit an usize
-    </span><span class="kw">unsafe </span>{ EVP_PKEY_size(<span class="kw-2">*</span>key.as_const()) }
-        .try_into()
-        .expect(<span class="string">"modulous to fit in usize"</span>)
-}
-
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>key_size_bits(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; usize {
-    <span class="comment">// Safety: RSA modulous byte sizes supported fit an usize
-    </span><span class="kw">unsafe </span>{ EVP_PKEY_bits(<span class="kw-2">*</span>key.as_const()) }
-        .try_into()
-        .expect(<span class="string">"modulous to fit in usize"</span>)
+    <span class="number">1 </span>== <span class="kw">unsafe </span>{ RSA_check_fips(<span class="kw-2">*</span>rsa_key <span class="kw">as </span><span class="kw-2">*mut </span>RSA) }
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_rsa_key(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; bool {
-    key.get_rsa().is_ok()
+    <span class="kw">let </span>id = key.id();
+    id == EVP_PKEY_RSA || id == EVP_PKEY_RSA_PSS
 }
 </code></pre></div></section></main></body></html>
