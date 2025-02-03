@@ -268,6 +268,7 @@ impl CmakeBuilder {
                             if major > 13 {
                                 // TODO: Update when FIPS GCC 14 build is fixed
                                 emit_warning("WARNING: FIPS build is known to fail on GCC >= 14. See: https://github.com/aws/aws-lc-rs/issues/569");
+                                emit_warning("Consider setting the compiler in your environment to clang: `export CC=clang`");
                                 return Some(false);
                             }
                         }
