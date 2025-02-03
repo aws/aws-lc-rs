@@ -3,9 +3,9 @@
 
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    cargo_env, emit_rustc_cfg, emit_warning, execute_command, is_cpu_jitter_entropy, is_no_asm,
-    option_env, target, target_arch, target_env, target_family, target_os, target_underscored,
-    target_vendor, OutputLibType, TestCommandResult,
+    cargo_env, effective_target, emit_rustc_cfg, emit_warning, execute_command,
+    is_cpu_jitter_entropy, is_no_asm, option_env, target_arch, target_env, target_family,
+    target_os, target_underscored, target_vendor, OutputLibType, TestCommandResult,
 };
 use std::collections::HashMap;
 use std::env;
@@ -111,6 +111,15 @@ impl CmakeBuilder {
             emit_rustc_cfg("cpu_jitter_entropy");
         }
 
+        if let Some(cc) = option_env!("AWS_LC_FIPS_SYS_CC") {
+            env::set_var("CC", cc);
+            emit_warning(&format!("Setting CC: {}", cc));
+        }
+        if let Some(cxx) = option_env!("AWS_LC_FIPS_SYS_CXX") {
+            env::set_var("CXX", cxx);
+            emit_warning(&format!("Setting CXX: {}", cxx));
+        }
+
         let cc_build = cc::Build::new();
         let opt_level = cargo_env("OPT_LEVEL");
         if opt_level.ne("0") {
@@ -207,12 +216,13 @@ impl CmakeBuilder {
             return cmake_cfg;
         }
 
-        // If the build environment vendor is Apple
-        #[cfg(target_vendor = "apple")]
-        {
-            const NO_OVERRIDE_T_OPTION: &str = "-Wno-overriding-t-option";
-            if let Ok(true) = cc_build.is_flag_supported(NO_OVERRIDE_T_OPTION) {
-                cmake_cfg.cflag(NO_OVERRIDE_T_OPTION);
+        if target_vendor() == "apple" {
+            let disable_warnings: [&str; 2] =
+                ["-Wno-overriding-t-option", "-Wno-overriding-option"];
+            for disabler in disable_warnings {
+                if let Ok(true) = cc_build.is_flag_supported(disabler) {
+                    cmake_cfg.cflag(disabler);
+                }
             }
             if target_arch() == "aarch64" {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "arm64");
@@ -222,12 +232,11 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
             }
-        }
-
-        if target_vendor() == "apple" && target_os().trim() == "ios" {
-            cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
-            if target().trim().ends_with("-ios-sim") {
-                cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
+            if target_os().trim() == "ios" {
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
+                if effective_target().trim().ends_with("-ios-sim") {
+                    cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
+                }
             }
         }
 
@@ -268,6 +277,7 @@ impl CmakeBuilder {
                             if major > 13 {
                                 // TODO: Update when FIPS GCC 14 build is fixed
                                 emit_warning("WARNING: FIPS build is known to fail on GCC >= 14. See: https://github.com/aws/aws-lc-rs/issues/569");
+                                emit_warning("Consider specifying a different compiler in your environment by setting `CC` or: `export AWS_LC_FIPS_SYS_CC=clang`");
                                 return Some(false);
                             }
                         }
@@ -307,7 +317,7 @@ impl CmakeBuilder {
             );
             let mut cflags = vec!["-Wno-unused-command-line-argument"];
             let mut asmflags = vec![];
-            match target().as_str() {
+            match effective_target().as_str() {
                 "aarch64-unknown-linux-ohos" => {}
                 "armv7-unknown-linux-ohos" => {
                     const ARM7_FLAGS: [&str; 6] = [
