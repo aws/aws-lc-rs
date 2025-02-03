@@ -173,7 +173,7 @@ impl KeyPair {
     fn validate_private_key(key: &LcPtr<EVP_PKEY>) -> Result<(), KeyRejected> {
         if !is_rsa_key(key) {
             return Err(KeyRejected::unspecified());
-        };
+        }
         match key.key_size_bits() {
             2048..=8192 => Ok(()),
             _ => Err(KeyRejected::unspecified()),
@@ -489,7 +489,7 @@ pub(super) fn generate_rsa_key(size: c_int, fips: bool) -> Result<LcPtr<EVP_PKEY
 
     if 1 != unsafe { EVP_PKEY_assign_RSA(*evp_pkey.as_mut(), *rsa) } {
         return Err(Unspecified);
-    };
+    }
 
     rsa.detach();
 
