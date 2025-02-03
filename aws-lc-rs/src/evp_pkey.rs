@@ -95,7 +95,7 @@ impl LcPtr<EVP_PKEY> {
         let mut cbb = LcCBB::new(self.key_size_bytes() * 5);
         if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), *self.as_const()) } {
             return Err(Unspecified);
-        };
+        }
         cbb.into_vec()
     }
 
