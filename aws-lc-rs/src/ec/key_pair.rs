@@ -3,12 +3,11 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use crate::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY, EVP_PKEY_EC};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
-
-use crate::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_cmp, EVP_PKEY, EVP_PKEY_EC};
 
 use crate::digest::digest_ctx::DigestContext;
 use crate::ec::evp_key_generate;
@@ -162,8 +161,8 @@ impl EcdsaKeyPair {
     ) -> Result<Self, KeyRejected> {
         let priv_evp_pkey = parse_sec1_private_bn(private_key, alg.id.nid())?;
         let pub_evp_pkey = parse_sec1_public_point(public_key, alg.id.nid())?;
-        // EVP_PKEY_cmp only compare params and public key
-        if 1 != unsafe { EVP_PKEY_cmp(*priv_evp_pkey.as_const(), *pub_evp_pkey.as_const()) } {
+        // EVP_PKEY_cmp only compares params and public key
+        if !priv_evp_pkey.eq(&pub_evp_pkey) {
             return Err(KeyRejected::inconsistent_components());
         }
 
@@ -187,7 +186,8 @@ impl EcdsaKeyPair {
         alg: &'static EcdsaSigningAlgorithm,
         private_key: &[u8],
     ) -> Result<Self, KeyRejected> {
-        let evp_pkey = parse_rfc5915_private_key(private_key, alg.id.nid())?;
+        let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(private_key, EVP_PKEY_EC)
+            .or(parse_rfc5915_private_key(private_key, alg.id.nid()))?;
 
         Ok(Self::new(alg, evp_pkey)?)
     }
@@ -318,5 +318,34 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey<'_> {
     fn as_der(&self) -> Result<EcPrivateKeyRfc5915Der<'static>, Unspecified> {
         let bytes = marshal_rfc5915_private_key(&self.0.evp_pkey)?;
         Ok(EcPrivateKeyRfc5915Der::new(bytes))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::encoding::AsDer;
+    use crate::signature::{EcdsaKeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
+
+    #[test]
+    fn test_from_private_key_der() {
+        let key_pair = EcdsaKeyPair::generate(&ECDSA_P256_SHA256_FIXED_SIGNING).unwrap();
+
+        let bytes_5208 = key_pair.to_pkcs8v1().unwrap();
+        let bytes_5915 = key_pair.private_key().as_der().unwrap();
+
+        let key_pair_5208 = EcdsaKeyPair::from_private_key_der(
+            &ECDSA_P256_SHA256_FIXED_SIGNING,
+            bytes_5208.as_ref(),
+        )
+        .unwrap();
+        let key_pair_5915 = EcdsaKeyPair::from_private_key_der(
+            &ECDSA_P256_SHA256_FIXED_SIGNING,
+            bytes_5915.as_ref(),
+        )
+        .unwrap();
+
+        assert_eq!(key_pair.evp_pkey, key_pair_5208.evp_pkey);
+        assert_eq!(key_pair.evp_pkey, key_pair_5915.evp_pkey);
+        assert_eq!(key_pair_5208.evp_pkey, key_pair_5915.evp_pkey);
     }
 }
