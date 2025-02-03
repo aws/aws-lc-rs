@@ -111,6 +111,15 @@ impl CmakeBuilder {
             emit_rustc_cfg("cpu_jitter_entropy");
         }
 
+        if let Some(cc) = option_env!("AWS_LC_FIPS_SYS_CC") {
+            env::set_var("CC", cc);
+            emit_warning(&format!("Setting CC: {}", cc));
+        }
+        if let Some(cxx) = option_env!("AWS_LC_FIPS_SYS_CXX") {
+            env::set_var("CXX", cxx);
+            emit_warning(&format!("Setting CXX: {}", cxx));
+        }
+
         let cc_build = cc::Build::new();
         let opt_level = cargo_env("OPT_LEVEL");
         if opt_level.ne("0") {
@@ -268,6 +277,7 @@ impl CmakeBuilder {
                             if major > 13 {
                                 // TODO: Update when FIPS GCC 14 build is fixed
                                 emit_warning("WARNING: FIPS build is known to fail on GCC >= 14. See: https://github.com/aws/aws-lc-rs/issues/569");
+                                emit_warning("Consider specifying a different compiler in your environment by setting `CC` or: `export AWS_LC_FIPS_SYS_CC=clang`");
                                 return Some(false);
                             }
                         }
