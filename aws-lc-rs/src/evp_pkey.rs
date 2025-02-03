@@ -22,11 +22,7 @@ impl PartialEq<Self> for LcPtr<EVP_PKEY> {
     /// Only compares params and public key
     fn eq(&self, other: &Self) -> bool {
         // EVP_PKEY_cmp only compares params and public key
-        if 1 == unsafe { EVP_PKEY_cmp(*self.as_const(), *other.as_const()) } {
-            true
-        } else {
-            false
-        }
+        1 == unsafe { EVP_PKEY_cmp(*self.as_const(), *other.as_const()) }
     }
 }
 
@@ -107,7 +103,7 @@ impl LcPtr<EVP_PKEY> {
         let mut cbb = LcCBB::new(self.key_size_bytes() * 5);
         if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), *self.as_const()) } {
             return Err(Unspecified);
-        };
+        }
         cbb.into_vec()
     }
 

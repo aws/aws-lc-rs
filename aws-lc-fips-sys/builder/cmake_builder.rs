@@ -113,11 +113,11 @@ impl CmakeBuilder {
 
         if let Some(cc) = option_env!("AWS_LC_FIPS_SYS_CC") {
             env::set_var("CC", cc);
-            emit_warning(&format!("Setting CC: {}", cc));
+            emit_warning(&format!("Setting CC: {cc}"));
         }
         if let Some(cxx) = option_env!("AWS_LC_FIPS_SYS_CXX") {
             env::set_var("CXX", cxx);
-            emit_warning(&format!("Setting CXX: {}", cxx));
+            emit_warning(&format!("Setting CXX: {cxx}"));
         }
 
         let cc_build = cc::Build::new();
