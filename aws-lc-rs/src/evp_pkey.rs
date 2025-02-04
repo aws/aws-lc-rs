@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{
-    EVP_PKEY_CTX_new, EVP_PKEY_bits, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
+    EVP_PKEY_CTX_new, EVP_PKEY_bits, EVP_PKEY_cmp, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
     EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id,
     EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_PKEY_size, EVP_PKEY_up_ref,
     EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
@@ -17,6 +17,14 @@ use crate::ptr::{ConstPointer, LcPtr};
 // use core::ffi::c_int;
 use std::os::raw::c_int;
 use std::ptr::null_mut;
+
+impl PartialEq<Self> for LcPtr<EVP_PKEY> {
+    /// Only compares params and public key
+    fn eq(&self, other: &Self) -> bool {
+        // EVP_PKEY_cmp only compares params and public key
+        1 == unsafe { EVP_PKEY_cmp(*self.as_const(), *other.as_const()) }
+    }
+}
 
 impl LcPtr<EVP_PKEY> {
     pub(crate) fn validate_as_ed25519(&self) -> Result<(), KeyRejected> {
@@ -95,7 +103,7 @@ impl LcPtr<EVP_PKEY> {
         let mut cbb = LcCBB::new(self.key_size_bytes() * 5);
         if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), *self.as_const()) } {
             return Err(Unspecified);
-        };
+        }
         cbb.into_vec()
     }
 
