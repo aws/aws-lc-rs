@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec/key_pair.rs`."><title>key_pair.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (4a4309466 2025-02-02)" data-channel="nightly" data-search-js="search-2d513d54.js" data-settings-js="settings-6dad6058.js" ><script src="../../../static.files/storage-302de22f.js"></script><script defer src="../../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9b5d7e41.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/ec/</div>key_pair.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec/key_pair.rs`."><title>key_pair.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (f027438f8 2025-02-03)" data-channel="nightly" data-search-js="search-2d513d54.js" data-settings-js="settings-6dad6058.js" ><script src="../../../static.files/storage-302de22f.js"></script><script defer src="../../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9b5d7e41.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/ec/</div>key_pair.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -320,17 +320,45 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-</span><span class="kw">use </span>core::fmt;
+</span><span class="kw">use </span><span class="kw">crate</span>::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY, EVP_PKEY_EC};
+<span class="kw">use </span>core::fmt;
 <span class="kw">use </span>core::fmt::{Debug, Formatter};
 <span class="kw">use </span>core::mem::MaybeUninit;
 <span class="kw">use </span>core::ptr::{null, null_mut};
-
-<span class="kw">use </span><span class="kw">crate</span>::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY_cmp, EVP_PKEY, EVP_PKEY_EC};
 
 <span class="kw">use </span><span class="kw">crate</span>::digest::digest_ctx::DigestContext;
 <span class="kw">use </span><span class="kw">crate</span>::ec::evp_key_generate;
@@ -484,8 +512,8 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
         <span class="kw">let </span>priv_evp_pkey = parse_sec1_private_bn(private_key, alg.id.nid())<span class="question-mark">?</span>;
         <span class="kw">let </span>pub_evp_pkey = parse_sec1_public_point(public_key, alg.id.nid())<span class="question-mark">?</span>;
-        <span class="comment">// EVP_PKEY_cmp only compare params and public key
-        </span><span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_cmp(<span class="kw-2">*</span>priv_evp_pkey.as_const(), <span class="kw-2">*</span>pub_evp_pkey.as_const()) } {
+        <span class="comment">// EVP_PKEY_cmp only compares params and public key
+        </span><span class="kw">if </span>!priv_evp_pkey.eq(<span class="kw-2">&amp;</span>pub_evp_pkey) {
             <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::inconsistent_components());
         }
 
@@ -509,7 +537,8 @@
         alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>EcdsaSigningAlgorithm,
         private_key: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
-        <span class="kw">let </span>evp_pkey = parse_rfc5915_private_key(private_key, alg.id.nid())<span class="question-mark">?</span>;
+        <span class="kw">let </span>evp_pkey = LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5208_private_key(private_key, EVP_PKEY_EC)
+            .or(parse_rfc5915_private_key(private_key, alg.id.nid()))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(alg, evp_pkey)<span class="question-mark">?</span>)
     }
@@ -640,6 +669,35 @@
     </span><span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EcPrivateKeyRfc5915Der&lt;<span class="lifetime">'static</span>&gt;, Unspecified&gt; {
         <span class="kw">let </span>bytes = marshal_rfc5915_private_key(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.evp_pkey)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(EcPrivateKeyRfc5915Der::new(bytes))
+    }
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">crate</span>::encoding::AsDer;
+    <span class="kw">use </span><span class="kw">crate</span>::signature::{EcdsaKeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_from_private_key_der() {
+        <span class="kw">let </span>key_pair = EcdsaKeyPair::generate(<span class="kw-2">&amp;</span>ECDSA_P256_SHA256_FIXED_SIGNING).unwrap();
+
+        <span class="kw">let </span>bytes_5208 = key_pair.to_pkcs8v1().unwrap();
+        <span class="kw">let </span>bytes_5915 = key_pair.private_key().as_der().unwrap();
+
+        <span class="kw">let </span>key_pair_5208 = EcdsaKeyPair::from_private_key_der(
+            <span class="kw-2">&amp;</span>ECDSA_P256_SHA256_FIXED_SIGNING,
+            bytes_5208.as_ref(),
+        )
+        .unwrap();
+        <span class="kw">let </span>key_pair_5915 = EcdsaKeyPair::from_private_key_der(
+            <span class="kw-2">&amp;</span>ECDSA_P256_SHA256_FIXED_SIGNING,
+            bytes_5915.as_ref(),
+        )
+        .unwrap();
+
+        <span class="macro">assert_eq!</span>(key_pair.evp_pkey, key_pair_5208.evp_pkey);
+        <span class="macro">assert_eq!</span>(key_pair.evp_pkey, key_pair_5915.evp_pkey);
+        <span class="macro">assert_eq!</span>(key_pair_5208.evp_pkey, key_pair_5915.evp_pkey);
     }
 }
 </code></pre></div></section></main></body></html>
