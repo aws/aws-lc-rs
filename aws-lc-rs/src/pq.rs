@@ -23,9 +23,9 @@ use std::ptr::null_mut;
 pub(crate) fn evp_key_pqdsa_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let params_fn = |ctx| {
         if 1 == unsafe { EVP_PKEY_CTX_pqdsa_set_params(ctx, nid) } {
-            return Ok(());
+            Ok(())
         } else {
-            return Err(());
+            Err(())
         }
     };
     LcPtr::<EVP_PKEY>::generate(EVP_PKEY_PQDSA, Some(params_fn))
@@ -56,12 +56,12 @@ mod tests {
 
     fn test_serialization_for(evp_pkey: &LcPtr<EVP_PKEY>) {
         let public_buffer = evp_pkey.marshal_rfc5280_public_key().unwrap();
-        println!("public marshall: {:?}", public_buffer);
+        println!("public marshall: {public_buffer:?}");
         let key_public =
             LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(&public_buffer, EVP_PKEY_PQDSA).unwrap();
 
         let private_buffer = evp_pkey.marshal_rfc5208_private_key(Version::V1).unwrap();
-        println!("private marshall: {:?}", private_buffer);
+        println!("private marshall: {private_buffer:?}");
         let key_private =
             LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(&private_buffer, EVP_PKEY_PQDSA).unwrap();
 
@@ -95,6 +95,6 @@ mod tests {
         evp_pkey
             .verify(message, None, No_EVP_PKEY_CTX_consumer, &signature)
             .unwrap();
-        println!("verified: {:?}", signature);
+        println!("verified: {signature:?}");
     }
 }

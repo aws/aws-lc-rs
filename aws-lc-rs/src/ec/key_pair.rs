@@ -3,11 +3,10 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aws_lc::{EVP_DigestSign, EVP_DigestSignInit, EVP_PKEY, EVP_PKEY_EC};
+use crate::aws_lc::{EVP_PKEY, EVP_PKEY_EC};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 
-use crate::digest::digest_ctx::DigestContext;
 use crate::ec::evp_key_generate;
 use crate::ec::signature::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 #[cfg(feature = "fips")]
