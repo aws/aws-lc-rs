@@ -122,33 +122,28 @@ impl CmakeBuilder {
 
         let cc_build = cc::Build::new();
         let opt_level = cargo_env("OPT_LEVEL");
-        if opt_level.ne("0") {
-            if opt_level.eq("1") || opt_level.eq("2") {
-                cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
-            } else {
-                cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
-                // TODO: Due to the nature of the FIPS build (e.g., its dynamic generation of
-                // assembly files and its custom compilation commands within CMake), not all
-                // source paths are stripped from the resulting binary.
-                emit_warning(
-                    "NOTICE: Build environment source paths might be visible in release binary.",
-                );
-                let parent_dir = self.manifest_dir.parent();
-                if parent_dir.is_some() && (target_family() == "unix" || target_env() == "gnu") {
-                    let parent_dir = parent_dir.unwrap();
+        if !["0", "1", "2"].contains(&opt_level.as_str()) {
+            // TODO: Due to the nature of the FIPS build (e.g., its dynamic generation of
+            // assembly files and its custom compilation commands within CMake), not all
+            // source paths are stripped from the resulting binary.
+            emit_warning(
+                "NOTICE: Build environment source paths might be visible in release binary.",
+            );
+            let parent_dir = self.manifest_dir.parent();
+            if parent_dir.is_some() && (target_family() == "unix" || target_env() == "gnu") {
+                let parent_dir = parent_dir.unwrap();
 
-                    let flag = format!("\"-ffile-prefix-map={}=\"", parent_dir.display());
+                let flag = format!("\"-ffile-prefix-map={}=\"", parent_dir.display());
+                if let Ok(true) = cc_build.is_flag_supported(&flag) {
+                    emit_warning(&format!("Using flag: {}", &flag));
+                    cmake_cfg.asmflag(&flag);
+                    cmake_cfg.cflag(&flag);
+                } else {
+                    let flag = format!("\"-fdebug-prefix-map={}=\"", parent_dir.display());
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {
                         emit_warning(&format!("Using flag: {}", &flag));
                         cmake_cfg.asmflag(&flag);
                         cmake_cfg.cflag(&flag);
-                    } else {
-                        let flag = format!("\"-fdebug-prefix-map={}=\"", parent_dir.display());
-                        if let Ok(true) = cc_build.is_flag_supported(&flag) {
-                            emit_warning(&format!("Using flag: {}", &flag));
-                            cmake_cfg.asmflag(&flag);
-                            cmake_cfg.cflag(&flag);
-                        }
                     }
                 }
             }
