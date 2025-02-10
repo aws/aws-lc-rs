@@ -62,7 +62,6 @@ use crate::ec::verify_evp_key_nid;
 use crate::ec::{encoding, evp_key_generate};
 use crate::error::{KeyRejected, Unspecified};
 use crate::hex;
-use crate::ptr::ConstPointer;
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
 use crate::aws_lc::{
@@ -448,9 +447,11 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
 
         let mut outp = null_mut::<u8>();
         let ec_key = {
-            ConstPointer::new(unsafe {
-                EVP_PKEY_get0_EC_KEY(*self.inner_key.get_evp_pkey().as_const())
-            })?
+            self.inner_key
+                .get_evp_pkey()
+                .project_const_lifetime(unsafe {
+                    |evp_pkey| EVP_PKEY_get0_EC_KEY(*evp_pkey.as_const())
+                })?
         };
         let length = usize::try_from(unsafe { aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp) })
             .map_err(|_| Unspecified)?;
