@@ -415,7 +415,9 @@ impl PrivateKey {
             }
             KeyInner::X25519(priv_key) => {
                 let mut buffer = [0u8; MAX_PUBLIC_KEY_LEN];
-                let out_len = priv_key.marshal_raw_public_to_buffer(&mut buffer)?;
+                let out_len = priv_key
+                    .as_const()
+                    .marshal_raw_public_to_buffer(&mut buffer)?;
                 Ok(PublicKey {
                     inner_key: self.inner_key.clone(),
                     key_bytes: buffer,
@@ -477,6 +479,7 @@ impl AsDer<Pkcs8V1Der<'static>> for PrivateKey {
         Ok(Pkcs8V1Der::new(
             self.inner_key
                 .get_evp_pkey()
+                .as_const()
                 .marshal_rfc5208_private_key(Version::V1)?,
         ))
     }
@@ -510,7 +513,9 @@ impl AsBigEndian<Curve25519SeedBin<'static>> for PrivateKey {
             return Err(Unspecified);
         }
         let evp_pkey = self.inner_key.get_evp_pkey();
-        Ok(Curve25519SeedBin::new(evp_pkey.marshal_raw_private_key()?))
+        Ok(Curve25519SeedBin::new(
+            evp_pkey.as_const().marshal_raw_private_key()?,
+        ))
     }
 }
 
@@ -577,7 +582,7 @@ impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
             | KeyInner::ECDH_P384(evp_pkey)
             | KeyInner::ECDH_P521(evp_pkey)
             | KeyInner::X25519(evp_pkey) => {
-                let der = evp_pkey.marshal_rfc5280_public_key()?;
+                let der = evp_pkey.as_const().marshal_rfc5280_public_key()?;
                 Ok(PublicKeyX509Der::from(Buffer::new(der)))
             }
         }
