@@ -147,6 +147,7 @@ impl Debug for Seed<'_> {
 
 #[derive(Clone)]
 #[allow(clippy::module_name_repetitions)]
+/// Ed25519 Public Key
 pub struct PublicKey {
     evp_pkey: LcPtr<EVP_PKEY>,
     public_key_bytes: [u8; ED25519_PUBLIC_KEY_LEN],
