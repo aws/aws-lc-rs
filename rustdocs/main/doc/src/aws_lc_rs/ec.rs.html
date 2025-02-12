@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec.rs`."><title>ec.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (a9730c3b5 2025-02-05)" data-channel="nightly" data-search-js="search-581efc7a.js" data-settings-js="settings-6dad6058.js" ><script src="../../static.files/storage-3a5871a4.js"></script><script defer src="../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-4d63596a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>ec.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec.rs`."><title>ec.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (92bedea1c 2025-02-11)" data-channel="nightly" data-search-js="search-581efc7a.js" data-settings-js="settings-6dad6058.js" ><script src="../../static.files/storage-3a5871a4.js"></script><script defer src="../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-4d63596a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>ec.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -246,25 +246,12 @@
 <a href="#245" id="245">245</a>
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
+<a href="#248" id="248">248</a></pre></div><pre class="rust"><code><span class="comment">// Copyright 2015-2016 Brian Smith.
 // SPDX-License-Identifier: ISC
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="kw">use </span><span class="kw">crate</span>::ec::signature::AlgorithmID;
-<span class="kw">use </span>core::ptr::null_mut;
 <span class="comment">// TODO: Uncomment when MSRV &gt;= 1.64
 </span><span class="kw">use </span>std::os::raw::c_int;
 
@@ -275,13 +262,13 @@
 <span class="kw">use </span><span class="kw">crate</span>::aws_lc::{
     ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name,
     EC_KEY_get0_group, EC_group_p224, EC_group_p256, EC_group_p384, EC_group_p521,
-    EC_group_secp256k1, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
-    EVP_PKEY_get0_EC_KEY, EVP_PKEY_keygen, EVP_PKEY_keygen_init, NID_X9_62_prime256v1,
-    NID_secp224r1, NID_secp256k1, NID_secp384r1, NID_secp521r1, EC_GROUP, EC_KEY, EVP_PKEY,
-    EVP_PKEY_EC,
+    EC_group_secp256k1, EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_get0_EC_KEY,
+    NID_X9_62_prime256v1, NID_secp224r1, NID_secp256k1, NID_secp384r1, NID_secp521r1, EC_GROUP,
+    EC_KEY, EVP_PKEY, EVP_PKEY_EC,
 };
 <span class="kw">use </span><span class="kw">crate</span>::error::{KeyRejected, Unspecified};
-<span class="kw">use </span><span class="kw">crate</span>::fips::indicator_check;
+<span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
+</span><span class="kw">use </span><span class="kw">crate</span>::fips::indicator_check;
 <span class="kw">use </span><span class="kw">crate</span>::ptr::{ConstPointer, LcPtr};
 <span class="kw">use </span><span class="kw">crate</span>::signature::Signature;
 
@@ -345,25 +332,14 @@
 
 <span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>evp_key_generate(nid: c_int) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>pkey_ctx = LcPtr::new(<span class="kw">unsafe </span>{ EVP_PKEY_CTX_new_id(EVP_PKEY_EC, null_mut()) })<span class="question-mark">?</span>;
-
-    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_keygen_init(<span class="kw-2">*</span>pkey_ctx.as_mut()) } {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-    }
-
-    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_ec_paramgen_curve_nid(<span class="kw-2">*</span>pkey_ctx.as_mut(), nid) } {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-    }
-
-    <span class="kw">let </span><span class="kw-2">mut </span>pkey = null_mut::&lt;EVP_PKEY&gt;();
-
-    <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{ EVP_PKEY_keygen(<span class="kw-2">*</span>pkey_ctx.as_mut(), <span class="kw-2">&amp;mut </span>pkey) }) {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-    }
-
-    <span class="kw">let </span>pkey = LcPtr::new(pkey)<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(pkey)
+    <span class="kw">let </span>params_fn = |ctx| {
+        <span class="kw">if </span><span class="number">1 </span>== <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid) } {
+            <span class="prelude-val">Ok</span>(())
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(())
+        }
+    };
+    LcPtr::&lt;EVP_PKEY&gt;::generate(EVP_PKEY_EC, <span class="prelude-val">Some</span>(params_fn))
 }
 
 <span class="attr">#[inline]

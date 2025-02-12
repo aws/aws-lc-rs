@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/rsa/encryption.rs`."><title>encryption.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (a9730c3b5 2025-02-05)" data-channel="nightly" data-search-js="search-581efc7a.js" data-settings-js="settings-6dad6058.js" ><script src="../../../static.files/storage-3a5871a4.js"></script><script defer src="../../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-4d63596a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/rsa/</div>encryption.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/rsa/encryption.rs`."><title>encryption.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-cf3c48c1.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (92bedea1c 2025-02-11)" data-channel="nightly" data-search-js="search-581efc7a.js" data-settings-js="settings-6dad6058.js" ><script src="../../../static.files/storage-3a5871a4.js"></script><script defer src="../../../static.files/src-script-8fee9dc5.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-4d63596a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/rsa/</div>encryption.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -201,7 +201,11 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a></pre></div><pre class="rust"><code><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>oaep;
@@ -264,7 +268,7 @@
     /// # Errors
     /// * `Unspecified` for any error that occurs during the generation of the RSA keypair.
     </span><span class="kw">pub fn </span>generate(size: KeySize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
-        <span class="kw">let </span>key = generate_rsa_key(size.bits(), <span class="bool-val">false</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>key = generate_rsa_key(size.bits())<span class="question-mark">?</span>;
         <span class="self">Self</span>::new(key)
     }
 
@@ -274,13 +278,17 @@
     /// * `KeySize::Rsa2048`
     /// * `KeySize::Rsa3072`
     /// * `KeySize::Rsa4096`
+    /// * `KeySize::Rsa8192`
+    ///
+    /// ## Deprecated
+    /// This is equivalent to `KeyPair::generate`.
     ///
     /// # Errors
-    /// * `Unspecified`: Any key generation failure.
+    /// * `Unspecified` for any error that occurs during the generation of the RSA keypair.
     </span><span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
+    #[deprecated]
     </span><span class="kw">pub fn </span>generate_fips(size: KeySize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
-        <span class="kw">let </span>key = generate_rsa_key(size.bits(), <span class="bool-val">true</span>)<span class="question-mark">?</span>;
-        <span class="self">Self</span>::new(key)
+        <span class="self">Self</span>::generate(size)
     }
 
     <span class="doccomment">/// Construct a `PrivateDecryptingKey` from the provided PKCS#8 (v1) document.
