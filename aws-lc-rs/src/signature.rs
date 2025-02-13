@@ -253,7 +253,8 @@ pub use crate::ec::signature::{
     EcdsaSigningAlgorithm, EcdsaVerificationAlgorithm, PublicKey as EcdsaPublicKey,
 };
 pub use crate::ed25519::{
-    Ed25519KeyPair, EdDSAParameters, Seed as Ed25519Seed, ED25519_PUBLIC_KEY_LEN,
+    Ed25519KeyPair, EdDSAParameters, PublicKey as Ed25519PublicKey, Seed as Ed25519Seed,
+    ED25519_PUBLIC_KEY_LEN,
 };
 use crate::{digest, ec, error, hex, rsa, sealed};
 

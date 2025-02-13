@@ -3,9 +3,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::encoding::{AsBigEndian, Curve25519SeedBin};
+use aws_lc_rs::encoding::{AsBigEndian, AsDer, Curve25519SeedBin};
 use aws_lc_rs::rand::SystemRandom;
-use aws_lc_rs::signature::{self, Ed25519KeyPair, KeyPair};
+use aws_lc_rs::signature::{self, Ed25519KeyPair, KeyPair, VerificationAlgorithm, ED25519};
 use aws_lc_rs::{error, test, test_file};
 
 #[test]
@@ -179,9 +179,23 @@ fn ed25519_test_public_key_coverage() {
         "PublicKey(\"0590d26d769c711c3d8cbffc41f5b4665d63feb3d17765c3b630d50bf5c188fb\")";
 
     let key_pair = Ed25519KeyPair::from_pkcs8_maybe_unchecked(PRIVATE_KEY).unwrap();
+    let message = b"Hello world!";
+    let sig = key_pair.sign(message);
+
+    let public_key = key_pair.public_key();
+    let public_key_raw_bytes = public_key.as_ref();
+    let public_key_x509 = public_key.as_der().unwrap();
+    let public_key_x509_bytes = public_key_x509.as_ref();
 
     // Test `AsRef<[u8]>`
-    assert_eq!(key_pair.public_key().as_ref(), PUBLIC_KEY);
+    assert_eq!(public_key_raw_bytes, PUBLIC_KEY);
+
+    assert!(ED25519
+        .verify_sig(public_key_raw_bytes, message, sig.as_ref())
+        .is_ok());
+    assert!(ED25519
+        .verify_sig(public_key_x509_bytes, message, sig.as_ref())
+        .is_ok());
 
     // Test `Clone`.
     #[allow(clippy::clone_on_copy)]
