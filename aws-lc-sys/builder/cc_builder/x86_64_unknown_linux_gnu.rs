@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Thu Feb  6 13:31:15 UTC 2025
+// Tue Feb 18 19:46:25 UTC 2025
 
 use crate::cc_builder::Library;
 
@@ -106,10 +106,10 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/evp_extra/p_dsa_asn1.c",
         "crypto/evp_extra/p_ec_asn1.c",
         "crypto/evp_extra/p_ed25519_asn1.c",
+        "crypto/evp_extra/p_ed25519ph.c",
         "crypto/evp_extra/p_hmac_asn1.c",
         "crypto/evp_extra/p_kem_asn1.c",
         "crypto/evp_extra/p_methods.c",
-        "crypto/evp_extra/p_pqdsa.c",
         "crypto/evp_extra/p_pqdsa_asn1.c",
         "crypto/evp_extra/p_rsa_asn1.c",
         "crypto/evp_extra/p_x25519.c",
@@ -131,7 +131,6 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/kyber/pqcrystals_kyber_ref_common/fips202.c",
         "crypto/lhash/lhash.c",
         "crypto/mem.c",
-        "crypto/ml_dsa/ml_dsa.c",
         "crypto/obj/obj.c",
         "crypto/obj/obj_xref.c",
         "crypto/ocsp/ocsp_asn.c",
@@ -162,7 +161,6 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/poly1305/poly1305_arm.c",
         "crypto/poly1305/poly1305_vec.c",
         "crypto/pool/pool.c",
-        "crypto/pqdsa/pqdsa.c",
         "crypto/rand_extra/deterministic.c",
         "crypto/rand_extra/entropy_passive.c",
         "crypto/rand_extra/forkunsafe.c",
