@@ -430,6 +430,15 @@ where
     }
 }
 
+impl From<&PublicKey> for PublicKeyComponents<&[u8]> {
+    fn from(public_key: &PublicKey) -> Self {
+        PublicKeyComponents {
+            n: public_key.modulus.as_ref(),
+            e: public_key.exponent.as_ref(),
+        }
+    }
+}
+
 impl<B> TryInto<PublicEncryptingKey> for PublicKeyComponents<B>
 where
     B: AsRef<[u8]> + Debug,
