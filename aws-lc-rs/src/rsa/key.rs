@@ -430,6 +430,7 @@ where
     }
 }
 
+#[cfg(feature = "ring-io")]
 impl From<&PublicKey> for PublicKeyComponents<&[u8]> {
     fn from(public_key: &PublicKey) -> Self {
         PublicKeyComponents {
