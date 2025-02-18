@@ -2,21 +2,30 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{
-    EVP_PKEY_CTX_new, EVP_PKEY_bits, EVP_PKEY_cmp, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
-    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id,
-    EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_PKEY_size, EVP_PKEY_up_ref,
-    EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
-    EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY, EVP_PKEY_CTX, RSA,
+    EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_cmp, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
+    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen,
+    EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_PKEY_size,
+    EVP_PKEY_up_ref, EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
+    EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_ED25519,
+    RSA,
+};
+#[cfg(not(feature = "fips"))]
+use crate::aws_lc::{
+    EVP_PKEY_pqdsa_new_raw_private_key, EVP_PKEY_pqdsa_new_raw_public_key, EVP_PKEY_PQDSA,
+    NID_MLDSA44, NID_MLDSA65, NID_MLDSA87,
 };
 use crate::cbb::LcCBB;
-use crate::cbs;
 use crate::error::{KeyRejected, Unspecified};
 use crate::pkcs8::Version;
 use crate::ptr::{ConstPointer, LcPtr};
+use crate::{cbs, digest};
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_int;
+use crate::digest::digest_ctx::DigestContext;
+use crate::fips::indicator_check;
 use std::os::raw::c_int;
-use std::ptr::null_mut;
+use std::ptr::{null, null_mut};
 
 impl PartialEq<Self> for LcPtr<EVP_PKEY> {
     /// Only compares params and public key
@@ -26,9 +35,17 @@ impl PartialEq<Self> for LcPtr<EVP_PKEY> {
     }
 }
 
+#[allow(non_camel_case_types)]
+pub(crate) trait EVP_PKEY_CTX_consumer: Fn(*mut EVP_PKEY_CTX) -> Result<(), ()> {}
+
+impl<T> EVP_PKEY_CTX_consumer for T where T: Fn(*mut EVP_PKEY_CTX) -> Result<(), ()> {}
+
+#[allow(non_upper_case_globals, clippy::type_complexity)]
+pub(crate) const No_EVP_PKEY_CTX_consumer: Option<fn(*mut EVP_PKEY_CTX) -> Result<(), ()>> = None;
+
 impl LcPtr<EVP_PKEY> {
     pub(crate) fn validate_as_ed25519(&self) -> Result<(), KeyRejected> {
-        const ED25519_KEY_TYPE: c_int = aws_lc::EVP_PKEY_ED25519;
+        const ED25519_KEY_TYPE: c_int = EVP_PKEY_ED25519;
         const ED25519_MIN_BITS: c_int = 253;
         const ED25519_MAX_BITS: c_int = 256;
 
@@ -193,6 +210,18 @@ impl LcPtr<EVP_PKEY> {
         }
     }
 
+    #[allow(dead_code)]
+    pub(crate) fn marshal_raw_public_key(&self) -> Result<Vec<u8>, Unspecified> {
+        let mut size = 0;
+        if 1 != unsafe { EVP_PKEY_get_raw_public_key(*self.as_const(), null_mut(), &mut size) } {
+            return Err(Unspecified);
+        }
+        let mut buffer = vec![0u8; size];
+        let buffer_size = self.marshal_raw_public_to_buffer(&mut buffer)?;
+        debug_assert_eq!(buffer_size, size);
+        Ok(buffer)
+    }
+
     pub(crate) fn marshal_raw_public_to_buffer(
         &self,
         buffer: &mut [u8],
@@ -214,20 +243,195 @@ impl LcPtr<EVP_PKEY> {
         bytes: &[u8],
         evp_pkey_type: c_int,
     ) -> Result<Self, KeyRejected> {
+        #[cfg(not(feature = "fips"))]
+        if evp_pkey_type == EVP_PKEY_PQDSA {
+            return match bytes.len() {
+                2560 => Self::new(unsafe {
+                    EVP_PKEY_pqdsa_new_raw_private_key(NID_MLDSA44, bytes.as_ptr(), bytes.len())
+                }),
+                4032 => Self::new(unsafe {
+                    EVP_PKEY_pqdsa_new_raw_private_key(NID_MLDSA65, bytes.as_ptr(), bytes.len())
+                }),
+                4896 => Self::new(unsafe {
+                    EVP_PKEY_pqdsa_new_raw_private_key(NID_MLDSA87, bytes.as_ptr(), bytes.len())
+                }),
+                _ => Err(()),
+            }
+            .map_err(|()| KeyRejected::unspecified());
+        }
+
         Self::new(unsafe {
             EVP_PKEY_new_raw_private_key(evp_pkey_type, null_mut(), bytes.as_ptr(), bytes.len())
         })
-        .map_err(|()| KeyRejected::invalid_encoding())
+        .map_err(|()| KeyRejected::unspecified())
     }
 
     pub(crate) fn parse_raw_public_key(
         bytes: &[u8],
         evp_pkey_type: c_int,
     ) -> Result<Self, KeyRejected> {
+        #[cfg(not(feature = "fips"))]
+        if evp_pkey_type == EVP_PKEY_PQDSA {
+            return match bytes.len() {
+                1312 => Self::new(unsafe {
+                    EVP_PKEY_pqdsa_new_raw_public_key(NID_MLDSA44, bytes.as_ptr(), bytes.len())
+                }),
+                1952 => Self::new(unsafe {
+                    EVP_PKEY_pqdsa_new_raw_public_key(NID_MLDSA65, bytes.as_ptr(), bytes.len())
+                }),
+                2592 => Self::new(unsafe {
+                    EVP_PKEY_pqdsa_new_raw_public_key(NID_MLDSA87, bytes.as_ptr(), bytes.len())
+                }),
+                _ => Err(()),
+            }
+            .map_err(|()| KeyRejected::unspecified());
+        }
+
         Self::new(unsafe {
             EVP_PKEY_new_raw_public_key(evp_pkey_type, null_mut(), bytes.as_ptr(), bytes.len())
         })
         .map_err(|()| KeyRejected::invalid_encoding())
+    }
+
+    pub(crate) fn sign<F>(
+        &self,
+        message: &[u8],
+        digest: Option<&'static digest::Algorithm>,
+        padding_fn: Option<F>,
+    ) -> Result<Box<[u8]>, Unspecified>
+    where
+        F: EVP_PKEY_CTX_consumer,
+    {
+        let mut md_ctx = DigestContext::new_uninit();
+        let evp_md = if let Some(alg) = digest {
+            *digest::match_digest_type(&alg.id)
+        } else {
+            null()
+        };
+        let mut pctx = null_mut::<EVP_PKEY_CTX>();
+        if 1 != unsafe {
+            // EVP_DigestSignInit does not mutate |pkey| for thread-safety purposes and may be
+            // used concurrently with other non-mutating functions on |pkey|.
+            // https://github.com/aws/aws-lc/blob/9b4b5a15a97618b5b826d742419ccd54c819fa42/include/openssl/evp.h#L297-L313
+            EVP_DigestSignInit(
+                md_ctx.as_mut_ptr(),
+                &mut pctx,
+                evp_md,
+                null_mut(),
+                *self.as_mut_unsafe(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+
+        if let Some(pad_fn) = padding_fn {
+            pad_fn(pctx)?;
+        }
+
+        // Determine the maximum length of the signature.
+        let mut sig_len = 0;
+        if 1 != unsafe {
+            EVP_DigestSign(
+                md_ctx.as_mut_ptr(),
+                null_mut(),
+                &mut sig_len,
+                message.as_ptr(),
+                message.len(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+        if sig_len == 0 {
+            return Err(Unspecified);
+        }
+
+        let mut signature = vec![0u8; sig_len];
+        if 1 != indicator_check!(unsafe {
+            EVP_DigestSign(
+                md_ctx.as_mut_ptr(),
+                signature.as_mut_ptr(),
+                &mut sig_len,
+                message.as_ptr(),
+                message.len(),
+            )
+        }) {
+            return Err(Unspecified);
+        }
+        signature.truncate(sig_len);
+        Ok(signature.into_boxed_slice())
+    }
+
+    pub(crate) fn verify<F>(
+        &self,
+        msg: &[u8],
+        digest: Option<&'static digest::Algorithm>,
+        padding_fn: Option<F>,
+        signature: &[u8],
+    ) -> Result<(), Unspecified>
+    where
+        F: EVP_PKEY_CTX_consumer,
+    {
+        let mut md_ctx = DigestContext::new_uninit();
+
+        let evp_md = if let Some(alg) = digest {
+            *digest::match_digest_type(&alg.id)
+        } else {
+            null()
+        };
+
+        let mut pctx = null_mut::<EVP_PKEY_CTX>();
+
+        if 1 != unsafe {
+            EVP_DigestVerifyInit(
+                md_ctx.as_mut_ptr(),
+                &mut pctx,
+                evp_md,
+                null_mut(),
+                *self.as_mut_unsafe(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+        if let Some(pad_fn) = padding_fn {
+            pad_fn(pctx)?;
+        }
+
+        if 1 != indicator_check!(unsafe {
+            EVP_DigestVerify(
+                md_ctx.as_mut_ptr(),
+                signature.as_ptr(),
+                signature.len(),
+                msg.as_ptr(),
+                msg.len(),
+            )
+        }) {
+            return Err(Unspecified);
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn generate<F>(pkey_type: c_int, params_fn: Option<F>) -> Result<Self, Unspecified>
+    where
+        F: EVP_PKEY_CTX_consumer,
+    {
+        let mut pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(pkey_type, null_mut()) })?;
+
+        if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx.as_mut()) } {
+            return Err(Unspecified);
+        }
+
+        if let Some(pad_fn) = params_fn {
+            pad_fn(*pkey_ctx.as_mut())?;
+        }
+
+        let mut pkey = null_mut::<EVP_PKEY>();
+
+        if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx.as_mut(), &mut pkey) }) {
+            return Err(Unspecified);
+        }
+
+        Ok(LcPtr::new(pkey)?)
     }
 }
 
