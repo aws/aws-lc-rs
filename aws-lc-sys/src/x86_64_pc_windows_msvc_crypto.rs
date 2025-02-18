@@ -111,7 +111,7 @@ pub const AWSLC_VERSION_NAME: &[u8; 7] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
 pub const AWSLC_API_VERSION: i32 = 32;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.45.0\0";
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.46.0\0";
 pub const AES_ENCRYPT: i32 = 1;
 pub const AES_DECRYPT: i32 = 0;
 pub const AES_MAXNR: i32 = 14;
@@ -132,7 +132,7 @@ pub const CRYPTO_LOCK: i32 = 1;
 pub const CRYPTO_UNLOCK: i32 = 2;
 pub const CRYPTO_READ: i32 = 4;
 pub const CRYPTO_WRITE: i32 = 8;
-pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.45.0)\0";
+pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.46.0)\0";
 pub const OPENSSL_VERSION: i32 = 0;
 pub const OPENSSL_CFLAGS: i32 = 1;
 pub const OPENSSL_BUILT_ON: i32 = 2;
@@ -3280,6 +3280,8 @@ pub const SN_MLDSA65: &[u8; 8] = b"MLDSA65\0";
 pub const NID_MLDSA65: i32 = 995;
 pub const SN_MLDSA87: &[u8; 8] = b"MLDSA87\0";
 pub const NID_MLDSA87: i32 = 996;
+pub const SN_ED25519ph: &[u8; 10] = b"ED25519ph\0";
+pub const NID_ED25519ph: i32 = 997;
 pub const OBJ_NAME_TYPE_MD_METH: i32 = 1;
 pub const OBJ_NAME_TYPE_CIPHER_METH: i32 = 2;
 pub const OBJ_R_UNKNOWN_NID: i32 = 100;
@@ -3289,6 +3291,7 @@ pub const EVP_PKEY_RSA: i32 = 6;
 pub const EVP_PKEY_RSA_PSS: i32 = 912;
 pub const EVP_PKEY_EC: i32 = 408;
 pub const EVP_PKEY_ED25519: i32 = 949;
+pub const EVP_PKEY_ED25519PH: i32 = 997;
 pub const EVP_PKEY_X25519: i32 = 948;
 pub const EVP_PKEY_HKDF: i32 = 969;
 pub const EVP_PKEY_HMAC: i32 = 855;
@@ -4241,6 +4244,12 @@ pub struct evp_pkey_st {
     _unused: [u8; 0],
 }
 pub type EVP_PKEY = evp_pkey_st;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct evp_pkey_ctx_signature_context_params_st {
+    _unused: [u8; 0],
+}
+pub type EVP_PKEY_CTX_SIGNATURE_CONTEXT_PARAMS = evp_pkey_ctx_signature_context_params_st;
 pub type HMAC_CTX = hmac_ctx_st;
 pub type MD4_CTX = md4_state_st;
 pub type MD5_CTX = md5_state_st;
@@ -16430,6 +16439,22 @@ extern "C" {
     pub fn EVP_PKEY_CTX_get_signature_md(
         ctx: *mut EVP_PKEY_CTX,
         out_md: *mut *const EVP_MD,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_26_0_EVP_PKEY_CTX_set_signature_context"]
+    pub fn EVP_PKEY_CTX_set_signature_context(
+        ctx: *mut EVP_PKEY_CTX,
+        context: *const u8,
+        context_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_26_0_EVP_PKEY_CTX_get0_signature_context"]
+    pub fn EVP_PKEY_CTX_get0_signature_context(
+        ctx: *mut EVP_PKEY_CTX,
+        context: *mut *const u8,
+        context_len: *mut usize,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
