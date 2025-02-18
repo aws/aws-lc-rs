@@ -338,6 +338,11 @@ impl PublicKey {
     pub fn exponent(&self) -> io::Positive<'_> {
         io::Positive::new_non_empty_without_leading_zeros(Input::from(self.exponent.as_ref()))
     }
+
+    /// Returns the length in bytes of the public modulus.
+    pub fn modulus_len(&self) -> usize {
+        self.modulus.len()
+    }
 }
 
 /// Low-level API for RSA public keys.
@@ -431,11 +436,11 @@ where
 }
 
 #[cfg(feature = "ring-io")]
-impl From<&PublicKey> for PublicKeyComponents<&[u8]> {
+impl From<&PublicKey> for PublicKeyComponents<Vec<u8>> {
     fn from(public_key: &PublicKey) -> Self {
         PublicKeyComponents {
-            n: public_key.modulus.as_ref(),
-            e: public_key.exponent.as_ref(),
+            n: public_key.modulus.to_vec(),
+            e: public_key.exponent.to_vec(),
         }
     }
 }
