@@ -4,7 +4,13 @@ members = [
     "aws-lc-sys",
     "aws-lc-fips-sys",
     "aws-lc-rs-testing",
-    "links-testing"
+    "links-testing",
+]
+exclude = [
+    "scripts/tools/cargo-dig.rs",
+    "scripts/tools/semver.rs",
+    "scripts/tools/target-platform.rs",
+    "scripts/tests/assert_cpu_jitter_entropy.rs",
 ]
 resolver = "2"
 
