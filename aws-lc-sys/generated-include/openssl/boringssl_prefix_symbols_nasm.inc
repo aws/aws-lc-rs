@@ -1225,6 +1225,7 @@
 %xdefine _EVP_PKEY_CTX_free _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_free
 %xdefine _EVP_PKEY_CTX_get0_pkey _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get0_pkey
 %xdefine _EVP_PKEY_CTX_get0_rsa_oaep_label _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get0_rsa_oaep_label
+%xdefine _EVP_PKEY_CTX_get0_signature_context _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get0_signature_context
 %xdefine _EVP_PKEY_CTX_get_app_data _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get_app_data
 %xdefine _EVP_PKEY_CTX_get_keygen_info _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get_keygen_info
 %xdefine _EVP_PKEY_CTX_get_rsa_mgf1_md _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get_rsa_mgf1_md
@@ -1261,6 +1262,7 @@
 %xdefine _EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md
 %xdefine _EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen
 %xdefine _EVP_PKEY_CTX_set_rsa_pss_saltlen _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_rsa_pss_saltlen
+%xdefine _EVP_PKEY_CTX_set_signature_context _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_signature_context
 %xdefine _EVP_PKEY_CTX_set_signature_md _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_signature_md
 %xdefine _EVP_PKEY_asn1_find _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_asn1_find
 %xdefine _EVP_PKEY_asn1_find_str _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_asn1_find_str
@@ -1323,6 +1325,7 @@
 %xdefine _EVP_PKEY_paramgen_init _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen_init
 %xdefine _EVP_PKEY_pqdsa_new_raw_private_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_private_key
 %xdefine _EVP_PKEY_pqdsa_new_raw_public_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_public_key
+%xdefine _EVP_PKEY_pqdsa_pkey_meth _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_pkey_meth
 %xdefine _EVP_PKEY_pqdsa_set_params _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_set_params
 %xdefine _EVP_PKEY_print_params _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_print_params
 %xdefine _EVP_PKEY_print_private _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_print_private
@@ -3406,6 +3409,8 @@
 %xdefine _ed25519_verify_internal _ %+ BORINGSSL_PREFIX %+ _ed25519_verify_internal
 %xdefine _ed25519_verify_nohw _ %+ BORINGSSL_PREFIX %+ _ed25519_verify_nohw
 %xdefine _ed25519_verify_s2n_bignum _ %+ BORINGSSL_PREFIX %+ _ed25519_verify_s2n_bignum
+%xdefine _ed25519ph_asn1_meth _ %+ BORINGSSL_PREFIX %+ _ed25519ph_asn1_meth
+%xdefine _ed25519ph_pkey_meth _ %+ BORINGSSL_PREFIX %+ _ed25519ph_pkey_meth
 %xdefine _evp_pkey_set_cb_translate _ %+ BORINGSSL_PREFIX %+ _evp_pkey_set_cb_translate
 %xdefine _evp_pkey_set_method _ %+ BORINGSSL_PREFIX %+ _evp_pkey_set_method
 %xdefine _extract_multiplier_2x20_win5 _ %+ BORINGSSL_PREFIX %+ _extract_multiplier_2x20_win5
@@ -3608,12 +3613,15 @@
 %xdefine _md5_block_asm_data_order _ %+ BORINGSSL_PREFIX %+ _md5_block_asm_data_order
 %xdefine _ml_dsa_44_keypair _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_keypair
 %xdefine _ml_dsa_44_keypair_internal _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_keypair_internal
+%xdefine _ml_dsa_44_keypair_internal_no_self_test _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_keypair_internal_no_self_test
 %xdefine _ml_dsa_44_pack_pk_from_sk _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_pack_pk_from_sk
 %xdefine _ml_dsa_44_params_init _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_params_init
 %xdefine _ml_dsa_44_sign _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_sign
 %xdefine _ml_dsa_44_sign_internal _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_sign_internal
+%xdefine _ml_dsa_44_sign_internal_no_self_test _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_sign_internal_no_self_test
 %xdefine _ml_dsa_44_verify _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_verify
 %xdefine _ml_dsa_44_verify_internal _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_verify_internal
+%xdefine _ml_dsa_44_verify_internal_no_self_test _ %+ BORINGSSL_PREFIX %+ _ml_dsa_44_verify_internal_no_self_test
 %xdefine _ml_dsa_65_keypair _ %+ BORINGSSL_PREFIX %+ _ml_dsa_65_keypair
 %xdefine _ml_dsa_65_keypair_internal _ %+ BORINGSSL_PREFIX %+ _ml_dsa_65_keypair_internal
 %xdefine _ml_dsa_65_pack_pk_from_sk _ %+ BORINGSSL_PREFIX %+ _ml_dsa_65_pack_pk_from_sk
@@ -3982,7 +3990,6 @@
 %xdefine _pqcrystals_kyber_fips202_ref_shake256_squeeze _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber_fips202_ref_shake256_squeeze
 %xdefine _pqcrystals_kyber_fips202_ref_shake256_squeezeblocks _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber_fips202_ref_shake256_squeezeblocks
 %xdefine _pqdsa_asn1_meth _ %+ BORINGSSL_PREFIX %+ _pqdsa_asn1_meth
-%xdefine _pqdsa_pkey_meth _ %+ BORINGSSL_PREFIX %+ _pqdsa_pkey_meth
 %xdefine _rand_fork_unsafe_buffering_enabled _ %+ BORINGSSL_PREFIX %+ _rand_fork_unsafe_buffering_enabled
 %xdefine _rsa_asn1_meth _ %+ BORINGSSL_PREFIX %+ _rsa_asn1_meth
 %xdefine _rsa_default_private_transform _ %+ BORINGSSL_PREFIX %+ _rsa_default_private_transform
@@ -5327,6 +5334,7 @@
 %xdefine EVP_PKEY_CTX_free BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_free
 %xdefine EVP_PKEY_CTX_get0_pkey BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get0_pkey
 %xdefine EVP_PKEY_CTX_get0_rsa_oaep_label BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get0_rsa_oaep_label
+%xdefine EVP_PKEY_CTX_get0_signature_context BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get0_signature_context
 %xdefine EVP_PKEY_CTX_get_app_data BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get_app_data
 %xdefine EVP_PKEY_CTX_get_keygen_info BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get_keygen_info
 %xdefine EVP_PKEY_CTX_get_rsa_mgf1_md BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_get_rsa_mgf1_md
@@ -5363,6 +5371,7 @@
 %xdefine EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md
 %xdefine EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen
 %xdefine EVP_PKEY_CTX_set_rsa_pss_saltlen BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_rsa_pss_saltlen
+%xdefine EVP_PKEY_CTX_set_signature_context BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_signature_context
 %xdefine EVP_PKEY_CTX_set_signature_md BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_signature_md
 %xdefine EVP_PKEY_asn1_find BORINGSSL_PREFIX %+ _EVP_PKEY_asn1_find
 %xdefine EVP_PKEY_asn1_find_str BORINGSSL_PREFIX %+ _EVP_PKEY_asn1_find_str
@@ -5425,6 +5434,7 @@
 %xdefine EVP_PKEY_paramgen_init BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen_init
 %xdefine EVP_PKEY_pqdsa_new_raw_private_key BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_private_key
 %xdefine EVP_PKEY_pqdsa_new_raw_public_key BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_public_key
+%xdefine EVP_PKEY_pqdsa_pkey_meth BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_pkey_meth
 %xdefine EVP_PKEY_pqdsa_set_params BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_set_params
 %xdefine EVP_PKEY_print_params BORINGSSL_PREFIX %+ _EVP_PKEY_print_params
 %xdefine EVP_PKEY_print_private BORINGSSL_PREFIX %+ _EVP_PKEY_print_private
@@ -7508,6 +7518,8 @@
 %xdefine ed25519_verify_internal BORINGSSL_PREFIX %+ _ed25519_verify_internal
 %xdefine ed25519_verify_nohw BORINGSSL_PREFIX %+ _ed25519_verify_nohw
 %xdefine ed25519_verify_s2n_bignum BORINGSSL_PREFIX %+ _ed25519_verify_s2n_bignum
+%xdefine ed25519ph_asn1_meth BORINGSSL_PREFIX %+ _ed25519ph_asn1_meth
+%xdefine ed25519ph_pkey_meth BORINGSSL_PREFIX %+ _ed25519ph_pkey_meth
 %xdefine evp_pkey_set_cb_translate BORINGSSL_PREFIX %+ _evp_pkey_set_cb_translate
 %xdefine evp_pkey_set_method BORINGSSL_PREFIX %+ _evp_pkey_set_method
 %xdefine extract_multiplier_2x20_win5 BORINGSSL_PREFIX %+ _extract_multiplier_2x20_win5
@@ -7710,12 +7722,15 @@
 %xdefine md5_block_asm_data_order BORINGSSL_PREFIX %+ _md5_block_asm_data_order
 %xdefine ml_dsa_44_keypair BORINGSSL_PREFIX %+ _ml_dsa_44_keypair
 %xdefine ml_dsa_44_keypair_internal BORINGSSL_PREFIX %+ _ml_dsa_44_keypair_internal
+%xdefine ml_dsa_44_keypair_internal_no_self_test BORINGSSL_PREFIX %+ _ml_dsa_44_keypair_internal_no_self_test
 %xdefine ml_dsa_44_pack_pk_from_sk BORINGSSL_PREFIX %+ _ml_dsa_44_pack_pk_from_sk
 %xdefine ml_dsa_44_params_init BORINGSSL_PREFIX %+ _ml_dsa_44_params_init
 %xdefine ml_dsa_44_sign BORINGSSL_PREFIX %+ _ml_dsa_44_sign
 %xdefine ml_dsa_44_sign_internal BORINGSSL_PREFIX %+ _ml_dsa_44_sign_internal
+%xdefine ml_dsa_44_sign_internal_no_self_test BORINGSSL_PREFIX %+ _ml_dsa_44_sign_internal_no_self_test
 %xdefine ml_dsa_44_verify BORINGSSL_PREFIX %+ _ml_dsa_44_verify
 %xdefine ml_dsa_44_verify_internal BORINGSSL_PREFIX %+ _ml_dsa_44_verify_internal
+%xdefine ml_dsa_44_verify_internal_no_self_test BORINGSSL_PREFIX %+ _ml_dsa_44_verify_internal_no_self_test
 %xdefine ml_dsa_65_keypair BORINGSSL_PREFIX %+ _ml_dsa_65_keypair
 %xdefine ml_dsa_65_keypair_internal BORINGSSL_PREFIX %+ _ml_dsa_65_keypair_internal
 %xdefine ml_dsa_65_pack_pk_from_sk BORINGSSL_PREFIX %+ _ml_dsa_65_pack_pk_from_sk
@@ -8084,7 +8099,6 @@
 %xdefine pqcrystals_kyber_fips202_ref_shake256_squeeze BORINGSSL_PREFIX %+ _pqcrystals_kyber_fips202_ref_shake256_squeeze
 %xdefine pqcrystals_kyber_fips202_ref_shake256_squeezeblocks BORINGSSL_PREFIX %+ _pqcrystals_kyber_fips202_ref_shake256_squeezeblocks
 %xdefine pqdsa_asn1_meth BORINGSSL_PREFIX %+ _pqdsa_asn1_meth
-%xdefine pqdsa_pkey_meth BORINGSSL_PREFIX %+ _pqdsa_pkey_meth
 %xdefine rand_fork_unsafe_buffering_enabled BORINGSSL_PREFIX %+ _rand_fork_unsafe_buffering_enabled
 %xdefine rsa_asn1_meth BORINGSSL_PREFIX %+ _rsa_asn1_meth
 %xdefine rsa_default_private_transform BORINGSSL_PREFIX %+ _rsa_default_private_transform
