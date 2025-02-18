@@ -340,6 +340,7 @@ impl PublicKey {
     }
 
     /// Returns the length in bytes of the public modulus.
+    #[must_use]
     pub fn modulus_len(&self) -> usize {
         self.modulus.len()
     }
