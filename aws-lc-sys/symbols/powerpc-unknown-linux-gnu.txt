@@ -1184,6 +1184,7 @@ EVP_PKEY_CTX_dup
 EVP_PKEY_CTX_free
 EVP_PKEY_CTX_get0_pkey
 EVP_PKEY_CTX_get0_rsa_oaep_label
+EVP_PKEY_CTX_get0_signature_context
 EVP_PKEY_CTX_get_app_data
 EVP_PKEY_CTX_get_keygen_info
 EVP_PKEY_CTX_get_rsa_mgf1_md
@@ -1220,6 +1221,7 @@ EVP_PKEY_CTX_set_rsa_pss_keygen_md
 EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md
 EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen
 EVP_PKEY_CTX_set_rsa_pss_saltlen
+EVP_PKEY_CTX_set_signature_context
 EVP_PKEY_CTX_set_signature_md
 EVP_PKEY_asn1_find
 EVP_PKEY_asn1_find_str
@@ -1282,6 +1284,7 @@ EVP_PKEY_paramgen
 EVP_PKEY_paramgen_init
 EVP_PKEY_pqdsa_new_raw_private_key
 EVP_PKEY_pqdsa_new_raw_public_key
+EVP_PKEY_pqdsa_pkey_meth
 EVP_PKEY_pqdsa_set_params
 EVP_PKEY_print_params
 EVP_PKEY_print_private
@@ -3049,6 +3052,8 @@ ed25519_sign_internal
 ed25519_sign_nohw
 ed25519_verify_internal
 ed25519_verify_nohw
+ed25519ph_asn1_meth
+ed25519ph_pkey_meth
 evp_pkey_set_cb_translate
 evp_pkey_set_method
 gcm_ghash_nohw
@@ -3223,12 +3228,15 @@ lh_doall_arg
 md4_block_data_order
 ml_dsa_44_keypair
 ml_dsa_44_keypair_internal
+ml_dsa_44_keypair_internal_no_self_test
 ml_dsa_44_pack_pk_from_sk
 ml_dsa_44_params_init
 ml_dsa_44_sign
 ml_dsa_44_sign_internal
+ml_dsa_44_sign_internal_no_self_test
 ml_dsa_44_verify
 ml_dsa_44_verify_internal
+ml_dsa_44_verify_internal_no_self_test
 ml_dsa_65_keypair
 ml_dsa_65_keypair_internal
 ml_dsa_65_pack_pk_from_sk
@@ -3593,7 +3601,6 @@ pqcrystals_kyber_fips202_ref_shake256_init
 pqcrystals_kyber_fips202_ref_shake256_squeeze
 pqcrystals_kyber_fips202_ref_shake256_squeezeblocks
 pqdsa_asn1_meth
-pqdsa_pkey_meth
 rand_fork_unsafe_buffering_enabled
 rsa_asn1_meth
 rsa_default_private_transform
