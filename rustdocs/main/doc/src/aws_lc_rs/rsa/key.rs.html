@@ -340,149 +340,150 @@
 <a href=#340 id=340 data-nosnippet>340</a>    }
 <a href=#341 id=341 data-nosnippet>341</a>
 <a href=#342 id=342 data-nosnippet>342</a>    <span class="doccomment">/// Returns the length in bytes of the public modulus.
-<a href=#343 id=343 data-nosnippet>343</a>    </span><span class="kw">pub fn </span>modulus_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-<a href=#344 id=344 data-nosnippet>344</a>        <span class="self">self</span>.modulus.len()
-<a href=#345 id=345 data-nosnippet>345</a>    }
-<a href=#346 id=346 data-nosnippet>346</a>}
-<a href=#347 id=347 data-nosnippet>347</a>
-<a href=#348 id=348 data-nosnippet>348</a><span class="doccomment">/// Low-level API for RSA public keys.
-<a href=#349 id=349 data-nosnippet>349</a>///
-<a href=#350 id=350 data-nosnippet>350</a>/// When the public key is in DER-encoded PKCS#1 ASN.1 format, it is
-<a href=#351 id=351 data-nosnippet>351</a>/// recommended to use `aws_lc_rs::signature::verify()` with
-<a href=#352 id=352 data-nosnippet>352</a>/// `aws_lc_rs::signature::RSA_PKCS1_*`, because `aws_lc_rs::signature::verify()`
-<a href=#353 id=353 data-nosnippet>353</a>/// will handle the parsing in that case. Otherwise, this function can be used
-<a href=#354 id=354 data-nosnippet>354</a>/// to pass in the raw bytes for the public key components as
-<a href=#355 id=355 data-nosnippet>355</a>/// `untrusted::Input` arguments.
-<a href=#356 id=356 data-nosnippet>356</a></span><span class="attr">#[allow(clippy::module_name_repetitions)]
-<a href=#357 id=357 data-nosnippet>357</a>#[derive(Clone)]
-<a href=#358 id=358 data-nosnippet>358</a></span><span class="kw">pub struct </span>PublicKeyComponents&lt;B&gt;
-<a href=#359 id=359 data-nosnippet>359</a><span class="kw">where
-<a href=#360 id=360 data-nosnippet>360</a>    </span>B: AsRef&lt;[u8]&gt; + Debug,
-<a href=#361 id=361 data-nosnippet>361</a>{
-<a href=#362 id=362 data-nosnippet>362</a>    <span class="doccomment">/// The public modulus, encoded in big-endian bytes without leading zeros.
-<a href=#363 id=363 data-nosnippet>363</a>    </span><span class="kw">pub </span>n: B,
-<a href=#364 id=364 data-nosnippet>364</a>    <span class="doccomment">/// The public exponent, encoded in big-endian bytes without leading zeros.
-<a href=#365 id=365 data-nosnippet>365</a>    </span><span class="kw">pub </span>e: B,
-<a href=#366 id=366 data-nosnippet>366</a>}
-<a href=#367 id=367 data-nosnippet>367</a>
-<a href=#368 id=368 data-nosnippet>368</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt; + Debug&gt; Debug <span class="kw">for </span>PublicKeyComponents&lt;B&gt; {
-<a href=#369 id=369 data-nosnippet>369</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-<a href=#370 id=370 data-nosnippet>370</a>        f.debug_struct(<span class="string">"RsaPublicKeyComponents"</span>)
-<a href=#371 id=371 data-nosnippet>371</a>            .field(<span class="string">"n"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.n)
-<a href=#372 id=372 data-nosnippet>372</a>            .field(<span class="string">"e"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.e)
-<a href=#373 id=373 data-nosnippet>373</a>            .finish()
-<a href=#374 id=374 data-nosnippet>374</a>    }
-<a href=#375 id=375 data-nosnippet>375</a>}
-<a href=#376 id=376 data-nosnippet>376</a>
-<a href=#377 id=377 data-nosnippet>377</a><span class="kw">impl</span>&lt;B: Copy + AsRef&lt;[u8]&gt; + Debug&gt; Copy <span class="kw">for </span>PublicKeyComponents&lt;B&gt; {}
-<a href=#378 id=378 data-nosnippet>378</a>
-<a href=#379 id=379 data-nosnippet>379</a><span class="kw">impl</span>&lt;B&gt; PublicKeyComponents&lt;B&gt;
-<a href=#380 id=380 data-nosnippet>380</a><span class="kw">where
-<a href=#381 id=381 data-nosnippet>381</a>    </span>B: AsRef&lt;[u8]&gt; + Debug,
-<a href=#382 id=382 data-nosnippet>382</a>{
-<a href=#383 id=383 data-nosnippet>383</a>    <span class="attr">#[inline]
-<a href=#384 id=384 data-nosnippet>384</a>    </span><span class="kw">fn </span>build_rsa(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, ()&gt; {
-<a href=#385 id=385 data-nosnippet>385</a>        <span class="kw">let </span>n_bytes = <span class="self">self</span>.n.as_ref();
-<a href=#386 id=386 data-nosnippet>386</a>        <span class="kw">if </span>n_bytes.is_empty() || n_bytes[<span class="number">0</span>] == <span class="number">0u8 </span>{
-<a href=#387 id=387 data-nosnippet>387</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(());
-<a href=#388 id=388 data-nosnippet>388</a>        }
-<a href=#389 id=389 data-nosnippet>389</a>        <span class="kw">let </span>n_bn = DetachableLcPtr::try_from(n_bytes)<span class="question-mark">?</span>;
-<a href=#390 id=390 data-nosnippet>390</a>
-<a href=#391 id=391 data-nosnippet>391</a>        <span class="kw">let </span>e_bytes = <span class="self">self</span>.e.as_ref();
-<a href=#392 id=392 data-nosnippet>392</a>        <span class="kw">if </span>e_bytes.is_empty() || e_bytes[<span class="number">0</span>] == <span class="number">0u8 </span>{
-<a href=#393 id=393 data-nosnippet>393</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(());
-<a href=#394 id=394 data-nosnippet>394</a>        }
-<a href=#395 id=395 data-nosnippet>395</a>        <span class="kw">let </span>e_bn = DetachableLcPtr::try_from(e_bytes)<span class="question-mark">?</span>;
-<a href=#396 id=396 data-nosnippet>396</a>
-<a href=#397 id=397 data-nosnippet>397</a>        <span class="kw">let </span>rsa = DetachableLcPtr::new(<span class="kw">unsafe </span>{ RSA_new() })<span class="question-mark">?</span>;
-<a href=#398 id=398 data-nosnippet>398</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ RSA_set0_key(<span class="kw-2">*</span>rsa, <span class="kw-2">*</span>n_bn, <span class="kw-2">*</span>e_bn, null_mut()) } {
-<a href=#399 id=399 data-nosnippet>399</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(());
-<a href=#400 id=400 data-nosnippet>400</a>        }
-<a href=#401 id=401 data-nosnippet>401</a>        n_bn.detach();
-<a href=#402 id=402 data-nosnippet>402</a>        e_bn.detach();
-<a href=#403 id=403 data-nosnippet>403</a>
-<a href=#404 id=404 data-nosnippet>404</a>        <span class="kw">let </span><span class="kw-2">mut </span>pkey = LcPtr::new(<span class="kw">unsafe </span>{ EVP_PKEY_new() })<span class="question-mark">?</span>;
-<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_assign_RSA(<span class="kw-2">*</span>pkey.as_mut(), <span class="kw-2">*</span>rsa) } {
-<a href=#406 id=406 data-nosnippet>406</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(());
-<a href=#407 id=407 data-nosnippet>407</a>        }
-<a href=#408 id=408 data-nosnippet>408</a>        rsa.detach();
-<a href=#409 id=409 data-nosnippet>409</a>
-<a href=#410 id=410 data-nosnippet>410</a>        <span class="prelude-val">Ok</span>(pkey)
-<a href=#411 id=411 data-nosnippet>411</a>    }
-<a href=#412 id=412 data-nosnippet>412</a>
-<a href=#413 id=413 data-nosnippet>413</a>    <span class="doccomment">/// Verifies that `signature` is a valid signature of `message` using `self`
-<a href=#414 id=414 data-nosnippet>414</a>    /// as the public key. `params` determine what algorithm parameters
-<a href=#415 id=415 data-nosnippet>415</a>    /// (padding, digest algorithm, key length range, etc.) are used in the
-<a href=#416 id=416 data-nosnippet>416</a>    /// verification.
-<a href=#417 id=417 data-nosnippet>417</a>    ///
-<a href=#418 id=418 data-nosnippet>418</a>    /// # Errors
-<a href=#419 id=419 data-nosnippet>419</a>    /// `error::Unspecified` if `message` was not verified.
-<a href=#420 id=420 data-nosnippet>420</a>    </span><span class="kw">pub fn </span>verify(
-<a href=#421 id=421 data-nosnippet>421</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#422 id=422 data-nosnippet>422</a>        params: <span class="kw-2">&amp;</span>RsaParameters,
-<a href=#423 id=423 data-nosnippet>423</a>        message: <span class="kw-2">&amp;</span>[u8],
-<a href=#424 id=424 data-nosnippet>424</a>        signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#425 id=425 data-nosnippet>425</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-<a href=#426 id=426 data-nosnippet>426</a>        <span class="kw">let </span>rsa = <span class="self">self</span>.build_rsa()<span class="question-mark">?</span>;
-<a href=#427 id=427 data-nosnippet>427</a>        <span class="kw">super</span>::signature::verify_rsa_signature(
-<a href=#428 id=428 data-nosnippet>428</a>            params.digest_algorithm(),
-<a href=#429 id=429 data-nosnippet>429</a>            params.padding(),
-<a href=#430 id=430 data-nosnippet>430</a>            <span class="kw-2">&amp;</span>rsa,
-<a href=#431 id=431 data-nosnippet>431</a>            message,
-<a href=#432 id=432 data-nosnippet>432</a>            signature,
-<a href=#433 id=433 data-nosnippet>433</a>            params.bit_size_range(),
-<a href=#434 id=434 data-nosnippet>434</a>        )
-<a href=#435 id=435 data-nosnippet>435</a>    }
-<a href=#436 id=436 data-nosnippet>436</a>}
-<a href=#437 id=437 data-nosnippet>437</a>
-<a href=#438 id=438 data-nosnippet>438</a><span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
-<a href=#439 id=439 data-nosnippet>439</a></span><span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>PublicKey&gt; <span class="kw">for </span>PublicKeyComponents&lt;Vec&lt;u8&gt;&gt; {
-<a href=#440 id=440 data-nosnippet>440</a>    <span class="kw">fn </span>from(public_key: <span class="kw-2">&amp;</span>PublicKey) -&gt; <span class="self">Self </span>{
-<a href=#441 id=441 data-nosnippet>441</a>        PublicKeyComponents {
-<a href=#442 id=442 data-nosnippet>442</a>            n: public_key.modulus.to_vec(),
-<a href=#443 id=443 data-nosnippet>443</a>            e: public_key.exponent.to_vec(),
-<a href=#444 id=444 data-nosnippet>444</a>        }
-<a href=#445 id=445 data-nosnippet>445</a>    }
-<a href=#446 id=446 data-nosnippet>446</a>}
-<a href=#447 id=447 data-nosnippet>447</a>
-<a href=#448 id=448 data-nosnippet>448</a><span class="kw">impl</span>&lt;B&gt; TryInto&lt;PublicEncryptingKey&gt; <span class="kw">for </span>PublicKeyComponents&lt;B&gt;
-<a href=#449 id=449 data-nosnippet>449</a><span class="kw">where
-<a href=#450 id=450 data-nosnippet>450</a>    </span>B: AsRef&lt;[u8]&gt; + Debug,
-<a href=#451 id=451 data-nosnippet>451</a>{
-<a href=#452 id=452 data-nosnippet>452</a>    <span class="kw">type </span>Error = Unspecified;
-<a href=#453 id=453 data-nosnippet>453</a>
-<a href=#454 id=454 data-nosnippet>454</a>    <span class="doccomment">/// Try to build a `PublicEncryptingKey` from the public key components.
-<a href=#455 id=455 data-nosnippet>455</a>    ///
-<a href=#456 id=456 data-nosnippet>456</a>    /// # Errors
-<a href=#457 id=457 data-nosnippet>457</a>    /// `error::Unspecified` if the key failed to verify.
-<a href=#458 id=458 data-nosnippet>458</a>    </span><span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;PublicEncryptingKey, <span class="self">Self</span>::Error&gt; {
-<a href=#459 id=459 data-nosnippet>459</a>        <span class="kw">let </span>rsa = <span class="self">self</span>.build_rsa()<span class="question-mark">?</span>;
-<a href=#460 id=460 data-nosnippet>460</a>        PublicEncryptingKey::new(rsa)
-<a href=#461 id=461 data-nosnippet>461</a>    }
-<a href=#462 id=462 data-nosnippet>462</a>}
-<a href=#463 id=463 data-nosnippet>463</a>
-<a href=#464 id=464 data-nosnippet>464</a><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>generate_rsa_key(size: c_int) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
-<a href=#465 id=465 data-nosnippet>465</a>    <span class="kw">let </span>params_fn = |ctx| {
-<a href=#466 id=466 data-nosnippet>466</a>        <span class="kw">if </span><span class="number">1 </span>== <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, size) } {
-<a href=#467 id=467 data-nosnippet>467</a>            <span class="prelude-val">Ok</span>(())
-<a href=#468 id=468 data-nosnippet>468</a>        } <span class="kw">else </span>{
-<a href=#469 id=469 data-nosnippet>469</a>            <span class="prelude-val">Err</span>(())
-<a href=#470 id=470 data-nosnippet>470</a>        }
-<a href=#471 id=471 data-nosnippet>471</a>    };
-<a href=#472 id=472 data-nosnippet>472</a>
-<a href=#473 id=473 data-nosnippet>473</a>    LcPtr::&lt;EVP_PKEY&gt;::generate(EVP_PKEY_RSA, <span class="prelude-val">Some</span>(params_fn))
-<a href=#474 id=474 data-nosnippet>474</a>}
-<a href=#475 id=475 data-nosnippet>475</a>
-<a href=#476 id=476 data-nosnippet>476</a><span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
-<a href=#477 id=477 data-nosnippet>477</a>#[must_use]
-<a href=#478 id=478 data-nosnippet>478</a></span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_valid_fips_key(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; bool {
-<a href=#479 id=479 data-nosnippet>479</a>    <span class="comment">// This should always be an RSA key and must-never panic.
-<a href=#480 id=480 data-nosnippet>480</a>    </span><span class="kw">let </span>rsa_key = key.get_rsa().expect(<span class="string">"RSA EVP_PKEY"</span>);
-<a href=#481 id=481 data-nosnippet>481</a>
-<a href=#482 id=482 data-nosnippet>482</a>    <span class="number">1 </span>== <span class="kw">unsafe </span>{ RSA_check_fips(<span class="kw-2">*</span>rsa_key <span class="kw">as </span><span class="kw-2">*mut </span>RSA) }
-<a href=#483 id=483 data-nosnippet>483</a>}
-<a href=#484 id=484 data-nosnippet>484</a>
-<a href=#485 id=485 data-nosnippet>485</a><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_rsa_key(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; bool {
-<a href=#486 id=486 data-nosnippet>486</a>    <span class="kw">let </span>id = key.id();
-<a href=#487 id=487 data-nosnippet>487</a>    id == EVP_PKEY_RSA || id == EVP_PKEY_RSA_PSS
-<a href=#488 id=488 data-nosnippet>488</a>}</code></pre></div></section></main></body></html>
+<a href=#343 id=343 data-nosnippet>343</a>    </span><span class="attr">#[must_use]
+<a href=#344 id=344 data-nosnippet>344</a>    </span><span class="kw">pub fn </span>modulus_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+<a href=#345 id=345 data-nosnippet>345</a>        <span class="self">self</span>.modulus.len()
+<a href=#346 id=346 data-nosnippet>346</a>    }
+<a href=#347 id=347 data-nosnippet>347</a>}
+<a href=#348 id=348 data-nosnippet>348</a>
+<a href=#349 id=349 data-nosnippet>349</a><span class="doccomment">/// Low-level API for RSA public keys.
+<a href=#350 id=350 data-nosnippet>350</a>///
+<a href=#351 id=351 data-nosnippet>351</a>/// When the public key is in DER-encoded PKCS#1 ASN.1 format, it is
+<a href=#352 id=352 data-nosnippet>352</a>/// recommended to use `aws_lc_rs::signature::verify()` with
+<a href=#353 id=353 data-nosnippet>353</a>/// `aws_lc_rs::signature::RSA_PKCS1_*`, because `aws_lc_rs::signature::verify()`
+<a href=#354 id=354 data-nosnippet>354</a>/// will handle the parsing in that case. Otherwise, this function can be used
+<a href=#355 id=355 data-nosnippet>355</a>/// to pass in the raw bytes for the public key components as
+<a href=#356 id=356 data-nosnippet>356</a>/// `untrusted::Input` arguments.
+<a href=#357 id=357 data-nosnippet>357</a></span><span class="attr">#[allow(clippy::module_name_repetitions)]
+<a href=#358 id=358 data-nosnippet>358</a>#[derive(Clone)]
+<a href=#359 id=359 data-nosnippet>359</a></span><span class="kw">pub struct </span>PublicKeyComponents&lt;B&gt;
+<a href=#360 id=360 data-nosnippet>360</a><span class="kw">where
+<a href=#361 id=361 data-nosnippet>361</a>    </span>B: AsRef&lt;[u8]&gt; + Debug,
+<a href=#362 id=362 data-nosnippet>362</a>{
+<a href=#363 id=363 data-nosnippet>363</a>    <span class="doccomment">/// The public modulus, encoded in big-endian bytes without leading zeros.
+<a href=#364 id=364 data-nosnippet>364</a>    </span><span class="kw">pub </span>n: B,
+<a href=#365 id=365 data-nosnippet>365</a>    <span class="doccomment">/// The public exponent, encoded in big-endian bytes without leading zeros.
+<a href=#366 id=366 data-nosnippet>366</a>    </span><span class="kw">pub </span>e: B,
+<a href=#367 id=367 data-nosnippet>367</a>}
+<a href=#368 id=368 data-nosnippet>368</a>
+<a href=#369 id=369 data-nosnippet>369</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt; + Debug&gt; Debug <span class="kw">for </span>PublicKeyComponents&lt;B&gt; {
+<a href=#370 id=370 data-nosnippet>370</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+<a href=#371 id=371 data-nosnippet>371</a>        f.debug_struct(<span class="string">"RsaPublicKeyComponents"</span>)
+<a href=#372 id=372 data-nosnippet>372</a>            .field(<span class="string">"n"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.n)
+<a href=#373 id=373 data-nosnippet>373</a>            .field(<span class="string">"e"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.e)
+<a href=#374 id=374 data-nosnippet>374</a>            .finish()
+<a href=#375 id=375 data-nosnippet>375</a>    }
+<a href=#376 id=376 data-nosnippet>376</a>}
+<a href=#377 id=377 data-nosnippet>377</a>
+<a href=#378 id=378 data-nosnippet>378</a><span class="kw">impl</span>&lt;B: Copy + AsRef&lt;[u8]&gt; + Debug&gt; Copy <span class="kw">for </span>PublicKeyComponents&lt;B&gt; {}
+<a href=#379 id=379 data-nosnippet>379</a>
+<a href=#380 id=380 data-nosnippet>380</a><span class="kw">impl</span>&lt;B&gt; PublicKeyComponents&lt;B&gt;
+<a href=#381 id=381 data-nosnippet>381</a><span class="kw">where
+<a href=#382 id=382 data-nosnippet>382</a>    </span>B: AsRef&lt;[u8]&gt; + Debug,
+<a href=#383 id=383 data-nosnippet>383</a>{
+<a href=#384 id=384 data-nosnippet>384</a>    <span class="attr">#[inline]
+<a href=#385 id=385 data-nosnippet>385</a>    </span><span class="kw">fn </span>build_rsa(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, ()&gt; {
+<a href=#386 id=386 data-nosnippet>386</a>        <span class="kw">let </span>n_bytes = <span class="self">self</span>.n.as_ref();
+<a href=#387 id=387 data-nosnippet>387</a>        <span class="kw">if </span>n_bytes.is_empty() || n_bytes[<span class="number">0</span>] == <span class="number">0u8 </span>{
+<a href=#388 id=388 data-nosnippet>388</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(());
+<a href=#389 id=389 data-nosnippet>389</a>        }
+<a href=#390 id=390 data-nosnippet>390</a>        <span class="kw">let </span>n_bn = DetachableLcPtr::try_from(n_bytes)<span class="question-mark">?</span>;
+<a href=#391 id=391 data-nosnippet>391</a>
+<a href=#392 id=392 data-nosnippet>392</a>        <span class="kw">let </span>e_bytes = <span class="self">self</span>.e.as_ref();
+<a href=#393 id=393 data-nosnippet>393</a>        <span class="kw">if </span>e_bytes.is_empty() || e_bytes[<span class="number">0</span>] == <span class="number">0u8 </span>{
+<a href=#394 id=394 data-nosnippet>394</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(());
+<a href=#395 id=395 data-nosnippet>395</a>        }
+<a href=#396 id=396 data-nosnippet>396</a>        <span class="kw">let </span>e_bn = DetachableLcPtr::try_from(e_bytes)<span class="question-mark">?</span>;
+<a href=#397 id=397 data-nosnippet>397</a>
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="kw">let </span>rsa = DetachableLcPtr::new(<span class="kw">unsafe </span>{ RSA_new() })<span class="question-mark">?</span>;
+<a href=#399 id=399 data-nosnippet>399</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ RSA_set0_key(<span class="kw-2">*</span>rsa, <span class="kw-2">*</span>n_bn, <span class="kw-2">*</span>e_bn, null_mut()) } {
+<a href=#400 id=400 data-nosnippet>400</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(());
+<a href=#401 id=401 data-nosnippet>401</a>        }
+<a href=#402 id=402 data-nosnippet>402</a>        n_bn.detach();
+<a href=#403 id=403 data-nosnippet>403</a>        e_bn.detach();
+<a href=#404 id=404 data-nosnippet>404</a>
+<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">let </span><span class="kw-2">mut </span>pkey = LcPtr::new(<span class="kw">unsafe </span>{ EVP_PKEY_new() })<span class="question-mark">?</span>;
+<a href=#406 id=406 data-nosnippet>406</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_assign_RSA(<span class="kw-2">*</span>pkey.as_mut(), <span class="kw-2">*</span>rsa) } {
+<a href=#407 id=407 data-nosnippet>407</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(());
+<a href=#408 id=408 data-nosnippet>408</a>        }
+<a href=#409 id=409 data-nosnippet>409</a>        rsa.detach();
+<a href=#410 id=410 data-nosnippet>410</a>
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="prelude-val">Ok</span>(pkey)
+<a href=#412 id=412 data-nosnippet>412</a>    }
+<a href=#413 id=413 data-nosnippet>413</a>
+<a href=#414 id=414 data-nosnippet>414</a>    <span class="doccomment">/// Verifies that `signature` is a valid signature of `message` using `self`
+<a href=#415 id=415 data-nosnippet>415</a>    /// as the public key. `params` determine what algorithm parameters
+<a href=#416 id=416 data-nosnippet>416</a>    /// (padding, digest algorithm, key length range, etc.) are used in the
+<a href=#417 id=417 data-nosnippet>417</a>    /// verification.
+<a href=#418 id=418 data-nosnippet>418</a>    ///
+<a href=#419 id=419 data-nosnippet>419</a>    /// # Errors
+<a href=#420 id=420 data-nosnippet>420</a>    /// `error::Unspecified` if `message` was not verified.
+<a href=#421 id=421 data-nosnippet>421</a>    </span><span class="kw">pub fn </span>verify(
+<a href=#422 id=422 data-nosnippet>422</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#423 id=423 data-nosnippet>423</a>        params: <span class="kw-2">&amp;</span>RsaParameters,
+<a href=#424 id=424 data-nosnippet>424</a>        message: <span class="kw-2">&amp;</span>[u8],
+<a href=#425 id=425 data-nosnippet>425</a>        signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#426 id=426 data-nosnippet>426</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
+<a href=#427 id=427 data-nosnippet>427</a>        <span class="kw">let </span>rsa = <span class="self">self</span>.build_rsa()<span class="question-mark">?</span>;
+<a href=#428 id=428 data-nosnippet>428</a>        <span class="kw">super</span>::signature::verify_rsa_signature(
+<a href=#429 id=429 data-nosnippet>429</a>            params.digest_algorithm(),
+<a href=#430 id=430 data-nosnippet>430</a>            params.padding(),
+<a href=#431 id=431 data-nosnippet>431</a>            <span class="kw-2">&amp;</span>rsa,
+<a href=#432 id=432 data-nosnippet>432</a>            message,
+<a href=#433 id=433 data-nosnippet>433</a>            signature,
+<a href=#434 id=434 data-nosnippet>434</a>            params.bit_size_range(),
+<a href=#435 id=435 data-nosnippet>435</a>        )
+<a href=#436 id=436 data-nosnippet>436</a>    }
+<a href=#437 id=437 data-nosnippet>437</a>}
+<a href=#438 id=438 data-nosnippet>438</a>
+<a href=#439 id=439 data-nosnippet>439</a><span class="attr">#[cfg(feature = <span class="string">"ring-io"</span>)]
+<a href=#440 id=440 data-nosnippet>440</a></span><span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>PublicKey&gt; <span class="kw">for </span>PublicKeyComponents&lt;Vec&lt;u8&gt;&gt; {
+<a href=#441 id=441 data-nosnippet>441</a>    <span class="kw">fn </span>from(public_key: <span class="kw-2">&amp;</span>PublicKey) -&gt; <span class="self">Self </span>{
+<a href=#442 id=442 data-nosnippet>442</a>        PublicKeyComponents {
+<a href=#443 id=443 data-nosnippet>443</a>            n: public_key.modulus.to_vec(),
+<a href=#444 id=444 data-nosnippet>444</a>            e: public_key.exponent.to_vec(),
+<a href=#445 id=445 data-nosnippet>445</a>        }
+<a href=#446 id=446 data-nosnippet>446</a>    }
+<a href=#447 id=447 data-nosnippet>447</a>}
+<a href=#448 id=448 data-nosnippet>448</a>
+<a href=#449 id=449 data-nosnippet>449</a><span class="kw">impl</span>&lt;B&gt; TryInto&lt;PublicEncryptingKey&gt; <span class="kw">for </span>PublicKeyComponents&lt;B&gt;
+<a href=#450 id=450 data-nosnippet>450</a><span class="kw">where
+<a href=#451 id=451 data-nosnippet>451</a>    </span>B: AsRef&lt;[u8]&gt; + Debug,
+<a href=#452 id=452 data-nosnippet>452</a>{
+<a href=#453 id=453 data-nosnippet>453</a>    <span class="kw">type </span>Error = Unspecified;
+<a href=#454 id=454 data-nosnippet>454</a>
+<a href=#455 id=455 data-nosnippet>455</a>    <span class="doccomment">/// Try to build a `PublicEncryptingKey` from the public key components.
+<a href=#456 id=456 data-nosnippet>456</a>    ///
+<a href=#457 id=457 data-nosnippet>457</a>    /// # Errors
+<a href=#458 id=458 data-nosnippet>458</a>    /// `error::Unspecified` if the key failed to verify.
+<a href=#459 id=459 data-nosnippet>459</a>    </span><span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;PublicEncryptingKey, <span class="self">Self</span>::Error&gt; {
+<a href=#460 id=460 data-nosnippet>460</a>        <span class="kw">let </span>rsa = <span class="self">self</span>.build_rsa()<span class="question-mark">?</span>;
+<a href=#461 id=461 data-nosnippet>461</a>        PublicEncryptingKey::new(rsa)
+<a href=#462 id=462 data-nosnippet>462</a>    }
+<a href=#463 id=463 data-nosnippet>463</a>}
+<a href=#464 id=464 data-nosnippet>464</a>
+<a href=#465 id=465 data-nosnippet>465</a><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>generate_rsa_key(size: c_int) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, Unspecified&gt; {
+<a href=#466 id=466 data-nosnippet>466</a>    <span class="kw">let </span>params_fn = |ctx| {
+<a href=#467 id=467 data-nosnippet>467</a>        <span class="kw">if </span><span class="number">1 </span>== <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, size) } {
+<a href=#468 id=468 data-nosnippet>468</a>            <span class="prelude-val">Ok</span>(())
+<a href=#469 id=469 data-nosnippet>469</a>        } <span class="kw">else </span>{
+<a href=#470 id=470 data-nosnippet>470</a>            <span class="prelude-val">Err</span>(())
+<a href=#471 id=471 data-nosnippet>471</a>        }
+<a href=#472 id=472 data-nosnippet>472</a>    };
+<a href=#473 id=473 data-nosnippet>473</a>
+<a href=#474 id=474 data-nosnippet>474</a>    LcPtr::&lt;EVP_PKEY&gt;::generate(EVP_PKEY_RSA, <span class="prelude-val">Some</span>(params_fn))
+<a href=#475 id=475 data-nosnippet>475</a>}
+<a href=#476 id=476 data-nosnippet>476</a>
+<a href=#477 id=477 data-nosnippet>477</a><span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
+<a href=#478 id=478 data-nosnippet>478</a>#[must_use]
+<a href=#479 id=479 data-nosnippet>479</a></span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_valid_fips_key(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; bool {
+<a href=#480 id=480 data-nosnippet>480</a>    <span class="comment">// This should always be an RSA key and must-never panic.
+<a href=#481 id=481 data-nosnippet>481</a>    </span><span class="kw">let </span>rsa_key = key.get_rsa().expect(<span class="string">"RSA EVP_PKEY"</span>);
+<a href=#482 id=482 data-nosnippet>482</a>
+<a href=#483 id=483 data-nosnippet>483</a>    <span class="number">1 </span>== <span class="kw">unsafe </span>{ RSA_check_fips(<span class="kw-2">*</span>rsa_key <span class="kw">as </span><span class="kw-2">*mut </span>RSA) }
+<a href=#484 id=484 data-nosnippet>484</a>}
+<a href=#485 id=485 data-nosnippet>485</a>
+<a href=#486 id=486 data-nosnippet>486</a><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_rsa_key(key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;) -&gt; bool {
+<a href=#487 id=487 data-nosnippet>487</a>    <span class="kw">let </span>id = key.id();
+<a href=#488 id=488 data-nosnippet>488</a>    id == EVP_PKEY_RSA || id == EVP_PKEY_RSA_PSS
+<a href=#489 id=489 data-nosnippet>489</a>}</code></pre></div></section></main></body></html>
