@@ -308,6 +308,7 @@ jobs:
       - name: Run cargo test
         run: cargo build -p aws-lc-rs --features prebuilt-nasm --target x86_64-pc-windows-gnu
   open-harmony:
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
@@ -324,6 +325,7 @@ jobs:
           docker run -v "${{ github.workspace }}:/aws_lc_rs" ohos:5.0.0
 
   alpine-linux:
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
@@ -338,3 +340,44 @@ jobs:
       - name: Build
         run: |
           docker run -v "${{ github.workspace }}:/aws_lc_rs" alpine:3.20
+
+  msys2:
+    if: github.repository_owner == 'aws'
+    name: ${{ matrix.sys }} - ${{ matrix.target }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { sys: mingw64, env: x86_64, target: x86_64-pc-windows-gnu, cc: gcc, rustflags: "" }
+          - { sys: mingw32, env: i686, target: i686-pc-windows-gnu, cc: gcc, rustflags: "" }
+          - { sys: ucrt64,  env: ucrt-x86_64,  target: x86_64-pc-windows-gnu, cc: gcc, rustflags: "" }
+          - { sys: clang64, env: clang-x86_64, target: x86_64-pc-windows-gnullvm, cc: clang, rustflags: "-Clinker=clang" }
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{matrix.sys}}
+          install: git base-devel mingw-w64-${{matrix.env}}-llvm
+          release: true
+      - run: git config --global core.autocrlf input
+      - name: Install NASM
+        uses: ilammy/setup-nasm@v1.5.1
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+          target: ${{matrix.target}}
+      - name: Build
+        env:
+          CC: ${{matrix.cc}}
+          RUSTFLAGS: ${{matrix.rustflags}}
+        run: cargo build -p aws-lc-rs --target ${{matrix.target}} --features bindgen
+      - name: Test
+        env:
+          CC: ${{matrix.cc}}
+          RUSTFLAGS: ${{matrix.rustflags}}
+        run: cargo test -p aws-lc-rs --target ${{matrix.target}} --features bindgen
