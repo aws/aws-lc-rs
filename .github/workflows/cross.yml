@@ -352,15 +352,19 @@ jobs:
         with:
           version: 17
           env: true
+      - name: curiosity
+        shell: bash
+        run: |
+          ls "C:/Program Files/LLVM/bin/"
       - name: Build
         env:
           CC: "C:/Program Files/LLVM/bin/clang.exe"
           CXX: "C:/Program Files/LLVM/bin/clang++.exe"
-          AWS_LC_SYS_CMAKE_LINKER: "C:/Program Files/LLVM/bin/lld.exe"
+          CFLAGS: "-fuse-ld=\"C:/Program Files/LLVM/bin/lld.exe\""
         run: cargo -vv build -p aws-lc-rs --target x86_64-pc-windows-gnullvm --features bindgen
       - name: Test
         env:
           CC: "C:/Program Files/LLVM/bin/clang.exe"
           CXX: "C:/Program Files/LLVM/bin/clang++.exe"
-          AWS_LC_SYS_CMAKE_LINKER: "C:/Program Files/LLVM/bin/lld.exe"
+          CFLAGS: "-fuse-ld=\"C:/Program Files/LLVM/bin/lld.exe\""
         run: cargo -vv test -p aws-lc-rs --target x86_64-pc-windows-gnullvm --features bindgen

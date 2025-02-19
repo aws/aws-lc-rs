@@ -167,11 +167,6 @@ impl CmakeBuilder {
             CStdRequested::None => {}
         }
 
-        if let Some(linker) = option_env("AWS_LC_SYS_CMAKE_LINKER") {
-            emit_warning(&format!("Setting CMAKE_LINKER: {linker}"));
-            cmake_cfg.define("CMAKE_LINKER", linker);
-        }
-
         if target_env() == "ohos" {
             Self::configure_open_harmony(&mut cmake_cfg, get_crate_cflags());
             return cmake_cfg;
