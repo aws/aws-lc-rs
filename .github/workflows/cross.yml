@@ -357,10 +357,10 @@ jobs:
           CC: "C:/Program Files/LLVM/bin/clang.exe"
           CXX: "C:/Program Files/LLVM/bin/clang++.exe"
           AWS_LC_SYS_CMAKE_LINKER: "C:/Program Files/LLVM/bin/lld.exe"
-        run: cargo build -p aws-lc-rs --target x86_64-pc-windows-gnullvm --features bindgen
+        run: cargo -vv build -p aws-lc-rs --target x86_64-pc-windows-gnullvm --features bindgen
       - name: Test
         env:
           CC: "C:/Program Files/LLVM/bin/clang.exe"
           CXX: "C:/Program Files/LLVM/bin/clang++.exe"
           AWS_LC_SYS_CMAKE_LINKER: "C:/Program Files/LLVM/bin/lld.exe"
-        run: cargo test -p aws-lc-rs --target x86_64-pc-windows-gnullvm --features bindgen
+        run: cargo -vv test -p aws-lc-rs --target x86_64-pc-windows-gnullvm --features bindgen

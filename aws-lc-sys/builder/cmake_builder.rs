@@ -168,6 +168,7 @@ impl CmakeBuilder {
         }
 
         if let Some(linker) = option_env("AWS_LC_SYS_CMAKE_LINKER") {
+            emit_warning(&format!("Setting CMAKE_LINKER: {linker}"));
             cmake_cfg.define("CMAKE_LINKER", linker);
         }
 
