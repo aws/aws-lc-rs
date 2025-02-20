@@ -185,6 +185,10 @@ impl EcdsaKeyPair {
     ) -> Result<Self, KeyRejected> {
         let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(private_key, EVP_PKEY_EC)
             .or(parse_rfc5915_private_key(private_key, alg.id.nid()))?;
+        #[cfg(not(feature = "fips"))]
+        verify_evp_key_nid(&evp_pkey.as_const(), alg.id.nid())?;
+        #[cfg(feature = "fips")]
+        validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
 
         Ok(Self::new(alg, evp_pkey)?)
     }
@@ -261,7 +265,35 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey<'_> {
 #[cfg(test)]
 mod tests {
     use crate::encoding::AsDer;
-    use crate::signature::{EcdsaKeyPair, ECDSA_P256_SHA256_FIXED_SIGNING};
+    use crate::signature::{
+        EcdsaKeyPair, ECDSA_P256K1_SHA256_ASN1_SIGNING, ECDSA_P256_SHA256_FIXED_SIGNING,
+        ECDSA_P384_SHA3_384_FIXED_SIGNING, ECDSA_P521_SHA512_FIXED_SIGNING,
+    };
+
+    #[test]
+    fn test_reject_wrong_curve() {
+        let supported_algs = [
+            &ECDSA_P256_SHA256_FIXED_SIGNING,
+            &ECDSA_P384_SHA3_384_FIXED_SIGNING,
+            &ECDSA_P521_SHA512_FIXED_SIGNING,
+            &ECDSA_P256K1_SHA256_ASN1_SIGNING,
+        ];
+
+        for marshal_alg in supported_algs {
+            let key_pair = EcdsaKeyPair::generate(marshal_alg).unwrap();
+            let key_pair_doc = key_pair.to_pkcs8v1().unwrap();
+            let key_pair_bytes = key_pair_doc.as_ref();
+
+            for parse_alg in supported_algs {
+                if parse_alg == marshal_alg {
+                    continue;
+                }
+
+                let result = EcdsaKeyPair::from_private_key_der(parse_alg, key_pair_bytes);
+                assert!(result.is_err());
+            }
+        }
+    }
 
     #[test]
     fn test_from_private_key_der() {
