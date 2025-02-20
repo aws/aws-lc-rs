@@ -56,7 +56,7 @@ use crate::ec::encoding::sec1::{
     parse_sec1_private_bn,
 };
 #[cfg(feature = "fips")]
-use crate::ec::validate_evp_key;
+use crate::ec::validate_ec_evp_key;
 #[cfg(not(feature = "fips"))]
 use crate::ec::verify_evp_key_nid;
 use crate::ec::{encoding, evp_key_generate};
@@ -304,7 +304,7 @@ impl PrivateKey {
         #[cfg(not(feature = "fips"))]
         verify_evp_key_nid(&evp_pkey.as_const(), alg.id.nid())?;
         #[cfg(feature = "fips")]
-        validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
+        validate_ec_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
 
         Ok(Self::new(alg, evp_pkey))
     }
