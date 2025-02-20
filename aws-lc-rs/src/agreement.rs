@@ -321,7 +321,7 @@ impl PrivateKey {
     }
 
     #[cfg(test)]
-    #[allow(clippy::missing_errors_doc, missing_docs)]
+    #[allow(clippy::missing_errors_doc)]
     pub fn generate_for_test(
         alg: &'static Algorithm,
         rng: &dyn crate::rand::SecureRandom,
