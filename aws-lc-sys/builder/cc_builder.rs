@@ -217,6 +217,13 @@ impl CcBuilder {
                     .join("third_party")
                     .join("s2n-bignum")
                     .join("include"),
+            )
+            .include(
+                self.manifest_dir
+                    .join("aws-lc")
+                    .join("third_party")
+                    .join("jitterentropy")
+                    .join("jitterentropy-library")
             );
     }
 
