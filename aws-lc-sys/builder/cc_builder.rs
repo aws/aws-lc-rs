@@ -223,7 +223,7 @@ impl CcBuilder {
                     .join("aws-lc")
                     .join("third_party")
                     .join("jitterentropy")
-                    .join("jitterentropy-library")
+                    .join("jitterentropy-library"),
             );
     }
 
