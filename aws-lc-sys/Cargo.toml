@@ -59,6 +59,7 @@ asan = []
 ssl = ['bindgen']
 bindgen = ["dep:bindgen"] # Generate the bindings on the targetted platform as a fallback mechanism.
 prebuilt-nasm = []
+aws-lc-rs = []
 
 [build-dependencies]
 cmake = "0.1.48"
