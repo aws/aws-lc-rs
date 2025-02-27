@@ -5,9 +5,8 @@ use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
-    get_crate_cflags, is_crt_static, is_no_asm, option_env, requested_c_std, target_arch,
-    target_env, target_os, target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm,
-    CStdRequested, OutputLibType,
+    get_crate_cflags, is_crt_static, is_no_asm, option_env, target_arch, target_env, target_os,
+    target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -67,7 +66,10 @@ impl CmakeBuilder {
         cmake::Config::new(&self.manifest_dir)
     }
 
-    fn collect_compiler_cflags(&self) -> OsString {
+    fn apply_universal_build_options<'a>(
+        &self,
+        cmake_cfg: &'a mut cmake::Config,
+    ) -> &'a cmake::Config {
         // Use the compiler options identified by CcBuilder
         let cc_builder = CcBuilder::new(
             self.manifest_dir.clone(),
@@ -75,27 +77,12 @@ impl CmakeBuilder {
             self.build_prefix.clone(),
             self.output_lib_type,
         );
-        let mut cflags = OsString::new();
-        let compiler = cc_builder.prepare_builder().get_compiler();
-        let args = compiler.args();
-        for (i, arg) in args.iter().enumerate() {
-            if i > 0 {
-                cflags.push(" ");
-            }
-            if let Some(arg) = arg.to_str() {
-                if arg.contains(' ') {
-                    cflags.push("\"");
-                    cflags.push(arg);
-                    cflags.push("\"");
-                } else {
-                    cflags.push(arg);
-                }
-            } else {
-                cflags.push(arg);
-            }
+        let cc_build = cc::Build::new();
+        let (is_like_msvc, build_options) = cc_builder.collect_universal_build_options(&cc_build);
+        for option in &build_options {
+            option.apply_cmake(cmake_cfg, is_like_msvc);
         }
-
-        cflags
+        cmake_cfg
     }
 
     #[allow(clippy::too_many_lines)]
@@ -157,22 +144,19 @@ impl CmakeBuilder {
 
             cmake_cfg.define("ASAN", "1");
         }
-        match requested_c_std() {
-            CStdRequested::C99 => {
-                cmake_cfg.define("CMAKE_C_STANDARD", "99");
-            }
-            CStdRequested::C11 => {
-                cmake_cfg.define("CMAKE_C_STANDARD", "11");
-            }
-            CStdRequested::None => {}
-        }
 
         if target_env() == "ohos" {
             Self::configure_open_harmony(&mut cmake_cfg, get_crate_cflags());
             return cmake_cfg;
         }
 
-        let mut cflags = OsString::from(get_crate_cflags());
+        let cflags = get_crate_cflags();
+        if !cflags.is_empty() {
+            emit_warning(&format!(
+                "AWS_LC_SYS_CFLAGS found. Setting CFLAGS: '{cflags}'"
+            ));
+            env::set_var("CFLAGS", cflags);
+        }
 
         // Allow environment to specify CMake toolchain.
         let toolchain_var_name = format!("CMAKE_TOOLCHAIN_FILE_{}", target_underscored());
@@ -182,16 +166,10 @@ impl CmakeBuilder {
             emit_warning(&format!(
                 "CMAKE_TOOLCHAIN_FILE environment variable set: {toolchain}"
             ));
-            emit_warning(&format!("Setting CFLAGS: {cflags:?}"));
-            env::set_var("CFLAGS", cflags);
             return cmake_cfg;
         }
         // We only consider compiler CFLAGS when no cmake toolchain is set
-        let compiler_cflags = self.collect_compiler_cflags();
-        cflags.push(" ");
-        cflags.push(&compiler_cflags);
-        emit_warning(&format!("Setting CFLAGS: {cflags:?}"));
-        env::set_var("CFLAGS", cflags);
+        self.apply_universal_build_options(&mut cmake_cfg);
 
         // See issue: https://github.com/aws/aws-lc-rs/issues/453
         if target_os() == "windows" {
