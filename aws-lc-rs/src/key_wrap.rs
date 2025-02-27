@@ -74,14 +74,12 @@ pub struct AesBlockCipher {
 impl BlockCipher for AesBlockCipher {
     /// Returns the algorithm identifier.
     #[inline]
-    #[must_use]
     fn id(&self) -> BlockCipherId {
         self.id
     }
 
     /// Returns the algorithm key length.
     #[inline]
-    #[must_use]
     fn key_len(&self) -> usize {
         self.key_len
     }
