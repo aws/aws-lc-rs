@@ -55,7 +55,11 @@ use crate::ec::encoding::sec1::{
     marshal_sec1_private_key, marshal_sec1_public_point, marshal_sec1_public_point_into_buffer,
     parse_sec1_private_bn,
 };
-use crate::ec::{encoding, evp_key_generate};
+use crate::ec::{encoding, evp_key_generate, };
+#[cfg(not(feature = "fips"))]
+use crate::ec::verify_evp_key_nid;
+#[cfg(feature = "fips")]
+use crate::ec::validate_evp_key;
 use crate::error::{KeyRejected, Unspecified};
 use crate::hex;
 use crate::ptr::ConstPointer;
@@ -63,7 +67,8 @@ pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
 use crate::aws_lc::{
     EVP_PKEY_derive, EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY,
-    NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY, EVP_PKEY_X25519, NID_X25519,
+    NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY, EVP_PKEY_EC, EVP_PKEY_X25519,
+    NID_X25519,
 };
 
 use crate::buffer::Buffer;
@@ -71,10 +76,11 @@ use crate::ec;
 use crate::ec::encoding::rfc5915::parse_rfc5915_private_key;
 use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
-    EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
+    EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, Pkcs8V1Der, PublicKeyX509Der,
 };
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
 use crate::fips::indicator_check;
+use crate::pkcs8::Version;
 use crate::ptr::LcPtr;
 use core::fmt;
 use core::fmt::{Debug, Formatter};
@@ -293,7 +299,13 @@ impl PrivateKey {
         if AlgorithmID::X25519 == alg.id {
             return Err(KeyRejected::invalid_encoding());
         }
-        let evp_pkey = parse_rfc5915_private_key(key_bytes, alg.id.nid())?;
+        let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(key_bytes, EVP_PKEY_EC)
+            .or(parse_rfc5915_private_key(key_bytes, alg.id.nid()))?;
+        #[cfg(not(feature = "fips"))]
+        verify_evp_key_nid(&evp_pkey.as_const(), alg.id.nid())?;
+        #[cfg(feature = "fips")]
+        validate_evp_key(&evp_pkey.as_const(), alg.id.nid())?;
+
         Ok(Self::new(alg, evp_pkey))
     }
 
@@ -446,6 +458,26 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
         Ok(EcPrivateKeyRfc5915Der::take_from_slice(unsafe {
             core::slice::from_raw_parts_mut(*outp.as_mut(), length)
         }))
+    }
+}
+
+impl AsDer<Pkcs8V1Der<'static>> for PrivateKey {
+    /// Serializes the key as a PKCS #8 private key structure.
+    ///
+    /// X25519 is not supported.
+    ///
+    /// # Errors
+    /// `error::Unspecified`  if serialization failed.
+    fn as_der(&self) -> Result<Pkcs8V1Der<'static>, Unspecified> {
+        if AlgorithmID::X25519 == self.inner_key.algorithm().id {
+            return Err(Unspecified);
+        }
+
+        Ok(Pkcs8V1Der::new(
+            self.inner_key
+                .get_evp_pkey()
+                .marshal_rfc5208_private_key(Version::V1)?,
+        ))
     }
 }
 
@@ -785,7 +817,7 @@ mod tests {
     };
     use crate::encoding::{
         AsBigEndian, AsDer, Curve25519SeedBin, EcPrivateKeyBin, EcPrivateKeyRfc5915Der,
-        EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
+        EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, Pkcs8V1Der, PublicKeyX509Der,
     };
     use crate::{rand, test};
 
@@ -924,6 +956,18 @@ mod tests {
             PrivateKey::from_private_key_der(&ECDH_P256, der_private_key_buffer.as_ref()).unwrap();
         {
             let result = agree(&der_private_key, &peer_public, (), |key_material| {
+                assert_eq!(key_material, &output[..]);
+                Ok(())
+            });
+            assert_eq!(result, Ok(()));
+        }
+
+        let pkcs8_private_key_buffer: Pkcs8V1Der = my_private.as_der().unwrap();
+        let pkcs8_private_key =
+            PrivateKey::from_private_key_der(&ECDH_P256, pkcs8_private_key_buffer.as_ref())
+                .unwrap();
+        {
+            let result = agree(&pkcs8_private_key, &peer_public, (), |key_material| {
                 assert_eq!(key_material, &output[..]);
                 Ok(())
             });
