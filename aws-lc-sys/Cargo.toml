@@ -32,6 +32,8 @@ include = [
     "/aws-lc/third_party/fiat/**/*.h",
     "/aws-lc/third_party/s2n-bignum/**/*.S",
     "/aws-lc/third_party/s2n-bignum/**/*.h",
+    "/aws-lc/third_party/jitterentropy/**/*.c",
+    "/aws-lc/third_party/jitterentropy/**/*.h",
     "/aws-lc/util/fipstools/**/CMakeLists.txt",
     "/aws-lc/util/fipstools/**/*.c",
     "/CMakeLists.txt",
