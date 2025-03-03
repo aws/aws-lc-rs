@@ -184,7 +184,7 @@ impl CcBuilder {
                 build_options.push(BuildOption::std("c11"));
             }
             CStdRequested::None => {
-                if self.compiler_check("c11", "") {
+                if self.compiler_check("c11") {
                     build_options.push(BuildOption::std("c11"));
                 } else {
                     build_options.push(BuildOption::std("c99"));
@@ -363,7 +363,7 @@ impl CcBuilder {
         for flag in lib.flags {
             cc_build.flag(flag);
         }
-        self.run_compiler_checks();
+        self.run_compiler_checks(&mut cc_build);
 
         if let Some(prefix) = &self.build_prefix {
             cc_build.compile(format!("{}_crypto", prefix.as_str()).as_str());
@@ -375,10 +375,9 @@ impl CcBuilder {
     // This performs basic checks of compiler capabilities and sets an appropriate flag on success.
     // This should be kept in alignment with the checks performed by AWS-LC's CMake build.
     // See: https://github.com/search?q=repo%3Aaws%2Faws-lc%20check_compiler&type=code
-    fn compiler_check(&self, basename: &str, flag: &str) -> bool {
+    fn compiler_check(&self, basename: &str) -> bool {
         let mut ret_val = false;
         let output_dir = self.out_dir.join(format!("out-{basename}"));
-        let mut cc_build = self.create_builder();
         let source_file = self
             .manifest_dir
             .join("aws-lc")
@@ -396,6 +395,7 @@ impl CcBuilder {
             emit_warning("######");
             emit_warning("######");
         }
+        let mut cc_build = cc::Build::default();
         cc_build
             .file(source_file)
             .warnings_into_errors(true)
@@ -408,9 +408,6 @@ impl CcBuilder {
         let result = cc_build.try_compile_intermediates();
 
         if result.is_ok() {
-            if !flag.is_empty() {
-                cc_build.define(flag, "1");
-            }
             ret_val = true;
         }
         if fs::remove_dir_all(&output_dir).is_err() {
@@ -492,9 +489,13 @@ impl CcBuilder {
         }
         let _ = fs::remove_file(exec_path);
     }
-    fn run_compiler_checks(&self) {
-        self.compiler_check("stdalign_check", "AWS_LC_STDALIGN_AVAILABLE");
-        self.compiler_check("builtin_swap_check", "AWS_LC_BUILTIN_SWAP_SUPPORTED");
+    fn run_compiler_checks(&self, cc_build: &mut cc::Build) {
+        if self.compiler_check("stdalign_check") {
+            cc_build.define("AWS_LC_STDALIGN_AVAILABLE", Some("1"));
+        }
+        if self.compiler_check("builtin_swap_check") {
+            cc_build.define("AWS_LC_BUILTIN_SWAP_SUPPORTED", Some("1"));
+        }
         self.memcmp_check();
     }
 }
