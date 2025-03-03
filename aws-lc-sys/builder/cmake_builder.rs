@@ -298,6 +298,30 @@ impl CmakeBuilder {
             let script_path = script_path.replace('\\', "/");
 
             cmake_cfg.define("CMAKE_ASM_NASM_COMPILER", script_path.as_str());
+            // Without the following definition, the build fails with a message similar to the one
+            // reported here: https://gitlab.kitware.com/cmake/cmake/-/issues/19453
+            // The variables below were found in the associated fix:
+            // https://gitlab.kitware.com/cmake/cmake/-/merge_requests/4257/diffs
+            cmake_cfg.define(
+                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreaded",
+                "",
+            );
+            cmake_cfg.define(
+                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDLL",
+                "",
+            );
+            cmake_cfg.define(
+                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebug",
+                "",
+            );
+            cmake_cfg.define(
+                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebugDLL",
+                "",
+            );
+            cmake_cfg.define(
+                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_ProgramDatabase",
+                "",
+            );
         }
     }
 
