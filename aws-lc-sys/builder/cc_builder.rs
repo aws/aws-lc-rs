@@ -27,7 +27,6 @@ pub(crate) struct CcBuilder {
     output_lib_type: OutputLibType,
 }
 
-use cc;
 use std::{env, fs};
 
 pub(crate) struct Library {
@@ -83,6 +82,7 @@ impl Default for PlatformConfig {
     }
 }
 
+#[allow(clippy::upper_case_acronyms)]
 pub(crate) enum BuildOption {
     STD(String),
     FLAG(String),
@@ -90,13 +90,13 @@ pub(crate) enum BuildOption {
     INCLUDE(PathBuf),
 }
 impl BuildOption {
-    fn std<T: ToString>(val: T) -> Self {
+    fn std<T: ToString + ?Sized>(val: &T) -> Self {
         Self::STD(val.to_string())
     }
-    fn flag<T: ToString>(val: T) -> Self {
+    fn flag<T: ToString + ?Sized>(val: &T) -> Self {
         Self::FLAG(val.to_string())
     }
-    fn flag_if_supported<T: ToString>(cc_build: &cc::Build, flag: T) -> Option<Self> {
+    fn flag_if_supported<T: ToString + ?Sized>(cc_build: &cc::Build, flag: &T) -> Option<Self> {
         if let Ok(true) = cc_build.is_flag_supported(flag.to_string()) {
             Some(Self::FLAG(flag.to_string()))
         } else {
@@ -104,7 +104,7 @@ impl BuildOption {
         }
     }
 
-    fn define<K: ToString, V: ToString>(key: K, val: V) -> Self {
+    fn define<K: ToString + ?Sized, V: ToString + ?Sized>(key: &K, val: &V) -> Self {
         Self::DEFINE(key.to_string(), val.to_string())
     }
 
@@ -222,13 +222,13 @@ impl CcBuilder {
                     let flag = format!("-ffile-prefix-map={}=", self.manifest_dir.display());
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {
                         emit_warning(&format!("Using flag: {}", &flag));
-                        build_options.push(BuildOption::flag(flag));
+                        build_options.push(BuildOption::flag(&flag));
                     } else {
                         emit_warning("NOTICE: Build environment source paths might be visible in release binary.");
                         let flag = format!("-fdebug-prefix-map={}=", self.manifest_dir.display());
                         if let Ok(true) = cc_build.is_flag_supported(&flag) {
                             emit_warning(&format!("Using flag: {}", &flag));
-                            build_options.push(BuildOption::flag(flag));
+                            build_options.push(BuildOption::flag(&flag));
                         }
                     }
                 }
@@ -241,12 +241,11 @@ impl CcBuilder {
             // clang: error: overriding '-mmacosx-version-min=13.7' option with '--target=x86_64-apple-macosx14.2' [-Werror,-Woverriding-t-option]
             // ```
             if let Some(option) =
-                BuildOption::flag_if_supported(&cc_build, "-Wno-overriding-t-option")
+                BuildOption::flag_if_supported(cc_build, "-Wno-overriding-t-option")
             {
                 build_options.push(option);
             }
-            if let Some(option) =
-                BuildOption::flag_if_supported(&cc_build, "-Wno-overriding-option")
+            if let Some(option) = BuildOption::flag_if_supported(cc_build, "-Wno-overriding-option")
             {
                 build_options.push(option);
             }
