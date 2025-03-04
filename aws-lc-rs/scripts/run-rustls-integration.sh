@@ -4,6 +4,13 @@
 
 ROOT="${GITHUB_WORKSPACE:-$(git rev-parse --show-toplevel)}"
 
+latest_release=0
+for arg in "$@"; do
+  if [ "$arg" = "--latest-release" ]; then
+    latest_release=1
+  fi
+done
+
 CLEANUP_ON_EXIT=()
 
 function cleanup() {
@@ -49,9 +56,11 @@ rm -rf "${RUSTLS_WEBPKI_DIR}" # Cleanup before we clone
 
 RUSTLS_DIR="$(mktemp -d)"
 CLEANUP_ON_EXIT+=("${RUSTLS_DIR}")
-cargo download rustls | tar xvzf - -C "${RUSTLS_DIR}" --strip-components=1
-RUSTLS_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_DIR}/.cargo_vcs_info.json)"
-rm -rf "${RUSTLS_DIR}" # Cleanup before we clone
+if [[ $latest_release == "1" ]]; then
+  cargo download rustls | tar xvzf - -C "${RUSTLS_DIR}" --strip-components=1
+  RUSTLS_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_DIR}/.cargo_vcs_info.json)"
+  rm -rf "${RUSTLS_DIR}" # Cleanup before we clone
+fi
 
 git clone https://github.com/rustls/rcgen "${RUSTLS_RCGEN_DIR}"
 git clone https://github.com/rustls/webpki.git "${RUSTLS_WEBPKI_DIR}"
@@ -86,12 +95,14 @@ fi
 # Trigger Cargo to generate the lock file
 cargo update
 cargo update "aws-lc-rs@${AWS_LC_RS_VERSION}"
-cargo tree -i aws-lc-rs --features aws_lc_rs
-cargo test --features aws_lc_rs
+cargo tree -i aws-lc-rs --features aws-lc-rs
+cargo test --features aws-lc-rs
 popd &>/dev/null # "${RUSTLS_WEBPKI_DIR}"
 
 pushd "${RUSTLS_DIR}"
-git checkout "${RUSTLS_COMMIT}"
+if [[ $latest_release == "1" ]]; then
+  git checkout "${RUSTLS_COMMIT}"
+fi
 rm Cargo.lock
 # Update the Cargo.toml to use the GitHub repository reference under test.
 RUSTLS_RCGEN_STRING="^rcgen = { .* }"
@@ -114,8 +125,8 @@ pushd ./rustls
 
 # Print the dependency tree for debug purposes, if we did everything right there
 # should only be one aws-lc-rs version. Otherwise this will fail sine there are multiple versions
-cargo tree -i aws-lc-rs --features aws_lc_rs
-# Run the rustls tests with the aws_lc_rs feature enabled
-cargo test --features aws_lc_rs
+cargo tree -i aws-lc-rs --features aws-lc-rs
+# Run the rustls tests with the aws-lc-rs feature enabled
+cargo test --features aws-lc-rs
 popd &>/dev/null # ./rustls
 popd &>/dev/null # ${RUSTLS_DIR}
