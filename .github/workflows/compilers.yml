@@ -35,9 +35,25 @@ jobs:
         gcc_version: [ '7', '8' ]
         fips: [ '0', '1' ]
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
+      - run: |
+          apt-get update
+          apt-get install -y ca-certificates
+          apt-get install -y cmake curl sudo
+          apt-get install -y --no-install-recommends gpg-agent software-properties-common
+          apt-add-repository --yes ppa:git-core/ppa
+          add-apt-repository --yes ppa:longsleep/golang-backports
+          apt-get update
+          apt-get install -y build-essential git golang-go
+          curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
+          dpkg -i powershell_7.2.23-1.deb_amd64.deb
+          apt-get install -f
+          rm powershell_7.2.23-1.deb_amd64.deb
+      - name: Checkout
+        run: |
+          git config --global --add safe.directory '*'
+          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
+          git fetch origin ${{ github.sha }}
+          git checkout --recurse-submodules -b ci-job ${{ github.sha }}
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -47,10 +63,6 @@ jobs:
         with:
           version: ${{ matrix.gcc_version }}
           platform: x64
-      - if: matrix.fips == '1'
-        uses: actions/setup-go@v4
-        with:
-          go-version: '>=1.18'
       - name: Run cargo test (debug)
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       - name: Run cargo test (release)
@@ -61,10 +73,11 @@ jobs:
         name: Verify paths found in debug build
         run: |
           DEBUG_LIBCRYPTO=$(find ./target/debug -name "libaws_lc_*_crypto.a")
-          if strings ${DEBUG_LIBCRYPTO} | grep runner; then 
+          if strings ${DEBUG_LIBCRYPTO} | grep '/__w/aws-lc-rs'; then 
             exit 0; # SUCCESS
           else
-            exit 1; # FAIL - we expected to find "runner"  (i.e., a path)
+            strings ${DEBUG_LIBCRYPTO}
+            exit 1; # FAIL - we expected to find "/__w/aws-lc-rs"  (i.e., a path)
           fi
       # TODO: Due to the nature of the FIPS build (e.g., its dynamic generation of
       # assembly files and its custom compilation commands within CMake), not all
@@ -73,8 +86,8 @@ jobs:
         name: Verify paths not found in release build
         run: |
           RELEASE_LIBCRYPTO=$(find ./target/release -name "libaws_lc_*_crypto.a")
-          if strings ${RELEASE_LIBCRYPTO} | grep runner; then 
-            exit 1; # FAIL - we did not expect to find "runner" (i.e., a path)
+          if strings ${RELEASE_LIBCRYPTO} | grep '/__w/aws-lc-rs'; then 
+            exit 1; # FAIL - we did not expect to find "/__w/aws-lc-rs" (i.e., a path)
           else
             exit 0; # SUCCESS
           fi
