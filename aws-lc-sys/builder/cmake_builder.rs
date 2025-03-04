@@ -162,7 +162,7 @@ impl CmakeBuilder {
         // https://github.com/rust-lang/cmake-rs/issues/240
         // This breaks build configurations that generate warnings when optimizations
         // are disabled.
-        self.preserve_cflag_optimization_flags(&mut cmake_cfg);
+        Self::preserve_cflag_optimization_flags(&mut cmake_cfg);
 
         // Allow environment to specify CMake toolchain.
         let toolchain_var_name = format!("CMAKE_TOOLCHAIN_FILE_{}", target_underscored());
@@ -212,7 +212,7 @@ impl CmakeBuilder {
         cmake_cfg
     }
 
-    fn preserve_cflag_optimization_flags(&self, cmake_cfg: &mut cmake::Config) {
+    fn preserve_cflag_optimization_flags(cmake_cfg: &mut cmake::Config) {
         if let Ok(cflags) = env::var("CFLAGS") {
             let split = cflags.split_whitespace();
             for arg in split {
