@@ -616,8 +616,8 @@ fn main() {
             emit_warning("######");
             emit_warning("###### WARNING: MISSING GIT SUBMODULE ######");
             emit_warning(&format!(
-                "  -- Did you initialize the repo's git submodules? Unable to find crypto directory: {:?}.",
-                &aws_lc_crypto_dir
+                "  -- Did you initialize the repo's git submodules? Unable to find crypto directory: {}.",
+                &aws_lc_crypto_dir.display()
             ));
             emit_warning("  -- run 'git submodule update --init --recursive' to initialize.");
             emit_warning("######");

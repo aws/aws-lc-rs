@@ -285,8 +285,8 @@ impl CcBuilder {
             emit_warning("######");
             emit_warning("###### WARNING: MISSING GIT SUBMODULE ######");
             emit_warning(&format!(
-                "  -- Did you initialize the repo's git submodules? Unable to find source file: {:?}.",
-                &source_file
+                "  -- Did you initialize the repo's git submodules? Unable to find source file: {}.",
+                source_file.display()
             ));
             emit_warning("  -- run 'git submodule update --init --recursive' to initialize.");
             emit_warning("######");
@@ -310,7 +310,7 @@ impl CcBuilder {
             ret_val = true;
         }
         if fs::remove_dir_all(&output_dir).is_err() {
-            emit_warning(&format!("Failed to remove {:?}", &output_dir));
+            emit_warning(&format!("Failed to remove {}", output_dir.display()));
         }
         emit_warning(&format!(
             "Compilation of '{basename}.c' {} - {:?}.",
@@ -354,14 +354,14 @@ impl CcBuilder {
             execute_command(memcmp_compiler.path().as_os_str(), memcmp_args.as_slice());
         assert!(
             memcmp_compile_result.status,
-            "COMPILER: {:?}\
+            "COMPILER: {}\
             ARGS: {:?}\
             EXECUTED: {}\
             ERROR: {}\
             OUTPUT: {}\
             Failed to compile {basename}
             ",
-            memcmp_compiler.path(),
+            memcmp_compiler.path().display(),
             memcmp_args.as_slice(),
             memcmp_compile_result.executed,
             memcmp_compile_result.stderr,

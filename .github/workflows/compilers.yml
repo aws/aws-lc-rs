@@ -23,7 +23,9 @@ jobs:
   aws-lc-rs-2004-gcc:
     if: github.repository_owner == 'aws'
     name: GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container:
+      image: ubuntu:20.04
     env:
       AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
     strategy:
@@ -33,9 +35,27 @@ jobs:
         gcc_version: [ '7', '8' ]
         fips: [ '0', '1' ]
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
+      - run: |
+          apt-get update
+          apt-get install -y ca-certificates
+          apt-get install -y cmake curl sudo
+          apt-get install -y --no-install-recommends gpg-agent software-properties-common
+          apt-add-repository --yes ppa:git-core/ppa
+          add-apt-repository --yes ppa:longsleep/golang-backports
+          apt-get update
+          apt-get install -y build-essential git golang-go
+          curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
+          dpkg -i powershell_7.2.23-1.deb_amd64.deb
+          apt-get install -f
+          rm powershell_7.2.23-1.deb_amd64.deb
+      - name: Checkout
+        run: |
+          mkdir -p /tmp/aws-lc-rs
+          git config --global --add safe.directory '*'
+          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git /tmp/aws-lc-rs
+          cd /tmp/aws-lc-rs
+          git fetch origin ${{ github.sha }}
+          git checkout --recurse-submodules -b ci-job ${{ github.sha }}
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -45,34 +65,35 @@ jobs:
         with:
           version: ${{ matrix.gcc_version }}
           platform: x64
-      - if: matrix.fips == '1'
-        uses: actions/setup-go@v4
-        with:
-          go-version: '>=1.18'
       - name: Run cargo test (debug)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       - name: Run cargo test (release)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --release --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       # The steps below verify that we're successfully using `-ffile-prefix-map`
       # to remove build environment paths from the resulting library.
       - if: ${{ matrix.gcc_version == '8' }}
+        working-directory: /tmp/aws-lc-rs/
         name: Verify paths found in debug build
         run: |
           DEBUG_LIBCRYPTO=$(find ./target/debug -name "libaws_lc_*_crypto.a")
-          if strings ${DEBUG_LIBCRYPTO} | grep runner; then 
+          if strings ${DEBUG_LIBCRYPTO} | grep '/tmp/aws-lc-rs/'; then 
             exit 0; # SUCCESS
           else
-            exit 1; # FAIL - we expected to find "runner"  (i.e., a path)
+            strings ${DEBUG_LIBCRYPTO}
+            exit 1; # FAIL - we expected to find "/tmp/aws-lc-rs/"  (i.e., a path)
           fi
       # TODO: Due to the nature of the FIPS build (e.g., its dynamic generation of
       # assembly files and its custom compilation commands within CMake), not all
       # source paths are stripped from the resulting binary.
       - if: ${{ matrix.gcc_version == '8' && matrix.fips == '0' }}
+        working-directory: /tmp/aws-lc-rs/
         name: Verify paths not found in release build
         run: |
           RELEASE_LIBCRYPTO=$(find ./target/release -name "libaws_lc_*_crypto.a")
-          if strings ${RELEASE_LIBCRYPTO} | grep runner; then 
-            exit 1; # FAIL - we did not expect to find "runner" (i.e., a path)
+          if strings ${RELEASE_LIBCRYPTO} | grep '/tmp/aws-lc-rs/'; then 
+            exit 1; # FAIL - we did not expect to find "/tmp/aws-lc-rs/" (i.e., a path)
           else
             exit 0; # SUCCESS
           fi
@@ -80,7 +101,7 @@ jobs:
   aws-lc-rs-1804-gcc:
     if: github.repository_owner == 'aws'
     name: GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container:
       image: ubuntu:18.04
     env:
