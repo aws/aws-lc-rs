@@ -56,9 +56,11 @@ rm -rf "${RUSTLS_WEBPKI_DIR}" # Cleanup before we clone
 
 RUSTLS_DIR="$(mktemp -d)"
 CLEANUP_ON_EXIT+=("${RUSTLS_DIR}")
-cargo download rustls | tar xvzf - -C "${RUSTLS_DIR}" --strip-components=1
-RUSTLS_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_DIR}/.cargo_vcs_info.json)"
-rm -rf "${RUSTLS_DIR}" # Cleanup before we clone
+if [[ $latest_release == "1" ]]; then
+  cargo download rustls | tar xvzf - -C "${RUSTLS_DIR}" --strip-components=1
+  RUSTLS_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_DIR}/.cargo_vcs_info.json)"
+  rm -rf "${RUSTLS_DIR}" # Cleanup before we clone
+fi
 
 git clone https://github.com/rustls/rcgen "${RUSTLS_RCGEN_DIR}"
 git clone https://github.com/rustls/webpki.git "${RUSTLS_WEBPKI_DIR}"
