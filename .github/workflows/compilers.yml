@@ -23,7 +23,9 @@ jobs:
   aws-lc-rs-2004-gcc:
     if: github.repository_owner == 'aws'
     name: GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container:
+      image: ubuntu:20.04
     env:
       AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
     strategy:
@@ -80,7 +82,7 @@ jobs:
   aws-lc-rs-1804-gcc:
     if: github.repository_owner == 'aws'
     name: GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container:
       image: ubuntu:18.04
     env:
