@@ -55,11 +55,11 @@ use crate::ec::encoding::sec1::{
     marshal_sec1_private_key, marshal_sec1_public_point, marshal_sec1_public_point_into_buffer,
     parse_sec1_private_bn,
 };
-use crate::ec::{encoding, evp_key_generate, };
-#[cfg(not(feature = "fips"))]
-use crate::ec::verify_evp_key_nid;
 #[cfg(feature = "fips")]
 use crate::ec::validate_evp_key;
+#[cfg(not(feature = "fips"))]
+use crate::ec::verify_evp_key_nid;
+use crate::ec::{encoding, evp_key_generate};
 use crate::error::{KeyRejected, Unspecified};
 use crate::hex;
 use crate::ptr::ConstPointer;
