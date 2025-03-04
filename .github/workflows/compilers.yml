@@ -50,8 +50,10 @@ jobs:
           rm powershell_7.2.23-1.deb_amd64.deb
       - name: Checkout
         run: |
+          mkdir -p /tmp/aws-lc-rs
           git config --global --add safe.directory '*'
-          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
+          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git /tmp/aws-lc-rs
+          cd /tmp/aws-lc-rs
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
       - uses: dtolnay/rust-toolchain@master
@@ -64,30 +66,34 @@ jobs:
           version: ${{ matrix.gcc_version }}
           platform: x64
       - name: Run cargo test (debug)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       - name: Run cargo test (release)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --release --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       # The steps below verify that we're successfully using `-ffile-prefix-map`
       # to remove build environment paths from the resulting library.
       - if: ${{ matrix.gcc_version == '8' }}
+        working-directory: /tmp/aws-lc-rs/
         name: Verify paths found in debug build
         run: |
           DEBUG_LIBCRYPTO=$(find ./target/debug -name "libaws_lc_*_crypto.a")
-          if strings ${DEBUG_LIBCRYPTO} | grep '/__w/aws-lc-rs'; then 
+          if strings ${DEBUG_LIBCRYPTO} | grep '/tmp/aws-lc-rs/'; then 
             exit 0; # SUCCESS
           else
             strings ${DEBUG_LIBCRYPTO}
-            exit 1; # FAIL - we expected to find "/__w/aws-lc-rs"  (i.e., a path)
+            exit 1; # FAIL - we expected to find "/tmp/aws-lc-rs/"  (i.e., a path)
           fi
       # TODO: Due to the nature of the FIPS build (e.g., its dynamic generation of
       # assembly files and its custom compilation commands within CMake), not all
       # source paths are stripped from the resulting binary.
       - if: ${{ matrix.gcc_version == '8' && matrix.fips == '0' }}
+        working-directory: /tmp/aws-lc-rs/
         name: Verify paths not found in release build
         run: |
           RELEASE_LIBCRYPTO=$(find ./target/release -name "libaws_lc_*_crypto.a")
-          if strings ${RELEASE_LIBCRYPTO} | grep '/__w/aws-lc-rs'; then 
-            exit 1; # FAIL - we did not expect to find "/__w/aws-lc-rs" (i.e., a path)
+          if strings ${RELEASE_LIBCRYPTO} | grep '/tmp/aws-lc-rs/'; then 
+            exit 1; # FAIL - we did not expect to find "/tmp/aws-lc-rs/" (i.e., a path)
           else
             exit 0; # SUCCESS
           fi
