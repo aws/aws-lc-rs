@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_26_0
+%define BORINGSSL_PREFIX aws_lc_0_27_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -223,6 +223,7 @@
 %xdefine _AWSLC_non_fips_pkey_evp_methods _ %+ BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_methods
 %xdefine _AWSLC_thread_local_clear _ %+ BORINGSSL_PREFIX %+ _AWSLC_thread_local_clear
 %xdefine _AWSLC_thread_local_shutdown _ %+ BORINGSSL_PREFIX %+ _AWSLC_thread_local_shutdown
+%xdefine _AWS_LC_FIPS_failure _ %+ BORINGSSL_PREFIX %+ _AWS_LC_FIPS_failure
 %xdefine _BASIC_CONSTRAINTS_free _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_free
 %xdefine _BASIC_CONSTRAINTS_it _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_it
 %xdefine _BASIC_CONSTRAINTS_new _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_new
@@ -260,6 +261,7 @@
 %xdefine _BIO_get_fp _ %+ BORINGSSL_PREFIX %+ _BIO_get_fp
 %xdefine _BIO_get_init _ %+ BORINGSSL_PREFIX %+ _BIO_get_init
 %xdefine _BIO_get_md_ctx _ %+ BORINGSSL_PREFIX %+ _BIO_get_md_ctx
+%xdefine _BIO_get_mem_data _ %+ BORINGSSL_PREFIX %+ _BIO_get_mem_data
 %xdefine _BIO_get_mem_ptr _ %+ BORINGSSL_PREFIX %+ _BIO_get_mem_ptr
 %xdefine _BIO_get_new_index _ %+ BORINGSSL_PREFIX %+ _BIO_get_new_index
 %xdefine _BIO_get_retry_flags _ %+ BORINGSSL_PREFIX %+ _BIO_get_retry_flags
@@ -1129,6 +1131,7 @@
 %xdefine _EVP_DigestSignFinal _ %+ BORINGSSL_PREFIX %+ _EVP_DigestSignFinal
 %xdefine _EVP_DigestSignInit _ %+ BORINGSSL_PREFIX %+ _EVP_DigestSignInit
 %xdefine _EVP_DigestSignUpdate _ %+ BORINGSSL_PREFIX %+ _EVP_DigestSignUpdate
+%xdefine _EVP_DigestSqueeze _ %+ BORINGSSL_PREFIX %+ _EVP_DigestSqueeze
 %xdefine _EVP_DigestUpdate _ %+ BORINGSSL_PREFIX %+ _EVP_DigestUpdate
 %xdefine _EVP_DigestVerify _ %+ BORINGSSL_PREFIX %+ _EVP_DigestVerify
 %xdefine _EVP_DigestVerifyFinal _ %+ BORINGSSL_PREFIX %+ _EVP_DigestVerifyFinal
@@ -1287,6 +1290,7 @@
 %xdefine _EVP_PKEY_derive_set_peer _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_derive_set_peer
 %xdefine _EVP_PKEY_ec_pkey_meth _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_ec_pkey_meth
 %xdefine _EVP_PKEY_ed25519_pkey_meth _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_ed25519_pkey_meth
+%xdefine _EVP_PKEY_ed25519ph_pkey_meth _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_ed25519ph_pkey_meth
 %xdefine _EVP_PKEY_encapsulate _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_encapsulate
 %xdefine _EVP_PKEY_encapsulate_deterministic _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_encapsulate_deterministic
 %xdefine _EVP_PKEY_encrypt _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_encrypt
@@ -3410,7 +3414,6 @@
 %xdefine _ed25519_verify_nohw _ %+ BORINGSSL_PREFIX %+ _ed25519_verify_nohw
 %xdefine _ed25519_verify_s2n_bignum _ %+ BORINGSSL_PREFIX %+ _ed25519_verify_s2n_bignum
 %xdefine _ed25519ph_asn1_meth _ %+ BORINGSSL_PREFIX %+ _ed25519ph_asn1_meth
-%xdefine _ed25519ph_pkey_meth _ %+ BORINGSSL_PREFIX %+ _ed25519ph_pkey_meth
 %xdefine _evp_pkey_set_cb_translate _ %+ BORINGSSL_PREFIX %+ _evp_pkey_set_cb_translate
 %xdefine _evp_pkey_set_method _ %+ BORINGSSL_PREFIX %+ _evp_pkey_set_method
 %xdefine _extract_multiplier_2x20_win5 _ %+ BORINGSSL_PREFIX %+ _extract_multiplier_2x20_win5
@@ -4332,6 +4335,7 @@
 %xdefine AWSLC_non_fips_pkey_evp_methods BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_methods
 %xdefine AWSLC_thread_local_clear BORINGSSL_PREFIX %+ _AWSLC_thread_local_clear
 %xdefine AWSLC_thread_local_shutdown BORINGSSL_PREFIX %+ _AWSLC_thread_local_shutdown
+%xdefine AWS_LC_FIPS_failure BORINGSSL_PREFIX %+ _AWS_LC_FIPS_failure
 %xdefine BASIC_CONSTRAINTS_free BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_free
 %xdefine BASIC_CONSTRAINTS_it BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_it
 %xdefine BASIC_CONSTRAINTS_new BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_new
@@ -4369,6 +4373,7 @@
 %xdefine BIO_get_fp BORINGSSL_PREFIX %+ _BIO_get_fp
 %xdefine BIO_get_init BORINGSSL_PREFIX %+ _BIO_get_init
 %xdefine BIO_get_md_ctx BORINGSSL_PREFIX %+ _BIO_get_md_ctx
+%xdefine BIO_get_mem_data BORINGSSL_PREFIX %+ _BIO_get_mem_data
 %xdefine BIO_get_mem_ptr BORINGSSL_PREFIX %+ _BIO_get_mem_ptr
 %xdefine BIO_get_new_index BORINGSSL_PREFIX %+ _BIO_get_new_index
 %xdefine BIO_get_retry_flags BORINGSSL_PREFIX %+ _BIO_get_retry_flags
@@ -5238,6 +5243,7 @@
 %xdefine EVP_DigestSignFinal BORINGSSL_PREFIX %+ _EVP_DigestSignFinal
 %xdefine EVP_DigestSignInit BORINGSSL_PREFIX %+ _EVP_DigestSignInit
 %xdefine EVP_DigestSignUpdate BORINGSSL_PREFIX %+ _EVP_DigestSignUpdate
+%xdefine EVP_DigestSqueeze BORINGSSL_PREFIX %+ _EVP_DigestSqueeze
 %xdefine EVP_DigestUpdate BORINGSSL_PREFIX %+ _EVP_DigestUpdate
 %xdefine EVP_DigestVerify BORINGSSL_PREFIX %+ _EVP_DigestVerify
 %xdefine EVP_DigestVerifyFinal BORINGSSL_PREFIX %+ _EVP_DigestVerifyFinal
@@ -5396,6 +5402,7 @@
 %xdefine EVP_PKEY_derive_set_peer BORINGSSL_PREFIX %+ _EVP_PKEY_derive_set_peer
 %xdefine EVP_PKEY_ec_pkey_meth BORINGSSL_PREFIX %+ _EVP_PKEY_ec_pkey_meth
 %xdefine EVP_PKEY_ed25519_pkey_meth BORINGSSL_PREFIX %+ _EVP_PKEY_ed25519_pkey_meth
+%xdefine EVP_PKEY_ed25519ph_pkey_meth BORINGSSL_PREFIX %+ _EVP_PKEY_ed25519ph_pkey_meth
 %xdefine EVP_PKEY_encapsulate BORINGSSL_PREFIX %+ _EVP_PKEY_encapsulate
 %xdefine EVP_PKEY_encapsulate_deterministic BORINGSSL_PREFIX %+ _EVP_PKEY_encapsulate_deterministic
 %xdefine EVP_PKEY_encrypt BORINGSSL_PREFIX %+ _EVP_PKEY_encrypt
@@ -7519,7 +7526,6 @@
 %xdefine ed25519_verify_nohw BORINGSSL_PREFIX %+ _ed25519_verify_nohw
 %xdefine ed25519_verify_s2n_bignum BORINGSSL_PREFIX %+ _ed25519_verify_s2n_bignum
 %xdefine ed25519ph_asn1_meth BORINGSSL_PREFIX %+ _ed25519ph_asn1_meth
-%xdefine ed25519ph_pkey_meth BORINGSSL_PREFIX %+ _ed25519ph_pkey_meth
 %xdefine evp_pkey_set_cb_translate BORINGSSL_PREFIX %+ _evp_pkey_set_cb_translate
 %xdefine evp_pkey_set_method BORINGSSL_PREFIX %+ _evp_pkey_set_method
 %xdefine extract_multiplier_2x20_win5 BORINGSSL_PREFIX %+ _extract_multiplier_2x20_win5
