@@ -198,6 +198,7 @@ AWSLC_non_fips_pkey_evp_asn1_methods
 AWSLC_non_fips_pkey_evp_methods
 AWSLC_thread_local_clear
 AWSLC_thread_local_shutdown
+AWS_LC_FIPS_failure
 BASIC_CONSTRAINTS_free
 BASIC_CONSTRAINTS_it
 BASIC_CONSTRAINTS_new
@@ -235,6 +236,7 @@ BIO_get_fd
 BIO_get_fp
 BIO_get_init
 BIO_get_md_ctx
+BIO_get_mem_data
 BIO_get_mem_ptr
 BIO_get_new_index
 BIO_get_retry_flags
@@ -1088,6 +1090,7 @@ EVP_DigestSign
 EVP_DigestSignFinal
 EVP_DigestSignInit
 EVP_DigestSignUpdate
+EVP_DigestSqueeze
 EVP_DigestUpdate
 EVP_DigestVerify
 EVP_DigestVerifyFinal
@@ -1246,6 +1249,7 @@ EVP_PKEY_derive_init
 EVP_PKEY_derive_set_peer
 EVP_PKEY_ec_pkey_meth
 EVP_PKEY_ed25519_pkey_meth
+EVP_PKEY_ed25519ph_pkey_meth
 EVP_PKEY_encapsulate
 EVP_PKEY_encapsulate_deterministic
 EVP_PKEY_encrypt
@@ -3053,7 +3057,6 @@ ed25519_sign_nohw
 ed25519_verify_internal
 ed25519_verify_nohw
 ed25519ph_asn1_meth
-ed25519ph_pkey_meth
 evp_pkey_set_cb_translate
 evp_pkey_set_method
 gcm_ghash_nohw
