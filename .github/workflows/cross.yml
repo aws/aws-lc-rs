@@ -40,7 +40,7 @@ jobs:
           - [ powerpc-unknown-linux-gnu, 1, 0 ]
           - [ powerpc64-unknown-linux-gnu, 1, 0 ]
           - [ powerpc64le-unknown-linux-gnu, 1, 0 ]
-          - [ riscv64gc-unknown-linux-gnu, 0, 0 ]
+          - [ riscv64gc-unknown-linux-gnu, 0, 1 ]
           - [ s390x-unknown-linux-gnu, 0, 1 ]
           - [ x86_64-pc-windows-gnu, 0, 1 ]
           - [ x86_64-unknown-linux-musl, 0, 1 ]
