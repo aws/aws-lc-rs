@@ -95,19 +95,6 @@ impl CmakeBuilder {
             cmake_cfg.define("BUILD_SHARED_LIBS", "0");
         }
 
-        let opt_level = cargo_env("OPT_LEVEL");
-        if opt_level.ne("0") {
-            if opt_level.eq("1") || opt_level.eq("2") {
-                cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
-            } else if opt_level.eq("s") || opt_level.eq("z") {
-                cmake_cfg.define("CMAKE_BUILD_TYPE", "minsizerel");
-            } else {
-                cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
-            }
-        } else {
-            cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
-        }
-
         if let Some(prefix) = &self.build_prefix {
             cmake_cfg.define("BORINGSSL_PREFIX", format!("{prefix}_"));
             let include_path = self.manifest_dir.join("generated-include");
