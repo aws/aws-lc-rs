@@ -31,6 +31,7 @@ platform_binding!(aarch64_unknown_linux_gnu);
 platform_binding!(aarch64_unknown_linux_musl);
 platform_binding!(i686_pc_windows_msvc);
 platform_binding!(i686_unknown_linux_gnu);
+platform_binding!(riscv64gc_unknown_linux_gnu);
 platform_binding!(x86_64_apple_darwin);
 platform_binding!(x86_64_pc_windows_gnu);
 platform_binding!(x86_64_pc_windows_msvc);
