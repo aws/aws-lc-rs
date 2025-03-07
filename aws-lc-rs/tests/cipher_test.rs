@@ -8,7 +8,7 @@ use aws_lc_rs::cipher::{
 };
 use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
 use aws_lc_rs::test::from_hex;
-use paste::paste;
+use concat_idents::concat_idents;
 
 fn step_encrypt(
     mut encrypting_key: StreamingEncryptingKey,
@@ -111,9 +111,9 @@ fn step_decrypt(
 
 macro_rules! streaming_cipher_rt {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $plaintext:literal, $from_step:literal, $to_step:literal) => {
-        paste! {
+        concat_idents!( test_name = $name, _streaming {
         #[test]
-        fn [<$name _streaming>]() {
+        fn test_name() {
             let key = from_hex($key).unwrap();
             let input = from_hex($plaintext).unwrap();
 
@@ -131,15 +131,15 @@ macro_rules! streaming_cipher_rt {
                 assert_eq!(input.as_slice(), plaintext.as_ref());
             }
         }
-        }
+        });
     };
 }
 
 macro_rules! streaming_ecb_pkcs7_rt {
     ($name:ident, $alg:expr, $key:literal, $plaintext:literal, $from_step:literal, $to_step:literal) => {
-        paste! {
+        concat_idents!( test_name = $name, _streaming {
         #[test]
-        fn [<$name _streaming>]() {
+        fn test_name() {
             let key = from_hex($key).unwrap();
             let input = from_hex($plaintext).unwrap();
 
@@ -157,15 +157,15 @@ macro_rules! streaming_ecb_pkcs7_rt {
                 assert_eq!(input.as_slice(), plaintext.as_ref());
             }
         }
-        }
+        });
     };
 }
 
 macro_rules! streaming_cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
-        paste! {
+        concat_idents!( test_name = $name, _streaming {
         #[test]
-        fn [<$name _streaming>]() {
+        fn test_name() {
             let key = from_hex($key).unwrap();
             let input = from_hex($plaintext).unwrap();
             let expected_ciphertext = from_hex($ciphertext).unwrap();
@@ -175,10 +175,10 @@ macro_rules! streaming_cipher_kat {
                 let ec = EncryptionContext::Iv128(
                     FixedLength::<IV_LEN_128_BIT>::try_from(iv.as_slice()).unwrap(),
                 );
-
+                concat_idents!( less_safe_constructor = less_safe_, $constructor {
                 let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
-                    let encrypting_key = StreamingEncryptingKey::[<less_safe_ $constructor>](unbound_key, ec).unwrap();
-
+                    let encrypting_key = StreamingEncryptingKey::less_safe_constructor(unbound_key, ec).unwrap();
+                });
                 let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
 
                 assert_eq!(expected_ciphertext.as_slice(), ciphertext.as_ref());
@@ -191,15 +191,15 @@ macro_rules! streaming_cipher_kat {
                 assert_eq!(input.as_slice(), plaintext.as_ref());
             }
         }
-        }
+        });
     };
 }
 
 macro_rules! streaming_ecb_pkcs7_kat {
     ($name:ident, $alg:expr, $key:literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
-        paste! {
+        concat_idents!( test_name = $name, _streaming {
         #[test]
-        fn [<$name _streaming>]() {
+        fn test_name() {
             let key = from_hex($key).unwrap();
             let input = from_hex($plaintext).unwrap();
             let expected_ciphertext = from_hex($ciphertext).unwrap();
@@ -220,7 +220,7 @@ macro_rules! streaming_ecb_pkcs7_kat {
                 assert_eq!(input.as_slice(), plaintext.as_ref());
             }
         }
-        }
+        });
     };
 }
 

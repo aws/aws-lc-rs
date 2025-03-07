@@ -68,7 +68,7 @@ bindgen = { version = "0.69.5", optional = true }
 bindgen = { version = "0.69.5" }
 
 [dependencies]
-paste = "1.0.11"
+concat-idents = "1.1.5"
 
 [package.metadata.aws-lc-sys]
 commit-hash = "d0356099f6b668697cdb381dfb09f9a694a6c9c2"

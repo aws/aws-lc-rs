@@ -4,26 +4,23 @@
 #![cfg_attr(not(clippy), allow(unexpected_cfgs))]
 #![cfg_attr(not(clippy), allow(unknown_lints))]
 
-use paste::paste;
+use concat_idents::concat_idents;
 use std::os::raw::{c_char, c_long, c_void};
-
-#[allow(unused_macros)]
-macro_rules! use_bindings {
-    ($bindings:ident) => {
-        mod $bindings;
-        pub use $bindings::*;
-    };
-}
 
 macro_rules! platform_binding {
     ($platform:ident) => {
-        paste! {
+        concat_idents!(bindings_name = $platform, _, crypto {
             #[cfg(all($platform, not(feature = "ssl"), not(use_bindgen_generated)))]
-            use_bindings!([< $platform _crypto >]);
-
+            mod bindings_name;
+            #[cfg(all($platform, not(feature = "ssl"), not(use_bindgen_generated)))]
+            pub use bindings_name::*;
+        });
+        concat_idents!(bindings_name = $platform, _, crypto, _, ssl {
             #[cfg(all($platform, feature = "ssl", not(use_bindgen_generated)))]
-            use_bindings!([< $platform _crypto_ssl >]);
-        }
+            mod bindings_name;
+            #[cfg(all($platform, feature = "ssl", not(use_bindgen_generated)))]
+            pub use bindings_name::*;
+        });
     };
 }
 

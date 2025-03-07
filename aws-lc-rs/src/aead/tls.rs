@@ -298,7 +298,7 @@ mod tests {
     use super::{TlsProtocolId, TlsRecordOpeningKey, TlsRecordSealingKey};
     use crate::aead::{Aad, Nonce, AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305};
     use crate::test::from_hex;
-    use paste::paste;
+    use concat_idents::concat_idents;
 
     const TEST_128_BIT_KEY: &[u8] = &[
         0xb0, 0x37, 0x9f, 0xf8, 0xfb, 0x8e, 0xa6, 0x31, 0xf4, 0x1c, 0xe6, 0x3e, 0xb5, 0xc5, 0x20,
@@ -333,18 +333,18 @@ mod tests {
 
     macro_rules! test_tls_aead {
         ($name:ident, $alg:expr, $proto:expr, $key:expr) => {
-            paste! {
+            concat_idents!( test_name = test_, $name, _tls_aead_unsupported {
                 #[test]
-                fn [<test_ $name _tls_aead_unsupported>]() {
+                fn test_name() {
                     assert!(TlsRecordSealingKey::new($alg, $proto, $key).is_err());
                     assert!(TlsRecordOpeningKey::new($alg, $proto, $key).is_err());
                 }
-            }
+            });
         };
         ($name:ident, $alg:expr, $proto:expr, $key:expr, $expect_tag_len:expr, $expect_nonce_len:expr) => {
-            paste! {
+           concat_idents!( test_name = test_, $name {
                 #[test]
-                fn [<test_ $name>]() {
+                fn test_name() {
                     let mut sealing_key =
                         TlsRecordSealingKey::new($alg, $proto, $key).unwrap();
 
@@ -403,7 +403,7 @@ mod tests {
                         assert_eq!(plaintext, offset_cipher_text[..plaintext.len()]);
                     }
                 }
-            }
+            });
         };
     }
 
