@@ -183,10 +183,9 @@
 use crate::error::Unspecified;
 use crate::{derive_debug_via_id, hkdf};
 use aead_ctx::AeadCtx;
+use concat_idents::concat_idents;
 use core::fmt::Debug;
 use core::ops::RangeFrom;
-use core::stringify;
-use paste::paste;
 
 mod aead_ctx;
 mod aes_gcm;
@@ -530,14 +529,14 @@ impl<N: NonceSequence> SealingKey<N> {
 
 macro_rules! nonce_seq_key_op_mut {
     ($name:ident) => {
-        paste! {
+       concat_idents!( prepared_nonce_name = $name, PreparedNonce {
         /// A key operation with a precomputed nonce from a key's associated `NonceSequence`.
-        pub struct [<$name PreparedNonce>]<'a, N: NonceSequence> {
+        pub struct prepared_nonce_name<'a, N: NonceSequence> {
             key: &'a mut $name<N>,
             nonce: Nonce,
         }
 
-        impl<'a, N: NonceSequence> [<$name PreparedNonce>]<'a, N> {
+        impl<'a, N: NonceSequence> prepared_nonce_name<'a, N> {
             fn new(key: &'a mut $name<N>) -> Result<Self, Unspecified> {
                 let nonce = key.nonce_sequence.advance()?;
                 Ok(Self {
@@ -547,7 +546,7 @@ macro_rules! nonce_seq_key_op_mut {
             }
         }
 
-        impl<N: NonceSequence> [<$name PreparedNonce>]<'_, N> {
+        impl<N: NonceSequence> prepared_nonce_name<'_, N> {
             /// Returns the prepared Nonce that is used for key methods invoked on [Self].
             #[must_use]
             pub fn nonce(&self) -> &Nonce {
@@ -555,17 +554,26 @@ macro_rules! nonce_seq_key_op_mut {
             }
         }
 
-        impl<N: NonceSequence> Debug for [<$name PreparedNonce>]<'_, N> {
-            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-                f.debug_struct(stringify!([<$name PreparedNonce>])).finish_non_exhaustive()
-            }
-        }
-        }
-    };
+    });
+    }
 }
 
 nonce_seq_key_op_mut!(OpeningKey);
 nonce_seq_key_op_mut!(SealingKey);
+
+impl<N: NonceSequence> Debug for OpeningKeyPreparedNonce<'_, N> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        f.debug_struct("OpeningKeyPreparedNonce")
+            .finish_non_exhaustive()
+    }
+}
+
+impl<N: NonceSequence> Debug for SealingKeyPreparedNonce<'_, N> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        f.debug_struct("SealingKeyPreparedNonce")
+            .finish_non_exhaustive()
+    }
+}
 
 impl<N: NonceSequence> OpeningKeyPreparedNonce<'_, N> {
     /// Authenticates and decrypts (“opens”) data in place.

@@ -507,7 +507,7 @@ mod tests {
     use crate::iv::{FixedLength, IV_LEN_128_BIT};
     use crate::rand::{SecureRandom, SystemRandom};
     use crate::test::from_hex;
-    use paste::*;
+    use concat_idents::concat_idents;
 
     fn step_encrypt(
         mut encrypting_key: StreamingEncryptingKey,
@@ -608,8 +608,8 @@ mod tests {
 
     macro_rules! helper_stream_step_encrypt_test {
         ($mode:ident) => {
-            paste! {
-                fn [<helper_test_ $mode _stream_encrypt_step_n_bytes>](
+            concat_idents!(test_name = helper_test_, $mode, _stream_encrypt_step_n_bytes {
+                fn test_name(
                     encrypting_key_creator: impl Fn() -> StreamingEncryptingKey,
                     decrypting_key_creator: impl Fn(DecryptionContext) -> StreamingDecryptingKey,
                     n: usize,
@@ -629,7 +629,7 @@ mod tests {
 
                     assert_eq!(input.as_slice(), &*plaintext);
                 }
-            }
+            });
         };
     }
 

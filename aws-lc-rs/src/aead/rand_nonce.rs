@@ -151,7 +151,7 @@ mod tests {
     use super::{Aad, RandomizedNonceKey};
     use crate::aead::{AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305};
     use crate::test::from_hex;
-    use paste::paste;
+    use concat_idents::concat_idents;
 
     const TEST_128_BIT_KEY: &[u8] = &[
         0xb0, 0x37, 0x9f, 0xf8, 0xfb, 0x8e, 0xa6, 0x31, 0xf4, 0x1c, 0xe6, 0x3e, 0xb5, 0xc5, 0x20,
@@ -166,17 +166,18 @@ mod tests {
 
     macro_rules! test_randnonce {
         ($name:ident, $alg:expr, $key:expr) => {
-            paste! {
+           concat_idents!(test_name_unsupported = test_, $name, _randnonce_unsupported {
                 #[test]
-                fn [<test_ $name _randnonce_unsupported>]() {
+                fn test_name_unsupported() {
                     assert!(RandomizedNonceKey::new($alg, $key).is_err());
                 }
-            }
+            });
         };
+
         ($name:ident, $alg:expr, $key:expr, $expect_tag_len:expr, $expect_nonce_len:expr) => {
-            paste! {
+            concat_idents!(test_name = test_, $name, _randnonce {
                 #[test]
-                fn [<test_ $name _randnonce>]() {
+                fn test_name() {
                     let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();
                     let rand_nonce_key =
                         RandomizedNonceKey::new($alg, $key).unwrap();
@@ -215,7 +216,7 @@ mod tests {
 
                     assert_eq!(plaintext, in_out[..plaintext.len()]);
                 }
-            }
+            });
         };
     }
 
