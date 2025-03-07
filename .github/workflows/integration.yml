@@ -231,3 +231,23 @@ jobs:
       - name: Verify msrv
         working-directory: ./aws-lc-rs
         run: cargo +1.63.0 check --features bindgen
+
+  preserve-optimizations:
+    runs-on: ubuntu-24.04-arm
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Install qemu-user-static
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+      - name: Build Docker Image
+        working-directory: .github/docker_images/fedora-41
+        run: |
+          ./build_image.sh
+      - name: Build
+        run: |
+          docker run --privileged --user root -v "${{ github.workspace }}:/aws_lc_rs"  fedora-41
