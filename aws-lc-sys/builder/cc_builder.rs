@@ -82,6 +82,74 @@ impl Default for PlatformConfig {
     }
 }
 
+#[allow(clippy::upper_case_acronyms)]
+pub(crate) enum BuildOption {
+    STD(String),
+    FLAG(String),
+    DEFINE(String, String),
+    INCLUDE(PathBuf),
+}
+impl BuildOption {
+    fn std<T: ToString + ?Sized>(val: &T) -> Self {
+        Self::STD(val.to_string())
+    }
+    fn flag<T: ToString + ?Sized>(val: &T) -> Self {
+        Self::FLAG(val.to_string())
+    }
+    fn flag_if_supported<T: ToString + ?Sized>(cc_build: &cc::Build, flag: &T) -> Option<Self> {
+        if let Ok(true) = cc_build.is_flag_supported(flag.to_string()) {
+            Some(Self::FLAG(flag.to_string()))
+        } else {
+            None
+        }
+    }
+
+    fn define<K: ToString + ?Sized, V: ToString + ?Sized>(key: &K, val: &V) -> Self {
+        Self::DEFINE(key.to_string(), val.to_string())
+    }
+
+    fn include<P: Into<PathBuf>>(path: P) -> Self {
+        Self::INCLUDE(path.into())
+    }
+
+    fn apply_cc<'a>(&self, cc_build: &'a mut cc::Build) -> &'a mut cc::Build {
+        match self {
+            BuildOption::STD(val) => cc_build.std(val),
+            BuildOption::FLAG(val) => cc_build.flag(val),
+            BuildOption::DEFINE(key, val) => cc_build.define(key, Some(val.as_str())),
+            BuildOption::INCLUDE(path) => cc_build.include(path.as_path()),
+        }
+    }
+
+    pub(crate) fn apply_cmake<'a>(
+        &self,
+        cmake_cfg: &'a mut cmake::Config,
+        is_like_msvc: bool,
+    ) -> &'a mut cmake::Config {
+        if is_like_msvc {
+            match self {
+                BuildOption::STD(val) => cmake_cfg.define(
+                    "CMAKE_C_STANDARD",
+                    val.to_ascii_lowercase().strip_prefix('c').unwrap_or("11"),
+                ),
+                BuildOption::FLAG(val) => cmake_cfg.cflag(val),
+                BuildOption::DEFINE(key, val) => cmake_cfg.cflag(format!("/D{key}={val}")),
+                BuildOption::INCLUDE(path) => cmake_cfg.cflag(format!("/I{}", path.display())),
+            }
+        } else {
+            match self {
+                BuildOption::STD(val) => cmake_cfg.define(
+                    "CMAKE_C_STANDARD",
+                    val.to_ascii_lowercase().strip_prefix('c').unwrap_or("11"),
+                ),
+                BuildOption::FLAG(val) => cmake_cfg.cflag(val),
+                BuildOption::DEFINE(key, val) => cmake_cfg.cflag(format!("-D{key}={val}")),
+                BuildOption::INCLUDE(path) => cmake_cfg.cflag(format!("-I{}", path.display())),
+            }
+        }
+    }
+}
+
 impl CcBuilder {
     pub(crate) fn new(
         manifest_dir: PathBuf,
@@ -97,43 +165,29 @@ impl CcBuilder {
         }
     }
 
-    pub(crate) fn create_builder(&self) -> cc::Build {
-        let mut cc_build = cc::Build::default();
-        cc_build.out_dir(&self.out_dir).cpp(false);
+    pub(crate) fn collect_universal_build_options(
+        &self,
+        cc_build: &cc::Build,
+    ) -> (bool, Vec<BuildOption>) {
+        let mut build_options: Vec<BuildOption> = Vec::new();
 
-        let compiler = cc_build.get_compiler();
-        if compiler.is_like_gnu() || compiler.is_like_clang() {
-            cc_build.flag("-Wno-unused-parameter");
-            if target_os() == "linux"
-                || target_os().ends_with("bsd")
-                || target_env() == "gnu"
-                || target_env() == "musl"
-            {
-                cc_build.define("_XOPEN_SOURCE", "700").flag("-pthread");
-            }
-        }
+        let compiler_is_msvc = {
+            let compiler = cc_build.get_compiler();
+            !compiler.is_like_gnu() && !compiler.is_like_clang()
+        };
 
-        self.add_includes(&mut cc_build);
-
-        cc_build
-    }
-
-    pub(crate) fn prepare_builder(&self) -> cc::Build {
-        let mut cc_build = self.create_builder();
         match requested_c_std() {
             CStdRequested::C99 => {
-                cc_build.std("c99");
+                build_options.push(BuildOption::std("c99"));
             }
             CStdRequested::C11 => {
-                cc_build.std("c11");
+                build_options.push(BuildOption::std("c11"));
             }
             CStdRequested::None => {
-                if target_env() == "msvc" && target_arch() == "aarch64" {
-                    // clang-cl (not "clang") will be used.
-                } else if self.compiler_check("c11", "") {
-                    cc_build.std("c11");
+                if self.compiler_check("c11") {
+                    build_options.push(BuildOption::std("c11"));
                 } else {
-                    cc_build.std("c99");
+                    build_options.push(BuildOption::std("c99"));
                 }
             }
         }
@@ -145,9 +199,10 @@ impl CcBuilder {
             emit_warning(&format!("CXX environment variable set: {}", cxx.clone()));
         }
 
-        let compiler = cc_build.get_compiler();
-        if target_arch() == "x86" && (compiler.is_like_clang() || compiler.is_like_gnu()) {
-            cc_build.flag_if_supported("-msse2");
+        if target_arch() == "x86" && !compiler_is_msvc {
+            if let Some(option) = BuildOption::flag_if_supported(cc_build, "-msse2") {
+                build_options.push(option);
+            }
         }
 
         let opt_level = cargo_env("OPT_LEVEL");
@@ -155,7 +210,7 @@ impl CcBuilder {
             "0" | "1" | "2" => {
                 if is_no_asm() {
                     emit_warning("AWS_LC_SYS_NO_ASM found. Disabling assembly code usage.");
-                    cc_build.define("OPENSSL_NO_ASM", "1");
+                    build_options.push(BuildOption::define("OPENSSL_NO_ASM", "1"));
                 }
             }
             _ => {
@@ -163,29 +218,21 @@ impl CcBuilder {
                     !is_no_asm(),
                     "AWS_LC_SYS_NO_ASM only allowed for debug builds!"
                 );
-                if compiler.is_like_gnu() || compiler.is_like_clang() {
+                if !compiler_is_msvc {
                     let flag = format!("-ffile-prefix-map={}=", self.manifest_dir.display());
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {
                         emit_warning(&format!("Using flag: {}", &flag));
-                        cc_build.flag(flag);
+                        build_options.push(BuildOption::flag(&flag));
                     } else {
                         emit_warning("NOTICE: Build environment source paths might be visible in release binary.");
                         let flag = format!("-fdebug-prefix-map={}=", self.manifest_dir.display());
                         if let Ok(true) = cc_build.is_flag_supported(&flag) {
                             emit_warning(&format!("Using flag: {}", &flag));
-                            cc_build.flag(flag);
+                            build_options.push(BuildOption::flag(&flag));
                         }
                     }
                 }
             }
-        }
-
-        if !get_crate_cflags().is_empty() {
-            let cflags = get_crate_cflags();
-            emit_warning(&format!(
-                "AWS_LC_SYS_CFLAGS found. Setting CFLAGS: '{cflags}'"
-            ));
-            env::set_var("CFLAGS", cflags);
         }
 
         if target_os() == "macos" {
@@ -193,38 +240,94 @@ impl CcBuilder {
             // ```
             // clang: error: overriding '-mmacosx-version-min=13.7' option with '--target=x86_64-apple-macosx14.2' [-Werror,-Woverriding-t-option]
             // ```
-            cc_build.flag_if_supported("-Wno-overriding-t-option");
-            cc_build.flag_if_supported("-Wno-overriding-option");
+            if let Some(option) =
+                BuildOption::flag_if_supported(cc_build, "-Wno-overriding-t-option")
+            {
+                build_options.push(option);
+            }
+            if let Some(option) = BuildOption::flag_if_supported(cc_build, "-Wno-overriding-option")
+            {
+                build_options.push(option);
+            }
+        }
+        (compiler_is_msvc, build_options)
+    }
+
+    pub fn collect_cc_only_build_options(&self, cc_build: &cc::Build) -> Vec<BuildOption> {
+        let mut build_options: Vec<BuildOption> = Vec::new();
+        let is_like_msvc = {
+            let compiler = cc_build.get_compiler();
+            !compiler.is_like_gnu() && !compiler.is_like_clang()
+        };
+        if !is_like_msvc {
+            build_options.push(BuildOption::flag("-Wno-unused-parameter"));
+            if target_os() == "linux"
+                || target_os().ends_with("bsd")
+                || target_env() == "gnu"
+                || target_env() == "musl"
+            {
+                build_options.push(BuildOption::define("_XOPEN_SOURCE", "700"));
+                build_options.push(BuildOption::flag("-pthread"));
+            }
         }
 
+        self.add_includes(&mut build_options);
+
+        build_options
+    }
+
+    fn add_includes(&self, build_options: &mut Vec<BuildOption>) {
+        // The order of includes matters
+        if let Some(prefix) = &self.build_prefix {
+            build_options.push(BuildOption::define("BORINGSSL_IMPLEMENTATION", "1"));
+            build_options.push(BuildOption::define("BORINGSSL_PREFIX", prefix.as_str()));
+            build_options.push(BuildOption::include(
+                self.manifest_dir.join("generated-include"),
+            ));
+        }
+        build_options.push(BuildOption::include(self.manifest_dir.join("include")));
+        build_options.push(BuildOption::include(
+            self.manifest_dir.join("aws-lc").join("include"),
+        ));
+        build_options.push(BuildOption::include(
+            self.manifest_dir
+                .join("aws-lc")
+                .join("third_party")
+                .join("s2n-bignum")
+                .join("include"),
+        ));
+        build_options.push(BuildOption::include(
+            self.manifest_dir
+                .join("aws-lc")
+                .join("third_party")
+                .join("jitterentropy")
+                .join("jitterentropy-library"),
+        ));
+    }
+
+    pub fn create_builder(&self) -> cc::Build {
+        let mut cc_build = cc::Build::new();
+        let build_options = self.collect_cc_only_build_options(&cc_build);
+        for option in build_options {
+            option.apply_cc(&mut cc_build);
+        }
         cc_build
     }
 
-    fn add_includes(&self, cc_build: &mut cc::Build) {
-        // The order of includes matters
-        if let Some(prefix) = &self.build_prefix {
-            cc_build
-                .define("BORINGSSL_IMPLEMENTATION", "1")
-                .define("BORINGSSL_PREFIX", prefix.as_str());
-            cc_build.include(self.manifest_dir.join("generated-include"));
+    pub fn prepare_builder(&self) -> cc::Build {
+        let mut cc_build = self.create_builder();
+        let (_, build_options) = self.collect_universal_build_options(&cc_build);
+        for option in build_options {
+            option.apply_cc(&mut cc_build);
+        }
+        let cflags = get_crate_cflags();
+        if !cflags.is_empty() {
+            emit_warning(&format!(
+                "AWS_LC_SYS_CFLAGS found. Setting CFLAGS: '{cflags}'"
+            ));
+            env::set_var("CFLAGS", cflags);
         }
         cc_build
-            .include(self.manifest_dir.join("include"))
-            .include(self.manifest_dir.join("aws-lc").join("include"))
-            .include(
-                self.manifest_dir
-                    .join("aws-lc")
-                    .join("third_party")
-                    .join("s2n-bignum")
-                    .join("include"),
-            )
-            .include(
-                self.manifest_dir
-                    .join("aws-lc")
-                    .join("third_party")
-                    .join("jitterentropy")
-                    .join("jitterentropy-library"),
-            );
     }
 
     fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) {
@@ -259,7 +362,7 @@ impl CcBuilder {
         for flag in lib.flags {
             cc_build.flag(flag);
         }
-        self.run_compiler_checks();
+        self.run_compiler_checks(&mut cc_build);
 
         if let Some(prefix) = &self.build_prefix {
             cc_build.compile(format!("{}_crypto", prefix.as_str()).as_str());
@@ -271,10 +374,9 @@ impl CcBuilder {
     // This performs basic checks of compiler capabilities and sets an appropriate flag on success.
     // This should be kept in alignment with the checks performed by AWS-LC's CMake build.
     // See: https://github.com/search?q=repo%3Aaws%2Faws-lc%20check_compiler&type=code
-    fn compiler_check(&self, basename: &str, flag: &str) -> bool {
+    fn compiler_check(&self, basename: &str) -> bool {
         let mut ret_val = false;
         let output_dir = self.out_dir.join(format!("out-{basename}"));
-        let mut cc_build = self.create_builder();
         let source_file = self
             .manifest_dir
             .join("aws-lc")
@@ -292,6 +394,7 @@ impl CcBuilder {
             emit_warning("######");
             emit_warning("######");
         }
+        let mut cc_build = cc::Build::default();
         cc_build
             .file(source_file)
             .warnings_into_errors(true)
@@ -304,9 +407,6 @@ impl CcBuilder {
         let result = cc_build.try_compile_intermediates();
 
         if result.is_ok() {
-            if !flag.is_empty() {
-                cc_build.define(flag, "1");
-            }
             ret_val = true;
         }
         if fs::remove_dir_all(&output_dir).is_err() {
@@ -388,9 +488,13 @@ impl CcBuilder {
         }
         let _ = fs::remove_file(exec_path);
     }
-    fn run_compiler_checks(&self) {
-        self.compiler_check("stdalign_check", "AWS_LC_STDALIGN_AVAILABLE");
-        self.compiler_check("builtin_swap_check", "AWS_LC_BUILTIN_SWAP_SUPPORTED");
+    fn run_compiler_checks(&self, cc_build: &mut cc::Build) {
+        if self.compiler_check("stdalign_check") {
+            cc_build.define("AWS_LC_STDALIGN_AVAILABLE", Some("1"));
+        }
+        if self.compiler_check("builtin_swap_check") {
+            cc_build.define("AWS_LC_BUILTIN_SWAP_SUPPORTED", Some("1"));
+        }
         self.memcmp_check();
     }
 }

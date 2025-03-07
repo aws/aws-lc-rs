@@ -1,7 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0 OR ISC
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5...3.31)
+
+if(CMAKE_VERSION VERSION_GREATER "3.14")
+# https://cmake.org/cmake/help/latest/policy/CMP0091.html
+# In CMake 3.14 and below, MSVC runtime library selection flags are added to the default CMAKE_<LANG>_FLAGS_<CONFIG>
+# cache entries by CMake automatically.
+cmake_policy(SET CMP0091 OLD)
+endif()
 
 project(AWS_LC_RUST NONE)
 enable_language(C)
