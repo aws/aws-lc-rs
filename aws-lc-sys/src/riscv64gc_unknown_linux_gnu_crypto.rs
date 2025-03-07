@@ -3973,108 +3973,10 @@ pub const TRUST_TOKEN_R_BAD_VALIDITY_CHECK: i32 = 111;
 pub const TRUST_TOKEN_R_NO_SRR_KEY_CONFIGURED: i32 = 112;
 pub const TRUST_TOKEN_R_INVALID_METADATA_KEY: i32 = 113;
 pub const TRUST_TOKEN_R_INVALID_PROOF: i32 = 114;
-pub type time_t = ::std::os::raw::c_long;
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct pthread_rwlock_t {
-    pub __u: pthread_rwlock_t__bindgen_ty_1,
-}
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub union pthread_rwlock_t__bindgen_ty_1 {
-    pub __i: [::std::os::raw::c_int; 14usize],
-    pub __vi: [::std::os::raw::c_int; 14usize],
-    pub __p: [*mut ::std::os::raw::c_void; 7usize],
-}
-#[test]
-fn bindgen_test_layout_pthread_rwlock_t__bindgen_ty_1() {
-    const UNINIT: ::std::mem::MaybeUninit<pthread_rwlock_t__bindgen_ty_1> =
-        ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<pthread_rwlock_t__bindgen_ty_1>(),
-        56usize,
-        concat!("Size of: ", stringify!(pthread_rwlock_t__bindgen_ty_1))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<pthread_rwlock_t__bindgen_ty_1>(),
-        8usize,
-        concat!("Alignment of ", stringify!(pthread_rwlock_t__bindgen_ty_1))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).__i) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(pthread_rwlock_t__bindgen_ty_1),
-            "::",
-            stringify!(__i)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).__vi) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(pthread_rwlock_t__bindgen_ty_1),
-            "::",
-            stringify!(__vi)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).__p) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(pthread_rwlock_t__bindgen_ty_1),
-            "::",
-            stringify!(__p)
-        )
-    );
-}
-impl Default for pthread_rwlock_t__bindgen_ty_1 {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
-#[test]
-fn bindgen_test_layout_pthread_rwlock_t() {
-    const UNINIT: ::std::mem::MaybeUninit<pthread_rwlock_t> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<pthread_rwlock_t>(),
-        56usize,
-        concat!("Size of: ", stringify!(pthread_rwlock_t))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<pthread_rwlock_t>(),
-        8usize,
-        concat!("Alignment of ", stringify!(pthread_rwlock_t))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).__u) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(pthread_rwlock_t),
-            "::",
-            stringify!(__u)
-        )
-    );
-}
-impl Default for pthread_rwlock_t {
-    fn default() -> Self {
-        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
-        unsafe {
-            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
-            s.assume_init()
-        }
-    }
-}
+pub type __off_t = ::std::os::raw::c_long;
+pub type __off64_t = ::std::os::raw::c_long;
+pub type __time_t = ::std::os::raw::c_long;
+pub type time_t = __time_t;
 pub type ossl_ssize_t = isize;
 pub type CBS_ASN1_TAG = u32;
 pub type CRYPTO_THREADID = ::std::os::raw::c_int;
@@ -4926,13 +4828,371 @@ impl Default for tm {
         }
     }
 }
+pub type va_list = __builtin_va_list;
+pub type FILE = _IO_FILE;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct _IO_FILE {
+pub struct _IO_marker {
     _unused: [u8; 0],
 }
-pub type FILE = _IO_FILE;
-pub type va_list = [u64; 4usize];
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct _IO_codecvt {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct _IO_wide_data {
+    _unused: [u8; 0],
+}
+pub type _IO_lock_t = ::std::os::raw::c_void;
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct _IO_FILE {
+    pub _flags: ::std::os::raw::c_int,
+    pub _IO_read_ptr: *mut ::std::os::raw::c_char,
+    pub _IO_read_end: *mut ::std::os::raw::c_char,
+    pub _IO_read_base: *mut ::std::os::raw::c_char,
+    pub _IO_write_base: *mut ::std::os::raw::c_char,
+    pub _IO_write_ptr: *mut ::std::os::raw::c_char,
+    pub _IO_write_end: *mut ::std::os::raw::c_char,
+    pub _IO_buf_base: *mut ::std::os::raw::c_char,
+    pub _IO_buf_end: *mut ::std::os::raw::c_char,
+    pub _IO_save_base: *mut ::std::os::raw::c_char,
+    pub _IO_backup_base: *mut ::std::os::raw::c_char,
+    pub _IO_save_end: *mut ::std::os::raw::c_char,
+    pub _markers: *mut _IO_marker,
+    pub _chain: *mut _IO_FILE,
+    pub _fileno: ::std::os::raw::c_int,
+    pub _flags2: ::std::os::raw::c_int,
+    pub _old_offset: __off_t,
+    pub _cur_column: ::std::os::raw::c_ushort,
+    pub _vtable_offset: ::std::os::raw::c_schar,
+    pub _shortbuf: [::std::os::raw::c_char; 1usize],
+    pub _lock: *mut _IO_lock_t,
+    pub _offset: __off64_t,
+    pub _codecvt: *mut _IO_codecvt,
+    pub _wide_data: *mut _IO_wide_data,
+    pub _freeres_list: *mut _IO_FILE,
+    pub _freeres_buf: *mut ::std::os::raw::c_void,
+    pub __pad5: usize,
+    pub _mode: ::std::os::raw::c_int,
+    pub _unused2: [::std::os::raw::c_char; 20usize],
+}
+#[test]
+fn bindgen_test_layout__IO_FILE() {
+    const UNINIT: ::std::mem::MaybeUninit<_IO_FILE> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<_IO_FILE>(),
+        216usize,
+        concat!("Size of: ", stringify!(_IO_FILE))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<_IO_FILE>(),
+        8usize,
+        concat!("Alignment of ", stringify!(_IO_FILE))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._flags) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_flags)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_read_ptr) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_read_ptr)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_read_end) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_read_end)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_read_base) as usize - ptr as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_read_base)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_write_base) as usize - ptr as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_write_base)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_write_ptr) as usize - ptr as usize },
+        40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_write_ptr)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_write_end) as usize - ptr as usize },
+        48usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_write_end)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_buf_base) as usize - ptr as usize },
+        56usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_buf_base)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_buf_end) as usize - ptr as usize },
+        64usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_buf_end)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_save_base) as usize - ptr as usize },
+        72usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_save_base)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_backup_base) as usize - ptr as usize },
+        80usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_backup_base)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._IO_save_end) as usize - ptr as usize },
+        88usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_IO_save_end)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._markers) as usize - ptr as usize },
+        96usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_markers)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._chain) as usize - ptr as usize },
+        104usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_chain)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._fileno) as usize - ptr as usize },
+        112usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_fileno)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._flags2) as usize - ptr as usize },
+        116usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_flags2)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._old_offset) as usize - ptr as usize },
+        120usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_old_offset)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._cur_column) as usize - ptr as usize },
+        128usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_cur_column)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._vtable_offset) as usize - ptr as usize },
+        130usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_vtable_offset)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._shortbuf) as usize - ptr as usize },
+        131usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_shortbuf)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._lock) as usize - ptr as usize },
+        136usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_lock)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._offset) as usize - ptr as usize },
+        144usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_offset)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._codecvt) as usize - ptr as usize },
+        152usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_codecvt)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._wide_data) as usize - ptr as usize },
+        160usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_wide_data)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._freeres_list) as usize - ptr as usize },
+        168usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_freeres_list)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._freeres_buf) as usize - ptr as usize },
+        176usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_freeres_buf)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).__pad5) as usize - ptr as usize },
+        184usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(__pad5)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._mode) as usize - ptr as usize },
+        192usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_mode)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr)._unused2) as usize - ptr as usize },
+        196usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_IO_FILE),
+            "::",
+            stringify!(_unused2)
+        )
+    );
+}
+impl Default for _IO_FILE {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct buf_mem_st {
@@ -5729,7 +5989,57 @@ extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_OPENSSL_secure_clear_free"]
     pub fn OPENSSL_secure_clear_free(ptr: *mut ::std::os::raw::c_void, len: usize);
 }
-pub type CRYPTO_MUTEX = pthread_rwlock_t;
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union crypto_mutex_st {
+    pub alignment: f64,
+    pub padding: [u8; 56usize],
+}
+#[test]
+fn bindgen_test_layout_crypto_mutex_st() {
+    const UNINIT: ::std::mem::MaybeUninit<crypto_mutex_st> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<crypto_mutex_st>(),
+        56usize,
+        concat!("Size of: ", stringify!(crypto_mutex_st))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<crypto_mutex_st>(),
+        8usize,
+        concat!("Alignment of ", stringify!(crypto_mutex_st))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).alignment) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(crypto_mutex_st),
+            "::",
+            stringify!(alignment)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).padding) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(crypto_mutex_st),
+            "::",
+            stringify!(padding)
+        )
+    );
+}
+impl Default for crypto_mutex_st {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+pub type CRYPTO_MUTEX = crypto_mutex_st;
 pub type CRYPTO_refcount_t = u32;
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_AWSLC_thread_local_clear"]
@@ -5947,14 +6257,6 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_CRYPTO_pre_sandbox_init"]
     pub fn CRYPTO_pre_sandbox_init();
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_27_0_armv8_disable_dit"]
-    pub fn armv8_disable_dit();
-}
-extern "C" {
-    #[link_name = "\u{1}aws_lc_0_27_0_armv8_enable_dit"]
-    pub fn armv8_enable_dit();
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_FIPS_mode"]
@@ -28742,6 +29044,7 @@ extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_ERR_GET_FUNC_RUST"]
     pub fn ERR_GET_FUNC_RUST(packed_error: u32) -> ::std::os::raw::c_int;
 }
+pub type __builtin_va_list = *mut ::std::os::raw::c_void;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub struct CRYPTO_dynlock_value {

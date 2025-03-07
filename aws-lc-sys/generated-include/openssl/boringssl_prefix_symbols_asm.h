@@ -20,7 +20,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_ASM_H
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_26_0
+#define BORINGSSL_PREFIX aws_lc_0_27_0
 #endif // BORINGSSL_PREFIX
 
 // On iOS and macOS, we need to treat assembly symbols differently from other
@@ -230,6 +230,7 @@
 #define _AWSLC_non_fips_pkey_evp_methods BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, AWSLC_non_fips_pkey_evp_methods)
 #define _AWSLC_thread_local_clear BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, AWSLC_thread_local_clear)
 #define _AWSLC_thread_local_shutdown BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, AWSLC_thread_local_shutdown)
+#define _AWS_LC_FIPS_failure BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, AWS_LC_FIPS_failure)
 #define _BASIC_CONSTRAINTS_free BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BASIC_CONSTRAINTS_free)
 #define _BASIC_CONSTRAINTS_it BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BASIC_CONSTRAINTS_it)
 #define _BASIC_CONSTRAINTS_new BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BASIC_CONSTRAINTS_new)
@@ -267,6 +268,7 @@
 #define _BIO_get_fp BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_fp)
 #define _BIO_get_init BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_init)
 #define _BIO_get_md_ctx BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_md_ctx)
+#define _BIO_get_mem_data BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_mem_data)
 #define _BIO_get_mem_ptr BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_mem_ptr)
 #define _BIO_get_new_index BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_new_index)
 #define _BIO_get_retry_flags BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, BIO_get_retry_flags)
@@ -1136,6 +1138,7 @@
 #define _EVP_DigestSignFinal BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_DigestSignFinal)
 #define _EVP_DigestSignInit BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_DigestSignInit)
 #define _EVP_DigestSignUpdate BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_DigestSignUpdate)
+#define _EVP_DigestSqueeze BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_DigestSqueeze)
 #define _EVP_DigestUpdate BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_DigestUpdate)
 #define _EVP_DigestVerify BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_DigestVerify)
 #define _EVP_DigestVerifyFinal BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_DigestVerifyFinal)
@@ -1294,6 +1297,7 @@
 #define _EVP_PKEY_derive_set_peer BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_derive_set_peer)
 #define _EVP_PKEY_ec_pkey_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_ec_pkey_meth)
 #define _EVP_PKEY_ed25519_pkey_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_ed25519_pkey_meth)
+#define _EVP_PKEY_ed25519ph_pkey_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_ed25519ph_pkey_meth)
 #define _EVP_PKEY_encapsulate BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_encapsulate)
 #define _EVP_PKEY_encapsulate_deterministic BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_encapsulate_deterministic)
 #define _EVP_PKEY_encrypt BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_encrypt)
@@ -3417,7 +3421,6 @@
 #define _ed25519_verify_nohw BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, ed25519_verify_nohw)
 #define _ed25519_verify_s2n_bignum BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, ed25519_verify_s2n_bignum)
 #define _ed25519ph_asn1_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, ed25519ph_asn1_meth)
-#define _ed25519ph_pkey_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, ed25519ph_pkey_meth)
 #define _evp_pkey_set_cb_translate BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, evp_pkey_set_cb_translate)
 #define _evp_pkey_set_method BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, evp_pkey_set_method)
 #define _extract_multiplier_2x20_win5 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, extract_multiplier_2x20_win5)
