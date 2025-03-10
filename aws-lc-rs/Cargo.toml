@@ -50,9 +50,9 @@ untrusted = { version = "0.7.1", optional = true }
 aws-lc-sys = { version = "0.27.0", path = "../aws-lc-sys", optional = true }
 aws-lc-fips-sys = { version = "0.13.1", path = "../aws-lc-fips-sys", optional = true }
 zeroize = "1.7"
-paste = "1.0.11"
 
 [dev-dependencies]
+paste = "1.0.11"
 lazy_static = "1.4.0"
 clap = { version = "4.1.8", features = ["derive"] }
 hex = "0.4.3"

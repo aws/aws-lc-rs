@@ -4,25 +4,24 @@
 //! Serialization formats
 
 use crate::buffer::Buffer;
-use paste::paste;
 
 macro_rules! generated_encodings {
-    ($($name:ident),*) => { paste! {
+    ($($name:ident, $name_type:ident),*) => {
         use core::fmt::{Debug, Error, Formatter};
         use core::ops::Deref;
         mod buffer_type {
             $(
-                pub struct [<$name Type>] {
+                pub struct $name_type {
                     _priv: (),
                 }
             )*
         }
         $(
             /// Serialized bytes
-            pub struct $name<'a>(Buffer<'a, buffer_type::[<$name Type>]>);
+            pub struct $name<'a>(Buffer<'a, buffer_type::$name_type>);
 
             impl<'a> Deref for $name<'a> {
-                type Target = Buffer<'a, buffer_type::[<$name Type>]>;
+                type Target = Buffer<'a, buffer_type::$name_type>;
 
                 fn deref(&self) -> &Self::Target {
                     &self.0
@@ -46,24 +45,32 @@ macro_rules! generated_encodings {
                 }
             }
 
-            impl<'a> From<Buffer<'a, buffer_type::[<$name Type>]>> for $name<'a> {
-                fn from(value: Buffer<'a, buffer_type::[<$name Type>]>) -> Self {
+            impl<'a> From<Buffer<'a, buffer_type::$name_type>> for $name<'a> {
+                fn from(value: Buffer<'a, buffer_type::$name_type>) -> Self {
                     Self(value)
                 }
             }
         )*
-    }}
+    }
 }
 pub(crate) use generated_encodings;
 generated_encodings!(
     EcPrivateKeyBin,
+    EcPrivateKeyBinType,
     EcPrivateKeyRfc5915Der,
+    EcPrivateKeyRfc5915DerType,
     EcPublicKeyUncompressedBin,
+    EcPublicKeyUncompressedBinType,
     EcPublicKeyCompressedBin,
+    EcPublicKeyCompressedBinType,
     PublicKeyX509Der,
+    PublicKeyX509DerType,
     Curve25519SeedBin,
+    Curve25519SeedBinType,
     Pkcs8V1Der,
-    Pkcs8V2Der
+    Pkcs8V1DerType,
+    Pkcs8V2Der,
+    Pkcs8V2DerType
 );
 
 /// Trait for types that can be serialized into a DER format.

@@ -186,7 +186,6 @@ use aead_ctx::AeadCtx;
 use core::fmt::Debug;
 use core::ops::RangeFrom;
 use core::stringify;
-use paste::paste;
 
 mod aead_ctx;
 mod aes_gcm;
@@ -529,25 +528,21 @@ impl<N: NonceSequence> SealingKey<N> {
 }
 
 macro_rules! nonce_seq_key_op_mut {
-    ($name:ident) => {
-        paste! {
+    ($name:ident, $name_prep_nonce:ident) => {
         /// A key operation with a precomputed nonce from a key's associated `NonceSequence`.
-        pub struct [<$name PreparedNonce>]<'a, N: NonceSequence> {
+        pub struct $name_prep_nonce<'a, N: NonceSequence> {
             key: &'a mut $name<N>,
             nonce: Nonce,
         }
 
-        impl<'a, N: NonceSequence> [<$name PreparedNonce>]<'a, N> {
+        impl<'a, N: NonceSequence> $name_prep_nonce<'a, N> {
             fn new(key: &'a mut $name<N>) -> Result<Self, Unspecified> {
                 let nonce = key.nonce_sequence.advance()?;
-                Ok(Self {
-                    key,
-                    nonce,
-                })
+                Ok(Self { key, nonce })
             }
         }
 
-        impl<N: NonceSequence> [<$name PreparedNonce>]<'_, N> {
+        impl<N: NonceSequence> $name_prep_nonce<'_, N> {
             /// Returns the prepared Nonce that is used for key methods invoked on [Self].
             #[must_use]
             pub fn nonce(&self) -> &Nonce {
@@ -555,17 +550,17 @@ macro_rules! nonce_seq_key_op_mut {
             }
         }
 
-        impl<N: NonceSequence> Debug for [<$name PreparedNonce>]<'_, N> {
+        impl<N: NonceSequence> Debug for $name_prep_nonce<'_, N> {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-                f.debug_struct(stringify!([<$name PreparedNonce>])).finish_non_exhaustive()
+                f.debug_struct(stringify!($name_prep_nonce))
+                    .finish_non_exhaustive()
             }
-        }
         }
     };
 }
 
-nonce_seq_key_op_mut!(OpeningKey);
-nonce_seq_key_op_mut!(SealingKey);
+nonce_seq_key_op_mut!(OpeningKey, OpeningKeyPreparedNonce);
+nonce_seq_key_op_mut!(SealingKey, SealingKeyPreparedNonce);
 
 impl<N: NonceSequence> OpeningKeyPreparedNonce<'_, N> {
     /// Authenticates and decrypts (“opens”) data in place.
