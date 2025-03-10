@@ -6,7 +6,7 @@
 use crate::buffer::Buffer;
 
 macro_rules! generated_encodings {
-    ($($name:ident, $name_type:ident),*) => {
+    ($(($name:ident, $name_type:ident)),*) => {
         use core::fmt::{Debug, Error, Formatter};
         use core::ops::Deref;
         mod buffer_type {
@@ -55,22 +55,14 @@ macro_rules! generated_encodings {
 }
 pub(crate) use generated_encodings;
 generated_encodings!(
-    EcPrivateKeyBin,
-    EcPrivateKeyBinType,
-    EcPrivateKeyRfc5915Der,
-    EcPrivateKeyRfc5915DerType,
-    EcPublicKeyUncompressedBin,
-    EcPublicKeyUncompressedBinType,
-    EcPublicKeyCompressedBin,
-    EcPublicKeyCompressedBinType,
-    PublicKeyX509Der,
-    PublicKeyX509DerType,
-    Curve25519SeedBin,
-    Curve25519SeedBinType,
-    Pkcs8V1Der,
-    Pkcs8V1DerType,
-    Pkcs8V2Der,
-    Pkcs8V2DerType
+    (EcPrivateKeyBin, EcPrivateKeyBinType),
+    (EcPrivateKeyRfc5915Der, EcPrivateKeyRfc5915DerType),
+    (EcPublicKeyUncompressedBin, EcPublicKeyUncompressedBinType),
+    (EcPublicKeyCompressedBin, EcPublicKeyCompressedBinType),
+    (PublicKeyX509Der, PublicKeyX509DerType),
+    (Curve25519SeedBin, Curve25519SeedBinType),
+    (Pkcs8V1Der, Pkcs8V1DerType),
+    (Pkcs8V2Der, Pkcs8V2DerType)
 );
 
 /// Trait for types that can be serialized into a DER format.

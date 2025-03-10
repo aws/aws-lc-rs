@@ -289,7 +289,7 @@ where
     }
 }
 
-generated_encodings!(EncapsulationKeyBytes, EncapsulationKeyBytesType);
+generated_encodings!((EncapsulationKeyBytes, EncapsulationKeyBytesType));
 
 /// A serializable encapsulation key usable with KEM algorithms. Constructed
 /// from either a `DecapsulationKey` or raw bytes.
