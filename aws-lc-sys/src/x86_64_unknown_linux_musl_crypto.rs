@@ -111,7 +111,7 @@ pub const AWSLC_VERSION_NAME: &[u8; 7] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
 pub const AWSLC_API_VERSION: i32 = 32;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.48.1\0";
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.48.2\0";
 pub const AES_ENCRYPT: i32 = 1;
 pub const AES_DECRYPT: i32 = 0;
 pub const AES_MAXNR: i32 = 14;
@@ -132,7 +132,7 @@ pub const CRYPTO_LOCK: i32 = 1;
 pub const CRYPTO_UNLOCK: i32 = 2;
 pub const CRYPTO_READ: i32 = 4;
 pub const CRYPTO_WRITE: i32 = 8;
-pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.48.1)\0";
+pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.48.2)\0";
 pub const OPENSSL_VERSION: i32 = 0;
 pub const OPENSSL_CFLAGS: i32 = 1;
 pub const OPENSSL_BUILT_ON: i32 = 2;
@@ -6818,13 +6818,6 @@ extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    #[link_name = "\u{1}aws_lc_0_27_0_BIO_get_mem_data"]
-    pub fn BIO_get_mem_data(
-        bio: *mut BIO,
-        contents: *mut *mut ::std::os::raw::c_char,
-    ) -> ::std::os::raw::c_long;
-}
-extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_BIO_get_mem_ptr"]
     pub fn BIO_get_mem_ptr(bio: *mut BIO, out: *mut *mut BUF_MEM) -> ::std::os::raw::c_int;
 }
@@ -7634,6 +7627,10 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_BN_num_bytes"]
     pub fn BN_num_bytes(bn: *const BIGNUM) -> ::std::os::raw::c_uint;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_27_0_BN_get_minimal_width"]
+    pub fn BN_get_minimal_width(bn: *const BIGNUM) -> ::std::os::raw::c_int;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_BN_zero"]
@@ -24909,6 +24906,10 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_X509_TRUST_get_trust"]
     pub fn X509_TRUST_get_trust(xp: *const X509_TRUST) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_27_0_X509_TRUST_cleanup"]
+    pub fn X509_TRUST_cleanup();
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_27_0_X509_OBJECT_get0_X509_CRL"]
