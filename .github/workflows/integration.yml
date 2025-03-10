@@ -65,6 +65,28 @@ jobs:
         run: |
           ./scripts/run-rustls-integration.sh
 
+  windows-debug-crt-static-test:
+    if: github.repository_owner == 'aws'
+    name: "Windows debug w/ crt-static Test"
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: run-windows-debug-crt-static-test
+        working-directory: ./aws-lc-rs
+        shell: bash
+        run: |
+          ./scripts/run-windows-debug-crt-static-test.sh
+
   links-crate-tests:
     if: github.repository_owner == 'aws'
     name: sys crate tests
