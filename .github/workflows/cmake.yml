@@ -1,0 +1,37 @@
+name: CMake Compatability
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+env:
+  DOCKER_BUILDKIT: 1
+  GOPROXY: https://proxy.golang.org,direct
+jobs:
+  cmake:
+    if: github.repository_owner == 'aws'
+    name: CMake ${{ matrix.cmake.version}} build with ${{ matrix.generator}}
+    strategy:
+      fail-fast: false
+      matrix:
+        cmake:
+          - { version: "3.5", url: "https://cmake.org/files/v3.5/cmake-3.5.0.tar.gz", hash: "92c83ad8a4fd6224cf6319a60b399854f55b38ebe9d297c942408b792b1a9efa" }
+          - { version: "3.28", url: "https://cmake.org/files/v3.28/cmake-3.28.1.tar.gz", hash: "15e94f83e647f7d620a140a7a5da76349fc47a1bfed66d0f5cdee8e7344079ad" }
+          - { version: "4.0", url: "https://cmake.org/files/v4.0/cmake-4.0.0-rc3.tar.gz", hash: "d1ae66637fb083efde5c12b45a76ab9bcd419970979c93b14a0d0d21eb8c6c08" }
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Build Docker Image
+        working-directory: .github/docker_images/cmake_build_versions
+        run: |
+          docker build -t "cmake-${{ matrix.cmake.version }}" --build-arg CMAKE_VERSION=${{ matrix.cmake.version }} --build-arg CMAKE_DOWNLOAD_URL=${{ matrix.cmake.url }} --build-arg CMAKE_SHA256=${{ matrix.cmake.hash }} .
+      - name: Test
+        run: |
+          docker run -v "${{ github.workspace }}:/aws_lc_rs" "cmake-${{ matrix.cmake.version }}"
