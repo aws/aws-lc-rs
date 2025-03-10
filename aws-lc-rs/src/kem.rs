@@ -289,9 +289,7 @@ where
     }
 }
 
-use paste::paste;
-
-generated_encodings!(EncapsulationKeyBytes);
+generated_encodings!((EncapsulationKeyBytes, EncapsulationKeyBytesType));
 
 /// A serializable encapsulation key usable with KEM algorithms. Constructed
 /// from either a `DecapsulationKey` or raw bytes.
