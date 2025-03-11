@@ -236,7 +236,6 @@ BIO_get_fd
 BIO_get_fp
 BIO_get_init
 BIO_get_md_ctx
-BIO_get_mem_data
 BIO_get_mem_ptr
 BIO_get_new_index
 BIO_get_retry_flags
@@ -394,6 +393,7 @@ BN_from_montgomery
 BN_gcd
 BN_generate_prime_ex
 BN_get_flags
+BN_get_minimal_width
 BN_get_rfc3526_prime_1536
 BN_get_rfc3526_prime_2048
 BN_get_rfc3526_prime_3072
@@ -952,6 +952,7 @@ EC_hash_to_curve_p384_xmd_sha384_sswu
 ED25519_check_public_key
 ED25519_keypair
 ED25519_keypair_from_seed
+ED25519_keypair_internal
 ED25519_sign
 ED25519_sign_no_self_test
 ED25519_verify
@@ -2538,6 +2539,7 @@ X509_STORE_set_trust
 X509_STORE_set_verify_cb
 X509_STORE_unlock
 X509_STORE_up_ref
+X509_TRUST_cleanup
 X509_TRUST_get0
 X509_TRUST_get0_name
 X509_TRUST_get_by_id
