@@ -27,6 +27,8 @@ pub(crate) struct CcBuilder {
     output_lib_type: OutputLibType,
 }
 
+use std::thread::sleep;
+use std::time::Duration;
 use std::{env, fs};
 
 pub(crate) struct Library {
@@ -334,24 +336,41 @@ impl CcBuilder {
         use core::str::FromStr;
         cc_build.file(PathBuf::from_str("rust_wrapper.c").unwrap());
 
+        // s2n_bignum is compiled separately due to needing extra flags
+        let mut s2n_bignum_builder = cc_build.clone();
+        s2n_bignum_builder.flag(&format!(
+            "--include={}",
+            self.manifest_dir
+                .join("generated-include")
+                .join("openssl")
+                .join("boringssl_prefix_symbols_asm.h")
+                .display()
+        ));
+        s2n_bignum_builder.define("S2N_BN_HIDE_SYMBOLS", "1");
+        let mut cc_preprocessor = self.create_builder();
         for source in lib.sources {
             let source_path = self.manifest_dir.join("aws-lc").join(source);
-            let is_asm = std::path::Path::new(source)
-                .extension()
-                .map_or(false, |ext| ext.eq("S"));
-            if is_asm && target_vendor() == "apple" && target_arch() == "aarch64" {
-                let mut cc_preprocessor = self.create_builder();
-                cc_preprocessor.file(source_path);
-                let preprocessed_asm = String::from_utf8(cc_preprocessor.expand()).unwrap();
-                let preprocessed_asm = preprocessed_asm.replace(';', "\n\t");
-                let asm_output_path = self.out_dir.join(source);
-                fs::create_dir_all(asm_output_path.parent().unwrap()).unwrap();
-                fs::write(asm_output_path.clone(), preprocessed_asm).unwrap();
-                cc_build.file(asm_output_path);
+            let is_s2n_bignum = std::path::Path::new(source).starts_with("third_party/s2n-bignum");
+
+            if is_s2n_bignum {
+                let asm_output_path = if target_vendor() == "apple" && target_arch() == "aarch64" {
+                    let asm_output_path = self.out_dir.join(source);
+                    let mut cc_preprocessor = cc_preprocessor.clone();
+                    cc_preprocessor.file(source_path);
+                    let preprocessed_asm = String::from_utf8(cc_preprocessor.expand()).unwrap();
+                    let preprocessed_asm = preprocessed_asm.replace(';', "\n\t");
+                    fs::create_dir_all(asm_output_path.parent().unwrap()).unwrap();
+                    fs::write(asm_output_path.clone(), preprocessed_asm).unwrap();
+                    asm_output_path
+                } else {
+                    source_path.clone()
+                };
+                s2n_bignum_builder.file(asm_output_path);
             } else {
                 cc_build.file(source_path);
             }
         }
+        s2n_bignum_builder.compile("s2n_bignum");
     }
 
     fn build_library(&self, lib: &Library) {
