@@ -55,14 +55,16 @@ macro_rules! generated_encodings {
 }
 pub(crate) use generated_encodings;
 generated_encodings!(
+    (Curve25519SeedBin, Curve25519SeedBinType),
     (EcPrivateKeyBin, EcPrivateKeyBinType),
     (EcPrivateKeyRfc5915Der, EcPrivateKeyRfc5915DerType),
-    (EcPublicKeyUncompressedBin, EcPublicKeyUncompressedBinType),
     (EcPublicKeyCompressedBin, EcPublicKeyCompressedBinType),
-    (PublicKeyX509Der, PublicKeyX509DerType),
-    (Curve25519SeedBin, Curve25519SeedBinType),
+    (EcPublicKeyUncompressedBin, EcPublicKeyUncompressedBinType),
     (Pkcs8V1Der, Pkcs8V1DerType),
-    (Pkcs8V2Der, Pkcs8V2DerType)
+    (Pkcs8V2Der, Pkcs8V2DerType),
+    (PqdsaPrivateKeyRaw, PqdsaPrivateKeyRawType),
+    (PqdsaSeedRaw, PqdsaSeedRawType),
+    (PublicKeyX509Der, PublicKeyX509DerType)
 );
 
 /// Trait for types that can be serialized into a DER format.
@@ -81,4 +83,13 @@ pub trait AsBigEndian<T> {
     /// # Errors
     /// Returns Unspecified if serialization fails.
     fn as_be_bytes(&self) -> Result<T, crate::error::Unspecified>;
+}
+
+/// Trait for values that can be serialized into a raw format
+pub trait AsRawBytes<T> {
+    /// Serializes into a raw format.
+    ///
+    /// # Errors
+    /// Returns Unspecified if serialization fails.
+    fn as_raw_bytes(&self) -> Result<T, crate::error::Unspecified>;
 }
