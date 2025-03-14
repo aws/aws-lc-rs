@@ -78,6 +78,10 @@ jobs:
       - if: ${{ matrix.target[1] == 1 }}
         name: Cross-compilation (test FIPS release)
         run: cross test -p aws-lc-rs --release --no-default-features --features fips --target ${{ matrix.target[0] }}
+      - name: Cross-compilation (test aws-lc-sys ssl feature)
+        run: |
+          unset AWS_LC_SYS_EXTERNAL_BINDGEN
+          cross test -p aws-lc-sys --features ssl --target ${{ matrix.target[0] }}
 
   aws-lc-rs-cross-0_2_5-test:
     if: github.repository_owner == 'aws'
