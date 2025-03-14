@@ -5,7 +5,7 @@ Dump of file chacha-x86_64.obj
 
 File Type: COFF OBJECT
 
-aws_lc_0_27_0_ChaCha20_ctr32_nohw:
+aws_lc_0_27_1_ChaCha20_ctr32_nohw:
   0000000000000000: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
   0000000000000005: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
   000000000000000A: 48 89 E0           mov         rax,rsp
@@ -315,7 +315,7 @@ L$SEH_end_ChaCha20_ctr32_nohw:
   00000000000003DD: 90                 nop
   00000000000003DE: 90                 nop
   00000000000003DF: 90                 nop
-aws_lc_0_27_0_ChaCha20_ctr32_ssse3:
+aws_lc_0_27_1_ChaCha20_ctr32_ssse3:
   00000000000003E0: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
   00000000000003E5: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
   00000000000003EA: 48 89 E0           mov         rax,rsp
@@ -501,7 +501,7 @@ L$SEH_end_ChaCha20_ctr32_ssse3:
   000000000000063D: 90                 nop
   000000000000063E: 90                 nop
   000000000000063F: 90                 nop
-aws_lc_0_27_0_ChaCha20_ctr32_ssse3_4x:
+aws_lc_0_27_1_ChaCha20_ctr32_ssse3_4x:
   0000000000000640: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
   0000000000000645: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
   000000000000064A: 48 89 E0           mov         rax,rsp
@@ -512,72 +512,74 @@ L$SEH_begin_ChaCha20_ctr32_ssse3_4x:
   0000000000000656: 4C 89 C9           mov         rcx,r9
   0000000000000659: 4C 8B 44 24 28     mov         r8,qword ptr [rsp+28h]
   000000000000065E: 49 89 E1           mov         r9,rsp
-  0000000000000661: 4D 89 D3           mov         r11,r10
-  0000000000000664: 48 81 EC E8 01 00  sub         rsp,1E8h
+  0000000000000661: 48 81 EC E8 01 00  sub         rsp,1E8h
                     00
-  000000000000066B: 41 0F 29 B1 58 FF  movaps      xmmword ptr [r9-0A8h],xmm6
+  0000000000000668: 41 0F 29 B1 58 FF  movaps      xmmword ptr [r9-0A8h],xmm6
                     FF FF
-  0000000000000673: 41 0F 29 B9 68 FF  movaps      xmmword ptr [r9-98h],xmm7
+  0000000000000670: 41 0F 29 B9 68 FF  movaps      xmmword ptr [r9-98h],xmm7
                     FF FF
-  000000000000067B: 45 0F 29 81 78 FF  movaps      xmmword ptr [r9-88h],xmm8
+  0000000000000678: 45 0F 29 81 78 FF  movaps      xmmword ptr [r9-88h],xmm8
                     FF FF
-  0000000000000683: 45 0F 29 49 88     movaps      xmmword ptr [r9-78h],xmm9
-  0000000000000688: 45 0F 29 51 98     movaps      xmmword ptr [r9-68h],xmm10
-  000000000000068D: 45 0F 29 59 A8     movaps      xmmword ptr [r9-58h],xmm11
-  0000000000000692: 45 0F 29 61 B8     movaps      xmmword ptr [r9-48h],xmm12
-  0000000000000697: 45 0F 29 69 C8     movaps      xmmword ptr [r9-38h],xmm13
-  000000000000069C: 45 0F 29 71 D8     movaps      xmmword ptr [r9-28h],xmm14
-  00000000000006A1: 45 0F 29 79 E8     movaps      xmmword ptr [r9-18h],xmm15
+  0000000000000680: 45 0F 29 49 88     movaps      xmmword ptr [r9-78h],xmm9
+  0000000000000685: 45 0F 29 51 98     movaps      xmmword ptr [r9-68h],xmm10
+  000000000000068A: 45 0F 29 59 A8     movaps      xmmword ptr [r9-58h],xmm11
+  000000000000068F: 45 0F 29 61 B8     movaps      xmmword ptr [r9-48h],xmm12
+  0000000000000694: 45 0F 29 69 C8     movaps      xmmword ptr [r9-38h],xmm13
+  0000000000000699: 45 0F 29 71 D8     movaps      xmmword ptr [r9-28h],xmm14
+  000000000000069E: 45 0F 29 79 E8     movaps      xmmword ptr [r9-18h],xmm15
 L$4x_body:
-  00000000000006A6: 66 44 0F 6F 1D A0  movdqa      xmm11,xmmword ptr [.rdata+0A0h]
+  00000000000006A3: 66 44 0F 6F 1D A0  movdqa      xmm11,xmmword ptr [.rdata+0A0h]
                     00 00 00
-  00000000000006AF: F3 44 0F 6F 39     movdqu      xmm15,xmmword ptr [rcx]
-  00000000000006B4: F3 0F 6F 79 10     movdqu      xmm7,xmmword ptr [rcx+10h]
-  00000000000006B9: F3 41 0F 6F 18     movdqu      xmm3,xmmword ptr [r8]
-  00000000000006BE: 48 8D 8C 24 00 01  lea         rcx,[rsp+100h]
+  00000000000006AC: F3 44 0F 6F 39     movdqu      xmm15,xmmword ptr [rcx]
+  00000000000006B1: F3 0F 6F 79 10     movdqu      xmm7,xmmword ptr [rcx+10h]
+  00000000000006B6: F3 41 0F 6F 18     movdqu      xmm3,xmmword ptr [r8]
+  00000000000006BB: 48 8D 8C 24 00 01  lea         rcx,[rsp+100h]
                     00 00
-  00000000000006C6: 4C 8D 15 80 00 00  lea         r10,[.rdata+80h]
+  00000000000006C3: 4C 8D 15 80 00 00  lea         r10,[.rdata+80h]
                     00
-  00000000000006CD: 4C 8D 1D 90 00 00  lea         r11,[.rdata+90h]
+  00000000000006CA: 4C 8D 1D 90 00 00  lea         r11,[.rdata+90h]
                     00
-  00000000000006D4: 66 45 0F 70 C3 00  pshufd      xmm8,xmm11,0
-  00000000000006DA: 66 45 0F 70 CB 55  pshufd      xmm9,xmm11,55h
-  00000000000006E0: 66 44 0F 7F 44 24  movdqa      xmmword ptr [rsp+40h],xmm8
+  00000000000006D1: 66 45 0F 70 C3 00  pshufd      xmm8,xmm11,0
+  00000000000006D7: 66 45 0F 70 CB 55  pshufd      xmm9,xmm11,55h
+  00000000000006DD: 66 44 0F 7F 44 24  movdqa      xmmword ptr [rsp+40h],xmm8
                     40
-  00000000000006E7: 66 45 0F 70 D3 AA  pshufd      xmm10,xmm11,0AAh
-  00000000000006ED: 66 44 0F 7F 4C 24  movdqa      xmmword ptr [rsp+50h],xmm9
+  00000000000006E4: 66 45 0F 70 D3 AA  pshufd      xmm10,xmm11,0AAh
+  00000000000006EA: 66 44 0F 7F 4C 24  movdqa      xmmword ptr [rsp+50h],xmm9
                     50
-  00000000000006F4: 66 45 0F 70 DB FF  pshufd      xmm11,xmm11,0FFh
-  00000000000006FA: 66 44 0F 7F 54 24  movdqa      xmmword ptr [rsp+60h],xmm10
+  00000000000006F1: 66 45 0F 70 DB FF  pshufd      xmm11,xmm11,0FFh
+  00000000000006F7: 66 44 0F 7F 54 24  movdqa      xmmword ptr [rsp+60h],xmm10
                     60
-  0000000000000701: 66 44 0F 7F 5C 24  movdqa      xmmword ptr [rsp+70h],xmm11
+  00000000000006FE: 66 44 0F 7F 5C 24  movdqa      xmmword ptr [rsp+70h],xmm11
                     70
-  0000000000000708: 66 45 0F 70 E7 00  pshufd      xmm12,xmm15,0
-  000000000000070E: 66 45 0F 70 EF 55  pshufd      xmm13,xmm15,55h
-  0000000000000714: 66 44 0F 7F 61 80  movdqa      xmmword ptr [rcx-80h],xmm12
-  000000000000071A: 66 45 0F 70 F7 AA  pshufd      xmm14,xmm15,0AAh
-  0000000000000720: 66 44 0F 7F 69 90  movdqa      xmmword ptr [rcx-70h],xmm13
-  0000000000000726: 66 45 0F 70 FF FF  pshufd      xmm15,xmm15,0FFh
-  000000000000072C: 66 44 0F 7F 71 A0  movdqa      xmmword ptr [rcx-60h],xmm14
-  0000000000000732: 66 44 0F 7F 79 B0  movdqa      xmmword ptr [rcx-50h],xmm15
-  0000000000000738: 66 0F 70 E7 00     pshufd      xmm4,xmm7,0
-  000000000000073D: 66 0F 70 EF 55     pshufd      xmm5,xmm7,55h
-  0000000000000742: 66 0F 7F 61 C0     movdqa      xmmword ptr [rcx-40h],xmm4
-  0000000000000747: 66 0F 70 F7 AA     pshufd      xmm6,xmm7,0AAh
-  000000000000074C: 66 0F 7F 69 D0     movdqa      xmmword ptr [rcx-30h],xmm5
-  0000000000000751: 66 0F 70 FF FF     pshufd      xmm7,xmm7,0FFh
-  0000000000000756: 66 0F 7F 71 E0     movdqa      xmmword ptr [rcx-20h],xmm6
-  000000000000075B: 66 0F 7F 79 F0     movdqa      xmmword ptr [rcx-10h],xmm7
-  0000000000000760: 66 0F 70 C3 00     pshufd      xmm0,xmm3,0
-  0000000000000765: 66 0F 70 CB 55     pshufd      xmm1,xmm3,55h
-  000000000000076A: 66 0F FE 05 20 00  paddd       xmm0,xmmword ptr [.rdata+20h]
+  0000000000000705: 66 45 0F 70 E7 00  pshufd      xmm12,xmm15,0
+  000000000000070B: 66 45 0F 70 EF 55  pshufd      xmm13,xmm15,55h
+  0000000000000711: 66 44 0F 7F 61 80  movdqa      xmmword ptr [rcx-80h],xmm12
+  0000000000000717: 66 45 0F 70 F7 AA  pshufd      xmm14,xmm15,0AAh
+  000000000000071D: 66 44 0F 7F 69 90  movdqa      xmmword ptr [rcx-70h],xmm13
+  0000000000000723: 66 45 0F 70 FF FF  pshufd      xmm15,xmm15,0FFh
+  0000000000000729: 66 44 0F 7F 71 A0  movdqa      xmmword ptr [rcx-60h],xmm14
+  000000000000072F: 66 44 0F 7F 79 B0  movdqa      xmmword ptr [rcx-50h],xmm15
+  0000000000000735: 66 0F 70 E7 00     pshufd      xmm4,xmm7,0
+  000000000000073A: 66 0F 70 EF 55     pshufd      xmm5,xmm7,55h
+  000000000000073F: 66 0F 7F 61 C0     movdqa      xmmword ptr [rcx-40h],xmm4
+  0000000000000744: 66 0F 70 F7 AA     pshufd      xmm6,xmm7,0AAh
+  0000000000000749: 66 0F 7F 69 D0     movdqa      xmmword ptr [rcx-30h],xmm5
+  000000000000074E: 66 0F 70 FF FF     pshufd      xmm7,xmm7,0FFh
+  0000000000000753: 66 0F 7F 71 E0     movdqa      xmmword ptr [rcx-20h],xmm6
+  0000000000000758: 66 0F 7F 79 F0     movdqa      xmmword ptr [rcx-10h],xmm7
+  000000000000075D: 66 0F 70 C3 00     pshufd      xmm0,xmm3,0
+  0000000000000762: 66 0F 70 CB 55     pshufd      xmm1,xmm3,55h
+  0000000000000767: 66 0F FE 05 20 00  paddd       xmm0,xmmword ptr [.rdata+20h]
                     00 00
-  0000000000000772: 66 0F 70 D3 AA     pshufd      xmm2,xmm3,0AAh
-  0000000000000777: 66 0F 7F 49 10     movdqa      xmmword ptr [rcx+10h],xmm1
-  000000000000077C: 66 0F 70 DB FF     pshufd      xmm3,xmm3,0FFh
-  0000000000000781: 66 0F 7F 51 20     movdqa      xmmword ptr [rcx+20h],xmm2
-  0000000000000786: 66 0F 7F 59 30     movdqa      xmmword ptr [rcx+30h],xmm3
-  000000000000078B: E9 73 00 00 00     jmp         L$oop_enter4x
+  000000000000076F: 66 0F 70 D3 AA     pshufd      xmm2,xmm3,0AAh
+  0000000000000774: 66 0F 7F 49 10     movdqa      xmmword ptr [rcx+10h],xmm1
+  0000000000000779: 66 0F 70 DB FF     pshufd      xmm3,xmm3,0FFh
+  000000000000077E: 66 0F 7F 51 20     movdqa      xmmword ptr [rcx+20h],xmm2
+  0000000000000783: 66 0F 7F 59 30     movdqa      xmmword ptr [rcx+30h],xmm3
+  0000000000000788: E9 76 00 00 00     jmp         L$oop_enter4x
+  000000000000078D: 90                 nop
+  000000000000078E: 90                 nop
+  000000000000078F: 90                 nop
   0000000000000790: 90                 nop
   0000000000000791: 90                 nop
   0000000000000792: 90                 nop
@@ -1201,7 +1203,7 @@ L$SEH_end_ChaCha20_ctr32_ssse3_4x:
   000000000000111D: 90                 nop
   000000000000111E: 90                 nop
   000000000000111F: 90                 nop
-aws_lc_0_27_0_ChaCha20_ctr32_avx2:
+aws_lc_0_27_1_ChaCha20_ctr32_avx2:
   0000000000001120: 48 89 7C 24 08     mov         qword ptr [rsp+8],rdi
   0000000000001125: 48 89 74 24 10     mov         qword ptr [rsp+10h],rsi
   000000000000112A: 48 89 E0           mov         rax,rsp
