@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_27_0
+%define BORINGSSL_PREFIX aws_lc_0_27_1
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -1815,10 +1815,13 @@
 %xdefine _PEM_ASN1_write_bio _ %+ BORINGSSL_PREFIX %+ _PEM_ASN1_write_bio
 %xdefine _PEM_X509_INFO_read _ %+ BORINGSSL_PREFIX %+ _PEM_X509_INFO_read
 %xdefine _PEM_X509_INFO_read_bio _ %+ BORINGSSL_PREFIX %+ _PEM_X509_INFO_read_bio
+%xdefine _PEM_X509_INFO_write_bio _ %+ BORINGSSL_PREFIX %+ _PEM_X509_INFO_write_bio
 %xdefine _PEM_bytes_read_bio _ %+ BORINGSSL_PREFIX %+ _PEM_bytes_read_bio
 %xdefine _PEM_def_callback _ %+ BORINGSSL_PREFIX %+ _PEM_def_callback
+%xdefine _PEM_dek_info _ %+ BORINGSSL_PREFIX %+ _PEM_dek_info
 %xdefine _PEM_do_header _ %+ BORINGSSL_PREFIX %+ _PEM_do_header
 %xdefine _PEM_get_EVP_CIPHER_INFO _ %+ BORINGSSL_PREFIX %+ _PEM_get_EVP_CIPHER_INFO
+%xdefine _PEM_proc_type _ %+ BORINGSSL_PREFIX %+ _PEM_proc_type
 %xdefine _PEM_read _ %+ BORINGSSL_PREFIX %+ _PEM_read
 %xdefine _PEM_read_DHparams _ %+ BORINGSSL_PREFIX %+ _PEM_read_DHparams
 %xdefine _PEM_read_DSAPrivateKey _ %+ BORINGSSL_PREFIX %+ _PEM_read_DSAPrivateKey
@@ -2209,7 +2212,11 @@
 %xdefine _SHA512_Update _ %+ BORINGSSL_PREFIX %+ _SHA512_Update
 %xdefine _SHA512_get_state _ %+ BORINGSSL_PREFIX %+ _SHA512_get_state
 %xdefine _SHAKE128 _ %+ BORINGSSL_PREFIX %+ _SHAKE128
+%xdefine _SHAKE128_Absorb_once_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE128_Absorb_once_x4
+%xdefine _SHAKE128_Init_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE128_Init_x4
+%xdefine _SHAKE128_Squeezeblocks_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE128_Squeezeblocks_x4
 %xdefine _SHAKE256 _ %+ BORINGSSL_PREFIX %+ _SHAKE256
+%xdefine _SHAKE256_x4 _ %+ BORINGSSL_PREFIX %+ _SHAKE256_x4
 %xdefine _SHAKE_Absorb _ %+ BORINGSSL_PREFIX %+ _SHAKE_Absorb
 %xdefine _SHAKE_Final _ %+ BORINGSSL_PREFIX %+ _SHAKE_Final
 %xdefine _SHAKE_Init _ %+ BORINGSSL_PREFIX %+ _SHAKE_Init
@@ -5929,10 +5936,13 @@
 %xdefine PEM_ASN1_write_bio BORINGSSL_PREFIX %+ _PEM_ASN1_write_bio
 %xdefine PEM_X509_INFO_read BORINGSSL_PREFIX %+ _PEM_X509_INFO_read
 %xdefine PEM_X509_INFO_read_bio BORINGSSL_PREFIX %+ _PEM_X509_INFO_read_bio
+%xdefine PEM_X509_INFO_write_bio BORINGSSL_PREFIX %+ _PEM_X509_INFO_write_bio
 %xdefine PEM_bytes_read_bio BORINGSSL_PREFIX %+ _PEM_bytes_read_bio
 %xdefine PEM_def_callback BORINGSSL_PREFIX %+ _PEM_def_callback
+%xdefine PEM_dek_info BORINGSSL_PREFIX %+ _PEM_dek_info
 %xdefine PEM_do_header BORINGSSL_PREFIX %+ _PEM_do_header
 %xdefine PEM_get_EVP_CIPHER_INFO BORINGSSL_PREFIX %+ _PEM_get_EVP_CIPHER_INFO
+%xdefine PEM_proc_type BORINGSSL_PREFIX %+ _PEM_proc_type
 %xdefine PEM_read BORINGSSL_PREFIX %+ _PEM_read
 %xdefine PEM_read_DHparams BORINGSSL_PREFIX %+ _PEM_read_DHparams
 %xdefine PEM_read_DSAPrivateKey BORINGSSL_PREFIX %+ _PEM_read_DSAPrivateKey
@@ -6323,7 +6333,11 @@
 %xdefine SHA512_Update BORINGSSL_PREFIX %+ _SHA512_Update
 %xdefine SHA512_get_state BORINGSSL_PREFIX %+ _SHA512_get_state
 %xdefine SHAKE128 BORINGSSL_PREFIX %+ _SHAKE128
+%xdefine SHAKE128_Absorb_once_x4 BORINGSSL_PREFIX %+ _SHAKE128_Absorb_once_x4
+%xdefine SHAKE128_Init_x4 BORINGSSL_PREFIX %+ _SHAKE128_Init_x4
+%xdefine SHAKE128_Squeezeblocks_x4 BORINGSSL_PREFIX %+ _SHAKE128_Squeezeblocks_x4
 %xdefine SHAKE256 BORINGSSL_PREFIX %+ _SHAKE256
+%xdefine SHAKE256_x4 BORINGSSL_PREFIX %+ _SHAKE256_x4
 %xdefine SHAKE_Absorb BORINGSSL_PREFIX %+ _SHAKE_Absorb
 %xdefine SHAKE_Final BORINGSSL_PREFIX %+ _SHAKE_Final
 %xdefine SHAKE_Init BORINGSSL_PREFIX %+ _SHAKE_Init
