@@ -1766,10 +1766,13 @@ PEM_ASN1_write
 PEM_ASN1_write_bio
 PEM_X509_INFO_read
 PEM_X509_INFO_read_bio
+PEM_X509_INFO_write_bio
 PEM_bytes_read_bio
 PEM_def_callback
+PEM_dek_info
 PEM_do_header
 PEM_get_EVP_CIPHER_INFO
+PEM_proc_type
 PEM_read
 PEM_read_DHparams
 PEM_read_DSAPrivateKey
@@ -2158,7 +2161,11 @@ SHA512_Transform
 SHA512_Update
 SHA512_get_state
 SHAKE128
+SHAKE128_Absorb_once_x4
+SHAKE128_Init_x4
+SHAKE128_Squeezeblocks_x4
 SHAKE256
+SHAKE256_x4
 SHAKE_Absorb
 SHAKE_Final
 SHAKE_Init
