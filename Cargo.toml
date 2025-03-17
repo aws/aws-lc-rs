@@ -11,6 +11,7 @@ exclude = [
     "scripts/tools/semver.rs",
     "scripts/tools/target-platform.rs",
     "scripts/tests/assert_cpu_jitter_entropy.rs",
+    "scripts/tests/prefix_test.rs"
 ]
 resolver = "2"
 
