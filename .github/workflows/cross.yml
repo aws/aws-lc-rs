@@ -79,6 +79,12 @@ jobs:
         name: Cross-compilation (test FIPS release)
         run: cross test -p aws-lc-rs --release --no-default-features --features fips --target ${{ matrix.target[0] }}
       - name: Cross-compilation (test aws-lc-sys ssl feature)
+        # There's a bug in the clang "atomic" header
+        # It was reported here: https://reviews.llvm.org/D75183
+        # It was finally fixed here: https://reviews.llvm.org/D118391
+        # Instead of trying to hack around this, we just won't test building libssl on that platform.
+        # We should update this test once cross-rs has an updated docker image for this target.
+        if: ${{ matrix.target[0] != 'arm-linux-androideabi' }}
         run: |
           unset AWS_LC_SYS_EXTERNAL_BINDGEN
           cross test -p aws-lc-sys --features ssl --target ${{ matrix.target[0] }}
