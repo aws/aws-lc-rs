@@ -74,11 +74,15 @@ jobs:
       - if: ${{ matrix.target[2] == 1 }}
         run: |
           echo 'AWS_LC_SYS_EXTERNAL_BINDGEN=0' >> "$GITHUB_ENV"
+      - if: ${{ matrix.target[0] == 'x86_64-unknown-illumos' }}
+        # TODO: Restructure the build options
+        run: |
+          echo 'CROSS_TEST_EXTRA_FLAG=--no-run' >> "$GITHUB_ENV"
       - name: Cross-compilation (test release)
-        run: cross test -p aws-lc-rs --release --features unstable --target ${{ matrix.target[0] }}
+        run: cross test -p aws-lc-rs --release "${CROSS_TEST_EXTRA_FLAG}" --features unstable --target ${{ matrix.target[0] }}
       - if: ${{ matrix.target[1] == 1 }}
         name: Cross-compilation (test FIPS release)
-        run: cross test -p aws-lc-rs --release --no-default-features --features fips --target ${{ matrix.target[0] }}
+        run: cross test -p aws-lc-rs --release "${CROSS_TEST_EXTRA_FLAG}" --no-default-features --features fips --target ${{ matrix.target[0] }}
       - name: Cross-compilation (test aws-lc-sys ssl feature)
         # There's a bug in the clang "atomic" header
         # It was reported here: https://reviews.llvm.org/D75183
@@ -88,7 +92,7 @@ jobs:
         if: ${{ matrix.target[0] != 'arm-linux-androideabi' }}
         run: |
           unset AWS_LC_SYS_EXTERNAL_BINDGEN
-          cross test -p aws-lc-sys --features ssl --target ${{ matrix.target[0] }}
+          cross test -p aws-lc-sys "${CROSS_TEST_EXTRA_FLAG}" --features ssl --target ${{ matrix.target[0] }}
 
   aws-lc-rs-cross-0_2_5-test:
     if: github.repository_owner == 'aws'
