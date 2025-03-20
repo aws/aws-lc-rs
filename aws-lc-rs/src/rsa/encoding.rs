@@ -76,7 +76,7 @@ pub(in crate::rsa) mod rfc8017 {
 ///
 /// Encodings that use the `SubjectPublicKeyInfo` structure.
 pub(in crate::rsa) mod rfc5280 {
-    use crate::aws_lc::{EVP_PKEY, EVP_PKEY_RSA};
+    use crate::aws_lc::{EVP_PKEY, EVP_PKEY_RSA, EVP_PKEY_RSA_PSS};
     use crate::buffer::Buffer;
     use crate::encoding::PublicKeyX509Der;
     use crate::error::{KeyRejected, Unspecified};
@@ -92,6 +92,9 @@ pub(in crate::rsa) mod rfc5280 {
     pub(in crate::rsa) fn decode_public_key_der(
         value: &[u8],
     ) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-        LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(value, EVP_PKEY_RSA)
+        LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(value, EVP_PKEY_RSA).or(
+            // Does anyone encode with this OID?
+            LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(value, EVP_PKEY_RSA_PSS),
+        )
     }
 }

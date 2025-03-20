@@ -4,6 +4,8 @@ UNAME_S := $(shell uname -s)
 
 AWS_LC_RS_COV_EXTRA_FEATURES := unstable
 
+export AWS_LC_RS_DISABLE_SLOW_TESTS := 1
+
 asan:
 # TODO: This build target produces linker error on Mac.
 # Run specific tests:

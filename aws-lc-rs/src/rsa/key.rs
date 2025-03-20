@@ -12,7 +12,7 @@ use crate::aws_lc::{
 };
 #[cfg(feature = "ring-io")]
 use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
-use crate::encoding::{AsDer, Pkcs8V1Der};
+use crate::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
 use crate::error::{KeyRejected, Unspecified};
 #[cfg(feature = "ring-io")]
 use crate::io;
@@ -32,6 +32,7 @@ use core::ptr::null_mut;
 use std::os::raw::c_int;
 
 use crate::pkcs8::Version;
+use crate::rsa::encoding::{rfc5280, rfc8017};
 use crate::rsa::signature::configure_rsa_pkcs1_pss_padding;
 #[cfg(feature = "ring-io")]
 use untrusted::Input;
@@ -288,7 +289,7 @@ impl Drop for PublicKey {
 }
 
 impl PublicKey {
-    pub(super) fn new(evp_pkey: &LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
+    pub(super) fn new(evp_pkey: &LcPtr<EVP_PKEY>) -> Result<Self, KeyRejected> {
         let key = encoding::rfc8017::encode_public_key_der(evp_pkey)?;
         #[cfg(feature = "ring-io")]
         {
@@ -307,6 +308,21 @@ impl PublicKey {
         #[cfg(not(feature = "ring-io"))]
         Ok(PublicKey { key })
     }
+
+    /// Parses an RSA public key from either RFC8017 or RFC5280
+    /// # Errors
+    /// `KeyRejected` if the encoding is not for a valid RSA key.
+    pub fn from_der(input: &[u8]) -> Result<Self, KeyRejected> {
+        // These both invoke `RSA_check_key`:
+        // https://github.com/aws/aws-lc/blob/4368aaa6975ba41bd76d3bb12fac54c4680247fb/crypto/rsa_extra/rsa_asn1.c#L105-L109
+        let evp_pkey =
+            rfc8017::decode_public_key_der(input).or(rfc5280::decode_public_key_der(input))?;
+        if is_rsa_key(&evp_pkey) {
+            PublicKey::new(&evp_pkey)
+        } else {
+            Err(KeyRejected::wrong_algorithm())
+        }
+    }
 }
 
 impl Debug for PublicKey {
@@ -322,6 +338,14 @@ impl AsRef<[u8]> for PublicKey {
     /// DER encode a RSA public key to (RFC 8017) `RSAPublicKey` structure.
     fn as_ref(&self) -> &[u8] {
         self.key.as_ref()
+    }
+}
+
+impl AsDer<PublicKeyX509Der<'static>> for PublicKey {
+    fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
+        // TODO: refactor
+        let evp_pkey = rfc8017::decode_public_key_der(self.as_ref())?;
+        rfc5280::encode_public_key_der(&evp_pkey)
     }
 }
 
