@@ -274,3 +274,20 @@ jobs:
           VERSION=$(scripts/tools/cargo-dig.rs aws-lc-fips-sys/Cargo.toml -v)
           LINKS_LINE=$(echo links = \"aws_lc_fips_${VERSION//./_}\")
           grep "${LINKS_LINE}" aws-lc-fips-sys/Cargo.toml
+  symbol-conflicts:
+    if: github.repository_owner == 'aws'
+    name: Verify prefixing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: nightly
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Run assert script
+        run: ./scripts/tests/prefix_test.rs
