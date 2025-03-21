@@ -819,16 +819,33 @@ fn min_encrypt_key() {
     const PUBLIC_KEY: &[u8] = include_bytes!("data/rsa_test_public_key_2048.x509");
 
     let parsed_private_key = PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect("key supported");
+    let signing_priv_key = RsaKeyPair::from_pkcs8(PRIVATE_KEY).expect("key supported");
     let parsed_public_key = PublicEncryptingKey::from_der(PUBLIC_KEY).expect("key supported");
+    let parsed_signing_public_key =
+        RsaSubjectPublicKey::from_der(PUBLIC_KEY).expect("key supported");
 
-    let public_key = parsed_private_key.public_key();
+    let derived_public_key = parsed_private_key.public_key();
+    let derived_signing_public_key = signing_priv_key.public_key();
 
     let private_key_bytes =
         AsDer::<Pkcs8V1Der>::as_der(&parsed_private_key).expect("serializeable");
-    let public_key_bytes = AsDer::<PublicKeyX509Der>::as_der(&public_key).expect("serializeable");
+    let signing_private_key_bytes =
+        AsDer::<Pkcs8V1Der>::as_der(&signing_priv_key).expect("serializeable");
+    let parsed_public_key_bytes =
+        AsDer::<PublicKeyX509Der>::as_der(&parsed_public_key).expect("serializeable");
+    let parsed_signing_public_key_bytes =
+        AsDer::<PublicKeyX509Der>::as_der(&parsed_signing_public_key).expect("serializeable");
+    let derived_public_key_bytes =
+        AsDer::<PublicKeyX509Der>::as_der(&derived_public_key).expect("serializeable");
+    let derived_signing_public_key_bytes =
+        AsDer::<PublicKeyX509Der>::as_der(derived_signing_public_key).expect("serializeable");
 
     assert_eq!(PRIVATE_KEY, private_key_bytes.as_ref());
-    assert_eq!(PUBLIC_KEY, public_key_bytes.as_ref());
+    assert_eq!(PRIVATE_KEY, signing_private_key_bytes.as_ref());
+    assert_eq!(PUBLIC_KEY, parsed_public_key_bytes.as_ref());
+    assert_eq!(PUBLIC_KEY, parsed_signing_public_key_bytes.as_ref());
+    assert_eq!(PUBLIC_KEY, derived_public_key_bytes.as_ref());
+    assert_eq!(PUBLIC_KEY, derived_signing_public_key_bytes.as_ref());
 
     let oaep_parsed_private =
         OaepPrivateDecryptingKey::new(parsed_private_key.clone()).expect("supported key");
