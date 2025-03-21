@@ -315,13 +315,9 @@ impl PublicKey {
     pub fn from_der(input: &[u8]) -> Result<Self, KeyRejected> {
         // These both invoke `RSA_check_key`:
         // https://github.com/aws/aws-lc/blob/4368aaa6975ba41bd76d3bb12fac54c4680247fb/crypto/rsa_extra/rsa_asn1.c#L105-L109
-        let evp_pkey =
-            rfc8017::decode_public_key_der(input).or(rfc5280::decode_public_key_der(input))?;
-        if is_rsa_key(&evp_pkey) {
-            PublicKey::new(&evp_pkey)
-        } else {
-            Err(KeyRejected::wrong_algorithm())
-        }
+        PublicKey::new(
+            &rfc8017::decode_public_key_der(input).or(rfc5280::decode_public_key_der(input))?,
+        )
     }
 }
 
