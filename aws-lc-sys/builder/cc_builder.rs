@@ -377,16 +377,15 @@ impl CcBuilder {
             cc_build.flag(flag);
         }
         self.run_compiler_checks(&mut cc_build);
-        let mut archiver = cc_build.clone();
 
-        let mut object_files = self.add_all_files(lib, &mut cc_build);
-        object_files.extend(cc_build.compile_intermediates());
-
-        archiver.objects(object_files);
+        let object_files = self.add_all_files(lib, &mut cc_build);
+        for object in object_files {
+            cc_build.object(object);
+        }
         if let Some(prefix) = &self.build_prefix {
-            archiver.compile(format!("{}_crypto", prefix.as_str()).as_str());
+            cc_build.compile(format!("{}_crypto", prefix.as_str()).as_str());
         } else {
-            archiver.compile(lib.name);
+            cc_build.compile(lib.name);
         }
     }
 
