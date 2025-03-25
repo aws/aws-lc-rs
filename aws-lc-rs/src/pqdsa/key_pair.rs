@@ -10,7 +10,7 @@ use crate::constant_time::verify_slices_are_equal;
 use crate::encoding::{
     AsBigEndian, AsDer, AsRawBytes, Pkcs8V1Der, PqdsaPrivateKeyRaw, PqdsaSeedRaw,
 };
-use crate::error::Unspecified;
+use crate::error::{KeyRejected, Unspecified};
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
 use crate::pkcs8;
 use crate::pkcs8::{Document, Version};
@@ -106,7 +106,7 @@ impl PqdsaKeyPair {
     pub fn from_pkcs8(
         algorithm: &'static PqdsaSigningAlgorithm,
         pkcs8: &[u8],
-    ) -> Result<Self, Unspecified> {
+    ) -> Result<Self, KeyRejected> {
         let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8, EVP_PKEY_PQDSA)?;
         validate_pqdsa_evp_key(&evp_pkey, algorithm.0.id)?;
         let pubkey = PublicKey::from_private_evp_pkey(&evp_pkey)?;
@@ -124,7 +124,7 @@ impl PqdsaKeyPair {
     pub fn from_raw_private_key(
         algorithm: &'static PqdsaSigningAlgorithm,
         raw_private_key: &[u8],
-    ) -> Result<Self, Unspecified> {
+    ) -> Result<Self, KeyRejected> {
         let evp_pkey = LcPtr::<EVP_PKEY>::parse_raw_private_key(raw_private_key, EVP_PKEY_PQDSA)?;
         validate_pqdsa_evp_key(&evp_pkey, algorithm.0.id)?;
         let pubkey = PublicKey::from_private_evp_pkey(&evp_pkey)?;
@@ -148,7 +148,10 @@ impl PqdsaKeyPair {
     pub fn from_raw_seed(
         algorithm: &'static PqdsaSigningAlgorithm,
         raw_seed: &[u8],
-    ) -> Result<Self, Unspecified> {
+    ) -> Result<Self, KeyRejected> {
+        if raw_seed.len() != algorithm.0.id.seed_bytes() {
+            return Err(KeyRejected::invalid_encoding());
+        }
         let evp_pkey = LcPtr::<EVP_PKEY>::new(unsafe {
             EVP_PKEY_pqdsa_new_raw_private_key(
                 algorithm.0.id.nid(),

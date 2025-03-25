@@ -74,6 +74,10 @@ impl AlgorithmID {
             Self::MLDSA_87 => 4627,
         }
     }
+
+    pub(crate) const fn seed_bytes(&self) -> usize {
+       32
+    }
 }
 
 pub(crate) fn validate_pqdsa_evp_key(

@@ -257,7 +257,7 @@ impl LcPtr<EVP_PKEY> {
                 }),
                 _ => Err(()),
             }
-            .map_err(|()| KeyRejected::unspecified());
+            .map_err(|()| KeyRejected::invalid_encoding());
         }
 
         Self::new(unsafe {
