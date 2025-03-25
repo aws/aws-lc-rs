@@ -4,25 +4,10 @@
 pub(crate) mod key_pair;
 pub(crate) mod signature;
 
-use crate::aws_lc::{
-    d2i_PrivateKey, CBB_init, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_pqdsa_set_params,
-    EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_new,
-    EVP_PKEY_pqdsa_new_raw_private_key, EVP_PKEY_pqdsa_new_raw_public_key, EVP_marshal_private_key,
-    EVP_marshal_public_key, EVP_parse_public_key, CBB, EVP_PKEY, EVP_PKEY_EC, EVP_PKEY_PQDSA,
-    NID_MLDSA44, NID_MLDSA65, NID_MLDSA87,
-};
-use crate::cbb::LcCBB;
-use crate::cbs::build_CBS;
-use crate::digest;
-use crate::digest::digest_ctx::DigestContext;
-use crate::ec::encoding::sec1::parse_sec1_public_point;
-use crate::ec::validate_ec_evp_key;
+use crate::aws_lc::{EVP_PKEY, EVP_PKEY_PQDSA, NID_MLDSA44, NID_MLDSA65, NID_MLDSA87};
 use crate::error::{KeyRejected, Unspecified};
-use crate::evp_pkey::*;
-use crate::fips::indicator_check;
 use crate::ptr::LcPtr;
 use std::os::raw::c_int;
-use std::ptr::null_mut;
 
 #[derive(Debug, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
@@ -33,6 +18,7 @@ pub(crate) enum AlgorithmID {
 }
 
 impl AlgorithmID {
+    #[allow(dead_code)]
     pub(crate) const fn from_nid(nid: c_int) -> Result<Self, Unspecified> {
         match nid {
             NID_MLDSA44 => Ok(Self::MLDSA_44),
@@ -50,6 +36,7 @@ impl AlgorithmID {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) const fn priv_key_size_bytes(&self) -> usize {
         match self {
             Self::MLDSA_44 => 2560,
@@ -103,14 +90,13 @@ mod tests {
     use crate::aws_lc::{
         EVP_PKEY_cmp, EVP_PKEY, EVP_PKEY_PQDSA, NID_MLDSA44, NID_MLDSA65, NID_MLDSA87,
     };
-    use crate::digest;
+
     use crate::evp_pkey::*;
-    use crate::hmac::sign;
+
     use crate::pkcs8::Version;
     use crate::pqdsa::key_pair::evp_key_pqdsa_generate;
     use crate::pqdsa::AlgorithmID;
     use crate::ptr::LcPtr;
-    use std::ffi::c_int;
 
     #[test]
     fn test_keygen() {

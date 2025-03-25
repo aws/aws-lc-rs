@@ -1,15 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aws_lc::{
-    EVP_PKEY_CTX_pqdsa_set_params, EVP_PKEY_new_raw_private_key,
-    EVP_PKEY_pqdsa_new_raw_private_key, EVP_PKEY, EVP_PKEY_PQDSA,
-};
-use crate::buffer::Buffer;
-use crate::constant_time::verify_slices_are_equal;
-use crate::encoding::{
-    AsBigEndian, AsDer, AsRawBytes, Pkcs8V1Der, PqdsaPrivateKeyRaw, PqdsaSeedRaw,
-};
+use crate::aws_lc::{EVP_PKEY_CTX_pqdsa_set_params, EVP_PKEY, EVP_PKEY_PQDSA};
+use crate::encoding::{AsDer, AsRawBytes, Pkcs8V1Der, PqdsaPrivateKeyRaw};
 use crate::error::{KeyRejected, Unspecified};
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
 use crate::pkcs8;
@@ -20,7 +13,6 @@ use crate::ptr::LcPtr;
 use crate::signature::KeyPair;
 use core::fmt::{Debug, Formatter};
 use std::ffi::c_int;
-use std::ptr::null_mut;
 
 /// A PQDSA (Post-Quantum Digital Signature Algorithm) key pair, used for signing and verification.
 #[allow(clippy::module_name_repetitions)]
@@ -178,14 +170,9 @@ pub(crate) fn evp_key_pqdsa_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unsp
 #[cfg(all(test, feature = "unstable"))]
 mod tests {
     use super::*;
-    use crate::pqdsa::signature::PqdsaVerificationAlgorithm;
-    use crate::pqdsa::AlgorithmID;
-    use crate::pqdsa::AlgorithmID::MLDSA_44;
-    use crate::rand::{SecureRandom, SystemRandom};
+
     use crate::signature::{UnparsedPublicKey, VerificationAlgorithm};
-    use crate::unstable::signature::{
-        PqdsaPublicKey, MLDSA_44_SIGNING, MLDSA_65_SIGNING, MLDSA_87_SIGNING,
-    };
+    use crate::unstable::signature::{MLDSA_44_SIGNING, MLDSA_65_SIGNING, MLDSA_87_SIGNING};
 
     const TEST_ALGORITHMS: &[&PqdsaSigningAlgorithm] =
         &[&MLDSA_44_SIGNING, &MLDSA_65_SIGNING, &MLDSA_87_SIGNING];
@@ -228,7 +215,6 @@ mod tests {
             #[cfg(feature = "ring-sig-verify")]
             #[allow(deprecated)]
             {
-                use untrusted::Input;
                 assert!(alg
                     .0
                     .verify(
@@ -247,14 +233,15 @@ mod tests {
             // Generate a new key pair
             let keypair = PqdsaKeyPair::generate(alg).unwrap();
             let message = b"Test message";
-            let different_message = b"Different message";
             let mut original_signature = vec![0; alg.signature_len()];
             let sig_len = keypair.sign(message, &mut original_signature).unwrap();
             assert_eq!(sig_len, alg.signature_len());
 
             let public_key = keypair.public_key();
             let unparsed_public_key = UnparsedPublicKey::new(alg.0, public_key.as_ref());
-            unparsed_public_key.verify(message, original_signature.as_ref());
+            unparsed_public_key
+                .verify(message, original_signature.as_ref())
+                .unwrap();
 
             let pkcs8_1 = keypair.to_pkcs8().unwrap();
             let pkcs8_2 = keypair.private_key().as_der().unwrap();

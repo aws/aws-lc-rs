@@ -1,17 +1,15 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aws_lc::{EVP_PKEY_CTX_pqdsa_set_params, EVP_PKEY};
+use crate::aws_lc::EVP_PKEY;
 use crate::buffer::Buffer;
-use crate::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
+use crate::encoding::{AsDer, PublicKeyX509Der};
 use crate::error::Unspecified;
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
-use crate::pqdsa::key_pair::PqdsaKeyPair;
 use crate::pqdsa::{parse_pqdsa_public_key, AlgorithmID};
 use crate::ptr::LcPtr;
 use crate::sealed;
 use crate::signature::VerificationAlgorithm;
-use aws_lc_sys::EVP_PKEY_PQDSA;
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 #[cfg(feature = "ring-sig-verify")]
