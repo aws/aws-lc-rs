@@ -330,7 +330,7 @@ impl CcBuilder {
         cc_build
     }
 
-    fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) {
+    fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) -> Vec<PathBuf> {
         use core::str::FromStr;
         cc_build.file(PathBuf::from_str("rust_wrapper.c").unwrap());
 
@@ -368,23 +368,25 @@ impl CcBuilder {
                 cc_build.file(source_path);
             }
         }
-        s2n_bignum_builder.compile("s2n_bignum");
+        s2n_bignum_builder.compile_intermediates()
     }
 
     fn build_library(&self, lib: &Library) {
         let mut cc_build = self.prepare_builder();
-
-        self.add_all_files(lib, &mut cc_build);
-
         for flag in lib.flags {
             cc_build.flag(flag);
         }
         self.run_compiler_checks(&mut cc_build);
+        let mut archiver = cc_build.clone();
 
+        let mut object_files = self.add_all_files(lib, &mut cc_build);
+        object_files.extend(cc_build.compile_intermediates());
+
+        archiver.objects(object_files);
         if let Some(prefix) = &self.build_prefix {
-            cc_build.compile(format!("{}_crypto", prefix.as_str()).as_str());
+            archiver.compile(format!("{}_crypto", prefix.as_str()).as_str());
         } else {
-            cc_build.compile(lib.name);
+            archiver.compile(lib.name);
         }
     }
 
