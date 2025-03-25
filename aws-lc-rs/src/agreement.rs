@@ -410,7 +410,7 @@ impl PrivateKey {
                 let len = marshal_sec1_public_point_into_buffer(&mut public_key, evp_pkey, false)?;
                 Ok(PublicKey {
                     inner_key: self.inner_key.clone(),
-                    public_key,
+                    key_bytes: public_key,
                     len,
                 })
             }
@@ -419,7 +419,7 @@ impl PrivateKey {
                 let out_len = priv_key.marshal_raw_public_to_buffer(&mut buffer)?;
                 Ok(PublicKey {
                     inner_key: self.inner_key.clone(),
-                    public_key: buffer,
+                    key_bytes: buffer,
                     len: out_len,
                 })
             }
@@ -522,7 +522,7 @@ const MAX_PUBLIC_KEY_LEN: usize = ec::PUBLIC_KEY_MAX_LEN;
 /// A public key for key agreement.
 pub struct PublicKey {
     inner_key: KeyInner,
-    public_key: [u8; MAX_PUBLIC_KEY_LEN],
+    key_bytes: [u8; MAX_PUBLIC_KEY_LEN],
     len: usize,
 }
 
@@ -542,7 +542,7 @@ impl Debug for PublicKey {
         f.write_str(&format!(
             "PublicKey {{ algorithm: {:?}, bytes: \"{}\" }}",
             self.inner_key.algorithm(),
-            hex::encode(&self.public_key[0..self.len])
+            hex::encode(&self.key_bytes[0..self.len])
         ))
     }
 }
@@ -552,7 +552,7 @@ impl AsRef<[u8]> for PublicKey {
     /// Octet-String-to-Elliptic-Curve-Point algorithm in
     /// [SEC 1: Elliptic Curve Cryptography, Version 2.0].
     fn as_ref(&self) -> &[u8] {
-        &self.public_key[0..self.len]
+        &self.key_bytes[0..self.len]
     }
 }
 
@@ -560,7 +560,7 @@ impl Clone for PublicKey {
     fn clone(&self) -> Self {
         PublicKey {
             inner_key: self.inner_key.clone(),
-            public_key: self.public_key,
+            key_bytes: self.key_bytes,
             len: self.len,
         }
     }
@@ -614,7 +614,7 @@ impl AsBigEndian<EcPublicKeyUncompressedBin<'static>> for PublicKey {
         }
 
         let mut buffer = vec![0u8; self.len];
-        buffer.copy_from_slice(&self.public_key[0..self.len]);
+        buffer.copy_from_slice(&self.key_bytes[0..self.len]);
 
         Ok(EcPublicKeyUncompressedBin::new(buffer))
     }

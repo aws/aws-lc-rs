@@ -155,8 +155,8 @@ impl Context {
 
         Ok(Digest {
             algorithm: self.algorithm,
-            digest_msg: output,
-            digest_len: self.algorithm.output_len,
+            message: output,
+            len: self.algorithm.output_len,
         })
     }
 
@@ -199,8 +199,8 @@ pub fn digest(algorithm: &'static Algorithm, data: &[u8]) -> Digest {
 
     Digest {
         algorithm,
-        digest_msg: output,
-        digest_len: algorithm.output_len,
+        message: output,
+        len: algorithm.output_len,
     }
 }
 
@@ -211,8 +211,8 @@ pub fn digest(algorithm: &'static Algorithm, data: &[u8]) -> Digest {
 pub struct Digest {
     /// The trait `Copy` can't be implemented for dynamic arrays, so we set a
     /// fixed array and the appropriate length.
-    digest_msg: [u8; MAX_OUTPUT_LEN],
-    digest_len: usize,
+    message: [u8; MAX_OUTPUT_LEN],
+    len: usize,
 
     algorithm: &'static Algorithm,
 }
@@ -229,7 +229,7 @@ impl Digest {
 impl AsRef<[u8]> for Digest {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        &self.digest_msg[..self.digest_len]
+        &self.message[..self.len]
     }
 }
 
