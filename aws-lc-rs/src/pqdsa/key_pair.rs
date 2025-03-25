@@ -47,18 +47,6 @@ impl KeyPair for PqdsaKeyPair {
     }
 }
 
-/// A PQDSA seed.
-pub struct PqdsaSeed<'a>(&'a PqdsaKeyPair);
-
-// impl AsRawBytes<PqdsaSeedRaw<'static>> for PqdsaSeed<'_> {
-//     fn as_raw_bytes(&self) -> Result<PqdsaSeedRaw<'static>, Unspecified> {
-//         Ok(PqdsaSeedRaw::new(
-//             // Pending: https://github.com/aws/aws-lc/pull/2194
-//             todo!(),
-//         ))
-//     }
-// }
-
 /// A PQDSA private key.
 pub struct PqdsaPrivateKey<'a>(pub(crate) &'a PqdsaKeyPair);
 
@@ -135,39 +123,6 @@ impl PqdsaKeyPair {
         })
     }
 
-    /// Constructs a key pair from a raw seed.
-    ///
-    /// It is recommended to use `PqdsaKeyPair::from_pkcs8()` instead. If the public key is
-    /// available, prefer to use `PqdsaKeyPair::from_seed_and_public_key()` as it will verify
-    /// the validity of the key pair.
-    ///
-    /// CAUTION: MLDSA-44, MLDSA-65 and MLDSA-87 all use a 32-byte seed.
-    ///
-    /// # Errors
-    /// Returns `Unspecified` if the key is not valid for the specified signing algorithm.
-    pub fn from_raw_seed(
-        algorithm: &'static PqdsaSigningAlgorithm,
-        raw_seed: &[u8],
-    ) -> Result<Self, KeyRejected> {
-        if raw_seed.len() != algorithm.0.id.seed_bytes() {
-            return Err(KeyRejected::invalid_encoding());
-        }
-        let evp_pkey = LcPtr::<EVP_PKEY>::new(unsafe {
-            EVP_PKEY_pqdsa_new_raw_private_key(
-                algorithm.0.id.nid(),
-                raw_seed.as_ptr(),
-                raw_seed.len(),
-            )
-        })?;
-        validate_pqdsa_evp_key(&evp_pkey, algorithm.0.id)?;
-        let pubkey = PublicKey::from_private_evp_pkey(&evp_pkey)?;
-        Ok(Self {
-            algorithm,
-            evp_pkey,
-            pubkey,
-        })
-    }
-
     /// Serializes the private key to PKCS#8 v1 DER.
     ///
     /// # Errors
@@ -202,12 +157,6 @@ impl PqdsaKeyPair {
     #[must_use]
     pub fn private_key(&self) -> PqdsaPrivateKey {
         PqdsaPrivateKey(self)
-    }
-
-    /// Returns the seed value for this key pair. The private key can be derived from this value.
-    #[must_use]
-    pub fn seed(&self) -> PqdsaSeed {
-        PqdsaSeed(self)
     }
 }
 
@@ -317,33 +266,6 @@ mod tests {
             let raw_keypair = PqdsaKeyPair::from_raw_private_key(alg, raw.as_ref()).unwrap();
 
             assert_eq!(pkcs8_keypair.evp_pkey, raw_keypair.evp_pkey);
-        }
-    }
-
-    #[test]
-    fn test_marshaling_from_seed() {
-        let rnd = SystemRandom::new();
-        for &alg in TEST_ALGORITHMS {
-            // Generate a new key pair
-            let mut seed = [0u8; 32];
-            rnd.fill(&mut seed).unwrap();
-
-            let keypair = PqdsaKeyPair::from_raw_seed(alg, &seed).unwrap();
-            let duplicate_keypair = PqdsaKeyPair::from_raw_seed(alg, &seed).unwrap();
-            assert_eq!(keypair.evp_pkey, duplicate_keypair.evp_pkey);
-
-            let message = b"Test message";
-            let different_message = b"Different message";
-            let mut original_signature = vec![0; alg.signature_len()];
-            let sig_len = keypair.sign(message, &mut original_signature).unwrap();
-            assert_eq!(sig_len, alg.signature_len());
-
-            let public_key = keypair.public_key();
-            let duplicate_public_key = duplicate_keypair.public_key();
-            assert_eq!(public_key.as_ref(), duplicate_public_key.as_ref());
-
-            let unparsed_public_key = UnparsedPublicKey::new(alg.0, public_key.as_ref());
-            unparsed_public_key.verify(message, original_signature.as_ref());
         }
     }
 

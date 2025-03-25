@@ -13,16 +13,13 @@ macro_rules! mldsa_keygen_test {
     ($file:literal, $signing:expr) => {
         test::run(test_file!($file), |section, test_case| {
             assert_eq!(section, "");
-            let seed = test_case.consume_bytes("SEED");
+            let _seed = test_case.consume_bytes("SEED");
             let public = test_case.consume_bytes("PUBLIC");
             let secret = test_case.consume_bytes("SECRET");
 
-            let key_pair_seed = PqdsaKeyPair::from_raw_seed($signing, seed.as_slice())?;
             let key_pair_secret = PqdsaKeyPair::from_raw_private_key($signing, secret.as_slice())?;
-            let public_seed = key_pair_seed.public_key();
             let public_secret = key_pair_secret.public_key();
-            assert_eq!(public_seed.as_ref(), public_secret.as_ref());
-            assert_eq!(public_seed.as_ref(), public.as_slice());
+            assert_eq!(public.as_slice(), public_secret.as_ref());
 
             Ok(())
         });

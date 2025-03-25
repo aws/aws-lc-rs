@@ -1,6 +1,5 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-#![allow(unused)]
 
 pub(crate) mod key_pair;
 pub(crate) mod signature;
@@ -73,10 +72,6 @@ impl AlgorithmID {
             Self::MLDSA_65 => 3309,
             Self::MLDSA_87 => 4627,
         }
-    }
-
-    pub(crate) const fn seed_bytes(&self) -> usize {
-       32
     }
 }
 

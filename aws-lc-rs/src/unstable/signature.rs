@@ -35,7 +35,7 @@
 //! ```
 //!
 
-pub use crate::pqdsa::key_pair::{PqdsaKeyPair, PqdsaPrivateKey, PqdsaSeed};
+pub use crate::pqdsa::key_pair::{PqdsaKeyPair, PqdsaPrivateKey};
 pub use crate::pqdsa::signature::{
     PqdsaSigningAlgorithm, PqdsaVerificationAlgorithm, PublicKey as PqdsaPublicKey,
 };
