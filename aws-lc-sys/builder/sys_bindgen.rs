@@ -65,7 +65,11 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bi
         .allowlist_file(r".*(/|\\)openssl((/|\\)[^/\\]+)+\.h")
         .allowlist_file(r".*(/|\\)rust_wrapper\.h")
         .rustified_enum(r"point_conversion_form_t")
-        .rust_target(bindgen::RustTarget::Stable_1_59)
+        .rust_target(
+            bindgen::RustTarget::stable(59, 0)
+                .map_err(|x| x.to_string())
+                .unwrap(),
+        )
         .default_macro_constant_type(bindgen::MacroTypeVariation::Signed)
         .generate_comments(true)
         .fit_macro_constants(false)
