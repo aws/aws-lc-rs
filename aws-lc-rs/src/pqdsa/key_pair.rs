@@ -79,7 +79,7 @@ impl PqdsaKeyPair {
         })
     }
 
-    /// Parses a PKCS#8 key from the specified bytes.
+    /// Constructs a key pair from the parsing of PKCS#8.
     ///
     /// # Errors
     /// Returns `Unspecified` if the key is not valid for the specified signing algorithm.
@@ -97,7 +97,7 @@ impl PqdsaKeyPair {
         })
     }
 
-    /// Constructs a key pair from a raw private key.
+    /// Constructs a key pair from raw private key bytes.
     ///
     /// # Errors
     /// Returns `Unspecified` if the key is not valid for the specified signing algorithm.
@@ -125,7 +125,8 @@ impl PqdsaKeyPair {
         ))
     }
 
-    /// Uses this key to sign the message provided.
+    /// Uses this key to sign the message provided. The signature is written to the `signature`
+    /// slice provided. It returns the length of the signature on success.
     ///
     /// # Errors
     /// Returns `Unspecified` if signing fails.
