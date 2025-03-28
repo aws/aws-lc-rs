@@ -33,9 +33,8 @@ macro_rules! mldsa_sigver_test {
             let public_key = test_case.consume_bytes("PUBLIC");
             let message = test_case.consume_bytes("MESSAGE");
             let signature = test_case.consume_bytes("SIGNATURE");
-            let context = test_case.consume_bytes("CONTEXT");
+            let _context = test_case.consume_bytes("CONTEXT");
             let expected_result = test_case.consume_bool("RESULT");
-
 
             let result =
                 $verification.verify_sig(public_key.as_ref(), message.as_ref(), signature.as_ref());
