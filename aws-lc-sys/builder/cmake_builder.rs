@@ -5,8 +5,9 @@ use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
-    get_crate_cflags, is_crt_static, is_no_asm, option_env, target_arch, target_env, target_os,
-    target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm, OutputLibType,
+    get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src, option_env, target_arch,
+    target_env, target_os, target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm,
+    OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -111,9 +112,15 @@ impl CmakeBuilder {
         } else {
             cmake_cfg.define("BUILD_LIBSSL", "OFF");
         }
-        // Build flags that minimize our dependencies.
-        cmake_cfg.define("DISABLE_PERL", "ON");
-        cmake_cfg.define("DISABLE_GO", "ON");
+        if is_no_pregenerated_src() {
+            // Go and Perl will be required.
+            cmake_cfg.define("DISABLE_PERL", "OFF");
+            cmake_cfg.define("DISABLE_GO", "OFF");
+        } else {
+            // Build flags that minimize our dependencies.
+            cmake_cfg.define("DISABLE_PERL", "ON");
+            cmake_cfg.define("DISABLE_GO", "ON");
+        }
 
         if is_no_asm() {
             let opt_level = cargo_env("OPT_LEVEL");

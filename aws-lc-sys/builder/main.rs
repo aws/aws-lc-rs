@@ -360,7 +360,7 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
         ))
     };
 
-    if let Some(val) = env_var_to_bool("AWS_LC_SYS_CMAKE_BUILDER") {
+    if let Some(val) = is_cmake_builder() {
         let builder: Box<dyn Builder> = if val {
             cmake_builder_builder()
         } else {
@@ -420,6 +420,8 @@ static mut AWS_LC_SYS_EXTERNAL_BINDGEN: bool = false;
 static mut AWS_LC_SYS_NO_ASM: bool = false;
 static mut AWS_LC_SYS_CFLAGS: String = String::new();
 static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
+static mut AWS_LC_SYS_CMAKE_BUILDER: Option<bool> = None;
+static mut AWS_LC_SYS_NO_PREGENERATED_SRC: bool = false;
 
 static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
 
@@ -434,6 +436,9 @@ fn initialize() {
         AWS_LC_SYS_CFLAGS = option_env("AWS_LC_SYS_CFLAGS").unwrap_or_default();
         AWS_LC_SYS_PREBUILT_NASM = env_var_to_bool("AWS_LC_SYS_PREBUILT_NASM");
         AWS_LC_SYS_C_STD = CStdRequested::from_env();
+        AWS_LC_SYS_CMAKE_BUILDER = env_var_to_bool("AWS_LC_SYS_CMAKE_BUILDER");
+        AWS_LC_SYS_NO_PREGENERATED_SRC =
+            env_var_to_bool("AWS_LC_SYS_NO_PREGENERATED_SRC").unwrap_or(false);
     }
 
     if !is_external_bindgen() && (is_pregenerating_bindings() || !has_bindgen_feature()) {
@@ -493,6 +498,18 @@ fn is_external_bindgen() -> bool {
 
 fn is_no_asm() -> bool {
     unsafe { AWS_LC_SYS_NO_ASM }
+}
+
+fn is_cmake_builder() -> Option<bool> {
+    if is_no_pregenerated_src() {
+        Some(true)
+    } else {
+        unsafe { AWS_LC_SYS_CMAKE_BUILDER }
+    }
+}
+
+fn is_no_pregenerated_src() -> bool {
+    unsafe { AWS_LC_SYS_NO_PREGENERATED_SRC }
 }
 
 #[allow(unknown_lints)]
