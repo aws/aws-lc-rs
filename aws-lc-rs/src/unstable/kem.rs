@@ -10,6 +10,7 @@ pub use crate::kem::{ML_KEM_1024, ML_KEM_512, ML_KEM_768};
 
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, PartialEq)]
+/// TODO: Remove
 pub enum AlgorithmId {}
 
 impl crate::kem::AlgorithmIdentifier for AlgorithmId {

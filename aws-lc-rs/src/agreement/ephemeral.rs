@@ -41,7 +41,7 @@ impl EphemeralPrivateKey {
     }
 
     #[cfg(test)]
-    #[allow(clippy::missing_errors_doc, missing_docs)]
+    #[allow(missing_docs, clippy::missing_errors_doc)]
     pub fn generate_for_test(
         alg: &'static Algorithm,
         rng: &dyn SecureRandom,
