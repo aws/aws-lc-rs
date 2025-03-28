@@ -19,6 +19,7 @@ include = [
     "/aws-lc/**/CMakeLists.txt",
     "/aws-lc/**/*.cmake",
     "/aws-lc/**/*.errordata",
+    "/aws-lc/**/*.go",
     "/aws-lc/**/*.lds",
     "!/aws-lc/bindings/**",
     "!/aws-lc/docs/**",
