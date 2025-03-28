@@ -1,9 +1,9 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec/encoding.rs`."><title>encoding.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0-nightly (a2e63569f 2025-03-26)" data-channel="nightly" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../../static.files/storage-82c7156e.js"></script><script defer src="../../../static.files/src-script-63605ae7.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/ec/</div>encoding.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec/encoding.rs`."><title>encoding.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0-nightly (3f5502370 2025-03-27)" data-channel="nightly" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../../static.files/storage-82c7156e.js"></script><script defer src="../../../static.files/src-script-63605ae7.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/ec/</div>encoding.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 <a href=#2 id=2 data-nosnippet>2</a>// SPDX-License-Identifier: Apache-2.0 OR ISC
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a></span><span class="kw">use </span><span class="kw">crate</span>::aws_lc::{EVP_PKEY, EVP_PKEY_EC};
 <a href=#5 id=5 data-nosnippet>5</a><span class="kw">use </span><span class="kw">crate</span>::ec::encoding::sec1::parse_sec1_public_point;
-<a href=#6 id=6 data-nosnippet>6</a><span class="kw">use </span><span class="kw">crate</span>::ec::validate_evp_key;
+<a href=#6 id=6 data-nosnippet>6</a><span class="kw">use </span><span class="kw">crate</span>::ec::validate_ec_evp_key;
 <a href=#7 id=7 data-nosnippet>7</a>
 <a href=#8 id=8 data-nosnippet>8</a><span class="kw">use </span><span class="kw">crate</span>::error::KeyRejected;
 <a href=#9 id=9 data-nosnippet>9</a><span class="kw">use </span><span class="kw">crate</span>::ptr::LcPtr;
@@ -23,7 +23,7 @@
 <a href=#23 id=23 data-nosnippet>23</a>    <span class="kw">use </span><span class="kw">crate</span>::cbb::LcCBB;
 <a href=#24 id=24 data-nosnippet>24</a>    <span class="kw">use </span><span class="kw">crate</span>::ec::{
 <a href=#25 id=25 data-nosnippet>25</a>        compressed_public_key_size_bytes, ec_group_from_nid, uncompressed_public_key_size_bytes,
-<a href=#26 id=26 data-nosnippet>26</a>        validate_evp_key, KeyRejected,
+<a href=#26 id=26 data-nosnippet>26</a>        validate_ec_evp_key, KeyRejected,
 <a href=#27 id=27 data-nosnippet>27</a>    };
 <a href=#28 id=28 data-nosnippet>28</a>    <span class="kw">use </span><span class="kw">crate</span>::error::Unspecified;
 <a href=#29 id=29 data-nosnippet>29</a>    <span class="kw">use </span><span class="kw">crate</span>::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
@@ -72,7 +72,7 @@
 <a href=#72 id=72 data-nosnippet>72</a>
 <a href=#73 id=73 data-nosnippet>73</a>        ec_key.detach();
 <a href=#74 id=74 data-nosnippet>74</a>
-<a href=#75 id=75 data-nosnippet>75</a>        validate_evp_key(<span class="kw-2">&amp;</span>pkey.as_const(), nid)<span class="question-mark">?</span>;
+<a href=#75 id=75 data-nosnippet>75</a>        validate_ec_evp_key(<span class="kw-2">&amp;</span>pkey.as_const(), nid)<span class="question-mark">?</span>;
 <a href=#76 id=76 data-nosnippet>76</a>
 <a href=#77 id=77 data-nosnippet>77</a>        <span class="prelude-val">Ok</span>(pkey)
 <a href=#78 id=78 data-nosnippet>78</a>    }
@@ -126,7 +126,7 @@
 <a href=#126 id=126 data-nosnippet>126</a>        ec_key.detach();
 <a href=#127 id=127 data-nosnippet>127</a>
 <a href=#128 id=128 data-nosnippet>128</a>        <span class="comment">// Validate the EC_KEY before returning it.
-<a href=#129 id=129 data-nosnippet>129</a>        </span>validate_evp_key(<span class="kw-2">&amp;</span>pkey.as_const(), expected_curve_nid)<span class="question-mark">?</span>;
+<a href=#129 id=129 data-nosnippet>129</a>        </span>validate_ec_evp_key(<span class="kw-2">&amp;</span>pkey.as_const(), expected_curve_nid)<span class="question-mark">?</span>;
 <a href=#130 id=130 data-nosnippet>130</a>
 <a href=#131 id=131 data-nosnippet>131</a>        <span class="prelude-val">Ok</span>(pkey)
 <a href=#132 id=132 data-nosnippet>132</a>    }
@@ -250,5 +250,5 @@
 <a href=#250 id=250 data-nosnippet>250</a>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, KeyRejected&gt; {
 <a href=#251 id=251 data-nosnippet>251</a>    LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
 <a href=#252 id=252 data-nosnippet>252</a>        .or(parse_sec1_public_point(key_bytes, expected_curve_nid))
-<a href=#253 id=253 data-nosnippet>253</a>        .and_then(|key| validate_evp_key(<span class="kw-2">&amp;</span>key.as_const(), expected_curve_nid).map(|()| key))
+<a href=#253 id=253 data-nosnippet>253</a>        .and_then(|key| validate_ec_evp_key(<span class="kw-2">&amp;</span>key.as_const(), expected_curve_nid).map(|()| key))
 <a href=#254 id=254 data-nosnippet>254</a>}</code></pre></div></section></main></body></html>

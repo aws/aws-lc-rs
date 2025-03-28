@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/hkdf.rs`."><title>hkdf.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0-nightly (a2e63569f 2025-03-26)" data-channel="nightly" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../static.files/storage-82c7156e.js"></script><script defer src="../../static.files/src-script-63605ae7.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>hkdf.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2015 Brian Smith.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/hkdf.rs`."><title>hkdf.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0-nightly (3f5502370 2025-03-27)" data-channel="nightly" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../static.files/storage-82c7156e.js"></script><script defer src="../../static.files/src-script-63605ae7.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>hkdf.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2015 Brian Smith.
 <a href=#2 id=2 data-nosnippet>2</a>// SPDX-License-Identifier: ISC
 <a href=#3 id=3 data-nosnippet>3</a>// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 <a href=#4 id=4 data-nosnippet>4</a>// SPDX-License-Identifier: Apache-2.0 OR ISC
@@ -93,8 +93,8 @@
 <a href=#93 id=93 data-nosnippet>93</a><span class="doccomment">/// A salt for HKDF operations.
 <a href=#94 id=94 data-nosnippet>94</a></span><span class="kw">pub struct </span>Salt {
 <a href=#95 id=95 data-nosnippet>95</a>    algorithm: Algorithm,
-<a href=#96 id=96 data-nosnippet>96</a>    salt_bytes: [u8; MAX_HKDF_SALT_LEN],
-<a href=#97 id=97 data-nosnippet>97</a>    salt_len: usize,
+<a href=#96 id=96 data-nosnippet>96</a>    bytes: [u8; MAX_HKDF_SALT_LEN],
+<a href=#97 id=97 data-nosnippet>97</a>    len: usize,
 <a href=#98 id=98 data-nosnippet>98</a>}
 <a href=#99 id=99 data-nosnippet>99</a>
 <a href=#100 id=100 data-nosnippet>100</a><span class="attr">#[allow(clippy::missing_fields_in_debug)]
@@ -108,7 +108,7 @@
 <a href=#108 id=108 data-nosnippet>108</a>
 <a href=#109 id=109 data-nosnippet>109</a><span class="kw">impl </span>Drop <span class="kw">for </span>Salt {
 <a href=#110 id=110 data-nosnippet>110</a>    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#111 id=111 data-nosnippet>111</a>        <span class="self">self</span>.salt_bytes.zeroize();
+<a href=#111 id=111 data-nosnippet>111</a>        <span class="self">self</span>.bytes.zeroize();
 <a href=#112 id=112 data-nosnippet>112</a>    }
 <a href=#113 id=113 data-nosnippet>113</a>}
 <a href=#114 id=114 data-nosnippet>114</a>
@@ -144,8 +144,8 @@
 <a href=#144 id=144 data-nosnippet>144</a>        salt_bytes[<span class="number">0</span>..salt_len].copy_from_slice(value);
 <a href=#145 id=145 data-nosnippet>145</a>        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
 <a href=#146 id=146 data-nosnippet>146</a>            algorithm,
-<a href=#147 id=147 data-nosnippet>147</a>            salt_bytes,
-<a href=#148 id=148 data-nosnippet>148</a>            salt_len,
+<a href=#147 id=147 data-nosnippet>147</a>            bytes: salt_bytes,
+<a href=#148 id=148 data-nosnippet>148</a>            len: salt_len,
 <a href=#149 id=149 data-nosnippet>149</a>        })
 <a href=#150 id=150 data-nosnippet>150</a>    }
 <a href=#151 id=151 data-nosnippet>151</a>
@@ -162,8 +162,8 @@
 <a href=#162 id=162 data-nosnippet>162</a>            algorithm: <span class="self">self</span>.algorithm,
 <a href=#163 id=163 data-nosnippet>163</a>            mode: PrkMode::ExtractExpand {
 <a href=#164 id=164 data-nosnippet>164</a>                secret: Arc::from(ZeroizeBoxSlice::from(secret)),
-<a href=#165 id=165 data-nosnippet>165</a>                salt: <span class="self">self</span>.salt_bytes,
-<a href=#166 id=166 data-nosnippet>166</a>                salt_len: <span class="self">self</span>.salt_len,
+<a href=#165 id=165 data-nosnippet>165</a>                salt: <span class="self">self</span>.bytes,
+<a href=#166 id=166 data-nosnippet>166</a>                salt_len: <span class="self">self</span>.len,
 <a href=#167 id=167 data-nosnippet>167</a>            },
 <a href=#168 id=168 data-nosnippet>168</a>        }
 <a href=#169 id=169 data-nosnippet>169</a>    }
@@ -187,8 +187,8 @@
 <a href=#187 id=187 data-nosnippet>187</a>        okm.fill(<span class="kw-2">&amp;mut </span>salt_bytes[..salt_len]).unwrap();
 <a href=#188 id=188 data-nosnippet>188</a>        <span class="self">Self </span>{
 <a href=#189 id=189 data-nosnippet>189</a>            algorithm,
-<a href=#190 id=190 data-nosnippet>190</a>            salt_bytes,
-<a href=#191 id=191 data-nosnippet>191</a>            salt_len,
+<a href=#190 id=190 data-nosnippet>190</a>            bytes: salt_bytes,
+<a href=#191 id=191 data-nosnippet>191</a>            len: salt_len,
 <a href=#192 id=192 data-nosnippet>192</a>        }
 <a href=#193 id=193 data-nosnippet>193</a>    }
 <a href=#194 id=194 data-nosnippet>194</a>}
