@@ -40,6 +40,7 @@ include = [
     "/CMakeLists.txt",
     "/builder/**/*.rs",
     "/builder/**/*.bat",
+    "/builder/**/*.sh",
     "/builder/**/*.obj",
     "/Cargo.toml",
     "/generated-include/**",
