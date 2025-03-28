@@ -21,7 +21,11 @@ pub(in crate::rsa) mod rfc8017 {
         let mut pubkey_bytes = null_mut::<u8>();
         let mut outlen: usize = 0;
         if 1 != unsafe {
-            RSA_public_key_to_bytes(&mut pubkey_bytes, &mut outlen, *pubkey.as_const().get_rsa()?)
+            RSA_public_key_to_bytes(
+                &mut pubkey_bytes,
+                &mut outlen,
+                *pubkey.as_const().get_rsa()?,
+            )
         } {
             return Err(Unspecified);
         }
