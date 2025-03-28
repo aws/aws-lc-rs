@@ -51,7 +51,8 @@ impl AsDer<Pkcs8V1Der<'static>> for PqdsaPrivateKey<'_> {
         Ok(Pkcs8V1Der::new(
             self.0
                 .evp_pkey
-                .as_const().marshal_rfc5208_private_key(pkcs8::Version::V1)?,
+                .as_const()
+                .marshal_rfc5208_private_key(pkcs8::Version::V1)?,
         ))
     }
 }
@@ -121,7 +122,9 @@ impl PqdsaKeyPair {
     /// Returns `Unspecified` if serialization fails.
     pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
         Ok(Document::new(
-            self.evp_pkey.as_const().marshal_rfc5208_private_key(Version::V1)?,
+            self.evp_pkey
+                .as_const()
+                .marshal_rfc5208_private_key(Version::V1)?,
         ))
     }
 

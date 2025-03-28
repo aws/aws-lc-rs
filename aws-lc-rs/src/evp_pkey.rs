@@ -189,7 +189,6 @@ impl ConstPointer<'_, EVP_PKEY> {
             Err(Unspecified)
         }
     }
-
 }
 
 impl LcPtr<EVP_PKEY> {
