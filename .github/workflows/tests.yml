@@ -553,19 +553,25 @@ jobs:
   cmake-source-path-has-spaces:
     if: github.repository_owner == 'aws'
     name:
-      "Spaces in path (CMake) - ${{ matrix.os }}"
+      "Spaces in path (CMake) - ${{ matrix.os }} - pregen-src: ${{ matrix.pregen_src }}"
     runs-on: ${{ matrix.os }}
     env:
       AWS_LC_SYS_CMAKE_BUILDER: 1
+      AWS_LC_SYS_NO_PREGENERATED_SRC: ${{ matrix.pregen_src }}
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
+        pregen_src: [ 0, 1 ]
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
           path: "path has spaces/aws-lc-rs"
+      - if: ${{ matrix.pregen_src == 1 }}
+        shell: bash
+        run: |
+          rm -rf ./aws-lc-sys/aws-lc/generated-src/*
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
       - uses: dtolnay/rust-toolchain@stable
