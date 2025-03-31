@@ -36,7 +36,6 @@ macro_rules! mldsa_sigver_test {
             let context = test_case.consume_bytes("CONTEXT");
             let expected_result = test_case.consume_bool("RESULT");
 
-
             let result =
                 $verification.verify_sig(public_key.as_ref(), message.as_ref(), signature.as_ref());
             if expected_result {
