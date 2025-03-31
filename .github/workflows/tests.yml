@@ -513,7 +513,7 @@ jobs:
           brew update
           brew uninstall --force llvm
           brew install llvm@19
-          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> "$GITHUB_ENV"
+          echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm@19/lib' >> "$GITHUB_ENV"
       - name: aws-lc-sys bindgen build
         working-directory: ./aws-lc-sys
         run: cargo test --features bindgen
