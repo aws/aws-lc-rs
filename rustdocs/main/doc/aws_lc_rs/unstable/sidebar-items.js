@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["kdf","kem"]};
+window.SIDEBAR_ITEMS = {};
