@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_27_2
+%define BORINGSSL_PREFIX aws_lc_0_28_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -1922,6 +1922,7 @@
 %xdefine _PKCS5_PBKDF2_HMAC_SHA1 _ %+ BORINGSSL_PREFIX %+ _PKCS5_PBKDF2_HMAC_SHA1
 %xdefine _PKCS5_pbe2_decrypt_init _ %+ BORINGSSL_PREFIX %+ _PKCS5_pbe2_decrypt_init
 %xdefine _PKCS5_pbe2_encrypt_init _ %+ BORINGSSL_PREFIX %+ _PKCS5_pbe2_encrypt_init
+%xdefine _PKCS7_ATTR_VERIFY_it _ %+ BORINGSSL_PREFIX %+ _PKCS7_ATTR_VERIFY_it
 %xdefine _PKCS7_DIGEST_free _ %+ BORINGSSL_PREFIX %+ _PKCS7_DIGEST_free
 %xdefine _PKCS7_DIGEST_it _ %+ BORINGSSL_PREFIX %+ _PKCS7_DIGEST_it
 %xdefine _PKCS7_DIGEST_new _ %+ BORINGSSL_PREFIX %+ _PKCS7_DIGEST_new
@@ -6117,6 +6118,7 @@
 %xdefine PKCS5_PBKDF2_HMAC_SHA1 BORINGSSL_PREFIX %+ _PKCS5_PBKDF2_HMAC_SHA1
 %xdefine PKCS5_pbe2_decrypt_init BORINGSSL_PREFIX %+ _PKCS5_pbe2_decrypt_init
 %xdefine PKCS5_pbe2_encrypt_init BORINGSSL_PREFIX %+ _PKCS5_pbe2_encrypt_init
+%xdefine PKCS7_ATTR_VERIFY_it BORINGSSL_PREFIX %+ _PKCS7_ATTR_VERIFY_it
 %xdefine PKCS7_DIGEST_free BORINGSSL_PREFIX %+ _PKCS7_DIGEST_free
 %xdefine PKCS7_DIGEST_it BORINGSSL_PREFIX %+ _PKCS7_DIGEST_it
 %xdefine PKCS7_DIGEST_new BORINGSSL_PREFIX %+ _PKCS7_DIGEST_new
