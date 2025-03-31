@@ -9,13 +9,5 @@
 //! The APIs under this module are not stable and may change in the future.
 //! They are not covered by semver guarantees.
 //!
-#[deprecated(note = "use  `aws_lc_rs::kdf` instead")]
-/// TODO: Remove this module
-pub mod kdf;
-
-#[deprecated(note = "use `aws_lc_rs::kem` instead")]
-/// TODO: Remove this module
-pub mod kem;
-
 #[cfg(not(feature = "fips"))]
 pub mod signature;
