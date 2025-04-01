@@ -197,8 +197,6 @@ AUTHORITY_INFO_ACCESS_new
 AUTHORITY_KEYID_free
 AUTHORITY_KEYID_it
 AUTHORITY_KEYID_new
-AWSLC_non_fips_pkey_evp_asn1_methods
-AWSLC_non_fips_pkey_evp_methods
 AWSLC_thread_local_clear
 AWSLC_thread_local_shutdown
 BASIC_CONSTRAINTS_free
@@ -3318,7 +3316,6 @@ i2s_ASN1_OCTET_STRING
 i2t_ASN1_OBJECT
 i2v_GENERAL_NAME
 i2v_GENERAL_NAMES
-is_fips_build
 is_public_component_of_rsa_key_good
 kBoringSSLRSASqrtTwo
 kBoringSSLRSASqrtTwoLen
