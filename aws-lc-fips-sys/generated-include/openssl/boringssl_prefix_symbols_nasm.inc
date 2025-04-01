@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_13_4
+%define BORINGSSL_PREFIX aws_lc_fips_0_13_5
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -222,8 +222,6 @@
 %xdefine _AUTHORITY_KEYID_free _ %+ BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_free
 %xdefine _AUTHORITY_KEYID_it _ %+ BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_it
 %xdefine _AUTHORITY_KEYID_new _ %+ BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_new
-%xdefine _AWSLC_non_fips_pkey_evp_asn1_methods _ %+ BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_asn1_methods
-%xdefine _AWSLC_non_fips_pkey_evp_methods _ %+ BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_methods
 %xdefine _AWSLC_thread_local_clear _ %+ BORINGSSL_PREFIX %+ _AWSLC_thread_local_clear
 %xdefine _AWSLC_thread_local_shutdown _ %+ BORINGSSL_PREFIX %+ _AWSLC_thread_local_shutdown
 %xdefine _BASIC_CONSTRAINTS_free _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_free
@@ -3443,7 +3441,6 @@
 %xdefine _i2t_ASN1_OBJECT _ %+ BORINGSSL_PREFIX %+ _i2t_ASN1_OBJECT
 %xdefine _i2v_GENERAL_NAME _ %+ BORINGSSL_PREFIX %+ _i2v_GENERAL_NAME
 %xdefine _i2v_GENERAL_NAMES _ %+ BORINGSSL_PREFIX %+ _i2v_GENERAL_NAMES
-%xdefine _is_fips_build _ %+ BORINGSSL_PREFIX %+ _is_fips_build
 %xdefine _is_public_component_of_rsa_key_good _ %+ BORINGSSL_PREFIX %+ _is_public_component_of_rsa_key_good
 %xdefine _kBoringSSLRSASqrtTwo _ %+ BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwo
 %xdefine _kBoringSSLRSASqrtTwoLen _ %+ BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwoLen
@@ -4047,8 +4044,6 @@
 %xdefine AUTHORITY_KEYID_free BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_free
 %xdefine AUTHORITY_KEYID_it BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_it
 %xdefine AUTHORITY_KEYID_new BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_new
-%xdefine AWSLC_non_fips_pkey_evp_asn1_methods BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_asn1_methods
-%xdefine AWSLC_non_fips_pkey_evp_methods BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_methods
 %xdefine AWSLC_thread_local_clear BORINGSSL_PREFIX %+ _AWSLC_thread_local_clear
 %xdefine AWSLC_thread_local_shutdown BORINGSSL_PREFIX %+ _AWSLC_thread_local_shutdown
 %xdefine BASIC_CONSTRAINTS_free BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_free
@@ -7268,7 +7263,6 @@
 %xdefine i2t_ASN1_OBJECT BORINGSSL_PREFIX %+ _i2t_ASN1_OBJECT
 %xdefine i2v_GENERAL_NAME BORINGSSL_PREFIX %+ _i2v_GENERAL_NAME
 %xdefine i2v_GENERAL_NAMES BORINGSSL_PREFIX %+ _i2v_GENERAL_NAMES
-%xdefine is_fips_build BORINGSSL_PREFIX %+ _is_fips_build
 %xdefine is_public_component_of_rsa_key_good BORINGSSL_PREFIX %+ _is_public_component_of_rsa_key_good
 %xdefine kBoringSSLRSASqrtTwo BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwo
 %xdefine kBoringSSLRSASqrtTwoLen BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwoLen
