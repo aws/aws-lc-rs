@@ -72,8 +72,8 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
           brew install llvm
-          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> "$GITHUB_ENV"
-          echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
+          echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
+          echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -474,8 +474,8 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
           brew install llvm
-          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
-          echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
+          echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
+          echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install cargo-careful
@@ -495,9 +495,6 @@ jobs:
     if: github.repository_owner == 'aws'
     name: Clang 19.1 + bindgen tests
     runs-on: macos-14-xlarge
-    env:
-      LIBCLANG_PATH: /opt/homebrew/opt/llvm/lib
-      LLVM_CONFIG_PATH: /opt/homebrew/opt/llvm/llvm-config
     steps:
       - uses: actions/checkout@v4
         with:
@@ -513,7 +510,8 @@ jobs:
           brew update
           brew uninstall --force llvm
           brew install llvm@19
-          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> "$GITHUB_ENV"
+          echo 'LIBCLANG_PATH=/opt/homebrew/opt/llvm@19/lib' >> $GITHUB_ENV
+          echo 'LLVM_CONFIG_PATH=/opt/homebrew/opt/llvm@19/bin/llvm-config' >> $GITHUB_ENV
       - name: aws-lc-sys bindgen build
         working-directory: ./aws-lc-sys
         run: cargo test --features bindgen
