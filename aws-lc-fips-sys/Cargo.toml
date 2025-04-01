@@ -80,4 +80,4 @@ bindgen = { version = "0.69.5" }
 regex = "~1.9.6"
 
 [package.metadata.aws-lc-fips-sys]
-commit-hash = "190be0667cf1f7b39bed2c96760f08a6295b652b"
+commit-hash = "3970115d971d895f0db7cc98b425959758722e1d"
