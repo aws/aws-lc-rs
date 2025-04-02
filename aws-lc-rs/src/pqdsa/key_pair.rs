@@ -51,6 +51,7 @@ impl AsDer<Pkcs8V1Der<'static>> for PqdsaPrivateKey<'_> {
         Ok(Pkcs8V1Der::new(
             self.0
                 .evp_pkey
+                .as_const()
                 .marshal_rfc5208_private_key(pkcs8::Version::V1)?,
         ))
     }
@@ -59,7 +60,7 @@ impl AsDer<Pkcs8V1Der<'static>> for PqdsaPrivateKey<'_> {
 impl AsRawBytes<PqdsaPrivateKeyRaw<'static>> for PqdsaPrivateKey<'_> {
     fn as_raw_bytes(&self) -> Result<PqdsaPrivateKeyRaw<'static>, Unspecified> {
         Ok(PqdsaPrivateKeyRaw::new(
-            self.0.evp_pkey.marshal_raw_private_key()?,
+            self.0.evp_pkey.as_const().marshal_raw_private_key()?,
         ))
     }
 }
@@ -121,7 +122,9 @@ impl PqdsaKeyPair {
     /// Returns `Unspecified` if serialization fails.
     pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
         Ok(Document::new(
-            self.evp_pkey.marshal_rfc5208_private_key(Version::V1)?,
+            self.evp_pkey
+                .as_const()
+                .marshal_rfc5208_private_key(Version::V1)?,
         ))
     }
 
