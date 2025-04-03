@@ -136,8 +136,6 @@ jobs:
           submodules: "recursive"
       - run: |
           brew install llvm
-          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
-          echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -158,8 +156,6 @@ jobs:
           submodules: "recursive"
       - run: |
           brew install llvm
-          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
-          echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:

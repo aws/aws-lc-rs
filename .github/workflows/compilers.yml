@@ -150,6 +150,8 @@ jobs:
     if: github.repository_owner == 'aws'
     name: C-std ${{ matrix.os }} - ${{ matrix.c_std }} - Force CMake ${{ matrix.cmake }}
     runs-on: ${{ matrix.os }}
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
     strategy:
       fail-fast: false
       matrix:
@@ -165,9 +167,8 @@ jobs:
         id: toolchain
         with:
           toolchain: stable
-      - run: |
-          echo 'export AWS_LC_SYS_CMAKE_BUILDER=${{ matrix.cmake }}' >> "$GITHUB_ENV"
-      - name: Run cargo test
+      - if: ${{ !startsWith(matrix.os, 'windows-') || matrix.cmake == '1' }} # Windows requires CMake build
+        name: Run cargo test
         working-directory: ./aws-lc-rs
         env:
           AWS_LC_SYS_PREBUILT_NASM: 1
