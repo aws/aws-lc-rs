@@ -10,14 +10,14 @@
 #![cfg_attr(clippy, feature(custom_inner_attributes))]
 #![cfg_attr(clippy, clippy::msrv = "1.77")]
 
+use cc_builder::CcBuilder;
+use cmake_builder::CmakeBuilder;
+use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{env, fmt};
-
-use cc_builder::CcBuilder;
-use cmake_builder::CmakeBuilder;
 
 // These should generally match those found in aws-lc/include/openssl/opensslconf.h
 const OSSL_CONF_DEFINES: &[&str] = &[
@@ -319,13 +319,15 @@ fn target() -> String {
     cargo_env("TARGET")
 }
 
+#[allow(static_mut_refs)]
 fn effective_target() -> String {
     let target = target();
-    match target.as_str() {
-        "x86_64-alpine-linux-musl" => "x86_64-unknown-linux-musl".to_string(),
-        "aarch64-alpine-linux-musl" => "aarch64-unknown-linux-musl".to_string(),
-        _ => target,
+    if let Some(hashmap) = unsafe { AWS_LC_SYS_EFFECTIVE_TARGET.as_ref() } {
+        if let Some(effective_target) = hashmap.get(&target) {
+            return effective_target.clone();
+        }
     }
+    target
 }
 
 #[allow(unused)]
@@ -413,6 +415,23 @@ impl CStdRequested {
     }
 }
 
+fn parse_env_var_into_hashmap(env_var: &str, hashmap: &mut HashMap<String, String>) {
+    if let Some(target_mapping) = option_env(env_var) {
+        emit_warning(&format!("Parsing {env_var}: {target_mapping}"));
+        let mut pairs = target_mapping.split(',');
+        for pair in pairs.by_ref() {
+            let split = pair.split_once(':').unwrap();
+            let key = split.0.to_string();
+            let value = split.1.to_string();
+            emit_warning(&format!(
+                "Mapping '{}' to effective target '{}'",
+                &key, &value
+            ));
+            hashmap.insert(key, value);
+        }
+    }
+}
+
 static mut PREGENERATED: bool = false;
 static mut AWS_LC_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_SYS_PREGENERATING_BINDINGS: bool = false;
@@ -422,10 +441,12 @@ static mut AWS_LC_SYS_CFLAGS: String = String::new();
 static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
 static mut AWS_LC_SYS_CMAKE_BUILDER: Option<bool> = None;
 static mut AWS_LC_SYS_NO_PREGENERATED_SRC: bool = false;
+static mut AWS_LC_SYS_EFFECTIVE_TARGET: Option<HashMap<String, String>> = None;
 
 static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
 
 fn initialize() {
+    #[allow(static_mut_refs)]
     unsafe {
         AWS_LC_SYS_NO_PREFIX = env_var_to_bool("AWS_LC_SYS_NO_PREFIX").unwrap_or(false);
         AWS_LC_SYS_PREGENERATING_BINDINGS =
@@ -439,6 +460,20 @@ fn initialize() {
         AWS_LC_SYS_CMAKE_BUILDER = env_var_to_bool("AWS_LC_SYS_CMAKE_BUILDER");
         AWS_LC_SYS_NO_PREGENERATED_SRC =
             env_var_to_bool("AWS_LC_SYS_NO_PREGENERATED_SRC").unwrap_or(false);
+        AWS_LC_SYS_EFFECTIVE_TARGET = Some(
+            [
+                ("x86_64-alpine-linux-musl", "x86_64-unknown-linux-musl"),
+                ("aarch64-alpine-linux-musl", "aarch64-unknown-linux-musl"),
+            ]
+            .iter()
+            .map(|(k, v)| ((*k).to_string(), (*v).to_string()))
+            .collect(),
+        );
+
+        parse_env_var_into_hashmap(
+            "AWS_LC_SYS_EFFECTIVE_TARGET",
+            AWS_LC_SYS_EFFECTIVE_TARGET.as_mut().unwrap(),
+        );
     }
 
     if !is_external_bindgen() && (is_pregenerating_bindings() || !has_bindgen_feature()) {

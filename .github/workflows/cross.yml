@@ -340,6 +340,9 @@ jobs:
         working-directory: .github/docker_images/alpine-3.20
         run: |
           ./build_image.sh
-      - name: Build
+      - name: Build/Test
         run: |
           docker run -v "${{ github.workspace }}:/aws_lc_rs" alpine:3.20
+      - name: Build/Test w/ AWS_LC_SYS_EFFECTIVE_TARGET
+        run: |
+          docker run -v "${{ github.workspace }}:/aws_lc_rs" --env AWS_LC_SYS_EFFECTIVE_TARGET=x86_64-alpine-linux-musl:x86_64-unknown-linux-musl,aarch64-alpine-linux-musl:aarch64-unknown-linux-musl alpine:3.20
