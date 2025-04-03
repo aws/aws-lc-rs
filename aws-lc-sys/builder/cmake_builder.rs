@@ -6,8 +6,7 @@ use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
     get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src, option_env, target_arch,
-    target_env, target_os, target_underscored, target_vendor, test_nasm_command, use_prebuilt_nasm,
-    OutputLibType,
+    target_env, target_os, target_underscored, test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -187,20 +186,23 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_OSX_ARCHITECTURES", "x86_64");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86_64");
             }
+            if target_os().trim() == "ios" {
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
+                if effective_target().ends_with("-ios-sim") || target_arch() == "x86_64" {
+                    cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
+                } else {
+                    cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphoneos");
+                }
+                cmake_cfg.define("CMAKE_THREAD_LIBS_INIT", "-lpthread");
+            }
+            if target_os().trim() == "macos" {
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "Darwin");
+                cmake_cfg.define("CMAKE_OSX_SYSROOT", "macosx");
+            }
         }
 
         if target_os() == "android" {
             self.configure_android(&mut cmake_cfg);
-        }
-
-        if target_vendor() == "apple" && target_os().to_lowercase() == "ios" {
-            cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
-            if effective_target().ends_with("-ios-sim") || target_arch() == "x86_64" {
-                cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
-            } else {
-                cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphoneos");
-            }
-            cmake_cfg.define("CMAKE_THREAD_LIBS_INIT", "-lpthread");
         }
 
         cmake_cfg
