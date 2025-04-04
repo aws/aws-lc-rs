@@ -42,7 +42,7 @@ jobs:
           - [ powerpc64le-unknown-linux-gnu, 1, 0 ]
           - [ riscv64gc-unknown-linux-gnu, 0, 1 ]
           - [ s390x-unknown-linux-gnu, 0, 1 ]
-          - [ x86_64-pc-windows-gnu, 0, 1 ]
+          - [ x86_64-pc-windows-gnu, 0, 1 ] # Requires release build. See: https://github.com/rust-lang/rust/issues/139380
           - [ x86_64-unknown-linux-musl, 0, 1 ]
           - [ x86_64-unknown-illumos, 0, 0 ]
     steps:
@@ -92,7 +92,7 @@ jobs:
         if: ${{ matrix.target[0] != 'arm-linux-androideabi' }}
         run: |
           unset AWS_LC_SYS_EXTERNAL_BINDGEN
-          cross test -p aws-lc-sys "${CROSS_TEST_EXTRA_FLAG}" --features ssl --target ${{ matrix.target[0] }}
+          cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features ssl --target ${{ matrix.target[0] }}
 
   aws-lc-rs-cross-0_2_5-test:
     if: github.repository_owner == 'aws'
