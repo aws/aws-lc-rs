@@ -238,9 +238,16 @@ impl CmakeBuilder {
             }
             if target_os().trim() == "ios" {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "iOS");
-                if effective_target().trim().ends_with("-ios-sim") {
+                if effective_target().ends_with("-ios-sim") || target_arch() == "x86_64" {
                     cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphonesimulator");
+                } else {
+                    cmake_cfg.define("CMAKE_OSX_SYSROOT", "iphoneos");
                 }
+                cmake_cfg.define("CMAKE_THREAD_LIBS_INIT", "-lpthread");
+            }
+            if target_os().trim() == "macos" {
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "Darwin");
+                cmake_cfg.define("CMAKE_OSX_SYSROOT", "macosx");
             }
         }
 

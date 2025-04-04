@@ -213,8 +213,8 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
           brew install llvm
-          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"'
-          echo 'export LIBCLANG_PATH=/opt/homebrew/opt/llvm' >> "$GITHUB_ENV"
+          echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
+          echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
       - name: Install NASM on Windows
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1

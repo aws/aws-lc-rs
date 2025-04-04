@@ -51,6 +51,14 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
+      - if: ${{ startsWith( matrix.os, 'macos-') }}
+        name: Update Cmake
+        # Use latest CMake
+        run: |
+          brew update
+          brew upgrade cmake
+          cmake --version
+          echo 'CMAKE=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/bin/cmake' >> $GITHUB_ENV
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
