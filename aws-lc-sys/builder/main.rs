@@ -88,7 +88,8 @@ macro_rules! bindgen_available {
                     )
                 ),
                 all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
-                all(target_arch = "x86", target_os = "linux", target_env = "gnu")
+                all(target_arch = "x86", target_os = "linux", target_env = "gnu"),
+                all(target_arch = "riscv64", target_os = "linux", target_env = "gnu")
             ))
         )))]
         $item

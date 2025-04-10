@@ -9,6 +9,11 @@ pre-build = [
     "apt install --assume-yes --install-recommends winehq-stable",
 ]
 
+[target.riscv64gc-unknown-linux-gnu]
+pre-build = [
+    "apt-get update && apt-get install --assume-yes clang-10",
+]
+
 [build.env]
 passthrough = [
     "AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN",
