@@ -56,7 +56,8 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bi
                 .join("rust_wrapper.h")
                 .display()
                 .to_string(),
-        );
+        )
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     if !options.disable_prelude {
         builder = builder.raw_line(PRELUDE);
