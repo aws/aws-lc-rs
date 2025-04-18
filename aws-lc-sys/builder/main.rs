@@ -630,6 +630,13 @@ fn main() {
             bindings_available = true;
         }
     } else if is_bindgen_required() {
+        emit_warning("######");
+        emit_warning(
+            "If bindgen is unable to locate a header file, use the \
+            BINDGEN_EXTRA_CLANG_ARGS environment variable to specify additional include paths.",
+        );
+        emit_warning("See: https://github.com/rust-lang/rust-bindgen?tab=readme-ov-file#environment-variables");
+        emit_warning("######");
         let aws_lc_crypto_dir = Path::new(&manifest_dir).join("aws-lc").join("crypto");
         if !aws_lc_crypto_dir.exists() {
             emit_warning("######");
