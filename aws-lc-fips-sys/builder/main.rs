@@ -107,7 +107,7 @@ pub(crate) fn get_generated_include_path(manifest_dir: &Path) -> PathBuf {
 
 pub(crate) fn get_aws_lc_fips_sys_includes_path() -> Option<Vec<PathBuf>> {
     option_env("AWS_LC_FIPS_SYS_INCLUDES")
-        .map(|colon_delim_paths| colon_delim_paths.split(':').map(PathBuf::from).collect())
+        .map(|v| std::env::split_paths(&v).collect())
 }
 
 #[allow(dead_code)]
