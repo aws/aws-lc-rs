@@ -118,8 +118,7 @@ pub(crate) fn get_generated_include_path(manifest_dir: &Path) -> PathBuf {
 }
 
 pub(crate) fn get_aws_lc_sys_includes_path() -> Option<Vec<PathBuf>> {
-    optional_env_crate_target("INCLUDES")
-      .map(|v| std::env::split_paths(&v).collect())
+    optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect())
 }
 
 #[allow(dead_code)]
