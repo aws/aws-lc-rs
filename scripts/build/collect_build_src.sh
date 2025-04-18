@@ -101,6 +101,8 @@ function find_generated_src_dir() {
 
     if [[ "${TARGET_PLATFORM_ARCH}" =~ "aarch64" ]]; then
       ARCH_NAME="aarch64"
+    elif [[ "${TARGET_PLATFORM_ARCH}" =~ "riscv64" ]]; then
+      ARCH_NAME="riscv64"
     elif [[ "${TARGET_PLATFORM_ARCH}" =~ "x86_64" ]]; then
       ARCH_NAME="x86_64"
     elif [[ "${TARGET_PLATFORM_ARCH}" =~ "i686" ]]; then

@@ -9,6 +9,7 @@ mod aarch64_apple_darwin;
 mod aarch64_unknown_linux_gnu;
 mod aarch64_unknown_linux_musl;
 mod i686_unknown_linux_gnu;
+mod riscv64gc_unknown_linux_gnu;
 mod x86_64_apple_darwin;
 mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
@@ -40,6 +41,7 @@ enum PlatformConfig {
     aarch64_apple_darwin,
     aarch64_unknown_linux_gnu,
     aarch64_unknown_linux_musl,
+    riscv64gc_unknown_linux_gnu,
     x86_64_apple_darwin,
     x86_64_unknown_linux_gnu,
     x86_64_unknown_linux_musl,
@@ -54,6 +56,9 @@ impl PlatformConfig {
             PlatformConfig::aarch64_unknown_linux_musl => {
                 aarch64_unknown_linux_musl::CRYPTO_LIBRARY
             }
+            PlatformConfig::riscv64gc_unknown_linux_gnu => {
+                riscv64gc_unknown_linux_gnu::CRYPTO_LIBRARY
+            }
             PlatformConfig::x86_64_apple_darwin => x86_64_apple_darwin::CRYPTO_LIBRARY,
             PlatformConfig::x86_64_unknown_linux_gnu => x86_64_unknown_linux_gnu::CRYPTO_LIBRARY,
             PlatformConfig::x86_64_unknown_linux_musl => x86_64_unknown_linux_musl::CRYPTO_LIBRARY,
@@ -67,6 +72,7 @@ impl PlatformConfig {
             "aarch64-apple-darwin" => Some(PlatformConfig::aarch64_apple_darwin),
             "aarch64-unknown-linux-gnu" => Some(PlatformConfig::aarch64_unknown_linux_gnu),
             "aarch64-unknown-linux-musl" => Some(PlatformConfig::aarch64_unknown_linux_musl),
+            "riscv64gc-unknown-linux-gnu" => Some(PlatformConfig::riscv64gc_unknown_linux_gnu),
             "x86_64-apple-darwin" => Some(PlatformConfig::x86_64_apple_darwin),
             "x86_64-unknown-linux-gnu" => Some(PlatformConfig::x86_64_unknown_linux_gnu),
             "x86_64-unknown-linux-musl" => Some(PlatformConfig::x86_64_unknown_linux_musl),

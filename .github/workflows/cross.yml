@@ -67,7 +67,7 @@ jobs:
       #        |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
       - if: ${{ matrix.target[0] == 'riscv64gc-unknown-linux-gnu' }}
         run: |
-          echo 'AWS_LC_SYS_CFLAGS="-Wno-string-compare"' >> "$GITHUB_ENV"
+          echo 'AWS_LC_SYS_CFLAGS=-Wno-string-compare' >> "$GITHUB_ENV"
       - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
         run: |
           echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
