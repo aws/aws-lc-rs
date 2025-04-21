@@ -28,6 +28,8 @@ include = [
     "!/aws-lc/tests/**",
     "!/aws-lc/third_party/**",
     "!/aws-lc/util/**",
+    "!/aws-lc/tool/**",
+    "!/aws-lc/tool-openssl/**",
     "/aws-lc/tests/compiler_features_tests/**.c",
     "/aws-lc/third_party/fiat/**/LICENSE",
     "/aws-lc/third_party/fiat/**/*.h",
