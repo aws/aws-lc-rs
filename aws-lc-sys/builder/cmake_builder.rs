@@ -110,6 +110,7 @@ impl CmakeBuilder {
 
         // Build flags that minimize our crate size.
         cmake_cfg.define("BUILD_TESTING", "OFF");
+        cmake_cfg.define("BUILD_TOOL", "OFF");
         if cfg!(feature = "ssl") {
             cmake_cfg.define("BUILD_LIBSSL", "ON");
         } else {

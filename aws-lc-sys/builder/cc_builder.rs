@@ -202,7 +202,7 @@ impl CcBuilder {
             set_env_for_target("CC", &cc);
         }
         if let Some(cxx) = optional_env_optional_crate_target("CXX") {
-            set_env_for_target("CC", &cxx);
+            set_env_for_target("CXX", &cxx);
         }
 
         if target_arch() == "x86" && !compiler_is_msvc {
