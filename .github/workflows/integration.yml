@@ -72,8 +72,6 @@ jobs:
     runs-on: windows-latest
     strategy:
       fail-fast: false
-      matrix:
-        os: [ windows-latest ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -87,6 +85,37 @@ jobs:
         shell: bash
         run: |
           ./scripts/run-windows-debug-crt-static-test.sh
+
+  ssl-test:
+    if: github.repository_owner == 'aws'
+    name: "SSL Test"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, ubuntu-latest, macos-latest ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: install bindgen-cli
+        run: cargo install --force --locked bindgen-cli
+      - uses: ilammy/setup-nasm@v1
+      - name: "Test aws-lc-sys package w/ SSL enabled"
+        working-directory: ./aws-lc-sys
+        run: cargo package --features ssl
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v4
+      - name: "Test aws-lc-fips-sys package w/ SSL enabled"
+        working-directory: ./aws-lc-fips-sys
+        run: cargo package --features ssl
 
   links-crate-tests:
     if: github.repository_owner == 'aws'
