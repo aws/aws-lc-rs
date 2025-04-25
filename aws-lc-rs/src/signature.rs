@@ -360,6 +360,13 @@ impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
     }
 }
 
+impl<B: AsRef<[u8]>> AsRef<[u8]> for UnparsedPublicKey<B> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        self.bytes.as_ref()
+    }
+}
+
 impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     /// Construct a new `UnparsedPublicKey`.
     ///
