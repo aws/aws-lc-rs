@@ -306,6 +306,14 @@ impl CcBuilder {
             self.manifest_dir
                 .join("aws-lc")
                 .join("third_party")
+                .join("s2n-bignum")
+                .join("s2n-bignum-imported")
+                .join("include"),
+        ));
+        build_options.push(BuildOption::include(
+            self.manifest_dir
+                .join("aws-lc")
+                .join("third_party")
                 .join("jitterentropy")
                 .join("jitterentropy-library"),
         ));
