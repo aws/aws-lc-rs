@@ -184,7 +184,10 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
             }
         };
 
-        let actual_result = UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
+        let upk = UnparsedPublicKey::new(alg, &public_key);
+        assert_eq!(upk.as_ref(), public_key.as_slice());
+
+        let actual_result = upk.verify(&msg, &sig);
         assert_eq!(actual_result.is_ok(), is_valid);
 
         Ok(())
