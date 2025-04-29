@@ -131,7 +131,7 @@ function cleanup_source_files() {
             #FILE=$(realpath "${FILE}")
             echo "${FILE}" | \
                 sed -e "s/.*\/aws-lc-sys\/aws-lc\///" | \
-                sed -e "s/.*\/out\/build\/aws-lc\/crypto\/fipsmodule\/\(.*\.S\)\.S$/third_party\/s2n-bignum\/${S2N_BN_DIR}\/\1/" | \
+                sed -e "s/.*\/out\/build\/aws-lc\/crypto\/fipsmodule\/\(.*\.S\)\.S$/third_party\/s2n-bignum\/s2n-bignum-imported\/${S2N_BN_DIR}\/\1/" | \
                 sed -e "s/.*\/out\/build\/aws-lc\//generated-src\/${GS_DIR}\//" | \
                 sed -e 's/\(.*\)\/[^\/]*\/crypto\/err_data\.c/\1\/err_data.c/'
         fi
