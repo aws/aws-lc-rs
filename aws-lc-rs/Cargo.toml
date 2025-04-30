@@ -1,7 +1,7 @@
 [package]
 name = "aws-lc-rs"
 authors = ["AWS-LibCrypto"]
-version = "1.13.0"
+version = "1.13.1"
 # this crate re-exports whatever sys crate that was selected
 links = "aws_lc_rs_1_13_0_sys"
 edition = "2021"
@@ -47,7 +47,7 @@ fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { version = "0.7.1", optional = true }
-aws-lc-sys = { version = "0.28.0", path = "../aws-lc-sys", optional = true }
+aws-lc-sys = { version = "0.29.0", path = "../aws-lc-sys", optional = true }
 aws-lc-fips-sys = { version = "0.13.1", path = "../aws-lc-fips-sys", optional = true }
 zeroize = "1.7"
 

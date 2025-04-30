@@ -17,7 +17,7 @@ mod x86_64_unknown_linux_musl;
 use crate::{
     cargo_env, effective_target, emit_warning, env_var_to_bool, execute_command, get_crate_cflags,
     is_no_asm, optional_env_optional_crate_target, out_dir, requested_c_std, set_env_for_target,
-    target, target_arch, target_env, target_os, target_vendor, CStdRequested, OutputLibType,
+    target, target_arch, target_env, target_os, CStdRequested, OutputLibType,
 };
 use std::path::PathBuf;
 
@@ -355,25 +355,12 @@ impl CcBuilder {
                 .display()
         ));
         s2n_bignum_builder.define("S2N_BN_HIDE_SYMBOLS", "1");
-        let cc_preprocessor = self.create_builder();
         for source in lib.sources {
             let source_path = self.manifest_dir.join("aws-lc").join(source);
             let is_s2n_bignum = std::path::Path::new(source).starts_with("third_party/s2n-bignum");
 
             if is_s2n_bignum {
-                let asm_output_path = if target_vendor() == "apple" && target_arch() == "aarch64" {
-                    let asm_output_path = self.out_dir.join(source);
-                    let mut cc_preprocessor = cc_preprocessor.clone();
-                    cc_preprocessor.file(source_path);
-                    let preprocessed_asm = String::from_utf8(cc_preprocessor.expand()).unwrap();
-                    let preprocessed_asm = preprocessed_asm.replace(';', "\n\t");
-                    fs::create_dir_all(asm_output_path.parent().unwrap()).unwrap();
-                    fs::write(asm_output_path.clone(), preprocessed_asm).unwrap();
-                    asm_output_path
-                } else {
-                    source_path.clone()
-                };
-                s2n_bignum_builder.file(asm_output_path);
+                s2n_bignum_builder.file(source_path);
             } else {
                 cc_build.file(source_path);
             }
