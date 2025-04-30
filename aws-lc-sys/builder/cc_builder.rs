@@ -17,7 +17,7 @@ mod x86_64_unknown_linux_musl;
 use crate::{
     cargo_env, effective_target, emit_warning, env_var_to_bool, execute_command, get_crate_cflags,
     is_no_asm, optional_env_optional_crate_target, out_dir, requested_c_std, set_env_for_target,
-    target, target_arch, target_env, target_os, target_vendor, CStdRequested, OutputLibType,
+    target, target_arch, target_env, target_os, CStdRequested, OutputLibType,
 };
 use std::path::PathBuf;
 
@@ -341,9 +341,8 @@ impl CcBuilder {
         cc_build
     }
 
-    fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) -> Vec<PathBuf> {
+    fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) {
         use core::str::FromStr;
-        cc_build.file(PathBuf::from_str("rust_wrapper.c").unwrap());
 
         // s2n_bignum is compiled separately due to needing extra flags
         let mut s2n_bignum_builder = cc_build.clone();
@@ -356,30 +355,21 @@ impl CcBuilder {
                 .display()
         ));
         s2n_bignum_builder.define("S2N_BN_HIDE_SYMBOLS", "1");
-        let cc_preprocessor = self.create_builder();
         for source in lib.sources {
             let source_path = self.manifest_dir.join("aws-lc").join(source);
             let is_s2n_bignum = std::path::Path::new(source).starts_with("third_party/s2n-bignum");
 
             if is_s2n_bignum {
-                let asm_output_path = if target_vendor() == "apple" && target_arch() == "aarch64" {
-                    let asm_output_path = self.out_dir.join(source);
-                    let mut cc_preprocessor = cc_preprocessor.clone();
-                    cc_preprocessor.file(source_path);
-                    let preprocessed_asm = String::from_utf8(cc_preprocessor.expand()).unwrap();
-                    let preprocessed_asm = preprocessed_asm.replace(';', "\n\t");
-                    fs::create_dir_all(asm_output_path.parent().unwrap()).unwrap();
-                    fs::write(asm_output_path.clone(), preprocessed_asm).unwrap();
-                    asm_output_path
-                } else {
-                    source_path.clone()
-                };
-                s2n_bignum_builder.file(asm_output_path);
+                s2n_bignum_builder.file(source_path);
             } else {
                 cc_build.file(source_path);
             }
         }
-        s2n_bignum_builder.compile_intermediates()
+        let object_files = s2n_bignum_builder.compile_intermediates();
+        for object in object_files {
+            cc_build.object(object);
+        }
+        cc_build.file(PathBuf::from_str("rust_wrapper.c").unwrap());
     }
 
     fn build_library(&self, lib: &Library) {
@@ -389,10 +379,7 @@ impl CcBuilder {
         }
         self.run_compiler_checks(&mut cc_build);
 
-        let object_files = self.add_all_files(lib, &mut cc_build);
-        for object in object_files {
-            cc_build.object(object);
-        }
+        self.add_all_files(lib, &mut cc_build);
         if let Some(prefix) = &self.build_prefix {
             cc_build.compile(format!("{}_crypto", prefix.as_str()).as_str());
         } else {

@@ -379,6 +379,7 @@ fn target_env() -> String {
     cargo_env("CARGO_CFG_TARGET_ENV")
 }
 
+#[allow(unused)]
 fn target_vendor() -> String {
     cargo_env("CARGO_CFG_TARGET_VENDOR")
 }
