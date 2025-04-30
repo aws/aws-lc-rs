@@ -21,6 +21,7 @@ include = [
     "/aws-lc/**/*.errordata",
     "/aws-lc/**/err_data_generate.go",
     "/aws-lc/**/*.lds",
+    "/aws-lc/**/*.inc",
     "!/aws-lc/bindings/**",
     "!/aws-lc/docs/**",
     "!/aws-lc/fuzz/**",
