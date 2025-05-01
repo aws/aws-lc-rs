@@ -145,7 +145,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-14, macos-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -176,7 +176,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-14, macos-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v3
         with:

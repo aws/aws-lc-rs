@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
+        os: [ ubuntu-latest, macos-13, macos-latest ]
         args:
           - --all-targets --features unstable
           - --release --all-targets --features unstable
@@ -61,7 +61,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
+        os: [ ubuntu-latest, macos-13, macos-latest ]
         args:
           - --no-default-features --features aws-lc-sys,bindgen,unstable
           - --release --all-targets --features bindgen,unstable
@@ -189,7 +189,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
+        os: [ ubuntu-latest, macos-13, macos-latest ]
         static: [ 0, 1 ]
     steps:
       - uses: actions/checkout@v4
@@ -274,7 +274,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
+        os: [ ubuntu-latest, macos-13, macos-latest ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -331,7 +331,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
+        os: [ ubuntu-latest, macos-13, macos-latest ]
         static: [ 0, 1 ]
     steps:
       - uses: actions/checkout@v4
@@ -354,7 +354,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -389,7 +389,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -428,7 +428,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-latest, windows-latest ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -460,7 +460,7 @@ jobs:
         os:
           - ubuntu-latest
           - macos-13
-          - macos-14-xlarge
+          - macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -494,7 +494,7 @@ jobs:
   clang-19-bindgen:
     if: github.repository_owner == 'aws'
     name: Clang 19.1 + bindgen tests
-    runs-on: macos-14-xlarge
+    runs-on: macos-latest
     env:
       LIBCLANG_PATH: '/opt/homebrew/opt/llvm@19/lib'
       LLVM_CONFIG_PATH: '/opt/homebrew/opt/llvm@19/bin/llvm-config'
@@ -528,7 +528,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-latest, windows-latest ]
         fips: [ 0, 1 ]
     steps:
       - uses: actions/checkout@v4
@@ -545,7 +545,7 @@ jobs:
       - name: Run cargo test
         # macOS aarch64 fix for FIPS pending the following PR applied to FIPS branch:
         # https://github.com/aws/aws-lc/pull/2005
-        if: ${{ matrix.fips == 0 || matrix.os != 'macos-14-xlarge' }}
+        if: ${{ matrix.fips == 0 || matrix.os != 'macos-latest' }}
         working-directory: "path has spaces/aws-lc-rs"
         run: cargo test --tests -p aws-lc-rs --no-default-features --features ${{ (matrix.fips == 1 && 'fips') || 'aws-lc-sys' }}
 
@@ -560,7 +560,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge ]
+        os: [ ubuntu-latest, macos-13, macos-latest ]
         pregen_src: [ 0, 1 ]
     steps:
       - uses: actions/checkout@v4

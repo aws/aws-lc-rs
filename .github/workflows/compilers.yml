@@ -156,7 +156,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, macos-13, macos-14-xlarge, windows-latest ]
+        os: [ ubuntu-latest, macos-13, macos-14, macos-latest, windows-latest ]
         c_std: [ "11", "99" ]
         cmake: [ '0', '1' ]
     steps:

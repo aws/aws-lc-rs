@@ -129,7 +129,7 @@ jobs:
   aws-lc-rs-ios-aarch64:
     if: github.repository_owner == 'aws'
     name: iOS aarch64 cross-platform build
-    runs-on: macos-14-xlarge
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -149,7 +149,7 @@ jobs:
   aws-lc-rs-ios-x86_64:
     if: github.repository_owner == 'aws'
     name: iOS x86-64 cross-platform build
-    runs-on: macos-14-xlarge
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
         with:
