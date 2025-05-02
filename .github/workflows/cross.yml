@@ -37,6 +37,7 @@ jobs:
           - [ armv7-linux-androideabi, 0, 0 ]
           - [ armv7-unknown-linux-gnueabihf, 0, 0 ]
           - [ i686-unknown-linux-gnu, 0, 1 ]
+          - [ i686-pc-windows-gnu, 0, 0 ]
           - [ powerpc-unknown-linux-gnu, 1, 0 ]
           - [ powerpc64-unknown-linux-gnu, 1, 0 ]
           - [ powerpc64le-unknown-linux-gnu, 1, 0 ]
@@ -192,36 +193,6 @@ jobs:
       - name: cargo xwin build for `aarch64-pc-windows-msvc`
         run: cargo xwin build -p aws-lc-rs --release --all-targets --target aarch64-pc-windows-msvc
 
-  aws-lc-rs-windows-gnu:
-    if: github.repository_owner == 'aws'
-    name: ${{ matrix.target }}
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - "x86_64-pc-windows-gnu"
-          - "i686-pc-windows-gnu"
-    steps:
-      - uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v4
-        with:
-          submodules: "recursive"
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-      - if: ${{ matrix.target == 'i686-pc-windows-gnu' }}
-        name: Install mingw
-        uses: bwoodsend/setup-winlibs-action@v1
-        with:
-          architecture: i686
-      - name: Debug Test on `${{ matrix.target }}`
-        run: cargo test -p aws-lc-rs --target ${{ matrix.target }} --features bindgen
-      - name: Release test on `${{ matrix.target }}`
-        run: cargo test -p aws-lc-rs --release --target ${{ matrix.target }} --features bindgen
-
   aws-lc-rs-windows-msvc:
     if: ${{ github.repository_owner == 'aws' }}
     name: ${{ matrix.target }} - ${{ (matrix.crt_static == '1' && 'crt-static and /WX') || '/WX' }}
@@ -309,6 +280,7 @@ jobs:
       - name: Run cargo test
         run: cargo build -p aws-lc-rs --features prebuilt-nasm --target x86_64-pc-windows-gnu
   open-harmony:
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
@@ -325,6 +297,7 @@ jobs:
           docker run -v "${{ github.workspace }}:/aws_lc_rs" ohos:5.0.0
 
   alpine-linux:
+    if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
@@ -339,3 +312,49 @@ jobs:
       - name: Build
         run: |
           docker run -v "${{ github.workspace }}:/aws_lc_rs" alpine:3.20
+
+  msys2:
+    if: github.repository_owner == 'aws'
+    runs-on: windows-latest
+    env:
+      AWS_LC_SYS_EXTERNAL_BINDGEN: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { sys: mingw64, env: x86_64, target: x86_64-pc-windows-gnu, cc: gcc, cxx: g++ }
+          - { sys: ucrt64,  env: ucrt-x86_64,  target: x86_64-pc-windows-gnu, cc: gcc, cxx: g++ }
+          - { sys: clang64, env: clang-x86_64, target: x86_64-pc-windows-gnullvm, cc: clang, cxx: clang++ }
+    steps:
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        id: setup_msys2
+        with:
+          msystem: ${{ matrix.sys }}
+          update: true
+          pacboy: >-
+            rust-bindgen
+            cc
+            nasm
+            go
+      - name: Update Environment
+        shell: bash
+        run: |
+          echo "GOPATH=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}" >> $GITHUB_ENV
+          echo "GOROOT=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\lib\go" >> $GITHUB_ENV
+          echo "CC=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\bin\${{ matrix.cc }}.exe" >> $GITHUB_ENV
+          echo "CXX=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\bin\${{ matrix.cxx }}.exe" >> $GITHUB_ENV
+          echo "${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\bin" >> $GITHUB_PATH
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+          target: ${{matrix.target}}
+      - name: Build
+        run: cargo build -p aws-lc-rs --target ${{matrix.target}} --features bindgen
+      - name: Test
+        run: cargo test -p aws-lc-rs --target ${{matrix.target}} --features bindgen
