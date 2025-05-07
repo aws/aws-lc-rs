@@ -2488,6 +2488,7 @@ X509_SIG_get0
 X509_SIG_getm
 X509_SIG_it
 X509_SIG_new
+X509_STORE_CTX_add_custom_crit_oid
 X509_STORE_CTX_cleanup
 X509_STORE_CTX_free
 X509_STORE_CTX_get0_cert
@@ -2527,6 +2528,7 @@ X509_STORE_CTX_set_time
 X509_STORE_CTX_set_time_posix
 X509_STORE_CTX_set_trust
 X509_STORE_CTX_set_verify_cb
+X509_STORE_CTX_set_verify_crit_oids
 X509_STORE_CTX_trusted_stack
 X509_STORE_add_cert
 X509_STORE_add_crl
