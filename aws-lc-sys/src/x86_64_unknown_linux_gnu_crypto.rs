@@ -111,7 +111,7 @@ pub const AWSLC_VERSION_NAME: &[u8; 7] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
 pub const AWSLC_API_VERSION: i32 = 33;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.50.1\0";
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.51.1\0";
 pub const AES_ENCRYPT: i32 = 1;
 pub const AES_DECRYPT: i32 = 0;
 pub const AES_MAXNR: i32 = 14;
@@ -132,7 +132,7 @@ pub const CRYPTO_LOCK: i32 = 1;
 pub const CRYPTO_UNLOCK: i32 = 2;
 pub const CRYPTO_READ: i32 = 4;
 pub const CRYPTO_WRITE: i32 = 8;
-pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.50.1)\0";
+pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.51.1)\0";
 pub const OPENSSL_VERSION: i32 = 0;
 pub const OPENSSL_CFLAGS: i32 = 1;
 pub const OPENSSL_BUILT_ON: i32 = 2;
@@ -22776,6 +22776,27 @@ extern "C" {
         ctx: *mut X509_STORE_CTX,
         trust: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_29_0_X509_STORE_CTX_add_custom_crit_oid"]
+    pub fn X509_STORE_CTX_add_custom_crit_oid(
+        ctx: *mut X509_STORE_CTX,
+        oid: *mut ASN1_OBJECT,
+    ) -> ::std::os::raw::c_int;
+}
+pub type X509_STORE_CTX_verify_crit_oids_cb = ::std::option::Option<
+    unsafe extern "C" fn(
+        ctx: *mut X509_STORE_CTX,
+        x509: *mut X509,
+        oids: *mut stack_st_ASN1_OBJECT,
+    ) -> ::std::os::raw::c_int,
+>;
+extern "C" {
+    #[link_name = "\u{1}aws_lc_0_29_0_X509_STORE_CTX_set_verify_crit_oids"]
+    pub fn X509_STORE_CTX_set_verify_crit_oids(
+        ctx: *mut X509_STORE_CTX,
+        verify_custom_crit_oids: X509_STORE_CTX_verify_crit_oids_cb,
+    );
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_29_0_X509_VERIFY_PARAM_new"]
