@@ -14,7 +14,7 @@ done
 CLEANUP_ON_EXIT=()
 
 function cleanup() {
-    for x in ${CLEANUP_ON_EXIT[@]}; do
+    for x in "${CLEANUP_ON_EXIT[@]}"; do
         rm -rf "${x}"
     done
 }
@@ -44,20 +44,26 @@ popd &>/dev/null # "${ROOT}/aws-lc-rs"
 
 RUSTLS_RCGEN_DIR="$(mktemp -d)"
 CLEANUP_ON_EXIT+=("${RUSTLS_RCGEN_DIR}")
-cargo download rcgen | tar xvzf - -C "${RUSTLS_RCGEN_DIR}" --strip-components=1
+cargo download -o "${RUSTLS_RCGEN_DIR}"/rcgen.tar.gz rcgen
+tar xvzf "${RUSTLS_RCGEN_DIR}"/rcgen.tar.gz -C "${RUSTLS_RCGEN_DIR}" --strip-components=1
+rm "${RUSTLS_RCGEN_DIR}"/rcgen.tar.gz
 RUSTLS_RCGEN_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_RCGEN_DIR}/.cargo_vcs_info.json)"
 rm -rf "${RUSTLS_RCGEN_DIR}" # Cleanup before we clone
 
 RUSTLS_WEBPKI_DIR="$(mktemp -d)"
 CLEANUP_ON_EXIT+=("${RUSTLS_WEBPKI_DIR}")
-cargo download rustls-webpki | tar xvzf - -C "${RUSTLS_WEBPKI_DIR}" --strip-components=1
+cargo download -o "${RUSTLS_WEBPKI_DIR}"/rustls-webpki.tar.gz rustls-webpki
+tar xvzf "${RUSTLS_WEBPKI_DIR}"/rustls-webpki.tar.gz -C "${RUSTLS_WEBPKI_DIR}" --strip-components=1
+rm "${RUSTLS_WEBPKI_DIR}"/rustls-webpki.tar.gz
 RUSTLS_WEBPKI_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_WEBPKI_DIR}/.cargo_vcs_info.json)"
 rm -rf "${RUSTLS_WEBPKI_DIR}" # Cleanup before we clone
 
 RUSTLS_DIR="$(mktemp -d)"
 CLEANUP_ON_EXIT+=("${RUSTLS_DIR}")
 if [[ $latest_release == "1" ]]; then
-  cargo download rustls | tar xvzf - -C "${RUSTLS_DIR}" --strip-components=1
+  cargo download -o "${RUSTLS_DIR}"/rustls.tar.gz rustls
+  tar xvzf "${RUSTLS_DIR}"/rustls.tar.gz -C "${RUSTLS_DIR}" --strip-components=1
+  rm "${RUSTLS_DIR}"/rustls.tar.gz
   RUSTLS_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_DIR}/.cargo_vcs_info.json)"
   rm -rf "${RUSTLS_DIR}" # Cleanup before we clone
 fi
