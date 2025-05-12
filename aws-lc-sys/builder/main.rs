@@ -496,7 +496,7 @@ impl CStdRequested {
 static mut PREGENERATED: bool = false;
 static mut AWS_LC_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_SYS_PREGENERATING_BINDINGS: bool = false;
-static mut AWS_LC_SYS_EXTERNAL_BINDGEN: bool = false;
+static mut AWS_LC_SYS_EXTERNAL_BINDGEN: Option<bool> = None;
 static mut AWS_LC_SYS_NO_ASM: bool = false;
 static mut AWS_LC_SYS_CFLAGS: String = String::new();
 static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
@@ -511,7 +511,7 @@ fn initialize() {
         AWS_LC_SYS_NO_PREFIX = env_crate_var_to_bool("NO_PREFIX").unwrap_or(false);
         AWS_LC_SYS_PREGENERATING_BINDINGS =
             env_crate_var_to_bool("PREGENERATING_BINDINGS").unwrap_or(false);
-        AWS_LC_SYS_EXTERNAL_BINDGEN = env_crate_var_to_bool("EXTERNAL_BINDGEN").unwrap_or(false);
+        AWS_LC_SYS_EXTERNAL_BINDGEN = env_crate_var_to_bool("EXTERNAL_BINDGEN");
         AWS_LC_SYS_NO_ASM = env_crate_var_to_bool("NO_ASM").unwrap_or(false);
         AWS_LC_SYS_CFLAGS = optional_env_optional_crate_target("CFLAGS").unwrap_or_default();
         AWS_LC_SYS_PREBUILT_NASM = env_crate_var_to_bool("PREBUILT_NASM");
@@ -523,7 +523,9 @@ fn initialize() {
             optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
     }
 
-    if !is_external_bindgen() && (is_pregenerating_bindings() || !has_bindgen_feature()) {
+    if !is_external_bindgen_requested().unwrap_or(false)
+        && (is_pregenerating_bindings() || !has_bindgen_feature())
+    {
         let target = effective_target();
         let supported_platform = match target.as_str() {
             "aarch64-apple-darwin"
@@ -553,7 +555,7 @@ fn initialize() {
 fn is_bindgen_required() -> bool {
     is_no_prefix()
         || is_pregenerating_bindings()
-        || is_external_bindgen()
+        || is_external_bindgen_requested().unwrap_or(false)
         || has_bindgen_feature()
         || !has_pregenerated()
 }
@@ -574,7 +576,7 @@ fn is_pregenerating_bindings() -> bool {
     unsafe { AWS_LC_SYS_PREGENERATING_BINDINGS }
 }
 
-fn is_external_bindgen() -> bool {
+fn is_external_bindgen_requested() -> Option<bool> {
     unsafe { AWS_LC_SYS_EXTERNAL_BINDGEN }
 }
 
@@ -655,7 +657,7 @@ fn is_crt_static() -> bool {
 
 bindgen_available!(
     fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
-        if internal_bindgen_supported() && !is_external_bindgen() {
+        if internal_bindgen_supported() && !is_external_bindgen_requested().unwrap_or(false) {
             emit_warning(&format!(
                 "Generating bindings - internal bindgen. Platform: {}",
                 effective_target()
@@ -704,7 +706,7 @@ fn main() {
             let src_bindings_path = Path::new(&manifest_dir)
                 .join("src")
                 .join(format!("{}.rs", target_platform_prefix("crypto")));
-            if is_external_bindgen() {
+            if is_external_bindgen_requested().unwrap_or(false) {
                 invoke_external_bindgen(&manifest_dir, &prefix, &src_bindings_path).unwrap();
             } else {
                 generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
@@ -827,6 +829,12 @@ impl Debug for BindingOptions {
 }
 
 fn verify_bindgen() -> Result<(), String> {
+    if !is_external_bindgen_requested().unwrap_or(true) {
+        return Err(
+            "external bindgen usage prevented by AWS_LC_SYS_EXTERNAL_BINDGEN=0".to_string(),
+        );
+    }
+
     let result = execute_command("bindgen".as_ref(), &["--version".as_ref()]);
     if !result.status {
         if result.executed {
