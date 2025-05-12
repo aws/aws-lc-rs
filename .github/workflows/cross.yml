@@ -23,6 +23,12 @@ jobs:
     if: github.repository_owner == 'aws'
     name: cross tests ${{ matrix.target[0] }}
     runs-on: ubuntu-22.04
+    env:
+      # The flag below is set to avoid the following error with GCC 11.4.0 on the riscv64 platform:
+      #   /home/runner/work/aws-lc-rs/aws-lc-rs/aws-lc-sys/aws-lc/crypto/pem/pem_lib.c:707:11: error: 'strncmp' of strings of length 1 and 9 and bound of 9 evaluates to nonzero [-Werror=string-compare]
+      #    707 |       if (strncmp(buf, "-----END ", 9) == 0) {
+      #        |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      AWS_LC_SYS_CFLAGS_riscv64gc_unknown_linux_gnu: '-Wno-string-compare'
     strategy:
       fail-fast: false
       matrix:
@@ -62,13 +68,6 @@ jobs:
           target: ${{ matrix.target[0] }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
-      # The flag below is set to avoid the following error with GCC 11.4.0 on the riscv64 platform:
-      #   /home/runner/work/aws-lc-rs/aws-lc-rs/aws-lc-sys/aws-lc/crypto/pem/pem_lib.c:707:11: error: 'strncmp' of strings of length 1 and 9 and bound of 9 evaluates to nonzero [-Werror=string-compare]
-      #    707 |       if (strncmp(buf, "-----END ", 9) == 0) {
-      #        |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      - if: ${{ matrix.target[0] == 'riscv64gc-unknown-linux-gnu' }}
-        run: |
-          echo 'AWS_LC_SYS_CFLAGS=-Wno-string-compare' >> "$GITHUB_ENV"
       - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
         run: |
           echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
