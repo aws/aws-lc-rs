@@ -333,6 +333,7 @@ jobs:
           update: true
           pacboy: >-
             rust-bindgen
+            ninja
             cc
             nasm
             go
@@ -343,6 +344,7 @@ jobs:
           echo "GOROOT=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\lib\go" >> $GITHUB_ENV
           echo "CC=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\bin\${{ matrix.cc }}.exe" >> $GITHUB_ENV
           echo "CXX=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\bin\${{ matrix.cxx }}.exe" >> $GITHUB_ENV
+          echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
           echo "${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\bin" >> $GITHUB_PATH
       - name: Checkout
         uses: actions/checkout@v4
