@@ -161,7 +161,8 @@ fn optional_env_crate_target<N: AsRef<str>>(name: N) -> Option<String> {
 
 fn optional_env_target<N: AsRef<str>>(name: N) -> Option<String> {
     let name = name.as_ref();
-    let name_for_target = format!("{}_{}", &name, target());
+    let target_name = target().to_lowercase().replace('-', "_");
+    let name_for_target = format!("{}_{}", &name, target_name);
     optional_env(name_for_target).or(optional_env(name))
 }
 
