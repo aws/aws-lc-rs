@@ -137,21 +137,20 @@ impl CmakeBuilder {
                 emit_warning(
                     "NOTICE: Build environment source paths might be visible in release binary.",
                 );
-                let parent_dir = self.manifest_dir.parent();
-                if parent_dir.is_some() && (target_family() == "unix" || target_env() == "gnu") {
-                    let parent_dir = parent_dir.unwrap();
-
-                    let flag = format!("\"-ffile-prefix-map={}=\"", parent_dir.display());
-                    if let Ok(true) = cc_build.is_flag_supported(&flag) {
-                        emit_warning(&format!("Using flag: {}", &flag));
-                        cmake_cfg.asmflag(&flag);
-                        cmake_cfg.cflag(&flag);
-                    } else {
-                        let flag = format!("\"-fdebug-prefix-map={}=\"", parent_dir.display());
+                if let Some(parent_dir) = self.manifest_dir.parent() {
+                    if target_family() == "unix" || target_env() == "gnu" {
+                        let flag = format!("\"-ffile-prefix-map={}=\"", parent_dir.display());
                         if let Ok(true) = cc_build.is_flag_supported(&flag) {
                             emit_warning(&format!("Using flag: {}", &flag));
                             cmake_cfg.asmflag(&flag);
                             cmake_cfg.cflag(&flag);
+                        } else {
+                            let flag = format!("\"-fdebug-prefix-map={}=\"", parent_dir.display());
+                            if let Ok(true) = cc_build.is_flag_supported(&flag) {
+                                emit_warning(&format!("Using flag: {}", &flag));
+                                cmake_cfg.asmflag(&flag);
+                                cmake_cfg.cflag(&flag);
+                            }
                         }
                     }
                 }
