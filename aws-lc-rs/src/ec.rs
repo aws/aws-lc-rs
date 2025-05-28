@@ -3,8 +3,6 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::ec::signature::AlgorithmID;
-// TODO: Uncomment when MSRV >= 1.64
 #[cfg(feature = "fips")]
 use crate::aws_lc::EC_KEY_check_fips;
 #[cfg(not(feature = "fips"))]
@@ -16,11 +14,14 @@ use crate::aws_lc::{
     NID_X9_62_prime256v1, NID_secp224r1, NID_secp256k1, NID_secp384r1, NID_secp521r1, EC_GROUP,
     EC_KEY, EVP_PKEY, EVP_PKEY_EC,
 };
+use crate::ec::signature::AlgorithmID;
 use crate::error::{KeyRejected, Unspecified};
 #[cfg(feature = "fips")]
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
 use crate::signature::Signature;
+// TODO: Uncomment when MSRV >= 1.64
+//use core::ffi::c_int;
 use std::os::raw::c_int;
 use std::ptr::null;
 
