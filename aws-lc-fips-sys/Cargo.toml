@@ -62,7 +62,7 @@ asan = []
 ssl = []
 bindgen = [
     "dep:bindgen",
-] # Generate the bindings on the targetted platform as a fallback mechanism.
+] # Generate the bindings on the targeted platform as a fallback mechanism.
 
 [build-dependencies]
 cmake = "0.1.48"
