@@ -109,7 +109,7 @@
 <a href=#109 id=109 data-nosnippet>109</a>    /// `error::Unspecified` on parse error.
 <a href=#110 id=110 data-nosnippet>110</a>    </span><span class="kw">pub fn </span>public_modulus_len(public_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;u32, Unspecified&gt; {
 <a href=#111 id=111 data-nosnippet>111</a>        <span class="kw">let </span>rsa = encoding::rfc8017::decode_public_key_der(public_key)<span class="question-mark">?</span>;
-<a href=#112 id=112 data-nosnippet>112</a>        <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ RSA_bits(<span class="kw-2">*</span>rsa.get_rsa()<span class="question-mark">?</span>) })
+<a href=#112 id=112 data-nosnippet>112</a>        <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ RSA_bits(<span class="kw-2">*</span>rsa.as_const().get_rsa()<span class="question-mark">?</span>) })
 <a href=#113 id=113 data-nosnippet>113</a>    }
 <a href=#114 id=114 data-nosnippet>114</a>
 <a href=#115 id=115 data-nosnippet>115</a>    <span class="attr">#[must_use]
@@ -222,7 +222,7 @@
 <a href=#222 id=222 data-nosnippet>222</a>    signature: <span class="kw-2">&amp;</span>[u8],
 <a href=#223 id=223 data-nosnippet>223</a>    allowed_bit_size: <span class="kw-2">&amp;</span>RangeInclusive&lt;u32&gt;,
 <a href=#224 id=224 data-nosnippet>224</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-<a href=#225 id=225 data-nosnippet>225</a>    <span class="kw">if </span>!allowed_bit_size.contains(<span class="kw-2">&amp;</span>public_key.key_size_bits().try_into()<span class="question-mark">?</span>) {
+<a href=#225 id=225 data-nosnippet>225</a>    <span class="kw">if </span>!allowed_bit_size.contains(<span class="kw-2">&amp;</span>public_key.as_const().key_size_bits().try_into()<span class="question-mark">?</span>) {
 <a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
 <a href=#227 id=227 data-nosnippet>227</a>    }
 <a href=#228 id=228 data-nosnippet>228</a>

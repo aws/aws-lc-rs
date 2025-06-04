@@ -135,9 +135,9 @@
 <a href=#135 id=135 data-nosnippet>135</a>        compressed: bool,
 <a href=#136 id=136 data-nosnippet>136</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Unspecified&gt; {
 <a href=#137 id=137 data-nosnippet>137</a>        <span class="kw">let </span>pub_key_size = <span class="kw">if </span>compressed {
-<a href=#138 id=138 data-nosnippet>138</a>            compressed_public_key_size_bytes(evp_pkey.key_size_bits())
+<a href=#138 id=138 data-nosnippet>138</a>            compressed_public_key_size_bytes(evp_pkey.as_const().key_size_bits())
 <a href=#139 id=139 data-nosnippet>139</a>        } <span class="kw">else </span>{
-<a href=#140 id=140 data-nosnippet>140</a>            uncompressed_public_key_size_bytes(evp_pkey.key_size_bits())
+<a href=#140 id=140 data-nosnippet>140</a>            uncompressed_public_key_size_bytes(evp_pkey.as_const().key_size_bits())
 <a href=#141 id=141 data-nosnippet>141</a>        };
 <a href=#142 id=142 data-nosnippet>142</a>        <span class="kw">let </span><span class="kw-2">mut </span>cbb = LcCBB::new(pub_key_size);
 <a href=#143 id=143 data-nosnippet>143</a>        marshal_sec1_public_point_into_cbb(<span class="kw-2">&amp;mut </span>cbb, evp_pkey, compressed)<span class="question-mark">?</span>;
@@ -159,96 +159,106 @@
 <a href=#159 id=159 data-nosnippet>159</a>        evp_pkey: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
 <a href=#160 id=160 data-nosnippet>160</a>        compressed: bool,
 <a href=#161 id=161 data-nosnippet>161</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-<a href=#162 id=162 data-nosnippet>162</a>        <span class="kw">let </span>ec_key = ConstPointer::new(<span class="kw">unsafe </span>{ EVP_PKEY_get0_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_const()) })<span class="question-mark">?</span>;
-<a href=#163 id=163 data-nosnippet>163</a>        <span class="kw">let </span>ec_group = ConstPointer::new(<span class="kw">unsafe </span>{ EC_KEY_get0_group(<span class="kw-2">*</span>ec_key) })<span class="question-mark">?</span>;
-<a href=#164 id=164 data-nosnippet>164</a>        <span class="kw">let </span>ec_point = ConstPointer::new(<span class="kw">unsafe </span>{ EC_KEY_get0_public_key(<span class="kw-2">*</span>ec_key) })<span class="question-mark">?</span>;
-<a href=#165 id=165 data-nosnippet>165</a>
-<a href=#166 id=166 data-nosnippet>166</a>        <span class="kw">let </span>point_conversion_form = <span class="kw">if </span>compressed {
-<a href=#167 id=167 data-nosnippet>167</a>            point_conversion_form_t::POINT_CONVERSION_COMPRESSED
-<a href=#168 id=168 data-nosnippet>168</a>        } <span class="kw">else </span>{
-<a href=#169 id=169 data-nosnippet>169</a>            point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED
-<a href=#170 id=170 data-nosnippet>170</a>        };
-<a href=#171 id=171 data-nosnippet>171</a>
-<a href=#172 id=172 data-nosnippet>172</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-<a href=#173 id=173 data-nosnippet>173</a>            EC_POINT_point2cbb(
-<a href=#174 id=174 data-nosnippet>174</a>                cbb.as_mut_ptr(),
-<a href=#175 id=175 data-nosnippet>175</a>                <span class="kw-2">*</span>ec_group,
-<a href=#176 id=176 data-nosnippet>176</a>                <span class="kw-2">*</span>ec_point,
-<a href=#177 id=177 data-nosnippet>177</a>                point_conversion_form,
-<a href=#178 id=178 data-nosnippet>178</a>                null_mut(),
-<a href=#179 id=179 data-nosnippet>179</a>            )
-<a href=#180 id=180 data-nosnippet>180</a>        } {
-<a href=#181 id=181 data-nosnippet>181</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#182 id=182 data-nosnippet>182</a>        }
-<a href=#183 id=183 data-nosnippet>183</a>        <span class="prelude-val">Ok</span>(())
-<a href=#184 id=184 data-nosnippet>184</a>    }
-<a href=#185 id=185 data-nosnippet>185</a>
-<a href=#186 id=186 data-nosnippet>186</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>marshal_sec1_private_key(
-<a href=#187 id=187 data-nosnippet>187</a>        evp_pkey: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
-<a href=#188 id=188 data-nosnippet>188</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Unspecified&gt; {
-<a href=#189 id=189 data-nosnippet>189</a>        <span class="kw">let </span>ec_key = ConstPointer::new(<span class="kw">unsafe </span>{ EVP_PKEY_get0_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_const()) })<span class="question-mark">?</span>;
-<a href=#190 id=190 data-nosnippet>190</a>        <span class="kw">let </span>ec_group = ConstPointer::new(<span class="kw">unsafe </span>{ EC_KEY_get0_group(<span class="kw-2">*</span>ec_key) })<span class="question-mark">?</span>;
-<a href=#191 id=191 data-nosnippet>191</a>        <span class="kw">let </span>nid = <span class="kw">unsafe </span>{ EC_GROUP_get_curve_name(<span class="kw-2">*</span>ec_group) };
-<a href=#192 id=192 data-nosnippet>192</a>        <span class="attr">#[allow(non_upper_case_globals)]
-<a href=#193 id=193 data-nosnippet>193</a>        </span><span class="kw">let </span>key_size: usize = <span class="kw">match </span>nid {
-<a href=#194 id=194 data-nosnippet>194</a>            NID_X9_62_prime256v1 | NID_secp256k1 =&gt; <span class="prelude-val">Ok</span>(<span class="number">32usize</span>),
-<a href=#195 id=195 data-nosnippet>195</a>            NID_secp384r1 =&gt; <span class="prelude-val">Ok</span>(<span class="number">48usize</span>),
-<a href=#196 id=196 data-nosnippet>196</a>            NID_secp521r1 =&gt; <span class="prelude-val">Ok</span>(<span class="number">66usize</span>),
-<a href=#197 id=197 data-nosnippet>197</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Unspecified),
-<a href=#198 id=198 data-nosnippet>198</a>        }<span class="question-mark">?</span>;
-<a href=#199 id=199 data-nosnippet>199</a>        <span class="kw">let </span>private_bn = ConstPointer::new(<span class="kw">unsafe </span>{ EC_KEY_get0_private_key(<span class="kw-2">*</span>ec_key) })<span class="question-mark">?</span>;
-<a href=#200 id=200 data-nosnippet>200</a>
-<a href=#201 id=201 data-nosnippet>201</a>        <span class="kw">let </span><span class="kw-2">mut </span>cbb = LcCBB::new(key_size);
-<a href=#202 id=202 data-nosnippet>202</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ BN_bn2cbb_padded(cbb.as_mut_ptr(), key_size, <span class="kw-2">*</span>private_bn) } {
-<a href=#203 id=203 data-nosnippet>203</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#204 id=204 data-nosnippet>204</a>        }
-<a href=#205 id=205 data-nosnippet>205</a>        cbb.into_vec()
-<a href=#206 id=206 data-nosnippet>206</a>    }
-<a href=#207 id=207 data-nosnippet>207</a>}
+<a href=#162 id=162 data-nosnippet>162</a>        <span class="kw">let </span>ec_key = evp_pkey.project_const_lifetime(<span class="kw">unsafe </span>{
+<a href=#163 id=163 data-nosnippet>163</a>            |evp_pkey| EVP_PKEY_get0_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_const())
+<a href=#164 id=164 data-nosnippet>164</a>        })<span class="question-mark">?</span>;
+<a href=#165 id=165 data-nosnippet>165</a>        <span class="kw">let </span>ec_group =
+<a href=#166 id=166 data-nosnippet>166</a>            ec_key.project_const_lifetime(<span class="kw">unsafe </span>{ |ec_key| EC_KEY_get0_group(<span class="kw-2">**</span>ec_key) })<span class="question-mark">?</span>;
+<a href=#167 id=167 data-nosnippet>167</a>        <span class="kw">let </span>ec_point =
+<a href=#168 id=168 data-nosnippet>168</a>            ec_key.project_const_lifetime(<span class="kw">unsafe </span>{ |ec_key| EC_KEY_get0_public_key(<span class="kw-2">**</span>ec_key) })<span class="question-mark">?</span>;
+<a href=#169 id=169 data-nosnippet>169</a>
+<a href=#170 id=170 data-nosnippet>170</a>        <span class="kw">let </span>point_conversion_form = <span class="kw">if </span>compressed {
+<a href=#171 id=171 data-nosnippet>171</a>            point_conversion_form_t::POINT_CONVERSION_COMPRESSED
+<a href=#172 id=172 data-nosnippet>172</a>        } <span class="kw">else </span>{
+<a href=#173 id=173 data-nosnippet>173</a>            point_conversion_form_t::POINT_CONVERSION_UNCOMPRESSED
+<a href=#174 id=174 data-nosnippet>174</a>        };
+<a href=#175 id=175 data-nosnippet>175</a>
+<a href=#176 id=176 data-nosnippet>176</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
+<a href=#177 id=177 data-nosnippet>177</a>            EC_POINT_point2cbb(
+<a href=#178 id=178 data-nosnippet>178</a>                cbb.as_mut_ptr(),
+<a href=#179 id=179 data-nosnippet>179</a>                <span class="kw-2">*</span>ec_group,
+<a href=#180 id=180 data-nosnippet>180</a>                <span class="kw-2">*</span>ec_point,
+<a href=#181 id=181 data-nosnippet>181</a>                point_conversion_form,
+<a href=#182 id=182 data-nosnippet>182</a>                null_mut(),
+<a href=#183 id=183 data-nosnippet>183</a>            )
+<a href=#184 id=184 data-nosnippet>184</a>        } {
+<a href=#185 id=185 data-nosnippet>185</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#186 id=186 data-nosnippet>186</a>        }
+<a href=#187 id=187 data-nosnippet>187</a>        <span class="prelude-val">Ok</span>(())
+<a href=#188 id=188 data-nosnippet>188</a>    }
+<a href=#189 id=189 data-nosnippet>189</a>
+<a href=#190 id=190 data-nosnippet>190</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>marshal_sec1_private_key(
+<a href=#191 id=191 data-nosnippet>191</a>        evp_pkey: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
+<a href=#192 id=192 data-nosnippet>192</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Unspecified&gt; {
+<a href=#193 id=193 data-nosnippet>193</a>        <span class="kw">let </span>ec_key = evp_pkey.project_const_lifetime(<span class="kw">unsafe </span>{
+<a href=#194 id=194 data-nosnippet>194</a>            |evp_pkey| EVP_PKEY_get0_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_const())
+<a href=#195 id=195 data-nosnippet>195</a>        })<span class="question-mark">?</span>;
+<a href=#196 id=196 data-nosnippet>196</a>        <span class="kw">let </span>ec_group =
+<a href=#197 id=197 data-nosnippet>197</a>            ec_key.project_const_lifetime(<span class="kw">unsafe </span>{ |ec_key| EC_KEY_get0_group(<span class="kw-2">**</span>ec_key) })<span class="question-mark">?</span>;
+<a href=#198 id=198 data-nosnippet>198</a>        <span class="kw">let </span>nid = <span class="kw">unsafe </span>{ EC_GROUP_get_curve_name(<span class="kw-2">*</span>ec_group) };
+<a href=#199 id=199 data-nosnippet>199</a>        <span class="attr">#[allow(non_upper_case_globals)]
+<a href=#200 id=200 data-nosnippet>200</a>        </span><span class="kw">let </span>key_size: usize = <span class="kw">match </span>nid {
+<a href=#201 id=201 data-nosnippet>201</a>            NID_X9_62_prime256v1 | NID_secp256k1 =&gt; <span class="prelude-val">Ok</span>(<span class="number">32usize</span>),
+<a href=#202 id=202 data-nosnippet>202</a>            NID_secp384r1 =&gt; <span class="prelude-val">Ok</span>(<span class="number">48usize</span>),
+<a href=#203 id=203 data-nosnippet>203</a>            NID_secp521r1 =&gt; <span class="prelude-val">Ok</span>(<span class="number">66usize</span>),
+<a href=#204 id=204 data-nosnippet>204</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Unspecified),
+<a href=#205 id=205 data-nosnippet>205</a>        }<span class="question-mark">?</span>;
+<a href=#206 id=206 data-nosnippet>206</a>        <span class="kw">let </span>private_bn =
+<a href=#207 id=207 data-nosnippet>207</a>            ec_key.project_const_lifetime(<span class="kw">unsafe </span>{ |ec_key| EC_KEY_get0_private_key(<span class="kw-2">**</span>ec_key) })<span class="question-mark">?</span>;
 <a href=#208 id=208 data-nosnippet>208</a>
-<a href=#209 id=209 data-nosnippet>209</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>rfc5915 {
-<a href=#210 id=210 data-nosnippet>210</a>    <span class="kw">use </span><span class="kw">crate</span>::aws_lc::{
-<a href=#211 id=211 data-nosnippet>211</a>        EC_KEY_get_enc_flags, EC_KEY_marshal_private_key, EC_KEY_parse_private_key,
-<a href=#212 id=212 data-nosnippet>212</a>        EVP_PKEY_get0_EC_KEY, EVP_PKEY_new, EVP_PKEY_set1_EC_KEY, EVP_PKEY,
-<a href=#213 id=213 data-nosnippet>213</a>    };
-<a href=#214 id=214 data-nosnippet>214</a>    <span class="kw">use </span><span class="kw">crate</span>::cbb::LcCBB;
-<a href=#215 id=215 data-nosnippet>215</a>    <span class="kw">use </span><span class="kw">crate</span>::cbs::build_CBS;
-<a href=#216 id=216 data-nosnippet>216</a>    <span class="kw">use </span><span class="kw">crate</span>::ec::ec_group_from_nid;
-<a href=#217 id=217 data-nosnippet>217</a>    <span class="kw">use </span><span class="kw">crate</span>::error::{KeyRejected, Unspecified};
-<a href=#218 id=218 data-nosnippet>218</a>    <span class="kw">use </span><span class="kw">crate</span>::ptr::{ConstPointer, LcPtr};
-<a href=#219 id=219 data-nosnippet>219</a>
-<a href=#220 id=220 data-nosnippet>220</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_rfc5915_private_key(
-<a href=#221 id=221 data-nosnippet>221</a>        key_bytes: <span class="kw-2">&amp;</span>[u8],
-<a href=#222 id=222 data-nosnippet>222</a>        expected_curve_nid: i32,
-<a href=#223 id=223 data-nosnippet>223</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, KeyRejected&gt; {
-<a href=#224 id=224 data-nosnippet>224</a>        <span class="kw">let </span>ec_group = ec_group_from_nid(expected_curve_nid)<span class="question-mark">?</span>;
-<a href=#225 id=225 data-nosnippet>225</a>        <span class="kw">let </span><span class="kw-2">mut </span>cbs = build_CBS(key_bytes);
-<a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">let </span><span class="kw-2">mut </span>ec_key = LcPtr::new(<span class="kw">unsafe </span>{ EC_KEY_parse_private_key(<span class="kw-2">&amp;mut </span>cbs, <span class="kw-2">*</span>ec_group) })<span class="question-mark">?</span>;
-<a href=#227 id=227 data-nosnippet>227</a>        <span class="kw">let </span><span class="kw-2">mut </span>evp_pkey = LcPtr::new(<span class="kw">unsafe </span>{ EVP_PKEY_new() })<span class="question-mark">?</span>;
-<a href=#228 id=228 data-nosnippet>228</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_set1_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_mut(), <span class="kw-2">*</span>ec_key.as_mut()) } {
-<a href=#229 id=229 data-nosnippet>229</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::unexpected_error());
-<a href=#230 id=230 data-nosnippet>230</a>        }
-<a href=#231 id=231 data-nosnippet>231</a>        <span class="prelude-val">Ok</span>(evp_pkey)
-<a href=#232 id=232 data-nosnippet>232</a>    }
-<a href=#233 id=233 data-nosnippet>233</a>
-<a href=#234 id=234 data-nosnippet>234</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>marshal_rfc5915_private_key(
-<a href=#235 id=235 data-nosnippet>235</a>        evp_pkey: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
-<a href=#236 id=236 data-nosnippet>236</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Unspecified&gt; {
-<a href=#237 id=237 data-nosnippet>237</a>        <span class="kw">let </span>ec_key = ConstPointer::new(<span class="kw">unsafe </span>{ EVP_PKEY_get0_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_const()) })<span class="question-mark">?</span>;
-<a href=#238 id=238 data-nosnippet>238</a>        <span class="kw">let </span><span class="kw-2">mut </span>cbb = LcCBB::new(evp_pkey.key_size_bytes());
-<a href=#239 id=239 data-nosnippet>239</a>        <span class="kw">let </span>enc_flags = <span class="kw">unsafe </span>{ EC_KEY_get_enc_flags(<span class="kw-2">*</span>ec_key) };
-<a href=#240 id=240 data-nosnippet>240</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EC_KEY_marshal_private_key(cbb.as_mut_ptr(), <span class="kw-2">*</span>ec_key, enc_flags) } {
-<a href=#241 id=241 data-nosnippet>241</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#242 id=242 data-nosnippet>242</a>        }
-<a href=#243 id=243 data-nosnippet>243</a>        cbb.into_vec()
-<a href=#244 id=244 data-nosnippet>244</a>    }
-<a href=#245 id=245 data-nosnippet>245</a>}
-<a href=#246 id=246 data-nosnippet>246</a>
-<a href=#247 id=247 data-nosnippet>247</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_ec_public_key(
-<a href=#248 id=248 data-nosnippet>248</a>    key_bytes: <span class="kw-2">&amp;</span>[u8],
-<a href=#249 id=249 data-nosnippet>249</a>    expected_curve_nid: i32,
-<a href=#250 id=250 data-nosnippet>250</a>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, KeyRejected&gt; {
-<a href=#251 id=251 data-nosnippet>251</a>    LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
-<a href=#252 id=252 data-nosnippet>252</a>        .or(parse_sec1_public_point(key_bytes, expected_curve_nid))
-<a href=#253 id=253 data-nosnippet>253</a>        .and_then(|key| validate_ec_evp_key(<span class="kw-2">&amp;</span>key.as_const(), expected_curve_nid).map(|()| key))
-<a href=#254 id=254 data-nosnippet>254</a>}</code></pre></div></section></main></body></html>
+<a href=#209 id=209 data-nosnippet>209</a>        <span class="kw">let </span><span class="kw-2">mut </span>cbb = LcCBB::new(key_size);
+<a href=#210 id=210 data-nosnippet>210</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ BN_bn2cbb_padded(cbb.as_mut_ptr(), key_size, <span class="kw-2">*</span>private_bn) } {
+<a href=#211 id=211 data-nosnippet>211</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#212 id=212 data-nosnippet>212</a>        }
+<a href=#213 id=213 data-nosnippet>213</a>        cbb.into_vec()
+<a href=#214 id=214 data-nosnippet>214</a>    }
+<a href=#215 id=215 data-nosnippet>215</a>}
+<a href=#216 id=216 data-nosnippet>216</a>
+<a href=#217 id=217 data-nosnippet>217</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>rfc5915 {
+<a href=#218 id=218 data-nosnippet>218</a>    <span class="kw">use </span><span class="kw">crate</span>::aws_lc::{
+<a href=#219 id=219 data-nosnippet>219</a>        EC_KEY_get_enc_flags, EC_KEY_marshal_private_key, EC_KEY_parse_private_key,
+<a href=#220 id=220 data-nosnippet>220</a>        EVP_PKEY_get0_EC_KEY, EVP_PKEY_new, EVP_PKEY_set1_EC_KEY, EVP_PKEY,
+<a href=#221 id=221 data-nosnippet>221</a>    };
+<a href=#222 id=222 data-nosnippet>222</a>    <span class="kw">use </span><span class="kw">crate</span>::cbb::LcCBB;
+<a href=#223 id=223 data-nosnippet>223</a>    <span class="kw">use </span><span class="kw">crate</span>::cbs::build_CBS;
+<a href=#224 id=224 data-nosnippet>224</a>    <span class="kw">use </span><span class="kw">crate</span>::ec::ec_group_from_nid;
+<a href=#225 id=225 data-nosnippet>225</a>    <span class="kw">use </span><span class="kw">crate</span>::error::{KeyRejected, Unspecified};
+<a href=#226 id=226 data-nosnippet>226</a>    <span class="kw">use </span><span class="kw">crate</span>::ptr::LcPtr;
+<a href=#227 id=227 data-nosnippet>227</a>
+<a href=#228 id=228 data-nosnippet>228</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_rfc5915_private_key(
+<a href=#229 id=229 data-nosnippet>229</a>        key_bytes: <span class="kw-2">&amp;</span>[u8],
+<a href=#230 id=230 data-nosnippet>230</a>        expected_curve_nid: i32,
+<a href=#231 id=231 data-nosnippet>231</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, KeyRejected&gt; {
+<a href=#232 id=232 data-nosnippet>232</a>        <span class="kw">let </span>ec_group = ec_group_from_nid(expected_curve_nid)<span class="question-mark">?</span>;
+<a href=#233 id=233 data-nosnippet>233</a>        <span class="kw">let </span><span class="kw-2">mut </span>cbs = build_CBS(key_bytes);
+<a href=#234 id=234 data-nosnippet>234</a>        <span class="kw">let </span><span class="kw-2">mut </span>ec_key = LcPtr::new(<span class="kw">unsafe </span>{ EC_KEY_parse_private_key(<span class="kw-2">&amp;mut </span>cbs, <span class="kw-2">*</span>ec_group) })<span class="question-mark">?</span>;
+<a href=#235 id=235 data-nosnippet>235</a>        <span class="kw">let </span><span class="kw-2">mut </span>evp_pkey = LcPtr::new(<span class="kw">unsafe </span>{ EVP_PKEY_new() })<span class="question-mark">?</span>;
+<a href=#236 id=236 data-nosnippet>236</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_set1_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_mut(), <span class="kw-2">*</span>ec_key.as_mut()) } {
+<a href=#237 id=237 data-nosnippet>237</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::unexpected_error());
+<a href=#238 id=238 data-nosnippet>238</a>        }
+<a href=#239 id=239 data-nosnippet>239</a>        <span class="prelude-val">Ok</span>(evp_pkey)
+<a href=#240 id=240 data-nosnippet>240</a>    }
+<a href=#241 id=241 data-nosnippet>241</a>
+<a href=#242 id=242 data-nosnippet>242</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>marshal_rfc5915_private_key(
+<a href=#243 id=243 data-nosnippet>243</a>        evp_pkey: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
+<a href=#244 id=244 data-nosnippet>244</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, Unspecified&gt; {
+<a href=#245 id=245 data-nosnippet>245</a>        <span class="kw">let </span>ec_key = evp_pkey.project_const_lifetime(<span class="kw">unsafe </span>{
+<a href=#246 id=246 data-nosnippet>246</a>            |evp_pkey| EVP_PKEY_get0_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_const())
+<a href=#247 id=247 data-nosnippet>247</a>        })<span class="question-mark">?</span>;
+<a href=#248 id=248 data-nosnippet>248</a>        <span class="kw">let </span><span class="kw-2">mut </span>cbb = LcCBB::new(evp_pkey.as_const().key_size_bytes());
+<a href=#249 id=249 data-nosnippet>249</a>        <span class="kw">let </span>enc_flags = <span class="kw">unsafe </span>{ EC_KEY_get_enc_flags(<span class="kw-2">*</span>ec_key) };
+<a href=#250 id=250 data-nosnippet>250</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EC_KEY_marshal_private_key(cbb.as_mut_ptr(), <span class="kw-2">*</span>ec_key, enc_flags) } {
+<a href=#251 id=251 data-nosnippet>251</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#252 id=252 data-nosnippet>252</a>        }
+<a href=#253 id=253 data-nosnippet>253</a>        cbb.into_vec()
+<a href=#254 id=254 data-nosnippet>254</a>    }
+<a href=#255 id=255 data-nosnippet>255</a>}
+<a href=#256 id=256 data-nosnippet>256</a>
+<a href=#257 id=257 data-nosnippet>257</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_ec_public_key(
+<a href=#258 id=258 data-nosnippet>258</a>    key_bytes: <span class="kw-2">&amp;</span>[u8],
+<a href=#259 id=259 data-nosnippet>259</a>    expected_curve_nid: i32,
+<a href=#260 id=260 data-nosnippet>260</a>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, KeyRejected&gt; {
+<a href=#261 id=261 data-nosnippet>261</a>    LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
+<a href=#262 id=262 data-nosnippet>262</a>        .or(parse_sec1_public_point(key_bytes, expected_curve_nid))
+<a href=#263 id=263 data-nosnippet>263</a>        .and_then(|key| validate_ec_evp_key(<span class="kw-2">&amp;</span>key.as_const(), expected_curve_nid).map(|()| key))
+<a href=#264 id=264 data-nosnippet>264</a>}</code></pre></div></section></main></body></html>

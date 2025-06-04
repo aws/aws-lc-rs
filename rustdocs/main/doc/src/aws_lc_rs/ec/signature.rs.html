@@ -121,7 +121,7 @@
 <a href=#121 id=121 data-nosnippet>121</a>    /// # Errors
 <a href=#122 id=122 data-nosnippet>122</a>    /// Returns an error if the public key fails to marshal to X.509.
 <a href=#123 id=123 data-nosnippet>123</a>    </span><span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;PublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;, Unspecified&gt; {
-<a href=#124 id=124 data-nosnippet>124</a>        <span class="kw">let </span>der = <span class="self">self</span>.evp_pkey.marshal_rfc5280_public_key()<span class="question-mark">?</span>;
+<a href=#124 id=124 data-nosnippet>124</a>        <span class="kw">let </span>der = <span class="self">self</span>.evp_pkey.as_const().marshal_rfc5280_public_key()<span class="question-mark">?</span>;
 <a href=#125 id=125 data-nosnippet>125</a>        <span class="prelude-val">Ok</span>(PublicKeyX509Der::new(der))
 <a href=#126 id=126 data-nosnippet>126</a>    }
 <a href=#127 id=127 data-nosnippet>127</a>}

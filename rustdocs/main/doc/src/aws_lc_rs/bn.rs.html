@@ -35,7 +35,7 @@
 <a href=#35 id=35 data-nosnippet>35</a>    }
 <a href=#36 id=36 data-nosnippet>36</a>}
 <a href=#37 id=37 data-nosnippet>37</a>
-<a href=#38 id=38 data-nosnippet>38</a><span class="kw">impl </span>ConstPointer&lt;BIGNUM&gt; {
+<a href=#38 id=38 data-nosnippet>38</a><span class="kw">impl </span>ConstPointer&lt;<span class="lifetime">'_</span>, BIGNUM&gt; {
 <a href=#39 id=39 data-nosnippet>39</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>to_be_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
 <a href=#40 id=40 data-nosnippet>40</a>        <span class="kw">unsafe </span>{
 <a href=#41 id=41 data-nosnippet>41</a>            <span class="kw">let </span>bn_bytes = BN_num_bytes(<span class="kw-2">**</span><span class="self">self</span>);
