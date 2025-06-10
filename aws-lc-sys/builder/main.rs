@@ -885,6 +885,33 @@ fn verify_bindgen() -> Result<(), String> {
     Ok(())
 }
 
+const PRELUDE: &str = r"
+#![allow(
+    clippy::cast_lossless,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::default_trait_access,
+    clippy::must_use_candidate,
+    clippy::missing_safety_doc,
+    clippy::not_unsafe_ptr_arg_deref,
+    clippy::ptr_as_ptr,
+    clippy::ptr_offset_with_cast,
+    clippy::pub_underscore_fields,
+    clippy::semicolon_if_nothing_returned,
+    clippy::too_many_lines,
+    clippy::unreadable_literal,
+    clippy::used_underscore_binding,
+    clippy::useless_transmute,
+    clippy::useless_transmute,
+    dead_code,
+    improper_ctypes,
+    non_camel_case_types,
+    non_snake_case,
+    non_upper_case_globals,
+    unused_imports,
+)]
+";
+
 fn invoke_external_bindgen(
     manifest_dir: &Path,
     prefix: &Option<String>,
@@ -946,13 +973,17 @@ fn invoke_external_bindgen(
         "functions,types,vars,methods,constructors,destructors",
         header.as_str(),
         "--rust-target",
-        r"1.59",
+        r"1.70",
         "--output",
         gen_bindings_path.to_str().unwrap(),
         "--formatter",
         r"rustfmt",
-        "--",
     ]);
+    if !options.disable_prelude {
+        bindgen_params.extend(["--raw-line", PRELUDE]);
+    }
+    bindgen_params.push("--");
+
     for x in &clang_args {
         bindgen_params.push(x.as_str());
     }

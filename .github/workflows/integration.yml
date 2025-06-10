@@ -335,13 +335,13 @@ jobs:
       - name: Install MSRV Rust version
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.63.0 # TODO: dynamically identify MSRV
+          toolchain: 1.70.0 # TODO: dynamically identify MSRV
 
       - name: Update dependencies
         run: |
-          cargo +1.63.0 update
-          cargo +1.63.0 tree
+          cargo +1.70.0 update
+          cargo +1.70.0 tree
 
       - name: Verify msrv
         working-directory: ./aws-lc-rs
-        run: cargo +1.63.0 check --features bindgen
+        run: cargo +1.70.0 check --features bindgen

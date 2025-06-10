@@ -102,11 +102,9 @@ use crate::aws_lc::{
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use crate::{constant_time, digest, hkdf};
+use core::ffi::c_uint;
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
-// TODO: Uncomment when MSRV >= 1.64
-// use core::ffi::c_uint;
-use std::os::raw::c_uint;
 
 /// A deprecated alias for `Tag`.
 #[deprecated]
