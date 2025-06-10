@@ -61,7 +61,7 @@ impl KbkdfCtrHmacAlgorithm {
     }
 
     #[must_use]
-    fn get_evp_md(&self) -> ConstPointer<EVP_MD> {
+    fn get_evp_md(&self) -> ConstPointer<'_, EVP_MD> {
         match_digest_type(match self.id {
             KbkdfCtrHmacAlgorithmId::Sha224 => &AlgorithmID::SHA224,
             KbkdfCtrHmacAlgorithmId::Sha256 => &AlgorithmID::SHA256,
