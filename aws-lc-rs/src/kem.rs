@@ -256,7 +256,7 @@ where
                 shared_secret.as_mut_ptr(),
                 &mut shared_secret_len,
                 // AWS-LC incorrectly has this as an unqualified `uint8_t *`, it should be qualified with const
-                ciphertext.as_ptr() as *mut u8,
+                ciphertext.as_ptr().cast_mut(),
                 ciphertext.len(),
             )
         } {
