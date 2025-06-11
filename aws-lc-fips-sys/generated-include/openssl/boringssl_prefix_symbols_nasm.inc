@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_13_6
+%define BORINGSSL_PREFIX aws_lc_fips_0_13_7
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -2466,6 +2466,7 @@
 %xdefine _X509_SIG_getm _ %+ BORINGSSL_PREFIX %+ _X509_SIG_getm
 %xdefine _X509_SIG_it _ %+ BORINGSSL_PREFIX %+ _X509_SIG_it
 %xdefine _X509_SIG_new _ %+ BORINGSSL_PREFIX %+ _X509_SIG_new
+%xdefine _X509_STORE_CTX_add_custom_crit_oid _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_add_custom_crit_oid
 %xdefine _X509_STORE_CTX_cleanup _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_cleanup
 %xdefine _X509_STORE_CTX_free _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_free
 %xdefine _X509_STORE_CTX_get0_cert _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_get0_cert
@@ -2504,6 +2505,7 @@
 %xdefine _X509_STORE_CTX_set_time_posix _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_set_time_posix
 %xdefine _X509_STORE_CTX_set_trust _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_set_trust
 %xdefine _X509_STORE_CTX_set_verify_cb _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_set_verify_cb
+%xdefine _X509_STORE_CTX_set_verify_crit_oids _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_set_verify_crit_oids
 %xdefine _X509_STORE_CTX_trusted_stack _ %+ BORINGSSL_PREFIX %+ _X509_STORE_CTX_trusted_stack
 %xdefine _X509_STORE_add_cert _ %+ BORINGSSL_PREFIX %+ _X509_STORE_add_cert
 %xdefine _X509_STORE_add_crl _ %+ BORINGSSL_PREFIX %+ _X509_STORE_add_crl
@@ -6288,6 +6290,7 @@
 %xdefine X509_SIG_getm BORINGSSL_PREFIX %+ _X509_SIG_getm
 %xdefine X509_SIG_it BORINGSSL_PREFIX %+ _X509_SIG_it
 %xdefine X509_SIG_new BORINGSSL_PREFIX %+ _X509_SIG_new
+%xdefine X509_STORE_CTX_add_custom_crit_oid BORINGSSL_PREFIX %+ _X509_STORE_CTX_add_custom_crit_oid
 %xdefine X509_STORE_CTX_cleanup BORINGSSL_PREFIX %+ _X509_STORE_CTX_cleanup
 %xdefine X509_STORE_CTX_free BORINGSSL_PREFIX %+ _X509_STORE_CTX_free
 %xdefine X509_STORE_CTX_get0_cert BORINGSSL_PREFIX %+ _X509_STORE_CTX_get0_cert
@@ -6326,6 +6329,7 @@
 %xdefine X509_STORE_CTX_set_time_posix BORINGSSL_PREFIX %+ _X509_STORE_CTX_set_time_posix
 %xdefine X509_STORE_CTX_set_trust BORINGSSL_PREFIX %+ _X509_STORE_CTX_set_trust
 %xdefine X509_STORE_CTX_set_verify_cb BORINGSSL_PREFIX %+ _X509_STORE_CTX_set_verify_cb
+%xdefine X509_STORE_CTX_set_verify_crit_oids BORINGSSL_PREFIX %+ _X509_STORE_CTX_set_verify_crit_oids
 %xdefine X509_STORE_CTX_trusted_stack BORINGSSL_PREFIX %+ _X509_STORE_CTX_trusted_stack
 %xdefine X509_STORE_add_cert BORINGSSL_PREFIX %+ _X509_STORE_add_cert
 %xdefine X509_STORE_add_crl BORINGSSL_PREFIX %+ _X509_STORE_add_crl
