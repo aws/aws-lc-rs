@@ -321,9 +321,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { sys: mingw64, env: x86_64, target: x86_64-pc-windows-gnu, cc: gcc, cxx: g++ }
-          - { sys: ucrt64,  env: ucrt-x86_64,  target: x86_64-pc-windows-gnu, cc: gcc, cxx: g++ }
-          - { sys: clang64, env: clang-x86_64, target: x86_64-pc-windows-gnullvm, cc: clang, cxx: clang++ }
+          - { sys: mingw64 }
+          - { sys: ucrt64 }
+          - { sys: clang64 }
     steps:
       - name: Install MSYS2
         uses: msys2/setup-msys2@v2
@@ -332,6 +332,8 @@ jobs:
           msystem: ${{ matrix.sys }}
           update: true
           pacboy: >-
+            toolchain
+            rust
             rust-bindgen
             ninja
             cc
@@ -340,22 +342,17 @@ jobs:
       - name: Update Environment
         shell: bash
         run: |
-          echo "GOPATH=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}" >> $GITHUB_ENV
-          echo "GOROOT=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\lib\go" >> $GITHUB_ENV
-          echo "CC=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\bin\${{ matrix.cc }}.exe" >> $GITHUB_ENV
-          echo "CXX=${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\bin\${{ matrix.cxx }}.exe" >> $GITHUB_ENV
+          SYSROOT=$(cygpath -a -m '${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}')
+          echo "BINDGEN_EXTRA_CLANG_ARGS=-target x86_64-pc-windows-gnu" >> $GITHUB_ENV
+          echo "GOPATH=${SYSROOT}" >> $GITHUB_ENV
+          echo "GOROOT=${SYSROOT}/lib/go" >> $GITHUB_ENV
           echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
-          echo "${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}\bin" >> $GITHUB_PATH
+          cygpath -w ${SYSROOT}/bin >> $GITHUB_PATH
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
-          target: ${{matrix.target}}
       - name: Build
-        run: cargo build -p aws-lc-rs --target ${{matrix.target}} --features bindgen
+        run: cargo build --verbose --features bindgen --release -p aws-lc-rs
       - name: Test
-        run: cargo test -p aws-lc-rs --target ${{matrix.target}} --features bindgen
+        run: cargo test --verbose --features bindgen -p aws-lc-rs
