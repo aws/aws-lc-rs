@@ -261,23 +261,13 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "ARM64");
             }
-            ("msvc", "x86") => {
-                cmake_cfg.static_crt(is_crt_static());
-                cmake_cfg.define("CMAKE_SYSTEM_NAME", "");
-                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "");
-            }
             ("msvc", _) => {
                 cmake_cfg.static_crt(is_crt_static());
             }
-            ("gnu", "x86") => {
-                cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
-                cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "x86");
-            }
-            ("gnullvm", arch) => {
+            (_, arch) => {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", arch);
             }
-            _ => {}
         }
         if use_prebuilt_nasm() {
             emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");

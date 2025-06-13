@@ -151,7 +151,7 @@ impl PqdsaKeyPair {
 
     /// Returns the private key associated with this key pair.
     #[must_use]
-    pub fn private_key(&self) -> PqdsaPrivateKey {
+    pub fn private_key(&self) -> PqdsaPrivateKey<'_> {
         PqdsaPrivateKey(self)
     }
 }
@@ -175,7 +175,7 @@ pub(crate) fn evp_key_pqdsa_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unsp
 mod tests {
     use super::*;
 
-    use crate::signature::{UnparsedPublicKey, VerificationAlgorithm};
+    use crate::signature::UnparsedPublicKey;
     use crate::unstable::signature::{MLDSA_44_SIGNING, MLDSA_65_SIGNING, MLDSA_87_SIGNING};
 
     const TEST_ALGORITHMS: &[&PqdsaSigningAlgorithm] =
@@ -219,6 +219,7 @@ mod tests {
             #[cfg(feature = "ring-sig-verify")]
             #[allow(deprecated)]
             {
+                use crate::signature::VerificationAlgorithm;
                 assert!(alg
                     .0
                     .verify(
