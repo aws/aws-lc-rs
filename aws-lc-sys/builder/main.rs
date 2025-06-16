@@ -949,9 +949,9 @@ fn invoke_external_bindgen(
         r"rustfmt",
         "--",
     ]);
-    clang_args
-        .iter()
-        .for_each(|x| bindgen_params.push(x.as_str()));
+    for x in &clang_args {
+        bindgen_params.push(x.as_str());
+    }
     let cmd_params: Vec<OsString> = bindgen_params.iter().map(OsString::from).collect();
     let cmd_params: Vec<&OsStr> = cmd_params.iter().map(OsString::as_os_str).collect();
 

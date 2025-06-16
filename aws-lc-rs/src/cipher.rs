@@ -284,7 +284,7 @@ pub enum OperatingMode {
 }
 
 impl OperatingMode {
-    fn evp_cipher(&self, algorithm: &Algorithm) -> ConstPointer<EVP_CIPHER> {
+    fn evp_cipher(&self, algorithm: &Algorithm) -> ConstPointer<'_, EVP_CIPHER> {
         unsafe {
             ConstPointer::new_static(match (self, algorithm.id) {
                 (OperatingMode::CBC, AlgorithmId::Aes128) => EVP_aes_128_cbc(),
