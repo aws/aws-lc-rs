@@ -685,10 +685,13 @@ const PRELUDE: &str = r"
 #![allow(
     clippy::cast_lossless,
     clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
     clippy::default_trait_access,
+    clippy::missing_safety_doc,
     clippy::must_use_candidate,
     clippy::not_unsafe_ptr_arg_deref,
     clippy::ptr_as_ptr,
+    clippy::ptr_offset_with_cast,
     clippy::pub_underscore_fields,
     clippy::semicolon_if_nothing_returned,
     clippy::too_many_lines,
@@ -700,7 +703,8 @@ const PRELUDE: &str = r"
     non_camel_case_types,
     non_snake_case,
     non_upper_case_globals,
-    unused_imports,
+    unpredictable_function_pointer_comparisons,
+    unused_imports
 )]
 ";
 
@@ -781,9 +785,9 @@ fn invoke_external_bindgen(
         bindgen_params.extend(["--raw-line", PRELUDE]);
     }
     bindgen_params.push("--");
-    clang_args
-        .iter()
-        .for_each(|x| bindgen_params.push(x.as_str()));
+    for x in &clang_args {
+        bindgen_params.push(x.as_str());
+    }
     let cmd_params: Vec<OsString> = bindgen_params.iter().map(OsString::from).collect();
     let cmd_params: Vec<&OsStr> = cmd_params.iter().map(OsString::as_os_str).collect();
 

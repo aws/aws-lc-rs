@@ -95,12 +95,12 @@ impl ConstPointer<'_, EVP_PKEY> {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn get_ec_key(&self) -> Result<ConstPointer<EC_KEY>, KeyRejected> {
+    pub(crate) fn get_ec_key(&self) -> Result<ConstPointer<'_, EC_KEY>, KeyRejected> {
         self.project_const_lifetime(unsafe { |evp_pkey| EVP_PKEY_get0_EC_KEY(**evp_pkey) })
             .map_err(|()| KeyRejected::wrong_algorithm())
     }
 
-    pub(crate) fn get_rsa(&self) -> Result<ConstPointer<RSA>, KeyRejected> {
+    pub(crate) fn get_rsa(&self) -> Result<ConstPointer<'_, RSA>, KeyRejected> {
         self.project_const_lifetime(unsafe { |evp_pkey| EVP_PKEY_get0_RSA(**evp_pkey) })
             .map_err(|()| KeyRejected::wrong_algorithm())
     }

@@ -206,7 +206,7 @@ impl StreamingEncryptingKey {
     pub fn finish(
         mut self,
         output: &mut [u8],
-    ) -> Result<(DecryptionContext, BufferUpdate), Unspecified> {
+    ) -> Result<(DecryptionContext, BufferUpdate<'_>), Unspecified> {
         if output.len() < self.algorithm().block_len() {
             return Err(Unspecified);
         }
@@ -423,7 +423,7 @@ impl StreamingDecryptingKey {
     /// # Errors
     /// * Returns an error if the `output` buffer is smaller than the algorithm's
     ///   block length.
-    pub fn finish(mut self, output: &mut [u8]) -> Result<BufferUpdate, Unspecified> {
+    pub fn finish(mut self, output: &mut [u8]) -> Result<BufferUpdate<'_>, Unspecified> {
         if output.len() < self.algorithm().block_len() {
             return Err(Unspecified);
         }
