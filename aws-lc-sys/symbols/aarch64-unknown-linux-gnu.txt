@@ -213,11 +213,18 @@ BIO_clear_flags
 BIO_clear_retry_flags
 BIO_copy_next_retry
 BIO_ctrl
+BIO_ctrl_dgram_connect
 BIO_ctrl_get_read_request
 BIO_ctrl_get_write_guarantee
 BIO_ctrl_pending
+BIO_ctrl_set_connected
 BIO_destroy_bio_pair
+BIO_dgram_get_peer
+BIO_dgram_recv_timedout
+BIO_dgram_send_timedout
+BIO_dgram_set_peer
 BIO_do_connect
+BIO_dump
 BIO_eof
 BIO_f_base64
 BIO_f_cipher
@@ -229,6 +236,7 @@ BIO_free_all
 BIO_get_callback_arg
 BIO_get_cipher_ctx
 BIO_get_cipher_status
+BIO_get_close
 BIO_get_data
 BIO_get_ex_data
 BIO_get_ex_new_index
@@ -267,6 +275,7 @@ BIO_method_type
 BIO_new
 BIO_new_bio_pair
 BIO_new_connect
+BIO_new_dgram
 BIO_new_fd
 BIO_new_file
 BIO_new_fp
@@ -288,6 +297,7 @@ BIO_read_filename
 BIO_reset
 BIO_rw_filename
 BIO_s_connect
+BIO_s_datagram
 BIO_s_fd
 BIO_s_file
 BIO_s_mem
@@ -1309,6 +1319,7 @@ EVP_PKEY_set1_EC_KEY
 EVP_PKEY_set1_RSA
 EVP_PKEY_set1_tls_encodedpoint
 EVP_PKEY_set_type
+EVP_PKEY_set_type_str
 EVP_PKEY_sign
 EVP_PKEY_sign_init
 EVP_PKEY_size
@@ -1933,6 +1944,7 @@ PKCS7_decrypt
 PKCS7_dup
 PKCS7_encrypt
 PKCS7_free
+PKCS7_get0_signers
 PKCS7_get_CRLs
 PKCS7_get_PEM_CRLs
 PKCS7_get_PEM_certificates
@@ -1983,6 +1995,7 @@ PQDSA_KEY_free
 PQDSA_KEY_get0_dsa
 PQDSA_KEY_init
 PQDSA_KEY_new
+PQDSA_KEY_set_raw_keypair_from_both
 PQDSA_KEY_set_raw_keypair_from_seed
 PQDSA_KEY_set_raw_private_key
 PQDSA_KEY_set_raw_public_key
@@ -2826,7 +2839,6 @@ asn1_evp_pkey_methods_size
 asn1_generalizedtime_to_tm
 asn1_get_choice_selector
 asn1_get_field_ptr
-asn1_get_object_maybe_indefinite
 asn1_get_string_table_for_testing
 asn1_is_printable
 asn1_item_combine_free
@@ -2887,7 +2899,7 @@ bignum_tomont_p384_alt
 bio_clear_socket_error
 bio_errno_should_retry
 bio_ip_and_port_to_socket_and_addr
-bio_sock_error
+bio_sock_error_get_and_clear
 bio_socket_nbio
 bio_socket_should_retry
 bn_abs_sub_consttime
@@ -3551,10 +3563,13 @@ ml_dsa_verify
 ml_dsa_verify_internal
 ml_dsa_verify_message
 ml_kem_1024_decapsulate
+ml_kem_1024_decapsulate_no_self_test
 ml_kem_1024_encapsulate
 ml_kem_1024_encapsulate_deterministic
+ml_kem_1024_encapsulate_deterministic_no_self_test
 ml_kem_1024_keypair
 ml_kem_1024_keypair_deterministic
+ml_kem_1024_keypair_deterministic_no_self_test
 ml_kem_512_decapsulate
 ml_kem_512_decapsulate_no_self_test
 ml_kem_512_encapsulate
@@ -3564,10 +3579,17 @@ ml_kem_512_keypair
 ml_kem_512_keypair_deterministic
 ml_kem_512_keypair_deterministic_no_self_test
 ml_kem_768_decapsulate
+ml_kem_768_decapsulate_no_self_test
 ml_kem_768_encapsulate
 ml_kem_768_encapsulate_deterministic
+ml_kem_768_encapsulate_deterministic_no_self_test
 ml_kem_768_keypair
 ml_kem_768_keypair_deterministic
+ml_kem_768_keypair_deterministic_no_self_test
+ml_kem_common_decapsulate
+ml_kem_common_encapsulate
+ml_kem_common_encapsulate_deterministic
+ml_kem_common_keypair
 o2i_ECPublicKey
 p256_methods
 p256_montjscalarmul
