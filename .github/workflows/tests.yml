@@ -92,7 +92,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ windows-2019, windows-2022 ]
+        os: [ windows-2022 ]
         args:
           - --all-targets --features unstable
           - --all-targets --features bindgen,unstable
