@@ -343,7 +343,8 @@ jobs:
         shell: bash
         run: |
           SYSROOT=$(cygpath -a -m '${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}')
-          echo "BINDGEN_EXTRA_CLANG_ARGS=-target x86_64-pc-windows-gnu" >> $GITHUB_ENV
+          # AVX512 is not needed for our bindgen. The clang AVX512 headers cause build failures.
+          echo "BINDGEN_EXTRA_CLANG_ARGS=-target x86_64-pc-windows-gnu -U__AVX512BITALG__ -U__AVX512VPOPCNTDQ__ -U__AVX512VLBITALG__ -U__AVX10_2__ -U__AVX512F__ -U__AVX512CD__ -U__AVX512BW__ -U__AVX512DQ__ -U__AVX512VL__" >> $GITHUB_ENV
           echo "GOPATH=${SYSROOT}" >> $GITHUB_ENV
           echo "GOROOT=${SYSROOT}/lib/go" >> $GITHUB_ENV
           echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
