@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-fips-sys/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_fips_sys" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (e703dff8f 2025-06-11)" data-channel="nightly" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-63605ae7.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_fips_sys/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-fips-sys/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_fips_sys" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (f3db63916 2025-06-17)" data-channel="nightly" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-63605ae7.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_fips_sys/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 <a href=#2 id=2 data-nosnippet>2</a>// SPDX-License-Identifier: Apache-2.0 OR ISC
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a></span><span class="attr">#![cfg_attr(not(clippy), allow(unexpected_cfgs))]
@@ -58,58 +58,62 @@
 <a href=#58 id=58 data-nosnippet>58</a>#[allow(
 <a href=#59 id=59 data-nosnippet>59</a>    clippy::cast_lossless,
 <a href=#60 id=60 data-nosnippet>60</a>    clippy::cast_possible_truncation,
-<a href=#61 id=61 data-nosnippet>61</a>    clippy::default_trait_access,
-<a href=#62 id=62 data-nosnippet>62</a>    clippy::must_use_candidate,
-<a href=#63 id=63 data-nosnippet>63</a>    clippy::not_unsafe_ptr_arg_deref,
-<a href=#64 id=64 data-nosnippet>64</a>    clippy::ptr_as_ptr,
-<a href=#65 id=65 data-nosnippet>65</a>    clippy::pub_underscore_fields,
-<a href=#66 id=66 data-nosnippet>66</a>    clippy::semicolon_if_nothing_returned,
-<a href=#67 id=67 data-nosnippet>67</a>    clippy::too_many_lines,
-<a href=#68 id=68 data-nosnippet>68</a>    clippy::unreadable_literal,
-<a href=#69 id=69 data-nosnippet>69</a>    clippy::used_underscore_binding,
-<a href=#70 id=70 data-nosnippet>70</a>    clippy::useless_transmute,
-<a href=#71 id=71 data-nosnippet>71</a>    dead_code,
-<a href=#72 id=72 data-nosnippet>72</a>    improper_ctypes,
-<a href=#73 id=73 data-nosnippet>73</a>    non_camel_case_types,
-<a href=#74 id=74 data-nosnippet>74</a>    non_snake_case,
-<a href=#75 id=75 data-nosnippet>75</a>    non_upper_case_globals,
-<a href=#76 id=76 data-nosnippet>76</a>    unused_imports
-<a href=#77 id=77 data-nosnippet>77</a>)]
-<a href=#78 id=78 data-nosnippet>78</a></span><span class="kw">mod </span>generated {
-<a href=#79 id=79 data-nosnippet>79</a>    <span class="macro">include!</span>(<span class="macro">concat!</span>(<span class="macro">env!</span>(<span class="string">"OUT_DIR"</span>), <span class="string">"/bindings.rs"</span>));
-<a href=#80 id=80 data-nosnippet>80</a>}
-<a href=#81 id=81 data-nosnippet>81</a><span class="attr">#[cfg(use_bindgen_generated)]
-<a href=#82 id=82 data-nosnippet>82</a></span><span class="kw">pub use </span>generated::<span class="kw-2">*</span>;
-<a href=#83 id=83 data-nosnippet>83</a>
-<a href=#84 id=84 data-nosnippet>84</a><span class="attr">#[allow(non_snake_case)]
-<a href=#85 id=85 data-nosnippet>85</a>#[must_use]
-<a href=#86 id=86 data-nosnippet>86</a></span><span class="kw">pub fn </span>ERR_GET_LIB(packed_error: u32) -&gt; i32 {
-<a href=#87 id=87 data-nosnippet>87</a>    <span class="kw">unsafe </span>{ ERR_GET_LIB_RUST(packed_error) }
-<a href=#88 id=88 data-nosnippet>88</a>}
-<a href=#89 id=89 data-nosnippet>89</a>
-<a href=#90 id=90 data-nosnippet>90</a><span class="attr">#[allow(non_snake_case)]
-<a href=#91 id=91 data-nosnippet>91</a>#[must_use]
-<a href=#92 id=92 data-nosnippet>92</a></span><span class="kw">pub fn </span>ERR_GET_REASON(packed_error: u32) -&gt; i32 {
-<a href=#93 id=93 data-nosnippet>93</a>    <span class="kw">unsafe </span>{ ERR_GET_REASON_RUST(packed_error) }
-<a href=#94 id=94 data-nosnippet>94</a>}
-<a href=#95 id=95 data-nosnippet>95</a>
-<a href=#96 id=96 data-nosnippet>96</a><span class="attr">#[allow(non_snake_case)]
-<a href=#97 id=97 data-nosnippet>97</a>#[must_use]
-<a href=#98 id=98 data-nosnippet>98</a></span><span class="kw">pub fn </span>ERR_GET_FUNC(packed_error: u32) -&gt; i32 {
-<a href=#99 id=99 data-nosnippet>99</a>    <span class="kw">unsafe </span>{ ERR_GET_FUNC_RUST(packed_error) }
-<a href=#100 id=100 data-nosnippet>100</a>}
-<a href=#101 id=101 data-nosnippet>101</a>
-<a href=#102 id=102 data-nosnippet>102</a><span class="attr">#[allow(non_snake_case)]
-<a href=#103 id=103 data-nosnippet>103</a>#[must_use]
-<a href=#104 id=104 data-nosnippet>104</a></span><span class="kw">pub fn </span>CFG_CPU_JITTER_ENTROPY() -&gt; bool {
-<a href=#105 id=105 data-nosnippet>105</a>    <span class="macro">cfg!</span>(cpu_jitter_entropy)
-<a href=#106 id=106 data-nosnippet>106</a>}
-<a href=#107 id=107 data-nosnippet>107</a>
-<a href=#108 id=108 data-nosnippet>108</a><span class="attr">#[allow(non_snake_case, clippy::not_unsafe_ptr_arg_deref)]
-<a href=#109 id=109 data-nosnippet>109</a></span><span class="kw">pub fn </span>BIO_get_mem_data(b: <span class="kw-2">*mut </span>BIO, pp: <span class="kw-2">*mut *mut </span>c_char) -&gt; c_long {
-<a href=#110 id=110 data-nosnippet>110</a>    <span class="kw">unsafe </span>{ BIO_ctrl(b, BIO_CTRL_INFO, <span class="number">0</span>, pp.cast::&lt;c_void&gt;()) }
-<a href=#111 id=111 data-nosnippet>111</a>}
-<a href=#112 id=112 data-nosnippet>112</a>
-<a href=#113 id=113 data-nosnippet>113</a><span class="kw">pub fn </span>init() {
-<a href=#114 id=114 data-nosnippet>114</a>    <span class="kw">unsafe </span>{ CRYPTO_library_init() }
-<a href=#115 id=115 data-nosnippet>115</a>}</code></pre></div></section></main></body></html>
+<a href=#61 id=61 data-nosnippet>61</a>    clippy::cast_possible_wrap,
+<a href=#62 id=62 data-nosnippet>62</a>    clippy::default_trait_access,
+<a href=#63 id=63 data-nosnippet>63</a>    clippy::missing_safety_doc,
+<a href=#64 id=64 data-nosnippet>64</a>    clippy::must_use_candidate,
+<a href=#65 id=65 data-nosnippet>65</a>    clippy::not_unsafe_ptr_arg_deref,
+<a href=#66 id=66 data-nosnippet>66</a>    clippy::ptr_as_ptr,
+<a href=#67 id=67 data-nosnippet>67</a>    clippy::ptr_offset_with_cast,
+<a href=#68 id=68 data-nosnippet>68</a>    clippy::pub_underscore_fields,
+<a href=#69 id=69 data-nosnippet>69</a>    clippy::semicolon_if_nothing_returned,
+<a href=#70 id=70 data-nosnippet>70</a>    clippy::too_many_lines,
+<a href=#71 id=71 data-nosnippet>71</a>    clippy::unreadable_literal,
+<a href=#72 id=72 data-nosnippet>72</a>    clippy::used_underscore_binding,
+<a href=#73 id=73 data-nosnippet>73</a>    clippy::useless_transmute,
+<a href=#74 id=74 data-nosnippet>74</a>    dead_code,
+<a href=#75 id=75 data-nosnippet>75</a>    improper_ctypes,
+<a href=#76 id=76 data-nosnippet>76</a>    non_camel_case_types,
+<a href=#77 id=77 data-nosnippet>77</a>    non_snake_case,
+<a href=#78 id=78 data-nosnippet>78</a>    non_upper_case_globals,
+<a href=#79 id=79 data-nosnippet>79</a>    unpredictable_function_pointer_comparisons,
+<a href=#80 id=80 data-nosnippet>80</a>    unused_imports
+<a href=#81 id=81 data-nosnippet>81</a>)]
+<a href=#82 id=82 data-nosnippet>82</a></span><span class="kw">mod </span>generated {
+<a href=#83 id=83 data-nosnippet>83</a>    <span class="macro">include!</span>(<span class="macro">concat!</span>(<span class="macro">env!</span>(<span class="string">"OUT_DIR"</span>), <span class="string">"/bindings.rs"</span>));
+<a href=#84 id=84 data-nosnippet>84</a>}
+<a href=#85 id=85 data-nosnippet>85</a><span class="attr">#[cfg(use_bindgen_generated)]
+<a href=#86 id=86 data-nosnippet>86</a></span><span class="kw">pub use </span>generated::<span class="kw-2">*</span>;
+<a href=#87 id=87 data-nosnippet>87</a>
+<a href=#88 id=88 data-nosnippet>88</a><span class="attr">#[allow(non_snake_case)]
+<a href=#89 id=89 data-nosnippet>89</a>#[must_use]
+<a href=#90 id=90 data-nosnippet>90</a></span><span class="kw">pub fn </span>ERR_GET_LIB(packed_error: u32) -&gt; i32 {
+<a href=#91 id=91 data-nosnippet>91</a>    <span class="kw">unsafe </span>{ ERR_GET_LIB_RUST(packed_error) }
+<a href=#92 id=92 data-nosnippet>92</a>}
+<a href=#93 id=93 data-nosnippet>93</a>
+<a href=#94 id=94 data-nosnippet>94</a><span class="attr">#[allow(non_snake_case)]
+<a href=#95 id=95 data-nosnippet>95</a>#[must_use]
+<a href=#96 id=96 data-nosnippet>96</a></span><span class="kw">pub fn </span>ERR_GET_REASON(packed_error: u32) -&gt; i32 {
+<a href=#97 id=97 data-nosnippet>97</a>    <span class="kw">unsafe </span>{ ERR_GET_REASON_RUST(packed_error) }
+<a href=#98 id=98 data-nosnippet>98</a>}
+<a href=#99 id=99 data-nosnippet>99</a>
+<a href=#100 id=100 data-nosnippet>100</a><span class="attr">#[allow(non_snake_case)]
+<a href=#101 id=101 data-nosnippet>101</a>#[must_use]
+<a href=#102 id=102 data-nosnippet>102</a></span><span class="kw">pub fn </span>ERR_GET_FUNC(packed_error: u32) -&gt; i32 {
+<a href=#103 id=103 data-nosnippet>103</a>    <span class="kw">unsafe </span>{ ERR_GET_FUNC_RUST(packed_error) }
+<a href=#104 id=104 data-nosnippet>104</a>}
+<a href=#105 id=105 data-nosnippet>105</a>
+<a href=#106 id=106 data-nosnippet>106</a><span class="attr">#[allow(non_snake_case)]
+<a href=#107 id=107 data-nosnippet>107</a>#[must_use]
+<a href=#108 id=108 data-nosnippet>108</a></span><span class="kw">pub fn </span>CFG_CPU_JITTER_ENTROPY() -&gt; bool {
+<a href=#109 id=109 data-nosnippet>109</a>    <span class="macro">cfg!</span>(cpu_jitter_entropy)
+<a href=#110 id=110 data-nosnippet>110</a>}
+<a href=#111 id=111 data-nosnippet>111</a>
+<a href=#112 id=112 data-nosnippet>112</a><span class="attr">#[allow(non_snake_case, clippy::not_unsafe_ptr_arg_deref)]
+<a href=#113 id=113 data-nosnippet>113</a></span><span class="kw">pub fn </span>BIO_get_mem_data(b: <span class="kw-2">*mut </span>BIO, pp: <span class="kw-2">*mut *mut </span>c_char) -&gt; c_long {
+<a href=#114 id=114 data-nosnippet>114</a>    <span class="kw">unsafe </span>{ BIO_ctrl(b, BIO_CTRL_INFO, <span class="number">0</span>, pp.cast::&lt;c_void&gt;()) }
+<a href=#115 id=115 data-nosnippet>115</a>}
+<a href=#116 id=116 data-nosnippet>116</a>
+<a href=#117 id=117 data-nosnippet>117</a><span class="kw">pub fn </span>init() {
+<a href=#118 id=118 data-nosnippet>118</a>    <span class="kw">unsafe </span>{ CRYPTO_library_init() }
+<a href=#119 id=119 data-nosnippet>119</a>}</code></pre></div></section></main></body></html>
