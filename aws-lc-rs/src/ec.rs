@@ -20,9 +20,7 @@ use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
 use crate::signature::Signature;
-// TODO: Uncomment when MSRV >= 1.64
-//use core::ffi::c_int;
-use std::os::raw::c_int;
+use core::ffi::c_int;
 use std::ptr::null;
 
 pub(crate) mod encoding;
