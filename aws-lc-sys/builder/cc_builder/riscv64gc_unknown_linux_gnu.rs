@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Thu May  8 11:27:58 UTC 2025
+// Wed Jun 18 19:21:52 UTC 2025
 
 use crate::cc_builder::Library;
 
@@ -39,8 +39,10 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/asn1/tasn_utl.c",
         "crypto/base64/base64.c",
         "crypto/bio/bio.c",
+        "crypto/bio/bio_addr.c",
         "crypto/bio/bio_mem.c",
         "crypto/bio/connect.c",
+        "crypto/bio/dgram.c",
         "crypto/bio/errno.c",
         "crypto/bio/fd.c",
         "crypto/bio/file.c",
@@ -73,6 +75,7 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/cipher_extra/e_tls.c",
         "crypto/cipher_extra/tls_cbc.c",
         "crypto/conf/conf.c",
+        "crypto/console/console.c",
         "crypto/crypto.c",
         "crypto/decrepit/bio/base64_bio.c",
         "crypto/decrepit/blowfish/blowfish.c",
