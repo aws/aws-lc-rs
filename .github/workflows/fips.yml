@@ -69,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2019, windows-latest ]
+        os: [ windows-latest ]
         args:
           - --all-targets --features fips,unstable
           - --all-targets --features fips,bindgen,unstable

@@ -92,7 +92,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ windows-2019, windows-2022 ]
+        os: [ windows-2022 ]
         args:
           - --all-targets --features unstable
           - --all-targets --features bindgen,unstable
@@ -466,6 +466,8 @@ jobs:
         with:
           submodules: 'recursive'
           lfs: true
+      - name: Install cargo-careful
+        run: cargo install cargo-careful
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -478,8 +480,6 @@ jobs:
           echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
-      - name: Install cargo-careful
-        run: cargo install --locked cargo-careful
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'

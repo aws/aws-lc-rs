@@ -151,7 +151,7 @@ impl PqdsaKeyPair {
 
     /// Returns the private key associated with this key pair.
     #[must_use]
-    pub fn private_key(&self) -> PqdsaPrivateKey {
+    pub fn private_key(&self) -> PqdsaPrivateKey<'_> {
         PqdsaPrivateKey(self)
     }
 }

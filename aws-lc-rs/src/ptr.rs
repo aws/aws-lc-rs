@@ -51,7 +51,7 @@ impl<'a, P: Pointer> From<&'a ManagedPointer<P>> for ConstPointer<'a, P::T> {
 
 impl<P: Pointer> ManagedPointer<P> {
     #[inline]
-    pub fn as_const(&self) -> ConstPointer<P::T> {
+    pub fn as_const(&self) -> ConstPointer<'_, P::T> {
         self.into()
     }
 
