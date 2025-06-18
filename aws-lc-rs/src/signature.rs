@@ -339,6 +339,13 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), error::Unspecified>;
+
+    fn verify_digest_sig(
+        &self,
+        public_key: &[u8],
+        digest: &digest::Digest,
+        signature: &[u8],
+    ) -> Result<(), error::Unspecified>;
 }
 
 /// An unparsed, possibly malformed, public key for signature verification.

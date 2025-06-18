@@ -8,8 +8,8 @@ use crate::error::Unspecified;
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
 use crate::pqdsa::{parse_pqdsa_public_key, AlgorithmID};
 use crate::ptr::LcPtr;
-use crate::sealed;
 use crate::signature::VerificationAlgorithm;
+use crate::{digest, sealed};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
 #[cfg(feature = "ring-sig-verify")]
@@ -87,6 +87,15 @@ impl VerificationAlgorithm for PqdsaVerificationAlgorithm {
         let evp_pkey = parse_pqdsa_public_key(public_key, self.id)?;
 
         evp_pkey.verify(msg, None, No_EVP_PKEY_CTX_consumer, signature)
+    }
+
+    fn verify_digest_sig(
+        &self,
+        _public_key: &[u8],
+        _digest: &digest::Digest,
+        _signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        todo!()
     }
 }
 
