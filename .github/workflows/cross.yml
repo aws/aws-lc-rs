@@ -347,6 +347,7 @@ jobs:
           echo "GOPATH=${SYSROOT}" >> $GITHUB_ENV
           echo "GOROOT=${SYSROOT}/lib/go" >> $GITHUB_ENV
           echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
+          echo "LIBCLANG_PATH=${SYSROOT}/lib" >> $GITHUB_ENV
           cygpath -w ${SYSROOT}/bin >> $GITHUB_PATH
       - name: Checkout
         uses: actions/checkout@v4
