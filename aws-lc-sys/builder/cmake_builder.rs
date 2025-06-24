@@ -11,7 +11,7 @@ use crate::{
 };
 use std::env;
 use std::ffi::OsString;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub(crate) struct CmakeBuilder {
     manifest_dir: PathBuf,
@@ -22,6 +22,11 @@ pub(crate) struct CmakeBuilder {
 
 fn test_clang_cl_command() -> bool {
     execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
+}
+
+fn test_prebuilt_nasm_script(script_path: &Path) -> bool {
+    // Call with no args - both scripts will exit with error, but we only care if they can execute
+    execute_command(script_path.as_os_str(), &[]).executed
 }
 
 fn find_cmake_command() -> Option<OsString> {
@@ -217,6 +222,35 @@ impl CmakeBuilder {
     }
 
     #[allow(clippy::unused_self)]
+    fn select_prebuilt_nasm_script(&self) -> PathBuf {
+        let sh_script = self.manifest_dir.join("builder").join("prebuilt-nasm.sh");
+        let bat_script = self.manifest_dir.join("builder").join("prebuilt-nasm.bat");
+
+        // Test .sh first (more universal - works in MSYS2, WSL, native Unix)
+        if test_prebuilt_nasm_script(&sh_script) {
+            emit_warning("Selected prebuilt-nasm.sh (shell script can execute)");
+            sh_script
+        } else if test_prebuilt_nasm_script(&bat_script) {
+            emit_warning(
+                "Selected prebuilt-nasm.bat (batch script can execute, shell script cannot)",
+            );
+            bat_script
+        } else {
+            // Fallback to current logic if neither can execute
+            let fallback_script = if cfg!(target_os = "windows") {
+                bat_script
+            } else {
+                sh_script
+            };
+            emit_warning(
+                &format!(
+                    "Neither script could be tested for execution, falling back to target-based selection: {}", 
+                    fallback_script.file_name().unwrap().to_str().unwrap()));
+            fallback_script
+        }
+    }
+
+    #[allow(clippy::unused_self)]
     fn configure_android(&self, _cmake_cfg: &mut cmake::Config) {
         // If we leave CMAKE_SYSTEM_PROCESSOR unset, then cmake-rs should handle properly setting
         // CMAKE_SYSTEM_NAME and CMAKE_SYSTEM_PROCESSOR:
@@ -274,18 +308,8 @@ impl CmakeBuilder {
             emit_warning("!!!   Using pre-built NASM binaries   !!!");
             emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
-            let script_name = if cfg!(target_os = "windows") {
-                "prebuilt-nasm.bat"
-            } else {
-                "prebuilt-nasm.sh"
-            };
-
-            let script_path = self
-                .manifest_dir
-                .join("builder")
-                .join(script_name)
-                .display()
-                .to_string();
+            let script_path = self.select_prebuilt_nasm_script();
+            let script_path = script_path.display().to_string();
             let script_path = script_path.replace('\\', "/");
 
             cmake_cfg.define("CMAKE_ASM_NASM_COMPILER", script_path.as_str());
@@ -404,7 +428,9 @@ impl crate::Builder for CmakeBuilder {
             }
         }
         if let Some(cmake_cmd) = find_cmake_command() {
-            env::set_var("CMAKE", cmake_cmd);
+            unsafe {
+                env::set_var("CMAKE", cmake_cmd);
+            }
         } else {
             eprintln!("Missing dependency: cmake");
             missing_dependency = true;
