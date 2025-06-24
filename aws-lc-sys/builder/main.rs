@@ -629,7 +629,11 @@ fn has_pregenerated() -> bool {
 }
 
 fn test_nasm_command() -> bool {
-    execute_command("nasm".as_ref(), &["-version".as_ref()]).status
+    let status = execute_command("nasm".as_ref(), &["-version".as_ref()]).status;
+    if !status {
+        emit_warning("NASM command not found or failed to execute.");
+    }
+    status
 }
 
 fn prepare_cargo_cfg() {
