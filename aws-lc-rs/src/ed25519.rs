@@ -402,8 +402,13 @@ impl Ed25519KeyPair {
         Self::try_sign(self, msg).expect("ED25519 signing failed")
     }
 
+    /// Returns the signature of the message `msg`.
+    ///
+    /// # Errors
+    /// Returns `error::Unspecified` if the signing operation fails.
     #[inline]
-    fn try_sign(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
+    #[must_use]
+    pub fn try_sign(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
         let sig_bytes = self.evp_pkey.sign(msg, None, No_EVP_PKEY_CTX_consumer)?;
 
         Ok(Signature::new(|slice| {
