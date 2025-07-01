@@ -83,6 +83,15 @@ impl VerificationAlgorithm for RsaParameters {
             self.bit_size_range(),
         )
     }
+
+    fn verify_digest_sig(
+        &self,
+        _public_key: &[u8],
+        _digest: &digest::Digest,
+        _signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        todo!()
+    }
 }
 
 impl Sealed for RsaParameters {}
