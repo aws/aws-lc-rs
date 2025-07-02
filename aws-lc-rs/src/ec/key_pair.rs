@@ -201,6 +201,11 @@ impl EcdsaKeyPair {
         PrivateKey(self)
     }
 
+    /// [`EcdsaSigningAlgorithm`] which was used to create this [`EcdsaKeyPair`]
+    pub fn algorithm(&self) -> &'static EcdsaSigningAlgorithm {
+        self.algorithm
+    }
+
     /// Returns the signature of the message using a random nonce.
     ///
     /// # *ring* Compatibility
