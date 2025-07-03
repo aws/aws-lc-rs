@@ -404,6 +404,9 @@ impl Ed25519KeyPair {
 
     /// Returns the signature of the message `msg`.
     ///
+    // # FIPS
+    // This method must not be used.
+    //
     /// # Errors
     /// Returns `error::Unspecified` if the signing operation fails.
     #[inline]
