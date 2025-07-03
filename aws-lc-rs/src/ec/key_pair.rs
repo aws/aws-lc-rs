@@ -202,6 +202,7 @@ impl EcdsaKeyPair {
     }
 
     /// [`EcdsaSigningAlgorithm`] which was used to create this [`EcdsaKeyPair`]
+    #[must_use]
     pub fn algorithm(&self) -> &'static EcdsaSigningAlgorithm {
         self.algorithm
     }
@@ -323,5 +324,6 @@ mod tests {
         assert_eq!(key_pair.evp_pkey, key_pair_5208.evp_pkey);
         assert_eq!(key_pair.evp_pkey, key_pair_5915.evp_pkey);
         assert_eq!(key_pair_5208.evp_pkey, key_pair_5915.evp_pkey);
+        assert_eq!(key_pair_5915.algorithm, &ECDSA_P256_SHA256_FIXED_SIGNING);
     }
 }
