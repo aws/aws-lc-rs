@@ -115,7 +115,7 @@ pub const AWSLC_VERSION_NAME: &[u8; 7] = b"AWS-LC\0";
 pub const OPENSSL_VERSION_NUMBER: i32 = 269488255;
 pub const SSLEAY_VERSION_NUMBER: i32 = 269488255;
 pub const AWSLC_API_VERSION: i32 = 34;
-pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.53.1\0";
+pub const AWSLC_VERSION_NUMBER_STRING: &[u8; 7] = b"1.55.0\0";
 pub const AES_ENCRYPT: i32 = 1;
 pub const AES_DECRYPT: i32 = 0;
 pub const AES_MAXNR: i32 = 14;
@@ -136,7 +136,7 @@ pub const CRYPTO_LOCK: i32 = 1;
 pub const CRYPTO_UNLOCK: i32 = 2;
 pub const CRYPTO_READ: i32 = 4;
 pub const CRYPTO_WRITE: i32 = 8;
-pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.53.1)\0";
+pub const OPENSSL_VERSION_TEXT: &[u8; 42] = b"OpenSSL 1.1.1 (compatible; AWS-LC 1.55.0)\0";
 pub const OPENSSL_VERSION: i32 = 0;
 pub const OPENSSL_CFLAGS: i32 = 1;
 pub const OPENSSL_BUILT_ON: i32 = 2;
@@ -814,7 +814,7 @@ pub const DH_R_INVALID_PARAMETERS: i32 = 107;
 pub const DH_F_DH_BUILTIN_GENPARAMS: i32 = 0;
 pub const EVP_MAX_MD_SIZE: i32 = 64;
 pub const EVP_MAX_MD_CHAINING_LENGTH: i32 = 64;
-pub const EVP_MAX_MD_BLOCK_SIZE: i32 = 128;
+pub const EVP_MAX_MD_BLOCK_SIZE: i32 = 144;
 pub const EVP_MD_FLAG_DIGALGID_ABSENT: i32 = 2;
 pub const EVP_MD_FLAG_XOF: i32 = 4;
 pub const EVP_MD_CTX_FLAG_NON_FIPS_ALLOW: i32 = 0;
@@ -3333,6 +3333,7 @@ pub const HMAC_R_MISSING_PARAMETERS: i32 = 100;
 pub const HMAC_R_BUFFER_TOO_SMALL: i32 = 102;
 pub const HMAC_R_SET_PRECOMPUTED_KEY_EXPORT_NOT_CALLED: i32 = 103;
 pub const HMAC_R_NOT_CALLED_JUST_AFTER_INIT: i32 = 104;
+pub const HMAC_R_PRECOMPUTED_KEY_NOT_SUPPORTED_FOR_DIGEST: i32 = 105;
 pub const EVP_HPKE_DHKEM_X25519_HKDF_SHA256: i32 = 32;
 pub const EVP_HPKE_MAX_PUBLIC_KEY_LENGTH: i32 = 32;
 pub const EVP_HPKE_MAX_PRIVATE_KEY_LENGTH: i32 = 32;
@@ -6819,48 +6820,6 @@ impl Default for crypto_ex_data_st {
         }
     }
 }
-pub type sa_family_t = ::std::os::raw::c_ushort;
-#[repr(C)]
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
-pub struct sockaddr {
-    pub sa_family: sa_family_t,
-    pub sa_data: [::std::os::raw::c_char; 14usize],
-}
-#[test]
-fn bindgen_test_layout_sockaddr() {
-    const UNINIT: ::std::mem::MaybeUninit<sockaddr> = ::std::mem::MaybeUninit::uninit();
-    let ptr = UNINIT.as_ptr();
-    assert_eq!(
-        ::std::mem::size_of::<sockaddr>(),
-        16usize,
-        concat!("Size of: ", stringify!(sockaddr))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<sockaddr>(),
-        2usize,
-        concat!("Alignment of ", stringify!(sockaddr))
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).sa_family) as usize - ptr as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(sockaddr),
-            "::",
-            stringify!(sa_family)
-        )
-    );
-    assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).sa_data) as usize - ptr as usize },
-        2usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(sockaddr),
-            "::",
-            stringify!(sa_data)
-        )
-    );
-}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct stack_st_BIO {
@@ -7399,9 +7358,6 @@ extern "C" {
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_30_0_BIO_dgram_set_peer"]
     pub fn BIO_dgram_set_peer(bp: *mut BIO, peer: *const BIO_ADDR) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    pub fn BIO_dgram_get_mtu_overhead(bp: *mut BIO, peer: *mut sockaddr) -> ::std::os::raw::c_uint;
 }
 extern "C" {
     #[link_name = "\u{1}aws_lc_0_30_0_BIO_ADDR_new"]
@@ -17784,6 +17740,7 @@ pub union md_ctx_union {
     pub sha1: SHA_CTX,
     pub sha256: SHA256_CTX,
     pub sha512: SHA512_CTX,
+    pub sha3: [u8; 400usize],
 }
 #[test]
 fn bindgen_test_layout_md_ctx_union() {
@@ -17791,7 +17748,7 @@ fn bindgen_test_layout_md_ctx_union() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<md_ctx_union>(),
-        216usize,
+        400usize,
         concat!("Size of: ", stringify!(md_ctx_union))
     );
     assert_eq!(
@@ -17839,6 +17796,16 @@ fn bindgen_test_layout_md_ctx_union() {
             stringify!(sha512)
         )
     );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).sha3) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(md_ctx_union),
+            "::",
+            stringify!(sha3)
+        )
+    );
 }
 impl Default for md_ctx_union {
     fn default() -> Self {
@@ -17865,7 +17832,7 @@ fn bindgen_test_layout_hmac_ctx_st() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<hmac_ctx_st>(),
-        660usize,
+        1212usize,
         concat!("Size of: ", stringify!(hmac_ctx_st))
     );
     assert_eq!(
@@ -17905,7 +17872,7 @@ fn bindgen_test_layout_hmac_ctx_st() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).i_ctx) as usize - ptr as usize },
-        224usize,
+        408usize,
         concat!(
             "Offset of field: ",
             stringify!(hmac_ctx_st),
@@ -17915,7 +17882,7 @@ fn bindgen_test_layout_hmac_ctx_st() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).o_ctx) as usize - ptr as usize },
-        440usize,
+        808usize,
         concat!(
             "Offset of field: ",
             stringify!(hmac_ctx_st),
@@ -17925,7 +17892,7 @@ fn bindgen_test_layout_hmac_ctx_st() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).state) as usize - ptr as usize },
-        656usize,
+        1208usize,
         concat!(
             "Offset of field: ",
             stringify!(hmac_ctx_st),
