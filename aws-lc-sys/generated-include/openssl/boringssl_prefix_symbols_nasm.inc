@@ -2215,9 +2215,21 @@
 %xdefine _SHA384_Update _ %+ BORINGSSL_PREFIX %+ _SHA384_Update
 %xdefine _SHA384_get_state _ %+ BORINGSSL_PREFIX %+ _SHA384_get_state
 %xdefine _SHA3_224 _ %+ BORINGSSL_PREFIX %+ _SHA3_224
+%xdefine _SHA3_224_Final _ %+ BORINGSSL_PREFIX %+ _SHA3_224_Final
+%xdefine _SHA3_224_Init _ %+ BORINGSSL_PREFIX %+ _SHA3_224_Init
+%xdefine _SHA3_224_Update _ %+ BORINGSSL_PREFIX %+ _SHA3_224_Update
 %xdefine _SHA3_256 _ %+ BORINGSSL_PREFIX %+ _SHA3_256
+%xdefine _SHA3_256_Final _ %+ BORINGSSL_PREFIX %+ _SHA3_256_Final
+%xdefine _SHA3_256_Init _ %+ BORINGSSL_PREFIX %+ _SHA3_256_Init
+%xdefine _SHA3_256_Update _ %+ BORINGSSL_PREFIX %+ _SHA3_256_Update
 %xdefine _SHA3_384 _ %+ BORINGSSL_PREFIX %+ _SHA3_384
+%xdefine _SHA3_384_Final _ %+ BORINGSSL_PREFIX %+ _SHA3_384_Final
+%xdefine _SHA3_384_Init _ %+ BORINGSSL_PREFIX %+ _SHA3_384_Init
+%xdefine _SHA3_384_Update _ %+ BORINGSSL_PREFIX %+ _SHA3_384_Update
 %xdefine _SHA3_512 _ %+ BORINGSSL_PREFIX %+ _SHA3_512
+%xdefine _SHA3_512_Final _ %+ BORINGSSL_PREFIX %+ _SHA3_512_Final
+%xdefine _SHA3_512_Init _ %+ BORINGSSL_PREFIX %+ _SHA3_512_Init
+%xdefine _SHA3_512_Update _ %+ BORINGSSL_PREFIX %+ _SHA3_512_Update
 %xdefine _SHA3_Final _ %+ BORINGSSL_PREFIX %+ _SHA3_Final
 %xdefine _SHA3_Init _ %+ BORINGSSL_PREFIX %+ _SHA3_Init
 %xdefine _SHA3_Update _ %+ BORINGSSL_PREFIX %+ _SHA3_Update
@@ -6409,9 +6421,21 @@
 %xdefine SHA384_Update BORINGSSL_PREFIX %+ _SHA384_Update
 %xdefine SHA384_get_state BORINGSSL_PREFIX %+ _SHA384_get_state
 %xdefine SHA3_224 BORINGSSL_PREFIX %+ _SHA3_224
+%xdefine SHA3_224_Final BORINGSSL_PREFIX %+ _SHA3_224_Final
+%xdefine SHA3_224_Init BORINGSSL_PREFIX %+ _SHA3_224_Init
+%xdefine SHA3_224_Update BORINGSSL_PREFIX %+ _SHA3_224_Update
 %xdefine SHA3_256 BORINGSSL_PREFIX %+ _SHA3_256
+%xdefine SHA3_256_Final BORINGSSL_PREFIX %+ _SHA3_256_Final
+%xdefine SHA3_256_Init BORINGSSL_PREFIX %+ _SHA3_256_Init
+%xdefine SHA3_256_Update BORINGSSL_PREFIX %+ _SHA3_256_Update
 %xdefine SHA3_384 BORINGSSL_PREFIX %+ _SHA3_384
+%xdefine SHA3_384_Final BORINGSSL_PREFIX %+ _SHA3_384_Final
+%xdefine SHA3_384_Init BORINGSSL_PREFIX %+ _SHA3_384_Init
+%xdefine SHA3_384_Update BORINGSSL_PREFIX %+ _SHA3_384_Update
 %xdefine SHA3_512 BORINGSSL_PREFIX %+ _SHA3_512
+%xdefine SHA3_512_Final BORINGSSL_PREFIX %+ _SHA3_512_Final
+%xdefine SHA3_512_Init BORINGSSL_PREFIX %+ _SHA3_512_Init
+%xdefine SHA3_512_Update BORINGSSL_PREFIX %+ _SHA3_512_Update
 %xdefine SHA3_Final BORINGSSL_PREFIX %+ _SHA3_Final
 %xdefine SHA3_Init BORINGSSL_PREFIX %+ _SHA3_Init
 %xdefine SHA3_Update BORINGSSL_PREFIX %+ _SHA3_Update
