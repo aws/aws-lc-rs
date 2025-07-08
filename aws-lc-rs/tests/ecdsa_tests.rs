@@ -140,7 +140,8 @@ fn ecdsa_generate_pkcs8_test() {
         println!();
         println!();
 
-        EcdsaKeyPair::from_pkcs8(alg, pkcs8.as_ref()).unwrap();
+        let key_pair = EcdsaKeyPair::from_pkcs8(alg, pkcs8.as_ref()).unwrap();
+        assert_eq!(key_pair.algorithm(), *alg);
     }
 }
 
