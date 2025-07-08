@@ -410,7 +410,6 @@ impl Ed25519KeyPair {
     /// # Errors
     /// Returns `error::Unspecified` if the signing operation fails.
     #[inline]
-    #[must_use]
     pub fn try_sign(&self, msg: &[u8]) -> Result<Signature, Unspecified> {
         let sig_bytes = self.evp_pkey.sign(msg, None, No_EVP_PKEY_CTX_consumer)?;
 

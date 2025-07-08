@@ -32,7 +32,7 @@ fn test_signature_ed25519() {
             let expected_sig = test_case.consume_bytes("SIG");
 
             let key_pair = Ed25519KeyPair::from_seed_unchecked(&seed).unwrap();
-            let actual_sig = key_pair.sign(&msg);
+            let actual_sig = key_pair.try_sign(&msg)?;
             assert_eq!(&expected_sig[..], actual_sig.as_ref());
 
             let key_pair = Ed25519KeyPair::from_seed_and_public_key(&seed, &public_key).unwrap();
