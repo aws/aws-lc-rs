@@ -19,7 +19,7 @@ aws-lc-fips-sys = { path = "../aws-lc-fips-sys", optional = true }
 
 [build-dependencies]
 cc = "1.0.72"
-toml_edit = "0.22"
+toml_edit = "0.23"
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["aws-lc-rs", "aws-lc-sys", "aws-lc-fips-sys"] # the sys crate is only used through a C library build
