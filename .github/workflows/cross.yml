@@ -313,6 +313,7 @@ jobs:
           docker run -v "${{ github.workspace }}:/aws_lc_rs" alpine:3.20
 
   msys2:
+    name: msys2 ${{ matrix.sys }} - ${{ matrix.nasm }}, ${{ matrix.generator }}
     if: github.repository_owner == 'aws'
     runs-on: windows-latest
     env:
@@ -320,10 +321,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { sys: mingw64 }
-          - { sys: ucrt64 }
-          - { sys: clang64 }
+        sys:
+          - mingw64
+          - ucrt64
+          - clang64
+        nasm:
+          - 'prebuilt'
+          - 'nasm'
+        generator:
+          - ninja
+          - msys
+          - mingw
     steps:
       - name: Install MSYS2
         uses: msys2/setup-msys2@v2
@@ -332,28 +340,44 @@ jobs:
           msystem: ${{ matrix.sys }}
           update: true
           pacboy: >-
+            cmake
             toolchain
+            llvm
             rust
             rust-bindgen
             ninja
             cc
-            nasm
             go
+            ${{ (matrix.nasm == 'nasm' && 'nasm') || 'make' }}
       - name: Update Environment
         shell: bash
         run: |
           SYSROOT=$(cygpath -a -m '${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}')
+          echo "AWS_LC_SYS_PREBUILT_NASM=${{ (matrix.nasm == 'nasm' && '0') || '1' }}" >> $GITHUB_ENV
           echo "BINDGEN_EXTRA_CLANG_ARGS=-target x86_64-pc-windows-gnu" >> $GITHUB_ENV
           echo "GOPATH=${SYSROOT}" >> $GITHUB_ENV
           echo "GOROOT=${SYSROOT}/lib/go" >> $GITHUB_ENV
-          echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
-          echo "LIBCLANG_PATH=${SYSROOT}/lib" >> $GITHUB_ENV
           cygpath -w ${SYSROOT}/bin >> $GITHUB_PATH
+      - name: Set CMAKE_GENERATOR
+        if: matrix.generator == 'ninja'
+        shell: bash
+        run: |
+          echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
+      - name: Set LIBCLANG_PATH
+        if: matrix.generator == 'msys'
+        shell: bash
+        run: |
+          SYSROOT=$(cygpath -a -m '${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}')
+          echo "LIBCLANG_PATH=${SYSROOT}/lib" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
-      - name: Build
-        run: cargo build --verbose --features bindgen --release -p aws-lc-rs
       - name: Test
-        run: cargo test --verbose --features bindgen -p aws-lc-rs
+        if: matrix.generator != 'msys'
+        shell: bash
+        run: cargo test --verbose --features bindgen --release -p aws-lc-rs
+      - name: Test
+        if: matrix.generator == 'msys'
+        shell: msys2 {0}
+        run: cargo test --verbose --features bindgen --release -p aws-lc-rs
