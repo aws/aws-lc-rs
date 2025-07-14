@@ -310,7 +310,6 @@ impl CmakeBuilder {
 
             let script_path = self.select_prebuilt_nasm_script();
             let script_path = script_path.display().to_string();
-            let script_path = script_path.replace('\\', "/");
 
             cmake_cfg.define("CMAKE_ASM_NASM_COMPILER", script_path.as_str());
             // Without the following definition, the build fails with a message similar to the one

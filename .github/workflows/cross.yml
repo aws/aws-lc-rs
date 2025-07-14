@@ -381,3 +381,29 @@ jobs:
         if: matrix.generator == 'msys'
         shell: msys2 {0}
         run: cargo test --verbose --features bindgen --release -p aws-lc-rs
+  cygwin:
+    name: cygwin - ${{ matrix.nasm }}
+    env:
+      AWS_LC_SYS_PREBUILT_NASM: 1
+      CMAKE_GENERATOR: Ninja
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        nasm:
+          - prebuilt
+          - nasm
+    steps:
+      - run: git config --global core.autocrlf input
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-gnu
+      - uses: cygwin/cygwin-install-action@master
+        with:
+          packages: gcc-core,gcc-g++,make,cmake,cygwin-devel,binutils,ninja${{ (matrix.nasm == 'nasm' && ',nasm') || '' }}
+      - shell: bash
+        run: cargo test --verbose --features bindgen --release -p aws-lc-rs --target x86_64-pc-windows-gnu
