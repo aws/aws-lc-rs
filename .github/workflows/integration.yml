@@ -150,16 +150,57 @@ jobs:
         working-directory: ./links-testing
         run: cargo run --features ${{ matrix.features }} --no-default-features
 
-  publish-dry-run:
+  publish-dry-run-version-check:
     if: github.repository_owner == 'aws'
-    name: publish dry-run
+    name: publish dry-run version check
+    runs-on: ubuntu-latest
+    outputs:
+      skip-aws-lc-rs: ${{ steps.check.outputs.skip-aws-lc-rs }}
+      reason: ${{ steps.check.outputs.reason }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check sys crate version compatibility
+        id: check
+        run: |
+          # Run the compatibility check script
+          if output=$(./scripts/ci/check_sys_crate_compatibility.sh 2>&1); then
+            should_skip=$(echo "$output" | grep "^SHOULD_SKIP=" | cut -d'=' -f2-)
+            echo "Detected: SHOULD_SKIP=$should_skip"
+            echo "skip-aws-lc-rs=${should_skip}" >> $GITHUB_OUTPUT
+            echo "reason=" >> $GITHUB_OUTPUT
+            echo Successful publish compatibility check
+            echo "$output"
+            exit 0
+          else
+            exit_code=$?
+            echo Failed publish compatibility check with exit code $exit_code
+            echo "$output"
+
+            if [ $exit_code -eq 1 ]; then
+              # Script returned 1 (incompatible - should skip)
+              echo "skip-aws-lc-rs=true" >> $GITHUB_OUTPUT
+
+              # Extract skip reason from output
+              skip_reason=$(echo "$output" | grep "^SKIP_REASON=" | cut -d'=' -f2-)
+              echo "reason=$skip_reason" >> $GITHUB_OUTPUT
+              exit 1
+            else
+              # Script returned 2 (error)
+              echo "::error::Script execution failed with exit code $exit_code"
+              exit $exit_code
+            fi
+          fi
+
+  publish-dry-run-sys-crates:
+    if: github.repository_owner == 'aws'
+    name: publish dry-run (sys crates)
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         rust: [ stable ]
         os: [ windows-latest, ubuntu-latest, macos-13, macos-latest ]
-        crate: [ aws-lc-sys, aws-lc-rs, aws-lc-fips-sys ]
+        crate: [ aws-lc-sys, aws-lc-fips-sys ]
         args:
           - publish --dry-run
     steps:
@@ -191,6 +232,49 @@ jobs:
           AWS_LC_SYS_STATIC: 0
           AWS_LC_FIPS_SYS_STATIC: 0
         working-directory: ./${{ matrix.crate }}
+        run: cargo publish --dry-run
+
+  publish-dry-run-main-crate:
+    if: github.repository_owner == 'aws' && needs.publish-dry-run-version-check.outputs.skip-aws-lc-rs != 'true'
+    name: publish dry-run (aws-lc-rs)
+    needs: publish-dry-run-version-check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ windows-latest, ubuntu-latest, macos-13, macos-latest ]
+        args:
+          - publish --dry-run
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - run: go version
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: ilammy/setup-nasm@v1
+      - name: Install ninja-build tool
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: seanmiddleditch/gha-setup-ninja@v4
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: aws-lc-rs
+        working-directory: ./aws-lc-rs
+        run: cargo ${{ matrix.args }}
+      - name: Clean
+        run: cargo clean
+      - name: Force Linux shared build
+        env:
+          AWS_LC_SYS_STATIC: 0
+          AWS_LC_FIPS_SYS_STATIC: 0
+        working-directory: ./aws-lc-rs
         run: cargo publish --dry-run
 
   ## Verify that prebuilt-nasm objects were published properly
