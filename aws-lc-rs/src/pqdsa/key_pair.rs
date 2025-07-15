@@ -176,10 +176,10 @@ mod tests {
     use super::*;
 
     use crate::signature::{UnparsedPublicKey, VerificationAlgorithm};
-    use crate::unstable::signature::{MLDSA_44_SIGNING, MLDSA_65_SIGNING, MLDSA_87_SIGNING};
+    use crate::unstable::signature::{ML_DSA_44_SIGNING, ML_DSA_65_SIGNING, ML_DSA_87_SIGNING};
 
     const TEST_ALGORITHMS: &[&PqdsaSigningAlgorithm] =
-        &[&MLDSA_44_SIGNING, &MLDSA_65_SIGNING, &MLDSA_87_SIGNING];
+        &[&ML_DSA_44_SIGNING, &ML_DSA_65_SIGNING, &ML_DSA_87_SIGNING];
 
     #[test]
     fn test_public_key_serialization() {

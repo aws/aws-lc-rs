@@ -43,25 +43,55 @@ pub use crate::pqdsa::signature::{
 use crate::pqdsa::AlgorithmID;
 
 /// Verification of MLDSA-44 signatures
+#[deprecated(note = "Use ML_DSA_44")]
 pub static MLDSA_44: PqdsaVerificationAlgorithm = PqdsaVerificationAlgorithm {
-    id: &AlgorithmID::MLDSA_44,
+    id: &AlgorithmID::ML_DSA_44,
 };
 
 /// Verification of MLDSA-65 signatures
+#[deprecated(note = "Use ML_DSA_65")]
 pub static MLDSA_65: PqdsaVerificationAlgorithm = PqdsaVerificationAlgorithm {
-    id: &AlgorithmID::MLDSA_65,
+    id: &AlgorithmID::ML_DSA_65,
 };
 
 /// Verification of MLDSA-87 signatures
+#[deprecated(note = "Use ML_DSA_87")]
 pub static MLDSA_87: PqdsaVerificationAlgorithm = PqdsaVerificationAlgorithm {
-    id: &AlgorithmID::MLDSA_87,
+    id: &AlgorithmID::ML_DSA_87,
 };
 
 /// Sign using MLDSA-44
-pub static MLDSA_44_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&MLDSA_44);
+#[deprecated(note = "Use ML_DSA_44_SIGNING")]
+pub static MLDSA_44_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_44);
 
 /// Sign using MLDSA-65
-pub static MLDSA_65_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&MLDSA_65);
+#[deprecated(note = "Use ML_DSA_65_SIGNING")]
+pub static MLDSA_65_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_65);
 
 /// Sign using MLDSA-87
-pub static MLDSA_87_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&MLDSA_87);
+#[deprecated(note = "Use ML_DSA_87_SIGNING")]
+pub static MLDSA_87_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_87);
+
+/// Verification of ML-DSA-44 signatures
+pub static ML_DSA_44: PqdsaVerificationAlgorithm = PqdsaVerificationAlgorithm {
+    id: &AlgorithmID::ML_DSA_44,
+};
+
+/// Verification of ML-DSA-65 signatures
+pub static ML_DSA_65: PqdsaVerificationAlgorithm = PqdsaVerificationAlgorithm {
+    id: &AlgorithmID::ML_DSA_65,
+};
+
+/// Verification of ML-DSA-87 signatures
+pub static ML_DSA_87: PqdsaVerificationAlgorithm = PqdsaVerificationAlgorithm {
+    id: &AlgorithmID::ML_DSA_87,
+};
+
+/// Sign using ML-DSA-44
+pub static ML_DSA_44_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_44);
+
+/// Sign using ML-DSA-65
+pub static ML_DSA_65_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_65);
+
+/// Sign using ML-DSA-87
+pub static ML_DSA_87_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_87);

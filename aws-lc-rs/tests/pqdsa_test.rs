@@ -4,8 +4,8 @@
 
 use aws_lc_rs::signature::{KeyPair, VerificationAlgorithm};
 use aws_lc_rs::unstable::signature::{
-    PqdsaKeyPair, MLDSA_44, MLDSA_44_SIGNING, MLDSA_65, MLDSA_65_SIGNING, MLDSA_87,
-    MLDSA_87_SIGNING,
+    PqdsaKeyPair, ML_DSA_44, ML_DSA_44_SIGNING, ML_DSA_65, ML_DSA_65_SIGNING, ML_DSA_87,
+    ML_DSA_87_SIGNING,
 };
 use aws_lc_rs::{test, test_file};
 
@@ -51,30 +51,30 @@ macro_rules! mldsa_sigver_test {
 
 #[test]
 fn mldsa_44_keygen_test() {
-    mldsa_keygen_test!("data/MLDSA_44_ACVP_keyGen.txt", &MLDSA_44_SIGNING);
+    mldsa_keygen_test!("data/MLDSA_44_ACVP_keyGen.txt", &ML_DSA_44_SIGNING);
 }
 
 #[test]
 fn mldsa_65_keygen_test() {
-    mldsa_keygen_test!("data/MLDSA_65_ACVP_keyGen.txt", &MLDSA_65_SIGNING);
+    mldsa_keygen_test!("data/MLDSA_65_ACVP_keyGen.txt", &ML_DSA_65_SIGNING);
 }
 
 #[test]
 fn mldsa_87_keygen_test() {
-    mldsa_keygen_test!("data/MLDSA_87_ACVP_keyGen.txt", &MLDSA_87_SIGNING);
+    mldsa_keygen_test!("data/MLDSA_87_ACVP_keyGen.txt", &ML_DSA_87_SIGNING);
 }
 
 #[test]
 fn mldsa_44_sigver_test() {
-    mldsa_sigver_test!("data/MLDSA_44_sigVer.txt", &MLDSA_44);
+    mldsa_sigver_test!("data/MLDSA_44_sigVer.txt", &ML_DSA_44);
 }
 
 #[test]
 fn mldsa_65_sigver_test() {
-    mldsa_sigver_test!("data/MLDSA_65_sigVer.txt", &MLDSA_65);
+    mldsa_sigver_test!("data/MLDSA_65_sigVer.txt", &ML_DSA_65);
 }
 
 #[test]
 fn mldsa_87_sigver_test() {
-    mldsa_sigver_test!("data/MLDSA_87_sigVer.txt", &MLDSA_87);
+    mldsa_sigver_test!("data/MLDSA_87_sigVer.txt", &ML_DSA_87);
 }
