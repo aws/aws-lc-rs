@@ -3,7 +3,9 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use aws_lc_rs::digest::{SHA1_FOR_LEGACY_USE_ONLY, SHA256, SHA384, SHA512};
 use aws_lc_rs::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
+use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::rsa::{
     EncryptionAlgorithmId, KeySize, OaepPrivateDecryptingKey, OaepPublicEncryptingKey,
     Pkcs1PrivateDecryptingKey, Pkcs1PublicEncryptingKey, PrivateDecryptingKey, PublicEncryptingKey,
@@ -11,9 +13,10 @@ use aws_lc_rs::rsa::{
 };
 use aws_lc_rs::signature::{
     KeyPair, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey,
+    UnparsedPublicKey,
 };
 use aws_lc_rs::test::to_hex_upper;
-use aws_lc_rs::{rand, signature, test, test_file};
+use aws_lc_rs::{digest, rand, signature, test, test_file};
 
 #[test]
 fn rsa_traits() {
@@ -62,10 +65,22 @@ fn test_signature_rsa_pkcs1_sign() {
         |section, test_case| {
             assert_eq!(section, "");
             let digest_name = test_case.consume_string("Digest");
-            let alg = match digest_name.as_ref() {
-                "SHA256" => &signature::RSA_PKCS1_SHA256,
-                "SHA384" => &signature::RSA_PKCS1_SHA384,
-                "SHA512" => &signature::RSA_PKCS1_SHA512,
+            let (alg, verification_alg, digest_alg) = match digest_name.as_ref() {
+                "SHA256" => (
+                    &signature::RSA_PKCS1_SHA256,
+                    &signature::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
+                    &SHA256,
+                ),
+                "SHA384" => (
+                    &signature::RSA_PKCS1_SHA384,
+                    &signature::RSA_PKCS1_2048_8192_SHA384,
+                    &SHA384,
+                ),
+                "SHA512" => (
+                    &signature::RSA_PKCS1_SHA512,
+                    &signature::RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
+                    &SHA512,
+                ),
                 _ => panic!("Unsupported digest: {digest_name}"),
             };
 
@@ -81,14 +96,19 @@ fn test_signature_rsa_pkcs1_sign() {
                 return Ok(());
             }
             let key_pair = key_pair.expect(&debug_msg);
+            let public_key = key_pair.public_key();
+            let upk = UnparsedPublicKey::new(verification_alg, public_key.as_ref());
 
-            // XXX: This test is too slow on Android ARM Travis CI builds.
-            // TODO: re-enable these tests on Android ARM.
             let mut actual = vec![0u8; key_pair.public_modulus_len()];
             key_pair
                 .sign(alg, &rng, &msg, actual.as_mut_slice())
                 .expect(&debug_msg);
             assert_eq!(actual.as_slice() == &expected[..], result == "Pass");
+            assert!(upk.verify(&msg, actual.as_slice()).is_ok());
+
+            let digest = digest::digest(digest_alg, &msg);
+            key_pair.sign_digest(alg, &digest, actual.as_mut_slice())?;
+            assert!(upk.verify_digest(&digest, actual.as_slice()).is_ok());
             Ok(())
         },
     );
@@ -102,10 +122,22 @@ fn test_signature_rsa_pss_sign() {
             assert_eq!(section, "");
 
             let digest_name = test_case.consume_string("Digest");
-            let alg = match digest_name.as_ref() {
-                "SHA256" => &signature::RSA_PSS_SHA256,
-                "SHA384" => &signature::RSA_PSS_SHA384,
-                "SHA512" => &signature::RSA_PSS_SHA512,
+            let (encoding, verification_alg, digest_alg) = match digest_name.as_ref() {
+                "SHA256" => (
+                    &signature::RSA_PSS_SHA256,
+                    &signature::RSA_PSS_2048_8192_SHA256,
+                    &SHA256,
+                ),
+                "SHA384" => (
+                    &signature::RSA_PSS_SHA384,
+                    &signature::RSA_PSS_2048_8192_SHA384,
+                    &SHA384,
+                ),
+                "SHA512" => (
+                    &signature::RSA_PSS_SHA512,
+                    &signature::RSA_PSS_2048_8192_SHA512,
+                    &SHA512,
+                ),
                 _ => panic!("Unsupported digest: {digest_name}"),
             };
 
@@ -116,17 +148,21 @@ fn test_signature_rsa_pss_sign() {
                 return Ok(());
             }
             let key_pair = key_pair.unwrap();
+            let public_key = key_pair.public_key();
+            let upk = UnparsedPublicKey::new(verification_alg, public_key.as_ref());
             let msg = test_case.consume_bytes("Msg");
-            let salt = test_case.consume_bytes("Salt");
-            let _expected = test_case.consume_bytes("Sig");
 
-            let rng = test::rand::FixedSliceRandom { bytes: &salt };
+            let rng = SystemRandom::new();
 
             let mut actual = vec![0u8; key_pair.public_modulus_len()];
 
-            key_pair.sign(alg, &rng, &msg, actual.as_mut_slice())?;
-            // TODO: *AWS-LC* does not allow the salt to be specified for PSS
-            //assert_eq!(actual.as_slice() == &expected[..], result == "Pass");
+            key_pair.sign(encoding, &rng, &msg, actual.as_mut_slice())?;
+            upk.verify(&msg, actual.as_slice())?;
+
+            let digest = digest::digest(digest_alg, &msg);
+            key_pair.sign_digest(encoding, &digest, actual.as_mut_slice())?;
+            upk.verify_digest(&digest, actual.as_slice())?;
+
             Ok(())
         },
     );
@@ -156,11 +192,11 @@ fn test_signature_rsa_pkcs1_verify() {
             assert_eq!(section, "");
 
             let digest_name = test_case.consume_string("Digest");
-            let params: &[_] = match digest_name.as_ref() {
-                "SHA1" => sha1_params,
-                "SHA256" => sha256_params,
-                "SHA384" => sha384_params,
-                "SHA512" => sha512_params,
+            let (params, digest_alg) = match digest_name.as_ref() {
+                "SHA1" => (sha1_params, &SHA1_FOR_LEGACY_USE_ONLY),
+                "SHA256" => (sha256_params, &SHA256),
+                "SHA384" => (sha384_params, &SHA384),
+                "SHA512" => (sha512_params, &SHA512),
                 _ => panic!("Unsupported digest: {digest_name}"),
             };
             let public_key = test_case.consume_bytes("Key");
@@ -178,9 +214,13 @@ fn test_signature_rsa_pkcs1_verify() {
             for &alg in params {
                 let width_ok = key_bits >= alg.min_modulus_len();
                 let width_ok = width_ok && key_bits <= alg.max_modulus_len();
-                let actual_result =
-                    signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
+                let upk = UnparsedPublicKey::new(alg, &public_key);
+                let actual_result = upk.verify(&msg, &sig);
                 assert_eq!(actual_result.is_ok(), is_valid && width_ok);
+
+                let digest = digest::digest(digest_alg, &msg);
+                let actual_digest_result = upk.verify_digest(&digest, &sig);
+                assert_eq!(actual_digest_result, actual_result);
             }
 
             Ok(())
@@ -196,10 +236,10 @@ fn test_signature_rsa_pss_verify() {
             assert_eq!(section, "");
 
             let digest_name = test_case.consume_string("Digest");
-            let alg = match digest_name.as_ref() {
-                "SHA256" => &signature::RSA_PSS_2048_8192_SHA256,
-                "SHA384" => &signature::RSA_PSS_2048_8192_SHA384,
-                "SHA512" => &signature::RSA_PSS_2048_8192_SHA512,
+            let (alg, digest_alg) = match digest_name.as_ref() {
+                "SHA256" => (&signature::RSA_PSS_2048_8192_SHA256, &SHA256),
+                "SHA384" => (&signature::RSA_PSS_2048_8192_SHA384, &SHA384),
+                "SHA512" => (&signature::RSA_PSS_2048_8192_SHA512, &SHA512),
                 _ => panic!("Unsupported digest: {digest_name}"),
             };
 
@@ -208,9 +248,14 @@ fn test_signature_rsa_pss_verify() {
             let sig = test_case.consume_bytes("Sig");
             let is_valid = test_case.consume_string("Result") == "P";
 
-            let actual_result =
-                signature::UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
+            let upk = UnparsedPublicKey::new(alg, &public_key);
+
+            let actual_result = upk.verify(&msg, &sig);
             assert_eq!(actual_result.is_ok(), is_valid);
+
+            let digest = digest::digest(digest_alg, &msg);
+            let actual_digest_result = upk.verify_digest(&digest, &sig);
+            assert_eq!(actual_digest_result, actual_result);
 
             Ok(())
         },
@@ -1068,4 +1113,26 @@ fn rsa2048_pkcs1_openssl_kat() {
         .expect("decrypt");
 
     assert_eq!(EXPECTED_MESSAGE, plaintext);
+}
+
+#[test]
+// For code coverage
+fn test_wrong_digest() {
+    let keypair = RsaKeyPair::generate(KeySize::Rsa2048).unwrap();
+    let msg = "Hello World!";
+    let digest_sha256 = digest::digest(&SHA256, msg.as_bytes());
+    let digest_sha384 = digest::digest(&SHA384, msg.as_bytes());
+
+    let mut signature = vec![0u8; keypair.public_modulus_len()];
+    keypair
+        .sign_digest(&signature::RSA_PSS_SHA256, &digest_sha256, &mut signature)
+        .unwrap();
+    assert!(keypair
+        .sign_digest(&signature::RSA_PSS_SHA256, &digest_sha384, &mut signature)
+        .is_err());
+
+    let public_key = keypair.public_key();
+    let upk = UnparsedPublicKey::new(&signature::RSA_PSS_2048_8192_SHA256, &public_key);
+    upk.verify_digest(&digest_sha256, &signature).unwrap();
+    assert!(upk.verify_digest(&digest_sha384, &signature).is_err());
 }

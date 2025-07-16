@@ -22,7 +22,7 @@ use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
 use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
-use crate::{constant_time, hex, sealed};
+use crate::{constant_time, digest, hex, sealed};
 
 /// The length of an Ed25519 public key.
 pub const ED25519_PUBLIC_KEY_LEN: usize = crate::aws_lc::ED25519_PUBLIC_KEY_LEN as usize;
@@ -53,6 +53,10 @@ impl VerificationAlgorithm for EdDSAParameters {
         )
     }
 
+    /// Verify `signature` for `msg` using `public_key`.
+    ///
+    /// # Errors
+    ///  Returns `Unspecified` if the `msg` cannot be verified using `public_key`.
     fn verify_sig(
         &self,
         public_key: &[u8],
@@ -61,6 +65,19 @@ impl VerificationAlgorithm for EdDSAParameters {
     ) -> Result<(), Unspecified> {
         let evp_pkey = try_ed25519_public_key_from_bytes(public_key)?;
         evp_pkey.verify(msg, None, No_EVP_PKEY_CTX_consumer, signature)
+    }
+
+    /// DO NOT USE. This function is required by `VerificationAlgorithm` but cannot be used w/ Ed25519.
+    ///
+    /// # Errors
+    /// Always returns `Unspecified`.
+    fn verify_digest_sig(
+        &self,
+        _public_key: &[u8],
+        _digest: &digest::Digest,
+        _signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        Err(Unspecified)
     }
 }
 
