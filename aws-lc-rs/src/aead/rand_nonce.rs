@@ -5,7 +5,9 @@ use crate::error::Unspecified;
 use core::fmt::Debug;
 
 use super::aead_ctx::AeadCtx;
-use super::{Aad, Algorithm, AlgorithmID, Nonce, Tag, UnboundKey};
+use super::{
+    Aad, Algorithm, AlgorithmID, Nonce, Tag, UnboundKey, AES_128_GCM_SIV, AES_256_GCM_SIV,
+};
 
 /// AEAD Cipher key using a randomized nonce.
 ///
@@ -36,10 +38,13 @@ impl RandomizedNonceKey {
                 algorithm.tag_len(),
                 algorithm.nonce_len(),
             ),
-            AlgorithmID::AES_128_GCM_SIV
-            | AlgorithmID::AES_192_GCM
-            | AlgorithmID::AES_256_GCM_SIV
-            | AlgorithmID::CHACHA20_POLY1305 => return Err(Unspecified),
+            AlgorithmID::AES_128_GCM_SIV => {
+                AeadCtx::aes_128_gcm_siv(key_bytes, algorithm.tag_len())
+            }
+            AlgorithmID::AES_256_GCM_SIV => {
+                AeadCtx::aes_256_gcm_siv(key_bytes, algorithm.tag_len())
+            }
+            AlgorithmID::AES_192_GCM | AlgorithmID::CHACHA20_POLY1305 => return Err(Unspecified),
         }?;
         Ok(Self {
             key: UnboundKey::from(ctx),
@@ -95,8 +100,15 @@ impl RandomizedNonceKey {
         A: AsRef<[u8]>,
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
+        let nonce = if self.algorithm == &AES_128_GCM_SIV || self.algorithm == &AES_256_GCM_SIV {
+            let mut nonce = vec![0u8; self.algorithm.nonce_len()];
+            crate::rand::fill(&mut nonce[..])?;
+            Some(Nonce::try_assume_unique_for_key(nonce.as_slice())?)
+        } else {
+            None
+        };
         self.key
-            .seal_in_place_append_tag(None, aad.as_ref(), in_out)
+            .seal_in_place_append_tag(nonce, aad.as_ref(), in_out)
     }
 
     /// Encrypts and signs (“seals”) data in place.
@@ -125,8 +137,15 @@ impl RandomizedNonceKey {
     where
         A: AsRef<[u8]>,
     {
+        let nonce = if self.algorithm == &AES_128_GCM_SIV || self.algorithm == &AES_256_GCM_SIV {
+            let mut nonce = vec![0u8; self.algorithm.nonce_len()];
+            crate::rand::fill(&mut nonce[..])?;
+            Some(Nonce::try_assume_unique_for_key(nonce.as_slice())?)
+        } else {
+            None
+        };
         self.key
-            .seal_in_place_separate_tag(None, aad.as_ref(), in_out)
+            .seal_in_place_separate_tag(nonce, aad.as_ref(), in_out)
     }
 
     /// The key's AEAD algorithm.
@@ -149,7 +168,9 @@ impl Debug for RandomizedNonceKey {
 #[cfg(test)]
 mod tests {
     use super::{Aad, RandomizedNonceKey};
-    use crate::aead::{AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305};
+    use crate::aead::{
+        AES_128_GCM, AES_128_GCM_SIV, AES_256_GCM, AES_256_GCM_SIV, CHACHA20_POLY1305,
+    };
     use crate::test::from_hex;
     use paste::paste;
 
@@ -221,5 +242,20 @@ mod tests {
 
     test_randnonce!(aes_128_gcm, &AES_128_GCM, TEST_128_BIT_KEY, &16, &12);
     test_randnonce!(aes_256_gcm, &AES_256_GCM, TEST_256_BIT_KEY, &16, &12);
+    test_randnonce!(
+        aes_128_gcm_siv,
+        &AES_128_GCM_SIV,
+        TEST_128_BIT_KEY,
+        &16,
+        &12
+    );
+    test_randnonce!(
+        aes_256_gcm_siv,
+        &AES_256_GCM_SIV,
+        TEST_256_BIT_KEY,
+        &16,
+        &12
+    );
+
     test_randnonce!(chacha20_poly1305, &CHACHA20_POLY1305, TEST_256_BIT_KEY);
 }
