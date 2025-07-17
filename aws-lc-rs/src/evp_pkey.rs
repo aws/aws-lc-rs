@@ -5,8 +5,9 @@ use crate::aws_lc::{
     EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new,
     EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_cmp, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
     EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen,
-    EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_PKEY_size,
-    EVP_PKEY_up_ref, EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
+    EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_PKEY_sign,
+    EVP_PKEY_sign_init, EVP_PKEY_size, EVP_PKEY_up_ref, EVP_PKEY_verify, EVP_PKEY_verify_init,
+    EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
     EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_ED25519,
     RSA,
 };
@@ -23,6 +24,7 @@ use crate::{cbs, digest};
 // TODO: Uncomment when MSRV >= 1.64
 // use core::ffi::c_int;
 use crate::digest::digest_ctx::DigestContext;
+use crate::digest::Digest;
 use crate::fips::indicator_check;
 use std::os::raw::c_int;
 use std::ptr::{null, null_mut};
@@ -354,6 +356,55 @@ impl LcPtr<EVP_PKEY> {
         Ok(signature.into_boxed_slice())
     }
 
+    pub(crate) fn sign_digest<F>(
+        &self,
+        digest: &Digest,
+        padding_fn: Option<F>,
+    ) -> Result<Box<[u8]>, Unspecified>
+    where
+        F: EVP_PKEY_CTX_consumer,
+    {
+        let mut pctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.as_mut_unsafe(), null_mut()) })?;
+
+        if 1 != unsafe { EVP_PKEY_sign_init(*pctx.as_mut()) } {
+            return Err(Unspecified);
+        }
+
+        if let Some(pad_fn) = padding_fn {
+            pad_fn(*pctx.as_mut())?;
+        }
+
+        let msg_digest = digest.as_ref();
+        let mut sig_len = 0;
+        if 1 != unsafe {
+            EVP_PKEY_sign(
+                *pctx.as_mut(),
+                null_mut(),
+                &mut sig_len,
+                msg_digest.as_ptr(),
+                msg_digest.len(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+
+        let mut signature = vec![0u8; sig_len];
+        if 1 != indicator_check!(unsafe {
+            EVP_PKEY_sign(
+                *pctx.as_mut(),
+                signature.as_mut_ptr(),
+                &mut sig_len,
+                msg_digest.as_ptr(),
+                msg_digest.len(),
+            )
+        }) {
+            return Err(Unspecified);
+        }
+        signature.truncate(sig_len);
+
+        Ok(signature.into_boxed_slice())
+    }
+
     pub(crate) fn verify<F>(
         &self,
         msg: &[u8],
@@ -402,6 +453,42 @@ impl LcPtr<EVP_PKEY> {
         }
 
         Ok(())
+    }
+
+    pub(crate) fn verify_digest_sig<F>(
+        &self,
+        digest: &Digest,
+        padding_fn: Option<F>,
+        signature: &[u8],
+    ) -> Result<(), Unspecified>
+    where
+        F: EVP_PKEY_CTX_consumer,
+    {
+        let mut pctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.as_mut_unsafe(), null_mut()) })?;
+
+        if 1 != unsafe { EVP_PKEY_verify_init(*pctx.as_mut()) } {
+            return Err(Unspecified);
+        }
+
+        if let Some(pad_fn) = padding_fn {
+            pad_fn(*pctx.as_mut())?;
+        }
+
+        let msg_digest = digest.as_ref();
+
+        if 1 == unsafe {
+            indicator_check!(EVP_PKEY_verify(
+                *pctx.as_mut(),
+                signature.as_ptr(),
+                signature.len(),
+                msg_digest.as_ptr(),
+                msg_digest.len(),
+            ))
+        } {
+            Ok(())
+        } else {
+            Err(Unspecified)
+        }
     }
 
     pub(crate) fn generate<F>(pkey_type: c_int, params_fn: Option<F>) -> Result<Self, Unspecified>

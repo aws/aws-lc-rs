@@ -3,10 +3,13 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use aws_lc_rs::digest::{
+    SHA1_FOR_LEGACY_USE_ONLY, SHA224, SHA256, SHA384, SHA3_256, SHA3_384, SHA3_512, SHA512,
+};
 use aws_lc_rs::encoding::{AsBigEndian, AsDer, EcPrivateKeyRfc5915Der};
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::signature::{self, EcdsaKeyPair, KeyPair, Signature, UnparsedPublicKey};
-use aws_lc_rs::{test, test_file};
+use aws_lc_rs::{digest, test, test_file};
 
 #[test]
 fn ecdsa_traits() {
@@ -166,20 +169,20 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
         let sig = test_case.consume_bytes("Sig");
         let is_valid = test_case.consume_string("Result") == "P (0 )";
 
-        let alg = match (curve_name.as_str(), digest_name.as_str()) {
-            ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_ASN1,
-            ("P-256", "SHA384") => &signature::ECDSA_P256_SHA384_ASN1,
-            ("P-384", "SHA256") => &signature::ECDSA_P384_SHA256_ASN1,
-            ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_ASN1,
-            ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_ASN1,
-            ("P-521", "SHA1") => &signature::ECDSA_P521_SHA1_ASN1,
-            ("P-521", "SHA224") => &signature::ECDSA_P521_SHA224_ASN1,
-            ("P-521", "SHA256") => &signature::ECDSA_P521_SHA256_ASN1,
-            ("P-521", "SHA384") => &signature::ECDSA_P521_SHA384_ASN1,
-            ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_ASN1,
-            ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_ASN1,
-            ("secp256k1", "SHA256") => &signature::ECDSA_P256K1_SHA256_ASN1,
-            ("secp256k1", "SHA3-256") => &signature::ECDSA_P256K1_SHA3_256_ASN1,
+        let (alg, digest_alg) = match (curve_name.as_str(), digest_name.as_str()) {
+            ("P-256", "SHA256") => (&signature::ECDSA_P256_SHA256_ASN1, &SHA256),
+            ("P-256", "SHA384") => (&signature::ECDSA_P256_SHA384_ASN1, &SHA384),
+            ("P-384", "SHA256") => (&signature::ECDSA_P384_SHA256_ASN1, &SHA256),
+            ("P-384", "SHA384") => (&signature::ECDSA_P384_SHA384_ASN1, &SHA384),
+            ("P-384", "SHA3-384") => (&signature::ECDSA_P384_SHA3_384_ASN1, &SHA3_384),
+            ("P-521", "SHA1") => (&signature::ECDSA_P521_SHA1_ASN1, &SHA1_FOR_LEGACY_USE_ONLY),
+            ("P-521", "SHA224") => (&signature::ECDSA_P521_SHA224_ASN1, &SHA224),
+            ("P-521", "SHA256") => (&signature::ECDSA_P521_SHA256_ASN1, &SHA256),
+            ("P-521", "SHA384") => (&signature::ECDSA_P521_SHA384_ASN1, &SHA384),
+            ("P-521", "SHA512") => (&signature::ECDSA_P521_SHA512_ASN1, &SHA512),
+            ("P-521", "SHA3-512") => (&signature::ECDSA_P521_SHA3_512_ASN1, &SHA3_512),
+            ("secp256k1", "SHA256") => (&signature::ECDSA_P256K1_SHA256_ASN1, &SHA256),
+            ("secp256k1", "SHA3-256") => (&signature::ECDSA_P256K1_SHA3_256_ASN1, &SHA3_256),
             _ => {
                 panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
             }
@@ -190,6 +193,10 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
 
         let actual_result = upk.verify(&msg, &sig);
         assert_eq!(actual_result.is_ok(), is_valid);
+
+        let digest = digest::digest(digest_alg, &msg);
+        let actual_digest_result = upk.verify_digest(&digest, &sig);
+        assert_eq!(actual_digest_result.is_ok(), is_valid);
 
         Ok(())
     });
@@ -217,18 +224,18 @@ fn test_signature_ecdsa_verify_fixed(data_file: test::File) {
         let sig = test_case.consume_bytes("Sig");
         let expected_result = test_case.consume_string("Result");
 
-        let alg = match (curve_name.as_str(), digest_name.as_str()) {
-            ("P-256", "SHA256") => &signature::ECDSA_P256_SHA256_FIXED,
-            ("P-384", "SHA384") => &signature::ECDSA_P384_SHA384_FIXED,
-            ("P-384", "SHA3-384") => &signature::ECDSA_P384_SHA3_384_FIXED,
-            ("P-521", "SHA1") => &signature::ECDSA_P521_SHA1_FIXED,
-            ("P-521", "SHA224") => &signature::ECDSA_P521_SHA224_FIXED,
-            ("P-521", "SHA256") => &signature::ECDSA_P521_SHA256_FIXED,
-            ("P-521", "SHA384") => &signature::ECDSA_P521_SHA384_FIXED,
-            ("P-521", "SHA512") => &signature::ECDSA_P521_SHA512_FIXED,
-            ("P-521", "SHA3-512") => &signature::ECDSA_P521_SHA3_512_FIXED,
-            ("secp256k1", "SHA256") => &signature::ECDSA_P256K1_SHA256_FIXED,
-            ("secp256k1", "SHA3-256") => &signature::ECDSA_P256K1_SHA3_256_FIXED,
+        let (alg, digest_alg) = match (curve_name.as_str(), digest_name.as_str()) {
+            ("P-256", "SHA256") => (&signature::ECDSA_P256_SHA256_FIXED, &SHA256),
+            ("P-384", "SHA384") => (&signature::ECDSA_P384_SHA384_FIXED, &SHA384),
+            ("P-384", "SHA3-384") => (&signature::ECDSA_P384_SHA3_384_FIXED, &SHA3_384),
+            ("P-521", "SHA1") => (&signature::ECDSA_P521_SHA1_FIXED, &SHA1_FOR_LEGACY_USE_ONLY),
+            ("P-521", "SHA224") => (&signature::ECDSA_P521_SHA224_FIXED, &SHA224),
+            ("P-521", "SHA256") => (&signature::ECDSA_P521_SHA256_FIXED, &SHA256),
+            ("P-521", "SHA384") => (&signature::ECDSA_P521_SHA384_FIXED, &SHA384),
+            ("P-521", "SHA512") => (&signature::ECDSA_P521_SHA512_FIXED, &SHA512),
+            ("P-521", "SHA3-512") => (&signature::ECDSA_P521_SHA3_512_FIXED, &SHA3_512),
+            ("secp256k1", "SHA256") => (&signature::ECDSA_P256K1_SHA256_FIXED, &SHA256),
+            ("secp256k1", "SHA3-256") => (&signature::ECDSA_P256K1_SHA3_256_FIXED, &SHA3_256),
             _ => {
                 panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
             }
@@ -236,8 +243,14 @@ fn test_signature_ecdsa_verify_fixed(data_file: test::File) {
 
         let is_valid = expected_result == "P (0 )";
 
-        let actual_result = UnparsedPublicKey::new(alg, &public_key).verify(&msg, &sig);
+        let upk = UnparsedPublicKey::new(alg, &public_key);
+
+        let actual_result = upk.verify(&msg, &sig);
         assert_eq!(actual_result.is_ok(), is_valid);
+
+        let digest = digest::digest(digest_alg, &msg);
+        let actual_digest_result = upk.verify_digest(&digest, &sig);
+        assert_eq!(actual_digest_result.is_ok(), is_valid);
 
         Ok(())
     });
@@ -304,60 +317,77 @@ fn test_signature_ecdsa_sign_fixed_sign_and_verify(data_file: test::File) {
         let _k = test_case.consume_optional_bytes("k");
         let _expected_result = test_case.consume_bytes("Sig");
 
-        let (signing_alg, verification_alg) = match (curve_name.as_str(), digest_name.as_str()) {
-            ("P-256", "SHA256") => (
-                &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
-                &signature::ECDSA_P256_SHA256_FIXED,
-            ),
-            ("P-384", "SHA384") => (
-                &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
-                &signature::ECDSA_P384_SHA384_FIXED,
-            ),
-            ("P-384", "SHA3-384") => (
-                &signature::ECDSA_P384_SHA3_384_FIXED_SIGNING,
-                &signature::ECDSA_P384_SHA3_384_FIXED,
-            ),
-            ("P-521", "SHA224") => (
-                &signature::ECDSA_P521_SHA224_FIXED_SIGNING,
-                &signature::ECDSA_P521_SHA224_FIXED,
-            ),
-            ("P-521", "SHA256") => (
-                &signature::ECDSA_P521_SHA256_FIXED_SIGNING,
-                &signature::ECDSA_P521_SHA256_FIXED,
-            ),
-            ("P-521", "SHA384") => (
-                &signature::ECDSA_P521_SHA384_FIXED_SIGNING,
-                &signature::ECDSA_P521_SHA384_FIXED,
-            ),
-            ("P-521", "SHA512") => (
-                &signature::ECDSA_P521_SHA512_FIXED_SIGNING,
-                &signature::ECDSA_P521_SHA512_FIXED,
-            ),
-            ("P-521", "SHA3-512") => (
-                &signature::ECDSA_P521_SHA3_512_FIXED_SIGNING,
-                &signature::ECDSA_P521_SHA3_512_FIXED,
-            ),
-            ("secp256k1", "SHA256") => (
-                &signature::ECDSA_P256K1_SHA256_FIXED_SIGNING,
-                &signature::ECDSA_P256K1_SHA256_FIXED,
-            ),
-            ("secp256k1", "SHA3-256") => (
-                &signature::ECDSA_P256K1_SHA3_256_FIXED_SIGNING,
-                &signature::ECDSA_P256K1_SHA3_256_FIXED,
-            ),
-            _ => {
-                panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
-            }
-        };
+        let (signing_alg, verification_alg, digest_alg) =
+            match (curve_name.as_str(), digest_name.as_str()) {
+                ("P-256", "SHA256") => (
+                    &signature::ECDSA_P256_SHA256_FIXED_SIGNING,
+                    &signature::ECDSA_P256_SHA256_FIXED,
+                    &SHA256,
+                ),
+                ("P-384", "SHA384") => (
+                    &signature::ECDSA_P384_SHA384_FIXED_SIGNING,
+                    &signature::ECDSA_P384_SHA384_FIXED,
+                    &SHA384,
+                ),
+                ("P-384", "SHA3-384") => (
+                    &signature::ECDSA_P384_SHA3_384_FIXED_SIGNING,
+                    &signature::ECDSA_P384_SHA3_384_FIXED,
+                    &SHA3_384,
+                ),
+                ("P-521", "SHA224") => (
+                    &signature::ECDSA_P521_SHA224_FIXED_SIGNING,
+                    &signature::ECDSA_P521_SHA224_FIXED,
+                    &SHA224,
+                ),
+                ("P-521", "SHA256") => (
+                    &signature::ECDSA_P521_SHA256_FIXED_SIGNING,
+                    &signature::ECDSA_P521_SHA256_FIXED,
+                    &SHA256,
+                ),
+                ("P-521", "SHA384") => (
+                    &signature::ECDSA_P521_SHA384_FIXED_SIGNING,
+                    &signature::ECDSA_P521_SHA384_FIXED,
+                    &SHA384,
+                ),
+                ("P-521", "SHA512") => (
+                    &signature::ECDSA_P521_SHA512_FIXED_SIGNING,
+                    &signature::ECDSA_P521_SHA512_FIXED,
+                    &SHA512,
+                ),
+                ("P-521", "SHA3-512") => (
+                    &signature::ECDSA_P521_SHA3_512_FIXED_SIGNING,
+                    &signature::ECDSA_P521_SHA3_512_FIXED,
+                    &SHA3_512,
+                ),
+                ("secp256k1", "SHA256") => (
+                    &signature::ECDSA_P256K1_SHA256_FIXED_SIGNING,
+                    &signature::ECDSA_P256K1_SHA256_FIXED,
+                    &SHA256,
+                ),
+                ("secp256k1", "SHA3-256") => (
+                    &signature::ECDSA_P256K1_SHA3_256_FIXED_SIGNING,
+                    &signature::ECDSA_P256K1_SHA3_256_FIXED,
+                    &SHA3_256,
+                ),
+                _ => {
+                    panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
+                }
+            };
 
         let private_key =
             EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q).unwrap();
 
         let signature = private_key.sign(&rng, &msg).unwrap();
 
+        let digest = digest::digest(digest_alg, &msg);
+        let digest_signature = private_key.sign_digest(&digest).unwrap();
+
         let public_key = UnparsedPublicKey::new(verification_alg, q);
         let vfy_result = public_key.verify(&msg, signature.as_ref());
         assert!(vfy_result.is_ok());
+
+        let vfy_digest_result = public_key.verify_digest(&digest, digest_signature.as_ref());
+        assert!(vfy_digest_result.is_ok());
 
         Ok(())
     });
@@ -394,59 +424,77 @@ fn test_signature_ecdsa_sign_asn1(data_file: test::File) {
         let _k = test_case.consume_optional_bytes("k");
         let _expected_result = test_case.consume_bytes("Sig");
 
-        let (signing_alg, verification_alg) = match (curve_name.as_str(), digest_name.as_str()) {
-            ("P-256", "SHA256") => (
-                &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
-                &signature::ECDSA_P256_SHA256_ASN1,
-            ),
-            ("P-384", "SHA384") => (
-                &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
-                &signature::ECDSA_P384_SHA384_ASN1,
-            ),
-            ("P-384", "SHA3-384") => (
-                &signature::ECDSA_P384_SHA3_384_ASN1_SIGNING,
-                &signature::ECDSA_P384_SHA3_384_ASN1,
-            ),
-            ("P-521", "SHA224") => (
-                &signature::ECDSA_P521_SHA224_ASN1_SIGNING,
-                &signature::ECDSA_P521_SHA224_ASN1,
-            ),
-            ("P-521", "SHA256") => (
-                &signature::ECDSA_P521_SHA256_ASN1_SIGNING,
-                &signature::ECDSA_P521_SHA256_ASN1,
-            ),
-            ("P-521", "SHA384") => (
-                &signature::ECDSA_P521_SHA384_ASN1_SIGNING,
-                &signature::ECDSA_P521_SHA384_ASN1,
-            ),
-            ("P-521", "SHA512") => (
-                &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
-                &signature::ECDSA_P521_SHA512_ASN1,
-            ),
-            ("P-521", "SHA3-512") => (
-                &signature::ECDSA_P521_SHA3_512_ASN1_SIGNING,
-                &signature::ECDSA_P521_SHA3_512_ASN1,
-            ),
-            ("secp256k1", "SHA256") => (
-                &signature::ECDSA_P256K1_SHA256_ASN1_SIGNING,
-                &signature::ECDSA_P256K1_SHA256_ASN1,
-            ),
-            ("secp256k1", "SHA3-256") => (
-                &signature::ECDSA_P256K1_SHA3_256_ASN1_SIGNING,
-                &signature::ECDSA_P256K1_SHA3_256_ASN1,
-            ),
-            _ => {
-                panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
-            }
-        };
+        let (signing_alg, verification_alg, digest_alg) =
+            match (curve_name.as_str(), digest_name.as_str()) {
+                ("P-256", "SHA256") => (
+                    &signature::ECDSA_P256_SHA256_ASN1_SIGNING,
+                    &signature::ECDSA_P256_SHA256_ASN1,
+                    &SHA256,
+                ),
+                ("P-384", "SHA384") => (
+                    &signature::ECDSA_P384_SHA384_ASN1_SIGNING,
+                    &signature::ECDSA_P384_SHA384_ASN1,
+                    &SHA384,
+                ),
+                ("P-384", "SHA3-384") => (
+                    &signature::ECDSA_P384_SHA3_384_ASN1_SIGNING,
+                    &signature::ECDSA_P384_SHA3_384_ASN1,
+                    &SHA3_384,
+                ),
+                ("P-521", "SHA224") => (
+                    &signature::ECDSA_P521_SHA224_ASN1_SIGNING,
+                    &signature::ECDSA_P521_SHA224_ASN1,
+                    &SHA224,
+                ),
+                ("P-521", "SHA256") => (
+                    &signature::ECDSA_P521_SHA256_ASN1_SIGNING,
+                    &signature::ECDSA_P521_SHA256_ASN1,
+                    &SHA256,
+                ),
+                ("P-521", "SHA384") => (
+                    &signature::ECDSA_P521_SHA384_ASN1_SIGNING,
+                    &signature::ECDSA_P521_SHA384_ASN1,
+                    &SHA384,
+                ),
+                ("P-521", "SHA512") => (
+                    &signature::ECDSA_P521_SHA512_ASN1_SIGNING,
+                    &signature::ECDSA_P521_SHA512_ASN1,
+                    &SHA512,
+                ),
+                ("P-521", "SHA3-512") => (
+                    &signature::ECDSA_P521_SHA3_512_ASN1_SIGNING,
+                    &signature::ECDSA_P521_SHA3_512_ASN1,
+                    &SHA3_512,
+                ),
+                ("secp256k1", "SHA256") => (
+                    &signature::ECDSA_P256K1_SHA256_ASN1_SIGNING,
+                    &signature::ECDSA_P256K1_SHA256_ASN1,
+                    &SHA256,
+                ),
+                ("secp256k1", "SHA3-256") => (
+                    &signature::ECDSA_P256K1_SHA3_256_ASN1_SIGNING,
+                    &signature::ECDSA_P256K1_SHA3_256_ASN1,
+                    &SHA3_256,
+                ),
+                _ => {
+                    panic!("Unsupported curve+digest: {curve_name}+{digest_name}");
+                }
+            };
 
         let private_key =
             EcdsaKeyPair::from_private_key_and_public_key(signing_alg, &d, &q).unwrap();
 
         let signature = private_key.sign(&rng, &msg).unwrap();
 
+        let digest = digest::digest(digest_alg, &msg);
+        let digest_signature = private_key.sign_digest(&digest).unwrap();
+
         let public_key = UnparsedPublicKey::new(verification_alg, q);
-        assert_eq!(public_key.verify(&msg, signature.as_ref()), Ok(()));
+        let vfy_result = public_key.verify(&msg, signature.as_ref());
+        assert!(vfy_result.is_ok());
+
+        let vfy_digest_result = public_key.verify_digest(&digest, digest_signature.as_ref());
+        assert!(vfy_digest_result.is_ok());
 
         Ok(())
     });
@@ -517,4 +565,25 @@ fn test_private_key() {
             assert_eq!(key_pair_doc.as_ref(), key_pair_copy_doc.as_ref());
         }
     }
+}
+#[test]
+// For code coverage
+fn test_wrong_digest() {
+    let key_pair = EcdsaKeyPair::generate(&signature::ECDSA_P256_SHA256_ASN1_SIGNING).unwrap();
+    let msg = "Hello World!";
+
+    let digest_sha256 = digest::digest(&SHA256, msg.as_bytes());
+    let digest_sha384 = digest::digest(&SHA384, msg.as_bytes());
+
+    let signature_sha256 = key_pair.sign_digest(&digest_sha256).unwrap();
+    assert!(key_pair.sign_digest(&digest_sha384).is_err());
+
+    let public_key = key_pair.public_key();
+    let upk = UnparsedPublicKey::new(&signature::ECDSA_P256_SHA256_ASN1, public_key.as_ref());
+    upk.verify(msg.as_bytes(), signature_sha256.as_ref())
+        .unwrap();
+
+    assert!(upk
+        .verify_digest(&digest_sha384, signature_sha256.as_ref())
+        .is_err());
 }

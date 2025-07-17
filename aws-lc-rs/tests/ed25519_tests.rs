@@ -73,6 +73,30 @@ fn test_signature_ed25519_verify() {
         },
     );
 }
+
+#[test]
+// For code coverage
+fn test_signature_ed25519_digest_verify() {
+    test::run(
+        test_file!("data/ed25519_verify_tests.txt"),
+        |section, test_case| {
+            assert_eq!(section, "");
+
+            let public_key = test_case.consume_bytes("PUB");
+            let msg = test_case.consume_bytes("MESSAGE");
+            let sig = test_case.consume_bytes("SIG");
+            let _result = test_case.consume_string("Result");
+            let expected_result = Err(error::Unspecified);
+            let digest = aws_lc_rs::digest::digest(&aws_lc_rs::digest::SHA256, &msg);
+            assert_eq!(
+                expected_result,
+                signature::UnparsedPublicKey::new(&ED25519, public_key)
+                    .verify_digest(&digest, &sig)
+            );
+            Ok(())
+        },
+    );
+}
 fn test_signature_verification(
     public_key: &[u8],
     msg: &[u8],
@@ -81,7 +105,7 @@ fn test_signature_verification(
 ) {
     assert_eq!(
         expected_result,
-        signature::UnparsedPublicKey::new(&signature::ED25519, public_key).verify(msg, sig)
+        signature::UnparsedPublicKey::new(&ED25519, public_key).verify(msg, sig)
     );
 }
 
