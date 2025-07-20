@@ -13,6 +13,8 @@ use core::fmt::Debug;
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub(crate) enum PaddingStrategy {
+    /// ISO 10126 padding. For compatibility purposes only. Applies non-random PKCS7 padding.
+    ISO10126,
     /// PKCS#7 Padding. ([See RFC 5652](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3))
     PKCS7,
 }
@@ -23,7 +25,8 @@ impl PaddingStrategy {
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
         match self {
-            PaddingStrategy::PKCS7 => {
+            // PKCS7 padding can be unpadded as ISO 10126 padding
+            PaddingStrategy::ISO10126 | PaddingStrategy::PKCS7 => {
                 let mut padding_buffer = [0u8; MAX_CIPHER_BLOCK_LEN];
 
                 let in_out_len = in_out.as_mut().len();
@@ -40,13 +43,22 @@ impl PaddingStrategy {
     }
 
     fn remove_padding(self, block_len: usize, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
+        if in_out.is_empty() || in_out.len() < block_len {
+            return Err(Unspecified);
+        }
         match self {
-            PaddingStrategy::PKCS7 => {
-                let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
-
-                if in_out.is_empty() || in_out.len() < block_len {
+            PaddingStrategy::ISO10126 => {
+                let padding: u8 = in_out[in_out.len() - 1];
+                if padding == 0 || padding > block_len as u8 {
                     return Err(Unspecified);
                 }
+
+                // ISO 10126 padding is a random padding scheme, so we cannot verify the padding bytes
+                let final_len = in_out.len() - padding as usize;
+                Ok(&mut in_out[0..final_len])
+            }
+            PaddingStrategy::PKCS7 => {
+                let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
 
                 let padding: u8 = in_out[in_out.len() - 1];
                 if padding == 0 || padding > block_size {
@@ -206,6 +218,23 @@ impl PaddedBlockDecryptingKey {
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
+    }
+
+    /// Constructs a new `PaddedBlockDecryptingKey` cipher with chaining block cipher (CBC) mode.
+    /// Decrypted data is unpadded following the ISO 10126 scheme
+    /// (compatible with PKCS#7 and ANSI X.923).
+    ///
+    /// Offered for computability purposes only.
+    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
+    pub fn cbc_iso10126(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CBC, PaddingStrategy::ISO10126)
     }
 
     /// Constructs a new `PaddedBlockDecryptingKey` cipher with electronic code book (ECB) mode.
