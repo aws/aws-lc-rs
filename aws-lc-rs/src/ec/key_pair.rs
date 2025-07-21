@@ -207,7 +207,7 @@ impl EcdsaKeyPair {
         self.algorithm
     }
 
-    /// Returns the signature of the message using a random nonce.
+    /// Returns a signature for the message.
     ///
     /// # *ring* Compatibility
     /// Our implementation ignores the `SecureRandom` parameter.
@@ -236,7 +236,7 @@ impl EcdsaKeyPair {
         })
     }
 
-    /// Returns the signature of the digest using a random nonce.
+    /// Returns a signature for the message corresponding to the provided digest.
     ///
     /// # Errors
     /// `error::Unspecified` on internal error.
