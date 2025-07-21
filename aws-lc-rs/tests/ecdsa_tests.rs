@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::digest::{
-    SHA1_FOR_LEGACY_USE_ONLY, SHA224, SHA256, SHA384, SHA3_256, SHA3_384, SHA3_512, SHA512,
+    Digest, SHA1_FOR_LEGACY_USE_ONLY, SHA224, SHA256, SHA384, SHA3_256, SHA3_384, SHA3_512, SHA512,
 };
 use aws_lc_rs::encoding::{AsBigEndian, AsDer, EcPrivateKeyRfc5915Der};
 use aws_lc_rs::rand::SystemRandom;
@@ -379,7 +379,8 @@ fn test_signature_ecdsa_sign_fixed_sign_and_verify(data_file: test::File) {
 
         let signature = private_key.sign(&rng, &msg).unwrap();
 
-        let digest = digest::digest(digest_alg, &msg);
+        let og_digest = digest::digest(digest_alg, &msg);
+        let digest = Digest::import_less_safe(og_digest.as_ref(), digest_alg).unwrap();
         let digest_signature = private_key.sign_digest(&digest).unwrap();
 
         let public_key = UnparsedPublicKey::new(verification_alg, q);

@@ -3,7 +3,7 @@
 // Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use aws_lc_rs::digest::{SHA1_FOR_LEGACY_USE_ONLY, SHA256, SHA384, SHA512};
+use aws_lc_rs::digest::{Digest, SHA1_FOR_LEGACY_USE_ONLY, SHA256, SHA384, SHA512};
 use aws_lc_rs::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::rsa::{
@@ -106,7 +106,8 @@ fn test_signature_rsa_pkcs1_sign() {
             assert_eq!(actual.as_slice() == &expected[..], result == "Pass");
             assert!(upk.verify(&msg, actual.as_slice()).is_ok());
 
-            let digest = digest::digest(digest_alg, &msg);
+            let og_digest = digest::digest(digest_alg, &msg);
+            let digest = Digest::import_less_safe(og_digest.as_ref(), digest_alg).unwrap();
             key_pair.sign_digest(alg, &digest, actual.as_mut_slice())?;
             assert!(upk.verify_digest(&digest, actual.as_slice()).is_ok());
             Ok(())
