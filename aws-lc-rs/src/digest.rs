@@ -223,6 +223,9 @@ impl Digest {
     ///
     /// WARNING: Ensure that the digest is provided by a trusted source.
     /// When possible, prefer to directly compute the digest of content.
+    ///
+    /// # Errors
+    /// Returns `Unspecified` if the imported value is the wrong length for the specified algorithm.
     pub fn import_less_safe(
         digest: &[u8],
         algorithm: &'static Algorithm,
@@ -235,7 +238,7 @@ impl Digest {
         Ok(Digest {
             message: my_digest,
             len: digest.len(),
-            algorithm: algorithm,
+            algorithm,
         })
     }
 
