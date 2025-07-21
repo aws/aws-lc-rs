@@ -218,6 +218,30 @@ pub struct Digest {
 }
 
 impl Digest {
+    /// Imports a digest value provide by an external source. This allows for the signing of
+    /// content that might not be directly accessible.
+    ///
+    /// WARNING: Ensure that the digest is provided by a trusted source.
+    /// When possible, prefer to directly compute the digest of content.
+    ///
+    /// # Errors
+    /// Returns `Unspecified` if the imported value is the wrong length for the specified algorithm.
+    pub fn import_less_safe(
+        digest: &[u8],
+        algorithm: &'static Algorithm,
+    ) -> Result<Self, Unspecified> {
+        if digest.len() != algorithm.output_len {
+            return Err(Unspecified);
+        }
+        let mut my_digest = [0u8; MAX_OUTPUT_LEN];
+        my_digest[0..digest.len()].copy_from_slice(&digest[0..digest.len()]);
+        Ok(Digest {
+            message: my_digest,
+            len: digest.len(),
+            algorithm,
+        })
+    }
+
     /// The algorithm that was used to calculate the digest value.
     #[inline]
     #[must_use]
@@ -359,6 +383,7 @@ pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<'_, 
 
 #[cfg(test)]
 mod tests {
+    use crate::digest;
     #[cfg(feature = "fips")]
     mod fips;
 
@@ -439,8 +464,6 @@ mod tests {
 
     #[test]
     fn digest_coverage() {
-        use crate::digest;
-
         for alg in [
             &digest::SHA1_FOR_LEGACY_USE_ONLY,
             &digest::SHA224,
@@ -462,5 +485,15 @@ mod tests {
             assert_eq!(orig_digest.as_ref(), clone_digest.as_ref());
             assert_eq!(orig_digest.clone().as_ref(), clone_digest.as_ref());
         }
+    }
+
+    #[test]
+    fn test_import_less_safe() {
+        let digest = digest::digest(&digest::SHA256, b"hello, world");
+        let digest_copy =
+            digest::Digest::import_less_safe(digest.as_ref(), &digest::SHA256).unwrap();
+
+        assert_eq!(digest.as_ref(), digest_copy.as_ref());
+        assert_eq!(digest.algorithm, digest_copy.algorithm);
     }
 }

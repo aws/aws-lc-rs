@@ -198,19 +198,41 @@ impl VerificationAlgorithm for EcdsaVerificationAlgorithm {
                 verify_asn1_signature(self.id, self.digest, public_key, msg, signature)
             }
             EcdsaSignatureFormat::Fixed => {
-                verify_fixed_signature(self.id, self.digest, public_key, msg, signature)
+                let (out_bytes, out_bytes_len) = convert_fixed_signature(self.id, signature)?;
+                verify_asn1_signature(self.id, self.digest, public_key, msg, unsafe {
+                    out_bytes.as_slice(out_bytes_len)
+                })
+            }
+        }
+    }
+
+    fn verify_digest_sig(
+        &self,
+        public_key: &[u8],
+        digest: &digest::Digest,
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        if self.digest != digest.algorithm() {
+            return Err(Unspecified);
+        }
+        match self.sig_format {
+            EcdsaSignatureFormat::ASN1 => {
+                verify_asn1_digest_signature(self.id, digest, public_key, signature)
+            }
+            EcdsaSignatureFormat::Fixed => {
+                let (out_bytes, out_bytes_len) = convert_fixed_signature(self.id, signature)?;
+                verify_asn1_digest_signature(self.id, digest, public_key, unsafe {
+                    out_bytes.as_slice(out_bytes_len)
+                })
             }
         }
     }
 }
 
-fn verify_fixed_signature(
+fn convert_fixed_signature(
     alg: &'static AlgorithmID,
-    digest: &'static digest::Algorithm,
-    public_key: &[u8],
-    msg: &[u8],
     signature: &[u8],
-) -> Result<(), Unspecified> {
+) -> Result<(LcPtr<u8>, usize), Unspecified> {
     let mut out_bytes = null_mut::<u8>();
     let mut out_bytes_len = MaybeUninit::<usize>::uninit();
     let sig = unsafe { ecdsa_sig_from_fixed(alg, signature)? };
@@ -219,20 +241,30 @@ fn verify_fixed_signature(
     } {
         return Err(Unspecified);
     }
-    let out_bytes = LcPtr::new(out_bytes)?;
-    let signature = unsafe { out_bytes.as_slice(out_bytes_len.assume_init()) };
-    verify_asn1_signature(alg, digest, public_key, msg, signature)
+    Ok((LcPtr::new(out_bytes)?, unsafe {
+        out_bytes_len.assume_init()
+    }))
 }
 
 fn verify_asn1_signature(
     alg: &'static AlgorithmID,
-    digest: &'static digest::Algorithm,
+    digest_alg: &'static digest::Algorithm,
     public_key: &[u8],
     msg: &[u8],
     signature: &[u8],
 ) -> Result<(), Unspecified> {
     let evp_pkey = parse_ec_public_key(public_key, alg.nid())?;
-    evp_pkey.verify(msg, Some(digest), No_EVP_PKEY_CTX_consumer, signature)
+    evp_pkey.verify(msg, Some(digest_alg), No_EVP_PKEY_CTX_consumer, signature)
+}
+
+fn verify_asn1_digest_signature(
+    alg: &'static AlgorithmID,
+    digest: &digest::Digest,
+    public_key: &[u8],
+    signature: &[u8],
+) -> Result<(), Unspecified> {
+    let evp_pkey = parse_ec_public_key(public_key, alg.nid())?;
+    evp_pkey.verify_digest_sig(digest, No_EVP_PKEY_CTX_consumer, signature)
 }
 
 #[inline]

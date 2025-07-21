@@ -7,8 +7,9 @@ use super::{encoding, RsaParameters};
 #[cfg(feature = "fips")]
 use crate::aws_lc::RSA;
 use crate::aws_lc::{
-    EVP_PKEY_CTX_set_rsa_keygen_bits, EVP_PKEY_assign_RSA, EVP_PKEY_new, RSA_new, RSA_set0_key,
-    RSA_size, EVP_PKEY, EVP_PKEY_RSA, EVP_PKEY_RSA_PSS,
+    EVP_PKEY_CTX_set_rsa_keygen_bits, EVP_PKEY_CTX_set_signature_md, EVP_PKEY_assign_RSA,
+    EVP_PKEY_new, RSA_new, RSA_set0_key, RSA_size, EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_RSA,
+    EVP_PKEY_RSA_PSS,
 };
 #[cfg(feature = "ring-io")]
 use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
@@ -29,6 +30,7 @@ use core::ptr::null_mut;
 // use core::ffi::c_int;
 use std::os::raw::c_int;
 
+use crate::digest::{match_digest_type, Digest};
 use crate::pkcs8::Version;
 use crate::rsa::encoding::{rfc5280, rfc8017};
 use crate::rsa::signature::configure_rsa_pkcs1_pss_padding;
@@ -183,14 +185,12 @@ impl KeyPair {
 
     /// Sign `msg`. `msg` is digested using the digest algorithm from
     /// `padding_alg` and the digest is then padded using the padding algorithm
-    /// from `padding_alg`. The signature it written into `signature`;
+    /// from `padding_alg`. The signature is written into `signature`;
     /// `signature`'s length must be exactly the length returned by
     /// `public_modulus_len()`.
     ///
-    /// Many other crypto libraries have signing functions that takes a
-    /// precomputed digest as input, instead of the message to digest. This
-    /// function does *not* take a precomputed digest; instead, `sign`
-    /// calculates the digest itself.
+    /// This function does *not* take a precomputed digest; instead, `sign`
+    /// calculates the digest itself. See `sign_digest`.
     ///
     /// # *ring* Compatibility
     /// Our implementation ignores the `SecureRandom` parameter.
@@ -219,6 +219,51 @@ impl KeyPair {
         let sig_bytes = self
             .evp_pkey
             .sign(msg, Some(encoding.digest_algorithm()), padding_fn)?;
+
+        signature.copy_from_slice(&sig_bytes);
+        Ok(())
+    }
+
+    /// The `digest` is padded using the padding algorithm
+    /// from `padding_alg`. The signature is written into `signature`;
+    /// `signature`'s length must be exactly the length returned by
+    /// `public_modulus_len()`.
+    ///
+    /// # *ring* Compatibility
+    /// Our implementation ignores the `SecureRandom` parameter.
+    //
+    // # FIPS
+    // Not allowed
+    //
+    /// # Errors
+    /// `error::Unspecified` on error.
+    /// With "fips" feature enabled, errors if digest length is greater than `u32::MAX`.
+    pub fn sign_digest(
+        &self,
+        padding_alg: &'static dyn RsaEncoding,
+        digest: &Digest,
+        signature: &mut [u8],
+    ) -> Result<(), Unspecified> {
+        let encoding = padding_alg.encoding();
+        if encoding.digest_algorithm() != digest.algorithm() {
+            return Err(Unspecified);
+        }
+
+        let padding_fn = Some({
+            |pctx: *mut EVP_PKEY_CTX| {
+                let evp_md = match_digest_type(&digest.algorithm().id);
+                if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, *evp_md) } {
+                    return Err(());
+                }
+                if let RsaPadding::RSA_PKCS1_PSS_PADDING = encoding.padding() {
+                    configure_rsa_pkcs1_pss_padding(pctx)
+                } else {
+                    Ok(())
+                }
+            }
+        });
+
+        let sig_bytes = self.evp_pkey.sign_digest(digest, padding_fn)?;
 
         signature.copy_from_slice(&sig_bytes);
         Ok(())
