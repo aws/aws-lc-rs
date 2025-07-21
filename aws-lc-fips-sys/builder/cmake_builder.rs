@@ -249,6 +249,14 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "Darwin");
                 cmake_cfg.define("CMAKE_OSX_SYSROOT", "macosx");
             }
+            if target_os().trim() == "tvos" {
+                cmake_cfg.define("CMAKE_SYSTEM_NAME", "tvOS");
+                if effective_target().ends_with("-tvos-sim") || target_arch() == "x86_64" {
+                    cmake_cfg.define("CMAKE_OSX_SYSROOT", "appletvsimulator");
+                } else {
+                    cmake_cfg.define("CMAKE_OSX_SYSROOT", "appletvos");
+                }
+            }
         }
 
         if target_os() == "windows" {
