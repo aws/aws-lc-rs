@@ -429,7 +429,13 @@ mod tests {
 
                 let context = encrypting_key.less_safe_encrypt(&mut in_out, ec).unwrap();
 
-                assert_eq!(expected_ciphertext, in_out);
+                if ($padding == PaddingStrategy::ISO10126) {
+                    // This padding scheme is technically non-deterministic in nature if the padding is more then one
+                    // byte. So just validate the input length of in_out is no longer the plaintext.
+                    assert_ne!(input, in_out[..input.len()]);
+                } else {
+                    assert_eq!(expected_ciphertext, in_out);
+                }
 
                 let unbound_key2 = UnboundCipherKey::new(alg, &key).unwrap();
                 let decrypting_key =
@@ -483,6 +489,17 @@ mod tests {
         "b5313560244a4822c46c2a0c9d0cf7fd",
         "a3e4c990356c01f320043c3d8d6f43",
         "ad96993f248bd6a29760ec7ccda95ee1"
+    );
+
+    padded_cipher_kat!(
+        test_openssl_aes_128_cbc_iso10126_16_bytes,
+        &AES_128,
+        OperatingMode::CBC,
+        PaddingStrategy::ISO10126,
+        "053304bb3899e1d99db9d29343ea782d",
+        "b83452fc9c80215a6ecdc505b5154c90",
+        "736e65616b7920726163636f6f6e7321",
+        "44563399c6bb2133e013161dc5bd4fa8ce83ef997ddb04bbbbe3632b68e9cde0"
     );
 
     padded_cipher_kat!(
