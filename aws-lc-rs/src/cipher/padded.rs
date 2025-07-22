@@ -360,6 +360,16 @@ mod tests {
     }
 
     #[test]
+    fn test_unpad_iso10126() {
+        let mut input = from_hex("01020304050607fedcba9805").unwrap();
+        let padding = PaddingStrategy::ISO10126;
+        let block_len = 8;
+
+        let unpadded = padding.remove_padding(block_len, &mut input).unwrap();
+        assert_eq!(unpadded, &mut [1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
     fn test_aes_128_cbc() {
         let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
         for i in 0..=50 {
