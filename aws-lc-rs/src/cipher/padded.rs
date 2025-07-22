@@ -465,6 +465,17 @@ mod tests {
     );
 
     padded_cipher_kat!(
+        test_openssl_aes_128_cbc_iso10126_15_bytes,
+        &AES_128,
+        OperatingMode::CBC,
+        PaddingStrategy::ISO10126,
+        "053304bb3899e1d99db9d29343ea782d",
+        "b5313560244a4822c46c2a0c9d0cf7fd",
+        "a3e4c990356c01f320043c3d8d6f43",
+        "ad96993f248bd6a29760ec7ccda95ee1"
+    );
+
+    padded_cipher_kat!(
         test_openssl_aes_128_cbc_16_bytes,
         &AES_128,
         OperatingMode::CBC,
