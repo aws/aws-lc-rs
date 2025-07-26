@@ -49,7 +49,7 @@ impl PaddingStrategy {
         match self {
             PaddingStrategy::ISO10126 => {
                 let padding: u8 = in_out[in_out.len() - 1];
-                if padding == 0 || padding > block_len as u8 {
+                if padding == 0 || padding as usize > block_len {
                     return Err(Unspecified);
                 }
 
