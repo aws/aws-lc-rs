@@ -166,6 +166,10 @@ impl CmakeBuilder {
         // Allow environment to specify CMake toolchain.
         if let Some(toolchain) = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE") {
             set_env_for_target("CMAKE_TOOLCHAIN_FILE", toolchain);
+            // Only setup if allowed by environment variable
+            if use_prebuilt_nasm() && Some(true) == allow_prebuilt_nasm() {
+                self.configure_prebuilt_nasm(&mut cmake_cfg);
+            }
             return cmake_cfg;
         }
         // We only consider compiler CFLAGS when no cmake toolchain is set
@@ -244,7 +248,7 @@ impl CmakeBuilder {
             };
             emit_warning(
                 &format!(
-                    "Neither script could be tested for execution, falling back to target-based selection: {}", 
+                    "Neither script could be tested for execution, falling back to target-based selection: {}",
                     fallback_script.file_name().unwrap().to_str().unwrap()));
             fallback_script
         }
@@ -304,40 +308,44 @@ impl CmakeBuilder {
             }
         }
         if use_prebuilt_nasm() {
-            emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            emit_warning("!!!   Using pre-built NASM binaries   !!!");
-            emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
-            let script_path = self.select_prebuilt_nasm_script();
-            let script_path = script_path.display().to_string();
-            let script_path = script_path.replace('\\', "/");
-
-            cmake_cfg.define("CMAKE_ASM_NASM_COMPILER", script_path.as_str());
-            // Without the following definition, the build fails with a message similar to the one
-            // reported here: https://gitlab.kitware.com/cmake/cmake/-/issues/19453
-            // The variables below were found in the associated fix:
-            // https://gitlab.kitware.com/cmake/cmake/-/merge_requests/4257/diffs
-            cmake_cfg.define(
-                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreaded",
-                "",
-            );
-            cmake_cfg.define(
-                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDLL",
-                "",
-            );
-            cmake_cfg.define(
-                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebug",
-                "",
-            );
-            cmake_cfg.define(
-                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebugDLL",
-                "",
-            );
-            cmake_cfg.define(
-                "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_ProgramDatabase",
-                "",
-            );
+            self.configure_prebuilt_nasm(cmake_cfg);
         }
+    }
+
+    fn configure_prebuilt_nasm(&self, cmake_cfg: &mut cmake::Config) {
+        emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        emit_warning("!!!   Using pre-built NASM binaries   !!!");
+        emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+        let script_path = self.select_prebuilt_nasm_script();
+        let script_path = script_path.display().to_string();
+        let script_path = script_path.replace('\\', "/");
+
+        cmake_cfg.define("CMAKE_ASM_NASM_COMPILER", script_path.as_str());
+        // Without the following definition, the build fails with a message similar to the one
+        // reported here: https://gitlab.kitware.com/cmake/cmake/-/issues/19453
+        // The variables below were found in the associated fix:
+        // https://gitlab.kitware.com/cmake/cmake/-/merge_requests/4257/diffs
+        cmake_cfg.define(
+            "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreaded",
+            "",
+        );
+        cmake_cfg.define(
+            "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDLL",
+            "",
+        );
+        cmake_cfg.define(
+            "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebug",
+            "",
+        );
+        cmake_cfg.define(
+            "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebugDLL",
+            "",
+        );
+        cmake_cfg.define(
+            "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_ProgramDatabase",
+            "",
+        );
     }
 
     fn configure_open_harmony(cmake_cfg: &mut cmake::Config) {
