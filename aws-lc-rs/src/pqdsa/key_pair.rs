@@ -175,7 +175,7 @@ pub(crate) fn evp_key_pqdsa_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unsp
 mod tests {
     use super::*;
 
-    use crate::signature::{UnparsedPublicKey, VerificationAlgorithm};
+    use crate::signature::UnparsedPublicKey;
     use crate::unstable::signature::{ML_DSA_44_SIGNING, ML_DSA_65_SIGNING, ML_DSA_87_SIGNING};
 
     const TEST_ALGORITHMS: &[&PqdsaSigningAlgorithm] =
@@ -219,6 +219,7 @@ mod tests {
             #[cfg(feature = "ring-sig-verify")]
             #[allow(deprecated)]
             {
+                use crate::signature::VerificationAlgorithm;
                 assert!(alg
                     .0
                     .verify(

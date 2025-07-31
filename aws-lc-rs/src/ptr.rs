@@ -72,7 +72,7 @@ impl<P: Pointer> ManagedPointer<P> {
     #[inline]
     pub unsafe fn as_mut_unsafe(&self) -> MutPointer<P::T> {
         MutPointer {
-            ptr: self.pointer.as_const_ptr() as *mut P::T,
+            ptr: self.pointer.as_const_ptr().cast_mut(),
         }
     }
 
