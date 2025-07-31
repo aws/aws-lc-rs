@@ -5,11 +5,11 @@ use std::fmt::{self, Debug, Formatter};
 use std::ops::RangeInclusive;
 
 use crate::aws_lc::{
-    EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_CTX_set_rsa_pss_saltlen, RSA_bits, EVP_PKEY,
-    EVP_PKEY_CTX, RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
+    EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_CTX_set_signature_md,
+    RSA_bits, EVP_PKEY, EVP_PKEY_CTX, RSA_PKCS1_PSS_PADDING, RSA_PSS_SALTLEN_DIGEST,
 };
 
-use crate::digest::{self};
+use crate::digest::{self, match_digest_type, Digest};
 use crate::error::Unspecified;
 use crate::ptr::LcPtr;
 use crate::sealed::Sealed;
@@ -79,6 +79,25 @@ impl VerificationAlgorithm for RsaParameters {
             self.padding(),
             &evp_pkey,
             msg,
+            signature,
+            self.bit_size_range(),
+        )
+    }
+
+    fn verify_digest_sig(
+        &self,
+        public_key: &[u8],
+        digest: &Digest,
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        if self.digest_algorithm() != digest.algorithm() {
+            return Err(Unspecified);
+        }
+        let evp_pkey = encoding::rfc8017::decode_public_key_der(public_key)?;
+        verify_rsa_digest_signature(
+            self.padding(),
+            &evp_pkey,
+            digest,
             signature,
             self.bit_size_range(),
         )
@@ -233,4 +252,33 @@ pub(crate) fn verify_rsa_signature(
     };
 
     public_key.verify(msg, Some(algorithm), padding_fn, signature)
+}
+
+#[inline]
+pub(crate) fn verify_rsa_digest_signature(
+    padding: &'static RsaPadding,
+    public_key: &LcPtr<EVP_PKEY>,
+    digest: &Digest,
+    signature: &[u8],
+    allowed_bit_size: &RangeInclusive<u32>,
+) -> Result<(), Unspecified> {
+    if !allowed_bit_size.contains(&public_key.as_const().key_size_bits().try_into()?) {
+        return Err(Unspecified);
+    }
+
+    let padding_fn = Some({
+        |pctx: *mut EVP_PKEY_CTX| {
+            let evp_md = match_digest_type(&digest.algorithm().id);
+            if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, *evp_md) } {
+                return Err(());
+            }
+            if let RsaPadding::RSA_PKCS1_PSS_PADDING = padding {
+                configure_rsa_pkcs1_pss_padding(pctx)
+            } else {
+                Ok(())
+            }
+        }
+    });
+
+    public_key.verify_digest_sig(digest, padding_fn, signature)
 }

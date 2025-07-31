@@ -49,6 +49,27 @@ macro_rules! mldsa_sigver_test {
     };
 }
 
+macro_rules! mldsa_sigver_digest_test {
+    ($file:literal, $verification:expr) => {
+        test::run(test_file!($file), |section, test_case| {
+            assert_eq!(section, "");
+            let public_key = test_case.consume_bytes("PUBLIC");
+            let message = test_case.consume_bytes("MESSAGE");
+            let signature = test_case.consume_bytes("SIGNATURE");
+            let _context = test_case.consume_bytes("CONTEXT");
+            let _expected_result = test_case.consume_bool("RESULT");
+
+            // For code coverage
+            let digest = aws_lc_rs::digest::digest(&aws_lc_rs::digest::SHA256, message.as_ref());
+            let result =
+                $verification.verify_digest_sig(public_key.as_ref(), &digest, signature.as_ref());
+            assert!(result.is_err());
+
+            Ok(())
+        });
+    };
+}
+
 #[test]
 fn mldsa_44_keygen_test() {
     mldsa_keygen_test!("data/MLDSA_44_ACVP_keyGen.txt", &ML_DSA_44_SIGNING);
@@ -77,4 +98,10 @@ fn mldsa_65_sigver_test() {
 #[test]
 fn mldsa_87_sigver_test() {
     mldsa_sigver_test!("data/MLDSA_87_sigVer.txt", &ML_DSA_87);
+}
+
+#[test]
+// For code coverage
+fn mldsa_44_sigver_digest_test() {
+    mldsa_sigver_digest_test!("data/MLDSA_44_sigVer.txt", &ML_DSA_44);
 }

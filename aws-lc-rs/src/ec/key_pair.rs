@@ -4,15 +4,15 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{EVP_PKEY, EVP_PKEY_EC};
-use core::fmt;
-use core::fmt::{Debug, Formatter};
-
+use crate::digest::Digest;
 use crate::ec::evp_key_generate;
 use crate::ec::signature::{EcdsaSignatureFormat, EcdsaSigningAlgorithm, PublicKey};
 #[cfg(feature = "fips")]
 use crate::ec::validate_ec_evp_key;
 #[cfg(not(feature = "fips"))]
 use crate::ec::verify_evp_key_nid;
+use core::fmt;
+use core::fmt::{Debug, Formatter};
 
 use crate::ec;
 use crate::ec::encoding::rfc5915::{marshal_rfc5915_private_key, parse_rfc5915_private_key};
@@ -207,7 +207,7 @@ impl EcdsaKeyPair {
         self.algorithm
     }
 
-    /// Returns the signature of the message using a random nonce.
+    /// Returns a signature for the message.
     ///
     /// # *ring* Compatibility
     /// Our implementation ignores the `SecureRandom` parameter.
@@ -226,6 +226,31 @@ impl EcdsaKeyPair {
             Some(self.algorithm.digest),
             No_EVP_PKEY_CTX_consumer,
         )?;
+
+        Ok(match self.algorithm.sig_format {
+            EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
+                slice[..out_sig.len()].copy_from_slice(&out_sig);
+                out_sig.len()
+            }),
+            EcdsaSignatureFormat::Fixed => ec::ecdsa_asn1_to_fixed(self.algorithm.id, &out_sig)?,
+        })
+    }
+
+    /// Returns a signature for the message corresponding to the provided digest.
+    ///
+    /// # Errors
+    /// `error::Unspecified` on internal error.
+    //
+    // # FIPS
+    // Not allowed.
+    #[inline]
+    pub fn sign_digest(&self, digest: &Digest) -> Result<Signature, Unspecified> {
+        let out_sig = self
+            .evp_pkey
+            .sign_digest(digest, No_EVP_PKEY_CTX_consumer)?;
+        if self.algorithm.digest != digest.algorithm() {
+            return Err(Unspecified);
+        }
 
         Ok(match self.algorithm.sig_format {
             EcdsaSignatureFormat::ASN1 => Signature::new(|slice| {
