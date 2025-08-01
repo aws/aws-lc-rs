@@ -13,6 +13,8 @@ use core::fmt::Debug;
 #[non_exhaustive]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub(crate) enum PaddingStrategy {
+    /// ISO 10126 padding. For compatibility purposes only. Applies non-random PKCS7 padding.
+    ISO10126,
     /// PKCS#7 Padding. ([See RFC 5652](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3))
     PKCS7,
 }
@@ -23,7 +25,8 @@ impl PaddingStrategy {
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
         match self {
-            PaddingStrategy::PKCS7 => {
+            // PKCS7 padding can be unpadded as ISO 10126 padding
+            PaddingStrategy::ISO10126 | PaddingStrategy::PKCS7 => {
                 let mut padding_buffer = [0u8; MAX_CIPHER_BLOCK_LEN];
 
                 let in_out_len = in_out.as_mut().len();
@@ -40,13 +43,22 @@ impl PaddingStrategy {
     }
 
     fn remove_padding(self, block_len: usize, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
+        if in_out.is_empty() || in_out.len() < block_len {
+            return Err(Unspecified);
+        }
         match self {
-            PaddingStrategy::PKCS7 => {
-                let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
-
-                if in_out.is_empty() || in_out.len() < block_len {
+            PaddingStrategy::ISO10126 => {
+                let padding: u8 = in_out[in_out.len() - 1];
+                if padding == 0 || padding as usize > block_len {
                     return Err(Unspecified);
                 }
+
+                // ISO 10126 padding is a random padding scheme, so we cannot verify the padding bytes
+                let final_len = in_out.len() - padding as usize;
+                Ok(&mut in_out[0..final_len])
+            }
+            PaddingStrategy::PKCS7 => {
+                let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
 
                 let padding: u8 = in_out[in_out.len() - 1];
                 if padding == 0 || padding > block_size {
@@ -208,6 +220,23 @@ impl PaddedBlockDecryptingKey {
         Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
     }
 
+    /// Constructs a new `PaddedBlockDecryptingKey` cipher with chaining block cipher (CBC) mode.
+    /// Decrypted data is unpadded following the ISO 10126 scheme
+    /// (compatible with PKCS#7 and ANSI X.923).
+    ///
+    /// Offered for computability purposes only.
+    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
+    pub fn cbc_iso10126(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CBC, PaddingStrategy::ISO10126)
+    }
+
     /// Constructs a new `PaddedBlockDecryptingKey` cipher with electronic code book (ECB) mode.
     /// Decrypted data is unpadded following the PKCS#7 scheme.
     ///
@@ -331,6 +360,16 @@ mod tests {
     }
 
     #[test]
+    fn test_unpad_iso10126() {
+        let mut input = from_hex("01020304050607fedcba9805").unwrap();
+        let padding = PaddingStrategy::ISO10126;
+        let block_len = 8;
+
+        let unpadded = padding.remove_padding(block_len, &mut input).unwrap();
+        assert_eq!(unpadded, &mut [1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
     fn test_aes_128_cbc() {
         let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
         for i in 0..=50 {
@@ -390,7 +429,13 @@ mod tests {
 
                 let context = encrypting_key.less_safe_encrypt(&mut in_out, ec).unwrap();
 
-                assert_eq!(expected_ciphertext, in_out);
+                if ($padding == PaddingStrategy::ISO10126) {
+                    // This padding scheme is technically non-deterministic in nature if the padding is more then one
+                    // byte. So just validate the input length of in_out is no longer the plaintext.
+                    assert_ne!(input, in_out[..input.len()]);
+                } else {
+                    assert_eq!(expected_ciphertext, in_out);
+                }
 
                 let unbound_key2 = UnboundCipherKey::new(alg, &key).unwrap();
                 let decrypting_key =
@@ -433,6 +478,28 @@ mod tests {
         "b5313560244a4822c46c2a0c9d0cf7fd",
         "a3e4c990356c01f320043c3d8d6f43",
         "ad96993f248bd6a29760ec7ccda95ee1"
+    );
+
+    padded_cipher_kat!(
+        test_openssl_aes_128_cbc_iso10126_15_bytes,
+        &AES_128,
+        OperatingMode::CBC,
+        PaddingStrategy::ISO10126,
+        "053304bb3899e1d99db9d29343ea782d",
+        "b5313560244a4822c46c2a0c9d0cf7fd",
+        "a3e4c990356c01f320043c3d8d6f43",
+        "ad96993f248bd6a29760ec7ccda95ee1"
+    );
+
+    padded_cipher_kat!(
+        test_openssl_aes_128_cbc_iso10126_16_bytes,
+        &AES_128,
+        OperatingMode::CBC,
+        PaddingStrategy::ISO10126,
+        "053304bb3899e1d99db9d29343ea782d",
+        "b83452fc9c80215a6ecdc505b5154c90",
+        "736e65616b7920726163636f6f6e7321",
+        "44563399c6bb2133e013161dc5bd4fa8ce83ef997ddb04bbbbe3632b68e9cde0"
     );
 
     padded_cipher_kat!(
