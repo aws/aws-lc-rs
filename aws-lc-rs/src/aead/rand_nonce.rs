@@ -16,6 +16,8 @@ use super::{
 /// The following algorithms are supported:
 /// * `AES_128_GCM`
 /// * `AES_256_GCM`
+/// * `AES_128_GCM_SIV`
+/// * `AES_256_GCM_SIV`
 ///
 /// Prefer this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey`.
 pub struct RandomizedNonceKey {
