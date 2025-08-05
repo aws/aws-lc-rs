@@ -17,7 +17,8 @@ use crate::aws_lc::{
     NID_MLDSA44, NID_MLDSA65, NID_MLDSA87,
 };
 use crate::cbb::LcCBB;
-use crate::digest::{Digest, digest_ctx::DigestContext};
+use crate::digest::digest_ctx::DigestContext;
+use crate::digest::Digest;
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::Version;
