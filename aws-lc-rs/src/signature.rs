@@ -257,6 +257,7 @@ pub use crate::ed25519::{
     ED25519_PUBLIC_KEY_LEN,
 };
 
+use crate::digest::Digest;
 use crate::{digest, ec, error, hex, rsa, sealed};
 
 /// The longest signature is for ML-DSA-87
@@ -339,6 +340,20 @@ pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), error::Unspecified>;
+
+    /// Verify the signature `signature` of `digest` with the `public_key`.
+    ///
+    // # FIPS
+    // Not approved.
+    //
+    /// # Errors
+    /// `error::Unspecified` if inputs not verified.
+    fn verify_digest_sig(
+        &self,
+        public_key: &[u8],
+        digest: &Digest,
+        signature: &[u8],
+    ) -> Result<(), error::Unspecified>;
 }
 
 /// An unparsed, possibly malformed, public key for signature verification.
@@ -393,6 +408,26 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
         self.algorithm
             .verify_sig(self.bytes.as_ref(), message, signature)
+    }
+
+    /// Parses the public key and verifies `signature` is a valid signature of
+    /// `digest` using it.
+    ///
+    /// See the [`crate::signature`] module-level documentation for examples.
+    ///
+    // # FIPS
+    // Not allowed
+    //
+    /// # Errors
+    /// `error::Unspecified` if inputs not verified.
+    #[inline]
+    pub fn verify_digest(
+        &self,
+        digest: &Digest,
+        signature: &[u8],
+    ) -> Result<(), error::Unspecified> {
+        self.algorithm
+            .verify_digest_sig(self.bytes.as_ref(), digest, signature)
     }
 }
 
