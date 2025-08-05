@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec/signature.rs`."><title>signature.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (3048886e5 2025-07-30)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/ec/</div>signature.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/ec/signature.rs`."><title>signature.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/ec/</div>signature.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 <a href=#2 id=2 data-nosnippet>2</a>// SPDX-License-Identifier: Apache-2.0 OR ISC
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a></span><span class="kw">use </span><span class="kw">crate</span>::aws_lc::{
@@ -198,62 +198,94 @@
 <a href=#198 id=198 data-nosnippet>198</a>                verify_asn1_signature(<span class="self">self</span>.id, <span class="self">self</span>.digest, public_key, msg, signature)
 <a href=#199 id=199 data-nosnippet>199</a>            }
 <a href=#200 id=200 data-nosnippet>200</a>            EcdsaSignatureFormat::Fixed =&gt; {
-<a href=#201 id=201 data-nosnippet>201</a>                verify_fixed_signature(<span class="self">self</span>.id, <span class="self">self</span>.digest, public_key, msg, signature)
-<a href=#202 id=202 data-nosnippet>202</a>            }
-<a href=#203 id=203 data-nosnippet>203</a>        }
-<a href=#204 id=204 data-nosnippet>204</a>    }
-<a href=#205 id=205 data-nosnippet>205</a>}
-<a href=#206 id=206 data-nosnippet>206</a>
-<a href=#207 id=207 data-nosnippet>207</a><span class="kw">fn </span>verify_fixed_signature(
-<a href=#208 id=208 data-nosnippet>208</a>    alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AlgorithmID,
-<a href=#209 id=209 data-nosnippet>209</a>    digest: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>digest::Algorithm,
-<a href=#210 id=210 data-nosnippet>210</a>    public_key: <span class="kw-2">&amp;</span>[u8],
-<a href=#211 id=211 data-nosnippet>211</a>    msg: <span class="kw-2">&amp;</span>[u8],
-<a href=#212 id=212 data-nosnippet>212</a>    signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#213 id=213 data-nosnippet>213</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-<a href=#214 id=214 data-nosnippet>214</a>    <span class="kw">let </span><span class="kw-2">mut </span>out_bytes = null_mut::&lt;u8&gt;();
-<a href=#215 id=215 data-nosnippet>215</a>    <span class="kw">let </span><span class="kw-2">mut </span>out_bytes_len = MaybeUninit::&lt;usize&gt;::uninit();
-<a href=#216 id=216 data-nosnippet>216</a>    <span class="kw">let </span>sig = <span class="kw">unsafe </span>{ ecdsa_sig_from_fixed(alg, signature)<span class="question-mark">? </span>};
-<a href=#217 id=217 data-nosnippet>217</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-<a href=#218 id=218 data-nosnippet>218</a>        ECDSA_SIG_to_bytes(<span class="kw-2">&amp;mut </span>out_bytes, out_bytes_len.as_mut_ptr(), <span class="kw-2">*</span>sig.as_const())
-<a href=#219 id=219 data-nosnippet>219</a>    } {
-<a href=#220 id=220 data-nosnippet>220</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#221 id=221 data-nosnippet>221</a>    }
-<a href=#222 id=222 data-nosnippet>222</a>    <span class="kw">let </span>out_bytes = LcPtr::new(out_bytes)<span class="question-mark">?</span>;
-<a href=#223 id=223 data-nosnippet>223</a>    <span class="kw">let </span>signature = <span class="kw">unsafe </span>{ out_bytes.as_slice(out_bytes_len.assume_init()) };
-<a href=#224 id=224 data-nosnippet>224</a>    verify_asn1_signature(alg, digest, public_key, msg, signature)
-<a href=#225 id=225 data-nosnippet>225</a>}
-<a href=#226 id=226 data-nosnippet>226</a>
-<a href=#227 id=227 data-nosnippet>227</a><span class="kw">fn </span>verify_asn1_signature(
-<a href=#228 id=228 data-nosnippet>228</a>    alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AlgorithmID,
-<a href=#229 id=229 data-nosnippet>229</a>    digest: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>digest::Algorithm,
-<a href=#230 id=230 data-nosnippet>230</a>    public_key: <span class="kw-2">&amp;</span>[u8],
-<a href=#231 id=231 data-nosnippet>231</a>    msg: <span class="kw-2">&amp;</span>[u8],
-<a href=#232 id=232 data-nosnippet>232</a>    signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#233 id=233 data-nosnippet>233</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-<a href=#234 id=234 data-nosnippet>234</a>    <span class="kw">let </span>evp_pkey = parse_ec_public_key(public_key, alg.nid())<span class="question-mark">?</span>;
-<a href=#235 id=235 data-nosnippet>235</a>    evp_pkey.verify(msg, <span class="prelude-val">Some</span>(digest), No_EVP_PKEY_CTX_consumer, signature)
-<a href=#236 id=236 data-nosnippet>236</a>}
-<a href=#237 id=237 data-nosnippet>237</a>
-<a href=#238 id=238 data-nosnippet>238</a><span class="attr">#[inline]
-<a href=#239 id=239 data-nosnippet>239</a></span><span class="kw">unsafe fn </span>ecdsa_sig_from_fixed(
-<a href=#240 id=240 data-nosnippet>240</a>    alg_id: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AlgorithmID,
-<a href=#241 id=241 data-nosnippet>241</a>    signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#242 id=242 data-nosnippet>242</a>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;ECDSA_SIG&gt;, ()&gt; {
-<a href=#243 id=243 data-nosnippet>243</a>    <span class="kw">let </span>num_size_bytes = alg_id.private_key_size();
-<a href=#244 id=244 data-nosnippet>244</a>    <span class="kw">if </span>signature.len() != <span class="number">2 </span>* num_size_bytes {
-<a href=#245 id=245 data-nosnippet>245</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(());
-<a href=#246 id=246 data-nosnippet>246</a>    }
-<a href=#247 id=247 data-nosnippet>247</a>    <span class="kw">let </span><span class="kw-2">mut </span>r_bn = DetachableLcPtr::&lt;BIGNUM&gt;::try_from(<span class="kw-2">&amp;</span>signature[..num_size_bytes])<span class="question-mark">?</span>;
-<a href=#248 id=248 data-nosnippet>248</a>    <span class="kw">let </span><span class="kw-2">mut </span>s_bn = DetachableLcPtr::&lt;BIGNUM&gt;::try_from(<span class="kw-2">&amp;</span>signature[num_size_bytes..])<span class="question-mark">?</span>;
-<a href=#249 id=249 data-nosnippet>249</a>
-<a href=#250 id=250 data-nosnippet>250</a>    <span class="kw">let </span><span class="kw-2">mut </span>ecdsa_sig = LcPtr::new(ECDSA_SIG_new())<span class="question-mark">?</span>;
-<a href=#251 id=251 data-nosnippet>251</a>
-<a href=#252 id=252 data-nosnippet>252</a>    <span class="kw">if </span><span class="number">1 </span>!= ECDSA_SIG_set0(<span class="kw-2">*</span>ecdsa_sig.as_mut(), <span class="kw-2">*</span>r_bn.as_mut(), <span class="kw-2">*</span>s_bn.as_mut()) {
-<a href=#253 id=253 data-nosnippet>253</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(());
-<a href=#254 id=254 data-nosnippet>254</a>    }
-<a href=#255 id=255 data-nosnippet>255</a>    r_bn.detach();
-<a href=#256 id=256 data-nosnippet>256</a>    s_bn.detach();
-<a href=#257 id=257 data-nosnippet>257</a>
-<a href=#258 id=258 data-nosnippet>258</a>    <span class="prelude-val">Ok</span>(ecdsa_sig)
-<a href=#259 id=259 data-nosnippet>259</a>}</code></pre></div></section></main></body></html>
+<a href=#201 id=201 data-nosnippet>201</a>                <span class="kw">let </span>(out_bytes, out_bytes_len) = convert_fixed_signature(<span class="self">self</span>.id, signature)<span class="question-mark">?</span>;
+<a href=#202 id=202 data-nosnippet>202</a>                verify_asn1_signature(<span class="self">self</span>.id, <span class="self">self</span>.digest, public_key, msg, <span class="kw">unsafe </span>{
+<a href=#203 id=203 data-nosnippet>203</a>                    out_bytes.as_slice(out_bytes_len)
+<a href=#204 id=204 data-nosnippet>204</a>                })
+<a href=#205 id=205 data-nosnippet>205</a>            }
+<a href=#206 id=206 data-nosnippet>206</a>        }
+<a href=#207 id=207 data-nosnippet>207</a>    }
+<a href=#208 id=208 data-nosnippet>208</a>
+<a href=#209 id=209 data-nosnippet>209</a>    <span class="kw">fn </span>verify_digest_sig(
+<a href=#210 id=210 data-nosnippet>210</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#211 id=211 data-nosnippet>211</a>        public_key: <span class="kw-2">&amp;</span>[u8],
+<a href=#212 id=212 data-nosnippet>212</a>        digest: <span class="kw-2">&amp;</span>digest::Digest,
+<a href=#213 id=213 data-nosnippet>213</a>        signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#214 id=214 data-nosnippet>214</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
+<a href=#215 id=215 data-nosnippet>215</a>        <span class="kw">if </span><span class="self">self</span>.digest != digest.algorithm() {
+<a href=#216 id=216 data-nosnippet>216</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#217 id=217 data-nosnippet>217</a>        }
+<a href=#218 id=218 data-nosnippet>218</a>        <span class="kw">match </span><span class="self">self</span>.sig_format {
+<a href=#219 id=219 data-nosnippet>219</a>            EcdsaSignatureFormat::ASN1 =&gt; {
+<a href=#220 id=220 data-nosnippet>220</a>                verify_asn1_digest_signature(<span class="self">self</span>.id, digest, public_key, signature)
+<a href=#221 id=221 data-nosnippet>221</a>            }
+<a href=#222 id=222 data-nosnippet>222</a>            EcdsaSignatureFormat::Fixed =&gt; {
+<a href=#223 id=223 data-nosnippet>223</a>                <span class="kw">let </span>(out_bytes, out_bytes_len) = convert_fixed_signature(<span class="self">self</span>.id, signature)<span class="question-mark">?</span>;
+<a href=#224 id=224 data-nosnippet>224</a>                verify_asn1_digest_signature(<span class="self">self</span>.id, digest, public_key, <span class="kw">unsafe </span>{
+<a href=#225 id=225 data-nosnippet>225</a>                    out_bytes.as_slice(out_bytes_len)
+<a href=#226 id=226 data-nosnippet>226</a>                })
+<a href=#227 id=227 data-nosnippet>227</a>            }
+<a href=#228 id=228 data-nosnippet>228</a>        }
+<a href=#229 id=229 data-nosnippet>229</a>    }
+<a href=#230 id=230 data-nosnippet>230</a>}
+<a href=#231 id=231 data-nosnippet>231</a>
+<a href=#232 id=232 data-nosnippet>232</a><span class="kw">fn </span>convert_fixed_signature(
+<a href=#233 id=233 data-nosnippet>233</a>    alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AlgorithmID,
+<a href=#234 id=234 data-nosnippet>234</a>    signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#235 id=235 data-nosnippet>235</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(LcPtr&lt;u8&gt;, usize), Unspecified&gt; {
+<a href=#236 id=236 data-nosnippet>236</a>    <span class="kw">let </span><span class="kw-2">mut </span>out_bytes = null_mut::&lt;u8&gt;();
+<a href=#237 id=237 data-nosnippet>237</a>    <span class="kw">let </span><span class="kw-2">mut </span>out_bytes_len = MaybeUninit::&lt;usize&gt;::uninit();
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="kw">let </span>sig = <span class="kw">unsafe </span>{ ecdsa_sig_from_fixed(alg, signature)<span class="question-mark">? </span>};
+<a href=#239 id=239 data-nosnippet>239</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
+<a href=#240 id=240 data-nosnippet>240</a>        ECDSA_SIG_to_bytes(<span class="kw-2">&amp;mut </span>out_bytes, out_bytes_len.as_mut_ptr(), <span class="kw-2">*</span>sig.as_const())
+<a href=#241 id=241 data-nosnippet>241</a>    } {
+<a href=#242 id=242 data-nosnippet>242</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#243 id=243 data-nosnippet>243</a>    }
+<a href=#244 id=244 data-nosnippet>244</a>    <span class="prelude-val">Ok</span>((LcPtr::new(out_bytes)<span class="question-mark">?</span>, <span class="kw">unsafe </span>{
+<a href=#245 id=245 data-nosnippet>245</a>        out_bytes_len.assume_init()
+<a href=#246 id=246 data-nosnippet>246</a>    }))
+<a href=#247 id=247 data-nosnippet>247</a>}
+<a href=#248 id=248 data-nosnippet>248</a>
+<a href=#249 id=249 data-nosnippet>249</a><span class="kw">fn </span>verify_asn1_signature(
+<a href=#250 id=250 data-nosnippet>250</a>    alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AlgorithmID,
+<a href=#251 id=251 data-nosnippet>251</a>    digest_alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>digest::Algorithm,
+<a href=#252 id=252 data-nosnippet>252</a>    public_key: <span class="kw-2">&amp;</span>[u8],
+<a href=#253 id=253 data-nosnippet>253</a>    msg: <span class="kw-2">&amp;</span>[u8],
+<a href=#254 id=254 data-nosnippet>254</a>    signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#255 id=255 data-nosnippet>255</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
+<a href=#256 id=256 data-nosnippet>256</a>    <span class="kw">let </span>evp_pkey = parse_ec_public_key(public_key, alg.nid())<span class="question-mark">?</span>;
+<a href=#257 id=257 data-nosnippet>257</a>    evp_pkey.verify(msg, <span class="prelude-val">Some</span>(digest_alg), No_EVP_PKEY_CTX_consumer, signature)
+<a href=#258 id=258 data-nosnippet>258</a>}
+<a href=#259 id=259 data-nosnippet>259</a>
+<a href=#260 id=260 data-nosnippet>260</a><span class="kw">fn </span>verify_asn1_digest_signature(
+<a href=#261 id=261 data-nosnippet>261</a>    alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AlgorithmID,
+<a href=#262 id=262 data-nosnippet>262</a>    digest: <span class="kw-2">&amp;</span>digest::Digest,
+<a href=#263 id=263 data-nosnippet>263</a>    public_key: <span class="kw-2">&amp;</span>[u8],
+<a href=#264 id=264 data-nosnippet>264</a>    signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#265 id=265 data-nosnippet>265</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
+<a href=#266 id=266 data-nosnippet>266</a>    <span class="kw">let </span>evp_pkey = parse_ec_public_key(public_key, alg.nid())<span class="question-mark">?</span>;
+<a href=#267 id=267 data-nosnippet>267</a>    evp_pkey.verify_digest_sig(digest, No_EVP_PKEY_CTX_consumer, signature)
+<a href=#268 id=268 data-nosnippet>268</a>}
+<a href=#269 id=269 data-nosnippet>269</a>
+<a href=#270 id=270 data-nosnippet>270</a><span class="attr">#[inline]
+<a href=#271 id=271 data-nosnippet>271</a></span><span class="kw">unsafe fn </span>ecdsa_sig_from_fixed(
+<a href=#272 id=272 data-nosnippet>272</a>    alg_id: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AlgorithmID,
+<a href=#273 id=273 data-nosnippet>273</a>    signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#274 id=274 data-nosnippet>274</a>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;ECDSA_SIG&gt;, ()&gt; {
+<a href=#275 id=275 data-nosnippet>275</a>    <span class="kw">let </span>num_size_bytes = alg_id.private_key_size();
+<a href=#276 id=276 data-nosnippet>276</a>    <span class="kw">if </span>signature.len() != <span class="number">2 </span>* num_size_bytes {
+<a href=#277 id=277 data-nosnippet>277</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(());
+<a href=#278 id=278 data-nosnippet>278</a>    }
+<a href=#279 id=279 data-nosnippet>279</a>    <span class="kw">let </span><span class="kw-2">mut </span>r_bn = DetachableLcPtr::&lt;BIGNUM&gt;::try_from(<span class="kw-2">&amp;</span>signature[..num_size_bytes])<span class="question-mark">?</span>;
+<a href=#280 id=280 data-nosnippet>280</a>    <span class="kw">let </span><span class="kw-2">mut </span>s_bn = DetachableLcPtr::&lt;BIGNUM&gt;::try_from(<span class="kw-2">&amp;</span>signature[num_size_bytes..])<span class="question-mark">?</span>;
+<a href=#281 id=281 data-nosnippet>281</a>
+<a href=#282 id=282 data-nosnippet>282</a>    <span class="kw">let </span><span class="kw-2">mut </span>ecdsa_sig = LcPtr::new(ECDSA_SIG_new())<span class="question-mark">?</span>;
+<a href=#283 id=283 data-nosnippet>283</a>
+<a href=#284 id=284 data-nosnippet>284</a>    <span class="kw">if </span><span class="number">1 </span>!= ECDSA_SIG_set0(<span class="kw-2">*</span>ecdsa_sig.as_mut(), <span class="kw-2">*</span>r_bn.as_mut(), <span class="kw-2">*</span>s_bn.as_mut()) {
+<a href=#285 id=285 data-nosnippet>285</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(());
+<a href=#286 id=286 data-nosnippet>286</a>    }
+<a href=#287 id=287 data-nosnippet>287</a>    r_bn.detach();
+<a href=#288 id=288 data-nosnippet>288</a>    s_bn.detach();
+<a href=#289 id=289 data-nosnippet>289</a>
+<a href=#290 id=290 data-nosnippet>290</a>    <span class="prelude-val">Ok</span>(ecdsa_sig)
+<a href=#291 id=291 data-nosnippet>291</a>}</code></pre></div></section></main></body></html>
