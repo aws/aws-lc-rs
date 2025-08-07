@@ -65,9 +65,8 @@ use crate::hex;
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
 
 use crate::aws_lc::{
-    EVP_PKEY_derive, EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY,
-    NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, EVP_PKEY, EVP_PKEY_EC, EVP_PKEY_X25519,
-    NID_X25519,
+    i2d_ECPrivateKey, EVP_PKEY_get0_EC_KEY, NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
+    EVP_PKEY, EVP_PKEY_EC, EVP_PKEY_X25519, NID_X25519,
 };
 
 use crate::buffer::Buffer;
@@ -78,7 +77,6 @@ use crate::encoding::{
     EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, Pkcs8V1Der, PublicKeyX509Der,
 };
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
-use crate::fips::indicator_check;
 use crate::pkcs8::Version;
 use crate::ptr::LcPtr;
 use core::fmt;
@@ -455,7 +453,7 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
                     |evp_pkey| EVP_PKEY_get0_EC_KEY(*evp_pkey.as_const())
                 })?
         };
-        let length = usize::try_from(unsafe { aws_lc::i2d_ECPrivateKey(*ec_key, &mut outp) })
+        let length = usize::try_from(unsafe { i2d_ECPrivateKey(*ec_key, &mut outp) })
             .map_err(|_| Unspecified)?;
         let mut outp = LcPtr::new(outp)?;
         Ok(EcPrivateKeyRfc5915Der::take_from_slice(unsafe {
@@ -712,107 +710,40 @@ where
 
     let peer_pub_bytes = peer_public_key.bytes.as_ref();
 
-    let mut buffer = [0u8; MAX_AGREEMENT_SECRET_LEN];
-
-    let secret: &[u8] = match &my_private_key.inner_key {
-        KeyInner::X25519(priv_key) => {
-            x25519_diffie_hellman(&mut buffer, priv_key, peer_pub_bytes).or(Err(error_value))?
-        }
-        KeyInner::ECDH_P256(priv_key)
-        | KeyInner::ECDH_P384(priv_key)
-        | KeyInner::ECDH_P521(priv_key) => {
-            ec_key_ecdh(&mut buffer, priv_key, peer_pub_bytes, expected_nid).or(Err(error_value))?
+    let parse_result = match &my_private_key.inner_key {
+        KeyInner::X25519(_) => try_parse_x25519_public_key_bytes(peer_pub_bytes),
+        KeyInner::ECDH_P256(_) | KeyInner::ECDH_P384(_) | KeyInner::ECDH_P521(_) => {
+            encoding::parse_ec_public_key(peer_pub_bytes, expected_nid)
         }
     };
-    kdf(secret)
-}
 
-// Current max secret length is P-521's.
-const MAX_AGREEMENT_SECRET_LEN: usize = AlgorithmID::ECDH_P521.private_key_len();
+    if let Ok(peer_pub_key) = parse_result {
+        let secret = my_private_key
+            .inner_key
+            .get_evp_pkey()
+            .agree(&peer_pub_key)
+            .or(Err(error_value))?;
 
-#[inline]
-#[allow(clippy::needless_pass_by_value)]
-fn ec_key_ecdh<'a>(
-    buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
-    priv_key: &LcPtr<EVP_PKEY>,
-    peer_pub_key_bytes: &[u8],
-    nid: i32,
-) -> Result<&'a [u8], Unspecified> {
-    let mut pub_key = encoding::parse_ec_public_key(peer_pub_key_bytes, nid)?;
-
-    let mut pkey_ctx = priv_key.create_EVP_PKEY_CTX()?;
-
-    if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx.as_mut()) } {
-        return Err(Unspecified);
+        kdf(secret.as_ref())
+    } else {
+        Err(error_value)
     }
-
-    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx.as_mut(), *pub_key.as_mut()) } {
-        return Err(Unspecified);
-    }
-
-    let mut out_key_len = buffer.len();
-
-    if 1 != indicator_check!(unsafe {
-        EVP_PKEY_derive(*pkey_ctx.as_mut(), buffer.as_mut_ptr(), &mut out_key_len)
-    }) {
-        return Err(Unspecified);
-    }
-
-    if 0 == out_key_len {
-        return Err(Unspecified);
-    }
-
-    Ok(&buffer[0..out_key_len])
-}
-
-#[inline]
-fn x25519_diffie_hellman<'a>(
-    buffer: &'a mut [u8; MAX_AGREEMENT_SECRET_LEN],
-    priv_key: &LcPtr<EVP_PKEY>,
-    peer_pub_key: &[u8],
-) -> Result<&'a [u8], ()> {
-    let mut pkey_ctx = priv_key.create_EVP_PKEY_CTX()?;
-
-    if 1 != unsafe { EVP_PKEY_derive_init(*pkey_ctx.as_mut()) } {
-        return Err(());
-    }
-
-    let mut pub_key = try_parse_x25519_public_key_bytes(peer_pub_key)?;
-
-    if 1 != unsafe { EVP_PKEY_derive_set_peer(*pkey_ctx.as_mut(), *pub_key.as_mut()) } {
-        return Err(());
-    }
-
-    let mut out_key_len = buffer.len();
-
-    if 1 != indicator_check!(unsafe {
-        EVP_PKEY_derive(*pkey_ctx.as_mut(), buffer.as_mut_ptr(), &mut out_key_len)
-    }) {
-        return Err(());
-    }
-
-    debug_assert!(out_key_len == AlgorithmID::X25519.pub_key_len());
-
-    Ok(&buffer[0..AlgorithmID::X25519.pub_key_len()])
 }
 
 pub(crate) fn try_parse_x25519_public_key_bytes(
     key_bytes: &[u8],
-) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_X25519)
         .or(try_parse_x25519_public_key_raw_bytes(key_bytes))
 }
 
-fn try_parse_x25519_public_key_raw_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
+fn try_parse_x25519_public_key_raw_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     let expected_pub_key_len = X25519.id.pub_key_len();
     if key_bytes.len() != expected_pub_key_len {
-        return Err(Unspecified);
+        return Err(KeyRejected::invalid_encoding());
     }
 
-    Ok(LcPtr::<EVP_PKEY>::parse_raw_public_key(
-        key_bytes,
-        EVP_PKEY_X25519,
-    )?)
+    LcPtr::<EVP_PKEY>::parse_raw_public_key(key_bytes, EVP_PKEY_X25519)
 }
 
 #[cfg(test)]

@@ -3,7 +3,8 @@
 
 use crate::aws_lc::{
     EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new,
-    EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_cmp, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
+    EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_cmp, EVP_PKEY_derive, EVP_PKEY_derive_init,
+    EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
     EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen,
     EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_PKEY_sign,
     EVP_PKEY_sign_init, EVP_PKEY_size, EVP_PKEY_up_ref, EVP_PKEY_verify, EVP_PKEY_verify_init,
@@ -487,6 +488,33 @@ impl LcPtr<EVP_PKEY> {
         } else {
             Err(Unspecified)
         }
+    }
+
+    pub(crate) fn agree(&self, peer_key: &Self) -> Result<Box<[u8]>, Unspecified> {
+        let mut pctx = self.create_EVP_PKEY_CTX()?;
+
+        if 1 != unsafe { EVP_PKEY_derive_init(*pctx.as_mut()) } {
+            return Err(Unspecified);
+        }
+
+        let mut secret_len = 0;
+        if 1 != unsafe { EVP_PKEY_derive_set_peer(*pctx.as_mut(), *peer_key.as_mut_unsafe()) } {
+            return Err(Unspecified);
+        }
+
+        if 1 != unsafe { EVP_PKEY_derive(*pctx.as_mut(), null_mut(), &mut secret_len) } {
+            return Err(Unspecified);
+        }
+
+        let mut secret = vec![0u8; secret_len];
+        if 1 != indicator_check!(unsafe {
+            EVP_PKEY_derive(*pctx.as_mut(), secret.as_mut_ptr(), &mut secret_len)
+        }) {
+            return Err(Unspecified);
+        }
+        secret.truncate(secret_len);
+
+        Ok(secret.into_boxed_slice())
     }
 
     pub(crate) fn generate<F>(pkey_type: c_int, params_fn: Option<F>) -> Result<Self, Unspecified>
