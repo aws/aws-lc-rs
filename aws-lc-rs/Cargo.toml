@@ -5,7 +5,7 @@ version = "1.13.3"
 # this crate re-exports whatever sys crate that was selected
 links = "aws_lc_rs_1_13_3_sys"
 edition = "2021"
-rust-version = "1.63.0"
+rust-version = "1.70.0"
 keywords = ["crypto", "cryptography", "security"]
 license = "ISC AND (Apache-2.0 OR ISC)"
 description = "aws-lc-rs is a cryptographic library using AWS-LC for its cryptographic operations. This library strives to be API-compatible with the popular Rust library named ring."
@@ -46,31 +46,17 @@ non-fips = ["aws-lc-sys"]
 fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
-untrusted = { version = "0.7.1", optional = true }
+untrusted = { workspace = true, optional = true }
 aws-lc-sys = { version = "0.30.0", path = "../aws-lc-sys", optional = true }
 aws-lc-fips-sys = { version = "0.13.1", path = "../aws-lc-fips-sys", optional = true }
-zeroize = "1.7"
+zeroize.workspace = true
 
 [dev-dependencies]
-paste = "1.0.11"
-lazy_static = "1.4.0"
-clap = { version = "4.1.8", features = ["derive"] }
-hex = "0.4.3"
-
-# Pinned dependency to preserve MSRV: 1.63.0 <= rust-version < 1.70.0
-which = "5.0.0"
-# Pinned dependency to preserve MSRV: ??? <= rust-version < 1.70.0
-home = "=0.5.5"
-# Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
-regex = "<1.10.0"
-# Pinned dependency to preserve MSRV: ??? <= rust-version < 1.65.0
-regex-automata = "~0.3.9"
-# Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
-regex-syntax = "~0.7.5"
-# Pinned to avoid build failure in older versions
-proc-macro2 = "1.0.60"
-# Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.70.0
-once_cell = "~1.20.3"
+paste.workspace = true
+lazy_static.workspace = true
+clap = { workspace = true, features = ["derive"] }
+hex.workspace = true
+regex.workspace = true
 
 [package.metadata.cargo-udeps.ignore]
 development = ["which", "home", "regex", "regex-automata", "regex-syntax", "proc-macro2", "jobserver", "cc", "once_cell"]

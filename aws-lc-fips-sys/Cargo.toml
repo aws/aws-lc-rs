@@ -7,7 +7,7 @@ authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"
 license = "ISC AND (Apache-2.0 OR ISC) AND OpenSSL"
-rust-version = "1.63.0"
+rust-version = "1.70.0"
 include = [
     "LICENSE",
     "/aws-lc/**/*.c",
@@ -65,21 +65,20 @@ bindgen = [
 ] # Generate the bindings on the targeted platform as a fallback mechanism.
 
 [build-dependencies]
-cmake = "0.1.48"
-dunce = "1.0"
-fs_extra = "1.3"
-cc = "1.0.100"
-regex = "1"
+cmake.workspace = true
+dunce.workspace = true
+fs_extra.workspace = true
+cc.workspace = true
+regex.workspace = true
 
 [target.'cfg(all(any(target_arch = "x86_64", target_arch = "aarch64"), any(target_os = "linux", target_os = "macos"), any(target_env = "gnu", target_env = "musl", target_env = "")))'.build-dependencies]
-bindgen = { version = "0.69.5", optional = true }
+bindgen = { workspace = true, optional = true }
 
 [target.'cfg(not(all(any(target_arch = "x86_64", target_arch = "aarch64"), any(target_os = "linux", target_os = "macos"), any(target_env = "gnu", target_env = "musl", target_env = ""))))'.build-dependencies]
-bindgen = { version = "0.69.5" }
+bindgen = { workspace = true }
 
 [dev-dependencies]
-# Pinned dependency to preserve MSRV: 1.60.0  <= rust-version < 1.65.0
-regex = "~1.9.6"
+regex.workspace = true
 
 [package.metadata.aws-lc-fips-sys]
 commit-hash = "205ad181868086a090e6b766c076a9732ad354c7"

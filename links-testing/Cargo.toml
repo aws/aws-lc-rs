@@ -2,7 +2,7 @@
 name = "links-testing"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.63.0"
+rust-version = "1.70.0"
 publish = false
 
 [features]
@@ -18,8 +18,8 @@ aws-lc-sys = { path = "../aws-lc-sys", optional = true }
 aws-lc-fips-sys = { path = "../aws-lc-fips-sys", optional = true }
 
 [build-dependencies]
-cc = "1.0.72"
-toml_edit = "0.22"
+cc.workspace = true
+toml_edit.workspace = true
 
 [package.metadata.cargo-udeps.ignore]
 normal = ["aws-lc-rs", "aws-lc-sys", "aws-lc-fips-sys"] # the sys crate is only used through a C library build

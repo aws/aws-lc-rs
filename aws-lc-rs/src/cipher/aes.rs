@@ -49,12 +49,11 @@ pub(super) fn encrypt_ctr_mode(
     context: EncryptionContext,
     in_out: &mut [u8],
 ) -> Result<DecryptionContext, Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. }
-        | SymmetricCipherKey::Aes192 { enc_key, .. }
-        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
-        _ => unreachable!(),
+    let (SymmetricCipherKey::Aes128 { enc_key, .. }
+    | SymmetricCipherKey::Aes192 { enc_key, .. }
+    | SymmetricCipherKey::Aes256 { enc_key, .. }) = &key
+    else {
+        unreachable!()
     };
 
     let mut iv = {
@@ -65,7 +64,7 @@ pub(super) fn encrypt_ctr_mode(
 
     let mut buffer = [0u8; AES_BLOCK_LEN];
 
-    aes_ctr128_encrypt(key, &mut iv, &mut buffer, in_out);
+    aes_ctr128_encrypt(enc_key, &mut iv, &mut buffer, in_out);
     iv.zeroize();
 
     Ok(context.into())
@@ -85,12 +84,11 @@ pub(super) fn encrypt_cbc_mode(
     context: EncryptionContext,
     in_out: &mut [u8],
 ) -> Result<DecryptionContext, Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. }
-        | SymmetricCipherKey::Aes192 { enc_key, .. }
-        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
-        _ => unreachable!(),
+    let (SymmetricCipherKey::Aes128 { enc_key, .. }
+    | SymmetricCipherKey::Aes192 { enc_key, .. }
+    | SymmetricCipherKey::Aes256 { enc_key, .. }) = &key
+    else {
+        unreachable!()
     };
 
     let mut iv = {
@@ -99,7 +97,7 @@ pub(super) fn encrypt_cbc_mode(
         iv
     };
 
-    aes_cbc_encrypt(key, &mut iv, in_out);
+    aes_cbc_encrypt(enc_key, &mut iv, in_out);
     iv.zeroize();
 
     Ok(context.into())
@@ -111,12 +109,11 @@ pub(super) fn decrypt_cbc_mode<'in_out>(
     context: DecryptionContext,
     in_out: &'in_out mut [u8],
 ) -> Result<&'in_out mut [u8], Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { dec_key, .. }
-        | SymmetricCipherKey::Aes192 { dec_key, .. }
-        | SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
-        _ => unreachable!(),
+    let (SymmetricCipherKey::Aes128 { dec_key, .. }
+    | SymmetricCipherKey::Aes192 { dec_key, .. }
+    | SymmetricCipherKey::Aes256 { dec_key, .. }) = &key
+    else {
+        unreachable!()
     };
 
     let mut iv = {
@@ -125,7 +122,7 @@ pub(super) fn decrypt_cbc_mode<'in_out>(
         iv
     };
 
-    aes_cbc_decrypt(key, &mut iv, in_out);
+    aes_cbc_decrypt(dec_key, &mut iv, in_out);
     iv.zeroize();
 
     Ok(in_out)
@@ -138,12 +135,11 @@ pub(super) fn encrypt_cfb_mode(
     context: EncryptionContext,
     in_out: &mut [u8],
 ) -> Result<DecryptionContext, Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. }
-        | SymmetricCipherKey::Aes192 { enc_key, .. }
-        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
-        _ => unreachable!(),
+    let (SymmetricCipherKey::Aes128 { enc_key, .. }
+    | SymmetricCipherKey::Aes192 { enc_key, .. }
+    | SymmetricCipherKey::Aes256 { enc_key, .. }) = &key
+    else {
+        unreachable!()
     };
 
     let mut iv = {
@@ -158,7 +154,7 @@ pub(super) fn encrypt_cfb_mode(
         _ => unreachable!(),
     };
 
-    cfb_encrypt(key, &mut iv, in_out);
+    cfb_encrypt(enc_key, &mut iv, in_out);
     iv.zeroize();
 
     Ok(context.into())
@@ -171,12 +167,11 @@ pub(super) fn decrypt_cfb_mode<'in_out>(
     context: DecryptionContext,
     in_out: &'in_out mut [u8],
 ) -> Result<&'in_out mut [u8], Unspecified> {
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. }
-        | SymmetricCipherKey::Aes192 { enc_key, .. }
-        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
-        _ => unreachable!(),
+    let (SymmetricCipherKey::Aes128 { enc_key, .. }
+    | SymmetricCipherKey::Aes192 { enc_key, .. }
+    | SymmetricCipherKey::Aes256 { enc_key, .. }) = &key
+    else {
+        unreachable!()
     };
 
     let mut iv = {
@@ -191,7 +186,7 @@ pub(super) fn decrypt_cfb_mode<'in_out>(
         _ => unreachable!(),
     };
 
-    cfb_decrypt(key, &mut iv, in_out);
+    cfb_decrypt(enc_key, &mut iv, in_out);
 
     iv.zeroize();
 
@@ -208,18 +203,17 @@ pub(super) fn encrypt_ecb_mode(
         unreachable!();
     }
 
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { enc_key, .. }
-        | SymmetricCipherKey::Aes192 { enc_key, .. }
-        | SymmetricCipherKey::Aes256 { enc_key, .. } => enc_key,
-        _ => unreachable!(),
+    let (SymmetricCipherKey::Aes128 { enc_key, .. }
+    | SymmetricCipherKey::Aes192 { enc_key, .. }
+    | SymmetricCipherKey::Aes256 { enc_key, .. }) = &key
+    else {
+        unreachable!()
     };
 
     let mut in_out_iter = in_out.chunks_exact_mut(AES_BLOCK_LEN);
 
     for block in in_out_iter.by_ref() {
-        aes_ecb_encrypt(key, block);
+        aes_ecb_encrypt(enc_key, block);
     }
 
     // This is a sanity check that should not happen. We validate in `encrypt` that in_out.len() % block_len == 0
@@ -239,19 +233,18 @@ pub(super) fn decrypt_ecb_mode<'in_out>(
         unreachable!();
     }
 
-    #[allow(clippy::match_wildcard_for_single_variants)]
-    let key = match &key {
-        SymmetricCipherKey::Aes128 { dec_key, .. }
-        | SymmetricCipherKey::Aes192 { dec_key, .. }
-        | SymmetricCipherKey::Aes256 { dec_key, .. } => dec_key,
-        _ => unreachable!(),
+    let (SymmetricCipherKey::Aes128 { dec_key, .. }
+    | SymmetricCipherKey::Aes192 { dec_key, .. }
+    | SymmetricCipherKey::Aes256 { dec_key, .. }) = &key
+    else {
+        unreachable!()
     };
 
     {
         let mut in_out_iter = in_out.chunks_exact_mut(AES_BLOCK_LEN);
 
         for block in in_out_iter.by_ref() {
-            aes_ecb_decrypt(key, block);
+            aes_ecb_decrypt(dec_key, block);
         }
 
         // This is a sanity check hat should not fail. We validate in `decrypt` that in_out.len() % block_len == 0 for

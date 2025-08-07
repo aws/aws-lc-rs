@@ -7,7 +7,7 @@ pub(crate) mod signature;
 use crate::aws_lc::{EVP_PKEY, EVP_PKEY_PQDSA, NID_MLDSA44, NID_MLDSA65, NID_MLDSA87};
 use crate::error::{KeyRejected, Unspecified};
 use crate::ptr::LcPtr;
-use std::os::raw::c_int;
+use core::ffi::c_int;
 
 #[derive(Debug, Eq, PartialEq)]
 #[allow(non_camel_case_types)]

@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 use super::signature::{RsaEncoding, RsaPadding};
 use super::{encoding, RsaParameters};
-#[cfg(feature = "fips")]
-use crate::aws_lc::RSA;
 use crate::aws_lc::{
     EVP_PKEY_CTX_set_rsa_keygen_bits, EVP_PKEY_CTX_set_signature_md, EVP_PKEY_assign_RSA,
     EVP_PKEY_new, RSA_new, RSA_set0_key, RSA_size, EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_RSA,
@@ -549,7 +547,7 @@ pub(super) fn is_valid_fips_key(key: &LcPtr<EVP_PKEY>) -> bool {
     let evp_pkey = key.as_const();
     let rsa_key = evp_pkey.get_rsa().expect("RSA EVP_PKEY");
 
-    1 == unsafe { RSA_check_fips(*rsa_key as *mut RSA) }
+    1 == unsafe { RSA_check_fips((*rsa_key).cast_mut()) }
 }
 
 pub(super) fn is_rsa_key(key: &LcPtr<EVP_PKEY>) -> bool {

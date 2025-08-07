@@ -183,8 +183,6 @@ mod tests {
 
     #[test]
     fn test_public_key_serialization() {
-        #[cfg(feature = "ring-sig-verify")]
-        use crate::signature::VerificationAlgorithm;
         for &alg in TEST_ALGORITHMS {
             // Generate a new key pair
             let keypair = PqdsaKeyPair::generate(alg).unwrap();
@@ -221,6 +219,7 @@ mod tests {
             #[cfg(feature = "ring-sig-verify")]
             #[allow(deprecated)]
             {
+                use crate::signature::VerificationAlgorithm;
                 assert!(alg
                     .0
                     .verify(

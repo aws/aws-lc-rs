@@ -775,7 +775,7 @@ fn invoke_external_bindgen(
         "functions,types,vars,methods,constructors,destructors",
         header.as_str(),
         "--rust-target",
-        r"1.59",
+        r"1.70",
         "--output",
         gen_bindings_path.to_str().unwrap(),
         "--formatter",
