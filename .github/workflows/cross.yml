@@ -75,9 +75,15 @@ jobs:
         run: |
           echo 'AWS_LC_SYS_EXTERNAL_BINDGEN=0' >> "$GITHUB_ENV"
       - if: ${{ matrix.target[0] == 'x86_64-unknown-illumos' }}
-        # TODO: Restructure the build options
         run: |
           echo 'CROSS_TEST_EXTRA_FLAG=--no-run' >> "$GITHUB_ENV"
+      - if: ${{ matrix.target[0] != 'x86_64-unknown-illumos' }}
+        # Since Rust 1.89, doctests run by default.
+        # When cross-compiling, doctests do not have the environment setup properly to link to shared libraries.
+        # Per documentation:
+        #       --all-targets       Test all targets (does not include doctests)
+        run: |
+          echo 'CROSS_TEST_EXTRA_FLAG=--all-targets' >> "$GITHUB_ENV"
       - name: Cross-compilation (test release)
         run: cross test -p aws-lc-rs --release "${CROSS_TEST_EXTRA_FLAG}" --features unstable --target ${{ matrix.target[0] }}
       - if: ${{ matrix.target[1] == 1 }}
