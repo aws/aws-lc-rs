@@ -53,13 +53,12 @@ mod ephemeral;
 
 use crate::ec::encoding::sec1::{
     marshal_sec1_private_key, marshal_sec1_public_point, marshal_sec1_public_point_into_buffer,
-    parse_sec1_private_bn,
+    parse_sec1_private_bn, parse_sec1_public_point,
 };
-#[cfg(feature = "fips")]
+use crate::ec::evp_key_generate;
 use crate::ec::validate_ec_evp_key;
 #[cfg(not(feature = "fips"))]
 use crate::ec::verify_evp_key_nid;
-use crate::ec::{encoding, evp_key_generate};
 use crate::error::{KeyRejected, Unspecified};
 use crate::hex;
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
@@ -663,6 +662,136 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
     }
 }
 
+/// A parsed public key for key agreement.
+///
+/// This represents a public key that has been successfully parsed and validated
+/// from its encoded form. The key can be used with the `agree` function to
+/// perform key agreement operations.
+#[derive(Debug)]
+pub struct ParsedPublicKey {
+    format: ParsedPublicKeyFormat,
+    nid: i32,
+    key: LcPtr<EVP_PKEY>,
+}
+
+unsafe impl Send for ParsedPublicKey {}
+unsafe impl Sync for ParsedPublicKey {}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+/// The format of a parsed public key.
+///
+/// This is used to distinguish between different types of public key formats
+/// supported by *aws-lc-rs*.
+#[non_exhaustive]
+pub enum ParsedPublicKeyFormat {
+    /// The key is in an X.509 SubjectPublicKeyInfo format.
+    X509,
+    /// The key is in an uncompressed form (X9.62).
+    Uncompressed,
+    /// The key is in a compressed form (SEC 1: Elliptic Curve Cryptography, Version 2.0).
+    Compressed,
+    /// The key is in a raw form. (X25519 only)
+    Raw,
+}
+
+/// A parsed public key for key agreement.
+impl ParsedPublicKey {
+    fn nid(&self) -> i32 {
+        self.nid
+    }
+
+    /// The format of the data the public key was parsed from.
+    #[must_use]
+    pub fn format(&self) -> ParsedPublicKeyFormat {
+        self.format
+    }
+
+    pub(crate) fn key(&self) -> &LcPtr<EVP_PKEY> {
+        &self.key
+    }
+
+    /// The algorithm of the public key.
+    #[must_use]
+    #[allow(non_upper_case_globals)]
+    pub fn alg(&self) -> &'static Algorithm {
+        match self.nid() {
+            NID_X25519 => &X25519,
+            NID_X9_62_prime256v1 => &ECDH_P256,
+            NID_secp384r1 => &ECDH_P384,
+            NID_secp521r1 => &ECDH_P521,
+            _ => unreachable!("Unreachable agreement algorithm nid: {}", self.nid()),
+        }
+    }
+}
+
+impl ParsedPublicKey {
+    #[allow(non_upper_case_globals)]
+    pub(crate) fn new(bytes: impl AsRef<[u8]>, nid: i32) -> Result<Self, KeyRejected> {
+        let key_bytes = bytes.as_ref();
+        if key_bytes.is_empty() {
+            return Err(KeyRejected::unspecified());
+        }
+        match nid {
+            NID_X25519 => {
+                let format: ParsedPublicKeyFormat;
+                let key = if let Ok(evp_pkey) =
+                    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_X25519)
+                {
+                    format = ParsedPublicKeyFormat::X509;
+                    evp_pkey
+                } else {
+                    format = ParsedPublicKeyFormat::Raw;
+                    try_parse_x25519_public_key_raw_bytes(key_bytes)?
+                };
+
+                Ok(ParsedPublicKey { format, nid, key })
+            }
+            NID_X9_62_prime256v1 | NID_secp384r1 | NID_secp521r1 => {
+                let format: ParsedPublicKeyFormat;
+                let key = if let Ok(evp_pkey) =
+                    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
+                {
+                    validate_ec_evp_key(&evp_pkey.as_const(), nid)?;
+                    format = ParsedPublicKeyFormat::X509;
+                    evp_pkey
+                } else if let Ok(evp_pkey) = parse_sec1_public_point(key_bytes, nid) {
+                    format = match key_bytes[0] {
+                        0x02 | 0x03 => ParsedPublicKeyFormat::Compressed,
+                        _ => ParsedPublicKeyFormat::Uncompressed,
+                    };
+                    evp_pkey
+                } else {
+                    return Err(KeyRejected::invalid_encoding());
+                };
+
+                Ok(ParsedPublicKey { format, nid, key })
+            }
+            _ => Err(KeyRejected::unspecified()),
+        }
+    }
+}
+
+impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
+    #[allow(dead_code)]
+    fn parse(&self) -> Result<ParsedPublicKey, KeyRejected> {
+        ParsedPublicKey::new(&self.bytes, self.alg.id.nid())
+    }
+}
+
+impl<B: AsRef<[u8]>> TryFrom<&UnparsedPublicKey<B>> for ParsedPublicKey {
+    type Error = KeyRejected;
+    fn try_from(upk: &UnparsedPublicKey<B>) -> Result<Self, Self::Error> {
+        upk.parse()
+    }
+}
+
+impl<B: AsRef<[u8]>> TryFrom<UnparsedPublicKey<B>> for ParsedPublicKey {
+    type Error = KeyRejected;
+    fn try_from(upk: UnparsedPublicKey<B>) -> Result<Self, Self::Error> {
+        upk.parse()
+    }
+}
+
 /// Performs a key agreement with a private key and the given public key.
 ///
 /// `my_private_key` is the private key to use. Only a reference to the key
@@ -692,9 +821,9 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// `error_value` on internal failure.
 #[inline]
 #[allow(clippy::missing_panics_doc)]
-pub fn agree<B: AsRef<[u8]>, F, R, E>(
+pub fn agree<B: TryInto<ParsedPublicKey>, F, R, E>(
     my_private_key: &PrivateKey,
-    peer_public_key: &UnparsedPublicKey<B>,
+    peer_public_key: B,
     error_value: E,
     kdf: F,
 ) -> Result<R, E>
@@ -702,39 +831,23 @@ where
     F: FnOnce(&[u8]) -> Result<R, E>,
 {
     let expected_alg = my_private_key.algorithm();
-    let expected_nid = expected_alg.id.nid();
 
-    if peer_public_key.alg != expected_alg {
-        return Err(error_value);
-    }
-
-    let peer_pub_bytes = peer_public_key.bytes.as_ref();
-
-    let parse_result = match &my_private_key.inner_key {
-        KeyInner::X25519(_) => try_parse_x25519_public_key_bytes(peer_pub_bytes),
-        KeyInner::ECDH_P256(_) | KeyInner::ECDH_P384(_) | KeyInner::ECDH_P521(_) => {
-            encoding::parse_ec_public_key(peer_pub_bytes, expected_nid)
-        }
-    };
+    let parse_result = peer_public_key.try_into();
 
     if let Ok(peer_pub_key) = parse_result {
+        if peer_pub_key.alg() != expected_alg {
+            return Err(error_value);
+        }
         let secret = my_private_key
             .inner_key
             .get_evp_pkey()
-            .agree(&peer_pub_key)
+            .agree(peer_pub_key.key())
             .or(Err(error_value))?;
 
         kdf(secret.as_ref())
     } else {
         Err(error_value)
     }
-}
-
-pub(crate) fn try_parse_x25519_public_key_bytes(
-    key_bytes: &[u8],
-) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
-    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_X25519)
-        .or(try_parse_x25519_public_key_raw_bytes(key_bytes))
 }
 
 fn try_parse_x25519_public_key_raw_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
@@ -824,7 +937,7 @@ mod tests {
             assert!(PrivateKey::from_private_key_der(alg, test_key).is_err());
             assert!(agree(
                 my_private_key,
-                &UnparsedPublicKey::new(alg, test_key),
+                UnparsedPublicKey::new(alg, test_key),
                 (),
                 |_| Ok(())
             )
