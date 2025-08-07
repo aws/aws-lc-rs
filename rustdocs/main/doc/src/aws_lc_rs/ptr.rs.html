@@ -72,7 +72,7 @@
 <a href=#72 id=72 data-nosnippet>72</a>    <span class="attr">#[inline]
 <a href=#73 id=73 data-nosnippet>73</a>    </span><span class="kw">pub unsafe fn </span>as_mut_unsafe(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MutPointer&lt;P::T&gt; {
 <a href=#74 id=74 data-nosnippet>74</a>        MutPointer {
-<a href=#75 id=75 data-nosnippet>75</a>            ptr: <span class="self">self</span>.pointer.as_const_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>P::T,
+<a href=#75 id=75 data-nosnippet>75</a>            ptr: <span class="self">self</span>.pointer.as_const_ptr().cast_mut(),
 <a href=#76 id=76 data-nosnippet>76</a>        }
 <a href=#77 id=77 data-nosnippet>77</a>    }
 <a href=#78 id=78 data-nosnippet>78</a>
