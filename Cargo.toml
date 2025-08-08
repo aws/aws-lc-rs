@@ -18,7 +18,7 @@ resolver = "2"
 [workspace.dependencies]
 bindgen = "0.72.0"
 cc = "1.2.26"
-clap = "=4.4.18"# v4.5 is MSRV 1.74
+clap = "=4.5.43"# v4.5 is MSRV 1.74
 cmake = "0.1.54"
 criterion = "0.5.1" # v0.6.0 depends on clap v4.5
 dunce = "1.0.5"
