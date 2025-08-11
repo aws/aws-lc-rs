@@ -13,7 +13,7 @@ use crate::digest::{self, match_digest_type, Digest};
 use crate::error::Unspecified;
 use crate::ptr::LcPtr;
 use crate::sealed::Sealed;
-use crate::signature::VerificationAlgorithm;
+use crate::signature::{ParsedPublicKey, ParsedVerificationAlgorithm, VerificationAlgorithm};
 
 use super::encoding;
 #[cfg(feature = "ring-sig-verify")]
@@ -49,6 +49,41 @@ impl RsaParameters {
     #[inline]
     pub(crate) fn bit_size_range(&self) -> &RangeInclusive<u32> {
         &self.2
+    }
+}
+
+impl ParsedVerificationAlgorithm for RsaParameters {
+    fn parsed_verify_sig(
+        &self,
+        public_key: &ParsedPublicKey,
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        let evp_pkey = public_key.key();
+        verify_rsa_signature(
+            self.digest_algorithm(),
+            self.padding(),
+            evp_pkey,
+            msg,
+            signature,
+            self.bit_size_range(),
+        )
+    }
+
+    fn parsed_verify_digest_sig(
+        &self,
+        public_key: &ParsedPublicKey,
+        digest: &Digest,
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        let evp_pkey = public_key.key();
+        verify_rsa_digest_signature(
+            self.padding(),
+            evp_pkey,
+            digest,
+            signature,
+            self.bit_size_range(),
+        )
     }
 }
 
