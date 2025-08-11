@@ -233,16 +233,16 @@
 //!     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
 //! }
 //! ```
-use core::fmt::{Debug, Formatter};
-
-#[cfg(feature = "ring-sig-verify")]
-use untrusted::Input;
-
+use crate::aws_lc::EVP_PKEY;
 pub use crate::rsa::signature::{RsaEncoding, RsaSignatureEncoding};
 pub use crate::rsa::{
     KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey,
     PublicKeyComponents as RsaPublicKeyComponents, RsaParameters,
 };
+use core::fmt::{Debug, Formatter};
+use std::any::{Any, TypeId};
+#[cfg(feature = "ring-sig-verify")]
+use untrusted::Input;
 
 use crate::rsa::signature::RsaSigningAlgorithmId;
 use crate::rsa::RsaVerificationAlgorithmId;
@@ -258,6 +258,13 @@ pub use crate::ed25519::{
 };
 
 use crate::digest::Digest;
+use crate::ec::encoding::parse_ec_public_key;
+use crate::ed25519::parse_ed25519_public_key;
+use crate::error::KeyRejected;
+#[cfg(all(feature = "unstable", not(feature = "fips")))]
+use crate::pqdsa::{parse_pqdsa_public_key, signature::PqdsaVerificationAlgorithm};
+use crate::ptr::LcPtr;
+use crate::rsa::key::parse_rsa_public_key;
 use crate::{digest, ec, error, hex, rsa, sealed};
 
 /// The longest signature is for ML-DSA-87
@@ -301,8 +308,25 @@ pub trait KeyPair: Debug + Send + Sized + Sync {
     fn public_key(&self) -> &Self::PublicKey;
 }
 
+// Private trait
+pub(crate) trait ParsedVerificationAlgorithm: Debug + Sync {
+    fn parsed_verify_sig(
+        &self,
+        public_key: &ParsedPublicKey,
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), error::Unspecified>;
+
+    fn parsed_verify_digest_sig(
+        &self,
+        public_key: &ParsedPublicKey,
+        digest: &Digest,
+        signature: &[u8],
+    ) -> Result<(), error::Unspecified>;
+}
+
 /// A signature verification algorithm.
-pub trait VerificationAlgorithm: Debug + Sync + sealed::Sealed {
+pub trait VerificationAlgorithm: Debug + Sync + Any + sealed::Sealed {
     /// Verify the signature `signature` of message `msg` with the public key
     /// `public_key`.
     ///
@@ -362,6 +386,132 @@ pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
     algorithm: &'static dyn VerificationAlgorithm,
     bytes: B,
 }
+/// A parsed public key for signature verification.
+///
+/// A `ParsedPublicKey` can be created in two ways:
+/// - Directly from public key bytes using [`ParsedPublicKey::new`]
+/// - By parsing an `UnparsedPublicKey` using [`UnparsedPublicKey::parse`]
+///
+/// This pre-validates the public key format and stores the parsed key material,
+/// allowing for more efficient signature verification operations compared to
+/// parsing the key on each verification.
+///
+/// See the [`crate::signature`] module-level documentation for examples.
+pub struct ParsedPublicKey {
+    algorithm: &'static dyn VerificationAlgorithm,
+    parsed_algorithm: &'static dyn ParsedVerificationAlgorithm,
+    key: LcPtr<EVP_PKEY>,
+}
+
+impl ParsedPublicKey {
+    /// Creates a new `ParsedPublicKey` directly from public key bytes.
+    ///
+    /// This method validates the public key format and creates a `ParsedPublicKey`
+    /// that can be used for efficient signature verification operations.
+    ///
+    /// # Errors
+    /// `KeyRejected` if the public key bytes are malformed or incompatible
+    /// with the specified algorithm.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aws_lc_rs::signature::{self, ParsedPublicKey};
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let parsed_key = ParsedPublicKey::new(&signature::ED25519, include_bytes!("../tests/data/ed25519_test_public_key.bin"))?;
+    ///     let signature = [
+    ///         0xED, 0xDB, 0x67, 0xE9, 0xF7, 0x8C, 0x9A, 0x0, 0xFD, 0xEE, 0x2D, 0x22, 0x21, 0xA3, 0x9A,
+    ///         0x8A, 0x79, 0xF2, 0x53, 0x88, 0x78, 0xF0, 0xA0, 0x1, 0x80, 0xA, 0x49, 0xA4, 0x17, 0x88,
+    ///         0xAB, 0x44, 0x4B, 0xD2, 0x58, 0xB0, 0x3B, 0x51, 0x8A, 0x1B, 0x61, 0x24, 0x52, 0x78, 0x48,
+    ///         0x58, 0x40, 0x5, 0xB5, 0x45, 0x22, 0xB6, 0x40, 0xBD, 0x14, 0x47, 0xB1, 0xF0, 0xDC, 0x13,
+    ///         0xB3, 0xE9, 0xD0, 0x6,
+    ///     ];
+    ///     assert!(parsed_key.verify_sig(b"hello world!", &signature).is_ok());
+    ///     assert!(parsed_key.verify_sig(b"hello world.", &signature).is_err());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn new<B: AsRef<[u8]>>(
+        algorithm: &'static dyn VerificationAlgorithm,
+        bytes: B,
+    ) -> Result<Self, KeyRejected> {
+        parse_public_key(bytes.as_ref(), algorithm)
+    }
+
+    /// Returns the algorithm used by this public key.
+    #[must_use]
+    pub fn algorithm(&self) -> &'static dyn VerificationAlgorithm {
+        self.algorithm
+    }
+
+    pub(crate) fn key(&self) -> &LcPtr<EVP_PKEY> {
+        &self.key
+    }
+
+    /// Uses the public key to verify that `signature` is a valid signature of
+    /// `message`.
+    ///
+    /// This method is more efficient than [`UnparsedPublicKey::verify`] when
+    /// performing multiple signature verifications with the same public key,
+    /// as the key parsing overhead is avoided.
+    ///
+    /// See the [`crate::signature`] module-level documentation for examples.
+    ///
+    // # FIPS
+    // The following conditions must be met:
+    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+    // * NIST Elliptic Curves: P256, P384, P521
+    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+    //
+    /// # Errors
+    /// `error::Unspecified` if the signature is invalid or verification fails.
+    #[inline]
+    pub fn verify_sig(&self, message: &[u8], signature: &[u8]) -> Result<(), error::Unspecified> {
+        self.parsed_algorithm
+            .parsed_verify_sig(self, message, signature)
+    }
+
+    /// Uses the public key to verify that `signature` is a valid signature of
+    /// `digest`.
+    ///
+    /// This method is more efficient than [`UnparsedPublicKey::verify_digest`] when
+    /// performing multiple signature verifications with the same public key,
+    /// as the key parsing overhead is avoided.
+    ///
+    /// See the [`crate::signature`] module-level documentation for examples.
+    ///
+    // # FIPS
+    // Not allowed
+    //
+    /// # Errors
+    /// `error::Unspecified` if the signature is invalid or verification fails.
+    #[inline]
+    pub fn verify_digest_sig(
+        &self,
+        digest: &Digest,
+        signature: &[u8],
+    ) -> Result<(), error::Unspecified> {
+        self.parsed_algorithm
+            .parsed_verify_digest_sig(self, digest, signature)
+    }
+}
+
+impl Debug for ParsedPublicKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.write_str(&format!(
+            "ParsedPublicKey {{ algorithm: {:?}, }}",
+            self.algorithm,
+        ))
+    }
+}
+
+impl<B: AsRef<[u8]>> AsRef<[u8]> for UnparsedPublicKey<B> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        self.bytes.as_ref()
+    }
+}
 
 impl<B: Copy + AsRef<[u8]>> Copy for UnparsedPublicKey<B> {}
 
@@ -372,13 +522,6 @@ impl<B: AsRef<[u8]>> Debug for UnparsedPublicKey<B> {
             self.algorithm,
             hex::encode(self.bytes.as_ref())
         ))
-    }
-}
-
-impl<B: AsRef<[u8]>> AsRef<[u8]> for UnparsedPublicKey<B> {
-    #[inline]
-    fn as_ref(&self) -> &[u8] {
-        self.bytes.as_ref()
     }
 }
 
@@ -429,6 +572,72 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
         self.algorithm
             .verify_digest_sig(self.bytes.as_ref(), digest, signature)
     }
+
+    /// Parses the public key bytes and returns a `ParsedPublicKey`.
+    ///
+    /// This method validates the public key format and creates a `ParsedPublicKey`
+    /// that can be used for more efficient signature verification operations.
+    /// The parsing overhead is incurred once, making subsequent verifications
+    /// faster compared to using `UnparsedPublicKey::verify` directly.
+    ///
+    /// This is equivalent to calling [`ParsedPublicKey::new`] with the same
+    /// algorithm and bytes.
+    ///
+    /// # Errors
+    /// `KeyRejected` if the public key bytes are malformed or incompatible
+    /// with the specified algorithm.
+    pub fn parse(&self) -> Result<ParsedPublicKey, KeyRejected> {
+        parse_public_key(self.bytes.as_ref(), self.algorithm)
+    }
+}
+
+pub(crate) fn parse_public_key(
+    bytes: &[u8],
+    algorithm: &'static dyn VerificationAlgorithm,
+) -> Result<ParsedPublicKey, KeyRejected> {
+    let parsed_algorithm: &'static dyn ParsedVerificationAlgorithm;
+
+    let key = if algorithm.type_id() == TypeId::of::<EcdsaVerificationAlgorithm>() {
+        #[allow(clippy::cast_ptr_alignment)]
+        let ec_alg = unsafe {
+            &*(algorithm as *const dyn VerificationAlgorithm).cast::<EcdsaVerificationAlgorithm>()
+        };
+        parsed_algorithm = ec_alg;
+        parse_ec_public_key(bytes, ec_alg.id.nid())?
+    } else if algorithm.type_id() == TypeId::of::<EdDSAParameters>() {
+        #[allow(clippy::cast_ptr_alignment)]
+        let ed_alg =
+            unsafe { &*(algorithm as *const dyn VerificationAlgorithm).cast::<EdDSAParameters>() };
+        parsed_algorithm = ed_alg;
+        parse_ed25519_public_key(bytes)?
+    } else if algorithm.type_id() == TypeId::of::<RsaParameters>() {
+        #[allow(clippy::cast_ptr_alignment)]
+        let rsa_alg =
+            unsafe { &*(algorithm as *const dyn VerificationAlgorithm).cast::<RsaParameters>() };
+        parsed_algorithm = rsa_alg;
+        parse_rsa_public_key(bytes)?
+    } else {
+        #[cfg(all(feature = "unstable", not(feature = "fips")))]
+        if algorithm.type_id() == TypeId::of::<PqdsaVerificationAlgorithm>() {
+            #[allow(clippy::cast_ptr_alignment)]
+            let pqdsa_alg = unsafe {
+                &*(algorithm as *const dyn VerificationAlgorithm)
+                    .cast::<PqdsaVerificationAlgorithm>()
+            };
+            parsed_algorithm = pqdsa_alg;
+            parse_pqdsa_public_key(bytes, pqdsa_alg.id)?
+        } else {
+            unreachable!()
+        }
+        #[cfg(any(not(feature = "unstable"), feature = "fips"))]
+        unreachable!()
+    };
+
+    Ok(ParsedPublicKey {
+        algorithm,
+        parsed_algorithm,
+        key,
+    })
 }
 
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-1.
