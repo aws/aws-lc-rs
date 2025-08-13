@@ -172,8 +172,10 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
         let (alg, digest_alg) = match (curve_name.as_str(), digest_name.as_str()) {
             ("P-256", "SHA256") => (&signature::ECDSA_P256_SHA256_ASN1, &SHA256),
             ("P-256", "SHA384") => (&signature::ECDSA_P256_SHA384_ASN1, &SHA384),
+            ("P-256", "SHA512") => (&signature::ECDSA_P256_SHA512_ASN1, &SHA512),
             ("P-384", "SHA256") => (&signature::ECDSA_P384_SHA256_ASN1, &SHA256),
             ("P-384", "SHA384") => (&signature::ECDSA_P384_SHA384_ASN1, &SHA384),
+            ("P-384", "SHA512") => (&signature::ECDSA_P384_SHA512_ASN1, &SHA512),
             ("P-384", "SHA3-384") => (&signature::ECDSA_P384_SHA3_384_ASN1, &SHA3_384),
             ("P-521", "SHA1") => (&signature::ECDSA_P521_SHA1_ASN1, &SHA1_FOR_LEGACY_USE_ONLY),
             ("P-521", "SHA224") => (&signature::ECDSA_P521_SHA224_ASN1, &SHA224),
