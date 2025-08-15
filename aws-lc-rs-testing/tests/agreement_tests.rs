@@ -28,7 +28,7 @@ fn agree_ephemeral_e2e() {
 
             agreement::agree_ephemeral(
                 alice_private_key,
-                &agreement::UnparsedPublicKey::new(algorithm, bob_public_key),
+                agreement::UnparsedPublicKey::new(algorithm, bob_public_key),
                 ring::error::Unspecified,
                 |value| {
                     secret.extend_from_slice(value);
@@ -45,7 +45,7 @@ fn agree_ephemeral_e2e() {
 
             agreement::agree_ephemeral(
                 bob_private_key,
-                &agreement::UnparsedPublicKey::new(algorithm, alice_public_key),
+                agreement::UnparsedPublicKey::new(algorithm, alice_public_key),
                 ring::error::Unspecified,
                 |value| {
                     secret.extend_from_slice(value);
