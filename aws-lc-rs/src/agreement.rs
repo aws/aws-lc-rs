@@ -55,10 +55,9 @@ use crate::ec::encoding::sec1::{
     marshal_sec1_private_key, marshal_sec1_public_point, marshal_sec1_public_point_into_buffer,
     parse_sec1_private_bn, parse_sec1_public_point,
 };
-use crate::ec::evp_key_generate;
-use crate::ec::validate_ec_evp_key;
 #[cfg(not(feature = "fips"))]
 use crate::ec::verify_evp_key_nid;
+use crate::ec::{evp_key_generate, validate_ec_evp_key};
 use crate::error::{KeyRejected, Unspecified};
 use crate::hex;
 pub use ephemeral::{agree_ephemeral, EphemeralPrivateKey};
