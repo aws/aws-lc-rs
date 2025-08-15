@@ -158,7 +158,7 @@
 //! let seal_prepared_nonce = sealing_key.prepare_nonce()?;
 //!
 //! // Query the nonce that will be used for our seal operation with our prepared nonce
-//! let seal_nonce_bytes = Vec::from(seal_prepared_nonce.nonce().as_ref());
+//! let seal_nonce_bytes = Vec::from(seal_prepared_nonce.nonce().as_ref().as_slice());
 //!
 //! // Use the prepared nonce and seal the plaintext
 //! seal_prepared_nonce.seal_in_place_append_tag(Aad::empty(), &mut in_out)?;
@@ -167,7 +167,7 @@
 //! let open_prepared_nonce = opening_key.prepare_nonce()?;
 //!
 //! // Query the nonce that will be used for our seal operation with our prepared nonce
-//! let open_nonce_bytes = Vec::from(open_prepared_nonce.nonce().as_ref());
+//! let open_nonce_bytes = Vec::from(open_prepared_nonce.nonce().as_ref().as_slice());
 //!
 //! // Since we initialized the Counter32Builder the same between both builders the nonce here
 //! // will match the one from the opening key.
