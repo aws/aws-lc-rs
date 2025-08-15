@@ -89,8 +89,8 @@ fn test_parsed_public_key_p521() {
 #[test]
 fn test_parsed_public_key_invalid_empty() {
     let empty_key = [];
-    assert!(ParsedPublicKey::new(&empty_key, X25519.id.nid()).is_err());
-    assert!(ParsedPublicKey::new(&empty_key, ECDH_P256.id.nid()).is_err());
+    assert!(ParsedPublicKey::new(empty_key, X25519.id.nid()).is_err());
+    assert!(ParsedPublicKey::new(empty_key, ECDH_P256.id.nid()).is_err());
 }
 
 #[test]
@@ -145,7 +145,7 @@ fn test_parsed_public_key_debug() {
         test::from_dirty_hex("e6db6867583030db3594c1a424b15f7c726624ec26b3353b10a903a6d0ab1c4c");
     let parsed = ParsedPublicKey::new(&raw_key, X25519.id.nid()).unwrap();
 
-    let debug_str = format!("{:?}", parsed);
+    let debug_str = format!("{parsed:?}");
     assert!(debug_str.contains("ParsedPublicKey"));
 }
 
