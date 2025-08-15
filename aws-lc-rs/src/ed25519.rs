@@ -13,6 +13,7 @@ use untrusted::Input;
 use crate::aws_lc::{EVP_PKEY, EVP_PKEY_ED25519};
 
 use crate::buffer::Buffer;
+use crate::digest::Digest;
 use crate::encoding::{
     AsBigEndian, AsDer, Curve25519SeedBin, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der,
 };
@@ -21,7 +22,9 @@ use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
 use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
 use crate::rand::SecureRandom;
-use crate::signature::{KeyPair, Signature, VerificationAlgorithm};
+use crate::signature::{
+    KeyPair, ParsedPublicKey, ParsedVerificationAlgorithm, Signature, VerificationAlgorithm,
+};
 use crate::{constant_time, digest, hex, sealed};
 
 /// The length of an Ed25519 public key.
@@ -35,6 +38,28 @@ pub struct EdDSAParameters;
 
 impl sealed::Sealed for EdDSAParameters {}
 
+impl ParsedVerificationAlgorithm for EdDSAParameters {
+    fn parsed_verify_sig(
+        &self,
+        public_key: &ParsedPublicKey,
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        public_key
+            .key()
+            .verify(msg, None, No_EVP_PKEY_CTX_consumer, signature)
+    }
+
+    fn parsed_verify_digest_sig(
+        &self,
+        _public_key: &ParsedPublicKey,
+        _digest: &Digest,
+        _signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        Err(Unspecified)
+    }
+}
+
 impl VerificationAlgorithm for EdDSAParameters {
     #[inline]
     #[cfg(feature = "ring-sig-verify")]
@@ -44,11 +69,9 @@ impl VerificationAlgorithm for EdDSAParameters {
         msg: Input<'_>,
         signature: Input<'_>,
     ) -> Result<(), Unspecified> {
-        let evp_pkey = try_ed25519_public_key_from_bytes(public_key.as_slice_less_safe())?;
-        evp_pkey.verify(
+        self.verify_sig(
+            public_key.as_slice_less_safe(),
             msg.as_slice_less_safe(),
-            None,
-            No_EVP_PKEY_CTX_consumer,
             signature.as_slice_less_safe(),
         )
     }
@@ -63,7 +86,7 @@ impl VerificationAlgorithm for EdDSAParameters {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), Unspecified> {
-        let evp_pkey = try_ed25519_public_key_from_bytes(public_key)?;
+        let evp_pkey = parse_ed25519_public_key(public_key)?;
         evp_pkey.verify(msg, None, No_EVP_PKEY_CTX_consumer, signature)
     }
 
@@ -81,13 +104,14 @@ impl VerificationAlgorithm for EdDSAParameters {
     }
 }
 
-fn try_ed25519_public_key_from_bytes(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
+pub(crate) fn parse_ed25519_public_key(key_bytes: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
     // If the length of key bytes matches the raw public key size then it has to be that
     if key_bytes.len() == ED25519_PUBLIC_KEY_LEN {
-        return LcPtr::<EVP_PKEY>::parse_raw_public_key(key_bytes, EVP_PKEY_ED25519);
+        LcPtr::<EVP_PKEY>::parse_raw_public_key(key_bytes, EVP_PKEY_ED25519)
+    } else {
+        // Otherwise we support X.509 SubjectPublicKeyInfo formatted keys which are inherently larger
+        LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_ED25519)
     }
-    // Otherwise we support X.509 SubjectPublicKeyInfo formatted keys which are inherently larger
-    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_ED25519)
 }
 
 /// An Ed25519 key pair, for signing.
