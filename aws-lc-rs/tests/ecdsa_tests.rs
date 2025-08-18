@@ -8,7 +8,9 @@ use aws_lc_rs::digest::{
 };
 use aws_lc_rs::encoding::{AsBigEndian, AsDer, EcPrivateKeyRfc5915Der};
 use aws_lc_rs::rand::SystemRandom;
-use aws_lc_rs::signature::{self, EcdsaKeyPair, KeyPair, Signature, UnparsedPublicKey};
+use aws_lc_rs::signature::{
+    self, EcdsaKeyPair, KeyPair, ParsedPublicKey, Signature, UnparsedPublicKey,
+};
 use aws_lc_rs::{digest, test, test_file};
 
 #[test]
@@ -190,15 +192,27 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
             }
         };
 
-        let upk = UnparsedPublicKey::new(alg, &public_key);
-        assert_eq!(upk.as_ref(), public_key.as_slice());
+        {
+            let upk = UnparsedPublicKey::new(alg, &public_key);
+            assert_eq!(upk.as_ref(), public_key.as_slice());
 
-        let actual_result = upk.verify(&msg, &sig);
-        assert_eq!(actual_result.is_ok(), is_valid);
+            let actual_result = upk.verify(&msg, &sig);
+            assert_eq!(actual_result.is_ok(), is_valid);
 
-        let digest = digest::digest(digest_alg, &msg);
-        let actual_digest_result = upk.verify_digest(&digest, &sig);
-        assert_eq!(actual_digest_result.is_ok(), is_valid);
+            let digest = digest::digest(digest_alg, &msg);
+            let actual_digest_result = upk.verify_digest(&digest, &sig);
+            assert_eq!(actual_digest_result.is_ok(), is_valid);
+        }
+
+        {
+            let ppk = ParsedPublicKey::new(alg, &public_key).unwrap();
+            let actual_result = ppk.verify_sig(&msg, &sig);
+            assert_eq!(actual_result.is_ok(), is_valid);
+
+            let digest = digest::digest(digest_alg, &msg);
+            let actual_digest_result = ppk.verify_digest_sig(&digest, &sig);
+            assert_eq!(actual_digest_result.is_ok(), is_valid);
+        }
 
         Ok(())
     });
