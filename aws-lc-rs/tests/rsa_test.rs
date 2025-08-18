@@ -12,8 +12,8 @@ use aws_lc_rs::rsa::{
     OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
 };
 use aws_lc_rs::signature::{
-    KeyPair, RsaKeyPair, RsaParameters, RsaPublicKeyComponents, RsaSubjectPublicKey,
-    UnparsedPublicKey,
+    KeyPair, ParsedPublicKey, RsaKeyPair, RsaParameters, RsaPublicKeyComponents,
+    RsaSubjectPublicKey, UnparsedPublicKey,
 };
 use aws_lc_rs::test::to_hex_upper;
 use aws_lc_rs::{digest, rand, signature, test, test_file};
@@ -97,19 +97,38 @@ fn test_signature_rsa_pkcs1_sign() {
             }
             let key_pair = key_pair.expect(&debug_msg);
             let public_key = key_pair.public_key();
-            let upk = UnparsedPublicKey::new(verification_alg, public_key.as_ref());
+            {
+                let upk = UnparsedPublicKey::new(verification_alg, public_key.as_ref());
 
-            let mut actual = vec![0u8; key_pair.public_modulus_len()];
-            key_pair
-                .sign(alg, &rng, &msg, actual.as_mut_slice())
-                .expect(&debug_msg);
-            assert_eq!(actual.as_slice() == &expected[..], result == "Pass");
-            assert!(upk.verify(&msg, actual.as_slice()).is_ok());
+                let mut actual = vec![0u8; key_pair.public_modulus_len()];
+                key_pair
+                    .sign(alg, &rng, &msg, actual.as_mut_slice())
+                    .expect(&debug_msg);
+                assert_eq!(actual.as_slice() == &expected[..], result == "Pass");
+                assert!(upk.verify(&msg, actual.as_slice()).is_ok());
 
-            let og_digest = digest::digest(digest_alg, &msg);
-            let digest = Digest::import_less_safe(og_digest.as_ref(), digest_alg).unwrap();
-            key_pair.sign_digest(alg, &digest, actual.as_mut_slice())?;
-            assert!(upk.verify_digest(&digest, actual.as_slice()).is_ok());
+                let og_digest = digest::digest(digest_alg, &msg);
+                let digest = Digest::import_less_safe(og_digest.as_ref(), digest_alg).unwrap();
+                key_pair.sign_digest(alg, &digest, actual.as_mut_slice())?;
+                assert!(upk.verify_digest(&digest, actual.as_slice()).is_ok());
+            }
+
+            {
+                let ppk = ParsedPublicKey::new(verification_alg, public_key.as_ref()).unwrap();
+
+                let mut actual = vec![0u8; key_pair.public_modulus_len()];
+                key_pair
+                    .sign(alg, &rng, &msg, actual.as_mut_slice())
+                    .expect(&debug_msg);
+                assert_eq!(actual.as_slice() == &expected[..], result == "Pass");
+                assert!(ppk.verify_sig(&msg, actual.as_slice()).is_ok());
+
+                let og_digest = digest::digest(digest_alg, &msg);
+                let digest = Digest::import_less_safe(og_digest.as_ref(), digest_alg).unwrap();
+                key_pair.sign_digest(alg, &digest, actual.as_mut_slice())?;
+                assert!(ppk.verify_digest_sig(&digest, actual.as_slice()).is_ok());
+            }
+
             Ok(())
         },
     );
@@ -150,19 +169,32 @@ fn test_signature_rsa_pss_sign() {
             }
             let key_pair = key_pair.unwrap();
             let public_key = key_pair.public_key();
-            let upk = UnparsedPublicKey::new(verification_alg, public_key.as_ref());
+            let rng = SystemRandom::new();
             let msg = test_case.consume_bytes("Msg");
 
-            let rng = SystemRandom::new();
+            {
+                let upk = UnparsedPublicKey::new(verification_alg, public_key.as_ref());
+                let mut actual = vec![0u8; key_pair.public_modulus_len()];
 
-            let mut actual = vec![0u8; key_pair.public_modulus_len()];
+                key_pair.sign(encoding, &rng, &msg, actual.as_mut_slice())?;
+                upk.verify(&msg, actual.as_slice())?;
 
-            key_pair.sign(encoding, &rng, &msg, actual.as_mut_slice())?;
-            upk.verify(&msg, actual.as_slice())?;
+                let digest = digest::digest(digest_alg, &msg);
+                key_pair.sign_digest(encoding, &digest, actual.as_mut_slice())?;
+                upk.verify_digest(&digest, actual.as_slice())?;
+            }
 
-            let digest = digest::digest(digest_alg, &msg);
-            key_pair.sign_digest(encoding, &digest, actual.as_mut_slice())?;
-            upk.verify_digest(&digest, actual.as_slice())?;
+            {
+                let ppk = ParsedPublicKey::new(verification_alg, public_key.as_ref()).unwrap();
+                let mut actual = vec![0u8; key_pair.public_modulus_len()];
+
+                key_pair.sign(encoding, &rng, &msg, actual.as_mut_slice())?;
+                ppk.verify_sig(&msg, actual.as_slice())?;
+
+                let digest = digest::digest(digest_alg, &msg);
+                key_pair.sign_digest(encoding, &digest, actual.as_mut_slice())?;
+                ppk.verify_digest_sig(&digest, actual.as_slice())?;
+            }
 
             Ok(())
         },
