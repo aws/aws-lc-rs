@@ -172,6 +172,7 @@ pub(crate) enum RsaSigningAlgorithmId {
 }
 
 #[allow(clippy::module_name_repetitions)]
+/// Encoding type for an RSA signature
 pub struct RsaSignatureEncoding(
     &'static digest::Algorithm,
     &'static RsaPadding,
