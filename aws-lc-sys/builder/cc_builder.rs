@@ -344,7 +344,7 @@ impl CcBuilder {
     fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) {
         use core::str::FromStr;
 
-        // s2n_bignum is compiled separately due to needing extra flags
+        // s2n-bignum is compiled separately due to needing extra flags
         let mut s2n_bignum_builder = cc_build.clone();
         s2n_bignum_builder.flag(format!(
             "--include={}",
@@ -355,18 +355,41 @@ impl CcBuilder {
                 .display()
         ));
         s2n_bignum_builder.define("S2N_BN_HIDE_SYMBOLS", "1");
+
+        // CPU Jitter Entropy is compiled separately due to needing specific flags
+        let mut jitter_entropy_builder = cc_build.clone();
+        jitter_entropy_builder.flag(format!(
+            "--include={}",
+            self.manifest_dir
+                .join("generated-include")
+                .join("openssl")
+                .join("boringssl_prefix_symbols.h")
+                .display()
+        ));
+        // From cmake script in /third_party/jitterentropy.
+        // If ever supporting CC build for Windows these flags must be
+        // conditioned on the target OS.
+        jitter_entropy_builder.flag("-DAWSLC -fwrapv --param ssp-buffer-size=4 -fvisibility=hidden -Wcast-align -Wmissing-field-initializers -Wshadow -Wswitch-enum -Wextra -Wall -pedantic -O0 -fwrapv -Wconversion");
+
         for source in lib.sources {
             let source_path = self.manifest_dir.join("aws-lc").join(source);
             let is_s2n_bignum = std::path::Path::new(source).starts_with("third_party/s2n-bignum");
+            let is_jitter_entropy = std::path::Path::new(source).starts_with("third_party/jitterentropy");
 
             if is_s2n_bignum {
                 s2n_bignum_builder.file(source_path);
+            } else if is_jitter_entropy {
+                jitter_entropy_builder.file(source_path);
             } else {
                 cc_build.file(source_path);
             }
         }
-        let object_files = s2n_bignum_builder.compile_intermediates();
-        for object in object_files {
+        let s2n_bignum_object_files = s2n_bignum_builder.compile_intermediates();
+        for object in s2n_bignum_object_files {
+            cc_build.object(object);
+        }
+        let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
+        for object in jitter_entropy_object_files {
             cc_build.object(object);
         }
         cc_build.file(PathBuf::from_str("rust_wrapper.c").unwrap());
