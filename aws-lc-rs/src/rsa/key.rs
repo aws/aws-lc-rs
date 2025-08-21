@@ -367,6 +367,10 @@ impl PublicKey {
     }
 }
 
+pub(crate) fn parse_rsa_public_key(input: &[u8]) -> Result<LcPtr<EVP_PKEY>, KeyRejected> {
+    rfc8017::decode_public_key_der(input).or(rfc5280::decode_public_key_der(input))
+}
+
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str(&format!(

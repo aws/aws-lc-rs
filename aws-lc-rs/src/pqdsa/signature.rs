@@ -3,12 +3,13 @@
 
 use crate::aws_lc::EVP_PKEY;
 use crate::buffer::Buffer;
+use crate::digest::Digest;
 use crate::encoding::{AsDer, PublicKeyX509Der};
 use crate::error::Unspecified;
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
 use crate::pqdsa::{parse_pqdsa_public_key, AlgorithmID};
 use crate::ptr::LcPtr;
-use crate::signature::VerificationAlgorithm;
+use crate::signature::{ParsedPublicKey, ParsedVerificationAlgorithm, VerificationAlgorithm};
 use crate::{digest, sealed};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
@@ -52,6 +53,28 @@ impl PublicKey {
             evp_pkey: evp_pkey.clone(),
             octets: octets.into_boxed_slice(),
         })
+    }
+}
+
+impl ParsedVerificationAlgorithm for PqdsaVerificationAlgorithm {
+    fn parsed_verify_sig(
+        &self,
+        public_key: &ParsedPublicKey,
+        msg: &[u8],
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        let evp_pkey = public_key.key();
+        evp_pkey.verify(msg, None, No_EVP_PKEY_CTX_consumer, signature)
+    }
+
+    fn parsed_verify_digest_sig(
+        &self,
+        public_key: &ParsedPublicKey,
+        digest: &Digest,
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        let evp_pkey = public_key.key();
+        evp_pkey.verify_digest_sig(digest, No_EVP_PKEY_CTX_consumer, signature)
     }
 }
 
