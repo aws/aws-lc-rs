@@ -238,13 +238,13 @@ use core::fmt::{Debug, Formatter};
 #[cfg(feature = "ring-sig-verify")]
 use untrusted::Input;
 
-pub use crate::rsa::signature::RsaEncoding;
+pub use crate::rsa::signature::{RsaEncoding, RsaSignatureEncoding};
 pub use crate::rsa::{
     KeyPair as RsaKeyPair, PublicKey as RsaSubjectPublicKey,
     PublicKeyComponents as RsaPublicKeyComponents, RsaParameters,
 };
 
-use crate::rsa::signature::{RsaSignatureEncoding, RsaSigningAlgorithmId};
+use crate::rsa::signature::RsaSigningAlgorithmId;
 use crate::rsa::RsaVerificationAlgorithmId;
 
 pub use crate::ec::key_pair::{EcdsaKeyPair, PrivateKey as EcdsaPrivateKey};
