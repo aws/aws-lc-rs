@@ -694,8 +694,8 @@ fn prepare_nonce() {
     for _ in 0..(LIMIT / 2) {
         let skpn = sk.prepare_nonce().unwrap();
         let okpn = ok.prepare_nonce().unwrap();
-        let so_nonce = Vec::from(skpn.nonce().as_ref());
-        let oo_nonce = Vec::from(okpn.nonce().as_ref());
+        let so_nonce = Vec::from(skpn.nonce().as_ref().as_slice());
+        let oo_nonce = Vec::from(okpn.nonce().as_ref().as_slice());
 
         assert_eq!(so_nonce.as_slice(), oo_nonce.as_slice());
         assert!(!nonces.contains(&so_nonce));
@@ -714,8 +714,8 @@ fn prepare_nonce() {
 
         let so = sk.prepare_nonce().unwrap();
         let oo = ok.prepare_nonce().unwrap();
-        let so_nonce = Vec::from(so.nonce().as_ref());
-        let oo_nonce = Vec::from(oo.nonce().as_ref());
+        let so_nonce = Vec::from(so.nonce().as_ref().as_slice());
+        let oo_nonce = Vec::from(oo.nonce().as_ref().as_slice());
 
         assert_eq!(so_nonce.as_slice(), oo_nonce.as_slice());
         assert!(!nonces.contains(&so_nonce));
