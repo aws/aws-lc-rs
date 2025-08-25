@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{
-    EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit, EVP_PKEY_CTX_new,
-    EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_cmp, EVP_PKEY_derive, EVP_PKEY_derive_init,
-    EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
+    BIO_new_mem_buf, EVP_DigestSign, EVP_DigestSignInit, EVP_DigestVerify, EVP_DigestVerifyInit,
+    EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_bits, EVP_PKEY_cmp, EVP_PKEY_derive,
+    EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get0_RSA,
     EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen,
     EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_PKEY_sign,
     EVP_PKEY_sign_init, EVP_PKEY_size, EVP_PKEY_up_ref, EVP_PKEY_verify, EVP_PKEY_verify_init,
     EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
-    EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_ED25519,
-    RSA,
+    EVP_parse_private_key, EVP_parse_public_key, PEM_read_bio_PUBKEY, PEM_read_bio_PrivateKey, BIO,
+    EC_KEY, EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_ED25519, RSA,
 };
 #[cfg(all(feature = "unstable", not(feature = "fips")))]
 use crate::aws_lc::{
@@ -217,6 +217,42 @@ impl LcPtr<EVP_PKEY> {
         // Also checks the validity of the key
         let evp_pkey = LcPtr::new(unsafe { EVP_parse_private_key(&mut cbs) })
             .map_err(|()| KeyRejected::invalid_encoding())?;
+        evp_pkey
+            .as_const()
+            .id()
+            .eq(&evp_pkey_type)
+            .then_some(evp_pkey)
+            .ok_or(KeyRejected::wrong_algorithm())
+    }
+
+    pub(crate) fn parse_pem_private_key(
+        bytes: &[u8],
+        evp_pkey_type: c_int,
+    ) -> Result<Self, KeyRejected> {
+        let mut bio: LcPtr<BIO> = LcPtr::new(unsafe {
+            BIO_new_mem_buf(bytes.as_ptr().cast(), bytes.len().cast_signed())
+        })?;
+        let evp_pkey = LcPtr::new(unsafe {
+            PEM_read_bio_PrivateKey(*bio.as_mut(), null_mut(), None, null_mut())
+        })?;
+        evp_pkey
+            .as_const()
+            .id()
+            .eq(&evp_pkey_type)
+            .then_some(evp_pkey)
+            .ok_or(KeyRejected::wrong_algorithm())
+    }
+
+    pub(crate) fn parse_pem_public_key(
+        bytes: &[u8],
+        evp_pkey_type: c_int,
+    ) -> Result<Self, KeyRejected> {
+        let mut bio: LcPtr<BIO> = LcPtr::new(unsafe {
+            BIO_new_mem_buf(bytes.as_ptr().cast(), bytes.len().cast_signed())
+        })?;
+        let evp_pkey = LcPtr::new(unsafe {
+            PEM_read_bio_PUBKEY(*bio.as_mut(), null_mut(), None, null_mut())
+        })?;
         evp_pkey
             .as_const()
             .id()
