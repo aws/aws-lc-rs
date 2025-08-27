@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Tue Jul  8 21:08:51 UTC 2025
+// Wed Aug 27 19:51:33 UTC 2025
 
 use crate::cc_builder::Library;
 
@@ -47,6 +47,7 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/bio/fd.c",
         "crypto/bio/file.c",
         "crypto/bio/hexdump.c",
+        "crypto/bio/md.c",
         "crypto/bio/pair.c",
         "crypto/bio/printf.c",
         "crypto/bio/socket.c",
@@ -122,6 +123,18 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/fipsmodule/bcm.c",
         "crypto/fipsmodule/cpucap/cpucap.c",
         "crypto/fipsmodule/fips_shared_support.c",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/intt.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/mulcache_compute.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/ntt.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/nttfrombytes.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/ntttobytes.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/nttunpack.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/polyvec_basemul_acc_montgomery_cached_asm_k2.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/polyvec_basemul_acc_montgomery_cached_asm_k3.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/polyvec_basemul_acc_montgomery_cached_asm_k4.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/reduce.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/rej_uniform_asm.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/tomont.S",
         "crypto/hpke/hpke.c",
         "crypto/hrss/asm/poly_rq_mul.S",
         "crypto/hrss/hrss.c",
@@ -151,7 +164,6 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/pem/pem_x509.c",
         "crypto/pem/pem_xaux.c",
         "crypto/pkcs7/bio/cipher.c",
-        "crypto/pkcs7/bio/md.c",
         "crypto/pkcs7/pkcs7.c",
         "crypto/pkcs7/pkcs7_asn1.c",
         "crypto/pkcs7/pkcs7_x509.c",
