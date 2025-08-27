@@ -284,7 +284,7 @@ jobs:
         run: cargo install --locked bindgen-cli
       - name: Remove bindings
         run: |
-          rm ./aws-lc-sys/src/x86_64* 
+          rm ./aws-lc-sys/src/x86_64*
           rm ./aws-lc-sys/src/aarch64*
       - name: Run cargo test
         run: cargo test --tests -p aws-lc-rs --no-default-features --features aws-lc-sys
@@ -445,7 +445,7 @@ jobs:
         run: cargo install --locked bindgen-cli
       - name: Remove bindings
         run: |
-          rm ./aws-lc-fips-sys/src/x86_64* 
+          rm ./aws-lc-fips-sys/src/x86_64*
           rm ./aws-lc-fips-sys/src/aarch64*
       - name: Run cargo test
         run: cargo test --tests -p aws-lc-rs --no-default-features --features fips
@@ -583,7 +583,8 @@ jobs:
         # Use latest CMake
         run: |
           brew update
-          brew upgrade cmake
+          brew uninstall --force cmake
+          brew install --force cmake
           cmake --version
           echo 'CMAKE=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/bin/cmake' >> $GITHUB_ENV
       - name: Run cargo test

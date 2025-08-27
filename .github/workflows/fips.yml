@@ -56,7 +56,8 @@ jobs:
         # Use latest CMake
         run: |
           brew update
-          brew upgrade cmake
+          brew uninstall --force cmake
+          brew install --force cmake
           cmake --version
           echo 'CMAKE=${{ (matrix.os == 'macos-13' && '/usr/local') || '/opt/homebrew' }}/bin/cmake' >> $GITHUB_ENV
       - name: Run cargo test

@@ -36,14 +36,14 @@ jobs:
         fips: [ '0', '1' ]
     steps:
       - run: |
+          set -x
           apt-get update
           apt-get install -y ca-certificates
-          apt-get install -y cmake curl sudo
+          apt-get install -y cmake curl sudo git
           apt-get install -y --no-install-recommends gpg-agent software-properties-common
-          apt-add-repository --yes ppa:git-core/ppa
           add-apt-repository --yes ppa:longsleep/golang-backports
           apt-get update
-          apt-get install -y build-essential git golang-go
+          apt-get install -y build-essential golang-go
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
           dpkg -i powershell_7.2.23-1.deb_amd64.deb
           apt-get install -f
@@ -78,7 +78,7 @@ jobs:
         name: Verify paths found in debug build
         run: |
           DEBUG_LIBCRYPTO=$(find ./target/debug -name "libaws_lc_*_crypto.a")
-          if strings ${DEBUG_LIBCRYPTO} | grep '/tmp/aws-lc-rs/'; then 
+          if strings ${DEBUG_LIBCRYPTO} | grep '/tmp/aws-lc-rs/'; then
             exit 0; # SUCCESS
           else
             strings ${DEBUG_LIBCRYPTO}
@@ -92,7 +92,7 @@ jobs:
         name: Verify paths not found in release build
         run: |
           RELEASE_LIBCRYPTO=$(find ./target/release -name "libaws_lc_*_crypto.a")
-          if strings ${RELEASE_LIBCRYPTO} | grep '/tmp/aws-lc-rs/'; then 
+          if strings ${RELEASE_LIBCRYPTO} | grep '/tmp/aws-lc-rs/'; then
             exit 1; # FAIL - we did not expect to find "/tmp/aws-lc-rs/" (i.e., a path)
           else
             exit 0; # SUCCESS
@@ -114,14 +114,14 @@ jobs:
         fips: [ '0', '1' ]
     steps:
       - run: |
+          set -x
           apt-get update
           apt-get install -y ca-certificates
-          apt-get install -y cmake curl sudo
+          apt-get install -y cmake curl sudo git
           apt-get install -y --no-install-recommends gpg-agent software-properties-common
-          apt-add-repository --yes ppa:git-core/ppa
           add-apt-repository --yes ppa:longsleep/golang-backports
           apt-get update
-          apt-get install -y build-essential git golang-go
+          apt-get install -y build-essential golang-go
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
           dpkg -i powershell_7.2.23-1.deb_amd64.deb
           apt-get install -f
