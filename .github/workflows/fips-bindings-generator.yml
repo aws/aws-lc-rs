@@ -15,6 +15,7 @@ env:
   # Otherwise, we test against the latest version.
   RUST_NIGHTLY_TOOLCHAIN: nightly
   RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly
+  DEBIAN_FRONTEND: noninteractive
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}

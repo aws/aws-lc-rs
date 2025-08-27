@@ -19,6 +19,8 @@ env:
   RUST_NIGHTLY_TOOLCHAIN: nightly
   RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly
   GOPROXY: https://proxy.golang.org,direct
+  DEBIAN_FRONTEND: noninteractive
+
 jobs:
   sys-bindings:
     if: github.repository_owner == 'aws'
