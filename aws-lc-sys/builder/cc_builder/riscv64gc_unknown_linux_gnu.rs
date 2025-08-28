@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Tue Jul  8 21:08:55 UTC 2025
+// Wed Aug 27 19:51:41 UTC 2025
 
 use crate::cc_builder::Library;
 
@@ -47,6 +47,7 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/bio/fd.c",
         "crypto/bio/file.c",
         "crypto/bio/hexdump.c",
+        "crypto/bio/md.c",
         "crypto/bio/pair.c",
         "crypto/bio/printf.c",
         "crypto/bio/socket.c",
@@ -150,7 +151,6 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/pem/pem_x509.c",
         "crypto/pem/pem_xaux.c",
         "crypto/pkcs7/bio/cipher.c",
-        "crypto/pkcs7/bio/md.c",
         "crypto/pkcs7/pkcs7.c",
         "crypto/pkcs7/pkcs7_asn1.c",
         "crypto/pkcs7/pkcs7_x509.c",

@@ -203,6 +203,7 @@ BASIC_CONSTRAINTS_free
 BASIC_CONSTRAINTS_it
 BASIC_CONSTRAINTS_new
 BF_cbc_encrypt
+BF_cfb64_encrypt
 BF_decrypt
 BF_ecb_encrypt
 BF_encrypt
@@ -252,6 +253,7 @@ BIO_get_ex_new_index
 BIO_get_fd
 BIO_get_fp
 BIO_get_init
+BIO_get_md
 BIO_get_md_ctx
 BIO_get_mem_ptr
 BIO_get_new_index
@@ -1003,7 +1005,9 @@ ENGINE_get_EC
 ENGINE_get_RSA
 ENGINE_load_builtin_engines
 ENGINE_new
+ENGINE_register_all_ciphers
 ENGINE_register_all_complete
+ENGINE_register_all_digests
 ENGINE_set_EC
 ENGINE_set_RSA
 ERR_SAVE_STATE_free
@@ -1268,6 +1272,7 @@ EVP_PKEY_assign_EC_KEY
 EVP_PKEY_assign_RSA
 EVP_PKEY_base_id
 EVP_PKEY_bits
+EVP_PKEY_check
 EVP_PKEY_cmp
 EVP_PKEY_cmp_parameters
 EVP_PKEY_copy_parameters
@@ -1314,6 +1319,7 @@ EVP_PKEY_new
 EVP_PKEY_new_mac_key
 EVP_PKEY_new_raw_private_key
 EVP_PKEY_new_raw_public_key
+EVP_PKEY_param_check
 EVP_PKEY_paramgen
 EVP_PKEY_paramgen_init
 EVP_PKEY_pqdsa_new_raw_private_key
@@ -1323,6 +1329,7 @@ EVP_PKEY_pqdsa_set_params
 EVP_PKEY_print_params
 EVP_PKEY_print_private
 EVP_PKEY_print_public
+EVP_PKEY_public_check
 EVP_PKEY_rsa_pkey_meth
 EVP_PKEY_rsa_pss_pkey_meth
 EVP_PKEY_set1_DH
@@ -1551,7 +1558,10 @@ KEM_KEY_set_raw_public_key
 KEM_KEY_set_raw_secret_key
 KEM_find_kem_by_nid
 Keccak1600_Absorb
+Keccak1600_Absorb_once_x4
 Keccak1600_Squeeze
+Keccak1600_Squeezeblocks_x4
+KeccakF1600
 MD4
 MD4_Final
 MD4_Init
@@ -2034,6 +2044,7 @@ RAND_set_rand_method
 RAND_status
 RAND_write_file
 RC4
+RC4_options
 RC4_set_key
 RFC8032_DOM2_PREFIX
 RIPEMD160
@@ -2574,6 +2585,8 @@ X509_STORE_get0_objects
 X509_STORE_get0_param
 X509_STORE_get_ex_data
 X509_STORE_get_ex_new_index
+X509_STORE_get_lookup_crls
+X509_STORE_get_verify_cb
 X509_STORE_load_locations
 X509_STORE_lock
 X509_STORE_new
@@ -2584,6 +2597,7 @@ X509_STORE_set_depth
 X509_STORE_set_ex_data
 X509_STORE_set_flags
 X509_STORE_set_get_crl
+X509_STORE_set_lookup_crls
 X509_STORE_set_purpose
 X509_STORE_set_trust
 X509_STORE_set_verify_cb

@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_30_0
+%define BORINGSSL_PREFIX aws_lc_0_31_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -228,6 +228,7 @@
 %xdefine _BASIC_CONSTRAINTS_it _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_it
 %xdefine _BASIC_CONSTRAINTS_new _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_new
 %xdefine _BF_cbc_encrypt _ %+ BORINGSSL_PREFIX %+ _BF_cbc_encrypt
+%xdefine _BF_cfb64_encrypt _ %+ BORINGSSL_PREFIX %+ _BF_cfb64_encrypt
 %xdefine _BF_decrypt _ %+ BORINGSSL_PREFIX %+ _BF_decrypt
 %xdefine _BF_ecb_encrypt _ %+ BORINGSSL_PREFIX %+ _BF_ecb_encrypt
 %xdefine _BF_encrypt _ %+ BORINGSSL_PREFIX %+ _BF_encrypt
@@ -277,6 +278,7 @@
 %xdefine _BIO_get_fd _ %+ BORINGSSL_PREFIX %+ _BIO_get_fd
 %xdefine _BIO_get_fp _ %+ BORINGSSL_PREFIX %+ _BIO_get_fp
 %xdefine _BIO_get_init _ %+ BORINGSSL_PREFIX %+ _BIO_get_init
+%xdefine _BIO_get_md _ %+ BORINGSSL_PREFIX %+ _BIO_get_md
 %xdefine _BIO_get_md_ctx _ %+ BORINGSSL_PREFIX %+ _BIO_get_md_ctx
 %xdefine _BIO_get_mem_ptr _ %+ BORINGSSL_PREFIX %+ _BIO_get_mem_ptr
 %xdefine _BIO_get_new_index _ %+ BORINGSSL_PREFIX %+ _BIO_get_new_index
@@ -1037,7 +1039,9 @@
 %xdefine _ENGINE_get_RSA _ %+ BORINGSSL_PREFIX %+ _ENGINE_get_RSA
 %xdefine _ENGINE_load_builtin_engines _ %+ BORINGSSL_PREFIX %+ _ENGINE_load_builtin_engines
 %xdefine _ENGINE_new _ %+ BORINGSSL_PREFIX %+ _ENGINE_new
+%xdefine _ENGINE_register_all_ciphers _ %+ BORINGSSL_PREFIX %+ _ENGINE_register_all_ciphers
 %xdefine _ENGINE_register_all_complete _ %+ BORINGSSL_PREFIX %+ _ENGINE_register_all_complete
+%xdefine _ENGINE_register_all_digests _ %+ BORINGSSL_PREFIX %+ _ENGINE_register_all_digests
 %xdefine _ENGINE_set_EC _ %+ BORINGSSL_PREFIX %+ _ENGINE_set_EC
 %xdefine _ENGINE_set_RSA _ %+ BORINGSSL_PREFIX %+ _ENGINE_set_RSA
 %xdefine _ERR_SAVE_STATE_free _ %+ BORINGSSL_PREFIX %+ _ERR_SAVE_STATE_free
@@ -1302,6 +1306,7 @@
 %xdefine _EVP_PKEY_assign_RSA _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_assign_RSA
 %xdefine _EVP_PKEY_base_id _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_base_id
 %xdefine _EVP_PKEY_bits _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_bits
+%xdefine _EVP_PKEY_check _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_check
 %xdefine _EVP_PKEY_cmp _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_cmp
 %xdefine _EVP_PKEY_cmp_parameters _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_cmp_parameters
 %xdefine _EVP_PKEY_copy_parameters _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_copy_parameters
@@ -1348,6 +1353,7 @@
 %xdefine _EVP_PKEY_new_mac_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_new_mac_key
 %xdefine _EVP_PKEY_new_raw_private_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_new_raw_private_key
 %xdefine _EVP_PKEY_new_raw_public_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_new_raw_public_key
+%xdefine _EVP_PKEY_param_check _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_param_check
 %xdefine _EVP_PKEY_paramgen _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen
 %xdefine _EVP_PKEY_paramgen_init _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen_init
 %xdefine _EVP_PKEY_pqdsa_new_raw_private_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_private_key
@@ -1357,6 +1363,7 @@
 %xdefine _EVP_PKEY_print_params _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_print_params
 %xdefine _EVP_PKEY_print_private _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_print_private
 %xdefine _EVP_PKEY_print_public _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_print_public
+%xdefine _EVP_PKEY_public_check _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_public_check
 %xdefine _EVP_PKEY_rsa_pkey_meth _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_rsa_pkey_meth
 %xdefine _EVP_PKEY_rsa_pss_pkey_meth _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_rsa_pss_pkey_meth
 %xdefine _EVP_PKEY_set1_DH _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_set1_DH
@@ -1585,11 +1592,11 @@
 %xdefine _KEM_KEY_set_raw_secret_key _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_secret_key
 %xdefine _KEM_find_kem_by_nid _ %+ BORINGSSL_PREFIX %+ _KEM_find_kem_by_nid
 %xdefine _Keccak1600_Absorb _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Absorb
-%xdefine _Keccak1600_Absorb_cext _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Absorb_cext
-%xdefine _Keccak1600_Absorb_hw _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Absorb_hw
+%xdefine _Keccak1600_Absorb_once_x4 _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Absorb_once_x4
 %xdefine _Keccak1600_Squeeze _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Squeeze
-%xdefine _Keccak1600_Squeeze_cext _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Squeeze_cext
-%xdefine _Keccak1600_Squeeze_hw _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Squeeze_hw
+%xdefine _Keccak1600_Squeezeblocks_x4 _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Squeezeblocks_x4
+%xdefine _KeccakF1600 _ %+ BORINGSSL_PREFIX %+ _KeccakF1600
+%xdefine _KeccakF1600_hw _ %+ BORINGSSL_PREFIX %+ _KeccakF1600_hw
 %xdefine _MD4 _ %+ BORINGSSL_PREFIX %+ _MD4
 %xdefine _MD4_Final _ %+ BORINGSSL_PREFIX %+ _MD4_Final
 %xdefine _MD4_Init _ %+ BORINGSSL_PREFIX %+ _MD4_Init
@@ -2074,6 +2081,7 @@
 %xdefine _RAND_status _ %+ BORINGSSL_PREFIX %+ _RAND_status
 %xdefine _RAND_write_file _ %+ BORINGSSL_PREFIX %+ _RAND_write_file
 %xdefine _RC4 _ %+ BORINGSSL_PREFIX %+ _RC4
+%xdefine _RC4_options _ %+ BORINGSSL_PREFIX %+ _RC4_options
 %xdefine _RC4_set_key _ %+ BORINGSSL_PREFIX %+ _RC4_set_key
 %xdefine _RFC8032_DOM2_PREFIX _ %+ BORINGSSL_PREFIX %+ _RFC8032_DOM2_PREFIX
 %xdefine _RIPEMD160 _ %+ BORINGSSL_PREFIX %+ _RIPEMD160
@@ -2616,6 +2624,8 @@
 %xdefine _X509_STORE_get0_param _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get0_param
 %xdefine _X509_STORE_get_ex_data _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_ex_data
 %xdefine _X509_STORE_get_ex_new_index _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_ex_new_index
+%xdefine _X509_STORE_get_lookup_crls _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_lookup_crls
+%xdefine _X509_STORE_get_verify_cb _ %+ BORINGSSL_PREFIX %+ _X509_STORE_get_verify_cb
 %xdefine _X509_STORE_load_locations _ %+ BORINGSSL_PREFIX %+ _X509_STORE_load_locations
 %xdefine _X509_STORE_lock _ %+ BORINGSSL_PREFIX %+ _X509_STORE_lock
 %xdefine _X509_STORE_new _ %+ BORINGSSL_PREFIX %+ _X509_STORE_new
@@ -2626,6 +2636,7 @@
 %xdefine _X509_STORE_set_ex_data _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_ex_data
 %xdefine _X509_STORE_set_flags _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_flags
 %xdefine _X509_STORE_set_get_crl _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_get_crl
+%xdefine _X509_STORE_set_lookup_crls _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_lookup_crls
 %xdefine _X509_STORE_set_purpose _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_purpose
 %xdefine _X509_STORE_set_trust _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_trust
 %xdefine _X509_STORE_set_verify_cb _ %+ BORINGSSL_PREFIX %+ _X509_STORE_set_verify_cb
@@ -3872,7 +3883,33 @@
 %xdefine _ml_kem_common_encapsulate _ %+ BORINGSSL_PREFIX %+ _ml_kem_common_encapsulate
 %xdefine _ml_kem_common_encapsulate_deterministic _ %+ BORINGSSL_PREFIX %+ _ml_kem_common_encapsulate_deterministic
 %xdefine _ml_kem_common_keypair _ %+ BORINGSSL_PREFIX %+ _ml_kem_common_keypair
+%xdefine _mlkem_aarch64_invntt_zetas_layer12345 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer12345
+%xdefine _mlkem_aarch64_invntt_zetas_layer67 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer67
+%xdefine _mlkem_aarch64_ntt_zetas_layer12345 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer12345
+%xdefine _mlkem_aarch64_ntt_zetas_layer67 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer67
+%xdefine _mlkem_aarch64_zetas_mulcache_native _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_native
+%xdefine _mlkem_aarch64_zetas_mulcache_twisted_native _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_twisted_native
 %xdefine _mlkem_ct_opt_blocker_u64 _ %+ BORINGSSL_PREFIX %+ _mlkem_ct_opt_blocker_u64
+%xdefine _mlkem_intt_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_intt_asm
+%xdefine _mlkem_invntt_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_invntt_avx2
+%xdefine _mlkem_ntt_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_ntt_asm
+%xdefine _mlkem_ntt_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_ntt_avx2
+%xdefine _mlkem_nttfrombytes_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_nttfrombytes_avx2
+%xdefine _mlkem_ntttobytes_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_ntttobytes_avx2
+%xdefine _mlkem_nttunpack_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_nttunpack_avx2
+%xdefine _mlkem_poly_mulcache_compute_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_asm
+%xdefine _mlkem_poly_mulcache_compute_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_avx2
+%xdefine _mlkem_poly_reduce_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_reduce_asm
+%xdefine _mlkem_poly_tobytes_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_tobytes_asm
+%xdefine _mlkem_poly_tomont_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_tomont_asm
+%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k2 _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k2
+%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k3 _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k3
+%xdefine _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k4 _ %+ BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k4
+%xdefine _mlkem_qdata _ %+ BORINGSSL_PREFIX %+ _mlkem_qdata
+%xdefine _mlkem_reduce_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_reduce_avx2
+%xdefine _mlkem_rej_uniform_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_rej_uniform_asm
+%xdefine _mlkem_rej_uniform_table _ %+ BORINGSSL_PREFIX %+ _mlkem_rej_uniform_table
+%xdefine _mlkem_tomont_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_tomont_avx2
 %xdefine _o2i_ECPublicKey _ %+ BORINGSSL_PREFIX %+ _o2i_ECPublicKey
 %xdefine _openssl_console_acquire_mutex _ %+ BORINGSSL_PREFIX %+ _openssl_console_acquire_mutex
 %xdefine _openssl_console_close _ %+ BORINGSSL_PREFIX %+ _openssl_console_close
@@ -4127,6 +4164,11 @@
 %xdefine _sha256_block_data_order_ssse3 _ %+ BORINGSSL_PREFIX %+ _sha256_block_data_order_ssse3
 %xdefine _sha256_func _ %+ BORINGSSL_PREFIX %+ _sha256_func
 %xdefine _sha384_func _ %+ BORINGSSL_PREFIX %+ _sha384_func
+%xdefine _sha3_keccak2_f1600 _ %+ BORINGSSL_PREFIX %+ _sha3_keccak2_f1600
+%xdefine _sha3_keccak4_f1600_alt _ %+ BORINGSSL_PREFIX %+ _sha3_keccak4_f1600_alt
+%xdefine _sha3_keccak4_f1600_alt2 _ %+ BORINGSSL_PREFIX %+ _sha3_keccak4_f1600_alt2
+%xdefine _sha3_keccak_f1600 _ %+ BORINGSSL_PREFIX %+ _sha3_keccak_f1600
+%xdefine _sha3_keccak_f1600_alt _ %+ BORINGSSL_PREFIX %+ _sha3_keccak_f1600_alt
 %xdefine _sha512_block_data_order _ %+ BORINGSSL_PREFIX %+ _sha512_block_data_order
 %xdefine _sha512_block_data_order_avx _ %+ BORINGSSL_PREFIX %+ _sha512_block_data_order_avx
 %xdefine _sha512_block_data_order_hw _ %+ BORINGSSL_PREFIX %+ _sha512_block_data_order_hw
@@ -4434,6 +4476,7 @@
 %xdefine BASIC_CONSTRAINTS_it BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_it
 %xdefine BASIC_CONSTRAINTS_new BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_new
 %xdefine BF_cbc_encrypt BORINGSSL_PREFIX %+ _BF_cbc_encrypt
+%xdefine BF_cfb64_encrypt BORINGSSL_PREFIX %+ _BF_cfb64_encrypt
 %xdefine BF_decrypt BORINGSSL_PREFIX %+ _BF_decrypt
 %xdefine BF_ecb_encrypt BORINGSSL_PREFIX %+ _BF_ecb_encrypt
 %xdefine BF_encrypt BORINGSSL_PREFIX %+ _BF_encrypt
@@ -4483,6 +4526,7 @@
 %xdefine BIO_get_fd BORINGSSL_PREFIX %+ _BIO_get_fd
 %xdefine BIO_get_fp BORINGSSL_PREFIX %+ _BIO_get_fp
 %xdefine BIO_get_init BORINGSSL_PREFIX %+ _BIO_get_init
+%xdefine BIO_get_md BORINGSSL_PREFIX %+ _BIO_get_md
 %xdefine BIO_get_md_ctx BORINGSSL_PREFIX %+ _BIO_get_md_ctx
 %xdefine BIO_get_mem_ptr BORINGSSL_PREFIX %+ _BIO_get_mem_ptr
 %xdefine BIO_get_new_index BORINGSSL_PREFIX %+ _BIO_get_new_index
@@ -5243,7 +5287,9 @@
 %xdefine ENGINE_get_RSA BORINGSSL_PREFIX %+ _ENGINE_get_RSA
 %xdefine ENGINE_load_builtin_engines BORINGSSL_PREFIX %+ _ENGINE_load_builtin_engines
 %xdefine ENGINE_new BORINGSSL_PREFIX %+ _ENGINE_new
+%xdefine ENGINE_register_all_ciphers BORINGSSL_PREFIX %+ _ENGINE_register_all_ciphers
 %xdefine ENGINE_register_all_complete BORINGSSL_PREFIX %+ _ENGINE_register_all_complete
+%xdefine ENGINE_register_all_digests BORINGSSL_PREFIX %+ _ENGINE_register_all_digests
 %xdefine ENGINE_set_EC BORINGSSL_PREFIX %+ _ENGINE_set_EC
 %xdefine ENGINE_set_RSA BORINGSSL_PREFIX %+ _ENGINE_set_RSA
 %xdefine ERR_SAVE_STATE_free BORINGSSL_PREFIX %+ _ERR_SAVE_STATE_free
@@ -5508,6 +5554,7 @@
 %xdefine EVP_PKEY_assign_RSA BORINGSSL_PREFIX %+ _EVP_PKEY_assign_RSA
 %xdefine EVP_PKEY_base_id BORINGSSL_PREFIX %+ _EVP_PKEY_base_id
 %xdefine EVP_PKEY_bits BORINGSSL_PREFIX %+ _EVP_PKEY_bits
+%xdefine EVP_PKEY_check BORINGSSL_PREFIX %+ _EVP_PKEY_check
 %xdefine EVP_PKEY_cmp BORINGSSL_PREFIX %+ _EVP_PKEY_cmp
 %xdefine EVP_PKEY_cmp_parameters BORINGSSL_PREFIX %+ _EVP_PKEY_cmp_parameters
 %xdefine EVP_PKEY_copy_parameters BORINGSSL_PREFIX %+ _EVP_PKEY_copy_parameters
@@ -5554,6 +5601,7 @@
 %xdefine EVP_PKEY_new_mac_key BORINGSSL_PREFIX %+ _EVP_PKEY_new_mac_key
 %xdefine EVP_PKEY_new_raw_private_key BORINGSSL_PREFIX %+ _EVP_PKEY_new_raw_private_key
 %xdefine EVP_PKEY_new_raw_public_key BORINGSSL_PREFIX %+ _EVP_PKEY_new_raw_public_key
+%xdefine EVP_PKEY_param_check BORINGSSL_PREFIX %+ _EVP_PKEY_param_check
 %xdefine EVP_PKEY_paramgen BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen
 %xdefine EVP_PKEY_paramgen_init BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen_init
 %xdefine EVP_PKEY_pqdsa_new_raw_private_key BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_private_key
@@ -5563,6 +5611,7 @@
 %xdefine EVP_PKEY_print_params BORINGSSL_PREFIX %+ _EVP_PKEY_print_params
 %xdefine EVP_PKEY_print_private BORINGSSL_PREFIX %+ _EVP_PKEY_print_private
 %xdefine EVP_PKEY_print_public BORINGSSL_PREFIX %+ _EVP_PKEY_print_public
+%xdefine EVP_PKEY_public_check BORINGSSL_PREFIX %+ _EVP_PKEY_public_check
 %xdefine EVP_PKEY_rsa_pkey_meth BORINGSSL_PREFIX %+ _EVP_PKEY_rsa_pkey_meth
 %xdefine EVP_PKEY_rsa_pss_pkey_meth BORINGSSL_PREFIX %+ _EVP_PKEY_rsa_pss_pkey_meth
 %xdefine EVP_PKEY_set1_DH BORINGSSL_PREFIX %+ _EVP_PKEY_set1_DH
@@ -5791,11 +5840,11 @@
 %xdefine KEM_KEY_set_raw_secret_key BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_secret_key
 %xdefine KEM_find_kem_by_nid BORINGSSL_PREFIX %+ _KEM_find_kem_by_nid
 %xdefine Keccak1600_Absorb BORINGSSL_PREFIX %+ _Keccak1600_Absorb
-%xdefine Keccak1600_Absorb_cext BORINGSSL_PREFIX %+ _Keccak1600_Absorb_cext
-%xdefine Keccak1600_Absorb_hw BORINGSSL_PREFIX %+ _Keccak1600_Absorb_hw
+%xdefine Keccak1600_Absorb_once_x4 BORINGSSL_PREFIX %+ _Keccak1600_Absorb_once_x4
 %xdefine Keccak1600_Squeeze BORINGSSL_PREFIX %+ _Keccak1600_Squeeze
-%xdefine Keccak1600_Squeeze_cext BORINGSSL_PREFIX %+ _Keccak1600_Squeeze_cext
-%xdefine Keccak1600_Squeeze_hw BORINGSSL_PREFIX %+ _Keccak1600_Squeeze_hw
+%xdefine Keccak1600_Squeezeblocks_x4 BORINGSSL_PREFIX %+ _Keccak1600_Squeezeblocks_x4
+%xdefine KeccakF1600 BORINGSSL_PREFIX %+ _KeccakF1600
+%xdefine KeccakF1600_hw BORINGSSL_PREFIX %+ _KeccakF1600_hw
 %xdefine MD4 BORINGSSL_PREFIX %+ _MD4
 %xdefine MD4_Final BORINGSSL_PREFIX %+ _MD4_Final
 %xdefine MD4_Init BORINGSSL_PREFIX %+ _MD4_Init
@@ -6280,6 +6329,7 @@
 %xdefine RAND_status BORINGSSL_PREFIX %+ _RAND_status
 %xdefine RAND_write_file BORINGSSL_PREFIX %+ _RAND_write_file
 %xdefine RC4 BORINGSSL_PREFIX %+ _RC4
+%xdefine RC4_options BORINGSSL_PREFIX %+ _RC4_options
 %xdefine RC4_set_key BORINGSSL_PREFIX %+ _RC4_set_key
 %xdefine RFC8032_DOM2_PREFIX BORINGSSL_PREFIX %+ _RFC8032_DOM2_PREFIX
 %xdefine RIPEMD160 BORINGSSL_PREFIX %+ _RIPEMD160
@@ -6822,6 +6872,8 @@
 %xdefine X509_STORE_get0_param BORINGSSL_PREFIX %+ _X509_STORE_get0_param
 %xdefine X509_STORE_get_ex_data BORINGSSL_PREFIX %+ _X509_STORE_get_ex_data
 %xdefine X509_STORE_get_ex_new_index BORINGSSL_PREFIX %+ _X509_STORE_get_ex_new_index
+%xdefine X509_STORE_get_lookup_crls BORINGSSL_PREFIX %+ _X509_STORE_get_lookup_crls
+%xdefine X509_STORE_get_verify_cb BORINGSSL_PREFIX %+ _X509_STORE_get_verify_cb
 %xdefine X509_STORE_load_locations BORINGSSL_PREFIX %+ _X509_STORE_load_locations
 %xdefine X509_STORE_lock BORINGSSL_PREFIX %+ _X509_STORE_lock
 %xdefine X509_STORE_new BORINGSSL_PREFIX %+ _X509_STORE_new
@@ -6832,6 +6884,7 @@
 %xdefine X509_STORE_set_ex_data BORINGSSL_PREFIX %+ _X509_STORE_set_ex_data
 %xdefine X509_STORE_set_flags BORINGSSL_PREFIX %+ _X509_STORE_set_flags
 %xdefine X509_STORE_set_get_crl BORINGSSL_PREFIX %+ _X509_STORE_set_get_crl
+%xdefine X509_STORE_set_lookup_crls BORINGSSL_PREFIX %+ _X509_STORE_set_lookup_crls
 %xdefine X509_STORE_set_purpose BORINGSSL_PREFIX %+ _X509_STORE_set_purpose
 %xdefine X509_STORE_set_trust BORINGSSL_PREFIX %+ _X509_STORE_set_trust
 %xdefine X509_STORE_set_verify_cb BORINGSSL_PREFIX %+ _X509_STORE_set_verify_cb
@@ -8078,7 +8131,33 @@
 %xdefine ml_kem_common_encapsulate BORINGSSL_PREFIX %+ _ml_kem_common_encapsulate
 %xdefine ml_kem_common_encapsulate_deterministic BORINGSSL_PREFIX %+ _ml_kem_common_encapsulate_deterministic
 %xdefine ml_kem_common_keypair BORINGSSL_PREFIX %+ _ml_kem_common_keypair
+%xdefine mlkem_aarch64_invntt_zetas_layer12345 BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer12345
+%xdefine mlkem_aarch64_invntt_zetas_layer67 BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer67
+%xdefine mlkem_aarch64_ntt_zetas_layer12345 BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer12345
+%xdefine mlkem_aarch64_ntt_zetas_layer67 BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer67
+%xdefine mlkem_aarch64_zetas_mulcache_native BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_native
+%xdefine mlkem_aarch64_zetas_mulcache_twisted_native BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_twisted_native
 %xdefine mlkem_ct_opt_blocker_u64 BORINGSSL_PREFIX %+ _mlkem_ct_opt_blocker_u64
+%xdefine mlkem_intt_asm BORINGSSL_PREFIX %+ _mlkem_intt_asm
+%xdefine mlkem_invntt_avx2 BORINGSSL_PREFIX %+ _mlkem_invntt_avx2
+%xdefine mlkem_ntt_asm BORINGSSL_PREFIX %+ _mlkem_ntt_asm
+%xdefine mlkem_ntt_avx2 BORINGSSL_PREFIX %+ _mlkem_ntt_avx2
+%xdefine mlkem_nttfrombytes_avx2 BORINGSSL_PREFIX %+ _mlkem_nttfrombytes_avx2
+%xdefine mlkem_ntttobytes_avx2 BORINGSSL_PREFIX %+ _mlkem_ntttobytes_avx2
+%xdefine mlkem_nttunpack_avx2 BORINGSSL_PREFIX %+ _mlkem_nttunpack_avx2
+%xdefine mlkem_poly_mulcache_compute_asm BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_asm
+%xdefine mlkem_poly_mulcache_compute_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_avx2
+%xdefine mlkem_poly_reduce_asm BORINGSSL_PREFIX %+ _mlkem_poly_reduce_asm
+%xdefine mlkem_poly_tobytes_asm BORINGSSL_PREFIX %+ _mlkem_poly_tobytes_asm
+%xdefine mlkem_poly_tomont_asm BORINGSSL_PREFIX %+ _mlkem_poly_tomont_asm
+%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_asm_k2 BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k2
+%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_asm_k3 BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k3
+%xdefine mlkem_polyvec_basemul_acc_montgomery_cached_asm_k4 BORINGSSL_PREFIX %+ _mlkem_polyvec_basemul_acc_montgomery_cached_asm_k4
+%xdefine mlkem_qdata BORINGSSL_PREFIX %+ _mlkem_qdata
+%xdefine mlkem_reduce_avx2 BORINGSSL_PREFIX %+ _mlkem_reduce_avx2
+%xdefine mlkem_rej_uniform_asm BORINGSSL_PREFIX %+ _mlkem_rej_uniform_asm
+%xdefine mlkem_rej_uniform_table BORINGSSL_PREFIX %+ _mlkem_rej_uniform_table
+%xdefine mlkem_tomont_avx2 BORINGSSL_PREFIX %+ _mlkem_tomont_avx2
 %xdefine o2i_ECPublicKey BORINGSSL_PREFIX %+ _o2i_ECPublicKey
 %xdefine openssl_console_acquire_mutex BORINGSSL_PREFIX %+ _openssl_console_acquire_mutex
 %xdefine openssl_console_close BORINGSSL_PREFIX %+ _openssl_console_close
@@ -8333,6 +8412,11 @@
 %xdefine sha256_block_data_order_ssse3 BORINGSSL_PREFIX %+ _sha256_block_data_order_ssse3
 %xdefine sha256_func BORINGSSL_PREFIX %+ _sha256_func
 %xdefine sha384_func BORINGSSL_PREFIX %+ _sha384_func
+%xdefine sha3_keccak2_f1600 BORINGSSL_PREFIX %+ _sha3_keccak2_f1600
+%xdefine sha3_keccak4_f1600_alt BORINGSSL_PREFIX %+ _sha3_keccak4_f1600_alt
+%xdefine sha3_keccak4_f1600_alt2 BORINGSSL_PREFIX %+ _sha3_keccak4_f1600_alt2
+%xdefine sha3_keccak_f1600 BORINGSSL_PREFIX %+ _sha3_keccak_f1600
+%xdefine sha3_keccak_f1600_alt BORINGSSL_PREFIX %+ _sha3_keccak_f1600_alt
 %xdefine sha512_block_data_order BORINGSSL_PREFIX %+ _sha512_block_data_order
 %xdefine sha512_block_data_order_avx BORINGSSL_PREFIX %+ _sha512_block_data_order_avx
 %xdefine sha512_block_data_order_hw BORINGSSL_PREFIX %+ _sha512_block_data_order_hw

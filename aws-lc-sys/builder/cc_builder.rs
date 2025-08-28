@@ -374,7 +374,8 @@ impl CcBuilder {
         for source in lib.sources {
             let source_path = self.manifest_dir.join("aws-lc").join(source);
             let is_s2n_bignum = std::path::Path::new(source).starts_with("third_party/s2n-bignum");
-            let is_jitter_entropy = std::path::Path::new(source).starts_with("third_party/jitterentropy");
+            let is_jitter_entropy =
+                std::path::Path::new(source).starts_with("third_party/jitterentropy");
 
             if is_s2n_bignum {
                 s2n_bignum_builder.file(source_path);

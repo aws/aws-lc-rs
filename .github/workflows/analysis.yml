@@ -18,6 +18,7 @@ env:
   # Otherwise, we test against the latest version.
   RUST_NIGHTLY_TOOLCHAIN: nightly
   RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly
+  DEBIAN_FRONTEND: noninteractive
 
 jobs:
   rustfmt:
@@ -154,9 +155,9 @@ jobs:
       - name: Run cargo tree
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          if cargo tree -e build -p aws-lc-sys | grep -q bindgen; then 
+          if cargo tree -e build -p aws-lc-sys | grep -q bindgen; then
             exit 1 # bindgen should not be listed
-          else 
+          else
             exit 0
           fi
       - name: Run cargo tree
@@ -185,9 +186,9 @@ jobs:
       - name: Run cargo tree
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          if cargo tree -e build -p aws-lc-fips-sys | grep -q bindgen; then 
+          if cargo tree -e build -p aws-lc-fips-sys | grep -q bindgen; then
             exit 1 # bindgen should not be listed
-          else 
+          else
             exit 0
           fi
       - name: Run cargo tree

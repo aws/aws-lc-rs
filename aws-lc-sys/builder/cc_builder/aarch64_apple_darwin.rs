@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Tue Jul  8 21:02:25 UTC 2025
+// Wed Aug 27 19:49:44 UTC 2025
 
 use crate::cc_builder::Library;
 
@@ -47,6 +47,7 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/bio/fd.c",
         "crypto/bio/file.c",
         "crypto/bio/hexdump.c",
+        "crypto/bio/md.c",
         "crypto/bio/pair.c",
         "crypto/bio/printf.c",
         "crypto/bio/socket.c",
@@ -121,6 +122,16 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/ex_data.c",
         "crypto/fipsmodule/bcm.c",
         "crypto/fipsmodule/cpucap/cpucap.c",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/intt.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/ntt.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/poly_mulcache_compute_asm.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/poly_reduce_asm.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/poly_tobytes_asm.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/poly_tomont_asm.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/polyvec_basemul_acc_montgomery_cached_asm_k2.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/polyvec_basemul_acc_montgomery_cached_asm_k3.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/polyvec_basemul_acc_montgomery_cached_asm_k4.S",
+        "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/rej_uniform_asm.S",
         "crypto/hpke/hpke.c",
         "crypto/hrss/hrss.c",
         "crypto/kyber/kem_kyber.c",
@@ -149,7 +160,6 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/pem/pem_x509.c",
         "crypto/pem/pem_xaux.c",
         "crypto/pkcs7/bio/cipher.c",
-        "crypto/pkcs7/bio/md.c",
         "crypto/pkcs7/pkcs7.c",
         "crypto/pkcs7/pkcs7_asn1.c",
         "crypto/pkcs7/pkcs7_x509.c",
@@ -325,5 +335,10 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "third_party/s2n-bignum/s2n-bignum-imported/arm/p521/p521_jdouble_alt.S",
         "third_party/s2n-bignum/s2n-bignum-imported/arm/p521/p521_jscalarmul.S",
         "third_party/s2n-bignum/s2n-bignum-imported/arm/p521/p521_jscalarmul_alt.S",
+        "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak2_f1600.S",
+        "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak4_f1600_alt.S",
+        "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak4_f1600_alt2.S",
+        "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak_f1600.S",
+        "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak_f1600_alt.S",
     ],
 };
