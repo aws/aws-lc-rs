@@ -1,6 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
+use aws_lc::EVP_CIPHER_CTX_set_padding;
+
 use crate::aws_lc::{
     EVP_CIPHER_CTX_new, EVP_CIPHER_iv_length, EVP_CIPHER_key_length, EVP_DecryptFinal_ex,
     EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_EncryptFinal_ex, EVP_EncryptInit_ex,
@@ -470,6 +472,15 @@ impl StreamingDecryptingKey {
         context: DecryptionContext,
     ) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CBC, context)
+    }
+
+    /// Disables padding for the decryption operation.
+    ///
+    /// Offered for computability purposes only.
+    /// This will decrypt the padding data into the regular output where it
+    /// will need to be validated and removed afterwards.
+    pub fn disable_padding(&mut self) {
+        unsafe { EVP_CIPHER_CTX_set_padding(*self.cipher_ctx.as_mut(), 0) };
     }
 
     // Constructs a `StreamingDecryptingKey` for decrypting using the CFB128 cipher mode.
