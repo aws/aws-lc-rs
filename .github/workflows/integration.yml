@@ -71,8 +71,6 @@ jobs:
     if: github.repository_owner == 'aws'
     name: "Windows debug w/ crt-static Test"
     runs-on: windows-latest
-    strategy:
-      fail-fast: false
     steps:
       - uses: actions/checkout@v3
         with:
