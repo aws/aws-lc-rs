@@ -156,6 +156,27 @@ jobs:
       - name: iOS Simulator Runner
         run: ./scripts/ci/ios-simulator-runner.sh
 
+  aws-lc-rs-tvos-aarch64:
+    if: github.repository_owner == 'aws'
+    name: tvOS aarch64 cross-platform build
+    runs-on: macos-latest
+    env:
+      TVOS_FORCE_TEST: 1
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+      - run: |
+          brew install llvm
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: rust-src
+      - name: Install bash, coreutils
+        run: brew install bash coreutils
+      - name: tvOS Simulator Runner
+        run: ./scripts/ci/tvos-simulator-runner.sh
+
   aws-lc-rs-ios-x86_64:
     if: github.repository_owner == 'aws'
     name: iOS x86-64 cross-platform build

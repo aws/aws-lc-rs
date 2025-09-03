@@ -744,6 +744,7 @@ fn invoke_external_bindgen(
     if let Some(prefix_str) = &options.build_prefix {
         sym_prefix = if target_os().to_lowercase() == "macos"
             || target_os().to_lowercase() == "ios"
+            || target_os().to_lowercase() == "tvos"
             || (target_os().to_lowercase() == "windows" && target_arch() == "x86")
         {
             format!("_{prefix_str}_")
