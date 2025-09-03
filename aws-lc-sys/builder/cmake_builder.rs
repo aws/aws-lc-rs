@@ -166,8 +166,7 @@ impl CmakeBuilder {
         // Allow environment to specify CMake toolchain.
         if let Some(toolchain) = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE") {
             set_env_for_target("CMAKE_TOOLCHAIN_FILE", toolchain);
-            // Only setup if allowed by environment variable
-            if use_prebuilt_nasm() && Some(true) == allow_prebuilt_nasm() {
+            if use_prebuilt_nasm() {
                 self.configure_prebuilt_nasm(&mut cmake_cfg);
             }
             return cmake_cfg;
