@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 #![cfg(all(not(feature = "fips"), feature = "unstable"))]
 
-use aws_lc_rs::signature::{KeyPair, VerificationAlgorithm};
+use aws_lc_rs::signature::{KeyPair, ParsedPublicKey, VerificationAlgorithm};
 use aws_lc_rs::unstable::signature::{
     PqdsaKeyPair, ML_DSA_44, ML_DSA_44_SIGNING, ML_DSA_65, ML_DSA_65_SIGNING, ML_DSA_87,
     ML_DSA_87_SIGNING,
@@ -44,6 +44,13 @@ macro_rules! mldsa_sigver_test {
                 assert!(result.is_err());
             }
 
+            let ppk = ParsedPublicKey::new($verification, public_key.as_slice()).unwrap();
+            let result = ppk.verify_sig(message.as_ref(), signature.as_ref());
+            if expected_result {
+                assert!(result.is_ok());
+            } else {
+                assert!(result.is_err());
+            }
             Ok(())
         });
     };
@@ -63,6 +70,10 @@ macro_rules! mldsa_sigver_digest_test {
             let digest = aws_lc_rs::digest::digest(&aws_lc_rs::digest::SHA256, message.as_ref());
             let result =
                 $verification.verify_digest_sig(public_key.as_ref(), &digest, signature.as_ref());
+            assert!(result.is_err());
+
+            let ppk = ParsedPublicKey::new($verification, public_key.as_slice()).unwrap();
+            let result = ppk.verify_digest_sig(&digest, signature.as_ref());
             assert!(result.is_err());
 
             Ok(())
