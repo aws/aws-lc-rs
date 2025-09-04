@@ -158,7 +158,7 @@
 <a href=#158 id=158 data-nosnippet>158</a>//! let seal_prepared_nonce = sealing_key.prepare_nonce()?;
 <a href=#159 id=159 data-nosnippet>159</a>//!
 <a href=#160 id=160 data-nosnippet>160</a>//! // Query the nonce that will be used for our seal operation with our prepared nonce
-<a href=#161 id=161 data-nosnippet>161</a>//! let seal_nonce_bytes = Vec::from(seal_prepared_nonce.nonce().as_ref());
+<a href=#161 id=161 data-nosnippet>161</a>//! let seal_nonce_bytes = Vec::from(seal_prepared_nonce.nonce().as_ref().as_slice());
 <a href=#162 id=162 data-nosnippet>162</a>//!
 <a href=#163 id=163 data-nosnippet>163</a>//! // Use the prepared nonce and seal the plaintext
 <a href=#164 id=164 data-nosnippet>164</a>//! seal_prepared_nonce.seal_in_place_append_tag(Aad::empty(), &amp;mut in_out)?;
@@ -167,7 +167,7 @@
 <a href=#167 id=167 data-nosnippet>167</a>//! let open_prepared_nonce = opening_key.prepare_nonce()?;
 <a href=#168 id=168 data-nosnippet>168</a>//!
 <a href=#169 id=169 data-nosnippet>169</a>//! // Query the nonce that will be used for our seal operation with our prepared nonce
-<a href=#170 id=170 data-nosnippet>170</a>//! let open_nonce_bytes = Vec::from(open_prepared_nonce.nonce().as_ref());
+<a href=#170 id=170 data-nosnippet>170</a>//! let open_nonce_bytes = Vec::from(open_prepared_nonce.nonce().as_ref().as_slice());
 <a href=#171 id=171 data-nosnippet>171</a>//!
 <a href=#172 id=172 data-nosnippet>172</a>//! // Since we initialized the Counter32Builder the same between both builders the nonce here
 <a href=#173 id=173 data-nosnippet>173</a>//! // will match the one from the opening key.
