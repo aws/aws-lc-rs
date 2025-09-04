@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/signature.rs`."><title>signature.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (a1208bf76 2025-09-03)" data-channel="nightly" data-search-js="search-272972ce.js" data-stringdex-js="stringdex-0e748618.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>signature.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2015-2017 Brian Smith.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/signature.rs`."><title>signature.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (a1208bf76 2025-09-03)" data-channel="nightly" data-search-js="search-272972ce.js" data-stringdex-js="stringdex-0e748618.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>signature.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2015-2017 Brian Smith.
 <a href=#2 id=2 data-nosnippet>2</a>// SPDX-License-Identifier: ISC
 <a href=#3 id=3 data-nosnippet>3</a>// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 <a href=#4 id=4 data-nosnippet>4</a>// SPDX-License-Identifier: Apache-2.0 OR ISC
@@ -233,16 +233,16 @@
 <a href=#233 id=233 data-nosnippet>233</a>//!     sign_and_verify_rsa(&amp;private_key_path, &amp;public_key_path).unwrap()
 <a href=#234 id=234 data-nosnippet>234</a>//! }
 <a href=#235 id=235 data-nosnippet>235</a>//! ```
-<a href=#236 id=236 data-nosnippet>236</a></span><span class="kw">use </span>core::fmt::{Debug, Formatter};
-<a href=#237 id=237 data-nosnippet>237</a>
-<a href=#238 id=238 data-nosnippet>238</a><span class="attr">#[cfg(feature = <span class="string">"ring-sig-verify"</span>)]
-<a href=#239 id=239 data-nosnippet>239</a></span><span class="kw">use </span>untrusted::Input;
-<a href=#240 id=240 data-nosnippet>240</a>
-<a href=#241 id=241 data-nosnippet>241</a><span class="kw">pub use </span><span class="kw">crate</span>::rsa::signature::{RsaEncoding, RsaSignatureEncoding};
-<a href=#242 id=242 data-nosnippet>242</a><span class="kw">pub use </span><span class="kw">crate</span>::rsa::{
-<a href=#243 id=243 data-nosnippet>243</a>    KeyPair <span class="kw">as </span>RsaKeyPair, PublicKey <span class="kw">as </span>RsaSubjectPublicKey,
-<a href=#244 id=244 data-nosnippet>244</a>    PublicKeyComponents <span class="kw">as </span>RsaPublicKeyComponents, RsaParameters,
-<a href=#245 id=245 data-nosnippet>245</a>};
+<a href=#236 id=236 data-nosnippet>236</a></span><span class="kw">use </span><span class="kw">crate</span>::aws_lc::EVP_PKEY;
+<a href=#237 id=237 data-nosnippet>237</a><span class="kw">pub use </span><span class="kw">crate</span>::rsa::signature::{RsaEncoding, RsaSignatureEncoding};
+<a href=#238 id=238 data-nosnippet>238</a><span class="kw">pub use </span><span class="kw">crate</span>::rsa::{
+<a href=#239 id=239 data-nosnippet>239</a>    KeyPair <span class="kw">as </span>RsaKeyPair, PublicKey <span class="kw">as </span>RsaSubjectPublicKey,
+<a href=#240 id=240 data-nosnippet>240</a>    PublicKeyComponents <span class="kw">as </span>RsaPublicKeyComponents, RsaParameters,
+<a href=#241 id=241 data-nosnippet>241</a>};
+<a href=#242 id=242 data-nosnippet>242</a><span class="kw">use </span>core::fmt::{Debug, Formatter};
+<a href=#243 id=243 data-nosnippet>243</a><span class="kw">use </span>std::any::{Any, TypeId};
+<a href=#244 id=244 data-nosnippet>244</a><span class="attr">#[cfg(feature = <span class="string">"ring-sig-verify"</span>)]
+<a href=#245 id=245 data-nosnippet>245</a></span><span class="kw">use </span>untrusted::Input;
 <a href=#246 id=246 data-nosnippet>246</a>
 <a href=#247 id=247 data-nosnippet>247</a><span class="kw">use </span><span class="kw">crate</span>::rsa::signature::RsaSigningAlgorithmId;
 <a href=#248 id=248 data-nosnippet>248</a><span class="kw">use </span><span class="kw">crate</span>::rsa::RsaVerificationAlgorithmId;
@@ -258,616 +258,825 @@
 <a href=#258 id=258 data-nosnippet>258</a>};
 <a href=#259 id=259 data-nosnippet>259</a>
 <a href=#260 id=260 data-nosnippet>260</a><span class="kw">use </span><span class="kw">crate</span>::digest::Digest;
-<a href=#261 id=261 data-nosnippet>261</a><span class="kw">use crate</span>::{digest, ec, error, hex, rsa, sealed};
-<a href=#262 id=262 data-nosnippet>262</a>
-<a href=#263 id=263 data-nosnippet>263</a><span class="doccomment">/// The longest signature is for ML-DSA-87
-<a href=#264 id=264 data-nosnippet>264</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MAX_LEN: usize = <span class="number">4627</span>;
-<a href=#265 id=265 data-nosnippet>265</a>
-<a href=#266 id=266 data-nosnippet>266</a><span class="doccomment">/// A public key signature returned from a signing operation.
-<a href=#267 id=267 data-nosnippet>267</a></span><span class="attr">#[derive(Clone, Copy)]
-<a href=#268 id=268 data-nosnippet>268</a></span><span class="kw">pub struct </span>Signature {
-<a href=#269 id=269 data-nosnippet>269</a>    value: [u8; MAX_LEN],
-<a href=#270 id=270 data-nosnippet>270</a>    len: usize,
-<a href=#271 id=271 data-nosnippet>271</a>}
+<a href=#261 id=261 data-nosnippet>261</a><span class="kw">use </span><span class="kw">crate</span>::ec::encoding::parse_ec_public_key;
+<a href=#262 id=262 data-nosnippet>262</a><span class="kw">use </span><span class="kw">crate</span>::ed25519::parse_ed25519_public_key;
+<a href=#263 id=263 data-nosnippet>263</a><span class="kw">use </span><span class="kw">crate</span>::error::KeyRejected;
+<a href=#264 id=264 data-nosnippet>264</a><span class="attr">#[cfg(all(feature = <span class="string">"unstable"</span>, not(feature = <span class="string">"fips"</span>)))]
+<a href=#265 id=265 data-nosnippet>265</a></span><span class="kw">use </span><span class="kw">crate</span>::pqdsa::{parse_pqdsa_public_key, signature::PqdsaVerificationAlgorithm};
+<a href=#266 id=266 data-nosnippet>266</a><span class="kw">use </span><span class="kw">crate</span>::ptr::LcPtr;
+<a href=#267 id=267 data-nosnippet>267</a><span class="kw">use </span><span class="kw">crate</span>::rsa::key::parse_rsa_public_key;
+<a href=#268 id=268 data-nosnippet>268</a><span class="kw">use crate</span>::{digest, ec, error, hex, rsa, sealed};
+<a href=#269 id=269 data-nosnippet>269</a>
+<a href=#270 id=270 data-nosnippet>270</a><span class="doccomment">/// The longest signature is for ML-DSA-87
+<a href=#271 id=271 data-nosnippet>271</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MAX_LEN: usize = <span class="number">4627</span>;
 <a href=#272 id=272 data-nosnippet>272</a>
-<a href=#273 id=273 data-nosnippet>273</a><span class="kw">impl </span>Signature {
-<a href=#274 id=274 data-nosnippet>274</a>    <span class="comment">// Panics if `value` is too long.
-<a href=#275 id=275 data-nosnippet>275</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new&lt;F&gt;(fill: F) -&gt; <span class="self">Self
-<a href=#276 id=276 data-nosnippet>276</a>    </span><span class="kw">where
-<a href=#277 id=277 data-nosnippet>277</a>        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>[u8; MAX_LEN]) -&gt; usize,
-<a href=#278 id=278 data-nosnippet>278</a>    {
-<a href=#279 id=279 data-nosnippet>279</a>        <span class="kw">let </span><span class="kw-2">mut </span>r = <span class="self">Self </span>{
-<a href=#280 id=280 data-nosnippet>280</a>            value: [<span class="number">0</span>; MAX_LEN],
-<a href=#281 id=281 data-nosnippet>281</a>            len: <span class="number">0</span>,
-<a href=#282 id=282 data-nosnippet>282</a>        };
-<a href=#283 id=283 data-nosnippet>283</a>        r.len = fill(<span class="kw-2">&amp;mut </span>r.value);
-<a href=#284 id=284 data-nosnippet>284</a>        r
-<a href=#285 id=285 data-nosnippet>285</a>    }
-<a href=#286 id=286 data-nosnippet>286</a>}
-<a href=#287 id=287 data-nosnippet>287</a>
-<a href=#288 id=288 data-nosnippet>288</a><span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>Signature {
-<a href=#289 id=289 data-nosnippet>289</a>    <span class="attr">#[inline]
-<a href=#290 id=290 data-nosnippet>290</a>    </span><span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
-<a href=#291 id=291 data-nosnippet>291</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.value[..<span class="self">self</span>.len]
+<a href=#273 id=273 data-nosnippet>273</a><span class="doccomment">/// A public key signature returned from a signing operation.
+<a href=#274 id=274 data-nosnippet>274</a></span><span class="attr">#[derive(Clone, Copy)]
+<a href=#275 id=275 data-nosnippet>275</a></span><span class="kw">pub struct </span>Signature {
+<a href=#276 id=276 data-nosnippet>276</a>    value: [u8; MAX_LEN],
+<a href=#277 id=277 data-nosnippet>277</a>    len: usize,
+<a href=#278 id=278 data-nosnippet>278</a>}
+<a href=#279 id=279 data-nosnippet>279</a>
+<a href=#280 id=280 data-nosnippet>280</a><span class="kw">impl </span>Signature {
+<a href=#281 id=281 data-nosnippet>281</a>    <span class="comment">// Panics if `value` is too long.
+<a href=#282 id=282 data-nosnippet>282</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new&lt;F&gt;(fill: F) -&gt; <span class="self">Self
+<a href=#283 id=283 data-nosnippet>283</a>    </span><span class="kw">where
+<a href=#284 id=284 data-nosnippet>284</a>        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>[u8; MAX_LEN]) -&gt; usize,
+<a href=#285 id=285 data-nosnippet>285</a>    {
+<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">let </span><span class="kw-2">mut </span>r = <span class="self">Self </span>{
+<a href=#287 id=287 data-nosnippet>287</a>            value: [<span class="number">0</span>; MAX_LEN],
+<a href=#288 id=288 data-nosnippet>288</a>            len: <span class="number">0</span>,
+<a href=#289 id=289 data-nosnippet>289</a>        };
+<a href=#290 id=290 data-nosnippet>290</a>        r.len = fill(<span class="kw-2">&amp;mut </span>r.value);
+<a href=#291 id=291 data-nosnippet>291</a>        r
 <a href=#292 id=292 data-nosnippet>292</a>    }
 <a href=#293 id=293 data-nosnippet>293</a>}
 <a href=#294 id=294 data-nosnippet>294</a>
-<a href=#295 id=295 data-nosnippet>295</a><span class="doccomment">/// Key pairs for signing messages (private key and public key).
-<a href=#296 id=296 data-nosnippet>296</a></span><span class="kw">pub trait </span>KeyPair: Debug + Send + Sized + Sync {
-<a href=#297 id=297 data-nosnippet>297</a>    <span class="doccomment">/// The type of the public key.
-<a href=#298 id=298 data-nosnippet>298</a>    </span><span class="kw">type </span>PublicKey: AsRef&lt;[u8]&gt; + Debug + Clone + Send + Sized + Sync;
-<a href=#299 id=299 data-nosnippet>299</a>
-<a href=#300 id=300 data-nosnippet>300</a>    <span class="doccomment">/// The public key for the key pair.
-<a href=#301 id=301 data-nosnippet>301</a>    </span><span class="kw">fn </span>public_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::PublicKey;
-<a href=#302 id=302 data-nosnippet>302</a>}
-<a href=#303 id=303 data-nosnippet>303</a>
-<a href=#304 id=304 data-nosnippet>304</a><span class="doccomment">/// A signature verification algorithm.
-<a href=#305 id=305 data-nosnippet>305</a></span><span class="kw">pub trait </span>VerificationAlgorithm: Debug + Sync + sealed::Sealed {
-<a href=#306 id=306 data-nosnippet>306</a>    <span class="doccomment">/// Verify the signature `signature` of message `msg` with the public key
-<a href=#307 id=307 data-nosnippet>307</a>    /// `public_key`.
-<a href=#308 id=308 data-nosnippet>308</a>    ///
-<a href=#309 id=309 data-nosnippet>309</a>    </span><span class="comment">// # FIPS
-<a href=#310 id=310 data-nosnippet>310</a>    // The following conditions must be met:
-<a href=#311 id=311 data-nosnippet>311</a>    // * RSA Key Sizes: 1024, 2048, 3072, 4096
-<a href=#312 id=312 data-nosnippet>312</a>    // * NIST Elliptic Curves: P256, P384, P521
-<a href=#313 id=313 data-nosnippet>313</a>    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
-<a href=#314 id=314 data-nosnippet>314</a>    //
-<a href=#315 id=315 data-nosnippet>315</a>    </span><span class="doccomment">/// # Errors
-<a href=#316 id=316 data-nosnippet>316</a>    /// `error::Unspecified` if inputs not verified.
-<a href=#317 id=317 data-nosnippet>317</a>    </span><span class="attr">#[cfg(feature = <span class="string">"ring-sig-verify"</span>)]
-<a href=#318 id=318 data-nosnippet>318</a>    #[deprecated(note = <span class="string">"please use `VerificationAlgorithm::verify_sig` instead"</span>)]
-<a href=#319 id=319 data-nosnippet>319</a>    </span><span class="kw">fn </span>verify(
-<a href=#320 id=320 data-nosnippet>320</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#321 id=321 data-nosnippet>321</a>        public_key: Input&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#322 id=322 data-nosnippet>322</a>        msg: Input&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#323 id=323 data-nosnippet>323</a>        signature: Input&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#324 id=324 data-nosnippet>324</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt;;
-<a href=#325 id=325 data-nosnippet>325</a>
-<a href=#326 id=326 data-nosnippet>326</a>    <span class="doccomment">/// Verify the signature `signature` of message `msg` with the public key
-<a href=#327 id=327 data-nosnippet>327</a>    /// `public_key`.
-<a href=#328 id=328 data-nosnippet>328</a>    ///
-<a href=#329 id=329 data-nosnippet>329</a>    </span><span class="comment">// # FIPS
-<a href=#330 id=330 data-nosnippet>330</a>    // The following conditions must be met:
-<a href=#331 id=331 data-nosnippet>331</a>    // * RSA Key Sizes: 1024, 2048, 3072, 4096
-<a href=#332 id=332 data-nosnippet>332</a>    // * NIST Elliptic Curves: P256, P384, P521
-<a href=#333 id=333 data-nosnippet>333</a>    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
-<a href=#334 id=334 data-nosnippet>334</a>    //
-<a href=#335 id=335 data-nosnippet>335</a>    </span><span class="doccomment">/// # Errors
-<a href=#336 id=336 data-nosnippet>336</a>    /// `error::Unspecified` if inputs not verified.
-<a href=#337 id=337 data-nosnippet>337</a>    </span><span class="kw">fn </span>verify_sig(
-<a href=#338 id=338 data-nosnippet>338</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#339 id=339 data-nosnippet>339</a>        public_key: <span class="kw-2">&amp;</span>[u8],
-<a href=#340 id=340 data-nosnippet>340</a>        msg: <span class="kw-2">&amp;</span>[u8],
-<a href=#341 id=341 data-nosnippet>341</a>        signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#342 id=342 data-nosnippet>342</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt;;
-<a href=#343 id=343 data-nosnippet>343</a>
-<a href=#344 id=344 data-nosnippet>344</a>    <span class="doccomment">/// Verify the signature `signature` of `digest` with the `public_key`.
-<a href=#345 id=345 data-nosnippet>345</a>    ///
-<a href=#346 id=346 data-nosnippet>346</a>    </span><span class="comment">// # FIPS
-<a href=#347 id=347 data-nosnippet>347</a>    // Not approved.
-<a href=#348 id=348 data-nosnippet>348</a>    //
-<a href=#349 id=349 data-nosnippet>349</a>    </span><span class="doccomment">/// # Errors
-<a href=#350 id=350 data-nosnippet>350</a>    /// `error::Unspecified` if inputs not verified.
-<a href=#351 id=351 data-nosnippet>351</a>    </span><span class="kw">fn </span>verify_digest_sig(
-<a href=#352 id=352 data-nosnippet>352</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#353 id=353 data-nosnippet>353</a>        public_key: <span class="kw-2">&amp;</span>[u8],
-<a href=#354 id=354 data-nosnippet>354</a>        digest: <span class="kw-2">&amp;</span>Digest,
-<a href=#355 id=355 data-nosnippet>355</a>        signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#356 id=356 data-nosnippet>356</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt;;
-<a href=#357 id=357 data-nosnippet>357</a>}
-<a href=#358 id=358 data-nosnippet>358</a>
-<a href=#359 id=359 data-nosnippet>359</a><span class="doccomment">/// An unparsed, possibly malformed, public key for signature verification.
-<a href=#360 id=360 data-nosnippet>360</a></span><span class="attr">#[derive(Clone)]
-<a href=#361 id=361 data-nosnippet>361</a></span><span class="kw">pub struct </span>UnparsedPublicKey&lt;B: AsRef&lt;[u8]&gt;&gt; {
-<a href=#362 id=362 data-nosnippet>362</a>    algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>VerificationAlgorithm,
-<a href=#363 id=363 data-nosnippet>363</a>    bytes: B,
-<a href=#364 id=364 data-nosnippet>364</a>}
-<a href=#365 id=365 data-nosnippet>365</a>
-<a href=#366 id=366 data-nosnippet>366</a><span class="kw">impl</span>&lt;B: Copy + AsRef&lt;[u8]&gt;&gt; Copy <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {}
+<a href=#295 id=295 data-nosnippet>295</a><span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>Signature {
+<a href=#296 id=296 data-nosnippet>296</a>    <span class="attr">#[inline]
+<a href=#297 id=297 data-nosnippet>297</a>    </span><span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+<a href=#298 id=298 data-nosnippet>298</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.value[..<span class="self">self</span>.len]
+<a href=#299 id=299 data-nosnippet>299</a>    }
+<a href=#300 id=300 data-nosnippet>300</a>}
+<a href=#301 id=301 data-nosnippet>301</a>
+<a href=#302 id=302 data-nosnippet>302</a><span class="doccomment">/// Key pairs for signing messages (private key and public key).
+<a href=#303 id=303 data-nosnippet>303</a></span><span class="kw">pub trait </span>KeyPair: Debug + Send + Sized + Sync {
+<a href=#304 id=304 data-nosnippet>304</a>    <span class="doccomment">/// The type of the public key.
+<a href=#305 id=305 data-nosnippet>305</a>    </span><span class="kw">type </span>PublicKey: AsRef&lt;[u8]&gt; + Debug + Clone + Send + Sized + Sync;
+<a href=#306 id=306 data-nosnippet>306</a>
+<a href=#307 id=307 data-nosnippet>307</a>    <span class="doccomment">/// The public key for the key pair.
+<a href=#308 id=308 data-nosnippet>308</a>    </span><span class="kw">fn </span>public_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::PublicKey;
+<a href=#309 id=309 data-nosnippet>309</a>}
+<a href=#310 id=310 data-nosnippet>310</a>
+<a href=#311 id=311 data-nosnippet>311</a><span class="comment">// Private trait
+<a href=#312 id=312 data-nosnippet>312</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>ParsedVerificationAlgorithm: Debug + Sync {
+<a href=#313 id=313 data-nosnippet>313</a>    <span class="kw">fn </span>parsed_verify_sig(
+<a href=#314 id=314 data-nosnippet>314</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#315 id=315 data-nosnippet>315</a>        public_key: <span class="kw-2">&amp;</span>ParsedPublicKey,
+<a href=#316 id=316 data-nosnippet>316</a>        msg: <span class="kw-2">&amp;</span>[u8],
+<a href=#317 id=317 data-nosnippet>317</a>        signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#318 id=318 data-nosnippet>318</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt;;
+<a href=#319 id=319 data-nosnippet>319</a>
+<a href=#320 id=320 data-nosnippet>320</a>    <span class="kw">fn </span>parsed_verify_digest_sig(
+<a href=#321 id=321 data-nosnippet>321</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#322 id=322 data-nosnippet>322</a>        public_key: <span class="kw-2">&amp;</span>ParsedPublicKey,
+<a href=#323 id=323 data-nosnippet>323</a>        digest: <span class="kw-2">&amp;</span>Digest,
+<a href=#324 id=324 data-nosnippet>324</a>        signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#325 id=325 data-nosnippet>325</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt;;
+<a href=#326 id=326 data-nosnippet>326</a>}
+<a href=#327 id=327 data-nosnippet>327</a>
+<a href=#328 id=328 data-nosnippet>328</a><span class="doccomment">/// A signature verification algorithm.
+<a href=#329 id=329 data-nosnippet>329</a></span><span class="kw">pub trait </span>VerificationAlgorithm: Debug + Sync + Any + sealed::Sealed {
+<a href=#330 id=330 data-nosnippet>330</a>    <span class="doccomment">/// Verify the signature `signature` of message `msg` with the public key
+<a href=#331 id=331 data-nosnippet>331</a>    /// `public_key`.
+<a href=#332 id=332 data-nosnippet>332</a>    ///
+<a href=#333 id=333 data-nosnippet>333</a>    </span><span class="comment">// # FIPS
+<a href=#334 id=334 data-nosnippet>334</a>    // The following conditions must be met:
+<a href=#335 id=335 data-nosnippet>335</a>    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+<a href=#336 id=336 data-nosnippet>336</a>    // * NIST Elliptic Curves: P256, P384, P521
+<a href=#337 id=337 data-nosnippet>337</a>    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+<a href=#338 id=338 data-nosnippet>338</a>    //
+<a href=#339 id=339 data-nosnippet>339</a>    </span><span class="doccomment">/// # Errors
+<a href=#340 id=340 data-nosnippet>340</a>    /// `error::Unspecified` if inputs not verified.
+<a href=#341 id=341 data-nosnippet>341</a>    </span><span class="attr">#[cfg(feature = <span class="string">"ring-sig-verify"</span>)]
+<a href=#342 id=342 data-nosnippet>342</a>    #[deprecated(note = <span class="string">"please use `VerificationAlgorithm::verify_sig` instead"</span>)]
+<a href=#343 id=343 data-nosnippet>343</a>    </span><span class="kw">fn </span>verify(
+<a href=#344 id=344 data-nosnippet>344</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#345 id=345 data-nosnippet>345</a>        public_key: Input&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#346 id=346 data-nosnippet>346</a>        msg: Input&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#347 id=347 data-nosnippet>347</a>        signature: Input&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#348 id=348 data-nosnippet>348</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt;;
+<a href=#349 id=349 data-nosnippet>349</a>
+<a href=#350 id=350 data-nosnippet>350</a>    <span class="doccomment">/// Verify the signature `signature` of message `msg` with the public key
+<a href=#351 id=351 data-nosnippet>351</a>    /// `public_key`.
+<a href=#352 id=352 data-nosnippet>352</a>    ///
+<a href=#353 id=353 data-nosnippet>353</a>    </span><span class="comment">// # FIPS
+<a href=#354 id=354 data-nosnippet>354</a>    // The following conditions must be met:
+<a href=#355 id=355 data-nosnippet>355</a>    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+<a href=#356 id=356 data-nosnippet>356</a>    // * NIST Elliptic Curves: P256, P384, P521
+<a href=#357 id=357 data-nosnippet>357</a>    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+<a href=#358 id=358 data-nosnippet>358</a>    //
+<a href=#359 id=359 data-nosnippet>359</a>    </span><span class="doccomment">/// # Errors
+<a href=#360 id=360 data-nosnippet>360</a>    /// `error::Unspecified` if inputs not verified.
+<a href=#361 id=361 data-nosnippet>361</a>    </span><span class="kw">fn </span>verify_sig(
+<a href=#362 id=362 data-nosnippet>362</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#363 id=363 data-nosnippet>363</a>        public_key: <span class="kw-2">&amp;</span>[u8],
+<a href=#364 id=364 data-nosnippet>364</a>        msg: <span class="kw-2">&amp;</span>[u8],
+<a href=#365 id=365 data-nosnippet>365</a>        signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#366 id=366 data-nosnippet>366</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt;;
 <a href=#367 id=367 data-nosnippet>367</a>
-<a href=#368 id=368 data-nosnippet>368</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; Debug <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {
-<a href=#369 id=369 data-nosnippet>369</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
-<a href=#370 id=370 data-nosnippet>370</a>        f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#371 id=371 data-nosnippet>371</a>            <span class="string">"UnparsedPublicKey {{ algorithm: {:?}, bytes: \"{}\" }}"</span>,
-<a href=#372 id=372 data-nosnippet>372</a>            <span class="self">self</span>.algorithm,
-<a href=#373 id=373 data-nosnippet>373</a>            hex::encode(<span class="self">self</span>.bytes.as_ref())
-<a href=#374 id=374 data-nosnippet>374</a>        ))
-<a href=#375 id=375 data-nosnippet>375</a>    }
-<a href=#376 id=376 data-nosnippet>376</a>}
-<a href=#377 id=377 data-nosnippet>377</a>
-<a href=#378 id=378 data-nosnippet>378</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; AsRef&lt;[u8]&gt; <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {
-<a href=#379 id=379 data-nosnippet>379</a>    <span class="attr">#[inline]
-<a href=#380 id=380 data-nosnippet>380</a>    </span><span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
-<a href=#381 id=381 data-nosnippet>381</a>        <span class="self">self</span>.bytes.as_ref()
-<a href=#382 id=382 data-nosnippet>382</a>    }
-<a href=#383 id=383 data-nosnippet>383</a>}
-<a href=#384 id=384 data-nosnippet>384</a>
-<a href=#385 id=385 data-nosnippet>385</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; UnparsedPublicKey&lt;B&gt; {
-<a href=#386 id=386 data-nosnippet>386</a>    <span class="doccomment">/// Construct a new `UnparsedPublicKey`.
-<a href=#387 id=387 data-nosnippet>387</a>    ///
-<a href=#388 id=388 data-nosnippet>388</a>    /// No validation of `bytes` is done until `verify()` is called.
-<a href=#389 id=389 data-nosnippet>389</a>    </span><span class="attr">#[inline]
-<a href=#390 id=390 data-nosnippet>390</a>    </span><span class="kw">pub fn </span>new(algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>VerificationAlgorithm, bytes: B) -&gt; <span class="self">Self </span>{
-<a href=#391 id=391 data-nosnippet>391</a>        <span class="self">Self </span>{ algorithm, bytes }
-<a href=#392 id=392 data-nosnippet>392</a>    }
-<a href=#393 id=393 data-nosnippet>393</a>
-<a href=#394 id=394 data-nosnippet>394</a>    <span class="doccomment">/// Parses the public key and verifies `signature` is a valid signature of
-<a href=#395 id=395 data-nosnippet>395</a>    /// `message` using it.
-<a href=#396 id=396 data-nosnippet>396</a>    ///
-<a href=#397 id=397 data-nosnippet>397</a>    /// See the [`crate::signature`] module-level documentation for examples.
-<a href=#398 id=398 data-nosnippet>398</a>    ///
-<a href=#399 id=399 data-nosnippet>399</a>    </span><span class="comment">// # FIPS
-<a href=#400 id=400 data-nosnippet>400</a>    // The following conditions must be met:
-<a href=#401 id=401 data-nosnippet>401</a>    // * RSA Key Sizes: 1024, 2048, 3072, 4096
-<a href=#402 id=402 data-nosnippet>402</a>    // * NIST Elliptic Curves: P256, P384, P521
-<a href=#403 id=403 data-nosnippet>403</a>    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
-<a href=#404 id=404 data-nosnippet>404</a>    //
-<a href=#405 id=405 data-nosnippet>405</a>    </span><span class="doccomment">/// # Errors
-<a href=#406 id=406 data-nosnippet>406</a>    /// `error::Unspecified` if inputs not verified.
-<a href=#407 id=407 data-nosnippet>407</a>    </span><span class="attr">#[inline]
-<a href=#408 id=408 data-nosnippet>408</a>    </span><span class="kw">pub fn </span>verify(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>[u8], signature: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt; {
-<a href=#409 id=409 data-nosnippet>409</a>        <span class="self">self</span>.algorithm
-<a href=#410 id=410 data-nosnippet>410</a>            .verify_sig(<span class="self">self</span>.bytes.as_ref(), message, signature)
-<a href=#411 id=411 data-nosnippet>411</a>    }
-<a href=#412 id=412 data-nosnippet>412</a>
-<a href=#413 id=413 data-nosnippet>413</a>    <span class="doccomment">/// Parses the public key and verifies `signature` is a valid signature of
-<a href=#414 id=414 data-nosnippet>414</a>    /// `digest` using it.
+<a href=#368 id=368 data-nosnippet>368</a>    <span class="doccomment">/// Verify the signature `signature` of `digest` with the `public_key`.
+<a href=#369 id=369 data-nosnippet>369</a>    ///
+<a href=#370 id=370 data-nosnippet>370</a>    </span><span class="comment">// # FIPS
+<a href=#371 id=371 data-nosnippet>371</a>    // Not approved.
+<a href=#372 id=372 data-nosnippet>372</a>    //
+<a href=#373 id=373 data-nosnippet>373</a>    </span><span class="doccomment">/// # Errors
+<a href=#374 id=374 data-nosnippet>374</a>    /// `error::Unspecified` if inputs not verified.
+<a href=#375 id=375 data-nosnippet>375</a>    </span><span class="kw">fn </span>verify_digest_sig(
+<a href=#376 id=376 data-nosnippet>376</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#377 id=377 data-nosnippet>377</a>        public_key: <span class="kw-2">&amp;</span>[u8],
+<a href=#378 id=378 data-nosnippet>378</a>        digest: <span class="kw-2">&amp;</span>Digest,
+<a href=#379 id=379 data-nosnippet>379</a>        signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#380 id=380 data-nosnippet>380</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt;;
+<a href=#381 id=381 data-nosnippet>381</a>}
+<a href=#382 id=382 data-nosnippet>382</a>
+<a href=#383 id=383 data-nosnippet>383</a><span class="doccomment">/// An unparsed, possibly malformed, public key for signature verification.
+<a href=#384 id=384 data-nosnippet>384</a></span><span class="attr">#[derive(Clone)]
+<a href=#385 id=385 data-nosnippet>385</a></span><span class="kw">pub struct </span>UnparsedPublicKey&lt;B: AsRef&lt;[u8]&gt;&gt; {
+<a href=#386 id=386 data-nosnippet>386</a>    algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>VerificationAlgorithm,
+<a href=#387 id=387 data-nosnippet>387</a>    bytes: B,
+<a href=#388 id=388 data-nosnippet>388</a>}
+<a href=#389 id=389 data-nosnippet>389</a><span class="doccomment">/// A parsed public key for signature verification.
+<a href=#390 id=390 data-nosnippet>390</a>///
+<a href=#391 id=391 data-nosnippet>391</a>/// A `ParsedPublicKey` can be created in two ways:
+<a href=#392 id=392 data-nosnippet>392</a>/// - Directly from public key bytes using [`ParsedPublicKey::new`]
+<a href=#393 id=393 data-nosnippet>393</a>/// - By parsing an `UnparsedPublicKey` using [`UnparsedPublicKey::parse`]
+<a href=#394 id=394 data-nosnippet>394</a>///
+<a href=#395 id=395 data-nosnippet>395</a>/// This pre-validates the public key format and stores the parsed key material,
+<a href=#396 id=396 data-nosnippet>396</a>/// allowing for more efficient signature verification operations compared to
+<a href=#397 id=397 data-nosnippet>397</a>/// parsing the key on each verification.
+<a href=#398 id=398 data-nosnippet>398</a>///
+<a href=#399 id=399 data-nosnippet>399</a>/// See the [`crate::signature`] module-level documentation for examples.
+<a href=#400 id=400 data-nosnippet>400</a></span><span class="kw">pub struct </span>ParsedPublicKey {
+<a href=#401 id=401 data-nosnippet>401</a>    algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>VerificationAlgorithm,
+<a href=#402 id=402 data-nosnippet>402</a>    parsed_algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>ParsedVerificationAlgorithm,
+<a href=#403 id=403 data-nosnippet>403</a>    key: LcPtr&lt;EVP_PKEY&gt;,
+<a href=#404 id=404 data-nosnippet>404</a>}
+<a href=#405 id=405 data-nosnippet>405</a>
+<a href=#406 id=406 data-nosnippet>406</a><span class="kw">impl </span>ParsedPublicKey {
+<a href=#407 id=407 data-nosnippet>407</a>    <span class="doccomment">/// Creates a new `ParsedPublicKey` directly from public key bytes.
+<a href=#408 id=408 data-nosnippet>408</a>    ///
+<a href=#409 id=409 data-nosnippet>409</a>    /// This method validates the public key format and creates a `ParsedPublicKey`
+<a href=#410 id=410 data-nosnippet>410</a>    /// that can be used for efficient signature verification operations.
+<a href=#411 id=411 data-nosnippet>411</a>    ///
+<a href=#412 id=412 data-nosnippet>412</a>    /// # Errors
+<a href=#413 id=413 data-nosnippet>413</a>    /// `KeyRejected` if the public key bytes are malformed or incompatible
+<a href=#414 id=414 data-nosnippet>414</a>    /// with the specified algorithm.
 <a href=#415 id=415 data-nosnippet>415</a>    ///
-<a href=#416 id=416 data-nosnippet>416</a>    /// See the [`crate::signature`] module-level documentation for examples.
+<a href=#416 id=416 data-nosnippet>416</a>    /// # Examples
 <a href=#417 id=417 data-nosnippet>417</a>    ///
-<a href=#418 id=418 data-nosnippet>418</a>    </span><span class="comment">// # FIPS
-<a href=#419 id=419 data-nosnippet>419</a>    // Not allowed
-<a href=#420 id=420 data-nosnippet>420</a>    //
-<a href=#421 id=421 data-nosnippet>421</a>    </span><span class="doccomment">/// # Errors
-<a href=#422 id=422 data-nosnippet>422</a>    /// `error::Unspecified` if inputs not verified.
-<a href=#423 id=423 data-nosnippet>423</a>    </span><span class="attr">#[inline]
-<a href=#424 id=424 data-nosnippet>424</a>    </span><span class="kw">pub fn </span>verify_digest(
-<a href=#425 id=425 data-nosnippet>425</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#426 id=426 data-nosnippet>426</a>        digest: <span class="kw-2">&amp;</span>Digest,
-<a href=#427 id=427 data-nosnippet>427</a>        signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#428 id=428 data-nosnippet>428</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt; {
-<a href=#429 id=429 data-nosnippet>429</a>        <span class="self">self</span>.algorithm
-<a href=#430 id=430 data-nosnippet>430</a>            .verify_digest_sig(<span class="self">self</span>.bytes.as_ref(), digest, signature)
-<a href=#431 id=431 data-nosnippet>431</a>    }
-<a href=#432 id=432 data-nosnippet>432</a>}
-<a href=#433 id=433 data-nosnippet>433</a>
-<a href=#434 id=434 data-nosnippet>434</a><span class="doccomment">/// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-1.
-<a href=#435 id=435 data-nosnippet>435</a></span><span class="kw">pub static </span>RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
-<a href=#436 id=436 data-nosnippet>436</a>    <span class="kw-2">&amp;</span>digest::SHA1_FOR_LEGACY_USE_ONLY,
-<a href=#437 id=437 data-nosnippet>437</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#438 id=438 data-nosnippet>438</a>    <span class="number">1024</span>..=<span class="number">8192</span>,
-<a href=#439 id=439 data-nosnippet>439</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
-<a href=#440 id=440 data-nosnippet>440</a>);
+<a href=#418 id=418 data-nosnippet>418</a>    /// ```
+<a href=#419 id=419 data-nosnippet>419</a>    /// use aws_lc_rs::signature::{self, ParsedPublicKey};
+<a href=#420 id=420 data-nosnippet>420</a>    ///
+<a href=#421 id=421 data-nosnippet>421</a>    /// # fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+<a href=#422 id=422 data-nosnippet>422</a>    ///     let parsed_key = ParsedPublicKey::new(&amp;signature::ED25519, include_bytes!("../tests/data/ed25519_test_public_key.bin"))?;
+<a href=#423 id=423 data-nosnippet>423</a>    ///     let signature = [
+<a href=#424 id=424 data-nosnippet>424</a>    ///         0xED, 0xDB, 0x67, 0xE9, 0xF7, 0x8C, 0x9A, 0x0, 0xFD, 0xEE, 0x2D, 0x22, 0x21, 0xA3, 0x9A,
+<a href=#425 id=425 data-nosnippet>425</a>    ///         0x8A, 0x79, 0xF2, 0x53, 0x88, 0x78, 0xF0, 0xA0, 0x1, 0x80, 0xA, 0x49, 0xA4, 0x17, 0x88,
+<a href=#426 id=426 data-nosnippet>426</a>    ///         0xAB, 0x44, 0x4B, 0xD2, 0x58, 0xB0, 0x3B, 0x51, 0x8A, 0x1B, 0x61, 0x24, 0x52, 0x78, 0x48,
+<a href=#427 id=427 data-nosnippet>427</a>    ///         0x58, 0x40, 0x5, 0xB5, 0x45, 0x22, 0xB6, 0x40, 0xBD, 0x14, 0x47, 0xB1, 0xF0, 0xDC, 0x13,
+<a href=#428 id=428 data-nosnippet>428</a>    ///         0xB3, 0xE9, 0xD0, 0x6,
+<a href=#429 id=429 data-nosnippet>429</a>    ///     ];
+<a href=#430 id=430 data-nosnippet>430</a>    ///     assert!(parsed_key.verify_sig(b"hello world!", &amp;signature).is_ok());
+<a href=#431 id=431 data-nosnippet>431</a>    ///     assert!(parsed_key.verify_sig(b"hello world.", &amp;signature).is_err());
+<a href=#432 id=432 data-nosnippet>432</a>    /// # Ok(())
+<a href=#433 id=433 data-nosnippet>433</a>    /// # }
+<a href=#434 id=434 data-nosnippet>434</a>    /// ```
+<a href=#435 id=435 data-nosnippet>435</a>    </span><span class="kw">pub fn </span>new&lt;B: AsRef&lt;[u8]&gt;&gt;(
+<a href=#436 id=436 data-nosnippet>436</a>        algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>VerificationAlgorithm,
+<a href=#437 id=437 data-nosnippet>437</a>        bytes: B,
+<a href=#438 id=438 data-nosnippet>438</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
+<a href=#439 id=439 data-nosnippet>439</a>        parse_public_key(bytes.as_ref(), algorithm)
+<a href=#440 id=440 data-nosnippet>440</a>    }
 <a href=#441 id=441 data-nosnippet>441</a>
-<a href=#442 id=442 data-nosnippet>442</a><span class="doccomment">/// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-256.
-<a href=#443 id=443 data-nosnippet>443</a></span><span class="kw">pub static </span>RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
-<a href=#444 id=444 data-nosnippet>444</a>    <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#445 id=445 data-nosnippet>445</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#446 id=446 data-nosnippet>446</a>    <span class="number">1024</span>..=<span class="number">8192</span>,
-<a href=#447 id=447 data-nosnippet>447</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
-<a href=#448 id=448 data-nosnippet>448</a>);
-<a href=#449 id=449 data-nosnippet>449</a>
-<a href=#450 id=450 data-nosnippet>450</a><span class="doccomment">/// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-512.
-<a href=#451 id=451 data-nosnippet>451</a></span><span class="kw">pub static </span>RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
-<a href=#452 id=452 data-nosnippet>452</a>    <span class="kw-2">&amp;</span>digest::SHA512,
-<a href=#453 id=453 data-nosnippet>453</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#454 id=454 data-nosnippet>454</a>    <span class="number">1024</span>..=<span class="number">8192</span>,
-<a href=#455 id=455 data-nosnippet>455</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
-<a href=#456 id=456 data-nosnippet>456</a>);
-<a href=#457 id=457 data-nosnippet>457</a>
-<a href=#458 id=458 data-nosnippet>458</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-1.
-<a href=#459 id=459 data-nosnippet>459</a></span><span class="kw">pub static </span>RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
-<a href=#460 id=460 data-nosnippet>460</a>    <span class="kw-2">&amp;</span>digest::SHA1_FOR_LEGACY_USE_ONLY,
-<a href=#461 id=461 data-nosnippet>461</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#462 id=462 data-nosnippet>462</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
-<a href=#463 id=463 data-nosnippet>463</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
-<a href=#464 id=464 data-nosnippet>464</a>);
-<a href=#465 id=465 data-nosnippet>465</a>
-<a href=#466 id=466 data-nosnippet>466</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-256.
-<a href=#467 id=467 data-nosnippet>467</a></span><span class="kw">pub static </span>RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters::new(
-<a href=#468 id=468 data-nosnippet>468</a>    <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#469 id=469 data-nosnippet>469</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#470 id=470 data-nosnippet>470</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
-<a href=#471 id=471 data-nosnippet>471</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA256,
-<a href=#472 id=472 data-nosnippet>472</a>);
-<a href=#473 id=473 data-nosnippet>473</a>
-<a href=#474 id=474 data-nosnippet>474</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-384.
-<a href=#475 id=475 data-nosnippet>475</a></span><span class="kw">pub static </span>RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters::new(
-<a href=#476 id=476 data-nosnippet>476</a>    <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#477 id=477 data-nosnippet>477</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#478 id=478 data-nosnippet>478</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
-<a href=#479 id=479 data-nosnippet>479</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA384,
-<a href=#480 id=480 data-nosnippet>480</a>);
-<a href=#481 id=481 data-nosnippet>481</a>
-<a href=#482 id=482 data-nosnippet>482</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-512.
-<a href=#483 id=483 data-nosnippet>483</a></span><span class="kw">pub static </span>RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters::new(
-<a href=#484 id=484 data-nosnippet>484</a>    <span class="kw-2">&amp;</span>digest::SHA512,
-<a href=#485 id=485 data-nosnippet>485</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#486 id=486 data-nosnippet>486</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
-<a href=#487 id=487 data-nosnippet>487</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA512,
-<a href=#488 id=488 data-nosnippet>488</a>);
-<a href=#489 id=489 data-nosnippet>489</a>
-<a href=#490 id=490 data-nosnippet>490</a><span class="doccomment">/// Verification of signatures using RSA keys of 3072-8192 bits, PKCS#1.5 padding, and SHA-384.
-<a href=#491 id=491 data-nosnippet>491</a></span><span class="kw">pub static </span>RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters::new(
-<a href=#492 id=492 data-nosnippet>492</a>    <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#493 id=493 data-nosnippet>493</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#494 id=494 data-nosnippet>494</a>    <span class="number">3072</span>..=<span class="number">8192</span>,
-<a href=#495 id=495 data-nosnippet>495</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_3072_8192_SHA384,
-<a href=#496 id=496 data-nosnippet>496</a>);
-<a href=#497 id=497 data-nosnippet>497</a>
-<a href=#498 id=498 data-nosnippet>498</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-256.
-<a href=#499 id=499 data-nosnippet>499</a></span><span class="kw">pub static </span>RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters::new(
-<a href=#500 id=500 data-nosnippet>500</a>    <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#501 id=501 data-nosnippet>501</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-<a href=#502 id=502 data-nosnippet>502</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
-<a href=#503 id=503 data-nosnippet>503</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA256,
-<a href=#504 id=504 data-nosnippet>504</a>);
-<a href=#505 id=505 data-nosnippet>505</a>
-<a href=#506 id=506 data-nosnippet>506</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-384.
-<a href=#507 id=507 data-nosnippet>507</a></span><span class="kw">pub static </span>RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters::new(
-<a href=#508 id=508 data-nosnippet>508</a>    <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#509 id=509 data-nosnippet>509</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-<a href=#510 id=510 data-nosnippet>510</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
-<a href=#511 id=511 data-nosnippet>511</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA384,
-<a href=#512 id=512 data-nosnippet>512</a>);
-<a href=#513 id=513 data-nosnippet>513</a>
-<a href=#514 id=514 data-nosnippet>514</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-512.
-<a href=#515 id=515 data-nosnippet>515</a></span><span class="kw">pub static </span>RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters::new(
-<a href=#516 id=516 data-nosnippet>516</a>    <span class="kw-2">&amp;</span>digest::SHA512,
-<a href=#517 id=517 data-nosnippet>517</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-<a href=#518 id=518 data-nosnippet>518</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
-<a href=#519 id=519 data-nosnippet>519</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA512,
-<a href=#520 id=520 data-nosnippet>520</a>);
-<a href=#521 id=521 data-nosnippet>521</a>
-<a href=#522 id=522 data-nosnippet>522</a><span class="doccomment">/// RSA PSS padding using SHA-256 for RSA signatures.
-<a href=#523 id=523 data-nosnippet>523</a></span><span class="kw">pub static </span>RSA_PSS_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
-<a href=#524 id=524 data-nosnippet>524</a>    <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#525 id=525 data-nosnippet>525</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-<a href=#526 id=526 data-nosnippet>526</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PSS_SHA256,
-<a href=#527 id=527 data-nosnippet>527</a>);
-<a href=#528 id=528 data-nosnippet>528</a>
-<a href=#529 id=529 data-nosnippet>529</a><span class="doccomment">/// RSA PSS padding using SHA-384 for RSA signatures.
-<a href=#530 id=530 data-nosnippet>530</a></span><span class="kw">pub static </span>RSA_PSS_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
-<a href=#531 id=531 data-nosnippet>531</a>    <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#532 id=532 data-nosnippet>532</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-<a href=#533 id=533 data-nosnippet>533</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PSS_SHA384,
-<a href=#534 id=534 data-nosnippet>534</a>);
-<a href=#535 id=535 data-nosnippet>535</a>
-<a href=#536 id=536 data-nosnippet>536</a><span class="doccomment">/// RSA PSS padding using SHA-512 for RSA signatures.
-<a href=#537 id=537 data-nosnippet>537</a></span><span class="kw">pub static </span>RSA_PSS_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
-<a href=#538 id=538 data-nosnippet>538</a>    <span class="kw-2">&amp;</span>digest::SHA512,
-<a href=#539 id=539 data-nosnippet>539</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
-<a href=#540 id=540 data-nosnippet>540</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PSS_SHA512,
-<a href=#541 id=541 data-nosnippet>541</a>);
-<a href=#542 id=542 data-nosnippet>542</a>
-<a href=#543 id=543 data-nosnippet>543</a><span class="doccomment">/// PKCS#1 1.5 padding using SHA-256 for RSA signatures.
-<a href=#544 id=544 data-nosnippet>544</a></span><span class="kw">pub static </span>RSA_PKCS1_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
-<a href=#545 id=545 data-nosnippet>545</a>    <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#546 id=546 data-nosnippet>546</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#547 id=547 data-nosnippet>547</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PKCS1_SHA256,
-<a href=#548 id=548 data-nosnippet>548</a>);
-<a href=#549 id=549 data-nosnippet>549</a>
-<a href=#550 id=550 data-nosnippet>550</a><span class="doccomment">/// PKCS#1 1.5 padding using SHA-384 for RSA signatures.
-<a href=#551 id=551 data-nosnippet>551</a></span><span class="kw">pub static </span>RSA_PKCS1_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
-<a href=#552 id=552 data-nosnippet>552</a>    <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#553 id=553 data-nosnippet>553</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#554 id=554 data-nosnippet>554</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PKCS1_SHA384,
-<a href=#555 id=555 data-nosnippet>555</a>);
-<a href=#556 id=556 data-nosnippet>556</a>
-<a href=#557 id=557 data-nosnippet>557</a><span class="doccomment">/// PKCS#1 1.5 padding using SHA-512 for RSA signatures.
-<a href=#558 id=558 data-nosnippet>558</a></span><span class="kw">pub static </span>RSA_PKCS1_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
-<a href=#559 id=559 data-nosnippet>559</a>    <span class="kw-2">&amp;</span>digest::SHA512,
-<a href=#560 id=560 data-nosnippet>560</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
-<a href=#561 id=561 data-nosnippet>561</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PKCS1_SHA512,
-<a href=#562 id=562 data-nosnippet>562</a>);
-<a href=#563 id=563 data-nosnippet>563</a>
-<a href=#564 id=564 data-nosnippet>564</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
-<a href=#565 id=565 data-nosnippet>565</a></span><span class="kw">pub static </span>ECDSA_P256_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#566 id=566 data-nosnippet>566</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256,
-<a href=#567 id=567 data-nosnippet>567</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#568 id=568 data-nosnippet>568</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#569 id=569 data-nosnippet>569</a>};
-<a href=#570 id=570 data-nosnippet>570</a>
-<a href=#571 id=571 data-nosnippet>571</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
-<a href=#572 id=572 data-nosnippet>572</a></span><span class="kw">pub static </span>ECDSA_P384_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#573 id=573 data-nosnippet>573</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
-<a href=#574 id=574 data-nosnippet>574</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#575 id=575 data-nosnippet>575</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#576 id=576 data-nosnippet>576</a>};
-<a href=#577 id=577 data-nosnippet>577</a>
-<a href=#578 id=578 data-nosnippet>578</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA3-384.
-<a href=#579 id=579 data-nosnippet>579</a></span><span class="kw">pub static </span>ECDSA_P384_SHA3_384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#580 id=580 data-nosnippet>580</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
-<a href=#581 id=581 data-nosnippet>581</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_384,
-<a href=#582 id=582 data-nosnippet>582</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#583 id=583 data-nosnippet>583</a>};
-<a href=#584 id=584 data-nosnippet>584</a>
-<a href=#585 id=585 data-nosnippet>585</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-1.
-<a href=#586 id=586 data-nosnippet>586</a></span><span class="kw">pub static </span>ECDSA_P521_SHA1_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#587 id=587 data-nosnippet>587</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#588 id=588 data-nosnippet>588</a>    digest: <span class="kw-2">&amp;</span>digest::SHA1_FOR_LEGACY_USE_ONLY,
-<a href=#589 id=589 data-nosnippet>589</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#590 id=590 data-nosnippet>590</a>};
-<a href=#591 id=591 data-nosnippet>591</a>
-<a href=#592 id=592 data-nosnippet>592</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-224.
-<a href=#593 id=593 data-nosnippet>593</a></span><span class="kw">pub static </span>ECDSA_P521_SHA224_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#594 id=594 data-nosnippet>594</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#595 id=595 data-nosnippet>595</a>    digest: <span class="kw-2">&amp;</span>digest::SHA224,
-<a href=#596 id=596 data-nosnippet>596</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#597 id=597 data-nosnippet>597</a>};
-<a href=#598 id=598 data-nosnippet>598</a>
-<a href=#599 id=599 data-nosnippet>599</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-256.
-<a href=#600 id=600 data-nosnippet>600</a></span><span class="kw">pub static </span>ECDSA_P521_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#601 id=601 data-nosnippet>601</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#602 id=602 data-nosnippet>602</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#603 id=603 data-nosnippet>603</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#604 id=604 data-nosnippet>604</a>};
-<a href=#605 id=605 data-nosnippet>605</a>
-<a href=#606 id=606 data-nosnippet>606</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-384.
-<a href=#607 id=607 data-nosnippet>607</a></span><span class="kw">pub static </span>ECDSA_P521_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#608 id=608 data-nosnippet>608</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#609 id=609 data-nosnippet>609</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#610 id=610 data-nosnippet>610</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#611 id=611 data-nosnippet>611</a>};
-<a href=#612 id=612 data-nosnippet>612</a>
-<a href=#613 id=613 data-nosnippet>613</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-512.
-<a href=#614 id=614 data-nosnippet>614</a></span><span class="kw">pub static </span>ECDSA_P521_SHA512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#615 id=615 data-nosnippet>615</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#616 id=616 data-nosnippet>616</a>    digest: <span class="kw-2">&amp;</span>digest::SHA512,
-<a href=#617 id=617 data-nosnippet>617</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#618 id=618 data-nosnippet>618</a>};
-<a href=#619 id=619 data-nosnippet>619</a>
-<a href=#620 id=620 data-nosnippet>620</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA3-512.
-<a href=#621 id=621 data-nosnippet>621</a></span><span class="kw">pub static </span>ECDSA_P521_SHA3_512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#622 id=622 data-nosnippet>622</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#623 id=623 data-nosnippet>623</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_512,
-<a href=#624 id=624 data-nosnippet>624</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#625 id=625 data-nosnippet>625</a>};
-<a href=#626 id=626 data-nosnippet>626</a>
-<a href=#627 id=627 data-nosnippet>627</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA-256.
-<a href=#628 id=628 data-nosnippet>628</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#629 id=629 data-nosnippet>629</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256K1,
-<a href=#630 id=630 data-nosnippet>630</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#631 id=631 data-nosnippet>631</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#632 id=632 data-nosnippet>632</a>};
-<a href=#633 id=633 data-nosnippet>633</a>
-<a href=#634 id=634 data-nosnippet>634</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA3-256.
-<a href=#635 id=635 data-nosnippet>635</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA3_256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#636 id=636 data-nosnippet>636</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256K1,
-<a href=#637 id=637 data-nosnippet>637</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_256,
-<a href=#638 id=638 data-nosnippet>638</a>    sig_format: EcdsaSignatureFormat::Fixed,
-<a href=#639 id=639 data-nosnippet>639</a>};
-<a href=#640 id=640 data-nosnippet>640</a>
-<a href=#641 id=641 data-nosnippet>641</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
-<a href=#642 id=642 data-nosnippet>642</a></span><span class="kw">pub static </span>ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#643 id=643 data-nosnippet>643</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256,
-<a href=#644 id=644 data-nosnippet>644</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#645 id=645 data-nosnippet>645</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#646 id=646 data-nosnippet>646</a>};
-<a href=#647 id=647 data-nosnippet>647</a>
-<a href=#648 id=648 data-nosnippet>648</a><span class="doccomment">/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-384.
-<a href=#649 id=649 data-nosnippet>649</a></span><span class="kw">pub static </span>ECDSA_P256_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#650 id=650 data-nosnippet>650</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256,
-<a href=#651 id=651 data-nosnippet>651</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#652 id=652 data-nosnippet>652</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#653 id=653 data-nosnippet>653</a>};
-<a href=#654 id=654 data-nosnippet>654</a>
-<a href=#655 id=655 data-nosnippet>655</a><span class="doccomment">/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-512.
-<a href=#656 id=656 data-nosnippet>656</a></span><span class="kw">pub static </span>ECDSA_P256_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#657 id=657 data-nosnippet>657</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256,
-<a href=#658 id=658 data-nosnippet>658</a>    digest: <span class="kw-2">&amp;</span>digest::SHA512,
-<a href=#659 id=659 data-nosnippet>659</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#660 id=660 data-nosnippet>660</a>};
-<a href=#661 id=661 data-nosnippet>661</a>
-<a href=#662 id=662 data-nosnippet>662</a><span class="doccomment">/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-256.
-<a href=#663 id=663 data-nosnippet>663</a></span><span class="kw">pub static </span>ECDSA_P384_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#664 id=664 data-nosnippet>664</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
-<a href=#665 id=665 data-nosnippet>665</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#666 id=666 data-nosnippet>666</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#667 id=667 data-nosnippet>667</a>};
-<a href=#668 id=668 data-nosnippet>668</a>
-<a href=#669 id=669 data-nosnippet>669</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
-<a href=#670 id=670 data-nosnippet>670</a></span><span class="kw">pub static </span>ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#671 id=671 data-nosnippet>671</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
-<a href=#672 id=672 data-nosnippet>672</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#673 id=673 data-nosnippet>673</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#674 id=674 data-nosnippet>674</a>};
-<a href=#675 id=675 data-nosnippet>675</a>
-<a href=#676 id=676 data-nosnippet>676</a><span class="doccomment">/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-512.
-<a href=#677 id=677 data-nosnippet>677</a></span><span class="kw">pub static </span>ECDSA_P384_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#678 id=678 data-nosnippet>678</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
-<a href=#679 id=679 data-nosnippet>679</a>    digest: <span class="kw-2">&amp;</span>digest::SHA512,
-<a href=#680 id=680 data-nosnippet>680</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#681 id=681 data-nosnippet>681</a>};
+<a href=#442 id=442 data-nosnippet>442</a>    <span class="doccomment">/// Returns the algorithm used by this public key.
+<a href=#443 id=443 data-nosnippet>443</a>    </span><span class="attr">#[must_use]
+<a href=#444 id=444 data-nosnippet>444</a>    </span><span class="kw">pub fn </span>algorithm(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>VerificationAlgorithm {
+<a href=#445 id=445 data-nosnippet>445</a>        <span class="self">self</span>.algorithm
+<a href=#446 id=446 data-nosnippet>446</a>    }
+<a href=#447 id=447 data-nosnippet>447</a>
+<a href=#448 id=448 data-nosnippet>448</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt; {
+<a href=#449 id=449 data-nosnippet>449</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.key
+<a href=#450 id=450 data-nosnippet>450</a>    }
+<a href=#451 id=451 data-nosnippet>451</a>
+<a href=#452 id=452 data-nosnippet>452</a>    <span class="doccomment">/// Uses the public key to verify that `signature` is a valid signature of
+<a href=#453 id=453 data-nosnippet>453</a>    /// `message`.
+<a href=#454 id=454 data-nosnippet>454</a>    ///
+<a href=#455 id=455 data-nosnippet>455</a>    /// This method is more efficient than [`UnparsedPublicKey::verify`] when
+<a href=#456 id=456 data-nosnippet>456</a>    /// performing multiple signature verifications with the same public key,
+<a href=#457 id=457 data-nosnippet>457</a>    /// as the key parsing overhead is avoided.
+<a href=#458 id=458 data-nosnippet>458</a>    ///
+<a href=#459 id=459 data-nosnippet>459</a>    /// See the [`crate::signature`] module-level documentation for examples.
+<a href=#460 id=460 data-nosnippet>460</a>    ///
+<a href=#461 id=461 data-nosnippet>461</a>    </span><span class="comment">// # FIPS
+<a href=#462 id=462 data-nosnippet>462</a>    // The following conditions must be met:
+<a href=#463 id=463 data-nosnippet>463</a>    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+<a href=#464 id=464 data-nosnippet>464</a>    // * NIST Elliptic Curves: P256, P384, P521
+<a href=#465 id=465 data-nosnippet>465</a>    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+<a href=#466 id=466 data-nosnippet>466</a>    //
+<a href=#467 id=467 data-nosnippet>467</a>    </span><span class="doccomment">/// # Errors
+<a href=#468 id=468 data-nosnippet>468</a>    /// `error::Unspecified` if the signature is invalid or verification fails.
+<a href=#469 id=469 data-nosnippet>469</a>    </span><span class="attr">#[inline]
+<a href=#470 id=470 data-nosnippet>470</a>    </span><span class="kw">pub fn </span>verify_sig(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>[u8], signature: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt; {
+<a href=#471 id=471 data-nosnippet>471</a>        <span class="self">self</span>.parsed_algorithm
+<a href=#472 id=472 data-nosnippet>472</a>            .parsed_verify_sig(<span class="self">self</span>, message, signature)
+<a href=#473 id=473 data-nosnippet>473</a>    }
+<a href=#474 id=474 data-nosnippet>474</a>
+<a href=#475 id=475 data-nosnippet>475</a>    <span class="doccomment">/// Uses the public key to verify that `signature` is a valid signature of
+<a href=#476 id=476 data-nosnippet>476</a>    /// `digest`.
+<a href=#477 id=477 data-nosnippet>477</a>    ///
+<a href=#478 id=478 data-nosnippet>478</a>    /// This method is more efficient than [`UnparsedPublicKey::verify_digest`] when
+<a href=#479 id=479 data-nosnippet>479</a>    /// performing multiple signature verifications with the same public key,
+<a href=#480 id=480 data-nosnippet>480</a>    /// as the key parsing overhead is avoided.
+<a href=#481 id=481 data-nosnippet>481</a>    ///
+<a href=#482 id=482 data-nosnippet>482</a>    /// See the [`crate::signature`] module-level documentation for examples.
+<a href=#483 id=483 data-nosnippet>483</a>    ///
+<a href=#484 id=484 data-nosnippet>484</a>    </span><span class="comment">// # FIPS
+<a href=#485 id=485 data-nosnippet>485</a>    // Not allowed
+<a href=#486 id=486 data-nosnippet>486</a>    //
+<a href=#487 id=487 data-nosnippet>487</a>    </span><span class="doccomment">/// # Errors
+<a href=#488 id=488 data-nosnippet>488</a>    /// `error::Unspecified` if the signature is invalid or verification fails.
+<a href=#489 id=489 data-nosnippet>489</a>    </span><span class="attr">#[inline]
+<a href=#490 id=490 data-nosnippet>490</a>    </span><span class="kw">pub fn </span>verify_digest_sig(
+<a href=#491 id=491 data-nosnippet>491</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#492 id=492 data-nosnippet>492</a>        digest: <span class="kw-2">&amp;</span>Digest,
+<a href=#493 id=493 data-nosnippet>493</a>        signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#494 id=494 data-nosnippet>494</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt; {
+<a href=#495 id=495 data-nosnippet>495</a>        <span class="self">self</span>.parsed_algorithm
+<a href=#496 id=496 data-nosnippet>496</a>            .parsed_verify_digest_sig(<span class="self">self</span>, digest, signature)
+<a href=#497 id=497 data-nosnippet>497</a>    }
+<a href=#498 id=498 data-nosnippet>498</a>}
+<a href=#499 id=499 data-nosnippet>499</a>
+<a href=#500 id=500 data-nosnippet>500</a><span class="kw">impl </span>Debug <span class="kw">for </span>ParsedPublicKey {
+<a href=#501 id=501 data-nosnippet>501</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+<a href=#502 id=502 data-nosnippet>502</a>        f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#503 id=503 data-nosnippet>503</a>            <span class="string">"ParsedPublicKey {{ algorithm: {:?}, }}"</span>,
+<a href=#504 id=504 data-nosnippet>504</a>            <span class="self">self</span>.algorithm,
+<a href=#505 id=505 data-nosnippet>505</a>        ))
+<a href=#506 id=506 data-nosnippet>506</a>    }
+<a href=#507 id=507 data-nosnippet>507</a>}
+<a href=#508 id=508 data-nosnippet>508</a>
+<a href=#509 id=509 data-nosnippet>509</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; AsRef&lt;[u8]&gt; <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {
+<a href=#510 id=510 data-nosnippet>510</a>    <span class="attr">#[inline]
+<a href=#511 id=511 data-nosnippet>511</a>    </span><span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+<a href=#512 id=512 data-nosnippet>512</a>        <span class="self">self</span>.bytes.as_ref()
+<a href=#513 id=513 data-nosnippet>513</a>    }
+<a href=#514 id=514 data-nosnippet>514</a>}
+<a href=#515 id=515 data-nosnippet>515</a>
+<a href=#516 id=516 data-nosnippet>516</a><span class="kw">impl</span>&lt;B: Copy + AsRef&lt;[u8]&gt;&gt; Copy <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {}
+<a href=#517 id=517 data-nosnippet>517</a>
+<a href=#518 id=518 data-nosnippet>518</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; Debug <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {
+<a href=#519 id=519 data-nosnippet>519</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+<a href=#520 id=520 data-nosnippet>520</a>        f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#521 id=521 data-nosnippet>521</a>            <span class="string">"UnparsedPublicKey {{ algorithm: {:?}, bytes: \"{}\" }}"</span>,
+<a href=#522 id=522 data-nosnippet>522</a>            <span class="self">self</span>.algorithm,
+<a href=#523 id=523 data-nosnippet>523</a>            hex::encode(<span class="self">self</span>.bytes.as_ref())
+<a href=#524 id=524 data-nosnippet>524</a>        ))
+<a href=#525 id=525 data-nosnippet>525</a>    }
+<a href=#526 id=526 data-nosnippet>526</a>}
+<a href=#527 id=527 data-nosnippet>527</a>
+<a href=#528 id=528 data-nosnippet>528</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; UnparsedPublicKey&lt;B&gt; {
+<a href=#529 id=529 data-nosnippet>529</a>    <span class="doccomment">/// Construct a new `UnparsedPublicKey`.
+<a href=#530 id=530 data-nosnippet>530</a>    ///
+<a href=#531 id=531 data-nosnippet>531</a>    /// No validation of `bytes` is done until `verify()` is called.
+<a href=#532 id=532 data-nosnippet>532</a>    </span><span class="attr">#[inline]
+<a href=#533 id=533 data-nosnippet>533</a>    </span><span class="kw">pub fn </span>new(algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>VerificationAlgorithm, bytes: B) -&gt; <span class="self">Self </span>{
+<a href=#534 id=534 data-nosnippet>534</a>        <span class="self">Self </span>{ algorithm, bytes }
+<a href=#535 id=535 data-nosnippet>535</a>    }
+<a href=#536 id=536 data-nosnippet>536</a>
+<a href=#537 id=537 data-nosnippet>537</a>    <span class="doccomment">/// Parses the public key and verifies `signature` is a valid signature of
+<a href=#538 id=538 data-nosnippet>538</a>    /// `message` using it.
+<a href=#539 id=539 data-nosnippet>539</a>    ///
+<a href=#540 id=540 data-nosnippet>540</a>    /// See the [`crate::signature`] module-level documentation for examples.
+<a href=#541 id=541 data-nosnippet>541</a>    ///
+<a href=#542 id=542 data-nosnippet>542</a>    </span><span class="comment">// # FIPS
+<a href=#543 id=543 data-nosnippet>543</a>    // The following conditions must be met:
+<a href=#544 id=544 data-nosnippet>544</a>    // * RSA Key Sizes: 1024, 2048, 3072, 4096
+<a href=#545 id=545 data-nosnippet>545</a>    // * NIST Elliptic Curves: P256, P384, P521
+<a href=#546 id=546 data-nosnippet>546</a>    // * Digest Algorithms: SHA1, SHA256, SHA384, SHA512
+<a href=#547 id=547 data-nosnippet>547</a>    //
+<a href=#548 id=548 data-nosnippet>548</a>    </span><span class="doccomment">/// # Errors
+<a href=#549 id=549 data-nosnippet>549</a>    /// `error::Unspecified` if inputs not verified.
+<a href=#550 id=550 data-nosnippet>550</a>    </span><span class="attr">#[inline]
+<a href=#551 id=551 data-nosnippet>551</a>    </span><span class="kw">pub fn </span>verify(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>[u8], signature: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt; {
+<a href=#552 id=552 data-nosnippet>552</a>        <span class="self">self</span>.algorithm
+<a href=#553 id=553 data-nosnippet>553</a>            .verify_sig(<span class="self">self</span>.bytes.as_ref(), message, signature)
+<a href=#554 id=554 data-nosnippet>554</a>    }
+<a href=#555 id=555 data-nosnippet>555</a>
+<a href=#556 id=556 data-nosnippet>556</a>    <span class="doccomment">/// Parses the public key and verifies `signature` is a valid signature of
+<a href=#557 id=557 data-nosnippet>557</a>    /// `digest` using it.
+<a href=#558 id=558 data-nosnippet>558</a>    ///
+<a href=#559 id=559 data-nosnippet>559</a>    /// See the [`crate::signature`] module-level documentation for examples.
+<a href=#560 id=560 data-nosnippet>560</a>    ///
+<a href=#561 id=561 data-nosnippet>561</a>    </span><span class="comment">// # FIPS
+<a href=#562 id=562 data-nosnippet>562</a>    // Not allowed
+<a href=#563 id=563 data-nosnippet>563</a>    //
+<a href=#564 id=564 data-nosnippet>564</a>    </span><span class="doccomment">/// # Errors
+<a href=#565 id=565 data-nosnippet>565</a>    /// `error::Unspecified` if inputs not verified.
+<a href=#566 id=566 data-nosnippet>566</a>    </span><span class="attr">#[inline]
+<a href=#567 id=567 data-nosnippet>567</a>    </span><span class="kw">pub fn </span>verify_digest(
+<a href=#568 id=568 data-nosnippet>568</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#569 id=569 data-nosnippet>569</a>        digest: <span class="kw-2">&amp;</span>Digest,
+<a href=#570 id=570 data-nosnippet>570</a>        signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#571 id=571 data-nosnippet>571</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), error::Unspecified&gt; {
+<a href=#572 id=572 data-nosnippet>572</a>        <span class="self">self</span>.algorithm
+<a href=#573 id=573 data-nosnippet>573</a>            .verify_digest_sig(<span class="self">self</span>.bytes.as_ref(), digest, signature)
+<a href=#574 id=574 data-nosnippet>574</a>    }
+<a href=#575 id=575 data-nosnippet>575</a>
+<a href=#576 id=576 data-nosnippet>576</a>    <span class="doccomment">/// Parses the public key bytes and returns a `ParsedPublicKey`.
+<a href=#577 id=577 data-nosnippet>577</a>    ///
+<a href=#578 id=578 data-nosnippet>578</a>    /// This method validates the public key format and creates a `ParsedPublicKey`
+<a href=#579 id=579 data-nosnippet>579</a>    /// that can be used for more efficient signature verification operations.
+<a href=#580 id=580 data-nosnippet>580</a>    /// The parsing overhead is incurred once, making subsequent verifications
+<a href=#581 id=581 data-nosnippet>581</a>    /// faster compared to using `UnparsedPublicKey::verify` directly.
+<a href=#582 id=582 data-nosnippet>582</a>    ///
+<a href=#583 id=583 data-nosnippet>583</a>    /// This is equivalent to calling [`ParsedPublicKey::new`] with the same
+<a href=#584 id=584 data-nosnippet>584</a>    /// algorithm and bytes.
+<a href=#585 id=585 data-nosnippet>585</a>    ///
+<a href=#586 id=586 data-nosnippet>586</a>    /// # Errors
+<a href=#587 id=587 data-nosnippet>587</a>    /// `KeyRejected` if the public key bytes are malformed or incompatible
+<a href=#588 id=588 data-nosnippet>588</a>    /// with the specified algorithm.
+<a href=#589 id=589 data-nosnippet>589</a>    </span><span class="kw">pub fn </span>parse(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ParsedPublicKey, KeyRejected&gt; {
+<a href=#590 id=590 data-nosnippet>590</a>        parse_public_key(<span class="self">self</span>.bytes.as_ref(), <span class="self">self</span>.algorithm)
+<a href=#591 id=591 data-nosnippet>591</a>    }
+<a href=#592 id=592 data-nosnippet>592</a>}
+<a href=#593 id=593 data-nosnippet>593</a>
+<a href=#594 id=594 data-nosnippet>594</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_public_key(
+<a href=#595 id=595 data-nosnippet>595</a>    bytes: <span class="kw-2">&amp;</span>[u8],
+<a href=#596 id=596 data-nosnippet>596</a>    algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>VerificationAlgorithm,
+<a href=#597 id=597 data-nosnippet>597</a>) -&gt; <span class="prelude-ty">Result</span>&lt;ParsedPublicKey, KeyRejected&gt; {
+<a href=#598 id=598 data-nosnippet>598</a>    <span class="kw">let </span>parsed_algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>ParsedVerificationAlgorithm;
+<a href=#599 id=599 data-nosnippet>599</a>
+<a href=#600 id=600 data-nosnippet>600</a>    <span class="kw">let </span>key = <span class="kw">if </span>algorithm.type_id() == TypeId::of::&lt;EcdsaVerificationAlgorithm&gt;() {
+<a href=#601 id=601 data-nosnippet>601</a>        <span class="attr">#[allow(clippy::cast_ptr_alignment)]
+<a href=#602 id=602 data-nosnippet>602</a>        </span><span class="kw">let </span>ec_alg = <span class="kw">unsafe </span>{
+<a href=#603 id=603 data-nosnippet>603</a>            <span class="kw-2">&amp;*</span>(algorithm <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">dyn </span>VerificationAlgorithm).cast::&lt;EcdsaVerificationAlgorithm&gt;()
+<a href=#604 id=604 data-nosnippet>604</a>        };
+<a href=#605 id=605 data-nosnippet>605</a>        parsed_algorithm = ec_alg;
+<a href=#606 id=606 data-nosnippet>606</a>        parse_ec_public_key(bytes, ec_alg.id.nid())<span class="question-mark">?
+<a href=#607 id=607 data-nosnippet>607</a>    </span>} <span class="kw">else if </span>algorithm.type_id() == TypeId::of::&lt;EdDSAParameters&gt;() {
+<a href=#608 id=608 data-nosnippet>608</a>        <span class="attr">#[allow(clippy::cast_ptr_alignment)]
+<a href=#609 id=609 data-nosnippet>609</a>        </span><span class="kw">let </span>ed_alg =
+<a href=#610 id=610 data-nosnippet>610</a>            <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>(algorithm <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">dyn </span>VerificationAlgorithm).cast::&lt;EdDSAParameters&gt;() };
+<a href=#611 id=611 data-nosnippet>611</a>        parsed_algorithm = ed_alg;
+<a href=#612 id=612 data-nosnippet>612</a>        parse_ed25519_public_key(bytes)<span class="question-mark">?
+<a href=#613 id=613 data-nosnippet>613</a>    </span>} <span class="kw">else if </span>algorithm.type_id() == TypeId::of::&lt;RsaParameters&gt;() {
+<a href=#614 id=614 data-nosnippet>614</a>        <span class="attr">#[allow(clippy::cast_ptr_alignment)]
+<a href=#615 id=615 data-nosnippet>615</a>        </span><span class="kw">let </span>rsa_alg =
+<a href=#616 id=616 data-nosnippet>616</a>            <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>(algorithm <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">dyn </span>VerificationAlgorithm).cast::&lt;RsaParameters&gt;() };
+<a href=#617 id=617 data-nosnippet>617</a>        parsed_algorithm = rsa_alg;
+<a href=#618 id=618 data-nosnippet>618</a>        parse_rsa_public_key(bytes)<span class="question-mark">?
+<a href=#619 id=619 data-nosnippet>619</a>    </span>} <span class="kw">else </span>{
+<a href=#620 id=620 data-nosnippet>620</a>        <span class="attr">#[cfg(all(feature = <span class="string">"unstable"</span>, not(feature = <span class="string">"fips"</span>)))]
+<a href=#621 id=621 data-nosnippet>621</a>        </span><span class="kw">if </span>algorithm.type_id() == TypeId::of::&lt;PqdsaVerificationAlgorithm&gt;() {
+<a href=#622 id=622 data-nosnippet>622</a>            <span class="attr">#[allow(clippy::cast_ptr_alignment)]
+<a href=#623 id=623 data-nosnippet>623</a>            </span><span class="kw">let </span>pqdsa_alg = <span class="kw">unsafe </span>{
+<a href=#624 id=624 data-nosnippet>624</a>                <span class="kw-2">&amp;*</span>(algorithm <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">dyn </span>VerificationAlgorithm)
+<a href=#625 id=625 data-nosnippet>625</a>                    .cast::&lt;PqdsaVerificationAlgorithm&gt;()
+<a href=#626 id=626 data-nosnippet>626</a>            };
+<a href=#627 id=627 data-nosnippet>627</a>            parsed_algorithm = pqdsa_alg;
+<a href=#628 id=628 data-nosnippet>628</a>            parse_pqdsa_public_key(bytes, pqdsa_alg.id)<span class="question-mark">?
+<a href=#629 id=629 data-nosnippet>629</a>        </span>} <span class="kw">else </span>{
+<a href=#630 id=630 data-nosnippet>630</a>            <span class="macro">unreachable!</span>()
+<a href=#631 id=631 data-nosnippet>631</a>        }
+<a href=#632 id=632 data-nosnippet>632</a>        <span class="attr">#[cfg(any(not(feature = <span class="string">"unstable"</span>), feature = <span class="string">"fips"</span>))]
+<a href=#633 id=633 data-nosnippet>633</a>        </span><span class="macro">unreachable!</span>()
+<a href=#634 id=634 data-nosnippet>634</a>    };
+<a href=#635 id=635 data-nosnippet>635</a>
+<a href=#636 id=636 data-nosnippet>636</a>    <span class="prelude-val">Ok</span>(ParsedPublicKey {
+<a href=#637 id=637 data-nosnippet>637</a>        algorithm,
+<a href=#638 id=638 data-nosnippet>638</a>        parsed_algorithm,
+<a href=#639 id=639 data-nosnippet>639</a>        key,
+<a href=#640 id=640 data-nosnippet>640</a>    })
+<a href=#641 id=641 data-nosnippet>641</a>}
+<a href=#642 id=642 data-nosnippet>642</a>
+<a href=#643 id=643 data-nosnippet>643</a><span class="doccomment">/// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-1.
+<a href=#644 id=644 data-nosnippet>644</a></span><span class="kw">pub static </span>RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
+<a href=#645 id=645 data-nosnippet>645</a>    <span class="kw-2">&amp;</span>digest::SHA1_FOR_LEGACY_USE_ONLY,
+<a href=#646 id=646 data-nosnippet>646</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#647 id=647 data-nosnippet>647</a>    <span class="number">1024</span>..=<span class="number">8192</span>,
+<a href=#648 id=648 data-nosnippet>648</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY,
+<a href=#649 id=649 data-nosnippet>649</a>);
+<a href=#650 id=650 data-nosnippet>650</a>
+<a href=#651 id=651 data-nosnippet>651</a><span class="doccomment">/// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-256.
+<a href=#652 id=652 data-nosnippet>652</a></span><span class="kw">pub static </span>RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
+<a href=#653 id=653 data-nosnippet>653</a>    <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#654 id=654 data-nosnippet>654</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#655 id=655 data-nosnippet>655</a>    <span class="number">1024</span>..=<span class="number">8192</span>,
+<a href=#656 id=656 data-nosnippet>656</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY,
+<a href=#657 id=657 data-nosnippet>657</a>);
+<a href=#658 id=658 data-nosnippet>658</a>
+<a href=#659 id=659 data-nosnippet>659</a><span class="doccomment">/// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-512.
+<a href=#660 id=660 data-nosnippet>660</a></span><span class="kw">pub static </span>RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
+<a href=#661 id=661 data-nosnippet>661</a>    <span class="kw-2">&amp;</span>digest::SHA512,
+<a href=#662 id=662 data-nosnippet>662</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#663 id=663 data-nosnippet>663</a>    <span class="number">1024</span>..=<span class="number">8192</span>,
+<a href=#664 id=664 data-nosnippet>664</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY,
+<a href=#665 id=665 data-nosnippet>665</a>);
+<a href=#666 id=666 data-nosnippet>666</a>
+<a href=#667 id=667 data-nosnippet>667</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-1.
+<a href=#668 id=668 data-nosnippet>668</a></span><span class="kw">pub static </span>RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
+<a href=#669 id=669 data-nosnippet>669</a>    <span class="kw-2">&amp;</span>digest::SHA1_FOR_LEGACY_USE_ONLY,
+<a href=#670 id=670 data-nosnippet>670</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#671 id=671 data-nosnippet>671</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
+<a href=#672 id=672 data-nosnippet>672</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY,
+<a href=#673 id=673 data-nosnippet>673</a>);
+<a href=#674 id=674 data-nosnippet>674</a>
+<a href=#675 id=675 data-nosnippet>675</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-256.
+<a href=#676 id=676 data-nosnippet>676</a></span><span class="kw">pub static </span>RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters::new(
+<a href=#677 id=677 data-nosnippet>677</a>    <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#678 id=678 data-nosnippet>678</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#679 id=679 data-nosnippet>679</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
+<a href=#680 id=680 data-nosnippet>680</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA256,
+<a href=#681 id=681 data-nosnippet>681</a>);
 <a href=#682 id=682 data-nosnippet>682</a>
-<a href=#683 id=683 data-nosnippet>683</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
-<a href=#684 id=684 data-nosnippet>684</a></span><span class="kw">pub static </span>ECDSA_P384_SHA3_384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#685 id=685 data-nosnippet>685</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
-<a href=#686 id=686 data-nosnippet>686</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_384,
-<a href=#687 id=687 data-nosnippet>687</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#688 id=688 data-nosnippet>688</a>};
-<a href=#689 id=689 data-nosnippet>689</a>
-<a href=#690 id=690 data-nosnippet>690</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-1.
-<a href=#691 id=691 data-nosnippet>691</a></span><span class="kw">pub static </span>ECDSA_P521_SHA1_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#692 id=692 data-nosnippet>692</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#693 id=693 data-nosnippet>693</a>    digest: <span class="kw-2">&amp;</span>digest::SHA1_FOR_LEGACY_USE_ONLY,
-<a href=#694 id=694 data-nosnippet>694</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#695 id=695 data-nosnippet>695</a>};
-<a href=#696 id=696 data-nosnippet>696</a>
-<a href=#697 id=697 data-nosnippet>697</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-224.
-<a href=#698 id=698 data-nosnippet>698</a></span><span class="kw">pub static </span>ECDSA_P521_SHA224_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#699 id=699 data-nosnippet>699</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#700 id=700 data-nosnippet>700</a>    digest: <span class="kw-2">&amp;</span>digest::SHA224,
-<a href=#701 id=701 data-nosnippet>701</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#702 id=702 data-nosnippet>702</a>};
-<a href=#703 id=703 data-nosnippet>703</a>
-<a href=#704 id=704 data-nosnippet>704</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-256.
-<a href=#705 id=705 data-nosnippet>705</a></span><span class="kw">pub static </span>ECDSA_P521_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#706 id=706 data-nosnippet>706</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#707 id=707 data-nosnippet>707</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#708 id=708 data-nosnippet>708</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#709 id=709 data-nosnippet>709</a>};
-<a href=#710 id=710 data-nosnippet>710</a>
-<a href=#711 id=711 data-nosnippet>711</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-384.
-<a href=#712 id=712 data-nosnippet>712</a></span><span class="kw">pub static </span>ECDSA_P521_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#713 id=713 data-nosnippet>713</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#714 id=714 data-nosnippet>714</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
-<a href=#715 id=715 data-nosnippet>715</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#716 id=716 data-nosnippet>716</a>};
-<a href=#717 id=717 data-nosnippet>717</a>
-<a href=#718 id=718 data-nosnippet>718</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-512.
-<a href=#719 id=719 data-nosnippet>719</a></span><span class="kw">pub static </span>ECDSA_P521_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#720 id=720 data-nosnippet>720</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#721 id=721 data-nosnippet>721</a>    digest: <span class="kw-2">&amp;</span>digest::SHA512,
-<a href=#722 id=722 data-nosnippet>722</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#723 id=723 data-nosnippet>723</a>};
-<a href=#724 id=724 data-nosnippet>724</a>
-<a href=#725 id=725 data-nosnippet>725</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
-<a href=#726 id=726 data-nosnippet>726</a></span><span class="kw">pub static </span>ECDSA_P521_SHA3_512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#727 id=727 data-nosnippet>727</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
-<a href=#728 id=728 data-nosnippet>728</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_512,
-<a href=#729 id=729 data-nosnippet>729</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#730 id=730 data-nosnippet>730</a>};
-<a href=#731 id=731 data-nosnippet>731</a>
-<a href=#732 id=732 data-nosnippet>732</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
-<a href=#733 id=733 data-nosnippet>733</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#734 id=734 data-nosnippet>734</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256K1,
-<a href=#735 id=735 data-nosnippet>735</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
-<a href=#736 id=736 data-nosnippet>736</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#737 id=737 data-nosnippet>737</a>};
-<a href=#738 id=738 data-nosnippet>738</a>
-<a href=#739 id=739 data-nosnippet>739</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
-<a href=#740 id=740 data-nosnippet>740</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA3_256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
-<a href=#741 id=741 data-nosnippet>741</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256K1,
-<a href=#742 id=742 data-nosnippet>742</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_256,
-<a href=#743 id=743 data-nosnippet>743</a>    sig_format: EcdsaSignatureFormat::ASN1,
-<a href=#744 id=744 data-nosnippet>744</a>};
-<a href=#745 id=745 data-nosnippet>745</a>
-<a href=#746 id=746 data-nosnippet>746</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
-<a href=#747 id=747 data-nosnippet>747</a></span><span class="kw">pub static </span>ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#748 id=748 data-nosnippet>748</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256_SHA256_FIXED);
-<a href=#749 id=749 data-nosnippet>749</a>
-<a href=#750 id=750 data-nosnippet>750</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
-<a href=#751 id=751 data-nosnippet>751</a></span><span class="kw">pub static </span>ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#752 id=752 data-nosnippet>752</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P384_SHA384_FIXED);
-<a href=#753 id=753 data-nosnippet>753</a>
-<a href=#754 id=754 data-nosnippet>754</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA3-384.
-<a href=#755 id=755 data-nosnippet>755</a></span><span class="kw">pub static </span>ECDSA_P384_SHA3_384_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#756 id=756 data-nosnippet>756</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P384_SHA3_384_FIXED);
-<a href=#757 id=757 data-nosnippet>757</a>
-<a href=#758 id=758 data-nosnippet>758</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-224.
-<a href=#759 id=759 data-nosnippet>759</a>/// # ⚠️ Warning
-<a href=#760 id=760 data-nosnippet>760</a>/// The security design strength of SHA-224 digests is less then security strength of P-521.
-<a href=#761 id=761 data-nosnippet>761</a>/// This scheme should only be used for backwards compatibility purposes.
-<a href=#762 id=762 data-nosnippet>762</a></span><span class="kw">pub static </span>ECDSA_P521_SHA224_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#763 id=763 data-nosnippet>763</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA224_FIXED);
-<a href=#764 id=764 data-nosnippet>764</a>
-<a href=#765 id=765 data-nosnippet>765</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-256.
-<a href=#766 id=766 data-nosnippet>766</a>/// # ⚠️ Warning
-<a href=#767 id=767 data-nosnippet>767</a>/// The security design strength of SHA-256 digests is less then security strength of P-521.
-<a href=#768 id=768 data-nosnippet>768</a>/// This scheme should only be used for backwards compatibility purposes.
-<a href=#769 id=769 data-nosnippet>769</a></span><span class="kw">pub static </span>ECDSA_P521_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#770 id=770 data-nosnippet>770</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA256_FIXED);
-<a href=#771 id=771 data-nosnippet>771</a>
-<a href=#772 id=772 data-nosnippet>772</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-384.
-<a href=#773 id=773 data-nosnippet>773</a>/// # ⚠️ Warning
-<a href=#774 id=774 data-nosnippet>774</a>/// The security design strength of SHA-384 digests is less then security strength of P-521.
-<a href=#775 id=775 data-nosnippet>775</a>/// This scheme should only be used for backwards compatibility purposes.
-<a href=#776 id=776 data-nosnippet>776</a></span><span class="kw">pub static </span>ECDSA_P521_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#777 id=777 data-nosnippet>777</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA384_FIXED);
-<a href=#778 id=778 data-nosnippet>778</a>
-<a href=#779 id=779 data-nosnippet>779</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-512.
-<a href=#780 id=780 data-nosnippet>780</a></span><span class="kw">pub static </span>ECDSA_P521_SHA512_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#781 id=781 data-nosnippet>781</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA512_FIXED);
-<a href=#782 id=782 data-nosnippet>782</a>
-<a href=#783 id=783 data-nosnippet>783</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA3-512.
-<a href=#784 id=784 data-nosnippet>784</a></span><span class="kw">pub static </span>ECDSA_P521_SHA3_512_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#785 id=785 data-nosnippet>785</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA3_512_FIXED);
+<a href=#683 id=683 data-nosnippet>683</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-384.
+<a href=#684 id=684 data-nosnippet>684</a></span><span class="kw">pub static </span>RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters::new(
+<a href=#685 id=685 data-nosnippet>685</a>    <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#686 id=686 data-nosnippet>686</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#687 id=687 data-nosnippet>687</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
+<a href=#688 id=688 data-nosnippet>688</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA384,
+<a href=#689 id=689 data-nosnippet>689</a>);
+<a href=#690 id=690 data-nosnippet>690</a>
+<a href=#691 id=691 data-nosnippet>691</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-512.
+<a href=#692 id=692 data-nosnippet>692</a></span><span class="kw">pub static </span>RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters::new(
+<a href=#693 id=693 data-nosnippet>693</a>    <span class="kw-2">&amp;</span>digest::SHA512,
+<a href=#694 id=694 data-nosnippet>694</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#695 id=695 data-nosnippet>695</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
+<a href=#696 id=696 data-nosnippet>696</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_2048_8192_SHA512,
+<a href=#697 id=697 data-nosnippet>697</a>);
+<a href=#698 id=698 data-nosnippet>698</a>
+<a href=#699 id=699 data-nosnippet>699</a><span class="doccomment">/// Verification of signatures using RSA keys of 3072-8192 bits, PKCS#1.5 padding, and SHA-384.
+<a href=#700 id=700 data-nosnippet>700</a></span><span class="kw">pub static </span>RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters::new(
+<a href=#701 id=701 data-nosnippet>701</a>    <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#702 id=702 data-nosnippet>702</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#703 id=703 data-nosnippet>703</a>    <span class="number">3072</span>..=<span class="number">8192</span>,
+<a href=#704 id=704 data-nosnippet>704</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PKCS1_3072_8192_SHA384,
+<a href=#705 id=705 data-nosnippet>705</a>);
+<a href=#706 id=706 data-nosnippet>706</a>
+<a href=#707 id=707 data-nosnippet>707</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-256.
+<a href=#708 id=708 data-nosnippet>708</a></span><span class="kw">pub static </span>RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters::new(
+<a href=#709 id=709 data-nosnippet>709</a>    <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#710 id=710 data-nosnippet>710</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
+<a href=#711 id=711 data-nosnippet>711</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
+<a href=#712 id=712 data-nosnippet>712</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA256,
+<a href=#713 id=713 data-nosnippet>713</a>);
+<a href=#714 id=714 data-nosnippet>714</a>
+<a href=#715 id=715 data-nosnippet>715</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-384.
+<a href=#716 id=716 data-nosnippet>716</a></span><span class="kw">pub static </span>RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters::new(
+<a href=#717 id=717 data-nosnippet>717</a>    <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#718 id=718 data-nosnippet>718</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
+<a href=#719 id=719 data-nosnippet>719</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
+<a href=#720 id=720 data-nosnippet>720</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA384,
+<a href=#721 id=721 data-nosnippet>721</a>);
+<a href=#722 id=722 data-nosnippet>722</a>
+<a href=#723 id=723 data-nosnippet>723</a><span class="doccomment">/// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-512.
+<a href=#724 id=724 data-nosnippet>724</a></span><span class="kw">pub static </span>RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters::new(
+<a href=#725 id=725 data-nosnippet>725</a>    <span class="kw-2">&amp;</span>digest::SHA512,
+<a href=#726 id=726 data-nosnippet>726</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
+<a href=#727 id=727 data-nosnippet>727</a>    <span class="number">2048</span>..=<span class="number">8192</span>,
+<a href=#728 id=728 data-nosnippet>728</a>    <span class="kw-2">&amp;</span>RsaVerificationAlgorithmId::RSA_PSS_2048_8192_SHA512,
+<a href=#729 id=729 data-nosnippet>729</a>);
+<a href=#730 id=730 data-nosnippet>730</a>
+<a href=#731 id=731 data-nosnippet>731</a><span class="doccomment">/// RSA PSS padding using SHA-256 for RSA signatures.
+<a href=#732 id=732 data-nosnippet>732</a></span><span class="kw">pub static </span>RSA_PSS_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
+<a href=#733 id=733 data-nosnippet>733</a>    <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#734 id=734 data-nosnippet>734</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
+<a href=#735 id=735 data-nosnippet>735</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PSS_SHA256,
+<a href=#736 id=736 data-nosnippet>736</a>);
+<a href=#737 id=737 data-nosnippet>737</a>
+<a href=#738 id=738 data-nosnippet>738</a><span class="doccomment">/// RSA PSS padding using SHA-384 for RSA signatures.
+<a href=#739 id=739 data-nosnippet>739</a></span><span class="kw">pub static </span>RSA_PSS_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
+<a href=#740 id=740 data-nosnippet>740</a>    <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#741 id=741 data-nosnippet>741</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
+<a href=#742 id=742 data-nosnippet>742</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PSS_SHA384,
+<a href=#743 id=743 data-nosnippet>743</a>);
+<a href=#744 id=744 data-nosnippet>744</a>
+<a href=#745 id=745 data-nosnippet>745</a><span class="doccomment">/// RSA PSS padding using SHA-512 for RSA signatures.
+<a href=#746 id=746 data-nosnippet>746</a></span><span class="kw">pub static </span>RSA_PSS_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
+<a href=#747 id=747 data-nosnippet>747</a>    <span class="kw-2">&amp;</span>digest::SHA512,
+<a href=#748 id=748 data-nosnippet>748</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
+<a href=#749 id=749 data-nosnippet>749</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PSS_SHA512,
+<a href=#750 id=750 data-nosnippet>750</a>);
+<a href=#751 id=751 data-nosnippet>751</a>
+<a href=#752 id=752 data-nosnippet>752</a><span class="doccomment">/// PKCS#1 1.5 padding using SHA-256 for RSA signatures.
+<a href=#753 id=753 data-nosnippet>753</a></span><span class="kw">pub static </span>RSA_PKCS1_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
+<a href=#754 id=754 data-nosnippet>754</a>    <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#755 id=755 data-nosnippet>755</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#756 id=756 data-nosnippet>756</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PKCS1_SHA256,
+<a href=#757 id=757 data-nosnippet>757</a>);
+<a href=#758 id=758 data-nosnippet>758</a>
+<a href=#759 id=759 data-nosnippet>759</a><span class="doccomment">/// PKCS#1 1.5 padding using SHA-384 for RSA signatures.
+<a href=#760 id=760 data-nosnippet>760</a></span><span class="kw">pub static </span>RSA_PKCS1_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
+<a href=#761 id=761 data-nosnippet>761</a>    <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#762 id=762 data-nosnippet>762</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#763 id=763 data-nosnippet>763</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PKCS1_SHA384,
+<a href=#764 id=764 data-nosnippet>764</a>);
+<a href=#765 id=765 data-nosnippet>765</a>
+<a href=#766 id=766 data-nosnippet>766</a><span class="doccomment">/// PKCS#1 1.5 padding using SHA-512 for RSA signatures.
+<a href=#767 id=767 data-nosnippet>767</a></span><span class="kw">pub static </span>RSA_PKCS1_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
+<a href=#768 id=768 data-nosnippet>768</a>    <span class="kw-2">&amp;</span>digest::SHA512,
+<a href=#769 id=769 data-nosnippet>769</a>    <span class="kw-2">&amp;</span>rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
+<a href=#770 id=770 data-nosnippet>770</a>    <span class="kw-2">&amp;</span>RsaSigningAlgorithmId::RSA_PKCS1_SHA512,
+<a href=#771 id=771 data-nosnippet>771</a>);
+<a href=#772 id=772 data-nosnippet>772</a>
+<a href=#773 id=773 data-nosnippet>773</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
+<a href=#774 id=774 data-nosnippet>774</a></span><span class="kw">pub static </span>ECDSA_P256_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#775 id=775 data-nosnippet>775</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256,
+<a href=#776 id=776 data-nosnippet>776</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#777 id=777 data-nosnippet>777</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#778 id=778 data-nosnippet>778</a>};
+<a href=#779 id=779 data-nosnippet>779</a>
+<a href=#780 id=780 data-nosnippet>780</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
+<a href=#781 id=781 data-nosnippet>781</a></span><span class="kw">pub static </span>ECDSA_P384_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#782 id=782 data-nosnippet>782</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
+<a href=#783 id=783 data-nosnippet>783</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#784 id=784 data-nosnippet>784</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#785 id=785 data-nosnippet>785</a>};
 <a href=#786 id=786 data-nosnippet>786</a>
-<a href=#787 id=787 data-nosnippet>787</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA-256.
-<a href=#788 id=788 data-nosnippet>788</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#789 id=789 data-nosnippet>789</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256K1_SHA256_FIXED);
-<a href=#790 id=790 data-nosnippet>790</a>
-<a href=#791 id=791 data-nosnippet>791</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA3-256.
-<a href=#792 id=792 data-nosnippet>792</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA3_256_FIXED_SIGNING: EcdsaSigningAlgorithm =
-<a href=#793 id=793 data-nosnippet>793</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256K1_SHA3_256_FIXED);
-<a href=#794 id=794 data-nosnippet>794</a>
-<a href=#795 id=795 data-nosnippet>795</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
-<a href=#796 id=796 data-nosnippet>796</a></span><span class="kw">pub static </span>ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#797 id=797 data-nosnippet>797</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256_SHA256_ASN1);
-<a href=#798 id=798 data-nosnippet>798</a>
-<a href=#799 id=799 data-nosnippet>799</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
-<a href=#800 id=800 data-nosnippet>800</a></span><span class="kw">pub static </span>ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#801 id=801 data-nosnippet>801</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P384_SHA384_ASN1);
-<a href=#802 id=802 data-nosnippet>802</a>
-<a href=#803 id=803 data-nosnippet>803</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
-<a href=#804 id=804 data-nosnippet>804</a></span><span class="kw">pub static </span>ECDSA_P384_SHA3_384_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#805 id=805 data-nosnippet>805</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P384_SHA3_384_ASN1);
-<a href=#806 id=806 data-nosnippet>806</a>
-<a href=#807 id=807 data-nosnippet>807</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-224.
-<a href=#808 id=808 data-nosnippet>808</a>/// # ⚠️ Warning
-<a href=#809 id=809 data-nosnippet>809</a>/// The security design strength of SHA-224 digests is less then security strength of P-521.
-<a href=#810 id=810 data-nosnippet>810</a>/// This scheme should only be used for backwards compatibility purposes.
-<a href=#811 id=811 data-nosnippet>811</a></span><span class="kw">pub static </span>ECDSA_P521_SHA224_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#812 id=812 data-nosnippet>812</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA224_ASN1);
-<a href=#813 id=813 data-nosnippet>813</a>
-<a href=#814 id=814 data-nosnippet>814</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-256.
-<a href=#815 id=815 data-nosnippet>815</a>/// # ⚠️ Warning
-<a href=#816 id=816 data-nosnippet>816</a>/// The security design strength of SHA-256 digests is less then security strength of P-521.
-<a href=#817 id=817 data-nosnippet>817</a>/// This scheme should only be used for backwards compatibility purposes.
-<a href=#818 id=818 data-nosnippet>818</a></span><span class="kw">pub static </span>ECDSA_P521_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#819 id=819 data-nosnippet>819</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA256_ASN1);
-<a href=#820 id=820 data-nosnippet>820</a>
-<a href=#821 id=821 data-nosnippet>821</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-384.
-<a href=#822 id=822 data-nosnippet>822</a>/// # ⚠️ Warning
-<a href=#823 id=823 data-nosnippet>823</a>/// The security design strength of SHA-384 digests is less then security strength of P-521.
-<a href=#824 id=824 data-nosnippet>824</a>/// This scheme should only be used for backwards compatibility purposes.
-<a href=#825 id=825 data-nosnippet>825</a></span><span class="kw">pub static </span>ECDSA_P521_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#826 id=826 data-nosnippet>826</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA384_ASN1);
-<a href=#827 id=827 data-nosnippet>827</a>
-<a href=#828 id=828 data-nosnippet>828</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-512.
-<a href=#829 id=829 data-nosnippet>829</a></span><span class="kw">pub static </span>ECDSA_P521_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#830 id=830 data-nosnippet>830</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA512_ASN1);
-<a href=#831 id=831 data-nosnippet>831</a>
-<a href=#832 id=832 data-nosnippet>832</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
-<a href=#833 id=833 data-nosnippet>833</a></span><span class="kw">pub static </span>ECDSA_P521_SHA3_512_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#834 id=834 data-nosnippet>834</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA3_512_ASN1);
+<a href=#787 id=787 data-nosnippet>787</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA3-384.
+<a href=#788 id=788 data-nosnippet>788</a></span><span class="kw">pub static </span>ECDSA_P384_SHA3_384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#789 id=789 data-nosnippet>789</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
+<a href=#790 id=790 data-nosnippet>790</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_384,
+<a href=#791 id=791 data-nosnippet>791</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#792 id=792 data-nosnippet>792</a>};
+<a href=#793 id=793 data-nosnippet>793</a>
+<a href=#794 id=794 data-nosnippet>794</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-1.
+<a href=#795 id=795 data-nosnippet>795</a></span><span class="kw">pub static </span>ECDSA_P521_SHA1_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#796 id=796 data-nosnippet>796</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#797 id=797 data-nosnippet>797</a>    digest: <span class="kw-2">&amp;</span>digest::SHA1_FOR_LEGACY_USE_ONLY,
+<a href=#798 id=798 data-nosnippet>798</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#799 id=799 data-nosnippet>799</a>};
+<a href=#800 id=800 data-nosnippet>800</a>
+<a href=#801 id=801 data-nosnippet>801</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-224.
+<a href=#802 id=802 data-nosnippet>802</a></span><span class="kw">pub static </span>ECDSA_P521_SHA224_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#803 id=803 data-nosnippet>803</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#804 id=804 data-nosnippet>804</a>    digest: <span class="kw-2">&amp;</span>digest::SHA224,
+<a href=#805 id=805 data-nosnippet>805</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#806 id=806 data-nosnippet>806</a>};
+<a href=#807 id=807 data-nosnippet>807</a>
+<a href=#808 id=808 data-nosnippet>808</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-256.
+<a href=#809 id=809 data-nosnippet>809</a></span><span class="kw">pub static </span>ECDSA_P521_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#810 id=810 data-nosnippet>810</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#811 id=811 data-nosnippet>811</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#812 id=812 data-nosnippet>812</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#813 id=813 data-nosnippet>813</a>};
+<a href=#814 id=814 data-nosnippet>814</a>
+<a href=#815 id=815 data-nosnippet>815</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-384.
+<a href=#816 id=816 data-nosnippet>816</a></span><span class="kw">pub static </span>ECDSA_P521_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#817 id=817 data-nosnippet>817</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#818 id=818 data-nosnippet>818</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#819 id=819 data-nosnippet>819</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#820 id=820 data-nosnippet>820</a>};
+<a href=#821 id=821 data-nosnippet>821</a>
+<a href=#822 id=822 data-nosnippet>822</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-512.
+<a href=#823 id=823 data-nosnippet>823</a></span><span class="kw">pub static </span>ECDSA_P521_SHA512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#824 id=824 data-nosnippet>824</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#825 id=825 data-nosnippet>825</a>    digest: <span class="kw-2">&amp;</span>digest::SHA512,
+<a href=#826 id=826 data-nosnippet>826</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#827 id=827 data-nosnippet>827</a>};
+<a href=#828 id=828 data-nosnippet>828</a>
+<a href=#829 id=829 data-nosnippet>829</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA3-512.
+<a href=#830 id=830 data-nosnippet>830</a></span><span class="kw">pub static </span>ECDSA_P521_SHA3_512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#831 id=831 data-nosnippet>831</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#832 id=832 data-nosnippet>832</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_512,
+<a href=#833 id=833 data-nosnippet>833</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#834 id=834 data-nosnippet>834</a>};
 <a href=#835 id=835 data-nosnippet>835</a>
-<a href=#836 id=836 data-nosnippet>836</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
-<a href=#837 id=837 data-nosnippet>837</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#838 id=838 data-nosnippet>838</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256K1_SHA256_ASN1);
-<a href=#839 id=839 data-nosnippet>839</a>
-<a href=#840 id=840 data-nosnippet>840</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
-<a href=#841 id=841 data-nosnippet>841</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA3_256_ASN1_SIGNING: EcdsaSigningAlgorithm =
-<a href=#842 id=842 data-nosnippet>842</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256K1_SHA3_256_ASN1);
-<a href=#843 id=843 data-nosnippet>843</a>
-<a href=#844 id=844 data-nosnippet>844</a><span class="doccomment">/// Verification of Ed25519 signatures.
-<a href=#845 id=845 data-nosnippet>845</a></span><span class="kw">pub static </span>ED25519: EdDSAParameters = EdDSAParameters {};
-<a href=#846 id=846 data-nosnippet>846</a>
-<a href=#847 id=847 data-nosnippet>847</a><span class="attr">#[cfg(test)]
-<a href=#848 id=848 data-nosnippet>848</a></span><span class="kw">mod </span>tests {
-<a href=#849 id=849 data-nosnippet>849</a>    <span class="kw">use </span>regex::Regex;
-<a href=#850 id=850 data-nosnippet>850</a>
-<a href=#851 id=851 data-nosnippet>851</a>    <span class="kw">use </span><span class="kw">crate</span>::rand::{generate, SystemRandom};
-<a href=#852 id=852 data-nosnippet>852</a>    <span class="kw">use </span><span class="kw">crate</span>::signature::{UnparsedPublicKey, ED25519};
-<a href=#853 id=853 data-nosnippet>853</a>
-<a href=#854 id=854 data-nosnippet>854</a>    <span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
-<a href=#855 id=855 data-nosnippet>855</a>    </span><span class="kw">mod </span>fips;
+<a href=#836 id=836 data-nosnippet>836</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA-256.
+<a href=#837 id=837 data-nosnippet>837</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#838 id=838 data-nosnippet>838</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256K1,
+<a href=#839 id=839 data-nosnippet>839</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#840 id=840 data-nosnippet>840</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#841 id=841 data-nosnippet>841</a>};
+<a href=#842 id=842 data-nosnippet>842</a>
+<a href=#843 id=843 data-nosnippet>843</a><span class="doccomment">/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA3-256.
+<a href=#844 id=844 data-nosnippet>844</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA3_256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#845 id=845 data-nosnippet>845</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256K1,
+<a href=#846 id=846 data-nosnippet>846</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_256,
+<a href=#847 id=847 data-nosnippet>847</a>    sig_format: EcdsaSignatureFormat::Fixed,
+<a href=#848 id=848 data-nosnippet>848</a>};
+<a href=#849 id=849 data-nosnippet>849</a>
+<a href=#850 id=850 data-nosnippet>850</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
+<a href=#851 id=851 data-nosnippet>851</a></span><span class="kw">pub static </span>ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#852 id=852 data-nosnippet>852</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256,
+<a href=#853 id=853 data-nosnippet>853</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#854 id=854 data-nosnippet>854</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#855 id=855 data-nosnippet>855</a>};
 <a href=#856 id=856 data-nosnippet>856</a>
-<a href=#857 id=857 data-nosnippet>857</a>    <span class="attr">#[test]
-<a href=#858 id=858 data-nosnippet>858</a>    </span><span class="kw">fn </span>test_unparsed_public_key() {
-<a href=#859 id=859 data-nosnippet>859</a>        <span class="kw">let </span>random_pubkey: [u8; <span class="number">32</span>] = generate(<span class="kw-2">&amp;</span>SystemRandom::new()).unwrap().expose();
-<a href=#860 id=860 data-nosnippet>860</a>        <span class="kw">let </span>unparsed_pubkey = UnparsedPublicKey::new(<span class="kw-2">&amp;</span>ED25519, random_pubkey);
-<a href=#861 id=861 data-nosnippet>861</a>        <span class="kw">let </span>unparsed_pubkey_debug = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, <span class="kw-2">&amp;</span>unparsed_pubkey);
-<a href=#862 id=862 data-nosnippet>862</a>
-<a href=#863 id=863 data-nosnippet>863</a>        <span class="attr">#[allow(clippy::clone_on_copy)]
-<a href=#864 id=864 data-nosnippet>864</a>        </span><span class="kw">let </span>unparsed_pubkey_clone = unparsed_pubkey.clone();
-<a href=#865 id=865 data-nosnippet>865</a>        <span class="macro">assert_eq!</span>(unparsed_pubkey_debug, <span class="macro">format!</span>(<span class="string">"{unparsed_pubkey_clone:?}"</span>));
-<a href=#866 id=866 data-nosnippet>866</a>        <span class="kw">let </span>pubkey_re = Regex::new(
-<a href=#867 id=867 data-nosnippet>867</a>            <span class="string">"UnparsedPublicKey \\{ algorithm: EdDSAParameters, bytes: \"[0-9a-f]{64}\" \\}"</span>,
-<a href=#868 id=868 data-nosnippet>868</a>        )
-<a href=#869 id=869 data-nosnippet>869</a>        .unwrap();
+<a href=#857 id=857 data-nosnippet>857</a><span class="doccomment">/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-384.
+<a href=#858 id=858 data-nosnippet>858</a></span><span class="kw">pub static </span>ECDSA_P256_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#859 id=859 data-nosnippet>859</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256,
+<a href=#860 id=860 data-nosnippet>860</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#861 id=861 data-nosnippet>861</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#862 id=862 data-nosnippet>862</a>};
+<a href=#863 id=863 data-nosnippet>863</a>
+<a href=#864 id=864 data-nosnippet>864</a><span class="doccomment">/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-512.
+<a href=#865 id=865 data-nosnippet>865</a></span><span class="kw">pub static </span>ECDSA_P256_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#866 id=866 data-nosnippet>866</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256,
+<a href=#867 id=867 data-nosnippet>867</a>    digest: <span class="kw-2">&amp;</span>digest::SHA512,
+<a href=#868 id=868 data-nosnippet>868</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#869 id=869 data-nosnippet>869</a>};
 <a href=#870 id=870 data-nosnippet>870</a>
-<a href=#871 id=871 data-nosnippet>871</a>        <span class="macro">assert!</span>(pubkey_re.is_match(<span class="kw-2">&amp;</span>unparsed_pubkey_debug));
-<a href=#872 id=872 data-nosnippet>872</a>    }
-<a href=#873 id=873 data-nosnippet>873</a>}</code></pre></div></section></main></body></html>
+<a href=#871 id=871 data-nosnippet>871</a><span class="doccomment">/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-256.
+<a href=#872 id=872 data-nosnippet>872</a></span><span class="kw">pub static </span>ECDSA_P384_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#873 id=873 data-nosnippet>873</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
+<a href=#874 id=874 data-nosnippet>874</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#875 id=875 data-nosnippet>875</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#876 id=876 data-nosnippet>876</a>};
+<a href=#877 id=877 data-nosnippet>877</a>
+<a href=#878 id=878 data-nosnippet>878</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
+<a href=#879 id=879 data-nosnippet>879</a></span><span class="kw">pub static </span>ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#880 id=880 data-nosnippet>880</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
+<a href=#881 id=881 data-nosnippet>881</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#882 id=882 data-nosnippet>882</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#883 id=883 data-nosnippet>883</a>};
+<a href=#884 id=884 data-nosnippet>884</a>
+<a href=#885 id=885 data-nosnippet>885</a><span class="doccomment">/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-512.
+<a href=#886 id=886 data-nosnippet>886</a></span><span class="kw">pub static </span>ECDSA_P384_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#887 id=887 data-nosnippet>887</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
+<a href=#888 id=888 data-nosnippet>888</a>    digest: <span class="kw-2">&amp;</span>digest::SHA512,
+<a href=#889 id=889 data-nosnippet>889</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#890 id=890 data-nosnippet>890</a>};
+<a href=#891 id=891 data-nosnippet>891</a>
+<a href=#892 id=892 data-nosnippet>892</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
+<a href=#893 id=893 data-nosnippet>893</a></span><span class="kw">pub static </span>ECDSA_P384_SHA3_384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#894 id=894 data-nosnippet>894</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P384,
+<a href=#895 id=895 data-nosnippet>895</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_384,
+<a href=#896 id=896 data-nosnippet>896</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#897 id=897 data-nosnippet>897</a>};
+<a href=#898 id=898 data-nosnippet>898</a>
+<a href=#899 id=899 data-nosnippet>899</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-1.
+<a href=#900 id=900 data-nosnippet>900</a></span><span class="kw">pub static </span>ECDSA_P521_SHA1_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#901 id=901 data-nosnippet>901</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#902 id=902 data-nosnippet>902</a>    digest: <span class="kw-2">&amp;</span>digest::SHA1_FOR_LEGACY_USE_ONLY,
+<a href=#903 id=903 data-nosnippet>903</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#904 id=904 data-nosnippet>904</a>};
+<a href=#905 id=905 data-nosnippet>905</a>
+<a href=#906 id=906 data-nosnippet>906</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-224.
+<a href=#907 id=907 data-nosnippet>907</a></span><span class="kw">pub static </span>ECDSA_P521_SHA224_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#908 id=908 data-nosnippet>908</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#909 id=909 data-nosnippet>909</a>    digest: <span class="kw-2">&amp;</span>digest::SHA224,
+<a href=#910 id=910 data-nosnippet>910</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#911 id=911 data-nosnippet>911</a>};
+<a href=#912 id=912 data-nosnippet>912</a>
+<a href=#913 id=913 data-nosnippet>913</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-256.
+<a href=#914 id=914 data-nosnippet>914</a></span><span class="kw">pub static </span>ECDSA_P521_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#915 id=915 data-nosnippet>915</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#916 id=916 data-nosnippet>916</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#917 id=917 data-nosnippet>917</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#918 id=918 data-nosnippet>918</a>};
+<a href=#919 id=919 data-nosnippet>919</a>
+<a href=#920 id=920 data-nosnippet>920</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-384.
+<a href=#921 id=921 data-nosnippet>921</a></span><span class="kw">pub static </span>ECDSA_P521_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#922 id=922 data-nosnippet>922</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#923 id=923 data-nosnippet>923</a>    digest: <span class="kw-2">&amp;</span>digest::SHA384,
+<a href=#924 id=924 data-nosnippet>924</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#925 id=925 data-nosnippet>925</a>};
+<a href=#926 id=926 data-nosnippet>926</a>
+<a href=#927 id=927 data-nosnippet>927</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-512.
+<a href=#928 id=928 data-nosnippet>928</a></span><span class="kw">pub static </span>ECDSA_P521_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#929 id=929 data-nosnippet>929</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#930 id=930 data-nosnippet>930</a>    digest: <span class="kw-2">&amp;</span>digest::SHA512,
+<a href=#931 id=931 data-nosnippet>931</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#932 id=932 data-nosnippet>932</a>};
+<a href=#933 id=933 data-nosnippet>933</a>
+<a href=#934 id=934 data-nosnippet>934</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
+<a href=#935 id=935 data-nosnippet>935</a></span><span class="kw">pub static </span>ECDSA_P521_SHA3_512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#936 id=936 data-nosnippet>936</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P521,
+<a href=#937 id=937 data-nosnippet>937</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_512,
+<a href=#938 id=938 data-nosnippet>938</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#939 id=939 data-nosnippet>939</a>};
+<a href=#940 id=940 data-nosnippet>940</a>
+<a href=#941 id=941 data-nosnippet>941</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
+<a href=#942 id=942 data-nosnippet>942</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#943 id=943 data-nosnippet>943</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256K1,
+<a href=#944 id=944 data-nosnippet>944</a>    digest: <span class="kw-2">&amp;</span>digest::SHA256,
+<a href=#945 id=945 data-nosnippet>945</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#946 id=946 data-nosnippet>946</a>};
+<a href=#947 id=947 data-nosnippet>947</a>
+<a href=#948 id=948 data-nosnippet>948</a><span class="doccomment">/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
+<a href=#949 id=949 data-nosnippet>949</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA3_256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+<a href=#950 id=950 data-nosnippet>950</a>    id: <span class="kw-2">&amp;</span>ec::signature::AlgorithmID::ECDSA_P256K1,
+<a href=#951 id=951 data-nosnippet>951</a>    digest: <span class="kw-2">&amp;</span>digest::SHA3_256,
+<a href=#952 id=952 data-nosnippet>952</a>    sig_format: EcdsaSignatureFormat::ASN1,
+<a href=#953 id=953 data-nosnippet>953</a>};
+<a href=#954 id=954 data-nosnippet>954</a>
+<a href=#955 id=955 data-nosnippet>955</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
+<a href=#956 id=956 data-nosnippet>956</a></span><span class="kw">pub static </span>ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#957 id=957 data-nosnippet>957</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256_SHA256_FIXED);
+<a href=#958 id=958 data-nosnippet>958</a>
+<a href=#959 id=959 data-nosnippet>959</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
+<a href=#960 id=960 data-nosnippet>960</a></span><span class="kw">pub static </span>ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#961 id=961 data-nosnippet>961</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P384_SHA384_FIXED);
+<a href=#962 id=962 data-nosnippet>962</a>
+<a href=#963 id=963 data-nosnippet>963</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA3-384.
+<a href=#964 id=964 data-nosnippet>964</a></span><span class="kw">pub static </span>ECDSA_P384_SHA3_384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#965 id=965 data-nosnippet>965</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P384_SHA3_384_FIXED);
+<a href=#966 id=966 data-nosnippet>966</a>
+<a href=#967 id=967 data-nosnippet>967</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-224.
+<a href=#968 id=968 data-nosnippet>968</a>/// # ⚠️ Warning
+<a href=#969 id=969 data-nosnippet>969</a>/// The security design strength of SHA-224 digests is less then security strength of P-521.
+<a href=#970 id=970 data-nosnippet>970</a>/// This scheme should only be used for backwards compatibility purposes.
+<a href=#971 id=971 data-nosnippet>971</a></span><span class="kw">pub static </span>ECDSA_P521_SHA224_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#972 id=972 data-nosnippet>972</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA224_FIXED);
+<a href=#973 id=973 data-nosnippet>973</a>
+<a href=#974 id=974 data-nosnippet>974</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-256.
+<a href=#975 id=975 data-nosnippet>975</a>/// # ⚠️ Warning
+<a href=#976 id=976 data-nosnippet>976</a>/// The security design strength of SHA-256 digests is less then security strength of P-521.
+<a href=#977 id=977 data-nosnippet>977</a>/// This scheme should only be used for backwards compatibility purposes.
+<a href=#978 id=978 data-nosnippet>978</a></span><span class="kw">pub static </span>ECDSA_P521_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#979 id=979 data-nosnippet>979</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA256_FIXED);
+<a href=#980 id=980 data-nosnippet>980</a>
+<a href=#981 id=981 data-nosnippet>981</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-384.
+<a href=#982 id=982 data-nosnippet>982</a>/// # ⚠️ Warning
+<a href=#983 id=983 data-nosnippet>983</a>/// The security design strength of SHA-384 digests is less then security strength of P-521.
+<a href=#984 id=984 data-nosnippet>984</a>/// This scheme should only be used for backwards compatibility purposes.
+<a href=#985 id=985 data-nosnippet>985</a></span><span class="kw">pub static </span>ECDSA_P521_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#986 id=986 data-nosnippet>986</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA384_FIXED);
+<a href=#987 id=987 data-nosnippet>987</a>
+<a href=#988 id=988 data-nosnippet>988</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-512.
+<a href=#989 id=989 data-nosnippet>989</a></span><span class="kw">pub static </span>ECDSA_P521_SHA512_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#990 id=990 data-nosnippet>990</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA512_FIXED);
+<a href=#991 id=991 data-nosnippet>991</a>
+<a href=#992 id=992 data-nosnippet>992</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA3-512.
+<a href=#993 id=993 data-nosnippet>993</a></span><span class="kw">pub static </span>ECDSA_P521_SHA3_512_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#994 id=994 data-nosnippet>994</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA3_512_FIXED);
+<a href=#995 id=995 data-nosnippet>995</a>
+<a href=#996 id=996 data-nosnippet>996</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA-256.
+<a href=#997 id=997 data-nosnippet>997</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#998 id=998 data-nosnippet>998</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256K1_SHA256_FIXED);
+<a href=#999 id=999 data-nosnippet>999</a>
+<a href=#1000 id=1000 data-nosnippet>1000</a><span class="doccomment">/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA3-256.
+<a href=#1001 id=1001 data-nosnippet>1001</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA3_256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1002 id=1002 data-nosnippet>1002</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256K1_SHA3_256_FIXED);
+<a href=#1003 id=1003 data-nosnippet>1003</a>
+<a href=#1004 id=1004 data-nosnippet>1004</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
+<a href=#1005 id=1005 data-nosnippet>1005</a></span><span class="kw">pub static </span>ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1006 id=1006 data-nosnippet>1006</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256_SHA256_ASN1);
+<a href=#1007 id=1007 data-nosnippet>1007</a>
+<a href=#1008 id=1008 data-nosnippet>1008</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
+<a href=#1009 id=1009 data-nosnippet>1009</a></span><span class="kw">pub static </span>ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1010 id=1010 data-nosnippet>1010</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P384_SHA384_ASN1);
+<a href=#1011 id=1011 data-nosnippet>1011</a>
+<a href=#1012 id=1012 data-nosnippet>1012</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
+<a href=#1013 id=1013 data-nosnippet>1013</a></span><span class="kw">pub static </span>ECDSA_P384_SHA3_384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1014 id=1014 data-nosnippet>1014</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P384_SHA3_384_ASN1);
+<a href=#1015 id=1015 data-nosnippet>1015</a>
+<a href=#1016 id=1016 data-nosnippet>1016</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-224.
+<a href=#1017 id=1017 data-nosnippet>1017</a>/// # ⚠️ Warning
+<a href=#1018 id=1018 data-nosnippet>1018</a>/// The security design strength of SHA-224 digests is less then security strength of P-521.
+<a href=#1019 id=1019 data-nosnippet>1019</a>/// This scheme should only be used for backwards compatibility purposes.
+<a href=#1020 id=1020 data-nosnippet>1020</a></span><span class="kw">pub static </span>ECDSA_P521_SHA224_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1021 id=1021 data-nosnippet>1021</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA224_ASN1);
+<a href=#1022 id=1022 data-nosnippet>1022</a>
+<a href=#1023 id=1023 data-nosnippet>1023</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-256.
+<a href=#1024 id=1024 data-nosnippet>1024</a>/// # ⚠️ Warning
+<a href=#1025 id=1025 data-nosnippet>1025</a>/// The security design strength of SHA-256 digests is less then security strength of P-521.
+<a href=#1026 id=1026 data-nosnippet>1026</a>/// This scheme should only be used for backwards compatibility purposes.
+<a href=#1027 id=1027 data-nosnippet>1027</a></span><span class="kw">pub static </span>ECDSA_P521_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1028 id=1028 data-nosnippet>1028</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA256_ASN1);
+<a href=#1029 id=1029 data-nosnippet>1029</a>
+<a href=#1030 id=1030 data-nosnippet>1030</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-384.
+<a href=#1031 id=1031 data-nosnippet>1031</a>/// # ⚠️ Warning
+<a href=#1032 id=1032 data-nosnippet>1032</a>/// The security design strength of SHA-384 digests is less then security strength of P-521.
+<a href=#1033 id=1033 data-nosnippet>1033</a>/// This scheme should only be used for backwards compatibility purposes.
+<a href=#1034 id=1034 data-nosnippet>1034</a></span><span class="kw">pub static </span>ECDSA_P521_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1035 id=1035 data-nosnippet>1035</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA384_ASN1);
+<a href=#1036 id=1036 data-nosnippet>1036</a>
+<a href=#1037 id=1037 data-nosnippet>1037</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-512.
+<a href=#1038 id=1038 data-nosnippet>1038</a></span><span class="kw">pub static </span>ECDSA_P521_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1039 id=1039 data-nosnippet>1039</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA512_ASN1);
+<a href=#1040 id=1040 data-nosnippet>1040</a>
+<a href=#1041 id=1041 data-nosnippet>1041</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
+<a href=#1042 id=1042 data-nosnippet>1042</a></span><span class="kw">pub static </span>ECDSA_P521_SHA3_512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1043 id=1043 data-nosnippet>1043</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P521_SHA3_512_ASN1);
+<a href=#1044 id=1044 data-nosnippet>1044</a>
+<a href=#1045 id=1045 data-nosnippet>1045</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
+<a href=#1046 id=1046 data-nosnippet>1046</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1047 id=1047 data-nosnippet>1047</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256K1_SHA256_ASN1);
+<a href=#1048 id=1048 data-nosnippet>1048</a>
+<a href=#1049 id=1049 data-nosnippet>1049</a><span class="doccomment">/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
+<a href=#1050 id=1050 data-nosnippet>1050</a></span><span class="kw">pub static </span>ECDSA_P256K1_SHA3_256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+<a href=#1051 id=1051 data-nosnippet>1051</a>    EcdsaSigningAlgorithm(<span class="kw-2">&amp;</span>ECDSA_P256K1_SHA3_256_ASN1);
+<a href=#1052 id=1052 data-nosnippet>1052</a>
+<a href=#1053 id=1053 data-nosnippet>1053</a><span class="doccomment">/// Verification of Ed25519 signatures.
+<a href=#1054 id=1054 data-nosnippet>1054</a></span><span class="kw">pub static </span>ED25519: EdDSAParameters = EdDSAParameters {};
+<a href=#1055 id=1055 data-nosnippet>1055</a>
+<a href=#1056 id=1056 data-nosnippet>1056</a><span class="attr">#[cfg(test)]
+<a href=#1057 id=1057 data-nosnippet>1057</a></span><span class="kw">mod </span>tests {
+<a href=#1058 id=1058 data-nosnippet>1058</a>    <span class="kw">use </span>regex::Regex;
+<a href=#1059 id=1059 data-nosnippet>1059</a>
+<a href=#1060 id=1060 data-nosnippet>1060</a>    <span class="kw">use </span><span class="kw">crate</span>::rand::{generate, SystemRandom};
+<a href=#1061 id=1061 data-nosnippet>1061</a>    <span class="kw">use </span><span class="kw">crate</span>::signature::{UnparsedPublicKey, ED25519};
+<a href=#1062 id=1062 data-nosnippet>1062</a>
+<a href=#1063 id=1063 data-nosnippet>1063</a>    <span class="attr">#[cfg(feature = <span class="string">"fips"</span>)]
+<a href=#1064 id=1064 data-nosnippet>1064</a>    </span><span class="kw">mod </span>fips;
+<a href=#1065 id=1065 data-nosnippet>1065</a>
+<a href=#1066 id=1066 data-nosnippet>1066</a>    <span class="attr">#[test]
+<a href=#1067 id=1067 data-nosnippet>1067</a>    </span><span class="kw">fn </span>test_unparsed_public_key() {
+<a href=#1068 id=1068 data-nosnippet>1068</a>        <span class="kw">let </span>random_pubkey: [u8; <span class="number">32</span>] = generate(<span class="kw-2">&amp;</span>SystemRandom::new()).unwrap().expose();
+<a href=#1069 id=1069 data-nosnippet>1069</a>        <span class="kw">let </span>unparsed_pubkey = UnparsedPublicKey::new(<span class="kw-2">&amp;</span>ED25519, random_pubkey);
+<a href=#1070 id=1070 data-nosnippet>1070</a>        <span class="kw">let </span>unparsed_pubkey_debug = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, <span class="kw-2">&amp;</span>unparsed_pubkey);
+<a href=#1071 id=1071 data-nosnippet>1071</a>
+<a href=#1072 id=1072 data-nosnippet>1072</a>        <span class="attr">#[allow(clippy::clone_on_copy)]
+<a href=#1073 id=1073 data-nosnippet>1073</a>        </span><span class="kw">let </span>unparsed_pubkey_clone = unparsed_pubkey.clone();
+<a href=#1074 id=1074 data-nosnippet>1074</a>        <span class="macro">assert_eq!</span>(unparsed_pubkey_debug, <span class="macro">format!</span>(<span class="string">"{unparsed_pubkey_clone:?}"</span>));
+<a href=#1075 id=1075 data-nosnippet>1075</a>        <span class="kw">let </span>pubkey_re = Regex::new(
+<a href=#1076 id=1076 data-nosnippet>1076</a>            <span class="string">"UnparsedPublicKey \\{ algorithm: EdDSAParameters, bytes: \"[0-9a-f]{64}\" \\}"</span>,
+<a href=#1077 id=1077 data-nosnippet>1077</a>        )
+<a href=#1078 id=1078 data-nosnippet>1078</a>        .unwrap();
+<a href=#1079 id=1079 data-nosnippet>1079</a>
+<a href=#1080 id=1080 data-nosnippet>1080</a>        <span class="macro">assert!</span>(pubkey_re.is_match(<span class="kw-2">&amp;</span>unparsed_pubkey_debug));
+<a href=#1081 id=1081 data-nosnippet>1081</a>    }
+<a href=#1082 id=1082 data-nosnippet>1082</a>}</code></pre></div></section></main></body></html>
