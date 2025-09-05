@@ -101,6 +101,39 @@ jobs:
           unset AWS_LC_SYS_EXTERNAL_BINDGEN
           cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features ssl --target ${{ matrix.target[0] }}
 
+  aws-lc-rs-cross-prebuilt-nasm:
+    if: github.repository_owner == 'aws'
+    name: cross prebuilt-NASM - ${{ matrix.target[0] }}
+    runs-on: ubuntu-latest
+    env:
+      AWS_LC_SYS_PREBUILT_NASM: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - [ x86_64-pc-windows-gnu, 0, 1 ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "stable"
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: "stable"
+          target: ${{ matrix.target[0] }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
+        run: |
+          echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
+      - name: Cross-compilation (test release)
+        run: CROSS_CONFIG=$(pwd)/Cross.toml.passthrough-only cross test -p aws-lc-rs --no-run --features unstable --target ${{ matrix.target[0] }}
+
   aws-lc-rs-cross-0_2_5-test:
     if: github.repository_owner == 'aws'
     name: cross tests ${{ matrix.target }}
