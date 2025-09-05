@@ -762,7 +762,7 @@ impl ParsedPublicKey {
                         0x02 | 0x03 => ParsedPublicKeyFormat::Compressed,
                         0x04 => ParsedPublicKeyFormat::Uncompressed,
                         0x06 | 0x07 => ParsedPublicKeyFormat::Hybrid,
-                        _ => ParsedPublicKeyFormat::Unknown
+                        _ => ParsedPublicKeyFormat::Unknown,
                     };
                     evp_pkey
                 } else {
