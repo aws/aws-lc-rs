@@ -689,8 +689,12 @@ pub enum ParsedPublicKeyFormat {
     Uncompressed,
     /// The key is in a compressed form (SEC 1: Elliptic Curve Cryptography, Version 2.0).
     Compressed,
+    /// The key is in a hybrid form (SEC 1: Elliptic Curve Cryptography, Version 2.0).
+    Hybrid,
     /// The key is in a raw form. (X25519 only)
     Raw,
+    /// The key is in an unknown format.
+    Unknown,
 }
 
 /// A parsed public key for key agreement.
@@ -756,7 +760,9 @@ impl ParsedPublicKey {
                 } else if let Ok(evp_pkey) = parse_sec1_public_point(key_bytes, nid) {
                     format = match key_bytes[0] {
                         0x02 | 0x03 => ParsedPublicKeyFormat::Compressed,
-                        _ => ParsedPublicKeyFormat::Uncompressed,
+                        0x04 => ParsedPublicKeyFormat::Uncompressed,
+                        0x06 | 0x07 => ParsedPublicKeyFormat::Hybrid,
+                        _ => ParsedPublicKeyFormat::Unknown
                     };
                     evp_pkey
                 } else {
