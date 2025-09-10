@@ -157,9 +157,14 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, macos-13, macos-14, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-14, macos-latest, windows-latest, windows-11-arm ]
         c_std: [ "11", "99" ]
         cmake: [ '0', '1' ]
+        exclude:
+          - os: windows-latest
+            cmake: 0
+          - os: windows-11-arm
+            cmake: 0
     steps:
       - uses: actions/checkout@v4
         with:
@@ -168,8 +173,7 @@ jobs:
         id: toolchain
         with:
           toolchain: stable
-      - if: ${{ !startsWith(matrix.os, 'windows-') || matrix.cmake == '1' }} # Windows requires CMake build
-        name: Run cargo test
+      - name: Run cargo test
         working-directory: ./aws-lc-rs
         env:
           AWS_LC_SYS_PREBUILT_NASM: 1
