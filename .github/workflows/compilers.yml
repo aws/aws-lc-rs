@@ -23,12 +23,13 @@ jobs:
 
   aws-lc-rs-2004-gcc:
     if: github.repository_owner == 'aws'
-    name: GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
-    runs-on: ubuntu-22.04
+    name: x86-64 - GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
+    runs-on: ubuntu-24.04
     container:
       image: ubuntu:20.04
     env:
       AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
+      CI_GCC_VERSION: ${{ matrix.gcc_version }}
     strategy:
       fail-fast: false
       matrix:
@@ -41,31 +42,32 @@ jobs:
           apt-get update
           apt-get install -y ca-certificates
           apt-get install -y cmake curl sudo git
-          apt-get install -y --no-install-recommends gpg-agent software-properties-common
+          apt-get install -y gpg-agent software-properties-common dirmngr
+          apt-get install -y gcc-${CI_GCC_VERSION} g++-${CI_GCC_VERSION}
+          gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1
           add-apt-repository --yes ppa:longsleep/golang-backports
           apt-get update
           apt-get install -y build-essential golang-go
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
           dpkg -i powershell_7.2.23-1.deb_amd64.deb
           apt-get install -f
+          update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${CI_GCC_VERSION} 100
+          update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${CI_GCC_VERSION} 100
           rm powershell_7.2.23-1.deb_amd64.deb
       - name: Checkout
         run: |
+          set -x
           mkdir -p /tmp/aws-lc-rs
           git config --global --add safe.directory '*'
           git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git /tmp/aws-lc-rs
           cd /tmp/aws-lc-rs
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
+          gcc --version
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: stable
-      - name: Set up GCC
-        uses: egor-tensin/setup-gcc@v1.3
-        with:
-          version: ${{ matrix.gcc_version }}
-          platform: x64
       - name: Run cargo test (debug)
         working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
@@ -99,49 +101,168 @@ jobs:
             exit 0; # SUCCESS
           fi
 
-  aws-lc-rs-1804-gcc:
+  aws-lc-rs-2004-arm-gcc:
     if: github.repository_owner == 'aws'
-    name: GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
-    runs-on: ubuntu-22.04
+    name: arm64 - GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
+    runs-on: ubuntu-24.04-arm
     container:
-      image: ubuntu:18.04
+      image: arm64v8/ubuntu:20.04
     env:
       AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
+      CI_GCC_VERSION: ${{ matrix.gcc_version }}
     strategy:
       fail-fast: false
       matrix:
         cmake: [ '0', '1' ]
-        gcc_version: [ '4.8', '5', '6' ]
+        gcc_version: [ '7', '8' ]
         fips: [ '0', '1' ]
+        exclude:
+          - cmake: 0
+            fips: 1
     steps:
       - run: |
           set -x
           apt-get update
           apt-get install -y ca-certificates
           apt-get install -y cmake curl sudo git
-          apt-get install -y --no-install-recommends gpg-agent software-properties-common
+          apt-get install -y gpg-agent software-properties-common dirmngr
+          apt-get install -y gcc-${CI_GCC_VERSION} g++-${CI_GCC_VERSION}
+          gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1
+          add-apt-repository --yes ppa:longsleep/golang-backports
+          apt-get update
+          apt-get install -y build-essential golang-go
+          curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell-7.2.23-linux-arm64.tar.gz
+          mkdir -p /opt/microsoft/powershell/7
+          tar zxf powershell-7.2.23-linux-arm64.tar.gz -C /opt/microsoft/powershell/7
+          chmod +x /opt/microsoft/powershell/7/pwsh
+          ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
+          apt-get install -f
+          update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${CI_GCC_VERSION} 100
+          update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${CI_GCC_VERSION} 100
+          rm powershell-7.2.23-linux-arm64.tar.gz
+      - name: Checkout
+        run: |
+          set -x
+          git config --global --add safe.directory '*'
+          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
+          git fetch origin ${{ github.sha }}
+          git checkout --recurse-submodules -b ci-job ${{ github.sha }}
+          gcc --version
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: stable
+      - name: Run cargo test (debug)
+        run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
+      - name: Run cargo test (release)
+        run: cargo test -p aws-lc-rs --release --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
+
+  aws-lc-rs-1804-gcc:
+    if: github.repository_owner == 'aws'
+    name: x86-64 - GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
+    runs-on: ubuntu-24.04
+    container:
+      image: ubuntu:18.04
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
+      CI_GCC_VERSION: ${{ matrix.gcc_version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cmake: [ '0', '1' ]
+        gcc_version: [ '4.8', '5', '6' ]
+        fips: [ '0', '1' ]
+        exclude:
+          - cmake: 0
+            fips: 1
+    steps:
+      - run: |
+          set -x
+          apt-get update
+          apt-get install -y ca-certificates
+          apt-get install -y cmake curl sudo git
+          apt-get install -y gpg-agent software-properties-common dirmngr
+          apt-get install -y gcc-${CI_GCC_VERSION} g++-${CI_GCC_VERSION}
+          gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1
           add-apt-repository --yes ppa:longsleep/golang-backports
           apt-get update
           apt-get install -y build-essential golang-go
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
           dpkg -i powershell_7.2.23-1.deb_amd64.deb
           apt-get install -f
+          update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${CI_GCC_VERSION} 100
+          update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${CI_GCC_VERSION} 100
           rm powershell_7.2.23-1.deb_amd64.deb
       - name: Checkout
         run: |
+          set -x
           git config --global --add safe.directory '*'
           git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
+          gcc --version
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: stable
-      - name: Set up GCC
-        uses: egor-tensin/setup-gcc@v1.3
+      - name: Run cargo test (debug)
+        run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
+      - name: Run cargo test (release)
+        run: cargo test -p aws-lc-rs --release --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
+
+  aws-lc-rs-1804-arm-gcc:
+    if: github.repository_owner == 'aws'
+    name: arm64 - GCC ${{ matrix.gcc_version }} - CMake ${{ matrix.cmake }} - FIPS ${{ matrix.fips }}
+    runs-on: ubuntu-24.04-arm
+    container:
+      image: arm64v8/ubuntu:18.04
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
+      CI_GCC_VERSION: ${{ matrix.gcc_version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cmake: [ '0', '1' ]
+        gcc_version: [ '5', '6' ]
+        fips: [ '0', '1' ]
+        exclude:
+          - cmake: '0'
+            fips: '1'
+          - gcc_version: '5'
+            fips: '1'
+    steps:
+      - run: |
+          set -x
+          apt-get update
+          apt-get install -y ca-certificates
+          apt-get install -y cmake curl sudo git
+          apt-get install -y gpg-agent software-properties-common dirmngr
+          apt-get install -y gcc-${CI_GCC_VERSION} g++-${CI_GCC_VERSION}
+          gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1
+          add-apt-repository --yes ppa:longsleep/golang-backports
+          apt-get update
+          apt-get install -y build-essential golang-go
+          curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell-7.2.23-linux-arm64.tar.gz
+          mkdir -p /opt/microsoft/powershell/7
+          tar zxf powershell-7.2.23-linux-arm64.tar.gz -C /opt/microsoft/powershell/7
+          chmod +x /opt/microsoft/powershell/7/pwsh
+          ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
+          apt-get install -f
+          update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${CI_GCC_VERSION} 100
+          update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${CI_GCC_VERSION} 100
+          rm powershell-7.2.23-linux-arm64.tar.gz
+      - name: Checkout
+        run: |
+          set -x
+          git config --global --add safe.directory '*'
+          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
+          git fetch origin ${{ github.sha }}
+          git checkout --recurse-submodules -b ci-job ${{ github.sha }}
+          gcc --version
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
         with:
-          version: ${{ matrix.gcc_version }}
-          platform: x64
+          toolchain: stable
       - name: Run cargo test (debug)
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       - name: Run cargo test (release)
