@@ -136,7 +136,7 @@ jobs:
 
   aws-lc-rs-cross-0_2_5-test:
     if: github.repository_owner == 'aws'
-    name: cross tests ${{ matrix.target }}
+    name: cross v0.2.5 tests ${{ matrix.target }}
     runs-on: ubuntu-latest
     env:
       CROSS_CONFIG: "./Cross.toml.x86_64-unknown-linux-gnu"
@@ -145,6 +145,7 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
     steps:
       - uses: actions/checkout@v3
         with:
