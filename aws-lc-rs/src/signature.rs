@@ -1102,5 +1102,6 @@ mod tests {
         test::compile_time_assert_sync::<UnparsedPublicKey<Vec<u8>>>();
         test::compile_time_assert_send::<ParsedPublicKey>();
         test::compile_time_assert_sync::<ParsedPublicKey>();
+        test::compile_time_assert_clone::<ParsedPublicKey>();
     }
 }

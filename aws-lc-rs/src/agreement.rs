@@ -666,7 +666,7 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// This represents a public key that has been successfully parsed and validated
 /// from its encoded form. The key can be used with the `agree` function to
 /// perform key agreement operations.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParsedPublicKey {
     format: ParsedPublicKeyFormat,
     nid: i32,
