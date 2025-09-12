@@ -352,8 +352,7 @@ impl CcBuilder {
     }
 
     #[allow(clippy::zero_sized_map_values)]
-    fn build_source_feature_map() -> HashMap<String, CompilerFeature> {
-        // TODO: Add compiler feature macro guards to s2n-bignum assembly code?
+    fn build_s2n_bignum_source_feature_map() -> HashMap<String, CompilerFeature> {
         let mut source_feature_map: HashMap<String, CompilerFeature> = HashMap::new();
         source_feature_map.insert("sha3_keccak_f1600_alt.S".into(), CompilerFeature::NeonSha3);
         source_feature_map.insert("sha3_keccak2_f1600.S".into(), CompilerFeature::NeonSha3);
@@ -394,7 +393,7 @@ impl CcBuilder {
         // conditioned on the target OS.
         jitter_entropy_builder.flag("-DAWSLC -fwrapv --param ssp-buffer-size=4 -fvisibility=hidden -Wcast-align -Wmissing-field-initializers -Wshadow -Wswitch-enum -Wextra -Wall -pedantic -O0 -fwrapv -Wconversion");
 
-        let source_feature_map = Self::build_source_feature_map();
+        let s2n_bignum_source_feature_map = Self::build_s2n_bignum_source_feature_map();
         let compiler_features = self.compiler_features.take();
         for source in lib.sources {
             let source_path = self.manifest_dir.join("aws-lc").join(source);
@@ -414,7 +413,7 @@ impl CcBuilder {
                     .unwrap()
                     .to_string();
 
-                if let Some(compiler_feature) = source_feature_map.get(&filename) {
+                if let Some(compiler_feature) = s2n_bignum_source_feature_map.get(&filename) {
                     if compiler_features.contains(compiler_feature) {
                         s2n_bignum_builder.file(source_path);
                     } else {
@@ -585,10 +584,10 @@ impl CcBuilder {
         let _ = fs::remove_file(exec_path);
     }
     fn run_compiler_checks(&self, cc_build: &mut cc::Build) {
-        if self.compiler_check("stdalign_check", Vec::<String>::new()) {
+        if self.compiler_check("stdalign_check", Vec::<&'static str>::new()) {
             cc_build.define("AWS_LC_STDALIGN_AVAILABLE", Some("1"));
         }
-        if self.compiler_check("builtin_swap_check", Vec::<String>::new()) {
+        if self.compiler_check("builtin_swap_check", Vec::<&'static str>::new()) {
             cc_build.define("AWS_LC_BUILTIN_SWAP_SUPPORTED", Some("1"));
         }
         if target_arch() == "aarch64"
