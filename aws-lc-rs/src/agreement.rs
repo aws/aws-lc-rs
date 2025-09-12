@@ -220,14 +220,14 @@ impl KeyInner {
     }
 }
 
-unsafe impl Send for PrivateKey {}
-
-// https://github.com/awslabs/aws-lc/blob/main/include/openssl/ec_key.h#L88
-// An |EC_KEY| object represents a public or private EC key. A given object may
+// See EVP_PKEY documentation here:
+// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+// An |EVP_PKEY| object represents a public or private key. A given object may
 // be used concurrently on multiple threads by non-mutating functions, provided
 // no other thread is concurrently calling a mutating function. Unless otherwise
 // documented, functions which take a |const| pointer are non-mutating and
 // functions which take a non-|const| pointer are mutating.
+unsafe impl Send for PrivateKey {}
 unsafe impl Sync for PrivateKey {}
 
 impl Debug for PrivateKey {
@@ -536,6 +536,13 @@ impl PublicKey {
     }
 }
 
+// See EVP_PKEY documentation here:
+// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+// An |EVP_PKEY| object represents a public or private key. A given object may
+// be used concurrently on multiple threads by non-mutating functions, provided
+// no other thread is concurrently calling a mutating function. Unless otherwise
+// documented, functions which take a |const| pointer are non-mutating and
+// functions which take a non-|const| pointer are mutating.
 unsafe impl Send for PublicKey {}
 unsafe impl Sync for PublicKey {}
 
@@ -674,6 +681,13 @@ pub struct ParsedPublicKey {
     bytes: Box<[u8]>,
 }
 
+// See EVP_PKEY documentation here:
+// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+// An |EVP_PKEY| object represents a public or private key. A given object may
+// be used concurrently on multiple threads by non-mutating functions, provided
+// no other thread is concurrently calling a mutating function. Unless otherwise
+// documented, functions which take a |const| pointer are non-mutating and
+// functions which take a non-|const| pointer are mutating.
 unsafe impl Send for ParsedPublicKey {}
 unsafe impl Sync for ParsedPublicKey {}
 
