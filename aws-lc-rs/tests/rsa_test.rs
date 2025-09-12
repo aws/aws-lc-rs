@@ -99,6 +99,7 @@ fn test_signature_rsa_pkcs1_sign() {
             let public_key = key_pair.public_key();
             {
                 let upk = UnparsedPublicKey::new(verification_alg, public_key.as_ref());
+                assert_eq!(public_key.as_ref(), upk.as_ref());
 
                 let mut actual = vec![0u8; key_pair.public_modulus_len()];
                 key_pair
@@ -115,6 +116,7 @@ fn test_signature_rsa_pkcs1_sign() {
 
             {
                 let ppk = ParsedPublicKey::new(verification_alg, public_key.as_ref()).unwrap();
+                assert_eq!(public_key.as_ref(), ppk.as_ref());
 
                 let mut actual = vec![0u8; key_pair.public_modulus_len()];
                 key_pair

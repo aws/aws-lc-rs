@@ -107,11 +107,11 @@ fn test_signature_verification(
     sig: &[u8],
     expected_result: Result<(), error::Unspecified>,
 ) {
-    assert_eq!(
-        expected_result,
-        signature::UnparsedPublicKey::new(&ED25519, public_key).verify(msg, sig)
-    );
+    let upk = signature::UnparsedPublicKey::new(&ED25519, public_key);
+    assert_eq!(public_key, upk.as_ref());
+    assert_eq!(expected_result, upk.verify(msg, sig));
     let ppk = ParsedPublicKey::new(&ED25519, public_key).unwrap();
+    assert_eq!(public_key, ppk.as_ref());
     assert_eq!(expected_result, ppk.verify_sig(msg, sig));
 }
 
