@@ -4,7 +4,8 @@ FROM $CROSS_BASE_IMAGE
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    apt-get install --assume-yes --no-install-recommends gpg-agent software-properties-common && \
+    apt-get install --assume-yes --no-install-recommends gpg-agent software-properties-common dirmngr && \
+    gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1 && \
     add-apt-repository --yes ppa:longsleep/golang-backports && \
     apt-get update && \
     apt-get install --assume-yes --no-install-recommends build-essential cmake golang-go clang && \

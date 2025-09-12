@@ -10,7 +10,8 @@ ARG GOPROXY=direct
 RUN apt-get update && \
     apt-get install -y ca-certificates && \
     apt-get install -y cmake curl sudo  && \
-    apt-get install -y --no-install-recommends gpg-agent software-properties-common && \
+    apt-get install -y --no-install-recommends gpg-agent software-properties-common dirmngr && \
+    gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1 && \
     add-apt-repository --yes ppa:longsleep/golang-backports && \
     add-apt-repository --yes --update ppa:ubuntu-toolchain-r/test && \
     apt-add-repository --yes ppa:git-core/ppa && \

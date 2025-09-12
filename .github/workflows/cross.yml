@@ -162,6 +162,9 @@ jobs:
           target: ${{ matrix.target }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
+        run: |
+          echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
       - name: Cross-compilation (build debug)
         run: cross build -p aws-lc-rs --features unstable --target ${{ matrix.target }}
       - name: Cross-compilation (test release)
