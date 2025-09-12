@@ -19,13 +19,22 @@ use crate::{
     is_no_asm, optional_env_optional_crate_target, out_dir, requested_c_std, set_env_for_target,
     target, target_arch, target_env, target_os, CStdRequested, OutputLibType,
 };
+use std::cell::Cell;
+use std::collections::HashMap;
 use std::path::PathBuf;
+
+#[non_exhaustive]
+#[derive(PartialEq, Eq)]
+pub(crate) enum CompilerFeature {
+    NeonSha3,
+}
 
 pub(crate) struct CcBuilder {
     manifest_dir: PathBuf,
     out_dir: PathBuf,
     build_prefix: Option<String>,
     output_lib_type: OutputLibType,
+    compiler_features: Cell<Vec<CompilerFeature>>,
 }
 
 use std::fs;
@@ -168,6 +177,7 @@ impl CcBuilder {
             out_dir,
             build_prefix,
             output_lib_type,
+            compiler_features: Cell::new(vec![]),
         }
     }
 
@@ -190,7 +200,7 @@ impl CcBuilder {
                 build_options.push(BuildOption::std("c11"));
             }
             CStdRequested::None => {
-                if self.compiler_check("c11") {
+                if self.compiler_check("c11", Vec::<String>::new()) {
                     build_options.push(BuildOption::std("c11"));
                 } else {
                     build_options.push(BuildOption::std("c99"));
@@ -341,6 +351,18 @@ impl CcBuilder {
         cc_build
     }
 
+    #[allow(clippy::zero_sized_map_values)]
+    fn build_s2n_bignum_source_feature_map() -> HashMap<String, CompilerFeature> {
+        let mut source_feature_map: HashMap<String, CompilerFeature> = HashMap::new();
+        source_feature_map.insert("sha3_keccak_f1600_alt.S".into(), CompilerFeature::NeonSha3);
+        source_feature_map.insert("sha3_keccak2_f1600.S".into(), CompilerFeature::NeonSha3);
+        source_feature_map.insert(
+            "sha3_keccak4_f1600_alt2.S".into(),
+            CompilerFeature::NeonSha3,
+        );
+        source_feature_map
+    }
+
     fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) {
         use core::str::FromStr;
 
@@ -371,20 +393,45 @@ impl CcBuilder {
         // conditioned on the target OS.
         jitter_entropy_builder.flag("-DAWSLC -fwrapv --param ssp-buffer-size=4 -fvisibility=hidden -Wcast-align -Wmissing-field-initializers -Wshadow -Wswitch-enum -Wextra -Wall -pedantic -O0 -fwrapv -Wconversion");
 
+        let s2n_bignum_source_feature_map = Self::build_s2n_bignum_source_feature_map();
+        let compiler_features = self.compiler_features.take();
         for source in lib.sources {
             let source_path = self.manifest_dir.join("aws-lc").join(source);
             let is_s2n_bignum = std::path::Path::new(source).starts_with("third_party/s2n-bignum");
             let is_jitter_entropy =
                 std::path::Path::new(source).starts_with("third_party/jitterentropy");
 
+            if !source_path.is_file() {
+                emit_warning(&format!("Not a file: {:?}", source_path.as_os_str()));
+                continue;
+            }
             if is_s2n_bignum {
-                s2n_bignum_builder.file(source_path);
+                let filename: String = source_path
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string();
+
+                if let Some(compiler_feature) = s2n_bignum_source_feature_map.get(&filename) {
+                    if compiler_features.contains(compiler_feature) {
+                        s2n_bignum_builder.file(source_path);
+                    } else {
+                        emit_warning(&format!(
+                            "Skipping due to missing compiler features: {:?}",
+                            source_path.as_os_str()
+                        ));
+                    }
+                } else {
+                    s2n_bignum_builder.file(source_path);
+                }
             } else if is_jitter_entropy {
                 jitter_entropy_builder.file(source_path);
             } else {
                 cc_build.file(source_path);
             }
         }
+        self.compiler_features.set(compiler_features);
         let s2n_bignum_object_files = s2n_bignum_builder.compile_intermediates();
         for object in s2n_bignum_object_files {
             cc_build.object(object);
@@ -414,7 +461,11 @@ impl CcBuilder {
     // This performs basic checks of compiler capabilities and sets an appropriate flag on success.
     // This should be kept in alignment with the checks performed by AWS-LC's CMake build.
     // See: https://github.com/search?q=repo%3Aaws%2Faws-lc%20check_compiler&type=code
-    fn compiler_check(&self, basename: &str) -> bool {
+    fn compiler_check<T, S>(&self, basename: &str, extra_flags: T) -> bool
+    where
+        T: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
         let mut ret_val = false;
         let output_dir = self.out_dir.join(format!("out-{basename}"));
         let source_file = self
@@ -439,6 +490,10 @@ impl CcBuilder {
             .file(source_file)
             .warnings_into_errors(true)
             .out_dir(&output_dir);
+        for flag in extra_flags {
+            let flag = flag.as_ref();
+            cc_build.flag(flag);
+        }
 
         let compiler = cc_build.get_compiler();
         if compiler.is_like_gnu() || compiler.is_like_clang() {
@@ -529,11 +584,19 @@ impl CcBuilder {
         let _ = fs::remove_file(exec_path);
     }
     fn run_compiler_checks(&self, cc_build: &mut cc::Build) {
-        if self.compiler_check("stdalign_check") {
+        if self.compiler_check("stdalign_check", Vec::<&'static str>::new()) {
             cc_build.define("AWS_LC_STDALIGN_AVAILABLE", Some("1"));
         }
-        if self.compiler_check("builtin_swap_check") {
+        if self.compiler_check("builtin_swap_check", Vec::<&'static str>::new()) {
             cc_build.define("AWS_LC_BUILTIN_SWAP_SUPPORTED", Some("1"));
+        }
+        if target_arch() == "aarch64"
+            && self.compiler_check("neon_sha3_check", vec!["-march=armv8.4-a+sha3"])
+        {
+            let mut compiler_features = self.compiler_features.take();
+            compiler_features.push(CompilerFeature::NeonSha3);
+            self.compiler_features.set(compiler_features);
+            cc_build.define("MY_ASSEMBLER_SUPPORTS_NEON_SHA3_EXTENSION", Some("1"));
         }
         self.memcmp_check();
     }
