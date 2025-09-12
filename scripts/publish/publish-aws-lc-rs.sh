@@ -2,11 +2,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0 OR ISC
 
-set -e
+set -ex
 
 SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 PUBLISH=0
 RELATIVE_CRATE_PATH=aws-lc-rs
+REPO_ROOT=$(git rev-parse --show-toplevel)
+CRATE_DIR="${REPO_ROOT}/${RELATIVE_CRATE_PATH}"
 
 source "${SCRIPT_DIR}"/_publish_tools.sh
 
