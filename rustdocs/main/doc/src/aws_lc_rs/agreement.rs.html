@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/agreement.rs`."><title>agreement.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (5eda692e7 2025-09-11)" data-channel="nightly" data-search-js="search-d846cb6c.js" data-stringdex-js="stringdex-5af928a3.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>agreement.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2015-2017 Brian Smith.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/agreement.rs`."><title>agreement.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.92.0-nightly (52618eb33 2025-09-14)" data-channel="nightly" data-search-js="search-cb266a1a.js" data-stringdex-js="stringdex-5af928a3.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/</div>agreement.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2015-2017 Brian Smith.
 <a href=#2 id=2 data-nosnippet>2</a>// SPDX-License-Identifier: ISC
 <a href=#3 id=3 data-nosnippet>3</a>// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 <a href=#4 id=4 data-nosnippet>4</a>// SPDX-License-Identifier: Apache-2.0 OR ISC
@@ -220,15 +220,15 @@
 <a href=#220 id=220 data-nosnippet>220</a>    }
 <a href=#221 id=221 data-nosnippet>221</a>}
 <a href=#222 id=222 data-nosnippet>222</a>
-<a href=#223 id=223 data-nosnippet>223</a><span class="kw">unsafe impl </span>Send <span class="kw">for </span>PrivateKey {}
-<a href=#224 id=224 data-nosnippet>224</a>
-<a href=#225 id=225 data-nosnippet>225</a><span class="comment">// https://github.com/awslabs/aws-lc/blob/main/include/openssl/ec_key.h#L88
-<a href=#226 id=226 data-nosnippet>226</a>// An |EC_KEY| object represents a public or private EC key. A given object may
-<a href=#227 id=227 data-nosnippet>227</a>// be used concurrently on multiple threads by non-mutating functions, provided
-<a href=#228 id=228 data-nosnippet>228</a>// no other thread is concurrently calling a mutating function. Unless otherwise
-<a href=#229 id=229 data-nosnippet>229</a>// documented, functions which take a |const| pointer are non-mutating and
-<a href=#230 id=230 data-nosnippet>230</a>// functions which take a non-|const| pointer are mutating.
-<a href=#231 id=231 data-nosnippet>231</a></span><span class="kw">unsafe impl </span>Sync <span class="kw">for </span>PrivateKey {}
+<a href=#223 id=223 data-nosnippet>223</a><span class="comment">// See EVP_PKEY documentation here:
+<a href=#224 id=224 data-nosnippet>224</a>// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+<a href=#225 id=225 data-nosnippet>225</a>// An |EVP_PKEY| object represents a public or private key. A given object may
+<a href=#226 id=226 data-nosnippet>226</a>// be used concurrently on multiple threads by non-mutating functions, provided
+<a href=#227 id=227 data-nosnippet>227</a>// no other thread is concurrently calling a mutating function. Unless otherwise
+<a href=#228 id=228 data-nosnippet>228</a>// documented, functions which take a |const| pointer are non-mutating and
+<a href=#229 id=229 data-nosnippet>229</a>// functions which take a non-|const| pointer are mutating.
+<a href=#230 id=230 data-nosnippet>230</a></span><span class="kw">unsafe impl </span>Send <span class="kw">for </span>PrivateKey {}
+<a href=#231 id=231 data-nosnippet>231</a><span class="kw">unsafe impl </span>Sync <span class="kw">for </span>PrivateKey {}
 <a href=#232 id=232 data-nosnippet>232</a>
 <a href=#233 id=233 data-nosnippet>233</a><span class="kw">impl </span>Debug <span class="kw">for </span>PrivateKey {
 <a href=#234 id=234 data-nosnippet>234</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
@@ -536,335 +536,367 @@
 <a href=#536 id=536 data-nosnippet>536</a>    }
 <a href=#537 id=537 data-nosnippet>537</a>}
 <a href=#538 id=538 data-nosnippet>538</a>
-<a href=#539 id=539 data-nosnippet>539</a><span class="kw">unsafe impl </span>Send <span class="kw">for </span>PublicKey {}
-<a href=#540 id=540 data-nosnippet>540</a><span class="kw">unsafe impl </span>Sync <span class="kw">for </span>PublicKey {}
-<a href=#541 id=541 data-nosnippet>541</a>
-<a href=#542 id=542 data-nosnippet>542</a><span class="kw">impl </span>Debug <span class="kw">for </span>PublicKey {
-<a href=#543 id=543 data-nosnippet>543</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
-<a href=#544 id=544 data-nosnippet>544</a>        f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#545 id=545 data-nosnippet>545</a>            <span class="string">"PublicKey {{ algorithm: {:?}, bytes: \"{}\" }}"</span>,
-<a href=#546 id=546 data-nosnippet>546</a>            <span class="self">self</span>.inner_key.algorithm(),
-<a href=#547 id=547 data-nosnippet>547</a>            hex::encode(<span class="kw-2">&amp;</span><span class="self">self</span>.key_bytes[<span class="number">0</span>..<span class="self">self</span>.len])
-<a href=#548 id=548 data-nosnippet>548</a>        ))
-<a href=#549 id=549 data-nosnippet>549</a>    }
-<a href=#550 id=550 data-nosnippet>550</a>}
-<a href=#551 id=551 data-nosnippet>551</a>
-<a href=#552 id=552 data-nosnippet>552</a><span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>PublicKey {
-<a href=#553 id=553 data-nosnippet>553</a>    <span class="doccomment">/// Serializes the public key in an uncompressed form (X9.62) using the
-<a href=#554 id=554 data-nosnippet>554</a>    /// Octet-String-to-Elliptic-Curve-Point algorithm in
-<a href=#555 id=555 data-nosnippet>555</a>    /// [SEC 1: Elliptic Curve Cryptography, Version 2.0].
-<a href=#556 id=556 data-nosnippet>556</a>    </span><span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
-<a href=#557 id=557 data-nosnippet>557</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.key_bytes[<span class="number">0</span>..<span class="self">self</span>.len]
-<a href=#558 id=558 data-nosnippet>558</a>    }
-<a href=#559 id=559 data-nosnippet>559</a>}
-<a href=#560 id=560 data-nosnippet>560</a>
-<a href=#561 id=561 data-nosnippet>561</a><span class="kw">impl </span>Clone <span class="kw">for </span>PublicKey {
-<a href=#562 id=562 data-nosnippet>562</a>    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
-<a href=#563 id=563 data-nosnippet>563</a>        PublicKey {
-<a href=#564 id=564 data-nosnippet>564</a>            inner_key: <span class="self">self</span>.inner_key.clone(),
-<a href=#565 id=565 data-nosnippet>565</a>            key_bytes: <span class="self">self</span>.key_bytes,
-<a href=#566 id=566 data-nosnippet>566</a>            len: <span class="self">self</span>.len,
-<a href=#567 id=567 data-nosnippet>567</a>        }
-<a href=#568 id=568 data-nosnippet>568</a>    }
-<a href=#569 id=569 data-nosnippet>569</a>}
-<a href=#570 id=570 data-nosnippet>570</a>
-<a href=#571 id=571 data-nosnippet>571</a><span class="kw">impl </span>AsDer&lt;PublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;&gt; <span class="kw">for </span>PublicKey {
-<a href=#572 id=572 data-nosnippet>572</a>    <span class="doccomment">/// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
-<a href=#573 id=573 data-nosnippet>573</a>    /// # Errors
-<a href=#574 id=574 data-nosnippet>574</a>    /// Returns an error if the public key fails to marshal to X.509.
-<a href=#575 id=575 data-nosnippet>575</a>    </span><span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;PublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;, <span class="kw">crate</span>::error::Unspecified&gt; {
-<a href=#576 id=576 data-nosnippet>576</a>        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.inner_key {
-<a href=#577 id=577 data-nosnippet>577</a>            KeyInner::ECDH_P256(evp_pkey)
-<a href=#578 id=578 data-nosnippet>578</a>            | KeyInner::ECDH_P384(evp_pkey)
-<a href=#579 id=579 data-nosnippet>579</a>            | KeyInner::ECDH_P521(evp_pkey)
-<a href=#580 id=580 data-nosnippet>580</a>            | KeyInner::X25519(evp_pkey) =&gt; {
-<a href=#581 id=581 data-nosnippet>581</a>                <span class="kw">let </span>der = evp_pkey.as_const().marshal_rfc5280_public_key()<span class="question-mark">?</span>;
-<a href=#582 id=582 data-nosnippet>582</a>                <span class="prelude-val">Ok</span>(PublicKeyX509Der::from(Buffer::new(der)))
-<a href=#583 id=583 data-nosnippet>583</a>            }
-<a href=#584 id=584 data-nosnippet>584</a>        }
-<a href=#585 id=585 data-nosnippet>585</a>    }
-<a href=#586 id=586 data-nosnippet>586</a>}
-<a href=#587 id=587 data-nosnippet>587</a>
-<a href=#588 id=588 data-nosnippet>588</a><span class="kw">impl </span>AsBigEndian&lt;EcPublicKeyCompressedBin&lt;<span class="lifetime">'static</span>&gt;&gt; <span class="kw">for </span>PublicKey {
-<a href=#589 id=589 data-nosnippet>589</a>    <span class="doccomment">/// Provides the public key elliptic curve point to a compressed point format.
-<a href=#590 id=590 data-nosnippet>590</a>    /// # Errors
-<a href=#591 id=591 data-nosnippet>591</a>    /// Returns an error if the underlying implementation is unable to marshal the public key to this format.
-<a href=#592 id=592 data-nosnippet>592</a>    </span><span class="kw">fn </span>as_be_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EcPublicKeyCompressedBin&lt;<span class="lifetime">'static</span>&gt;, <span class="kw">crate</span>::error::Unspecified&gt; {
-<a href=#593 id=593 data-nosnippet>593</a>        <span class="kw">let </span>evp_pkey = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.inner_key {
-<a href=#594 id=594 data-nosnippet>594</a>            KeyInner::ECDH_P256(evp_pkey)
-<a href=#595 id=595 data-nosnippet>595</a>            | KeyInner::ECDH_P384(evp_pkey)
-<a href=#596 id=596 data-nosnippet>596</a>            | KeyInner::ECDH_P521(evp_pkey) =&gt; evp_pkey,
-<a href=#597 id=597 data-nosnippet>597</a>            KeyInner::X25519(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified),
-<a href=#598 id=598 data-nosnippet>598</a>        };
-<a href=#599 id=599 data-nosnippet>599</a>        <span class="kw">let </span>pub_point = marshal_sec1_public_point(evp_pkey, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
-<a href=#600 id=600 data-nosnippet>600</a>        <span class="prelude-val">Ok</span>(EcPublicKeyCompressedBin::new(pub_point))
-<a href=#601 id=601 data-nosnippet>601</a>    }
-<a href=#602 id=602 data-nosnippet>602</a>}
-<a href=#603 id=603 data-nosnippet>603</a>
-<a href=#604 id=604 data-nosnippet>604</a><span class="kw">impl </span>AsBigEndian&lt;EcPublicKeyUncompressedBin&lt;<span class="lifetime">'static</span>&gt;&gt; <span class="kw">for </span>PublicKey {
-<a href=#605 id=605 data-nosnippet>605</a>    <span class="doccomment">/// Provides the public key elliptic curve point to a compressed point format.
-<a href=#606 id=606 data-nosnippet>606</a>    ///
-<a href=#607 id=607 data-nosnippet>607</a>    /// Equivalent to [`PublicKey::as_ref`] for ECDH key types, except that it provides you a copy instead of a reference.
-<a href=#608 id=608 data-nosnippet>608</a>    ///
-<a href=#609 id=609 data-nosnippet>609</a>    /// # Errors
-<a href=#610 id=610 data-nosnippet>610</a>    /// Returns an error if the underlying implementation is unable to marshal the public key to this format.
-<a href=#611 id=611 data-nosnippet>611</a>    </span><span class="kw">fn </span>as_be_bytes(
-<a href=#612 id=612 data-nosnippet>612</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#613 id=613 data-nosnippet>613</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;EcPublicKeyUncompressedBin&lt;<span class="lifetime">'static</span>&gt;, <span class="kw">crate</span>::error::Unspecified&gt; {
-<a href=#614 id=614 data-nosnippet>614</a>        <span class="kw">if </span><span class="self">self</span>.algorithm().id == AlgorithmID::X25519 {
-<a href=#615 id=615 data-nosnippet>615</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#616 id=616 data-nosnippet>616</a>        }
-<a href=#617 id=617 data-nosnippet>617</a>
-<a href=#618 id=618 data-nosnippet>618</a>        <span class="kw">let </span><span class="kw-2">mut </span>buffer = <span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="self">self</span>.len];
-<a href=#619 id=619 data-nosnippet>619</a>        buffer.copy_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.key_bytes[<span class="number">0</span>..<span class="self">self</span>.len]);
-<a href=#620 id=620 data-nosnippet>620</a>
-<a href=#621 id=621 data-nosnippet>621</a>        <span class="prelude-val">Ok</span>(EcPublicKeyUncompressedBin::new(buffer))
-<a href=#622 id=622 data-nosnippet>622</a>    }
-<a href=#623 id=623 data-nosnippet>623</a>}
+<a href=#539 id=539 data-nosnippet>539</a><span class="comment">// See EVP_PKEY documentation here:
+<a href=#540 id=540 data-nosnippet>540</a>// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+<a href=#541 id=541 data-nosnippet>541</a>// An |EVP_PKEY| object represents a public or private key. A given object may
+<a href=#542 id=542 data-nosnippet>542</a>// be used concurrently on multiple threads by non-mutating functions, provided
+<a href=#543 id=543 data-nosnippet>543</a>// no other thread is concurrently calling a mutating function. Unless otherwise
+<a href=#544 id=544 data-nosnippet>544</a>// documented, functions which take a |const| pointer are non-mutating and
+<a href=#545 id=545 data-nosnippet>545</a>// functions which take a non-|const| pointer are mutating.
+<a href=#546 id=546 data-nosnippet>546</a></span><span class="kw">unsafe impl </span>Send <span class="kw">for </span>PublicKey {}
+<a href=#547 id=547 data-nosnippet>547</a><span class="kw">unsafe impl </span>Sync <span class="kw">for </span>PublicKey {}
+<a href=#548 id=548 data-nosnippet>548</a>
+<a href=#549 id=549 data-nosnippet>549</a><span class="kw">impl </span>Debug <span class="kw">for </span>PublicKey {
+<a href=#550 id=550 data-nosnippet>550</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+<a href=#551 id=551 data-nosnippet>551</a>        f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#552 id=552 data-nosnippet>552</a>            <span class="string">"PublicKey {{ algorithm: {:?}, bytes: \"{}\" }}"</span>,
+<a href=#553 id=553 data-nosnippet>553</a>            <span class="self">self</span>.inner_key.algorithm(),
+<a href=#554 id=554 data-nosnippet>554</a>            hex::encode(<span class="kw-2">&amp;</span><span class="self">self</span>.key_bytes[<span class="number">0</span>..<span class="self">self</span>.len])
+<a href=#555 id=555 data-nosnippet>555</a>        ))
+<a href=#556 id=556 data-nosnippet>556</a>    }
+<a href=#557 id=557 data-nosnippet>557</a>}
+<a href=#558 id=558 data-nosnippet>558</a>
+<a href=#559 id=559 data-nosnippet>559</a><span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>PublicKey {
+<a href=#560 id=560 data-nosnippet>560</a>    <span class="doccomment">/// Serializes the public key in an uncompressed form (X9.62) using the
+<a href=#561 id=561 data-nosnippet>561</a>    /// Octet-String-to-Elliptic-Curve-Point algorithm in
+<a href=#562 id=562 data-nosnippet>562</a>    /// [SEC 1: Elliptic Curve Cryptography, Version 2.0].
+<a href=#563 id=563 data-nosnippet>563</a>    </span><span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+<a href=#564 id=564 data-nosnippet>564</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.key_bytes[<span class="number">0</span>..<span class="self">self</span>.len]
+<a href=#565 id=565 data-nosnippet>565</a>    }
+<a href=#566 id=566 data-nosnippet>566</a>}
+<a href=#567 id=567 data-nosnippet>567</a>
+<a href=#568 id=568 data-nosnippet>568</a><span class="kw">impl </span>Clone <span class="kw">for </span>PublicKey {
+<a href=#569 id=569 data-nosnippet>569</a>    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+<a href=#570 id=570 data-nosnippet>570</a>        PublicKey {
+<a href=#571 id=571 data-nosnippet>571</a>            inner_key: <span class="self">self</span>.inner_key.clone(),
+<a href=#572 id=572 data-nosnippet>572</a>            key_bytes: <span class="self">self</span>.key_bytes,
+<a href=#573 id=573 data-nosnippet>573</a>            len: <span class="self">self</span>.len,
+<a href=#574 id=574 data-nosnippet>574</a>        }
+<a href=#575 id=575 data-nosnippet>575</a>    }
+<a href=#576 id=576 data-nosnippet>576</a>}
+<a href=#577 id=577 data-nosnippet>577</a>
+<a href=#578 id=578 data-nosnippet>578</a><span class="kw">impl </span>AsDer&lt;PublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;&gt; <span class="kw">for </span>PublicKey {
+<a href=#579 id=579 data-nosnippet>579</a>    <span class="doccomment">/// Provides the public key as a DER-encoded (X.509) `SubjectPublicKeyInfo` structure.
+<a href=#580 id=580 data-nosnippet>580</a>    /// # Errors
+<a href=#581 id=581 data-nosnippet>581</a>    /// Returns an error if the public key fails to marshal to X.509.
+<a href=#582 id=582 data-nosnippet>582</a>    </span><span class="kw">fn </span>as_der(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;PublicKeyX509Der&lt;<span class="lifetime">'static</span>&gt;, <span class="kw">crate</span>::error::Unspecified&gt; {
+<a href=#583 id=583 data-nosnippet>583</a>        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.inner_key {
+<a href=#584 id=584 data-nosnippet>584</a>            KeyInner::ECDH_P256(evp_pkey)
+<a href=#585 id=585 data-nosnippet>585</a>            | KeyInner::ECDH_P384(evp_pkey)
+<a href=#586 id=586 data-nosnippet>586</a>            | KeyInner::ECDH_P521(evp_pkey)
+<a href=#587 id=587 data-nosnippet>587</a>            | KeyInner::X25519(evp_pkey) =&gt; {
+<a href=#588 id=588 data-nosnippet>588</a>                <span class="kw">let </span>der = evp_pkey.as_const().marshal_rfc5280_public_key()<span class="question-mark">?</span>;
+<a href=#589 id=589 data-nosnippet>589</a>                <span class="prelude-val">Ok</span>(PublicKeyX509Der::from(Buffer::new(der)))
+<a href=#590 id=590 data-nosnippet>590</a>            }
+<a href=#591 id=591 data-nosnippet>591</a>        }
+<a href=#592 id=592 data-nosnippet>592</a>    }
+<a href=#593 id=593 data-nosnippet>593</a>}
+<a href=#594 id=594 data-nosnippet>594</a>
+<a href=#595 id=595 data-nosnippet>595</a><span class="kw">impl </span>AsBigEndian&lt;EcPublicKeyCompressedBin&lt;<span class="lifetime">'static</span>&gt;&gt; <span class="kw">for </span>PublicKey {
+<a href=#596 id=596 data-nosnippet>596</a>    <span class="doccomment">/// Provides the public key elliptic curve point to a compressed point format.
+<a href=#597 id=597 data-nosnippet>597</a>    /// # Errors
+<a href=#598 id=598 data-nosnippet>598</a>    /// Returns an error if the underlying implementation is unable to marshal the public key to this format.
+<a href=#599 id=599 data-nosnippet>599</a>    </span><span class="kw">fn </span>as_be_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EcPublicKeyCompressedBin&lt;<span class="lifetime">'static</span>&gt;, <span class="kw">crate</span>::error::Unspecified&gt; {
+<a href=#600 id=600 data-nosnippet>600</a>        <span class="kw">let </span>evp_pkey = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.inner_key {
+<a href=#601 id=601 data-nosnippet>601</a>            KeyInner::ECDH_P256(evp_pkey)
+<a href=#602 id=602 data-nosnippet>602</a>            | KeyInner::ECDH_P384(evp_pkey)
+<a href=#603 id=603 data-nosnippet>603</a>            | KeyInner::ECDH_P521(evp_pkey) =&gt; evp_pkey,
+<a href=#604 id=604 data-nosnippet>604</a>            KeyInner::X25519(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified),
+<a href=#605 id=605 data-nosnippet>605</a>        };
+<a href=#606 id=606 data-nosnippet>606</a>        <span class="kw">let </span>pub_point = marshal_sec1_public_point(evp_pkey, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
+<a href=#607 id=607 data-nosnippet>607</a>        <span class="prelude-val">Ok</span>(EcPublicKeyCompressedBin::new(pub_point))
+<a href=#608 id=608 data-nosnippet>608</a>    }
+<a href=#609 id=609 data-nosnippet>609</a>}
+<a href=#610 id=610 data-nosnippet>610</a>
+<a href=#611 id=611 data-nosnippet>611</a><span class="kw">impl </span>AsBigEndian&lt;EcPublicKeyUncompressedBin&lt;<span class="lifetime">'static</span>&gt;&gt; <span class="kw">for </span>PublicKey {
+<a href=#612 id=612 data-nosnippet>612</a>    <span class="doccomment">/// Provides the public key elliptic curve point to a compressed point format.
+<a href=#613 id=613 data-nosnippet>613</a>    ///
+<a href=#614 id=614 data-nosnippet>614</a>    /// Equivalent to [`PublicKey::as_ref`] for ECDH key types, except that it provides you a copy instead of a reference.
+<a href=#615 id=615 data-nosnippet>615</a>    ///
+<a href=#616 id=616 data-nosnippet>616</a>    /// # Errors
+<a href=#617 id=617 data-nosnippet>617</a>    /// Returns an error if the underlying implementation is unable to marshal the public key to this format.
+<a href=#618 id=618 data-nosnippet>618</a>    </span><span class="kw">fn </span>as_be_bytes(
+<a href=#619 id=619 data-nosnippet>619</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#620 id=620 data-nosnippet>620</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;EcPublicKeyUncompressedBin&lt;<span class="lifetime">'static</span>&gt;, <span class="kw">crate</span>::error::Unspecified&gt; {
+<a href=#621 id=621 data-nosnippet>621</a>        <span class="kw">if </span><span class="self">self</span>.algorithm().id == AlgorithmID::X25519 {
+<a href=#622 id=622 data-nosnippet>622</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#623 id=623 data-nosnippet>623</a>        }
 <a href=#624 id=624 data-nosnippet>624</a>
-<a href=#625 id=625 data-nosnippet>625</a><span class="doccomment">/// An unparsed, possibly malformed, public key for key agreement.
-<a href=#626 id=626 data-nosnippet>626</a></span><span class="attr">#[derive(Clone)]
-<a href=#627 id=627 data-nosnippet>627</a></span><span class="kw">pub struct </span>UnparsedPublicKey&lt;B: AsRef&lt;[u8]&gt;&gt; {
-<a href=#628 id=628 data-nosnippet>628</a>    alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Algorithm,
-<a href=#629 id=629 data-nosnippet>629</a>    bytes: B,
+<a href=#625 id=625 data-nosnippet>625</a>        <span class="kw">let </span><span class="kw-2">mut </span>buffer = <span class="macro">vec!</span>[<span class="number">0u8</span>; <span class="self">self</span>.len];
+<a href=#626 id=626 data-nosnippet>626</a>        buffer.copy_from_slice(<span class="kw-2">&amp;</span><span class="self">self</span>.key_bytes[<span class="number">0</span>..<span class="self">self</span>.len]);
+<a href=#627 id=627 data-nosnippet>627</a>
+<a href=#628 id=628 data-nosnippet>628</a>        <span class="prelude-val">Ok</span>(EcPublicKeyUncompressedBin::new(buffer))
+<a href=#629 id=629 data-nosnippet>629</a>    }
 <a href=#630 id=630 data-nosnippet>630</a>}
 <a href=#631 id=631 data-nosnippet>631</a>
-<a href=#632 id=632 data-nosnippet>632</a><span class="kw">impl</span>&lt;B: Copy + AsRef&lt;[u8]&gt;&gt; Copy <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {}
-<a href=#633 id=633 data-nosnippet>633</a>
-<a href=#634 id=634 data-nosnippet>634</a><span class="kw">impl</span>&lt;B: Debug + AsRef&lt;[u8]&gt;&gt; Debug <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {
-<a href=#635 id=635 data-nosnippet>635</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
-<a href=#636 id=636 data-nosnippet>636</a>        f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#637 id=637 data-nosnippet>637</a>            <span class="string">"UnparsedPublicKey {{ algorithm: {:?}, bytes: {:?} }}"</span>,
-<a href=#638 id=638 data-nosnippet>638</a>            <span class="self">self</span>.alg,
-<a href=#639 id=639 data-nosnippet>639</a>            hex::encode(<span class="self">self</span>.bytes.as_ref())
-<a href=#640 id=640 data-nosnippet>640</a>        ))
-<a href=#641 id=641 data-nosnippet>641</a>    }
-<a href=#642 id=642 data-nosnippet>642</a>}
-<a href=#643 id=643 data-nosnippet>643</a>
-<a href=#644 id=644 data-nosnippet>644</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; UnparsedPublicKey&lt;B&gt; {
-<a href=#645 id=645 data-nosnippet>645</a>    <span class="doccomment">/// Constructs a new `UnparsedPublicKey`.
-<a href=#646 id=646 data-nosnippet>646</a>    </span><span class="kw">pub fn </span>new(algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Algorithm, bytes: B) -&gt; <span class="self">Self </span>{
-<a href=#647 id=647 data-nosnippet>647</a>        UnparsedPublicKey {
-<a href=#648 id=648 data-nosnippet>648</a>            alg: algorithm,
-<a href=#649 id=649 data-nosnippet>649</a>            bytes,
-<a href=#650 id=650 data-nosnippet>650</a>        }
-<a href=#651 id=651 data-nosnippet>651</a>    }
-<a href=#652 id=652 data-nosnippet>652</a>
-<a href=#653 id=653 data-nosnippet>653</a>    <span class="doccomment">/// The agreement algorithm associated with this public key
-<a href=#654 id=654 data-nosnippet>654</a>    </span><span class="kw">pub fn </span>algorithm(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Algorithm {
-<a href=#655 id=655 data-nosnippet>655</a>        <span class="self">self</span>.alg
-<a href=#656 id=656 data-nosnippet>656</a>    }
-<a href=#657 id=657 data-nosnippet>657</a>
-<a href=#658 id=658 data-nosnippet>658</a>    <span class="doccomment">/// The bytes provided for this public key
-<a href=#659 id=659 data-nosnippet>659</a>    </span><span class="kw">pub fn </span>bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>B {
-<a href=#660 id=660 data-nosnippet>660</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.bytes
-<a href=#661 id=661 data-nosnippet>661</a>    }
-<a href=#662 id=662 data-nosnippet>662</a>}
-<a href=#663 id=663 data-nosnippet>663</a>
-<a href=#664 id=664 data-nosnippet>664</a><span class="doccomment">/// A parsed public key for key agreement.
-<a href=#665 id=665 data-nosnippet>665</a>///
-<a href=#666 id=666 data-nosnippet>666</a>/// This represents a public key that has been successfully parsed and validated
-<a href=#667 id=667 data-nosnippet>667</a>/// from its encoded form. The key can be used with the `agree` function to
-<a href=#668 id=668 data-nosnippet>668</a>/// perform key agreement operations.
-<a href=#669 id=669 data-nosnippet>669</a></span><span class="attr">#[derive(Debug)]
-<a href=#670 id=670 data-nosnippet>670</a></span><span class="kw">pub struct </span>ParsedPublicKey {
-<a href=#671 id=671 data-nosnippet>671</a>    format: ParsedPublicKeyFormat,
-<a href=#672 id=672 data-nosnippet>672</a>    nid: i32,
-<a href=#673 id=673 data-nosnippet>673</a>    key: LcPtr&lt;EVP_PKEY&gt;,
-<a href=#674 id=674 data-nosnippet>674</a>}
-<a href=#675 id=675 data-nosnippet>675</a>
-<a href=#676 id=676 data-nosnippet>676</a><span class="kw">unsafe impl </span>Send <span class="kw">for </span>ParsedPublicKey {}
-<a href=#677 id=677 data-nosnippet>677</a><span class="kw">unsafe impl </span>Sync <span class="kw">for </span>ParsedPublicKey {}
-<a href=#678 id=678 data-nosnippet>678</a>
-<a href=#679 id=679 data-nosnippet>679</a><span class="attr">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-<a href=#680 id=680 data-nosnippet>680</a></span><span class="doccomment">/// The format of a parsed public key.
-<a href=#681 id=681 data-nosnippet>681</a>///
-<a href=#682 id=682 data-nosnippet>682</a>/// This is used to distinguish between different types of public key formats
-<a href=#683 id=683 data-nosnippet>683</a>/// supported by *aws-lc-rs*.
-<a href=#684 id=684 data-nosnippet>684</a></span><span class="attr">#[non_exhaustive]
-<a href=#685 id=685 data-nosnippet>685</a></span><span class="kw">pub enum </span>ParsedPublicKeyFormat {
-<a href=#686 id=686 data-nosnippet>686</a>    <span class="doccomment">/// The key is in an X.509 SubjectPublicKeyInfo format.
-<a href=#687 id=687 data-nosnippet>687</a>    </span>X509,
-<a href=#688 id=688 data-nosnippet>688</a>    <span class="doccomment">/// The key is in an uncompressed form (X9.62).
-<a href=#689 id=689 data-nosnippet>689</a>    </span>Uncompressed,
-<a href=#690 id=690 data-nosnippet>690</a>    <span class="doccomment">/// The key is in a compressed form (SEC 1: Elliptic Curve Cryptography, Version 2.0).
-<a href=#691 id=691 data-nosnippet>691</a>    </span>Compressed,
-<a href=#692 id=692 data-nosnippet>692</a>    <span class="doccomment">/// The key is in a hybrid form (SEC 1: Elliptic Curve Cryptography, Version 2.0).
-<a href=#693 id=693 data-nosnippet>693</a>    </span>Hybrid,
-<a href=#694 id=694 data-nosnippet>694</a>    <span class="doccomment">/// The key is in a raw form. (X25519 only)
-<a href=#695 id=695 data-nosnippet>695</a>    </span>Raw,
-<a href=#696 id=696 data-nosnippet>696</a>    <span class="doccomment">/// The key is in an unknown format.
-<a href=#697 id=697 data-nosnippet>697</a>    </span>Unknown,
-<a href=#698 id=698 data-nosnippet>698</a>}
-<a href=#699 id=699 data-nosnippet>699</a>
-<a href=#700 id=700 data-nosnippet>700</a><span class="doccomment">/// A parsed public key for key agreement.
-<a href=#701 id=701 data-nosnippet>701</a></span><span class="kw">impl </span>ParsedPublicKey {
-<a href=#702 id=702 data-nosnippet>702</a>    <span class="kw">fn </span>nid(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i32 {
-<a href=#703 id=703 data-nosnippet>703</a>        <span class="self">self</span>.nid
-<a href=#704 id=704 data-nosnippet>704</a>    }
-<a href=#705 id=705 data-nosnippet>705</a>
-<a href=#706 id=706 data-nosnippet>706</a>    <span class="doccomment">/// The format of the data the public key was parsed from.
-<a href=#707 id=707 data-nosnippet>707</a>    </span><span class="attr">#[must_use]
-<a href=#708 id=708 data-nosnippet>708</a>    </span><span class="kw">pub fn </span>format(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ParsedPublicKeyFormat {
-<a href=#709 id=709 data-nosnippet>709</a>        <span class="self">self</span>.format
-<a href=#710 id=710 data-nosnippet>710</a>    }
-<a href=#711 id=711 data-nosnippet>711</a>
-<a href=#712 id=712 data-nosnippet>712</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt; {
-<a href=#713 id=713 data-nosnippet>713</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.key
-<a href=#714 id=714 data-nosnippet>714</a>    }
-<a href=#715 id=715 data-nosnippet>715</a>
-<a href=#716 id=716 data-nosnippet>716</a>    <span class="doccomment">/// The algorithm of the public key.
-<a href=#717 id=717 data-nosnippet>717</a>    </span><span class="attr">#[must_use]
-<a href=#718 id=718 data-nosnippet>718</a>    #[allow(non_upper_case_globals)]
-<a href=#719 id=719 data-nosnippet>719</a>    </span><span class="kw">pub fn </span>alg(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Algorithm {
-<a href=#720 id=720 data-nosnippet>720</a>        <span class="kw">match </span><span class="self">self</span>.nid() {
-<a href=#721 id=721 data-nosnippet>721</a>            NID_X25519 =&gt; <span class="kw-2">&amp;</span>X25519,
-<a href=#722 id=722 data-nosnippet>722</a>            NID_X9_62_prime256v1 =&gt; <span class="kw-2">&amp;</span>ECDH_P256,
-<a href=#723 id=723 data-nosnippet>723</a>            NID_secp384r1 =&gt; <span class="kw-2">&amp;</span>ECDH_P384,
-<a href=#724 id=724 data-nosnippet>724</a>            NID_secp521r1 =&gt; <span class="kw-2">&amp;</span>ECDH_P521,
-<a href=#725 id=725 data-nosnippet>725</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">"Unreachable agreement algorithm nid: {}"</span>, <span class="self">self</span>.nid()),
-<a href=#726 id=726 data-nosnippet>726</a>        }
-<a href=#727 id=727 data-nosnippet>727</a>    }
-<a href=#728 id=728 data-nosnippet>728</a>}
-<a href=#729 id=729 data-nosnippet>729</a>
-<a href=#730 id=730 data-nosnippet>730</a><span class="kw">impl </span>ParsedPublicKey {
-<a href=#731 id=731 data-nosnippet>731</a>    <span class="attr">#[allow(non_upper_case_globals)]
-<a href=#732 id=732 data-nosnippet>732</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(bytes: <span class="kw">impl </span>AsRef&lt;[u8]&gt;, nid: i32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
-<a href=#733 id=733 data-nosnippet>733</a>        <span class="kw">let </span>key_bytes = bytes.as_ref();
-<a href=#734 id=734 data-nosnippet>734</a>        <span class="kw">if </span>key_bytes.is_empty() {
-<a href=#735 id=735 data-nosnippet>735</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::unspecified());
-<a href=#736 id=736 data-nosnippet>736</a>        }
-<a href=#737 id=737 data-nosnippet>737</a>        <span class="kw">match </span>nid {
-<a href=#738 id=738 data-nosnippet>738</a>            NID_X25519 =&gt; {
-<a href=#739 id=739 data-nosnippet>739</a>                <span class="kw">let </span>format: ParsedPublicKeyFormat;
-<a href=#740 id=740 data-nosnippet>740</a>                <span class="kw">let </span>key = <span class="kw">if let </span><span class="prelude-val">Ok</span>(evp_pkey) =
-<a href=#741 id=741 data-nosnippet>741</a>                    LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5280_public_key(key_bytes, EVP_PKEY_X25519)
-<a href=#742 id=742 data-nosnippet>742</a>                {
-<a href=#743 id=743 data-nosnippet>743</a>                    format = ParsedPublicKeyFormat::X509;
-<a href=#744 id=744 data-nosnippet>744</a>                    evp_pkey
-<a href=#745 id=745 data-nosnippet>745</a>                } <span class="kw">else </span>{
-<a href=#746 id=746 data-nosnippet>746</a>                    format = ParsedPublicKeyFormat::Raw;
-<a href=#747 id=747 data-nosnippet>747</a>                    try_parse_x25519_public_key_raw_bytes(key_bytes)<span class="question-mark">?
-<a href=#748 id=748 data-nosnippet>748</a>                </span>};
-<a href=#749 id=749 data-nosnippet>749</a>
-<a href=#750 id=750 data-nosnippet>750</a>                <span class="prelude-val">Ok</span>(ParsedPublicKey { format, nid, key })
-<a href=#751 id=751 data-nosnippet>751</a>            }
-<a href=#752 id=752 data-nosnippet>752</a>            NID_X9_62_prime256v1 | NID_secp384r1 | NID_secp521r1 =&gt; {
-<a href=#753 id=753 data-nosnippet>753</a>                <span class="kw">let </span>format: ParsedPublicKeyFormat;
-<a href=#754 id=754 data-nosnippet>754</a>                <span class="kw">let </span>key = <span class="kw">if let </span><span class="prelude-val">Ok</span>(evp_pkey) =
-<a href=#755 id=755 data-nosnippet>755</a>                    LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
-<a href=#756 id=756 data-nosnippet>756</a>                {
-<a href=#757 id=757 data-nosnippet>757</a>                    validate_ec_evp_key(<span class="kw-2">&amp;</span>evp_pkey.as_const(), nid)<span class="question-mark">?</span>;
+<a href=#632 id=632 data-nosnippet>632</a><span class="doccomment">/// An unparsed, possibly malformed, public key for key agreement.
+<a href=#633 id=633 data-nosnippet>633</a></span><span class="attr">#[derive(Clone)]
+<a href=#634 id=634 data-nosnippet>634</a></span><span class="kw">pub struct </span>UnparsedPublicKey&lt;B: AsRef&lt;[u8]&gt;&gt; {
+<a href=#635 id=635 data-nosnippet>635</a>    alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Algorithm,
+<a href=#636 id=636 data-nosnippet>636</a>    bytes: B,
+<a href=#637 id=637 data-nosnippet>637</a>}
+<a href=#638 id=638 data-nosnippet>638</a>
+<a href=#639 id=639 data-nosnippet>639</a><span class="kw">impl</span>&lt;B: Copy + AsRef&lt;[u8]&gt;&gt; Copy <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {}
+<a href=#640 id=640 data-nosnippet>640</a>
+<a href=#641 id=641 data-nosnippet>641</a><span class="kw">impl</span>&lt;B: Debug + AsRef&lt;[u8]&gt;&gt; Debug <span class="kw">for </span>UnparsedPublicKey&lt;B&gt; {
+<a href=#642 id=642 data-nosnippet>642</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
+<a href=#643 id=643 data-nosnippet>643</a>        f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#644 id=644 data-nosnippet>644</a>            <span class="string">"UnparsedPublicKey {{ algorithm: {:?}, bytes: {:?} }}"</span>,
+<a href=#645 id=645 data-nosnippet>645</a>            <span class="self">self</span>.alg,
+<a href=#646 id=646 data-nosnippet>646</a>            hex::encode(<span class="self">self</span>.bytes.as_ref())
+<a href=#647 id=647 data-nosnippet>647</a>        ))
+<a href=#648 id=648 data-nosnippet>648</a>    }
+<a href=#649 id=649 data-nosnippet>649</a>}
+<a href=#650 id=650 data-nosnippet>650</a>
+<a href=#651 id=651 data-nosnippet>651</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; UnparsedPublicKey&lt;B&gt; {
+<a href=#652 id=652 data-nosnippet>652</a>    <span class="doccomment">/// Constructs a new `UnparsedPublicKey`.
+<a href=#653 id=653 data-nosnippet>653</a>    </span><span class="kw">pub fn </span>new(algorithm: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Algorithm, bytes: B) -&gt; <span class="self">Self </span>{
+<a href=#654 id=654 data-nosnippet>654</a>        UnparsedPublicKey {
+<a href=#655 id=655 data-nosnippet>655</a>            alg: algorithm,
+<a href=#656 id=656 data-nosnippet>656</a>            bytes,
+<a href=#657 id=657 data-nosnippet>657</a>        }
+<a href=#658 id=658 data-nosnippet>658</a>    }
+<a href=#659 id=659 data-nosnippet>659</a>
+<a href=#660 id=660 data-nosnippet>660</a>    <span class="doccomment">/// The agreement algorithm associated with this public key
+<a href=#661 id=661 data-nosnippet>661</a>    </span><span class="kw">pub fn </span>algorithm(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Algorithm {
+<a href=#662 id=662 data-nosnippet>662</a>        <span class="self">self</span>.alg
+<a href=#663 id=663 data-nosnippet>663</a>    }
+<a href=#664 id=664 data-nosnippet>664</a>
+<a href=#665 id=665 data-nosnippet>665</a>    <span class="doccomment">/// The bytes provided for this public key
+<a href=#666 id=666 data-nosnippet>666</a>    </span><span class="kw">pub fn </span>bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>B {
+<a href=#667 id=667 data-nosnippet>667</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.bytes
+<a href=#668 id=668 data-nosnippet>668</a>    }
+<a href=#669 id=669 data-nosnippet>669</a>}
+<a href=#670 id=670 data-nosnippet>670</a>
+<a href=#671 id=671 data-nosnippet>671</a><span class="doccomment">/// A parsed public key for key agreement.
+<a href=#672 id=672 data-nosnippet>672</a>///
+<a href=#673 id=673 data-nosnippet>673</a>/// This represents a public key that has been successfully parsed and validated
+<a href=#674 id=674 data-nosnippet>674</a>/// from its encoded form. The key can be used with the `agree` function to
+<a href=#675 id=675 data-nosnippet>675</a>/// perform key agreement operations.
+<a href=#676 id=676 data-nosnippet>676</a></span><span class="attr">#[derive(Debug, Clone)]
+<a href=#677 id=677 data-nosnippet>677</a></span><span class="kw">pub struct </span>ParsedPublicKey {
+<a href=#678 id=678 data-nosnippet>678</a>    format: ParsedPublicKeyFormat,
+<a href=#679 id=679 data-nosnippet>679</a>    nid: i32,
+<a href=#680 id=680 data-nosnippet>680</a>    key: LcPtr&lt;EVP_PKEY&gt;,
+<a href=#681 id=681 data-nosnippet>681</a>    bytes: Box&lt;[u8]&gt;,
+<a href=#682 id=682 data-nosnippet>682</a>}
+<a href=#683 id=683 data-nosnippet>683</a>
+<a href=#684 id=684 data-nosnippet>684</a><span class="comment">// See EVP_PKEY documentation here:
+<a href=#685 id=685 data-nosnippet>685</a>// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+<a href=#686 id=686 data-nosnippet>686</a>// An |EVP_PKEY| object represents a public or private key. A given object may
+<a href=#687 id=687 data-nosnippet>687</a>// be used concurrently on multiple threads by non-mutating functions, provided
+<a href=#688 id=688 data-nosnippet>688</a>// no other thread is concurrently calling a mutating function. Unless otherwise
+<a href=#689 id=689 data-nosnippet>689</a>// documented, functions which take a |const| pointer are non-mutating and
+<a href=#690 id=690 data-nosnippet>690</a>// functions which take a non-|const| pointer are mutating.
+<a href=#691 id=691 data-nosnippet>691</a></span><span class="kw">unsafe impl </span>Send <span class="kw">for </span>ParsedPublicKey {}
+<a href=#692 id=692 data-nosnippet>692</a><span class="kw">unsafe impl </span>Sync <span class="kw">for </span>ParsedPublicKey {}
+<a href=#693 id=693 data-nosnippet>693</a>
+<a href=#694 id=694 data-nosnippet>694</a><span class="attr">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+<a href=#695 id=695 data-nosnippet>695</a></span><span class="doccomment">/// The format of a parsed public key.
+<a href=#696 id=696 data-nosnippet>696</a>///
+<a href=#697 id=697 data-nosnippet>697</a>/// This is used to distinguish between different types of public key formats
+<a href=#698 id=698 data-nosnippet>698</a>/// supported by *aws-lc-rs*.
+<a href=#699 id=699 data-nosnippet>699</a></span><span class="attr">#[non_exhaustive]
+<a href=#700 id=700 data-nosnippet>700</a></span><span class="kw">pub enum </span>ParsedPublicKeyFormat {
+<a href=#701 id=701 data-nosnippet>701</a>    <span class="doccomment">/// The key is in an X.509 SubjectPublicKeyInfo format.
+<a href=#702 id=702 data-nosnippet>702</a>    </span>X509,
+<a href=#703 id=703 data-nosnippet>703</a>    <span class="doccomment">/// The key is in an uncompressed form (X9.62).
+<a href=#704 id=704 data-nosnippet>704</a>    </span>Uncompressed,
+<a href=#705 id=705 data-nosnippet>705</a>    <span class="doccomment">/// The key is in a compressed form (SEC 1: Elliptic Curve Cryptography, Version 2.0).
+<a href=#706 id=706 data-nosnippet>706</a>    </span>Compressed,
+<a href=#707 id=707 data-nosnippet>707</a>    <span class="doccomment">/// The key is in a hybrid form (SEC 1: Elliptic Curve Cryptography, Version 2.0).
+<a href=#708 id=708 data-nosnippet>708</a>    </span>Hybrid,
+<a href=#709 id=709 data-nosnippet>709</a>    <span class="doccomment">/// The key is in a raw form. (X25519 only)
+<a href=#710 id=710 data-nosnippet>710</a>    </span>Raw,
+<a href=#711 id=711 data-nosnippet>711</a>    <span class="doccomment">/// The key is in an unknown format.
+<a href=#712 id=712 data-nosnippet>712</a>    </span>Unknown,
+<a href=#713 id=713 data-nosnippet>713</a>}
+<a href=#714 id=714 data-nosnippet>714</a>
+<a href=#715 id=715 data-nosnippet>715</a><span class="doccomment">/// A parsed public key for key agreement.
+<a href=#716 id=716 data-nosnippet>716</a></span><span class="kw">impl </span>ParsedPublicKey {
+<a href=#717 id=717 data-nosnippet>717</a>    <span class="kw">fn </span>nid(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i32 {
+<a href=#718 id=718 data-nosnippet>718</a>        <span class="self">self</span>.nid
+<a href=#719 id=719 data-nosnippet>719</a>    }
+<a href=#720 id=720 data-nosnippet>720</a>
+<a href=#721 id=721 data-nosnippet>721</a>    <span class="doccomment">/// The format of the data the public key was parsed from.
+<a href=#722 id=722 data-nosnippet>722</a>    </span><span class="attr">#[must_use]
+<a href=#723 id=723 data-nosnippet>723</a>    </span><span class="kw">pub fn </span>format(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ParsedPublicKeyFormat {
+<a href=#724 id=724 data-nosnippet>724</a>        <span class="self">self</span>.format
+<a href=#725 id=725 data-nosnippet>725</a>    }
+<a href=#726 id=726 data-nosnippet>726</a>
+<a href=#727 id=727 data-nosnippet>727</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt; {
+<a href=#728 id=728 data-nosnippet>728</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.key
+<a href=#729 id=729 data-nosnippet>729</a>    }
+<a href=#730 id=730 data-nosnippet>730</a>
+<a href=#731 id=731 data-nosnippet>731</a>    <span class="doccomment">/// The algorithm of the public key.
+<a href=#732 id=732 data-nosnippet>732</a>    </span><span class="attr">#[must_use]
+<a href=#733 id=733 data-nosnippet>733</a>    #[allow(non_upper_case_globals)]
+<a href=#734 id=734 data-nosnippet>734</a>    </span><span class="kw">pub fn </span>alg(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Algorithm {
+<a href=#735 id=735 data-nosnippet>735</a>        <span class="kw">match </span><span class="self">self</span>.nid() {
+<a href=#736 id=736 data-nosnippet>736</a>            NID_X25519 =&gt; <span class="kw-2">&amp;</span>X25519,
+<a href=#737 id=737 data-nosnippet>737</a>            NID_X9_62_prime256v1 =&gt; <span class="kw-2">&amp;</span>ECDH_P256,
+<a href=#738 id=738 data-nosnippet>738</a>            NID_secp384r1 =&gt; <span class="kw-2">&amp;</span>ECDH_P384,
+<a href=#739 id=739 data-nosnippet>739</a>            NID_secp521r1 =&gt; <span class="kw-2">&amp;</span>ECDH_P521,
+<a href=#740 id=740 data-nosnippet>740</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">"Unreachable agreement algorithm nid: {}"</span>, <span class="self">self</span>.nid()),
+<a href=#741 id=741 data-nosnippet>741</a>        }
+<a href=#742 id=742 data-nosnippet>742</a>    }
+<a href=#743 id=743 data-nosnippet>743</a>}
+<a href=#744 id=744 data-nosnippet>744</a>
+<a href=#745 id=745 data-nosnippet>745</a><span class="kw">impl </span>ParsedPublicKey {
+<a href=#746 id=746 data-nosnippet>746</a>    <span class="attr">#[allow(non_upper_case_globals)]
+<a href=#747 id=747 data-nosnippet>747</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(bytes: <span class="kw">impl </span>AsRef&lt;[u8]&gt;, nid: i32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, KeyRejected&gt; {
+<a href=#748 id=748 data-nosnippet>748</a>        <span class="kw">let </span>bytes = bytes.as_ref().to_vec().into_boxed_slice();
+<a href=#749 id=749 data-nosnippet>749</a>        <span class="kw">if </span>bytes.is_empty() {
+<a href=#750 id=750 data-nosnippet>750</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::unspecified());
+<a href=#751 id=751 data-nosnippet>751</a>        }
+<a href=#752 id=752 data-nosnippet>752</a>        <span class="kw">match </span>nid {
+<a href=#753 id=753 data-nosnippet>753</a>            NID_X25519 =&gt; {
+<a href=#754 id=754 data-nosnippet>754</a>                <span class="kw">let </span>format: ParsedPublicKeyFormat;
+<a href=#755 id=755 data-nosnippet>755</a>                <span class="kw">let </span>key = <span class="kw">if let </span><span class="prelude-val">Ok</span>(evp_pkey) =
+<a href=#756 id=756 data-nosnippet>756</a>                    LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5280_public_key(<span class="kw-2">&amp;</span>bytes, EVP_PKEY_X25519)
+<a href=#757 id=757 data-nosnippet>757</a>                {
 <a href=#758 id=758 data-nosnippet>758</a>                    format = ParsedPublicKeyFormat::X509;
 <a href=#759 id=759 data-nosnippet>759</a>                    evp_pkey
-<a href=#760 id=760 data-nosnippet>760</a>                } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(evp_pkey) = parse_sec1_public_point(key_bytes, nid) {
-<a href=#761 id=761 data-nosnippet>761</a>                    format = <span class="kw">match </span>key_bytes[<span class="number">0</span>] {
-<a href=#762 id=762 data-nosnippet>762</a>                        <span class="number">0x02 </span>| <span class="number">0x03 </span>=&gt; ParsedPublicKeyFormat::Compressed,
-<a href=#763 id=763 data-nosnippet>763</a>                        <span class="number">0x04 </span>=&gt; ParsedPublicKeyFormat::Uncompressed,
-<a href=#764 id=764 data-nosnippet>764</a>                        <span class="number">0x06 </span>| <span class="number">0x07 </span>=&gt; ParsedPublicKeyFormat::Hybrid,
-<a href=#765 id=765 data-nosnippet>765</a>                        <span class="kw">_ </span>=&gt; ParsedPublicKeyFormat::Unknown,
-<a href=#766 id=766 data-nosnippet>766</a>                    };
-<a href=#767 id=767 data-nosnippet>767</a>                    evp_pkey
-<a href=#768 id=768 data-nosnippet>768</a>                } <span class="kw">else </span>{
-<a href=#769 id=769 data-nosnippet>769</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::invalid_encoding());
-<a href=#770 id=770 data-nosnippet>770</a>                };
-<a href=#771 id=771 data-nosnippet>771</a>
-<a href=#772 id=772 data-nosnippet>772</a>                <span class="prelude-val">Ok</span>(ParsedPublicKey { format, nid, key })
-<a href=#773 id=773 data-nosnippet>773</a>            }
-<a href=#774 id=774 data-nosnippet>774</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(KeyRejected::unspecified()),
-<a href=#775 id=775 data-nosnippet>775</a>        }
-<a href=#776 id=776 data-nosnippet>776</a>    }
-<a href=#777 id=777 data-nosnippet>777</a>}
-<a href=#778 id=778 data-nosnippet>778</a>
-<a href=#779 id=779 data-nosnippet>779</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; UnparsedPublicKey&lt;B&gt; {
-<a href=#780 id=780 data-nosnippet>780</a>    <span class="attr">#[allow(dead_code)]
-<a href=#781 id=781 data-nosnippet>781</a>    </span><span class="kw">fn </span>parse(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ParsedPublicKey, KeyRejected&gt; {
-<a href=#782 id=782 data-nosnippet>782</a>        ParsedPublicKey::new(<span class="kw-2">&amp;</span><span class="self">self</span>.bytes, <span class="self">self</span>.alg.id.nid())
-<a href=#783 id=783 data-nosnippet>783</a>    }
-<a href=#784 id=784 data-nosnippet>784</a>}
-<a href=#785 id=785 data-nosnippet>785</a>
-<a href=#786 id=786 data-nosnippet>786</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; TryFrom&lt;<span class="kw-2">&amp;</span>UnparsedPublicKey&lt;B&gt;&gt; <span class="kw">for </span>ParsedPublicKey {
-<a href=#787 id=787 data-nosnippet>787</a>    <span class="kw">type </span>Error = KeyRejected;
-<a href=#788 id=788 data-nosnippet>788</a>    <span class="kw">fn </span>try_from(upk: <span class="kw-2">&amp;</span>UnparsedPublicKey&lt;B&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-<a href=#789 id=789 data-nosnippet>789</a>        upk.parse()
-<a href=#790 id=790 data-nosnippet>790</a>    }
-<a href=#791 id=791 data-nosnippet>791</a>}
-<a href=#792 id=792 data-nosnippet>792</a>
-<a href=#793 id=793 data-nosnippet>793</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; TryFrom&lt;UnparsedPublicKey&lt;B&gt;&gt; <span class="kw">for </span>ParsedPublicKey {
-<a href=#794 id=794 data-nosnippet>794</a>    <span class="kw">type </span>Error = KeyRejected;
-<a href=#795 id=795 data-nosnippet>795</a>    <span class="kw">fn </span>try_from(upk: UnparsedPublicKey&lt;B&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-<a href=#796 id=796 data-nosnippet>796</a>        upk.parse()
-<a href=#797 id=797 data-nosnippet>797</a>    }
-<a href=#798 id=798 data-nosnippet>798</a>}
-<a href=#799 id=799 data-nosnippet>799</a>
-<a href=#800 id=800 data-nosnippet>800</a><span class="doccomment">/// Performs a key agreement with a private key and the given public key.
-<a href=#801 id=801 data-nosnippet>801</a>///
-<a href=#802 id=802 data-nosnippet>802</a>/// `my_private_key` is the private key to use. Only a reference to the key
-<a href=#803 id=803 data-nosnippet>803</a>/// is required, allowing the key to continue to be used.
-<a href=#804 id=804 data-nosnippet>804</a>///
-<a href=#805 id=805 data-nosnippet>805</a>/// `peer_public_key` is the peer's public key. `agree` will return
-<a href=#806 id=806 data-nosnippet>806</a>/// `Err(error_value)` if it does not match `my_private_key's` algorithm/curve.
-<a href=#807 id=807 data-nosnippet>807</a>/// `agree` verifies that it is encoded in the standard form for the
-<a href=#808 id=808 data-nosnippet>808</a>/// algorithm and that the key is *valid*; see the algorithm's documentation for
-<a href=#809 id=809 data-nosnippet>809</a>/// details on how keys are to be encoded and what constitutes a valid key for
-<a href=#810 id=810 data-nosnippet>810</a>/// that algorithm.
-<a href=#811 id=811 data-nosnippet>811</a>///
-<a href=#812 id=812 data-nosnippet>812</a>/// `error_value` is the value to return if an error occurs before `kdf` is
-<a href=#813 id=813 data-nosnippet>813</a>/// called, e.g. when decoding of the peer's public key fails or when the public
-<a href=#814 id=814 data-nosnippet>814</a>/// key is otherwise invalid.
-<a href=#815 id=815 data-nosnippet>815</a>///
-<a href=#816 id=816 data-nosnippet>816</a>/// After the key agreement is done, `agree` calls `kdf` with the raw
-<a href=#817 id=817 data-nosnippet>817</a>/// key material from the key agreement operation and then returns what `kdf`
-<a href=#818 id=818 data-nosnippet>818</a>/// returns.
-<a href=#819 id=819 data-nosnippet>819</a></span><span class="comment">// # FIPS
-<a href=#820 id=820 data-nosnippet>820</a>// Use this function with one of the following key algorithms:
-<a href=#821 id=821 data-nosnippet>821</a>// * `ECDH_P256`
-<a href=#822 id=822 data-nosnippet>822</a>// * `ECDH_P384`
-<a href=#823 id=823 data-nosnippet>823</a>// * `ECDH_P521`
-<a href=#824 id=824 data-nosnippet>824</a>//
-<a href=#825 id=825 data-nosnippet>825</a></span><span class="doccomment">/// # Errors
-<a href=#826 id=826 data-nosnippet>826</a>/// `error_value` on internal failure.
-<a href=#827 id=827 data-nosnippet>827</a></span><span class="attr">#[inline]
-<a href=#828 id=828 data-nosnippet>828</a>#[allow(clippy::missing_panics_doc)]
-<a href=#829 id=829 data-nosnippet>829</a></span><span class="kw">pub fn </span>agree&lt;B: TryInto&lt;ParsedPublicKey&gt;, F, R, E&gt;(
-<a href=#830 id=830 data-nosnippet>830</a>    my_private_key: <span class="kw-2">&amp;</span>PrivateKey,
-<a href=#831 id=831 data-nosnippet>831</a>    peer_public_key: B,
-<a href=#832 id=832 data-nosnippet>832</a>    error_value: E,
-<a href=#833 id=833 data-nosnippet>833</a>    kdf: F,
-<a href=#834 id=834 data-nosnippet>834</a>) -&gt; <span class="prelude-ty">Result</span>&lt;R, E&gt;
-<a href=#835 id=835 data-nosnippet>835</a><span class="kw">where
-<a href=#836 id=836 data-nosnippet>836</a>    </span>F: FnOnce(<span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;R, E&gt;,
-<a href=#837 id=837 data-nosnippet>837</a>{
-<a href=#838 id=838 data-nosnippet>838</a>    <span class="kw">let </span>expected_alg = my_private_key.algorithm();
-<a href=#839 id=839 data-nosnippet>839</a>
-<a href=#840 id=840 data-nosnippet>840</a>    <span class="kw">let </span>parse_result = peer_public_key.try_into();
-<a href=#841 id=841 data-nosnippet>841</a>
-<a href=#842 id=842 data-nosnippet>842</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(peer_pub_key) = parse_result {
-<a href=#843 id=843 data-nosnippet>843</a>        <span class="kw">if </span>peer_pub_key.alg() != expected_alg {
-<a href=#844 id=844 data-nosnippet>844</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(error_value);
-<a href=#845 id=845 data-nosnippet>845</a>        }
-<a href=#846 id=846 data-nosnippet>846</a>        <span class="kw">let </span>secret = my_private_key
-<a href=#847 id=847 data-nosnippet>847</a>            .inner_key
-<a href=#848 id=848 data-nosnippet>848</a>            .get_evp_pkey()
-<a href=#849 id=849 data-nosnippet>849</a>            .agree(peer_pub_key.key())
-<a href=#850 id=850 data-nosnippet>850</a>            .or(<span class="prelude-val">Err</span>(error_value))<span class="question-mark">?</span>;
-<a href=#851 id=851 data-nosnippet>851</a>
-<a href=#852 id=852 data-nosnippet>852</a>        kdf(secret.as_ref())
-<a href=#853 id=853 data-nosnippet>853</a>    } <span class="kw">else </span>{
-<a href=#854 id=854 data-nosnippet>854</a>        <span class="prelude-val">Err</span>(error_value)
-<a href=#855 id=855 data-nosnippet>855</a>    }
-<a href=#856 id=856 data-nosnippet>856</a>}
-<a href=#857 id=857 data-nosnippet>857</a>
-<a href=#858 id=858 data-nosnippet>858</a><span class="kw">fn </span>try_parse_x25519_public_key_raw_bytes(key_bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, KeyRejected&gt; {
-<a href=#859 id=859 data-nosnippet>859</a>    <span class="kw">let </span>expected_pub_key_len = X25519.id.pub_key_len();
-<a href=#860 id=860 data-nosnippet>860</a>    <span class="kw">if </span>key_bytes.len() != expected_pub_key_len {
-<a href=#861 id=861 data-nosnippet>861</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::invalid_encoding());
-<a href=#862 id=862 data-nosnippet>862</a>    }
-<a href=#863 id=863 data-nosnippet>863</a>
-<a href=#864 id=864 data-nosnippet>864</a>    LcPtr::&lt;EVP_PKEY&gt;::parse_raw_public_key(key_bytes, EVP_PKEY_X25519)
-<a href=#865 id=865 data-nosnippet>865</a>}
-<a href=#866 id=866 data-nosnippet>866</a>
-<a href=#867 id=867 data-nosnippet>867</a><span class="attr">#[cfg(test)]
-<a href=#868 id=868 data-nosnippet>868</a></span><span class="kw">mod </span>agreement_tests;
-<a href=#869 id=869 data-nosnippet>869</a><span class="attr">#[cfg(test)]
-<a href=#870 id=870 data-nosnippet>870</a></span><span class="kw">mod </span>parsed_public_key_tests;</code></pre></div></section></main></body></html>
+<a href=#760 id=760 data-nosnippet>760</a>                } <span class="kw">else </span>{
+<a href=#761 id=761 data-nosnippet>761</a>                    format = ParsedPublicKeyFormat::Raw;
+<a href=#762 id=762 data-nosnippet>762</a>                    try_parse_x25519_public_key_raw_bytes(<span class="kw-2">&amp;</span>bytes)<span class="question-mark">?
+<a href=#763 id=763 data-nosnippet>763</a>                </span>};
+<a href=#764 id=764 data-nosnippet>764</a>
+<a href=#765 id=765 data-nosnippet>765</a>                <span class="prelude-val">Ok</span>(ParsedPublicKey {
+<a href=#766 id=766 data-nosnippet>766</a>                    format,
+<a href=#767 id=767 data-nosnippet>767</a>                    nid,
+<a href=#768 id=768 data-nosnippet>768</a>                    key,
+<a href=#769 id=769 data-nosnippet>769</a>                    bytes,
+<a href=#770 id=770 data-nosnippet>770</a>                })
+<a href=#771 id=771 data-nosnippet>771</a>            }
+<a href=#772 id=772 data-nosnippet>772</a>            NID_X9_62_prime256v1 | NID_secp384r1 | NID_secp521r1 =&gt; {
+<a href=#773 id=773 data-nosnippet>773</a>                <span class="kw">let </span>format: ParsedPublicKeyFormat;
+<a href=#774 id=774 data-nosnippet>774</a>                <span class="kw">let </span>key = <span class="kw">if let </span><span class="prelude-val">Ok</span>(evp_pkey) =
+<a href=#775 id=775 data-nosnippet>775</a>                    LcPtr::&lt;EVP_PKEY&gt;::parse_rfc5280_public_key(<span class="kw-2">&amp;</span>bytes, EVP_PKEY_EC)
+<a href=#776 id=776 data-nosnippet>776</a>                {
+<a href=#777 id=777 data-nosnippet>777</a>                    validate_ec_evp_key(<span class="kw-2">&amp;</span>evp_pkey.as_const(), nid)<span class="question-mark">?</span>;
+<a href=#778 id=778 data-nosnippet>778</a>                    format = ParsedPublicKeyFormat::X509;
+<a href=#779 id=779 data-nosnippet>779</a>                    evp_pkey
+<a href=#780 id=780 data-nosnippet>780</a>                } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(evp_pkey) = parse_sec1_public_point(<span class="kw-2">&amp;</span>bytes, nid) {
+<a href=#781 id=781 data-nosnippet>781</a>                    format = <span class="kw">match </span>bytes[<span class="number">0</span>] {
+<a href=#782 id=782 data-nosnippet>782</a>                        <span class="number">0x02 </span>| <span class="number">0x03 </span>=&gt; ParsedPublicKeyFormat::Compressed,
+<a href=#783 id=783 data-nosnippet>783</a>                        <span class="number">0x04 </span>=&gt; ParsedPublicKeyFormat::Uncompressed,
+<a href=#784 id=784 data-nosnippet>784</a>                        <span class="number">0x06 </span>| <span class="number">0x07 </span>=&gt; ParsedPublicKeyFormat::Hybrid,
+<a href=#785 id=785 data-nosnippet>785</a>                        <span class="kw">_ </span>=&gt; ParsedPublicKeyFormat::Unknown,
+<a href=#786 id=786 data-nosnippet>786</a>                    };
+<a href=#787 id=787 data-nosnippet>787</a>                    evp_pkey
+<a href=#788 id=788 data-nosnippet>788</a>                } <span class="kw">else </span>{
+<a href=#789 id=789 data-nosnippet>789</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::invalid_encoding());
+<a href=#790 id=790 data-nosnippet>790</a>                };
+<a href=#791 id=791 data-nosnippet>791</a>
+<a href=#792 id=792 data-nosnippet>792</a>                <span class="prelude-val">Ok</span>(ParsedPublicKey {
+<a href=#793 id=793 data-nosnippet>793</a>                    format,
+<a href=#794 id=794 data-nosnippet>794</a>                    nid,
+<a href=#795 id=795 data-nosnippet>795</a>                    key,
+<a href=#796 id=796 data-nosnippet>796</a>                    bytes,
+<a href=#797 id=797 data-nosnippet>797</a>                })
+<a href=#798 id=798 data-nosnippet>798</a>            }
+<a href=#799 id=799 data-nosnippet>799</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(KeyRejected::unspecified()),
+<a href=#800 id=800 data-nosnippet>800</a>        }
+<a href=#801 id=801 data-nosnippet>801</a>    }
+<a href=#802 id=802 data-nosnippet>802</a>}
+<a href=#803 id=803 data-nosnippet>803</a>
+<a href=#804 id=804 data-nosnippet>804</a><span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>ParsedPublicKey {
+<a href=#805 id=805 data-nosnippet>805</a>    <span class="doccomment">/// Returns the original bytes from which this key was parsed.
+<a href=#806 id=806 data-nosnippet>806</a>    </span><span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+<a href=#807 id=807 data-nosnippet>807</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.bytes
+<a href=#808 id=808 data-nosnippet>808</a>    }
+<a href=#809 id=809 data-nosnippet>809</a>}
+<a href=#810 id=810 data-nosnippet>810</a>
+<a href=#811 id=811 data-nosnippet>811</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; UnparsedPublicKey&lt;B&gt; {
+<a href=#812 id=812 data-nosnippet>812</a>    <span class="attr">#[allow(dead_code)]
+<a href=#813 id=813 data-nosnippet>813</a>    </span><span class="kw">fn </span>parse(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ParsedPublicKey, KeyRejected&gt; {
+<a href=#814 id=814 data-nosnippet>814</a>        ParsedPublicKey::new(<span class="kw-2">&amp;</span><span class="self">self</span>.bytes, <span class="self">self</span>.alg.id.nid())
+<a href=#815 id=815 data-nosnippet>815</a>    }
+<a href=#816 id=816 data-nosnippet>816</a>}
+<a href=#817 id=817 data-nosnippet>817</a>
+<a href=#818 id=818 data-nosnippet>818</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; TryFrom&lt;<span class="kw-2">&amp;</span>UnparsedPublicKey&lt;B&gt;&gt; <span class="kw">for </span>ParsedPublicKey {
+<a href=#819 id=819 data-nosnippet>819</a>    <span class="kw">type </span>Error = KeyRejected;
+<a href=#820 id=820 data-nosnippet>820</a>    <span class="kw">fn </span>try_from(upk: <span class="kw-2">&amp;</span>UnparsedPublicKey&lt;B&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+<a href=#821 id=821 data-nosnippet>821</a>        upk.parse()
+<a href=#822 id=822 data-nosnippet>822</a>    }
+<a href=#823 id=823 data-nosnippet>823</a>}
+<a href=#824 id=824 data-nosnippet>824</a>
+<a href=#825 id=825 data-nosnippet>825</a><span class="kw">impl</span>&lt;B: AsRef&lt;[u8]&gt;&gt; TryFrom&lt;UnparsedPublicKey&lt;B&gt;&gt; <span class="kw">for </span>ParsedPublicKey {
+<a href=#826 id=826 data-nosnippet>826</a>    <span class="kw">type </span>Error = KeyRejected;
+<a href=#827 id=827 data-nosnippet>827</a>    <span class="kw">fn </span>try_from(upk: UnparsedPublicKey&lt;B&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+<a href=#828 id=828 data-nosnippet>828</a>        upk.parse()
+<a href=#829 id=829 data-nosnippet>829</a>    }
+<a href=#830 id=830 data-nosnippet>830</a>}
+<a href=#831 id=831 data-nosnippet>831</a>
+<a href=#832 id=832 data-nosnippet>832</a><span class="doccomment">/// Performs a key agreement with a private key and the given public key.
+<a href=#833 id=833 data-nosnippet>833</a>///
+<a href=#834 id=834 data-nosnippet>834</a>/// `my_private_key` is the private key to use. Only a reference to the key
+<a href=#835 id=835 data-nosnippet>835</a>/// is required, allowing the key to continue to be used.
+<a href=#836 id=836 data-nosnippet>836</a>///
+<a href=#837 id=837 data-nosnippet>837</a>/// `peer_public_key` is the peer's public key. `agree` will return
+<a href=#838 id=838 data-nosnippet>838</a>/// `Err(error_value)` if it does not match `my_private_key's` algorithm/curve.
+<a href=#839 id=839 data-nosnippet>839</a>/// `agree` verifies that it is encoded in the standard form for the
+<a href=#840 id=840 data-nosnippet>840</a>/// algorithm and that the key is *valid*; see the algorithm's documentation for
+<a href=#841 id=841 data-nosnippet>841</a>/// details on how keys are to be encoded and what constitutes a valid key for
+<a href=#842 id=842 data-nosnippet>842</a>/// that algorithm.
+<a href=#843 id=843 data-nosnippet>843</a>///
+<a href=#844 id=844 data-nosnippet>844</a>/// `error_value` is the value to return if an error occurs before `kdf` is
+<a href=#845 id=845 data-nosnippet>845</a>/// called, e.g. when decoding of the peer's public key fails or when the public
+<a href=#846 id=846 data-nosnippet>846</a>/// key is otherwise invalid.
+<a href=#847 id=847 data-nosnippet>847</a>///
+<a href=#848 id=848 data-nosnippet>848</a>/// After the key agreement is done, `agree` calls `kdf` with the raw
+<a href=#849 id=849 data-nosnippet>849</a>/// key material from the key agreement operation and then returns what `kdf`
+<a href=#850 id=850 data-nosnippet>850</a>/// returns.
+<a href=#851 id=851 data-nosnippet>851</a></span><span class="comment">// # FIPS
+<a href=#852 id=852 data-nosnippet>852</a>// Use this function with one of the following key algorithms:
+<a href=#853 id=853 data-nosnippet>853</a>// * `ECDH_P256`
+<a href=#854 id=854 data-nosnippet>854</a>// * `ECDH_P384`
+<a href=#855 id=855 data-nosnippet>855</a>// * `ECDH_P521`
+<a href=#856 id=856 data-nosnippet>856</a>//
+<a href=#857 id=857 data-nosnippet>857</a></span><span class="doccomment">/// # Errors
+<a href=#858 id=858 data-nosnippet>858</a>/// `error_value` on internal failure.
+<a href=#859 id=859 data-nosnippet>859</a></span><span class="attr">#[inline]
+<a href=#860 id=860 data-nosnippet>860</a>#[allow(clippy::missing_panics_doc)]
+<a href=#861 id=861 data-nosnippet>861</a></span><span class="kw">pub fn </span>agree&lt;B: TryInto&lt;ParsedPublicKey&gt;, F, R, E&gt;(
+<a href=#862 id=862 data-nosnippet>862</a>    my_private_key: <span class="kw-2">&amp;</span>PrivateKey,
+<a href=#863 id=863 data-nosnippet>863</a>    peer_public_key: B,
+<a href=#864 id=864 data-nosnippet>864</a>    error_value: E,
+<a href=#865 id=865 data-nosnippet>865</a>    kdf: F,
+<a href=#866 id=866 data-nosnippet>866</a>) -&gt; <span class="prelude-ty">Result</span>&lt;R, E&gt;
+<a href=#867 id=867 data-nosnippet>867</a><span class="kw">where
+<a href=#868 id=868 data-nosnippet>868</a>    </span>F: FnOnce(<span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;R, E&gt;,
+<a href=#869 id=869 data-nosnippet>869</a>{
+<a href=#870 id=870 data-nosnippet>870</a>    <span class="kw">let </span>expected_alg = my_private_key.algorithm();
+<a href=#871 id=871 data-nosnippet>871</a>
+<a href=#872 id=872 data-nosnippet>872</a>    <span class="kw">let </span>parse_result = peer_public_key.try_into();
+<a href=#873 id=873 data-nosnippet>873</a>
+<a href=#874 id=874 data-nosnippet>874</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(peer_pub_key) = parse_result {
+<a href=#875 id=875 data-nosnippet>875</a>        <span class="kw">if </span>peer_pub_key.alg() != expected_alg {
+<a href=#876 id=876 data-nosnippet>876</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(error_value);
+<a href=#877 id=877 data-nosnippet>877</a>        }
+<a href=#878 id=878 data-nosnippet>878</a>        <span class="kw">let </span>secret = my_private_key
+<a href=#879 id=879 data-nosnippet>879</a>            .inner_key
+<a href=#880 id=880 data-nosnippet>880</a>            .get_evp_pkey()
+<a href=#881 id=881 data-nosnippet>881</a>            .agree(peer_pub_key.key())
+<a href=#882 id=882 data-nosnippet>882</a>            .or(<span class="prelude-val">Err</span>(error_value))<span class="question-mark">?</span>;
+<a href=#883 id=883 data-nosnippet>883</a>
+<a href=#884 id=884 data-nosnippet>884</a>        kdf(secret.as_ref())
+<a href=#885 id=885 data-nosnippet>885</a>    } <span class="kw">else </span>{
+<a href=#886 id=886 data-nosnippet>886</a>        <span class="prelude-val">Err</span>(error_value)
+<a href=#887 id=887 data-nosnippet>887</a>    }
+<a href=#888 id=888 data-nosnippet>888</a>}
+<a href=#889 id=889 data-nosnippet>889</a>
+<a href=#890 id=890 data-nosnippet>890</a><span class="kw">fn </span>try_parse_x25519_public_key_raw_bytes(key_bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_PKEY&gt;, KeyRejected&gt; {
+<a href=#891 id=891 data-nosnippet>891</a>    <span class="kw">let </span>expected_pub_key_len = X25519.id.pub_key_len();
+<a href=#892 id=892 data-nosnippet>892</a>    <span class="kw">if </span>key_bytes.len() != expected_pub_key_len {
+<a href=#893 id=893 data-nosnippet>893</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(KeyRejected::invalid_encoding());
+<a href=#894 id=894 data-nosnippet>894</a>    }
+<a href=#895 id=895 data-nosnippet>895</a>
+<a href=#896 id=896 data-nosnippet>896</a>    LcPtr::&lt;EVP_PKEY&gt;::parse_raw_public_key(key_bytes, EVP_PKEY_X25519)
+<a href=#897 id=897 data-nosnippet>897</a>}
+<a href=#898 id=898 data-nosnippet>898</a>
+<a href=#899 id=899 data-nosnippet>899</a><span class="attr">#[cfg(test)]
+<a href=#900 id=900 data-nosnippet>900</a></span><span class="kw">mod </span>agreement_tests;
+<a href=#901 id=901 data-nosnippet>901</a><span class="attr">#[cfg(test)]
+<a href=#902 id=902 data-nosnippet>902</a></span><span class="kw">mod </span>parsed_public_key_tests;</code></pre></div></section></main></body></html>
