@@ -19,10 +19,6 @@ fn ecdsa_traits() {
     test::compile_time_assert_sync::<EcdsaKeyPair>();
     test::compile_time_assert_send::<Signature>();
     test::compile_time_assert_sync::<Signature>();
-    test::compile_time_assert_send::<UnparsedPublicKey<&[u8]>>();
-    test::compile_time_assert_sync::<UnparsedPublicKey<&[u8]>>();
-    test::compile_time_assert_send::<UnparsedPublicKey<Vec<u8>>>();
-    test::compile_time_assert_sync::<UnparsedPublicKey<Vec<u8>>>();
 }
 
 #[test]
@@ -206,6 +202,7 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
 
         {
             let ppk = ParsedPublicKey::new(alg, &public_key).unwrap();
+            assert_eq!(ppk.as_ref(), public_key.as_slice());
             let actual_result = ppk.verify_sig(&msg, &sig);
             assert_eq!(actual_result.is_ok(), is_valid);
 

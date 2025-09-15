@@ -397,11 +397,23 @@ pub struct UnparsedPublicKey<B: AsRef<[u8]>> {
 /// parsing the key on each verification.
 ///
 /// See the [`crate::signature`] module-level documentation for examples.
+#[derive(Clone)]
 pub struct ParsedPublicKey {
     algorithm: &'static dyn VerificationAlgorithm,
     parsed_algorithm: &'static dyn ParsedVerificationAlgorithm,
     key: LcPtr<EVP_PKEY>,
+    bytes: Box<[u8]>,
 }
+
+// See EVP_PKEY documentation here:
+// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+// An |EVP_PKEY| object represents a public or private key. A given object may
+// be used concurrently on multiple threads by non-mutating functions, provided
+// no other thread is concurrently calling a mutating function. Unless otherwise
+// documented, functions which take a |const| pointer are non-mutating and
+// functions which take a non-|const| pointer are mutating.
+unsafe impl Send for ParsedPublicKey {}
+unsafe impl Sync for ParsedPublicKey {}
 
 impl ParsedPublicKey {
     /// Creates a new `ParsedPublicKey` directly from public key bytes.
@@ -497,11 +509,19 @@ impl ParsedPublicKey {
     }
 }
 
+/// Provides the original bytes from which this key was parsed
+impl AsRef<[u8]> for ParsedPublicKey {
+    fn as_ref(&self) -> &[u8] {
+        &self.bytes
+    }
+}
+
 impl Debug for ParsedPublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.write_str(&format!(
-            "ParsedPublicKey {{ algorithm: {:?}, }}",
+            "ParsedPublicKey {{ algorithm: {:?}, bytes: \"{}\" }}",
             self.algorithm,
+            hex::encode(self.bytes.as_ref())
         ))
     }
 }
@@ -633,10 +653,12 @@ pub(crate) fn parse_public_key(
         unreachable!()
     };
 
+    let bytes = bytes.to_vec().into_boxed_slice();
     Ok(ParsedPublicKey {
         algorithm,
         parsed_algorithm,
         key,
+        bytes,
     })
 }
 
@@ -1055,10 +1077,10 @@ pub static ED25519: EdDSAParameters = EdDSAParameters {};
 
 #[cfg(test)]
 mod tests {
-    use regex::Regex;
-
     use crate::rand::{generate, SystemRandom};
-    use crate::signature::{UnparsedPublicKey, ED25519};
+    use crate::signature::{ParsedPublicKey, UnparsedPublicKey, ED25519};
+    use crate::test;
+    use regex::Regex;
 
     #[cfg(feature = "fips")]
     mod fips;
@@ -1078,5 +1100,17 @@ mod tests {
         .unwrap();
 
         assert!(pubkey_re.is_match(&unparsed_pubkey_debug));
+    }
+    #[test]
+    fn test_types() {
+        test::compile_time_assert_send::<UnparsedPublicKey<&[u8]>>();
+        test::compile_time_assert_sync::<UnparsedPublicKey<&[u8]>>();
+        test::compile_time_assert_send::<UnparsedPublicKey<Vec<u8>>>();
+        test::compile_time_assert_sync::<UnparsedPublicKey<Vec<u8>>>();
+        test::compile_time_assert_clone::<UnparsedPublicKey<&[u8]>>();
+        test::compile_time_assert_clone::<UnparsedPublicKey<Vec<u8>>>();
+        test::compile_time_assert_send::<ParsedPublicKey>();
+        test::compile_time_assert_sync::<ParsedPublicKey>();
+        test::compile_time_assert_clone::<ParsedPublicKey>();
     }
 }

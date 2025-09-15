@@ -220,14 +220,14 @@ impl KeyInner {
     }
 }
 
-unsafe impl Send for PrivateKey {}
-
-// https://github.com/awslabs/aws-lc/blob/main/include/openssl/ec_key.h#L88
-// An |EC_KEY| object represents a public or private EC key. A given object may
+// See EVP_PKEY documentation here:
+// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+// An |EVP_PKEY| object represents a public or private key. A given object may
 // be used concurrently on multiple threads by non-mutating functions, provided
 // no other thread is concurrently calling a mutating function. Unless otherwise
 // documented, functions which take a |const| pointer are non-mutating and
 // functions which take a non-|const| pointer are mutating.
+unsafe impl Send for PrivateKey {}
 unsafe impl Sync for PrivateKey {}
 
 impl Debug for PrivateKey {
@@ -536,6 +536,13 @@ impl PublicKey {
     }
 }
 
+// See EVP_PKEY documentation here:
+// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+// An |EVP_PKEY| object represents a public or private key. A given object may
+// be used concurrently on multiple threads by non-mutating functions, provided
+// no other thread is concurrently calling a mutating function. Unless otherwise
+// documented, functions which take a |const| pointer are non-mutating and
+// functions which take a non-|const| pointer are mutating.
 unsafe impl Send for PublicKey {}
 unsafe impl Sync for PublicKey {}
 
@@ -666,13 +673,21 @@ impl<B: AsRef<[u8]>> UnparsedPublicKey<B> {
 /// This represents a public key that has been successfully parsed and validated
 /// from its encoded form. The key can be used with the `agree` function to
 /// perform key agreement operations.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParsedPublicKey {
     format: ParsedPublicKeyFormat,
     nid: i32,
     key: LcPtr<EVP_PKEY>,
+    bytes: Box<[u8]>,
 }
 
+// See EVP_PKEY documentation here:
+// https://github.com/aws/aws-lc/blob/125af14c57451565b875fbf1282a38a6ecf83782/include/openssl/evp.h#L83-L89
+// An |EVP_PKEY| object represents a public or private key. A given object may
+// be used concurrently on multiple threads by non-mutating functions, provided
+// no other thread is concurrently calling a mutating function. Unless otherwise
+// documented, functions which take a |const| pointer are non-mutating and
+// functions which take a non-|const| pointer are mutating.
 unsafe impl Send for ParsedPublicKey {}
 unsafe impl Sync for ParsedPublicKey {}
 
@@ -730,35 +745,40 @@ impl ParsedPublicKey {
 impl ParsedPublicKey {
     #[allow(non_upper_case_globals)]
     pub(crate) fn new(bytes: impl AsRef<[u8]>, nid: i32) -> Result<Self, KeyRejected> {
-        let key_bytes = bytes.as_ref();
-        if key_bytes.is_empty() {
+        let bytes = bytes.as_ref().to_vec().into_boxed_slice();
+        if bytes.is_empty() {
             return Err(KeyRejected::unspecified());
         }
         match nid {
             NID_X25519 => {
                 let format: ParsedPublicKeyFormat;
                 let key = if let Ok(evp_pkey) =
-                    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_X25519)
+                    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(&bytes, EVP_PKEY_X25519)
                 {
                     format = ParsedPublicKeyFormat::X509;
                     evp_pkey
                 } else {
                     format = ParsedPublicKeyFormat::Raw;
-                    try_parse_x25519_public_key_raw_bytes(key_bytes)?
+                    try_parse_x25519_public_key_raw_bytes(&bytes)?
                 };
 
-                Ok(ParsedPublicKey { format, nid, key })
+                Ok(ParsedPublicKey {
+                    format,
+                    nid,
+                    key,
+                    bytes,
+                })
             }
             NID_X9_62_prime256v1 | NID_secp384r1 | NID_secp521r1 => {
                 let format: ParsedPublicKeyFormat;
                 let key = if let Ok(evp_pkey) =
-                    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(key_bytes, EVP_PKEY_EC)
+                    LcPtr::<EVP_PKEY>::parse_rfc5280_public_key(&bytes, EVP_PKEY_EC)
                 {
                     validate_ec_evp_key(&evp_pkey.as_const(), nid)?;
                     format = ParsedPublicKeyFormat::X509;
                     evp_pkey
-                } else if let Ok(evp_pkey) = parse_sec1_public_point(key_bytes, nid) {
-                    format = match key_bytes[0] {
+                } else if let Ok(evp_pkey) = parse_sec1_public_point(&bytes, nid) {
+                    format = match bytes[0] {
                         0x02 | 0x03 => ParsedPublicKeyFormat::Compressed,
                         0x04 => ParsedPublicKeyFormat::Uncompressed,
                         0x06 | 0x07 => ParsedPublicKeyFormat::Hybrid,
@@ -769,10 +789,22 @@ impl ParsedPublicKey {
                     return Err(KeyRejected::invalid_encoding());
                 };
 
-                Ok(ParsedPublicKey { format, nid, key })
+                Ok(ParsedPublicKey {
+                    format,
+                    nid,
+                    key,
+                    bytes,
+                })
             }
             _ => Err(KeyRejected::unspecified()),
         }
+    }
+}
+
+impl AsRef<[u8]> for ParsedPublicKey {
+    /// Returns the original bytes from which this key was parsed.
+    fn as_ref(&self) -> &[u8] {
+        &self.bytes
     }
 }
 

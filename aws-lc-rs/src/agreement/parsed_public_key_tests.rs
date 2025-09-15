@@ -9,10 +9,24 @@ use crate::encoding::{AsBigEndian, AsDer, EcPublicKeyCompressedBin, PublicKeyX50
 use crate::test;
 
 #[test]
+fn test_types() {
+    test::compile_time_assert_send::<UnparsedPublicKey<&[u8]>>();
+    test::compile_time_assert_sync::<UnparsedPublicKey<&[u8]>>();
+    test::compile_time_assert_send::<UnparsedPublicKey<Vec<u8>>>();
+    test::compile_time_assert_sync::<UnparsedPublicKey<Vec<u8>>>();
+    test::compile_time_assert_clone::<UnparsedPublicKey<&[u8]>>();
+    test::compile_time_assert_clone::<UnparsedPublicKey<Vec<u8>>>();
+    test::compile_time_assert_send::<ParsedPublicKey>();
+    test::compile_time_assert_sync::<ParsedPublicKey>();
+    test::compile_time_assert_clone::<ParsedPublicKey>();
+}
+
+#[test]
 fn test_parsed_public_key_x25519_raw() {
     let raw_key =
         test::from_dirty_hex("e6db6867583030db3594c1a424b15f7c726624ec26b3353b10a903a6d0ab1c4c");
     let parsed = ParsedPublicKey::new(&raw_key, X25519.id.nid()).unwrap();
+    assert_eq!(&raw_key, parsed.as_ref());
 
     assert_eq!(parsed.format(), ParsedPublicKeyFormat::Raw);
     assert_eq!(parsed.alg(), &X25519);
