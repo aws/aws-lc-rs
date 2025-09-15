@@ -81,4 +81,4 @@ bindgen = { workspace = true }
 regex.workspace = true
 
 [package.metadata.aws-lc-fips-sys]
-commit-hash = "205ad181868086a090e6b766c076a9732ad354c7"
+commit-hash = "fcd86b8478a66721b3356e1fe85a0d1e31a4e834"
