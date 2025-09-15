@@ -2323,6 +2323,8 @@ X509_STORE_get0_objects
 X509_STORE_get0_param
 X509_STORE_get_ex_data
 X509_STORE_get_ex_new_index
+X509_STORE_get_lookup_crls
+X509_STORE_get_verify_cb
 X509_STORE_load_locations
 X509_STORE_lock
 X509_STORE_new
@@ -2333,6 +2335,7 @@ X509_STORE_set_depth
 X509_STORE_set_ex_data
 X509_STORE_set_flags
 X509_STORE_set_get_crl
+X509_STORE_set_lookup_crls
 X509_STORE_set_purpose
 X509_STORE_set_trust
 X509_STORE_set_verify_cb
