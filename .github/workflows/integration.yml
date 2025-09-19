@@ -299,7 +299,7 @@ jobs:
       - name: Remove NASM
         shell: bash
         run: |
-          rm -f /c/Strawberry/c/bin/nasm
+          rm -f `which nasm`
       - name: Verify NASM not available
         shell: bash
         run: |
