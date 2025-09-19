@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Wed Aug 27 19:50:03 UTC 2025
+// Fri Sep 19 11:51:13 UTC 2025
 
 use crate::cc_builder::Library;
 
@@ -170,8 +170,9 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/pkcs8/pkcs8_x509.c",
         "crypto/poly1305/poly1305_vec.c",
         "crypto/pool/pool.c",
-        "crypto/rand_extra/forkunsafe.c",
+        "crypto/rand_extra/getentropy.c",
         "crypto/rand_extra/rand_extra.c",
+        "crypto/rand_extra/snapsafe_fallback.c",
         "crypto/rc4/rc4.c",
         "crypto/refcount_c11.c",
         "crypto/refcount_lock.c",
@@ -187,6 +188,9 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/trust_token/pmbtoken.c",
         "crypto/trust_token/trust_token.c",
         "crypto/trust_token/voprf.c",
+        "crypto/ube/fork_detect.c",
+        "crypto/ube/snapsafe_detect.c",
+        "crypto/ube/ube.c",
         "crypto/x509/a_digest.c",
         "crypto/x509/a_sign.c",
         "crypto/x509/a_verify.c",
@@ -284,6 +288,11 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "generated-src/mac-x86_64/crypto/fipsmodule/x86_64-mont.S",
         "generated-src/mac-x86_64/crypto/fipsmodule/x86_64-mont5.S",
         "generated-src/mac-x86_64/crypto/test/trampoline-x86_64.S",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-base.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-gcd.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-health.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-noise.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-sha3.c",
         "third_party/s2n-bignum/s2n-bignum-imported/x86_att/curve25519/bignum_madd_n25519.S",
         "third_party/s2n-bignum/s2n-bignum-imported/x86_att/curve25519/bignum_madd_n25519_alt.S",
         "third_party/s2n-bignum/s2n-bignum-imported/x86_att/curve25519/bignum_mod_n25519.S",
@@ -334,5 +343,6 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "third_party/s2n-bignum/s2n-bignum-imported/x86_att/p521/p521_jdouble_alt.S",
         "third_party/s2n-bignum/s2n-bignum-imported/x86_att/p521/p521_jscalarmul.S",
         "third_party/s2n-bignum/s2n-bignum-imported/x86_att/p521/p521_jscalarmul_alt.S",
+        "third_party/s2n-bignum/s2n-bignum-imported/x86_att/sha3/sha3_keccak_f1600.S",
     ],
 };

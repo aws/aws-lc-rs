@@ -1,8 +1,8 @@
 [package]
 name = "aws-lc-sys"
 description = "AWS-LC is a general-purpose cryptographic library maintained by the AWS Cryptography team for AWS and their customers. It іs based on code from the Google BoringSSL project and the OpenSSL project."
-version = "0.31.0"
-links = "aws_lc_0_31_0"
+version = "0.32.0"
+links = "aws_lc_0_32_0"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"
@@ -40,6 +40,8 @@ include = [
     "/aws-lc/third_party/s2n-bignum/**/*.h",
     "/aws-lc/third_party/jitterentropy/**/*.c",
     "/aws-lc/third_party/jitterentropy/**/*.h",
+    "/aws-lc/third_party/jitterentropy/CMakeLists.txt",
+    "!/aws-lc/third_party/jitterentropy/jitterentropy-library/tests/**",
     "/aws-lc/util/fipstools/**/CMakeLists.txt",
     "/aws-lc/util/fipstools/**/*.c",
     "/CMakeLists.txt",
@@ -75,4 +77,4 @@ bindgen = { workspace = true, optional = true }
 bindgen.workspace = true
 
 [package.metadata.aws-lc-sys]
-commit-hash = "eff1b1a63da05977d3fc262985478c1251763495"
+commit-hash = "0fa8839018a3d98bae2fb24c557183d8ca02e6c5"
