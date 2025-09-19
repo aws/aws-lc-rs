@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Wed Aug 27 19:51:41 UTC 2025
+// Fri Sep 19 11:54:19 UTC 2025
 
 use crate::cc_builder::Library;
 
@@ -161,10 +161,12 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/poly1305/poly1305_arm.c",
         "crypto/poly1305/poly1305_vec.c",
         "crypto/pool/pool.c",
+        "crypto/rand_extra/ccrandomgeneratebytes.c",
         "crypto/rand_extra/deterministic.c",
-        "crypto/rand_extra/entropy_passive.c",
-        "crypto/rand_extra/forkunsafe.c",
+        "crypto/rand_extra/getentropy.c",
         "crypto/rand_extra/rand_extra.c",
+        "crypto/rand_extra/snapsafe_fallback.c",
+        "crypto/rand_extra/urandom.c",
         "crypto/rand_extra/windows.c",
         "crypto/rc4/rc4.c",
         "crypto/refcount_c11.c",
@@ -184,6 +186,9 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/trust_token/pmbtoken.c",
         "crypto/trust_token/trust_token.c",
         "crypto/trust_token/voprf.c",
+        "crypto/ube/fork_detect.c",
+        "crypto/ube/snapsafe_detect.c",
+        "crypto/ube/ube.c",
         "crypto/x509/a_digest.c",
         "crypto/x509/a_sign.c",
         "crypto/x509/a_verify.c",
@@ -255,5 +260,11 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/x509/x_x509.c",
         "crypto/x509/x_x509a.c",
         "generated-src/err_data.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-base.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-gcd.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-health.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-noise.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-sha3.c",
+        "third_party/jitterentropy/jitterentropy-library/src/jitterentropy-timer.c",
     ],
 };
