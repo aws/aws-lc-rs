@@ -363,13 +363,55 @@ impl CcBuilder {
         source_feature_map
     }
 
+    fn prepare_jitter_entropy_builder(&self) -> cc::Build {
+        // See: https://github.com/aws/aws-lc/blob/2294510cd0ecb2d5946461e3dbb038363b7b94cb/third_party/jitterentropy/CMakeLists.txt#L19-L35
+        let mut build_options: Vec<BuildOption> = Vec::new();
+        self.add_includes(&mut build_options);
+
+        let mut je_builder = cc::Build::new();
+        for option in build_options {
+            option.apply_cc(&mut je_builder);
+        }
+
+        let compiler = je_builder.get_compiler();
+        je_builder.define("AWSLC", "1");
+        je_builder.pic(true);
+        if target_os() == "windows" && compiler.is_like_msvc() {
+            je_builder.flag("/Od").flag("/W4").flag("/DYNAMICBASE");
+        } else {
+            je_builder
+                .flag("-fwrapv")
+                .flag("--param")
+                .flag("ssp-buffer-size=4")
+                .flag("-fvisibility=hidden")
+                .flag("-Wcast-align")
+                .flag("-Wmissing-field-initializers")
+                .flag("-Wshadow")
+                .flag("-Wswitch-enum")
+                .flag("-Wextra")
+                .flag("-Wall")
+                .flag("-pedantic")
+                .flag("-O0")
+                .flag("-fwrapv")
+                .flag("-Wconversion");
+        }
+        je_builder
+    }
+
     fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) {
         use core::str::FromStr;
+        let compiler = cc_build.get_compiler();
 
+        let force_include_option = if compiler.is_like_msvc() {
+            "/FI"
+        } else {
+            "--include="
+        };
         // s2n-bignum is compiled separately due to needing extra flags
         let mut s2n_bignum_builder = cc_build.clone();
         s2n_bignum_builder.flag(format!(
-            "--include={}",
+            "{}{}",
+            force_include_option,
             self.manifest_dir
                 .join("generated-include")
                 .join("openssl")
@@ -379,19 +421,16 @@ impl CcBuilder {
         s2n_bignum_builder.define("S2N_BN_HIDE_SYMBOLS", "1");
 
         // CPU Jitter Entropy is compiled separately due to needing specific flags
-        let mut jitter_entropy_builder = cc_build.clone();
+        let mut jitter_entropy_builder = self.prepare_jitter_entropy_builder();
         jitter_entropy_builder.flag(format!(
-            "--include={}",
+            "{}{}",
+            force_include_option,
             self.manifest_dir
                 .join("generated-include")
                 .join("openssl")
                 .join("boringssl_prefix_symbols.h")
                 .display()
         ));
-        // From cmake script in /third_party/jitterentropy.
-        // If ever supporting CC build for Windows these flags must be
-        // conditioned on the target OS.
-        jitter_entropy_builder.flag("-DAWSLC -fwrapv --param ssp-buffer-size=4 -fvisibility=hidden -Wcast-align -Wmissing-field-initializers -Wshadow -Wswitch-enum -Wextra -Wall -pedantic -O0 -fwrapv -Wconversion");
 
         let s2n_bignum_source_feature_map = Self::build_s2n_bignum_source_feature_map();
         let compiler_features = self.compiler_features.take();
