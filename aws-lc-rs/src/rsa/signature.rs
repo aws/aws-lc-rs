@@ -12,6 +12,7 @@ use crate::aws_lc::{
 use crate::digest::{self, match_digest_type, Digest};
 use crate::error::Unspecified;
 use crate::ptr::LcPtr;
+use crate::rsa::key::parse_rsa_public_key;
 use crate::sealed::Sealed;
 use crate::signature::{ParsedPublicKey, ParsedVerificationAlgorithm, VerificationAlgorithm};
 
@@ -108,7 +109,7 @@ impl VerificationAlgorithm for RsaParameters {
         msg: &[u8],
         signature: &[u8],
     ) -> Result<(), Unspecified> {
-        let evp_pkey = encoding::rfc8017::decode_public_key_der(public_key)?;
+        let evp_pkey = parse_rsa_public_key(public_key)?;
         verify_rsa_signature(
             self.digest_algorithm(),
             self.padding(),
@@ -128,7 +129,7 @@ impl VerificationAlgorithm for RsaParameters {
         if self.digest_algorithm() != digest.algorithm() {
             return Err(Unspecified);
         }
-        let evp_pkey = encoding::rfc8017::decode_public_key_der(public_key)?;
+        let evp_pkey = parse_rsa_public_key(public_key)?;
         verify_rsa_digest_signature(
             self.padding(),
             &evp_pkey,

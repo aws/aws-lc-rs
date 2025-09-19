@@ -10,6 +10,7 @@ use aws_lc_rs::encoding::{AsBigEndian, AsDer, EcPrivateKeyRfc5915Der};
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::signature::{
     self, EcdsaKeyPair, KeyPair, ParsedPublicKey, Signature, UnparsedPublicKey,
+    VerificationAlgorithm,
 };
 use aws_lc_rs::{digest, test, test_file};
 
@@ -209,6 +210,10 @@ fn test_signature_ecdsa_verify_asn1(data_file: test::File) {
             let digest = digest::digest(digest_alg, &msg);
             let actual_digest_result = ppk.verify_digest_sig(&digest, &sig);
             assert_eq!(actual_digest_result.is_ok(), is_valid);
+
+            let x509_bytes = ppk.as_der().unwrap();
+            let actual_x509_result = alg.verify_sig(x509_bytes.as_ref(), &msg, &sig);
+            assert_eq!(actual_x509_result.is_ok(), is_valid);
         }
 
         Ok(())

@@ -20,3 +20,4 @@ deps/aws-lc-sys/src/bindings.rs
 /Cargo.lock
 
 lcov.info
+/.zed/
