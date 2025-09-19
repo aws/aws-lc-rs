@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_31_0
+%define BORINGSSL_PREFIX aws_lc_0_32_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -696,7 +696,8 @@
 %xdefine _CRYPTO_cleanup_all_ex_data _ %+ BORINGSSL_PREFIX %+ _CRYPTO_cleanup_all_ex_data
 %xdefine _CRYPTO_ctr128_encrypt _ %+ BORINGSSL_PREFIX %+ _CRYPTO_ctr128_encrypt
 %xdefine _CRYPTO_ctr128_encrypt_ctr32 _ %+ BORINGSSL_PREFIX %+ _CRYPTO_ctr128_encrypt_ctr32
-%xdefine _CRYPTO_fork_detect_ignore_madv_wipeonfork_for_testing _ %+ BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_madv_wipeonfork_for_testing
+%xdefine _CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING
+%xdefine _CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING
 %xdefine _CRYPTO_free _ %+ BORINGSSL_PREFIX %+ _CRYPTO_free
 %xdefine _CRYPTO_free_ex_data _ %+ BORINGSSL_PREFIX %+ _CRYPTO_free_ex_data
 %xdefine _CRYPTO_gcm128_aad _ %+ BORINGSSL_PREFIX %+ _CRYPTO_gcm128_aad
@@ -721,11 +722,11 @@
 %xdefine _CRYPTO_get_snapsafe_supported _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_supported
 %xdefine _CRYPTO_get_sysgenid_path _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_sysgenid_path
 %xdefine _CRYPTO_get_thread_local _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_thread_local
+%xdefine _CRYPTO_get_ube_generation_number _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_ube_generation_number
 %xdefine _CRYPTO_ghash_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_ghash_init
 %xdefine _CRYPTO_has_asm _ %+ BORINGSSL_PREFIX %+ _CRYPTO_has_asm
 %xdefine _CRYPTO_has_broken_NEON _ %+ BORINGSSL_PREFIX %+ _CRYPTO_has_broken_NEON
 %xdefine _CRYPTO_hchacha20 _ %+ BORINGSSL_PREFIX %+ _CRYPTO_hchacha20
-%xdefine _CRYPTO_init_sysrand _ %+ BORINGSSL_PREFIX %+ _CRYPTO_init_sysrand
 %xdefine _CRYPTO_is_ARMv8_DIT_capable_for_testing _ %+ BORINGSSL_PREFIX %+ _CRYPTO_is_ARMv8_DIT_capable_for_testing
 %xdefine _CRYPTO_is_PPC64LE_vcrypto_capable _ %+ BORINGSSL_PREFIX %+ _CRYPTO_is_PPC64LE_vcrypto_capable
 %xdefine _CRYPTO_is_confidential_build _ %+ BORINGSSL_PREFIX %+ _CRYPTO_is_confidential_build
@@ -746,11 +747,11 @@
 %xdefine _CRYPTO_poly1305_update _ %+ BORINGSSL_PREFIX %+ _CRYPTO_poly1305_update
 %xdefine _CRYPTO_poly1305_update_neon _ %+ BORINGSSL_PREFIX %+ _CRYPTO_poly1305_update_neon
 %xdefine _CRYPTO_pre_sandbox_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_pre_sandbox_init
-%xdefine _CRYPTO_rdrand _ %+ BORINGSSL_PREFIX %+ _CRYPTO_rdrand
-%xdefine _CRYPTO_rdrand_multiple8_buf _ %+ BORINGSSL_PREFIX %+ _CRYPTO_rdrand_multiple8_buf
+%xdefine _CRYPTO_rdrand_multiple8 _ %+ BORINGSSL_PREFIX %+ _CRYPTO_rdrand_multiple8
 %xdefine _CRYPTO_realloc _ %+ BORINGSSL_PREFIX %+ _CRYPTO_realloc
 %xdefine _CRYPTO_refcount_dec_and_test_zero _ %+ BORINGSSL_PREFIX %+ _CRYPTO_refcount_dec_and_test_zero
 %xdefine _CRYPTO_refcount_inc _ %+ BORINGSSL_PREFIX %+ _CRYPTO_refcount_inc
+%xdefine _CRYPTO_rndr_multiple8 _ %+ BORINGSSL_PREFIX %+ _CRYPTO_rndr_multiple8
 %xdefine _CRYPTO_secure_malloc_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_secure_malloc_init
 %xdefine _CRYPTO_secure_malloc_initialized _ %+ BORINGSSL_PREFIX %+ _CRYPTO_secure_malloc_initialized
 %xdefine _CRYPTO_secure_used _ %+ BORINGSSL_PREFIX %+ _CRYPTO_secure_used
@@ -764,7 +765,6 @@
 %xdefine _CRYPTO_set_mem_functions _ %+ BORINGSSL_PREFIX %+ _CRYPTO_set_mem_functions
 %xdefine _CRYPTO_set_thread_local _ %+ BORINGSSL_PREFIX %+ _CRYPTO_set_thread_local
 %xdefine _CRYPTO_sysrand _ %+ BORINGSSL_PREFIX %+ _CRYPTO_sysrand
-%xdefine _CRYPTO_sysrand_for_seed _ %+ BORINGSSL_PREFIX %+ _CRYPTO_sysrand_for_seed
 %xdefine _CRYPTO_sysrand_if_available _ %+ BORINGSSL_PREFIX %+ _CRYPTO_sysrand_if_available
 %xdefine _CRYPTO_tls1_prf _ %+ BORINGSSL_PREFIX %+ _CRYPTO_tls1_prf
 %xdefine _CRYPTO_xts128_encrypt _ %+ BORINGSSL_PREFIX %+ _CRYPTO_xts128_encrypt
@@ -942,6 +942,7 @@
 %xdefine _EC_KEY_OpenSSL _ %+ BORINGSSL_PREFIX %+ _EC_KEY_OpenSSL
 %xdefine _EC_KEY_check_fips _ %+ BORINGSSL_PREFIX %+ _EC_KEY_check_fips
 %xdefine _EC_KEY_check_key _ %+ BORINGSSL_PREFIX %+ _EC_KEY_check_key
+%xdefine _EC_KEY_decoded_from_explicit_params _ %+ BORINGSSL_PREFIX %+ _EC_KEY_decoded_from_explicit_params
 %xdefine _EC_KEY_derive_from_secret _ %+ BORINGSSL_PREFIX %+ _EC_KEY_derive_from_secret
 %xdefine _EC_KEY_dup _ %+ BORINGSSL_PREFIX %+ _EC_KEY_dup
 %xdefine _EC_KEY_free _ %+ BORINGSSL_PREFIX %+ _EC_KEY_free
@@ -965,6 +966,7 @@
 %xdefine _EC_KEY_new_method _ %+ BORINGSSL_PREFIX %+ _EC_KEY_new_method
 %xdefine _EC_KEY_parse_curve_name _ %+ BORINGSSL_PREFIX %+ _EC_KEY_parse_curve_name
 %xdefine _EC_KEY_parse_parameters _ %+ BORINGSSL_PREFIX %+ _EC_KEY_parse_parameters
+%xdefine _EC_KEY_parse_parameters_and_type _ %+ BORINGSSL_PREFIX %+ _EC_KEY_parse_parameters_and_type
 %xdefine _EC_KEY_parse_private_key _ %+ BORINGSSL_PREFIX %+ _EC_KEY_parse_private_key
 %xdefine _EC_KEY_set_asn1_flag _ %+ BORINGSSL_PREFIX %+ _EC_KEY_set_asn1_flag
 %xdefine _EC_KEY_set_conv_form _ %+ BORINGSSL_PREFIX %+ _EC_KEY_set_conv_form
@@ -1345,6 +1347,7 @@
 %xdefine _EVP_PKEY_kem_new_raw_public_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_public_key
 %xdefine _EVP_PKEY_kem_new_raw_secret_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_secret_key
 %xdefine _EVP_PKEY_kem_pkey_meth _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_kem_pkey_meth
+%xdefine _EVP_PKEY_kem_set_params _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_kem_set_params
 %xdefine _EVP_PKEY_keygen _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_keygen
 %xdefine _EVP_PKEY_keygen_deterministic _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_keygen_deterministic
 %xdefine _EVP_PKEY_keygen_init _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_keygen_init
@@ -1590,6 +1593,7 @@
 %xdefine _KEM_KEY_set_raw_key _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_key
 %xdefine _KEM_KEY_set_raw_public_key _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_public_key
 %xdefine _KEM_KEY_set_raw_secret_key _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_secret_key
+%xdefine _KEM_find_asn1_by_nid _ %+ BORINGSSL_PREFIX %+ _KEM_find_asn1_by_nid
 %xdefine _KEM_find_kem_by_nid _ %+ BORINGSSL_PREFIX %+ _KEM_find_kem_by_nid
 %xdefine _Keccak1600_Absorb _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Absorb
 %xdefine _Keccak1600_Absorb_once_x4 _ %+ BORINGSSL_PREFIX %+ _Keccak1600_Absorb_once_x4
@@ -1611,6 +1615,7 @@
 %xdefine _MD5_get_state _ %+ BORINGSSL_PREFIX %+ _MD5_get_state
 %xdefine _MGF1 _ %+ BORINGSSL_PREFIX %+ _MGF1
 %xdefine _NAME_CONSTRAINTS_check _ %+ BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_check
+%xdefine _NAME_CONSTRAINTS_check_CN _ %+ BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_check_CN
 %xdefine _NAME_CONSTRAINTS_free _ %+ BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_free
 %xdefine _NAME_CONSTRAINTS_it _ %+ BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_it
 %xdefine _NAME_CONSTRAINTS_new _ %+ BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_new
@@ -2063,14 +2068,12 @@
 %xdefine _RAND_SSLeay _ %+ BORINGSSL_PREFIX %+ _RAND_SSLeay
 %xdefine _RAND_add _ %+ BORINGSSL_PREFIX %+ _RAND_add
 %xdefine _RAND_bytes _ %+ BORINGSSL_PREFIX %+ _RAND_bytes
-%xdefine _RAND_bytes_with_additional_data _ %+ BORINGSSL_PREFIX %+ _RAND_bytes_with_additional_data
+%xdefine _RAND_bytes_with_user_prediction_resistance _ %+ BORINGSSL_PREFIX %+ _RAND_bytes_with_user_prediction_resistance
 %xdefine _RAND_cleanup _ %+ BORINGSSL_PREFIX %+ _RAND_cleanup
 %xdefine _RAND_egd _ %+ BORINGSSL_PREFIX %+ _RAND_egd
 %xdefine _RAND_egd_bytes _ %+ BORINGSSL_PREFIX %+ _RAND_egd_bytes
-%xdefine _RAND_enable_fork_unsafe_buffering _ %+ BORINGSSL_PREFIX %+ _RAND_enable_fork_unsafe_buffering
 %xdefine _RAND_file_name _ %+ BORINGSSL_PREFIX %+ _RAND_file_name
 %xdefine _RAND_get_rand_method _ %+ BORINGSSL_PREFIX %+ _RAND_get_rand_method
-%xdefine _RAND_get_system_entropy_for_custom_prng _ %+ BORINGSSL_PREFIX %+ _RAND_get_system_entropy_for_custom_prng
 %xdefine _RAND_keep_random_devices_open _ %+ BORINGSSL_PREFIX %+ _RAND_keep_random_devices_open
 %xdefine _RAND_load_file _ %+ BORINGSSL_PREFIX %+ _RAND_load_file
 %xdefine _RAND_poll _ %+ BORINGSSL_PREFIX %+ _RAND_poll
@@ -2656,6 +2659,8 @@
 %xdefine _X509_VERIFY_PARAM_add0_policy _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_add0_policy
 %xdefine _X509_VERIFY_PARAM_add1_host _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_add1_host
 %xdefine _X509_VERIFY_PARAM_clear_flags _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_clear_flags
+%xdefine _X509_VERIFY_PARAM_disable_ec_key_explicit_params _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_disable_ec_key_explicit_params
+%xdefine _X509_VERIFY_PARAM_enable_ec_key_explicit_params _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_enable_ec_key_explicit_params
 %xdefine _X509_VERIFY_PARAM_free _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_free
 %xdefine _X509_VERIFY_PARAM_get_depth _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get_depth
 %xdefine _X509_VERIFY_PARAM_get_flags _ %+ BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get_flags
@@ -3073,6 +3078,7 @@
 %xdefine _aesv8_gcm_8x_enc_128 _ %+ BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_128
 %xdefine _aesv8_gcm_8x_enc_192 _ %+ BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_192
 %xdefine _aesv8_gcm_8x_enc_256 _ %+ BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_256
+%xdefine _allow_mocked_ube_detection_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _allow_mocked_ube_detection_FOR_TESTING
 %xdefine _armv8_disable_dit _ %+ BORINGSSL_PREFIX %+ _armv8_disable_dit
 %xdefine _armv8_enable_dit _ %+ BORINGSSL_PREFIX %+ _armv8_enable_dit
 %xdefine _armv8_get_dit _ %+ BORINGSSL_PREFIX %+ _armv8_get_dit
@@ -3254,6 +3260,7 @@
 %xdefine _cbs_get_utf8 _ %+ BORINGSSL_PREFIX %+ _cbs_get_utf8
 %xdefine _chacha20_poly1305_open _ %+ BORINGSSL_PREFIX %+ _chacha20_poly1305_open
 %xdefine _chacha20_poly1305_seal _ %+ BORINGSSL_PREFIX %+ _chacha20_poly1305_seal
+%xdefine _cn2dnsid _ %+ BORINGSSL_PREFIX %+ _cn2dnsid
 %xdefine _crypto_gcm_avx512_enabled _ %+ BORINGSSL_PREFIX %+ _crypto_gcm_avx512_enabled
 %xdefine _crypto_gcm_clmul_enabled _ %+ BORINGSSL_PREFIX %+ _crypto_gcm_clmul_enabled
 %xdefine _curve25519_x25519 _ %+ BORINGSSL_PREFIX %+ _curve25519_x25519
@@ -3400,6 +3407,7 @@
 %xdefine _dh_check_params_fast _ %+ BORINGSSL_PREFIX %+ _dh_check_params_fast
 %xdefine _dh_compute_key_padded_no_self_test _ %+ BORINGSSL_PREFIX %+ _dh_compute_key_padded_no_self_test
 %xdefine _dh_pkey_meth _ %+ BORINGSSL_PREFIX %+ _dh_pkey_meth
+%xdefine _disable_mocked_ube_detection_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _disable_mocked_ube_detection_FOR_TESTING
 %xdefine _dsa_asn1_meth _ %+ BORINGSSL_PREFIX %+ _dsa_asn1_meth
 %xdefine _dsa_check_key _ %+ BORINGSSL_PREFIX %+ _dsa_check_key
 %xdefine _dsa_internal_paramgen _ %+ BORINGSSL_PREFIX %+ _dsa_internal_paramgen
@@ -3567,10 +3575,17 @@
 %xdefine _gcm_init_ssse3 _ %+ BORINGSSL_PREFIX %+ _gcm_init_ssse3
 %xdefine _gcm_init_v8 _ %+ BORINGSSL_PREFIX %+ _gcm_init_v8
 %xdefine _gcm_setiv_avx512 _ %+ BORINGSSL_PREFIX %+ _gcm_setiv_avx512
+%xdefine _get_entropy_source _ %+ BORINGSSL_PREFIX %+ _get_entropy_source
+%xdefine _get_entropy_source_method_id_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _get_entropy_source_method_id_FOR_TESTING
 %xdefine _get_legacy_kem_kyber1024_r3 _ %+ BORINGSSL_PREFIX %+ _get_legacy_kem_kyber1024_r3
 %xdefine _get_legacy_kem_kyber512_r3 _ %+ BORINGSSL_PREFIX %+ _get_legacy_kem_kyber512_r3
 %xdefine _get_legacy_kem_kyber768_r3 _ %+ BORINGSSL_PREFIX %+ _get_legacy_kem_kyber768_r3
+%xdefine _get_thread_and_global_tree_drbg_calls_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _get_thread_and_global_tree_drbg_calls_FOR_TESTING
+%xdefine _get_thread_generate_calls_since_seed _ %+ BORINGSSL_PREFIX %+ _get_thread_generate_calls_since_seed
+%xdefine _get_thread_reseed_calls_since_initialization _ %+ BORINGSSL_PREFIX %+ _get_thread_reseed_calls_since_initialization
 %xdefine _handle_cpu_env _ %+ BORINGSSL_PREFIX %+ _handle_cpu_env
+%xdefine _have_hw_rng_aarch64_for_testing _ %+ BORINGSSL_PREFIX %+ _have_hw_rng_aarch64_for_testing
+%xdefine _have_hw_rng_x86_64_for_testing _ %+ BORINGSSL_PREFIX %+ _have_hw_rng_x86_64_for_testing
 %xdefine _hmac_asn1_meth _ %+ BORINGSSL_PREFIX %+ _hmac_asn1_meth
 %xdefine _i2a_ASN1_ENUMERATED _ %+ BORINGSSL_PREFIX %+ _i2a_ASN1_ENUMERATED
 %xdefine _i2a_ASN1_INTEGER _ %+ BORINGSSL_PREFIX %+ _i2a_ASN1_INTEGER
@@ -3728,6 +3743,37 @@
 %xdefine _is_a_tty _ %+ BORINGSSL_PREFIX %+ _is_a_tty
 %xdefine _is_fips_build _ %+ BORINGSSL_PREFIX %+ _is_fips_build
 %xdefine _is_public_component_of_rsa_key_good _ %+ BORINGSSL_PREFIX %+ _is_public_component_of_rsa_key_good
+%xdefine _jent_apt_init _ %+ BORINGSSL_PREFIX %+ _jent_apt_init
+%xdefine _jent_apt_reinit _ %+ BORINGSSL_PREFIX %+ _jent_apt_reinit
+%xdefine _jent_entropy_collector_alloc _ %+ BORINGSSL_PREFIX %+ _jent_entropy_collector_alloc
+%xdefine _jent_entropy_collector_free _ %+ BORINGSSL_PREFIX %+ _jent_entropy_collector_free
+%xdefine _jent_entropy_init _ %+ BORINGSSL_PREFIX %+ _jent_entropy_init
+%xdefine _jent_entropy_init_ex _ %+ BORINGSSL_PREFIX %+ _jent_entropy_init_ex
+%xdefine _jent_entropy_switch_notime_impl _ %+ BORINGSSL_PREFIX %+ _jent_entropy_switch_notime_impl
+%xdefine _jent_gcd_analyze _ %+ BORINGSSL_PREFIX %+ _jent_gcd_analyze
+%xdefine _jent_gcd_fini _ %+ BORINGSSL_PREFIX %+ _jent_gcd_fini
+%xdefine _jent_gcd_get _ %+ BORINGSSL_PREFIX %+ _jent_gcd_get
+%xdefine _jent_gcd_init _ %+ BORINGSSL_PREFIX %+ _jent_gcd_init
+%xdefine _jent_gcd_selftest _ %+ BORINGSSL_PREFIX %+ _jent_gcd_selftest
+%xdefine _jent_health_cb_block_switch _ %+ BORINGSSL_PREFIX %+ _jent_health_cb_block_switch
+%xdefine _jent_health_failure _ %+ BORINGSSL_PREFIX %+ _jent_health_failure
+%xdefine _jent_lag_init _ %+ BORINGSSL_PREFIX %+ _jent_lag_init
+%xdefine _jent_measure_jitter _ %+ BORINGSSL_PREFIX %+ _jent_measure_jitter
+%xdefine _jent_random_data _ %+ BORINGSSL_PREFIX %+ _jent_random_data
+%xdefine _jent_read_entropy _ %+ BORINGSSL_PREFIX %+ _jent_read_entropy
+%xdefine _jent_read_entropy_safe _ %+ BORINGSSL_PREFIX %+ _jent_read_entropy_safe
+%xdefine _jent_read_random_block _ %+ BORINGSSL_PREFIX %+ _jent_read_random_block
+%xdefine _jent_set_fips_failure_callback _ %+ BORINGSSL_PREFIX %+ _jent_set_fips_failure_callback
+%xdefine _jent_set_fips_failure_callback_internal _ %+ BORINGSSL_PREFIX %+ _jent_set_fips_failure_callback_internal
+%xdefine _jent_sha3_256_init _ %+ BORINGSSL_PREFIX %+ _jent_sha3_256_init
+%xdefine _jent_sha3_alloc _ %+ BORINGSSL_PREFIX %+ _jent_sha3_alloc
+%xdefine _jent_sha3_dealloc _ %+ BORINGSSL_PREFIX %+ _jent_sha3_dealloc
+%xdefine _jent_sha3_final _ %+ BORINGSSL_PREFIX %+ _jent_sha3_final
+%xdefine _jent_sha3_tester _ %+ BORINGSSL_PREFIX %+ _jent_sha3_tester
+%xdefine _jent_sha3_update _ %+ BORINGSSL_PREFIX %+ _jent_sha3_update
+%xdefine _jent_stuck _ %+ BORINGSSL_PREFIX %+ _jent_stuck
+%xdefine _jent_time_entropy_init _ %+ BORINGSSL_PREFIX %+ _jent_time_entropy_init
+%xdefine _jent_version _ %+ BORINGSSL_PREFIX %+ _jent_version
 %xdefine _kBoringSSLRSASqrtTwo _ %+ BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwo
 %xdefine _kBoringSSLRSASqrtTwoLen _ %+ BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwoLen
 %xdefine _kOpenSSLReasonStringData _ %+ BORINGSSL_PREFIX %+ _kOpenSSLReasonStringData
@@ -3919,6 +3965,7 @@
 %xdefine _openssl_console_write _ %+ BORINGSSL_PREFIX %+ _openssl_console_write
 %xdefine _openssl_poly1305_neon2_addmulmod _ %+ BORINGSSL_PREFIX %+ _openssl_poly1305_neon2_addmulmod
 %xdefine _openssl_poly1305_neon2_blocks _ %+ BORINGSSL_PREFIX %+ _openssl_poly1305_neon2_blocks
+%xdefine _override_entropy_source_method_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _override_entropy_source_method_FOR_TESTING
 %xdefine _p256_methods _ %+ BORINGSSL_PREFIX %+ _p256_methods
 %xdefine _p256_montjscalarmul _ %+ BORINGSSL_PREFIX %+ _p256_montjscalarmul
 %xdefine _p256_montjscalarmul_alt _ %+ BORINGSSL_PREFIX %+ _p256_montjscalarmul_alt
@@ -4120,7 +4167,9 @@
 %xdefine _pqcrystals_kyber_fips202_ref_shake256_squeeze _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber_fips202_ref_shake256_squeeze
 %xdefine _pqcrystals_kyber_fips202_ref_shake256_squeezeblocks _ %+ BORINGSSL_PREFIX %+ _pqcrystals_kyber_fips202_ref_shake256_squeezeblocks
 %xdefine _pqdsa_asn1_meth _ %+ BORINGSSL_PREFIX %+ _pqdsa_asn1_meth
-%xdefine _rand_fork_unsafe_buffering_enabled _ %+ BORINGSSL_PREFIX %+ _rand_fork_unsafe_buffering_enabled
+%xdefine _rand_fips_library_destructor _ %+ BORINGSSL_PREFIX %+ _rand_fips_library_destructor
+%xdefine _rdrand_multiple8 _ %+ BORINGSSL_PREFIX %+ _rdrand_multiple8
+%xdefine _rndr_multiple8 _ %+ BORINGSSL_PREFIX %+ _rndr_multiple8
 %xdefine _rsa_asn1_meth _ %+ BORINGSSL_PREFIX %+ _rsa_asn1_meth
 %xdefine _rsa_default_private_transform _ %+ BORINGSSL_PREFIX %+ _rsa_default_private_transform
 %xdefine _rsa_default_sign_raw _ %+ BORINGSSL_PREFIX %+ _rsa_default_sign_raw
@@ -4148,6 +4197,9 @@
 %xdefine _rsaz_amm52x40_x2_ifma256 _ %+ BORINGSSL_PREFIX %+ _rsaz_amm52x40_x2_ifma256
 %xdefine _s2i_ASN1_INTEGER _ %+ BORINGSSL_PREFIX %+ _s2i_ASN1_INTEGER
 %xdefine _s2i_ASN1_OCTET_STRING _ %+ BORINGSSL_PREFIX %+ _s2i_ASN1_OCTET_STRING
+%xdefine _set_fork_generation_number_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _set_fork_generation_number_FOR_TESTING
+%xdefine _set_snapsafe_generation_number_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _set_snapsafe_generation_number_FOR_TESTING
+%xdefine _set_thread_and_global_tree_drbg_reseed_counter_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _set_thread_and_global_tree_drbg_reseed_counter_FOR_TESTING
 %xdefine _sha1_block_data_order _ %+ BORINGSSL_PREFIX %+ _sha1_block_data_order
 %xdefine _sha1_block_data_order_avx _ %+ BORINGSSL_PREFIX %+ _sha1_block_data_order_avx
 %xdefine _sha1_block_data_order_avx2 _ %+ BORINGSSL_PREFIX %+ _sha1_block_data_order_avx2
@@ -4176,8 +4228,14 @@
 %xdefine _sha512_block_data_order_nohw _ %+ BORINGSSL_PREFIX %+ _sha512_block_data_order_nohw
 %xdefine _sha512_func _ %+ BORINGSSL_PREFIX %+ _sha512_func
 %xdefine _sk_pop_free _ %+ BORINGSSL_PREFIX %+ _sk_pop_free
+%xdefine _snapsafe_fallback_get_seed _ %+ BORINGSSL_PREFIX %+ _snapsafe_fallback_get_seed
 %xdefine _sskdf_variant_digest _ %+ BORINGSSL_PREFIX %+ _sskdf_variant_digest
 %xdefine _sskdf_variant_hmac _ %+ BORINGSSL_PREFIX %+ _sskdf_variant_hmac
+%xdefine _tree_jitter_drbg_destructor _ %+ BORINGSSL_PREFIX %+ _tree_jitter_drbg_destructor
+%xdefine _tree_jitter_free_thread_drbg _ %+ BORINGSSL_PREFIX %+ _tree_jitter_free_thread_drbg
+%xdefine _tree_jitter_get_seed _ %+ BORINGSSL_PREFIX %+ _tree_jitter_get_seed
+%xdefine _tree_jitter_initialize _ %+ BORINGSSL_PREFIX %+ _tree_jitter_initialize
+%xdefine _tree_jitter_zeroize_thread_drbg _ %+ BORINGSSL_PREFIX %+ _tree_jitter_zeroize_thread_drbg
 %xdefine _tty_in _ %+ BORINGSSL_PREFIX %+ _tty_in
 %xdefine _tty_new _ %+ BORINGSSL_PREFIX %+ _tty_new
 %xdefine _tty_orig _ %+ BORINGSSL_PREFIX %+ _tty_orig
@@ -4211,6 +4269,7 @@
 %xdefine _v3_policy_mappings _ %+ BORINGSSL_PREFIX %+ _v3_policy_mappings
 %xdefine _v3_sinfo _ %+ BORINGSSL_PREFIX %+ _v3_sinfo
 %xdefine _v3_skey_id _ %+ BORINGSSL_PREFIX %+ _v3_skey_id
+%xdefine _validate_cidr_mask _ %+ BORINGSSL_PREFIX %+ _validate_cidr_mask
 %xdefine _voprf_exp2_blind _ %+ BORINGSSL_PREFIX %+ _voprf_exp2_blind
 %xdefine _voprf_exp2_client_key_from_bytes _ %+ BORINGSSL_PREFIX %+ _voprf_exp2_client_key_from_bytes
 %xdefine _voprf_exp2_derive_key_from_secret _ %+ BORINGSSL_PREFIX %+ _voprf_exp2_derive_key_from_secret
@@ -4268,7 +4327,6 @@
 %xdefine _x509v3_conf_name_matches _ %+ BORINGSSL_PREFIX %+ _x509v3_conf_name_matches
 %xdefine _x509v3_ext_free_with_method _ %+ BORINGSSL_PREFIX %+ _x509v3_ext_free_with_method
 %xdefine _x509v3_hex_to_bytes _ %+ BORINGSSL_PREFIX %+ _x509v3_hex_to_bytes
-%xdefine _x509v3_looks_like_dns_name _ %+ BORINGSSL_PREFIX %+ _x509v3_looks_like_dns_name
 %xdefine _x86_64_assembly_implementation_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _x86_64_assembly_implementation_FOR_TESTING
 %else
 %xdefine ACCESS_DESCRIPTION_free BORINGSSL_PREFIX %+ _ACCESS_DESCRIPTION_free
@@ -4944,7 +5002,8 @@
 %xdefine CRYPTO_cleanup_all_ex_data BORINGSSL_PREFIX %+ _CRYPTO_cleanup_all_ex_data
 %xdefine CRYPTO_ctr128_encrypt BORINGSSL_PREFIX %+ _CRYPTO_ctr128_encrypt
 %xdefine CRYPTO_ctr128_encrypt_ctr32 BORINGSSL_PREFIX %+ _CRYPTO_ctr128_encrypt_ctr32
-%xdefine CRYPTO_fork_detect_ignore_madv_wipeonfork_for_testing BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_madv_wipeonfork_for_testing
+%xdefine CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING
+%xdefine CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING
 %xdefine CRYPTO_free BORINGSSL_PREFIX %+ _CRYPTO_free
 %xdefine CRYPTO_free_ex_data BORINGSSL_PREFIX %+ _CRYPTO_free_ex_data
 %xdefine CRYPTO_gcm128_aad BORINGSSL_PREFIX %+ _CRYPTO_gcm128_aad
@@ -4969,11 +5028,11 @@
 %xdefine CRYPTO_get_snapsafe_supported BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_supported
 %xdefine CRYPTO_get_sysgenid_path BORINGSSL_PREFIX %+ _CRYPTO_get_sysgenid_path
 %xdefine CRYPTO_get_thread_local BORINGSSL_PREFIX %+ _CRYPTO_get_thread_local
+%xdefine CRYPTO_get_ube_generation_number BORINGSSL_PREFIX %+ _CRYPTO_get_ube_generation_number
 %xdefine CRYPTO_ghash_init BORINGSSL_PREFIX %+ _CRYPTO_ghash_init
 %xdefine CRYPTO_has_asm BORINGSSL_PREFIX %+ _CRYPTO_has_asm
 %xdefine CRYPTO_has_broken_NEON BORINGSSL_PREFIX %+ _CRYPTO_has_broken_NEON
 %xdefine CRYPTO_hchacha20 BORINGSSL_PREFIX %+ _CRYPTO_hchacha20
-%xdefine CRYPTO_init_sysrand BORINGSSL_PREFIX %+ _CRYPTO_init_sysrand
 %xdefine CRYPTO_is_ARMv8_DIT_capable_for_testing BORINGSSL_PREFIX %+ _CRYPTO_is_ARMv8_DIT_capable_for_testing
 %xdefine CRYPTO_is_PPC64LE_vcrypto_capable BORINGSSL_PREFIX %+ _CRYPTO_is_PPC64LE_vcrypto_capable
 %xdefine CRYPTO_is_confidential_build BORINGSSL_PREFIX %+ _CRYPTO_is_confidential_build
@@ -4994,11 +5053,11 @@
 %xdefine CRYPTO_poly1305_update BORINGSSL_PREFIX %+ _CRYPTO_poly1305_update
 %xdefine CRYPTO_poly1305_update_neon BORINGSSL_PREFIX %+ _CRYPTO_poly1305_update_neon
 %xdefine CRYPTO_pre_sandbox_init BORINGSSL_PREFIX %+ _CRYPTO_pre_sandbox_init
-%xdefine CRYPTO_rdrand BORINGSSL_PREFIX %+ _CRYPTO_rdrand
-%xdefine CRYPTO_rdrand_multiple8_buf BORINGSSL_PREFIX %+ _CRYPTO_rdrand_multiple8_buf
+%xdefine CRYPTO_rdrand_multiple8 BORINGSSL_PREFIX %+ _CRYPTO_rdrand_multiple8
 %xdefine CRYPTO_realloc BORINGSSL_PREFIX %+ _CRYPTO_realloc
 %xdefine CRYPTO_refcount_dec_and_test_zero BORINGSSL_PREFIX %+ _CRYPTO_refcount_dec_and_test_zero
 %xdefine CRYPTO_refcount_inc BORINGSSL_PREFIX %+ _CRYPTO_refcount_inc
+%xdefine CRYPTO_rndr_multiple8 BORINGSSL_PREFIX %+ _CRYPTO_rndr_multiple8
 %xdefine CRYPTO_secure_malloc_init BORINGSSL_PREFIX %+ _CRYPTO_secure_malloc_init
 %xdefine CRYPTO_secure_malloc_initialized BORINGSSL_PREFIX %+ _CRYPTO_secure_malloc_initialized
 %xdefine CRYPTO_secure_used BORINGSSL_PREFIX %+ _CRYPTO_secure_used
@@ -5012,7 +5071,6 @@
 %xdefine CRYPTO_set_mem_functions BORINGSSL_PREFIX %+ _CRYPTO_set_mem_functions
 %xdefine CRYPTO_set_thread_local BORINGSSL_PREFIX %+ _CRYPTO_set_thread_local
 %xdefine CRYPTO_sysrand BORINGSSL_PREFIX %+ _CRYPTO_sysrand
-%xdefine CRYPTO_sysrand_for_seed BORINGSSL_PREFIX %+ _CRYPTO_sysrand_for_seed
 %xdefine CRYPTO_sysrand_if_available BORINGSSL_PREFIX %+ _CRYPTO_sysrand_if_available
 %xdefine CRYPTO_tls1_prf BORINGSSL_PREFIX %+ _CRYPTO_tls1_prf
 %xdefine CRYPTO_xts128_encrypt BORINGSSL_PREFIX %+ _CRYPTO_xts128_encrypt
@@ -5190,6 +5248,7 @@
 %xdefine EC_KEY_OpenSSL BORINGSSL_PREFIX %+ _EC_KEY_OpenSSL
 %xdefine EC_KEY_check_fips BORINGSSL_PREFIX %+ _EC_KEY_check_fips
 %xdefine EC_KEY_check_key BORINGSSL_PREFIX %+ _EC_KEY_check_key
+%xdefine EC_KEY_decoded_from_explicit_params BORINGSSL_PREFIX %+ _EC_KEY_decoded_from_explicit_params
 %xdefine EC_KEY_derive_from_secret BORINGSSL_PREFIX %+ _EC_KEY_derive_from_secret
 %xdefine EC_KEY_dup BORINGSSL_PREFIX %+ _EC_KEY_dup
 %xdefine EC_KEY_free BORINGSSL_PREFIX %+ _EC_KEY_free
@@ -5213,6 +5272,7 @@
 %xdefine EC_KEY_new_method BORINGSSL_PREFIX %+ _EC_KEY_new_method
 %xdefine EC_KEY_parse_curve_name BORINGSSL_PREFIX %+ _EC_KEY_parse_curve_name
 %xdefine EC_KEY_parse_parameters BORINGSSL_PREFIX %+ _EC_KEY_parse_parameters
+%xdefine EC_KEY_parse_parameters_and_type BORINGSSL_PREFIX %+ _EC_KEY_parse_parameters_and_type
 %xdefine EC_KEY_parse_private_key BORINGSSL_PREFIX %+ _EC_KEY_parse_private_key
 %xdefine EC_KEY_set_asn1_flag BORINGSSL_PREFIX %+ _EC_KEY_set_asn1_flag
 %xdefine EC_KEY_set_conv_form BORINGSSL_PREFIX %+ _EC_KEY_set_conv_form
@@ -5593,6 +5653,7 @@
 %xdefine EVP_PKEY_kem_new_raw_public_key BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_public_key
 %xdefine EVP_PKEY_kem_new_raw_secret_key BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_secret_key
 %xdefine EVP_PKEY_kem_pkey_meth BORINGSSL_PREFIX %+ _EVP_PKEY_kem_pkey_meth
+%xdefine EVP_PKEY_kem_set_params BORINGSSL_PREFIX %+ _EVP_PKEY_kem_set_params
 %xdefine EVP_PKEY_keygen BORINGSSL_PREFIX %+ _EVP_PKEY_keygen
 %xdefine EVP_PKEY_keygen_deterministic BORINGSSL_PREFIX %+ _EVP_PKEY_keygen_deterministic
 %xdefine EVP_PKEY_keygen_init BORINGSSL_PREFIX %+ _EVP_PKEY_keygen_init
@@ -5838,6 +5899,7 @@
 %xdefine KEM_KEY_set_raw_key BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_key
 %xdefine KEM_KEY_set_raw_public_key BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_public_key
 %xdefine KEM_KEY_set_raw_secret_key BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_secret_key
+%xdefine KEM_find_asn1_by_nid BORINGSSL_PREFIX %+ _KEM_find_asn1_by_nid
 %xdefine KEM_find_kem_by_nid BORINGSSL_PREFIX %+ _KEM_find_kem_by_nid
 %xdefine Keccak1600_Absorb BORINGSSL_PREFIX %+ _Keccak1600_Absorb
 %xdefine Keccak1600_Absorb_once_x4 BORINGSSL_PREFIX %+ _Keccak1600_Absorb_once_x4
@@ -5859,6 +5921,7 @@
 %xdefine MD5_get_state BORINGSSL_PREFIX %+ _MD5_get_state
 %xdefine MGF1 BORINGSSL_PREFIX %+ _MGF1
 %xdefine NAME_CONSTRAINTS_check BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_check
+%xdefine NAME_CONSTRAINTS_check_CN BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_check_CN
 %xdefine NAME_CONSTRAINTS_free BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_free
 %xdefine NAME_CONSTRAINTS_it BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_it
 %xdefine NAME_CONSTRAINTS_new BORINGSSL_PREFIX %+ _NAME_CONSTRAINTS_new
@@ -6311,14 +6374,12 @@
 %xdefine RAND_SSLeay BORINGSSL_PREFIX %+ _RAND_SSLeay
 %xdefine RAND_add BORINGSSL_PREFIX %+ _RAND_add
 %xdefine RAND_bytes BORINGSSL_PREFIX %+ _RAND_bytes
-%xdefine RAND_bytes_with_additional_data BORINGSSL_PREFIX %+ _RAND_bytes_with_additional_data
+%xdefine RAND_bytes_with_user_prediction_resistance BORINGSSL_PREFIX %+ _RAND_bytes_with_user_prediction_resistance
 %xdefine RAND_cleanup BORINGSSL_PREFIX %+ _RAND_cleanup
 %xdefine RAND_egd BORINGSSL_PREFIX %+ _RAND_egd
 %xdefine RAND_egd_bytes BORINGSSL_PREFIX %+ _RAND_egd_bytes
-%xdefine RAND_enable_fork_unsafe_buffering BORINGSSL_PREFIX %+ _RAND_enable_fork_unsafe_buffering
 %xdefine RAND_file_name BORINGSSL_PREFIX %+ _RAND_file_name
 %xdefine RAND_get_rand_method BORINGSSL_PREFIX %+ _RAND_get_rand_method
-%xdefine RAND_get_system_entropy_for_custom_prng BORINGSSL_PREFIX %+ _RAND_get_system_entropy_for_custom_prng
 %xdefine RAND_keep_random_devices_open BORINGSSL_PREFIX %+ _RAND_keep_random_devices_open
 %xdefine RAND_load_file BORINGSSL_PREFIX %+ _RAND_load_file
 %xdefine RAND_poll BORINGSSL_PREFIX %+ _RAND_poll
@@ -6904,6 +6965,8 @@
 %xdefine X509_VERIFY_PARAM_add0_policy BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_add0_policy
 %xdefine X509_VERIFY_PARAM_add1_host BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_add1_host
 %xdefine X509_VERIFY_PARAM_clear_flags BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_clear_flags
+%xdefine X509_VERIFY_PARAM_disable_ec_key_explicit_params BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_disable_ec_key_explicit_params
+%xdefine X509_VERIFY_PARAM_enable_ec_key_explicit_params BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_enable_ec_key_explicit_params
 %xdefine X509_VERIFY_PARAM_free BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_free
 %xdefine X509_VERIFY_PARAM_get_depth BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get_depth
 %xdefine X509_VERIFY_PARAM_get_flags BORINGSSL_PREFIX %+ _X509_VERIFY_PARAM_get_flags
@@ -7321,6 +7384,7 @@
 %xdefine aesv8_gcm_8x_enc_128 BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_128
 %xdefine aesv8_gcm_8x_enc_192 BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_192
 %xdefine aesv8_gcm_8x_enc_256 BORINGSSL_PREFIX %+ _aesv8_gcm_8x_enc_256
+%xdefine allow_mocked_ube_detection_FOR_TESTING BORINGSSL_PREFIX %+ _allow_mocked_ube_detection_FOR_TESTING
 %xdefine armv8_disable_dit BORINGSSL_PREFIX %+ _armv8_disable_dit
 %xdefine armv8_enable_dit BORINGSSL_PREFIX %+ _armv8_enable_dit
 %xdefine armv8_get_dit BORINGSSL_PREFIX %+ _armv8_get_dit
@@ -7502,6 +7566,7 @@
 %xdefine cbs_get_utf8 BORINGSSL_PREFIX %+ _cbs_get_utf8
 %xdefine chacha20_poly1305_open BORINGSSL_PREFIX %+ _chacha20_poly1305_open
 %xdefine chacha20_poly1305_seal BORINGSSL_PREFIX %+ _chacha20_poly1305_seal
+%xdefine cn2dnsid BORINGSSL_PREFIX %+ _cn2dnsid
 %xdefine crypto_gcm_avx512_enabled BORINGSSL_PREFIX %+ _crypto_gcm_avx512_enabled
 %xdefine crypto_gcm_clmul_enabled BORINGSSL_PREFIX %+ _crypto_gcm_clmul_enabled
 %xdefine curve25519_x25519 BORINGSSL_PREFIX %+ _curve25519_x25519
@@ -7648,6 +7713,7 @@
 %xdefine dh_check_params_fast BORINGSSL_PREFIX %+ _dh_check_params_fast
 %xdefine dh_compute_key_padded_no_self_test BORINGSSL_PREFIX %+ _dh_compute_key_padded_no_self_test
 %xdefine dh_pkey_meth BORINGSSL_PREFIX %+ _dh_pkey_meth
+%xdefine disable_mocked_ube_detection_FOR_TESTING BORINGSSL_PREFIX %+ _disable_mocked_ube_detection_FOR_TESTING
 %xdefine dsa_asn1_meth BORINGSSL_PREFIX %+ _dsa_asn1_meth
 %xdefine dsa_check_key BORINGSSL_PREFIX %+ _dsa_check_key
 %xdefine dsa_internal_paramgen BORINGSSL_PREFIX %+ _dsa_internal_paramgen
@@ -7815,10 +7881,17 @@
 %xdefine gcm_init_ssse3 BORINGSSL_PREFIX %+ _gcm_init_ssse3
 %xdefine gcm_init_v8 BORINGSSL_PREFIX %+ _gcm_init_v8
 %xdefine gcm_setiv_avx512 BORINGSSL_PREFIX %+ _gcm_setiv_avx512
+%xdefine get_entropy_source BORINGSSL_PREFIX %+ _get_entropy_source
+%xdefine get_entropy_source_method_id_FOR_TESTING BORINGSSL_PREFIX %+ _get_entropy_source_method_id_FOR_TESTING
 %xdefine get_legacy_kem_kyber1024_r3 BORINGSSL_PREFIX %+ _get_legacy_kem_kyber1024_r3
 %xdefine get_legacy_kem_kyber512_r3 BORINGSSL_PREFIX %+ _get_legacy_kem_kyber512_r3
 %xdefine get_legacy_kem_kyber768_r3 BORINGSSL_PREFIX %+ _get_legacy_kem_kyber768_r3
+%xdefine get_thread_and_global_tree_drbg_calls_FOR_TESTING BORINGSSL_PREFIX %+ _get_thread_and_global_tree_drbg_calls_FOR_TESTING
+%xdefine get_thread_generate_calls_since_seed BORINGSSL_PREFIX %+ _get_thread_generate_calls_since_seed
+%xdefine get_thread_reseed_calls_since_initialization BORINGSSL_PREFIX %+ _get_thread_reseed_calls_since_initialization
 %xdefine handle_cpu_env BORINGSSL_PREFIX %+ _handle_cpu_env
+%xdefine have_hw_rng_aarch64_for_testing BORINGSSL_PREFIX %+ _have_hw_rng_aarch64_for_testing
+%xdefine have_hw_rng_x86_64_for_testing BORINGSSL_PREFIX %+ _have_hw_rng_x86_64_for_testing
 %xdefine hmac_asn1_meth BORINGSSL_PREFIX %+ _hmac_asn1_meth
 %xdefine i2a_ASN1_ENUMERATED BORINGSSL_PREFIX %+ _i2a_ASN1_ENUMERATED
 %xdefine i2a_ASN1_INTEGER BORINGSSL_PREFIX %+ _i2a_ASN1_INTEGER
@@ -7976,6 +8049,37 @@
 %xdefine is_a_tty BORINGSSL_PREFIX %+ _is_a_tty
 %xdefine is_fips_build BORINGSSL_PREFIX %+ _is_fips_build
 %xdefine is_public_component_of_rsa_key_good BORINGSSL_PREFIX %+ _is_public_component_of_rsa_key_good
+%xdefine jent_apt_init BORINGSSL_PREFIX %+ _jent_apt_init
+%xdefine jent_apt_reinit BORINGSSL_PREFIX %+ _jent_apt_reinit
+%xdefine jent_entropy_collector_alloc BORINGSSL_PREFIX %+ _jent_entropy_collector_alloc
+%xdefine jent_entropy_collector_free BORINGSSL_PREFIX %+ _jent_entropy_collector_free
+%xdefine jent_entropy_init BORINGSSL_PREFIX %+ _jent_entropy_init
+%xdefine jent_entropy_init_ex BORINGSSL_PREFIX %+ _jent_entropy_init_ex
+%xdefine jent_entropy_switch_notime_impl BORINGSSL_PREFIX %+ _jent_entropy_switch_notime_impl
+%xdefine jent_gcd_analyze BORINGSSL_PREFIX %+ _jent_gcd_analyze
+%xdefine jent_gcd_fini BORINGSSL_PREFIX %+ _jent_gcd_fini
+%xdefine jent_gcd_get BORINGSSL_PREFIX %+ _jent_gcd_get
+%xdefine jent_gcd_init BORINGSSL_PREFIX %+ _jent_gcd_init
+%xdefine jent_gcd_selftest BORINGSSL_PREFIX %+ _jent_gcd_selftest
+%xdefine jent_health_cb_block_switch BORINGSSL_PREFIX %+ _jent_health_cb_block_switch
+%xdefine jent_health_failure BORINGSSL_PREFIX %+ _jent_health_failure
+%xdefine jent_lag_init BORINGSSL_PREFIX %+ _jent_lag_init
+%xdefine jent_measure_jitter BORINGSSL_PREFIX %+ _jent_measure_jitter
+%xdefine jent_random_data BORINGSSL_PREFIX %+ _jent_random_data
+%xdefine jent_read_entropy BORINGSSL_PREFIX %+ _jent_read_entropy
+%xdefine jent_read_entropy_safe BORINGSSL_PREFIX %+ _jent_read_entropy_safe
+%xdefine jent_read_random_block BORINGSSL_PREFIX %+ _jent_read_random_block
+%xdefine jent_set_fips_failure_callback BORINGSSL_PREFIX %+ _jent_set_fips_failure_callback
+%xdefine jent_set_fips_failure_callback_internal BORINGSSL_PREFIX %+ _jent_set_fips_failure_callback_internal
+%xdefine jent_sha3_256_init BORINGSSL_PREFIX %+ _jent_sha3_256_init
+%xdefine jent_sha3_alloc BORINGSSL_PREFIX %+ _jent_sha3_alloc
+%xdefine jent_sha3_dealloc BORINGSSL_PREFIX %+ _jent_sha3_dealloc
+%xdefine jent_sha3_final BORINGSSL_PREFIX %+ _jent_sha3_final
+%xdefine jent_sha3_tester BORINGSSL_PREFIX %+ _jent_sha3_tester
+%xdefine jent_sha3_update BORINGSSL_PREFIX %+ _jent_sha3_update
+%xdefine jent_stuck BORINGSSL_PREFIX %+ _jent_stuck
+%xdefine jent_time_entropy_init BORINGSSL_PREFIX %+ _jent_time_entropy_init
+%xdefine jent_version BORINGSSL_PREFIX %+ _jent_version
 %xdefine kBoringSSLRSASqrtTwo BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwo
 %xdefine kBoringSSLRSASqrtTwoLen BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwoLen
 %xdefine kOpenSSLReasonStringData BORINGSSL_PREFIX %+ _kOpenSSLReasonStringData
@@ -8167,6 +8271,7 @@
 %xdefine openssl_console_write BORINGSSL_PREFIX %+ _openssl_console_write
 %xdefine openssl_poly1305_neon2_addmulmod BORINGSSL_PREFIX %+ _openssl_poly1305_neon2_addmulmod
 %xdefine openssl_poly1305_neon2_blocks BORINGSSL_PREFIX %+ _openssl_poly1305_neon2_blocks
+%xdefine override_entropy_source_method_FOR_TESTING BORINGSSL_PREFIX %+ _override_entropy_source_method_FOR_TESTING
 %xdefine p256_methods BORINGSSL_PREFIX %+ _p256_methods
 %xdefine p256_montjscalarmul BORINGSSL_PREFIX %+ _p256_montjscalarmul
 %xdefine p256_montjscalarmul_alt BORINGSSL_PREFIX %+ _p256_montjscalarmul_alt
@@ -8368,7 +8473,9 @@
 %xdefine pqcrystals_kyber_fips202_ref_shake256_squeeze BORINGSSL_PREFIX %+ _pqcrystals_kyber_fips202_ref_shake256_squeeze
 %xdefine pqcrystals_kyber_fips202_ref_shake256_squeezeblocks BORINGSSL_PREFIX %+ _pqcrystals_kyber_fips202_ref_shake256_squeezeblocks
 %xdefine pqdsa_asn1_meth BORINGSSL_PREFIX %+ _pqdsa_asn1_meth
-%xdefine rand_fork_unsafe_buffering_enabled BORINGSSL_PREFIX %+ _rand_fork_unsafe_buffering_enabled
+%xdefine rand_fips_library_destructor BORINGSSL_PREFIX %+ _rand_fips_library_destructor
+%xdefine rdrand_multiple8 BORINGSSL_PREFIX %+ _rdrand_multiple8
+%xdefine rndr_multiple8 BORINGSSL_PREFIX %+ _rndr_multiple8
 %xdefine rsa_asn1_meth BORINGSSL_PREFIX %+ _rsa_asn1_meth
 %xdefine rsa_default_private_transform BORINGSSL_PREFIX %+ _rsa_default_private_transform
 %xdefine rsa_default_sign_raw BORINGSSL_PREFIX %+ _rsa_default_sign_raw
@@ -8396,6 +8503,9 @@
 %xdefine rsaz_amm52x40_x2_ifma256 BORINGSSL_PREFIX %+ _rsaz_amm52x40_x2_ifma256
 %xdefine s2i_ASN1_INTEGER BORINGSSL_PREFIX %+ _s2i_ASN1_INTEGER
 %xdefine s2i_ASN1_OCTET_STRING BORINGSSL_PREFIX %+ _s2i_ASN1_OCTET_STRING
+%xdefine set_fork_generation_number_FOR_TESTING BORINGSSL_PREFIX %+ _set_fork_generation_number_FOR_TESTING
+%xdefine set_snapsafe_generation_number_FOR_TESTING BORINGSSL_PREFIX %+ _set_snapsafe_generation_number_FOR_TESTING
+%xdefine set_thread_and_global_tree_drbg_reseed_counter_FOR_TESTING BORINGSSL_PREFIX %+ _set_thread_and_global_tree_drbg_reseed_counter_FOR_TESTING
 %xdefine sha1_block_data_order BORINGSSL_PREFIX %+ _sha1_block_data_order
 %xdefine sha1_block_data_order_avx BORINGSSL_PREFIX %+ _sha1_block_data_order_avx
 %xdefine sha1_block_data_order_avx2 BORINGSSL_PREFIX %+ _sha1_block_data_order_avx2
@@ -8424,8 +8534,14 @@
 %xdefine sha512_block_data_order_nohw BORINGSSL_PREFIX %+ _sha512_block_data_order_nohw
 %xdefine sha512_func BORINGSSL_PREFIX %+ _sha512_func
 %xdefine sk_pop_free BORINGSSL_PREFIX %+ _sk_pop_free
+%xdefine snapsafe_fallback_get_seed BORINGSSL_PREFIX %+ _snapsafe_fallback_get_seed
 %xdefine sskdf_variant_digest BORINGSSL_PREFIX %+ _sskdf_variant_digest
 %xdefine sskdf_variant_hmac BORINGSSL_PREFIX %+ _sskdf_variant_hmac
+%xdefine tree_jitter_drbg_destructor BORINGSSL_PREFIX %+ _tree_jitter_drbg_destructor
+%xdefine tree_jitter_free_thread_drbg BORINGSSL_PREFIX %+ _tree_jitter_free_thread_drbg
+%xdefine tree_jitter_get_seed BORINGSSL_PREFIX %+ _tree_jitter_get_seed
+%xdefine tree_jitter_initialize BORINGSSL_PREFIX %+ _tree_jitter_initialize
+%xdefine tree_jitter_zeroize_thread_drbg BORINGSSL_PREFIX %+ _tree_jitter_zeroize_thread_drbg
 %xdefine tty_in BORINGSSL_PREFIX %+ _tty_in
 %xdefine tty_new BORINGSSL_PREFIX %+ _tty_new
 %xdefine tty_orig BORINGSSL_PREFIX %+ _tty_orig
@@ -8459,6 +8575,7 @@
 %xdefine v3_policy_mappings BORINGSSL_PREFIX %+ _v3_policy_mappings
 %xdefine v3_sinfo BORINGSSL_PREFIX %+ _v3_sinfo
 %xdefine v3_skey_id BORINGSSL_PREFIX %+ _v3_skey_id
+%xdefine validate_cidr_mask BORINGSSL_PREFIX %+ _validate_cidr_mask
 %xdefine voprf_exp2_blind BORINGSSL_PREFIX %+ _voprf_exp2_blind
 %xdefine voprf_exp2_client_key_from_bytes BORINGSSL_PREFIX %+ _voprf_exp2_client_key_from_bytes
 %xdefine voprf_exp2_derive_key_from_secret BORINGSSL_PREFIX %+ _voprf_exp2_derive_key_from_secret
@@ -8516,7 +8633,6 @@
 %xdefine x509v3_conf_name_matches BORINGSSL_PREFIX %+ _x509v3_conf_name_matches
 %xdefine x509v3_ext_free_with_method BORINGSSL_PREFIX %+ _x509v3_ext_free_with_method
 %xdefine x509v3_hex_to_bytes BORINGSSL_PREFIX %+ _x509v3_hex_to_bytes
-%xdefine x509v3_looks_like_dns_name BORINGSSL_PREFIX %+ _x509v3_looks_like_dns_name
 %xdefine x86_64_assembly_implementation_FOR_TESTING BORINGSSL_PREFIX %+ _x86_64_assembly_implementation_FOR_TESTING
 
 %endif ; __OUTPUT_FORMAT__
