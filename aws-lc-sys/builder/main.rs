@@ -170,10 +170,7 @@ fn optional_env<N: AsRef<str>>(name: N) -> Option<String> {
     let name = name.as_ref();
     println!("cargo:rerun-if-env-changed={name}");
     if let Ok(value) = env::var(name) {
-        emit_warning(&format!(
-            "Environment Variable found '{name}': '{}'",
-            &value
-        ));
+        emit_warning(format!("Environment Variable found '{name}': '{}'", &value));
         return Some(value);
     }
     None
@@ -188,7 +185,7 @@ where
     let target = target.replace('-', "_");
     let env_var = format!("{}_{target}", env_var.as_ref().to_str().unwrap());
     env::set_var(&env_var, &value);
-    emit_warning(&format!(
+    emit_warning(format!(
         "Setting {env_var}: {}",
         value.as_ref().to_str().unwrap()
     ));
@@ -200,7 +197,7 @@ where
     V: AsRef<OsStr>,
 {
     env::set_var(&env_var, &value);
-    emit_warning(&format!(
+    emit_warning(format!(
         "Setting {}: {}",
         env_var.as_ref().to_str().unwrap(),
         value.as_ref().to_str().unwrap()
@@ -228,7 +225,7 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
         || env_var_value.starts_with("off")
         || env_var_value.starts_with('f')
     {
-        emit_warning(&format!("Value: {} is false.", &env_var_value));
+        emit_warning(format!("Value: {} is false.", &env_var_value));
         return Some(false);
     }
     if env_var_value.starts_with(|c: char| c.is_ascii_digit())
@@ -236,7 +233,7 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
         || env_var_value.starts_with("on")
         || env_var_value.starts_with('t')
     {
-        emit_warning(&format!("Value: {} is true.", &env_var_value));
+        emit_warning(format!("Value: {} is true.", &env_var_value));
         return Some(true);
     }
     None
@@ -283,9 +280,18 @@ fn prefix_string() -> String {
     format!("aws_lc_{}", VERSION.to_string().replace('.', "_"))
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(all(feature = "bindgen", feature = "all-bindings"))]
 fn target_platform_prefix(name: &str) -> String {
     format!("{}_{}", effective_target().replace('-', "_"), name)
+}
+
+#[cfg(all(feature = "bindgen", not(feature = "all-bindings")))]
+fn target_platform_prefix(name: &str) -> String {
+    if target_vendor() == "apple" {
+        format!("universal_apple_{}", name.replace('-', "_"))
+    } else {
+        format!("universal_{}", name.replace('-', "_"))
+    }
 }
 
 pub(crate) struct TestCommandResult {
@@ -355,11 +361,12 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
 
 fn emit_rustc_cfg(cfg: &str) {
     let cfg = cfg.replace('-', "_");
+    emit_warning(format!("Emitting configuration: cargo:rustc-cfg={cfg}"));
     println!("cargo:rustc-cfg={cfg}");
 }
 
-fn emit_warning(message: &str) {
-    println!("cargo:warning={message}");
+fn emit_warning<T: AsRef<str>>(message: T) {
+    println!("cargo:warning={}", message.as_ref());
 }
 
 #[allow(dead_code)]
@@ -485,7 +492,7 @@ impl CStdRequested {
                 "11" => CStdRequested::C11,
                 _ => CStdRequested::None,
             };
-            emit_warning(&format!(
+            emit_warning(format!(
                 "AWS_LC_SYS_C_STD environment variable set: {cstd:?}"
             ));
             return cstd;
@@ -527,25 +534,39 @@ fn initialize() {
     if !is_external_bindgen_requested().unwrap_or(false)
         && (is_pregenerating_bindings() || !has_bindgen_feature())
     {
-        let target = effective_target();
-        let supported_platform = match target.as_str() {
-            "aarch64-apple-darwin"
-            | "aarch64-linux-android"
-            | "aarch64-pc-windows-msvc"
-            | "aarch64-unknown-linux-gnu"
-            | "aarch64-unknown-linux-musl"
-            | "i686-pc-windows-msvc"
-            | "i686-unknown-linux-gnu"
-            | "riscv64gc-unknown-linux-gnu"
-            | "x86_64-apple-darwin"
-            | "x86_64-pc-windows-gnu"
-            | "x86_64-pc-windows-msvc"
-            | "x86_64-unknown-linux-gnu"
-            | "x86_64-unknown-linux-musl" => Some(target),
-            _ => None,
-        };
-        if let Some(platform) = supported_platform {
-            emit_rustc_cfg(platform.as_str());
+        #[cfg(feature = "all-bindings")]
+        {
+            let target = effective_target();
+            let supported_platform = match target.as_str() {
+                "aarch64-apple-darwin"
+                | "aarch64-linux-android"
+                | "aarch64-pc-windows-msvc"
+                | "aarch64-unknown-linux-gnu"
+                | "aarch64-unknown-linux-musl"
+                | "i686-pc-windows-msvc"
+                | "i686-unknown-linux-gnu"
+                | "riscv64gc-unknown-linux-gnu"
+                | "x86_64-apple-darwin"
+                | "x86_64-pc-windows-gnu"
+                | "x86_64-pc-windows-msvc"
+                | "x86_64-unknown-linux-gnu"
+                | "x86_64-unknown-linux-musl" => Some(target),
+                _ => None,
+            };
+            if let Some(platform) = supported_platform {
+                emit_rustc_cfg(platform.as_str());
+                unsafe {
+                    PREGENERATED = true;
+                }
+            }
+        }
+        #[cfg(not(feature = "all-bindings"))]
+        {
+            if target_vendor() == "apple" {
+                emit_rustc_cfg("universal-apple");
+            } else {
+                emit_rustc_cfg("universal");
+            }
             unsafe {
                 PREGENERATED = true;
             }
@@ -564,7 +585,7 @@ fn is_bindgen_required() -> bool {
 bindgen_available!(
     fn internal_bindgen_supported() -> bool {
         let cv = bindgen::clang_version();
-        emit_warning(&format!("Clang version: {}", cv.full));
+        emit_warning(format!("Clang version: {}", cv.full));
         true
     }
 );
@@ -652,6 +673,8 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
+        println!("cargo:rustc-check-cfg=cfg(universal)");
+        println!("cargo:rustc-check-cfg=cfg(universal_apple)");
     }
 }
 
@@ -663,7 +686,7 @@ fn is_crt_static() -> bool {
 bindgen_available!(
     fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
         if internal_bindgen_supported() && !is_external_bindgen_requested().unwrap_or(false) {
-            emit_warning(&format!(
+            emit_warning(format!(
                 "Generating bindings - internal bindgen. Platform: {}",
                 effective_target()
             ));
@@ -698,8 +721,8 @@ fn main() {
     };
 
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
-    emit_warning(&format!("Building with: {}", builder.name()));
-    emit_warning(&format!("Symbol Prefix: {:?}", &prefix));
+    emit_warning(format!("Building with: {}", builder.name()));
+    emit_warning(format!("Symbol Prefix: {:?}", &prefix));
 
     builder.check_dependencies().unwrap();
 
@@ -712,6 +735,10 @@ fn main() {
                 .join("src")
                 .join(format!("{}.rs", target_platform_prefix("crypto")));
             if is_external_bindgen_requested().unwrap_or(false) {
+                assert!(
+                    !is_pregenerating_bindings(),
+                    "Pregenerated bindings not supported using external bindgen.",
+                );
                 invoke_external_bindgen(&manifest_dir, &prefix, &src_bindings_path).unwrap();
             } else {
                 generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
@@ -730,7 +757,7 @@ fn main() {
         if !aws_lc_crypto_dir.exists() {
             emit_warning("######");
             emit_warning("###### WARNING: MISSING GIT SUBMODULE ######");
-            emit_warning(&format!(
+            emit_warning(format!(
                 "  -- Did you initialize the repo's git submodules? Unable to find crypto directory: {}.",
                 &aws_lc_crypto_dir.display()
             ));
@@ -919,7 +946,7 @@ fn invoke_external_bindgen(
 ) -> Result<(), String> {
     verify_bindgen()?;
 
-    emit_warning(&format!(
+    emit_warning(format!(
         "Generating bindings - external bindgen. Platform: {}",
         effective_target()
     ));

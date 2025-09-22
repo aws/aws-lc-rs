@@ -237,13 +237,13 @@ impl CcBuilder {
                 if !compiler_is_msvc {
                     let flag = format!("-ffile-prefix-map={}=", self.manifest_dir.display());
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {
-                        emit_warning(&format!("Using flag: {}", &flag));
+                        emit_warning(format!("Using flag: {}", &flag));
                         build_options.push(BuildOption::flag(&flag));
                     } else {
                         emit_warning("NOTICE: Build environment source paths might be visible in release binary.");
                         let flag = format!("-fdebug-prefix-map={}=", self.manifest_dir.display());
                         if let Ok(true) = cc_build.is_flag_supported(&flag) {
-                            emit_warning(&format!("Using flag: {}", &flag));
+                            emit_warning(format!("Using flag: {}", &flag));
                             build_options.push(BuildOption::flag(&flag));
                         }
                     }
@@ -441,7 +441,7 @@ impl CcBuilder {
                 std::path::Path::new(source).starts_with("third_party/jitterentropy");
 
             if !source_path.is_file() {
-                emit_warning(&format!("Not a file: {:?}", source_path.as_os_str()));
+                emit_warning(format!("Not a file: {:?}", source_path.as_os_str()));
                 continue;
             }
             if is_s2n_bignum {
@@ -456,7 +456,7 @@ impl CcBuilder {
                     if compiler_features.contains(compiler_feature) {
                         s2n_bignum_builder.file(source_path);
                     } else {
-                        emit_warning(&format!(
+                        emit_warning(format!(
                             "Skipping due to missing compiler features: {:?}",
                             source_path.as_os_str()
                         ));
@@ -516,7 +516,7 @@ impl CcBuilder {
         if !source_file.exists() {
             emit_warning("######");
             emit_warning("###### WARNING: MISSING GIT SUBMODULE ######");
-            emit_warning(&format!(
+            emit_warning(format!(
                 "  -- Did you initialize the repo's git submodules? Unable to find source file: {}.",
                 source_file.display()
             ));
@@ -544,9 +544,9 @@ impl CcBuilder {
             ret_val = true;
         }
         if fs::remove_dir_all(&output_dir).is_err() {
-            emit_warning(&format!("Failed to remove {}", output_dir.display()));
+            emit_warning(format!("Failed to remove {}", output_dir.display()));
         }
-        emit_warning(&format!(
+        emit_warning(format!(
             "Compilation of '{basename}.c' {} - {:?}.",
             if ret_val { "succeeded" } else { "failed" },
             &result
