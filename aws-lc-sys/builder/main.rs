@@ -285,9 +285,14 @@ fn target_platform_prefix(name: &str) -> String {
     format!("{}_{}", effective_target().replace('-', "_"), name)
 }
 
+#[cfg(not(feature = "all-bindings"))]
+fn target_has_prefixed_symbols() -> bool {
+    target_vendor() == "apple" || target().starts_with("i686-pc-windows-")
+}
+
 #[cfg(all(feature = "bindgen", not(feature = "all-bindings")))]
 fn target_platform_prefix(name: &str) -> String {
-    if target_vendor() == "apple" || target() == "i686-pc-windows-msvc" {
+    if target_has_prefixed_symbols() {
         format!("universal_prefixed_{}", name.replace('-', "_"))
     } else {
         format!("universal_{}", name.replace('-', "_"))
@@ -562,7 +567,7 @@ fn initialize() {
         }
         #[cfg(not(feature = "all-bindings"))]
         {
-            if target_vendor() == "apple" {
+            if target_has_prefixed_symbols() {
                 emit_rustc_cfg("universal-prefixed");
             } else {
                 emit_rustc_cfg("universal");
@@ -728,6 +733,7 @@ fn main() {
 
     #[allow(unused_assignments)]
     let mut bindings_available = false;
+    emit_warning(format!("Target platform: '{}'", target()));
     if is_pregenerating_bindings() {
         #[cfg(feature = "bindgen")]
         {
