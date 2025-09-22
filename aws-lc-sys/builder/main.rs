@@ -287,8 +287,8 @@ fn target_platform_prefix(name: &str) -> String {
 
 #[cfg(all(feature = "bindgen", not(feature = "all-bindings")))]
 fn target_platform_prefix(name: &str) -> String {
-    if target_vendor() == "apple" {
-        format!("universal_apple_{}", name.replace('-', "_"))
+    if target_vendor() == "apple" || (target_arch() == "i686" && target_os() == "windows") {
+        format!("universal_prefixed_{}", name.replace('-', "_"))
     } else {
         format!("universal_{}", name.replace('-', "_"))
     }
@@ -563,7 +563,7 @@ fn initialize() {
         #[cfg(not(feature = "all-bindings"))]
         {
             if target_vendor() == "apple" {
-                emit_rustc_cfg("universal-apple");
+                emit_rustc_cfg("universal-prefixed");
             } else {
                 emit_rustc_cfg("universal");
             }
@@ -674,7 +674,7 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
         println!("cargo:rustc-check-cfg=cfg(universal)");
-        println!("cargo:rustc-check-cfg=cfg(universal_apple)");
+        println!("cargo:rustc-check-cfg=cfg(universal_prefixed)");
     }
 }
 
