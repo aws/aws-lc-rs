@@ -287,7 +287,7 @@ fn target_platform_prefix(name: &str) -> String {
 
 #[cfg(all(feature = "bindgen", not(feature = "all-bindings")))]
 fn target_platform_prefix(name: &str) -> String {
-    if target_vendor() == "apple" || (target_arch() == "i686" && target_os() == "windows") {
+    if target_vendor() == "apple" || target() == "i686-pc-windows-msvc" {
         format!("universal_prefixed_{}", name.replace('-', "_"))
     } else {
         format!("universal_{}", name.replace('-', "_"))
@@ -659,7 +659,7 @@ fn test_nasm_command() -> bool {
 
 fn prepare_cargo_cfg() {
     if cfg!(clippy) {
-        println!("cargo:rustc-check-cfg=cfg(use_bindgen_generated)");
+        println!("cargo:rustc-check-cfg=cfg(use_bindgen_pregenerated)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_linux_android)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_apple_darwin)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
@@ -692,7 +692,7 @@ bindgen_available!(
             ));
             let gen_bindings_path = out_dir().join("bindings.rs");
             generate_bindings(manifest_dir, prefix, &gen_bindings_path);
-            emit_rustc_cfg("use_bindgen_generated");
+            emit_rustc_cfg("use_bindgen_pregenerated");
             true
         } else {
             false
@@ -775,7 +775,7 @@ fn main() {
         let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
         match result {
             Ok(()) => {
-                emit_rustc_cfg("use_bindgen_generated");
+                emit_rustc_cfg("use_bindgen_pregenerated");
                 bindings_available = true;
             }
             Err(msg) => eprintln!("Failure invoking external bindgen! {msg}"),

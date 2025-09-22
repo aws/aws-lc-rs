@@ -14,7 +14,7 @@ macro_rules! use_bindings {
 
 macro_rules! platform_binding {
     ($platform:ident, $platform_crypto:ident) => {
-        #[cfg(all($platform, not(feature = "ssl"), not(use_bindgen_generated)))]
+        #[cfg(all($platform, not(feature = "ssl"), not(use_bindgen_pregenerated)))]
         use_bindings!($platform_crypto);
     };
 }
@@ -42,7 +42,7 @@ platform_binding!(x86_64_pc_windows_msvc, x86_64_pc_windows_msvc_crypto);
 platform_binding!(x86_64_unknown_linux_gnu, x86_64_unknown_linux_gnu_crypto);
 platform_binding!(x86_64_unknown_linux_musl, x86_64_unknown_linux_musl_crypto);
 
-#[cfg(use_bindgen_generated)]
+#[cfg(use_bindgen_pregenerated)]
 #[allow(
     clippy::cast_lossless,
     clippy::cast_possible_truncation,
@@ -70,7 +70,7 @@ platform_binding!(x86_64_unknown_linux_musl, x86_64_unknown_linux_musl_crypto);
 mod generated {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
-#[cfg(use_bindgen_generated)]
+#[cfg(use_bindgen_pregenerated)]
 pub use generated::*;
 
 #[allow(non_snake_case)]
