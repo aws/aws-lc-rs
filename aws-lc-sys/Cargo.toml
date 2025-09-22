@@ -69,6 +69,8 @@ cmake.workspace = true
 dunce.workspace = true
 fs_extra.workspace = true
 cc = { workspace = true, features = ["parallel"] }
+# libloading v0.8.9 has MSRV of 1.71.0
+libloading.workspace = true
 
 [target.'cfg(any(all(any(target_arch="x86_64",target_arch="aarch64"),any(target_os="linux",target_os="macos",target_os="windows"),any(target_env="gnu",target_env="musl",target_env="msvc",target_env="")),all(target_arch="x86",target_os="windows",target_env="msvc"),all(target_arch="x86",target_os="linux",target_env="gnu")))'.build-dependencies]
 bindgen = { workspace = true, optional = true }
@@ -78,3 +80,6 @@ bindgen.workspace = true
 
 [package.metadata.aws-lc-sys]
 commit-hash = "0fa8839018a3d98bae2fb24c557183d8ca02e6c5"
+
+[package.metadata.cargo-udeps.ignore]
+build = ["libloading"]
