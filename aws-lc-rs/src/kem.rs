@@ -613,7 +613,7 @@ mod tests {
             let priv_key_from_bytes =
                 DecapsulationKey::new(algorithm, priv_key_raw_bytes.as_ref()).unwrap();
 
-            let pub_key = priv_key.encapsulation_key().unwrap();
+            let pub_key = priv_key_from_bytes.encapsulation_key().unwrap();
 
             let (alice_ciphertext, alice_secret) =
                 pub_key.encapsulate().expect("encapsulate successful");
@@ -637,8 +637,12 @@ mod tests {
             // Generate public key bytes to send to bob
             let pub_key_bytes = pub_key.key_bytes().unwrap();
 
+            // Generate private key bytes for alice to store securely
+            let priv_key_bytes = priv_key.key_bytes().unwrap();
+
             // Test that priv_key's EVP_PKEY isn't entirely freed since we remove this pub_key's reference.
             drop(pub_key);
+            drop(priv_key);
 
             let retrieved_pub_key =
                 EncapsulationKey::new(algorithm, pub_key_bytes.as_ref()).unwrap();
@@ -646,11 +650,68 @@ mod tests {
                 .encapsulate()
                 .expect("encapsulate successful");
 
-            let alice_secret = priv_key
+            // Alice reconstructs her private key from stored bytes
+            let retrieved_priv_key =
+                DecapsulationKey::new(algorithm, priv_key_bytes.as_ref()).unwrap();
+            let alice_secret = retrieved_priv_key
                 .decapsulate(ciphertext)
                 .expect("decapsulate successful");
 
             assert_eq!(alice_secret.as_ref(), bob_secret.as_ref());
+        }
+    }
+
+    #[test]
+    fn test_decapsulation_key_serialization_comprehensive() {
+        for algorithm in [&ML_KEM_512, &ML_KEM_768, &ML_KEM_1024] {
+            // Generate original key
+            let original_key = DecapsulationKey::generate(algorithm).unwrap();
+
+            // Test key_bytes() returns correct size
+            let key_bytes = original_key.key_bytes().unwrap();
+            assert_eq!(key_bytes.as_ref().len(), algorithm.decapsulate_key_size());
+
+            // Test round-trip serialization/deserialization
+            let reconstructed_key = DecapsulationKey::new(algorithm, key_bytes.as_ref()).unwrap();
+
+            // Verify algorithm consistency
+            assert_eq!(original_key.algorithm(), reconstructed_key.algorithm());
+            assert_eq!(original_key.algorithm(), algorithm);
+
+            // Test multiple serialization rounds produce identical results
+            let key_bytes_2 = reconstructed_key.key_bytes().unwrap();
+            assert_eq!(key_bytes.as_ref(), key_bytes_2.as_ref());
+
+            let reconstructed_key_2 =
+                DecapsulationKey::new(algorithm, key_bytes_2.as_ref()).unwrap();
+            let key_bytes_3 = reconstructed_key_2.key_bytes().unwrap();
+            assert_eq!(key_bytes.as_ref(), key_bytes_3.as_ref());
+
+            // Test functional equivalence - both keys should decrypt the same ciphertext identically
+            let pub_key = original_key.encapsulation_key().unwrap();
+            let (ciphertext, expected_secret) = pub_key.encapsulate().unwrap();
+
+            // Both the original and reconstructed keys should decrypt to the same secret
+            let secret_from_original = original_key
+                .decapsulate(Ciphertext::from(ciphertext.as_ref()))
+                .unwrap();
+            let secret_from_reconstructed = reconstructed_key
+                .decapsulate(Ciphertext::from(ciphertext.as_ref()))
+                .unwrap();
+
+            // All three secrets should be identical
+            assert_eq!(expected_secret.as_ref(), secret_from_original.as_ref());
+            assert_eq!(expected_secret.as_ref(), secret_from_reconstructed.as_ref());
+            assert_eq!(
+                secret_from_original.as_ref(),
+                secret_from_reconstructed.as_ref()
+            );
+
+            // Verify secret length is correct
+            assert_eq!(
+                expected_secret.as_ref().len(),
+                algorithm.shared_secret_size()
+            );
         }
     }
 
