@@ -47,7 +47,7 @@
 //! ```
 use crate::aws_lc::{
     EVP_PKEY_CTX_kem_set_params, EVP_PKEY_decapsulate, EVP_PKEY_encapsulate,
-    EVP_PKEY_kem_new_raw_public_key, EVP_PKEY, EVP_PKEY_KEM,
+    EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY, EVP_PKEY_KEM,
 };
 use crate::buffer::Buffer;
 use crate::encoding::generated_encodings;
@@ -202,6 +202,31 @@ impl<Id> DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
+    /// Creates a new KEM decapsulation key from raw bytes. This method MUST NOT be used to generate
+    /// a new decapsulation key, rather it MUST be used to construct `DecapsulationKey` previously serialized
+    /// to raw bytes.
+    ///
+    /// `alg` is the [`Algorithm`] to be associated with the generated `DecapsulationKey`.
+    ///
+    /// `bytes` is a slice of raw bytes representing a `DecapsulationKey`.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when operation fails during key creation.
+    pub fn new(alg: &'static Algorithm<Id>, bytes: &[u8]) -> Result<Self, KeyRejected> {
+        match bytes.len().cmp(&alg.decapsulate_key_size()) {
+            Ordering::Less => Err(KeyRejected::too_small()),
+            Ordering::Greater => Err(KeyRejected::too_large()),
+            Ordering::Equal => Ok(()),
+        }?;
+        let priv_key = LcPtr::new(unsafe {
+            EVP_PKEY_kem_new_raw_secret_key(alg.id.nid(), bytes.as_ptr(), bytes.len())
+        })?;
+        Ok(DecapsulationKey {
+            algorithm: alg,
+            evp_pkey: priv_key,
+        })
+    }
+
     /// Generate a new KEM decapsulation key for the given algorithm.
     ///
     /// # Errors
@@ -272,6 +297,19 @@ where
 
         Ok(SharedSecret(shared_secret.into_boxed_slice()))
     }
+
+    /// Returns the `DecapsulationKey` bytes.
+    ///
+    /// # Errors
+    /// * `Unspecified`: Any failure to retrieve the `DecapsulationKey` bytes.
+    pub fn key_bytes(&self) -> Result<DecapsulationKeyBytes<'static>, Unspecified> {
+        let decapsulation_key_bytes = self.evp_pkey.as_const().marshal_raw_private_key()?;
+        debug_assert_eq!(
+            decapsulation_key_bytes.len(),
+            self.algorithm.decapsulate_key_size()
+        );
+        Ok(DecapsulationKeyBytes::new(decapsulation_key_bytes))
+    }
 }
 
 unsafe impl<Id> Send for DecapsulationKey<Id> where Id: AlgorithmIdentifier {}
@@ -289,7 +327,10 @@ where
     }
 }
 
-generated_encodings!((EncapsulationKeyBytes, EncapsulationKeyBytesType));
+generated_encodings!(
+    (EncapsulationKeyBytes, EncapsulationKeyBytesType),
+    (DecapsulationKeyBytes, DecapsulationKeyBytesType)
+);
 
 /// A serializable encapsulation key usable with KEM algorithms. Constructed
 /// from either a `DecapsulationKey` or raw bytes.
@@ -508,7 +549,14 @@ mod tests {
     fn test_kem_serialize() {
         for algorithm in [&ML_KEM_512, &ML_KEM_768, &ML_KEM_1024] {
             let priv_key = DecapsulationKey::generate(algorithm).unwrap();
-            assert_eq!(priv_key.algorithm(), algorithm);
+            let priv_key_raw_bytes = priv_key.key_bytes().unwrap();
+            let priv_key_from_bytes =
+                DecapsulationKey::new(algorithm, priv_key_raw_bytes.as_ref()).unwrap();
+
+            assert_eq!(
+                priv_key.key_bytes().unwrap().as_ref(),
+                priv_key_from_bytes.key_bytes().unwrap().as_ref()
+            );
 
             let pub_key = priv_key.encapsulation_key().unwrap();
             let pubkey_raw_bytes = pub_key.key_bytes().unwrap();
@@ -539,6 +587,20 @@ mod tests {
                 short_pub_key_from_bytes.err(),
                 Some(KeyRejected::too_small())
             );
+
+            let too_long_bytes = vec![0u8; algorithm.decapsulate_key_size() + 1];
+            let long_priv_key_from_bytes = DecapsulationKey::new(algorithm, &too_long_bytes);
+            assert_eq!(
+                long_priv_key_from_bytes.err(),
+                Some(KeyRejected::too_large())
+            );
+
+            let too_short_bytes = vec![0u8; algorithm.decapsulate_key_size() - 1];
+            let short_priv_key_from_bytes = DecapsulationKey::new(algorithm, &too_short_bytes);
+            assert_eq!(
+                short_priv_key_from_bytes.err(),
+                Some(KeyRejected::too_small())
+            );
         }
     }
 
@@ -547,13 +609,16 @@ mod tests {
         for algorithm in [&ML_KEM_512, &ML_KEM_768, &ML_KEM_1024] {
             let priv_key = DecapsulationKey::generate(algorithm).unwrap();
             assert_eq!(priv_key.algorithm(), algorithm);
+            let priv_key_raw_bytes = priv_key.key_bytes().unwrap();
+            let priv_key_from_bytes =
+                DecapsulationKey::new(algorithm, priv_key_raw_bytes.as_ref()).unwrap();
 
             let pub_key = priv_key.encapsulation_key().unwrap();
 
             let (alice_ciphertext, alice_secret) =
                 pub_key.encapsulate().expect("encapsulate successful");
 
-            let bob_secret = priv_key
+            let bob_secret = priv_key_from_bytes
                 .decapsulate(alice_ciphertext)
                 .expect("decapsulate successful");
 
