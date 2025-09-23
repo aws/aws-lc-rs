@@ -30,29 +30,30 @@ jobs:
       #    707 |       if (strncmp(buf, "-----END ", 9) == 0) {
       #        |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
       AWS_LC_SYS_CFLAGS_riscv64gc_unknown_linux_gnu: '-Wno-string-compare'
+      AWS_LC_SYS_EXTERNAL_BINDGEN: '0' # disallow external bindgen
     strategy:
       fail-fast: false
       matrix:
         target:
-          - [ aarch64-linux-android, 0, 1 ]
-          - [ aarch64-unknown-linux-gnu, 1, 1 ]
-          - [ aarch64-unknown-linux-musl, 1, 1 ]
-          - [ arm-linux-androideabi, 0, 0 ]
-          - [ arm-unknown-linux-gnueabihf, 0, 0 ]
-          - [ arm-unknown-linux-musleabi, 1, 0 ]
-          - [ arm-unknown-linux-musleabihf, 1, 0 ]
-          - [ armv7-linux-androideabi, 0, 0 ]
-          - [ armv7-unknown-linux-gnueabihf, 0, 0 ]
-          - [ i686-unknown-linux-gnu, 0, 1 ]
-          - [ i686-pc-windows-gnu, 0, 0 ]
-          - [ powerpc-unknown-linux-gnu, 1, 0 ]
-          - [ powerpc64-unknown-linux-gnu, 1, 0 ]
-          - [ powerpc64le-unknown-linux-gnu, 1, 0 ]
-          - [ riscv64gc-unknown-linux-gnu, 0, 1 ]
-          - [ s390x-unknown-linux-gnu, 0, 0 ]
-          - [ x86_64-pc-windows-gnu, 0, 1 ] # Requires release build. See: https://github.com/rust-lang/rust/issues/139380
-          - [ x86_64-unknown-linux-musl, 0, 1 ]
-          - [ x86_64-unknown-illumos, 0, 0 ]
+          - [ aarch64-linux-android, 0]
+          - [ aarch64-unknown-linux-gnu, 1]
+          - [ aarch64-unknown-linux-musl, 1]
+          - [ arm-linux-androideabi, 0]
+          - [ arm-unknown-linux-gnueabihf, 0]
+          - [ arm-unknown-linux-musleabi, 1]
+          - [ arm-unknown-linux-musleabihf, 1]
+          - [ armv7-linux-androideabi, 0]
+          - [ armv7-unknown-linux-gnueabihf, 0]
+          - [ i686-unknown-linux-gnu, 0]
+          - [ i686-pc-windows-gnu, 0]
+          - [ powerpc-unknown-linux-gnu, 1]
+          - [ powerpc64-unknown-linux-gnu, 1]
+          - [ powerpc64le-unknown-linux-gnu, 1]
+          - [ riscv64gc-unknown-linux-gnu, 0]
+          - [ s390x-unknown-linux-gnu, 0]
+          - [ x86_64-pc-windows-gnu, 0] # Requires release build. See: https://github.com/rust-lang/rust/issues/139380
+          - [ x86_64-unknown-linux-musl, 0]
+          - [ x86_64-unknown-illumos, 0]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -72,9 +73,6 @@ jobs:
       - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
         run: |
           echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
-      - if: ${{ matrix.target[2] == 1 }}
-        run: |
-          echo 'AWS_LC_SYS_EXTERNAL_BINDGEN=0' >> "$GITHUB_ENV"
       - if: ${{ matrix.target[0] == 'x86_64-unknown-illumos' }}
         run: |
           echo 'CROSS_TEST_EXTRA_FLAG=--no-run' >> "$GITHUB_ENV"
@@ -90,7 +88,7 @@ jobs:
       - if: ${{ matrix.target[1] == 1 }}
         name: Cross-compilation (test FIPS release)
         run: cross test -p aws-lc-rs --release "${CROSS_TEST_EXTRA_FLAG}" --no-default-features --features fips --target ${{ matrix.target[0] }}
-      - name: Cross-compilation (test aws-lc-sys ssl feature)
+      - name: Cross-compilation w/ internal bindgen (aws-lc-sys/ssl feature)
         # There's a bug in the clang "atomic" header
         # It was reported here: https://reviews.llvm.org/D75183
         # It was finally fixed here: https://reviews.llvm.org/D118391
@@ -98,8 +96,15 @@ jobs:
         # We should update this test once cross-rs has an updated docker image for this target.
         if: ${{ matrix.target[0] != 'arm-linux-androideabi' }}
         run: |
-          unset AWS_LC_SYS_EXTERNAL_BINDGEN
           cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features ssl --target ${{ matrix.target[0] }}
+      - name:  Cross-compilation w/ external bindgen (aws-lc-sys/ssl feature)
+        if: ${{ matrix.target[0] != 'arm-linux-androideabi' }}
+        env:
+          # require the use of external bindgen
+          AWS_LC_SYS_EXTERNAL_BINDGEN: 1
+        run:
+          cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features ssl --target ${{ matrix.target[0] }}
+
 
   aws-lc-rs-cross-prebuilt-nasm:
     if: github.repository_owner == 'aws'
