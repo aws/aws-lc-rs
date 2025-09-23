@@ -214,17 +214,27 @@ fn ed25519_test_public_key_coverage() {
 
     let public_key = key_pair.public_key();
     let public_key_raw_bytes = public_key.as_ref();
+    let parsed_public_key: ParsedPublicKey =
+        ParsedPublicKey::new(&ED25519, public_key_raw_bytes).unwrap();
+    let parsed_public_key_raw_bytes = parsed_public_key.as_ref();
     let public_key_x509 = public_key.as_der().unwrap();
+    let parsed_public_key_x509 = parsed_public_key.as_der().unwrap();
     let public_key_x509_bytes = public_key_x509.as_ref();
+    let parsed_public_key_x509_bytes = parsed_public_key_x509.as_ref();
 
     // Test `AsRef<[u8]>`
     assert_eq!(public_key_raw_bytes, PUBLIC_KEY);
+    assert_eq!(parsed_public_key_raw_bytes, PUBLIC_KEY);
+    assert_eq!(public_key_x509_bytes, parsed_public_key_x509_bytes);
 
     assert!(ED25519
         .verify_sig(public_key_raw_bytes, message, sig.as_ref())
         .is_ok());
     assert!(ED25519
         .verify_sig(public_key_x509_bytes, message, sig.as_ref())
+        .is_ok());
+    assert!(ED25519
+        .verify_sig(parsed_public_key_x509_bytes, message, sig.as_ref())
         .is_ok());
 
     // Test `Clone`.

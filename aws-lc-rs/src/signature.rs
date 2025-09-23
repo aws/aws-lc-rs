@@ -260,7 +260,8 @@ pub use crate::ed25519::{
 use crate::digest::Digest;
 use crate::ec::encoding::parse_ec_public_key;
 use crate::ed25519::parse_ed25519_public_key;
-use crate::error::KeyRejected;
+use crate::encoding::{AsDer, PublicKeyX509Der};
+use crate::error::{KeyRejected, Unspecified};
 #[cfg(all(feature = "unstable", not(feature = "fips")))]
 use crate::pqdsa::{parse_pqdsa_public_key, signature::PqdsaVerificationAlgorithm};
 use crate::ptr::LcPtr;
@@ -506,6 +507,14 @@ impl ParsedPublicKey {
     ) -> Result<(), error::Unspecified> {
         self.parsed_algorithm
             .parsed_verify_digest_sig(self, digest, signature)
+    }
+}
+
+impl AsDer<PublicKeyX509Der<'static>> for ParsedPublicKey {
+    fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
+        Ok(PublicKeyX509Der::new(
+            self.key.as_const().marshal_rfc5280_public_key()?,
+        ))
     }
 }
 

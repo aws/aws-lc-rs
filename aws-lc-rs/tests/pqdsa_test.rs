@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 #![cfg(all(not(feature = "fips"), feature = "unstable"))]
 
+use aws_lc_rs::encoding::AsDer;
 use aws_lc_rs::signature::{KeyPair, ParsedPublicKey, VerificationAlgorithm};
 use aws_lc_rs::unstable::signature::{
     PqdsaKeyPair, ML_DSA_44, ML_DSA_44_SIGNING, ML_DSA_65, ML_DSA_65_SIGNING, ML_DSA_87,
@@ -46,6 +47,14 @@ macro_rules! mldsa_sigver_test {
 
             let ppk = ParsedPublicKey::new($verification, public_key.as_slice()).unwrap();
             let result = ppk.verify_sig(message.as_ref(), signature.as_ref());
+            if expected_result {
+                assert!(result.is_ok());
+            } else {
+                assert!(result.is_err());
+            }
+            let x509_bytes = ppk.as_der().unwrap();
+            let result =
+                $verification.verify_sig(x509_bytes.as_ref(), message.as_ref(), signature.as_ref());
             if expected_result {
                 assert!(result.is_ok());
             } else {
