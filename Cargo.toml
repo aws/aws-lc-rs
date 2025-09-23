@@ -34,7 +34,7 @@ zeroize = "1.8.1"
 toml_edit = "0.23.0"
 
 # libloading v0.8.9 has MSRV of 1.71.0
-libloading = "=0.8.8"
+libloading = "=0.8.9"
 
 [profile.bench]
 lto = true
