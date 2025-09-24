@@ -50,11 +50,13 @@ use crate::aws_lc::{
     EVP_PKEY_kem_new_raw_public_key, EVP_PKEY_kem_new_raw_secret_key, EVP_PKEY, EVP_PKEY_KEM,
 };
 use crate::buffer::Buffer;
-use crate::encoding::generated_encodings;
+use crate::encoding::{generated_encodings, AsDer, Pkcs8V1Der, PublicKeyX509Der};
 use crate::error::{KeyRejected, Unspecified};
 use crate::ptr::LcPtr;
 use alloc::borrow::Cow;
+use aws_lc::EVP_PKEY_get_raw_private_key;
 use core::cmp::Ordering;
+use std::ptr::null_mut;
 use zeroize::Zeroize;
 
 const ML_KEM_512_SHARED_SECRET_LENGTH: usize = 32;
@@ -202,9 +204,10 @@ impl<Id> DecapsulationKey<Id>
 where
     Id: AlgorithmIdentifier,
 {
-    /// Creates a new KEM decapsulation key from raw bytes. This method MUST NOT be used to generate
-    /// a new decapsulation key, rather it MUST be used to construct `DecapsulationKey` previously serialized
-    /// to raw bytes.
+    /// Creates a `DecapsulationKey` from "raw" bytes, as those provided by `key_bytes`.
+    ///
+    /// NOTE: The associated `EncapsulationKey` must be serialized separately. The `DecapsulationKey` returned by this
+    /// function will not provide the associated `EncapsulationKey`.
     ///
     /// `alg` is the [`Algorithm`] to be associated with the generated `DecapsulationKey`.
     ///
@@ -212,18 +215,52 @@ where
     ///
     /// # Errors
     /// `error::Unspecified` when operation fails during key creation.
-    pub fn new(alg: &'static Algorithm<Id>, bytes: &[u8]) -> Result<Self, KeyRejected> {
-        match bytes.len().cmp(&alg.decapsulate_key_size()) {
+    pub fn new(algorithm: &'static Algorithm<Id>, bytes: &[u8]) -> Result<Self, KeyRejected> {
+        match bytes.len().cmp(&algorithm.decapsulate_key_size()) {
             Ordering::Less => Err(KeyRejected::too_small()),
             Ordering::Greater => Err(KeyRejected::too_large()),
             Ordering::Equal => Ok(()),
         }?;
-        let priv_key = LcPtr::new(unsafe {
-            EVP_PKEY_kem_new_raw_secret_key(alg.id.nid(), bytes.as_ptr(), bytes.len())
+        let evp_pkey = LcPtr::new(unsafe {
+            EVP_PKEY_kem_new_raw_secret_key(algorithm.id.nid(), bytes.as_ptr(), bytes.len())
         })?;
+
         Ok(DecapsulationKey {
-            algorithm: alg,
-            evp_pkey: priv_key,
+            algorithm,
+            evp_pkey,
+        })
+    }
+
+    /// Creates a `DecapsulationKey` from a PKCS#8 encoded KEM key.
+    ///
+    /// NOTE: The associated `EncapsulationKey` might need to be serialized separately. Depending on the encoding, a
+    /// `DecapsulationKey` returned by this function might not provide its associated `EncapsulationKey`.
+    ///
+    /// `alg` is the [`Algorithm`] to be associated with the generated `DecapsulationKey`.
+    ///
+    /// `bytes` is a slice of raw bytes representing a `DecapsulationKey`.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when operation fails during key creation.
+    pub fn from_pkcs8(
+        algorithm: &'static Algorithm<Id>,
+        pkcs8: &[u8],
+    ) -> Result<Self, KeyRejected> {
+        let evp_pkey = LcPtr::<EVP_PKEY>::parse_rfc5208_private_key(pkcs8, EVP_PKEY_KEM)?;
+
+        // TODO: A better way to verify the ML-KEM type
+        let mut size = 0;
+        if 1 != unsafe { EVP_PKEY_get_raw_private_key(*evp_pkey.as_const(), null_mut(), &mut size) }
+        {
+            return Err(KeyRejected::invalid_encoding());
+        }
+        if size != algorithm.decapsulate_key_size {
+            return Err(KeyRejected::invalid_encoding());
+        }
+
+        Ok(DecapsulationKey {
+            algorithm,
+            evp_pkey,
         })
     }
 
@@ -245,18 +282,27 @@ where
         self.algorithm
     }
 
-    /// Computes the KEM encapsulation key from the KEM decapsulation key.
+    /// If available, provides the associated `EncapsulationKey`. This will be available on a newly generated
+    /// `DescapsulationKey`. However, a `DescapsulationKey` constructed from deserialization might not have
+    /// the associated `EncapsulationKey` available.
     ///
     /// # Errors
-    /// `error::Unspecified` when operation fails due to internal error.
+    /// `error::Unspecified` if the associated `EncapsulationKey` is not available.
     #[allow(clippy::missing_panics_doc)]
     pub fn encapsulation_key(&self) -> Result<EncapsulationKey<Id>, Unspecified> {
         let evp_pkey = self.evp_pkey.clone();
 
-        Ok(EncapsulationKey {
+        let retval = EncapsulationKey {
             algorithm: self.algorithm,
             evp_pkey,
-        })
+        };
+
+        // TODO: A better way of validating that the `EncapsulationKey` is valid.
+        if retval.key_bytes().is_err() {
+            return Err(Unspecified);
+        }
+
+        Ok(retval)
     }
 
     /// Performs the decapsulate operation using this KEM decapsulation key on the given ciphertext.
@@ -315,6 +361,19 @@ where
 unsafe impl<Id> Send for DecapsulationKey<Id> where Id: AlgorithmIdentifier {}
 
 unsafe impl<Id> Sync for DecapsulationKey<Id> where Id: AlgorithmIdentifier {}
+
+impl<Id> AsDer<Pkcs8V1Der<'static>> for DecapsulationKey<Id>
+where
+    Id: AlgorithmIdentifier,
+{
+    fn as_der(&self) -> Result<Pkcs8V1Der<'static>, crate::error::Unspecified> {
+        Ok(Pkcs8V1Der::new(
+            self.evp_pkey
+                .as_const()
+                .marshal_rfc5208_private_key(crate::pkcs8::Version::V1)?,
+        ))
+    }
+}
 
 impl<Id> Debug for DecapsulationKey<Id>
 where
@@ -439,6 +498,17 @@ where
 unsafe impl<Id> Send for EncapsulationKey<Id> where Id: AlgorithmIdentifier {}
 
 unsafe impl<Id> Sync for EncapsulationKey<Id> where Id: AlgorithmIdentifier {}
+
+impl<Id> AsDer<PublicKeyX509Der<'static>> for EncapsulationKey<Id>
+where
+    Id: AlgorithmIdentifier,
+{
+    fn as_der(&self) -> Result<PublicKeyX509Der<'static>, crate::error::Unspecified> {
+        Ok(PublicKeyX509Der::new(
+            self.evp_pkey.as_const().marshal_rfc5280_public_key()?,
+        ))
+    }
+}
 
 impl<Id> Debug for EncapsulationKey<Id>
 where
@@ -613,7 +683,8 @@ mod tests {
             let priv_key_from_bytes =
                 DecapsulationKey::new(algorithm, priv_key_raw_bytes.as_ref()).unwrap();
 
-            let pub_key = priv_key_from_bytes.encapsulation_key().unwrap();
+            assert!(priv_key_from_bytes.encapsulation_key().is_err());
+            let pub_key = priv_key.encapsulation_key().unwrap();
 
             let (alice_ciphertext, alice_secret) =
                 pub_key.encapsulate().expect("encapsulate successful");
