@@ -548,6 +548,23 @@ impl EncryptingKey {
         Self::new(key, OperatingMode::CFB128)
     }
 
+    /// Constructs an `EncryptingKey` operating in cipher block chaining (CBC) mode using the provided key.
+    ///
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
+    pub fn cbc(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CBC)
+    }
+
     /// Constructs an `EncryptingKey` operating in electronic code book mode (ECB) using the provided key.
     ///
     /// # ☠️ ️️️DANGER ☠️
@@ -670,6 +687,23 @@ impl DecryptingKey {
     /// * [`Unspecified`]: Returned if there is an error during decryption.
     pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB128)
+    }
+
+    /// Constructs an `DecryptingKey` operating in cipher block chaining (CBC) mode using the provided key and context.
+    ///
+    /// # ☠️ ️️️DANGER ☠️
+    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// very likely not what you want to use.
+    ///
+    // # FIPS
+    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    /// # Errors
+    /// * [`Unspecified`]: Returned if there is an error during decryption.
+    pub fn cbc(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
+        Self::new(key, OperatingMode::CBC)
     }
 
     /// Constructs an `DecryptingKey` operating in electronic code book (ECB) mode using the provided key.
@@ -941,6 +975,27 @@ mod tests {
             from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
         for i in 0..=50 {
             helper_test_cipher_n_bytes(key.as_slice(), &AES_256, OperatingMode::CTR, i);
+        }
+    }
+
+    #[test]
+    fn test_aes_128_cbc() {
+        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        // CBC mode requires input to be a multiple of block size (16 bytes)
+        for i in 0..=3 {
+            let size = i * 16; // Test with 0, 16, 32, 48 bytes
+            helper_test_cipher_n_bytes(key.as_slice(), &AES_128, OperatingMode::CBC, size);
+        }
+    }
+
+    #[test]
+    fn test_aes_256_cbc() {
+        let key =
+            from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
+        // CBC mode requires input to be a multiple of block size (16 bytes)
+        for i in 0..=3 {
+            let size = i * 16; // Test with 0, 16, 32, 48 bytes
+            helper_test_cipher_n_bytes(key.as_slice(), &AES_256, OperatingMode::CBC, size);
         }
     }
 
