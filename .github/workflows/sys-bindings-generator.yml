@@ -35,6 +35,8 @@ jobs:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: 'rustfmt'
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.20'
@@ -69,11 +71,12 @@ jobs:
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@stable
         id: toolchain
         with:
           toolchain: stable
           target: ${{ matrix.target }}
+          components: 'rustfmt'
       - if: contains(matrix.target, 'x86') || contains(matrix.target, 'i686')
         uses: ilammy/setup-nasm@v1
       - uses: actions/setup-go@v4
@@ -113,6 +116,8 @@ jobs:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: 'rustfmt'
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.20'
@@ -137,10 +142,13 @@ jobs:
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@stable
         with:
+          components: 'rustfmt'
           toolchain: ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }}
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: 'rustfmt'
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.20'
@@ -164,6 +172,8 @@ jobs:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: 'rustfmt'
       - name: Install current Bash on macOS
         if: runner.os == 'macOS'
         run: brew install bash coreutils
@@ -191,11 +201,12 @@ jobs:
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@stable
         id: toolchain
         with:
           toolchain: stable
           target: ${{ matrix.target }}
+          components: 'rustfmt'
       - if: contains(matrix.target, 'x86') || contains(matrix.target, 'i686')
         uses: ilammy/setup-nasm@v1
       - uses: actions/setup-go@v4
@@ -229,6 +240,8 @@ jobs:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: 'rustfmt'
       - name: Install cross
         run: cargo install cross --locked --git https://github.com/cross-rs/cross
       - name: Generate bindings for ${{ matrix.target }}
@@ -252,6 +265,8 @@ jobs:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: 'rustfmt'
       - name: Install current Bash on macOS
         if: runner.os == 'macOS'
         run: brew install bash coreutils
@@ -275,6 +290,8 @@ jobs:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: 'rustfmt'
       - name: Install cross
         run: cargo install cross --locked --git https://github.com/cross-rs/cross
       - name: Collect source for ${{ matrix.target }}
@@ -290,11 +307,12 @@ jobs:
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@stable
         id: toolchain
         with:
           toolchain: stable
           targets: "x86_64-pc-windows-msvc,x86_64-pc-windows-gnu"
+          components: 'rustfmt'
       - uses: ilammy/setup-nasm@v1
       - name: Build aws-lc-sys
         shell: bash
