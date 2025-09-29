@@ -303,15 +303,47 @@ macro_rules! padded_ecb_pkcs7_kat {
 
 macro_rules! cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
+        unpadded_cipher_kat!(
+            $name,
+            $alg,
+            $mode,
+            $constructor,
+            $key,
+            $iv,
+            $plaintext,
+            $ciphertext
+        );
+
+        streaming_cipher_kat!(
+            $name,
+            $alg,
+            $mode,
+            $constructor,
+            $key,
+            $iv,
+            $plaintext,
+            $ciphertext,
+            2,
+            9
+        );
+    };
+}
+
+macro_rules! unpadded_cipher_kat {
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal, $ciphertext:literal) => {
         #[test]
         fn $name() {
             let key = from_hex($key).unwrap();
             let input = from_hex($plaintext).unwrap();
             let expected_ciphertext = from_hex($ciphertext).unwrap();
 
-            let iv = from_hex($iv).unwrap();
-            let fixed_iv = FixedLength::try_from(iv.as_slice()).unwrap();
-            let context = EncryptionContext::Iv128(fixed_iv);
+            let context = if $iv.len() == 0 {
+                EncryptionContext::None
+            } else {
+                let iv = from_hex($iv).unwrap();
+                let fixed_iv = FixedLength::try_from(iv.as_slice()).unwrap();
+                EncryptionContext::Iv128(fixed_iv)
+            };
 
             let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
 
@@ -331,63 +363,30 @@ macro_rules! cipher_kat {
             let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
             assert_eq!(input.as_slice(), plaintext);
         }
-
-        streaming_cipher_kat!(
-            $name,
-            $alg,
-            $mode,
-            $constructor,
-            $key,
-            $iv,
-            $plaintext,
-            $ciphertext,
-            2,
-            9
-        );
     };
-}
 
-macro_rules! ecb_kat {
-    ($name:ident, $alg:expr, $key:literal, $plaintext:literal, $ciphertext:literal) => {
-        #[test]
-        fn $name() {
-            let key = from_hex($key).unwrap();
-            let input = from_hex($plaintext).unwrap();
-            let expected_ciphertext = from_hex($ciphertext).unwrap();
-
-            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
-
-            let encrypting_key = EncryptingKey::ecb(unbound_key).unwrap();
-            assert_eq!(OperatingMode::ECB, encrypting_key.mode());
-            assert_eq!($alg, encrypting_key.algorithm());
-            let mut in_out = input.clone();
-            let context = encrypting_key
-                .less_safe_encrypt(in_out.as_mut_slice(), EncryptionContext::None)
-                .unwrap();
-            assert_eq!(expected_ciphertext.as_slice(), in_out);
-
-            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
-            let decrypting_key = DecryptingKey::ecb(unbound_key2).unwrap();
-            assert_eq!(OperatingMode::ECB, decrypting_key.mode());
-            assert_eq!($alg, decrypting_key.algorithm());
-            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
-            assert_eq!(input.as_slice(), plaintext);
-        }
-    };
-    ($name:ident, $alg:expr, $key:literal, $plaintext:literal) => {
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv: literal, $plaintext:literal) => {
         #[test]
         fn $name() {
             let key = from_hex($key).unwrap();
             let input = from_hex($plaintext).unwrap();
 
+            let context = if $iv.len() == 0 {
+                EncryptionContext::None
+            } else {
+                let iv = from_hex($iv).unwrap();
+                let fixed_iv = FixedLength::try_from(iv.as_slice()).unwrap();
+                EncryptionContext::Iv128(fixed_iv)
+            };
+
             let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
 
-            let encrypting_key = EncryptingKey::ecb(unbound_key).unwrap();
-            assert_eq!(OperatingMode::ECB, encrypting_key.mode());
+            let encrypting_key = EncryptingKey::$constructor(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
             assert_eq!($alg, encrypting_key.algorithm());
             let mut in_out = input.clone();
             encrypting_key
-                .less_safe_encrypt(in_out.as_mut_slice(), EncryptionContext::None)
+                .less_safe_encrypt(in_out.as_mut_slice(), context)
                 .expect_err("expected encryption failure");
         }
     };
@@ -856,48 +855,66 @@ padded_ecb_pkcs7_kat!(
     "f6dc9e368d2cdf6a2e97a022876eb9f2"
 );
 
-ecb_kat!(
+unpadded_cipher_kat!(
     test_kat_aes_128_ecb_16_bytes,
     &AES_128,
+    OperatingMode::ECB,
+    ecb,
     "f8efb984d9e813c96a79020bdfbb6032",
+    "", // ECB does not have an IV
     "c4a500e39307dbe7727b5b3a36660f70",
     "1eea416d959f747da26d48d2df11d205"
 );
 
-ecb_kat!(
+unpadded_cipher_kat!(
     test_kat_aes_192_ecb_16_bytes,
     &AES_192,
+    OperatingMode::ECB,
+    ecb,
     "4c6994ffa9dcdc805b60c2c0095334c42d95a8fc0ca5b080",
+    "", // ECB does not have an IV
     "c4a500e39307dbe7727b5b3a36660f70",
     "1f021658980c025396455f7bb7e01d07"
 );
 
-ecb_kat!(
+unpadded_cipher_kat!(
     test_kat_aes_128_ecb_15_bytes,
     &AES_128,
+    OperatingMode::ECB,
+    ecb,
     "f8efb984d9e813c96a79020bdfbb6032",
+    "", // ECB does not have an IV
     "c4a500e39307dbe7727b5b3a36660f"
 );
 
-ecb_kat!(
+unpadded_cipher_kat!(
     test_kat_aes_192_ecb_15_bytes,
     &AES_192,
+    OperatingMode::ECB,
+    ecb,
     "c88f5b00a4ef9a6840e2acaf33f00a3bdc4e25895303fa72",
+    "", // ECB does not have an IV
     "c4a500e39307dbe7727b5b3a36660f"
 );
 
-ecb_kat!(
+unpadded_cipher_kat!(
     test_kat_aes_256_ecb_16_bytes,
     &AES_256,
+    OperatingMode::ECB,
+    ecb,
     "d3c9173cbfc65d0e2b6f43ae57c2a6550b756f487bbb7b6404efec69aa74d411",
+    "", // ECB does not have an IV
     "109082176cf2a9488b0cd887386bb84a",
     "c8c9fece9883b26c0ca58e610493a318"
 );
 
-ecb_kat!(
+unpadded_cipher_kat!(
     test_kat_aes_256_ecb_15_bytes,
     &AES_256,
+    OperatingMode::ECB,
+    ecb,
     "d3c9173cbfc65d0e2b6f43ae57c2a6550b756f487bbb7b6404efec69aa74d411",
+    "", // ECB does not have an IV
     "109082176cf2a9488b0cd887386bb8"
 );
 
@@ -1028,4 +1045,67 @@ cipher_kat!(
     "f1b6b55e908d39b769968ae6c3c05c4f",
     "9c1675a95f573b4504e6bc5275d0df",
     "b8e816bd9e74adebdacf9036cbda41"
+);
+
+unpadded_cipher_kat!(
+    test_kat_aes_128_cbc_16_bytes_raw,
+    &AES_128,
+    OperatingMode::CBC,
+    cbc,
+    "000102030405060708090a0b0c0d0e0f",
+    "00000000000000000000000000000000",
+    "00112233445566778899aabbccddeeff",
+    "69c4e0d86a7b0430d8cdb78070b4c55a"
+);
+
+unpadded_cipher_kat!(
+    test_kat_aes_192_cbc_16_bytes_raw,
+    &AES_192,
+    OperatingMode::CBC,
+    cbc,
+    "e08c15411774ec4a908b64eadc6ac4199c7cd453f3aaef53",
+    "00000000000000000000000000000000",
+    "00112233445566778899aabbccddeeff",
+    "fc7f57e545e92c0a0b364c3086d49bf0"
+);
+
+unpadded_cipher_kat!(
+    test_kat_aes_256_cbc_16_bytes_raw,
+    &AES_256,
+    OperatingMode::CBC,
+    cbc,
+    "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "00000000000000000000000000000000",
+    "00112233445566778899aabbccddeeff",
+    "8ea2b7ca516745bfeafc49904b496089"
+);
+
+unpadded_cipher_kat!(
+    test_kat_aes_128_cbc_15_bytes_raw,
+    &AES_128,
+    OperatingMode::CBC,
+    cbc,
+    "000102030405060708090a0b0c0d0e0f",
+    "00000000000000000000000000000000",
+    "00112233445566778899aabbccddee"
+);
+
+unpadded_cipher_kat!(
+    test_kat_aes_192_cbc_15_bytes_raw,
+    &AES_192,
+    OperatingMode::CBC,
+    cbc,
+    "e08c15411774ec4a908b64eadc6ac4199c7cd453f3aaef53",
+    "00000000000000000000000000000000",
+    "00112233445566778899aabbccddee"
+);
+
+unpadded_cipher_kat!(
+    test_kat_aes_256_cbc_15_bytes_raw,
+    &AES_256,
+    OperatingMode::CBC,
+    cbc,
+    "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "00000000000000000000000000000000",
+    "00112233445566778899aabbccddee"
 );
