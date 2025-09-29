@@ -551,7 +551,7 @@ impl EncryptingKey {
     /// Constructs an `EncryptingKey` operating in cipher block chaining (CBC) mode using the provided key.
     ///
     /// # ☠️ ️️️DANGER ☠️
-    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// Offered for compatibility purposes only. This is an extremely dangerous mode, and
     /// very likely not what you want to use.
     ///
     // # FIPS
@@ -568,7 +568,7 @@ impl EncryptingKey {
     /// Constructs an `EncryptingKey` operating in electronic code book mode (ECB) using the provided key.
     ///
     /// # ☠️ ️️️DANGER ☠️
-    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// Offered for compatibility purposes only. This is an extremely dangerous mode, and
     /// very likely not what you want to use.
     ///
     // # FIPS
@@ -692,7 +692,7 @@ impl DecryptingKey {
     /// Constructs an `DecryptingKey` operating in cipher block chaining (CBC) mode using the provided key and context.
     ///
     /// # ☠️ ️️️DANGER ☠️
-    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// Offered for compatibility purposes only. This is an extremely dangerous mode, and
     /// very likely not what you want to use.
     ///
     // # FIPS
@@ -709,7 +709,7 @@ impl DecryptingKey {
     /// Constructs an `DecryptingKey` operating in electronic code book (ECB) mode using the provided key.
     ///
     /// # ☠️ ️️️DANGER ☠️
-    /// Offered for computability purposes only. This is an extremely dangerous mode, and
+    /// Offered for compatibility purposes only. This is an extremely dangerous mode, and
     /// very likely not what you want to use.
     ///
     // # FIPS
