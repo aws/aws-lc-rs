@@ -251,6 +251,32 @@ jobs:
           cross test -p aws-lc-sys --features bindgen --target ${{ matrix.target }}
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings for ${{ matrix.target }}"
+  generate-universal-bindings-and-commit:
+    needs: generate-headers-and-commit
+    if: github.repository == 'aws/aws-lc-rs'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          ref: ${{ github.ref_name }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: 'rustfmt'
+      - name: Install current Bash on macOS
+        if: runner.os == 'macOS'
+        run: brew install bash coreutils
+      - name: Generate bindings for ${{ matrix.os }}
+        env:
+          AWS_LC_SYS_PREGENERATING_BINDINGS: "1"
+        run: |
+          cargo test -p aws-lc-sys --no-default-features --features bindgen
+      - name: Commit & Push changes
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings from ${{ matrix.os }}"
   collect-src-and-commit:
     needs: generate-bindings-and-commit
     if: github.repository == 'aws/aws-lc-rs'
