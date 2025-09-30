@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{get_rust_include_path, BindingOptions, COPYRIGHT, PRELUDE};
+use crate::{emit_warning, get_rust_include_path, BindingOptions, COPYRIGHT, PRELUDE};
 use bindgen::callbacks::{ItemInfo, ParseCallbacks};
 use std::fmt::Debug;
 use std::path::Path;
@@ -31,6 +31,48 @@ impl ParseCallbacks for StripPrefixCallback {
     }
 }
 
+const ALLOWED_HEADERS: [&str; 29] = [
+    "aes.h",
+    "aead.h",
+    "base.h",
+    "bn.h",
+    "boringssl_prefix_symbols.h",
+    "boringssl_prefix_symbols_asm.h",
+    "boringssl_prefix_symbols_nasm.inc",
+    "bytestring.h",
+    "chacha.h",
+    "cipher.h",
+    "crypto.h",
+    "curve25519.h",
+    "digest.h",
+    "ec.h",
+    "ec_key.h",
+    "ecdh.h",
+    "ecdsa.h",
+    "err.h",
+    "evp.h",
+    "hkdf.h",
+    "hmac.h",
+    "is_awslc.h",
+    "kdf.h",
+    "mem.h",
+    "nid.h",
+    "poly1305.h",
+    "rand.h",
+    "rsa.h",
+    "sha.h",
+];
+
+const BLOCKED_FUNCTIONS: [&str; 5] = [
+    "BN_print_fp",
+    "CBS_parse_generalized_time",
+    "CBS_parse_utc_time",
+    "ERR_print_errors_fp",
+    "RSA_print_fp",
+];
+
+const BLOCKED_TYPES: [&str; 4] = ["FILE", "fpos_t", "tm", "__sFILE"];
+
 fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bindgen::Builder {
     let clang_args = crate::prepare_clang_args(manifest_dir, options);
 
@@ -39,7 +81,6 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bi
         .derive_debug(true)
         .derive_default(true)
         .derive_eq(true)
-        .allowlist_file(r".*(/|\\)openssl((/|\\)[^/\\]+)+\.h")
         .allowlist_file(r".*(/|\\)rust_wrapper\.h")
         .rustified_enum(r"point_conversion_form_t")
         .rust_target(bindgen::RustTarget::stable(70, 0).unwrap())
@@ -58,6 +99,23 @@ fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bi
                 .display()
                 .to_string(),
         );
+
+    if cfg!(feature = "all-bindings") {
+        builder = builder.allowlist_file(r".*(/|\\)openssl((/|\\)[^/\\]+)+\.h");
+    } else {
+        for header in ALLOWED_HEADERS {
+            emit_warning(format!("Allowed header: {header}").as_str());
+            builder = builder.allowlist_file(format!("{}{}", r".*(/|\\)openssl(/|\\)", header));
+        }
+        for function in BLOCKED_FUNCTIONS {
+            emit_warning(format!("Blocked function: {function}").as_str());
+            builder = builder.blocklist_function(function);
+        }
+        for tipe in BLOCKED_TYPES {
+            emit_warning(format!("Opaque type: {tipe}").as_str());
+            builder = builder.blocklist_type(tipe);
+        }
+    }
 
     if !options.disable_prelude {
         builder = builder.raw_line(PRELUDE);
