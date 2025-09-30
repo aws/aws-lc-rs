@@ -31,10 +31,7 @@ fn test_prebuilt_nasm_script(script_path: &Path) -> bool {
 
 fn find_cmake_command() -> Option<OsString> {
     if let Some(cmake) = optional_env_optional_crate_target("CMAKE") {
-        emit_warning(&format!(
-            "CMAKE environment variable set: {}",
-            cmake.clone()
-        ));
+        emit_warning(format!("CMAKE environment variable set: {}", cmake.clone()));
         if execute_command(cmake.as_ref(), &["--version".as_ref()]).status {
             Some(cmake.into())
         } else {
@@ -229,7 +226,7 @@ impl CmakeBuilder {
             let split = cflags.split_whitespace();
             for arg in split {
                 if arg.starts_with("-O") || arg.starts_with("/O") {
-                    emit_warning(&format!("Preserving optimization flag: {arg}"));
+                    emit_warning(format!("Preserving optimization flag: {arg}"));
                     cmake_cfg.cflag(arg);
                 }
             }
@@ -258,7 +255,7 @@ impl CmakeBuilder {
                 sh_script
             };
             emit_warning(
-                &format!(
+                format!(
                     "Neither script could be tested for execution, falling back to target-based selection: {}",
                     fallback_script.file_name().unwrap().to_str().unwrap()));
             fallback_script
