@@ -18,4 +18,5 @@ mkdir -p ./aws-lc-sys/symbols ./aws-lc-sys/generated-include/openssl
 cargo clean
 AWS_LC_SYS_PREGENERATING_BINDINGS=1 cargo test -p aws-lc-sys --features bindgen
 ./scripts/build/collect_build_src.sh
+AWS_LC_SYS_PREGENERATING_BINDINGS=1 cargo test -p aws-lc-sys --features bindgen --no-default-features
 popd
