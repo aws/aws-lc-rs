@@ -603,3 +603,23 @@ jobs:
       - name: Run cargo test
         working-directory: "path has spaces/aws-lc-rs"
         run: cargo test --tests -p aws-lc-rs --features bindgen
+
+  hostile-environment:
+    if: github.repository_owner == 'aws'
+    name: Hostile environment
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    env:
+      CFLAGS: '-O3'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run tests
+        run: cargo test -p aws-lc-rs --all-targets
+      - name: Run tests w/ FIPS
+        run: cargo test -p aws-lc-rs --all-targets --features fips
