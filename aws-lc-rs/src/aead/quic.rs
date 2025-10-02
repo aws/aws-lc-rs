@@ -120,21 +120,21 @@ impl PartialEq for Algorithm {
 impl Eq for Algorithm {}
 
 /// AES-128.
-pub static AES_128: Algorithm = Algorithm {
+pub const AES_128: Algorithm = Algorithm {
     key_len: 16,
     init: SymmetricCipherKey::aes128,
     id: AlgorithmID::AES_128,
 };
 
 /// AES-256.
-pub static AES_256: Algorithm = Algorithm {
+pub const AES_256: Algorithm = Algorithm {
     key_len: 32,
     init: SymmetricCipherKey::aes256,
     id: AlgorithmID::AES_256,
 };
 
 /// `ChaCha20`.
-pub static CHACHA20: Algorithm = Algorithm {
+pub const CHACHA20: Algorithm = Algorithm {
     key_len: 32,
     init: SymmetricCipherKey::chacha20,
     id: AlgorithmID::CHACHA20,

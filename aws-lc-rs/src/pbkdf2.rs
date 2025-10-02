@@ -120,25 +120,25 @@ pub struct Algorithm {
 }
 
 /// PBKDF2 using HMAC-SHA1.
-pub static PBKDF2_HMAC_SHA1: Algorithm = Algorithm {
+pub const PBKDF2_HMAC_SHA1: Algorithm = Algorithm {
     algorithm: hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
     max_output_len: MAX_USIZE32 * digest::SHA1_OUTPUT_LEN as u64,
 };
 
 /// PBKDF2 using HMAC-SHA256.
-pub static PBKDF2_HMAC_SHA256: Algorithm = Algorithm {
+pub const PBKDF2_HMAC_SHA256: Algorithm = Algorithm {
     algorithm: hmac::HMAC_SHA256,
     max_output_len: MAX_USIZE32 * digest::SHA256_OUTPUT_LEN as u64,
 };
 
 /// PBKDF2 using HMAC-SHA384.
-pub static PBKDF2_HMAC_SHA384: Algorithm = Algorithm {
+pub const PBKDF2_HMAC_SHA384: Algorithm = Algorithm {
     algorithm: hmac::HMAC_SHA384,
     max_output_len: MAX_USIZE32 * digest::SHA384_OUTPUT_LEN as u64,
 };
 
 /// PBKDF2 using HMAC-SHA512.
-pub static PBKDF2_HMAC_SHA512: Algorithm = Algorithm {
+pub const PBKDF2_HMAC_SHA512: Algorithm = Algorithm {
     algorithm: hmac::HMAC_SHA512,
     max_output_len: MAX_USIZE32 * digest::SHA512_OUTPUT_LEN as u64,
 };
