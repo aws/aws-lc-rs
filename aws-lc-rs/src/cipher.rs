@@ -374,21 +374,21 @@ pub struct Algorithm {
 }
 
 /// AES 128-bit cipher
-pub static AES_128: Algorithm = Algorithm {
+pub const AES_128: Algorithm = Algorithm {
     id: AlgorithmId::Aes128,
     key_len: AES_128_KEY_LEN,
     block_len: AES_BLOCK_LEN,
 };
 
 /// AES 192-bit cipher
-pub static AES_192: Algorithm = Algorithm {
+pub const AES_192: Algorithm = Algorithm {
     id: AlgorithmId::Aes192,
     key_len: AES_192_KEY_LEN,
     block_len: AES_BLOCK_LEN,
 };
 
 /// AES 256-bit cipher
-pub static AES_256: Algorithm = Algorithm {
+pub const AES_256: Algorithm = Algorithm {
     id: AlgorithmId::Aes256,
     key_len: AES_256_KEY_LEN,
     block_len: AES_BLOCK_LEN,
