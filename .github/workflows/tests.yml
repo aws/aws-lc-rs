@@ -157,7 +157,7 @@ jobs:
     strategy:
       matrix:
         args:
-          -
+          - ''
           - --release
         features:
           - --features asan
