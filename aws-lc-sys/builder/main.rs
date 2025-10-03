@@ -783,7 +783,11 @@ fn main() {
     }
 
     if !bindings_available {
-        if !cfg!(feature = "ssl") {
+        if cfg!(feature = "ssl") {
+            emit_warning(
+                "External bindgen required, but external bindgen unable to produce SSL bindings.",
+            );
+        } else {
             let gen_bindings_path = out_dir().join("bindings.rs");
             let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
             match result {
@@ -793,10 +797,6 @@ fn main() {
                 }
                 Err(msg) => eprintln!("Failure invoking external bindgen! {msg}"),
             }
-        } else {
-            emit_warning(
-                "External bindgen required, but external bindgen unable to produce SSL bindings.",
-            );
         }
     }
 
