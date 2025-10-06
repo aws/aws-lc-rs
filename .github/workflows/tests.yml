@@ -611,8 +611,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest ]
+        cflags:
+          - '-O3'
     env:
-      CFLAGS: '-O3'
+      CFLAGS: ${{ matrix.cflags }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -623,3 +625,28 @@ jobs:
         run: cargo test -p aws-lc-rs --all-targets
       - name: Run tests w/ FIPS
         run: cargo test -p aws-lc-rs --all-targets --features fips
+
+  hardened-environment:
+    if: github.repository_owner == 'aws'
+    name: Hardened environment
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        cflags:
+          - '-O2 -fhardened'
+        gcc_version:
+          - 14
+    env:
+      CC: gcc-${{ matrix.gcc_version }}
+      CXX: g++-${{ matrix.gcc_version }}
+      CFLAGS: ${{ matrix.cflags }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run tests
+        run: cargo test -p aws-lc-rs --all-targets
