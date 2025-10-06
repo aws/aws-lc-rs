@@ -375,7 +375,8 @@ impl CcBuilder {
 
         let compiler = if let Some(original_cflags) = optional_env_target("CFLAGS") {
             let mut new_cflags = original_cflags.clone();
-            new_cflags.push_str(" -O0");
+            // The `_FORTIFY_SOURCE` macro often requires optimizations to also be enabled, so unset it.
+            new_cflags.push_str(" -O0 -Wp,-U_FORTIFY_SOURCE");
             set_env_for_target("CFLAGS", &new_cflags);
             // cc-rs currently prioritizes flags provided by CFLAGS over the flags provided by the build script.
             // The environment variables used by the compiler are set when `get_compiler` is called.
