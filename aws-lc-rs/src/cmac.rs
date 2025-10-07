@@ -92,11 +92,12 @@
 //! [NIST SP 800-38B]: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-38b.pdf
 
 use crate::aws_lc::{
-    CMAC_CTX_copy, CMAC_CTX_free, CMAC_CTX_new, CMAC_Final, CMAC_Init,
+    CMAC_CTX_copy, CMAC_CTX_new, CMAC_Final, CMAC_Init,
     CMAC_Update, EVP_aes_128_cbc, EVP_aes_192_cbc, EVP_aes_256_cbc, EVP_des_ede3_cbc, CMAC_CTX,
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
+use crate::ptr::LcPtr;
 use crate::{constant_time, rand};
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
@@ -187,46 +188,6 @@ impl AsRef<[u8]> for Tag {
     }
 }
 
-struct LcCmacCtx(*mut CMAC_CTX);
-
-impl LcCmacCtx {
-    fn new() -> Result<Self, Unspecified> {
-        let ptr = unsafe { CMAC_CTX_new() };
-        if ptr.is_null() {
-            return Err(Unspecified);
-        }
-        Ok(LcCmacCtx(ptr))
-    }
-
-    fn as_mut_ptr(&mut self) -> *mut CMAC_CTX {
-        self.0
-    }
-
-    fn try_clone(&self) -> Result<Self, Unspecified> {
-        let new_ctx = Self::new()?;
-        unsafe {
-            if 1 != CMAC_CTX_copy(new_ctx.0, self.0) {
-                return Err(Unspecified);
-            }
-        }
-        Ok(new_ctx)
-    }
-}
-
-unsafe impl Send for LcCmacCtx {}
-
-impl Drop for LcCmacCtx {
-    fn drop(&mut self) {
-        unsafe { CMAC_CTX_free(self.0) }
-    }
-}
-
-impl Clone for LcCmacCtx {
-    fn clone(&self) -> Self {
-        self.try_clone().expect("Unable to clone LcCmacCtx")
-    }
-}
-
 /// A key to use for CMAC signing.
 //
 // # FIPS
@@ -236,7 +197,19 @@ impl Clone for LcCmacCtx {
 #[derive(Clone)]
 pub struct Key {
     algorithm: Algorithm,
-    ctx: LcCmacCtx,
+    ctx: LcPtr<CMAC_CTX>,
+}
+
+impl Clone for LcPtr<CMAC_CTX> {
+    fn clone(&self) -> Self {
+        let mut new_ctx = LcPtr::new(unsafe { CMAC_CTX_new() }).expect("CMAC_CTX_new failed");
+        unsafe {
+            if 1 != CMAC_CTX_copy(*new_ctx.as_mut(), *self.as_const()) {
+                panic!("CMAC_CTX_copy failed");
+            }
+        }
+        new_ctx
+    }
 }
 
 unsafe impl Send for Key {}
@@ -292,12 +265,12 @@ impl Key {
             return Err(Unspecified);
         }
 
-        let mut ctx = LcCmacCtx::new()?;
+        let mut ctx = LcPtr::new(unsafe { CMAC_CTX_new() })?;
         
         unsafe {
             let cipher = (algorithm.cipher_fn)();
             if 1 != CMAC_Init(
-                ctx.as_mut_ptr(),
+                *ctx.as_mut(),
                 key_value.as_ptr().cast(),
                 key_value.len(),
                 cipher,
@@ -366,7 +339,7 @@ impl Context {
     #[inline]
     fn try_update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
-            if 1 != CMAC_Update(self.key.ctx.as_mut_ptr(), data.as_ptr(), data.len()) {
+            if 1 != CMAC_Update(*self.key.ctx.as_mut(), data.as_ptr(), data.len()) {
                 return Err(Unspecified);
             }
         }
@@ -402,7 +375,7 @@ impl Context {
         
         unsafe {
             if 1 != indicator_check!(CMAC_Final(
-                self.key.ctx.as_mut_ptr(),
+                *self.key.ctx.as_mut(),
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
             )) {
