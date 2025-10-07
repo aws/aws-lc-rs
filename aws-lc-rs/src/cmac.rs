@@ -137,7 +137,7 @@ impl Algorithm {
 }
 
 /// CMAC using AES-128.
-pub static AES_128: Algorithm = Algorithm {
+pub const AES_128: Algorithm = Algorithm {
     name: "AES_128",
     key_len: 16,
     tag_len: 16,
@@ -145,7 +145,7 @@ pub static AES_128: Algorithm = Algorithm {
 };
 
 /// CMAC using AES-192.
-pub static AES_192: Algorithm = Algorithm {
+pub const AES_192: Algorithm = Algorithm {
     name: "AES_192",
     key_len: 24,
     tag_len: 16,
@@ -153,7 +153,7 @@ pub static AES_192: Algorithm = Algorithm {
 };
 
 /// CMAC using AES-256.
-pub static AES_256: Algorithm = Algorithm {
+pub const AES_256: Algorithm = Algorithm {
     name: "AES_256",
     key_len: 32,
     tag_len: 16,
@@ -161,7 +161,7 @@ pub static AES_256: Algorithm = Algorithm {
 };
 
 /// CMAC using 3DES (Triple DES). Obsolete
-pub static TDES_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
+pub const TDES_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
     name: "TDES",
     key_len: 24,
     tag_len: 8,
