@@ -15,10 +15,9 @@
 //! ## Signing a value and verifying it wasn't tampered with
 //!
 //! ```
-//! use aws_lc_rs::{cmac, rand};
+//! use aws_lc_rs::cmac;
 //!
-//! let rng = rand::SystemRandom::new();
-//! let key = cmac::Key::generate(cmac::AES_128, &rng)?;
+//! let key = cmac::Key::generate(cmac::AES_128)?;
 //!
 //! let msg = "hello, world";
 //!
@@ -227,7 +226,7 @@ impl core::fmt::Debug for Key {
 
 impl Key {
     /// Generate a CMAC signing key using the given algorithm with a
-    /// random value generated from `rng`.
+    /// random value.
     ///
     //
     // # FIPS
@@ -236,13 +235,10 @@ impl Key {
     // * `AES_256`
     //
     /// # Errors
-    /// `error::Unspecified` if the `rng` fails or key construction fails.
-    pub fn generate(
-        algorithm: Algorithm,
-        rng: &dyn rand::SecureRandom,
-    ) -> Result<Self, Unspecified> {
+    /// `error::Unspecified` if random generation or key construction fails.
+    pub fn generate(algorithm: Algorithm) -> Result<Self, Unspecified> {
         let mut key_bytes = vec![0u8; algorithm.key_len()];
-        rng.fill(&mut key_bytes)?;
+        rand::fill(&mut key_bytes)?;
         Ok(Self::new(algorithm, &key_bytes))
     }
 
@@ -438,17 +434,14 @@ pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rand::SystemRandom;
 
     #[cfg(feature = "fips")]
     mod fips;
 
     #[test]
     fn cmac_basic_test() {
-        let rng = SystemRandom::new();
-        
         for &algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
-            let key = Key::generate(algorithm, &rng).unwrap();
+            let key = Key::generate(algorithm).unwrap();
             let data = b"hello, world";
             
             let tag = sign(&key, data);
@@ -463,10 +456,8 @@ mod tests {
         const HELLO_WORLD_GOOD: &[u8] = b"hello, world";
         const HELLO_WORLD_BAD: &[u8] = b"hello, worle";
 
-        let rng = SystemRandom::new();
-
         for algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
-            let key = Key::generate(*algorithm, &rng).unwrap();
+            let key = Key::generate(*algorithm).unwrap();
             let tag = sign(&key, HELLO_WORLD_GOOD);
             println!("{key:?}");
             assert!(verify(&key, HELLO_WORLD_GOOD, tag.as_ref()).is_ok());
@@ -498,8 +489,7 @@ mod tests {
 
     #[test]
     fn cmac_context_test() {
-        let rng = SystemRandom::new();
-        let key = Key::generate(AES_192, &rng).unwrap();
+        let key = Key::generate(AES_192).unwrap();
         
         let mut ctx = Context::with_key(&key);
         ctx.update(b"hello");
@@ -514,10 +504,9 @@ mod tests {
     #[test]
     fn cmac_multi_part_test() {
         let parts = ["hello", ", ", "world"];
-        let rng = SystemRandom::new();
         
         for &algorithm in &[AES_128, AES_256] {
-            let key = Key::generate(algorithm, &rng).unwrap();
+            let key = Key::generate(algorithm).unwrap();
             
             // Multi-part signing
             let mut ctx = Context::with_key(&key);
@@ -582,8 +571,7 @@ mod tests {
 
     #[test]
     fn cmac_empty_data() {
-        let rng = SystemRandom::new();
-        let key = Key::generate(AES_128, &rng).unwrap();
+        let key = Key::generate(AES_128).unwrap();
         
         // CMAC should work with empty data
         let tag = sign(&key, b"");
@@ -597,8 +585,7 @@ mod tests {
 
     #[test]
     fn des_ede3_cmac_test() {
-        let rng = SystemRandom::new();
-        let key = Key::generate(TDES_FOR_LEGACY_USE_ONLY, &rng).unwrap();
+        let key = Key::generate(TDES_FOR_LEGACY_USE_ONLY).unwrap();
         let data = b"test data for 3DES CMAC";
         
         let tag = sign(&key, data);
