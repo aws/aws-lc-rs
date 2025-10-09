@@ -344,6 +344,7 @@ jobs:
       - name: Update dependencies
         run: |
           cargo +1.70.0 update
+          cargo +1.70.0 update -p libloading --precise 0.8.8
           cargo +1.70.0 tree
 
       - name: Verify msrv

@@ -70,8 +70,6 @@ dunce.workspace = true
 fs_extra.workspace = true
 cc.workspace = true
 regex.workspace = true
-# libloading v0.8.9 has MSRV of 1.71.0
-libloading.workspace = true
 
 [target.'cfg(all(any(target_arch = "x86_64", target_arch = "aarch64"), any(target_os = "linux", target_os = "macos"), any(target_env = "gnu", target_env = "musl", target_env = "")))'.build-dependencies]
 bindgen = { workspace = true, optional = true }
@@ -84,6 +82,3 @@ regex.workspace = true
 
 [package.metadata.aws-lc-fips-sys]
 commit-hash = "fcd86b8478a66721b3356e1fe85a0d1e31a4e834"
-
-[package.metadata.cargo-udeps.ignore]
-build = ["libloading"]
