@@ -14,9 +14,12 @@ done
 CLEANUP_ON_EXIT=()
 
 function cleanup() {
-    for x in "${CLEANUP_ON_EXIT[@]}"; do
-        rm -rf "${x}"
-    done
+  echo "You can delete the following directories:"
+  echo "${CLEANUP_ON_EXIT[@]}"
+  # Uncomment the following if you need cleanup
+  # for x in "${CLEANUP_ON_EXIT[@]}"; do
+  #     rm -rf "${x}"
+  # done
 }
 
 trap cleanup EXIT
@@ -116,8 +119,8 @@ RUSTLS_RCGEN_PATH_STRING="rcgen = { path = \"${RUSTLS_RCGEN_DIR}/rcgen\" , defau
 RUSTLS_AWS_LC_RS_STRING="^aws-lc-rs = { version.* }"
 RUSTLS_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
 RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"unstable\", \"aws-lc-sys\"] }"
-RUSTLS_WEBPKI_STRING="^webpki = { package.* }"
-RUSTLS_WEBPKI_PATH_STRING="webpki = { package = \"rustls-webpki\", path = \"${RUSTLS_WEBPKI_DIR}\", features = [\"alloc\"], default-features = false }"
+RUSTLS_WEBPKI_STRING="^webpki = { package = \"rustls-webpki\""
+RUSTLS_WEBPKI_PATH_STRING="webpki = { package = \"rustls-webpki\", path = \"${RUSTLS_WEBPKI_DIR}\""
 sed_replace ./rustls-post-quantum/Cargo.toml "s|${RUSTLS_AWS_LC_RS_STRING}|${RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING}|g"
 if [[ "$(uname)" == "Darwin" ]]; then
 	find ./ -type f  -name "Cargo.toml" | xargs sed -i '' -e "s|${RUSTLS_RCGEN_STRING}|${RUSTLS_RCGEN_PATH_STRING}|g" -e "s|${RUSTLS_AWS_LC_RS_STRING}|${RUSTLS_AWS_LC_RS_PATH_STRING}|g" -e "s|${RUSTLS_WEBPKI_STRING}|${RUSTLS_WEBPKI_PATH_STRING}|g"
