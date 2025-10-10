@@ -209,6 +209,12 @@ impl CmakeBuilder {
             cmake_cfg.define("ASAN", "1");
         }
 
+        // cmake-rs has logic that strips Optimization/Debug options that are passed via CFLAGS:
+        // https://github.com/rust-lang/cmake-rs/issues/240
+        // This breaks build configurations that generate warnings when optimizations
+        // are disabled.
+        Self::preserve_cflag_optimization_flags(&mut cmake_cfg);
+
         // Allow environment to specify CMake toolchain.
         if let Some(toolchain) = option_env("CMAKE_TOOLCHAIN_FILE").or(option_env(format!(
             "CMAKE_TOOLCHAIN_FILE_{}",
@@ -275,6 +281,18 @@ impl CmakeBuilder {
         }
 
         cmake_cfg
+    }
+
+    fn preserve_cflag_optimization_flags(cmake_cfg: &mut cmake::Config) {
+        if let Ok(cflags) = env::var("CFLAGS") {
+            let split = cflags.split_whitespace();
+            for arg in split {
+                if arg.starts_with("-O") || arg.starts_with("/O") {
+                    emit_warning(&format!("Preserving optimization flag: {arg}"));
+                    cmake_cfg.cflag(arg);
+                }
+            }
+        }
     }
 
     fn verify_compiler_support(compiler: &cc::Tool) -> Option<bool> {
