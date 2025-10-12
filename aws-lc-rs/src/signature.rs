@@ -672,7 +672,7 @@ pub(crate) fn parse_public_key(
 }
 
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-1.
-pub static RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
+pub const RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     1024..=8192,
@@ -680,7 +680,7 @@ pub static RSA_PKCS1_1024_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaPara
 );
 
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-256.
-pub static RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
+pub const RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA256,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     1024..=8192,
@@ -688,7 +688,7 @@ pub static RSA_PKCS1_1024_8192_SHA256_FOR_LEGACY_USE_ONLY: RsaParameters = RsaPa
 );
 
 /// Verification of signatures using RSA keys of 1024-8192 bits, PKCS#1.5 padding, and SHA-512.
-pub static RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
+pub const RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA512,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     1024..=8192,
@@ -696,7 +696,7 @@ pub static RSA_PKCS1_1024_8192_SHA512_FOR_LEGACY_USE_ONLY: RsaParameters = RsaPa
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-1.
-pub static RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
+pub const RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaParameters::new(
     &digest::SHA1_FOR_LEGACY_USE_ONLY,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
@@ -704,7 +704,7 @@ pub static RSA_PKCS1_2048_8192_SHA1_FOR_LEGACY_USE_ONLY: RsaParameters = RsaPara
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-256.
-pub static RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters::new(
+pub const RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters::new(
     &digest::SHA256,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
@@ -712,7 +712,7 @@ pub static RSA_PKCS1_2048_8192_SHA256: RsaParameters = RsaParameters::new(
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-384.
-pub static RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters::new(
+pub const RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters::new(
     &digest::SHA384,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
@@ -720,7 +720,7 @@ pub static RSA_PKCS1_2048_8192_SHA384: RsaParameters = RsaParameters::new(
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PKCS#1.5 padding, and SHA-512.
-pub static RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters::new(
+pub const RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters::new(
     &digest::SHA512,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     2048..=8192,
@@ -728,7 +728,7 @@ pub static RSA_PKCS1_2048_8192_SHA512: RsaParameters = RsaParameters::new(
 );
 
 /// Verification of signatures using RSA keys of 3072-8192 bits, PKCS#1.5 padding, and SHA-384.
-pub static RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters::new(
+pub const RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters::new(
     &digest::SHA384,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     3072..=8192,
@@ -736,7 +736,7 @@ pub static RSA_PKCS1_3072_8192_SHA384: RsaParameters = RsaParameters::new(
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-256.
-pub static RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters::new(
+pub const RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters::new(
     &digest::SHA256,
     &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
@@ -744,7 +744,7 @@ pub static RSA_PSS_2048_8192_SHA256: RsaParameters = RsaParameters::new(
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-384.
-pub static RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters::new(
+pub const RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters::new(
     &digest::SHA384,
     &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
@@ -752,7 +752,7 @@ pub static RSA_PSS_2048_8192_SHA384: RsaParameters = RsaParameters::new(
 );
 
 /// Verification of signatures using RSA keys of 2048-8192 bits, PSS padding, and SHA-512.
-pub static RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters::new(
+pub const RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters::new(
     &digest::SHA512,
     &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
     2048..=8192,
@@ -760,329 +760,329 @@ pub static RSA_PSS_2048_8192_SHA512: RsaParameters = RsaParameters::new(
 );
 
 /// RSA PSS padding using SHA-256 for RSA signatures.
-pub static RSA_PSS_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
+pub const RSA_PSS_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA256,
     &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
     &RsaSigningAlgorithmId::RSA_PSS_SHA256,
 );
 
 /// RSA PSS padding using SHA-384 for RSA signatures.
-pub static RSA_PSS_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
+pub const RSA_PSS_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA384,
     &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
     &RsaSigningAlgorithmId::RSA_PSS_SHA384,
 );
 
 /// RSA PSS padding using SHA-512 for RSA signatures.
-pub static RSA_PSS_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
+pub const RSA_PSS_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA512,
     &rsa::signature::RsaPadding::RSA_PKCS1_PSS_PADDING,
     &RsaSigningAlgorithmId::RSA_PSS_SHA512,
 );
 
 /// PKCS#1 1.5 padding using SHA-256 for RSA signatures.
-pub static RSA_PKCS1_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
+pub const RSA_PKCS1_SHA256: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA256,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     &RsaSigningAlgorithmId::RSA_PKCS1_SHA256,
 );
 
 /// PKCS#1 1.5 padding using SHA-384 for RSA signatures.
-pub static RSA_PKCS1_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
+pub const RSA_PKCS1_SHA384: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA384,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     &RsaSigningAlgorithmId::RSA_PKCS1_SHA384,
 );
 
 /// PKCS#1 1.5 padding using SHA-512 for RSA signatures.
-pub static RSA_PKCS1_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
+pub const RSA_PKCS1_SHA512: RsaSignatureEncoding = RsaSignatureEncoding::new(
     &digest::SHA512,
     &rsa::signature::RsaPadding::RSA_PKCS1_PADDING,
     &RsaSigningAlgorithmId::RSA_PKCS1_SHA512,
 );
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
-pub static ECDSA_P256_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P256_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA256,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
-pub static ECDSA_P384_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P384_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA384,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA3-384.
-pub static ECDSA_P384_SHA3_384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P384_SHA3_384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA3_384,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-1.
-pub static ECDSA_P521_SHA1_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA1_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA1_FOR_LEGACY_USE_ONLY,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-224.
-pub static ECDSA_P521_SHA224_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA224_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA224,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-256.
-pub static ECDSA_P521_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA256,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-384.
-pub static ECDSA_P521_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA384,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-512.
-pub static ECDSA_P521_SHA512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA512,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA3-512.
-pub static ECDSA_P521_SHA3_512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA3_512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA3_512,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA-256.
-pub static ECDSA_P256K1_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P256K1_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256K1,
     digest: &digest::SHA256,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA3-256.
-pub static ECDSA_P256K1_SHA3_256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P256K1_SHA3_256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256K1,
     digest: &digest::SHA3_256,
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
-pub static ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA256,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-384.
-pub static ECDSA_P256_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P256_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA384,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-512.
-pub static ECDSA_P256_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P256_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA512,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-256.
-pub static ECDSA_P384_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P384_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA256,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
-pub static ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P384_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA384,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-512.
-pub static ECDSA_P384_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P384_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA512,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
-pub static ECDSA_P384_SHA3_384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P384_SHA3_384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P384,
     digest: &digest::SHA3_384,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-1.
-pub static ECDSA_P521_SHA1_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA1_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA1_FOR_LEGACY_USE_ONLY,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-224.
-pub static ECDSA_P521_SHA224_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA224_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA224,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-256.
-pub static ECDSA_P521_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA256,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-384.
-pub static ECDSA_P521_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA384,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-512.
-pub static ECDSA_P521_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA512,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
-pub static ECDSA_P521_SHA3_512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P521_SHA3_512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P521,
     digest: &digest::SHA3_512,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
-pub static ECDSA_P256K1_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P256K1_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256K1,
     digest: &digest::SHA256,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
-pub static ECDSA_P256K1_SHA3_256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+pub const ECDSA_P256K1_SHA3_256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256K1,
     digest: &digest::SHA3_256,
     sig_format: EcdsaSignatureFormat::ASN1,
 };
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
-pub static ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA-384.
-pub static ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P384_SHA384_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA3-384.
-pub static ECDSA_P384_SHA3_384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P384_SHA3_384_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P384_SHA3_384_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-224.
 /// # ⚠️ Warning
 /// The security design strength of SHA-224 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
-pub static ECDSA_P521_SHA224_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA224_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA224_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-256.
 /// # ⚠️ Warning
 /// The security design strength of SHA-256 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
-pub static ECDSA_P521_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA256_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-384.
 /// # ⚠️ Warning
 /// The security design strength of SHA-384 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
-pub static ECDSA_P521_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA384_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-512.
-pub static ECDSA_P521_SHA512_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA512_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA512_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA3-512.
-pub static ECDSA_P521_SHA3_512_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA3_512_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA3_512_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA-256.
-pub static ECDSA_P256K1_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P256K1_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA256_FIXED);
 
 /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA3-256.
-pub static ECDSA_P256K1_SHA3_256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P256K1_SHA3_256_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA3_256_FIXED);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
-pub static ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA-384.
-pub static ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P384_SHA384_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
-pub static ECDSA_P384_SHA3_384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P384_SHA3_384_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P384_SHA3_384_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-224.
 /// # ⚠️ Warning
 /// The security design strength of SHA-224 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
-pub static ECDSA_P521_SHA224_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA224_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA224_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-256.
 /// # ⚠️ Warning
 /// The security design strength of SHA-256 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
-pub static ECDSA_P521_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA256_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-384.
 /// # ⚠️ Warning
 /// The security design strength of SHA-384 digests is less then security strength of P-521.
 /// This scheme should only be used for backwards compatibility purposes.
-pub static ECDSA_P521_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA384_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-512.
-pub static ECDSA_P521_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA512_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
-pub static ECDSA_P521_SHA3_512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P521_SHA3_512_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P521_SHA3_512_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
-pub static ECDSA_P256K1_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P256K1_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA256_ASN1);
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
-pub static ECDSA_P256K1_SHA3_256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+pub const ECDSA_P256K1_SHA3_256_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA3_256_ASN1);
 
 /// Verification of Ed25519 signatures.
-pub static ED25519: EdDSAParameters = EdDSAParameters {};
+pub const ED25519: EdDSAParameters = EdDSAParameters {};
 
 #[cfg(test)]
 mod tests {

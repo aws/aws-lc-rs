@@ -133,19 +133,19 @@ impl Algorithm {
 }
 
 /// HMAC using SHA-1. Obsolete.
-pub static HMAC_SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm(&digest::SHA1_FOR_LEGACY_USE_ONLY);
+pub const HMAC_SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm(&digest::SHA1_FOR_LEGACY_USE_ONLY);
 
 /// HMAC using SHA-224.
-pub static HMAC_SHA224: Algorithm = Algorithm(&digest::SHA224);
+pub const HMAC_SHA224: Algorithm = Algorithm(&digest::SHA224);
 
 /// HMAC using SHA-256.
-pub static HMAC_SHA256: Algorithm = Algorithm(&digest::SHA256);
+pub const HMAC_SHA256: Algorithm = Algorithm(&digest::SHA256);
 
 /// HMAC using SHA-384.
-pub static HMAC_SHA384: Algorithm = Algorithm(&digest::SHA384);
+pub const HMAC_SHA384: Algorithm = Algorithm(&digest::SHA384);
 
 /// HMAC using SHA-512.
-pub static HMAC_SHA512: Algorithm = Algorithm(&digest::SHA512);
+pub const HMAC_SHA512: Algorithm = Algorithm(&digest::SHA512);
 
 /// An HMAC tag.
 ///
