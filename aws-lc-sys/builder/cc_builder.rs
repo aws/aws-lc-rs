@@ -15,9 +15,10 @@ mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
 use crate::{
-    cargo_env, effective_target, emit_warning, env_var_to_bool, execute_command, get_crate_cflags,
-    is_no_asm, optional_env_optional_crate_target, optional_env_target, out_dir, requested_c_std,
-    set_env_for_target, target, target_arch, target_env, target_os, CStdRequested, OutputLibType,
+    cargo_env, disable_jitter_entropy, effective_target, emit_warning, env_var_to_bool,
+    execute_command, get_crate_cflags, is_no_asm, optional_env_optional_crate_target,
+    optional_env_target, out_dir, requested_c_std, set_env_for_target, target, target_arch,
+    target_env, target_os, CStdRequested, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -286,7 +287,9 @@ impl CcBuilder {
                 build_options.push(BuildOption::flag("-pthread"));
             }
         }
-
+        if Some(true) == disable_jitter_entropy() {
+            build_options.push(BuildOption::define("DISABLE_CPU_JITTER_ENTROPY", "1"));
+        }
         self.add_includes(&mut build_options);
 
         build_options
@@ -320,13 +323,16 @@ impl CcBuilder {
                 .join("s2n-bignum-imported")
                 .join("include"),
         ));
-        build_options.push(BuildOption::include(
-            self.manifest_dir
-                .join("aws-lc")
-                .join("third_party")
-                .join("jitterentropy")
-                .join("jitterentropy-library"),
-        ));
+
+        if Some(true) != disable_jitter_entropy() {
+            build_options.push(BuildOption::include(
+                self.manifest_dir
+                    .join("aws-lc")
+                    .join("third_party")
+                    .join("jitterentropy")
+                    .join("jitterentropy-library"),
+            ));
+        }
     }
 
     pub fn create_builder(&self) -> cc::Build {
@@ -478,7 +484,10 @@ impl CcBuilder {
                     s2n_bignum_builder.file(source_path);
                 }
             } else if is_jitter_entropy {
-                jitter_entropy_builder.file(source_path);
+                // Only compile if not disabled.
+                if Some(true) != disable_jitter_entropy() {
+                    jitter_entropy_builder.file(source_path);
+                }
             } else {
                 cc_build.file(source_path);
             }
@@ -488,9 +497,11 @@ impl CcBuilder {
         for object in s2n_bignum_object_files {
             cc_build.object(object);
         }
-        let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
-        for object in jitter_entropy_object_files {
-            cc_build.object(object);
+        if Some(true) != disable_jitter_entropy() {
+            let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
+            for object in jitter_entropy_object_files {
+                cc_build.object(object);
+            }
         }
         cc_build.file(PathBuf::from_str("rust_wrapper.c").unwrap());
     }
