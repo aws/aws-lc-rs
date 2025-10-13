@@ -15,9 +15,10 @@ mod x86_64_unknown_linux_gnu;
 mod x86_64_unknown_linux_musl;
 
 use crate::{
-    cargo_env, effective_target, emit_warning, env_var_to_bool, execute_command, get_crate_cflags,
-    is_no_asm, optional_env_optional_crate_target, optional_env_target, out_dir, requested_c_std,
-    set_env_for_target, target, target_arch, target_env, target_os, CStdRequested, OutputLibType,
+    cargo_env, effective_target, emit_warning, env_name_for_target, env_var_to_bool,
+    execute_command, get_crate_cflags, is_no_asm, optional_env_optional_crate_target,
+    optional_env_target, out_dir, requested_c_std, set_env_for_target, target, target_arch,
+    target_env, target_os, CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -373,14 +374,12 @@ impl CcBuilder {
             option.apply_cc(&mut je_builder);
         }
 
-        let compiler = if let Some(original_cflags) = optional_env_target("CFLAGS") {
-            let mut new_cflags = original_cflags.clone();
-            new_cflags.push_str(" -O0");
-            set_env_for_target("CFLAGS", &new_cflags);
+        let compiler = if let Some(mut cflags) = optional_env_target("CFLAGS") {
+            cflags.push_str(" -O0");
+            let _guard_cflags = EnvGuard::new(&env_name_for_target("CFLAGS"), &cflags);
             // cc-rs currently prioritizes flags provided by CFLAGS over the flags provided by the build script.
             // The environment variables used by the compiler are set when `get_compiler` is called.
             let compiler = je_builder.get_compiler();
-            set_env_for_target("CFLAGS", &original_cflags);
             compiler
         } else {
             je_builder.get_compiler()

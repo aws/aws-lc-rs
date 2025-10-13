@@ -1,7 +1,9 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::{get_rust_include_path, BindingOptions, COPYRIGHT, PRELUDE};
+use crate::{
+    effective_target, get_rust_include_path, BindingOptions, EnvGuard, COPYRIGHT, PRELUDE,
+};
 use bindgen::callbacks::{ItemInfo, ParseCallbacks};
 use std::fmt::Debug;
 use std::path::Path;
@@ -78,6 +80,7 @@ pub(crate) fn generate_bindings(
     manifest_dir: &Path,
     options: &BindingOptions,
 ) -> bindgen::Bindings {
+    let _guard_target = EnvGuard::new("TARGET", effective_target());
     prepare_bindings_builder(manifest_dir, options)
         .generate()
         .expect("Unable to generate bindings.")

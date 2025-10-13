@@ -141,6 +141,12 @@ fn cargo_env<N: AsRef<str>>(name: N) -> String {
     env::var(name).unwrap_or_else(|_| panic!("missing env var {name:?}"))
 }
 
+fn env_name_for_target<K: AsRef<OsStr>>(env_var: K) -> String {
+    let target = target().to_lowercase();
+    let target = target.replace('-', "_");
+    format!("{}_{target}", env_var.as_ref().to_str().unwrap())
+}
+
 // "CFLAGS" =>
 // "AWS_LC_SYS_CFLAGS_aarch64_unknown_linux_gnu" OR "AWS_LC_SYS_CFLAGS"
 //    OR "CFLAGS_aarch64_unknown_linux_gnu" OR "CFLAGS"
@@ -153,16 +159,13 @@ fn optional_env_optional_crate_target<N: AsRef<str>>(name: N) -> Option<String> 
 fn optional_env_crate_target<N: AsRef<str>>(name: N) -> Option<String> {
     let name = name.as_ref();
     let crate_name = crate_name().to_uppercase().replace('-', "_");
-    let target_name = target().to_lowercase().replace('-', "_");
     let name_for_crate = format!("{crate_name}_{name}");
-    let name_for_crate_target = format!("{crate_name}_{name}_{target_name}");
+    let name_for_crate_target = env_name_for_target(&name_for_crate);
     optional_env(name_for_crate_target).or(optional_env(name_for_crate))
 }
 
 fn optional_env_target<N: AsRef<str>>(name: N) -> Option<String> {
-    let name = name.as_ref();
-    let target_name = target().to_lowercase().replace('-', "_");
-    let name_for_target = format!("{}_{}", &name, target_name);
+    let name_for_target = env_name_for_target(name.as_ref());
     optional_env(name_for_target).or(optional_env(name))
 }
 
@@ -184,9 +187,7 @@ where
     K: AsRef<OsStr>,
     V: AsRef<OsStr>,
 {
-    let target = target().to_lowercase();
-    let target = target.replace('-', "_");
-    let env_var = format!("{}_{target}", env_var.as_ref().to_str().unwrap());
+    let env_var = env_name_for_target(env_var);
     env::set_var(&env_var, &value);
     emit_warning(&format!(
         "Setting {env_var}: {}",
@@ -912,6 +913,32 @@ const PRELUDE: &str = r"
 )]
 ";
 
+pub(crate) struct EnvGuard {
+    key: String,
+    original_value: Option<String>,
+}
+
+impl EnvGuard {
+    fn new<T: AsRef<OsStr>>(key: &str, new_value: T) -> Self {
+        let original_value = env::var(key).ok();
+        env::set_var(key, new_value);
+        Self {
+            key: key.to_string(),
+            original_value,
+        }
+    }
+}
+
+impl Drop for EnvGuard {
+    fn drop(&mut self) {
+        if let Some(ref value) = self.original_value {
+            env::set_var(&self.key, value);
+        } else {
+            env::remove_var(&self.key);
+        }
+    }
+}
+
 fn invoke_external_bindgen(
     manifest_dir: &Path,
     prefix: &Option<String>,
@@ -923,6 +950,8 @@ fn invoke_external_bindgen(
         "Generating bindings - external bindgen. Platform: {}",
         effective_target()
     ));
+
+    let _guard_target = EnvGuard::new("TARGET", effective_target());
 
     let options = BindingOptions {
         // We collect the symbols w/o the prefix added
