@@ -58,7 +58,7 @@ fi
 
 function filter_symbols() {
 if [[ "${CRATE_NAME}" =~ fips ]]; then
-  grep -E '^\w*$' | grep -v -E "^bignum_" | grep -v "curve25519_x25519" | grep -v "edwards25519_" | grep -v "p256_montj" | grep -v "p384_montj" | grep -v "p521_montj" | grep -v "p521_j" | grep -v "jent_" | grep -v "fips_" | grep -v "fips_check"
+  grep -E '^\w*$' | grep -v -E "^_?bignum_" | grep -v "curve25519_x25519" | grep -v "edwards25519_" | grep -v "p256_montj" | grep -v "p384_montj" | grep -v "p521_montj" | grep -v "p521_j" | grep -v "jent_"
 else
   grep -E '^\w*$'
 fi
