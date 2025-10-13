@@ -5,6 +5,7 @@
 aws-lc-sys = { path = "../../aws-lc-sys", package = "aws-lc-sys" }
 aws-lc-sys-v0_31_0 = { package = "aws-lc-sys", version = "0.31.0" }
 aws-lc-fips-sys = { path = "../../aws-lc-fips-sys" }
+aws-lc-fips-sys-v0_13_7 = { package = "aws-lc-fips-sys", version = "=0.13.7" }
 openssl-sys = "0"
 boring-sys = "4"
 ---
@@ -111,6 +112,7 @@ macro_rules! generate_test {
 generate_test!(aws_lc_fips_sys, test_fips);
 generate_test!(aws_lc_sys, test_sys);
 generate_test!(aws_lc_sys_v0_31_0, test_sys_v0_31_0);
+generate_test!(aws_lc_fips_sys_v0_13_7, test_fips_v0_13_7);
 generate_test!(openssl_sys, test_openssl);
 generate_test!(boring_sys, test_boring);
 
@@ -121,6 +123,8 @@ fn main() {
     test_sys::test();
     println!("Testing sys-v0.31.0");
     test_sys_v0_31_0::test();
+    println!("Testing fips-v0.13.7");
+    test_fips_v0_13_7::test();
     println!("Testing openssl");
     test_openssl::test();
     println!("Testing boring");
@@ -129,4 +133,5 @@ fn main() {
     assert_eq!(1, unsafe { aws_lc_fips_sys::FIPS_mode() });
     assert_ne!(1, unsafe { aws_lc_sys::FIPS_mode() });
     assert_ne!(1, unsafe { aws_lc_sys_v0_31_0::FIPS_mode() });
+    assert_eq!(1, unsafe { aws_lc_fips_sys_v0_13_7::FIPS_mode() });
 }
