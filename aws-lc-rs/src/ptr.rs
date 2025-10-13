@@ -7,6 +7,7 @@ use crate::aws_lc::{
     ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_AEAD_CTX, EVP_CIPHER_CTX, EVP_PKEY, EVP_PKEY_CTX,
     RSA,
 };
+use aws_lc::{BIO_free, BIO};
 use core::ops::Deref;
 use std::marker::PhantomData;
 
@@ -271,6 +272,7 @@ create_pointer!(EVP_PKEY_CTX, EVP_PKEY_CTX_free);
 create_pointer!(RSA, RSA_free);
 create_pointer!(EVP_AEAD_CTX, EVP_AEAD_CTX_free);
 create_pointer!(EVP_CIPHER_CTX, EVP_CIPHER_CTX_free);
+create_pointer!(BIO, BIO_free);
 
 #[cfg(test)]
 mod tests {

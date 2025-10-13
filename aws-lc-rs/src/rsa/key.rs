@@ -164,6 +164,15 @@ impl KeyPair {
         Self::new(key)
     }
 
+    /// Parses a PEM-encoded private key.
+    ///
+    /// # Errors
+    /// `error:KeyRejected` on error.
+    pub fn from_pem(input: &[u8]) -> Result<Self, KeyRejected> {
+        let key = LcPtr::<EVP_PKEY>::parse_pem_private_key(input, EVP_PKEY_RSA)?;
+        Self::new(key)
+    }
+
     /// Returns a boolean indicator if this RSA key is an approved FIPS 140-3 key.
     #[cfg(feature = "fips")]
     #[must_use]
