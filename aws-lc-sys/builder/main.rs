@@ -504,6 +504,7 @@ static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
 static mut AWS_LC_SYS_CMAKE_BUILDER: Option<bool> = None;
 static mut AWS_LC_SYS_NO_PREGENERATED_SRC: bool = false;
 static mut AWS_LC_SYS_EFFECTIVE_TARGET: String = String::new();
+static mut AWS_LC_SYS_NO_JITTER_ENTROPY: Option<bool> = None;
 
 static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
 
@@ -522,6 +523,7 @@ fn initialize() {
             env_crate_var_to_bool("NO_PREGENERATED_SRC").unwrap_or(false);
         AWS_LC_SYS_EFFECTIVE_TARGET =
             optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
+        AWS_LC_SYS_NO_JITTER_ENTROPY = env_crate_var_to_bool("NO_JITTER_ENTROPY");
     }
 
     if !is_external_bindgen_requested().unwrap_or(false)
@@ -595,6 +597,10 @@ fn is_cmake_builder() -> Option<bool> {
 
 fn is_no_pregenerated_src() -> bool {
     unsafe { AWS_LC_SYS_NO_PREGENERATED_SRC }
+}
+
+fn disable_jitter_entropy() -> Option<bool> {
+    unsafe { AWS_LC_SYS_NO_JITTER_ENTROPY }
 }
 
 #[allow(unknown_lints)]
