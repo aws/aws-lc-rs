@@ -1550,6 +1550,7 @@ KEM_KEY_get0_kem
 KEM_KEY_init
 KEM_KEY_new
 KEM_KEY_set_raw_key
+KEM_KEY_set_raw_keypair_from_seed
 KEM_KEY_set_raw_public_key
 KEM_KEY_set_raw_secret_key
 KEM_find_asn1_by_nid
