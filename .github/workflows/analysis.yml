@@ -292,3 +292,75 @@ jobs:
           go-version: '>=1.18'
       - name: Run assert script
         run: ./scripts/tests/prefix_test.rs
+  jitter-entropy:
+    if: github.repository_owner == 'aws'
+    name: Verify jitter-entropy is enabled
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: nightly
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Assert jitter-entropy available
+        run: |
+          if ./scripts/tests/assert_cpu_jitter_entropy.rs; then
+            echo jitter-entropy enabled.
+            exit 0
+          else
+            echo jitter-entropy not enabled, but should be.
+            exit 1
+          fi
+      - name: Verify latency is present
+        run: |
+          LATENCY=$(./scripts/tests/first_random_byte_latency.rs)
+          echo LATENCY: ${LATENCY}
+          if [ "$LATENCY" -lt 5 ]; then
+            echo LATENCY too low. Was jitter-entropy actually used?
+            exit 1
+          elif [ "$LATENCY" -gt 70 ]; then
+            echo LATENCY too high. Bug in jitter-entropy?
+            exit 1
+          fi
+          exit 0;
+  no-jitter-entropy:
+    if: github.repository_owner == 'aws'
+    name: Verify jitter-entropy is not enabled
+    runs-on: ubuntu-latest
+    env:
+      AWS_LC_SYS_NO_JITTER_ENTROPY: 1
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: nightly
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+      - name: Assert jitter-entropy not available
+        run: |
+          if ./scripts/tests/assert_cpu_jitter_entropy.rs; then
+            echo jitter-entropy enabled, but should not be.
+            exit 1
+          else
+            echo jitter-entropy not enabled.
+            exit 0
+          fi
+      - name: Verify latency is not present
+        run: |
+          LATENCY=$(./scripts/tests/first_random_byte_latency.rs)
+          echo LATENCY: ${LATENCY}
+          if [ "$LATENCY" -gt 1 ]; then
+            echo LATENCY too high. Was jitter-entropy enabled?
+            exit 1
+          else
+            exit 0
+          fi
