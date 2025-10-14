@@ -4,10 +4,10 @@
 use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
-    allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
-    get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src, optional_env,
-    optional_env_optional_crate_target, set_env, set_env_for_target, target_arch, target_env,
-    target_os, test_nasm_command, use_prebuilt_nasm, OutputLibType,
+    allow_prebuilt_nasm, cargo_env, disable_jitter_entropy, effective_target, emit_warning,
+    execute_command, get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src,
+    optional_env, optional_env_optional_crate_target, set_env, set_env_for_target, target_arch,
+    target_env, target_os, test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -116,6 +116,7 @@ impl CmakeBuilder {
         // Build flags that minimize our crate size.
         cmake_cfg.define("BUILD_TESTING", "OFF");
         cmake_cfg.define("BUILD_TOOL", "OFF");
+        cmake_cfg.define("ENABLE_SOURCE_MODIFICATION", "OFF");
         if cfg!(feature = "ssl") {
             cmake_cfg.define("BUILD_LIBSSL", "ON");
         } else {
@@ -129,6 +130,9 @@ impl CmakeBuilder {
             // Build flags that minimize our dependencies.
             cmake_cfg.define("DISABLE_PERL", "ON");
             cmake_cfg.define("DISABLE_GO", "ON");
+        }
+        if Some(true) == disable_jitter_entropy() {
+            cmake_cfg.define("DISABLE_CPU_JITTER_ENTROPY", "ON");
         }
 
         if is_no_asm() {

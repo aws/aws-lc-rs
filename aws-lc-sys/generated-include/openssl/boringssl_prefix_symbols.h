@@ -17,7 +17,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_32_2
+#define BORINGSSL_PREFIX aws_lc_0_32_3
 #endif // BORINGSSL_PREFIX
 
 
@@ -1594,6 +1594,7 @@
 #define KEM_KEY_init BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, KEM_KEY_init)
 #define KEM_KEY_new BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, KEM_KEY_new)
 #define KEM_KEY_set_raw_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, KEM_KEY_set_raw_key)
+#define KEM_KEY_set_raw_keypair_from_seed BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, KEM_KEY_set_raw_keypair_from_seed)
 #define KEM_KEY_set_raw_public_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, KEM_KEY_set_raw_public_key)
 #define KEM_KEY_set_raw_secret_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, KEM_KEY_set_raw_secret_key)
 #define KEM_find_asn1_by_nid BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, KEM_find_asn1_by_nid)
