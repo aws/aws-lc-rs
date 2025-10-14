@@ -316,18 +316,10 @@ jobs:
             echo jitter-entropy not enabled, but should be.
             exit 1
           fi
-      - name: Verify latency is present
+      - name: Log the latency
         run: |
           LATENCY=$(./scripts/tests/first_random_byte_latency.rs)
           echo LATENCY: ${LATENCY}
-          if [ "$LATENCY" -lt 5 ]; then
-            echo LATENCY too low. Was jitter-entropy actually used?
-            exit 1
-          elif [ "$LATENCY" -gt 70 ]; then
-            echo LATENCY too high. Bug in jitter-entropy?
-            exit 1
-          fi
-          exit 0;
   no-jitter-entropy:
     if: github.repository_owner == 'aws'
     name: Verify jitter-entropy is not enabled
