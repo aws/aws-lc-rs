@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_32_2
+%define BORINGSSL_PREFIX aws_lc_0_32_3
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -1591,6 +1591,7 @@
 %xdefine _KEM_KEY_init _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_init
 %xdefine _KEM_KEY_new _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_new
 %xdefine _KEM_KEY_set_raw_key _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_key
+%xdefine _KEM_KEY_set_raw_keypair_from_seed _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_keypair_from_seed
 %xdefine _KEM_KEY_set_raw_public_key _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_public_key
 %xdefine _KEM_KEY_set_raw_secret_key _ %+ BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_secret_key
 %xdefine _KEM_find_asn1_by_nid _ %+ BORINGSSL_PREFIX %+ _KEM_find_asn1_by_nid
@@ -5897,6 +5898,7 @@
 %xdefine KEM_KEY_init BORINGSSL_PREFIX %+ _KEM_KEY_init
 %xdefine KEM_KEY_new BORINGSSL_PREFIX %+ _KEM_KEY_new
 %xdefine KEM_KEY_set_raw_key BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_key
+%xdefine KEM_KEY_set_raw_keypair_from_seed BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_keypair_from_seed
 %xdefine KEM_KEY_set_raw_public_key BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_public_key
 %xdefine KEM_KEY_set_raw_secret_key BORINGSSL_PREFIX %+ _KEM_KEY_set_raw_secret_key
 %xdefine KEM_find_asn1_by_nid BORINGSSL_PREFIX %+ _KEM_find_asn1_by_nid
