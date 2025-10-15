@@ -225,22 +225,26 @@ pub(crate) mod key;
 mod padded;
 mod streaming;
 
+use aws_lc::EVP_des_ede3_cbc;
 pub use padded::{PaddedBlockDecryptingKey, PaddedBlockEncryptingKey};
 pub use streaming::{BufferUpdate, StreamingDecryptingKey, StreamingEncryptingKey};
 
 use crate::aws_lc::{
-    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_192_cbc,
-    EVP_aes_192_cfb128, EVP_aes_192_ctr, EVP_aes_192_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128,
-    EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
+    CMAC_CTX_new, CMAC_Final, CMAC_Init, CMAC_Update, EVP_aes_128_cbc, EVP_aes_128_cfb128,
+    EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_192_cbc, EVP_aes_192_cfb128, EVP_aes_192_ctr,
+    EVP_aes_192_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128, EVP_aes_256_ctr, EVP_aes_256_ecb,
+    CMAC_CTX, EVP_CIPHER,
 };
 use crate::buffer::Buffer;
 use crate::error::Unspecified;
-use crate::hkdf;
+use crate::fips::indicator_check;
 use crate::hkdf::KeyType;
 use crate::iv::{FixedLength, IV_LEN_128_BIT};
-use crate::ptr::ConstPointer;
+use crate::ptr::{ConstPointer, LcPtr};
+use crate::{constant_time, hkdf};
 use core::fmt::Debug;
 use key::SymmetricCipherKey;
+use std::ptr::null_mut;
 
 /// The number of bytes in an AES 128-bit key
 pub use crate::cipher::aes::AES_128_KEY_LEN;
@@ -299,6 +303,8 @@ impl OperatingMode {
                 (OperatingMode::CTR, AlgorithmId::Aes256) => EVP_aes_256_ctr(),
                 (OperatingMode::CFB128, AlgorithmId::Aes256) => EVP_aes_256_cfb128(),
                 (OperatingMode::ECB, AlgorithmId::Aes256) => EVP_aes_256_ecb(),
+                (OperatingMode::CBC, AlgorithmId::Tdes) => EVP_des_ede3_cbc(),
+                _ => panic!("Unsupport cipher!"),
             })
             .unwrap()
         }
@@ -363,6 +369,9 @@ pub enum AlgorithmId {
 
     /// AES 192-bit
     Aes192,
+
+    /// Triple-DES
+    Tdes,
 }
 
 /// A cipher algorithm.
@@ -371,27 +380,39 @@ pub struct Algorithm {
     id: AlgorithmId,
     key_len: usize,
     block_len: usize,
+    tag_len: usize,
 }
 
 /// AES 128-bit cipher
-pub static AES_128: Algorithm = Algorithm {
+pub const AES_128: Algorithm = Algorithm {
     id: AlgorithmId::Aes128,
     key_len: AES_128_KEY_LEN,
     block_len: AES_BLOCK_LEN,
+    tag_len: 16,
 };
 
 /// AES 192-bit cipher
-pub static AES_192: Algorithm = Algorithm {
+pub const AES_192: Algorithm = Algorithm {
     id: AlgorithmId::Aes192,
     key_len: AES_192_KEY_LEN,
     block_len: AES_BLOCK_LEN,
+    tag_len: 16,
 };
 
 /// AES 256-bit cipher
-pub static AES_256: Algorithm = Algorithm {
+pub const AES_256: Algorithm = Algorithm {
     id: AlgorithmId::Aes256,
     key_len: AES_256_KEY_LEN,
     block_len: AES_BLOCK_LEN,
+    tag_len: 16,
+};
+
+/// 3-DES cipher - For Legacy use only
+pub const TDES_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
+    id: AlgorithmId::Tdes,
+    key_len: 24,
+    block_len: 8,
+    tag_len: 8,
 };
 
 impl Algorithm {
@@ -403,6 +424,18 @@ impl Algorithm {
     #[must_use]
     pub const fn block_len(&self) -> usize {
         self.block_len
+    }
+
+    /// The tag length of this cipher algorithm.
+    #[must_use]
+    pub const fn tag_len(&self) -> usize {
+        self.tag_len
+    }
+
+    /// The key length of this cipher algorithm.
+    #[must_use]
+    pub const fn key_len(&self) -> usize {
+        self.key_len
     }
 
     fn new_encryption_context(
@@ -417,6 +450,7 @@ impl Algorithm {
                 }
                 OperatingMode::ECB => Ok(EncryptionContext::None),
             },
+            _ => panic!("Unsupported cipher!"),
         }
     }
 
@@ -431,6 +465,7 @@ impl Algorithm {
                     matches!(input, EncryptionContext::None)
                 }
             },
+            _ => panic!("Unsupported cipher!"),
         }
     }
 
@@ -445,6 +480,7 @@ impl Algorithm {
                     matches!(input, DecryptionContext::None)
                 }
             },
+            _ => panic!("Unsupported cipher!"),
         }
     }
 }
@@ -510,7 +546,93 @@ impl TryInto<SymmetricCipherKey> for UnboundCipherKey {
             AlgorithmId::Aes128 => SymmetricCipherKey::aes128(self.key_bytes.as_ref()),
             AlgorithmId::Aes192 => SymmetricCipherKey::aes192(self.key_bytes.as_ref()),
             AlgorithmId::Aes256 => SymmetricCipherKey::aes256(self.key_bytes.as_ref()),
+            _ => Err(Unspecified),
         }
+    }
+}
+
+struct TagType {}
+
+/// Tag produced by CMAC operation
+pub struct Tag(Buffer<'static, TagType>);
+
+impl AsRef<[u8]> for Tag {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
+/// A cipher key for CMAC signing
+pub struct AuthenticatingKey {
+    algorithm: &'static Algorithm,
+    cmac_ctx: LcPtr<CMAC_CTX>,
+}
+
+impl AuthenticatingKey {
+    #[allow(clippy::unnecessary_wraps)]
+    fn new(key: UnboundCipherKey, mode: OperatingMode) -> Result<Self, Unspecified> {
+        let algorithm = key.algorithm();
+        let mut cmac_ctx = LcPtr::new(unsafe { CMAC_CTX_new() })?;
+        if 1 != unsafe {
+            CMAC_Init(
+                *cmac_ctx.as_mut(),
+                key.key_bytes.as_ref().as_ptr().cast(),
+                key.algorithm().key_len,
+                *mode.evp_cipher(key.algorithm()),
+                null_mut(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+        Ok(Self {
+            algorithm,
+            cmac_ctx,
+        })
+    }
+
+    /// A key for CMAC signing
+    pub fn cmac(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Self::new(key, OperatingMode::CBC)
+    }
+
+    /// Sign
+    pub fn sign(&mut self, data: &[u8]) -> Result<Tag, Unspecified> {
+        if 1 != unsafe { CMAC_Update(*self.cmac_ctx.as_mut(), data.as_ptr(), data.len()) } {
+            return Err(Unspecified);
+        }
+
+        let mut output = vec![0u8; self.algorithm.tag_len()];
+        let mut out_len: usize = 0;
+        if 1 != indicator_check!(unsafe {
+            CMAC_Final(*self.cmac_ctx.as_mut(), output.as_mut_ptr(), &mut out_len)
+        }) {
+            return Err(Unspecified);
+        }
+
+        assert_eq!(out_len, self.algorithm.tag_len());
+
+        Ok(Tag(Buffer::take_from_slice(output.as_mut_slice())))
+    }
+}
+
+/// A cipher key for CMAC verification
+pub struct VerifyingKey {
+    authenticating_key: AuthenticatingKey,
+}
+
+impl VerifyingKey {
+    /// A key for CMAC verification
+    pub fn cmac(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+        Ok(Self {
+            authenticating_key: AuthenticatingKey::cmac(key)?,
+        })
+    }
+
+    /// Verify
+    pub fn verify(&mut self, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
+        let actual_tag = self.authenticating_key.sign(data)?;
+
+        constant_time::verify_slices_are_equal(actual_tag.0.as_ref(), tag)
     }
 }
 
@@ -796,22 +918,26 @@ fn encrypt(
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_cbc_mode(key, context, in_out)
             }
+            _ => panic!("Unsupported cipher!"),
         },
         OperatingMode::CTR => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_ctr_mode(key, context, in_out)
             }
+            _ => panic!("Unsupported cipher!"),
         },
         // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_cfb_mode(key, mode, context, in_out)
             }
+            _ => panic!("Unsupported cipher!"),
         },
         OperatingMode::ECB => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_ecb_mode(key, context, in_out)
             }
+            _ => panic!("Unsupported cipher!"),
         },
     }
 }
@@ -839,22 +965,26 @@ fn decrypt<'in_out>(
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_cbc_mode(key, context, in_out)
             }
+            _ => panic!("Unsupported cipher!"),
         },
         OperatingMode::CTR => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_ctr_mode(key, context, in_out)
             }
+            _ => panic!("Unsupported cipher!"),
         },
         // TODO: Hopefully support CFB1, and CFB8
         OperatingMode::CFB128 => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_cfb_mode(key, mode, context, in_out)
             }
+            _ => panic!("Unsupported cipher!"),
         },
         OperatingMode::ECB => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_ecb_mode(key, context, in_out)
             }
+            _ => panic!("Unsupported cipher!"),
         },
     }
 }
@@ -862,7 +992,7 @@ fn decrypt<'in_out>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test::from_hex;
+    use crate::{rand::SystemRandom, test::from_hex};
 
     #[cfg(feature = "fips")]
     mod fips;
@@ -872,7 +1002,7 @@ mod tests {
         {
             let aes_128_key_bytes = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
             let cipher_key = UnboundCipherKey::new(&AES_128, aes_128_key_bytes.as_slice()).unwrap();
-            assert_eq!("UnboundCipherKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 } }", format!("{cipher_key:?}"));
+            assert_eq!("UnboundCipherKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16, tag_len: 16 } }", format!("{cipher_key:?}"));
         }
 
         {
@@ -880,7 +1010,7 @@ mod tests {
                 from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f")
                     .unwrap();
             let cipher_key = UnboundCipherKey::new(&AES_256, aes_256_key_bytes.as_slice()).unwrap();
-            assert_eq!("UnboundCipherKey { algorithm: Algorithm { id: Aes256, key_len: 32, block_len: 16 } }", format!("{cipher_key:?}"));
+            assert_eq!("UnboundCipherKey { algorithm: Algorithm { id: Aes256, key_len: 32, block_len: 16, tag_len: 16 } }", format!("{cipher_key:?}"));
         }
 
         {
@@ -889,7 +1019,7 @@ mod tests {
                 UnboundCipherKey::new(&AES_128, key_bytes).unwrap(),
             )
             .unwrap();
-            assert_eq!("PaddedBlockEncryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CBC, padding: PKCS7, .. }", format!("{key:?}"));
+            assert_eq!("PaddedBlockEncryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16, tag_len: 16 }, mode: CBC, padding: PKCS7, .. }", format!("{key:?}"));
             let mut data = vec![0u8; 16];
             let context = key.encrypt(&mut data).unwrap();
             assert_eq!("Iv128", format!("{context:?}"));
@@ -897,20 +1027,20 @@ mod tests {
                 UnboundCipherKey::new(&AES_128, key_bytes).unwrap(),
             )
             .unwrap();
-            assert_eq!("PaddedBlockDecryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CBC, padding: PKCS7, .. }", format!("{key:?}"));
+            assert_eq!("PaddedBlockDecryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16, tag_len: 16 }, mode: CBC, padding: PKCS7, .. }", format!("{key:?}"));
         }
 
         {
             let key_bytes = &[0u8; 16];
             let key =
                 EncryptingKey::ctr(UnboundCipherKey::new(&AES_128, key_bytes).unwrap()).unwrap();
-            assert_eq!("EncryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CTR, .. }", format!("{key:?}"));
+            assert_eq!("EncryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16, tag_len: 16 }, mode: CTR, .. }", format!("{key:?}"));
             let mut data = vec![0u8; 16];
             let context = key.encrypt(&mut data).unwrap();
             assert_eq!("Iv128", format!("{context:?}"));
             let key =
                 DecryptingKey::ctr(UnboundCipherKey::new(&AES_128, key_bytes).unwrap()).unwrap();
-            assert_eq!("DecryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16 }, mode: CTR, .. }", format!("{key:?}"));
+            assert_eq!("DecryptingKey { algorithm: Algorithm { id: Aes128, key_len: 16, block_len: 16, tag_len: 16 }, mode: CTR, .. }", format!("{key:?}"));
         }
     }
 
@@ -1191,4 +1321,24 @@ mod tests {
         "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
         "f58c4c04d6e5f1ba779eabfb5f7bfbd69cfc4e967edb808d679f777bc6702c7d39f23369a9d9bacfa530e26304231461b2eb05e2c39be9fcda6c19078c6a9d1b"
     );
+
+    #[test]
+    fn cmac_basic_test() {
+        use crate::rand;
+
+        for algorithm in [&AES_128, &AES_192, &AES_256, &TDES_FOR_LEGACY_USE_ONLY] {
+            let mut key_bytes = vec![0u8; algorithm.key_len()];
+            rand::fill(&mut key_bytes).unwrap();
+            let data = b"hello, world";
+
+            let mut authenticating_key =
+                AuthenticatingKey::cmac(UnboundCipherKey::new(&algorithm, &key_bytes).unwrap())
+                    .unwrap();
+            let mut verifying_key =
+                VerifyingKey::cmac(UnboundCipherKey::new(&algorithm, &key_bytes).unwrap()).unwrap();
+            let tag = authenticating_key.sign(data).unwrap();
+
+            assert!(verifying_key.verify(data, tag.as_ref()).is_ok());
+        }
+    }
 }
