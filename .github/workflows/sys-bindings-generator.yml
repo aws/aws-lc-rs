@@ -278,7 +278,9 @@ jobs:
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings from ${{ matrix.os }}"
   collect-src-and-commit:
-    needs: generate-bindings-and-commit
+    needs:
+      - generate-bindings-and-commit
+      - generate-universal-bindings-and-commit
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ${{ matrix.os }}
     strategy:
