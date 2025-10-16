@@ -73,6 +73,7 @@ const OSSL_CONF_DEFINES: &[&str] = &[
 
 mod cc_builder;
 mod cmake_builder;
+mod nasm_builder;
 #[cfg(feature = "bindgen")]
 mod sys_bindgen;
 
@@ -633,6 +634,10 @@ fn test_nasm_command() -> bool {
         emit_warning("NASM command not found or failed to execute.");
     }
     status
+}
+
+fn test_clang_cl_command() -> bool {
+    execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
 }
 
 fn prepare_cargo_cfg() {
