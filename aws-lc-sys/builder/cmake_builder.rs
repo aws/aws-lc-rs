@@ -7,7 +7,8 @@ use crate::{
     allow_prebuilt_nasm, cargo_env, disable_jitter_entropy, effective_target, emit_warning,
     execute_command, get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src,
     optional_env, optional_env_optional_crate_target, set_env, set_env_for_target, target_arch,
-    target_env, target_os, test_nasm_command, use_prebuilt_nasm, OutputLibType,
+    target_env, target_os, test_clang_cl_command, test_nasm_command, use_prebuilt_nasm,
+    OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -19,10 +20,6 @@ pub(crate) struct CmakeBuilder {
     out_dir: PathBuf,
     build_prefix: Option<String>,
     output_lib_type: OutputLibType,
-}
-
-fn test_clang_cl_command() -> bool {
-    execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
 }
 
 fn test_prebuilt_nasm_script(script_path: &Path) -> bool {
