@@ -31,6 +31,7 @@ impl ParseCallbacks for StripPrefixCallback {
     }
 }
 
+// These are headers providing functions used by aws-lc-rs
 const ALLOWED_HEADERS: [&str; 29] = [
     "aes.h",
     "aead.h",
@@ -63,6 +64,7 @@ const ALLOWED_HEADERS: [&str; 29] = [
     "sha.h",
 ];
 
+// These functions have parameters using a blocked type
 const BLOCKED_FUNCTIONS: [&str; 5] = [
     "BN_print_fp",
     "CBS_parse_generalized_time",
@@ -71,6 +73,7 @@ const BLOCKED_FUNCTIONS: [&str; 5] = [
     "RSA_print_fp",
 ];
 
+// These types might vary by platform. Ensure that they do not appear in the universal bindings.
 const BLOCKED_TYPES: [&str; 4] = ["FILE", "fpos_t", "tm", "__sFILE"];
 
 fn prepare_bindings_builder(manifest_dir: &Path, options: &BindingOptions) -> bindgen::Builder {
