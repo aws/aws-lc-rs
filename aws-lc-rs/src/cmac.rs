@@ -21,7 +21,7 @@
 //!
 //! let msg = "hello, world";
 //!
-//! let tag = cmac::sign(&key, msg.as_bytes());
+//! let tag = cmac::sign(&key, msg.as_bytes())?;
 //!
 //! // [We give access to the message to an untrusted party, and they give it
 //! // back to us. We need to verify they didn't tamper with it.]
@@ -45,12 +45,12 @@
 //! let rng = rand::SystemRandom::new();
 //! let key_value: [u8; 16] = rand::generate(&rng)?.expose();
 //!
-//! let s_key = cmac::Key::new(cmac::AES_128, key_value.as_ref());
-//! let tag = cmac::sign(&s_key, msg.as_bytes());
+//! let s_key = cmac::Key::new(cmac::AES_128, key_value.as_ref())?;
+//! let tag = cmac::sign(&s_key, msg.as_bytes())?;
 //!
 //! // The receiver (somehow!) knows the key value, and uses it to verify the
 //! // integrity of the message.
-//! let v_key = cmac::Key::new(cmac::AES_128, key_value.as_ref());
+//! let v_key = cmac::Key::new(cmac::AES_128, key_value.as_ref())?;
 //! cmac::verify(&v_key, msg.as_bytes(), tag.as_ref())?;
 //!
 //! # Ok::<(), aws_lc_rs::error::Unspecified>(())
@@ -69,16 +69,16 @@
 //! let rng = rand::SystemRandom::new();
 //! let key_value: [u8; 32] = rand::generate(&rng)?.expose();
 //!
-//! let s_key = cmac::Key::new(cmac::AES_256, key_value.as_ref());
+//! let s_key = cmac::Key::new(cmac::AES_256, key_value.as_ref())?;
 //! let mut s_ctx = cmac::Context::with_key(&s_key);
 //! for part in &parts {
-//!     s_ctx.update(part.as_bytes());
+//!     s_ctx.update(part.as_bytes())?;
 //! }
-//! let tag = s_ctx.sign();
+//! let tag = s_ctx.sign()?;
 //!
 //! // The receiver (somehow!) knows the key value, and uses it to verify the
 //! // integrity of the message.
-//! let v_key = cmac::Key::new(cmac::AES_256, key_value.as_ref());
+//! let v_key = cmac::Key::new(cmac::AES_256, key_value.as_ref())?;
 //! let mut msg = Vec::<u8>::new();
 //! for part in &parts {
 //!     msg.extend(part.as_bytes());
@@ -239,7 +239,7 @@ impl Key {
     pub fn generate(algorithm: Algorithm) -> Result<Self, Unspecified> {
         let mut key_bytes = vec![0u8; algorithm.key_len()];
         rand::fill(&mut key_bytes)?;
-        Ok(Self::new(algorithm, &key_bytes))
+        Self::new(algorithm, &key_bytes)
     }
 
     /// Construct a CMAC signing key using the given algorithm and key value.
@@ -247,16 +247,10 @@ impl Key {
     /// `key_value` should be a value generated using a secure random number
     /// generator or derived from a random key by a key derivation function.
     ///
-    /// # Panics
-    /// Panics if the key length doesn't match the algorithm or if CMAC context
+    /// # Errors
+    /// `error::Unspecified` if the key length doesn't match the algorithm or if CMAC context
     /// initialization fails.
-    #[inline]
-    #[must_use]
-    pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Self {
-        Self::try_new(algorithm, key_value).expect("Unable to create CmacContext")
-    }
-
-    fn try_new(algorithm: Algorithm, key_value: &[u8]) -> Result<Self, Unspecified> {
+    pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Result<Self, Unspecified> {
         if key_value.len() != algorithm.key_len() {
             return Err(Unspecified);
         }
@@ -325,15 +319,9 @@ impl Context {
     /// Updates the CMAC with all the data in `data`. `update` may be called
     /// zero or more times until `sign` is called.
     ///
-    /// # Panics
-    /// Panics if the CMAC cannot be updated.
-    #[inline]
-    pub fn update(&mut self, data: &[u8]) {
-        Self::try_update(self, data).expect("CMAC_Update failed");
-    }
-
-    #[inline]
-    fn try_update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
+    /// # Errors
+    /// `error::Unspecified` if the CMAC cannot be updated.
+    pub fn update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
             if 1 != CMAC_Update(*self.key.ctx.as_mut(), data.as_ptr(), data.len()) {
                 return Err(Unspecified);
@@ -356,16 +344,9 @@ impl Context {
     // * `AES_128`
     // * `AES_256`
     //
-    /// # Panics
-    /// Panics if the CMAC calculation cannot be finalized.
-    #[inline]
-    #[must_use]
-    pub fn sign(self) -> Tag {
-        Self::try_sign(self).expect("CMAC_Final failed")
-    }
-
-    #[inline]
-    fn try_sign(mut self) -> Result<Tag, Unspecified> {
+    /// # Errors
+    /// `error::Unspecified` if the CMAC calculation cannot be finalized.
+    pub fn sign(mut self) -> Result<Tag, Unspecified> {
         let mut output = [0u8; MAX_CMAC_TAG_LEN];
         let mut out_len = MaybeUninit::<usize>::uninit();
         
@@ -402,11 +383,13 @@ impl Context {
 // Use this function with one of the following algorithms:
 // * `AES_128`
 // * `AES_256`
+//
+/// # Errors
+/// `error::Unspecified` if the CMAC calculation fails.
 #[inline]
-#[must_use]
-pub fn sign(key: &Key, data: &[u8]) -> Tag {
+pub fn sign(key: &Key, data: &[u8]) -> Result<Tag, Unspecified> {
     let mut ctx = Context::with_key(key);
-    ctx.update(data);
+    ctx.update(data)?;
     ctx.sign()
 }
 
@@ -427,7 +410,7 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 // * `AES_256`
 #[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
-    let computed_tag = sign(key, data);
+    let computed_tag = sign(key, data)?;
     constant_time::verify_slices_are_equal(computed_tag.as_ref(), tag)
 }
 
@@ -444,7 +427,7 @@ mod tests {
             let key = Key::generate(algorithm).unwrap();
             let data = b"hello, world";
             
-            let tag = sign(&key, data);
+            let tag = sign(&key, data).unwrap();
             assert!(verify(&key, data, tag.as_ref()).is_ok());
             assert!(verify(&key, b"hello, worle", tag.as_ref()).is_err());
         }
@@ -458,7 +441,7 @@ mod tests {
 
         for algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
             let key = Key::generate(*algorithm).unwrap();
-            let tag = sign(&key, HELLO_WORLD_GOOD);
+            let tag = sign(&key, HELLO_WORLD_GOOD).unwrap();
             println!("{key:?}");
             assert!(verify(&key, HELLO_WORLD_GOOD, tag.as_ref()).is_ok());
             assert!(verify(&key, HELLO_WORLD_BAD, tag.as_ref()).is_err());
@@ -475,13 +458,13 @@ mod tests {
         for &alg in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
             // Clone after updating context with message, then check if the final Tag is the same.
             let key_bytes = vec![0u8; alg.key_len()];
-            let key = Key::new(alg, &key_bytes);
+            let key = Key::new(alg, &key_bytes).unwrap();
             let mut ctx = Context::with_key(&key);
-            ctx.update(b"hello, world");
+            ctx.update(b"hello, world").unwrap();
             let ctx_clone = ctx.clone();
 
-            let orig_tag = ctx.sign();
-            let clone_tag = ctx_clone.sign();
+            let orig_tag = ctx.sign().unwrap();
+            let clone_tag = ctx_clone.sign().unwrap();
             assert_eq!(orig_tag.as_ref(), clone_tag.as_ref());
             assert_eq!(orig_tag.clone().as_ref(), clone_tag.as_ref());
         }
@@ -492,12 +475,12 @@ mod tests {
         let key = Key::generate(AES_192).unwrap();
         
         let mut ctx = Context::with_key(&key);
-        ctx.update(b"hello");
-        ctx.update(b", ");
-        ctx.update(b"world");
-        let tag1 = ctx.sign();
+        ctx.update(b"hello").unwrap();
+        ctx.update(b", ").unwrap();
+        ctx.update(b"world").unwrap();
+        let tag1 = ctx.sign().unwrap();
         
-        let tag2 = sign(&key, b"hello, world");
+        let tag2 = sign(&key, b"hello, world").unwrap();
         assert_eq!(tag1.as_ref(), tag2.as_ref());
     }
 
@@ -511,9 +494,9 @@ mod tests {
             // Multi-part signing
             let mut ctx = Context::with_key(&key);
             for part in &parts {
-                ctx.update(part.as_bytes());
+                ctx.update(part.as_bytes()).unwrap();
             }
-            let tag = ctx.sign();
+            let tag = ctx.sign().unwrap();
             
             // Verification with concatenated message
             let mut msg = Vec::<u8>::new();
@@ -532,26 +515,25 @@ mod tests {
         let key_256 = [0u8; 32];
         let key_3des = [0u8; 24];
         
-        let k1 = Key::new(AES_128, &key_128);
-        let k2 = Key::new(AES_192, &key_192);
-        let k3 = Key::new(AES_256, &key_256);
-        let k4 = Key::new(TDES_FOR_LEGACY_USE_ONLY, &key_3des);
+        let k1 = Key::new(AES_128, &key_128).unwrap();
+        let k2 = Key::new(AES_192, &key_192).unwrap();
+        let k3 = Key::new(AES_256, &key_256).unwrap();
+        let k4 = Key::new(TDES_FOR_LEGACY_USE_ONLY, &key_3des).unwrap();
         
         let data = b"test message";
         
         // All should produce valid tags
-        let _ = sign(&k1, data);
-        let _ = sign(&k2, data);
-        let _ = sign(&k3, data);
-        let _ = sign(&k4, data);
+        let _ = sign(&k1, data).unwrap();
+        let _ = sign(&k2, data).unwrap();
+        let _ = sign(&k3, data).unwrap();
+        let _ = sign(&k4, data).unwrap();
     }
 
     #[test]
-    #[should_panic]
     fn cmac_key_new_wrong_length_test() {
         let key_256 = [0u8; 32];
-        // Wrong key length should panic
-        let _ = Key::new(AES_128, &key_256);
+        // Wrong key length should return error
+        assert!(Key::new(AES_128, &key_256).is_err());
     }
 
     #[test]
@@ -574,12 +556,12 @@ mod tests {
         let key = Key::generate(AES_128).unwrap();
         
         // CMAC should work with empty data
-        let tag = sign(&key, b"");
+        let tag = sign(&key, b"").unwrap();
         assert!(verify(&key, b"", tag.as_ref()).is_ok());
         
         // Context version
         let ctx = Context::with_key(&key);
-        let tag2 = ctx.sign();
+        let tag2 = ctx.sign().unwrap();
         assert_eq!(tag.as_ref(), tag2.as_ref());
     }
 
@@ -588,7 +570,7 @@ mod tests {
         let key = Key::generate(TDES_FOR_LEGACY_USE_ONLY).unwrap();
         let data = b"test data for 3DES CMAC";
         
-        let tag = sign(&key, data);
+        let tag = sign(&key, data).unwrap();
         assert_eq!(tag.as_ref().len(), 8); // 3DES block size
         assert!(verify(&key, data, tag.as_ref()).is_ok());
     }

@@ -12,24 +12,26 @@ const TEST_MESSAGE: &str = "test message";
 macro_rules! cmac_api {
     ($name:ident, $alg:expr, $key_len:expr, $expect:path) => {
         #[test]
-        fn $name() {
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
             let rng = SystemRandom::new();
 
             let key_value: [u8; $key_len] = rand::generate(&rng).unwrap().expose();
 
-            let s_key = Key::new($alg, key_value.as_ref());
+            let s_key = Key::new($alg, key_value.as_ref()).unwrap();
 
             let tag = assert_fips_status_indicator!(
-                sign(&s_key, TEST_MESSAGE.as_bytes()),
+                sign(&s_key, TEST_MESSAGE.as_bytes())?,
                 $expect
             );
 
-            let v_key = Key::new($alg, key_value.as_ref());
+            let v_key = Key::new($alg, key_value.as_ref()).unwrap();
 
             assert_fips_status_indicator!(
-                verify(&v_key, TEST_MESSAGE.as_bytes(), tag.as_ref()),
+                verify(&v_key, TEST_MESSAGE.as_bytes(), tag.as_ref())?,
                 $expect
-            ).unwrap();
+            );
+            
+            Ok(())
         }
     };
 }

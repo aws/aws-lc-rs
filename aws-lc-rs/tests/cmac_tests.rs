@@ -17,8 +17,8 @@ fn cavp_cmac_aes128_tests() {
         let input = if mlen == 0 { Vec::new() } else { msg };
         let should_pass = result.chars().next().unwrap() == 'P';
         
-        let cmac_key = cmac::Key::new(cmac::AES_128, &key);
-        let signature = cmac::sign(&cmac_key, &input);
+        let cmac_key = cmac::Key::new(cmac::AES_128, &key).unwrap();
+        let signature = cmac::sign(&cmac_key, &input).unwrap();
         
         // Truncate to tlen
         let truncated_sig = &signature.as_ref()[..std::cmp::min(signature.as_ref().len(), tlen)];
@@ -50,8 +50,8 @@ fn cavp_cmac_aes192_tests() {
         let input = if mlen == 0 { Vec::new() } else { msg };
         let should_pass = result.chars().next().unwrap() == 'P';
         
-        let cmac_key = cmac::Key::new(cmac::AES_192, &key);
-        let signature = cmac::sign(&cmac_key, &input);
+        let cmac_key = cmac::Key::new(cmac::AES_192, &key).unwrap();
+        let signature = cmac::sign(&cmac_key, &input).unwrap();
         
         // Truncate to tlen
         let truncated_sig = &signature.as_ref()[..std::cmp::min(signature.as_ref().len(), tlen)];
@@ -83,8 +83,8 @@ fn cavp_cmac_aes256_tests() {
         let input = if mlen == 0 { Vec::new() } else { msg };
         let should_pass = result.chars().next().unwrap() == 'P';
         
-        let cmac_key = cmac::Key::new(cmac::AES_256, &key);
-        let signature = cmac::sign(&cmac_key, &input);
+        let cmac_key = cmac::Key::new(cmac::AES_256, &key).unwrap();
+        let signature = cmac::sign(&cmac_key, &input).unwrap();
         
         // Truncate to tlen
         let truncated_sig = &signature.as_ref()[..std::cmp::min(signature.as_ref().len(), tlen)];
@@ -123,8 +123,8 @@ fn cavp_cmac_3des_tests() {
         let input = if mlen == 0 { Vec::new() } else { msg };
         let should_pass = result.chars().next().unwrap() == 'P';
         
-        let cmac_key = cmac::Key::new(cmac::TDES_FOR_LEGACY_USE_ONLY, &combined_key);
-        let signature = cmac::sign(&cmac_key, &input);
+        let cmac_key = cmac::Key::new(cmac::TDES_FOR_LEGACY_USE_ONLY, &combined_key).unwrap();
+        let signature = cmac::sign(&cmac_key, &input).unwrap();
         
         // Truncate to tlen
         let truncated_sig = &signature.as_ref()[..std::cmp::min(signature.as_ref().len(), tlen)];
