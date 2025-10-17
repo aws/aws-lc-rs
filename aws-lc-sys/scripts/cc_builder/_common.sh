@@ -43,6 +43,7 @@ function s2n_bignum_aarch64() {
       | rg --pcre2 -v '/arm/.*/unopt/' \
       | rg --pcre2 -v '/arm/p384/(p384_montj(mix)?add|bignum_(?!add|deamont|littleendian|mont|neg|nonzero|sub|tomont))' \
       | rg --pcre2 -v '/arm/p521/(bignum_(.*mont.*|cmul|double|half|optneg|triple)_p521(_alt)?\.S|bignum_mod_[np]521_9\.S|p521_j(mix)?add(_alt)?\.S)' \
+      | rg --pcre2 -v '/arm/sha3/sha3_keccak(4_f1600|2_f1600_alt)\.S' \
       | sort -f
 }
 
