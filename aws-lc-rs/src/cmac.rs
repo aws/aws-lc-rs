@@ -91,29 +91,36 @@
 //! [NIST SP 800-38B]: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-38b.pdf
 
 use crate::aws_lc::{
-    CMAC_CTX_copy, CMAC_CTX_new, CMAC_Final, CMAC_Init,
-    CMAC_Update, EVP_aes_128_cbc, EVP_aes_192_cbc, EVP_aes_256_cbc, EVP_des_ede3_cbc, CMAC_CTX,
+    CMAC_CTX, CMAC_CTX_copy, CMAC_CTX_new, CMAC_Final, CMAC_Init,
+    CMAC_Update, EVP_CIPHER, EVP_aes_128_cbc, EVP_aes_192_cbc, EVP_aes_256_cbc, EVP_des_ede3_cbc,
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
-use crate::ptr::LcPtr;
+use crate::ptr::{ConstPointer, LcPtr};
 use crate::{constant_time, rand};
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum AlgorithmId {
+    Aes128,
+    Aes192,
+    Aes256,
+    Tdes,
+}
+
 /// A CMAC algorithm.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Algorithm {
-    name: &'static str,
+    id: AlgorithmId,
     key_len: usize,
     tag_len: usize,
-    cipher_fn: unsafe extern "C" fn() -> *const crate::aws_lc::EVP_CIPHER,
 }
 
 impl core::fmt::Debug for Algorithm {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
         f.debug_struct("Algorithm")
-            .field("name", &self.name)
+            .field("id", &self.id)
             .field("key_len", &self.key_len)
             .field("tag_len", &self.tag_len)
             .finish()
@@ -136,36 +143,45 @@ impl Algorithm {
     }
 }
 
+impl AlgorithmId {
+    fn evp_cipher(&self) -> ConstPointer<'_, EVP_CIPHER> {
+        unsafe {
+            ConstPointer::new_static(match self {
+                AlgorithmId::Aes128 => EVP_aes_128_cbc(),
+                AlgorithmId::Aes192 => EVP_aes_192_cbc(),
+                AlgorithmId::Aes256 => EVP_aes_256_cbc(),
+                AlgorithmId::Tdes => EVP_des_ede3_cbc(),
+            }).unwrap()
+        }
+    }
+}
+
 /// CMAC using AES-128.
 pub const AES_128: Algorithm = Algorithm {
-    name: "AES_128",
+    id: AlgorithmId::Aes128,
     key_len: 16,
     tag_len: 16,
-    cipher_fn: EVP_aes_128_cbc,
 };
 
 /// CMAC using AES-192.
 pub const AES_192: Algorithm = Algorithm {
-    name: "AES_192",
+    id: AlgorithmId::Aes192,
     key_len: 24,
     tag_len: 16,
-    cipher_fn: EVP_aes_192_cbc,
 };
 
 /// CMAC using AES-256.
 pub const AES_256: Algorithm = Algorithm {
-    name: "AES_256",
+    id: AlgorithmId::Aes256,
     key_len: 32,
     tag_len: 16,
-    cipher_fn: EVP_aes_256_cbc,
 };
 
 /// CMAC using 3DES (Triple DES). Obsolete
 pub const TDES_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
-    name: "TDES",
+    id: AlgorithmId::Tdes,
     key_len: 24,
     tag_len: 8,
-    cipher_fn: EVP_des_ede3_cbc,
 };
 
 /// Maximum CMAC tag length (AES block size).
@@ -258,12 +274,12 @@ impl Key {
         let mut ctx = LcPtr::new(unsafe { CMAC_CTX_new() })?;
         
         unsafe {
-            let cipher = (algorithm.cipher_fn)();
+            let cipher = algorithm.id.evp_cipher();
             if 1 != CMAC_Init(
                 *ctx.as_mut(),
                 key_value.as_ptr().cast(),
                 key_value.len(),
-                cipher,
+                *cipher,
                 null_mut(),
             ) {
                 return Err(Unspecified);
