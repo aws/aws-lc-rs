@@ -104,6 +104,7 @@ bindgen_available!(
 );
 mod cc_builder;
 mod cmake_builder;
+mod nasm_builder;
 
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("aws-lc").join("include")
@@ -666,6 +667,10 @@ fn test_nasm_command() -> bool {
         emit_warning("NASM command not found or failed to execute.");
     }
     status
+}
+
+fn test_clang_cl_command() -> bool {
+    execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
 }
 
 fn prepare_cargo_cfg() {
