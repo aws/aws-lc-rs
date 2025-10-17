@@ -163,6 +163,7 @@ extern crate aws_lc_sys as aws_lc;
 
 pub mod aead;
 pub mod agreement;
+pub mod cmac;
 pub mod constant_time;
 pub mod digest;
 pub mod error;
