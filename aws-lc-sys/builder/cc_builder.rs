@@ -267,13 +267,12 @@ impl CcBuilder {
         };
         if !is_like_msvc {
             build_options.push(BuildOption::flag("-Wno-unused-parameter"));
-            if target_os() == "linux"
-                || target_os().ends_with("bsd")
-                || target_env() == "gnu"
-                || target_env() == "musl"
-            {
+            build_options.push(BuildOption::flag("-pthread"));
+            if target_os() == "linux" {
                 build_options.push(BuildOption::define("_XOPEN_SOURCE", "700"));
-                build_options.push(BuildOption::flag("-pthread"));
+            } else if target_vendor() != "apple" {
+                // Needed by illumos
+                build_options.push(BuildOption::define("__EXTENSIONS__", "1"));
             }
         }
         if Some(true) == disable_jitter_entropy() {
