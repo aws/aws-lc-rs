@@ -11,11 +11,14 @@ source "${SCRIPT_DIR}/_common.sh"
 
 pushd "${AWS_LC_DIR}"
 declare -a SOURCE_FILES
-SOURCE_FILES=("crypto/hrss/asm/poly_rq_mul.S")
-mapfile -O 1 -t SOURCE_FILES < <(find crypto -name "*.c" -type f | rg --pcre2 -v 'crypto/fipsmodule/(?!(bcm.c|cpucap/cpucap.c))' | rg --pcre2 -v 'crypto/kyber/pqcrystals_kyber_ref_common/(?!fips202.c)' | rg --pcre2 -v '_test\.c$' | sort -f)
+SOURCE_FILES=()
+mapfile -O 0 -t SOURCE_FILES < <(find crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src -name "*.S" -type f | sort -f)
 echo "${SOURCE_FILES[@]}"
-mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(find third_party/jitterentropy/jitterentropy-library/src -type f -name "*.c" | sort -f)
+mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(find generated-src/linux-x86_64/crypto -name "*.S" -type f  | sort -f)
 echo "${SOURCE_FILES[@]}"
+mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(s2n_bignum_x86_64)
+echo "${SOURCE_FILES[@]}"
+
 popd
 
 # Sort SOURCE_FILES array
