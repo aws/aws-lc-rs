@@ -219,9 +219,7 @@ impl Clone for LcPtr<CMAC_CTX> {
     fn clone(&self) -> Self {
         let mut new_ctx = LcPtr::new(unsafe { CMAC_CTX_new() }).expect("CMAC_CTX_new failed");
         unsafe {
-            if 1 != CMAC_CTX_copy(*new_ctx.as_mut(), *self.as_const()) {
-                panic!("CMAC_CTX_copy failed");
-            }
+            assert!(1 == CMAC_CTX_copy(*new_ctx.as_mut(), *self.as_const()), "CMAC_CTX_copy failed");
         }
         new_ctx
     }

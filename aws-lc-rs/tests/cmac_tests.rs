@@ -15,7 +15,7 @@ fn cavp_cmac_aes128_tests() {
         let result = test_case.consume_string("Result");
         
         let input = if mlen == 0 { Vec::new() } else { msg };
-        let should_pass = result.chars().next().unwrap() == 'P';
+        let should_pass = result.starts_with('P');
         
         let cmac_key = cmac::Key::new(cmac::AES_128, &key).unwrap();
         let signature = cmac::sign(&cmac_key, &input).unwrap();
@@ -48,7 +48,7 @@ fn cavp_cmac_aes192_tests() {
         let result = test_case.consume_string("Result");
         
         let input = if mlen == 0 { Vec::new() } else { msg };
-        let should_pass = result.chars().next().unwrap() == 'P';
+        let should_pass = result.starts_with('P');
         
         let cmac_key = cmac::Key::new(cmac::AES_192, &key).unwrap();
         let signature = cmac::sign(&cmac_key, &input).unwrap();
@@ -81,7 +81,7 @@ fn cavp_cmac_aes256_tests() {
         let result = test_case.consume_string("Result");
         
         let input = if mlen == 0 { Vec::new() } else { msg };
-        let should_pass = result.chars().next().unwrap() == 'P';
+        let should_pass = result.starts_with('P');
         
         let cmac_key = cmac::Key::new(cmac::AES_256, &key).unwrap();
         let signature = cmac::sign(&cmac_key, &input).unwrap();
@@ -121,7 +121,7 @@ fn cavp_cmac_3des_tests() {
         combined_key.extend(key3);
         
         let input = if mlen == 0 { Vec::new() } else { msg };
-        let should_pass = result.chars().next().unwrap() == 'P';
+        let should_pass = result.starts_with('P');
         
         let cmac_key = cmac::Key::new(cmac::TDES_FOR_LEGACY_USE_ONLY, &combined_key).unwrap();
         let signature = cmac::sign(&cmac_key, &input).unwrap();
