@@ -8,6 +8,7 @@
 mod apple_aarch64;
 mod apple_x86_64;
 mod linux_aarch64;
+mod linux_arm;
 mod linux_ppc64le;
 mod linux_x86;
 mod linux_x86_64;
@@ -67,6 +68,8 @@ fn identify_sources() -> Vec<&'static str> {
         source_files.append(&mut Vec::from(linux_x86_64::CRYPTO_LIBRARY));
     } else if target_arch() == "aarch64" {
         source_files.append(&mut Vec::from(linux_aarch64::CRYPTO_LIBRARY));
+    } else if target_arch() == "arm" {
+        source_files.append(&mut Vec::from(linux_arm::CRYPTO_LIBRARY));
     } else if target_arch() == "x86" {
         source_files.append(&mut Vec::from(linux_x86::CRYPTO_LIBRARY));
     } else if target_arch() == "powerpc64le" {
