@@ -110,21 +110,11 @@ enum AlgorithmId {
 }
 
 /// A CMAC algorithm.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Algorithm {
     id: AlgorithmId,
     key_len: usize,
     tag_len: usize,
-}
-
-impl core::fmt::Debug for Algorithm {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
-        f.debug_struct("Algorithm")
-            .field("id", &self.id)
-            .field("key_len", &self.key_len)
-            .field("tag_len", &self.tag_len)
-            .finish()
-    }
 }
 
 impl Algorithm {
@@ -374,6 +364,10 @@ impl Context {
             }
             
             let actual_len = out_len.assume_init();
+            if actual_len > MAX_CMAC_TAG_LEN {
+                // This indicates a memory corruption.
+                panic!("CMAC tag length {} exceeds maximum {}", actual_len, MAX_CMAC_TAG_LEN);
+            }
             if actual_len != self.key.algorithm.tag_len() {
                 return Err(Unspecified);
             }
@@ -409,9 +403,6 @@ pub fn sign(key: &Key, data: &[u8]) -> Result<Tag, Unspecified> {
 
 /// Calculates the CMAC of `data` using the signing key `key`, and verifies
 /// whether the resultant value equals `tag`, in one step.
-///
-/// This is logically equivalent to, but more efficient than, constructing a
-/// `Key` with the same value as `key` and then using `verify`.
 ///
 /// The verification will be done in constant time to prevent timing attacks.
 ///
