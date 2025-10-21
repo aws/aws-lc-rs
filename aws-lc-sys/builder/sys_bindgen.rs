@@ -31,9 +31,9 @@ impl ParseCallbacks for StripPrefixCallback {
     }
 }
 
-const ALLOWED_HEADERS: [&str; 29] = [
-    "aes.h",
+const ALLOWED_HEADERS: [&str; 30] = [
     "aead.h",
+    "aes.h",
     "base.h",
     "bn.h",
     "boringssl_prefix_symbols.h",
@@ -42,6 +42,7 @@ const ALLOWED_HEADERS: [&str; 29] = [
     "bytestring.h",
     "chacha.h",
     "cipher.h",
+    "cmac.h",
     "crypto.h",
     "curve25519.h",
     "digest.h",
