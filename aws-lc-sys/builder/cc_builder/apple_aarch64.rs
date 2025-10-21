@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Thu Oct 16 20:45:49 UTC 2025
+// Tue Oct 21 11:29:18 UTC 2025
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/intt.S",
@@ -95,11 +95,9 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "third_party/s2n-bignum/s2n-bignum-imported/arm/p521/p521_jscalarmul.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak_f1600_alt.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak_f1600.S",
-    "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak2_f1600_alt.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak2_f1600.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak4_f1600_alt.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak4_f1600_alt2.S",
-    "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak4_f1600.S",
     "third_party/s2n-bignum/s2n-bignum-to-be-imported/arm/aes/aes-xts-dec.S",
     "third_party/s2n-bignum/s2n-bignum-to-be-imported/arm/aes/aes-xts-enc.S",
 ];

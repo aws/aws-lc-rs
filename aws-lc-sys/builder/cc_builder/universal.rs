@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Thu Oct 16 17:46:27 UTC 2025
+// Tue Oct 21 11:29:19 UTC 2025
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/asn1/a_bitstr.c",
