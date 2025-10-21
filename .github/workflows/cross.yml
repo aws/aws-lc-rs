@@ -457,6 +457,43 @@ jobs:
         shell: msys2 {0}
         run: cargo test --verbose --features bindgen --release -p aws-lc-rs
 
+  msys2-no-cmake:
+    name: msys2-no-cmake ${{ matrix.sys }} - ${{ matrix.nasm }}
+    if: github.repository_owner == 'aws'
+    runs-on: windows-latest
+    env:
+      AWS_LC_SYS_EXTERNAL_BINDGEN: 1
+      AWS_LC_SYS_CMAKE_BUILDER: 0
+    strategy:
+      fail-fast: false
+      matrix:
+        sys:
+          - mingw64
+          - ucrt64
+          - clang64
+        nasm:
+          - 'prebuilt'
+          - 'nasm'
+    steps:
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        id: setup_msys2
+        with:
+          msystem: ${{ matrix.sys }}
+          update: true
+          pacboy: >-
+            toolchain
+            rust
+            rust-bindgen
+            cc
+            ${{ (matrix.nasm == 'nasm' && 'nasm') || 'make' }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Test
+        run: cargo test --verbose --features bindgen --release -p aws-lc-rs
+
   musl-tests:
     name: musl - ${{ matrix.config.arch }}
     env:
