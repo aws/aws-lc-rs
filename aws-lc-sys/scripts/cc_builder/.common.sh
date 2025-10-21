@@ -2,6 +2,9 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0 OR ISC
 
+set -ex
+set -o pipefail
+
 if [[ ${BASH_VERSINFO[0]} -lt 4 ]]; then
     echo Must use bash 4 or later: ${BASH_VERSION}
     exit 1
