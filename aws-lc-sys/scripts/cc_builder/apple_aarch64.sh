@@ -7,7 +7,7 @@ set -o pipefail
 SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 SCRIPT_NAME="$(basename -s .sh -- "${BASH_SOURCE[0]}")"
 
-source "${SCRIPT_DIR}/_common.sh"
+source "${SCRIPT_DIR}/.common.sh"
 
 pushd "${AWS_LC_DIR}"
 declare -a SOURCE_FILES
