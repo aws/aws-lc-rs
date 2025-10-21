@@ -11,11 +11,10 @@ source "${SCRIPT_DIR}/.common.sh"
 
 pushd "${AWS_LC_DIR}"
 declare -a SOURCE_FILES
-SOURCE_FILES=("generated-src/err_data.c")
-mapfile -O 1 -t SOURCE_FILES < <(find crypto -name "*.c" -type f | rg --pcre2 -v 'crypto/fipsmodule/(?!(bcm.c|cpucap/cpucap.c))' | rg --pcre2 -v 'crypto/kyber/pqcrystals_kyber_ref_common/(?!fips202.c)' | rg --pcre2 -v '_test\.c$' | sort -f)
+SOURCE_FILES=( )
+mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(find generated-src/win-x86_64/crypto -name "*.asm" -type f  | sort -f)
 echo "${SOURCE_FILES[@]}"
-mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(find third_party/jitterentropy/jitterentropy-library/src -type f -name "*.c" | sort -f)
-echo "${SOURCE_FILES[@]}"
+
 popd
 
 # Sort SOURCE_FILES array
