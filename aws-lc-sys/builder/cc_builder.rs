@@ -705,6 +705,10 @@ impl crate::Builder for CcBuilder {
             return Err("CcBuilder only supports static builds".to_string());
         }
 
+        if target_env() == "ohos" {
+            return Err("OpenHarmony targets must be built with CMake.".to_string());
+        }
+
         if Some(true) == env_var_to_bool("CARGO_FEATURE_SSL") {
             return Err("cc_builder for libssl not supported".to_string());
         }
