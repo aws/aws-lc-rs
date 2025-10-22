@@ -350,6 +350,9 @@ impl Context {
     //
     /// # Errors
     /// `error::Unspecified` if the CMAC calculation cannot be finalized.
+    /// 
+    /// # Panics
+    /// Panics if the CMAC tag length exceeds the maximum allowed length, indicating memory corruption.
     pub fn sign(mut self) -> Result<Tag, Unspecified> {
         let mut output = [0u8; MAX_CMAC_TAG_LEN];
         let mut out_len = MaybeUninit::<usize>::uninit();
@@ -364,10 +367,8 @@ impl Context {
             }
             
             let actual_len = out_len.assume_init();
-            if actual_len > MAX_CMAC_TAG_LEN {
-                // This indicates a memory corruption.
-                panic!("CMAC tag length {} exceeds maximum {}", actual_len, MAX_CMAC_TAG_LEN);
-            }
+            // This indicates a memory corruption.
+            assert!(actual_len <= MAX_CMAC_TAG_LEN, "CMAC tag length {actual_len} exceeds maximum {MAX_CMAC_TAG_LEN}");
             if actual_len != self.key.algorithm.tag_len() {
                 return Err(Unspecified);
             }
