@@ -7925,6 +7925,58 @@ impl Default for evp_cipher_info_st {
     }
 }
 pub type EVP_CIPHER_INFO = evp_cipher_info_st;
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_33_0_AES_CMAC"]
+    pub fn AES_CMAC(
+        out: *mut u8,
+        key: *const u8,
+        key_len: usize,
+        in_: *const u8,
+        in_len: usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_33_0_CMAC_CTX_new"]
+    pub fn CMAC_CTX_new() -> *mut CMAC_CTX;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_33_0_CMAC_CTX_free"]
+    pub fn CMAC_CTX_free(ctx: *mut CMAC_CTX);
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_33_0_CMAC_CTX_copy"]
+    pub fn CMAC_CTX_copy(out: *mut CMAC_CTX, in_: *const CMAC_CTX) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_33_0_CMAC_Init"]
+    pub fn CMAC_Init(
+        ctx: *mut CMAC_CTX,
+        key: *const ::std::os::raw::c_void,
+        key_len: usize,
+        cipher: *const EVP_CIPHER,
+        engine: *mut ENGINE,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_33_0_CMAC_Reset"]
+    pub fn CMAC_Reset(ctx: *mut CMAC_CTX) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_33_0_CMAC_Update"]
+    pub fn CMAC_Update(ctx: *mut CMAC_CTX, in_: *const u8, in_len: usize) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_33_0_CMAC_Final"]
+    pub fn CMAC_Final(
+        ctx: *mut CMAC_CTX,
+        out: *mut u8,
+        out_len: *mut usize,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    #[link_name = "\u{1}_aws_lc_0_33_0_CMAC_CTX_get0_cipher_ctx"]
+    pub fn CMAC_CTX_get0_cipher_ctx(ctx: *mut CMAC_CTX) -> *mut EVP_CIPHER_CTX;
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct conf_value_st {
