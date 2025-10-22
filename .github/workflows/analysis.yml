@@ -20,6 +20,9 @@ env:
   RUST_SCRIPT_NIGHTLY_TOOLCHAIN: nightly
   DEBIAN_FRONTEND: noninteractive
 
+permissions:
+  contents: read
+
 jobs:
   rustfmt:
     if: github.repository_owner == 'aws'

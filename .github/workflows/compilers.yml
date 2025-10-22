@@ -19,6 +19,9 @@ env:
   RUST_NIGHTLY_TOOLCHAIN: nightly
   DEBIAN_FRONTEND: noninteractive
 
+permissions:
+  contents: read
+
 jobs:
 
   aws-lc-rs-2004-gcc:
