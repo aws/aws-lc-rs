@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
 //! CMAC is specified in [RFC 4493] and [NIST SP 800-38B].
 //!
 //! After a `Key` is constructed, it can be used for multiple signing or
@@ -91,8 +94,8 @@
 //! [NIST SP 800-38B]: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-38b.pdf
 
 use crate::aws_lc::{
-    CMAC_CTX, CMAC_CTX_copy, CMAC_CTX_new, CMAC_Final, CMAC_Init,
-    CMAC_Update, EVP_CIPHER, EVP_aes_128_cbc, EVP_aes_192_cbc, EVP_aes_256_cbc, EVP_des_ede3_cbc,
+    CMAC_CTX_copy, CMAC_CTX_new, CMAC_Final, CMAC_Init, CMAC_Update, EVP_aes_128_cbc,
+    EVP_aes_192_cbc, EVP_aes_256_cbc, EVP_des_ede3_cbc, CMAC_CTX, EVP_CIPHER,
 };
 use crate::error::Unspecified;
 use crate::fips::indicator_check;
@@ -141,7 +144,8 @@ impl AlgorithmId {
                 AlgorithmId::Aes192 => EVP_aes_192_cbc(),
                 AlgorithmId::Aes256 => EVP_aes_256_cbc(),
                 AlgorithmId::Tdes => EVP_des_ede3_cbc(),
-            }).unwrap()
+            })
+            .unwrap()
         }
     }
 }
@@ -209,7 +213,10 @@ impl Clone for LcPtr<CMAC_CTX> {
     fn clone(&self) -> Self {
         let mut new_ctx = LcPtr::new(unsafe { CMAC_CTX_new() }).expect("CMAC_CTX_new failed");
         unsafe {
-            assert!(1 == CMAC_CTX_copy(*new_ctx.as_mut(), *self.as_const()), "CMAC_CTX_copy failed");
+            assert!(
+                1 == CMAC_CTX_copy(*new_ctx.as_mut(), *self.as_const()),
+                "CMAC_CTX_copy failed"
+            );
         }
         new_ctx
     }
@@ -260,7 +267,7 @@ impl Key {
         }
 
         let mut ctx = LcPtr::new(unsafe { CMAC_CTX_new() })?;
-        
+
         unsafe {
             let cipher = algorithm.id.evp_cipher();
             if 1 != CMAC_Init(
@@ -315,9 +322,7 @@ impl Context {
     #[inline]
     #[must_use]
     pub fn with_key(key: &Key) -> Self {
-        Self {
-            key: key.clone(),
-        }
+        Self { key: key.clone() }
     }
 
     /// Updates the CMAC with all the data in `data`. `update` may be called
@@ -350,13 +355,13 @@ impl Context {
     //
     /// # Errors
     /// `error::Unspecified` if the CMAC calculation cannot be finalized.
-    /// 
+    ///
     /// # Panics
     /// Panics if the CMAC tag length exceeds the maximum allowed length, indicating memory corruption.
     pub fn sign(mut self) -> Result<Tag, Unspecified> {
         let mut output = [0u8; MAX_CMAC_TAG_LEN];
         let mut out_len = MaybeUninit::<usize>::uninit();
-        
+
         unsafe {
             if 1 != indicator_check!(CMAC_Final(
                 *self.key.ctx.as_mut(),
@@ -365,14 +370,17 @@ impl Context {
             )) {
                 return Err(Unspecified);
             }
-            
+
             let actual_len = out_len.assume_init();
             // This indicates a memory corruption.
-            assert!(actual_len <= MAX_CMAC_TAG_LEN, "CMAC tag length {actual_len} exceeds maximum {MAX_CMAC_TAG_LEN}");
+            assert!(
+                actual_len <= MAX_CMAC_TAG_LEN,
+                "CMAC tag length {actual_len} exceeds maximum {MAX_CMAC_TAG_LEN}"
+            );
             if actual_len != self.key.algorithm.tag_len() {
                 return Err(Unspecified);
             }
-            
+
             Ok(Tag {
                 bytes: output,
                 len: actual_len,
@@ -432,7 +440,7 @@ mod tests {
         for &algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
             let key = Key::generate(algorithm).unwrap();
             let data = b"hello, world";
-            
+
             let tag = sign(&key, data).unwrap();
             assert!(verify(&key, data, tag.as_ref()).is_ok());
             assert!(verify(&key, b"hello, worle", tag.as_ref()).is_err());
@@ -479,13 +487,13 @@ mod tests {
     #[test]
     fn cmac_context_test() {
         let key = Key::generate(AES_192).unwrap();
-        
+
         let mut ctx = Context::with_key(&key);
         ctx.update(b"hello").unwrap();
         ctx.update(b", ").unwrap();
         ctx.update(b"world").unwrap();
         let tag1 = ctx.sign().unwrap();
-        
+
         let tag2 = sign(&key, b"hello, world").unwrap();
         assert_eq!(tag1.as_ref(), tag2.as_ref());
     }
@@ -493,17 +501,17 @@ mod tests {
     #[test]
     fn cmac_multi_part_test() {
         let parts = ["hello", ", ", "world"];
-        
+
         for &algorithm in &[AES_128, AES_256] {
             let key = Key::generate(algorithm).unwrap();
-            
+
             // Multi-part signing
             let mut ctx = Context::with_key(&key);
             for part in &parts {
                 ctx.update(part.as_bytes()).unwrap();
             }
             let tag = ctx.sign().unwrap();
-            
+
             // Verification with concatenated message
             let mut msg = Vec::<u8>::new();
             for part in &parts {
@@ -517,17 +525,17 @@ mod tests {
     fn cmac_key_new_test() {
         // Test Key::new with explicit key values
         let key_128 = [0u8; 16];
-        let key_192 = [0u8; 24]; 
+        let key_192 = [0u8; 24];
         let key_256 = [0u8; 32];
         let key_3des = [0u8; 24];
-        
+
         let k1 = Key::new(AES_128, &key_128).unwrap();
         let k2 = Key::new(AES_192, &key_192).unwrap();
         let k3 = Key::new(AES_256, &key_256).unwrap();
         let k4 = Key::new(TDES_FOR_LEGACY_USE_ONLY, &key_3des).unwrap();
-        
+
         let data = b"test message";
-        
+
         // All should produce valid tags
         let _ = sign(&k1, data).unwrap();
         let _ = sign(&k2, data).unwrap();
@@ -546,13 +554,13 @@ mod tests {
     fn cmac_algorithm_properties() {
         assert_eq!(AES_128.key_len(), 16);
         assert_eq!(AES_128.tag_len(), 16);
-        
+
         assert_eq!(AES_192.key_len(), 24);
         assert_eq!(AES_192.tag_len(), 16);
-        
+
         assert_eq!(AES_256.key_len(), 32);
         assert_eq!(AES_256.tag_len(), 16);
-        
+
         assert_eq!(TDES_FOR_LEGACY_USE_ONLY.key_len(), 24);
         assert_eq!(TDES_FOR_LEGACY_USE_ONLY.tag_len(), 8);
     }
@@ -560,11 +568,11 @@ mod tests {
     #[test]
     fn cmac_empty_data() {
         let key = Key::generate(AES_128).unwrap();
-        
+
         // CMAC should work with empty data
         let tag = sign(&key, b"").unwrap();
         assert!(verify(&key, b"", tag.as_ref()).is_ok());
-        
+
         // Context version
         let ctx = Context::with_key(&key);
         let tag2 = ctx.sign().unwrap();
@@ -575,7 +583,7 @@ mod tests {
     fn des_ede3_cmac_test() {
         let key = Key::generate(TDES_FOR_LEGACY_USE_ONLY).unwrap();
         let data = b"test data for 3DES CMAC";
-        
+
         let tag = sign(&key, data).unwrap();
         assert_eq!(tag.as_ref().len(), 8); // 3DES block size
         assert!(verify(&key, data, tag.as_ref()).is_ok());

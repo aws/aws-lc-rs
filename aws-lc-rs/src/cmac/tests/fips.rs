@@ -19,10 +19,8 @@ macro_rules! cmac_api {
 
             let s_key = Key::new($alg, key_value.as_ref()).unwrap();
 
-            let tag = assert_fips_status_indicator!(
-                sign(&s_key, TEST_MESSAGE.as_bytes())?,
-                $expect
-            );
+            let tag =
+                assert_fips_status_indicator!(sign(&s_key, TEST_MESSAGE.as_bytes())?, $expect);
 
             let v_key = Key::new($alg, key_value.as_ref()).unwrap();
 
@@ -30,7 +28,7 @@ macro_rules! cmac_api {
                 verify(&v_key, TEST_MESSAGE.as_bytes(), tag.as_ref())?,
                 $expect
             );
-            
+
             Ok(())
         }
     };
@@ -39,4 +37,9 @@ macro_rules! cmac_api {
 cmac_api!(aes_128, AES_128, 16, FipsServiceStatus::Approved);
 cmac_api!(aes_192, AES_192, 24, FipsServiceStatus::NonApproved);
 cmac_api!(aes_256, AES_256, 32, FipsServiceStatus::Approved);
-cmac_api!(tdes, TDES_FOR_LEGACY_USE_ONLY, 24, FipsServiceStatus::NonApproved);
+cmac_api!(
+    tdes,
+    TDES_FOR_LEGACY_USE_ONLY,
+    24,
+    FipsServiceStatus::NonApproved
+);
