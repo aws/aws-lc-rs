@@ -4,8 +4,8 @@
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     cargo_env, effective_target, emit_rustc_cfg, emit_warning, execute_command,
-    is_cpu_jitter_entropy, is_no_asm, option_env, target_arch, target_env, target_family,
-    target_os, target_underscored, target_vendor, OutputLibType, TestCommandResult,
+    is_cpu_jitter_entropy, is_crt_static, is_no_asm, option_env, target_arch, target_env,
+    target_family, target_os, target_underscored, target_vendor, OutputLibType, TestCommandResult,
 };
 use std::collections::HashMap;
 use std::env;
@@ -161,6 +161,11 @@ impl CmakeBuilder {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
         } else {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
+        }
+
+        if is_crt_static() {
+            // Need to set this flag to enable static runtime for FIPS binaries due to limitations in cmake-rs and ninja generator.
+            cmake_cfg.define("AWS_LC_FIPS_SYS_STATIC_RUNTIME", "ON");
         }
 
         Self::verify_compiler_support(&cc_build.get_compiler());
