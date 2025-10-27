@@ -72,8 +72,14 @@ jobs:
 
   windows-debug-crt-static-test:
     if: github.repository_owner == 'aws'
-    name: "Windows debug w/ crt-static Test"
+    name: "Windows debug ${{ matrix.cli }} w/ crt-static Test"
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cli:
+          - ''
+          - '--fips'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -86,7 +92,7 @@ jobs:
         working-directory: ./aws-lc-rs
         shell: bash
         run: |
-          ./scripts/run-windows-debug-crt-static-test.sh
+          ./scripts/run-windows-debug-crt-static-test.sh ${{ matrix.cli }}
 
   ssl-test:
     if: github.repository_owner == 'aws'

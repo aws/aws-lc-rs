@@ -272,18 +272,26 @@ jobs:
 
   aws-lc-rs-windows-msvc:
     if: ${{ github.repository_owner == 'aws' }}
-    name: ${{ matrix.target }} - ${{ (matrix.crt_static == '1' && 'crt-static and /WX') || '/WX' }}
+    name: ${{ matrix.target }} ${{ (matrix.fips == '1' && '(FIPS)') || '' }} - ${{ (matrix.crt_static == '1' && 'crt-static and /WX') || '/WX' }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
         target:
-          - "x86_64-pc-windows-msvc"
-          - "i686-pc-windows-msvc"
-          - "aarch64-pc-windows-msvc"
+          - 'x86_64-pc-windows-msvc'
+          - 'i686-pc-windows-msvc'
+          - 'aarch64-pc-windows-msvc'
         crt_static:
-          - "0"
-          - "1"
+          - '0'
+          - '1'
+        fips:
+          - '0'
+          - '1'
+        exclude:
+          - target: "i686-pc-windows-msvc"
+            fips: '1'
+          - target: "aarch64-pc-windows-msvc"
+            fips: '1'
     steps:
       - name: Install NASM
         if: ${{ matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'i686-pc-windows-msvc' }}
@@ -311,9 +319,10 @@ jobs:
             echo "RUSTFLAGS=-Clink-arg=/WX" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
       - name: Debug build
-        run: cargo ${{ env.ACTION_CARGO }} -p aws-lc-rs --all-targets --target ${{ matrix.target }} --features bindgen
+        run: cargo ${{ env.ACTION_CARGO }} -p aws-lc-rs --all-targets --target ${{ matrix.target }} --features bindgen${{ (matrix.fips == '1' && ',fips') || '' }}
       - name: Release Build for ${{ matrix.target }}
-        run: cargo ${{ env.ACTION_CARGO }} --release -p aws-lc-rs --all-targets --target ${{ matrix.target }}
+        run: cargo ${{ env.ACTION_CARGO }} --release -p aws-lc-rs --all-targets --target ${{ matrix.target }}${{ (matrix.fips == '1' && ' --features fips') || '' }}
+
   freebsd:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs freebsd test
