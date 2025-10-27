@@ -475,8 +475,12 @@ fn prepare_cargo_cfg() {
 }
 
 fn is_crt_static() -> bool {
-    let features = cargo_env("CARGO_CFG_TARGET_FEATURE");
-    features.contains("crt-static")
+    // Some cross-compilation environment apparently don't have this defined.
+    if let Some(features) = option_env("CARGO_CFG_TARGET_FEATURE") {
+        features.contains("crt-static")
+    } else {
+        false
+    }
 }
 
 bindgen_available!(
