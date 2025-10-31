@@ -95,6 +95,22 @@ impl CmakeBuilder {
             set_env("CMAKE_GENERATOR", generator);
         }
 
+        let opt_level = cargo_env("OPT_LEVEL");
+        match opt_level.as_str() {
+            "0" => {
+                cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
+            }
+            "1" | "2" => {
+                cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
+            }
+            "s" | "z" => {
+                cmake_cfg.define("CMAKE_BUILD_TYPE", "minsizerel");
+            }
+            _ => {
+                cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
+            }
+        }
+
         if OutputLibType::default() == OutputLibType::Dynamic {
             cmake_cfg.define("BUILD_SHARED_LIBS", "1");
         } else {
@@ -167,9 +183,11 @@ impl CmakeBuilder {
         // Allow environment to specify CMake toolchain.
         if let Some(toolchain) = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE") {
             set_env_for_target("CMAKE_TOOLCHAIN_FILE", toolchain);
-            if use_prebuilt_nasm() {
-                self.configure_prebuilt_nasm(&mut cmake_cfg);
+
+            if target_os() == "windows" {
+                self.configure_windows(&mut cmake_cfg);
             }
+
             return cmake_cfg;
         }
         // We only consider compiler CFLAGS when no cmake toolchain is set
@@ -287,6 +305,11 @@ impl CmakeBuilder {
     }
 
     fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
+        let runtime_library = if is_crt_static() {
+            "MultiThreaded"
+        } else {
+            "MultiThreadedDLL"
+        };
         match (target_env().as_str(), target_arch().as_str()) {
             ("msvc", "aarch64") => {
                 // If CMAKE_GENERATOR is either not set or not set to "Ninja"
@@ -303,11 +326,13 @@ impl CmakeBuilder {
                     ));
                     cmake_cfg.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
                 }
+                cmake_cfg.define("CMAKE_MSVC_RUNTIME_LIBRARY", runtime_library);
                 cmake_cfg.static_crt(is_crt_static());
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "ARM64");
             }
             ("msvc", _) => {
+                cmake_cfg.define("CMAKE_MSVC_RUNTIME_LIBRARY", runtime_library);
                 cmake_cfg.static_crt(is_crt_static());
             }
             (_, arch) => {
