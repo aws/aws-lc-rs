@@ -34,6 +34,18 @@ fn main() {
         );
     };
 
+    // When using static CRT on Windows MSVC, ignore missing PDB file warnings
+    // The static CRT libraries reference PDB files from Microsoft's build servers
+    // which are not available during linking
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows")
+        && env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc")
+        && env::var("CARGO_CFG_TARGET_FEATURE")
+            .map(|features| features.contains("crt-static"))
+            .unwrap_or(false)
+    {
+        println!("cargo:rustc-link-arg=/ignore:4099");
+    }
+
     export_sys_vars(sys_crate);
 }
 

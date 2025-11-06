@@ -5,13 +5,15 @@ use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, disable_jitter_entropy, effective_target, emit_warning,
-    execute_command, get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src,
-    optional_env, optional_env_optional_crate_target, set_env, set_env_for_target, target_arch,
-    target_env, target_os, test_nasm_command, use_prebuilt_nasm, OutputLibType,
+    env_var_to_bool, execute_command, get_crate_cflags, is_crt_static, is_no_asm,
+    is_no_pregenerated_src, optional_env, optional_env_optional_crate_target, set_env,
+    set_env_for_target, target_arch, target_env, target_os, test_nasm_command, use_prebuilt_nasm,
+    OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 pub(crate) struct CmakeBuilder {
     manifest_dir: PathBuf,
@@ -164,12 +166,29 @@ impl CmakeBuilder {
         // are disabled.
         Self::preserve_cflag_optimization_flags(&mut cmake_cfg);
 
-        // Allow environment to specify CMake toolchain.
-        if let Some(toolchain) = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE") {
-            set_env_for_target("CMAKE_TOOLCHAIN_FILE", toolchain);
+        if target_os() == "windows" {
             if use_prebuilt_nasm() {
                 self.configure_prebuilt_nasm(&mut cmake_cfg);
             }
+            if target_env().as_str() == "msvc" {
+                let mut msvcrt = String::from_str("MultiThreaded").unwrap();
+                if is_crt_static() {
+                    cmake_cfg.static_crt(true);
+                    // When using static CRT on Windows MSVC, ignore missing PDB file warnings
+                    // The static CRT libraries reference PDB files from Microsoft's build servers
+                    // which are not available.
+                    println!("cargo:rustc-link-arg=/ignore:4099");
+                } else {
+                    msvcrt.push_str("DLL");
+                }
+                cmake_cfg.define("CMAKE_MSVC_RUNTIME_LIBRARY", msvcrt.as_str());
+            }
+        }
+
+        // Allow environment to specify CMake toolchain.
+        if let Some(toolchain) = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE") {
+            set_env_for_target("CMAKE_TOOLCHAIN_FILE", toolchain);
+
             return cmake_cfg;
         }
         // We only consider compiler CFLAGS when no cmake toolchain is set
@@ -303,20 +322,16 @@ impl CmakeBuilder {
                     ));
                     cmake_cfg.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
                 }
-                cmake_cfg.static_crt(is_crt_static());
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "ARM64");
             }
             ("msvc", _) => {
-                cmake_cfg.static_crt(is_crt_static());
+                // No-op
             }
             (_, arch) => {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", arch);
             }
-        }
-        if use_prebuilt_nasm() {
-            self.configure_prebuilt_nasm(cmake_cfg);
         }
     }
 
