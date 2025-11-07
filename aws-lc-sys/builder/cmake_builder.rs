@@ -5,10 +5,9 @@ use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, disable_jitter_entropy, effective_target, emit_warning,
-    env_var_to_bool, execute_command, get_crate_cflags, is_crt_static, is_no_asm,
-    is_no_pregenerated_src, optional_env, optional_env_optional_crate_target, set_env,
-    set_env_for_target, target_arch, target_env, target_os, test_nasm_command, use_prebuilt_nasm,
-    OutputLibType,
+    execute_command, get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src,
+    optional_env, optional_env_optional_crate_target, set_env, set_env_for_target, target_arch,
+    target_env, target_os, test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
@@ -305,6 +304,7 @@ impl CmakeBuilder {
         }
     }
 
+    #[allow(clippy::unused_self)]
     fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
         match (target_env().as_str(), target_arch().as_str()) {
             ("msvc", "aarch64") => {
