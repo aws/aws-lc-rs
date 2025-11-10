@@ -359,3 +359,54 @@ jobs:
           else
             exit 0
           fi
+
+  gnu-stack-check:
+    if: github.repository_owner == 'aws'
+    name: Verify (${{ matrix.host }}) GNU-stack section
+    runs-on: ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        host:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install readelf
+        run: sudo apt-get update && sudo apt-get install -y binutils
+      - name: Build project
+        run: cargo build --workspace --all-targets --release
+      - name: Check for GNU-stack section in object files
+        run: |
+          echo "Checking for .note.GNU-stack section in all object files..."
+          MISSING_COUNT=0
+          TOTAL_COUNT=0
+          for obj_file in $(find target -name "*.o"); do
+            # Skip known non-ELF object files
+            if [[ "$obj_file" == *"bcm_c_generated_asm.dir/bcm.c.o" ]]; then
+              echo "⊘ Skipping (non-ELF): $obj_file"
+              continue
+            fi
+            TOTAL_COUNT=$((TOTAL_COUNT + 1))
+            if readelf -S "$obj_file" | grep -q "\.note\.GNU-stack"; then
+              echo "✓ $obj_file"
+            else
+              echo "✗ Missing .note.GNU-stack in $obj_file"
+              MISSING_COUNT=$((MISSING_COUNT + 1))
+            fi
+          done
+          echo ""
+          echo "Checked $TOTAL_COUNT object file(s)"
+          if [ $TOTAL_COUNT -eq 0 ]; then
+            echo "ERROR: No object files found to check"
+            exit 1
+          elif [ $MISSING_COUNT -gt 0 ]; then
+            echo "ERROR: Found $MISSING_COUNT object file(s) without .note.GNU-stack section"
+            exit 1
+          else
+            echo "SUCCESS: All object files have .note.GNU-stack section"
+            exit 0
+          fi
