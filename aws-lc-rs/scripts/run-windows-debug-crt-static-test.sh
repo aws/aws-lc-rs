@@ -2,6 +2,19 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0 OR ISC
 
+# Parse command line arguments
+FIPS_MODE=false
+for arg in "$@"; do
+    case $arg in
+        --fips)
+            FIPS_MODE=true
+            shift
+            ;;
+        *)
+            ;;
+    esac
+done
+
 SRC_ROOT="${GITHUB_WORKSPACE:-$(git rev-parse --show-toplevel)}/aws-lc-rs"
 
 case `uname -s` in
@@ -17,7 +30,15 @@ pushd "${TMP_DIR}"
 cargo new --bin aws-lc-rs-test
 pushd aws-lc-rs-test
 
-cargo add aws-lc-rs rustls rustls-platform-verifier
+# Add aws-lc-rs with or without fips feature
+if [ "$FIPS_MODE" = true ]; then
+    cargo add aws-lc-rs --features fips
+else
+    cargo add aws-lc-rs
+fi
+
+cargo add rustls rustls-platform-verifier
+
 cat << EOF >> Cargo.toml
 [profile.release]
 debug = "limited"
