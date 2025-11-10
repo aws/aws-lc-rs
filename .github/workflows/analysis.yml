@@ -362,8 +362,14 @@ jobs:
 
   gnu-stack-check:
     if: github.repository_owner == 'aws'
-    name: Verify GNU-stack section in object files
-    runs-on: ubuntu-latest
+    name: Verify (${{ matrix.host }}) GNU-stack section
+    runs-on: ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        host:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v3
         with:
