@@ -37,7 +37,6 @@
 //! ## Using the one-shot API:
 //!
 //! ```
-//! use aws_lc_rs::rand::SecureRandom;
 //! use aws_lc_rs::{cmac, rand};
 //!
 //! let msg = "hello, world";
