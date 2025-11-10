@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/aead/aead_ctx.rs`."><title>aead_ctx.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.92.0-nightly (695857bc3 2025-10-21)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/aead/</div>aead_ctx.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `aws-lc-rs/src/aead/aead_ctx.rs`."><title>aead_ctx.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aws_lc_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (6647be936 2025-11-09)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aws_lc_rs/aead/</div>aead_ctx.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 <a href=#2 id=2 data-nosnippet>2</a>// SPDX-License-Identifier: Apache-2.0 OR ISC
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a></span><span class="kw">use </span>core::mem::size_of;
@@ -185,7 +185,7 @@
 <a href=#185 id=185 data-nosnippet>185</a>    }
 <a href=#186 id=186 data-nosnippet>186</a>
 <a href=#187 id=187 data-nosnippet>187</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>chacha20(key_bytes: <span class="kw-2">&amp;</span>[u8], tag_len: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Unspecified&gt; {
-<a href=#188 id=188 data-nosnippet>188</a>        <span class="kw">if </span>chacha::KEY_LEN != key_bytes.len() {
+<a href=#188 id=188 data-nosnippet>188</a>        <span class="kw">if </span><span class="macro">chacha::KEY_LEN !</span>= key_bytes.len() {
 <a href=#189 id=189 data-nosnippet>189</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
 <a href=#190 id=190 data-nosnippet>190</a>        }
 <a href=#191 id=191 data-nosnippet>191</a>        <span class="prelude-val">Ok</span>(AeadCtx::CHACHA20_POLY1305(AeadCtx::build_context(
@@ -202,7 +202,7 @@
 <a href=#202 id=202 data-nosnippet>202</a>        tag_len: usize,
 <a href=#203 id=203 data-nosnippet>203</a>        direction: <span class="prelude-ty">Option</span>&lt;AeadDirection&gt;,
 <a href=#204 id=204 data-nosnippet>204</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_AEAD_CTX&gt;, Unspecified&gt; {
-<a href=#205 id=205 data-nosnippet>205</a>        <span class="kw">if </span>AES_128_KEY_LEN != key_bytes.len() {
+<a href=#205 id=205 data-nosnippet>205</a>        <span class="kw">if </span><span class="macro">AES_128_KEY_LEN !</span>= key_bytes.len() {
 <a href=#206 id=206 data-nosnippet>206</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
 <a href=#207 id=207 data-nosnippet>207</a>        }
 <a href=#208 id=208 data-nosnippet>208</a>        AeadCtx::build_context(aead, key_bytes, tag_len, direction)
@@ -214,7 +214,7 @@
 <a href=#214 id=214 data-nosnippet>214</a>        tag_len: usize,
 <a href=#215 id=215 data-nosnippet>215</a>        direction: <span class="prelude-ty">Option</span>&lt;AeadDirection&gt;,
 <a href=#216 id=216 data-nosnippet>216</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_AEAD_CTX&gt;, Unspecified&gt; {
-<a href=#217 id=217 data-nosnippet>217</a>        <span class="kw">if </span>AES_192_KEY_LEN != key_bytes.len() {
+<a href=#217 id=217 data-nosnippet>217</a>        <span class="kw">if </span><span class="macro">AES_192_KEY_LEN !</span>= key_bytes.len() {
 <a href=#218 id=218 data-nosnippet>218</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
 <a href=#219 id=219 data-nosnippet>219</a>        }
 <a href=#220 id=220 data-nosnippet>220</a>        AeadCtx::build_context(aead, key_bytes, tag_len, direction)
@@ -226,7 +226,7 @@
 <a href=#226 id=226 data-nosnippet>226</a>        tag_len: usize,
 <a href=#227 id=227 data-nosnippet>227</a>        direction: <span class="prelude-ty">Option</span>&lt;AeadDirection&gt;,
 <a href=#228 id=228 data-nosnippet>228</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;EVP_AEAD_CTX&gt;, Unspecified&gt; {
-<a href=#229 id=229 data-nosnippet>229</a>        <span class="kw">if </span>AES_256_KEY_LEN != key_bytes.len() {
+<a href=#229 id=229 data-nosnippet>229</a>        <span class="kw">if </span><span class="macro">AES_256_KEY_LEN !</span>= key_bytes.len() {
 <a href=#230 id=230 data-nosnippet>230</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
 <a href=#231 id=231 data-nosnippet>231</a>        }
 <a href=#232 id=232 data-nosnippet>232</a>        AeadCtx::build_context(aead, key_bytes, tag_len, direction)
@@ -293,4 +293,5 @@
 <a href=#293 id=293 data-nosnippet>293</a>            | AeadCtx::CHACHA20_POLY1305(ctx) =&gt; ctx,
 <a href=#294 id=294 data-nosnippet>294</a>        }
 <a href=#295 id=295 data-nosnippet>295</a>    }
-<a href=#296 id=296 data-nosnippet>296</a>}</code></pre></div></section></main></body></html>
+<a href=#296 id=296 data-nosnippet>296</a>}
+</code></pre></div></section></main></body></html>
