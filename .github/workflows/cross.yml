@@ -246,29 +246,74 @@ jobs:
 
   cargo-xwin:
     if: github.repository_owner == 'aws'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        host:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+          - windows-11-arm
+        target:
+          - "x86_64-pc-windows-msvc"
+          - "aarch64-pc-windows-msvc"
+        crt_static:
+          - "0"
+          - "1"
     steps:
       - name: Install build dependencies
-        # cargo-xwin apparently require ninja-build
+        if: matrix.host == 'ubuntu-latest'
+        # cargo-xwin apparently requires ninja-build
         run: |
-          sudo apt-get update && sudo apt-get install --assume-yes nasm clang ninja-build llvm
+          sudo apt-get update && sudo apt-get install --assume-yes nasm ninja-build llvm
+      - name: Install build dependencies
+        if: matrix.host == 'macos-latest'
+        run: |
+          brew install nasm ninja llvm
       - uses: actions/checkout@v3
         with:
           submodules: "recursive"
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          target: x86_64-pc-windows-msvc
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          target: aarch64-pc-windows-msvc
-      - name: Install cargo-xwin and bindgen-cli
-        run: cargo install --locked cargo-xwin bindgen-cli
-      - name: cargo xwin build for `x86_64-pc-windows-msvc`
-        run: cargo xwin build -p aws-lc-rs --release --all-targets --target x86_64-pc-windows-msvc
-      - name: cargo xwin build for `aarch64-pc-windows-msvc`
-        run: cargo xwin build -p aws-lc-rs --release --all-targets --target aarch64-pc-windows-msvc
+          target: ${{ matrix.target }}
+      - name: Install cargo-xwin
+        run: cargo install --locked cargo-xwin
+      - name: Set RUSTFLAGS
+        if: contains(matrix.host, 'windows') != true
+        run: |
+          if [[ '${{ matrix.crt_static }}' == '1' ]]; then
+            echo "RUSTFLAGS=-Clink-arg=/WX -Ctarget-feature=+crt-static" >> $GITHUB_ENV
+          else
+            echo "RUSTFLAGS=-Clink-arg=/WX" >> $GITHUB_ENV
+          fi
+          echo "EXTRA_FLAGS=" >> $GITHUB_ENV
+      - name: Set RUSTFLAGS
+        if: contains(matrix.host, 'windows')
+        run: |
+          if ('${{ matrix.crt_static }}' -eq '1') {
+            echo "RUSTFLAGS=-Clink-arg=/WX -Ctarget-feature=+crt-static" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            echo "RUSTFLAGS=-Clink-arg=/WX" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+          if ('${{ matrix.host }}' -like '*arm*') {
+            echo "EXTRA_FLAGS=--features=prebuilt-nasm" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            echo "EXTRA_FLAGS=" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+      - name: cargo xwin build for ${{ matrix.target }}
+        run: cargo xwin build -p aws-lc-rs --release --all-targets --target ${{ matrix.target }} ${{ env.EXTRA_FLAGS }}
+      - name: cargo test for x86_64-pc-windows-msvc
+        if: matrix.host == 'windows-latest' && matrix.target == 'x86_64-pc-windows-msvc'
+        env:
+          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUNNER: 'cmd.exe'
+        run: cargo xwin test -p aws-lc-rs --release --all-targets --target x86_64-pc-windows-msvc ${{ env.EXTRA_FLAGS }}
+      - name: cargo test for aarch64-pc-windows-msvc
+        if: matrix.host == 'windows-11-arm' && matrix.target == 'aarch64-pc-windows-msvc'
+        env:
+          CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUNNER: 'cmd.exe'
+        run: cargo xwin test -p aws-lc-rs --release --all-targets --target aarch64-pc-windows-msvc ${{ env.EXTRA_FLAGS }}
 
   aws-lc-rs-windows-msvc:
     if: ${{ github.repository_owner == 'aws' }}
