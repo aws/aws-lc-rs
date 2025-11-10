@@ -60,7 +60,6 @@
 //!
 //! ## Using the multi-part API:
 //! ```
-//! use aws_lc_rs::rand::SecureRandom;
 //! use aws_lc_rs::{cmac, rand};
 //!
 //! let parts = ["hello", ", ", "world"];
