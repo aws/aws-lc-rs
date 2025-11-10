@@ -354,6 +354,14 @@ impl CcBuilder {
         if !cflags.is_empty() {
             set_env_for_target("CFLAGS", cflags);
         }
+
+        // Add --noexecstack flag for assembly files to prevent executable stacks
+        // This matches the behavior of AWS-LC's CMake build which uses -Wa,--noexecstack
+        // See: https://github.com/aws/aws-lc/blob/main/crypto/CMakeLists.txt#L77
+        if target_os() == "linux" || target_os().ends_with("bsd") {
+            cc_build.asm_flag("-Wa,--noexecstack");
+        }
+
         cc_build
     }
 
