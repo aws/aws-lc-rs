@@ -370,12 +370,20 @@ jobs:
 
   freebsd:
     if: github.repository_owner == 'aws'
-    name: aws-lc-rs freebsd test
+    name: freebsd ${{ matrix.release }} (${{ matrix.arch }}) -- ${{ matrix.options }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        target: [ 13.4, 14.1 ]
+        arch: [  'x86_64' ] # , 'aarch64', 'riscv64' ]
+        release: [ '14.3', '15.0' ]
+        options:
+          - '--all-targets'
+          - '--release'
+          - '--no-default-features --features=fips'
+        # exclude:
+        #   - arch: 'riscv64'
+        #     options: '--no-default-features --features=fips'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -383,7 +391,8 @@ jobs:
       - name: Prepare VM
         uses: vmactions/freebsd-vm@v1
         with:
-          release: ${{ matrix.target }}
+          release: ${{ matrix.release }}
+          arch: ${{ matrix.arch }}
           usesh: true
           copyback: false
           prepare: |
@@ -391,17 +400,19 @@ jobs:
           run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
              . "$HOME/.cargo/env"
-            cargo test -p aws-lc-rs
-            cargo test -p aws-lc-rs --no-default-features --features=fips
+            cargo test -p aws-lc-rs ${{ matrix.options }}
   netbsd:
     if: github.repository_owner == 'aws'
-    name: aws-lc-rs netbsd test
+    name: netbsd ${{ matrix.release }} (${{ matrix.arch }}) -- ${{ matrix.options }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        arch: [ 'aarch64', 'x86_64' ]
-        version: [ 10.1 ]
+        arch: [ 'x86_64' ] # , 'aarch64' ]
+        release: [ '10.1' ]
+        options:
+          - '--all-targets'
+          - '--release'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -409,19 +420,18 @@ jobs:
       - name: Prepare VM
         uses: vmactions/netbsd-vm@v1
         with:
-          release: ${{ matrix.version }}
+          release: ${{ matrix.release }}
           arch: ${{ matrix.arch }}
           usesh: true
           copyback: false
           prepare: |
             export PATH="/usr/pkg/bin:/usr/pkg/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
-            export PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/${{ matrix.arch }}/${{ matrix.version }}/All"
+            export PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/${{ matrix.arch }}/${{ matrix.release }}/All"
             pkg_add -u curl cmake gmake perl mozilla-rootcerts
           run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
              . "$HOME/.cargo/env"
-            cargo test -p aws-lc-rs
-            cargo test -p aws-lc-rs --no-default-features --features=fips
+            cargo test -p aws-lc-rs ${{ matrix.options }}
   cross-x86_64-pc-windows-gnu:
     if: github.repository_owner == 'aws'
     name: cross (prebuilt nasm) - x86_64-pc-windows-gnu
