@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Tue Oct 21 20:00:02 UTC 2025
+// Tue Nov 11 15:37:43 UTC 2025
 
 use crate::cc_builder::Library;
 
@@ -178,8 +178,8 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/rand_extra/deterministic.c",
         "crypto/rand_extra/getentropy.c",
         "crypto/rand_extra/rand_extra.c",
-        "crypto/rand_extra/snapsafe_fallback.c",
         "crypto/rand_extra/urandom.c",
+        "crypto/rand_extra/vm_ube_fallback.c",
         "crypto/rand_extra/windows.c",
         "crypto/rc4/rc4.c",
         "crypto/refcount_c11.c",
@@ -199,9 +199,10 @@ pub(super) const CRYPTO_LIBRARY: Library = Library {
         "crypto/trust_token/pmbtoken.c",
         "crypto/trust_token/trust_token.c",
         "crypto/trust_token/voprf.c",
-        "crypto/ube/fork_detect.c",
-        "crypto/ube/snapsafe_detect.c",
+        "crypto/ube/fork_ube_detect.c",
         "crypto/ube/ube.c",
+        "crypto/ube/vm_ube_detect.c",
+        "crypto/ui/ui.c",
         "crypto/x509/a_digest.c",
         "crypto/x509/a_sign.c",
         "crypto/x509/a_verify.c",

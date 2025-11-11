@@ -714,15 +714,15 @@
 %xdefine _CRYPTO_get_dynlock_lock_callback _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_dynlock_lock_callback
 %xdefine _CRYPTO_get_ex_data _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_ex_data
 %xdefine _CRYPTO_get_ex_new_index _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_ex_new_index
-%xdefine _CRYPTO_get_fork_generation _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_fork_generation
+%xdefine _CRYPTO_get_fork_ube_generation _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_fork_ube_generation
 %xdefine _CRYPTO_get_lock_name _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_lock_name
 %xdefine _CRYPTO_get_locking_callback _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_locking_callback
-%xdefine _CRYPTO_get_snapsafe_active _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_active
-%xdefine _CRYPTO_get_snapsafe_generation _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_generation
-%xdefine _CRYPTO_get_snapsafe_supported _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_supported
 %xdefine _CRYPTO_get_sysgenid_path _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_sysgenid_path
 %xdefine _CRYPTO_get_thread_local _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_thread_local
 %xdefine _CRYPTO_get_ube_generation_number _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_ube_generation_number
+%xdefine _CRYPTO_get_vm_ube_active _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_vm_ube_active
+%xdefine _CRYPTO_get_vm_ube_generation _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_vm_ube_generation
+%xdefine _CRYPTO_get_vm_ube_supported _ %+ BORINGSSL_PREFIX %+ _CRYPTO_get_vm_ube_supported
 %xdefine _CRYPTO_ghash_init _ %+ BORINGSSL_PREFIX %+ _CRYPTO_ghash_init
 %xdefine _CRYPTO_has_asm _ %+ BORINGSSL_PREFIX %+ _CRYPTO_has_asm
 %xdefine _CRYPTO_has_broken_NEON _ %+ BORINGSSL_PREFIX %+ _CRYPTO_has_broken_NEON
@@ -2314,6 +2314,12 @@
 %xdefine _TRUST_TOKEN_new _ %+ BORINGSSL_PREFIX %+ _TRUST_TOKEN_new
 %xdefine _TRUST_TOKEN_pst_v1_pmb _ %+ BORINGSSL_PREFIX %+ _TRUST_TOKEN_pst_v1_pmb
 %xdefine _TRUST_TOKEN_pst_v1_voprf _ %+ BORINGSSL_PREFIX %+ _TRUST_TOKEN_pst_v1_voprf
+%xdefine _UI_add_info_string _ %+ BORINGSSL_PREFIX %+ _UI_add_info_string
+%xdefine _UI_add_input_string _ %+ BORINGSSL_PREFIX %+ _UI_add_input_string
+%xdefine _UI_add_verify_string _ %+ BORINGSSL_PREFIX %+ _UI_add_verify_string
+%xdefine _UI_free _ %+ BORINGSSL_PREFIX %+ _UI_free
+%xdefine _UI_new _ %+ BORINGSSL_PREFIX %+ _UI_new
+%xdefine _UI_process _ %+ BORINGSSL_PREFIX %+ _UI_process
 %xdefine _USERNOTICE_free _ %+ BORINGSSL_PREFIX %+ _USERNOTICE_free
 %xdefine _USERNOTICE_it _ %+ BORINGSSL_PREFIX %+ _USERNOTICE_it
 %xdefine _USERNOTICE_new _ %+ BORINGSSL_PREFIX %+ _USERNOTICE_new
@@ -4198,9 +4204,9 @@
 %xdefine _rsaz_amm52x40_x2_ifma256 _ %+ BORINGSSL_PREFIX %+ _rsaz_amm52x40_x2_ifma256
 %xdefine _s2i_ASN1_INTEGER _ %+ BORINGSSL_PREFIX %+ _s2i_ASN1_INTEGER
 %xdefine _s2i_ASN1_OCTET_STRING _ %+ BORINGSSL_PREFIX %+ _s2i_ASN1_OCTET_STRING
-%xdefine _set_fork_generation_number_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _set_fork_generation_number_FOR_TESTING
-%xdefine _set_snapsafe_generation_number_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _set_snapsafe_generation_number_FOR_TESTING
+%xdefine _set_fork_ube_generation_number_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _set_fork_ube_generation_number_FOR_TESTING
 %xdefine _set_thread_and_global_tree_drbg_reseed_counter_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _set_thread_and_global_tree_drbg_reseed_counter_FOR_TESTING
+%xdefine _set_vm_ube_generation_number_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _set_vm_ube_generation_number_FOR_TESTING
 %xdefine _sha1_block_data_order _ %+ BORINGSSL_PREFIX %+ _sha1_block_data_order
 %xdefine _sha1_block_data_order_avx _ %+ BORINGSSL_PREFIX %+ _sha1_block_data_order_avx
 %xdefine _sha1_block_data_order_avx2 _ %+ BORINGSSL_PREFIX %+ _sha1_block_data_order_avx2
@@ -4229,7 +4235,6 @@
 %xdefine _sha512_block_data_order_nohw _ %+ BORINGSSL_PREFIX %+ _sha512_block_data_order_nohw
 %xdefine _sha512_func _ %+ BORINGSSL_PREFIX %+ _sha512_func
 %xdefine _sk_pop_free _ %+ BORINGSSL_PREFIX %+ _sk_pop_free
-%xdefine _snapsafe_fallback_get_seed _ %+ BORINGSSL_PREFIX %+ _snapsafe_fallback_get_seed
 %xdefine _sskdf_variant_digest _ %+ BORINGSSL_PREFIX %+ _sskdf_variant_digest
 %xdefine _sskdf_variant_hmac _ %+ BORINGSSL_PREFIX %+ _sskdf_variant_hmac
 %xdefine _tree_jitter_drbg_destructor _ %+ BORINGSSL_PREFIX %+ _tree_jitter_drbg_destructor
@@ -4271,6 +4276,7 @@
 %xdefine _v3_sinfo _ %+ BORINGSSL_PREFIX %+ _v3_sinfo
 %xdefine _v3_skey_id _ %+ BORINGSSL_PREFIX %+ _v3_skey_id
 %xdefine _validate_cidr_mask _ %+ BORINGSSL_PREFIX %+ _validate_cidr_mask
+%xdefine _vm_ube_fallback_get_seed _ %+ BORINGSSL_PREFIX %+ _vm_ube_fallback_get_seed
 %xdefine _voprf_exp2_blind _ %+ BORINGSSL_PREFIX %+ _voprf_exp2_blind
 %xdefine _voprf_exp2_client_key_from_bytes _ %+ BORINGSSL_PREFIX %+ _voprf_exp2_client_key_from_bytes
 %xdefine _voprf_exp2_derive_key_from_secret _ %+ BORINGSSL_PREFIX %+ _voprf_exp2_derive_key_from_secret
@@ -5021,15 +5027,15 @@
 %xdefine CRYPTO_get_dynlock_lock_callback BORINGSSL_PREFIX %+ _CRYPTO_get_dynlock_lock_callback
 %xdefine CRYPTO_get_ex_data BORINGSSL_PREFIX %+ _CRYPTO_get_ex_data
 %xdefine CRYPTO_get_ex_new_index BORINGSSL_PREFIX %+ _CRYPTO_get_ex_new_index
-%xdefine CRYPTO_get_fork_generation BORINGSSL_PREFIX %+ _CRYPTO_get_fork_generation
+%xdefine CRYPTO_get_fork_ube_generation BORINGSSL_PREFIX %+ _CRYPTO_get_fork_ube_generation
 %xdefine CRYPTO_get_lock_name BORINGSSL_PREFIX %+ _CRYPTO_get_lock_name
 %xdefine CRYPTO_get_locking_callback BORINGSSL_PREFIX %+ _CRYPTO_get_locking_callback
-%xdefine CRYPTO_get_snapsafe_active BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_active
-%xdefine CRYPTO_get_snapsafe_generation BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_generation
-%xdefine CRYPTO_get_snapsafe_supported BORINGSSL_PREFIX %+ _CRYPTO_get_snapsafe_supported
 %xdefine CRYPTO_get_sysgenid_path BORINGSSL_PREFIX %+ _CRYPTO_get_sysgenid_path
 %xdefine CRYPTO_get_thread_local BORINGSSL_PREFIX %+ _CRYPTO_get_thread_local
 %xdefine CRYPTO_get_ube_generation_number BORINGSSL_PREFIX %+ _CRYPTO_get_ube_generation_number
+%xdefine CRYPTO_get_vm_ube_active BORINGSSL_PREFIX %+ _CRYPTO_get_vm_ube_active
+%xdefine CRYPTO_get_vm_ube_generation BORINGSSL_PREFIX %+ _CRYPTO_get_vm_ube_generation
+%xdefine CRYPTO_get_vm_ube_supported BORINGSSL_PREFIX %+ _CRYPTO_get_vm_ube_supported
 %xdefine CRYPTO_ghash_init BORINGSSL_PREFIX %+ _CRYPTO_ghash_init
 %xdefine CRYPTO_has_asm BORINGSSL_PREFIX %+ _CRYPTO_has_asm
 %xdefine CRYPTO_has_broken_NEON BORINGSSL_PREFIX %+ _CRYPTO_has_broken_NEON
@@ -6621,6 +6627,12 @@
 %xdefine TRUST_TOKEN_new BORINGSSL_PREFIX %+ _TRUST_TOKEN_new
 %xdefine TRUST_TOKEN_pst_v1_pmb BORINGSSL_PREFIX %+ _TRUST_TOKEN_pst_v1_pmb
 %xdefine TRUST_TOKEN_pst_v1_voprf BORINGSSL_PREFIX %+ _TRUST_TOKEN_pst_v1_voprf
+%xdefine UI_add_info_string BORINGSSL_PREFIX %+ _UI_add_info_string
+%xdefine UI_add_input_string BORINGSSL_PREFIX %+ _UI_add_input_string
+%xdefine UI_add_verify_string BORINGSSL_PREFIX %+ _UI_add_verify_string
+%xdefine UI_free BORINGSSL_PREFIX %+ _UI_free
+%xdefine UI_new BORINGSSL_PREFIX %+ _UI_new
+%xdefine UI_process BORINGSSL_PREFIX %+ _UI_process
 %xdefine USERNOTICE_free BORINGSSL_PREFIX %+ _USERNOTICE_free
 %xdefine USERNOTICE_it BORINGSSL_PREFIX %+ _USERNOTICE_it
 %xdefine USERNOTICE_new BORINGSSL_PREFIX %+ _USERNOTICE_new
@@ -8505,9 +8517,9 @@
 %xdefine rsaz_amm52x40_x2_ifma256 BORINGSSL_PREFIX %+ _rsaz_amm52x40_x2_ifma256
 %xdefine s2i_ASN1_INTEGER BORINGSSL_PREFIX %+ _s2i_ASN1_INTEGER
 %xdefine s2i_ASN1_OCTET_STRING BORINGSSL_PREFIX %+ _s2i_ASN1_OCTET_STRING
-%xdefine set_fork_generation_number_FOR_TESTING BORINGSSL_PREFIX %+ _set_fork_generation_number_FOR_TESTING
-%xdefine set_snapsafe_generation_number_FOR_TESTING BORINGSSL_PREFIX %+ _set_snapsafe_generation_number_FOR_TESTING
+%xdefine set_fork_ube_generation_number_FOR_TESTING BORINGSSL_PREFIX %+ _set_fork_ube_generation_number_FOR_TESTING
 %xdefine set_thread_and_global_tree_drbg_reseed_counter_FOR_TESTING BORINGSSL_PREFIX %+ _set_thread_and_global_tree_drbg_reseed_counter_FOR_TESTING
+%xdefine set_vm_ube_generation_number_FOR_TESTING BORINGSSL_PREFIX %+ _set_vm_ube_generation_number_FOR_TESTING
 %xdefine sha1_block_data_order BORINGSSL_PREFIX %+ _sha1_block_data_order
 %xdefine sha1_block_data_order_avx BORINGSSL_PREFIX %+ _sha1_block_data_order_avx
 %xdefine sha1_block_data_order_avx2 BORINGSSL_PREFIX %+ _sha1_block_data_order_avx2
@@ -8536,7 +8548,6 @@
 %xdefine sha512_block_data_order_nohw BORINGSSL_PREFIX %+ _sha512_block_data_order_nohw
 %xdefine sha512_func BORINGSSL_PREFIX %+ _sha512_func
 %xdefine sk_pop_free BORINGSSL_PREFIX %+ _sk_pop_free
-%xdefine snapsafe_fallback_get_seed BORINGSSL_PREFIX %+ _snapsafe_fallback_get_seed
 %xdefine sskdf_variant_digest BORINGSSL_PREFIX %+ _sskdf_variant_digest
 %xdefine sskdf_variant_hmac BORINGSSL_PREFIX %+ _sskdf_variant_hmac
 %xdefine tree_jitter_drbg_destructor BORINGSSL_PREFIX %+ _tree_jitter_drbg_destructor
@@ -8578,6 +8589,7 @@
 %xdefine v3_sinfo BORINGSSL_PREFIX %+ _v3_sinfo
 %xdefine v3_skey_id BORINGSSL_PREFIX %+ _v3_skey_id
 %xdefine validate_cidr_mask BORINGSSL_PREFIX %+ _validate_cidr_mask
+%xdefine vm_ube_fallback_get_seed BORINGSSL_PREFIX %+ _vm_ube_fallback_get_seed
 %xdefine voprf_exp2_blind BORINGSSL_PREFIX %+ _voprf_exp2_blind
 %xdefine voprf_exp2_client_key_from_bytes BORINGSSL_PREFIX %+ _voprf_exp2_client_key_from_bytes
 %xdefine voprf_exp2_derive_key_from_secret BORINGSSL_PREFIX %+ _voprf_exp2_derive_key_from_secret
