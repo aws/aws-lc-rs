@@ -393,6 +393,35 @@ jobs:
              . "$HOME/.cargo/env"
             cargo test -p aws-lc-rs
             cargo test -p aws-lc-rs --no-default-features --features=fips
+  netbsd:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs netbsd test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ 'aarch64', 'x86_64' ]
+        version: [ 10.1 ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Prepare VM
+        uses: vmactions/netbsd-vm@v1
+        with:
+          release: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+          usesh: true
+          copyback: false
+          prepare: |
+            export PATH="/usr/pkg/bin:/usr/pkg/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
+            export PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/${{ matrix.arch }}/${{ matrix.version }}/All"
+            pkg_add -u curl cmake gmake perl mozilla-rootcerts
+          run: |
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+             . "$HOME/.cargo/env"
+            cargo test -p aws-lc-rs
+            cargo test -p aws-lc-rs --no-default-features --features=fips
   cross-x86_64-pc-windows-gnu:
     if: github.repository_owner == 'aws'
     name: cross (prebuilt nasm) - x86_64-pc-windows-gnu
