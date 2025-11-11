@@ -63,7 +63,7 @@ jobs:
           brew uninstall --force cmake
           brew install --force cmake
           cmake --version
-          echo 'CMAKE=/opt/homebrew/bin/cmake' >> $GITHUB_ENV
+          echo 'CMAKE=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/bin/cmake' >> $GITHUB_ENV
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}

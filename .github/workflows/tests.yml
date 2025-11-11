@@ -76,8 +76,8 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
           brew install llvm
-          echo 'LIBCLANG_PATH=/opt/homebrew/opt/llvm/lib' >> $GITHUB_ENV
-          echo 'LLVM_CONFIG_PATH=/usr/local/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
+          echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
+          echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -490,8 +490,8 @@ jobs:
       - if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
           brew install llvm
-          echo 'LIBCLANG_PATH=/opt/homebrew/opt/llvm/lib' >> $GITHUB_ENV
-          echo 'LLVM_CONFIG_PATH=/opt/homebrew/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
+          echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
+          echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - uses: actions/setup-go@v4
@@ -602,7 +602,7 @@ jobs:
           brew uninstall --force cmake
           brew install --force cmake
           cmake --version
-          echo 'CMAKE=/opt/homebrew/bin/cmake' >> $GITHUB_ENV
+          echo 'CMAKE=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/bin/cmake' >> $GITHUB_ENV
       - name: Run cargo test
         working-directory: "path has spaces/aws-lc-rs"
         run: cargo test --tests -p aws-lc-rs --features bindgen
