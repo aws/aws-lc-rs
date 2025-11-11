@@ -60,7 +60,7 @@
 <a href=#60 id=60 data-nosnippet>60</a>///
 <a href=#61 id=61 data-nosnippet>61</a>/// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 <a href=#62 id=62 data-nosnippet>62</a></span><span class="attr">#[allow(deprecated)]
-<a href=#63 id=63 data-nosnippet>63</a></span><span class="kw">pub static </span>SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
+<a href=#63 id=63 data-nosnippet>63</a></span><span class="kw">pub const </span>SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 <a href=#64 id=64 data-nosnippet>64</a>    output_len: SHA1_OUTPUT_LEN,
 <a href=#65 id=65 data-nosnippet>65</a>    chaining_len: SHA1_OUTPUT_LEN,
 <a href=#66 id=66 data-nosnippet>66</a>    block_len: SHA1_BLOCK_LEN,
@@ -75,7 +75,7 @@
 <a href=#75 id=75 data-nosnippet>75</a>///
 <a href=#76 id=76 data-nosnippet>76</a>/// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 <a href=#77 id=77 data-nosnippet>77</a></span><span class="attr">#[allow(deprecated)]
-<a href=#78 id=78 data-nosnippet>78</a></span><span class="kw">pub static </span>SHA224: Algorithm = Algorithm {
+<a href=#78 id=78 data-nosnippet>78</a></span><span class="kw">pub const </span>SHA224: Algorithm = Algorithm {
 <a href=#79 id=79 data-nosnippet>79</a>    output_len: SHA224_OUTPUT_LEN,
 <a href=#80 id=80 data-nosnippet>80</a>
 <a href=#81 id=81 data-nosnippet>81</a>    <span class="comment">// The chaining length is equivalent to the length before truncation.
@@ -93,7 +93,7 @@
 <a href=#93 id=93 data-nosnippet>93</a>///
 <a href=#94 id=94 data-nosnippet>94</a>/// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 <a href=#95 id=95 data-nosnippet>95</a></span><span class="attr">#[allow(deprecated)]
-<a href=#96 id=96 data-nosnippet>96</a></span><span class="kw">pub static </span>SHA256: Algorithm = Algorithm {
+<a href=#96 id=96 data-nosnippet>96</a></span><span class="kw">pub const </span>SHA256: Algorithm = Algorithm {
 <a href=#97 id=97 data-nosnippet>97</a>    output_len: SHA256_OUTPUT_LEN,
 <a href=#98 id=98 data-nosnippet>98</a>    chaining_len: SHA256_OUTPUT_LEN,
 <a href=#99 id=99 data-nosnippet>99</a>    block_len: SHA256_BLOCK_LEN,
@@ -108,7 +108,7 @@
 <a href=#108 id=108 data-nosnippet>108</a>///
 <a href=#109 id=109 data-nosnippet>109</a>/// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 <a href=#110 id=110 data-nosnippet>110</a></span><span class="attr">#[allow(deprecated)]
-<a href=#111 id=111 data-nosnippet>111</a></span><span class="kw">pub static </span>SHA384: Algorithm = Algorithm {
+<a href=#111 id=111 data-nosnippet>111</a></span><span class="kw">pub const </span>SHA384: Algorithm = Algorithm {
 <a href=#112 id=112 data-nosnippet>112</a>    output_len: SHA384_OUTPUT_LEN,
 <a href=#113 id=113 data-nosnippet>113</a>
 <a href=#114 id=114 data-nosnippet>114</a>    <span class="comment">// The chaining length is equivalent to the length before truncation.
@@ -126,7 +126,7 @@
 <a href=#126 id=126 data-nosnippet>126</a>///
 <a href=#127 id=127 data-nosnippet>127</a>/// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 <a href=#128 id=128 data-nosnippet>128</a></span><span class="attr">#[allow(deprecated)]
-<a href=#129 id=129 data-nosnippet>129</a></span><span class="kw">pub static </span>SHA512: Algorithm = Algorithm {
+<a href=#129 id=129 data-nosnippet>129</a></span><span class="kw">pub const </span>SHA512: Algorithm = Algorithm {
 <a href=#130 id=130 data-nosnippet>130</a>    output_len: SHA512_OUTPUT_LEN,
 <a href=#131 id=131 data-nosnippet>131</a>    chaining_len: SHA512_OUTPUT_LEN,
 <a href=#132 id=132 data-nosnippet>132</a>    block_len: SHA512_BLOCK_LEN,
@@ -141,7 +141,7 @@
 <a href=#141 id=141 data-nosnippet>141</a>///
 <a href=#142 id=142 data-nosnippet>142</a>/// [FIPS 180-4]: http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 <a href=#143 id=143 data-nosnippet>143</a></span><span class="attr">#[allow(deprecated)]
-<a href=#144 id=144 data-nosnippet>144</a></span><span class="kw">pub static </span>SHA512_256: Algorithm = Algorithm {
+<a href=#144 id=144 data-nosnippet>144</a></span><span class="kw">pub const </span>SHA512_256: Algorithm = Algorithm {
 <a href=#145 id=145 data-nosnippet>145</a>    output_len: SHA512_256_OUTPUT_LEN,
 <a href=#146 id=146 data-nosnippet>146</a>    chaining_len: SHA512_OUTPUT_LEN,
 <a href=#147 id=147 data-nosnippet>147</a>    block_len: SHA512_BLOCK_LEN,
@@ -156,7 +156,7 @@
 <a href=#156 id=156 data-nosnippet>156</a>///
 <a href=#157 id=157 data-nosnippet>157</a>/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
 <a href=#158 id=158 data-nosnippet>158</a></span><span class="attr">#[allow(deprecated)]
-<a href=#159 id=159 data-nosnippet>159</a></span><span class="kw">pub static </span>SHA3_256: Algorithm = Algorithm {
+<a href=#159 id=159 data-nosnippet>159</a></span><span class="kw">pub const </span>SHA3_256: Algorithm = Algorithm {
 <a href=#160 id=160 data-nosnippet>160</a>    output_len: SHA3_256_OUTPUT_LEN,
 <a href=#161 id=161 data-nosnippet>161</a>    chaining_len: SHA3_256_OUTPUT_LEN,
 <a href=#162 id=162 data-nosnippet>162</a>    block_len: SHA3_256_BLOCK_LEN,
@@ -171,7 +171,7 @@
 <a href=#171 id=171 data-nosnippet>171</a>///
 <a href=#172 id=172 data-nosnippet>172</a>/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
 <a href=#173 id=173 data-nosnippet>173</a></span><span class="attr">#[allow(deprecated)]
-<a href=#174 id=174 data-nosnippet>174</a></span><span class="kw">pub static </span>SHA3_384: Algorithm = Algorithm {
+<a href=#174 id=174 data-nosnippet>174</a></span><span class="kw">pub const </span>SHA3_384: Algorithm = Algorithm {
 <a href=#175 id=175 data-nosnippet>175</a>    output_len: SHA3_384_OUTPUT_LEN,
 <a href=#176 id=176 data-nosnippet>176</a>    chaining_len: SHA3_384_OUTPUT_LEN,
 <a href=#177 id=177 data-nosnippet>177</a>    block_len: SHA3_384_BLOCK_LEN,
@@ -186,7 +186,7 @@
 <a href=#186 id=186 data-nosnippet>186</a>///
 <a href=#187 id=187 data-nosnippet>187</a>/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
 <a href=#188 id=188 data-nosnippet>188</a></span><span class="attr">#[allow(deprecated)]
-<a href=#189 id=189 data-nosnippet>189</a></span><span class="kw">pub static </span>SHA3_512: Algorithm = Algorithm {
+<a href=#189 id=189 data-nosnippet>189</a></span><span class="kw">pub const </span>SHA3_512: Algorithm = Algorithm {
 <a href=#190 id=190 data-nosnippet>190</a>    output_len: SHA3_512_OUTPUT_LEN,
 <a href=#191 id=191 data-nosnippet>191</a>    chaining_len: SHA3_512_OUTPUT_LEN,
 <a href=#192 id=192 data-nosnippet>192</a>    block_len: SHA3_512_BLOCK_LEN,

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"static":["AES_128","AES_256","CHACHA20"],"struct":["Algorithm","HeaderProtectionKey"],"type":["Sample"]};
+window.SIDEBAR_ITEMS = {"constant":["AES_128","AES_256","CHACHA20"],"struct":["Algorithm","HeaderProtectionKey"],"type":["Sample"]};
