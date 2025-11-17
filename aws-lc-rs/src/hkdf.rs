@@ -70,10 +70,6 @@ pub const HKDF_SHA384: Algorithm = Algorithm(hmac::HMAC_SHA384);
 /// HKDF using HMAC-SHA-512.
 pub const HKDF_SHA512: Algorithm = Algorithm(hmac::HMAC_SHA512);
 
-/// General Salt length's for HKDF don't normally exceed 256 bits.
-/// We set the limit to something tolerable, so that the Salt structure can be stack allocatable.
-const MAX_HKDF_SALT_LEN: usize = 80;
-
 /// General Info length's for HKDF don't normally exceed 256 bits.
 /// We set the default capacity to a value larger than should be needed
 /// so that the value passed to |`HKDF_expand`| is only allocated once.
@@ -92,8 +88,7 @@ impl KeyType for Algorithm {
 /// A salt for HKDF operations.
 pub struct Salt {
     algorithm: Algorithm,
-    bytes: [u8; MAX_HKDF_SALT_LEN],
-    len: usize,
+    bytes: Box<[u8]>,
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -107,6 +102,7 @@ impl fmt::Debug for Salt {
 
 impl Drop for Salt {
     fn drop(&mut self) {
+        // Box<[u8]> implements Zeroize, so we can call it directly
         self.bytes.zeroize();
     }
 }
@@ -128,24 +124,11 @@ impl Salt {
     // * `value.len() > 0` is true
     //
     /// # Panics
-    /// `new` panics if the salt length exceeds the limit
+    /// `new` panics if salt creation fails
     #[must_use]
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
-        Salt::try_new(algorithm, value).expect("Salt length limit exceeded.")
-    }
-
-    fn try_new(algorithm: Algorithm, value: &[u8]) -> Result<Salt, Unspecified> {
-        let salt_len = value.len();
-        if salt_len > MAX_HKDF_SALT_LEN {
-            return Err(Unspecified);
-        }
-        let mut salt_bytes = [0u8; MAX_HKDF_SALT_LEN];
-        salt_bytes[0..salt_len].copy_from_slice(value);
-        Ok(Self {
-            algorithm,
-            bytes: salt_bytes,
-            len: salt_len,
-        })
+        let bytes = value.to_vec().into_boxed_slice();
+        Self { algorithm, bytes }
     }
 
     /// The [HKDF-Extract] operation.
@@ -161,8 +144,7 @@ impl Salt {
             algorithm: self.algorithm,
             mode: PrkMode::ExtractExpand {
                 secret: Arc::from(ZeroizeBoxSlice::from(secret)),
-                salt: self.bytes,
-                salt_len: self.len,
+                salt: self.bytes.clone(),
             },
         }
     }
@@ -175,19 +157,15 @@ impl Salt {
     }
 }
 
-#[allow(clippy::assertions_on_constants)]
-const _: () = assert!(MAX_HKDF_PRK_LEN <= MAX_HKDF_SALT_LEN);
-
 impl From<Okm<'_, Algorithm>> for Salt {
     fn from(okm: Okm<'_, Algorithm>) -> Self {
         let algorithm = okm.prk.algorithm;
-        let mut salt_bytes = [0u8; MAX_HKDF_SALT_LEN];
         let salt_len = okm.len().len();
-        okm.fill(&mut salt_bytes[..salt_len]).unwrap();
+        let mut salt_bytes = vec![0u8; salt_len];
+        okm.fill(&mut salt_bytes).unwrap();
         Self {
             algorithm,
-            bytes: salt_bytes,
-            len: salt_len,
+            bytes: salt_bytes.into_boxed_slice(),
         }
     }
 }
@@ -207,8 +185,7 @@ enum PrkMode {
     },
     ExtractExpand {
         secret: Arc<ZeroizeBoxSlice<u8>>,
-        salt: [u8; MAX_HKDF_SALT_LEN],
-        salt_len: usize,
+        salt: Box<[u8]>,
     },
 }
 
@@ -230,11 +207,7 @@ impl PrkMode {
                     return Err(Unspecified);
                 }
             },
-            PrkMode::ExtractExpand {
-                secret,
-                salt,
-                salt_len,
-            } => {
+            PrkMode::ExtractExpand { secret, salt } => {
                 if 1 != indicator_check!(unsafe {
                     HKDF(
                         out.as_mut_ptr(),
@@ -243,7 +216,7 @@ impl PrkMode {
                         secret.as_ptr(),
                         secret.len(),
                         salt.as_ptr(),
-                        *salt_len,
+                        salt.len(),
                         info.as_ptr(),
                         info.len(),
                     )
@@ -502,5 +475,38 @@ mod tests {
             "hkdf::Okm { prk: hkdf::Prk { algorithm: Algorithm(SHA256), mode: ExtractExpand { .. } } }",
             format!("{okm:?}")
         );
+    }
+
+    #[test]
+    fn test_long_salt() {
+        // Test with a salt longer than the previous 80-byte limit
+        let long_salt = vec![0x42u8; 100];
+
+        // This should work now that we removed the MAX_HKDF_SALT_LEN restriction
+        let salt = Salt::new(HKDF_SHA256, &long_salt);
+
+        // Test the extract operation still works
+        let secret = b"test secret key material";
+        let prk = salt.extract(secret);
+
+        // Test expand operation
+        let info_data = b"test context info";
+        let info = [info_data.as_slice()];
+        let okm = prk.expand(&info, HKDF_SHA256).unwrap();
+
+        // Fill output buffer
+        let mut output = [0u8; 32];
+        okm.fill(&mut output).unwrap();
+
+        // Test with an even longer salt to demonstrate flexibility
+        let very_long_salt = vec![0x55u8; 500];
+        let very_long_salt_obj = Salt::new(HKDF_SHA256, &very_long_salt);
+        let prk2 = very_long_salt_obj.extract(secret);
+        let okm2 = prk2.expand(&info, HKDF_SHA256).unwrap();
+        let mut output2 = [0u8; 32];
+        okm2.fill(&mut output2).unwrap();
+
+        // Verify outputs are different (they should be due to different salts)
+        assert_ne!(output, output2);
     }
 }
