@@ -38,25 +38,27 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - [ aarch64-linux-android, 0]
-          - [ aarch64-unknown-linux-gnu, 1]
-          - [ aarch64-unknown-linux-musl, 1]
-          - [ arm-linux-androideabi, 0]
-          - [ arm-unknown-linux-gnueabihf, 0]
-          - [ arm-unknown-linux-musleabi, 1]
-          - [ arm-unknown-linux-musleabihf, 1]
-          - [ armv7-linux-androideabi, 0]
-          - [ armv7-unknown-linux-gnueabihf, 0]
-          - [ i686-unknown-linux-gnu, 0]
-          - [ i686-pc-windows-gnu, 0]
-          - [ powerpc-unknown-linux-gnu, 1]
-          - [ powerpc64-unknown-linux-gnu, 1]
-          - [ powerpc64le-unknown-linux-gnu, 1]
-          - [ riscv64gc-unknown-linux-gnu, 0]
-          - [ s390x-unknown-linux-gnu, 0]
-          - [ x86_64-pc-windows-gnu, 0] # Requires release build. See: https://github.com/rust-lang/rust/issues/139380
-          - [ x86_64-unknown-linux-musl, 0]
-          - [ x86_64-unknown-illumos, 0]
+          - [ aarch64-linux-android, 0, 1]
+          - [ aarch64-unknown-linux-gnu, 1, 1]
+          - [ aarch64-unknown-linux-musl, 1, 1]
+          - [ arm-linux-androideabi, 0, 0]
+          - [ arm-unknown-linux-gnueabihf, 0, 1]
+          - [ arm-unknown-linux-musleabi, 1, 1]
+          - [ arm-unknown-linux-musleabihf, 1, 1]
+          - [ armv7-linux-androideabi, 0, 1]
+          - [ armv7-unknown-linux-gnueabihf, 0, 1]
+          - [ i686-pc-windows-gnu, 0, 1]
+          - [ i686-unknown-linux-gnu, 0, 1]
+          - [ loongarch64-unknown-linux-gnu, 0, 0]
+          - [ loongarch64-unknown-linux-musl, 0, 0]
+          - [ powerpc-unknown-linux-gnu, 1, 1]
+          - [ powerpc64-unknown-linux-gnu, 1, 1]
+          - [ powerpc64le-unknown-linux-gnu, 1, 1]
+          - [ riscv64gc-unknown-linux-gnu, 0, 1]
+          - [ s390x-unknown-linux-gnu, 0, 1]
+          - [ x86_64-pc-windows-gnu, 0, 1] # Requires release build. See: https://github.com/rust-lang/rust/issues/139380
+          - [ x86_64-unknown-illumos, 0, 1]
+          - [ x86_64-unknown-linux-musl, 0, 1]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -69,7 +71,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
-          toolchain: "stable"
+          toolchain: 'stable'
           target: ${{ matrix.target[0] }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
@@ -97,13 +99,14 @@ jobs:
         # It was finally fixed here: https://reviews.llvm.org/D118391
         # Instead of trying to hack around this, we just won't test building libssl on that platform.
         # We should update this test once cross-rs has an updated docker image for this target.
-        if: ${{ matrix.target[0] != 'arm-linux-androideabi' }}
+        if: ${{ matrix.target[2] == 1 }}
         run: |
           cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features ssl --target ${{ matrix.target[0] }}
       - name: Install bindgen-cli
+        if: ${{ matrix.target[2] == 1 }}
         run: cargo install --locked bindgen-cli
       - name:  Cross-compilation w/ external bindgen (aws-lc-sys/ssl feature)
-        if: ${{ matrix.target[0] != 'arm-linux-androideabi' }}
+        if: ${{ matrix.target[2] == 1 }}
         env:
           # require the use of external bindgen
           AWS_LC_SYS_EXTERNAL_BINDGEN: 1
