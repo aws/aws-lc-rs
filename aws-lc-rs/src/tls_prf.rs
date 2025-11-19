@@ -162,7 +162,7 @@ fn prf(
 
     if 1 != indicator_check!(unsafe {
         CRYPTO_tls1_prf(
-            *digest,
+            digest.as_const_ptr(),
             output.as_mut_ptr(),
             output.len(),
             secret.as_ptr(),

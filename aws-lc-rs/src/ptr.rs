@@ -7,7 +7,6 @@ use crate::aws_lc::{
     RSA_free, BIGNUM, CMAC_CTX, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_AEAD_CTX,
     EVP_CIPHER_CTX, EVP_PKEY, EVP_PKEY_CTX, RSA,
 };
-use core::ops::Deref;
 use std::marker::PhantomData;
 
 pub(crate) type LcPtr<T> = ManagedPointer<*mut T>;
@@ -55,6 +54,11 @@ impl<P: Pointer> ManagedPointer<P> {
         self.into()
     }
 
+    #[inline]
+    pub fn as_const_ptr(&self) -> *const P::T {
+        self.pointer.as_const_ptr()
+    }
+
     pub fn project_const_lifetime<'a, C>(
         &'a self,
         f: unsafe fn(&'a Self) -> *const C,
@@ -70,10 +74,8 @@ impl<P: Pointer> ManagedPointer<P> {
     }
 
     #[inline]
-    pub unsafe fn as_mut_unsafe(&self) -> MutPointer<P::T> {
-        MutPointer {
-            ptr: self.pointer.as_const_ptr().cast_mut(),
-        }
+    pub unsafe fn as_mut_unsafe_ptr(&self) -> *mut P::T {
+        self.pointer.as_const_ptr().cast_mut()
     }
 
     #[inline]
@@ -82,14 +84,17 @@ impl<P: Pointer> ManagedPointer<P> {
             ptr: self.pointer.as_mut_ptr(),
         }
     }
+
+    #[inline]
+    pub fn as_mut_ptr(&mut self) -> *mut P::T {
+        self.as_mut().as_ptr()
+    }
 }
 
 impl<P: Pointer> DetachablePointer<P> {
     #[inline]
-    pub fn as_mut(&mut self) -> MutPointer<P::T> {
-        MutPointer {
-            ptr: self.pointer.as_mut().unwrap().as_mut_ptr(),
-        }
+    pub fn as_mut_ptr(&mut self) -> *mut P::T {
+        self.pointer.as_mut().unwrap().as_mut_ptr()
     }
 }
 
@@ -97,20 +102,6 @@ impl<P: Pointer> DetachablePointer<P> {
 #[allow(clippy::module_name_repetitions)]
 pub(crate) struct DetachablePointer<P: Pointer> {
     pointer: Option<P>,
-}
-
-impl<P: Pointer> Deref for DetachablePointer<P> {
-    type Target = P;
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        match &self.pointer {
-            Some(pointer) => pointer,
-            None => {
-                // Safety: pointer is only None when DetachableLcPtr is detached or dropped
-                unreachable!()
-            }
-        }
-    }
 }
 
 impl<P: Pointer> DetachablePointer<P> {
@@ -185,13 +176,9 @@ impl<T> ConstPointer<'_, T> {
             _lifetime: PhantomData,
         })
     }
-}
 
-impl<T> Deref for ConstPointer<'_, T> {
-    type Target = *const T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.ptr
+    pub fn as_const_ptr(&self) -> *const T {
+        self.ptr
     }
 }
 
@@ -200,11 +187,12 @@ pub(crate) struct MutPointer<T> {
     ptr: *mut T,
 }
 
-impl<T> Deref for MutPointer<T> {
-    type Target = *mut T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.ptr
+impl<T> MutPointer<T> {
+    /// Returns the raw pointer directly without dereferencing through a reference.
+    /// This can avoid potential alignment or stack issues on some architectures.
+    #[inline]
+    pub(crate) fn as_ptr(&self) -> *mut T {
+        self.ptr
     }
 }
 

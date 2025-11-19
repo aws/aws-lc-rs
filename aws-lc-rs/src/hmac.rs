@@ -300,7 +300,7 @@ impl Key {
                 ctx.as_mut_ptr(),
                 key_value.as_ptr().cast(),
                 key_value.len(),
-                *evp_md_type,
+                evp_md_type.as_const_ptr(),
                 null_mut(),
             ) {
                 return Err(Unspecified);

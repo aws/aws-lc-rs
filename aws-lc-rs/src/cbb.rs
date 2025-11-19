@@ -29,7 +29,7 @@ impl LcCBB<'static> {
         }
 
         let out_data = LcPtr::new(out_data)?;
-        let slice = unsafe { std::slice::from_raw_parts(*out_data.as_const(), out_len) };
+        let slice = unsafe { std::slice::from_raw_parts(out_data.as_const_ptr(), out_len) };
         // `to_vec()` copies the data into a new `Vec`
         Ok(slice.to_vec())
     }

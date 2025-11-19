@@ -448,14 +448,14 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
             self.inner_key
                 .get_evp_pkey()
                 .project_const_lifetime(unsafe {
-                    |evp_pkey| EVP_PKEY_get0_EC_KEY(*evp_pkey.as_const())
+                    |evp_pkey| EVP_PKEY_get0_EC_KEY(evp_pkey.as_const_ptr())
                 })?
         };
-        let length = usize::try_from(unsafe { i2d_ECPrivateKey(*ec_key, &mut outp) })
+        let length = usize::try_from(unsafe { i2d_ECPrivateKey(ec_key.as_const_ptr(), &mut outp) })
             .map_err(|_| Unspecified)?;
         let mut outp = LcPtr::new(outp)?;
         Ok(EcPrivateKeyRfc5915Der::take_from_slice(unsafe {
-            core::slice::from_raw_parts_mut(*outp.as_mut(), length)
+            core::slice::from_raw_parts_mut(outp.as_mut().as_ptr(), length)
         }))
     }
 }

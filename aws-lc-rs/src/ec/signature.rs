@@ -281,7 +281,11 @@ fn convert_fixed_signature(
     let mut out_bytes_len = MaybeUninit::<usize>::uninit();
     let sig = unsafe { ecdsa_sig_from_fixed(alg, signature)? };
     if 1 != unsafe {
-        ECDSA_SIG_to_bytes(&mut out_bytes, out_bytes_len.as_mut_ptr(), *sig.as_const())
+        ECDSA_SIG_to_bytes(
+            &mut out_bytes,
+            out_bytes_len.as_mut_ptr(),
+            sig.as_const_ptr(),
+        )
     } {
         return Err(Unspecified);
     }
@@ -321,7 +325,7 @@ unsafe fn ecdsa_sig_from_fixed(
 
     let mut ecdsa_sig = LcPtr::new(ECDSA_SIG_new())?;
 
-    if 1 != ECDSA_SIG_set0(*ecdsa_sig.as_mut(), *r_bn.as_mut(), *s_bn.as_mut()) {
+    if 1 != ECDSA_SIG_set0(ecdsa_sig.as_mut_ptr(), r_bn.as_mut_ptr(), s_bn.as_mut_ptr()) {
         return Err(());
     }
     r_bn.detach();

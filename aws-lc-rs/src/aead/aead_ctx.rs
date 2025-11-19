@@ -245,12 +245,12 @@ impl AeadCtx {
         let mut aead_ctx: LcPtr<EVP_AEAD_CTX> =
             LcPtr::new(unsafe { OPENSSL_malloc(size_of::<EVP_AEAD_CTX>()) }.cast())?;
 
-        unsafe { EVP_AEAD_CTX_zero(*aead_ctx.as_mut()) };
+        unsafe { EVP_AEAD_CTX_zero(aead_ctx.as_mut().as_ptr()) };
 
         if 1 != match direction {
             Some(direction) => unsafe {
                 EVP_AEAD_CTX_init_with_direction(
-                    *aead_ctx.as_mut(),
+                    aead_ctx.as_mut().as_ptr(),
                     aead,
                     key_bytes.as_ptr(),
                     key_bytes.len(),
@@ -260,7 +260,7 @@ impl AeadCtx {
             },
             None => unsafe {
                 EVP_AEAD_CTX_init(
-                    *aead_ctx.as_mut(),
+                    aead_ctx.as_mut().as_ptr(),
                     aead,
                     key_bytes.as_ptr(),
                     key_bytes.len(),
