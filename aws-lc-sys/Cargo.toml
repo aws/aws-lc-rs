@@ -79,4 +79,4 @@ bindgen = { workspace = true, optional = true }
 bindgen.workspace = true
 
 [package.metadata.aws-lc-sys]
-commit-hash = "7187ab572ddcdae4fa408e932d3e878c9941137b"
+commit-hash = "7b627926398b6bb786296132b22dbb37bab7649f"
