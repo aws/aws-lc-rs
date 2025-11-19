@@ -252,7 +252,7 @@ where
 
         if 1 != unsafe {
             EVP_PKEY_decapsulate(
-                ctx.as_mut().as_ptr(),
+                ctx.as_mut_ptr(),
                 shared_secret.as_mut_ptr(),
                 &mut shared_secret_len,
                 // AWS-LC incorrectly has this as an unqualified `uint8_t *`, it should be qualified with const
@@ -326,7 +326,7 @@ where
 
         if 1 != unsafe {
             EVP_PKEY_encapsulate(
-                ctx.as_mut().as_ptr(),
+                ctx.as_mut_ptr(),
                 ciphertext.as_mut_ptr(),
                 &mut ciphertext_len,
                 shared_secret.as_mut_ptr(),
@@ -559,46 +559,6 @@ mod tests {
 
             assert_eq!(alice_secret.as_ref(), bob_secret.as_ref());
         }
-    }
-
-    // Individual algorithm tests for better isolation of platform-specific issues
-    #[test]
-    fn test_kem_e2e_ml_kem_512() {
-        let algorithm = &ML_KEM_512;
-        let priv_key = DecapsulationKey::generate(algorithm).unwrap();
-        let pub_key = priv_key.encapsulation_key().unwrap();
-        let (alice_ciphertext, alice_secret) =
-            pub_key.encapsulate().expect("encapsulate successful");
-        let bob_secret = priv_key
-            .decapsulate(alice_ciphertext)
-            .expect("decapsulate successful");
-        assert_eq!(alice_secret.as_ref(), bob_secret.as_ref());
-    }
-
-    #[test]
-    fn test_kem_e2e_ml_kem_768() {
-        let algorithm = &ML_KEM_768;
-        let priv_key = DecapsulationKey::generate(algorithm).unwrap();
-        let pub_key = priv_key.encapsulation_key().unwrap();
-        let (alice_ciphertext, alice_secret) =
-            pub_key.encapsulate().expect("encapsulate successful");
-        let bob_secret = priv_key
-            .decapsulate(alice_ciphertext)
-            .expect("decapsulate successful");
-        assert_eq!(alice_secret.as_ref(), bob_secret.as_ref());
-    }
-
-    #[test]
-    fn test_kem_e2e_ml_kem_1024() {
-        let algorithm = &ML_KEM_1024;
-        let priv_key = DecapsulationKey::generate(algorithm).unwrap();
-        let pub_key = priv_key.encapsulation_key().unwrap();
-        let (alice_ciphertext, alice_secret) =
-            pub_key.encapsulate().expect("encapsulate successful");
-        let bob_secret = priv_key
-            .decapsulate(alice_ciphertext)
-            .expect("decapsulate successful");
-        assert_eq!(alice_secret.as_ref(), bob_secret.as_ref());
     }
 
     #[test]

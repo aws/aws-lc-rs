@@ -269,7 +269,7 @@ impl Key {
         unsafe {
             let cipher = algorithm.id.evp_cipher();
             if 1 != CMAC_Init(
-                ctx.as_mut().as_ptr(),
+                ctx.as_mut_ptr(),
                 key_value.as_ptr().cast(),
                 key_value.len(),
                 cipher.as_const_ptr(),

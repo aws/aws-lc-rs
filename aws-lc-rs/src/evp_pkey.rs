@@ -207,6 +207,11 @@ impl ConstPointer<'_, EVP_PKEY> {
 }
 
 impl LcPtr<EVP_PKEY> {
+    #[inline]
+    pub unsafe fn as_mut_unsafe_ptr(&self) -> *mut EVP_PKEY {
+        self.as_const_ptr().cast_mut()
+    }
+
     pub(crate) fn parse_rfc5280_public_key(
         bytes: &[u8],
         evp_pkey_type: c_int,
@@ -377,8 +382,7 @@ impl LcPtr<EVP_PKEY> {
     where
         F: EVP_PKEY_CTX_consumer,
     {
-        let mut pctx =
-            LcPtr::new(unsafe { EVP_PKEY_CTX_new(self.as_mut_unsafe_ptr(), null_mut()) })?;
+        let mut pctx = self.create_EVP_PKEY_CTX()?;
 
         if 1 != unsafe { EVP_PKEY_sign_init(pctx.as_mut_ptr()) } {
             return Err(Unspecified);
@@ -478,8 +482,7 @@ impl LcPtr<EVP_PKEY> {
     where
         F: EVP_PKEY_CTX_consumer,
     {
-        let mut pctx =
-            LcPtr::new(unsafe { EVP_PKEY_CTX_new(self.as_mut_unsafe_ptr(), null_mut()) })?;
+        let mut pctx = self.create_EVP_PKEY_CTX()?;
 
         if 1 != unsafe { EVP_PKEY_verify_init(pctx.as_mut_ptr()) } {
             return Err(Unspecified);
@@ -506,7 +509,7 @@ impl LcPtr<EVP_PKEY> {
         }
     }
 
-    pub(crate) fn agree(&self, peer_key: &Self) -> Result<Box<[u8]>, Unspecified> {
+    pub(crate) fn agree(&self, peer_key: &mut Self) -> Result<Box<[u8]>, Unspecified> {
         let mut pctx = self.create_EVP_PKEY_CTX()?;
 
         if 1 != unsafe { EVP_PKEY_derive_init(pctx.as_mut_ptr()) } {
@@ -514,8 +517,7 @@ impl LcPtr<EVP_PKEY> {
         }
 
         let mut secret_len = 0;
-        if 1 != unsafe { EVP_PKEY_derive_set_peer(pctx.as_mut_ptr(), peer_key.as_mut_unsafe_ptr()) }
-        {
+        if 1 != unsafe { EVP_PKEY_derive_set_peer(pctx.as_mut_ptr(), peer_key.as_mut_ptr()) } {
             return Err(Unspecified);
         }
 

@@ -74,20 +74,8 @@ impl<P: Pointer> ManagedPointer<P> {
     }
 
     #[inline]
-    pub unsafe fn as_mut_unsafe_ptr(&self) -> *mut P::T {
-        self.pointer.as_const_ptr().cast_mut()
-    }
-
-    #[inline]
-    pub fn as_mut(&mut self) -> MutPointer<P::T> {
-        MutPointer {
-            ptr: self.pointer.as_mut_ptr(),
-        }
-    }
-
-    #[inline]
     pub fn as_mut_ptr(&mut self) -> *mut P::T {
-        self.as_mut().as_ptr()
+        self.pointer.as_mut_ptr()
     }
 }
 
@@ -178,20 +166,6 @@ impl<T> ConstPointer<'_, T> {
     }
 
     pub fn as_const_ptr(&self) -> *const T {
-        self.ptr
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct MutPointer<T> {
-    ptr: *mut T,
-}
-
-impl<T> MutPointer<T> {
-    /// Returns the raw pointer directly without dereferencing through a reference.
-    /// This can avoid potential alignment or stack issues on some architectures.
-    #[inline]
-    pub(crate) fn as_ptr(&self) -> *mut T {
         self.ptr
     }
 }

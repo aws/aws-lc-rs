@@ -381,6 +381,10 @@ jobs:
         run: |
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all --suppressions=$(pwd)/.valgrind/rust-test.supp" \
             cargo test --release -p aws-lc-rs --features unstable --all-targets -- --test-threads=1
+      - name: Run FIPS release tests under Valgrind
+        run: |
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all --suppressions=$(pwd)/.valgrind/rust-test.supp" \
+            cargo test --release -p aws-lc-rs --features fips --all-targets -- --test-threads=1
 
   gnu-stack-check:
     if: github.repository_owner == 'aws'

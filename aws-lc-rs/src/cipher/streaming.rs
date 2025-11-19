@@ -101,7 +101,7 @@ fn evp_decrypt_init(
     // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
     if 1 != unsafe {
         EVP_DecryptInit_ex(
-            cipher_ctx.as_mut().as_ptr(),
+            cipher_ctx.as_mut_ptr(),
             cipher.as_const_ptr(),
             null_mut(),
             key.as_ptr(),
@@ -181,7 +181,7 @@ impl StreamingEncryptingKey {
 
         if 1 != unsafe {
             EVP_EncryptUpdate(
-                self.cipher_ctx.as_mut().as_ptr(),
+                self.cipher_ctx.as_mut_ptr(),
                 output.as_mut_ptr(),
                 &mut outlen,
                 input.as_ptr(),

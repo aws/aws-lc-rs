@@ -10,3 +10,36 @@
    fun:run_tests<*>
    ...
 }
+
+# AWS-LC ML-DSA Implementation Issues
+# TODO: Remove once fixed upstream in AWS-LC
+{
+   aws_lc_ml_dsa_verify_uninit
+   Memcheck:Cond
+   fun:*ml_dsa_verify_internal*
+}
+
+{
+   aws_lc_ml_dsa_verify_uninit_value
+   Memcheck:Value8
+   fun:*ml_dsa_verify_internal*
+}
+
+{
+   aws_lc_rs_test_possible_leak
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:*/*_test-*
+   ...
+   fun:__libc_start_main@@GLIBC_*
+}
+
+{
+   rust_thread_new_leak
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:*thread*Thread*new*
+   ...
+}

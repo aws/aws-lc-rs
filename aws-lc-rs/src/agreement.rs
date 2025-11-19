@@ -455,7 +455,7 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
             .map_err(|_| Unspecified)?;
         let mut outp = LcPtr::new(outp)?;
         Ok(EcPrivateKeyRfc5915Der::take_from_slice(unsafe {
-            core::slice::from_raw_parts_mut(outp.as_mut().as_ptr(), length)
+            core::slice::from_raw_parts_mut(outp.as_mut_ptr(), length)
         }))
     }
 }
@@ -724,8 +724,8 @@ impl ParsedPublicKey {
         self.format
     }
 
-    pub(crate) fn key(&self) -> &LcPtr<EVP_PKEY> {
-        &self.key
+    pub(crate) fn mut_key(&mut self) -> &mut LcPtr<EVP_PKEY> {
+        &mut self.key
     }
 
     /// The algorithm of the public key.
@@ -871,14 +871,14 @@ where
 
     let parse_result = peer_public_key.try_into();
 
-    if let Ok(peer_pub_key) = parse_result {
+    if let Ok(mut peer_pub_key) = parse_result {
         if peer_pub_key.alg() != expected_alg {
             return Err(error_value);
         }
         let secret = my_private_key
             .inner_key
             .get_evp_pkey()
-            .agree(peer_pub_key.key())
+            .agree(peer_pub_key.mut_key())
             .or(Err(error_value))?;
 
         kdf(secret.as_ref())
