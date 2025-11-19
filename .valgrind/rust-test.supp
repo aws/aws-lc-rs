@@ -1,0 +1,12 @@
+# Valgrind suppression file for Rust test harness
+
+{
+   rust_test_invocations
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   fun:call_once<fn() -> core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>
+   ...
+   fun:run_tests<*>
+   ...
+}
