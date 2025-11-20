@@ -101,6 +101,7 @@ use crate::ptr::{ConstPointer, LcPtr};
 use crate::{constant_time, rand};
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
+use zeroize::Zeroize;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum AlgorithmId {
@@ -192,6 +193,28 @@ impl AsRef<[u8]> for Tag {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.bytes[..self.len]
+    }
+}
+
+/// A CMAC tag that automatically zeroizes its contents when dropped.
+///
+/// For a given tag `t`, use `t.as_ref()` to get the tag value as a byte slice.
+#[derive(Clone, Debug)]
+pub struct SecretTag {
+    bytes: [u8; MAX_CMAC_TAG_LEN],
+    len: usize,
+}
+
+impl AsRef<[u8]> for SecretTag {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        &self.bytes[..self.len]
+    }
+}
+
+impl Drop for SecretTag {
+    fn drop(&mut self) {
+        self.bytes.zeroize();
     }
 }
 
@@ -337,26 +360,13 @@ impl Context {
         Ok(())
     }
 
-    /// Finalizes the CMAC calculation and returns the CMAC value. `sign`
-    /// consumes the context so it cannot be (mis-)used after `sign` has been
-    /// called.
-    ///
-    /// It is generally not safe to implement CMAC verification by comparing
-    /// the return value of `sign` to a tag. Use `verify` for verification
-    /// instead.
-    ///
-    //
-    // # FIPS
-    // Use this method with one of the following algorithms:
-    // * `AES_128`
-    // * `AES_256`
-    //
-    /// # Errors
-    /// `error::Unspecified` if the CMAC calculation cannot be finalized.
-    ///
-    /// # Panics
-    /// Panics if the CMAC tag length exceeds the maximum allowed length, indicating memory corruption.
-    pub fn sign(mut self) -> Result<Tag, Unspecified> {
+    /// Generic helper for CMAC finalization that constructs the result type directly.
+    /// The constructor function receives the raw bytes and length and constructs the final result.
+    /// This ensures no intermediate copies of sensitive data leak.
+    fn finalize_cmac_with<T, F>(&mut self, constructor: F) -> Result<T, Unspecified>
+    where
+        F: FnOnce([u8; MAX_CMAC_TAG_LEN], usize) -> T,
+    {
         let mut output = [0u8; MAX_CMAC_TAG_LEN];
         let mut out_len = MaybeUninit::<usize>::uninit();
 
@@ -379,11 +389,50 @@ impl Context {
                 return Err(Unspecified);
             }
 
-            Ok(Tag {
-                bytes: output,
-                len: actual_len,
-            })
+            // Constructor receives the raw data and constructs the result directly
+            let result = constructor(output, actual_len);
+            // Zeroize the local copy to prevent stack leaks
+            output.zeroize();
+            Ok(result)
         }
+    }
+
+    /// Finalizes the CMAC calculation and returns the CMAC value. `sign`
+    /// consumes the context so it cannot be (mis-)used after `sign` has been
+    /// called.
+    ///
+    /// It is generally not safe to implement CMAC verification by comparing
+    /// the return value of `sign` to a tag. Use `verify` for verification
+    /// instead.
+    ///
+    //
+    // # FIPS
+    // Use this method with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    //
+    /// # Errors
+    /// `error::Unspecified` if the CMAC calculation cannot be finalized.
+    ///
+    /// # Panics
+    /// Panics if the CMAC tag length exceeds the maximum allowed length, indicating memory corruption.
+    pub fn sign(mut self) -> Result<Tag, Unspecified> {
+        self.finalize_cmac_with(|bytes, len| Tag { bytes, len })
+    }
+
+    /// Finalizes the CMAC calculation and returns a zeroizing secret tag.
+    /// The returned tag will automatically zeroize its contents when dropped.
+    ///
+    /// It is generally not safe to implement CMAC verification by comparing
+    /// the return value to a tag. Use `verify` for verification instead.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the CMAC calculation cannot be finalized.
+    ///
+    /// # Panics
+    /// Panics if the CMAC tag length exceeds the maximum allowed length, indicating memory corruption.
+    pub fn sign_secret(mut self) -> Result<SecretTag, Unspecified> {
+        self.finalize_cmac_with(|bytes, len| SecretTag { bytes, len })
     }
 }
 
@@ -408,6 +457,29 @@ pub fn sign(key: &Key, data: &[u8]) -> Result<Tag, Unspecified> {
     ctx.sign()
 }
 
+/// Calculates the CMAC of `data` using the key `key` and returns a zeroizing tag.
+///
+/// The returned tag will automatically zeroize its contents when dropped.
+///
+/// Use `Context` to calculate CMACs where the input is in multiple parts.
+///
+/// It is generally not safe to implement CMAC verification by comparing the
+/// return value to a tag. Use `verify` for verification instead.
+//
+// # FIPS
+// Use this function with one of the following algorithms:
+// * `AES_128`
+// * `AES_256`
+//
+/// # Errors
+/// `error::Unspecified` if the CMAC calculation fails.
+#[inline]
+pub fn sign_secret(key: &Key, data: &[u8]) -> Result<SecretTag, Unspecified> {
+    let mut ctx = Context::with_key(key);
+    ctx.update(data)?;
+    ctx.sign_secret()
+}
+
 /// Calculates the CMAC of `data` using the signing key `key`, and verifies
 /// whether the resultant value equals `tag`, in one step.
 ///
@@ -423,6 +495,27 @@ pub fn sign(key: &Key, data: &[u8]) -> Result<Tag, Unspecified> {
 #[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
     let computed_tag = sign(key, data)?;
+    constant_time::verify_slices_are_equal(computed_tag.as_ref(), tag)
+}
+
+/// Calculates the CMAC of `data` using the signing key `key`, and verifies
+/// whether the resultant value equals `tag`, in one step using a zeroizing tag.
+///
+/// The computed tag will automatically zeroize its contents after verification,
+/// ensuring no sensitive CMAC data remains in memory.
+///
+/// The verification will be done in constant time to prevent timing attacks.
+///
+/// # Errors
+/// `error::Unspecified` if the inputs are not verified or CMAC calculation fails.
+//
+// # FIPS
+// Use this function with one of the following algorithms:
+// * `AES_128`
+// * `AES_256`
+#[inline]
+pub fn verify_secret(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
+    let computed_tag = sign_secret(key, data)?;
     constant_time::verify_slices_are_equal(computed_tag.as_ref(), tag)
 }
 
