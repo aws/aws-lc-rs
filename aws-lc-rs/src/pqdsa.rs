@@ -129,7 +129,7 @@ mod tests {
             LcPtr::<EVP_PKEY>::parse_raw_public_key(&raw_public_buffer, EVP_PKEY_PQDSA).unwrap();
 
         assert_eq!(1, unsafe {
-            EVP_PKEY_cmp(*key_public.as_const(), *key_public2.as_const())
+            EVP_PKEY_cmp(key_public.as_const_ptr(), key_public2.as_const_ptr())
         });
 
         let raw_private_buffer = key_private.as_const().marshal_raw_private_key().unwrap();
@@ -138,7 +138,7 @@ mod tests {
         let key_private2 =
             LcPtr::<EVP_PKEY>::parse_raw_private_key(&raw_private_buffer, EVP_PKEY_PQDSA).unwrap();
         assert_eq!(1, unsafe {
-            EVP_PKEY_cmp(*key_private.as_const(), *key_private2.as_const())
+            EVP_PKEY_cmp(key_private.as_const_ptr(), key_private2.as_const_ptr())
         });
     }
 

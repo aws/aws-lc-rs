@@ -113,7 +113,7 @@ impl OaepPublicEncryptingKey {
     ) -> Result<&'ciphertext mut [u8], Unspecified> {
         let mut pkey_ctx = self.public_key.0.create_EVP_PKEY_CTX()?;
 
-        if 1 != unsafe { EVP_PKEY_encrypt_init(*pkey_ctx.as_mut()) } {
+        if 1 != unsafe { EVP_PKEY_encrypt_init(pkey_ctx.as_mut_ptr()) } {
             return Err(Unspecified);
         }
 
@@ -128,7 +128,7 @@ impl OaepPublicEncryptingKey {
 
         if 1 != indicator_check!(unsafe {
             EVP_PKEY_encrypt(
-                *pkey_ctx.as_mut(),
+                pkey_ctx.as_mut_ptr(),
                 ciphertext.as_mut_ptr(),
                 &mut out_len,
                 plaintext.as_ptr(),
@@ -217,7 +217,7 @@ impl OaepPrivateDecryptingKey {
     ) -> Result<&'plaintext mut [u8], Unspecified> {
         let mut pkey_ctx = self.private_key.0.create_EVP_PKEY_CTX()?;
 
-        if 1 != unsafe { EVP_PKEY_decrypt_init(*pkey_ctx.as_mut()) } {
+        if 1 != unsafe { EVP_PKEY_decrypt_init(pkey_ctx.as_mut_ptr()) } {
             return Err(Unspecified);
         }
 
@@ -232,7 +232,7 @@ impl OaepPrivateDecryptingKey {
 
         if 1 != indicator_check!(unsafe {
             EVP_PKEY_decrypt(
-                *pkey_ctx.as_mut(),
+                pkey_ctx.as_mut_ptr(),
                 plaintext.as_mut_ptr(),
                 &mut out_len,
                 ciphertext.as_ptr(),
@@ -277,16 +277,17 @@ fn configure_oaep_crypto_operation(
     mgf1_hash_fn: Mgf1HashFn,
     label: Option<&[u8]>,
 ) -> Result<(), Unspecified> {
-    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(*evp_pkey_ctx.as_mut(), RSA_PKCS1_OAEP_PADDING) }
-    {
+    if 1 != unsafe {
+        EVP_PKEY_CTX_set_rsa_padding(evp_pkey_ctx.as_mut_ptr(), RSA_PKCS1_OAEP_PADDING)
+    } {
         return Err(Unspecified);
     }
 
-    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_oaep_md(*evp_pkey_ctx.as_mut(), oaep_hash_fn()) } {
+    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_oaep_md(evp_pkey_ctx.as_mut_ptr(), oaep_hash_fn()) } {
         return Err(Unspecified);
     }
 
-    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_mgf1_md(*evp_pkey_ctx.as_mut(), mgf1_hash_fn()) } {
+    if 1 != unsafe { EVP_PKEY_CTX_set_rsa_mgf1_md(evp_pkey_ctx.as_mut_ptr(), mgf1_hash_fn()) } {
         return Err(Unspecified);
     }
 
@@ -294,7 +295,9 @@ fn configure_oaep_crypto_operation(
 
     if label.is_empty() {
         // Safety: Don't pass zero-length slice pointers to C code :)
-        if 1 != unsafe { EVP_PKEY_CTX_set0_rsa_oaep_label(*evp_pkey_ctx.as_mut(), null_mut(), 0) } {
+        if 1 != unsafe {
+            EVP_PKEY_CTX_set0_rsa_oaep_label(evp_pkey_ctx.as_mut_ptr(), null_mut(), 0)
+        } {
             return Err(Unspecified);
         }
         return Ok(());
@@ -307,12 +310,16 @@ fn configure_oaep_crypto_operation(
     {
         // memcpy the label data into the AWS-LC allocation
         let label_ptr =
-            unsafe { core::slice::from_raw_parts_mut(*label_ptr.as_mut(), label.len()) };
+            unsafe { core::slice::from_raw_parts_mut(label_ptr.as_mut_ptr(), label.len()) };
         label_ptr.copy_from_slice(label);
     }
 
     if 1 != unsafe {
-        EVP_PKEY_CTX_set0_rsa_oaep_label(*evp_pkey_ctx.as_mut(), *label_ptr, label.len())
+        EVP_PKEY_CTX_set0_rsa_oaep_label(
+            evp_pkey_ctx.as_mut_ptr(),
+            label_ptr.as_mut_ptr(),
+            label.len(),
+        )
     } {
         return Err(Unspecified);
     }
