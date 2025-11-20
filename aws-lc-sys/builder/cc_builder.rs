@@ -222,6 +222,11 @@ impl CcBuilder {
             }
         }
 
+        if target_os() == "macos" {
+            // Certain MacOS system headers are guarded by _POSIX_C_SOURCE and _DARWIN_C_SOURCE
+            build_options.push(BuildOption::define("_DARWIN_C_SOURCE", "1"));
+        }
+
         let opt_level = cargo_env("OPT_LEVEL");
         match opt_level.as_str() {
             "0" | "1" | "2" => {
@@ -391,8 +396,6 @@ impl CcBuilder {
             let mut new_cflags = original_cflags.clone();
             // The `_FORTIFY_SOURCE` macro often requires optimizations to also be enabled, so unset it.
             new_cflags.push_str(" -O0 -Wp,-U_FORTIFY_SOURCE");
-            // Certain MacOS system headers are guarded by _POSIX_C_SOURCE and _DARWIN_C_SOURCE
-            new_cflags.push_str(" -D_DARWIN_C_SOURCE");
             set_env_for_target("CFLAGS", &new_cflags);
             // cc-rs currently prioritizes flags provided by CFLAGS over the flags provided by the build script.
             // The environment variables used by the compiler are set when `get_compiler` is called.
@@ -404,6 +407,10 @@ impl CcBuilder {
         };
 
         je_builder.define("AWSLC", "1");
+        if target_os() == "macos" {
+            // Certain MacOS system headers are guarded by _POSIX_C_SOURCE and _DARWIN_C_SOURCE
+            je_builder.define("_DARWIN_C_SOURCE", "1");
+        }
         je_builder.pic(true);
         if target_os() == "windows" && compiler.is_like_msvc() {
             je_builder.flag("/Od").flag("/W4").flag("/DYNAMICBASE");
