@@ -71,12 +71,7 @@ cmake.workspace = true
 dunce.workspace = true
 fs_extra.workspace = true
 cc = { workspace = true, features = ["parallel"] }
-
-[target.'cfg(any(all(any(target_arch="x86_64",target_arch="aarch64"),any(target_os="linux",target_os="macos",target_os="windows"),any(target_env="gnu",target_env="musl",target_env="msvc",target_env="")),all(target_arch="x86",target_os="windows",target_env="msvc"),all(target_arch="x86",target_os="linux",target_env="gnu")))'.build-dependencies]
 bindgen = { workspace = true, optional = true }
-
-[target.'cfg(not(any(all(any(target_arch="x86_64",target_arch="aarch64"),any(target_os="linux",target_os="macos",target_os="windows"),any(target_env="gnu",target_env="musl",target_env="msvc",target_env="")),all(target_arch="x86",target_os="windows",target_env="msvc"),all(target_arch="x86",target_os="linux",target_env="gnu"))))'.build-dependencies]
-bindgen.workspace = true
 
 [package.metadata.aws-lc-sys]
 commit-hash = "7b627926398b6bb786296132b22dbb37bab7649f"

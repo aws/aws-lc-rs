@@ -71,39 +71,10 @@ const OSSL_CONF_DEFINES: &[&str] = &[
     "OPENSSL_NO_WHIRLPOOL",
 ];
 
-macro_rules! bindgen_available {
-    ($top:ident, $item:item) => {
-        #[allow(clippy::non_minimal_cfg)]
-        #[cfg($top(any(
-            feature = "bindgen",
-            not(any(
-                all(
-                    any(target_arch = "x86_64", target_arch = "aarch64"),
-                    any(target_os = "linux", target_os = "macos", target_os = "windows"),
-                    any(
-                        target_env = "gnu",
-                        target_env = "musl",
-                        target_env = "msvc",
-                        target_env = ""
-                    )
-                ),
-                all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
-                all(target_arch = "x86", target_os = "linux", target_env = "gnu"),
-                all(target_arch = "riscv64", target_os = "linux", target_env = "gnu")
-            ))
-        )))]
-        $item
-    };
-    ($item:item) => {
-        bindgen_available!(any, $item);
-    };
-}
-
-bindgen_available!(
-    mod sys_bindgen;
-);
 mod cc_builder;
 mod cmake_builder;
+#[cfg(feature = "bindgen")]
+mod sys_bindgen;
 
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("aws-lc").join("include")
@@ -334,21 +305,20 @@ fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     }
 }
 
-bindgen_available!(
-    fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
-        let options = BindingOptions {
-            build_prefix: prefix.clone(),
-            include_ssl: cfg!(feature = "ssl"),
-            disable_prelude: true,
-        };
+#[cfg(feature = "bindgen")]
+fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
+    let options = BindingOptions {
+        build_prefix: prefix.clone(),
+        include_ssl: cfg!(feature = "ssl"),
+        disable_prelude: true,
+    };
 
-        let bindings = sys_bindgen::generate_bindings(manifest_dir, &options);
+    let bindings = sys_bindgen::generate_bindings(manifest_dir, &options);
 
-        bindings
-            .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
-            .expect("written bindings");
-    }
-);
+    bindings
+        .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
+        .expect("written bindings");
+}
 
 #[cfg(feature = "bindgen")]
 fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindings_path: &Path) {
@@ -589,13 +559,12 @@ fn is_bindgen_required() -> bool {
         || !has_pregenerated()
 }
 
-bindgen_available!(
-    fn internal_bindgen_supported() -> bool {
-        let cv = bindgen::clang_version();
-        emit_warning(format!("Clang version: {}", cv.full));
-        true
-    }
-);
+#[cfg(feature = "bindgen")]
+fn internal_bindgen_supported() -> bool {
+    let cv = bindgen::clang_version();
+    emit_warning(format!("Clang version: {}", cv.full));
+    true
+}
 
 fn is_no_prefix() -> bool {
     unsafe { AWS_LC_SYS_NO_PREFIX }
@@ -694,29 +663,26 @@ fn is_crt_static() -> bool {
     features.contains("crt-static")
 }
 
-bindgen_available!(
-    fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
-        if internal_bindgen_supported() && !is_external_bindgen_requested().unwrap_or(false) {
-            emit_warning(format!(
-                "Generating bindings - internal bindgen. Platform: {}",
-                effective_target()
-            ));
-            let gen_bindings_path = out_dir().join("bindings.rs");
-            generate_bindings(manifest_dir, prefix, &gen_bindings_path);
-            emit_rustc_cfg("use_bindgen_pregenerated");
-            true
-        } else {
-            false
-        }
-    }
-);
-
-bindgen_available!(
-    not,
-    fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
+#[cfg(feature = "bindgen")]
+fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
+    if internal_bindgen_supported() && !is_external_bindgen_requested().unwrap_or(false) {
+        emit_warning(format!(
+            "Generating bindings - internal bindgen. Platform: {}",
+            effective_target()
+        ));
+        let gen_bindings_path = out_dir().join("bindings.rs");
+        generate_bindings(manifest_dir, prefix, &gen_bindings_path);
+        emit_rustc_cfg("use_bindgen_pregenerated");
+        true
+    } else {
         false
     }
-);
+}
+
+#[cfg(not(feature = "bindgen"))]
+fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
+    false
+}
 
 fn main() {
     initialize();
