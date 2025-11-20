@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Tue Nov 11 15:37:52 UTC 2025
+// Wed Nov 19 21:35:14 UTC 2025
 
 use crate::cc_builder::Library;
 
