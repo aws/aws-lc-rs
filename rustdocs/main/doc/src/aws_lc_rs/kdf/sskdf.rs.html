@@ -229,7 +229,7 @@
 <a href=#229 id=229 data-nosnippet>229</a>        SSKDF_hmac(
 <a href=#230 id=230 data-nosnippet>230</a>            output.as_mut_ptr(),
 <a href=#231 id=231 data-nosnippet>231</a>            out_len,
-<a href=#232 id=232 data-nosnippet>232</a>            <span class="kw-2">*</span>evp_md,
+<a href=#232 id=232 data-nosnippet>232</a>            evp_md.as_const_ptr(),
 <a href=#233 id=233 data-nosnippet>233</a>            secret.as_ptr(),
 <a href=#234 id=234 data-nosnippet>234</a>            secret.len(),
 <a href=#235 id=235 data-nosnippet>235</a>            info.as_ptr(),
@@ -274,7 +274,7 @@
 <a href=#274 id=274 data-nosnippet>274</a>        SSKDF_digest(
 <a href=#275 id=275 data-nosnippet>275</a>            output.as_mut_ptr(),
 <a href=#276 id=276 data-nosnippet>276</a>            out_len,
-<a href=#277 id=277 data-nosnippet>277</a>            <span class="kw-2">*</span>evp_md,
+<a href=#277 id=277 data-nosnippet>277</a>            evp_md.as_const_ptr(),
 <a href=#278 id=278 data-nosnippet>278</a>            secret.as_ptr(),
 <a href=#279 id=279 data-nosnippet>279</a>            secret.len(),
 <a href=#280 id=280 data-nosnippet>280</a>            info.as_ptr(),

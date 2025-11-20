@@ -448,14 +448,14 @@
 <a href=#448 id=448 data-nosnippet>448</a>            <span class="self">self</span>.inner_key
 <a href=#449 id=449 data-nosnippet>449</a>                .get_evp_pkey()
 <a href=#450 id=450 data-nosnippet>450</a>                .project_const_lifetime(<span class="kw">unsafe </span>{
-<a href=#451 id=451 data-nosnippet>451</a>                    |evp_pkey| EVP_PKEY_get0_EC_KEY(<span class="kw-2">*</span>evp_pkey.as_const())
+<a href=#451 id=451 data-nosnippet>451</a>                    |evp_pkey| EVP_PKEY_get0_EC_KEY(evp_pkey.as_const_ptr())
 <a href=#452 id=452 data-nosnippet>452</a>                })<span class="question-mark">?
 <a href=#453 id=453 data-nosnippet>453</a>        </span>};
-<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">let </span>length = usize::try_from(<span class="kw">unsafe </span>{ i2d_ECPrivateKey(<span class="kw-2">*</span>ec_key, <span class="kw-2">&amp;mut </span>outp) })
+<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">let </span>length = usize::try_from(<span class="kw">unsafe </span>{ i2d_ECPrivateKey(ec_key.as_const_ptr(), <span class="kw-2">&amp;mut </span>outp) })
 <a href=#455 id=455 data-nosnippet>455</a>            .map_err(|<span class="kw">_</span>| Unspecified)<span class="question-mark">?</span>;
 <a href=#456 id=456 data-nosnippet>456</a>        <span class="kw">let </span><span class="kw-2">mut </span>outp = LcPtr::new(outp)<span class="question-mark">?</span>;
 <a href=#457 id=457 data-nosnippet>457</a>        <span class="prelude-val">Ok</span>(EcPrivateKeyRfc5915Der::take_from_slice(<span class="kw">unsafe </span>{
-<a href=#458 id=458 data-nosnippet>458</a>            core::slice::from_raw_parts_mut(<span class="kw-2">*</span>outp.as_mut(), length)
+<a href=#458 id=458 data-nosnippet>458</a>            core::slice::from_raw_parts_mut(outp.as_mut_ptr(), length)
 <a href=#459 id=459 data-nosnippet>459</a>        }))
 <a href=#460 id=460 data-nosnippet>460</a>    }
 <a href=#461 id=461 data-nosnippet>461</a>}
@@ -724,8 +724,8 @@
 <a href=#724 id=724 data-nosnippet>724</a>        <span class="self">self</span>.format
 <a href=#725 id=725 data-nosnippet>725</a>    }
 <a href=#726 id=726 data-nosnippet>726</a>
-<a href=#727 id=727 data-nosnippet>727</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt; {
-<a href=#728 id=728 data-nosnippet>728</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.key
+<a href=#727 id=727 data-nosnippet>727</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mut_key(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>LcPtr&lt;EVP_PKEY&gt; {
+<a href=#728 id=728 data-nosnippet>728</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>.key
 <a href=#729 id=729 data-nosnippet>729</a>    }
 <a href=#730 id=730 data-nosnippet>730</a>
 <a href=#731 id=731 data-nosnippet>731</a>    <span class="doccomment">/// The algorithm of the public key.
@@ -871,14 +871,14 @@
 <a href=#871 id=871 data-nosnippet>871</a>
 <a href=#872 id=872 data-nosnippet>872</a>    <span class="kw">let </span>parse_result = peer_public_key.try_into();
 <a href=#873 id=873 data-nosnippet>873</a>
-<a href=#874 id=874 data-nosnippet>874</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(peer_pub_key) = parse_result {
+<a href=#874 id=874 data-nosnippet>874</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>peer_pub_key) = parse_result {
 <a href=#875 id=875 data-nosnippet>875</a>        <span class="kw">if </span>peer_pub_key.alg() != expected_alg {
 <a href=#876 id=876 data-nosnippet>876</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(error_value);
 <a href=#877 id=877 data-nosnippet>877</a>        }
 <a href=#878 id=878 data-nosnippet>878</a>        <span class="kw">let </span>secret = my_private_key
 <a href=#879 id=879 data-nosnippet>879</a>            .inner_key
 <a href=#880 id=880 data-nosnippet>880</a>            .get_evp_pkey()
-<a href=#881 id=881 data-nosnippet>881</a>            .agree(peer_pub_key.key())
+<a href=#881 id=881 data-nosnippet>881</a>            .agree(peer_pub_key.mut_key())
 <a href=#882 id=882 data-nosnippet>882</a>            .or(<span class="prelude-val">Err</span>(error_value))<span class="question-mark">?</span>;
 <a href=#883 id=883 data-nosnippet>883</a>
 <a href=#884 id=884 data-nosnippet>884</a>        kdf(secret.as_ref())

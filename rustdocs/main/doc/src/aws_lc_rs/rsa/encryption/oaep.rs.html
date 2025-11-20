@@ -113,7 +113,7 @@
 <a href=#113 id=113 data-nosnippet>113</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'ciphertext </span><span class="kw-2">mut </span>[u8], Unspecified&gt; {
 <a href=#114 id=114 data-nosnippet>114</a>        <span class="kw">let </span><span class="kw-2">mut </span>pkey_ctx = <span class="self">self</span>.public_key.<span class="number">0</span>.create_EVP_PKEY_CTX()<span class="question-mark">?</span>;
 <a href=#115 id=115 data-nosnippet>115</a>
-<a href=#116 id=116 data-nosnippet>116</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_encrypt_init(<span class="kw-2">*</span>pkey_ctx.as_mut()) } {
+<a href=#116 id=116 data-nosnippet>116</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_encrypt_init(pkey_ctx.as_mut_ptr()) } {
 <a href=#117 id=117 data-nosnippet>117</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
 <a href=#118 id=118 data-nosnippet>118</a>        }
 <a href=#119 id=119 data-nosnippet>119</a>
@@ -128,7 +128,7 @@
 <a href=#128 id=128 data-nosnippet>128</a>
 <a href=#129 id=129 data-nosnippet>129</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
 <a href=#130 id=130 data-nosnippet>130</a>            EVP_PKEY_encrypt(
-<a href=#131 id=131 data-nosnippet>131</a>                <span class="kw-2">*</span>pkey_ctx.as_mut(),
+<a href=#131 id=131 data-nosnippet>131</a>                pkey_ctx.as_mut_ptr(),
 <a href=#132 id=132 data-nosnippet>132</a>                ciphertext.as_mut_ptr(),
 <a href=#133 id=133 data-nosnippet>133</a>                <span class="kw-2">&amp;mut </span>out_len,
 <a href=#134 id=134 data-nosnippet>134</a>                plaintext.as_ptr(),
@@ -217,7 +217,7 @@
 <a href=#217 id=217 data-nosnippet>217</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'plaintext </span><span class="kw-2">mut </span>[u8], Unspecified&gt; {
 <a href=#218 id=218 data-nosnippet>218</a>        <span class="kw">let </span><span class="kw-2">mut </span>pkey_ctx = <span class="self">self</span>.private_key.<span class="number">0</span>.create_EVP_PKEY_CTX()<span class="question-mark">?</span>;
 <a href=#219 id=219 data-nosnippet>219</a>
-<a href=#220 id=220 data-nosnippet>220</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_decrypt_init(<span class="kw-2">*</span>pkey_ctx.as_mut()) } {
+<a href=#220 id=220 data-nosnippet>220</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_decrypt_init(pkey_ctx.as_mut_ptr()) } {
 <a href=#221 id=221 data-nosnippet>221</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
 <a href=#222 id=222 data-nosnippet>222</a>        }
 <a href=#223 id=223 data-nosnippet>223</a>
@@ -232,7 +232,7 @@
 <a href=#232 id=232 data-nosnippet>232</a>
 <a href=#233 id=233 data-nosnippet>233</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
 <a href=#234 id=234 data-nosnippet>234</a>            EVP_PKEY_decrypt(
-<a href=#235 id=235 data-nosnippet>235</a>                <span class="kw-2">*</span>pkey_ctx.as_mut(),
+<a href=#235 id=235 data-nosnippet>235</a>                pkey_ctx.as_mut_ptr(),
 <a href=#236 id=236 data-nosnippet>236</a>                plaintext.as_mut_ptr(),
 <a href=#237 id=237 data-nosnippet>237</a>                <span class="kw-2">&amp;mut </span>out_len,
 <a href=#238 id=238 data-nosnippet>238</a>                ciphertext.as_ptr(),
@@ -277,49 +277,56 @@
 <a href=#277 id=277 data-nosnippet>277</a>    mgf1_hash_fn: Mgf1HashFn,
 <a href=#278 id=278 data-nosnippet>278</a>    label: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt;,
 <a href=#279 id=279 data-nosnippet>279</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-<a href=#280 id=280 data-nosnippet>280</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_rsa_padding(<span class="kw-2">*</span>evp_pkey_ctx.as_mut(), RSA_PKCS1_OAEP_PADDING) }
-<a href=#281 id=281 data-nosnippet>281</a>    {
-<a href=#282 id=282 data-nosnippet>282</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#283 id=283 data-nosnippet>283</a>    }
-<a href=#284 id=284 data-nosnippet>284</a>
-<a href=#285 id=285 data-nosnippet>285</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_rsa_oaep_md(<span class="kw-2">*</span>evp_pkey_ctx.as_mut(), oaep_hash_fn()) } {
-<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#287 id=287 data-nosnippet>287</a>    }
-<a href=#288 id=288 data-nosnippet>288</a>
-<a href=#289 id=289 data-nosnippet>289</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_rsa_mgf1_md(<span class="kw-2">*</span>evp_pkey_ctx.as_mut(), mgf1_hash_fn()) } {
-<a href=#290 id=290 data-nosnippet>290</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#291 id=291 data-nosnippet>291</a>    }
-<a href=#292 id=292 data-nosnippet>292</a>
-<a href=#293 id=293 data-nosnippet>293</a>    <span class="kw">let </span>label = label.unwrap_or(<span class="kw-2">&amp;</span>[<span class="number">0u8</span>; <span class="number">0</span>]);
-<a href=#294 id=294 data-nosnippet>294</a>
-<a href=#295 id=295 data-nosnippet>295</a>    <span class="kw">if </span>label.is_empty() {
-<a href=#296 id=296 data-nosnippet>296</a>        <span class="comment">// Safety: Don't pass zero-length slice pointers to C code :)
-<a href=#297 id=297 data-nosnippet>297</a>        </span><span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set0_rsa_oaep_label(<span class="kw-2">*</span>evp_pkey_ctx.as_mut(), null_mut(), <span class="number">0</span>) } {
-<a href=#298 id=298 data-nosnippet>298</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#299 id=299 data-nosnippet>299</a>        }
-<a href=#300 id=300 data-nosnippet>300</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-<a href=#301 id=301 data-nosnippet>301</a>    }
-<a href=#302 id=302 data-nosnippet>302</a>
-<a href=#303 id=303 data-nosnippet>303</a>    <span class="comment">// AWS-LC takes ownership of the label memory, and will call OPENSSL_free, so we are forced to copy it for now.
-<a href=#304 id=304 data-nosnippet>304</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>label_ptr =
-<a href=#305 id=305 data-nosnippet>305</a>        DetachableLcPtr::&lt;u8&gt;::new(<span class="kw">unsafe </span>{ OPENSSL_malloc(size_of_val(label)) }.cast())<span class="question-mark">?</span>;
-<a href=#306 id=306 data-nosnippet>306</a>
-<a href=#307 id=307 data-nosnippet>307</a>    {
-<a href=#308 id=308 data-nosnippet>308</a>        <span class="comment">// memcpy the label data into the AWS-LC allocation
-<a href=#309 id=309 data-nosnippet>309</a>        </span><span class="kw">let </span>label_ptr =
-<a href=#310 id=310 data-nosnippet>310</a>            <span class="kw">unsafe </span>{ core::slice::from_raw_parts_mut(<span class="kw-2">*</span>label_ptr.as_mut(), label.len()) };
-<a href=#311 id=311 data-nosnippet>311</a>        label_ptr.copy_from_slice(label);
-<a href=#312 id=312 data-nosnippet>312</a>    }
-<a href=#313 id=313 data-nosnippet>313</a>
-<a href=#314 id=314 data-nosnippet>314</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-<a href=#315 id=315 data-nosnippet>315</a>        EVP_PKEY_CTX_set0_rsa_oaep_label(<span class="kw-2">*</span>evp_pkey_ctx.as_mut(), <span class="kw-2">*</span>label_ptr, label.len())
-<a href=#316 id=316 data-nosnippet>316</a>    } {
-<a href=#317 id=317 data-nosnippet>317</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#318 id=318 data-nosnippet>318</a>    }
-<a href=#319 id=319 data-nosnippet>319</a>
-<a href=#320 id=320 data-nosnippet>320</a>    <span class="comment">// AWS-LC owns the allocation now, so we detach it to avoid freeing it here when label_ptr goes out of scope.
-<a href=#321 id=321 data-nosnippet>321</a>    </span>label_ptr.detach();
-<a href=#322 id=322 data-nosnippet>322</a>
-<a href=#323 id=323 data-nosnippet>323</a>    <span class="prelude-val">Ok</span>(())
-<a href=#324 id=324 data-nosnippet>324</a>}
+<a href=#280 id=280 data-nosnippet>280</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
+<a href=#281 id=281 data-nosnippet>281</a>        EVP_PKEY_CTX_set_rsa_padding(evp_pkey_ctx.as_mut_ptr(), RSA_PKCS1_OAEP_PADDING)
+<a href=#282 id=282 data-nosnippet>282</a>    } {
+<a href=#283 id=283 data-nosnippet>283</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#284 id=284 data-nosnippet>284</a>    }
+<a href=#285 id=285 data-nosnippet>285</a>
+<a href=#286 id=286 data-nosnippet>286</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_rsa_oaep_md(evp_pkey_ctx.as_mut_ptr(), oaep_hash_fn()) } {
+<a href=#287 id=287 data-nosnippet>287</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#288 id=288 data-nosnippet>288</a>    }
+<a href=#289 id=289 data-nosnippet>289</a>
+<a href=#290 id=290 data-nosnippet>290</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_rsa_mgf1_md(evp_pkey_ctx.as_mut_ptr(), mgf1_hash_fn()) } {
+<a href=#291 id=291 data-nosnippet>291</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#292 id=292 data-nosnippet>292</a>    }
+<a href=#293 id=293 data-nosnippet>293</a>
+<a href=#294 id=294 data-nosnippet>294</a>    <span class="kw">let </span>label = label.unwrap_or(<span class="kw-2">&amp;</span>[<span class="number">0u8</span>; <span class="number">0</span>]);
+<a href=#295 id=295 data-nosnippet>295</a>
+<a href=#296 id=296 data-nosnippet>296</a>    <span class="kw">if </span>label.is_empty() {
+<a href=#297 id=297 data-nosnippet>297</a>        <span class="comment">// Safety: Don't pass zero-length slice pointers to C code :)
+<a href=#298 id=298 data-nosnippet>298</a>        </span><span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
+<a href=#299 id=299 data-nosnippet>299</a>            EVP_PKEY_CTX_set0_rsa_oaep_label(evp_pkey_ctx.as_mut_ptr(), null_mut(), <span class="number">0</span>)
+<a href=#300 id=300 data-nosnippet>300</a>        } {
+<a href=#301 id=301 data-nosnippet>301</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#302 id=302 data-nosnippet>302</a>        }
+<a href=#303 id=303 data-nosnippet>303</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+<a href=#304 id=304 data-nosnippet>304</a>    }
+<a href=#305 id=305 data-nosnippet>305</a>
+<a href=#306 id=306 data-nosnippet>306</a>    <span class="comment">// AWS-LC takes ownership of the label memory, and will call OPENSSL_free, so we are forced to copy it for now.
+<a href=#307 id=307 data-nosnippet>307</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>label_ptr =
+<a href=#308 id=308 data-nosnippet>308</a>        DetachableLcPtr::&lt;u8&gt;::new(<span class="kw">unsafe </span>{ OPENSSL_malloc(size_of_val(label)) }.cast())<span class="question-mark">?</span>;
+<a href=#309 id=309 data-nosnippet>309</a>
+<a href=#310 id=310 data-nosnippet>310</a>    {
+<a href=#311 id=311 data-nosnippet>311</a>        <span class="comment">// memcpy the label data into the AWS-LC allocation
+<a href=#312 id=312 data-nosnippet>312</a>        </span><span class="kw">let </span>label_ptr =
+<a href=#313 id=313 data-nosnippet>313</a>            <span class="kw">unsafe </span>{ core::slice::from_raw_parts_mut(label_ptr.as_mut_ptr(), label.len()) };
+<a href=#314 id=314 data-nosnippet>314</a>        label_ptr.copy_from_slice(label);
+<a href=#315 id=315 data-nosnippet>315</a>    }
+<a href=#316 id=316 data-nosnippet>316</a>
+<a href=#317 id=317 data-nosnippet>317</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
+<a href=#318 id=318 data-nosnippet>318</a>        EVP_PKEY_CTX_set0_rsa_oaep_label(
+<a href=#319 id=319 data-nosnippet>319</a>            evp_pkey_ctx.as_mut_ptr(),
+<a href=#320 id=320 data-nosnippet>320</a>            label_ptr.as_mut_ptr(),
+<a href=#321 id=321 data-nosnippet>321</a>            label.len(),
+<a href=#322 id=322 data-nosnippet>322</a>        )
+<a href=#323 id=323 data-nosnippet>323</a>    } {
+<a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#325 id=325 data-nosnippet>325</a>    }
+<a href=#326 id=326 data-nosnippet>326</a>
+<a href=#327 id=327 data-nosnippet>327</a>    <span class="comment">// AWS-LC owns the allocation now, so we detach it to avoid freeing it here when label_ptr goes out of scope.
+<a href=#328 id=328 data-nosnippet>328</a>    </span>label_ptr.detach();
+<a href=#329 id=329 data-nosnippet>329</a>
+<a href=#330 id=330 data-nosnippet>330</a>    <span class="prelude-val">Ok</span>(())
+<a href=#331 id=331 data-nosnippet>331</a>}
 </code></pre></div></section></main></body></html>

@@ -252,7 +252,7 @@
 <a href=#252 id=252 data-nosnippet>252</a>
 <a href=#253 id=253 data-nosnippet>253</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
 <a href=#254 id=254 data-nosnippet>254</a>            EVP_PKEY_decapsulate(
-<a href=#255 id=255 data-nosnippet>255</a>                <span class="kw-2">*</span>ctx.as_mut(),
+<a href=#255 id=255 data-nosnippet>255</a>                ctx.as_mut_ptr(),
 <a href=#256 id=256 data-nosnippet>256</a>                shared_secret.as_mut_ptr(),
 <a href=#257 id=257 data-nosnippet>257</a>                <span class="kw-2">&amp;mut </span>shared_secret_len,
 <a href=#258 id=258 data-nosnippet>258</a>                <span class="comment">// AWS-LC incorrectly has this as an unqualified `uint8_t *`, it should be qualified with const
@@ -326,7 +326,7 @@
 <a href=#326 id=326 data-nosnippet>326</a>
 <a href=#327 id=327 data-nosnippet>327</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
 <a href=#328 id=328 data-nosnippet>328</a>            EVP_PKEY_encapsulate(
-<a href=#329 id=329 data-nosnippet>329</a>                <span class="kw-2">*</span>ctx.as_mut(),
+<a href=#329 id=329 data-nosnippet>329</a>                ctx.as_mut_ptr(),
 <a href=#330 id=330 data-nosnippet>330</a>                ciphertext.as_mut_ptr(),
 <a href=#331 id=331 data-nosnippet>331</a>                <span class="kw-2">&amp;mut </span>ciphertext_len,
 <a href=#332 id=332 data-nosnippet>332</a>                shared_secret.as_mut_ptr(),

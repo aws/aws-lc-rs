@@ -281,52 +281,56 @@
 <a href=#281 id=281 data-nosnippet>281</a>    <span class="kw">let </span><span class="kw-2">mut </span>out_bytes_len = MaybeUninit::&lt;usize&gt;::uninit();
 <a href=#282 id=282 data-nosnippet>282</a>    <span class="kw">let </span>sig = <span class="kw">unsafe </span>{ ecdsa_sig_from_fixed(alg, signature)<span class="question-mark">? </span>};
 <a href=#283 id=283 data-nosnippet>283</a>    <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
-<a href=#284 id=284 data-nosnippet>284</a>        ECDSA_SIG_to_bytes(<span class="kw-2">&amp;mut </span>out_bytes, out_bytes_len.as_mut_ptr(), <span class="kw-2">*</span>sig.as_const())
-<a href=#285 id=285 data-nosnippet>285</a>    } {
-<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
-<a href=#287 id=287 data-nosnippet>287</a>    }
-<a href=#288 id=288 data-nosnippet>288</a>    <span class="prelude-val">Ok</span>((LcPtr::new(out_bytes)<span class="question-mark">?</span>, <span class="kw">unsafe </span>{
-<a href=#289 id=289 data-nosnippet>289</a>        out_bytes_len.assume_init()
-<a href=#290 id=290 data-nosnippet>290</a>    }))
-<a href=#291 id=291 data-nosnippet>291</a>}
-<a href=#292 id=292 data-nosnippet>292</a>
-<a href=#293 id=293 data-nosnippet>293</a><span class="kw">fn </span>verify_asn1_signature(
-<a href=#294 id=294 data-nosnippet>294</a>    digest_alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>digest::Algorithm,
-<a href=#295 id=295 data-nosnippet>295</a>    public_key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
-<a href=#296 id=296 data-nosnippet>296</a>    msg: <span class="kw-2">&amp;</span>[u8],
-<a href=#297 id=297 data-nosnippet>297</a>    signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#298 id=298 data-nosnippet>298</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-<a href=#299 id=299 data-nosnippet>299</a>    public_key.verify(msg, <span class="prelude-val">Some</span>(digest_alg), No_EVP_PKEY_CTX_consumer, signature)
-<a href=#300 id=300 data-nosnippet>300</a>}
-<a href=#301 id=301 data-nosnippet>301</a>
-<a href=#302 id=302 data-nosnippet>302</a><span class="kw">fn </span>verify_asn1_digest_signature(
-<a href=#303 id=303 data-nosnippet>303</a>    digest: <span class="kw-2">&amp;</span>Digest,
-<a href=#304 id=304 data-nosnippet>304</a>    public_key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
-<a href=#305 id=305 data-nosnippet>305</a>    signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#306 id=306 data-nosnippet>306</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-<a href=#307 id=307 data-nosnippet>307</a>    public_key.verify_digest_sig(digest, No_EVP_PKEY_CTX_consumer, signature)
-<a href=#308 id=308 data-nosnippet>308</a>}
-<a href=#309 id=309 data-nosnippet>309</a>
-<a href=#310 id=310 data-nosnippet>310</a><span class="attr">#[inline]
-<a href=#311 id=311 data-nosnippet>311</a></span><span class="kw">unsafe fn </span>ecdsa_sig_from_fixed(
-<a href=#312 id=312 data-nosnippet>312</a>    alg_id: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AlgorithmID,
-<a href=#313 id=313 data-nosnippet>313</a>    signature: <span class="kw-2">&amp;</span>[u8],
-<a href=#314 id=314 data-nosnippet>314</a>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;ECDSA_SIG&gt;, ()&gt; {
-<a href=#315 id=315 data-nosnippet>315</a>    <span class="kw">let </span>num_size_bytes = alg_id.private_key_size();
-<a href=#316 id=316 data-nosnippet>316</a>    <span class="kw">if </span>signature.len() != <span class="number">2 </span>* num_size_bytes {
-<a href=#317 id=317 data-nosnippet>317</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(());
-<a href=#318 id=318 data-nosnippet>318</a>    }
-<a href=#319 id=319 data-nosnippet>319</a>    <span class="kw">let </span><span class="kw-2">mut </span>r_bn = DetachableLcPtr::&lt;BIGNUM&gt;::try_from(<span class="kw-2">&amp;</span>signature[..num_size_bytes])<span class="question-mark">?</span>;
-<a href=#320 id=320 data-nosnippet>320</a>    <span class="kw">let </span><span class="kw-2">mut </span>s_bn = DetachableLcPtr::&lt;BIGNUM&gt;::try_from(<span class="kw-2">&amp;</span>signature[num_size_bytes..])<span class="question-mark">?</span>;
-<a href=#321 id=321 data-nosnippet>321</a>
-<a href=#322 id=322 data-nosnippet>322</a>    <span class="kw">let </span><span class="kw-2">mut </span>ecdsa_sig = LcPtr::new(ECDSA_SIG_new())<span class="question-mark">?</span>;
-<a href=#323 id=323 data-nosnippet>323</a>
-<a href=#324 id=324 data-nosnippet>324</a>    <span class="kw">if </span><span class="number">1 </span>!= ECDSA_SIG_set0(<span class="kw-2">*</span>ecdsa_sig.as_mut(), <span class="kw-2">*</span>r_bn.as_mut(), <span class="kw-2">*</span>s_bn.as_mut()) {
-<a href=#325 id=325 data-nosnippet>325</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(());
-<a href=#326 id=326 data-nosnippet>326</a>    }
-<a href=#327 id=327 data-nosnippet>327</a>    r_bn.detach();
-<a href=#328 id=328 data-nosnippet>328</a>    s_bn.detach();
-<a href=#329 id=329 data-nosnippet>329</a>
-<a href=#330 id=330 data-nosnippet>330</a>    <span class="prelude-val">Ok</span>(ecdsa_sig)
-<a href=#331 id=331 data-nosnippet>331</a>}
+<a href=#284 id=284 data-nosnippet>284</a>        ECDSA_SIG_to_bytes(
+<a href=#285 id=285 data-nosnippet>285</a>            <span class="kw-2">&amp;mut </span>out_bytes,
+<a href=#286 id=286 data-nosnippet>286</a>            out_bytes_len.as_mut_ptr(),
+<a href=#287 id=287 data-nosnippet>287</a>            sig.as_const_ptr(),
+<a href=#288 id=288 data-nosnippet>288</a>        )
+<a href=#289 id=289 data-nosnippet>289</a>    } {
+<a href=#290 id=290 data-nosnippet>290</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
+<a href=#291 id=291 data-nosnippet>291</a>    }
+<a href=#292 id=292 data-nosnippet>292</a>    <span class="prelude-val">Ok</span>((LcPtr::new(out_bytes)<span class="question-mark">?</span>, <span class="kw">unsafe </span>{
+<a href=#293 id=293 data-nosnippet>293</a>        out_bytes_len.assume_init()
+<a href=#294 id=294 data-nosnippet>294</a>    }))
+<a href=#295 id=295 data-nosnippet>295</a>}
+<a href=#296 id=296 data-nosnippet>296</a>
+<a href=#297 id=297 data-nosnippet>297</a><span class="kw">fn </span>verify_asn1_signature(
+<a href=#298 id=298 data-nosnippet>298</a>    digest_alg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>digest::Algorithm,
+<a href=#299 id=299 data-nosnippet>299</a>    public_key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
+<a href=#300 id=300 data-nosnippet>300</a>    msg: <span class="kw-2">&amp;</span>[u8],
+<a href=#301 id=301 data-nosnippet>301</a>    signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#302 id=302 data-nosnippet>302</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
+<a href=#303 id=303 data-nosnippet>303</a>    public_key.verify(msg, <span class="prelude-val">Some</span>(digest_alg), No_EVP_PKEY_CTX_consumer, signature)
+<a href=#304 id=304 data-nosnippet>304</a>}
+<a href=#305 id=305 data-nosnippet>305</a>
+<a href=#306 id=306 data-nosnippet>306</a><span class="kw">fn </span>verify_asn1_digest_signature(
+<a href=#307 id=307 data-nosnippet>307</a>    digest: <span class="kw-2">&amp;</span>Digest,
+<a href=#308 id=308 data-nosnippet>308</a>    public_key: <span class="kw-2">&amp;</span>LcPtr&lt;EVP_PKEY&gt;,
+<a href=#309 id=309 data-nosnippet>309</a>    signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#310 id=310 data-nosnippet>310</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
+<a href=#311 id=311 data-nosnippet>311</a>    public_key.verify_digest_sig(digest, No_EVP_PKEY_CTX_consumer, signature)
+<a href=#312 id=312 data-nosnippet>312</a>}
+<a href=#313 id=313 data-nosnippet>313</a>
+<a href=#314 id=314 data-nosnippet>314</a><span class="attr">#[inline]
+<a href=#315 id=315 data-nosnippet>315</a></span><span class="kw">unsafe fn </span>ecdsa_sig_from_fixed(
+<a href=#316 id=316 data-nosnippet>316</a>    alg_id: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AlgorithmID,
+<a href=#317 id=317 data-nosnippet>317</a>    signature: <span class="kw-2">&amp;</span>[u8],
+<a href=#318 id=318 data-nosnippet>318</a>) -&gt; <span class="prelude-ty">Result</span>&lt;LcPtr&lt;ECDSA_SIG&gt;, ()&gt; {
+<a href=#319 id=319 data-nosnippet>319</a>    <span class="kw">let </span>num_size_bytes = alg_id.private_key_size();
+<a href=#320 id=320 data-nosnippet>320</a>    <span class="kw">if </span>signature.len() != <span class="number">2 </span>* num_size_bytes {
+<a href=#321 id=321 data-nosnippet>321</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(());
+<a href=#322 id=322 data-nosnippet>322</a>    }
+<a href=#323 id=323 data-nosnippet>323</a>    <span class="kw">let </span><span class="kw-2">mut </span>r_bn = DetachableLcPtr::&lt;BIGNUM&gt;::try_from(<span class="kw-2">&amp;</span>signature[..num_size_bytes])<span class="question-mark">?</span>;
+<a href=#324 id=324 data-nosnippet>324</a>    <span class="kw">let </span><span class="kw-2">mut </span>s_bn = DetachableLcPtr::&lt;BIGNUM&gt;::try_from(<span class="kw-2">&amp;</span>signature[num_size_bytes..])<span class="question-mark">?</span>;
+<a href=#325 id=325 data-nosnippet>325</a>
+<a href=#326 id=326 data-nosnippet>326</a>    <span class="kw">let </span><span class="kw-2">mut </span>ecdsa_sig = LcPtr::new(ECDSA_SIG_new())<span class="question-mark">?</span>;
+<a href=#327 id=327 data-nosnippet>327</a>
+<a href=#328 id=328 data-nosnippet>328</a>    <span class="kw">if </span><span class="number">1 </span>!= ECDSA_SIG_set0(ecdsa_sig.as_mut_ptr(), r_bn.as_mut_ptr(), s_bn.as_mut_ptr()) {
+<a href=#329 id=329 data-nosnippet>329</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(());
+<a href=#330 id=330 data-nosnippet>330</a>    }
+<a href=#331 id=331 data-nosnippet>331</a>    r_bn.detach();
+<a href=#332 id=332 data-nosnippet>332</a>    s_bn.detach();
+<a href=#333 id=333 data-nosnippet>333</a>
+<a href=#334 id=334 data-nosnippet>334</a>    <span class="prelude-val">Ok</span>(ecdsa_sig)
+<a href=#335 id=335 data-nosnippet>335</a>}
 </code></pre></div></section></main></body></html>

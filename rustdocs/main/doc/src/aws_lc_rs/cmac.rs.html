@@ -212,7 +212,7 @@
 <a href=#212 id=212 data-nosnippet>212</a>        <span class="kw">let </span><span class="kw-2">mut </span>new_ctx = LcPtr::new(<span class="kw">unsafe </span>{ CMAC_CTX_new() }).expect(<span class="string">"CMAC_CTX_new failed"</span>);
 <a href=#213 id=213 data-nosnippet>213</a>        <span class="kw">unsafe </span>{
 <a href=#214 id=214 data-nosnippet>214</a>            <span class="macro">assert!</span>(
-<a href=#215 id=215 data-nosnippet>215</a>                <span class="number">1 </span>== CMAC_CTX_copy(<span class="kw-2">*</span>new_ctx.as_mut(), <span class="kw-2">*</span><span class="self">self</span>.as_const()),
+<a href=#215 id=215 data-nosnippet>215</a>                <span class="number">1 </span>== CMAC_CTX_copy(new_ctx.as_mut_ptr(), <span class="self">self</span>.as_const_ptr()),
 <a href=#216 id=216 data-nosnippet>216</a>                <span class="string">"CMAC_CTX_copy failed"
 <a href=#217 id=217 data-nosnippet>217</a>            </span>);
 <a href=#218 id=218 data-nosnippet>218</a>        }
@@ -269,10 +269,10 @@
 <a href=#269 id=269 data-nosnippet>269</a>        <span class="kw">unsafe </span>{
 <a href=#270 id=270 data-nosnippet>270</a>            <span class="kw">let </span>cipher = algorithm.id.evp_cipher();
 <a href=#271 id=271 data-nosnippet>271</a>            <span class="kw">if </span><span class="number">1 </span>!= CMAC_Init(
-<a href=#272 id=272 data-nosnippet>272</a>                <span class="kw-2">*</span>ctx.as_mut(),
+<a href=#272 id=272 data-nosnippet>272</a>                ctx.as_mut_ptr(),
 <a href=#273 id=273 data-nosnippet>273</a>                key_value.as_ptr().cast(),
 <a href=#274 id=274 data-nosnippet>274</a>                key_value.len(),
-<a href=#275 id=275 data-nosnippet>275</a>                <span class="kw-2">*</span>cipher,
+<a href=#275 id=275 data-nosnippet>275</a>                cipher.as_const_ptr(),
 <a href=#276 id=276 data-nosnippet>276</a>                null_mut(),
 <a href=#277 id=277 data-nosnippet>277</a>            ) {
 <a href=#278 id=278 data-nosnippet>278</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
@@ -330,7 +330,7 @@
 <a href=#330 id=330 data-nosnippet>330</a>    /// `error::Unspecified` if the CMAC cannot be updated.
 <a href=#331 id=331 data-nosnippet>331</a>    </span><span class="kw">pub fn </span>update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
 <a href=#332 id=332 data-nosnippet>332</a>        <span class="kw">unsafe </span>{
-<a href=#333 id=333 data-nosnippet>333</a>            <span class="kw">if </span><span class="number">1 </span>!= CMAC_Update(<span class="kw-2">*</span><span class="self">self</span>.key.ctx.as_mut(), data.as_ptr(), data.len()) {
+<a href=#333 id=333 data-nosnippet>333</a>            <span class="kw">if </span><span class="number">1 </span>!= CMAC_Update(<span class="self">self</span>.key.ctx.as_mut_ptr(), data.as_ptr(), data.len()) {
 <a href=#334 id=334 data-nosnippet>334</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Unspecified);
 <a href=#335 id=335 data-nosnippet>335</a>            }
 <a href=#336 id=336 data-nosnippet>336</a>        }
@@ -362,7 +362,7 @@
 <a href=#362 id=362 data-nosnippet>362</a>
 <a href=#363 id=363 data-nosnippet>363</a>        <span class="kw">unsafe </span>{
 <a href=#364 id=364 data-nosnippet>364</a>            <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(CMAC_Final(
-<a href=#365 id=365 data-nosnippet>365</a>                <span class="kw-2">*</span><span class="self">self</span>.key.ctx.as_mut(),
+<a href=#365 id=365 data-nosnippet>365</a>                <span class="self">self</span>.key.ctx.as_mut_ptr(),
 <a href=#366 id=366 data-nosnippet>366</a>                output.as_mut_ptr(),
 <a href=#367 id=367 data-nosnippet>367</a>                out_len.as_mut_ptr(),
 <a href=#368 id=368 data-nosnippet>368</a>            )) {

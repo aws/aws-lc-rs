@@ -105,7 +105,7 @@
 <a href=#105 id=105 data-nosnippet>105</a>            <span class="kw">let </span>nonce = nonce.as_ref();
 <a href=#106 id=106 data-nosnippet>106</a>
 <a href=#107 id=107 data-nosnippet>107</a>            <span class="kw">if </span><span class="number">1 </span>!= EVP_AEAD_CTX_open_gather(
-<a href=#108 id=108 data-nosnippet>108</a>                <span class="kw-2">*</span>aead_ctx.as_const(),
+<a href=#108 id=108 data-nosnippet>108</a>                aead_ctx.as_const_ptr(),
 <a href=#109 id=109 data-nosnippet>109</a>                out_plaintext.as_mut_ptr(),
 <a href=#110 id=110 data-nosnippet>110</a>                nonce.as_ptr(),
 <a href=#111 id=111 data-nosnippet>111</a>                nonce.len(),
@@ -179,7 +179,7 @@
 <a href=#179 id=179 data-nosnippet>179</a>
 <a href=#180 id=180 data-nosnippet>180</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{
 <a href=#181 id=181 data-nosnippet>181</a>            EVP_AEAD_CTX_seal_scatter(
-<a href=#182 id=182 data-nosnippet>182</a>                <span class="kw-2">*</span><span class="self">self</span>.ctx.as_ref().as_const(),
+<a href=#182 id=182 data-nosnippet>182</a>                <span class="self">self</span>.ctx.as_ref().as_const_ptr(),
 <a href=#183 id=183 data-nosnippet>183</a>                in_out.as_mut_ptr(),
 <a href=#184 id=184 data-nosnippet>184</a>                extra_out_and_tag.as_mut_ptr(),
 <a href=#185 id=185 data-nosnippet>185</a>                <span class="kw-2">&amp;mut </span>out_tag_len,
@@ -231,7 +231,7 @@
 <a href=#231 id=231 data-nosnippet>231</a>        <span class="kw">let </span><span class="kw-2">mut </span>out_len = MaybeUninit::&lt;usize&gt;::uninit();
 <a href=#232 id=232 data-nosnippet>232</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
 <a href=#233 id=233 data-nosnippet>233</a>            EVP_AEAD_CTX_open(
-<a href=#234 id=234 data-nosnippet>234</a>                <span class="kw-2">*</span><span class="self">self</span>.ctx.as_ref().as_const(),
+<a href=#234 id=234 data-nosnippet>234</a>                <span class="self">self</span>.ctx.as_ref().as_const_ptr(),
 <a href=#235 id=235 data-nosnippet>235</a>                in_out.as_mut_ptr(),
 <a href=#236 id=236 data-nosnippet>236</a>                out_len.as_mut_ptr(),
 <a href=#237 id=237 data-nosnippet>237</a>                plaintext_len,
@@ -277,7 +277,7 @@
 <a href=#277 id=277 data-nosnippet>277</a>
 <a href=#278 id=278 data-nosnippet>278</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
 <a href=#279 id=279 data-nosnippet>279</a>            EVP_AEAD_CTX_open_gather(
-<a href=#280 id=280 data-nosnippet>280</a>                <span class="kw-2">*</span><span class="self">self</span>.ctx.as_ref().as_const(),
+<a href=#280 id=280 data-nosnippet>280</a>                <span class="self">self</span>.ctx.as_ref().as_const_ptr(),
 <a href=#281 id=281 data-nosnippet>281</a>                in_out.as_mut_ptr(),
 <a href=#282 id=282 data-nosnippet>282</a>                null(),
 <a href=#283 id=283 data-nosnippet>283</a>                <span class="number">0</span>,
@@ -325,7 +325,7 @@
 <a href=#325 id=325 data-nosnippet>325</a>
 <a href=#326 id=326 data-nosnippet>326</a>            <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
 <a href=#327 id=327 data-nosnippet>327</a>                EVP_AEAD_CTX_seal(
-<a href=#328 id=328 data-nosnippet>328</a>                    <span class="kw-2">*</span><span class="self">self</span>.ctx.as_ref().as_const(),
+<a href=#328 id=328 data-nosnippet>328</a>                    <span class="self">self</span>.ctx.as_ref().as_const_ptr(),
 <a href=#329 id=329 data-nosnippet>329</a>                    mut_in_out.as_mut_ptr(),
 <a href=#330 id=330 data-nosnippet>330</a>                    out_len.as_mut_ptr(),
 <a href=#331 id=331 data-nosnippet>331</a>                    plaintext_len + alg_tag_len,
@@ -363,7 +363,7 @@
 <a href=#363 id=363 data-nosnippet>363</a>
 <a href=#364 id=364 data-nosnippet>364</a>            <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
 <a href=#365 id=365 data-nosnippet>365</a>                EVP_AEAD_CTX_seal_scatter(
-<a href=#366 id=366 data-nosnippet>366</a>                    <span class="kw-2">*</span><span class="self">self</span>.ctx.as_ref().as_const(),
+<a href=#366 id=366 data-nosnippet>366</a>                    <span class="self">self</span>.ctx.as_ref().as_const_ptr(),
 <a href=#367 id=367 data-nosnippet>367</a>                    in_out.as_mut_ptr(),
 <a href=#368 id=368 data-nosnippet>368</a>                    tag_buffer.as_mut_ptr(),
 <a href=#369 id=369 data-nosnippet>369</a>                    out_tag_len.as_mut_ptr(),
@@ -410,7 +410,7 @@
 <a href=#410 id=410 data-nosnippet>410</a>
 <a href=#411 id=411 data-nosnippet>411</a>            <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
 <a href=#412 id=412 data-nosnippet>412</a>                EVP_AEAD_CTX_seal_scatter(
-<a href=#413 id=413 data-nosnippet>413</a>                    <span class="kw-2">*</span><span class="self">self</span>.ctx.as_ref().as_const(),
+<a href=#413 id=413 data-nosnippet>413</a>                    <span class="self">self</span>.ctx.as_ref().as_const_ptr(),
 <a href=#414 id=414 data-nosnippet>414</a>                    in_out.as_mut_ptr(),
 <a href=#415 id=415 data-nosnippet>415</a>                    tag.as_mut_ptr(),
 <a href=#416 id=416 data-nosnippet>416</a>                    out_tag_len.as_mut_ptr(),
@@ -447,7 +447,7 @@
 <a href=#447 id=447 data-nosnippet>447</a>
 <a href=#448 id=448 data-nosnippet>448</a>        <span class="kw">if </span><span class="number">1 </span>!= <span class="macro">indicator_check!</span>(<span class="kw">unsafe </span>{
 <a href=#449 id=449 data-nosnippet>449</a>            EVP_AEAD_CTX_seal_scatter(
-<a href=#450 id=450 data-nosnippet>450</a>                <span class="kw-2">*</span><span class="self">self</span>.ctx.as_ref().as_const(),
+<a href=#450 id=450 data-nosnippet>450</a>                <span class="self">self</span>.ctx.as_ref().as_const_ptr(),
 <a href=#451 id=451 data-nosnippet>451</a>                in_out.as_mut_ptr(),
 <a href=#452 id=452 data-nosnippet>452</a>                tag_buffer.as_mut_ptr(),
 <a href=#453 id=453 data-nosnippet>453</a>                out_tag_len.as_mut_ptr(),

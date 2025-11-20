@@ -191,7 +191,7 @@
 <a href=#191 id=191 data-nosnippet>191</a>
 <a href=#192 id=192 data-nosnippet>192</a><span class="kw">impl </span>PrkMode {
 <a href=#193 id=193 data-nosnippet>193</a>    <span class="kw">fn </span>fill(<span class="kw-2">&amp;</span><span class="self">self</span>, algorithm: Algorithm, out: <span class="kw-2">&amp;mut </span>[u8], info: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Unspecified&gt; {
-<a href=#194 id=194 data-nosnippet>194</a>        <span class="kw">let </span>digest = <span class="kw-2">*</span>digest::match_digest_type(<span class="kw-2">&amp;</span>algorithm.<span class="number">0</span>.digest_algorithm().id);
+<a href=#194 id=194 data-nosnippet>194</a>        <span class="kw">let </span>digest = digest::match_digest_type(<span class="kw-2">&amp;</span>algorithm.<span class="number">0</span>.digest_algorithm().id).as_const_ptr();
 <a href=#195 id=195 data-nosnippet>195</a>
 <a href=#196 id=196 data-nosnippet>196</a>        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self </span>{
 <a href=#197 id=197 data-nosnippet>197</a>            PrkMode::Expand { key_bytes, key_len } =&gt; <span class="kw">unsafe </span>{

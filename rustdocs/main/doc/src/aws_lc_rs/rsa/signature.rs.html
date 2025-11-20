@@ -164,7 +164,7 @@
 <a href=#164 id=164 data-nosnippet>164</a>    /// `error::Unspecified` on parse error.
 <a href=#165 id=165 data-nosnippet>165</a>    </span><span class="kw">pub fn </span>public_modulus_len(public_key: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;u32, Unspecified&gt; {
 <a href=#166 id=166 data-nosnippet>166</a>        <span class="kw">let </span>rsa = encoding::rfc8017::decode_public_key_der(public_key)<span class="question-mark">?</span>;
-<a href=#167 id=167 data-nosnippet>167</a>        <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ RSA_bits(<span class="kw-2">*</span>rsa.as_const().get_rsa()<span class="question-mark">?</span>) })
+<a href=#167 id=167 data-nosnippet>167</a>        <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ RSA_bits(rsa.as_const().get_rsa()<span class="question-mark">?</span>.as_const_ptr()) })
 <a href=#168 id=168 data-nosnippet>168</a>    }
 <a href=#169 id=169 data-nosnippet>169</a>
 <a href=#170 id=170 data-nosnippet>170</a>    <span class="attr">#[must_use]
@@ -306,7 +306,7 @@
 <a href=#306 id=306 data-nosnippet>306</a>    <span class="kw">let </span>padding_fn = <span class="prelude-val">Some</span>({
 <a href=#307 id=307 data-nosnippet>307</a>        |pctx: <span class="kw-2">*mut </span>EVP_PKEY_CTX| {
 <a href=#308 id=308 data-nosnippet>308</a>            <span class="kw">let </span>evp_md = match_digest_type(<span class="kw-2">&amp;</span>digest.algorithm().id);
-<a href=#309 id=309 data-nosnippet>309</a>            <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_signature_md(pctx, <span class="kw-2">*</span>evp_md) } {
+<a href=#309 id=309 data-nosnippet>309</a>            <span class="kw">if </span><span class="number">1 </span>!= <span class="kw">unsafe </span>{ EVP_PKEY_CTX_set_signature_md(pctx, evp_md.as_const_ptr()) } {
 <a href=#310 id=310 data-nosnippet>310</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(());
 <a href=#311 id=311 data-nosnippet>311</a>            }
 <a href=#312 id=312 data-nosnippet>312</a>            <span class="kw">if let </span>RsaPadding::RSA_PKCS1_PSS_PADDING = padding {

@@ -29,7 +29,7 @@
 <a href=#29 id=29 data-nosnippet>29</a>        }
 <a href=#30 id=30 data-nosnippet>30</a>
 <a href=#31 id=31 data-nosnippet>31</a>        <span class="kw">let </span>out_data = LcPtr::new(out_data)<span class="question-mark">?</span>;
-<a href=#32 id=32 data-nosnippet>32</a>        <span class="kw">let </span>slice = <span class="kw">unsafe </span>{ std::slice::from_raw_parts(<span class="kw-2">*</span>out_data.as_const(), out_len) };
+<a href=#32 id=32 data-nosnippet>32</a>        <span class="kw">let </span>slice = <span class="kw">unsafe </span>{ std::slice::from_raw_parts(out_data.as_const_ptr(), out_len) };
 <a href=#33 id=33 data-nosnippet>33</a>        <span class="comment">// `to_vec()` copies the data into a new `Vec`
 <a href=#34 id=34 data-nosnippet>34</a>        </span><span class="prelude-val">Ok</span>(slice.to_vec())
 <a href=#35 id=35 data-nosnippet>35</a>    }
