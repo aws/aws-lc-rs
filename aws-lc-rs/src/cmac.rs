@@ -101,6 +101,7 @@ use crate::ptr::{ConstPointer, LcPtr};
 use crate::{constant_time, rand};
 use core::mem::MaybeUninit;
 use core::ptr::null_mut;
+use zeroize::Zeroize;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum AlgorithmId {
@@ -182,7 +183,7 @@ const MAX_CMAC_TAG_LEN: usize = 16;
 /// A CMAC tag.
 ///
 /// For a given tag `t`, use `t.as_ref()` to get the tag value as a byte slice.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Tag {
     bytes: [u8; MAX_CMAC_TAG_LEN],
     len: usize,
@@ -192,6 +193,12 @@ impl AsRef<[u8]> for Tag {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.bytes[..self.len]
+    }
+}
+
+impl Drop for Tag {
+    fn drop(&mut self) {
+        self.bytes.zeroize();
     }
 }
 
