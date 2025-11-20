@@ -222,7 +222,7 @@ impl CcBuilder {
             }
         }
 
-        if target_os() == "macos" {
+        if target_os() == "macos" || target_os() == "darwin" {
             // Certain MacOS system headers are guarded by _POSIX_C_SOURCE and _DARWIN_C_SOURCE
             build_options.push(BuildOption::define("_DARWIN_C_SOURCE", "1"));
         }
@@ -407,7 +407,7 @@ impl CcBuilder {
         };
 
         je_builder.define("AWSLC", "1");
-        if target_os() == "macos" {
+        if target_os() == "macos" || target_os() == "darwin" {
             // Certain MacOS system headers are guarded by _POSIX_C_SOURCE and _DARWIN_C_SOURCE
             je_builder.define("_DARWIN_C_SOURCE", "1");
         }
