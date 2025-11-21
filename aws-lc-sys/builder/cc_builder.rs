@@ -602,6 +602,18 @@ impl CcBuilder {
             return;
         }
         let mut memcmp_compile_args = Vec::from(memcmp_compiler.args());
+
+        // This check invokes the compiled executable and hence needs to link
+        // it. CMake handles this via LDFLAGS but `cc` doesn't. In setups with
+        // custom linker setups this could lead to a mismatch between the
+        // expected and the actually used linker. Explicitly respecting LDFLAGS
+        // here brings us back to parity with CMake.
+        if let Ok(ldflags) = std::env::var("LDFLAGS") {
+            for flag in ldflags.split_whitespace() {
+                memcmp_compile_args.push(flag.into());
+            }
+        }
+
         memcmp_compile_args.push(
             self.manifest_dir
                 .join("aws-lc")

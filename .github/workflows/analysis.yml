@@ -360,6 +360,32 @@ jobs:
             exit 0
           fi
 
+  valgrind:
+    if: github.repository_owner == 'aws'
+    name: Valgrind Memory Check
+    runs-on: ubuntu-latest
+    env:
+      AWS_LC_RS_DISABLE_SLOW_TESTS: 1
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+      - name: Run debug tests under Valgrind
+        run: |
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all --suppressions=$(pwd)/.valgrind/rust-test.supp" \
+            cargo test -p aws-lc-rs --features unstable --all-targets -- --test-threads=1
+      - name: Run release tests under Valgrind
+        run: |
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all --suppressions=$(pwd)/.valgrind/rust-test.supp" \
+            cargo test --release -p aws-lc-rs --features unstable --all-targets -- --test-threads=1
+      - name: Run FIPS release tests under Valgrind
+        run: |
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER="valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all --suppressions=$(pwd)/.valgrind/rust-test.supp" \
+            cargo test --release -p aws-lc-rs --features fips --all-targets -- --test-threads=1
+
   gnu-stack-check:
     if: github.repository_owner == 'aws'
     name: Verify (${{ matrix.host }}) GNU-stack section

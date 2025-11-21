@@ -235,7 +235,7 @@ impl Clone for LcPtr<CMAC_CTX> {
         let mut new_ctx = LcPtr::new(unsafe { CMAC_CTX_new() }).expect("CMAC_CTX_new failed");
         unsafe {
             assert!(
-                1 == CMAC_CTX_copy(*new_ctx.as_mut(), *self.as_const()),
+                1 == CMAC_CTX_copy(new_ctx.as_mut_ptr(), self.as_const_ptr()),
                 "CMAC_CTX_copy failed"
             );
         }
@@ -292,10 +292,10 @@ impl Key {
         unsafe {
             let cipher = algorithm.id.evp_cipher();
             if 1 != CMAC_Init(
-                *ctx.as_mut(),
+                ctx.as_mut_ptr(),
                 key_value.as_ptr().cast(),
                 key_value.len(),
-                *cipher,
+                cipher.as_const_ptr(),
                 null_mut(),
             ) {
                 return Err(Unspecified);
@@ -353,7 +353,7 @@ impl Context {
     /// `error::Unspecified` if the CMAC cannot be updated.
     pub fn update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
         unsafe {
-            if 1 != CMAC_Update(*self.key.ctx.as_mut(), data.as_ptr(), data.len()) {
+            if 1 != CMAC_Update(self.key.ctx.as_mut_ptr(), data.as_ptr(), data.len()) {
                 return Err(Unspecified);
             }
         }
@@ -372,7 +372,7 @@ impl Context {
 
         unsafe {
             if 1 != indicator_check!(CMAC_Final(
-                *self.key.ctx.as_mut(),
+                self.key.ctx.as_mut_ptr(),
                 output.as_mut_ptr(),
                 out_len.as_mut_ptr(),
             )) {

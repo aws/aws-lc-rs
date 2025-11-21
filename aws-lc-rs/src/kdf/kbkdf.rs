@@ -133,7 +133,7 @@ pub fn kbkdf_ctr_hmac(
         KBKDF_ctr_hmac(
             output.as_mut_ptr(),
             out_len,
-            *evp_md,
+            evp_md.as_const_ptr(),
             secret.as_ptr(),
             secret.len(),
             info.as_ptr(),

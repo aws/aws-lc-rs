@@ -191,7 +191,7 @@ enum PrkMode {
 
 impl PrkMode {
     fn fill(&self, algorithm: Algorithm, out: &mut [u8], info: &[u8]) -> Result<(), Unspecified> {
-        let digest = *digest::match_digest_type(&algorithm.0.digest_algorithm().id);
+        let digest = digest::match_digest_type(&algorithm.0.digest_algorithm().id).as_const_ptr();
 
         match &self {
             PrkMode::Expand { key_bytes, key_len } => unsafe {

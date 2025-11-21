@@ -73,8 +73,8 @@ fn evp_encrypt_init(
     // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
     if 1 != unsafe {
         EVP_EncryptInit_ex(
-            *cipher_ctx.as_mut(),
-            **cipher,
+            cipher_ctx.as_mut_ptr(),
+            cipher.as_const_ptr(),
             null_mut(),
             key.as_ptr(),
             iv_ptr,
@@ -101,8 +101,8 @@ fn evp_decrypt_init(
     // AWS-LC copies the key and iv values into the EVP_CIPHER_CTX, and thus can be dropped after this.
     if 1 != unsafe {
         EVP_DecryptInit_ex(
-            *cipher_ctx.as_mut(),
-            **cipher,
+            cipher_ctx.as_mut_ptr(),
+            cipher.as_const_ptr(),
             null_mut(),
             key.as_ptr(),
             iv_ptr,
@@ -127,7 +127,7 @@ impl StreamingEncryptingKey {
         let key_bytes = key.key_bytes.as_ref();
         debug_assert_eq!(
             key_bytes.len(),
-            <usize>::try_from(unsafe { EVP_CIPHER_key_length(*cipher) }).unwrap()
+            <usize>::try_from(unsafe { EVP_CIPHER_key_length(cipher.as_const_ptr()) }).unwrap()
         );
 
         match &context {
@@ -135,7 +135,8 @@ impl StreamingEncryptingKey {
                 let iv = <&[u8]>::try_from(ctx)?;
                 debug_assert_eq!(
                     iv.len(),
-                    <usize>::try_from(unsafe { EVP_CIPHER_iv_length(*cipher) }).unwrap()
+                    <usize>::try_from(unsafe { EVP_CIPHER_iv_length(cipher.as_const_ptr()) })
+                        .unwrap()
                 );
                 evp_encrypt_init(&mut cipher_ctx, &cipher, key_bytes, Some(iv))?;
             }
@@ -180,7 +181,7 @@ impl StreamingEncryptingKey {
 
         if 1 != unsafe {
             EVP_EncryptUpdate(
-                *self.cipher_ctx.as_mut(),
+                self.cipher_ctx.as_mut_ptr(),
                 output.as_mut_ptr(),
                 &mut outlen,
                 input.as_ptr(),
@@ -213,7 +214,11 @@ impl StreamingEncryptingKey {
         let mut outlen: i32 = 0;
 
         if 1 != indicator_check!(unsafe {
-            EVP_EncryptFinal_ex(*self.cipher_ctx.as_mut(), output.as_mut_ptr(), &mut outlen)
+            EVP_EncryptFinal_ex(
+                self.cipher_ctx.as_mut_ptr(),
+                output.as_mut_ptr(),
+                &mut outlen,
+            )
         }) {
             return Err(Unspecified);
         }
@@ -349,7 +354,7 @@ impl StreamingDecryptingKey {
         let key_bytes = key.key_bytes.as_ref();
         debug_assert_eq!(
             key_bytes.len(),
-            <usize>::try_from(unsafe { EVP_CIPHER_key_length(*cipher) }).unwrap()
+            <usize>::try_from(unsafe { EVP_CIPHER_key_length(cipher.as_const_ptr()) }).unwrap()
         );
 
         match &context {
@@ -357,7 +362,8 @@ impl StreamingDecryptingKey {
                 let iv = <&[u8]>::try_from(ctx)?;
                 debug_assert_eq!(
                     iv.len(),
-                    <usize>::try_from(unsafe { EVP_CIPHER_iv_length(*cipher) }).unwrap()
+                    <usize>::try_from(unsafe { EVP_CIPHER_iv_length(cipher.as_const_ptr()) })
+                        .unwrap()
                 );
                 evp_decrypt_init(&mut cipher_ctx, &cipher, key_bytes, Some(iv))?;
             }
@@ -401,7 +407,7 @@ impl StreamingDecryptingKey {
 
         if 1 != unsafe {
             EVP_DecryptUpdate(
-                *self.cipher_ctx.as_mut(),
+                self.cipher_ctx.as_mut_ptr(),
                 output.as_mut_ptr(),
                 &mut outlen,
                 input.as_ptr(),
@@ -430,7 +436,11 @@ impl StreamingDecryptingKey {
         let mut outlen: i32 = 0;
 
         if 1 != indicator_check!(unsafe {
-            EVP_DecryptFinal_ex(*self.cipher_ctx.as_mut(), output.as_mut_ptr(), &mut outlen)
+            EVP_DecryptFinal_ex(
+                self.cipher_ctx.as_mut_ptr(),
+                output.as_mut_ptr(),
+                &mut outlen,
+            )
         }) {
             return Err(Unspecified);
         }
