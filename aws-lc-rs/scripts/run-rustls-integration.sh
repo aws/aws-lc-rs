@@ -108,7 +108,7 @@ fi
 rm Cargo.lock
 RCGEN_AWS_LC_RS_STRING="^aws-lc-rs = .*"
 RCGEN_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
-sed_replace ./Cargo.toml "s|${RCGEN_AWS_LC_RS_STRING}|${RCGEN_AWS_LC_RS_PATH_STRING}|g"
+sed_replace ./Cargo.toml "s|${RCGEN_AWS_LC_RS_STRING}|${RCGEN_AWS_LC_RS_PATH_STRING}|gm"
 cargo add --path "${ROOT}/aws-lc-rs" --package rustls-cert-gen
 cargo update
 cargo update "aws-lc-rs@${AWS_LC_RS_VERSION}"
@@ -121,11 +121,20 @@ if [[ $latest_release == "1" ]]; then
   git checkout "${RUSTLS_WEBPKI_COMMIT}"
 fi
 rm Cargo.lock
-WEBPKI_RCGEN_STRING="^rcgen = { .* }"
+WEBPKI_RCGEN_STRING="^rcgen = \\{ .*?\\}"
 WEBPKI_RCGEN_PATH_STRING="rcgen = { path = \"${RUSTLS_RCGEN_DIR}/rcgen\" , default-features = false, features = [\"aws_lc_rs\"] }"
 WEBPKI_AWS_LC_RS_STRING="^aws-lc-rs = { version.* }"
 WEBPKI_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", optional = true, default-features = false, features = [\"aws-lc-sys\"] }"
-find ./ -type f  -name "Cargo.toml" | xargs perl -0777 -pi -e 's|'"${WEBPKI_RCGEN_STRING}"'|'"${WEBPKI_RCGEN_PATH_STRING}"'|g; s|'"${WEBPKI_AWS_LC_RS_STRING}"'|'"${WEBPKI_AWS_LC_RS_PATH_STRING}"'|g'
+WEBPKI_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING="^aws-lc-rs = \\{ workspace = true, optional = true.*?\\}"
+WEBPKI_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING="^aws-lc-rs = \\{ workspace = true[^\\}]*\\}"
+WEBPKI_AWS_LC_RS_PATH_NON_OPTIONAL_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
+while IFS= read -r -d '' cargo_toml; do
+  sed_replace "${cargo_toml}" \
+    "s|${WEBPKI_RCGEN_STRING}|${WEBPKI_RCGEN_PATH_STRING}|gm" \
+    "s|${WEBPKI_AWS_LC_RS_STRING}|${WEBPKI_AWS_LC_RS_PATH_STRING}|gm" \
+    "s|${WEBPKI_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING}|${WEBPKI_AWS_LC_RS_PATH_STRING}|gm" \
+    "s|${WEBPKI_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING}|${WEBPKI_AWS_LC_RS_PATH_NON_OPTIONAL_STRING}|gm"
+done < <(find ./ -type f -name "Cargo.toml" -print0)
 
 # Trigger Cargo to generate the lock file
 cargo update
@@ -140,15 +149,29 @@ if [[ $latest_release == "1" ]]; then
 fi
 rm Cargo.lock
 # Update the Cargo.toml to use the GitHub repository reference under test.
-RUSTLS_RCGEN_STRING="^rcgen = { .* }"
+RUSTLS_RCGEN_STRING="^rcgen = \\{ .*?\\}"
 RUSTLS_RCGEN_PATH_STRING="rcgen = { path = \"${RUSTLS_RCGEN_DIR}/rcgen\" , default-features = false, features = [\"aws_lc_rs\", \"pem\"] }"
 RUSTLS_AWS_LC_RS_STRING="^aws-lc-rs = { version.* }"
-RUSTLS_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
+RUSTLS_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", optional = true, default-features = false, features = [\"aws-lc-sys\"] }"
+RUSTLS_AWS_LC_RS_PATH_NON_OPTIONAL_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
 RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"unstable\", \"aws-lc-sys\"] }"
-RUSTLS_WEBPKI_STRING="^webpki = { package = \"rustls-webpki\",.*}"
+RUSTLS_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING="^aws-lc-rs = \\{ workspace = true, optional = true.*?\\}"
+RUSTLS_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING="^aws-lc-rs = \\{ workspace = true[^\\}]*\\}"
+RUSTLS_WEBPKI_STRING="^webpki = \\{ package = \"rustls-webpki\",[\s\S]*?\\}"
 RUSTLS_WEBPKI_PATH_STRING="webpki = { package = \"rustls-webpki\", path = \"${RUSTLS_WEBPKI_DIR}\", features = [\"alloc\"], default-features = false }"
-sed_replace ./rustls-post-quantum/Cargo.toml "s|${RUSTLS_AWS_LC_RS_STRING}|${RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING}|g"
-find ./ -type f  -name "Cargo.toml" | xargs perl -0777 -pi -e 's|'"${RUSTLS_RCGEN_STRING}"'|'"${RUSTLS_RCGEN_PATH_STRING}"'|g; s|'"${RUSTLS_AWS_LC_RS_STRING}"'|'"${RUSTLS_AWS_LC_RS_PATH_STRING}"'|g; s|'"${RUSTLS_WEBPKI_STRING}"'|'"${RUSTLS_WEBPKI_PATH_STRING}"'|g'
+sed_replace ./rustls-post-quantum/Cargo.toml \
+  "s|${RUSTLS_AWS_LC_RS_STRING}|${RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING}|gm" \
+  "s|${RUSTLS_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING}|${RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING}|gm" \
+  "s|${RUSTLS_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING}|${RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING}|gm"
+while IFS= read -r -d '' cargo_toml; do
+  [[ "${cargo_toml}" == "./rustls-post-quantum/Cargo.toml" ]] && continue
+  sed_replace "${cargo_toml}" \
+    "s|${RUSTLS_RCGEN_STRING}|${RUSTLS_RCGEN_PATH_STRING}|gm" \
+    "s|${RUSTLS_AWS_LC_RS_STRING}|${RUSTLS_AWS_LC_RS_PATH_NON_OPTIONAL_STRING}|gm" \
+    "s|${RUSTLS_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING}|${RUSTLS_AWS_LC_RS_PATH_STRING}|gm" \
+    "s|${RUSTLS_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING}|${RUSTLS_AWS_LC_RS_PATH_NON_OPTIONAL_STRING}|gm" \
+    "s|${RUSTLS_WEBPKI_STRING}|${RUSTLS_WEBPKI_PATH_STRING}|gm"
+done < <(find ./ -type f -name "Cargo.toml" -print0)
 
 # Trigger Cargo to generate the lock file
 cargo update
