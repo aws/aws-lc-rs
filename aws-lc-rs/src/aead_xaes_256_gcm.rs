@@ -1021,7 +1021,7 @@ mod tests {
     mod fips;
 
     #[test]
-    fn test_aes_128() {
+    fn test_xaes_256_gcm() {
         let key = from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
         let og_nonce = from_hex("5bf11a0951f0bfc7ea5c9e585bf11a0951f0bfc7ea5c9e58").unwrap();
         let plaintext = from_hex("00112233445566778899aabbccddeeff").unwrap();

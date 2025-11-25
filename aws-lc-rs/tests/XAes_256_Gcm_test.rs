@@ -21,8 +21,8 @@ fn aead_xaes_gcm_256() {
 
 /// Tests all combinations of sealer and opener functions
 fn test_aead_all(aead_alg: &'static aead_xaes_256_gcm::Algorithm, test_file: test::File) {
-    let mut sealers = vec![seal_with_key, seal_with_less_safe_key];
-    let mut openers = vec![open_with_key, open_with_less_safe_key];
+    let mut sealers = vec![seal_with_key, seal_with_less_safe_key, seal_with_less_safe_key_scatter];
+    let mut openers = vec![open_with_key, open_with_less_safe_key, open_with_less_safe_key_gather];
 
     for seal in &sealers {
         for open in &openers {
@@ -360,6 +360,7 @@ fn seal_with_less_safe_key_scatter(
     };
 
     // create an extra bit of data to be encrypted
+    // let extra_in = in_out[split_point..].to_vec();
     let extra_in = in_out[split_point..].to_vec();
     let key = make_less_safe_key(algorithm, key);
 
@@ -500,30 +501,30 @@ fn test_aead_key_debug() {
     let key_bytes = [0; 32];
     let nonce = [0; NONCE_LEN];
 
-    let key = aead_xaes_256_gcm::UnboundKey::new(&aead_xaes_256_gcm::AES_256_GCM, &key_bytes).unwrap();
-    assert_eq!("UnboundKey { algorithm: AES_256_GCM }", format!("{key:?}"));
+    let key = aead_xaes_256_gcm::UnboundKey::new(&aead_xaes_256_gcm::XAES_256_GCM, &key_bytes).unwrap();
+    assert_eq!("UnboundKey { algorithm: XAES_256_GCM }", format!("{key:?}"));
 
     let sealing_key: aead_xaes_256_gcm::SealingKey<OneNonceSequence> = make_key(
-        &aead_xaes_256_gcm::AES_256_GCM,
+        &aead_xaes_256_gcm::XAES_256_GCM,
         &key_bytes,
         Nonce::try_assume_unique_for_key(&nonce).unwrap(),
     );
     assert_eq!(
-        "SealingKey { algorithm: AES_256_GCM }",
+        "SealingKey { algorithm: XAES_256_GCM }",
         format!("{sealing_key:?}")
     );
 
     let opening_key: aead_xaes_256_gcm::OpeningKey<OneNonceSequence> = make_key(
-        &aead_xaes_256_gcm::AES_256_GCM,
+        &aead_xaes_256_gcm::XAES_256_GCM,
         &key_bytes,
         Nonce::try_assume_unique_for_key(&nonce).unwrap(),
     );
     assert_eq!(
-        "OpeningKey { algorithm: AES_256_GCM }",
+        "OpeningKey { algorithm: XAES_256_GCM }",
         format!("{opening_key:?}")
     );
-    let key: aead_xaes_256_gcm::LessSafeKey = make_less_safe_key(&aead_xaes_256_gcm::AES_256_GCM, &key_bytes);
-    assert_eq!("LessSafeKey { algorithm: AES_256_GCM }", format!("{key:?}"));
+    let key: aead_xaes_256_gcm::LessSafeKey = make_less_safe_key(&aead_xaes_256_gcm::XAES_256_GCM, &key_bytes);
+    assert_eq!("LessSafeKey { algorithm: XAES_256_GCM }", format!("{key:?}"));
 }
 
 fn make_key<K: aead_xaes_256_gcm::BoundKey<OneNonceSequence>>(
