@@ -14447,6 +14447,10 @@ extern "C" {
     pub fn EVP_aead_aes_256_gcm() -> *const EVP_AEAD;
 }
 extern "C" {
+    #[link_name = "\u{1}_aws_lc_fips_0_13_10_EVP_aead_xaes_256_gcm"]
+    pub fn EVP_aead_xaes_256_gcm() -> *const EVP_AEAD;
+}
+extern "C" {
     #[link_name = "\u{1}_aws_lc_fips_0_13_10_EVP_aead_chacha20_poly1305"]
     pub fn EVP_aead_chacha20_poly1305() -> *const EVP_AEAD;
 }

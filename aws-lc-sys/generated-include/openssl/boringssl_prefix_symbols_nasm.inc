@@ -1415,6 +1415,7 @@
 %xdefine _EVP_aead_aes_256_cbc_sha384_tls _ %+ BORINGSSL_PREFIX %+ _EVP_aead_aes_256_cbc_sha384_tls
 %xdefine _EVP_aead_aes_256_ctr_hmac_sha256 _ %+ BORINGSSL_PREFIX %+ _EVP_aead_aes_256_ctr_hmac_sha256
 %xdefine _EVP_aead_aes_256_gcm _ %+ BORINGSSL_PREFIX %+ _EVP_aead_aes_256_gcm
+%xdefine _EVP_aead_xaes_256_gcm _ %+ BORINGSSL_PREFIX %+ _EVP_aead_xaes_256_gcm
 %xdefine _EVP_aead_aes_256_gcm_randnonce _ %+ BORINGSSL_PREFIX %+ _EVP_aead_aes_256_gcm_randnonce
 %xdefine _EVP_aead_aes_256_gcm_siv _ %+ BORINGSSL_PREFIX %+ _EVP_aead_aes_256_gcm_siv
 %xdefine _EVP_aead_aes_256_gcm_tls12 _ %+ BORINGSSL_PREFIX %+ _EVP_aead_aes_256_gcm_tls12

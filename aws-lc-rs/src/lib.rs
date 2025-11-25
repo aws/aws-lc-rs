@@ -162,6 +162,7 @@ extern crate aws_lc_fips_sys as aws_lc;
 extern crate aws_lc_sys as aws_lc;
 
 pub mod aead;
+pub mod aead_xaes_256_gcm;
 pub mod agreement;
 pub mod cmac;
 pub mod constant_time;

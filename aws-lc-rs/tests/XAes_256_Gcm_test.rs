@@ -1,0 +1,558 @@
+// Copyright 2015-2016 Brian Smith.
+// SPDX-License-Identifier: ISC
+// Modifications copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
+use aws_lc_rs::aead_xaes_256_gcm::nonce_sequence::Counter32Builder;
+use aws_lc_rs::{aead_xaes_256_gcm, error, test, test_file};
+
+use aws_lc_rs::aead_xaes_256_gcm::{
+    Aad, BoundKey, Nonce, OpeningKey, SealingKey, UnboundKey, XAES_256_GCM, NONCE_LEN,
+};
+use core::ops::RangeFrom;
+
+#[test]
+fn aead_xaes_gcm_256() {
+    test_aead_all(
+        &aead_xaes_256_gcm::XAES_256_GCM,
+        test_file!("data/aead_xaes_256_gcm_tests.txt"),
+    );
+}
+
+/// Tests all combinations of sealer and opener functions
+fn test_aead_all(aead_alg: &'static aead_xaes_256_gcm::Algorithm, test_file: test::File) {
+    let mut sealers = vec![seal_with_key, seal_with_less_safe_key];
+    let mut openers = vec![open_with_key, open_with_less_safe_key];
+
+    for seal in &sealers {
+        for open in &openers {
+            test_aead(aead_alg, seal, open, test_file);
+        }
+    }
+}
+
+#[allow(clippy::too_many_lines)]
+fn test_aead<Seal, Open>(
+    aead_alg: &'static aead_xaes_256_gcm::Algorithm,
+    seal: Seal,
+    open: Open,
+    test_file: test::File,
+) where
+    Seal: Fn(
+        &'static aead_xaes_256_gcm::Algorithm,
+        &[u8],
+        Nonce,
+        aead_xaes_256_gcm::Aad<&[u8]>,
+        &mut Vec<u8>,
+    ) -> Result<(), error::Unspecified>,
+    Open: for<'a> Fn(
+        &'static aead_xaes_256_gcm::Algorithm,
+        &[u8],
+        Nonce,
+        aead_xaes_256_gcm::Aad<&[u8]>,
+        &'a mut [u8],
+        RangeFrom<usize>,
+    ) -> Result<&'a mut [u8], error::Unspecified>,
+{
+    // TLS record headers are 5 bytes long.
+    // TLS explicit nonces for AES-GCM are 8 bytes long.
+    static MINIMAL_IN_PREFIX_LENS: [usize; 36] = [
+        // No input prefix to overwrite; i.e. the opening is exactly
+        // "in place."
+        0,
+        1,
+        2,
+        // Proposed TLS 1.3 header (no explicit nonce).
+        5,
+        8,
+        // Probably the most common use of a non-zero `in_prefix_len`
+        // would be to write a decrypted TLS record over the top of the
+        // TLS header and nonce.
+        5 /* record header */ + 8, /* explicit nonce */
+        // The stitched AES-GCM x86-64 code works on 6-block (96 byte)
+        // units. Some of the ChaCha20 code is even weirder.
+        15,  // The maximum partial AES block.
+        16,  // One AES block.
+        17,  // One byte more than a full AES block.
+        31,  // 2 AES blocks or 1 ChaCha20 block, minus 1.
+        32,  // Two AES blocks, one ChaCha20 block.
+        33,  // 2 AES blocks or 1 ChaCha20 block, plus 1.
+        47,  // Three AES blocks - 1.
+        48,  // Three AES blocks.
+        49,  // Three AES blocks + 1.
+        63,  // Four AES blocks or two ChaCha20 blocks, minus 1.
+        64,  // Four AES blocks or two ChaCha20 blocks.
+        65,  // Four AES blocks or two ChaCha20 blocks, plus 1.
+        79,  // Five AES blocks, minus 1.
+        80,  // Five AES blocks.
+        81,  // Five AES blocks, plus 1.
+        95,  // Six AES blocks or three ChaCha20 blocks, minus 1.
+        96,  // Six AES blocks or three ChaCha20 blocks.
+        97,  // Six AES blocks or three ChaCha20 blocks, plus 1.
+        111, // Seven AES blocks, minus 1.
+        112, // Seven AES blocks.
+        113, // Seven AES blocks, plus 1.
+        127, // Eight AES blocks or four ChaCha20 blocks, minus 1.
+        128, // Eight AES blocks or four ChaCha20 blocks.
+        129, // Eight AES blocks or four ChaCha20 blocks, plus 1.
+        143, // Nine AES blocks, minus 1.
+        144, // Nine AES blocks.
+        145, // Nine AES blocks, plus 1.
+        255, // 16 AES blocks or 8 ChaCha20 blocks, minus 1.
+        256, // 16 AES blocks or 8 ChaCha20 blocks.
+        257, // 16 AES blocks or 8 ChaCha20 blocks, plus 1.
+    ];
+
+    test_aead_key_sizes(aead_alg);
+
+    test::run(test_file, |section, test_case| {
+        assert_eq!(section, "");
+        let key_bytes = test_case.consume_bytes("KEY");
+        let nonce_bytes = test_case.consume_bytes("NONCE");
+        let plaintext = test_case.consume_bytes("IN");
+        let aad = test_case.consume_bytes("AD");
+        let mut ct = test_case.consume_bytes("CT");
+        let tag = test_case.consume_bytes("TAG");
+        let error = test_case.consume_optional_string("FAILS");
+
+        match &error {
+            Some(err) if err == "WRONG_NONCE_LENGTH" => {
+                assert!(Nonce::try_assume_unique_for_key(&nonce_bytes).is_err());
+                return Ok(());
+            }
+            _ => (),
+        }
+
+        let mut s_in_out = plaintext.clone();
+        let nonce = Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap();
+        let s_result = seal(
+            aead_alg,
+            &key_bytes[..],
+            nonce,
+            aead_xaes_256_gcm::Aad::from(&aad[..]),
+            &mut s_in_out,
+        );
+
+        ct.extend(tag);
+
+        if s_result.is_ok() {
+            assert_eq!(&ct, &s_in_out);
+        }
+
+        // In release builds, test all prefix lengths from 0 to 4096 bytes.
+        // Debug builds are too slow for this, so for those builds, only
+        // test a smaller subset.
+
+        let more_comprehensive_in_prefix_lengths: Box<[usize]> = (1..4096).collect();
+        let in_prefix_lengths = if cfg!(any(debug_assertions, disable_slow_tests)) {
+            &MINIMAL_IN_PREFIX_LENS[..]
+        } else {
+            &more_comprehensive_in_prefix_lengths[..]
+        };
+        let mut o_in_out = vec![123u8; 4096];
+
+        for &in_prefix_len in in_prefix_lengths {
+            o_in_out.truncate(0);
+            o_in_out.resize(in_prefix_len, 123);
+            o_in_out.extend_from_slice(&ct[..]);
+
+            let o_in_out_clone = o_in_out.clone();
+            let nonce = Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap();
+            let o_result = open(
+                aead_alg,
+                &key_bytes,
+                nonce,
+                aead_xaes_256_gcm::Aad::from(&aad[..]),
+                &mut o_in_out,
+                in_prefix_len..,
+            );
+            match error {
+                None => {
+                    assert!(s_result.is_ok());
+                    assert!(o_result.is_ok(), "Not ok: {o_result:?}");
+                    let result = o_result.unwrap();
+                    assert_eq!(&plaintext[..], result);
+
+                    for bad_func in [aead_open_bad_tag, aead_open_bad_nonce, aead_open_bad_aad] {
+                        bad_func(
+                            aead_alg,
+                            &key_bytes,
+                            &nonce_bytes,
+                            aad.as_slice(),
+                            &o_in_out_clone,
+                            in_prefix_len,
+                            &open,
+                        );
+                    }
+                }
+                Some(ref error) if error == "WRONG_NONCE_LENGTH" => {
+                    assert_eq!(Err(error::Unspecified), s_result);
+                    assert_eq!(Err(error::Unspecified), o_result);
+                }
+                Some(error) => {
+                    panic!("Unexpected error test case: {error}");
+                }
+            }
+        }
+
+        Ok(())
+    });
+}
+
+fn aead_open_bad_tag<Open>(
+    aead_alg: &'static aead_xaes_256_gcm::Algorithm,
+    key_bytes: &[u8],
+    nonce_bytes: &[u8],
+    aad_bytes: &[u8],
+    in_out: &[u8],
+    in_prefix_len: usize,
+    open: Open,
+) where
+    Open: for<'a> Fn(
+        &'static aead_xaes_256_gcm::Algorithm,
+        &[u8],
+        Nonce,
+        aead_xaes_256_gcm::Aad<&[u8]>,
+        &'a mut [u8],
+        RangeFrom<usize>,
+    ) -> Result<&'a mut [u8], error::Unspecified>,
+{
+    let mut in_out = Vec::from(in_out);
+    let in_out_len = in_out.len();
+    in_out[in_out_len - 1] ^= 0x08;
+    let nonce_bytes = Vec::from(nonce_bytes);
+    let aad_bytes = Vec::from(aad_bytes);
+    let nonce = Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap();
+    let aad: Aad<&[u8]> = aead_xaes_256_gcm::Aad::from(aad_bytes.as_slice());
+    let err_result = open(
+        aead_alg,
+        key_bytes,
+        nonce,
+        aad,
+        &mut in_out,
+        in_prefix_len..,
+    );
+    assert!(err_result.is_err());
+}
+
+fn aead_open_bad_nonce<Open>(
+    aead_alg: &'static aead_xaes_256_gcm::Algorithm,
+    key_bytes: &[u8],
+    nonce_bytes: &[u8],
+    aad_bytes: &[u8],
+    in_out: &[u8],
+    in_prefix_len: usize,
+    open: Open,
+) where
+    Open: for<'a> Fn(
+        &'static aead_xaes_256_gcm::Algorithm,
+        &[u8],
+        Nonce,
+        aead_xaes_256_gcm::Aad<&[u8]>,
+        &'a mut [u8],
+        RangeFrom<usize>,
+    ) -> Result<&'a mut [u8], error::Unspecified>,
+{
+    let mut in_out = Vec::from(in_out);
+    let mut nonce_bytes = Vec::from(nonce_bytes);
+    nonce_bytes[NONCE_LEN - 1] ^= 0x80;
+    let aad_bytes = Vec::from(aad_bytes);
+    let nonce = Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap();
+    let aad: Aad<&[u8]> = aead_xaes_256_gcm::Aad::from(aad_bytes.as_slice());
+    let err_result = open(
+        aead_alg,
+        key_bytes,
+        nonce,
+        aad,
+        &mut in_out,
+        in_prefix_len..,
+    );
+    assert!(err_result.is_err());
+}
+
+fn aead_open_bad_aad<Open>(
+    aead_alg: &'static aead_xaes_256_gcm::Algorithm,
+    key_bytes: &[u8],
+    nonce_bytes: &[u8],
+    aad_bytes: &[u8],
+    in_out: &[u8],
+    in_prefix_len: usize,
+    open: Open,
+) where
+    Open: for<'a> Fn(
+        &'static aead_xaes_256_gcm::Algorithm,
+        &[u8],
+        Nonce,
+        aead_xaes_256_gcm::Aad<&[u8]>,
+        &'a mut [u8],
+        RangeFrom<usize>,
+    ) -> Result<&'a mut [u8], error::Unspecified>,
+{
+    let mut in_out = Vec::from(in_out);
+    let nonce_bytes = Vec::from(nonce_bytes);
+    let mut aad_bytes = Vec::from(aad_bytes);
+    let aad_len = aad_bytes.len();
+    if aad_len == 0 {
+        aad_bytes.push(0x08);
+    } else {
+        aad_bytes[aad_len - 1] ^= 0x08;
+    }
+    let nonce = Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap();
+    let aad = aead_xaes_256_gcm::Aad::from(aad_bytes.as_slice());
+    let err_result = open(
+        aead_alg,
+        key_bytes,
+        nonce,
+        aad,
+        &mut in_out,
+        in_prefix_len..,
+    );
+    assert!(err_result.is_err());
+}
+
+fn seal_with_key(
+    algorithm: &'static aead_xaes_256_gcm::Algorithm,
+    key: &[u8],
+    nonce: Nonce,
+    aad: aead_xaes_256_gcm::Aad<&[u8]>,
+    in_out: &mut Vec<u8>,
+) -> Result<(), error::Unspecified> {
+    let mut s_key: aead_xaes_256_gcm::SealingKey<OneNonceSequence> = make_key(algorithm, key, nonce);
+    s_key.seal_in_place_append_tag(aad, in_out)
+}
+
+fn open_with_key<'a>(
+    algorithm: &'static aead_xaes_256_gcm::Algorithm,
+    key: &[u8],
+    nonce: Nonce,
+    aad: aead_xaes_256_gcm::Aad<&[u8]>,
+    in_out: &'a mut [u8],
+    ciphertext_and_tag: RangeFrom<usize>,
+) -> Result<&'a mut [u8], error::Unspecified> {
+    let mut o_key: aead_xaes_256_gcm::OpeningKey<OneNonceSequence> = make_key(algorithm, key, nonce);
+    o_key.open_within(aad, in_out, ciphertext_and_tag)
+}
+
+fn seal_with_less_safe_key(
+    algorithm: &'static aead_xaes_256_gcm::Algorithm,
+    key: &[u8],
+    nonce: Nonce,
+    aad: aead_xaes_256_gcm::Aad<&[u8]>,
+    in_out: &mut Vec<u8>,
+) -> Result<(), error::Unspecified> {
+    let key = make_less_safe_key(algorithm, key);
+    key.seal_in_place_append_tag(nonce, aad, in_out)
+}
+
+fn seal_with_less_safe_key_scatter(
+    algorithm: &'static aead_xaes_256_gcm::Algorithm,
+    key: &[u8],
+    nonce: Nonce,
+    aad: aead_xaes_256_gcm::Aad<&[u8]>,
+    in_out: &mut Vec<u8>,
+) -> Result<(), error::Unspecified> {
+    // choose a split point for the `extra` data
+    let split_point = if in_out.is_empty() {
+        0
+    } else {
+        let split_point = u32::from_ne_bytes(key[..4].try_into().unwrap());
+        split_point as usize % in_out.len()
+    };
+
+    // create an extra bit of data to be encrypted
+    let extra_in = in_out[split_point..].to_vec();
+    let key = make_less_safe_key(algorithm, key);
+
+    // reserve space at the end for the tag
+    in_out.extend_from_slice(&[0u8; aead_xaes_256_gcm::MAX_TAG_LEN][..algorithm.tag_len()]);
+
+    let (in_out, extra_out_and_tag) = in_out.split_at_mut(split_point);
+
+    key.seal_in_place_scatter(nonce, aad, in_out, &extra_in, extra_out_and_tag)
+}
+
+fn open_with_less_safe_key<'a>(
+    algorithm: &'static aead_xaes_256_gcm::Algorithm,
+    key: &[u8],
+    nonce: Nonce,
+    aad: aead_xaes_256_gcm::Aad<&[u8]>,
+    in_out: &'a mut [u8],
+    ciphertext_and_tag: RangeFrom<usize>,
+) -> Result<&'a mut [u8], error::Unspecified> {
+    let key = make_less_safe_key(algorithm, key);
+    key.open_within(nonce, aad, in_out, ciphertext_and_tag)
+}
+
+fn open_with_less_safe_key_gather<'a>(
+    algorithm: &'static aead_xaes_256_gcm::Algorithm,
+    key: &[u8],
+    nonce: Nonce,
+    aad: aead_xaes_256_gcm::Aad<&[u8]>,
+    in_out: &'a mut [u8],
+    ciphertext_and_tag: RangeFrom<usize>,
+) -> Result<&'a mut [u8], error::Unspecified> {
+    let key = make_less_safe_key(algorithm, key);
+
+    // clone the ciphertext and tag to a separate buffer, since it doesn't get modified in place
+    let ciphertext = in_out[ciphertext_and_tag].to_vec();
+    let (in_ciphertext, in_tag) = ciphertext.split_at(ciphertext.len() - algorithm.tag_len());
+
+    let out_plaintext = &mut in_out[..in_ciphertext.len()];
+
+    key.open_separate_gather(nonce, aad, in_ciphertext, in_tag, out_plaintext)?;
+
+    Ok(out_plaintext)
+}
+
+#[allow(clippy::range_plus_one)]
+fn test_aead_key_sizes(aead_alg: &'static aead_xaes_256_gcm::Algorithm) {
+    let key_len = aead_alg.key_len();
+    let key_data = vec![1u8; key_len * 2];
+
+    // Key is the right size.
+    assert!(aead_xaes_256_gcm::UnboundKey::new(aead_alg, &key_data[..key_len]).is_ok());
+
+    // Key is one byte too small.
+    assert!(aead_xaes_256_gcm::UnboundKey::new(aead_alg, &key_data[..(key_len - 1)]).is_err());
+
+    // Key is one byte too large.
+    assert!(aead_xaes_256_gcm::UnboundKey::new(aead_alg, &key_data[..(key_len + 1)]).is_err());
+
+    // Key is half the required size.
+    assert!(aead_xaes_256_gcm::UnboundKey::new(aead_alg, &key_data[..(key_len / 2)]).is_err());
+
+    // Key is twice the required size.
+    assert!(aead_xaes_256_gcm::UnboundKey::new(aead_alg, &key_data[..(key_len * 2)]).is_err());
+
+    // Key is empty.
+    assert!(aead_xaes_256_gcm::UnboundKey::new(aead_alg, &[]).is_err());
+
+    // Key is one byte.
+    assert!(aead_xaes_256_gcm::UnboundKey::new(aead_alg, &[0]).is_err());
+}
+
+// Test that we reject non-standard nonce sizes.
+#[allow(clippy::range_plus_one)]
+#[test]
+fn test_aead_nonce_sizes() {
+    let nonce_len = NONCE_LEN;
+    let nonce = vec![0u8; nonce_len * 2];
+
+    assert!(Nonce::try_assume_unique_for_key(&nonce[..nonce_len]).is_ok());
+    assert!(Nonce::try_assume_unique_for_key(&nonce[..(nonce_len - 1)]).is_err());
+    assert!(Nonce::try_assume_unique_for_key(&nonce[..(nonce_len + 1)]).is_err());
+    assert!(Nonce::try_assume_unique_for_key(&nonce[..(nonce_len / 2)]).is_err());
+    assert!(Nonce::try_assume_unique_for_key(&nonce[..(nonce_len * 2)]).is_err());
+    assert!(Nonce::try_assume_unique_for_key(&[]).is_err());
+    assert!(Nonce::try_assume_unique_for_key(&nonce[..1]).is_err());
+    assert!(Nonce::try_assume_unique_for_key(&nonce[..16]).is_err()); // 128 bits.
+}
+
+#[test]
+fn test_aead_traits() {
+    test::compile_time_assert_send::<aead_xaes_256_gcm::Tag>();
+    test::compile_time_assert_sync::<aead_xaes_256_gcm::Tag>();
+    test::compile_time_assert_send::<aead_xaes_256_gcm::UnboundKey>();
+    test::compile_time_assert_sync::<aead_xaes_256_gcm::UnboundKey>();
+    test::compile_time_assert_send::<aead_xaes_256_gcm::LessSafeKey>();
+    test::compile_time_assert_sync::<aead_xaes_256_gcm::LessSafeKey>();
+}
+
+#[test]
+fn test_aead_thread_safeness() {
+    lazy_static::lazy_static! {
+        /// Compute the Initial salt once, as the seed is constant
+        static ref SECRET_KEY: aead_xaes_256_gcm::LessSafeKey = aead_xaes_256_gcm::LessSafeKey::new(
+            aead_xaes_256_gcm::UnboundKey::new(&aead_xaes_256_gcm::AES_128_GCM, b"this is a test! ").unwrap(),
+        );
+    }
+    use std::thread;
+
+    let tag = SECRET_KEY
+        .seal_in_place_separate_tag(
+            Nonce::try_assume_unique_for_key(&[0; NONCE_LEN]).unwrap(),
+            aead_xaes_256_gcm::Aad::empty(),
+            &mut [],
+        )
+        .unwrap();
+
+    let mut join_handles = Vec::new();
+    for _ in 1..100 {
+        let join_handle = thread::spawn(|| {
+            SECRET_KEY
+                .seal_in_place_separate_tag(
+                    Nonce::try_assume_unique_for_key(&[0; NONCE_LEN]).unwrap(),
+                    aead_xaes_256_gcm::Aad::empty(),
+                    &mut [],
+                )
+                .unwrap()
+        });
+        join_handles.push(join_handle);
+    }
+    for handle in join_handles {
+        let thread_tag = handle.join().unwrap();
+        assert_eq!(thread_tag.as_ref(), tag.as_ref());
+    }
+}
+
+#[test]
+fn test_aead_key_debug() {
+    let key_bytes = [0; 32];
+    let nonce = [0; NONCE_LEN];
+
+    let key = aead_xaes_256_gcm::UnboundKey::new(&aead_xaes_256_gcm::AES_256_GCM, &key_bytes).unwrap();
+    assert_eq!("UnboundKey { algorithm: AES_256_GCM }", format!("{key:?}"));
+
+    let sealing_key: aead_xaes_256_gcm::SealingKey<OneNonceSequence> = make_key(
+        &aead_xaes_256_gcm::AES_256_GCM,
+        &key_bytes,
+        Nonce::try_assume_unique_for_key(&nonce).unwrap(),
+    );
+    assert_eq!(
+        "SealingKey { algorithm: AES_256_GCM }",
+        format!("{sealing_key:?}")
+    );
+
+    let opening_key: aead_xaes_256_gcm::OpeningKey<OneNonceSequence> = make_key(
+        &aead_xaes_256_gcm::AES_256_GCM,
+        &key_bytes,
+        Nonce::try_assume_unique_for_key(&nonce).unwrap(),
+    );
+    assert_eq!(
+        "OpeningKey { algorithm: AES_256_GCM }",
+        format!("{opening_key:?}")
+    );
+    let key: aead_xaes_256_gcm::LessSafeKey = make_less_safe_key(&aead_xaes_256_gcm::AES_256_GCM, &key_bytes);
+    assert_eq!("LessSafeKey { algorithm: AES_256_GCM }", format!("{key:?}"));
+}
+
+fn make_key<K: aead_xaes_256_gcm::BoundKey<OneNonceSequence>>(
+    algorithm: &'static aead_xaes_256_gcm::Algorithm,
+    key: &[u8],
+    nonce: Nonce,
+) -> K {
+    let key = aead_xaes_256_gcm::UnboundKey::new(algorithm, key).unwrap();
+    let nonce_sequence = OneNonceSequence::new(nonce);
+    K::new(key, nonce_sequence)
+}
+
+fn make_less_safe_key(algorithm: &'static aead_xaes_256_gcm::Algorithm, key: &[u8]) -> aead_xaes_256_gcm::LessSafeKey {
+    let key = aead_xaes_256_gcm::UnboundKey::new(algorithm, key).unwrap();
+    aead_xaes_256_gcm::LessSafeKey::new(key)
+}
+
+struct OneNonceSequence(Option<Nonce>);
+
+impl OneNonceSequence {
+    /// Constructs the sequence allowing `advance()` to be called
+    /// `allowed_invocations` times.
+    fn new(nonce: Nonce) -> Self {
+        Self(Some(nonce))
+    }
+}
+
+impl aead_xaes_256_gcm::NonceSequence for OneNonceSequence {
+    fn advance(&mut self) -> Result<Nonce, error::Unspecified> {
+        self.0.take().ok_or(error::Unspecified)
+    }
+}

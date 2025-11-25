@@ -1,8 +1,8 @@
 [submodule "aws-lc-sys/aws-lc"]
 	path = aws-lc-sys/aws-lc
 	url = https://github.com/aws/aws-lc.git
-	branch = main
+	branch = xaes-256-gcm
 [submodule "aws-lc-fips-sys/aws-lc"]
 	path = aws-lc-fips-sys/aws-lc
 	url = https://github.com/aws/aws-lc.git
-	branch = fips-2024-09-27
+	branch = xaes-256-gcm

@@ -1119,6 +1119,7 @@ EVP_aead_aes_256_cbc_sha1_tls_implicit_iv
 EVP_aead_aes_256_cbc_sha384_tls
 EVP_aead_aes_256_ctr_hmac_sha256
 EVP_aead_aes_256_gcm
+EVP_aead_xaes_256_gcm
 EVP_aead_aes_256_gcm_randnonce
 EVP_aead_aes_256_gcm_siv
 EVP_aead_aes_256_gcm_tls12
