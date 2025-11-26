@@ -930,7 +930,7 @@ impl Debug for LessSafeKey {
 pub struct Algorithm {
     init: fn(key: &[u8], tag_len: usize) -> Result<AeadCtx, Unspecified>,
     key_len: usize,
-    pub id: AlgorithmID,
+    id: AlgorithmID,
 
     // /// Use `max_input_len!()` to initialize this.
     // TODO: Make this `usize`.
@@ -966,7 +966,7 @@ derive_debug_via_id!(Algorithm);
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 #[allow(non_camel_case_types)]
-pub enum AlgorithmID {
+enum AlgorithmID {
     AES_128_GCM,
     AES_192_GCM,
     AES_256_GCM,
