@@ -3,14 +3,12 @@
 
 #![cfg(debug_assertions)]
 
-mod chacha20_poly1305_openssh;
 mod quic;
 
-use crate::aead::nonce_sequence::Counter64Builder;
-use crate::aead::{
+use crate::aead_xaes_256_gcm::nonce_sequence::Counter64Builder;
+use crate::aead_xaes_256_gcm::{
     Aad, BoundKey, Nonce, OpeningKey, RandomizedNonceKey, SealingKey, TlsProtocolId,
     TlsRecordOpeningKey, TlsRecordSealingKey, UnboundKey, AES_128_GCM, AES_256_GCM,
-    CHACHA20_POLY1305,
 };
 use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 
@@ -108,13 +106,6 @@ nonce_sequence_api!(
     FipsServiceStatus::NonApproved,
     FipsServiceStatus::Approved
 );
-nonce_sequence_api!(
-    chacha20_poly1305_nonce_sequence_api,
-    &CHACHA20_POLY1305,
-    &TEST_KEY_256_BIT[..],
-    FipsServiceStatus::NonApproved,
-    FipsServiceStatus::NonApproved
-);
 
 macro_rules! randnonce_api {
     ($name:ident, $alg:expr, $key:expr) => {
@@ -179,12 +170,6 @@ randnonce_api!(
     &AES_256_GCM,
     &TEST_KEY_256_BIT[..]
 );
-randnonce_api!(
-    chacha20_poly1305_randnonce_api,
-    &CHACHA20_POLY1305,
-    &TEST_KEY_256_BIT[..],
-    false
-);
 
 macro_rules! tls_nonce_api {
     ($name:ident, $alg:expr, $proto:expr, $key:expr) => {
@@ -248,18 +233,4 @@ tls_nonce_api!(
     &AES_256_GCM,
     TlsProtocolId::TLS13,
     &TEST_KEY_256_BIT
-);
-tls_nonce_api!(
-    chaca20_poly1305_tls12_nonce_api,
-    &CHACHA20_POLY1305,
-    TlsProtocolId::TLS12,
-    &TEST_KEY_256_BIT,
-    false
-);
-tls_nonce_api!(
-    chaca20_poly1305_tls13_nonce_api,
-    &CHACHA20_POLY1305,
-    TlsProtocolId::TLS13,
-    &TEST_KEY_256_BIT,
-    false
 );
