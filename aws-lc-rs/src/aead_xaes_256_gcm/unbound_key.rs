@@ -4,7 +4,7 @@
 use super::aead_ctx::AeadCtx;
 use super::{
     Algorithm, Nonce, Tag, AES_128_GCM, AES_128_GCM_SIV, AES_192_GCM, AES_256_GCM, AES_256_GCM_SIV,
-    CHACHA20_POLY1305, MAX_KEY_LEN, MAX_TAG_LEN, NONCE_LEN,
+    MAX_KEY_LEN, MAX_TAG_LEN, NONCE_LEN,
 };
 use crate::aws_lc::{
     EVP_AEAD_CTX_open, EVP_AEAD_CTX_open_gather, EVP_AEAD_CTX_seal, EVP_AEAD_CTX_seal_scatter,
@@ -494,7 +494,6 @@ impl From<AeadCtx> for UnboundKey {
             | AeadCtx::AES_256_GCM_TLS12(_)
             | AeadCtx::AES_256_GCM_TLS13(_) => &AES_256_GCM,
             AeadCtx::AES_256_GCM_SIV(_) => &AES_256_GCM_SIV,
-            AeadCtx::CHACHA20_POLY1305(_) => &CHACHA20_POLY1305,
         };
         Self {
             ctx: value,

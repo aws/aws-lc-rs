@@ -189,17 +189,14 @@ use core::stringify;
 
 mod aead_ctx;
 mod aes_gcm;
-mod chacha;
 mod nonce;
 pub mod nonce_sequence;
-mod poly1305;
 pub mod quic;
 mod rand_nonce;
 mod tls;
 mod unbound_key;
 
 pub use self::aes_gcm::{AES_128_GCM, AES_128_GCM_SIV, AES_192_GCM, AES_256_GCM, XAES_256_GCM, AES_256_GCM_SIV};
-pub use self::chacha::CHACHA20_POLY1305;
 pub use self::nonce::{Nonce, NONCE_LEN};
 pub use self::rand_nonce::RandomizedNonceKey;
 pub use self::tls::{TlsProtocolId, TlsRecordOpeningKey, TlsRecordSealingKey};
@@ -972,7 +969,6 @@ pub enum AlgorithmID {
     XAES_256_GCM,
     AES_128_GCM_SIV,
     AES_256_GCM_SIV,
-    CHACHA20_POLY1305,
 }
 
 impl PartialEq for Algorithm {

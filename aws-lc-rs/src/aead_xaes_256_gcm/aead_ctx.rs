@@ -4,15 +4,13 @@
 use core::mem::size_of;
 use core::ptr::null_mut;
 
-use crate::cipher::chacha;
-
 use crate::aws_lc::{
     evp_aead_direction_t, evp_aead_direction_t_evp_aead_open, evp_aead_direction_t_evp_aead_seal,
     EVP_AEAD_CTX_init, EVP_AEAD_CTX_init_with_direction, EVP_AEAD_CTX_zero, EVP_aead_aes_128_gcm,
     EVP_aead_aes_128_gcm_randnonce, EVP_aead_aes_128_gcm_siv, EVP_aead_aes_128_gcm_tls12,
     EVP_aead_aes_128_gcm_tls13, EVP_aead_aes_192_gcm, EVP_aead_aes_256_gcm, EVP_aead_xaes_256_gcm,
     EVP_aead_aes_256_gcm_randnonce, EVP_aead_aes_256_gcm_siv, EVP_aead_aes_256_gcm_tls12,
-    EVP_aead_aes_256_gcm_tls13, EVP_aead_chacha20_poly1305, OPENSSL_malloc, EVP_AEAD_CTX,
+    EVP_aead_aes_256_gcm_tls13, OPENSSL_malloc, EVP_AEAD_CTX,
 };
 use crate::cipher::aes::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
 use crate::error::Unspecified;
@@ -54,8 +52,6 @@ pub(crate) enum AeadCtx {
 
     AES_128_GCM_TLS13(LcPtr<EVP_AEAD_CTX>),
     AES_256_GCM_TLS13(LcPtr<EVP_AEAD_CTX>),
-
-    CHACHA20_POLY1305(LcPtr<EVP_AEAD_CTX>),
 }
 
 unsafe impl Send for AeadCtx {}
@@ -194,18 +190,6 @@ impl AeadCtx {
         )?))
     }
 
-    pub(crate) fn chacha20(key_bytes: &[u8], tag_len: usize) -> Result<Self, Unspecified> {
-        if chacha::KEY_LEN != key_bytes.len() {
-            return Err(Unspecified);
-        }
-        Ok(AeadCtx::CHACHA20_POLY1305(AeadCtx::build_context(
-            EVP_aead_chacha20_poly1305,
-            key_bytes,
-            tag_len,
-            None,
-        )?))
-    }
-
     fn aes_128_context(
         aead: unsafe extern "C" fn() -> *const aws_lc::evp_aead_st,
         key_bytes: &[u8],
@@ -300,8 +284,7 @@ impl AsRef<LcPtr<EVP_AEAD_CTX>> for AeadCtx {
             | AeadCtx::AES_128_GCM_TLS12(ctx)
             | AeadCtx::AES_256_GCM_TLS12(ctx)
             | AeadCtx::AES_128_GCM_TLS13(ctx)
-            | AeadCtx::AES_256_GCM_TLS13(ctx)
-            | AeadCtx::CHACHA20_POLY1305(ctx) => ctx,
+            | AeadCtx::AES_256_GCM_TLS13(ctx) => ctx,
         }
     }
 }

@@ -46,7 +46,7 @@ impl RandomizedNonceKey {
             AlgorithmID::AES_256_GCM_SIV => {
                 AeadCtx::aes_256_gcm_siv(key_bytes, algorithm.tag_len())
             }
-            AlgorithmID::AES_192_GCM | AlgorithmID::CHACHA20_POLY1305 | AlgorithmID::XAES_256_GCM => return Err(Unspecified),
+            AlgorithmID::AES_192_GCM | AlgorithmID::XAES_256_GCM => return Err(Unspecified),
         }?;
         Ok(Self {
             key: UnboundKey::from(ctx),
@@ -171,7 +171,7 @@ impl Debug for RandomizedNonceKey {
 mod tests {
     use super::{Aad, RandomizedNonceKey};
     use crate::aead_xaes_256_gcm::{
-        AES_128_GCM, AES_128_GCM_SIV, AES_256_GCM, AES_256_GCM_SIV, CHACHA20_POLY1305,
+        AES_128_GCM, AES_128_GCM_SIV, AES_256_GCM, AES_256_GCM_SIV,
     };
     use crate::test::from_hex;
     use paste::paste;

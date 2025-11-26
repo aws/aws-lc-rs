@@ -75,8 +75,7 @@ impl TlsRecordSealingKey {
                 AlgorithmID::AES_128_GCM_SIV
                 | AlgorithmID::AES_192_GCM
                 | AlgorithmID::AES_256_GCM_SIV
-                | AlgorithmID::XAES_256_GCM
-                | AlgorithmID::CHACHA20_POLY1305,
+                | AlgorithmID::XAES_256_GCM,
                 _,
             ) => Err(Unspecified),
         }?;
@@ -222,8 +221,7 @@ impl TlsRecordOpeningKey {
                 AlgorithmID::AES_128_GCM_SIV
                 | AlgorithmID::AES_192_GCM
                 | AlgorithmID::AES_256_GCM_SIV
-                | AlgorithmID::XAES_256_GCM
-                | AlgorithmID::CHACHA20_POLY1305,
+                | AlgorithmID::XAES_256_GCM,
                 _,
             ) => Err(Unspecified),
         }?;
@@ -298,7 +296,7 @@ impl Debug for TlsRecordOpeningKey {
 #[cfg(test)]
 mod tests {
     use super::{TlsProtocolId, TlsRecordOpeningKey, TlsRecordSealingKey};
-    use crate::aead_xaes_256_gcm::{Aad, Nonce, AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305};
+    use crate::aead_xaes_256_gcm::{Aad, Nonce, AES_128_GCM, AES_256_GCM};
     use crate::test::from_hex;
     use paste::paste;
 
