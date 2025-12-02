@@ -350,14 +350,15 @@ impl CcBuilder {
     }
 
     pub fn prepare_builder(&self) -> cc::Build {
+        let cflags = get_crate_cflags();
+        if !cflags.is_empty() {
+            set_env_for_target("CFLAGS", cflags);
+        }
+
         let mut cc_build = self.create_builder();
         let (_, build_options) = self.collect_universal_build_options(&cc_build);
         for option in build_options {
             option.apply_cc(&mut cc_build);
-        }
-        let cflags = get_crate_cflags();
-        if !cflags.is_empty() {
-            set_env_for_target("CFLAGS", cflags);
         }
 
         // Add --noexecstack flag for assembly files to prevent executable stacks
@@ -611,6 +612,18 @@ impl CcBuilder {
             return;
         }
         let mut memcmp_compile_args = Vec::from(memcmp_compiler.args());
+
+        // This check invokes the compiled executable and hence needs to link
+        // it. CMake handles this via LDFLAGS but `cc` doesn't. In setups with
+        // custom linker setups this could lead to a mismatch between the
+        // expected and the actually used linker. Explicitly respecting LDFLAGS
+        // here brings us back to parity with CMake.
+        if let Ok(ldflags) = std::env::var("LDFLAGS") {
+            for flag in ldflags.split_whitespace() {
+                memcmp_compile_args.push(flag.into());
+            }
+        }
+
         memcmp_compile_args.push(
             self.manifest_dir
                 .join("aws-lc")

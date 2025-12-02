@@ -250,7 +250,7 @@ impl KeyPair {
         let padding_fn = Some({
             |pctx: *mut EVP_PKEY_CTX| {
                 let evp_md = match_digest_type(&digest.algorithm().id);
-                if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, *evp_md) } {
+                if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, evp_md.as_const_ptr()) } {
                     return Err(());
                 }
                 if let RsaPadding::RSA_PKCS1_PSS_PADDING = encoding.padding() {
@@ -276,7 +276,7 @@ impl KeyPair {
         match self.evp_pkey.as_const().get_rsa() {
             Ok(rsa) => {
                 // https://github.com/awslabs/aws-lc/blob/main/include/openssl/rsa.h#L99
-                unsafe { RSA_size(*rsa) as usize }
+                unsafe { RSA_size(rsa.as_const_ptr()) as usize }
             }
             Err(_) => unreachable!(),
         }
@@ -338,11 +338,11 @@ impl PublicKey {
         {
             let evp_pkey = evp_pkey.as_const();
             let pubkey = evp_pkey.get_rsa()?;
-            let modulus =
-                pubkey.project_const_lifetime(unsafe { |pubkey| RSA_get0_n(**pubkey) })?;
+            let modulus = pubkey
+                .project_const_lifetime(unsafe { |pubkey| RSA_get0_n(pubkey.as_const_ptr()) })?;
             let modulus = modulus.to_be_bytes().into_boxed_slice();
-            let exponent =
-                pubkey.project_const_lifetime(unsafe { |pubkey| RSA_get0_e(**pubkey) })?;
+            let exponent = pubkey
+                .project_const_lifetime(unsafe { |pubkey| RSA_get0_e(pubkey.as_const_ptr()) })?;
             let exponent = exponent.to_be_bytes().into_boxed_slice();
             Ok(PublicKey {
                 key,
@@ -457,23 +457,30 @@ where
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
             return Err(());
         }
-        let n_bn = DetachableLcPtr::try_from(n_bytes)?;
+        let mut n_bn = DetachableLcPtr::try_from(n_bytes)?;
 
         let e_bytes = self.e.as_ref();
         if e_bytes.is_empty() || e_bytes[0] == 0u8 {
             return Err(());
         }
-        let e_bn = DetachableLcPtr::try_from(e_bytes)?;
+        let mut e_bn = DetachableLcPtr::try_from(e_bytes)?;
 
-        let rsa = DetachableLcPtr::new(unsafe { RSA_new() })?;
-        if 1 != unsafe { RSA_set0_key(*rsa, *n_bn, *e_bn, null_mut()) } {
+        let mut rsa = DetachableLcPtr::new(unsafe { RSA_new() })?;
+        if 1 != unsafe {
+            RSA_set0_key(
+                rsa.as_mut_ptr(),
+                n_bn.as_mut_ptr(),
+                e_bn.as_mut_ptr(),
+                null_mut(),
+            )
+        } {
             return Err(());
         }
         n_bn.detach();
         e_bn.detach();
 
         let mut pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
-        if 1 != unsafe { EVP_PKEY_assign_RSA(*pkey.as_mut(), *rsa) } {
+        if 1 != unsafe { EVP_PKEY_assign_RSA(pkey.as_mut_ptr(), rsa.as_mut_ptr()) } {
             return Err(());
         }
         rsa.detach();
@@ -551,7 +558,7 @@ pub(super) fn is_valid_fips_key(key: &LcPtr<EVP_PKEY>) -> bool {
     let evp_pkey = key.as_const();
     let rsa_key = evp_pkey.get_rsa().expect("RSA EVP_PKEY");
 
-    1 == unsafe { RSA_check_fips((*rsa_key).cast_mut()) }
+    1 == unsafe { RSA_check_fips((rsa_key.as_const_ptr()).cast_mut()) }
 }
 
 pub(super) fn is_rsa_key(key: &LcPtr<EVP_PKEY>) -> bool {

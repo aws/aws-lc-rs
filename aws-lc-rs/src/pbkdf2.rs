@@ -208,7 +208,7 @@ fn try_derive(
             salt.as_ptr(),
             salt.len(),
             iterations.get(),
-            *digest::match_digest_type(&algorithm.algorithm.digest_algorithm().id),
+            digest::match_digest_type(&algorithm.algorithm.digest_algorithm().id).as_const_ptr(),
             out.len(),
             out.as_mut_ptr(),
         )
