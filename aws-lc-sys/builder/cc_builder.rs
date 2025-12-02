@@ -345,14 +345,15 @@ impl CcBuilder {
     }
 
     pub fn prepare_builder(&self) -> cc::Build {
+        let cflags = get_crate_cflags();
+        if !cflags.is_empty() {
+            set_env_for_target("CFLAGS", cflags);
+        }
+
         let mut cc_build = self.create_builder();
         let (_, build_options) = self.collect_universal_build_options(&cc_build);
         for option in build_options {
             option.apply_cc(&mut cc_build);
-        }
-        let cflags = get_crate_cflags();
-        if !cflags.is_empty() {
-            set_env_for_target("CFLAGS", cflags);
         }
 
         // Add --noexecstack flag for assembly files to prevent executable stacks
