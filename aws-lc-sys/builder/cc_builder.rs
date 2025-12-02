@@ -222,6 +222,11 @@ impl CcBuilder {
             }
         }
 
+        if target_os() == "macos" || target_os() == "darwin" {
+            // Certain MacOS system headers are guarded by _POSIX_C_SOURCE and _DARWIN_C_SOURCE
+            build_options.push(BuildOption::define("_DARWIN_C_SOURCE", "1"));
+        }
+
         let opt_level = cargo_env("OPT_LEVEL");
         match opt_level.as_str() {
             "0" | "1" | "2" => {
@@ -403,6 +408,10 @@ impl CcBuilder {
         };
 
         je_builder.define("AWSLC", "1");
+        if target_os() == "macos" || target_os() == "darwin" {
+            // Certain MacOS system headers are guarded by _POSIX_C_SOURCE and _DARWIN_C_SOURCE
+            je_builder.define("_DARWIN_C_SOURCE", "1");
+        }
         je_builder.pic(true);
         if target_os() == "windows" && compiler.is_like_msvc() {
             je_builder.flag("/Od").flag("/W4").flag("/DYNAMICBASE");
