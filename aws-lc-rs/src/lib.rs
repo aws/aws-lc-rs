@@ -153,7 +153,7 @@
 
 #![warn(missing_docs)]
 #![warn(clippy::exhaustive_enums)]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![cfg_attr(aws_lc_rs_docsrs, feature(doc_cfg))]
 
 extern crate alloc;
 #[cfg(feature = "fips")]

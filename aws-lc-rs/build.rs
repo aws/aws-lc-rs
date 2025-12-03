@@ -10,6 +10,7 @@ fn main() {
         "`fips` and `non-fips` are mutually exclusive crate features."
     );
 
+    println!("cargo:rustc-check-cfg=cfg(aws_lc_rs_docsrs)");
     println!("cargo:rustc-check-cfg=cfg(disable_slow_tests)");
     if let Ok(disable) = env::var("AWS_LC_RS_DISABLE_SLOW_TESTS") {
         if disable == "1" {

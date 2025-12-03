@@ -35,35 +35,35 @@ jobs:
         run: |
           # License statement we want present.
           LICENSE_STATEMENT="By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license and the ISC license."
-          
+
           # Fetches the PR description.
           PR_DESCRIPTION=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }} | jq -r .body)
-          
+
           printf "PR description:\n%s" "${PR_DESCRIPTION}"
           echo ""
           echo ""
           printf "Must contain:\n%s" "${LICENSE_STATEMENT}"
           echo ""
           echo ""
-          
+
           # Normalize line endings (convert CRLF to LF)
           PR_DESCRIPTION=$(echo "${PR_DESCRIPTION}" | tr -d '\r')
-          
+
           # Escape quotes in PR description
           PR_DESCRIPTION=$(echo "${PR_DESCRIPTION}" | sed 's/"/\\"/g; s/'"'"'/\\'"'"'/g')
-          
+
           # Remove all spaces and tabs
           PR_DESCRIPTION=$(echo "${PR_DESCRIPTION}" | tr -d ' \t')
           LICENSE_STATEMENT=$(echo "${LICENSE_STATEMENT}" | tr -d ' \t')
-          
+
           printf "PR description trimmed:\n%s" "${PR_DESCRIPTION}"
           echo ""
           echo ""
           printf "Must contain trimmed:\n%s" "${LICENSE_STATEMENT}"
           echo ""
           echo ""
-          
+
           # Assert PR description contains license statement.
           if printf "%s\n" "${PR_DESCRIPTION}" | grep -ixq "${LICENSE_STATEMENT}"; then
             echo "Success: PR description contains license statement."
@@ -71,3 +71,24 @@ jobs:
             echo "Error: PR description does not contain the required license statement."
             exit 1
           fi
+
+  verify-docsrs-build:
+    if: github.repository_owner == 'aws'
+    runs-on: ubuntu-latest
+    env:
+      RUSTDOCFLAGS: "-Dwarnings --cfg=aws_lc_rs_docsrs"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+
+      - name: Verify docs.rs build
+        run: |
+          cargo +nightly doc -p aws-lc-rs
+          cargo +nightly doc -p aws-lc-sys
+          cargo +nightly doc -p aws-lc-fips-sys
