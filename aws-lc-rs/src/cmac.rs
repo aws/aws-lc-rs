@@ -501,7 +501,7 @@ pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
         result.len()
     };
 
-    constant_time::verify_slices_are_equal(&output[0..output_len], &tag)
+    constant_time::verify_slices_are_equal(&output[0..output_len], tag)
 }
 
 #[cfg(test)]
