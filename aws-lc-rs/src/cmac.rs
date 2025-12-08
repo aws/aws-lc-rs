@@ -358,33 +358,71 @@ impl Context {
     /// Panics if the CMAC tag length exceeds the maximum allowed length, indicating memory corruption.
     pub fn sign(mut self) -> Result<Tag, Unspecified> {
         let mut output = [0u8; MAX_CMAC_TAG_LEN];
-        let mut out_len = MaybeUninit::<usize>::uninit();
+        let output_len = {
+            let result = internal_sign(&mut self, &mut output)?;
+            result.len()
+        };
 
-        unsafe {
-            if 1 != indicator_check!(CMAC_Final(
-                self.key.ctx.as_mut_ptr(),
-                output.as_mut_ptr(),
-                out_len.as_mut_ptr(),
-            )) {
-                return Err(Unspecified);
-            }
-
-            let actual_len = out_len.assume_init();
-            // This indicates a memory corruption.
-            assert!(
-                actual_len <= MAX_CMAC_TAG_LEN,
-                "CMAC tag length {actual_len} exceeds maximum {MAX_CMAC_TAG_LEN}"
-            );
-            if actual_len != self.key.algorithm.tag_len() {
-                return Err(Unspecified);
-            }
-
-            Ok(Tag {
-                bytes: output,
-                len: actual_len,
-            })
-        }
+        Ok(Tag {
+            bytes: output,
+            len: output_len,
+        })
     }
+
+    /// Finalizes the CMAC calculation and verifies whether the resulting value
+    /// equals the provided `tag`.
+    ///
+    /// `verify` consumes the context so it cannot be (mis-)used after `verify`
+    /// has been called.
+    ///
+    /// The verification is done in constant time to prevent timing attacks.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the tag does not match or if CMAC calculation fails.
+    //
+    // # FIPS
+    // Use this function with one of the following algorithms:
+    // * `AES_128`
+    // * `AES_256`
+    #[inline]
+    pub fn verify(mut self, tag: &[u8]) -> Result<(), Unspecified> {
+        let mut output = [0u8; MAX_CMAC_TAG_LEN];
+        let output_len = {
+            let result = internal_sign(&mut self, &mut output)?;
+            result.len()
+        };
+
+        constant_time::verify_slices_are_equal(&output[0..output_len], tag)
+    }
+}
+
+pub(crate) fn internal_sign<'in_out>(
+    ctx: &mut Context,
+    output: &'in_out mut [u8],
+) -> Result<&'in_out mut [u8], Unspecified> {
+    let mut out_len = MaybeUninit::<usize>::uninit();
+
+    if 1 != indicator_check!(unsafe {
+        CMAC_Final(
+            ctx.key.ctx.as_mut_ptr(),
+            output.as_mut_ptr(),
+            out_len.as_mut_ptr(),
+        )
+    }) {
+        return Err(Unspecified);
+    }
+    let actual_len = unsafe { out_len.assume_init() };
+
+    // This indicates a memory corruption.
+    debug_assert!(
+        actual_len <= MAX_CMAC_TAG_LEN,
+        "CMAC tag length {actual_len} exceeds maximum {MAX_CMAC_TAG_LEN}"
+    );
+    if actual_len != ctx.key.algorithm.tag_len() {
+        return Err(Unspecified);
+    }
+
+    Ok(&mut output[0..actual_len])
 }
 
 /// Calculates the CMAC of `data` using the key `key` in one step.
@@ -408,13 +446,48 @@ pub fn sign(key: &Key, data: &[u8]) -> Result<Tag, Unspecified> {
     ctx.sign()
 }
 
+/// Calculates the CMAC of `data` using the key `key` in one step, writing the
+/// result into the provided `output` buffer.
+///
+/// Use `Context` to calculate CMACs where the input is in multiple parts.
+///
+/// The `output` buffer must be at least as large as the algorithm's tag length
+/// (obtainable via `key.algorithm().tag_len()`). The returned slice will be a
+/// sub-slice of `output` containing exactly the tag bytes.
+///
+/// It is generally not safe to implement CMAC verification by comparing the
+/// return value of `sign_to_buffer` to a tag. Use `verify` for verification instead.
+//
+// # FIPS
+// Use this function with one of the following algorithms:
+// * `AES_128`
+// * `AES_256`
+//
+/// # Errors
+/// `error::Unspecified` if the output buffer is too small or if the CMAC calculation fails.
+#[inline]
+pub fn sign_to_buffer<'out>(
+    key: &Key,
+    data: &[u8],
+    output: &'out mut [u8],
+) -> Result<&'out mut [u8], Unspecified> {
+    if output.len() < key.algorithm().tag_len() {
+        return Err(Unspecified);
+    }
+
+    let mut ctx = Context::with_key(key);
+    ctx.update(data)?;
+
+    internal_sign(&mut ctx, output)
+}
+
 /// Calculates the CMAC of `data` using the signing key `key`, and verifies
 /// whether the resultant value equals `tag`, in one step.
 ///
-/// The verification will be done in constant time to prevent timing attacks.
+/// The verification is done in constant time to prevent timing attacks.
 ///
 /// # Errors
-/// `error::Unspecified` if the inputs are not verified or CMAC calculation fails.
+/// `error::Unspecified` if the tag does not match or if CMAC calculation fails.
 //
 // # FIPS
 // Use this function with one of the following algorithms:
@@ -422,8 +495,13 @@ pub fn sign(key: &Key, data: &[u8]) -> Result<Tag, Unspecified> {
 // * `AES_256`
 #[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
-    let computed_tag = sign(key, data)?;
-    constant_time::verify_slices_are_equal(computed_tag.as_ref(), tag)
+    let mut output = [0u8; MAX_CMAC_TAG_LEN];
+    let output_len = {
+        let result = sign_to_buffer(key, data, &mut output)?;
+        result.len()
+    };
+
+    constant_time::verify_slices_are_equal(&output[0..output_len], &tag)
 }
 
 #[cfg(test)]
@@ -585,5 +663,96 @@ mod tests {
         let tag = sign(&key, data).unwrap();
         assert_eq!(tag.as_ref().len(), 8); // 3DES block size
         assert!(verify(&key, data, tag.as_ref()).is_ok());
+    }
+
+    #[test]
+    fn cmac_sign_to_buffer_test() {
+        for &algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
+            let key = Key::generate(algorithm).unwrap();
+            let data = b"hello, world";
+
+            // Test with exact size buffer
+            let mut output = vec![0u8; algorithm.tag_len()];
+            let result = sign_to_buffer(&key, data, &mut output).unwrap();
+            assert_eq!(result.len(), algorithm.tag_len());
+
+            // Verify the tag matches sign()
+            let tag = sign(&key, data).unwrap();
+            assert_eq!(result, tag.as_ref());
+
+            // Test with larger buffer
+            let mut large_output = vec![0u8; algorithm.tag_len() + 10];
+            let result2 = sign_to_buffer(&key, data, &mut large_output).unwrap();
+            assert_eq!(result2.len(), algorithm.tag_len());
+            assert_eq!(result2, tag.as_ref());
+        }
+    }
+
+    #[test]
+    fn cmac_sign_to_buffer_too_small_test() {
+        let key = Key::generate(AES_128).unwrap();
+        let data = b"hello";
+
+        // Buffer too small should fail
+        let mut small_buffer = vec![0u8; AES_128.tag_len() - 1];
+        assert!(sign_to_buffer(&key, data, &mut small_buffer).is_err());
+
+        // Empty buffer should fail
+        let mut empty_buffer = vec![];
+        assert!(sign_to_buffer(&key, data, &mut empty_buffer).is_err());
+    }
+
+    #[test]
+    fn cmac_context_verify_test() {
+        for &algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
+            let key = Key::generate(algorithm).unwrap();
+            let data = b"hello, world";
+
+            // Generate a valid tag
+            let tag = sign(&key, data).unwrap();
+
+            // Verify with Context::verify
+            let mut ctx = Context::with_key(&key);
+            ctx.update(data).unwrap();
+            assert!(ctx.verify(tag.as_ref()).is_ok());
+
+            // Verify with wrong tag should fail
+            let mut ctx2 = Context::with_key(&key);
+            ctx2.update(data).unwrap();
+            let wrong_tag = vec![0u8; algorithm.tag_len()];
+            assert!(ctx2.verify(&wrong_tag).is_err());
+
+            // Verify with different data should fail
+            let mut ctx3 = Context::with_key(&key);
+            ctx3.update(b"wrong data").unwrap();
+            assert!(ctx3.verify(tag.as_ref()).is_err());
+        }
+    }
+
+    #[test]
+    fn cmac_context_verify_multipart_test() {
+        let key = Key::generate(AES_256).unwrap();
+        let parts = ["hello", ", ", "world"];
+
+        // Create tag from concatenated message
+        let mut full_msg = Vec::new();
+        for part in &parts {
+            full_msg.extend_from_slice(part.as_bytes());
+        }
+        let tag = sign(&key, &full_msg).unwrap();
+
+        // Verify using multi-part context
+        let mut ctx = Context::with_key(&key);
+        for part in &parts {
+            ctx.update(part.as_bytes()).unwrap();
+        }
+        assert!(ctx.verify(tag.as_ref()).is_ok());
+
+        // Verify with missing part should fail
+        let mut ctx2 = Context::with_key(&key);
+        ctx2.update(parts[0].as_bytes()).unwrap();
+        ctx2.update(parts[1].as_bytes()).unwrap();
+        // Missing parts[2]
+        assert!(ctx2.verify(tag.as_ref()).is_err());
     }
 }
