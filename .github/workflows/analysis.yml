@@ -70,7 +70,7 @@ jobs:
         run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
   apidiff:
-    if: github.repository_owner == 'aws'
+    if: github.repository_owner == 'aws' && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
       AWS_LC_SYS_CMAKE_BUILDER: 1
@@ -106,7 +106,7 @@ jobs:
           cargo public-api diff --deny changed --deny removed "${CRATE_VERSION}"
 
   dependency-review:
-    if: github.repository_owner == 'aws'
+    if: github.repository_owner == 'aws' && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'

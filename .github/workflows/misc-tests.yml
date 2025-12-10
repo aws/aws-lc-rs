@@ -22,7 +22,7 @@ jobs:
           ./scripts/tools/copyright_check.sh
 
   assert-license-statement-in-pr-description:
-    if: github.repository_owner == 'aws'
+    if: github.repository_owner == 'aws' && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
