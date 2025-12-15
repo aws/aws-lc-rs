@@ -2,6 +2,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0 OR ISC
 
+# This script tests aws-lc-rs integration with the rustls ecosystem (rcgen, webpki, rustls).
+# It uses Cargo's [patch.crates-io] feature to override dependencies, which is more robust
+# than modifying individual dependency declarations.
+
 ROOT="${GITHUB_WORKSPACE:-$(git rev-parse --show-toplevel)}"
 
 latest_release=0
@@ -31,157 +35,145 @@ function cleanup() {
 
 trap cleanup EXIT
 
-#TODO: Call this function for all uses of sed
-function sed_replace {
-  local filepath="${1}";
-  shift
-  while [[ $# -gt 0 ]]; do
-      local pattern="${1}";
-     	perl -0777 -pi -e "${pattern}" "${filepath}"
-      shift
-  done
+# Get the latest stable (non-prerelease) version of a crate from crates.io
+function get_latest_stable_version() {
+  local crate="$1"
+  cargo show --json "$crate" | jq -r '
+    [.versions[] |
+     select(.yanked == false and (.num | test("alpha|beta|rc") | not))
+    ][0].num
+  '
 }
 
+# Get the git commit SHA for a specific crate version from crates.io
+function get_crate_commit() {
+  local crate="$1"
+  local version="$2"
+  local tmp_dir
+  tmp_dir="$(mktemp -d)"
 
-# Get aws-lc-rs version
-pushd "${ROOT}/aws-lc-rs"
-AWS_LC_RS_VERSION=$(cargo read-manifest | jq .version -r)
-popd &>/dev/null # "${ROOT}/aws-lc-rs"
+  cargo download -o "$tmp_dir/crate.tar.gz" "${crate}=${version}"
+  tar xzf "$tmp_dir/crate.tar.gz" -C "$tmp_dir" --strip-components=1
+  local sha
+  sha="$(jq -r '.git.sha1' "$tmp_dir/.cargo_vcs_info.json")"
+  rm -rf "$tmp_dir"
+  echo "$sha"
+}
 
-RUSTLS_RCGEN_DIR="$(mktemp -d)"
-CLEANUP_ON_EXIT+=("${RUSTLS_RCGEN_DIR}")
+# Add [patch.crates-io] section to a Cargo.toml to override aws-lc-rs and aws-lc-sys
+# Usage: add_aws_lc_patch <cargo_toml_path> <aws_lc_rs_workspace_root>
+function add_aws_lc_patch() {
+  local cargo_toml="$1"
+  local aws_lc_workspace="$2"
+
+  local aws_lc_rs_patch="aws-lc-rs = { path = \"${aws_lc_workspace}/aws-lc-rs\" }"
+  local aws_lc_sys_patch="aws-lc-sys = { path = \"${aws_lc_workspace}/aws-lc-sys\" }"
+
+  if grep -q '^\[patch\.crates-io\]' "$cargo_toml"; then
+    # [patch.crates-io] section exists - insert our patches after the header
+    local tmp_file
+    tmp_file="$(mktemp)"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      echo "$line"
+      if [[ "$line" == "[patch.crates-io]" ]]; then
+        echo "$aws_lc_rs_patch"
+        echo "$aws_lc_sys_patch"
+      fi
+    done < "$cargo_toml" > "$tmp_file"
+    mv "$tmp_file" "$cargo_toml"
+  else
+    # No existing [patch.crates-io] section - append to end of file
+    cat >> "$cargo_toml" << EOF
+
+[patch.crates-io]
+${aws_lc_rs_patch}
+${aws_lc_sys_patch}
+EOF
+  fi
+}
+
+# Clone a repository and optionally checkout a specific commit
+# Usage: clone_repo <url> <destination> [commit]
+function clone_repo() {
+  local url="$1"
+  local dest="$2"
+  local commit="${3:-}"
+
+  git clone "$url" "$dest"
+  if [ -n "$commit" ]; then
+    pushd "$dest" > /dev/null
+    git checkout "$commit"
+    popd > /dev/null
+  fi
+}
+
+echo "=== Testing rcgen with aws-lc-rs ==="
+
+RCGEN_DIR="$(mktemp -d)"
+CLEANUP_ON_EXIT+=("$RCGEN_DIR")
+
 if [[ $latest_release == "1" ]]; then
-  RUSTLS_RCGEN_STABLE_VERSION="$(cargo show --json rcgen | jq -r '
-    [.versions[] |
-     select(.yanked == false and (.num | test("alpha|beta|rc") | not))
-    ][0].num
-  ')"
-
-  cargo download -o "${RUSTLS_RCGEN_DIR}"/rcgen.tar.gz "rcgen=${RUSTLS_RCGEN_STABLE_VERSION}"
-  tar xvzf "${RUSTLS_RCGEN_DIR}"/rcgen.tar.gz -C "${RUSTLS_RCGEN_DIR}" --strip-components=1
-  rm "${RUSTLS_RCGEN_DIR}"/rcgen.tar.gz
-  RUSTLS_RCGEN_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_RCGEN_DIR}/.cargo_vcs_info.json)"
-  rm -rf "${RUSTLS_RCGEN_DIR}" # Cleanup before we clone
+  RCGEN_VERSION="$(get_latest_stable_version rcgen)"
+  RCGEN_COMMIT="$(get_crate_commit rcgen "$RCGEN_VERSION")"
+  echo "Using rcgen version ${RCGEN_VERSION} (commit: ${RCGEN_COMMIT})"
+  clone_repo "https://github.com/rustls/rcgen" "$RCGEN_DIR" "$RCGEN_COMMIT"
+else
+  clone_repo "https://github.com/rustls/rcgen" "$RCGEN_DIR"
 fi
 
-RUSTLS_WEBPKI_DIR="$(mktemp -d)"
-CLEANUP_ON_EXIT+=("${RUSTLS_WEBPKI_DIR}")
-if [[ $latest_release == "1" ]]; then
-  RUSTLS_WEBPKI_STABLE_VERSION="$(cargo show --json rustls-webpki | jq -r '
-    [.versions[] |
-     select(.yanked == false and (.num | test("alpha|beta|rc") | not))
-    ][0].num
-  ')"
+pushd "$RCGEN_DIR"
+rm -f Cargo.lock
+add_aws_lc_patch "Cargo.toml" "$ROOT"
+cargo update
+cargo tree -i aws-lc-rs --features aws_lc_rs
+cargo test --features aws_lc_rs
+popd > /dev/null
 
-  cargo download  -o "${RUSTLS_WEBPKI_DIR}"/rustls-webpki.tar.gz "rustls-webpki=${RUSTLS_WEBPKI_STABLE_VERSION}"
-  tar xvzf "${RUSTLS_WEBPKI_DIR}"/rustls-webpki.tar.gz -C "${RUSTLS_WEBPKI_DIR}" --strip-components=1
-  rm "${RUSTLS_WEBPKI_DIR}"/rustls-webpki.tar.gz
-  RUSTLS_WEBPKI_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_WEBPKI_DIR}/.cargo_vcs_info.json)"
-  rm -rf "${RUSTLS_WEBPKI_DIR}" # Cleanup before we clone
+echo "=== Testing rustls-webpki with aws-lc-rs ==="
+
+WEBPKI_DIR="$(mktemp -d)"
+CLEANUP_ON_EXIT+=("$WEBPKI_DIR")
+
+if [[ $latest_release == "1" ]]; then
+  WEBPKI_VERSION="$(get_latest_stable_version rustls-webpki)"
+  WEBPKI_COMMIT="$(get_crate_commit rustls-webpki "$WEBPKI_VERSION")"
+  echo "Using rustls-webpki version ${WEBPKI_VERSION} (commit: ${WEBPKI_COMMIT})"
+  clone_repo "https://github.com/rustls/webpki.git" "$WEBPKI_DIR" "$WEBPKI_COMMIT"
+else
+  clone_repo "https://github.com/rustls/webpki.git" "$WEBPKI_DIR"
 fi
+
+pushd "$WEBPKI_DIR"
+rm -f Cargo.lock
+add_aws_lc_patch "Cargo.toml" "$ROOT"
+cargo update
+cargo tree -i aws-lc-rs --features aws-lc-rs
+cargo test --features aws-lc-rs
+popd > /dev/null
+
+echo "=== Testing rustls with aws-lc-rs ==="
 
 RUSTLS_DIR="$(mktemp -d)"
-CLEANUP_ON_EXIT+=("${RUSTLS_DIR}")
-if [[ $latest_release == "1" ]]; then
-  RUSTLS_STABLE_VERSION="$(cargo show --json rustls | jq -r '
-    [.versions[] |
-     select(.yanked == false and (.num | test("alpha|beta|rc") | not))
-    ][0].num
-  ')"
+CLEANUP_ON_EXIT+=("$RUSTLS_DIR")
 
-  cargo download -o "${RUSTLS_DIR}"/rustls.tar.gz "rustls=${RUSTLS_STABLE_VERSION}"
-  tar xvzf "${RUSTLS_DIR}"/rustls.tar.gz -C "${RUSTLS_DIR}" --strip-components=1
-  rm "${RUSTLS_DIR}"/rustls.tar.gz
-  RUSTLS_COMMIT="$(jq -r '.git.sha1' ${RUSTLS_DIR}/.cargo_vcs_info.json)"
-  rm -rf "${RUSTLS_DIR}" # Cleanup before we clone
+if [[ $latest_release == "1" ]]; then
+  RUSTLS_VERSION="$(get_latest_stable_version rustls)"
+  RUSTLS_COMMIT="$(get_crate_commit rustls "$RUSTLS_VERSION")"
+  echo "Using rustls version ${RUSTLS_VERSION} (commit: ${RUSTLS_COMMIT})"
+  clone_repo "https://github.com/rustls/rustls.git" "$RUSTLS_DIR" "$RUSTLS_COMMIT"
+else
+  clone_repo "https://github.com/rustls/rustls.git" "$RUSTLS_DIR"
 fi
 
-git clone https://github.com/rustls/rcgen "${RUSTLS_RCGEN_DIR}"
-git clone https://github.com/rustls/webpki.git "${RUSTLS_WEBPKI_DIR}"
-git clone https://github.com/rustls/rustls.git "${RUSTLS_DIR}"
-
-# Update rcgen to use the GitHub repository reference under test.
-pushd "${RUSTLS_RCGEN_DIR}"
-if [[ $latest_release == "1" ]]; then
-  git checkout "${RUSTLS_RCGEN_COMMIT}"
-fi
-rm Cargo.lock
-RCGEN_AWS_LC_RS_STRING="^aws-lc-rs = .*"
-RCGEN_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
-sed_replace ./Cargo.toml "s|${RCGEN_AWS_LC_RS_STRING}|${RCGEN_AWS_LC_RS_PATH_STRING}|gm"
-cargo add --path "${ROOT}/aws-lc-rs" --package rustls-cert-gen
+pushd "$RUSTLS_DIR"
+rm -f Cargo.lock
+add_aws_lc_patch "Cargo.toml" "$ROOT"
 cargo update
-cargo update "aws-lc-rs@${AWS_LC_RS_VERSION}"
-cargo test --features aws_lc_rs
-popd &>/dev/null # "${RUSTLS_RCGEN_DIR}"
-
-# Update rustls-webpki to use the GitHub repository reference under test.
-pushd "${RUSTLS_WEBPKI_DIR}"
-if [[ $latest_release == "1" ]]; then
-  git checkout "${RUSTLS_WEBPKI_COMMIT}"
-fi
-rm Cargo.lock
-WEBPKI_RCGEN_STRING="^rcgen = \\{ .*?\\}"
-WEBPKI_RCGEN_PATH_STRING="rcgen = { path = \"${RUSTLS_RCGEN_DIR}/rcgen\" , default-features = false, features = [\"aws_lc_rs\"] }"
-WEBPKI_AWS_LC_RS_STRING="^aws-lc-rs = { version.* }"
-WEBPKI_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", optional = true, default-features = false, features = [\"aws-lc-sys\"] }"
-WEBPKI_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING="^aws-lc-rs = \\{ workspace = true, optional = true.*?\\}"
-WEBPKI_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING="^aws-lc-rs = \\{ workspace = true[^\\}]*\\}"
-WEBPKI_AWS_LC_RS_PATH_NON_OPTIONAL_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
-while IFS= read -r -d '' cargo_toml; do
-  sed_replace "${cargo_toml}" \
-    "s|${WEBPKI_RCGEN_STRING}|${WEBPKI_RCGEN_PATH_STRING}|gm" \
-    "s|${WEBPKI_AWS_LC_RS_STRING}|${WEBPKI_AWS_LC_RS_PATH_STRING}|gm" \
-    "s|${WEBPKI_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING}|${WEBPKI_AWS_LC_RS_PATH_STRING}|gm" \
-    "s|${WEBPKI_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING}|${WEBPKI_AWS_LC_RS_PATH_NON_OPTIONAL_STRING}|gm"
-done < <(find ./ -type f -name "Cargo.toml" -print0)
-
-# Trigger Cargo to generate the lock file
-cargo update
-cargo update "aws-lc-rs@${AWS_LC_RS_VERSION}"
-cargo tree -i aws-lc-rs --features aws-lc-rs
-cargo test --features aws-lc-rs
-popd &>/dev/null # "${RUSTLS_WEBPKI_DIR}"
-
-pushd "${RUSTLS_DIR}"
-if [[ $latest_release == "1" ]]; then
-  git checkout "${RUSTLS_COMMIT}"
-fi
-rm Cargo.lock
-# Update the Cargo.toml to use the GitHub repository reference under test.
-RUSTLS_RCGEN_STRING="^rcgen = \\{ .*?\\}"
-RUSTLS_RCGEN_PATH_STRING="rcgen = { path = \"${RUSTLS_RCGEN_DIR}/rcgen\" , default-features = false, features = [\"aws_lc_rs\", \"pem\"] }"
-RUSTLS_AWS_LC_RS_STRING="^aws-lc-rs = { version.* }"
-RUSTLS_AWS_LC_RS_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", optional = true, default-features = false, features = [\"aws-lc-sys\"] }"
-RUSTLS_AWS_LC_RS_PATH_NON_OPTIONAL_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"aws-lc-sys\"] }"
-RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING="aws-lc-rs = { path = \"${ROOT}/aws-lc-rs\", default-features = false, features = [\"unstable\", \"aws-lc-sys\"] }"
-RUSTLS_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING="^aws-lc-rs = \\{ workspace = true, optional = true.*?\\}"
-RUSTLS_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING="^aws-lc-rs = \\{ workspace = true[^\\}]*\\}"
-RUSTLS_WEBPKI_STRING="^webpki = \\{ package = \"rustls-webpki\",[\s\S]*?\\}"
-RUSTLS_WEBPKI_PATH_STRING="webpki = { package = \"rustls-webpki\", path = \"${RUSTLS_WEBPKI_DIR}\", features = [\"alloc\"], default-features = false }"
-sed_replace ./rustls-post-quantum/Cargo.toml \
-  "s|${RUSTLS_AWS_LC_RS_STRING}|${RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING}|gm" \
-  "s|${RUSTLS_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING}|${RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING}|gm" \
-  "s|${RUSTLS_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING}|${RUSTLS_AWS_LC_RS_NON_OPTIONAL_PATH_STRING}|gm"
-while IFS= read -r -d '' cargo_toml; do
-  [[ "${cargo_toml}" == "./rustls-post-quantum/Cargo.toml" ]] && continue
-  sed_replace "${cargo_toml}" \
-    "s|${RUSTLS_RCGEN_STRING}|${RUSTLS_RCGEN_PATH_STRING}|gm" \
-    "s|${RUSTLS_AWS_LC_RS_STRING}|${RUSTLS_AWS_LC_RS_PATH_NON_OPTIONAL_STRING}|gm" \
-    "s|${RUSTLS_AWS_LC_RS_WORKSPACE_OPTIONAL_STRING}|${RUSTLS_AWS_LC_RS_PATH_STRING}|gm" \
-    "s|${RUSTLS_AWS_LC_RS_WORKSPACE_NON_OPTIONAL_STRING}|${RUSTLS_AWS_LC_RS_PATH_NON_OPTIONAL_STRING}|gm" \
-    "s|${RUSTLS_WEBPKI_STRING}|${RUSTLS_WEBPKI_PATH_STRING}|gm"
-done < <(find ./ -type f -name "Cargo.toml" -print0)
-
-# Trigger Cargo to generate the lock file
-cargo update
-cargo update "aws-lc-rs@${AWS_LC_RS_VERSION}"
+# Run from rustls subdirectory to test the main library
 pushd ./rustls
-
-# Print the dependency tree for debug purposes, if we did everything right there
-# should only be one aws-lc-rs version. Otherwise this will fail sine there are multiple versions
 cargo tree -i aws-lc-rs --features aws-lc-rs
-# Run the rustls tests with the aws-lc-rs feature enabled
 cargo test --features aws-lc-rs
-popd &>/dev/null # ./rustls
-popd &>/dev/null # ${RUSTLS_DIR}
+popd > /dev/null
+popd > /dev/null
+
+echo "=== All rustls integration tests passed ==="
