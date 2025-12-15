@@ -17,7 +17,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_34_0
+#define BORINGSSL_PREFIX aws_lc_0_35_0
 #endif // BORINGSSL_PREFIX
 
 
@@ -210,6 +210,7 @@
 #define ASN1_mbstring_copy BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ASN1_mbstring_copy)
 #define ASN1_mbstring_ncopy BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ASN1_mbstring_ncopy)
 #define ASN1_object_size BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ASN1_object_size)
+#define ASN1_parse BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ASN1_parse)
 #define ASN1_primitive_free BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ASN1_primitive_free)
 #define ASN1_put_eoc BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ASN1_put_eoc)
 #define ASN1_put_object BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ASN1_put_object)
@@ -235,6 +236,7 @@
 #define BF_decrypt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BF_decrypt)
 #define BF_ecb_encrypt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BF_ecb_encrypt)
 #define BF_encrypt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BF_encrypt)
+#define BF_ofb64_encrypt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BF_ofb64_encrypt)
 #define BF_set_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BF_set_key)
 #define BIO_ADDR_clear BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_ADDR_clear)
 #define BIO_ADDR_copy BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, BIO_ADDR_copy)
@@ -1465,7 +1467,9 @@
 #define EVP_aes_256_xts BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_aes_256_xts)
 #define EVP_bf_cbc BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_bf_cbc)
 #define EVP_bf_cfb BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_bf_cfb)
+#define EVP_bf_cfb64 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_bf_cfb64)
 #define EVP_bf_ecb BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_bf_ecb)
+#define EVP_bf_ofb BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_bf_ofb)
 #define EVP_blake2b256 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_blake2b256)
 #define EVP_cast5_cbc BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_cast5_cbc)
 #define EVP_cast5_ecb BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_cast5_ecb)
@@ -3911,6 +3915,8 @@
 #define ml_dsa_verify BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_dsa_verify)
 #define ml_dsa_verify_internal BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_dsa_verify_internal)
 #define ml_dsa_verify_message BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_dsa_verify_message)
+#define ml_kem_1024_check_pk BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_1024_check_pk)
+#define ml_kem_1024_check_sk BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_1024_check_sk)
 #define ml_kem_1024_decapsulate BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_1024_decapsulate)
 #define ml_kem_1024_decapsulate_no_self_test BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_1024_decapsulate_no_self_test)
 #define ml_kem_1024_encapsulate BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_1024_encapsulate)
@@ -3919,6 +3925,8 @@
 #define ml_kem_1024_keypair BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_1024_keypair)
 #define ml_kem_1024_keypair_deterministic BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_1024_keypair_deterministic)
 #define ml_kem_1024_keypair_deterministic_no_self_test BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_1024_keypair_deterministic_no_self_test)
+#define ml_kem_512_check_pk BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_512_check_pk)
+#define ml_kem_512_check_sk BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_512_check_sk)
 #define ml_kem_512_decapsulate BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_512_decapsulate)
 #define ml_kem_512_decapsulate_no_self_test BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_512_decapsulate_no_self_test)
 #define ml_kem_512_encapsulate BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_512_encapsulate)
@@ -3927,6 +3935,8 @@
 #define ml_kem_512_keypair BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_512_keypair)
 #define ml_kem_512_keypair_deterministic BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_512_keypair_deterministic)
 #define ml_kem_512_keypair_deterministic_no_self_test BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_512_keypair_deterministic_no_self_test)
+#define ml_kem_768_check_pk BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_768_check_pk)
+#define ml_kem_768_check_sk BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_768_check_sk)
 #define ml_kem_768_decapsulate BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_768_decapsulate)
 #define ml_kem_768_decapsulate_no_self_test BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_768_decapsulate_no_self_test)
 #define ml_kem_768_encapsulate BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, ml_kem_768_encapsulate)

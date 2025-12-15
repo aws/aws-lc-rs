@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_34_0
+%define BORINGSSL_PREFIX aws_lc_0_35_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -207,6 +207,7 @@
 %xdefine _ASN1_mbstring_copy _ %+ BORINGSSL_PREFIX %+ _ASN1_mbstring_copy
 %xdefine _ASN1_mbstring_ncopy _ %+ BORINGSSL_PREFIX %+ _ASN1_mbstring_ncopy
 %xdefine _ASN1_object_size _ %+ BORINGSSL_PREFIX %+ _ASN1_object_size
+%xdefine _ASN1_parse _ %+ BORINGSSL_PREFIX %+ _ASN1_parse
 %xdefine _ASN1_primitive_free _ %+ BORINGSSL_PREFIX %+ _ASN1_primitive_free
 %xdefine _ASN1_put_eoc _ %+ BORINGSSL_PREFIX %+ _ASN1_put_eoc
 %xdefine _ASN1_put_object _ %+ BORINGSSL_PREFIX %+ _ASN1_put_object
@@ -232,6 +233,7 @@
 %xdefine _BF_decrypt _ %+ BORINGSSL_PREFIX %+ _BF_decrypt
 %xdefine _BF_ecb_encrypt _ %+ BORINGSSL_PREFIX %+ _BF_ecb_encrypt
 %xdefine _BF_encrypt _ %+ BORINGSSL_PREFIX %+ _BF_encrypt
+%xdefine _BF_ofb64_encrypt _ %+ BORINGSSL_PREFIX %+ _BF_ofb64_encrypt
 %xdefine _BF_set_key _ %+ BORINGSSL_PREFIX %+ _BF_set_key
 %xdefine _BIO_ADDR_clear _ %+ BORINGSSL_PREFIX %+ _BIO_ADDR_clear
 %xdefine _BIO_ADDR_copy _ %+ BORINGSSL_PREFIX %+ _BIO_ADDR_copy
@@ -1462,7 +1464,9 @@
 %xdefine _EVP_aes_256_xts _ %+ BORINGSSL_PREFIX %+ _EVP_aes_256_xts
 %xdefine _EVP_bf_cbc _ %+ BORINGSSL_PREFIX %+ _EVP_bf_cbc
 %xdefine _EVP_bf_cfb _ %+ BORINGSSL_PREFIX %+ _EVP_bf_cfb
+%xdefine _EVP_bf_cfb64 _ %+ BORINGSSL_PREFIX %+ _EVP_bf_cfb64
 %xdefine _EVP_bf_ecb _ %+ BORINGSSL_PREFIX %+ _EVP_bf_ecb
+%xdefine _EVP_bf_ofb _ %+ BORINGSSL_PREFIX %+ _EVP_bf_ofb
 %xdefine _EVP_blake2b256 _ %+ BORINGSSL_PREFIX %+ _EVP_blake2b256
 %xdefine _EVP_cast5_cbc _ %+ BORINGSSL_PREFIX %+ _EVP_cast5_cbc
 %xdefine _EVP_cast5_ecb _ %+ BORINGSSL_PREFIX %+ _EVP_cast5_ecb
@@ -3908,6 +3912,8 @@
 %xdefine _ml_dsa_verify _ %+ BORINGSSL_PREFIX %+ _ml_dsa_verify
 %xdefine _ml_dsa_verify_internal _ %+ BORINGSSL_PREFIX %+ _ml_dsa_verify_internal
 %xdefine _ml_dsa_verify_message _ %+ BORINGSSL_PREFIX %+ _ml_dsa_verify_message
+%xdefine _ml_kem_1024_check_pk _ %+ BORINGSSL_PREFIX %+ _ml_kem_1024_check_pk
+%xdefine _ml_kem_1024_check_sk _ %+ BORINGSSL_PREFIX %+ _ml_kem_1024_check_sk
 %xdefine _ml_kem_1024_decapsulate _ %+ BORINGSSL_PREFIX %+ _ml_kem_1024_decapsulate
 %xdefine _ml_kem_1024_decapsulate_no_self_test _ %+ BORINGSSL_PREFIX %+ _ml_kem_1024_decapsulate_no_self_test
 %xdefine _ml_kem_1024_encapsulate _ %+ BORINGSSL_PREFIX %+ _ml_kem_1024_encapsulate
@@ -3916,6 +3922,8 @@
 %xdefine _ml_kem_1024_keypair _ %+ BORINGSSL_PREFIX %+ _ml_kem_1024_keypair
 %xdefine _ml_kem_1024_keypair_deterministic _ %+ BORINGSSL_PREFIX %+ _ml_kem_1024_keypair_deterministic
 %xdefine _ml_kem_1024_keypair_deterministic_no_self_test _ %+ BORINGSSL_PREFIX %+ _ml_kem_1024_keypair_deterministic_no_self_test
+%xdefine _ml_kem_512_check_pk _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_check_pk
+%xdefine _ml_kem_512_check_sk _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_check_sk
 %xdefine _ml_kem_512_decapsulate _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_decapsulate
 %xdefine _ml_kem_512_decapsulate_no_self_test _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_decapsulate_no_self_test
 %xdefine _ml_kem_512_encapsulate _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_encapsulate
@@ -3924,6 +3932,8 @@
 %xdefine _ml_kem_512_keypair _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_keypair
 %xdefine _ml_kem_512_keypair_deterministic _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_keypair_deterministic
 %xdefine _ml_kem_512_keypair_deterministic_no_self_test _ %+ BORINGSSL_PREFIX %+ _ml_kem_512_keypair_deterministic_no_self_test
+%xdefine _ml_kem_768_check_pk _ %+ BORINGSSL_PREFIX %+ _ml_kem_768_check_pk
+%xdefine _ml_kem_768_check_sk _ %+ BORINGSSL_PREFIX %+ _ml_kem_768_check_sk
 %xdefine _ml_kem_768_decapsulate _ %+ BORINGSSL_PREFIX %+ _ml_kem_768_decapsulate
 %xdefine _ml_kem_768_decapsulate_no_self_test _ %+ BORINGSSL_PREFIX %+ _ml_kem_768_decapsulate_no_self_test
 %xdefine _ml_kem_768_encapsulate _ %+ BORINGSSL_PREFIX %+ _ml_kem_768_encapsulate
@@ -4520,6 +4530,7 @@
 %xdefine ASN1_mbstring_copy BORINGSSL_PREFIX %+ _ASN1_mbstring_copy
 %xdefine ASN1_mbstring_ncopy BORINGSSL_PREFIX %+ _ASN1_mbstring_ncopy
 %xdefine ASN1_object_size BORINGSSL_PREFIX %+ _ASN1_object_size
+%xdefine ASN1_parse BORINGSSL_PREFIX %+ _ASN1_parse
 %xdefine ASN1_primitive_free BORINGSSL_PREFIX %+ _ASN1_primitive_free
 %xdefine ASN1_put_eoc BORINGSSL_PREFIX %+ _ASN1_put_eoc
 %xdefine ASN1_put_object BORINGSSL_PREFIX %+ _ASN1_put_object
@@ -4545,6 +4556,7 @@
 %xdefine BF_decrypt BORINGSSL_PREFIX %+ _BF_decrypt
 %xdefine BF_ecb_encrypt BORINGSSL_PREFIX %+ _BF_ecb_encrypt
 %xdefine BF_encrypt BORINGSSL_PREFIX %+ _BF_encrypt
+%xdefine BF_ofb64_encrypt BORINGSSL_PREFIX %+ _BF_ofb64_encrypt
 %xdefine BF_set_key BORINGSSL_PREFIX %+ _BF_set_key
 %xdefine BIO_ADDR_clear BORINGSSL_PREFIX %+ _BIO_ADDR_clear
 %xdefine BIO_ADDR_copy BORINGSSL_PREFIX %+ _BIO_ADDR_copy
@@ -5775,7 +5787,9 @@
 %xdefine EVP_aes_256_xts BORINGSSL_PREFIX %+ _EVP_aes_256_xts
 %xdefine EVP_bf_cbc BORINGSSL_PREFIX %+ _EVP_bf_cbc
 %xdefine EVP_bf_cfb BORINGSSL_PREFIX %+ _EVP_bf_cfb
+%xdefine EVP_bf_cfb64 BORINGSSL_PREFIX %+ _EVP_bf_cfb64
 %xdefine EVP_bf_ecb BORINGSSL_PREFIX %+ _EVP_bf_ecb
+%xdefine EVP_bf_ofb BORINGSSL_PREFIX %+ _EVP_bf_ofb
 %xdefine EVP_blake2b256 BORINGSSL_PREFIX %+ _EVP_blake2b256
 %xdefine EVP_cast5_cbc BORINGSSL_PREFIX %+ _EVP_cast5_cbc
 %xdefine EVP_cast5_ecb BORINGSSL_PREFIX %+ _EVP_cast5_ecb
@@ -8221,6 +8235,8 @@
 %xdefine ml_dsa_verify BORINGSSL_PREFIX %+ _ml_dsa_verify
 %xdefine ml_dsa_verify_internal BORINGSSL_PREFIX %+ _ml_dsa_verify_internal
 %xdefine ml_dsa_verify_message BORINGSSL_PREFIX %+ _ml_dsa_verify_message
+%xdefine ml_kem_1024_check_pk BORINGSSL_PREFIX %+ _ml_kem_1024_check_pk
+%xdefine ml_kem_1024_check_sk BORINGSSL_PREFIX %+ _ml_kem_1024_check_sk
 %xdefine ml_kem_1024_decapsulate BORINGSSL_PREFIX %+ _ml_kem_1024_decapsulate
 %xdefine ml_kem_1024_decapsulate_no_self_test BORINGSSL_PREFIX %+ _ml_kem_1024_decapsulate_no_self_test
 %xdefine ml_kem_1024_encapsulate BORINGSSL_PREFIX %+ _ml_kem_1024_encapsulate
@@ -8229,6 +8245,8 @@
 %xdefine ml_kem_1024_keypair BORINGSSL_PREFIX %+ _ml_kem_1024_keypair
 %xdefine ml_kem_1024_keypair_deterministic BORINGSSL_PREFIX %+ _ml_kem_1024_keypair_deterministic
 %xdefine ml_kem_1024_keypair_deterministic_no_self_test BORINGSSL_PREFIX %+ _ml_kem_1024_keypair_deterministic_no_self_test
+%xdefine ml_kem_512_check_pk BORINGSSL_PREFIX %+ _ml_kem_512_check_pk
+%xdefine ml_kem_512_check_sk BORINGSSL_PREFIX %+ _ml_kem_512_check_sk
 %xdefine ml_kem_512_decapsulate BORINGSSL_PREFIX %+ _ml_kem_512_decapsulate
 %xdefine ml_kem_512_decapsulate_no_self_test BORINGSSL_PREFIX %+ _ml_kem_512_decapsulate_no_self_test
 %xdefine ml_kem_512_encapsulate BORINGSSL_PREFIX %+ _ml_kem_512_encapsulate
@@ -8237,6 +8255,8 @@
 %xdefine ml_kem_512_keypair BORINGSSL_PREFIX %+ _ml_kem_512_keypair
 %xdefine ml_kem_512_keypair_deterministic BORINGSSL_PREFIX %+ _ml_kem_512_keypair_deterministic
 %xdefine ml_kem_512_keypair_deterministic_no_self_test BORINGSSL_PREFIX %+ _ml_kem_512_keypair_deterministic_no_self_test
+%xdefine ml_kem_768_check_pk BORINGSSL_PREFIX %+ _ml_kem_768_check_pk
+%xdefine ml_kem_768_check_sk BORINGSSL_PREFIX %+ _ml_kem_768_check_sk
 %xdefine ml_kem_768_decapsulate BORINGSSL_PREFIX %+ _ml_kem_768_decapsulate
 %xdefine ml_kem_768_decapsulate_no_self_test BORINGSSL_PREFIX %+ _ml_kem_768_decapsulate_no_self_test
 %xdefine ml_kem_768_encapsulate BORINGSSL_PREFIX %+ _ml_kem_768_encapsulate
