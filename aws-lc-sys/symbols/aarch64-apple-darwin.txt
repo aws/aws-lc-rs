@@ -224,6 +224,7 @@ ASN1_OCTET_STRING_free
 ASN1_OCTET_STRING_it
 ASN1_OCTET_STRING_new
 ASN1_OCTET_STRING_set
+ASN1_parse
 ASN1_primitive_free
 ASN1_PRINTABLE_free
 ASN1_PRINTABLE_it
@@ -334,6 +335,7 @@ BF_cfb64_encrypt
 BF_decrypt
 BF_ecb_encrypt
 BF_encrypt
+BF_ofb64_encrypt
 BF_set_key
 bignum_add_p384
 bignum_add_p521
@@ -1678,7 +1680,9 @@ EVP_aes_256_wrap
 EVP_aes_256_xts
 EVP_bf_cbc
 EVP_bf_cfb
+EVP_bf_cfb64
 EVP_bf_ecb
+EVP_bf_ofb
 EVP_blake2b256
 EVP_BytesToKey
 EVP_cast5_cbc
@@ -2457,6 +2461,8 @@ ml_dsa_use_hint
 ml_dsa_verify
 ml_dsa_verify_internal
 ml_dsa_verify_message
+ml_kem_1024_check_pk
+ml_kem_1024_check_sk
 ml_kem_1024_decapsulate
 ml_kem_1024_decapsulate_no_self_test
 ml_kem_1024_encapsulate
@@ -2465,6 +2471,8 @@ ml_kem_1024_encapsulate_deterministic_no_self_test
 ml_kem_1024_keypair
 ml_kem_1024_keypair_deterministic
 ml_kem_1024_keypair_deterministic_no_self_test
+ml_kem_512_check_pk
+ml_kem_512_check_sk
 ml_kem_512_decapsulate
 ml_kem_512_decapsulate_no_self_test
 ml_kem_512_encapsulate
@@ -2473,6 +2481,8 @@ ml_kem_512_encapsulate_deterministic_no_self_test
 ml_kem_512_keypair
 ml_kem_512_keypair_deterministic
 ml_kem_512_keypair_deterministic_no_self_test
+ml_kem_768_check_pk
+ml_kem_768_check_sk
 ml_kem_768_decapsulate
 ml_kem_768_decapsulate_no_self_test
 ml_kem_768_encapsulate
