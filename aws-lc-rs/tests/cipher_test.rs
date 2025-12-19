@@ -7,6 +7,7 @@ use aws_lc_rs::cipher::{
     StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192, AES_256,
 };
 use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
+use aws_lc_rs::test;
 use aws_lc_rs::test::from_hex;
 use paste::paste;
 
@@ -1109,3 +1110,9 @@ unpadded_cipher_kat!(
     "00000000000000000000000000000000",
     "00112233445566778899aabbccddee"
 );
+
+#[test]
+fn test_streaming_cipher_traits() {
+    test::compile_time_assert_send::<StreamingEncryptingKey>();
+    test::compile_time_assert_send::<StreamingDecryptingKey>();
+}

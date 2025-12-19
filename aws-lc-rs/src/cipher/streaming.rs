@@ -24,6 +24,8 @@ pub struct StreamingEncryptingKey {
     context: EncryptionContext,
 }
 
+unsafe impl Send for StreamingEncryptingKey {}
+
 /// A struct indicating the portion of a buffer written to, and/or not written to, during an
 /// encryption/decryption operation.
 pub struct BufferUpdate<'a> {
@@ -341,6 +343,9 @@ pub struct StreamingDecryptingKey {
     mode: OperatingMode,
     cipher_ctx: LcPtr<EVP_CIPHER_CTX>,
 }
+
+unsafe impl Send for StreamingDecryptingKey {}
+
 impl StreamingDecryptingKey {
     #[allow(clippy::needless_pass_by_value)]
     fn new(
