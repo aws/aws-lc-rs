@@ -31,7 +31,7 @@ regex = "1.11.1"
 ring = "0.17.14"
 untrusted = "0.7.1"
 zeroize = "1.8.1"
-toml_edit = "0.23.0"
+toml_edit = "0.24.0"
 
 [profile.bench]
 lto = true
