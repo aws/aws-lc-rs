@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::cc_builder::CcBuilder;
-use crate::OutputLib::{Crypto, RustWrapper, Ssl};
+use crate::OutputLib::{Crypto, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, disable_jitter_entropy, effective_target, emit_warning,
     execute_command, get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src,
@@ -427,7 +427,7 @@ impl CmakeBuilder {
             .asmflag(asmflags.join(" ").as_str());
     }
 
-    fn build_rust_wrapper(&self) -> PathBuf {
+    fn build_library(&self) -> PathBuf {
         self.prepare_cmake_build()
             .configure_arg("--no-warn-unused-cli")
             .build()
@@ -474,7 +474,7 @@ impl crate::Builder for CmakeBuilder {
         Ok(())
     }
     fn build(&self) -> Result<(), String> {
-        self.build_rust_wrapper();
+        self.build_library();
 
         println!(
             "cargo:rustc-link-search=native={}",
@@ -494,12 +494,6 @@ impl crate::Builder for CmakeBuilder {
                 Ssl.libname(&self.build_prefix)
             );
         }
-
-        println!(
-            "cargo:rustc-link-lib={}={}",
-            self.output_lib_type.rust_lib_type(),
-            RustWrapper.libname(&self.build_prefix)
-        );
 
         Ok(())
     }

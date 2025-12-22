@@ -73,22 +73,22 @@ mod generated {
 #[cfg(use_bindgen_pregenerated)]
 pub use generated::*;
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, clippy::cast_possible_wrap)]
 #[must_use]
 pub fn ERR_GET_LIB(packed_error: u32) -> i32 {
-    unsafe { ERR_GET_LIB_RUST(packed_error) }
+    ((packed_error >> 24) & 0xFF) as i32
 }
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, clippy::cast_possible_wrap)]
 #[must_use]
 pub fn ERR_GET_REASON(packed_error: u32) -> i32 {
-    unsafe { ERR_GET_REASON_RUST(packed_error) }
+    (packed_error & 0xFFF) as i32
 }
 
 #[allow(non_snake_case)]
 #[must_use]
-pub fn ERR_GET_FUNC(packed_error: u32) -> i32 {
-    unsafe { ERR_GET_FUNC_RUST(packed_error) }
+pub fn ERR_GET_FUNC(_packed_error: u32) -> i32 {
+    0
 }
 
 #[cfg(feature = "all-bindings")]

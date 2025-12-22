@@ -95,7 +95,6 @@ pub(crate) fn get_aws_lc_sys_includes_path() -> Option<Vec<PathBuf>> {
 #[allow(dead_code)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum OutputLib {
-    RustWrapper,
     Crypto,
     Ssl,
 }
@@ -235,7 +234,6 @@ impl OutputLib {
         let name = match self {
             OutputLib::Crypto => "crypto",
             OutputLib::Ssl => "ssl",
-            OutputLib::RustWrapper => "rust_wrapper",
         };
         if let Some(prefix) = prefix {
             format!("{prefix}_{name}")

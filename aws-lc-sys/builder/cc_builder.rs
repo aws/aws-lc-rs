@@ -437,7 +437,6 @@ impl CcBuilder {
     }
 
     fn add_all_files(&self, lib: &Library, cc_build: &mut cc::Build) {
-        use core::str::FromStr;
         let compiler = cc_build.get_compiler();
 
         let force_include_option = if compiler.is_like_msvc() {
@@ -522,7 +521,6 @@ impl CcBuilder {
                 cc_build.object(object);
             }
         }
-        cc_build.file(PathBuf::from_str("rust_wrapper.c").unwrap());
     }
 
     fn build_library(&self, lib: &Library) {

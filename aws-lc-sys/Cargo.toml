@@ -52,7 +52,6 @@ include = [
     "/Cargo.toml",
     "/generated-include/**",
     "/include/**",
-    "/rust_wrapper.c",
     "/src/**/*.rs",
     "/tests/**/*.rs",
 ]
