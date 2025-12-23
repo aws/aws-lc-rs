@@ -22,6 +22,25 @@ passthrough = [
     'AWS_LC_SYS_CFLAGS_riscv64gc_unknown_linux_gnu'
 ]
 
+[target.mips-unknown-linux-gnu]
+build-std = true
+
+[target.mips-unknown-linux-musl]
+build-std = ["std", "panic_abort"]
+image = "ghcr.io/cross-rs/mips-unknown-linux-musl:edge"
+
+[target.mipsel-unknown-linux-musl]
+build-std = true
+image = "ghcr.io/cross-rs/mipsel-unknown-linux-musl:edge"
+
+[target.mips64-unknown-linux-muslabi64]
+build-std = true
+image = "ghcr.io/cross-rs/mips64-unknown-linux-muslabi64:edge"
+
+[target.mips64el-unknown-linux-muslabi64]
+build-std = true
+image = "ghcr.io/cross-rs/mips64el-unknown-linux-muslabi64:edge"
+
 [build.env]
 passthrough = [
     "AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN",

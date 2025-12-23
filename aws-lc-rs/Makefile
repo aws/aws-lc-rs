@@ -49,6 +49,7 @@ msrv:
 
 clippy:
 	cargo +nightly clippy --all-targets --features bindgen,fips,unstable -- -W clippy::all  -W clippy::pedantic
+	cargo +nightly clippy --all-targets --features unstable -- -W clippy::all -W clippy::pedantic
 
 clippy-fips-fix:
 	cargo +nightly clippy --all-targets --features bindgen,fips,unstable --fix --allow-dirty -- -W clippy::all  -W clippy::pedantic
