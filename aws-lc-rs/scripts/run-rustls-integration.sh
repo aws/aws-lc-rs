@@ -6,6 +6,24 @@
 # It uses Cargo's [patch.crates-io] feature to override dependencies, which is more robust
 # than modifying individual dependency declarations.
 
+function usage() {
+  cat << EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Tests aws-lc-rs integration with the rustls ecosystem.
+
+Options:
+  --latest-release  Test against latest stable releases (instead of main branch)
+  --cleanup         Automatically delete cloned repositories on exit
+  --help            Show this help message
+
+Dependencies: jq, cargo-show, cargo-download
+EOF
+  exit 0
+}
+
+[[ " $* " =~ " --help " ]] && usage
+
 ROOT="${GITHUB_WORKSPACE:-$(git rev-parse --show-toplevel)}"
 
 latest_release=0
@@ -19,9 +37,25 @@ for arg in "$@"; do
   fi
 done
 
+function check_dependencies() {
+  local missing=()
+  command -v jq >/dev/null 2>&1 || missing+=("jq")
+  command -v cargo-show >/dev/null 2>&1 >/dev/null 2>&1 || missing+=("cargo-show (cargo install cargo-show)")
+  command -v cargo-download >/dev/null 2>&1 || missing+=("cargo-download (cargo install cargo-download)")
+
+  if [ ${#missing[@]} -gt 0 ]; then
+    echo "Missing dependencies: ${missing[*]}" >&2
+    exit 1
+  fi
+}
+check_dependencies
+
 CLEANUP_ON_EXIT=()
 
 function cleanup() {
+  if [ ${#CLEANUP_ON_EXIT[@]} -eq 0 ]; then
+    return
+  fi
   if [ "$cleanup" -eq 0 ]; then
     echo "You can delete the following directories:"
     echo "${CLEANUP_ON_EXIT[@]}"
@@ -66,6 +100,12 @@ function add_aws_lc_patch() {
   local cargo_toml="$1"
   local aws_lc_workspace="$2"
 
+  # Skip if already patched
+  if grep -q "aws-lc-rs = { path = \"${aws_lc_workspace}" "$cargo_toml"; then
+    echo "Patch already present in $cargo_toml"
+    return
+  fi
+
   local aws_lc_rs_patch="aws-lc-rs = { path = \"${aws_lc_workspace}/aws-lc-rs\" }"
   local aws_lc_sys_patch="aws-lc-sys = { path = \"${aws_lc_workspace}/aws-lc-sys\" }"
 
@@ -73,6 +113,7 @@ function add_aws_lc_patch() {
     # [patch.crates-io] section exists - insert our patches after the header
     local tmp_file
     tmp_file="$(mktemp)"
+    trap "rm -f '$tmp_file'" RETURN
     while IFS= read -r line || [[ -n "$line" ]]; do
       echo "$line"
       if [[ "$line" == "[patch.crates-io]" ]]; then
@@ -99,7 +140,7 @@ function clone_repo() {
   local dest="$2"
   local commit="${3:-}"
 
-  git clone "$url" "$dest"
+  git clone --recurse-submodules "$url" "$dest"
   if [ -n "$commit" ]; then
     pushd "$dest" > /dev/null
     git checkout "$commit"
@@ -122,9 +163,13 @@ else
 fi
 
 pushd "$RCGEN_DIR"
-rm -f Cargo.lock
 add_aws_lc_patch "Cargo.toml" "$ROOT"
-cargo update
+if [[ $latest_release != "1" ]]; then
+  rm -f Cargo.lock
+  cargo update
+else
+  cargo update -p aws-lc-rs -p aws-lc-sys
+fi
 cargo tree -i aws-lc-rs --features aws_lc_rs
 cargo test --features aws_lc_rs
 popd > /dev/null
@@ -144,9 +189,13 @@ else
 fi
 
 pushd "$WEBPKI_DIR"
-rm -f Cargo.lock
 add_aws_lc_patch "Cargo.toml" "$ROOT"
-cargo update
+if [[ $latest_release != "1" ]]; then
+  rm -f Cargo.lock
+  cargo update
+else
+  cargo update -p aws-lc-rs -p aws-lc-sys
+fi
 cargo tree -i aws-lc-rs --features aws-lc-rs
 cargo test --features aws-lc-rs
 popd > /dev/null
@@ -166,14 +215,19 @@ else
 fi
 
 pushd "$RUSTLS_DIR"
-rm -f Cargo.lock
 add_aws_lc_patch "Cargo.toml" "$ROOT"
-cargo update
+if [[ $latest_release != "1" ]]; then
+  rm -f Cargo.lock
+  cargo update
+else
+  cargo update -p aws-lc-rs -p aws-lc-sys
+fi
+
 # Run from rustls subdirectory to test the main library
 pushd ./rustls
 cargo tree -i aws-lc-rs --features aws-lc-rs
 cargo test --features aws-lc-rs
-popd > /dev/null
-popd > /dev/null
+popd > /dev/null # ./rustls
+popd > /dev/null # "$RUSTLS_DIR"
 
 echo "=== All rustls integration tests passed ==="
