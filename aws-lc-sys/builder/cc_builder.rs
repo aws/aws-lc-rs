@@ -47,7 +47,7 @@ use std::fs;
 fn identify_sources() -> Vec<&'static str> {
     let mut source_files: Vec<&'static str> = vec![];
     source_files.append(&mut Vec::from(universal::CRYPTO_LIBRARY));
-
+    let mut target_specific_source_found = true;
     if target_os() == "windows" {
         if target_arch() == "x86_64" {
             source_files.append(&mut Vec::from(win_x86_64::CRYPTO_LIBRARY));
@@ -56,13 +56,15 @@ fn identify_sources() -> Vec<&'static str> {
         } else if target_arch() == "x86" {
             source_files.append(&mut Vec::from(win_x86::CRYPTO_LIBRARY));
         } else {
-            panic!("target_arch() = {}", target_arch());
+            target_specific_source_found = false;
         }
     } else if target_vendor() == "apple" {
         if target_arch() == "x86_64" {
             source_files.append(&mut Vec::from(apple_x86_64::CRYPTO_LIBRARY));
         } else if target_arch() == "aarch64" {
             source_files.append(&mut Vec::from(apple_aarch64::CRYPTO_LIBRARY));
+        } else {
+            target_specific_source_found = false;
         }
     } else if target_arch() == "x86_64" {
         source_files.append(&mut Vec::from(linux_x86_64::CRYPTO_LIBRARY));
@@ -75,12 +77,16 @@ fn identify_sources() -> Vec<&'static str> {
     } else if target_arch() == "powerpc64" {
         source_files.append(&mut Vec::from(linux_ppc64le::CRYPTO_LIBRARY));
     } else {
+        target_specific_source_found = false;
+    }
+    if !target_specific_source_found {
         emit_warning(format!(
             "No target-specific source found: {}-{}",
             target_os(),
             target_arch()
         ));
     }
+
     source_files
 }
 
@@ -526,10 +532,8 @@ impl CcBuilder {
                     jitter_entropy_builder.file(source_path);
                 }
             } else if source_path.extension() == Some("asm".as_ref()) {
-                emit_warning(format!("NASM file: {:?}", source_path.as_os_str()));
                 nasm_builder.file(source_path);
             } else {
-                emit_warning(format!("CC file: {:?}", source_path.as_os_str()));
                 cc_build.file(source_path);
             }
         }
