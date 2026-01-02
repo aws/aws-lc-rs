@@ -23,7 +23,7 @@ passthrough = [
 ]
 
 [target.mips-unknown-linux-gnu]
-build-std = true
+build-std = ["std", "panic_abort"]
 
 [target.mips-unknown-linux-musl]
 build-std = ["std", "panic_abort"]

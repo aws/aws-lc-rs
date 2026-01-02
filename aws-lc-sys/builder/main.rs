@@ -556,7 +556,6 @@ fn initialize() {
                 emit_rustc_cfg("universal-prefixed");
             } else {
                 emit_rustc_cfg("universal");
-                panic!("This should not happen")
             }
             unsafe {
                 PREGENERATED = true;
@@ -672,6 +671,7 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
         println!("cargo:rustc-check-cfg=cfg(universal)");
+        println!("cargo:rustc-check-cfg=cfg(universal_no_u1)");
         println!("cargo:rustc-check-cfg=cfg(universal_prefixed)");
     }
 }
