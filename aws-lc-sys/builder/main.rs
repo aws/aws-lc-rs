@@ -256,7 +256,7 @@ fn target_platform_prefix(name: &str) -> String {
 
 #[cfg(not(feature = "all-bindings"))]
 fn target_has_prefixed_symbols() -> bool {
-    target_vendor() == "apple" || target().starts_with("i686-pc-windows-")
+    target_vendor() == "apple" || (target_arch() == "x86" && target_os() == "windows")
 }
 
 #[cfg(all(feature = "bindgen", not(feature = "all-bindings")))]
