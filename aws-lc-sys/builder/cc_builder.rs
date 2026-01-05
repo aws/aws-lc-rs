@@ -419,7 +419,7 @@ impl CcBuilder {
             set_env_for_target("CFLAGS", &new_cflags);
             // cc-rs currently prioritizes flags provided by CFLAGS over the flags provided by the build script.
             // The environment variables used by the compiler are set when `get_compiler` is called.
-            let _compiler = je_builder.get_compiler();
+            je_builder.get_compiler();
             set_env_for_target("CFLAGS", &original_cflags);
         }
 
