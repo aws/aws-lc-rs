@@ -679,3 +679,38 @@ jobs:
           rm ./aws-lc-sys/src/universal_prefixed_crypto.rs
       - name: Run cargo test
         run: cargo test -p aws-lc-rs --no-default-features --features aws-lc-sys --tests
+
+  cranelift-backend-test:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs cranelift-backend-test (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    env:
+      # Cranelift requires panic=abort as it doesn't fully support unwinding.
+      # -Zpanic_abort_tests is required to run tests with panic=abort.
+      RUSTFLAGS: -Zcodegen-backend=cranelift -Cpanic=abort -Zpanic_abort_tests
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: rustc-codegen-cranelift-preview
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Remove other universal bindings
+        shell: bash
+        run: |
+          rm ./aws-lc-sys/src/universal_crypto.rs
+          rm ./aws-lc-sys/src/universal_prefixed_crypto.rs
+      - name: Run cargo test
+        run: cargo test -p aws-lc-rs --no-default-features --features aws-lc-sys --all-targets

@@ -260,8 +260,21 @@ fn target_has_prefixed_symbols() -> bool {
 }
 
 #[cfg(not(feature = "all-bindings"))]
+fn is_cranelift_backend() -> bool {
+    // CARGO_ENCODED_RUSTFLAGS contains flags separated by 0x1f (ASCII Unit Separator)
+    if let Some(rustflags) = optional_env("CARGO_ENCODED_RUSTFLAGS") {
+        for flag in rustflags.split('\x1f') {
+            if flag.contains("codegen-backend=cranelift") {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+#[cfg(not(feature = "all-bindings"))]
 fn target_chokes_on_u1() -> bool {
-    target_arch() == "mips" || target_arch() == "mips64"
+    target_arch() == "mips" || target_arch() == "mips64" || is_cranelift_backend()
 }
 
 #[cfg(all(feature = "bindgen", not(feature = "all-bindings")))]
@@ -551,6 +564,11 @@ fn initialize() {
             if use_no_u1_bindings() == Some(true)
                 || (target_chokes_on_u1() && use_no_u1_bindings().is_none())
             {
+                if is_cranelift_backend() {
+                    emit_warning(
+                        "Cranelift codegen backend detected. Using universal_no_u1 bindings.",
+                    );
+                }
                 emit_rustc_cfg("universal-no-u1");
             } else if target_has_prefixed_symbols() {
                 emit_rustc_cfg("universal-prefixed");
