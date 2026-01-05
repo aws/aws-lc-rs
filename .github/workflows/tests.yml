@@ -654,3 +654,28 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Run tests
         run: cargo test -p aws-lc-rs --all-targets
+
+  build-env-no-u1-bindings-test:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs build-env-no-u1-bindings-test
+    runs-on: ${{ matrix.os }}
+    env:
+      AWS_LC_SYS_NO_U1_BINDINGS: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - if: ${{ matrix.os == 'windows-latest' }}
+        uses: ilammy/setup-nasm@v1
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Remove other universal bindings
+        shell: bash
+        run: |
+          rm ./aws-lc-sys/src/universal_crypto.rs
+          rm ./aws-lc-sys/src/universal_prefixed_crypto.rs
+      - name: Run cargo test
+        run: cargo test -p aws-lc-rs --no-default-features --features aws-lc-sys --tests
