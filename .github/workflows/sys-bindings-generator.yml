@@ -279,6 +279,8 @@ jobs:
         run: |
           cargo test -p aws-lc-sys --no-default-features --features bindgen
       - name: Create bindings with the \u{1} stripped
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: aws-lc-sys/src
         run: |
           sed 's/#\[link_name = "\\u{1}aws_lc_/#[link_name = "aws_lc_/g' universal_crypto.rs > universal_no_u1_crypto.rs
       - name: Commit & Push changes
