@@ -708,9 +708,13 @@ CRYPTO_xts128_encrypt
 CTR_DRBG_clear
 CTR_DRBG_free
 CTR_DRBG_generate
+CTR_DRBG_generate_df
+CTR_DRBG_get_nonce
 CTR_DRBG_init
+CTR_DRBG_init_df
 CTR_DRBG_new
 CTR_DRBG_reseed
+CTR_DRBG_reseed_df
 ChaCha20_ctr32_avx2
 ChaCha20_ctr32_nohw
 ChaCha20_ctr32_ssse3
