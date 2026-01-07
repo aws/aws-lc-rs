@@ -22,6 +22,8 @@ pub struct StreamingEncryptingKey {
     mode: OperatingMode,
     cipher_ctx: LcPtr<EVP_CIPHER_CTX>,
     context: EncryptionContext,
+    #[cfg(feature = "unstable")]
+    output_generated: usize,
 }
 
 unsafe impl Send for StreamingEncryptingKey {}
@@ -152,6 +154,8 @@ impl StreamingEncryptingKey {
             mode,
             cipher_ctx,
             context,
+            #[cfg(feature = "unstable")]
+            output_generated: 0,
         })
     }
 
@@ -194,6 +198,73 @@ impl StreamingEncryptingKey {
         }
         let outlen: usize = outlen.try_into()?;
         debug_assert!(outlen <= min_outsize);
+        #[cfg(feature = "unstable")]
+        {
+            self.output_generated += outlen;
+        }
+
+        Ok(BufferUpdate::new(output, outlen))
+    }
+
+    /// Updates the internal state of the key with the provided plaintext `input`,
+    /// potentially writing bytes of ciphertext to `output`.
+    ///
+    /// This function has looser output buffer size requirements than [`Self::update`],
+    /// calculating the minimum required size based on the total bytes of output generated
+    /// and the cipher's block length. This is considered "less safe" because it's
+    /// based on assumptions about the state of the underlying operations.
+    ///
+    /// The minimum output buffer size is calculated based on how many bytes are needed to
+    /// reach the next block boundary after processing the input. If `next_total` is the sum
+    /// of bytes already generated plus `input.len()`, then the minimum size is:
+    /// `input.len() + ((block_len - (next_total % block_len)) % block_len)`
+    ///
+    /// # Errors
+    /// Returns an error if the `output` buffer is smaller than the calculated minimum size,
+    /// if the total output length overflows, or if the length of `input` is larger than
+    /// `i32::MAX`.
+    ///
+    /// # Panics
+    /// Panics if the number of bytes written by the cipher operation exceeds the output
+    /// buffer length.
+    #[cfg(feature = "unstable")]
+    pub fn less_safe_update<'a>(
+        &mut self,
+        input: &[u8],
+        output: &'a mut [u8],
+    ) -> Result<BufferUpdate<'a>, Unspecified> {
+        let next_total = self
+            .output_generated
+            .checked_add(input.len())
+            .ok_or(Unspecified)?;
+        let extra_buffer_size = (self.algorithm().block_len
+            - next_total.rem_euclid(self.algorithm().block_len))
+        .rem_euclid(self.algorithm().block_len);
+        let min_outsize = input
+            .len()
+            .checked_add(extra_buffer_size)
+            .ok_or(Unspecified)?;
+        if output.len() < min_outsize {
+            return Err(Unspecified);
+        }
+        let mut outlen: i32 = 0;
+        let inlen: i32 = input.len().try_into()?;
+
+        if 1 != unsafe {
+            EVP_EncryptUpdate(
+                self.cipher_ctx.as_mut_ptr(),
+                output.as_mut_ptr(),
+                &mut outlen,
+                input.as_ptr(),
+                inlen,
+            )
+        } {
+            return Err(Unspecified);
+        }
+        let outlen: usize = outlen.try_into()?;
+        assert!(outlen <= output.len(), "Memory corruption!");
+        self.output_generated += outlen;
+
         Ok(BufferUpdate::new(output, outlen))
     }
 
@@ -342,6 +413,8 @@ pub struct StreamingDecryptingKey {
     algorithm: &'static Algorithm,
     mode: OperatingMode,
     cipher_ctx: LcPtr<EVP_CIPHER_CTX>,
+    #[cfg(feature = "unstable")]
+    output_generated: usize,
 }
 
 unsafe impl Send for StreamingDecryptingKey {}
@@ -381,6 +454,8 @@ impl StreamingDecryptingKey {
             algorithm,
             mode,
             cipher_ctx,
+            #[cfg(feature = "unstable")]
+            output_generated: 0,
         })
     }
 
@@ -423,6 +498,72 @@ impl StreamingDecryptingKey {
         }
         let outlen: usize = outlen.try_into()?;
         debug_assert!(outlen <= min_outsize);
+        #[cfg(feature = "unstable")]
+        {
+            self.output_generated += outlen;
+        }
+        Ok(BufferUpdate::new(output, outlen))
+    }
+
+    /// Updates the internal state of the key with the provided ciphertext `input`,
+    /// potentially writing bytes of plaintext to `output`.
+    ///
+    /// This function has looser output buffer size requirements than [`Self::update`],
+    /// calculating the minimum required size based on the total bytes of output generated
+    /// and the cipher's block length. This is considered "less safe" because it's
+    /// based on assumptions about the state of the underlying operations.
+    ///
+    /// The minimum output buffer size is calculated based on how many bytes are needed to
+    /// reach the next block boundary after processing the input. If `next_total` is the sum
+    /// of bytes already generated plus `input.len()`, then the minimum size is:
+    /// `input.len() + ((block_len - (next_total % block_len)) % block_len)`
+    ///
+    /// # Errors
+    /// Returns an error if the `output` buffer is smaller than the calculated minimum size,
+    /// if the total output length overflows, or if the length of `input` is larger than
+    /// `i32::MAX`.
+    ///
+    /// # Panics
+    /// Panics if the number of bytes written by the cipher operation exceeds the output
+    /// buffer length.
+    #[cfg(feature = "unstable")]
+    pub fn less_safe_update<'a>(
+        &mut self,
+        input: &[u8],
+        output: &'a mut [u8],
+    ) -> Result<BufferUpdate<'a>, Unspecified> {
+        let next_total = self
+            .output_generated
+            .checked_add(input.len())
+            .ok_or(Unspecified)?;
+        let extra_buffer_size = (self.algorithm().block_len
+            - next_total.rem_euclid(self.algorithm().block_len))
+        .rem_euclid(self.algorithm().block_len);
+        let min_outsize = input
+            .len()
+            .checked_add(extra_buffer_size)
+            .ok_or(Unspecified)?;
+        if output.len() < min_outsize {
+            return Err(Unspecified);
+        }
+
+        let mut outlen: i32 = 0;
+        let inlen: i32 = input.len().try_into()?;
+
+        if 1 != unsafe {
+            EVP_DecryptUpdate(
+                self.cipher_ctx.as_mut_ptr(),
+                output.as_mut_ptr(),
+                &mut outlen,
+                input.as_ptr(),
+                inlen,
+            )
+        } {
+            return Err(Unspecified);
+        }
+        let outlen: usize = outlen.try_into()?;
+        assert!(outlen <= output.len(), "Memory corruption!");
+        self.output_generated += outlen;
         Ok(BufferUpdate::new(output, outlen))
     }
 
@@ -621,6 +762,123 @@ mod tests {
         plaintext.into_boxed_slice()
     }
 
+    #[cfg(feature = "unstable")]
+    fn step_encrypt_less_safe(
+        mut encrypting_key: StreamingEncryptingKey,
+        plaintext: &[u8],
+        step: usize,
+    ) -> (Box<[u8]>, DecryptionContext) {
+        let alg = encrypting_key.algorithm();
+        let mode = encrypting_key.mode();
+        let block_len = alg.block_len();
+        let n = plaintext.len();
+        let mut ciphertext = vec![0u8; n + block_len];
+
+        let mut in_idx: usize = 0;
+        let mut out_idx: usize = 0;
+        loop {
+            let mut in_end = in_idx + step;
+            if in_end > n {
+                in_end = n;
+            }
+            let input_len = in_end - in_idx;
+            let next_total = out_idx + input_len;
+            // Calculate the tighter minimum output buffer size
+            let min_out_len = input_len + ((block_len - (next_total % block_len)) % block_len);
+            if input_len % block_len == 0 && step % block_len == 0 {
+                // When input is provided one block at a time, no additional space should be needed.
+                assert!(input_len == min_out_len)
+            }
+            let out_end = out_idx + min_out_len;
+            let output = encrypting_key
+                .less_safe_update(
+                    &plaintext[in_idx..in_end],
+                    &mut ciphertext[out_idx..out_end],
+                )
+                .unwrap();
+            in_idx += step;
+            out_idx += output.written().len();
+            if in_idx >= n {
+                break;
+            }
+        }
+        let out_end = out_idx + block_len;
+        let (decrypt_iv, output) = encrypting_key
+            .finish(&mut ciphertext[out_idx..out_end])
+            .unwrap();
+        let outlen = output.written().len();
+        ciphertext.truncate(out_idx + outlen);
+        match mode {
+            OperatingMode::CBC | OperatingMode::ECB => {
+                assert!(ciphertext.len() > plaintext.len());
+                assert!(ciphertext.len() <= plaintext.len() + block_len);
+            }
+            _ => {
+                assert_eq!(ciphertext.len(), plaintext.len());
+            }
+        }
+
+        (ciphertext.into_boxed_slice(), decrypt_iv)
+    }
+
+    #[cfg(feature = "unstable")]
+    fn step_decrypt_less_safe(
+        mut decrypting_key: StreamingDecryptingKey,
+        ciphertext: &[u8],
+        step: usize,
+    ) -> Box<[u8]> {
+        let alg = decrypting_key.algorithm();
+        let mode = decrypting_key.mode();
+        let block_len = alg.block_len();
+        let n = ciphertext.len();
+        let mut plaintext = vec![0u8; n + block_len];
+
+        let mut in_idx: usize = 0;
+        let mut out_idx: usize = 0;
+        loop {
+            let mut in_end = in_idx + step;
+            if in_end > n {
+                in_end = n;
+            }
+            let input_len = in_end - in_idx;
+            let next_total = out_idx + input_len;
+            // Calculate the tighter minimum output buffer size
+            let min_out_len = input_len + ((block_len - (next_total % block_len)) % block_len);
+            if input_len % block_len == 0 && step % block_len == 0 {
+                // When input is provided one block at a time, no additional space should be needed.
+                assert!(input_len == min_out_len)
+            }
+            let out_end = out_idx + min_out_len;
+            let output = decrypting_key
+                .less_safe_update(
+                    &ciphertext[in_idx..in_end],
+                    &mut plaintext[out_idx..out_end],
+                )
+                .unwrap();
+            in_idx += step;
+            out_idx += output.written().len();
+            if in_idx >= n {
+                break;
+            }
+        }
+        let out_end = out_idx + block_len;
+        let output = decrypting_key
+            .finish(&mut plaintext[out_idx..out_end])
+            .unwrap();
+        let outlen = output.written().len();
+        plaintext.truncate(out_idx + outlen);
+        match mode {
+            OperatingMode::CBC | OperatingMode::ECB => {
+                assert!(ciphertext.len() > plaintext.len());
+                assert!(ciphertext.len() <= plaintext.len() + block_len);
+            }
+            _ => {
+                assert_eq!(ciphertext.len(), plaintext.len());
+            }
+        }
+        plaintext.into_boxed_slice()
+    }
+
     macro_rules! helper_stream_step_encrypt_test {
         ($mode:ident) => {
             paste! {
@@ -646,12 +904,42 @@ mod tests {
                 }
             }
         };
+        ($mode:ident, less_safe) => {
+            paste! {
+                #[cfg(feature = "unstable")]
+                fn [<helper_test_ $mode _stream_encrypt_step_n_bytes_less_safe>](
+                    encrypting_key_creator: impl Fn() -> StreamingEncryptingKey,
+                    decrypting_key_creator: impl Fn(DecryptionContext) -> StreamingDecryptingKey,
+                    n: usize,
+                    step: usize,
+                ) {
+                    let mut input = vec![0u8; n];
+                    let random = SystemRandom::new();
+                    random.fill(&mut input).unwrap();
+
+                    let encrypting_key = encrypting_key_creator();
+
+                    let (ciphertext, decrypt_iv) = step_encrypt_less_safe(encrypting_key, &input, step);
+
+                    let decrypting_key = decrypting_key_creator(decrypt_iv);
+
+                    let plaintext = step_decrypt_less_safe(decrypting_key, &ciphertext, step);
+
+                    assert_eq!(input.as_slice(), &*plaintext);
+                }
+            }
+        };
     }
 
     helper_stream_step_encrypt_test!(cbc_pkcs7);
     helper_stream_step_encrypt_test!(ctr);
     helper_stream_step_encrypt_test!(cfb128);
     helper_stream_step_encrypt_test!(ecb_pkcs7);
+
+    helper_stream_step_encrypt_test!(cbc_pkcs7, less_safe);
+    helper_stream_step_encrypt_test!(ctr, less_safe);
+    helper_stream_step_encrypt_test!(cfb128, less_safe);
+    helper_stream_step_encrypt_test!(ecb_pkcs7, less_safe);
 
     #[test]
     fn test_step_cbc() {
@@ -866,6 +1154,231 @@ mod tests {
                 256,
             );
             helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                1,
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "unstable")]
+    fn test_step_cbc_less_safe() {
+        let random = SystemRandom::new();
+        let mut key = [0u8; AES_256_KEY_LEN];
+        random.fill(&mut key).unwrap();
+        let key = key;
+
+        let encrypting_key_creator = || {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingEncryptingKey::cbc_pkcs7(key).unwrap()
+        };
+        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingDecryptingKey::cbc_pkcs7(key, decryption_ctx).unwrap()
+        };
+
+        for i in 13..=21 {
+            for j in 124..=131 {
+                helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    i,
+                );
+            }
+            for j in 124..=131 {
+                helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    j - i,
+                );
+            }
+        }
+        for j in 124..=131 {
+            helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                j,
+            );
+            helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                256,
+            );
+            helper_test_cbc_pkcs7_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                1,
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "unstable")]
+    fn test_step_ctr_less_safe() {
+        let random = SystemRandom::new();
+        let mut key = [0u8; AES_256_KEY_LEN];
+        random.fill(&mut key).unwrap();
+
+        let encrypting_key_creator = || {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingEncryptingKey::ctr(key).unwrap()
+        };
+        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingDecryptingKey::ctr(key, decryption_ctx).unwrap()
+        };
+
+        for i in 13..=21 {
+            for j in 124..=131 {
+                helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    i,
+                );
+            }
+            for j in 124..=131 {
+                helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    j - i,
+                );
+            }
+        }
+        for j in 124..=131 {
+            helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                j,
+            );
+            helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                256,
+            );
+            helper_test_ctr_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                1,
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "unstable")]
+    fn test_step_cfb128_less_safe() {
+        let random = SystemRandom::new();
+        let mut key = [0u8; AES_256_KEY_LEN];
+        random.fill(&mut key).unwrap();
+
+        let encrypting_key_creator = || {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingEncryptingKey::cfb128(key).unwrap()
+        };
+        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingDecryptingKey::cfb128(key, decryption_ctx).unwrap()
+        };
+
+        for i in 13..=21 {
+            for j in 124..=131 {
+                helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    i,
+                );
+            }
+            for j in 124..=131 {
+                helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    j - i,
+                );
+            }
+        }
+        for j in 124..=131 {
+            helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                j,
+            );
+            helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                256,
+            );
+            helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                1,
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "unstable")]
+    fn test_step_ecb_pkcs7_less_safe() {
+        let random = SystemRandom::new();
+        let mut key = [0u8; AES_256_KEY_LEN];
+        random.fill(&mut key).unwrap();
+
+        let encrypting_key_creator = || {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingEncryptingKey::ecb_pkcs7(key).unwrap()
+        };
+        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+            StreamingDecryptingKey::ecb_pkcs7(key, decryption_ctx).unwrap()
+        };
+
+        for i in 13..=21 {
+            for j in 124..=131 {
+                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    i,
+                );
+            }
+            for j in 124..=131 {
+                helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
+                    encrypting_key_creator,
+                    decrypting_key_creator,
+                    j,
+                    j - i,
+                );
+            }
+        }
+        for j in 124..=131 {
+            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                j,
+            );
+            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
+                encrypting_key_creator,
+                decrypting_key_creator,
+                j,
+                256,
+            );
+            helper_test_ecb_pkcs7_stream_encrypt_step_n_bytes_less_safe(
                 encrypting_key_creator,
                 decrypting_key_creator,
                 j,
