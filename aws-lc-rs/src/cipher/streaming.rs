@@ -192,11 +192,11 @@ impl StreamingEncryptingKey {
         Ok(BufferUpdate::new(output, outlen))
     }
 
-    /// Updates the internal state of the key with the provided ciphertext `input`,
+    /// Updates the internal state of the key with the provided plaintext `input`,
     /// potentially writing bytes of ciphertext to `output`.
     ///
     /// The number of bytes written to `output` can be up to `input.len()`
-    /// plus the block length of the algorithm (e.g., [`Algorithm::block_len`]).
+    /// plus the block length of the algorithm (e.g., [`Algorithm::block_len`]) minus one.
     ///
     /// # Errors
     /// * Returns an error if the `output` buffer is smaller than the length of
@@ -483,11 +483,11 @@ impl StreamingDecryptingKey {
     /// Updates the internal state of the key with the provided ciphertext `input`,
     /// potentially also writing bytes of plaintext to `output`.
     /// The number of bytes written to `output` can be up to `input.len()`
-    /// plus the block length of the cipher algorithm (e.g., [`Algorithm::block_len`]).
+    /// plus the block length of the cipher algorithm (e.g., [`Algorithm::block_len`]) minus one.
     ///
     /// # Errors
     /// * Returns an error if the `output` buffer is smaller than the length of
-    ///   the `input` plus the algorithm's block length.
+    ///   the `input` plus the algorithm's block length minus one.
     /// * May return an error if the length of `input` plus the algorithm's block length is larger
     ///   than `i32::MAX`.
     pub fn update<'a>(
@@ -498,7 +498,8 @@ impl StreamingDecryptingKey {
         let min_outsize = input
             .len()
             .checked_add(self.algorithm().block_len())
-            .ok_or(Unspecified)?;
+            .ok_or(Unspecified)?
+            - 1;
         self.update_internal(input, output, min_outsize)
     }
 
@@ -766,7 +767,7 @@ mod tests {
             plaintext,
             step,
             |key, input, output, out_idx, block_len, _step| {
-                let out_end = out_idx + input.len() + block_len;
+                let out_end = out_idx + input.len() + block_len - 1;
                 let result = key.update(input, &mut output[out_idx..out_end]).unwrap();
                 result.written().len()
             },
@@ -783,7 +784,7 @@ mod tests {
             ciphertext,
             step,
             |key, input, output, out_idx, block_len, _step| {
-                let out_end = out_idx + input.len() + block_len;
+                let out_end = out_idx + input.len() + block_len - 1;
                 let result = key.update(input, &mut output[out_idx..out_end]).unwrap();
                 result.written().len()
             },
