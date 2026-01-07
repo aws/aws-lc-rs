@@ -808,7 +808,7 @@ mod tests {
                 let min_out_len = input_len + ((block_len - (next_total % block_len)) % block_len);
                 if input_len % block_len == 0 && step % block_len == 0 {
                     // When input is provided one block at a time, no additional space should be needed.
-                    assert!(input_len == min_out_len)
+                    assert!(input_len == min_out_len);
                 }
                 let out_end = out_idx + min_out_len;
                 let result = key
@@ -836,7 +836,7 @@ mod tests {
                 let min_out_len = input_len + ((block_len - (next_total % block_len)) % block_len);
                 if input_len % block_len == 0 && step % block_len == 0 {
                     // When input is provided one block at a time, no additional space should be needed.
-                    assert!(input_len == min_out_len)
+                    assert!(input_len == min_out_len);
                 }
                 let out_end = out_idx + min_out_len;
                 let result = key
