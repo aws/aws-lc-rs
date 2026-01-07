@@ -677,9 +677,13 @@ CRYPTO_tls1_prf
 CTR_DRBG_clear
 CTR_DRBG_free
 CTR_DRBG_generate
+CTR_DRBG_generate_df
+CTR_DRBG_get_nonce
 CTR_DRBG_init
+CTR_DRBG_init_df
 CTR_DRBG_new
 CTR_DRBG_reseed
+CTR_DRBG_reseed_df
 d2i_ACCESS_DESCRIPTION
 d2i_ASN1_BIT_STRING
 d2i_ASN1_BMPSTRING
