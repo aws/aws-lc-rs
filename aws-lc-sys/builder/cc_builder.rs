@@ -244,13 +244,13 @@ impl CcBuilder {
                 if !compiler_is_msvc {
                     let path_str = format!("\"{}\"", self.manifest_dir.display());
 
-                    let flag = format!("-ffile-prefix-map={}=", path_str);
+                    let flag = format!("-ffile-prefix-map={path_str}=");
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {
                         emit_warning(format!("Using flag: {}", &flag));
                         build_options.push(BuildOption::flag(&flag));
                     } else {
                         emit_warning("NOTICE: Build environment source paths might be visible in release binary.");
-                        let flag = format!("-fdebug-prefix-map={}=", path_str);
+                        let flag = format!("-fdebug-prefix-map={path_str}=");
                         if let Ok(true) = cc_build.is_flag_supported(&flag) {
                             emit_warning(format!("Using flag: {}", &flag));
                             build_options.push(BuildOption::flag(&flag));
