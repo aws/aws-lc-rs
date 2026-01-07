@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Tue Oct 21 11:29:19 UTC 2025
+// Wed Jan  7 21:59:38 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "generated-src/win-x86_64/crypto/chacha/chacha-x86_64.asm",
@@ -15,8 +15,8 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "generated-src/win-x86_64/crypto/fipsmodule/ghash-ssse3-x86_64.asm",
     "generated-src/win-x86_64/crypto/fipsmodule/ghash-x86_64.asm",
     "generated-src/win-x86_64/crypto/fipsmodule/md5-x86_64.asm",
-    "generated-src/win-x86_64/crypto/fipsmodule/p256_beeu-x86_64-asm.asm",
     "generated-src/win-x86_64/crypto/fipsmodule/p256-x86_64-asm.asm",
+    "generated-src/win-x86_64/crypto/fipsmodule/p256_beeu-x86_64-asm.asm",
     "generated-src/win-x86_64/crypto/fipsmodule/rdrand-x86_64.asm",
     "generated-src/win-x86_64/crypto/fipsmodule/rsaz-2k-avx512.asm",
     "generated-src/win-x86_64/crypto/fipsmodule/rsaz-3k-avx512.asm",
