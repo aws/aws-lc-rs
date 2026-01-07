@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_13_10
+%define BORINGSSL_PREFIX aws_lc_fips_0_13_11
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -734,9 +734,13 @@
 %xdefine _CTR_DRBG_clear _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_clear
 %xdefine _CTR_DRBG_free _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_free
 %xdefine _CTR_DRBG_generate _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_generate
+%xdefine _CTR_DRBG_generate_df _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_generate_df
+%xdefine _CTR_DRBG_get_nonce _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_get_nonce
 %xdefine _CTR_DRBG_init _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_init
+%xdefine _CTR_DRBG_init_df _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_init_df
 %xdefine _CTR_DRBG_new _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_new
 %xdefine _CTR_DRBG_reseed _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_reseed
+%xdefine _CTR_DRBG_reseed_df _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_reseed_df
 %xdefine _ChaCha20_ctr32_avx2 _ %+ BORINGSSL_PREFIX %+ _ChaCha20_ctr32_avx2
 %xdefine _ChaCha20_ctr32_neon _ %+ BORINGSSL_PREFIX %+ _ChaCha20_ctr32_neon
 %xdefine _ChaCha20_ctr32_nohw _ %+ BORINGSSL_PREFIX %+ _ChaCha20_ctr32_nohw
@@ -4564,9 +4568,13 @@
 %xdefine CTR_DRBG_clear BORINGSSL_PREFIX %+ _CTR_DRBG_clear
 %xdefine CTR_DRBG_free BORINGSSL_PREFIX %+ _CTR_DRBG_free
 %xdefine CTR_DRBG_generate BORINGSSL_PREFIX %+ _CTR_DRBG_generate
+%xdefine CTR_DRBG_generate_df BORINGSSL_PREFIX %+ _CTR_DRBG_generate_df
+%xdefine CTR_DRBG_get_nonce BORINGSSL_PREFIX %+ _CTR_DRBG_get_nonce
 %xdefine CTR_DRBG_init BORINGSSL_PREFIX %+ _CTR_DRBG_init
+%xdefine CTR_DRBG_init_df BORINGSSL_PREFIX %+ _CTR_DRBG_init_df
 %xdefine CTR_DRBG_new BORINGSSL_PREFIX %+ _CTR_DRBG_new
 %xdefine CTR_DRBG_reseed BORINGSSL_PREFIX %+ _CTR_DRBG_reseed
+%xdefine CTR_DRBG_reseed_df BORINGSSL_PREFIX %+ _CTR_DRBG_reseed_df
 %xdefine ChaCha20_ctr32_avx2 BORINGSSL_PREFIX %+ _ChaCha20_ctr32_avx2
 %xdefine ChaCha20_ctr32_neon BORINGSSL_PREFIX %+ _ChaCha20_ctr32_neon
 %xdefine ChaCha20_ctr32_nohw BORINGSSL_PREFIX %+ _ChaCha20_ctr32_nohw
