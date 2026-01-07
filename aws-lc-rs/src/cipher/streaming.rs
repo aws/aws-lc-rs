@@ -187,6 +187,7 @@ impl StreamingEncryptingKey {
         #[cfg(feature = "unstable")]
         {
             self.output_generated += outlen;
+            assert!(outlen <= output.len());
         }
 
         Ok(BufferUpdate::new(output, outlen))
@@ -475,6 +476,7 @@ impl StreamingDecryptingKey {
         #[cfg(feature = "unstable")]
         {
             self.output_generated += outlen;
+            assert!(outlen <= output.len());
         }
 
         Ok(BufferUpdate::new(output, outlen))
