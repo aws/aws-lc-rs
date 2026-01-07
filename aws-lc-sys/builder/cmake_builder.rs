@@ -79,7 +79,8 @@ impl CmakeBuilder {
             self.output_lib_type,
         );
         let cc_build = cc::Build::new();
-        let (is_like_msvc, build_options) = cc_builder.collect_universal_build_options(&cc_build);
+        let (is_like_msvc, build_options) =
+            cc_builder.collect_universal_build_options(&cc_build, true);
         for option in &build_options {
             option.apply_cmake(cmake_cfg, is_like_msvc);
         }

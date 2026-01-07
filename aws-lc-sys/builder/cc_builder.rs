@@ -186,6 +186,7 @@ impl CcBuilder {
     pub(crate) fn collect_universal_build_options(
         &self,
         cc_build: &cc::Build,
+        do_quote_paths: bool,
     ) -> (bool, Vec<BuildOption>) {
         let mut build_options: Vec<BuildOption> = Vec::new();
 
@@ -242,9 +243,11 @@ impl CcBuilder {
                     "AWS_LC_SYS_NO_ASM only allowed for debug builds!"
                 );
                 if !compiler_is_msvc {
-                    // TODO: figure out why this line results in the binaries containing source paths.
-                    //let path_str = format!("\"{}\"", self.manifest_dir.display());
-                    let path_str = format!("{}", self.manifest_dir.display());
+                    let path_str = if do_quote_paths {
+                        format!("\"{}\"", self.manifest_dir.display())
+                    } else {
+                        format!("{}", self.manifest_dir.display())
+                    };
 
                     let flag = format!("-ffile-prefix-map={path_str}=");
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {
@@ -361,7 +364,7 @@ impl CcBuilder {
         }
 
         let mut cc_build = self.create_builder();
-        let (_, build_options) = self.collect_universal_build_options(&cc_build);
+        let (_, build_options) = self.collect_universal_build_options(&cc_build, false);
         for option in build_options {
             option.apply_cc(&mut cc_build);
         }
