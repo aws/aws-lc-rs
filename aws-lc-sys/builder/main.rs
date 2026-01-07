@@ -260,6 +260,24 @@ fn target_has_prefixed_symbols() -> bool {
     target_vendor() == "apple" || (target_arch() == "x86" && target_os() == "windows")
 }
 
+#[cfg(not(feature = "all-bindings"))]
+fn is_cranelift_backend() -> bool {
+    // CARGO_ENCODED_RUSTFLAGS contains flags separated by 0x1f (ASCII Unit Separator)
+    if let Some(rustflags) = optional_env("CARGO_ENCODED_RUSTFLAGS") {
+        for flag in rustflags.split('\x1f') {
+            if flag.contains("codegen-backend=cranelift") {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+#[cfg(not(feature = "all-bindings"))]
+fn target_chokes_on_u1() -> bool {
+    target_arch() == "mips" || target_arch() == "mips64" || is_cranelift_backend()
+}
+
 #[cfg(all(feature = "bindgen", not(feature = "all-bindings")))]
 fn target_platform_prefix(name: &str) -> String {
     if target_has_prefixed_symbols() {
@@ -486,6 +504,7 @@ static mut AWS_LC_SYS_CMAKE_BUILDER: Option<bool> = None;
 static mut AWS_LC_SYS_NO_PREGENERATED_SRC: bool = false;
 static mut AWS_LC_SYS_EFFECTIVE_TARGET: String = String::new();
 static mut AWS_LC_SYS_NO_JITTER_ENTROPY: Option<bool> = None;
+static mut AWS_LC_SYS_NO_U1_BINDINGS: Option<bool> = None;
 
 static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
 
@@ -505,6 +524,7 @@ fn initialize() {
         AWS_LC_SYS_EFFECTIVE_TARGET =
             optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
         AWS_LC_SYS_NO_JITTER_ENTROPY = env_crate_var_to_bool("NO_JITTER_ENTROPY");
+        AWS_LC_SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
     }
 
     if !is_external_bindgen_requested().unwrap_or(false)
@@ -512,6 +532,10 @@ fn initialize() {
     {
         #[cfg(feature = "all-bindings")]
         {
+            assert!(
+                use_no_u1_bindings() != Some(true),
+                "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
+            );
             let target = effective_target();
             let supported_platform = match target.as_str() {
                 "aarch64-apple-darwin"
@@ -538,7 +562,16 @@ fn initialize() {
         }
         #[cfg(not(feature = "all-bindings"))]
         {
-            if target_has_prefixed_symbols() {
+            if use_no_u1_bindings() == Some(true)
+                || (target_chokes_on_u1() && use_no_u1_bindings().is_none())
+            {
+                if is_cranelift_backend() {
+                    emit_warning(
+                        "Cranelift codegen backend detected. Using universal_no_u1 bindings.",
+                    );
+                }
+                emit_rustc_cfg("universal-no-u1");
+            } else if target_has_prefixed_symbols() {
                 emit_rustc_cfg("universal-prefixed");
             } else {
                 emit_rustc_cfg("universal");
@@ -595,6 +628,10 @@ fn is_no_pregenerated_src() -> bool {
 
 fn disable_jitter_entropy() -> Option<bool> {
     unsafe { AWS_LC_SYS_NO_JITTER_ENTROPY }
+}
+
+fn use_no_u1_bindings() -> Option<bool> {
+    unsafe { AWS_LC_SYS_NO_U1_BINDINGS }
 }
 
 #[allow(unknown_lints)]
@@ -657,6 +694,7 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
         println!("cargo:rustc-check-cfg=cfg(universal)");
+        println!("cargo:rustc-check-cfg=cfg(universal_no_u1)");
         println!("cargo:rustc-check-cfg=cfg(universal_prefixed)");
     }
 }

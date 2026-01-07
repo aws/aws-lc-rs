@@ -20,6 +20,7 @@ macro_rules! platform_binding {
 }
 
 platform_binding!(universal_prefixed, universal_prefixed_crypto);
+platform_binding!(universal_no_u1, universal_no_u1_crypto);
 platform_binding!(universal, universal_crypto);
 
 platform_binding!(aarch64_linux_android, aarch64_linux_android_crypto);
