@@ -242,7 +242,9 @@ impl CcBuilder {
                     "AWS_LC_SYS_NO_ASM only allowed for debug builds!"
                 );
                 if !compiler_is_msvc {
-                    let path_str = format!("\"{}\"", self.manifest_dir.display());
+                    // TODO: figure out why this line results in the binaries containing source paths.
+                    //let path_str = format!("\"{}\"", self.manifest_dir.display());
+                    let path_str = format!("{}", self.manifest_dir.display());
 
                     let flag = format!("-ffile-prefix-map={path_str}=");
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {

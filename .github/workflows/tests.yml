@@ -565,6 +565,9 @@ jobs:
       - name: Run cargo test
         working-directory: "path has spaces/aws-lc-rs"
         run: cargo test --tests -p aws-lc-rs --no-default-features --features ${{ (matrix.fips == 1 && 'fips') || 'aws-lc-sys' }}
+      - name: Run cargo test release build
+        working-directory: "path has spaces/aws-lc-rs"
+        run: cargo test --tests --release -p aws-lc-rs --no-default-features --features ${{ (matrix.fips == 1 && 'fips') || 'aws-lc-sys' }}
 
   cmake-source-path-has-spaces:
     if: github.repository_owner == 'aws'
@@ -607,6 +610,9 @@ jobs:
       - name: Run cargo test
         working-directory: "path has spaces/aws-lc-rs"
         run: cargo test --tests -p aws-lc-rs --features bindgen
+      - name: Run cargo release test
+        working-directory: "path has spaces/aws-lc-rs"
+        run: cargo test --release --tests -p aws-lc-rs --features bindgen
 
   hostile-environment:
     if: github.repository_owner == 'aws'
