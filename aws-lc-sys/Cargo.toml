@@ -64,6 +64,7 @@ bindgen = ["dep:bindgen"] # Generate the bindings on the targeted platform as a 
 prebuilt-nasm = []
 all-bindings = []
 default = ['all-bindings']
+fips = ['dep:bindgen']
 
 [build-dependencies]
 cmake.workspace = true

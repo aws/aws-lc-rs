@@ -74,7 +74,7 @@ const OSSL_CONF_DEFINES: &[&str] = &[
 mod cc_builder;
 mod cmake_builder;
 mod nasm_builder;
-#[cfg(feature = "bindgen")]
+#[cfg(any(feature = "bindgen", feature = "fips"))]
 mod sys_bindgen;
 
 pub(crate) struct EnvGuard {
@@ -103,12 +103,16 @@ impl Drop for EnvGuard {
     }
 }
 
-fn is_fips_build() -> bool {
+fn is_fips_crate() -> bool {
     crate_name().contains("fips")
 }
 
+fn is_fips_build() -> bool {
+    cfg!(feature = "fips")
+}
+
 fn is_all_bindings() -> bool {
-    is_fips_build() || env::var("CARGO_FEATURE_ALL_BINDINGS").is_ok()
+    is_fips_crate() || env::var("CARGO_FEATURE_ALL_BINDINGS").is_ok()
 }
 
 fn is_prebuilt_nasm() -> bool {
@@ -299,7 +303,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn prefix_string() -> String {
     format!(
         "aws_lc{}_{}",
-        if is_fips_build() { "_fips" } else { "" },
+        if is_fips_crate() { "_fips" } else { "" },
         VERSION.to_string().replace('.', "_")
     )
 }
@@ -324,7 +328,7 @@ fn target_chokes_on_u1() -> bool {
     target_arch() == "mips" || target_arch() == "mips64" || is_cranelift_backend()
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(feature = "bindgen", feature = "fips"))]
 fn target_platform_prefix(name: &str) -> String {
     if is_all_bindings() {
         format!("{}_{}", effective_target().replace('-', "_"), name)
@@ -370,7 +374,7 @@ fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     }
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(feature = "bindgen", feature = "fips"))]
 fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
     let options = BindingOptions {
         build_prefix: prefix.clone(),
@@ -385,7 +389,7 @@ fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path
         .expect("written bindings");
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(feature = "bindgen", feature = "fips"))]
 fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindings_path: &Path) {
     sys_bindgen::generate_bindings(
         manifest_dir,
@@ -580,6 +584,11 @@ fn initialize() {
             optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect());
     }
 
+    assert!(
+        !is_fips_crate() || is_fips_build(),
+        "aws-lc-fips-sys requires 'fips' feature to be enabled.",
+    );
+
     if !is_external_bindgen_requested().unwrap_or(false)
         && (is_pregenerating_bindings() || !has_bindgen_feature())
     {
@@ -589,7 +598,7 @@ fn initialize() {
                 "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
             );
             let target = effective_target();
-            let supported_platform = match (is_fips_build(), target.as_str()) {
+            let supported_platform = match (is_fips_crate(), target.as_str()) {
                 (
                     _,
                     "aarch64-apple-darwin"
@@ -617,7 +626,7 @@ fn initialize() {
                     PREGENERATED = true;
                 }
             }
-        } else if !is_fips_build() {
+        } else if !is_fips_crate() {
             if use_no_u1_bindings() == Some(true)
                 || (target_chokes_on_u1() && use_no_u1_bindings().is_none())
             {
@@ -647,7 +656,7 @@ fn is_bindgen_required() -> bool {
         || !has_pregenerated()
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(feature = "bindgen", feature = "fips"))]
 fn internal_bindgen_supported() -> bool {
     let cv = bindgen::clang_version();
     emit_warning(format!("Clang version: {}", cv.full));
@@ -765,7 +774,7 @@ fn is_crt_static() -> bool {
     features.contains("crt-static")
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(any(feature = "bindgen", feature = "fips"))]
 fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
     if internal_bindgen_supported() && !is_external_bindgen_requested().unwrap_or(false) {
         emit_warning(format!(
@@ -781,7 +790,7 @@ fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
     }
 }
 
-#[cfg(not(feature = "bindgen"))]
+#[cfg(not(any(feature = "bindgen", feature = "fips")))]
 fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
     false
 }
@@ -809,7 +818,7 @@ fn main() {
     let mut bindings_available = false;
     emit_warning(format!("Target platform: '{}'", target()));
     if is_pregenerating_bindings() {
-        #[cfg(feature = "bindgen")]
+        #[cfg(any(feature = "bindgen", feature = "fips"))]
         {
             let src_bindings_path = Path::new(&manifest_dir)
                 .join("src")

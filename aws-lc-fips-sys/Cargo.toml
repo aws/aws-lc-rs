@@ -61,6 +61,8 @@ build = "builder/main.rs"
 asan = []
 ssl = []
 bindgen = [] # Generate the bindings on the targeted platform as a fallback mechanism.
+fips = []
+default = ["fips"]
 
 [build-dependencies]
 cmake.workspace = true
