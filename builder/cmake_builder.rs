@@ -10,6 +10,7 @@ use crate::{
     set_env_for_target, target_arch, target_env, target_os, test_clang_cl_command,
     test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
+use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -315,6 +316,17 @@ impl CmakeBuilder {
 
     #[allow(clippy::unused_self)]
     fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
+        if is_fips_build() {
+            cmake_cfg.generator("Ninja");
+            let env_map = self
+                .collect_vcvarsall_bat()
+                .map_err(|x| panic!("{}", x))
+                .unwrap();
+            for (key, value) in env_map {
+                cmake_cfg.env(key, value);
+            }
+        }
+
         match (target_env().as_str(), target_arch().as_str()) {
             ("msvc", "aarch64") => {
                 // If CMAKE_GENERATOR is either not set or not set to "Ninja"
@@ -342,6 +354,24 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", arch);
             }
         }
+    }
+
+    fn collect_vcvarsall_bat(&self) -> Result<HashMap<String, String>, String> {
+        let mut map: HashMap<String, String> = HashMap::new();
+        let script_path = self.manifest_dir.join("builder").join("printenv.bat");
+        let result = execute_command(script_path.as_os_str(), &[]);
+        if !result.status {
+            eprintln!("{}", result.stdout);
+            return Err("Failed to run vcvarsall.bat.".to_owned());
+        }
+        eprintln!("{}", result.stdout);
+        let lines = result.stdout.lines();
+        for line in lines {
+            if let Some((var, val)) = line.split_once('=') {
+                map.insert(var.to_string(), val.to_string());
+            }
+        }
+        Ok(map)
     }
 
     fn configure_prebuilt_nasm(&self, cmake_cfg: &mut cmake::Config) {
