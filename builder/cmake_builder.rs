@@ -120,6 +120,9 @@ impl CmakeBuilder {
         }
         if is_fips_build() {
             cmake_cfg.define("FIPS", "1");
+            cmake_cfg.define("CMAKE_C_FLAGS", "");
+            cmake_cfg.define("CMAKE_CXX_FLAGS", "");
+            cmake_cfg.define("CMAKE_ASM_FLAGS", "");
         } else {
             if is_no_pregenerated_src() {
                 // Go and Perl will be required.
