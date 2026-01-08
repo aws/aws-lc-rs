@@ -77,6 +77,18 @@ mod nasm_builder;
 #[cfg(feature = "bindgen")]
 mod sys_bindgen;
 
+fn is_fips_build() -> bool {
+    crate_name().contains("fips")
+}
+
+fn is_all_bindings() -> bool {
+    is_fips_build() || env::var("CARGO_FEATURE_ALL_BINDINGS").is_ok()
+}
+
+fn is_prebuilt_nasm() -> bool {
+    !is_fips_build() && env::var("CARGO_FEATURE_PREBUILT_NASM").is_ok()
+}
+
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("aws-lc").join("include")
 }
@@ -89,8 +101,10 @@ pub(crate) fn get_generated_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("generated-include")
 }
 
-pub(crate) fn get_aws_lc_sys_includes_path() -> Option<Vec<PathBuf>> {
-    optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect())
+#[allow(unknown_lints)]
+#[allow(static_mut_refs)]
+pub(crate) fn get_env_includes_path() -> Option<Vec<PathBuf>> {
+    unsafe { SYS_INCLUDES.clone() }
 }
 
 #[allow(dead_code)]
@@ -212,11 +226,20 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
 
 impl Default for OutputLibType {
     fn default() -> Self {
-        if Some(false) == env_crate_var_to_bool("STATIC") {
-            // Only dynamic if the value is set and is a "negative" value
-            OutputLibType::Dynamic
-        } else {
+        if let Some(stc_lib) = env_crate_var_to_bool("STATIC") {
+            if stc_lib {
+                OutputLibType::Static
+            } else {
+                OutputLibType::Dynamic
+            }
+        } else if !is_fips_build()
+            || (is_fips_build()
+                && (target_os() == "linux" || target_os().ends_with("bsd"))
+                && (target_arch() == "x86_64" || target_arch() == "aarch64"))
+        {
             OutputLibType::Static
+        } else {
+            OutputLibType::Dynamic
         }
     }
 }
@@ -247,20 +270,17 @@ impl OutputLib {
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn prefix_string() -> String {
-    format!("aws_lc_{}", VERSION.to_string().replace('.', "_"))
+    format!(
+        "aws_lc{}_{}",
+        if is_fips_build() { "_fips" } else { "" },
+        VERSION.to_string().replace('.', "_")
+    )
 }
 
-#[cfg(all(feature = "bindgen", feature = "all-bindings"))]
-fn target_platform_prefix(name: &str) -> String {
-    format!("{}_{}", effective_target().replace('-', "_"), name)
-}
-
-#[cfg(not(feature = "all-bindings"))]
 fn target_has_prefixed_symbols() -> bool {
     target_vendor() == "apple" || (target_arch() == "x86" && target_os() == "windows")
 }
 
-#[cfg(not(feature = "all-bindings"))]
 fn is_cranelift_backend() -> bool {
     // CARGO_ENCODED_RUSTFLAGS contains flags separated by 0x1f (ASCII Unit Separator)
     if let Some(rustflags) = optional_env("CARGO_ENCODED_RUSTFLAGS") {
@@ -273,14 +293,15 @@ fn is_cranelift_backend() -> bool {
     false
 }
 
-#[cfg(not(feature = "all-bindings"))]
 fn target_chokes_on_u1() -> bool {
     target_arch() == "mips" || target_arch() == "mips64" || is_cranelift_backend()
 }
 
-#[cfg(all(feature = "bindgen", not(feature = "all-bindings")))]
+#[cfg(feature = "bindgen")]
 fn target_platform_prefix(name: &str) -> String {
-    if target_has_prefixed_symbols() {
+    if is_all_bindings() {
+        format!("{}_{}", effective_target().replace('-', "_"), name)
+    } else if target_has_prefixed_symbols() {
         format!("universal_prefixed_{}", name.replace('-', "_"))
     } else {
         format!("universal_{}", name.replace('-', "_"))
@@ -396,8 +417,8 @@ fn effective_target() -> String {
     #[allow(unknown_lints)]
     #[allow(static_mut_refs)]
     unsafe {
-        if !AWS_LC_SYS_EFFECTIVE_TARGET.is_empty() {
-            return AWS_LC_SYS_EFFECTIVE_TARGET.clone();
+        if !SYS_EFFECTIVE_TARGET.is_empty() {
+            return SYS_EFFECTIVE_TARGET.clone();
         }
     }
     let target = target();
@@ -430,6 +451,10 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
             OutputLibType::default(),
         ))
     };
+
+    if is_fips_build() {
+        return cmake_builder_builder();
+    }
 
     let cc_builder_builder = || {
         Box::new(CcBuilder::new(
@@ -494,63 +519,69 @@ impl CStdRequested {
 }
 
 static mut PREGENERATED: bool = false;
-static mut AWS_LC_SYS_NO_PREFIX: bool = false;
-static mut AWS_LC_SYS_PREGENERATING_BINDINGS: bool = false;
-static mut AWS_LC_SYS_EXTERNAL_BINDGEN: Option<bool> = None;
-static mut AWS_LC_SYS_NO_ASM: bool = false;
-static mut AWS_LC_SYS_CFLAGS: String = String::new();
-static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
-static mut AWS_LC_SYS_CMAKE_BUILDER: Option<bool> = None;
-static mut AWS_LC_SYS_NO_PREGENERATED_SRC: bool = false;
-static mut AWS_LC_SYS_EFFECTIVE_TARGET: String = String::new();
-static mut AWS_LC_SYS_NO_JITTER_ENTROPY: Option<bool> = None;
-static mut AWS_LC_SYS_NO_U1_BINDINGS: Option<bool> = None;
+static mut SYS_NO_PREFIX: bool = false;
+static mut SYS_PREGENERATING_BINDINGS: bool = false;
+static mut SYS_EXTERNAL_BINDGEN: Option<bool> = None;
+static mut SYS_NO_ASM: bool = false;
+static mut SYS_CFLAGS: String = String::new();
+static mut SYS_PREBUILT_NASM: Option<bool> = None;
+static mut SYS_CMAKE_BUILDER: Option<bool> = None;
+static mut SYS_NO_PREGENERATED_SRC: bool = false;
+static mut SYS_EFFECTIVE_TARGET: String = String::new();
+static mut SYS_NO_JITTER_ENTROPY: Option<bool> = None;
+static mut SYS_NO_U1_BINDINGS: Option<bool> = None;
+static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
 
-static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
+static mut SYS_C_STD: CStdRequested = CStdRequested::None;
 
 fn initialize() {
     unsafe {
-        AWS_LC_SYS_NO_PREFIX = env_crate_var_to_bool("NO_PREFIX").unwrap_or(false);
-        AWS_LC_SYS_PREGENERATING_BINDINGS =
+        SYS_NO_PREFIX = env_crate_var_to_bool("NO_PREFIX").unwrap_or(false);
+        SYS_PREGENERATING_BINDINGS =
             env_crate_var_to_bool("PREGENERATING_BINDINGS").unwrap_or(false);
-        AWS_LC_SYS_EXTERNAL_BINDGEN = env_crate_var_to_bool("EXTERNAL_BINDGEN");
-        AWS_LC_SYS_NO_ASM = env_crate_var_to_bool("NO_ASM").unwrap_or(false);
-        AWS_LC_SYS_CFLAGS = optional_env_optional_crate_target("CFLAGS").unwrap_or_default();
-        AWS_LC_SYS_PREBUILT_NASM = env_crate_var_to_bool("PREBUILT_NASM");
-        AWS_LC_SYS_C_STD = CStdRequested::from_env();
-        AWS_LC_SYS_CMAKE_BUILDER = env_crate_var_to_bool("CMAKE_BUILDER");
-        AWS_LC_SYS_NO_PREGENERATED_SRC =
-            env_crate_var_to_bool("NO_PREGENERATED_SRC").unwrap_or(false);
-        AWS_LC_SYS_EFFECTIVE_TARGET =
-            optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
-        AWS_LC_SYS_NO_JITTER_ENTROPY = env_crate_var_to_bool("NO_JITTER_ENTROPY");
-        AWS_LC_SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
+        SYS_EXTERNAL_BINDGEN = env_crate_var_to_bool("EXTERNAL_BINDGEN");
+        SYS_NO_ASM = env_crate_var_to_bool("NO_ASM").unwrap_or(false);
+        SYS_CFLAGS = optional_env_optional_crate_target("CFLAGS").unwrap_or_default();
+        SYS_PREBUILT_NASM = env_crate_var_to_bool("PREBUILT_NASM");
+        SYS_C_STD = CStdRequested::from_env();
+        SYS_CMAKE_BUILDER = env_crate_var_to_bool("CMAKE_BUILDER");
+        SYS_NO_PREGENERATED_SRC = env_crate_var_to_bool("NO_PREGENERATED_SRC").unwrap_or(false);
+        SYS_EFFECTIVE_TARGET = optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
+        SYS_NO_JITTER_ENTROPY = env_crate_var_to_bool("NO_JITTER_ENTROPY");
+        SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
+        SYS_INCLUDES =
+            optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect());
     }
 
     if !is_external_bindgen_requested().unwrap_or(false)
         && (is_pregenerating_bindings() || !has_bindgen_feature())
     {
-        #[cfg(feature = "all-bindings")]
-        {
+        if is_all_bindings() {
             assert!(
                 use_no_u1_bindings() != Some(true),
                 "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
             );
             let target = effective_target();
-            let supported_platform = match target.as_str() {
-                "aarch64-apple-darwin"
-                | "aarch64-linux-android"
-                | "aarch64-pc-windows-msvc"
-                | "aarch64-unknown-linux-gnu"
-                | "aarch64-unknown-linux-musl"
-                | "i686-pc-windows-msvc"
-                | "i686-unknown-linux-gnu"
-                | "riscv64gc-unknown-linux-gnu"
-                | "x86_64-apple-darwin"
-                | "x86_64-pc-windows-gnu"
-                | "x86_64-pc-windows-msvc"
-                | "x86_64-unknown-linux-gnu"
-                | "x86_64-unknown-linux-musl" => Some(target),
+            let supported_platform = match (is_fips_build(), target.as_str()) {
+                (
+                    _,
+                    "aarch64-apple-darwin"
+                    | "aarch64-unknown-linux-gnu"
+                    | "aarch64-unknown-linux-musl"
+                    | "x86_64-apple-darwin"
+                    | "x86_64-unknown-linux-gnu"
+                    | "x86_64-unknown-linux-musl",
+                )
+                | (
+                    false,
+                    "aarch64-linux-android"
+                    | "aarch64-pc-windows-msvc"
+                    | "i686-pc-windows-msvc"
+                    | "i686-unknown-linux-gnu"
+                    | "riscv64gc-unknown-linux-gnu"
+                    | "x86_64-pc-windows-gnu"
+                    | "x86_64-pc-windows-msvc",
+                ) => Some(target),
                 _ => None,
             };
             if let Some(platform) = supported_platform {
@@ -559,9 +590,7 @@ fn initialize() {
                     PREGENERATED = true;
                 }
             }
-        }
-        #[cfg(not(feature = "all-bindings"))]
-        {
+        } else {
             if use_no_u1_bindings() == Some(true)
                 || (target_chokes_on_u1() && use_no_u1_bindings().is_none())
             {
@@ -599,45 +628,49 @@ fn internal_bindgen_supported() -> bool {
 }
 
 fn is_no_prefix() -> bool {
-    unsafe { AWS_LC_SYS_NO_PREFIX }
+    unsafe { SYS_NO_PREFIX }
 }
 
 fn is_pregenerating_bindings() -> bool {
-    unsafe { AWS_LC_SYS_PREGENERATING_BINDINGS }
+    unsafe { SYS_PREGENERATING_BINDINGS }
 }
 
 fn is_external_bindgen_requested() -> Option<bool> {
-    unsafe { AWS_LC_SYS_EXTERNAL_BINDGEN }
+    unsafe { SYS_EXTERNAL_BINDGEN }
 }
 
 fn is_no_asm() -> bool {
-    unsafe { AWS_LC_SYS_NO_ASM }
+    unsafe { SYS_NO_ASM }
 }
 
 fn is_cmake_builder() -> Option<bool> {
     if is_no_pregenerated_src() {
         Some(true)
     } else {
-        unsafe { AWS_LC_SYS_CMAKE_BUILDER }
+        unsafe { SYS_CMAKE_BUILDER }
     }
 }
 
 fn is_no_pregenerated_src() -> bool {
-    unsafe { AWS_LC_SYS_NO_PREGENERATED_SRC }
+    unsafe { SYS_NO_PREGENERATED_SRC }
 }
 
 fn disable_jitter_entropy() -> Option<bool> {
-    unsafe { AWS_LC_SYS_NO_JITTER_ENTROPY }
+    if is_fips_build() {
+        Some(false)
+    } else {
+        unsafe { SYS_NO_JITTER_ENTROPY }
+    }
 }
 
 fn use_no_u1_bindings() -> Option<bool> {
-    unsafe { AWS_LC_SYS_NO_U1_BINDINGS }
+    unsafe { SYS_NO_U1_BINDINGS }
 }
 
 #[allow(unknown_lints)]
 #[allow(static_mut_refs)]
 fn get_crate_cflags() -> &'static str {
-    unsafe { AWS_LC_SYS_CFLAGS.as_str() }
+    unsafe { SYS_CFLAGS.as_str() }
 }
 
 fn use_prebuilt_nasm() -> bool {
@@ -646,15 +679,15 @@ fn use_prebuilt_nasm() -> bool {
         && !is_no_asm()
         && !test_nasm_command()
         && (Some(true) == allow_prebuilt_nasm()
-            || (allow_prebuilt_nasm().is_none() && cfg!(feature = "prebuilt-nasm")))
+            || (allow_prebuilt_nasm().is_none() && is_prebuilt_nasm()))
 }
 
 fn allow_prebuilt_nasm() -> Option<bool> {
-    unsafe { AWS_LC_SYS_PREBUILT_NASM }
+    unsafe { SYS_PREBUILT_NASM }
 }
 
 fn requested_c_std() -> CStdRequested {
-    unsafe { AWS_LC_SYS_C_STD }
+    unsafe { SYS_C_STD }
 }
 
 fn has_bindgen_feature() -> bool {
@@ -685,6 +718,7 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+        println!("cargo:rustc-check-cfg=cfg(cpu_jitter_entropy)");
         println!("cargo:rustc-check-cfg=cfg(i686_pc_windows_msvc)");
         println!("cargo:rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(riscv64gc_unknown_linux_gnu)");
@@ -838,8 +872,8 @@ fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
         get_aws_lc_include_path(manifest_dir),
     ];
 
-    if let Some(extra_paths) = get_aws_lc_sys_includes_path() {
-        include_paths.extend(extra_paths);
+    if let Some(extra_paths) = get_env_includes_path() {
+        include_paths.extend(extra_paths.clone());
     }
 
     let include_dir = out_dir.join("include");
@@ -1088,7 +1122,7 @@ fn prepare_clang_args(manifest_dir: &Path, options: &BindingOptions) -> Vec<Stri
         get_aws_lc_include_path(manifest_dir).display().to_string(),
     );
 
-    if let Some(include_paths) = get_aws_lc_sys_includes_path() {
+    if let Some(include_paths) = get_env_includes_path() {
         for path in include_paths {
             add_header_include_path(&mut clang_args, path.display().to_string());
         }
