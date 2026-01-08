@@ -10,6 +10,7 @@ use crate::{
     set_env_for_target, target_arch, target_env, target_os, test_clang_cl_command,
     test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
+use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -319,6 +320,17 @@ impl CmakeBuilder {
 
     #[allow(clippy::unused_self)]
     fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
+        if is_fips_build() {
+            cmake_cfg.generator("Ninja");
+            let env_map = self
+                .collect_vcvarsall_bat()
+                .map_err(|x| panic!("{}", x))
+                .unwrap();
+            for (key, value) in env_map {
+                cmake_cfg.env(key, value);
+            }
+        }
+
         match (target_env().as_str(), target_arch().as_str()) {
             ("msvc", "aarch64") => {
                 // If CMAKE_GENERATOR is either not set or not set to "Ninja"
