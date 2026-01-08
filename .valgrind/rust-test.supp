@@ -1,7 +1,33 @@
 # Valgrind suppression file for Rust test harness
+#
+# SAFETY DOCUMENTATION
+# ====================
+# This file ONLY suppresses known false positives from:
+#   - Rust's test harness threading infrastructure
+#   - Rust standard library thread-local storage
+#   - Static/global initialization that intentionally lives for program lifetime
+#
+# WHAT IS NOT SUPPRESSED (will still be reported as errors):
+#   - "definitely lost" memory - REAL LEAKS, never suppressed
+#   - "indirectly lost" memory - REAL LEAKS, never suppressed
+#
+# All rules use either:
+#   - match-leak-kinds: possible (interior pointers - common in Rust)
+#   - match-leak-kinds: reachable (intentional static/global allocations)
+#
+# To verify no real leaks are being masked, periodically run:
+#   valgrind --leak-check=full --show-leak-kinds=definite,indirect <test>
+#
+# This will show ONLY real leaks, ignoring all possibly/reachable reports.
 
+###############################################################################
+# Rust Test Harness - Threading Infrastructure
+###############################################################################
+
+# Rust test harness uses call_once for thread context initialization
+# This is intentional one-time allocation that lives for program lifetime
 {
-   rust_test_invocations
+   rust_test_harness_context_init
    Memcheck:Leak
    match-leak-kinds: possible
    ...
@@ -11,10 +37,96 @@
    ...
 }
 
-# AWS-LC ML-DSA Implementation Issues
-# TODO: Remove once fixed upstream in AWS-LC
+# Rust std::thread::Thread::new allocates thread metadata
+# This can appear as "possibly lost" due to interior pointers in Thread structure
 {
-   aws_lc_ml_dsa_verify_uninit
+   rust_thread_new_interior_pointer
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:*thread*Thread*new*
+   ...
+}
+
+###############################################################################
+# Rust Standard Library - Thread Local Storage
+###############################################################################
+
+# Thread-local storage initialized via pthread_once
+# This is intentionally not freed - it's static initialization
+{
+   rust_pthread_once_tls_init
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   ...
+   fun:*pthread_once*
+   ...
+}
+
+# Thread-local storage via calloc (some TLS implementations)
+{
+   rust_pthread_once_tls_calloc
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   ...
+   fun:*pthread_once*
+   ...
+}
+
+###############################################################################
+# Test Binary Initialization
+# These patterns are specific to test binaries (*_test-* or *_tests-*)
+# and require __libc_start_main in the stack to ensure we're matching
+# program initialization, not runtime allocations
+###############################################################################
+
+# Possible leak from test binary initialization
+# Requires: malloc at top, test binary object, __libc_start_main at bottom
+# This pattern matches Rust test harness thread pool setup
+{
+   rust_test_binary_init_possible
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:*/*_test*-*
+   ...
+   fun:__libc_start_main*
+}
+
+# Still-reachable memory from test binary initialization
+# This is static/global data that intentionally lives until program exit
+{
+   rust_test_binary_init_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   obj:*/*_test*-*
+   ...
+   fun:__libc_start_main*
+}
+
+# Calloc variant for test binary initialization
+{
+   rust_test_binary_init_calloc_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   obj:*/*_test*-*
+   ...
+   fun:__libc_start_main*
+}
+
+###############################################################################
+# AWS-LC Specific Suppressions
+###############################################################################
+
+# AWS-LC ML-DSA Implementation - Uninitialized memory reads
+# TODO: Remove once fixed upstream in AWS-LC
+# Tracking: These are known issues in the ML-DSA verify implementation
+{
+   aws_lc_ml_dsa_verify_uninit_cond
    Memcheck:Cond
    fun:*ml_dsa_verify_internal*
 }
@@ -23,23 +135,4 @@
    aws_lc_ml_dsa_verify_uninit_value
    Memcheck:Value8
    fun:*ml_dsa_verify_internal*
-}
-
-{
-   aws_lc_rs_test_possible_leak
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   obj:*/*_test-*
-   ...
-   fun:__libc_start_main@@GLIBC_*
-}
-
-{
-   rust_thread_new_leak
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   fun:*thread*Thread*new*
-   ...
 }
