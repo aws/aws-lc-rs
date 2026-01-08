@@ -12,6 +12,7 @@
 #   ./scripts/run-valgrind.sh pqdsa_test         # Run specific test
 #   ./scripts/run-valgrind.sh --no-suppress      # Run without suppressions
 #   ./scripts/run-valgrind.sh --release          # Run release build
+#   ./scripts/run-valgrind.sh --strict-leaks     # Only check for real leaks (definite/indirect)
 
 set -e
 
@@ -33,6 +34,7 @@ FEATURES="unstable"
 PACKAGE="aws-lc-rs"
 VALGRIND_EXTRA_ARGS=""
 GEN_SUPPRESSIONS=0
+STRICT_LEAKS=0
 export AWS_LC_RS_DISABLE_SLOW_TESTS=1
 
 # Parse command line arguments
@@ -44,6 +46,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --gen-suppressions)
             GEN_SUPPRESSIONS=1
+            shift
+            ;;
+        --strict-leaks)
+            STRICT_LEAKS=1
             shift
             ;;
         --release)
@@ -72,6 +78,9 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --no-suppress      Disable Valgrind suppressions (show all warnings)"
             echo "  --gen-suppressions Generate suppression rules for errors found"
+            echo "  --strict-leaks     Only report real leaks (definite/indirect), ignores"
+            echo "                     possibly lost and still reachable. Use this to verify"
+            echo "                     suppressions aren't masking actual memory leaks."
             echo "  --release          Use release build (faster but less debug info)"
             echo "  --debug            Use debug build (default)"
             echo "  --threads N        Number of test threads (default: 1)"
@@ -84,6 +93,7 @@ while [[ $# -gt 0 ]]; do
             echo "  $0 pqdsa_test              # Run specific test"
             echo "  $0 --no-suppress           # Run without suppressions"
             echo "  $0 --gen-suppressions      # Generate suppression rules"
+            echo "  $0 --strict-leaks          # Verify no real leaks (ignores false positives)"
             echo "  $0 --release pqdsa_test    # Run specific test in release mode"
             exit 0
             ;;
@@ -110,6 +120,17 @@ if ! command -v valgrind &> /dev/null; then
     echo "  Ubuntu/Debian: sudo apt-get install valgrind"
     echo "  macOS: brew install valgrind"
     exit 1
+fi
+
+# Handle strict-leaks mode - only show definite and indirect leaks (real leaks)
+if [ $STRICT_LEAKS -eq 1 ]; then
+    SHOW_LEAK_KINDS="definite,indirect"
+    USE_SUPPRESSIONS=0  # No need for suppressions in strict mode
+    echo -e "${YELLOW}=== STRICT LEAKS MODE ===${NC}"
+    echo -e "${YELLOW}Only checking for real memory leaks (definite/indirect).${NC}"
+    echo -e "${YELLOW}Possibly lost and still reachable are IGNORED.${NC}"
+    echo -e "${YELLOW}If this passes, your suppressions are NOT masking real leaks.${NC}"
+    echo ""
 fi
 
 # Build Valgrind command
@@ -170,6 +191,7 @@ echo "Build: ${BUILD_MODE}"
 echo "Test threads: ${TEST_THREADS}"
 echo "Suppressions: $([ $USE_SUPPRESSIONS -eq 1 ] && echo 'enabled' || echo 'disabled')"
 echo "Generate suppressions: $([ $GEN_SUPPRESSIONS -eq 1 ] && echo 'enabled' || echo 'disabled')"
+echo "Strict leaks mode: $([ $STRICT_LEAKS -eq 1 ] && echo 'enabled (only definite/indirect)' || echo 'disabled')"
 echo ""
 
 # Export environment variables
