@@ -617,7 +617,7 @@ fn initialize() {
                     PREGENERATED = true;
                 }
             }
-        } else {
+        } else if !is_fips_build() {
             if use_no_u1_bindings() == Some(true)
                 || (target_chokes_on_u1() && use_no_u1_bindings().is_none())
             {
