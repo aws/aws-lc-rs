@@ -597,6 +597,7 @@ fn initialize() {
 
     if !is_external_bindgen_requested().unwrap_or(false)
         && (is_pregenerating_bindings() || !has_bindgen_feature())
+        && !cfg!(feature = "ssl")
     {
         if is_all_bindings() {
             assert!(
@@ -850,6 +851,10 @@ fn main() {
             bindings_available = true;
         }
     } else if is_bindgen_required() {
+        assert!(
+            use_no_u1_bindings() != Some(true),
+            "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
+        );
         emit_warning("######");
         emit_warning(
             "If bindgen is unable to locate a header file, use the \
@@ -880,6 +885,10 @@ fn main() {
                 "External bindgen required, but external bindgen unable to produce SSL bindings.",
             );
         } else {
+            assert!(
+                use_no_u1_bindings() != Some(true),
+                "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
+            );
             let gen_bindings_path = out_dir().join("bindings.rs");
             let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
             match result {
