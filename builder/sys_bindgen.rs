@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::{
-    emit_warning, get_rust_include_path, is_all_bindings, BindingOptions, COPYRIGHT, PRELUDE,
+    effective_target, emit_warning, get_rust_include_path, is_all_bindings, BindingOptions,
+    EnvGuard, COPYRIGHT, PRELUDE,
 };
 use bindgen::callbacks::{ItemInfo, ParseCallbacks};
 use std::fmt::Debug;
@@ -141,6 +142,7 @@ pub(crate) fn generate_bindings(
     manifest_dir: &Path,
     options: &BindingOptions,
 ) -> bindgen::Bindings {
+    let _guard_target = EnvGuard::new("TARGET", effective_target());
     prepare_bindings_builder(manifest_dir, options)
         .generate()
         .expect("Unable to generate bindings.")
