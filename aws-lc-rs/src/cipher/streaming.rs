@@ -219,6 +219,10 @@ impl StreamingEncryptingKey {
     /// Updates the internal state of the key with the provided plaintext `input`,
     /// potentially writing bytes of ciphertext to `output`.
     ///
+    /// # Unstable
+    /// This function is only available when the `unstable` feature is enabled.
+    /// The API is subject to change in future versions.
+    ///
     /// This function has looser output buffer size requirements than [`Self::update`],
     /// calculating the minimum required size based on the total bytes of output generated
     /// and the cipher's block length. This is considered "less safe" because it's
@@ -507,6 +511,10 @@ impl StreamingDecryptingKey {
 
     /// Updates the internal state of the key with the provided ciphertext `input`,
     /// potentially writing bytes of plaintext to `output`.
+    ///
+    /// # Unstable
+    /// This function is only available when the `unstable` feature is enabled.
+    /// The API is subject to change in future versions.
     ///
     /// This function has looser output buffer size requirements than [`Self::update`],
     /// calculating the minimum required size based on the total bytes of output generated
