@@ -113,6 +113,11 @@ impl CmakeBuilder {
 
         if OutputLibType::default() == OutputLibType::Dynamic {
             cmake_cfg.define("BUILD_SHARED_LIBS", "1");
+            if is_fips_build() {
+                // The default flags include `-ffunction-sections` that can result in
+                // dead code elimination dropping functions.
+                cmake_cfg.no_default_flags(true);
+            }
         } else {
             cmake_cfg.define("BUILD_SHARED_LIBS", "0");
         }
