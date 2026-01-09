@@ -106,6 +106,11 @@ impl CmakeBuilder {
 
         if OutputLibType::default() == OutputLibType::Dynamic {
             cmake_cfg.define("BUILD_SHARED_LIBS", "1");
+            if is_fips_build() {
+                // The default flags include `-ffunction-sections` that can result in
+                // dead code elimination dropping functions.
+                cmake_cfg.no_default_flags(true);
+            }
         } else {
             cmake_cfg.define("BUILD_SHARED_LIBS", "0");
         }
@@ -130,9 +135,6 @@ impl CmakeBuilder {
         }
         if is_fips_build() {
             cmake_cfg.define("FIPS", "1");
-            cmake_cfg.define("CMAKE_C_FLAGS", "");
-            cmake_cfg.define("CMAKE_CXX_FLAGS", "");
-            cmake_cfg.define("CMAKE_ASM_FLAGS", "");
         } else {
             if is_no_pregenerated_src() {
                 // Go and Perl will be required.
