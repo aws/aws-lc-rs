@@ -212,7 +212,8 @@ impl StreamingEncryptingKey {
             .len()
             .checked_add(self.algorithm().block_len())
             .ok_or(Unspecified)?
-            - 1;
+            .checked_sub(1)
+            .ok_or(Unspecified)?;
         self.update_internal(input, output, min_outsize)
     }
 
@@ -505,7 +506,8 @@ impl StreamingDecryptingKey {
             .len()
             .checked_add(self.algorithm().block_len())
             .ok_or(Unspecified)?
-            - 1;
+            .checked_sub(1)
+            .ok_or(Unspecified)?;
         self.update_internal(input, output, min_outsize)
     }
 
