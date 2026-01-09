@@ -22,7 +22,6 @@ pub struct StreamingEncryptingKey {
     mode: OperatingMode,
     cipher_ctx: LcPtr<EVP_CIPHER_CTX>,
     context: EncryptionContext,
-    #[cfg(feature = "unstable")]
     output_generated: usize,
 }
 
@@ -154,7 +153,6 @@ impl StreamingEncryptingKey {
             mode,
             cipher_ctx,
             context,
-            #[cfg(feature = "unstable")]
             output_generated: 0,
         })
     }
@@ -184,11 +182,8 @@ impl StreamingEncryptingKey {
         }
         let outlen: usize = outlen.try_into()?;
         debug_assert!(outlen <= min_outsize);
-        #[cfg(feature = "unstable")]
-        {
-            self.output_generated += outlen;
-            assert!(outlen <= output.len());
-        }
+        self.output_generated += outlen;
+        assert!(outlen <= output.len());
 
         Ok(BufferUpdate::new(output, outlen))
     }
@@ -220,10 +215,6 @@ impl StreamingEncryptingKey {
     /// Updates the internal state of the key with the provided plaintext `input`,
     /// potentially writing bytes of ciphertext to `output`.
     ///
-    /// # Unstable
-    /// This function is only available when the `unstable` feature is enabled.
-    /// The API is subject to change in future versions.
-    ///
     /// This function has looser output buffer size requirements than [`Self::update`],
     /// calculating the minimum required size based on the total bytes of output generated
     /// and the cipher's block length. This is considered "less safe" because it's
@@ -242,7 +233,6 @@ impl StreamingEncryptingKey {
     /// # Panics
     /// Panics if the number of bytes written by the cipher operation exceeds the output
     /// buffer length.
-    #[cfg(feature = "unstable")]
     pub fn less_safe_update<'a>(
         &mut self,
         input: &[u8],
@@ -407,7 +397,6 @@ pub struct StreamingDecryptingKey {
     algorithm: &'static Algorithm,
     mode: OperatingMode,
     cipher_ctx: LcPtr<EVP_CIPHER_CTX>,
-    #[cfg(feature = "unstable")]
     output_generated: usize,
 }
 
@@ -448,7 +437,6 @@ impl StreamingDecryptingKey {
             algorithm,
             mode,
             cipher_ctx,
-            #[cfg(feature = "unstable")]
             output_generated: 0,
         })
     }
@@ -478,11 +466,8 @@ impl StreamingDecryptingKey {
         }
         let outlen: usize = outlen.try_into()?;
         debug_assert!(outlen <= min_outsize);
-        #[cfg(feature = "unstable")]
-        {
-            self.output_generated += outlen;
-            assert!(outlen <= output.len());
-        }
+        self.output_generated += outlen;
+        assert!(outlen <= output.len());
 
         Ok(BufferUpdate::new(output, outlen))
     }
@@ -514,10 +499,6 @@ impl StreamingDecryptingKey {
     /// Updates the internal state of the key with the provided ciphertext `input`,
     /// potentially writing bytes of plaintext to `output`.
     ///
-    /// # Unstable
-    /// This function is only available when the `unstable` feature is enabled.
-    /// The API is subject to change in future versions.
-    ///
     /// This function has looser output buffer size requirements than [`Self::update`],
     /// calculating the minimum required size based on the total bytes of output generated
     /// and the cipher's block length. This is considered "less safe" because it's
@@ -536,7 +517,6 @@ impl StreamingDecryptingKey {
     /// # Panics
     /// Panics if the number of bytes written by the cipher operation exceeds the output
     /// buffer length.
-    #[cfg(feature = "unstable")]
     pub fn less_safe_update<'a>(
         &mut self,
         input: &[u8],
@@ -803,7 +783,6 @@ mod tests {
         )
     }
 
-    #[cfg(feature = "unstable")]
     fn step_encrypt_less_safe(
         encrypting_key: StreamingEncryptingKey,
         plaintext: &[u8],
@@ -831,7 +810,6 @@ mod tests {
         )
     }
 
-    #[cfg(feature = "unstable")]
     fn step_decrypt_less_safe(
         decrypting_key: StreamingDecryptingKey,
         ciphertext: &[u8],
@@ -886,7 +864,6 @@ mod tests {
         };
         ($mode:ident, less_safe) => {
             paste! {
-                #[cfg(feature = "unstable")]
                 fn [<helper_test_ $mode _stream_encrypt_step_n_bytes_less_safe>](
                     encrypting_key_creator: impl Fn() -> StreamingEncryptingKey,
                     decrypting_key_creator: impl Fn(DecryptionContext) -> StreamingDecryptingKey,
@@ -1143,7 +1120,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "unstable")]
     fn test_step_cbc_less_safe() {
         let random = SystemRandom::new();
         let mut key = [0u8; AES_256_KEY_LEN];
@@ -1200,7 +1176,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "unstable")]
     fn test_step_ctr_less_safe() {
         let random = SystemRandom::new();
         let mut key = [0u8; AES_256_KEY_LEN];
@@ -1256,7 +1231,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "unstable")]
     fn test_step_cfb128_less_safe() {
         let random = SystemRandom::new();
         let mut key = [0u8; AES_256_KEY_LEN];
@@ -1312,7 +1286,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "unstable")]
     fn test_step_ecb_pkcs7_less_safe() {
         let random = SystemRandom::new();
         let mut key = [0u8; AES_256_KEY_LEN];
