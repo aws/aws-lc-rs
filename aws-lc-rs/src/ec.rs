@@ -71,12 +71,12 @@ pub(crate) fn validate_ec_evp_key(
     })?;
     verify_ec_key_nid(&ec_key, expected_curve_nid)?;
 
-    #[cfg(not(feature = "fips"))]
+    #[cfg(not(any(feature = "fips", feature = "panic_on_fips")))]
     if 1 != unsafe { EC_KEY_check_key(ec_key.as_const_ptr()) } {
         return Err(KeyRejected::inconsistent_components());
     }
 
-    #[cfg(feature = "fips")]
+    #[cfg(any(feature = "fips", feature = "panic_on_fips"))]
     if 1 != indicator_check!(unsafe { EC_KEY_check_fips(ec_key.as_const_ptr()) }) {
         return Err(KeyRejected::inconsistent_components());
     }
