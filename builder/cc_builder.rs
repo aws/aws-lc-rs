@@ -19,10 +19,11 @@ mod win_x86_64;
 
 use crate::nasm_builder::NasmBuilder;
 use crate::{
-    cargo_env, disable_jitter_entropy, emit_warning, env_var_to_bool, execute_command,
-    get_crate_cflags, is_no_asm, optional_env_optional_crate_target, optional_env_target, out_dir,
-    requested_c_std, set_env_for_target, target, target_arch, target_env, target_os, target_vendor,
-    test_clang_cl_command, CStdRequested, OutputLibType,
+    cargo_env, disable_jitter_entropy, emit_warning, env_name_for_target, env_var_to_bool,
+    execute_command, get_crate_cflags, is_no_asm, optional_env_optional_crate_target,
+    optional_env_target, out_dir, requested_c_std, set_env_for_target, target, target_arch,
+    target_env, target_os, target_vendor, test_clang_cl_command, CStdRequested, EnvGuard,
+    OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -203,10 +204,12 @@ impl CcBuilder {
                 build_options.push(BuildOption::std("c11"));
             }
             CStdRequested::None => {
-                if self.compiler_check("c11", Vec::<String>::new()) {
-                    build_options.push(BuildOption::std("c11"));
-                } else {
-                    build_options.push(BuildOption::std("c99"));
+                if target_os() != "windows" {
+                    if self.compiler_check("c11", Vec::<String>::new()) {
+                        build_options.push(BuildOption::std("c11"));
+                    } else {
+                        build_options.push(BuildOption::std("c99"));
+                    }
                 }
             }
         }
@@ -402,6 +405,14 @@ impl CcBuilder {
                 "_STL_EXTRA_DISABLED_WARNINGS",
                 "4774 4987",
             ));
+
+            if target().ends_with("-win7-windows-msvc") {
+                // 0x0601 is the value of `_WIN32_WINNT_WIN7`
+                build_options.push(BuildOption::define("_WIN32_WINNT", "0x0601"));
+                emit_warning(
+                    "Setting _WIN32_WINNT to _WIN32_WINNT_WIN7 for x86_64-win7-windows-msvc target",
+                );
+            }
         }
     }
 
@@ -416,18 +427,17 @@ impl CcBuilder {
             option.apply_cc(&mut je_builder);
         }
 
-        if let Some(original_cflags) = optional_env_target("CFLAGS") {
-            let mut new_cflags = original_cflags.clone();
+        if let Some(mut cflags) = optional_env_target("CFLAGS") {
             if is_like_msvc {
-                new_cflags.push_str(" -Od");
+                cflags.push_str(" -Od");
             } else {
-                new_cflags.push_str(" -O0 -Wp,-U_FORTIFY_SOURCE");
+                cflags.push_str(" -O0 -Wp,-U_FORTIFY_SOURCE");
             }
-            set_env_for_target("CFLAGS", &new_cflags);
+            let _guard_cflags = EnvGuard::new(&env_name_for_target("CFLAGS"), &cflags);
+
             // cc-rs currently prioritizes flags provided by CFLAGS over the flags provided by the build script.
             // The environment variables used by the compiler are set when `get_compiler` is called.
             je_builder.get_compiler();
-            set_env_for_target("CFLAGS", &original_cflags);
         }
 
         je_builder.define("AWSLC", "1");
