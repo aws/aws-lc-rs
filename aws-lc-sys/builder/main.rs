@@ -644,10 +644,11 @@ fn use_prebuilt_nasm() -> bool {
     target_os() == "windows"
         && target_arch() == "x86_64"
         && !is_no_asm()
-        && !test_nasm_command()
-        && !cfg!(feature = "disable-prebuilt-nasm")
-        && (Some(true) == allow_prebuilt_nasm()
-            || (allow_prebuilt_nasm().is_none() && cfg!(feature = "prebuilt-nasm")))
+        && !test_nasm_command() // NASM not found in environment
+        && Some(false) != allow_prebuilt_nasm() // not prevented by environment
+        && !cfg!(feature = "disable-prebuilt-nasm") // not prevented by feature
+        // permitted by environment or by feature
+        && (Some(true) == allow_prebuilt_nasm() || cfg!(feature = "prebuilt-nasm"))
 }
 
 fn allow_prebuilt_nasm() -> Option<bool> {
