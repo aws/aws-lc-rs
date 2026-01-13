@@ -403,7 +403,7 @@ impl CcBuilder {
                 "4774 4987",
             ));
 
-            if target() == "x86_64-win7-windows-msvc" {
+            if target().ends_with("-win7-windows-msvc") {
                 // 0x0601 is the value of `_WIN32_WINNT_WIN7`
                 build_options.push(BuildOption::define("_WIN32_WINNT", "0x0601"));
                 emit_warning(
