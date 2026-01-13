@@ -119,6 +119,10 @@ fn is_prebuilt_nasm() -> bool {
     !is_fips_build() && env::var("CARGO_FEATURE_PREBUILT_NASM").is_ok()
 }
 
+fn is_disable_prebuilt_nasm() -> bool {
+    !is_fips_build() && env::var("CARGO_FEATURE_DISABLE_PREBUILT_NASM").is_ok()
+}
+
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("aws-lc").join("include")
 }
@@ -714,9 +718,11 @@ fn use_prebuilt_nasm() -> bool {
     target_os() == "windows"
         && target_arch() == "x86_64"
         && !is_no_asm()
-        && !test_nasm_command()
-        && (Some(true) == allow_prebuilt_nasm()
-            || (allow_prebuilt_nasm().is_none() && is_prebuilt_nasm()))
+        && !test_nasm_command() // NASM not found in environment
+        && Some(false) != allow_prebuilt_nasm() // not prevented by environment
+        && !is_disable_prebuilt_nasm() // not prevented by feature
+        // permitted by environment or by feature
+        && (Some(true) == allow_prebuilt_nasm() || is_prebuilt_nasm())
 }
 
 fn allow_prebuilt_nasm() -> Option<bool> {
