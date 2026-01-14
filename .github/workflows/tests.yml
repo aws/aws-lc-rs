@@ -241,6 +241,45 @@ jobs:
         shell: bash
         run: AWS_LC_SYS_PREBUILT_NASM=1 cargo test --tests -p aws-lc-rs --release --no-default-features --features aws-lc-sys
 
+  disable-prebuilt-nasm-test:
+    if: github.repository_owner == 'aws'
+    name: disable-prebuilt-nasm
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - 'x86_64-pc-windows-msvc'
+          - 'x86_64-pc-windows-gnu'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Remove NASM
+        shell: bash
+        run: |
+          rm -f `which nasm`
+      - name: Verify NASM not available
+        shell: bash
+        run: |
+          if nasm --version; then
+            echo `which nasm`
+            exit 1
+          else
+            exit 0;
+          fi
+      - name: Verify build fails w/ disable-prebuilt-nasm feature
+        shell: bash
+        run: |
+          if cargo build -p aws-lc-rs --release --no-default-features --features aws-lc-sys,aws-lc-sys/disable-prebuilt-nasm; then
+            echo "Build unexpectedly succeeded"
+            exit 1
+          else
+            echo "Build failed as expected"
+            exit 0
+          fi
+
   build-env-nasm-test:
     if: github.repository_owner == 'aws'
     name: prebuilt NASM verification
