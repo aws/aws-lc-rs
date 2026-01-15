@@ -38,6 +38,7 @@ asan = ["aws-lc-sys?/asan", "aws-lc-fips-sys?/asan"]
 test_logging = []
 unstable = []
 prebuilt-nasm = ["aws-lc-sys?/prebuilt-nasm"]
+panic_on_fips = []
 
 # require non-FIPS
 non-fips = ["aws-lc-sys"]
