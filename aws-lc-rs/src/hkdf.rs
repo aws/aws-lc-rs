@@ -286,9 +286,13 @@ impl Prk {
     /// `SSLKEYLOGFILE` functionality.
     ///
     // # FIPS
-    // This function must not be used.
-    //
-    // See [`Salt::extract`].
+    // The following conditions must be met:
+    // * Algorithm is one of the following:
+    //   * `HKDF_SHA1_FOR_LEGACY_USE_ONLY`
+    //   * `HKDF_SHA256`
+    //   * `HKDF_SHA384`
+    //   * `HKDF_SHA512`
+    // * The `info_len` from [`Prk::expand`] is non-zero.
     //
     /// # Panics
     /// Panics if the given Prk length exceeds the limit
