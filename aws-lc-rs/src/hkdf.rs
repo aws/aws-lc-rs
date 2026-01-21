@@ -88,7 +88,7 @@ impl KeyType for Algorithm {
 /// A salt for HKDF operations.
 pub struct Salt {
     algorithm: Algorithm,
-    bytes: Box<[u8]>,
+    bytes: Arc<Box<[u8]>>,
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -97,13 +97,6 @@ impl fmt::Debug for Salt {
         f.debug_struct("hkdf::Salt")
             .field("algorithm", &self.algorithm.0)
             .finish()
-    }
-}
-
-impl Drop for Salt {
-    fn drop(&mut self) {
-        // Box<[u8]> implements Zeroize, so we can call it directly
-        self.bytes.zeroize();
     }
 }
 
@@ -127,8 +120,10 @@ impl Salt {
     /// `new` panics if salt creation fails
     #[must_use]
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
-        let bytes = value.to_vec().into_boxed_slice();
-        Self { algorithm, bytes }
+        Self {
+            algorithm,
+            bytes: Arc::new(Box::from(value.to_owned())),
+        }
     }
 
     /// The [HKDF-Extract] operation.
@@ -143,8 +138,8 @@ impl Salt {
         Prk {
             algorithm: self.algorithm,
             mode: PrkMode::ExtractExpand {
-                secret: Arc::from(ZeroizeBoxSlice::from(secret)),
-                salt: self.bytes.clone(),
+                secret: Arc::new(ZeroizeBoxSlice::from(secret)),
+                salt: Arc::clone(&self.bytes),
             },
         }
     }
@@ -165,7 +160,7 @@ impl From<Okm<'_, Algorithm>> for Salt {
         okm.fill(&mut salt_bytes).unwrap();
         Self {
             algorithm,
-            bytes: salt_bytes.into_boxed_slice(),
+            bytes: Arc::new(salt_bytes.into_boxed_slice()),
         }
     }
 }
@@ -185,7 +180,7 @@ enum PrkMode {
     },
     ExtractExpand {
         secret: Arc<ZeroizeBoxSlice<u8>>,
-        salt: Box<[u8]>,
+        salt: Arc<Box<[u8]>>,
     },
 }
 
@@ -268,6 +263,17 @@ pub struct Prk {
     mode: PrkMode,
 }
 
+impl Drop for Prk {
+    fn drop(&mut self) {
+        if let PrkMode::Expand {
+            ref mut key_bytes, ..
+        } = self.mode
+        {
+            key_bytes.zeroize();
+        }
+    }
+}
+
 #[allow(clippy::missing_fields_in_debug)]
 impl fmt::Debug for Prk {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -336,17 +342,9 @@ impl Prk {
         if len_cached > 255 * self.algorithm.0.digest_algorithm().output_len {
             return Err(Unspecified);
         }
-        let mut info_bytes: Vec<u8> = Vec::with_capacity(HKDF_INFO_DEFAULT_CAPACITY_LEN);
-        let mut info_len = 0;
-        for &byte_ary in info {
-            info_bytes.extend_from_slice(byte_ary);
-            info_len += byte_ary.len();
-        }
-        let info_bytes = info_bytes.into_boxed_slice();
         Ok(Okm {
             prk: self,
-            info_bytes,
-            info_len,
+            info,
             len,
         })
     }
@@ -372,8 +370,7 @@ impl From<Okm<'_, Algorithm>> for Prk {
 /// use once.
 pub struct Okm<'a, L: KeyType> {
     prk: &'a Prk,
-    info_bytes: Box<[u8]>,
-    info_len: usize,
+    info: &'a [&'a [u8]],
     len: L,
 }
 
@@ -383,9 +380,35 @@ impl<L: KeyType> fmt::Debug for Okm<'_, L> {
     }
 }
 
-impl<L: KeyType> Drop for Okm<'_, L> {
-    fn drop(&mut self) {
-        self.info_bytes.zeroize();
+/// Concatenates info slices into a contiguous buffer for HKDF operations.
+/// Uses stack allocation for typical cases, heap allocation for large info.
+/// Zeroizes the buffer after use to protect potentially sensitive context data.
+#[inline]
+fn concatenate_info<F, R>(info: &[&[u8]], f: F) -> R
+where
+    F: FnOnce(&[u8]) -> R,
+{
+    let info_len: usize = info.iter().map(|s| s.len()).sum();
+
+    // Info is public; no need to zeroize.
+    if info_len <= HKDF_INFO_DEFAULT_CAPACITY_LEN {
+        // Use stack buffer for typical case (avoids heap allocation)
+        let mut stack_buf = [0u8; HKDF_INFO_DEFAULT_CAPACITY_LEN];
+        let mut pos = 0;
+        for &slice in info {
+            stack_buf[pos..pos + slice.len()].copy_from_slice(slice);
+            pos += slice.len();
+        }
+        let result = f(&stack_buf[..info_len]);
+        result
+    } else {
+        // Heap allocation for rare large info case
+        let mut heap_buf = Vec::with_capacity(info_len);
+        for &slice in info {
+            heap_buf.extend_from_slice(slice);
+        }
+        let result = f(&heap_buf);
+        result
     }
 }
 
@@ -419,11 +442,9 @@ impl<L: KeyType> Okm<'_, L> {
             return Err(Unspecified);
         }
 
-        self.prk
-            .mode
-            .fill(self.prk.algorithm, out, &self.info_bytes[..self.info_len])?;
-
-        Ok(())
+        concatenate_info(self.info, |info_bytes| {
+            self.prk.mode.fill(self.prk.algorithm, out, info_bytes)
+        })
     }
 }
 
