@@ -556,11 +556,6 @@ jobs:
         with:
           submodules: "recursive"
       - name: Test
-        if: matrix.generator != 'msys'
-        shell: bash
-        run: cargo test --verbose --features bindgen --release -p aws-lc-rs
-      - name: Test
-        if: matrix.generator == 'msys'
         shell: msys2 {0}
         run: cargo test --verbose --features bindgen --release -p aws-lc-rs
 
@@ -593,11 +588,20 @@ jobs:
             rust-bindgen
             cc
             ${{ (matrix.nasm == 'nasm' && 'nasm') || 'make' }}
+      - name: Update Environment
+        shell: bash
+        run: |
+          SYSROOT=$(cygpath -a -m '${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}')
+          echo "AWS_LC_SYS_PREBUILT_NASM=${{ (matrix.nasm == 'nasm' && '0') || '1' }}" >> $GITHUB_ENV
+          echo "GOPATH=${SYSROOT}" >> $GITHUB_ENV
+          echo "GOROOT=${SYSROOT}/lib/go" >> $GITHUB_ENV
+          cygpath -w ${SYSROOT}/bin >> $GITHUB_PATH
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
       - name: Test
+        shell: msys2 {0}
         run: cargo test --verbose --release -p aws-lc-rs
 
   musl-tests:
