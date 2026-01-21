@@ -95,7 +95,7 @@ fn hkdf_output_len_tests() {
 #[test]
 fn hkdf_info_len_tests() {
     for &alg in &[hkdf::HKDF_SHA256, hkdf::HKDF_SHA384, hkdf::HKDF_SHA512] {
-        for info_length in (100..400).step_by(7) {
+        for info_length in (40..400).step_by(13) {
             let salt = hkdf::Salt::new(alg, &[]);
             let prk = salt.extract(&[]); // TODO: enforce minimum length.
             let info = vec![1u8; info_length];

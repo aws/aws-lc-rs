@@ -73,7 +73,7 @@ pub const HKDF_SHA512: Algorithm = Algorithm(hmac::HMAC_SHA512);
 /// General Info length's for HKDF don't normally exceed 256 bits.
 /// We set the default capacity to a value larger than should be needed
 /// so that the value passed to |`HKDF_expand`| is only allocated once.
-const HKDF_INFO_DEFAULT_CAPACITY_LEN: usize = 300;
+const HKDF_INFO_DEFAULT_CAPACITY_LEN: usize = 80;
 
 /// The maximum output size of a PRK computed by |`HKDF_extract`| is the maximum digest
 /// size that can be outputted by *AWS-LC*.
@@ -382,7 +382,7 @@ impl<L: KeyType> fmt::Debug for Okm<'_, L> {
 
 /// Concatenates info slices into a contiguous buffer for HKDF operations.
 /// Uses stack allocation for typical cases, heap allocation for large info.
-/// Zeroizes the buffer after use to protect potentially sensitive context data.
+/// Info is public context data per RFC 5869, so no zeroization is needed.
 #[inline]
 fn concatenate_info<F, R>(info: &[&[u8]], f: F) -> R
 where
@@ -399,16 +399,16 @@ where
             stack_buf[pos..pos + slice.len()].copy_from_slice(slice);
             pos += slice.len();
         }
-        let result = f(&stack_buf[..info_len]);
-        result
+
+        f(&stack_buf[..info_len])
     } else {
         // Heap allocation for rare large info case
         let mut heap_buf = Vec::with_capacity(info_len);
         for &slice in info {
             heap_buf.extend_from_slice(slice);
         }
-        let result = f(&heap_buf);
-        result
+
+        f(&heap_buf)
     }
 }
 
