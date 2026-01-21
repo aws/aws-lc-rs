@@ -725,7 +725,7 @@ impl CcBuilder {
             self.compiler_features.set(compiler_features);
             cc_build.define("MY_ASSEMBLER_SUPPORTS_NEON_SHA3_EXTENSION", Some("1"));
         }
-        if target_os() == "linux" {
+        if target_os() == "linux" || target_os() == "android" {
             if self.compiler_check("linux_random_h", Vec::<&'static str>::new()) {
                 cc_build.define("HAVE_LINUX_RANDOM_H", Some("1"));
             } else if self.compiler_check("linux_random_h", vec!["-DDEFINE_U32"]) {
