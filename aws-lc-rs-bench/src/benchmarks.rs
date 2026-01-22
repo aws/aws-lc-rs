@@ -9,21 +9,19 @@
 
 use std::hint::black_box;
 
-use aws_lc_rs::{
-    aead::{
-        Aad, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_128_GCM,
-        AES_256_GCM, CHACHA20_POLY1305, NONCE_LEN,
-    },
-    agreement::{self, EphemeralPrivateKey, UnparsedPublicKey, X25519},
-    digest::{self, Context as DigestContext},
-    error::Unspecified,
-    hkdf::{Salt, HKDF_SHA256, HKDF_SHA384},
-    hmac::{self, Context as HmacContext},
-    rand::SystemRandom,
-    signature::{
-        self, EcdsaKeyPair, Ed25519KeyPair, KeyPair, RsaKeyPair, ECDSA_P256_SHA256_FIXED_SIGNING,
-        ECDSA_P384_SHA384_FIXED_SIGNING, ED25519,
-    },
+use aws_lc_rs::aead::{
+    Aad, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_128_GCM,
+    AES_256_GCM, CHACHA20_POLY1305, NONCE_LEN,
+};
+use aws_lc_rs::agreement::{self, EphemeralPrivateKey, UnparsedPublicKey, X25519};
+use aws_lc_rs::digest::{self, Context as DigestContext};
+use aws_lc_rs::error::Unspecified;
+use aws_lc_rs::hkdf::{Salt, HKDF_SHA256, HKDF_SHA384};
+use aws_lc_rs::hmac::{self, Context as HmacContext};
+use aws_lc_rs::rand::SystemRandom;
+use aws_lc_rs::signature::{
+    self, EcdsaKeyPair, Ed25519KeyPair, KeyPair, RsaKeyPair, ECDSA_P256_SHA256_FIXED_SIGNING,
+    ECDSA_P384_SHA384_FIXED_SIGNING, ED25519,
 };
 
 /// A benchmark definition
