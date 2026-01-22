@@ -4,6 +4,7 @@ members = [
     "aws-lc-sys",
     "aws-lc-fips-sys",
     "aws-lc-rs-testing",
+    "aws-lc-rs-bench",
     "links-testing",
 ]
 exclude = [
@@ -16,6 +17,7 @@ exclude = [
 resolver = "2"
 
 [workspace.dependencies]
+anyhow = "1.0"
 bindgen = "0.72.0"
 cc = "1.2.26"
 clap = "4.5.0"
@@ -29,6 +31,8 @@ openssl = "0.10.73"
 paste = "1.0.15"
 regex = "1.11.1"
 ring = "0.17.14"
+serde = "1.0"
+serde_json = "1.0"
 untrusted = "0.7.1"
 zeroize = "1.8.1"
 toml_edit = "0.24.0"
