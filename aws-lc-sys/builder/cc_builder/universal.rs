@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Wed Jan  7 21:59:38 UTC 2026
+// Thu Jan 22 16:28:54 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/asn1/asn1_lib.c",
@@ -118,11 +118,6 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/fipsmodule/cpucap/cpucap.c",
     "crypto/hpke/hpke.c",
     "crypto/hrss/hrss.c",
-    "crypto/kyber/kem_kyber.c",
-    "crypto/kyber/kyber1024r3_ref.c",
-    "crypto/kyber/kyber512r3_ref.c",
-    "crypto/kyber/kyber768r3_ref.c",
-    "crypto/kyber/pqcrystals_kyber_ref_common/fips202.c",
     "crypto/lhash/lhash.c",
     "crypto/mem.c",
     "crypto/obj/obj.c",
