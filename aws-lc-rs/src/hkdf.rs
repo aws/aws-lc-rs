@@ -88,7 +88,7 @@ impl KeyType for Algorithm {
 /// A salt for HKDF operations.
 pub struct Salt {
     algorithm: Algorithm,
-    bytes: Arc<Box<[u8]>>,
+    bytes: Arc<[u8]>,
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -122,7 +122,7 @@ impl Salt {
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
         Self {
             algorithm,
-            bytes: Arc::new(Box::from(value.to_owned())),
+            bytes: Arc::from(value),
         }
     }
 
@@ -160,7 +160,7 @@ impl From<Okm<'_, Algorithm>> for Salt {
         okm.fill(&mut salt_bytes).unwrap();
         Self {
             algorithm,
-            bytes: Arc::new(salt_bytes.into_boxed_slice()),
+            bytes: Arc::from(salt_bytes.as_slice()),
         }
     }
 }
@@ -180,7 +180,7 @@ enum PrkMode {
     },
     ExtractExpand {
         secret: Arc<ZeroizeBoxSlice<u8>>,
-        salt: Arc<Box<[u8]>>,
+        salt: Arc<[u8]>,
     },
 }
 
