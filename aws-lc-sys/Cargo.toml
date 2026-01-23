@@ -1,8 +1,8 @@
 [package]
 name = "aws-lc-sys"
 description = "AWS-LC is a general-purpose cryptographic library maintained by the AWS Cryptography team for AWS and their customers. It іs based on code from the Google BoringSSL project and the OpenSSL project."
-version = "0.36.0"
-links = "aws_lc_0_36_0"
+version = "0.37.0"
+links = "aws_lc_0_37_0"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"
@@ -74,4 +74,4 @@ cc = { workspace = true, features = ["parallel"] }
 bindgen = { workspace = true, optional = true }
 
 [package.metadata.aws-lc-sys]
-commit-hash = "728811eecec794802c78105be6dbfe9d79870ac7"
+commit-hash = "bee13c3051b4cdc568d4c358660aeeb734157804"
