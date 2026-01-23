@@ -121,6 +121,65 @@ jobs:
         run:
           cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features bindgen --target ${{ matrix.target[0] }}
 
+  # This test ensures that older Android API levels (before getentropy was added in API 28)
+  # build correctly with the cc-builder. See: https://github.com/aws/aws-lc-rs/issues/1006
+  aws-lc-rs-android-old-api:
+    if: github.repository_owner == 'aws'
+    name: Android API ${{ matrix.api }} - ${{ matrix.target }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # API 21 is the oldest supported by current NDK (Android 5.0)
+          - target: aarch64-linux-android
+            api: 21
+          # API 24 is Android 7.0, still before getentropy (API 28)
+          - target: aarch64-linux-android
+            api: 24
+          - target: armv7-linux-androideabi
+            api: 21
+          - target: x86_64-linux-android
+            api: 21
+          - target: i686-linux-android
+            api: 21
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+      - name: Install Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+      - name: Setup Android environment
+        run: |
+          # Convert target triple to NDK toolchain name
+          case "${{ matrix.target }}" in
+            aarch64-linux-android) TOOLCHAIN_TARGET="aarch64-linux-android" ;;
+            armv7-linux-androideabi) TOOLCHAIN_TARGET="armv7a-linux-androideabi" ;;
+            x86_64-linux-android) TOOLCHAIN_TARGET="x86_64-linux-android" ;;
+            i686-linux-android) TOOLCHAIN_TARGET="i686-linux-android" ;;
+          esac
+
+          NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+
+          # Set compiler with API level
+          echo "CC_${{ matrix.target }}=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang" >> $GITHUB_ENV
+          echo "AR_${{ matrix.target }}=${NDK_BIN}/llvm-ar" >> $GITHUB_ENV
+          echo "RANLIB_${{ matrix.target }}=${NDK_BIN}/llvm-ranlib" >> $GITHUB_ENV
+
+          # Ensure we use cc-builder, not cmake
+          echo "AWS_LC_SYS_CMAKE_BUILDER=0" >> $GITHUB_ENV
+      - name: Build aws-lc-sys (cc-builder)
+        # Use --no-default-features to disable 'all-bindings' feature, which allows
+        # universal bindings to be used for targets without pre-generated bindings
+        run: cargo build -p aws-lc-sys --no-default-features --target ${{ matrix.target }}
+      - name: Build aws-lc-sys release (cc-builder)
+        run: cargo build -p aws-lc-sys --no-default-features --release --target ${{ matrix.target }}
 
   aws-lc-rs-cross-prebuilt-nasm:
     if: github.repository_owner == 'aws'
@@ -556,11 +615,6 @@ jobs:
         with:
           submodules: "recursive"
       - name: Test
-        if: matrix.generator != 'msys'
-        shell: bash
-        run: cargo test --verbose --features bindgen --release -p aws-lc-rs
-      - name: Test
-        if: matrix.generator == 'msys'
         shell: msys2 {0}
         run: cargo test --verbose --features bindgen --release -p aws-lc-rs
 
@@ -593,11 +647,20 @@ jobs:
             rust-bindgen
             cc
             ${{ (matrix.nasm == 'nasm' && 'nasm') || 'make' }}
+      - name: Update Environment
+        shell: bash
+        run: |
+          SYSROOT=$(cygpath -a -m '${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}')
+          echo "AWS_LC_SYS_PREBUILT_NASM=${{ (matrix.nasm == 'nasm' && '0') || '1' }}" >> $GITHUB_ENV
+          echo "GOPATH=${SYSROOT}" >> $GITHUB_ENV
+          echo "GOROOT=${SYSROOT}/lib/go" >> $GITHUB_ENV
+          cygpath -w ${SYSROOT}/bin >> $GITHUB_PATH
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
       - name: Test
+        shell: msys2 {0}
         run: cargo test --verbose --release -p aws-lc-rs
 
   musl-tests:

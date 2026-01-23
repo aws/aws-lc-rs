@@ -393,15 +393,30 @@ impl CcBuilder {
 
     #[allow(clippy::unused_self)]
     fn add_defines(&self, build_options: &mut Vec<BuildOption>, is_like_msvc: bool) {
-        if is_like_msvc {
-            build_options.push(BuildOption::define("_HAS_EXCEPTIONS", "0"));
+        // WIN32_LEAN_AND_MEAN and NOMINMAX are needed for all Windows targets to avoid
+        // header type definition errors, no matter the compiler. This matches the behavior
+        // in aws-lc/CMakeLists.txt, which defines these for all WIN32 targets
+        if target_os() == "windows" {
             build_options.push(BuildOption::define("WIN32_LEAN_AND_MEAN", ""));
             build_options.push(BuildOption::define("NOMINMAX", ""));
+        }
+
+        if is_like_msvc {
+            build_options.push(BuildOption::define("_HAS_EXCEPTIONS", "0"));
             build_options.push(BuildOption::define("_CRT_SECURE_NO_WARNINGS", "0"));
             build_options.push(BuildOption::define(
                 "_STL_EXTRA_DISABLED_WARNINGS",
                 "4774 4987",
             ));
+
+            if target().ends_with("-win7-windows-msvc") {
+                // 0x0601 is the value of `_WIN32_WINNT_WIN7`
+                build_options.push(BuildOption::define("_WIN32_WINNT", "0x0601"));
+                emit_warning(format!(
+                    "Setting _WIN32_WINNT to _WIN32_WINNT_WIN7 for {} target",
+                    target()
+                ));
+            }
         }
     }
 
@@ -725,7 +740,7 @@ impl CcBuilder {
             self.compiler_features.set(compiler_features);
             cc_build.define("MY_ASSEMBLER_SUPPORTS_NEON_SHA3_EXTENSION", Some("1"));
         }
-        if target_os() == "linux" {
+        if target_os() == "linux" || target_os() == "android" {
             if self.compiler_check("linux_random_h", Vec::<&'static str>::new()) {
                 cc_build.define("HAVE_LINUX_RANDOM_H", Some("1"));
             } else if self.compiler_check("linux_random_h", vec!["-DDEFINE_U32"]) {
