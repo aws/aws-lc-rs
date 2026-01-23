@@ -223,11 +223,23 @@ else
   cargo update -p aws-lc-rs -p aws-lc-sys
 fi
 
-# Run from rustls subdirectory to test the main library
-pushd ./rustls
-cargo tree -i aws-lc-rs --features aws-lc-rs
-cargo test --features aws-lc-rs
-popd > /dev/null # ./rustls
+# Detect which package has the aws-lc-rs feature by checking [features] section.
+# Old structure (<=0.23.x): aws-lc-rs feature is in rustls/Cargo.toml
+# New structure (>=0.24.x): aws-lc-rs feature is in rustls-test/Cargo.toml
+if grep -q '^aws-lc-rs\s*=' ./rustls/Cargo.toml && \
+   grep -q '^aws_lc_rs\s*=' ./rustls/Cargo.toml; then
+  # Old structure: aws-lc-rs feature is in the main rustls crate
+  pushd ./rustls
+  cargo tree -i aws-lc-rs --features aws-lc-rs
+  cargo test --features aws-lc-rs
+  popd > /dev/null # ./rustls
+else
+  # New structure: aws-lc-rs feature is in rustls-test
+  pushd ./rustls-test
+  cargo tree -i aws-lc-rs --features aws-lc-rs
+  cargo test --features aws-lc-rs
+  popd > /dev/null # ./rustls-test
+fi
 popd > /dev/null # "$RUSTLS_DIR"
 
 echo "=== All rustls integration tests passed ==="
