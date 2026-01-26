@@ -37,6 +37,10 @@ use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use core::fmt::Debug;
 
+#[cfg(external_tests)]
+#[allow(unused_imports)]
+pub use sealed::*;
+
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
     /// Fills `dest` with random bytes.

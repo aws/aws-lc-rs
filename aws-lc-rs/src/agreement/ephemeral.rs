@@ -40,7 +40,7 @@ impl EphemeralPrivateKey {
         Ok(Self(PrivateKey::generate(alg)?))
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, external_tests))]
     #[allow(missing_docs, clippy::missing_errors_doc)]
     pub fn generate_for_test(
         alg: &'static Algorithm,

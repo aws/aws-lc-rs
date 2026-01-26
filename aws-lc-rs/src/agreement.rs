@@ -327,7 +327,7 @@ impl PrivateKey {
         Ok(Self::new(alg, evp_pkey))
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, external_tests))]
     #[allow(missing_docs, clippy::missing_errors_doc)]
     pub fn generate_for_test(
         alg: &'static Algorithm,
@@ -357,7 +357,7 @@ impl PrivateKey {
         }
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, external_tests))]
     fn from_x25519_private_key(
         priv_key: &[u8; AlgorithmID::X25519.private_key_len()],
     ) -> Result<Self, Unspecified> {
@@ -368,7 +368,7 @@ impl PrivateKey {
         })
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, external_tests))]
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = parse_sec1_private_bn(priv_key, ECDH_P256.id.nid())?;
         Ok(PrivateKey {
@@ -376,7 +376,7 @@ impl PrivateKey {
         })
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, external_tests))]
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = parse_sec1_private_bn(priv_key, ECDH_P384.id.nid())?;
         Ok(PrivateKey {
@@ -384,7 +384,7 @@ impl PrivateKey {
         })
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, external_tests))]
     fn from_p521_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = parse_sec1_private_bn(priv_key, ECDH_P521.id.nid())?;
         Ok(PrivateKey {
