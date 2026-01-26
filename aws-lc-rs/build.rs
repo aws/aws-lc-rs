@@ -41,8 +41,7 @@ fn main() {
     if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows")
         && env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc")
         && env::var("CARGO_CFG_TARGET_FEATURE")
-            .map(|features| features.contains("crt-static"))
-            .unwrap_or(false)
+            .is_ok_and(|features| features.contains("crt-static"))
     {
         println!("cargo:rustc-link-arg=/ignore:4099");
     }
