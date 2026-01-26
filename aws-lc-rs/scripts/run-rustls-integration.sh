@@ -226,8 +226,7 @@ fi
 # Detect which package has the aws-lc-rs feature by checking [features] section.
 # Old structure (<=0.23.x): aws-lc-rs feature is in rustls/Cargo.toml
 # New structure (>=0.24.x): aws-lc-rs feature is in rustls-test/Cargo.toml
-if grep -q '^aws-lc-rs\s*=' ./rustls/Cargo.toml && \
-   grep -q '^aws_lc_rs\s*=' ./rustls/Cargo.toml; then
+if grep -q '^aws-lc-rs\s*=' ./rustls/Cargo.toml; then
   # Old structure: aws-lc-rs feature is in the main rustls crate
   pushd ./rustls
   cargo tree -i aws-lc-rs --features aws-lc-rs
