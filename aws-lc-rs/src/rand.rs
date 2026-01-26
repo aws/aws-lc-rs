@@ -48,6 +48,13 @@ pub trait SecureRandom: sealed::SecureRandom {
     /// # Errors
     /// `error::Unspecified` if unable to fill `dest`.
     fn fill(&self, dest: &mut [u8]) -> Result<(), Unspecified>;
+
+    /// Fills `dest` with random bytes.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if unable to fill `dest`.
+    #[cfg(any(test, external_tests))]
+    fn mut_fill(&mut self, dest: &mut [u8]) -> Result<(), Unspecified>;
 }
 
 impl<T> SecureRandom for T
@@ -56,6 +63,12 @@ where
 {
     #[inline]
     fn fill(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
+        self.fill_impl(dest)
+    }
+
+    #[inline]
+    #[cfg(any(test, external_tests))]
+    fn mut_fill(&mut self, dest: &mut [u8]) -> Result<(), Unspecified> {
         self.fill_impl(dest)
     }
 }
