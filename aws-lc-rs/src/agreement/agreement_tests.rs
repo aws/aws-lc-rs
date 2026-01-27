@@ -23,8 +23,8 @@ fn test_agreement_x25519() {
         test::from_dirty_hex("a546e36bf0527c9d3b16154b82465edd62144c0ac1fc5a18506a2244ba449ac4");
 
     let my_private = {
-        let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-        PrivateKey::generate_for_test(alg, &rng).unwrap()
+        let mut rng = test::rand::FixedSliceRandom { bytes: &my_private };
+        PrivateKey::generate_for_test(alg, &mut rng).unwrap()
     };
 
     let my_public =
@@ -111,8 +111,8 @@ fn test_agreement_ecdh_p256() {
         test::from_dirty_hex("C88F01F510D9AC3F70A292DAA2316DE544E9AAB8AFE84049C62A9C57862D1433");
 
     let my_private = {
-        let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-        PrivateKey::generate_for_test(alg, &rng).unwrap()
+        let mut rng = test::rand::FixedSliceRandom { bytes: &my_private };
+        PrivateKey::generate_for_test(alg, &mut rng).unwrap()
     };
 
     let my_public = test::from_dirty_hex(
@@ -193,8 +193,8 @@ fn test_agreement_ecdh_p384() {
         );
 
     let my_private = {
-        let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-        PrivateKey::generate_for_test(alg, &rng).unwrap()
+        let mut rng = test::rand::FixedSliceRandom { bytes: &my_private };
+        PrivateKey::generate_for_test(alg, &mut rng).unwrap()
     };
 
     let my_public = test::from_dirty_hex(
@@ -257,8 +257,8 @@ fn test_agreement_ecdh_p521() {
         );
 
     let my_private = {
-        let rng = test::rand::FixedSliceRandom { bytes: &my_private };
-        PrivateKey::generate_for_test(alg, &rng).unwrap()
+        let mut rng = test::rand::FixedSliceRandom { bytes: &my_private };
+        PrivateKey::generate_for_test(alg, &mut rng).unwrap()
     };
 
     let my_public = test::from_dirty_hex(
@@ -317,8 +317,8 @@ fn agreement_traits() {
     use crate::test;
     use regex::{self, Regex};
 
-    let rng = rand::SystemRandom::new();
-    let private_key = PrivateKey::generate_for_test(&ECDH_P256, &rng).unwrap();
+    let mut rng = rand::SystemRandom::new();
+    let private_key = PrivateKey::generate_for_test(&ECDH_P256, &mut rng).unwrap();
 
     test::compile_time_assert_send::<PrivateKey>();
     test::compile_time_assert_sync::<PrivateKey>();
@@ -328,7 +328,7 @@ fn agreement_traits() {
         "PrivateKey { algorithm: Algorithm { curve: P256 } }"
     );
 
-    let ephemeral_private_key = PrivateKey::generate_for_test(&ECDH_P256, &rng).unwrap();
+    let ephemeral_private_key = PrivateKey::generate_for_test(&ECDH_P256, &mut rng).unwrap();
 
     test::compile_time_assert_send::<PrivateKey>();
     test::compile_time_assert_sync::<PrivateKey>();

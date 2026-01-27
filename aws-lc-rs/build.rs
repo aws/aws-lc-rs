@@ -12,6 +12,7 @@ fn main() {
 
     println!("cargo:rustc-check-cfg=cfg(aws_lc_rs_docsrs)");
     println!("cargo:rustc-check-cfg=cfg(disable_slow_tests)");
+    println!("cargo:rustc-check-cfg=cfg(external_tests)");
     if let Ok(disable) = env::var("AWS_LC_RS_DISABLE_SLOW_TESTS") {
         if disable == "1" {
             println!("cargo:warning=### Slow tests will be disabled! ###");
@@ -21,6 +22,15 @@ fn main() {
         }
     }
     println!("cargo:rerun-if-env-changed=AWS_LC_RS_DISABLE_SLOW_TESTS");
+    if let Ok(disable) = env::var("AWS_LC_RS_EXTERNAL_TESTS") {
+        if disable == "1" {
+            println!("cargo:warning=### Enabling public testing functions! ###");
+            println!("cargo:rustc-cfg=external_tests");
+        } else {
+            println!("cargo:warning=### Public testing functions not enabled: {disable}! ###");
+        }
+    }
+    println!("cargo:rerun-if-env-changed=AWS_LC_RS_EXTERNAL_TESTS");
 
     // This appears asymmetric, but it reflects the `cfg` statements in lib.rs that
     // require `aws-lc-sys` to be present when "fips" is not enabled.

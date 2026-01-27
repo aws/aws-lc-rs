@@ -6,15 +6,8 @@
 //! Cryptographic pseudo-random number generation.
 //!
 //! An application should create a single `SystemRandom` and then use it for
-//! all randomness generation. Functions that generate random bytes should take
-//! a `&dyn SecureRandom` parameter instead of instantiating their own. Besides
-//! being more efficient, this also helps document where non-deterministic
-//! (random) outputs occur. Taking a reference to a `SecureRandom` also helps
-//! with testing techniques like fuzzing, where it is useful to use a
-//! (non-secure) deterministic implementation of `SecureRandom` so that results
-//! can be replayed. Following this pattern also may help with sandboxing
-//! (seccomp filters on Linux in particular). See `SystemRandom`'s
-//! documentation for more details.
+//! all randomness generation. See `SystemRandom`'s documentation for more
+//! details.
 
 //! # Example
 //! ```
@@ -37,6 +30,10 @@ use crate::error::Unspecified;
 use crate::fips::indicator_check;
 use core::fmt::Debug;
 
+#[cfg(external_tests)]
+#[allow(unused_imports)]
+pub use sealed::*;
+
 /// A secure random number generator.
 pub trait SecureRandom: sealed::SecureRandom {
     /// Fills `dest` with random bytes.
@@ -44,6 +41,13 @@ pub trait SecureRandom: sealed::SecureRandom {
     /// # Errors
     /// `error::Unspecified` if unable to fill `dest`.
     fn fill(&self, dest: &mut [u8]) -> Result<(), Unspecified>;
+
+    /// Fills `dest` with random bytes.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if unable to fill `dest`.
+    #[cfg(any(test, external_tests))]
+    fn mut_fill(&mut self, dest: &mut [u8]) -> Result<(), Unspecified>;
 }
 
 impl<T> SecureRandom for T
@@ -52,6 +56,12 @@ where
 {
     #[inline]
     fn fill(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
+        self.fill_impl(dest)
+    }
+
+    #[inline]
+    #[cfg(any(test, external_tests))]
+    fn mut_fill(&mut self, dest: &mut [u8]) -> Result<(), Unspecified> {
         self.fill_impl(dest)
     }
 }
