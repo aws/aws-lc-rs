@@ -1,0 +1,25 @@
+[package]
+name = "aws-lc-rs-bench"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70.0"
+publish = false
+license = "Apache-2.0 OR ISC"
+description = "CI benchmarking tool for aws-lc-rs"
+
+[features]
+default = []
+fips = ["aws-lc-rs/fips"]
+
+[dependencies]
+aws-lc-rs = { path = "../aws-lc-rs", default-features = true }
+clap = { workspace = true, features = ["derive"] }
+anyhow = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+# For instruction counting with valgrind/callgrind
+crabgrind = { version = "0.1", optional = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+crabgrind = "0.1"

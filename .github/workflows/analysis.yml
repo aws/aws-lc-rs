@@ -133,6 +133,9 @@ jobs:
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
 
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
       - name: Install cargo-udeps
         run: cargo install cargo-udeps
 
@@ -243,12 +246,14 @@ jobs:
         with:
           package: aws-lc-rs
           feature-group: default-features
+          rust-toolchain: 1.90.0
       - name: Check semver (FIPS)
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
           package: aws-lc-rs
           feature-group: only-explicit-features
           features: fips
+          rust-toolchain: 1.90.0
   metadata-checks:
     if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
@@ -402,7 +407,7 @@ jobs:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
       - name: Install readelf
-        run: sudo apt-get update && sudo apt-get install -y binutils
+        run: sudo apt-get update && sudo apt-get install -y binutils valgrind
       - name: Build project
         run: cargo build --workspace --all-targets --release
       - name: Check for GNU-stack section in object files

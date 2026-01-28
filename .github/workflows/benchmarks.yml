@@ -1,0 +1,241 @@
+name: Benchmarks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_BACKTRACE: 1
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    name: Benchmark (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+          echo Listing for /usr/include/valgrind/
+          ls -la /usr/include/valgrind/
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-bench-
+
+      - name: Build benchmark tool (candidate)
+        run: cargo build --release -p aws-lc-rs-bench
+
+      - name: Checkout baseline (main branch)
+        if: github.event_name == 'pull_request'
+        run: |
+          git worktree add ../baseline origin/${{ github.base_ref }}
+          cd ../baseline
+          git submodule update --init --recursive
+
+      - name: Check if baseline has benchmark tool
+        if: github.event_name == 'pull_request'
+        id: baseline-check
+        run: |
+          if [ -f "../baseline/aws-lc-rs-bench/Cargo.toml" ]; then
+            echo "has_benchmark=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_benchmark=false" >> $GITHUB_OUTPUT
+            echo "::notice::Baseline does not contain aws-lc-rs-bench package. Skipping comparison."
+          fi
+
+      - name: Build benchmark tool (baseline)
+        if: github.event_name == 'pull_request' && steps.baseline-check.outputs.has_benchmark == 'true'
+        run: |
+          cd ../baseline
+          cargo build --release -p aws-lc-rs-bench
+
+      - name: Run baseline benchmarks
+        if: github.event_name == 'pull_request' && steps.baseline-check.outputs.has_benchmark == 'true'
+        run: |
+          cd ../baseline
+          ./target/release/aws-lc-rs-bench run-all --output-dir baseline-results
+
+      - name: Run candidate benchmarks
+        run: |
+          ./target/release/aws-lc-rs-bench run-all --output-dir candidate-results
+
+      - name: Compare results
+        if: github.event_name == 'pull_request' && steps.baseline-check.outputs.has_benchmark == 'true'
+        id: compare
+        run: |
+          ./target/release/aws-lc-rs-bench compare ../baseline/baseline-results candidate-results > benchmark-report-${{ matrix.target }}.md
+          cat benchmark-report-${{ matrix.target }}.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.target }}
+          path: candidate-results/
+          retention-days: 30
+
+      - name: Upload benchmark report
+        if: github.event_name == 'pull_request' && steps.baseline-check.outputs.has_benchmark == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report-${{ matrix.target }}
+          path: benchmark-report-${{ matrix.target }}.md
+          retention-days: 30
+
+      - name: Store main branch results
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-benchmark-results-${{ matrix.target }}
+          path: candidate-results/
+          retention-days: 90
+
+  benchmark-fips:
+    name: Benchmark FIPS (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+          echo Listing for /usr/include/valgrind/
+          ls -la /usr/include/valgrind/
+
+      - name: Install Go (required for FIPS build)
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-bench-fips-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-bench-fips-
+
+      - name: Build benchmark tool with FIPS (candidate)
+        run: cargo build --release -p aws-lc-rs-bench --features fips
+
+      - name: Checkout baseline (main branch)
+        if: github.event_name == 'pull_request'
+        run: |
+          git worktree add ../baseline origin/${{ github.base_ref }}
+          cd ../baseline
+          git submodule update --init --recursive
+
+      - name: Check if baseline has benchmark tool
+        if: github.event_name == 'pull_request'
+        id: baseline-check
+        run: |
+          if [ -f "../baseline/aws-lc-rs-bench/Cargo.toml" ]; then
+            echo "has_benchmark=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_benchmark=false" >> $GITHUB_OUTPUT
+            echo "::notice::Baseline does not contain aws-lc-rs-bench package. Skipping FIPS comparison."
+          fi
+
+      - name: Build benchmark tool with FIPS (baseline)
+        if: github.event_name == 'pull_request' && steps.baseline-check.outputs.has_benchmark == 'true'
+        run: |
+          cd ../baseline
+          cargo build --release -p aws-lc-rs-bench --features fips
+
+      - name: Run baseline FIPS benchmarks
+        if: github.event_name == 'pull_request' && steps.baseline-check.outputs.has_benchmark == 'true'
+        run: |
+          cd ../baseline
+          ./target/release/aws-lc-rs-bench run-all --output-dir baseline-fips-results
+
+      - name: Run candidate FIPS benchmarks
+        run: |
+          ./target/release/aws-lc-rs-bench run-all --output-dir candidate-fips-results
+
+      - name: Compare FIPS results
+        if: github.event_name == 'pull_request' && steps.baseline-check.outputs.has_benchmark == 'true'
+        id: compare
+        run: |
+          ./target/release/aws-lc-rs-bench compare ../baseline/baseline-fips-results candidate-fips-results > benchmark-fips-report-${{ matrix.target }}.md
+          cat benchmark-fips-report-${{ matrix.target }}.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload FIPS benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-fips-results-${{ matrix.target }}
+          path: candidate-fips-results/
+          retention-days: 30
+
+      - name: Upload FIPS benchmark report
+        if: github.event_name == 'pull_request' && steps.baseline-check.outputs.has_benchmark == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-fips-report-${{ matrix.target }}
+          path: benchmark-fips-report-${{ matrix.target }}.md
+          retention-days: 30
+
+      - name: Store main branch FIPS results
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-benchmark-fips-results-${{ matrix.target }}
+          path: candidate-fips-results/
+          retention-days: 90
+

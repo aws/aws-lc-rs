@@ -31,7 +31,7 @@ macro_rules! benchmark_hkdf {
 
             use $pkg::{hkdf, digest};
 
-            use criterion::black_box;
+            use std::hint::black_box;
             use crate::HKDFConfig;
 
             pub fn algorithm(config: &crate::HKDFConfig) ->  hkdf::Algorithm {

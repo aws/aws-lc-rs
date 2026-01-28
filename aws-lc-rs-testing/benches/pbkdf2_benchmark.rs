@@ -31,7 +31,7 @@ macro_rules! benchmark_pbkdf2 {
             use $pkg::pbkdf2;
 
             use crate::PBKDF2Config;
-            use criterion::black_box;
+            use std::hint::black_box;
             use std::num::NonZeroU32;
 
             pub fn algorithm(config: &crate::PBKDF2Config) -> pbkdf2::Algorithm {

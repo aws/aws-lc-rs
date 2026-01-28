@@ -1,0 +1,137 @@
+name: Benchmark Comment
+
+# This workflow runs after the Benchmarks workflow completes.
+# It posts benchmark results as PR comments with write permissions.
+# Using workflow_run allows commenting on PRs from forks securely.
+
+on:
+  workflow_run:
+    workflows: ["Benchmarks"]
+    types:
+      - completed
+
+permissions:
+  pull-requests: write
+
+jobs:
+  post-comment:
+    name: Post PR Comment
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Get PR number
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+            });
+            
+            // Look for an artifact that contains PR info
+            // The PR number is embedded in the workflow run
+            const prNumber = context.payload.workflow_run.pull_requests[0]?.number;
+            if (!prNumber) {
+              console.log('No PR number found in workflow run');
+              return;
+            }
+            core.setOutput('number', prNumber);
+            return prNumber;
+
+      - name: Download benchmark reports
+        if: steps.pr.outputs.number
+        uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-*report-*
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Combine reports
+        if: steps.pr.outputs.number
+        id: combine
+        run: |
+          # Check if any comparison reports exist
+          shopt -s nullglob
+          reports=(benchmark-report-*.md benchmark-fips-report-*.md)
+          if [ ${#reports[@]} -eq 0 ]; then
+            echo "has_reports=false" >> $GITHUB_OUTPUT
+            echo "::notice::No benchmark comparison reports found. Baseline may not have aws-lc-rs-bench package."
+            exit 0
+          fi
+          echo "has_reports=true" >> $GITHUB_OUTPUT
+          
+          {
+            echo "<!-- aws-lc-rs-benchmark-results -->"
+            echo "# Benchmark Results"
+            echo ""
+            echo "## Standard Build"
+            echo ""
+            for f in benchmark-report-*.md; do
+              if [ -f "$f" ]; then
+                target=$(echo "$f" | sed 's/benchmark-report-\(.*\)\.md/\1/')
+                echo "### Target: \`$target\`"
+                echo ""
+                cat "$f"
+                echo ""
+              fi
+            done
+            echo "## FIPS Build"
+            echo ""
+            for f in benchmark-fips-report-*.md; do
+              if [ -f "$f" ]; then
+                target=$(echo "$f" | sed 's/benchmark-fips-report-\(.*\)\.md/\1/')
+                echo "### Target: \`$target\`"
+                echo ""
+                cat "$f"
+                echo ""
+              fi
+            done
+            echo ""
+            echo "---"
+            echo ""
+            echo "> **Note**: Benchmark results are measured using CPU instruction counts via Valgrind's callgrind tool."
+            echo "> Changes greater than 2% are considered significant."
+            echo ">"
+            echo "> ✅ = improvement, ⚠️ = regression"
+          } > combined-report.md
+
+      - name: Find existing comment
+        if: steps.pr.outputs.number
+        uses: peter-evans/find-comment@v3
+        id: find-comment
+        with:
+          issue-number: ${{ steps.pr.outputs.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- aws-lc-rs-benchmark-results -->'
+
+      - name: Create or update comment with results
+        if: steps.pr.outputs.number && steps.combine.outputs.has_reports == 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ steps.pr.outputs.number }}
+          body-path: combined-report.md
+          edit-mode: replace
+
+      - name: Post notice when no comparison available
+        if: steps.pr.outputs.number && steps.combine.outputs.has_reports != 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ steps.pr.outputs.number }}
+          body: |
+            <!-- aws-lc-rs-benchmark-results -->
+            ## Benchmark Results
+
+            ℹ️ **No benchmark comparison available.**
+
+            This is expected if the baseline branch does not yet contain the `aws-lc-rs-bench` package.
+            Benchmark comparisons will be available for future PRs once this package is merged to main.
+
+            The candidate benchmarks have been run and stored as artifacts.
+          edit-mode: replace

@@ -7,20 +7,22 @@ rust-version = "1.70.0"
 publish = false
 
 [features]
-ring-benchmarks = []
-openssl-benchmarks = []
+ring-benchmarks = ["ring"]
+openssl-benchmarks = ["openssl"]
 ring-sig-verify = ["aws-lc-rs/ring-sig-verify"]
 bindgen = ["aws-lc-rs/bindgen"]
 fips = ["aws-lc-rs/fips"]
 asan = ["aws-lc-rs/asan"]
+
+[dependencies]
+ring = { workspace = true, optional = true }
+openssl = { workspace = true, optional = true, features = ["vendored"] }
 
 [dev-dependencies]
 aws-lc-rs = { version = "1.0", path = "../aws-lc-rs", features = ["ring-sig-verify", "unstable"] }
 untrusted.workspace = true
 paste.workspace = true
 criterion = { workspace = true, features = ["csv_output"] }
-ring.workspace = true
-openssl = { workspace = true, features = ["vendored"] }
 
 [[bench]]
 name = "aead_benchmark"
