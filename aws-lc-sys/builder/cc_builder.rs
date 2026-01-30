@@ -20,9 +20,9 @@ mod win_x86_64;
 use crate::nasm_builder::NasmBuilder;
 use crate::{
     cargo_env, disable_jitter_entropy, emit_warning, env_var_to_bool, execute_command,
-    get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm, optional_env_optional_crate_target,
-    optional_env_target, out_dir, requested_c_std, set_env_for_target, target, target_arch,
-    target_env, target_os, target_vendor, test_clang_cl_command, CStdRequested, OutputLibType,
+    get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm, out_dir, requested_c_std,
+    set_env_for_target, target, target_arch, target_env, target_os, target_vendor,
+    test_clang_cl_command, CStdRequested, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
