@@ -125,7 +125,7 @@ jobs:
   # build correctly with the cc-builder. See: https://github.com/aws/aws-lc-rs/issues/1006
   aws-lc-rs-android-old-api:
     if: github.repository_owner == 'aws'
-    name: Android API ${{ matrix.api }} - ${{ matrix.target }}
+    name: Android API ${{ matrix.api }} - ${{ matrix.target }} ${{ matrix.test_target_cc && '(TARGET_CC test)' || '' }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -143,6 +143,10 @@ jobs:
             api: 21
           - target: i686-linux-android
             api: 21
+          # Add test case for TARGET_CC preference
+          - target: aarch64-linux-android
+            api: 21
+            test_target_cc: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -167,8 +171,25 @@ jobs:
 
           NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
 
-          # Set compiler with API level
-          echo "CC_${{ matrix.target }}=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang" >> $GITHUB_ENV
+          # For the TARGET_CC test case, set both CC/CXX and TARGET_CC/CXX
+          if [ "${{ matrix.test_target_cc }}" = "true" ]; then
+            # Set regular CC/CXX to non-existent compiler to verify they're not used
+            echo "CC=${NDK_BIN}/non-existent-clang" >> $GITHUB_ENV
+            echo "CXX=${NDK_BIN}/non-existent-clang++" >> $GITHUB_ENV
+
+            # Set TARGET_CC/CXX to the correct compilers - these should be preferred
+            echo "TARGET_CC=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang" >> $GITHUB_ENV
+            echo "TARGET_CXX=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang++" >> $GITHUB_ENV
+
+            # Print for debugging
+            echo "Testing TARGET_CC/CXX preference:"
+            echo "CC=${CC}"
+            echo "TARGET_CC=${TARGET_CC}"
+          else
+            # Set compiler with API level (original behavior)
+            echo "CC_${{ matrix.target }}=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang" >> $GITHUB_ENV
+          fi
+
           echo "AR_${{ matrix.target }}=${NDK_BIN}/llvm-ar" >> $GITHUB_ENV
           echo "RANLIB_${{ matrix.target }}=${NDK_BIN}/llvm-ranlib" >> $GITHUB_ENV
 
