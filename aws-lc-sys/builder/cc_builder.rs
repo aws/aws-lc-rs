@@ -211,10 +211,14 @@ impl CcBuilder {
             }
         }
 
-        if let Some(cc) = optional_env_optional_crate_target("CC") {
+        if let Some(cc) = optional_env_optional_crate_target("TARGET_CC")
+            .or(optional_env_optional_crate_target("CC"))
+        {
             set_env_for_target("CC", &cc);
         }
-        if let Some(cxx) = optional_env_optional_crate_target("CXX") {
+        if let Some(cxx) = optional_env_optional_crate_target("TARGET_CXX")
+            .or(optional_env_optional_crate_target("CXX"))
+        {
             set_env_for_target("CXX", &cxx);
         }
 
