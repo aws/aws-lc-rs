@@ -12,6 +12,7 @@ fn main() {
 
     println!("cargo:rustc-check-cfg=cfg(aws_lc_rs_docsrs)");
     println!("cargo:rustc-check-cfg=cfg(disable_slow_tests)");
+    println!("cargo:rustc-check-cfg=cfg(dev_tests_only)");
     if let Ok(disable) = env::var("AWS_LC_RS_DISABLE_SLOW_TESTS") {
         if disable == "1" {
             println!("cargo:warning=### Slow tests will be disabled! ###");
@@ -21,6 +22,31 @@ fn main() {
         }
     }
     println!("cargo:rerun-if-env-changed=AWS_LC_RS_DISABLE_SLOW_TESTS");
+
+    let mut enable_dev_test_only = None;
+    if cfg!(feature = "dev-tests-only") {
+        enable_dev_test_only = Some(true);
+    }
+    // Environment variable can override
+    if let Ok(dev_tests) = env::var("AWS_LC_RS_DEV_TESTS_ONLY") {
+        println!("cargo:warning=### AWS_LC_RS_DEV_TEST_ONLY: '{dev_tests}' ###");
+        enable_dev_test_only = Some(dev_tests == "1");
+    }
+    println!("cargo:rerun-if-env-changed=AWS_LC_RS_DEV_TESTS_ONLY");
+
+    if let Some(dev_test_only) = enable_dev_test_only {
+        if dev_test_only {
+            let profile = env::var("PROFILE").unwrap();
+            if !profile.contains("dev") && !profile.contains("debug") && !profile.contains("test") {
+                println!("cargo:warning=### PROFILE: '{profile}' ###");
+                panic!("dev-tests-only feature only allowed for dev profile builds");
+            }
+            println!("cargo:warning=### Enabling public testing functions! ###");
+            println!("cargo:rustc-cfg=dev_tests_only");
+        } else {
+            println!("cargo:warning=### AWS_LC_RS_DEV_TEST_ONLY: Public testing functions not enabled! ###");
+        }
+    }
 
     // This appears asymmetric, but it reflects the `cfg` statements in lib.rs that
     // require `aws-lc-sys` to be present when "fips" is not enabled.
