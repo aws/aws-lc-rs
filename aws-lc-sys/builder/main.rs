@@ -570,7 +570,11 @@ fn initialize() {
                         "Cranelift codegen backend detected. Using universal_no_u1 bindings.",
                     );
                 }
-                emit_rustc_cfg("universal-no-u1");
+                if target_has_prefixed_symbols() {
+                    emit_rustc_cfg("universal-no-u1-prefixed");
+                } else {
+                    emit_rustc_cfg("universal-no-u1");
+                }
             } else if target_has_prefixed_symbols() {
                 emit_rustc_cfg("universal-prefixed");
             } else {
@@ -697,6 +701,7 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
         println!("cargo:rustc-check-cfg=cfg(universal)");
         println!("cargo:rustc-check-cfg=cfg(universal_no_u1)");
+        println!("cargo:rustc-check-cfg=cfg(universal_no_u1_prefixed)");
         println!("cargo:rustc-check-cfg=cfg(universal_prefixed)");
     }
 }
