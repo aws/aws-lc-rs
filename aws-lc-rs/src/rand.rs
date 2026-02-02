@@ -102,6 +102,9 @@ pub(crate) mod sealed {
     /// A sealed trait for secure random number generation.
     pub trait SecureRandom: core::fmt::Debug {
         /// Fills `dest` with random bytes.
+        ///
+        /// # Errors
+        /// Returns `error::Unspecified` if unable to fill `dest`.
         fn fill_impl(&self, dest: &mut [u8]) -> Result<(), error::Unspecified>;
     }
 

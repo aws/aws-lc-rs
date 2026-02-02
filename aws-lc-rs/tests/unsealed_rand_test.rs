@@ -13,6 +13,7 @@
 //!    `cargo test --features dev-tests-only --test unsealed_rand_test`
 
 #![cfg(dev_tests_only)]
+#![allow(clippy::cast_possible_truncation)]
 
 use aws_lc_rs::error::Unspecified;
 // When external_tests is enabled, the unsealed module is public, allowing
