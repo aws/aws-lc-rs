@@ -6,4 +6,4 @@ set -ex -o pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
-docker build -t openwrt:23.05 "${SCRIPT_DIR}"
+docker build -t openwrt:24.10 "${SCRIPT_DIR}"

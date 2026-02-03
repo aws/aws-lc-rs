@@ -588,12 +588,12 @@ jobs:
         with:
           submodules: "recursive"
       - name: Build Docker Image
-        working-directory: .github/docker_images/openwrt-23.05
+        working-directory: .github/docker_images/openwrt-24.10
         run: |
           ./build_image.sh
       - name: Build
         run: |
-          docker run -v "${{ github.workspace }}:/aws_lc_rs" openwrt:23.05
+          docker run -v "${{ github.workspace }}:/aws_lc_rs" openwrt:24.10
 
   msys2:
     name: msys2 ${{ matrix.sys }} - ${{ matrix.nasm }}, ${{ matrix.generator }}
