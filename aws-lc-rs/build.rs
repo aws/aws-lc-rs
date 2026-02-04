@@ -29,7 +29,7 @@ fn main() {
     }
     // Environment variable can override
     if let Ok(dev_tests) = env::var("AWS_LC_RS_DEV_TESTS_ONLY") {
-        println!("cargo:warning=### AWS_LC_RS_DEV_TEST_ONLY: '{dev_tests}' ###");
+        println!("cargo:warning=### AWS_LC_RS_DEV_TESTS_ONLY: '{dev_tests}' ###");
         enable_dev_test_only = Some(dev_tests == "1");
     }
     println!("cargo:rerun-if-env-changed=AWS_LC_RS_DEV_TESTS_ONLY");
