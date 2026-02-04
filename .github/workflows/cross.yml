@@ -56,8 +56,7 @@ jobs:
           - [ i686-unknown-linux-gnu, 0, 0, 1]
           - [ mips-unknown-linux-gnu, 0, 1, 0]
           - [ mips-unknown-linux-musl, 0, 1, 0]
-          # Pending: https://github.com/aws/aws-lc-rs/issues/522
-          # - [ mips64-unknown-linux-muslabi64, 0, 1, 0]
+          - [ mips64-unknown-linux-muslabi64, 0, 1, 0]
           - [ mips64el-unknown-linux-muslabi64, 0, 1, 0]
           - [ powerpc-unknown-linux-gnu, 1, 0, 1]
           - [ powerpc64-unknown-linux-gnu, 1, 0, 1]
