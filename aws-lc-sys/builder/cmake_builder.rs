@@ -147,8 +147,7 @@ impl CmakeBuilder {
             cmake_cfg.define("ASAN", "1");
         }
 
-        let cflags = get_crate_cflags();
-        if !cflags.is_empty() {
+        if let Some(cflags) = get_crate_cflags() {
             set_env_for_target("CFLAGS", cflags);
         }
 
@@ -238,7 +237,7 @@ impl CmakeBuilder {
     }
 
     fn preserve_cflag_optimization_flags(cmake_cfg: &mut cmake::Config) {
-        if let Ok(cflags) = env::var("CFLAGS") {
+        if let Some(cflags) = get_crate_cflags() {
             let split = cflags.split_whitespace();
             for arg in split {
                 if arg.starts_with("-O") || arg.starts_with("/O") {

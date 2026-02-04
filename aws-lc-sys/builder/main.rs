@@ -155,7 +155,10 @@ where
     let target = target().to_lowercase();
     let target = target.replace('-', "_");
     let env_var = format!("{}_{target}", env_var.as_ref().to_str().unwrap());
-    env::set_var(&env_var, &value);
+    #[allow(unused_unsafe)]
+    unsafe {
+        env::set_var(&env_var, &value);
+    }
     emit_warning(format!(
         "Setting {env_var}: {}",
         value.as_ref().to_str().unwrap()
@@ -167,7 +170,10 @@ where
     K: AsRef<OsStr>,
     V: AsRef<OsStr>,
 {
-    env::set_var(&env_var, &value);
+    #[allow(unused_unsafe)]
+    unsafe {
+        env::set_var(&env_var, &value);
+    }
     emit_warning(format!(
         "Setting {}: {}",
         env_var.as_ref().to_str().unwrap(),
@@ -498,7 +504,6 @@ static mut AWS_LC_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_SYS_PREGENERATING_BINDINGS: bool = false;
 static mut AWS_LC_SYS_EXTERNAL_BINDGEN: Option<bool> = None;
 static mut AWS_LC_SYS_NO_ASM: bool = false;
-static mut AWS_LC_SYS_CFLAGS: String = String::new();
 static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
 static mut AWS_LC_SYS_CMAKE_BUILDER: Option<bool> = None;
 static mut AWS_LC_SYS_NO_PREGENERATED_SRC: bool = false;
@@ -515,7 +520,6 @@ fn initialize() {
             env_crate_var_to_bool("PREGENERATING_BINDINGS").unwrap_or(false);
         AWS_LC_SYS_EXTERNAL_BINDGEN = env_crate_var_to_bool("EXTERNAL_BINDGEN");
         AWS_LC_SYS_NO_ASM = env_crate_var_to_bool("NO_ASM").unwrap_or(false);
-        AWS_LC_SYS_CFLAGS = optional_env_optional_crate_target("CFLAGS").unwrap_or_default();
         AWS_LC_SYS_PREBUILT_NASM = env_crate_var_to_bool("PREBUILT_NASM");
         AWS_LC_SYS_C_STD = CStdRequested::from_env();
         AWS_LC_SYS_CMAKE_BUILDER = env_crate_var_to_bool("CMAKE_BUILDER");
@@ -634,10 +638,17 @@ fn use_no_u1_bindings() -> Option<bool> {
     unsafe { AWS_LC_SYS_NO_U1_BINDINGS }
 }
 
-#[allow(unknown_lints)]
-#[allow(static_mut_refs)]
-fn get_crate_cflags() -> &'static str {
-    unsafe { AWS_LC_SYS_CFLAGS.as_str() }
+fn get_crate_cc() -> Option<String> {
+    optional_env_optional_crate_target("TARGET_CC").or(optional_env_optional_crate_target("CC"))
+}
+
+fn get_crate_cxx() -> Option<String> {
+    optional_env_optional_crate_target("TARGET_CXX").or(optional_env_optional_crate_target("CXX"))
+}
+
+fn get_crate_cflags() -> Option<String> {
+    optional_env_optional_crate_target("TARGET_CFLAGS")
+        .or(optional_env_optional_crate_target("CFLAGS"))
 }
 
 fn use_prebuilt_nasm() -> bool {
