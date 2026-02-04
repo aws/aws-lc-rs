@@ -44,7 +44,7 @@ fn main() {
             println!("cargo:warning=### Enabling public testing functions! ###");
             println!("cargo:rustc-cfg=dev_tests_only");
         } else {
-            println!("cargo:warning=### AWS_LC_RS_DEV_TEST_ONLY: Public testing functions not enabled! ###");
+            println!("cargo:warning=### AWS_LC_RS_DEV_TESTS_ONLY: Public testing functions not enabled! ###");
         }
     }
 
