@@ -1,0 +1,1025 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0 OR ISC
+
+name: Release Crates
+
+on:
+  workflow_dispatch:
+    branches:
+      - main
+    inputs:
+      release_aws_lc_sys:
+        description: 'Release aws-lc-sys'
+        required: true
+        type: boolean
+        default: true
+      release_aws_lc_fips_sys:
+        description: 'Release aws-lc-fips-sys'
+        required: true
+        type: boolean
+        default: true
+      release_aws_lc_rs:
+        description: 'Release aws-lc-rs'
+        required: true
+        type: boolean
+        default: true
+      dry_run:
+        description: 'Dry run (skip actual publish)'
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  group: release-workflow
+  cancel-in-progress: false
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # =============================================================================
+  # Gather version information and validate inputs
+  # =============================================================================
+  gather-versions:
+    name: Gather Version Information
+    runs-on: ubuntu-latest
+    outputs:
+      aws_lc_rs_version: ${{ steps.versions.outputs.aws_lc_rs_version }}
+      aws_lc_sys_version: ${{ steps.versions.outputs.aws_lc_sys_version }}
+      aws_lc_fips_sys_version: ${{ steps.versions.outputs.aws_lc_fips_sys_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Extract crate versions
+        id: versions
+        run: |
+          get_version() {
+            grep '^version' "$1/Cargo.toml" | head -1 | sed 's/version = "\(.*\)"/\1/'
+          }
+
+          AWS_LC_RS_VERSION=$(get_version "aws-lc-rs")
+          AWS_LC_SYS_VERSION=$(get_version "aws-lc-sys")
+          AWS_LC_FIPS_SYS_VERSION=$(get_version "aws-lc-fips-sys")
+
+          echo "aws_lc_rs_version=${AWS_LC_RS_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "aws_lc_sys_version=${AWS_LC_SYS_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "aws_lc_fips_sys_version=${AWS_LC_FIPS_SYS_VERSION}" >> "$GITHUB_OUTPUT"
+
+          echo "## Detected Versions" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Crate | Version | Will Release |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|---------|--------------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| aws-lc-rs | ${AWS_LC_RS_VERSION} | ${{ inputs.release_aws_lc_rs }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| aws-lc-sys | ${AWS_LC_SYS_VERSION} | ${{ inputs.release_aws_lc_sys }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| aws-lc-fips-sys | ${AWS_LC_FIPS_SYS_VERSION} | ${{ inputs.release_aws_lc_fips_sys }} |" >> "$GITHUB_STEP_SUMMARY"
+
+  # =============================================================================
+  # Check if versions are already published on crates.io
+  # =============================================================================
+  check-crates-io:
+    name: Check crates.io Status
+    runs-on: ubuntu-latest
+    needs: gather-versions
+    outputs:
+      aws_lc_rs_needs_publish: ${{ steps.check.outputs.aws_lc_rs_needs_publish }}
+      aws_lc_sys_needs_publish: ${{ steps.check.outputs.aws_lc_sys_needs_publish }}
+      aws_lc_fips_sys_needs_publish: ${{ steps.check.outputs.aws_lc_fips_sys_needs_publish }}
+    steps:
+      - name: Check if versions exist on crates.io
+        id: check
+        run: |
+          check_crates_io() {
+            local crate_name=$1
+            local version=$2
+            local http_code
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/${crate_name}/${version}")
+            if [[ "$http_code" == "200" ]]; then
+              echo "false"  # Already published, does not need publish
+            else
+              echo "true"   # Not found, needs publish
+            fi
+          }
+
+          AWS_LC_RS_NEEDS=$(check_crates_io "aws-lc-rs" "${{ needs.gather-versions.outputs.aws_lc_rs_version }}")
+          AWS_LC_SYS_NEEDS=$(check_crates_io "aws-lc-sys" "${{ needs.gather-versions.outputs.aws_lc_sys_version }}")
+          AWS_LC_FIPS_SYS_NEEDS=$(check_crates_io "aws-lc-fips-sys" "${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }}")
+
+          echo "aws_lc_rs_needs_publish=${AWS_LC_RS_NEEDS}" >> "$GITHUB_OUTPUT"
+          echo "aws_lc_sys_needs_publish=${AWS_LC_SYS_NEEDS}" >> "$GITHUB_OUTPUT"
+          echo "aws_lc_fips_sys_needs_publish=${AWS_LC_FIPS_SYS_NEEDS}" >> "$GITHUB_OUTPUT"
+
+          echo "## crates.io Status" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Crate | Version | Needs Publish |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|---------|---------------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| aws-lc-rs | ${{ needs.gather-versions.outputs.aws_lc_rs_version }} | ${AWS_LC_RS_NEEDS} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| aws-lc-sys | ${{ needs.gather-versions.outputs.aws_lc_sys_version }} | ${AWS_LC_SYS_NEEDS} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| aws-lc-fips-sys | ${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }} | ${AWS_LC_FIPS_SYS_NEEDS} |" >> "$GITHUB_STEP_SUMMARY"
+
+  # =============================================================================
+  # Sanity checks for aws-lc-sys
+  # =============================================================================
+  sanity-check-aws-lc-sys:
+    name: Sanity Check aws-lc-sys
+    runs-on: ubuntu-latest
+    needs: [gather-versions, check-crates-io]
+    if: inputs.release_aws_lc_sys && needs.check-crates-io.outputs.aws_lc_sys_needs_publish == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install nightly for clippy
+        run: rustup install nightly
+
+      - name: Verify links line in Cargo.toml
+        working-directory: aws-lc-sys
+        run: |
+          VERSION="${{ needs.gather-versions.outputs.aws_lc_sys_version }}"
+          CRATE_VERSION_PREFIX=$(echo "$VERSION" | sed -e 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)/\1_\2_\3/')
+          EXPECTED_LINKS="links = \"aws_lc_${CRATE_VERSION_PREFIX}\""
+
+          if ! grep -q "$EXPECTED_LINKS" Cargo.toml; then
+            echo "ERROR: Expected 'links' line not found in Cargo.toml"
+            echo "Expected: $EXPECTED_LINKS"
+            exit 1
+          fi
+          echo "✓ links line verified: $EXPECTED_LINKS"
+
+      - name: Verify prefix symbols
+        working-directory: aws-lc-sys
+        run: |
+          VERSION="${{ needs.gather-versions.outputs.aws_lc_sys_version }}"
+          CRATE_VERSION_PREFIX=$(echo "$VERSION" | sed -e 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)/\1_\2_\3/')
+          EXPECTED_MACRO="#define BORINGSSL_PREFIX aws_lc_${CRATE_VERSION_PREFIX}"
+          PREFIX_FILE="generated-include/openssl/boringssl_prefix_symbols_asm.h"
+
+          if ! grep -q "$EXPECTED_MACRO" "$PREFIX_FILE"; then
+            echo "ERROR: Expected prefix macro not found in $PREFIX_FILE"
+            echo "Expected: $EXPECTED_MACRO"
+            exit 1
+          fi
+          echo "✓ prefix symbols verified"
+
+      - name: Verify AWS-LC commit hash
+        working-directory: aws-lc-sys
+        run: |
+          COMMIT_HASH=$(git submodule status -- aws-lc | sed -e 's/.\([0-9a-f]*\).*/\1/')
+
+          if ! grep -q "$COMMIT_HASH" Cargo.toml; then
+            echo "ERROR: AWS-LC commit hash not found in Cargo.toml"
+            echo "Expected commit hash: $COMMIT_HASH"
+            exit 1
+          fi
+          echo "✓ AWS-LC commit hash verified: $COMMIT_HASH"
+
+      - name: Run cargo clippy
+        working-directory: aws-lc-sys
+        run: |
+          echo "Running clippy to check for warnings..."
+          if ! cargo +nightly clippy --all-targets --all-features -- -D warnings 2>&1; then
+            echo "::warning::Clippy found warnings in aws-lc-sys. Consider fixing before release."
+          fi
+
+      - name: Run cargo fmt check
+        working-directory: aws-lc-sys
+        run: cargo fmt --check
+
+      - name: Run cargo test
+        working-directory: aws-lc-sys
+        run: cargo test
+
+      - name: Run cargo package (dry-run)
+        working-directory: aws-lc-sys
+        run: cargo package --allow-dirty
+
+  # =============================================================================
+  # Sanity checks for aws-lc-fips-sys
+  # =============================================================================
+  sanity-check-aws-lc-fips-sys:
+    name: Sanity Check aws-lc-fips-sys
+    runs-on: ubuntu-latest
+    needs: [gather-versions, check-crates-io]
+    if: inputs.release_aws_lc_fips_sys && needs.check-crates-io.outputs.aws_lc_fips_sys_needs_publish == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install nightly for clippy
+        run: rustup install nightly
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+
+      - name: Verify links line in Cargo.toml
+        working-directory: aws-lc-fips-sys
+        run: |
+          VERSION="${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }}"
+          CRATE_VERSION_PREFIX=$(echo "$VERSION" | sed -e 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)/\1_\2_\3/')
+          EXPECTED_LINKS="links = \"aws_lc_fips_${CRATE_VERSION_PREFIX}\""
+
+          if ! grep -q "$EXPECTED_LINKS" Cargo.toml; then
+            echo "ERROR: Expected 'links' line not found in Cargo.toml"
+            echo "Expected: $EXPECTED_LINKS"
+            exit 1
+          fi
+          echo "✓ links line verified: $EXPECTED_LINKS"
+
+      - name: Verify prefix symbols
+        working-directory: aws-lc-fips-sys
+        run: |
+          VERSION="${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }}"
+          CRATE_VERSION_PREFIX=$(echo "$VERSION" | sed -e 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)/\1_\2_\3/')
+          EXPECTED_MACRO="#define BORINGSSL_PREFIX aws_lc_fips_${CRATE_VERSION_PREFIX}"
+          PREFIX_FILE="generated-include/openssl/boringssl_prefix_symbols_asm.h"
+
+          if ! grep -q "$EXPECTED_MACRO" "$PREFIX_FILE"; then
+            echo "ERROR: Expected prefix macro not found in $PREFIX_FILE"
+            echo "Expected: $EXPECTED_MACRO"
+            exit 1
+          fi
+          echo "✓ prefix symbols verified"
+
+      - name: Verify AWS-LC commit hash
+        working-directory: aws-lc-fips-sys
+        run: |
+          COMMIT_HASH=$(git submodule status -- aws-lc | sed -e 's/.\([0-9a-f]*\).*/\1/')
+
+          if ! grep -q "$COMMIT_HASH" Cargo.toml; then
+            echo "ERROR: AWS-LC commit hash not found in Cargo.toml"
+            echo "Expected commit hash: $COMMIT_HASH"
+            exit 1
+          fi
+          echo "✓ AWS-LC commit hash verified: $COMMIT_HASH"
+
+      - name: Create go.mod for packaging
+        working-directory: aws-lc-fips-sys/aws-lc
+        run: |
+          cat << 'EOF' > go.mod
+          module boringssl.googlesource.com/boringssl
+
+          go 1.18
+          EOF
+
+      - name: Run cargo clippy
+        working-directory: aws-lc-fips-sys
+        run: |
+          echo "Running clippy to check for warnings..."
+          if ! cargo +nightly clippy --all-targets --all-features -- -D warnings 2>&1; then
+            echo "::warning::Clippy found warnings in aws-lc-fips-sys. Consider fixing before release."
+          fi
+
+      - name: Run cargo fmt check
+        working-directory: aws-lc-fips-sys
+        run: cargo fmt --check
+
+      - name: Run cargo test
+        working-directory: aws-lc-fips-sys
+        run: cargo test
+
+      - name: Run cargo package (dry-run)
+        working-directory: aws-lc-fips-sys
+        run: cargo package --allow-dirty
+
+  # =============================================================================
+  # Sanity checks for aws-lc-rs
+  # =============================================================================
+  sanity-check-aws-lc-rs:
+    name: Sanity Check aws-lc-rs
+    runs-on: ubuntu-latest
+    needs: [gather-versions, check-crates-io]
+    if: inputs.release_aws_lc_rs && needs.check-crates-io.outputs.aws_lc_rs_needs_publish == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install nightly for clippy
+        run: rustup install nightly
+
+      - name: Verify dependency versions match
+        run: |
+          SYS_VERSION="${{ needs.gather-versions.outputs.aws_lc_sys_version }}"
+
+          # Extract the aws-lc-sys version dependency from aws-lc-rs/Cargo.toml
+          DEP_VERSION=$(grep -A5 'dependencies.aws-lc-sys' aws-lc-rs/Cargo.toml | grep 'version' | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/' | sed 's/[^0-9.]//g')
+
+          # If the above didn't work, try the inline format
+          if [[ -z "$DEP_VERSION" ]]; then
+            DEP_VERSION=$(grep 'aws-lc-sys.*version' aws-lc-rs/Cargo.toml | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/' | sed 's/[^0-9.]//g')
+          fi
+
+          echo "aws-lc-sys version in workspace: $SYS_VERSION"
+          echo "aws-lc-sys dependency in aws-lc-rs: $DEP_VERSION"
+
+          if [[ -n "$DEP_VERSION" && "$DEP_VERSION" != "$SYS_VERSION" ]]; then
+            echo "ERROR: aws-lc-rs depends on aws-lc-sys $DEP_VERSION, but workspace has $SYS_VERSION"
+            echo "Please update the dependency version in aws-lc-rs/Cargo.toml"
+            exit 1
+          fi
+          echo "✓ Dependency versions verified"
+
+      - name: Run cargo clippy
+        working-directory: aws-lc-rs
+        run: |
+          echo "Running clippy to check for warnings..."
+          if ! cargo +nightly clippy --all-targets --all-features -- -D warnings 2>&1; then
+            echo "::warning::Clippy found warnings in aws-lc-rs. Consider fixing before release."
+          fi
+
+      - name: Run cargo fmt check
+        working-directory: aws-lc-rs
+        run: cargo fmt --check
+
+      - name: Run cargo test
+        working-directory: aws-lc-rs
+        run: cargo test
+
+      - name: Run cargo package (dry-run)
+        working-directory: aws-lc-rs
+        run: cargo package --allow-dirty
+
+  # =============================================================================
+  # Human approval gate before publishing
+  # =============================================================================
+  approval-gate:
+    name: Await Publishing Approval
+    runs-on: ubuntu-latest
+    needs:
+      - gather-versions
+      - check-crates-io
+      - sanity-check-aws-lc-sys
+      - sanity-check-aws-lc-fips-sys
+      - sanity-check-aws-lc-rs
+    # Run if NOT a dry run, no failures/cancellations, and at least one crate needs publishing
+    # Also verify that sanity checks for crates being published actually succeeded (not just skipped)
+    if: |
+      always() &&
+      !inputs.dry_run &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      (
+        (inputs.release_aws_lc_sys && needs.check-crates-io.outputs.aws_lc_sys_needs_publish == 'true' && needs.sanity-check-aws-lc-sys.result == 'success') ||
+        (inputs.release_aws_lc_fips_sys && needs.check-crates-io.outputs.aws_lc_fips_sys_needs_publish == 'true' && needs.sanity-check-aws-lc-fips-sys.result == 'success') ||
+        (inputs.release_aws_lc_rs && needs.check-crates-io.outputs.aws_lc_rs_needs_publish == 'true' && needs.sanity-check-aws-lc-rs.result == 'success')
+      )
+    environment: release-approval
+    steps:
+      - name: Display release summary
+        run: |
+          echo "## Release Summary - Awaiting Approval" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "The following crates will be published to crates.io:" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${{ inputs.release_aws_lc_fips_sys }}" == "true" && "${{ needs.check-crates-io.outputs.aws_lc_fips_sys_needs_publish }}" == "true" ]]; then
+            echo "- **aws-lc-fips-sys** v${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }} (sanity: ${{ needs.sanity-check-aws-lc-fips-sys.result }})" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [[ "${{ inputs.release_aws_lc_sys }}" == "true" && "${{ needs.check-crates-io.outputs.aws_lc_sys_needs_publish }}" == "true" ]]; then
+            echo "- **aws-lc-sys** v${{ needs.gather-versions.outputs.aws_lc_sys_version }} (sanity: ${{ needs.sanity-check-aws-lc-sys.result }})" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [[ "${{ inputs.release_aws_lc_rs }}" == "true" && "${{ needs.check-crates-io.outputs.aws_lc_rs_needs_publish }}" == "true" ]]; then
+            echo "- **aws-lc-rs** v${{ needs.gather-versions.outputs.aws_lc_rs_version }} (sanity: ${{ needs.sanity-check-aws-lc-rs.result }})" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Review the sanity check results above before approving.**" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Approval received
+        run: echo "✓ Publishing approval received"
+
+  # =============================================================================
+  # Create Git tags (after publish to avoid orphan tags on failure)
+  # =============================================================================
+  create-tags:
+    name: Create Git Tags
+    runs-on: ubuntu-latest
+    needs:
+      - gather-versions
+      - check-crates-io
+      - publish-aws-lc-fips-sys
+      - publish-aws-lc-sys
+      - publish-aws-lc-rs
+    if: |
+      always() &&
+      (needs.publish-aws-lc-fips-sys.result == 'success' || needs.publish-aws-lc-sys.result == 'success' || needs.publish-aws-lc-rs.result == 'success')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and push tags
+        run: |
+          # Create aws-lc-rs tag
+          if [[ "${{ needs.publish-aws-lc-rs.result }}" == "success" ]]; then
+            TAG_NAME="v${{ needs.gather-versions.outputs.aws_lc_rs_version }}"
+            if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+              git tag -a "$TAG_NAME" -m "$TAG_NAME"
+              echo "Created tag: $TAG_NAME"
+            else
+              echo "Tag already exists: $TAG_NAME"
+            fi
+          fi
+
+          # Create aws-lc-sys tag
+          if [[ "${{ needs.publish-aws-lc-sys.result }}" == "success" ]]; then
+            TAG_NAME="aws-lc-sys/v${{ needs.gather-versions.outputs.aws_lc_sys_version }}"
+            if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+              git tag -a "$TAG_NAME" -m "$TAG_NAME"
+              echo "Created tag: $TAG_NAME"
+            else
+              echo "Tag already exists: $TAG_NAME"
+            fi
+          fi
+
+          # Create aws-lc-fips-sys tag
+          if [[ "${{ needs.publish-aws-lc-fips-sys.result }}" == "success" ]]; then
+            TAG_NAME="aws-lc-fips-sys/v${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }}"
+            if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+              git tag -a "$TAG_NAME" -m "$TAG_NAME"
+              echo "Created tag: $TAG_NAME"
+            else
+              echo "Tag already exists: $TAG_NAME"
+            fi
+          fi
+
+          # Push all tags
+          git push --tags
+
+  # =============================================================================
+  # Publish aws-lc-fips-sys (published first as it has no internal dependencies)
+  # =============================================================================
+  publish-aws-lc-fips-sys:
+    name: Publish aws-lc-fips-sys
+    runs-on: ubuntu-latest
+    needs:
+      - gather-versions
+      - check-crates-io
+      - approval-gate
+    if: |
+      always() &&
+      needs.approval-gate.result == 'success' &&
+      inputs.release_aws_lc_fips_sys &&
+      needs.check-crates-io.outputs.aws_lc_fips_sys_needs_publish == 'true'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+
+      - name: Create go.mod for packaging
+        working-directory: aws-lc-fips-sys/aws-lc
+        run: |
+          cat << 'EOF' > go.mod
+          module boringssl.googlesource.com/boringssl
+
+          go 1.18
+          EOF
+
+      - name: Authenticate with crates.io (Trusted Publishing)
+        uses: rust-lang/crates-io-auth-action@v1
+        id: crates-io-auth
+
+      - name: Publish aws-lc-fips-sys
+        working-directory: aws-lc-fips-sys
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
+        run: |
+          echo "Publishing aws-lc-fips-sys v${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }}..."
+          cargo publish --allow-dirty
+          echo "✓ aws-lc-fips-sys published successfully"
+
+      - name: Wait for crates.io index update
+        run: |
+          echo "Waiting for crates.io to index aws-lc-fips-sys..."
+          sleep 30
+
+          # Poll until the version appears
+          for i in {1..30}; do
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/aws-lc-fips-sys/${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }}")
+            if [[ "$http_code" == "200" ]]; then
+              echo "✓ aws-lc-fips-sys is now available on crates.io"
+              exit 0
+            fi
+            echo "Attempt $i: Version not yet indexed (HTTP $http_code), waiting..."
+            sleep 10
+          done
+
+          echo "Warning: Version may not be immediately available, proceeding anyway"
+
+  # =============================================================================
+  # Publish aws-lc-sys
+  # =============================================================================
+  publish-aws-lc-sys:
+    name: Publish aws-lc-sys
+    runs-on: ubuntu-latest
+    needs:
+      - gather-versions
+      - check-crates-io
+      - approval-gate
+      - publish-aws-lc-fips-sys
+    if: |
+      always() &&
+      needs.approval-gate.result == 'success' &&
+      (needs.publish-aws-lc-fips-sys.result == 'success' || needs.publish-aws-lc-fips-sys.result == 'skipped') &&
+      inputs.release_aws_lc_sys &&
+      needs.check-crates-io.outputs.aws_lc_sys_needs_publish == 'true'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Authenticate with crates.io (Trusted Publishing)
+        uses: rust-lang/crates-io-auth-action@v1
+        id: crates-io-auth
+
+      - name: Publish aws-lc-sys
+        working-directory: aws-lc-sys
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
+        run: |
+          echo "Publishing aws-lc-sys v${{ needs.gather-versions.outputs.aws_lc_sys_version }}..."
+          cargo publish --allow-dirty
+          echo "✓ aws-lc-sys published successfully"
+
+      - name: Wait for crates.io index update
+        run: |
+          echo "Waiting for crates.io to index aws-lc-sys..."
+          sleep 30
+
+          # Poll until the version appears
+          for i in {1..30}; do
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/aws-lc-sys/${{ needs.gather-versions.outputs.aws_lc_sys_version }}")
+            if [[ "$http_code" == "200" ]]; then
+              echo "✓ aws-lc-sys is now available on crates.io"
+              exit 0
+            fi
+            echo "Attempt $i: Version not yet indexed (HTTP $http_code), waiting..."
+            sleep 10
+          done
+
+          echo "Warning: Version may not be immediately available, proceeding anyway"
+
+  # =============================================================================
+  # Publish aws-lc-rs (depends on aws-lc-sys being available)
+  # =============================================================================
+  publish-aws-lc-rs:
+    name: Publish aws-lc-rs
+    runs-on: ubuntu-latest
+    needs:
+      - gather-versions
+      - check-crates-io
+      - approval-gate
+      - publish-aws-lc-sys
+    if: |
+      always() &&
+      needs.approval-gate.result == 'success' &&
+      (needs.publish-aws-lc-sys.result == 'success' || needs.publish-aws-lc-sys.result == 'skipped') &&
+      inputs.release_aws_lc_rs &&
+      needs.check-crates-io.outputs.aws_lc_rs_needs_publish == 'true'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Authenticate with crates.io (Trusted Publishing)
+        uses: rust-lang/crates-io-auth-action@v1
+        id: crates-io-auth
+
+      - name: Publish aws-lc-rs
+        working-directory: aws-lc-rs
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
+        run: |
+          echo "Publishing aws-lc-rs v${{ needs.gather-versions.outputs.aws_lc_rs_version }}..."
+          cargo publish --allow-dirty
+          echo "✓ aws-lc-rs published successfully"
+
+  # =============================================================================
+  # Verify the published crates work correctly
+  # =============================================================================
+  verify-release:
+    name: Verify Published Crates
+    runs-on: ubuntu-latest
+    needs:
+      - gather-versions
+      - publish-aws-lc-rs
+      - publish-aws-lc-sys
+      - publish-aws-lc-fips-sys
+    if: |
+      always() &&
+      (needs.publish-aws-lc-rs.result == 'success' || needs.publish-aws-lc-sys.result == 'success' || needs.publish-aws-lc-fips-sys.result == 'success')
+    steps:
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Go (for FIPS)
+        uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.18'
+
+      - name: Wait for crates.io propagation
+        run: |
+          echo "Waiting for crates.io to fully propagate..."
+          sleep 60
+
+      - name: Create test project
+        run: |
+          cargo new --bin aws-lc-rs-release-test
+          cd aws-lc-rs-release-test
+
+      - name: Test aws-lc-rs (standard)
+        if: needs.publish-aws-lc-rs.result == 'success'
+        working-directory: aws-lc-rs-release-test
+        run: |
+          cargo add aws-lc-rs@${{ needs.gather-versions.outputs.aws_lc_rs_version }}
+
+          cat << 'EOF' > src/main.rs
+          use aws_lc_rs::digest::{digest, SHA256};
+          use aws_lc_rs::try_fips_mode;
+
+          fn main() {
+              if try_fips_mode().is_ok() {
+                  println!("FIPS feature is enabled!")
+              } else {
+                  println!("FIPS feature is not enabled!")
+              }
+
+              const MESSAGE: &[u8] = b"Hello from release verification!";
+              let output = digest(&SHA256, MESSAGE);
+
+              print!("SHA256: ");
+              for v in output.as_ref() {
+                  print!("{:02x}", *v);
+              }
+              println!();
+
+              println!("✓ aws-lc-rs verification successful!");
+          }
+          EOF
+
+          cargo run
+
+          # Verify version matches
+          INSTALLED_VERSION=$(cargo metadata --format-version 1 | jq -r '.packages[] | select(.name == "aws-lc-rs") | .version')
+          if [[ "$INSTALLED_VERSION" != "${{ needs.gather-versions.outputs.aws_lc_rs_version }}" ]]; then
+            echo "ERROR: Version mismatch! Expected ${{ needs.gather-versions.outputs.aws_lc_rs_version }}, got $INSTALLED_VERSION"
+            exit 1
+          fi
+          echo "✓ Version verified: $INSTALLED_VERSION"
+
+      - name: Test aws-lc-rs with FIPS feature
+        if: needs.publish-aws-lc-rs.result == 'success' && needs.publish-aws-lc-fips-sys.result == 'success'
+        working-directory: aws-lc-rs-release-test
+        run: |
+          cargo add aws-lc-rs@${{ needs.gather-versions.outputs.aws_lc_rs_version }} --features fips
+          cargo run
+          echo "✓ aws-lc-rs with FIPS feature verification successful!"
+
+  # =============================================================================
+  # Create draft GitHub release with PR list
+  # =============================================================================
+  create-draft-release:
+    name: Create Draft GitHub Release
+    runs-on: ubuntu-latest
+    needs:
+      - gather-versions
+      - check-crates-io
+      - publish-aws-lc-rs
+      - publish-aws-lc-sys
+      - publish-aws-lc-fips-sys
+      - verify-release
+    if: |
+      always() &&
+      inputs.release_aws_lc_rs &&
+      needs.check-crates-io.outputs.aws_lc_rs_needs_publish == 'true' &&
+      needs.publish-aws-lc-rs.result == 'success'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get previous release tag
+        id: prev_tag
+        run: |
+          # Get the most recent tag before the current one
+          CURRENT_TAG="v${{ needs.gather-versions.outputs.aws_lc_rs_version }}"
+          PREV_TAG=$(git tag -l 'v*' --sort=-version:refname | grep -v "^${CURRENT_TAG}$" | head -1)
+
+          if [[ -z "$PREV_TAG" ]]; then
+            # If no previous tag, use the first commit
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+
+          echo "prev_tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Previous tag: ${PREV_TAG}"
+
+      - name: Generate PR list
+        id: pr_list
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.gather-versions.outputs.aws_lc_rs_version }}"
+          PREV_TAG="${{ steps.prev_tag.outputs.prev_tag }}"
+          CURRENT_TAG="v${VERSION}"
+
+          echo "Generating PR list from ${PREV_TAG} to ${CURRENT_TAG}..."
+
+          # Get merge commits between tags
+          MERGE_COMMITS=$(git log "${PREV_TAG}..HEAD" --merges --pretty=format:"%H" 2>/dev/null || echo "")
+
+          # Build PR list
+          PR_LIST=""
+          CONTRIBUTORS=""
+
+          if [[ -n "$MERGE_COMMITS" ]]; then
+            while IFS= read -r commit; do
+              # Extract PR number from merge commit message
+              PR_NUM=$(git log -1 --pretty=format:"%s" "$commit" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+
+              if [[ -n "$PR_NUM" ]]; then
+                # Get PR details from GitHub API
+                PR_DATA=$(gh pr view "$PR_NUM" --json title,author,url 2>/dev/null || echo "")
+
+                if [[ -n "$PR_DATA" ]]; then
+                  PR_TITLE=$(echo "$PR_DATA" | jq -r '.title // empty')
+                  PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login // empty')
+                  PR_URL=$(echo "$PR_DATA" | jq -r '.url // empty')
+
+                  if [[ -n "$PR_TITLE" && -n "$PR_AUTHOR" && -n "$PR_URL" ]]; then
+                    PR_LIST="${PR_LIST}* ${PR_TITLE} by @${PR_AUTHOR} in ${PR_URL}"$'\n'
+
+                    # Track contributors for "New Contributors" section
+                    if [[ ! "$CONTRIBUTORS" =~ "@${PR_AUTHOR}" ]]; then
+                      CONTRIBUTORS="${CONTRIBUTORS}@${PR_AUTHOR} "
+                    fi
+                  fi
+                fi
+              fi
+            done <<< "$MERGE_COMMITS"
+          fi
+
+          # If no PRs found via merge commits, try using GitHub's compare API
+          if [[ -z "$PR_LIST" ]]; then
+            echo "No merge commits found, using GitHub compare..."
+            COMPARE_DATA=$(gh api "repos/${{ github.repository }}/compare/${PREV_TAG}...HEAD" --jq '.commits[].sha' 2>/dev/null || echo "")
+
+            if [[ -n "$COMPARE_DATA" ]]; then
+              # Get PRs associated with commits
+              while IFS= read -r sha; do
+                PR_DATA=$(gh api "repos/${{ github.repository }}/commits/${sha}/pulls" --jq '.[0] | {number, title, user: .user.login, url: .html_url}' 2>/dev/null || echo "")
+
+                if [[ -n "$PR_DATA" && "$PR_DATA" != "null" ]]; then
+                  PR_NUM=$(echo "$PR_DATA" | jq -r '.number // empty')
+                  PR_TITLE=$(echo "$PR_DATA" | jq -r '.title // empty')
+                  PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.user // empty')
+                  PR_URL=$(echo "$PR_DATA" | jq -r '.url // empty')
+
+                  if [[ -n "$PR_TITLE" && -n "$PR_AUTHOR" && -n "$PR_URL" ]]; then
+                    # Avoid duplicates
+                    if [[ ! "$PR_LIST" =~ "$PR_URL" ]]; then
+                      PR_LIST="${PR_LIST}* ${PR_TITLE} by @${PR_AUTHOR} in ${PR_URL}"$'\n'
+
+                      if [[ ! "$CONTRIBUTORS" =~ "@${PR_AUTHOR}" ]]; then
+                        CONTRIBUTORS="${CONTRIBUTORS}@${PR_AUTHOR} "
+                      fi
+                    fi
+                  fi
+                fi
+              done <<< "$COMPARE_DATA"
+            fi
+          fi
+
+          # If still no PRs, add a placeholder
+          if [[ -z "$PR_LIST" ]]; then
+            PR_LIST="* No PRs found in this release range"$'\n'
+          fi
+
+          # Save PR list to file for next step
+          echo "$PR_LIST" > /tmp/pr_list.txt
+
+          echo "Generated PR list:"
+          cat /tmp/pr_list.txt
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.gather-versions.outputs.aws_lc_rs_version }}"
+          PREV_TAG="${{ steps.prev_tag.outputs.prev_tag }}"
+          PR_LIST=$(cat /tmp/pr_list.txt)
+
+          # Build release body
+          cat << 'RELEASE_TEMPLATE' > /tmp/release_body.md
+          ## What's Changed
+          <!--
+          Move important PRs from "Other Merged PRs" section below and edit titles to be more descriptive.
+          Group related changes under sub-headings like:
+          ### Build Improvements
+          ### Bug Fixes
+          -->
+
+          ### Build Improvements
+          <!-- Add build-related changes here -->
+
+          ### Issues Being Closed
+          <!-- Add links to issues that are resolved by this release -->
+
+          ## Other Merged PRs
+          <!-- Review these PRs and move notable ones to "What's Changed" above -->
+          RELEASE_TEMPLATE
+
+          # Append PR list
+          echo "$PR_LIST" >> /tmp/release_body.md
+
+          # Add New Contributors section placeholder
+          cat << 'CONTRIBUTORS_TEMPLATE' >> /tmp/release_body.md
+
+          ## New Contributors
+          <!-- Add first-time contributors here, e.g.: -->
+          <!-- * @username made their first contribution in https://github.com/aws/aws-lc-rs/pull/XXX -->
+
+          CONTRIBUTORS_TEMPLATE
+
+          # Add full changelog link
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...v${VERSION}" >> /tmp/release_body.md
+
+          # Create draft release
+          gh release create "v${VERSION}" \
+            --title "aws-lc-rs v${VERSION}" \
+            --notes-file /tmp/release_body.md \
+            --draft
+
+          echo "✓ Draft release created: https://github.com/${{ github.repository }}/releases/tag/v${VERSION}"
+
+      - name: Output draft release URL
+        run: |
+          VERSION="${{ needs.gather-versions.outputs.aws_lc_rs_version }}"
+          echo "## Draft Release Created" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "A draft release has been created with all merged PRs listed in the 'Other Merged PRs' section." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Next steps:**" >> "$GITHUB_STEP_SUMMARY"
+          echo "1. [Edit the draft release](https://github.com/${{ github.repository }}/releases/tag/v${VERSION})" >> "$GITHUB_STEP_SUMMARY"
+          echo "2. Move notable PRs from 'Other Merged PRs' to 'What's Changed'" >> "$GITHUB_STEP_SUMMARY"
+          echo "3. Edit PR titles to be more user-friendly" >> "$GITHUB_STEP_SUMMARY"
+          echo "4. Add any closed issues to 'Issues Being Closed'" >> "$GITHUB_STEP_SUMMARY"
+          echo "5. Identify and add 'New Contributors'" >> "$GITHUB_STEP_SUMMARY"
+          echo "6. Publish the release when ready" >> "$GITHUB_STEP_SUMMARY"
+
+  # =============================================================================
+  # Summary job
+  # =============================================================================
+  release-summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs:
+      - gather-versions
+      - check-crates-io
+      - publish-aws-lc-fips-sys
+      - publish-aws-lc-sys
+      - publish-aws-lc-rs
+      - verify-release
+      - create-draft-release
+      - create-tags
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Release Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "**⚠️ DRY RUN - No crates were published**" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "| Crate | Version | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|---------|--------|" >> "$GITHUB_STEP_SUMMARY"
+
+          # aws-lc-fips-sys
+          if [[ "${{ inputs.release_aws_lc_fips_sys }}" == "true" ]]; then
+            if [[ "${{ needs.publish-aws-lc-fips-sys.result }}" == "success" ]]; then
+              echo "| aws-lc-fips-sys | ${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }} | ✅ Published |" >> "$GITHUB_STEP_SUMMARY"
+            elif [[ "${{ needs.check-crates-io.outputs.aws_lc_fips_sys_needs_publish }}" == "false" ]]; then
+              echo "| aws-lc-fips-sys | ${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }} | ⏭️ Already published |" >> "$GITHUB_STEP_SUMMARY"
+            elif [[ "${{ needs.publish-aws-lc-fips-sys.result }}" == "skipped" ]]; then
+              echo "| aws-lc-fips-sys | ${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }} | ⏭️ Skipped |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| aws-lc-fips-sys | ${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }} | ❌ Failed |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+
+          # aws-lc-sys
+          if [[ "${{ inputs.release_aws_lc_sys }}" == "true" ]]; then
+            if [[ "${{ needs.publish-aws-lc-sys.result }}" == "success" ]]; then
+              echo "| aws-lc-sys | ${{ needs.gather-versions.outputs.aws_lc_sys_version }} | ✅ Published |" >> "$GITHUB_STEP_SUMMARY"
+            elif [[ "${{ needs.check-crates-io.outputs.aws_lc_sys_needs_publish }}" == "false" ]]; then
+              echo "| aws-lc-sys | ${{ needs.gather-versions.outputs.aws_lc_sys_version }} | ⏭️ Already published |" >> "$GITHUB_STEP_SUMMARY"
+            elif [[ "${{ needs.publish-aws-lc-sys.result }}" == "skipped" ]]; then
+              echo "| aws-lc-sys | ${{ needs.gather-versions.outputs.aws_lc_sys_version }} | ⏭️ Skipped |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| aws-lc-sys | ${{ needs.gather-versions.outputs.aws_lc_sys_version }} | ❌ Failed |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+
+          # aws-lc-rs
+          if [[ "${{ inputs.release_aws_lc_rs }}" == "true" ]]; then
+            if [[ "${{ needs.publish-aws-lc-rs.result }}" == "success" ]]; then
+              echo "| aws-lc-rs | ${{ needs.gather-versions.outputs.aws_lc_rs_version }} | ✅ Published |" >> "$GITHUB_STEP_SUMMARY"
+            elif [[ "${{ needs.check-crates-io.outputs.aws_lc_rs_needs_publish }}" == "false" ]]; then
+              echo "| aws-lc-rs | ${{ needs.gather-versions.outputs.aws_lc_rs_version }} | ⏭️ Already published |" >> "$GITHUB_STEP_SUMMARY"
+            elif [[ "${{ needs.publish-aws-lc-rs.result }}" == "skipped" ]]; then
+              echo "| aws-lc-rs | ${{ needs.gather-versions.outputs.aws_lc_rs_version }} | ⏭️ Skipped |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| aws-lc-rs | ${{ needs.gather-versions.outputs.aws_lc_rs_version }} | ❌ Failed |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Verification" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${{ needs.verify-release.result }}" == "success" ]]; then
+            echo "✅ Published crates verified successfully" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${{ needs.verify-release.result }}" == "skipped" ]]; then
+            echo "⏭️ Verification skipped (no crates published)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "❌ Verification failed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Git Tags" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${{ needs.create-tags.result }}" == "success" ]]; then
+            echo "✅ Git tags created and pushed successfully" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${{ needs.create-tags.result }}" == "skipped" ]]; then
+            echo "⏭️ Tag creation skipped (no crates published)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "❌ Tag creation failed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Next Steps" >> "$GITHUB_STEP_SUMMARY"
+          echo "1. Verify the crates on crates.io:" >> "$GITHUB_STEP_SUMMARY"
+          echo "   - https://crates.io/crates/aws-lc-rs" >> "$GITHUB_STEP_SUMMARY"
+          echo "   - https://crates.io/crates/aws-lc-sys" >> "$GITHUB_STEP_SUMMARY"
+          echo "   - https://crates.io/crates/aws-lc-fips-sys" >> "$GITHUB_STEP_SUMMARY"
+          echo "2. Edit and publish the draft GitHub release:" >> "$GITHUB_STEP_SUMMARY"
+          echo "   - https://github.com/${{ github.repository }}/releases" >> "$GITHUB_STEP_SUMMARY"
+          echo "   - Move notable PRs from 'Other Merged PRs' to 'What's Changed'" >> "$GITHUB_STEP_SUMMARY"
+          echo "   - Add resolved issues and new contributors" >> "$GITHUB_STEP_SUMMARY"
