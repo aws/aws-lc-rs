@@ -4,7 +4,7 @@ This document describes the release process for the aws-lc-rs family of crates:
 
 - **aws-lc-rs** - The main Rust crypto library
 - **aws-lc-sys** - Low-level FFI bindings to AWS-LC
-- **aws-lc-fips-sys** - FIPS-validated AWS-LC bindings
+- **aws-lc-fips-sys** - Low-level FFI bindings to FIPS-validated AWS-LC
 
 ## Table of Contents
 
@@ -17,7 +17,6 @@ This document describes the release process for the aws-lc-rs family of crates:
   - [Draft Release Notes](#draft-release-notes)
 - [Manual Release Process](#manual-release-process)
 - [Post-Release Steps](#post-release-steps)
-- [Yanking a Release](#yanking-a-release)
 - [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
@@ -76,23 +75,6 @@ Before initiating a release, verify:
 - [ ] Prefix symbols are regenerated if versions changed (see `scripts/generate/`)
 - [ ] AWS-LC submodule commit hash is documented in `Cargo.toml`
 - [ ] Any new public APIs are documented
-
-### Verifying Version Configuration
-
-For `-sys` crates, the version must be reflected in multiple places:
-
-**aws-lc-sys/Cargo.toml:**
-```toml
-version = "X.Y.Z"
-links = "aws_lc_X_Y_Z"
-```
-
-**aws-lc-sys/generated-include/openssl/boringssl_prefix_symbols_asm.h:**
-```c
-#define BORINGSSL_PREFIX aws_lc_X_Y_Z
-```
-
-The same pattern applies to `aws-lc-fips-sys` with the prefix `aws_lc_fips_X_Y_Z`.
 
 ## Automated Release Process
 
@@ -204,22 +186,7 @@ After a successful release:
      - Credit new contributors
    - Click "Publish release" when ready
 
-2. **Create GitHub Release** (Manual release only)
-   - Go to https://github.com/aws/aws-lc-rs/releases/new
-   - Select the `v{version}` tag
-   - Write release notes highlighting:
-     - New features
-     - Bug fixes
-     - Breaking changes
-     - Security updates
-   - Publish the release
-
-3. **Announce the Release**
-   - Update any relevant documentation
-   - Notify dependent projects if there are breaking changes
-   - Post to relevant community channels
-
-4. **Monitor for Issues**
+2. **Monitor for Issues**
    - Watch for bug reports related to the new release
    - Be prepared to yank and re-release if critical issues are found
 

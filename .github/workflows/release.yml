@@ -53,12 +53,94 @@ jobs:
           echo "✓ Running on main branch"
 
   # =============================================================================
+  # Verify that CI workflows have passed on main branch
+  # =============================================================================
+  verify-ci-status:
+    name: Verify CI Status
+    runs-on: ubuntu-latest
+    needs: validate-branch
+    steps:
+      - name: Check CI workflow status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Checking that required CI workflows have passed on main branch..."
+
+          # Define the workflows we require to pass
+          REQUIRED_WORKFLOWS=("tests" "cross")
+          FAILED_CHECKS=()
+
+          for workflow in "${REQUIRED_WORKFLOWS[@]}"; do
+            echo "Checking workflow: ${workflow}..."
+
+            # Get the most recent completed run for this workflow on main
+            LATEST_RUN=$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "/repos/${{ github.repository }}/actions/workflows/${workflow}.yml/runs?branch=main&status=completed&per_page=1" \
+              --jq '.workflow_runs[0] | {conclusion: .conclusion, created_at: .created_at, html_url: .html_url}' 2>/dev/null || echo "")
+
+            if [[ -z "$LATEST_RUN" || "$LATEST_RUN" == "null" ]]; then
+              echo "::warning::Could not find recent runs for workflow '${workflow}'"
+              FAILED_CHECKS+=("${workflow}: no recent runs found")
+              continue
+            fi
+
+            CONCLUSION=$(echo "$LATEST_RUN" | jq -r '.conclusion // empty')
+            CREATED_AT=$(echo "$LATEST_RUN" | jq -r '.created_at // empty')
+            HTML_URL=$(echo "$LATEST_RUN" | jq -r '.html_url // empty')
+
+            echo "  Latest run: ${CREATED_AT}"
+            echo "  Conclusion: ${CONCLUSION}"
+            echo "  URL: ${HTML_URL}"
+
+            if [[ "$CONCLUSION" != "success" ]]; then
+              echo "::error::Workflow '${workflow}' has not passed (status: ${CONCLUSION})"
+              FAILED_CHECKS+=("${workflow}: ${CONCLUSION}")
+            else
+              # Check that the run is recent (within last 7 days)
+              RUN_TIMESTAMP=$(date -d "${CREATED_AT}" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "${CREATED_AT}" +%s 2>/dev/null || echo "0")
+              CURRENT_TIMESTAMP=$(date +%s)
+              SEVEN_DAYS_AGO=$((CURRENT_TIMESTAMP - 604800))
+
+              if [[ "$RUN_TIMESTAMP" -lt "$SEVEN_DAYS_AGO" ]]; then
+                echo "::warning::Workflow '${workflow}' last passed more than 7 days ago"
+                FAILED_CHECKS+=("${workflow}: last success was more than 7 days ago")
+              else
+                echo "✓ ${workflow} passed recently"
+              fi
+            fi
+          done
+
+          # Report results
+          echo ""
+          echo "## CI Status Check Results" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ ${#FAILED_CHECKS[@]} -gt 0 ]]; then
+            echo "::warning::Some required CI checks have not passed:"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "⚠️ **Warning: Some CI checks have not passed:**" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            for check in "${FAILED_CHECKS[@]}"; do
+              echo "  - ${check}"
+              echo "- ${check}" >> "$GITHUB_STEP_SUMMARY"
+            done
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Please verify CI workflows pass on main before approving the release.**" >> "$GITHUB_STEP_SUMMARY"
+            echo ""
+            echo "⚠️  Proceeding with release workflow, but manual verification recommended."
+          else
+            echo "✓ All required CI workflows have passed"
+            echo "✅ All required CI workflows have passed on main branch" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # =============================================================================
   # Gather version information and validate inputs
   # =============================================================================
   gather-versions:
     name: Gather Version Information
     runs-on: ubuntu-latest
-    needs: validate-branch
+    needs: verify-ci-status
     outputs:
       aws_lc_rs_version: ${{ steps.versions.outputs.aws_lc_rs_version }}
       aws_lc_sys_version: ${{ steps.versions.outputs.aws_lc_sys_version }}
@@ -404,24 +486,77 @@ jobs:
       - name: Verify dependency versions match
         run: |
           SYS_VERSION="${{ needs.gather-versions.outputs.aws_lc_sys_version }}"
+          FIPS_SYS_VERSION="${{ needs.gather-versions.outputs.aws_lc_fips_sys_version }}"
+          VALIDATION_FAILED=false
+
+          echo "=== Checking aws-lc-sys dependency ==="
 
           # Extract the aws-lc-sys version dependency from aws-lc-rs/Cargo.toml
-          DEP_VERSION=$(grep -A5 'dependencies.aws-lc-sys' aws-lc-rs/Cargo.toml | grep 'version' | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/' | sed 's/[^0-9.]//g')
+          SYS_DEP_VERSION=$(grep -A5 'dependencies.aws-lc-sys' aws-lc-rs/Cargo.toml | grep 'version' | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/' | sed 's/[^0-9.]//g')
 
           # If the above didn't work, try the inline format
-          if [[ -z "$DEP_VERSION" ]]; then
-            DEP_VERSION=$(grep 'aws-lc-sys.*version' aws-lc-rs/Cargo.toml | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/' | sed 's/[^0-9.]//g')
+          if [[ -z "$SYS_DEP_VERSION" ]]; then
+            SYS_DEP_VERSION=$(grep 'aws-lc-sys.*version' aws-lc-rs/Cargo.toml | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/' | sed 's/[^0-9.]//g')
           fi
 
           echo "aws-lc-sys version in workspace: $SYS_VERSION"
-          echo "aws-lc-sys dependency in aws-lc-rs: $DEP_VERSION"
+          echo "aws-lc-sys dependency in aws-lc-rs: $SYS_DEP_VERSION"
 
-          if [[ -n "$DEP_VERSION" && "$DEP_VERSION" != "$SYS_VERSION" ]]; then
-            echo "ERROR: aws-lc-rs depends on aws-lc-sys $DEP_VERSION, but workspace has $SYS_VERSION"
+          if [[ -n "$SYS_DEP_VERSION" && "$SYS_DEP_VERSION" != "$SYS_VERSION" ]]; then
+            echo "::error::aws-lc-rs depends on aws-lc-sys $SYS_DEP_VERSION, but workspace has $SYS_VERSION"
             echo "Please update the dependency version in aws-lc-rs/Cargo.toml"
+            VALIDATION_FAILED=true
+          else
+            echo "✓ aws-lc-sys dependency version verified"
+          fi
+
+          echo ""
+          echo "=== Checking aws-lc-fips-sys dependency ==="
+
+          # Extract the aws-lc-fips-sys version dependency from aws-lc-rs/Cargo.toml
+          FIPS_DEP_VERSION=$(grep -A5 'dependencies.aws-lc-fips-sys' aws-lc-rs/Cargo.toml | grep 'version' | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/' | sed 's/[^0-9.]//g')
+
+          # If the above didn't work, try the inline format
+          if [[ -z "$FIPS_DEP_VERSION" ]]; then
+            FIPS_DEP_VERSION=$(grep 'aws-lc-fips-sys.*version' aws-lc-rs/Cargo.toml | head -1 | sed 's/.*version = "\([^"]*\)".*/\1/' | sed 's/[^0-9.]//g')
+          fi
+
+          echo "aws-lc-fips-sys version in workspace: $FIPS_SYS_VERSION"
+          echo "aws-lc-fips-sys dependency in aws-lc-rs: $FIPS_DEP_VERSION"
+
+          if [[ -n "$FIPS_DEP_VERSION" && "$FIPS_DEP_VERSION" != "$FIPS_SYS_VERSION" ]]; then
+            echo "::error::aws-lc-rs depends on aws-lc-fips-sys $FIPS_DEP_VERSION, but workspace has $FIPS_SYS_VERSION"
+            echo "Please update the dependency version in aws-lc-rs/Cargo.toml"
+            VALIDATION_FAILED=true
+          else
+            echo "✓ aws-lc-fips-sys dependency version verified"
+          fi
+
+          echo ""
+          echo "## Dependency Version Check" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Dependency | Workspace Version | aws-lc-rs Depends On | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------------|-------------------|----------------------|--------|" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -n "$SYS_DEP_VERSION" && "$SYS_DEP_VERSION" != "$SYS_VERSION" ]]; then
+            echo "| aws-lc-sys | ${SYS_VERSION} | ${SYS_DEP_VERSION} | ❌ Mismatch |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| aws-lc-sys | ${SYS_VERSION} | ${SYS_DEP_VERSION} | ✅ Match |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [[ -n "$FIPS_DEP_VERSION" && "$FIPS_DEP_VERSION" != "$FIPS_SYS_VERSION" ]]; then
+            echo "| aws-lc-fips-sys | ${FIPS_SYS_VERSION} | ${FIPS_DEP_VERSION} | ❌ Mismatch |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| aws-lc-fips-sys | ${FIPS_SYS_VERSION} | ${FIPS_DEP_VERSION} | ✅ Match |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [[ "$VALIDATION_FAILED" == "true" ]]; then
+            echo ""
+            echo "::error::Dependency version validation failed"
             exit 1
           fi
-          echo "✓ Dependency versions verified"
+
+          echo ""
+          echo "✓ All dependency versions verified"
 
       - name: Run cargo clippy
         working-directory: aws-lc-rs
