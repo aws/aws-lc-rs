@@ -109,7 +109,7 @@ impl<R> FipsServiceStatus<R> {
 
 macro_rules! indicator_check {
     ($function:expr) => {{
-        #[cfg(all(feature = "fips", debug_assertions))]
+        #[cfg(all(not(feature = "panic_on_fips"), feature = "fips", debug_assertions))]
         {
             use crate::fips::{service_indicator_after_call, service_indicator_before_call};
             let before = service_indicator_before_call();
@@ -123,7 +123,17 @@ macro_rules! indicator_check {
                 result
             }
         }
-        #[cfg(any(not(feature = "fips"), not(debug_assertions)))]
+        #[cfg(feature = "panic_on_fips")]
+        {
+            //crate::fips::panic_fips_disabled()
+            panic!("FIPS operations not allowed by 'panic_on_fips' feature.");
+            #[allow(unreachable_code)]
+            $function
+        }
+        #[cfg(all(
+            not(feature = "panic_on_fips"),
+            any(not(feature = "fips"), not(debug_assertions))
+        ))]
         {
             $function
         }
