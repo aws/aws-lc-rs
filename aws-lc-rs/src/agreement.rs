@@ -327,37 +327,37 @@ impl PrivateKey {
         Ok(Self::new(alg, evp_pkey))
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     #[allow(missing_docs, clippy::missing_errors_doc)]
     pub fn generate_for_test(
         alg: &'static Algorithm,
-        rng: &dyn crate::rand::SecureRandom,
+        rng: &mut dyn crate::rand::SecureRandom,
     ) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
                 let mut priv_key = [0u8; AlgorithmID::X25519.private_key_len()];
-                rng.fill(&mut priv_key)?;
+                rng.mut_fill(&mut priv_key)?;
                 Self::from_x25519_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P256 => {
                 let mut priv_key = [0u8; AlgorithmID::ECDH_P256.private_key_len()];
-                rng.fill(&mut priv_key)?;
+                rng.mut_fill(&mut priv_key)?;
                 Self::from_p256_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P384 => {
                 let mut priv_key = [0u8; AlgorithmID::ECDH_P384.private_key_len()];
-                rng.fill(&mut priv_key)?;
+                rng.mut_fill(&mut priv_key)?;
                 Self::from_p384_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P521 => {
                 let mut priv_key = [0u8; AlgorithmID::ECDH_P521.private_key_len()];
-                rng.fill(&mut priv_key)?;
+                rng.mut_fill(&mut priv_key)?;
                 Self::from_p521_private_key(&priv_key)
             }
         }
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     fn from_x25519_private_key(
         priv_key: &[u8; AlgorithmID::X25519.private_key_len()],
     ) -> Result<Self, Unspecified> {
@@ -368,7 +368,7 @@ impl PrivateKey {
         })
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = parse_sec1_private_bn(priv_key, ECDH_P256.id.nid())?;
         Ok(PrivateKey {
@@ -376,7 +376,7 @@ impl PrivateKey {
         })
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = parse_sec1_private_bn(priv_key, ECDH_P384.id.nid())?;
         Ok(PrivateKey {
@@ -384,7 +384,7 @@ impl PrivateKey {
         })
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     fn from_p521_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = parse_sec1_private_bn(priv_key, ECDH_P521.id.nid())?;
         Ok(PrivateKey {

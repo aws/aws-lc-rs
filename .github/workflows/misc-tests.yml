@@ -92,3 +92,46 @@ jobs:
           cargo +nightly doc -p aws-lc-rs
           cargo +nightly doc -p aws-lc-sys
           cargo +nightly doc -p aws-lc-fips-sys
+
+  dev-tests-only-feature:
+    if: github.repository_owner == 'aws'
+    name: dev-tests-only feature tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Run unsealed_rand_test with env var
+        env:
+          AWS_LC_RS_DEV_TESTS_ONLY: "1"
+        working-directory: ./aws-lc-rs
+        run: cargo test --test unsealed_rand_test
+
+      - name: Run unsealed_rand_test with feature flag
+        working-directory: ./aws-lc-rs
+        run: cargo test --features dev-tests-only --test unsealed_rand_test
+
+      - name: Verify release build fails with dev-tests-only feature
+        working-directory: ./aws-lc-rs
+        run: |
+          if cargo build --release --features dev-tests-only 2>&1; then
+            echo "ERROR: Release build should have failed with dev-tests-only feature"
+            exit 1
+          else
+            echo "SUCCESS: Release build correctly failed with dev-tests-only feature"
+          fi
+
+      - name: Verify release build fails with AWS_LC_RS_DEV_TESTS_ONLY env var
+        env:
+          AWS_LC_RS_DEV_TESTS_ONLY: "1"
+        working-directory: ./aws-lc-rs
+        run: |
+          if cargo build --release 2>&1; then
+            echo "ERROR: Release build should have failed with AWS_LC_RS_DEV_TESTS_ONLY=1"
+            exit 1
+          else
+            echo "SUCCESS: Release build correctly failed with AWS_LC_RS_DEV_TESTS_ONLY=1"
+          fi
