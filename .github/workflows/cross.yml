@@ -56,8 +56,7 @@ jobs:
           - [ i686-unknown-linux-gnu, 0, 0, 1]
           - [ mips-unknown-linux-gnu, 0, 1, 0]
           - [ mips-unknown-linux-musl, 0, 1, 0]
-          # Pending: https://github.com/aws/aws-lc-rs/issues/522
-          # - [ mips64-unknown-linux-muslabi64, 0, 1, 0]
+          - [ mips64-unknown-linux-muslabi64, 0, 1, 0]
           - [ mips64el-unknown-linux-muslabi64, 0, 1, 0]
           - [ powerpc-unknown-linux-gnu, 1, 0, 1]
           - [ powerpc64-unknown-linux-gnu, 1, 0, 1]
@@ -125,7 +124,7 @@ jobs:
   # build correctly with the cc-builder. See: https://github.com/aws/aws-lc-rs/issues/1006
   aws-lc-rs-android-old-api:
     if: github.repository_owner == 'aws'
-    name: Android API ${{ matrix.api }} - ${{ matrix.target }}
+    name: Android API ${{ matrix.api }} - ${{ matrix.target }} ${{ matrix.test_target_cc && '(TARGET_CC test)' || '' }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -143,6 +142,10 @@ jobs:
             api: 21
           - target: i686-linux-android
             api: 21
+          # Add test case for TARGET_CC preference
+          - target: aarch64-linux-android
+            api: 21
+            test_target_cc: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -167,8 +170,25 @@ jobs:
 
           NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
 
-          # Set compiler with API level
-          echo "CC_${{ matrix.target }}=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang" >> $GITHUB_ENV
+          # For the TARGET_CC test case, set both CC/CXX and TARGET_CC/CXX
+          if [ "${{ matrix.test_target_cc }}" = "true" ]; then
+            # Set regular CC/CXX to non-existent compiler to verify they're not used
+            echo "CC=${NDK_BIN}/non-existent-clang" >> $GITHUB_ENV
+            echo "CXX=${NDK_BIN}/non-existent-clang++" >> $GITHUB_ENV
+
+            # Set TARGET_CC/CXX to the correct compilers - these should be preferred
+            echo "TARGET_CC=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang" >> $GITHUB_ENV
+            echo "TARGET_CXX=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang++" >> $GITHUB_ENV
+
+            # Print for debugging
+            echo "Testing TARGET_CC/CXX preference:"
+            echo "CC=${CC}"
+            echo "TARGET_CC=${TARGET_CC}"
+          else
+            # Set compiler with API level (original behavior)
+            echo "CC_${{ matrix.target }}=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang" >> $GITHUB_ENV
+          fi
+
           echo "AR_${{ matrix.target }}=${NDK_BIN}/llvm-ar" >> $GITHUB_ENV
           echo "RANLIB_${{ matrix.target }}=${NDK_BIN}/llvm-ranlib" >> $GITHUB_ENV
 
@@ -552,6 +572,27 @@ jobs:
       - name: Build
         run: |
           docker run -v "${{ github.workspace }}:/aws_lc_rs" alpine:3.20
+
+  openwrt-sdk:
+    # Test for OpenWrt cross-compilation environment
+    # Verifies fix for https://github.com/aws/aws-lc-rs/issues/1009
+    # OpenWrt sets CC to host compiler and TARGET_CC to cross compiler
+    if: github.repository_owner == 'aws'
+    name: OpenWrt SDK (aarch64-musl)
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Build Docker Image
+        working-directory: .github/docker_images/openwrt-24.10
+        run: |
+          ./build_image.sh
+      - name: Build
+        run: |
+          docker run -v "${{ github.workspace }}:/aws_lc_rs" openwrt:24.10
 
   msys2:
     name: msys2 ${{ matrix.sys }} - ${{ matrix.nasm }}, ${{ matrix.generator }}
