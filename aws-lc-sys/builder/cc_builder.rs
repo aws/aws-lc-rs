@@ -449,7 +449,10 @@ impl CcBuilder {
             // Certain MacOS system headers are guarded by _POSIX_C_SOURCE and _DARWIN_C_SOURCE
             je_builder.define("_DARWIN_C_SOURCE", "1");
         }
-        je_builder.pic(true);
+        // Only enable PIC on non-Windows targets. Windows doesn't support -fPIC.
+        if target_os() != "windows" {
+            je_builder.pic(true);
+        }
         if is_like_msvc {
             je_builder.flag("-Od").flag("-W4").flag("-DYNAMICBASE");
         } else {
