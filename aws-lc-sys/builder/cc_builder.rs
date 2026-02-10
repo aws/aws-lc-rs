@@ -20,8 +20,8 @@ mod win_x86_64;
 use crate::nasm_builder::NasmBuilder;
 use crate::{
     cargo_env, disable_jitter_entropy, emit_warning, env_var_to_bool, execute_command,
-    get_crate_cflags, is_no_asm, optional_env_optional_crate_target, optional_env_target, out_dir,
-    requested_c_std, set_env_for_target, target, target_arch, target_env, target_os, target_vendor,
+    get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm, out_dir, requested_c_std,
+    set_env_for_target, target, target_arch, target_env, target_os, target_vendor,
     test_clang_cl_command, CStdRequested, OutputLibType,
 };
 use std::cell::Cell;
@@ -211,10 +211,10 @@ impl CcBuilder {
             }
         }
 
-        if let Some(cc) = optional_env_optional_crate_target("CC") {
+        if let Some(cc) = get_crate_cc() {
             set_env_for_target("CC", &cc);
         }
-        if let Some(cxx) = optional_env_optional_crate_target("CXX") {
+        if let Some(cxx) = get_crate_cxx() {
             set_env_for_target("CXX", &cxx);
         }
 
@@ -358,8 +358,7 @@ impl CcBuilder {
     }
 
     pub fn prepare_builder(&self) -> cc::Build {
-        let cflags = get_crate_cflags();
-        if !cflags.is_empty() {
+        if let Some(cflags) = get_crate_cflags() {
             set_env_for_target("CFLAGS", cflags);
         }
 
@@ -431,7 +430,7 @@ impl CcBuilder {
             option.apply_cc(&mut je_builder);
         }
 
-        if let Some(original_cflags) = optional_env_target("CFLAGS") {
+        if let Some(original_cflags) = get_crate_cflags() {
             let mut new_cflags = original_cflags.clone();
             if is_like_msvc {
                 new_cflags.push_str(" -Od");
@@ -774,7 +773,7 @@ impl crate::Builder for CcBuilder {
         if target_os() == "windows"
             && target_arch() == "aarch64"
             && target_env() == "msvc"
-            && optional_env_optional_crate_target("CC").is_none()
+            && get_crate_cc().is_none()
             && test_clang_cl_command()
         {
             set_env_for_target("CC", "clang-cl");
