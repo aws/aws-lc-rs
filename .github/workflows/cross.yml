@@ -52,7 +52,6 @@ jobs:
           - [ arm-unknown-linux-musleabihf, 1, 0, 1]
           - [ armv7-linux-androideabi, 0, 0, 1]
           - [ armv7-unknown-linux-gnueabihf, 0, 0, 1]
-          - [ i686-pc-windows-gnu, 0, 0, 1]
           - [ i686-unknown-linux-gnu, 0, 0, 1]
           - [ mips-unknown-linux-gnu, 0, 1, 0]
           - [ mips-unknown-linux-musl, 0, 1, 0]
