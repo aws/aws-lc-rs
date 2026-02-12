@@ -45,7 +45,7 @@ mod [<$pkg _benchmarks>]  {
 
     use $pkg::{aead, error};
 
-    use criterion::black_box;
+    use std::hint::black_box;
     use crate::AeadConfig;
     use aead::{
         Aad, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, Tag, UnboundKey,
