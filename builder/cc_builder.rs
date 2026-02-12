@@ -203,10 +203,12 @@ impl CcBuilder {
                 build_options.push(BuildOption::std("c11"));
             }
             CStdRequested::None => {
-                if self.compiler_check("c11", Vec::<String>::new()) {
-                    build_options.push(BuildOption::std("c11"));
-                } else {
-                    build_options.push(BuildOption::std("c99"));
+                if !compiler_is_msvc {
+                    if self.compiler_check("c11", Vec::<String>::new()) {
+                        build_options.push(BuildOption::std("c11"));
+                    } else {
+                        build_options.push(BuildOption::std("c99"));
+                    }
                 }
             }
         }
