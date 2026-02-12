@@ -284,7 +284,7 @@ jobs:
         run: |
           sed 's/#\[link_name = "\\u{1}aws_lc_/#[link_name = "aws_lc_/g' universal_crypto.rs > universal_no_u1_crypto.rs
       - name: Create prefixed bindings with the \u{1} stripped
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'macos-latest'
         working-directory: aws-lc-sys/src
         run: |
           sed 's/#\[link_name = "\\u{1}_aws_lc_/#[link_name = "aws_lc_/g' universal_prefixed_crypto.rs > universal_no_u1_prefixed_crypto.rs

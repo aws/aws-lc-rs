@@ -653,6 +653,14 @@ impl CcBuilder {
     // This should be kept in alignment with the same check performed by the CMake build.
     // See: https://github.com/search?q=repo%3Aaws%2Faws-lc%20check_run&type=code
     fn memcmp_check(&self) {
+        // This check compiles, links, and executes a test program. When cross-compiling
+        // (HOST != TARGET), we cannot execute the resulting binary, so we skip this check.
+        // This also avoids linker configuration issues with cross-compilation toolchains
+        // (e.g., cross-rs Darwin toolchains that set invalid -fuse-ld= flags in CFLAGS).
+        if cargo_env("HOST") != target() {
+            return;
+        }
+
         let basename = "memcmp_invalid_stripped_check";
         let exec_path = out_dir().join(basename);
         let memcmp_build = cc::Build::default();
@@ -707,24 +715,21 @@ impl CcBuilder {
             memcmp_compile_result.stdout
         );
 
-        // We can only execute the binary when the host and target platforms match.
-        if cargo_env("HOST") == target() {
-            let result = execute_command(exec_path.as_os_str(), &[]);
-            assert!(
-                result.status,
-                "### COMPILER BUG DETECTED ###\nYour compiler ({}) is not supported due to a memcmp related bug reported in \
-                https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189. \
-                We strongly recommend against using this compiler. \n\
-                EXECUTED: {}\n\
-                ERROR: {}\n\
-                OUTPUT: {}\n\
-                ",
-                memcmp_compiler.path().display(),
-                memcmp_compile_result.executed,
-                memcmp_compile_result.stderr,
-                memcmp_compile_result.stdout
-            );
-        }
+        let result = execute_command(exec_path.as_os_str(), &[]);
+        assert!(
+            result.status,
+            "### COMPILER BUG DETECTED ###\nYour compiler ({}) is not supported due to a memcmp related bug reported in \
+            https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189. \
+            We strongly recommend against using this compiler. \n\
+            EXECUTED: {}\n\
+            ERROR: {}\n\
+            OUTPUT: {}\n\
+            ",
+            memcmp_compiler.path().display(),
+            memcmp_compile_result.executed,
+            memcmp_compile_result.stderr,
+            memcmp_compile_result.stdout
+        );
         let _ = fs::remove_file(exec_path);
     }
     fn run_compiler_checks(&self, cc_build: &mut cc::Build) {
