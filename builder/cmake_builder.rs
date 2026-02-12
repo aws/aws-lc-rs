@@ -169,9 +169,12 @@ impl CmakeBuilder {
         if target_os() == "windows" {
             if is_fips_build() {
                 let opt_level = cargo_env("OPT_LEVEL");
-                if opt_level.eq("0") || opt_level.eq("1") || opt_level.eq("2") {
-                    cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
-                }
+                let build_type = if opt_level.eq("0") || opt_level.eq("1") || opt_level.eq("2") {
+                    "RELWITHDEBINFO"
+                } else {
+                    "RELEASE"
+                };
+                cmake_cfg.define("CMAKE_BUILD_TYPE", build_type);
             } else if use_prebuilt_nasm() {
                 self.configure_prebuilt_nasm(&mut cmake_cfg);
             }

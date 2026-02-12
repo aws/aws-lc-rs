@@ -65,6 +65,7 @@ disable-prebuilt-nasm = []
 prebuilt-nasm = []
 all-bindings = []
 default = ['all-bindings']
+fips = ['dep:bindgen']
 
 [build-dependencies]
 cmake.workspace = true
