@@ -4,12 +4,12 @@
 
 For non-FIPS builds on Windows, the following requirements apply:
 
-| Platform                  | *default*                      | **fips**                                |
-|---------------------------|--------------------------------|-----------------------------------------|
-| `x86_64-pc-windows-msvc`  | C/C++ Compiler & \*NASM        | C/C++ Compiler, CMake, NASM, Go & Ninja |
-| `x86_64-pc-windows-gnu`   | C/C++ Compiler & \*NASM        | **Not Supported**                       |
-| `i686-pc-windows-msvc`    | C/C++ Compiler & NASM          | **Not Supported**                       |
-| `aarch64-pc-windows-msvc` | C/C++ Compiler (clang-cl)      | **Not Supported**                       |
+| Platform                  | *default*                      | **fips**                                     |
+|---------------------------|--------------------------------|----------------------------------------------|
+| `x86_64-pc-windows-msvc`  | C/C++ Compiler & \*NASM        | C/C++ Compiler, CMake, NASM, Go & Ninja      |
+| `x86_64-pc-windows-gnu`   | C/C++ Compiler & \*NASM        | **Not Supported**                            |
+| `i686-pc-windows-msvc`    | C/C++ Compiler & NASM          | **Not Supported**                            |
+| `aarch64-pc-windows-msvc` | C/C++ Compiler (clang-cl)      | C/C++ Compiler (clang-cl), CMake, Go & Ninja |
 
 \* NASM is recommended on x86-64 but can be avoided using prebuilt NASM objects. See the
 [Prebuilt NASM objects](#prebuilt-nasm-objects) section below.
