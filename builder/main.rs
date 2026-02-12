@@ -104,7 +104,7 @@ impl Drop for EnvGuard {
 }
 
 fn is_fips_build() -> bool {
-    cfg!(feature = "fips")
+    is_fips_crate() || cfg!(feature = "fips")
 }
 
 fn is_fips_crate() -> bool {
@@ -770,6 +770,7 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_unknown_linux_musl)");
+        println!("cargo:rustc-check-cfg=cfg(cpu_jitter_entropy)");
         println!("cargo:rustc-check-cfg=cfg(i686_pc_windows_msvc)");
         println!("cargo:rustc-check-cfg=cfg(i686_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(riscv64gc_unknown_linux_gnu)");
