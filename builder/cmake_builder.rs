@@ -88,8 +88,24 @@ impl CmakeBuilder {
         cmake_cfg
     }
 
+    const GOCACHE_DIR_NAME: &'static str = "go-cache";
+
     #[allow(clippy::too_many_lines)]
     fn prepare_cmake_build(&self) -> cmake::Config {
+        if is_fips_build() {
+            unsafe {
+                env::set_var("GOFLAGS", "-buildvcs=false");
+            }
+            if env::var("GOCACHE").is_err() {
+                unsafe {
+                    env::set_var(
+                        "GOCACHE",
+                        self.out_dir.join(Self::GOCACHE_DIR_NAME).as_os_str(),
+                    );
+                }
+            }
+        }
+
         let mut cmake_cfg = self.get_cmake_config();
         if let Some(generator) = optional_env_optional_crate_target("CMAKE_GENERATOR") {
             set_env("CMAKE_GENERATOR", generator);
