@@ -8,7 +8,7 @@ build targets.
 | Platform                     | `aws-lc-sys` | `aws-lc-fips-sys` | 
 |------------------------------|--------------|-------------------|
 | `aarch64-apple-darwin`       | ✓            | ✓                 | 
-| `aarch64-pc-windows-msvc`    | ✓            | **Not Supported** |
+| `aarch64-pc-windows-msvc`    | ✓            | ✓ ²               |
 | `aarch64-unknown-linux-gnu`  | ✓            | ✓                 |
 | `aarch64-unknown-linux-musl` | ✓            | ✓                 |
 | `i686-pc-windows-msvc`       | ✓            | **Not Supported** |
@@ -19,7 +19,7 @@ build targets.
 | `x86_64-unknown-linux-gnu`   | ✓            | ✓                 |
 | `x86_64-unknown-linux-musl`  | ✓            | ✓                 |
 
-² FIPS is supported but requires bindgen (no pre-generated FIPS bindings are available for Windows)
+² FIPS is supported but requires bindgen (no pre-generated FIPS bindings are available for Windows platforms)
 
 ## Tested platforms
 
@@ -102,7 +102,7 @@ cargo install --force --locked bindgen-cli
 
 | Platform                  | Build | Tests | FIPS  |
 |---------------------------|-------|-------|-------|
-| `aarch64-pc-windows-msvc` | ✓     | ✓     |       |
+| `aarch64-pc-windows-msvc` | ✓     | ✓     | ✓     |
 | `i686-pc-windows-msvc`    | ✓     | ✓     |       |
 | `x86_64-pc-windows-gnu`   | ✓     | ✓     |       |
 | `x86_64-pc-windows-msvc`  | ✓     | ✓     | ✓     |

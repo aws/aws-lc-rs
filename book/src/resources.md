@@ -28,8 +28,8 @@ The target-specific variant takes precedence when both are set.
 
   Default: static library
 
-  > **Note:** For `aws-lc-fips-sys`, static library builds are only supported on Linux targets.
-  > On other platforms (macOS, Windows), FIPS builds produce shared libraries.
+  > **Note:** For `aws-lc-fips-sys`, static library builds are only supported on Linux and BSD targets
+  > with x86_64 or aarch64 architectures. On other platforms, FIPS builds to shared libraries.
 
 ### Build System
 
@@ -39,14 +39,14 @@ The target-specific variant takes precedence when both are set.
   - `1` - Force use of CMake
   - `0` - Force use of the `cc` crate builder
 
-  Default: The `cc` crate builder is used by default. **CMake is never required for `aws-lc-sys`.**
+  Default: The `cc` crate builder is used by default. **CMake is not required for `aws-lc-sys`.**
 
   > **Note:** The `aws-lc-fips-sys` crate always requires CMake and does not support this option.
 
 * **`AWS_LC_SYS_NO_PREGENERATED_SRC`**
 
-  When set to `1`, forces the build to use CMake instead of pre-generated source file lists.
-  This can be useful when building with custom configurations.
+  When set to `1`, forces the build to generate CMake source files instead of using
+  pre-generated ones.
 
 ### Bindings Generation
 
@@ -56,10 +56,10 @@ The target-specific variant takes precedence when both are set.
   - `1` - Use external `bindgen-cli` (must be installed via `cargo install bindgen-cli`)
   - `0` - Use internal bindgen or pre-generated bindings
 
-  > **Note:** For users of `aws-lc-rs`, bindgen is never required. The crate provides universal
-  > bindings that work across all supported platforms. This option is primarily useful for
-  > direct consumers of `aws-lc-sys` who need complete API bindings on platforms without
-  > pre-generated bindings.
+  > **Note:** For users of `aws-lc-rs`, bindgen is never required. `aws-lc-sys` provides universal
+  > bindings that work for users of `aws-lc-rs` across all supported platforms. This option
+  > is primarily useful for direct consumers of `aws-lc-sys` who need complete API bindings
+  > on platforms without pre-generated bindings.
 
 * **`AWS_LC_SYS_NO_PREFIX`** | **`AWS_LC_FIPS_SYS_NO_PREFIX`**
 
@@ -70,8 +70,8 @@ The target-specific variant takes precedence when both are set.
 * **`AWS_LC_SYS_NO_U1_BINDINGS`**
 
   When set to `1`, uses bindings that don't include the `\x01` prefix on symbol names.
-  This is automatically enabled for certain backends (like Cranelift) that don't support
-  the prefixed symbols.
+  This is automatically enabled for certain backends (like Cranelift) and architectures
+  (like MIPS) that don't support the prefixed symbols.
 
 ### Assembly and Optimization
 
@@ -80,8 +80,8 @@ The target-specific variant takes precedence when both are set.
   When set to `1`, forces the build to use pure C implementations for all cryptographic
   operations instead of optimized assembly.
 
-  > **Note**: This option is only available for unoptimized builds (i.e., `OPT_LEVEL = "0"`
-  > or debug builds).
+  > **Note**: When using the CMake builder, this option is only available when `OPT_LEVEL = "0"`.
+  > When using the `cc` crate builder, this option is available for optimization levels 0, 1, and 2.
 
   > **WARNING**: Performance on most platforms is extremely limited by this option. Certain security
   > properties, such as resistance to timing attacks, can only be provided when assembly code is used.
@@ -120,17 +120,28 @@ The target-specific variant takes precedence when both are set.
 
   Default: C11 on most platforms.
 
+### Entropy Configuration
+
+* **`AWS_LC_SYS_NO_JITTER_ENTROPY`**
+
+  When set to `1`, disables the CPU jitter entropy source in the build. This affects the
+  random number generation subsystem. Use of jitter entropy has a one-time-per-process
+  latency cost, typically around 50ms, for the collection of entropy. This flag may be
+  used to eliminate this latency.
+
+  > **Note:** This option is only available for `aws-lc-sys`.
+
 ### Advanced Options
 
 * **`AWS_LC_SYS_EFFECTIVE_TARGET`**
 
-  Overrides the detected target triple. This can be useful for cross-compilation scenarios
-  where the automatic target detection doesn't work correctly.
+  Overrides the target triple string used for certain build decisions. This affects selection of pre-generated bindings.
 
-* **`AWS_LC_SYS_NO_JITTER_ENTROPY`**
-
-  When set to `1`, disables the jitter entropy source. This may be useful on platforms
-  where jitter entropy is not available or causes issues.
+  > **Note:** This variable does **not** override the underlying Cargo target configuration
+  > (`CARGO_CFG_TARGET_*` variables). Build decisions that depend on `target_os()`,
+  > `target_arch()`, `target_vendor()`, or `target_env()` are not affected by this setting.
+  > It is primarily useful for selecting different pre-generated bindings or symbol prefixes
+  > when building for targets that are compatible with another target's bindings.
 
 ## Links
 

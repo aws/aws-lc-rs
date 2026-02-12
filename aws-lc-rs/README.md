@@ -19,7 +19,6 @@ using `Cargo.toml`:
 [dependencies]
 aws-lc-rs = "1"
 ```
-
 Consuming projects will need a C/C++ compiler to build.
 
 **Non-FIPS builds (default):**
@@ -141,8 +140,8 @@ behavior is observably different.
 
 * Our implementation requires the `std` library. We currently do not support a
   [`#![no_std]`](https://docs.rust-embedded.org/book/intro/no-std.html) build.
-* We can only support a subset of the platforms supported by `aws-lc-sys`. See the list of
-  supported platforms above.
+* `aws-lc-rs` supports the platforms supported by `aws-lc-sys` and AWS-LC. See the
+  [Platform Support](https://aws.github.io/aws-lc-rs/platform_support.html) page in our User Guide.
 * `Ed25519KeyPair::from_pkcs8` and `Ed25519KeyPair::from_pkcs8_maybe_unchecked` both support
   parsing of v1 or v2 PKCS#8 documents. If a v2 encoded key is provided to either function,
   public key component, if present, will be verified to match the one derived from the encoded

@@ -20,8 +20,8 @@ there are additional build tools required for building these crates into your Ru
 used by `aws-lc-rs`. These bindings work across all supported platforms, so **bindgen is never
 required** for `aws-lc-rs` users.
 
-> **Note:** If you take a direct dependency on `aws-lc-sys` (not through `aws-lc-rs`), you may want
-> to use the more complete target-specific bindings. See the pre-generated bindings in
+> **Note:** If you take a direct dependency on `aws-lc-sys` (not through `aws-lc-rs`), it defaults
+> to using the more complete target-specific bindings. See the pre-generated bindings in
 > [`aws-lc-sys/src/`](https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/src).
 
 **FIPS (`aws-lc-fips-sys`):** Pre-generated bindings are available for a limited set of targets.
