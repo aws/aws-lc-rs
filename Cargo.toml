@@ -29,7 +29,7 @@ zeroize = "1.8.1"
 # a dev-dependency or only used outside of our public crates.
 # These can be updated to the latest versions.
 clap = "4.4"
-criterion = "0.5.1"
+criterion = "0.8.2"
 hex = "0.4.3"
 lazy_static = "1.5.0"
 openssl = "0.10.73"
