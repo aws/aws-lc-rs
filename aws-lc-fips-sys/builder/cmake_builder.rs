@@ -120,6 +120,14 @@ impl CmakeBuilder {
             emit_warning(&format!("Setting CXX: {cxx}"));
         }
 
+        // For ARM64 Windows, we use clang-cl for all compilation because MSVC's cl.exe
+        // doesn't support GAS-style assembly syntax used in .S files. Setting CC/CXX
+        // here ensures cmake-rs detects the compiler correctly.
+        if target_os() == "windows" && target_arch() == "aarch64" {
+            env::set_var("CC", "clang-cl");
+            env::set_var("CXX", "clang-cl");
+        }
+
         let cc_build = cc::Build::new();
         let opt_level = cargo_env("OPT_LEVEL");
         if opt_level.ne("0") {
@@ -272,6 +280,30 @@ impl CmakeBuilder {
 
         if target_os() == "windows" {
             cmake_cfg.generator("Ninja");
+
+            // For ARM64 Windows, we use clang-cl for all compilation (C, C++, ASM).
+            // We must set the target triples for cross-compilation and explicitly use
+            // MSVC's link.exe to ensure proper linker flags (ws2_32.lib vs -lws2_32).
+            // Note: CC/CXX environment variables are set earlier in this function.
+            if target_arch() == "aarch64" {
+                cmake_cfg.define("CMAKE_C_COMPILER", "clang-cl");
+                cmake_cfg.define("CMAKE_CXX_COMPILER", "clang-cl");
+                cmake_cfg.define("CMAKE_ASM_COMPILER", "clang-cl");
+                cmake_cfg.define("CMAKE_C_COMPILER_TARGET", "aarch64-pc-windows-msvc");
+                cmake_cfg.define("CMAKE_CXX_COMPILER_TARGET", "aarch64-pc-windows-msvc");
+                cmake_cfg.define("CMAKE_ASM_COMPILER_TARGET", "aarch64-pc-windows-msvc");
+                // Tell CMake that clang-cl uses the MSVC frontend, which ensures
+                // proper MSVC-style linker flags (ws2_32.lib instead of -lws2_32).
+                cmake_cfg.define("CMAKE_C_COMPILER_FRONTEND_VARIANT", "MSVC");
+                cmake_cfg.define("CMAKE_CXX_COMPILER_FRONTEND_VARIANT", "MSVC");
+                // Explicitly use MSVC's linker and archiver tools. Without this,
+                // CMake looks for these tools in the clang-cl directory (LLVM),
+                // but lib.exe and link.exe are MSVC tools, not LLVM tools.
+                // The vcvarsall.bat environment ensures these resolve correctly.
+                cmake_cfg.define("CMAKE_LINKER", "link");
+                cmake_cfg.define("CMAKE_AR", "lib");
+            }
+
             let env_map = self
                 .collect_vcvarsall_bat()
                 .map_err(|x| panic!("{}", x))

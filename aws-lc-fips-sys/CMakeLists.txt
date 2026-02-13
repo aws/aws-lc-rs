@@ -10,6 +10,13 @@ if(CMAKE_VERSION VERSION_GREATER "3.14")
 cmake_policy(SET CMP0091 OLD)
 endif()
 
+if(POLICY CMP0141)
+# https://cmake.org/cmake/help/latest/policy/CMP0141.html
+# CMP0141 controls MSVC debug information format flags. Setting to OLD prevents CMake from
+# automatically setting MSVC_DEBUG_INFORMATION_FORMAT which is not supported for ARM64 ASM.
+cmake_policy(SET CMP0141 OLD)
+endif()
+
 project(AWS_LC_RUST NONE)
 enable_language(C)
 
