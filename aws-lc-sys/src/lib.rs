@@ -84,7 +84,7 @@ pub fn ERR_GET_LIB(packed_error: u32) -> i32 {
 #[allow(non_snake_case, clippy::cast_possible_wrap)]
 #[must_use]
 pub fn ERR_GET_REASON(packed_error: u32) -> i32 {
-    (packed_error & 0xFFF) as i32
+    (packed_error & 0x0FFF) as i32
 }
 
 #[allow(non_snake_case)]

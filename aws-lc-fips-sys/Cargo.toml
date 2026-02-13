@@ -60,9 +60,9 @@ build = "builder/main.rs"
 [features]
 asan = []
 ssl = []
-bindgen = [
-    "dep:bindgen",
-] # Generate the bindings on the targeted platform as a fallback mechanism.
+bindgen = []
+fips = []
+default = ["fips"]
 
 [build-dependencies]
 cmake.workspace = true
@@ -70,12 +70,7 @@ dunce.workspace = true
 fs_extra.workspace = true
 cc.workspace = true
 regex.workspace = true
-
-[target.'cfg(all(any(target_arch = "x86_64", target_arch = "aarch64"), any(target_os = "linux", target_os = "macos"), any(target_env = "gnu", target_env = "musl", target_env = "")))'.build-dependencies]
-bindgen = { workspace = true, optional = true }
-
-[target.'cfg(not(all(any(target_arch = "x86_64", target_arch = "aarch64"), any(target_os = "linux", target_os = "macos"), any(target_env = "gnu", target_env = "musl", target_env = ""))))'.build-dependencies]
-bindgen = { workspace = true }
+bindgen.workspace = true
 
 [dev-dependencies]
 regex.workspace = true
