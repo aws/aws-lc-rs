@@ -47,11 +47,11 @@ Please contact aws-lc-pre-notifications@amazon.com.
 The [aws-lc-sys] and [aws-lc-fips-sys] libraries contain code from [AWS-LC] and are licensed under
 the ISC AND ( Apache-2.0 OR ISC ) AND OpenSSL licenses.
 
-[ISSUES]: https://github.com/awslabs/aws-lc-rs/issues/new/choose
+[ISSUES]: https://github.com/aws/aws-lc-rs/issues/new/choose
 
 [API_DOC]: https://docs.rs/aws-lc-rs/
 
-[FORK]: https://github.com/awslabs/aws-lc-rs/fork
+[FORK]: https://github.com/aws/aws-lc-rs/fork
 
 [vulnerability reporting page]: https://aws.amazon.com/security/vulnerability-reporting/
 
