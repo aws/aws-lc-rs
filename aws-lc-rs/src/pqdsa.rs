@@ -53,6 +53,13 @@ impl AlgorithmID {
         }
     }
 
+    pub(crate) const fn seed_size_bytes(&self) -> usize {
+        // All ML-DSA variants use 32-byte seeds per FIPS 204
+        match self {
+            Self::ML_DSA_44 | Self::ML_DSA_65 | Self::ML_DSA_87 => 32,
+        }
+    }
+
     pub(crate) const fn signature_size_bytes(&self) -> usize {
         match self {
             Self::ML_DSA_44 => 2420,

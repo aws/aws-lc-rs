@@ -1,7 +1,9 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aws_lc::{EVP_PKEY_CTX_pqdsa_set_params, EVP_PKEY, EVP_PKEY_PQDSA};
+use crate::aws_lc::{
+    EVP_PKEY_CTX_pqdsa_set_params, EVP_PKEY_pqdsa_new_raw_private_key, EVP_PKEY, EVP_PKEY_PQDSA,
+};
 use crate::encoding::{AsDer, AsRawBytes, Pkcs8V1Der, PqdsaPrivateKeyRaw};
 use crate::error::{KeyRejected, Unspecified};
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
@@ -109,6 +111,61 @@ impl PqdsaKeyPair {
         let evp_pkey = LcPtr::<EVP_PKEY>::parse_raw_private_key(raw_private_key, EVP_PKEY_PQDSA)?;
         validate_pqdsa_evp_key(&evp_pkey, algorithm.0.id)?;
         let pubkey = PublicKey::from_private_evp_pkey(&evp_pkey)?;
+        Ok(Self {
+            algorithm,
+            evp_pkey,
+            pubkey,
+        })
+    }
+
+    /// Constructs a key pair deterministically from a 32-byte seed.
+    ///
+    /// Per FIPS 204, the same seed always produces the same key pair. This enables
+    /// reproducible key generation for testing, ACVP validation, and interoperability
+    /// with implementations that store seeds rather than expanded private keys.
+    ///
+    /// `algorithm` is the [`PqdsaSigningAlgorithm`] to be associated with the key pair.
+    ///
+    /// `seed` is the 32-byte seed from which the key pair is deterministically derived.
+    /// All ML-DSA variants (ML-DSA-44, ML-DSA-65, ML-DSA-87) use 32-byte seeds.
+    ///
+    /// # Security Considerations
+    ///
+    /// The seed is the root secret. Compromise of the seed is equivalent to compromise
+    /// of the private key. Callers are responsible for generating seeds from a
+    /// cryptographically secure random source and protecting them accordingly.
+    ///
+    /// This method expands the seed into the full private key internally. The seed
+    /// itself is not retained in the returned [`PqdsaKeyPair`]; the expanded key material
+    /// is stored instead. The expanded private key can be retrieved via
+    /// [`Self::private_key`] and serialized via [`Self::to_pkcs8`] or
+    /// [`PqdsaPrivateKey::as_raw_bytes`].
+    ///
+    /// # Errors
+    ///
+    /// Returns `KeyRejected::too_small()` if `seed.len() < 32`.
+    ///
+    /// Returns `KeyRejected::too_large()` if `seed.len() > 32`.
+    ///
+    /// Returns `KeyRejected::unspecified()` if the underlying cryptographic operation fails.
+    pub fn from_seed(
+        algorithm: &'static PqdsaSigningAlgorithm,
+        seed: &[u8],
+    ) -> Result<Self, KeyRejected> {
+        let expected_seed_len = algorithm.0.id.seed_size_bytes();
+        match seed.len().cmp(&expected_seed_len) {
+            core::cmp::Ordering::Less => return Err(KeyRejected::too_small()),
+            core::cmp::Ordering::Greater => return Err(KeyRejected::too_large()),
+            core::cmp::Ordering::Equal => {}
+        }
+        let nid = algorithm.0.id.nid();
+        let evp_pkey = LcPtr::new(unsafe {
+            EVP_PKEY_pqdsa_new_raw_private_key(nid, seed.as_ptr(), seed.len())
+        })
+        .map_err(|()| KeyRejected::unspecified())?;
+        validate_pqdsa_evp_key(&evp_pkey, algorithm.0.id)?;
+        let pubkey =
+            PublicKey::from_private_evp_pkey(&evp_pkey).map_err(|_| KeyRejected::unspecified())?;
         Ok(Self {
             algorithm,
             evp_pkey,
@@ -259,6 +316,99 @@ mod tests {
 
             assert_eq!(pkcs8_keypair.evp_pkey, raw_keypair.evp_pkey);
         }
+    }
+
+    #[test]
+    fn test_from_seed() {
+        for &alg in TEST_ALGORITHMS {
+            let seed = [1u8; 32];
+            let kp = PqdsaKeyPair::from_seed(alg, &seed).unwrap();
+            assert_eq!(kp.algorithm(), alg);
+            // Verify key works for signing
+            let msg = b"seed test";
+            let mut sig = vec![0; alg.signature_len()];
+            let sig_len = kp.sign(msg, &mut sig).unwrap();
+            assert_eq!(sig_len, alg.signature_len());
+        }
+    }
+
+    #[test]
+    fn test_from_seed_deterministic() {
+        for &alg in TEST_ALGORITHMS {
+            let seed = [42u8; 32];
+            let kp1 = PqdsaKeyPair::from_seed(alg, &seed).unwrap();
+            let kp2 = PqdsaKeyPair::from_seed(alg, &seed).unwrap();
+            assert_eq!(kp1.public_key().as_ref(), kp2.public_key().as_ref());
+        }
+    }
+
+    #[test]
+    fn test_from_seed_wrong_size() {
+        use crate::error::KeyRejected;
+        for &alg in TEST_ALGORITHMS {
+            assert_eq!(
+                PqdsaKeyPair::from_seed(alg, &[0u8; 31]).err(),
+                Some(KeyRejected::too_small())
+            );
+            assert_eq!(
+                PqdsaKeyPair::from_seed(alg, &[0u8; 33]).err(),
+                Some(KeyRejected::too_large())
+            );
+            assert_eq!(
+                PqdsaKeyPair::from_seed(alg, &[]).err(),
+                Some(KeyRejected::too_small())
+            );
+        }
+    }
+
+    #[test]
+    fn test_from_seed_different_seeds_different_keys() {
+        for &alg in TEST_ALGORITHMS {
+            let kp1 = PqdsaKeyPair::from_seed(alg, &[1u8; 32]).unwrap();
+            let kp2 = PqdsaKeyPair::from_seed(alg, &[2u8; 32]).unwrap();
+            assert_ne!(kp1.public_key().as_ref(), kp2.public_key().as_ref());
+        }
+    }
+
+    #[test]
+    fn test_from_seed_raw_private_key_roundtrip() {
+        use crate::encoding::AsRawBytes;
+        for &alg in TEST_ALGORITHMS {
+            let seed = [55u8; 32];
+            let kp = PqdsaKeyPair::from_seed(alg, &seed).unwrap();
+            let raw_bytes = kp.private_key().as_raw_bytes().unwrap();
+            let kp2 = PqdsaKeyPair::from_raw_private_key(alg, raw_bytes.as_ref()).unwrap();
+            assert_eq!(kp.public_key().as_ref(), kp2.public_key().as_ref());
+        }
+    }
+
+    #[test]
+    fn test_from_seed_pkcs8_roundtrip() {
+        for &alg in TEST_ALGORITHMS {
+            let seed = [77u8; 32];
+            let kp = PqdsaKeyPair::from_seed(alg, &seed).unwrap();
+            let pkcs8 = kp.to_pkcs8().unwrap();
+            let kp2 = PqdsaKeyPair::from_pkcs8(alg, pkcs8.as_ref()).unwrap();
+            assert_eq!(kp.public_key().as_ref(), kp2.public_key().as_ref());
+        }
+    }
+
+    #[test]
+    fn test_from_seed_same_seed_different_algorithms() {
+        // Same seed with different algorithms should produce different keys
+        let seed = [42u8; 32];
+        let kp_44 = PqdsaKeyPair::from_seed(&ML_DSA_44_SIGNING, &seed).unwrap();
+        let kp_65 = PqdsaKeyPair::from_seed(&ML_DSA_65_SIGNING, &seed).unwrap();
+        let kp_87 = PqdsaKeyPair::from_seed(&ML_DSA_87_SIGNING, &seed).unwrap();
+        // Public keys have different sizes across algorithms, so they must differ
+        assert_ne!(
+            kp_44.public_key().as_ref().len(),
+            kp_65.public_key().as_ref().len()
+        );
+        assert_ne!(
+            kp_65.public_key().as_ref().len(),
+            kp_87.public_key().as_ref().len()
+        );
     }
 
     // Additional test for the algorithm getter
