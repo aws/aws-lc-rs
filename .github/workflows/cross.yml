@@ -424,12 +424,15 @@ jobs:
         exclude:
           - target: "i686-pc-windows-msvc"
             fips: '1'
-          - target: "aarch64-pc-windows-msvc"
-            fips: '1'
+          # - target: "aarch64-pc-windows-msvc"
+          #   fips: '1'
     steps:
       - name: Install NASM
         if: ${{ matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'i686-pc-windows-msvc' }}
         uses: ilammy/setup-nasm@v1
+      - name: Install ninja-build tool
+        if: ${{ matrix.fips == '1' }}
+        uses: seanmiddleditch/gha-setup-ninja@v4
       - uses: actions/checkout@v4
         with:
           submodules: "recursive"

@@ -343,8 +343,55 @@ impl CmakeBuilder {
                 .collect_vcvarsall_bat()
                 .map_err(|x| panic!("{}", x))
                 .unwrap();
+            // Get tool paths before consuming env_map
+            let clang_cl_path = env_map.get("CLANG_CL_PATH").cloned();
+            let msvc_linker_path = env_map.get("MSVC_LINKER_PATH").cloned();
             for (key, value) in env_map {
                 cmake_cfg.env(key, value);
+            }
+            if target_arch() == "aarch64" {
+                // ARM64 Windows uses `enable_language(ASM)` in CMake instead of NASM.
+                // The .S assembly files require Clang to compile, not MSVC's cl.exe.
+                // cl.exe doesn't understand .S files and will silently ignore them.
+                // Use the clang-cl path discovered from VS installation if available.
+                let asm_compiler = clang_cl_path.as_deref().unwrap_or("clang-cl");
+                cmake_cfg.define("CMAKE_ASM_COMPILER", asm_compiler);
+                // Explicitly set the linker to MSVC's link.exe to ensure proper
+                // Windows library linking (ws2_32.lib instead of -lws2_32)
+                if let Some(linker_path) = &msvc_linker_path {
+                    cmake_cfg.define("CMAKE_LINKER", linker_path.as_str());
+                }
+                // When cross-compiling with Ninja, CMake may not properly detect MSVC-style
+                // library linking. Set this to empty to use MSVC style (library.lib) instead
+                // of Unix style (-lws2_32 which becomes /lws2_32 and fails).
+                cmake_cfg.define("CMAKE_LINK_LIBRARY_FLAG", "");
+                // Specify the target architecture for clang-cl to generate ARM64 code.
+                // clang-cl doesn't inherit target arch from MSVC environment variables.
+                cmake_cfg.define("CMAKE_ASM_FLAGS", "--target=arm64-pc-windows-msvc");
+                // CMake doesn't recognize MSVC_RUNTIME_LIBRARY for this ASM compiler,
+                // so we set these variables to empty to avoid the error:
+                // "MSVC_RUNTIME_LIBRARY value 'MultiThreadedDLL' not known for this ASM compiler"
+                // See: https://gitlab.kitware.com/cmake/cmake/-/issues/19453
+                cmake_cfg.define(
+                    "CMAKE_ASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreaded",
+                    "",
+                );
+                cmake_cfg.define(
+                    "CMAKE_ASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDLL",
+                    "",
+                );
+                cmake_cfg.define(
+                    "CMAKE_ASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebug",
+                    "",
+                );
+                cmake_cfg.define(
+                    "CMAKE_ASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_MultiThreadedDebugDLL",
+                    "",
+                );
+                cmake_cfg.define(
+                    "CMAKE_ASM_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_ProgramDatabase",
+                    "",
+                );
             }
         }
 
@@ -352,7 +399,10 @@ impl CmakeBuilder {
             ("msvc", "aarch64") => {
                 // If CMAKE_GENERATOR is either not set or not set to "Ninja"
                 let cmake_generator = optional_env("CMAKE_GENERATOR");
-                if cmake_generator.is_none() || cmake_generator.unwrap().to_lowercase() != "ninja" {
+                if !is_fips_build()
+                    && (cmake_generator.is_none()
+                        || cmake_generator.unwrap().to_lowercase() != "ninja")
+                {
                     // The following is not supported by the Ninja generator
                     cmake_cfg.generator_toolset(format!(
                         "ClangCL{}",
@@ -513,10 +563,14 @@ impl crate::Builder for CmakeBuilder {
                 eprintln!("Missing dependency: nasm");
                 missing_dependency = true;
             }
-            if target_arch() == "aarch64" && target_env() == "msvc" && !test_clang_cl_command() {
-                eprintln!("Missing dependency: clang-cl");
-                missing_dependency = true;
-            }
+        }
+        if target_os() == "windows"
+            && target_arch() == "aarch64"
+            && target_env() == "msvc"
+            && !test_clang_cl_command()
+        {
+            eprintln!("Missing dependency: clang-cl");
+            missing_dependency = true;
         }
         if let Some(cmake_cmd) = find_cmake_command() {
             unsafe {
