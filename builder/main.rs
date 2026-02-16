@@ -75,6 +75,7 @@ mod cc_builder;
 mod cmake_builder;
 mod nasm_builder;
 mod prebuilt_aws_lc;
+mod prebuilt_builder;
 #[cfg(any(feature = "bindgen", feature = "fips"))]
 mod sys_bindgen;
 
@@ -150,7 +151,7 @@ enum OutputLib {
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum OutputLibType {
     Static,
     Dynamic,
@@ -391,6 +392,7 @@ fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path
         build_prefix: prefix.clone(),
         include_ssl: cfg!(feature = "ssl"),
         disable_prelude: true,
+        prebuilt_include_dir: None,
     };
 
     let bindings = sys_bindgen::generate_bindings(manifest_dir, &options);
@@ -574,9 +576,6 @@ static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
 static mut SYS_C_STD: CStdRequested = CStdRequested::None;
 
 fn initialize() {
-    // Initialize prebuilt configuration first
-    prebuilt_aws_lc::initialize();
-
     unsafe {
         SYS_NO_PREFIX = env_crate_var_to_bool("NO_PREFIX").unwrap_or(false);
         SYS_PREGENERATING_BINDINGS =
@@ -850,7 +849,13 @@ fn main() {
                     !is_pregenerating_bindings(),
                     "Pregenerated bindings not supported using external bindgen.",
                 );
-                invoke_external_bindgen(&manifest_dir, &prefix, &src_bindings_path).unwrap();
+                let options = BindingOptions {
+                    build_prefix: prefix.clone(),
+                    include_ssl: false,
+                    disable_prelude: true,
+                    prebuilt_include_dir: None,
+                };
+                invoke_external_bindgen(&manifest_dir, &options, &src_bindings_path).unwrap();
             } else {
                 generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
             }
@@ -896,7 +901,13 @@ fn main() {
                 "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
             );
             let gen_bindings_path = out_dir().join("bindings.rs");
-            let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
+            let options = BindingOptions {
+                build_prefix: prefix.clone(),
+                include_ssl: false,
+                disable_prelude: true,
+                prebuilt_include_dir: None,
+            };
+            let result = invoke_external_bindgen(&manifest_dir, &options, &gen_bindings_path);
             match result {
                 Ok(()) => {
                     emit_rustc_cfg("use_bindgen_pregenerated");
@@ -975,6 +986,8 @@ pub(crate) struct BindingOptions {
     pub build_prefix: Option<String>,
     pub include_ssl: bool,
     pub disable_prelude: bool,
+    /// Path to prebuilt AWS-LC headers (used for prebuilt mode binding generation)
+    pub prebuilt_include_dir: Option<PathBuf>,
 }
 
 impl Debug for BindingOptions {
@@ -983,6 +996,7 @@ impl Debug for BindingOptions {
             .field("build_prefix", &self.build_prefix)
             .field("include_ssl", &self.include_ssl)
             .field("disable_prelude", &self.disable_prelude)
+            .field("prebuilt_include_dir", &self.prebuilt_include_dir)
             .finish()
     }
 }
@@ -1067,7 +1081,7 @@ const PRELUDE: &str = r"
 
 fn invoke_external_bindgen(
     manifest_dir: &Path,
-    prefix: &Option<String>,
+    options: &BindingOptions,
     gen_bindings_path: &Path,
 ) -> Result<(), String> {
     verify_bindgen()?;
@@ -1079,14 +1093,7 @@ fn invoke_external_bindgen(
 
     let _guard_target = EnvGuard::new("TARGET", effective_target());
 
-    let options = BindingOptions {
-        // We collect the symbols w/o the prefix added
-        build_prefix: None,
-        include_ssl: false,
-        disable_prelude: true,
-    };
-
-    let clang_args = prepare_clang_args(manifest_dir, &options);
+    let clang_args = prepare_clang_args(manifest_dir, options);
     let header = get_rust_include_path(manifest_dir)
         .join("rust_wrapper.h")
         .display()
@@ -1094,7 +1101,7 @@ fn invoke_external_bindgen(
 
     let sym_prefix: String;
     let mut bindgen_params = vec![];
-    if let Some(prefix_str) = prefix {
+    if let Some(prefix_str) = &options.build_prefix {
         sym_prefix = if target_os().to_lowercase() == "macos"
             || target_os().to_lowercase() == "ios"
             || target_os().to_lowercase() == "tvos"
@@ -1143,6 +1150,11 @@ fn invoke_external_bindgen(
     for x in &clang_args {
         bindgen_params.push(x.as_str());
     }
+
+    // Add SSL define as a clang arg (after the -- separator)
+    if options.include_ssl {
+        bindgen_params.push("-DAWS_LC_RUST_INCLUDE_SSL");
+    }
     let cmd_params: Vec<OsString> = bindgen_params.iter().map(OsString::from).collect();
     let cmd_params: Vec<&OsStr> = cmd_params.iter().map(OsString::as_os_str).collect();
 
@@ -1169,27 +1181,34 @@ fn add_header_include_path(args: &mut Vec<String>, path: String) {
 fn prepare_clang_args(manifest_dir: &Path, options: &BindingOptions) -> Vec<String> {
     let mut clang_args: Vec<String> = Vec::new();
 
+    // Always include rust_wrapper.h location from bundled source
     add_header_include_path(
         &mut clang_args,
         get_rust_include_path(manifest_dir).display().to_string(),
     );
 
-    if options.build_prefix.is_some() {
-        // NOTE: It's possible that the prefix embedded in the header files doesn't match the prefix
-        // specified. This only happens when the version number as changed in Cargo.toml, but the
-        // new headers have not yet been generated.
+    // For prebuilt mode, use prebuilt headers for AWS-LC OpenSSL headers
+    if let Some(ref prebuilt_include) = options.prebuilt_include_dir {
+        add_header_include_path(&mut clang_args, prebuilt_include.display().to_string());
+    } else {
+        // Existing logic for bundled headers
+        if options.build_prefix.is_some() {
+            // NOTE: It's possible that the prefix embedded in the header files doesn't match the prefix
+            // specified. This only happens when the version number as changed in Cargo.toml, but the
+            // new headers have not yet been generated.
+            add_header_include_path(
+                &mut clang_args,
+                get_generated_include_path(manifest_dir)
+                    .display()
+                    .to_string(),
+            );
+        }
+
         add_header_include_path(
             &mut clang_args,
-            get_generated_include_path(manifest_dir)
-                .display()
-                .to_string(),
+            get_aws_lc_include_path(manifest_dir).display().to_string(),
         );
     }
-
-    add_header_include_path(
-        &mut clang_args,
-        get_aws_lc_include_path(manifest_dir).display().to_string(),
-    );
 
     if let Some(include_paths) = get_env_includes_path() {
         for path in include_paths {

@@ -29,7 +29,7 @@ static mut SYS_CONFIG: Option<Config> = None;
 
 /// Constructs the full environment variable name for error messages.
 /// For example, for aws-lc-sys crate: "AWS_LC_SYS_PREBUILT_INSTALL_DIR"
-fn env_var_crate_target(name: &str) -> String {
+pub(crate) fn env_var_crate_target(name: &str) -> String {
     let crate_name = crate::crate_name().to_uppercase().replace('-', "_");
     format!("{crate_name}_{name}")
 }
