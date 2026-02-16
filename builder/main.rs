@@ -74,6 +74,7 @@ const OSSL_CONF_DEFINES: &[&str] = &[
 mod cc_builder;
 mod cmake_builder;
 mod nasm_builder;
+mod prebuilt_aws_lc;
 #[cfg(any(feature = "bindgen", feature = "fips"))]
 mod sys_bindgen;
 
@@ -573,6 +574,9 @@ static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
 static mut SYS_C_STD: CStdRequested = CStdRequested::None;
 
 fn initialize() {
+    // Initialize prebuilt configuration first
+    prebuilt_aws_lc::initialize();
+
     unsafe {
         SYS_NO_PREFIX = env_crate_var_to_bool("NO_PREFIX").unwrap_or(false);
         SYS_PREGENERATING_BINDINGS =
