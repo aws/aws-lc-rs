@@ -8,7 +8,7 @@
 //! of building from source.
 
 use crate::prebuilt_aws_lc::env_var_crate_target;
-use crate::{emit_warning, is_crt_static, target_env, target_os, OutputLibType};
+use crate::{emit_warning, target_env, target_os, OutputLibType};
 use std::path::{Path, PathBuf};
 
 /// Builder for linking against a prebuilt AWS-LC installation.
@@ -74,11 +74,13 @@ impl PrebuiltBuilder {
     }
 
     /// Returns the symbol prefix, if any.
+    #[allow(dead_code)]
     pub(crate) fn prefix(&self) -> Option<&str> {
         self.prefix.as_deref()
     }
 
     /// Returns the detected output library type (Static or Dynamic).
+    #[allow(dead_code)]
     pub(crate) fn output_lib_type(&self) -> OutputLibType {
         self.output_lib_type
     }
@@ -100,6 +102,9 @@ impl PrebuiltBuilder {
     }
 
     /// Detects whether to use static or dynamic linking based on available libraries.
+    ///
+    /// Respects user preference from `OutputLibType::default()` (which checks AWS_LC_SYS_STATIC
+    /// env var). Falls back to static if available, then dynamic.
     fn detect_lib_type(lib_dir: &Path, prefix: &Option<String>) -> Result<OutputLibType, String> {
         let crypto_name = match prefix {
             Some(p) => format!("{}_crypto", p),
@@ -109,12 +114,30 @@ impl PrebuiltBuilder {
         let static_exists = Self::find_static_lib(lib_dir, &crypto_name).is_some();
         let dynamic_exists = Self::find_dynamic_lib(lib_dir, &crypto_name).is_some();
 
-        match (static_exists, dynamic_exists) {
-            (true, _) if is_crt_static() => Ok(OutputLibType::Static),
-            (_, true) if !is_crt_static() => Ok(OutputLibType::Dynamic),
-            (true, _) => Ok(OutputLibType::Static),
-            (_, true) => Ok(OutputLibType::Dynamic),
-            (false, false) => {
+        // Get user's preference (respects AWS_LC_SYS_STATIC env var)
+        let preferred = OutputLibType::default();
+
+        match (static_exists, dynamic_exists, preferred) {
+            // User explicitly wants static and it exists
+            (true, _, OutputLibType::Static) => Ok(OutputLibType::Static),
+            // User explicitly wants dynamic and it exists
+            (_, true, OutputLibType::Dynamic) => Ok(OutputLibType::Dynamic),
+            // User wants static but only dynamic exists
+            (false, true, OutputLibType::Static) => {
+                emit_warning(
+                    "Static library requested but not found, falling back to dynamic linking",
+                );
+                Ok(OutputLibType::Dynamic)
+            }
+            // User wants dynamic but only static exists
+            (true, false, OutputLibType::Dynamic) => {
+                emit_warning(
+                    "Dynamic library requested but not found, falling back to static linking",
+                );
+                Ok(OutputLibType::Static)
+            }
+            // Neither library found
+            (false, false, _) => {
                 let expected = match prefix {
                     Some(p) => format!("lib{p}_crypto.a, lib{p}_crypto.so, {p}_crypto.lib, etc."),
                     None => "libcrypto.a, libcrypto.so, crypto.lib, etc.".to_string(),
@@ -306,7 +329,7 @@ fn generate_bindings_with_bindgen(
             let options = crate::BindingOptions {
                 build_prefix: prefix.clone(),
                 include_ssl: cfg!(feature = "ssl"),
-                disable_prelude: false,
+                disable_prelude: true,
                 prebuilt_include_dir: Some(include_dir.to_path_buf()),
             };
 
@@ -361,7 +384,7 @@ fn try_external_bindgen(
     let options = crate::BindingOptions {
         build_prefix: prefix.clone(),
         include_ssl: cfg!(feature = "ssl"),
-        disable_prelude: false,
+        disable_prelude: true,
         prebuilt_include_dir: Some(include_dir.to_path_buf()),
     };
 
@@ -422,6 +445,9 @@ mod tests {
             ("CARGO_CFG_TARGET_OS", std::env::consts::OS),
             ("CARGO_CFG_TARGET_ENV", ""),
             ("CARGO_CFG_TARGET_FEATURE", ""),
+            ("CARGO_CFG_TARGET_ARCH", std::env::consts::ARCH),
+            ("TARGET", std::env::consts::ARCH), // Simplified target for testing
+            ("CARGO_PKG_NAME", "aws-lc-sys"),   // Required by crate_name()
         ];
 
         let mut guard = EnvGuard {

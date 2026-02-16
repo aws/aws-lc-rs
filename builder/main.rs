@@ -576,6 +576,9 @@ static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
 static mut SYS_C_STD: CStdRequested = CStdRequested::None;
 
 fn initialize() {
+    // Initialize prebuilt configuration first (reads PREBUILT_INSTALL_DIR env var)
+    prebuilt_aws_lc::initialize();
+
     unsafe {
         SYS_NO_PREFIX = env_crate_var_to_bool("NO_PREFIX").unwrap_or(false);
         SYS_PREGENERATING_BINDINGS =
@@ -822,6 +825,13 @@ fn main() {
 
     let manifest_dir = current_dir();
     let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
+
+    // Check if prebuilt mode is enabled
+    if prebuilt_aws_lc::is_enabled() {
+        handle_prebuilt_build(&manifest_dir);
+        return;
+    }
+
     let prefix_str = prefix_string();
     let prefix = if is_no_prefix() {
         None
@@ -940,6 +950,78 @@ fn main() {
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
+}
+
+/// Handles the prebuilt AWS-LC build flow.
+///
+/// This function is called when `PREBUILT_INSTALL_DIR` environment variable is set.
+/// It validates the installation, creates the PrebuiltBuilder, handles bindings,
+/// and emits the appropriate cargo directives.
+fn handle_prebuilt_build(manifest_dir: &Path) {
+    use prebuilt_builder::PrebuiltBuilder;
+
+    let config = prebuilt_aws_lc::get_config()
+        .expect("prebuilt_aws_lc::is_enabled() was true but config is None");
+    let include_dir = config.install_dir.join("include");
+
+    emit_warning(format!(
+        "Using prebuilt AWS-LC from: {}",
+        config.install_dir.display()
+    ));
+
+    // 1. Validate installation and detect prefix
+    let (_version, prefix) =
+        prebuilt_aws_lc::validate_installation(&include_dir, config.skip_version_check)
+            .unwrap_or_else(|e| panic!("Prebuilt validation failed: {}", e));
+
+    // 2. Create builder
+    let builder = PrebuiltBuilder::new(config.install_dir.clone(), prefix.clone())
+        .unwrap_or_else(|e| panic!("Prebuilt configuration failed: {}", e));
+
+    // 3. Check library dependencies
+    builder
+        .check_dependencies()
+        .unwrap_or_else(|e| panic!("Prebuilt library check failed: {}", e));
+
+    // 4. Handle bindings (checks conventional location, then generates if needed)
+    prebuilt_builder::handle_prebuilt_bindings(
+        config,
+        builder.include_dir(),
+        manifest_dir,
+        &out_dir(),
+        &prefix,
+    )
+    .unwrap_or_else(|e| panic!("Prebuilt bindings failed: {}", e));
+
+    emit_rustc_cfg("use_bindgen_pregenerated");
+
+    // 5. Emit linking directives
+    builder
+        .build()
+        .unwrap_or_else(|e| panic!("Prebuilt linking failed: {}", e));
+
+    // 6. Export metadata for downstream crates
+    println!("cargo:include={}", builder.include_dir().display());
+    println!("cargo:libcrypto={}", builder.crypto_lib_name());
+    if cfg!(feature = "ssl") {
+        println!("cargo:libssl={}", builder.ssl_lib_name());
+    }
+    println!("cargo:conf={}", OSSL_CONF_DEFINES.join(","));
+
+    // 7. Rerun triggers
+    println!("cargo:rerun-if-changed=builder/");
+    println!(
+        "cargo:rerun-if-env-changed={}",
+        prebuilt_aws_lc::env_var_crate_target("PREBUILT_INSTALL_DIR")
+    );
+    println!(
+        "cargo:rerun-if-env-changed={}",
+        prebuilt_aws_lc::env_var_crate_target("PREBUILT_BINDINGS")
+    );
+    println!(
+        "cargo:rerun-if-env-changed={}",
+        prebuilt_aws_lc::env_var_crate_target("PREBUILT_SKIP_VERSION_CHECK")
+    );
 }
 
 fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {

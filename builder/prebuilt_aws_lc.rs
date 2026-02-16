@@ -6,9 +6,6 @@
 //! This module provides functionality to link against a pre-existing AWS-LC
 //! installation instead of building from source.
 
-// TODO: Remove this once Phase 2/3 integrates this module
-#![allow(dead_code)]
-
 use std::path::{Path, PathBuf};
 
 use crate::{emit_warning, get_aws_lc_include_path, optional_env_crate_target};
