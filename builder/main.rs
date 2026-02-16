@@ -812,6 +812,7 @@ fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
     false
 }
 
+#[cfg(not(test))]
 fn main() {
     initialize();
     prepare_cargo_cfg();
@@ -1196,3 +1197,107 @@ const COPYRIGHT: &str = r"
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 ";
+
+// =============================================================================
+// Tests - run via: rustc --test builder/main.rs --edition 2021 -o /tmp/builder_test && /tmp/builder_test
+// Or via the Makefile target: make test-builder
+// =============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // -------------------------------------------------------------------------
+    // parse_to_bool tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_parse_to_bool_true_values() {
+        assert_eq!(parse_to_bool("1"), Some(true));
+        assert_eq!(parse_to_bool("2"), Some(true));
+        assert_eq!(parse_to_bool("9"), Some(true));
+        assert_eq!(parse_to_bool("ON"), Some(true));
+        assert_eq!(parse_to_bool("on"), Some(true));
+        assert_eq!(parse_to_bool("On"), Some(true));
+        assert_eq!(parse_to_bool("YES"), Some(true));
+        assert_eq!(parse_to_bool("yes"), Some(true));
+        assert_eq!(parse_to_bool("TRUE"), Some(true));
+        assert_eq!(parse_to_bool("true"), Some(true));
+        assert_eq!(parse_to_bool("y"), Some(true));
+        assert_eq!(parse_to_bool("Y"), Some(true));
+        assert_eq!(parse_to_bool("t"), Some(true));
+        assert_eq!(parse_to_bool("T"), Some(true));
+    }
+
+    #[test]
+    fn test_parse_to_bool_false_values() {
+        assert_eq!(parse_to_bool("0"), Some(false));
+        assert_eq!(parse_to_bool("OFF"), Some(false));
+        assert_eq!(parse_to_bool("off"), Some(false));
+        assert_eq!(parse_to_bool("NO"), Some(false));
+        assert_eq!(parse_to_bool("no"), Some(false));
+        assert_eq!(parse_to_bool("FALSE"), Some(false));
+        assert_eq!(parse_to_bool("false"), Some(false));
+        assert_eq!(parse_to_bool("n"), Some(false));
+        assert_eq!(parse_to_bool("N"), Some(false));
+        assert_eq!(parse_to_bool("f"), Some(false));
+        assert_eq!(parse_to_bool("F"), Some(false));
+    }
+
+    #[test]
+    fn test_parse_to_bool_none_values() {
+        assert_eq!(parse_to_bool(""), None);
+        assert_eq!(parse_to_bool("invalid"), None);
+        assert_eq!(parse_to_bool("maybe"), None);
+        assert_eq!(parse_to_bool("   "), None);
+    }
+
+    // -------------------------------------------------------------------------
+    // OutputLib tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_output_lib_crypto_libname_with_prefix() {
+        let prefix = Some("test_prefix".to_string());
+        let name = OutputLib::Crypto.libname(&prefix);
+        assert_eq!(name, "test_prefix_crypto");
+    }
+
+    #[test]
+    fn test_output_lib_crypto_libname_without_prefix() {
+        let name = OutputLib::Crypto.libname(&None);
+        assert_eq!(name, "crypto");
+    }
+
+    #[test]
+    fn test_output_lib_ssl_libname_with_prefix() {
+        let prefix = Some("my_prefix".to_string());
+        let name = OutputLib::Ssl.libname(&prefix);
+        assert_eq!(name, "my_prefix_ssl");
+    }
+
+    #[test]
+    fn test_output_lib_ssl_libname_without_prefix() {
+        let name = OutputLib::Ssl.libname(&None);
+        assert_eq!(name, "ssl");
+    }
+
+    // -------------------------------------------------------------------------
+    // OutputLibType tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_output_lib_type_rust_lib_type() {
+        assert_eq!(OutputLibType::Static.rust_lib_type(), "static");
+        assert_eq!(OutputLibType::Dynamic.rust_lib_type(), "dylib");
+    }
+
+    // -------------------------------------------------------------------------
+    // Version/Prefix tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_version_constant_exists() {
+        assert!(!VERSION.is_empty(), "VERSION should not be empty");
+    }
+}
