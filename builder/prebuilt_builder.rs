@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-//! PrebuiltBuilder for linking against pre-existing AWS-LC installations.
+//! `PrebuiltBuilder` for linking against pre-existing AWS-LC installations.
 //!
 //! This builder is used when the `PREBUILT_INSTALL_DIR` environment variable
 //! is set, allowing users to link against a system-installed AWS-LC instead
@@ -22,11 +22,11 @@ pub(crate) struct PrebuiltBuilder {
 }
 
 impl PrebuiltBuilder {
-    /// Creates a new PrebuiltBuilder for the given installation directory.
+    /// Creates a new `PrebuiltBuilder` for the given installation directory.
     ///
     /// # Arguments
     /// * `install_dir` - Path to the AWS-LC installation root directory
-    /// * `prefix` - Optional symbol prefix (e.g., "my_prefix" for libmy_prefix_crypto.a)
+    /// * `prefix` - Optional symbol prefix (e.g., `my_prefix` for `libmy_prefix_crypto.a`)
     ///
     /// # Errors
     /// Returns an error if the library directory doesn't exist or no suitable
@@ -88,7 +88,7 @@ impl PrebuiltBuilder {
     /// Returns the crypto library name (with prefix if applicable).
     pub(crate) fn crypto_lib_name(&self) -> String {
         match &self.prefix {
-            Some(p) => format!("{}_crypto", p),
+            Some(p) => format!("{p}_crypto"),
             None => "crypto".to_string(),
         }
     }
@@ -96,18 +96,18 @@ impl PrebuiltBuilder {
     /// Returns the SSL library name (with prefix if applicable).
     pub(crate) fn ssl_lib_name(&self) -> String {
         match &self.prefix {
-            Some(p) => format!("{}_ssl", p),
+            Some(p) => format!("{p}_ssl"),
             None => "ssl".to_string(),
         }
     }
 
     /// Detects whether to use static or dynamic linking based on available libraries.
     ///
-    /// Respects user preference from `OutputLibType::default()` (which checks AWS_LC_SYS_STATIC
+    /// Respects user preference from `OutputLibType::default()` (which checks `AWS_LC_SYS_STATIC`
     /// env var). Falls back to static if available, then dynamic.
     fn detect_lib_type(lib_dir: &Path, prefix: &Option<String>) -> Result<OutputLibType, String> {
         let crypto_name = match prefix {
-            Some(p) => format!("{}_crypto", p),
+            Some(p) => format!("{p}_crypto"),
             None => "crypto".to_string(),
         };
 
@@ -179,7 +179,7 @@ impl PrebuiltBuilder {
     /// Verifies that a required library exists.
     fn verify_library_exists(&self, base_name: &str) -> Result<(), String> {
         let name = match &self.prefix {
-            Some(p) => format!("{}_{}", p, base_name),
+            Some(p) => format!("{p}_{base_name}"),
             None => base_name.to_string(),
         };
 
@@ -233,7 +233,7 @@ impl crate::Builder for PrebuiltBuilder {
         Ok(())
     }
 
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Prebuilt"
     }
 }
@@ -275,8 +275,8 @@ pub(crate) fn find_prebuilt_bindings(
 /// Handles bindings for prebuilt AWS-LC mode.
 ///
 /// This function attempts to locate or generate bindings in the following order:
-/// 1. Use explicit override from PREBUILT_BINDINGS env var
-/// 2. Use conventional location at $INSTALL_DIR/share/rust/aws_lc_bindings.rs
+/// 1. Use explicit override from `PREBUILT_BINDINGS` env var
+/// 2. Use conventional location at `$INSTALL_DIR/share/rust/aws_lc_bindings.rs`
 /// 3. Generate via internal bindgen (if feature enabled)
 /// 4. Generate via external bindgen-cli
 pub(crate) fn handle_prebuilt_bindings(
@@ -337,7 +337,7 @@ fn generate_bindings_with_bindgen(
             let bindings_path = out_dir.join("bindings.rs");
             bindings
                 .write_to_file(&bindings_path)
-                .map_err(|e| format!("Failed to write bindings: {}", e))?;
+                .map_err(|e| format!("Failed to write bindings: {e}"))?;
 
             return Ok(());
         }
@@ -354,10 +354,9 @@ fn generate_bindings_with_bindgen(
         "No pre-generated bindings found and bindgen is not available.\n\n\
          To resolve this, either:\n\
          1. Install AWS-LC with Rust bindings (share/rust/aws_lc_bindings.rs), or\n\
-         2. Set {} to point to a bindings file, or\n\
+         2. Set {bindings_env_var} to point to a bindings file, or\n\
          3. Enable the 'bindgen' feature: cargo build --features bindgen, or\n\
-         4. Install bindgen-cli: cargo install bindgen-cli",
-        bindings_env_var
+         4. Install bindgen-cli: cargo install bindgen-cli"
     ))
 }
 
@@ -392,7 +391,7 @@ fn try_external_bindgen(
 
     // Use existing invoke_external_bindgen infrastructure
     crate::invoke_external_bindgen(manifest_dir, &options, &bindings_path)
-        .map_err(|e| format!("External bindgen failed: {}", e))?;
+        .map_err(|e| format!("External bindgen failed: {e}"))?;
 
     Ok(true)
 }
@@ -425,8 +424,8 @@ mod tests {
             fn drop(&mut self) {
                 for (key, original) in &self.vars {
                     match original {
-                        Some(val) => std::env::set_var(key, val),
-                        None => std::env::remove_var(key),
+                        Some(val) => unsafe { std::env::set_var(key, val) },
+                        None => unsafe { std::env::remove_var(key) },
                     }
                 }
                 // _lock is dropped here, releasing the mutex
@@ -456,7 +455,7 @@ mod tests {
         };
         for (key, val) in vars_to_set {
             guard.vars.push((key.to_string(), std::env::var(key).ok()));
-            std::env::set_var(key, val);
+            unsafe { std::env::set_var(key, val) };
         }
         guard
     }

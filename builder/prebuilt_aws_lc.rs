@@ -14,7 +14,7 @@ use crate::{emit_warning, get_aws_lc_include_path, optional_env_crate_target};
 pub(crate) struct Config {
     /// Path to the AWS-LC installation directory
     pub install_dir: PathBuf,
-    /// Optional path to pre-generated Rust bindings file (from PREBUILT_BINDINGS env var)
+    /// Optional path to pre-generated Rust bindings file (from `PREBUILT_BINDINGS` env var)
     pub bindings_override: Option<PathBuf>,
     /// Whether to skip version compatibility check
     pub skip_version_check: bool,
@@ -25,14 +25,14 @@ pub(crate) struct Config {
 static mut SYS_CONFIG: Option<Config> = None;
 
 /// Constructs the full environment variable name for error messages.
-/// For example, for aws-lc-sys crate: "AWS_LC_SYS_PREBUILT_INSTALL_DIR"
+/// For example, for aws-lc-sys crate: `AWS_LC_SYS_PREBUILT_INSTALL_DIR`
 pub(crate) fn env_var_crate_target(name: &str) -> String {
     let crate_name = crate::crate_name().to_uppercase().replace('-', "_");
     format!("{crate_name}_{name}")
 }
 
 /// Initialize prebuilt configuration from environment variables.
-/// Must be called from main.rs initialize() function.
+/// Must be called from main.rs `initialize()` function.
 pub(crate) fn initialize() {
     // Check if prebuilt mode is enabled via PREBUILT_INSTALL_DIR
     let install_dir_env = optional_env_crate_target("PREBUILT_INSTALL_DIR");
@@ -47,8 +47,7 @@ pub(crate) fn initialize() {
 
     // Read optional skip version check flag
     let skip_version_check = optional_env_crate_target("PREBUILT_SKIP_VERSION_CHECK")
-        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
-        .unwrap_or(false);
+        .is_some_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
 
     let config = Config {
         install_dir,
@@ -69,12 +68,12 @@ pub(crate) fn get_config() -> Option<&'static Config> {
     unsafe { SYS_CONFIG.as_ref() }
 }
 
-/// Returns true if prebuilt mode is enabled (PREBUILT_INSTALL_DIR is set).
+/// Returns true if prebuilt mode is enabled (`PREBUILT_INSTALL_DIR` is set).
 pub(crate) fn is_enabled() -> bool {
     get_config().is_some()
 }
 
-/// Detects if the prebuilt AWS-LC has a symbol prefix by checking for BORINGSSL_PREFIX.
+/// Detects if the prebuilt AWS-LC has a symbol prefix by checking for `BORINGSSL_PREFIX`.
 ///
 /// Returns the prefix string if found, or None if no prefix is configured.
 pub(crate) fn detect_prefix(include_dir: &Path) -> Option<String> {
@@ -101,7 +100,7 @@ pub(crate) fn detect_prefix(include_dir: &Path) -> Option<String> {
 
 /// Validates AWS-LC headers and extracts version string in one pass.
 ///
-/// Checks for OPENSSL_IS_AWSLC marker and AWSLC_VERSION_NUMBER_STRING.
+/// Checks for `OPENSSL_IS_AWSLC` marker and `AWSLC_VERSION_NUMBER_STRING`.
 /// Returns the version string (e.g., "1.35.0") on success.
 pub(crate) fn validate_and_extract_version(include_dir: &Path) -> Result<String, String> {
     let base_h = include_dir.join("openssl").join("base.h");
@@ -141,7 +140,7 @@ pub(crate) fn validate_and_extract_version(include_dir: &Path) -> Result<String,
 pub(crate) fn parse_version(version_str: &str) -> Result<(u32, u32, u32), String> {
     let parts: Vec<&str> = version_str.split('.').collect();
     if parts.len() != 3 {
-        return Err(format!("Invalid version format: {}", version_str));
+        return Err(format!("Invalid version format: {version_str}"));
     }
     Ok((
         parts[0]
@@ -177,7 +176,7 @@ pub(crate) fn get_bundled_awslc_version() -> String {
 
 /// Validates a prebuilt AWS-LC installation.
 ///
-/// Returns (version_string, detected_prefix) on success.
+/// Returns (`version_string`, `detected_prefix`) on success.
 pub(crate) fn validate_installation(
     include_dir: &Path,
     skip_version_check: bool,
@@ -204,17 +203,15 @@ pub(crate) fn validate_installation(
         if !compatible {
             if skip_version_check {
                 emit_warning(format!(
-                    "WARNING: Skipping version check. Installed {} < required {}. \
-                     This may cause runtime issues.",
-                    version, required_version
+                    "WARNING: Skipping version check. Installed {version} < required {required_version}. \
+                     This may cause runtime issues."
                 ));
             } else {
                 let env_prefix = install_dir_env_var.trim_end_matches("_INSTALL_DIR");
                 return Err(format!(
-                    "AWS-LC version mismatch: installed {} < required {}.\n\
-                     Please upgrade AWS-LC or unset {} to build from source.\n\
-                     To bypass this check (not recommended), set {}_SKIP_VERSION_CHECK=1",
-                    version, required_version, install_dir_env_var, env_prefix
+                    "AWS-LC version mismatch: installed {version} < required {required_version}.\n\
+                     Please upgrade AWS-LC or unset {install_dir_env_var} to build from source.\n\
+                     To bypass this check (not recommended), set {env_prefix}_SKIP_VERSION_CHECK=1"
                 ));
             }
         }

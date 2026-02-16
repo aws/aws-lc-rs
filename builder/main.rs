@@ -819,6 +819,7 @@ fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
 }
 
 #[cfg(not(test))]
+#[allow(clippy::too_many_lines)]
 fn main() {
     initialize();
     prepare_cargo_cfg();
@@ -955,7 +956,7 @@ fn main() {
 /// Handles the prebuilt AWS-LC build flow.
 ///
 /// This function is called when `PREBUILT_INSTALL_DIR` environment variable is set.
-/// It validates the installation, creates the PrebuiltBuilder, handles bindings,
+/// It validates the installation, creates the `PrebuiltBuilder`, handles bindings,
 /// and emits the appropriate cargo directives.
 fn handle_prebuilt_build(manifest_dir: &Path) {
     use prebuilt_builder::PrebuiltBuilder;
@@ -972,16 +973,16 @@ fn handle_prebuilt_build(manifest_dir: &Path) {
     // 1. Validate installation and detect prefix
     let (_version, prefix) =
         prebuilt_aws_lc::validate_installation(&include_dir, config.skip_version_check)
-            .unwrap_or_else(|e| panic!("Prebuilt validation failed: {}", e));
+            .unwrap_or_else(|e| panic!("Prebuilt validation failed: {e}"));
 
     // 2. Create builder
     let builder = PrebuiltBuilder::new(config.install_dir.clone(), prefix.clone())
-        .unwrap_or_else(|e| panic!("Prebuilt configuration failed: {}", e));
+        .unwrap_or_else(|e| panic!("Prebuilt configuration failed: {e}"));
 
     // 3. Check library dependencies
     builder
         .check_dependencies()
-        .unwrap_or_else(|e| panic!("Prebuilt library check failed: {}", e));
+        .unwrap_or_else(|e| panic!("Prebuilt library check failed: {e}"));
 
     // 4. Handle bindings (checks conventional location, then generates if needed)
     prebuilt_builder::handle_prebuilt_bindings(
@@ -991,14 +992,14 @@ fn handle_prebuilt_build(manifest_dir: &Path) {
         &out_dir(),
         &prefix,
     )
-    .unwrap_or_else(|e| panic!("Prebuilt bindings failed: {}", e));
+    .unwrap_or_else(|e| panic!("Prebuilt bindings failed: {e}"));
 
     emit_rustc_cfg("use_bindgen_pregenerated");
 
     // 5. Emit linking directives
     builder
         .build()
-        .unwrap_or_else(|e| panic!("Prebuilt linking failed: {}", e));
+        .unwrap_or_else(|e| panic!("Prebuilt linking failed: {e}"));
 
     // 6. Export metadata for downstream crates
     println!("cargo:include={}", builder.include_dir().display());
