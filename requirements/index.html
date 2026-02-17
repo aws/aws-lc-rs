@@ -170,10 +170,33 @@
 <p>This page outlines the requirements for using <code>aws-lc-rs</code> on each target platform.</p>
 <p><code>aws-lc-rs</code> uses <a href="https://crates.io/crates/aws-lc-sys">aws-lc-sys</a> or <a href="https://crates.io/crates/aws-lc-fips-sys">aws-lc-fips-sys</a> to provide raw FFI bindings to <a href="https://github.com/aws/aws-lc">AWS-LC</a>. Thus,
 there are additional build tools required for building these crates into your Rust application.</p>
+<h2 id="quick-summary"><a class="header" href="#quick-summary">Quick Summary</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Build Type</th><th>C/C++ Compiler</th><th>CMake</th><th>Bindgen</th><th>Go</th></tr></thead><tbody>
+<tr><td><strong>Non-FIPS</strong> (<code>aws-lc-sys</code>)</td><td>Required</td><td>Never required</td><td>Never required</td><td>Never required</td></tr>
+<tr><td><strong>FIPS</strong> (<code>aws-lc-fips-sys</code>)</td><td>Required</td><td>Always required</td><td>Required*</td><td>Always required</td></tr>
+</tbody></table>
+</div>
+<p>* Bindgen is required for FIPS builds unless the target has pre-generated bindings.</p>
+<h3 id="pre-generated-bindings"><a class="header" href="#pre-generated-bindings">Pre-generated Bindings</a></h3>
+<p><strong>Non-FIPS (<code>aws-lc-sys</code>):</strong> Pre-generated &quot;universal&quot; bindings are provided that cover all functions
+used by <code>aws-lc-rs</code>. These bindings work across all supported platforms, so <strong>bindgen is never
+required</strong> for <code>aws-lc-rs</code> users.</p>
+<blockquote>
+<p><strong>Note:</strong> If you take a direct dependency on <code>aws-lc-sys</code> (not through <code>aws-lc-rs</code>), it defaults
+to using the more complete target-specific bindings. See the pre-generated bindings in
+<a href="https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/src"><code>aws-lc-sys/src/</code></a>.</p>
+</blockquote>
+<p><strong>FIPS (<code>aws-lc-fips-sys</code>):</strong> Pre-generated bindings are available for a limited set of targets.
+See <a href="https://github.com/aws/aws-lc-rs/tree/main/aws-lc-fips-sys/src"><code>aws-lc-fips-sys/src/</code></a> for
+the list. Bindgen is required for all other targets.</p>
+<h3 id="tested-platforms"><a class="header" href="#tested-platforms">Tested Platforms</a></h3>
+<p>A mostly complete set of platforms for which we test our builds can be found in our
+<a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml">CI workflow configuration</a>.</p>
+<h2 id="platform-specific-requirements"><a class="header" href="#platform-specific-requirements">Platform-Specific Requirements</a></h2>
 <ul>
-<li><a href="linux">Linux</a></li>
-<li><a href="apple">macOS &amp; iOS</a></li>
-<li><a href="windows">Windows</a></li>
+<li><a href="linux.html">Linux</a></li>
+<li><a href="apple.html">macOS &amp; iOS</a></li>
+<li><a href="windows.html">Windows</a></li>
 </ul>
 
                     </main>

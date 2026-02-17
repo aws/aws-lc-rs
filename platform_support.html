@@ -171,54 +171,116 @@
 <p><code>aws-lc-rs</code> can utilize pre-generated bindings when operating on the following
 build targets.</p>
 <div class="table-wrapper"><table><thead><tr><th>Platform</th><th><code>aws-lc-sys</code></th><th><code>aws-lc-fips-sys</code></th></tr></thead><tbody>
-<tr><td><code>aarch64-apple-darwin</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>aarch64-pc-windows-msvc</code></td><td>X</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>aarch64-unknown-linux-musl</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>i686-pc-windows-msvc</code></td><td>X</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>i686-unknown-linux-gnu</code></td><td>X</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>x86_64-apple-darwin</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>x86_64-pc-windows-gnu</code></td><td>X</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>x86_64-pc-windows-msvc</code></td><td>X</td><td></td></tr>
-<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>x86_64-unknown-linux-musl</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>aarch64-apple-darwin</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>aarch64-pc-windows-msvc</code></td><td>✓</td><td>✓ ²</td></tr>
+<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>aarch64-unknown-linux-musl</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>i686-pc-windows-msvc</code></td><td>✓</td><td><strong>Not Supported</strong></td></tr>
+<tr><td><code>i686-unknown-linux-gnu</code></td><td>✓</td><td><strong>Not Supported</strong></td></tr>
+<tr><td><code>x86_64-apple-darwin</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-pc-windows-gnu</code></td><td>✓</td><td><strong>Not Supported</strong></td></tr>
+<tr><td><code>x86_64-pc-windows-msvc</code></td><td>✓</td><td>✓ ²</td></tr>
+<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-unknown-linux-musl</code></td><td>✓</td><td>✓</td></tr>
 </tbody></table>
 </div>
+<p>² FIPS is supported but requires bindgen (no pre-generated FIPS bindings are available for Windows platforms)</p>
 <h2 id="tested-platforms"><a class="header" href="#tested-platforms">Tested platforms</a></h2>
-<p>In addition to the ones listed above, the  <code>aws-lc-rs</code> CI builds and/or tests with the following platforms.
-All platforms listed below require <code>CMake</code> to be available in the build environment.
-They also require bindings to be generated during the build process.</p>
-<h3 id="bindgen"><a class="header" href="#bindgen">bindgen</a></h3>
-<p>One of the following options must be used for bindings generation.
+<p>In addition to the platforms with pre-generated bindings listed above, <code>aws-lc-rs</code> CI builds and/or tests on many additional platforms.
+See our <a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml">CI workflow configuration</a> for the complete list of tested platforms.</p>
+<h3 id="build-requirements-summary"><a class="header" href="#build-requirements-summary">Build Requirements Summary</a></h3>
+<p><strong>For non-FIPS builds (<code>aws-lc-sys</code>):</strong></p>
+<ul>
+<li>C/C++ Compiler: Required</li>
+<li>CMake: <strong>Never</strong> required</li>
+<li>Bindgen: <strong>Never</strong> required (universal pre-generated bindings are provided)</li>
+<li>Go: <strong>Never</strong> required</li>
+</ul>
+<p><strong>For FIPS builds (<code>aws-lc-fips-sys</code>):</strong></p>
+<ul>
+<li>C/C++ Compiler: Required</li>
+<li>CMake: <strong>Always</strong> required</li>
+<li>Go: <strong>Always</strong> required</li>
+<li>Bindgen: Required <strong>unless</strong> the target has pre-generated bindings (see table above)</li>
+</ul>
+<h3 id="bindgen-for-fips-builds"><a class="header" href="#bindgen-for-fips-builds">Bindgen for FIPS Builds</a></h3>
+<p>For FIPS builds on targets without pre-generated bindings, one of the following options must be used for bindings generation.
 See <a href="requirements/README.html">requirements</a> page for more information.</p>
 <ul>
 <li>Enable <code>bindgen</code> feature in your <code>Cargo.toml</code>:</li>
 </ul>
 <pre><code class="language-toml">[dependencies]
-aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;] }
+aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;, &quot;fips&quot;] }
 </code></pre>
 <p><em><strong>-- OR --</strong></em></p>
 <ul>
-<li>Install <code>bindgen-cli</code> in the build envionment:</li>
+<li>Install <code>bindgen-cli</code> in the build environment:</li>
 </ul>
 <pre><code class="language-shell">cargo install --force --locked bindgen-cli
 </code></pre>
-<h3 id="platforms"><a class="header" href="#platforms">Platforms</a></h3>
+<h3 id="linux-platforms"><a class="header" href="#linux-platforms">Linux Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th><th>FIPS</th></tr></thead><tbody>
+<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>aarch64-unknown-linux-musl</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>arm-unknown-linux-gnueabihf</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>arm-unknown-linux-musleabi</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>arm-unknown-linux-musleabihf</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>armv7-unknown-linux-gnueabihf</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>i686-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>mips-unknown-linux-gnu</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>mips-unknown-linux-musl</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>mips64-unknown-linux-muslabi64</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>mips64el-unknown-linux-muslabi64</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>powerpc-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>powerpc64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>powerpc64le-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>riscv64gc-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>s390x-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-unknown-linux-musl</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+</tbody></table>
+</div>
+<p>¹ Requires nightly Rust toolchain</p>
+<h3 id="apple-platforms"><a class="header" href="#apple-platforms">Apple Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th><th>FIPS</th></tr></thead><tbody>
+<tr><td><code>aarch64-apple-darwin</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>aarch64-apple-ios</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>aarch64-apple-ios-sim</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>aarch64-apple-tvos-sim</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-apple-darwin</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-apple-ios</code></td><td>✓</td><td></td><td></td></tr>
+</tbody></table>
+</div>
+<p>¹ Requires nightly Rust toolchain</p>
+<h3 id="windows-platforms"><a class="header" href="#windows-platforms">Windows Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th><th>FIPS</th></tr></thead><tbody>
+<tr><td><code>aarch64-pc-windows-msvc</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>i686-pc-windows-msvc</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-pc-windows-gnu</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-pc-windows-msvc</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+</tbody></table>
+</div>
+<h3 id="android-platforms"><a class="header" href="#android-platforms">Android Platforms</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th></tr></thead><tbody>
-<tr><td><code>aarch64-apple-ios</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>aarch64-linux-android</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>aarch64-pc-windows-msvc</code></td><td>X</td><td></td></tr>
-<tr><td><code>armv7-linux-androideabi</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>arm-linux-androideabi</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>arm-unknown-linux-gnueabihf</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>powerpc64le-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>powerpc64-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>powerpc-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>riscv64gc-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>s390x-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>x86_64-apple-ios</code></td><td>X</td><td></td></tr>
-<tr><td><code>x86_64-pc-windows-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>x86_64-pc-windows-msvc</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>aarch64-linux-android</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>arm-linux-androideabi</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>armv7-linux-androideabi</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>i686-linux-android</code></td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-linux-android</code></td><td>✓</td><td></td></tr>
+</tbody></table>
+</div>
+<h3 id="bsd-platforms"><a class="header" href="#bsd-platforms">BSD Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th><th>FIPS</th></tr></thead><tbody>
+<tr><td><code>x86_64-unknown-freebsd</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-unknown-netbsd</code></td><td>✓</td><td>✓</td><td></td></tr>
+</tbody></table>
+</div>
+<h3 id="other-platforms"><a class="header" href="#other-platforms">Other Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th></tr></thead><tbody>
+<tr><td><code>x86_64-unknown-illumos</code></td><td>✓</td><td>✓</td></tr>
+<tr><td>OpenHarmony (aarch64)</td><td>✓</td><td></td></tr>
+<tr><td>OpenWrt (aarch64-musl)</td><td>✓</td><td></td></tr>
+<tr><td>Alpine Linux</td><td>✓</td><td>✓</td></tr>
 </tbody></table>
 </div>
                     </main>

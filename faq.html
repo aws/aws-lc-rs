@@ -176,13 +176,21 @@
 <li>Must be a platform and CPU architecture supported by <a href="https://github.com/aws/aws-lc">AWS-LC</a>.</li>
 <li>Must be a platform supported by the Rust compiler with support for the full standard library.
 See the <a href="https://doc.rust-lang.org/rustc/platform-support.html">Rust compiler's platform support</a> documentation.</li>
-<li>If the underlying <code>aws-lc-sys</code> or <code>aws-lc-fips-sys</code> crates don't have pre-generated bindings for the desired platform
-then you must use the <code>bindgen</code> crate feature of <code>aws-lc-rs</code>, or have the <a href="https://crates.io/crates/bindgen-cli">bindgen-cli</a> installed, to enable
+<li><strong>For non-FIPS builds:</strong> Bindgen is <strong>never</strong> required. The <code>aws-lc-sys</code> crate provides universal pre-generated
+bindings that cover all functions used by <code>aws-lc-rs</code>.</li>
+<li><strong>For FIPS builds:</strong> If <code>aws-lc-fips-sys</code> doesn't have pre-generated bindings for your target platform,
+you must use the <code>bindgen</code> crate feature of <code>aws-lc-rs</code>, or have the <a href="https://crates.io/crates/bindgen-cli">bindgen-cli</a> installed, to enable
 generation of the FFI bindings for the desired platform and architecture.</li>
-<li>See <a href="requirements/README.html">Requirements</a> and <a href="./platform_suppport.html">Platform Support</a> for more details on
+</ul>
+<blockquote>
+<p><strong>Note:</strong> If you take a direct dependency on <code>aws-lc-sys</code> (not through <code>aws-lc-rs</code>) and need access to the
+complete AWS-LC API, you may want to use target-specific bindings or enable bindgen for complete API coverage.</p>
+</blockquote>
+<ul>
+<li>See <a href="requirements/README.html">Requirements</a> and <a href="platform_support.html">Platform Support</a> for more details on
 build requirements for various platforms.</li>
 </ul>
-<p>If there is a platform or architecture you are interested in seeing support for, please create a GitHub <a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">issue</a>.</p>
+<p>If there is a platform or architecture you are interested in seeing support for, please create a GitHub <a href="https://github.com/aws/aws-lc-rs/issues/new/choose">issue</a>.</p>
 
                     </main>
 

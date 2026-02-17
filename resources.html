@@ -167,36 +167,171 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="resources"><a class="header" href="#resources">Resources</a></h1>
-<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
-<p>There are a few environment variables that may help in diagnosing/remdiating build problem. These affect the way that
-<code>aws-lc-sys</code> or <code>aws-lc-fips-sys</code> build the underlying AWS-LC library.</p>
-<p>None of the environment variables below are officially supported, and any one of them might be removed or changed on a
-future release. Please <a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">contact us</a> about any bugs you find in our build process.</p>
+<h2 id="build-environment-variables"><a class="header" href="#build-environment-variables">Build Environment Variables</a></h2>
+<p>The <code>aws-lc-sys</code> crate supports several environment variables that can help configure or troubleshoot
+the build process. The <code>aws-lc-fips-sys</code> crate supports most of the same environment variables, but
+uses an <code>AWS_LC_FIPS_SYS_</code> prefix instead of <code>AWS_LC_SYS_</code>.</p>
+<blockquote>
+<p><strong>Note:</strong> None of the environment variables below are officially supported, and any one of them
+might be removed or changed in a future release. Please <a href="https://github.com/aws/aws-lc-rs/issues/new/choose">contact us</a> about any bugs you find in
+our build process.</p>
+</blockquote>
+<h3 id="target-specific-variables"><a class="header" href="#target-specific-variables">Target-Specific Variables</a></h3>
+<p>Many of these environment variables also support target-specific variants. For example:</p>
 <ul>
-<li><code>AWS_LC_SYS_STATIC</code> | <code>AWS_LC_FIPS_SYS_STATIC</code> -- value can be set to <code>0</code> or <code>1</code> to force the resulting build
-artifact to be shared library (e.g., <code>*.so</code>) or static library (e.g., <code>*.a</code>).</li>
-<li><code>AWS_LC_SYS_CMAKE_BUILDER</code> -- value can be set to <code>1</code> or <code>0</code> to force the build to use (<code>1</code>) or not use (<code>0</code>) CMake.</li>
-<li><code>AWS_LC_SYS_EXTERNAL_BINDGEN | ``AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN</code> -- value can be set to <code>1</code> or <code>0</code> to force the
-build to use (<code>1</code>) or not use (<code>0</code>) the <code>bindgen-cli</code> instead of the pre-generated or internally generated bindings.</li>
-<li><code>AWS_LC_SYS_NO_PREFIX</code> | <code>AWS_LC_FIPS_SYS_NO_PREFIX</code> -- value can be set to <code>1</code> to force the build to not prefix the
-library nor the symbols it contains.</li>
-<li><code>AWS_LC_SYS_NO_ASM</code> | <code>AWS_LC_FIPS_SYS_NO_ASM</code> -- value can be set to <code>1</code> to force the build to use C-language
-implementations for all cryptographic operations. Our optimized hardware-specific assembly implementations will not
-be used. This option is only available for unoptimized (i.e., <code>OPT_LEVEL = &quot;0&quot;</code> or &quot;debug&quot;) builds.
-<strong>WARNING</strong>: Performance on most platforms is extremely limited by this option. Certain security
-properties, such as resistance to timing attacks, can only be provided when assembly code is used.</li>
-<li><code>AWS_LC_SYS_PREBUILT_NASM</code> -- value can be set to <code>1</code> to <em>allow</em> the build to use our prebuilt NASM objects.
-The value can be set to <code>0</code> to <em>prevent</em> our prebuilt NASM objects from being used. See the section on
-<a href="requirements/windows.html#prebuilt-nasm-objects">Prebuilt NASM objects</a> for more information.</li>
-<li><code>AWS_LC_SYS_CFLAGS</code> -- if value is set, it will be used as the value of <code>CFLAGS</code> in the environment when the AWS-LC
-build is performed.</li>
-<li><code>AWS_LC_SYS_C_STD</code> -- value can be set to determine the C standard used by the C compiler. It may be set to
-either <code>99</code> for C99 or <code>11</code> for C11. On most platforms, C11 will be used by default.</li>
+<li><code>AWS_LC_SYS_CFLAGS</code> applies to all targets</li>
+<li><code>AWS_LC_SYS_CFLAGS_aarch64_unknown_linux_gnu</code> applies only to the <code>aarch64-unknown-linux-gnu</code> target</li>
+</ul>
+<p>The target-specific variant takes precedence when both are set.</p>
+<h3 id="library-output"><a class="header" href="#library-output">Library Output</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_STATIC</code></strong> | <strong><code>AWS_LC_FIPS_SYS_STATIC</code></strong></p>
+<p>Controls whether the build produces a static or shared library.</p>
+<ul>
+<li><code>1</code> - Build as static library (e.g., <code>*.a</code>)</li>
+<li><code>0</code> - Build as shared/dynamic library (e.g., <code>*.so</code>, <code>*.dylib</code>, <code>*.dll</code>)</li>
+</ul>
+<p>Default: static library</p>
+<blockquote>
+<p><strong>Note:</strong> For <code>aws-lc-fips-sys</code>, static library builds are only supported on Linux and BSD targets
+with x86_64 or aarch64 architectures. On other platforms, FIPS builds to shared libraries.</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="build-system"><a class="header" href="#build-system">Build System</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_CMAKE_BUILDER</code></strong></p>
+<p>Controls which build system is used to compile AWS-LC. This option only applies to <code>aws-lc-sys</code>.</p>
+<ul>
+<li><code>1</code> - Force use of CMake</li>
+<li><code>0</code> - Force use of the <code>cc</code> crate builder</li>
+</ul>
+<p>Default: The <code>cc</code> crate builder is used by default. <strong>CMake is not required for <code>aws-lc-sys</code>.</strong></p>
+<blockquote>
+<p><strong>Note:</strong> The <code>aws-lc-fips-sys</code> crate always requires CMake and does not support this option.</p>
+</blockquote>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_PREGENERATED_SRC</code></strong></p>
+<p>When set to <code>1</code>, forces the build to generate CMake source files instead of using
+pre-generated ones.</p>
+</li>
+</ul>
+<h3 id="bindings-generation"><a class="header" href="#bindings-generation">Bindings Generation</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_EXTERNAL_BINDGEN</code></strong> | <strong><code>AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN</code></strong></p>
+<p>Controls whether to use the external <code>bindgen-cli</code> tool for generating bindings.</p>
+<ul>
+<li><code>1</code> - Use external <code>bindgen-cli</code> (must be installed via <code>cargo install bindgen-cli</code>)</li>
+<li><code>0</code> - Use internal bindgen or pre-generated bindings</li>
+</ul>
+<blockquote>
+<p><strong>Note:</strong> For users of <code>aws-lc-rs</code>, bindgen is never required. <code>aws-lc-sys</code> provides universal
+bindings that work for users of <code>aws-lc-rs</code> across all supported platforms. This option
+is primarily useful for direct consumers of <code>aws-lc-sys</code> who need complete API bindings
+on platforms without pre-generated bindings.</p>
+</blockquote>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_PREFIX</code></strong> | <strong><code>AWS_LC_FIPS_SYS_NO_PREFIX</code></strong></p>
+<p>When set to <code>1</code>, the build will not apply a unique prefix to the library name or the symbols
+it contains. This may be useful in certain linking scenarios but can cause symbol conflicts
+if multiple versions are linked.</p>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_U1_BINDINGS</code></strong></p>
+<p>When set to <code>1</code>, uses bindings that don't include the <code>\x01</code> prefix on symbol names.
+This is automatically enabled for certain backends (like Cranelift) and architectures
+(like MIPS) that don't support the prefixed symbols.</p>
+</li>
+</ul>
+<h3 id="assembly-and-optimization"><a class="header" href="#assembly-and-optimization">Assembly and Optimization</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_ASM</code></strong> | <strong><code>AWS_LC_FIPS_SYS_NO_ASM</code></strong></p>
+<p>When set to <code>1</code>, forces the build to use pure C implementations for all cryptographic
+operations instead of optimized assembly.</p>
+<blockquote>
+<p><strong>Note</strong>: When using the CMake builder, this option is only available when <code>OPT_LEVEL = &quot;0&quot;</code>.
+When using the <code>cc</code> crate builder, this option is available for optimization levels 0, 1, and 2.</p>
+</blockquote>
+<blockquote>
+<p><strong>WARNING</strong>: Performance on most platforms is extremely limited by this option. Certain security
+properties, such as resistance to timing attacks, can only be provided when assembly code is used.</p>
+</blockquote>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_PREBUILT_NASM</code></strong></p>
+<p>Controls the use of prebuilt NASM objects on Windows x86-64.</p>
+<ul>
+<li><code>1</code> - Allow use of prebuilt NASM objects</li>
+<li><code>0</code> - Prevent use of prebuilt NASM objects (requires NASM to be installed)</li>
+</ul>
+<p>See the section on <a href="requirements/windows.html#prebuilt-nasm-objects">Prebuilt NASM objects</a>
+for more information.</p>
+</li>
+</ul>
+<h3 id="compiler-configuration"><a class="header" href="#compiler-configuration">Compiler Configuration</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_CC</code></strong> / <strong><code>AWS_LC_SYS_TARGET_CC</code></strong></p>
+<p>Specifies the C compiler to use. Falls back to the standard <code>CC</code> / <code>TARGET_CC</code> environment
+variables if not set.</p>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_CXX</code></strong> / <strong><code>AWS_LC_SYS_TARGET_CXX</code></strong></p>
+<p>Specifies the C++ compiler to use. Falls back to the standard <code>CXX</code> / <code>TARGET_CXX</code>
+environment variables if not set.</p>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_CFLAGS</code></strong> / <strong><code>AWS_LC_SYS_TARGET_CFLAGS</code></strong></p>
+<p>Additional flags to pass to the C compiler during the AWS-LC build. Falls back to
+<code>CFLAGS</code> / <code>TARGET_CFLAGS</code> if not set.</p>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_C_STD</code></strong></p>
+<p>Specifies the C language standard to use.</p>
+<ul>
+<li><code>99</code> - Use C99</li>
+<li><code>11</code> - Use C11</li>
+</ul>
+<p>Default: C11 on most platforms.</p>
+</li>
+</ul>
+<h3 id="entropy-configuration"><a class="header" href="#entropy-configuration">Entropy Configuration</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_JITTER_ENTROPY</code></strong></p>
+<p>When set to <code>1</code>, disables the CPU jitter entropy source in the build. This affects the
+random number generation subsystem. Use of jitter entropy has a one-time-per-process
+latency cost, typically around 50ms, for the collection of entropy. This flag may be
+used to eliminate this latency.</p>
+<blockquote>
+<p><strong>Note:</strong> This option is only available for <code>aws-lc-sys</code>.</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="advanced-options"><a class="header" href="#advanced-options">Advanced Options</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_EFFECTIVE_TARGET</code></strong></p>
+<p>Overrides the target triple string used for certain build decisions. This affects selection of pre-generated bindings.</p>
+<blockquote>
+<p><strong>Note:</strong> This variable does <strong>not</strong> override the underlying Cargo target configuration
+(<code>CARGO_CFG_TARGET_*</code> variables). Build decisions that depend on <code>target_os()</code>,
+<code>target_arch()</code>, <code>target_vendor()</code>, or <code>target_env()</code> are not affected by this setting.
+It is primarily useful for selecting different pre-generated bindings or symbol prefixes
+when building for targets that are compatible with another target's bindings.</p>
+</blockquote>
+</li>
 </ul>
 <h2 id="links"><a class="header" href="#links">Links</a></h2>
 <ul>
 <li><a href="https://docs.rs/aws-lc-rs/latest">API Reference Guide</a></li>
-<li><a href="https://github.com/awslabs/aws-lc-rs">GitHub Repository</a></li>
+<li><a href="https://github.com/aws/aws-lc-rs">GitHub Repository</a></li>
 </ul>
 
                     </main>

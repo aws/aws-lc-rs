@@ -167,33 +167,59 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="linux-requirements"><a class="header" href="#linux-requirements">Linux Requirements</a></h1>
-<p>Unless the &quot;fips&quot; feature is enabled, building aws-lc-rs v1.7.0 (or later) for the following targets should only require
-a C/C++ compiler.</p>
-<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th><th>bindgen required?</th></tr></thead><tbody>
-<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>aarch64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>x86_64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>i686-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td><strong>Not Supported</strong></td><td>No</td></tr>
-<tr><td><em>Other</em></td><td>C/C++ Compiler &amp; CMake</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
+<h2 id="build-requirements"><a class="header" href="#build-requirements">Build Requirements</a></h2>
+<h3 id="non-fips-builds-aws-lc-sys"><a class="header" href="#non-fips-builds-aws-lc-sys">Non-FIPS Builds (<code>aws-lc-sys</code>)</a></h3>
+<p>For non-FIPS builds on Linux:</p>
+<ul>
+<li><strong>C/C++ Compiler:</strong> Required</li>
+<li><strong>CMake:</strong> Never required</li>
+<li><strong>Bindgen:</strong> Never required (universal pre-generated bindings are provided)</li>
+<li><strong>Go:</strong> Never required</li>
+</ul>
+<h3 id="fips-builds-aws-lc-fips-sys"><a class="header" href="#fips-builds-aws-lc-fips-sys">FIPS Builds (<code>aws-lc-fips-sys</code>)</a></h3>
+<p>For FIPS builds on Linux:</p>
+<ul>
+<li><strong>C/C++ Compiler:</strong> Required</li>
+<li><strong>CMake:</strong> Always required</li>
+<li><strong>Go:</strong> Always required</li>
+<li><strong>Bindgen:</strong> Required unless target has pre-generated bindings (see list below)</li>
+</ul>
+<h4 id="targets-with-pre-generated-fips-bindings"><a class="header" href="#targets-with-pre-generated-fips-bindings">Targets with Pre-generated FIPS Bindings</a></h4>
+<p>The following Linux targets have pre-generated bindings for <code>aws-lc-fips-sys</code>:</p>
+<ul>
+<li><code>aarch64-unknown-linux-gnu</code></li>
+<li><code>aarch64-unknown-linux-musl</code></li>
+<li><code>x86_64-unknown-linux-gnu</code></li>
+<li><code>x86_64-unknown-linux-musl</code></li>
+</ul>
+<p>For other Linux targets using FIPS, bindgen is required.</p>
+<h3 id="summary-table"><a class="header" href="#summary-table">Summary Table</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th></tr></thead><tbody>
+<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td><code>aarch64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td><code>x86_64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td>Other Linux targets</td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake, Go &amp; Bindgen</td></tr>
 </tbody></table>
 </div>
 <h2 id="cc-compiler"><a class="header" href="#cc-compiler">C/C++ Compiler</a></h2>
 <h3 id="amazon-linux-al2023"><a class="header" href="#amazon-linux-al2023">Amazon Linux (AL2023)</a></h3>
 <pre><code class="language-shell">sudo dnf groupinstall -y &quot;Development Tools&quot;
 </code></pre>
-<h4 id="ubuntu-2204-lts"><a class="header" href="#ubuntu-2204-lts">Ubuntu (22.04 LTS)</a></h4>
+<h3 id="ubuntu-2204-lts"><a class="header" href="#ubuntu-2204-lts">Ubuntu (22.04 LTS)</a></h3>
 <pre><code class="language-shell">sudo apt-get install -y build-essential
 </code></pre>
 <h2 id="cmake--go"><a class="header" href="#cmake--go">CMake &amp; Go</a></h2>
-<h4 id="amazon-linux-al2023-1"><a class="header" href="#amazon-linux-al2023-1">Amazon Linux (AL2023)</a></h4>
+<p>CMake and Go are only required for FIPS builds.</p>
+<h3 id="amazon-linux-al2023-1"><a class="header" href="#amazon-linux-al2023-1">Amazon Linux (AL2023)</a></h3>
 <pre><code class="language-shell">sudo dnf install -y cmake golang
 </code></pre>
-<h4 id="ubuntu-2204-lts-1"><a class="header" href="#ubuntu-2204-lts-1">Ubuntu (22.04 LTS)</a></h4>
+<h3 id="ubuntu-2204-lts-1"><a class="header" href="#ubuntu-2204-lts-1">Ubuntu (22.04 LTS)</a></h3>
 <pre><code class="language-shell">sudo apt-get install -y cmake golang
 </code></pre>
-<h2 id="bindgen"><a class="header" href="#bindgen">Bindgen</a></h2>
-<p>On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
+<h2 id="bindgen-fips-only"><a class="header" href="#bindgen-fips-only">Bindgen (FIPS only)</a></h2>
+<p>Bindgen is only required for FIPS builds on platforms that do not have pre-generated bindings.
+On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
 See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">requirements</a> page in
 <a href="https://rust-lang.github.io/rust-bindgen/">The bindgen User Guide</a> for instructions.</p>
 <h3 id="libclang--llvm"><a class="header" href="#libclang--llvm">libclang / LLVM</a></h3>
@@ -207,7 +233,7 @@ See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">req
 <pre><code class="language-shell">cargo install --force --locked bindgen-cli
 </code></pre>
 <h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
-<p>See our <a href="../resources.html#troubleshooting">troubleshooting section</a>.</p>
+<p>See our <a href="../resources.html#build-environment-variables">troubleshooting section</a>.</p>
 
                     </main>
 

@@ -186,11 +186,11 @@ prescribed cryptographic requirements can seamlessly integrate aws-lc-rs into th
 AWS Regions.</p>
 <h2 id="questions-feedback-and-contributing"><a class="header" href="#questions-feedback-and-contributing">Questions, Feedback and Contributing</a></h2>
 <ul>
-<li><a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">Submit an non-security Bug/Issue/Request</a></li>
+<li><a href="https://github.com/aws/aws-lc-rs/issues/new/choose">Submit an non-security Bug/Issue/Request</a></li>
 <li><a href="https://docs.rs/aws-lc-rs/">API documentation</a></li>
-<li><a href="https://github.com/awslabs/aws-lc-rs/fork">Fork our repo</a></li>
+<li><a href="https://github.com/aws/aws-lc-rs/fork">Fork our repo</a></li>
 </ul>
-<p>We use <a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">GitHub Issues</a> for managing feature requests, bug reports, or questions about aws-lc-rs API usage.</p>
+<p>We use <a href="https://github.com/aws/aws-lc-rs/issues/new/choose">GitHub Issues</a> for managing feature requests, bug reports, or questions about aws-lc-rs API usage.</p>
 <p>Otherwise, if you think you might have found a security impacting issue, please instead
 follow our <em>Security Notification Process</em> below.</p>
 <h2 id="security-notification-process"><a class="header" href="#security-notification-process">Security Notification Process</a></h2>
@@ -208,39 +208,88 @@ the ISC AND ( Apache-2.0 OR ISC ) AND OpenSSL licenses.</p>
 <p>This page outlines the requirements for using <code>aws-lc-rs</code> on each target platform.</p>
 <p><code>aws-lc-rs</code> uses <a href="https://crates.io/crates/aws-lc-sys">aws-lc-sys</a> or <a href="https://crates.io/crates/aws-lc-fips-sys">aws-lc-fips-sys</a> to provide raw FFI bindings to <a href="https://github.com/aws/aws-lc">AWS-LC</a>. Thus,
 there are additional build tools required for building these crates into your Rust application.</p>
+<h2 id="quick-summary"><a class="header" href="#quick-summary">Quick Summary</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Build Type</th><th>C/C++ Compiler</th><th>CMake</th><th>Bindgen</th><th>Go</th></tr></thead><tbody>
+<tr><td><strong>Non-FIPS</strong> (<code>aws-lc-sys</code>)</td><td>Required</td><td>Never required</td><td>Never required</td><td>Never required</td></tr>
+<tr><td><strong>FIPS</strong> (<code>aws-lc-fips-sys</code>)</td><td>Required</td><td>Always required</td><td>Required*</td><td>Always required</td></tr>
+</tbody></table>
+</div>
+<p>* Bindgen is required for FIPS builds unless the target has pre-generated bindings.</p>
+<h3 id="pre-generated-bindings"><a class="header" href="#pre-generated-bindings">Pre-generated Bindings</a></h3>
+<p><strong>Non-FIPS (<code>aws-lc-sys</code>):</strong> Pre-generated &quot;universal&quot; bindings are provided that cover all functions
+used by <code>aws-lc-rs</code>. These bindings work across all supported platforms, so <strong>bindgen is never
+required</strong> for <code>aws-lc-rs</code> users.</p>
+<blockquote>
+<p><strong>Note:</strong> If you take a direct dependency on <code>aws-lc-sys</code> (not through <code>aws-lc-rs</code>), it defaults
+to using the more complete target-specific bindings. See the pre-generated bindings in
+<a href="https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/src"><code>aws-lc-sys/src/</code></a>.</p>
+</blockquote>
+<p><strong>FIPS (<code>aws-lc-fips-sys</code>):</strong> Pre-generated bindings are available for a limited set of targets.
+See <a href="https://github.com/aws/aws-lc-rs/tree/main/aws-lc-fips-sys/src"><code>aws-lc-fips-sys/src/</code></a> for
+the list. Bindgen is required for all other targets.</p>
+<h3 id="tested-platforms"><a class="header" href="#tested-platforms">Tested Platforms</a></h3>
+<p>A mostly complete set of platforms for which we test our builds can be found in our
+<a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml">CI workflow configuration</a>.</p>
+<h2 id="platform-specific-requirements"><a class="header" href="#platform-specific-requirements">Platform-Specific Requirements</a></h2>
 <ul>
-<li><a href="requirements/linux">Linux</a></li>
-<li><a href="requirements/apple">macOS &amp; iOS</a></li>
-<li><a href="requirements/windows">Windows</a></li>
+<li><a href="requirements/linux.html">Linux</a></li>
+<li><a href="requirements/apple.html">macOS &amp; iOS</a></li>
+<li><a href="requirements/windows.html">Windows</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="linux-requirements"><a class="header" href="#linux-requirements">Linux Requirements</a></h1>
-<p>Unless the &quot;fips&quot; feature is enabled, building aws-lc-rs v1.7.0 (or later) for the following targets should only require
-a C/C++ compiler.</p>
-<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th><th>bindgen required?</th></tr></thead><tbody>
-<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>aarch64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>x86_64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>i686-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td><strong>Not Supported</strong></td><td>No</td></tr>
-<tr><td><em>Other</em></td><td>C/C++ Compiler &amp; CMake</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
+<h2 id="build-requirements"><a class="header" href="#build-requirements">Build Requirements</a></h2>
+<h3 id="non-fips-builds-aws-lc-sys"><a class="header" href="#non-fips-builds-aws-lc-sys">Non-FIPS Builds (<code>aws-lc-sys</code>)</a></h3>
+<p>For non-FIPS builds on Linux:</p>
+<ul>
+<li><strong>C/C++ Compiler:</strong> Required</li>
+<li><strong>CMake:</strong> Never required</li>
+<li><strong>Bindgen:</strong> Never required (universal pre-generated bindings are provided)</li>
+<li><strong>Go:</strong> Never required</li>
+</ul>
+<h3 id="fips-builds-aws-lc-fips-sys"><a class="header" href="#fips-builds-aws-lc-fips-sys">FIPS Builds (<code>aws-lc-fips-sys</code>)</a></h3>
+<p>For FIPS builds on Linux:</p>
+<ul>
+<li><strong>C/C++ Compiler:</strong> Required</li>
+<li><strong>CMake:</strong> Always required</li>
+<li><strong>Go:</strong> Always required</li>
+<li><strong>Bindgen:</strong> Required unless target has pre-generated bindings (see list below)</li>
+</ul>
+<h4 id="targets-with-pre-generated-fips-bindings"><a class="header" href="#targets-with-pre-generated-fips-bindings">Targets with Pre-generated FIPS Bindings</a></h4>
+<p>The following Linux targets have pre-generated bindings for <code>aws-lc-fips-sys</code>:</p>
+<ul>
+<li><code>aarch64-unknown-linux-gnu</code></li>
+<li><code>aarch64-unknown-linux-musl</code></li>
+<li><code>x86_64-unknown-linux-gnu</code></li>
+<li><code>x86_64-unknown-linux-musl</code></li>
+</ul>
+<p>For other Linux targets using FIPS, bindgen is required.</p>
+<h3 id="summary-table"><a class="header" href="#summary-table">Summary Table</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th></tr></thead><tbody>
+<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td><code>aarch64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td><code>x86_64-unknown-linux-musl</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td>Other Linux targets</td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake, Go &amp; Bindgen</td></tr>
 </tbody></table>
 </div>
 <h2 id="cc-compiler"><a class="header" href="#cc-compiler">C/C++ Compiler</a></h2>
 <h3 id="amazon-linux-al2023"><a class="header" href="#amazon-linux-al2023">Amazon Linux (AL2023)</a></h3>
 <pre><code class="language-shell">sudo dnf groupinstall -y &quot;Development Tools&quot;
 </code></pre>
-<h4 id="ubuntu-2204-lts"><a class="header" href="#ubuntu-2204-lts">Ubuntu (22.04 LTS)</a></h4>
+<h3 id="ubuntu-2204-lts"><a class="header" href="#ubuntu-2204-lts">Ubuntu (22.04 LTS)</a></h3>
 <pre><code class="language-shell">sudo apt-get install -y build-essential
 </code></pre>
 <h2 id="cmake--go"><a class="header" href="#cmake--go">CMake &amp; Go</a></h2>
-<h4 id="amazon-linux-al2023-1"><a class="header" href="#amazon-linux-al2023-1">Amazon Linux (AL2023)</a></h4>
+<p>CMake and Go are only required for FIPS builds.</p>
+<h3 id="amazon-linux-al2023-1"><a class="header" href="#amazon-linux-al2023-1">Amazon Linux (AL2023)</a></h3>
 <pre><code class="language-shell">sudo dnf install -y cmake golang
 </code></pre>
-<h4 id="ubuntu-2204-lts-1"><a class="header" href="#ubuntu-2204-lts-1">Ubuntu (22.04 LTS)</a></h4>
+<h3 id="ubuntu-2204-lts-1"><a class="header" href="#ubuntu-2204-lts-1">Ubuntu (22.04 LTS)</a></h3>
 <pre><code class="language-shell">sudo apt-get install -y cmake golang
 </code></pre>
-<h2 id="bindgen"><a class="header" href="#bindgen">Bindgen</a></h2>
-<p>On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
+<h2 id="bindgen-fips-only"><a class="header" href="#bindgen-fips-only">Bindgen (FIPS only)</a></h2>
+<p>Bindgen is only required for FIPS builds on platforms that do not have pre-generated bindings.
+On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
 See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">requirements</a> page in
 <a href="https://rust-lang.github.io/rust-bindgen/">The bindgen User Guide</a> for instructions.</p>
 <h3 id="libclang--llvm"><a class="header" href="#libclang--llvm">libclang / LLVM</a></h3>
@@ -254,59 +303,97 @@ See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">req
 <pre><code class="language-shell">cargo install --force --locked bindgen-cli
 </code></pre>
 <h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
-<p>See our <a href="requirements/../resources.html#troubleshooting">troubleshooting section</a>.</p>
+<p>See our <a href="requirements/../resources.html#build-environment-variables">troubleshooting section</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="macos--ios-requirements"><a class="header" href="#macos--ios-requirements">macOS &amp; iOS Requirements</a></h1>
-<p>Unless the &quot;fips&quot; feature is enabled, building aws-lc-rs v1.7.0 (or later) for macOS targets should only require
-a C/C++ compiler. Builds for iOS will also require CMake.</p>
-<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th><th>bindgen required?</th></tr></thead><tbody>
-<tr><td><code>aarch64-apple-darwin</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>x86_64-apple-darwin</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td><td>No</td></tr>
-<tr><td><code>aarch64-apple-ios</code></td><td>C/C++ Compiler &amp; CMake</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
-<tr><td><code>x86_64-apple-ios</code></td><td>C/C++ Compiler &amp; CMake</td><td><strong>Not Supported</strong></td><td><strong><em>Yes</em></strong></td></tr>
+<h2 id="build-requirements-1"><a class="header" href="#build-requirements-1">Build Requirements</a></h2>
+<h3 id="non-fips-builds-aws-lc-sys-1"><a class="header" href="#non-fips-builds-aws-lc-sys-1">Non-FIPS Builds (<code>aws-lc-sys</code>)</a></h3>
+<p>For non-FIPS builds on macOS and iOS:</p>
+<ul>
+<li><strong>C/C++ Compiler:</strong> Required</li>
+<li><strong>CMake:</strong> Never required</li>
+<li><strong>Bindgen:</strong> Never required (universal pre-generated bindings are provided)</li>
+<li><strong>Go:</strong> Never required</li>
+</ul>
+<h3 id="fips-builds-aws-lc-fips-sys-1"><a class="header" href="#fips-builds-aws-lc-fips-sys-1">FIPS Builds (<code>aws-lc-fips-sys</code>)</a></h3>
+<p>For FIPS builds on macOS:</p>
+<ul>
+<li><strong>C/C++ Compiler:</strong> Required</li>
+<li><strong>CMake:</strong> Always required</li>
+<li><strong>Go:</strong> Always required</li>
+<li><strong>Bindgen:</strong> Required unless target has pre-generated bindings (see list below)</li>
+</ul>
+<blockquote>
+<p><strong>Note:</strong> FIPS is <strong>not supported</strong> on iOS targets.</p>
+</blockquote>
+<h4 id="targets-with-pre-generated-fips-bindings-1"><a class="header" href="#targets-with-pre-generated-fips-bindings-1">Targets with Pre-generated FIPS Bindings</a></h4>
+<p>The following macOS targets have pre-generated bindings for <code>aws-lc-fips-sys</code>:</p>
+<ul>
+<li><code>aarch64-apple-darwin</code></li>
+<li><code>x86_64-apple-darwin</code></li>
+</ul>
+<h3 id="summary-table-1"><a class="header" href="#summary-table-1">Summary Table</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th></tr></thead><tbody>
+<tr><td><code>aarch64-apple-darwin</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td><code>x86_64-apple-darwin</code></td><td>C/C++ Compiler</td><td>C/C++ Compiler, CMake &amp; Go</td></tr>
+<tr><td><code>aarch64-apple-ios</code></td><td>C/C++ Compiler</td><td><strong>Not Supported</strong></td></tr>
+<tr><td><code>x86_64-apple-ios</code></td><td>C/C++ Compiler</td><td><strong>Not Supported</strong></td></tr>
 </tbody></table>
 </div>
 <h2 id="cc-compiler-1"><a class="header" href="#cc-compiler-1">C/C++ Compiler</a></h2>
-<p>Install <a href="https://developer.apple.com/xcode/resources/">Command Line Tools for Xcode</a> which a provides a C/C++ compiler environment (LLVM).</p>
+<p>Install <a href="https://developer.apple.com/xcode/resources/">Command Line Tools for Xcode</a> which provides a C/C++ compiler environment (LLVM).</p>
 <h2 id="cmake"><a class="header" href="#cmake">CMake</a></h2>
+<p>CMake is only required for FIPS builds on macOS.</p>
 <h3 id="macports"><a class="header" href="#macports">MacPorts</a></h3>
 <pre><code class="language-shell">sudo port install cmake
 </code></pre>
 <h3 id="homebrew"><a class="header" href="#homebrew">Homebrew</a></h3>
 <pre><code class="language-shell">brew install cmake
 </code></pre>
-<h2 id="bindgen-1"><a class="header" href="#bindgen-1">Bindgen</a></h2>
-<p>On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
-See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">requirements</a> page in
-<a href="https://rust-lang.github.io/rust-bindgen/">The bindgen User Guide</a> for instructions.</p>
-<h4 id=""><a class="header" href="#"></a></h4>
+<h2 id="go"><a class="header" href="#go">Go</a></h2>
+<p>Go is only required for FIPS builds.</p>
 <h3 id="macports-1"><a class="header" href="#macports-1">MacPorts</a></h3>
-<pre><code class="language-shell">sudo port install clang
+<pre><code class="language-shell">sudo port install go
 </code></pre>
 <h3 id="homebrew-1"><a class="header" href="#homebrew-1">Homebrew</a></h3>
+<pre><code class="language-shell">brew install go
+</code></pre>
+<h2 id="bindgen-fips-only-1"><a class="header" href="#bindgen-fips-only-1">Bindgen (FIPS only)</a></h2>
+<p>Bindgen is only required for FIPS builds on platforms that do not have pre-generated bindings.
+On most platforms, <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> package to be installed.
+See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">requirements</a> page in
+<a href="https://rust-lang.github.io/rust-bindgen/">The bindgen User Guide</a> for instructions.</p>
+<h3 id="macports-2"><a class="header" href="#macports-2">MacPorts</a></h3>
+<pre><code class="language-shell">sudo port install clang
+</code></pre>
+<h3 id="homebrew-2"><a class="header" href="#homebrew-2">Homebrew</a></h3>
 <pre><code class="language-shell">brew install llvm
 </code></pre>
 <h3 id="bindgen-cli-1"><a class="header" href="#bindgen-cli-1">bindgen-cli</a></h3>
 <pre><code class="language-shell">cargo install --force --locked bindgen-cli
 </code></pre>
-<h2 id="fips-build"><a class="header" href="#fips-build">FIPS build</a></h2>
-<p>Building with the &quot;fips&quot; feature on this platform will result in the creation of shared libraries (named like
+<h2 id="fips-build-note"><a class="header" href="#fips-build-note">FIPS Build Note</a></h2>
+<p>Building with the &quot;fips&quot; feature on macOS will result in the creation of shared libraries (named like
 <code>libaws_lc_fips_0_xx_yy_crypto.dylib</code> and <code>libaws_lc_fips_0_xx_yy_rust_wrapper.dylib</code>). These shared libraries will
 likely need to be distributed alongside any executable that depends on <strong>aws-lc-rs</strong>.</p>
 <h2 id="troubleshooting-1"><a class="header" href="#troubleshooting-1">Troubleshooting</a></h2>
-<p>See our <a href="requirements/../resources.html#troubleshooting">troubleshooting section</a>.</p>
+<p>See our <a href="requirements/../resources.html#build-environment-variables">troubleshooting section</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="windows-requirements"><a class="header" href="#windows-requirements">Windows Requirements</a></h1>
-<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th><th>bindgen required?</th></tr></thead><tbody>
-<tr><td><code>x86_64-pc-windows-msvc</code></td><td>C/C++ Compiler, CMake &amp; *NASM</td><td>C/C++ Compiler, CMake, NASM, Go &amp; Ninja</td><td>No</td></tr>
-<tr><td><code>x86_64-pc-windows-gnu</code></td><td>C/C++ Compiler, CMake &amp; *NASM</td><td><strong>Not Supported</strong></td><td>No</td></tr>
-<tr><td><code>i686-pc-windows-msvc</code></td><td>C/C++ Compiler, CMake &amp; NASM</td><td><strong>Not Supported</strong></td><td>No</td></tr>
-<tr><td><code>aarch64-pc-windows-msvc</code></td><td>C/C++ Compiler (MSVC's <code>clang-cl</code>) &amp; CMake</td><td><strong>Not Supported</strong></td><td>No</td></tr>
-<tr><td><em>Other</em></td><td><strong>Not Supported</strong></td><td><strong>Not Supported</strong></td><td>N/A</td></tr>
+<h2 id="build-requirements-2"><a class="header" href="#build-requirements-2">Build Requirements</a></h2>
+<p>For non-FIPS builds on Windows, the following requirements apply:</p>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><em>default</em></th><th><strong>fips</strong></th></tr></thead><tbody>
+<tr><td><code>x86_64-pc-windows-msvc</code></td><td>C/C++ Compiler &amp; *NASM</td><td>C/C++ Compiler, CMake, NASM, Go &amp; Ninja</td></tr>
+<tr><td><code>x86_64-pc-windows-gnu</code></td><td>C/C++ Compiler &amp; *NASM</td><td><strong>Not Supported</strong></td></tr>
+<tr><td><code>i686-pc-windows-msvc</code></td><td>C/C++ Compiler &amp; NASM</td><td><strong>Not Supported</strong></td></tr>
+<tr><td><code>aarch64-pc-windows-msvc</code></td><td>C/C++ Compiler (clang-cl)</td><td>C/C++ Compiler (clang-cl), CMake, Go &amp; Ninja</td></tr>
 </tbody></table>
 </div>
-<ul>
-<li>The NASM assembler is recommended on <code>x86-64</code> platforms. NASM is required for <code>x86</code> and for &quot;fips&quot; builds. See the
-<a href="requirements/windows.html#prebuilt-nasm-objects">Prebuilt NASM objects</a> section below.</li>
-</ul>
+<p>* NASM is recommended on x86-64 but can be avoided using prebuilt NASM objects. See the
+<a href="requirements/windows.html#prebuilt-nasm-objects">Prebuilt NASM objects</a> section below.</p>
+<blockquote>
+<p><strong>Note:</strong> FIPS builds on Windows also require <code>bindgen</code>, as there are no pre-generated FIPS
+bindings for Windows platforms.
+See <a href="requirements/../platform_support.html">Platform Support</a> for more details.</p>
+</blockquote>
 <h2 id="cc-compiler-2"><a class="header" href="#cc-compiler-2">C/C++ Compiler</a></h2>
 <p>Use the following instructions to download <strong>Visual Studio Build Tools 2017</strong> or later.</p>
 <ol>
@@ -314,7 +401,7 @@ likely need to be distributed alongside any executable that depends on <strong>a
 <li>Execute the installer.</li>
 <li>If you have an existing installation chose <code>Modify</code> on the existing installation.</li>
 <li>Under <code>Workloads</code> select <code>Visual C++ build tools</code></li>
-<li>Under <code>Individual componenets</code> select
+<li>Under <code>Individual components</code> select
 <ul>
 <li><code>C++/CLI support</code></li>
 <li><code>C++ CMake tools for Windows</code></li>
@@ -328,7 +415,16 @@ likely need to be distributed alongside any executable that depends on <strong>a
 </li>
 <li>Confirm selections and click <code>Install</code></li>
 </ol>
+<h3 id="alternative-clang-compiler"><a class="header" href="#alternative-clang-compiler">Alternative: Clang Compiler</a></h3>
+<p>As an alternative to MSVC, you can use the Clang compiler on Windows. This can be useful for cross-compilation
+scenarios or when using MSYS2/MinGW environments. When using Clang:</p>
+<ul>
+<li>Install LLVM/Clang from <a href="https://github.com/llvm/llvm-project/releases">LLVM releases</a> or via MSYS2</li>
+<li>Ensure <code>clang</code> or <code>clang-cl</code> is available in your PATH</li>
+<li>For MSYS2 environments, the <code>clang64</code> or <code>ucrt64</code> subsystems provide Clang toolchains</li>
+</ul>
 <h2 id="cmake-1"><a class="header" href="#cmake-1">CMake</a></h2>
+<p>CMake is only required for FIPS builds on Windows.</p>
 <ol>
 <li><a href="https://cmake.org/download/">Download</a> Windows CMake Installer</li>
 <li>Execute the installer</li>
@@ -339,6 +435,7 @@ likely need to be distributed alongside any executable that depends on <strong>a
 </li>
 </ol>
 <h2 id="nasm"><a class="header" href="#nasm">NASM</a></h2>
+<p>NASM is required for x86 and x86-64 builds on Windows.</p>
 <ol>
 <li><a href="https://nasm.us/">Download</a> and install the Netwide Assembler (NASM)</li>
 <li>Add the NASM installation directory to your PATH
@@ -347,39 +444,49 @@ likely need to be distributed alongside any executable that depends on <strong>a
 </ul>
 </li>
 </ol>
-<h3 id="use-of-prebuilt-nasm-objects"><a class="header" href="#use-of-prebuilt-nasm-objects">Use of prebuilt NASM objects</a></h3>
-<p>For Windows x86 and x86-64, NASM is required for assembly code compilation. On these platforms,
-we recommend that you install <a href="https://www.nasm.us/">the NASM assembler</a>. If NASM is
-detected in the build environment <em>it is used</em> to compile the assembly files. However,
-if a NASM assembler is not available, and the &quot;fips&quot; feature is not enabled, then the build fails unless one of the
-following conditions are true:</p>
-<ul>
-<li>You are building for <code>x86-64</code> and either:
-<ul>
-<li>The <code>AWS_LC_SYS_PREBUILT_NASM</code> environment variable is found and has a value of &quot;1&quot;; OR</li>
-<li><code>AWS_LC_SYS_PREBUILT_NASM</code> is <em>not found</em> in the environment AND the &quot;prebuilt-nasm&quot; feature has been enabled.</li>
-</ul>
-</li>
-</ul>
-<p>If the above cases apply, then the crate provided prebuilt NASM objects will be used for the build. To prevent usage of
-prebuilt NASM
-objects, install NASM in the build environment and/or set the variable <code>AWS_LC_SYS_PREBUILT_NASM</code> to <code>0</code> in the build
-environment to prevent their use.</p>
+<h3 id="prebuilt-nasm-objects"><a class="header" href="#prebuilt-nasm-objects">Prebuilt NASM objects</a></h3>
+<blockquote>
+<p><strong>Important:</strong> Prebuilt NASM objects are <strong>only</strong> available for Windows platforms. They are <strong>never</strong> used on Linux, macOS, or any other platform.</p>
+</blockquote>
+<blockquote>
+<p><strong>Important:</strong> If a NASM assembler is detected in your build environment, it is <strong>always</strong> used to compile assembly files. Prebuilt NASM objects are only used as a fallback when NASM is not available.</p>
+</blockquote>
+<p>For Windows x86-64 (non-FIPS builds only), you can avoid installing NASM by using prebuilt NASM objects. 
+The build will use prebuilt objects only when <strong>all</strong> of the following conditions are met:</p>
+<ol>
+<li>No NASM assembler is found in the build environment</li>
+<li>The &quot;fips&quot; feature is <strong>not</strong> enabled</li>
+<li>The target is <code>x86_64-pc-windows-msvc</code> or <code>x86_64-pc-windows-gnu</code></li>
+<li>Either the <code>AWS_LC_SYS_PREBUILT_NASM</code> environment variable is set to <code>1</code>, <strong>or</strong> the <code>prebuilt-nasm</code> feature is enabled</li>
+</ol>
+<p>To prevent usage of prebuilt NASM objects, install NASM in the build environment and/or set the variable 
+<code>AWS_LC_SYS_PREBUILT_NASM</code> to <code>0</code> in the build environment.</p>
 <h4 id="about-prebuilt-nasm-objects"><a class="header" href="#about-prebuilt-nasm-objects">About prebuilt NASM objects</a></h4>
 <p>Prebuilt NASM objects are generated using automation similar to the crate provided pregenerated bindings. See the
-repositories
+repository's
 <a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/sys-bindings-generator.yml">GitHub workflow configuration</a>
 for more information.
 The prebuilt NASM objects are checked into the repository
 and are <a href="https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/builder/prebuilt-nasm">available for inspection</a>.
 For each PR submitted,
-<a href="https://github.com/aws/aws-lc-rs/blob/8fb6869fc7bde92529a5cca40cf79513820984f7/.github/workflows/tests.yml#L209-L241">CI verifies</a>
+<a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/tests.yml">CI verifies</a>
 that the NASM objects newly built from source match the NASM objects currently in the repository.</p>
 <h3 id="no-assembly-build"><a class="header" href="#no-assembly-build">No-assembly build</a></h3>
 <p>It is possible to avoid the NASM requirement by setting the <code>AWS_LC_SYS_NO_ASM</code>/<code>AWS_LC_FIPS_SYS_NO_ASM</code> environment
 variables. However, this severely impacts performance and can only be used for un-optimized/debug builds. See the
-notes in our <a href="requirements/../resources.html#troubleshooting">troubleshooting section</a>.</p>
+notes in our <a href="requirements/../resources.html#build-environment-variables">troubleshooting section</a>.</p>
+<h2 id="go-1"><a class="header" href="#go-1">Go</a></h2>
+<p>Go is only required for FIPS builds.</p>
+<ol>
+<li><a href="https://go.dev/dl/">Download</a> and install Go</li>
+<li>Add the Go installation binary directory to your PATH
+<ul>
+<li><code>set PATH=&quot;C:\Program Files\Go\bin;%PATH%&quot;</code></li>
+</ul>
+</li>
+</ol>
 <h2 id="ninja"><a class="header" href="#ninja">Ninja</a></h2>
+<p>Ninja is only required for FIPS builds on Windows.</p>
 <ol>
 <li><a href="https://github.com/ninja-build/ninja/releases">Download</a> and install Ninja</li>
 <li>Add the Ninja installation directory to your PATH
@@ -388,11 +495,11 @@ notes in our <a href="requirements/../resources.html#troubleshooting">troublesho
 </ul>
 </li>
 </ol>
-<h2 id="bindgen-2"><a class="header" href="#bindgen-2">Bindgen</a></h2>
-<p>Bindgen is not required for most Windows targets, but it can still be used if needed.
-Using <code>bindgen</code> requires a <code>libclang</code> or <code>llvm</code> package to be installed.
+<h2 id="bindgen-fips-only-2"><a class="header" href="#bindgen-fips-only-2">Bindgen (FIPS only)</a></h2>
+<p>Bindgen is required for FIPS builds on Windows, as there are no pre-generated FIPS bindings for Windows platforms.
+Using <code>bindgen</code> requires <code>libclang</code> or <code>llvm</code> to be installed.
 See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">requirements</a> page in
-[The bindgen User Guide] for instructions.</p>
+<a href="https://rust-lang.github.io/rust-bindgen/">The bindgen User Guide</a> for instructions.</p>
 <h3 id="libclang--llvm-1"><a class="header" href="#libclang--llvm-1">libclang / LLVM</a></h3>
 <ol>
 <li>Download <a href="https://github.com/llvm/llvm-project/releases/tag/llvmorg-15.0.6">LLVM Installer</a></li>
@@ -406,65 +513,127 @@ See the <a href="https://rust-lang.github.io/rust-bindgen/requirements.html">req
 <h3 id="bindgen-cli-2"><a class="header" href="#bindgen-cli-2">bindgen-cli</a></h3>
 <pre><code class="language-shell">cargo install --force --locked bindgen-cli
 </code></pre>
-<h2 id="fips-build-1"><a class="header" href="#fips-build-1">FIPS build</a></h2>
-<p>Building with the &quot;fips&quot; feature on this platform will result in the creation of shared libraries (named like
+<h2 id="fips-build-note-1"><a class="header" href="#fips-build-note-1">FIPS Build Note</a></h2>
+<p>Building with the &quot;fips&quot; feature on Windows will result in the creation of shared libraries (named like
 <code>aws_lc_fips_0_xx_yy_crypto.dll</code> and <code>aws_lc_fips_0_xx_yy_rust_wrapper.dll</code>). These shared libraries will likely need to
 be distributed alongside any executable that depends on <strong>aws-lc-rs</strong>.</p>
 <h2 id="troubleshooting-2"><a class="header" href="#troubleshooting-2">Troubleshooting</a></h2>
-<p>See our <a href="requirements/../resources.html#troubleshooting">troubleshooting section</a>.</p>
+<p>See our <a href="requirements/../resources.html#build-environment-variables">troubleshooting section</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="platform-support"><a class="header" href="#platform-support">Platform Support</a></h1>
-<h2 id="pre-generated-bindings"><a class="header" href="#pre-generated-bindings">Pre-generated bindings</a></h2>
+<h2 id="pre-generated-bindings-1"><a class="header" href="#pre-generated-bindings-1">Pre-generated bindings</a></h2>
 <p><code>aws-lc-rs</code> can utilize pre-generated bindings when operating on the following
 build targets.</p>
 <div class="table-wrapper"><table><thead><tr><th>Platform</th><th><code>aws-lc-sys</code></th><th><code>aws-lc-fips-sys</code></th></tr></thead><tbody>
-<tr><td><code>aarch64-apple-darwin</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>aarch64-pc-windows-msvc</code></td><td>X</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>aarch64-unknown-linux-musl</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>i686-pc-windows-msvc</code></td><td>X</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>i686-unknown-linux-gnu</code></td><td>X</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>x86_64-apple-darwin</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>x86_64-pc-windows-gnu</code></td><td>X</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>x86_64-pc-windows-msvc</code></td><td>X</td><td></td></tr>
-<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>x86_64-unknown-linux-musl</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>aarch64-apple-darwin</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>aarch64-pc-windows-msvc</code></td><td>✓</td><td>✓ ²</td></tr>
+<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>aarch64-unknown-linux-musl</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>i686-pc-windows-msvc</code></td><td>✓</td><td><strong>Not Supported</strong></td></tr>
+<tr><td><code>i686-unknown-linux-gnu</code></td><td>✓</td><td><strong>Not Supported</strong></td></tr>
+<tr><td><code>x86_64-apple-darwin</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-pc-windows-gnu</code></td><td>✓</td><td><strong>Not Supported</strong></td></tr>
+<tr><td><code>x86_64-pc-windows-msvc</code></td><td>✓</td><td>✓ ²</td></tr>
+<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-unknown-linux-musl</code></td><td>✓</td><td>✓</td></tr>
 </tbody></table>
 </div>
-<h2 id="tested-platforms"><a class="header" href="#tested-platforms">Tested platforms</a></h2>
-<p>In addition to the ones listed above, the  <code>aws-lc-rs</code> CI builds and/or tests with the following platforms.
-All platforms listed below require <code>CMake</code> to be available in the build environment.
-They also require bindings to be generated during the build process.</p>
-<h3 id="bindgen-3"><a class="header" href="#bindgen-3">bindgen</a></h3>
-<p>One of the following options must be used for bindings generation.
+<p>² FIPS is supported but requires bindgen (no pre-generated FIPS bindings are available for Windows platforms)</p>
+<h2 id="tested-platforms-1"><a class="header" href="#tested-platforms-1">Tested platforms</a></h2>
+<p>In addition to the platforms with pre-generated bindings listed above, <code>aws-lc-rs</code> CI builds and/or tests on many additional platforms.
+See our <a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml">CI workflow configuration</a> for the complete list of tested platforms.</p>
+<h3 id="build-requirements-summary"><a class="header" href="#build-requirements-summary">Build Requirements Summary</a></h3>
+<p><strong>For non-FIPS builds (<code>aws-lc-sys</code>):</strong></p>
+<ul>
+<li>C/C++ Compiler: Required</li>
+<li>CMake: <strong>Never</strong> required</li>
+<li>Bindgen: <strong>Never</strong> required (universal pre-generated bindings are provided)</li>
+<li>Go: <strong>Never</strong> required</li>
+</ul>
+<p><strong>For FIPS builds (<code>aws-lc-fips-sys</code>):</strong></p>
+<ul>
+<li>C/C++ Compiler: Required</li>
+<li>CMake: <strong>Always</strong> required</li>
+<li>Go: <strong>Always</strong> required</li>
+<li>Bindgen: Required <strong>unless</strong> the target has pre-generated bindings (see table above)</li>
+</ul>
+<h3 id="bindgen-for-fips-builds"><a class="header" href="#bindgen-for-fips-builds">Bindgen for FIPS Builds</a></h3>
+<p>For FIPS builds on targets without pre-generated bindings, one of the following options must be used for bindings generation.
 See <a href="requirements/README.html">requirements</a> page for more information.</p>
 <ul>
 <li>Enable <code>bindgen</code> feature in your <code>Cargo.toml</code>:</li>
 </ul>
 <pre><code class="language-toml">[dependencies]
-aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;] }
+aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;, &quot;fips&quot;] }
 </code></pre>
 <p><em><strong>-- OR --</strong></em></p>
 <ul>
-<li>Install <code>bindgen-cli</code> in the build envionment:</li>
+<li>Install <code>bindgen-cli</code> in the build environment:</li>
 </ul>
 <pre><code class="language-shell">cargo install --force --locked bindgen-cli
 </code></pre>
-<h3 id="platforms"><a class="header" href="#platforms">Platforms</a></h3>
+<h3 id="linux-platforms"><a class="header" href="#linux-platforms">Linux Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th><th>FIPS</th></tr></thead><tbody>
+<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>aarch64-unknown-linux-musl</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>arm-unknown-linux-gnueabihf</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>arm-unknown-linux-musleabi</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>arm-unknown-linux-musleabihf</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>armv7-unknown-linux-gnueabihf</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>i686-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>mips-unknown-linux-gnu</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>mips-unknown-linux-musl</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>mips64-unknown-linux-muslabi64</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>mips64el-unknown-linux-muslabi64</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>powerpc-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>powerpc64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>powerpc64le-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>riscv64gc-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>s390x-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-unknown-linux-musl</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+</tbody></table>
+</div>
+<p>¹ Requires nightly Rust toolchain</p>
+<h3 id="apple-platforms"><a class="header" href="#apple-platforms">Apple Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th><th>FIPS</th></tr></thead><tbody>
+<tr><td><code>aarch64-apple-darwin</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>aarch64-apple-ios</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>aarch64-apple-ios-sim</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>aarch64-apple-tvos-sim</code> ¹</td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-apple-darwin</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-apple-ios</code></td><td>✓</td><td></td><td></td></tr>
+</tbody></table>
+</div>
+<p>¹ Requires nightly Rust toolchain</p>
+<h3 id="windows-platforms"><a class="header" href="#windows-platforms">Windows Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th><th>FIPS</th></tr></thead><tbody>
+<tr><td><code>aarch64-pc-windows-msvc</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>i686-pc-windows-msvc</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-pc-windows-gnu</code></td><td>✓</td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-pc-windows-msvc</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+</tbody></table>
+</div>
+<h3 id="android-platforms"><a class="header" href="#android-platforms">Android Platforms</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th></tr></thead><tbody>
-<tr><td><code>aarch64-apple-ios</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>aarch64-linux-android</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>aarch64-pc-windows-msvc</code></td><td>X</td><td></td></tr>
-<tr><td><code>armv7-linux-androideabi</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>arm-linux-androideabi</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>arm-unknown-linux-gnueabihf</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>powerpc64le-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>powerpc64-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>powerpc-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>riscv64gc-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>s390x-unknown-linux-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>x86_64-apple-ios</code></td><td>X</td><td></td></tr>
-<tr><td><code>x86_64-pc-windows-gnu</code></td><td>X</td><td>X</td></tr>
-<tr><td><code>x86_64-pc-windows-msvc</code></td><td>X</td><td>X</td></tr>
+<tr><td><code>aarch64-linux-android</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>arm-linux-androideabi</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>armv7-linux-androideabi</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>i686-linux-android</code></td><td>✓</td><td></td></tr>
+<tr><td><code>x86_64-linux-android</code></td><td>✓</td><td></td></tr>
+</tbody></table>
+</div>
+<h3 id="bsd-platforms"><a class="header" href="#bsd-platforms">BSD Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th><th>FIPS</th></tr></thead><tbody>
+<tr><td><code>x86_64-unknown-freebsd</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td><code>x86_64-unknown-netbsd</code></td><td>✓</td><td>✓</td><td></td></tr>
+</tbody></table>
+</div>
+<h3 id="other-platforms"><a class="header" href="#other-platforms">Other Platforms</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th></tr></thead><tbody>
+<tr><td><code>x86_64-unknown-illumos</code></td><td>✓</td><td>✓</td></tr>
+<tr><td>OpenHarmony (aarch64)</td><td>✓</td><td></td></tr>
+<tr><td>OpenWrt (aarch64-musl)</td><td>✓</td><td></td></tr>
+<tr><td>Alpine Linux</td><td>✓</td><td>✓</td></tr>
 </tbody></table>
 </div><div style="break-before: page; page-break-before: always;"></div><h1 id="frequently-asked-questions"><a class="header" href="#frequently-asked-questions">Frequently Asked Questions</a></h1>
 <h2 id="what-are-the-differences-between-aws-lc-rs-and-ring"><a class="header" href="#what-are-the-differences-between-aws-lc-rs-and-ring">What are the differences between <code>aws-lc-rs</code> and <code>ring</code>?</a></h2>
@@ -476,44 +645,187 @@ aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;] }
 <li>Must be a platform and CPU architecture supported by <a href="https://github.com/aws/aws-lc">AWS-LC</a>.</li>
 <li>Must be a platform supported by the Rust compiler with support for the full standard library.
 See the <a href="https://doc.rust-lang.org/rustc/platform-support.html">Rust compiler's platform support</a> documentation.</li>
-<li>If the underlying <code>aws-lc-sys</code> or <code>aws-lc-fips-sys</code> crates don't have pre-generated bindings for the desired platform
-then you must use the <code>bindgen</code> crate feature of <code>aws-lc-rs</code>, or have the <a href="https://crates.io/crates/bindgen-cli">bindgen-cli</a> installed, to enable
+<li><strong>For non-FIPS builds:</strong> Bindgen is <strong>never</strong> required. The <code>aws-lc-sys</code> crate provides universal pre-generated
+bindings that cover all functions used by <code>aws-lc-rs</code>.</li>
+<li><strong>For FIPS builds:</strong> If <code>aws-lc-fips-sys</code> doesn't have pre-generated bindings for your target platform,
+you must use the <code>bindgen</code> crate feature of <code>aws-lc-rs</code>, or have the <a href="https://crates.io/crates/bindgen-cli">bindgen-cli</a> installed, to enable
 generation of the FFI bindings for the desired platform and architecture.</li>
-<li>See <a href="requirements/README.html">Requirements</a> and <a href="./platform_suppport.html">Platform Support</a> for more details on
+</ul>
+<blockquote>
+<p><strong>Note:</strong> If you take a direct dependency on <code>aws-lc-sys</code> (not through <code>aws-lc-rs</code>) and need access to the
+complete AWS-LC API, you may want to use target-specific bindings or enable bindgen for complete API coverage.</p>
+</blockquote>
+<ul>
+<li>See <a href="requirements/README.html">Requirements</a> and <a href="platform_support.html">Platform Support</a> for more details on
 build requirements for various platforms.</li>
 </ul>
-<p>If there is a platform or architecture you are interested in seeing support for, please create a GitHub <a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">issue</a>.</p>
+<p>If there is a platform or architecture you are interested in seeing support for, please create a GitHub <a href="https://github.com/aws/aws-lc-rs/issues/new/choose">issue</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="resources"><a class="header" href="#resources">Resources</a></h1>
-<h2 id="troubleshooting-3"><a class="header" href="#troubleshooting-3">Troubleshooting</a></h2>
-<p>There are a few environment variables that may help in diagnosing/remdiating build problem. These affect the way that
-<code>aws-lc-sys</code> or <code>aws-lc-fips-sys</code> build the underlying AWS-LC library.</p>
-<p>None of the environment variables below are officially supported, and any one of them might be removed or changed on a
-future release. Please <a href="https://github.com/awslabs/aws-lc-rs/issues/new/choose">contact us</a> about any bugs you find in our build process.</p>
+<h2 id="build-environment-variables"><a class="header" href="#build-environment-variables">Build Environment Variables</a></h2>
+<p>The <code>aws-lc-sys</code> crate supports several environment variables that can help configure or troubleshoot
+the build process. The <code>aws-lc-fips-sys</code> crate supports most of the same environment variables, but
+uses an <code>AWS_LC_FIPS_SYS_</code> prefix instead of <code>AWS_LC_SYS_</code>.</p>
+<blockquote>
+<p><strong>Note:</strong> None of the environment variables below are officially supported, and any one of them
+might be removed or changed in a future release. Please <a href="https://github.com/aws/aws-lc-rs/issues/new/choose">contact us</a> about any bugs you find in
+our build process.</p>
+</blockquote>
+<h3 id="target-specific-variables"><a class="header" href="#target-specific-variables">Target-Specific Variables</a></h3>
+<p>Many of these environment variables also support target-specific variants. For example:</p>
 <ul>
-<li><code>AWS_LC_SYS_STATIC</code> | <code>AWS_LC_FIPS_SYS_STATIC</code> -- value can be set to <code>0</code> or <code>1</code> to force the resulting build
-artifact to be shared library (e.g., <code>*.so</code>) or static library (e.g., <code>*.a</code>).</li>
-<li><code>AWS_LC_SYS_CMAKE_BUILDER</code> -- value can be set to <code>1</code> or <code>0</code> to force the build to use (<code>1</code>) or not use (<code>0</code>) CMake.</li>
-<li><code>AWS_LC_SYS_EXTERNAL_BINDGEN | ``AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN</code> -- value can be set to <code>1</code> or <code>0</code> to force the
-build to use (<code>1</code>) or not use (<code>0</code>) the <code>bindgen-cli</code> instead of the pre-generated or internally generated bindings.</li>
-<li><code>AWS_LC_SYS_NO_PREFIX</code> | <code>AWS_LC_FIPS_SYS_NO_PREFIX</code> -- value can be set to <code>1</code> to force the build to not prefix the
-library nor the symbols it contains.</li>
-<li><code>AWS_LC_SYS_NO_ASM</code> | <code>AWS_LC_FIPS_SYS_NO_ASM</code> -- value can be set to <code>1</code> to force the build to use C-language
-implementations for all cryptographic operations. Our optimized hardware-specific assembly implementations will not
-be used. This option is only available for unoptimized (i.e., <code>OPT_LEVEL = &quot;0&quot;</code> or &quot;debug&quot;) builds.
-<strong>WARNING</strong>: Performance on most platforms is extremely limited by this option. Certain security
-properties, such as resistance to timing attacks, can only be provided when assembly code is used.</li>
-<li><code>AWS_LC_SYS_PREBUILT_NASM</code> -- value can be set to <code>1</code> to <em>allow</em> the build to use our prebuilt NASM objects.
-The value can be set to <code>0</code> to <em>prevent</em> our prebuilt NASM objects from being used. See the section on
-<a href="requirements/windows.html#prebuilt-nasm-objects">Prebuilt NASM objects</a> for more information.</li>
-<li><code>AWS_LC_SYS_CFLAGS</code> -- if value is set, it will be used as the value of <code>CFLAGS</code> in the environment when the AWS-LC
-build is performed.</li>
-<li><code>AWS_LC_SYS_C_STD</code> -- value can be set to determine the C standard used by the C compiler. It may be set to
-either <code>99</code> for C99 or <code>11</code> for C11. On most platforms, C11 will be used by default.</li>
+<li><code>AWS_LC_SYS_CFLAGS</code> applies to all targets</li>
+<li><code>AWS_LC_SYS_CFLAGS_aarch64_unknown_linux_gnu</code> applies only to the <code>aarch64-unknown-linux-gnu</code> target</li>
+</ul>
+<p>The target-specific variant takes precedence when both are set.</p>
+<h3 id="library-output"><a class="header" href="#library-output">Library Output</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_STATIC</code></strong> | <strong><code>AWS_LC_FIPS_SYS_STATIC</code></strong></p>
+<p>Controls whether the build produces a static or shared library.</p>
+<ul>
+<li><code>1</code> - Build as static library (e.g., <code>*.a</code>)</li>
+<li><code>0</code> - Build as shared/dynamic library (e.g., <code>*.so</code>, <code>*.dylib</code>, <code>*.dll</code>)</li>
+</ul>
+<p>Default: static library</p>
+<blockquote>
+<p><strong>Note:</strong> For <code>aws-lc-fips-sys</code>, static library builds are only supported on Linux and BSD targets
+with x86_64 or aarch64 architectures. On other platforms, FIPS builds to shared libraries.</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="build-system"><a class="header" href="#build-system">Build System</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_CMAKE_BUILDER</code></strong></p>
+<p>Controls which build system is used to compile AWS-LC. This option only applies to <code>aws-lc-sys</code>.</p>
+<ul>
+<li><code>1</code> - Force use of CMake</li>
+<li><code>0</code> - Force use of the <code>cc</code> crate builder</li>
+</ul>
+<p>Default: The <code>cc</code> crate builder is used by default. <strong>CMake is not required for <code>aws-lc-sys</code>.</strong></p>
+<blockquote>
+<p><strong>Note:</strong> The <code>aws-lc-fips-sys</code> crate always requires CMake and does not support this option.</p>
+</blockquote>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_PREGENERATED_SRC</code></strong></p>
+<p>When set to <code>1</code>, forces the build to generate CMake source files instead of using
+pre-generated ones.</p>
+</li>
+</ul>
+<h3 id="bindings-generation"><a class="header" href="#bindings-generation">Bindings Generation</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_EXTERNAL_BINDGEN</code></strong> | <strong><code>AWS_LC_FIPS_SYS_EXTERNAL_BINDGEN</code></strong></p>
+<p>Controls whether to use the external <code>bindgen-cli</code> tool for generating bindings.</p>
+<ul>
+<li><code>1</code> - Use external <code>bindgen-cli</code> (must be installed via <code>cargo install bindgen-cli</code>)</li>
+<li><code>0</code> - Use internal bindgen or pre-generated bindings</li>
+</ul>
+<blockquote>
+<p><strong>Note:</strong> For users of <code>aws-lc-rs</code>, bindgen is never required. <code>aws-lc-sys</code> provides universal
+bindings that work for users of <code>aws-lc-rs</code> across all supported platforms. This option
+is primarily useful for direct consumers of <code>aws-lc-sys</code> who need complete API bindings
+on platforms without pre-generated bindings.</p>
+</blockquote>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_PREFIX</code></strong> | <strong><code>AWS_LC_FIPS_SYS_NO_PREFIX</code></strong></p>
+<p>When set to <code>1</code>, the build will not apply a unique prefix to the library name or the symbols
+it contains. This may be useful in certain linking scenarios but can cause symbol conflicts
+if multiple versions are linked.</p>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_U1_BINDINGS</code></strong></p>
+<p>When set to <code>1</code>, uses bindings that don't include the <code>\x01</code> prefix on symbol names.
+This is automatically enabled for certain backends (like Cranelift) and architectures
+(like MIPS) that don't support the prefixed symbols.</p>
+</li>
+</ul>
+<h3 id="assembly-and-optimization"><a class="header" href="#assembly-and-optimization">Assembly and Optimization</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_ASM</code></strong> | <strong><code>AWS_LC_FIPS_SYS_NO_ASM</code></strong></p>
+<p>When set to <code>1</code>, forces the build to use pure C implementations for all cryptographic
+operations instead of optimized assembly.</p>
+<blockquote>
+<p><strong>Note</strong>: When using the CMake builder, this option is only available when <code>OPT_LEVEL = &quot;0&quot;</code>.
+When using the <code>cc</code> crate builder, this option is available for optimization levels 0, 1, and 2.</p>
+</blockquote>
+<blockquote>
+<p><strong>WARNING</strong>: Performance on most platforms is extremely limited by this option. Certain security
+properties, such as resistance to timing attacks, can only be provided when assembly code is used.</p>
+</blockquote>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_PREBUILT_NASM</code></strong></p>
+<p>Controls the use of prebuilt NASM objects on Windows x86-64.</p>
+<ul>
+<li><code>1</code> - Allow use of prebuilt NASM objects</li>
+<li><code>0</code> - Prevent use of prebuilt NASM objects (requires NASM to be installed)</li>
+</ul>
+<p>See the section on <a href="requirements/windows.html#prebuilt-nasm-objects">Prebuilt NASM objects</a>
+for more information.</p>
+</li>
+</ul>
+<h3 id="compiler-configuration"><a class="header" href="#compiler-configuration">Compiler Configuration</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_CC</code></strong> / <strong><code>AWS_LC_SYS_TARGET_CC</code></strong></p>
+<p>Specifies the C compiler to use. Falls back to the standard <code>CC</code> / <code>TARGET_CC</code> environment
+variables if not set.</p>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_CXX</code></strong> / <strong><code>AWS_LC_SYS_TARGET_CXX</code></strong></p>
+<p>Specifies the C++ compiler to use. Falls back to the standard <code>CXX</code> / <code>TARGET_CXX</code>
+environment variables if not set.</p>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_CFLAGS</code></strong> / <strong><code>AWS_LC_SYS_TARGET_CFLAGS</code></strong></p>
+<p>Additional flags to pass to the C compiler during the AWS-LC build. Falls back to
+<code>CFLAGS</code> / <code>TARGET_CFLAGS</code> if not set.</p>
+</li>
+<li>
+<p><strong><code>AWS_LC_SYS_C_STD</code></strong></p>
+<p>Specifies the C language standard to use.</p>
+<ul>
+<li><code>99</code> - Use C99</li>
+<li><code>11</code> - Use C11</li>
+</ul>
+<p>Default: C11 on most platforms.</p>
+</li>
+</ul>
+<h3 id="entropy-configuration"><a class="header" href="#entropy-configuration">Entropy Configuration</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_NO_JITTER_ENTROPY</code></strong></p>
+<p>When set to <code>1</code>, disables the CPU jitter entropy source in the build. This affects the
+random number generation subsystem. Use of jitter entropy has a one-time-per-process
+latency cost, typically around 50ms, for the collection of entropy. This flag may be
+used to eliminate this latency.</p>
+<blockquote>
+<p><strong>Note:</strong> This option is only available for <code>aws-lc-sys</code>.</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="advanced-options"><a class="header" href="#advanced-options">Advanced Options</a></h3>
+<ul>
+<li>
+<p><strong><code>AWS_LC_SYS_EFFECTIVE_TARGET</code></strong></p>
+<p>Overrides the target triple string used for certain build decisions. This affects selection of pre-generated bindings.</p>
+<blockquote>
+<p><strong>Note:</strong> This variable does <strong>not</strong> override the underlying Cargo target configuration
+(<code>CARGO_CFG_TARGET_*</code> variables). Build decisions that depend on <code>target_os()</code>,
+<code>target_arch()</code>, <code>target_vendor()</code>, or <code>target_env()</code> are not affected by this setting.
+It is primarily useful for selecting different pre-generated bindings or symbol prefixes
+when building for targets that are compatible with another target's bindings.</p>
+</blockquote>
+</li>
 </ul>
 <h2 id="links"><a class="header" href="#links">Links</a></h2>
 <ul>
 <li><a href="https://docs.rs/aws-lc-rs/latest">API Reference Guide</a></li>
-<li><a href="https://github.com/awslabs/aws-lc-rs">GitHub Repository</a></li>
+<li><a href="https://github.com/aws/aws-lc-rs">GitHub Repository</a></li>
 </ul>
 
                     </main>
