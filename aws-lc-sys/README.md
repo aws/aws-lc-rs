@@ -54,13 +54,13 @@ environment to prevent their use.
 #### About prebuilt NASM objects
 
 Prebuilt NASM objects are generated using automation similar to the crate provided pregenerated bindings. See the
-repositories
+repository's
 [GitHub workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/sys-bindings-generator.yml)
 for more information.
 The prebuilt NASM objects are checked into the repository
 and are [available for inspection](https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/builder/prebuilt-nasm).
 For each PR submitted,
-[CI verifies](https://github.com/aws/aws-lc-rs/blob/8fb6869fc7bde92529a5cca40cf79513820984f7/.github/workflows/tests.yml#L209-L241)
+[CI verifies](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/tests.yml)
 that the NASM objects newly built from source match the NASM objects currently in the repository.
 
 ## Build Prerequisites
