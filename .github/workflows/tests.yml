@@ -702,12 +702,12 @@ jobs:
       - name: Run tests
         run: cargo test -p aws-lc-rs --all-targets
 
-  build-env-no-u1-bindings-test:
+  build-env-no-soh-bindings-test:
     if: github.repository_owner == 'aws'
-    name: aws-lc-rs build-env-no-u1-bindings-test
+    name: aws-lc-rs build-env-no-soh-bindings-test
     runs-on: ${{ matrix.os }}
     env:
-      AWS_LC_SYS_NO_U1_BINDINGS: 1
+      AWS_LC_SYS_NO_SOH_BINDINGS: 1
     strategy:
       fail-fast: false
       matrix:
@@ -731,10 +731,6 @@ jobs:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs cranelift-backend-test (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
-    env:
-      # Cranelift requires panic=abort as it doesn't fully support unwinding.
-      # -Zpanic_abort_tests is required to run tests with panic=abort.
-      RUSTFLAGS: -Zcodegen-backend=cranelift -Cpanic=abort -Zpanic_abort_tests
     strategy:
       fail-fast: false
       matrix:
@@ -756,6 +752,25 @@ jobs:
           components: rustc-codegen-cranelift-preview
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Configure Cranelift via .cargo/config.toml
+        shell: bash
+        run: |
+          mkdir -p .cargo
+          cat > .cargo/config.toml << 'EOF'
+          [unstable]
+          codegen-backend = true
+
+          [profile.dev]
+          codegen-backend = "cranelift"
+          panic = "abort"
+
+          [profile.test]
+          codegen-backend = "cranelift"
+          panic = "abort"
+
+          [build]
+          rustflags = ["-Zpanic_abort_tests"]
+          EOF
       - name: Remove other universal bindings
         shell: bash
         run: |

@@ -67,9 +67,9 @@ The target-specific variant takes precedence when both are set.
   it contains. This may be useful in certain linking scenarios but can cause symbol conflicts
   if multiple versions are linked.
 
-* **`AWS_LC_SYS_NO_U1_BINDINGS`**
+* **`AWS_LC_SYS_NO_SOH_BINDINGS`**
 
-  When set to `1`, uses bindings that don't include the `\x01` prefix on symbol names.
+  When set to `1`, uses bindings that don't include the `\x01` (SOH) prefix on symbol names.
   This is automatically enabled for certain backends (like Cranelift) and architectures
   (like MIPS) that don't support the prefixed symbols.
 

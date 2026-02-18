@@ -271,16 +271,19 @@ fn is_cranelift_backend() -> bool {
     // CARGO_ENCODED_RUSTFLAGS contains flags separated by 0x1f (ASCII Unit Separator)
     if let Some(rustflags) = optional_env("CARGO_ENCODED_RUSTFLAGS") {
         for flag in rustflags.split('\x1f') {
-            if flag.contains("codegen-backend=cranelift") {
+            if flag.contains("codegen-backend") && flag.contains("cranelift") {
                 return true;
             }
         }
+    }
+    if let Some(rustflags) = optional_env("RUSTFLAGS") {
+        return rustflags.contains("codegen-backend") && rustflags.contains("cranelift");
     }
     false
 }
 
 #[cfg(not(feature = "all-bindings"))]
-fn target_chokes_on_u1() -> bool {
+fn target_chokes_on_soh() -> bool {
     target_arch() == "mips" || target_arch() == "mips64" || is_cranelift_backend()
 }
 
@@ -509,7 +512,7 @@ static mut AWS_LC_SYS_CMAKE_BUILDER: Option<bool> = None;
 static mut AWS_LC_SYS_NO_PREGENERATED_SRC: bool = false;
 static mut AWS_LC_SYS_EFFECTIVE_TARGET: String = String::new();
 static mut AWS_LC_SYS_NO_JITTER_ENTROPY: Option<bool> = None;
-static mut AWS_LC_SYS_NO_U1_BINDINGS: Option<bool> = None;
+static mut AWS_LC_SYS_NO_SOH_BINDINGS: Option<bool> = None;
 
 static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
 
@@ -528,7 +531,7 @@ fn initialize() {
         AWS_LC_SYS_EFFECTIVE_TARGET =
             optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
         AWS_LC_SYS_NO_JITTER_ENTROPY = env_crate_var_to_bool("NO_JITTER_ENTROPY");
-        AWS_LC_SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
+        AWS_LC_SYS_NO_SOH_BINDINGS = env_crate_var_to_bool("NO_SOH_BINDINGS");
     }
 
     if !is_external_bindgen_requested().unwrap_or(false)
@@ -537,7 +540,7 @@ fn initialize() {
         #[cfg(feature = "all-bindings")]
         {
             assert!(
-                use_no_u1_bindings() != Some(true),
+                use_no_soh_bindings() != Some(true),
                 "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
             );
             let target = effective_target();
@@ -566,18 +569,18 @@ fn initialize() {
         }
         #[cfg(not(feature = "all-bindings"))]
         {
-            if use_no_u1_bindings() == Some(true)
-                || (target_chokes_on_u1() && use_no_u1_bindings().is_none())
+            if use_no_soh_bindings() == Some(true)
+                || (target_chokes_on_soh() && use_no_soh_bindings().is_none())
             {
                 if is_cranelift_backend() {
                     emit_warning(
-                        "Cranelift codegen backend detected. Using universal_no_u1 bindings.",
+                        "Codegen backend does not support the \\u{1} link_name prefix. Using universal_no_soh bindings.",
                     );
                 }
                 if target_has_prefixed_symbols() {
-                    emit_rustc_cfg("universal-no-u1-prefixed");
+                    emit_rustc_cfg("universal-no-soh-prefixed");
                 } else {
-                    emit_rustc_cfg("universal-no-u1");
+                    emit_rustc_cfg("universal-no-soh");
                 }
             } else if target_has_prefixed_symbols() {
                 emit_rustc_cfg("universal-prefixed");
@@ -638,8 +641,8 @@ fn disable_jitter_entropy() -> Option<bool> {
     unsafe { AWS_LC_SYS_NO_JITTER_ENTROPY }
 }
 
-fn use_no_u1_bindings() -> Option<bool> {
-    unsafe { AWS_LC_SYS_NO_U1_BINDINGS }
+fn use_no_soh_bindings() -> Option<bool> {
+    unsafe { AWS_LC_SYS_NO_SOH_BINDINGS }
 }
 
 fn get_crate_cc() -> Option<String> {
@@ -711,8 +714,8 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
         println!("cargo:rustc-check-cfg=cfg(universal)");
-        println!("cargo:rustc-check-cfg=cfg(universal_no_u1)");
-        println!("cargo:rustc-check-cfg=cfg(universal_no_u1_prefixed)");
+        println!("cargo:rustc-check-cfg=cfg(universal_no_soh)");
+        println!("cargo:rustc-check-cfg=cfg(universal_no_soh_prefixed)");
         println!("cargo:rustc-check-cfg=cfg(universal_prefixed)");
     }
 }
