@@ -271,7 +271,7 @@ fn is_cranelift_backend() -> bool {
     // CARGO_ENCODED_RUSTFLAGS contains flags separated by 0x1f (ASCII Unit Separator)
     if let Some(rustflags) = optional_env("CARGO_ENCODED_RUSTFLAGS") {
         for flag in rustflags.split('\x1f') {
-            if flag.contains("codegen-backend=cranelift") {
+            if flag.contains("cranelift") {
                 return true;
             }
         }
