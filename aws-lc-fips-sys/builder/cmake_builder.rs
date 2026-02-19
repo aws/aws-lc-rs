@@ -121,46 +121,37 @@ impl CmakeBuilder {
         }
 
         let cc_build = cc::Build::new();
-        let opt_level = cargo_env("OPT_LEVEL");
-        if opt_level.ne("0") {
-            if opt_level.eq("1") || opt_level.eq("2") {
-                cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
-            } else {
-                if opt_level.eq("s") || opt_level.eq("z") {
-                    cmake_cfg.define("CMAKE_BUILD_TYPE", "minsizerel");
-                } else {
-                    cmake_cfg.define("CMAKE_BUILD_TYPE", "release");
-                }
-                // TODO: Due to the nature of the FIPS build (e.g., its dynamic generation of
-                // assembly files and its custom compilation commands within CMake), not all
-                // source paths are stripped from the resulting binary.
-                emit_warning(
-                    "NOTICE: Build environment source paths might be visible in release binary.",
-                );
-                if let Some(parent_dir) = self.manifest_dir.parent() {
-                    if target_family() == "unix" || target_env() == "gnu" {
-                        let flag = format!("\"-ffile-prefix-map={}=\"", parent_dir.display());
+        let cmake_prefile = cmake_cfg.get_profile();
+        if matches!(cmake_prefile, "Release" | "MinSizeRel") {
+            // TODO: Due to the nature of the FIPS build (e.g., its dynamic generation of
+            // assembly files and its custom compilation commands within CMake), not all
+            // source paths are stripped from the resulting binary.
+            emit_warning(
+                "NOTICE: Build environment source paths might be visible in release binary.",
+            );
+            if let Some(parent_dir) = self.manifest_dir.parent() {
+                if target_family() == "unix" || target_env() == "gnu" {
+                    let flag = format!("\"-ffile-prefix-map={}=\"", parent_dir.display());
+                    if let Ok(true) = cc_build.is_flag_supported(&flag) {
+                        emit_warning(&format!("Using flag: {}", &flag));
+                        cmake_cfg.asmflag(&flag);
+                        cmake_cfg.cflag(&flag);
+                    } else {
+                        let flag = format!("\"-fdebug-prefix-map={}=\"", parent_dir.display());
                         if let Ok(true) = cc_build.is_flag_supported(&flag) {
                             emit_warning(&format!("Using flag: {}", &flag));
                             cmake_cfg.asmflag(&flag);
                             cmake_cfg.cflag(&flag);
-                        } else {
-                            let flag = format!("\"-fdebug-prefix-map={}=\"", parent_dir.display());
-                            if let Ok(true) = cc_build.is_flag_supported(&flag) {
-                                emit_warning(&format!("Using flag: {}", &flag));
-                                cmake_cfg.asmflag(&flag);
-                                cmake_cfg.cflag(&flag);
-                            }
                         }
                     }
                 }
             }
-        } else if target_os() == "windows" {
+        }
+
+        if target_os() == "windows" {
             // The Windows/FIPS build rejects "debug" profile
             // https://github.com/aws/aws-lc/blob/main/CMakeLists.txt#L656
-            cmake_cfg.define("CMAKE_BUILD_TYPE", "relwithdebinfo");
-        } else {
-            cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
+            cmake_cfg.profile("RelWithDebInfo");
         }
 
         if is_crt_static() {
