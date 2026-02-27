@@ -25,8 +25,8 @@ required** for `aws-lc-rs` users.
 > [`aws-lc-sys/src/`](https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/src).
 
 **FIPS (`aws-lc-fips-sys`):** Pre-generated bindings are available for a limited set of targets.
-See [`aws-lc-fips-sys/src/`](https://github.com/aws/aws-lc-rs/tree/main/aws-lc-fips-sys/src) for
-the list. Bindgen is required for all other targets.
+See the [Pre-generated FIPS Bindings](../platform_support.md#pre-generated-fips-bindings) table
+on the Platform Support page for the full list. Bindgen is required for all other targets.
 
 ### Tested Platforms
 

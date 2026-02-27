@@ -106,6 +106,23 @@ Use of prebuilt NASM objects is prevented if either of the following conditions 
 Be aware that [features are additive](https://doc.rust-lang.org/cargo/reference/features.html#feature-unification);
 by enabling this feature, it is enabled for all crates within the same build.
 
+##### dev-tests-only
+
+Enables the `rand::unsealed` module, which re-exports the normally sealed `SecureRandom` trait.
+This allows consumers to provide their own implementations of `SecureRandom` (e.g., a
+deterministic RNG) for testing purposes. When enabled, a `mut_fill` method is also available on
+`SecureRandom`.
+
+This feature is restricted to **dev/debug profile builds only** — attempting to use it in a
+release build will result in a compile-time error.
+
+It can be enabled in two ways:
+* **Feature flag:** `cargo test --features dev-tests-only`
+* **Environment variable:** `AWS_LC_RS_DEV_TESTS_ONLY=1 cargo test`
+
+> **⚠️ Warning:** This feature is intended **only** for development and testing. It must not be
+> used in production builds.
+
 ## Use of prebuilt NASM objects
 
 Prebuilt NASM objects are **only** applicable to Windows x86-64 platforms. They are **never** used on any other platform (Linux, macOS, etc.).

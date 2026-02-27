@@ -1,44 +1,37 @@
 # Platform Support
 
-## Pre-generated bindings
+## Non-FIPS Builds (`aws-lc-sys`)
 
-`aws-lc-rs` can utilize pre-generated bindings when operating on the following
-build targets.
+For non-FIPS builds, `aws-lc-sys` provides **universal pre-generated bindings** that work across
+**all** supported platforms. Bindgen is never required, CMake is never required, and Go is never
+required. The only build requirement is a C/C++ compiler.
 
-| Platform                     | `aws-lc-sys` | `aws-lc-fips-sys` | 
-|------------------------------|--------------|-------------------|
-| `aarch64-apple-darwin`       | ✓            | ✓                 | 
-| `aarch64-pc-windows-msvc`    | ✓            | ✓ ²               |
-| `aarch64-unknown-linux-gnu`  | ✓            | ✓                 |
-| `aarch64-unknown-linux-musl` | ✓            | ✓                 |
-| `i686-pc-windows-msvc`       | ✓            | **Not Supported** |
-| `i686-unknown-linux-gnu`     | ✓            | **Not Supported** |
-| `x86_64-apple-darwin`        | ✓            | ✓                 |             
-| `x86_64-pc-windows-gnu`      | ✓            | **Not Supported** |
-| `x86_64-pc-windows-msvc`     | ✓            | ✓ ²               |
-| `x86_64-unknown-linux-gnu`   | ✓            | ✓                 |
-| `x86_64-unknown-linux-musl`  | ✓            | ✓                 |
+This means that if your target platform is supported by both [AWS-LC] and the
+[Rust compiler (with std support)][platform-support], `aws-lc-rs` should work out of the box
+without any additional tooling beyond a C/C++ compiler.
 
-² FIPS is supported but requires bindgen (no pre-generated FIPS bindings are available for Windows platforms)
+## FIPS Builds (`aws-lc-fips-sys`)
 
-## Tested platforms
+FIPS builds always require **CMake** and **Go** in addition to a C/C++ compiler. FIPS builds also
+require **bindgen** unless pre-generated bindings are available for the target platform.
 
-In addition to the platforms with pre-generated bindings listed above, `aws-lc-rs` CI builds and/or tests on many additional platforms.
-See our [CI workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml) for the complete list of tested platforms.
+### Pre-generated FIPS Bindings
 
-### Build Requirements Summary
+Pre-generated bindings for `aws-lc-fips-sys` are available for the following targets. All other
+FIPS targets require bindgen.
 
-**For non-FIPS builds (`aws-lc-sys`):**
-- C/C++ Compiler: Required
-- CMake: **Never** required
-- Bindgen: **Never** required (universal pre-generated bindings are provided)
-- Go: **Never** required
+| Platform                     | Pre-generated FIPS Bindings |
+|------------------------------|-----------------------------|
+| `aarch64-apple-darwin`       | ✓                           |
+| `aarch64-pc-windows-msvc`    | ✗ (bindgen required) ¹      |
+| `aarch64-unknown-linux-gnu`  | ✓                           |
+| `aarch64-unknown-linux-musl` | ✓                           |
+| `x86_64-apple-darwin`        | ✓                           |
+| `x86_64-pc-windows-msvc`     | ✗ (bindgen required) ¹      |
+| `x86_64-unknown-linux-gnu`   | ✓                           |
+| `x86_64-unknown-linux-musl`  | ✓                           |
 
-**For FIPS builds (`aws-lc-fips-sys`):**
-- C/C++ Compiler: Required
-- CMake: **Always** required
-- Go: **Always** required
-- Bindgen: Required **unless** the target has pre-generated bindings (see table above)
+¹ FIPS is supported on this platform but requires bindgen (no pre-generated FIPS bindings are available for Windows platforms)
 
 ### Bindgen for FIPS Builds
 
@@ -59,6 +52,20 @@ _**-- OR --**_
 ```shell
 cargo install --force --locked bindgen-cli
 ```
+
+## Tested Platforms
+
+`aws-lc-rs` CI builds and/or tests on many platforms beyond those listed in the FIPS bindings table above.
+See our [CI workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml) for the complete list of tested platforms.
+
+### Build Requirements Summary
+
+| Requirement       | Non-FIPS (`aws-lc-sys`)            | FIPS (`aws-lc-fips-sys`)                                  |
+|-------------------|------------------------------------|-----------------------------------------------------------|
+| C/C++ Compiler    | Required                           | Required                                                  |
+| CMake             | **Never** required                 | **Always** required                                       |
+| Bindgen           | **Never** required (universal pre-generated bindings) | Required unless target has pre-generated bindings |
+| Go                | **Never** required                 | **Always** required                                       |
 
 ### Linux Platforms
 
@@ -132,3 +139,6 @@ cargo install --force --locked bindgen-cli
 | OpenHarmony (aarch64)     | ✓     |       |
 | OpenWrt (aarch64-musl)    | ✓     |       |
 | Alpine Linux              | ✓     | ✓     |
+
+[AWS-LC]: https://github.com/aws/aws-lc
+[platform-support]: https://doc.rust-lang.org/rustc/platform-support.html
