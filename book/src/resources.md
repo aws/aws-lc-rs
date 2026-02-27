@@ -143,6 +143,31 @@ The target-specific variant takes precedence when both are set.
   > It is primarily useful for selecting different pre-generated bindings or symbol prefixes
   > when building for targets that are compatible with another target's bindings.
 
+## `aws-lc-rs` Environment Variables
+
+The `aws-lc-rs` crate supports the following environment variables for configuring build behavior.
+
+* **`AWS_LC_RS_DEV_TESTS_ONLY`**
+
+  Enables development-only testing functionality without requiring the `dev-tests-only` feature flag.
+  When enabled, the `rand::unsealed` module is exposed, allowing consumers to provide their own
+  implementations of `SecureRandom` for deterministic or custom random number generation in tests.
+
+  - `1` - Enable development testing functionality
+  - `0` - Explicitly disable (overrides the `dev-tests-only` feature flag if set)
+
+  This setting is restricted to dev/debug profile builds. Attempting to use it in a release build
+  will result in a compilation panic.
+
+  > **Note:** This environment variable can also override the `dev-tests-only` Cargo feature flag.
+  > If both the feature flag and the environment variable are present, the environment variable
+  > takes precedence.
+
+* **`AWS_LC_RS_DISABLE_SLOW_TESTS`**
+
+  When set to `1`, disables slow-running tests in the `aws-lc-rs` test suite. This can be useful
+  for faster iteration during development.
+
 ## Links
 
 - [API Reference Guide](https://docs.rs/aws-lc-rs/latest)
