@@ -1,0 +1,41 @@
+[package]
+name = "builder-test"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Test harness for aws-lc-sys builder modules - does not duplicate code"
+
+# Silence warnings that are expected when compiling builder code as a library.
+# The builder code is designed to run as a build script, so many functions
+# appear "unused" when compiled as a library for testing purposes.
+[lints.rust]
+dead_code = "allow"
+unused = "allow"
+
+# Point to the actual builder/main.rs as the library source
+# The #[cfg(test)] module in main.rs will be compiled and run
+[lib]
+name = "builder"
+path = "../builder/main.rs"
+
+[dependencies]
+# All dependencies that builder/main.rs requires
+cc = { workspace = true, features = ["parallel"] }
+cmake = { workspace = true }
+dunce = { workspace = true }
+fs_extra = { workspace = true }
+bindgen = { workspace = true, optional = true }
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+default = []
+# Mirror the features from aws-lc-sys that affect builder compilation
+bindgen = ["dep:bindgen"]
+fips = ["dep:bindgen"]
+ssl = ["bindgen"]
+all-bindings = []
+prebuilt-nasm = []
+disable-prebuilt-nasm = []
+asan = []

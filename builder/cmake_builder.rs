@@ -5,11 +5,12 @@ use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, disable_jitter_entropy, effective_target, emit_warning,
-    execute_command, get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src,
-    optional_env, optional_env_optional_crate_target, set_env, set_env_for_target, target_arch,
-    target_env, target_os, test_clang_cl_command, test_nasm_command, use_prebuilt_nasm,
-    OutputLibType,
+    execute_command, get_crate_cflags, is_crt_static, is_fips_build, is_no_asm,
+    is_no_pregenerated_src, optional_env, optional_env_optional_crate_target, set_env,
+    set_env_for_target, target_arch, target_env, target_os, test_clang_cl_command,
+    test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
+use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -87,8 +88,24 @@ impl CmakeBuilder {
         cmake_cfg
     }
 
+    const GOCACHE_DIR_NAME: &'static str = "go-cache";
+
     #[allow(clippy::too_many_lines)]
     fn prepare_cmake_build(&self) -> cmake::Config {
+        if is_fips_build() {
+            unsafe {
+                env::set_var("GOFLAGS", "-buildvcs=false");
+            }
+            if env::var("GOCACHE").is_err() {
+                unsafe {
+                    env::set_var(
+                        "GOCACHE",
+                        self.out_dir.join(Self::GOCACHE_DIR_NAME).as_os_str(),
+                    );
+                }
+            }
+        }
+
         let mut cmake_cfg = self.get_cmake_config();
         if let Some(generator) = optional_env_optional_crate_target("CMAKE_GENERATOR") {
             set_env("CMAKE_GENERATOR", generator);
@@ -96,6 +113,11 @@ impl CmakeBuilder {
 
         if OutputLibType::default() == OutputLibType::Dynamic {
             cmake_cfg.define("BUILD_SHARED_LIBS", "1");
+            if is_fips_build() {
+                // The default flags include `-ffunction-sections` that can result in
+                // dead code elimination dropping functions.
+                cmake_cfg.no_default_flags(true);
+            }
         } else {
             cmake_cfg.define("BUILD_SHARED_LIBS", "0");
         }
@@ -118,17 +140,26 @@ impl CmakeBuilder {
         } else {
             cmake_cfg.define("BUILD_LIBSSL", "OFF");
         }
-        if is_no_pregenerated_src() {
-            // Go and Perl will be required.
-            cmake_cfg.define("DISABLE_PERL", "OFF");
-            cmake_cfg.define("DISABLE_GO", "OFF");
+        if is_fips_build() {
+            cmake_cfg.define("FIPS", "1");
         } else {
-            // Build flags that minimize our dependencies.
-            cmake_cfg.define("DISABLE_PERL", "ON");
-            cmake_cfg.define("DISABLE_GO", "ON");
-        }
-        if Some(true) == disable_jitter_entropy() {
-            cmake_cfg.define("DISABLE_CPU_JITTER_ENTROPY", "ON");
+            if is_no_pregenerated_src() {
+                // Go and Perl will be required.
+                cmake_cfg.define("DISABLE_PERL", "OFF");
+                cmake_cfg.define("DISABLE_GO", "OFF");
+            } else {
+                // Build flags that minimize our dependencies.
+                cmake_cfg.define("DISABLE_PERL", "ON");
+                cmake_cfg.define("DISABLE_GO", "ON");
+            }
+            if Some(true) == disable_jitter_entropy() {
+                cmake_cfg.define("DISABLE_CPU_JITTER_ENTROPY", "ON");
+            }
+
+            if target_env() == "ohos" {
+                Self::configure_open_harmony(&mut cmake_cfg);
+                return cmake_cfg;
+            }
         }
 
         if is_no_asm() {
@@ -151,11 +182,6 @@ impl CmakeBuilder {
             set_env_for_target("CFLAGS", cflags);
         }
 
-        if target_env() == "ohos" {
-            Self::configure_open_harmony(&mut cmake_cfg);
-            return cmake_cfg;
-        }
-
         // cmake-rs has logic that strips Optimization/Debug options that are passed via CFLAGS:
         // https://github.com/rust-lang/cmake-rs/issues/240
         // This breaks build configurations that generate warnings when optimizations
@@ -163,7 +189,15 @@ impl CmakeBuilder {
         Self::preserve_cflag_optimization_flags(&mut cmake_cfg);
 
         if target_os() == "windows" {
-            if use_prebuilt_nasm() {
+            if is_fips_build() {
+                let opt_level = cargo_env("OPT_LEVEL");
+                let build_type = if opt_level.eq("0") || opt_level.eq("1") || opt_level.eq("2") {
+                    "RELWITHDEBINFO"
+                } else {
+                    "RELEASE"
+                };
+                cmake_cfg.define("CMAKE_BUILD_TYPE", build_type);
+            } else if use_prebuilt_nasm() {
                 self.configure_prebuilt_nasm(&mut cmake_cfg);
             }
             if target_env().as_str() == "msvc" {
@@ -303,6 +337,17 @@ impl CmakeBuilder {
 
     #[allow(clippy::unused_self)]
     fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
+        if is_fips_build() {
+            cmake_cfg.generator("Ninja");
+            let env_map = self
+                .collect_vcvarsall_bat()
+                .map_err(|x| panic!("{}", x))
+                .unwrap();
+            for (key, value) in env_map {
+                cmake_cfg.env(key, value);
+            }
+        }
+
         match (target_env().as_str(), target_arch().as_str()) {
             ("msvc", "aarch64") => {
                 // If CMAKE_GENERATOR is either not set or not set to "Ninja"
@@ -330,6 +375,24 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", arch);
             }
         }
+    }
+
+    fn collect_vcvarsall_bat(&self) -> Result<HashMap<String, String>, String> {
+        let mut map: HashMap<String, String> = HashMap::new();
+        let script_path = self.manifest_dir.join("builder").join("printenv.bat");
+        let result = execute_command(script_path.as_os_str(), &[]);
+        if !result.status {
+            eprintln!("{}", result.stdout);
+            return Err("Failed to run vcvarsall.bat.".to_owned());
+        }
+        eprintln!("{}", result.stdout);
+        let lines = result.stdout.lines();
+        for line in lines {
+            if let Some((var, val)) = line.split_once('=') {
+                map.insert(var.to_string(), val.to_string());
+            }
+        }
+        Ok(map)
     }
 
     fn configure_prebuilt_nasm(&self, cmake_cfg: &mut cmake::Config) {
