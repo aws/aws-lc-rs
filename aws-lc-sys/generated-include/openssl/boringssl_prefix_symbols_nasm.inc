@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_37_1
+%define BORINGSSL_PREFIX aws_lc_0_38_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -1361,6 +1361,7 @@
 %xdefine _EVP_PKEY_param_check _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_param_check
 %xdefine _EVP_PKEY_paramgen _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen
 %xdefine _EVP_PKEY_paramgen_init _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen_init
+%xdefine _EVP_PKEY_pqdsa_get_type _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_get_type
 %xdefine _EVP_PKEY_pqdsa_new_raw_private_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_private_key
 %xdefine _EVP_PKEY_pqdsa_new_raw_public_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_public_key
 %xdefine _EVP_PKEY_pqdsa_pkey_meth _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_pkey_meth
@@ -1535,7 +1536,6 @@
 %xdefine _FIPS_is_entropy_cpu_jitter _ %+ BORINGSSL_PREFIX %+ _FIPS_is_entropy_cpu_jitter
 %xdefine _FIPS_mode _ %+ BORINGSSL_PREFIX %+ _FIPS_mode
 %xdefine _FIPS_mode_set _ %+ BORINGSSL_PREFIX %+ _FIPS_mode_set
-%xdefine _FIPS_read_counter _ %+ BORINGSSL_PREFIX %+ _FIPS_read_counter
 %xdefine _FIPS_service_indicator_after_call _ %+ BORINGSSL_PREFIX %+ _FIPS_service_indicator_after_call
 %xdefine _FIPS_service_indicator_before_call _ %+ BORINGSSL_PREFIX %+ _FIPS_service_indicator_before_call
 %xdefine _GENERAL_NAMES_free _ %+ BORINGSSL_PREFIX %+ _GENERAL_NAMES_free
@@ -2084,6 +2084,7 @@
 %xdefine _RAND_poll _ %+ BORINGSSL_PREFIX %+ _RAND_poll
 %xdefine _RAND_priv_bytes _ %+ BORINGSSL_PREFIX %+ _RAND_priv_bytes
 %xdefine _RAND_pseudo_bytes _ %+ BORINGSSL_PREFIX %+ _RAND_pseudo_bytes
+%xdefine _RAND_public_bytes _ %+ BORINGSSL_PREFIX %+ _RAND_public_bytes
 %xdefine _RAND_seed _ %+ BORINGSSL_PREFIX %+ _RAND_seed
 %xdefine _RAND_set_rand_method _ %+ BORINGSSL_PREFIX %+ _RAND_set_rand_method
 %xdefine _RAND_status _ %+ BORINGSSL_PREFIX %+ _RAND_status
@@ -2139,6 +2140,7 @@
 %xdefine _RSA_get0_p _ %+ BORINGSSL_PREFIX %+ _RSA_get0_p
 %xdefine _RSA_get0_pss_params _ %+ BORINGSSL_PREFIX %+ _RSA_get0_pss_params
 %xdefine _RSA_get0_q _ %+ BORINGSSL_PREFIX %+ _RSA_get0_q
+%xdefine _RSA_get0_ssa_pss_params _ %+ BORINGSSL_PREFIX %+ _RSA_get0_ssa_pss_params
 %xdefine _RSA_get_default_method _ %+ BORINGSSL_PREFIX %+ _RSA_get_default_method
 %xdefine _RSA_get_ex_data _ %+ BORINGSSL_PREFIX %+ _RSA_get_ex_data
 %xdefine _RSA_get_ex_new_index _ %+ BORINGSSL_PREFIX %+ _RSA_get_ex_new_index
@@ -2820,6 +2822,7 @@
 %xdefine _X509v3_get_ext_count _ %+ BORINGSSL_PREFIX %+ _X509v3_get_ext_count
 %xdefine ___local_stdio_printf_options _ %+ BORINGSSL_PREFIX %+ ___local_stdio_printf_options
 %xdefine ___local_stdio_scanf_options _ %+ BORINGSSL_PREFIX %+ ___local_stdio_scanf_options
+%xdefine _a2i_ASN1_INTEGER _ %+ BORINGSSL_PREFIX %+ _a2i_ASN1_INTEGER
 %xdefine _a2i_IPADDRESS _ %+ BORINGSSL_PREFIX %+ _a2i_IPADDRESS
 %xdefine _a2i_IPADDRESS_NC _ %+ BORINGSSL_PREFIX %+ _a2i_IPADDRESS_NC
 %xdefine _abi_test_bad_unwind_epilog _ %+ BORINGSSL_PREFIX %+ _abi_test_bad_unwind_epilog
@@ -3588,9 +3591,11 @@
 %xdefine _gcm_setiv_avx512 _ %+ BORINGSSL_PREFIX %+ _gcm_setiv_avx512
 %xdefine _get_entropy_source _ %+ BORINGSSL_PREFIX %+ _get_entropy_source
 %xdefine _get_entropy_source_method_id_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _get_entropy_source_method_id_FOR_TESTING
+%xdefine _get_private_thread_generate_calls_since_seed _ %+ BORINGSSL_PREFIX %+ _get_private_thread_generate_calls_since_seed
+%xdefine _get_private_thread_reseed_calls_since_initialization _ %+ BORINGSSL_PREFIX %+ _get_private_thread_reseed_calls_since_initialization
+%xdefine _get_public_thread_generate_calls_since_seed _ %+ BORINGSSL_PREFIX %+ _get_public_thread_generate_calls_since_seed
+%xdefine _get_public_thread_reseed_calls_since_initialization _ %+ BORINGSSL_PREFIX %+ _get_public_thread_reseed_calls_since_initialization
 %xdefine _get_thread_and_global_tree_drbg_calls_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _get_thread_and_global_tree_drbg_calls_FOR_TESTING
-%xdefine _get_thread_generate_calls_since_seed _ %+ BORINGSSL_PREFIX %+ _get_thread_generate_calls_since_seed
-%xdefine _get_thread_reseed_calls_since_initialization _ %+ BORINGSSL_PREFIX %+ _get_thread_reseed_calls_since_initialization
 %xdefine _handle_cpu_env _ %+ BORINGSSL_PREFIX %+ _handle_cpu_env
 %xdefine _have_hw_rng_aarch64_for_testing _ %+ BORINGSSL_PREFIX %+ _have_hw_rng_aarch64_for_testing
 %xdefine _have_hw_rng_x86_64_for_testing _ %+ BORINGSSL_PREFIX %+ _have_hw_rng_x86_64_for_testing
@@ -5450,6 +5455,7 @@
 %xdefine EVP_PKEY_param_check BORINGSSL_PREFIX %+ _EVP_PKEY_param_check
 %xdefine EVP_PKEY_paramgen BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen
 %xdefine EVP_PKEY_paramgen_init BORINGSSL_PREFIX %+ _EVP_PKEY_paramgen_init
+%xdefine EVP_PKEY_pqdsa_get_type BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_get_type
 %xdefine EVP_PKEY_pqdsa_new_raw_private_key BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_private_key
 %xdefine EVP_PKEY_pqdsa_new_raw_public_key BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_new_raw_public_key
 %xdefine EVP_PKEY_pqdsa_pkey_meth BORINGSSL_PREFIX %+ _EVP_PKEY_pqdsa_pkey_meth
@@ -5624,7 +5630,6 @@
 %xdefine FIPS_is_entropy_cpu_jitter BORINGSSL_PREFIX %+ _FIPS_is_entropy_cpu_jitter
 %xdefine FIPS_mode BORINGSSL_PREFIX %+ _FIPS_mode
 %xdefine FIPS_mode_set BORINGSSL_PREFIX %+ _FIPS_mode_set
-%xdefine FIPS_read_counter BORINGSSL_PREFIX %+ _FIPS_read_counter
 %xdefine FIPS_service_indicator_after_call BORINGSSL_PREFIX %+ _FIPS_service_indicator_after_call
 %xdefine FIPS_service_indicator_before_call BORINGSSL_PREFIX %+ _FIPS_service_indicator_before_call
 %xdefine GENERAL_NAMES_free BORINGSSL_PREFIX %+ _GENERAL_NAMES_free
@@ -6173,6 +6178,7 @@
 %xdefine RAND_poll BORINGSSL_PREFIX %+ _RAND_poll
 %xdefine RAND_priv_bytes BORINGSSL_PREFIX %+ _RAND_priv_bytes
 %xdefine RAND_pseudo_bytes BORINGSSL_PREFIX %+ _RAND_pseudo_bytes
+%xdefine RAND_public_bytes BORINGSSL_PREFIX %+ _RAND_public_bytes
 %xdefine RAND_seed BORINGSSL_PREFIX %+ _RAND_seed
 %xdefine RAND_set_rand_method BORINGSSL_PREFIX %+ _RAND_set_rand_method
 %xdefine RAND_status BORINGSSL_PREFIX %+ _RAND_status
@@ -6228,6 +6234,7 @@
 %xdefine RSA_get0_p BORINGSSL_PREFIX %+ _RSA_get0_p
 %xdefine RSA_get0_pss_params BORINGSSL_PREFIX %+ _RSA_get0_pss_params
 %xdefine RSA_get0_q BORINGSSL_PREFIX %+ _RSA_get0_q
+%xdefine RSA_get0_ssa_pss_params BORINGSSL_PREFIX %+ _RSA_get0_ssa_pss_params
 %xdefine RSA_get_default_method BORINGSSL_PREFIX %+ _RSA_get_default_method
 %xdefine RSA_get_ex_data BORINGSSL_PREFIX %+ _RSA_get_ex_data
 %xdefine RSA_get_ex_new_index BORINGSSL_PREFIX %+ _RSA_get_ex_new_index
@@ -6909,6 +6916,7 @@
 %xdefine X509v3_get_ext_count BORINGSSL_PREFIX %+ _X509v3_get_ext_count
 %xdefine __local_stdio_printf_options BORINGSSL_PREFIX %+ ___local_stdio_printf_options
 %xdefine __local_stdio_scanf_options BORINGSSL_PREFIX %+ ___local_stdio_scanf_options
+%xdefine a2i_ASN1_INTEGER BORINGSSL_PREFIX %+ _a2i_ASN1_INTEGER
 %xdefine a2i_IPADDRESS BORINGSSL_PREFIX %+ _a2i_IPADDRESS
 %xdefine a2i_IPADDRESS_NC BORINGSSL_PREFIX %+ _a2i_IPADDRESS_NC
 %xdefine abi_test_bad_unwind_epilog BORINGSSL_PREFIX %+ _abi_test_bad_unwind_epilog
@@ -7677,9 +7685,11 @@
 %xdefine gcm_setiv_avx512 BORINGSSL_PREFIX %+ _gcm_setiv_avx512
 %xdefine get_entropy_source BORINGSSL_PREFIX %+ _get_entropy_source
 %xdefine get_entropy_source_method_id_FOR_TESTING BORINGSSL_PREFIX %+ _get_entropy_source_method_id_FOR_TESTING
+%xdefine get_private_thread_generate_calls_since_seed BORINGSSL_PREFIX %+ _get_private_thread_generate_calls_since_seed
+%xdefine get_private_thread_reseed_calls_since_initialization BORINGSSL_PREFIX %+ _get_private_thread_reseed_calls_since_initialization
+%xdefine get_public_thread_generate_calls_since_seed BORINGSSL_PREFIX %+ _get_public_thread_generate_calls_since_seed
+%xdefine get_public_thread_reseed_calls_since_initialization BORINGSSL_PREFIX %+ _get_public_thread_reseed_calls_since_initialization
 %xdefine get_thread_and_global_tree_drbg_calls_FOR_TESTING BORINGSSL_PREFIX %+ _get_thread_and_global_tree_drbg_calls_FOR_TESTING
-%xdefine get_thread_generate_calls_since_seed BORINGSSL_PREFIX %+ _get_thread_generate_calls_since_seed
-%xdefine get_thread_reseed_calls_since_initialization BORINGSSL_PREFIX %+ _get_thread_reseed_calls_since_initialization
 %xdefine handle_cpu_env BORINGSSL_PREFIX %+ _handle_cpu_env
 %xdefine have_hw_rng_aarch64_for_testing BORINGSSL_PREFIX %+ _have_hw_rng_aarch64_for_testing
 %xdefine have_hw_rng_x86_64_for_testing BORINGSSL_PREFIX %+ _have_hw_rng_x86_64_for_testing

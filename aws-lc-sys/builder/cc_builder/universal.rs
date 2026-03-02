@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Wed Feb 11 20:55:20 UTC 2026
+// Mon Mar  2 21:40:57 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/asn1/asn1_lib.c",
@@ -119,6 +119,7 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/hpke/hpke.c",
     "crypto/hrss/hrss.c",
     "crypto/lhash/lhash.c",
+    "crypto/md4/md4.c",
     "crypto/mem.c",
     "crypto/obj/obj.c",
     "crypto/obj/obj_xref.c",
