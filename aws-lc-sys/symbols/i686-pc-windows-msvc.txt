@@ -1319,6 +1319,7 @@ EVP_PKEY_new_raw_public_key
 EVP_PKEY_param_check
 EVP_PKEY_paramgen
 EVP_PKEY_paramgen_init
+EVP_PKEY_pqdsa_get_type
 EVP_PKEY_pqdsa_new_raw_private_key
 EVP_PKEY_pqdsa_new_raw_public_key
 EVP_PKEY_pqdsa_pkey_meth
@@ -1493,7 +1494,6 @@ EXTENDED_KEY_USAGE_new
 FIPS_is_entropy_cpu_jitter
 FIPS_mode
 FIPS_mode_set
-FIPS_read_counter
 FIPS_service_indicator_after_call
 FIPS_service_indicator_before_call
 GENERAL_NAMES_free
@@ -2039,6 +2039,7 @@ RAND_load_file
 RAND_poll
 RAND_priv_bytes
 RAND_pseudo_bytes
+RAND_public_bytes
 RAND_seed
 RAND_set_rand_method
 RAND_status
@@ -2092,6 +2093,7 @@ RSA_get0_n
 RSA_get0_p
 RSA_get0_pss_params
 RSA_get0_q
+RSA_get0_ssa_pss_params
 RSA_get_default_method
 RSA_get_ex_data
 RSA_get_ex_new_index
@@ -2773,6 +2775,7 @@ X509v3_get_ext_by_critical
 X509v3_get_ext_count
 __local_stdio_printf_options
 __local_stdio_scanf_options
+a2i_ASN1_INTEGER
 a2i_IPADDRESS
 a2i_IPADDRESS_NC
 abi_test_clobber_eax
@@ -3192,9 +3195,11 @@ gcm_init_nohw
 gcm_init_ssse3
 get_entropy_source
 get_entropy_source_method_id_FOR_TESTING
+get_private_thread_generate_calls_since_seed
+get_private_thread_reseed_calls_since_initialization
+get_public_thread_generate_calls_since_seed
+get_public_thread_reseed_calls_since_initialization
 get_thread_and_global_tree_drbg_calls_FOR_TESTING
-get_thread_generate_calls_since_seed
-get_thread_reseed_calls_since_initialization
 have_hw_rng_aarch64_for_testing
 have_hw_rng_x86_64_for_testing
 hmac_asn1_meth
