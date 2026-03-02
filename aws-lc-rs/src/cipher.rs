@@ -783,11 +783,10 @@ fn encrypt(
     let block_len = algorithm.block_len();
 
     match mode {
-        OperatingMode::CBC | OperatingMode::ECB => {
-            if in_out.len() % block_len != 0 {
+        OperatingMode::CBC | OperatingMode::ECB
+            if in_out.len() % block_len != 0 => {
                 return Err(Unspecified);
             }
-        }
         _ => {}
     }
 
@@ -826,11 +825,10 @@ fn decrypt<'in_out>(
     let block_len = algorithm.block_len();
 
     match mode {
-        OperatingMode::CBC | OperatingMode::ECB => {
-            if in_out.len() % block_len != 0 {
+        OperatingMode::CBC | OperatingMode::ECB
+            if in_out.len() % block_len != 0 => {
                 return Err(Unspecified);
             }
-        }
         _ => {}
     }
 
