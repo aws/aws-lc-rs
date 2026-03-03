@@ -137,9 +137,9 @@ jobs:
         run: cargo install cargo-udeps
 
       - name: Run cargo udeps
-        # we only use openssl when the openssl-benchmarks feature is enabled.
-        # openssl is a dev-dependency so it can't be optional.
-        run: cargo udeps --workspace --all-targets --features openssl-benchmarks
+        # ring and openssl are optional dependencies in aws-lc-rs-testing,
+        # gated by ring-benchmarks and openssl-benchmarks features respectively.
+        run: cargo udeps --workspace --all-targets --features ring-benchmarks,openssl-benchmarks
         env:
           RUSTC_WRAPPER: ""
 
