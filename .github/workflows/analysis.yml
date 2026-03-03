@@ -133,6 +133,9 @@ jobs:
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
 
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
       - name: Install cargo-udeps
         run: cargo install cargo-udeps
 
