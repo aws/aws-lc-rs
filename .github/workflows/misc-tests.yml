@@ -75,8 +75,6 @@ jobs:
   verify-docsrs-build:
     if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
-    env:
-      RUSTDOCFLAGS: "-Dwarnings --cfg=aws_lc_rs_docsrs"
     steps:
       - uses: actions/checkout@v3
         with:
@@ -87,11 +85,14 @@ jobs:
         with:
           toolchain: nightly
 
+      - name: Install cargo-docs-rs
+        run: cargo install cargo-docs-rs
+
       - name: Verify docs.rs build
         run: |
-          cargo +nightly doc -p aws-lc-rs
-          cargo +nightly doc -p aws-lc-sys
-          cargo +nightly doc -p aws-lc-fips-sys
+          cargo +nightly docs-rs -p aws-lc-rs
+          cargo +nightly docs-rs -p aws-lc-sys
+          cargo +nightly docs-rs -p aws-lc-fips-sys
 
   dev-tests-only-feature:
     if: github.repository_owner == 'aws'
