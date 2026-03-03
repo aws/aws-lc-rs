@@ -45,38 +45,31 @@ macro_rules! benchmark_agreement {
 
             use $pkg::{agreement, test};
 
-    use crate::{AgreementConfig, Curve};
-    use agreement::{
-        agree_ephemeral, Algorithm, EphemeralPrivateKey, UnparsedPublicKey, ECDH_P256, ECDH_P384,
-        X25519,
-    };
+            use crate::{AgreementConfig, Curve};
+            use agreement::{
+                Algorithm, EphemeralPrivateKey, UnparsedPublicKey, ECDH_P256, ECDH_P384,
+                X25519,
+            };
 
-    fn algorithm(config: &AgreementConfig) -> &'static Algorithm {
-        match config.curve {
-            Curve::X25519 => &X25519,
-            Curve::P256 => &ECDH_P256,
-            Curve::P384 => &ECDH_P384,
+            fn algorithm(config: &AgreementConfig) -> &'static Algorithm {
+                match config.curve {
+                    Curve::X25519 => &X25519,
+                    Curve::P256 => &ECDH_P256,
+                    Curve::P384 => &ECDH_P384,
+                }
+            }
+
+            pub fn private_key(config: &AgreementConfig) -> EphemeralPrivateKey {
+                let rng = test::rand::FixedSliceRandom {
+                    bytes: &config.private,
+                };
+                EphemeralPrivateKey::generate(algorithm(config), &rng).unwrap()
+            }
+
+            pub fn peer_public_key(config: &AgreementConfig) -> UnparsedPublicKey<Vec<u8>> {
+                UnparsedPublicKey::new(algorithm(config), config.peer_pub.clone())
+            }
         }
-    }
-
-    pub fn private_key(config: &AgreementConfig) -> EphemeralPrivateKey {
-        let rng = test::rand::FixedSliceRandom {
-            bytes: &config.private,
-        };
-        EphemeralPrivateKey::generate(algorithm(config), &rng).unwrap()
-    }
-
-    pub fn peer_public_key(config: &AgreementConfig) -> UnparsedPublicKey<Vec<u8>> {
-        UnparsedPublicKey::new(algorithm(config), config.peer_pub.clone())
-    }
-
-    pub fn agreement(
-        private_key: EphemeralPrivateKey,
-        peer_public_key: &UnparsedPublicKey<Vec<u8>>,
-    ) {
-        agree_ephemeral(private_key, peer_public_key, (), |val| Ok(Vec::from(val))).unwrap();
-    }
-}
         }
     };
 }
@@ -94,7 +87,10 @@ fn test_agree_ephemeral(c: &mut Criterion, config: &AgreementConfig) {
     group.bench_function("AWS-LC", |b| {
         b.iter(|| {
             let private_key = aws_lc_rs_benchmarks::private_key(config);
-            aws_lc_rs_benchmarks::agreement(private_key, &aws_peer_public_key);
+            aws_lc_rs::agreement::agree_ephemeral(private_key, &aws_peer_public_key, (), |val| {
+                Ok(Vec::from(val))
+            })
+            .unwrap();
         });
     });
     #[cfg(feature = "ring-benchmarks")]
@@ -103,7 +99,10 @@ fn test_agree_ephemeral(c: &mut Criterion, config: &AgreementConfig) {
         group.bench_function("Ring", |b| {
             b.iter(|| {
                 let private_key = ring_benchmarks::private_key(config);
-                ring_benchmarks::agreement(private_key, &ring_peer_public_key);
+                ring::agreement::agree_ephemeral(private_key, &ring_peer_public_key, |val| {
+                    Vec::from(val)
+                })
+                .unwrap();
             });
         });
     }

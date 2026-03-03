@@ -76,7 +76,7 @@ macro_rules! benchmark_rsa {
             use $pkg::{signature, rand};
 
     use super::{RsaDigest, RsaPadding};
-    use signature::{RsaKeyPair, RsaParameters, VerificationAlgorithm};
+    use signature::{RsaKeyPair, RsaParameters};
 
     pub fn create_key_pair(key: &[u8]) -> RsaKeyPair {
         RsaKeyPair::from_der(key).expect("Unable to parse key")
@@ -126,11 +126,9 @@ macro_rules! benchmark_rsa {
             .expect("signing failed");
     }
 
-    pub fn verify(rsa_params: &RsaParameters, public_key: &[u8], msg: &[u8], signature: &[u8]) {
-        let public_key = untrusted::Input::from(public_key);
-        let msg = untrusted::Input::from(msg);
-        let signature = untrusted::Input::from(signature);
-        rsa_params.verify(public_key, msg, signature).unwrap()
+    pub fn verify(rsa_params: &'static RsaParameters, public_key: &[u8], msg: &[u8], sig: &[u8]) {
+        let public_key = signature::UnparsedPublicKey::new(rsa_params, public_key);
+        public_key.verify(msg, sig).unwrap()
     }
 }
 
