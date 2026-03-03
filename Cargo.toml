@@ -4,6 +4,7 @@ members = [
     "aws-lc-sys",
     "aws-lc-fips-sys",
     "aws-lc-rs-testing",
+    "aws-lc-rs-bench",
     "links-testing",
 ]
 exclude = [
@@ -28,6 +29,7 @@ zeroize = "1.8.1"
 # The dependencies below do not affect our MSRV. They are only used as
 # a dev-dependency or only used outside of our public crates.
 # These can be updated to the latest versions.
+anyhow = "1.0"
 clap = "4.4"
 criterion = "0.8.2"
 hex = "0.4.3"
@@ -35,6 +37,8 @@ lazy_static = "1.5.0"
 openssl = "0.10.73"
 paste = "1.0.15"
 ring = "0.17.14"
+serde = "1.0"
+serde_json = "1.0"
 toml_edit = "0.25.0"
 
 [profile.bench]

@@ -60,6 +60,7 @@ platform_binding!(
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap,
     clippy::default_trait_access,
+    clippy::doc_markdown,
     clippy::missing_safety_doc,
     clippy::must_use_candidate,
     clippy::not_unsafe_ptr_arg_deref,

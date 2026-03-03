@@ -55,7 +55,7 @@ jobs:
         run: cargo test ${{ matrix.args }}
       - name: Run extra tests
         working-directory: ./aws-lc-rs-testing
-        run: cargo test --all-targets
+        run: cargo test --all-targets --features ring-benchmarks,openssl-benchmarks
 
   bindgen-test:
     if: github.repository_owner == 'aws'

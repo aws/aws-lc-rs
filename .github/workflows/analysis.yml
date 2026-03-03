@@ -133,13 +133,16 @@ jobs:
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
 
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
       - name: Install cargo-udeps
         run: cargo install cargo-udeps
 
       - name: Run cargo udeps
-        # we only use openssl when the openssl-benchmarks feature is enabled.
-        # openssl is a dev-dependency so it can't be optional.
-        run: cargo udeps --workspace --all-targets --features openssl-benchmarks
+        # ring and openssl are optional dependencies in aws-lc-rs-testing,
+        # gated by ring-benchmarks and openssl-benchmarks features respectively.
+        run: cargo udeps --workspace --all-targets --features ring-benchmarks,openssl-benchmarks
         env:
           RUSTC_WRAPPER: ""
 
@@ -404,7 +407,7 @@ jobs:
       - name: Install readelf
         run: sudo apt-get update && sudo apt-get install -y binutils
       - name: Build project
-        run: cargo build --workspace --all-targets --release
+        run: cargo build -p aws-lc-rs -p aws-lc-sys -p aws-lc-fips-sys --all-targets --release
       - name: Check for GNU-stack section in object files
         run: |
           echo "Checking for .note.GNU-stack section in all object files..."
