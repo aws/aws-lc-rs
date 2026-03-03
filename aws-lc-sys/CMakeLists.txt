@@ -3,18 +3,11 @@
 
 cmake_minimum_required(VERSION 3.5...3.31)
 
-if(CMAKE_VERSION VERSION_GREATER "3.14")
-# https://cmake.org/cmake/help/latest/policy/CMP0091.html
-# In CMake 3.14 and below, MSVC runtime library selection flags are added to the default CMAKE_<LANG>_FLAGS_<CONFIG>
-# cache entries by CMake automatically.
-cmake_policy(SET CMP0091 OLD)
-endif()
-
 project(AWS_LC_RUST NONE)
 enable_language(C)
 
 function(set_my_target_properties ...)
-    set_target_properties(rust_wrapper crypto PROPERTIES ${ARGV})
+    set_target_properties(crypto PROPERTIES ${ARGV})
     if (BUILD_LIBSSL)
         set_target_properties(ssl PROPERTIES ${ARGV})
     endif()
@@ -33,11 +26,11 @@ if (BUILD_LIBSSL)
     add_definitions(-DAWS_LC_RUST_INCLUDE_SSL)
 endif()
 
-add_library(rust_wrapper rust_wrapper.c)
-target_include_directories(rust_wrapper PRIVATE include)
-target_link_libraries(rust_wrapper PUBLIC crypto)
+# Custom target needed because aws-lc is added with EXCLUDE_FROM_ALL, so its targets aren't built by default.
 if (BUILD_LIBSSL)
-    target_link_libraries(rust_wrapper PUBLIC ssl)
+    add_custom_target(aws_lc_sys ALL DEPENDS crypto ssl)
+else()
+    add_custom_target(aws_lc_sys ALL DEPENDS crypto)
 endif()
 
 set(FINAL_ARTIFACTS_DIRECTORY ${CMAKE_BINARY_DIR}/artifacts)

@@ -59,26 +59,21 @@ impl Algorithm {
 }
 
 /// HKDF using HMAC-SHA-1. Obsolete.
-pub static HKDF_SHA1_FOR_LEGACY_USE_ONLY: Algorithm =
-    Algorithm(hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY);
+pub const HKDF_SHA1_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm(hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY);
 
 /// HKDF using HMAC-SHA-256.
-pub static HKDF_SHA256: Algorithm = Algorithm(hmac::HMAC_SHA256);
+pub const HKDF_SHA256: Algorithm = Algorithm(hmac::HMAC_SHA256);
 
 /// HKDF using HMAC-SHA-384.
-pub static HKDF_SHA384: Algorithm = Algorithm(hmac::HMAC_SHA384);
+pub const HKDF_SHA384: Algorithm = Algorithm(hmac::HMAC_SHA384);
 
 /// HKDF using HMAC-SHA-512.
-pub static HKDF_SHA512: Algorithm = Algorithm(hmac::HMAC_SHA512);
-
-/// General Salt length's for HKDF don't normally exceed 256 bits.
-/// We set the limit to something tolerable, so that the Salt structure can be stack allocatable.
-const MAX_HKDF_SALT_LEN: usize = 80;
+pub const HKDF_SHA512: Algorithm = Algorithm(hmac::HMAC_SHA512);
 
 /// General Info length's for HKDF don't normally exceed 256 bits.
 /// We set the default capacity to a value larger than should be needed
 /// so that the value passed to |`HKDF_expand`| is only allocated once.
-const HKDF_INFO_DEFAULT_CAPACITY_LEN: usize = 300;
+const HKDF_INFO_DEFAULT_CAPACITY_LEN: usize = 80;
 
 /// The maximum output size of a PRK computed by |`HKDF_extract`| is the maximum digest
 /// size that can be outputted by *AWS-LC*.
@@ -93,8 +88,7 @@ impl KeyType for Algorithm {
 /// A salt for HKDF operations.
 pub struct Salt {
     algorithm: Algorithm,
-    bytes: [u8; MAX_HKDF_SALT_LEN],
-    len: usize,
+    bytes: Arc<[u8]>,
 }
 
 #[allow(clippy::missing_fields_in_debug)]
@@ -103,12 +97,6 @@ impl fmt::Debug for Salt {
         f.debug_struct("hkdf::Salt")
             .field("algorithm", &self.algorithm.0)
             .finish()
-    }
-}
-
-impl Drop for Salt {
-    fn drop(&mut self) {
-        self.bytes.zeroize();
     }
 }
 
@@ -129,24 +117,13 @@ impl Salt {
     // * `value.len() > 0` is true
     //
     /// # Panics
-    /// `new` panics if the salt length exceeds the limit
+    /// `new` panics if salt creation fails
     #[must_use]
     pub fn new(algorithm: Algorithm, value: &[u8]) -> Self {
-        Salt::try_new(algorithm, value).expect("Salt length limit exceeded.")
-    }
-
-    fn try_new(algorithm: Algorithm, value: &[u8]) -> Result<Salt, Unspecified> {
-        let salt_len = value.len();
-        if salt_len > MAX_HKDF_SALT_LEN {
-            return Err(Unspecified);
-        }
-        let mut salt_bytes = [0u8; MAX_HKDF_SALT_LEN];
-        salt_bytes[0..salt_len].copy_from_slice(value);
-        Ok(Self {
+        Self {
             algorithm,
-            bytes: salt_bytes,
-            len: salt_len,
-        })
+            bytes: Arc::from(value),
+        }
     }
 
     /// The [HKDF-Extract] operation.
@@ -161,9 +138,8 @@ impl Salt {
         Prk {
             algorithm: self.algorithm,
             mode: PrkMode::ExtractExpand {
-                secret: Arc::from(ZeroizeBoxSlice::from(secret)),
-                salt: self.bytes,
-                salt_len: self.len,
+                secret: Arc::new(ZeroizeBoxSlice::from(secret)),
+                salt: Arc::clone(&self.bytes),
             },
         }
     }
@@ -176,19 +152,15 @@ impl Salt {
     }
 }
 
-#[allow(clippy::assertions_on_constants)]
-const _: () = assert!(MAX_HKDF_PRK_LEN <= MAX_HKDF_SALT_LEN);
-
 impl From<Okm<'_, Algorithm>> for Salt {
     fn from(okm: Okm<'_, Algorithm>) -> Self {
         let algorithm = okm.prk.algorithm;
-        let mut salt_bytes = [0u8; MAX_HKDF_SALT_LEN];
         let salt_len = okm.len().len();
-        okm.fill(&mut salt_bytes[..salt_len]).unwrap();
+        let mut salt_bytes = vec![0u8; salt_len];
+        okm.fill(&mut salt_bytes).unwrap();
         Self {
             algorithm,
-            bytes: salt_bytes,
-            len: salt_len,
+            bytes: Arc::from(salt_bytes.as_slice()),
         }
     }
 }
@@ -208,14 +180,13 @@ enum PrkMode {
     },
     ExtractExpand {
         secret: Arc<ZeroizeBoxSlice<u8>>,
-        salt: [u8; MAX_HKDF_SALT_LEN],
-        salt_len: usize,
+        salt: Arc<[u8]>,
     },
 }
 
 impl PrkMode {
     fn fill(&self, algorithm: Algorithm, out: &mut [u8], info: &[u8]) -> Result<(), Unspecified> {
-        let digest = *digest::match_digest_type(&algorithm.0.digest_algorithm().id);
+        let digest = digest::match_digest_type(&algorithm.0.digest_algorithm().id).as_const_ptr();
 
         match &self {
             PrkMode::Expand { key_bytes, key_len } => unsafe {
@@ -231,11 +202,7 @@ impl PrkMode {
                     return Err(Unspecified);
                 }
             },
-            PrkMode::ExtractExpand {
-                secret,
-                salt,
-                salt_len,
-            } => {
+            PrkMode::ExtractExpand { secret, salt } => {
                 if 1 != indicator_check!(unsafe {
                     HKDF(
                         out.as_mut_ptr(),
@@ -244,7 +211,7 @@ impl PrkMode {
                         secret.as_ptr(),
                         secret.len(),
                         salt.as_ptr(),
-                        *salt_len,
+                        salt.len(),
                         info.as_ptr(),
                         info.len(),
                     )
@@ -296,6 +263,17 @@ pub struct Prk {
     mode: PrkMode,
 }
 
+impl Drop for Prk {
+    fn drop(&mut self) {
+        if let PrkMode::Expand {
+            ref mut key_bytes, ..
+        } = self.mode
+        {
+            key_bytes.zeroize();
+        }
+    }
+}
+
 #[allow(clippy::missing_fields_in_debug)]
 impl fmt::Debug for Prk {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -314,9 +292,13 @@ impl Prk {
     /// `SSLKEYLOGFILE` functionality.
     ///
     // # FIPS
-    // This function must not be used.
-    //
-    // See [`Salt::extract`].
+    // The following conditions must be met:
+    // * Algorithm is one of the following:
+    //   * `HKDF_SHA1_FOR_LEGACY_USE_ONLY`
+    //   * `HKDF_SHA256`
+    //   * `HKDF_SHA384`
+    //   * `HKDF_SHA512`
+    // * The `info_len` from [`Prk::expand`] is non-zero.
     //
     /// # Panics
     /// Panics if the given Prk length exceeds the limit
@@ -360,17 +342,9 @@ impl Prk {
         if len_cached > 255 * self.algorithm.0.digest_algorithm().output_len {
             return Err(Unspecified);
         }
-        let mut info_bytes: Vec<u8> = Vec::with_capacity(HKDF_INFO_DEFAULT_CAPACITY_LEN);
-        let mut info_len = 0;
-        for &byte_ary in info {
-            info_bytes.extend_from_slice(byte_ary);
-            info_len += byte_ary.len();
-        }
-        let info_bytes = info_bytes.into_boxed_slice();
         Ok(Okm {
             prk: self,
-            info_bytes,
-            info_len,
+            info,
             len,
         })
     }
@@ -396,8 +370,7 @@ impl From<Okm<'_, Algorithm>> for Prk {
 /// use once.
 pub struct Okm<'a, L: KeyType> {
     prk: &'a Prk,
-    info_bytes: Box<[u8]>,
-    info_len: usize,
+    info: &'a [&'a [u8]],
     len: L,
 }
 
@@ -407,9 +380,35 @@ impl<L: KeyType> fmt::Debug for Okm<'_, L> {
     }
 }
 
-impl<L: KeyType> Drop for Okm<'_, L> {
-    fn drop(&mut self) {
-        self.info_bytes.zeroize();
+/// Concatenates info slices into a contiguous buffer for HKDF operations.
+/// Uses stack allocation for typical cases, heap allocation for large info.
+/// Info is public context data per RFC 5869, so no zeroization is needed.
+#[inline]
+fn concatenate_info<F, R>(info: &[&[u8]], f: F) -> R
+where
+    F: FnOnce(&[u8]) -> R,
+{
+    let info_len: usize = info.iter().map(|s| s.len()).sum();
+
+    // Info is public; no need to zeroize.
+    if info_len <= HKDF_INFO_DEFAULT_CAPACITY_LEN {
+        // Use stack buffer for typical case (avoids heap allocation)
+        let mut stack_buf = [0u8; HKDF_INFO_DEFAULT_CAPACITY_LEN];
+        let mut pos = 0;
+        for &slice in info {
+            stack_buf[pos..pos + slice.len()].copy_from_slice(slice);
+            pos += slice.len();
+        }
+
+        f(&stack_buf[..info_len])
+    } else {
+        // Heap allocation for rare large info case
+        let mut heap_buf = Vec::with_capacity(info_len);
+        for &slice in info {
+            heap_buf.extend_from_slice(slice);
+        }
+
+        f(&heap_buf)
     }
 }
 
@@ -443,11 +442,9 @@ impl<L: KeyType> Okm<'_, L> {
             return Err(Unspecified);
         }
 
-        self.prk
-            .mode
-            .fill(self.prk.algorithm, out, &self.info_bytes[..self.info_len])?;
-
-        Ok(())
+        concatenate_info(self.info, |info_bytes| {
+            self.prk.mode.fill(self.prk.algorithm, out, info_bytes)
+        })
     }
 }
 
@@ -503,5 +500,38 @@ mod tests {
             "hkdf::Okm { prk: hkdf::Prk { algorithm: Algorithm(SHA256), mode: ExtractExpand { .. } } }",
             format!("{okm:?}")
         );
+    }
+
+    #[test]
+    fn test_long_salt() {
+        // Test with a salt longer than the previous 80-byte limit
+        let long_salt = vec![0x42u8; 100];
+
+        // This should work now that we removed the MAX_HKDF_SALT_LEN restriction
+        let salt = Salt::new(HKDF_SHA256, &long_salt);
+
+        // Test the extract operation still works
+        let secret = b"test secret key material";
+        let prk = salt.extract(secret);
+
+        // Test expand operation
+        let info_data = b"test context info";
+        let info = [info_data.as_slice()];
+        let okm = prk.expand(&info, HKDF_SHA256).unwrap();
+
+        // Fill output buffer
+        let mut output = [0u8; 32];
+        okm.fill(&mut output).unwrap();
+
+        // Test with an even longer salt to demonstrate flexibility
+        let very_long_salt = vec![0x55u8; 500];
+        let very_long_salt_obj = Salt::new(HKDF_SHA256, &very_long_salt);
+        let prk2 = very_long_salt_obj.extract(secret);
+        let okm2 = prk2.expand(&info, HKDF_SHA256).unwrap();
+        let mut output2 = [0u8; 32];
+        okm2.fill(&mut output2).unwrap();
+
+        // Verify outputs are different (they should be due to different salts)
+        assert_ne!(output, output2);
     }
 }

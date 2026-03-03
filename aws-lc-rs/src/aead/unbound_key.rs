@@ -105,7 +105,7 @@ impl UnboundKey {
             let nonce = nonce.as_ref();
 
             if 1 != EVP_AEAD_CTX_open_gather(
-                *aead_ctx.as_const(),
+                aead_ctx.as_const_ptr(),
                 out_plaintext.as_mut_ptr(),
                 nonce.as_ptr(),
                 nonce.len(),
@@ -179,7 +179,7 @@ impl UnboundKey {
 
         if 1 != unsafe {
             EVP_AEAD_CTX_seal_scatter(
-                *self.ctx.as_ref().as_const(),
+                self.ctx.as_ref().as_const_ptr(),
                 in_out.as_mut_ptr(),
                 extra_out_and_tag.as_mut_ptr(),
                 &mut out_tag_len,
@@ -231,7 +231,7 @@ impl UnboundKey {
         let mut out_len = MaybeUninit::<usize>::uninit();
         if 1 != indicator_check!(unsafe {
             EVP_AEAD_CTX_open(
-                *self.ctx.as_ref().as_const(),
+                self.ctx.as_ref().as_const_ptr(),
                 in_out.as_mut_ptr(),
                 out_len.as_mut_ptr(),
                 plaintext_len,
@@ -277,7 +277,7 @@ impl UnboundKey {
 
         if 1 != indicator_check!(unsafe {
             EVP_AEAD_CTX_open_gather(
-                *self.ctx.as_ref().as_const(),
+                self.ctx.as_ref().as_const_ptr(),
                 in_out.as_mut_ptr(),
                 null(),
                 0,
@@ -325,7 +325,7 @@ impl UnboundKey {
 
             if 1 != indicator_check!(unsafe {
                 EVP_AEAD_CTX_seal(
-                    *self.ctx.as_ref().as_const(),
+                    self.ctx.as_ref().as_const_ptr(),
                     mut_in_out.as_mut_ptr(),
                     out_len.as_mut_ptr(),
                     plaintext_len + alg_tag_len,
@@ -363,7 +363,7 @@ impl UnboundKey {
 
             if 1 != indicator_check!(unsafe {
                 EVP_AEAD_CTX_seal_scatter(
-                    *self.ctx.as_ref().as_const(),
+                    self.ctx.as_ref().as_const_ptr(),
                     in_out.as_mut_ptr(),
                     tag_buffer.as_mut_ptr(),
                     out_tag_len.as_mut_ptr(),
@@ -410,7 +410,7 @@ impl UnboundKey {
 
             if 1 != indicator_check!(unsafe {
                 EVP_AEAD_CTX_seal_scatter(
-                    *self.ctx.as_ref().as_const(),
+                    self.ctx.as_ref().as_const_ptr(),
                     in_out.as_mut_ptr(),
                     tag.as_mut_ptr(),
                     out_tag_len.as_mut_ptr(),
@@ -447,7 +447,7 @@ impl UnboundKey {
 
         if 1 != indicator_check!(unsafe {
             EVP_AEAD_CTX_seal_scatter(
-                *self.ctx.as_ref().as_const(),
+                self.ctx.as_ref().as_const_ptr(),
                 in_out.as_mut_ptr(),
                 tag_buffer.as_mut_ptr(),
                 out_tag_len.as_mut_ptr(),

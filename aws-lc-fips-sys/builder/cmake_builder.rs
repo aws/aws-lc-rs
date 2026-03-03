@@ -4,8 +4,8 @@
 use crate::OutputLib::{Crypto, RustWrapper, Ssl};
 use crate::{
     cargo_env, effective_target, emit_rustc_cfg, emit_warning, execute_command,
-    is_cpu_jitter_entropy, is_no_asm, option_env, target_arch, target_env, target_family,
-    target_os, target_underscored, target_vendor, OutputLibType, TestCommandResult,
+    is_cpu_jitter_entropy, is_crt_static, is_no_asm, option_env, target_arch, target_env,
+    target_family, target_os, target_underscored, target_vendor, OutputLibType, TestCommandResult,
 };
 use std::collections::HashMap;
 use std::env;
@@ -163,6 +163,11 @@ impl CmakeBuilder {
             cmake_cfg.define("CMAKE_BUILD_TYPE", "debug");
         }
 
+        if is_crt_static() {
+            // Need to set this flag to enable static runtime for FIPS binaries due to limitations in cmake-rs and ninja generator.
+            cmake_cfg.define("AWS_LC_FIPS_SYS_STATIC_RUNTIME", "ON");
+        }
+
         Self::verify_compiler_support(&cc_build.get_compiler());
 
         if let Some(prefix) = &self.build_prefix {
@@ -208,6 +213,12 @@ impl CmakeBuilder {
 
             cmake_cfg.define("ASAN", "1");
         }
+
+        // cmake-rs has logic that strips Optimization/Debug options that are passed via CFLAGS:
+        // https://github.com/rust-lang/cmake-rs/issues/240
+        // This breaks build configurations that generate warnings when optimizations
+        // are disabled.
+        Self::preserve_cflag_optimization_flags(&mut cmake_cfg);
 
         // Allow environment to specify CMake toolchain.
         if let Some(toolchain) = option_env("CMAKE_TOOLCHAIN_FILE").or(option_env(format!(
@@ -275,6 +286,18 @@ impl CmakeBuilder {
         }
 
         cmake_cfg
+    }
+
+    fn preserve_cflag_optimization_flags(cmake_cfg: &mut cmake::Config) {
+        if let Ok(cflags) = env::var("CFLAGS") {
+            let split = cflags.split_whitespace();
+            for arg in split {
+                if arg.starts_with("-O") || arg.starts_with("/O") {
+                    emit_warning(&format!("Preserving optimization flag: {arg}"));
+                    cmake_cfg.cflag(arg);
+                }
+            }
+        }
     }
 
     fn verify_compiler_support(compiler: &cc::Tool) -> Option<bool> {

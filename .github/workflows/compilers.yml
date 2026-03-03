@@ -19,6 +19,9 @@ env:
   RUST_NIGHTLY_TOOLCHAIN: nightly
   DEBIAN_FRONTEND: noninteractive
 
+permissions:
+  contents: read
+
 jobs:
 
   aws-lc-rs-2004-gcc:
@@ -39,15 +42,20 @@ jobs:
     steps:
       - run: |
           set -x
+          # Use kernel.org mirror for more reliable package access
+          sed -i 's|archive.ubuntu.com|mirrors.edge.kernel.org|g' /etc/apt/sources.list
+          sed -i 's|security.ubuntu.com|mirrors.edge.kernel.org|g' /etc/apt/sources.list
           apt-get update
           apt-get install -y ca-certificates
           apt-get install -y cmake curl sudo git
           apt-get install -y gpg-agent software-properties-common dirmngr
           apt-get install -y gcc-${CI_GCC_VERSION} g++-${CI_GCC_VERSION}
-          gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1
-          add-apt-repository --yes ppa:longsleep/golang-backports
-          apt-get update
-          apt-get install -y build-essential golang-go
+          apt-get install -y build-essential
+          GO_VERSION=1.23.8
+          curl -LO "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
+          tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
+          rm "go${GO_VERSION}.linux-amd64.tar.gz"
+          echo "/usr/local/go/bin" >> $GITHUB_PATH
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
           dpkg -i powershell_7.2.23-1.deb_amd64.deb
           apt-get install -f
@@ -127,10 +135,12 @@ jobs:
           apt-get install -y cmake curl sudo git
           apt-get install -y gpg-agent software-properties-common dirmngr
           apt-get install -y gcc-${CI_GCC_VERSION} g++-${CI_GCC_VERSION}
-          gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1
-          add-apt-repository --yes ppa:longsleep/golang-backports
-          apt-get update
-          apt-get install -y build-essential golang-go
+          apt-get install -y build-essential
+          GO_VERSION=1.23.8
+          curl -LO "https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz"
+          tar -C /usr/local -xzf "go${GO_VERSION}.linux-arm64.tar.gz"
+          rm "go${GO_VERSION}.linux-arm64.tar.gz"
+          echo "/usr/local/go/bin" >> $GITHUB_PATH
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell-7.2.23-linux-arm64.tar.gz
           mkdir -p /opt/microsoft/powershell/7
           tar zxf powershell-7.2.23-linux-arm64.tar.gz -C /opt/microsoft/powershell/7
@@ -143,8 +153,10 @@ jobs:
       - name: Checkout
         run: |
           set -x
+          mkdir -p /tmp/aws-lc-rs
           git config --global --add safe.directory '*'
-          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
+          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git /tmp/aws-lc-rs
+          cd /tmp/aws-lc-rs
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
           gcc --version
@@ -153,8 +165,10 @@ jobs:
         with:
           toolchain: stable
       - name: Run cargo test (debug)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       - name: Run cargo test (release)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --release --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
 
   aws-lc-rs-1804-gcc:
@@ -178,15 +192,20 @@ jobs:
     steps:
       - run: |
           set -x
+          # Use kernel.org mirror for more reliable package access
+          sed -i 's|archive.ubuntu.com|mirrors.edge.kernel.org|g' /etc/apt/sources.list
+          sed -i 's|security.ubuntu.com|mirrors.edge.kernel.org|g' /etc/apt/sources.list
           apt-get update
           apt-get install -y ca-certificates
           apt-get install -y cmake curl sudo git
           apt-get install -y gpg-agent software-properties-common dirmngr
           apt-get install -y gcc-${CI_GCC_VERSION} g++-${CI_GCC_VERSION}
-          gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1
-          add-apt-repository --yes ppa:longsleep/golang-backports
-          apt-get update
-          apt-get install -y build-essential golang-go
+          apt-get install -y build-essential
+          GO_VERSION=1.23.8
+          curl -LO "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
+          tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
+          rm "go${GO_VERSION}.linux-amd64.tar.gz"
+          echo "/usr/local/go/bin" >> $GITHUB_PATH
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell_7.2.23-1.deb_amd64.deb
           dpkg -i powershell_7.2.23-1.deb_amd64.deb
           apt-get install -f
@@ -196,8 +215,10 @@ jobs:
       - name: Checkout
         run: |
           set -x
+          mkdir -p /tmp/aws-lc-rs
           git config --global --add safe.directory '*'
-          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
+          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git /tmp/aws-lc-rs
+          cd /tmp/aws-lc-rs
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
           gcc --version
@@ -206,8 +227,10 @@ jobs:
         with:
           toolchain: stable
       - name: Run cargo test (debug)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       - name: Run cargo test (release)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --release --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
 
   aws-lc-rs-1804-arm-gcc:
@@ -238,10 +261,12 @@ jobs:
           apt-get install -y cmake curl sudo git
           apt-get install -y gpg-agent software-properties-common dirmngr
           apt-get install -y gcc-${CI_GCC_VERSION} g++-${CI_GCC_VERSION}
-          gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1
-          add-apt-repository --yes ppa:longsleep/golang-backports
-          apt-get update
-          apt-get install -y build-essential golang-go
+          apt-get install -y build-essential
+          GO_VERSION=1.23.8
+          curl -LO "https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz"
+          tar -C /usr/local -xzf "go${GO_VERSION}.linux-arm64.tar.gz"
+          rm "go${GO_VERSION}.linux-arm64.tar.gz"
+          echo "/usr/local/go/bin" >> $GITHUB_PATH
           curl -L -O -J https://github.com/PowerShell/PowerShell/releases/download/v7.2.23/powershell-7.2.23-linux-arm64.tar.gz
           mkdir -p /opt/microsoft/powershell/7
           tar zxf powershell-7.2.23-linux-arm64.tar.gz -C /opt/microsoft/powershell/7
@@ -254,8 +279,10 @@ jobs:
       - name: Checkout
         run: |
           set -x
+          mkdir -p /tmp/aws-lc-rs
           git config --global --add safe.directory '*'
-          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git .
+          git clone --recursive ${{ github.server_url }}/${{ github.repository }}.git /tmp/aws-lc-rs
+          cd /tmp/aws-lc-rs
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
           gcc --version
@@ -264,8 +291,10 @@ jobs:
         with:
           toolchain: stable
       - name: Run cargo test (debug)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
       - name: Run cargo test (release)
+        working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --release --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
 
   aws-lc-rs-c-std-test:
@@ -278,7 +307,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: [ stable ]
-        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-14, macos-latest, windows-latest, windows-11-arm ]
+        os: [ ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-14, macos-latest, windows-latest, windows-11-arm ]
         c_std: [ "11", "99" ]
         cmake: [ '0', '1' ]
         exclude:

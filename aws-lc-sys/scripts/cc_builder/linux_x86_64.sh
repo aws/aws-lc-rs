@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0 OR ISC
+set -ex
+set -o pipefail
+
+SCRIPT_DIR=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+SCRIPT_NAME="$(basename -s .sh -- "${BASH_SOURCE[0]}")"
+
+source "${SCRIPT_DIR}/.common.sh"
+
+pushd "${AWS_LC_DIR}"
+declare -a SOURCE_FILES
+SOURCE_FILES=()
+mapfile -O 0 -t SOURCE_FILES < <(find crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src -name "*.S" -type f | sort -f)
+echo "${SOURCE_FILES[@]}"
+mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(find generated-src/linux-x86_64/crypto -name "*.S" -type f  | sort -f)
+echo "${SOURCE_FILES[@]}"
+mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(s2n_bignum_x86_64)
+echo "${SOURCE_FILES[@]}"
+
+popd
+
+# Sort SOURCE_FILES array
+mapfile -t SOURCE_FILES < <(printf '%s\n' "${SOURCE_FILES[@]}" | sort -f)
+
+generate_output "${SOURCE_FILES[@]}" > "${BUILD_CFG_FILE}"

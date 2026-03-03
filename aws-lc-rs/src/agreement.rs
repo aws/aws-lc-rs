@@ -327,37 +327,37 @@ impl PrivateKey {
         Ok(Self::new(alg, evp_pkey))
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     #[allow(missing_docs, clippy::missing_errors_doc)]
     pub fn generate_for_test(
         alg: &'static Algorithm,
-        rng: &dyn crate::rand::SecureRandom,
+        rng: &mut dyn crate::rand::SecureRandom,
     ) -> Result<Self, Unspecified> {
         match alg.id {
             AlgorithmID::X25519 => {
                 let mut priv_key = [0u8; AlgorithmID::X25519.private_key_len()];
-                rng.fill(&mut priv_key)?;
+                rng.mut_fill(&mut priv_key)?;
                 Self::from_x25519_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P256 => {
                 let mut priv_key = [0u8; AlgorithmID::ECDH_P256.private_key_len()];
-                rng.fill(&mut priv_key)?;
+                rng.mut_fill(&mut priv_key)?;
                 Self::from_p256_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P384 => {
                 let mut priv_key = [0u8; AlgorithmID::ECDH_P384.private_key_len()];
-                rng.fill(&mut priv_key)?;
+                rng.mut_fill(&mut priv_key)?;
                 Self::from_p384_private_key(&priv_key)
             }
             AlgorithmID::ECDH_P521 => {
                 let mut priv_key = [0u8; AlgorithmID::ECDH_P521.private_key_len()];
-                rng.fill(&mut priv_key)?;
+                rng.mut_fill(&mut priv_key)?;
                 Self::from_p521_private_key(&priv_key)
             }
         }
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     fn from_x25519_private_key(
         priv_key: &[u8; AlgorithmID::X25519.private_key_len()],
     ) -> Result<Self, Unspecified> {
@@ -368,7 +368,7 @@ impl PrivateKey {
         })
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     fn from_p256_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = parse_sec1_private_bn(priv_key, ECDH_P256.id.nid())?;
         Ok(PrivateKey {
@@ -376,7 +376,7 @@ impl PrivateKey {
         })
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     fn from_p384_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = parse_sec1_private_bn(priv_key, ECDH_P384.id.nid())?;
         Ok(PrivateKey {
@@ -384,7 +384,7 @@ impl PrivateKey {
         })
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, dev_tests_only))]
     fn from_p521_private_key(priv_key: &[u8]) -> Result<Self, Unspecified> {
         let pkey = parse_sec1_private_bn(priv_key, ECDH_P521.id.nid())?;
         Ok(PrivateKey {
@@ -448,14 +448,14 @@ impl AsDer<EcPrivateKeyRfc5915Der<'static>> for PrivateKey {
             self.inner_key
                 .get_evp_pkey()
                 .project_const_lifetime(unsafe {
-                    |evp_pkey| EVP_PKEY_get0_EC_KEY(*evp_pkey.as_const())
+                    |evp_pkey| EVP_PKEY_get0_EC_KEY(evp_pkey.as_const_ptr())
                 })?
         };
-        let length = usize::try_from(unsafe { i2d_ECPrivateKey(*ec_key, &mut outp) })
+        let length = usize::try_from(unsafe { i2d_ECPrivateKey(ec_key.as_const_ptr(), &mut outp) })
             .map_err(|_| Unspecified)?;
         let mut outp = LcPtr::new(outp)?;
         Ok(EcPrivateKeyRfc5915Der::take_from_slice(unsafe {
-            core::slice::from_raw_parts_mut(*outp.as_mut(), length)
+            core::slice::from_raw_parts_mut(outp.as_mut_ptr(), length)
         }))
     }
 }
@@ -724,8 +724,8 @@ impl ParsedPublicKey {
         self.format
     }
 
-    pub(crate) fn key(&self) -> &LcPtr<EVP_PKEY> {
-        &self.key
+    pub(crate) fn mut_key(&mut self) -> &mut LcPtr<EVP_PKEY> {
+        &mut self.key
     }
 
     /// The algorithm of the public key.
@@ -871,14 +871,14 @@ where
 
     let parse_result = peer_public_key.try_into();
 
-    if let Ok(peer_pub_key) = parse_result {
+    if let Ok(mut peer_pub_key) = parse_result {
         if peer_pub_key.alg() != expected_alg {
             return Err(error_value);
         }
         let secret = my_private_key
             .inner_key
             .get_evp_pkey()
-            .agree(peer_pub_key.key())
+            .agree(peer_pub_key.mut_key())
             .or(Err(error_value))?;
 
         kdf(secret.as_ref())

@@ -17,7 +17,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_fips_0_13_8
+%define BORINGSSL_PREFIX aws_lc_fips_0_13_12
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -222,6 +222,8 @@
 %xdefine _AUTHORITY_KEYID_free _ %+ BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_free
 %xdefine _AUTHORITY_KEYID_it _ %+ BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_it
 %xdefine _AUTHORITY_KEYID_new _ %+ BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_new
+%xdefine _AWSLC_non_fips_pkey_evp_asn1_methods _ %+ BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_asn1_methods
+%xdefine _AWSLC_non_fips_pkey_evp_methods _ %+ BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_methods
 %xdefine _AWSLC_thread_local_clear _ %+ BORINGSSL_PREFIX %+ _AWSLC_thread_local_clear
 %xdefine _AWSLC_thread_local_shutdown _ %+ BORINGSSL_PREFIX %+ _AWSLC_thread_local_shutdown
 %xdefine _BASIC_CONSTRAINTS_free _ %+ BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_free
@@ -732,9 +734,13 @@
 %xdefine _CTR_DRBG_clear _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_clear
 %xdefine _CTR_DRBG_free _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_free
 %xdefine _CTR_DRBG_generate _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_generate
+%xdefine _CTR_DRBG_generate_df _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_generate_df
+%xdefine _CTR_DRBG_get_nonce _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_get_nonce
 %xdefine _CTR_DRBG_init _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_init
+%xdefine _CTR_DRBG_init_df _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_init_df
 %xdefine _CTR_DRBG_new _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_new
 %xdefine _CTR_DRBG_reseed _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_reseed
+%xdefine _CTR_DRBG_reseed_df _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_reseed_df
 %xdefine _ChaCha20_ctr32_avx2 _ %+ BORINGSSL_PREFIX %+ _ChaCha20_ctr32_avx2
 %xdefine _ChaCha20_ctr32_neon _ %+ BORINGSSL_PREFIX %+ _ChaCha20_ctr32_neon
 %xdefine _ChaCha20_ctr32_nohw _ %+ BORINGSSL_PREFIX %+ _ChaCha20_ctr32_nohw
@@ -3446,6 +3452,7 @@
 %xdefine _i2t_ASN1_OBJECT _ %+ BORINGSSL_PREFIX %+ _i2t_ASN1_OBJECT
 %xdefine _i2v_GENERAL_NAME _ %+ BORINGSSL_PREFIX %+ _i2v_GENERAL_NAME
 %xdefine _i2v_GENERAL_NAMES _ %+ BORINGSSL_PREFIX %+ _i2v_GENERAL_NAMES
+%xdefine _is_fips_build _ %+ BORINGSSL_PREFIX %+ _is_fips_build
 %xdefine _is_public_component_of_rsa_key_good _ %+ BORINGSSL_PREFIX %+ _is_public_component_of_rsa_key_good
 %xdefine _kBoringSSLRSASqrtTwo _ %+ BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwo
 %xdefine _kBoringSSLRSASqrtTwoLen _ %+ BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwoLen
@@ -4049,6 +4056,8 @@
 %xdefine AUTHORITY_KEYID_free BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_free
 %xdefine AUTHORITY_KEYID_it BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_it
 %xdefine AUTHORITY_KEYID_new BORINGSSL_PREFIX %+ _AUTHORITY_KEYID_new
+%xdefine AWSLC_non_fips_pkey_evp_asn1_methods BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_asn1_methods
+%xdefine AWSLC_non_fips_pkey_evp_methods BORINGSSL_PREFIX %+ _AWSLC_non_fips_pkey_evp_methods
 %xdefine AWSLC_thread_local_clear BORINGSSL_PREFIX %+ _AWSLC_thread_local_clear
 %xdefine AWSLC_thread_local_shutdown BORINGSSL_PREFIX %+ _AWSLC_thread_local_shutdown
 %xdefine BASIC_CONSTRAINTS_free BORINGSSL_PREFIX %+ _BASIC_CONSTRAINTS_free
@@ -4559,9 +4568,13 @@
 %xdefine CTR_DRBG_clear BORINGSSL_PREFIX %+ _CTR_DRBG_clear
 %xdefine CTR_DRBG_free BORINGSSL_PREFIX %+ _CTR_DRBG_free
 %xdefine CTR_DRBG_generate BORINGSSL_PREFIX %+ _CTR_DRBG_generate
+%xdefine CTR_DRBG_generate_df BORINGSSL_PREFIX %+ _CTR_DRBG_generate_df
+%xdefine CTR_DRBG_get_nonce BORINGSSL_PREFIX %+ _CTR_DRBG_get_nonce
 %xdefine CTR_DRBG_init BORINGSSL_PREFIX %+ _CTR_DRBG_init
+%xdefine CTR_DRBG_init_df BORINGSSL_PREFIX %+ _CTR_DRBG_init_df
 %xdefine CTR_DRBG_new BORINGSSL_PREFIX %+ _CTR_DRBG_new
 %xdefine CTR_DRBG_reseed BORINGSSL_PREFIX %+ _CTR_DRBG_reseed
+%xdefine CTR_DRBG_reseed_df BORINGSSL_PREFIX %+ _CTR_DRBG_reseed_df
 %xdefine ChaCha20_ctr32_avx2 BORINGSSL_PREFIX %+ _ChaCha20_ctr32_avx2
 %xdefine ChaCha20_ctr32_neon BORINGSSL_PREFIX %+ _ChaCha20_ctr32_neon
 %xdefine ChaCha20_ctr32_nohw BORINGSSL_PREFIX %+ _ChaCha20_ctr32_nohw
@@ -7273,6 +7286,7 @@
 %xdefine i2t_ASN1_OBJECT BORINGSSL_PREFIX %+ _i2t_ASN1_OBJECT
 %xdefine i2v_GENERAL_NAME BORINGSSL_PREFIX %+ _i2v_GENERAL_NAME
 %xdefine i2v_GENERAL_NAMES BORINGSSL_PREFIX %+ _i2v_GENERAL_NAMES
+%xdefine is_fips_build BORINGSSL_PREFIX %+ _is_fips_build
 %xdefine is_public_component_of_rsa_key_good BORINGSSL_PREFIX %+ _is_public_component_of_rsa_key_good
 %xdefine kBoringSSLRSASqrtTwo BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwo
 %xdefine kBoringSSLRSASqrtTwoLen BORINGSSL_PREFIX %+ _kBoringSSLRSASqrtTwoLen

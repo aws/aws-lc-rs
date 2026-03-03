@@ -30,7 +30,7 @@ macro_rules! benchmark_digest {
 
             use $pkg::{digest};
 
-            use criterion::black_box;
+            use std::hint::black_box;
             use crate::DigestConfig;
             use digest::{Context, Digest};
 

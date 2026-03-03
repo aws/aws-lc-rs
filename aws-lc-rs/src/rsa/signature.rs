@@ -164,7 +164,7 @@ impl RsaParameters {
     /// `error::Unspecified` on parse error.
     pub fn public_modulus_len(public_key: &[u8]) -> Result<u32, Unspecified> {
         let rsa = encoding::rfc8017::decode_public_key_der(public_key)?;
-        Ok(unsafe { RSA_bits(*rsa.as_const().get_rsa()?) })
+        Ok(unsafe { RSA_bits(rsa.as_const().get_rsa()?.as_const_ptr()) })
     }
 
     #[must_use]
@@ -306,7 +306,7 @@ pub(crate) fn verify_rsa_digest_signature(
     let padding_fn = Some({
         |pctx: *mut EVP_PKEY_CTX| {
             let evp_md = match_digest_type(&digest.algorithm().id);
-            if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, *evp_md) } {
+            if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, evp_md.as_const_ptr()) } {
                 return Err(());
             }
             if let RsaPadding::RSA_PKCS1_PSS_PADDING = padding {

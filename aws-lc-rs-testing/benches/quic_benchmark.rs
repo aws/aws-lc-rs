@@ -42,7 +42,7 @@ macro_rules! benchmark_quic
 
             use $pkg::aead;
             use aead::quic;
-            use criterion::black_box;
+            use std::hint::black_box;
 
             fn algorithm(config: &crate::QuicConfig) -> &'static quic::Algorithm {
                 black_box(match &config.algorithm {

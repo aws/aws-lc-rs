@@ -16,6 +16,9 @@ mkdir -p ./aws-lc-sys/symbols ./aws-lc-sys/generated-include/openssl
 ./scripts/generate/_generate_prefix_headers.sh -c aws-lc-sys
 ./scripts/ci/update_sys_crate_metadata.sh aws-lc-sys
 cargo clean
+# Generate complete bindings for this target
 AWS_LC_SYS_PREGENERATING_BINDINGS=1 cargo test -p aws-lc-sys --features bindgen
+# Generate "universal" bindings
+AWS_LC_SYS_PREGENERATING_BINDINGS=1 cargo test -p aws-lc-sys --features bindgen --no-default-features
 ./scripts/build/collect_build_src.sh
 popd

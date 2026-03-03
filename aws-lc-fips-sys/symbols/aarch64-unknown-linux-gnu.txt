@@ -197,6 +197,8 @@ AUTHORITY_INFO_ACCESS_new
 AUTHORITY_KEYID_free
 AUTHORITY_KEYID_it
 AUTHORITY_KEYID_new
+AWSLC_non_fips_pkey_evp_asn1_methods
+AWSLC_non_fips_pkey_evp_methods
 AWSLC_thread_local_clear
 AWSLC_thread_local_shutdown
 BASIC_CONSTRAINTS_free
@@ -705,9 +707,13 @@ CRYPTO_xts128_encrypt
 CTR_DRBG_clear
 CTR_DRBG_free
 CTR_DRBG_generate
+CTR_DRBG_generate_df
+CTR_DRBG_get_nonce
 CTR_DRBG_init
+CTR_DRBG_init_df
 CTR_DRBG_new
 CTR_DRBG_reseed
+CTR_DRBG_reseed_df
 ChaCha20_ctr32_neon
 ChaCha20_ctr32_nohw
 DES_decrypt3
@@ -3318,6 +3324,7 @@ i2s_ASN1_OCTET_STRING
 i2t_ASN1_OBJECT
 i2v_GENERAL_NAME
 i2v_GENERAL_NAMES
+is_fips_build
 is_public_component_of_rsa_key_good
 kBoringSSLRSASqrtTwo
 kBoringSSLRSASqrtTwoLen

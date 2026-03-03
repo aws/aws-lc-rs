@@ -19,6 +19,9 @@ env:
   RUST_NIGHTLY_TOOLCHAIN: nightly
   DEBIAN_FRONTEND: noninteractive
 
+permissions:
+  contents: read
+
 jobs:
   aws-lc-rs-cross-test:
     if: github.repository_owner == 'aws'
@@ -30,29 +33,38 @@ jobs:
       #    707 |       if (strncmp(buf, "-----END ", 9) == 0) {
       #        |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
       AWS_LC_SYS_CFLAGS_riscv64gc_unknown_linux_gnu: '-Wno-string-compare'
+      AWS_LC_SYS_EXTERNAL_BINDGEN: '0' # disallow external bindgen
     strategy:
       fail-fast: false
       matrix:
+        # The target arrays are structured as:
+        # [0]: target name
+        # [1]: Runs FIPS build if '1'
+        # [2]: Uses nightly toolchain if '1'
+        # [3]: Verifies bindgen if '1'
         target:
-          - [ aarch64-linux-android, 0, 1 ]
-          - [ aarch64-unknown-linux-gnu, 1, 1 ]
-          - [ aarch64-unknown-linux-musl, 1, 1 ]
-          - [ arm-linux-androideabi, 0, 0 ]
-          - [ arm-unknown-linux-gnueabihf, 0, 0 ]
-          - [ arm-unknown-linux-musleabi, 1, 0 ]
-          - [ arm-unknown-linux-musleabihf, 1, 0 ]
-          - [ armv7-linux-androideabi, 0, 0 ]
-          - [ armv7-unknown-linux-gnueabihf, 0, 0 ]
-          - [ i686-unknown-linux-gnu, 0, 1 ]
-          - [ i686-pc-windows-gnu, 0, 0 ]
-          - [ powerpc-unknown-linux-gnu, 1, 0 ]
-          - [ powerpc64-unknown-linux-gnu, 1, 0 ]
-          - [ powerpc64le-unknown-linux-gnu, 1, 0 ]
-          - [ riscv64gc-unknown-linux-gnu, 0, 1 ]
-          - [ s390x-unknown-linux-gnu, 0, 0 ]
-          - [ x86_64-pc-windows-gnu, 0, 1 ] # Requires release build. See: https://github.com/rust-lang/rust/issues/139380
-          - [ x86_64-unknown-linux-musl, 0, 1 ]
-          - [ x86_64-unknown-illumos, 0, 0 ]
+          - [ aarch64-linux-android, 0, 0, 1]
+          - [ aarch64-unknown-linux-gnu, 1, 0, 1]
+          - [ aarch64-unknown-linux-musl, 1, 0, 1]
+          - [ arm-linux-androideabi, 0, 0, 0]
+          - [ arm-unknown-linux-gnueabihf, 0, 0, 1]
+          - [ arm-unknown-linux-musleabi, 1, 0, 1]
+          - [ arm-unknown-linux-musleabihf, 1, 0, 1]
+          - [ armv7-linux-androideabi, 0, 0, 1]
+          - [ armv7-unknown-linux-gnueabihf, 0, 0, 1]
+          - [ i686-unknown-linux-gnu, 0, 0, 1]
+          - [ mips-unknown-linux-gnu, 0, 1, 0]
+          - [ mips-unknown-linux-musl, 0, 1, 0]
+          - [ mips64-unknown-linux-muslabi64, 0, 1, 0]
+          - [ mips64el-unknown-linux-muslabi64, 0, 1, 0]
+          - [ powerpc-unknown-linux-gnu, 1, 0, 1]
+          - [ powerpc64-unknown-linux-gnu, 1, 0, 1]
+          - [ powerpc64le-unknown-linux-gnu, 1, 0, 1]
+          - [ riscv64gc-unknown-linux-gnu, 0, 0, 1]
+          - [ s390x-unknown-linux-gnu, 0, 0, 1]
+          - [ x86_64-pc-windows-gnu, 0, 0, 1] # Requires release build. See: https://github.com/rust-lang/rust/issues/139380
+          - [ x86_64-unknown-illumos, 0, 0, 1]
+          - [ x86_64-unknown-linux-musl, 0, 0, 1]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -65,16 +77,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
-          toolchain: "stable"
-          target: ${{ matrix.target[0] }}
+          toolchain: ${{ (matrix.target[2] == '0' && 'stable') || 'nightly' }}
+          target: ${{ (matrix.target[2] == '0' && matrix.target[0]) || '' }}
+          components: ${{ (matrix.target[2] == '0' && '') || 'rust-src' }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
         run: |
           echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
-      - if: ${{ matrix.target[2] == 1 }}
-        run: |
-          echo 'AWS_LC_SYS_EXTERNAL_BINDGEN=0' >> "$GITHUB_ENV"
       - if: ${{ matrix.target[0] == 'x86_64-unknown-illumos' }}
         run: |
           echo 'CROSS_TEST_EXTRA_FLAG=--no-run' >> "$GITHUB_ENV"
@@ -87,19 +97,108 @@ jobs:
           echo 'CROSS_TEST_EXTRA_FLAG=--all-targets' >> "$GITHUB_ENV"
       - name: Cross-compilation (test release)
         run: cross test -p aws-lc-rs --release "${CROSS_TEST_EXTRA_FLAG}" --features unstable --target ${{ matrix.target[0] }}
-      - if: ${{ matrix.target[1] == 1 }}
+      - if: ${{ matrix.target[1] == '1' }}
         name: Cross-compilation (test FIPS release)
         run: cross test -p aws-lc-rs --release "${CROSS_TEST_EXTRA_FLAG}" --no-default-features --features fips --target ${{ matrix.target[0] }}
-      - name: Cross-compilation (test aws-lc-sys ssl feature)
+      - name: Cross-compilation w/ internal bindgen (aws-lc-sys/ssl feature)
         # There's a bug in the clang "atomic" header
         # It was reported here: https://reviews.llvm.org/D75183
         # It was finally fixed here: https://reviews.llvm.org/D118391
         # Instead of trying to hack around this, we just won't test building libssl on that platform.
         # We should update this test once cross-rs has an updated docker image for this target.
-        if: ${{ matrix.target[0] != 'arm-linux-androideabi' }}
+        if: ${{ matrix.target[3] == '1' }}
         run: |
-          unset AWS_LC_SYS_EXTERNAL_BINDGEN
           cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features ssl --target ${{ matrix.target[0] }}
+      - name: Install bindgen-cli
+        run: cargo install --locked bindgen-cli
+      - name:  Cross-compilation w/ external bindgen (aws-lc-sys/ssl feature)
+        if: ${{ matrix.target[3] == '1' }}
+        env:
+          # require the use of external bindgen
+          AWS_LC_SYS_EXTERNAL_BINDGEN: 1
+        run:
+          cross test -p aws-lc-sys --release "${CROSS_TEST_EXTRA_FLAG}" --features bindgen --target ${{ matrix.target[0] }}
+
+  # This test ensures that older Android API levels (before getentropy was added in API 28)
+  # build correctly with the cc-builder. See: https://github.com/aws/aws-lc-rs/issues/1006
+  aws-lc-rs-android-old-api:
+    if: github.repository_owner == 'aws'
+    name: Android API ${{ matrix.api }} - ${{ matrix.target }} ${{ matrix.test_target_cc && '(TARGET_CC test)' || '' }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # API 21 is the oldest supported by current NDK (Android 5.0)
+          - target: aarch64-linux-android
+            api: 21
+          # API 24 is Android 7.0, still before getentropy (API 28)
+          - target: aarch64-linux-android
+            api: 24
+          - target: armv7-linux-androideabi
+            api: 21
+          - target: x86_64-linux-android
+            api: 21
+          - target: i686-linux-android
+            api: 21
+          # Add test case for TARGET_CC preference
+          - target: aarch64-linux-android
+            api: 21
+            test_target_cc: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
+      - name: Install Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+      - name: Setup Android environment
+        run: |
+          # Convert target triple to NDK toolchain name
+          case "${{ matrix.target }}" in
+            aarch64-linux-android) TOOLCHAIN_TARGET="aarch64-linux-android" ;;
+            armv7-linux-androideabi) TOOLCHAIN_TARGET="armv7a-linux-androideabi" ;;
+            x86_64-linux-android) TOOLCHAIN_TARGET="x86_64-linux-android" ;;
+            i686-linux-android) TOOLCHAIN_TARGET="i686-linux-android" ;;
+          esac
+
+          NDK_BIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+
+          # For the TARGET_CC test case, set both CC/CXX and TARGET_CC/CXX
+          if [ "${{ matrix.test_target_cc }}" = "true" ]; then
+            # Set regular CC/CXX to non-existent compiler to verify they're not used
+            echo "CC=${NDK_BIN}/non-existent-clang" >> $GITHUB_ENV
+            echo "CXX=${NDK_BIN}/non-existent-clang++" >> $GITHUB_ENV
+
+            # Set TARGET_CC/CXX to the correct compilers - these should be preferred
+            echo "TARGET_CC=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang" >> $GITHUB_ENV
+            echo "TARGET_CXX=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang++" >> $GITHUB_ENV
+
+            # Print for debugging
+            echo "Testing TARGET_CC/CXX preference:"
+            echo "CC=${CC}"
+            echo "TARGET_CC=${TARGET_CC}"
+          else
+            # Set compiler with API level (original behavior)
+            echo "CC_${{ matrix.target }}=${NDK_BIN}/${TOOLCHAIN_TARGET}${{ matrix.api }}-clang" >> $GITHUB_ENV
+          fi
+
+          echo "AR_${{ matrix.target }}=${NDK_BIN}/llvm-ar" >> $GITHUB_ENV
+          echo "RANLIB_${{ matrix.target }}=${NDK_BIN}/llvm-ranlib" >> $GITHUB_ENV
+
+          # Ensure we use cc-builder, not cmake
+          echo "AWS_LC_SYS_CMAKE_BUILDER=0" >> $GITHUB_ENV
+      - name: Build aws-lc-sys (cc-builder)
+        # Use --no-default-features to disable 'all-bindings' feature, which allows
+        # universal bindings to be used for targets without pre-generated bindings
+        run: cargo build -p aws-lc-sys --no-default-features --target ${{ matrix.target }}
+      - name: Build aws-lc-sys release (cc-builder)
+        run: cargo build -p aws-lc-sys --no-default-features --release --target ${{ matrix.target }}
 
   aws-lc-rs-cross-prebuilt-nasm:
     if: github.repository_owner == 'aws'
@@ -140,6 +239,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CROSS_CONFIG: "./Cross.toml.x86_64-unknown-linux-gnu"
+      AWS_LC_RS_DISABLE_SLOW_TESTS: 1
     strategy:
       fail-fast: false
       matrix:
@@ -236,44 +336,99 @@ jobs:
 
   cargo-xwin:
     if: github.repository_owner == 'aws'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.host }}
+    env:
+      AWS_LC_RS_DISABLE_SLOW_TESTS: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        host:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+          - windows-11-arm
+        target:
+          - "x86_64-pc-windows-msvc"
+          - "aarch64-pc-windows-msvc"
+        crt_static:
+          - "0"
+          - "1"
     steps:
       - name: Install build dependencies
-        # cargo-xwin apparently require ninja-build
+        if: matrix.host == 'ubuntu-latest'
+        # cargo-xwin apparently requires ninja-build
         run: |
-          sudo apt-get update && sudo apt-get install --assume-yes nasm clang ninja-build llvm
+          sudo apt-get update && sudo apt-get install --assume-yes nasm ninja-build llvm
+      - name: Install build dependencies
+        if: matrix.host == 'macos-latest'
+        run: |
+          brew install nasm ninja llvm
       - uses: actions/checkout@v3
         with:
           submodules: "recursive"
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          target: x86_64-pc-windows-msvc
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          target: aarch64-pc-windows-msvc
-      - name: Install cargo-xwin and bindgen-cli
-        run: cargo install --locked cargo-xwin bindgen-cli
-      - name: cargo xwin build for `x86_64-pc-windows-msvc`
-        run: cargo xwin build -p aws-lc-rs --release --all-targets --target x86_64-pc-windows-msvc
-      - name: cargo xwin build for `aarch64-pc-windows-msvc`
-        run: cargo xwin build -p aws-lc-rs --release --all-targets --target aarch64-pc-windows-msvc
+          target: ${{ matrix.target }}
+      - name: Install cargo-xwin
+        run: cargo install --locked cargo-xwin
+      - name: Set RUSTFLAGS
+        if: contains(matrix.host, 'windows') != true
+        run: |
+          if [[ '${{ matrix.crt_static }}' == '1' ]]; then
+            echo "RUSTFLAGS=-Clink-arg=/WX -Ctarget-feature=+crt-static" >> $GITHUB_ENV
+          else
+            echo "RUSTFLAGS=-Clink-arg=/WX" >> $GITHUB_ENV
+          fi
+          echo "EXTRA_FLAGS=" >> $GITHUB_ENV
+      - name: Set RUSTFLAGS
+        if: contains(matrix.host, 'windows')
+        run: |
+          if ('${{ matrix.crt_static }}' -eq '1') {
+            echo "RUSTFLAGS=-Clink-arg=/WX -Ctarget-feature=+crt-static" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            echo "RUSTFLAGS=-Clink-arg=/WX" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+          if ('${{ matrix.host }}' -like '*arm*') {
+            echo "EXTRA_FLAGS=--features=prebuilt-nasm" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            echo "EXTRA_FLAGS=" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+      - name: cargo xwin build for ${{ matrix.target }}
+        run: cargo xwin build -p aws-lc-rs --release --all-targets --target ${{ matrix.target }} ${{ env.EXTRA_FLAGS }}
+      - name: cargo test for x86_64-pc-windows-msvc
+        if: matrix.host == 'windows-latest' && matrix.target == 'x86_64-pc-windows-msvc'
+        env:
+          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUNNER: 'cmd.exe'
+        run: cargo xwin test -p aws-lc-rs --release --all-targets --target x86_64-pc-windows-msvc ${{ env.EXTRA_FLAGS }}
+      - name: cargo test for aarch64-pc-windows-msvc
+        if: matrix.host == 'windows-11-arm' && matrix.target == 'aarch64-pc-windows-msvc'
+        env:
+          CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_RUNNER: 'cmd.exe'
+        run: cargo xwin test -p aws-lc-rs --release --all-targets --target aarch64-pc-windows-msvc ${{ env.EXTRA_FLAGS }}
 
   aws-lc-rs-windows-msvc:
     if: ${{ github.repository_owner == 'aws' }}
-    name: ${{ matrix.target }} - ${{ (matrix.crt_static == '1' && 'crt-static and /WX') || '/WX' }}
+    name: ${{ matrix.target }} ${{ (matrix.fips == '1' && '(FIPS)') || '' }} - ${{ (matrix.crt_static == '1' && 'crt-static and /WX') || '/WX' }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
         target:
-          - "x86_64-pc-windows-msvc"
-          - "i686-pc-windows-msvc"
-          - "aarch64-pc-windows-msvc"
+          - 'x86_64-pc-windows-msvc'
+          - 'i686-pc-windows-msvc'
+          - 'aarch64-pc-windows-msvc'
         crt_static:
-          - "0"
-          - "1"
+          - '0'
+          - '1'
+        fips:
+          - '0'
+          - '1'
+        exclude:
+          - target: "i686-pc-windows-msvc"
+            fips: '1'
+          - target: "aarch64-pc-windows-msvc"
+            fips: '1'
     steps:
       - name: Install NASM
         if: ${{ matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'i686-pc-windows-msvc' }}
@@ -301,17 +456,26 @@ jobs:
             echo "RUSTFLAGS=-Clink-arg=/WX" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
       - name: Debug build
-        run: cargo ${{ env.ACTION_CARGO }} -p aws-lc-rs --all-targets --target ${{ matrix.target }} --features bindgen
+        run: cargo ${{ env.ACTION_CARGO }} -p aws-lc-rs --all-targets --target ${{ matrix.target }} --features bindgen${{ (matrix.fips == '1' && ',fips') || '' }}
       - name: Release Build for ${{ matrix.target }}
-        run: cargo ${{ env.ACTION_CARGO }} --release -p aws-lc-rs --all-targets --target ${{ matrix.target }}
+        run: cargo ${{ env.ACTION_CARGO }} --release -p aws-lc-rs --all-targets --target ${{ matrix.target }}${{ (matrix.fips == '1' && ' --features fips') || '' }}
+
   freebsd:
     if: github.repository_owner == 'aws'
-    name: aws-lc-rs freebsd test
+    name: freebsd ${{ matrix.release }} (${{ matrix.arch }}) -- ${{ matrix.options }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        target: [ 13.4, 14.1 ]
+        arch: [  'x86_64' ] # , 'aarch64', 'riscv64' ]
+        release: [ '14.3', '15.0' ]
+        options:
+          - '--all-targets'
+          - '--release'
+          - '--no-default-features --features=fips'
+        # exclude:
+        #   - arch: 'riscv64'
+        #     options: '--no-default-features --features=fips'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -319,7 +483,8 @@ jobs:
       - name: Prepare VM
         uses: vmactions/freebsd-vm@v1
         with:
-          release: ${{ matrix.target }}
+          release: ${{ matrix.release }}
+          arch: ${{ matrix.arch }}
           usesh: true
           copyback: false
           prepare: |
@@ -327,8 +492,38 @@ jobs:
           run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
              . "$HOME/.cargo/env"
-            cargo test -p aws-lc-rs
-            cargo test -p aws-lc-rs --no-default-features --features=fips
+            cargo test -p aws-lc-rs ${{ matrix.options }}
+  netbsd:
+    if: github.repository_owner == 'aws'
+    name: netbsd ${{ matrix.release }} (${{ matrix.arch }}) -- ${{ matrix.options }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ 'x86_64' ] # , 'aarch64' ]
+        release: [ '10.1' ]
+        options:
+          - '--all-targets'
+          - '--release'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Prepare VM
+        uses: vmactions/netbsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          arch: ${{ matrix.arch }}
+          usesh: true
+          copyback: false
+          prepare: |
+            export PATH="/usr/pkg/bin:/usr/pkg/sbin:/usr/sbin:/usr/bin:/sbin:/bin"
+            export PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/${{ matrix.arch }}/${{ matrix.release }}/All"
+            pkg_add -u curl cmake gmake perl mozilla-rootcerts
+          run: |
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+             . "$HOME/.cargo/env"
+            cargo test -p aws-lc-rs ${{ matrix.options }}
   cross-x86_64-pc-windows-gnu:
     if: github.repository_owner == 'aws'
     name: cross (prebuilt nasm) - x86_64-pc-windows-gnu
@@ -379,6 +574,27 @@ jobs:
       - name: Build
         run: |
           docker run -v "${{ github.workspace }}:/aws_lc_rs" alpine:3.20
+
+  openwrt-sdk:
+    # Test for OpenWrt cross-compilation environment
+    # Verifies fix for https://github.com/aws/aws-lc-rs/issues/1009
+    # OpenWrt sets CC to host compiler and TARGET_CC to cross compiler
+    if: github.repository_owner == 'aws'
+    name: OpenWrt SDK (aarch64-musl)
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Build Docker Image
+        working-directory: .github/docker_images/openwrt-24.10
+        run: |
+          ./build_image.sh
+      - name: Build
+        run: |
+          docker run -v "${{ github.workspace }}:/aws_lc_rs" openwrt:24.10
 
   msys2:
     name: msys2 ${{ matrix.sys }} - ${{ matrix.nasm }}, ${{ matrix.generator }}
@@ -442,13 +658,53 @@ jobs:
         with:
           submodules: "recursive"
       - name: Test
-        if: matrix.generator != 'msys'
-        shell: bash
-        run: cargo test --verbose --features bindgen --release -p aws-lc-rs
-      - name: Test
-        if: matrix.generator == 'msys'
         shell: msys2 {0}
         run: cargo test --verbose --features bindgen --release -p aws-lc-rs
+
+  msys2-no-cmake:
+    name: msys2-no-cmake ${{ matrix.sys }} - ${{ matrix.nasm }}
+    if: github.repository_owner == 'aws'
+    runs-on: windows-latest
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: 0
+    strategy:
+      fail-fast: false
+      matrix:
+        sys:
+          - mingw64
+          - ucrt64
+          - clang64
+        nasm:
+          - 'prebuilt'
+          - 'nasm'
+    steps:
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        id: setup_msys2
+        with:
+          msystem: ${{ matrix.sys }}
+          update: true
+          pacboy: >-
+            toolchain
+            rust
+            rust-bindgen
+            cc
+            ${{ (matrix.nasm == 'nasm' && 'nasm') || 'make' }}
+      - name: Update Environment
+        shell: bash
+        run: |
+          SYSROOT=$(cygpath -a -m '${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}')
+          echo "AWS_LC_SYS_PREBUILT_NASM=${{ (matrix.nasm == 'nasm' && '0') || '1' }}" >> $GITHUB_ENV
+          echo "GOPATH=${SYSROOT}" >> $GITHUB_ENV
+          echo "GOROOT=${SYSROOT}/lib/go" >> $GITHUB_ENV
+          cygpath -w ${SYSROOT}/bin >> $GITHUB_PATH
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Test
+        shell: msys2 {0}
+        run: cargo test --verbose --release -p aws-lc-rs
 
   musl-tests:
     name: musl - ${{ matrix.config.arch }}

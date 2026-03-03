@@ -32,7 +32,7 @@ impl PartialEq<Self> for LcPtr<EVP_PKEY> {
     /// Only compares params and public key
     fn eq(&self, other: &Self) -> bool {
         // EVP_PKEY_cmp only compares params and public key
-        1 == unsafe { EVP_PKEY_cmp(*self.as_const(), *other.as_const()) }
+        1 == unsafe { EVP_PKEY_cmp(self.as_const_ptr(), other.as_const_ptr()) }
     }
 }
 
@@ -80,7 +80,7 @@ impl ConstPointer<'_, EVP_PKEY> {
     // EVP_PKEY_X448 = 961;
     // EVP_PKEY_ED448 = 960;
     pub(crate) fn id(&self) -> i32 {
-        unsafe { EVP_PKEY_id(**self) }
+        unsafe { EVP_PKEY_id(self.as_const_ptr()) }
     }
 
     pub(crate) fn key_size_bytes(&self) -> usize {
@@ -88,22 +88,30 @@ impl ConstPointer<'_, EVP_PKEY> {
     }
 
     pub(crate) fn key_size_bits(&self) -> usize {
-        unsafe { EVP_PKEY_bits(**self) }.try_into().unwrap()
+        unsafe { EVP_PKEY_bits(self.as_const_ptr()) }
+            .try_into()
+            .unwrap()
     }
 
     pub(crate) fn signature_size_bytes(&self) -> usize {
-        unsafe { EVP_PKEY_size(**self) }.try_into().unwrap()
+        unsafe { EVP_PKEY_size(self.as_const_ptr()) }
+            .try_into()
+            .unwrap()
     }
 
     #[allow(dead_code)]
     pub(crate) fn get_ec_key(&self) -> Result<ConstPointer<'_, EC_KEY>, KeyRejected> {
-        self.project_const_lifetime(unsafe { |evp_pkey| EVP_PKEY_get0_EC_KEY(**evp_pkey) })
-            .map_err(|()| KeyRejected::wrong_algorithm())
+        self.project_const_lifetime(unsafe {
+            |evp_pkey| EVP_PKEY_get0_EC_KEY(evp_pkey.as_const_ptr())
+        })
+        .map_err(|()| KeyRejected::wrong_algorithm())
     }
 
     pub(crate) fn get_rsa(&self) -> Result<ConstPointer<'_, RSA>, KeyRejected> {
-        self.project_const_lifetime(unsafe { |evp_pkey| EVP_PKEY_get0_RSA(**evp_pkey) })
-            .map_err(|()| KeyRejected::wrong_algorithm())
+        self.project_const_lifetime(unsafe {
+            |evp_pkey| EVP_PKEY_get0_RSA(evp_pkey.as_const_ptr())
+        })
+        .map_err(|()| KeyRejected::wrong_algorithm())
     }
 
     pub(crate) fn marshal_rfc5280_public_key(&self) -> Result<Vec<u8>, Unspecified> {
@@ -111,7 +119,7 @@ impl ConstPointer<'_, EVP_PKEY> {
         // size in bytes for keys ranging from 2048-bit to 4096-bit. So size the initial capacity to be roughly
         // 500% as a conservative estimate to avoid needing to reallocate for any key in that range.
         let mut cbb = LcCBB::new(self.key_size_bytes() * 5);
-        if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), **self) } {
+        if 1 != unsafe { EVP_marshal_public_key(cbb.as_mut_ptr(), self.as_const_ptr()) } {
             return Err(Unspecified);
         }
         cbb.into_vec()
@@ -122,16 +130,19 @@ impl ConstPointer<'_, EVP_PKEY> {
         version: Version,
     ) -> Result<Vec<u8>, Unspecified> {
         let key_size_bytes =
-            TryInto::<usize>::try_into(unsafe { EVP_PKEY_bits(**self) }).expect("fit in usize") / 8;
+            TryInto::<usize>::try_into(unsafe { EVP_PKEY_bits(self.as_const_ptr()) })
+                .expect("fit in usize")
+                / 8;
         let mut cbb = LcCBB::new(key_size_bytes * 5);
         match version {
             Version::V1 => {
-                if 1 != unsafe { EVP_marshal_private_key(cbb.as_mut_ptr(), **self) } {
+                if 1 != unsafe { EVP_marshal_private_key(cbb.as_mut_ptr(), self.as_const_ptr()) } {
                     return Err(Unspecified);
                 }
             }
             Version::V2 => {
-                if 1 != unsafe { EVP_marshal_private_key_v2(cbb.as_mut_ptr(), **self) } {
+                if 1 != unsafe { EVP_marshal_private_key_v2(cbb.as_mut_ptr(), self.as_const_ptr()) }
+                {
                     return Err(Unspecified);
                 }
             }
@@ -141,7 +152,8 @@ impl ConstPointer<'_, EVP_PKEY> {
 
     pub(crate) fn marshal_raw_private_key(&self) -> Result<Vec<u8>, Unspecified> {
         let mut size = 0;
-        if 1 != unsafe { EVP_PKEY_get_raw_private_key(**self, null_mut(), &mut size) } {
+        if 1 != unsafe { EVP_PKEY_get_raw_private_key(self.as_const_ptr(), null_mut(), &mut size) }
+        {
             return Err(Unspecified);
         }
         let mut buffer = vec![0u8; size];
@@ -155,7 +167,9 @@ impl ConstPointer<'_, EVP_PKEY> {
         buffer: &mut [u8],
     ) -> Result<usize, Unspecified> {
         let mut key_len = buffer.len();
-        if 1 == unsafe { EVP_PKEY_get_raw_private_key(**self, buffer.as_mut_ptr(), &mut key_len) } {
+        if 1 == unsafe {
+            EVP_PKEY_get_raw_private_key(self.as_const_ptr(), buffer.as_mut_ptr(), &mut key_len)
+        } {
             Ok(key_len)
         } else {
             Err(Unspecified)
@@ -165,7 +179,7 @@ impl ConstPointer<'_, EVP_PKEY> {
     #[allow(dead_code)]
     pub(crate) fn marshal_raw_public_key(&self) -> Result<Vec<u8>, Unspecified> {
         let mut size = 0;
-        if 1 != unsafe { EVP_PKEY_get_raw_public_key(**self, null_mut(), &mut size) } {
+        if 1 != unsafe { EVP_PKEY_get_raw_public_key(self.as_const_ptr(), null_mut(), &mut size) } {
             return Err(Unspecified);
         }
         let mut buffer = vec![0u8; size];
@@ -183,7 +197,7 @@ impl ConstPointer<'_, EVP_PKEY> {
             // `EVP_PKEY_get_raw_public_key` writes the total length
             // to `encapsulate_key_size` in the event that the buffer we provide is larger then
             // required.
-            EVP_PKEY_get_raw_public_key(**self, buffer.as_mut_ptr(), &mut key_len)
+            EVP_PKEY_get_raw_public_key(self.as_const_ptr(), buffer.as_mut_ptr(), &mut key_len)
         } {
             Ok(key_len)
         } else {
@@ -193,6 +207,11 @@ impl ConstPointer<'_, EVP_PKEY> {
 }
 
 impl LcPtr<EVP_PKEY> {
+    #[inline]
+    pub unsafe fn as_mut_unsafe_ptr(&self) -> *mut EVP_PKEY {
+        self.as_const_ptr().cast_mut()
+    }
+
     pub(crate) fn parse_rfc5280_public_key(
         bytes: &[u8],
         evp_pkey_type: c_int,
@@ -230,7 +249,7 @@ impl LcPtr<EVP_PKEY> {
         // The only modification made by EVP_PKEY_CTX_new to `priv_key` is to increment its
         // refcount. The modification is made while holding a global lock:
         // https://github.com/aws/aws-lc/blob/61503f7fe72457e12d3446853a5452d175560c49/crypto/refcount_lock.c#L29
-        LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.as_mut_unsafe(), null_mut()) })
+        LcPtr::new(unsafe { EVP_PKEY_CTX_new(self.as_mut_unsafe_ptr(), null_mut()) })
     }
 
     pub(crate) fn parse_raw_private_key(
@@ -298,7 +317,7 @@ impl LcPtr<EVP_PKEY> {
     {
         let mut md_ctx = DigestContext::new_uninit();
         let evp_md = if let Some(alg) = digest {
-            *digest::match_digest_type(&alg.id)
+            digest::match_digest_type(&alg.id).as_const_ptr()
         } else {
             null()
         };
@@ -312,7 +331,7 @@ impl LcPtr<EVP_PKEY> {
                 &mut pctx,
                 evp_md,
                 null_mut(),
-                *self.as_mut_unsafe(),
+                self.as_mut_unsafe_ptr(),
             )
         } {
             return Err(Unspecified);
@@ -363,21 +382,21 @@ impl LcPtr<EVP_PKEY> {
     where
         F: EVP_PKEY_CTX_consumer,
     {
-        let mut pctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.as_mut_unsafe(), null_mut()) })?;
+        let mut pctx = self.create_EVP_PKEY_CTX()?;
 
-        if 1 != unsafe { EVP_PKEY_sign_init(*pctx.as_mut()) } {
+        if 1 != unsafe { EVP_PKEY_sign_init(pctx.as_mut_ptr()) } {
             return Err(Unspecified);
         }
 
         if let Some(pad_fn) = padding_fn {
-            pad_fn(*pctx.as_mut())?;
+            pad_fn(pctx.as_mut_ptr())?;
         }
 
         let msg_digest = digest.as_ref();
         let mut sig_len = 0;
         if 1 != unsafe {
             EVP_PKEY_sign(
-                *pctx.as_mut(),
+                pctx.as_mut_ptr(),
                 null_mut(),
                 &mut sig_len,
                 msg_digest.as_ptr(),
@@ -390,7 +409,7 @@ impl LcPtr<EVP_PKEY> {
         let mut signature = vec![0u8; sig_len];
         if 1 != indicator_check!(unsafe {
             EVP_PKEY_sign(
-                *pctx.as_mut(),
+                pctx.as_mut_ptr(),
                 signature.as_mut_ptr(),
                 &mut sig_len,
                 msg_digest.as_ptr(),
@@ -417,7 +436,7 @@ impl LcPtr<EVP_PKEY> {
         let mut md_ctx = DigestContext::new_uninit();
 
         let evp_md = if let Some(alg) = digest {
-            *digest::match_digest_type(&alg.id)
+            digest::match_digest_type(&alg.id).as_const_ptr()
         } else {
             null()
         };
@@ -430,7 +449,7 @@ impl LcPtr<EVP_PKEY> {
                 &mut pctx,
                 evp_md,
                 null_mut(),
-                *self.as_mut_unsafe(),
+                self.as_mut_unsafe_ptr(),
             )
         } {
             return Err(Unspecified);
@@ -463,21 +482,21 @@ impl LcPtr<EVP_PKEY> {
     where
         F: EVP_PKEY_CTX_consumer,
     {
-        let mut pctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new(*self.as_mut_unsafe(), null_mut()) })?;
+        let mut pctx = self.create_EVP_PKEY_CTX()?;
 
-        if 1 != unsafe { EVP_PKEY_verify_init(*pctx.as_mut()) } {
+        if 1 != unsafe { EVP_PKEY_verify_init(pctx.as_mut_ptr()) } {
             return Err(Unspecified);
         }
 
         if let Some(pad_fn) = padding_fn {
-            pad_fn(*pctx.as_mut())?;
+            pad_fn(pctx.as_mut_ptr())?;
         }
 
         let msg_digest = digest.as_ref();
 
         if 1 == unsafe {
             indicator_check!(EVP_PKEY_verify(
-                *pctx.as_mut(),
+                pctx.as_mut_ptr(),
                 signature.as_ptr(),
                 signature.len(),
                 msg_digest.as_ptr(),
@@ -490,25 +509,25 @@ impl LcPtr<EVP_PKEY> {
         }
     }
 
-    pub(crate) fn agree(&self, peer_key: &Self) -> Result<Box<[u8]>, Unspecified> {
+    pub(crate) fn agree(&self, peer_key: &mut Self) -> Result<Box<[u8]>, Unspecified> {
         let mut pctx = self.create_EVP_PKEY_CTX()?;
 
-        if 1 != unsafe { EVP_PKEY_derive_init(*pctx.as_mut()) } {
+        if 1 != unsafe { EVP_PKEY_derive_init(pctx.as_mut_ptr()) } {
             return Err(Unspecified);
         }
 
         let mut secret_len = 0;
-        if 1 != unsafe { EVP_PKEY_derive_set_peer(*pctx.as_mut(), *peer_key.as_mut_unsafe()) } {
+        if 1 != unsafe { EVP_PKEY_derive_set_peer(pctx.as_mut_ptr(), peer_key.as_mut_ptr()) } {
             return Err(Unspecified);
         }
 
-        if 1 != unsafe { EVP_PKEY_derive(*pctx.as_mut(), null_mut(), &mut secret_len) } {
+        if 1 != unsafe { EVP_PKEY_derive(pctx.as_mut_ptr(), null_mut(), &mut secret_len) } {
             return Err(Unspecified);
         }
 
         let mut secret = vec![0u8; secret_len];
         if 1 != indicator_check!(unsafe {
-            EVP_PKEY_derive(*pctx.as_mut(), secret.as_mut_ptr(), &mut secret_len)
+            EVP_PKEY_derive(pctx.as_mut_ptr(), secret.as_mut_ptr(), &mut secret_len)
         }) {
             return Err(Unspecified);
         }
@@ -523,17 +542,17 @@ impl LcPtr<EVP_PKEY> {
     {
         let mut pkey_ctx = LcPtr::new(unsafe { EVP_PKEY_CTX_new_id(pkey_type, null_mut()) })?;
 
-        if 1 != unsafe { EVP_PKEY_keygen_init(*pkey_ctx.as_mut()) } {
+        if 1 != unsafe { EVP_PKEY_keygen_init(pkey_ctx.as_mut_ptr()) } {
             return Err(Unspecified);
         }
 
         if let Some(pad_fn) = params_fn {
-            pad_fn(*pkey_ctx.as_mut())?;
+            pad_fn(pkey_ctx.as_mut_ptr())?;
         }
 
         let mut pkey = null_mut::<EVP_PKEY>();
 
-        if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(*pkey_ctx.as_mut(), &mut pkey) }) {
+        if 1 != indicator_check!(unsafe { EVP_PKEY_keygen(pkey_ctx.as_mut_ptr(), &mut pkey) }) {
             return Err(Unspecified);
         }
 
@@ -547,9 +566,9 @@ impl Clone for LcPtr<EVP_PKEY> {
         // https://github.com/aws/aws-lc/blob/61503f7fe72457e12d3446853a5452d175560c49/crypto/refcount_lock.c#L29
         assert_eq!(
             1,
-            unsafe { EVP_PKEY_up_ref(*self.as_mut_unsafe()) },
+            unsafe { EVP_PKEY_up_ref(self.as_mut_unsafe_ptr()) },
             "infallible AWS-LC function"
         );
-        Self::new(unsafe { *self.as_mut_unsafe() }).expect("non-null AWS-LC EVP_PKEY pointer")
+        Self::new(unsafe { self.as_mut_unsafe_ptr() }).expect("non-null AWS-LC EVP_PKEY pointer")
     }
 }

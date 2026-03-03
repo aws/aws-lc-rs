@@ -21,6 +21,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   collect-symbols-and-commit:
     if: github.repository == 'aws/aws-lc-rs'
@@ -28,7 +31,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14 ]
+        os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -165,7 +168,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14 ]
+        os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -251,16 +254,16 @@ jobs:
           cross test -p aws-lc-sys --features bindgen --target ${{ matrix.target }}
       - name: Commit & Push changes
         run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings for ${{ matrix.target }}"
-  collect-src-and-commit:
-    needs: generate-bindings-and-commit
+  generate-universal-bindings-and-commit:
+    needs: generate-headers-and-commit
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-13, macos-14 ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -270,34 +273,46 @@ jobs:
       - name: Install current Bash on macOS
         if: runner.os == 'macOS'
         run: brew install bash coreutils
-      - name: Collect source from ${{ matrix.os }}
-        run: ./scripts/build/collect_build_src.sh
+      - name: Generate bindings for ${{ matrix.os }}
+        env:
+          AWS_LC_SYS_PREGENERATING_BINDINGS: "1"
+        run: |
+          cargo test -p aws-lc-sys --no-default-features --features bindgen
+      - name: Create bindings with the \u{1} stripped
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: aws-lc-sys/src
+        run: |
+          sed 's/#\[link_name = "\\u{1}aws_lc_/#[link_name = "aws_lc_/g' universal_crypto.rs > universal_no_u1_crypto.rs
+      - name: Create prefixed bindings with the \u{1} stripped
+        if: matrix.os == 'macos-latest'
+        working-directory: aws-lc-sys/src
+        run: |
+          sed 's/#\[link_name = "\\u{1}_aws_lc_/#[link_name = "aws_lc_/g' universal_prefixed_crypto.rs > universal_no_u1_prefixed_crypto.rs
       - name: Commit & Push changes
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Collected source files from ${{ matrix.os }}"
-  collect-cross-src-and-commit:
-    needs: generate-cross-bindings-and-commit
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Generated bindings from ${{ matrix.os }}"
+  collect-src-and-commit:
+    needs:
+      - generate-bindings-and-commit
+      - generate-universal-bindings-and-commit
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
-    env:
-      AWS_LC_RS_DISABLE_SLOW_TESTS: 1
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [ aarch64-unknown-linux-gnu, i686-unknown-linux-gnu, aarch64-unknown-linux-musl, riscv64gc-unknown-linux-gnu, x86_64-unknown-linux-musl ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: 'rustfmt'
-      - name: Install cross
-        run: cargo install cross --locked --git https://github.com/cross-rs/cross
-      - name: Collect source for ${{ matrix.target }}
-        run: ./scripts/build/collect_build_src.sh -t ${{ matrix.target }}
+      - name: Install ripgrep
+        run: cargo install --force --locked ripgrep --features pcre2
+      - name: Collect source
+        run: |
+          for script in aws-lc-sys/scripts/cc_builder/*; do
+            $script;
+          done
       - name: Commit & Push changes
-        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Collected source files for ${{ matrix.target }}"
+        run: ./scripts/ci/ci_add_commit_rebase_push.sh "Collected source files"
   collect-nasm-and-commit:
     needs: generate-windows-bindings-and-commit
     if: github.repository == 'aws/aws-lc-rs'

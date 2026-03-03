@@ -2,26 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::cc_builder::CcBuilder;
-use crate::OutputLib::{Crypto, RustWrapper, Ssl};
+use crate::OutputLib::{Crypto, Ssl};
 use crate::{
-    allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
-    get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src, optional_env,
-    optional_env_optional_crate_target, set_env, set_env_for_target, target_arch, target_env,
-    target_os, test_nasm_command, use_prebuilt_nasm, OutputLibType,
+    allow_prebuilt_nasm, cargo_env, disable_jitter_entropy, effective_target, emit_warning,
+    execute_command, get_crate_cflags, is_crt_static, is_no_asm, is_no_pregenerated_src,
+    optional_env, optional_env_optional_crate_target, set_env, set_env_for_target, target_arch,
+    target_env, target_os, test_clang_cl_command, test_nasm_command, use_prebuilt_nasm,
+    OutputLibType,
 };
 use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 pub(crate) struct CmakeBuilder {
     manifest_dir: PathBuf,
     out_dir: PathBuf,
     build_prefix: Option<String>,
     output_lib_type: OutputLibType,
-}
-
-fn test_clang_cl_command() -> bool {
-    execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
 }
 
 fn test_prebuilt_nasm_script(script_path: &Path) -> bool {
@@ -31,10 +29,7 @@ fn test_prebuilt_nasm_script(script_path: &Path) -> bool {
 
 fn find_cmake_command() -> Option<OsString> {
     if let Some(cmake) = optional_env_optional_crate_target("CMAKE") {
-        emit_warning(&format!(
-            "CMAKE environment variable set: {}",
-            cmake.clone()
-        ));
+        emit_warning(format!("CMAKE environment variable set: {}", cmake.clone()));
         if execute_command(cmake.as_ref(), &["--version".as_ref()]).status {
             Some(cmake.into())
         } else {
@@ -84,7 +79,8 @@ impl CmakeBuilder {
             self.output_lib_type,
         );
         let cc_build = cc::Build::new();
-        let (is_like_msvc, build_options) = cc_builder.collect_universal_build_options(&cc_build);
+        let (is_like_msvc, build_options) =
+            cc_builder.collect_universal_build_options(&cc_build, true);
         for option in &build_options {
             option.apply_cmake(cmake_cfg, is_like_msvc);
         }
@@ -116,6 +112,7 @@ impl CmakeBuilder {
         // Build flags that minimize our crate size.
         cmake_cfg.define("BUILD_TESTING", "OFF");
         cmake_cfg.define("BUILD_TOOL", "OFF");
+        cmake_cfg.define("ENABLE_SOURCE_MODIFICATION", "OFF");
         if cfg!(feature = "ssl") {
             cmake_cfg.define("BUILD_LIBSSL", "ON");
         } else {
@@ -129,6 +126,9 @@ impl CmakeBuilder {
             // Build flags that minimize our dependencies.
             cmake_cfg.define("DISABLE_PERL", "ON");
             cmake_cfg.define("DISABLE_GO", "ON");
+        }
+        if Some(true) == disable_jitter_entropy() {
+            cmake_cfg.define("DISABLE_CPU_JITTER_ENTROPY", "ON");
         }
 
         if is_no_asm() {
@@ -147,8 +147,7 @@ impl CmakeBuilder {
             cmake_cfg.define("ASAN", "1");
         }
 
-        let cflags = get_crate_cflags();
-        if !cflags.is_empty() {
+        if let Some(cflags) = get_crate_cflags() {
             set_env_for_target("CFLAGS", cflags);
         }
 
@@ -163,12 +162,29 @@ impl CmakeBuilder {
         // are disabled.
         Self::preserve_cflag_optimization_flags(&mut cmake_cfg);
 
-        // Allow environment to specify CMake toolchain.
-        if let Some(toolchain) = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE") {
-            set_env_for_target("CMAKE_TOOLCHAIN_FILE", toolchain);
+        if target_os() == "windows" {
             if use_prebuilt_nasm() {
                 self.configure_prebuilt_nasm(&mut cmake_cfg);
             }
+            if target_env().as_str() == "msvc" {
+                let mut msvcrt = String::from_str("MultiThreaded").unwrap();
+                if is_crt_static() {
+                    cmake_cfg.static_crt(true);
+                    // When using static CRT on Windows MSVC, ignore missing PDB file warnings
+                    // The static CRT libraries reference PDB files from Microsoft's build servers
+                    // which are not available.
+                    println!("cargo:rustc-link-arg=/ignore:4099");
+                } else {
+                    msvcrt.push_str("DLL");
+                }
+                cmake_cfg.define("CMAKE_MSVC_RUNTIME_LIBRARY", msvcrt.as_str());
+            }
+        }
+
+        // Allow environment to specify CMake toolchain.
+        if let Some(toolchain) = optional_env_optional_crate_target("CMAKE_TOOLCHAIN_FILE") {
+            set_env_for_target("CMAKE_TOOLCHAIN_FILE", toolchain);
+
             return cmake_cfg;
         }
         // We only consider compiler CFLAGS when no cmake toolchain is set
@@ -221,11 +237,11 @@ impl CmakeBuilder {
     }
 
     fn preserve_cflag_optimization_flags(cmake_cfg: &mut cmake::Config) {
-        if let Ok(cflags) = env::var("CFLAGS") {
+        if let Some(cflags) = get_crate_cflags() {
             let split = cflags.split_whitespace();
             for arg in split {
                 if arg.starts_with("-O") || arg.starts_with("/O") {
-                    emit_warning(&format!("Preserving optimization flag: {arg}"));
+                    emit_warning(format!("Preserving optimization flag: {arg}"));
                     cmake_cfg.cflag(arg);
                 }
             }
@@ -254,7 +270,7 @@ impl CmakeBuilder {
                 sh_script
             };
             emit_warning(
-                &format!(
+                format!(
                     "Neither script could be tested for execution, falling back to target-based selection: {}",
                     fallback_script.file_name().unwrap().to_str().unwrap()));
             fallback_script
@@ -285,6 +301,7 @@ impl CmakeBuilder {
         }
     }
 
+    #[allow(clippy::unused_self)]
     fn configure_windows(&self, cmake_cfg: &mut cmake::Config) {
         match (target_env().as_str(), target_arch().as_str()) {
             ("msvc", "aarch64") => {
@@ -302,20 +319,16 @@ impl CmakeBuilder {
                     ));
                     cmake_cfg.define("CMAKE_GENERATOR_PLATFORM", "ARM64");
                 }
-                cmake_cfg.static_crt(is_crt_static());
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", "ARM64");
             }
             ("msvc", _) => {
-                cmake_cfg.static_crt(is_crt_static());
+                // No-op
             }
             (_, arch) => {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", arch);
             }
-        }
-        if use_prebuilt_nasm() {
-            self.configure_prebuilt_nasm(cmake_cfg);
         }
     }
 
@@ -411,7 +424,7 @@ impl CmakeBuilder {
             .asmflag(asmflags.join(" ").as_str());
     }
 
-    fn build_rust_wrapper(&self) -> PathBuf {
+    fn build_library(&self) -> PathBuf {
         self.prepare_cmake_build()
             .configure_arg("--no-warn-unused-cli")
             .build()
@@ -458,7 +471,7 @@ impl crate::Builder for CmakeBuilder {
         Ok(())
     }
     fn build(&self) -> Result<(), String> {
-        self.build_rust_wrapper();
+        self.build_library();
 
         println!(
             "cargo:rustc-link-search=native={}",
@@ -478,12 +491,6 @@ impl crate::Builder for CmakeBuilder {
                 Ssl.libname(&self.build_prefix)
             );
         }
-
-        println!(
-            "cargo:rustc-link-lib={}={}",
-            self.output_lib_type.rust_lib_type(),
-            RustWrapper.libname(&self.build_prefix)
-        );
 
         Ok(())
     }

@@ -37,9 +37,9 @@ fn verify_ec_key_nid(
     ec_key: &ConstPointer<EC_KEY>,
     expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
-    let ec_group =
-        ec_key.project_const_lifetime(unsafe { |ec_key| EC_KEY_get0_group(**ec_key) })?;
-    let key_nid = unsafe { EC_GROUP_get_curve_name(*ec_group) };
+    let ec_group = ec_key
+        .project_const_lifetime(unsafe { |ec_key| EC_KEY_get0_group(ec_key.as_const_ptr()) })?;
+    let key_nid = unsafe { EC_GROUP_get_curve_name(ec_group.as_const_ptr()) };
 
     if key_nid != expected_curve_nid {
         return Err(KeyRejected::wrong_algorithm());
@@ -53,8 +53,9 @@ pub(crate) fn verify_evp_key_nid(
     evp_pkey: &ConstPointer<EVP_PKEY>,
     expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
-    let ec_key =
-        evp_pkey.project_const_lifetime(unsafe { |evp_pkey| EVP_PKEY_get0_EC_KEY(**evp_pkey) })?;
+    let ec_key = evp_pkey.project_const_lifetime(unsafe {
+        |evp_pkey| EVP_PKEY_get0_EC_KEY(evp_pkey.as_const_ptr())
+    })?;
     verify_ec_key_nid(&ec_key, expected_curve_nid)?;
 
     Ok(())
@@ -65,17 +66,18 @@ pub(crate) fn validate_ec_evp_key(
     evp_pkey: &ConstPointer<EVP_PKEY>,
     expected_curve_nid: i32,
 ) -> Result<(), KeyRejected> {
-    let ec_key =
-        evp_pkey.project_const_lifetime(unsafe { |evp_pkey| EVP_PKEY_get0_EC_KEY(**evp_pkey) })?;
+    let ec_key = evp_pkey.project_const_lifetime(unsafe {
+        |evp_pkey| EVP_PKEY_get0_EC_KEY(evp_pkey.as_const_ptr())
+    })?;
     verify_ec_key_nid(&ec_key, expected_curve_nid)?;
 
     #[cfg(not(feature = "fips"))]
-    if 1 != unsafe { EC_KEY_check_key(*ec_key) } {
+    if 1 != unsafe { EC_KEY_check_key(ec_key.as_const_ptr()) } {
         return Err(KeyRejected::inconsistent_components());
     }
 
     #[cfg(feature = "fips")]
-    if 1 != indicator_check!(unsafe { EC_KEY_check_fips(*ec_key) }) {
+    if 1 != indicator_check!(unsafe { EC_KEY_check_fips(ec_key.as_const_ptr()) }) {
         return Err(KeyRejected::inconsistent_components());
     }
 
@@ -118,12 +120,14 @@ fn ecdsa_asn1_to_fixed(alg_id: &'static AlgorithmID, sig: &[u8]) -> Result<Signa
 
     let ecdsa_sig = LcPtr::new(unsafe { ECDSA_SIG_from_bytes(sig.as_ptr(), sig.len()) })?;
 
-    let r_bn = ecdsa_sig
-        .project_const_lifetime(unsafe { |ecdsa_sig| ECDSA_SIG_get0_r(*ecdsa_sig.as_const()) })?;
+    let r_bn = ecdsa_sig.project_const_lifetime(unsafe {
+        |ecdsa_sig| ECDSA_SIG_get0_r(ecdsa_sig.as_const_ptr())
+    })?;
     let r_buffer = r_bn.to_be_bytes();
 
-    let s_bn = ecdsa_sig
-        .project_const_lifetime(unsafe { |ecdsa_sig| ECDSA_SIG_get0_s(*ecdsa_sig.as_const()) })?;
+    let s_bn = ecdsa_sig.project_const_lifetime(unsafe {
+        |ecdsa_sig| ECDSA_SIG_get0_s(ecdsa_sig.as_const_ptr())
+    })?;
     let s_buffer = s_bn.to_be_bytes();
 
     Ok(Signature::new(|slice| {

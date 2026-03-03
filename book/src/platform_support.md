@@ -1,65 +1,144 @@
 # Platform Support
 
-## Pre-generated bindings
+## Non-FIPS Builds (`aws-lc-sys`)
 
-`aws-lc-rs` can utilize pre-generated bindings when operating on the following
-build targets.
+For non-FIPS builds, `aws-lc-sys` provides **universal pre-generated bindings** that work across
+**all** supported platforms. Bindgen is never required, CMake is never required, and Go is never
+required. The only build requirement is a C/C++ compiler.
 
-| Platform                     | `aws-lc-sys` | `aws-lc-fips-sys` | 
-|------------------------------|--------------|-------------------|
-| `aarch64-apple-darwin`       | X            | X                 | 
-| `aarch64-pc-windows-msvc`    | X            | **Not Supported** |
-| `aarch64-unknown-linux-gnu`  | X            | X                 |
-| `aarch64-unknown-linux-musl` | X            | X                 |
-| `i686-pc-windows-msvc`       | X            | **Not Supported** |
-| `i686-unknown-linux-gnu`     | X            | **Not Supported** |
-| `x86_64-apple-darwin`        | X            | X                 |             
-| `x86_64-pc-windows-gnu`      | X            | **Not Supported** |
-| `x86_64-pc-windows-msvc`     | X            |                   |
-| `x86_64-unknown-linux-gnu`   | X            | X                 |
-| `x86_64-unknown-linux-musl`  | X            | X                 |
+This means that if your target platform is supported by both [AWS-LC] and the
+[Rust compiler (with std support)][platform-support], `aws-lc-rs` should work out of the box
+without any additional tooling beyond a C/C++ compiler.
 
-## Tested platforms
+## FIPS Builds (`aws-lc-fips-sys`)
 
-In addition to the ones listed above, the  `aws-lc-rs` CI builds and/or tests with the following platforms.
-All platforms listed below require `CMake` to be available in the build environment.
-They also require bindings to be generated during the build process.
+FIPS builds always require **CMake** and **Go** in addition to a C/C++ compiler. FIPS builds also
+require **bindgen** unless pre-generated bindings are available for the target platform.
 
-### bindgen
+### Pre-generated FIPS Bindings
 
-One of the following options must be used for bindings generation.
+Pre-generated bindings for `aws-lc-fips-sys` are available for the following targets. All other
+FIPS targets require bindgen.
+
+| Platform                     | Pre-generated FIPS Bindings |
+|------------------------------|-----------------------------|
+| `aarch64-apple-darwin`       | ✓                           |
+| `aarch64-pc-windows-msvc`    | ✗ (bindgen required) ¹      |
+| `aarch64-unknown-linux-gnu`  | ✓                           |
+| `aarch64-unknown-linux-musl` | ✓                           |
+| `x86_64-apple-darwin`        | ✓                           |
+| `x86_64-pc-windows-msvc`     | ✗ (bindgen required) ¹      |
+| `x86_64-unknown-linux-gnu`   | ✓                           |
+| `x86_64-unknown-linux-musl`  | ✓                           |
+
+¹ FIPS is supported on this platform but requires bindgen (no pre-generated FIPS bindings are available for Windows platforms)
+
+### Bindgen for FIPS Builds
+
+For FIPS builds on targets without pre-generated bindings, one of the following options must be used for bindings generation.
 See [requirements](requirements/README.md) page for more information.
 
 * Enable `bindgen` feature in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-aws-lc-rs = { version = "1", features = ["bindgen"] }
+aws-lc-rs = { version = "1", features = ["bindgen", "fips"] }
 ```
 
 _**-- OR --**_
 
-* Install `bindgen-cli` in the build envionment:
+* Install `bindgen-cli` in the build environment:
 
 ```shell
 cargo install --force --locked bindgen-cli
 ```
 
-### Platforms
+## Tested Platforms
 
-| Platform                        | Build | Tests |  
-|---------------------------------|-------|-------|
-| `aarch64-apple-ios`             | X     | X     |
-| `aarch64-linux-android`         | X     | X     |
-| `aarch64-pc-windows-msvc`       | X     |       | 
-| `armv7-linux-androideabi`       | X     | X     | 
-| `arm-linux-androideabi`         | X     | X     |
-| `arm-unknown-linux-gnueabihf`   | X     | X     |
-| `powerpc64le-unknown-linux-gnu` | X     | X     | 
-| `powerpc64-unknown-linux-gnu`   | X     | X     |
-| `powerpc-unknown-linux-gnu`     | X     | X     |
-| `riscv64gc-unknown-linux-gnu`   | X     | X     |
-| `s390x-unknown-linux-gnu`       | X     | X     |
-| `x86_64-apple-ios`              | X     |       |
-| `x86_64-pc-windows-gnu`         | X     | X     |
-| `x86_64-pc-windows-msvc`        | X     | X     |
+`aws-lc-rs` CI builds and/or tests on many platforms beyond those listed in the FIPS bindings table above.
+See our [CI workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml) for the complete list of tested platforms.
+
+### Build Requirements Summary
+
+| Requirement       | Non-FIPS (`aws-lc-sys`)            | FIPS (`aws-lc-fips-sys`)                                  |
+|-------------------|------------------------------------|-----------------------------------------------------------|
+| C/C++ Compiler    | Required                           | Required                                                  |
+| CMake             | **Never** required                 | **Always** required                                       |
+| Bindgen           | **Never** required (universal pre-generated bindings) | Required unless target has pre-generated bindings |
+| Go                | **Never** required                 | **Always** required                                       |
+
+### Linux Platforms
+
+| Platform                          | Build | Tests | FIPS  |
+|-----------------------------------|-------|-------|-------|
+| `aarch64-unknown-linux-gnu`       | ✓     | ✓     | ✓     |
+| `aarch64-unknown-linux-musl`      | ✓     | ✓     | ✓     |
+| `arm-unknown-linux-gnueabihf`     | ✓     | ✓     |       |
+| `arm-unknown-linux-musleabi`      | ✓     | ✓     | ✓     |
+| `arm-unknown-linux-musleabihf`    | ✓     | ✓     | ✓     |
+| `armv7-unknown-linux-gnueabihf`   | ✓     | ✓     |       |
+| `i686-unknown-linux-gnu`          | ✓     | ✓     |       |
+| `mips-unknown-linux-gnu` ¹        | ✓     | ✓     |       |
+| `mips-unknown-linux-musl` ¹       | ✓     | ✓     |       |
+| `mips64-unknown-linux-muslabi64` ¹| ✓     | ✓     |       |
+| `mips64el-unknown-linux-muslabi64` ¹| ✓   | ✓     |       |
+| `powerpc-unknown-linux-gnu`       | ✓     | ✓     | ✓     |
+| `powerpc64-unknown-linux-gnu`     | ✓     | ✓     | ✓     |
+| `powerpc64le-unknown-linux-gnu`   | ✓     | ✓     | ✓     |
+| `riscv64gc-unknown-linux-gnu`     | ✓     | ✓     |       |
+| `s390x-unknown-linux-gnu`         | ✓     | ✓     |       |
+| `x86_64-unknown-linux-gnu`        | ✓     | ✓     | ✓     |
+| `x86_64-unknown-linux-musl`       | ✓     | ✓     | ✓     |
+
+¹ Requires nightly Rust toolchain
+
+### Apple Platforms
+
+| Platform                  | Build | Tests | FIPS  |
+|---------------------------|-------|-------|-------|
+| `aarch64-apple-darwin`    | ✓     | ✓     | ✓     |
+| `aarch64-apple-ios`       | ✓     | ✓     |       |
+| `aarch64-apple-ios-sim`   | ✓     | ✓     |       |
+| `aarch64-apple-tvos-sim` ¹| ✓     | ✓     |       |
+| `x86_64-apple-darwin`     | ✓     | ✓     | ✓     |
+| `x86_64-apple-ios`        | ✓     |       |       |
+
+¹ Requires nightly Rust toolchain
+
+### Windows Platforms
+
+| Platform                  | Build | Tests | FIPS  |
+|---------------------------|-------|-------|-------|
+| `aarch64-pc-windows-msvc` | ✓     | ✓     | ✓     |
+| `i686-pc-windows-msvc`    | ✓     | ✓     |       |
+| `x86_64-pc-windows-gnu`   | ✓     | ✓     |       |
+| `x86_64-pc-windows-msvc`  | ✓     | ✓     | ✓     |
+
+### Android Platforms
+
+| Platform                  | Build | Tests |
+|---------------------------|-------|-------|
+| `aarch64-linux-android`   | ✓     | ✓     |
+| `arm-linux-androideabi`   | ✓     | ✓     |
+| `armv7-linux-androideabi` | ✓     | ✓     |
+| `i686-linux-android`      | ✓     |       |
+| `x86_64-linux-android`    | ✓     |       |
+
+### BSD Platforms
+
+| Platform                  | Build | Tests | FIPS  |
+|---------------------------|-------|-------|-------|
+| `x86_64-unknown-freebsd`  | ✓     | ✓     | ✓     |
+| `x86_64-unknown-netbsd`   | ✓     | ✓     |       |
+
+### Other Platforms
+
+| Platform                  | Build | Tests |
+|---------------------------|-------|-------|
+| `x86_64-unknown-illumos`  | ✓     | ✓     |
+| OpenHarmony (aarch64)     | ✓     |       |
+| OpenWrt (aarch64-musl)    | ✓     |       |
+| Alpine Linux              | ✓     | ✓     |
+
+[AWS-LC]: https://github.com/aws/aws-lc
+[platform-support]: https://doc.rust-lang.org/rustc/platform-support.html

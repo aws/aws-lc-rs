@@ -71,39 +71,11 @@ const OSSL_CONF_DEFINES: &[&str] = &[
     "OPENSSL_NO_WHIRLPOOL",
 ];
 
-macro_rules! bindgen_available {
-    ($top:ident, $item:item) => {
-        #[allow(clippy::non_minimal_cfg)]
-        #[cfg($top(any(
-            feature = "bindgen",
-            not(any(
-                all(
-                    any(target_arch = "x86_64", target_arch = "aarch64"),
-                    any(target_os = "linux", target_os = "macos", target_os = "windows"),
-                    any(
-                        target_env = "gnu",
-                        target_env = "musl",
-                        target_env = "msvc",
-                        target_env = ""
-                    )
-                ),
-                all(target_arch = "x86", target_os = "windows", target_env = "msvc"),
-                all(target_arch = "x86", target_os = "linux", target_env = "gnu"),
-                all(target_arch = "riscv64", target_os = "linux", target_env = "gnu")
-            ))
-        )))]
-        $item
-    };
-    ($item:item) => {
-        bindgen_available!(any, $item);
-    };
-}
-
-bindgen_available!(
-    mod sys_bindgen;
-);
 mod cc_builder;
 mod cmake_builder;
+mod nasm_builder;
+#[cfg(feature = "bindgen")]
+mod sys_bindgen;
 
 pub(crate) fn get_aws_lc_include_path(manifest_dir: &Path) -> PathBuf {
     manifest_dir.join("aws-lc").join("include")
@@ -124,7 +96,6 @@ pub(crate) fn get_aws_lc_sys_includes_path() -> Option<Vec<PathBuf>> {
 #[allow(dead_code)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum OutputLib {
-    RustWrapper,
     Crypto,
     Ssl,
 }
@@ -170,10 +141,7 @@ fn optional_env<N: AsRef<str>>(name: N) -> Option<String> {
     let name = name.as_ref();
     println!("cargo:rerun-if-env-changed={name}");
     if let Ok(value) = env::var(name) {
-        emit_warning(&format!(
-            "Environment Variable found '{name}': '{}'",
-            &value
-        ));
+        emit_warning(format!("Environment Variable found '{name}': '{}'", &value));
         return Some(value);
     }
     None
@@ -187,8 +155,11 @@ where
     let target = target().to_lowercase();
     let target = target.replace('-', "_");
     let env_var = format!("{}_{target}", env_var.as_ref().to_str().unwrap());
-    env::set_var(&env_var, &value);
-    emit_warning(&format!(
+    #[allow(unused_unsafe)]
+    unsafe {
+        env::set_var(&env_var, &value);
+    }
+    emit_warning(format!(
         "Setting {env_var}: {}",
         value.as_ref().to_str().unwrap()
     ));
@@ -199,8 +170,11 @@ where
     K: AsRef<OsStr>,
     V: AsRef<OsStr>,
 {
-    env::set_var(&env_var, &value);
-    emit_warning(&format!(
+    #[allow(unused_unsafe)]
+    unsafe {
+        env::set_var(&env_var, &value);
+    }
+    emit_warning(format!(
         "Setting {}: {}",
         env_var.as_ref().to_str().unwrap(),
         value.as_ref().to_str().unwrap()
@@ -228,7 +202,7 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
         || env_var_value.starts_with("off")
         || env_var_value.starts_with('f')
     {
-        emit_warning(&format!("Value: {} is false.", &env_var_value));
+        emit_warning(format!("Value: {} is false.", &env_var_value));
         return Some(false);
     }
     if env_var_value.starts_with(|c: char| c.is_ascii_digit())
@@ -236,7 +210,7 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
         || env_var_value.starts_with("on")
         || env_var_value.starts_with('t')
     {
-        emit_warning(&format!("Value: {} is true.", &env_var_value));
+        emit_warning(format!("Value: {} is true.", &env_var_value));
         return Some(true);
     }
     None
@@ -267,7 +241,6 @@ impl OutputLib {
         let name = match self {
             OutputLib::Crypto => "crypto",
             OutputLib::Ssl => "ssl",
-            OutputLib::RustWrapper => "rust_wrapper",
         };
         if let Some(prefix) = prefix {
             format!("{prefix}_{name}")
@@ -283,9 +256,41 @@ fn prefix_string() -> String {
     format!("aws_lc_{}", VERSION.to_string().replace('.', "_"))
 }
 
-#[cfg(feature = "bindgen")]
+#[cfg(all(feature = "bindgen", feature = "all-bindings"))]
 fn target_platform_prefix(name: &str) -> String {
     format!("{}_{}", effective_target().replace('-', "_"), name)
+}
+
+#[cfg(not(feature = "all-bindings"))]
+fn target_has_prefixed_symbols() -> bool {
+    target_vendor() == "apple" || (target_arch() == "x86" && target_os() == "windows")
+}
+
+#[cfg(not(feature = "all-bindings"))]
+fn is_cranelift_backend() -> bool {
+    // CARGO_ENCODED_RUSTFLAGS contains flags separated by 0x1f (ASCII Unit Separator)
+    if let Some(rustflags) = optional_env("CARGO_ENCODED_RUSTFLAGS") {
+        for flag in rustflags.split('\x1f') {
+            if flag.contains("codegen-backend") && flag.contains("cranelift") {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+#[cfg(not(feature = "all-bindings"))]
+fn target_chokes_on_u1() -> bool {
+    target_arch() == "mips" || target_arch() == "mips64" || is_cranelift_backend()
+}
+
+#[cfg(all(feature = "bindgen", not(feature = "all-bindings")))]
+fn target_platform_prefix(name: &str) -> String {
+    if target_has_prefixed_symbols() {
+        format!("universal_prefixed_{}", name.replace('-', "_"))
+    } else {
+        format!("universal_{}", name.replace('-', "_"))
+    }
 }
 
 pub(crate) struct TestCommandResult {
@@ -323,21 +328,20 @@ fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     }
 }
 
-bindgen_available!(
-    fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
-        let options = BindingOptions {
-            build_prefix: prefix.clone(),
-            include_ssl: cfg!(feature = "ssl"),
-            disable_prelude: true,
-        };
+#[cfg(feature = "bindgen")]
+fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path: &PathBuf) {
+    let options = BindingOptions {
+        build_prefix: prefix.clone(),
+        include_ssl: cfg!(feature = "ssl"),
+        disable_prelude: true,
+    };
 
-        let bindings = sys_bindgen::generate_bindings(manifest_dir, &options);
+    let bindings = sys_bindgen::generate_bindings(manifest_dir, &options);
 
-        bindings
-            .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
-            .expect("written bindings");
-    }
-);
+    bindings
+        .write(Box::new(std::fs::File::create(bindings_path).unwrap()))
+        .expect("written bindings");
+}
 
 #[cfg(feature = "bindgen")]
 fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindings_path: &Path) {
@@ -355,11 +359,12 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
 
 fn emit_rustc_cfg(cfg: &str) {
     let cfg = cfg.replace('-', "_");
+    emit_warning(format!("Emitting configuration: cargo:rustc-cfg={cfg}"));
     println!("cargo:rustc-cfg={cfg}");
 }
 
-fn emit_warning(message: &str) {
-    println!("cargo:warning={message}");
+fn emit_warning<T: AsRef<str>>(message: T) {
+    println!("cargo:warning={}", message.as_ref());
 }
 
 #[allow(dead_code)]
@@ -485,7 +490,7 @@ impl CStdRequested {
                 "11" => CStdRequested::C11,
                 _ => CStdRequested::None,
             };
-            emit_warning(&format!(
+            emit_warning(format!(
                 "AWS_LC_SYS_C_STD environment variable set: {cstd:?}"
             ));
             return cstd;
@@ -499,11 +504,12 @@ static mut AWS_LC_SYS_NO_PREFIX: bool = false;
 static mut AWS_LC_SYS_PREGENERATING_BINDINGS: bool = false;
 static mut AWS_LC_SYS_EXTERNAL_BINDGEN: Option<bool> = None;
 static mut AWS_LC_SYS_NO_ASM: bool = false;
-static mut AWS_LC_SYS_CFLAGS: String = String::new();
 static mut AWS_LC_SYS_PREBUILT_NASM: Option<bool> = None;
 static mut AWS_LC_SYS_CMAKE_BUILDER: Option<bool> = None;
 static mut AWS_LC_SYS_NO_PREGENERATED_SRC: bool = false;
 static mut AWS_LC_SYS_EFFECTIVE_TARGET: String = String::new();
+static mut AWS_LC_SYS_NO_JITTER_ENTROPY: Option<bool> = None;
+static mut AWS_LC_SYS_NO_U1_BINDINGS: Option<bool> = None;
 
 static mut AWS_LC_SYS_C_STD: CStdRequested = CStdRequested::None;
 
@@ -514,7 +520,6 @@ fn initialize() {
             env_crate_var_to_bool("PREGENERATING_BINDINGS").unwrap_or(false);
         AWS_LC_SYS_EXTERNAL_BINDGEN = env_crate_var_to_bool("EXTERNAL_BINDGEN");
         AWS_LC_SYS_NO_ASM = env_crate_var_to_bool("NO_ASM").unwrap_or(false);
-        AWS_LC_SYS_CFLAGS = optional_env_optional_crate_target("CFLAGS").unwrap_or_default();
         AWS_LC_SYS_PREBUILT_NASM = env_crate_var_to_bool("PREBUILT_NASM");
         AWS_LC_SYS_C_STD = CStdRequested::from_env();
         AWS_LC_SYS_CMAKE_BUILDER = env_crate_var_to_bool("CMAKE_BUILDER");
@@ -522,30 +527,63 @@ fn initialize() {
             env_crate_var_to_bool("NO_PREGENERATED_SRC").unwrap_or(false);
         AWS_LC_SYS_EFFECTIVE_TARGET =
             optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
+        AWS_LC_SYS_NO_JITTER_ENTROPY = env_crate_var_to_bool("NO_JITTER_ENTROPY");
+        AWS_LC_SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
     }
 
     if !is_external_bindgen_requested().unwrap_or(false)
         && (is_pregenerating_bindings() || !has_bindgen_feature())
     {
-        let target = effective_target();
-        let supported_platform = match target.as_str() {
-            "aarch64-apple-darwin"
-            | "aarch64-linux-android"
-            | "aarch64-pc-windows-msvc"
-            | "aarch64-unknown-linux-gnu"
-            | "aarch64-unknown-linux-musl"
-            | "i686-pc-windows-msvc"
-            | "i686-unknown-linux-gnu"
-            | "riscv64gc-unknown-linux-gnu"
-            | "x86_64-apple-darwin"
-            | "x86_64-pc-windows-gnu"
-            | "x86_64-pc-windows-msvc"
-            | "x86_64-unknown-linux-gnu"
-            | "x86_64-unknown-linux-musl" => Some(target),
-            _ => None,
-        };
-        if let Some(platform) = supported_platform {
-            emit_rustc_cfg(platform.as_str());
+        #[cfg(feature = "all-bindings")]
+        {
+            assert!(
+                use_no_u1_bindings() != Some(true),
+                "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
+            );
+            let target = effective_target();
+            let supported_platform = match target.as_str() {
+                "aarch64-apple-darwin"
+                | "aarch64-linux-android"
+                | "aarch64-pc-windows-msvc"
+                | "aarch64-unknown-linux-gnu"
+                | "aarch64-unknown-linux-musl"
+                | "i686-pc-windows-msvc"
+                | "i686-unknown-linux-gnu"
+                | "riscv64gc-unknown-linux-gnu"
+                | "x86_64-apple-darwin"
+                | "x86_64-pc-windows-gnu"
+                | "x86_64-pc-windows-msvc"
+                | "x86_64-unknown-linux-gnu"
+                | "x86_64-unknown-linux-musl" => Some(target),
+                _ => None,
+            };
+            if let Some(platform) = supported_platform {
+                emit_rustc_cfg(platform.as_str());
+                unsafe {
+                    PREGENERATED = true;
+                }
+            }
+        }
+        #[cfg(not(feature = "all-bindings"))]
+        {
+            if use_no_u1_bindings() == Some(true)
+                || (target_chokes_on_u1() && use_no_u1_bindings().is_none())
+            {
+                if is_cranelift_backend() {
+                    emit_warning(
+                        "Cranelift codegen backend detected. Using universal_no_u1 bindings.",
+                    );
+                }
+                if target_has_prefixed_symbols() {
+                    emit_rustc_cfg("universal-no-u1-prefixed");
+                } else {
+                    emit_rustc_cfg("universal-no-u1");
+                }
+            } else if target_has_prefixed_symbols() {
+                emit_rustc_cfg("universal-prefixed");
+            } else {
+                emit_rustc_cfg("universal");
+            }
             unsafe {
                 PREGENERATED = true;
             }
@@ -561,13 +599,12 @@ fn is_bindgen_required() -> bool {
         || !has_pregenerated()
 }
 
-bindgen_available!(
-    fn internal_bindgen_supported() -> bool {
-        let cv = bindgen::clang_version();
-        emit_warning(&format!("Clang version: {}", cv.full));
-        true
-    }
-);
+#[cfg(feature = "bindgen")]
+fn internal_bindgen_supported() -> bool {
+    let cv = bindgen::clang_version();
+    emit_warning(format!("Clang version: {}", cv.full));
+    true
+}
 
 fn is_no_prefix() -> bool {
     unsafe { AWS_LC_SYS_NO_PREFIX }
@@ -597,19 +634,36 @@ fn is_no_pregenerated_src() -> bool {
     unsafe { AWS_LC_SYS_NO_PREGENERATED_SRC }
 }
 
-#[allow(unknown_lints)]
-#[allow(static_mut_refs)]
-fn get_crate_cflags() -> &'static str {
-    unsafe { AWS_LC_SYS_CFLAGS.as_str() }
+fn disable_jitter_entropy() -> Option<bool> {
+    unsafe { AWS_LC_SYS_NO_JITTER_ENTROPY }
+}
+
+fn use_no_u1_bindings() -> Option<bool> {
+    unsafe { AWS_LC_SYS_NO_U1_BINDINGS }
+}
+
+fn get_crate_cc() -> Option<String> {
+    optional_env_optional_crate_target("TARGET_CC").or(optional_env_optional_crate_target("CC"))
+}
+
+fn get_crate_cxx() -> Option<String> {
+    optional_env_optional_crate_target("TARGET_CXX").or(optional_env_optional_crate_target("CXX"))
+}
+
+fn get_crate_cflags() -> Option<String> {
+    optional_env_optional_crate_target("TARGET_CFLAGS")
+        .or(optional_env_optional_crate_target("CFLAGS"))
 }
 
 fn use_prebuilt_nasm() -> bool {
     target_os() == "windows"
         && target_arch() == "x86_64"
         && !is_no_asm()
-        && !test_nasm_command()
-        && (Some(true) == allow_prebuilt_nasm()
-            || (allow_prebuilt_nasm().is_none() && cfg!(feature = "prebuilt-nasm")))
+        && !test_nasm_command() // NASM not found in environment
+        && Some(false) != allow_prebuilt_nasm() // not prevented by environment
+        && !cfg!(feature = "disable-prebuilt-nasm") // not prevented by feature
+        // permitted by environment or by feature
+        && (Some(true) == allow_prebuilt_nasm() || cfg!(feature = "prebuilt-nasm"))
 }
 
 fn allow_prebuilt_nasm() -> Option<bool> {
@@ -636,9 +690,13 @@ fn test_nasm_command() -> bool {
     status
 }
 
+fn test_clang_cl_command() -> bool {
+    execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
+}
+
 fn prepare_cargo_cfg() {
     if cfg!(clippy) {
-        println!("cargo:rustc-check-cfg=cfg(use_bindgen_generated)");
+        println!("cargo:rustc-check-cfg=cfg(use_bindgen_pregenerated)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_linux_android)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_apple_darwin)");
         println!("cargo:rustc-check-cfg=cfg(aarch64_pc_windows_msvc)");
@@ -652,6 +710,10 @@ fn prepare_cargo_cfg() {
         println!("cargo:rustc-check-cfg=cfg(x86_64_pc_windows_msvc)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_gnu)");
         println!("cargo:rustc-check-cfg=cfg(x86_64_unknown_linux_musl)");
+        println!("cargo:rustc-check-cfg=cfg(universal)");
+        println!("cargo:rustc-check-cfg=cfg(universal_no_u1)");
+        println!("cargo:rustc-check-cfg=cfg(universal_no_u1_prefixed)");
+        println!("cargo:rustc-check-cfg=cfg(universal_prefixed)");
     }
 }
 
@@ -660,29 +722,26 @@ fn is_crt_static() -> bool {
     features.contains("crt-static")
 }
 
-bindgen_available!(
-    fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
-        if internal_bindgen_supported() && !is_external_bindgen_requested().unwrap_or(false) {
-            emit_warning(&format!(
-                "Generating bindings - internal bindgen. Platform: {}",
-                effective_target()
-            ));
-            let gen_bindings_path = out_dir().join("bindings.rs");
-            generate_bindings(manifest_dir, prefix, &gen_bindings_path);
-            emit_rustc_cfg("use_bindgen_generated");
-            true
-        } else {
-            false
-        }
-    }
-);
-
-bindgen_available!(
-    not,
-    fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
+#[cfg(feature = "bindgen")]
+fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
+    if internal_bindgen_supported() && !is_external_bindgen_requested().unwrap_or(false) {
+        emit_warning(format!(
+            "Generating bindings - internal bindgen. Platform: {}",
+            effective_target()
+        ));
+        let gen_bindings_path = out_dir().join("bindings.rs");
+        generate_bindings(manifest_dir, prefix, &gen_bindings_path);
+        emit_rustc_cfg("use_bindgen_pregenerated");
+        true
+    } else {
         false
     }
-);
+}
+
+#[cfg(not(feature = "bindgen"))]
+fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
+    false
+}
 
 fn main() {
     initialize();
@@ -698,13 +757,14 @@ fn main() {
     };
 
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
-    emit_warning(&format!("Building with: {}", builder.name()));
-    emit_warning(&format!("Symbol Prefix: {:?}", &prefix));
+    emit_warning(format!("Building with: {}", builder.name()));
+    emit_warning(format!("Symbol Prefix: {:?}", &prefix));
 
     builder.check_dependencies().unwrap();
 
     #[allow(unused_assignments)]
     let mut bindings_available = false;
+    emit_warning(format!("Target platform: '{}'", target()));
     if is_pregenerating_bindings() {
         #[cfg(feature = "bindgen")]
         {
@@ -712,6 +772,10 @@ fn main() {
                 .join("src")
                 .join(format!("{}.rs", target_platform_prefix("crypto")));
             if is_external_bindgen_requested().unwrap_or(false) {
+                assert!(
+                    !is_pregenerating_bindings(),
+                    "Pregenerated bindings not supported using external bindgen.",
+                );
                 invoke_external_bindgen(&manifest_dir, &prefix, &src_bindings_path).unwrap();
             } else {
                 generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
@@ -730,7 +794,7 @@ fn main() {
         if !aws_lc_crypto_dir.exists() {
             emit_warning("######");
             emit_warning("###### WARNING: MISSING GIT SUBMODULE ######");
-            emit_warning(&format!(
+            emit_warning(format!(
                 "  -- Did you initialize the repo's git submodules? Unable to find crypto directory: {}.",
                 &aws_lc_crypto_dir.display()
             ));
@@ -743,15 +807,21 @@ fn main() {
         bindings_available = true;
     }
 
-    if !bindings_available && !cfg!(feature = "ssl") {
-        let gen_bindings_path = out_dir().join("bindings.rs");
-        let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
-        match result {
-            Ok(()) => {
-                emit_rustc_cfg("use_bindgen_generated");
-                bindings_available = true;
+    if !bindings_available {
+        if cfg!(feature = "ssl") {
+            emit_warning(
+                "External bindgen required, but external bindgen unable to produce SSL bindings.",
+            );
+        } else {
+            let gen_bindings_path = out_dir().join("bindings.rs");
+            let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
+            match result {
+                Ok(()) => {
+                    emit_rustc_cfg("use_bindgen_pregenerated");
+                    bindings_available = true;
+                }
+                Err(msg) => eprintln!("Failure invoking external bindgen! {msg}"),
             }
-            Err(msg) => eprintln!("Failure invoking external bindgen! {msg}"),
         }
     }
 
@@ -919,7 +989,7 @@ fn invoke_external_bindgen(
 ) -> Result<(), String> {
     verify_bindgen()?;
 
-    emit_warning(&format!(
+    emit_warning(format!(
         "Generating bindings - external bindgen. Platform: {}",
         effective_target()
     ));

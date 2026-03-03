@@ -21,6 +21,9 @@ env:
   GOPROXY: https://proxy.golang.org,direct
   DEBIAN_FRONTEND: noninteractive
 
+permissions:
+  contents: read
+
 jobs:
   sys-bindings:
     if: github.repository_owner == 'aws'

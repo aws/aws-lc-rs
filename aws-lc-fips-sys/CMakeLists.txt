@@ -20,11 +20,25 @@ function(set_my_target_properties ...)
     endif()
 endfunction()
 
+option(AWS_LC_FIPS_SYS_STATIC_RUNTIME "Enable static MSVC runtime for FIPS binaries" OFF)
+
 if (BUILD_SHARED_LIBS AND FIPS)
     # FIPS_SHARED does not support unique function or data sections, but we can't set this from Rust
     # as cmake crate will postfix the C/CXX flags after our disablement nullifying them.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-function-sections -fno-data-sections")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-function-sections -fno-data-sections")
+
+    # FIPS_SHARED requires setting the static runtime flags manually due to limitations in cmake-rs and ninja generator.
+    if (MSVC AND AWS_LC_FIPS_SYS_STATIC_RUNTIME)
+        message(STATUS "Setting static MSVC runtime for FIPS binaries")
+        string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
+        set(STATIC_RUNTIME_FLAG "/MT")
+        if(CMAKE_BUILD_TYPE_UPPER STREQUAL "DEBUG")
+          set(STATIC_RUNTIME_FLAG "/MTd")
+        endif()
+        set(CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE_UPPER} "${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} ${STATIC_RUNTIME_FLAG}")
+        set(CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER} "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} ${STATIC_RUNTIME_FLAG}")
+    endif()
     add_definitions(-DBORINGSSL_SHARED_LIBRARY)
 endif()
 
