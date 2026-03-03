@@ -404,7 +404,7 @@ jobs:
       - name: Install readelf
         run: sudo apt-get update && sudo apt-get install -y binutils
       - name: Build project
-        run: cargo build --workspace --all-targets --release
+        run: cargo build -p aws-lc-rs -p aws-lc-sys -p aws-lc-fips-sys --all-targets --release
       - name: Check for GNU-stack section in object files
         run: |
           echo "Checking for .note.GNU-stack section in all object files..."
