@@ -31,7 +31,31 @@ use crate::fips::indicator_check;
 use core::fmt::Debug;
 
 /// Re-exports of sealed traits for development testing.
-#[cfg(dev_tests_only)]
+///
+/// This module is only available when the `dev-tests-only` feature is enabled.
+/// It exposes the [`SecureRandom`](unsealed::SecureRandom) trait, allowing consumers
+/// to provide their own implementations (e.g., a deterministic RNG) for testing purposes.
+///
+/// # Example
+///
+/// ```ignore
+/// use aws_lc_rs::rand::{unsealed, SecureRandom};
+/// use aws_lc_rs::error::Unspecified;
+///
+/// #[derive(Debug)]
+/// struct DeterministicRandom(u8);
+///
+/// impl unsealed::SecureRandom for DeterministicRandom {
+///     fn fill_impl(&self, dest: &mut [u8]) -> Result<(), Unspecified> {
+///         for (i, byte) in dest.iter_mut().enumerate() {
+///             *byte = self.0.wrapping_add(i as u8);
+///         }
+///         Ok(())
+///     }
+/// }
+/// ```
+#[cfg(any(dev_tests_only, aws_lc_rs_docsrs))]
+#[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "dev-tests-only")))]
 #[allow(unused_imports)]
 pub mod unsealed {
     pub use super::sealed::*;
@@ -47,9 +71,12 @@ pub trait SecureRandom: sealed::SecureRandom {
 
     /// Fills `dest` with random bytes.
     ///
+    /// This method is only available when the `dev-tests-only` feature is enabled.
+    ///
     /// # Errors
     /// `error::Unspecified` if unable to fill `dest`.
-    #[cfg(any(test, dev_tests_only))]
+    #[cfg(any(test, dev_tests_only, aws_lc_rs_docsrs))]
+    #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "dev-tests-only")))]
     fn mut_fill(&mut self, dest: &mut [u8]) -> Result<(), Unspecified>;
 }
 
@@ -63,7 +90,7 @@ where
     }
 
     #[inline]
-    #[cfg(any(test, dev_tests_only))]
+    #[cfg(any(test, dev_tests_only, aws_lc_rs_docsrs))]
     fn mut_fill(&mut self, dest: &mut [u8]) -> Result<(), Unspecified> {
         self.fill_impl(dest)
     }

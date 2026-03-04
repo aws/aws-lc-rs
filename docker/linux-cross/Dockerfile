@@ -2,15 +2,16 @@ ARG CROSS_BASE_IMAGE=ubuntu:20.04
 FROM $CROSS_BASE_IMAGE
 
 ARG DEBIAN_FRONTEND=noninteractive
+ARG GO_VERSION=1.23.8
 
 RUN apt-get update && \
-    apt-get install --assume-yes --no-install-recommends gpg-agent software-properties-common dirmngr && \
-    gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F6BC817356A3D45E C631127F87FA12D1 && \
-    add-apt-repository --yes ppa:longsleep/golang-backports && \
-    apt-get update && \
-    apt-get install --assume-yes --no-install-recommends build-essential cmake golang-go clang && \
+    apt-get install --assume-yes --no-install-recommends build-essential cmake clang ca-certificates curl && \
+    ARCH=$(dpkg --print-architecture) && \
+    curl -sL "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" | tar -C /usr/local -xz && \
     git config --global --add safe.directory '*' && \
     rm -rf /tmp/*
+
+ENV PATH="/usr/local/go/bin:${PATH}"
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable && \
     . $HOME/.cargo/env && \

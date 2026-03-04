@@ -120,8 +120,9 @@ It can be enabled in two ways:
 * **Feature flag:** `cargo test --features dev-tests-only`
 * **Environment variable:** `AWS_LC_RS_DEV_TESTS_ONLY=1 cargo test`
 
-> **⚠️ Warning:** This feature is intended **only** for development and testing. It must not be
-> used in production builds.
+**⚠️ Warning:** This feature is intended **only** for development and testing. It must not be
+used in production builds. The `rand::unsealed` module and `mut_fill` method are not part of the
+stable public API and may change without notice.
 
 ## Use of prebuilt NASM objects
 
