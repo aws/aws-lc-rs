@@ -6,7 +6,7 @@ links = "aws_lc_0_38_0"
 authors = ["AWS-LC"]
 edition = "2021"
 repository = "https://github.com/aws/aws-lc-rs"
-license = "ISC AND (Apache-2.0 OR ISC) AND OpenSSL"
+license = "ISC AND (Apache-2.0 OR ISC) AND MIT AND BSD-3 AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)"
 rust-version = "1.71.0"
 include = [
     "LICENSE",
