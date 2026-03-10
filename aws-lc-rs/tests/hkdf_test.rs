@@ -176,6 +176,7 @@ fn hkdf_clone_tests() {
 }
 
 #[test]
+#[cfg(not(target_arch = "wasm32"))]
 fn hkdf_thread_safeness() {
     use std::thread;
 

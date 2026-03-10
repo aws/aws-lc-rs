@@ -570,6 +570,7 @@ fn test_aead_traits() {
 }
 
 #[test]
+#[cfg(not(target_arch = "wasm32"))]
 fn test_aead_thread_safeness() {
     lazy_static::lazy_static! {
         /// Compute the Initial salt once, as the seed is constant

@@ -17,6 +17,8 @@ mod win_aarch64;
 mod win_x86;
 mod win_x86_64;
 
+use cc::Build;
+
 use crate::nasm_builder::NasmBuilder;
 use crate::{
     cargo_env, disable_jitter_entropy, emit_warning, env_var_to_bool, execute_command,
@@ -292,14 +294,14 @@ impl CcBuilder {
         if !is_like_msvc {
             build_options.push(BuildOption::flag("-Wno-unused-parameter"));
             build_options.push(BuildOption::flag("-pthread"));
-            if target_os() == "linux" {
+            if target_os() == "linux" || target_os() == "emscripten" {
                 build_options.push(BuildOption::define("_XOPEN_SOURCE", "700"));
             } else if target_vendor() != "apple" {
                 // Needed by illumos
                 build_options.push(BuildOption::define("__EXTENSIONS__", "1"));
             }
         }
-        if Some(true) == disable_jitter_entropy() {
+        if disable_jitter_entropy() {
             build_options.push(BuildOption::define("DISABLE_CPU_JITTER_ENTROPY", "1"));
         }
         self.add_includes(&mut build_options);
@@ -337,7 +339,7 @@ impl CcBuilder {
                 .join("include"),
         ));
 
-        if Some(true) != disable_jitter_entropy() {
+        if !disable_jitter_entropy() {
             build_options.push(BuildOption::include(
                 self.manifest_dir
                     .join("aws-lc")
@@ -497,18 +499,23 @@ impl CcBuilder {
         ));
         s2n_bignum_builder.define("S2N_BN_HIDE_SYMBOLS", "1");
 
-        // CPU Jitter Entropy is compiled separately due to needing specific flags
-        let mut jitter_entropy_builder =
-            self.prepare_jitter_entropy_builder(compiler.is_like_msvc());
-        jitter_entropy_builder.flag(format!(
-            "{}{}",
-            force_include_option,
-            self.manifest_dir
-                .join("generated-include")
-                .join("openssl")
-                .join("boringssl_prefix_symbols.h")
-                .display()
-        ));
+        let mut jitter_entropy_builder = if !disable_jitter_entropy() {
+            // CPU Jitter Entropy is compiled separately due to needing specific flags
+            let mut jitter_entropy_builder =
+                self.prepare_jitter_entropy_builder(compiler.is_like_msvc());
+            jitter_entropy_builder.flag(format!(
+                "{}{}",
+                force_include_option,
+                self.manifest_dir
+                    .join("generated-include")
+                    .join("openssl")
+                    .join("boringssl_prefix_symbols.h")
+                    .display()
+            ));
+            jitter_entropy_builder
+        } else {
+            Build::new()
+        };
 
         let mut build_options = vec![];
         self.add_includes(&mut build_options);
@@ -552,7 +559,7 @@ impl CcBuilder {
                 }
             } else if is_jitter_entropy {
                 // Only compile if not disabled.
-                if Some(true) != disable_jitter_entropy() {
+                if !disable_jitter_entropy() {
                     jitter_entropy_builder.file(source_path);
                 }
             } else if source_path.extension() == Some("asm".as_ref()) {
@@ -566,7 +573,7 @@ impl CcBuilder {
         for object in s2n_bignum_object_files {
             cc_build.object(object);
         }
-        if Some(true) != disable_jitter_entropy() {
+        if !disable_jitter_entropy() {
             let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
             for object in jitter_entropy_object_files {
                 cc_build.object(object);
