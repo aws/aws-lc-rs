@@ -289,7 +289,7 @@ impl CcBuilder {
         if !is_cl_like {
             build_options.push(BuildOption::flag("-Wno-unused-parameter"));
             build_options.push(BuildOption::flag("-pthread"));
-            if target_os() == "linux" {
+            if target_os() == "linux" || target_os() == "emscripten" {
                 build_options.push(BuildOption::define("_XOPEN_SOURCE", "700"));
             } else if target_vendor() != "apple" {
                 // Needed by illumos
@@ -615,17 +615,21 @@ impl CcBuilder {
         ));
         s2n_bignum_builder.define("S2N_BN_HIDE_SYMBOLS", "1");
 
-        // CPU Jitter Entropy is compiled separately due to needing specific flags
-        let mut jitter_entropy_builder = self.prepare_jitter_entropy_builder(is_cl_like);
-        jitter_entropy_builder.flag(format!(
-            "{}{}",
-            force_include_option,
-            self.manifest_dir
-                .join("generated-include")
-                .join("openssl")
-                .join("boringssl_prefix_symbols.h")
-                .display()
-        ));
+        // CPU Jitter Entropy is compiled separately due to needing specific flags.
+        // Only set up the builder if jitter entropy is actually going to be built.
+        let mut jitter_entropy_builder = should_build_jitter_entropy().then(|| {
+            let mut jitter_entropy_builder = self.prepare_jitter_entropy_builder(is_cl_like);
+            jitter_entropy_builder.flag(format!(
+                "{}{}",
+                force_include_option,
+                self.manifest_dir
+                    .join("generated-include")
+                    .join("openssl")
+                    .join("boringssl_prefix_symbols.h")
+                    .display()
+            ));
+            jitter_entropy_builder
+        });
 
         let mut build_options = vec![];
         self.add_includes(&mut build_options);
@@ -669,8 +673,8 @@ impl CcBuilder {
                 }
             } else if is_jitter_entropy {
                 // Only compile if not disabled.
-                if should_build_jitter_entropy() {
-                    jitter_entropy_builder.file(source_path);
+                if let Some(builder) = jitter_entropy_builder.as_mut() {
+                    builder.file(source_path);
                 }
             } else if source_path.extension() == Some("asm".as_ref()) {
                 nasm_builder.file(source_path);
@@ -683,9 +687,9 @@ impl CcBuilder {
         for object in s2n_bignum_object_files {
             cc_build.object(object);
         }
-        if should_build_jitter_entropy() {
+        if let Some(builder) = jitter_entropy_builder {
             let _je_cflags_guards = Self::jitter_entropy_cflags_guards(is_cl_like);
-            let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
+            let jitter_entropy_object_files = builder.compile_intermediates();
             for object in jitter_entropy_object_files {
                 cc_build.object(object);
             }

@@ -936,6 +936,10 @@ fn should_build_jitter_entropy() -> bool {
     }
 
     *AVAILABLE.get_or_init(|| {
+        // wasm/emscripten targets do not support CPU jitter entropy.
+        if target_arch().starts_with("wasm") {
+            return false;
+        }
         // The current FIPS branch does not include jitter entropy.
         if is_fips_build() {
             return true;
