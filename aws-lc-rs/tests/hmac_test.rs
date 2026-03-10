@@ -102,6 +102,7 @@ fn hmac_traits() {
 }
 
 #[test]
+#[cfg(not(target_arch = "wasm32"))]
 fn hmac_thread_safeness() {
     use std::thread;
     lazy_static::lazy_static! {

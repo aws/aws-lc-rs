@@ -6,12 +6,6 @@
 use aws_lc_rs::rand::{self, SecureRandom as _};
 use aws_lc_rs::test;
 
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen_test::{wasm_bindgen_test as test, wasm_bindgen_test_configure};
-
-#[cfg(target_arch = "wasm32")]
-wasm_bindgen_test_configure!(run_in_browser);
-
 #[test]
 fn test_system_random_lengths() {
     const LINUX_LIMIT: usize = 256;

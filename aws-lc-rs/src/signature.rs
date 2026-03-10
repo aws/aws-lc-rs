@@ -226,11 +226,13 @@
 //! }
 //!
 //! fn main() {
+//! #   if !cfg!(target_arch = "wasm32") {
 //!     let private_key_path =
 //!         std::path::Path::new("tests/data/signature_rsa_example_private_key.der");
 //!     let public_key_path =
 //!         std::path::Path::new("tests/data/signature_rsa_example_public_key.der");
 //!     sign_and_verify_rsa(&private_key_path, &public_key_path).unwrap()
+//! #   }
 //! }
 //! ```
 use crate::aws_lc::EVP_PKEY;
