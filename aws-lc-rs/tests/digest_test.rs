@@ -79,9 +79,6 @@ mod digest_shavs {
                 };
                 use aws_lc_rs::{digest, test_file};
 
-                #[cfg(target_arch = "wasm32")]
-                use wasm_bindgen_test::wasm_bindgen_test as test;
-
                 #[test]
                 fn short_msg_known_answer_test() {
                     run_known_answer_test(
