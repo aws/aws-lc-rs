@@ -26,9 +26,6 @@ dunce = { workspace = true }
 fs_extra = { workspace = true }
 bindgen = { workspace = true, optional = true }
 
-[dev-dependencies]
-tempfile = "3"
-
 [features]
 default = []
 # Mirror the features from aws-lc-sys that affect builder compilation
