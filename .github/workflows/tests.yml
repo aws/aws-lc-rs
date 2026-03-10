@@ -314,6 +314,41 @@ jobs:
           git add .
           git diff --cached --exit-code HEAD -- aws-lc-sys/builder/prebuilt-nasm/*.txt
 
+  build-clang-cl-discovery-test:
+    if: github.repository_owner == 'aws'
+    name: clang-cl discovery via vswhere
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build with clang-cl hidden from PATH
+        shell: pwsh
+        run: |
+          # Find clang-cl and remove its directory from PATH so that
+          # the build must discover it via vswhere instead.
+          $clangCl = Get-Command clang-cl -ErrorAction SilentlyContinue
+          if (-not $clangCl) {
+            Write-Error "clang-cl is not present on this runner; cannot test vswhere discovery"
+            exit 1
+          }
+          $clangDir = Split-Path $clangCl.Source
+          Write-Output "Hiding clang-cl directory from PATH: $clangDir"
+          $env:PATH = ($env:PATH -split ';' | Where-Object {
+            $_ -ne $clangDir
+          }) -join ';'
+
+          # Verify clang-cl is no longer reachable via PATH
+          if (Get-Command clang-cl -ErrorAction SilentlyContinue) {
+            Write-Error "clang-cl should not be in PATH after filtering"
+            exit 1
+          }
+          Write-Output "Confirmed: clang-cl is not in PATH"
+
+          # Build — find_clang_cl_in_vs should locate it through vswhere
+          cargo build -p aws-lc-sys --target aarch64-pc-windows-msvc
+
   build-env-external-bindgen-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs - External bindgen test (${{ matrix.os }})

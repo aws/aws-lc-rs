@@ -690,8 +690,68 @@ fn test_nasm_command() -> bool {
     status
 }
 
+fn find_clang_cl() -> Option<OsString> {
+    // Check if clang-cl is directly available (e.g., in PATH)
+    if execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status {
+        return Some("clang-cl".into());
+    }
+
+    // Try to find clang-cl in a Visual Studio installation using vswhere.exe
+    find_clang_cl_in_vs()
+}
+
+fn find_clang_cl_in_vs() -> Option<OsString> {
+    let program_files_x86 =
+        env::var("ProgramFiles(x86)").unwrap_or_else(|_| r"C:\Program Files (x86)".to_string());
+    let vswhere = PathBuf::from(&program_files_x86)
+        .join("Microsoft Visual Studio")
+        .join("Installer")
+        .join("vswhere.exe");
+
+    let result = execute_command(
+        vswhere.as_os_str(),
+        &[
+            "-latest".as_ref(),
+            "-products".as_ref(),
+            "*".as_ref(),
+            "-requires".as_ref(),
+            "Microsoft.VisualStudio.Component.VC.Llvm.Clang".as_ref(),
+            "-property".as_ref(),
+            "installationPath".as_ref(),
+        ],
+    );
+
+    if !result.status {
+        return None;
+    }
+
+    let vs_path = result.stdout.trim();
+    if vs_path.is_empty() {
+        return None;
+    }
+
+    for arch_dir in &["ARM64", "x64"] {
+        let clang_cl = PathBuf::from(vs_path)
+            .join("VC")
+            .join("Tools")
+            .join("Llvm")
+            .join(arch_dir)
+            .join("bin")
+            .join("clang-cl.exe");
+
+        if clang_cl.exists()
+            && execute_command(clang_cl.as_os_str(), &["--version".as_ref()]).status
+        {
+            emit_warning(format!("Found clang-cl at: {}", clang_cl.display()));
+            return Some(clang_cl.into_os_string());
+        }
+    }
+
+    None
+}
+
 fn test_clang_cl_command() -> bool {
-    execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
+    find_clang_cl().is_some()
 }
 
 fn prepare_cargo_cfg() {
