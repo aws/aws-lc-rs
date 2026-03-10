@@ -20,9 +20,9 @@ mod win_x86_64;
 use crate::nasm_builder::NasmBuilder;
 use crate::{
     cargo_env, disable_jitter_entropy, emit_warning, env_name_for_target, env_var_to_bool,
-    execute_command, get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm, out_dir,
-    requested_c_std, set_env_for_target, target, target_arch, target_env, target_os, target_vendor,
-    test_clang_cl_command, CStdRequested, EnvGuard, OutputLibType,
+    execute_command, find_clang_cl, get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm,
+    out_dir, requested_c_std, set_env_for_target, target, target_arch, target_env, target_os,
+    target_vendor, CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -800,9 +800,17 @@ impl crate::Builder for CcBuilder {
             && target_arch() == "aarch64"
             && target_env() == "msvc"
             && get_crate_cc().is_none()
-            && test_clang_cl_command()
         {
-            set_env_for_target("CC", "clang-cl");
+            if let Some(clang_cl) = find_clang_cl() {
+                set_env_for_target("CC", clang_cl);
+            } else {
+                emit_warning(
+                    "Windows ARM64 (aarch64-pc-windows-msvc) requires clang-cl. \
+                     Install the 'C++ Clang Compiler for Windows' component in \
+                     Visual Studio Build Tools, or set CC to a working clang-cl. \
+                     See User Guide: https://aws.github.io/aws-lc-rs/index.html",
+                );
+            }
         }
 
         println!("cargo:root={}", self.out_dir.display());

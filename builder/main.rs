@@ -14,6 +14,7 @@ use std::ffi::{OsStr, OsString};
 use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::OnceLock;
 use std::{env, fmt};
 
 use cc_builder::CcBuilder;
@@ -804,8 +805,53 @@ fn test_nasm_command() -> bool {
     status
 }
 
+fn find_clang_cl() -> Option<OsString> {
+    static CACHE: OnceLock<Option<OsString>> = OnceLock::new();
+    CACHE
+        .get_or_init(|| {
+            // Check if clang-cl is directly available (e.g., in PATH)
+            if execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status {
+                return Some("clang-cl".into());
+            }
+
+            // Try to find clang-cl in a Visual Studio installation
+            find_clang_cl_in_vs()
+        })
+        .clone()
+}
+
+fn find_clang_cl_in_vs() -> Option<OsString> {
+    // Use the cc crate's VS discovery (which calls vswhere internally) to
+    // locate the VS installation, then look for clang-cl relative to it.
+    let tool = cc::windows_registry::find_tool(&target(), "cl.exe")?;
+    let cl_path = tool.path().to_path_buf();
+
+    // cl.exe lives deep inside the VS installation:
+    //   <VS>/VC/Tools/MSVC/<ver>/bin/<host>/<target>/cl.exe
+    // clang-cl lives at:
+    //   <VS>/VC/Tools/Llvm/<arch>/bin/clang-cl.exe
+    // Walk up from cl.exe until we find the VS root.
+    for ancestor in cl_path.ancestors() {
+        let vc_llvm = ancestor.join("VC").join("Tools").join("Llvm");
+        if vc_llvm.exists() {
+            for arch_dir in &["ARM64", "x64"] {
+                let clang_cl = vc_llvm.join(arch_dir).join("bin").join("clang-cl.exe");
+                if clang_cl.exists()
+                    && execute_command(clang_cl.as_os_str(), &["--version".as_ref()]).status
+                {
+                    emit_warning(format!("Found clang-cl at: {}", clang_cl.display()));
+                    return Some(clang_cl.into_os_string());
+                }
+            }
+            break;
+        }
+    }
+
+    None
+}
+
 fn test_clang_cl_command() -> bool {
-    execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
+    find_clang_cl().is_some()
 }
 
 fn prepare_cargo_cfg() {
