@@ -450,10 +450,14 @@ impl crate::Builder for CmakeBuilder {
                 eprintln!("Missing dependency: nasm");
                 missing_dependency = true;
             }
-            if target_arch() == "aarch64" && target_env() == "msvc" && !test_clang_cl_command() {
-                eprintln!("Missing dependency: clang-cl");
-                missing_dependency = true;
-            }
+        }
+        if target_os() == "windows"
+            && target_arch() == "aarch64"
+            && target_env() == "msvc"
+            && !test_clang_cl_command()
+        {
+            eprintln!("Missing dependency: clang-cl");
+            missing_dependency = true;
         }
         if let Some(cmake_cmd) = find_cmake_command() {
             unsafe {
