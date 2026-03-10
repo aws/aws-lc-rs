@@ -634,8 +634,11 @@ fn is_no_pregenerated_src() -> bool {
     unsafe { AWS_LC_SYS_NO_PREGENERATED_SRC }
 }
 
-fn disable_jitter_entropy() -> Option<bool> {
-    unsafe { AWS_LC_SYS_NO_JITTER_ENTROPY }
+fn disable_jitter_entropy() -> bool {
+    match unsafe { AWS_LC_SYS_NO_JITTER_ENTROPY } {
+        Some(x) => x,
+        None => target_arch().starts_with("wasm"),
+    }
 }
 
 fn use_no_u1_bindings() -> Option<bool> {

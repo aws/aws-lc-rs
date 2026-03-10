@@ -127,7 +127,7 @@ impl CmakeBuilder {
             cmake_cfg.define("DISABLE_PERL", "ON");
             cmake_cfg.define("DISABLE_GO", "ON");
         }
-        if Some(true) == disable_jitter_entropy() {
+        if disable_jitter_entropy() {
             cmake_cfg.define("DISABLE_CPU_JITTER_ENTROPY", "ON");
         }
 
