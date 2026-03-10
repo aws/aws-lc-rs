@@ -443,30 +443,30 @@ pub(crate) fn internal_sign<'in_out>(
     ctx: &mut Context,
     output: &'in_out mut [u8],
 ) -> Result<&'in_out mut [u8], Unspecified> {
+    let tag_len = ctx.key.algorithm().tag_len();
+    if output.len() < tag_len {
+        return Err(Unspecified);
+    }
+
     let mut out_len = MaybeUninit::<c_uint>::uninit();
 
-    unsafe {
-        if 1 != indicator_check!(HMAC_Final(
+    if 1 != indicator_check!(unsafe {
+        HMAC_Final(
             ctx.key.get_hmac_ctx_ptr(),
             output.as_mut_ptr(),
             out_len.as_mut_ptr(),
-        )) {
-            return Err(Unspecified);
-        }
-        let actual_len = out_len.assume_init() as usize;
-
-        // This indicates a memory corruption.
-        debug_assert!(
-            actual_len <= digest::MAX_OUTPUT_LEN,
-            "HMAC tag length {actual_len} exceeds maximum {}",
-            digest::MAX_OUTPUT_LEN
-        );
-        if actual_len != ctx.key.algorithm().tag_len() {
-            return Err(Unspecified);
-        }
-
-        Ok(&mut output[..actual_len])
+        )
+    }) {
+        return Err(Unspecified);
     }
+    let actual_len = unsafe { out_len.assume_init() } as usize;
+
+    debug_assert!(
+        actual_len == tag_len,
+        "HMAC tag length {actual_len} does not match expected length {tag_len}"
+    );
+
+    Ok(&mut output[0..tag_len])
 }
 
 /// Calculates the HMAC of `data` using the key `key` in one step.
@@ -498,7 +498,7 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
 /// tag length (i.e., `key.algorithm().tag_len()`). The returned slice will be a
 /// sub-slice of `output` containing exactly the tag bytes.
 ///
-/// It is generally not safe to implement CMAC verification by comparing the
+/// It is generally not safe to implement HMAC verification by comparing the
 /// return value of `sign_to_buffer` to a tag. Use `verify` for verification instead.
 //
 // # FIPS
@@ -517,11 +517,6 @@ pub fn sign_to_buffer<'out>(
     data: &[u8],
     output: &'out mut [u8],
 ) -> Result<&'out mut [u8], Unspecified> {
-    let tag_len = key.algorithm().tag_len();
-    if output.len() < tag_len {
-        return Err(Unspecified);
-    }
-
     let mut ctx = Context::with_key(key);
     ctx.update(data);
 
@@ -637,15 +632,22 @@ mod tests {
             let result = hmac::sign_to_buffer(&key, data, &mut output).unwrap();
             assert_eq!(result.len(), tag_len);
 
-            // Verify the tag matches sign()
+            // Verify the returned tag matches sign() and passes verify()
             let tag = hmac::sign(&key, data);
             assert_eq!(result, tag.as_ref());
+            assert!(hmac::verify(&key, data, result).is_ok());
+
+            // Verify the output buffer also matches sign() and passes verify()
+            assert_eq!(output.as_slice(), tag.as_ref());
+            assert!(hmac::verify(&key, data, output.as_slice()).is_ok());
 
             // Test with larger buffer
             let mut large_output = vec![0u8; tag_len + 10];
             let result2 = hmac::sign_to_buffer(&key, data, &mut large_output).unwrap();
             assert_eq!(result2.len(), tag_len);
             assert_eq!(result2, tag.as_ref());
+            assert!(hmac::verify(&key, data, result2).is_ok());
+            assert_eq!(&large_output[0..tag_len], tag.as_ref());
         }
     }
 
