@@ -158,7 +158,6 @@ impl CmakeBuilder {
 
             if target_env() == "ohos" {
                 Self::configure_open_harmony(&mut cmake_cfg);
-                return cmake_cfg;
             }
         }
 
@@ -297,16 +296,23 @@ impl CmakeBuilder {
             );
             bat_script
         } else {
-            // Fallback to current logic if neither can execute
+            // Neither script could be verified as executable. This can happen in sandboxed or
+            // restricted build environments where trial execution is blocked. We fall back to
+            // selecting a script based on the host OS, which matches the behavior prior to
+            // execution-based detection. If this fallback is incorrect, the build will fail
+            // when CMake attempts to invoke the selected script.
             let fallback_script = if cfg!(target_os = "windows") {
                 bat_script
             } else {
                 sh_script
             };
-            emit_warning(
-                format!(
-                    "Neither script could be tested for execution, falling back to target-based selection: {}",
-                    fallback_script.file_name().unwrap().to_str().unwrap()));
+            emit_warning(format!(
+                "WARNING: Neither prebuilt-nasm.sh nor prebuilt-nasm.bat could be verified as \
+                     executable. Falling back to target-based selection: {}. If the build fails \
+                     during assembly, verify that the selected script is appropriate for your \
+                     build environment.",
+                fallback_script.file_name().unwrap().to_str().unwrap()
+            ));
             fallback_script
         }
     }

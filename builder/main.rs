@@ -945,10 +945,11 @@ fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
     for path in include_paths {
         for child in std::fs::read_dir(path).into_iter().flatten().flatten() {
             if child.file_type().map_or(false, |t| t.is_file()) {
-                let _ = std::fs::copy(
+                std::fs::copy(
                     child.path(),
                     include_dir.join(child.path().file_name().unwrap()),
-                );
+                )
+                .expect("Failed to copy include file during build setup");
                 continue;
             }
 
@@ -956,7 +957,8 @@ fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
             let options = fs_extra::dir::CopyOptions::new()
                 .skip_exist(true)
                 .copy_inside(true);
-            let _ = fs_extra::dir::copy(child.path(), &include_dir, &options);
+            fs_extra::dir::copy(child.path(), &include_dir, &options)
+                .expect("Failed to copy include directory during build setup");
         }
     }
 
