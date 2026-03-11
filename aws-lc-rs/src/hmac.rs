@@ -562,6 +562,36 @@ mod tests {
         assert_eq!(hmac::HMAC_SHA512.tag_len(), 64);
     }
 
+    // Make sure that internal_sign properly rejects too small buffers
+    // (and does not corrupt memory by buffer overflow)
+    #[test]
+    fn hmac_internal_sign_too_small_buffer() {
+        let rng = rand::SystemRandom::new();
+
+        for algorithm in &[
+            hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+            hmac::HMAC_SHA224,
+            hmac::HMAC_SHA256,
+            hmac::HMAC_SHA384,
+            hmac::HMAC_SHA512,
+        ] {
+            let key = hmac::Key::generate(*algorithm, &rng).unwrap();
+            let data = b"hello, world";
+
+            // Buffer one byte too small should fail
+            let mut small_buf = vec![0u8; algorithm.tag_len() - 1];
+            let mut ctx = hmac::Context::with_key(&key);
+            ctx.update(data);
+            assert!(super::internal_sign(&mut ctx, &mut small_buf).is_err());
+
+            // Empty buffer should fail
+            let mut empty_buf = vec![];
+            let mut ctx = hmac::Context::with_key(&key);
+            ctx.update(data);
+            assert!(super::internal_sign(&mut ctx, &mut empty_buf).is_err());
+        }
+    }
+
     // Make sure that `Key::generate` and `verify_with_own_key` aren't
     // completely wacky.
     #[test]
