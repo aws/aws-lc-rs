@@ -19,10 +19,10 @@ mod win_x86_64;
 
 use crate::nasm_builder::NasmBuilder;
 use crate::{
-    cargo_env, disable_jitter_entropy, emit_warning, env_var_to_bool, execute_command,
-    get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm, out_dir, requested_c_std,
-    set_env_for_target, target, target_arch, target_env, target_os, target_vendor,
-    test_clang_cl_command, CStdRequested, OutputLibType,
+    cargo_env, disable_jitter_entropy, emit_warning, env_name_for_target, env_var_to_bool,
+    execute_command, get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm, out_dir,
+    requested_c_std, set_env_for_target, target, target_arch, target_env, target_os, target_vendor,
+    test_clang_cl_command, CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -203,10 +203,12 @@ impl CcBuilder {
                 build_options.push(BuildOption::std("c11"));
             }
             CStdRequested::None => {
-                if self.compiler_check("c11", Vec::<String>::new()) {
-                    build_options.push(BuildOption::std("c11"));
-                } else {
-                    build_options.push(BuildOption::std("c99"));
+                if !compiler_is_msvc {
+                    if self.compiler_check("c11", Vec::<String>::new()) {
+                        build_options.push(BuildOption::std("c11"));
+                    } else {
+                        build_options.push(BuildOption::std("c99"));
+                    }
                 }
             }
         }
@@ -430,18 +432,17 @@ impl CcBuilder {
             option.apply_cc(&mut je_builder);
         }
 
-        if let Some(original_cflags) = get_crate_cflags() {
-            let mut new_cflags = original_cflags.clone();
+        if let Some(mut cflags) = get_crate_cflags() {
             if is_like_msvc {
-                new_cflags.push_str(" -Od");
+                cflags.push_str(" -Od");
             } else {
-                new_cflags.push_str(" -O0 -Wp,-U_FORTIFY_SOURCE");
+                cflags.push_str(" -O0 -Wp,-U_FORTIFY_SOURCE");
             }
-            set_env_for_target("CFLAGS", &new_cflags);
+            let _guard_cflags = EnvGuard::new(&env_name_for_target("CFLAGS"), &cflags);
+
             // cc-rs currently prioritizes flags provided by CFLAGS over the flags provided by the build script.
             // The environment variables used by the compiler are set when `get_compiler` is called.
             je_builder.get_compiler();
-            set_env_for_target("CFLAGS", &original_cflags);
         }
 
         je_builder.define("AWSLC", "1");
