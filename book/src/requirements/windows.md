@@ -139,6 +139,12 @@ be distributed alongside any executable that depends on **aws-lc-rs**.
 
 ## Troubleshooting
 
+### I installed all requirements, but my build fails
+
+Make sure you are building from the *Developer PowerShell for VS* or *Developer Command Prompt for VS* that come with [Build Tools for Visual Studio][WIN_TOOLS]. Either one will correctly set the environment variables required for Visual Studio Build Tools to work properly.
+
+### My build still fails
+
 See our [troubleshooting section](../resources.md#build-environment-variables).
 
 [WIN_TOOLS]: https://aka.ms/vs/17/release/vs_BuildTools.exe
