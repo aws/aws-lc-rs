@@ -405,7 +405,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       AWS_LC_SYS_NO_ASM: 1
-      AWS_LC_RS_DISABLE_SLOW_TESTS: 1
     strategy:
       fail-fast: false
       matrix:
@@ -441,7 +440,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       AWS_LC_FIPS_SYS_NO_ASM: 1
-      AWS_LC_RS_DISABLE_SLOW_TESTS: 1
     strategy:
       fail-fast: false
       matrix:

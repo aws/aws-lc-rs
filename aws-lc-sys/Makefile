@@ -12,4 +12,9 @@ clippy-fix:
 
 ci: format clippy test api-diff-main
 
-.PHONY: test ci clippy-fix
+# Test builder functions using the builder-test crate
+# This compiles builder/main.rs as a library and runs its #[cfg(test)] module
+test-builder:
+	cargo test -p builder-test
+
+.PHONY: test ci clippy-fix test-builder

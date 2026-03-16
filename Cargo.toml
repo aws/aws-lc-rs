@@ -5,6 +5,7 @@ members = [
     "aws-lc-fips-sys",
     "aws-lc-rs-testing",
     "links-testing",
+    "builder-test",
 ]
 exclude = [
     "scripts/tools/cargo-dig.rs",

@@ -3,18 +3,11 @@
 
 cmake_minimum_required(VERSION 3.5...3.31)
 
-if(CMAKE_VERSION VERSION_GREATER "3.14")
-# https://cmake.org/cmake/help/latest/policy/CMP0091.html
-# In CMake 3.14 and below, MSVC runtime library selection flags are added to the default CMAKE_<LANG>_FLAGS_<CONFIG>
-# cache entries by CMake automatically.
-cmake_policy(SET CMP0091 OLD)
-endif()
-
 project(AWS_LC_RUST NONE)
 enable_language(C)
 
 function(set_my_target_properties ...)
-    set_target_properties(rust_wrapper crypto PROPERTIES ${ARGV})
+    set_target_properties(crypto PROPERTIES ${ARGV})
     if (BUILD_LIBSSL)
         set_target_properties(ssl PROPERTIES ${ARGV})
     endif()
@@ -22,23 +15,7 @@ endfunction()
 
 option(AWS_LC_FIPS_SYS_STATIC_RUNTIME "Enable static MSVC runtime for FIPS binaries" OFF)
 
-if (BUILD_SHARED_LIBS AND FIPS)
-    # FIPS_SHARED does not support unique function or data sections, but we can't set this from Rust
-    # as cmake crate will postfix the C/CXX flags after our disablement nullifying them.
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-function-sections -fno-data-sections")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-function-sections -fno-data-sections")
-
-    # FIPS_SHARED requires setting the static runtime flags manually due to limitations in cmake-rs and ninja generator.
-    if (MSVC AND AWS_LC_FIPS_SYS_STATIC_RUNTIME)
-        message(STATUS "Setting static MSVC runtime for FIPS binaries")
-        string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
-        set(STATIC_RUNTIME_FLAG "/MT")
-        if(CMAKE_BUILD_TYPE_UPPER STREQUAL "DEBUG")
-          set(STATIC_RUNTIME_FLAG "/MTd")
-        endif()
-        set(CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE_UPPER} "${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} ${STATIC_RUNTIME_FLAG}")
-        set(CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER} "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UPPER}} ${STATIC_RUNTIME_FLAG}")
-    endif()
+if (BUILD_SHARED_LIBS)
     add_definitions(-DBORINGSSL_SHARED_LIBRARY)
 endif()
 
@@ -51,11 +28,11 @@ if (BUILD_LIBSSL)
     add_definitions(-DAWS_LC_RUST_INCLUDE_SSL)
 endif()
 
-add_library(rust_wrapper rust_wrapper.c)
-target_include_directories(rust_wrapper PRIVATE include)
-target_link_libraries(rust_wrapper PUBLIC crypto)
+# Custom target needed because aws-lc is added with EXCLUDE_FROM_ALL, so its targets aren't built by default.
 if (BUILD_LIBSSL)
-    target_link_libraries(rust_wrapper PUBLIC ssl)
+    add_custom_target(aws_lc_sys ALL DEPENDS crypto ssl)
+else()
+    add_custom_target(aws_lc_sys ALL DEPENDS crypto)
 endif()
 
 set(FINAL_ARTIFACTS_DIRECTORY ${CMAKE_BINARY_DIR}/artifacts)

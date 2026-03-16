@@ -130,6 +130,13 @@ impl Algorithm {
     pub fn digest_algorithm(&self) -> &'static digest::Algorithm {
         self.0
     }
+
+    /// The tag length for this HMAC algorithm.
+    #[inline]
+    #[must_use]
+    pub fn tag_len(&self) -> usize {
+        self.digest_algorithm().output_len
+    }
 }
 
 /// HMAC using SHA-1. Obsolete.
@@ -259,7 +266,7 @@ impl Key {
         F: FnOnce(&mut [u8]) -> Result<(), Unspecified>,
     {
         let mut key_bytes = [0; digest::MAX_OUTPUT_LEN];
-        let key_bytes = &mut key_bytes[..algorithm.0.output_len];
+        let key_bytes = &mut key_bytes[..algorithm.tag_len()];
         fill(key_bytes)?;
         Ok(Self::new(algorithm, key_bytes))
     }
@@ -328,7 +335,7 @@ impl Key {
 impl hkdf::KeyType for Algorithm {
     #[inline]
     fn len(&self) -> usize {
-        self.digest_algorithm().output_len
+        self.tag_len()
     }
 }
 
@@ -420,21 +427,46 @@ impl Context {
     #[inline]
     fn try_sign(mut self) -> Result<Tag, Unspecified> {
         let mut output = [0u8; digest::MAX_OUTPUT_LEN];
-        let mut out_len = MaybeUninit::<c_uint>::uninit();
-        unsafe {
-            if 1 != indicator_check!(HMAC_Final(
-                self.key.get_hmac_ctx_ptr(),
-                output.as_mut_ptr(),
-                out_len.as_mut_ptr(),
-            )) {
-                return Err(Unspecified);
-            }
-            Ok(Tag {
-                msg: output,
-                msg_len: out_len.assume_init() as usize,
-            })
-        }
+        let msg_len = {
+            let result = internal_sign(&mut self, &mut output)?;
+            result.len()
+        };
+        Ok(Tag {
+            msg: output,
+            msg_len,
+        })
     }
+}
+
+#[inline]
+pub(crate) fn internal_sign<'in_out>(
+    ctx: &mut Context,
+    output: &'in_out mut [u8],
+) -> Result<&'in_out mut [u8], Unspecified> {
+    let tag_len = ctx.key.algorithm().tag_len();
+    if output.len() < tag_len {
+        return Err(Unspecified);
+    }
+
+    let mut out_len = MaybeUninit::<c_uint>::uninit();
+
+    if 1 != indicator_check!(unsafe {
+        HMAC_Final(
+            ctx.key.get_hmac_ctx_ptr(),
+            output.as_mut_ptr(),
+            out_len.as_mut_ptr(),
+        )
+    }) {
+        return Err(Unspecified);
+    }
+    let actual_len = unsafe { out_len.assume_init() } as usize;
+
+    debug_assert!(
+        actual_len == tag_len,
+        "HMAC tag length {actual_len} does not match expected length {tag_len}"
+    );
+
+    Ok(&mut output[0..tag_len])
 }
 
 /// Calculates the HMAC of `data` using the key `key` in one step.
@@ -457,6 +489,38 @@ pub fn sign(key: &Key, data: &[u8]) -> Tag {
     let mut ctx = Context::with_key(key);
     ctx.update(data);
     ctx.sign()
+}
+
+/// Calculates the HMAC of `data` using the key `key` in one step,
+/// writing the result into the provided `output` buffer.
+///
+/// The `output` buffer must be at least as large as the algorithm's
+/// tag length (i.e., `key.algorithm().tag_len()`). The returned slice will be a
+/// sub-slice of `output` containing exactly the tag bytes.
+///
+/// It is generally not safe to implement HMAC verification by comparing the
+/// return value of `sign_to_buffer` to a tag. Use `verify` for verification instead.
+//
+// # FIPS
+// Use this function with one of the following algorithms:
+// * `HMAC_SHA1_FOR_LEGACY_USE_ONLY`
+// * `HMAC_SHA224`
+// * `HMAC_SHA256`
+// * `HMAC_SHA384`
+// * `HMAC_SHA512`
+//
+/// # Errors
+/// `error::Unspecified` if `output` is too small or if the HMAC operation fails.
+#[inline]
+pub fn sign_to_buffer<'out>(
+    key: &Key,
+    data: &[u8],
+    output: &'out mut [u8],
+) -> Result<&'out mut [u8], Unspecified> {
+    let mut ctx = Context::with_key(key);
+    ctx.update(data);
+
+    internal_sign(&mut ctx, output)
 }
 
 /// Calculates the HMAC of `data` using the signing key `key`, and verifies
@@ -488,6 +552,45 @@ mod tests {
 
     #[cfg(feature = "fips")]
     mod fips;
+
+    #[test]
+    fn hmac_algorithm_properties() {
+        assert_eq!(hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY.tag_len(), 20);
+        assert_eq!(hmac::HMAC_SHA224.tag_len(), 28);
+        assert_eq!(hmac::HMAC_SHA256.tag_len(), 32);
+        assert_eq!(hmac::HMAC_SHA384.tag_len(), 48);
+        assert_eq!(hmac::HMAC_SHA512.tag_len(), 64);
+    }
+
+    // Make sure that internal_sign properly rejects too small buffers
+    // (and does not corrupt memory by buffer overflow)
+    #[test]
+    fn hmac_internal_sign_too_small_buffer() {
+        let rng = rand::SystemRandom::new();
+
+        for algorithm in &[
+            hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+            hmac::HMAC_SHA224,
+            hmac::HMAC_SHA256,
+            hmac::HMAC_SHA384,
+            hmac::HMAC_SHA512,
+        ] {
+            let key = hmac::Key::generate(*algorithm, &rng).unwrap();
+            let data = b"hello, world";
+
+            // Buffer one byte too small should fail
+            let mut small_buf = vec![0u8; algorithm.tag_len() - 1];
+            let mut ctx = hmac::Context::with_key(&key);
+            ctx.update(data);
+            assert!(super::internal_sign(&mut ctx, &mut small_buf).is_err());
+
+            // Empty buffer should fail
+            let mut empty_buf = vec![];
+            let mut ctx = hmac::Context::with_key(&key);
+            ctx.update(data);
+            assert!(super::internal_sign(&mut ctx, &mut empty_buf).is_err());
+        }
+    }
 
     // Make sure that `Key::generate` and `verify_with_own_key` aren't
     // completely wacky.
@@ -537,5 +640,58 @@ mod tests {
             assert_eq!(orig_tag.as_ref(), clone_tag.as_ref());
             assert_eq!(orig_tag.clone().as_ref(), clone_tag.as_ref());
         }
+    }
+
+    #[test]
+    fn hmac_sign_to_buffer_test() {
+        let rng = rand::SystemRandom::new();
+
+        for &algorithm in &[
+            hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+            hmac::HMAC_SHA224,
+            hmac::HMAC_SHA256,
+            hmac::HMAC_SHA384,
+            hmac::HMAC_SHA512,
+        ] {
+            let key = hmac::Key::generate(algorithm, &rng).unwrap();
+            let data = b"hello, world";
+            let tag_len = algorithm.tag_len();
+
+            // Test with exact size buffer
+            let mut output = vec![0u8; tag_len];
+            let result = hmac::sign_to_buffer(&key, data, &mut output).unwrap();
+            assert_eq!(result.len(), tag_len);
+
+            // Verify the returned tag matches sign() and passes verify()
+            let tag = hmac::sign(&key, data);
+            assert_eq!(result, tag.as_ref());
+            assert!(hmac::verify(&key, data, result).is_ok());
+
+            // Verify the output buffer also matches sign() and passes verify()
+            assert_eq!(output.as_slice(), tag.as_ref());
+            assert!(hmac::verify(&key, data, output.as_slice()).is_ok());
+
+            // Test with larger buffer
+            let mut large_output = vec![0u8; tag_len + 10];
+            let result2 = hmac::sign_to_buffer(&key, data, &mut large_output).unwrap();
+            assert_eq!(result2.len(), tag_len);
+            assert_eq!(result2, tag.as_ref());
+            assert!(hmac::verify(&key, data, result2).is_ok());
+            assert_eq!(&large_output[0..tag_len], tag.as_ref());
+        }
+    }
+
+    #[test]
+    fn hmac_sign_to_buffer_too_small_test() {
+        let key = hmac::Key::new(hmac::HMAC_SHA256, &[0; 32]);
+        let data = b"hello";
+
+        // Buffer too small should fail
+        let mut small_buffer = vec![0u8; hmac::HMAC_SHA256.tag_len() - 1];
+        assert!(hmac::sign_to_buffer(&key, data, &mut small_buffer).is_err());
+
+        // Empty buffer should fail
+        let mut empty_buffer = vec![];
+        assert!(hmac::sign_to_buffer(&key, data, &mut empty_buffer).is_err());
     }
 }

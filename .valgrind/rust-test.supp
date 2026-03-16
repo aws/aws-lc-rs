@@ -37,14 +37,18 @@
    ...
 }
 
-# Rust std::thread::Thread::new allocates thread metadata
-# This can appear as "possibly lost" due to interior pointers in Thread structure
+# Rust std::thread::Thread::new allocates thread metadata (e.g., Arc<Inner>)
+# This can appear as "possibly lost" due to interior pointers in the Thread structure.
+# The `...` between malloc and Thread::new allows for intermediate allocator frames
+# (alloc, alloc_impl, allocate, allocate_for_layout, etc.) which vary by Rust version.
 {
    rust_thread_new_interior_pointer
    Memcheck:Leak
    match-leak-kinds: possible
    fun:malloc
-   fun:*thread*Thread*new*
+   ...
+   fun:*Thread*new*
+   fun:*init_current*
    ...
 }
 
