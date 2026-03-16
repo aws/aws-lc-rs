@@ -354,6 +354,8 @@ jobs:
         run: |
           cargo +1.71.0 update
           cargo +1.71.0 update -p libloading --precise 0.8.8
+          cargo +1.71.0 update -p clap --precise 4.5.61
+          cargo +1.71.0 update -p clap_lex --precise 1.0.1
           cargo +1.71.0 tree
 
       - name: Verify msrv
