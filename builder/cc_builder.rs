@@ -432,19 +432,6 @@ impl CcBuilder {
             option.apply_cc(&mut je_builder);
         }
 
-        if let Some(mut cflags) = get_crate_cflags() {
-            if is_like_msvc {
-                cflags.push_str(" -Od");
-            } else {
-                cflags.push_str(" -O0 -Wp,-U_FORTIFY_SOURCE");
-            }
-            let _guard_cflags = EnvGuard::new(&env_name_for_target("CFLAGS"), &cflags);
-
-            // cc-rs currently prioritizes flags provided by CFLAGS over the flags provided by the build script.
-            // The environment variables used by the compiler are set when `get_compiler` is called.
-            je_builder.get_compiler();
-        }
-
         je_builder.define("AWSLC", "1");
         if target_os() == "macos" || target_os() == "darwin" {
             // Certain MacOS system headers are guarded by _POSIX_C_SOURCE and _DARWIN_C_SOURCE
@@ -568,6 +555,27 @@ impl CcBuilder {
             cc_build.object(object);
         }
         if Some(true) != disable_jitter_entropy() {
+            // The cc crate appends CFLAGS at the end of the compiler command line,
+            // which means CFLAGS optimization flags override build script flags.
+            // Jitterentropy MUST be compiled with -O0, so we temporarily override
+            // CFLAGS to replace any optimization flags with -O0.
+            let _je_cflags_guard: Option<EnvGuard> = if let Some(cflags) = get_crate_cflags() {
+                let filtered: String = cflags
+                    .split_whitespace()
+                    .filter(|flag| !flag.starts_with("-O") && !flag.starts_with("/O"))
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                let new_cflags = if compiler.is_like_msvc() {
+                    format!("{filtered} -Od").trim().to_string()
+                } else {
+                    format!("{filtered} -O0 -Wp,-U_FORTIFY_SOURCE")
+                        .trim()
+                        .to_string()
+                };
+                Some(EnvGuard::new(&env_name_for_target("CFLAGS"), &new_cflags))
+            } else {
+                None
+            };
             let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
             for object in jitter_entropy_object_files {
                 cc_build.object(object);
