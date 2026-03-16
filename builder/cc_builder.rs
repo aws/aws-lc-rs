@@ -464,6 +464,27 @@ impl CcBuilder {
         je_builder
     }
 
+    /// The cc crate appends CFLAGS at the end of the compiler command line,
+    /// which means CFLAGS optimization flags override build script flags.
+    /// Jitterentropy MUST be compiled with -O0, so we temporarily override
+    /// CFLAGS to replace any optimization flags with -O0.
+    fn jitter_entropy_cflags_guard(is_like_msvc: bool) -> Option<EnvGuard> {
+        let cflags = get_crate_cflags()?;
+        let filtered: String = cflags
+            .split_whitespace()
+            .filter(|flag| !flag.starts_with("-O") && !flag.starts_with("/O"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let new_cflags = if is_like_msvc {
+            format!("{filtered} -Od").trim().to_string()
+        } else {
+            format!("{filtered} -O0 -Wp,-U_FORTIFY_SOURCE")
+                .trim()
+                .to_string()
+        };
+        Some(EnvGuard::new(&env_name_for_target("CFLAGS"), &new_cflags))
+    }
+
     fn add_all_files(&self, sources: &[&'static str], cc_build: &mut cc::Build) {
         let compiler = cc_build.get_compiler();
 
@@ -555,27 +576,7 @@ impl CcBuilder {
             cc_build.object(object);
         }
         if Some(true) != disable_jitter_entropy() {
-            // The cc crate appends CFLAGS at the end of the compiler command line,
-            // which means CFLAGS optimization flags override build script flags.
-            // Jitterentropy MUST be compiled with -O0, so we temporarily override
-            // CFLAGS to replace any optimization flags with -O0.
-            let _je_cflags_guard: Option<EnvGuard> = if let Some(cflags) = get_crate_cflags() {
-                let filtered: String = cflags
-                    .split_whitespace()
-                    .filter(|flag| !flag.starts_with("-O") && !flag.starts_with("/O"))
-                    .collect::<Vec<_>>()
-                    .join(" ");
-                let new_cflags = if compiler.is_like_msvc() {
-                    format!("{filtered} -Od").trim().to_string()
-                } else {
-                    format!("{filtered} -O0 -Wp,-U_FORTIFY_SOURCE")
-                        .trim()
-                        .to_string()
-                };
-                Some(EnvGuard::new(&env_name_for_target("CFLAGS"), &new_cflags))
-            } else {
-                None
-            };
+            let _je_cflags_guard = Self::jitter_entropy_cflags_guard(compiler.is_like_msvc());
             let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
             for object in jitter_entropy_object_files {
                 cc_build.object(object);
