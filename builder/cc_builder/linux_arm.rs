@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Mon Mar  2 21:40:57 UTC 2026
+// Thu Mar 19 18:54:50 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/poly1305/poly1305_arm_asm.S",
