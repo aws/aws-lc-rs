@@ -700,6 +700,34 @@ jobs:
       - name: Run tests
         run: cargo test -p aws-lc-rs --all-targets
 
+  symlinked-includes:
+    if: github.repository_owner == 'aws'
+    name: Symlinked includes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Replace include files with symlinks
+        run: |
+          # Simulate build environments (Bazel, Nix) where source files in
+          # CARGO_MANIFEST_DIR are symlinks into a content-addressable store.
+          STORE=$(mktemp -d)
+          for crate in aws-lc-sys aws-lc-fips-sys; do
+            for inc in include generated-include aws-lc/include; do
+              dir="${crate}/${inc}"
+              [ -d "$dir" ] || continue
+              find "$dir" -type f | while read -r f; do
+                mkdir -p "${STORE}/$(dirname "$f")"
+                mv "$f" "${STORE}/$f"
+                ln -s "${STORE}/$f" "$f"
+              done
+            done
+          done
+      - name: Run cargo test
+        run: cargo test --tests -p aws-lc-rs --no-default-features --features aws-lc-sys
+
   build-env-no-u1-bindings-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs build-env-no-u1-bindings-test
