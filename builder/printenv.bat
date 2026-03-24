@@ -27,13 +27,15 @@ echo vcvarsall.bat not found.
 goto End
 
 :FoundVS
-call "!VS_PATH!vcvarsall.bat" x64
+set "VCVARS_ARCH=%~1"
+if "%VCVARS_ARCH%"=="" set "VCVARS_ARCH=x64"
+call "!VS_PATH!vcvarsall.bat" %VCVARS_ARCH%
 if !ERRORLEVEL! neq 0 (
     echo Failed to set Visual Studio environment variables.
-    echo PATH: "!VS_PATH!vcvarsall.bat"
+    echo PATH: "!VS_PATH!vcvarsall.bat" %VCVARS_ARCH%
     goto End
 )
-echo Visual Studio environment variables set for x64.
+echo Visual Studio environment variables set for %VCVARS_ARCH%.
 
 set
 endlocal

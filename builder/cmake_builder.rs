@@ -383,10 +383,40 @@ impl CmakeBuilder {
         }
     }
 
+    /// Returns the architecture argument for `vcvarsall.bat`.
+    ///
+    /// In a Cargo build-script, `cfg!(target_arch)` is the **host** architecture
+    /// (the machine running the build), while `target_arch()` (backed by
+    /// `CARGO_CFG_TARGET_ARCH`) is the **target** architecture we are compiling for.
+    ///
+    /// `vcvarsall.bat` accepts a single token that encodes both:
+    ///   - native   : `x64`, `arm64`, `x86`
+    ///   - cross    : `<host>_<target>`, e.g. `x64_arm64`
+    fn vcvarsall_arch() -> &'static str {
+        let target = target_arch();
+        match (
+            cfg!(target_arch = "x86_64"),
+            cfg!(target_arch = "aarch64"),
+            target.as_str(),
+        ) {
+            // Host x64
+            (true, _, "x86_64") => "x64",
+            (true, _, "aarch64") => "x64_arm64",
+            (true, _, "x86") => "x64_x86",
+            // Host arm64
+            (_, true, "aarch64") => "arm64",
+            (_, true, "x86_64") => "arm64_x64",
+            (_, true, "x86") => "arm64_x86",
+            // Fallback
+            _ => "x64",
+        }
+    }
+
     fn collect_vcvarsall_bat(&self) -> Result<HashMap<String, String>, String> {
         let mut map: HashMap<String, String> = HashMap::new();
         let script_path = self.manifest_dir.join("builder").join("printenv.bat");
-        let result = execute_command(script_path.as_os_str(), &[]);
+        let arch = OsString::from(Self::vcvarsall_arch());
+        let result = execute_command(script_path.as_os_str(), &[arch.as_os_str()]);
         if !result.status {
             eprintln!("{}", result.stdout);
             return Err("Failed to run vcvarsall.bat.".to_owned());
