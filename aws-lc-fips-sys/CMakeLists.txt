@@ -35,6 +35,14 @@ else()
     add_custom_target(aws_lc_sys ALL DEPENDS crypto)
 endif()
 
+# The aws-lc Windows FIPS shared-library build may define a fips_integrity
+# target that patches the correct integrity hash into crypto.dll after it is
+# linked. Because aws-lc is added with EXCLUDE_FROM_ALL, that target would not
+# be part of this project's ALL target and would otherwise never be built.
+if (TARGET fips_integrity)
+    add_dependencies(aws_lc_sys fips_integrity)
+endif()
+
 set(FINAL_ARTIFACTS_DIRECTORY ${CMAKE_BINARY_DIR}/artifacts)
 
 # Places the compiled library files at the root of the binary directory so we can have a consistent
