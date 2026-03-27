@@ -42,6 +42,11 @@ use zeroize::Zeroize;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum KeySize {
     /// 2048-bit key
+    #[deprecated(
+        note = "RSA 2048-bit keys are not recommended for new key generation. \
+                NIST SP 800-131A Rev. 3 (draft) deprecates RSA keys smaller than \
+                3072 bits after 2030. Use `KeySize::Rsa3072` or larger."
+    )]
     Rsa2048,
 
     /// 3072-bit key
@@ -55,6 +60,7 @@ pub enum KeySize {
 }
 
 #[allow(clippy::len_without_is_empty)]
+#[allow(deprecated)]
 impl KeySize {
     /// Returns the size of the key in bytes.
     #[inline]
