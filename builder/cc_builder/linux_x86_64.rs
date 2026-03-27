@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Thu Mar 19 18:54:51 UTC 2026
+// Fri Mar 27 16:59:33 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/intt.S",
