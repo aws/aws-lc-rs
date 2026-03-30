@@ -476,7 +476,42 @@ fn target_underscored() -> String {
 }
 
 fn out_dir() -> PathBuf {
-    PathBuf::from(cargo_env("OUT_DIR"))
+    to_short_path(&PathBuf::from(cargo_env("OUT_DIR")))
+}
+
+/// On Windows, convert a path to its 8.3 short form to avoid MAX_PATH (260 char) limits
+/// when cl.exe is invoked with deeply nested source trees (e.g. Bazel runfiles).
+#[cfg(windows)]
+fn to_short_path(path: &Path) -> PathBuf {
+    use std::os::windows::ffi::{OsStrExt, OsStringExt};
+    extern "system" {
+        fn GetShortPathNameW(
+            lpszLongPath: *const u16,
+            lpszShortPath: *mut u16,
+            cchBuffer: u32,
+        ) -> u32;
+    }
+    let wide: Vec<u16> = path
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let len = unsafe { GetShortPathNameW(wide.as_ptr(), std::ptr::null_mut(), 0) };
+    if len == 0 {
+        return path.to_path_buf();
+    }
+    let mut buf = vec![0u16; len as usize];
+    let result = unsafe { GetShortPathNameW(wide.as_ptr(), buf.as_mut_ptr(), len) };
+    if result == 0 {
+        return path.to_path_buf();
+    }
+    buf.truncate(result as usize);
+    PathBuf::from(std::ffi::OsString::from_wide(&buf))
+}
+
+#[cfg(not(windows))]
+fn to_short_path(path: &Path) -> PathBuf {
+    path.to_path_buf()
 }
 
 fn current_dir() -> PathBuf {
@@ -818,7 +853,7 @@ fn main() {
     prepare_cargo_cfg();
 
     let manifest_dir = current_dir();
-    let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
+    let manifest_dir = to_short_path(&dunce::canonicalize(Path::new(&manifest_dir)).unwrap());
     let prefix_str = prefix_string();
     let prefix = if is_no_prefix() {
         None
@@ -862,7 +897,9 @@ fn main() {
             "If bindgen is unable to locate a header file, use the \
             BINDGEN_EXTRA_CLANG_ARGS environment variable to specify additional include paths.",
         );
-        emit_warning("See: https://github.com/rust-lang/rust-bindgen?tab=readme-ov-file#environment-variables");
+        emit_warning(
+            "See: https://github.com/rust-lang/rust-bindgen?tab=readme-ov-file#environment-variables",
+        );
         emit_warning("######");
         let aws_lc_crypto_dir = Path::new(&manifest_dir).join("aws-lc").join("crypto");
         if !aws_lc_crypto_dir.exists() {
