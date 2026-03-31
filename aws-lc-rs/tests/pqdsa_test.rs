@@ -43,31 +43,52 @@ macro_rules! mldsa_sigver_test {
             let public_key = test_case.consume_bytes("PUBLIC");
             let message = test_case.consume_bytes("MESSAGE");
             let signature = test_case.consume_bytes("SIGNATURE");
-            let _context = test_case.consume_bytes("CONTEXT");
+            let context = test_case.consume_bytes("CONTEXT");
             let expected_result = test_case.consume_bool("RESULT");
 
-            let result =
-                $verification.verify_sig(public_key.as_ref(), message.as_ref(), signature.as_ref());
+            let result = $verification.verify_sig_with_context(
+                public_key.as_ref(),
+                message.as_ref(),
+                context.as_ref(),
+                signature.as_ref(),
+            );
             if expected_result {
                 assert!(result.is_ok());
             } else {
                 assert!(result.is_err());
             }
 
-            let ppk = ParsedPublicKey::new($verification, public_key.as_slice()).unwrap();
-            let result = ppk.verify_sig(message.as_ref(), signature.as_ref());
-            if expected_result {
-                assert!(result.is_ok());
-            } else {
-                assert!(result.is_err());
-            }
-            let x509_bytes = ppk.as_der().unwrap();
-            let result =
-                $verification.verify_sig(x509_bytes.as_ref(), message.as_ref(), signature.as_ref());
-            if expected_result {
-                assert!(result.is_ok());
-            } else {
-                assert!(result.is_err());
+            // Also test without context for backward compatibility when context is empty
+            if context.is_empty() {
+                let result = $verification.verify_sig(
+                    public_key.as_ref(),
+                    message.as_ref(),
+                    signature.as_ref(),
+                );
+                if expected_result {
+                    assert!(result.is_ok());
+                } else {
+                    assert!(result.is_err());
+                }
+
+                let ppk = ParsedPublicKey::new($verification, public_key.as_slice()).unwrap();
+                let result = ppk.verify_sig(message.as_ref(), signature.as_ref());
+                if expected_result {
+                    assert!(result.is_ok());
+                } else {
+                    assert!(result.is_err());
+                }
+                let x509_bytes = ppk.as_der().unwrap();
+                let result = $verification.verify_sig(
+                    x509_bytes.as_ref(),
+                    message.as_ref(),
+                    signature.as_ref(),
+                );
+                if expected_result {
+                    assert!(result.is_ok());
+                } else {
+                    assert!(result.is_err());
+                }
             }
             Ok(())
         });
@@ -323,5 +344,64 @@ fn test_mldsa_seed_functional_equivalence() {
             .expect("original signature should verify");
         pk.verify(msg, &sig_reconstructed)
             .expect("reconstructed signature should verify");
+    }
+}
+
+#[test]
+fn test_mldsa_context_string() {
+    for (signing_alg, verify_alg) in [
+        (&ML_DSA_44_SIGNING, &ML_DSA_44),
+        (&ML_DSA_65_SIGNING, &ML_DSA_65),
+        (&ML_DSA_87_SIGNING, &ML_DSA_87),
+    ] {
+        let kp = PqdsaKeyPair::generate(signing_alg).unwrap();
+        let msg = b"context string test message";
+        let ctx = b"my-application-context";
+        let mut sig = vec![0u8; signing_alg.signature_len()];
+
+        // Sign with context, verify with same context
+        let sig_len = kp.sign_with_context(msg, ctx, &mut sig).unwrap();
+        assert_eq!(sig_len, signing_alg.signature_len());
+        verify_alg
+            .verify_sig_with_context(kp.public_key().as_ref(), msg, ctx, &sig)
+            .expect("same context should verify");
+
+        // Wrong context fails
+        assert!(
+            verify_alg
+                .verify_sig_with_context(kp.public_key().as_ref(), msg, b"wrong", &sig)
+                .is_err(),
+            "wrong context should fail"
+        );
+
+        // No context fails for signature made with context
+        assert!(
+            verify_alg
+                .verify_sig(kp.public_key().as_ref(), msg, &sig)
+                .is_err(),
+            "no context should fail for context-signed signature"
+        );
+
+        // Empty context matches default sign()
+        let mut sig_empty = vec![0u8; signing_alg.signature_len()];
+        kp.sign_with_context(msg, b"", &mut sig_empty).unwrap();
+        verify_alg
+            .verify_sig(kp.public_key().as_ref(), msg, &sig_empty)
+            .expect("empty context should match default");
+
+        // Context > 255 bytes rejected
+        let long_ctx = [0x41u8; 256];
+        assert!(
+            kp.sign_with_context(msg, &long_ctx, &mut sig).is_err(),
+            "context > 255 bytes should be rejected"
+        );
+
+        // Max context (255 bytes) accepted
+        let max_ctx = [0x42u8; 255];
+        kp.sign_with_context(msg, &max_ctx, &mut sig)
+            .expect("255-byte context should be accepted");
+        verify_alg
+            .verify_sig_with_context(kp.public_key().as_ref(), msg, &max_ctx, &sig)
+            .expect("255-byte context should verify");
     }
 }

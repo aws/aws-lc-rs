@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::aws_lc::EVP_PKEY;
+use crate::aws_lc::{EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_CTX_set_signature_context};
 use crate::buffer::Buffer;
 use crate::digest::Digest;
 use crate::encoding::{AsDer, PublicKeyX509Der};
@@ -123,6 +123,39 @@ impl VerificationAlgorithm for PqdsaVerificationAlgorithm {
         _signature: &[u8],
     ) -> Result<(), Unspecified> {
         Err(Unspecified)
+    }
+}
+
+impl PqdsaVerificationAlgorithm {
+    /// Verifies the signature for `msg` using a FIPS 204 context string.
+    ///
+    /// The `context` parameter is an octet string of at most 255 bytes that provides
+    /// domain separation per FIPS 204 §5.2. An empty context is equivalent to calling
+    /// [`VerificationAlgorithm::verify_sig`].
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the signature is invalid or `context` exceeds 255 bytes.
+    pub fn verify_sig_with_context(
+        &self,
+        public_key: &[u8],
+        msg: &[u8],
+        context: &[u8],
+        signature: &[u8],
+    ) -> Result<(), Unspecified> {
+        let evp_pkey = parse_pqdsa_public_key(public_key, self.id)?;
+        let ctx_fn = |pctx: *mut EVP_PKEY_CTX| -> Result<(), ()> {
+            if context.is_empty() {
+                return Ok(());
+            }
+            if 1 == unsafe {
+                EVP_PKEY_CTX_set_signature_context(pctx, context.as_ptr(), context.len())
+            } {
+                Ok(())
+            } else {
+                Err(())
+            }
+        };
+        evp_pkey.verify(msg, None, Some(ctx_fn), signature)
     }
 }
 
