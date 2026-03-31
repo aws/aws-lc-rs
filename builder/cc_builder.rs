@@ -340,13 +340,15 @@ impl CcBuilder {
         ));
 
         if Some(true) != disable_jitter_entropy() {
-            build_options.push(BuildOption::include(
-                self.manifest_dir
-                    .join("aws-lc")
-                    .join("third_party")
-                    .join("jitterentropy")
-                    .join("jitterentropy-library"),
-            ));
+            let jitterentropy_path = self
+                .manifest_dir
+                .join("aws-lc")
+                .join("third_party")
+                .join("jitterentropy")
+                .join("jitterentropy-library");
+
+            build_options.push(BuildOption::include(&jitterentropy_path));
+            build_options.push(BuildOption::include(jitterentropy_path.join("src")));
         }
     }
 
