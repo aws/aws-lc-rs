@@ -16,6 +16,25 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+/// Strip LTO-related flags from a CFLAGS string. LTO flags interfere with the
+/// FIPS delocator pipeline, which compiles C to assembly (`-S`) and processes it
+/// with a Go tool. The combination of `-S` and `-flto` causes GCC to produce
+/// GIMPLE-annotated output that the delocator cannot handle. Additionally, LTO
+/// object files mixed with hand-written assembly in static libraries can cause
+/// linker errors (e.g. `R_X86_64_32` relocations incompatible with PIE).
+/// See also: aws-lc `CMakeLists.txt` which disables assembly when LTO is active.
+fn strip_lto_flags(cflags: &str) -> String {
+    cflags
+        .split_whitespace()
+        .filter(|flag| {
+            !flag.starts_with("-flto")
+                && *flag != "-ffat-lto-objects"
+                && *flag != "-fno-fat-lto-objects"
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 pub(crate) struct CmakeBuilder {
     manifest_dir: PathBuf,
     out_dir: PathBuf,
@@ -178,7 +197,15 @@ impl CmakeBuilder {
         }
 
         if let Some(cflags) = get_crate_cflags() {
-            set_env_for_target("CFLAGS", cflags);
+            let cflags = if is_fips_build() {
+                strip_lto_flags(&cflags)
+            } else {
+                cflags
+            };
+            // Set both the target-specific and base CFLAGS. cmake-rs reads
+            // the base CFLAGS env var directly, so we must override it too.
+            set_env_for_target("CFLAGS", &cflags);
+            set_env("CFLAGS", &cflags);
         }
 
         // cmake-rs has logic that strips Optimization/Debug options that are passed via CFLAGS:
@@ -596,5 +623,34 @@ impl crate::Builder for CmakeBuilder {
 
     fn name(&self) -> &'static str {
         "CMake"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::strip_lto_flags;
+
+    #[test]
+    fn test_strip_lto_flags() {
+        // RPM-style CFLAGS with -flto=auto and -ffat-lto-objects
+        let input = "-O2 -ftree-vectorize -flto=auto -ffat-lto-objects -fexceptions -g -fPIC";
+        assert_eq!(
+            strip_lto_flags(input),
+            "-O2 -ftree-vectorize -fexceptions -g -fPIC"
+        );
+
+        // Various LTO flag forms
+        assert_eq!(strip_lto_flags("-flto -O2"), "-O2");
+        assert_eq!(strip_lto_flags("-flto=thin -O2"), "-O2");
+        assert_eq!(strip_lto_flags("-flto=full -O2"), "-O2");
+        assert_eq!(strip_lto_flags("-flto=4 -O2"), "-O2");
+        assert_eq!(strip_lto_flags("-fno-fat-lto-objects -O2"), "-O2");
+
+        // No LTO flags - passthrough
+        let no_lto = "-O2 -fPIC -g";
+        assert_eq!(strip_lto_flags(no_lto), no_lto);
+
+        // Empty input
+        assert_eq!(strip_lto_flags(""), "");
     }
 }
