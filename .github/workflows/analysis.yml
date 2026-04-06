@@ -28,7 +28,7 @@ jobs:
     if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -55,7 +55,7 @@ jobs:
           - "--features bindgen,unstable,fips"
           - "--no-default-features --features aws-lc-sys"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -80,7 +80,7 @@ jobs:
         crate_dir: [ "aws-lc-sys", "aws-lc-fips-sys", "aws-lc-rs" ]
         diff_target: [ "branch", "published" ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           fetch-depth: 0
           submodules: 'recursive'
@@ -110,11 +110,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v3
+        uses: actions/dependency-review-action@cc4f6536e38d1126c5e3b0683d469a14f23bfea4 # v3
         with:
           allow-licenses: Apache-2.0, ISC, MIT, MIT-0
 
@@ -122,7 +122,7 @@ jobs:
     if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
 
@@ -151,7 +151,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-14, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -182,7 +182,7 @@ jobs:
       matrix:
         crate: [ 'aws-lc-rs', 'aws-lc-sys', 'aws-lc-fips-sys' ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
           lfs: true
@@ -204,16 +204,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - name: Check semver (Default Features)
-        uses: obi1kenobi/cargo-semver-checks-action@v2
+        uses: obi1kenobi/cargo-semver-checks-action@6b69fcf40e9b5fb17adeb57e4b6ecd020649a239 # v2.9
         with:
           package: aws-lc-rs
           feature-group: default-features
       - name: Check semver (FIPS)
-        uses: obi1kenobi/cargo-semver-checks-action@v2
+        uses: obi1kenobi/cargo-semver-checks-action@6b69fcf40e9b5fb17adeb57e4b6ecd020649a239 # v2.9
         with:
           package: aws-lc-rs
           feature-group: only-explicit-features
@@ -229,7 +229,7 @@ jobs:
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - name: aws-lc-rs links
@@ -252,14 +252,14 @@ jobs:
     name: Verify prefixing
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: nightly
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Run assert script
@@ -269,14 +269,14 @@ jobs:
     name: Verify jitter-entropy is enabled
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: nightly
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Assert jitter-entropy available
@@ -299,14 +299,14 @@ jobs:
     env:
       AWS_LC_SYS_NO_JITTER_ENTROPY: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: nightly
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Assert jitter-entropy not available
@@ -336,7 +336,7 @@ jobs:
     env:
       AWS_LC_RS_DISABLE_SLOW_TESTS: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -366,7 +366,7 @@ jobs:
           - ubuntu-latest
           - ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable

@@ -34,7 +34,7 @@ jobs:
     env:
       GIT_CLONE_PROTECTION_ACTIVE: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -56,7 +56,7 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         latest: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -81,7 +81,7 @@ jobs:
           - ''
           - '--fips'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -103,7 +103,7 @@ jobs:
       matrix:
         os: [ windows-latest, ubuntu-latest, macos-latest ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -112,15 +112,15 @@ jobs:
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: install bindgen-cli
         run: cargo install --force --locked bindgen-cli
-      - uses: ilammy/setup-nasm@v1
+      - uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: "Test aws-lc-sys package w/ SSL enabled"
         working-directory: ./aws-lc-sys
         run: cargo package --features ssl
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v4
+        uses: seanmiddleditch/gha-setup-ninja@8b297075da4cd2a5f1fd21fe011b499edf06e9d2 # v4
       - name: "Test aws-lc-fips-sys package w/ SSL enabled"
         working-directory: ./aws-lc-fips-sys
         run: cargo package --features ssl
@@ -135,7 +135,7 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
         features: [ aws-lc-rs, aws-lc-rs-fips, aws-lc-sys, aws-lc-fips-sys ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -144,13 +144,13 @@ jobs:
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install NASM on Windows
         if: runner.os == 'Windows'
-        uses: ilammy/setup-nasm@v1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Setup Go >=v1.18
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v4
+        uses: seanmiddleditch/gha-setup-ninja@8b297075da4cd2a5f1fd21fe011b499edf06e9d2 # v4
       - name: Run cargo test
         working-directory: ./links-testing
         run: cargo test --features ${{ matrix.features }} --no-default-features
@@ -166,7 +166,7 @@ jobs:
       skip-aws-lc-rs: ${{ steps.check.outputs.skip-aws-lc-rs }}
       reason: ${{ steps.check.outputs.reason }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       - name: Check sys crate version compatibility
         id: check
         run: |
@@ -212,18 +212,18 @@ jobs:
         args:
           - publish --dry-run
     steps:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - run: go version
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
-        uses: ilammy/setup-nasm@v1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Install ninja-build tool
         if: ${{ matrix.os == 'windows-latest' }}
-        uses: seanmiddleditch/gha-setup-ninja@v4
+        uses: seanmiddleditch/gha-setup-ninja@8b297075da4cd2a5f1fd21fe011b499edf06e9d2 # v4
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -255,18 +255,18 @@ jobs:
         args:
           - publish --dry-run
     steps:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - run: go version
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
-        uses: ilammy/setup-nasm@v1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Install ninja-build tool
         if: ${{ matrix.os == 'windows-latest' }}
-        uses: seanmiddleditch/gha-setup-ninja@v4
+        uses: seanmiddleditch/gha-setup-ninja@8b297075da4cd2a5f1fd21fe011b499edf06e9d2 # v4
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
@@ -296,7 +296,7 @@ jobs:
         args:
           - publish --dry-run
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -331,7 +331,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: 'recursive'
           lfs: true
@@ -343,7 +343,7 @@ jobs:
           echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
       - name: Install NASM on Windows
         if: runner.os == 'Windows'
-        uses: ilammy/setup-nasm@v1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
 
       - name: Install MSRV Rust version
         uses: dtolnay/rust-toolchain@stable

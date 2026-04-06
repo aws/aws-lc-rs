@@ -41,7 +41,7 @@ jobs:
           - --no-default-features --features non-fips,ring-sig-verify,unstable
           - --no-default-features --features non-fips,alloc,unstable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -70,7 +70,7 @@ jobs:
           - --no-default-features --features aws-lc-sys,bindgen,unstable
           - --release --all-targets --features bindgen,unstable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - if: ${{ startsWith(matrix.os, 'macos-') }}
@@ -108,7 +108,7 @@ jobs:
     env:
       AWS_LC_SYS_PREBUILT_NASM: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -126,7 +126,7 @@ jobs:
     name: aws-ls-rs coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           lfs: true
@@ -149,7 +149,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
         with:
           files: ./codecov.json,./codecov-fips.json
           verbose: true
@@ -168,7 +168,7 @@ jobs:
           - --no-default-features --features fips,asan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -197,7 +197,7 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         static: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -217,7 +217,7 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -252,7 +252,7 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -291,12 +291,12 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
       - name: Install NASM
-        uses: ilammy/setup-nasm@v1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Remove NASM artifacts
         shell: bash
         run: |
@@ -325,7 +325,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -349,13 +349,13 @@ jobs:
       matrix:
         target: [ 'i686-pc-windows-gnu', 'i686-pc-windows-msvc', 'x86_64-pc-windows-msvc', 'x86_64-pc-windows-gnu' ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
         with:
           target: ${{ matrix.target }}
-      - uses: ilammy/setup-nasm@v1
+      - uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Install bindgen-cli
         run: cargo install --locked bindgen-cli
       - name: Remove bindings
@@ -365,7 +365,7 @@ jobs:
           rm ./aws-lc-sys/src/i686*
       - if: ${{ matrix.target == 'i686-pc-windows-gnu' }}
         name: Install mingw
-        uses: bwoodsend/setup-winlibs-action@v1
+        uses: bwoodsend/setup-winlibs-action@ceefd070f6288838003797de3b06d7bc01e52842 # v1.16
         with:
           architecture: i686
       - name: Run cargo test
@@ -389,11 +389,11 @@ jobs:
           - os: 'macos-15-intel'
             static: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Run cargo test
@@ -410,7 +410,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -445,14 +445,14 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
-      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: seanmiddleditch/gha-setup-ninja@96bed6edff20d1dd61ecff9b75cc519d516e6401 # v5
       - name: Run cargo test
         run: cargo test -p aws-lc-rs --tests --no-default-features --features fips
       - name: Release build
@@ -484,15 +484,15 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
-        uses: ilammy/setup-nasm@v1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - if: ${{ matrix.os == 'windows-latest' }}
-        uses: seanmiddleditch/gha-setup-ninja@v5
+        uses: seanmiddleditch/gha-setup-ninja@96bed6edff20d1dd61ecff9b75cc519d516e6401 # v5
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Install bindgen-cli
@@ -516,7 +516,7 @@ jobs:
           - macos-15-intel
           - macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           lfs: true
@@ -534,7 +534,7 @@ jobs:
           echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Run tests
@@ -553,10 +553,10 @@ jobs:
       LIBCLANG_PATH: '/opt/homebrew/opt/llvm@19/lib'
       LLVM_CONFIG_PATH: '/opt/homebrew/opt/llvm@19/bin/llvm-config'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - uses: dtolnay/rust-toolchain@master
@@ -590,15 +590,15 @@ jobs:
           - os: 'macos-latest'
             fips: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           path: "path has spaces/aws-lc-rs"
       - if: ${{ matrix.os == 'windows-latest' }}
-        uses: ilammy/setup-nasm@v1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - uses: dtolnay/rust-toolchain@stable
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-      - uses: actions/setup-go@v4
+      - uses: seanmiddleditch/gha-setup-ninja@96bed6edff20d1dd61ecff9b75cc519d516e6401 # v5
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Run cargo test
@@ -622,7 +622,7 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         pregen_src: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           path: "path has spaces/aws-lc-rs"
@@ -631,10 +631,10 @@ jobs:
         run: |
           rm -rf ./aws-lc-sys/aws-lc/generated-src/*
       - if: ${{ matrix.os == 'windows-latest' }}
-        uses: ilammy/setup-nasm@v1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - uses: dtolnay/rust-toolchain@stable
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-      - uses: actions/setup-go@v4
+      - uses: seanmiddleditch/gha-setup-ninja@96bed6edff20d1dd61ecff9b75cc519d516e6401 # v5
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - if: ${{ startsWith( matrix.os, 'macos-') }}
@@ -667,11 +667,11 @@ jobs:
       CFLAGS: ${{ matrix.cflags }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - name: Run tests
@@ -697,7 +697,7 @@ jobs:
       CFLAGS: ${{ matrix.cflags }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -709,7 +709,7 @@ jobs:
     name: Symlinked includes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -743,11 +743,11 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
-        uses: ilammy/setup-nasm@v1
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - uses: dtolnay/rust-toolchain@stable
       - name: Remove other universal bindings
         shell: bash
@@ -776,7 +776,7 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master

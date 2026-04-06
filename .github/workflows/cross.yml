@@ -66,7 +66,7 @@ jobs:
           - [ x86_64-unknown-illumos, 0, 0, 1]
           - [ x86_64-unknown-linux-musl, 0, 0, 1]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: "recursive"
       - uses: dtolnay/rust-toolchain@master
@@ -146,14 +146,14 @@ jobs:
             api: 21
             test_target_cc: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - uses: dtolnay/rust-toolchain@stable
         with:
           target: ${{ matrix.target }}
       - name: Install Android NDK
-        uses: nttld/setup-ndk@v1
+        uses: nttld/setup-ndk@ed92fe6cadad69be94a966a7ee3271275e62f779 # v1.6.0
         id: setup-ndk
         with:
           ndk-version: r26d
@@ -212,7 +212,7 @@ jobs:
         target:
           - [ x86_64-pc-windows-gnu, 0, 1 ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: "recursive"
       - uses: dtolnay/rust-toolchain@master
@@ -246,7 +246,7 @@ jobs:
           - x86_64-unknown-linux-gnu
           - aarch64-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: "recursive"
       - uses: dtolnay/rust-toolchain@master
@@ -274,10 +274,10 @@ jobs:
     name: iOS aarch64 cross-platform build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: "recursive"
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4.3.0
         with:
           go-version: '>=1.18'
       - run: |
@@ -299,7 +299,7 @@ jobs:
     env:
       TVOS_FORCE_TEST: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: "recursive"
       - run: |
@@ -318,7 +318,7 @@ jobs:
     name: iOS x86-64 cross-platform build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: "recursive"
       - run: |
@@ -360,7 +360,7 @@ jobs:
         if: matrix.host == 'macos-latest'
         run: |
           brew install nasm ninja llvm
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           submodules: "recursive"
       - uses: dtolnay/rust-toolchain@master
@@ -429,8 +429,8 @@ jobs:
     steps:
       - name: Install NASM
         if: ${{ matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'i686-pc-windows-msvc' }}
-        uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v4
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - uses: dtolnay/rust-toolchain@master
@@ -474,11 +474,11 @@ jobs:
         #   - arch: 'riscv64'
         #     options: '--no-default-features --features=fips'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - name: Prepare VM
-        uses: vmactions/freebsd-vm@v1
+        uses: vmactions/freebsd-vm@7ca82f79fe3078fecded6d3a2bff094995447bbd # v1.4.4
         with:
           release: ${{ matrix.release }}
           arch: ${{ matrix.arch }}
@@ -503,11 +503,11 @@ jobs:
           - '--all-targets'
           - '--release'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - name: Prepare VM
-        uses: vmactions/netbsd-vm@v1
+        uses: vmactions/netbsd-vm@ca7ff0556959998c82761c34ea0c3c99fa084c48 # v1.3.7
         with:
           release: ${{ matrix.release }}
           arch: ${{ matrix.arch }}
@@ -526,7 +526,7 @@ jobs:
     name: cross (prebuilt nasm) - x86_64-pc-windows-gnu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - uses: dtolnay/rust-toolchain@stable
@@ -544,7 +544,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - name: Build Docker Image
@@ -561,7 +561,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - name: Build Docker Image
@@ -582,7 +582,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - name: Build Docker Image
@@ -615,7 +615,7 @@ jobs:
           - mingw
     steps:
       - name: Install MSYS2
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@cafece8e6baf9247cf9b1bf95097b0b983cc558d # v2.31.0
         id: setup_msys2
         with:
           msystem: ${{ matrix.sys }}
@@ -651,7 +651,7 @@ jobs:
           SYSROOT=$(cygpath -a -m '${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}')
           echo "LIBCLANG_PATH=${SYSROOT}/lib" >> $GITHUB_ENV
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - name: Test
@@ -676,7 +676,7 @@ jobs:
           - 'nasm'
     steps:
       - name: Install MSYS2
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@cafece8e6baf9247cf9b1bf95097b0b983cc558d # v2.31.0
         id: setup_msys2
         with:
           msystem: ${{ matrix.sys }}
@@ -696,7 +696,7 @@ jobs:
           echo "GOROOT=${SYSROOT}/lib/go" >> $GITHUB_ENV
           cygpath -w ${SYSROOT}/bin >> $GITHUB_PATH
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - name: Test
@@ -718,7 +718,7 @@ jobs:
       image: rust:latest
       options: "--platform linux/${{ (matrix.config.arch == 'aarch64' && 'arm64/v8') || 'amd64'}}"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: "recursive"
       - run: |
