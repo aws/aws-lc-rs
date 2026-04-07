@@ -452,7 +452,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
-      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: seanmiddleditch/gha-setup-ninja@v6
       - name: Run cargo test
         run: cargo test -p aws-lc-rs --tests --no-default-features --features fips
       - name: Release build
@@ -490,7 +490,7 @@ jobs:
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
       - if: ${{ matrix.os == 'windows-latest' }}
-        uses: seanmiddleditch/gha-setup-ninja@v5
+        uses: seanmiddleditch/gha-setup-ninja@v6
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-go@v4
         with:
@@ -597,7 +597,7 @@ jobs:
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
       - uses: dtolnay/rust-toolchain@stable
-      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: seanmiddleditch/gha-setup-ninja@v6
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'
@@ -633,7 +633,7 @@ jobs:
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
       - uses: dtolnay/rust-toolchain@stable
-      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: seanmiddleditch/gha-setup-ninja@v6
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.18'

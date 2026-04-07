@@ -37,10 +37,8 @@ jobs:
           # Our aws-lc-sys generation scripts require nightly.
           toolchain: ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }}
       - run: rustup override set $RUST_NIGHTLY_TOOLCHAIN
-      - uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: rust-script
+      - name: Install rust-script
+        run: cargo install rust-script
       - name: Install OS Dependencies
         run: |
           sudo apt-get update
@@ -85,10 +83,8 @@ jobs:
           # Our aws-lc-fips-sys generation scripts require nightly.
           toolchain: ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }}
       - run: rustup override set $RUST_NIGHTLY_TOOLCHAIN
-      - uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: rust-script
+      - name: Install rust-script
+        run: cargo install rust-script
       - name: Install OS Dependencies
         run: |
           sudo apt-get update

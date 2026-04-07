@@ -33,14 +33,15 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           components: 'rustfmt'
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4
         with:
           go-version: '>=1.20'
       - name: Install current Bash on macOS
@@ -70,19 +71,19 @@ jobs:
           - 'x86_64-pc-windows-gnu'
           - 'i686-pc-windows-msvc'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         id: toolchain
         with:
           toolchain: stable
           target: ${{ matrix.target }}
           components: 'rustfmt'
       - if: contains(matrix.target, 'x86') || contains(matrix.target, 'i686')
-        uses: ilammy/setup-nasm@v1
-      - uses: actions/setup-go@v4
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4
         with:
           go-version: '>=1.20'
       - name: No-prefix build for ${{ matrix.target }}
@@ -114,14 +115,15 @@ jobs:
           - powerpc-unknown-linux-gnu
           - powerpc64le-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           components: 'rustfmt'
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4
         with:
           go-version: '>=1.20'
       - name: Install cross
@@ -141,18 +143,19 @@ jobs:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           components: 'rustfmt'
           toolchain: ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           components: 'rustfmt'
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4
         with:
           go-version: '>=1.20'
       - name: Generate Prefix Headers
@@ -170,12 +173,13 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           components: 'rustfmt'
       - name: Install current Bash on macOS
         if: runner.os == 'macOS'
@@ -200,19 +204,19 @@ jobs:
           - 'x86_64-pc-windows-gnu'
           - 'i686-pc-windows-msvc'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         id: toolchain
         with:
           toolchain: stable
           target: ${{ matrix.target }}
           components: 'rustfmt'
       - if: contains(matrix.target, 'x86') || contains(matrix.target, 'i686')
-        uses: ilammy/setup-nasm@v1
-      - uses: actions/setup-go@v4
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+      - uses: actions/setup-go@7b8cf10d4e4a01d4992d18a89f4d7dc5a3e6d6f4 # v4
         with:
           go-version: '>=1.20'
       - name: Generate bindings for ${{ matrix.target }}
@@ -238,12 +242,13 @@ jobs:
           - "riscv64gc-unknown-linux-gnu"
           - "x86_64-unknown-linux-musl"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           components: 'rustfmt'
       - name: Install cross
         run: cargo install cross --locked --git https://github.com/cross-rs/cross
@@ -263,12 +268,13 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           components: 'rustfmt'
       - name: Install current Bash on macOS
         if: runner.os == 'macOS'
@@ -297,12 +303,13 @@ jobs:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           components: 'rustfmt'
       - name: Install ripgrep
         run: cargo install --force --locked ripgrep --features pcre2
@@ -318,17 +325,17 @@ jobs:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         id: toolchain
         with:
           toolchain: stable
           targets: "x86_64-pc-windows-msvc,x86_64-pc-windows-gnu"
           components: 'rustfmt'
-      - uses: ilammy/setup-nasm@v1
+      - uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Build aws-lc-sys
         shell: bash
         run: AWS_LC_SYS_PREBUILT_NASM=0 cargo build -p aws-lc-sys --release --target x86_64-pc-windows-msvc
