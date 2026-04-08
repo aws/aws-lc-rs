@@ -487,6 +487,9 @@ impl UnboundCipherKey {
     ///
     /// * [`Unspecified`] if `key_bytes.len()` does not match the length required by `algorithm`.
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
+        if key_bytes.len() != algorithm.key_len {
+            return Err(Unspecified);
+        }
         let key_bytes = Buffer::new(key_bytes.to_vec());
         Ok(UnboundCipherKey {
             algorithm,

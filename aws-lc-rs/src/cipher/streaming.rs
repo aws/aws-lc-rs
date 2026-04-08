@@ -128,10 +128,11 @@ impl StreamingEncryptingKey {
         let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let cipher = mode.evp_cipher(key.algorithm);
         let key_bytes = key.key_bytes.as_ref();
-        debug_assert_eq!(
-            key_bytes.len(),
-            <usize>::try_from(unsafe { EVP_CIPHER_key_length(cipher.as_const_ptr()) }).unwrap()
-        );
+        if key_bytes.len()
+            != <usize>::try_from(unsafe { EVP_CIPHER_key_length(cipher.as_const_ptr()) }).unwrap()
+        {
+            return Err(Unspecified);
+        }
 
         match &context {
             ctx @ EncryptionContext::Iv128(..) => {
@@ -413,10 +414,11 @@ impl StreamingDecryptingKey {
         let algorithm = key.algorithm();
         let cipher = mode.evp_cipher(key.algorithm);
         let key_bytes = key.key_bytes.as_ref();
-        debug_assert_eq!(
-            key_bytes.len(),
-            <usize>::try_from(unsafe { EVP_CIPHER_key_length(cipher.as_const_ptr()) }).unwrap()
-        );
+        if key_bytes.len()
+            != <usize>::try_from(unsafe { EVP_CIPHER_key_length(cipher.as_const_ptr()) }).unwrap()
+        {
+            return Err(Unspecified);
+        }
 
         match &context {
             ctx @ DecryptionContext::Iv128(..) => {
