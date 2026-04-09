@@ -345,19 +345,28 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
 
+      # Install stable toolchain for dependency resolution. Older Cargo versions
+      # cannot parse manifests that use edition 2024+, causing resolution failures
+      # when any transitive dependency adopts a newer edition. Stable Cargo handles
+      # all editions and its MSRV-aware resolver automatically prefers dependency
+      # versions compatible with our declared rust-version.
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install MSRV Rust version
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.71.0 # TODO: dynamically identify MSRV
+          toolchain: 1.71.0
 
-      - name: Update dependencies
+      # Use stable Cargo with MSRV-aware resolver to generate a lockfile that
+      # respects our rust-version. The "fallback" policy tells Cargo to prefer
+      # dependency versions compatible with rust-version, falling back to latest
+      # only when no compatible version exists in the semver range.
+      - name: Resolve MSRV-compatible dependencies
         run: |
-          cargo +1.71.0 update
-          cargo +1.71.0 update -p libloading --precise 0.8.8
-          cargo +1.71.0 update -p clap --precise 4.5.61
-          cargo +1.71.0 update -p clap_lex --precise 1.0.1
-          cargo +1.71.0 tree
+          cargo +stable --config "resolver.incompatible-rust-versions='fallback'" update
+          cargo +stable tree
 
       - name: Verify msrv
         working-directory: ./aws-lc-rs
-        run: cargo +1.71.0 check --features bindgen
+        run: cargo +1.71.0 check --locked --features bindgen
