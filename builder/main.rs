@@ -476,7 +476,10 @@ fn target_underscored() -> String {
 }
 
 fn out_dir() -> PathBuf {
-    to_short_path(&PathBuf::from(cargo_env("OUT_DIR")))
+    let out = PathBuf::from(cargo_env("OUT_DIR"));
+    #[cfg(windows)]
+    let out = to_short_path(&out);
+    out
 }
 
 /// On Windows, convert a path to its 8.3 short form to avoid MAX_PATH (260 char) limits
@@ -506,12 +509,20 @@ fn to_short_path(path: &Path) -> PathBuf {
         return path.to_path_buf();
     }
     buf.truncate(result as usize);
-    PathBuf::from(std::ffi::OsString::from_wide(&buf))
-}
+    let short_path = PathBuf::from(std::ffi::OsString::from_wide(&buf));
 
-#[cfg(not(windows))]
-fn to_short_path(path: &Path) -> PathBuf {
-    path.to_path_buf()
+    const MAX_PATH: usize = 260;
+    let original_len = wide.len() - 1;
+    if original_len >= MAX_PATH && (result as usize) >= MAX_PATH {
+        emit_warning(format!(
+            "Path length ({}) exceeds MAX_PATH ({}) and 8.3 short name conversion was ineffective. \
+             8.3 short names may be disabled on this volume. \
+             See: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-8dot3name",
+            original_len, MAX_PATH,
+        ));
+    }
+
+    short_path
 }
 
 fn current_dir() -> PathBuf {
@@ -853,7 +864,9 @@ fn main() {
     prepare_cargo_cfg();
 
     let manifest_dir = current_dir();
-    let manifest_dir = to_short_path(&dunce::canonicalize(Path::new(&manifest_dir)).unwrap());
+    let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
+    #[cfg(windows)]
+    let manifest_dir = to_short_path(&manifest_dir);
     let prefix_str = prefix_string();
     let prefix = if is_no_prefix() {
         None
