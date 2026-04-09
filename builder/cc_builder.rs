@@ -750,13 +750,10 @@ impl CcBuilder {
         // try_compile_intermediates succeeds but __builtin_bswap* are unresolved at
         // link time. Without this guard the define is set and crypto/internal.h skips
         // the correct _MSC_VER path that uses _byteswap_* intrinsics.
+        if target_env() != "msvc"
+            && self.compiler_check("builtin_swap_check", Vec::<&'static str>::new())
         {
-            let compiler = cc::Build::default().get_compiler();
-            if (compiler.is_like_gnu() || compiler.is_like_clang())
-                && self.compiler_check("builtin_swap_check", Vec::<&'static str>::new())
-            {
-                cc_build.define("AWS_LC_BUILTIN_SWAP_SUPPORTED", Some("1"));
-            }
+            cc_build.define("AWS_LC_BUILTIN_SWAP_SUPPORTED", Some("1"));
         }
         if target_arch() == "aarch64"
             && self.compiler_check("neon_sha3_check", vec!["-march=armv8.4-a+sha3"])
