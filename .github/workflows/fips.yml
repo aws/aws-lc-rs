@@ -43,7 +43,7 @@ jobs:
           - --no-default-features --features fips,ring-sig-verify,unstable
           - --no-default-features --features fips,alloc,unstable
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -52,7 +52,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - if: ${{ startsWith( matrix.os, 'macos-') }}
@@ -85,7 +85,7 @@ jobs:
           - --no-default-features --features fips,alloc,unstable
     steps:
       - uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -95,7 +95,7 @@ jobs:
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
       - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v4
+        uses: seanmiddleditch/gha-setup-ninja@v6
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -106,14 +106,14 @@ jobs:
     env:
       AWS_LC_FIPS_SYS_CPU_JITTER_ENTROPY: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
         id: toolchain
         with:
           toolchain: nightly
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Run assert script
