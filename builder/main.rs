@@ -858,21 +858,21 @@ fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
     false
 }
 
+fn canonicalized_manifest_dir() -> PathBuf {
+    let manifest_dir = current_dir();
+    let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
+    #[cfg(windows)]
+    let manifest_dir = to_short_path(&manifest_dir);
+    manifest_dir
+}
+
 #[cfg(not(test))]
 fn main() {
     initialize();
     prepare_cargo_cfg();
 
-    let manifest_dir = current_dir();
-    let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
-    #[cfg(windows)]
-    let manifest_dir = to_short_path(&manifest_dir);
-    let prefix_str = prefix_string();
-    let prefix = if is_no_prefix() {
-        None
-    } else {
-        Some(prefix_str)
-    };
+    let manifest_dir = canonicalized_manifest_dir();
+    let prefix = (!is_no_prefix()).then(prefix_string);
 
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
     emit_warning(format!("Building with: {}", builder.name()));
