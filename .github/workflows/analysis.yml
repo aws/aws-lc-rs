@@ -258,7 +258,7 @@ jobs:
         id: toolchain
         with:
           toolchain: nightly
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Run assert script
@@ -275,7 +275,7 @@ jobs:
         id: toolchain
         with:
           toolchain: nightly
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Assert jitter-entropy available
@@ -305,7 +305,7 @@ jobs:
         id: toolchain
         with:
           toolchain: nightly
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Assert jitter-entropy not available

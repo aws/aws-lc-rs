@@ -52,7 +52,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
       - name: Set Rust toolchain override
         run: rustup override set ${{ steps.toolchain.outputs.name }}
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - if: ${{ startsWith( matrix.os, 'macos-') }}
@@ -113,7 +113,7 @@ jobs:
         id: toolchain
         with:
           toolchain: nightly
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Run assert script
