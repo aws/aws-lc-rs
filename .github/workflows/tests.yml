@@ -41,7 +41,7 @@ jobs:
           - --no-default-features --features non-fips,ring-sig-verify,unstable
           - --no-default-features --features non-fips,alloc,unstable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -70,7 +70,7 @@ jobs:
           - --no-default-features --features aws-lc-sys,bindgen,unstable
           - --release --all-targets --features bindgen,unstable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - if: ${{ startsWith(matrix.os, 'macos-') }}
@@ -108,7 +108,7 @@ jobs:
     env:
       AWS_LC_SYS_PREBUILT_NASM: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -126,7 +126,7 @@ jobs:
     name: aws-ls-rs coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           lfs: true
@@ -168,7 +168,7 @@ jobs:
           - --no-default-features --features fips,asan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -197,7 +197,7 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         static: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -217,7 +217,7 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -252,7 +252,7 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -291,7 +291,7 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -325,7 +325,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -349,7 +349,7 @@ jobs:
       matrix:
         target: [ 'i686-pc-windows-gnu', 'i686-pc-windows-msvc', 'x86_64-pc-windows-msvc', 'x86_64-pc-windows-gnu' ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -389,7 +389,7 @@ jobs:
           - os: 'macos-15-intel'
             static: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -410,7 +410,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -445,7 +445,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -484,7 +484,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
@@ -516,7 +516,7 @@ jobs:
           - macos-15-intel
           - macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           lfs: true
@@ -553,7 +553,7 @@ jobs:
       LIBCLANG_PATH: '/opt/homebrew/opt/llvm@19/lib'
       LLVM_CONFIG_PATH: '/opt/homebrew/opt/llvm@19/bin/llvm-config'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: actions/setup-go@v4
@@ -590,7 +590,7 @@ jobs:
           - os: 'macos-latest'
             fips: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           path: "path has spaces/aws-lc-rs"
@@ -622,7 +622,7 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         pregen_src: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           path: "path has spaces/aws-lc-rs"
@@ -667,7 +667,7 @@ jobs:
       CFLAGS: ${{ matrix.cflags }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -697,7 +697,7 @@ jobs:
       CFLAGS: ${{ matrix.cflags }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -709,7 +709,7 @@ jobs:
     name: Symlinked includes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@stable
@@ -743,7 +743,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
@@ -776,7 +776,7 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
