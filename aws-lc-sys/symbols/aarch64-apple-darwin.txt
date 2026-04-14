@@ -3416,6 +3416,7 @@ X509_CRL_up_ref
 X509_CRL_verify
 X509_delete_ext
 X509_digest
+x509_digest_nid_ok
 x509_digest_sign_algorithm
 x509_digest_verify_init
 X509_dup
