@@ -6,7 +6,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_39_1
+#define BORINGSSL_PREFIX aws_lc_0_40_0
 #endif // BORINGSSL_PREFIX
 
 
@@ -3866,7 +3866,15 @@
 #define mlkem_aarch64_ntt_zetas_layer67 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_aarch64_ntt_zetas_layer67)
 #define mlkem_aarch64_zetas_mulcache_native BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_aarch64_zetas_mulcache_native)
 #define mlkem_aarch64_zetas_mulcache_twisted_native BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_aarch64_zetas_mulcache_twisted_native)
+#define mlkem_compress_d10_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_compress_d10_data)
+#define mlkem_compress_d11_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_compress_d11_data)
+#define mlkem_compress_d4_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_compress_d4_data)
+#define mlkem_compress_d5_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_compress_d5_data)
 #define mlkem_ct_opt_blocker_u64 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_ct_opt_blocker_u64)
+#define mlkem_decompress_d10_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_decompress_d10_data)
+#define mlkem_decompress_d11_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_decompress_d11_data)
+#define mlkem_decompress_d4_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_decompress_d4_data)
+#define mlkem_decompress_d5_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_decompress_d5_data)
 #define mlkem_intt_asm BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_intt_asm)
 #define mlkem_invntt_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_invntt_avx2)
 #define mlkem_ntt_asm BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_ntt_asm)
@@ -3874,6 +3882,14 @@
 #define mlkem_nttfrombytes_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_nttfrombytes_avx2)
 #define mlkem_ntttobytes_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_ntttobytes_avx2)
 #define mlkem_nttunpack_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_nttunpack_avx2)
+#define mlkem_poly_compress_d10_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_compress_d10_avx2)
+#define mlkem_poly_compress_d11_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_compress_d11_avx2)
+#define mlkem_poly_compress_d4_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_compress_d4_avx2)
+#define mlkem_poly_compress_d5_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_compress_d5_avx2)
+#define mlkem_poly_decompress_d10_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_decompress_d10_avx2)
+#define mlkem_poly_decompress_d11_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_decompress_d11_avx2)
+#define mlkem_poly_decompress_d4_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_decompress_d4_avx2)
+#define mlkem_poly_decompress_d5_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_decompress_d5_avx2)
 #define mlkem_poly_mulcache_compute_asm BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_mulcache_compute_asm)
 #define mlkem_poly_mulcache_compute_avx2 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_mulcache_compute_avx2)
 #define mlkem_poly_reduce_asm BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, mlkem_poly_reduce_asm)
@@ -4095,6 +4111,7 @@
 #define x509V3_add_value_asn1_string BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509V3_add_value_asn1_string)
 #define x509_check_cert_time BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509_check_cert_time)
 #define x509_check_issued_with_callback BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509_check_issued_with_callback)
+#define x509_digest_nid_ok BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509_digest_nid_ok)
 #define x509_digest_sign_algorithm BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509_digest_sign_algorithm)
 #define x509_digest_verify_init BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509_digest_verify_init)
 #define x509_init_signature_info BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, x509_init_signature_info)

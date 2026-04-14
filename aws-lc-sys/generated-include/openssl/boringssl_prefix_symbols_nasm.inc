@@ -6,7 +6,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_39_1
+%define BORINGSSL_PREFIX aws_lc_0_40_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -3863,7 +3863,15 @@
 %xdefine _mlkem_aarch64_ntt_zetas_layer67 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer67
 %xdefine _mlkem_aarch64_zetas_mulcache_native _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_native
 %xdefine _mlkem_aarch64_zetas_mulcache_twisted_native _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_twisted_native
+%xdefine _mlkem_compress_d10_data _ %+ BORINGSSL_PREFIX %+ _mlkem_compress_d10_data
+%xdefine _mlkem_compress_d11_data _ %+ BORINGSSL_PREFIX %+ _mlkem_compress_d11_data
+%xdefine _mlkem_compress_d4_data _ %+ BORINGSSL_PREFIX %+ _mlkem_compress_d4_data
+%xdefine _mlkem_compress_d5_data _ %+ BORINGSSL_PREFIX %+ _mlkem_compress_d5_data
 %xdefine _mlkem_ct_opt_blocker_u64 _ %+ BORINGSSL_PREFIX %+ _mlkem_ct_opt_blocker_u64
+%xdefine _mlkem_decompress_d10_data _ %+ BORINGSSL_PREFIX %+ _mlkem_decompress_d10_data
+%xdefine _mlkem_decompress_d11_data _ %+ BORINGSSL_PREFIX %+ _mlkem_decompress_d11_data
+%xdefine _mlkem_decompress_d4_data _ %+ BORINGSSL_PREFIX %+ _mlkem_decompress_d4_data
+%xdefine _mlkem_decompress_d5_data _ %+ BORINGSSL_PREFIX %+ _mlkem_decompress_d5_data
 %xdefine _mlkem_intt_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_intt_asm
 %xdefine _mlkem_invntt_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_invntt_avx2
 %xdefine _mlkem_ntt_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_ntt_asm
@@ -3871,6 +3879,14 @@
 %xdefine _mlkem_nttfrombytes_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_nttfrombytes_avx2
 %xdefine _mlkem_ntttobytes_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_ntttobytes_avx2
 %xdefine _mlkem_nttunpack_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_nttunpack_avx2
+%xdefine _mlkem_poly_compress_d10_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d10_avx2
+%xdefine _mlkem_poly_compress_d11_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d11_avx2
+%xdefine _mlkem_poly_compress_d4_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d4_avx2
+%xdefine _mlkem_poly_compress_d5_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_compress_d5_avx2
+%xdefine _mlkem_poly_decompress_d10_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d10_avx2
+%xdefine _mlkem_poly_decompress_d11_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d11_avx2
+%xdefine _mlkem_poly_decompress_d4_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d4_avx2
+%xdefine _mlkem_poly_decompress_d5_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d5_avx2
 %xdefine _mlkem_poly_mulcache_compute_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_asm
 %xdefine _mlkem_poly_mulcache_compute_avx2 _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_avx2
 %xdefine _mlkem_poly_reduce_asm _ %+ BORINGSSL_PREFIX %+ _mlkem_poly_reduce_asm
@@ -4092,6 +4108,7 @@
 %xdefine _x509V3_add_value_asn1_string _ %+ BORINGSSL_PREFIX %+ _x509V3_add_value_asn1_string
 %xdefine _x509_check_cert_time _ %+ BORINGSSL_PREFIX %+ _x509_check_cert_time
 %xdefine _x509_check_issued_with_callback _ %+ BORINGSSL_PREFIX %+ _x509_check_issued_with_callback
+%xdefine _x509_digest_nid_ok _ %+ BORINGSSL_PREFIX %+ _x509_digest_nid_ok
 %xdefine _x509_digest_sign_algorithm _ %+ BORINGSSL_PREFIX %+ _x509_digest_sign_algorithm
 %xdefine _x509_digest_verify_init _ %+ BORINGSSL_PREFIX %+ _x509_digest_verify_init
 %xdefine _x509_init_signature_info _ %+ BORINGSSL_PREFIX %+ _x509_init_signature_info
@@ -7957,7 +7974,15 @@
 %xdefine mlkem_aarch64_ntt_zetas_layer67 BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer67
 %xdefine mlkem_aarch64_zetas_mulcache_native BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_native
 %xdefine mlkem_aarch64_zetas_mulcache_twisted_native BORINGSSL_PREFIX %+ _mlkem_aarch64_zetas_mulcache_twisted_native
+%xdefine mlkem_compress_d10_data BORINGSSL_PREFIX %+ _mlkem_compress_d10_data
+%xdefine mlkem_compress_d11_data BORINGSSL_PREFIX %+ _mlkem_compress_d11_data
+%xdefine mlkem_compress_d4_data BORINGSSL_PREFIX %+ _mlkem_compress_d4_data
+%xdefine mlkem_compress_d5_data BORINGSSL_PREFIX %+ _mlkem_compress_d5_data
 %xdefine mlkem_ct_opt_blocker_u64 BORINGSSL_PREFIX %+ _mlkem_ct_opt_blocker_u64
+%xdefine mlkem_decompress_d10_data BORINGSSL_PREFIX %+ _mlkem_decompress_d10_data
+%xdefine mlkem_decompress_d11_data BORINGSSL_PREFIX %+ _mlkem_decompress_d11_data
+%xdefine mlkem_decompress_d4_data BORINGSSL_PREFIX %+ _mlkem_decompress_d4_data
+%xdefine mlkem_decompress_d5_data BORINGSSL_PREFIX %+ _mlkem_decompress_d5_data
 %xdefine mlkem_intt_asm BORINGSSL_PREFIX %+ _mlkem_intt_asm
 %xdefine mlkem_invntt_avx2 BORINGSSL_PREFIX %+ _mlkem_invntt_avx2
 %xdefine mlkem_ntt_asm BORINGSSL_PREFIX %+ _mlkem_ntt_asm
@@ -7965,6 +7990,14 @@
 %xdefine mlkem_nttfrombytes_avx2 BORINGSSL_PREFIX %+ _mlkem_nttfrombytes_avx2
 %xdefine mlkem_ntttobytes_avx2 BORINGSSL_PREFIX %+ _mlkem_ntttobytes_avx2
 %xdefine mlkem_nttunpack_avx2 BORINGSSL_PREFIX %+ _mlkem_nttunpack_avx2
+%xdefine mlkem_poly_compress_d10_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_compress_d10_avx2
+%xdefine mlkem_poly_compress_d11_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_compress_d11_avx2
+%xdefine mlkem_poly_compress_d4_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_compress_d4_avx2
+%xdefine mlkem_poly_compress_d5_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_compress_d5_avx2
+%xdefine mlkem_poly_decompress_d10_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d10_avx2
+%xdefine mlkem_poly_decompress_d11_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d11_avx2
+%xdefine mlkem_poly_decompress_d4_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d4_avx2
+%xdefine mlkem_poly_decompress_d5_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_decompress_d5_avx2
 %xdefine mlkem_poly_mulcache_compute_asm BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_asm
 %xdefine mlkem_poly_mulcache_compute_avx2 BORINGSSL_PREFIX %+ _mlkem_poly_mulcache_compute_avx2
 %xdefine mlkem_poly_reduce_asm BORINGSSL_PREFIX %+ _mlkem_poly_reduce_asm
@@ -8186,6 +8219,7 @@
 %xdefine x509V3_add_value_asn1_string BORINGSSL_PREFIX %+ _x509V3_add_value_asn1_string
 %xdefine x509_check_cert_time BORINGSSL_PREFIX %+ _x509_check_cert_time
 %xdefine x509_check_issued_with_callback BORINGSSL_PREFIX %+ _x509_check_issued_with_callback
+%xdefine x509_digest_nid_ok BORINGSSL_PREFIX %+ _x509_digest_nid_ok
 %xdefine x509_digest_sign_algorithm BORINGSSL_PREFIX %+ _x509_digest_sign_algorithm
 %xdefine x509_digest_verify_init BORINGSSL_PREFIX %+ _x509_digest_verify_init
 %xdefine x509_init_signature_info BORINGSSL_PREFIX %+ _x509_init_signature_info
