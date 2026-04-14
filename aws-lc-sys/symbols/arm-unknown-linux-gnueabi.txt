@@ -3647,6 +3647,7 @@ x25519_scalar_mult_generic_nohw
 x509V3_add_value_asn1_string
 x509_check_cert_time
 x509_check_issued_with_callback
+x509_digest_nid_ok
 x509_digest_sign_algorithm
 x509_digest_verify_init
 x509_init_signature_info
