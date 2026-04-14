@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Fri Mar 27 16:59:33 UTC 2026
+// Tue Apr 14 12:15:13 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "generated-src/win-x86/crypto/chacha/chacha-x86.asm",

@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Fri Mar 27 16:59:33 UTC 2026
+// Tue Apr 14 12:15:13 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/intt.S",
@@ -98,6 +98,7 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak4_f1600_alt2.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak_f1600.S",
     "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak_f1600_alt.S",
+    "third_party/s2n-bignum/s2n-bignum-imported/arm/sha3/sha3_keccak_f1600_alt2.S",
     "third_party/s2n-bignum/s2n-bignum-to-be-imported/arm/aes/aes-xts-dec.S",
     "third_party/s2n-bignum/s2n-bignum-to-be-imported/arm/aes/aes-xts-enc.S",
 ];
