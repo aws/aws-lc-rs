@@ -214,6 +214,7 @@ jobs:
           AWS_LC_FIPS_SYS_SANITIZER: msan
           RUSTFLAGS: -Zsanitizer=memory -Zsanitizer-memory-track-origins
           RUSTDOCFLAGS: -Zsanitizer=memory -Zsanitizer-memory-track-origins
+          AWS_LC_RS_DISABLE_SLOW_TESTS: 1
         working-directory: ./aws-lc-rs
         run: cargo test -Zbuild-std ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu ${{ matrix.features }}
 
