@@ -560,7 +560,7 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
         };
         builder.check_dependencies().unwrap();
         return builder;
-    } else if is_no_asm() {
+    } else if is_no_asm() || sanitizer().is_some() {
         let builder = cmake_builder_builder();
         builder.check_dependencies().unwrap();
         return builder;
@@ -615,6 +615,7 @@ static mut SYS_EFFECTIVE_TARGET: String = String::new();
 static mut SYS_NO_JITTER_ENTROPY: Option<bool> = None;
 static mut SYS_NO_U1_BINDINGS: Option<bool> = None;
 static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
+static mut SYS_SANITIZER: Option<String> = None;
 
 static mut SYS_C_STD: CStdRequested = CStdRequested::None;
 
@@ -634,6 +635,7 @@ fn initialize() {
         SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
         SYS_INCLUDES =
             optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect());
+        SYS_SANITIZER = optional_env_crate_target("SANITIZER").map(|v| v.to_lowercase());
     }
 
     assert!(
@@ -734,6 +736,11 @@ fn is_external_bindgen_requested() -> Option<bool> {
 
 fn is_no_asm() -> bool {
     unsafe { SYS_NO_ASM }
+}
+
+#[allow(static_mut_refs)]
+fn sanitizer() -> Option<String> {
+    unsafe { SYS_SANITIZER.clone() }
 }
 
 fn is_cmake_builder() -> Option<bool> {

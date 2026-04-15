@@ -6,7 +6,7 @@ use crate::OutputLib::{Crypto, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, disable_jitter_entropy, effective_target, emit_warning,
     execute_command, get_crate_cflags, is_crt_static, is_fips_build, is_no_asm,
-    is_no_pregenerated_src, optional_env, optional_env_optional_crate_target, set_env,
+    is_no_pregenerated_src, optional_env, optional_env_optional_crate_target, sanitizer, set_env,
     set_env_for_target, target_arch, target_env, target_os, test_clang_cl_command,
     test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
@@ -189,12 +189,7 @@ impl CmakeBuilder {
             }
         }
 
-        if cfg!(feature = "asan") {
-            set_env_for_target("CC", "clang");
-            set_env_for_target("CXX", "clang++");
-
-            cmake_cfg.define("ASAN", "1");
-        }
+        Self::configure_sanitizer(&mut cmake_cfg);
 
         if let Some(cflags) = get_crate_cflags() {
             let cflags = if is_fips_build() {
@@ -492,6 +487,77 @@ impl CmakeBuilder {
             "CMAKE_ASM_NASM_COMPILE_OPTIONS_MSVC_DEBUG_INFORMATION_FORMAT_ProgramDatabase",
             "",
         );
+    }
+
+    /// Configure the `CMake` build for sanitizer instrumentation.
+    ///
+    /// Resolves the active sanitizer from either the `asan` Cargo feature flag
+    /// (kept for backward compatibility) or the `AWS_LC_SYS_SANITIZER` /
+    /// `AWS_LC_FIPS_SYS_SANITIZER` environment variable (preferred). Supported
+    /// values: `asan`, `msan`, `tsan`.
+    fn configure_sanitizer(cmake_cfg: &mut cmake::Config) {
+        let feature_sanitizer = if cfg!(feature = "asan") {
+            Some("asan")
+        } else {
+            None
+        };
+        let env_sanitizer = sanitizer();
+        let env_sanitizer = env_sanitizer.as_deref();
+
+        let active_sanitizer = match (feature_sanitizer, env_sanitizer) {
+            (Some(f), Some(e)) if f != e => {
+                panic!(
+                    "Conflicting sanitizer configuration: feature flag '{f}' and \
+                     AWS_LC_SYS_SANITIZER='{e}'. Remove one to resolve the conflict."
+                );
+            }
+            (Some(f), _) => Some(f),
+            (_, Some(e)) => Some(e),
+            _ => None,
+        };
+
+        if let Some(san) = active_sanitizer {
+            set_env_for_target("CC", "clang");
+            set_env_for_target("CXX", "clang++");
+
+            match san {
+                "asan" => {
+                    cmake_cfg.define("ASAN", "1");
+                }
+                "msan" => {
+                    // AWS-LC's CMakeLists.txt correctly skips the FIPS
+                    // delocator when MSAN is set, but bcm.c guards the
+                    // integrity-test symbols with `#if !defined(OPENSSL_ASAN)`
+                    // only — it does not check OPENSSL_MSAN. Until the
+                    // upstream C guard is broadened, MSAN + FIPS will produce
+                    // undefined-symbol link errors for BORINGSSL_bcm_text_*.
+                    assert!(
+                        !is_fips_build(),
+                        "MemorySanitizer is not supported for FIPS builds. \
+                         The FIPS integrity check in bcm.c lacks an \
+                         OPENSSL_MSAN guard, causing undefined-symbol link \
+                         errors (BORINGSSL_bcm_text_start/end/hash)."
+                    );
+                    cmake_cfg.define("MSAN", "1");
+                }
+                "tsan" => {
+                    cmake_cfg.define("TSAN", "1");
+                    // AWS-LC's CMakeLists.txt defines BORINGSSL_DISPATCH_TEST for
+                    // non-FIPS, non-release builds. That macro enables non-atomic
+                    // writes to a global BORINGSSL_function_hit[] array from ~15
+                    // dispatch points (C and assembly), which TSAN flags as data
+                    // races. The writes are benign (idempotent store of 1), but
+                    // suppressing every function name is impractical. Force the C
+                    // library to build in Release mode so the macro is never
+                    // defined. This matches AWS-LC's own sanitizer CI, which
+                    // always uses -DCMAKE_BUILD_TYPE=Release.
+                    cmake_cfg.profile("Release");
+                }
+                other => {
+                    panic!("Unsupported sanitizer: '{other}'. Supported values: asan, msan, tsan")
+                }
+            }
+        }
     }
 
     fn configure_open_harmony(cmake_cfg: &mut cmake::Config) {
