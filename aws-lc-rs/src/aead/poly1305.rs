@@ -41,7 +41,12 @@ impl Context {
     #[inline]
     pub(super) fn from_key(Key { key_and_nonce }: Key) -> Self {
         unsafe {
-            let mut state = MaybeUninit::<poly1305_state>::uninit();
+            // Use `zeroed()` instead of `uninit()` for MSAN compatibility.
+            // `CRYPTO_poly1305_init` may not write all 512 bytes of the opaque
+            // `poly1305_state` buffer, so MSAN would flag `assume_init()` as
+            // reading uninitialized memory. Zeroing is safe since the underlying
+            // type is `[u8; 512]`.
+            let mut state = MaybeUninit::<poly1305_state>::zeroed();
             CRYPTO_poly1305_init(state.as_mut_ptr().cast(), key_and_nonce.as_ptr());
             Self {
                 state: state.assume_init(),
