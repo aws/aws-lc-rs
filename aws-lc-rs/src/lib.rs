@@ -89,6 +89,22 @@
 //! ["Address Sanitizer" section](https://doc.rust-lang.org/beta/unstable-book/compiler-flags/sanitizer.html#addresssanitizer)
 //! of the [Rust Unstable Book](https://doc.rust-lang.org/beta/unstable-book/).
 //!
+//! **Preferred alternative:** Instead of the `asan` feature flag, you can set the
+//! `AWS_LC_SYS_SANITIZER` environment variable (or `AWS_LC_FIPS_SYS_SANITIZER` for FIPS builds)
+//! to one of: `asan`, `msan`, `tsan`. This approach does not require forwarding a feature through
+//! the dependency graph and also supports MemorySanitizer and ThreadSanitizer.
+//! MSAN and TSAN require the standard library to be rebuilt with sanitizer instrumentation, so
+//! you must install the `rust-src` component and pass `-Zbuild-std` to Cargo. For example:
+//!
+//! ```bash
+//! rustup component add rust-src --toolchain nightly
+//! AWS_LC_SYS_SANITIZER=msan RUSTFLAGS="-Zsanitizer=memory -Zsanitizer-memory-track-origins" \
+//!     cargo +nightly test -Zbuild-std --target x86_64-unknown-linux-gnu
+//! ```
+//!
+//! **Note:** MSAN is not currently supported for FIPS builds due to a missing preprocessor guard
+//! in the upstream AWS-LC `bcm.c` integrity check.
+//!
 //! #### bindgen
 //!
 //! Causes `aws-lc-sys` or `aws-lc-fips-sys` to generates fresh bindings for AWS-LC instead of using
