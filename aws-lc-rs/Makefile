@@ -24,6 +24,21 @@ asan-fips:
 #	RUST_BACKTRACE=1 ASAN_OPTIONS=detect_leaks=1 RUSTFLAGS=-Zsanitizer=address RUSTDOCFLAGS=-Zsanitizer=address cargo +nightly test --test ecdsa_tests          --target `rustc -vV | sed -n 's|host: ||p'` --no-default-features --features fips,asan
 	RUST_BACKTRACE=1 ASAN_OPTIONS=detect_leaks=1 RUSTFLAGS=-Zsanitizer=address RUSTDOCFLAGS=-Zsanitizer=address cargo +nightly test --lib --bins --tests --examples --target `rustc -vV | sed -n 's|host: ||p'` --no-default-features --features fips,asan
 
+msan:
+	RUST_BACKTRACE=1 AWS_LC_SYS_SANITIZER=msan RUSTFLAGS="-Zsanitizer=memory -Zsanitizer-memory-track-origins" RUSTDOCFLAGS="-Zsanitizer=memory -Zsanitizer-memory-track-origins" cargo +nightly test -Zbuild-std --lib --bins --tests --examples --target x86_64-unknown-linux-gnu
+
+msan-release:
+	RUST_BACKTRACE=1 AWS_LC_SYS_SANITIZER=msan RUSTFLAGS="-Zsanitizer=memory -Zsanitizer-memory-track-origins" RUSTDOCFLAGS="-Zsanitizer=memory -Zsanitizer-memory-track-origins" cargo +nightly test -Zbuild-std --release --lib --bins --tests --examples --target x86_64-unknown-linux-gnu
+
+tsan:
+	RUST_BACKTRACE=1 AWS_LC_SYS_SANITIZER=tsan RUSTFLAGS=-Zsanitizer=thread RUSTDOCFLAGS=-Zsanitizer=thread cargo +nightly test -Zbuild-std --lib --bins --tests --examples --target x86_64-unknown-linux-gnu
+
+tsan-release:
+	RUST_BACKTRACE=1 AWS_LC_SYS_SANITIZER=tsan RUSTFLAGS=-Zsanitizer=thread RUSTDOCFLAGS=-Zsanitizer=thread cargo +nightly test -Zbuild-std --release --lib --bins --tests --examples --target x86_64-unknown-linux-gnu
+
+tsan-fips:
+	RUST_BACKTRACE=1 AWS_LC_FIPS_SYS_SANITIZER=tsan RUSTFLAGS=-Zsanitizer=thread RUSTDOCFLAGS=-Zsanitizer=thread cargo +nightly test -Zbuild-std --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --no-default-features --features fips
+
 coverage:
 	cargo llvm-cov --features "${AWS_LC_RS_COV_EXTRA_FEATURES}" --no-fail-fast --fail-under-lines 95 --ignore-filename-regex "aws-lc(-fips|)-sys/*" --lcov --output-path lcov.info
 
@@ -62,4 +77,4 @@ ci: format clippy msrv test coverage api-diff-pub
 readme:
 	cargo readme | tee README.md
 
-.PHONY: asan asan-fips asan-release ci clippy coverage coverage-fips test msrv clippy clippy-fix
+.PHONY: asan asan-fips asan-release msan msan-release tsan tsan-release tsan-fips ci clippy coverage coverage-fips test msrv clippy clippy-fix

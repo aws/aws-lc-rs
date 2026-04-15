@@ -185,6 +185,71 @@ jobs:
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
 
+  aws-lc-rs-msan:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs msan
+    strategy:
+      fail-fast: false
+      matrix:
+        args:
+          - ''
+          - --release
+        features:
+          - ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: rust-src
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Run memory sanitizers
+        env:
+          AWS_LC_SYS_SANITIZER: msan
+          AWS_LC_FIPS_SYS_SANITIZER: msan
+          RUSTFLAGS: -Zsanitizer=memory -Zsanitizer-memory-track-origins
+          RUSTDOCFLAGS: -Zsanitizer=memory -Zsanitizer-memory-track-origins
+        working-directory: ./aws-lc-rs
+        run: cargo test -Zbuild-std ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu ${{ matrix.features }}
+
+  aws-lc-rs-tsan:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs tsan
+    strategy:
+      fail-fast: false
+      matrix:
+        args:
+          - ''
+          - --release
+        features:
+          - ''
+          - --no-default-features --features fips
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+          components: rust-src
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Run thread sanitizers
+        env:
+          AWS_LC_SYS_SANITIZER: tsan
+          AWS_LC_FIPS_SYS_SANITIZER: tsan
+          RUSTFLAGS: -Zsanitizer=thread
+          RUSTDOCFLAGS: -Zsanitizer=thread
+        working-directory: ./aws-lc-rs
+        run: cargo test -Zbuild-std ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu ${{ matrix.features }}
+
   build-env-static-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs build-env-static-test
