@@ -1,0 +1,64 @@
+name: zig
+
+on:
+  push:
+    branches:
+      - "*"
+      - "!generate/aws-lc-*"
+  pull_request:
+    branches:
+      - "*"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  RUST_BACKTRACE: 1
+
+permissions:
+  contents: read
+
+jobs:
+  cargo-zigbuild:
+    if: github.repository_owner == 'aws'
+    name: cargo-zigbuild (${{ matrix.host }}, ${{ matrix.target }})
+    runs-on: ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        host:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        target:
+          - x86_64-pc-windows-gnu
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+        include:
+          - host: macos-latest
+            target: aarch64-apple-darwin
+          - host: macos-latest
+            target: x86_64-apple-darwin
+          - host: ubuntu-latest
+            target: aarch64-apple-darwin
+          - host: windows-latest
+            target: aarch64-apple-darwin
+    steps:
+      - name: Install NASM
+        if: contains(matrix.target, 'x86_64')
+        uses: ilammy/setup-nasm@v1
+      - uses: actions/checkout@v6
+        with:
+          submodules: "recursive"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: "0.15.2"
+      - name: Install cargo-zigbuild
+        run: cargo install --locked cargo-zigbuild
+      - name: cargo zigbuild (debug)
+        run: cargo zigbuild -p aws-lc-rs --target ${{ matrix.target }}
+      - name: cargo zigbuild (release)
+        run: cargo zigbuild -p aws-lc-rs --release --target ${{ matrix.target }}
