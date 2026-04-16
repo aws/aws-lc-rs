@@ -760,6 +760,59 @@ fn disable_jitter_entropy() -> Option<bool> {
     unsafe { SYS_NO_JITTER_ENTROPY }
 }
 
+/// Returns true if jitter entropy should be built. This is false when the user
+/// explicitly set `AWS_LC_SYS_NO_JITTER_ENTROPY=1`, or when auto-detection
+/// determined that required headers are unavailable.
+fn should_build_jitter_entropy() -> bool {
+    static AVAILABLE: OnceLock<bool> = OnceLock::new();
+
+    // If the user explicitly set the env var, respect it unconditionally.
+    if let Some(val) = disable_jitter_entropy() {
+        return !val;
+    }
+
+    *AVAILABLE.get_or_init(|| {
+        // The current FIPS branch does not include jitter entropy.
+        if is_fips_build() {
+            return true;
+        }
+        // Only Apple targets need the CoreServices header.
+        if target_vendor() != "apple" {
+            return true;
+        }
+        probe_apple_core_services()
+    })
+}
+
+/// Probes whether `CoreServices/CoreServices.h` is available for the current
+/// target toolchain. On Apple targets, jitterentropy requires this header which
+/// is only present when the macOS SDK is installed. When cross-compiling to
+/// Apple targets from non-macOS hosts (e.g., Linux → macOS via cargo-zigbuild),
+/// this header is typically missing.
+fn probe_apple_core_services() -> bool {
+    let probe_dir = out_dir().join("out-apple_core_services_check");
+    let src_dir = probe_dir.join("src");
+    let _ = std::fs::create_dir_all(&src_dir);
+    let source_file = src_dir.join("apple_core_services_check.c");
+    if std::fs::write(&source_file, "#include <CoreServices/CoreServices.h>\n").is_err() {
+        emit_warning("Failed to write CoreServices probe file; assuming available.");
+        return true;
+    }
+
+    let mut cc_build = cc::Build::default();
+    cc_build.file(&source_file).out_dir(&probe_dir);
+    let available = cc_build.try_compile_intermediates().is_ok();
+    let _ = std::fs::remove_dir_all(&probe_dir);
+
+    if !available {
+        emit_warning(
+            "CoreServices/CoreServices.h not available; \
+             automatically disabling CPU jitter entropy.",
+        );
+    }
+    available
+}
+
 fn use_no_u1_bindings() -> Option<bool> {
     unsafe { SYS_NO_U1_BINDINGS }
 }

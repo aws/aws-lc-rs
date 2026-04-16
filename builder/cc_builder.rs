@@ -19,9 +19,9 @@ mod win_x86_64;
 
 use crate::nasm_builder::NasmBuilder;
 use crate::{
-    cargo_env, disable_jitter_entropy, emit_warning, env_name_for_target, env_var_to_bool,
-    execute_command, find_clang_cl, get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm,
-    out_dir, requested_c_std, set_env_for_target, target, target_arch, target_env, target_os,
+    cargo_env, emit_warning, env_name_for_target, env_var_to_bool, execute_command, find_clang_cl,
+    get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm, out_dir, requested_c_std,
+    set_env_for_target, should_build_jitter_entropy, target, target_arch, target_env, target_os,
     target_vendor, CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
@@ -301,7 +301,7 @@ impl CcBuilder {
                 build_options.push(BuildOption::define("__EXTENSIONS__", "1"));
             }
         }
-        if Some(true) == disable_jitter_entropy() {
+        if !should_build_jitter_entropy() {
             build_options.push(BuildOption::define("DISABLE_CPU_JITTER_ENTROPY", "1"));
         }
         self.add_includes(&mut build_options);
@@ -339,7 +339,7 @@ impl CcBuilder {
                 .join("include"),
         ));
 
-        if Some(true) != disable_jitter_entropy() {
+        if should_build_jitter_entropy() {
             let jitterentropy_path = self
                 .manifest_dir
                 .join("aws-lc")
@@ -563,7 +563,7 @@ impl CcBuilder {
                 }
             } else if is_jitter_entropy {
                 // Only compile if not disabled.
-                if Some(true) != disable_jitter_entropy() {
+                if should_build_jitter_entropy() {
                     jitter_entropy_builder.file(source_path);
                 }
             } else if source_path.extension() == Some("asm".as_ref()) {
@@ -577,7 +577,7 @@ impl CcBuilder {
         for object in s2n_bignum_object_files {
             cc_build.object(object);
         }
-        if Some(true) != disable_jitter_entropy() {
+        if should_build_jitter_entropy() {
             let _je_cflags_guard = Self::jitter_entropy_cflags_guard(compiler.is_like_msvc());
             let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
             for object in jitter_entropy_object_files {

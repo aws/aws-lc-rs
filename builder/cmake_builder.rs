@@ -4,10 +4,10 @@
 use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, Ssl};
 use crate::{
-    allow_prebuilt_nasm, cargo_env, disable_jitter_entropy, effective_target, emit_warning,
-    execute_command, get_crate_cflags, is_crt_static, is_fips_build, is_no_asm,
-    is_no_pregenerated_src, optional_env, optional_env_optional_crate_target, sanitizer, set_env,
-    set_env_for_target, target_arch, target_env, target_os, test_clang_cl_command,
+    allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
+    get_crate_cflags, is_crt_static, is_fips_build, is_no_asm, is_no_pregenerated_src,
+    optional_env, optional_env_optional_crate_target, sanitizer, set_env, set_env_for_target,
+    should_build_jitter_entropy, target_arch, target_env, target_os, test_clang_cl_command,
     test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::collections::HashMap;
@@ -171,7 +171,7 @@ impl CmakeBuilder {
                 cmake_cfg.define("DISABLE_PERL", "ON");
                 cmake_cfg.define("DISABLE_GO", "ON");
             }
-            if Some(true) == disable_jitter_entropy() {
+            if !should_build_jitter_entropy() {
                 cmake_cfg.define("DISABLE_CPU_JITTER_ENTROPY", "ON");
             }
 
