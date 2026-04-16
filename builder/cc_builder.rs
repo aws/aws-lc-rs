@@ -480,7 +480,7 @@ impl CcBuilder {
         let new_cflags = if is_like_msvc {
             format!("{filtered} -Od").trim().to_string()
         } else {
-            format!("{filtered} -O0 -Wp,-U_FORTIFY_SOURCE")
+            format!("{filtered} -O0 -U_FORTIFY_SOURCE")
                 .trim()
                 .to_string()
         };
