@@ -19,13 +19,14 @@ mod win_x86_64;
 
 use crate::nasm_builder::NasmBuilder;
 use crate::{
-    cargo_env, emit_warning, env_name_for_target, env_var_to_bool, execute_command, find_clang_cl,
-    get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm, out_dir, requested_c_std,
-    set_env_for_target, should_build_jitter_entropy, target, target_arch, target_env, target_os,
-    target_vendor, CStdRequested, EnvGuard, OutputLibType,
+    cargo_env, emit_warning, env_var_to_bool, execute_command, find_clang_cl, get_crate_cc,
+    get_crate_cflags, get_crate_cxx, is_no_asm, out_dir, requested_c_std, set_env_for_target,
+    should_build_jitter_entropy, target, target_arch, target_env, target_os, target_vendor,
+    CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
+use std::env;
 use std::path::PathBuf;
 
 #[non_exhaustive]
@@ -470,21 +471,44 @@ impl CcBuilder {
     /// which means CFLAGS optimization flags override build script flags.
     /// Jitterentropy MUST be compiled with -O0, so we temporarily override
     /// CFLAGS to replace any optimization flags with -O0.
-    fn jitter_entropy_cflags_guard(is_like_msvc: bool) -> Option<EnvGuard> {
-        let cflags = get_crate_cflags()?;
-        let filtered: String = cflags
-            .split_whitespace()
-            .filter(|flag| !flag.starts_with("-O") && !flag.starts_with("/O"))
-            .collect::<Vec<_>>()
-            .join(" ");
-        let new_cflags = if is_like_msvc {
-            format!("{filtered} -Od").trim().to_string()
-        } else {
-            format!("{filtered} -O0 -U_FORTIFY_SOURCE")
-                .trim()
-                .to_string()
+    ///
+    /// The cc crate collects flags from ALL matching CFLAGS env vars (not just
+    /// the highest-priority one), so we must filter every variable it checks:
+    ///   1. `CFLAGS_{target}` (e.g. `CFLAGS_x86_64_unknown_freebsd`)
+    ///   2. `HOST_CFLAGS` or `TARGET_CFLAGS`
+    ///   3. `CFLAGS`
+    fn jitter_entropy_cflags_guards(is_like_msvc: bool) -> Vec<EnvGuard> {
+        let target_u = target().to_lowercase().replace('-', "_");
+
+        let cflags_env_names: Vec<String> = vec![
+            format!("CFLAGS_{target_u}"),
+            "HOST_CFLAGS".to_string(),
+            "TARGET_CFLAGS".to_string(),
+            "CFLAGS".to_string(),
+        ];
+
+        let filter_cflags = |value: &str| -> String {
+            let filtered: String = value
+                .split_whitespace()
+                .filter(|flag| !flag.starts_with("-O") && !flag.starts_with("/O"))
+                .collect::<Vec<_>>()
+                .join(" ");
+            if is_like_msvc {
+                format!("{filtered} -Od").trim().to_string()
+            } else {
+                format!("{filtered} -O0 -U_FORTIFY_SOURCE")
+                    .trim()
+                    .to_string()
+            }
         };
-        Some(EnvGuard::new(&env_name_for_target("CFLAGS"), &new_cflags))
+
+        cflags_env_names
+            .into_iter()
+            .filter_map(|name| {
+                let value = env::var(&name).ok()?;
+                Some(EnvGuard::new(&name, filter_cflags(&value)))
+            })
+            .collect()
     }
 
     fn add_all_files(&self, sources: &[&'static str], cc_build: &mut cc::Build) {
@@ -578,7 +602,7 @@ impl CcBuilder {
             cc_build.object(object);
         }
         if should_build_jitter_entropy() {
-            let _je_cflags_guard = Self::jitter_entropy_cflags_guard(compiler.is_like_msvc());
+            let _je_cflags_guards = Self::jitter_entropy_cflags_guards(compiler.is_like_msvc());
             let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
             for object in jitter_entropy_object_files {
                 cc_build.object(object);
