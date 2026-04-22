@@ -539,6 +539,23 @@ where
     }
 }
 
+impl<B> AsDer<PublicKeyX509Der<'static>> for PublicKeyComponents<B>
+where
+    B: AsRef<[u8]> + Debug,
+{
+    /// Serializes the RSA public key components into an X.509 `SubjectPublicKeyInfo`
+    /// structure, as specified in [RFC 5280].
+    ///
+    /// [RFC 5280]: https://www.rfc-editor.org/rfc/rfc5280.html
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the components do not form a valid RSA public key.
+    fn as_der(&self) -> Result<PublicKeyX509Der<'static>, Unspecified> {
+        let pkey = self.build_rsa()?;
+        rfc5280::encode_public_key_der(&pkey)
+    }
+}
+
 pub(super) fn generate_rsa_key(size: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
     let params_fn = |ctx| {
         if 1 == unsafe { EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, size) } {

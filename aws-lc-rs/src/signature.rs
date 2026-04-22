@@ -452,6 +452,50 @@ impl ParsedPublicKey {
         parse_public_key(bytes.as_ref(), algorithm)
     }
 
+    /// Creates a new `ParsedPublicKey` from the components of an RSA public key.
+    ///
+    /// `components` carries the public modulus `n` and public exponent `e` in
+    /// big-endian bytes without leading zeros. `algorithm` must be an RSA
+    /// verification algorithm such as [`RSA_PKCS1_2048_8192_SHA256`] or
+    /// [`RSA_PSS_2048_8192_SHA256`]; any other verification algorithm is
+    /// rejected.
+    ///
+    /// # Errors
+    /// `KeyRejected` if `algorithm` is not an RSA verification algorithm, or
+    /// if `components` do not form a valid RSA public key.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use aws_lc_rs::signature::{self, ParsedPublicKey, RsaPublicKeyComponents};
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # fn modulus_bytes() -> &'static [u8] { &[] }
+    /// # fn exponent_bytes() -> &'static [u8] { &[] }
+    /// # fn signature_bytes() -> &'static [u8] { &[] }
+    /// // Public key components (big-endian, no leading zeros) received
+    /// // out-of-band from a peer.
+    /// let components = RsaPublicKeyComponents {
+    ///     n: modulus_bytes(),
+    ///     e: exponent_bytes(),
+    /// };
+    /// let parsed = ParsedPublicKey::from_rsa_components(
+    ///     &signature::RSA_PKCS1_2048_8192_SHA256,
+    ///     &components,
+    /// )?;
+    /// parsed.verify_sig(b"hello, world", signature_bytes())?;
+    /// # Ok(()) }
+    /// ```
+    pub fn from_rsa_components<B: AsRef<[u8]> + Debug>(
+        algorithm: &'static dyn VerificationAlgorithm,
+        components: &rsa::PublicKeyComponents<B>,
+    ) -> Result<Self, KeyRejected> {
+        let der = components
+            .as_der()
+            .map_err(|Unspecified| KeyRejected::invalid_encoding())?;
+        parse_public_key(der.as_ref(), algorithm)
+    }
+
     /// Returns the algorithm used by this public key.
     #[must_use]
     pub fn algorithm(&self) -> &'static dyn VerificationAlgorithm {

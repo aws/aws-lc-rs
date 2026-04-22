@@ -331,6 +331,125 @@ fn test_signature_rsa_primitive_verification() {
     );
 }
 
+// Exercises `ParsedPublicKey::from_rsa_components` across the same vectors as
+// `test_signature_rsa_primitive_verification`.  The `ParsedPublicKey` produced
+// from the components must accept the same signatures that
+// `RsaPublicKeyComponents::verify` accepts on the same inputs.
+#[test]
+fn test_parsed_public_key_from_rsa_components() {
+    test::run(
+        test_file!("data/rsa_primitive_verify_tests.txt"),
+        |section, test_case| {
+            assert_eq!(section, "");
+            let n = test_case.consume_bytes("n");
+            let e = test_case.consume_bytes("e");
+            let msg = test_case.consume_bytes("Msg");
+            let sig = test_case.consume_bytes("Sig");
+            let expected = test_case.consume_string("Result");
+            let components = RsaPublicKeyComponents {
+                n: n.as_slice(),
+                e: e.as_slice(),
+            };
+            let built = ParsedPublicKey::from_rsa_components(
+                &signature::RSA_PKCS1_2048_8192_SHA256,
+                &components,
+            );
+            if let Ok(parsed) = built {
+                let result = parsed.verify_sig(&msg, &sig);
+                assert_eq!(
+                    result.is_ok(),
+                    expected == "Pass",
+                    "N = {}",
+                    to_hex_upper(n)
+                );
+            } else {
+                assert_ne!(
+                    expected, "Pass",
+                    "from_rsa_components rejected a Pass vector: N = {}",
+                    to_hex_upper(n)
+                );
+            }
+            Ok(())
+        },
+    );
+}
+
+// A non-RSA verification algorithm must be rejected, since
+// `RsaPublicKeyComponents` only describes RSA keys.
+#[test]
+fn test_parsed_public_key_from_rsa_components_rejects_non_rsa_algorithm() {
+    let n: [u8; 4] = [0x12, 0x34, 0x56, 0x79];
+    let e: [u8; 3] = [0x01, 0x00, 0x01];
+    let components = RsaPublicKeyComponents {
+        n: n.as_slice(),
+        e: e.as_slice(),
+    };
+    let err = ParsedPublicKey::from_rsa_components(&signature::ED25519, &components)
+        .expect_err("Ed25519 is not an RSA algorithm");
+    let _ = err;
+}
+
+// Zero or empty modulus/exponent are invalid RSA components and must be
+// rejected before any DER parsing happens.
+#[test]
+fn test_parsed_public_key_from_rsa_components_rejects_empty_modulus() {
+    let n: [u8; 0] = [];
+    let e: [u8; 3] = [0x01, 0x00, 0x01];
+    let components = RsaPublicKeyComponents {
+        n: n.as_slice(),
+        e: e.as_slice(),
+    };
+    let err = ParsedPublicKey::from_rsa_components(
+        &signature::RSA_PKCS1_2048_8192_SHA256,
+        &components,
+    )
+    .expect_err("empty modulus should be rejected");
+    let _ = err;
+}
+
+// `AsDer<PublicKeyX509Der>` on `RsaPublicKeyComponents` must round-trip:
+// the DER it produces should re-parse as the same RSA public key.
+#[test]
+fn test_rsa_public_key_components_as_der_round_trip() {
+    const PUBLIC_KEY: &[u8] = include_bytes!("data/rsa_test_public_key_2048.der");
+    let key_pair =
+        RsaKeyPair::from_pkcs8(include_bytes!("data/rsa_test_private_key_2048.p8")).unwrap();
+    let pubkey = key_pair.public_key();
+    assert_eq!(pubkey.as_ref(), PUBLIC_KEY);
+
+    // Deconstruct into components via the `ring-io` accessor, rebuild, and
+    // re-encode as X.509; the round-tripped DER must parse back into an
+    // equivalent `ParsedPublicKey`.
+    #[cfg(feature = "ring-io")]
+    {
+        let components: RsaPublicKeyComponents<Vec<u8>> = pubkey.into();
+        let der: PublicKeyX509Der<'_> = components.as_der().unwrap();
+        let parsed_from_der =
+            ParsedPublicKey::new(&signature::RSA_PKCS1_2048_8192_SHA256, der.as_ref()).unwrap();
+        let parsed_from_components = ParsedPublicKey::from_rsa_components(
+            &signature::RSA_PKCS1_2048_8192_SHA256,
+            &components,
+        )
+        .unwrap();
+        // Both constructors should accept the same signature.
+        let message = b"hello, world";
+        let mut signature = vec![0u8; key_pair.public_modulus_len()];
+        let rng = rand::SystemRandom::new();
+        key_pair
+            .sign(
+                &signature::RSA_PKCS1_SHA256,
+                &rng,
+                message,
+                &mut signature,
+            )
+            .unwrap();
+        parsed_from_der.verify_sig(message, &signature).unwrap();
+        parsed_from_components
+            .verify_sig(message, &signature)
+            .unwrap();
+    }
+}
+
 #[test]
 fn rsa_test_public_key_coverage() {
     const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_2048.p8");
