@@ -756,16 +756,19 @@ jobs:
 
   hostile-environment:
     if: github.repository_owner == 'aws'
-    name: Hostile environment
+    name: Hostile environment - ${{ matrix.env_name }}=${{ matrix.env_value }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
-        cflags:
-          - '-O3'
-          - '-flto=auto -ffat-lto-objects'
-    env:
-      CFLAGS: ${{ matrix.cflags }}
+        include:
+          - env_name: CFLAGS
+            env_value: '-O3'
+          - env_name: CFLAGS
+            env_value: '-flto=auto -ffat-lto-objects'
+          - env_name: HOST_CFLAGS
+            env_value: '-O2'
+          - env_name: TARGET_CFLAGS
+            env_value: '-O2'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -776,9 +779,13 @@ jobs:
         with:
           go-version: '>=1.18'
       - name: Run tests
-        run: cargo test -p aws-lc-rs --all-targets
+        run: |
+          export ${{ matrix.env_name }}="${{ matrix.env_value }}"
+          cargo test -p aws-lc-rs --all-targets
       - name: Run tests w/ FIPS
-        run: cargo test -p aws-lc-rs --all-targets --features fips
+        run: |
+          export ${{ matrix.env_name }}="${{ matrix.env_value }}"
+          cargo test -p aws-lc-rs --all-targets --features fips
 
   hardened-environment:
     if: github.repository_owner == 'aws'
