@@ -125,6 +125,14 @@ impl StreamingEncryptingKey {
         context: EncryptionContext,
     ) -> Result<Self, Unspecified> {
         let algorithm = key.algorithm();
+        if !algorithm.supports_mode(mode) {
+            return Err(Unspecified);
+        }
+        // The streaming path passes raw key bytes to the EVP API rather than
+        // going through `SymmetricCipherKey` construction.  Validate
+        // algorithm-specific key constraints (e.g. DES weak-key / K1!=K2
+        // checks) that would otherwise be missed.
+        key.validate_key_material()?;
         let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let cipher = mode.evp_cipher(key.algorithm);
         let key_bytes = key.key_bytes.as_ref();
@@ -136,6 +144,16 @@ impl StreamingEncryptingKey {
 
         match &context {
             ctx @ EncryptionContext::Iv128(..) => {
+                let iv = <&[u8]>::try_from(ctx)?;
+                debug_assert_eq!(
+                    iv.len(),
+                    <usize>::try_from(unsafe { EVP_CIPHER_iv_length(cipher.as_const_ptr()) })
+                        .unwrap()
+                );
+                evp_encrypt_init(&mut cipher_ctx, &cipher, key_bytes, Some(iv))?;
+            }
+            #[cfg(feature = "legacy-3des")]
+            ctx @ EncryptionContext::Iv64(..) => {
                 let iv = <&[u8]>::try_from(ctx)?;
                 debug_assert_eq!(
                     iv.len(),
@@ -410,8 +428,13 @@ impl StreamingDecryptingKey {
         mode: OperatingMode,
         context: DecryptionContext,
     ) -> Result<Self, Unspecified> {
-        let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let algorithm = key.algorithm();
+        if !algorithm.supports_mode(mode) {
+            return Err(Unspecified);
+        }
+        // See comment in `StreamingEncryptingKey::new`.
+        key.validate_key_material()?;
+        let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let cipher = mode.evp_cipher(key.algorithm);
         let key_bytes = key.key_bytes.as_ref();
         if key_bytes.len()
@@ -422,6 +445,16 @@ impl StreamingDecryptingKey {
 
         match &context {
             ctx @ DecryptionContext::Iv128(..) => {
+                let iv = <&[u8]>::try_from(ctx)?;
+                debug_assert_eq!(
+                    iv.len(),
+                    <usize>::try_from(unsafe { EVP_CIPHER_iv_length(cipher.as_const_ptr()) })
+                        .unwrap()
+                );
+                evp_decrypt_init(&mut cipher_ctx, &cipher, key_bytes, Some(iv))?;
+            }
+            #[cfg(feature = "legacy-3des")]
+            ctx @ DecryptionContext::Iv64(..) => {
                 let iv = <&[u8]>::try_from(ctx)?;
                 debug_assert_eq!(
                     iv.len(),

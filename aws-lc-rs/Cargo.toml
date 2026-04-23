@@ -39,6 +39,7 @@ test_logging = []
 unstable = []
 prebuilt-nasm = ["aws-lc-sys?/prebuilt-nasm"]
 dev-tests-only = []
+legacy-3des = ["aws-lc-sys?/all-bindings"]
 
 # require non-FIPS
 non-fips = ["aws-lc-sys"]

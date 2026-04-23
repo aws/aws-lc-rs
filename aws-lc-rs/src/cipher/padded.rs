@@ -114,13 +114,15 @@ impl PaddedBlockEncryptingKey {
         Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7)
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
         padding: PaddingStrategy,
     ) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         let algorithm = key.algorithm();
+        if !algorithm.supports_mode(mode) {
+            return Err(Unspecified);
+        }
         let key = key.try_into()?;
         Ok(Self {
             algorithm,
@@ -255,13 +257,15 @@ impl PaddedBlockDecryptingKey {
         Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7)
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
         padding: PaddingStrategy,
     ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
         let algorithm = key.algorithm();
+        if !algorithm.supports_mode(mode) {
+            return Err(Unspecified);
+        }
         let key = key.try_into()?;
         Ok(PaddedBlockDecryptingKey {
             algorithm,
