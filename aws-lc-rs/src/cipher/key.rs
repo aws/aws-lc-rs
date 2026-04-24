@@ -9,6 +9,8 @@ use crate::cipher::chacha::ChaCha20Key;
 #[cfg(feature = "legacy-3des")]
 use crate::cipher::des::{DesKey, DES_EDE3_KEY_LEN, DES_EDE_KEY_LEN};
 use crate::cipher::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
+#[cfg(feature = "legacy-3des")]
+use crate::constant_time;
 use crate::error::{KeyRejected, Unspecified};
 use core::mem::{size_of, MaybeUninit};
 use core::ptr::copy_nonoverlapping;
@@ -162,7 +164,7 @@ impl SymmetricCipherKey {
 
         // SP 800-67 §3.1 requires K1 != K2 for 2-Key TDEA; if they are equal
         // the cipher degenerates to single-DES (56-bit effective security).
-        if first_key == second_key {
+        if constant_time::verify_slices_are_equal(first_key, second_key).is_ok() {
             return Err(KeyRejected::inconsistent_components());
         }
 
@@ -214,12 +216,21 @@ impl SymmetricCipherKey {
             .try_into()
             .expect("length already checked");
 
-        // SP 800-67r2 Appendix A: for 3-Key TDEA, K1, K2 and K3 should be
-        // independently chosen. We enforce that all three subkeys are
-        // distinct. Callers who want the `K1 ‖ K2 ‖ K1` (2TDEA) form must
-        // use `DES_EDE_FOR_LEGACY_USE_ONLY` with a 16-byte key instead of
+        // SP 800-67 §2 (Keying Option 1) requires K1, K2 and K3 to be
+        // pairwise independent. We enforce that all three subkeys are distinct
+        // so the cipher cannot degenerate to single-DES (K1==K2 or K2==K3)
+        // or to 2TDEA (K1==K3). Callers who want 2TDEA must use
+        // `DES_EDE_FOR_LEGACY_USE_ONLY` with a 16-byte key instead of
         // encoding 2TDEA as a 24-byte 3TDEA key.
-        if first_key == second_key || second_key == third_key || first_key == third_key {
+        let mut any_equal: u8 = 0;
+        for (a, b) in [
+            (first_key, second_key),
+            (second_key, third_key),
+            (first_key, third_key),
+        ] {
+            any_equal |= u8::from(constant_time::verify_slices_are_equal(a, b).is_ok());
+        }
+        if any_equal != 0 {
             return Err(KeyRejected::inconsistent_components());
         }
 

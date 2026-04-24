@@ -489,8 +489,7 @@ pub const AES_256: Algorithm = Algorithm {
 /// 2-key Triple DES is a legacy algorithm and has been disallowed for encryption
 /// by [NIST SP 800-131A Rev. 2](https://csrc.nist.gov/publications/detail/sp/800-131a/rev-2/final)
 /// since 2015 — several years earlier than 3-key Triple DES. It is retained here
-/// solely for interoperability with existing systems that cannot yet migrate.
-/// New designs must use an AES-based algorithm.
+/// solely for interoperability. New designs must use an AES-based algorithm.
 ///
 /// Only CBC and ECB operating modes are supported. K1 must differ from K2; if
 /// they are equal the cipher degenerates to single-DES and key construction
@@ -1529,11 +1528,10 @@ mod tests {
     #[test]
     #[allow(deprecated)]
     fn test_des_ede3_rejects_degenerate_keys() {
-        // SP 800-67r2 Appendix A: 3TDEA requires K1, K2, and K3 to be
-        // independently chosen. We enforce that all three subkeys are
-        // pairwise distinct so the cipher cannot degenerate to single-DES
-        // (K1 == K2 or K2 == K3) or to 2TDEA (K1 == K3). Callers who want
-        // 2TDEA must use `DES_EDE_FOR_LEGACY_USE_ONLY` with a 16-byte key.
+        // SP 800-67 §2 (Keying Option 1) requires K1, K2, and K3 to be pairwise
+        // independent. We enforce that all three subkeys are distinct so the cipher
+        // cannot degenerate to single-DES (K1==K2 or K2==K3) or to 2TDEA (K1==K3).
+        // Callers who want 2TDEA must use `DES_EDE_FOR_LEGACY_USE_ONLY` with a 16-byte key.
         let k1_eq_k2 = from_hex("0123456789abcdef0123456789abcdef456789abcdef0123").unwrap();
         assert!(
             UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &k1_eq_k2)

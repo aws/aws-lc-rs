@@ -40,7 +40,7 @@ pub(super) fn encrypt_cbc_mode(
     let mut iv = [0u8; DES_CBC_IV_LEN];
     iv.copy_from_slice(iv_bytes);
 
-    des_ede_cbc_encrypt(
+    des_cbc_encrypt(
         &key.0[0],
         &key.0[1],
         &key.0[2],
@@ -66,7 +66,7 @@ pub(super) fn decrypt_cbc_mode<'in_out>(
     let mut iv = [0u8; DES_CBC_IV_LEN];
     iv.copy_from_slice(iv_bytes);
 
-    des_ede_cbc_encrypt(
+    des_cbc_encrypt(
         &key.0[0],
         &key.0[1],
         &key.0[2],
@@ -94,7 +94,7 @@ pub(super) fn encrypt_ecb_mode(
 
     let mut in_out_iter = in_out.chunks_exact_mut(DES_BLOCK_LEN);
     for block in in_out_iter.by_ref() {
-        des_ecb3_encrypt(&key.0[0], &key.0[1], &key.0[2], block, DES_ENCRYPT);
+        des_ecb_encrypt(&key.0[0], &key.0[1], &key.0[2], block, DES_ENCRYPT);
     }
     // Sanity check: `encrypt` validates that `in_out.len() % block_len == 0`
     // for ECB mode before dispatching here.
@@ -125,7 +125,7 @@ pub(super) fn decrypt_ecb_mode<'in_out>(
     {
         let mut in_out_iter = in_out.chunks_exact_mut(DES_BLOCK_LEN);
         for block in in_out_iter.by_ref() {
-            des_ecb3_encrypt(&key.0[0], &key.0[1], &key.0[2], block, DES_DECRYPT);
+            des_ecb_encrypt(&key.0[0], &key.0[1], &key.0[2], block, DES_DECRYPT);
         }
         // Sanity check: `decrypt` validates that `in_out.len() % block_len == 0`
         // for ECB mode before dispatching here.
@@ -135,7 +135,7 @@ pub(super) fn decrypt_ecb_mode<'in_out>(
     Ok(in_out)
 }
 
-fn des_ede_cbc_encrypt(
+fn des_cbc_encrypt(
     ks1: &DES_key_schedule,
     ks2: &DES_key_schedule,
     ks3: &DES_key_schedule,
@@ -166,7 +166,7 @@ fn des_ede_cbc_encrypt(
     });
 }
 
-fn des_ecb3_encrypt(
+fn des_ecb_encrypt(
     ks1: &DES_key_schedule,
     ks2: &DES_key_schedule,
     ks3: &DES_key_schedule,
