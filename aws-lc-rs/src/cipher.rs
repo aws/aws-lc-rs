@@ -337,20 +337,25 @@ impl OperatingMode {
             (OperatingMode::CFB128, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cfb128() },
             (OperatingMode::ECB, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ecb() },
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             (OperatingMode::CBC, AlgorithmId::DesEdeForLegacyUseOnly) => unsafe {
                 EVP_des_ede_cbc()
             },
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             (OperatingMode::ECB, AlgorithmId::DesEdeForLegacyUseOnly) => unsafe { EVP_des_ede() },
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             (OperatingMode::CBC, AlgorithmId::DesEde3ForLegacyUseOnly) => unsafe {
                 EVP_des_ede3_cbc()
             },
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             (OperatingMode::ECB, AlgorithmId::DesEde3ForLegacyUseOnly) => unsafe {
                 EVP_des_ede3_ecb()
             },
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             (OperatingMode::CTR, AlgorithmId::DesEdeForLegacyUseOnly)
             | (OperatingMode::CTR, AlgorithmId::DesEde3ForLegacyUseOnly)
             | (OperatingMode::CFB128, AlgorithmId::DesEdeForLegacyUseOnly)
@@ -438,6 +443,7 @@ pub enum AlgorithmId {
     /// 2-key Triple DES has been disallowed for encryption by
     /// NIST SP 800-131A Rev. 2 since 2015.
     #[cfg(feature = "legacy-3des")]
+    #[deprecated]
     DesEdeForLegacyUseOnly,
 
     /// 3TDEA (for legacy use only).
@@ -445,6 +451,7 @@ pub enum AlgorithmId {
     /// 3DES has been disallowed for encryption by NIST SP 800-131A Rev. 2
     /// after 2023.
     #[cfg(feature = "legacy-3des")]
+    #[deprecated]
     DesEde3ForLegacyUseOnly,
 }
 
@@ -548,6 +555,7 @@ impl Algorithm {
                 OperatingMode::ECB => Ok(EncryptionContext::None),
             },
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
                 match mode {
                     OperatingMode::CBC => Ok(EncryptionContext::Iv64(FixedLength::new()?)),
@@ -570,6 +578,7 @@ impl Algorithm {
                 }
             },
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
                 match mode {
                     OperatingMode::CBC => matches!(input, EncryptionContext::Iv64(_)),
@@ -592,6 +601,7 @@ impl Algorithm {
                 }
             },
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
                 match mode {
                     OperatingMode::CBC => matches!(input, DecryptionContext::Iv64(_)),
@@ -617,6 +627,7 @@ impl Algorithm {
                     | OperatingMode::ECB
             ),
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
                 matches!(mode, OperatingMode::CBC | OperatingMode::ECB)
             }
@@ -693,6 +704,7 @@ impl UnboundCipherKey {
     /// `DES_set_key_unchecked`, which skips weak-key detection.
     fn validate_key_material(&self) -> Result<(), KeyRejected> {
         #[cfg(feature = "legacy-3des")]
+        #[allow(deprecated)]
         match self.algorithm.id() {
             AlgorithmId::DesEdeForLegacyUseOnly => {
                 let _ = SymmetricCipherKey::prepare_des_ede(self.key_bytes.as_ref())?;
@@ -715,10 +727,12 @@ impl TryInto<SymmetricCipherKey> for UnboundCipherKey {
             AlgorithmId::Aes192 => SymmetricCipherKey::aes192(self.key_bytes.as_ref()),
             AlgorithmId::Aes256 => SymmetricCipherKey::aes256(self.key_bytes.as_ref()),
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly => {
                 SymmetricCipherKey::des_ede(self.key_bytes.as_ref())
             }
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEde3ForLegacyUseOnly => {
                 SymmetricCipherKey::des_ede3(self.key_bytes.as_ref())
             }
@@ -1025,6 +1039,7 @@ fn encrypt(
                 aes::encrypt_cbc_mode(key, context, in_out)
             }
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
                 des::encrypt_cbc_mode(key, context, in_out)
             }
@@ -1034,8 +1049,9 @@ fn encrypt(
                 aes::encrypt_ctr_mode(key, context, in_out)
             }
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
-                Err(Unspecified)
+                unreachable!("DES does not support CTR mode.")
             }
         },
         // TODO: Hopefully support CFB1, and CFB8
@@ -1044,8 +1060,9 @@ fn encrypt(
                 aes::encrypt_cfb_mode(key, mode, context, in_out)
             }
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
-                Err(Unspecified)
+                unreachable!("DES does not support CFB128 mode.")
             }
         },
         OperatingMode::ECB => match algorithm.id() {
@@ -1053,6 +1070,7 @@ fn encrypt(
                 aes::encrypt_ecb_mode(key, context, in_out)
             }
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
                 des::encrypt_ecb_mode(key, context, in_out)
             }
@@ -1082,6 +1100,7 @@ fn decrypt<'in_out>(
                 aes::decrypt_cbc_mode(key, context, in_out)
             }
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
                 des::decrypt_cbc_mode(key, context, in_out)
             }
@@ -1091,8 +1110,9 @@ fn decrypt<'in_out>(
                 aes::decrypt_ctr_mode(key, context, in_out)
             }
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
-                Err(Unspecified)
+                unreachable!("DES does not support CTR mode.")
             }
         },
         // TODO: Hopefully support CFB1, and CFB8
@@ -1101,8 +1121,9 @@ fn decrypt<'in_out>(
                 aes::decrypt_cfb_mode(key, mode, context, in_out)
             }
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
-                Err(Unspecified)
+                unreachable!("DES does not support CFB128 mode.")
             }
         },
         OperatingMode::ECB => match algorithm.id() {
@@ -1110,6 +1131,7 @@ fn decrypt<'in_out>(
                 aes::decrypt_ecb_mode(key, context, in_out)
             }
             #[cfg(feature = "legacy-3des")]
+            #[allow(deprecated)]
             AlgorithmId::DesEdeForLegacyUseOnly | AlgorithmId::DesEde3ForLegacyUseOnly => {
                 des::decrypt_ecb_mode(key, context, in_out)
             }
@@ -1575,6 +1597,92 @@ mod tests {
                         .and_then(EncryptingKey::cbc)
                         .is_err(),
                     "expected weak DES subkey {weak} at position {position} to be rejected"
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "legacy-3des")]
+    #[test]
+    #[allow(deprecated)]
+    fn test_des_ede_rejects_semi_weak_subkey() {
+        // DES_set_key also rejects semi-weak keys (return value -2).
+        // There are 6 semi-weak key pairs (12 keys total); each member of a
+        // pair encrypts what the other decrypts, making the cipher an
+        // involuntary self-inverse. The semi-weak keys are listed in
+        // openssl/des.h. We verify that using any one of them as either
+        // subkey of a 2TDEA key is rejected.
+        // The 12 DES semi-weak keys (6 pairs); each key in a pair is its own
+        // partner's inverse. These are exactly the keys for which DES_set_key
+        // returns -2 (along with the 4 weak keys already tested separately).
+        // Values taken from OpenSSL/AWS-LC des.h.
+        let semi_weak_keys: [&str; 12] = [
+            "01fe01fe01fe01fe",
+            "fe01fe01fe01fe01",
+            "1fe01fe00ef10ef1",
+            "e01fe01ff10ef10e",
+            "01e001e001f101f1",
+            "e001e001f101f101",
+            "1ffe1ffe0efe0efe",
+            "fe1ffe1ffe0efe0e",
+            "011f011f010e010e",
+            "1f011f010e010e01",
+            "e0fee0fef1fef1fe",
+            "fee0fee0fef1fef1",
+        ];
+        let distinct = "0123456789abcdef";
+        for semi_weak in &semi_weak_keys {
+            let key = from_hex(&format!("{}{}", semi_weak, distinct)).unwrap();
+            assert!(
+                UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key)
+                    .and_then(EncryptingKey::cbc)
+                    .is_err(),
+                "expected semi-weak DES K1 = {semi_weak} to be rejected in 2TDEA"
+            );
+            let key = from_hex(&format!("{}{}", distinct, semi_weak)).unwrap();
+            assert!(
+                UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key)
+                    .and_then(EncryptingKey::cbc)
+                    .is_err(),
+                "expected semi-weak DES K2 = {semi_weak} to be rejected in 2TDEA"
+            );
+        }
+    }
+
+    #[cfg(feature = "legacy-3des")]
+    #[test]
+    #[allow(deprecated)]
+    fn test_des_ede3_rejects_semi_weak_subkey() {
+        // Same 12 semi-weak keys as above; verify rejection at each of the
+        // three subkey positions in a 3TDEA key.
+        let semi_weak_keys: [&str; 12] = [
+            "01fe01fe01fe01fe",
+            "fe01fe01fe01fe01",
+            "1fe01fe00ef10ef1",
+            "e01fe01ff10ef10e",
+            "01e001e001f101f1",
+            "e001e001f101f101",
+            "1ffe1ffe0efe0efe",
+            "fe1ffe1ffe0efe0e",
+            "011f011f010e010e",
+            "1f011f010e010e01",
+            "e0fee0fef1fef1fe",
+            "fee0fee0fef1fef1",
+        ];
+        let fillers = ["0123456789abcdef", "23456789abcdef01"];
+
+        for semi_weak in &semi_weak_keys {
+            for position in 0..3 {
+                let mut parts = [""; 3];
+                parts[position] = *semi_weak;
+                parts[(position + 1) % 3] = fillers[0];
+                parts[(position + 2) % 3] = fillers[1];
+                let key = from_hex(&format!("{}{}{}", parts[0], parts[1], parts[2])).unwrap();
+                assert!(
+                    UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key)
+                        .and_then(EncryptingKey::cbc)
+                        .is_err(),
+                    "expected semi-weak DES subkey {semi_weak} at position {position} to be rejected in 3TDEA"
                 );
             }
         }

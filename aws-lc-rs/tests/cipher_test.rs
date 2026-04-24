@@ -1411,6 +1411,11 @@ macro_rules! des_padded_cipher_rt {
     };
 }
 
+// The following DES KAT vectors are from the NIST SP 800-38A TDES example values:
+// https://csrc.nist.gov/projects/cryptographic-standards-and-guidelines/example-values
+// The 2TDEA key is the first 16 bytes of the 3TDEA key.
+// PKCS#7-padded variants are not from NIST; their ciphertexts were computed
+// by applying PKCS#7 padding to the NIST plaintext before encryption.
 #[cfg(feature = "legacy-3des")]
 des_cipher_kat!(
     test_kat_des_ede_cbc_32_bytes,
@@ -1510,7 +1515,7 @@ des_cipher_rt!(
     OperatingMode::CBC,
     cbc,
     "0123456789abcdef23456789abcdef01",
-    "4e6f77206973207468652074696d6520666f7220616c6c20206d656e20746f20"
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
 #[cfg(feature = "legacy-3des")]
@@ -1520,7 +1525,7 @@ des_cipher_rt!(
     OperatingMode::CBC,
     cbc,
     "0123456789abcdef23456789abcdef01456789abcdef0123",
-    "4e6f77206973207468652074696d6520666f7220616c6c20206d656e20746f20"
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
 #[cfg(feature = "legacy-3des")]
@@ -1530,7 +1535,7 @@ des_cipher_rt!(
     OperatingMode::ECB,
     ecb,
     "0123456789abcdef23456789abcdef01",
-    "4e6f77206973207468652074696d6520666f7220616c6c20206d656e20746f20"
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
 #[cfg(feature = "legacy-3des")]
@@ -1540,7 +1545,7 @@ des_cipher_rt!(
     OperatingMode::ECB,
     ecb,
     "0123456789abcdef23456789abcdef01456789abcdef0123",
-    "4e6f77206973207468652074696d6520666f7220616c6c20206d656e20746f20"
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
 #[cfg(feature = "legacy-3des")]
@@ -1598,7 +1603,7 @@ des_padded_cipher_rt!(
     OperatingMode::CBC,
     cbc_pkcs7,
     "0123456789abcdef23456789abcdef01",
-    "4e6f77206973207468652074696d6520666f7220616c6c20206d656e20746f"
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
 #[cfg(feature = "legacy-3des")]
@@ -1608,7 +1613,7 @@ des_padded_cipher_rt!(
     OperatingMode::CBC,
     cbc_pkcs7,
     "0123456789abcdef23456789abcdef01456789abcdef0123",
-    "4e6f77206973207468652074696d6520666f7220616c6c20206d656e20746f"
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
 #[cfg(feature = "legacy-3des")]
@@ -1618,7 +1623,7 @@ des_padded_cipher_rt!(
     OperatingMode::ECB,
     ecb_pkcs7,
     "0123456789abcdef23456789abcdef01",
-    "4e6f77206973207468652074696d6520666f7220616c6c20206d656e20746f"
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
 #[cfg(feature = "legacy-3des")]
@@ -1628,7 +1633,7 @@ des_padded_cipher_rt!(
     OperatingMode::ECB,
     ecb_pkcs7,
     "0123456789abcdef23456789abcdef01456789abcdef0123",
-    "4e6f77206973207468652074696d6520666f7220616c6c20206d656e20746f"
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
 #[test]

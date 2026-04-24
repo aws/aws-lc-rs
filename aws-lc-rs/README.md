@@ -134,16 +134,17 @@ supported.
 
 **⚠️ Warning:** Triple DES is a legacy algorithm. It has been disallowed for
 encryption by [NIST SP 800-131A Rev. 2](https://csrc.nist.gov/publications/detail/sp/800-131a/rev-2/final):
-2-key Triple DES since 2015, and 3-key Triple DES after 2023. This feature exists
+2-key Triple DES after 2015, and 3-key Triple DES after 2023. This feature exists
 solely to support interoperability with existing systems that cannot yet migrate to
 AES. All exposed items are marked `#[deprecated]` so that any use site produces a
 compiler warning. **Do not use Triple DES in new designs.** If you only need
 confidentiality, prefer AES-GCM or another AEAD from the `aead` module; if you
 specifically need a block cipher, prefer one of the AES algorithms in `cipher`.
 
-This feature also enables `aws-lc-sys?/all-bindings`, which is required to expose the
-`DES_*` bindings when the consuming build uses `bindgen` rather than the pre-generated
-bindings.
+The universal bindings used by default from `aws-lc-sys` do not expose the `DES_*` symbols. Thus,
+this feature enables `aws-lc-sys?/all-bindings` so that bindings are available for all AWS-LC
+libcrypto functions. On platforms where pre-generated bindings are unavailable, `bindgen` is
+invoked at build time and the generated bindings will include the full symbol set.
 
 ## Use of prebuilt NASM objects
 

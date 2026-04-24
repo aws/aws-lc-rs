@@ -157,12 +157,8 @@ impl SymmetricCipherKey {
         }
         // `as_chunks` is only stable since Rust 1.88.0, so use explicit slicing
         // instead to stay within the crate's MSRV.
-        let first_key: &[u8; 8] = key_bytes[0..8]
-            .try_into()
-            .map_err(|_| KeyRejected::unspecified())?;
-        let second_key: &[u8; 8] = key_bytes[8..16]
-            .try_into()
-            .map_err(|_| KeyRejected::unspecified())?;
+        let first_key: &[u8; 8] = key_bytes[0..8].try_into().expect("length already checked");
+        let second_key: &[u8; 8] = key_bytes[8..16].try_into().expect("length already checked");
 
         // SP 800-67 §3.1 requires K1 != K2 for 2-Key TDEA; if they are equal
         // the cipher degenerates to single-DES (56-bit effective security).
@@ -192,7 +188,7 @@ impl SymmetricCipherKey {
         //   0  => key is not weak and has odd parity (preferred)
         //  -1  => key parity is not odd (schedule is still valid; most callers
         //         do not maintain DES parity bits, so we accept this)
-        //  -2  => key is a weak DES key; reject it
+        //  -2  => key is a weak or semi-weak DES key; reject it
         // Any other non-zero value is treated as a failure.
         match unsafe { DES_set_key(key_bytes.as_ptr() as *const DES_cblock, ks.as_mut_ptr()) } {
             0 | -1 => Ok(unsafe { ks.assume_init() }),
@@ -212,15 +208,11 @@ impl SymmetricCipherKey {
         }
         // `as_chunks` is only stable since Rust 1.88.0, so use explicit slicing
         // instead to stay within the crate's MSRV.
-        let first_key: &[u8; 8] = key_bytes[0..8]
-            .try_into()
-            .map_err(|_| KeyRejected::unspecified())?;
-        let second_key: &[u8; 8] = key_bytes[8..16]
-            .try_into()
-            .map_err(|_| KeyRejected::unspecified())?;
+        let first_key: &[u8; 8] = key_bytes[0..8].try_into().expect("length already checked");
+        let second_key: &[u8; 8] = key_bytes[8..16].try_into().expect("length already checked");
         let third_key: &[u8; 8] = key_bytes[16..24]
             .try_into()
-            .map_err(|_| KeyRejected::unspecified())?;
+            .expect("length already checked");
 
         // SP 800-67r2 Appendix A: for 3-Key TDEA, K1, K2 and K3 should be
         // independently chosen. We enforce that all three subkeys are
