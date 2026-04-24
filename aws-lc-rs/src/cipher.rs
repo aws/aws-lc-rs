@@ -509,8 +509,8 @@ pub const DES_EDE_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 ///
 /// 3DES is a legacy algorithm and has been disallowed for encryption by
 /// [NIST SP 800-131A Rev. 2](https://csrc.nist.gov/publications/detail/sp/800-131a/rev-2/final)
-/// after 2023. It is retained here solely for interoperability with existing
-/// systems that cannot yet migrate. New designs must use an AES-based algorithm.
+/// after 2023. It is retained here solely for interoperability. New designs
+/// must use an AES-based algorithm.
 ///
 /// Only CBC and ECB operating modes are supported. K1, K2, and K3 must all
 /// be distinct; any pairwise equality causes 3TDEA to degenerate (to either
