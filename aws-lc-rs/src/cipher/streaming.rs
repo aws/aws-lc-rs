@@ -132,6 +132,7 @@ impl StreamingEncryptingKey {
         // going through `SymmetricCipherKey` construction.  Validate
         // algorithm-specific key constraints (e.g. DES weak-key / K1!=K2
         // checks) that would otherwise be missed.
+        #[cfg(feature = "legacy-3des")]
         key.validate_key_material()?;
         let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let cipher = mode.evp_cipher(key.algorithm);
@@ -433,6 +434,7 @@ impl StreamingDecryptingKey {
             return Err(Unspecified);
         }
         // See comment in `StreamingEncryptingKey::new`.
+        #[cfg(feature = "legacy-3des")]
         key.validate_key_material()?;
         let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
         let cipher = mode.evp_cipher(key.algorithm);
