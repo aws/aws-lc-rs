@@ -692,14 +692,19 @@ impl UnboundCipherKey {
     /// Validates the key material against algorithm-specific constraints beyond
     /// the length check performed by [`UnboundCipherKey::new`].
     ///
-    /// Rejects weak DES subkeys and degenerate key configurations
-    /// (e.g. K1 == K2 for 2TDEA). The streaming cipher constructors call this
-    /// because they pass raw key bytes directly to the EVP API rather than
-    /// going through [`SymmetricCipherKey`] construction, which would otherwise
-    /// perform these checks. This is necessary because the EVP layer internally
-    /// uses `DES_set_key_unchecked`, which skips weak-key detection.
-    #[cfg(feature = "legacy-3des")]
+    /// For DES algorithms (behind `legacy-3des`), this rejects weak DES subkeys
+    /// and degenerate key configurations (e.g. K1 == K2 for 2TDEA). For other
+    /// algorithms this is a no-op since the only constraint is key length.
+    ///
+    /// The streaming cipher constructors call this because they pass raw key
+    /// bytes directly to the EVP API rather than going through
+    /// [`SymmetricCipherKey`] construction, which would otherwise perform these
+    /// checks. This is necessary because the EVP layer internally uses
+    /// `DES_set_key_unchecked`, which skips weak-key detection.
+    #[allow(clippy::unused_self)]
+    #[allow(clippy::unnecessary_wraps)]
     fn validate_key_material(&self) -> Result<(), KeyRejected> {
+        #[cfg(feature = "legacy-3des")]
         #[allow(deprecated)]
         match self.algorithm.id() {
             AlgorithmId::DesEdeForLegacyUseOnly => {
