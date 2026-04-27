@@ -229,6 +229,7 @@ impl SymmetricCipherKey {
             (first_key, third_key),
         ] {
             any_equal |= u8::from(constant_time::verify_slices_are_equal(a, b).is_ok());
+            any_equal = core::hint::black_box(any_equal);
         }
         if any_equal != 0 {
             return Err(KeyRejected::inconsistent_components());
