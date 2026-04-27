@@ -207,6 +207,7 @@ block_api!(
     FipsServiceStatus::Approved
 );
 
+#[cfg(feature = "legacy-3des")]
 block_api!(
     block_des_ede_cbc_pkcs7,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -216,6 +217,7 @@ block_api!(
     FipsServiceStatus::NonApproved
 );
 
+#[cfg(feature = "legacy-3des")]
 block_api!(
     block_des_ede_ecb_pkcs7,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -225,6 +227,7 @@ block_api!(
     FipsServiceStatus::NonApproved
 );
 
+#[cfg(feature = "legacy-3des")]
 block_api!(
     block_des_ede3_cbc_pkcs7,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -234,6 +237,7 @@ block_api!(
     FipsServiceStatus::NonApproved
 );
 
+#[cfg(feature = "legacy-3des")]
 block_api!(
     block_des_ede3_ecb_pkcs7,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -243,6 +247,7 @@ block_api!(
     FipsServiceStatus::NonApproved
 );
 
+#[cfg(feature = "legacy-3des")]
 streaming_api!(
     streaming_des_ede_cbc_pkcs7,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -252,6 +257,7 @@ streaming_api!(
     FipsServiceStatus::NonApproved
 );
 
+#[cfg(feature = "legacy-3des")]
 streaming_api!(
     streaming_des_ede_ecb_pkcs7,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -261,6 +267,7 @@ streaming_api!(
     FipsServiceStatus::NonApproved
 );
 
+#[cfg(feature = "legacy-3des")]
 streaming_api!(
     streaming_des_ede3_cbc_pkcs7,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -270,6 +277,7 @@ streaming_api!(
     FipsServiceStatus::NonApproved
 );
 
+#[cfg(feature = "legacy-3des")]
 streaming_api!(
     streaming_des_ede3_ecb_pkcs7,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
