@@ -14,6 +14,8 @@ declare -a SOURCE_FILES
 SOURCE_FILES=()
 mapfile -O 0 -t SOURCE_FILES < <(find crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src -name "*.S" -type f | sort -f)
 echo "${SOURCE_FILES[@]}"
+mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(find crypto/fipsmodule/ml_dsa/mldsa/native/x86_64/src -name "*.S" -type f | sort -f)
+echo "${SOURCE_FILES[@]}"
 mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(find generated-src/linux-x86_64/crypto -name "*.S" -type f  | sort -f)
 echo "${SOURCE_FILES[@]}"
 mapfile -O ${#SOURCE_FILES[@]} -t SOURCE_FILES < <(s2n_bignum_x86_64)
