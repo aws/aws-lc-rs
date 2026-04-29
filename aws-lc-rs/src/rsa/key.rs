@@ -511,6 +511,51 @@ where
             params.bit_size_range(),
         )
     }
+
+    /// Parses these components into a [`crate::signature::ParsedPublicKey`],
+    /// which can then be used to verify multiple signatures while amortizing
+    /// the cost of key parsing.
+    ///
+    /// `params` specifies the RSA verification algorithm, such as
+    /// [`crate::signature::RSA_PKCS1_2048_8192_SHA256`] or
+    /// [`crate::signature::RSA_PSS_2048_8192_SHA256`].
+    ///
+    /// Note that the algorithm's accepted key-size range is *not* enforced at
+    /// this point; that check is deferred to
+    /// [`crate::signature::ParsedPublicKey::verify_sig`], matching the
+    /// behavior of [`crate::signature::ParsedPublicKey::new`].
+    ///
+    /// # Errors
+    /// `KeyRejected` if `self` does not form a valid RSA public key.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use aws_lc_rs::signature::{self, RsaPublicKeyComponents};
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # fn modulus_bytes() -> &'static [u8] { &[] }
+    /// # fn exponent_bytes() -> &'static [u8] { &[] }
+    /// # fn signature_bytes() -> &'static [u8] { &[] }
+    /// // Public key components (big-endian, no leading zeros) received
+    /// // out-of-band from a peer.
+    /// let components = RsaPublicKeyComponents {
+    ///     n: modulus_bytes(),
+    ///     e: exponent_bytes(),
+    /// };
+    /// let parsed =
+    ///     components.to_parsed_public_key(&signature::RSA_PKCS1_2048_8192_SHA256)?;
+    /// parsed.verify_sig(b"hello, world", signature_bytes())?;
+    /// # Ok(()) }
+    /// ```
+    pub fn to_parsed_public_key(
+        &self,
+        params: &'static RsaParameters,
+    ) -> Result<crate::signature::ParsedPublicKey, KeyRejected> {
+        let der = AsDer::<PublicKeyX509Der<'static>>::as_der(self)
+            .map_err(|Unspecified| KeyRejected::inconsistent_components())?;
+        crate::signature::parse_public_key(der.as_ref(), params)
+    }
 }
 
 #[cfg(feature = "ring-io")]
