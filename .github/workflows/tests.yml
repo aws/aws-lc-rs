@@ -35,6 +35,8 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, ubuntu-24.04-arm ]
         args:
           - --all-targets --features unstable
+          - --all-targets --features unstable,legacy-3des
+          - --all-targets --features legacy-3des
           - --release --all-targets --features unstable
           - --no-default-features --features non-fips,unstable
           - --no-default-features --features non-fips,ring-io,unstable
