@@ -16,7 +16,7 @@ pub const DES_EDE_KEY_LEN: usize = 16;
 /// Length of a 3TDEA (DES-EDE3) key in bytes.
 pub const DES_EDE3_KEY_LEN: usize = 24;
 
-/// The number of bytes for a DES CBC initialization vector (IV).
+/// The number of bytes for a 3DES-CBC initialization vector (IV).
 pub const DES_CBC_IV_LEN: usize = 8;
 
 pub(crate) const DES_BLOCK_LEN: usize = 8;
