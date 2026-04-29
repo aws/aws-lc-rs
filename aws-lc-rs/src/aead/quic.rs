@@ -71,7 +71,7 @@ pub type Sample = [u8; SAMPLE_LEN];
 
 /// A QUIC Header Protection Algorithm.
 pub struct Algorithm {
-    init: fn(key: &[u8]) -> Result<SymmetricCipherKey, error::Unspecified>,
+    init: fn(key: &[u8]) -> Result<SymmetricCipherKey, error::KeyRejected>,
 
     key_len: usize,
     id: AlgorithmID,
@@ -162,6 +162,10 @@ fn cipher_new_mask(
             let input = block::Block::zero();
             let counter = u32::from_ne_bytes(*counter_bytes).to_le();
             encrypt_block_chacha20(raw_key, input, nonce, counter)?
+        }
+        #[cfg(feature = "legacy-3des")]
+        SymmetricCipherKey::DesEde { .. } | SymmetricCipherKey::DesEde3 { .. } => {
+            return Err(error::Unspecified)
         }
     };
 

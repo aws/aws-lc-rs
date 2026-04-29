@@ -124,6 +124,28 @@ It can be enabled in two ways:
 used in production builds. The `rand::unsealed` module and `mut_fill` method are not part of the
 stable public API and may change without notice.
 
+##### legacy-3des
+
+Enables Triple DES as an opt-in symmetric cipher under the `cipher` module, exposing
+both `DES_EDE_FOR_LEGACY_USE_ONLY` (2-key Triple DES / DES-EDE) and
+`DES_EDE3_FOR_LEGACY_USE_ONLY` (3-key Triple DES / DES-EDE3), together with the
+supporting key-length and IV-length constants. Only CBC and ECB operating modes are
+supported.
+
+**⚠️ Warning:** Triple DES is a legacy algorithm. It has been disallowed for
+encryption by [NIST SP 800-131A Rev. 2](https://csrc.nist.gov/publications/detail/sp/800-131a/rev-2/final):
+2-key Triple DES after 2015, and 3-key Triple DES after 2023. This feature exists
+solely to support interoperability. All exposed items are marked `#[deprecated]`
+so that any use site produces a compiler warning. **Do not use Triple DES in new
+designs.** If you only need confidentiality, prefer AES-GCM or another AEAD from
+the `aead` module; if you specifically need a block cipher, prefer one of the AES
+algorithms in `cipher`.
+
+The universal bindings used by default from `aws-lc-sys` do not expose the `DES_*` symbols. Thus,
+this feature enables `aws-lc-sys?/all-bindings` so that bindings are available for all AWS-LC
+libcrypto functions. On platforms where pre-generated bindings are unavailable, `bindgen` is
+invoked at build time and the generated bindings will include the full symbol set.
+
 ## Use of prebuilt NASM objects
 
 Prebuilt NASM objects are **only** applicable to Windows x86-64 platforms. They are **never** used on any other platform (Linux, macOS, etc.).

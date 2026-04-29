@@ -6,6 +6,9 @@ use aws_lc_rs::cipher::{
     PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, StreamingDecryptingKey,
     StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192, AES_256,
 };
+#[cfg(feature = "legacy-3des")]
+#[allow(deprecated)]
+use aws_lc_rs::cipher::{DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY};
 use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
 use aws_lc_rs::test;
 use aws_lc_rs::test::from_hex;
@@ -1109,6 +1112,528 @@ unpadded_cipher_kat!(
     "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
     "00000000000000000000000000000000",
     "00112233445566778899aabbccddee"
+);
+
+#[cfg(feature = "legacy-3des")]
+macro_rules! des_streaming_cipher_kat {
+    ($name:ident, $alg:expr, $mode:expr, ecb_pkcs7, $key:literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
+        paste! {
+        #[test]
+        #[allow(deprecated)]
+        fn [<$name _streaming>]() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
+
+            for step in ($from_step..=$to_step) {
+                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+                let encrypting_key = StreamingEncryptingKey::ecb_pkcs7(unbound_key).unwrap();
+
+                let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+
+                assert_eq!(expected_ciphertext.as_slice(), ciphertext.as_ref());
+
+                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+                let decrypting_key =
+                    StreamingDecryptingKey::ecb_pkcs7(unbound_key2, decrypt_ctx).unwrap();
+
+                let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                assert_eq!(input.as_slice(), plaintext.as_ref());
+            }
+        }
+        }
+    };
+
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv:literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
+        paste! {
+        #[test]
+        #[allow(deprecated)]
+        fn [<$name _streaming>]() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
+            let iv = from_hex($iv).unwrap();
+
+            for step in ($from_step..=$to_step) {
+                let iv_arr: [u8; 8] = iv.clone().try_into().unwrap();
+                let ec = EncryptionContext::Iv64(FixedLength::from(iv_arr));
+
+                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+                let encrypting_key = StreamingEncryptingKey::[<less_safe_ $constructor>](unbound_key, ec).unwrap();
+
+                let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+
+                assert_eq!(expected_ciphertext.as_slice(), ciphertext.as_ref());
+
+                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+                let decrypting_key =
+                    StreamingDecryptingKey::$constructor(unbound_key2, decrypt_ctx).unwrap();
+
+                let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                assert_eq!(input.as_slice(), plaintext.as_ref());
+            }
+        }
+        }
+    };
+}
+
+#[cfg(feature = "legacy-3des")]
+macro_rules! des_streaming_cipher_rt {
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $plaintext:literal, $from_step:literal, $to_step:literal) => {
+        paste! {
+        #[test]
+        #[allow(deprecated)]
+        fn [<$name _streaming>]() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+
+            for step in ($from_step..=$to_step) {
+                let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+                let encrypting_key = StreamingEncryptingKey::$constructor(unbound_key).unwrap();
+
+                let (ciphertext, decrypt_ctx) = step_encrypt(encrypting_key, &input, step);
+
+                let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+                let decrypting_key =
+                    StreamingDecryptingKey::$constructor(unbound_key2, decrypt_ctx).unwrap();
+
+                let plaintext = step_decrypt(decrypting_key, &ciphertext, step);
+                assert_eq!(input.as_slice(), plaintext.as_ref());
+            }
+        }
+        }
+    };
+}
+
+#[cfg(feature = "legacy-3des")]
+macro_rules! des_cipher_kat {
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv:literal, $plaintext:literal, $ciphertext:literal) => {
+        #[test]
+        #[allow(deprecated)]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
+
+            let enc_ctx = if $iv.len() == 0 {
+                EncryptionContext::None
+            } else {
+                let iv_arr: [u8; 8] = from_hex($iv).unwrap().try_into().unwrap();
+                EncryptionContext::Iv64(FixedLength::from(iv_arr))
+            };
+
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+            let encrypting_key = EncryptingKey::$constructor(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key
+                .less_safe_encrypt(&mut in_out, enc_ctx)
+                .unwrap();
+            assert_eq!(expected_ciphertext.as_slice(), in_out.as_slice());
+
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = DecryptingKey::$constructor(unbound_key2).unwrap();
+            assert_eq!($mode, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
+        }
+    };
+
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv:literal, $plaintext:literal) => {
+        #[test]
+        #[allow(deprecated)]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+
+            let enc_ctx = if $iv.len() == 0 {
+                EncryptionContext::None
+            } else {
+                let iv_arr: [u8; 8] = from_hex($iv).unwrap().try_into().unwrap();
+                EncryptionContext::Iv64(FixedLength::from(iv_arr))
+            };
+
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+            let encrypting_key = EncryptingKey::$constructor(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            encrypting_key
+                .less_safe_encrypt(in_out.as_mut_slice(), enc_ctx)
+                .expect_err("expected encryption failure");
+        }
+    };
+}
+
+#[cfg(feature = "legacy-3des")]
+macro_rules! des_padded_cipher_kat {
+    ($name:ident, $alg:expr, $mode:expr, ecb_pkcs7, $key:literal, $iv:literal, $plaintext:literal, $ciphertext:literal) => {
+        #[test]
+        #[allow(deprecated)]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
+
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+            let encrypting_key = PaddedBlockEncryptingKey::ecb_pkcs7(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key
+                .less_safe_encrypt(&mut in_out, EncryptionContext::None)
+                .unwrap();
+            assert_eq!(expected_ciphertext.as_slice(), in_out.as_slice());
+
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = PaddedBlockDecryptingKey::ecb_pkcs7(unbound_key2).unwrap();
+            assert_eq!($mode, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
+        }
+
+        des_streaming_cipher_kat!(
+            $name,
+            $alg,
+            $mode,
+            ecb_pkcs7,
+            $key,
+            $plaintext,
+            $ciphertext,
+            2,
+            9
+        );
+    };
+
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv:literal, $plaintext:literal, $ciphertext:literal) => {
+        #[test]
+        #[allow(deprecated)]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+            let expected_ciphertext = from_hex($ciphertext).unwrap();
+
+            let enc_ctx = if $iv.len() == 0 {
+                EncryptionContext::None
+            } else {
+                let iv_arr: [u8; 8] = from_hex($iv).unwrap().try_into().unwrap();
+                EncryptionContext::Iv64(FixedLength::from(iv_arr))
+            };
+
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+            let encrypting_key = PaddedBlockEncryptingKey::$constructor(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key
+                .less_safe_encrypt(&mut in_out, enc_ctx)
+                .unwrap();
+            assert_eq!(expected_ciphertext.as_slice(), in_out.as_slice());
+
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = PaddedBlockDecryptingKey::$constructor(unbound_key2).unwrap();
+            assert_eq!($mode, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
+        }
+
+        des_streaming_cipher_kat!(
+            $name,
+            $alg,
+            $mode,
+            $constructor,
+            $key,
+            $iv,
+            $plaintext,
+            $ciphertext,
+            2,
+            9
+        );
+    };
+}
+
+#[cfg(feature = "legacy-3des")]
+macro_rules! des_cipher_rt {
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $plaintext:literal) => {
+        #[test]
+        #[allow(deprecated)]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+            let encrypting_key = EncryptingKey::$constructor(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key.encrypt(in_out.as_mut_slice()).unwrap();
+            assert_ne!(input.as_slice(), in_out.as_slice());
+
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = DecryptingKey::$constructor(unbound_key2).unwrap();
+            assert_eq!($mode, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
+        }
+    };
+}
+
+#[cfg(feature = "legacy-3des")]
+macro_rules! des_padded_cipher_rt {
+    ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $plaintext:literal) => {
+        #[test]
+        #[allow(deprecated)]
+        fn $name() {
+            let key = from_hex($key).unwrap();
+            let input = from_hex($plaintext).unwrap();
+
+            let unbound_key = UnboundCipherKey::new($alg, &key).unwrap();
+            let encrypting_key = PaddedBlockEncryptingKey::$constructor(unbound_key).unwrap();
+            assert_eq!($mode, encrypting_key.mode());
+            assert_eq!($alg, encrypting_key.algorithm());
+            let mut in_out = input.clone();
+            let context = encrypting_key.encrypt(&mut in_out).unwrap();
+
+            let unbound_key2 = UnboundCipherKey::new($alg, &key).unwrap();
+            let decrypting_key = PaddedBlockDecryptingKey::$constructor(unbound_key2).unwrap();
+            assert_eq!($mode, decrypting_key.mode());
+            assert_eq!($alg, decrypting_key.algorithm());
+            let plaintext = decrypting_key.decrypt(&mut in_out, context).unwrap();
+            assert_eq!(input.as_slice(), plaintext);
+        }
+
+        des_streaming_cipher_rt!($name, $alg, $mode, $constructor, $key, $plaintext, 2, 9);
+    };
+}
+
+// The following DES KAT vectors are from the NIST SP 800-38A TDES example values:
+// https://csrc.nist.gov/projects/cryptographic-standards-and-guidelines/example-values
+// The 2TDEA key is the first 16 bytes of the 3TDEA key.
+// PKCS#7-padded variants are not from NIST; their ciphertexts were computed
+// by applying PKCS#7 padding to the NIST plaintext before encryption.
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_ede_cbc_32_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef23456789abcdef01",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "7401ce1eab6d003caff84bf47b36cc2154f0238f9ffecd8f6acf118392b45581"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_ede3_cbc_32_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "2079c3d53aa763e193b79e2569ab5262516570481f25b50f73c0bda85c8e0da7"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_ede_ecb_32_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef23456789abcdef01",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "06ede3d82884090aff322c19f0518486730576972a666e58b6c88cf107340d3d"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_ede3_ecb_32_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "714772f339841d34267fcc4bd2949cc3ee11c22a576a303876183f99c0b6de87"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_ede_cbc_31_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef23456789abcdef01",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_ede3_cbc_31_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_ede_ecb_31_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef23456789abcdef01",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_ede3_ecb_31_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_rt!(
+    test_rt_des_ede_cbc_32_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef23456789abcdef01",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_rt!(
+    test_rt_des_ede3_cbc_32_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_rt!(
+    test_rt_des_ede_ecb_32_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef23456789abcdef01",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_rt!(
+    test_rt_des_ede3_ecb_32_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_kat!(
+    test_kat_des_ede_cbc_pkcs7_32_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "0123456789abcdef23456789abcdef01",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "7401ce1eab6d003caff84bf47b36cc2154f0238f9ffecd8f6acf118392b45581dcb0d2607c9dd8a3"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_kat!(
+    test_kat_des_ede3_cbc_pkcs7_32_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "2079c3d53aa763e193b79e2569ab5262516570481f25b50f73c0bda85c8e0da733830d1a78387028"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_kat!(
+    test_kat_des_ede_ecb_pkcs7_32_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb_pkcs7,
+    "0123456789abcdef23456789abcdef01",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "06ede3d82884090aff322c19f0518486730576972a666e58b6c88cf107340d3d5db28100613ac225"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_kat!(
+    test_kat_des_ede3_ecb_pkcs7_32_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb_pkcs7,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "714772f339841d34267fcc4bd2949cc3ee11c22a576a303876183f99c0b6de87832846b52f9e213d"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_rt!(
+    test_rt_des_ede_cbc_pkcs7_31_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "0123456789abcdef23456789abcdef01",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_rt!(
+    test_rt_des_ede3_cbc_pkcs7_31_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_rt!(
+    test_rt_des_ede_ecb_pkcs7_31_bytes,
+    &DES_EDE_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb_pkcs7,
+    "0123456789abcdef23456789abcdef01",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_rt!(
+    test_rt_des_ede3_ecb_pkcs7_31_bytes,
+    &DES_EDE3_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb_pkcs7,
+    "0123456789abcdef23456789abcdef01456789abcdef0123",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
 #[test]
