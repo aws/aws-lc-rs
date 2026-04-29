@@ -555,8 +555,9 @@ where
         let pkey = self
             .build_rsa()
             .map_err(|()| KeyRejected::inconsistent_components())?;
-        crate::signature::ParsedPublicKey::from_rsa_evp_pkey(params, pkey)
-            .map_err(|Unspecified| KeyRejected::inconsistent_components())
+        Ok(crate::signature::ParsedPublicKey::from_rsa_evp_pkey(
+            params, pkey,
+        )?)
     }
 }
 

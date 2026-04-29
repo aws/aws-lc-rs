@@ -389,6 +389,57 @@ fn test_rsa_public_key_components_to_parsed_public_key_rejects_empty_modulus() {
     assert_eq!(err.description_(), "InconsistentComponents");
 }
 
+// `AsDer<PublicKeyX509Der>` must also reject invalid components.
+#[test]
+fn test_rsa_public_key_components_as_der_rejects_empty_modulus() {
+    let n: [u8; 0] = [];
+    let e: [u8; 3] = [0x01, 0x00, 0x01];
+    let components = RsaPublicKeyComponents {
+        n: n.as_slice(),
+        e: e.as_slice(),
+    };
+    let result: Result<PublicKeyX509Der<'_>, _> = components.as_der();
+    assert!(result.is_err(), "as_der should reject empty modulus");
+}
+
+// Empty exponents (and exponents with a leading zero byte, since big-endian
+// components are expected without leading zeros) are invalid RSA components
+// and must be rejected on both the `to_parsed_public_key` and `as_der` paths.
+// This is the symmetric case of the empty-modulus tests above: `build_rsa`
+// applies the same validation to `e` as it does to `n`, so both surfaces are
+// exercised here.
+#[test]
+fn test_rsa_public_key_components_rejects_invalid_exponent() {
+    // 2048-bit modulus of `data/rsa_test_private_key_2048.p8`.
+    const N_HEX: &str = concat!(
+        "c8a78500a5a250db8ed36c85b8dcf83c4be1953114faaac7616e0ea24922fa6b",
+        "7ab01f85582c815cc3bdeb5ed46762bc536accaa8b72705b00cef316b2ec508f",
+        "b9697241b9e34238419cccf7339eeb8b062147af4f5932f613d9bc0ae70bf6d5",
+        "6d4432e83e13767587531bfa9dd56531741244be75e8bc9226b9fa44b4b8a101",
+        "358d7e8bb75d0c724a4f11ece77776263faefe79612eb1d71646e77e8982866b",
+        "e1400eafc3580d3139b41aaa7380187372f22e35bd55b288496165c881ed154d",
+        "5811245c52d56cc09d4916d4f2a50bcf5ae0a2637f4cfa6bf9daafc113dba838",
+        "3b6dd7da6dd8db22d8510a8d3115983308909a1a0332517aa55e896e154249b3",
+    );
+    let n = aws_lc_rs::test::from_hex(N_HEX).unwrap();
+
+    for bad_e in [&[][..], &[0x00, 0x01, 0x00, 0x01][..]] {
+        let components = RsaPublicKeyComponents {
+            n: n.as_slice(),
+            e: bad_e,
+        };
+        let err = components
+            .to_parsed_public_key(&signature::RSA_PKCS1_2048_8192_SHA256)
+            .expect_err("invalid exponent should be rejected by to_parsed_public_key");
+        assert_eq!(err.description_(), "InconsistentComponents");
+        let der_result: Result<PublicKeyX509Der<'_>, _> = components.as_der();
+        assert!(
+            der_result.is_err(),
+            "invalid exponent should be rejected by as_der"
+        );
+    }
+}
+
 // A 1024-bit RSA key is below the algorithm's accepted range
 // (`RSA_PKCS1_2048_8192_SHA256` accepts 2048..=8192). Note that the
 // bit-range check happens at verification time, not at construction: this
@@ -491,6 +542,16 @@ fn test_rsa_public_key_components_to_parsed_public_key_pss() {
     let parsed = components
         .to_parsed_public_key(&signature::RSA_PSS_2048_8192_SHA256)
         .unwrap();
+    // The `algorithm` stored on the resulting `ParsedPublicKey` must be the
+    // `RsaParameters` instance passed in, not e.g. a silently-substituted
+    // PKCS#1 default. Compare via `Debug` output because `VerificationAlgorithm`
+    // is a trait object and does not implement `PartialEq`; `RsaParameters`'s
+    // `Debug` impl uses its `RsaVerificationAlgorithmId`, which is unique per
+    // algorithm constant.
+    assert_eq!(
+        format!("{:?}", parsed.algorithm()),
+        format!("{:?}", &signature::RSA_PSS_2048_8192_SHA256),
+    );
     let key_pair =
         RsaKeyPair::from_pkcs8(include_bytes!("data/rsa_test_private_key_2048.p8")).unwrap();
     let message = b"hello, world";
@@ -502,6 +563,14 @@ fn test_rsa_public_key_components_to_parsed_public_key_pss() {
     parsed.verify_sig(message, &signature).unwrap();
     // A tampered message must not verify.
     assert!(parsed.verify_sig(b"goodbye, world", &signature).is_err());
+    // And a PKCS#1-produced signature must not verify against a PSS-parsed
+    // key: this pins down that the `RsaParameters` passed at construction is
+    // actually what drives verification.
+    let mut pkcs1_sig = vec![0u8; key_pair.public_modulus_len()];
+    key_pair
+        .sign(&signature::RSA_PKCS1_SHA256, &rng, message, &mut pkcs1_sig)
+        .unwrap();
+    assert!(parsed.verify_sig(message, &pkcs1_sig).is_err());
 }
 
 // `AsDer<PublicKeyX509Der>` on `RsaPublicKeyComponents` must round-trip when
