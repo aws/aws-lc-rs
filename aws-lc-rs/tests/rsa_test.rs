@@ -504,40 +504,37 @@ fn test_rsa_public_key_components_to_parsed_public_key_pss() {
     assert!(parsed.verify_sig(b"goodbye, world", &signature).is_err());
 }
 
-// `AsDer<PublicKeyX509Der>` on `RsaPublicKeyComponents` must round-trip:
-// the DER it produces should re-parse as the same RSA public key.
+// `AsDer<PublicKeyX509Der>` on `RsaPublicKeyComponents` must round-trip when
+// paired with the `ring-io`-gated `From<&PublicKey>` accessor: deconstruct a
+// real RSA public key into components, re-encode them as X.509, and confirm
+// both the re-parsed DER and the direct `to_parsed_public_key` path accept a
+// signature produced by the matching private key. The default-feature (no
+// `ring-io`) `AsDer` path is covered by
+// `test_rsa_public_key_components_as_der_round_trip_no_ring_io`.
+#[cfg(feature = "ring-io")]
 #[test]
 fn test_rsa_public_key_components_as_der_round_trip() {
-    const PUBLIC_KEY: &[u8] = include_bytes!("data/rsa_test_public_key_2048.der");
     let key_pair =
         RsaKeyPair::from_pkcs8(include_bytes!("data/rsa_test_private_key_2048.p8")).unwrap();
     let pubkey = key_pair.public_key();
-    assert_eq!(pubkey.as_ref(), PUBLIC_KEY);
-
-    // Deconstruct into components via the `ring-io` accessor, rebuild, and
-    // re-encode as X.509; the round-tripped DER must parse back into an
-    // equivalent `ParsedPublicKey`.
-    #[cfg(feature = "ring-io")]
-    {
-        let components: RsaPublicKeyComponents<Vec<u8>> = pubkey.into();
-        let der: PublicKeyX509Der<'_> = components.as_der().unwrap();
-        let parsed_from_der =
-            ParsedPublicKey::new(&signature::RSA_PKCS1_2048_8192_SHA256, der.as_ref()).unwrap();
-        let parsed_from_components = components
-            .to_parsed_public_key(&signature::RSA_PKCS1_2048_8192_SHA256)
-            .unwrap();
-        // Both constructors should accept the same signature.
-        let message = b"hello, world";
-        let mut signature = vec![0u8; key_pair.public_modulus_len()];
-        let rng = rand::SystemRandom::new();
-        key_pair
-            .sign(&signature::RSA_PKCS1_SHA256, &rng, message, &mut signature)
-            .unwrap();
-        parsed_from_der.verify_sig(message, &signature).unwrap();
-        parsed_from_components
-            .verify_sig(message, &signature)
-            .unwrap();
-    }
+    let components: RsaPublicKeyComponents<Vec<u8>> = pubkey.into();
+    let der: PublicKeyX509Der<'_> = components.as_der().unwrap();
+    let parsed_from_der =
+        ParsedPublicKey::new(&signature::RSA_PKCS1_2048_8192_SHA256, der.as_ref()).unwrap();
+    let parsed_from_components = components
+        .to_parsed_public_key(&signature::RSA_PKCS1_2048_8192_SHA256)
+        .unwrap();
+    // Both constructors should accept the same signature.
+    let message = b"hello, world";
+    let mut signature = vec![0u8; key_pair.public_modulus_len()];
+    let rng = rand::SystemRandom::new();
+    key_pair
+        .sign(&signature::RSA_PKCS1_SHA256, &rng, message, &mut signature)
+        .unwrap();
+    parsed_from_der.verify_sig(message, &signature).unwrap();
+    parsed_from_components
+        .verify_sig(message, &signature)
+        .unwrap();
 }
 
 #[test]

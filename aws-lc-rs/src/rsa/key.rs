@@ -552,9 +552,11 @@ where
         &self,
         params: &'static RsaParameters,
     ) -> Result<crate::signature::ParsedPublicKey, KeyRejected> {
-        let der = AsDer::<PublicKeyX509Der<'static>>::as_der(self)
-            .map_err(|Unspecified| KeyRejected::inconsistent_components())?;
-        crate::signature::parse_public_key(der.as_ref(), params)
+        let pkey = self
+            .build_rsa()
+            .map_err(|()| KeyRejected::inconsistent_components())?;
+        crate::signature::ParsedPublicKey::from_rsa_evp_pkey(params, pkey)
+            .map_err(|Unspecified| KeyRejected::inconsistent_components())
     }
 }
 
