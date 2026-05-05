@@ -324,7 +324,7 @@ fn agreement_traits() {
     test::compile_time_assert_sync::<PrivateKey>();
 
     assert_eq!(
-        format!("{:?}", &private_key),
+        format!("{private_key:?}"),
         "PrivateKey { algorithm: Algorithm { curve: P256 } }"
     );
 
@@ -334,7 +334,7 @@ fn agreement_traits() {
     test::compile_time_assert_sync::<PrivateKey>();
 
     assert_eq!(
-        format!("{:?}", &ephemeral_private_key),
+        format!("{ephemeral_private_key:?}"),
         "PrivateKey { algorithm: Algorithm { curve: P256 } }"
     );
 
@@ -343,7 +343,7 @@ fn agreement_traits() {
         "PublicKey \\{ algorithm: Algorithm \\{ curve: P256 \\}, bytes: \"[0-9a-f]+\" \\}",
     )
     .unwrap();
-    let pubkey_debug = format!("{:?}", &public_key);
+    let pubkey_debug = format!("{public_key:?}");
 
     assert!(
         pubkey_re.is_match(&pubkey_debug),
@@ -353,7 +353,7 @@ fn agreement_traits() {
     #[allow(clippy::redundant_clone)]
     let pubkey_clone = public_key.clone();
     assert_eq!(public_key.as_ref(), pubkey_clone.as_ref());
-    assert_eq!(pubkey_debug, format!("{:?}", &pubkey_clone));
+    assert_eq!(pubkey_debug, format!("{pubkey_clone:?}"));
 
     test::compile_time_assert_clone::<PublicKey>();
     test::compile_time_assert_send::<PublicKey>();

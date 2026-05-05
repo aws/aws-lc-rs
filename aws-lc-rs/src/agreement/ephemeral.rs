@@ -347,7 +347,7 @@ mod tests {
         test::compile_time_assert_sync::<agreement::EphemeralPrivateKey>();
 
         assert_eq!(
-            format!("{:?}", &ephemeral_private_key),
+            format!("{ephemeral_private_key:?}"),
             "EphemeralPrivateKey { algorithm: Algorithm { curve: P256 } }"
         );
     }

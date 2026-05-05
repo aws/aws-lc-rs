@@ -87,10 +87,10 @@ fn hmac_test_case_inner(
 #[test]
 fn hmac_debug() {
     let key = hmac::Key::new(hmac::HMAC_SHA256, &[0; 32]);
-    assert_eq!("Key { algorithm: SHA256 }", format!("{:?}", &key));
+    assert_eq!("Key { algorithm: SHA256 }", format!("{key:?}"));
 
     let ctx = hmac::Context::with_key(&key);
-    assert_eq!("Context { algorithm: SHA256 }", format!("{:?}", &ctx));
+    assert_eq!("Context { algorithm: SHA256 }", format!("{ctx:?}"));
 
     assert_eq!("Algorithm(SHA256)", format!("{:?}", hmac::HMAC_SHA256));
 }

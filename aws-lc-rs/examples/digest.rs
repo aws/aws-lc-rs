@@ -101,7 +101,7 @@ fn main() -> Result<()> {
                 .and_then(|mut file| process(digest_alg, &mut file, &file_name))
             {
                 // Display error information
-                println!("digest: {}: {}", &file_name, e);
+                println!("digest: {file_name}: {e}");
                 error = Some(e);
             }
         }
