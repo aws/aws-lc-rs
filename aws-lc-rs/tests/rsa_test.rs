@@ -503,6 +503,8 @@ fn test_rsa_public_key_components_as_der_round_trip_no_ring_io() {
     let parsed_from_components = components
         .to_parsed_public_key(&signature::RSA_PKCS1_2048_8192_SHA256)
         .unwrap();
+    // Both paths must produce byte-for-byte identical canonical DER.
+    assert_eq!(der.as_ref(), parsed_from_components.as_ref());
     // Both constructors must accept a signature produced by the matching
     // private key.
     let key_pair =
