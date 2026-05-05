@@ -193,7 +193,7 @@ fn optional_env<N: AsRef<str>>(name: N) -> Option<String> {
     let name = name.as_ref();
     println!("cargo:rerun-if-env-changed={name}");
     if let Ok(value) = env::var(name) {
-        emit_warning(format!("Environment Variable found '{name}': '{}'", &value));
+        emit_warning(format!("Environment Variable found '{name}': '{value}'"));
         return Some(value);
     }
     None
@@ -252,7 +252,7 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
         || env_var_value.starts_with("off")
         || env_var_value.starts_with('f')
     {
-        emit_warning(format!("Value: {} is false.", &env_var_value));
+        emit_warning(format!("Value: {env_var_value} is false."));
         return Some(false);
     }
     if env_var_value.starts_with(|c: char| c.is_ascii_digit())
@@ -260,7 +260,7 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
         || env_var_value.starts_with("on")
         || env_var_value.starts_with('t')
     {
-        emit_warning(format!("Value: {} is true.", &env_var_value));
+        emit_warning(format!("Value: {env_var_value} is true."));
         return Some(true);
     }
     None
@@ -982,7 +982,7 @@ fn main() {
 
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
     emit_warning(format!("Building with: {}", builder.name()));
-    emit_warning(format!("Symbol Prefix: {:?}", &prefix));
+    emit_warning(format!("Symbol Prefix: {prefix:?}"));
 
     builder.check_dependencies().unwrap();
 
@@ -1026,7 +1026,7 @@ fn main() {
             emit_warning("###### WARNING: MISSING GIT SUBMODULE ######");
             emit_warning(format!(
                 "  -- Did you initialize the repo's git submodules? Unable to find crypto directory: {}.",
-                &aws_lc_crypto_dir.display()
+                aws_lc_crypto_dir.display()
             ));
             emit_warning("  -- run 'git submodule update --init --recursive' to initialize.");
             emit_warning("######");

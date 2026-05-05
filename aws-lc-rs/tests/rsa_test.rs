@@ -807,18 +807,18 @@ round_trip_oaep_algorithm!(
 fn encrypting_keypair_debug() {
     let private_key = PrivateDecryptingKey::generate(KeySize::Rsa2048).expect("generation");
 
-    assert_eq!("PrivateDecryptingKey", format!("{:?}", &private_key));
+    assert_eq!("PrivateDecryptingKey", format!("{private_key:?}"));
 
     let public_key = private_key.public_key();
 
-    assert_eq!("PublicEncryptingKey", format!("{:?}", &public_key));
+    assert_eq!("PublicEncryptingKey", format!("{public_key:?}"));
 
     let oaep_private_key =
         OaepPrivateDecryptingKey::new(private_key.clone()).expect("oaep private key");
 
     assert_eq!(
         "OaepPrivateDecryptingKey { .. }",
-        format!("{:?}", &oaep_private_key)
+        format!("{oaep_private_key:?}")
     );
 
     let oaep_public_key =
@@ -826,7 +826,7 @@ fn encrypting_keypair_debug() {
 
     assert_eq!(
         "OaepPublicEncryptingKey { .. }",
-        format!("{:?}", &oaep_public_key)
+        format!("{oaep_public_key:?}")
     );
 
     let pkcs1_private_key =
@@ -834,7 +834,7 @@ fn encrypting_keypair_debug() {
 
     assert_eq!(
         "Pkcs1PrivateDecryptingKey { .. }",
-        format!("{:?}", &pkcs1_private_key)
+        format!("{pkcs1_private_key:?}")
     );
 
     let pkcs1_public_key =
@@ -842,7 +842,7 @@ fn encrypting_keypair_debug() {
 
     assert_eq!(
         "Pkcs1PublicEncryptingKey { .. }",
-        format!("{:?}", &pkcs1_public_key)
+        format!("{pkcs1_public_key:?}")
     );
 }
 
