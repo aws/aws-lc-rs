@@ -1123,7 +1123,7 @@ mod tests {
     fn test_unparsed_public_key() {
         let random_pubkey: [u8; 32] = generate(&SystemRandom::new()).unwrap().expose();
         let unparsed_pubkey = UnparsedPublicKey::new(&ED25519, random_pubkey);
-        let unparsed_pubkey_debug = format!("{:?}", &unparsed_pubkey);
+        let unparsed_pubkey_debug = format!("{unparsed_pubkey:?}");
 
         #[allow(clippy::clone_on_copy)]
         let unparsed_pubkey_clone = unparsed_pubkey.clone();
