@@ -6,7 +6,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_40_0
+%define BORINGSSL_PREFIX aws_lc_0_41_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -1265,6 +1265,7 @@
 %xdefine _EVP_PKEY_CTX_set0_rsa_oaep_label _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set0_rsa_oaep_label
 %xdefine _EVP_PKEY_CTX_set1_hkdf_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_hkdf_key
 %xdefine _EVP_PKEY_CTX_set1_hkdf_salt _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_hkdf_salt
+%xdefine _EVP_PKEY_CTX_set1_signature_context_string _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_signature_context_string
 %xdefine _EVP_PKEY_CTX_set_app_data _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_app_data
 %xdefine _EVP_PKEY_CTX_set_cb _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_cb
 %xdefine _EVP_PKEY_CTX_set_dh_pad _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_dh_pad
@@ -1327,6 +1328,7 @@
 %xdefine _EVP_PKEY_get1_EC_KEY _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_get1_EC_KEY
 %xdefine _EVP_PKEY_get1_RSA _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_get1_RSA
 %xdefine _EVP_PKEY_get1_tls_encodedpoint _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_get1_tls_encodedpoint
+%xdefine _EVP_PKEY_get_private_seed _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_get_private_seed
 %xdefine _EVP_PKEY_get_raw_private_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_get_raw_private_key
 %xdefine _EVP_PKEY_get_raw_public_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_get_raw_public_key
 %xdefine _EVP_PKEY_hkdf_pkey_meth _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_hkdf_pkey_meth
@@ -1334,6 +1336,7 @@
 %xdefine _EVP_PKEY_id _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_id
 %xdefine _EVP_PKEY_is_opaque _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_is_opaque
 %xdefine _EVP_PKEY_kem_check_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_kem_check_key
+%xdefine _EVP_PKEY_kem_get_type _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_kem_get_type
 %xdefine _EVP_PKEY_kem_new_raw_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_key
 %xdefine _EVP_PKEY_kem_new_raw_public_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_public_key
 %xdefine _EVP_PKEY_kem_new_raw_secret_key _ %+ BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_secret_key
@@ -3548,8 +3551,8 @@
 %xdefine _edwards25519_scalarmulbase_alt _ %+ BORINGSSL_PREFIX %+ _edwards25519_scalarmulbase_alt
 %xdefine _edwards25519_scalarmuldouble _ %+ BORINGSSL_PREFIX %+ _edwards25519_scalarmuldouble
 %xdefine _edwards25519_scalarmuldouble_alt _ %+ BORINGSSL_PREFIX %+ _edwards25519_scalarmuldouble_alt
+%xdefine _evp_pkey_set0 _ %+ BORINGSSL_PREFIX %+ _evp_pkey_set0
 %xdefine _evp_pkey_set_cb_translate _ %+ BORINGSSL_PREFIX %+ _evp_pkey_set_cb_translate
-%xdefine _evp_pkey_set_method _ %+ BORINGSSL_PREFIX %+ _evp_pkey_set_method
 %xdefine _extract_multiplier_2x20_win5 _ %+ BORINGSSL_PREFIX %+ _extract_multiplier_2x20_win5
 %xdefine _extract_multiplier_2x30_win5 _ %+ BORINGSSL_PREFIX %+ _extract_multiplier_2x30_win5
 %xdefine _extract_multiplier_2x40_win5 _ %+ BORINGSSL_PREFIX %+ _extract_multiplier_2x40_win5
@@ -3961,6 +3964,7 @@
 %xdefine _poly_Rq_mul _ %+ BORINGSSL_PREFIX %+ _poly_Rq_mul
 %xdefine _pqdsa_asn1_meth _ %+ BORINGSSL_PREFIX %+ _pqdsa_asn1_meth
 %xdefine _rand_fips_library_destructor _ %+ BORINGSSL_PREFIX %+ _rand_fips_library_destructor
+%xdefine _rand_thread_local_state_clear_all_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _rand_thread_local_state_clear_all_FOR_TESTING
 %xdefine _rdrand_multiple8 _ %+ BORINGSSL_PREFIX %+ _rdrand_multiple8
 %xdefine _rndr_multiple8 _ %+ BORINGSSL_PREFIX %+ _rndr_multiple8
 %xdefine _rsa_asn1_meth _ %+ BORINGSSL_PREFIX %+ _rsa_asn1_meth
@@ -5376,6 +5380,7 @@
 %xdefine EVP_PKEY_CTX_set0_rsa_oaep_label BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set0_rsa_oaep_label
 %xdefine EVP_PKEY_CTX_set1_hkdf_key BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_hkdf_key
 %xdefine EVP_PKEY_CTX_set1_hkdf_salt BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_hkdf_salt
+%xdefine EVP_PKEY_CTX_set1_signature_context_string BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set1_signature_context_string
 %xdefine EVP_PKEY_CTX_set_app_data BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_app_data
 %xdefine EVP_PKEY_CTX_set_cb BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_cb
 %xdefine EVP_PKEY_CTX_set_dh_pad BORINGSSL_PREFIX %+ _EVP_PKEY_CTX_set_dh_pad
@@ -5438,6 +5443,7 @@
 %xdefine EVP_PKEY_get1_EC_KEY BORINGSSL_PREFIX %+ _EVP_PKEY_get1_EC_KEY
 %xdefine EVP_PKEY_get1_RSA BORINGSSL_PREFIX %+ _EVP_PKEY_get1_RSA
 %xdefine EVP_PKEY_get1_tls_encodedpoint BORINGSSL_PREFIX %+ _EVP_PKEY_get1_tls_encodedpoint
+%xdefine EVP_PKEY_get_private_seed BORINGSSL_PREFIX %+ _EVP_PKEY_get_private_seed
 %xdefine EVP_PKEY_get_raw_private_key BORINGSSL_PREFIX %+ _EVP_PKEY_get_raw_private_key
 %xdefine EVP_PKEY_get_raw_public_key BORINGSSL_PREFIX %+ _EVP_PKEY_get_raw_public_key
 %xdefine EVP_PKEY_hkdf_pkey_meth BORINGSSL_PREFIX %+ _EVP_PKEY_hkdf_pkey_meth
@@ -5445,6 +5451,7 @@
 %xdefine EVP_PKEY_id BORINGSSL_PREFIX %+ _EVP_PKEY_id
 %xdefine EVP_PKEY_is_opaque BORINGSSL_PREFIX %+ _EVP_PKEY_is_opaque
 %xdefine EVP_PKEY_kem_check_key BORINGSSL_PREFIX %+ _EVP_PKEY_kem_check_key
+%xdefine EVP_PKEY_kem_get_type BORINGSSL_PREFIX %+ _EVP_PKEY_kem_get_type
 %xdefine EVP_PKEY_kem_new_raw_key BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_key
 %xdefine EVP_PKEY_kem_new_raw_public_key BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_public_key
 %xdefine EVP_PKEY_kem_new_raw_secret_key BORINGSSL_PREFIX %+ _EVP_PKEY_kem_new_raw_secret_key
@@ -7659,8 +7666,8 @@
 %xdefine edwards25519_scalarmulbase_alt BORINGSSL_PREFIX %+ _edwards25519_scalarmulbase_alt
 %xdefine edwards25519_scalarmuldouble BORINGSSL_PREFIX %+ _edwards25519_scalarmuldouble
 %xdefine edwards25519_scalarmuldouble_alt BORINGSSL_PREFIX %+ _edwards25519_scalarmuldouble_alt
+%xdefine evp_pkey_set0 BORINGSSL_PREFIX %+ _evp_pkey_set0
 %xdefine evp_pkey_set_cb_translate BORINGSSL_PREFIX %+ _evp_pkey_set_cb_translate
-%xdefine evp_pkey_set_method BORINGSSL_PREFIX %+ _evp_pkey_set_method
 %xdefine extract_multiplier_2x20_win5 BORINGSSL_PREFIX %+ _extract_multiplier_2x20_win5
 %xdefine extract_multiplier_2x30_win5 BORINGSSL_PREFIX %+ _extract_multiplier_2x30_win5
 %xdefine extract_multiplier_2x40_win5 BORINGSSL_PREFIX %+ _extract_multiplier_2x40_win5
@@ -8072,6 +8079,7 @@
 %xdefine poly_Rq_mul BORINGSSL_PREFIX %+ _poly_Rq_mul
 %xdefine pqdsa_asn1_meth BORINGSSL_PREFIX %+ _pqdsa_asn1_meth
 %xdefine rand_fips_library_destructor BORINGSSL_PREFIX %+ _rand_fips_library_destructor
+%xdefine rand_thread_local_state_clear_all_FOR_TESTING BORINGSSL_PREFIX %+ _rand_thread_local_state_clear_all_FOR_TESTING
 %xdefine rdrand_multiple8 BORINGSSL_PREFIX %+ _rdrand_multiple8
 %xdefine rndr_multiple8 BORINGSSL_PREFIX %+ _rndr_multiple8
 %xdefine rsa_asn1_meth BORINGSSL_PREFIX %+ _rsa_asn1_meth

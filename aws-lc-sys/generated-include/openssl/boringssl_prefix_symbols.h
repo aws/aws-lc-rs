@@ -6,7 +6,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_40_0
+#define BORINGSSL_PREFIX aws_lc_0_41_0
 #endif // BORINGSSL_PREFIX
 
 
@@ -1268,6 +1268,7 @@
 #define EVP_PKEY_CTX_set0_rsa_oaep_label BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_CTX_set0_rsa_oaep_label)
 #define EVP_PKEY_CTX_set1_hkdf_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_CTX_set1_hkdf_key)
 #define EVP_PKEY_CTX_set1_hkdf_salt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_CTX_set1_hkdf_salt)
+#define EVP_PKEY_CTX_set1_signature_context_string BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_CTX_set1_signature_context_string)
 #define EVP_PKEY_CTX_set_app_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_CTX_set_app_data)
 #define EVP_PKEY_CTX_set_cb BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_CTX_set_cb)
 #define EVP_PKEY_CTX_set_dh_pad BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_CTX_set_dh_pad)
@@ -1330,6 +1331,7 @@
 #define EVP_PKEY_get1_EC_KEY BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_get1_EC_KEY)
 #define EVP_PKEY_get1_RSA BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_get1_RSA)
 #define EVP_PKEY_get1_tls_encodedpoint BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_get1_tls_encodedpoint)
+#define EVP_PKEY_get_private_seed BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_get_private_seed)
 #define EVP_PKEY_get_raw_private_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_get_raw_private_key)
 #define EVP_PKEY_get_raw_public_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_get_raw_public_key)
 #define EVP_PKEY_hkdf_pkey_meth BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_hkdf_pkey_meth)
@@ -1337,6 +1339,7 @@
 #define EVP_PKEY_id BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_id)
 #define EVP_PKEY_is_opaque BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_is_opaque)
 #define EVP_PKEY_kem_check_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_kem_check_key)
+#define EVP_PKEY_kem_get_type BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_kem_get_type)
 #define EVP_PKEY_kem_new_raw_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_kem_new_raw_key)
 #define EVP_PKEY_kem_new_raw_public_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_kem_new_raw_public_key)
 #define EVP_PKEY_kem_new_raw_secret_key BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, EVP_PKEY_kem_new_raw_secret_key)
@@ -3551,8 +3554,8 @@
 #define edwards25519_scalarmulbase_alt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, edwards25519_scalarmulbase_alt)
 #define edwards25519_scalarmuldouble BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, edwards25519_scalarmuldouble)
 #define edwards25519_scalarmuldouble_alt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, edwards25519_scalarmuldouble_alt)
+#define evp_pkey_set0 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, evp_pkey_set0)
 #define evp_pkey_set_cb_translate BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, evp_pkey_set_cb_translate)
-#define evp_pkey_set_method BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, evp_pkey_set_method)
 #define extract_multiplier_2x20_win5 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, extract_multiplier_2x20_win5)
 #define extract_multiplier_2x30_win5 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, extract_multiplier_2x30_win5)
 #define extract_multiplier_2x40_win5 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, extract_multiplier_2x40_win5)
@@ -3964,6 +3967,7 @@
 #define poly_Rq_mul BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, poly_Rq_mul)
 #define pqdsa_asn1_meth BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, pqdsa_asn1_meth)
 #define rand_fips_library_destructor BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rand_fips_library_destructor)
+#define rand_thread_local_state_clear_all_FOR_TESTING BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rand_thread_local_state_clear_all_FOR_TESTING)
 #define rdrand_multiple8 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rdrand_multiple8)
 #define rndr_multiple8 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rndr_multiple8)
 #define rsa_asn1_meth BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, rsa_asn1_meth)

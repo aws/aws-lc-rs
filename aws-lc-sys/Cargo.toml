@@ -76,4 +76,4 @@ cc = { workspace = true, features = ["parallel"] }
 bindgen = { workspace = true, optional = true }
 
 [package.metadata.aws-lc-sys]
-commit-hash = "d50ded594c835fd277997461815ad473949f2c7a"
+commit-hash = "44766fa7daa88e5afc7fc6de3311c48eeeb02f39"
