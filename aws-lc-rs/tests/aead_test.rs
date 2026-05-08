@@ -607,6 +607,37 @@ fn test_aead_thread_safeness() {
 }
 
 #[test]
+fn test_less_safe_key_open_in_place_separate_tag() {
+    let key_bytes = [0x42; 16];
+    let nonce_bytes = [0x24; NONCE_LEN];
+    let aad = b"detached-tag";
+    let expected_plaintext = b"open detached tags in place";
+
+    let sealing_key = make_less_safe_key(&aead::AES_128_GCM, &key_bytes);
+    let opening_key = make_less_safe_key(&aead::AES_128_GCM, &key_bytes);
+    let mut in_out = expected_plaintext.to_vec();
+
+    let tag = sealing_key
+        .seal_in_place_separate_tag(
+            Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap(),
+            Aad::from(aad.as_slice()),
+            &mut in_out,
+        )
+        .unwrap();
+
+    let plaintext = opening_key
+        .open_in_place_separate_tag(
+            Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap(),
+            Aad::from(aad.as_slice()),
+            tag.as_ref(),
+            &mut in_out,
+        )
+        .unwrap();
+
+    assert_eq!(expected_plaintext, plaintext);
+}
+
+#[test]
 fn test_aead_key_debug() {
     let key_bytes = [0; 32];
     let nonce = [0; NONCE_LEN];

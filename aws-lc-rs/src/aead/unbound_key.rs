@@ -88,16 +88,52 @@ impl UnboundKey {
         in_tag: &[u8],
         out_plaintext: &mut [u8],
     ) -> Result<(), Unspecified> {
-        self.check_per_nonce_max_bytes(in_ciphertext.len())?;
+        self.open_separate_gather_impl(
+            nonce,
+            aad,
+            in_ciphertext.as_ptr(),
+            in_ciphertext.len(),
+            in_tag,
+            out_plaintext.as_mut_ptr(),
+            out_plaintext.len(),
+        )
+    }
+
+    #[inline]
+    pub(crate) fn open_in_place_separate_tag(
+        &self,
+        nonce: &Nonce,
+        aad: &[u8],
+        in_out: &mut [u8],
+        in_tag: &[u8],
+    ) -> Result<(), Unspecified> {
+        self.open_separate_gather_impl(
+            nonce,
+            aad,
+            in_out.as_ptr(),
+            in_out.len(),
+            in_tag,
+            in_out.as_mut_ptr(),
+            in_out.len(),
+        )
+    }
+
+    #[inline]
+    fn open_separate_gather_impl(
+        &self,
+        nonce: &Nonce,
+        aad: &[u8],
+        in_ciphertext: *const u8,
+        in_ciphertext_len: usize,
+        in_tag: &[u8],
+        out_plaintext: *mut u8,
+        out_plaintext_len: usize,
+    ) -> Result<(), Unspecified> {
+        self.check_per_nonce_max_bytes(in_ciphertext_len)?;
 
         // ensure that the lengths match
-        {
-            let actual = in_ciphertext.len();
-            let expected = out_plaintext.len();
-
-            if actual != expected {
-                return Err(Unspecified);
-            }
+        if in_ciphertext_len != out_plaintext_len {
+            return Err(Unspecified);
         }
 
         unsafe {
@@ -106,11 +142,11 @@ impl UnboundKey {
 
             if 1 != EVP_AEAD_CTX_open_gather(
                 aead_ctx.as_const_ptr(),
-                out_plaintext.as_mut_ptr(),
+                out_plaintext,
                 nonce.as_ptr(),
                 nonce.len(),
-                in_ciphertext.as_ptr(),
-                in_ciphertext.len(),
+                in_ciphertext,
+                in_ciphertext_len,
                 in_tag.as_ptr(),
                 in_tag.len(),
                 aad.as_ptr(),

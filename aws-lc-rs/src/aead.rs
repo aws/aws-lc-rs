@@ -736,6 +736,29 @@ impl LessSafeKey {
         self.open_within(nonce, aad, in_out, 0..)
     }
 
+    /// Like [`OpeningKey::open_in_place()`], except the authentication tag is
+    /// passed separately.
+    ///
+    /// `nonce` must be unique for every use of the key to open data.
+    ///
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid.
+    #[inline]
+    pub fn open_in_place_separate_tag<'in_out, A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        tag: &[u8],
+        in_out: &'in_out mut [u8],
+    ) -> Result<&'in_out mut [u8], Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.key
+            .open_in_place_separate_tag(&nonce, aad.as_ref(), in_out, tag)?;
+        Ok(in_out)
+    }
+
     /// Like [`OpeningKey::open_within()`], except it accepts an arbitrary nonce.
     ///
     /// `nonce` must be unique for every use of the key to open data.
