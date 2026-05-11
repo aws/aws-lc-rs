@@ -736,6 +736,37 @@ impl LessSafeKey {
         self.open_within(nonce, aad, in_out, 0..)
     }
 
+    /// Like [`OpeningKey::open_in_place()`], except the authentication tag is
+    /// passed separately.
+    ///
+    /// `in_out` contains the ciphertext on input and is overwritten with the
+    /// plaintext on success. `tag` is the authentication tag, e.g. as produced
+    /// by [`Self::seal_in_place_separate_tag()`].
+    ///
+    /// `nonce` must be unique for every use of the key to open data.
+    // # FIPS
+    // This method must not be used.
+    //
+    /// # Errors
+    /// `error::Unspecified` when ciphertext is invalid. In this case, `in_out` may
+    /// have been overwritten in an unspecified way.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn open_in_place_separate_tag<'in_out, A>(
+        &self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        tag: &[u8],
+        in_out: &'in_out mut [u8],
+    ) -> Result<&'in_out mut [u8], Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.key
+            .open_in_place_separate_tag(&nonce, aad.as_ref(), tag, in_out)?;
+        Ok(in_out)
+    }
+
     /// Like [`OpeningKey::open_within()`], except it accepts an arbitrary nonce.
     ///
     /// `nonce` must be unique for every use of the key to open data.
@@ -764,7 +795,7 @@ impl LessSafeKey {
             .open_within(nonce, aad.as_ref(), in_out, ciphertext_and_tag)
     }
 
-    /// Authenticates and decrypts (“opens”) data into another provided slice.
+    /// Authenticates and decrypts ("opens") data into another provided slice.
     ///
     /// `aad` is the additional authenticated data (AAD), if any.
     ///
