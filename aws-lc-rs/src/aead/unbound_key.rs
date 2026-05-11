@@ -104,21 +104,26 @@ impl UnboundKey {
         &self,
         nonce: &Nonce,
         aad: &[u8],
-        in_out: &mut [u8],
         in_tag: &[u8],
+        in_out: &mut [u8],
     ) -> Result<(), Unspecified> {
-        self.open_separate_gather_impl(
-            nonce,
-            aad,
-            in_out.as_ptr(),
-            in_out.len(),
-            in_tag,
-            in_out.as_mut_ptr(),
-            in_out.len(),
-        )
+        let ptr = in_out.as_mut_ptr();
+        let len = in_out.len();
+        self.open_separate_gather_impl(nonce, aad, ptr.cast_const(), len, in_tag, ptr, len)
     }
 
+    /// Common FFI path for `EVP_AEAD_CTX_open_gather`-based opening.
+    ///
+    /// `in_ciphertext` / `out_plaintext` may alias (exactly, i.e. same base
+    /// pointer and length). `EVP_AEAD_CTX_open_gather` explicitly permits
+    /// `out == in`, which is how `open_in_place_separate_tag` works.
+    ///
+    /// Callers must ensure:
+    /// * `in_ciphertext` is valid for reads of `in_ciphertext_len` bytes.
+    /// * `out_plaintext` is valid for writes of `out_plaintext_len` bytes.
+    /// * If the two pointers alias, they must alias exactly (same base, same length).
     #[inline]
+    #[allow(clippy::too_many_arguments)]
     fn open_separate_gather_impl(
         &self,
         nonce: &Nonce,
