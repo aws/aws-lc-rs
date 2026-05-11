@@ -114,7 +114,7 @@ jobs:
         with:
           submodules: 'recursive'
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           allow-licenses: Apache-2.0, ISC, MIT, MIT-0
 
