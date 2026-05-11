@@ -9,7 +9,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_ASM_H
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_40_0
+#define BORINGSSL_PREFIX aws_lc_0_41_0
 #endif // BORINGSSL_PREFIX
 
 // On iOS and macOS, we need to treat assembly symbols differently from other
@@ -1272,6 +1272,7 @@
 #define _EVP_PKEY_CTX_set0_rsa_oaep_label BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_CTX_set0_rsa_oaep_label)
 #define _EVP_PKEY_CTX_set1_hkdf_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_CTX_set1_hkdf_key)
 #define _EVP_PKEY_CTX_set1_hkdf_salt BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_CTX_set1_hkdf_salt)
+#define _EVP_PKEY_CTX_set1_signature_context_string BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_CTX_set1_signature_context_string)
 #define _EVP_PKEY_CTX_set_app_data BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_CTX_set_app_data)
 #define _EVP_PKEY_CTX_set_cb BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_CTX_set_cb)
 #define _EVP_PKEY_CTX_set_dh_pad BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_CTX_set_dh_pad)
@@ -1334,6 +1335,7 @@
 #define _EVP_PKEY_get1_EC_KEY BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_get1_EC_KEY)
 #define _EVP_PKEY_get1_RSA BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_get1_RSA)
 #define _EVP_PKEY_get1_tls_encodedpoint BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_get1_tls_encodedpoint)
+#define _EVP_PKEY_get_private_seed BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_get_private_seed)
 #define _EVP_PKEY_get_raw_private_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_get_raw_private_key)
 #define _EVP_PKEY_get_raw_public_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_get_raw_public_key)
 #define _EVP_PKEY_hkdf_pkey_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_hkdf_pkey_meth)
@@ -1341,6 +1343,7 @@
 #define _EVP_PKEY_id BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_id)
 #define _EVP_PKEY_is_opaque BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_is_opaque)
 #define _EVP_PKEY_kem_check_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_kem_check_key)
+#define _EVP_PKEY_kem_get_type BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_kem_get_type)
 #define _EVP_PKEY_kem_new_raw_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_kem_new_raw_key)
 #define _EVP_PKEY_kem_new_raw_public_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_kem_new_raw_public_key)
 #define _EVP_PKEY_kem_new_raw_secret_key BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_PKEY_kem_new_raw_secret_key)
@@ -3555,8 +3558,8 @@
 #define _edwards25519_scalarmulbase_alt BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, edwards25519_scalarmulbase_alt)
 #define _edwards25519_scalarmuldouble BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, edwards25519_scalarmuldouble)
 #define _edwards25519_scalarmuldouble_alt BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, edwards25519_scalarmuldouble_alt)
+#define _evp_pkey_set0 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, evp_pkey_set0)
 #define _evp_pkey_set_cb_translate BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, evp_pkey_set_cb_translate)
-#define _evp_pkey_set_method BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, evp_pkey_set_method)
 #define _extract_multiplier_2x20_win5 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, extract_multiplier_2x20_win5)
 #define _extract_multiplier_2x30_win5 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, extract_multiplier_2x30_win5)
 #define _extract_multiplier_2x40_win5 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, extract_multiplier_2x40_win5)
@@ -3968,6 +3971,7 @@
 #define _poly_Rq_mul BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, poly_Rq_mul)
 #define _pqdsa_asn1_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, pqdsa_asn1_meth)
 #define _rand_fips_library_destructor BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, rand_fips_library_destructor)
+#define _rand_thread_local_state_clear_all_FOR_TESTING BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, rand_thread_local_state_clear_all_FOR_TESTING)
 #define _rdrand_multiple8 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, rdrand_multiple8)
 #define _rndr_multiple8 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, rndr_multiple8)
 #define _rsa_asn1_meth BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, rsa_asn1_meth)
