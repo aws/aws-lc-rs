@@ -740,7 +740,9 @@ impl LessSafeKey {
     /// passed separately.
     ///
     /// `nonce` must be unique for every use of the key to open data.
-    ///
+    // # FIPS
+    // This method must not be used.
+    //
     /// # Errors
     /// `error::Unspecified` when ciphertext is invalid.
     #[inline]
