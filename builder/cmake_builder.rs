@@ -7,7 +7,7 @@ use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
     get_crate_cflags, is_crt_static, is_fips_build, is_no_asm, is_no_pregenerated_src,
     optional_env, optional_env_optional_crate_target, sanitizer, set_env, set_env_for_target,
-    should_build_jitter_entropy, target_arch, target_env, target_os, test_clang_cl_command,
+    should_build_jitter_entropy, target, target_arch, target_env, target_os, test_clang_cl_command,
     test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::collections::HashMap;
@@ -402,6 +402,14 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_NAME", "Windows");
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", arch);
             }
+        }
+
+        // Workaround for win7-windows-gnu targets: the upstream C source gates the
+        // Win7 compat path with `!defined(__MINGW32__)`. CMakeLists.txt already sets
+        // _WIN32_WINNT for MinGW, but we must force AWSLC_WINDOWS_7_COMPAT until the
+        // upstream fix lands: https://github.com/aws/aws-lc/pull/3239
+        if target().contains("-win7-windows-gnu") {
+            cmake_cfg.cflag("-DAWSLC_WINDOWS_7_COMPAT");
         }
     }
 

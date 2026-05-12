@@ -1066,6 +1066,14 @@ fn main() {
     );
     builder.build().unwrap();
 
+    // MinGW win7 targets use the BCryptGenRandom path (AWSLC_WINDOWS_7_COMPAT),
+    // which requires linking against bcrypt. MinGW ignores the MSVC
+    // `#pragma comment(lib, "bcrypt.lib")` in the source, so we link explicitly.
+    // See: https://github.com/aws/aws-lc/pull/3239
+    if target().contains("-win7-windows-gnu") {
+        println!("cargo:rustc-link-lib=bcrypt");
+    }
+
     println!(
         "cargo:include={}",
         setup_include_paths(&out_dir(), &manifest_dir).display()

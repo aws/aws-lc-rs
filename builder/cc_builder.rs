@@ -412,14 +412,24 @@ impl CcBuilder {
                 "_STL_EXTRA_DISABLED_WARNINGS",
                 "4774 4987",
             ));
+        }
 
-            if target().ends_with("-win7-windows-msvc") {
-                // 0x0601 is the value of `_WIN32_WINNT_WIN7`
-                build_options.push(BuildOption::define("_WIN32_WINNT", "0x0601"));
-                emit_warning(format!(
-                    "Setting _WIN32_WINNT to _WIN32_WINNT_WIN7 for {} target",
-                    target()
-                ));
+        // Target Windows 7 (0x0601 == _WIN32_WINNT_WIN7) for any win7 target triple.
+        if target().contains("-win7-windows-") {
+            build_options.push(BuildOption::define("_WIN32_WINNT", "0x0601"));
+            emit_warning(format!(
+                "Setting _WIN32_WINNT to _WIN32_WINNT_WIN7 for {} target",
+                target()
+            ));
+
+            // Additional workaround for MinGW: the upstream C source
+            // (crypto/rand_extra/windows.c) gates the Win7 compat path
+            // (BCryptGenRandom) with `!defined(__MINGW32__)`, which prevents MinGW
+            // from using it even when `_WIN32_WINNT` targets Win7. We define
+            // AWSLC_WINDOWS_7_COMPAT directly to bypass that guard until the
+            // upstream fix lands: https://github.com/aws/aws-lc/pull/3239
+            if !is_like_msvc {
+                build_options.push(BuildOption::define("AWSLC_WINDOWS_7_COMPAT", ""));
             }
         }
     }
