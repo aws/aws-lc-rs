@@ -142,6 +142,43 @@
 //! used in production builds. The `rand::unsealed` module and `mut_fill` method are not part of the
 //! stable public API and may change without notice.
 //!
+//! #### legacy-des
+//!
+//! Enables single DES and Triple DES as opt-in symmetric ciphers under the
+//! [`cipher`] module, exposing `DES_FOR_LEGACY_USE_ONLY` (single DES),
+//! `DES_EDE_FOR_LEGACY_USE_ONLY` (2-key Triple DES) and
+//! `DES_EDE3_FOR_LEGACY_USE_ONLY` (3-key Triple DES), together with the
+//! supporting key-length and IV-length constants. Only CBC and ECB operating
+//! modes are supported.
+//!
+//! **⚠️ Warning:** Single DES and Triple DES are legacy algorithms. Single DES
+//! provides only 56 bits of effective security and has been considered insecure
+//! for decades. Triple DES has been disallowed for encryption by
+//! [NIST SP 800-131A Rev. 2](https://csrc.nist.gov/publications/detail/sp/800-131a/rev-2/final):
+//! 2-key Triple DES after 2015, and 3-key Triple DES after 2023. This feature
+//! exists solely to support interoperability. All exposed items are marked
+//! `#[deprecated]` so that any use site produces a compiler warning. **Do not
+//! use single DES or Triple DES in new designs.** If you only need
+//! confidentiality, prefer AES-GCM or another AEAD from the [`aead`] module;
+//! if you specifically need a block cipher, prefer one of the AES algorithms
+//! in [`cipher`].
+//!
+//! **Build-time impact:** The default `aws-lc-sys` bindings do not expose the
+//! low-level `DES_*` symbols this feature relies on, so enabling `legacy-des`
+//! also enables `aws-lc-sys?/all-bindings`. Concretely:
+//!
+//! * On platforms with pre-generated per-target bindings, the build switches
+//!   from the universal bindings to the per-target bindings (no extra
+//!   tooling required).
+//! * On platforms *without* pre-generated bindings for the selected target,
+//!   `bindgen` is invoked at build time, which requires `libclang` to be
+//!   installed in the build environment.
+//!
+//! Because [features are
+//! additive](https://doc.rust-lang.org/cargo/reference/features.html#feature-unification),
+//! enabling `legacy-des` anywhere in your dependency graph applies the
+//! above to the entire build.
+//!
 //! # Use of prebuilt NASM objects
 //!
 //! Prebuilt NASM objects are **only** applicable to Windows x86-64 platforms. They are **never** used on any other platform (Linux, macOS, etc.).

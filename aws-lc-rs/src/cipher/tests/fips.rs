@@ -7,9 +7,11 @@ use crate::cipher::{
     DecryptingKey, EncryptingKey, PaddedBlockDecryptingKey, PaddedBlockEncryptingKey,
     StreamingDecryptingKey, StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192, AES_256,
 };
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 #[allow(deprecated)]
-use crate::cipher::{DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY};
+use crate::cipher::{
+    DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY, DES_FOR_LEGACY_USE_ONLY,
+};
 use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 
 const TEST_KEY_128_BIT: [u8; 16] = [
@@ -26,12 +28,15 @@ const TEST_KEY_256_BIT: [u8; 32] = [
     0x71, 0x0f, 0xd5, 0xe1, 0xd4, 0xfe, 0x95, 0xb3, 0x03, 0x46, 0xa5, 0x8e, 0x36, 0xad, 0x18, 0xe3,
 ];
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
+const TEST_KEY_DES: [u8; 8] = [0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
+
+#[cfg(feature = "legacy-des")]
 const TEST_KEY_DES_EDE: [u8; 16] = [
     0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01,
 ];
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 const TEST_KEY_DES_EDE3: [u8; 24] = [
     0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01,
     0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23,
@@ -207,7 +212,47 @@ block_api!(
     FipsServiceStatus::Approved
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
+block_api!(
+    block_des_cbc_pkcs7,
+    &DES_FOR_LEGACY_USE_ONLY,
+    PaddedBlockEncryptingKey::cbc_pkcs7,
+    PaddedBlockDecryptingKey::cbc_pkcs7,
+    &TEST_KEY_DES,
+    FipsServiceStatus::NonApproved
+);
+
+#[cfg(feature = "legacy-des")]
+block_api!(
+    block_des_ecb_pkcs7,
+    &DES_FOR_LEGACY_USE_ONLY,
+    PaddedBlockEncryptingKey::ecb_pkcs7,
+    PaddedBlockDecryptingKey::ecb_pkcs7,
+    &TEST_KEY_DES,
+    FipsServiceStatus::NonApproved
+);
+
+#[cfg(feature = "legacy-des")]
+streaming_api!(
+    streaming_des_cbc_pkcs7,
+    &DES_FOR_LEGACY_USE_ONLY,
+    StreamingEncryptingKey::cbc_pkcs7,
+    StreamingDecryptingKey::cbc_pkcs7,
+    &TEST_KEY_DES,
+    FipsServiceStatus::NonApproved
+);
+
+#[cfg(feature = "legacy-des")]
+streaming_api!(
+    streaming_des_ecb_pkcs7,
+    &DES_FOR_LEGACY_USE_ONLY,
+    StreamingEncryptingKey::ecb_pkcs7,
+    StreamingDecryptingKey::ecb_pkcs7,
+    &TEST_KEY_DES,
+    FipsServiceStatus::NonApproved
+);
+
+#[cfg(feature = "legacy-des")]
 block_api!(
     block_des_ede_cbc_pkcs7,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -217,7 +262,7 @@ block_api!(
     FipsServiceStatus::NonApproved
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 block_api!(
     block_des_ede_ecb_pkcs7,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -227,7 +272,7 @@ block_api!(
     FipsServiceStatus::NonApproved
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 block_api!(
     block_des_ede3_cbc_pkcs7,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -237,7 +282,7 @@ block_api!(
     FipsServiceStatus::NonApproved
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 block_api!(
     block_des_ede3_ecb_pkcs7,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -247,7 +292,7 @@ block_api!(
     FipsServiceStatus::NonApproved
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 streaming_api!(
     streaming_des_ede_cbc_pkcs7,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -257,7 +302,7 @@ streaming_api!(
     FipsServiceStatus::NonApproved
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 streaming_api!(
     streaming_des_ede_ecb_pkcs7,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -267,7 +312,7 @@ streaming_api!(
     FipsServiceStatus::NonApproved
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 streaming_api!(
     streaming_des_ede3_cbc_pkcs7,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -277,7 +322,7 @@ streaming_api!(
     FipsServiceStatus::NonApproved
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 streaming_api!(
     streaming_des_ede3_ecb_pkcs7,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,

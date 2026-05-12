@@ -169,12 +169,20 @@ pub const AES_256: Algorithm = Algorithm {
     tag_len: 16,
 };
 
-/// CMAC using 3DES (Triple DES). Obsolete
-pub const TDES_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
+/// CMAC using 3-key Triple DES (DES-EDE3). For legacy interoperability only;
+/// new designs must use an AES-based algorithm.
+pub const DES_EDE3_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
     id: AlgorithmId::Tdes,
     key_len: 24,
     tag_len: 8,
 };
+
+/// CMAC using 3-key Triple DES (DES-EDE3). For legacy interoperability only;
+/// new designs must use an AES-based algorithm.
+#[deprecated(
+    note = "Use `DES_EDE3_FOR_LEGACY_USE_ONLY` instead, which aligns with the naming used in the `cipher` module. The two constants are interchangeable."
+)]
+pub const TDES_FOR_LEGACY_USE_ONLY: Algorithm = DES_EDE3_FOR_LEGACY_USE_ONLY;
 
 /// Maximum CMAC tag length (AES block size).
 const MAX_CMAC_TAG_LEN: usize = 16;
@@ -513,7 +521,7 @@ mod tests {
 
     #[test]
     fn cmac_basic_test() {
-        for &algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
+        for &algorithm in &[AES_128, AES_192, AES_256, DES_EDE3_FOR_LEGACY_USE_ONLY] {
             let key = Key::generate(algorithm).unwrap();
             let data = b"hello, world";
 
@@ -529,7 +537,7 @@ mod tests {
         const HELLO_WORLD_GOOD: &[u8] = b"hello, world";
         const HELLO_WORLD_BAD: &[u8] = b"hello, worle";
 
-        for algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
+        for algorithm in &[AES_128, AES_192, AES_256, DES_EDE3_FOR_LEGACY_USE_ONLY] {
             let key = Key::generate(*algorithm).unwrap();
             let tag = sign(&key, HELLO_WORLD_GOOD).unwrap();
             println!("{key:?}");
@@ -545,7 +553,7 @@ mod tests {
         assert_ne!(AES_128, AES_256);
         assert_ne!(AES_192, AES_256);
 
-        for &alg in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
+        for &alg in &[AES_128, AES_192, AES_256, DES_EDE3_FOR_LEGACY_USE_ONLY] {
             // Clone after updating context with message, then check if the final Tag is the same.
             let key_bytes = vec![0u8; alg.key_len()];
             let key = Key::new(alg, &key_bytes).unwrap();
@@ -608,7 +616,7 @@ mod tests {
         let k1 = Key::new(AES_128, &key_128).unwrap();
         let k2 = Key::new(AES_192, &key_192).unwrap();
         let k3 = Key::new(AES_256, &key_256).unwrap();
-        let k4 = Key::new(TDES_FOR_LEGACY_USE_ONLY, &key_3des).unwrap();
+        let k4 = Key::new(DES_EDE3_FOR_LEGACY_USE_ONLY, &key_3des).unwrap();
 
         let data = b"test message";
 
@@ -637,8 +645,8 @@ mod tests {
         assert_eq!(AES_256.key_len(), 32);
         assert_eq!(AES_256.tag_len(), 16);
 
-        assert_eq!(TDES_FOR_LEGACY_USE_ONLY.key_len(), 24);
-        assert_eq!(TDES_FOR_LEGACY_USE_ONLY.tag_len(), 8);
+        assert_eq!(DES_EDE3_FOR_LEGACY_USE_ONLY.key_len(), 24);
+        assert_eq!(DES_EDE3_FOR_LEGACY_USE_ONLY.tag_len(), 8);
     }
 
     #[test]
@@ -657,7 +665,7 @@ mod tests {
 
     #[test]
     fn des_ede3_cmac_test() {
-        let key = Key::generate(TDES_FOR_LEGACY_USE_ONLY).unwrap();
+        let key = Key::generate(DES_EDE3_FOR_LEGACY_USE_ONLY).unwrap();
         let data = b"test data for 3DES CMAC";
 
         let tag = sign(&key, data).unwrap();
@@ -667,7 +675,7 @@ mod tests {
 
     #[test]
     fn cmac_sign_to_buffer_test() {
-        for &algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
+        for &algorithm in &[AES_128, AES_192, AES_256, DES_EDE3_FOR_LEGACY_USE_ONLY] {
             let key = Key::generate(algorithm).unwrap();
             let data = b"hello, world";
 
@@ -704,7 +712,7 @@ mod tests {
 
     #[test]
     fn cmac_context_verify_test() {
-        for &algorithm in &[AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY] {
+        for &algorithm in &[AES_128, AES_192, AES_256, DES_EDE3_FOR_LEGACY_USE_ONLY] {
             let key = Key::generate(algorithm).unwrap();
             let data = b"hello, world";
 

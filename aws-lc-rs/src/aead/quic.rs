@@ -163,9 +163,16 @@ fn cipher_new_mask(
             let counter = u32::from_ne_bytes(*counter_bytes).to_le();
             encrypt_block_chacha20(raw_key, input, nonce, counter)?
         }
-        #[cfg(feature = "legacy-3des")]
-        SymmetricCipherKey::DesEde { .. } | SymmetricCipherKey::DesEde3 { .. } => {
-            return Err(error::Unspecified)
+        // DES variants cannot reach this branch: `Algorithm::init` is private
+        // and only the AES_128/AES_256/CHACHA20 consts populate it, so a
+        // `HeaderProtectionKey` can never be constructed with a DES
+        // `SymmetricCipherKey`. The arm exists only to satisfy match
+        // exhaustiveness when the `legacy-des` feature is enabled.
+        #[cfg(feature = "legacy-des")]
+        SymmetricCipherKey::Des { .. }
+        | SymmetricCipherKey::DesEde { .. }
+        | SymmetricCipherKey::DesEde3 { .. } => {
+            unreachable!("DES cipher keys cannot be used with QUIC header protection")
         }
     };
 

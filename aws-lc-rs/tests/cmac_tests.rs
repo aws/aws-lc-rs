@@ -140,7 +140,7 @@ fn cavp_cmac_3des_tests() {
             let input = if mlen == 0 { Vec::new() } else { msg };
             let should_pass = result.starts_with('P');
 
-            let cmac_key = cmac::Key::new(cmac::TDES_FOR_LEGACY_USE_ONLY, &combined_key).unwrap();
+            let cmac_key = cmac::Key::new(cmac::DES_EDE3_FOR_LEGACY_USE_ONLY, &combined_key).unwrap();
             let signature = cmac::sign(&cmac_key, &input).unwrap();
 
             // Truncate to tlen
@@ -164,7 +164,7 @@ fn test_sign_to_buffer_basic() {
         cmac::AES_128,
         cmac::AES_192,
         cmac::AES_256,
-        cmac::TDES_FOR_LEGACY_USE_ONLY,
+        cmac::DES_EDE3_FOR_LEGACY_USE_ONLY,
     ] {
         let key = cmac::Key::generate(*algorithm).unwrap();
         let data = b"test data for sign_to_buffer";
@@ -231,7 +231,7 @@ fn test_context_verify_basic() {
         cmac::AES_128,
         cmac::AES_192,
         cmac::AES_256,
-        cmac::TDES_FOR_LEGACY_USE_ONLY,
+        cmac::DES_EDE3_FOR_LEGACY_USE_ONLY,
     ] {
         let key = cmac::Key::generate(*algorithm).unwrap();
         let data = b"data to verify";

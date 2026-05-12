@@ -37,8 +37,8 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         args:
           - --release --all-targets --features fips,unstable
-          - --release --all-targets --features fips,unstable,legacy-3des
-          - --release --all-targets --features fips,legacy-3des
+          - --release --all-targets --features fips,unstable,legacy-des
+          - --release --all-targets --features fips,legacy-des
           - --profile release-lto --all-targets --features fips,unstable
           - --no-default-features --features fips,unstable
           - --no-default-features --features fips,ring-io,unstable
