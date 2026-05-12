@@ -1993,6 +1993,82 @@ mod tests {
                 .is_err(),
             "3TDEA + CFB128 (decrypt) should be rejected"
         );
+
+        // Streaming constructors must also reject unsupported modes.
+        assert!(
+            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
+                .and_then(StreamingEncryptingKey::ctr)
+                .is_err(),
+            "DES + CTR (streaming encrypt) should be rejected"
+        );
+        assert!(
+            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
+                .and_then(StreamingEncryptingKey::cfb128)
+                .is_err(),
+            "DES + CFB128 (streaming encrypt) should be rejected"
+        );
+        assert!(
+            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
+                .and_then(|k| StreamingDecryptingKey::ctr(k, DecryptionContext::None))
+                .is_err(),
+            "DES + CTR (streaming decrypt) should be rejected"
+        );
+        assert!(
+            UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key1)
+                .and_then(|k| StreamingDecryptingKey::cfb128(k, DecryptionContext::None))
+                .is_err(),
+            "DES + CFB128 (streaming decrypt) should be rejected"
+        );
+
+        assert!(
+            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
+                .and_then(StreamingEncryptingKey::ctr)
+                .is_err(),
+            "2TDEA + CTR (streaming encrypt) should be rejected"
+        );
+        assert!(
+            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
+                .and_then(StreamingEncryptingKey::cfb128)
+                .is_err(),
+            "2TDEA + CFB128 (streaming encrypt) should be rejected"
+        );
+        assert!(
+            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
+                .and_then(|k| StreamingDecryptingKey::ctr(k, DecryptionContext::None))
+                .is_err(),
+            "2TDEA + CTR (streaming decrypt) should be rejected"
+        );
+        assert!(
+            UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key2)
+                .and_then(|k| StreamingDecryptingKey::cfb128(k, DecryptionContext::None))
+                .is_err(),
+            "2TDEA + CFB128 (streaming decrypt) should be rejected"
+        );
+
+        assert!(
+            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
+                .and_then(StreamingEncryptingKey::ctr)
+                .is_err(),
+            "3TDEA + CTR (streaming encrypt) should be rejected"
+        );
+        assert!(
+            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
+                .and_then(StreamingEncryptingKey::cfb128)
+                .is_err(),
+            "3TDEA + CFB128 (streaming encrypt) should be rejected"
+        );
+        assert!(
+            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
+                .and_then(|k| StreamingDecryptingKey::ctr(k, DecryptionContext::None))
+                .is_err(),
+            "3TDEA + CTR (streaming decrypt) should be rejected"
+        );
+        assert!(
+            UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key3)
+                .and_then(|k| StreamingDecryptingKey::cfb128(k, DecryptionContext::None))
+                .is_err(),
+            "3TDEA + CFB128 (streaming decrypt) should be rejected"
+        );
     }
 
     #[cfg(feature = "legacy-des")]

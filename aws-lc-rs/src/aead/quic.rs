@@ -171,7 +171,9 @@ fn cipher_new_mask(
         #[cfg(feature = "legacy-des")]
         SymmetricCipherKey::Des { .. }
         | SymmetricCipherKey::DesEde { .. }
-        | SymmetricCipherKey::DesEde3 { .. } => unreachable!(),
+        | SymmetricCipherKey::DesEde3 { .. } => {
+            unreachable!("DES cipher keys cannot be used with QUIC header protection")
+        }
     };
 
     let mut out: [u8; 5] = [0; 5];

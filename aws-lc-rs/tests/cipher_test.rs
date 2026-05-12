@@ -1446,6 +1446,30 @@ des_cipher_rt!(
 
 #[cfg(feature = "legacy-des")]
 des_cipher_kat!(
+    test_kat_des_cbc_32_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "2d121f90fcf68631ed788fcfe31a62dffa784891fa512ef928ea856d934257c6"
+);
+
+#[cfg(feature = "legacy-des")]
+des_cipher_kat!(
+    test_kat_des_ecb_32_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "7277a00dc1c1c36b2256338b7a9f36ef6e511022cfebec489a4a53a1c7d22e5b"
+);
+
+#[cfg(feature = "legacy-des")]
+des_cipher_kat!(
     test_kat_des_cbc_31_bytes,
     &DES_FOR_LEGACY_USE_ONLY,
     OperatingMode::CBC,
@@ -1485,6 +1509,124 @@ des_padded_cipher_rt!(
     "0123456789abcdef",
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_weak_keys_rejected() {
+    // The four DES weak keys (with parity bits set).
+    let weak_keys: &[&str] = &[
+        "0101010101010101",
+        "fefefefefefefefe",
+        "e0e0e0e0f1f1f1f1",
+        "1f1f1f1f0e0e0e0e",
+    ];
+    for hex_key in weak_keys {
+        let key_bytes = from_hex(hex_key).unwrap();
+        let unbound_key = UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+        EncryptingKey::cbc(unbound_key)
+            .expect_err(&format!("weak key {hex_key} should be rejected"));
+    }
+}
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_ede_rejects_k1_equals_k2() {
+    // 2TDEA with K1 == K2 degenerates to single DES; must be rejected.
+    let k1 = "0123456789abcdef";
+    let key_bytes = from_hex(&format!("{k1}{k1}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::cbc(unbound).expect_err("2TDEA K1==K2 should be rejected");
+
+    let unbound = UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::ecb(unbound).expect_err("2TDEA K1==K2 should be rejected (ECB)");
+
+    let unbound = UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    assert!(
+        StreamingEncryptingKey::cbc_pkcs7(unbound).is_err(),
+        "2TDEA K1==K2 should be rejected (streaming CBC)"
+    );
+}
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_ede3_rejects_pairwise_equal_keys() {
+    let k1 = "0123456789abcdef";
+    let k2 = "23456789abcdef01";
+    let k3 = "456789abcdef0123";
+
+    // K1 == K2
+    let key_bytes = from_hex(&format!("{k1}{k1}{k3}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::cbc(unbound).expect_err("3TDEA K1==K2 should be rejected");
+
+    // K2 == K3
+    let key_bytes = from_hex(&format!("{k1}{k2}{k2}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::cbc(unbound).expect_err("3TDEA K2==K3 should be rejected");
+
+    // K1 == K3 (degenerates to 2TDEA)
+    let key_bytes = from_hex(&format!("{k1}{k2}{k1}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::cbc(unbound).expect_err("3TDEA K1==K3 should be rejected");
+
+    // All three equal
+    let key_bytes = from_hex(&format!("{k1}{k1}{k1}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::ecb(unbound).expect_err("3TDEA K1==K2==K3 should be rejected");
+
+    // Streaming path
+    let key_bytes = from_hex(&format!("{k1}{k1}{k3}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    assert!(
+        StreamingEncryptingKey::cbc_pkcs7(unbound).is_err(),
+        "3TDEA K1==K2 should be rejected (streaming)"
+    );
+}
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_unsupported_modes_rejected() {
+    let des_key = from_hex("0123456789abcdef").unwrap();
+    let ede_key = from_hex("0123456789abcdef23456789abcdef01").unwrap();
+    let ede3_key =
+        from_hex("0123456789abcdef23456789abcdef01456789abcdef0123").unwrap();
+
+    for (alg, key_bytes) in [
+        (&DES_FOR_LEGACY_USE_ONLY, des_key.as_slice()),
+        (&DES_EDE_FOR_LEGACY_USE_ONLY, ede_key.as_slice()),
+        (&DES_EDE3_FOR_LEGACY_USE_ONLY, ede3_key.as_slice()),
+    ] {
+        // CTR must be rejected
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        EncryptingKey::ctr(unbound).expect_err("DES + CTR should be rejected");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        DecryptingKey::ctr(unbound).expect_err("DES + CTR should be rejected (decrypt)");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        assert!(
+            StreamingEncryptingKey::ctr(unbound).is_err(),
+            "DES + CTR should be rejected (streaming encrypt)"
+        );
+
+        // CFB128 must be rejected
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        EncryptingKey::cfb128(unbound).expect_err("DES + CFB128 should be rejected");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        DecryptingKey::cfb128(unbound).expect_err("DES + CFB128 should be rejected (decrypt)");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        assert!(
+            StreamingEncryptingKey::cfb128(unbound).is_err(),
+            "DES + CFB128 should be rejected (streaming encrypt)"
+        );
+    }
+}
 
 #[cfg(feature = "legacy-des")]
 des_cipher_kat!(
