@@ -97,7 +97,7 @@ impl PaddedBlockEncryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing a `PaddedBlockEncryptingKey`.
-    ///   With `legacy-3des` enabled, also returned if `key` was constructed with
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
     ///   provided key material contains weak or semi-weak DES subkeys, or a
     ///   degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA, or any
@@ -115,7 +115,7 @@ impl PaddedBlockEncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing a `PaddedBlockEncryptingKey`.
-    ///   With `legacy-3des` enabled, also returned if `key` was constructed with
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
     ///   provided key material contains weak or semi-weak DES subkeys, or a
     ///   degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA, or any
@@ -228,7 +228,7 @@ impl PaddedBlockDecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
-    ///   With `legacy-3des` enabled, also returned if `key` was constructed with
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
     ///   provided key material contains weak or semi-weak DES subkeys, or a
     ///   degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA, or any
@@ -250,7 +250,7 @@ impl PaddedBlockDecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
-    ///   With `legacy-3des` enabled, also returned if `key` was constructed with
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
     ///   provided key material contains weak or semi-weak DES subkeys, or a
     ///   degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA, or any
@@ -273,7 +273,7 @@ impl PaddedBlockDecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
-    ///   With `legacy-3des` enabled, also returned if `key` was constructed with
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
     ///   provided key material contains weak or semi-weak DES subkeys, or a
     ///   degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA, or any

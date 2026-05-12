@@ -152,7 +152,7 @@ impl StreamingEncryptingKey {
                 );
                 evp_encrypt_init(&mut cipher_ctx, &cipher, key_bytes, Some(iv))?;
             }
-            #[cfg(feature = "legacy-3des")]
+            #[cfg(feature = "legacy-des")]
             ctx @ EncryptionContext::Iv64(..) => {
                 let iv = <&[u8]>::try_from(ctx)?;
                 debug_assert_eq!(
@@ -319,7 +319,7 @@ impl StreamingEncryptingKey {
     /// The resulting ciphertext will be the same length as the plaintext.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CTR mode (e.g.
     /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ctr(key: UnboundCipherKey) -> Result<Self, Unspecified> {
@@ -334,7 +334,7 @@ impl StreamingEncryptingKey {
     /// an `EncryptionContext` from a previously used initialization vector (IV).
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CTR mode (e.g.
     /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn less_safe_ctr(
@@ -350,7 +350,7 @@ impl StreamingEncryptingKey {
     /// to fill the next block of ciphertext.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
     /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
     /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.
@@ -364,7 +364,7 @@ impl StreamingEncryptingKey {
     /// The resulting ciphertext will be the same length as the plaintext.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CFB128 mode (e.g.
     /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
@@ -382,7 +382,7 @@ impl StreamingEncryptingKey {
     /// very likely not what you want to use.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
     /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
     /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.
@@ -399,7 +399,7 @@ impl StreamingEncryptingKey {
     /// an `EncryptionContext` from a previously used initialization vector (IV).
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CFB128 mode (e.g.
     /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn less_safe_cfb128(
@@ -418,7 +418,7 @@ impl StreamingEncryptingKey {
     /// an `EncryptionContext` from a previously used initialization vector (IV).
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
     /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
     /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.
@@ -473,7 +473,7 @@ impl StreamingDecryptingKey {
                 );
                 evp_decrypt_init(&mut cipher_ctx, &cipher, key_bytes, Some(iv))?;
             }
-            #[cfg(feature = "legacy-3des")]
+            #[cfg(feature = "legacy-des")]
             ctx @ DecryptionContext::Iv64(..) => {
                 let iv = <&[u8]>::try_from(ctx)?;
                 debug_assert_eq!(
@@ -635,7 +635,7 @@ impl StreamingDecryptingKey {
     /// The resulting plaintext will be the same length as the ciphertext.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CTR mode (e.g.
     /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ctr(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
@@ -646,7 +646,7 @@ impl StreamingDecryptingKey {
     /// The resulting plaintext will be shorter than the ciphertext.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
     /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
     /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.
@@ -662,7 +662,7 @@ impl StreamingDecryptingKey {
     /// The resulting plaintext will be the same length as the ciphertext.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CFB128 mode (e.g.
     /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
@@ -677,7 +677,7 @@ impl StreamingDecryptingKey {
     /// very likely not what you want to use.
     ///
     /// # Errors
-    /// Returns an error on an internal failure. With `legacy-3des` enabled, also
+    /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
     /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
     /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.

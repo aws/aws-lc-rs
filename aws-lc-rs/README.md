@@ -124,7 +124,7 @@ It can be enabled in two ways:
 used in production builds. The `rand::unsealed` module and `mut_fill` method are not part of the
 stable public API and may change without notice.
 
-##### legacy-3des
+##### legacy-des
 
 Enables Triple DES as an opt-in symmetric cipher under the `cipher` module, exposing
 both `DES_EDE_FOR_LEGACY_USE_ONLY` (2-key Triple DES / DES-EDE) and

@@ -26,7 +26,7 @@ exclude = [
 
 [package.metadata.docs.rs]
 rustdoc-args = ["--cfg", "aws_lc_rs_docsrs"]
-features = ["unstable", "legacy-3des"]
+features = ["unstable", "legacy-des"]
 
 [features]
 alloc = []
@@ -39,7 +39,7 @@ test_logging = []
 unstable = []
 prebuilt-nasm = ["aws-lc-sys?/prebuilt-nasm"]
 dev-tests-only = []
-legacy-3des = ["aws-lc-sys?/all-bindings"]
+legacy-des = ["aws-lc-sys?/all-bindings"]
 
 # require non-FIPS
 non-fips = ["aws-lc-sys"]

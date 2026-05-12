@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{AES_set_decrypt_key, AES_set_encrypt_key, AES_KEY};
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 use crate::aws_lc::{DES_cblock, DES_key_schedule, DES_set_key};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 use crate::cipher::des::{DesKey, DES_EDE3_KEY_LEN, DES_EDE_KEY_LEN, DES_KEY_LEN};
 use crate::cipher::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 use crate::constant_time;
 use crate::error::{KeyRejected, Unspecified};
 use core::mem::{size_of, MaybeUninit};
@@ -35,15 +35,15 @@ pub(crate) enum SymmetricCipherKey {
     ChaCha20 {
         raw_key: ChaCha20Key,
     },
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     Des {
         key: DesKey,
     },
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     DesEde {
         key: DesKey,
     },
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     DesEde3 {
         key: DesKey,
     },
@@ -73,7 +73,7 @@ impl Drop for SymmetricCipherKey {
                 dec_bytes.zeroize();
             },
             SymmetricCipherKey::ChaCha20 { .. } => {}
-            #[cfg(feature = "legacy-3des")]
+            #[cfg(feature = "legacy-des")]
             SymmetricCipherKey::Des { key }
             | SymmetricCipherKey::DesEde { key }
             | SymmetricCipherKey::DesEde3 { key } => unsafe {
@@ -158,7 +158,7 @@ impl SymmetricCipherKey {
     /// This is the shared validation/preparation step used by both
     /// [`SymmetricCipherKey::des`] and
     /// [`UnboundCipherKey::validate_key_material`].
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     pub(crate) fn prepare_des(key_bytes: &[u8]) -> Result<[DES_key_schedule; 3], KeyRejected> {
         if key_bytes.len() != DES_KEY_LEN {
             return Err(KeyRejected::unspecified());
@@ -169,7 +169,7 @@ impl SymmetricCipherKey {
         unsafe { Ok([ks, zero.assume_init(), zero.assume_init()]) }
     }
 
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     pub(crate) fn des(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
         Ok(SymmetricCipherKey::Des {
             key: DesKey(Self::prepare_des(key_bytes)?),
@@ -182,7 +182,7 @@ impl SymmetricCipherKey {
     /// This is the shared validation/preparation step used by both
     /// [`SymmetricCipherKey::des_ede`] and
     /// [`UnboundCipherKey::validate_key_material`].
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     pub(crate) fn prepare_des_ede(key_bytes: &[u8]) -> Result<[DES_key_schedule; 3], KeyRejected> {
         if key_bytes.len() != DES_EDE_KEY_LEN {
             return Err(KeyRejected::unspecified());
@@ -206,14 +206,14 @@ impl SymmetricCipherKey {
         Ok([ks1, ks2, ks1])
     }
 
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     pub(crate) fn des_ede(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
         Ok(SymmetricCipherKey::DesEde {
             key: DesKey(Self::prepare_des_ede(key_bytes)?),
         })
     }
 
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     fn des_set_key(key_bytes: &[u8; 8]) -> Result<DES_key_schedule, KeyRejected> {
         let mut ks = MaybeUninit::<DES_key_schedule>::uninit();
         // DES_set_key return values (see openssl/des.h):
@@ -233,7 +233,7 @@ impl SymmetricCipherKey {
     /// This is the shared validation/preparation step used by both
     /// [`SymmetricCipherKey::des_ede3`] and
     /// [`UnboundCipherKey::validate_key_material`].
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     pub(crate) fn prepare_des_ede3(key_bytes: &[u8]) -> Result<[DES_key_schedule; 3], KeyRejected> {
         if key_bytes.len() != DES_EDE3_KEY_LEN {
             return Err(KeyRejected::unspecified());
@@ -272,7 +272,7 @@ impl SymmetricCipherKey {
         ])
     }
 
-    #[cfg(feature = "legacy-3des")]
+    #[cfg(feature = "legacy-des")]
     pub(crate) fn des_ede3(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
         Ok(SymmetricCipherKey::DesEde3 {
             key: DesKey(Self::prepare_des_ede3(key_bytes)?),
@@ -291,7 +291,7 @@ impl SymmetricCipherKey {
             SymmetricCipherKey::ChaCha20 { .. } => {
                 panic!("Unsupported algorithm!")
             }
-            #[cfg(feature = "legacy-3des")]
+            #[cfg(feature = "legacy-des")]
             SymmetricCipherKey::Des { .. }
             | SymmetricCipherKey::DesEde { .. }
             | SymmetricCipherKey::DesEde3 { .. } => {
