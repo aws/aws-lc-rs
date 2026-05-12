@@ -3,7 +3,7 @@
 
 #![cfg(debug_assertions)]
 
-use crate::cmac::{sign, verify, Key, AES_128, AES_192, AES_256, TDES_FOR_LEGACY_USE_ONLY};
+use crate::cmac::{sign, verify, Key, AES_128, AES_192, AES_256, DES_EDE3_FOR_LEGACY_USE_ONLY};
 use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 use crate::rand::{self, SystemRandom};
 
@@ -38,8 +38,8 @@ cmac_api!(aes_128, AES_128, 16, FipsServiceStatus::Approved);
 cmac_api!(aes_192, AES_192, 24, FipsServiceStatus::NonApproved);
 cmac_api!(aes_256, AES_256, 32, FipsServiceStatus::Approved);
 cmac_api!(
-    tdes,
-    TDES_FOR_LEGACY_USE_ONLY,
+    des_ede3,
+    DES_EDE3_FOR_LEGACY_USE_ONLY,
     24,
     FipsServiceStatus::NonApproved
 );
