@@ -198,6 +198,16 @@
 //! # }
 //! ```
 //!
+//! ## Feature flags
+//!
+//! ### `legacy-des`
+//!
+//! Enables single DES and Triple DES (`DES_FOR_LEGACY_USE_ONLY`,
+//! `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`) for legacy
+//! interoperability. Only CBC and ECB modes are supported. All exposed items
+//! are `#[deprecated]`. See the crate-level [feature flag
+//! documentation](crate#legacy-des) for details and security caveats.
+//!
 //! ## Getting an immutable reference to the IV slice.
 //!
 //! `TryFrom<&DecryptionContext>` is implemented for `&[u8]` allowing immutable references
@@ -303,14 +313,14 @@ pub use crate::cipher::aes::AES_CTR_IV_LEN;
 /// The number of bytes for an AES-CFB initialization vector (IV)
 pub use crate::cipher::aes::AES_CFB_IV_LEN;
 
-/// The number of bytes for a DES-CBC initialization vector (IV).
+/// The number of bytes for a DES/3DES-CBC initialization vector (IV).
 ///
-/// DES is a legacy algorithm and has been disallowed for encryption by
-/// NIST SP 800-131A Rev. 2 after 2023. It is retained for interoperability only.
+/// DES and 3DES are legacy algorithms and have been disallowed for encryption by
+/// NIST SP 800-131A Rev. 2 after 2023. They are retained for interoperability only.
 #[cfg(feature = "legacy-des")]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[deprecated(
-    note = "DES is a legacy algorithm retained for interoperability only; NIST SP 800-131A Rev. 2 disallows its use for encryption. Prefer an AES-based algorithm."
+    note = "DES/3DES are legacy algorithms retained for interoperability only; NIST SP 800-131A Rev. 2 disallows their use for encryption. Prefer an AES-based algorithm."
 )]
 pub use crate::cipher::des::DES_CBC_IV_LEN;
 
@@ -401,7 +411,11 @@ macro_rules! define_cipher_context {
             /// A 128-bit Initialization Vector.
             Iv128(FixedLength<IV_LEN_128_BIT>),
 
-            /// A 64-bit Initialization Vector (used by 3DES).
+            /// A 64-bit Initialization Vector.
+            ///
+            /// Used by DES and 3DES in CBC mode only. ECB mode uses
+            /// [`Self::None`] regardless of the cipher's block size, and
+            /// no other cipher in this crate produces or consumes a 64-bit IV.
             #[cfg(feature = "legacy-des")]
             #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
             Iv64(FixedLength<IV_LEN_64_BIT>),
@@ -594,6 +608,36 @@ pub const DES_EDE_FOR_LEGACY_USE_ONLY: Algorithm = Algorithm {
 /// Callers who specifically need 2-key Triple DES (2TDEA) must use
 /// [`DES_EDE_FOR_LEGACY_USE_ONLY`] (16-byte key) rather than encoding 2TDEA
 /// as a 24-byte `K1 ‖ K2 ‖ K1` key here.
+///
+/// # Example: 3DES-CBC interop round-trip
+///
+/// ```rust
+/// # #[cfg(feature = "legacy-des")]
+/// # #[allow(deprecated)]
+/// # fn main() -> Result<(), aws_lc_rs::error::Unspecified> {
+/// use aws_lc_rs::cipher::{
+///     DecryptingKey, EncryptingKey, UnboundCipherKey, DES_EDE3_FOR_LEGACY_USE_ONLY,
+/// };
+///
+/// let key_bytes: [u8; 24] = [
+///     0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+///     0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01,
+///     0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23,
+/// ];
+/// let plaintext = *b"8-byte..16-byte.";
+///
+/// let key = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes)?;
+/// let mut buf = plaintext.to_vec();
+/// let ctx = EncryptingKey::cbc(key)?.encrypt(&mut buf)?;
+///
+/// let key = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes)?;
+/// let recovered = DecryptingKey::cbc(key)?.decrypt(&mut buf, ctx)?;
+/// assert_eq!(&plaintext[..], recovered);
+/// # Ok(())
+/// # }
+/// # #[cfg(not(feature = "legacy-des"))]
+/// # fn main() {}
+/// ```
 #[cfg(feature = "legacy-des")]
 #[cfg_attr(aws_lc_rs_docsrs, doc(cfg(feature = "legacy-des")))]
 #[allow(deprecated)]
@@ -843,8 +887,8 @@ impl EncryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
     ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
-    ///   support CTR mode (e.g. `DES_EDE_FOR_LEGACY_USE_ONLY`,
-    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    ///   support CTR mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ctr(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CTR)
     }
@@ -859,8 +903,8 @@ impl EncryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
     ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
-    ///   support CFB128 mode (e.g. `DES_EDE_FOR_LEGACY_USE_ONLY`,
-    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    ///   support CFB128 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB128)
     }
@@ -876,16 +920,17 @@ impl EncryptingKey {
     // * `AES_128`
     // * `AES_256`
     //
-    // `DES_EDE_FOR_LEGACY_USE_ONLY` and `DES_EDE3_FOR_LEGACY_USE_ONLY` are never
-    // FIPS-approved.
+    // `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` and
+    // `DES_EDE3_FOR_LEGACY_USE_ONLY` are never FIPS-approved.
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
     ///   With `legacy-des` enabled, also returned if `key` was constructed with
-    ///   `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
-    ///   provided key material contains weak or semi-weak DES subkeys, or a
-    ///   degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA, or any
-    ///   pairwise equality for 3TDEA).
+    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
+    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
+    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
+    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
+    ///   for 3TDEA).
     pub fn cbc(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CBC)
     }
@@ -901,16 +946,17 @@ impl EncryptingKey {
     // * `AES_128`
     // * `AES_256`
     //
-    // `DES_EDE_FOR_LEGACY_USE_ONLY` and `DES_EDE3_FOR_LEGACY_USE_ONLY` are never
-    // FIPS-approved.
+    // `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` and
+    // `DES_EDE3_FOR_LEGACY_USE_ONLY` are never FIPS-approved.
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
     ///   With `legacy-des` enabled, also returned if `key` was constructed with
-    ///   `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
-    ///   provided key material contains weak or semi-weak DES subkeys, or a
-    ///   degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA, or any
-    ///   pairwise equality for 3TDEA).
+    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
+    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
+    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
+    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
+    ///   for 3TDEA).
     pub fn ecb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::ECB)
     }
@@ -1009,8 +1055,8 @@ impl DecryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
     ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
-    ///   support CTR mode (e.g. `DES_EDE_FOR_LEGACY_USE_ONLY`,
-    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    ///   support CTR mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ctr(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
         Self::new(key, OperatingMode::CTR)
     }
@@ -1025,8 +1071,8 @@ impl DecryptingKey {
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
     ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
-    ///   support CFB128 mode (e.g. `DES_EDE_FOR_LEGACY_USE_ONLY`,
-    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    ///   support CFB128 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB128)
     }
@@ -1042,16 +1088,17 @@ impl DecryptingKey {
     // * `AES_128`
     // * `AES_256`
     //
-    // `DES_EDE_FOR_LEGACY_USE_ONLY` and `DES_EDE3_FOR_LEGACY_USE_ONLY` are never
-    // FIPS-approved.
+    // `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` and
+    // `DES_EDE3_FOR_LEGACY_USE_ONLY` are never FIPS-approved.
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error during decryption.
     ///   With `legacy-des` enabled, also returned if `key` was constructed with
-    ///   `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
-    ///   provided key material contains weak or semi-weak DES subkeys, or a
-    ///   degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA, or any
-    ///   pairwise equality for 3TDEA).
+    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
+    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
+    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
+    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
+    ///   for 3TDEA).
     pub fn cbc(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
         Self::new(key, OperatingMode::CBC)
     }
@@ -1067,16 +1114,17 @@ impl DecryptingKey {
     // * `AES_128`
     // * `AES_256`
     //
-    // `DES_EDE_FOR_LEGACY_USE_ONLY` and `DES_EDE3_FOR_LEGACY_USE_ONLY` are never
-    // FIPS-approved.
+    // `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` and
+    // `DES_EDE3_FOR_LEGACY_USE_ONLY` are never FIPS-approved.
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `DecryptingKey`.
     ///   With `legacy-des` enabled, also returned if `key` was constructed with
-    ///   `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
-    ///   provided key material contains weak or semi-weak DES subkeys, or a
-    ///   degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA, or any
-    ///   pairwise equality for 3TDEA).
+    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
+    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
+    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
+    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
+    ///   for 3TDEA).
     pub fn ecb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::ECB)
     }

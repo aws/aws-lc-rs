@@ -1413,11 +1413,17 @@ macro_rules! des_padded_cipher_rt {
     };
 }
 
-// The following DES KAT vectors are from the NIST SP 800-38A TDES example values:
+// The following Triple DES (2TDEA/3TDEA) KAT vectors are from the NIST SP 800-38A
+// TDES example values:
 // https://csrc.nist.gov/projects/cryptographic-standards-and-guidelines/example-values
 // The 2TDEA key is the first 16 bytes of the 3TDEA key.
 // PKCS#7-padded variants are not from NIST; their ciphertexts were computed
 // by applying PKCS#7 padding to the NIST plaintext before encryption.
+//
+// The single-DES KAT vectors below share the same key prefix, IV and plaintext
+// as the TDES vectors for convenience but are not from NIST (SP 800-38A has no
+// single-DES examples). Their ciphertexts were verified against an independent
+// DES implementation.
 #[cfg(feature = "legacy-des")]
 des_cipher_rt!(
     test_rt_des_cbc_32_bytes,

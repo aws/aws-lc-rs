@@ -321,7 +321,8 @@ impl StreamingEncryptingKey {
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CTR mode (e.g.
-    /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ctr(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         let context = key.algorithm().new_encryption_context(OperatingMode::CTR)?;
         Self::less_safe_ctr(key, context)
@@ -336,7 +337,8 @@ impl StreamingEncryptingKey {
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CTR mode (e.g.
-    /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn less_safe_ctr(
         key: UnboundCipherKey,
         context: EncryptionContext,
@@ -351,10 +353,11 @@ impl StreamingEncryptingKey {
     ///
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
-    /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
-    /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
-    /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.
-    /// `K1 == K2` for 2TDEA, or any pairwise equality for 3TDEA).
+    /// returned if `key` was constructed with `DES_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
+    /// provided key material contains weak or semi-weak DES subkeys, or (for
+    /// Triple DES) a degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA,
+    /// or any pairwise equality for 3TDEA).
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         let context = key.algorithm().new_encryption_context(OperatingMode::CBC)?;
         Self::less_safe_cbc_pkcs7(key, context)
@@ -366,7 +369,8 @@ impl StreamingEncryptingKey {
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CFB128 mode (e.g.
-    /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         let context = key
             .algorithm()
@@ -383,10 +387,11 @@ impl StreamingEncryptingKey {
     ///
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
-    /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
-    /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
-    /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.
-    /// `K1 == K2` for 2TDEA, or any pairwise equality for 3TDEA).
+    /// returned if `key` was constructed with `DES_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
+    /// provided key material contains weak or semi-weak DES subkeys, or (for
+    /// Triple DES) a degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA,
+    /// or any pairwise equality for 3TDEA).
     pub fn ecb_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         let context = key.algorithm().new_encryption_context(OperatingMode::ECB)?;
         Self::new(key, OperatingMode::ECB, context)
@@ -401,7 +406,8 @@ impl StreamingEncryptingKey {
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CFB128 mode (e.g.
-    /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn less_safe_cfb128(
         key: UnboundCipherKey,
         context: EncryptionContext,
@@ -419,10 +425,11 @@ impl StreamingEncryptingKey {
     ///
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
-    /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
-    /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
-    /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.
-    /// `K1 == K2` for 2TDEA, or any pairwise equality for 3TDEA).
+    /// returned if `key` was constructed with `DES_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
+    /// provided key material contains weak or semi-weak DES subkeys, or (for
+    /// Triple DES) a degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA,
+    /// or any pairwise equality for 3TDEA).
     pub fn less_safe_cbc_pkcs7(
         key: UnboundCipherKey,
         context: EncryptionContext,
@@ -637,7 +644,8 @@ impl StreamingDecryptingKey {
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CTR mode (e.g.
-    /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ctr(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CTR, context)
     }
@@ -647,10 +655,11 @@ impl StreamingDecryptingKey {
     ///
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
-    /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
-    /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
-    /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.
-    /// `K1 == K2` for 2TDEA, or any pairwise equality for 3TDEA).
+    /// returned if `key` was constructed with `DES_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
+    /// provided key material contains weak or semi-weak DES subkeys, or (for
+    /// Triple DES) a degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA,
+    /// or any pairwise equality for 3TDEA).
     pub fn cbc_pkcs7(
         key: UnboundCipherKey,
         context: DecryptionContext,
@@ -664,7 +673,8 @@ impl StreamingDecryptingKey {
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
     /// returned if `key`'s algorithm does not support CFB128 mode (e.g.
-    /// `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CFB128, context)
     }
@@ -678,10 +688,11 @@ impl StreamingDecryptingKey {
     ///
     /// # Errors
     /// Returns an error on an internal failure. With `legacy-des` enabled, also
-    /// returned if `key` was constructed with `DES_EDE_FOR_LEGACY_USE_ONLY` or
-    /// `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains weak
-    /// or semi-weak DES subkeys, or a degenerate subkey configuration (e.g.
-    /// `K1 == K2` for 2TDEA, or any pairwise equality for 3TDEA).
+    /// returned if `key` was constructed with `DES_FOR_LEGACY_USE_ONLY`,
+    /// `DES_EDE_FOR_LEGACY_USE_ONLY` or `DES_EDE3_FOR_LEGACY_USE_ONLY` and the
+    /// provided key material contains weak or semi-weak DES subkeys, or (for
+    /// Triple DES) a degenerate subkey configuration (e.g. `K1 == K2` for 2TDEA,
+    /// or any pairwise equality for 3TDEA).
     pub fn ecb_pkcs7(
         key: UnboundCipherKey,
         context: DecryptionContext,

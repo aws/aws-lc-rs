@@ -20,7 +20,7 @@ pub const DES_EDE_KEY_LEN: usize = 16;
 /// Length of a 3TDEA (DES-EDE3) key in bytes.
 pub const DES_EDE3_KEY_LEN: usize = 24;
 
-/// The number of bytes for a DES-CBC initialization vector (IV).
+/// The number of bytes for a DES/3DES-CBC initialization vector (IV).
 pub const DES_CBC_IV_LEN: usize = 8;
 
 pub(crate) const DES_BLOCK_LEN: usize = 8;
@@ -28,6 +28,11 @@ pub(crate) const DES_BLOCK_LEN: usize = 8;
 // `#[repr(transparent)]` documents that `DesKey` has the same layout as the
 // wrapped array, which the `Drop` impl in `key.rs` relies on when it zeroizes
 // the key schedule bytes through a byte-slice view.
+//
+// The array is sized for 3TDEA and is used unchanged for single DES (slot 0
+// populated, slots 1 and 2 zeroed) and 2TDEA (slots 0 and 1 populated, slot 2 =
+// slot 0 per K3 == K1). Callers in this module match on `SymmetricCipherKey`
+// and read only the slots that are meaningful for the variant.
 #[repr(transparent)]
 pub(crate) struct DesKey(pub(super) [DES_key_schedule; 3]);
 
