@@ -164,9 +164,9 @@ fn cipher_new_mask(
             encrypt_block_chacha20(raw_key, input, nonce, counter)?
         }
         #[cfg(feature = "legacy-3des")]
-        SymmetricCipherKey::DesEde { .. } | SymmetricCipherKey::DesEde3 { .. } => {
-            return Err(error::Unspecified)
-        }
+        SymmetricCipherKey::Des { .. }
+        | SymmetricCipherKey::DesEde { .. }
+        | SymmetricCipherKey::DesEde3 { .. } => return Err(error::Unspecified),
     };
 
     let mut out: [u8; 5] = [0; 5];

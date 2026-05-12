@@ -7,7 +7,7 @@ use crate::aws_lc::{DES_cblock, DES_key_schedule, DES_set_key};
 use crate::cipher::block::Block;
 use crate::cipher::chacha::ChaCha20Key;
 #[cfg(feature = "legacy-3des")]
-use crate::cipher::des::{DesKey, DES_EDE3_KEY_LEN, DES_EDE_KEY_LEN};
+use crate::cipher::des::{DesKey, DES_EDE3_KEY_LEN, DES_EDE_KEY_LEN, DES_KEY_LEN};
 use crate::cipher::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
 #[cfg(feature = "legacy-3des")]
 use crate::constant_time;
@@ -34,6 +34,10 @@ pub(crate) enum SymmetricCipherKey {
     },
     ChaCha20 {
         raw_key: ChaCha20Key,
+    },
+    #[cfg(feature = "legacy-3des")]
+    Des {
+        key: DesKey,
     },
     #[cfg(feature = "legacy-3des")]
     DesEde {
@@ -70,7 +74,9 @@ impl Drop for SymmetricCipherKey {
             },
             SymmetricCipherKey::ChaCha20 { .. } => {}
             #[cfg(feature = "legacy-3des")]
-            SymmetricCipherKey::DesEde { key } | SymmetricCipherKey::DesEde3 { key } => unsafe {
+            SymmetricCipherKey::Des { key }
+            | SymmetricCipherKey::DesEde { key }
+            | SymmetricCipherKey::DesEde3 { key } => unsafe {
                 let key_bytes: &mut [u8; size_of::<DesKey>()] = (key as *mut DesKey)
                     .cast::<[u8; size_of::<DesKey>()]>()
                     .as_mut()
@@ -144,6 +150,30 @@ impl SymmetricCipherKey {
                 raw_key: ChaCha20Key(kb.assume_init()),
             })
         }
+    }
+
+    /// Validates single DES key material and computes the key schedule.
+    ///
+    /// Returns the schedule as `[ks, zeroed, zeroed]` (only slot 0 is used).
+    /// This is the shared validation/preparation step used by both
+    /// [`SymmetricCipherKey::des`] and
+    /// [`UnboundCipherKey::validate_key_material`].
+    #[cfg(feature = "legacy-3des")]
+    pub(crate) fn prepare_des(key_bytes: &[u8]) -> Result<[DES_key_schedule; 3], KeyRejected> {
+        if key_bytes.len() != DES_KEY_LEN {
+            return Err(KeyRejected::unspecified());
+        }
+        let k: &[u8; 8] = key_bytes.try_into().expect("length already checked");
+        let ks = Self::des_set_key(k)?;
+        let zero = MaybeUninit::<DES_key_schedule>::zeroed();
+        unsafe { Ok([ks, zero.assume_init(), zero.assume_init()]) }
+    }
+
+    #[cfg(feature = "legacy-3des")]
+    pub(crate) fn des(key_bytes: &[u8]) -> Result<Self, KeyRejected> {
+        Ok(SymmetricCipherKey::Des {
+            key: DesKey(Self::prepare_des(key_bytes)?),
+        })
     }
 
     /// Validates 2TDEA key material and computes the three DES key schedules.
@@ -262,7 +292,9 @@ impl SymmetricCipherKey {
                 panic!("Unsupported algorithm!")
             }
             #[cfg(feature = "legacy-3des")]
-            SymmetricCipherKey::DesEde { .. } | SymmetricCipherKey::DesEde3 { .. } => {
+            SymmetricCipherKey::Des { .. }
+            | SymmetricCipherKey::DesEde { .. }
+            | SymmetricCipherKey::DesEde3 { .. } => {
                 panic!("Unsupported algorithm!")
             }
         }

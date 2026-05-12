@@ -9,7 +9,9 @@ use crate::cipher::{
 };
 #[cfg(feature = "legacy-3des")]
 #[allow(deprecated)]
-use crate::cipher::{DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY};
+use crate::cipher::{
+    DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY, DES_FOR_LEGACY_USE_ONLY,
+};
 use crate::fips::{assert_fips_status_indicator, FipsServiceStatus};
 
 const TEST_KEY_128_BIT: [u8; 16] = [
@@ -25,6 +27,9 @@ const TEST_KEY_256_BIT: [u8; 32] = [
     0xd8, 0x32, 0x58, 0xa9, 0x5a, 0x62, 0x6c, 0x99, 0xc4, 0xe6, 0xb5, 0x3f, 0x97, 0x90, 0x62, 0xbe,
     0x71, 0x0f, 0xd5, 0xe1, 0xd4, 0xfe, 0x95, 0xb3, 0x03, 0x46, 0xa5, 0x8e, 0x36, 0xad, 0x18, 0xe3,
 ];
+
+#[cfg(feature = "legacy-3des")]
+const TEST_KEY_DES: [u8; 8] = [0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef];
 
 #[cfg(feature = "legacy-3des")]
 const TEST_KEY_DES_EDE: [u8; 16] = [
@@ -205,6 +210,46 @@ block_api!(
     DecryptingKey::ctr,
     &TEST_KEY_256_BIT,
     FipsServiceStatus::Approved
+);
+
+#[cfg(feature = "legacy-3des")]
+block_api!(
+    block_des_cbc_pkcs7,
+    &DES_FOR_LEGACY_USE_ONLY,
+    PaddedBlockEncryptingKey::cbc_pkcs7,
+    PaddedBlockDecryptingKey::cbc_pkcs7,
+    &TEST_KEY_DES,
+    FipsServiceStatus::NonApproved
+);
+
+#[cfg(feature = "legacy-3des")]
+block_api!(
+    block_des_ecb_pkcs7,
+    &DES_FOR_LEGACY_USE_ONLY,
+    PaddedBlockEncryptingKey::ecb_pkcs7,
+    PaddedBlockDecryptingKey::ecb_pkcs7,
+    &TEST_KEY_DES,
+    FipsServiceStatus::NonApproved
+);
+
+#[cfg(feature = "legacy-3des")]
+streaming_api!(
+    streaming_des_cbc_pkcs7,
+    &DES_FOR_LEGACY_USE_ONLY,
+    StreamingEncryptingKey::cbc_pkcs7,
+    StreamingDecryptingKey::cbc_pkcs7,
+    &TEST_KEY_DES,
+    FipsServiceStatus::NonApproved
+);
+
+#[cfg(feature = "legacy-3des")]
+streaming_api!(
+    streaming_des_ecb_pkcs7,
+    &DES_FOR_LEGACY_USE_ONLY,
+    StreamingEncryptingKey::ecb_pkcs7,
+    StreamingDecryptingKey::ecb_pkcs7,
+    &TEST_KEY_DES,
+    FipsServiceStatus::NonApproved
 );
 
 #[cfg(feature = "legacy-3des")]

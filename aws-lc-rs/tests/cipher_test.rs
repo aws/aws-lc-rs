@@ -8,7 +8,9 @@ use aws_lc_rs::cipher::{
 };
 #[cfg(feature = "legacy-3des")]
 #[allow(deprecated)]
-use aws_lc_rs::cipher::{DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY};
+use aws_lc_rs::cipher::{
+    DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY, DES_FOR_LEGACY_USE_ONLY,
+};
 use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
 use aws_lc_rs::test;
 use aws_lc_rs::test::from_hex;
@@ -1416,6 +1418,68 @@ macro_rules! des_padded_cipher_rt {
 // The 2TDEA key is the first 16 bytes of the 3TDEA key.
 // PKCS#7-padded variants are not from NIST; their ciphertexts were computed
 // by applying PKCS#7 padding to the NIST plaintext before encryption.
+#[cfg(feature = "legacy-3des")]
+des_cipher_rt!(
+    test_rt_des_cbc_32_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_rt!(
+    test_rt_des_ecb_32_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_cbc_31_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_cipher_kat!(
+    test_kat_des_ecb_31_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_rt!(
+    test_rt_des_cbc_pkcs7_31_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "0123456789abcdef",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-3des")]
+des_padded_cipher_rt!(
+    test_rt_des_ecb_pkcs7_31_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb_pkcs7,
+    "0123456789abcdef",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
 #[cfg(feature = "legacy-3des")]
 des_cipher_kat!(
     test_kat_des_ede_cbc_32_bytes,
