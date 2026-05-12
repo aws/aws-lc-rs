@@ -140,7 +140,8 @@ fn cavp_cmac_3des_tests() {
             let input = if mlen == 0 { Vec::new() } else { msg };
             let should_pass = result.starts_with('P');
 
-            let cmac_key = cmac::Key::new(cmac::DES_EDE3_FOR_LEGACY_USE_ONLY, &combined_key).unwrap();
+            let cmac_key =
+                cmac::Key::new(cmac::DES_EDE3_FOR_LEGACY_USE_ONLY, &combined_key).unwrap();
             let signature = cmac::sign(&cmac_key, &input).unwrap();
 
             // Truncate to tlen

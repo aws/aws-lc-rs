@@ -1592,8 +1592,7 @@ fn test_des_ede3_rejects_pairwise_equal_keys() {
 fn test_des_unsupported_modes_rejected() {
     let des_key = from_hex("0123456789abcdef").unwrap();
     let ede_key = from_hex("0123456789abcdef23456789abcdef01").unwrap();
-    let ede3_key =
-        from_hex("0123456789abcdef23456789abcdef01456789abcdef0123").unwrap();
+    let ede3_key = from_hex("0123456789abcdef23456789abcdef01456789abcdef0123").unwrap();
 
     for (alg, key_bytes) in [
         (&DES_FOR_LEGACY_USE_ONLY, des_key.as_slice()),
