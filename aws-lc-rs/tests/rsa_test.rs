@@ -28,6 +28,20 @@ fn rsa_traits() {
     test::compile_time_assert_sync::<RsaPublicKeyComponents<&[u8]>>();
     test::compile_time_assert_send::<RsaPublicKeyComponents<Vec<u8>>>();
     test::compile_time_assert_sync::<RsaPublicKeyComponents<Vec<u8>>>();
+
+    // Hazmat encryption types
+    test::compile_time_assert_send::<PrivateDecryptingKey>();
+    test::compile_time_assert_sync::<PrivateDecryptingKey>();
+    test::compile_time_assert_send::<PublicEncryptingKey>();
+    test::compile_time_assert_sync::<PublicEncryptingKey>();
+    test::compile_time_assert_send::<OaepPrivateDecryptingKey>();
+    test::compile_time_assert_sync::<OaepPrivateDecryptingKey>();
+    test::compile_time_assert_send::<OaepPublicEncryptingKey>();
+    test::compile_time_assert_sync::<OaepPublicEncryptingKey>();
+    test::compile_time_assert_send::<Pkcs1PrivateDecryptingKey>();
+    test::compile_time_assert_sync::<Pkcs1PrivateDecryptingKey>();
+    test::compile_time_assert_send::<Pkcs1PublicEncryptingKey>();
+    test::compile_time_assert_sync::<Pkcs1PublicEncryptingKey>();
 }
 
 #[test]
