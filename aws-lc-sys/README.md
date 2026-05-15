@@ -63,6 +63,62 @@ For each PR submitted,
 [CI verifies](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/tests.yml)
 that the NASM objects newly built from source match the NASM objects currently in the repository.
 
+## Using a system-installed AWS-LC
+
+If you have an existing AWS-LC installation (built and installed via CMake),
+you can link against it instead of building AWS-LC from the bundled source.
+Set `AWS_LC_SYS_SYSTEM_DIR` to the install prefix:
+
+```shell
+AWS_LC_SYS_SYSTEM_DIR=/path/to/aws-lc-install cargo build
+```
+
+The install directory must contain:
+
+* `include/openssl/base.h` — used to detect the `OPENSSL_IS_AWSLC` marker and
+  the AWS-LC version (`AWSLC_VERSION_NUMBER_STRING`).
+* `lib/` (or `lib64/` for 64-bit targets, when present) containing `libcrypto`.
+  When the `ssl` feature is enabled, `libssl` is also required.
+
+Static vs. dynamic linking honors `AWS_LC_SYS_STATIC` (the same variable used
+when building from source). When both static and dynamic libraries are present
+the preferred form is selected; if only one is present it is used regardless
+of the preference, with a warning.
+
+On Windows with the MSVC toolchain, both a real static archive and a DLL
+import library are named `{name}.lib` and live under `lib/`. The two are
+distinguished by the presence of a sibling `bin/{name}.dll` produced by
+CMake for shared builds: a `.lib` with such a sibling is classified as the
+dynamic artifact, and one without is classified as static.
+
+If a prefixed AWS-LC build is detected (via `include/openssl/boringssl_prefix_symbols.h`),
+the prefix is extracted and applied automatically to library names and bindings.
+
+### Bindings resolution
+
+When the system-library path is taken, bindings are resolved in this order:
+
+1. **`AWS_LC_SYS_SYSTEM_BINDINGS`** — explicit path to a pre-generated
+   `bindings.rs`. A misconfigured path is a hard error.
+2. **`<install_dir>/share/rust/aws_lc_bindings.rs`** — populated by AWS-LC's
+   CMake install (AWS-LC v1.68.0+). See [aws-lc#2999](https://github.com/aws/aws-lc/pull/2999).
+3. **Internal `bindgen`** — when the `bindgen` feature is enabled.
+4. **External `bindgen-cli`** — when the `bindgen` binary is on `PATH`.
+
+If none of these are available the build fails with guidance on how to proceed.
+
+### Version compatibility
+
+The version embedded in the installed headers must be greater than or equal to
+the AWS-LC version bundled with this crate. To bypass this check (not
+recommended), set `AWS_LC_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
+
+### Limitations
+
+System-library FIPS linking (`aws-lc-fips-sys`) is not yet supported.
+When `AWS_LC_FIPS_SYS_SYSTEM_DIR` is set, the build will fail with
+a clear error directing you to build from source instead.
+
 ## Build Prerequisites
 
 Since this crate builds AWS-LC as a native library, most build tools needed to build AWS-LC are applicable
