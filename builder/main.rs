@@ -21,7 +21,7 @@ use cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;
 
 // These should generally match those found in aws-lc/include/openssl/opensslconf.h
-const OSSL_CONF_DEFINES: &[&str] = &[
+pub(crate) const OSSL_CONF_DEFINES: &[&str] = &[
     "OPENSSL_NO_ASYNC",
     "OPENSSL_NO_BF",
     "OPENSSL_NO_BLAKE2",
@@ -75,6 +75,8 @@ const OSSL_CONF_DEFINES: &[&str] = &[
 mod cc_builder;
 mod cmake_builder;
 mod nasm_builder;
+mod system_library;
+use system_library::SystemLibrary;
 #[cfg(any(feature = "bindgen", feature = "fips"))]
 mod sys_bindgen;
 
@@ -104,7 +106,7 @@ impl Drop for EnvGuard {
     }
 }
 
-fn is_fips_build() -> bool {
+pub(crate) fn is_fips_build() -> bool {
     is_fips_crate() || cfg!(feature = "fips")
 }
 
@@ -238,7 +240,7 @@ fn env_var_to_bool(name: &str) -> Option<bool> {
     None
 }
 
-fn env_crate_var_to_bool(name: &str) -> Option<bool> {
+pub(crate) fn env_crate_var_to_bool(name: &str) -> Option<bool> {
     if let Some(value) = optional_env_crate_target(name) {
         return parse_to_bool(&value);
     }
@@ -391,6 +393,7 @@ fn generate_bindings(manifest_dir: &Path, prefix: &Option<String>, bindings_path
         build_prefix: prefix.clone(),
         include_ssl: cfg!(feature = "ssl"),
         disable_prelude: true,
+        external_include_dir: None,
     };
 
     let bindings = sys_bindgen::generate_bindings(manifest_dir, &options);
@@ -414,7 +417,7 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
     .expect("write bindings");
 }
 
-fn emit_rustc_cfg(cfg: &str) {
+pub(crate) fn emit_rustc_cfg(cfg: &str) {
     let cfg = cfg.replace('-', "_");
     emit_warning(format!("Emitting configuration: cargo:rustc-cfg={cfg}"));
     println!("cargo:rustc-cfg={cfg}");
@@ -476,7 +479,7 @@ fn target_underscored() -> String {
     effective_target().replace('-', "_")
 }
 
-fn out_dir() -> PathBuf {
+pub(crate) fn out_dir() -> PathBuf {
     let out = PathBuf::from(cargo_env("OUT_DIR"));
     #[cfg(windows)]
     let out = to_short_path(&out);
@@ -945,18 +948,20 @@ fn is_crt_static() -> bool {
 
 #[cfg(any(feature = "bindgen", feature = "fips"))]
 fn handle_bindgen(manifest_dir: &Path, prefix: &Option<String>) -> bool {
-    if internal_bindgen_supported() && !is_external_bindgen_requested().unwrap_or(false) {
-        emit_warning(format!(
-            "Generating bindings - internal bindgen. Platform: {}",
-            effective_target()
-        ));
-        let gen_bindings_path = out_dir().join("bindings.rs");
-        generate_bindings(manifest_dir, prefix, &gen_bindings_path);
-        emit_rustc_cfg("use_bindgen_pregenerated");
-        true
-    } else {
-        false
+    if is_external_bindgen_requested().unwrap_or(false) {
+        return false;
     }
+    if !internal_bindgen_supported() {
+        return false;
+    }
+    emit_warning(format!(
+        "Generating bindings - internal bindgen. Platform: {}",
+        effective_target()
+    ));
+    let gen_bindings_path = out_dir().join("bindings.rs");
+    generate_bindings(manifest_dir, prefix, &gen_bindings_path);
+    emit_rustc_cfg("use_bindgen_pregenerated");
+    true
 }
 
 #[cfg(not(any(feature = "bindgen", feature = "fips")))]
@@ -972,12 +977,29 @@ fn canonicalized_manifest_dir() -> PathBuf {
     manifest_dir
 }
 
+#[cfg(any(feature = "bindgen", feature = "fips"))]
+fn handle_pregenerating_bindings(manifest_dir: &Path, prefix: &Option<String>) {
+    assert!(
+        !is_external_bindgen_requested().unwrap_or(false),
+        "Pregenerated bindings not supported using external bindgen.",
+    );
+    let src_bindings_path = Path::new(manifest_dir)
+        .join("src")
+        .join(format!("{}.rs", target_platform_prefix("crypto")));
+    generate_src_bindings(manifest_dir, prefix, &src_bindings_path);
+}
+
 #[cfg(not(test))]
 fn main() {
     initialize();
     prepare_cargo_cfg();
 
     let manifest_dir = canonicalized_manifest_dir();
+
+    if try_system_library_build(&manifest_dir) {
+        return;
+    }
+
     let prefix = (!is_no_prefix()).then(prefix_string);
 
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
@@ -992,18 +1014,7 @@ fn main() {
     if is_pregenerating_bindings() {
         #[cfg(any(feature = "bindgen", feature = "fips"))]
         {
-            let src_bindings_path = Path::new(&manifest_dir)
-                .join("src")
-                .join(format!("{}.rs", target_platform_prefix("crypto")));
-            if is_external_bindgen_requested().unwrap_or(false) {
-                assert!(
-                    !is_pregenerating_bindings(),
-                    "Pregenerated bindings not supported using external bindgen.",
-                );
-                invoke_external_bindgen(&manifest_dir, &prefix, &src_bindings_path).unwrap();
-            } else {
-                generate_src_bindings(&manifest_dir, &prefix, &src_bindings_path);
-            }
+            handle_pregenerating_bindings(&manifest_dir, &prefix);
             bindings_available = true;
         }
     } else if is_bindgen_required() {
@@ -1048,7 +1059,15 @@ fn main() {
                 "Bindgen currently cannot generate prefixed bindings w/o the \\x01 prefix.",
             );
             let gen_bindings_path = out_dir().join("bindings.rs");
-            let result = invoke_external_bindgen(&manifest_dir, &prefix, &gen_bindings_path);
+            let result = invoke_external_bindgen(
+                &manifest_dir,
+                &BindingOptions {
+                    disable_prelude: true,
+                    ..Default::default()
+                },
+                &prefix,
+                &gen_bindings_path,
+            );
             match result {
                 Ok(()) => {
                     emit_rustc_cfg("use_bindgen_pregenerated");
@@ -1089,6 +1108,19 @@ fn main() {
 
     println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
+}
+
+/// If a system-installed AWS-LC is configured (via `<crate>_SYSTEM_DIR`),
+/// run the system-library build path and return `true`. Returns `false` when
+/// no system install is configured, signaling the caller to fall back to the
+/// from-source build path.
+fn try_system_library_build(manifest_dir: &Path) -> bool {
+    let Some(config) = system_library::get_config() else {
+        return false;
+    };
+    SystemLibrary::link(&config, manifest_dir)
+        .unwrap_or_else(|e| panic!("System library linking failed: {e}"));
+    true
 }
 
 fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
@@ -1135,6 +1167,9 @@ pub(crate) struct BindingOptions {
     pub build_prefix: Option<String>,
     pub include_ssl: bool,
     pub disable_prelude: bool,
+    /// When set, bindgen uses these headers instead of the bundled AWS-LC source.
+    /// Currently used by the system-library linking path to point at an installed `include/`.
+    pub external_include_dir: Option<PathBuf>,
 }
 
 impl Debug for BindingOptions {
@@ -1143,6 +1178,7 @@ impl Debug for BindingOptions {
             .field("build_prefix", &self.build_prefix)
             .field("include_ssl", &self.include_ssl)
             .field("disable_prelude", &self.disable_prelude)
+            .field("external_include_dir", &self.external_include_dir)
             .finish()
     }
 }
@@ -1227,6 +1263,7 @@ const PRELUDE: &str = r"
 
 fn invoke_external_bindgen(
     manifest_dir: &Path,
+    options: &BindingOptions,
     prefix: &Option<String>,
     gen_bindings_path: &Path,
 ) -> Result<(), String> {
@@ -1239,14 +1276,7 @@ fn invoke_external_bindgen(
 
     let _guard_target = EnvGuard::new("TARGET", effective_target());
 
-    let options = BindingOptions {
-        // We collect the symbols w/o the prefix added
-        build_prefix: None,
-        include_ssl: false,
-        disable_prelude: true,
-    };
-
-    let clang_args = prepare_clang_args(manifest_dir, &options);
+    let clang_args = prepare_clang_args(manifest_dir, options);
     let header = get_rust_include_path(manifest_dir)
         .join("rust_wrapper.h")
         .display()
@@ -1303,6 +1333,11 @@ fn invoke_external_bindgen(
     for x in &clang_args {
         bindgen_params.push(x.as_str());
     }
+
+    // Add SSL define as a clang arg (after the -- separator)
+    if options.include_ssl {
+        bindgen_params.push("-DAWS_LC_RUST_INCLUDE_SSL");
+    }
     let cmd_params: Vec<OsString> = bindgen_params.iter().map(OsString::from).collect();
     let cmd_params: Vec<&OsStr> = cmd_params.iter().map(OsString::as_os_str).collect();
 
@@ -1329,27 +1364,15 @@ fn add_header_include_path(args: &mut Vec<String>, path: String) {
 fn prepare_clang_args(manifest_dir: &Path, options: &BindingOptions) -> Vec<String> {
     let mut clang_args: Vec<String> = Vec::new();
 
+    // The `rust_wrapper.h` shim is always sourced from this crate's bundled
+    // include tree, regardless of whether the AWS-LC headers come from
+    // bundled source or from a system install.
     add_header_include_path(
         &mut clang_args,
         get_rust_include_path(manifest_dir).display().to_string(),
     );
 
-    if options.build_prefix.is_some() {
-        // NOTE: It's possible that the prefix embedded in the header files doesn't match the prefix
-        // specified. This only happens when the version number as changed in Cargo.toml, but the
-        // new headers have not yet been generated.
-        add_header_include_path(
-            &mut clang_args,
-            get_generated_include_path(manifest_dir)
-                .display()
-                .to_string(),
-        );
-    }
-
-    add_header_include_path(
-        &mut clang_args,
-        get_aws_lc_include_path(manifest_dir).display().to_string(),
-    );
+    add_aws_lc_header_paths(&mut clang_args, manifest_dir, options);
 
     if let Some(include_paths) = get_env_includes_path() {
         for path in include_paths {
@@ -1358,6 +1381,38 @@ fn prepare_clang_args(manifest_dir: &Path, options: &BindingOptions) -> Vec<Stri
     }
 
     clang_args
+}
+
+/// Appends the AWS-LC header search paths to `args`. The system-library path uses
+/// the install's `include/` exclusively; the from-source path layers the
+/// (optional) generated prefix-aware headers on top of the bundled ones.
+fn add_aws_lc_header_paths(args: &mut Vec<String>, manifest_dir: &Path, options: &BindingOptions) {
+    // System-library path: the install's `include/` replaces the bundled tree
+    // entirely. The prefix (if any) is already baked into those headers.
+    if let Some(external_include) = &options.external_include_dir {
+        add_header_include_path(args, external_include.display().to_string());
+        return;
+    }
+
+    // From-source path: prepend prefix-specific generated headers (when a
+    // build_prefix is set) so they shadow the bundled ones, then always
+    // append the bundled AWS-LC headers.
+    //
+    // NOTE: It's possible the prefix embedded in the generated headers
+    // doesn't match the one specified when the version number has changed in
+    // Cargo.toml but new headers haven't been generated.
+    if options.build_prefix.is_some() {
+        add_header_include_path(
+            args,
+            get_generated_include_path(manifest_dir)
+                .display()
+                .to_string(),
+        );
+    }
+    add_header_include_path(
+        args,
+        get_aws_lc_include_path(manifest_dir).display().to_string(),
+    );
 }
 
 const COPYRIGHT: &str = r"
