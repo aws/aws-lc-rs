@@ -3,6 +3,7 @@
 // Fri May  8 22:13:15 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
+    "crypto/hrss/asm/poly_rq_mul.S",
     "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/intt.S",
     "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/mulcache_compute.S",
     "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/ntt.S",
