@@ -684,14 +684,14 @@ impl crate::Builder for CmakeBuilder {
 
         println!(
             "cargo:rustc-link-lib={}={}",
-            self.output_lib_type.rust_lib_type(),
+            self.output_lib_type.rust_link_lib_kind(),
             Crypto.libname(&self.build_prefix)
         );
 
         if cfg!(feature = "ssl") {
             println!(
                 "cargo:rustc-link-lib={}={}",
-                self.output_lib_type.rust_lib_type(),
+                self.output_lib_type.rust_link_lib_kind(),
                 Ssl.libname(&self.build_prefix)
             );
         }
