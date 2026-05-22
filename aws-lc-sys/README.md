@@ -63,6 +63,82 @@ For each PR submitted,
 [CI verifies](https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/tests.yml)
 that the NASM objects newly built from source match the NASM objects currently in the repository.
 
+## Using a system-installed AWS-LC
+
+If you have an existing AWS-LC installation (built and installed via CMake),
+you can link against it instead of building AWS-LC from the bundled source.
+Set `AWS_LC_SYS_SYSTEM_DIR` to the install prefix:
+
+```shell
+AWS_LC_SYS_SYSTEM_DIR=/path/to/aws-lc-install cargo build
+```
+
+The install directory must contain:
+
+* `include/openssl/base.h` — used to detect the `OPENSSL_IS_AWSLC` marker and
+  the AWS-LC version (`AWSLC_VERSION_NUMBER_STRING`).
+* `lib/` (or `lib64/` for 64-bit targets, when present) containing `libcrypto`.
+  When the `ssl` feature is enabled, `libssl` is also required.
+
+Static vs. dynamic linking honors `AWS_LC_SYS_STATIC` (the same variable used
+when building from source). When both static and dynamic libraries are present
+the preferred form is selected; if only one is present and `AWS_LC_SYS_STATIC`
+is unset, that form is used with a warning. If `AWS_LC_SYS_STATIC` is set
+explicitly and the requested form is not present, the build fails rather than
+silently using the wrong linkage.
+
+On Windows with the MSVC toolchain, both a real static archive and a DLL
+import library are named `{name}.lib` and live under `lib/`. The two are
+distinguished by the presence of a sibling `bin/{name}.dll` produced by
+CMake for shared builds: a `.lib` with such a sibling is classified as the
+dynamic artifact, and one without is classified as static.
+
+When linking dynamically, the runtime loader needs to find the shared library
+at execution time. The build script does not embed an rpath, so configure
+your environment accordingly:
+
+* Linux: `LD_LIBRARY_PATH=<install_dir>/lib`
+* macOS: `DYLD_LIBRARY_PATH=<install_dir>/lib`
+* Windows: add `<install_dir>/bin` to `PATH`
+
+If the install was built with a `BORINGSSL_PREFIX`, the symbol prefix is
+detected from `include/openssl/boringssl_prefix_symbols.h` and reported in
+the build log. Note that AWS-LC's CMake does not rename the library file
+itself when prefixing — only the symbols inside — so no special handling
+is required at link time. The pre-generated bindings shipped by AWS-LC's
+CMake (`share/rust/aws_lc_bindings.rs`) are already prefix-aware.
+
+### Bindings resolution
+
+This path requires pre-generated bindings; it does not invoke `bindgen` itself.
+Bindings are resolved in this order:
+
+1. **`AWS_LC_SYS_SYSTEM_BINDINGS`** — explicit path to a pre-generated
+   `bindings.rs`. A misconfigured path is a hard error.
+2. **`<install_dir>/share/rust/aws_lc_bindings.rs`** — populated by AWS-LC's
+   CMake install when built with `-DGENERATE_RUST_BINDINGS=ON`
+   (AWS-LC v1.68.0+, see [aws-lc#2999](https://github.com/aws/aws-lc/pull/2999)).
+
+If neither is available the build fails with guidance on how to proceed.
+
+### Version compatibility
+
+The version embedded in the installed headers must be greater than or equal to
+the AWS-LC version bundled with this crate. To bypass this check (not
+recommended), set `AWS_LC_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
+
+### Limitations
+
+System-library FIPS linking (`aws-lc-fips-sys`) is not yet supported.
+When `AWS_LC_FIPS_SYS_SYSTEM_DIR` is set, the build will fail with
+a clear error directing you to build from source instead.
+
+When the `ssl` feature is enabled, the pre-generated bindings file must
+cover both `libcrypto` and `libssl`. AWS-LC's `-DGENERATE_RUST_BINDINGS=ON`
+produces such a combined file by default; if you supply your own bindings
+via `AWS_LC_SYS_SYSTEM_BINDINGS`, ensure they include the `ssl` symbols
+or you may get link errors when the `ssl` feature is on.
+
 ## Build Prerequisites
 
 Since this crate builds AWS-LC as a native library, most build tools needed to build AWS-LC are applicable

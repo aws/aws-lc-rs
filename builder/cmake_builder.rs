@@ -694,6 +694,8 @@ impl crate::Builder for CmakeBuilder {
             );
         }
 
+        crate::emit_source_build_metadata(&self.manifest_dir);
+
         Ok(())
     }
 
