@@ -552,6 +552,6 @@ fn resolve_bindings(
     ))
 }
 
-// #[cfg(test)]
-// #[path = "system_library_tests.rs"]
-// mod tests;
+#[cfg(test)]
+#[path = "system_library_tests.rs"]
+mod tests;
