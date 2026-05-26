@@ -69,19 +69,21 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: "recursive"
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "stable"
+      - name: Install stable Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ (matrix.target[2] == '0' && 'stable') || 'nightly' }}
-          target: ${{ (matrix.target[2] == '0' && matrix.target[0]) || '' }}
-          components: ${{ (matrix.target[2] == '0' && '') || 'rust-src' }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain for ${{ matrix.target[0] }}
+        run: |
+          if [[ '${{ matrix.target[2] }}' == '0' ]]; then
+            rustup toolchain install stable --profile minimal --target ${{ matrix.target[0] }} --no-self-update
+            rustup default stable
+          else
+            rustup toolchain install nightly --profile minimal --component rust-src --no-self-update
+            rustup default nightly
+          fi
       - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
         run: |
           echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
@@ -149,9 +151,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: "recursive"
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          target: ${{ matrix.target }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --no-self-update
+          rustup default stable
       - name: Install Android NDK
         uses: nttld/setup-ndk@v1
         id: setup-ndk
@@ -215,18 +218,16 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: "recursive"
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "stable"
+      - name: Install stable Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: "stable"
-          target: ${{ matrix.target[0] }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain for ${{ matrix.target[0] }}
+        run: |
+          rustup toolchain install stable --profile minimal --target ${{ matrix.target[0] }} --no-self-update
+          rustup default stable
       - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
         run: |
           echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
@@ -249,18 +250,16 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: "recursive"
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "stable"
+      - name: Install stable Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Install cross
         run: cargo install cross --locked --version 0.2.5
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: "stable"
-          target: ${{ matrix.target }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain for ${{ matrix.target }}
+        run: |
+          rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --no-self-update
+          rustup default stable
       - if: ${{ !startsWith(matrix.target[0], 'x86_64') }}
         run: |
           echo 'AWS_LC_RS_DISABLE_SLOW_TESTS=1' >> "$GITHUB_ENV"
@@ -282,11 +281,10 @@ jobs:
           go-version: '>=1.18'
       - run: |
           brew install llvm
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
-          target: aarch64-apple-ios-sim
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --target aarch64-apple-ios-sim --no-self-update
+          rustup default stable
       - name: Install bash
         run: brew install bash
       - name: iOS Simulator Runner
@@ -304,10 +302,10 @@ jobs:
           submodules: "recursive"
       - run: |
           brew install llvm
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly
-          components: rust-src
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install nightly --profile minimal --component rust-src --no-self-update
+          rustup default nightly
       - name: Install bash, coreutils
         run: brew install bash coreutils
       - name: tvOS Simulator Runner
@@ -323,11 +321,10 @@ jobs:
           submodules: "recursive"
       - run: |
           brew install llvm
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
-          target: x86_64-apple-ios
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --target x86_64-apple-ios --no-self-update
+          rustup default stable
       - name: Debug build for `x86_64-apple-ios`
         run: cargo build -p aws-lc-rs --target x86_64-apple-ios --features bindgen
       - name: Release build for `x86_64-apple-ios`
@@ -363,10 +360,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: "recursive"
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --no-self-update
+          rustup default stable
       - name: Install cargo-xwin
         run: cargo install --locked cargo-xwin
       - name: Set RUSTFLAGS
@@ -433,11 +430,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: "recursive"
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --no-self-update
+          rustup default stable
       - name: Set ACTION_CARGO
         run: |
           if ('${{ matrix.target }}' -like '*aarch64*') {
@@ -529,11 +525,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: "recursive"
-      - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-        with:
-          toolchain: "stable"
-          target: x86_64-pc-windows-gnu
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --target x86_64-pc-windows-gnu --no-self-update
+          rustup default stable
       - name: Install mingw
         run: sudo apt-get update && sudo apt-get install --assume-yes mingw-w64
       - name: Run cargo test

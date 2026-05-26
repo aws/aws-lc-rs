@@ -26,12 +26,9 @@ jobs:
           persist-credentials: false
           submodules: 'recursive'
       - name: Install Nightly Rust Toolchain
-        uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
