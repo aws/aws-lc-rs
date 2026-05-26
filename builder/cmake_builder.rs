@@ -16,6 +16,8 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+use crate::is_lto_flag;
+
 /// Strip LTO-related flags from a CFLAGS string. LTO flags interfere with the
 /// FIPS delocator pipeline, which compiles C to assembly (`-S`) and processes it
 /// with a Go tool. The combination of `-S` and `-flto` causes GCC to produce
@@ -26,11 +28,7 @@ use std::str::FromStr;
 fn strip_lto_flags(cflags: &str) -> String {
     cflags
         .split_whitespace()
-        .filter(|flag| {
-            !flag.starts_with("-flto")
-                && *flag != "-ffat-lto-objects"
-                && *flag != "-fno-fat-lto-objects"
-        })
+        .filter(|flag| !is_lto_flag(flag))
         .collect::<Vec<_>>()
         .join(" ")
 }

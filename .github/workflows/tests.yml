@@ -809,6 +809,38 @@ jobs:
           export ${{ matrix.env_name }}="${{ matrix.env_value }}"
           cargo test -p aws-lc-rs --all-targets --features fips
 
+  windows-hostile-environment:
+    if: github.repository_owner == 'aws'
+    name: Windows hostile env - CC=${{ matrix.cc }} CFLAGS=${{ matrix.cflags }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cc: clang
+            cxx: clang++
+            cflags: '-flto=thin'
+          - cc: clang
+            cxx: clang++
+            cflags: '-flto=thin -march=native'
+    runs-on: windows-latest
+    env:
+      AWS_LC_SYS_PREBUILT_NASM: 1
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+      - name: Install Rust
+        shell: pwsh
+        run: rustup toolchain install stable --profile minimal
+      - name: Run cargo build
+        shell: pwsh
+        run: |
+          $env:CC='${{ matrix.cc }}'
+          $env:CXX='${{ matrix.cxx }}'
+          $env:AR='llvm-lib'
+          $env:CFLAGS='${{ matrix.cflags }}'
+          cargo build -p aws-lc-rs
+
   hardened-environment:
     if: github.repository_owner == 'aws'
     name: Hardened environment

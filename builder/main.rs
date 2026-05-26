@@ -359,6 +359,14 @@ pub(crate) struct TestCommandResult {
     status: bool,
 }
 
+/// Returns true if the given flag is an LTO-related compiler flag.
+/// Used to filter out LTO flags from checks/builds where they are unnecessary
+/// or cause toolchain-specific failures (e.g., Clang on Windows requires
+/// `-fuse-ld=lld` for LTO linking).
+pub(crate) fn is_lto_flag(flag: &str) -> bool {
+    flag.starts_with("-flto") || flag == "-ffat-lto-objects" || flag == "-fno-fat-lto-objects"
+}
+
 const MAX_CMD_OUTPUT_SIZE: usize = 1 << 15;
 fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     if let Ok(mut result) = Command::new(executable).args(args).output() {
@@ -1466,5 +1474,26 @@ mod tests {
     #[test]
     fn test_version_constant_exists() {
         assert!(!VERSION.is_empty(), "VERSION should not be empty");
+    }
+
+    // -------------------------------------------------------------------------
+    // is_lto_flag tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_is_lto_flag() {
+        assert!(is_lto_flag("-flto"));
+        assert!(is_lto_flag("-flto=thin"));
+        assert!(is_lto_flag("-flto=full"));
+        assert!(is_lto_flag("-flto=auto"));
+        assert!(is_lto_flag("-flto=4"));
+        assert!(is_lto_flag("-ffat-lto-objects"));
+        assert!(is_lto_flag("-fno-fat-lto-objects"));
+
+        assert!(!is_lto_flag("-O3"));
+        assert!(!is_lto_flag("-march=native"));
+        assert!(!is_lto_flag("-ffunction-sections"));
+        assert!(!is_lto_flag("-fdata-sections"));
+        assert!(!is_lto_flag("-fuse-ld=lld"));
     }
 }

@@ -405,9 +405,15 @@ impl CcBuilder {
             build_options.push(BuildOption::define("NOMINMAX", ""));
         }
 
+        // Suppress MSVC CRT deprecation warnings (fopen, getenv, strerror, etc.).
+        // This applies to any compiler targeting the MSVC environment since the
+        // warnings originate from the Windows SDK/CRT headers, not the compiler.
+        if target_env() == "msvc" {
+            build_options.push(BuildOption::define("_CRT_SECURE_NO_WARNINGS", "1"));
+        }
+
         if is_like_msvc {
             build_options.push(BuildOption::define("_HAS_EXCEPTIONS", "0"));
-            build_options.push(BuildOption::define("_CRT_SECURE_NO_WARNINGS", "0"));
             build_options.push(BuildOption::define(
                 "_STL_EXTRA_DISABLED_WARNINGS",
                 "4774 4987",
@@ -715,13 +721,17 @@ impl CcBuilder {
             // The logic below assumes a Clang or GCC compiler is in use
             return;
         }
-        let mut memcmp_compile_args = Vec::from(memcmp_compiler.args());
+        // Only pass -O3 to trigger the optimization bug. We intentionally ignore
+        // CFLAGS here — this check is about compiler behavior at high optimization
+        // levels, not about the user's build configuration. Arbitrary CFLAGS can
+        // cause unrelated compile/link failures (e.g., -flto=thin on Windows
+        // requires -fuse-ld=lld). This matches the CMake build which only passes
+        // CMAKE_C_FLAGS_RELEASE (-O3) to check_run().
+        let mut memcmp_compile_args: Vec<std::ffi::OsString> = vec!["-O3".into()];
 
-        // This check invokes the compiled executable and hence needs to link
-        // it. CMake handles this via LDFLAGS but `cc` doesn't. In setups with
-        // custom linker setups this could lead to a mismatch between the
-        // expected and the actually used linker. Explicitly respecting LDFLAGS
-        // here brings us back to parity with CMake.
+        // Respect LDFLAGS for custom linker configurations. This check produces
+        // an executable, so the linker must be reachable. LDFLAGS may contain
+        // necessary flags like library search paths or linker selection.
         if let Ok(ldflags) = std::env::var("LDFLAGS") {
             for flag in ldflags.split_whitespace() {
                 memcmp_compile_args.push(flag.into());
