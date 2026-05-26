@@ -31,13 +31,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: rustfmt
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component rustfmt --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
 
       - name: Run cargo fmt
         run: cargo fmt -- --check --verbose
@@ -58,13 +55,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: clippy
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component clippy --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Run cargo clippy
         working-directory: ${{ matrix.crate_dir }}
         run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
@@ -84,12 +78,10 @@ jobs:
         with:
           fetch-depth: 0
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Install cargo-public-api
         run: cargo install --locked cargo-public-api
       - name: Perform API Diff (Target Branch)
@@ -126,12 +118,10 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Install cargo-udeps
         run: cargo install cargo-udeps
 
@@ -153,7 +143,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --no-self-update
       - name: Run cargo tree
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
@@ -185,12 +176,10 @@ jobs:
         with:
           submodules: 'recursive'
           lfs: true
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Setup to use minimal versions
         working-directory: ./${{ matrix.crate }}
         run: cargo update -Z minimal-versions
@@ -221,12 +210,10 @@ jobs:
     if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }} --profile minimal --no-self-update
+          rustup default ${{ env.RUST_SCRIPT_NIGHTLY_TOOLCHAIN }}
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -254,10 +241,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: nightly
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install nightly --profile minimal --no-self-update
+          rustup default nightly
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
@@ -271,10 +258,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: nightly
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install nightly --profile minimal --no-self-update
+          rustup default nightly
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
@@ -301,10 +288,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: nightly
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install nightly --profile minimal --no-self-update
+          rustup default nightly
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
@@ -338,7 +325,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --no-self-update
       - name: Install Valgrind
         run: sudo apt-get update && sudo apt-get install -y valgrind
       - name: Run debug tests under Valgrind
@@ -368,7 +356,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --no-self-update
       - name: Install readelf
         run: sudo apt-get update && sudo apt-get install -y binutils
       - name: Build project

@@ -46,12 +46,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
+          rustup default ${{ matrix.rust }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -80,12 +78,10 @@ jobs:
           brew install llvm
           echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
           echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
+          rustup default ${{ matrix.rust }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -113,12 +109,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
+          rustup default ${{ matrix.rust }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -133,13 +127,10 @@ jobs:
           submodules: 'recursive'
           lfs: true
 
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: llvm-tools-preview
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component llvm-tools-preview --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
 
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
@@ -173,12 +164,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Run address sanitizers
         env:
           ASAN_OPTIONS: detect_leaks=1
@@ -203,13 +192,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: rust-src
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component rust-src --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Run memory sanitizers
         env:
           AWS_LC_SYS_SANITIZER: msan
@@ -237,13 +223,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: rust-src
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component rust-src --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Run thread sanitizers
         env:
           AWS_LC_SYS_SANITIZER: tsan
@@ -268,7 +251,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Run cargo test
         # Doc-tests fail to link with dynamic build
         # See: https://github.com/rust-lang/cargo/issues/8531
@@ -288,7 +274,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Remove NASM
         shell: bash
         run: |
@@ -323,7 +312,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Remove NASM
         shell: bash
         run: |
@@ -362,7 +354,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Install NASM
         uses: ilammy/setup-nasm@v1
       - name: Remove NASM artifacts
@@ -390,7 +385,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Build with clang-cl hidden from PATH
         shell: pwsh
         run: |
@@ -431,7 +429,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Install bindgen-cli
         run: cargo install --locked bindgen-cli
       - name: Remove bindings
@@ -455,9 +456,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          target: ${{ matrix.target }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --no-self-update
+          rustup default stable
       - uses: ilammy/setup-nasm@v1
       - name: Install bindgen-cli
         run: cargo install --locked bindgen-cli
@@ -495,7 +497,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
@@ -516,7 +521,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Run cargo test
         run: cargo test -p aws-lc-rs
       - name: Release build
@@ -551,7 +559,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
@@ -594,7 +605,10 @@ jobs:
         uses: ilammy/setup-nasm@v1
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: seanmiddleditch/gha-setup-ninja@v6
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
@@ -625,18 +639,15 @@ jobs:
           lfs: true
       - name: Install cargo-careful
         run: cargo install cargo-careful
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: 'rust-src'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component rust-src --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
           brew install llvm
           echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
           echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
@@ -662,10 +673,10 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - run: |
           brew update
           brew uninstall --force llvm
@@ -699,7 +710,10 @@ jobs:
           path: "path has spaces/aws-lc-rs"
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - uses: seanmiddleditch/gha-setup-ninja@v6
       - uses: actions/setup-go@v6
         with:
@@ -735,7 +749,10 @@ jobs:
           rm -rf ./aws-lc-sys/aws-lc/generated-src/*
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - uses: seanmiddleditch/gha-setup-ninja@v6
       - uses: actions/setup-go@v6
         with:
@@ -776,7 +793,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
@@ -810,7 +830,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Run tests
         run: cargo test -p aws-lc-rs --all-targets
 
@@ -822,7 +845,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Replace include files with symlinks
         run: |
           # Simulate build environments (Bazel, Nix) where source files in
@@ -858,7 +884,10 @@ jobs:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Remove other universal bindings
         shell: bash
         run: |
@@ -889,13 +918,10 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: rustc-codegen-cranelift-preview
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component rustc-codegen-cranelift-preview --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Remove other universal bindings
         shell: bash
         run: |
