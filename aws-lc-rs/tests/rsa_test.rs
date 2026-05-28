@@ -17,6 +17,7 @@ use aws_lc_rs::signature::{
 };
 use aws_lc_rs::test::to_hex_upper;
 use aws_lc_rs::{digest, rand, signature, test, test_file};
+use std::collections::HashSet;
 
 #[test]
 fn rsa_traits() {
@@ -74,6 +75,11 @@ fn rsa_from_pkcs8_test() {
 #[test]
 fn test_signature_rsa_pkcs1_sign() {
     let rng = rand::SystemRandom::new();
+    // Under `disable_slow_tests`, one representative vector per digest is
+    // enough to exercise the signing path for MSan.  The `Fail-Invalid-Key`
+    // early-return above still runs on every vector, so input-validation
+    // coverage is preserved.
+    let mut signed_digests = HashSet::new();
     test::run(
         test_file!("data/rsa_pkcs1_sign_tests.txt"),
         |section, test_case| {
@@ -107,6 +113,9 @@ fn test_signature_rsa_pkcs1_sign() {
             let key_pair = RsaKeyPair::from_der(&private_key);
             if result == "Fail-Invalid-Key" {
                 assert!(key_pair.is_err(), "{}", &debug_msg);
+                return Ok(());
+            }
+            if cfg!(disable_slow_tests) && !signed_digests.insert(digest_name) {
                 return Ok(());
             }
             let key_pair = key_pair.expect(&debug_msg);
@@ -160,6 +169,9 @@ fn test_signature_rsa_pkcs1_sign() {
 
 #[test]
 fn test_signature_rsa_pss_sign() {
+    // Under `disable_slow_tests`, one representative vector per digest is
+    // enough to exercise the signing path for MSan.
+    let mut signed_digests = HashSet::new();
     test::run(
         test_file!("data/rsa_pss_sign_tests.txt"),
         |section, test_case| {
@@ -191,10 +203,13 @@ fn test_signature_rsa_pss_sign() {
             if key_pair.is_err() && result == "Fail-Invalid-Key" {
                 return Ok(());
             }
+            let msg = test_case.consume_bytes("Msg");
+            if cfg!(disable_slow_tests) && !signed_digests.insert(digest_name) {
+                return Ok(());
+            }
             let key_pair = key_pair.unwrap();
             let public_key = key_pair.public_key();
             let rng = SystemRandom::new();
-            let msg = test_case.consume_bytes("Msg");
 
             {
                 let upk = UnparsedPublicKey::new(verification_alg, public_key.as_ref());

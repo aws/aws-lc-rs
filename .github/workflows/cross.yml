@@ -239,7 +239,7 @@ jobs:
     name: cross v0.2.5 tests ${{ matrix.target }}
     runs-on: ubuntu-latest
     env:
-      CROSS_CONFIG: "./Cross.toml.x86_64-unknown-linux-gnu"
+      CROSS_CONFIG: "./Cross.toml.passthrough-only"
     strategy:
       fail-fast: false
       matrix:

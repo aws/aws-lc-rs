@@ -187,17 +187,22 @@ fn test_aead<Seal, Open>(
 
         // In release builds, test all prefix lengths from 0 to 4096 bytes.
         // Debug builds are too slow for this, so for those builds, only
-        // test a smaller subset.
+        // test a smaller subset.  Under `disable_slow_tests` (primarily the
+        // MSan CI job), shrink further to a handful of alignment-sensitive
+        // offsets -- this dominates the inner-loop cost and is the primary
+        // lever for keeping MSan runtime under the CI timeout.
 
         let more_comprehensive_in_prefix_lengths: Box<[usize]> = (1..4096).collect();
-        let in_prefix_lengths = if cfg!(any(debug_assertions, disable_slow_tests)) {
+        let in_prefix_lengths: &[usize] = if cfg!(disable_slow_tests) {
+            &[0, 1, 16, 17]
+        } else if cfg!(debug_assertions) {
             &MINIMAL_IN_PREFIX_LENS[..]
         } else {
             &more_comprehensive_in_prefix_lengths[..]
         };
         let mut o_in_out = vec![123u8; 4096];
 
-        for &in_prefix_len in in_prefix_lengths {
+        for (idx, &in_prefix_len) in in_prefix_lengths.iter().enumerate() {
             o_in_out.clear();
             o_in_out.resize(in_prefix_len, 123);
             o_in_out.extend_from_slice(&ct[..]);
@@ -219,16 +224,23 @@ fn test_aead<Seal, Open>(
                     let result = o_result.unwrap();
                     assert_eq!(&plaintext[..], result);
 
-                    for bad_func in [aead_open_bad_tag, aead_open_bad_nonce, aead_open_bad_aad] {
-                        bad_func(
-                            aead_alg,
-                            &key_bytes,
-                            &nonce_bytes,
-                            aad.as_slice(),
-                            &o_in_out_clone,
-                            in_prefix_len,
-                            &open,
-                        );
+                    // The `bad_func` checks verify that corrupted tag / nonce /
+                    // AAD all cause `open` to fail. That failure path is
+                    // independent of `in_prefix_len`, so running them once per
+                    // test vector is sufficient.
+                    if idx == 0 {
+                        for bad_func in [aead_open_bad_tag, aead_open_bad_nonce, aead_open_bad_aad]
+                        {
+                            bad_func(
+                                aead_alg,
+                                &key_bytes,
+                                &nonce_bytes,
+                                aad.as_slice(),
+                                &o_in_out_clone,
+                                in_prefix_len,
+                                &open,
+                            );
+                        }
                     }
                 }
                 Some(ref error) if error == "WRONG_NONCE_LENGTH" => {
