@@ -34,6 +34,15 @@ pub enum EncryptionAlgorithmId {
 /// An RSA private key used for decrypting ciphertext encrypted by a [`PublicEncryptingKey`].
 pub struct PrivateDecryptingKey(LcPtr<EVP_PKEY>);
 
+// https://github.com/aws/aws-lc/blob/ebaa07a207fee02bd68fe8d65f6b624afbf29394/include/openssl/evp.h#L295
+// An |EVP_PKEY| object represents a public or private RSA key. A given object may be
+// used concurrently on multiple threads by non-mutating functions, provided no
+// other thread is concurrently calling a mutating function. Unless otherwise
+// documented, functions which take a |const| pointer are non-mutating and
+// functions which take a non-|const| pointer are mutating.
+unsafe impl Send for PrivateDecryptingKey {}
+unsafe impl Sync for PrivateDecryptingKey {}
+
 impl PrivateDecryptingKey {
     fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
         Self::validate_key(&evp_pkey)?;
@@ -146,6 +155,10 @@ impl Clone for PrivateDecryptingKey {
 
 /// An RSA public key used for encrypting plaintext that is decrypted by a [`PrivateDecryptingKey`].
 pub struct PublicEncryptingKey(LcPtr<EVP_PKEY>);
+
+// See thread-safety note on `PrivateDecryptingKey`.
+unsafe impl Send for PublicEncryptingKey {}
+unsafe impl Sync for PublicEncryptingKey {}
 
 impl PublicEncryptingKey {
     pub(crate) fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, Unspecified> {
