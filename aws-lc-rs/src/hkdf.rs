@@ -126,6 +126,39 @@ impl Salt {
         }
     }
 
+    /// Constructs a `Salt` with no salt value.
+    ///
+    /// This is equivalent to a `salt` argument of "a string of HashLen
+    /// zeros" as described in [RFC 5869 Section 2.2], and avoids the
+    /// awkward [`Salt::new(alg, b"")`](Self::new) idiom.
+    ///
+    /// # Use a salt when you can
+    ///
+    /// HKDF's extraction step is strengthened by a non-secret, ideally
+    /// random salt; [RFC 5869 Section 3.1] recommends supplying one
+    /// whenever the application can, and [NIST SP 800-56C Rev. 2 §5.1]
+    /// likewise recommends a non-empty salt for the key-derivation key.
+    /// In particular, when the input keying material is not uniformly
+    /// random or when an attacker has any control over it, a salt is
+    /// what gives the extract step a reduction to HMAC's PRF security.
+    ///
+    /// Use this constructor only when no salt material is available to
+    /// the application. Otherwise prefer [`Salt::new`] with a salt that
+    /// is at least as long as the underlying digest's output and is
+    /// either random or chosen with care to avoid collisions across
+    /// uses of the same key.
+    ///
+    /// [RFC 5869 Section 2.2]: https://tools.ietf.org/html/rfc5869#section-2.2
+    /// [RFC 5869 Section 3.1]: https://tools.ietf.org/html/rfc5869#section-3.1
+    /// [NIST SP 800-56C Rev. 2 §5.1]: https://doi.org/10.6028/NIST.SP.800-56Cr2
+    //
+    // # FIPS
+    // Not allowed in FIPS mode: HKDF in FIPS mode requires a non-empty salt.
+    #[must_use]
+    pub fn none(algorithm: Algorithm) -> Self {
+        Self::new(algorithm, &[])
+    }
+
     /// The [HKDF-Extract] operation.
     ///
     /// [HKDF-Extract]: https://tools.ietf.org/html/rfc5869#section-2.2
@@ -500,6 +533,34 @@ mod tests {
             "hkdf::Okm { prk: hkdf::Prk { algorithm: Algorithm(SHA256), mode: ExtractExpand { .. } } }",
             format!("{okm:?}")
         );
+    }
+
+    #[test]
+    fn test_salt_none_matches_empty_salt() {
+        let none = Salt::none(HKDF_SHA256);
+        let empty = Salt::new(HKDF_SHA256, &[]);
+        let secret = b"input keying material";
+        let info = [b"context".as_slice()];
+
+        let prk_none = none.extract(secret);
+        let prk_empty = empty.extract(secret);
+
+        let mut out_none = [0u8; 32];
+        let mut out_empty = [0u8; 32];
+        prk_none
+            .expand(&info, HKDF_SHA256)
+            .unwrap()
+            .fill(&mut out_none)
+            .unwrap();
+        prk_empty
+            .expand(&info, HKDF_SHA256)
+            .unwrap()
+            .fill(&mut out_empty)
+            .unwrap();
+
+        // RFC 5869: a missing/empty salt is equivalent to HashLen zero bytes;
+        // the two constructors must produce identical PRKs (and thus OKMs).
+        assert_eq!(out_none, out_empty);
     }
 
     #[test]
