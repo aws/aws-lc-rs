@@ -20,9 +20,9 @@ mod win_x86_64;
 use crate::nasm_builder::NasmBuilder;
 use crate::{
     cargo_env, emit_warning, env_var_to_bool, execute_command, find_clang_cl, get_crate_cc,
-    get_crate_cflags, get_crate_cxx, is_no_asm, out_dir, requested_c_std, set_env_for_target,
-    should_build_jitter_entropy, target, target_arch, target_env, target_os, target_vendor,
-    CStdRequested, EnvGuard, OutputLibType,
+    get_crate_cflags, get_crate_cxx, is_link_whole_archive, is_no_asm, out_dir, requested_c_std,
+    set_env_for_target, should_build_jitter_entropy, target, target_arch, target_env, target_os,
+    target_vendor, CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -635,10 +635,31 @@ impl CcBuilder {
         self.run_compiler_checks(&mut cc_build);
 
         self.add_all_files(sources, &mut cc_build);
-        if let Some(prefix) = &self.build_prefix {
-            cc_build.compile(format!("{}_crypto", prefix.as_str()).as_str());
+
+        let lib_name = if let Some(prefix) = &self.build_prefix {
+            format!("{}_crypto", prefix.as_str())
         } else {
-            cc_build.compile("crypto");
+            "crypto".to_string()
+        };
+
+        // When whole-archive linking is requested, suppress cc-rs's automatic
+        // emission of `cargo:rustc-link-{lib,search}=` so we can emit our own
+        // directives with the `+whole-archive` modifier (which cc-rs has no
+        // way to express). cc still performs the actual compilation and
+        // archive creation; only the metadata output is silenced.
+        if is_link_whole_archive() {
+            cc_build.cargo_metadata(false);
+        }
+        cc_build.compile(&lib_name);
+        if is_link_whole_archive() {
+            emit_warning(format!(
+                "AWS_LC_SYS_LINK_WHOLE_ARCHIVE set: linking '{lib_name}' with +whole-archive"
+            ));
+            println!("cargo:rustc-link-search=native={}", self.out_dir.display());
+            println!(
+                "cargo:rustc-link-lib={}={lib_name}",
+                self.output_lib_type.rust_link_lib_kind()
+            );
         }
     }
 

@@ -1,6 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Fri May  8 22:13:15 UTC 2026
+// Thu May 21 19:28:12 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/intt.S",
@@ -23,6 +23,7 @@ pub(super) const CRYPTO_LIBRARY: &[&str] = &[
     "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/reduce.S",
     "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/rej_uniform_asm.S",
     "crypto/fipsmodule/ml_kem/mlkem/native/x86_64/src/tomont.S",
+    "crypto/hrss/asm/poly_rq_mul.S",
     "generated-src/linux-x86_64/crypto/chacha/chacha-x86_64.S",
     "generated-src/linux-x86_64/crypto/cipher_extra/aes128gcmsiv-x86_64.S",
     "generated-src/linux-x86_64/crypto/cipher_extra/aesni-sha1-x86_64.S",

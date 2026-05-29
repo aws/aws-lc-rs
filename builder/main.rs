@@ -293,6 +293,22 @@ impl OutputLibType {
             OutputLibType::Dynamic => "dylib",
         }
     }
+
+    /// Returns the `kind` portion of a `cargo:rustc-link-lib=<kind>=<name>`
+    /// directive, including the `+whole-archive` modifier when whole-archive
+    /// linking has been requested for a static library.
+    ///
+    /// Whole-archive linking forces the linker to include every object file
+    /// from the static archive, which surfaces unresolved symbol references
+    /// inside object files that no consumer happens to call. We use it in CI
+    /// to catch missing assembly source files in the `cc_builder` source lists.
+    fn rust_link_lib_kind(self) -> String {
+        if matches!(self, OutputLibType::Static) && is_link_whole_archive() {
+            format!("{}:+whole-archive", self.rust_lib_type())
+        } else {
+            self.rust_lib_type().to_string()
+        }
+    }
 }
 
 impl OutputLib {
@@ -625,6 +641,7 @@ static mut SYS_NO_JITTER_ENTROPY: Option<bool> = None;
 static mut SYS_NO_U1_BINDINGS: Option<bool> = None;
 static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
 static mut SYS_SANITIZER: Option<String> = None;
+static mut SYS_LINK_WHOLE_ARCHIVE: bool = false;
 
 static mut SYS_C_STD: CStdRequested = CStdRequested::None;
 
@@ -645,6 +662,7 @@ fn initialize() {
         SYS_INCLUDES =
             optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect());
         SYS_SANITIZER = optional_env_crate_target("SANITIZER").map(|v| v.to_lowercase());
+        SYS_LINK_WHOLE_ARCHIVE = env_crate_var_to_bool("LINK_WHOLE_ARCHIVE").unwrap_or(false);
     }
 
     assert!(
@@ -762,6 +780,22 @@ fn is_cmake_builder() -> Option<bool> {
 
 fn is_no_pregenerated_src() -> bool {
     unsafe { SYS_NO_PREGENERATED_SRC }
+}
+
+/// Returns true when the build script should ask rustc to link the produced
+/// `libcrypto` archive with the `+whole-archive` modifier. This is intended
+/// for CI use only and is enabled via `AWS_LC_SYS_LINK_WHOLE_ARCHIVE=1`.
+///
+/// `+whole-archive` on its own is necessary but not sufficient to catch
+/// missing internal symbol references: the linker may still strip
+/// unreferenced sections (Linux/LLD: `--gc-sections`; Apple ld:
+/// `-dead_strip`) before final symbol resolution, so unresolved references
+/// inside dead-stripped objects never produce link errors. To make this
+/// flag effective, callers should also set `RUSTFLAGS="-C link-dead-code=yes"`
+/// to tell rustc not to enable section GC. The CI job that exercises this
+/// flag does both.
+fn is_link_whole_archive() -> bool {
+    unsafe { SYS_LINK_WHOLE_ARCHIVE }
 }
 
 fn disable_jitter_entropy() -> Option<bool> {
