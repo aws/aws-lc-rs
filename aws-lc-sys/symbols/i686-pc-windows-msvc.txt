@@ -1234,6 +1234,7 @@ EVP_PKEY_CTX_pqdsa_set_params
 EVP_PKEY_CTX_set0_rsa_oaep_label
 EVP_PKEY_CTX_set1_hkdf_key
 EVP_PKEY_CTX_set1_hkdf_salt
+EVP_PKEY_CTX_set1_signature_context_string
 EVP_PKEY_CTX_set_app_data
 EVP_PKEY_CTX_set_cb
 EVP_PKEY_CTX_set_dh_pad
@@ -1296,6 +1297,7 @@ EVP_PKEY_get1_DSA
 EVP_PKEY_get1_EC_KEY
 EVP_PKEY_get1_RSA
 EVP_PKEY_get1_tls_encodedpoint
+EVP_PKEY_get_private_seed
 EVP_PKEY_get_raw_private_key
 EVP_PKEY_get_raw_public_key
 EVP_PKEY_hkdf_pkey_meth
@@ -1303,6 +1305,7 @@ EVP_PKEY_hmac_pkey_meth
 EVP_PKEY_id
 EVP_PKEY_is_opaque
 EVP_PKEY_kem_check_key
+EVP_PKEY_kem_get_type
 EVP_PKEY_kem_new_raw_key
 EVP_PKEY_kem_new_raw_public_key
 EVP_PKEY_kem_new_raw_secret_key
@@ -3182,8 +3185,8 @@ ed25519_sign_nohw
 ed25519_verify_internal
 ed25519_verify_nohw
 ed25519ph_asn1_meth
+evp_pkey_set0
 evp_pkey_set_cb_translate
-evp_pkey_set_method
 gcm_ghash_clmul
 gcm_ghash_nohw
 gcm_ghash_ssse3
@@ -3519,6 +3522,7 @@ pmbtoken_pst1_sign
 pmbtoken_pst1_unblind
 pqdsa_asn1_meth
 rand_fips_library_destructor
+rand_thread_local_state_clear_all_FOR_TESTING
 rdrand_multiple8
 rndr_multiple8
 rsa_asn1_meth
@@ -3630,6 +3634,7 @@ x25519_scalar_mult_generic_nohw
 x509V3_add_value_asn1_string
 x509_check_cert_time
 x509_check_issued_with_callback
+x509_digest_nid_ok
 x509_digest_sign_algorithm
 x509_digest_verify_init
 x509_init_signature_info

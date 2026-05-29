@@ -97,6 +97,12 @@ impl PaddedBlockEncryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing a `PaddedBlockEncryptingKey`.
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
+    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
+    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
+    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
+    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
+    ///   for 3TDEA).
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
     }
@@ -110,17 +116,25 @@ impl PaddedBlockEncryptingKey {
     ///
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing a `PaddedBlockEncryptingKey`.
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
+    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
+    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
+    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
+    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
+    ///   for 3TDEA).
     pub fn ecb_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7)
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
         padding: PaddingStrategy,
     ) -> Result<PaddedBlockEncryptingKey, Unspecified> {
         let algorithm = key.algorithm();
+        if !algorithm.supports_mode(mode) {
+            return Err(Unspecified);
+        }
         let key = key.try_into()?;
         Ok(Self {
             algorithm,
@@ -216,6 +230,12 @@ impl PaddedBlockDecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
+    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
+    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
+    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
+    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
+    ///   for 3TDEA).
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
     }
@@ -233,6 +253,12 @@ impl PaddedBlockDecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
+    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
+    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
+    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
+    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
+    ///   for 3TDEA).
     pub fn cbc_iso10126(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::CBC, PaddingStrategy::ISO10126)
     }
@@ -251,17 +277,25 @@ impl PaddedBlockDecryptingKey {
     //
     /// # Errors
     /// * [`Unspecified`]: Returned if there is an error constructing the `PaddedBlockDecryptingKey`.
+    ///   With `legacy-des` enabled, also returned if `key` was constructed with
+    ///   `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY` or
+    ///   `DES_EDE3_FOR_LEGACY_USE_ONLY` and the provided key material contains
+    ///   weak or semi-weak DES subkeys, or (for Triple DES) a degenerate subkey
+    ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
+    ///   for 3TDEA).
     pub fn ecb_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7)
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
         padding: PaddingStrategy,
     ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
         let algorithm = key.algorithm();
+        if !algorithm.supports_mode(mode) {
+            return Err(Unspecified);
+        }
         let key = key.try_into()?;
         Ok(PaddedBlockDecryptingKey {
             algorithm,

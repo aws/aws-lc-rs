@@ -34,13 +34,13 @@ jobs:
     env:
       GIT_CLONE_PROTECTION_ACTIVE: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Run s2n-quic integration
         working-directory: ./aws-lc-rs
         run: |
@@ -56,13 +56,13 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         latest: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Install cargo-download
         run: cargo install cargo-download cargo-show
       - name: Run rustls integration
@@ -81,13 +81,13 @@ jobs:
           - ''
           - '--fips'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: run-windows-debug-crt-static-test
         working-directory: ./aws-lc-rs
         shell: bash
@@ -103,24 +103,24 @@ jobs:
       matrix:
         os: [ windows-latest, ubuntu-latest, macos-latest ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: install bindgen-cli
         run: cargo install --force --locked bindgen-cli
       - uses: ilammy/setup-nasm@v1
       - name: "Test aws-lc-sys package w/ SSL enabled"
         working-directory: ./aws-lc-sys
         run: cargo package --features ssl
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v4
+        uses: seanmiddleditch/gha-setup-ninja@v6
       - name: "Test aws-lc-fips-sys package w/ SSL enabled"
         working-directory: ./aws-lc-fips-sys
         run: cargo package --features ssl
@@ -135,22 +135,22 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
         features: [ aws-lc-rs, aws-lc-rs-fips, aws-lc-sys, aws-lc-fips-sys ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
-        id: toolchain
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Install NASM on Windows
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
       - name: Setup Go >=v1.18
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Install ninja-build tool
-        uses: seanmiddleditch/gha-setup-ninja@v4
+        uses: seanmiddleditch/gha-setup-ninja@v6
       - name: Run cargo test
         working-directory: ./links-testing
         run: cargo test --features ${{ matrix.features }} --no-default-features
@@ -166,7 +166,7 @@ jobs:
       skip-aws-lc-rs: ${{ steps.check.outputs.skip-aws-lc-rs }}
       reason: ${{ steps.check.outputs.reason }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Check sys crate version compatibility
         id: check
         run: |
@@ -212,24 +212,22 @@ jobs:
         args:
           - publish --dry-run
     steps:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - run: go version
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
       - name: Install ninja-build tool
         if: ${{ matrix.os == 'windows-latest' }}
-        uses: seanmiddleditch/gha-setup-ninja@v4
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+        uses: seanmiddleditch/gha-setup-ninja@v6
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
+          rustup default ${{ matrix.rust }}
       - name: ${{ matrix.crate }}
         working-directory: ./${{ matrix.crate }}
         run: cargo ${{ matrix.args }}
@@ -255,24 +253,22 @@ jobs:
         args:
           - publish --dry-run
     steps:
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - run: go version
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
       - name: Install ninja-build tool
         if: ${{ matrix.os == 'windows-latest' }}
-        uses: seanmiddleditch/gha-setup-ninja@v4
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+        uses: seanmiddleditch/gha-setup-ninja@v6
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
+          rustup default ${{ matrix.rust }}
       - name: aws-lc-rs
         working-directory: ./aws-lc-rs
         run: cargo ${{ matrix.args }}
@@ -296,15 +292,13 @@ jobs:
         args:
           - publish --dry-run
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Remove NASM
         shell: bash
         run: |
@@ -331,7 +325,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           lfs: true
@@ -345,19 +339,26 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
 
-      - name: Install MSRV Rust version
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: 1.71.0 # TODO: dynamically identify MSRV
+      # Install stable toolchain for dependency resolution. Older Cargo versions
+      # cannot parse manifests that use edition 2024+, causing resolution failures
+      # when any transitive dependency adopts a newer edition. Stable Cargo handles
+      # all editions and its MSRV-aware resolver automatically prefers dependency
+      # versions compatible with our declared rust-version.
+      - name: Install stable Rust
+        run: rustup toolchain install stable --profile minimal --no-self-update
 
-      - name: Update dependencies
+      - name: Install MSRV Rust version
+        run: rustup toolchain install 1.71.0 --profile minimal --no-self-update
+
+      # Use stable Cargo with MSRV-aware resolver to generate a lockfile that
+      # respects our rust-version. The "fallback" policy tells Cargo to prefer
+      # dependency versions compatible with rust-version, falling back to latest
+      # only when no compatible version exists in the semver range.
+      - name: Resolve MSRV-compatible dependencies
         run: |
-          cargo +1.71.0 update
-          cargo +1.71.0 update -p libloading --precise 0.8.8
-          cargo +1.71.0 update -p clap --precise 4.5.61
-          cargo +1.71.0 update -p clap_lex --precise 1.0.1
-          cargo +1.71.0 tree
+          cargo +stable --config "resolver.incompatible-rust-versions='fallback'" update
+          cargo +stable tree
 
       - name: Verify msrv
         working-directory: ./aws-lc-rs
-        run: cargo +1.71.0 check --features bindgen
+        run: cargo +1.71.0 check --locked --features bindgen

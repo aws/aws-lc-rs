@@ -187,18 +187,23 @@ fn test_aead<Seal, Open>(
 
         // In release builds, test all prefix lengths from 0 to 4096 bytes.
         // Debug builds are too slow for this, so for those builds, only
-        // test a smaller subset.
+        // test a smaller subset.  Under `disable_slow_tests` (primarily the
+        // MSan CI job), shrink further to a handful of alignment-sensitive
+        // offsets -- this dominates the inner-loop cost and is the primary
+        // lever for keeping MSan runtime under the CI timeout.
 
         let more_comprehensive_in_prefix_lengths: Box<[usize]> = (1..4096).collect();
-        let in_prefix_lengths = if cfg!(any(debug_assertions, disable_slow_tests)) {
+        let in_prefix_lengths: &[usize] = if cfg!(disable_slow_tests) {
+            &[0, 1, 16, 17]
+        } else if cfg!(debug_assertions) {
             &MINIMAL_IN_PREFIX_LENS[..]
         } else {
             &more_comprehensive_in_prefix_lengths[..]
         };
         let mut o_in_out = vec![123u8; 4096];
 
-        for &in_prefix_len in in_prefix_lengths {
-            o_in_out.truncate(0);
+        for (idx, &in_prefix_len) in in_prefix_lengths.iter().enumerate() {
+            o_in_out.clear();
             o_in_out.resize(in_prefix_len, 123);
             o_in_out.extend_from_slice(&ct[..]);
 
@@ -219,16 +224,23 @@ fn test_aead<Seal, Open>(
                     let result = o_result.unwrap();
                     assert_eq!(&plaintext[..], result);
 
-                    for bad_func in [aead_open_bad_tag, aead_open_bad_nonce, aead_open_bad_aad] {
-                        bad_func(
-                            aead_alg,
-                            &key_bytes,
-                            &nonce_bytes,
-                            aad.as_slice(),
-                            &o_in_out_clone,
-                            in_prefix_len,
-                            &open,
-                        );
+                    // The `bad_func` checks verify that corrupted tag / nonce /
+                    // AAD all cause `open` to fail. That failure path is
+                    // independent of `in_prefix_len`, so running them once per
+                    // test vector is sufficient.
+                    if idx == 0 {
+                        for bad_func in [aead_open_bad_tag, aead_open_bad_nonce, aead_open_bad_aad]
+                        {
+                            bad_func(
+                                aead_alg,
+                                &key_bytes,
+                                &nonce_bytes,
+                                aad.as_slice(),
+                                &o_in_out_clone,
+                                in_prefix_len,
+                                &open,
+                            );
+                        }
                     }
                 }
                 Some(ref error) if error == "WRONG_NONCE_LENGTH" => {
@@ -604,6 +616,115 @@ fn test_aead_thread_safeness() {
         let thread_tag = handle.join().unwrap();
         assert_eq!(thread_tag.as_ref(), tag.as_ref());
     }
+}
+
+fn test_open_in_place_separate_tag_for(
+    algorithm: &'static aead::Algorithm,
+    key_bytes: &[u8],
+    plaintext: &[u8],
+) {
+    let nonce_bytes = [0x24; NONCE_LEN];
+    let aad = b"detached-tag";
+
+    let sealing_key = make_less_safe_key(algorithm, key_bytes);
+    let opening_key = make_less_safe_key(algorithm, key_bytes);
+    let mut in_out = plaintext.to_vec();
+
+    let tag = sealing_key
+        .seal_in_place_separate_tag(
+            Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap(),
+            Aad::from(aad.as_slice()),
+            &mut in_out,
+        )
+        .unwrap();
+
+    let result = opening_key
+        .open_in_place_separate_tag(
+            Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap(),
+            Aad::from(aad.as_slice()),
+            tag.as_ref(),
+            &mut in_out,
+        )
+        .unwrap();
+
+    assert_eq!(plaintext, result);
+}
+
+#[test]
+fn test_less_safe_key_open_in_place_separate_tag() {
+    let plaintext = b"open detached tags in place";
+
+    test_open_in_place_separate_tag_for(&aead::AES_128_GCM, &[0x42; 16], plaintext);
+    test_open_in_place_separate_tag_for(&aead::AES_256_GCM, &[0x42; 32], plaintext);
+    test_open_in_place_separate_tag_for(&aead::CHACHA20_POLY1305, &[0x42; 32], plaintext);
+}
+
+#[test]
+fn test_less_safe_key_open_in_place_separate_tag_empty_plaintext() {
+    test_open_in_place_separate_tag_for(&aead::AES_128_GCM, &[0x42; 16], b"");
+    test_open_in_place_separate_tag_for(&aead::AES_256_GCM, &[0x42; 32], b"");
+    test_open_in_place_separate_tag_for(&aead::CHACHA20_POLY1305, &[0x42; 32], b"");
+}
+
+#[test]
+fn test_less_safe_key_open_in_place_separate_tag_wrong_tag() {
+    let key_bytes = [0x42; 16];
+    let nonce_bytes = [0x24; NONCE_LEN];
+    let aad = b"detached-tag";
+    let plaintext = b"open detached tags in place";
+
+    let sealing_key = make_less_safe_key(&aead::AES_128_GCM, &key_bytes);
+    let opening_key = make_less_safe_key(&aead::AES_128_GCM, &key_bytes);
+    let mut in_out = plaintext.to_vec();
+
+    let tag = sealing_key
+        .seal_in_place_separate_tag(
+            Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap(),
+            Aad::from(aad.as_slice()),
+            &mut in_out,
+        )
+        .unwrap();
+
+    let mut bad_tag = tag.as_ref().to_vec();
+    bad_tag[0] ^= 0xff;
+
+    let result = opening_key.open_in_place_separate_tag(
+        Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap(),
+        Aad::from(aad.as_slice()),
+        &bad_tag,
+        &mut in_out,
+    );
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_less_safe_key_open_in_place_separate_tag_wrong_aad() {
+    let key_bytes = [0x42; 16];
+    let nonce_bytes = [0x24; NONCE_LEN];
+    let aad = b"detached-tag";
+    let plaintext = b"open detached tags in place";
+
+    let sealing_key = make_less_safe_key(&aead::AES_128_GCM, &key_bytes);
+    let opening_key = make_less_safe_key(&aead::AES_128_GCM, &key_bytes);
+    let mut in_out = plaintext.to_vec();
+
+    let tag = sealing_key
+        .seal_in_place_separate_tag(
+            Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap(),
+            Aad::from(aad.as_slice()),
+            &mut in_out,
+        )
+        .unwrap();
+
+    let result = opening_key.open_in_place_separate_tag(
+        Nonce::try_assume_unique_for_key(&nonce_bytes).unwrap(),
+        Aad::from(b"wrong-aad".as_slice()),
+        tag.as_ref(),
+        &mut in_out,
+    );
+
+    assert!(result.is_err());
 }
 
 #[test]

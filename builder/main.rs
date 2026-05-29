@@ -14,6 +14,7 @@ use std::ffi::{OsStr, OsString};
 use std::fmt::Debug;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::OnceLock;
 use std::{env, fmt};
 
 use cc_builder::CcBuilder;
@@ -192,7 +193,7 @@ fn optional_env<N: AsRef<str>>(name: N) -> Option<String> {
     let name = name.as_ref();
     println!("cargo:rerun-if-env-changed={name}");
     if let Ok(value) = env::var(name) {
-        emit_warning(format!("Environment Variable found '{name}': '{}'", &value));
+        emit_warning(format!("Environment Variable found '{name}': '{value}'"));
         return Some(value);
     }
     None
@@ -251,7 +252,7 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
         || env_var_value.starts_with("off")
         || env_var_value.starts_with('f')
     {
-        emit_warning(format!("Value: {} is false.", &env_var_value));
+        emit_warning(format!("Value: {env_var_value} is false."));
         return Some(false);
     }
     if env_var_value.starts_with(|c: char| c.is_ascii_digit())
@@ -259,7 +260,7 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
         || env_var_value.starts_with("on")
         || env_var_value.starts_with('t')
     {
-        emit_warning(format!("Value: {} is true.", &env_var_value));
+        emit_warning(format!("Value: {env_var_value} is true."));
         return Some(true);
     }
     None
@@ -476,7 +477,53 @@ fn target_underscored() -> String {
 }
 
 fn out_dir() -> PathBuf {
-    PathBuf::from(cargo_env("OUT_DIR"))
+    let out = PathBuf::from(cargo_env("OUT_DIR"));
+    #[cfg(windows)]
+    let out = to_short_path(&out);
+    out
+}
+
+/// On Windows, convert a path to its 8.3 short form to avoid MAX_PATH (260 char) limits
+/// when cl.exe is invoked with deeply nested source trees (e.g. Bazel runfiles).
+#[cfg(windows)]
+fn to_short_path(path: &Path) -> PathBuf {
+    use std::os::windows::ffi::{OsStrExt, OsStringExt};
+    extern "system" {
+        fn GetShortPathNameW(
+            lpszLongPath: *const u16,
+            lpszShortPath: *mut u16,
+            cchBuffer: u32,
+        ) -> u32;
+    }
+    let wide: Vec<u16> = path
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let len = unsafe { GetShortPathNameW(wide.as_ptr(), std::ptr::null_mut(), 0) };
+    if len == 0 {
+        return path.to_path_buf();
+    }
+    let mut buf = vec![0u16; len as usize];
+    let result = unsafe { GetShortPathNameW(wide.as_ptr(), buf.as_mut_ptr(), len) };
+    if result == 0 {
+        return path.to_path_buf();
+    }
+    buf.truncate(result as usize);
+    let short_path = PathBuf::from(std::ffi::OsString::from_wide(&buf));
+
+    const MAX_PATH: usize = 260;
+    let original_len = wide.len() - 1;
+    if original_len >= MAX_PATH && (result as usize) >= MAX_PATH {
+        emit_warning(format!(
+            "Path length ({}) exceeds MAX_PATH ({}) and 8.3 short name conversion was ineffective. \
+             8.3 short names may be disabled on this volume. \
+             See: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-8dot3name",
+            original_len, MAX_PATH,
+        ));
+    }
+
+    short_path
 }
 
 fn current_dir() -> PathBuf {
@@ -514,7 +561,7 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
         };
         builder.check_dependencies().unwrap();
         return builder;
-    } else if is_no_asm() {
+    } else if is_no_asm() || sanitizer().is_some() {
         let builder = cmake_builder_builder();
         builder.check_dependencies().unwrap();
         return builder;
@@ -569,6 +616,7 @@ static mut SYS_EFFECTIVE_TARGET: String = String::new();
 static mut SYS_NO_JITTER_ENTROPY: Option<bool> = None;
 static mut SYS_NO_U1_BINDINGS: Option<bool> = None;
 static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
+static mut SYS_SANITIZER: Option<String> = None;
 
 static mut SYS_C_STD: CStdRequested = CStdRequested::None;
 
@@ -588,6 +636,7 @@ fn initialize() {
         SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
         SYS_INCLUDES =
             optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect());
+        SYS_SANITIZER = optional_env_crate_target("SANITIZER").map(|v| v.to_lowercase());
     }
 
     assert!(
@@ -690,6 +739,11 @@ fn is_no_asm() -> bool {
     unsafe { SYS_NO_ASM }
 }
 
+#[allow(static_mut_refs)]
+fn sanitizer() -> Option<String> {
+    unsafe { SYS_SANITIZER.clone() }
+}
+
 fn is_cmake_builder() -> Option<bool> {
     if is_no_pregenerated_src() {
         Some(true)
@@ -704,6 +758,59 @@ fn is_no_pregenerated_src() -> bool {
 
 fn disable_jitter_entropy() -> Option<bool> {
     unsafe { SYS_NO_JITTER_ENTROPY }
+}
+
+/// Returns true if jitter entropy should be built. This is false when the user
+/// explicitly set `AWS_LC_SYS_NO_JITTER_ENTROPY=1`, or when auto-detection
+/// determined that required headers are unavailable.
+fn should_build_jitter_entropy() -> bool {
+    static AVAILABLE: OnceLock<bool> = OnceLock::new();
+
+    // If the user explicitly set the env var, respect it unconditionally.
+    if let Some(val) = disable_jitter_entropy() {
+        return !val;
+    }
+
+    *AVAILABLE.get_or_init(|| {
+        // The current FIPS branch does not include jitter entropy.
+        if is_fips_build() {
+            return true;
+        }
+        // Only Apple targets need the CoreServices header.
+        if target_vendor() != "apple" {
+            return true;
+        }
+        probe_apple_core_services()
+    })
+}
+
+/// Probes whether `CoreServices/CoreServices.h` is available for the current
+/// target toolchain. On Apple targets, jitterentropy requires this header which
+/// is only present when the macOS SDK is installed. When cross-compiling to
+/// Apple targets from non-macOS hosts (e.g., Linux → macOS via cargo-zigbuild),
+/// this header is typically missing.
+fn probe_apple_core_services() -> bool {
+    let probe_dir = out_dir().join("out-apple_core_services_check");
+    let src_dir = probe_dir.join("src");
+    let _ = std::fs::create_dir_all(&src_dir);
+    let source_file = src_dir.join("apple_core_services_check.c");
+    if std::fs::write(&source_file, "#include <CoreServices/CoreServices.h>\n").is_err() {
+        emit_warning("Failed to write CoreServices probe file; assuming available.");
+        return true;
+    }
+
+    let mut cc_build = cc::Build::default();
+    cc_build.file(&source_file).out_dir(&probe_dir);
+    let available = cc_build.try_compile_intermediates().is_ok();
+    let _ = std::fs::remove_dir_all(&probe_dir);
+
+    if !available {
+        emit_warning(
+            "CoreServices/CoreServices.h not available; \
+             automatically disabling CPU jitter entropy.",
+        );
+    }
+    available
 }
 
 fn use_no_u1_bindings() -> Option<bool> {
@@ -758,8 +865,53 @@ fn test_nasm_command() -> bool {
     status
 }
 
+fn find_clang_cl() -> Option<OsString> {
+    static CACHE: OnceLock<Option<OsString>> = OnceLock::new();
+    CACHE
+        .get_or_init(|| {
+            // Check if clang-cl is directly available (e.g., in PATH)
+            if execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status {
+                return Some("clang-cl".into());
+            }
+
+            // Try to find clang-cl in a Visual Studio installation
+            find_clang_cl_in_vs()
+        })
+        .clone()
+}
+
+fn find_clang_cl_in_vs() -> Option<OsString> {
+    // Use the cc crate's VS discovery (which calls vswhere internally) to
+    // locate the VS installation, then look for clang-cl relative to it.
+    let tool = cc::windows_registry::find_tool(&target(), "cl.exe")?;
+    let cl_path = tool.path().to_path_buf();
+
+    // cl.exe lives deep inside the VS installation:
+    //   <VS>/VC/Tools/MSVC/<ver>/bin/<host>/<target>/cl.exe
+    // clang-cl lives at:
+    //   <VS>/VC/Tools/Llvm/<arch>/bin/clang-cl.exe
+    // Walk up from cl.exe until we find the VS root.
+    for ancestor in cl_path.ancestors() {
+        let vc_llvm = ancestor.join("VC").join("Tools").join("Llvm");
+        if vc_llvm.exists() {
+            for arch_dir in &["ARM64", "x64"] {
+                let clang_cl = vc_llvm.join(arch_dir).join("bin").join("clang-cl.exe");
+                if clang_cl.exists()
+                    && execute_command(clang_cl.as_os_str(), &["--version".as_ref()]).status
+                {
+                    emit_warning(format!("Found clang-cl at: {}", clang_cl.display()));
+                    return Some(clang_cl.into_os_string());
+                }
+            }
+            break;
+        }
+    }
+
+    None
+}
+
 fn test_clang_cl_command() -> bool {
-    execute_command("clang-cl".as_ref(), &["--version".as_ref()]).status
+    find_clang_cl().is_some()
 }
 
 fn prepare_cargo_cfg() {
@@ -812,23 +964,25 @@ fn handle_bindgen(_manifest_dir: &Path, _prefix: &Option<String>) -> bool {
     false
 }
 
+fn canonicalized_manifest_dir() -> PathBuf {
+    let manifest_dir = current_dir();
+    let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
+    #[cfg(windows)]
+    let manifest_dir = to_short_path(&manifest_dir);
+    manifest_dir
+}
+
 #[cfg(not(test))]
 fn main() {
     initialize();
     prepare_cargo_cfg();
 
-    let manifest_dir = current_dir();
-    let manifest_dir = dunce::canonicalize(Path::new(&manifest_dir)).unwrap();
-    let prefix_str = prefix_string();
-    let prefix = if is_no_prefix() {
-        None
-    } else {
-        Some(prefix_str)
-    };
+    let manifest_dir = canonicalized_manifest_dir();
+    let prefix = (!is_no_prefix()).then(prefix_string);
 
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
     emit_warning(format!("Building with: {}", builder.name()));
-    emit_warning(format!("Symbol Prefix: {:?}", &prefix));
+    emit_warning(format!("Symbol Prefix: {prefix:?}"));
 
     builder.check_dependencies().unwrap();
 
@@ -862,7 +1016,9 @@ fn main() {
             "If bindgen is unable to locate a header file, use the \
             BINDGEN_EXTRA_CLANG_ARGS environment variable to specify additional include paths.",
         );
-        emit_warning("See: https://github.com/rust-lang/rust-bindgen?tab=readme-ov-file#environment-variables");
+        emit_warning(
+            "See: https://github.com/rust-lang/rust-bindgen?tab=readme-ov-file#environment-variables",
+        );
         emit_warning("######");
         let aws_lc_crypto_dir = Path::new(&manifest_dir).join("aws-lc").join("crypto");
         if !aws_lc_crypto_dir.exists() {
@@ -870,7 +1026,7 @@ fn main() {
             emit_warning("###### WARNING: MISSING GIT SUBMODULE ######");
             emit_warning(format!(
                 "  -- Did you initialize the repo's git submodules? Unable to find crypto directory: {}.",
-                &aws_lc_crypto_dir.display()
+                aws_lc_crypto_dir.display()
             ));
             emit_warning("  -- run 'git submodule update --init --recursive' to initialize.");
             emit_warning("######");
@@ -909,6 +1065,14 @@ fn main() {
         For more information, see the aws-lc-rs User Guide: https://aws.github.io/aws-lc-rs/index.html"
     );
     builder.build().unwrap();
+
+    // MinGW win7 targets use the BCryptGenRandom path (AWSLC_WINDOWS_7_COMPAT),
+    // which requires linking against bcrypt. MinGW ignores the MSVC
+    // `#pragma comment(lib, "bcrypt.lib")` in the source, so we link explicitly.
+    // See: https://github.com/aws/aws-lc/pull/3239
+    if target().contains("-win7-windows-gnu") {
+        println!("cargo:rustc-link-lib=bcrypt");
+    }
 
     println!(
         "cargo:include={}",

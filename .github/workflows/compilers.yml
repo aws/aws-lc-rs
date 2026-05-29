@@ -72,10 +72,10 @@ jobs:
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
           gcc --version
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Run cargo test (debug)
         working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
@@ -160,10 +160,10 @@ jobs:
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
           gcc --version
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Run cargo test (debug)
         working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
@@ -222,10 +222,10 @@ jobs:
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
           gcc --version
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Run cargo test (debug)
         working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
@@ -286,10 +286,10 @@ jobs:
           git fetch origin ${{ github.sha }}
           git checkout --recurse-submodules -b ci-job ${{ github.sha }}
           gcc --version
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Run cargo test (debug)
         working-directory: /tmp/aws-lc-rs/
         run: cargo test -p aws-lc-rs --all-targets --no-default-features --features ${{ (matrix.fips == '0' && 'unstable,aws-lc-sys') || 'unstable,fips' }}
@@ -316,13 +316,13 @@ jobs:
           - os: windows-11-arm
             cmake: 0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         env:

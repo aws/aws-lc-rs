@@ -58,7 +58,7 @@ mod digest_shavs {
             // length is zero.
             if len_bits == 0 {
                 assert_eq!(msg, &[0u8]);
-                msg.truncate(0);
+                msg.clear();
             }
             assert_eq!(msg.len().checked_mul(8).unwrap(), len_bits);
             let expected = test_case.consume_bytes("MD");

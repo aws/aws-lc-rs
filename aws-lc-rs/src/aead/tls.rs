@@ -31,10 +31,8 @@ pub enum TlsProtocolId {
 /// Prefer this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey` for TLS protocol implementations.
 #[allow(clippy::module_name_repetitions)]
 pub struct TlsRecordSealingKey {
-    // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
-    // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
-    // or force this type to !Sync. Since this is an implementation detail of AWS-LC
-    // we have optex to manage this behavior internally.
+    // The TLS-specific AEAD seal constructions in AWS-LC maintain internal mutable state
+    // (nonce counter). The seal methods take `&mut self` to prevent concurrent access.
     key: UnboundKey,
     protocol: TlsProtocolId,
 }
@@ -177,10 +175,8 @@ impl Debug for TlsRecordSealingKey {
 /// Prefer this type in place of `LessSafeKey`, `OpeningKey`, `SealingKey` for TLS protocol implementations.
 #[allow(clippy::module_name_repetitions)]
 pub struct TlsRecordOpeningKey {
-    // The TLS specific construction for TLS ciphers in AWS-LC are not thread-safe!
-    // The choice here was either wrap the underlying EVP_AEAD_CTX in a Mutex as done here,
-    // or force this type to !Sync. Since this is an implementation detail of AWS-LC
-    // we have optex to manage this behavior internally.
+    // Unlike the seal path, the TLS-specific AEAD open operations in AWS-LC are stateless
+    // and safe for concurrent use. The open methods take `&self`.
     key: UnboundKey,
     protocol: TlsProtocolId,
 }

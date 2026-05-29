@@ -12,3 +12,7 @@ updates:
     ignore:
       - dependency-name: "untrusted"
         versions: ["0.7.1"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"

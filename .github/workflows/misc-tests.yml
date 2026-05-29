@@ -15,7 +15,7 @@ jobs:
     if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
 
       - name: Check
         run: |
@@ -76,14 +76,14 @@ jobs:
     if: github.repository_owner == 'aws'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
 
       - name: Install Rust nightly
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly
+        run: |
+          rustup toolchain install nightly --profile minimal --no-self-update
+          rustup default nightly
 
       - name: Install cargo-docs-rs
         run: cargo install cargo-docs-rs
@@ -99,11 +99,14 @@ jobs:
     name: dev-tests-only feature tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
 
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
 
       - name: Run unsealed_rand_test with env var
         env:

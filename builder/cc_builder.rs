@@ -19,13 +19,14 @@ mod win_x86_64;
 
 use crate::nasm_builder::NasmBuilder;
 use crate::{
-    cargo_env, disable_jitter_entropy, emit_warning, env_name_for_target, env_var_to_bool,
-    execute_command, get_crate_cc, get_crate_cflags, get_crate_cxx, is_no_asm, out_dir,
-    requested_c_std, set_env_for_target, target, target_arch, target_env, target_os, target_vendor,
-    test_clang_cl_command, CStdRequested, EnvGuard, OutputLibType,
+    cargo_env, emit_warning, env_var_to_bool, execute_command, find_clang_cl, get_crate_cc,
+    get_crate_cflags, get_crate_cxx, is_no_asm, out_dir, requested_c_std, set_env_for_target,
+    should_build_jitter_entropy, target, target_arch, target_env, target_os, target_vendor,
+    CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
+use std::env;
 use std::path::PathBuf;
 
 #[non_exhaustive]
@@ -253,13 +254,13 @@ impl CcBuilder {
 
                     let flag = format!("-ffile-prefix-map={path_str}=");
                     if let Ok(true) = cc_build.is_flag_supported(&flag) {
-                        emit_warning(format!("Using flag: {}", &flag));
+                        emit_warning(format!("Using flag: {flag}"));
                         build_options.push(BuildOption::flag(&flag));
                     } else {
                         emit_warning("NOTICE: Build environment source paths might be visible in release binary.");
                         let flag = format!("-fdebug-prefix-map={path_str}=");
                         if let Ok(true) = cc_build.is_flag_supported(&flag) {
-                            emit_warning(format!("Using flag: {}", &flag));
+                            emit_warning(format!("Using flag: {flag}"));
                             build_options.push(BuildOption::flag(&flag));
                         }
                     }
@@ -301,7 +302,7 @@ impl CcBuilder {
                 build_options.push(BuildOption::define("__EXTENSIONS__", "1"));
             }
         }
-        if Some(true) == disable_jitter_entropy() {
+        if !should_build_jitter_entropy() {
             build_options.push(BuildOption::define("DISABLE_CPU_JITTER_ENTROPY", "1"));
         }
         self.add_includes(&mut build_options);
@@ -339,14 +340,16 @@ impl CcBuilder {
                 .join("include"),
         ));
 
-        if Some(true) != disable_jitter_entropy() {
-            build_options.push(BuildOption::include(
-                self.manifest_dir
-                    .join("aws-lc")
-                    .join("third_party")
-                    .join("jitterentropy")
-                    .join("jitterentropy-library"),
-            ));
+        if should_build_jitter_entropy() {
+            let jitterentropy_path = self
+                .manifest_dir
+                .join("aws-lc")
+                .join("third_party")
+                .join("jitterentropy")
+                .join("jitterentropy-library");
+
+            build_options.push(BuildOption::include(&jitterentropy_path));
+            build_options.push(BuildOption::include(jitterentropy_path.join("src")));
         }
     }
 
@@ -409,14 +412,24 @@ impl CcBuilder {
                 "_STL_EXTRA_DISABLED_WARNINGS",
                 "4774 4987",
             ));
+        }
 
-            if target().ends_with("-win7-windows-msvc") {
-                // 0x0601 is the value of `_WIN32_WINNT_WIN7`
-                build_options.push(BuildOption::define("_WIN32_WINNT", "0x0601"));
-                emit_warning(format!(
-                    "Setting _WIN32_WINNT to _WIN32_WINNT_WIN7 for {} target",
-                    target()
-                ));
+        // Target Windows 7 (0x0601 == _WIN32_WINNT_WIN7) for any win7 target triple.
+        if target().contains("-win7-windows-") {
+            build_options.push(BuildOption::define("_WIN32_WINNT", "0x0601"));
+            emit_warning(format!(
+                "Setting _WIN32_WINNT to _WIN32_WINNT_WIN7 for {} target",
+                target()
+            ));
+
+            // Additional workaround for MinGW: the upstream C source
+            // (crypto/rand_extra/windows.c) gates the Win7 compat path
+            // (BCryptGenRandom) with `!defined(__MINGW32__)`, which prevents MinGW
+            // from using it even when `_WIN32_WINNT` targets Win7. We define
+            // AWSLC_WINDOWS_7_COMPAT directly to bypass that guard until the
+            // upstream fix lands: https://github.com/aws/aws-lc/pull/3239
+            if !is_like_msvc {
+                build_options.push(BuildOption::define("AWSLC_WINDOWS_7_COMPAT", ""));
             }
         }
     }
@@ -468,21 +481,44 @@ impl CcBuilder {
     /// which means CFLAGS optimization flags override build script flags.
     /// Jitterentropy MUST be compiled with -O0, so we temporarily override
     /// CFLAGS to replace any optimization flags with -O0.
-    fn jitter_entropy_cflags_guard(is_like_msvc: bool) -> Option<EnvGuard> {
-        let cflags = get_crate_cflags()?;
-        let filtered: String = cflags
-            .split_whitespace()
-            .filter(|flag| !flag.starts_with("-O") && !flag.starts_with("/O"))
-            .collect::<Vec<_>>()
-            .join(" ");
-        let new_cflags = if is_like_msvc {
-            format!("{filtered} -Od").trim().to_string()
-        } else {
-            format!("{filtered} -O0 -Wp,-U_FORTIFY_SOURCE")
-                .trim()
-                .to_string()
+    ///
+    /// The cc crate collects flags from ALL matching CFLAGS env vars (not just
+    /// the highest-priority one), so we must filter every variable it checks:
+    ///   1. `CFLAGS_{target}` (e.g. `CFLAGS_x86_64_unknown_freebsd`)
+    ///   2. `HOST_CFLAGS` or `TARGET_CFLAGS`
+    ///   3. `CFLAGS`
+    fn jitter_entropy_cflags_guards(is_like_msvc: bool) -> Vec<EnvGuard> {
+        let target_u = target().to_lowercase().replace('-', "_");
+
+        let cflags_env_names: Vec<String> = vec![
+            format!("CFLAGS_{target_u}"),
+            "HOST_CFLAGS".to_string(),
+            "TARGET_CFLAGS".to_string(),
+            "CFLAGS".to_string(),
+        ];
+
+        let filter_cflags = |value: &str| -> String {
+            let filtered: String = value
+                .split_whitespace()
+                .filter(|flag| !flag.starts_with("-O") && !flag.starts_with("/O"))
+                .collect::<Vec<_>>()
+                .join(" ");
+            if is_like_msvc {
+                format!("{filtered} -Od").trim().to_string()
+            } else {
+                format!("{filtered} -O0 -U_FORTIFY_SOURCE")
+                    .trim()
+                    .to_string()
+            }
         };
-        Some(EnvGuard::new(&env_name_for_target("CFLAGS"), &new_cflags))
+
+        cflags_env_names
+            .into_iter()
+            .filter_map(|name| {
+                let value = env::var(&name).ok()?;
+                Some(EnvGuard::new(&name, filter_cflags(&value)))
+            })
+            .collect()
     }
 
     fn add_all_files(&self, sources: &[&'static str], cc_build: &mut cc::Build) {
@@ -561,7 +597,7 @@ impl CcBuilder {
                 }
             } else if is_jitter_entropy {
                 // Only compile if not disabled.
-                if Some(true) != disable_jitter_entropy() {
+                if should_build_jitter_entropy() {
                     jitter_entropy_builder.file(source_path);
                 }
             } else if source_path.extension() == Some("asm".as_ref()) {
@@ -575,8 +611,8 @@ impl CcBuilder {
         for object in s2n_bignum_object_files {
             cc_build.object(object);
         }
-        if Some(true) != disable_jitter_entropy() {
-            let _je_cflags_guard = Self::jitter_entropy_cflags_guard(compiler.is_like_msvc());
+        if should_build_jitter_entropy() {
+            let _je_cflags_guards = Self::jitter_entropy_cflags_guards(compiler.is_like_msvc());
             let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
             for object in jitter_entropy_object_files {
                 cc_build.object(object);
@@ -652,7 +688,7 @@ impl CcBuilder {
         emit_warning(format!(
             "Compilation of '{basename}.c' {} - {:?}.",
             if ret_val { "succeeded" } else { "failed" },
-            &result
+            result
         ));
         ret_val
     }
@@ -746,7 +782,13 @@ impl CcBuilder {
         if self.compiler_check("stdalign_check", Vec::<&'static str>::new()) {
             cc_build.define("AWS_LC_STDALIGN_AVAILABLE", Some("1"));
         }
-        if self.compiler_check("builtin_swap_check", Vec::<&'static str>::new()) {
+        // Only run builtin_swap_check for GCC/Clang (matching CMake). On MSVC,
+        // try_compile_intermediates succeeds but __builtin_bswap* are unresolved at
+        // link time. Without this guard the define is set and crypto/internal.h skips
+        // the correct _MSC_VER path that uses _byteswap_* intrinsics.
+        if target_env() != "msvc"
+            && self.compiler_check("builtin_swap_check", Vec::<&'static str>::new())
+        {
             cc_build.define("AWS_LC_BUILTIN_SWAP_SUPPORTED", Some("1"));
         }
         if target_arch() == "aarch64"
@@ -792,9 +834,17 @@ impl crate::Builder for CcBuilder {
             && target_arch() == "aarch64"
             && target_env() == "msvc"
             && get_crate_cc().is_none()
-            && test_clang_cl_command()
         {
-            set_env_for_target("CC", "clang-cl");
+            if let Some(clang_cl) = find_clang_cl() {
+                set_env_for_target("CC", clang_cl);
+            } else {
+                emit_warning(
+                    "Windows ARM64 (aarch64-pc-windows-msvc) requires clang-cl. \
+                     Install the 'C++ Clang Compiler for Windows' component in \
+                     Visual Studio Build Tools, or set CC to a working clang-cl. \
+                     See User Guide: https://aws.github.io/aws-lc-rs/index.html",
+                );
+            }
         }
 
         println!("cargo:root={}", self.out_dir.display());

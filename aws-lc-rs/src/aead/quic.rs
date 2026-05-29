@@ -71,7 +71,7 @@ pub type Sample = [u8; SAMPLE_LEN];
 
 /// A QUIC Header Protection Algorithm.
 pub struct Algorithm {
-    init: fn(key: &[u8]) -> Result<SymmetricCipherKey, error::Unspecified>,
+    init: fn(key: &[u8]) -> Result<SymmetricCipherKey, error::KeyRejected>,
 
     key_len: usize,
     id: AlgorithmID,
@@ -162,6 +162,17 @@ fn cipher_new_mask(
             let input = block::Block::zero();
             let counter = u32::from_ne_bytes(*counter_bytes).to_le();
             encrypt_block_chacha20(raw_key, input, nonce, counter)?
+        }
+        // DES variants cannot reach this branch: `Algorithm::init` is private
+        // and only the AES_128/AES_256/CHACHA20 consts populate it, so a
+        // `HeaderProtectionKey` can never be constructed with a DES
+        // `SymmetricCipherKey`. The arm exists only to satisfy match
+        // exhaustiveness when the `legacy-des` feature is enabled.
+        #[cfg(feature = "legacy-des")]
+        SymmetricCipherKey::Des { .. }
+        | SymmetricCipherKey::DesEde { .. }
+        | SymmetricCipherKey::DesEde3 { .. } => {
+            unreachable!("DES cipher keys cannot be used with QUIC header protection")
         }
     };
 

@@ -1242,6 +1242,7 @@ EVP_PKEY_CTX_pqdsa_set_params
 EVP_PKEY_CTX_set0_rsa_oaep_label
 EVP_PKEY_CTX_set1_hkdf_key
 EVP_PKEY_CTX_set1_hkdf_salt
+EVP_PKEY_CTX_set1_signature_context_string
 EVP_PKEY_CTX_set_app_data
 EVP_PKEY_CTX_set_cb
 EVP_PKEY_CTX_set_dh_pad
@@ -1304,6 +1305,7 @@ EVP_PKEY_get1_DSA
 EVP_PKEY_get1_EC_KEY
 EVP_PKEY_get1_RSA
 EVP_PKEY_get1_tls_encodedpoint
+EVP_PKEY_get_private_seed
 EVP_PKEY_get_raw_private_key
 EVP_PKEY_get_raw_public_key
 EVP_PKEY_hkdf_pkey_meth
@@ -1311,6 +1313,7 @@ EVP_PKEY_hmac_pkey_meth
 EVP_PKEY_id
 EVP_PKEY_is_opaque
 EVP_PKEY_kem_check_key
+EVP_PKEY_kem_get_type
 EVP_PKEY_kem_new_raw_key
 EVP_PKEY_kem_new_raw_public_key
 EVP_PKEY_kem_new_raw_secret_key
@@ -3309,8 +3312,8 @@ edwards25519_scalarmulbase
 edwards25519_scalarmulbase_alt
 edwards25519_scalarmuldouble
 edwards25519_scalarmuldouble_alt
+evp_pkey_set0
 evp_pkey_set_cb_translate
-evp_pkey_set_method
 extract_multiplier_2x20_win5
 extract_multiplier_2x30_win5
 extract_multiplier_2x40_win5
@@ -3606,11 +3609,27 @@ ml_kem_common_decapsulate
 ml_kem_common_encapsulate
 ml_kem_common_encapsulate_deterministic
 ml_kem_common_keypair
+mlkem_compress_d10_data
+mlkem_compress_d11_data
+mlkem_compress_d4_data
+mlkem_compress_d5_data
+mlkem_decompress_d10_data
+mlkem_decompress_d11_data
+mlkem_decompress_d4_data
+mlkem_decompress_d5_data
 mlkem_invntt_avx2
 mlkem_ntt_avx2
 mlkem_nttfrombytes_avx2
 mlkem_ntttobytes_avx2
 mlkem_nttunpack_avx2
+mlkem_poly_compress_d10_avx2
+mlkem_poly_compress_d11_avx2
+mlkem_poly_compress_d4_avx2
+mlkem_poly_compress_d5_avx2
+mlkem_poly_decompress_d10_avx2
+mlkem_poly_decompress_d11_avx2
+mlkem_poly_decompress_d4_avx2
+mlkem_poly_decompress_d5_avx2
 mlkem_poly_mulcache_compute_avx2
 mlkem_polyvec_basemul_acc_montgomery_cached_asm_k2
 mlkem_polyvec_basemul_acc_montgomery_cached_asm_k3
@@ -3677,6 +3696,7 @@ pmbtoken_pst1_sign
 pmbtoken_pst1_unblind
 poly_Rq_mul
 pqdsa_asn1_meth
+rand_thread_local_state_clear_all_FOR_TESTING
 rdrand_multiple8
 rndr_multiple8
 rsa_asn1_meth
@@ -3722,6 +3742,7 @@ sha256_block_data_order_nohw
 sha256_block_data_order_ssse3
 sha256_func
 sha384_func
+sha3_keccak4_f1600_alt
 sha3_keccak_f1600
 sha512_block_data_order_avx
 sha512_block_data_order_nohw
@@ -3811,6 +3832,7 @@ x25519_scalar_mult_generic_s2n_bignum
 x509V3_add_value_asn1_string
 x509_check_cert_time
 x509_check_issued_with_callback
+x509_digest_nid_ok
 x509_digest_sign_algorithm
 x509_digest_verify_init
 x509_init_signature_info

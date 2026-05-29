@@ -35,21 +35,21 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, ubuntu-24.04-arm ]
         args:
           - --all-targets --features unstable
+          - --all-targets --features unstable,legacy-des
+          - --all-targets --features legacy-des
           - --release --all-targets --features unstable
           - --no-default-features --features non-fips,unstable
           - --no-default-features --features non-fips,ring-io,unstable
           - --no-default-features --features non-fips,ring-sig-verify,unstable
           - --no-default-features --features non-fips,alloc,unstable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
+          rustup default ${{ matrix.rust }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -70,7 +70,7 @@ jobs:
           - --no-default-features --features aws-lc-sys,bindgen,unstable
           - --release --all-targets --features bindgen,unstable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - if: ${{ startsWith(matrix.os, 'macos-') }}
@@ -78,12 +78,10 @@ jobs:
           brew install llvm
           echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
           echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
+          rustup default ${{ matrix.rust }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -108,15 +106,13 @@ jobs:
     env:
       AWS_LC_SYS_PREBUILT_NASM: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
+          rustup default ${{ matrix.rust }}
       - name: Run cargo test
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }}
@@ -126,18 +122,15 @@ jobs:
     name: aws-ls-rs coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           lfs: true
 
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: llvm-tools-preview
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component llvm-tools-preview --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
 
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
@@ -149,7 +142,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: ./codecov.json,./codecov-fips.json
           verbose: true
@@ -168,15 +161,13 @@ jobs:
           - --no-default-features --features fips,asan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Run address sanitizers
         env:
           ASAN_OPTIONS: detect_leaks=1
@@ -184,6 +175,66 @@ jobs:
           RUSTDOCFLAGS: -Zsanitizer=address
         working-directory: ./aws-lc-rs
         run: cargo test ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu --features asan
+
+  aws-lc-rs-msan:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs msan
+    strategy:
+      fail-fast: false
+      matrix:
+        args:
+          - ''
+          - --release
+        features:
+          - ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component rust-src --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - name: Run memory sanitizers
+        env:
+          AWS_LC_SYS_SANITIZER: msan
+          AWS_LC_FIPS_SYS_SANITIZER: msan
+          RUSTFLAGS: -Zsanitizer=memory -Zsanitizer-memory-track-origins
+          RUSTDOCFLAGS: -Zsanitizer=memory -Zsanitizer-memory-track-origins
+          AWS_LC_RS_DISABLE_SLOW_TESTS: 1
+        working-directory: ./aws-lc-rs
+        run: cargo test -Zbuild-std ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu ${{ matrix.features }}
+
+  aws-lc-rs-tsan:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-rs tsan
+    strategy:
+      fail-fast: false
+      matrix:
+        args:
+          - ''
+          - --release
+        features:
+          - ''
+          - --no-default-features --features fips
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component rust-src --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - name: Run thread sanitizers
+        env:
+          AWS_LC_SYS_SANITIZER: tsan
+          AWS_LC_FIPS_SYS_SANITIZER: tsan
+          RUSTFLAGS: -Zsanitizer=thread
+          RUSTDOCFLAGS: -Zsanitizer=thread
+        working-directory: ./aws-lc-rs
+        run: cargo test -Zbuild-std ${{ matrix.args }} --lib --bins --tests --examples --target x86_64-unknown-linux-gnu ${{ matrix.features }}
 
   build-env-static-test:
     if: github.repository_owner == 'aws'
@@ -197,10 +248,13 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         static: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Run cargo test
         # Doc-tests fail to link with dynamic build
         # See: https://github.com/rust-lang/cargo/issues/8531
@@ -217,10 +271,13 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Remove NASM
         shell: bash
         run: |
@@ -252,10 +309,13 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Remove NASM
         shell: bash
         run: |
@@ -291,10 +351,13 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Install NASM
         uses: ilammy/setup-nasm@v1
       - name: Remove NASM artifacts
@@ -314,6 +377,44 @@ jobs:
           git add .
           git diff --cached --exit-code HEAD -- aws-lc-sys/builder/prebuilt-nasm/*.txt
 
+  build-clang-cl-discovery-test:
+    if: github.repository_owner == 'aws'
+    name: clang-cl discovery via vswhere
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - name: Build with clang-cl hidden from PATH
+        shell: pwsh
+        run: |
+          # Find clang-cl and remove its directory from PATH so that
+          # the build must discover it via vswhere instead.
+          $clangCl = Get-Command clang-cl -ErrorAction SilentlyContinue
+          if (-not $clangCl) {
+            Write-Error "clang-cl is not present on this runner; cannot test vswhere discovery"
+            exit 1
+          }
+          $clangDir = Split-Path $clangCl.Source
+          Write-Output "Hiding clang-cl directory from PATH: $clangDir"
+          $env:PATH = ($env:PATH -split ';' | Where-Object {
+            $_ -ne $clangDir
+          }) -join ';'
+
+          # Verify clang-cl is no longer reachable via PATH
+          if (Get-Command clang-cl -ErrorAction SilentlyContinue) {
+            Write-Error "clang-cl should not be in PATH after filtering"
+            exit 1
+          }
+          Write-Output "Confirmed: clang-cl is not in PATH"
+
+          # Build — find_clang_cl_in_vs should locate it through vswhere
+          cargo build -p aws-lc-sys --target aarch64-pc-windows-msvc
+
   build-env-external-bindgen-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs - External bindgen test (${{ matrix.os }})
@@ -325,10 +426,13 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Install bindgen-cli
         run: cargo install --locked bindgen-cli
       - name: Remove bindings
@@ -349,12 +453,13 @@ jobs:
       matrix:
         target: [ 'i686-pc-windows-gnu', 'i686-pc-windows-msvc', 'x86_64-pc-windows-msvc', 'x86_64-pc-windows-gnu' ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          target: ${{ matrix.target }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --no-self-update
+          rustup default stable
       - uses: ilammy/setup-nasm@v1
       - name: Install bindgen-cli
         run: cargo install --locked bindgen-cli
@@ -389,11 +494,14 @@ jobs:
           - os: 'macos-15-intel'
             static: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-go@v4
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Run cargo test
@@ -410,10 +518,13 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Run cargo test
         run: cargo test -p aws-lc-rs
       - name: Release build
@@ -445,14 +556,17 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-go@v4
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
-      - uses: seanmiddleditch/gha-setup-ninja@v5
+      - uses: seanmiddleditch/gha-setup-ninja@v6
       - name: Run cargo test
         run: cargo test -p aws-lc-rs --tests --no-default-features --features fips
       - name: Release build
@@ -484,15 +598,18 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
       - if: ${{ matrix.os == 'windows-latest' }}
-        uses: seanmiddleditch/gha-setup-ninja@v5
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-go@v4
+        uses: seanmiddleditch/gha-setup-ninja@v6
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Install bindgen-cli
@@ -516,25 +633,22 @@ jobs:
           - macos-15-intel
           - macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           lfs: true
       - name: Install cargo-careful
         run: cargo install cargo-careful
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: 'rust-src'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component rust-src --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - if: ${{ startsWith(matrix.os, 'macos-') }}
         run: |
           brew install llvm
           echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
           echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Run tests
@@ -553,16 +667,16 @@ jobs:
       LIBCLANG_PATH: '/opt/homebrew/opt/llvm@19/lib'
       LLVM_CONFIG_PATH: '/opt/homebrew/opt/llvm@19/bin/llvm-config'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - run: |
           brew update
           brew uninstall --force llvm
@@ -590,15 +704,18 @@ jobs:
           - os: 'macos-latest'
             fips: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           path: "path has spaces/aws-lc-rs"
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-      - uses: actions/setup-go@v4
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - uses: seanmiddleditch/gha-setup-ninja@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - name: Run cargo test
@@ -622,7 +739,7 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         pregen_src: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           path: "path has spaces/aws-lc-rs"
@@ -632,9 +749,12 @@ jobs:
           rm -rf ./aws-lc-sys/aws-lc/generated-src/*
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: seanmiddleditch/gha-setup-ninja@v5
-      - uses: actions/setup-go@v4
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - uses: seanmiddleditch/gha-setup-ninja@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.18'
       - if: ${{ startsWith( matrix.os, 'macos-') }}
@@ -655,25 +775,39 @@ jobs:
 
   hostile-environment:
     if: github.repository_owner == 'aws'
-    name: Hostile environment
+    name: Hostile environment - ${{ matrix.env_name }}=${{ matrix.env_value }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
-        cflags:
-          - '-O3'
-    env:
-      CFLAGS: ${{ matrix.cflags }}
+        include:
+          - env_name: CFLAGS
+            env_value: '-O3'
+          - env_name: CFLAGS
+            env_value: '-flto=auto -ffat-lto-objects'
+          - env_name: HOST_CFLAGS
+            env_value: '-O2'
+          - env_name: TARGET_CFLAGS
+            env_value: '-O2'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '>=1.18'
       - name: Run tests
-        run: cargo test -p aws-lc-rs --all-targets
+        run: |
+          export ${{ matrix.env_name }}="${{ matrix.env_value }}"
+          cargo test -p aws-lc-rs --all-targets
       - name: Run tests w/ FIPS
-        run: cargo test -p aws-lc-rs --all-targets --features fips
+        run: |
+          export ${{ matrix.env_name }}="${{ matrix.env_value }}"
+          cargo test -p aws-lc-rs --all-targets --features fips
 
   hardened-environment:
     if: github.repository_owner == 'aws'
@@ -693,10 +827,13 @@ jobs:
       CFLAGS: ${{ matrix.cflags }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Run tests
         run: cargo test -p aws-lc-rs --all-targets
 
@@ -705,10 +842,13 @@ jobs:
     name: Symlinked includes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Replace include files with symlinks
         run: |
           # Simulate build environments (Bazel, Nix) where source files in
@@ -739,12 +879,15 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/setup-nasm@v1
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
       - name: Remove other universal bindings
         shell: bash
         run: |
@@ -772,16 +915,13 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-      - uses: dtolnay/rust-toolchain@master
-        id: toolchain
-        with:
-          toolchain: ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-          components: rustc-codegen-cranelift-preview
-      - name: Set Rust toolchain override
-        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component rustc-codegen-cranelift-preview --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
       - name: Remove other universal bindings
         shell: bash
         run: |
