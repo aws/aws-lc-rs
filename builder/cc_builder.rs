@@ -480,7 +480,68 @@ impl CcBuilder {
                 .flag("-fwrapv")
                 .flag("-Wconversion");
         }
+
+        // The jitter-entropy `cc::Build` is constructed fresh and does not
+        // inherit `collect_universal_build_options`, so the path-stripping
+        // flags applied to the main builder don't reach jitter object files.
+        // Apply them directly here so absolute build-time paths don't leak
+        // into jitter `.o` files via DWARF source paths (and, defensively,
+        // `__FILE__` expansions and clang `UBSan` type-descriptor records).
+        // Applied unconditionally because jitter is always compiled at `-O0`
+        // regardless of `OPT_LEVEL`.
+        for option in self.collect_path_reproducibility_options(&je_builder, is_like_msvc) {
+            option.apply_cc(&mut je_builder);
+        }
         je_builder
+    }
+
+    /// Returns flags that prevent absolute build-time paths from being
+    /// embedded in compiled object files via DWARF source paths,
+    /// `__FILE__` expansions, or clang `UBSan` type-descriptor records.
+    /// Returns an empty `Vec` on MSVC, which has no equivalent flags.
+    ///
+    /// Probing is performed against the supplied `cc_build` so the actual
+    /// configured compiler is consulted (important when the jitter builder
+    /// has a different compiler invocation than the main one).
+    fn collect_path_reproducibility_options(
+        &self,
+        cc_build: &cc::Build,
+        is_like_msvc: bool,
+    ) -> Vec<BuildOption> {
+        let mut opts: Vec<BuildOption> = Vec::new();
+        if is_like_msvc {
+            return opts;
+        }
+
+        let path_str = self.manifest_dir.display().to_string();
+
+        // Strip absolute paths from `__FILE__` expansions and DWARF source
+        // paths. `-ffile-prefix-map` is preferred (covers both); fall back to
+        // `-fdebug-prefix-map` for older GCC (< 8) which only rewrites DWARF.
+        let file_flag = format!("-ffile-prefix-map={path_str}=");
+        if cc_build.is_flag_supported(&file_flag).unwrap_or(false) {
+            opts.push(BuildOption::flag(&file_flag));
+        } else {
+            let dbg_flag = format!("-fdebug-prefix-map={path_str}=");
+            if cc_build.is_flag_supported(&dbg_flag).unwrap_or(false) {
+                opts.push(BuildOption::flag(&dbg_flag));
+            }
+        }
+
+        // Clang's `UBSan` emits `SourceLocation` records in `.rodata`
+        // containing the absolute source-file path. `-ffile-prefix-map` does
+        // NOT rewrite those, and at `-O0` they aren't dead-code eliminated.
+        // Strip to basename. No-op on compilers that don't recognize the
+        // flag (GCC, older clang) and on builds without
+        // `-fsanitize=undefined`.
+        if let Some(opt) = BuildOption::flag_if_supported(
+            cc_build,
+            "-fsanitize-undefined-strip-path-components=-1",
+        ) {
+            opts.push(opt);
+        }
+
+        opts
     }
 
     /// The cc crate appends CFLAGS at the end of the compiler command line,
