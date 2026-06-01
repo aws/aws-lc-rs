@@ -368,7 +368,8 @@ impl CcBuilder {
         }
 
         let mut cc_build = self.create_builder();
-        let (_, build_options) = self.collect_universal_build_options(&cc_build, false);
+        let (compiler_is_msvc, build_options) =
+            self.collect_universal_build_options(&cc_build, false);
         for option in build_options {
             option.apply_cc(&mut cc_build);
         }
@@ -378,6 +379,23 @@ impl CcBuilder {
         // See: https://github.com/aws/aws-lc/blob/main/crypto/CMakeLists.txt#L77
         if target_os() == "linux" || target_os().ends_with("bsd") {
             cc_build.asm_flag("-Wa,--noexecstack");
+        }
+
+        // `-ffile-prefix-map` does not reach GNU `as` for `.S` sources, so in
+        // release-style builds mirror it with `-Wa,--debug-prefix-map=...`.
+        // Probe first because clang's integrated assembler rejects the flag,
+        // and skip paths with spaces because `-Wa,...` must stay a bare token.
+        let opt_level = cargo_env("OPT_LEVEL");
+        if (target_os() == "linux" || target_os().ends_with("bsd"))
+            && !compiler_is_msvc
+            && !matches!(opt_level.as_str(), "0" | "1" | "2")
+            && !self.manifest_dir.to_string_lossy().contains(' ')
+        {
+            let path_str = self.manifest_dir.display().to_string();
+            let asm_flag = format!("-Wa,--debug-prefix-map={path_str}=");
+            if cc_build.is_flag_supported(&asm_flag).unwrap_or(false) {
+                cc_build.asm_flag(asm_flag);
+            }
         }
 
         cc_build
@@ -481,28 +499,18 @@ impl CcBuilder {
                 .flag("-Wconversion");
         }
 
-        // The jitter-entropy `cc::Build` is constructed fresh and does not
-        // inherit `collect_universal_build_options`, so the path-stripping
-        // flags applied to the main builder don't reach jitter object files.
-        // Apply them directly here so absolute build-time paths don't leak
-        // into jitter `.o` files via DWARF source paths (and, defensively,
-        // `__FILE__` expansions and clang `UBSan` type-descriptor records).
-        // Applied unconditionally because jitter is always compiled at `-O0`
-        // regardless of `OPT_LEVEL`.
+        // Jitter uses a separate `cc::Build`, so it needs its own path-mapping
+        // flags even when the main builder already has them. Apply them here
+        // unconditionally because jitter is always compiled at `-O0`.
         for option in self.collect_path_reproducibility_options(&je_builder, is_like_msvc) {
             option.apply_cc(&mut je_builder);
         }
         je_builder
     }
 
-    /// Returns flags that prevent absolute build-time paths from being
-    /// embedded in compiled object files via DWARF source paths,
-    /// `__FILE__` expansions, or clang `UBSan` type-descriptor records.
-    /// Returns an empty `Vec` on MSVC, which has no equivalent flags.
-    ///
-    /// Probing is performed against the supplied `cc_build` so the actual
-    /// configured compiler is consulted (important when the jitter builder
-    /// has a different compiler invocation than the main one).
+    /// Returns path-reproducibility flags for the configured compiler.
+    /// These rewrite DWARF source paths and `__FILE__`; clang may also need
+    /// extra stripping for UBSan metadata. Returns an empty `Vec` on MSVC.
     fn collect_path_reproducibility_options(
         &self,
         cc_build: &cc::Build,
@@ -515,9 +523,8 @@ impl CcBuilder {
 
         let path_str = self.manifest_dir.display().to_string();
 
-        // Strip absolute paths from `__FILE__` expansions and DWARF source
-        // paths. `-ffile-prefix-map` is preferred (covers both); fall back to
-        // `-fdebug-prefix-map` for older GCC (< 8) which only rewrites DWARF.
+        // Prefer the flag that rewrites both `__FILE__` and DWARF; older GCC
+        // may only support `-fdebug-prefix-map`.
         let file_flag = format!("-ffile-prefix-map={path_str}=");
         if cc_build.is_flag_supported(&file_flag).unwrap_or(false) {
             opts.push(BuildOption::flag(&file_flag));
@@ -528,12 +535,7 @@ impl CcBuilder {
             }
         }
 
-        // Clang's `UBSan` emits `SourceLocation` records in `.rodata`
-        // containing the absolute source-file path. `-ffile-prefix-map` does
-        // NOT rewrite those, and at `-O0` they aren't dead-code eliminated.
-        // Strip to basename. No-op on compilers that don't recognize the
-        // flag (GCC, older clang) and on builds without
-        // `-fsanitize=undefined`.
+        // Clang UBSan metadata can still carry the full source path at `-O0`.
         if let Some(opt) = BuildOption::flag_if_supported(
             cc_build,
             "-fsanitize-undefined-strip-path-components=-1",
