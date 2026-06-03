@@ -103,7 +103,7 @@ jobs:
           cmake --build build-prefixed --target install -j
 
       - name: Upload install artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: aws-lc-install-${{ matrix.os }}
           path: |
@@ -185,7 +185,7 @@ jobs:
           cmake --build build-prefixed --target install -j
 
       - name: Upload install artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: aws-lc-install-windows-latest
           path: |
