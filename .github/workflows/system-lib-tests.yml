@@ -251,7 +251,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Download AWS-LC install
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: aws-lc-install-${{ matrix.os }}
           path: ${{ github.workspace }}/aws-lc-artifacts
@@ -321,7 +321,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Download AWS-LC install
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: aws-lc-install-windows-latest
           path: ${{ github.workspace }}/aws-lc-artifacts
