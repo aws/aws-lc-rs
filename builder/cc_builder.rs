@@ -881,6 +881,9 @@ impl crate::Builder for CcBuilder {
         println!("cargo:root={}", self.out_dir.display());
         let sources = crate::cc_builder::identify_sources();
         self.build_library(sources.as_slice());
+
+        crate::emit_source_build_metadata(&self.manifest_dir);
+
         Ok(())
     }
 

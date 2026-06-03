@@ -37,6 +37,7 @@ openssl = "0.10.73"
 paste = "1.0.15"
 ring = "0.17.14"
 toml_edit = "0.25.0"
+tempfile = "3"
 
 [profile.bench]
 lto = true
