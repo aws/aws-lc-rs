@@ -75,6 +75,7 @@ const OSSL_CONF_DEFINES: &[&str] = &[
 
 mod cc_builder;
 mod cmake_builder;
+mod fips_probe;
 mod nasm_builder;
 #[cfg(any(feature = "bindgen", feature = "fips"))]
 mod sys_bindgen;
@@ -105,6 +106,12 @@ impl Drop for EnvGuard {
         }
     }
 }
+
+/// Single process-wide lock serializing all tests that mutate env vars. Every
+/// builder test module must share this one; a per-module mutex lets tests race
+/// across modules and observe each other's partially-restored env state.
+#[cfg(test)]
+pub(crate) static ENV_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 pub(crate) fn is_fips_build() -> bool {
     is_fips_crate() || cfg!(feature = "fips")
@@ -382,11 +389,13 @@ fn target_platform_prefix(name: &str) -> String {
     }
 }
 
-pub(crate) struct TestCommandResult {
+pub(crate) struct CommandResult {
     #[allow(dead_code)]
     stderr: Box<str>,
     #[allow(dead_code)]
     stdout: Box<str>,
+    spawn_error: Option<Box<str>>,
+    exit_code: Option<i32>,
     executed: bool,
     status: bool,
 }
@@ -400,28 +409,35 @@ pub(crate) fn is_lto_flag(flag: &str) -> bool {
 }
 
 const MAX_CMD_OUTPUT_SIZE: usize = 1 << 15;
-fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
-    if let Ok(mut result) = Command::new(executable).args(args).output() {
-        result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);
-        let stderr = String::from_utf8(result.stderr)
-            .unwrap_or_default()
-            .into_boxed_str();
-        result.stdout.truncate(MAX_CMD_OUTPUT_SIZE);
-        let stdout = String::from_utf8(result.stdout)
-            .unwrap_or_default()
-            .into_boxed_str();
-        return TestCommandResult {
-            stderr,
-            stdout,
-            executed: true,
-            status: result.status.success(),
-        };
-    }
-    TestCommandResult {
-        stderr: String::new().into_boxed_str(),
-        stdout: String::new().into_boxed_str(),
-        executed: false,
-        status: false,
+fn execute_command(executable: &OsStr, args: &[&OsStr]) -> CommandResult {
+    match Command::new(executable).args(args).output() {
+        Ok(mut result) => {
+            let exit_code = result.status.code();
+            result.stderr.truncate(MAX_CMD_OUTPUT_SIZE);
+            let stderr = String::from_utf8(result.stderr)
+                .unwrap_or_default()
+                .into_boxed_str();
+            result.stdout.truncate(MAX_CMD_OUTPUT_SIZE);
+            let stdout = String::from_utf8(result.stdout)
+                .unwrap_or_default()
+                .into_boxed_str();
+            CommandResult {
+                stderr,
+                stdout,
+                spawn_error: None,
+                exit_code,
+                executed: true,
+                status: result.status.success(),
+            }
+        }
+        Err(err) => CommandResult {
+            stderr: String::new().into_boxed_str(),
+            stdout: String::new().into_boxed_str(),
+            spawn_error: Some(err.to_string().into_boxed_str()),
+            exit_code: None,
+            executed: false,
+            status: false,
+        },
     }
 }
 
@@ -587,16 +603,6 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
         ))
     };
 
-    if is_fips_build() {
-        assert!(
-            get_system_dir_path().is_none(),
-            "System-library linking is not yet supported for FIPS builds.\n\
-             Unset {} to build from source.",
-            crate_env_var_name("SYSTEM_DIR"),
-        );
-        return cmake_builder_builder();
-    }
-
     if let Some(install_dir) = get_system_dir_path() {
         return Box::new(SystemLib::new(
             manifest_dir.to_path_buf(),
@@ -604,6 +610,10 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
             get_system_bindings_path(),
             get_system_skip_version_check(),
         ));
+    }
+
+    if is_fips_build() {
+        return cmake_builder_builder();
     }
 
     let cc_builder_builder = || {
@@ -1081,6 +1091,42 @@ fn canonicalized_manifest_dir() -> PathBuf {
     #[cfg(windows)]
     let manifest_dir = to_short_path(&manifest_dir);
     manifest_dir
+}
+
+/// Links the startup FIPS-mode self-check for the system-library FIPS path.
+pub(crate) fn link_fips_runtime_check(
+    manifest_dir: &Path,
+    include_dir: &Path,
+) -> Result<(), String> {
+    let source = manifest_dir.join("builder").join("fips_runtime_check.c");
+    if !source.is_file() {
+        return Err(format!(
+            "FIPS runtime check source missing: {}",
+            source.display()
+        ));
+    }
+    println!("cargo:rerun-if-changed={}", source.display());
+
+    let mut cc_build = cc::Build::default();
+    cc_build
+        .file(&source)
+        .warnings(false)
+        // We emit the link directives ourselves (with +whole-archive), so
+        // suppress cc-rs's automatic emission.
+        .cargo_metadata(false)
+        // Silence cc-rs's `ar cqD` probe, which Apple's `ar` rejects (and
+        // cc-rs leaks as warnings before retrying). Real compile errors still
+        // surface from the build-time probe in verify_fips_install().
+        .cargo_warnings(false)
+        .include(include_dir);
+
+    let lib_name = "aws_lc_fips_runtime_check";
+    cc_build.compile(lib_name);
+
+    // Keep the constructor object in the final link.
+    println!("cargo:rustc-link-search=native={}", out_dir().display());
+    println!("cargo:rustc-link-lib=static:+whole-archive={lib_name}");
+    Ok(())
 }
 
 #[cfg(not(test))]

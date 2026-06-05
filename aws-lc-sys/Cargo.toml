@@ -50,6 +50,7 @@ include = [
     "/builder/**/*.bat",
     "/builder/**/*.sh",
     "/builder/**/*.obj",
+    "/builder/**/*.c",
     "/Cargo.toml",
     "/generated-include/**",
     "/include/**",

@@ -129,10 +129,6 @@ recommended), set `AWS_LC_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
 
 ### Limitations
 
-System-library FIPS linking (`aws-lc-fips-sys`) is not yet supported.
-When `AWS_LC_FIPS_SYS_SYSTEM_DIR` is set, the build will fail with
-a clear error directing you to build from source instead.
-
 When the `ssl` feature is enabled, the pre-generated bindings file must
 cover both `libcrypto` and `libssl`. AWS-LC's `-DGENERATE_RUST_BINDINGS=ON`
 produces such a combined file by default; if you supply your own bindings

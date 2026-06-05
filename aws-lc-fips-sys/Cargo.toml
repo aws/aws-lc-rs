@@ -47,6 +47,7 @@ include = [
     "/aws-lc/util/godeps.go",
     "/CMakeLists.txt",
     "/builder/**/*.rs",
+    "/builder/**/*.c",
     "/builder/printenv.bat",
     "/Cargo.toml",
     "/generated-include/**",

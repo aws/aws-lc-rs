@@ -2,13 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use super::*;
-use crate::EnvGuard;
-use std::sync::{Mutex, MutexGuard};
-
-/// Mutex to serialize tests that modify environment variables.
-/// Environment variables are process-global state, so tests that modify them
-/// must not run in parallel.
-static ENV_MUTEX: Mutex<()> = Mutex::new(());
+use crate::fips_probe::verify_fips_install;
+use crate::{EnvGuard, ENV_MUTEX};
+use std::sync::MutexGuard;
 
 /// RAII bundle that pairs a set of `EnvGuard`s (which restore env vars on
 /// drop) with the global `ENV_MUTEX` guard. Drop order is field-declaration
@@ -559,4 +555,150 @@ fn test_resolve_bindings_missing_returns_helpful_error() {
     let _env = setup_test_env();
     let err = resolve_bindings(temp.path(), &None).unwrap_err();
     assert!(err.contains("No pre-generated bindings found"), "{err}");
+}
+
+// -------------------------------------------------------------------------
+// FIPS verification (fixture-based integration tests)
+//
+// Skipped unless the matching env vars point at install prefixes containing
+// `include/` and `lib/`.
+// -------------------------------------------------------------------------
+
+/// Env-var name pointing at a real FIPS AWS-LC install (positive fixture).
+const FIXTURE_FIPS_ENV: &str = "AWS_LC_FIPS_SYS_FIXTURE_FIPS";
+/// Env-var name pointing at a real non-FIPS AWS-LC install (negative fixture).
+const FIXTURE_NONFIPS_ENV: &str = "AWS_LC_FIPS_SYS_FIXTURE_NONFIPS";
+
+/// Cargo env vars the FIPS verifier reads, with HOST == TARGET so the runtime
+/// probe path runs. `_temp_out_dir` keeps OUT_DIR alive; `_env` restores the
+/// env vars and releases the global mutex on drop.
+struct FixtureEnvGuard<'a> {
+    _env: TestEnvGuard<'a>,
+    _temp_out_dir: tempfile::TempDir,
+}
+
+fn repo_manifest_dir() -> &'static Path {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("builder-test lives under the repo root")
+}
+
+fn setup_fixture_env() -> FixtureEnvGuard<'static> {
+    // Acquire the env mutex first; layered EnvGuards below take effect under it.
+    let lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let arch = std::env::consts::ARCH;
+    let host_triple = format!("{arch}-fixture-host");
+    let temp_out = tempfile::tempdir().unwrap();
+
+    let vars: Vec<(&str, String)> = vec![
+        ("CARGO_CFG_TARGET_OS", std::env::consts::OS.to_string()),
+        ("CARGO_CFG_TARGET_ENV", String::new()),
+        ("CARGO_CFG_TARGET_FEATURE", String::new()),
+        ("CARGO_CFG_TARGET_ARCH", arch.to_string()),
+        ("CARGO_CFG_TARGET_POINTER_WIDTH", "64".to_string()),
+        ("HOST", host_triple.clone()),
+        ("TARGET", host_triple),
+        ("CARGO_PKG_NAME", "aws-lc-fips-sys".to_string()),
+        ("OUT_DIR", temp_out.path().to_string_lossy().into_owned()),
+        // cc::Build::get_compiler() requires these to derive flags.
+        ("OPT_LEVEL", "0".to_string()),
+        ("DEBUG", "true".to_string()),
+    ];
+    let guards: Vec<EnvGuard> = vars
+        .iter()
+        .map(|(key, val)| EnvGuard::new(key, val.as_str()))
+        .collect();
+
+    FixtureEnvGuard {
+        _env: TestEnvGuard {
+            _guards: guards,
+            _lock: lock,
+        },
+        _temp_out_dir: temp_out,
+    }
+}
+
+/// Resolves `crypto` for an install rooted at `install_dir`, mirroring what
+/// `SystemLib::check_dependencies` does so the FIPS verifier can be invoked
+/// directly without the full builder setup.
+fn resolve_crypto_for_fixture(install_dir: &Path) -> ResolvedLib {
+    for sub in ["lib64", "lib"] {
+        let lib_dir = install_dir.join(sub);
+        if !lib_dir.is_dir() {
+            continue;
+        }
+        if let Ok(lib) = resolve_library(&lib_dir, None, "crypto", CRYPTO_LIB_CANDIDATES) {
+            return lib;
+        }
+    }
+    panic!(
+        "fixture {} does not contain a resolvable libcrypto",
+        install_dir.display()
+    );
+}
+
+#[test]
+fn test_verify_fips_library_accepts_fips_install() {
+    let Ok(install) = std::env::var(FIXTURE_FIPS_ENV) else {
+        eprintln!("skip: {FIXTURE_FIPS_ENV} not set");
+        return;
+    };
+    let install_dir = PathBuf::from(install);
+    assert!(
+        install_dir.is_dir(),
+        "{FIXTURE_FIPS_ENV}={} is not a directory",
+        install_dir.display()
+    );
+
+    let _env = setup_fixture_env();
+    let crypto_lib = resolve_crypto_for_fixture(&install_dir);
+    let lib_dir = crypto_lib
+        .path
+        .parent()
+        .expect("resolved libcrypto has no parent")
+        .to_path_buf();
+    let include_dir = install_dir.join("include");
+
+    verify_fips_install(repo_manifest_dir(), &include_dir, &crypto_lib, &lib_dir).expect(
+        "verify_fips_library should accept a real FIPS install (build-time + runtime probes)",
+    );
+}
+
+#[test]
+fn test_verify_fips_library_rejects_nonfips_install() {
+    let Ok(install) = std::env::var(FIXTURE_NONFIPS_ENV) else {
+        eprintln!("skip: {FIXTURE_NONFIPS_ENV} not set");
+        return;
+    };
+    let install_dir = PathBuf::from(install);
+    assert!(
+        install_dir.is_dir(),
+        "{FIXTURE_NONFIPS_ENV}={} is not a directory",
+        install_dir.display()
+    );
+
+    let _env = setup_fixture_env();
+    let crypto_lib = resolve_crypto_for_fixture(&install_dir);
+    let lib_dir = crypto_lib
+        .path
+        .parent()
+        .expect("resolved libcrypto has no parent")
+        .to_path_buf();
+    let include_dir = install_dir.join("include");
+
+    let err = verify_fips_install(repo_manifest_dir(), &include_dir, &crypto_lib, &lib_dir)
+        .expect_err("verify_fips_library must reject a non-FIPS install");
+    assert!(
+        err.contains("FIPS verification failed"),
+        "unexpected error message: {err}"
+    );
+    // Assert the failure is specifically the FIPS link-probe rejection, not an
+    // earlier stage (missing probe source, unusable compiler) or the runtime
+    // FIPS_mode() check. This is the unforgeable part of the check: a non-FIPS
+    // libcrypto does not export BORINGSSL_integrity_test, so the probe cannot
+    // link against it.
+    assert!(
+        err.contains("linker rejected the probe against"),
+        "error should be the FIPS link-probe rejection: {err}"
+    );
 }
