@@ -88,16 +88,57 @@ impl UnboundKey {
         in_tag: &[u8],
         out_plaintext: &mut [u8],
     ) -> Result<(), Unspecified> {
-        self.check_per_nonce_max_bytes(in_ciphertext.len())?;
+        self.open_separate_gather_impl(
+            nonce,
+            aad,
+            in_ciphertext.as_ptr(),
+            in_ciphertext.len(),
+            in_tag,
+            out_plaintext.as_mut_ptr(),
+            out_plaintext.len(),
+        )
+    }
+
+    #[inline]
+    pub(crate) fn open_in_place_separate_tag(
+        &self,
+        nonce: &Nonce,
+        aad: &[u8],
+        in_tag: &[u8],
+        in_out: &mut [u8],
+    ) -> Result<(), Unspecified> {
+        let ptr = in_out.as_mut_ptr();
+        let len = in_out.len();
+        self.open_separate_gather_impl(nonce, aad, ptr.cast_const(), len, in_tag, ptr, len)
+    }
+
+    /// Common FFI path for `EVP_AEAD_CTX_open_gather`-based opening.
+    ///
+    /// `in_ciphertext` / `out_plaintext` may alias (exactly, i.e. same base
+    /// pointer and length). `EVP_AEAD_CTX_open_gather` explicitly permits
+    /// `out == in`, which is how `open_in_place_separate_tag` works.
+    ///
+    /// Callers must ensure:
+    /// * `in_ciphertext` is valid for reads of `in_ciphertext_len` bytes.
+    /// * `out_plaintext` is valid for writes of `out_plaintext_len` bytes.
+    /// * If the two pointers alias, they must alias exactly (same base, same length).
+    #[inline]
+    #[allow(clippy::too_many_arguments)]
+    fn open_separate_gather_impl(
+        &self,
+        nonce: &Nonce,
+        aad: &[u8],
+        in_ciphertext: *const u8,
+        in_ciphertext_len: usize,
+        in_tag: &[u8],
+        out_plaintext: *mut u8,
+        out_plaintext_len: usize,
+    ) -> Result<(), Unspecified> {
+        self.check_per_nonce_max_bytes(in_ciphertext_len)?;
 
         // ensure that the lengths match
-        {
-            let actual = in_ciphertext.len();
-            let expected = out_plaintext.len();
-
-            if actual != expected {
-                return Err(Unspecified);
-            }
+        if in_ciphertext_len != out_plaintext_len {
+            return Err(Unspecified);
         }
 
         unsafe {
@@ -106,11 +147,11 @@ impl UnboundKey {
 
             if 1 != EVP_AEAD_CTX_open_gather(
                 aead_ctx.as_const_ptr(),
-                out_plaintext.as_mut_ptr(),
+                out_plaintext,
                 nonce.as_ptr(),
                 nonce.len(),
-                in_ciphertext.as_ptr(),
-                in_ciphertext.len(),
+                in_ciphertext,
+                in_ciphertext_len,
                 in_tag.as_ptr(),
                 in_tag.len(),
                 aad.as_ptr(),

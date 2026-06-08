@@ -7,7 +7,7 @@ use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
     get_crate_cflags, is_crt_static, is_fips_build, is_no_asm, is_no_pregenerated_src,
     optional_env, optional_env_optional_crate_target, sanitizer, set_env, set_env_for_target,
-    should_build_jitter_entropy, target_arch, target_env, target_os, test_clang_cl_command,
+    should_build_jitter_entropy, target, target_arch, target_env, target_os, test_clang_cl_command,
     test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::collections::HashMap;
@@ -15,6 +15,8 @@ use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+
+use crate::is_lto_flag;
 
 /// Strip LTO-related flags from a CFLAGS string. LTO flags interfere with the
 /// FIPS delocator pipeline, which compiles C to assembly (`-S`) and processes it
@@ -26,11 +28,7 @@ use std::str::FromStr;
 fn strip_lto_flags(cflags: &str) -> String {
     cflags
         .split_whitespace()
-        .filter(|flag| {
-            !flag.starts_with("-flto")
-                && *flag != "-ffat-lto-objects"
-                && *flag != "-fno-fat-lto-objects"
-        })
+        .filter(|flag| !is_lto_flag(flag))
         .collect::<Vec<_>>()
         .join(" ")
 }
@@ -403,6 +401,14 @@ impl CmakeBuilder {
                 cmake_cfg.define("CMAKE_SYSTEM_PROCESSOR", arch);
             }
         }
+
+        // Workaround for win7-windows-gnu targets: the upstream C source gates the
+        // Win7 compat path with `!defined(__MINGW32__)`. CMakeLists.txt already sets
+        // _WIN32_WINNT for MinGW, but we must force AWSLC_WINDOWS_7_COMPAT until the
+        // upstream fix lands: https://github.com/aws/aws-lc/pull/3239
+        if target().contains("-win7-windows-gnu") {
+            cmake_cfg.cflag("-DAWSLC_WINDOWS_7_COMPAT");
+        }
     }
 
     /// Returns the architecture argument for `vcvarsall.bat`.
@@ -676,17 +682,19 @@ impl crate::Builder for CmakeBuilder {
 
         println!(
             "cargo:rustc-link-lib={}={}",
-            self.output_lib_type.rust_lib_type(),
+            self.output_lib_type.rust_link_lib_kind(),
             Crypto.libname(&self.build_prefix)
         );
 
         if cfg!(feature = "ssl") {
             println!(
                 "cargo:rustc-link-lib={}={}",
-                self.output_lib_type.rust_lib_type(),
+                self.output_lib_type.rust_link_lib_kind(),
                 Ssl.libname(&self.build_prefix)
             );
         }
+
+        crate::emit_source_build_metadata(&self.manifest_dir);
 
         Ok(())
     }

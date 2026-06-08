@@ -20,9 +20,9 @@ mod win_x86_64;
 use crate::nasm_builder::NasmBuilder;
 use crate::{
     cargo_env, emit_warning, env_var_to_bool, execute_command, find_clang_cl, get_crate_cc,
-    get_crate_cflags, get_crate_cxx, is_no_asm, out_dir, requested_c_std, set_env_for_target,
-    should_build_jitter_entropy, target, target_arch, target_env, target_os, target_vendor,
-    CStdRequested, EnvGuard, OutputLibType,
+    get_crate_cflags, get_crate_cxx, is_link_whole_archive, is_no_asm, out_dir, requested_c_std,
+    set_env_for_target, should_build_jitter_entropy, target, target_arch, target_env, target_os,
+    target_vendor, CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -405,21 +405,37 @@ impl CcBuilder {
             build_options.push(BuildOption::define("NOMINMAX", ""));
         }
 
+        // Suppress MSVC CRT deprecation warnings (fopen, getenv, strerror, etc.).
+        // This applies to any compiler targeting the MSVC environment since the
+        // warnings originate from the Windows SDK/CRT headers, not the compiler.
+        if target_env() == "msvc" {
+            build_options.push(BuildOption::define("_CRT_SECURE_NO_WARNINGS", "1"));
+        }
+
         if is_like_msvc {
             build_options.push(BuildOption::define("_HAS_EXCEPTIONS", "0"));
-            build_options.push(BuildOption::define("_CRT_SECURE_NO_WARNINGS", "0"));
             build_options.push(BuildOption::define(
                 "_STL_EXTRA_DISABLED_WARNINGS",
                 "4774 4987",
             ));
+        }
 
-            if target().ends_with("-win7-windows-msvc") {
-                // 0x0601 is the value of `_WIN32_WINNT_WIN7`
-                build_options.push(BuildOption::define("_WIN32_WINNT", "0x0601"));
-                emit_warning(format!(
-                    "Setting _WIN32_WINNT to _WIN32_WINNT_WIN7 for {} target",
-                    target()
-                ));
+        // Target Windows 7 (0x0601 == _WIN32_WINNT_WIN7) for any win7 target triple.
+        if target().contains("-win7-windows-") {
+            build_options.push(BuildOption::define("_WIN32_WINNT", "0x0601"));
+            emit_warning(format!(
+                "Setting _WIN32_WINNT to _WIN32_WINNT_WIN7 for {} target",
+                target()
+            ));
+
+            // Additional workaround for MinGW: the upstream C source
+            // (crypto/rand_extra/windows.c) gates the Win7 compat path
+            // (BCryptGenRandom) with `!defined(__MINGW32__)`, which prevents MinGW
+            // from using it even when `_WIN32_WINNT` targets Win7. We define
+            // AWSLC_WINDOWS_7_COMPAT directly to bypass that guard until the
+            // upstream fix lands: https://github.com/aws/aws-lc/pull/3239
+            if !is_like_msvc {
+                build_options.push(BuildOption::define("AWSLC_WINDOWS_7_COMPAT", ""));
             }
         }
     }
@@ -619,10 +635,31 @@ impl CcBuilder {
         self.run_compiler_checks(&mut cc_build);
 
         self.add_all_files(sources, &mut cc_build);
-        if let Some(prefix) = &self.build_prefix {
-            cc_build.compile(format!("{}_crypto", prefix.as_str()).as_str());
+
+        let lib_name = if let Some(prefix) = &self.build_prefix {
+            format!("{}_crypto", prefix.as_str())
         } else {
-            cc_build.compile("crypto");
+            "crypto".to_string()
+        };
+
+        // When whole-archive linking is requested, suppress cc-rs's automatic
+        // emission of `cargo:rustc-link-{lib,search}=` so we can emit our own
+        // directives with the `+whole-archive` modifier (which cc-rs has no
+        // way to express). cc still performs the actual compilation and
+        // archive creation; only the metadata output is silenced.
+        if is_link_whole_archive() {
+            cc_build.cargo_metadata(false);
+        }
+        cc_build.compile(&lib_name);
+        if is_link_whole_archive() {
+            emit_warning(format!(
+                "AWS_LC_SYS_LINK_WHOLE_ARCHIVE set: linking '{lib_name}' with +whole-archive"
+            ));
+            println!("cargo:rustc-link-search=native={}", self.out_dir.display());
+            println!(
+                "cargo:rustc-link-lib={}={lib_name}",
+                self.output_lib_type.rust_link_lib_kind()
+            );
         }
     }
 
@@ -705,13 +742,17 @@ impl CcBuilder {
             // The logic below assumes a Clang or GCC compiler is in use
             return;
         }
-        let mut memcmp_compile_args = Vec::from(memcmp_compiler.args());
+        // Only pass -O3 to trigger the optimization bug. We intentionally ignore
+        // CFLAGS here — this check is about compiler behavior at high optimization
+        // levels, not about the user's build configuration. Arbitrary CFLAGS can
+        // cause unrelated compile/link failures (e.g., -flto=thin on Windows
+        // requires -fuse-ld=lld). This matches the CMake build which only passes
+        // CMAKE_C_FLAGS_RELEASE (-O3) to check_run().
+        let mut memcmp_compile_args: Vec<std::ffi::OsString> = vec!["-O3".into()];
 
-        // This check invokes the compiled executable and hence needs to link
-        // it. CMake handles this via LDFLAGS but `cc` doesn't. In setups with
-        // custom linker setups this could lead to a mismatch between the
-        // expected and the actually used linker. Explicitly respecting LDFLAGS
-        // here brings us back to parity with CMake.
+        // Respect LDFLAGS for custom linker configurations. This check produces
+        // an executable, so the linker must be reachable. LDFLAGS may contain
+        // necessary flags like library search paths or linker selection.
         if let Ok(ldflags) = std::env::var("LDFLAGS") {
             for flag in ldflags.split_whitespace() {
                 memcmp_compile_args.push(flag.into());
@@ -840,6 +881,9 @@ impl crate::Builder for CcBuilder {
         println!("cargo:root={}", self.out_dir.display());
         let sources = crate::cc_builder::identify_sources();
         self.build_library(sources.as_slice());
+
+        crate::emit_source_build_metadata(&self.manifest_dir);
+
         Ok(())
     }
 

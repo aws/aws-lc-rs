@@ -462,6 +462,31 @@ impl ParsedPublicKey {
         &self.key
     }
 
+    /// Constructs a `ParsedPublicKey` directly from an already-built RSA
+    /// `EVP_PKEY`, skipping the DER-encode / DER-decode round-trip that
+    /// [`parse_public_key`] would otherwise perform. The SubjectPublicKeyInfo
+    /// DER is still marshalled once so that [`AsRef<[u8]>`] on the resulting
+    /// `ParsedPublicKey` continues to return a canonical encoding.
+    ///
+    /// `params` is used as both the public [`VerificationAlgorithm`] and the
+    /// internal `ParsedVerificationAlgorithm`, matching what
+    /// [`parse_public_key`] would assign for RSA inputs.
+    pub(crate) fn from_rsa_evp_pkey(
+        params: &'static RsaParameters,
+        key: LcPtr<EVP_PKEY>,
+    ) -> Result<Self, Unspecified> {
+        let bytes = key
+            .as_const()
+            .marshal_rfc5280_public_key()?
+            .into_boxed_slice();
+        Ok(ParsedPublicKey {
+            algorithm: params,
+            parsed_algorithm: params,
+            key,
+            bytes,
+        })
+    }
+
     /// Uses the public key to verify that `signature` is a valid signature of
     /// `message`.
     ///

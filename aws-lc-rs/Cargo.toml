@@ -1,9 +1,9 @@
 [package]
 name = "aws-lc-rs"
 authors = ["AWS-LibCrypto"]
-version = "1.16.3"
+version = "1.17.0"
 # this crate re-exports whatever sys crate that was selected
-links = "aws_lc_rs_1_16_3_sys"
+links = "aws_lc_rs_1_17_0_sys"
 edition = "2021"
 rust-version = "1.71.0"
 keywords = ["crypto", "cryptography", "security"]
@@ -26,7 +26,7 @@ exclude = [
 
 [package.metadata.docs.rs]
 rustdoc-args = ["--cfg", "aws_lc_rs_docsrs"]
-features = ["unstable", "legacy-3des"]
+features = ["unstable", "legacy-des"]
 
 [features]
 alloc = []
@@ -39,7 +39,7 @@ test_logging = []
 unstable = []
 prebuilt-nasm = ["aws-lc-sys?/prebuilt-nasm"]
 dev-tests-only = []
-legacy-3des = ["aws-lc-sys?/all-bindings"]
+legacy-des = ["aws-lc-sys?/all-bindings"]
 
 # require non-FIPS
 non-fips = ["aws-lc-sys"]
@@ -49,7 +49,7 @@ fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { workspace = true, optional = true }
-aws-lc-sys = { version = "0.40.0", path = "../aws-lc-sys", default-features = false, optional = true }
+aws-lc-sys = { version = "0.41.0", path = "../aws-lc-sys", default-features = false, optional = true }
 aws-lc-fips-sys = { version = "0.13.1", path = "../aws-lc-fips-sys", optional = true }
 zeroize.workspace = true
 

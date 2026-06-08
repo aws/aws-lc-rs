@@ -6,9 +6,11 @@ use aws_lc_rs::cipher::{
     PaddedBlockDecryptingKey, PaddedBlockEncryptingKey, StreamingDecryptingKey,
     StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_192, AES_256,
 };
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 #[allow(deprecated)]
-use aws_lc_rs::cipher::{DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY};
+use aws_lc_rs::cipher::{
+    DES_EDE3_FOR_LEGACY_USE_ONLY, DES_EDE_FOR_LEGACY_USE_ONLY, DES_FOR_LEGACY_USE_ONLY,
+};
 use aws_lc_rs::iv::{FixedLength, IV_LEN_128_BIT};
 use aws_lc_rs::test;
 use aws_lc_rs::test::from_hex;
@@ -1114,7 +1116,7 @@ unpadded_cipher_kat!(
     "00112233445566778899aabbccddee"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 macro_rules! des_streaming_cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, ecb_pkcs7, $key:literal, $plaintext:literal, $ciphertext:literal, $from_step:literal, $to_step:literal) => {
         paste! {
@@ -1177,7 +1179,7 @@ macro_rules! des_streaming_cipher_kat {
     };
 }
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 macro_rules! des_streaming_cipher_rt {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $plaintext:literal, $from_step:literal, $to_step:literal) => {
         paste! {
@@ -1205,7 +1207,7 @@ macro_rules! des_streaming_cipher_rt {
     };
 }
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 macro_rules! des_cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $iv:literal, $plaintext:literal, $ciphertext:literal) => {
         #[test]
@@ -1267,7 +1269,7 @@ macro_rules! des_cipher_kat {
     };
 }
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 macro_rules! des_padded_cipher_kat {
     ($name:ident, $alg:expr, $mode:expr, ecb_pkcs7, $key:literal, $iv:literal, $plaintext:literal, $ciphertext:literal) => {
         #[test]
@@ -1356,7 +1358,7 @@ macro_rules! des_padded_cipher_kat {
     };
 }
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 macro_rules! des_cipher_rt {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $plaintext:literal) => {
         #[test]
@@ -1383,7 +1385,7 @@ macro_rules! des_cipher_rt {
     };
 }
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 macro_rules! des_padded_cipher_rt {
     ($name:ident, $alg:expr, $mode:expr, $constructor:ident, $key:literal, $plaintext:literal) => {
         #[test]
@@ -1411,12 +1413,221 @@ macro_rules! des_padded_cipher_rt {
     };
 }
 
-// The following DES KAT vectors are from the NIST SP 800-38A TDES example values:
+// The following Triple DES (2TDEA/3TDEA) KAT vectors are from the NIST SP 800-38A
+// TDES example values:
 // https://csrc.nist.gov/projects/cryptographic-standards-and-guidelines/example-values
 // The 2TDEA key is the first 16 bytes of the 3TDEA key.
 // PKCS#7-padded variants are not from NIST; their ciphertexts were computed
 // by applying PKCS#7 padding to the NIST plaintext before encryption.
-#[cfg(feature = "legacy-3des")]
+//
+// The single-DES KAT vectors below share the same key prefix, IV and plaintext
+// as the TDES vectors for convenience but are not from NIST (SP 800-38A has no
+// single-DES examples). Their ciphertexts were verified against an independent
+// DES implementation.
+#[cfg(feature = "legacy-des")]
+des_cipher_rt!(
+    test_rt_des_cbc_32_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-des")]
+des_cipher_rt!(
+    test_rt_des_ecb_32_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-des")]
+des_cipher_kat!(
+    test_kat_des_cbc_32_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "2d121f90fcf68631ed788fcfe31a62dffa784891fa512ef928ea856d934257c6"
+);
+
+#[cfg(feature = "legacy-des")]
+des_cipher_kat!(
+    test_kat_des_ecb_32_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51",
+    "7277a00dc1c1c36b2256338b7a9f36ef6e511022cfebec489a4a53a1c7d22e5b"
+);
+
+#[cfg(feature = "legacy-des")]
+des_cipher_kat!(
+    test_kat_des_cbc_31_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc,
+    "0123456789abcdef",
+    "f69f2445df4f9b17",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
+);
+
+#[cfg(feature = "legacy-des")]
+des_cipher_kat!(
+    test_kat_des_ecb_31_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb,
+    "0123456789abcdef",
+    "",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
+);
+
+#[cfg(feature = "legacy-des")]
+des_padded_cipher_rt!(
+    test_rt_des_cbc_pkcs7_31_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::CBC,
+    cbc_pkcs7,
+    "0123456789abcdef",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[cfg(feature = "legacy-des")]
+des_padded_cipher_rt!(
+    test_rt_des_ecb_pkcs7_31_bytes,
+    &DES_FOR_LEGACY_USE_ONLY,
+    OperatingMode::ECB,
+    ecb_pkcs7,
+    "0123456789abcdef",
+    "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
+);
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_weak_keys_rejected() {
+    // The four DES weak keys (with parity bits set).
+    let weak_keys: &[&str] = &[
+        "0101010101010101",
+        "fefefefefefefefe",
+        "e0e0e0e0f1f1f1f1",
+        "1f1f1f1f0e0e0e0e",
+    ];
+    for hex_key in weak_keys {
+        let key_bytes = from_hex(hex_key).unwrap();
+        let unbound_key = UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+        EncryptingKey::cbc(unbound_key)
+            .expect_err(&format!("weak key {hex_key} should be rejected"));
+    }
+}
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_ede_rejects_k1_equals_k2() {
+    // 2TDEA with K1 == K2 degenerates to single DES; must be rejected.
+    let k1 = "0123456789abcdef";
+    let key_bytes = from_hex(&format!("{k1}{k1}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::cbc(unbound).expect_err("2TDEA K1==K2 should be rejected");
+
+    let unbound = UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::ecb(unbound).expect_err("2TDEA K1==K2 should be rejected (ECB)");
+
+    let unbound = UnboundCipherKey::new(&DES_EDE_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    assert!(
+        StreamingEncryptingKey::cbc_pkcs7(unbound).is_err(),
+        "2TDEA K1==K2 should be rejected (streaming CBC)"
+    );
+}
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_ede3_rejects_pairwise_equal_keys() {
+    let k1 = "0123456789abcdef";
+    let k2 = "23456789abcdef01";
+    let k3 = "456789abcdef0123";
+
+    // K1 == K2
+    let key_bytes = from_hex(&format!("{k1}{k1}{k3}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::cbc(unbound).expect_err("3TDEA K1==K2 should be rejected");
+
+    // K2 == K3
+    let key_bytes = from_hex(&format!("{k1}{k2}{k2}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::cbc(unbound).expect_err("3TDEA K2==K3 should be rejected");
+
+    // K1 == K3 (degenerates to 2TDEA)
+    let key_bytes = from_hex(&format!("{k1}{k2}{k1}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::cbc(unbound).expect_err("3TDEA K1==K3 should be rejected");
+
+    // All three equal
+    let key_bytes = from_hex(&format!("{k1}{k1}{k1}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    EncryptingKey::ecb(unbound).expect_err("3TDEA K1==K2==K3 should be rejected");
+
+    // Streaming path
+    let key_bytes = from_hex(&format!("{k1}{k1}{k3}")).unwrap();
+    let unbound = UnboundCipherKey::new(&DES_EDE3_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+    assert!(
+        StreamingEncryptingKey::cbc_pkcs7(unbound).is_err(),
+        "3TDEA K1==K2 should be rejected (streaming)"
+    );
+}
+
+#[test]
+#[cfg(feature = "legacy-des")]
+#[allow(deprecated)]
+fn test_des_unsupported_modes_rejected() {
+    let des_key = from_hex("0123456789abcdef").unwrap();
+    let ede_key = from_hex("0123456789abcdef23456789abcdef01").unwrap();
+    let ede3_key = from_hex("0123456789abcdef23456789abcdef01456789abcdef0123").unwrap();
+
+    for (alg, key_bytes) in [
+        (&DES_FOR_LEGACY_USE_ONLY, des_key.as_slice()),
+        (&DES_EDE_FOR_LEGACY_USE_ONLY, ede_key.as_slice()),
+        (&DES_EDE3_FOR_LEGACY_USE_ONLY, ede3_key.as_slice()),
+    ] {
+        // CTR must be rejected
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        EncryptingKey::ctr(unbound).expect_err("DES + CTR should be rejected");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        DecryptingKey::ctr(unbound).expect_err("DES + CTR should be rejected (decrypt)");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        assert!(
+            StreamingEncryptingKey::ctr(unbound).is_err(),
+            "DES + CTR should be rejected (streaming encrypt)"
+        );
+
+        // CFB128 must be rejected
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        EncryptingKey::cfb128(unbound).expect_err("DES + CFB128 should be rejected");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        DecryptingKey::cfb128(unbound).expect_err("DES + CFB128 should be rejected (decrypt)");
+
+        let unbound = UnboundCipherKey::new(alg, key_bytes).unwrap();
+        assert!(
+            StreamingEncryptingKey::cfb128(unbound).is_err(),
+            "DES + CFB128 should be rejected (streaming encrypt)"
+        );
+    }
+}
+
+#[cfg(feature = "legacy-des")]
 des_cipher_kat!(
     test_kat_des_ede_cbc_32_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1428,7 +1639,7 @@ des_cipher_kat!(
     "7401ce1eab6d003caff84bf47b36cc2154f0238f9ffecd8f6acf118392b45581"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_kat!(
     test_kat_des_ede3_cbc_32_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -1440,7 +1651,7 @@ des_cipher_kat!(
     "2079c3d53aa763e193b79e2569ab5262516570481f25b50f73c0bda85c8e0da7"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_kat!(
     test_kat_des_ede_ecb_32_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1452,7 +1663,7 @@ des_cipher_kat!(
     "06ede3d82884090aff322c19f0518486730576972a666e58b6c88cf107340d3d"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_kat!(
     test_kat_des_ede3_ecb_32_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -1464,7 +1675,7 @@ des_cipher_kat!(
     "714772f339841d34267fcc4bd2949cc3ee11c22a576a303876183f99c0b6de87"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_kat!(
     test_kat_des_ede_cbc_31_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1475,7 +1686,7 @@ des_cipher_kat!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_kat!(
     test_kat_des_ede3_cbc_31_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -1486,7 +1697,7 @@ des_cipher_kat!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_kat!(
     test_kat_des_ede_ecb_31_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1497,7 +1708,7 @@ des_cipher_kat!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_kat!(
     test_kat_des_ede3_ecb_31_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -1508,7 +1719,7 @@ des_cipher_kat!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_rt!(
     test_rt_des_ede_cbc_32_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1518,7 +1729,7 @@ des_cipher_rt!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_rt!(
     test_rt_des_ede3_cbc_32_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -1528,7 +1739,7 @@ des_cipher_rt!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_rt!(
     test_rt_des_ede_ecb_32_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1538,7 +1749,7 @@ des_cipher_rt!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_cipher_rt!(
     test_rt_des_ede3_ecb_32_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -1548,7 +1759,7 @@ des_cipher_rt!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_padded_cipher_kat!(
     test_kat_des_ede_cbc_pkcs7_32_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1560,7 +1771,7 @@ des_padded_cipher_kat!(
     "7401ce1eab6d003caff84bf47b36cc2154f0238f9ffecd8f6acf118392b45581dcb0d2607c9dd8a3"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_padded_cipher_kat!(
     test_kat_des_ede3_cbc_pkcs7_32_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -1572,7 +1783,7 @@ des_padded_cipher_kat!(
     "2079c3d53aa763e193b79e2569ab5262516570481f25b50f73c0bda85c8e0da733830d1a78387028"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_padded_cipher_kat!(
     test_kat_des_ede_ecb_pkcs7_32_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1584,7 +1795,7 @@ des_padded_cipher_kat!(
     "06ede3d82884090aff322c19f0518486730576972a666e58b6c88cf107340d3d5db28100613ac225"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_padded_cipher_kat!(
     test_kat_des_ede3_ecb_pkcs7_32_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -1596,7 +1807,7 @@ des_padded_cipher_kat!(
     "714772f339841d34267fcc4bd2949cc3ee11c22a576a303876183f99c0b6de87832846b52f9e213d"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_padded_cipher_rt!(
     test_rt_des_ede_cbc_pkcs7_31_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1606,7 +1817,7 @@ des_padded_cipher_rt!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_padded_cipher_rt!(
     test_rt_des_ede3_cbc_pkcs7_31_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,
@@ -1616,7 +1827,7 @@ des_padded_cipher_rt!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_padded_cipher_rt!(
     test_rt_des_ede_ecb_pkcs7_31_bytes,
     &DES_EDE_FOR_LEGACY_USE_ONLY,
@@ -1626,7 +1837,7 @@ des_padded_cipher_rt!(
     "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51"
 );
 
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 des_padded_cipher_rt!(
     test_rt_des_ede3_ecb_pkcs7_31_bytes,
     &DES_EDE3_FOR_LEGACY_USE_ONLY,

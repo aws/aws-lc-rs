@@ -5,15 +5,13 @@ edition = "2021"
 publish = false
 description = "Test harness for aws-lc-sys builder modules - does not duplicate code"
 
-# Silence warnings that are expected when compiling builder code as a library.
-# The builder code is designed to run as a build script, so many functions
-# appear "unused" when compiled as a library for testing purposes.
+# This crate exists solely to run unit tests defined in builder/main.rs and its
+# modules. The builder code normally compiles only as a build script, so many
+# functions appear "unused" when compiled as a library here.
 [lints.rust]
 dead_code = "allow"
 unused = "allow"
 
-# Point to the actual builder/main.rs as the library source
-# The #[cfg(test)] module in main.rs will be compiled and run
 [lib]
 name = "builder"
 path = "../builder/main.rs"
@@ -25,6 +23,9 @@ cmake = { workspace = true }
 dunce = { workspace = true }
 fs_extra = { workspace = true }
 bindgen = { workspace = true, optional = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
 
 [features]
 default = []

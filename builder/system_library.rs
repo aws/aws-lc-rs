@@ -1,0 +1,557 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
+//! Support for linking against a system-installed AWS-LC library.
+//!
+//! Activated when `<crate>_SYSTEM_DIR` (e.g. `AWS_LC_SYS_SYSTEM_DIR`) is set.
+//! Two entry points are invoked from the build script: `check_dependencies`
+//! locates and resolves the libraries, and `link()` then validates the
+//! include directory, checks the installed version against the bundled
+//! one, locates the bindings, copies them into `OUT_DIR`, and emits the
+//! appropriate `cargo:` directives.
+
+use crate::{
+    crate_env_var_name, emit_rustc_cfg, emit_warning, get_aws_lc_include_path, is_static_library,
+    out_dir, target_env, target_os, Builder, OutputLibType,
+};
+use std::cell::RefCell;
+use std::path::{Path, PathBuf};
+
+pub(crate) struct SystemLib {
+    pub manifest_dir: PathBuf,
+    pub install_dir: PathBuf,
+    pub bindings_file: Option<PathBuf>,
+    pub skip_version_check: bool,
+    pub crypto_lib: RefCell<Option<ResolvedLib>>,
+    pub ssl_lib: RefCell<Option<ResolvedLib>>,
+}
+
+impl SystemLib {
+    pub(crate) fn new(
+        manifest_dir: PathBuf,
+        install_dir: PathBuf,
+        bindings_file: Option<PathBuf>,
+        skip_version_check: bool,
+    ) -> Self {
+        Self {
+            manifest_dir,
+            install_dir,
+            bindings_file,
+            skip_version_check,
+            crypto_lib: RefCell::new(None),
+            ssl_lib: RefCell::new(None),
+        }
+    }
+}
+
+/// A resolved library file: the name to pass to the linker and its on-disk path.
+pub(crate) struct ResolvedLib {
+    pub lib_type: OutputLibType,
+    /// The bare library name passed to `rustc-link-lib` (e.g. `"crypto"`).
+    pub name: String,
+    /// Full path to the library file (used for `rerun-if-changed`).
+    pub path: PathBuf,
+}
+
+impl Builder for SystemLib {
+    fn check_dependencies(&self) -> Result<(), String> {
+        let mut candidate_lib_dirs: Vec<PathBuf> = Vec::new();
+        // Cargo should always set CARGO_CFG_TARGET_POINTER_WIDTH for build scripts.
+        let target_is_64bit =
+            std::env::var("CARGO_CFG_TARGET_POINTER_WIDTH").is_ok_and(|w| w == "64");
+        if self.install_dir.join("lib64").exists() && target_is_64bit {
+            candidate_lib_dirs.push(self.install_dir.join("lib64"));
+        }
+        candidate_lib_dirs.push(self.install_dir.join("lib"));
+        let requested_lib_type = is_static_library().map(|stc| {
+            if stc {
+                OutputLibType::Static
+            } else {
+                OutputLibType::Dynamic
+            }
+        });
+        // Resolve crypto and (optionally) ssl in the same lib_dir, so we don't
+        // commit to a lib_dir for crypto only to discover ssl is missing there
+        // when it lives in the alternate dir.
+        //
+        // Track the most-informative error we encounter so that when no
+        // candidate lib_dir works we surface the actionable resolver error
+        let mut last_err: Option<String> = None;
+        for lib_dir in &candidate_lib_dirs {
+            let crypto_lib = match resolve_library(
+                lib_dir.as_path(),
+                requested_lib_type,
+                "crypto",
+                CRYPTO_LIB_CANDIDATES,
+            ) {
+                Ok(lib) => lib,
+                Err(e) => {
+                    last_err = Some(e);
+                    continue;
+                }
+            };
+            if cfg!(feature = "ssl") {
+                let ssl_lib = match resolve_library(
+                    lib_dir.as_path(),
+                    requested_lib_type,
+                    "ssl",
+                    SSL_LIB_CANDIDATES,
+                ) {
+                    Ok(lib) => lib,
+                    Err(e) => {
+                        last_err = Some(e);
+                        continue;
+                    }
+                };
+                self.ssl_lib.replace(Some(ssl_lib));
+            }
+            self.crypto_lib.replace(Some(crypto_lib));
+            return Ok(());
+        }
+        Err(last_err.unwrap_or_else(|| {
+            format!(
+                "AWS-LC libcrypto{ssl} not found under {dir}",
+                ssl = if cfg!(feature = "ssl") { "/libssl" } else { "" },
+                dir = self.install_dir.display(),
+            )
+        }))
+    }
+
+    fn build(&self) -> Result<(), String> {
+        self.link()
+    }
+
+    fn name(&self) -> &'static str {
+        "System Library"
+    }
+}
+
+impl SystemLib {
+    /// Emits the `cargo:` directives needed to link against the
+    /// system-installed AWS-LC.
+    pub(crate) fn link(&self) -> Result<(), String> {
+        let crypto_lib = self.crypto_lib.borrow();
+        let crypto_lib = crypto_lib
+            .as_ref()
+            .expect("check_dependencies must run first");
+        let lib_dir = crypto_lib
+            .path
+            .parent()
+            .ok_or("libcrypto parent directory not found")?;
+        let install_dir = &self.install_dir;
+        let include_dir = install_dir.join("include");
+        if !include_dir.exists() {
+            return Err(format!(
+                "Include directory not found: {}\n\
+                 Verify {} points to a valid installation.",
+                include_dir.display(),
+                crate_env_var_name("SYSTEM_DIR"),
+            ));
+        }
+
+        if self.skip_version_check {
+            emit_warning("Skipping AWS-LC version compatibility check.");
+        } else {
+            let version = validate_and_extract_version(&include_dir)?;
+            let required = bundled_awslc_version(self.manifest_dir.as_path());
+            if !version_at_least(&version, &required)? {
+                return Err(format!(
+                    "AWS-LC version mismatch: installed {version} < required {required}.\n\
+                     Please upgrade AWS-LC or unset {} to build from source.\n\
+                     To bypass this check (not recommended), set {}=1",
+                    crate_env_var_name("SYSTEM_DIR"),
+                    crate_env_var_name("SYSTEM_SKIP_VERSION_CHECK"),
+                ));
+            }
+        }
+
+        // AWS-LC's CMake does not rename the library file when BORINGSSL_PREFIX is
+        // set — only the symbols inside — and the pre-generated bindings shipped
+        // alongside the install are already prefix-aware. This is purely a
+        // diagnostic surface for the build log; no link-time handling is required.
+        let prefix_aware = include_dir
+            .join("openssl/boringssl_prefix_symbols.h")
+            .is_file();
+        emit_warning(format!("System AWS-LC: prefix-aware={prefix_aware}"));
+
+        let bindings = resolve_bindings(install_dir, &self.bindings_file)?;
+        std::fs::copy(&bindings, out_dir().join("bindings.rs"))
+            .map_err(|e| format!("Failed to copy bindings from {}: {}", bindings.display(), e))?;
+        emit_warning(format!(
+            "Using pre-generated bindings from: {}",
+            bindings.display()
+        ));
+        emit_rustc_cfg("use_bindgen_pregenerated");
+
+        emit_warning(format!(
+            "Using system-installed AWS-LC from: {}",
+            install_dir.display()
+        ));
+        self.emit_link_directives(crypto_lib, &include_dir, lib_dir);
+        Ok(())
+    }
+
+    fn emit_link_directives(&self, crypto_lib: &ResolvedLib, include_dir: &Path, lib_dir: &Path) {
+        let optional_ssl_lib = self.ssl_lib.borrow();
+        let kind = crypto_lib.lib_type.rust_lib_type();
+        println!("cargo:rustc-link-search=native={}", lib_dir.display());
+        println!("cargo:libcrypto={}", crypto_lib.name);
+        println!("cargo:rustc-link-lib={kind}={}", crypto_lib.name);
+        if let Some(ssl_lib) = optional_ssl_lib.as_ref() {
+            println!("cargo:rustc-link-lib={kind}={}", ssl_lib.name);
+            println!("cargo:libssl={}", ssl_lib.name);
+            println!("cargo:rerun-if-changed={}", ssl_lib.path.display());
+        }
+
+        println!("cargo:include={}", include_dir.display());
+
+        println!("cargo:rerun-if-changed={}", include_dir.display());
+        println!("cargo:rerun-if-changed={}", crypto_lib.path.display());
+    }
+}
+
+// =============================================================================
+// Header validation / version extraction
+// =============================================================================
+
+fn validate_and_extract_version(include_dir: &Path) -> Result<String, String> {
+    let base_h = include_dir.join("openssl").join("base.h");
+    let content = std::fs::read_to_string(&base_h)
+        .map_err(|e| format!("Failed to read {}: {}", base_h.display(), e))?;
+
+    // Verify this is AWS-LC (not OpenSSL or BoringSSL). Tokenize each line so
+    // that an unrelated comment that mentions the macro can't false-match.
+    let has_awslc_marker = content.lines().any(|line| {
+        let mut tokens = line.split_whitespace();
+        tokens.next() == Some("#define") && tokens.next() == Some("OPENSSL_IS_AWSLC")
+    });
+    if !has_awslc_marker {
+        return Err(format!(
+            "Headers at {} are not valid AWS-LC headers.\n\
+             The OPENSSL_IS_AWSLC marker was not found in base.h.\n\
+             Ensure the path contains AWS-LC headers, not OpenSSL or BoringSSL.",
+            include_dir.display()
+        ));
+    }
+
+    extract_version(&base_h, &content)
+}
+
+/// Extracts `AWSLC_VERSION_NUMBER_STRING` from already-loaded `base.h`
+/// content. Used by both the system-install validator and the bundled-version
+/// helper, the latter of which doesn't need the AWS-LC marker check (the
+/// bundled headers are AWS-LC by construction).
+fn extract_version(base_h: &Path, content: &str) -> Result<String, String> {
+    // Match on the first whitespace-separated tokens rather than a bare
+    // `contains`, so that an unrelated line that merely mentions the macro
+    // name (e.g. a comment) cannot false-match.
+    for line in content.lines() {
+        let mut tokens = line.split_whitespace();
+        if tokens.next() != Some("#define") {
+            continue;
+        }
+        if tokens.next() != Some("AWSLC_VERSION_NUMBER_STRING") {
+            continue;
+        }
+        if let Some(value) = tokens.next() {
+            let trimmed = value.trim_matches('"');
+            if trimmed != value && !trimmed.is_empty() {
+                return Ok(trimmed.to_string());
+            }
+        }
+        return Err(format!(
+            "Malformed AWSLC_VERSION_NUMBER_STRING in {}",
+            base_h.display()
+        ));
+    }
+
+    Err(format!(
+        "Could not find AWSLC_VERSION_NUMBER_STRING in {}.",
+        base_h.display()
+    ))
+}
+
+fn version_at_least(installed: &str, required: &str) -> Result<bool, String> {
+    let parse = |s: &str| -> Result<(u32, u32, u32), String> {
+        let parts: Vec<&str> = s.split('.').collect();
+        if parts.len() != 3 {
+            return Err(format!("Invalid version format: {s}"));
+        }
+        Ok((
+            parts[0]
+                .parse()
+                .map_err(|_| format!("Invalid major: {}", parts[0]))?,
+            parts[1]
+                .parse()
+                .map_err(|_| format!("Invalid minor: {}", parts[1]))?,
+            parts[2]
+                .parse()
+                .map_err(|_| format!("Invalid patch: {}", parts[2]))?,
+        ))
+    };
+    Ok(parse(installed)? >= parse(required)?)
+}
+
+/// Reads the bundled (submodule) AWS-LC version, panicking with a helpful
+/// message if it can't. Also emits a `rerun-if-changed` for the bundled
+/// `base.h` so the build re-runs when the submodule moves.
+///
+/// The bundled headers are AWS-LC by construction, so this skips the
+/// `OPENSSL_IS_AWSLC` marker check and uses `extract_version` directly.
+fn bundled_awslc_version(manifest_dir: &Path) -> String {
+    let bundled_include = get_aws_lc_include_path(manifest_dir);
+    let base_h = bundled_include.join("openssl").join("base.h");
+    println!("cargo:rerun-if-changed={}", base_h.display());
+    let content = std::fs::read_to_string(&base_h).unwrap_or_else(|e| {
+        panic!(
+            "Failed to read bundled AWS-LC headers at {}: {e}\n\
+             The system-library linking path reads the bundled AWS-LC headers to enforce\n\
+             a minimum version. If the git submodule is not initialized, either run\n\
+             `git submodule update --init --recursive` or set {}=1 to bypass.",
+            base_h.display(),
+            crate_env_var_name("SYSTEM_SKIP_VERSION_CHECK"),
+        )
+    });
+    extract_version(&base_h, &content).unwrap_or_else(|e| {
+        panic!(
+            "Failed to extract bundled AWS-LC version from {}: {e}",
+            base_h.display()
+        )
+    })
+}
+
+// =============================================================================
+// Library resolution
+// =============================================================================
+
+/// Candidate bare library names for libcrypto, in preference order.
+///
+/// `crypto` covers plain AWS-LC installs (the common case). `crypto-awslc`
+/// covers installs produced with `ENABLE_DIST_PKG=ON` or a non-Apple Unix
+/// shared build that disables `ENABLE_PRE_SONAME_BUILD`, where AWS-LC's
+/// `CMake` appends the `-awslc` SONAME suffix to the library file name.
+///
+/// Note: the `BORINGSSL_PREFIX` symbol-prefixing feature does *not* rename
+/// the library file in upstream AWS-LC's build — it only renames the
+/// symbols inside. Do not try to apply the symbol prefix here.
+const CRYPTO_LIB_CANDIDATES: &[&str] = &["crypto", "crypto-awslc"];
+
+/// Candidate bare library names for libssl, in preference order.
+/// See `CRYPTO_LIB_CANDIDATES` for the rationale.
+const SSL_LIB_CANDIDATES: &[&str] = &["ssl", "ssl-awslc"];
+
+/// Resolves a library, choosing the linkage form based on `requested_lib_type`.
+///
+/// `lib_kind` is the human-readable name used in error messages
+/// (e.g. `"crypto"` or `"ssl"`).
+///
+/// When `requested_lib_type` is `Some`, the user has set `AWS_LC_SYS_STATIC`
+/// explicitly and the requested form is required: if only the other form
+/// is present we return an error rather than silently falling back. When
+/// `requested_lib_type` is `None`, we prefer the form picked by
+/// `OutputLibType::default()` but fall back to whichever form is available.
+fn resolve_library(
+    lib_dir: &Path,
+    requested_lib_type: Option<OutputLibType>,
+    lib_kind: &str,
+    candidate_names: &[&str],
+) -> Result<ResolvedLib, String> {
+    let preferred = requested_lib_type.unwrap_or_default();
+
+    if let Some(found) = find_candidate(lib_dir, preferred, candidate_names) {
+        return Ok(found);
+    }
+
+    // Preferred form not present. Probe the opposite form so we can give
+    // an accurate diagnostic: "wrong form on disk" vs "nothing on disk".
+    let opposite = preferred.opposite();
+    let opposite_match = find_candidate(lib_dir, opposite, candidate_names);
+
+    if requested_lib_type.is_some() {
+        // User explicitly requested a form that isn't available; do not
+        // silently fall back.
+        if opposite_match.is_some() {
+            return Err(format!(
+                "{var} is set to request {requested} linking, but only a {got} {lib_kind} library was found in {}.\n\
+                 Expected one of: {}\n\
+                 Provide the requested form at this location, or unset {var} to allow \
+                 the available form.",
+                lib_dir.display(),
+                expected_lib_filenames(candidate_names, Some(preferred)),
+                requested = preferred.description(),
+                got = opposite.description(),
+                var = crate_env_var_name("STATIC"),
+            ));
+        }
+        return Err(format!(
+            "{var} is set to request {requested} linking, but no {lib_kind} library was found in {}.\n\
+             Expected one of: {}",
+            lib_dir.display(),
+            expected_lib_filenames(candidate_names, Some(preferred)),
+            requested = preferred.description(),
+            var = crate_env_var_name("STATIC"),
+        ));
+    }
+
+    if let Some(found) = opposite_match {
+        let desc = opposite.description();
+        emit_warning(format!(
+            "Only {desc} {lib_kind} library found in system install; using {desc} linking."
+        ));
+        return Ok(found);
+    }
+
+    Err(format!(
+        "No {lib_kind} library found in {}\n\
+         Expected one of: {}",
+        lib_dir.display(),
+        expected_lib_filenames(candidate_names, None),
+    ))
+}
+
+/// Returns the first candidate in `candidates` whose library of the given
+/// `lib_type` exists in `lib_dir`.
+fn find_candidate(
+    lib_dir: &Path,
+    lib_type: OutputLibType,
+    candidates: &[&str],
+) -> Option<ResolvedLib> {
+    candidates.iter().find_map(|name| {
+        probe_lib(lib_dir, name, lib_type).map(|path| ResolvedLib {
+            lib_type,
+            name: (*name).to_string(),
+            path,
+        })
+    })
+}
+
+/// Returns `true` when the target is Windows with the MSVC toolchain.
+fn is_msvc() -> bool {
+    matches!(
+        (target_os().as_str(), target_env().as_str()),
+        ("windows", "msvc")
+    )
+}
+
+/// Probes for a library named `name` of the requested `lib_type` in `lib_dir`.
+///
+/// On MSVC, both static archives and DLL import libraries are named
+/// `{name}.lib`. The two are disambiguated by `msvc_has_sibling_dll`: if
+/// `../bin/{name}.dll` exists, the `.lib` is an import library (dynamic);
+/// otherwise it is a real static archive.
+fn probe_lib(lib_dir: &Path, name: &str, lib_type: OutputLibType) -> Option<PathBuf> {
+    let want_dynamic = matches!(lib_type, OutputLibType::Dynamic);
+    let path = lib_dir.join(lib_filename(name, lib_type));
+    if !path.exists() {
+        return None;
+    }
+    // MSVC: `{name}.lib` could be either a real static archive or a DLL
+    // import library. Classify by sibling-DLL presence.
+    if is_msvc() && msvc_has_sibling_dll(lib_dir, name) != want_dynamic {
+        return None;
+    }
+    Some(path)
+}
+
+/// Returns the platform-specific filename for a library named `base` of the
+/// given linkage type.
+///
+/// On MSVC, both real static archives and DLL import libraries are named
+/// `{base}.lib`, so this function returns that name for either linkage. The
+/// two are disambiguated at probe time inside `probe_lib` via the sibling
+/// `../bin/{base}.dll` check.
+fn lib_filename(base: &str, lib_type: OutputLibType) -> String {
+    if is_msvc() {
+        return format!("{base}.lib");
+    }
+
+    match lib_type {
+        OutputLibType::Static => format!("lib{base}.a"),
+        OutputLibType::Dynamic => match target_os().as_str() {
+            // MinGW: the runtime DLL lives in bin/, not lib_dir. The import
+            // library lib{base}.dll.a is the only artifact in lib_dir.
+            "windows" => format!("lib{base}.dll.a"),
+            "macos" | "ios" | "tvos" => format!("lib{base}.dylib"),
+            _ => format!("lib{base}.so"),
+        },
+    }
+}
+
+/// Comma-separated list of platform-appropriate filenames the resolver looks
+/// for. Used purely for error messages. Note that on MSVC `lib_filename`
+/// produces the same `{base}.lib` for either linkage, so the `filter`
+/// argument doesn't change the resulting list there (deduplicated below).
+fn expected_lib_filenames(candidates: &[&str], filter: Option<OutputLibType>) -> String {
+    let lib_types: &[OutputLibType] = match filter {
+        Some(OutputLibType::Static) => &[OutputLibType::Static],
+        Some(OutputLibType::Dynamic) => &[OutputLibType::Dynamic],
+        None => &[OutputLibType::Static, OutputLibType::Dynamic],
+    };
+    let mut names: Vec<String> = Vec::new();
+    for &lt in lib_types {
+        for base in candidates {
+            let name = lib_filename(base, lt);
+            if !names.contains(&name) {
+                names.push(name);
+            }
+        }
+    }
+    names.join(", ")
+}
+
+/// Returns `true` when a sibling `../bin/{name}.dll` exists relative to
+/// `lib_dir`. `CMake` installs the runtime DLL under `bin/` while the import
+/// library goes to `lib/` on MSVC, so this is the canonical way to detect
+/// that the `.lib` in `lib_dir` is an import library rather than a real
+/// static archive.
+fn msvc_has_sibling_dll(lib_dir: &Path, name: &str) -> bool {
+    lib_dir
+        .parent()
+        .is_some_and(|root| root.join("bin").join(format!("{name}.dll")).exists())
+}
+
+// =============================================================================
+// Bindings resolution
+// =============================================================================
+
+/// Locates pre-generated bindings, either from the explicit override or the
+/// conventional install location populated by AWS-LC's `CMake` install (see
+/// <https://github.com/aws/aws-lc/pull/2999>, AWS-LC v1.68.0+).
+///
+/// A misconfigured override is a hard error rather than a silent fall-through,
+/// since the user clearly asked for those specific bindings.
+fn resolve_bindings(
+    install_dir: &Path,
+    bindings_override: &Option<PathBuf>,
+) -> Result<PathBuf, String> {
+    if let Some(path) = bindings_override {
+        if path.is_file() {
+            return Ok(path.clone());
+        }
+        return Err(format!(
+            "{} does not point to a file: {}",
+            crate_env_var_name("SYSTEM_BINDINGS"),
+            path.display()
+        ));
+    }
+
+    let conventional = install_dir
+        .join("share")
+        .join("rust")
+        .join("aws_lc_bindings.rs");
+    if conventional.is_file() {
+        return Ok(conventional);
+    }
+
+    Err(format!(
+        "No pre-generated bindings found for system-installed AWS-LC.\n\n\
+         To resolve this, either:\n\
+         1. Install AWS-LC with Rust bindings (share/rust/aws_lc_bindings.rs), or\n\
+         2. Set {} to point to a bindings file",
+        crate_env_var_name("SYSTEM_BINDINGS"),
+    ))
+}
+
+#[cfg(test)]
+#[path = "system_library_tests.rs"]
+mod tests;

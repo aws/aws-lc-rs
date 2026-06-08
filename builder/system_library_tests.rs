@@ -1,0 +1,562 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0 OR ISC
+
+use super::*;
+use crate::EnvGuard;
+use std::sync::{Mutex, MutexGuard};
+
+/// Mutex to serialize tests that modify environment variables.
+/// Environment variables are process-global state, so tests that modify them
+/// must not run in parallel.
+static ENV_MUTEX: Mutex<()> = Mutex::new(());
+
+/// RAII bundle that pairs a set of `EnvGuard`s (which restore env vars on
+/// drop) with the global `ENV_MUTEX` guard. Drop order is field-declaration
+/// order, so `_guards` runs first — env vars are restored *before* the lock
+/// is released, preventing another test from observing partially-restored
+/// state.
+struct TestEnvGuard<'a> {
+    _guards: Vec<EnvGuard>,
+    _lock: MutexGuard<'a, ()>,
+}
+
+/// Temporary directory tree that mimics a minimal AWS-LC CMake install.
+///
+/// Provides a builder-style API so tests read as a concise declarative setup
+/// rather than a series of `create_dir_all` / `write` calls:
+///
+/// ```
+/// let fx = FakeInstall::new().touch_lib("crypto.lib").touch_bin("crypto.dll");
+/// ```
+struct FakeInstall {
+    _temp: tempfile::TempDir,
+    root: PathBuf,
+}
+
+impl FakeInstall {
+    fn new() -> Self {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().to_path_buf();
+        Self { _temp: temp, root }
+    }
+
+    /// Returns the `lib/` subdirectory path (does not require it to exist).
+    fn lib_dir(&self) -> PathBuf {
+        self.root.join("lib")
+    }
+
+    /// Creates an empty file in `lib/`, creating `lib/` itself if needed.
+    fn touch_lib(self, filename: &str) -> Self {
+        let dir = self.root.join("lib");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join(filename), b"").unwrap();
+        self
+    }
+
+    /// Creates an empty file in `bin/`, creating `bin/` itself if needed.
+    fn touch_bin(self, filename: &str) -> Self {
+        let dir = self.root.join("bin");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join(filename), b"").unwrap();
+        self
+    }
+
+    /// Creates a subdirectory under root (e.g. `"lib64"`).
+    fn mkdir(self, subdir: &str) -> Self {
+        std::fs::create_dir_all(self.root.join(subdir)).unwrap();
+        self
+    }
+}
+
+/// Sets up Cargo environment variables needed for tests that call target_os(),
+/// target_env(), etc. Returns a guard that restores the original environment
+/// when dropped. The guard also holds a mutex lock to prevent parallel test
+/// execution.
+fn setup_test_env() -> TestEnvGuard<'static> {
+    setup_test_env_with_target(std::env::consts::OS, "")
+}
+
+/// Like `setup_test_env`, but forces specific `CARGO_CFG_TARGET_OS` and
+/// `CARGO_CFG_TARGET_ENV` values so tests can exercise platform-specific
+/// resolution logic (notably MSVC) on any host.
+fn setup_test_env_with_target(os: &str, env: &str) -> TestEnvGuard<'static> {
+    // Acquire lock first to ensure exclusive access to env vars.
+    //
+    // WARNING: Do not call setup_test_env() multiple times in the same
+    // scope/thread. std::sync::Mutex is not reentrant, so a second call from
+    // the same thread will deadlock waiting for the lock held by the first.
+    let lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+
+    let arch = std::env::consts::ARCH;
+    let vars: &[(&str, &str)] = &[
+        ("CARGO_CFG_TARGET_OS", os),
+        ("CARGO_CFG_TARGET_ENV", env),
+        ("CARGO_CFG_TARGET_FEATURE", ""),
+        ("CARGO_CFG_TARGET_ARCH", arch),
+        ("CARGO_CFG_TARGET_POINTER_WIDTH", "64"),
+        ("TARGET", arch),
+        ("CARGO_PKG_NAME", "aws-lc-sys"),
+    ];
+
+    let guards: Vec<EnvGuard> = vars
+        .iter()
+        .map(|(key, val)| EnvGuard::new(key, *val))
+        .collect();
+
+    TestEnvGuard {
+        _guards: guards,
+        _lock: lock,
+    }
+}
+
+// -------------------------------------------------------------------------
+// version_at_least
+// -------------------------------------------------------------------------
+
+#[test]
+fn test_version_at_least_valid() {
+    assert!(version_at_least("1.2.3", "1.2.3").unwrap());
+    assert!(version_at_least("2.0.0", "1.9.9").unwrap());
+    assert!(version_at_least("1.3.0", "1.2.9").unwrap());
+    assert!(version_at_least("1.2.4", "1.2.3").unwrap());
+    assert!(!version_at_least("1.9.9", "2.0.0").unwrap());
+    assert!(!version_at_least("1.2.3", "1.3.0").unwrap());
+    assert!(!version_at_least("1.2.2", "1.2.3").unwrap());
+}
+
+#[test]
+fn test_version_at_least_invalid() {
+    assert!(version_at_least("1.2", "1.2.3").is_err());
+    assert!(version_at_least("1.2.3.4", "1.2.3").is_err());
+    assert!(version_at_least("a.b.c", "1.2.3").is_err());
+    assert!(version_at_least("1.2.3", "").is_err());
+}
+
+// -------------------------------------------------------------------------
+// validate_and_extract_version
+// -------------------------------------------------------------------------
+
+fn write_base_h(dir: &Path, body: &str) -> PathBuf {
+    let openssl_dir = dir.join("openssl");
+    std::fs::create_dir_all(&openssl_dir).unwrap();
+    let base_h = openssl_dir.join("base.h");
+    std::fs::write(&base_h, body).unwrap();
+    base_h
+}
+
+#[test]
+fn test_validate_and_extract_version_valid() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    write_base_h(
+        temp_dir.path(),
+        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"1.35.0\"\n",
+    );
+    assert_eq!(
+        validate_and_extract_version(temp_dir.path()).unwrap(),
+        "1.35.0"
+    );
+}
+
+#[test]
+fn test_validate_and_extract_version_not_awslc() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    write_base_h(temp_dir.path(), "// Not AWS-LC\n");
+    let err = validate_and_extract_version(temp_dir.path()).unwrap_err();
+    assert!(err.contains("not valid AWS-LC headers"), "{err}");
+}
+
+#[test]
+fn test_validate_and_extract_version_ignores_comment_false_match() {
+    // A comment that mentions the macro name shouldn't false-match.
+    let temp_dir = tempfile::tempdir().unwrap();
+    let mut body = String::from("#define OPENSSL_IS_AWSLC 1\n");
+    body.push_str("// AWSLC_VERSION_NUMBER_STRING is defined below\n");
+    body.push_str("#define AWSLC_VERSION_NUMBER_STRING \"2.0.0\"\n");
+    write_base_h(temp_dir.path(), &body);
+    assert_eq!(
+        validate_and_extract_version(temp_dir.path()).unwrap(),
+        "2.0.0"
+    );
+}
+
+#[test]
+fn test_validate_and_extract_version_missing_file() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    assert!(validate_and_extract_version(temp_dir.path()).is_err());
+}
+
+#[test]
+fn test_validate_and_extract_version_missing_version_string() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    write_base_h(temp_dir.path(), "#define OPENSSL_IS_AWSLC 1\n");
+    let err = validate_and_extract_version(temp_dir.path()).unwrap_err();
+    assert!(err.contains("Could not find AWSLC_VERSION_NUMBER_STRING"));
+}
+
+// -------------------------------------------------------------------------
+// resolve_library — no explicit preference
+// -------------------------------------------------------------------------
+
+#[test]
+#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
+fn test_resolve_library_no_explicit_pref() {
+    let _env = setup_test_env();
+
+    // Vanilla `crypto`.
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libcrypto.a"), b"").unwrap();
+    let resolved = resolve_library(temp.path(), None, "crypto", CRYPTO_LIB_CANDIDATES).unwrap();
+    assert!(matches!(resolved.lib_type, OutputLibType::Static));
+    assert_eq!(resolved.name, "crypto");
+    assert_eq!(resolved.path, temp.path().join("libcrypto.a"));
+
+    // ENABLE_DIST_PKG-style `crypto-awslc` is recognized.
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libcrypto-awslc.a"), b"").unwrap();
+    let resolved = resolve_library(temp.path(), None, "crypto", CRYPTO_LIB_CANDIDATES).unwrap();
+    assert_eq!(resolved.name, "crypto-awslc");
+
+    // Plain `crypto` wins over `crypto-awslc` when both are present.
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libcrypto.a"), b"").unwrap();
+    std::fs::write(temp.path().join("libcrypto-awslc.a"), b"").unwrap();
+    let resolved = resolve_library(temp.path(), None, "crypto", CRYPTO_LIB_CANDIDATES).unwrap();
+    assert_eq!(resolved.name, "crypto");
+
+    // A symbol-prefixed filename (`libfoo_crypto.a`) is NOT a match — we
+    // resolve the file by base name, not by symbol prefix.
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libfoo_crypto.a"), b"").unwrap();
+    assert!(resolve_library(temp.path(), None, "crypto", CRYPTO_LIB_CANDIDATES).is_err());
+
+    // Empty directory => not found.
+    let temp = tempfile::tempdir().unwrap();
+    let Err(err) = resolve_library(temp.path(), None, "crypto", CRYPTO_LIB_CANDIDATES) else {
+        panic!("expected Err for empty lib dir");
+    };
+    assert!(err.contains("No crypto library found"), "{err}");
+}
+
+// -------------------------------------------------------------------------
+// resolve_library — explicit AWS_LC_SYS_STATIC=0/1 preference
+// -------------------------------------------------------------------------
+
+#[test]
+#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
+fn test_resolve_library_explicit_pref_satisfied() {
+    let _env = setup_test_env();
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libcrypto.a"), b"").unwrap();
+    #[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "tvos")))]
+    std::fs::write(temp.path().join("libcrypto.so"), b"").unwrap();
+    #[cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos"))]
+    std::fs::write(temp.path().join("libcrypto.dylib"), b"").unwrap();
+
+    let resolved = resolve_library(
+        temp.path(),
+        Some(OutputLibType::Static),
+        "crypto",
+        CRYPTO_LIB_CANDIDATES,
+    )
+    .unwrap();
+    assert!(matches!(resolved.lib_type, OutputLibType::Static));
+
+    let resolved = resolve_library(
+        temp.path(),
+        Some(OutputLibType::Dynamic),
+        "crypto",
+        CRYPTO_LIB_CANDIDATES,
+    )
+    .unwrap();
+    assert!(matches!(resolved.lib_type, OutputLibType::Dynamic));
+}
+
+#[test]
+#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
+fn test_resolve_library_explicit_pref_unsatisfied_is_hard_error() {
+    let _env = setup_test_env();
+
+    // Static requested, only dynamic present.
+    let temp = tempfile::tempdir().unwrap();
+    #[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "tvos")))]
+    std::fs::write(temp.path().join("libcrypto.so"), b"").unwrap();
+    #[cfg(any(target_os = "macos", target_os = "ios", target_os = "tvos"))]
+    std::fs::write(temp.path().join("libcrypto.dylib"), b"").unwrap();
+    let Err(err) = resolve_library(
+        temp.path(),
+        Some(OutputLibType::Static),
+        "crypto",
+        CRYPTO_LIB_CANDIDATES,
+    ) else {
+        panic!("expected Err: static requested, only dynamic present");
+    };
+    assert!(
+        err.contains("only a dynamic crypto library was found"),
+        "{err}"
+    );
+
+    // Dynamic requested, only static present.
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libcrypto.a"), b"").unwrap();
+    let Err(err) = resolve_library(
+        temp.path(),
+        Some(OutputLibType::Dynamic),
+        "crypto",
+        CRYPTO_LIB_CANDIDATES,
+    ) else {
+        panic!("expected Err: dynamic requested, only static present");
+    };
+    assert!(
+        err.contains("only a static crypto library was found"),
+        "{err}"
+    );
+}
+
+#[test]
+#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
+fn test_resolve_library_explicit_pref_neither_form_present() {
+    // When the user explicitly requests a form but the directory contains
+    // *neither* form, the error must say "no library found" — not
+    // "only a {got} library was found", which would be a lie.
+    let _env = setup_test_env();
+    let temp = tempfile::tempdir().unwrap();
+    let Err(err) = resolve_library(
+        temp.path(),
+        Some(OutputLibType::Static),
+        "crypto",
+        CRYPTO_LIB_CANDIDATES,
+    ) else {
+        panic!("expected Err: empty dir");
+    };
+    assert!(
+        err.contains("no crypto library was found"),
+        "expected 'no crypto library was found' phrasing, got: {err}"
+    );
+    assert!(
+        !err.contains("only a"),
+        "must not claim a library was found when none is present: {err}"
+    );
+}
+
+#[test]
+#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
+fn test_resolve_library_explicit_static_satisfied_by_awslc_suffix() {
+    // AWS_LC_SYS_STATIC=1 with only `libcrypto-awslc.a` present should still
+    // succeed via the candidate fallback within the same lib_type.
+    let _env = setup_test_env();
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libcrypto-awslc.a"), b"").unwrap();
+
+    let resolved = resolve_library(
+        temp.path(),
+        Some(OutputLibType::Static),
+        "crypto",
+        CRYPTO_LIB_CANDIDATES,
+    )
+    .unwrap();
+    assert!(matches!(resolved.lib_type, OutputLibType::Static));
+    assert_eq!(resolved.name, "crypto-awslc");
+}
+
+// -------------------------------------------------------------------------
+// resolve_library — SSL candidates
+// -------------------------------------------------------------------------
+
+#[test]
+#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
+fn test_resolve_library_ssl_candidates() {
+    let _env = setup_test_env();
+
+    // Vanilla `ssl`.
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libssl.a"), b"").unwrap();
+    let resolved = resolve_library(temp.path(), None, "ssl", SSL_LIB_CANDIDATES).unwrap();
+    assert!(matches!(resolved.lib_type, OutputLibType::Static));
+    assert_eq!(resolved.name, "ssl");
+
+    // Suffixed `ssl-awslc` is recognized.
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libssl-awslc.a"), b"").unwrap();
+    let resolved = resolve_library(temp.path(), None, "ssl", SSL_LIB_CANDIDATES).unwrap();
+    assert_eq!(resolved.name, "ssl-awslc");
+}
+
+// -------------------------------------------------------------------------
+// probe_lib — Unix
+// -------------------------------------------------------------------------
+
+#[test]
+#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
+fn test_probe_lib_unix() {
+    let _env = setup_test_env();
+
+    let temp = tempfile::tempdir().unwrap();
+    std::fs::write(temp.path().join("libcrypto.a"), b"").unwrap();
+    assert!(probe_lib(temp.path(), "crypto", OutputLibType::Static).is_some());
+
+    #[cfg(target_os = "linux")]
+    {
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::write(temp.path().join("libcrypto.so"), b"").unwrap();
+        assert!(probe_lib(temp.path(), "crypto", OutputLibType::Dynamic).is_some());
+    }
+}
+
+// -------------------------------------------------------------------------
+// MSVC import-library vs static-archive disambiguation
+// -------------------------------------------------------------------------
+
+#[test]
+fn test_msvc_static_archive_without_sibling_dll() {
+    let _env = setup_test_env_with_target("windows", "msvc");
+    let fx = FakeInstall::new().touch_lib("crypto.lib");
+    let lib_dir = fx.lib_dir();
+
+    assert_eq!(
+        probe_lib(&lib_dir, "crypto", OutputLibType::Static),
+        Some(lib_dir.join("crypto.lib")),
+    );
+    assert_eq!(probe_lib(&lib_dir, "crypto", OutputLibType::Dynamic), None);
+}
+
+#[test]
+fn test_msvc_import_library_with_sibling_dll() {
+    let _env = setup_test_env_with_target("windows", "msvc");
+    let fx = FakeInstall::new()
+        .touch_lib("crypto.lib")
+        .touch_bin("crypto.dll");
+    let lib_dir = fx.lib_dir();
+
+    assert_eq!(probe_lib(&lib_dir, "crypto", OutputLibType::Static), None);
+    assert_eq!(
+        probe_lib(&lib_dir, "crypto", OutputLibType::Dynamic),
+        Some(lib_dir.join("crypto.lib")),
+    );
+}
+
+#[test]
+fn test_msvc_resolve_shared_install_honors_dynamic_preference() {
+    let _env = setup_test_env_with_target("windows", "msvc");
+    let fx = FakeInstall::new()
+        .touch_lib("crypto.lib")
+        .touch_bin("crypto.dll");
+    let lib_dir = fx.lib_dir();
+
+    let resolved = resolve_library(&lib_dir, None, "crypto", CRYPTO_LIB_CANDIDATES).unwrap();
+    assert!(matches!(resolved.lib_type, OutputLibType::Dynamic));
+    assert_eq!(resolved.name, "crypto");
+    assert_eq!(resolved.path, lib_dir.join("crypto.lib"));
+}
+
+// -------------------------------------------------------------------------
+// check_dependencies — lib dir resolution (lib64 vs lib)
+// -------------------------------------------------------------------------
+
+#[test]
+fn test_check_dependencies_prefers_lib64_on_64bit() {
+    // setup_test_env forces CARGO_CFG_TARGET_POINTER_WIDTH=64, so the
+    // resolution must pick lib64 regardless of the test binary's actual
+    // host pointer width. Don't switch on `cfg!(target_pointer_width)` here
+    // — that's the host build target, which can disagree with the env var
+    // on a (rare) 32-bit host and would spuriously fail.
+    let _env = setup_test_env();
+    let fx = FakeInstall::new()
+        .mkdir("lib")
+        .mkdir("lib64")
+        .mkdir("include/openssl");
+
+    // Place libcrypto.a (and libssl.a, for the `ssl` feature) in both lib/
+    // and lib64/ so resolution succeeds in either location.
+    std::fs::write(fx.root.join("lib").join("libcrypto.a"), b"").unwrap();
+    std::fs::write(fx.root.join("lib64").join("libcrypto.a"), b"").unwrap();
+    std::fs::write(fx.root.join("lib").join("libssl.a"), b"").unwrap();
+    std::fs::write(fx.root.join("lib64").join("libssl.a"), b"").unwrap();
+
+    let sys = SystemLib::new(
+        PathBuf::from("."),
+        fx.root.clone(),
+        None,
+        true, // skip version check
+    );
+    sys.check_dependencies().unwrap();
+
+    let crypto = sys.crypto_lib.borrow();
+    let crypto = crypto.as_ref().unwrap();
+    assert!(
+        crypto.path.to_str().unwrap().contains("lib64"),
+        "Expected lib64 path, got: {}",
+        crypto.path.display()
+    );
+}
+
+#[test]
+fn test_check_dependencies_missing_lib_dir() {
+    let _env = setup_test_env();
+    let fx = FakeInstall::new(); // no lib dir created
+
+    let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, true);
+    let err = sys.check_dependencies().unwrap_err();
+    // The error is now propagated from `resolve_library` rather than the
+    // generic "AWS-LC libcrypto not found" fallback, so it points at the
+    // specific lib_dir that was probed and lists the expected filenames.
+    assert!(
+        err.contains("No crypto library found"),
+        "expected propagated resolver error, got: {err}"
+    );
+    assert!(
+        err.contains("Expected one of:"),
+        "expected list of probed filenames, got: {err}"
+    );
+}
+
+// -------------------------------------------------------------------------
+// resolve_bindings
+// -------------------------------------------------------------------------
+
+#[test]
+fn test_resolve_bindings_conventional() {
+    let temp = tempfile::tempdir().unwrap();
+    let conventional = temp.path().join("share").join("rust");
+    std::fs::create_dir_all(&conventional).unwrap();
+    let bindings = conventional.join("aws_lc_bindings.rs");
+    std::fs::write(&bindings, b"// bindings").unwrap();
+
+    let _env = setup_test_env();
+    assert_eq!(resolve_bindings(temp.path(), &None).unwrap(), bindings);
+}
+
+#[test]
+fn test_resolve_bindings_override_takes_priority() {
+    let temp = tempfile::tempdir().unwrap();
+    // Conventional bindings exist…
+    let conventional = temp.path().join("share").join("rust");
+    std::fs::create_dir_all(&conventional).unwrap();
+    std::fs::write(conventional.join("aws_lc_bindings.rs"), b"// conventional").unwrap();
+    // …but the override should win.
+    let override_path = temp.path().join("custom-bindings.rs");
+    std::fs::write(&override_path, b"// override").unwrap();
+
+    let _env = setup_test_env();
+    assert_eq!(
+        resolve_bindings(temp.path(), &Some(override_path.clone())).unwrap(),
+        override_path
+    );
+}
+
+#[test]
+fn test_resolve_bindings_override_missing_is_hard_error() {
+    let temp = tempfile::tempdir().unwrap();
+    let bogus = temp.path().join("does-not-exist.rs");
+
+    let _env = setup_test_env();
+    let err = resolve_bindings(temp.path(), &Some(bogus)).unwrap_err();
+    assert!(err.contains("does not point to a file"), "{err}");
+}
+
+#[test]
+fn test_resolve_bindings_missing_returns_helpful_error() {
+    let temp = tempfile::tempdir().unwrap();
+    let _env = setup_test_env();
+    let err = resolve_bindings(temp.path(), &None).unwrap_err();
+    assert!(err.contains("No pre-generated bindings found"), "{err}");
+}

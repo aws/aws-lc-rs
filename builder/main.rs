@@ -19,6 +19,7 @@ use std::{env, fmt};
 
 use cc_builder::CcBuilder;
 use cmake_builder::CmakeBuilder;
+use system_library::SystemLib;
 
 // These should generally match those found in aws-lc/include/openssl/opensslconf.h
 const OSSL_CONF_DEFINES: &[&str] = &[
@@ -77,6 +78,7 @@ mod cmake_builder;
 mod nasm_builder;
 #[cfg(any(feature = "bindgen", feature = "fips"))]
 mod sys_bindgen;
+mod system_library;
 
 pub(crate) struct EnvGuard {
     key: String,
@@ -104,7 +106,7 @@ impl Drop for EnvGuard {
     }
 }
 
-fn is_fips_build() -> bool {
+pub(crate) fn is_fips_build() -> bool {
     is_fips_crate() || cfg!(feature = "fips")
 }
 
@@ -238,7 +240,7 @@ fn env_var_to_bool(name: &str) -> Option<bool> {
     None
 }
 
-fn env_crate_var_to_bool(name: &str) -> Option<bool> {
+pub(crate) fn env_crate_var_to_bool(name: &str) -> Option<bool> {
     if let Some(value) = optional_env_crate_target(name) {
         return parse_to_bool(&value);
     }
@@ -268,7 +270,7 @@ fn parse_to_bool(env_var_value: &str) -> Option<bool> {
 
 impl Default for OutputLibType {
     fn default() -> Self {
-        if let Some(stc_lib) = env_crate_var_to_bool("STATIC") {
+        if let Some(stc_lib) = is_static_library() {
             if stc_lib {
                 OutputLibType::Static
             } else {
@@ -291,6 +293,36 @@ impl OutputLibType {
         match self {
             OutputLibType::Static => "static",
             OutputLibType::Dynamic => "dylib",
+        }
+    }
+
+    /// Returns the `kind` portion of a `cargo:rustc-link-lib=<kind>=<name>`
+    /// directive, including the `+whole-archive` modifier when whole-archive
+    /// linking has been requested for a static library.
+    ///
+    /// Whole-archive linking forces the linker to include every object file
+    /// from the static archive, which surfaces unresolved symbol references
+    /// inside object files that no consumer happens to call. We use it in CI
+    /// to catch missing assembly source files in the `cc_builder` source lists.
+    fn rust_link_lib_kind(self) -> String {
+        if matches!(self, OutputLibType::Static) && is_link_whole_archive() {
+            format!("{}:+whole-archive", self.rust_lib_type())
+        } else {
+            self.rust_lib_type().to_string()
+        }
+    }
+
+    fn opposite(self) -> Self {
+        match self {
+            Self::Static => Self::Dynamic,
+            Self::Dynamic => Self::Static,
+        }
+    }
+
+    fn description(self) -> &'static str {
+        match self {
+            Self::Static => "static",
+            Self::Dynamic => "dynamic",
         }
     }
 }
@@ -359,6 +391,14 @@ pub(crate) struct TestCommandResult {
     status: bool,
 }
 
+/// Returns true if the given flag is an LTO-related compiler flag.
+/// Used to filter out LTO flags from checks/builds where they are unnecessary
+/// or cause toolchain-specific failures (e.g., Clang on Windows requires
+/// `-fuse-ld=lld` for LTO linking).
+pub(crate) fn is_lto_flag(flag: &str) -> bool {
+    flag.starts_with("-flto") || flag == "-ffat-lto-objects" || flag == "-fno-fat-lto-objects"
+}
+
 const MAX_CMD_OUTPUT_SIZE: usize = 1 << 15;
 fn execute_command(executable: &OsStr, args: &[&OsStr]) -> TestCommandResult {
     if let Ok(mut result) = Command::new(executable).args(args).output() {
@@ -414,7 +454,7 @@ fn generate_src_bindings(manifest_dir: &Path, prefix: &Option<String>, src_bindi
     .expect("write bindings");
 }
 
-fn emit_rustc_cfg(cfg: &str) {
+pub(crate) fn emit_rustc_cfg(cfg: &str) {
     let cfg = cfg.replace('-', "_");
     emit_warning(format!("Emitting configuration: cargo:rustc-cfg={cfg}"));
     println!("cargo:rustc-cfg={cfg}");
@@ -455,6 +495,13 @@ fn crate_name() -> String {
     cargo_env("CARGO_PKG_NAME")
 }
 
+/// Formats the full environment variable name for the current crate + given
+/// suffix (e.g. `"SYSTEM_DIR"` → `"AWS_LC_SYS_SYSTEM_DIR"`).
+pub(crate) fn crate_env_var_name(name: &str) -> String {
+    let crate_name = crate_name().to_uppercase().replace('-', "_");
+    format!("{crate_name}_{name}")
+}
+
 fn effective_target() -> String {
     #[allow(unknown_lints)]
     #[allow(static_mut_refs)]
@@ -476,7 +523,7 @@ fn target_underscored() -> String {
     effective_target().replace('-', "_")
 }
 
-fn out_dir() -> PathBuf {
+pub(crate) fn out_dir() -> PathBuf {
     let out = PathBuf::from(cargo_env("OUT_DIR"));
     #[cfg(windows)]
     let out = to_short_path(&out);
@@ -541,7 +588,22 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
     };
 
     if is_fips_build() {
+        assert!(
+            get_system_dir_path().is_none(),
+            "System-library linking is not yet supported for FIPS builds.\n\
+             Unset {} to build from source.",
+            crate_env_var_name("SYSTEM_DIR"),
+        );
         return cmake_builder_builder();
+    }
+
+    if let Some(install_dir) = get_system_dir_path() {
+        return Box::new(SystemLib::new(
+            manifest_dir.to_path_buf(),
+            install_dir,
+            get_system_bindings_path(),
+            get_system_skip_version_check(),
+        ));
     }
 
     let cc_builder_builder = || {
@@ -617,7 +679,11 @@ static mut SYS_NO_JITTER_ENTROPY: Option<bool> = None;
 static mut SYS_NO_U1_BINDINGS: Option<bool> = None;
 static mut SYS_INCLUDES: Option<Vec<PathBuf>> = None;
 static mut SYS_SANITIZER: Option<String> = None;
-
+static mut SYS_LINK_WHOLE_ARCHIVE: bool = false;
+static mut SYS_STATIC: Option<bool> = None;
+static mut SYS_SYSTEM_DIR: Option<PathBuf> = None;
+static mut SYS_SYSTEM_BINDINGS: Option<PathBuf> = None;
+static mut SYS_SYSTEM_SKIP_VERSION_CHECK: bool = false;
 static mut SYS_C_STD: CStdRequested = CStdRequested::None;
 
 fn initialize() {
@@ -637,6 +703,12 @@ fn initialize() {
         SYS_INCLUDES =
             optional_env_crate_target("INCLUDES").map(|v| std::env::split_paths(&v).collect());
         SYS_SANITIZER = optional_env_crate_target("SANITIZER").map(|v| v.to_lowercase());
+        SYS_LINK_WHOLE_ARCHIVE = env_crate_var_to_bool("LINK_WHOLE_ARCHIVE").unwrap_or(false);
+        SYS_STATIC = env_crate_var_to_bool("STATIC");
+        SYS_SYSTEM_DIR = optional_env_crate_target("SYSTEM_DIR").map(PathBuf::from);
+        SYS_SYSTEM_BINDINGS = optional_env_crate_target("SYSTEM_BINDINGS").map(PathBuf::from);
+        SYS_SYSTEM_SKIP_VERSION_CHECK =
+            env_crate_var_to_bool("SYSTEM_SKIP_VERSION_CHECK").unwrap_or(false);
     }
 
     assert!(
@@ -709,6 +781,11 @@ fn initialize() {
 }
 
 fn is_bindgen_required() -> bool {
+    // The system library path uses pre-generated bindings shipped with the
+    // install; bindgen is never needed.
+    if get_system_dir_path().is_some() {
+        return false;
+    }
     is_no_prefix()
         || is_pregenerating_bindings()
         || is_external_bindgen_requested().unwrap_or(false)
@@ -752,12 +829,46 @@ fn is_cmake_builder() -> Option<bool> {
     }
 }
 
+fn is_static_library() -> Option<bool> {
+    unsafe { SYS_STATIC }
+}
+
 fn is_no_pregenerated_src() -> bool {
     unsafe { SYS_NO_PREGENERATED_SRC }
 }
 
+/// Returns true when the build script should ask rustc to link the produced
+/// `libcrypto` archive with the `+whole-archive` modifier. This is intended
+/// for CI use only and is enabled via `AWS_LC_SYS_LINK_WHOLE_ARCHIVE=1`.
+///
+/// `+whole-archive` on its own is necessary but not sufficient to catch
+/// missing internal symbol references: the linker may still strip
+/// unreferenced sections (Linux/LLD: `--gc-sections`; Apple ld:
+/// `-dead_strip`) before final symbol resolution, so unresolved references
+/// inside dead-stripped objects never produce link errors. To make this
+/// flag effective, callers should also set `RUSTFLAGS="-C link-dead-code=yes"`
+/// to tell rustc not to enable section GC. The CI job that exercises this
+/// flag does both.
+fn is_link_whole_archive() -> bool {
+    unsafe { SYS_LINK_WHOLE_ARCHIVE }
+}
+
 fn disable_jitter_entropy() -> Option<bool> {
     unsafe { SYS_NO_JITTER_ENTROPY }
+}
+
+#[allow(static_mut_refs)]
+pub(crate) fn get_system_dir_path() -> Option<PathBuf> {
+    unsafe { SYS_SYSTEM_DIR.clone() }
+}
+
+#[allow(static_mut_refs)]
+pub(crate) fn get_system_bindings_path() -> Option<PathBuf> {
+    unsafe { SYS_SYSTEM_BINDINGS.clone() }
+}
+
+pub(crate) fn get_system_skip_version_check() -> bool {
+    unsafe { SYS_SYSTEM_SKIP_VERSION_CHECK }
 }
 
 /// Returns true if jitter entropy should be built. This is false when the user
@@ -978,6 +1089,7 @@ fn main() {
     prepare_cargo_cfg();
 
     let manifest_dir = canonicalized_manifest_dir();
+
     let prefix = (!is_no_prefix()).then(prefix_string);
 
     let builder = get_builder(&prefix, &manifest_dir, &out_dir());
@@ -1066,9 +1178,29 @@ fn main() {
     );
     builder.build().unwrap();
 
+    // Emitted unconditionally regardless of which builder ran: the OpenSSL
+    // compatibility-conf macro list is a property of AWS-LC's API surface,
+    // not of how it was built or located. The builder/ rerun trigger is
+    // likewise common because every code path runs through this build script.
+    println!("cargo:conf={}", OSSL_CONF_DEFINES.join(","));
+    println!("cargo:rerun-if-changed=builder/");
+}
+
+/// Emits the shared post-build cargo metadata for source-based builders
+/// (`CMake` and CC). This sets up include paths, exports library and
+/// configuration names for downstream crates, and registers rerun triggers.
+pub(crate) fn emit_source_build_metadata(manifest_dir: &Path) {
+    // MinGW win7 targets use the BCryptGenRandom path (AWSLC_WINDOWS_7_COMPAT),
+    // which requires linking against bcrypt. MinGW ignores the MSVC
+    // `#pragma comment(lib, "bcrypt.lib")` in the source, so we link explicitly.
+    // See: https://github.com/aws/aws-lc/pull/3239
+    if target().contains("-win7-windows-gnu") {
+        println!("cargo:rustc-link-lib=bcrypt");
+    }
+
     println!(
         "cargo:include={}",
-        setup_include_paths(&out_dir(), &manifest_dir).display()
+        setup_include_paths(&out_dir(), manifest_dir).display()
     );
 
     // export the artifact names
@@ -1077,9 +1209,6 @@ fn main() {
         println!("cargo:libssl={}_ssl", prefix_string());
     }
 
-    println!("cargo:conf={}", OSSL_CONF_DEFINES.join(","));
-
-    println!("cargo:rerun-if-changed=builder/");
     println!("cargo:rerun-if-changed=aws-lc/");
 }
 
@@ -1458,5 +1587,26 @@ mod tests {
     #[test]
     fn test_version_constant_exists() {
         assert!(!VERSION.is_empty(), "VERSION should not be empty");
+    }
+
+    // -------------------------------------------------------------------------
+    // is_lto_flag tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_is_lto_flag() {
+        assert!(is_lto_flag("-flto"));
+        assert!(is_lto_flag("-flto=thin"));
+        assert!(is_lto_flag("-flto=full"));
+        assert!(is_lto_flag("-flto=auto"));
+        assert!(is_lto_flag("-flto=4"));
+        assert!(is_lto_flag("-ffat-lto-objects"));
+        assert!(is_lto_flag("-fno-fat-lto-objects"));
+
+        assert!(!is_lto_flag("-O3"));
+        assert!(!is_lto_flag("-march=native"));
+        assert!(!is_lto_flag("-ffunction-sections"));
+        assert!(!is_lto_flag("-fdata-sections"));
+        assert!(!is_lto_flag("-fuse-ld=lld"));
     }
 }

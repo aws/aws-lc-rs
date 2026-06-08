@@ -11,7 +11,7 @@ use crate::rand;
 use zeroize::Zeroize;
 
 /// Length of a 64-bit IV in bytes (used by DES/3DES).
-#[cfg(feature = "legacy-3des")]
+#[cfg(feature = "legacy-des")]
 pub(crate) const IV_LEN_64_BIT: usize = 8;
 
 /// Length of a 128-bit IV in bytes.

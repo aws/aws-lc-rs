@@ -396,7 +396,7 @@ fn parse_test_case(
             Some(line) if line.starts_with('[') => {
                 assert!(is_first_line);
                 assert!(line.ends_with(']'));
-                current_section.truncate(0);
+                current_section.clear();
                 current_section.push_str(line);
                 let _: Option<char> = current_section.pop();
                 let _: char = current_section.remove(0);
