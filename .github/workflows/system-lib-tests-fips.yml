@@ -1,0 +1,469 @@
+name: System Library Tests (FIPS)
+# Exercises the system-library FIPS path enabled by
+# AWS_LC_FIPS_SYS_SYSTEM_DIR, including the link probe and runtime check.
+#
+# Builds AWS-LC FIPS from the fips-2025-09-12-lts branch, which supports
+# -DGENERATE_RUST_BINDINGS=ON for system-installed bindings.
+#
+# Two AWS-LC FIPS build constraints drive the matrix:
+#   * A *static* FIPS build is supported only on Linux; macOS and Windows FIPS
+#     builds must be shared (BUILD_SHARED_LIBS=ON).
+#   * Windows FIPS requires a Release build (Debug/RelWithDebInfo unsupported).
+#
+# A prefixed-install lane (BORINGSSL_PREFIX) runs only on Linux, where FIPS
+# can produce the required static archives.
+#
+# The negative (non-FIPS) fixture also builds bindings so failures occur at the
+# FIPS probe, not earlier during bindings resolution.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build AWS-LC FIPS (and a non-FIPS negative fixture) from the LTS branch into
+  # install prefixes the test jobs consume via workflow artifacts.
+  # ---------------------------------------------------------------------------
+  build-fips-unix:
+    if: github.repository_owner == 'aws'
+    name: Build AWS-LC FIPS (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      CC: clang
+      CXX: clang++
+    strategy:
+      fail-fast: false
+      matrix:
+        # Cover both Apple architectures.
+        os: [ ubuntu-latest, macos-15-intel, macos-latest ]
+    steps:
+      - name: Checkout AWS-LC (fips-2025-09-12-lts)
+        uses: actions/checkout@v6
+        with:
+          repository: aws/aws-lc
+          ref: fips-2025-09-12-lts
+          submodules: 'recursive'
+          path: aws-lc-fips-src
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '>=1.18'
+
+      - name: Update CMake (macOS)
+        if: startsWith(matrix.os, 'macos-')
+        run: |
+          brew update
+          brew install --force cmake
+          cmake --version
+
+      - name: Install bindgen-cli
+        run: cargo install --force --locked bindgen-cli
+
+      - name: Select FIPS library form
+        id: form
+        run: |
+          # Static FIPS is Linux-only.
+          if [ "$(uname -s)" = "Linux" ]; then
+            echo "shared=OFF" >> "$GITHUB_OUTPUT"
+          else
+            echo "shared=ON" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and install AWS-LC FIPS (+ Rust bindings)
+        run: |
+          cmake -S aws-lc-fips-src -B build-fips \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DFIPS=1 \
+            -DBUILD_SHARED_LIBS=${{ steps.form.outputs.shared }} \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TOOL=OFF \
+            -DGENERATE_RUST_BINDINGS=ON \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install-fips"
+          cmake --build build-fips --target install -j
+
+      - name: Build and install AWS-LC non-FIPS (+ Rust bindings, negative fixture)
+        run: |
+          cmake -S aws-lc-fips-src -B build-nonfips \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TOOL=OFF \
+            -DGENERATE_RUST_BINDINGS=ON \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install-nonfips"
+          cmake --build build-nonfips --target install -j
+
+      # Linux-only: generate a matching BORINGSSL_PREFIX symbols list from the
+      # unprefixed static archives we just built.
+      - name: Generate prefix symbols list (Linux)
+        if: runner.os == 'Linux'
+        working-directory: aws-lc-fips-src
+        run: |
+          libdir=lib
+          [ -f "${GITHUB_WORKSPACE}/install-fips/lib64/libcrypto.a" ] && libdir=lib64
+          go run util/read_symbols.go \
+            -out "${GITHUB_WORKSPACE}/fips_symbols.txt" \
+            "${GITHUB_WORKSPACE}/install-fips/${libdir}/libcrypto.a" \
+            "${GITHUB_WORKSPACE}/install-fips/${libdir}/libssl.a"
+
+      - name: Build and install AWS-LC FIPS with symbol prefix (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -S aws-lc-fips-src -B build-fips-prefixed \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DFIPS=1 \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TOOL=OFF \
+            -DGENERATE_RUST_BINDINGS=ON \
+            -DBORINGSSL_PREFIX=awslc_fips_sys_test \
+            -DBORINGSSL_PREFIX_SYMBOLS="${PWD}/fips_symbols.txt" \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install-fips-prefixed"
+          cmake --build build-fips-prefixed --target install -j
+
+      - name: Upload install artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aws-lc-fips-install-${{ matrix.os }}
+          path: |
+            install-fips/
+            install-nonfips/
+          retention-days: 1
+
+      - name: Upload prefixed install artifact (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aws-lc-fips-install-prefixed
+          path: install-fips-prefixed/
+          retention-days: 1
+
+  build-fips-windows:
+    if: github.repository_owner == 'aws'
+    name: Build AWS-LC FIPS (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout AWS-LC (fips-2025-09-12-lts)
+        uses: actions/checkout@v6
+        with:
+          repository: aws/aws-lc
+          ref: fips-2025-09-12-lts
+          submodules: 'recursive'
+          path: aws-lc-fips-src
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: ilammy/setup-nasm@v1
+      - uses: seanmiddleditch/gha-setup-ninja@v6
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '>=1.18'
+
+      - name: Install bindgen-cli
+        run: cargo install --force --locked bindgen-cli
+
+      - name: Build and install AWS-LC FIPS (shared, Release, + Rust bindings)
+        shell: bash
+        run: |
+          # Windows FIPS requires a shared Release build.
+          cmake -S aws-lc-fips-src -B build-fips \
+            -GNinja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DFIPS=1 \
+            -DBUILD_SHARED_LIBS=ON \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TOOL=OFF \
+            -DGENERATE_RUST_BINDINGS=ON \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install-fips"
+          cmake --build build-fips --target install -j
+
+      - name: Build and install AWS-LC non-FIPS (static, + Rust bindings, negative fixture)
+        shell: bash
+        run: |
+          cmake -S aws-lc-fips-src -B build-nonfips \
+            -GNinja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TOOL=OFF \
+            -DGENERATE_RUST_BINDINGS=ON \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install-nonfips"
+          cmake --build build-nonfips --target install -j
+
+      - name: Upload install artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aws-lc-fips-install-windows-latest
+          path: |
+            install-fips/
+            install-nonfips/
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Positive path: link aws-lc-fips-sys / aws-lc-rs against the FIPS install and
+  # assert both the system-library path and FIPS verification ran.
+  # ---------------------------------------------------------------------------
+  test-fips-unix:
+    if: github.repository_owner == 'aws'
+    needs: build-fips-unix
+    name: "Test: ${{ matrix.config.name }} (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-15-intel, macos-latest ]
+        config:
+          - name: "aws-lc-fips-sys"
+            cargo_args: "-p aws-lc-fips-sys"
+            cargo_cmd: "build"
+          - name: "aws-lc-rs, fips"
+            cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
+            cargo_cmd: "test"
+    steps:
+      # Do not initialize the aws-lc submodule; that makes fallback-to-source a
+      # hard failure instead of a silent regression. SKIP_VERSION_CHECK is
+      # required because the version check reads submodule headers.
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download AWS-LC FIPS install
+        uses: actions/download-artifact@v4
+        with:
+          name: aws-lc-fips-install-${{ matrix.os }}
+          path: ${{ github.workspace }}/fips-artifacts
+
+      - name: Determine link form
+        id: form
+        run: |
+          # Matches the build job: static on Linux, shared on macOS.
+          if [ "$(uname -s)" = "Linux" ]; then
+            echo "static=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "static=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run cargo ${{ matrix.config.cargo_cmd }}
+        env:
+          AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/fips-artifacts/install-fips
+          AWS_LC_FIPS_SYS_STATIC: ${{ steps.form.outputs.static }}
+          AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK: "1"
+          # A shared install (macOS) must be discoverable at runtime.
+          LD_LIBRARY_PATH: ${{ github.workspace }}/fips-artifacts/install-fips/lib
+          DYLD_LIBRARY_PATH: ${{ github.workspace }}/fips-artifacts/install-fips/lib
+        run: |
+          # Assert that the system-library path and FIPS verification both ran.
+          set -o pipefail
+          cargo ${{ matrix.config.cargo_cmd }} -vv ${{ matrix.config.cargo_args }} 2>&1 | tee cargo.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo.log; then
+            echo '::error::System-library code path was not entered; aws-lc-fips-sys silently fell back to building from source.'
+            exit 1
+          fi
+          if ! grep -q 'FIPS verification' cargo.log; then
+            echo '::error::FIPS verification did not run on the system-library FIPS path.'
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Prefixed-install path (Linux): verify that prefix-aware bindings work and
+  # that the FIPS probe resolves the renamed FIPS-only symbol.
+  # ---------------------------------------------------------------------------
+  test-fips-prefixed-linux:
+    if: github.repository_owner == 'aws'
+    needs: build-fips-unix
+    name: "Test: ${{ matrix.config.name }} (ubuntu-latest)"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "aws-lc-fips-sys, prefixed"
+            cargo_args: "-p aws-lc-fips-sys"
+            cargo_cmd: "build"
+          - name: "aws-lc-rs, fips, prefixed"
+            cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
+            cargo_cmd: "test"
+    steps:
+      # Do not initialize the aws-lc submodule (see test-fips-unix).
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download prefixed AWS-LC FIPS install
+        uses: actions/download-artifact@v4
+        with:
+          name: aws-lc-fips-install-prefixed
+          path: ${{ github.workspace }}/fips-artifacts/install-fips-prefixed
+
+      - name: Sanity-check that the install is actually prefixed
+        run: |
+          # Make sure prefixing actually changed the exported symbol names.
+          libdir=lib
+          [ -f "${GITHUB_WORKSPACE}/fips-artifacts/install-fips-prefixed/lib64/libcrypto.a" ] && libdir=lib64
+          if ! nm "${GITHUB_WORKSPACE}/fips-artifacts/install-fips-prefixed/${libdir}/libcrypto.a" \
+               | grep -q 'awslc_fips_sys_test_'; then
+            echo '::error::Prefixed install does not contain awslc_fips_sys_test_* symbols; prefixing did not take effect.'
+            exit 1
+          fi
+
+      - name: Run cargo ${{ matrix.config.cargo_cmd }}
+        env:
+          AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/fips-artifacts/install-fips-prefixed
+          AWS_LC_FIPS_SYS_STATIC: "1"
+          AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK: "1"
+        run: |
+          set -o pipefail
+          cargo ${{ matrix.config.cargo_cmd }} -vv ${{ matrix.config.cargo_args }} 2>&1 | tee cargo.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo.log; then
+            echo '::error::System-library code path was not entered; aws-lc-fips-sys silently fell back to building from source.'
+            exit 1
+          fi
+          if ! grep -q 'FIPS verification' cargo.log; then
+            echo '::error::FIPS verification did not run on the system-library FIPS path.'
+            exit 1
+          fi
+
+  test-fips-windows:
+    if: github.repository_owner == 'aws'
+    needs: build-fips-windows
+    name: "Test: ${{ matrix.config.name }} (windows-latest)"
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "aws-lc-fips-sys"
+            cargo_args: "-p aws-lc-fips-sys"
+            cargo_cmd: "build"
+          - name: "aws-lc-rs, fips"
+            cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
+            cargo_cmd: "test"
+    steps:
+      # Do not initialize the aws-lc submodule (see test-fips-unix).
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Download AWS-LC FIPS install
+        uses: actions/download-artifact@v4
+        with:
+          name: aws-lc-fips-install-windows-latest
+          path: ${{ github.workspace }}/fips-artifacts
+
+      - name: Run cargo ${{ matrix.config.cargo_cmd }}
+        shell: pwsh
+        env:
+          AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/fips-artifacts/install-fips
+          # Windows FIPS is a shared build.
+          AWS_LC_FIPS_SYS_STATIC: "0"
+          AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK: "1"
+        run: |
+          # Windows needs the DLL on PATH for both the probe and the test binary.
+          $env:Path = "$env:AWS_LC_FIPS_SYS_SYSTEM_DIR\bin;$env:AWS_LC_FIPS_SYS_SYSTEM_DIR\lib;$env:Path"
+
+          $output = cargo ${{ matrix.config.cargo_cmd }} -vv ${{ matrix.config.cargo_args }} 2>&1
+          $exitCode = $LASTEXITCODE
+          $output | Tee-Object -FilePath cargo.log
+          if ($exitCode -ne 0) { exit $exitCode }
+
+          if (-not (Select-String -Path cargo.log -Pattern 'Using system-installed AWS-LC from' -Quiet)) {
+            Write-Error 'System-library code path was not entered; aws-lc-fips-sys silently fell back to building from source.'
+            exit 1
+          }
+          if (-not (Select-String -Path cargo.log -Pattern 'FIPS verification' -Quiet)) {
+            Write-Error 'FIPS verification did not run on the system-library FIPS path.'
+            exit 1
+          }
+
+  # ---------------------------------------------------------------------------
+  # Negative path: building against a non-FIPS install MUST fail at the FIPS
+  # link probe (proving the probe is not trivially satisfied).
+  # ---------------------------------------------------------------------------
+  reject-nonfips-unix:
+    if: github.repository_owner == 'aws'
+    needs: build-fips-unix
+    name: "Reject non-FIPS install (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-15-intel, macos-latest ]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download AWS-LC install
+        uses: actions/download-artifact@v4
+        with:
+          name: aws-lc-fips-install-${{ matrix.os }}
+          path: ${{ github.workspace }}/fips-artifacts
+
+      - name: Assert the FIPS probe rejects a non-FIPS install
+        env:
+          AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/fips-artifacts/install-nonfips
+          AWS_LC_FIPS_SYS_STATIC: "1"
+          AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK: "1"
+        run: |
+          set -o pipefail
+          if cargo build -p aws-lc-fips-sys -vv 2>&1 | tee cargo.log; then
+            echo '::error::Build unexpectedly succeeded against a non-FIPS install.'
+            exit 1
+          fi
+          if ! grep -q 'FIPS verification failed' cargo.log; then
+            echo '::error::Build failed, but not at the FIPS probe rejection (check the failure cause).'
+            exit 1
+          fi
+
+  reject-nonfips-windows:
+    if: github.repository_owner == 'aws'
+    needs: build-fips-windows
+    name: "Reject non-FIPS install (windows-latest)"
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Download AWS-LC install
+        uses: actions/download-artifact@v4
+        with:
+          name: aws-lc-fips-install-windows-latest
+          path: ${{ github.workspace }}/fips-artifacts
+
+      - name: Assert the FIPS probe rejects a non-FIPS install
+        shell: pwsh
+        env:
+          AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/fips-artifacts/install-nonfips
+          AWS_LC_FIPS_SYS_STATIC: "1"
+          AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK: "1"
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $output = cargo build -p aws-lc-fips-sys -vv 2>&1
+          $exitCode = $LASTEXITCODE
+          $output | Tee-Object -FilePath cargo.log
+
+          if ($exitCode -eq 0) {
+            Write-Error 'Build unexpectedly succeeded against a non-FIPS install.'
+            exit 1
+          }
+          if (-not (Select-String -Path cargo.log -Pattern 'FIPS verification failed' -Quiet)) {
+            Write-Error 'Build failed, but not at the FIPS probe rejection (check the failure cause).'
+            exit 1
+          }
+
+          # The failed cargo build is expected in this negative test. Make the
+          # successful assertion explicit so PowerShell/GitHub Actions does not
+          # propagate cargo's non-zero $LASTEXITCODE as the step result.
+          exit 0
