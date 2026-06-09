@@ -57,6 +57,49 @@ jobs:
         working-directory: ./aws-lc-rs-testing
         run: cargo test --all-targets
 
+  # Exercises the `aws-lc-sys` crate's own integration tests under both build
+  # paths with `+whole-archive` linkage **and** dead-code preservation. The
+  # standard `aws-lc-rs-test` job above only links symbols that are reachable
+  # from `aws-lc-rs`'s test code; because of static-archive linker semantics,
+  # missing assembly source files in the cc_builder source lists go undetected
+  # when nothing in `aws-lc-rs` references the affected object file.
+  #
+  # `AWS_LC_SYS_LINK_WHOLE_ARCHIVE=1` forces every member of `libcrypto.a`
+  # into the link (`-l static:+whole-archive=...`), but that alone is not
+  # enough: rustc enables section GC by default (`--gc-sections` on Linux,
+  # `-dead_strip` on Apple), and section GC runs before final symbol
+  # resolution, silently dropping unreferenced objects together with their
+  # unresolved internal references. `RUSTFLAGS=-C link-dead-code=yes` tells
+  # rustc not to enable section GC, so any unresolved symbol inside the
+  # archive becomes a link error. The two settings together provide a
+  # generic guarantee that every internal symbol reference resolves.
+  aws-lc-sys-link-test:
+    if: github.repository_owner == 'aws'
+    name: aws-lc-sys link tests (${{ matrix.os }} / cmake=${{ matrix.cmake }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [ stable ]
+        os: [ ubuntu-latest, macos-15-intel, macos-latest, ubuntu-24.04-arm ]
+        cmake: [ '0', '1' ]
+    env:
+      AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
+      AWS_LC_SYS_LINK_WHOLE_ARCHIVE: '1'
+      RUSTFLAGS: '-C link-dead-code=yes'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+      - uses: dtolnay/rust-toolchain@master
+        id: toolchain
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Set Rust toolchain override
+        run: rustup override set ${{ steps.toolchain.outputs.name }}
+      - name: Run aws-lc-sys sanity tests
+        run: cargo test -p aws-lc-sys --tests
+
   bindgen-test:
     if: github.repository_owner == 'aws'
     name: aws-lc-rs bindgen-tests
@@ -808,6 +851,38 @@ jobs:
         run: |
           export ${{ matrix.env_name }}="${{ matrix.env_value }}"
           cargo test -p aws-lc-rs --all-targets --features fips
+
+  windows-hostile-environment:
+    if: github.repository_owner == 'aws'
+    name: Windows hostile env - CC=${{ matrix.cc }} CFLAGS=${{ matrix.cflags }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cc: clang
+            cxx: clang++
+            cflags: '-flto=thin'
+          - cc: clang
+            cxx: clang++
+            cflags: '-flto=thin -march=native'
+    runs-on: windows-latest
+    env:
+      AWS_LC_SYS_PREBUILT_NASM: 1
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+      - name: Install Rust
+        shell: pwsh
+        run: rustup toolchain install stable --profile minimal
+      - name: Run cargo build
+        shell: pwsh
+        run: |
+          $env:CC='${{ matrix.cc }}'
+          $env:CXX='${{ matrix.cxx }}'
+          $env:AR='llvm-lib'
+          $env:CFLAGS='${{ matrix.cflags }}'
+          cargo build -p aws-lc-rs
 
   hardened-environment:
     if: github.repository_owner == 'aws'
