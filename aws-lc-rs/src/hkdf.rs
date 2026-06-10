@@ -9,6 +9,13 @@
 //!
 //! [RFC 5869]: https://tools.ietf.org/html/rfc5869
 //!
+//! # Encoding `info`
+//!
+//! [`Prk::expand`] concatenates the `info` slices with no separator or length
+//! prefix. Callers must encode structured, variable-length context
+//! unambiguously to avoid deriving the same key from different inputs; see
+//! [`Prk::expand`].
+//!
 //! # Example
 //! ```
 //! use aws_lc_rs::{aead, hkdf, hmac, rand};
@@ -323,6 +330,19 @@ impl Prk {
     /// The [HKDF-Expand] operation.
     ///
     /// [HKDF-Expand]: https://tools.ietf.org/html/rfc5869#section-2.3
+    ///
+    /// The `info` slices are concatenated with no separator or length prefix to
+    /// form the single `info` octet string of [RFC 5869]; passing multiple
+    /// slices is equivalent to passing their concatenation.
+    ///
+    /// Callers are therefore responsible for unambiguously encoding structured
+    /// context. Concatenating variable-length fields directly lets distinct
+    /// inputs collide into the same `info` and derive the same key material
+    /// (e.g. `&[b"AB", b"CD"]` and `&[b"ABC", b"D"]`); use a fixed-width or
+    /// length-prefixed encoding instead. This matches the requirement for AEAD
+    /// associated data ([`crate::aead::Aad`]).
+    ///
+    /// [RFC 5869]: https://tools.ietf.org/html/rfc5869
     ///
     /// # Errors
     /// Returns `error::Unspecified` if:
