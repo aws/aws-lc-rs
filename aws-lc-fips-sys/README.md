@@ -59,6 +59,60 @@ Prebuilt NASM objects are *not* available for this crate.
 `aws-lc-fips-sys` currently relies on the AWS-LC FIPS static build, please see our CI documentation
 at [AWS-LC](https://github.com/aws/aws-lc/tree/main/tests/ci#unit-tests).
 
+## Using a system-installed AWS-LC FIPS module
+
+If you already have an AWS-LC FIPS installation (built and installed with `-DFIPS=1`), you can
+link against it instead of building from the bundled source. Set `AWS_LC_FIPS_SYS_SYSTEM_DIR` to
+the install prefix:
+
+```shell
+AWS_LC_FIPS_SYS_SYSTEM_DIR=/path/to/aws-lc-fips-install cargo build
+```
+
+The install directory must contain `include/openssl/base.h` and a `lib/` (or `lib64/`) directory
+holding `libcrypto` (and `libssl` when the `ssl` feature is enabled). The structure mirrors what
+`aws-lc-sys` accepts — see [aws-lc-sys/README.md](../aws-lc-sys/README.md) for the full layout.
+
+### FIPS verification
+
+The build script links a small C probe against the install's `libcrypto` and calls
+`BORINGSSL_integrity_test()`, which is exported only by FIPS, non-ASAN AWS-LC builds. When the
+build host can run the target binary directly, or through `CARGO_TARGET_<TRIPLE>_RUNNER`, the probe
+also requires `FIPS_mode() != 0`.
+
+A startup check is also linked into dependent binaries. It calls `FIPS_mode()` at process startup
+and aborts if the runtime library is not in FIPS mode, catching issues the build-time probe cannot
+see, such as deployment-host mismatches or shared-library shadowing. If the build-time probe links
+but cannot be launched, the build continues and relies on this startup check.
+
+### Runtime library path (shared installs)
+
+When linking a shared `libcrypto` (the required form for FIPS on macOS and Windows), the install's
+library directory is not embedded in the consumer binary, so the dynamic loader must be able to
+find it at runtime. Otherwise a different `libcrypto` may be loaded — on macOS the build-host's
+`@rpath` install name can resolve to an unrelated library. Make the install discoverable via
+`LD_LIBRARY_PATH`/`DYLD_LIBRARY_PATH=<prefix>/lib`, an rpath in your own binary
+(`RUSTFLAGS="-C link-arg=-Wl,-rpath,<prefix>/lib"`), or a standard system library path. Static
+installs (Linux) are unaffected.
+
+### Bindings
+
+This path requires pre-generated bindings; it does not invoke `bindgen` itself. Either:
+
+1. Install AWS-LC with `-DGENERATE_RUST_BINDINGS=ON` (AWS-LC v1.68.0+) so the conventional
+   `share/rust/aws_lc_bindings.rs` is populated; or
+2. Set `AWS_LC_FIPS_SYS_SYSTEM_BINDINGS=/path/to/bindings.rs` to point at a bindings file you
+   produced separately.
+
+The bindings must match the install's `BORINGSSL_PREFIX` setting. Generate bindings for the exact
+install you intend to link; the bindings shipped inside this crate are for the bundled,
+version-stamped prefix and are not suitable for an arbitrary system install.
+
+### Version compatibility
+
+The version embedded in the installed headers must be greater than or equal to the AWS-LC
+version bundled with this crate. Override with `AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
+
 ## Build Prerequisites
 
 Since this crate builds AWS-LC as a native library, all build tools needed to build AWS-LC are applicable to

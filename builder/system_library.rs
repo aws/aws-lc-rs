@@ -10,9 +10,11 @@
 //! one, locates the bindings, copies them into `OUT_DIR`, and emits the
 //! appropriate `cargo:` directives.
 
+use crate::fips_probe::verify_fips_install;
 use crate::{
-    crate_env_var_name, emit_rustc_cfg, emit_warning, get_aws_lc_include_path, is_static_library,
-    out_dir, target_env, target_os, Builder, OutputLibType,
+    crate_env_var_name, emit_rustc_cfg, emit_warning, get_aws_lc_include_path, is_fips_build,
+    is_static_library, link_fips_runtime_check, out_dir, target_env, target_os, Builder,
+    OutputLibType,
 };
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
@@ -165,15 +167,6 @@ impl SystemLib {
             }
         }
 
-        // AWS-LC's CMake does not rename the library file when BORINGSSL_PREFIX is
-        // set — only the symbols inside — and the pre-generated bindings shipped
-        // alongside the install are already prefix-aware. This is purely a
-        // diagnostic surface for the build log; no link-time handling is required.
-        let prefix_aware = include_dir
-            .join("openssl/boringssl_prefix_symbols.h")
-            .is_file();
-        emit_warning(format!("System AWS-LC: prefix-aware={prefix_aware}"));
-
         let bindings = resolve_bindings(install_dir, &self.bindings_file)?;
         std::fs::copy(&bindings, out_dir().join("bindings.rs"))
             .map_err(|e| format!("Failed to copy bindings from {}: {}", bindings.display(), e))?;
@@ -187,6 +180,15 @@ impl SystemLib {
             "Using system-installed AWS-LC from: {}",
             install_dir.display()
         ));
+
+        if is_fips_build() {
+            // Verify the supplied FIPS library before emitting the libcrypto
+            // link directive, then add the startup self-check.
+            let manifest_dir = self.manifest_dir.as_path();
+            verify_fips_install(manifest_dir, &include_dir, crypto_lib, lib_dir)?;
+            link_fips_runtime_check(manifest_dir, &include_dir)?;
+        }
+
         self.emit_link_directives(crypto_lib, &include_dir, lib_dir);
         Ok(())
     }
