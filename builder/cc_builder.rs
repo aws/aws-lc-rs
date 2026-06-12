@@ -19,10 +19,10 @@ mod win_x86_64;
 
 use crate::nasm_builder::NasmBuilder;
 use crate::{
-    cargo_env, emit_warning, env_var_to_bool, execute_command, find_clang_cl, get_crate_cc,
-    get_crate_cflags, get_crate_cxx, is_link_whole_archive, is_no_asm, out_dir, requested_c_std,
-    set_env_for_target, should_build_jitter_entropy, target, target_arch, target_env, target_os,
-    target_vendor, CStdRequested, EnvGuard, OutputLibType,
+    cargo_env, compiler_is_cl_like, emit_warning, env_var_to_bool, execute_command, find_clang_cl,
+    get_crate_cc, get_crate_cflags, get_crate_cxx, is_link_whole_archive, is_no_asm, out_dir,
+    requested_c_std, set_env_for_target, should_build_jitter_entropy, target, target_arch,
+    target_env, target_is_msvc, target_os, target_vendor, CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -133,9 +133,9 @@ impl BuildOption {
     pub(crate) fn apply_cmake<'a>(
         &self,
         cmake_cfg: &'a mut cmake::Config,
-        is_like_msvc: bool,
+        is_cl_like: bool,
     ) -> &'a mut cmake::Config {
-        if is_like_msvc {
+        if is_cl_like {
             match self {
                 BuildOption::STD(val) => cmake_cfg.define(
                     "CMAKE_C_STANDARD",
@@ -191,10 +191,9 @@ impl CcBuilder {
     ) -> (bool, Vec<BuildOption>) {
         let mut build_options: Vec<BuildOption> = Vec::new();
 
-        let compiler_is_msvc = {
-            let compiler = cc_build.get_compiler();
-            !compiler.is_like_gnu() && !compiler.is_like_clang()
-        };
+        // Flag dialect follows the compiler driver mode, not the target ABI;
+        // see `compiler_is_cl_like`.
+        let is_cl_like = compiler_is_cl_like(&cc_build.get_compiler());
 
         match requested_c_std() {
             CStdRequested::C99 => {
@@ -204,7 +203,7 @@ impl CcBuilder {
                 build_options.push(BuildOption::std("c11"));
             }
             CStdRequested::None => {
-                if !compiler_is_msvc {
+                if !is_cl_like {
                     if self.compiler_check("c11", Vec::<String>::new()) {
                         build_options.push(BuildOption::std("c11"));
                     } else {
@@ -221,7 +220,7 @@ impl CcBuilder {
             set_env_for_target("CXX", &cxx);
         }
 
-        if target_arch() == "x86" && !compiler_is_msvc {
+        if target_arch() == "x86" && !is_cl_like {
             if let Some(option) = BuildOption::flag_if_supported(cc_build, "-msse2") {
                 build_options.push(option);
             }
@@ -245,7 +244,7 @@ impl CcBuilder {
                     !is_no_asm(),
                     "AWS_LC_SYS_NO_ASM only allowed for debug builds!"
                 );
-                if !compiler_is_msvc {
+                if !is_cl_like {
                     let path_str = if do_quote_paths {
                         format!("\"{}\"", self.manifest_dir.display())
                     } else {
@@ -283,16 +282,15 @@ impl CcBuilder {
                 build_options.push(option);
             }
         }
-        (compiler_is_msvc, build_options)
+        (is_cl_like, build_options)
     }
 
-    pub fn collect_cc_only_build_options(&self, cc_build: &cc::Build) -> Vec<BuildOption> {
+    pub fn collect_cc_only_build_options(&self) -> Vec<BuildOption> {
         let mut build_options: Vec<BuildOption> = Vec::new();
-        let is_like_msvc = {
-            let compiler = cc_build.get_compiler();
-            !compiler.is_like_gnu() && !compiler.is_like_clang()
-        };
-        if !is_like_msvc {
+        // GNU-only flags below are gated on the compiler driver mode, not the
+        // target ABI; see `compiler_is_cl_like`.
+        let is_cl_like = compiler_is_cl_like(&cc::Build::new().get_compiler());
+        if !is_cl_like {
             build_options.push(BuildOption::flag("-Wno-unused-parameter"));
             build_options.push(BuildOption::flag("-pthread"));
             if target_os() == "linux" {
@@ -306,7 +304,7 @@ impl CcBuilder {
             build_options.push(BuildOption::define("DISABLE_CPU_JITTER_ENTROPY", "1"));
         }
         self.add_includes(&mut build_options);
-        self.add_defines(&mut build_options, is_like_msvc);
+        self.add_defines(&mut build_options, is_cl_like);
 
         build_options
     }
@@ -355,7 +353,7 @@ impl CcBuilder {
 
     pub fn create_builder(&self) -> cc::Build {
         let mut cc_build = cc::Build::new();
-        let build_options = self.collect_cc_only_build_options(&cc_build);
+        let build_options = self.collect_cc_only_build_options();
         for option in build_options {
             option.apply_cc(&mut cc_build);
         }
@@ -414,7 +412,7 @@ impl CcBuilder {
     }
 
     #[allow(clippy::unused_self)]
-    fn add_defines(&self, build_options: &mut Vec<BuildOption>, is_like_msvc: bool) {
+    fn add_defines(&self, build_options: &mut Vec<BuildOption>, is_cl_like: bool) {
         // WIN32_LEAN_AND_MEAN and NOMINMAX are needed for all Windows targets to avoid
         // header type definition errors, no matter the compiler. This matches the behavior
         // in aws-lc/CMakeLists.txt, which defines these for all WIN32 targets
@@ -425,12 +423,14 @@ impl CcBuilder {
 
         // Suppress MSVC CRT deprecation warnings (fopen, getenv, strerror, etc.).
         // This applies to any compiler targeting the MSVC environment since the
-        // warnings originate from the Windows SDK/CRT headers, not the compiler.
-        if target_env() == "msvc" {
+        // warnings originate from the Windows SDK/CRT headers, not the compiler,
+        // so it is keyed on the target ABI rather than the driver mode.
+        if target_is_msvc() {
             build_options.push(BuildOption::define("_CRT_SECURE_NO_WARNINGS", "1"));
         }
 
-        if is_like_msvc {
+        // MSVC STL macros: only meaningful when compiling in cl driver mode.
+        if is_cl_like {
             build_options.push(BuildOption::define("_HAS_EXCEPTIONS", "0"));
             build_options.push(BuildOption::define(
                 "_STL_EXTRA_DISABLED_WARNINGS",
@@ -452,17 +452,17 @@ impl CcBuilder {
             // from using it even when `_WIN32_WINNT` targets Win7. We define
             // AWSLC_WINDOWS_7_COMPAT directly to bypass that guard until the
             // upstream fix lands: https://github.com/aws/aws-lc/pull/3239
-            if !is_like_msvc {
+            if !is_cl_like {
                 build_options.push(BuildOption::define("AWSLC_WINDOWS_7_COMPAT", ""));
             }
         }
     }
 
-    fn prepare_jitter_entropy_builder(&self, is_like_msvc: bool) -> cc::Build {
+    fn prepare_jitter_entropy_builder(&self, is_msvc_target: bool) -> cc::Build {
         // See: https://github.com/aws/aws-lc/blob/2294510cd0ecb2d5946461e3dbb038363b7b94cb/third_party/jitterentropy/CMakeLists.txt#L19-L35
         let mut build_options: Vec<BuildOption> = Vec::new();
         self.add_includes(&mut build_options);
-        self.add_defines(&mut build_options, is_like_msvc);
+        self.add_defines(&mut build_options, is_msvc_target);
 
         let mut je_builder = cc::Build::new();
         for option in build_options {
@@ -478,7 +478,7 @@ impl CcBuilder {
         if target_os() != "windows" {
             je_builder.pic(true);
         }
-        if is_like_msvc {
+        if is_msvc_target {
             je_builder.flag("-Od").flag("-W4").flag("-DYNAMICBASE");
         } else {
             je_builder
@@ -556,7 +556,7 @@ impl CcBuilder {
     ///   1. `CFLAGS_{target}` (e.g. `CFLAGS_x86_64_unknown_freebsd`)
     ///   2. `HOST_CFLAGS` or `TARGET_CFLAGS`
     ///   3. `CFLAGS`
-    fn jitter_entropy_cflags_guards(is_like_msvc: bool) -> Vec<EnvGuard> {
+    fn jitter_entropy_cflags_guards(is_cl_like: bool) -> Vec<EnvGuard> {
         let target_u = target().to_lowercase().replace('-', "_");
 
         let cflags_env_names: Vec<String> = vec![
@@ -572,7 +572,7 @@ impl CcBuilder {
                 .filter(|flag| !flag.starts_with("-O") && !flag.starts_with("/O"))
                 .collect::<Vec<_>>()
                 .join(" ");
-            if is_like_msvc {
+            if is_cl_like {
                 format!("{filtered} -Od").trim().to_string()
             } else {
                 format!("{filtered} -O0 -U_FORTIFY_SOURCE")
@@ -591,13 +591,11 @@ impl CcBuilder {
     }
 
     fn add_all_files(&self, sources: &[&'static str], cc_build: &mut cc::Build) {
-        let compiler = cc_build.get_compiler();
+        // Force-include flag syntax follows the compiler driver mode, not the
+        // target ABI; see `compiler_is_cl_like`.
+        let is_cl_like = compiler_is_cl_like(&cc_build.get_compiler());
 
-        let force_include_option = if compiler.is_like_msvc() {
-            "/FI"
-        } else {
-            "--include="
-        };
+        let force_include_option = if is_cl_like { "/FI" } else { "--include=" };
         // s2n-bignum is compiled separately due to needing extra flags
         let mut s2n_bignum_builder = cc_build.clone();
         s2n_bignum_builder.flag(format!(
@@ -612,8 +610,7 @@ impl CcBuilder {
         s2n_bignum_builder.define("S2N_BN_HIDE_SYMBOLS", "1");
 
         // CPU Jitter Entropy is compiled separately due to needing specific flags
-        let mut jitter_entropy_builder =
-            self.prepare_jitter_entropy_builder(compiler.is_like_msvc());
+        let mut jitter_entropy_builder = self.prepare_jitter_entropy_builder(is_cl_like);
         jitter_entropy_builder.flag(format!(
             "{}{}",
             force_include_option,
@@ -681,7 +678,7 @@ impl CcBuilder {
             cc_build.object(object);
         }
         if should_build_jitter_entropy() {
-            let _je_cflags_guards = Self::jitter_entropy_cflags_guards(compiler.is_like_msvc());
+            let _je_cflags_guards = Self::jitter_entropy_cflags_guards(is_cl_like);
             let jitter_entropy_object_files = jitter_entropy_builder.compile_intermediates();
             for object in jitter_entropy_object_files {
                 cc_build.object(object);
@@ -763,6 +760,8 @@ impl CcBuilder {
             cc_build.flag(flag);
         }
 
+        // Capability probe of the actual compiler, so keyed on the family
+        // (not the target ABI): only adds a GNU-style flag to a throwaway probe.
         let compiler = cc_build.get_compiler();
         if compiler.is_like_gnu() || compiler.is_like_clang() {
             cc_build.flag("-Wno-unused-parameter");
@@ -801,8 +800,13 @@ impl CcBuilder {
         let exec_path = out_dir().join(basename);
         let memcmp_build = cc::Build::default();
         let memcmp_compiler = memcmp_build.get_compiler();
+        // The logic below assumes a Clang or GCC compiler; skip otherwise. This
+        // is a property of the actual compiler, so it is keyed on the family
+        // rather than the target ABI. Kept as an explicit "not clang and not
+        // gnu" gate (rather than `is_like_msvc()`) so an unrecognized future
+        // compiler family is skipped rather than run through Clang/GCC logic --
+        // mirroring the supported-compiler gate in `fips_probe`.
         if !memcmp_compiler.is_like_clang() && !memcmp_compiler.is_like_gnu() {
-            // The logic below assumes a Clang or GCC compiler is in use
             return;
         }
         // Only pass -O3 to trigger the optimization bug. We intentionally ignore
@@ -880,7 +884,7 @@ impl CcBuilder {
         // try_compile_intermediates succeeds but __builtin_bswap* are unresolved at
         // link time. Without this guard the define is set and crypto/internal.h skips
         // the correct _MSC_VER path that uses _byteswap_* intrinsics.
-        if target_env() != "msvc"
+        if !target_is_msvc()
             && self.compiler_check("builtin_swap_check", Vec::<&'static str>::new())
         {
             cc_build.define("AWS_LC_BUILTIN_SWAP_SUPPORTED", Some("1"));
@@ -926,7 +930,7 @@ impl crate::Builder for CcBuilder {
     fn build(&self) -> Result<(), String> {
         if target_os() == "windows"
             && target_arch() == "aarch64"
-            && target_env() == "msvc"
+            && target_is_msvc()
             && get_crate_cc().is_none()
         {
             if let Some(clang_cl) = find_clang_cl() {
