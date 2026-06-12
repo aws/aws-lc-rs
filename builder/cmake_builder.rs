@@ -109,7 +109,7 @@ impl CmakeBuilder {
         // `-Wa,--debug-prefix-map=...`, and skip paths with spaces because the
         // flag must survive CMake and the assembler as one bare token.
         let opt_level = cargo_env("OPT_LEVEL");
-        if !is_like_msvc
+        if !is_cl_like
             && (target_os() == "linux" || target_os().ends_with("bsd"))
             && !matches!(opt_level.as_str(), "0" | "1" | "2")
             && !self.manifest_dir.to_string_lossy().contains(' ')
