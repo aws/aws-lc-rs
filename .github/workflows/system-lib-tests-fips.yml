@@ -239,7 +239,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Download AWS-LC FIPS install
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: aws-lc-fips-install-${{ matrix.os }}
           path: ${{ github.workspace }}/fips-artifacts
@@ -301,7 +301,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Download prefixed AWS-LC FIPS install
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: aws-lc-fips-install-prefixed
           path: ${{ github.workspace }}/fips-artifacts/install-fips-prefixed
@@ -357,7 +357,7 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Download AWS-LC FIPS install
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: aws-lc-fips-install-windows-latest
           path: ${{ github.workspace }}/fips-artifacts
@@ -405,7 +405,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Download AWS-LC install
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: aws-lc-fips-install-${{ matrix.os }}
           path: ${{ github.workspace }}/fips-artifacts
@@ -437,7 +437,7 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Download AWS-LC install
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: aws-lc-fips-install-windows-latest
           path: ${{ github.workspace }}/fips-artifacts
