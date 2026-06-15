@@ -875,14 +875,50 @@ jobs:
       - name: Install Rust
         shell: pwsh
         run: rustup toolchain install stable --profile minimal
-      - name: Run cargo build
+      # `-flto=thin` makes clang emit LLVM bitcode objects, so use `lld-link`
+      # from the same LLVM install for this GNU-driver-mode-on-MSVC-ABI lane.
+      #
+      # `--tests` skips doctests because rustdoc would still link them via
+      # `link.exe`; doctests are covered by the non-LTO Windows jobs.
+      - name: Run cargo build & test
         shell: pwsh
         run: |
           $env:CC='${{ matrix.cc }}'
           $env:CXX='${{ matrix.cxx }}'
           $env:AR='llvm-lib'
           $env:CFLAGS='${{ matrix.cflags }}'
+          $env:RUSTFLAGS='-Clinker=lld-link'
           cargo build -p aws-lc-rs
+          cargo test -p aws-lc-rs --tests
+
+  windows-clang-cl:
+    if: github.repository_owner == 'aws'
+    # Explicit clang-cl baseline for the cl-driver-mode side of #1146.
+    name: Windows clang-cl - ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc
+    runs-on: windows-latest
+    env:
+      CC: clang-cl
+      CXX: clang-cl
+      AWS_LC_SYS_PREBUILT_NASM: 1
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        shell: pwsh
+        run: |
+          rustup toolchain install stable --profile minimal --target ${{ matrix.target }} --no-self-update
+          rustup default stable
+      - name: Run cargo build & test
+        shell: pwsh
+        run: |
+          cargo build -p aws-lc-rs --target ${{ matrix.target }}
+          cargo test -p aws-lc-rs --target ${{ matrix.target }}
 
   hardened-environment:
     if: github.repository_owner == 'aws'
