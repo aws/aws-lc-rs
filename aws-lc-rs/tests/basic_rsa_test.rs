@@ -218,3 +218,19 @@ fn test_encryption_rsa_primitive() {
 
     assert_ne!(encrypted, msg);
 }
+
+// Keys outside the supported 2048..=8192 range are reported with a specific
+// reason rather than the generic "Unspecified". See aws/aws-lc-rs#1082.
+#[test]
+fn test_rsa_pkcs8_key_too_small() {
+    let key = include_bytes!("data/rsa_test_private_key_1024.p8");
+    let err = RsaKeyPair::from_pkcs8(key).unwrap_err();
+    assert_eq!(err.description_(), "TooSmall");
+}
+
+#[test]
+fn test_rsa_pkcs8_key_too_large() {
+    let key = include_bytes!("data/rsa_test_private_key_16384.p8");
+    let err = RsaKeyPair::from_pkcs8(key).unwrap_err();
+    assert_eq!(err.description_(), "TooLarge");
+}

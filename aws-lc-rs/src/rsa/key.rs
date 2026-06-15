@@ -177,7 +177,8 @@ impl KeyPair {
         }
         match key.as_const().key_size_bits() {
             2048..=8192 => Ok(()),
-            _ => Err(KeyRejected::unspecified()),
+            bits if bits < 2048 => Err(KeyRejected::too_small()),
+            _ => Err(KeyRejected::too_large()),
         }
     }
 
