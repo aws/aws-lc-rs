@@ -123,9 +123,9 @@ If neither is available the build fails with guidance on how to proceed.
 
 ### Version compatibility
 
-The version embedded in the installed headers must be greater than or equal to
-the AWS-LC version bundled with this crate. To bypass this check (not
-recommended), set `AWS_LC_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
+The installed AWS-LC version must be at least the minimum supported by this
+crate (currently `1.72.1`), independent of the bundled version. To bypass this
+check (not recommended), set `AWS_LC_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
 
 ### Limitations
 

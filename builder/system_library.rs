@@ -12,9 +12,8 @@
 
 use crate::fips_probe::verify_fips_install;
 use crate::{
-    crate_env_var_name, emit_rustc_cfg, emit_warning, get_aws_lc_include_path, is_fips_build,
-    is_static_library, link_fips_runtime_check, out_dir, target_env, target_os, Builder,
-    OutputLibType,
+    crate_env_var_name, emit_rustc_cfg, emit_warning, is_fips_build, is_static_library,
+    link_fips_runtime_check, out_dir, target_env, target_os, Builder, OutputLibType,
 };
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
@@ -153,12 +152,26 @@ impl SystemLib {
 
         if self.skip_version_check {
             emit_warning("Skipping AWS-LC version compatibility check.");
+        } else if is_fips_build() {
+            // FIPS gates on the FIPS module version (see MINIMUM_FIPS_VERSION),
+            // not the library version string.
+            let fips_version = validate_and_resolve_fips_version(&include_dir)?;
+            if fips_version < MINIMUM_FIPS_VERSION {
+                return Err(format!(
+                    "AWS-LC FIPS module version too old: installed FIPS version {fips_version} < \
+                     minimum supported {MINIMUM_FIPS_VERSION}.\n\
+                     Please use a newer AWS-LC FIPS build or unset {} to build from source.\n\
+                     To bypass this check (not recommended), set {}=1",
+                    crate_env_var_name("SYSTEM_DIR"),
+                    crate_env_var_name("SYSTEM_SKIP_VERSION_CHECK"),
+                ));
+            }
         } else {
             let version = validate_and_extract_version(&include_dir)?;
-            let required = bundled_awslc_version(self.manifest_dir.as_path());
-            if !version_at_least(&version, &required)? {
+            if !version_at_least(&version, MINIMUM_AWS_LC_VERSION)? {
                 return Err(format!(
-                    "AWS-LC version mismatch: installed {version} < required {required}.\n\
+                    "AWS-LC version too old: installed {version} < minimum supported \
+                     {MINIMUM_AWS_LC_VERSION}.\n\
                      Please upgrade AWS-LC or unset {} to build from source.\n\
                      To bypass this check (not recommended), set {}=1",
                     crate_env_var_name("SYSTEM_DIR"),
@@ -216,13 +229,27 @@ impl SystemLib {
 // Header validation / version extraction
 // =============================================================================
 
-fn validate_and_extract_version(include_dir: &Path) -> Result<String, String> {
+/// Minimum AWS-LC (mainline) version supported via the system-library path,
+/// for the non-FIPS `aws-lc-sys` crate. A declared floor (not derived from the
+/// bundled submodule) whose support is proven by CI; bump it and the CI pin
+/// together. See `.github/workflows/system-lib-tests.yml`.
+const MINIMUM_AWS_LC_VERSION: &str = "1.72.1";
+
+/// Minimum AWS-LC FIPS *module* version supported via the system-library path,
+/// for `aws-lc-fips-sys`. The FIPS version (aws/aws-lc#3211) is decoupled from
+/// the library version and increases monotonically across FIPS branches, so it
+/// is a stable basis for comparison.
+///
+/// TODO: bump to `4` when switching to the `fips-2025-09-12-lts` branch.
+const MINIMUM_FIPS_VERSION: u32 = 3;
+
+/// Reads `<include_dir>/openssl/base.h`, verifies the `OPENSSL_IS_AWSLC` marker
+/// (rejecting `OpenSSL`/`BoringSSL`), and returns the header path and contents.
+fn read_and_validate_base_h(include_dir: &Path) -> Result<(PathBuf, String), String> {
     let base_h = include_dir.join("openssl").join("base.h");
     let content = std::fs::read_to_string(&base_h)
         .map_err(|e| format!("Failed to read {}: {}", base_h.display(), e))?;
 
-    // Verify this is AWS-LC (not OpenSSL or BoringSSL). Tokenize each line so
-    // that an unrelated comment that mentions the macro can't false-match.
     let has_awslc_marker = content.lines().any(|line| {
         let mut tokens = line.split_whitespace();
         tokens.next() == Some("#define") && tokens.next() == Some("OPENSSL_IS_AWSLC")
@@ -236,7 +263,20 @@ fn validate_and_extract_version(include_dir: &Path) -> Result<String, String> {
         ));
     }
 
+    Ok((base_h, content))
+}
+
+/// Validates the headers are AWS-LC and returns the library version string
+/// (`AWSLC_VERSION_NUMBER_STRING`).
+fn validate_and_extract_version(include_dir: &Path) -> Result<String, String> {
+    let (base_h, content) = read_and_validate_base_h(include_dir)?;
     extract_version(&base_h, &content)
+}
+
+/// Validates the headers are AWS-LC and returns the FIPS module version.
+fn validate_and_resolve_fips_version(include_dir: &Path) -> Result<u32, String> {
+    let (base_h, content) = read_and_validate_base_h(include_dir)?;
+    resolve_fips_version(&base_h, &content)
 }
 
 /// Extracts `AWSLC_VERSION_NUMBER_STRING` from already-loaded `base.h`
@@ -294,32 +334,40 @@ fn version_at_least(installed: &str, required: &str) -> Result<bool, String> {
     Ok(parse(installed)? >= parse(required)?)
 }
 
-/// Reads the bundled (submodule) AWS-LC version, panicking with a helpful
-/// message if it can't. Also emits a `rerun-if-changed` for the bundled
-/// `base.h` so the build re-runs when the submodule moves.
-///
-/// The bundled headers are AWS-LC by construction, so this skips the
-/// `OPENSSL_IS_AWSLC` marker check and uses `extract_version` directly.
-fn bundled_awslc_version(manifest_dir: &Path) -> String {
-    let bundled_include = get_aws_lc_include_path(manifest_dir);
-    let base_h = bundled_include.join("openssl").join("base.h");
-    println!("cargo:rerun-if-changed={}", base_h.display());
-    let content = std::fs::read_to_string(&base_h).unwrap_or_else(|e| {
-        panic!(
-            "Failed to read bundled AWS-LC headers at {}: {e}\n\
-             The system-library linking path reads the bundled AWS-LC headers to enforce\n\
-             a minimum version. If the git submodule is not initialized, either run\n\
-             `git submodule update --init --recursive` or set {}=1 to bypass.",
-            base_h.display(),
-            crate_env_var_name("SYSTEM_SKIP_VERSION_CHECK"),
-        )
-    });
-    extract_version(&base_h, &content).unwrap_or_else(|e| {
-        panic!(
-            "Failed to extract bundled AWS-LC version from {}: {e}",
-            base_h.display()
-        )
-    })
+/// Resolves the FIPS module version from `base.h`: prefers the
+/// `AWSLC_FIPS_VERSION_NUMBER` macro (FIPS 4.x+ / mainline, aws/aws-lc#3211),
+/// falling back to the major of `AWSLC_VERSION_NUMBER_STRING` on legacy FIPS
+/// branches (<= 3.x) that predate the macro.
+fn resolve_fips_version(base_h: &Path, content: &str) -> Result<u32, String> {
+    if let Some(version) = extract_fips_version_number(content) {
+        return Ok(version);
+    }
+    let version = extract_version(base_h, content)?;
+    version_major(&version)
+}
+
+/// Extracts the integer `AWSLC_FIPS_VERSION_NUMBER` macro, if present.
+fn extract_fips_version_number(content: &str) -> Option<u32> {
+    for line in content.lines() {
+        let mut tokens = line.split_whitespace();
+        if tokens.next() != Some("#define") {
+            continue;
+        }
+        if tokens.next() != Some("AWSLC_FIPS_VERSION_NUMBER") {
+            continue;
+        }
+        return tokens.next().and_then(|v| v.parse::<u32>().ok());
+    }
+    None
+}
+
+/// Parses the MAJOR component of a `MAJOR.MINOR.PATCH` version string.
+fn version_major(version: &str) -> Result<u32, String> {
+    version
+        .split('.')
+        .next()
+        .and_then(|major| major.parse::<u32>().ok())
+        .ok_or_else(|| format!("Invalid version format: {version}"))
 }
 
 // =============================================================================
