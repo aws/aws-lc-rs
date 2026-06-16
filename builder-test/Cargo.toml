@@ -24,6 +24,10 @@ dunce = { workspace = true }
 fs_extra = { workspace = true }
 bindgen = { workspace = true, optional = true }
 
+[target.'cfg(unix)'.dependencies]
+# Mirrors aws-lc-sys: builder/system_detect.rs uses pkg-config on Unix.
+pkg-config = { workspace = true }
+
 [dev-dependencies]
 tempfile = { workspace = true }
 

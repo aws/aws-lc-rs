@@ -18,30 +18,132 @@ use crate::{
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 
+/// Resolved on-disk locations for a system AWS-LC.
+///
+/// Prefix-based discovery (explicit `*_SYSTEM_DIR`, `OPENSSL_DIR`, default
+/// prefixes) derives every field from a single install prefix via
+/// [`InstallLayout::from_prefix`]. Sources that yield *independent* locations
+/// — pkg-config, the `OPENSSL_INCLUDE_DIR`/`OPENSSL_LIB_DIR` split, multiarch
+/// library directories such as `/usr/lib/<triple>` — populate the fields
+/// directly via [`InstallLayout::from_paths`].
+pub(crate) struct InstallLayout {
+    /// Directory passed to the compiler with `-I`; contains `openssl/base.h`.
+    include_dir: PathBuf,
+    /// Library search directories, highest priority first.
+    lib_dirs: Vec<PathBuf>,
+    /// Prefix under which conventional bindings live
+    /// (`<prefix>/share/rust/aws_lc_bindings.rs`), when discovery could
+    /// determine one. `None` means only an explicit `SYSTEM_BINDINGS` override
+    /// can supply bindings.
+    bindings_prefix: Option<PathBuf>,
+    /// Representative directory used in diagnostics and recorded as the active
+    /// system install once adopted: the install prefix when known, otherwise
+    /// the include directory.
+    marker_dir: PathBuf,
+}
+
+impl InstallLayout {
+    /// Layout for a conventional single-prefix install: headers at
+    /// `<prefix>/include`, libraries under `<prefix>/lib64` (preferred on
+    /// 64-bit targets when present) then `<prefix>/lib`, bindings under
+    /// `<prefix>/share/rust`.
+    pub(crate) fn from_prefix(prefix: PathBuf) -> Self {
+        let include_dir = prefix.join("include");
+        let mut lib_dirs = Vec::new();
+        // Cargo always sets CARGO_CFG_TARGET_POINTER_WIDTH for build scripts.
+        let target_is_64bit =
+            std::env::var("CARGO_CFG_TARGET_POINTER_WIDTH").is_ok_and(|w| w == "64");
+        let lib64 = prefix.join("lib64");
+        if target_is_64bit && lib64.exists() {
+            lib_dirs.push(lib64);
+        }
+        lib_dirs.push(prefix.join("lib"));
+        Self {
+            include_dir,
+            lib_dirs,
+            bindings_prefix: Some(prefix.clone()),
+            marker_dir: prefix,
+        }
+    }
+
+    /// Layout for independently-located headers and libraries. `bindings_prefix`
+    /// is where `share/rust/aws_lc_bindings.rs` is expected (e.g. derived from a
+    /// pkg-config include path or the `OPENSSL_INCLUDE_DIR` install layout).
+    pub(crate) fn from_paths(
+        include_dir: PathBuf,
+        lib_dirs: Vec<PathBuf>,
+        bindings_prefix: Option<PathBuf>,
+    ) -> Self {
+        let marker_dir = bindings_prefix
+            .clone()
+            .unwrap_or_else(|| include_dir.clone());
+        Self {
+            include_dir,
+            lib_dirs,
+            bindings_prefix,
+            marker_dir,
+        }
+    }
+}
+
 pub(crate) struct SystemLib {
     pub manifest_dir: PathBuf,
-    pub install_dir: PathBuf,
+    layout: InstallLayout,
     pub bindings_file: Option<PathBuf>,
     pub skip_version_check: bool,
     pub crypto_lib: RefCell<Option<ResolvedLib>>,
     pub ssl_lib: RefCell<Option<ResolvedLib>>,
+    /// Memoizes the bindings path resolved by `validate`, which doubles as a
+    /// "validation already succeeded" marker. Auto-detection probes an install
+    /// (running `validate`) and, on success, links the *same* instance; this
+    /// cache prevents the subsequent `link` from repeating the version check,
+    /// bindings lookup, and — most importantly — re-compiling and re-running
+    /// the FIPS probe binary.
+    validated_bindings: RefCell<Option<PathBuf>>,
 }
 
 impl SystemLib {
+    /// Constructs a `SystemLib` from a single install prefix. Used by the
+    /// explicit `*_SYSTEM_DIR` path and by prefix-based auto-detection.
     pub(crate) fn new(
         manifest_dir: PathBuf,
         install_dir: PathBuf,
         bindings_file: Option<PathBuf>,
         skip_version_check: bool,
     ) -> Self {
+        Self::from_layout(
+            manifest_dir,
+            InstallLayout::from_prefix(install_dir),
+            bindings_file,
+            skip_version_check,
+        )
+    }
+
+    /// Constructs a `SystemLib` from an already-resolved [`InstallLayout`].
+    /// Used by auto-detection sources that locate headers and libraries
+    /// independently (pkg-config, `OPENSSL_INCLUDE_DIR`/`OPENSSL_LIB_DIR`).
+    pub(crate) fn from_layout(
+        manifest_dir: PathBuf,
+        layout: InstallLayout,
+        bindings_file: Option<PathBuf>,
+        skip_version_check: bool,
+    ) -> Self {
         Self {
             manifest_dir,
-            install_dir,
+            layout,
             bindings_file,
             skip_version_check,
             crypto_lib: RefCell::new(None),
             ssl_lib: RefCell::new(None),
+            validated_bindings: RefCell::new(None),
         }
+    }
+
+    /// The directory to record (via `set_system_dir`) once this install is
+    /// adopted, so downstream consumers of `get_system_dir_path` agree a system
+    /// library is in use.
+    pub(crate) fn marker_dir(&self) -> &Path {
+        &self.layout.marker_dir
     }
 }
 
@@ -56,14 +158,6 @@ pub(crate) struct ResolvedLib {
 
 impl Builder for SystemLib {
     fn check_dependencies(&self) -> Result<(), String> {
-        let mut candidate_lib_dirs: Vec<PathBuf> = Vec::new();
-        // Cargo should always set CARGO_CFG_TARGET_POINTER_WIDTH for build scripts.
-        let target_is_64bit =
-            std::env::var("CARGO_CFG_TARGET_POINTER_WIDTH").is_ok_and(|w| w == "64");
-        if self.install_dir.join("lib64").exists() && target_is_64bit {
-            candidate_lib_dirs.push(self.install_dir.join("lib64"));
-        }
-        candidate_lib_dirs.push(self.install_dir.join("lib"));
         let requested_lib_type = is_static_library().map(|stc| {
             if stc {
                 OutputLibType::Static
@@ -78,7 +172,7 @@ impl Builder for SystemLib {
         // Track the most-informative error we encounter so that when no
         // candidate lib_dir works we surface the actionable resolver error
         let mut last_err: Option<String> = None;
-        for lib_dir in &candidate_lib_dirs {
+        for lib_dir in &self.layout.lib_dirs {
             let crypto_lib = match resolve_library(
                 lib_dir.as_path(),
                 requested_lib_type,
@@ -111,9 +205,15 @@ impl Builder for SystemLib {
         }
         Err(last_err.unwrap_or_else(|| {
             format!(
-                "AWS-LC libcrypto{ssl} not found under {dir}",
+                "AWS-LC libcrypto{ssl} not found under {dirs}",
                 ssl = if cfg!(feature = "ssl") { "/libssl" } else { "" },
-                dir = self.install_dir.display(),
+                dirs = self
+                    .layout
+                    .lib_dirs
+                    .iter()
+                    .map(|d| d.display().to_string())
+                    .collect::<Vec<_>>()
+                    .join(", "),
             )
         }))
     }
@@ -128,9 +228,26 @@ impl Builder for SystemLib {
 }
 
 impl SystemLib {
-    /// Emits the `cargo:` directives needed to link against the
-    /// system-installed AWS-LC.
-    pub(crate) fn link(&self) -> Result<(), String> {
+    /// Performs every *non-emitting* check required before linking against the
+    /// resolved install, returning the path to the pre-generated bindings to
+    /// use. In order, it: confirms the include directory exists, verifies the
+    /// AWS-LC marker and enforces the version / FIPS-version floor (unless
+    /// skipped), locates the bindings, and — for FIPS builds — verifies the
+    /// FIPS module.
+    ///
+    /// This is the single source of truth for "is this install suitable?".
+    /// Both the fatal explicit path (via `link`) and the non-fatal
+    /// auto-detection path (via `probe`) route through here, so the two can
+    /// never diverge — a probe that succeeds guarantees the subsequent link
+    /// will not fail validation. The result is memoized so a probe followed by
+    /// a link does not repeat the work (notably the FIPS probe).
+    ///
+    /// `check_dependencies` must have run first to resolve the libraries.
+    fn validate(&self) -> Result<PathBuf, String> {
+        if let Some(bindings) = self.validated_bindings.borrow().clone() {
+            return Ok(bindings);
+        }
+
         let crypto_lib = self.crypto_lib.borrow();
         let crypto_lib = crypto_lib
             .as_ref()
@@ -139,12 +256,12 @@ impl SystemLib {
             .path
             .parent()
             .ok_or("libcrypto parent directory not found")?;
-        let install_dir = &self.install_dir;
-        let include_dir = install_dir.join("include");
+        let include_dir = &self.layout.include_dir;
         if !include_dir.exists() {
             return Err(format!(
                 "Include directory not found: {}\n\
-                 Verify {} points to a valid installation.",
+                 Verify the AWS-LC headers exist (via {}, OPENSSL_DIR, or \
+                 OPENSSL_INCLUDE_DIR).",
                 include_dir.display(),
                 crate_env_var_name("SYSTEM_DIR"),
             ));
@@ -152,10 +269,11 @@ impl SystemLib {
 
         if self.skip_version_check {
             emit_warning("Skipping AWS-LC version compatibility check.");
+            read_and_validate_base_h(include_dir)?;
         } else if is_fips_build() {
             // FIPS gates on the FIPS module version (see MINIMUM_FIPS_VERSION),
             // not the library version string.
-            let fips_version = validate_and_resolve_fips_version(&include_dir)?;
+            let fips_version = validate_and_resolve_fips_version(include_dir)?;
             if fips_version < MINIMUM_FIPS_VERSION {
                 return Err(format!(
                     "AWS-LC FIPS module version too old: installed FIPS version {fips_version} < \
@@ -167,7 +285,7 @@ impl SystemLib {
                 ));
             }
         } else {
-            let version = validate_and_extract_version(&include_dir)?;
+            let version = validate_and_extract_version(include_dir)?;
             if !version_at_least(&version, MINIMUM_AWS_LC_VERSION)? {
                 return Err(format!(
                     "AWS-LC version too old: installed {version} < minimum supported \
@@ -180,7 +298,50 @@ impl SystemLib {
             }
         }
 
-        let bindings = resolve_bindings(install_dir, &self.bindings_file)?;
+        let bindings =
+            resolve_bindings(self.layout.bindings_prefix.as_deref(), &self.bindings_file)?;
+
+        if is_fips_build() {
+            // Verify the supplied FIPS library is a usable FIPS module before
+            // committing to it. The matching startup self-check link directive
+            // is emitted later, in `link`.
+            verify_fips_install(
+                self.manifest_dir.as_path(),
+                include_dir,
+                crypto_lib,
+                lib_dir,
+            )?;
+        }
+
+        self.validated_bindings.replace(Some(bindings.clone()));
+        Ok(bindings)
+    }
+
+    /// Non-fatally checks whether this install is suitable to link against. It
+    /// resolves the libraries and runs the exact same validation `link` relies
+    /// on, but emits no `cargo:` directives. Auto-detection treats any `Err`
+    /// as "not suitable — fall back to a source build" rather than a hard
+    /// error.
+    pub(crate) fn probe(&self) -> Result<(), String> {
+        self.check_dependencies()?;
+        self.validate().map(|_| ())
+    }
+
+    /// Emits the `cargo:` directives needed to link against the
+    /// system-installed AWS-LC.
+    pub(crate) fn link(&self) -> Result<(), String> {
+        let bindings = self.validate()?;
+
+        let crypto_lib = self.crypto_lib.borrow();
+        let crypto_lib = crypto_lib
+            .as_ref()
+            .expect("check_dependencies must run first");
+        let lib_dir = crypto_lib
+            .path
+            .parent()
+            .ok_or("libcrypto parent directory not found")?;
+        let include_dir = &self.layout.include_dir;
+
         std::fs::copy(&bindings, out_dir().join("bindings.rs"))
             .map_err(|e| format!("Failed to copy bindings from {}: {}", bindings.display(), e))?;
         emit_warning(format!(
@@ -191,18 +352,16 @@ impl SystemLib {
 
         emit_warning(format!(
             "Using system-installed AWS-LC from: {}",
-            install_dir.display()
+            self.layout.marker_dir.display()
         ));
 
         if is_fips_build() {
-            // Verify the supplied FIPS library before emitting the libcrypto
-            // link directive, then add the startup self-check.
-            let manifest_dir = self.manifest_dir.as_path();
-            verify_fips_install(manifest_dir, &include_dir, crypto_lib, lib_dir)?;
-            link_fips_runtime_check(manifest_dir, &include_dir)?;
+            // The FIPS module itself was already verified in `validate`; here
+            // we only add the startup self-check.
+            link_fips_runtime_check(self.manifest_dir.as_path(), include_dir)?;
         }
 
-        self.emit_link_directives(crypto_lib, &include_dir, lib_dir);
+        self.emit_link_directives(crypto_lib, include_dir, lib_dir);
         Ok(())
     }
 
@@ -577,10 +736,14 @@ fn msvc_has_sibling_dll(lib_dir: &Path, name: &str) -> bool {
 /// conventional install location populated by AWS-LC's `CMake` install (see
 /// <https://github.com/aws/aws-lc/pull/2999>, AWS-LC v1.68.0+).
 ///
+/// `bindings_prefix` is the install prefix under which `share/rust/` is
+/// searched; it is `None` for discovery sources that couldn't determine a
+/// prefix (in which case only an explicit override can supply bindings).
+///
 /// A misconfigured override is a hard error rather than a silent fall-through,
 /// since the user clearly asked for those specific bindings.
 fn resolve_bindings(
-    install_dir: &Path,
+    bindings_prefix: Option<&Path>,
     bindings_override: &Option<PathBuf>,
 ) -> Result<PathBuf, String> {
     if let Some(path) = bindings_override {
@@ -594,10 +757,16 @@ fn resolve_bindings(
         ));
     }
 
-    let conventional = install_dir
-        .join("share")
-        .join("rust")
-        .join("aws_lc_bindings.rs");
+    let Some(prefix) = bindings_prefix else {
+        return Err(format!(
+            "No pre-generated bindings found for system-installed AWS-LC.\n\
+             The detected install did not expose an install prefix from which to\n\
+             locate share/rust/aws_lc_bindings.rs. Set {} to point at a bindings file.",
+            crate_env_var_name("SYSTEM_BINDINGS"),
+        ));
+    };
+
+    let conventional = prefix.join("share").join("rust").join("aws_lc_bindings.rs");
     if conventional.is_file() {
         return Ok(conventional);
     }
@@ -605,8 +774,9 @@ fn resolve_bindings(
     Err(format!(
         "No pre-generated bindings found for system-installed AWS-LC.\n\n\
          To resolve this, either:\n\
-         1. Install AWS-LC with Rust bindings (share/rust/aws_lc_bindings.rs), or\n\
+         1. Install AWS-LC with Rust bindings (share/rust/aws_lc_bindings.rs) under {}, or\n\
          2. Set {} to point to a bindings file",
+        prefix.display(),
         crate_env_var_name("SYSTEM_BINDINGS"),
     ))
 }

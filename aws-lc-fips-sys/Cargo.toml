@@ -73,6 +73,11 @@ cc.workspace = true
 regex.workspace = true
 bindgen.workspace = true
 
+[target.'cfg(unix)'.build-dependencies]
+# Used only for auto-detecting a system-installed AWS-LC on Unix; not available
+# (and not used) on Windows/MSVC.
+pkg-config = { workspace = true }
+
 [dev-dependencies]
 regex.workspace = true
 

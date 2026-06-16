@@ -76,5 +76,10 @@ fs_extra.workspace = true
 cc = { workspace = true, features = ["parallel"] }
 bindgen = { workspace = true, optional = true }
 
+[target.'cfg(unix)'.build-dependencies]
+# Used only for auto-detecting a system-installed AWS-LC on Unix; not available
+# (and not used) on Windows/MSVC.
+pkg-config = { workspace = true }
+
 [package.metadata.aws-lc-sys]
 commit-hash = "44766fa7daa88e5afc7fc6de3311c48eeeb02f39"

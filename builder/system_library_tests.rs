@@ -670,7 +670,10 @@ fn test_resolve_bindings_conventional() {
     std::fs::write(&bindings, b"// bindings").unwrap();
 
     let _env = setup_test_env();
-    assert_eq!(resolve_bindings(temp.path(), &None).unwrap(), bindings);
+    assert_eq!(
+        resolve_bindings(Some(temp.path()), &None).unwrap(),
+        bindings
+    );
 }
 
 #[test]
@@ -686,7 +689,7 @@ fn test_resolve_bindings_override_takes_priority() {
 
     let _env = setup_test_env();
     assert_eq!(
-        resolve_bindings(temp.path(), &Some(override_path.clone())).unwrap(),
+        resolve_bindings(Some(temp.path()), &Some(override_path.clone())).unwrap(),
         override_path
     );
 }
@@ -697,7 +700,7 @@ fn test_resolve_bindings_override_missing_is_hard_error() {
     let bogus = temp.path().join("does-not-exist.rs");
 
     let _env = setup_test_env();
-    let err = resolve_bindings(temp.path(), &Some(bogus)).unwrap_err();
+    let err = resolve_bindings(Some(temp.path()), &Some(bogus)).unwrap_err();
     assert!(err.contains("does not point to a file"), "{err}");
 }
 
@@ -705,8 +708,156 @@ fn test_resolve_bindings_override_missing_is_hard_error() {
 fn test_resolve_bindings_missing_returns_helpful_error() {
     let temp = tempfile::tempdir().unwrap();
     let _env = setup_test_env();
-    let err = resolve_bindings(temp.path(), &None).unwrap_err();
+    let err = resolve_bindings(Some(temp.path()), &None).unwrap_err();
     assert!(err.contains("No pre-generated bindings found"), "{err}");
+}
+
+#[test]
+fn test_resolve_bindings_no_prefix_no_override_is_error() {
+    let _env = setup_test_env();
+    // Discovery couldn't determine a prefix and no override was supplied.
+    let err = resolve_bindings(None, &None).unwrap_err();
+    assert!(err.contains("No pre-generated bindings found"), "{err}");
+}
+
+#[test]
+fn test_resolve_bindings_no_prefix_uses_override() {
+    let temp = tempfile::tempdir().unwrap();
+    let override_path = temp.path().join("custom-bindings.rs");
+    std::fs::write(&override_path, b"// override").unwrap();
+
+    let _env = setup_test_env();
+    // With no prefix, an explicit override still resolves.
+    assert_eq!(
+        resolve_bindings(None, &Some(override_path.clone())).unwrap(),
+        override_path
+    );
+}
+
+// -------------------------------------------------------------------------
+// SystemLib::probe — non-fatal validation for auto-detection
+// -------------------------------------------------------------------------
+//
+// `probe` runs the same checks as the fatal `link` path but returns `Err`
+// instead of erroring the build, so auto-detection can fall back to a source
+// build. These tests are gated to non-FIPS builds because the FIPS path inside
+// `validate` compiles and runs a probe binary against a real FIPS module,
+// which a fake install can't satisfy.
+
+/// Builds a `FakeInstall` that looks like a minimal, valid AWS-LC: a static
+/// libcrypto, an `include/` directory, and conventional pre-generated bindings
+/// under `share/rust/`.
+#[cfg(not(feature = "fips"))]
+fn with_required_ssl_libs(fx: FakeInstall) -> FakeInstall {
+    #[cfg(feature = "ssl")]
+    {
+        fx.touch_lib("libssl.a")
+    }
+    #[cfg(not(feature = "ssl"))]
+    {
+        fx
+    }
+}
+
+#[cfg(not(feature = "fips"))]
+fn fake_valid_install() -> FakeInstall {
+    let fx = with_required_ssl_libs(
+        FakeInstall::new()
+            .mkdir("include/openssl")
+            .mkdir("share/rust")
+            .touch_lib("libcrypto.a"),
+    );
+    write_base_h(
+        &fx.root.join("include"),
+        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"99.0.0\"\n",
+    );
+    std::fs::write(
+        fx.root
+            .join("share")
+            .join("rust")
+            .join("aws_lc_bindings.rs"),
+        b"// bindings",
+    )
+    .unwrap();
+    fx
+}
+
+#[test]
+#[cfg(not(feature = "fips"))]
+fn test_probe_succeeds_on_valid_install() {
+    let _env = setup_test_env();
+    let fx = fake_valid_install();
+
+    // skip_version_check=true keeps this independent of the bundled submodule
+    // headers; the marker/version path is exercised by the tests below and by
+    // the `validate_and_extract_version` tests.
+    let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, true);
+    sys.probe()
+        .expect("valid install should probe successfully");
+
+    // `probe` memoizes its result; a second call must still succeed.
+    sys.probe().expect("probe should be idempotent");
+}
+
+#[test]
+#[cfg(not(feature = "fips"))]
+fn test_probe_falls_back_when_bindings_missing() {
+    let _env = setup_test_env();
+    // Valid library + headers, but no pre-generated bindings present.
+    let fx = with_required_ssl_libs(
+        FakeInstall::new()
+            .mkdir("include/openssl")
+            .touch_lib("libcrypto.a"),
+    );
+    write_base_h(
+        &fx.root.join("include"),
+        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"99.0.0\"\n",
+    );
+
+    let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, true);
+    // Must return Err (so auto-detection can fall back), never panic.
+    let err = sys.probe().unwrap_err();
+    assert!(err.contains("No pre-generated bindings found"), "{err}");
+}
+
+#[test]
+#[cfg(not(feature = "fips"))]
+fn test_probe_falls_back_when_not_awslc_headers() {
+    let _env = setup_test_env();
+    let fx = fake_valid_install();
+    // Overwrite the headers so the AWS-LC marker is absent (e.g. OpenSSL).
+    write_base_h(&fx.root.join("include"), "// Not AWS-LC\n");
+
+    // Version checking ON so the marker check runs. The marker check happens
+    // before the minimum-version comparison, so this stays independent of the
+    // bundled submodule.
+    let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, false);
+    let err = sys.probe().unwrap_err();
+    assert!(err.contains("not valid AWS-LC headers"), "{err}");
+}
+
+#[test]
+#[cfg(not(feature = "fips"))]
+fn test_probe_falls_back_when_skip_version_check_but_not_awslc_headers() {
+    let _env = setup_test_env();
+    let fx = fake_valid_install();
+    write_base_h(&fx.root.join("include"), "// Not AWS-LC\n");
+
+    // SYSTEM_SKIP_VERSION_CHECK skips the version floor, not the AWS-LC marker.
+    let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, true);
+    let err = sys.probe().unwrap_err();
+    assert!(err.contains("not valid AWS-LC headers"), "{err}");
+}
+
+#[test]
+#[cfg(not(feature = "fips"))]
+fn test_probe_falls_back_when_libs_missing() {
+    let _env = setup_test_env();
+    let fx = FakeInstall::new().mkdir("include/openssl"); // headers but no libs
+
+    let sys = SystemLib::new(PathBuf::from("."), fx.root.clone(), None, true);
+    let err = sys.probe().unwrap_err();
+    assert!(err.contains("No crypto library found"), "{err}");
 }
 
 // -------------------------------------------------------------------------
