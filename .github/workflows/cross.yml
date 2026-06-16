@@ -563,6 +563,20 @@ jobs:
         working-directory: .github/docker_images/alpine-3.20
         run: |
           ./build_image.sh
+      # Alpine 3.20 ships Cargo 1.78, which cannot parse edition-2024 manifests
+      # adopted by some transitive deps. Generate the lockfile with the runner's
+      # modern Cargo so the in-container build can consume it via --locked.
+      #
+      # The MSRV-aware resolver downgrades crates that declare a too-new
+      # rust-version (e.g. zeroize 1.9 requires Rust 1.85). It is not sufficient
+      # on its own: clap >=4.6 adopted edition 2024 without bumping its declared
+      # rust-version, so the resolver does not avoid it. Pin clap (and clap_lex)
+      # to the last edition-2021 releases that Cargo 1.78 can parse.
+      - name: Resolve MSRV-compatible dependencies
+        run: |
+          cargo --config "resolver.incompatible-rust-versions='fallback'" generate-lockfile
+          cargo update -p clap --precise 4.5.61
+          cargo update -p clap_lex --precise 1.0.1
       - name: Build
         run: |
           docker run -v "${{ github.workspace }}:/aws_lc_rs" alpine:3.20
