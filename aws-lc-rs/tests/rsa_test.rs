@@ -1205,8 +1205,21 @@ fn encrypt_decrypt_key_size() {
 fn too_small_encrypt_key() {
     const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_1024.p8");
     const PUBLIC_KEY: &[u8] = include_bytes!("data/rsa_test_public_key_1024.x509");
-    PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect_err("private key too small");
-    PublicEncryptingKey::from_der(PUBLIC_KEY).expect_err("public key too small");
+    let private_err =
+        PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect_err("private key too small");
+    let public_err = PublicEncryptingKey::from_der(PUBLIC_KEY).expect_err("public key too small");
+
+    assert_eq!("TooSmall", private_err.to_string());
+    assert_eq!("TooSmall", public_err.to_string());
+}
+
+#[test]
+fn too_small_signing_key_reports_too_small() {
+    const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_1024.p8");
+
+    let err = RsaKeyPair::from_pkcs8(PRIVATE_KEY).expect_err("signing key too small");
+
+    assert_eq!("TooSmall", err.to_string());
 }
 
 #[test]
@@ -1368,7 +1381,18 @@ fn errors_on_larger_than_max_plaintext() {
 #[test]
 fn too_big_encrypt_key() {
     const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_16384.p8");
-    PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect_err("key too big");
+    let err = PrivateDecryptingKey::from_pkcs8(PRIVATE_KEY).expect_err("key too big");
+
+    assert_eq!("TooLarge", err.to_string());
+}
+
+#[test]
+fn too_large_signing_key_reports_too_large() {
+    const PRIVATE_KEY: &[u8] = include_bytes!("data/rsa_test_private_key_16384.p8");
+
+    let err = RsaKeyPair::from_pkcs8(PRIVATE_KEY).expect_err("signing key too large");
+
+    assert_eq!("TooLarge", err.to_string());
 }
 
 macro_rules! round_trip_pkcs1_encryption {
