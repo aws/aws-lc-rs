@@ -48,7 +48,7 @@ jobs:
       - name: Install NASM
         if: contains(matrix.target, 'x86_64')
         uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Install Rust toolchain
