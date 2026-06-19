@@ -45,7 +45,7 @@ jobs:
           - --no-default-features --features fips,ring-sig-verify,unstable
           - --no-default-features --features fips,alloc,unstable
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -85,7 +85,7 @@ jobs:
           - --no-default-features --features fips,alloc,unstable
     steps:
       - uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -104,7 +104,7 @@ jobs:
     env:
       AWS_LC_FIPS_SYS_CPU_JITTER_ENTROPY: 1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain

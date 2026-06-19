@@ -33,7 +33,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -71,7 +71,7 @@ jobs:
           - 'x86_64-pc-windows-gnu'
           - 'i686-pc-windows-msvc'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -113,7 +113,7 @@ jobs:
           - powerpc-unknown-linux-gnu
           - powerpc64le-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -141,7 +141,7 @@ jobs:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -168,7 +168,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -199,7 +199,7 @@ jobs:
           - 'x86_64-pc-windows-gnu'
           - 'i686-pc-windows-msvc'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -235,7 +235,7 @@ jobs:
           - "riscv64gc-unknown-linux-gnu"
           - "x86_64-unknown-linux-musl"
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -261,7 +261,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-latest ]
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -296,7 +296,7 @@ jobs:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}
@@ -318,7 +318,7 @@ jobs:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: 'recursive'
           ref: ${{ github.ref_name }}

@@ -66,7 +66,7 @@ jobs:
           - [ x86_64-unknown-illumos, 0, 0, 1]
           - [ x86_64-unknown-linux-musl, 0, 0, 1]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Install stable Rust toolchain
@@ -148,7 +148,7 @@ jobs:
             api: 21
             test_target_cc: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Install Rust toolchain
@@ -215,7 +215,7 @@ jobs:
         target:
           - [ x86_64-pc-windows-gnu, 0, 1 ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Install stable Rust toolchain
@@ -247,7 +247,7 @@ jobs:
           - x86_64-unknown-linux-gnu
           - aarch64-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Install stable Rust toolchain
@@ -273,7 +273,7 @@ jobs:
     name: iOS aarch64 cross-platform build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - uses: actions/setup-go@v6
@@ -297,7 +297,7 @@ jobs:
     env:
       TVOS_FORCE_TEST: 1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - run: |
@@ -316,7 +316,7 @@ jobs:
     name: iOS x86-64 cross-platform build
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - run: |
@@ -357,7 +357,7 @@ jobs:
         if: matrix.host == 'macos-latest'
         run: |
           brew install nasm ninja llvm
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Install Rust toolchain
@@ -427,7 +427,7 @@ jobs:
       - name: Install NASM
         if: ${{ matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'i686-pc-windows-msvc' }}
         uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Install Rust toolchain
@@ -470,7 +470,7 @@ jobs:
         #   - arch: 'riscv64'
         #     options: '--no-default-features --features=fips'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Prepare VM
@@ -499,7 +499,7 @@ jobs:
           - '--all-targets'
           - '--release'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Prepare VM
@@ -522,7 +522,7 @@ jobs:
     name: cross (prebuilt nasm) - x86_64-pc-windows-gnu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Install Rust toolchain
@@ -539,7 +539,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Build Docker Image
@@ -556,7 +556,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Build Docker Image
@@ -591,7 +591,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Build Docker Image
@@ -660,7 +660,7 @@ jobs:
           SYSROOT=$(cygpath -a -m '${{ steps.setup_msys2.outputs.msys2-location }}\${{ matrix.sys }}')
           echo "LIBCLANG_PATH=${SYSROOT}/lib" >> $GITHUB_ENV
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Test
@@ -705,7 +705,7 @@ jobs:
           echo "GOROOT=${SYSROOT}/lib/go" >> $GITHUB_ENV
           cygpath -w ${SYSROOT}/bin >> $GITHUB_PATH
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - name: Test
@@ -727,7 +727,7 @@ jobs:
       image: rust:latest
       options: "--platform linux/${{ (matrix.config.arch == 'aarch64' && 'arm64/v8') || 'amd64'}}"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: "recursive"
       - run: |
