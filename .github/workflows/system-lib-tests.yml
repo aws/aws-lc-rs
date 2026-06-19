@@ -286,14 +286,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Keep in sync with MINIMUM_AWS_LC_VERSION in builder/system_library.rs.
-      AWS_LC_MIN_VERSION: "v1.72.1"
+      AWS_LC_MIN_VERSION: "v1.68.0"
     steps:
       # aws-lc-rs checkout WITHOUT the submodule, so a from-source fallback is
       # impossible (see test-unix).
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Checkout AWS-LC at the declared minimum version
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: aws/aws-lc
           ref: ${{ env.AWS_LC_MIN_VERSION }}

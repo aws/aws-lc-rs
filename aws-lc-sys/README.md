@@ -124,7 +124,7 @@ If neither is available the build fails with guidance on how to proceed.
 ### Version compatibility
 
 The installed AWS-LC version must be at least the minimum supported by this
-crate (currently `1.72.1`), independent of the bundled version. To bypass this
+crate (currently `1.68.0`), independent of the bundled version. To bypass this
 check (not recommended), set `AWS_LC_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
 
 ### Limitations

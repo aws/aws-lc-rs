@@ -196,13 +196,13 @@ fn test_validate_and_extract_version_missing_version_string() {
 #[test]
 fn test_extract_fips_version_number_present() {
     let content = "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_FIPS_VERSION_NUMBER 4\n";
-    assert_eq!(extract_fips_version_number(content), Some(4));
+    assert_eq!(extract_fips_version_number(content).unwrap(), Some(4));
 }
 
 #[test]
 fn test_extract_fips_version_number_absent() {
     let content = "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"3.3.0\"\n";
-    assert_eq!(extract_fips_version_number(content), None);
+    assert_eq!(extract_fips_version_number(content).unwrap(), None);
 }
 
 #[test]
@@ -210,7 +210,16 @@ fn test_extract_fips_version_number_ignores_comment_false_match() {
     // A comment mentioning the macro shouldn't false-match.
     let content =
         "// AWSLC_FIPS_VERSION_NUMBER is defined below\n#define AWSLC_FIPS_VERSION_NUMBER 7\n";
-    assert_eq!(extract_fips_version_number(content), Some(7));
+    assert_eq!(extract_fips_version_number(content).unwrap(), Some(7));
+}
+
+#[test]
+fn test_extract_fips_version_number_present_but_malformed_is_error() {
+    // A present-but-unparseable macro must not silently fall back to the
+    // (post-decoupling unreliable) library version.
+    let content = "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_FIPS_VERSION_NUMBER notanumber\n";
+    let err = extract_fips_version_number(content).unwrap_err();
+    assert!(err.contains("Malformed AWSLC_FIPS_VERSION_NUMBER"), "{err}");
 }
 
 #[test]

@@ -230,10 +230,12 @@ impl SystemLib {
 // =============================================================================
 
 /// Minimum AWS-LC (mainline) version supported via the system-library path,
-/// for the non-FIPS `aws-lc-sys` crate. A declared floor (not derived from the
+/// for the non-FIPS `aws-lc-sys` crate. `1.68.0` is the first release that can
+/// emit Rust bindings (`-DGENERATE_RUST_BINDINGS=ON`), which the
+/// system-library path consumes. A declared floor (not derived from the
 /// bundled submodule) whose support is proven by CI; bump it and the CI pin
 /// together. See `.github/workflows/system-lib-tests.yml`.
-const MINIMUM_AWS_LC_VERSION: &str = "1.72.1";
+const MINIMUM_AWS_LC_VERSION: &str = "1.68.0";
 
 /// Minimum AWS-LC FIPS *module* version supported via the system-library path,
 /// for `aws-lc-fips-sys`. The FIPS version (aws/aws-lc#3211) is decoupled from
@@ -339,15 +341,21 @@ fn version_at_least(installed: &str, required: &str) -> Result<bool, String> {
 /// falling back to the major of `AWSLC_VERSION_NUMBER_STRING` on legacy FIPS
 /// branches (<= 3.x) that predate the macro.
 fn resolve_fips_version(base_h: &Path, content: &str) -> Result<u32, String> {
-    if let Some(version) = extract_fips_version_number(content) {
+    if let Some(version) = extract_fips_version_number(content)? {
         return Ok(version);
     }
     let version = extract_version(base_h, content)?;
     version_major(&version)
 }
 
-/// Extracts the integer `AWSLC_FIPS_VERSION_NUMBER` macro, if present.
-fn extract_fips_version_number(content: &str) -> Option<u32> {
+/// Extracts the integer `AWSLC_FIPS_VERSION_NUMBER` macro.
+///
+/// Returns `Ok(None)` when the macro is absent (a legacy FIPS branch that
+/// predates it; callers fall back to the version-string major). A macro that is
+/// *present but unparseable* is a hard error rather than a silent fallback:
+/// post-decoupling (aws/aws-lc#3211) the library version is not a reliable
+/// substitute, so masking a malformed authoritative value would be wrong.
+fn extract_fips_version_number(content: &str) -> Result<Option<u32>, String> {
     for line in content.lines() {
         let mut tokens = line.split_whitespace();
         if tokens.next() != Some("#define") {
@@ -356,9 +364,18 @@ fn extract_fips_version_number(content: &str) -> Option<u32> {
         if tokens.next() != Some("AWSLC_FIPS_VERSION_NUMBER") {
             continue;
         }
-        return tokens.next().and_then(|v| v.parse::<u32>().ok());
+        let raw = tokens.next();
+        return raw
+            .and_then(|v| v.parse::<u32>().ok())
+            .map(Some)
+            .ok_or_else(|| {
+                format!(
+                    "Malformed AWSLC_FIPS_VERSION_NUMBER: expected an integer, found {}",
+                    raw.unwrap_or("<empty>")
+                )
+            });
     }
-    None
+    Ok(None)
 }
 
 /// Parses the MAJOR component of a `MAJOR.MINOR.PATCH` version string.
