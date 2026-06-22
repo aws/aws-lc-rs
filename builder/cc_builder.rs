@@ -191,8 +191,6 @@ impl CcBuilder {
     ) -> (bool, Vec<BuildOption>) {
         let mut build_options: Vec<BuildOption> = Vec::new();
 
-        // Flag dialect follows the compiler driver mode, not the target ABI;
-        // see `compiler_is_cl_like`.
         let is_cl_like = compiler_is_cl_like(&cc_build.get_compiler());
 
         match requested_c_std() {
@@ -287,8 +285,6 @@ impl CcBuilder {
 
     pub fn collect_cc_only_build_options(&self) -> Vec<BuildOption> {
         let mut build_options: Vec<BuildOption> = Vec::new();
-        // GNU-only flags below are gated on the compiler driver mode, not the
-        // target ABI; see `compiler_is_cl_like`.
         let is_cl_like = compiler_is_cl_like(&cc::Build::new().get_compiler());
         if !is_cl_like {
             build_options.push(BuildOption::flag("-Wno-unused-parameter"));
@@ -366,8 +362,7 @@ impl CcBuilder {
         }
 
         let mut cc_build = self.create_builder();
-        let (compiler_is_msvc, build_options) =
-            self.collect_universal_build_options(&cc_build, false);
+        let (is_cl_like, build_options) = self.collect_universal_build_options(&cc_build, false);
         for option in build_options {
             option.apply_cc(&mut cc_build);
         }
@@ -385,7 +380,7 @@ impl CcBuilder {
         // and skip paths with spaces because `-Wa,...` must stay a bare token.
         let opt_level = cargo_env("OPT_LEVEL");
         if (target_os() == "linux" || target_os().ends_with("bsd"))
-            && !compiler_is_msvc
+            && !is_cl_like
             && !matches!(opt_level.as_str(), "0" | "1" | "2")
             && !self.manifest_dir.to_string_lossy().contains(' ')
         {
@@ -495,14 +490,15 @@ impl CcBuilder {
 
     /// Returns path-reproducibility flags for the configured compiler.
     /// These rewrite DWARF source paths and `__FILE__`; clang may also need
-    /// extra stripping for `UBSan` metadata. Returns an empty `Vec` on MSVC.
+    /// extra stripping for `UBSan` metadata. Returns an empty `Vec` in cl
+    /// driver mode, which has no equivalent flags.
     fn collect_path_reproducibility_options(
         &self,
         cc_build: &cc::Build,
-        is_like_msvc: bool,
+        is_cl_like: bool,
     ) -> Vec<BuildOption> {
         let mut opts: Vec<BuildOption> = Vec::new();
-        if is_like_msvc {
+        if is_cl_like {
             return opts;
         }
 
@@ -605,8 +601,6 @@ impl CcBuilder {
     }
 
     fn add_all_files(&self, sources: &[&'static str], cc_build: &mut cc::Build) {
-        // Force-include flag syntax follows the compiler driver mode, not the
-        // target ABI; see `compiler_is_cl_like`.
         let is_cl_like = compiler_is_cl_like(&cc_build.get_compiler());
 
         let force_include_option = if is_cl_like { "/FI" } else { "--include=" };
@@ -774,8 +768,7 @@ impl CcBuilder {
             cc_build.flag(flag);
         }
 
-        // Capability probe of the actual compiler, so keyed on the family
-        // (not the target ABI): only adds a GNU-style flag to a throwaway probe.
+        // GNU-style flag, so gated on the actual compiler family.
         let compiler = cc_build.get_compiler();
         if compiler.is_like_gnu() || compiler.is_like_clang() {
             cc_build.flag("-Wno-unused-parameter");
@@ -814,12 +807,8 @@ impl CcBuilder {
         let exec_path = out_dir().join(basename);
         let memcmp_build = cc::Build::default();
         let memcmp_compiler = memcmp_build.get_compiler();
-        // The logic below assumes a Clang or GCC compiler; skip otherwise. This
-        // is a property of the actual compiler, so it is keyed on the family
-        // rather than the target ABI. Kept as an explicit "not clang and not
-        // gnu" gate (rather than `is_like_msvc()`) so an unrecognized future
-        // compiler family is skipped rather than run through Clang/GCC logic --
-        // mirroring the supported-compiler gate in `fips_probe`.
+        // The logic below assumes a Clang or GCC compiler; skip any other
+        // family (keyed on the compiler, not the target ABI).
         if !memcmp_compiler.is_like_clang() && !memcmp_compiler.is_like_gnu() {
             return;
         }

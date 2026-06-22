@@ -112,8 +112,7 @@ pub(crate) fn compile_fips_probe(
 
     let cc_build = cc::Build::new();
     let compiler = cc_build.get_compiler();
-    // Guard on the actual compiler family, with a clear error if cc-rs ever
-    // starts reporting a new unsupported family here.
+    // Keyed on the compiler family (not the target ABI); unsupported families error below.
     if !(compiler.is_like_clang() || compiler.is_like_gnu() || compiler.is_like_msvc()) {
         return Err(format!(
             "FIPS verification requires a Clang-, GCC-, or MSVC-compatible compiler; \
