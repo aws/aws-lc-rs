@@ -43,7 +43,7 @@ jobs:
           - --no-default-features --features non-fips,ring-sig-verify,unstable
           - --no-default-features --features non-fips,alloc,unstable
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -88,7 +88,7 @@ jobs:
       AWS_LC_SYS_LINK_WHOLE_ARCHIVE: '1'
       RUSTFLAGS: '-C link-dead-code=yes'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - uses: dtolnay/rust-toolchain@master
@@ -113,7 +113,7 @@ jobs:
           - --no-default-features --features aws-lc-sys,bindgen,unstable
           - --release --all-targets --features bindgen,unstable
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - if: ${{ startsWith(matrix.os, 'macos-') }}
@@ -149,7 +149,7 @@ jobs:
     env:
       AWS_LC_SYS_PREBUILT_NASM: 1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -165,7 +165,7 @@ jobs:
     name: aws-ls-rs coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
           lfs: true
@@ -204,7 +204,7 @@ jobs:
           - --no-default-features --features fips,asan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -232,7 +232,7 @@ jobs:
           - ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -263,7 +263,7 @@ jobs:
           - --no-default-features --features fips
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -291,7 +291,7 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         static: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -314,7 +314,7 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -352,7 +352,7 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -394,7 +394,7 @@ jobs:
           - 'x86_64-pc-windows-msvc'
           - 'x86_64-pc-windows-gnu'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -425,7 +425,7 @@ jobs:
     name: clang-cl discovery via vswhere
     runs-on: windows-11-arm
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -469,7 +469,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -496,7 +496,7 @@ jobs:
       matrix:
         target: [ 'i686-pc-windows-gnu', 'i686-pc-windows-msvc', 'x86_64-pc-windows-msvc', 'x86_64-pc-windows-gnu' ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -537,7 +537,7 @@ jobs:
           - os: 'macos-15-intel'
             static: 1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -561,7 +561,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -599,7 +599,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -641,7 +641,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
@@ -676,7 +676,7 @@ jobs:
           - macos-15-intel
           - macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
           lfs: true
@@ -710,7 +710,7 @@ jobs:
       LIBCLANG_PATH: '/opt/homebrew/opt/llvm@19/lib'
       LLVM_CONFIG_PATH: '/opt/homebrew/opt/llvm@19/bin/llvm-config'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - uses: actions/setup-go@v6
@@ -747,7 +747,7 @@ jobs:
           - os: 'macos-latest'
             fips: 1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
           path: "path has spaces/aws-lc-rs"
@@ -782,7 +782,7 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
         pregen_src: [ 0, 1 ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
           path: "path has spaces/aws-lc-rs"
@@ -833,7 +833,7 @@ jobs:
             env_value: '-O2'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -869,7 +869,7 @@ jobs:
     env:
       AWS_LC_SYS_PREBUILT_NASM: 1
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust
@@ -902,7 +902,7 @@ jobs:
       CFLAGS: ${{ matrix.cflags }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -917,7 +917,7 @@ jobs:
     name: Symlinked includes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain
@@ -954,7 +954,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - if: ${{ matrix.os == 'windows-latest' }}
@@ -990,7 +990,7 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Install Rust toolchain

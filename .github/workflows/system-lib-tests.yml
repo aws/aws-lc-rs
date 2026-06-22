@@ -40,7 +40,7 @@ jobs:
         # system-library path is exercised on both Apple architectures.
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
 
@@ -116,7 +116,7 @@ jobs:
     name: Build AWS-LC (windows-latest)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
 
@@ -246,7 +246,7 @@ jobs:
       # the system-library code path is silently bypassed will hard-fail rather
       # than fall through to a source build. Skipping the version check is
       # required because that path reads aws-lc/include/openssl/base.h.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -316,7 +316,7 @@ jobs:
 
     steps:
       # Intentionally do NOT initialize the aws-lc/ submodule (see test-unix).
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
 
