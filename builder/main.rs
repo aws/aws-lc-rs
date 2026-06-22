@@ -506,7 +506,6 @@ fn target_env() -> String {
 /// *dialect*: a `*-pc-windows-msvc` target can be built with plain `clang` in
 /// GNU driver mode (e.g. `CC=clang`), which needs GNU-style flags. For dialect
 /// decisions use `compiler_is_cl_like` instead.
-#[allow(unused)]
 fn target_is_msvc() -> bool {
     target_env() == "msvc"
 }
@@ -526,14 +525,12 @@ fn target_is_msvc() -> bool {
 /// `clang` selects its driver mode from `argv[0]`, so a `clang-cl`/`cl` program
 /// name is an authoritative fallback when `cc`'s family probe is unreliable.
 /// See: <https://github.com/aws/aws-lc-rs/issues/1146>
-#[allow(unused)]
 pub(crate) fn compiler_is_cl_like(compiler: &cc::Tool) -> bool {
     compiler.is_like_msvc() || program_name_is_cl_driver(compiler.path())
 }
 
 /// Whether a compiler program name selects clang's cl driver mode (`clang-cl`)
 /// or is `cl` itself. Robust fallback for `compiler_is_cl_like`.
-#[allow(unused)]
 pub(crate) fn program_name_is_cl_driver(path: &Path) -> bool {
     match path.file_name().and_then(OsStr::to_str) {
         Some(name) => {

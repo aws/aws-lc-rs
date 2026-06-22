@@ -453,10 +453,8 @@ impl CcBuilder {
         }
     }
 
-    fn prepare_jitter_entropy_builder(&self) -> cc::Build {
+    fn prepare_jitter_entropy_builder(&self, is_cl_like: bool) -> cc::Build {
         // See: https://github.com/aws/aws-lc/blob/2294510cd0ecb2d5946461e3dbb038363b7b94cb/third_party/jitterentropy/CMakeLists.txt#L19-L35
-        // Resolve the flag dialect here so the caller cannot pass the wrong mode.
-        let is_cl_like = compiler_is_cl_like(&cc::Build::new().get_compiler());
         let mut build_options: Vec<BuildOption> = Vec::new();
         self.add_includes(&mut build_options);
         self.add_defines(&mut build_options, is_cl_like);
@@ -618,7 +616,7 @@ impl CcBuilder {
         s2n_bignum_builder.define("S2N_BN_HIDE_SYMBOLS", "1");
 
         // CPU Jitter Entropy is compiled separately due to needing specific flags
-        let mut jitter_entropy_builder = self.prepare_jitter_entropy_builder();
+        let mut jitter_entropy_builder = self.prepare_jitter_entropy_builder(is_cl_like);
         jitter_entropy_builder.flag(format!(
             "{}{}",
             force_include_option,
