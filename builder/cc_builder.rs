@@ -510,7 +510,7 @@ impl CcBuilder {
 
     /// Returns path-reproducibility flags for the configured compiler.
     /// These rewrite DWARF source paths and `__FILE__`; clang may also need
-    /// extra stripping for UBSan metadata. Returns an empty `Vec` on MSVC.
+    /// extra stripping for `UBSan` metadata. Returns an empty `Vec` on MSVC.
     fn collect_path_reproducibility_options(
         &self,
         cc_build: &cc::Build,
