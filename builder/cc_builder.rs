@@ -368,7 +368,8 @@ impl CcBuilder {
         }
 
         let mut cc_build = self.create_builder();
-        let (_, build_options) = self.collect_universal_build_options(&cc_build, false);
+        let (compiler_is_msvc, build_options) =
+            self.collect_universal_build_options(&cc_build, false);
         for option in build_options {
             option.apply_cc(&mut cc_build);
         }
@@ -378,6 +379,23 @@ impl CcBuilder {
         // See: https://github.com/aws/aws-lc/blob/main/crypto/CMakeLists.txt#L77
         if target_os() == "linux" || target_os().ends_with("bsd") {
             cc_build.asm_flag("-Wa,--noexecstack");
+        }
+
+        // `-ffile-prefix-map` does not reach GNU `as` for `.S` sources, so in
+        // release-style builds mirror it with `-Wa,--debug-prefix-map=...`.
+        // Probe first because clang's integrated assembler rejects the flag,
+        // and skip paths with spaces because `-Wa,...` must stay a bare token.
+        let opt_level = cargo_env("OPT_LEVEL");
+        if (target_os() == "linux" || target_os().ends_with("bsd"))
+            && !compiler_is_msvc
+            && !matches!(opt_level.as_str(), "0" | "1" | "2")
+            && !self.manifest_dir.to_string_lossy().contains(' ')
+        {
+            let path_str = self.manifest_dir.display().to_string();
+            let asm_flag = format!("-Wa,--debug-prefix-map={path_str}=");
+            if cc_build.is_flag_supported(&asm_flag).unwrap_or(false) {
+                cc_build.asm_flag(asm_flag);
+            }
         }
 
         cc_build
@@ -480,7 +498,52 @@ impl CcBuilder {
                 .flag("-fwrapv")
                 .flag("-Wconversion");
         }
+
+        // Jitter uses a separate `cc::Build`, so it needs its own path-mapping
+        // flags even when the main builder already has them. Apply them here
+        // unconditionally because jitter is always compiled at `-O0`.
+        for option in self.collect_path_reproducibility_options(&je_builder, is_like_msvc) {
+            option.apply_cc(&mut je_builder);
+        }
         je_builder
+    }
+
+    /// Returns path-reproducibility flags for the configured compiler.
+    /// These rewrite DWARF source paths and `__FILE__`; clang may also need
+    /// extra stripping for `UBSan` metadata. Returns an empty `Vec` on MSVC.
+    fn collect_path_reproducibility_options(
+        &self,
+        cc_build: &cc::Build,
+        is_like_msvc: bool,
+    ) -> Vec<BuildOption> {
+        let mut opts: Vec<BuildOption> = Vec::new();
+        if is_like_msvc {
+            return opts;
+        }
+
+        let path_str = self.manifest_dir.display().to_string();
+
+        // Prefer the flag that rewrites both `__FILE__` and DWARF; older GCC
+        // may only support `-fdebug-prefix-map`.
+        let file_flag = format!("-ffile-prefix-map={path_str}=");
+        if cc_build.is_flag_supported(&file_flag).unwrap_or(false) {
+            opts.push(BuildOption::flag(&file_flag));
+        } else {
+            let dbg_flag = format!("-fdebug-prefix-map={path_str}=");
+            if cc_build.is_flag_supported(&dbg_flag).unwrap_or(false) {
+                opts.push(BuildOption::flag(&dbg_flag));
+            }
+        }
+
+        // Clang UBSan metadata can still carry the full source path at `-O0`.
+        if let Some(opt) = BuildOption::flag_if_supported(
+            cc_build,
+            "-fsanitize-undefined-strip-path-components=-1",
+        ) {
+            opts.push(opt);
+        }
+
+        opts
     }
 
     /// The cc crate appends CFLAGS at the end of the compiler command line,
