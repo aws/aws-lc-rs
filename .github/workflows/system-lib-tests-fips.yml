@@ -2,8 +2,10 @@ name: System Library Tests (FIPS)
 # Exercises the system-library FIPS path enabled by
 # AWS_LC_FIPS_SYS_SYSTEM_DIR, including the link probe and runtime check.
 #
-# Builds AWS-LC FIPS from the fips-2025-09-12-lts branch, which supports
-# -DGENERATE_RUST_BINDINGS=ON for system-installed bindings.
+# Builds AWS-LC FIPS from each ref listed in the `setup` job (FIPS branches
+# plus a FIPS build of `main`) and runs the system-library FIPS path against
+# each. Every ref must support -DGENERATE_RUST_BINDINGS=ON. Ensuring a given
+# library meets compliance requirements is the consumer's responsibility.
 #
 # Two AWS-LC FIPS build constraints drive the matrix:
 #   * A *static* FIPS build is supported only on Linux; macOS and Windows FIPS
@@ -27,12 +29,26 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Build AWS-LC FIPS (and a non-FIPS negative fixture) from the LTS branch into
+  # Single edit point for the AWS-LC refs the workflow fans out over. Each must
+  # support -DGENERATE_RUST_BINDINGS=ON and be a plain branch/tag name (no
+  # slashes, so it can go in artifact names).
+  # ---------------------------------------------------------------------------
+  setup:
+    if: github.repository_owner == 'aws'
+    runs-on: ubuntu-latest
+    outputs:
+      refs: ${{ steps.refs.outputs.refs }}
+    steps:
+      - id: refs
+        run: echo 'refs=["fips-2025-09-12-lts","main"]' >> "$GITHUB_OUTPUT"
+  # ---------------------------------------------------------------------------
+  # Build AWS-LC FIPS (and a non-FIPS negative fixture) from each ref into
   # install prefixes the test jobs consume via workflow artifacts.
   # ---------------------------------------------------------------------------
   build-fips-unix:
     if: github.repository_owner == 'aws'
-    name: Build AWS-LC FIPS (${{ matrix.os }})
+    needs: setup
+    name: Build AWS-LC FIPS (${{ matrix.aws_lc_ref }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     env:
       CC: clang
@@ -42,12 +58,13 @@ jobs:
       matrix:
         # Cover both Apple architectures.
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
+        aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
     steps:
-      - name: Checkout AWS-LC (fips-2025-09-12-lts)
+      - name: Checkout AWS-LC (${{ matrix.aws_lc_ref }})
         uses: actions/checkout@v7
         with:
           repository: aws/aws-lc
-          ref: fips-2025-09-12-lts
+          ref: ${{ matrix.aws_lc_ref }}
           submodules: 'recursive'
           path: aws-lc-fips-src
 
@@ -133,7 +150,7 @@ jobs:
       - name: Upload install artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: aws-lc-fips-install-${{ matrix.os }}
+          name: aws-lc-fips-install-${{ matrix.aws_lc_ref }}-${{ matrix.os }}
           path: |
             install-fips/
             install-nonfips/
@@ -143,20 +160,25 @@ jobs:
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v7
         with:
-          name: aws-lc-fips-install-prefixed
+          name: aws-lc-fips-install-prefixed-${{ matrix.aws_lc_ref }}
           path: install-fips-prefixed/
           retention-days: 1
 
   build-fips-windows:
     if: github.repository_owner == 'aws'
-    name: Build AWS-LC FIPS (windows-latest)
+    needs: setup
+    name: Build AWS-LC FIPS (${{ matrix.aws_lc_ref }}, windows-latest)
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
     steps:
-      - name: Checkout AWS-LC (fips-2025-09-12-lts)
+      - name: Checkout AWS-LC (${{ matrix.aws_lc_ref }})
         uses: actions/checkout@v7
         with:
           repository: aws/aws-lc
-          ref: fips-2025-09-12-lts
+          ref: ${{ matrix.aws_lc_ref }}
           submodules: 'recursive'
           path: aws-lc-fips-src
 
@@ -204,7 +226,7 @@ jobs:
       - name: Upload install artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: aws-lc-fips-install-windows-latest
+          name: aws-lc-fips-install-${{ matrix.aws_lc_ref }}-windows-latest
           path: |
             install-fips/
             install-nonfips/
@@ -216,13 +238,14 @@ jobs:
   # ---------------------------------------------------------------------------
   test-fips-unix:
     if: github.repository_owner == 'aws'
-    needs: build-fips-unix
-    name: "Test: ${{ matrix.config.name }} (${{ matrix.os }})"
+    needs: [setup, build-fips-unix]
+    name: "Test: ${{ matrix.config.name }} (${{ matrix.aws_lc_ref }}, ${{ matrix.os }})"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
+        aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
         config:
           - name: "aws-lc-fips-sys"
             cargo_args: "-p aws-lc-fips-sys"
@@ -231,17 +254,23 @@ jobs:
             cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
             cargo_cmd: "test"
     steps:
-      # Do not initialize the aws-lc submodule; that makes fallback-to-source a
-      # hard failure instead of a silent regression. SKIP_VERSION_CHECK is
-      # required because the version check reads submodule headers.
+      # Do not initialize the aws-lc submodule, then remove its working tree
+      # outright; that makes fallback-to-source a hard failure instead of a
+      # silent regression, and stays robust even if a future actions/checkout
+      # starts initializing submodules by default. The version check still runs
+      # (it compares against a declared minimum, not submodule headers).
       - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
 
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Download AWS-LC FIPS install
         uses: actions/download-artifact@v8
         with:
-          name: aws-lc-fips-install-${{ matrix.os }}
+          name: aws-lc-fips-install-${{ matrix.aws_lc_ref }}-${{ matrix.os }}
           path: ${{ github.workspace }}/fips-artifacts
 
       - name: Determine link form
@@ -258,7 +287,6 @@ jobs:
         env:
           AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/fips-artifacts/install-fips
           AWS_LC_FIPS_SYS_STATIC: ${{ steps.form.outputs.static }}
-          AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK: "1"
           # A shared install (macOS) must be discoverable at runtime.
           LD_LIBRARY_PATH: ${{ github.workspace }}/fips-artifacts/install-fips/lib
           DYLD_LIBRARY_PATH: ${{ github.workspace }}/fips-artifacts/install-fips/lib
@@ -276,17 +304,96 @@ jobs:
           fi
 
   # ---------------------------------------------------------------------------
+  # Proves the declared FIPS floor: build AWS-LC FIPS at the oldest branch that
+  # both reports MINIMUM_FIPS_VERSION (see builder/system_library.rs) and can
+  # emit Rust bindings, then run the suite against it with the version check
+  # enabled. The fips-2024-09-27 branch reports library version 3.x with no
+  # AWSLC_FIPS_VERSION_NUMBER macro, so resolve_fips_version() falls back to the
+  # version-string major and yields FIPS version 3 — exactly the floor. A
+  # failure means the floor is unsupported and must be raised together with this
+  # pin.
+  # ---------------------------------------------------------------------------
+  test-fips-minimum-version:
+    if: github.repository_owner == 'aws'
+    name: "Test: declared minimum AWS-LC FIPS version"
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+      CXX: clang++
+      # Keep in sync with MINIMUM_FIPS_VERSION in builder/system_library.rs: the
+      # oldest FIPS branch that reports that module version and supports
+      # -DGENERATE_RUST_BINDINGS=ON.
+      AWS_LC_FIPS_MIN_REF: "fips-2024-09-27"
+    steps:
+      # aws-lc-rs checkout WITHOUT the submodule (and remove its working tree),
+      # so a from-source fallback is impossible (see test-fips-unix).
+      - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
+
+      - name: Checkout AWS-LC at the declared minimum FIPS version
+        uses: actions/checkout@v7
+        with:
+          repository: aws/aws-lc
+          ref: ${{ env.AWS_LC_FIPS_MIN_REF }}
+          submodules: 'recursive'
+          path: aws-lc-fips-min-src
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '>=1.18'
+
+      - name: Install bindgen-cli
+        run: cargo install --force --locked bindgen-cli
+
+      - name: Build and install AWS-LC FIPS (static) with Rust bindings
+        run: |
+          cmake -S aws-lc-fips-min-src -B build-fips-min \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DFIPS=1 \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TOOL=OFF \
+            -DGENERATE_RUST_BINDINGS=ON \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install-fips-min"
+          cmake --build build-fips-min --target install -j
+
+      - name: Run aws-lc-rs FIPS tests against the minimum install (version check enabled)
+        env:
+          AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/install-fips-min
+          AWS_LC_FIPS_SYS_STATIC: "1"
+          LD_LIBRARY_PATH: ${{ github.workspace }}/install-fips-min/lib
+        run: |
+          set -o pipefail
+          cargo test -vv -p aws-lc-rs --no-default-features --features fips --lib 2>&1 | tee cargo.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo.log; then
+            echo '::error::System-library code path was not entered; aws-lc-fips-sys silently fell back to building from source.'
+            exit 1
+          fi
+          if ! grep -q 'FIPS verification' cargo.log; then
+            echo '::error::FIPS verification did not run on the system-library FIPS path.'
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
   # Prefixed-install path (Linux): verify that prefix-aware bindings work and
   # that the FIPS probe resolves the renamed FIPS-only symbol.
   # ---------------------------------------------------------------------------
   test-fips-prefixed-linux:
     if: github.repository_owner == 'aws'
-    needs: build-fips-unix
-    name: "Test: ${{ matrix.config.name }} (ubuntu-latest)"
+    needs: [setup, build-fips-unix]
+    name: "Test: ${{ matrix.config.name }} (${{ matrix.aws_lc_ref }}, ubuntu-latest)"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
         config:
           - name: "aws-lc-fips-sys, prefixed"
             cargo_args: "-p aws-lc-fips-sys"
@@ -295,15 +402,20 @@ jobs:
             cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
             cargo_cmd: "test"
     steps:
-      # Do not initialize the aws-lc submodule (see test-fips-unix).
+      # Do not initialize the aws-lc submodule, and remove its working tree
+      # outright (see test-fips-unix).
       - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
 
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Download prefixed AWS-LC FIPS install
         uses: actions/download-artifact@v8
         with:
-          name: aws-lc-fips-install-prefixed
+          name: aws-lc-fips-install-prefixed-${{ matrix.aws_lc_ref }}
           path: ${{ github.workspace }}/fips-artifacts/install-fips-prefixed
 
       - name: Sanity-check that the install is actually prefixed
@@ -321,7 +433,6 @@ jobs:
         env:
           AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/fips-artifacts/install-fips-prefixed
           AWS_LC_FIPS_SYS_STATIC: "1"
-          AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK: "1"
         run: |
           set -o pipefail
           cargo ${{ matrix.config.cargo_cmd }} -vv ${{ matrix.config.cargo_args }} 2>&1 | tee cargo.log
@@ -336,12 +447,13 @@ jobs:
 
   test-fips-windows:
     if: github.repository_owner == 'aws'
-    needs: build-fips-windows
-    name: "Test: ${{ matrix.config.name }} (windows-latest)"
+    needs: [setup, build-fips-windows]
+    name: "Test: ${{ matrix.config.name }} (${{ matrix.aws_lc_ref }}, windows-latest)"
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
+        aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
         config:
           - name: "aws-lc-fips-sys"
             cargo_args: "-p aws-lc-fips-sys"
@@ -350,8 +462,13 @@ jobs:
             cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
             cargo_cmd: "test"
     steps:
-      # Do not initialize the aws-lc submodule (see test-fips-unix).
+      # Do not initialize the aws-lc submodule, and remove its working tree
+      # outright (see test-fips-unix).
       - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
 
       - uses: dtolnay/rust-toolchain@stable
       - uses: ilammy/msvc-dev-cmd@v1
@@ -359,7 +476,7 @@ jobs:
       - name: Download AWS-LC FIPS install
         uses: actions/download-artifact@v8
         with:
-          name: aws-lc-fips-install-windows-latest
+          name: aws-lc-fips-install-${{ matrix.aws_lc_ref }}-windows-latest
           path: ${{ github.workspace }}/fips-artifacts
 
       - name: Run cargo ${{ matrix.config.cargo_cmd }}
@@ -368,7 +485,6 @@ jobs:
           AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/fips-artifacts/install-fips
           # Windows FIPS is a shared build.
           AWS_LC_FIPS_SYS_STATIC: "0"
-          AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK: "1"
         run: |
           # Windows needs the DLL on PATH for both the probe and the test binary.
           $env:Path = "$env:AWS_LC_FIPS_SYS_SYSTEM_DIR\bin;$env:AWS_LC_FIPS_SYS_SYSTEM_DIR\lib;$env:Path"
@@ -393,21 +509,29 @@ jobs:
   # ---------------------------------------------------------------------------
   reject-nonfips-unix:
     if: github.repository_owner == 'aws'
-    needs: build-fips-unix
-    name: "Reject non-FIPS install (${{ matrix.os }})"
+    needs: [setup, build-fips-unix]
+    name: "Reject non-FIPS install (${{ matrix.aws_lc_ref }}, ${{ matrix.os }})"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest ]
+        aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
     steps:
       - uses: actions/checkout@v7
+
+      # Remove the submodule working tree so fallback-to-source is impossible
+      # (see test-fips-unix).
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
+
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Download AWS-LC install
         uses: actions/download-artifact@v8
         with:
-          name: aws-lc-fips-install-${{ matrix.os }}
+          name: aws-lc-fips-install-${{ matrix.aws_lc_ref }}-${{ matrix.os }}
           path: ${{ github.workspace }}/fips-artifacts
 
       - name: Assert the FIPS probe rejects a non-FIPS install
@@ -428,18 +552,29 @@ jobs:
 
   reject-nonfips-windows:
     if: github.repository_owner == 'aws'
-    needs: build-fips-windows
-    name: "Reject non-FIPS install (windows-latest)"
+    needs: [setup, build-fips-windows]
+    name: "Reject non-FIPS install (${{ matrix.aws_lc_ref }}, windows-latest)"
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
     steps:
       - uses: actions/checkout@v7
+
+      # Remove the submodule working tree so fallback-to-source is impossible
+      # (see test-fips-unix).
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
+
       - uses: dtolnay/rust-toolchain@stable
       - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Download AWS-LC install
         uses: actions/download-artifact@v8
         with:
-          name: aws-lc-fips-install-windows-latest
+          name: aws-lc-fips-install-${{ matrix.aws_lc_ref }}-windows-latest
           path: ${{ github.workspace }}/fips-artifacts
 
       - name: Assert the FIPS probe rejects a non-FIPS install

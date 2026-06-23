@@ -110,8 +110,13 @@ version-stamped prefix and are not suitable for an arbitrary system install.
 
 ### Version compatibility
 
-The version embedded in the installed headers must be greater than or equal to the AWS-LC
-version bundled with this crate. Override with `AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
+FIPS installs are gated on the AWS-LC **FIPS module version** (an integer
+identifying a validation submission, decoupled from the library version; see
+[aws/aws-lc#3211](https://github.com/aws/aws-lc/pull/3211)), which must be at
+least the minimum supported by this crate (currently `3`). It is read from
+`AWSLC_FIPS_VERSION_NUMBER`, falling back to the major of
+`AWSLC_VERSION_NUMBER_STRING` on older branches (e.g. FIPS 3.x → `3`). To bypass
+this check (not recommended), set `AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
 
 ## Build Prerequisites
 

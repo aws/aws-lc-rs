@@ -190,6 +190,158 @@ fn test_validate_and_extract_version_missing_version_string() {
 }
 
 // -------------------------------------------------------------------------
+// FIPS module version resolution
+// -------------------------------------------------------------------------
+
+#[test]
+fn test_extract_fips_version_number_present() {
+    let content = "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_FIPS_VERSION_NUMBER 4\n";
+    assert_eq!(extract_fips_version_number(content).unwrap(), Some(4));
+}
+
+#[test]
+fn test_extract_fips_version_number_absent() {
+    let content = "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"3.3.0\"\n";
+    assert_eq!(extract_fips_version_number(content).unwrap(), None);
+}
+
+#[test]
+fn test_extract_fips_version_number_ignores_comment_false_match() {
+    // A comment mentioning the macro shouldn't false-match.
+    let content =
+        "// AWSLC_FIPS_VERSION_NUMBER is defined below\n#define AWSLC_FIPS_VERSION_NUMBER 7\n";
+    assert_eq!(extract_fips_version_number(content).unwrap(), Some(7));
+}
+
+#[test]
+fn test_extract_fips_version_number_present_but_malformed_is_error() {
+    // A present-but-unparseable macro must not silently fall back to the
+    // (post-decoupling unreliable) library version.
+    let content = "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_FIPS_VERSION_NUMBER notanumber\n";
+    let err = extract_fips_version_number(content).unwrap_err();
+    assert!(err.contains("Malformed AWSLC_FIPS_VERSION_NUMBER"), "{err}");
+}
+
+#[test]
+fn test_version_major() {
+    assert_eq!(version_major("3.3.0").unwrap(), 3);
+    assert_eq!(version_major("12.1.4").unwrap(), 12);
+    assert!(version_major("").is_err());
+    assert!(version_major("x.y.z").is_err());
+}
+
+#[test]
+fn test_resolve_fips_version_prefers_macro() {
+    // The macro is authoritative and wins over the legacy version string.
+    let content =
+        "#define AWSLC_VERSION_NUMBER_STRING \"3.3.0\"\n#define AWSLC_FIPS_VERSION_NUMBER 4\n";
+    assert_eq!(
+        resolve_fips_version(Path::new("base.h"), content).unwrap(),
+        4
+    );
+}
+
+#[test]
+fn test_resolve_fips_version_legacy_fallback() {
+    // No macro (legacy FIPS branch <= 3.x): infer from the version major.
+    let content = "#define AWSLC_VERSION_NUMBER_STRING \"3.3.0\"\n";
+    assert_eq!(
+        resolve_fips_version(Path::new("base.h"), content).unwrap(),
+        3
+    );
+}
+
+#[test]
+fn test_validate_and_resolve_fips_version_requires_awslc_marker() {
+    // Missing OPENSSL_IS_AWSLC marker is rejected even if a FIPS macro exists.
+    let temp_dir = tempfile::tempdir().unwrap();
+    write_base_h(temp_dir.path(), "#define AWSLC_FIPS_VERSION_NUMBER 4\n");
+    let err = validate_and_resolve_fips_version(temp_dir.path()).unwrap_err();
+    assert!(err.contains("not valid AWS-LC headers"), "{err}");
+}
+
+#[test]
+fn test_validate_and_resolve_fips_version_macro() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    write_base_h(
+        temp_dir.path(),
+        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_FIPS_VERSION_NUMBER 4\n",
+    );
+    assert_eq!(
+        validate_and_resolve_fips_version(temp_dir.path()).unwrap(),
+        4
+    );
+}
+
+#[test]
+fn test_validate_and_resolve_fips_version_legacy() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    write_base_h(
+        temp_dir.path(),
+        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"3.3.0\"\n",
+    );
+    assert_eq!(
+        validate_and_resolve_fips_version(temp_dir.path()).unwrap(),
+        3
+    );
+}
+
+// -------------------------------------------------------------------------
+// Declared minimums must not exceed what we vendor
+// -------------------------------------------------------------------------
+//
+// Guards against declaring a minimum newer than the bundled submodule. Skips
+// when the submodule is absent; submodule-initialized CI enforces it.
+
+/// Path to a sibling sys crate's bundled `base.h`, relative to `builder-test`.
+fn bundled_base_h(sys_crate: &str) -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("builder-test should have a parent directory")
+        .join(sys_crate)
+        .join("aws-lc")
+        .join("include")
+        .join("openssl")
+        .join("base.h")
+}
+
+#[test]
+fn test_minimum_aws_lc_version_not_newer_than_bundled() {
+    let base_h = bundled_base_h("aws-lc-sys");
+    let Ok(content) = std::fs::read_to_string(&base_h) else {
+        eprintln!(
+            "skipping: bundled base.h not found at {} (submodule not initialized)",
+            base_h.display()
+        );
+        return;
+    };
+    let bundled = extract_version(&base_h, &content).unwrap();
+    assert!(
+        version_at_least(&bundled, MINIMUM_AWS_LC_VERSION).unwrap(),
+        "MINIMUM_AWS_LC_VERSION ({MINIMUM_AWS_LC_VERSION}) must not exceed the bundled \
+         aws-lc-sys version ({bundled})",
+    );
+}
+
+#[test]
+fn test_minimum_fips_version_not_newer_than_bundled() {
+    let base_h = bundled_base_h("aws-lc-fips-sys");
+    let Ok(content) = std::fs::read_to_string(&base_h) else {
+        eprintln!(
+            "skipping: bundled FIPS base.h not found at {} (submodule not initialized)",
+            base_h.display()
+        );
+        return;
+    };
+    let bundled = resolve_fips_version(&base_h, &content).unwrap();
+    assert!(
+        bundled >= MINIMUM_FIPS_VERSION,
+        "MINIMUM_FIPS_VERSION ({MINIMUM_FIPS_VERSION}) must not exceed the bundled \
+         aws-lc-fips-sys FIPS version ({bundled})",
+    );
+}
+
+// -------------------------------------------------------------------------
 // resolve_library — no explicit preference
 // -------------------------------------------------------------------------
 
