@@ -498,6 +498,49 @@ fn target_env() -> String {
     cargo_env("CARGO_CFG_TARGET_ENV")
 }
 
+/// Whether the target ABI is MSVC (a `*-pc-windows-msvc` target).
+///
+/// This reflects the target ABI only and is the right signal for ABI/CRT/SDK
+/// decisions (MSVC CRT linkage, `_CRT_SECURE_NO_WARNINGS`, the `clang-cl`
+/// dependency checks). It is *not* a reliable signal for the compiler's flag
+/// *dialect*: a `*-pc-windows-msvc` target can be built with plain `clang` in
+/// GNU driver mode (e.g. `CC=clang`), which needs GNU-style flags. For dialect
+/// decisions use `compiler_is_cl_like` instead.
+fn target_is_msvc() -> bool {
+    target_env() == "msvc"
+}
+
+/// Whether the active C compiler is driven in MSVC "cl" mode (`cl.exe` or
+/// `clang-cl`), which is what determines cl-style flag *dialect* (`/Fo`, `/FI`,
+/// `/Od`, no `--param ...`).
+///
+/// Driver mode is a property of the *compiler*, not the target ABI, and the two
+/// can diverge in both directions:
+/// - plain `clang` targeting `*-pc-windows-msvc` runs in GNU mode and needs
+///   GNU-style flags (so the target ABI alone is not enough), and
+/// - `cc::Tool::is_like_msvc()` can misclassify `clang-cl` as plain Clang when
+///   its probe misfires in a sandbox (e.g. cargo-xwin), emitting GNU-only flags
+///   to a cl-mode driver (so `is_like_msvc()` alone is not enough).
+///
+/// `clang` selects its driver mode from `argv[0]`, so a `clang-cl`/`cl` program
+/// name is an authoritative fallback when `cc`'s family probe is unreliable.
+/// See: <https://github.com/aws/aws-lc-rs/issues/1146>
+pub(crate) fn compiler_is_cl_like(compiler: &cc::Tool) -> bool {
+    compiler.is_like_msvc() || program_name_is_cl_driver(compiler.path())
+}
+
+/// Whether a compiler program name selects clang's cl driver mode (`clang-cl`)
+/// or is `cl` itself. Robust fallback for `compiler_is_cl_like`.
+pub(crate) fn program_name_is_cl_driver(path: &Path) -> bool {
+    match path.file_name().and_then(OsStr::to_str) {
+        Some(name) => {
+            let name = name.to_ascii_lowercase();
+            name.contains("clang-cl") || name == "cl" || name == "cl.exe"
+        }
+        None => false,
+    }
+}
+
 #[allow(unused)]
 fn target_vendor() -> String {
     cargo_env("CARGO_CFG_TARGET_VENDOR")

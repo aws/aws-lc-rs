@@ -3,8 +3,8 @@
 
 use crate::system_library::ResolvedLib;
 use crate::{
-    cargo_env, emit_warning, execute_command, is_lto_flag, out_dir, target, target_os,
-    OutputLibType,
+    cargo_env, compiler_is_cl_like, emit_warning, execute_command, is_lto_flag, out_dir, target,
+    target_os, OutputLibType,
 };
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
@@ -53,14 +53,14 @@ fn inherited_probe_args(compiler: &cc::Tool) -> Vec<std::ffi::OsString> {
 /// Appends the probe source and link arguments to the inherited compiler flags.
 fn append_probe_link_args(
     args: &mut Vec<std::ffi::OsString>,
-    is_msvc: bool,
+    is_cl_like: bool,
     include_dir: &Path,
     crypto_lib: &ResolvedLib,
     lib_dir: &Path,
     probe_src: &Path,
     exec_path: &Path,
 ) {
-    if is_msvc {
+    if is_cl_like {
         let obj_path = out_dir().join("aws_lc_fips_link_probe.obj");
         args.extend([
             prefixed_os_arg("/I", include_dir.as_os_str()),
@@ -112,8 +112,8 @@ pub(crate) fn compile_fips_probe(
 
     let cc_build = cc::Build::new();
     let compiler = cc_build.get_compiler();
-    let is_msvc = compiler.is_like_msvc();
-    if !(compiler.is_like_clang() || compiler.is_like_gnu() || is_msvc) {
+    // Keyed on the compiler family (not the target ABI); unsupported families error below.
+    if !(compiler.is_like_clang() || compiler.is_like_gnu() || compiler.is_like_msvc()) {
         return Err(format!(
             "FIPS verification requires a Clang-, GCC-, or MSVC-compatible compiler; \
              {} is not supported. Set CC to a supported compiler.",
@@ -124,7 +124,8 @@ pub(crate) fn compile_fips_probe(
     let mut args = inherited_probe_args(&compiler);
     append_probe_link_args(
         &mut args,
-        is_msvc,
+        // Probe link-flag syntax follows the compiler driver mode, not the ABI.
+        compiler_is_cl_like(&compiler),
         include_dir,
         crypto_lib,
         lib_dir,

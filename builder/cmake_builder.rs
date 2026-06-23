@@ -7,8 +7,8 @@ use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
     get_crate_cflags, is_crt_static, is_fips_build, is_no_asm, is_no_pregenerated_src,
     optional_env, optional_env_optional_crate_target, sanitizer, set_env, set_env_for_target,
-    should_build_jitter_entropy, target, target_arch, target_env, target_os, test_clang_cl_command,
-    test_nasm_command, use_prebuilt_nasm, OutputLibType,
+    should_build_jitter_entropy, target, target_arch, target_env, target_is_msvc, target_os,
+    test_clang_cl_command, test_nasm_command, use_prebuilt_nasm, OutputLibType,
 };
 use std::collections::HashMap;
 use std::env;
@@ -97,10 +97,10 @@ impl CmakeBuilder {
             self.output_lib_type,
         );
         let cc_build = cc::Build::new();
-        let (is_like_msvc, build_options) =
+        let (is_cl_like, build_options) =
             cc_builder.collect_universal_build_options(&cc_build, true);
         for option in &build_options {
-            option.apply_cmake(cmake_cfg, is_like_msvc);
+            option.apply_cmake(cmake_cfg, is_cl_like);
         }
 
         // CMake seeds `CMAKE_C_FLAGS` and `CMAKE_ASM_FLAGS` separately, so the
@@ -109,7 +109,7 @@ impl CmakeBuilder {
         // `-Wa,--debug-prefix-map=...`, and skip paths with spaces because the
         // flag must survive CMake and the assembler as one bare token.
         let opt_level = cargo_env("OPT_LEVEL");
-        if !is_like_msvc
+        if !is_cl_like
             && (target_os() == "linux" || target_os().ends_with("bsd"))
             && !matches!(opt_level.as_str(), "0" | "1" | "2")
             && !self.manifest_dir.to_string_lossy().contains(' ')
@@ -238,7 +238,7 @@ impl CmakeBuilder {
             } else if use_prebuilt_nasm() {
                 self.configure_prebuilt_nasm(&mut cmake_cfg);
             }
-            if target_env().as_str() == "msvc" {
+            if target_is_msvc() {
                 let mut msvcrt = String::from_str("MultiThreaded").unwrap();
                 if is_crt_static() {
                     cmake_cfg.static_crt(true);
@@ -670,7 +670,7 @@ impl crate::Builder for CmakeBuilder {
         }
         if target_os() == "windows"
             && target_arch() == "aarch64"
-            && target_env() == "msvc"
+            && target_is_msvc()
             && !test_clang_cl_command()
         {
             eprintln!("Missing dependency: clang-cl");

@@ -43,6 +43,26 @@ scenarios or when using MSYS2/MinGW environments. When using Clang:
 * Ensure `clang` or `clang-cl` is available in your PATH
 * For MSYS2 environments, the `clang64` or `ucrt64` subsystems provide Clang toolchains
 
+#### Clang driver mode on the MSVC ABI
+
+For `*-pc-windows-msvc` targets, the C compiler flag *dialect* is determined by the compiler's
+**driver mode**, not by the target ABI:
+
+* `clang-cl` (like `cl.exe`) runs in **cl driver mode** and takes MSVC-style flags (`/Od`, `/FI`, ...).
+* plain `clang` (for example `CC=clang`, or cross-compiling with [`cargo-xwin`]) runs in **GNU driver
+  mode** and takes GNU-style flags, even when targeting the MSVC ABI.
+
+Both driver modes are supported, and both are exercised in CI for `x86_64-pc-windows-msvc`. If you
+override `CC`, the rest of the build environment (such as `AR`) should match the driver mode of the
+compiler you select.
+
+> **Note:** If you build the C sources with LTO under plain `clang` (e.g. `CFLAGS=-flto=thin`), the
+> resulting objects are LLVM bitcode, which the default MSVC `link.exe` cannot consume. Link with
+> `lld-link` from the same LLVM toolchain (for example `RUSTFLAGS=-Clinker=lld-link`) so the bitcode
+> is understood.
+
+[`cargo-xwin`]: https://github.com/rust-cross/cargo-xwin
+
 ## CMake
 
 CMake is only required for FIPS builds on Windows.
