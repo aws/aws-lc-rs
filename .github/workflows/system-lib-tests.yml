@@ -241,12 +241,19 @@ jobs:
             cargo_cmd: "test"
 
     steps:
-      # Intentionally do NOT initialize the aws-lc/ submodule. This makes the
-      # from-source build path physically impossible, so a regression where
-      # the system-library code path is silently bypassed will hard-fail rather
-      # than fall through to a source build. The version check still runs (it
-      # compares against a declared minimum, not the submodule).
+      # Intentionally do NOT initialize the aws-lc/ submodule, then remove its
+      # working tree outright. This makes the from-source build path physically
+      # impossible, so a regression where the system-library code path is
+      # silently bypassed hard-fails rather than falling through to a source
+      # build. Removing the tree (rather than merely skipping init) stays robust
+      # even if a future actions/checkout starts initializing submodules by
+      # default. The version check still runs (it compares against a declared
+      # minimum, not the submodule).
       - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-sys/aws-lc
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -292,6 +299,10 @@ jobs:
       # impossible (see test-unix).
       - uses: actions/checkout@v7
 
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-sys/aws-lc
+
       - name: Checkout AWS-LC at the declared minimum version
         uses: actions/checkout@v7
         with:
@@ -300,6 +311,8 @@ jobs:
           path: aws-lc-min-src
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
 
       - name: Install bindgen-cli
         run: cargo install --force --locked bindgen-cli
@@ -369,9 +382,14 @@ jobs:
             cargo_cmd: "test"
 
     steps:
-      # Intentionally do NOT initialize the aws-lc/ submodule (see test-unix).
-      # The version check still runs against the installed version.
+      # Intentionally do NOT initialize the aws-lc/ submodule, and remove its
+      # working tree outright (see test-unix). The version check still runs
+      # against the installed version.
       - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-sys/aws-lc
 
       - uses: dtolnay/rust-toolchain@stable
 

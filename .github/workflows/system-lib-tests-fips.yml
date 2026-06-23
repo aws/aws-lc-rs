@@ -254,10 +254,16 @@ jobs:
             cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
             cargo_cmd: "test"
     steps:
-      # Do not initialize the aws-lc submodule; that makes fallback-to-source a
-      # hard failure instead of a silent regression. The version check still
-      # runs (it compares against a declared minimum, not submodule headers).
+      # Do not initialize the aws-lc submodule, then remove its working tree
+      # outright; that makes fallback-to-source a hard failure instead of a
+      # silent regression, and stays robust even if a future actions/checkout
+      # starts initializing submodules by default. The version check still runs
+      # (it compares against a declared minimum, not submodule headers).
       - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -298,6 +304,84 @@ jobs:
           fi
 
   # ---------------------------------------------------------------------------
+  # Proves the declared FIPS floor: build AWS-LC FIPS at the oldest branch that
+  # both reports MINIMUM_FIPS_VERSION (see builder/system_library.rs) and can
+  # emit Rust bindings, then run the suite against it with the version check
+  # enabled. The fips-2024-09-27 branch reports library version 3.x with no
+  # AWSLC_FIPS_VERSION_NUMBER macro, so resolve_fips_version() falls back to the
+  # version-string major and yields FIPS version 3 — exactly the floor. A
+  # failure means the floor is unsupported and must be raised together with this
+  # pin.
+  # ---------------------------------------------------------------------------
+  test-fips-minimum-version:
+    if: github.repository_owner == 'aws'
+    name: "Test: declared minimum AWS-LC FIPS version"
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+      CXX: clang++
+      # Keep in sync with MINIMUM_FIPS_VERSION in builder/system_library.rs: the
+      # oldest FIPS branch that reports that module version and supports
+      # -DGENERATE_RUST_BINDINGS=ON.
+      AWS_LC_FIPS_MIN_REF: "fips-2024-09-27"
+    steps:
+      # aws-lc-rs checkout WITHOUT the submodule (and remove its working tree),
+      # so a from-source fallback is impossible (see test-fips-unix).
+      - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
+
+      - name: Checkout AWS-LC at the declared minimum FIPS version
+        uses: actions/checkout@v7
+        with:
+          repository: aws/aws-lc
+          ref: ${{ env.AWS_LC_FIPS_MIN_REF }}
+          submodules: 'recursive'
+          path: aws-lc-fips-min-src
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '>=1.18'
+
+      - name: Install bindgen-cli
+        run: cargo install --force --locked bindgen-cli
+
+      - name: Build and install AWS-LC FIPS (static) with Rust bindings
+        run: |
+          cmake -S aws-lc-fips-min-src -B build-fips-min \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DFIPS=1 \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TOOL=OFF \
+            -DGENERATE_RUST_BINDINGS=ON \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install-fips-min"
+          cmake --build build-fips-min --target install -j
+
+      - name: Run aws-lc-rs FIPS tests against the minimum install (version check enabled)
+        env:
+          AWS_LC_FIPS_SYS_SYSTEM_DIR: ${{ github.workspace }}/install-fips-min
+          AWS_LC_FIPS_SYS_STATIC: "1"
+          LD_LIBRARY_PATH: ${{ github.workspace }}/install-fips-min/lib
+        run: |
+          set -o pipefail
+          cargo test -vv -p aws-lc-rs --no-default-features --features fips --lib 2>&1 | tee cargo.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo.log; then
+            echo '::error::System-library code path was not entered; aws-lc-fips-sys silently fell back to building from source.'
+            exit 1
+          fi
+          if ! grep -q 'FIPS verification' cargo.log; then
+            echo '::error::FIPS verification did not run on the system-library FIPS path.'
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
   # Prefixed-install path (Linux): verify that prefix-aware bindings work and
   # that the FIPS probe resolves the renamed FIPS-only symbol.
   # ---------------------------------------------------------------------------
@@ -318,8 +402,13 @@ jobs:
             cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
             cargo_cmd: "test"
     steps:
-      # Do not initialize the aws-lc submodule (see test-fips-unix).
+      # Do not initialize the aws-lc submodule, and remove its working tree
+      # outright (see test-fips-unix).
       - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -373,8 +462,13 @@ jobs:
             cargo_args: "-p aws-lc-rs --no-default-features --features fips --lib"
             cargo_cmd: "test"
     steps:
-      # Do not initialize the aws-lc submodule (see test-fips-unix).
+      # Do not initialize the aws-lc submodule, and remove its working tree
+      # outright (see test-fips-unix).
       - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
 
       - uses: dtolnay/rust-toolchain@stable
       - uses: ilammy/msvc-dev-cmd@v1
@@ -425,6 +519,13 @@ jobs:
         aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
     steps:
       - uses: actions/checkout@v7
+
+      # Remove the submodule working tree so fallback-to-source is impossible
+      # (see test-fips-unix).
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
+
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Download AWS-LC install
@@ -460,6 +561,13 @@ jobs:
         aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
     steps:
       - uses: actions/checkout@v7
+
+      # Remove the submodule working tree so fallback-to-source is impossible
+      # (see test-fips-unix).
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
+
       - uses: dtolnay/rust-toolchain@stable
       - uses: ilammy/msvc-dev-cmd@v1
 

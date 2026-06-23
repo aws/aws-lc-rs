@@ -245,6 +245,25 @@ const MINIMUM_AWS_LC_VERSION: &str = "1.68.0";
 /// TODO: bump to `4` when switching to the `fips-2025-09-12-lts` branch.
 const MINIMUM_FIPS_VERSION: u32 = 3;
 
+/// Finds the first `#define <name> ...` line in `base.h` content and returns
+/// the value token following the macro name (or `""` for a bare `#define
+/// <name>` with no value), or `None` if the macro is not `#define`d. Matching
+/// on the leading whitespace-separated tokens — rather than a bare `contains`
+/// — prevents a comment that merely mentions the macro name from
+/// false-matching.
+fn find_define<'a>(content: &'a str, name: &str) -> Option<&'a str> {
+    content.lines().find_map(|line| {
+        let mut tokens = line.split_whitespace();
+        if tokens.next() == Some("#define") && tokens.next() == Some(name) {
+            // Map a valueless `#define <name>` to "" so callers still
+            // distinguish "defined" (`Some`) from "absent" (`None`).
+            Some(tokens.next().unwrap_or(""))
+        } else {
+            None
+        }
+    })
+}
+
 /// Reads `<include_dir>/openssl/base.h`, verifies the `OPENSSL_IS_AWSLC` marker
 /// (rejecting `OpenSSL`/`BoringSSL`), and returns the header path and contents.
 fn read_and_validate_base_h(include_dir: &Path) -> Result<(PathBuf, String), String> {
@@ -252,10 +271,7 @@ fn read_and_validate_base_h(include_dir: &Path) -> Result<(PathBuf, String), Str
     let content = std::fs::read_to_string(&base_h)
         .map_err(|e| format!("Failed to read {}: {}", base_h.display(), e))?;
 
-    let has_awslc_marker = content.lines().any(|line| {
-        let mut tokens = line.split_whitespace();
-        tokens.next() == Some("#define") && tokens.next() == Some("OPENSSL_IS_AWSLC")
-    });
+    let has_awslc_marker = find_define(&content, "OPENSSL_IS_AWSLC").is_some();
     if !has_awslc_marker {
         return Err(format!(
             "Headers at {} are not valid AWS-LC headers.\n\
@@ -282,37 +298,26 @@ fn validate_and_resolve_fips_version(include_dir: &Path) -> Result<u32, String> 
 }
 
 /// Extracts `AWSLC_VERSION_NUMBER_STRING` from already-loaded `base.h`
-/// content. Used by both the system-install validator and the bundled-version
-/// helper, the latter of which doesn't need the AWS-LC marker check (the
-/// bundled headers are AWS-LC by construction).
+/// content. Kept separate from `validate_and_extract_version` so the
+/// bundled-version guard test can call it directly, skipping the
+/// `OPENSSL_IS_AWSLC` marker check (the bundled headers are AWS-LC by
+/// construction).
 fn extract_version(base_h: &Path, content: &str) -> Result<String, String> {
-    // Match on the first whitespace-separated tokens rather than a bare
-    // `contains`, so that an unrelated line that merely mentions the macro
-    // name (e.g. a comment) cannot false-match.
-    for line in content.lines() {
-        let mut tokens = line.split_whitespace();
-        if tokens.next() != Some("#define") {
-            continue;
-        }
-        if tokens.next() != Some("AWSLC_VERSION_NUMBER_STRING") {
-            continue;
-        }
-        if let Some(value) = tokens.next() {
-            let trimmed = value.trim_matches('"');
-            if trimmed != value && !trimmed.is_empty() {
-                return Ok(trimmed.to_string());
-            }
-        }
+    let Some(value) = find_define(content, "AWSLC_VERSION_NUMBER_STRING") else {
         return Err(format!(
-            "Malformed AWSLC_VERSION_NUMBER_STRING in {}",
+            "Could not find AWSLC_VERSION_NUMBER_STRING in {}.",
             base_h.display()
         ));
+    };
+    let trimmed = value.trim_matches('"');
+    if trimmed != value && !trimmed.is_empty() {
+        Ok(trimmed.to_string())
+    } else {
+        Err(format!(
+            "Malformed AWSLC_VERSION_NUMBER_STRING in {}",
+            base_h.display()
+        ))
     }
-
-    Err(format!(
-        "Could not find AWSLC_VERSION_NUMBER_STRING in {}.",
-        base_h.display()
-    ))
 }
 
 fn version_at_least(installed: &str, required: &str) -> Result<bool, String> {
@@ -356,26 +361,13 @@ fn resolve_fips_version(base_h: &Path, content: &str) -> Result<u32, String> {
 /// post-decoupling (aws/aws-lc#3211) the library version is not a reliable
 /// substitute, so masking a malformed authoritative value would be wrong.
 fn extract_fips_version_number(content: &str) -> Result<Option<u32>, String> {
-    for line in content.lines() {
-        let mut tokens = line.split_whitespace();
-        if tokens.next() != Some("#define") {
-            continue;
-        }
-        if tokens.next() != Some("AWSLC_FIPS_VERSION_NUMBER") {
-            continue;
-        }
-        let raw = tokens.next();
-        return raw
-            .and_then(|v| v.parse::<u32>().ok())
-            .map(Some)
-            .ok_or_else(|| {
-                format!(
-                    "Malformed AWSLC_FIPS_VERSION_NUMBER: expected an integer, found {}",
-                    raw.unwrap_or("<empty>")
-                )
-            });
-    }
-    Ok(None)
+    let Some(value) = find_define(content, "AWSLC_FIPS_VERSION_NUMBER") else {
+        return Ok(None);
+    };
+    value.parse::<u32>().map(Some).map_err(|_| {
+        let shown = if value.is_empty() { "<empty>" } else { value };
+        format!("Malformed AWSLC_FIPS_VERSION_NUMBER: expected an unsigned integer, found {shown}")
+    })
 }
 
 /// Parses the MAJOR component of a `MAJOR.MINOR.PATCH` version string.
