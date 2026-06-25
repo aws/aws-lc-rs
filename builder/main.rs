@@ -916,6 +916,14 @@ fn is_no_asm() -> bool {
     unsafe { SYS_NO_ASM }
 }
 
+pub(crate) fn is_small() -> bool {
+    if is_fips_build() {
+        return false;
+    }
+    let opt_level = cargo_env("OPT_LEVEL");
+    matches!(opt_level.as_str(), "z" | "s")
+}
+
 #[allow(static_mut_refs)]
 fn sanitizer() -> Option<String> {
     unsafe { SYS_SANITIZER.clone() }

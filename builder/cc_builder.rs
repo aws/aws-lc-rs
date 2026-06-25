@@ -20,8 +20,8 @@ mod win_x86_64;
 use crate::nasm_builder::NasmBuilder;
 use crate::{
     cargo_env, compiler_is_cl_like, emit_warning, env_var_to_bool, execute_command, find_clang_cl,
-    get_crate_cc, get_crate_cflags, get_crate_cxx, is_link_whole_archive, is_no_asm, out_dir,
-    requested_c_std, set_env_for_target, should_build_jitter_entropy, target, target_arch,
+    get_crate_cc, get_crate_cflags, get_crate_cxx, is_link_whole_archive, is_no_asm, is_small,
+    out_dir, requested_c_std, set_env_for_target, should_build_jitter_entropy, target, target_arch,
     target_env, target_is_msvc, target_os, target_vendor, CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
@@ -265,6 +265,17 @@ impl CcBuilder {
             }
         }
 
+        if is_small() {
+            emit_warning(
+                "Size-optimized build (opt-level=s/z). Applying OPENSSL_SMALL and disabling AVX-512 assembly.",
+            );
+            build_options.push(BuildOption::define("OPENSSL_SMALL", "1"));
+            build_options.push(BuildOption::define(
+                "MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX",
+                "1",
+            ));
+        }
+
         if target_os() == "macos" {
             // This compiler error has only been seen on MacOS x86_64:
             // ```
@@ -287,6 +298,7 @@ impl CcBuilder {
         let mut build_options: Vec<BuildOption> = Vec::new();
         let is_cl_like = compiler_is_cl_like(&cc::Build::new().get_compiler());
         if !is_cl_like {
+            build_options.push(BuildOption::flag("-fvisibility=hidden"));
             build_options.push(BuildOption::flag("-Wno-unused-parameter"));
             // On emscripten, `-pthread` forces a shared-memory wasm module
             // (requires SharedArrayBuffer); build single-threaded instead.
