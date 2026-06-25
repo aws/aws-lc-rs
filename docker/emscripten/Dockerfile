@@ -23,13 +23,18 @@ RUN ARCH=$(uname -m | sed 's/x86_64/x64/' | sed 's/aarch64/arm64/') && \
     curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" | \
     tar -xJ -C /usr/local --strip-components=1
 
-# Install a fresh Emscripten SDK (the base image's /emsdk is not a git repo)
+# Install a fresh Emscripten SDK (the base image's /emsdk is not a git repo).
+# cross-rs runs the build as the host UID, which is unknown at image-build time
+# and does not own /emsdk. emcc populates a system-library cache on first use
+# (and fails its sanity check up front if it cannot write), so grant write
+# access to just the cache directory rather than the whole SDK.
 RUN rm -rf /emsdk && \
     git clone https://github.com/emscripten-core/emsdk.git /emsdk && \
     cd /emsdk && \
     ./emsdk install ${EMSDK_VERSION} && \
     ./emsdk activate ${EMSDK_VERSION} && \
-    chmod -R a+rwX /emsdk
+    mkdir -p /emsdk/upstream/emscripten/cache && \
+    chmod -R a+rwX /emsdk/upstream/emscripten/cache
 
 # Ensure the newly installed Node.js is used by Emscripten and the test runner
 # rather than the older version bundled with the SDK
