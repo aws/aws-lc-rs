@@ -1,2 +1,4 @@
+# Raise Emscripten's 64 KB default stack to 1 MB; the test suite's regex
+# compilation overflows the default. Affects in-workspace builds only.
 [target.wasm32-unknown-emscripten]
 rustflags = ["-C", "link-arg=-sSTACK_SIZE=1048576"]
