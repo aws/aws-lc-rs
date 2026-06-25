@@ -288,7 +288,11 @@ impl CcBuilder {
         let is_cl_like = compiler_is_cl_like(&cc::Build::new().get_compiler());
         if !is_cl_like {
             build_options.push(BuildOption::flag("-Wno-unused-parameter"));
-            build_options.push(BuildOption::flag("-pthread"));
+            // On emscripten, `-pthread` forces a shared-memory wasm module
+            // (requires SharedArrayBuffer); build single-threaded instead.
+            if target_os() != "emscripten" {
+                build_options.push(BuildOption::flag("-pthread"));
+            }
             if target_os() == "linux" || target_os() == "emscripten" {
                 build_options.push(BuildOption::define("_XOPEN_SOURCE", "700"));
             } else if target_vendor() != "apple" {
