@@ -196,9 +196,9 @@ or you may get link errors when the `ssl` feature is on.
 
 When you build with `opt-level = "s"` or `opt-level = "z"` (Cargo's
 size-optimizing profiles), `aws-lc-sys` automatically applies compile-time
-defines that replace high-performance implementations (precomputed EC tables,
-AVX-512 vectorized AES-GCM/SHA routines) with smaller generic equivalents.
-No configuration is needed — set the opt-level in your `Cargo.toml` profile:
+defines that replace high-performance implementations with smaller generic
+equivalents. No configuration is needed — set the opt-level in your
+`Cargo.toml` profile:
 
 ```toml
 [profile.release]
@@ -206,16 +206,21 @@ opt-level = "z"
 ```
 
 On x86_64 Linux, this typically reduces the aws-lc footprint by ~60–70%.
-The effect is platform-dependent — x86_64 benefits most because the AVX-512
-assembly is large; aarch64 sees a smaller reduction from the EC table
-elimination alone.
+aarch64 sees a ~40% reduction. The effect is platform-dependent — x86_64
+benefits most because disabling AVX-512 assembly removes large vectorized
+routines.
 
 Key properties:
 
 * **Automatic.** Triggered by `opt-level = "s"` or `"z"`.
 * **Behavior-preserving.** All algorithms remain available; outputs are
-  identical. Only performance characteristics change (slower bulk
-  AES-GCM/SHA on AVX-512-capable CPUs, slower EC scalar operations).
+  identical.
+* **Performance trade-off.** Elliptic curve operations (ECDSA, ECDH) are
+  significantly slower due to the removal of precomputed tables — expect
+  P-256 operations to be roughly 2–3× slower and P-384 roughly 3–6×
+  slower. Symmetric operations (AES-GCM, SHA) and RSA are largely
+  unaffected on aarch64; on x86_64 bulk throughput may decrease due to
+  the removal of AVX-512 code paths.
 * **Not applied to FIPS builds.** The defines are suppressed for
   `aws-lc-fips-sys`, since changing the compiled code would invalidate
   the FIPS module integrity check.
