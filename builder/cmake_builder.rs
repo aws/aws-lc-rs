@@ -5,7 +5,7 @@ use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
-    get_crate_cflags, is_crt_static, is_fips_build, is_no_asm, is_no_pregenerated_src,
+    get_crate_cflags, is_crt_static, is_fips_build, is_no_asm, is_no_pregenerated_src, is_small,
     optional_env, optional_env_optional_crate_target, sanitizer, set_env, set_env_for_target,
     should_build_jitter_entropy, target, target_arch, target_env, target_is_msvc, target_os,
     test_clang_cl_command, test_nasm_command, use_prebuilt_nasm, OutputLibType,
@@ -204,6 +204,14 @@ impl CmakeBuilder {
             } else {
                 panic!("AWS_LC_SYS_NO_ASM only allowed for debug builds!")
             }
+        }
+
+        if is_small() {
+            emit_warning(
+                "Size-optimized build (opt-level=s/z). Applying OPENSSL_SMALL and disabling AVX-512 assembly.",
+            );
+            cmake_cfg.define("OPENSSL_SMALL", "1");
+            cmake_cfg.define("MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX", "1");
         }
 
         Self::configure_sanitizer(&mut cmake_cfg);
