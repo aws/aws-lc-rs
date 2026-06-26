@@ -213,6 +213,9 @@ routines.
 Key properties:
 
 * **Automatic.** Triggered by `opt-level = "s"` or `"z"`.
+* **Overridable.** Set `AWS_LC_SYS_SMALL=1` to force the size-optimized
+  build regardless of opt-level, or `AWS_LC_SYS_SMALL=0` to prevent it
+  even when the opt-level would otherwise trigger it.
 * **Behavior-preserving.** All algorithms remain available; outputs are
   identical.
 * **Performance trade-off.** Elliptic curve operations (ECDSA, ECDH) are
@@ -221,11 +224,6 @@ Key properties:
   slower. Symmetric operations (AES-GCM, SHA) and RSA are largely
   unaffected on aarch64; on x86_64 bulk throughput may decrease due to
   the removal of AVX-512 code paths.
-* **FIPS builds.** The optimization is applied to `aws-lc-fips-sys` when
-  the opt-level triggers it, but a build-time warning is emitted. Changing
-  the compiled module may affect FIPS validation status — consult your
-  compliance requirements before shipping this configuration in a
-  FIPS-regulated environment.
 
 ## Build Prerequisites
 

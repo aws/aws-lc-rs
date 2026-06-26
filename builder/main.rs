@@ -772,6 +772,7 @@ static mut SYS_NO_ASM: bool = false;
 static mut SYS_PREBUILT_NASM: Option<bool> = None;
 static mut SYS_CMAKE_BUILDER: Option<bool> = None;
 static mut SYS_NO_PREGENERATED_SRC: bool = false;
+static mut SYS_SMALL: Option<bool> = None;
 static mut SYS_EFFECTIVE_TARGET: String = String::new();
 static mut SYS_NO_JITTER_ENTROPY: Option<bool> = None;
 static mut SYS_NO_U1_BINDINGS: Option<bool> = None;
@@ -796,6 +797,7 @@ fn initialize() {
         SYS_C_STD = CStdRequested::from_env();
         SYS_CMAKE_BUILDER = env_crate_var_to_bool("CMAKE_BUILDER");
         SYS_NO_PREGENERATED_SRC = env_crate_var_to_bool("NO_PREGENERATED_SRC").unwrap_or(false);
+        SYS_SMALL = env_crate_var_to_bool("SMALL");
         SYS_EFFECTIVE_TARGET = optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
         SYS_NO_JITTER_ENTROPY = env_crate_var_to_bool("NO_JITTER_ENTROPY");
         SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
@@ -917,18 +919,24 @@ fn is_no_asm() -> bool {
 }
 
 pub(crate) fn is_small() -> bool {
-    let opt_level = cargo_env("OPT_LEVEL");
-    if !matches!(opt_level.as_str(), "z" | "s") {
-        return false;
-    }
-    if is_fips_build() {
+    // Explicit override takes precedence over opt-level detection.
+    let explicit = unsafe { SYS_SMALL };
+    let small = match explicit {
+        Some(true) => true,
+        Some(false) => return false,
+        None => {
+            let opt_level = cargo_env("OPT_LEVEL");
+            matches!(opt_level.as_str(), "z" | "s")
+        }
+    };
+    if small && is_fips_build() {
         emit_warning(
-            "OPENSSL_SMALL is being applied to a FIPS build (opt-level=s/z). \
+            "OPENSSL_SMALL is being applied to a FIPS build. \
              This changes the compiled module and may affect FIPS validation status. \
              Consult your compliance requirements before shipping this configuration.",
         );
     }
-    true
+    small
 }
 
 #[allow(static_mut_refs)]
