@@ -171,6 +171,23 @@ least the minimum supported by this crate (currently `3`). It is read from
 `AWSLC_VERSION_NUMBER_STRING` on older branches (e.g. FIPS 3.x → `3`). To bypass
 this check (not recommended), set `AWS_LC_FIPS_SYS_SYSTEM_SKIP_VERSION_CHECK=1`.
 
+## Optimizing for binary size
+
+When you build with `opt-level = "s"` or `opt-level = "z"`, `aws-lc-fips-sys`
+automatically applies compile-time defines that reduce binary size at the cost
+of performance (primarily elliptic curve operations). Set
+`AWS_LC_FIPS_SYS_SMALL=0` to prevent this, or `AWS_LC_FIPS_SYS_SMALL=1` to
+force it regardless of opt-level.
+
+**Note:** Enabling this optimization changes the compiled FIPS module and may
+affect FIPS validation status. A build-time warning is emitted when it is
+active. Consult your compliance requirements before shipping this configuration
+in a FIPS-regulated environment.
+
+See [aws-lc-sys/README.md](../aws-lc-sys/README.md#optimizing-for-binary-size)
+for details on the size reduction, performance trade-offs, and affected
+algorithms.
+
 ## Build Prerequisites
 
 Since this crate builds AWS-LC as a native library, all build tools needed to build AWS-LC are applicable to
