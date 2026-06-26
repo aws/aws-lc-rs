@@ -86,8 +86,9 @@ with no extra configuration. Discovery order, highest precedence first:
 1. `AWS_LC_SYS_SYSTEM_DIR` — explicit install prefix (above). Any problem with
    an explicit prefix is a hard error, never a silent fallback.
 2. `OPENSSL_DIR` — install prefix.
-3. `OPENSSL_INCLUDE_DIR` + `OPENSSL_LIB_DIR` — independent header and library
-   directories (both must be set).
+3. `OPENSSL_INCLUDE_DIR` / `OPENSSL_LIB_DIR` — independent header and library
+   directories. Either may be set on its own; the unset half is derived from
+   `OPENSSL_DIR`, matching `openssl-sys`.
 4. pkg-config (Unix only) — probes `openssl`, `aws-lc`, `libcrypto`, then
    `libcrypto-awslc`, used only when none of the variables above are set.
    Cross-compilation follows pkg-config's own rule (set

@@ -16,8 +16,9 @@
 //! in the same precedence:
 //!
 //! 1. `OPENSSL_DIR` — a single install prefix.
-//! 2. `OPENSSL_INCLUDE_DIR` + `OPENSSL_LIB_DIR` — independent header/library
-//!    directories (both must be set).
+//! 2. `OPENSSL_INCLUDE_DIR` / `OPENSSL_LIB_DIR` — independent header/library
+//!    directories. Either may be set on its own, with the unset half derived
+//!    from `OPENSSL_DIR` (matching `openssl-sys`).
 //! 3. pkg-config (`openssl`, `aws-lc`, `libcrypto`, then `libcrypto-awslc`) —
 //!    only when the `OPENSSL_*` variables above didn't already point somewhere,
 //!    matching `openssl-sys`'s "env vars take precedence over pkg-config"
@@ -51,8 +52,8 @@ const PKG_CONFIG_MODULES: &[&str] = &["openssl", "aws-lc", "libcrypto", "libcryp
 fn detect_candidate_layouts() -> Vec<InstallLayout> {
     let mut candidates = Vec::new();
 
-    // Read OPENSSL_DIR once; it serves both as a standalone prefix candidate
-    // and as the preferred bindings prefix for the include/lib split below.
+    // Read OPENSSL_DIR once; it's a prefix candidate on its own and supplies
+    // the unset half (and bindings prefix) of the include/lib split below.
     let openssl_dir = optional_env_target("OPENSSL_DIR").map(PathBuf::from);
 
     // 1. OPENSSL_DIR: a single install prefix.
@@ -60,24 +61,27 @@ fn detect_candidate_layouts() -> Vec<InstallLayout> {
         candidates.push(InstallLayout::from_prefix(prefix.clone()));
     }
 
-    // 2. OPENSSL_INCLUDE_DIR + OPENSSL_LIB_DIR: independent locations. Both
-    //    must be present; a lone one is ambiguous, so it's ignored.
-    if let (Some(include), Some(lib)) = (
-        optional_env_target("OPENSSL_INCLUDE_DIR"),
-        optional_env_target("OPENSSL_LIB_DIR"),
-    ) {
-        let include_dir = PathBuf::from(include);
-        // Locate conventional bindings under OPENSSL_DIR when given, else infer
-        // the install prefix from the include directory (`<prefix>/include` or
-        // AWS-LC's cohabiting `<prefix>/include/aws-lc` layout).
-        let bindings_prefix = openssl_dir
-            .clone()
-            .or_else(|| bindings_prefix_from_include_dir(&include_dir));
-        candidates.push(InstallLayout::from_paths(
-            include_dir,
-            vec![PathBuf::from(lib)],
-            bindings_prefix,
-        ));
+    // 2. OPENSSL_INCLUDE_DIR / OPENSSL_LIB_DIR: independent locations. Either
+    //    may be set alone; the unset half comes from OPENSSL_DIR, matching
+    //    openssl-sys. A lone var with no OPENSSL_DIR is skipped.
+    let include_env = optional_env_target("OPENSSL_INCLUDE_DIR").map(PathBuf::from);
+    let lib_env = optional_env_target("OPENSSL_LIB_DIR").map(PathBuf::from);
+    if include_env.is_some() || lib_env.is_some() {
+        let include_dir = include_env.or_else(|| openssl_dir.as_ref().map(|p| p.join("include")));
+        let lib_dir = lib_env.or_else(|| openssl_dir.as_ref().map(|p| p.join("lib")));
+        if let (Some(include_dir), Some(lib_dir)) = (include_dir, lib_dir) {
+            // Bindings come from OPENSSL_DIR when set, else from the prefix
+            // inferred from the include dir (`<prefix>/include` or the
+            // cohabiting `<prefix>/include/aws-lc` layout).
+            let bindings_prefix = openssl_dir
+                .clone()
+                .or_else(|| bindings_prefix_from_include_dir(&include_dir));
+            candidates.push(InstallLayout::from_paths(
+                include_dir,
+                vec![lib_dir],
+                bindings_prefix,
+            ));
+        }
     }
 
     // 3. pkg-config, only as a fallback when the user hasn't pointed us

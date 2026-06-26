@@ -225,3 +225,36 @@ fn test_detect_include_lib_split_finds_bindings_from_cohabiting_include_prefix()
     let detected = detect_system_awslc(Path::new("."));
     assert!(detected.is_some());
 }
+
+#[test]
+#[cfg(not(feature = "fips"))]
+fn test_detect_derives_include_from_openssl_dir_when_only_lib_set() {
+    // OPENSSL_DIR + OPENSSL_LIB_DIR, no OPENSSL_INCLUDE_DIR: the include half
+    // is derived from OPENSSL_DIR while the lib half comes from OPENSSL_LIB_DIR.
+    // The library lives only in the separate lib dir, so adoption proves
+    // OPENSSL_LIB_DIR was used.
+    let temp = tempfile::tempdir().unwrap();
+    let prefix = temp.path().join("prefix");
+    let lib_dir = temp.path().join("separate-libs");
+    let include_dir = prefix.join("include");
+    let bindings_dir = prefix.join("share").join("rust");
+
+    std::fs::create_dir_all(&lib_dir).unwrap();
+    std::fs::write(lib_dir.join("libcrypto.a"), b"").unwrap();
+    #[cfg(feature = "ssl")]
+    std::fs::write(lib_dir.join("libssl.a"), b"").unwrap();
+    write_base_h(
+        &include_dir,
+        "#define OPENSSL_IS_AWSLC 1\n#define AWSLC_VERSION_NUMBER_STRING \"99.0.0\"\n",
+    );
+    std::fs::create_dir_all(&bindings_dir).unwrap();
+    std::fs::write(bindings_dir.join("aws_lc_bindings.rs"), b"// bindings").unwrap();
+
+    let lib = lib_dir.to_str().unwrap();
+    let mut env: Vec<(&str, &str)> = openssl_dir_vars(prefix.to_str().unwrap()).to_vec();
+    env.push(("OPENSSL_LIB_DIR", lib));
+    env.push(("OPENSSL_LIB_DIR_testarch", lib));
+    let _env = detect_env(&env);
+
+    assert!(detect_system_awslc(Path::new(".")).is_some());
+}
