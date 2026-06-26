@@ -11,8 +11,9 @@
 //! disable detection entirely.
 //!
 //! Discovery mirrors the mechanism `openssl-sys` uses, so that an environment
-//! which provides AWS-LC to `openssl-sys` (notably an Amazon Brazil version
-//! set) provides it here too, in the same precedence:
+//! which provides AWS-LC to `openssl-sys` (for example, a build environment
+//! that supplies AWS-LC to its entire dependency closure) provides it here too,
+//! in the same precedence:
 //!
 //! 1. `OPENSSL_DIR` — a single install prefix.
 //! 2. `OPENSSL_INCLUDE_DIR` + `OPENSSL_LIB_DIR` — independent header/library
