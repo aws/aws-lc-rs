@@ -221,9 +221,11 @@ Key properties:
   slower. Symmetric operations (AES-GCM, SHA) and RSA are largely
   unaffected on aarch64; on x86_64 bulk throughput may decrease due to
   the removal of AVX-512 code paths.
-* **Not applied to FIPS builds.** The defines are suppressed for
-  `aws-lc-fips-sys`, since changing the compiled code would invalidate
-  the FIPS module integrity check.
+* **FIPS builds.** The optimization is applied to `aws-lc-fips-sys` when
+  the opt-level triggers it, but a build-time warning is emitted. Changing
+  the compiled module may affect FIPS validation status — consult your
+  compliance requirements before shipping this configuration in a
+  FIPS-regulated environment.
 
 ## Build Prerequisites
 

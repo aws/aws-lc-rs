@@ -917,11 +917,18 @@ fn is_no_asm() -> bool {
 }
 
 pub(crate) fn is_small() -> bool {
-    if is_fips_build() {
+    let opt_level = cargo_env("OPT_LEVEL");
+    if !matches!(opt_level.as_str(), "z" | "s") {
         return false;
     }
-    let opt_level = cargo_env("OPT_LEVEL");
-    matches!(opt_level.as_str(), "z" | "s")
+    if is_fips_build() {
+        emit_warning(
+            "OPENSSL_SMALL is being applied to a FIPS build (opt-level=s/z). \
+             This changes the compiled module and may affect FIPS validation status. \
+             Consult your compliance requirements before shipping this configuration.",
+        );
+    }
+    true
 }
 
 #[allow(static_mut_refs)]
