@@ -73,6 +73,62 @@ Set `AWS_LC_SYS_SYSTEM_DIR` to the install prefix:
 AWS_LC_SYS_SYSTEM_DIR=/path/to/aws-lc-install cargo build
 ```
 
+### Automatic detection
+
+You don't have to set `AWS_LC_SYS_SYSTEM_DIR` explicitly. When it is unset, the
+build script tries to discover a usable AWS-LC from common OpenSSL-compatible
+environment variables and pkg-config metadata, and links it if found; otherwise
+it falls back to building the bundled source.
+This makes the crate link against the AWS-LC provided by the surrounding
+environment (for example, the AWS-LC present in a build's dependency closure)
+with no extra configuration. Discovery order, highest precedence first:
+
+1. `AWS_LC_SYS_SYSTEM_DIR` — explicit install prefix (above). Any problem with
+   an explicit prefix is a hard error, never a silent fallback.
+2. `OPENSSL_DIR` — install prefix.
+3. `OPENSSL_INCLUDE_DIR` / `OPENSSL_LIB_DIR` — independent header and library
+   directories. Either may be set on its own; the unset half is derived from
+   `OPENSSL_DIR`, matching `openssl-sys`.
+4. pkg-config (Unix only) — probes `openssl`, `aws-lc`, `libcrypto`, then
+   `libcrypto-awslc`, used only when none of the variables above are set.
+   Cross-compilation follows pkg-config's own rule (set
+   `PKG_CONFIG_ALLOW_CROSS=1` to allow it).
+
+Each `OPENSSL_*` variable also honors a target-suffixed form using Cargo's
+normalized target triple (e.g. `OPENSSL_DIR_x86_64_unknown_linux_gnu`), checked
+first.
+
+For `OPENSSL_INCLUDE_DIR` + `OPENSSL_LIB_DIR`, automatic binding lookup expects
+`OPENSSL_INCLUDE_DIR` to be `<prefix>/include` or AWS-LC's cohabiting
+`<prefix>/include/aws-lc` layout, and searches
+`<prefix>/share/rust/aws_lc_bindings.rs`. If bindings live elsewhere, set
+`AWS_LC_SYS_SYSTEM_BINDINGS` explicitly.
+
+A discovered install is **adopted only if it is genuinely AWS-LC** (carries the
+`OPENSSL_IS_AWSLC` marker), satisfies the [version requirement](#version-compatibility),
+and ships usable [bindings](#bindings-resolution). Anything else — a system
+OpenSSL, an AWS-LC older than the minimum, or one without bindings — is ignored
+and the build falls back to source. Auto-detection never fails the build on its
+own; it only ever *adds* the option of linking a suitable system install.
+
+Use `AWS_LC_SYS_USE_SYSTEM` to control this behavior:
+
+* **unset** — detect; link a usable system AWS-LC if found, else build from source.
+* **`0`** (or `false`/`no`/`off`) — skip detection entirely; always build from source.
+* **`1`** (or `true`/`yes`/`on`) — require a system AWS-LC; if none is found, the
+  build fails instead of falling back to source.
+
+`AWS_LC_SYS_USE_SYSTEM` governs only the *automatic* detection that runs when no
+explicit prefix is given. Setting both `AWS_LC_SYS_SYSTEM_DIR` and
+`AWS_LC_SYS_USE_SYSTEM=0` is contradictory and fails the build.
+
+Detection is quiet by default: when no system install is adopted the build
+simply falls back to source. To see which locations were probed and why each
+candidate was rejected, build verbosely with `cargo build -vv`.
+
+The layout, linkage, bindings, and version requirements described below apply
+to auto-detected installs exactly as they do to `AWS_LC_SYS_SYSTEM_DIR`.
+
 The install directory must contain:
 
 * `include/openssl/base.h` — used to detect the `OPENSSL_IS_AWSLC` marker and

@@ -102,6 +102,21 @@ jobs:
             -DCMAKE_INSTALL_PREFIX="${PWD}/install-prefixed"
           cmake --build build-prefixed --target install -j
 
+      - name: Build and install AWS-LC dist package without OpenSSL shim
+        if: runner.os == 'Linux'
+        run: |
+          cmake -S aws-lc-sys/aws-lc -B build-dist-pkg \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_TOOL=OFF \
+            -DDISABLE_GO=ON \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DGENERATE_RUST_BINDINGS=ON \
+            -DENABLE_DIST_PKG=ON \
+            -DENABLE_DIST_PKG_OPENSSL_SHIM=OFF \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install-dist-pkg"
+          cmake --build build-dist-pkg --target install -j
+
       - name: Upload install artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -109,6 +124,7 @@ jobs:
           path: |
             install/
             install-prefixed/
+            install-dist-pkg/
           retention-days: 1
 
   build-aws-lc-windows:
@@ -415,5 +431,245 @@ jobs:
           cargo ${{ matrix.config.cargo_cmd }} -vv ${{ matrix.config.cargo_args }} 2>&1 | tee cargo.log
           if ! grep -q 'Using system-installed AWS-LC from' cargo.log; then
             echo '::error::System-library code path was not entered; aws-lc-sys silently fell back to building from source.'
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Auto-detection (Windows): with AWS_LC_SYS_SYSTEM_DIR *unset*, the build
+  # script must still discover and link the pre-built AWS-LC via OPENSSL_DIR.
+  # Static and shared installs live under separate prefixes on Windows, so this
+  # also exercises automatic link-form selection without AWS_LC_SYS_STATIC. The
+  # shared variant runs the aws-lc-rs test binary (a real link + DLL load); the
+  # static variant builds aws-lc-sys.
+  # ---------------------------------------------------------------------------
+  test-autodetect-windows:
+    if: github.repository_owner == 'aws'
+    needs: build-aws-lc-windows
+    name: "Autodetect: OPENSSL_DIR, ${{ matrix.config.name }} (windows-latest)"
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "static"
+            install_subdir: "install"
+            dynamic: "0"
+            cargo_cmd: "build"
+            cargo_args: "-p aws-lc-sys"
+          - name: "shared"
+            install_subdir: "install-shared"
+            dynamic: "1"
+            cargo_cmd: "test"
+            cargo_args: "-p aws-lc-rs --lib"
+    steps:
+      # No submodule: a missed detection cannot fall through to a source build.
+      - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-sys/aws-lc
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download AWS-LC install
+        uses: actions/download-artifact@v8
+        with:
+          name: aws-lc-install-windows-latest
+          path: ${{ github.workspace }}/aws-lc-artifacts
+
+      - name: Auto-detect via OPENSSL_DIR and assert adoption
+        shell: bash
+        env:
+          OPENSSL_DIR: ${{ github.workspace }}/aws-lc-artifacts/${{ matrix.config.install_subdir }}
+        run: |
+          if [ "${{ matrix.config.dynamic }}" = "1" ]; then
+            export PATH="$OPENSSL_DIR/bin:$OPENSSL_DIR/lib:${PATH}"
+          fi
+          set -o pipefail
+          # The shared variant runs the aws-lc-rs test binary (real link + DLL
+          # load); the static variant builds aws-lc-sys.
+          cargo ${{ matrix.config.cargo_cmd }} -vv ${{ matrix.config.cargo_args }} 2>&1 | tee cargo.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo.log; then
+            echo '::error::Auto-detection did not adopt the system AWS-LC (system-library code path not entered).'
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Auto-detection (Unix): with AWS_LC_SYS_SYSTEM_DIR *unset*, the build script
+  # must still discover and link the pre-built AWS-LC via the generic OPENSSL_*
+  # variables and pkg-config. The aws-lc/ submodule is intentionally not
+  # initialized, so a failure to auto-detect cannot silently fall back to a
+  # source build -- it hard-fails here.
+  # ---------------------------------------------------------------------------
+  test-autodetect-unix:
+    if: github.repository_owner == 'aws'
+    needs: build-aws-lc-unix
+    name: "Autodetect: ${{ matrix.config.name }} (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-15-intel, macos-latest ]
+        config:
+          - name: "OPENSSL_DIR"
+            mechanism: openssl_dir
+          - name: "OPENSSL_INCLUDE_DIR + OPENSSL_LIB_DIR (split prefixes)"
+            mechanism: openssl_split
+          - name: "pkg-config"
+            mechanism: pkgconfig
+        include:
+          - os: ubuntu-latest
+            config:
+              name: "pkg-config (AWS-LC dist package)"
+              mechanism: pkgconfig_dist
+    steps:
+      # No submodule: a missed detection cannot fall through to a source build.
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download AWS-LC install
+        uses: actions/download-artifact@v8
+        with:
+          name: aws-lc-install-${{ matrix.os }}
+          path: ${{ github.workspace }}/aws-lc-artifacts
+
+      - name: "Detect via ${{ matrix.config.name }} and assert adoption"
+        env:
+          ARTIFACTS_DIR: ${{ github.workspace }}/aws-lc-artifacts
+          AWS_LC_SYS_STATIC: "1"
+        run: |
+          set -eo pipefail
+          install_dir="$ARTIFACTS_DIR/install"
+
+          setup_pkg_config_path() {
+            local pc_prefix="$1"
+            # .pc files embed the build-time prefix; rewrite it to the
+            # downloaded location so pkg-config reports valid paths.
+            local found=
+            for d in "$pc_prefix/lib/pkgconfig" "$pc_prefix/lib64/pkgconfig"; do
+              [ -d "$d" ] || continue
+              for pc in "$d"/*.pc; do
+                [ -f "$pc" ] && sed -i.bak "s|^prefix=.*|prefix=$pc_prefix|" "$pc"
+              done
+              export PKG_CONFIG_PATH="$d:${PKG_CONFIG_PATH:-}"
+              found=1
+            done
+            if [ -z "$found" ]; then
+              echo '::error::No pkgconfig directory in the install; cannot exercise pkg-config detection.'
+              exit 1
+            fi
+          }
+
+          case "${{ matrix.config.mechanism }}" in
+            openssl_dir)
+              export OPENSSL_DIR="$install_dir"
+              ;;
+            openssl_split)
+              split_root="$RUNNER_TEMP/aws-lc-split"
+              include_prefix="$split_root/include-prefix"
+              lib_prefix="$split_root/lib-prefix"
+              mkdir -p "$include_prefix" "$lib_prefix"
+              cp -R "$install_dir/include" "$include_prefix/"
+              cp -R "$install_dir/share" "$include_prefix/"
+              cp -R "$install_dir/lib" "$lib_prefix/"
+
+              export OPENSSL_INCLUDE_DIR="$include_prefix/include"
+              export OPENSSL_LIB_DIR="$lib_prefix/lib"
+              ;;
+            pkgconfig)
+              setup_pkg_config_path "$install_dir"
+              ;;
+            pkgconfig_dist)
+              install_dir="$ARTIFACTS_DIR/install-dist-pkg"
+              setup_pkg_config_path "$install_dir"
+              ;;
+          esac
+          cargo build -vv -p aws-lc-sys 2>&1 | tee cargo.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo.log; then
+            echo '::error::Auto-detection did not adopt the system AWS-LC (system-library code path not entered).'
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Auto-detection (Unix, shared + final link): test-autodetect-unix forces the
+  # static link form and only `cargo build`s aws-lc-sys (an rlib, never finally
+  # linked). This job closes that gap on Linux by forcing the *shared* link form
+  # (AWS_LC_SYS_STATIC=0) and running the aws-lc-rs test binary, so a real
+  # executable is linked and loads the auto-detected libcrypto.so discovered via
+  # pkg-config. LD_LIBRARY_PATH lets the test binary find the .so at runtime.
+  # ---------------------------------------------------------------------------
+  test-autodetect-shared-unix:
+    if: github.repository_owner == 'aws'
+    needs: build-aws-lc-unix
+    name: "Autodetect: pkg-config, shared + run (ubuntu-latest)"
+    runs-on: ubuntu-latest
+    steps:
+      # No submodule: a missed detection cannot fall through to a source build.
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download AWS-LC install
+        uses: actions/download-artifact@v8
+        with:
+          name: aws-lc-install-ubuntu-latest
+          path: ${{ github.workspace }}/aws-lc-artifacts
+
+      - name: Detect via pkg-config (shared) and assert adoption + run
+        env:
+          INSTALL_DIR: ${{ github.workspace }}/aws-lc-artifacts/install
+          AWS_LC_SYS_STATIC: "0"
+          LD_LIBRARY_PATH: ${{ github.workspace }}/aws-lc-artifacts/install/lib
+        run: |
+          set -eo pipefail
+          # .pc files embed the build-time prefix; rewrite it to the downloaded
+          # location so pkg-config reports valid paths.
+          found=
+          for d in "$INSTALL_DIR/lib/pkgconfig" "$INSTALL_DIR/lib64/pkgconfig"; do
+            [ -d "$d" ] || continue
+            for pc in "$d"/*.pc; do
+              [ -f "$pc" ] && sed -i.bak "s|^prefix=.*|prefix=$INSTALL_DIR|" "$pc"
+            done
+            export PKG_CONFIG_PATH="$d:${PKG_CONFIG_PATH:-}"
+            found=1
+          done
+          if [ -z "$found" ]; then
+            echo '::error::No pkgconfig directory in the install; cannot exercise pkg-config detection.'
+            exit 1
+          fi
+          # A shared build co-installs libcrypto.so alongside the static .a in
+          # the same prefix, so AWS_LC_SYS_STATIC=0 selects the dynamic form.
+          cargo test -vv -p aws-lc-rs --lib 2>&1 | tee cargo.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo.log; then
+            echo '::error::Auto-detection did not adopt the system AWS-LC (system-library code path not entered).'
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # AWS_LC_SYS_USE_SYSTEM=1 must hard-fail when no system AWS-LC is discoverable,
+  # rather than falling back to a source build.
+  # ---------------------------------------------------------------------------
+  test-autodetect-require-unix:
+    if: github.repository_owner == 'aws'
+    name: "Autodetect: USE_SYSTEM=1 requires an install"
+    runs-on: ubuntu-latest
+    steps:
+      # No submodule and no system AWS-LC: detection must find nothing.
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Assert the build fails when no system AWS-LC is present
+        env:
+          AWS_LC_SYS_USE_SYSTEM: "1"
+        run: |
+          set -o pipefail
+          if cargo build -vv -p aws-lc-sys 2>&1 | tee cargo.log; then
+            echo '::error::Expected the build to fail (USE_SYSTEM=1, no system AWS-LC), but it succeeded.'
+            exit 1
+          fi
+          if ! grep -q 'requires a system-installed AWS-LC' cargo.log; then
+            echo '::error::Build failed, but not with the expected USE_SYSTEM=1 error.'
             exit 1
           fi

@@ -504,6 +504,62 @@ jobs:
           }
 
   # ---------------------------------------------------------------------------
+  # Auto-detection (FIPS, Windows): with AWS_LC_FIPS_SYS_SYSTEM_DIR *unset*, the
+  # build script must still discover and link the pre-built FIPS install via
+  # OPENSSL_DIR and run FIPS verification. Windows FIPS is shared-only, so this
+  # also exercises automatic dynamic link-form selection without
+  # AWS_LC_FIPS_SYS_STATIC.
+  # ---------------------------------------------------------------------------
+  test-autodetect-fips-windows:
+    if: github.repository_owner == 'aws'
+    needs: [setup, build-fips-windows]
+    name: "Autodetect (FIPS): OPENSSL_DIR (${{ matrix.aws_lc_ref }}, windows-latest)"
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
+    steps:
+      # Do not initialize the aws-lc submodule (see test-fips-windows): a
+      # missed detection cannot fall through to a source build.
+      - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-fips-sys/aws-lc
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Download AWS-LC FIPS install
+        uses: actions/download-artifact@v8
+        with:
+          name: aws-lc-fips-install-${{ matrix.aws_lc_ref }}-windows-latest
+          path: ${{ github.workspace }}/fips-artifacts
+
+      - name: Auto-detect via OPENSSL_DIR and assert adoption + FIPS verification
+        shell: pwsh
+        env:
+          OPENSSL_DIR: ${{ github.workspace }}/fips-artifacts/install-fips
+        run: |
+          # Windows needs the DLL on PATH for both the probe and the build output checks.
+          $env:Path = "$env:OPENSSL_DIR\bin;$env:OPENSSL_DIR\lib;$env:Path"
+
+          $output = cargo build -vv -p aws-lc-fips-sys 2>&1
+          $exitCode = $LASTEXITCODE
+          $output | Tee-Object -FilePath cargo.log
+          if ($exitCode -ne 0) { exit $exitCode }
+
+          if (-not (Select-String -Path cargo.log -Pattern 'Using system-installed AWS-LC from' -Quiet)) {
+            Write-Error 'Auto-detection did not adopt the system FIPS install (system-library code path not entered).'
+            exit 1
+          }
+          if (-not (Select-String -Path cargo.log -Pattern 'FIPS verification' -Quiet)) {
+            Write-Error 'FIPS verification did not run on the auto-detected FIPS path.'
+            exit 1
+          }
+
+  # ---------------------------------------------------------------------------
   # Negative path: building against a non-FIPS install MUST fail at the FIPS
   # link probe (proving the probe is not trivially satisfied).
   # ---------------------------------------------------------------------------
@@ -602,3 +658,77 @@ jobs:
           # successful assertion explicit so PowerShell/GitHub Actions does not
           # propagate cargo's non-zero $LASTEXITCODE as the step result.
           exit 0
+
+  # ---------------------------------------------------------------------------
+  # Auto-detection (FIPS, Unix): with AWS_LC_FIPS_SYS_SYSTEM_DIR *unset*, the
+  # build script must still discover and link the pre-built FIPS install via
+  # OpenSSL-compatible discovery inputs and run FIPS verification. The aws-lc
+  # submodule is not initialized, so a missed detection hard-fails rather than
+  # silently falling back to a source build.
+  # ---------------------------------------------------------------------------
+  test-autodetect-fips-unix:
+    if: github.repository_owner == 'aws'
+    needs: [setup, build-fips-unix]
+    name: "Autodetect (FIPS): ${{ matrix.config.name }} (${{ matrix.aws_lc_ref }}, ${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-15-intel, macos-latest ]
+        aws_lc_ref: ${{ fromJSON(needs.setup.outputs.refs) }}
+        config:
+          - name: "OPENSSL_DIR"
+            mechanism: openssl_dir
+          - name: "pkg-config"
+            mechanism: pkgconfig
+    steps:
+      # Do not initialize the aws-lc submodule (see test-fips-unix): a missed
+      # detection cannot fall through to a source build.
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download AWS-LC FIPS install
+        uses: actions/download-artifact@v8
+        with:
+          name: aws-lc-fips-install-${{ matrix.aws_lc_ref }}-${{ matrix.os }}
+          path: ${{ github.workspace }}/fips-artifacts
+
+      - name: "Auto-detect via ${{ matrix.config.name }} and assert adoption + FIPS verification"
+        env:
+          INSTALL_DIR: ${{ github.workspace }}/fips-artifacts/install-fips
+          LD_LIBRARY_PATH: ${{ github.workspace }}/fips-artifacts/install-fips/lib
+          DYLD_LIBRARY_PATH: ${{ github.workspace }}/fips-artifacts/install-fips/lib
+        run: |
+          set -o pipefail
+          case "${{ matrix.config.mechanism }}" in
+            openssl_dir)
+              export OPENSSL_DIR="$INSTALL_DIR"
+              ;;
+            pkgconfig)
+              # .pc files embed the build-time prefix; rewrite it to the
+              # downloaded location so pkg-config reports valid paths.
+              found=
+              for d in "$INSTALL_DIR/lib/pkgconfig" "$INSTALL_DIR/lib64/pkgconfig"; do
+                [ -d "$d" ] || continue
+                for pc in "$d"/*.pc; do
+                  [ -f "$pc" ] && sed -i.bak "s|^prefix=.*|prefix=$INSTALL_DIR|" "$pc"
+                done
+                export PKG_CONFIG_PATH="$d:${PKG_CONFIG_PATH:-}"
+                found=1
+              done
+              if [ -z "$found" ]; then
+                echo '::error::No pkgconfig directory in the FIPS install; cannot exercise pkg-config detection.'
+                exit 1
+              fi
+              ;;
+          esac
+          cargo build -vv -p aws-lc-fips-sys 2>&1 | tee cargo.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo.log; then
+            echo '::error::Auto-detection did not adopt the system FIPS install (system-library code path not entered).'
+            exit 1
+          fi
+          if ! grep -q 'FIPS verification' cargo.log; then
+            echo '::error::FIPS verification did not run on the auto-detected FIPS path.'
+            exit 1
+          fi

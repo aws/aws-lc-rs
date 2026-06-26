@@ -69,6 +69,59 @@ the install prefix:
 AWS_LC_FIPS_SYS_SYSTEM_DIR=/path/to/aws-lc-fips-install cargo build
 ```
 
+### Automatic detection
+
+`AWS_LC_FIPS_SYS_SYSTEM_DIR` need not be set explicitly. When it is unset, the
+build script tries to discover a usable AWS-LC FIPS install from common
+OpenSSL-compatible environment variables and pkg-config metadata, and links it
+if found; otherwise it builds the bundled source. Discovery order, highest
+precedence first:
+
+1. `AWS_LC_FIPS_SYS_SYSTEM_DIR` — explicit prefix (above); problems with an
+   explicit prefix are fatal, never a silent fallback.
+2. `OPENSSL_DIR` — install prefix.
+3. `OPENSSL_INCLUDE_DIR` / `OPENSSL_LIB_DIR` — independent header and library
+   directories. Either may be set on its own; the unset half is derived from
+   `OPENSSL_DIR`, matching `openssl-sys`.
+4. pkg-config (Unix only) — probes `openssl`, `aws-lc`, `libcrypto`, then
+   `libcrypto-awslc`, used only when the variables above are unset; honors
+   `PKG_CONFIG_ALLOW_CROSS`.
+
+Each `OPENSSL_*` variable also honors a target-suffixed form using Cargo's
+normalized target triple (e.g. `OPENSSL_DIR_aarch64_unknown_linux_gnu`), checked
+first.
+
+For `OPENSSL_INCLUDE_DIR` + `OPENSSL_LIB_DIR`, automatic binding lookup expects
+`OPENSSL_INCLUDE_DIR` to be `<prefix>/include` or AWS-LC's cohabiting
+`<prefix>/include/aws-lc` layout, and searches
+`<prefix>/share/rust/aws_lc_bindings.rs`. If bindings live elsewhere, set
+`AWS_LC_FIPS_SYS_SYSTEM_BINDINGS` explicitly.
+
+A discovered install is **adopted only if** it is genuinely AWS-LC (carries the
+`OPENSSL_IS_AWSLC` marker), is a FIPS build whose [FIPS module version](#version-compatibility)
+meets the minimum, passes [FIPS verification](#fips-verification), and ships
+usable [bindings](#bindings). A non-FIPS build, a system OpenSSL, a too-old
+module version, or a binding-less install is ignored and the build falls back
+to source — detection never fails the build on its own.
+
+Control detection with `AWS_LC_FIPS_SYS_USE_SYSTEM`:
+
+* **unset** — detect; link a usable system FIPS install if found, else build from source.
+* **`0`** — skip detection; always build from source.
+* **`1`** — require a system FIPS install; fail the build if none is found.
+
+`AWS_LC_FIPS_SYS_USE_SYSTEM` governs only the *automatic* detection that runs
+when no explicit prefix is given. Setting both `AWS_LC_FIPS_SYS_SYSTEM_DIR` and
+`AWS_LC_FIPS_SYS_USE_SYSTEM=0` is contradictory and fails the build.
+
+Detection is quiet by default: when no system install is adopted the build
+simply falls back to source. To see which locations were probed and why each
+candidate was rejected, build verbosely with `cargo build -vv`.
+
+The layout, FIPS verification, bindings, and version requirements described
+below apply to auto-detected installs exactly as they do to
+`AWS_LC_FIPS_SYS_SYSTEM_DIR`.
+
 The install directory must contain `include/openssl/base.h` and a `lib/` (or `lib64/`) directory
 holding `libcrypto` (and `libssl` when the `ssl` feature is enabled). The structure mirrors what
 `aws-lc-sys` accepts — see [aws-lc-sys/README.md](../aws-lc-sys/README.md) for the full layout.

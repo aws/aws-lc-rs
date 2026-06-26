@@ -25,6 +25,21 @@ details on build requirements for various platforms.
 
 If there is a platform or architecture you are interested in seeing support for, please create a GitHub [issue].
 
+## Can I link against a system-installed AWS-LC instead of building from source?
+
+Yes. The `aws-lc-sys` and `aws-lc-fips-sys` crates can link against a pre-existing
+AWS-LC install instead of compiling the bundled source. Point them at an install
+explicitly with `AWS_LC_SYS_SYSTEM_DIR` / `AWS_LC_FIPS_SYS_SYSTEM_DIR`, or let them
+auto-detect one via common OpenSSL-compatible environment variables
+(`OPENSSL_DIR`, or `OPENSSL_INCLUDE_DIR` + `OPENSSL_LIB_DIR`) or pkg-config.
+The install must be AWS-LC (not OpenSSL) and ship the
+pre-generated Rust bindings; otherwise the build falls back to source. The
+`AWS_LC_SYS_USE_SYSTEM` / `AWS_LC_FIPS_SYS_USE_SYSTEM` variable controls whether
+detection runs and whether a system install is required.
+
+See the [aws-lc-sys] and [aws-lc-fips-sys] READMEs for the full discovery order
+and the required install layout.
+
 [ring-compatibility]: https://docs.rs/aws-lc-rs/latest/aws_lc_rs/#ring-compatibility
 
 [API reference guide]: https://docs.rs/aws-lc-rs/latest/aws_lc_rs
@@ -36,6 +51,10 @@ If there is a platform or architecture you are interested in seeing support for,
 [issue]: https://github.com/aws/aws-lc-rs/issues/new/choose
 
 [bindgen-cli]: https://crates.io/crates/bindgen-cli
+
+[aws-lc-sys]: https://github.com/aws/aws-lc-rs/blob/main/aws-lc-sys/README.md
+
+[aws-lc-fips-sys]: https://github.com/aws/aws-lc-rs/blob/main/aws-lc-fips-sys/README.md
 
 ## How can I use a custom or deterministic RNG for testing?
 

@@ -79,6 +79,7 @@ mod fips_probe;
 mod nasm_builder;
 #[cfg(any(feature = "bindgen", feature = "fips"))]
 mod sys_bindgen;
+mod system_detect;
 mod system_library;
 
 pub(crate) struct EnvGuard {
@@ -90,6 +91,16 @@ impl EnvGuard {
     fn new<T: AsRef<OsStr>>(key: &str, new_value: T) -> Self {
         let original_value = env::var(key).ok();
         env::set_var(key, new_value);
+        Self {
+            key: key.to_string(),
+            original_value,
+        }
+    }
+
+    #[cfg(test)]
+    fn remove(key: &str) -> Self {
+        let original_value = env::var(key).ok();
+        env::remove_var(key);
         Self {
             key: key.to_string(),
             original_value,
@@ -193,7 +204,7 @@ fn optional_env_crate_target<N: AsRef<str>>(name: N) -> Option<String> {
     optional_env(name_for_crate_target).or(optional_env(name_for_crate))
 }
 
-fn optional_env_target<N: AsRef<str>>(name: N) -> Option<String> {
+pub(crate) fn optional_env_target<N: AsRef<str>>(name: N) -> Option<String> {
     let name_for_target = env_name_for_target(name.as_ref());
     optional_env(name_for_target).or(optional_env(name))
 }
@@ -647,12 +658,46 @@ fn get_builder(prefix: &Option<String>, manifest_dir: &Path, out_dir: &Path) -> 
     };
 
     if let Some(install_dir) = get_system_dir_path() {
+        // SYSTEM_DIR and USE_SYSTEM=0 are contradictory ("use this install" vs
+        // "never use a system install"); fail rather than silently honoring one.
+        assert!(
+            use_system() != Some(false),
+            "{system_dir} is set but {use_system}=0 forbids a system install.\n\
+             Unset one: keep {system_dir} to link it, or {use_system}=0 to build from source.",
+            system_dir = crate_env_var_name("SYSTEM_DIR"),
+            use_system = crate_env_var_name("USE_SYSTEM"),
+        );
         return Box::new(SystemLib::new(
             manifest_dir.to_path_buf(),
             install_dir,
             get_system_bindings_path(),
             get_system_skip_version_check(),
         ));
+    }
+
+    // No explicit SYSTEM_DIR. Unless the user opted out with USE_SYSTEM=0, try
+    // to auto-detect a usable system AWS-LC. Detection is non-fatal: an
+    // unsuitable (or absent) install falls through to the source build, unless
+    // USE_SYSTEM=1 demands one.
+    if use_system() != Some(false) {
+        if let Some(system_lib) = system_detect::detect_system_awslc(manifest_dir) {
+            // Mirror the explicit path's global state so is_bindgen_required()
+            // and the other get_system_dir_path() consumers agree we are
+            // linking a system library.
+            set_system_dir(system_lib.marker_dir().to_path_buf());
+            return Box::new(system_lib);
+        }
+        // Detection found nothing usable. Fall through to a source build unless
+        // USE_SYSTEM=1 demands a system install, in which case fail.
+        assert!(
+            use_system() != Some(true),
+            "{use_system}=1 requires a system-installed AWS-LC, but none was found.\n\
+             Set {system_dir} to point at an install, provide OPENSSL_DIR, or unset \
+             {use_system} to build from source.\n\
+             Re-run with `-vv` to see why each discovered candidate was rejected.",
+            use_system = crate_env_var_name("USE_SYSTEM"),
+            system_dir = crate_env_var_name("SYSTEM_DIR"),
+        );
     }
 
     if is_fips_build() {
@@ -735,6 +780,7 @@ static mut SYS_SANITIZER: Option<String> = None;
 static mut SYS_LINK_WHOLE_ARCHIVE: bool = false;
 static mut SYS_STATIC: Option<bool> = None;
 static mut SYS_SYSTEM_DIR: Option<PathBuf> = None;
+static mut SYS_USE_SYSTEM: Option<bool> = None;
 static mut SYS_SYSTEM_BINDINGS: Option<PathBuf> = None;
 static mut SYS_SYSTEM_SKIP_VERSION_CHECK: bool = false;
 static mut SYS_C_STD: CStdRequested = CStdRequested::None;
@@ -759,6 +805,7 @@ fn initialize() {
         SYS_LINK_WHOLE_ARCHIVE = env_crate_var_to_bool("LINK_WHOLE_ARCHIVE").unwrap_or(false);
         SYS_STATIC = env_crate_var_to_bool("STATIC");
         SYS_SYSTEM_DIR = optional_env_crate_target("SYSTEM_DIR").map(PathBuf::from);
+        SYS_USE_SYSTEM = env_crate_var_to_bool("USE_SYSTEM");
         SYS_SYSTEM_BINDINGS = optional_env_crate_target("SYSTEM_BINDINGS").map(PathBuf::from);
         SYS_SYSTEM_SKIP_VERSION_CHECK =
             env_crate_var_to_bool("SYSTEM_SKIP_VERSION_CHECK").unwrap_or(false);
@@ -913,6 +960,25 @@ fn disable_jitter_entropy() -> Option<bool> {
 #[allow(static_mut_refs)]
 pub(crate) fn get_system_dir_path() -> Option<PathBuf> {
     unsafe { SYS_SYSTEM_DIR.clone() }
+}
+
+/// Records an auto-detected install prefix as if it had been supplied via
+/// `<crate>_SYSTEM_DIR`. This makes every downstream consumer of
+/// `get_system_dir_path` — most importantly `is_bindgen_required` — observe
+/// the same state as the explicit path, so detection can never both link a
+/// system library and run bindgen.
+fn set_system_dir(install_dir: PathBuf) {
+    unsafe {
+        SYS_SYSTEM_DIR = Some(install_dir);
+    }
+}
+
+/// The tri-state `<crate>_USE_SYSTEM` control:
+/// - `None` (unset): detect, adopt a valid system AWS-LC if found, else source.
+/// - `Some(false)`: skip detection entirely; build from source.
+/// - `Some(true)`: require a system install; hard-fail if none is found.
+fn use_system() -> Option<bool> {
+    unsafe { SYS_USE_SYSTEM }
 }
 
 #[allow(static_mut_refs)]
