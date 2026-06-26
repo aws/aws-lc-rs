@@ -582,6 +582,8 @@ fn test_aead_traits() {
 }
 
 #[test]
+// wasm32 targets (e.g. emscripten) have no std::thread support.
+#[cfg(not(target_arch = "wasm32"))]
 fn test_aead_thread_safeness() {
     lazy_static::lazy_static! {
         /// Compute the Initial salt once, as the seed is constant

@@ -102,6 +102,8 @@ fn hmac_traits() {
 }
 
 #[test]
+// wasm32 targets (e.g. emscripten) have no std::thread support.
+#[cfg(not(target_arch = "wasm32"))]
 fn hmac_thread_safeness() {
     use std::thread;
     lazy_static::lazy_static! {

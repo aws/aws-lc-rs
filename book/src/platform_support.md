@@ -136,6 +136,7 @@ See our [CI workflow configuration](https://github.com/aws/aws-lc-rs/blob/main/.
 | Platform                  | Build | Tests |
 |---------------------------|-------|-------|
 | `x86_64-unknown-illumos`  | ✓     | ✓     |
+| `wasm32-unknown-emscripten` | ✓   | ✓     |
 | OpenHarmony (aarch64)     | ✓     |       |
 | OpenWrt (aarch64-musl)    | ✓     |       |
 | Alpine Linux              | ✓     | ✓     |

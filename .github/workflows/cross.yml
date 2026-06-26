@@ -63,6 +63,7 @@ jobs:
           - [ riscv64gc-unknown-linux-gnu, 0, 0, 1]
           - [ s390x-unknown-linux-gnu, 0, 0, 1]
           - [ x86_64-pc-windows-gnu, 0, 0, 1] # Requires release build. See: https://github.com/rust-lang/rust/issues/139380
+          - [ wasm32-unknown-emscripten, 0, 0, 0]
           - [ x86_64-unknown-illumos, 0, 0, 1]
           - [ x86_64-unknown-linux-musl, 0, 0, 1]
     steps:
@@ -99,6 +100,15 @@ jobs:
           echo 'CROSS_TEST_EXTRA_FLAG=--all-targets' >> "$GITHUB_ENV"
       - name: Cross-compilation (test release)
         run: cross test -p aws-lc-rs --release "${CROSS_TEST_EXTRA_FLAG}" --features unstable --target ${{ matrix.target[0] }}
+      - name: Verify wasm artifact uses non-shared memory
+        if: ${{ matrix.target[0] == 'wasm32-unknown-emscripten' }}
+        # Functional tests pass regardless of the wasm memory model because the
+        # Node test runner always provides SharedArrayBuffer. Assert on the
+        # emitted artifact instead, so a stray `-pthread` (which switches the
+        # module to shared memory) is caught here rather than by downstream
+        # browser consumers.
+        run: |
+          python3 scripts/ci/assert_wasm_unshared.py target/wasm32-unknown-emscripten/release/deps
       - if: ${{ matrix.target[1] == '1' }}
         name: Cross-compilation (test FIPS release)
         run: cross test -p aws-lc-rs --release "${CROSS_TEST_EXTRA_FLAG}" --no-default-features --features fips --target ${{ matrix.target[0] }}
