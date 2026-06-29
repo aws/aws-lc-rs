@@ -87,7 +87,10 @@ jobs:
       - name: Perform API Diff (Target Branch)
         if: matrix.diff_target == 'branch'
         working-directory: ${{ matrix.crate_dir }}
-        run: cargo public-api diff --deny changed --deny removed ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: cargo public-api diff --deny changed --deny removed "${BASE_SHA}..${HEAD_SHA}"
       - name: Perform API Diff (Published)
         if: matrix.diff_target == 'published'
         working-directory: ${{ matrix.crate_dir }}
