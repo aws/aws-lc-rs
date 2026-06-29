@@ -987,6 +987,7 @@ CRYPTO_THREADID_set_callback
 CRYPTO_THREADID_set_numeric
 CRYPTO_THREADID_set_pointer
 CRYPTO_tls1_prf
+CRYPTO_tls13_hkdf_expand_label
 CRYPTO_xts128_encrypt
 CTR_DRBG_clear
 CTR_DRBG_free
@@ -2037,6 +2038,7 @@ FIPS_mode
 FIPS_mode_set
 FIPS_service_indicator_after_call
 FIPS_service_indicator_before_call
+FIPS_version
 gcm_ghash_avx
 gcm_ghash_avx512
 gcm_ghash_clmul
@@ -2409,6 +2411,14 @@ ml_kem_common_decapsulate
 ml_kem_common_encapsulate
 ml_kem_common_encapsulate_deterministic
 ml_kem_common_keypair
+mldsa_invntt_avx2_asm
+mldsa_ntt_avx2_asm
+mldsa_nttunpack_avx2_asm
+mldsa_pointwise_acc_l4_avx2_asm
+mldsa_pointwise_acc_l5_avx2_asm
+mldsa_pointwise_acc_l7_avx2_asm
+mldsa_pointwise_avx2_asm
+mldsa_poly_caddq_avx2_asm
 mlkem_compress_d10_data
 mlkem_compress_d11_data
 mlkem_compress_d4_data

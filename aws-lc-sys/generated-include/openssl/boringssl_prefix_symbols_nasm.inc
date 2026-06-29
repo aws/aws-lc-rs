@@ -6,7 +6,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_41_0
+%define BORINGSSL_PREFIX aws_lc_0_42_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -757,6 +757,7 @@
 %xdefine _CRYPTO_set_thread_local _ %+ BORINGSSL_PREFIX %+ _CRYPTO_set_thread_local
 %xdefine _CRYPTO_sysrand _ %+ BORINGSSL_PREFIX %+ _CRYPTO_sysrand
 %xdefine _CRYPTO_sysrand_if_available _ %+ BORINGSSL_PREFIX %+ _CRYPTO_sysrand_if_available
+%xdefine _CRYPTO_tls13_hkdf_expand_label _ %+ BORINGSSL_PREFIX %+ _CRYPTO_tls13_hkdf_expand_label
 %xdefine _CRYPTO_tls1_prf _ %+ BORINGSSL_PREFIX %+ _CRYPTO_tls1_prf
 %xdefine _CRYPTO_xts128_encrypt _ %+ BORINGSSL_PREFIX %+ _CRYPTO_xts128_encrypt
 %xdefine _CTR_DRBG_clear _ %+ BORINGSSL_PREFIX %+ _CTR_DRBG_clear
@@ -1530,6 +1531,7 @@
 %xdefine _FIPS_mode_set _ %+ BORINGSSL_PREFIX %+ _FIPS_mode_set
 %xdefine _FIPS_service_indicator_after_call _ %+ BORINGSSL_PREFIX %+ _FIPS_service_indicator_after_call
 %xdefine _FIPS_service_indicator_before_call _ %+ BORINGSSL_PREFIX %+ _FIPS_service_indicator_before_call
+%xdefine _FIPS_version _ %+ BORINGSSL_PREFIX %+ _FIPS_version
 %xdefine _GENERAL_NAMES_free _ %+ BORINGSSL_PREFIX %+ _GENERAL_NAMES_free
 %xdefine _GENERAL_NAMES_it _ %+ BORINGSSL_PREFIX %+ _GENERAL_NAMES_it
 %xdefine _GENERAL_NAMES_new _ %+ BORINGSSL_PREFIX %+ _GENERAL_NAMES_new
@@ -3860,6 +3862,31 @@
 %xdefine _ml_kem_common_encapsulate_deterministic _ %+ BORINGSSL_PREFIX %+ _ml_kem_common_encapsulate_deterministic
 %xdefine _ml_kem_common_keypair _ %+ BORINGSSL_PREFIX %+ _ml_kem_common_keypair
 %xdefine _mldsa_ct_opt_blocker_u64 _ %+ BORINGSSL_PREFIX %+ _mldsa_ct_opt_blocker_u64
+%xdefine _mldsa_intt_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_intt_aarch64_asm
+%xdefine _mldsa_invntt_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_invntt_avx2_asm
+%xdefine _mldsa_ntt_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_ntt_aarch64_asm
+%xdefine _mldsa_ntt_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_ntt_avx2_asm
+%xdefine _mldsa_nttunpack_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_nttunpack_avx2_asm
+%xdefine _mldsa_pointwise_acc_l4_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_pointwise_acc_l4_avx2_asm
+%xdefine _mldsa_pointwise_acc_l5_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_pointwise_acc_l5_avx2_asm
+%xdefine _mldsa_pointwise_acc_l7_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_pointwise_acc_l7_avx2_asm
+%xdefine _mldsa_pointwise_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_pointwise_avx2_asm
+%xdefine _mldsa_poly_caddq_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_caddq_aarch64_asm
+%xdefine _mldsa_poly_caddq_avx2_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_caddq_avx2_asm
+%xdefine _mldsa_poly_chknorm_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_chknorm_aarch64_asm
+%xdefine _mldsa_poly_decompose_32_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_decompose_32_aarch64_asm
+%xdefine _mldsa_poly_decompose_88_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_decompose_88_aarch64_asm
+%xdefine _mldsa_poly_pointwise_montgomery_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_pointwise_montgomery_aarch64_asm
+%xdefine _mldsa_poly_use_hint_32_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_32_aarch64_asm
+%xdefine _mldsa_poly_use_hint_88_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_88_aarch64_asm
+%xdefine _mldsa_polyvecl_pointwise_acc_montgomery_l4_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l4_aarch64_asm
+%xdefine _mldsa_polyvecl_pointwise_acc_montgomery_l5_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l5_aarch64_asm
+%xdefine _mldsa_polyvecl_pointwise_acc_montgomery_l7_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l7_aarch64_asm
+%xdefine _mldsa_polyz_unpack_17_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_17_aarch64_asm
+%xdefine _mldsa_polyz_unpack_19_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_19_aarch64_asm
+%xdefine _mldsa_rej_uniform_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_rej_uniform_aarch64_asm
+%xdefine _mldsa_rej_uniform_eta2_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta2_aarch64_asm
+%xdefine _mldsa_rej_uniform_eta4_aarch64_asm _ %+ BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta4_aarch64_asm
 %xdefine _mlkem_aarch64_invntt_zetas_layer12345 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer12345
 %xdefine _mlkem_aarch64_invntt_zetas_layer67 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer67
 %xdefine _mlkem_aarch64_ntt_zetas_layer12345 _ %+ BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer12345
@@ -4872,6 +4899,7 @@
 %xdefine CRYPTO_set_thread_local BORINGSSL_PREFIX %+ _CRYPTO_set_thread_local
 %xdefine CRYPTO_sysrand BORINGSSL_PREFIX %+ _CRYPTO_sysrand
 %xdefine CRYPTO_sysrand_if_available BORINGSSL_PREFIX %+ _CRYPTO_sysrand_if_available
+%xdefine CRYPTO_tls13_hkdf_expand_label BORINGSSL_PREFIX %+ _CRYPTO_tls13_hkdf_expand_label
 %xdefine CRYPTO_tls1_prf BORINGSSL_PREFIX %+ _CRYPTO_tls1_prf
 %xdefine CRYPTO_xts128_encrypt BORINGSSL_PREFIX %+ _CRYPTO_xts128_encrypt
 %xdefine CTR_DRBG_clear BORINGSSL_PREFIX %+ _CTR_DRBG_clear
@@ -5645,6 +5673,7 @@
 %xdefine FIPS_mode_set BORINGSSL_PREFIX %+ _FIPS_mode_set
 %xdefine FIPS_service_indicator_after_call BORINGSSL_PREFIX %+ _FIPS_service_indicator_after_call
 %xdefine FIPS_service_indicator_before_call BORINGSSL_PREFIX %+ _FIPS_service_indicator_before_call
+%xdefine FIPS_version BORINGSSL_PREFIX %+ _FIPS_version
 %xdefine GENERAL_NAMES_free BORINGSSL_PREFIX %+ _GENERAL_NAMES_free
 %xdefine GENERAL_NAMES_it BORINGSSL_PREFIX %+ _GENERAL_NAMES_it
 %xdefine GENERAL_NAMES_new BORINGSSL_PREFIX %+ _GENERAL_NAMES_new
@@ -7975,6 +8004,31 @@
 %xdefine ml_kem_common_encapsulate_deterministic BORINGSSL_PREFIX %+ _ml_kem_common_encapsulate_deterministic
 %xdefine ml_kem_common_keypair BORINGSSL_PREFIX %+ _ml_kem_common_keypair
 %xdefine mldsa_ct_opt_blocker_u64 BORINGSSL_PREFIX %+ _mldsa_ct_opt_blocker_u64
+%xdefine mldsa_intt_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_intt_aarch64_asm
+%xdefine mldsa_invntt_avx2_asm BORINGSSL_PREFIX %+ _mldsa_invntt_avx2_asm
+%xdefine mldsa_ntt_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_ntt_aarch64_asm
+%xdefine mldsa_ntt_avx2_asm BORINGSSL_PREFIX %+ _mldsa_ntt_avx2_asm
+%xdefine mldsa_nttunpack_avx2_asm BORINGSSL_PREFIX %+ _mldsa_nttunpack_avx2_asm
+%xdefine mldsa_pointwise_acc_l4_avx2_asm BORINGSSL_PREFIX %+ _mldsa_pointwise_acc_l4_avx2_asm
+%xdefine mldsa_pointwise_acc_l5_avx2_asm BORINGSSL_PREFIX %+ _mldsa_pointwise_acc_l5_avx2_asm
+%xdefine mldsa_pointwise_acc_l7_avx2_asm BORINGSSL_PREFIX %+ _mldsa_pointwise_acc_l7_avx2_asm
+%xdefine mldsa_pointwise_avx2_asm BORINGSSL_PREFIX %+ _mldsa_pointwise_avx2_asm
+%xdefine mldsa_poly_caddq_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_caddq_aarch64_asm
+%xdefine mldsa_poly_caddq_avx2_asm BORINGSSL_PREFIX %+ _mldsa_poly_caddq_avx2_asm
+%xdefine mldsa_poly_chknorm_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_chknorm_aarch64_asm
+%xdefine mldsa_poly_decompose_32_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_decompose_32_aarch64_asm
+%xdefine mldsa_poly_decompose_88_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_decompose_88_aarch64_asm
+%xdefine mldsa_poly_pointwise_montgomery_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_pointwise_montgomery_aarch64_asm
+%xdefine mldsa_poly_use_hint_32_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_32_aarch64_asm
+%xdefine mldsa_poly_use_hint_88_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_poly_use_hint_88_aarch64_asm
+%xdefine mldsa_polyvecl_pointwise_acc_montgomery_l4_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l4_aarch64_asm
+%xdefine mldsa_polyvecl_pointwise_acc_montgomery_l5_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l5_aarch64_asm
+%xdefine mldsa_polyvecl_pointwise_acc_montgomery_l7_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyvecl_pointwise_acc_montgomery_l7_aarch64_asm
+%xdefine mldsa_polyz_unpack_17_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_17_aarch64_asm
+%xdefine mldsa_polyz_unpack_19_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_polyz_unpack_19_aarch64_asm
+%xdefine mldsa_rej_uniform_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_rej_uniform_aarch64_asm
+%xdefine mldsa_rej_uniform_eta2_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta2_aarch64_asm
+%xdefine mldsa_rej_uniform_eta4_aarch64_asm BORINGSSL_PREFIX %+ _mldsa_rej_uniform_eta4_aarch64_asm
 %xdefine mlkem_aarch64_invntt_zetas_layer12345 BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer12345
 %xdefine mlkem_aarch64_invntt_zetas_layer67 BORINGSSL_PREFIX %+ _mlkem_aarch64_invntt_zetas_layer67
 %xdefine mlkem_aarch64_ntt_zetas_layer12345 BORINGSSL_PREFIX %+ _mlkem_aarch64_ntt_zetas_layer12345

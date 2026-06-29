@@ -734,6 +734,7 @@ CRYPTO_set_mem_functions
 CRYPTO_set_thread_local
 CRYPTO_sysrand
 CRYPTO_sysrand_if_available
+CRYPTO_tls13_hkdf_expand_label
 CRYPTO_tls1_prf
 CRYPTO_xts128_encrypt
 CTR_DRBG_clear
@@ -1502,6 +1503,7 @@ FIPS_mode
 FIPS_mode_set
 FIPS_service_indicator_after_call
 FIPS_service_indicator_before_call
+FIPS_version
 GENERAL_NAMES_free
 GENERAL_NAMES_it
 GENERAL_NAMES_new

@@ -735,6 +735,7 @@ CRYPTO_set_mem_functions
 CRYPTO_set_thread_local
 CRYPTO_sysrand
 CRYPTO_sysrand_if_available
+CRYPTO_tls13_hkdf_expand_label
 CRYPTO_tls1_prf
 CRYPTO_xts128_encrypt
 CTR_DRBG_clear
@@ -1507,6 +1508,7 @@ FIPS_mode
 FIPS_mode_set
 FIPS_service_indicator_after_call
 FIPS_service_indicator_before_call
+FIPS_version
 GENERAL_NAMES_free
 GENERAL_NAMES_it
 GENERAL_NAMES_new
@@ -3609,6 +3611,14 @@ ml_kem_common_decapsulate
 ml_kem_common_encapsulate
 ml_kem_common_encapsulate_deterministic
 ml_kem_common_keypair
+mldsa_invntt_avx2_asm
+mldsa_ntt_avx2_asm
+mldsa_nttunpack_avx2_asm
+mldsa_pointwise_acc_l4_avx2_asm
+mldsa_pointwise_acc_l5_avx2_asm
+mldsa_pointwise_acc_l7_avx2_asm
+mldsa_pointwise_avx2_asm
+mldsa_poly_caddq_avx2_asm
 mlkem_compress_d10_data
 mlkem_compress_d11_data
 mlkem_compress_d4_data
