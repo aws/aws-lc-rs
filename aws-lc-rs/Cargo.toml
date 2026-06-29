@@ -49,7 +49,7 @@ fips = ["dep:aws-lc-fips-sys"]
 
 [dependencies]
 untrusted = { workspace = true, optional = true }
-aws-lc-sys = { version = "0.41.0", path = "../aws-lc-sys", default-features = false, optional = true }
+aws-lc-sys = { version = "0.42.0", path = "../aws-lc-sys", default-features = false, optional = true }
 aws-lc-fips-sys = { version = "0.13.1", path = "../aws-lc-fips-sys", optional = true }
 zeroize.workspace = true
 
