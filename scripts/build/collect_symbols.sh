@@ -69,7 +69,7 @@ function filter_nm_symbols() {
 }
 
 function filter_windows_symbols() {
-   grep -v -E '^_*v?f?s?n?printf' | grep -v -E '^_*v?s?f?scanf' | grep -v RtlSecureZeroMemory | grep -v gai_strerrorA
+   grep -v -E '^_*v?f?s?n?printf' | grep -v -E '^_*v?s?f?scanf' | grep -v RtlSecureZeroMemory | grep -v gai_strerrorA | grep -v '^time$'
 }
 
 function remove_leading_underscore() {

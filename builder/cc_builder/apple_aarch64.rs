@@ -1,8 +1,25 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
-// Fri May  8 22:13:15 UTC 2026
+// Mon Jun 29 12:41:07 UTC 2026
 
 pub(super) const CRYPTO_LIBRARY: &[&str] = &[
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/intt_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/mld_polyvecl_pointwise_acc_montgomery_l4_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/mld_polyvecl_pointwise_acc_montgomery_l5_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/mld_polyvecl_pointwise_acc_montgomery_l7_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/ntt_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/pointwise_montgomery_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/polyz_unpack_17_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/polyz_unpack_19_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/poly_caddq_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/poly_chknorm_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/poly_decompose_32_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/poly_decompose_88_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/poly_use_hint_32_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/poly_use_hint_88_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/rej_uniform_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/rej_uniform_eta2_aarch64_asm.S",
+    "crypto/fipsmodule/ml_dsa/mldsa/native/aarch64/src/rej_uniform_eta4_aarch64_asm.S",
     "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/intt.S",
     "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/ntt.S",
     "crypto/fipsmodule/ml_kem/mlkem/native/aarch64/src/polyvec_basemul_acc_montgomery_cached_asm_k2.S",

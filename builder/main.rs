@@ -1349,11 +1349,11 @@ fn main() {
 /// (`CMake` and CC). This sets up include paths, exports library and
 /// configuration names for downstream crates, and registers rerun triggers.
 pub(crate) fn emit_source_build_metadata(manifest_dir: &Path) {
-    // MinGW win7 targets use the BCryptGenRandom path (AWSLC_WINDOWS_7_COMPAT),
-    // which requires linking against bcrypt. MinGW ignores the MSVC
-    // `#pragma comment(lib, "bcrypt.lib")` in the source, so we link explicitly.
+    // MinGW/GCC ignores `#pragma comment(lib, "bcrypt.lib")`, so we must
+    // link explicitly. The upstream CMakeLists.txt forces _WIN32_WINNT_WIN7
+    // for MINGW+GCC, activating the BCryptGenRandom codepath.
     // See: https://github.com/aws/aws-lc/pull/3239
-    if target().contains("-win7-windows-gnu") {
+    if target().contains("-windows-gnu") {
         println!("cargo:rustc-link-lib=bcrypt");
     }
 
