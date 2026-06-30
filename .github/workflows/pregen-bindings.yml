@@ -3,8 +3,7 @@ name: Pregeneration Test
 on:
   push:
     branches:
-      - '*'
-      - '!generate/aws-lc-*'
+      - 'main'
   pull_request:
     branches:
       - '*'
