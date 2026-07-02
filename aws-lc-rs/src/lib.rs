@@ -292,10 +292,14 @@ pub(crate) use debug::derive_debug_via_id;
 // use core::ffi::CStr;
 use std::ffi::CStr;
 
+#[cfg(feature = "fips")]
+use crate::aws_lc::awslc_version_string;
 use crate::aws_lc::{
     CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, ERR_GET_FUNC, ERR_GET_LIB,
     ERR_GET_REASON,
 };
+#[cfg(not(feature = "fips"))]
+use crate::aws_lc::{OpenSSL_version, OPENSSL_VERSION};
 use std::sync::Once;
 
 static START: Once = Once::new();
@@ -328,6 +332,44 @@ pub fn try_fips_mode() -> Result<(), &'static str> {
         _ => Err("FIPS mode not enabled!"),
     }
 }
+
+/// The version string of the linked AWS-LC library (e.g. `"AWS-LC 3.4.0"`).
+///
+/// This identifies the exact release you are running against. For FIPS builds it
+/// can disambiguate builds that share a FIPS module number, but it must not be
+/// used to infer FIPS certification status directly.
+///
+/// # Panics
+/// Panics if AWS-LC returns a version string that is not valid UTF-8.
+#[must_use]
+pub fn awslc_version() -> &'static str {
+    init();
+    #[cfg(feature = "fips")]
+    let ptr = unsafe { awslc_version_string() };
+    #[cfg(not(feature = "fips"))]
+    let ptr = unsafe { OpenSSL_version(OPENSSL_VERSION) };
+    unsafe { CStr::from_ptr(ptr).to_str().unwrap() }
+}
+
+/// The FIPS module number this build corresponds to, or `None` for non-FIPS builds.
+///
+/// For FIPS builds, this reflects the module number of the pinned AWS-LC FIPS branch.
+#[must_use]
+pub fn fips_version() -> Option<u32> {
+    init();
+
+    // TODO: Return FIPS_version() once on a module-5+ branch where it reports non-zero.
+    #[cfg(feature = "fips")]
+    let version = Some(FIPS_MODULE_NUMBER);
+    #[cfg(not(feature = "fips"))]
+    let version = None;
+
+    version
+}
+
+// TODO: Remove this constant once the FIPS module is switched to the module-5 branch
+#[cfg(feature = "fips")]
+const FIPS_MODULE_NUMBER: u32 = 3;
 
 #[cfg(feature = "fips")]
 /// Panics if the underlying implementation is not using CPU jitter entropy, otherwise it returns.
@@ -420,5 +462,22 @@ mod tests {
         if aws_lc::CFG_CPU_JITTER_ENTROPY() {
             crate::fips_cpu_jitter_entropy();
         }
+    }
+
+    #[test]
+    fn test_awslc_version() {
+        assert!(!crate::awslc_version().is_empty());
+    }
+
+    #[cfg(not(feature = "fips"))]
+    #[test]
+    fn test_fips_version() {
+        assert_eq!(crate::fips_version(), None);
+    }
+
+    #[cfg(feature = "fips")]
+    #[test]
+    fn test_fips_version() {
+        assert_eq!(crate::fips_version(), Some(3));
     }
 }
