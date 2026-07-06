@@ -826,6 +826,10 @@ impl CcBuilder {
         // requires -fuse-ld=lld). This matches the CMake build which only passes
         // CMAKE_C_FLAGS_RELEASE (-O3) to check_run().
         let mut memcmp_compile_args: Vec<std::ffi::OsString> = vec!["-O3".into()];
+        // AIX GCC defaults to 32-bit output; -maix64 selects the 64-bit ABI for the probe executable.
+        if target_os() == "aix" && target_arch() == "powerpc64" {
+            memcmp_compile_args.push("-maix64".into());
+        }
 
         // CFLAGS is ignored (above) but LDFLAGS is honored (below), so hardened
         // environments (e.g. RPM's redhat-rpm-config) can force -pie at link time
