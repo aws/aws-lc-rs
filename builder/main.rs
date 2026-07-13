@@ -97,7 +97,6 @@ impl EnvGuard {
         }
     }
 
-    #[cfg(test)]
     fn remove(key: &str) -> Self {
         let original_value = env::var(key).ok();
         env::remove_var(key);
