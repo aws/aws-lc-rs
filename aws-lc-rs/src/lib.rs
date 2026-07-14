@@ -292,14 +292,10 @@ pub(crate) use debug::derive_debug_via_id;
 // use core::ffi::CStr;
 use std::ffi::CStr;
 
-#[cfg(feature = "fips")]
-use crate::aws_lc::awslc_version_string;
 use crate::aws_lc::{
-    CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, ERR_GET_FUNC, ERR_GET_LIB,
-    ERR_GET_REASON,
+    CRYPTO_library_init, ERR_error_string, ERR_get_error, FIPS_mode, OpenSSL_version, ERR_GET_FUNC,
+    ERR_GET_LIB, ERR_GET_REASON, OPENSSL_VERSION,
 };
-#[cfg(not(feature = "fips"))]
-use crate::aws_lc::{OpenSSL_version, OPENSSL_VERSION};
 use std::sync::Once;
 
 static START: Once = Once::new();
@@ -333,7 +329,7 @@ pub fn try_fips_mode() -> Result<(), &'static str> {
     }
 }
 
-/// The version string of the linked AWS-LC library (e.g. `"AWS-LC 3.4.0"`).
+/// The version number of the linked AWS-LC library (e.g. `"5.1.0"`).
 ///
 /// This identifies the exact release you are running against. For FIPS builds it
 /// can disambiguate builds that share a FIPS module number, but it must not be
@@ -344,11 +340,10 @@ pub fn try_fips_mode() -> Result<(), &'static str> {
 #[must_use]
 pub fn awslc_version() -> &'static str {
     init();
-    #[cfg(feature = "fips")]
-    let ptr = unsafe { awslc_version_string() };
-    #[cfg(not(feature = "fips"))]
-    let ptr = unsafe { OpenSSL_version(OPENSSL_VERSION) };
-    unsafe { CStr::from_ptr(ptr).to_str().unwrap() }
+    let full = unsafe { CStr::from_ptr(OpenSSL_version(OPENSSL_VERSION)) }
+        .to_str()
+        .expect("AWS-LC version string is not valid UTF-8");
+    full.rsplit(' ').next().unwrap_or(full)
 }
 
 /// The FIPS module number this build corresponds to, or `None` for non-FIPS builds.
@@ -466,7 +461,18 @@ mod tests {
 
     #[test]
     fn test_awslc_version() {
-        assert!(!crate::awslc_version().is_empty());
+        #[cfg(not(feature = "fips"))]
+        let expected_major = 5;
+        #[cfg(feature = "fips")]
+        let expected_major = 3;
+
+        let version = crate::awslc_version();
+        let major = version
+            .split('.')
+            .next()
+            .and_then(|major| major.parse::<u32>().ok())
+            .expect("AWS-LC version should start with a numeric major version");
+        assert_eq!(major, expected_major);
     }
 
     #[cfg(not(feature = "fips"))]
