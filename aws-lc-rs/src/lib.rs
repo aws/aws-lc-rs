@@ -461,18 +461,18 @@ mod tests {
 
     #[test]
     fn test_awslc_version() {
-        #[cfg(not(feature = "fips"))]
-        let expected_major = 5;
-        #[cfg(feature = "fips")]
-        let expected_major = 3;
-
         let version = crate::awslc_version();
         let major = version
             .split('.')
             .next()
             .and_then(|major| major.parse::<u32>().ok())
             .expect("AWS-LC version should start with a numeric major version");
-        assert_eq!(major, expected_major);
+
+        // One major per AWS-LC version CI builds against.
+        #[cfg(not(feature = "fips"))]
+        assert!(matches!(major, 1 | 5));
+        #[cfg(feature = "fips")]
+        assert!(matches!(major, 3..=5));
     }
 
     #[cfg(not(feature = "fips"))]
