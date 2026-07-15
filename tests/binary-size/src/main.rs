@@ -3,7 +3,7 @@
 
 //! Minimal crypto surface binary for size measurement.
 //!
-//! Exercises SHA-256, AES-256-GCM, and ECDSA-P256 — the same surface used in
+//! Exercises SHA-256, AES-256-GCM, and ECDSA-P256 -- the same surface used in
 //! the binary-size investigation. The accumulator prevents dead-code
 //! elimination from stripping the crypto operations.
 

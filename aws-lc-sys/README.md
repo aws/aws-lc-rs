@@ -197,7 +197,7 @@ or you may get link errors when the `ssl` feature is on.
 When you build with `opt-level = "s"` or `opt-level = "z"` (Cargo's
 size-optimizing profiles), `aws-lc-sys` automatically applies compile-time
 defines that replace high-performance implementations with smaller generic
-equivalents. No configuration is needed — set the opt-level in your
+equivalents. No configuration is needed -- set the opt-level in your
 `Cargo.toml` profile:
 
 ```toml
@@ -205,8 +205,8 @@ equivalents. No configuration is needed — set the opt-level in your
 opt-level = "z"
 ```
 
-On x86_64 Linux, this typically reduces the aws-lc footprint by ~60–70%.
-aarch64 sees a ~40% reduction. The effect is platform-dependent — x86_64
+On x86_64 Linux, this typically reduces the aws-lc footprint by ~60-70%.
+aarch64 sees a ~40% reduction. The effect is platform-dependent -- x86_64
 benefits most because disabling AVX-512 assembly removes large vectorized
 routines.
 
@@ -219,8 +219,8 @@ Key properties:
 * **Behavior-preserving.** All algorithms remain available; outputs are
   identical.
 * **Performance trade-off.** Elliptic curve operations (ECDSA, ECDH) are
-  significantly slower due to the removal of precomputed tables — expect
-  P-256 operations to be roughly 2–3× slower and P-384 roughly 3–6×
+  significantly slower due to the removal of precomputed tables -- expect
+  P-256 operations to be roughly 2-3x slower and P-384 roughly 3-6x
   slower. Symmetric operations (AES-GCM, SHA) and RSA are largely
   unaffected on aarch64; on x86_64 bulk throughput may decrease due to
   the removal of AVX-512 code paths.
