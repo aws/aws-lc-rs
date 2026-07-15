@@ -301,7 +301,6 @@ impl CcBuilder {
         let mut build_options: Vec<BuildOption> = Vec::new();
         let is_cl_like = compiler_is_cl_like(&cc::Build::new().get_compiler());
         if !is_cl_like {
-            build_options.push(BuildOption::flag("-fvisibility=hidden"));
             build_options.push(BuildOption::flag("-Wno-unused-parameter"));
             // On emscripten, `-pthread` forces a shared-memory wasm module
             // (requires SharedArrayBuffer); build single-threaded instead.
