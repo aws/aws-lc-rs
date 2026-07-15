@@ -7,9 +7,10 @@ use aws_lc_rs::digest::{Digest, SHA1_FOR_LEGACY_USE_ONLY, SHA256, SHA384, SHA512
 use aws_lc_rs::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::rsa::{
-    EncryptionAlgorithmId, KeySize, OaepPrivateDecryptingKey, OaepPublicEncryptingKey,
-    Pkcs1PrivateDecryptingKey, Pkcs1PublicEncryptingKey, PrivateDecryptingKey, PublicEncryptingKey,
-    OAEP_SHA1_MGF1SHA1, OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
+    EncryptionAlgorithmId, KeyPairComponents as RsaKeyPairComponents, KeySize,
+    OaepPrivateDecryptingKey, OaepPublicEncryptingKey, Pkcs1PrivateDecryptingKey,
+    Pkcs1PublicEncryptingKey, PrivateDecryptingKey, PublicEncryptingKey, OAEP_SHA1_MGF1SHA1,
+    OAEP_SHA256_MGF1SHA256, OAEP_SHA384_MGF1SHA384, OAEP_SHA512_MGF1SHA512,
 };
 use aws_lc_rs::signature::{
     KeyPair, ParsedPublicKey, RsaKeyPair, RsaParameters, RsaPublicKeyComponents,
@@ -1510,4 +1511,146 @@ fn test_wrong_digest() {
     let upk = UnparsedPublicKey::new(&signature::RSA_PSS_2048_8192_SHA256, &public_key);
     upk.verify_digest(&digest_sha256, &signature).unwrap();
     assert!(upk.verify_digest(&digest_sha384, &signature).is_err());
+}
+
+// Components of the RSA private key in "data/rsa_test_private_key_2048.der",
+// big-endian-encoded without leading zeros.
+mod test_key_components {
+    pub const N: &str = "c8a78500a5a250db8ed36c85b8dcf83c4be1953114faaac7616e0ea24922fa6b7ab01f85582c815cc3bdeb5ed46762bc536accaa8b72705b00cef316b2ec508fb9697241b9e34238419cccf7339eeb8b062147af4f5932f613d9bc0ae70bf6d56d4432e83e13767587531bfa9dd56531741244be75e8bc9226b9fa44b4b8a101358d7e8bb75d0c724a4f11ece77776263faefe79612eb1d71646e77e8982866be1400eafc3580d3139b41aaa7380187372f22e35bd55b288496165c881ed154d5811245c52d56cc09d4916d4f2a50bcf5ae0a2637f4cfa6bf9daafc113dba8383b6dd7da6dd8db22d8510a8d3115983308909a1a0332517aa55e896e154249b3";
+    pub const E: &str = "010001";
+    pub const D: &str = "23a4ee9190dae6b63a0700ce386ab8862d8ca32e16e5f894769050752fbcd0f36ad602a37368648a90131acebbb8a9e77e82085d7b6c16dd73a54fb5868f48385fdd85787b870d6a64ed6fd3b20dd715d93eec370e4770301a92a13ee6904f86d664390edc882490f83b214b41e27899725f146b2912f0fc9d788826d05bc3eddc3336d42516304d67d3c481df92aeeeb9752cd739f78469b52aedd6210a3f7b7fb2d5e89e7124ea26aac61962ed66307aebcf5ce7d448d25793ea3338b62cce210dc19145c07ad9ff1d115b29945c345861d1eefe1ba408553157ff05c76cb66c25690fcc7c4d5f6512a16aa0a679a08866521936c0b7f089e3dd8d797d0af1";
+    pub const P: &str = "f85ba8dc29502396ee922ab8559613bc45d8d8b38202f8c8b8ff57b286f0ad82d3e1ac7c566ffe731cfae5619aeddc4e6b761bdcb2136470e33d712d4cc703c29c9b21b3e7969e35f0925fad5b2ddc7aba1cdb5c4086ef571eb3ea34bbb25f4e181d5fc1d11836dda0befc2f1a4268a4ab7d3278bc45a538b3d2341d48382717";
+    pub const Q: &str = "ced417ee88c401a0344361f531dcd7f0257730e405fcd54eb6e4e53968e65ce56042dc8fc5e16e52e6bdc3dc26ec8ae9c3f891b1c44b91fb11634a29f14244fd850fd58e9e4f5f9df02755a619098cfd5c8195237a86d7c247f63cadaf67b94895d6aa61953adc91dcb5c18d95ade2bf446dd065c15196b96ffa6156197693c5";
+    pub const DP: &str = "bfc98087ab7b905030a13d4e260183f202fa26b5d0735d0d1c174af0b955c897dbe94cdaa3a14e9c3447e7b4cd005bfd4eece12d3772d4407caae8e8337f07ff5412541f6a7a9c684903afd0de35772a6ae877d9309742e242fa6aa51840f16a0c233adc200d13e96805b416e7af5ac1b71032569c052846b64e602230aff437";
+    pub const DQ: &str = "35bb8024263fd5b44b1f9e595704eacca6cf1a528303b65ee6c0fc94379e714fddfc40d4d131c9b99bdc7cffbad50519ca21cfa8013928c9b330ba59bf25da4a8ac11c581ae4c010860d9200becc6e667c1be624fb7600a3a692601d374e9922345b3a947372814f1ba9d488f5f3e0ce93f67b8793fba04eb8bab182eec69189";
+    pub const Q_INV: &str = "b2349a56b39729dc8dd658abc18d9cdf07690bbab8c6a1932d5c8098e73792d2abc8c2d37804847c323e51529a32955c3d049f6632402e5d11902d15d7bbe8424c02ab54dd96c40c00d8ff41f56a3720b843d45c1b5ecbfc50db2e6d5a0b17b5a1743de21f6a61a5802da90271fbda6e4c6d12ae33922252a97fa973653ab7aa";
+}
+
+#[allow(non_snake_case)]
+fn rsa_test_key_pair_components() -> RsaKeyPairComponents<Vec<u8>> {
+    use test::from_hex;
+    use test_key_components::{D, DP, DQ, E, N, P, Q, Q_INV};
+    RsaKeyPairComponents {
+        public_key: RsaPublicKeyComponents {
+            n: from_hex(N).unwrap(),
+            e: from_hex(E).unwrap(),
+        },
+        d: from_hex(D).unwrap(),
+        p: from_hex(P).unwrap(),
+        q: from_hex(Q).unwrap(),
+        dP: from_hex(DP).unwrap(),
+        dQ: from_hex(DQ).unwrap(),
+        qInv: from_hex(Q_INV).unwrap(),
+    }
+}
+
+#[test]
+fn rsa_keypair_from_components() {
+    const MESSAGE: &[u8] = b"hello, world";
+    let components = rsa_test_key_pair_components();
+    let key_pair = RsaKeyPair::from_components(&components).expect("valid components");
+
+    // The public key must match the same key parsed from DER.
+    let from_der =
+        RsaKeyPair::from_der(include_bytes!("data/rsa_test_private_key_2048.der")).unwrap();
+    assert_eq!(
+        key_pair.public_key().as_ref(),
+        from_der.public_key().as_ref()
+    );
+
+    // Sign with the constructed key; verify with the DER-parsed public key.
+    let rng = SystemRandom::new();
+    let mut sig = vec![0u8; key_pair.public_modulus_len()];
+    key_pair
+        .sign(&signature::RSA_PKCS1_SHA256, &rng, MESSAGE, &mut sig)
+        .unwrap();
+    UnparsedPublicKey::new(
+        &signature::RSA_PKCS1_2048_8192_SHA256,
+        from_der.public_key(),
+    )
+    .verify(MESSAGE, &sig)
+    .unwrap();
+}
+
+#[test]
+fn rsa_keypair_components_traits() {
+    test::compile_time_assert_clone::<RsaKeyPairComponents<&[u8]>>();
+    test::compile_time_assert_copy::<RsaKeyPairComponents<&[u8]>>();
+    test::compile_time_assert_clone::<RsaKeyPairComponents<Vec<u8>>>();
+    test::compile_time_assert_send::<RsaKeyPairComponents<Vec<u8>>>();
+    test::compile_time_assert_sync::<RsaKeyPairComponents<Vec<u8>>>();
+
+    // The `Debug` output must contain only the public components.
+    let components = rsa_test_key_pair_components();
+    let debug = format!("{components:?}");
+    assert!(debug.starts_with("KeyPairComponents { public_key:"));
+    assert!(!debug.contains(" d:"));
+    assert!(!debug.contains(" p:"));
+    assert!(!debug.contains(" q:"));
+    assert!(!debug.contains("dP"));
+    assert!(!debug.contains("dQ"));
+    assert!(!debug.contains("qInv"));
+}
+
+// Like ring, the component types are not required to implement `Debug`;
+// `AsRef<[u8]>` alone must suffice for `from_components`.
+#[test]
+fn rsa_keypair_from_components_non_debug_bytes() {
+    struct NonDebugBytes(Vec<u8>);
+    impl AsRef<[u8]> for NonDebugBytes {
+        fn as_ref(&self) -> &[u8] {
+            &self.0
+        }
+    }
+
+    let components = rsa_test_key_pair_components();
+    let components = RsaKeyPairComponents {
+        public_key: RsaPublicKeyComponents {
+            n: NonDebugBytes(components.public_key.n),
+            e: NonDebugBytes(components.public_key.e),
+        },
+        d: NonDebugBytes(components.d),
+        p: NonDebugBytes(components.p),
+        q: NonDebugBytes(components.q),
+        dP: NonDebugBytes(components.dP),
+        dQ: NonDebugBytes(components.dQ),
+        qInv: NonDebugBytes(components.qInv),
+    };
+    RsaKeyPair::from_components(&components).expect("valid components");
+}
+
+#[test]
+fn rsa_keypair_from_components_rejects_inconsistent() {
+    fn corrupt_last_byte(component: &mut [u8]) {
+        component[component.len() - 1] ^= 0x02;
+    }
+
+    // n != p * q
+    let mut components = rsa_test_key_pair_components();
+    corrupt_last_byte(&mut components.public_key.n);
+    RsaKeyPair::from_components(&components).expect_err("modified n");
+
+    // p and q swapped: n == q * p still holds, but the CRT parameters are
+    // inconsistent with the swapped factors.
+    let mut components = rsa_test_key_pair_components();
+    std::mem::swap(&mut components.p, &mut components.q);
+    RsaKeyPair::from_components(&components).expect_err("swapped p and q");
+
+    // d inconsistent with e.
+    let mut components = rsa_test_key_pair_components();
+    corrupt_last_byte(&mut components.d);
+    RsaKeyPair::from_components(&components).expect_err("modified d");
+
+    // Inconsistent CRT parameters.
+    let mut components = rsa_test_key_pair_components();
+    corrupt_last_byte(&mut components.dP);
+    RsaKeyPair::from_components(&components).expect_err("modified dP");
+
+    let mut components = rsa_test_key_pair_components();
+    corrupt_last_byte(&mut components.dQ);
+    RsaKeyPair::from_components(&components).expect_err("modified dQ");
+
+    let mut components = rsa_test_key_pair_components();
+    corrupt_last_byte(&mut components.qInv);
+    RsaKeyPair::from_components(&components).expect_err("modified qInv");
 }

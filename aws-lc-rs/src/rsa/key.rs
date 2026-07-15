@@ -6,8 +6,8 @@ use super::signature::{RsaEncoding, RsaPadding};
 use super::{encoding, RsaParameters};
 use crate::aws_lc::{
     EVP_PKEY_CTX_set_rsa_keygen_bits, EVP_PKEY_CTX_set_signature_md, EVP_PKEY_assign_RSA,
-    EVP_PKEY_new, RSA_new, RSA_set0_key, RSA_size, EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_RSA,
-    EVP_PKEY_RSA_PSS,
+    EVP_PKEY_new, EVP_PKEY_set1_RSA, RSA_check_key, RSA_new, RSA_set0_crt_params, RSA_set0_factors,
+    RSA_set0_key, RSA_size, EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_RSA, EVP_PKEY_RSA_PSS,
 };
 #[cfg(feature = "ring-io")]
 use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
@@ -96,6 +96,45 @@ pub struct KeyPair {
 impl Sealed for KeyPair {}
 unsafe impl Send for KeyPair {}
 unsafe impl Sync for KeyPair {}
+
+/// RSA key pair components.
+#[allow(non_snake_case)]
+#[derive(Clone, Copy)]
+pub struct KeyPairComponents<Public, Private = Public> {
+    /// The public key components.
+    pub public_key: PublicKeyComponents<Public>,
+
+    /// The private exponent.
+    pub d: Private,
+
+    /// The first prime factor of `n`.
+    pub p: Private,
+
+    /// The second prime factor of `n`.
+    pub q: Private,
+
+    /// `p`'s CRT exponent: `d mod (p - 1)`.
+    pub dP: Private,
+
+    /// `q`'s CRT exponent: `d mod (q - 1)`.
+    pub dQ: Private,
+
+    /// The CRT coefficient: `q**-1 mod p`.
+    pub qInv: Private,
+}
+
+// Private components are intentionally excluded from the `Debug` output.
+#[allow(clippy::missing_fields_in_debug)]
+impl<Public, Private> Debug for KeyPairComponents<Public, Private>
+where
+    PublicKeyComponents<Public>: Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("KeyPairComponents")
+            .field("public_key", &self.public_key)
+            .finish()
+    }
+}
 
 impl KeyPair {
     fn new(evp_pkey: LcPtr<EVP_PKEY>) -> Result<Self, KeyRejected> {
@@ -275,6 +314,86 @@ impl KeyPair {
             Err(_) => unreachable!(),
         }
     }
+
+    /// Constructs an RSA private key from its big-endian-encoded components.
+    ///
+    /// Each component is interpreted as a big-endian-encoded integer;
+    /// leading zero bytes are permitted. All components, including the CRT
+    /// parameters (`dP`, `dQ`, `qInv`), are required and are validated for
+    /// consistency with one another: the key is rejected unless `n == p * q`,
+    /// `d * e == 1 (mod p-1)`, `d * e == 1 (mod q-1)`, `dP == d (mod p-1)`,
+    /// `dQ == d (mod q-1)`, and `qInv == q**-1 (mod p)`. No primality tests
+    /// are performed on `p` and `q`.
+    ///
+    /// Only two-prime (not multi-prime) keys are supported. The public
+    /// modulus (`n`) must be 2048 to 8192 bits. The public exponent (`e`)
+    /// must be odd, greater than 1, and no longer than 33 bits.
+    ///
+    /// # Errors
+    /// `KeyRejected` if the components do not form a valid, supported RSA
+    /// private key.
+    // The bindings use the standard RSA component names.
+    #[allow(clippy::many_single_char_names, clippy::similar_names)]
+    pub fn from_components<Public, Private>(
+        components: &KeyPairComponents<Public, Private>,
+    ) -> Result<Self, KeyRejected>
+    where
+        Public: AsRef<[u8]>,
+        Private: AsRef<[u8]>,
+    {
+        let mut rsa = LcPtr::new(unsafe { RSA_new() })?;
+        let mut p = DetachableLcPtr::try_from(components.p.as_ref())?;
+        let mut q = DetachableLcPtr::try_from(components.q.as_ref())?;
+        if 1 != unsafe { RSA_set0_factors(rsa.as_mut_ptr(), p.as_mut_ptr(), q.as_mut_ptr()) } {
+            return Err(KeyRejected::unspecified());
+        }
+        p.detach();
+        q.detach();
+
+        let mut n = DetachableLcPtr::try_from(components.public_key.n.as_ref())?;
+        let mut e = DetachableLcPtr::try_from(components.public_key.e.as_ref())?;
+        let mut d = DetachableLcPtr::try_from(components.d.as_ref())?;
+        if 1 != unsafe {
+            RSA_set0_key(
+                rsa.as_mut_ptr(),
+                n.as_mut_ptr(),
+                e.as_mut_ptr(),
+                d.as_mut_ptr(),
+            )
+        } {
+            return Err(KeyRejected::unspecified());
+        }
+        n.detach();
+        e.detach();
+        d.detach();
+
+        let mut dmp1 = DetachableLcPtr::try_from(components.dP.as_ref())?;
+        let mut dmq1 = DetachableLcPtr::try_from(components.dQ.as_ref())?;
+        let mut iqmp = DetachableLcPtr::try_from(components.qInv.as_ref())?;
+        if 1 != unsafe {
+            RSA_set0_crt_params(
+                rsa.as_mut_ptr(),
+                dmp1.as_mut_ptr(),
+                dmq1.as_mut_ptr(),
+                iqmp.as_mut_ptr(),
+            )
+        } {
+            return Err(KeyRejected::unspecified());
+        }
+        dmp1.detach();
+        dmq1.detach();
+        iqmp.detach();
+
+        if 1 != unsafe { RSA_check_key(rsa.as_mut_ptr()) } {
+            return Err(KeyRejected::inconsistent_components());
+        }
+        let mut evp_pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
+        if 1 != unsafe { EVP_PKEY_set1_RSA(evp_pkey.as_mut_ptr(), rsa.as_mut_ptr()) } {
+            return Err(KeyRejected::unspecified());
+        }
+
+        Self::new(evp_pkey)
+    }
 }
 
 impl Debug for KeyPair {
@@ -420,17 +539,14 @@ impl PublicKey {
 /// `untrusted::Input` arguments.
 #[allow(clippy::module_name_repetitions)]
 #[derive(Clone)]
-pub struct PublicKeyComponents<B>
-where
-    B: AsRef<[u8]> + Debug,
-{
+pub struct PublicKeyComponents<B> {
     /// The public modulus, encoded in big-endian bytes without leading zeros.
     pub n: B,
     /// The public exponent, encoded in big-endian bytes without leading zeros.
     pub e: B,
 }
 
-impl<B: AsRef<[u8]> + Debug> Debug for PublicKeyComponents<B> {
+impl<B: Debug> Debug for PublicKeyComponents<B> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("RsaPublicKeyComponents")
             .field("n", &self.n)
@@ -439,11 +555,11 @@ impl<B: AsRef<[u8]> + Debug> Debug for PublicKeyComponents<B> {
     }
 }
 
-impl<B: Copy + AsRef<[u8]> + Debug> Copy for PublicKeyComponents<B> {}
+impl<B: Copy> Copy for PublicKeyComponents<B> {}
 
 impl<B> PublicKeyComponents<B>
 where
-    B: AsRef<[u8]> + Debug,
+    B: AsRef<[u8]>,
 {
     #[inline]
     fn build_rsa(&self) -> Result<LcPtr<EVP_PKEY>, ()> {
@@ -567,7 +683,7 @@ impl From<&PublicKey> for PublicKeyComponents<Vec<u8>> {
 
 impl<B> TryInto<PublicEncryptingKey> for PublicKeyComponents<B>
 where
-    B: AsRef<[u8]> + Debug,
+    B: AsRef<[u8]>,
 {
     type Error = Unspecified;
 
@@ -583,7 +699,7 @@ where
 
 impl<B> AsDer<PublicKeyX509Der<'static>> for PublicKeyComponents<B>
 where
-    B: AsRef<[u8]> + Debug,
+    B: AsRef<[u8]>,
 {
     /// Serializes the RSA public key components into an X.509 `SubjectPublicKeyInfo`
     /// structure, as specified in [RFC 5280].
