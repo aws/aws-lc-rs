@@ -222,6 +222,10 @@ impl CmakeBuilder {
             }
         }
 
+        // These cache entries are set unconditionally (ON/OFF or flags/empty) so
+        // that toggling the size optimization between builds updates the persisted
+        // CMake cache in OUT_DIR; if we only defined them when enabled, a stale
+        // cached value could survive after the setting is turned off.
         let small = is_small();
         let small_value = cmake_bool(small);
         cmake_cfg.define("OPENSSL_SMALL", small_value);
