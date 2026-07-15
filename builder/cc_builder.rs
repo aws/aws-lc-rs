@@ -171,13 +171,13 @@ impl BuildOption {
 }
 
 impl CcBuilder {
-    fn small_c_build_options() -> [BuildOption; 1] {
-        [BuildOption::define("OPENSSL_SMALL", "1")]
+    fn small_c_build_options() -> Vec<BuildOption> {
+        vec![BuildOption::define("OPENSSL_SMALL", "1")]
     }
 
-    fn small_nasm_build_options() -> [BuildOption; 2] {
+    fn small_nasm_build_options() -> Vec<BuildOption> {
         // Raw NASM sources cannot include target.h, where OPENSSL_SMALL implies this gate.
-        [
+        vec![
             BuildOption::define("OPENSSL_SMALL", "1"),
             BuildOption::define("MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX", "1"),
         ]
