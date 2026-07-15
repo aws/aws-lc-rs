@@ -3,8 +3,7 @@ name: binary-size
 on:
   push:
     branches:
-      - '*'
-      - '!generate/aws-lc-*'
+      - 'main'
   pull_request:
     branches:
       - '*'
@@ -14,9 +13,6 @@ concurrency:
 
 env:
   RUST_BACKTRACE: 1
-  # Minimum expected size reduction percentage when opt-level = "z" vs "3".
-  # Measured at ~67% on x86_64 Linux; threshold set conservatively.
-  EXPECTED_REDUCTION_PERCENT: 40
 
 permissions:
   contents: read
@@ -24,9 +20,26 @@ permissions:
 jobs:
   binary-size-check:
     if: github.repository_owner == 'aws'
-    name: Binary size reduction (x86_64 Linux)
-    runs-on: ubuntu-latest
+    name: Binary size reduction (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Minimum expected size reduction percentage when opt-level = "z" vs "3".
+        # Measured at ~67% on x86_64 Linux and ~40% on aarch64; thresholds are
+        # set conservatively per platform.
+        include:
+          - os: ubuntu-latest
+            expected_reduction: 40
+          - os: windows-latest
+            expected_reduction: 25
+          - os: macos-latest
+            expected_reduction: 20
     steps:
+      - name: Install NASM
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
       - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
@@ -38,33 +51,43 @@ jobs:
 
       - name: Build with opt-level=3 (performance, no size optimization)
         working-directory: tests/binary-size
+        shell: bash
         env:
           CARGO_PROFILE_RELEASE_OPT_LEVEL: "3"
         run: |
           cargo build --release
-          cp target/release/binary-size binary-size-default
+          bin=target/release/binary-size
+          [ -f "${bin}.exe" ] && bin="${bin}.exe"
+          cp "$bin" binary-size-default
 
       - name: Build with opt-level=z (size-optimized, triggers OPENSSL_SMALL)
         working-directory: tests/binary-size
+        shell: bash
         env:
           CARGO_PROFILE_RELEASE_OPT_LEVEL: "z"
         run: |
           cargo clean
           cargo build --release
-          cp target/release/binary-size binary-size-small
+          bin=target/release/binary-size
+          [ -f "${bin}.exe" ] && bin="${bin}.exe"
+          cp "$bin" binary-size-small
 
       - name: Verify small binary runs correctly
         working-directory: tests/binary-size
+        shell: bash
         run: ./binary-size-small
 
       - name: Compare sizes
         working-directory: tests/binary-size
+        shell: bash
+        env:
+          EXPECTED_REDUCTION_PERCENT: ${{ matrix.expected_reduction }}
         run: |
-          size_default=$(stat --format="%s" binary-size-default)
-          size_small=$(stat --format="%s" binary-size-small)
+          size_default=$(wc -c < binary-size-default | tr -d '[:space:]')
+          size_small=$(wc -c < binary-size-small | tr -d '[:space:]')
 
-          echo "Default binary size (opt-level=3): ${size_default} bytes ($(numfmt --to=iec ${size_default}))"
-          echo "Small binary size (opt-level=z):   ${size_small} bytes ($(numfmt --to=iec ${size_small}))"
+          echo "Default binary size (opt-level=3): ${size_default} bytes"
+          echo "Small binary size (opt-level=z):   ${size_small} bytes"
 
           if [ "$size_default" -eq 0 ]; then
             echo "ERROR: default binary has zero size"
@@ -75,11 +98,11 @@ jobs:
           echo "Size reduction: ${reduction}%"
           echo ""
 
-          echo "## Binary Size Results" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Variant | Size |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|---------|------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Default (opt-level=3) | $(numfmt --to=iec ${size_default}) (${size_default} bytes) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Small (opt-level=z)   | $(numfmt --to=iec ${size_small}) (${size_small} bytes) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Binary Size Results (${{ matrix.os }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Variant | Size (bytes) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---------|--------------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Default (opt-level=3) | ${size_default} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Small (opt-level=z)   | ${size_small} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Reduction** | **${reduction}%** |" >> "$GITHUB_STEP_SUMMARY"
 
           if [ "$reduction" -lt "$EXPECTED_REDUCTION_PERCENT" ]; then
@@ -91,11 +114,19 @@ jobs:
 
   small-tests:
     if: github.repository_owner == 'aws'
-    name: Test suite with opt-level=z
-    runs-on: ubuntu-latest
+    name: Test suite with opt-level=z (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
     env:
       CARGO_PROFILE_DEV_OPT_LEVEL: "z"
     steps:
+      - name: Install NASM
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
       - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
