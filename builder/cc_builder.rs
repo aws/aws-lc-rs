@@ -22,8 +22,8 @@ use crate::{
     cargo_env, compiler_is_cl_like, emit_warning, env_var_to_bool, execute_command, find_clang_cl,
     get_crate_cc, get_crate_cflags, get_crate_cxx, is_cross_compiling, is_link_whole_archive,
     is_no_asm, is_small, out_dir, requested_c_std, set_env_for_target, should_build_jitter_entropy,
-    target, target_arch, target_env, target_is_msvc, target_os, target_vendor, CStdRequested,
-    EnvGuard, OutputLibType,
+    target, target_arch, target_env, target_is_msvc, target_os, target_vendor, use_prebuilt_nasm,
+    CStdRequested, EnvGuard, OutputLibType,
 };
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -93,6 +93,7 @@ fn identify_sources() -> Vec<&'static str> {
 }
 
 #[allow(clippy::upper_case_acronyms)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) enum BuildOption {
     STD(String),
     FLAG(String),
@@ -170,6 +171,18 @@ impl BuildOption {
 }
 
 impl CcBuilder {
+    fn small_c_build_options() -> [BuildOption; 1] {
+        [BuildOption::define("OPENSSL_SMALL", "1")]
+    }
+
+    fn small_nasm_build_options() -> [BuildOption; 2] {
+        // Raw NASM sources cannot include target.h, where OPENSSL_SMALL implies this gate.
+        [
+            BuildOption::define("OPENSSL_SMALL", "1"),
+            BuildOption::define("MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX", "1"),
+        ]
+    }
+
     pub(crate) fn new(
         manifest_dir: PathBuf,
         out_dir: PathBuf,
@@ -264,17 +277,6 @@ impl CcBuilder {
                     }
                 }
             }
-        }
-
-        if is_small() {
-            emit_warning(
-                "Size-optimized build (opt-level=s/z). Applying OPENSSL_SMALL and disabling AVX-512 assembly.",
-            );
-            build_options.push(BuildOption::define("OPENSSL_SMALL", "1"));
-            build_options.push(BuildOption::define(
-                "MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX",
-                "1",
-            ));
         }
 
         if target_os() == "macos" {
@@ -382,6 +384,14 @@ impl CcBuilder {
         let (is_cl_like, build_options) = self.collect_universal_build_options(&cc_build, false);
         for option in build_options {
             option.apply_cc(&mut cc_build);
+        }
+        if is_small() {
+            emit_warning(
+                "Size-optimized AWS-LC build enabled. Applying OPENSSL_SMALL and disabling AVX-512 assembly.",
+            );
+            for option in Self::small_c_build_options() {
+                option.apply_cc(&mut cc_build);
+            }
         }
 
         // Add --noexecstack flag for assembly files to prevent executable stacks
@@ -654,6 +664,17 @@ impl CcBuilder {
 
         for option in &build_options {
             option.apply_nasm(&mut nasm_builder);
+        }
+        if is_small() {
+            for option in Self::small_nasm_build_options() {
+                option.apply_nasm(&mut nasm_builder);
+            }
+            if use_prebuilt_nasm() {
+                emit_warning(
+                    "Prebuilt NASM objects cannot apply size-optimization definitions. \
+                     Install NASM to minimize Windows assembly code.",
+                );
+            }
         }
 
         let s2n_bignum_source_feature_map = Self::build_s2n_bignum_source_feature_map();
@@ -1199,5 +1220,30 @@ mod tests {
                 "{gnu} should not be detected as cl driver mode"
             );
         }
+    }
+
+    #[test]
+    fn test_small_c_build_options() {
+        assert_eq!(
+            CcBuilder::small_c_build_options(),
+            [BuildOption::DEFINE(
+                "OPENSSL_SMALL".to_string(),
+                "1".to_string()
+            )]
+        );
+    }
+
+    #[test]
+    fn test_small_nasm_build_options() {
+        assert_eq!(
+            CcBuilder::small_nasm_build_options(),
+            [
+                BuildOption::DEFINE("OPENSSL_SMALL".to_string(), "1".to_string()),
+                BuildOption::DEFINE(
+                    "MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX".to_string(),
+                    "1".to_string(),
+                ),
+            ]
+        );
     }
 }

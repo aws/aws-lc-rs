@@ -224,6 +224,9 @@ Key properties:
   slower. Symmetric operations (AES-GCM, SHA) and RSA are largely
   unaffected on aarch64; on x86_64 bulk throughput may decrease due to
   the removal of AVX-512 code paths.
+* **Windows NASM.** Source-built NASM assembly honors the size-optimization
+  definitions. Prebuilt NASM objects cannot be reconfigured; install NASM
+  to obtain the full assembly size reduction on Windows.
 
 ## Build Prerequisites
 

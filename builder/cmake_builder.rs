@@ -33,6 +33,22 @@ fn strip_lto_flags(cflags: &str) -> String {
         .join(" ")
 }
 
+const fn cmake_bool(value: bool) -> &'static str {
+    if value {
+        "ON"
+    } else {
+        "OFF"
+    }
+}
+
+const fn cmake_nasm_small_flags(value: bool) -> &'static str {
+    if value {
+        "-DOPENSSL_SMALL=1 -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=1"
+    } else {
+        ""
+    }
+}
+
 pub(crate) struct CmakeBuilder {
     manifest_dir: PathBuf,
     out_dir: PathBuf,
@@ -206,12 +222,21 @@ impl CmakeBuilder {
             }
         }
 
-        if is_small() {
+        let small = is_small();
+        let small_value = cmake_bool(small);
+        cmake_cfg.define("OPENSSL_SMALL", small_value);
+        if is_fips_build() {
+            // The pinned FIPS AWS-LC branch does not yet derive this from OPENSSL_SMALL.
+            cmake_cfg.define("MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX", small_value);
+        }
+        if target_os() == "windows" && target_arch() == "x86_64" {
+            // Raw NASM cannot include target.h, and add_definitions does not reach it.
+            cmake_cfg.define("CMAKE_ASM_NASM_FLAGS", cmake_nasm_small_flags(small));
+        }
+        if small {
             emit_warning(
-                "Size-optimized build (opt-level=s/z). Applying OPENSSL_SMALL and disabling AVX-512 assembly.",
+                "Size-optimized AWS-LC build enabled. Applying OPENSSL_SMALL and disabling AVX-512 assembly.",
             );
-            cmake_cfg.define("OPENSSL_SMALL", "1");
-            cmake_cfg.define("MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX", "1");
         }
 
         Self::configure_sanitizer(&mut cmake_cfg);
@@ -490,6 +515,12 @@ impl CmakeBuilder {
         emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         emit_warning("!!!   Using pre-built NASM binaries   !!!");
         emit_warning("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        if is_small() {
+            emit_warning(
+                "Prebuilt NASM objects cannot apply size-optimization definitions. \
+                 Install NASM to minimize Windows assembly code.",
+            );
+        }
 
         let script_path = self.select_prebuilt_nasm_script();
         let script_path = script_path.display().to_string();
@@ -733,7 +764,22 @@ impl crate::Builder for CmakeBuilder {
 
 #[cfg(test)]
 mod tests {
-    use super::strip_lto_flags;
+    use super::{cmake_bool, cmake_nasm_small_flags, strip_lto_flags};
+
+    #[test]
+    fn test_cmake_bool() {
+        assert_eq!(cmake_bool(true), "ON");
+        assert_eq!(cmake_bool(false), "OFF");
+    }
+
+    #[test]
+    fn test_cmake_nasm_small_flags() {
+        assert_eq!(
+            cmake_nasm_small_flags(true),
+            "-DOPENSSL_SMALL=1 -DMY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX=1"
+        );
+        assert_eq!(cmake_nasm_small_flags(false), "");
+    }
 
     #[test]
     fn test_strip_lto_flags() {
