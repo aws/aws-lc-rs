@@ -1372,6 +1372,10 @@ fn main() {
 /// (`CMake` and CC). This sets up include paths, exports library and
 /// configuration names for downstream crates, and registers rerun triggers.
 pub(crate) fn emit_source_build_metadata(manifest_dir: &Path) {
+    if is_fips_build() {
+        system_library::emit_fips_version(&get_aws_lc_include_path(manifest_dir)).unwrap();
+    }
+
     // MinGW/GCC ignores `#pragma comment(lib, "bcrypt.lib")`, so we must
     // link explicitly. The upstream CMakeLists.txt forces _WIN32_WINNT_WIN7
     // for MINGW+GCC, activating the BCryptGenRandom codepath.

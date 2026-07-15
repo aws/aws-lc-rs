@@ -356,6 +356,7 @@ impl SystemLib {
         ));
 
         if is_fips_build() {
+            emit_fips_version(include_dir)?;
             // The FIPS module itself was already verified in `validate`; here
             // we only add the startup self-check.
             link_fips_runtime_check(self.manifest_dir.as_path(), include_dir)?;
@@ -454,6 +455,13 @@ fn validate_and_extract_version(include_dir: &Path) -> Result<String, String> {
 fn validate_and_resolve_fips_version(include_dir: &Path) -> Result<u32, String> {
     let (base_h, content) = read_and_validate_base_h(include_dir)?;
     resolve_fips_version(&base_h, &content)
+}
+
+pub(crate) fn emit_fips_version(include_dir: &Path) -> Result<(), String> {
+    let (base_h, content) = read_and_validate_base_h(include_dir)?;
+    let fips_version = resolve_fips_version(&base_h, &content)?;
+    println!("cargo:rustc-env=AWS_LC_FIPS_VERSION={fips_version}");
+    Ok(())
 }
 
 /// Extracts `AWSLC_VERSION_NUMBER_STRING` from already-loaded `base.h`

@@ -94,3 +94,9 @@ pub fn CFG_CPU_JITTER_ENTROPY() -> bool {
 pub fn init() {
     unsafe { CRYPTO_library_init() }
 }
+
+pub fn fips_version() -> u32 {
+    env!("AWS_LC_FIPS_VERSION")
+        .parse()
+        .expect("AWS_LC_FIPS_VERSION must be an unsigned integer")
+}

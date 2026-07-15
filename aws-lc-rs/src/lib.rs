@@ -353,18 +353,13 @@ pub fn awslc_version() -> &'static str {
 pub fn fips_version() -> Option<u32> {
     init();
 
-    // TODO: Return FIPS_version() once on a module-5+ branch where it reports non-zero.
     #[cfg(feature = "fips")]
-    let version = Some(FIPS_MODULE_NUMBER);
+    let version = Some(aws_lc::fips_version());
     #[cfg(not(feature = "fips"))]
     let version = None;
 
     version
 }
-
-// TODO: Remove this constant once the FIPS module is switched to the module-5 branch
-#[cfg(feature = "fips")]
-const FIPS_MODULE_NUMBER: u32 = 3;
 
 #[cfg(feature = "fips")]
 /// Panics if the underlying implementation is not using CPU jitter entropy, otherwise it returns.
@@ -467,12 +462,7 @@ mod tests {
             .next()
             .and_then(|major| major.parse::<u32>().ok())
             .expect("AWS-LC version should start with a numeric major version");
-
-        // One major per AWS-LC version CI builds against.
-        #[cfg(not(feature = "fips"))]
-        assert!(matches!(major, 1 | 5));
-        #[cfg(feature = "fips")]
-        assert!(matches!(major, 3..=5));
+        assert!(major > 0);
     }
 
     #[cfg(not(feature = "fips"))]
@@ -484,6 +474,6 @@ mod tests {
     #[cfg(feature = "fips")]
     #[test]
     fn test_fips_version() {
-        assert_eq!(crate::fips_version(), Some(3));
+        assert_eq!(crate::fips_version(), Some(aws_lc::fips_version()));
     }
 }

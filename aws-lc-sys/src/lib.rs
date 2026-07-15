@@ -106,3 +106,7 @@ pub fn BIO_get_mem_data(b: *mut BIO, pp: *mut *mut c_char) -> c_long {
 pub fn init() {
     unsafe { CRYPTO_library_init() }
 }
+
+pub const fn fips_version() -> u32 {
+    0
+}
