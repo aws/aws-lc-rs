@@ -31,6 +31,8 @@ jobs:
         include:
           - os: ubuntu-latest
             expected_reduction: 40
+          - os: ubuntu-24.04-arm
+            expected_reduction: 25
           - os: windows-latest
             expected_reduction: 25
           - os: macos-latest
@@ -119,7 +121,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest ]
     env:
       CARGO_PROFILE_DEV_OPT_LEVEL: "z"
     steps:
