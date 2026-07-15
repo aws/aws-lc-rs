@@ -227,6 +227,8 @@ Key properties:
 * **Windows NASM.** Source-built NASM assembly honors the size-optimization
   definitions. Prebuilt NASM objects cannot be reconfigured; install NASM
   to obtain the full assembly size reduction on Windows.
+* **FIPS.** `aws-lc-fips-sys` never enables this automatically; it requires
+  an explicit `AWS_LC_FIPS_SYS_SMALL=1`. See its README for details.
 
 ## Build Prerequisites
 

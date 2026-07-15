@@ -821,6 +821,16 @@ fn initialize() {
         "aws-lc-fips-sys requires 'fips' feature to be enabled.",
     );
 
+    // Emitted once here rather than from is_small(), which is called multiple
+    // times during the build.
+    if is_fips_build() && is_small() {
+        emit_warning(
+            "OPENSSL_SMALL is being applied to a FIPS build. \
+             This changes the compiled module and may affect FIPS validation status. \
+             Consult your compliance requirements before shipping this configuration.",
+        );
+    }
+
     if !is_external_bindgen_requested().unwrap_or(false)
         && (is_pregenerating_bindings() || !has_bindgen_feature())
         && !cfg!(feature = "ssl")
@@ -922,24 +932,17 @@ fn is_no_asm() -> bool {
 }
 
 pub(crate) fn is_small() -> bool {
-    // Explicit override takes precedence over opt-level detection.
-    let explicit = unsafe { SYS_SMALL };
-    let small = match explicit {
-        Some(true) => true,
-        Some(false) => return false,
-        None => {
-            let opt_level = cargo_env("OPT_LEVEL");
-            matches!(opt_level.as_str(), "z" | "s")
-        }
-    };
-    if small && is_fips_build() {
-        emit_warning(
-            "OPENSSL_SMALL is being applied to a FIPS build. \
-             This changes the compiled module and may affect FIPS validation status. \
-             Consult your compliance requirements before shipping this configuration.",
-        );
+    // An explicit setting takes precedence over opt-level detection.
+    if let Some(explicit) = unsafe { SYS_SMALL } {
+        return explicit;
     }
-    small
+    // FIPS builds never enable the size optimization implicitly. It changes the
+    // compiled FIPS module, so it must be deliberately requested via
+    // AWS_LC_FIPS_SYS_SMALL=1.
+    if is_fips_build() {
+        return false;
+    }
+    matches!(cargo_env("OPT_LEVEL").as_str(), "z" | "s")
 }
 
 #[allow(static_mut_refs)]
