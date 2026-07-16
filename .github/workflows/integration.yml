@@ -115,7 +115,7 @@ jobs:
       - name: "Test aws-lc-sys package w/ SSL enabled"
         working-directory: ./aws-lc-sys
         run: cargo package --features ssl
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Install ninja-build tool
@@ -145,7 +145,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
       - name: Setup Go >=v1.18
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Install ninja-build tool
@@ -211,7 +211,7 @@ jobs:
         args:
           - publish --dry-run
     steps:
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - run: go version
@@ -252,7 +252,7 @@ jobs:
         args:
           - publish --dry-run
     steps:
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - run: go version

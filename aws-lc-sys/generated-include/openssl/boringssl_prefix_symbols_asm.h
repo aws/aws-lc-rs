@@ -9,7 +9,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_ASM_H
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_42_0
+#define BORINGSSL_PREFIX aws_lc_0_43_0
 #endif // BORINGSSL_PREFIX
 
 // On iOS and macOS, we need to treat assembly symbols differently from other
@@ -694,6 +694,8 @@
 #define _CRYPTO_cleanup_all_ex_data BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_cleanup_all_ex_data)
 #define _CRYPTO_ctr128_encrypt BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_ctr128_encrypt)
 #define _CRYPTO_ctr128_encrypt_ctr32 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_ctr128_encrypt_ctr32)
+#define _CRYPTO_cts128_decrypt BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_cts128_decrypt)
+#define _CRYPTO_cts128_encrypt BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_cts128_encrypt)
 #define _CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING)
 #define _CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING)
 #define _CRYPTO_free BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, CRYPTO_free)

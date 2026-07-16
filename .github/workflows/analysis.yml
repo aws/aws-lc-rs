@@ -247,7 +247,7 @@ jobs:
         run: |
           rustup toolchain install nightly --profile minimal --no-self-update
           rustup default nightly
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Run assert script
@@ -264,7 +264,7 @@ jobs:
         run: |
           rustup toolchain install nightly --profile minimal --no-self-update
           rustup default nightly
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Assert jitter-entropy available
@@ -294,7 +294,7 @@ jobs:
         run: |
           rustup toolchain install nightly --profile minimal --no-self-update
           rustup default nightly
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Assert jitter-entropy not available

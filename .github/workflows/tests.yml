@@ -543,7 +543,7 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal --no-self-update
           rustup default stable
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Run cargo test
@@ -605,7 +605,7 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal --no-self-update
           rustup default stable
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - uses: seanmiddleditch/gha-setup-ninja@v6
@@ -651,7 +651,7 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal --no-self-update
           rustup default stable
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Install bindgen-cli
@@ -690,7 +690,7 @@ jobs:
           brew install llvm
           echo 'LIBCLANG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/lib' >> $GITHUB_ENV
           echo 'LLVM_CONFIG_PATH=${{ (matrix.os == 'macos-15-intel' && '/usr/local') || '/opt/homebrew' }}/opt/llvm/bin/llvm-config' >> $GITHUB_ENV
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Run tests
@@ -712,7 +712,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Install Rust toolchain
@@ -757,7 +757,7 @@ jobs:
           rustup toolchain install stable --profile minimal --no-self-update
           rustup default stable
       - uses: seanmiddleditch/gha-setup-ninja@v6
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Run cargo test
@@ -796,7 +796,7 @@ jobs:
           rustup toolchain install stable --profile minimal --no-self-update
           rustup default stable
       - uses: seanmiddleditch/gha-setup-ninja@v6
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - if: ${{ startsWith( matrix.os, 'macos-') }}
@@ -839,7 +839,7 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal --no-self-update
           rustup default stable
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Run tests
@@ -952,7 +952,8 @@ jobs:
     # Reproduces the default Fedora/RHEL `rpmbuild` environment: %build exports
     # CFLAGS/CXXFLAGS/LDFLAGS from the redhat-rpm-config macros evaluated below.
     # These split PIE hardening across CFLAGS (-fPIE) and LDFLAGS (-pie), which
-    # broke the memcmp probe (it drops CFLAGS but honors LDFLAGS).
+    # historically broke the memcmp probe: it dropped all cc-computed compile
+    # flags (losing the default -fPIC) while honoring LDFLAGS.
     # See: https://github.com/aws/aws-lc-rs/issues/1168
     name: rpmbuild hardened environment
     runs-on: ubuntu-latest
@@ -985,6 +986,47 @@ jobs:
           echo "CXXFLAGS=$CXXFLAGS"
           echo "LDFLAGS=$LDFLAGS"
           cargo test -p aws-lc-rs --all-targets
+
+  memcmp-bug-detection:
+    if: github.repository_owner == 'aws'
+    # Asserts the memcmp probe's detection path end-to-end using GCC releases that
+    # actually contain GCC bug 95189: the probe must build, run, detect the
+    # miscompilation, and fail the build. All other CI jobs use fixed compilers,
+    # where the probe is skipped by its version gate.
+    # See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189
+    name: memcmp bug detection (GCC ${{ matrix.gcc_version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc_version:
+          - '9.3'
+          - '10.1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: 'recursive'
+      # The gcc:9.3/10.1 images are Debian Buster based -- too old to host
+      # modern actions (node) in a job container, so run the build via docker.
+      - name: Build must fail with COMPILER BUG DETECTED
+        run: |
+          docker run --rm -v "$PWD:/repo" gcc:${{ matrix.gcc_version }} bash -c '
+            set -e
+            curl --proto "=https" --tlsv1.2 -fL --retry 5 --retry-delay 5 -sS https://sh.rustup.rs -o /tmp/rustup-init.sh
+            sh /tmp/rustup-init.sh -y --default-toolchain stable --profile minimal >/dev/null
+            export PATH="$HOME/.cargo/bin:$PATH"
+            cd /repo
+            set +e
+            output=$(CARGO_TARGET_DIR=/tmp/target cargo build -p aws-lc-sys 2>&1)
+            status=$?
+            set -e
+            echo "$output" | tail -n 40
+            if [ "$status" -eq 0 ]; then
+              echo "ERROR: build succeeded with a compiler known to miscompile memcmp"
+              exit 1
+            fi
+            echo "$output" | grep -q "COMPILER BUG DETECTED"
+          '
 
   symlinked-includes:
     if: github.repository_owner == 'aws'

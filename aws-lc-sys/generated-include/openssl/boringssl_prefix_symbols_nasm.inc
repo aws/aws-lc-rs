@@ -6,7 +6,7 @@
 %define BORINGSSL_PREFIX_SYMBOLS_NASM_INC
 
 %ifndef BORINGSSL_PREFIX
-%define BORINGSSL_PREFIX aws_lc_0_42_0
+%define BORINGSSL_PREFIX aws_lc_0_43_0
 %endif ; BORINGSSL_PREFIX
 
 ; 32-bit Windows adds underscores to C functions, while 64-bit Windows does not.
@@ -687,6 +687,8 @@
 %xdefine _CRYPTO_cleanup_all_ex_data _ %+ BORINGSSL_PREFIX %+ _CRYPTO_cleanup_all_ex_data
 %xdefine _CRYPTO_ctr128_encrypt _ %+ BORINGSSL_PREFIX %+ _CRYPTO_ctr128_encrypt
 %xdefine _CRYPTO_ctr128_encrypt_ctr32 _ %+ BORINGSSL_PREFIX %+ _CRYPTO_ctr128_encrypt_ctr32
+%xdefine _CRYPTO_cts128_decrypt _ %+ BORINGSSL_PREFIX %+ _CRYPTO_cts128_decrypt
+%xdefine _CRYPTO_cts128_encrypt _ %+ BORINGSSL_PREFIX %+ _CRYPTO_cts128_encrypt
 %xdefine _CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING
 %xdefine _CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING _ %+ BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING
 %xdefine _CRYPTO_free _ %+ BORINGSSL_PREFIX %+ _CRYPTO_free
@@ -4829,6 +4831,8 @@
 %xdefine CRYPTO_cleanup_all_ex_data BORINGSSL_PREFIX %+ _CRYPTO_cleanup_all_ex_data
 %xdefine CRYPTO_ctr128_encrypt BORINGSSL_PREFIX %+ _CRYPTO_ctr128_encrypt
 %xdefine CRYPTO_ctr128_encrypt_ctr32 BORINGSSL_PREFIX %+ _CRYPTO_ctr128_encrypt_ctr32
+%xdefine CRYPTO_cts128_decrypt BORINGSSL_PREFIX %+ _CRYPTO_cts128_decrypt
+%xdefine CRYPTO_cts128_encrypt BORINGSSL_PREFIX %+ _CRYPTO_cts128_encrypt
 %xdefine CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING
 %xdefine CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING BORINGSSL_PREFIX %+ _CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING
 %xdefine CRYPTO_free BORINGSSL_PREFIX %+ _CRYPTO_free

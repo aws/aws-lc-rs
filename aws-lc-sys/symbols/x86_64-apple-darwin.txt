@@ -905,6 +905,8 @@ CRYPTO_chacha_20
 CRYPTO_cleanup_all_ex_data
 CRYPTO_ctr128_encrypt
 CRYPTO_ctr128_encrypt_ctr32
+CRYPTO_cts128_decrypt
+CRYPTO_cts128_encrypt
 CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING
 CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING
 CRYPTO_free

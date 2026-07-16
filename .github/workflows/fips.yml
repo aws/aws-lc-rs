@@ -51,7 +51,7 @@ jobs:
         run: |
           rustup toolchain install ${{ matrix.rust }} --profile minimal --no-self-update
           rustup default ${{ matrix.rust }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - if: ${{ startsWith( matrix.os, 'macos-') }}
@@ -110,7 +110,7 @@ jobs:
         run: |
           rustup toolchain install nightly --profile minimal --no-self-update
           rustup default nightly
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '>=1.18'
       - name: Run assert script

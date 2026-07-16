@@ -6,7 +6,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_H	
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_42_0
+#define BORINGSSL_PREFIX aws_lc_0_43_0
 #endif // BORINGSSL_PREFIX
 
 
@@ -690,6 +690,8 @@
 #define CRYPTO_cleanup_all_ex_data BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_cleanup_all_ex_data)
 #define CRYPTO_ctr128_encrypt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_ctr128_encrypt)
 #define CRYPTO_ctr128_encrypt_ctr32 BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_ctr128_encrypt_ctr32)
+#define CRYPTO_cts128_decrypt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_cts128_decrypt)
+#define CRYPTO_cts128_encrypt BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_cts128_encrypt)
 #define CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_fork_detect_ignore_inheritzero_FOR_TESTING)
 #define CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_fork_detect_ignore_wipeonfork_FOR_TESTING)
 #define CRYPTO_free BORINGSSL_ADD_PREFIX(BORINGSSL_PREFIX, CRYPTO_free)
