@@ -365,14 +365,13 @@ impl SystemLib {
         if is_fips_crate() {
             // Only aws-lc-fips-sys consumes the generated constant; a
             // FIPS aws-lc-sys build reports 0.
-            let fips_version = match *self.fips_version.borrow() {
-                Some(version) => version,
-                None => {
-                    emit_warning(
-                        "AWS-LC version check skipped; aws_lc_rs::fips_version() will report None.",
-                    );
-                    0
-                }
+            let fips_version = if let Some(version) = *self.fips_version.borrow() {
+                version
+            } else {
+                emit_warning(
+                    "AWS-LC version check skipped; aws_lc_rs::fips_version() will report None.",
+                );
+                0
             };
             write_fips_version(fips_version)?;
         }
