@@ -127,7 +127,7 @@ pub(crate) fn is_fips_build() -> bool {
     is_fips_crate() || cfg!(feature = "fips")
 }
 
-fn is_fips_crate() -> bool {
+pub(crate) fn is_fips_crate() -> bool {
     crate_name().contains("fips")
 }
 
@@ -823,7 +823,7 @@ fn initialize() {
 
     // Emitted once here rather than from is_small(), which is called multiple
     // times during the build.
-    if is_fips_build() && is_small() {
+    if is_fips_crate() && is_small() {
         emit_warning(
             "OPENSSL_SMALL is being applied to a FIPS build. \
              This changes the compiled module and may affect FIPS validation status. \
@@ -936,10 +936,12 @@ pub(crate) fn is_small() -> bool {
     if let Some(explicit) = unsafe { SYS_SMALL } {
         return explicit;
     }
-    // FIPS builds never enable the size optimization implicitly. It changes the
-    // compiled FIPS module, so it must be deliberately requested via
-    // AWS_LC_FIPS_SYS_SMALL=1.
-    if is_fips_build() {
+    // aws-lc-fips-sys tracks a certified (or certification-track) FIPS module,
+    // where the module's exact shape matters; the size optimization must be
+    // deliberately requested via AWS_LC_FIPS_SYS_SMALL=1. Mainline FIPS-mode
+    // builds (aws-lc-sys with the `fips` feature) follow the normal opt-level
+    // detection: their value is the integrity check, not a validated shape.
+    if is_fips_crate() {
         return false;
     }
     matches!(cargo_env("OPT_LEVEL").as_str(), "z" | "s")

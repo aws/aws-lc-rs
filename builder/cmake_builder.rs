@@ -5,10 +5,11 @@ use crate::cc_builder::CcBuilder;
 use crate::OutputLib::{Crypto, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
-    get_crate_cflags, is_crt_static, is_fips_build, is_no_asm, is_no_pregenerated_src, is_small,
-    optional_env, optional_env_optional_crate_target, sanitizer, set_env, set_env_for_target,
-    should_build_jitter_entropy, target, target_arch, target_env, target_is_msvc, target_os,
-    test_clang_cl_command, test_nasm_command, use_prebuilt_nasm, OutputLibType,
+    get_crate_cflags, is_crt_static, is_fips_build, is_fips_crate, is_no_asm,
+    is_no_pregenerated_src, is_small, optional_env, optional_env_optional_crate_target, sanitizer,
+    set_env, set_env_for_target, should_build_jitter_entropy, target, target_arch, target_env,
+    target_is_msvc, target_os, test_clang_cl_command, test_nasm_command, use_prebuilt_nasm,
+    OutputLibType,
 };
 use std::collections::HashMap;
 use std::env;
@@ -229,8 +230,10 @@ impl CmakeBuilder {
         let small = is_small();
         let small_value = cmake_bool(small);
         cmake_cfg.define("OPENSSL_SMALL", small_value);
-        if is_fips_build() {
-            // The pinned FIPS AWS-LC branch does not yet derive this from OPENSSL_SMALL.
+        if is_fips_crate() {
+            // Only the pinned FIPS AWS-LC branch lacks the CMake derivation of this
+            // from OPENSSL_SMALL; the mainline branch (aws-lc-sys, with or without
+            // the `fips` feature) derives it in its own CMakeLists.txt.
             cmake_cfg.define("MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX", small_value);
         }
         if target_os() == "windows" && target_arch() == "x86_64" {
