@@ -107,6 +107,8 @@ pub fn init() {
     unsafe { CRYPTO_library_init() }
 }
 
+/// Always `0`: `aws-lc-sys` does not track an AWS-LC FIPS release branch.
+#[must_use]
 pub const fn fips_version() -> u32 {
     0
 }
