@@ -821,8 +821,7 @@ fn initialize() {
         "aws-lc-fips-sys requires 'fips' feature to be enabled.",
     );
 
-    // Emitted once here rather than from is_small(), which is called multiple
-    // times during the build.
+    // Emitted here because is_small() is called multiple times per build.
     if is_fips_crate() && is_small() {
         emit_warning(
             "OPENSSL_SMALL is being applied to a FIPS build. \
@@ -936,11 +935,9 @@ pub(crate) fn is_small() -> bool {
     if let Some(explicit) = unsafe { SYS_SMALL } {
         return explicit;
     }
-    // aws-lc-fips-sys tracks a certified (or certification-track) FIPS module,
-    // where the module's exact shape matters; the size optimization must be
-    // deliberately requested via AWS_LC_FIPS_SYS_SMALL=1. Mainline FIPS-mode
-    // builds (aws-lc-sys with the `fips` feature) follow the normal opt-level
-    // detection: their value is the integrity check, not a validated shape.
+    // aws-lc-fips-sys tracks a certification-track FIPS module whose exact shape
+    // matters: size optimization requires an explicit AWS_LC_FIPS_SYS_SMALL=1.
+    // Mainline FIPS-mode builds (`fips` feature) use normal opt-level detection.
     if is_fips_crate() {
         return false;
     }

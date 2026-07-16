@@ -223,17 +223,14 @@ impl CmakeBuilder {
             }
         }
 
-        // These cache entries are set unconditionally (ON/OFF or flags/empty) so
-        // that toggling the size optimization between builds updates the persisted
-        // CMake cache in OUT_DIR; if we only defined them when enabled, a stale
-        // cached value could survive after the setting is turned off.
+        // Always set these cache entries (ON/OFF, flags/empty): the CMake cache in
+        // OUT_DIR persists across builds, so a stale value could survive a toggle.
         let small = is_small();
         let small_value = cmake_bool(small);
         cmake_cfg.define("OPENSSL_SMALL", small_value);
         if is_fips_crate() {
-            // Only the pinned FIPS AWS-LC branch lacks the CMake derivation of this
-            // from OPENSSL_SMALL; the mainline branch (aws-lc-sys, with or without
-            // the `fips` feature) derives it in its own CMakeLists.txt.
+            // Only the pinned FIPS branch needs this; mainline CMakeLists
+            // derives it from OPENSSL_SMALL.
             cmake_cfg.define("MY_ASSEMBLER_IS_TOO_OLD_FOR_512AVX", small_value);
         }
         if target_os() == "windows" && target_arch() == "x86_64" {

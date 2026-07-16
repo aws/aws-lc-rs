@@ -25,9 +25,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Minimum expected size reduction percentage when opt-level = "z" vs "3".
-        # Measured at ~67% on x86_64 Linux and ~40% on aarch64; thresholds are
-        # set conservatively per platform.
+        # Minimum expected size reduction for opt-level "z" vs "3", set conservatively
+        # per platform (measured: ~67% on x86_64 Linux, ~40% on aarch64).
         include:
           - os: ubuntu-latest
             expected_reduction: 40
