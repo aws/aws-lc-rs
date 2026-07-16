@@ -353,7 +353,8 @@ pub fn awslc_version() -> &'static str {
 /// Unlike [`awslc_version()`], this is a build-time constant resolved from
 /// the AWS-LC headers; the library linked at runtime is not consulted. It is
 /// also not equivalent to [`try_fips_mode()`] and does not by itself imply
-/// FIPS certification status.
+/// FIPS certification status. Returns `None` when the system-library version
+/// check is skipped.
 // TODO: Resolve at runtime via the `FIPS_version()` C API once
 // aws-lc-fips-sys tracks a FIPS 5+ branch.
 #[must_use]

@@ -97,7 +97,7 @@ pub fn init() {
 
 /// The FIPS module version this crate was built against, resolved at build
 /// time from the AWS-LC headers; the library linked at runtime is not
-/// consulted.
+/// consulted. Returns `0` when the system-library version check is skipped.
 // TODO: Resolve at runtime via the `FIPS_version()` C API once this crate
 // tracks a FIPS 5+ branch.
 #[must_use]
