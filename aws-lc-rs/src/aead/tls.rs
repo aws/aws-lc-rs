@@ -140,6 +140,124 @@ impl TlsRecordSealingKey {
             .map(|(_, tag)| tag)
     }
 
+    /// Encrypts and signs (“seals”) `plaintext` into a separate, possibly
+    /// uninitialised `ciphertext` buffer, leaving `plaintext` untouched.
+    ///
+    /// This is the out-of-place counterpart to [`Self::seal_in_place_separate_tag`]. A
+    /// TLS record layer whose plaintext is borrowed from the application cannot seal in
+    /// place, so it must otherwise copy the payload into a scratch buffer purely to make
+    /// it mutable. That copy is a property of the binding, not of the AEAD:
+    /// `EVP_AEAD_CTX_seal_scatter` takes distinct `in` and `out` pointers.
+    ///
+    /// `ciphertext` must be exactly `plaintext.len()` bytes. `extra_in` is additional
+    /// plaintext -- TLS 1.3's inner content-type byte, for instance -- encrypted ahead
+    /// of the tag, so `extra_out_and_tag` must be
+    /// `extra_in.len() + self.algorithm().tag_len()` bytes. On success every byte of
+    /// both output buffers has been written.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the buffer lengths are wrong or encryption fails.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_separate_out_of_place_uninit<'o, A>(
+        &mut self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        plaintext: &[u8],
+        ciphertext: &'o mut [core::mem::MaybeUninit<u8>],
+        extra_in: &[u8],
+        extra_out_and_tag: &'o mut [core::mem::MaybeUninit<u8>],
+    ) -> Result<(&'o mut [u8], &'o mut [u8]), Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.key.seal_separate_out_of_place_uninit(
+            nonce,
+            aad.as_ref(),
+            plaintext,
+            ciphertext,
+            extra_in,
+            extra_out_and_tag,
+        )
+    }
+
+    /// As [`Self::seal_separate_out_of_place_uninit`], for callers whose output
+    /// buffers are already initialised.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the buffer lengths are wrong or encryption fails.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_separate_out_of_place<A>(
+        &mut self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        plaintext: &[u8],
+        ciphertext: &mut [u8],
+        extra_in: &[u8],
+        extra_out_and_tag: &mut [u8],
+    ) -> Result<(), Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        self.key.seal_separate_out_of_place(
+            nonce,
+            aad.as_ref(),
+            plaintext,
+            ciphertext,
+            extra_in,
+            extra_out_and_tag,
+        )
+    }
+
+    /// Seals `plaintext` out of place, appending ciphertext, any `extra_in` ciphertext
+    /// and the tag to `out`.
+    ///
+    /// This is the ergonomic form of [`Self::seal_separate_out_of_place_uninit`]. The
+    /// uninitialised region is managed internally, so the caller writes no `unsafe` at
+    /// all, and `out.len()` afterwards is a permanent, safe record of what was written
+    /// -- unlike a returned slice, whose evidence expires with the borrow.
+    ///
+    /// `out` is grown by `plaintext.len() + extra_in.len() + tag_len()` bytes. Anything
+    /// already in `out` is preserved, so a caller can reserve a header prefix first.
+    /// No part of `out` is zeroed before the cipher writes it.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the encryption operation fails.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn seal_out_of_place_append<A>(
+        &mut self,
+        nonce: Nonce,
+        aad: Aad<A>,
+        plaintext: &[u8],
+        extra_in: &[u8],
+        out: &mut alloc::vec::Vec<u8>,
+    ) -> Result<(), Unspecified>
+    where
+        A: AsRef<[u8]>,
+    {
+        let grow_by = plaintext.len() + extra_in.len() + self.algorithm().tag_len();
+        let start = out.len();
+        out.reserve(grow_by);
+        {
+            let spare = &mut out.spare_capacity_mut()[..grow_by];
+            let (ct, extra_and_tag) = spare.split_at_mut(plaintext.len());
+            self.seal_separate_out_of_place_uninit(
+                nonce,
+                aad,
+                plaintext,
+                ct,
+                extra_in,
+                extra_and_tag,
+            )?;
+        }
+        // SAFETY: the seal above returned Ok, so it initialised all `grow_by` bytes of
+        // the spare capacity, and `reserve` guaranteed that much capacity exists.
+        unsafe { out.set_len(start + grow_by) };
+        Ok(())
+    }
+
     /// The key's AEAD algorithm.
     #[inline]
     #[must_use]

@@ -194,6 +194,136 @@ impl UnboundKey {
         }
     }
 
+    /// Encrypts `plaintext` into a separate `ciphertext` buffer, writing the tag into
+    /// `tag_out`.
+    ///
+    /// Every other sealing entry point on this type is in-place: the plaintext buffer
+    /// is overwritten with the ciphertext. That forces a caller whose plaintext is
+    /// borrowed or shared -- a TLS implementation gathering record payloads, for
+    /// instance -- to copy it into a scratch buffer first, so the copy is a property of
+    /// the binding rather than of the AEAD. `EVP_AEAD_CTX_seal_scatter` already takes
+    /// distinct `in` and `out` pointers and documents that they need not alias, so this
+    /// exposes a capability the C library has always had.
+    ///
+    /// Note the counterpart already exists for the other direction:
+    /// `open_separate_gather` is out-of-place, so the crate is currently asymmetric.
+    ///
+    /// `ciphertext` must be exactly `plaintext.len()` bytes. `extra_in` is additional
+    /// plaintext (TLS 1.3's inner content-type byte, for instance) that is encrypted and
+    /// written to `extra_out_and_tag` ahead of the tag, so `extra_out_and_tag` must be
+    /// `extra_in.len() + algorithm().tag_len()` bytes. The output buffers may not
+    /// overlap each other or `plaintext`.
+    ///
+    /// # Errors
+    /// `error::Unspecified` if the lengths are wrong or the encryption operation fails.
+    #[inline]
+    #[allow(clippy::needless_pass_by_value)]
+    /// As `seal_separate_out_of_place`, but writing into possibly-uninitialised output.
+    ///
+    /// Forming a `&mut [u8]` over uninitialised memory is undefined behaviour even if
+    /// every byte is about to be written, so a caller that wants to skip zeroing its
+    /// output buffer needs an entry point that speaks `MaybeUninit`. On success every
+    /// byte of both output slices has been written by the AEAD.
+    pub(crate) fn seal_separate_out_of_place_uninit<'o>(
+        &self,
+        nonce: Nonce,
+        aad: &[u8],
+        plaintext: &[u8],
+        ciphertext: &'o mut [core::mem::MaybeUninit<u8>],
+        extra_in: &[u8],
+        extra_out_and_tag: &'o mut [core::mem::MaybeUninit<u8>],
+    ) -> Result<(&'o mut [u8], &'o mut [u8]), Unspecified> {
+        self.check_per_nonce_max_bytes(plaintext.len() + extra_in.len())?;
+        if ciphertext.len() != plaintext.len()
+            || extra_out_and_tag.len() != extra_in.len() + self.algorithm().tag_len()
+        {
+            return Err(Unspecified);
+        }
+
+        let nonce = nonce.as_ref();
+        let mut out_tag_len = extra_out_and_tag.len();
+
+        if 1 != unsafe {
+            EVP_AEAD_CTX_seal_scatter(
+                self.ctx.as_ref().as_const_ptr(),
+                ciphertext.as_mut_ptr().cast::<u8>(),
+                extra_out_and_tag.as_mut_ptr().cast::<u8>(),
+                &mut out_tag_len,
+                extra_out_and_tag.len(),
+                nonce.as_ptr(),
+                nonce.len(),
+                plaintext.as_ptr(),
+                plaintext.len(),
+                extra_in.as_ptr(),
+                extra_in.len(),
+                aad.as_ptr(),
+                aad.len(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+        if out_tag_len != extra_out_and_tag.len() {
+            return Err(Unspecified);
+        }
+        // SAFETY: seal_scatter reported success, which per its contract means it wrote
+        // exactly plaintext.len() bytes to `out` and out_tag_len bytes to `out_tag`,
+        // covering both slices in full. Doing the assume-init here rather than making
+        // the caller do it keeps the one unverifiable FFI claim inside the crate that
+        // documents it. MaybeUninit<u8> shares u8's layout, so the casts are otherwise
+        // trivial. (`<[MaybeUninit<T>]>::assume_init_mut` says this more directly but
+        // postdates this crate's MSRV.)
+        unsafe {
+            Ok((
+                &mut *(ciphertext as *mut [core::mem::MaybeUninit<u8>] as *mut [u8]),
+                &mut *(extra_out_and_tag as *mut [core::mem::MaybeUninit<u8>] as *mut [u8]),
+            ))
+        }
+    }
+
+    pub(crate) fn seal_separate_out_of_place(
+        &self,
+        nonce: Nonce,
+        aad: &[u8],
+        plaintext: &[u8],
+        ciphertext: &mut [u8],
+        extra_in: &[u8],
+        extra_out_and_tag: &mut [u8],
+    ) -> Result<(), Unspecified> {
+        self.check_per_nonce_max_bytes(plaintext.len() + extra_in.len())?;
+        if ciphertext.len() != plaintext.len()
+            || extra_out_and_tag.len() != extra_in.len() + self.algorithm().tag_len()
+        {
+            return Err(Unspecified);
+        }
+
+        let nonce = nonce.as_ref();
+        let mut out_tag_len = extra_out_and_tag.len();
+
+        if 1 != unsafe {
+            EVP_AEAD_CTX_seal_scatter(
+                self.ctx.as_ref().as_const_ptr(),
+                ciphertext.as_mut_ptr(),
+                extra_out_and_tag.as_mut_ptr(),
+                &mut out_tag_len,
+                extra_out_and_tag.len(),
+                nonce.as_ptr(),
+                nonce.len(),
+                plaintext.as_ptr(),
+                plaintext.len(),
+                extra_in.as_ptr(),
+                extra_in.len(),
+                aad.as_ptr(),
+                aad.len(),
+            )
+        } {
+            return Err(Unspecified);
+        }
+        if out_tag_len != extra_out_and_tag.len() {
+            return Err(Unspecified);
+        }
+        Ok(())
+    }
+
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub(crate) fn seal_in_place_separate_scatter(
