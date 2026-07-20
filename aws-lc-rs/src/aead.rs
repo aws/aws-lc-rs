@@ -919,21 +919,25 @@ impl LessSafeKey {
     /// `nonce` must be unique for every use of the key to seal data.
     ///
     /// # Errors
-    /// `error::Unspecified` if the buffer lengths are wrong or encryption fails.
+    /// `error::Unspecified` if the buffer lengths are wrong or encryption fails. On
+    /// error the output buffers never hold usable ciphertext: a length mismatch is
+    /// rejected before the AEAD runs and leaves them untouched, while a failure inside
+    /// the AEAD zeroes them, so a caller that ignores the result cannot transmit a
+    /// partial or stale record.
     // # FIPS
     // This method must not be used.
     //
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
-    pub fn seal_separate_out_of_place_uninit<'o, A>(
+    pub fn seal_separate_out_of_place_uninit<'c, 't, A>(
         &self,
         nonce: Nonce,
         aad: Aad<A>,
         plaintext: &[u8],
-        ciphertext: &'o mut [core::mem::MaybeUninit<u8>],
+        ciphertext: &'c mut [core::mem::MaybeUninit<u8>],
         extra_in: &[u8],
-        extra_out_and_tag: &'o mut [core::mem::MaybeUninit<u8>],
-    ) -> Result<(&'o mut [u8], &'o mut [u8]), Unspecified>
+        extra_out_and_tag: &'t mut [core::mem::MaybeUninit<u8>],
+    ) -> Result<(&'c mut [u8], &'t mut [u8]), Unspecified>
     where
         A: AsRef<[u8]>,
     {
@@ -951,7 +955,11 @@ impl LessSafeKey {
     /// buffers are already initialised.
     ///
     /// # Errors
-    /// `error::Unspecified` if the buffer lengths are wrong or encryption fails.
+    /// `error::Unspecified` if the buffer lengths are wrong or encryption fails. On
+    /// error the output buffers never hold usable ciphertext: a length mismatch is
+    /// rejected before the AEAD runs and leaves them untouched, while a failure inside
+    /// the AEAD zeroes them, so a caller that ignores the result cannot transmit a
+    /// partial or stale record.
     // # FIPS
     // This method must not be used.
     //
@@ -1022,17 +1030,28 @@ impl LessSafeKey {
     /// Seals `plaintext` out of place, appending ciphertext, any `extra_in` ciphertext
     /// and the tag to `out`.
     ///
-    /// This is the ergonomic form of [`Self::seal_separate_out_of_place_uninit`]. The
-    /// uninitialised region is managed internally, so the caller writes no `unsafe` at
-    /// all, and `out.len()` afterwards is a permanent, safe record of what was written
-    /// -- unlike a returned slice, whose evidence expires with the borrow.
+    /// This is the ergonomic form of [`Self::seal_separate_out_of_place_uninit`]: the
+    /// uninitialised region is managed internally, so the caller writes no `unsafe`, and
+    /// `out.len()` afterwards records what was written.
     ///
-    /// `out` is grown by `plaintext.len() + extra_in.len() + tag_len()` bytes. Anything
-    /// already in `out` is preserved, so a caller can reserve a header prefix first.
-    /// No part of `out` is zeroed before the cipher writes it.
+    /// On success `out` has grown by `plaintext.len() + extra_in.len() + tag_len()`
+    /// bytes, and everything already in it is preserved, so a caller can write a record
+    /// header first. On error `out` is left at its original length, with the region
+    /// the cipher would have filled zeroed inside its spare capacity. Nothing is zeroed
+    /// on the success path: the cipher is the only thing that writes there.
+    ///
+    /// This form is `Vec`-specific because it grows the spare capacity directly.
+    /// Callers holding other containers use
+    /// [`Self::seal_separate_out_of_place_uninit`].
     ///
     /// # Errors
     /// `error::Unspecified` if the encryption operation fails.
+    ///
+    /// # Panics
+    /// If the required capacity exceeds `isize::MAX` bytes, via [`Vec::reserve`].
+    // # FIPS
+    // This method must not be used.
+    //
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
     pub fn seal_out_of_place_append<A>(
@@ -1046,25 +1065,8 @@ impl LessSafeKey {
     where
         A: AsRef<[u8]>,
     {
-        let grow_by = plaintext.len() + extra_in.len() + self.algorithm().tag_len();
-        let start = out.len();
-        out.reserve(grow_by);
-        {
-            let spare = &mut out.spare_capacity_mut()[..grow_by];
-            let (ct, extra_and_tag) = spare.split_at_mut(plaintext.len());
-            self.seal_separate_out_of_place_uninit(
-                nonce,
-                aad,
-                plaintext,
-                ct,
-                extra_in,
-                extra_and_tag,
-            )?;
-        }
-        // SAFETY: the seal above returned Ok, so it initialised all `grow_by` bytes of
-        // the spare capacity, and `reserve` guaranteed that much capacity exists.
-        unsafe { out.set_len(start + grow_by) };
-        Ok(())
+        self.key
+            .seal_out_of_place_append(nonce, aad.as_ref(), plaintext, extra_in, out)
     }
 
     /// The key's AEAD algorithm.
