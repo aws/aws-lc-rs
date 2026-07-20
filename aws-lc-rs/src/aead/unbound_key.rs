@@ -203,25 +203,19 @@ impl UnboundKey {
     /// `extra_in.len() + algorithm().tag_len()` bytes. The output buffers may not
     /// overlap each other or `plaintext`.
     ///
-    /// This variant writes into possibly-uninitialised output. Forming a `&mut [u8]`
-    /// over uninitialised memory is undefined behaviour even if every byte is about to
-    /// be written, so a caller that wants to skip zeroing its output buffer needs an
-    /// entry point that speaks `MaybeUninit`. On success every byte of both output
-    /// slices has been written by the AEAD.
-    ///
     /// # Errors
     /// `error::Unspecified` if the lengths are wrong or the encryption operation fails.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
-    pub(crate) fn seal_separate_out_of_place_uninit<'c, 't>(
+    pub(crate) fn seal_separate_out_of_place(
         &self,
         nonce: Nonce,
         aad: &[u8],
         plaintext: &[u8],
-        ciphertext: &'c mut [MaybeUninit<u8>],
+        ciphertext: &mut [u8],
         extra_in: &[u8],
-        extra_out_and_tag: &'t mut [MaybeUninit<u8>],
-    ) -> Result<(&'c mut [u8], &'t mut [u8]), Unspecified> {
+        extra_out_and_tag: &mut [u8],
+    ) -> Result<(), Unspecified> {
         self.check_per_nonce_max_bytes(plaintext.len() + extra_in.len())?;
         if ciphertext.len() != plaintext.len()
             || extra_out_and_tag.len() != extra_in.len() + self.algorithm().tag_len()
@@ -235,8 +229,8 @@ impl UnboundKey {
         if 1 != unsafe {
             EVP_AEAD_CTX_seal_scatter(
                 self.ctx.as_ref().as_const_ptr(),
-                ciphertext.as_mut_ptr().cast::<u8>(),
-                extra_out_and_tag.as_mut_ptr().cast::<u8>(),
+                ciphertext.as_mut_ptr(),
+                extra_out_and_tag.as_mut_ptr(),
                 &mut out_tag_len,
                 extra_out_and_tag.len(),
                 nonce.as_ptr(),
@@ -257,104 +251,6 @@ impl UnboundKey {
         if out_tag_len != extra_out_and_tag.len() {
             return Err(Unspecified);
         }
-        // SAFETY: seal_scatter reported success, which per its contract means it wrote
-        // exactly plaintext.len() bytes of ciphertext and out_tag_len bytes of tag; the
-        // checks above rejected the call unless those lengths cover both slices in full.
-        // Doing the assume-init here rather than making the caller do it keeps the one
-        // unverifiable FFI claim inside the crate that documents it. MaybeUninit<u8>
-        // shares u8's layout, so the casts are otherwise trivial.
-        // (`<[MaybeUninit<T>]>::assume_init_mut` says this more directly, but stabilised
-        // well after this crate's MSRV of 1.71.)
-        unsafe {
-            Ok((
-                &mut *(ciphertext as *mut [MaybeUninit<u8>] as *mut [u8]),
-                &mut *(extra_out_and_tag as *mut [MaybeUninit<u8>] as *mut [u8]),
-            ))
-        }
-    }
-
-    /// As [`Self::seal_separate_out_of_place_uninit`], for callers whose output buffers
-    /// are already initialised.
-    ///
-    /// # Errors
-    /// `error::Unspecified` if the lengths are wrong or the encryption operation fails.
-    #[inline]
-    pub(crate) fn seal_separate_out_of_place(
-        &self,
-        nonce: Nonce,
-        aad: &[u8],
-        plaintext: &[u8],
-        ciphertext: &mut [u8],
-        extra_in: &[u8],
-        extra_out_and_tag: &mut [u8],
-    ) -> Result<(), Unspecified> {
-        // SAFETY: `MaybeUninit<u8>` has the same layout as `u8`, and "initialised" is a
-        // strictly stronger property than `MaybeUninit` promises, so widening these
-        // references is sound. The callee only ever writes AEAD output -- never
-        // uninitialised bytes -- so both buffers are still fully initialised when the
-        // borrow ends. (`slice::as_uninit_slice_mut` is the direct spelling, but is
-        // still unstable.)
-        let (ciphertext, extra_out_and_tag) = unsafe {
-            (
-                &mut *(ciphertext as *mut [u8] as *mut [MaybeUninit<u8>]),
-                &mut *(extra_out_and_tag as *mut [u8] as *mut [MaybeUninit<u8>]),
-            )
-        };
-        self.seal_separate_out_of_place_uninit(
-            nonce,
-            aad,
-            plaintext,
-            ciphertext,
-            extra_in,
-            extra_out_and_tag,
-        )
-        .map(|_| ())
-    }
-
-    /// Seals `plaintext` out of place, appending the ciphertext, any `extra_in`
-    /// ciphertext and the tag to `out`.
-    ///
-    /// On success `out` has grown by `plaintext.len() + extra_in.len() + tag_len()`
-    /// bytes and everything already in it is preserved. On error `out` is left at its original length, with the region
-    /// the cipher would have filled zeroed inside its spare capacity. Nothing is zeroed
-    /// on the success path: the cipher is the only thing that writes there.
-    ///
-    /// # Errors
-    /// `error::Unspecified` if the encryption operation fails.
-    ///
-    /// # Panics
-    /// If the required capacity exceeds `isize::MAX` bytes, via [`Vec::reserve`].
-    #[inline]
-    pub(crate) fn seal_out_of_place_append(
-        &self,
-        nonce: Nonce,
-        aad: &[u8],
-        plaintext: &[u8],
-        extra_in: &[u8],
-        out: &mut alloc::vec::Vec<u8>,
-    ) -> Result<(), Unspecified> {
-        let grow_by = plaintext.len() + extra_in.len() + self.algorithm().tag_len();
-        let start = out.len();
-        out.reserve(grow_by);
-
-        {
-            let spare = &mut out.spare_capacity_mut()[..grow_by];
-            let (ct, extra_and_tag) = spare.split_at_mut(plaintext.len());
-            self.seal_separate_out_of_place_uninit(
-                nonce,
-                aad,
-                plaintext,
-                ct,
-                extra_in,
-                extra_and_tag,
-            )?;
-        }
-
-        // SAFETY: `reserve` guaranteed at least `grow_by` bytes of spare capacity, and
-        // the seal above returned Ok, which per its contract means the AEAD filled both
-        // output slices -- together exactly that `grow_by` bytes -- in full. On the
-        // error path this line is not reached, so `out` keeps its original length.
-        unsafe { out.set_len(start + grow_by) };
         Ok(())
     }
 

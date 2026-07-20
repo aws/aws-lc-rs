@@ -4,12 +4,10 @@
 // Out-of-place sealing must be bit-identical to the in-place path, or it is not the
 // same cipher and nothing downstream can trust it.
 //
-// This file is `#![forbid(unsafe_code)]`: sealing into uninitialised memory and using
-// the result is meant to need no `unsafe` from the caller, and the compiler enforces
-// that here rather than the claim being asserted in prose.
+// This file is `#![forbid(unsafe_code)]`: the out-of-place API takes ordinary
+// `&mut [u8]` output buffers, so a caller never needs `unsafe`, and the compiler
+// enforces that here rather than the claim being asserted in prose.
 #![forbid(unsafe_code)]
-
-use std::mem::MaybeUninit;
 
 use aws_lc_rs::aead::{
     Aad, Algorithm, LessSafeKey, Nonce, UnboundKey, AES_128_GCM, AES_256_GCM, CHACHA20_POLY1305,
@@ -65,7 +63,12 @@ fn out_of_place_matches_in_place() {
 
             assert_eq!(ciphertext, in_place, "ciphertext differs at len={len}");
             assert_eq!(tag_out, expected_tag.as_ref(), "tag differs at len={len}");
-
+            if len > 0 {
+                assert_ne!(
+                    ciphertext, plaintext,
+                    "output should be encrypted at len={len}"
+                );
+            }
             assert_eq!(
                 plaintext,
                 pattern(len),
@@ -100,6 +103,92 @@ fn out_of_place_roundtrips_through_open() {
         .open_in_place(nonce(), Aad::from(aad), &mut sealed)
         .unwrap();
     assert_eq!(opened, &plaintext[..]);
+}
+
+#[test]
+fn extra_in_is_encrypted_ahead_of_the_tag() {
+    // `extra_in` exists for TLS 1.3's inner content-type byte, so it has to be
+    // encrypted and authenticated, not merely copied out. Decrypting is what proves it.
+    for alg in [&AES_128_GCM, &AES_256_GCM, &CHACHA20_POLY1305] {
+        let plaintext = pattern(1024);
+        let extra_in = [23u8];
+        let aad = [0x17u8, 0x03, 0x03, 0x04, 0x11];
+
+        let mut ciphertext = vec![UNWRITTEN; plaintext.len()];
+        let mut extra_and_tag = vec![UNWRITTEN; extra_in.len() + alg.tag_len()];
+        key_for(alg)
+            .seal_separate_out_of_place(
+                nonce(),
+                Aad::from(aad),
+                &plaintext,
+                &mut ciphertext,
+                &extra_in,
+                &mut extra_and_tag,
+            )
+            .unwrap();
+
+        assert_ne!(
+            extra_and_tag[0], extra_in[0],
+            "the extra_in byte must be encrypted, not copied"
+        );
+
+        let mut sealed = ciphertext.clone();
+        sealed.extend_from_slice(&extra_and_tag);
+        let opened = key_for(alg)
+            .open_in_place(nonce(), Aad::from(aad), &mut sealed)
+            .unwrap();
+        assert_eq!(&opened[..plaintext.len()], &plaintext[..]);
+        assert_eq!(opened[plaintext.len()], 23, "the extra_in byte round-trips");
+    }
+}
+
+#[test]
+fn a_recycled_output_buffer_leaves_no_stale_bytes() {
+    // The caller-provided-buffer API is aimed at record layers that reuse one buffer per
+    // record, so sealing into a buffer that still holds a previous record must overwrite
+    // every byte it reports.
+    let alg = &AES_128_GCM;
+    let first = pattern(512);
+    let second = vec![0u8; 512];
+
+    let mut ciphertext = vec![UNWRITTEN; 512];
+    let mut tag_out = vec![UNWRITTEN; alg.tag_len()];
+    key_for(alg)
+        .seal_separate_out_of_place(
+            nonce(),
+            Aad::empty(),
+            &first,
+            &mut ciphertext,
+            &[],
+            &mut tag_out,
+        )
+        .unwrap();
+    let first_ciphertext = ciphertext.clone();
+
+    // Same buffer, different plaintext, different nonce.
+    let nonce2 = Nonce::assume_unique_for_key([0x99u8; 12]);
+    key_for(alg)
+        .seal_separate_out_of_place(
+            nonce2,
+            Aad::empty(),
+            &second,
+            &mut ciphertext,
+            &[],
+            &mut tag_out,
+        )
+        .unwrap();
+    assert_ne!(
+        ciphertext, first_ciphertext,
+        "the second seal must overwrite the first record"
+    );
+
+    let mut sealed = ciphertext.clone();
+    sealed.extend_from_slice(&tag_out);
+    let nonce2 = Nonce::assume_unique_for_key([0x99u8; 12]);
+    let opened = key_for(alg)
+        .open_in_place(nonce2, Aad::empty(), &mut sealed)
+        .unwrap();
+    assert_eq!(opened, &second[..]);
 }
 
 #[test]
@@ -145,195 +234,31 @@ fn wrong_buffer_lengths_are_refused() {
 }
 
 #[test]
-fn wrong_buffer_lengths_are_refused_on_the_uninit_path_too() {
-    // The uninit path is the one writing into memory the caller has not initialised, so
-    // its length check is the one whose absence would be a heap overflow rather than a
-    // wrong answer. Cover it separately from the initialised path.
+fn a_length_mismatch_is_refused_before_the_output_is_touched() {
+    // The length check happens in Rust, ahead of the AEAD, so the caller's buffer is
+    // left exactly as it was. (A failure raised inside the AEAD scrubs it instead --
+    // see the TLS tests, where a replayed nonce can produce one.)
     let alg = &AES_128_GCM;
     let plaintext = vec![0u8; 64];
+    let mut ciphertext = vec![UNWRITTEN; 63];
+    let mut tag = vec![UNWRITTEN; alg.tag_len()];
 
-    for ciphertext_len in [63usize, 65] {
-        let mut ciphertext = vec![MaybeUninit::<u8>::uninit(); ciphertext_len];
-        let mut tag = vec![MaybeUninit::<u8>::uninit(); alg.tag_len()];
-        assert!(
-            key_for(alg)
-                .seal_separate_out_of_place_uninit(
-                    nonce(),
-                    Aad::empty(),
-                    &plaintext,
-                    &mut ciphertext,
-                    &[],
-                    &mut tag
-                )
-                .is_err(),
-            "a {ciphertext_len}-byte buffer for a 64-byte plaintext should be refused"
-        );
-    }
-
-    for tag_len in [alg.tag_len() - 1, alg.tag_len() + 1] {
-        let mut ciphertext = vec![MaybeUninit::<u8>::uninit(); 64];
-        let mut bad_tag = vec![MaybeUninit::<u8>::uninit(); tag_len];
-        assert!(
-            key_for(alg)
-                .seal_separate_out_of_place_uninit(
-                    nonce(),
-                    Aad::empty(),
-                    &plaintext,
-                    &mut ciphertext,
-                    &[],
-                    &mut bad_tag
-                )
-                .is_err(),
-            "a {tag_len}-byte tag buffer should be refused"
-        );
-    }
-}
-
-#[test]
-fn uninit_variant_matches_the_initialised_one() {
-    for alg in [&AES_128_GCM, &AES_256_GCM, &CHACHA20_POLY1305] {
-        for len in [0usize, 1, 17, 1024, 16384] {
-            let plaintext = pattern(len);
-            let aad = [0x17u8, 0x03, 0x03, 0x40, 0x11];
-            let extra_in = [23u8]; // a TLS 1.3 inner content type
-
-            let mut ct_a = vec![UNWRITTEN; len];
-            let mut tail_a = vec![UNWRITTEN; extra_in.len() + alg.tag_len()];
-            key_for(alg)
-                .seal_separate_out_of_place(
-                    nonce(),
-                    Aad::from(aad),
-                    &plaintext,
-                    &mut ct_a,
-                    &extra_in,
-                    &mut tail_a,
-                )
-                .unwrap();
-            if len > 0 {
-                assert_ne!(ct_a, plaintext, "output should be encrypted at len={len}");
-            }
-
-            let mut ct_b = vec![MaybeUninit::<u8>::uninit(); len];
-            let mut tail_b = vec![MaybeUninit::<u8>::uninit(); extra_in.len() + alg.tag_len()];
-            let (ct_b, tail_b) = key_for(alg)
-                .seal_separate_out_of_place_uninit(
-                    nonce(),
-                    Aad::from(aad),
-                    &plaintext,
-                    &mut ct_b,
-                    &extra_in,
-                    &mut tail_b,
-                )
-                .unwrap();
-
-            assert_eq!(ct_a, ct_b, "ciphertext differs at len={len}");
-            assert_eq!(tail_a, tail_b, "extra+tag differs at len={len}");
-        }
-    }
-}
-
-#[test]
-fn a_caller_with_an_uninit_array_gets_usable_slices_back() {
-    const N: usize = 1024;
-    let alg = &AES_128_GCM;
-    let plaintext = pattern(N);
-
-    // Never zeroed. The cipher is the only thing that writes here.
-    let mut ct_buf = [MaybeUninit::<u8>::uninit(); N];
-    let mut tail_buf = [MaybeUninit::<u8>::uninit(); 1 + 16];
-
-    let (ciphertext, extra_and_tag) = key_for(alg)
-        .seal_separate_out_of_place_uninit(
+    assert!(key_for(alg)
+        .seal_separate_out_of_place(
             nonce(),
             Aad::empty(),
             &plaintext,
-            &mut ct_buf,
-            &[23],
-            &mut tail_buf,
+            &mut ciphertext,
+            &[],
+            &mut tag
         )
-        .unwrap();
-
-    // Both are plain `&mut [u8]` -- readable, writable, no assume_init in sight.
-    assert_eq!(ciphertext.len(), N);
-    assert_eq!(extra_and_tag.len(), 1 + alg.tag_len());
-    assert_ne!(&ciphertext[..8], &plaintext[..8], "should be encrypted");
-
-    // And they decrypt, which is the real proof the bytes were written.
-    let mut sealed = ciphertext.to_vec();
-    sealed.extend_from_slice(extra_and_tag);
-    let opened = key_for(alg)
-        .open_in_place(nonce(), Aad::empty(), &mut sealed)
-        .unwrap();
-    assert_eq!(&opened[..N], &plaintext[..]);
-    assert_eq!(opened[N], 23, "the extra_in byte round-trips");
-}
-
-#[test]
-fn append_writes_the_same_bytes_as_the_separate_form() {
-    for alg in [&AES_128_GCM, &AES_256_GCM, &CHACHA20_POLY1305] {
-        for len in [0usize, 1, 17, 1024, 16384] {
-            let plaintext = pattern(len);
-            let aad = [0x17u8, 0x03, 0x03, 0x40, 0x11];
-            let extra_in = [23u8]; // a TLS 1.3 inner content type
-
-            let mut expected = vec![UNWRITTEN; len];
-            let mut expected_tail = vec![UNWRITTEN; extra_in.len() + alg.tag_len()];
-            key_for(alg)
-                .seal_separate_out_of_place(
-                    nonce(),
-                    Aad::from(aad),
-                    &plaintext,
-                    &mut expected,
-                    &extra_in,
-                    &mut expected_tail,
-                )
-                .unwrap();
-            expected.extend_from_slice(&expected_tail);
-
-            let mut out = Vec::new();
-            key_for(alg)
-                .seal_out_of_place_append(nonce(), Aad::from(aad), &plaintext, &extra_in, &mut out)
-                .unwrap();
-
-            assert_eq!(out, expected, "appended output differs at len={len}");
-        }
-    }
-}
-
-#[test]
-fn append_preserves_an_existing_prefix_and_reuses_capacity() {
-    let alg = &AES_128_GCM;
-    let plaintext = pattern(512);
-    let header = [0x17u8, 0x03, 0x03, 0x02, 0x11]; // a TLS record header
-
-    // A recycled buffer: filled by a previous, longer record and then truncated back to
-    // just the header, so its spare capacity really does hold stale bytes. Building it
-    // that way is the point -- sealing must overwrite every byte it reports, with no
-    // stale byte surviving inside the region the caller is handed back.
-    let mut out = vec![0xEEu8; 4096];
-    out.truncate(0);
-    out.extend_from_slice(&header);
-    let capacity_before = out.capacity();
-
-    key_for(alg)
-        .seal_out_of_place_append(nonce(), Aad::empty(), &plaintext, &[23], &mut out)
-        .unwrap();
-
-    assert_eq!(&out[..header.len()], &header[..], "prefix was clobbered");
-    assert_eq!(
-        out.len(),
-        header.len() + plaintext.len() + 1 + alg.tag_len()
+        .is_err());
+    assert!(
+        ciphertext.iter().all(|&b| b == UNWRITTEN),
+        "a length mismatch must not write to the output buffer"
     );
-    assert_eq!(
-        out.capacity(),
-        capacity_before,
-        "should have used the spare capacity rather than reallocating"
+    assert!(
+        tag.iter().all(|&b| b == UNWRITTEN),
+        "a length mismatch must not write to the tag buffer"
     );
-
-    let mut sealed = out[header.len()..].to_vec();
-    let opened = key_for(alg)
-        .open_in_place(nonce(), Aad::empty(), &mut sealed)
-        .unwrap();
-    assert_eq!(&opened[..plaintext.len()], &plaintext[..]);
-    assert_eq!(opened[plaintext.len()], 23, "the extra_in byte round-trips");
 }

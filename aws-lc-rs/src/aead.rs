@@ -901,14 +901,14 @@ impl LessSafeKey {
             .map(|(_, tag)| tag)
     }
 
-    /// Encrypts and signs (“seals”) `plaintext` into a *separate*, possibly
-    /// uninitialised `ciphertext` buffer, writing any extra ciphertext and the
-    /// authentication tag into `extra_out_and_tag`.
+    /// Encrypts and signs (“seals”) `plaintext` into a *separate* `ciphertext` buffer,
+    /// writing any extra ciphertext and the authentication tag into `extra_out_and_tag`.
     ///
     /// Unlike the `seal_in_place_*` family, the plaintext is borrowed immutably and is
     /// left untouched. A caller whose plaintext is shared or borrowed therefore does not
     /// have to copy it into a scratch buffer before sealing, which is the copy that
-    /// in-place-only sealing forces on TLS record layers.
+    /// in-place-only sealing forces on TLS record layers. This is the sealing
+    /// counterpart to [`Self::open_separate_gather`].
     ///
     /// `ciphertext` must be exactly `plaintext.len()` bytes. `extra_in` is additional
     /// plaintext -- TLS 1.3's inner content-type byte, for instance -- encrypted ahead
@@ -917,42 +917,6 @@ impl LessSafeKey {
     /// both output buffers has been written.
     ///
     /// `nonce` must be unique for every use of the key to seal data.
-    ///
-    /// # Errors
-    /// `error::Unspecified` if the buffer lengths are wrong or encryption fails. On
-    /// error the output buffers never hold usable ciphertext: a length mismatch is
-    /// rejected before the AEAD runs and leaves them untouched, while a failure inside
-    /// the AEAD zeroes them, so a caller that ignores the result cannot transmit a
-    /// partial or stale record.
-    // # FIPS
-    // This method must not be used.
-    //
-    #[inline]
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn seal_separate_out_of_place_uninit<'c, 't, A>(
-        &self,
-        nonce: Nonce,
-        aad: Aad<A>,
-        plaintext: &[u8],
-        ciphertext: &'c mut [core::mem::MaybeUninit<u8>],
-        extra_in: &[u8],
-        extra_out_and_tag: &'t mut [core::mem::MaybeUninit<u8>],
-    ) -> Result<(&'c mut [u8], &'t mut [u8]), Unspecified>
-    where
-        A: AsRef<[u8]>,
-    {
-        self.key.seal_separate_out_of_place_uninit(
-            nonce,
-            aad.as_ref(),
-            plaintext,
-            ciphertext,
-            extra_in,
-            extra_out_and_tag,
-        )
-    }
-
-    /// As [`Self::seal_separate_out_of_place_uninit`], for callers whose output
-    /// buffers are already initialised.
     ///
     /// # Errors
     /// `error::Unspecified` if the buffer lengths are wrong or encryption fails. On
@@ -1025,48 +989,6 @@ impl LessSafeKey {
             extra_in,
             extra_out_and_tag,
         )
-    }
-
-    /// Seals `plaintext` out of place, appending ciphertext, any `extra_in` ciphertext
-    /// and the tag to `out`.
-    ///
-    /// This is the ergonomic form of [`Self::seal_separate_out_of_place_uninit`]: the
-    /// uninitialised region is managed internally, so the caller writes no `unsafe`, and
-    /// `out.len()` afterwards records what was written.
-    ///
-    /// On success `out` has grown by `plaintext.len() + extra_in.len() + tag_len()`
-    /// bytes, and everything already in it is preserved, so a caller can write a record
-    /// header first. On error `out` is left at its original length, with the region
-    /// the cipher would have filled zeroed inside its spare capacity. Nothing is zeroed
-    /// on the success path: the cipher is the only thing that writes there.
-    ///
-    /// This form is `Vec`-specific because it grows the spare capacity directly.
-    /// Callers holding other containers use
-    /// [`Self::seal_separate_out_of_place_uninit`].
-    ///
-    /// # Errors
-    /// `error::Unspecified` if the encryption operation fails.
-    ///
-    /// # Panics
-    /// If the required capacity exceeds `isize::MAX` bytes, via [`Vec::reserve`].
-    // # FIPS
-    // This method must not be used.
-    //
-    #[inline]
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn seal_out_of_place_append<A>(
-        &self,
-        nonce: Nonce,
-        aad: Aad<A>,
-        plaintext: &[u8],
-        extra_in: &[u8],
-        out: &mut alloc::vec::Vec<u8>,
-    ) -> Result<(), Unspecified>
-    where
-        A: AsRef<[u8]>,
-    {
-        self.key
-            .seal_out_of_place_append(nonce, aad.as_ref(), plaintext, extra_in, out)
     }
 
     /// The key's AEAD algorithm.

@@ -2,14 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 // TlsRecordSealingKey wraps different C constructions per protocol version and tracks a
-// nonce counter across calls, so the out-of-place entry points need coverage of their
-// own rather than inheriting it from the LessSafeKey tests.
-//
-// This file is `#![forbid(unsafe_code)]` for the same reason as aead_out_of_place.rs:
-// the claim that these APIs need no caller-side `unsafe` is enforced, not asserted.
+// nonce counter across calls, so the out-of-place entry point needs coverage of its own
+// rather than inheriting it from the LessSafeKey tests.
 #![forbid(unsafe_code)]
-
-use std::mem::MaybeUninit;
 
 use aws_lc_rs::aead::{
     Aad, Algorithm, Nonce, TlsProtocolId, TlsRecordOpeningKey, TlsRecordSealingKey, AES_128_GCM,
@@ -18,8 +13,12 @@ use aws_lc_rs::aead::{
 
 const KEY: [u8; 32] = [0x42u8; 32];
 
+/// A byte no algorithm here will produce for a whole buffer, so a buffer the cipher
+/// never touched is distinguishable from one it filled.
+const UNWRITTEN: u8 = 0xAA;
+
 /// The AEAD algorithms and TLS versions `TlsRecordSealingKey` accepts. TLS 1.2 and
-/// TLS 1.3 reach different C functions with different nonce handling, so every entry
+/// TLS 1.3 reach different C functions with different nonce handling, so the entry
 /// point is exercised over the whole matrix rather than one representative cell.
 const MATRIX: [(&Algorithm, TlsProtocolId); 4] = [
     (&AES_128_GCM, TlsProtocolId::TLS12),
@@ -49,10 +48,6 @@ fn pattern(len: usize) -> Vec<u8> {
         .map(|i| u8::try_from(i % 251).expect("i % 251 fits in a u8"))
         .collect()
 }
-
-/// A byte no algorithm here will produce for a whole buffer, so a buffer the cipher
-/// never touched is distinguishable from one it filled.
-const UNWRITTEN: u8 = 0xAA;
 
 #[test]
 fn out_of_place_matches_in_place() {
@@ -91,60 +86,34 @@ fn out_of_place_matches_in_place() {
 }
 
 #[test]
-fn uninit_variant_matches_the_initialised_one() {
-    for (alg, protocol) in MATRIX {
-        let plaintext = pattern(1024);
-        let aad = [0x17u8, 0x03, 0x03, 0x04, 0x11];
-        let extra_in = [23u8]; // a TLS 1.3 inner content type
-
-        let mut ct_a = vec![UNWRITTEN; plaintext.len()];
-        let mut tail_a = vec![UNWRITTEN; extra_in.len() + alg.tag_len()];
-        sealing_key(alg, protocol)
-            .seal_separate_out_of_place(
-                nonce(7),
-                Aad::from(aad),
-                &plaintext,
-                &mut ct_a,
-                &extra_in,
-                &mut tail_a,
-            )
-            .unwrap();
-        assert_ne!(ct_a, plaintext, "output should be encrypted");
-
-        let mut ct_b = vec![MaybeUninit::<u8>::uninit(); plaintext.len()];
-        let mut tail_b = vec![MaybeUninit::<u8>::uninit(); extra_in.len() + alg.tag_len()];
-        let (ct_b, tail_b) = sealing_key(alg, protocol)
-            .seal_separate_out_of_place_uninit(
-                nonce(7),
-                Aad::from(aad),
-                &plaintext,
-                &mut ct_b,
-                &extra_in,
-                &mut tail_b,
-            )
-            .unwrap();
-
-        assert_eq!(ct_a, ct_b);
-        assert_eq!(tail_a, tail_b);
-    }
-}
-
-#[test]
-fn an_appended_record_decrypts_with_its_inner_content_type() {
+fn a_sealed_record_decrypts_with_its_inner_content_type() {
+    // `extra_in` carries TLS 1.3's inner content-type byte, so it must be encrypted and
+    // authenticated rather than copied. Opening the record is what proves it.
     for (alg, protocol) in MATRIX {
         let plaintext = pattern(4096);
         let aad = [0x17u8, 0x03, 0x03, 0x10, 0x11];
-        let extra_in = [23u8]; // a TLS 1.3 inner content type
+        let extra_in = [23u8];
 
-        let mut record = Vec::new();
+        let mut ciphertext = vec![UNWRITTEN; plaintext.len()];
+        let mut extra_and_tag = vec![UNWRITTEN; extra_in.len() + alg.tag_len()];
         sealing_key(alg, protocol)
-            .seal_out_of_place_append(nonce(3), Aad::from(aad), &plaintext, &extra_in, &mut record)
+            .seal_separate_out_of_place(
+                nonce(3),
+                Aad::from(aad),
+                &plaintext,
+                &mut ciphertext,
+                &extra_in,
+                &mut extra_and_tag,
+            )
             .unwrap();
-        assert_eq!(
-            record.len(),
-            plaintext.len() + extra_in.len() + alg.tag_len()
+
+        assert_ne!(
+            extra_and_tag[0], extra_in[0],
+            "the extra_in byte must be encrypted, not copied"
         );
 
+        let mut record = ciphertext.clone();
+        record.extend_from_slice(&extra_and_tag);
         let opened = opening_key(alg, protocol)
             .open_in_place(nonce(3), Aad::from(aad), &mut record)
             .unwrap();
@@ -153,40 +122,8 @@ fn an_appended_record_decrypts_with_its_inner_content_type() {
         assert_eq!(
             opened[plaintext.len()],
             23,
-            "the extra_in byte must be encrypted and authenticated too"
+            "the extra_in byte must round-trip through the TLS path"
         );
-    }
-}
-
-#[test]
-fn append_writes_the_same_bytes_as_the_separate_form() {
-    for (alg, protocol) in MATRIX {
-        let plaintext = pattern(4096);
-        let aad = [0x17u8, 0x03, 0x03, 0x10, 0x11];
-        let extra_in = [23u8];
-
-        let mut expected = vec![UNWRITTEN; plaintext.len()];
-        let mut expected_tail = vec![UNWRITTEN; extra_in.len() + alg.tag_len()];
-        sealing_key(alg, protocol)
-            .seal_separate_out_of_place(
-                nonce(3),
-                Aad::from(aad),
-                &plaintext,
-                &mut expected,
-                &extra_in,
-                &mut expected_tail,
-            )
-            .unwrap();
-        expected.extend_from_slice(&expected_tail);
-
-        let header = [0x17u8, 0x03, 0x03, 0x10, 0x11]; // a TLS record header
-        let mut out = header.to_vec();
-        sealing_key(alg, protocol)
-            .seal_out_of_place_append(nonce(3), Aad::from(aad), &plaintext, &extra_in, &mut out)
-            .unwrap();
-
-        assert_eq!(&out[..header.len()], &header[..], "prefix was clobbered");
-        assert_eq!(&out[header.len()..], &expected[..]);
     }
 }
 
@@ -219,11 +156,9 @@ fn the_out_of_place_path_shares_the_in_place_nonce_counter() {
             "replaying nonce 5 out-of-place after using it in-place must be refused"
         );
 
-        // EVP_AEAD_CTX_seal_scatter scrubs the output buffers whenever it returns
-        // failure, so that a caller who ignores the return value cannot transmit
-        // whatever was there before. The buffers are therefore zeroed rather than left
-        // at UNWRITTEN, and asserting that here keeps the scrub from being dropped
-        // silently.
+        // Unlike a length mismatch, which is rejected before the AEAD runs, this failure
+        // comes from inside EVP_AEAD_CTX_seal_scatter, which scrubs the output buffers on
+        // the way out so that a caller ignoring the return value cannot transmit them.
         assert!(
             ciphertext.iter().all(|&b| b == 0),
             "a refused seal must scrub the output buffer"
@@ -233,27 +168,7 @@ fn the_out_of_place_path_shares_the_in_place_nonce_counter() {
             "a refused seal must scrub the tag buffer"
         );
 
-        // The appending entry point shares the same counter, so it must refuse the
-        // replay too -- and must leave `out` exactly as it found it.
-        let mut out = b"record header".to_vec();
-        let len_before = out.len();
-        assert!(
-            key.seal_out_of_place_append(nonce(5), Aad::empty(), &plaintext, &[], &mut out)
-                .is_err(),
-            "replaying nonce 5 through the appending form must be refused"
-        );
-        assert_eq!(
-            out.len(),
-            len_before,
-            "a refused append must not grow the output"
-        );
-        assert_eq!(
-            &out[..],
-            b"record header",
-            "a refused append must not alter it"
-        );
-
-        // A higher nonce on the same key is still accepted, so the rejections above were
+        // A higher nonce on the same key is still accepted, so the rejection above was
         // the counter doing its job rather than the key being poisoned.
         key.seal_separate_out_of_place(
             nonce(6),
