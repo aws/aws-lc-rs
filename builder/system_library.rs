@@ -389,11 +389,15 @@ impl SystemLib {
         let optional_ssl_lib = self.ssl_lib.borrow();
         let kind = crypto_lib.lib_type.rust_lib_type();
         println!("cargo:rustc-link-search=native={}", lib_dir.display());
+        println!("cargo:libdir={}", lib_dir.display());
         println!("cargo:libcrypto={}", crypto_lib.name);
+        println!("cargo:libcrypto_path={}", crypto_lib.path.display());
+        println!("cargo:link_kind={kind}");
         println!("cargo:rustc-link-lib={kind}={}", crypto_lib.name);
         if let Some(ssl_lib) = optional_ssl_lib.as_ref() {
             println!("cargo:rustc-link-lib={kind}={}", ssl_lib.name);
             println!("cargo:libssl={}", ssl_lib.name);
+            println!("cargo:libssl_path={}", ssl_lib.path.display());
             println!("cargo:rerun-if-changed={}", ssl_lib.path.display());
         }
 

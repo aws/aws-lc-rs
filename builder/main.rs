@@ -342,6 +342,19 @@ impl OutputLibType {
             Self::Dynamic => "dynamic",
         }
     }
+
+    fn library_filename(self, name: &str) -> String {
+        match (target_os().as_str(), target_env().as_str(), self) {
+            ("windows", "msvc", _) => format!("{name}.lib"),
+            ("windows", _, Self::Dynamic) => format!("lib{name}.dll.a"),
+            ("windows", _, Self::Static) => format!("lib{name}.a"),
+            ("macos" | "ios" | "tvos" | "watchos" | "visionos", _, Self::Dynamic) => {
+                format!("lib{name}.dylib")
+            }
+            (_, _, Self::Dynamic) => format!("lib{name}.so"),
+            (_, _, Self::Static) => format!("lib{name}.a"),
+        }
+    }
 }
 
 impl OutputLib {
@@ -1397,6 +1410,37 @@ pub(crate) fn emit_source_build_metadata(manifest_dir: &Path) {
     }
 
     println!("cargo:rerun-if-changed=aws-lc/");
+}
+
+/// Exports stable, absolute native-library locations for downstream build
+/// scripts that need to compile additional C code against this AWS-LC build.
+pub(crate) fn emit_source_library_metadata(
+    lib_dir: &Path,
+    output_lib_type: OutputLibType,
+    build_prefix: &Option<String>,
+) {
+    let crypto_path =
+        lib_dir.join(output_lib_type.library_filename(&OutputLib::Crypto.libname(build_prefix)));
+    assert!(
+        crypto_path.is_file(),
+        "AWS-LC libcrypto artifact not found: {}",
+        crypto_path.display()
+    );
+
+    println!("cargo:libdir={}", lib_dir.display());
+    println!("cargo:libcrypto_path={}", crypto_path.display());
+    println!("cargo:link_kind={}", output_lib_type.rust_lib_type());
+
+    if cfg!(feature = "ssl") {
+        let ssl_path =
+            lib_dir.join(output_lib_type.library_filename(&OutputLib::Ssl.libname(build_prefix)));
+        assert!(
+            ssl_path.is_file(),
+            "AWS-LC libssl artifact not found: {}",
+            ssl_path.display()
+        );
+        println!("cargo:libssl_path={}", ssl_path.display());
+    }
 }
 
 fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {

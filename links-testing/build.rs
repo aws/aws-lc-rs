@@ -31,19 +31,37 @@ fn main() {
 }
 
 fn build_and_link(links: &str, target_name: &str) {
+    let links = links.to_uppercase();
+
     // ensure that the include path is exported and set up correctly
     cc::Build::new()
-        .include(env(format!("DEP_{}_INCLUDE", links.to_uppercase())))
+        .include(env(format!("DEP_{links}_INCLUDE")))
         .file("src/testing.c")
         .compile(&format!("testing_{target_name}"));
 
     // make sure the root was exported
-    let root = env(format!("DEP_{}_ROOT", links.to_uppercase()));
+    let root = env(format!("DEP_{links}_ROOT"));
     println!("cargo:rustc-link-search={root}");
 
     // ensure the libcrypto artifact is linked
-    let libcrypto = env(format!("DEP_{}_LIBCRYPTO", links.to_uppercase()));
+    let libcrypto = env(format!("DEP_{links}_LIBCRYPTO"));
     println!("cargo:rustc-link-lib={libcrypto}");
+
+    // ensure downstream native builds receive the exact artifact location
+    let libdir = std::path::PathBuf::from(env(format!("DEP_{links}_LIBDIR")));
+    let libcrypto_path = std::path::PathBuf::from(env(format!("DEP_{links}_LIBCRYPTO_PATH")));
+    assert!(
+        libdir.is_dir(),
+        "exported libdir does not exist: {libdir:?}"
+    );
+    assert!(
+        libcrypto_path.is_file(),
+        "exported libcrypto path does not exist: {libcrypto_path:?}"
+    );
+    assert_eq!(libcrypto_path.parent(), Some(libdir.as_path()));
+
+    let link_kind = env(format!("DEP_{links}_LINK_KIND"));
+    assert!(matches!(link_kind.as_str(), "static" | "dylib"));
 }
 
 fn get_package_links_property(cargo_toml_path: &str) -> String {

@@ -12,6 +12,14 @@ See our [User Guide](https://aws.github.io/aws-lc-rs/) for guidance on installin
 
 [Documentation](https://github.com/aws/aws-lc).
 
+## Native build metadata
+
+Downstream Cargo build scripts that compile additional C code against this
+AWS-LC build can use the exported `include`, `libdir`, `libcrypto_path`, and
+`link_kind` metadata. When the `ssl` feature is enabled, `libssl_path` is also
+exported. Cargo exposes these values to direct dependents as versioned
+`DEP_AWS_LC_*` environment variables.
+
 ## Build Support
 
 This crate pulls in the source code of AWS-LC to build with it. Bindings for popular platforms are pre-generated.

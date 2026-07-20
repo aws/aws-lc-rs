@@ -8,6 +8,14 @@ on these bindings.
 
 [Documentation](https://github.com/aws/aws-lc).
 
+## Native build metadata
+
+Downstream Cargo build scripts that compile additional C code against this
+AWS-LC FIPS build can use the exported `include`, `libdir`, `libcrypto_path`,
+and `link_kind` metadata. When the `ssl` feature is enabled, `libssl_path` is
+also exported. Cargo exposes these values to direct dependents as versioned
+`DEP_AWS_LC_FIPS_*` environment variables.
+
 ## FIPS
 
 The aws-lc-fips-sys crate provides bindings to the latest version of the AWS-LC-FIPS module that
