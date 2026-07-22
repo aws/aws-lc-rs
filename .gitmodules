@@ -5,4 +5,4 @@
 [submodule "aws-lc-fips-sys/aws-lc"]
 	path = aws-lc-fips-sys/aws-lc
 	url = https://github.com/aws/aws-lc.git
-	branch = fips-2024-09-27
+	branch = fips-2025-09-12-lts
