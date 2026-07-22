@@ -17,11 +17,16 @@
 //! reduce the risks of algorithm agility and to provide consistency with ECDSA
 //! and `EdDSA`.
 //!
-//! Currently this module does not support digesting the message to be signed
-//! separately from the public key operation, as it is currently being
-//! optimized for Ed25519 and for the implementation of protocols that do not
-//! requiring signing large messages. An interface for efficiently supporting
-//! larger messages may be added later.
+//! For most signing operations this module hashes the message as part of the
+//! signing operation, rather than accepting a separately-computed digest. The
+//! exception is ECDSA: [`EcdsaKeyPair::sign_digest`] signs a caller-provided
+//! digest (see [`Digest::import_less_safe`] for constructing one from external
+//! digest bytes), which is useful when the digest is produced elsewhere, such
+//! as by a TLS implementation offloading the private key operation.
+//!
+//! This module is optimized for signing messages that are available in full,
+//! rather than streaming or incrementally-hashed large messages. An interface
+//! for efficiently supporting larger messages may be added later.
 //!
 //!
 //! # Algorithm Details
