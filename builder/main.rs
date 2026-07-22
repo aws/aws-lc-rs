@@ -347,7 +347,6 @@ impl OutputLibType {
         match (target_os().as_str(), target_env().as_str(), self) {
             ("windows", "msvc", _) => format!("{name}.lib"),
             ("windows", _, Self::Dynamic) => format!("lib{name}.dll.a"),
-            ("windows", _, Self::Static) => format!("lib{name}.a"),
             ("macos" | "ios" | "tvos" | "watchos" | "visionos", _, Self::Dynamic) => {
                 format!("lib{name}.dylib")
             }
