@@ -82,4 +82,4 @@ pkg-config = { workspace = true }
 regex.workspace = true
 
 [package.metadata.aws-lc-fips-sys]
-commit-hash = "85ebe82b744c7941433962fde312aa062c15d6d2"
+commit-hash = "3901b4e4564025f29f04ecf1da6b44234b63770d"
