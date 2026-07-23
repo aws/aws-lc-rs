@@ -128,11 +128,29 @@ jobs:
     if: github.repository_owner == 'aws'
     name: sys crate tests
     runs-on: ${{ matrix.os }}
+    env:
+      # 'default' leaves the linkage choice to the builder; 'dynamic' forces a
+      # shared-library build so the exported artifact-path metadata is
+      # validated for both link kinds.
+      AWS_LC_SYS_STATIC: ${{ (matrix.linkage == 'dynamic' && '0') || '' }}
+      AWS_LC_FIPS_SYS_STATIC: ${{ (matrix.linkage == 'dynamic' && '0') || '' }}
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
-        features: [ aws-lc-rs, aws-lc-rs-fips, aws-lc-sys, aws-lc-fips-sys ]
+        features: [ aws-lc-rs, aws-lc-rs-fips, aws-lc-sys, aws-lc-fips-sys, aws-lc-sys-ssl, aws-lc-fips-sys-ssl ]
+        linkage: [ default, dynamic ]
+        include:
+          # MinGW dynamic builds produce `lib*.dll.a` import libraries;
+          # exercise the exported artifact-path metadata on windows-gnu.
+          - os: windows-latest
+            features: aws-lc-sys
+            linkage: default
+            target: x86_64-pc-windows-gnu
+          - os: windows-latest
+            features: aws-lc-sys
+            linkage: dynamic
+            target: x86_64-pc-windows-gnu
     steps:
       - uses: actions/checkout@v7
         with:
@@ -141,6 +159,9 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal --no-self-update
           rustup default stable
+      - name: Install Rust target
+        if: ${{ matrix.target != '' }}
+        run: rustup target add ${{ matrix.target }}
       - name: Install NASM on Windows
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
@@ -152,10 +173,10 @@ jobs:
         uses: seanmiddleditch/gha-setup-ninja@v6
       - name: Run cargo test
         working-directory: ./links-testing
-        run: cargo test --features ${{ matrix.features }} --no-default-features
+        run: cargo test --features ${{ matrix.features }} --no-default-features ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
       - name: Run cargo run
         working-directory: ./links-testing
-        run: cargo run --features ${{ matrix.features }} --no-default-features
+        run: cargo run --features ${{ matrix.features }} --no-default-features ${{ matrix.target && format('--target {0}', matrix.target) || '' }}
 
   publish-dry-run-version-check:
     if: github.repository_owner == 'aws'
