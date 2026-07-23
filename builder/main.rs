@@ -1413,32 +1413,43 @@ pub(crate) fn emit_source_build_metadata(manifest_dir: &Path) {
 
 /// Exports stable, absolute native-library locations for downstream build
 /// scripts that need to compile additional C code against this AWS-LC build.
+///
+/// The artifact filenames are predicted from the target platform and link
+/// kind, so a wrong prediction is possible on configurations we don't
+/// exercise. If a predicted artifact is missing, the corresponding `*_path`
+/// key is skipped (with a warning) rather than failing the build; the
+/// `links-testing` crate asserts these exports are present for every
+/// configuration covered by CI.
 pub(crate) fn emit_source_library_metadata(
     lib_dir: &Path,
     output_lib_type: OutputLibType,
     build_prefix: &Option<String>,
 ) {
+    println!("cargo:libdir={}", lib_dir.display());
+    println!("cargo:link_kind={}", output_lib_type.rust_lib_type());
+
     let crypto_path =
         lib_dir.join(output_lib_type.library_filename(&OutputLib::Crypto.libname(build_prefix)));
-    assert!(
-        crypto_path.is_file(),
-        "AWS-LC libcrypto artifact not found: {}",
-        crypto_path.display()
-    );
-
-    println!("cargo:libdir={}", lib_dir.display());
-    println!("cargo:libcrypto_path={}", crypto_path.display());
-    println!("cargo:link_kind={}", output_lib_type.rust_lib_type());
+    if crypto_path.is_file() {
+        println!("cargo:libcrypto_path={}", crypto_path.display());
+    } else {
+        emit_warning(format!(
+            "AWS-LC libcrypto artifact not found: {}; not exporting libcrypto_path",
+            crypto_path.display()
+        ));
+    }
 
     if cfg!(feature = "ssl") {
         let ssl_path =
             lib_dir.join(output_lib_type.library_filename(&OutputLib::Ssl.libname(build_prefix)));
-        assert!(
-            ssl_path.is_file(),
-            "AWS-LC libssl artifact not found: {}",
-            ssl_path.display()
-        );
-        println!("cargo:libssl_path={}", ssl_path.display());
+        if ssl_path.is_file() {
+            println!("cargo:libssl_path={}", ssl_path.display());
+        } else {
+            emit_warning(format!(
+                "AWS-LC libssl artifact not found: {}; not exporting libssl_path",
+                ssl_path.display()
+            ));
+        }
     }
 }
 

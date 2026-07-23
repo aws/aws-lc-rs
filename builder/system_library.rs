@@ -395,6 +395,18 @@ impl SystemLib {
         println!("cargo:link_kind={kind}");
         println!("cargo:rustc-link-lib={kind}={}", crypto_lib.name);
         if let Some(ssl_lib) = optional_ssl_lib.as_ref() {
+            // `link_kind` (above) describes libcrypto. Without a requested
+            // lib type, resolution could in principle land on differing types
+            // for the two libraries; surface that instead of exporting
+            // misleading metadata.
+            if ssl_lib.lib_type != crypto_lib.lib_type {
+                emit_warning(format!(
+                    "libcrypto ({}) and libssl ({}) resolved to different library types; \
+                     the exported link_kind describes libcrypto only",
+                    crypto_lib.lib_type.description(),
+                    ssl_lib.lib_type.description(),
+                ));
+            }
             println!("cargo:rustc-link-lib={kind}={}", ssl_lib.name);
             println!("cargo:libssl={}", ssl_lib.name);
             println!("cargo:libssl_path={}", ssl_lib.path.display());
