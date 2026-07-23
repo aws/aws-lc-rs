@@ -62,6 +62,24 @@ fn build_and_link(links: &str, target_name: &str) {
 
     let link_kind = env(format!("DEP_{links}_LINK_KIND"));
     assert!(matches!(link_kind.as_str(), "static" | "dylib"));
+    if link_kind == "static" {
+        // a static artifact must be an archive (`.a`) or MSVC library (`.lib`)
+        let extension = libcrypto_path.extension().and_then(|e| e.to_str());
+        assert!(
+            matches!(extension, Some("a" | "lib")),
+            "unexpected static libcrypto artifact: {libcrypto_path:?}"
+        );
+    }
+
+    // when libssl is built, its exact artifact location must be exported too
+    if optional_env(format!("DEP_{links}_LIBSSL")).is_some() {
+        let libssl_path = std::path::PathBuf::from(env(format!("DEP_{links}_LIBSSL_PATH")));
+        assert!(
+            libssl_path.is_file(),
+            "exported libssl path does not exist: {libssl_path:?}"
+        );
+        assert_eq!(libssl_path.parent(), Some(libdir.as_path()));
+    }
 }
 
 fn get_package_links_property(cargo_toml_path: &str) -> String {
@@ -75,6 +93,11 @@ fn get_package_links_property(cargo_toml_path: &str) -> String {
 
 fn env<S: AsRef<str>>(s: S) -> String {
     let s = s.as_ref();
+    optional_env(s).unwrap_or_else(|| panic!("missing env var {s}"))
+}
+
+fn optional_env<S: AsRef<str>>(s: S) -> Option<String> {
+    let s = s.as_ref();
     println!("cargo:rerun-if-env-changed={s}");
-    std::env::var(s).unwrap_or_else(|_| panic!("missing env var {s}"))
+    std::env::var(s).ok()
 }
