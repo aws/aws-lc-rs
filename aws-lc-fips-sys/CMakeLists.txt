@@ -65,11 +65,15 @@ endforeach ()
 if (BORINGSSL_PREFIX)
     if (MSVC)
         set(TARGET_PREFIX "${BORINGSSL_PREFIX}")
-        set_my_target_properties(IMPORT_PREFIX ${TARGET_PREFIX})
     else()
         set(TARGET_PREFIX "lib${BORINGSSL_PREFIX}")
     endif()
+    # PREFIX renames the library artifact itself; IMPORT_PREFIX renames the
+    # import library generated for shared builds on DLL platforms (e.g.
+    # MinGW's lib*.dll.a), keeping it discoverable under the prefixed name.
+    # IMPORT_PREFIX is ignored on non-DLL platforms.
     set_my_target_properties(PREFIX ${TARGET_PREFIX})
+    set_my_target_properties(IMPORT_PREFIX ${TARGET_PREFIX})
 
     # This BORINGSSL_PREFIX has an "_" appended, so we must remove it
     string(REGEX REPLACE "_$" "" BORINGSSL_PREFIX_MACRO ${BORINGSSL_PREFIX})
