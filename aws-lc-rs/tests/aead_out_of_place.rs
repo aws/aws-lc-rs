@@ -1,12 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-// Out-of-place sealing must be bit-identical to the in-place path, or it is not the
-// same cipher and nothing downstream can trust it.
-//
-// This file is `#![forbid(unsafe_code)]`: the out-of-place API takes ordinary
-// `&mut [u8]` output buffers, so a caller never needs `unsafe`, and the compiler
-// enforces that here rather than the claim being asserted in prose.
 #![forbid(unsafe_code)]
 
 use aws_lc_rs::aead::{
@@ -51,7 +45,7 @@ fn out_of_place_matches_in_place() {
             let mut ciphertext = vec![UNWRITTEN; len];
             let mut tag_out = vec![UNWRITTEN; alg.tag_len()];
             key_for(alg)
-                .seal_separate_out_of_place(
+                .seal_out_of_place_scatter(
                     nonce(),
                     Aad::from(aad),
                     &plaintext,
@@ -81,13 +75,13 @@ fn out_of_place_matches_in_place() {
 #[test]
 fn out_of_place_roundtrips_through_open() {
     let alg = &AES_128_GCM;
-    let plaintext = b"the fused path must still decrypt".to_vec();
+    let plaintext = b"out-of-place sealing must still decrypt".to_vec();
     let aad = [1u8, 2, 3];
 
     let mut ciphertext = vec![UNWRITTEN; plaintext.len()];
     let mut tag_out = vec![UNWRITTEN; alg.tag_len()];
     key_for(alg)
-        .seal_separate_out_of_place(
+        .seal_out_of_place_scatter(
             nonce(),
             Aad::from(aad),
             &plaintext,
@@ -117,7 +111,7 @@ fn extra_in_is_encrypted_ahead_of_the_tag() {
         let mut ciphertext = vec![UNWRITTEN; plaintext.len()];
         let mut extra_and_tag = vec![UNWRITTEN; extra_in.len() + alg.tag_len()];
         key_for(alg)
-            .seal_separate_out_of_place(
+            .seal_out_of_place_scatter(
                 nonce(),
                 Aad::from(aad),
                 &plaintext,
@@ -154,7 +148,7 @@ fn a_recycled_output_buffer_leaves_no_stale_bytes() {
     let mut ciphertext = vec![UNWRITTEN; 512];
     let mut tag_out = vec![UNWRITTEN; alg.tag_len()];
     key_for(alg)
-        .seal_separate_out_of_place(
+        .seal_out_of_place_scatter(
             nonce(),
             Aad::empty(),
             &first,
@@ -168,7 +162,7 @@ fn a_recycled_output_buffer_leaves_no_stale_bytes() {
     // Same buffer, different plaintext, different nonce.
     let nonce2 = Nonce::assume_unique_for_key([0x99u8; 12]);
     key_for(alg)
-        .seal_separate_out_of_place(
+        .seal_out_of_place_scatter(
             nonce2,
             Aad::empty(),
             &second,
@@ -201,7 +195,7 @@ fn wrong_buffer_lengths_are_refused() {
         let mut ciphertext = vec![0u8; ciphertext_len];
         assert!(
             key_for(alg)
-                .seal_separate_out_of_place(
+                .seal_out_of_place_scatter(
                     nonce(),
                     Aad::empty(),
                     &plaintext,
@@ -219,7 +213,7 @@ fn wrong_buffer_lengths_are_refused() {
         let mut bad_tag = vec![0u8; tag_len];
         assert!(
             key_for(alg)
-                .seal_separate_out_of_place(
+                .seal_out_of_place_scatter(
                     nonce(),
                     Aad::empty(),
                     &plaintext,
@@ -244,7 +238,7 @@ fn a_length_mismatch_is_refused_before_the_output_is_touched() {
     let mut tag = vec![UNWRITTEN; alg.tag_len()];
 
     assert!(key_for(alg)
-        .seal_separate_out_of_place(
+        .seal_out_of_place_scatter(
             nonce(),
             Aad::empty(),
             &plaintext,

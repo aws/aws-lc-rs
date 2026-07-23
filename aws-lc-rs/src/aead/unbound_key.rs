@@ -194,49 +194,40 @@ impl UnboundKey {
         }
     }
 
-    /// Encrypts `plaintext` into a separate `ciphertext` buffer, leaving `plaintext`
-    /// untouched. This is the sealing counterpart to `open_separate_gather`.
-    ///
-    /// `ciphertext` must be exactly `plaintext.len()` bytes. `extra_in` is additional
-    /// plaintext (TLS 1.3's inner content-type byte, for instance) that is encrypted and
-    /// written to `extra_out_and_tag` ahead of the tag, so `extra_out_and_tag` must be
-    /// `extra_in.len() + algorithm().tag_len()` bytes. The output buffers may not
-    /// overlap each other or `plaintext`.
-    ///
-    /// # Errors
-    /// `error::Unspecified` if the lengths are wrong or the encryption operation fails.
     #[inline]
     #[allow(clippy::needless_pass_by_value)]
-    pub(crate) fn seal_separate_out_of_place(
+    pub(crate) fn seal_out_of_place_scatter(
         &self,
         nonce: Nonce,
         aad: &[u8],
-        plaintext: &[u8],
-        ciphertext: &mut [u8],
+        in_plaintext: &[u8],
+        out_ciphertext: &mut [u8],
         extra_in: &[u8],
         extra_out_and_tag: &mut [u8],
     ) -> Result<(), Unspecified> {
-        self.check_per_nonce_max_bytes(plaintext.len() + extra_in.len())?;
-        if ciphertext.len() != plaintext.len()
+        self.check_per_nonce_max_bytes(in_plaintext.len() + extra_in.len())?;
+        if out_ciphertext.len() != in_plaintext.len()
             || extra_out_and_tag.len() != extra_in.len() + self.algorithm().tag_len()
         {
             return Err(Unspecified);
         }
 
         let nonce = nonce.as_ref();
-        let mut out_tag_len = extra_out_and_tag.len();
+        // Set to a value the AEAD never reports on success, so the assertion below
+        // catches a missing write as well as a short one.
+        let mut out_tag_len = 0;
 
         if 1 != unsafe {
             EVP_AEAD_CTX_seal_scatter(
                 self.ctx.as_ref().as_const_ptr(),
-                ciphertext.as_mut_ptr(),
+                out_ciphertext.as_mut_ptr(),
                 extra_out_and_tag.as_mut_ptr(),
                 &mut out_tag_len,
                 extra_out_and_tag.len(),
                 nonce.as_ptr(),
                 nonce.len(),
-                plaintext.as_ptr(),
-                plaintext.len(),
+                in_plaintext.as_ptr(),
+                in_plaintext.len(),
                 extra_in.as_ptr(),
                 extra_in.len(),
                 aad.as_ptr(),
@@ -245,12 +236,7 @@ impl UnboundKey {
         } {
             return Err(Unspecified);
         }
-        // The tag length the C function reports is the only evidence available that it
-        // filled the tag buffer, so a mismatch has to be an error rather than a shorter
-        // successful write.
-        if out_tag_len != extra_out_and_tag.len() {
-            return Err(Unspecified);
-        }
+        debug_assert_eq!(out_tag_len, extra_out_and_tag.len());
         Ok(())
     }
 

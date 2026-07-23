@@ -1,9 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-// TlsRecordSealingKey wraps different C constructions per protocol version and tracks a
-// nonce counter across calls, so the out-of-place entry point needs coverage of its own
-// rather than inheriting it from the LessSafeKey tests.
 #![forbid(unsafe_code)]
 
 use aws_lc_rs::aead::{
@@ -64,7 +61,7 @@ fn out_of_place_matches_in_place() {
             let mut ciphertext = vec![UNWRITTEN; len];
             let mut tag_out = vec![UNWRITTEN; alg.tag_len()];
             sealing_key(alg, protocol)
-                .seal_separate_out_of_place(
+                .seal_out_of_place_scatter(
                     nonce(1),
                     Aad::from(aad),
                     &plaintext,
@@ -97,7 +94,7 @@ fn a_sealed_record_decrypts_with_its_inner_content_type() {
         let mut ciphertext = vec![UNWRITTEN; plaintext.len()];
         let mut extra_and_tag = vec![UNWRITTEN; extra_in.len() + alg.tag_len()];
         sealing_key(alg, protocol)
-            .seal_separate_out_of_place(
+            .seal_out_of_place_scatter(
                 nonce(3),
                 Aad::from(aad),
                 &plaintext,
@@ -144,7 +141,7 @@ fn the_out_of_place_path_shares_the_in_place_nonce_counter() {
         let mut ciphertext = vec![UNWRITTEN; plaintext.len()];
         let mut tag_out = vec![UNWRITTEN; alg.tag_len()];
         assert!(
-            key.seal_separate_out_of_place(
+            key.seal_out_of_place_scatter(
                 nonce(5),
                 Aad::empty(),
                 &plaintext,
@@ -170,7 +167,7 @@ fn the_out_of_place_path_shares_the_in_place_nonce_counter() {
 
         // A higher nonce on the same key is still accepted, so the rejection above was
         // the counter doing its job rather than the key being poisoned.
-        key.seal_separate_out_of_place(
+        key.seal_out_of_place_scatter(
             nonce(6),
             Aad::empty(),
             &plaintext,
@@ -192,7 +189,7 @@ fn wrong_buffer_lengths_are_refused() {
         let mut ciphertext = vec![0u8; ciphertext_len];
         assert!(
             sealing_key(alg, TlsProtocolId::TLS13)
-                .seal_separate_out_of_place(
+                .seal_out_of_place_scatter(
                     nonce(1),
                     Aad::empty(),
                     &plaintext,
@@ -210,7 +207,7 @@ fn wrong_buffer_lengths_are_refused() {
         let mut bad_tag = vec![0u8; tag_len];
         assert!(
             sealing_key(alg, TlsProtocolId::TLS13)
-                .seal_separate_out_of_place(
+                .seal_out_of_place_scatter(
                     nonce(1),
                     Aad::empty(),
                     &plaintext,
