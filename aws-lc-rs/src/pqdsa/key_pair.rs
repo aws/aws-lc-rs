@@ -252,8 +252,9 @@ pub(crate) fn evp_key_pqdsa_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unsp
 mod tests {
     use super::*;
 
-    use crate::signature::UnparsedPublicKey;
-    use crate::signature::{ML_DSA_44_SIGNING, ML_DSA_65_SIGNING, ML_DSA_87_SIGNING};
+    use crate::signature::{
+        UnparsedPublicKey, ML_DSA_44_SIGNING, ML_DSA_65_SIGNING, ML_DSA_87_SIGNING,
+    };
 
     const TEST_ALGORITHMS: &[&PqdsaSigningAlgorithm] =
         &[&ML_DSA_44_SIGNING, &ML_DSA_65_SIGNING, &ML_DSA_87_SIGNING];

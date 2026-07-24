@@ -307,9 +307,9 @@ jobs:
   # Proves the declared FIPS floor: build AWS-LC FIPS at the oldest branch that
   # both reports MINIMUM_FIPS_VERSION (see builder/system_library.rs) and can
   # emit Rust bindings, then run the suite against it with the version check
-  # enabled. The fips-2024-09-27 branch reports library version 3.x with no
+  # enabled. The fips-2025-09-12-lts branch reports library version 4.x with no
   # AWSLC_FIPS_VERSION_NUMBER macro, so resolve_fips_version() falls back to the
-  # version-string major and yields FIPS version 3 — exactly the floor. A
+  # version-string major and yields FIPS version 4 — exactly the floor. A
   # failure means the floor is unsupported and must be raised together with this
   # pin.
   # ---------------------------------------------------------------------------
@@ -323,7 +323,7 @@ jobs:
       # Keep in sync with MINIMUM_FIPS_VERSION in builder/system_library.rs: the
       # oldest FIPS branch that reports that module version and supports
       # -DGENERATE_RUST_BINDINGS=ON.
-      AWS_LC_FIPS_MIN_REF: "fips-2024-09-27"
+      AWS_LC_FIPS_MIN_REF: "fips-2025-09-12-lts"
     steps:
       # aws-lc-rs checkout WITHOUT the submodule (and remove its working tree),
       # so a from-source fallback is impossible (see test-fips-unix).

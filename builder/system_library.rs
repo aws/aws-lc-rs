@@ -421,8 +421,10 @@ const MINIMUM_AWS_LC_VERSION: &str = "1.68.0";
 /// the library version and increases monotonically across FIPS branches, so it
 /// is a stable basis for comparison.
 ///
-/// TODO: bump to `4` when switching to the `fips-2025-09-12-lts` branch.
-const MINIMUM_FIPS_VERSION: u32 = 3;
+/// FIPS 4.x (`fips-2025-09-12-lts`) is the floor: aws-lc-rs unconditionally
+/// references symbols (e.g. ML-DSA/PQDSA) that older FIPS modules do not
+/// provide.
+const MINIMUM_FIPS_VERSION: u32 = 4;
 
 /// Finds the first `#define <name> ...` line in `base.h` content and returns
 /// the value token following the macro name (or `""` for a bare `#define

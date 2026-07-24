@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use aws_lc_rs::encoding::{AsDer, AsRawBytes};
-use aws_lc_rs::signature::{KeyPair, ParsedPublicKey, VerificationAlgorithm};
 use aws_lc_rs::signature::{
-    PqdsaKeyPair, ML_DSA_44, ML_DSA_44_SIGNING, ML_DSA_65, ML_DSA_65_SIGNING, ML_DSA_87,
-    ML_DSA_87_SIGNING,
+    KeyPair, ParsedPublicKey, PqdsaKeyPair, VerificationAlgorithm, ML_DSA_44, ML_DSA_44_SIGNING,
+    ML_DSA_65, ML_DSA_65_SIGNING, ML_DSA_87, ML_DSA_87_SIGNING,
 };
 use aws_lc_rs::{test, test_file};
 
