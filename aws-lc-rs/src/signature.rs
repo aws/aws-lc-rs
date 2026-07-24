@@ -147,6 +147,31 @@
 //! }
 //! ```
 //!
+//! ## Signing and verifying with ML-DSA-44
+//!
+//! ```
+//! use aws_lc_rs::encoding::AsDer;
+//! use aws_lc_rs::signature::{KeyPair, PqdsaKeyPair, UnparsedPublicKey, ML_DSA_44, ML_DSA_44_SIGNING};
+//!
+//! fn main() -> Result<(), aws_lc_rs::error::Unspecified> {
+//!     let signing_alg = &ML_DSA_44_SIGNING;
+//!     let key_pair = PqdsaKeyPair::generate(signing_alg)?;
+//!
+//!     // Sign the message "hello, world".
+//!     const MESSAGE: &[u8] = b"hello, world";
+//!     let mut signature = vec![0; signing_alg.signature_len()];
+//!     let signature_len = key_pair.sign(MESSAGE, &mut signature)?;
+//!     assert_eq!(signature_len, signature.len());
+//!
+//!     // Verify the signature.
+//!     let public_key_bytes = key_pair.public_key().as_der()?;
+//!     let public_key = UnparsedPublicKey::new(&ML_DSA_44, public_key_bytes.as_ref());
+//!     public_key.verify(MESSAGE, &signature)?;
+//!
+//!     Ok(())
+//! }
+//! ```
+//!
 //! ## Signing and verifying with RSA (PKCS#1 1.5 padding)
 //!
 //! By default OpenSSL writes RSA public keys in `SubjectPublicKeyInfo` format,
@@ -258,14 +283,17 @@ pub use crate::ed25519::{
     Ed25519KeyPair, EdDSAParameters, PublicKey as Ed25519PublicKey, Seed as Ed25519Seed,
     ED25519_PUBLIC_KEY_LEN,
 };
+pub use crate::pqdsa::key_pair::{PqdsaKeyPair, PqdsaPrivateKey};
+pub use crate::pqdsa::signature::{
+    PqdsaSigningAlgorithm, PqdsaVerificationAlgorithm, PublicKey as PqdsaPublicKey,
+};
 
 use crate::digest::Digest;
 use crate::ec::encoding::parse_ec_public_key;
 use crate::ed25519::parse_ed25519_public_key;
 use crate::encoding::{AsDer, PublicKeyX509Der};
 use crate::error::{KeyRejected, Unspecified};
-#[cfg(all(feature = "unstable", not(feature = "fips")))]
-use crate::pqdsa::{parse_pqdsa_public_key, signature::PqdsaVerificationAlgorithm};
+use crate::pqdsa::{parse_pqdsa_public_key, AlgorithmID as PqdsaAlgorithmID};
 use crate::ptr::LcPtr;
 use crate::rsa::key::parse_rsa_public_key;
 use crate::{digest, ec, error, hex, rsa, sealed};
@@ -672,20 +700,14 @@ pub(crate) fn parse_public_key(
             unsafe { &*(algorithm as *const dyn VerificationAlgorithm).cast::<RsaParameters>() };
         parsed_algorithm = rsa_alg;
         parse_rsa_public_key(bytes)?
+    } else if algorithm.type_id() == TypeId::of::<PqdsaVerificationAlgorithm>() {
+        #[allow(clippy::cast_ptr_alignment)]
+        let pqdsa_alg = unsafe {
+            &*(algorithm as *const dyn VerificationAlgorithm).cast::<PqdsaVerificationAlgorithm>()
+        };
+        parsed_algorithm = pqdsa_alg;
+        parse_pqdsa_public_key(bytes, pqdsa_alg.id)?
     } else {
-        #[cfg(all(feature = "unstable", not(feature = "fips")))]
-        if algorithm.type_id() == TypeId::of::<PqdsaVerificationAlgorithm>() {
-            #[allow(clippy::cast_ptr_alignment)]
-            let pqdsa_alg = unsafe {
-                &*(algorithm as *const dyn VerificationAlgorithm)
-                    .cast::<PqdsaVerificationAlgorithm>()
-            };
-            parsed_algorithm = pqdsa_alg;
-            parse_pqdsa_public_key(bytes, pqdsa_alg.id)?
-        } else {
-            unreachable!()
-        }
-        #[cfg(any(not(feature = "unstable"), feature = "fips"))]
         unreachable!()
     };
 
@@ -1110,6 +1132,30 @@ pub const ECDSA_P256K1_SHA3_256_ASN1_SIGNING: EcdsaSigningAlgorithm =
 
 /// Verification of Ed25519 signatures.
 pub const ED25519: EdDSAParameters = EdDSAParameters {};
+
+/// Verification of ML-DSA-44 signatures.
+pub const ML_DSA_44: PqdsaVerificationAlgorithm = PqdsaVerificationAlgorithm {
+    id: &PqdsaAlgorithmID::ML_DSA_44,
+};
+
+/// Verification of ML-DSA-65 signatures.
+pub const ML_DSA_65: PqdsaVerificationAlgorithm = PqdsaVerificationAlgorithm {
+    id: &PqdsaAlgorithmID::ML_DSA_65,
+};
+
+/// Verification of ML-DSA-87 signatures.
+pub const ML_DSA_87: PqdsaVerificationAlgorithm = PqdsaVerificationAlgorithm {
+    id: &PqdsaAlgorithmID::ML_DSA_87,
+};
+
+/// Signing using ML-DSA-44.
+pub const ML_DSA_44_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_44);
+
+/// Signing using ML-DSA-65.
+pub const ML_DSA_65_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_65);
+
+/// Signing using ML-DSA-87.
+pub const ML_DSA_87_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_87);
 
 #[cfg(test)]
 mod tests {

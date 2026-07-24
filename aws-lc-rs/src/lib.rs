@@ -281,7 +281,6 @@ pub mod iv;
 pub mod kdf;
 #[allow(clippy::module_name_repetitions)]
 pub mod kem;
-#[cfg(all(feature = "unstable", not(feature = "fips")))]
 mod pqdsa;
 mod ptr;
 pub mod rsa;
