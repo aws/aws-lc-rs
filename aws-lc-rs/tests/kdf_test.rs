@@ -1,8 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-#![cfg(all(feature = "unstable", not(feature = "fips")))]
-
 use std::error::Error;
 
 use aws_lc_rs::kdf::{

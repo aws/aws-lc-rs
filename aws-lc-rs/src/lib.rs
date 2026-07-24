@@ -56,7 +56,7 @@
 //! accredited lab and has been submitted to NIST for certification. This will continue to be the
 //! case as we periodically submit new versions of the AWS-LC-FIPS module to NIST for certification.
 //! Currently, aws-lc-fips-sys binds to
-//! [AWS-LC-FIPS 3.0.x](https://github.com/aws/aws-lc/tree/fips-2024-09-27).
+//! [AWS-LC-FIPS 4.x](https://github.com/aws/aws-lc/tree/fips-2025-09-12-lts).
 //!
 //! Consult with your local FIPS compliance team to determine the version of AWS-LC-FIPS module that you require. Consumers
 //! needing to remain on a previous version of the AWS-LC-FIPS module should pin to specific versions of aws-lc-rs to avoid
@@ -67,7 +67,8 @@
 //! | AWS-LC-FIPS module | aws-lc-rs |
 //! |--------------------|-----------|
 //! | 2.0.x              | \<1.12.0  |
-//! | 3.0.x              | *latest*  |
+//! | 3.0.x              | \<1.18.0  |
+//! | 4.x                | *latest*  |
 //!
 //! Refer to the
 //! [NIST Cryptographic Module Validation Program's Modules In Progress List](https://csrc.nist.gov/Projects/cryptographic-module-validation-program/modules-in-process/Modules-In-Process-List)
@@ -378,15 +379,6 @@ pub fn fips_cpu_jitter_entropy() {
 /// Return an error if the underlying implementation is not using CPU jitter entropy, otherwise Ok.
 pub fn try_fips_cpu_jitter_entropy() -> Result<(), &'static str> {
     init();
-    // TODO: Delete once FIPS_is_entropy_cpu_jitter() available on FIPS branch
-    // https://github.com/aws/aws-lc/pull/2088
-    #[cfg(feature = "fips")]
-    if aws_lc::CFG_CPU_JITTER_ENTROPY() {
-        Ok(())
-    } else {
-        Err("FIPS CPU Jitter Entropy not enabled!")
-    }
-    #[cfg(not(feature = "fips"))]
     match unsafe { aws_lc::FIPS_is_entropy_cpu_jitter() } {
         1 => Ok(()),
         _ => Err("FIPS CPU Jitter Entropy not enabled!"),
@@ -476,7 +468,7 @@ mod tests {
     #[cfg(feature = "fips")]
     #[test]
     fn test_fips_version() {
-        // Module versions are monotonic across FIPS branches; the pinned branch is 3.
-        assert!(crate::fips_version().unwrap() >= 3);
+        // Module versions are monotonic across FIPS branches; the pinned branch is 4.
+        assert!(crate::fips_version().unwrap() >= 4);
     }
 }
