@@ -87,10 +87,13 @@ impl ParsedVerificationAlgorithm for PqdsaVerificationAlgorithm {
         _digest: &Digest,
         _signature: &[u8],
     ) -> Result<(), Unspecified> {
-        // ML-DSA does not support digest-then-verify. Verifying a signature over
-        // externally hashed input is not an operation defined by FIPS 204: "pure"
-        // ML-DSA signs the message itself, and the pre-hash variant (HashML-DSA)
-        // uses a distinct domain separator that this API does not implement.
+        // This API cannot be used with ML-DSA, because a `Digest` cannot represent the
+        // input that ML-DSA's digest-then-verify flow ("external mu") requires. That flow
+        // verifies against the 64-byte message representative
+        // mu = SHAKE256(SHAKE256(public_key) || 0x00 || len(ctx) || ctx || message),
+        // which is a key-dependent XOF output rather than a fixed-output hash of the
+        // message alone. Previously this path verified the digest bytes as if they were
+        // a pure ML-DSA message, which is not a construction defined by FIPS 204.
         Err(Unspecified)
     }
 }
@@ -133,7 +136,9 @@ impl VerificationAlgorithm for PqdsaVerificationAlgorithm {
     }
 
     /// DO NOT USE. This function is required by `VerificationAlgorithm` but cannot be used
-    /// with ML-DSA. See `parsed_verify_digest_sig` for why digest-then-verify is unsupported.
+    /// with ML-DSA: a `Digest` cannot represent `mu`, the key-dependent "message
+    /// representative" that ML-DSA's digest-then-verify flow ("external mu") operates on.
+    /// See `parsed_verify_digest_sig` for details.
     ///
     /// # Errors
     /// Always returns `Unspecified`.

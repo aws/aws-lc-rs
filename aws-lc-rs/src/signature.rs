@@ -101,7 +101,9 @@
 //!
 //! The signature is the raw ML-DSA signature encoding described in [FIPS 204].
 //! Signing and verification use the "pure" ML-DSA mode with an empty context
-//! string; the pre-hash (HashML-DSA) mode is not supported.
+//! string. The pre-hash (HashML-DSA) mode is not supported, and neither is the
+//! "external mu" variant, in which the message representative `mu` is computed
+//! separately and signed or verified in place of the message.
 //!
 //! The public key may be provided either as the raw public key bytes or as a
 //! DER-encoded X.509 `SubjectPublicKeyInfo` structure; both encodings are
