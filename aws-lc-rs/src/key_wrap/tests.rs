@@ -654,7 +654,7 @@ macro_rules! wrap_with_padding_input_output_invalid_test {
 // Input length == 0
 wrap_with_padding_input_output_invalid_test!(wrap_with_padding_input_len_zero, 0, 16);
 
-// Output length is not sufficent for required padding
+// Output length is not sufficient for required padding
 // In this example an input length of 6 would require 2 additional bytes of padding, plus the additional
 // 8 bytes from the wrapping algorithm (So minimum of 16 bytes).
 wrap_with_padding_input_output_invalid_test!(wrap_with_padding_output_len_too_small, 6, 15);
