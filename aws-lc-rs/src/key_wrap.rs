@@ -42,6 +42,7 @@ use crate::sealed::Sealed;
 use core::fmt::Debug;
 use core::mem::MaybeUninit;
 use core::ptr::null;
+use zeroize::Zeroize;
 
 mod tests;
 
@@ -405,6 +406,12 @@ impl KeyWrapPadded for KeyEncryptionKey<AesBlockCipher> {
         }
 
         Ok(&mut output[..out_len])
+    }
+}
+
+impl<Cipher: BlockCipher> Drop for KeyEncryptionKey<Cipher> {
+    fn drop(&mut self) {
+        self.key.zeroize();
     }
 }
 
