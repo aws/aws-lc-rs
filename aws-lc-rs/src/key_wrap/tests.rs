@@ -627,6 +627,11 @@ macro_rules! unwrap_input_output_invalid_test {
 // Input length < 24
 unwrap_input_output_invalid_test!(unwrap_input_len_smaller_than_min, 16, 16);
 
+// Input length < 8: previously caused `ciphertext.len() - 8` to underflow, panicking
+// (instead of returning Err) when built with `overflow-checks = true`.
+unwrap_input_output_invalid_test!(unwrap_input_len_zero, 0, 64);
+unwrap_input_output_invalid_test!(unwrap_input_len_less_than_eight, 7, 64);
+
 // Input length % 8 != 0
 unwrap_input_output_invalid_test!(unwrap_input_len_not_multiple_of_eight, 31, 31);
 

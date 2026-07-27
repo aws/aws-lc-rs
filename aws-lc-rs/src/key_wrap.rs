@@ -267,7 +267,7 @@ impl KeyWrap for KeyEncryptionKey<AesBlockCipher> {
         ciphertext: &[u8],
         output: &'output mut [u8],
     ) -> Result<&'output mut [u8], Unspecified> {
-        if output.len() < ciphertext.len() - 8 {
+        if ciphertext.len() < 8 || output.len() < ciphertext.len() - 8 {
             return Err(Unspecified);
         }
 
