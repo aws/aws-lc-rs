@@ -6,6 +6,11 @@
 //! Everything in this module is a deprecated alias for its stable counterpart in
 //! [`crate::signature`]. Aliases are used rather than re-exports so that usage
 //! produces deprecation warnings; type identity is unchanged.
+//!
+//! During stabilization, `PqdsaKeyPair::to_pkcs8` was renamed to
+//! [`crate::signature::PqdsaKeyPair::to_pkcs8v1`]. A deprecated `to_pkcs8` alias
+//! remains available while the `unstable` feature is enabled; it will be removed
+//! along with this module in a future release.
 
 use crate::signature;
 

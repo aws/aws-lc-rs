@@ -183,7 +183,7 @@ fn test_mldsa_seed_serialization_roundtrip() {
         let kp = PqdsaKeyPair::from_seed(signing_alg, &seed).unwrap();
 
         // PKCS#8 round-trip
-        let pkcs8 = kp.to_pkcs8().expect("to_pkcs8 should succeed");
+        let pkcs8 = kp.to_pkcs8v1().expect("to_pkcs8v1 should succeed");
         let kp_pkcs8 = PqdsaKeyPair::from_pkcs8(signing_alg, pkcs8.as_ref())
             .expect("from_pkcs8 should reconstruct the key");
         assert_eq!(

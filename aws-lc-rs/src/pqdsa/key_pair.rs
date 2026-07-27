@@ -44,10 +44,16 @@ impl KeyPair for PqdsaKeyPair {
 /// A PQDSA private key.
 pub struct PqdsaPrivateKey<'a>(pub(crate) &'a PqdsaKeyPair);
 
+impl Debug for PqdsaPrivateKey<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("PqdsaPrivateKey({:?})", self.0.algorithm.0.id))
+    }
+}
+
 impl AsDer<Pkcs8V1Der<'static>> for PqdsaPrivateKey<'_> {
     /// Serializes the key to PKCS#8 v1 DER.
     ///
-    /// See [`PqdsaKeyPair::to_pkcs8`] for the chosen representation of the private key.
+    /// See [`PqdsaKeyPair::to_pkcs8v1`] for the chosen representation of the private key.
     ///
     /// # Errors
     /// Returns `Unspecified` if serialization fails.
@@ -76,7 +82,10 @@ impl PqdsaKeyPair {
     /// Generates a new PQDSA key pair for the specified algorithm.
     ///
     /// # Errors
-    /// Returns `Unspecified` is the key generation fails.
+    /// Returns `Unspecified` if the key generation fails.
+    //
+    // # FIPS
+    // Approved for all supported algorithms: ML-DSA-44, ML-DSA-65, ML-DSA-87.
     pub fn generate(algorithm: &'static PqdsaSigningAlgorithm) -> Result<Self, Unspecified> {
         let evp_pkey = evp_key_pqdsa_generate(algorithm.0.id.nid())?;
         let pubkey = PublicKey::from_private_evp_pkey(&evp_pkey)?;
@@ -147,10 +156,10 @@ impl PqdsaKeyPair {
     ///
     /// The seed should be produced from random entropy such as through [`crate::rand::fill`].
     /// However, for users requiring FIPS, the seed must be produced from
-    /// [`Self::generate`]. The [`Self::to_pkcs8`] method serializes the private key in seed form.
+    /// [`Self::generate`]. The [`Self::to_pkcs8v1`] method serializes the private key in seed form.
     /// AWS-LC keeps the seed in the internal representation when possible, but if [`PqdsaKeyPair`]
     /// is constructed from the expanded form (via [`Self::from_raw_private_key`]) the seed cannot
-    /// be obtained and [`Self::to_pkcs8`] will fail.
+    /// be obtained and [`Self::to_pkcs8v1`] will fail.
     ///
     /// This method expands the seed into the full private key internally. The expanded private key
     /// can be retrieved via [`Self::private_key`] and serialized via
@@ -197,7 +206,7 @@ impl PqdsaKeyPair {
     ///
     /// # Errors
     /// Returns `Unspecified` if serialization fails.
-    pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
+    pub fn to_pkcs8v1(&self) -> Result<Document, Unspecified> {
         Ok(Document::new(
             self.evp_pkey
                 .as_const()
@@ -205,11 +214,28 @@ impl PqdsaKeyPair {
         ))
     }
 
-    /// Uses this key to sign the message provided. The signature is written to the `signature`
-    /// slice provided. It returns the length of the signature on success.
+    /// Deprecated alias for [`Self::to_pkcs8v1`].
+    ///
+    /// This method predates the stabilization of the ML-DSA API and is retained for
+    /// consumers of the `unstable` feature; it will be removed in a future release.
     ///
     /// # Errors
-    /// Returns `Unspecified` if signing fails.
+    /// Returns `Unspecified` if serialization fails.
+    #[cfg(feature = "unstable")]
+    #[deprecated(note = "use `PqdsaKeyPair::to_pkcs8v1`")]
+    pub fn to_pkcs8(&self) -> Result<Document, Unspecified> {
+        self.to_pkcs8v1()
+    }
+
+    /// Uses this key to sign the message provided. The signature is written to the `signature`
+    /// slice provided, which must be at least [`PqdsaSigningAlgorithm::signature_len`] bytes
+    /// long. It returns the length of the signature on success.
+    ///
+    /// # Errors
+    /// Returns `Unspecified` if `signature` is too small or if signing fails.
+    //
+    // # FIPS
+    // Approved for all supported algorithms: ML-DSA-44, ML-DSA-65, ML-DSA-87.
     pub fn sign(&self, msg: &[u8], signature: &mut [u8]) -> Result<usize, Unspecified> {
         let sig_length = self.algorithm.signature_len();
         if signature.len() < sig_length {
@@ -326,7 +352,7 @@ mod tests {
                 .verify(message, original_signature.as_ref())
                 .unwrap();
 
-            let pkcs8_1 = keypair.to_pkcs8().unwrap();
+            let pkcs8_1 = keypair.to_pkcs8v1().unwrap();
             let pkcs8_2 = keypair.private_key().as_der().unwrap();
             let raw = keypair.private_key().as_raw_bytes().unwrap();
 
@@ -347,9 +373,11 @@ mod tests {
             assert_eq!(kp.algorithm(), alg);
             // Verify key works for signing
             let msg = b"seed test";
-            let mut sig = vec![0; alg.signature_len()];
+            let mut sig = vec![0u8; alg.signature_len()];
             let sig_len = kp.sign(msg, &mut sig).unwrap();
             assert_eq!(sig_len, alg.signature_len());
+            let public_key = UnparsedPublicKey::new(alg.0, kp.public_key().as_ref());
+            public_key.verify(msg, &sig).unwrap();
         }
     }
 
@@ -408,7 +436,7 @@ mod tests {
         for &alg in TEST_ALGORITHMS {
             let seed = [77u8; 32];
             let kp = PqdsaKeyPair::from_seed(alg, &seed).unwrap();
-            let pkcs8 = kp.to_pkcs8().unwrap();
+            let pkcs8 = kp.to_pkcs8v1().unwrap();
             let kp2 = PqdsaKeyPair::from_pkcs8(alg, pkcs8.as_ref()).unwrap();
             assert_eq!(kp.public_key().as_ref(), kp2.public_key().as_ref());
         }
@@ -444,14 +472,14 @@ mod tests {
         }
     }
 
-    // `to_pkcs8` documents that it prefers serializing just the seed. When a key
+    // `to_pkcs8v1` documents that it prefers serializing just the seed. When a key
     // pair is created from a seed, the PKCS#8 output must therefore be the compact
     // seed encoding, which is dramatically smaller than the expanded private key.
     #[test]
     fn test_from_seed_pkcs8_is_seed_form() {
         for &alg in TEST_ALGORITHMS {
             let kp = PqdsaKeyPair::from_seed(alg, &[3u8; 32]).unwrap();
-            let pkcs8 = kp.to_pkcs8().unwrap();
+            let pkcs8 = kp.to_pkcs8v1().unwrap();
             let raw_expanded = kp.private_key().as_raw_bytes().unwrap();
             // The seed-form PKCS#8 wraps only the 32-byte seed (plus ASN.1
             // framing), so it is far smaller than the expanded private key.
@@ -472,7 +500,7 @@ mod tests {
     // `from_seed` documents that if a `PqdsaKeyPair` is constructed from the
     // expanded form the seed cannot be obtained. AWS-LC's PKCS#8 encoding only
     // emits the seed, so a key pair with no seed available cannot be serialized to
-    // PKCS#8 at all -- `to_pkcs8` returns an error rather than falling back to the
+    // PKCS#8 at all -- `to_pkcs8v1` returns an error rather than falling back to the
     // expanded encoding.
     #[test]
     fn test_expanded_key_pkcs8_unavailable() {
@@ -487,22 +515,22 @@ mod tests {
             assert!(expanded_kp.private_key().as_raw_bytes().is_ok());
             // ...but the seed is gone, so PKCS#8 serialization is unavailable.
             assert!(
-                expanded_kp.to_pkcs8().is_err(),
+                expanded_kp.to_pkcs8v1().is_err(),
                 "expanded-only key unexpectedly serialized to PKCS#8",
             );
         }
     }
 
-    // `from_pkcs8` documents that it accepts the seed encoding, and `to_pkcs8`
+    // `from_pkcs8` documents that it accepts the seed encoding, and `to_pkcs8v1`
     // documents that it prefers the seed. A seed -> PKCS#8 -> key pair -> PKCS#8
     // round-trip must therefore preserve the seed form byte-for-byte.
     #[test]
     fn test_from_seed_pkcs8_roundtrip_preserves_seed_form() {
         for &alg in TEST_ALGORITHMS {
             let kp = PqdsaKeyPair::from_seed(alg, &[8u8; 32]).unwrap();
-            let pkcs8 = kp.to_pkcs8().unwrap();
+            let pkcs8 = kp.to_pkcs8v1().unwrap();
             let reparsed = PqdsaKeyPair::from_pkcs8(alg, pkcs8.as_ref()).unwrap();
-            let pkcs8_again = reparsed.to_pkcs8().unwrap();
+            let pkcs8_again = reparsed.to_pkcs8v1().unwrap();
             // Seed is retained through parsing, so re-serialization is identical.
             assert_eq!(pkcs8.as_ref(), pkcs8_again.as_ref());
             // And the reconstructed key pair is the same key.
@@ -511,13 +539,13 @@ mod tests {
     }
 
     // `PqdsaPrivateKey::as_der` documents that it uses the representation chosen by
-    // `to_pkcs8`. For a seed-derived key that representation is the seed form, so
-    // `as_der` and `to_pkcs8` must agree.
+    // `to_pkcs8v1`. For a seed-derived key that representation is the seed form, so
+    // `as_der` and `to_pkcs8v1` must agree.
     #[test]
-    fn test_from_seed_as_der_matches_to_pkcs8() {
+    fn test_from_seed_as_der_matches_to_pkcs8v1() {
         for &alg in TEST_ALGORITHMS {
             let kp = PqdsaKeyPair::from_seed(alg, &[11u8; 32]).unwrap();
-            let pkcs8 = kp.to_pkcs8().unwrap();
+            let pkcs8 = kp.to_pkcs8v1().unwrap();
             let der = kp.private_key().as_der().unwrap();
             assert_eq!(pkcs8.as_ref(), der.as_ref());
         }
@@ -532,7 +560,34 @@ mod tests {
         }
     }
 
-    // Additional test for the algorithm getter
+    #[test]
+    fn test_algorithm_lengths() {
+        for (alg, signature_len, public_key_len) in [
+            (&ML_DSA_44_SIGNING, 2420, 1312),
+            (&ML_DSA_65_SIGNING, 3309, 1952),
+            (&ML_DSA_87_SIGNING, 4627, 2592),
+        ] {
+            assert_eq!(alg.signature_len(), signature_len);
+            assert_eq!(alg.public_key_len(), public_key_len);
+            assert_eq!(alg.seed_len(), 32);
+        }
+    }
+
+    // The deprecated `to_pkcs8` alias is retained for consumers of the `unstable`
+    // feature; it must produce the same encoding as `to_pkcs8v1`.
+    #[cfg(feature = "unstable")]
+    #[allow(deprecated)]
+    #[test]
+    fn test_to_pkcs8_deprecated_alias() {
+        for &alg in TEST_ALGORITHMS {
+            let kp = PqdsaKeyPair::from_seed(alg, &[9u8; 32]).unwrap();
+            assert_eq!(
+                kp.to_pkcs8().unwrap().as_ref(),
+                kp.to_pkcs8v1().unwrap().as_ref()
+            );
+        }
+    }
+
     #[test]
     fn test_debug() {
         for &alg in TEST_ALGORITHMS {
@@ -545,6 +600,11 @@ mod tests {
             assert!(
                 format!("{pubkey:?}").starts_with("PqdsaPublicKey("),
                 "{pubkey:?}"
+            );
+            let privkey = keypair.private_key();
+            assert!(
+                format!("{privkey:?}").starts_with("PqdsaPrivateKey("),
+                "{privkey:?}"
             );
         }
     }

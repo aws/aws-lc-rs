@@ -105,6 +105,19 @@
 //! signature using the secure random number generator passed to `sign()`.
 //!
 //!
+//! ## `ML_DSA_*` Details: ML-DSA (FIPS 204) Signatures
+//!
+//! The signature is the raw ML-DSA signature encoding described in [FIPS 204].
+//! Signing and verification use the "pure" ML-DSA mode with an empty context
+//! string. The pre-hash (HashML-DSA) mode is not supported, and neither is the
+//! "external mu" variant, in which the message representative `mu` is computed
+//! separately and signed or verified in place of the message.
+//!
+//! The public key may be provided either as the raw public key bytes or as a
+//! DER-encoded X.509 `SubjectPublicKeyInfo` structure; both encodings are
+//! accepted by `UnparsedPublicKey` and `ParsedPublicKey`.
+//!
+//!
 //! [SEC 1: Elliptic Curve Cryptography, Version 2.0]:
 //!     http://www.secg.org/sec1-v2.pdf
 //! [NIST Special Publication 800-56A, revision 2]:
@@ -119,6 +132,8 @@
 //!     https://tools.ietf.org/html/rfc3447#section-8.1
 //! [RFC 3447 Appendix-A.1.1]:
 //!     https://tools.ietf.org/html/rfc3447#appendix-A.1.1
+//! [FIPS 204]:
+//!     https://csrc.nist.gov/pubs/fips/204/final
 //!
 //!
 //! # Examples
@@ -1164,6 +1179,9 @@ pub const ML_DSA_65_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_D
 
 /// Signing using ML-DSA-87.
 pub const ML_DSA_87_SIGNING: PqdsaSigningAlgorithm = PqdsaSigningAlgorithm(&ML_DSA_87);
+
+#[cfg(test)]
+mod parsed_public_key_tests;
 
 #[cfg(test)]
 mod tests {
