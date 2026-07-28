@@ -250,7 +250,7 @@ use crate::aws_lc::{
     EVP_des_cbc, EVP_des_ecb, EVP_des_ede, EVP_des_ede3_cbc, EVP_des_ede3_ecb, EVP_des_ede_cbc,
 };
 use crate::buffer::Buffer;
-use crate::error::{KeyRejected, Unspecified};
+use crate::error::{ErrorDetail, KeyRejected, Unspecified};
 use crate::hkdf;
 use crate::hkdf::KeyType;
 #[cfg(feature = "legacy-des")]
@@ -424,6 +424,9 @@ macro_rules! define_cipher_context {
             None,
         }
 
+        // NOTE: `type Error` here is public API, so it must stay `Unspecified`.
+        // Switching it to `ErrorDetail` would be a breaking change for anyone
+        // who names this associated type or annotates the error explicitly.
         impl<'a> TryFrom<&'a $name> for &'a [u8] {
             type Error = Unspecified;
 
@@ -664,7 +667,7 @@ impl Algorithm {
     fn new_encryption_context(
         &self,
         mode: OperatingMode,
-    ) -> Result<EncryptionContext, Unspecified> {
+    ) -> Result<EncryptionContext, ErrorDetail> {
         match self.id {
             // TODO: Hopefully support CFB1, and CFB8
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
@@ -680,7 +683,9 @@ impl Algorithm {
             | AlgorithmId::DesEde3ForLegacyUseOnly => match mode {
                 OperatingMode::CBC => Ok(EncryptionContext::Iv64(FixedLength::new()?)),
                 OperatingMode::ECB => Ok(EncryptionContext::None),
-                _ => Err(Unspecified),
+                _ => Err(ErrorDetail::invalid_input(
+                    "algorithm does not support operating mode",
+                )),
             },
         }
     }
@@ -794,8 +799,15 @@ impl UnboundCipherKey {
     ///
     /// * [`Unspecified`] if `key_bytes.len()` does not match the length required by `algorithm`.
     pub fn new(algorithm: &'static Algorithm, key_bytes: &[u8]) -> Result<Self, Unspecified> {
+        Self::new_internal(algorithm, key_bytes).map_err(Unspecified::from)
+    }
+
+    pub(crate) fn new_internal(
+        algorithm: &'static Algorithm,
+        key_bytes: &[u8],
+    ) -> Result<Self, ErrorDetail> {
         if key_bytes.len() != algorithm.key_len {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input("cipher key length"));
         }
         let key_bytes = Buffer::new(key_bytes.to_vec());
         Ok(UnboundCipherKey {
@@ -890,7 +902,7 @@ impl EncryptingKey {
     ///   support CTR mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ctr(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CTR)
+        Self::new(key, OperatingMode::CTR).map_err(Unspecified::from)
     }
 
     /// Constructs an `EncryptingKey` operating in cipher feedback 128-bit mode (CFB128) using the provided key.
@@ -906,7 +918,7 @@ impl EncryptingKey {
     ///   support CFB128 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CFB128)
+        Self::new(key, OperatingMode::CFB128).map_err(Unspecified::from)
     }
 
     /// Constructs an `EncryptingKey` operating in cipher block chaining (CBC) mode using the provided key.
@@ -932,7 +944,7 @@ impl EncryptingKey {
     ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
     ///   for 3TDEA).
     pub fn cbc(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CBC)
+        Self::new(key, OperatingMode::CBC).map_err(Unspecified::from)
     }
 
     /// Constructs an `EncryptingKey` operating in electronic code book mode (ECB) using the provided key.
@@ -958,14 +970,16 @@ impl EncryptingKey {
     ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
     ///   for 3TDEA).
     pub fn ecb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::ECB)
+        Self::new(key, OperatingMode::ECB).map_err(Unspecified::from)
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn new(key: UnboundCipherKey, mode: OperatingMode) -> Result<Self, Unspecified> {
+    fn new(key: UnboundCipherKey, mode: OperatingMode) -> Result<Self, ErrorDetail> {
         let algorithm = key.algorithm();
         if !algorithm.supports_mode(mode) {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input(
+                "algorithm does not support operating mode",
+            ));
         }
         let key = key.try_into()?;
         Ok(Self {
@@ -998,8 +1012,12 @@ impl EncryptingKey {
     /// * [`Unspecified`]: Returned if cipher mode requires input to be a multiple of the block length,
     ///   and `in_out.len()` is not. Otherwise, returned if encryption fails.
     pub fn encrypt(&self, in_out: &mut [u8]) -> Result<DecryptionContext, Unspecified> {
+        self.encrypt_internal(in_out).map_err(Unspecified::from)
+    }
+
+    fn encrypt_internal(&self, in_out: &mut [u8]) -> Result<DecryptionContext, ErrorDetail> {
         let context = self.algorithm.new_encryption_context(self.mode)?;
-        self.less_safe_encrypt(in_out, context)
+        self.less_safe_encrypt_internal(in_out, context)
     }
 
     /// Encrypts the data provided in `in_out` in-place using the provided `EncryptionContext`.
@@ -1018,11 +1036,20 @@ impl EncryptingKey {
         in_out: &mut [u8],
         context: EncryptionContext,
     ) -> Result<DecryptionContext, Unspecified> {
+        self.less_safe_encrypt_internal(in_out, context)
+            .map_err(Unspecified::from)
+    }
+
+    fn less_safe_encrypt_internal(
+        &self,
+        in_out: &mut [u8],
+        context: EncryptionContext,
+    ) -> Result<DecryptionContext, ErrorDetail> {
         if !self
             .algorithm()
             .is_valid_encryption_context(self.mode, &context)
         {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input("encryption context"));
         }
         encrypt(self.algorithm(), &self.key, self.mode, in_out, context)
     }
@@ -1058,7 +1085,7 @@ impl DecryptingKey {
     ///   support CTR mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ctr(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
-        Self::new(key, OperatingMode::CTR)
+        Self::new(key, OperatingMode::CTR).map_err(Unspecified::from)
     }
 
     /// Constructs a cipher decrypting key operating in cipher feedback 128-bit mode (CFB128) using the provided key and context.
@@ -1074,7 +1101,7 @@ impl DecryptingKey {
     ///   support CFB128 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
     ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CFB128)
+        Self::new(key, OperatingMode::CFB128).map_err(Unspecified::from)
     }
 
     /// Constructs an `DecryptingKey` operating in cipher block chaining (CBC) mode using the provided key and context.
@@ -1100,7 +1127,7 @@ impl DecryptingKey {
     ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
     ///   for 3TDEA).
     pub fn cbc(key: UnboundCipherKey) -> Result<DecryptingKey, Unspecified> {
-        Self::new(key, OperatingMode::CBC)
+        Self::new(key, OperatingMode::CBC).map_err(Unspecified::from)
     }
 
     /// Constructs an `DecryptingKey` operating in electronic code book (ECB) mode using the provided key.
@@ -1126,14 +1153,16 @@ impl DecryptingKey {
     ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
     ///   for 3TDEA).
     pub fn ecb(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::ECB)
+        Self::new(key, OperatingMode::ECB).map_err(Unspecified::from)
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn new(key: UnboundCipherKey, mode: OperatingMode) -> Result<Self, Unspecified> {
+    fn new(key: UnboundCipherKey, mode: OperatingMode) -> Result<Self, ErrorDetail> {
         let algorithm = key.algorithm();
         if !algorithm.supports_mode(mode) {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input(
+                "algorithm does not support operating mode",
+            ));
         }
         let key = key.try_into()?;
         Ok(Self {
@@ -1169,6 +1198,15 @@ impl DecryptingKey {
         in_out: &'in_out mut [u8],
         context: DecryptionContext,
     ) -> Result<&'in_out mut [u8], Unspecified> {
+        self.decrypt_internal(in_out, context)
+            .map_err(Unspecified::from)
+    }
+
+    pub(crate) fn decrypt_internal<'in_out>(
+        &self,
+        in_out: &'in_out mut [u8],
+        context: DecryptionContext,
+    ) -> Result<&'in_out mut [u8], ErrorDetail> {
         decrypt(self.algorithm, &self.key, self.mode, in_out, context)
     }
 }
@@ -1188,17 +1226,19 @@ fn encrypt(
     mode: OperatingMode,
     in_out: &mut [u8],
     context: EncryptionContext,
-) -> Result<DecryptionContext, Unspecified> {
+) -> Result<DecryptionContext, ErrorDetail> {
     let block_len = algorithm.block_len();
 
     match mode {
         OperatingMode::CBC | OperatingMode::ECB if in_out.len() % block_len != 0 => {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input(
+                "input length is not a multiple of the block length",
+            ));
         }
         _ => {}
     }
 
-    match mode {
+    let result = match mode {
         OperatingMode::CBC => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::encrypt_cbc_mode(key, context, in_out)
@@ -1244,7 +1284,11 @@ fn encrypt(
             | AlgorithmId::DesEdeForLegacyUseOnly
             | AlgorithmId::DesEde3ForLegacyUseOnly => des::encrypt_ecb_mode(key, context, in_out),
         },
-    }
+    };
+
+    // The per-mode implementations still return `Unspecified`; widen once here
+    // rather than at every match arm.
+    result.map_err(ErrorDetail::from)
 }
 
 fn decrypt<'in_out>(
@@ -1253,17 +1297,19 @@ fn decrypt<'in_out>(
     mode: OperatingMode,
     in_out: &'in_out mut [u8],
     context: DecryptionContext,
-) -> Result<&'in_out mut [u8], Unspecified> {
+) -> Result<&'in_out mut [u8], ErrorDetail> {
     let block_len = algorithm.block_len();
 
     match mode {
         OperatingMode::CBC | OperatingMode::ECB if in_out.len() % block_len != 0 => {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input(
+                "input length is not a multiple of the block length",
+            ));
         }
         _ => {}
     }
 
-    match mode {
+    let result = match mode {
         OperatingMode::CBC => match algorithm.id() {
             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
                 aes::decrypt_cbc_mode(key, context, in_out)
@@ -1309,12 +1355,47 @@ fn decrypt<'in_out>(
             | AlgorithmId::DesEdeForLegacyUseOnly
             | AlgorithmId::DesEde3ForLegacyUseOnly => des::decrypt_ecb_mode(key, context, in_out),
         },
-    }
+    };
+
+    // See the comment in `encrypt`.
+    result.map_err(ErrorDetail::from)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::ErrorKind;
+
+    // The two mistakes cipher callers actually make: a wrong key length and an
+    // input that is not block-aligned. Both are now distinguishable from an
+    // internal failure.
+    #[test]
+    fn error_detail_classification() {
+        let err = UnboundCipherKey::new_internal(&AES_128, &[0u8; 15])
+            .err()
+            .unwrap();
+        assert_eq!(ErrorKind::InvalidInput, err.kind());
+        assert_eq!("cipher key length", err.context());
+
+        // CBC requires block-aligned input.
+        let key = UnboundCipherKey::new(&AES_128, &[0u8; 16]).unwrap();
+        let dkey = DecryptingKey::cbc(key).unwrap();
+        let mut not_aligned = [0u8; 17];
+        let context = DecryptionContext::Iv128(FixedLength::from([0u8; 16]));
+        let err = dkey
+            .decrypt_internal(&mut not_aligned, context)
+            .err()
+            .unwrap();
+        assert_eq!(ErrorKind::InvalidInput, err.kind());
+        assert_eq!(
+            "input length is not a multiple of the block length",
+            err.context()
+        );
+
+        // Guard against over-eager rejection: a supported mode must still work.
+        let key = UnboundCipherKey::new(&AES_128, &[0u8; 16]).unwrap();
+        assert!(EncryptingKey::new(key, OperatingMode::CBC).is_ok());
+    }
     use crate::test::from_hex;
 
     #[cfg(feature = "fips")]

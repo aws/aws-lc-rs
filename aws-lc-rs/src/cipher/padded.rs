@@ -6,7 +6,7 @@ use crate::cipher::{
     Algorithm, DecryptionContext, EncryptionContext, OperatingMode, UnboundCipherKey,
     MAX_CIPHER_BLOCK_LEN,
 };
-use crate::error::Unspecified;
+use crate::error::{ErrorDetail, Unspecified};
 use core::fmt::Debug;
 
 /// The cipher block padding strategy.
@@ -20,7 +20,7 @@ pub(crate) enum PaddingStrategy {
 }
 
 impl PaddingStrategy {
-    fn add_padding<InOut>(self, block_len: usize, in_out: &mut InOut) -> Result<(), Unspecified>
+    fn add_padding<InOut>(self, block_len: usize, in_out: &mut InOut) -> Result<(), ErrorDetail>
     where
         InOut: AsMut<[u8]> + for<'in_out> Extend<&'in_out u8>,
     {
@@ -33,7 +33,9 @@ impl PaddingStrategy {
                 // This implements PKCS#7 padding scheme, used by aws-lc if we were using EVP_CIPHER API's
                 let remainder = in_out_len % block_len;
                 let padding_size = block_len - remainder;
-                let v: u8 = padding_size.try_into().map_err(|_| Unspecified)?;
+                let v: u8 = padding_size
+                    .try_into()
+                    .map_err(|_| ErrorDetail::invalid_input("padding size"))?;
                 padding_buffer.fill(v);
                 // Possible heap allocation here :(
                 in_out.extend(padding_buffer[0..padding_size].iter());
@@ -42,15 +44,21 @@ impl PaddingStrategy {
         Ok(())
     }
 
-    fn remove_padding(self, block_len: usize, in_out: &mut [u8]) -> Result<&mut [u8], Unspecified> {
+    fn remove_padding(self, block_len: usize, in_out: &mut [u8]) -> Result<&mut [u8], ErrorDetail> {
+        // The input length is chosen by the caller and is not secret, so
+        // reporting it reveals nothing they do not already know.
         if in_out.is_empty() || in_out.len() < block_len {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input("ciphertext length"));
         }
+        // Every check below inspects *decrypted* bytes. Distinguishing them
+        // would turn this into a padding oracle (Vaudenay), so they all report
+        // the contextless `VerificationFailed` and are indistinguishable from
+        // each other and from a padding failure detected inside AWS-LC.
         match self {
             PaddingStrategy::ISO10126 => {
                 let padding: u8 = in_out[in_out.len() - 1];
                 if padding == 0 || padding as usize > block_len {
-                    return Err(Unspecified);
+                    return Err(ErrorDetail::verification_failed());
                 }
 
                 // ISO 10126 padding is a random padding scheme, so we cannot verify the padding bytes
@@ -58,16 +66,18 @@ impl PaddingStrategy {
                 Ok(&mut in_out[0..final_len])
             }
             PaddingStrategy::PKCS7 => {
-                let block_size: u8 = block_len.try_into().map_err(|_| Unspecified)?;
+                let block_size: u8 = block_len
+                    .try_into()
+                    .map_err(|_| ErrorDetail::invalid_input("block length"))?;
 
                 let padding: u8 = in_out[in_out.len() - 1];
                 if padding == 0 || padding > block_size {
-                    return Err(Unspecified);
+                    return Err(ErrorDetail::verification_failed());
                 }
 
                 for item in in_out.iter().skip(in_out.len() - padding as usize) {
                     if *item != padding {
-                        return Err(Unspecified);
+                        return Err(ErrorDetail::verification_failed());
                     }
                 }
 
@@ -104,7 +114,7 @@ impl PaddedBlockEncryptingKey {
     ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
     ///   for 3TDEA).
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
+        Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7).map_err(Unspecified::from)
     }
 
     /// Constructs a new `PaddedBlockEncryptingKey` cipher with electronic code book (ECB) mode.
@@ -123,17 +133,19 @@ impl PaddedBlockEncryptingKey {
     ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
     ///   for 3TDEA).
     pub fn ecb_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7)
+        Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7).map_err(Unspecified::from)
     }
 
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
         padding: PaddingStrategy,
-    ) -> Result<PaddedBlockEncryptingKey, Unspecified> {
+    ) -> Result<PaddedBlockEncryptingKey, ErrorDetail> {
         let algorithm = key.algorithm();
         if !algorithm.supports_mode(mode) {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input(
+                "algorithm does not support operating mode",
+            ));
         }
         let key = key.try_into()?;
         Ok(Self {
@@ -165,8 +177,15 @@ impl PaddedBlockEncryptingKey {
     where
         InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
     {
+        self.encrypt_internal(in_out).map_err(Unspecified::from)
+    }
+
+    fn encrypt_internal<InOut>(&self, in_out: &mut InOut) -> Result<DecryptionContext, ErrorDetail>
+    where
+        InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
+    {
         let context = self.algorithm.new_encryption_context(self.mode)?;
-        self.less_safe_encrypt(in_out, context)
+        self.less_safe_encrypt_internal(in_out, context)
     }
 
     /// Pads and encrypts data provided in `in_out` in-place.
@@ -182,11 +201,23 @@ impl PaddedBlockEncryptingKey {
     where
         InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
     {
+        self.less_safe_encrypt_internal(in_out, context)
+            .map_err(Unspecified::from)
+    }
+
+    fn less_safe_encrypt_internal<InOut>(
+        &self,
+        in_out: &mut InOut,
+        context: EncryptionContext,
+    ) -> Result<DecryptionContext, ErrorDetail>
+    where
+        InOut: AsMut<[u8]> + for<'a> Extend<&'a u8>,
+    {
         if !self
             .algorithm()
             .is_valid_encryption_context(self.mode, &context)
         {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input("encryption context"));
         }
 
         self.padding
@@ -237,7 +268,7 @@ impl PaddedBlockDecryptingKey {
     ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
     ///   for 3TDEA).
     pub fn cbc_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7)
+        Self::new(key, OperatingMode::CBC, PaddingStrategy::PKCS7).map_err(Unspecified::from)
     }
 
     /// Constructs a new `PaddedBlockDecryptingKey` cipher with chaining block cipher (CBC) mode.
@@ -260,7 +291,7 @@ impl PaddedBlockDecryptingKey {
     ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
     ///   for 3TDEA).
     pub fn cbc_iso10126(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CBC, PaddingStrategy::ISO10126)
+        Self::new(key, OperatingMode::CBC, PaddingStrategy::ISO10126).map_err(Unspecified::from)
     }
 
     /// Constructs a new `PaddedBlockDecryptingKey` cipher with electronic code book (ECB) mode.
@@ -284,17 +315,19 @@ impl PaddedBlockDecryptingKey {
     ///   configuration (e.g. `K1 == K2` for 2TDEA, or any pairwise equality
     ///   for 3TDEA).
     pub fn ecb_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7)
+        Self::new(key, OperatingMode::ECB, PaddingStrategy::PKCS7).map_err(Unspecified::from)
     }
 
     fn new(
         key: UnboundCipherKey,
         mode: OperatingMode,
         padding: PaddingStrategy,
-    ) -> Result<PaddedBlockDecryptingKey, Unspecified> {
+    ) -> Result<PaddedBlockDecryptingKey, ErrorDetail> {
         let algorithm = key.algorithm();
         if !algorithm.supports_mode(mode) {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input(
+                "algorithm does not support operating mode",
+            ));
         }
         let key = key.try_into()?;
         Ok(PaddedBlockDecryptingKey {
@@ -327,11 +360,20 @@ impl PaddedBlockDecryptingKey {
         in_out: &'in_out mut [u8],
         context: DecryptionContext,
     ) -> Result<&'in_out mut [u8], Unspecified> {
+        self.decrypt_internal(in_out, context)
+            .map_err(Unspecified::from)
+    }
+
+    fn decrypt_internal<'in_out>(
+        &self,
+        in_out: &'in_out mut [u8],
+        context: DecryptionContext,
+    ) -> Result<&'in_out mut [u8], ErrorDetail> {
         if !self
             .algorithm()
             .is_valid_decryption_context(self.mode, &context)
         {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input("decryption context"));
         }
 
         let block_len = self.algorithm().block_len();
@@ -359,8 +401,70 @@ mod tests {
         Algorithm, EncryptionContext, OperatingMode, PaddedBlockDecryptingKey,
         PaddedBlockEncryptingKey, UnboundCipherKey, AES_128, AES_256,
     };
+    use crate::error::ErrorKind;
     use crate::iv::FixedLength;
     use crate::test::from_hex;
+
+    // A padding oracle is created by letting the caller tell *why* unpadding
+    // failed. Every rejection that inspects decrypted bytes must therefore be
+    // byte-for-byte identical. The length precondition is deliberately NOT
+    // included: the input length is chosen by the caller and is not secret.
+    #[test]
+    fn remove_padding_failures_are_indistinguishable() {
+        const BLOCK: usize = 16;
+
+        let zero_padding_byte = {
+            let mut buf = [0u8; BLOCK];
+            buf[BLOCK - 1] = 0;
+            buf
+        };
+        let padding_byte_too_large = {
+            let mut buf = [0u8; BLOCK];
+            buf[BLOCK - 1] = u8::try_from(BLOCK + 1).unwrap();
+            buf
+        };
+        let inconsistent_padding_bytes = {
+            let mut buf = [0u8; BLOCK];
+            buf[BLOCK - 1] = 3;
+            buf[BLOCK - 2] = 3;
+            buf[BLOCK - 3] = 7; // should also be 3
+            buf
+        };
+
+        let mut errors = Vec::new();
+        for case in [
+            &zero_padding_byte,
+            &padding_byte_too_large,
+            &inconsistent_padding_bytes,
+        ] {
+            let mut buf = *case;
+            let err = PaddingStrategy::PKCS7
+                .remove_padding(BLOCK, &mut buf)
+                .expect_err("padding should be rejected");
+            assert_eq!(ErrorKind::VerificationFailed, err.kind());
+            assert_eq!("", err.context(), "no context may leak which check failed");
+            errors.push(err);
+        }
+        assert_eq!(errors[0], errors[1]);
+        assert_eq!(errors[1], errors[2]);
+
+        // ISO 10126 rejections must be identical to the PKCS#7 ones too.
+        let mut buf = zero_padding_byte;
+        let iso = PaddingStrategy::ISO10126
+            .remove_padding(BLOCK, &mut buf)
+            .err()
+            .unwrap();
+        assert_eq!(errors[0], iso);
+
+        // The public (non-secret) length precondition is allowed to be precise.
+        let mut short = [0u8; BLOCK - 1];
+        let err = PaddingStrategy::PKCS7
+            .remove_padding(BLOCK, &mut short)
+            .err()
+            .unwrap();
+        assert_eq!(ErrorKind::InvalidInput, err.kind());
+        assert_ne!(errors[0], err);
+    }
 
     fn helper_test_padded_cipher_n_bytes(
         key: &[u8],

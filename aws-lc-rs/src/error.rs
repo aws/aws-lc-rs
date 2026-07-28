@@ -223,6 +223,15 @@ impl From<TryFromIntError> for KeyRejected {
     }
 }
 
+// Length and size casts (`usize` <-> `c_int`) are pervasive in the cipher and
+// MAC paths; a failure means the caller supplied a length the C API cannot
+// represent.
+impl From<TryFromIntError> for ErrorDetail {
+    fn from(_: TryFromIntError) -> Self {
+        ErrorDetail::invalid_input("length exceeds platform integer range")
+    }
+}
+
 impl From<Unspecified> for KeyRejected {
     fn from(_: Unspecified) -> Self {
         Self::unspecified()
@@ -248,12 +257,21 @@ pub(crate) enum ErrorKind {
     /// value outside the range the algorithm accepts.
     InvalidInput,
 
+    /// A caller-supplied output buffer was too small, and `required` is the
+    /// minimum length that would have worked.
+    ///
+    /// `required` is always derived from public algorithm parameters (block
+    /// length, tag length), never from secret data.
+    BufferTooSmall { required: usize },
+
     /// A key, signature, or other structure could not be parsed or serialized.
     Encoding,
 
-    /// Authentication or signature verification failed.
+    /// Authentication, signature, or padding verification failed.
     ///
-    /// Intentionally opaque: no sub-category is ever recorded for this kind.
+    /// Intentionally opaque: no sub-category and no context are ever recorded
+    /// for this kind, so two verification failures are indistinguishable. See
+    /// [`ErrorDetail::verification_failed`].
     VerificationFailed,
 
     /// AWS-LC could not allocate memory.
@@ -274,6 +292,7 @@ impl ErrorKind {
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             ErrorKind::InvalidInput => "InvalidInput",
+            ErrorKind::BufferTooSmall { .. } => "BufferTooSmall",
             ErrorKind::Encoding => "Encoding",
             ErrorKind::VerificationFailed => "VerificationFailed",
             ErrorKind::AllocationFailed => "AllocationFailed",
@@ -285,7 +304,12 @@ impl ErrorKind {
 
 impl core::fmt::Display for ErrorKind {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        f.write_str(self.as_str())
+        match self {
+            ErrorKind::BufferTooSmall { required } => {
+                write!(f, "BufferTooSmall(required={required})")
+            }
+            _ => f.write_str(self.as_str()),
+        }
     }
 }
 
@@ -333,19 +357,26 @@ impl ErrorDetail {
         Self::new(ErrorKind::InvalidInput, context)
     }
 
+    /// A caller-supplied output buffer was too small to hold the result.
+    pub(crate) const fn buffer_too_small(context: &'static str, required: usize) -> Self {
+        Self::new(ErrorKind::BufferTooSmall { required }, context)
+    }
+
     /// A structure could not be parsed or serialized.
     pub(crate) const fn encoding(context: &'static str) -> Self {
         Self::new(ErrorKind::Encoding, context)
     }
 
-    /// Authentication or signature verification failed.
-    //
-    // Not yet used: the verification paths in `evp_pkey.rs` still return
-    // `Unspecified` directly, and converting them ripples into ~9 tail-position
-    // call sites. Exercised by tests so the opaqueness invariant is pinned.
-    #[cfg_attr(not(test), allow(dead_code))]
-    pub(crate) const fn verification_failed(context: &'static str) -> Self {
-        Self::new(ErrorKind::VerificationFailed, context)
+    /// Authentication, signature, or padding verification failed.
+    ///
+    /// Deliberately takes no `context`, unlike every other constructor here.
+    /// A context string would let callers distinguish *which* check failed, and
+    /// for unauthenticated block-cipher decryption that is a padding oracle: it
+    /// would separate "the PKCS#7 padding bytes were wrong" from "the ciphertext
+    /// length was wrong". Every verification failure in the crate is therefore
+    /// byte-for-byte identical.
+    pub(crate) const fn verification_failed() -> Self {
+        Self::new(ErrorKind::VerificationFailed, "")
     }
 
     /// AWS-LC could not allocate memory.
@@ -367,9 +398,9 @@ impl ErrorDetail {
 impl core::fmt::Display for ErrorDetail {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         if self.context().is_empty() {
-            f.write_str(self.kind().as_str())
+            write!(f, "{}", self.kind())
         } else {
-            write!(f, "{} ({})", self.kind().as_str(), self.context())
+            write!(f, "{} ({})", self.kind(), self.context())
         }
     }
 }
@@ -387,6 +418,7 @@ impl From<ErrorDetail> for KeyRejected {
         match detail.kind() {
             ErrorKind::Encoding => KeyRejected::invalid_encoding(),
             ErrorKind::InvalidInput
+            | ErrorKind::BufferTooSmall { .. }
             | ErrorKind::AllocationFailed
             | ErrorKind::Library
             | ErrorKind::VerificationFailed => KeyRejected::unexpected_error(),
@@ -402,6 +434,14 @@ impl From<ErrorDetail> for KeyRejected {
 impl From<Unspecified> for ErrorDetail {
     fn from(_: Unspecified) -> Self {
         ErrorDetail::unspecified()
+    }
+}
+
+// Lossless, unlike the conversion above: `KeyRejected` already carries a
+// `&'static str` reason, so it becomes the context verbatim.
+impl From<KeyRejected> for ErrorDetail {
+    fn from(rejected: KeyRejected) -> Self {
+        ErrorDetail::invalid_input(rejected.description_())
     }
 }
 
@@ -486,14 +526,36 @@ mod tests {
     }
 
     #[test]
-    fn error_detail_verification_failure_is_opaque() {
-        // Verification failures must not be distinguishable from one another.
-        let aead = ErrorDetail::verification_failed("EVP_AEAD_CTX_open");
-        let rsa = ErrorDetail::verification_failed("EVP_AEAD_CTX_open");
-        assert_eq!(aead, rsa);
-        assert_eq!(ErrorKind::VerificationFailed, aead.kind());
+    fn error_detail_buffer_too_small() {
+        let detail = ErrorDetail::buffer_too_small("CMAC tag", 16);
+        assert_eq!(ErrorKind::BufferTooSmall { required: 16 }, detail.kind());
+        assert_eq!(
+            "BufferTooSmall(required=16) (CMAC tag)",
+            format!("{detail}")
+        );
+        // The required length distinguishes buffers, which is the point.
+        assert_ne!(detail, ErrorDetail::buffer_too_small("CMAC tag", 32));
+    }
 
-        // ... and they must not leak a sub-category through the public type.
-        assert_eq!(super::Unspecified, super::Unspecified::from(aead));
+    #[test]
+    fn error_detail_verification_failure_is_opaque() {
+        // Every verification failure must be byte-for-byte identical, whatever
+        // produced it: a CMAC tag mismatch, an AEAD tag mismatch, and a PKCS#7
+        // padding rejection must not be distinguishable. `verification_failed`
+        // takes no context precisely so this cannot be violated by a caller.
+        let cmac_tag = ErrorDetail::verification_failed();
+        let aead_tag = ErrorDetail::verification_failed();
+        let bad_padding = ErrorDetail::verification_failed();
+
+        assert_eq!(cmac_tag, aead_tag);
+        assert_eq!(aead_tag, bad_padding);
+        assert_eq!(ErrorKind::VerificationFailed, bad_padding.kind());
+
+        // No context can leak which check failed.
+        assert_eq!("", bad_padding.context());
+        assert_eq!("VerificationFailed", format!("{bad_padding}"));
+
+        // ... and nothing leaks through the public type either.
+        assert_eq!(super::Unspecified, super::Unspecified::from(bad_padding));
     }
 }

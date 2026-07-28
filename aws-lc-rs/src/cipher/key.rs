@@ -11,7 +11,7 @@ use crate::cipher::des::{DesKey, DES_EDE3_KEY_LEN, DES_EDE_KEY_LEN, DES_KEY_LEN}
 use crate::cipher::{AES_128_KEY_LEN, AES_192_KEY_LEN, AES_256_KEY_LEN};
 #[cfg(feature = "legacy-des")]
 use crate::constant_time;
-use crate::error::{KeyRejected, Unspecified};
+use crate::error::{ErrorDetail, KeyRejected};
 use core::mem::{size_of, MaybeUninit};
 use core::ptr::copy_nonoverlapping;
 // TODO: Uncomment when MSRV >= 1.64
@@ -88,7 +88,7 @@ impl Drop for SymmetricCipherKey {
 }
 
 impl SymmetricCipherKey {
-    fn aes(key_bytes: &[u8]) -> Result<(AES_KEY, AES_KEY), Unspecified> {
+    fn aes(key_bytes: &[u8]) -> Result<(AES_KEY, AES_KEY), ErrorDetail> {
         let mut enc_key = MaybeUninit::<AES_KEY>::uninit();
         let mut dec_key = MaybeUninit::<AES_KEY>::uninit();
         #[allow(clippy::cast_possible_truncation)]
@@ -99,7 +99,7 @@ impl SymmetricCipherKey {
                 enc_key.as_mut_ptr(),
             )
         } {
-            return Err(Unspecified);
+            return Err(ErrorDetail::library("AES_set_encrypt_key"));
         }
 
         #[allow(clippy::cast_possible_truncation)]
@@ -110,7 +110,7 @@ impl SymmetricCipherKey {
                 dec_key.as_mut_ptr(),
             )
         } {
-            return Err(Unspecified);
+            return Err(ErrorDetail::library("AES_set_decrypt_key"));
         }
         unsafe { Ok((enc_key.assume_init(), dec_key.assume_init())) }
     }

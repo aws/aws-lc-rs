@@ -9,7 +9,7 @@ use crate::aws_lc::{
 use crate::cipher::{
     Algorithm, DecryptionContext, EncryptionContext, OperatingMode, UnboundCipherKey,
 };
-use crate::error::Unspecified;
+use crate::error::{ErrorDetail, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::LcPtr;
 use std::ptr::{null, null_mut};
@@ -66,7 +66,7 @@ fn evp_encrypt_init(
     cipher: &ConstPointer<EVP_CIPHER>,
     key: &[u8],
     iv: Option<&[u8]>,
-) -> Result<(), Unspecified> {
+) -> Result<(), ErrorDetail> {
     let iv_ptr: *const u8 = if let Some(iv) = iv {
         iv.as_ptr()
     } else {
@@ -83,7 +83,7 @@ fn evp_encrypt_init(
             iv_ptr,
         )
     } {
-        return Err(Unspecified);
+        return Err(ErrorDetail::library("EVP_EncryptInit_ex"));
     }
 
     Ok(())
@@ -94,7 +94,7 @@ fn evp_decrypt_init(
     cipher: &ConstPointer<EVP_CIPHER>,
     key: &[u8],
     iv: Option<&[u8]>,
-) -> Result<(), Unspecified> {
+) -> Result<(), ErrorDetail> {
     let iv_ptr: *const u8 = if let Some(iv) = iv {
         iv.as_ptr()
     } else {
@@ -111,7 +111,7 @@ fn evp_decrypt_init(
             iv_ptr,
         )
     } {
-        return Err(Unspecified);
+        return Err(ErrorDetail::library("EVP_DecryptInit_ex"));
     }
 
     Ok(())
@@ -123,10 +123,12 @@ impl StreamingEncryptingKey {
         key: UnboundCipherKey,
         mode: OperatingMode,
         context: EncryptionContext,
-    ) -> Result<Self, Unspecified> {
+    ) -> Result<Self, ErrorDetail> {
         let algorithm = key.algorithm();
         if !algorithm.supports_mode(mode) {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input(
+                "algorithm does not support operating mode",
+            ));
         }
         // The streaming path passes raw key bytes to the EVP API rather than
         // going through `SymmetricCipherKey` construction.  Validate
@@ -139,7 +141,7 @@ impl StreamingEncryptingKey {
         if key_bytes.len()
             != <usize>::try_from(unsafe { EVP_CIPHER_key_length(cipher.as_const_ptr()) }).unwrap()
         {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input("cipher key length"));
         }
 
         match &context {
@@ -181,9 +183,9 @@ impl StreamingEncryptingKey {
         input: &[u8],
         output: &'a mut [u8],
         min_outsize: usize,
-    ) -> Result<BufferUpdate<'a>, Unspecified> {
+    ) -> Result<BufferUpdate<'a>, ErrorDetail> {
         if output.len() < min_outsize {
-            return Err(Unspecified);
+            return Err(ErrorDetail::buffer_too_small("cipher output", min_outsize));
         }
         let mut outlen: i32 = 0;
         let inlen: i32 = input.len().try_into()?;
@@ -197,7 +199,7 @@ impl StreamingEncryptingKey {
                 inlen,
             )
         } {
-            return Err(Unspecified);
+            return Err(ErrorDetail::library("EVP_EncryptUpdate"));
         }
         let outlen: usize = outlen.try_into()?;
         debug_assert!(outlen <= min_outsize);
@@ -229,6 +231,7 @@ impl StreamingEncryptingKey {
             .checked_sub(1)
             .ok_or(Unspecified)?;
         self.update_internal(input, output, min_outsize)
+            .map_err(Unspecified::from)
     }
 
     /// Updates the internal state of the key with the provided plaintext `input`,
@@ -269,6 +272,7 @@ impl StreamingEncryptingKey {
             .checked_add(extra_buffer_size)
             .ok_or(Unspecified)?;
         self.update_internal(input, output, min_outsize)
+            .map_err(Unspecified::from)
     }
 
     /// Finishes the encryption operation, writing any remaining ciphertext to
@@ -281,11 +285,19 @@ impl StreamingEncryptingKey {
     /// * Returns an error if the `output` buffer is smaller than the algorithm's
     ///   block length.
     pub fn finish(
-        mut self,
+        self,
         output: &mut [u8],
     ) -> Result<(DecryptionContext, BufferUpdate<'_>), Unspecified> {
-        if output.len() < self.algorithm().block_len() {
-            return Err(Unspecified);
+        self.finish_internal(output).map_err(Unspecified::from)
+    }
+
+    fn finish_internal(
+        mut self,
+        output: &mut [u8],
+    ) -> Result<(DecryptionContext, BufferUpdate<'_>), ErrorDetail> {
+        let required = self.algorithm().block_len();
+        if output.len() < required {
+            return Err(ErrorDetail::buffer_too_small("cipher output", required));
         }
         let mut outlen: i32 = 0;
 
@@ -296,7 +308,7 @@ impl StreamingEncryptingKey {
                 &mut outlen,
             )
         }) {
-            return Err(Unspecified);
+            return Err(ErrorDetail::library("EVP_EncryptFinal_ex"));
         }
         let outlen: usize = outlen.try_into()?;
         debug_assert!(outlen <= self.algorithm().block_len());
@@ -343,7 +355,7 @@ impl StreamingEncryptingKey {
         key: UnboundCipherKey,
         context: EncryptionContext,
     ) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CTR, context)
+        Self::new(key, OperatingMode::CTR, context).map_err(Unspecified::from)
     }
 
     /// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
@@ -394,7 +406,7 @@ impl StreamingEncryptingKey {
     /// or any pairwise equality for 3TDEA).
     pub fn ecb_pkcs7(key: UnboundCipherKey) -> Result<Self, Unspecified> {
         let context = key.algorithm().new_encryption_context(OperatingMode::ECB)?;
-        Self::new(key, OperatingMode::ECB, context)
+        Self::new(key, OperatingMode::ECB, context).map_err(Unspecified::from)
     }
 
     /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
@@ -412,7 +424,7 @@ impl StreamingEncryptingKey {
         key: UnboundCipherKey,
         context: EncryptionContext,
     ) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CFB128, context)
+        Self::new(key, OperatingMode::CFB128, context).map_err(Unspecified::from)
     }
 
     /// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
@@ -434,7 +446,7 @@ impl StreamingEncryptingKey {
         key: UnboundCipherKey,
         context: EncryptionContext,
     ) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CBC, context)
+        Self::new(key, OperatingMode::CBC, context).map_err(Unspecified::from)
     }
 }
 
@@ -454,10 +466,12 @@ impl StreamingDecryptingKey {
         key: UnboundCipherKey,
         mode: OperatingMode,
         context: DecryptionContext,
-    ) -> Result<Self, Unspecified> {
+    ) -> Result<Self, ErrorDetail> {
         let algorithm = key.algorithm();
         if !algorithm.supports_mode(mode) {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input(
+                "algorithm does not support operating mode",
+            ));
         }
         // See comment in `StreamingEncryptingKey::new`.
         key.validate_key_material()?;
@@ -467,7 +481,7 @@ impl StreamingDecryptingKey {
         if key_bytes.len()
             != <usize>::try_from(unsafe { EVP_CIPHER_key_length(cipher.as_const_ptr()) }).unwrap()
         {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input("cipher key length"));
         }
 
         match &context {
@@ -508,9 +522,9 @@ impl StreamingDecryptingKey {
         input: &[u8],
         output: &'a mut [u8],
         min_outsize: usize,
-    ) -> Result<BufferUpdate<'a>, Unspecified> {
+    ) -> Result<BufferUpdate<'a>, ErrorDetail> {
         if output.len() < min_outsize {
-            return Err(Unspecified);
+            return Err(ErrorDetail::buffer_too_small("cipher output", min_outsize));
         }
         let mut outlen: i32 = 0;
         let inlen: i32 = input.len().try_into()?;
@@ -524,7 +538,7 @@ impl StreamingDecryptingKey {
                 inlen,
             )
         } {
-            return Err(Unspecified);
+            return Err(ErrorDetail::library("EVP_DecryptUpdate"));
         }
         let outlen: usize = outlen.try_into()?;
         debug_assert!(outlen <= min_outsize);
@@ -556,6 +570,7 @@ impl StreamingDecryptingKey {
             .checked_sub(1)
             .ok_or(Unspecified)?;
         self.update_internal(input, output, min_outsize)
+            .map_err(Unspecified::from)
     }
 
     /// Updates the internal state of the key with the provided ciphertext `input`,
@@ -596,6 +611,7 @@ impl StreamingDecryptingKey {
             .checked_add(extra_buffer_size)
             .ok_or(Unspecified)?;
         self.update_internal(input, output, min_outsize)
+            .map_err(Unspecified::from)
     }
 
     /// Finishes the decryption operation, writing the remaining plaintext to
@@ -606,9 +622,14 @@ impl StreamingDecryptingKey {
     /// # Errors
     /// * Returns an error if the `output` buffer is smaller than the algorithm's
     ///   block length.
-    pub fn finish(mut self, output: &mut [u8]) -> Result<BufferUpdate<'_>, Unspecified> {
-        if output.len() < self.algorithm().block_len() {
-            return Err(Unspecified);
+    pub fn finish(self, output: &mut [u8]) -> Result<BufferUpdate<'_>, Unspecified> {
+        self.finish_internal(output).map_err(Unspecified::from)
+    }
+
+    fn finish_internal(mut self, output: &mut [u8]) -> Result<BufferUpdate<'_>, ErrorDetail> {
+        let required = self.algorithm().block_len();
+        if output.len() < required {
+            return Err(ErrorDetail::buffer_too_small("cipher output", required));
         }
         let mut outlen: i32 = 0;
 
@@ -619,7 +640,9 @@ impl StreamingDecryptingKey {
                 &mut outlen,
             )
         }) {
-            return Err(Unspecified);
+            // An authenticated-decryption-style failure: for CBC this is the
+            // padding check inside AWS-LC. Kept opaque deliberately.
+            return Err(ErrorDetail::verification_failed());
         }
         let outlen: usize = outlen.try_into()?;
         debug_assert!(outlen <= self.algorithm().block_len());
@@ -647,7 +670,7 @@ impl StreamingDecryptingKey {
     /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
     /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn ctr(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CTR, context)
+        Self::new(key, OperatingMode::CTR, context).map_err(Unspecified::from)
     }
 
     /// Constructs a `StreamingDecryptingKey` for decrypting using the CBC cipher mode.
@@ -664,7 +687,7 @@ impl StreamingDecryptingKey {
         key: UnboundCipherKey,
         context: DecryptionContext,
     ) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CBC, context)
+        Self::new(key, OperatingMode::CBC, context).map_err(Unspecified::from)
     }
 
     // Constructs a `StreamingDecryptingKey` for decrypting using the CFB128 cipher mode.
@@ -676,7 +699,7 @@ impl StreamingDecryptingKey {
     /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
     /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
     pub fn cfb128(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::CFB128, context)
+        Self::new(key, OperatingMode::CFB128, context).map_err(Unspecified::from)
     }
 
     /// Constructs a `StreamingDecryptingKey` for decrypting using the ECB cipher mode.
@@ -697,7 +720,7 @@ impl StreamingDecryptingKey {
         key: UnboundCipherKey,
         context: DecryptionContext,
     ) -> Result<Self, Unspecified> {
-        Self::new(key, OperatingMode::ECB, context)
+        Self::new(key, OperatingMode::ECB, context).map_err(Unspecified::from)
     }
 }
 

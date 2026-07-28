@@ -95,7 +95,7 @@ use crate::aws_lc::{
     CMAC_CTX_copy, CMAC_CTX_new, CMAC_Final, CMAC_Init, CMAC_Update, EVP_aes_128_cbc,
     EVP_aes_192_cbc, EVP_aes_256_cbc, EVP_des_ede3_cbc, CMAC_CTX, EVP_CIPHER,
 };
-use crate::error::Unspecified;
+use crate::error::{ErrorDetail, Unspecified};
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
 use crate::{constant_time, rand};
@@ -268,8 +268,12 @@ impl Key {
     /// `error::Unspecified` if the key length doesn't match the algorithm or if CMAC context
     /// initialization fails.
     pub fn new(algorithm: Algorithm, key_value: &[u8]) -> Result<Self, Unspecified> {
+        Self::new_internal(algorithm, key_value).map_err(Unspecified::from)
+    }
+
+    fn new_internal(algorithm: Algorithm, key_value: &[u8]) -> Result<Self, ErrorDetail> {
         if key_value.len() != algorithm.key_len() {
-            return Err(Unspecified);
+            return Err(ErrorDetail::invalid_input("CMAC key length"));
         }
 
         let mut ctx = LcPtr::new(unsafe { CMAC_CTX_new() })?;
@@ -283,7 +287,7 @@ impl Key {
                 cipher.as_const_ptr(),
                 null_mut(),
             ) {
-                return Err(Unspecified);
+                return Err(ErrorDetail::library("CMAC_Init"));
             }
         }
 
@@ -337,9 +341,13 @@ impl Context {
     /// # Errors
     /// `error::Unspecified` if the CMAC cannot be updated.
     pub fn update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
+        self.update_internal(data).map_err(Unspecified::from)
+    }
+
+    fn update_internal(&mut self, data: &[u8]) -> Result<(), ErrorDetail> {
         unsafe {
             if 1 != CMAC_Update(self.key.ctx.as_mut_ptr(), data.as_ptr(), data.len()) {
-                return Err(Unspecified);
+                return Err(ErrorDetail::library("CMAC_Update"));
             }
         }
         Ok(())
@@ -394,20 +402,24 @@ impl Context {
     // * `AES_256`
     #[inline]
     pub fn verify(mut self, tag: &[u8]) -> Result<(), Unspecified> {
-        let mut output = [0u8; MAX_CMAC_TAG_LEN];
-        let output_len = {
-            let result = internal_sign(&mut self, &mut output)?;
-            result.len()
-        };
+        self.verify_internal(tag).map_err(Unspecified::from)
+    }
 
+    fn verify_internal(&mut self, tag: &[u8]) -> Result<(), ErrorDetail> {
+        let mut output = [0u8; MAX_CMAC_TAG_LEN];
+        let output_len = internal_sign(self, &mut output)?.len();
+
+        // A tag mismatch and a tag length mismatch must be indistinguishable,
+        // so both collapse into the contextless `VerificationFailed`.
         constant_time::verify_slices_are_equal(&output[0..output_len], tag)
+            .map_err(|_| ErrorDetail::verification_failed())
     }
 }
 
 pub(crate) fn internal_sign<'in_out>(
     ctx: &mut Context,
     output: &'in_out mut [u8],
-) -> Result<&'in_out mut [u8], Unspecified> {
+) -> Result<&'in_out mut [u8], ErrorDetail> {
     let mut out_len = MaybeUninit::<usize>::uninit();
 
     if 1 != indicator_check!(unsafe {
@@ -417,7 +429,7 @@ pub(crate) fn internal_sign<'in_out>(
             out_len.as_mut_ptr(),
         )
     }) {
-        return Err(Unspecified);
+        return Err(ErrorDetail::library("CMAC_Final"));
     }
     let actual_len = unsafe { out_len.assume_init() };
 
@@ -427,7 +439,7 @@ pub(crate) fn internal_sign<'in_out>(
         "CMAC tag length {actual_len} exceeds maximum {MAX_CMAC_TAG_LEN}"
     );
     if actual_len != ctx.key.algorithm.tag_len() {
-        return Err(Unspecified);
+        return Err(ErrorDetail::library("CMAC_Final tag length"));
     }
 
     Ok(&mut output[0..actual_len])
@@ -479,12 +491,21 @@ pub fn sign_to_buffer<'out>(
     data: &[u8],
     output: &'out mut [u8],
 ) -> Result<&'out mut [u8], Unspecified> {
-    if output.len() < key.algorithm().tag_len() {
-        return Err(Unspecified);
+    internal_sign_to_buffer(key, data, output).map_err(Unspecified::from)
+}
+
+fn internal_sign_to_buffer<'out>(
+    key: &Key,
+    data: &[u8],
+    output: &'out mut [u8],
+) -> Result<&'out mut [u8], ErrorDetail> {
+    let required = key.algorithm().tag_len();
+    if output.len() < required {
+        return Err(ErrorDetail::buffer_too_small("CMAC tag", required));
     }
 
     let mut ctx = Context::with_key(key);
-    ctx.update(data)?;
+    ctx.update_internal(data)?;
 
     internal_sign(&mut ctx, output)
 }
@@ -503,21 +524,67 @@ pub fn sign_to_buffer<'out>(
 // * `AES_256`
 #[inline]
 pub fn verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), Unspecified> {
-    let mut output = [0u8; MAX_CMAC_TAG_LEN];
-    let output_len = {
-        let result = sign_to_buffer(key, data, &mut output)?;
-        result.len()
-    };
+    internal_verify(key, data, tag).map_err(Unspecified::from)
+}
 
+fn internal_verify(key: &Key, data: &[u8], tag: &[u8]) -> Result<(), ErrorDetail> {
+    let mut output = [0u8; MAX_CMAC_TAG_LEN];
+    let output_len = internal_sign_to_buffer(key, data, &mut output)?.len();
+
+    // As in `Context::verify_internal`, a tag mismatch must be opaque.
     constant_time::verify_slices_are_equal(&output[0..output_len], tag)
+        .map_err(|_| ErrorDetail::verification_failed())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::ErrorKind;
 
     #[cfg(feature = "fips")]
     mod fips;
+
+    // Pins the distinction the `Unspecified` return type cannot express: a
+    // wrong key length, an undersized output buffer, and a tag mismatch are
+    // three different problems for a caller to fix.
+    #[test]
+    fn error_detail_classification() {
+        let err = Key::new_internal(AES_128, &[0u8; 8]).err().unwrap();
+        assert_eq!(ErrorKind::InvalidInput, err.kind());
+        assert_eq!("CMAC key length", err.context());
+
+        let key = Key::new(AES_128, &[0u8; 16]).unwrap();
+
+        let mut too_small = [0u8; 4];
+        let err = internal_sign_to_buffer(&key, b"data", &mut too_small)
+            .err()
+            .unwrap();
+        assert_eq!(
+            ErrorKind::BufferTooSmall {
+                required: AES_128.tag_len()
+            },
+            err.kind()
+        );
+
+        // A buffer exactly the tag length is fine.
+        let mut exact = vec![0u8; AES_128.tag_len()];
+        let tag = internal_sign_to_buffer(&key, b"data", &mut exact)
+            .unwrap()
+            .to_vec();
+
+        // A tag mismatch is a verification failure, and carries no context.
+        let err = internal_verify(&key, b"data", &[0u8; 16]).err().unwrap();
+        assert_eq!(ErrorKind::VerificationFailed, err.kind());
+        assert_eq!("", err.context());
+
+        // A tag of the wrong *length* must be indistinguishable from a tag of
+        // the wrong *value*.
+        let short = internal_verify(&key, b"data", &tag[..8]).err().unwrap();
+        assert_eq!(err, short);
+
+        // And the correct tag still verifies.
+        assert!(internal_verify(&key, b"data", &tag).is_ok());
+    }
 
     #[test]
     fn cmac_basic_test() {
