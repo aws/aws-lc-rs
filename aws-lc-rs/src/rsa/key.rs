@@ -255,7 +255,7 @@ impl KeyPair {
             }
         });
 
-        let sig_bytes = self.evp_pkey.sign_digest(digest.as_ref(), padding_fn)?;
+        let sig_bytes = self.evp_pkey.sign_digest(digest.into(), padding_fn)?;
 
         signature.copy_from_slice(&sig_bytes);
         Ok(())

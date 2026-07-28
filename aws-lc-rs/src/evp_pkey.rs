@@ -15,13 +15,52 @@ use crate::aws_lc::{
 };
 use crate::cbb::LcCBB;
 use crate::digest::digest_ctx::DigestContext;
+use crate::digest::Digest;
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
+use crate::ml_dsa::ExternalMu;
 use crate::pkcs8::Version;
 use crate::ptr::{ConstPointer, LcPtr};
 use crate::{cbs, digest};
 use core::ffi::c_int;
 use std::ptr::{null, null_mut};
+
+/// Pre-hashed input to `EVP_PKEY_sign` / `EVP_PKEY_verify`.
+///
+/// Intentionally not constructible from an arbitrary `&[u8]`: it can only be built from a
+/// value whose length was validated against the algorithm that produced it -- a [`Digest`]
+/// or a [`crate::ml_dsa::ExternalMu`] -- so that invariant travels with the value.
+///
+/// That matters most for PQDSA keys. In `EVP_PKEY_sign`'s digest mode an ML-DSA key treats
+/// the input as `mu`, and the two AWS-LC pins disagree about who validates its length:
+/// aws-lc-sys rejects a wrong `message_len` at the EVP layer, but the aws-lc-fips-sys pin
+/// performs no such check and copies the caller-supplied length into a fixed 64-byte stack
+/// buffer (`ml_dsa_ref/sign.c`, both sign and verify paths). An over-long input there is a
+/// stack buffer overflow, so the length check must not be optional.
+#[derive(Clone, Copy)]
+pub(crate) struct PreHashedInput<'a>(&'a [u8]);
+
+impl PreHashedInput<'_> {
+    fn as_slice(&self) -> &[u8] {
+        self.0
+    }
+}
+
+impl<'a> From<&'a Digest> for PreHashedInput<'a> {
+    /// A `Digest`'s length is fixed by its `digest::Algorithm` at construction, including via
+    /// [`Digest::import_less_safe`].
+    fn from(digest: &'a Digest) -> Self {
+        Self(digest.as_ref())
+    }
+}
+
+impl<'a> From<&'a ExternalMu> for PreHashedInput<'a> {
+    /// An `ExternalMu`'s length is fixed by its ML-DSA algorithm at construction, including
+    /// via [`ExternalMu::import_less_safe`].
+    fn from(mu: &'a ExternalMu) -> Self {
+        Self(mu.as_ref())
+    }
+}
 
 impl PartialEq<Self> for LcPtr<EVP_PKEY> {
     /// Only compares params and public key
@@ -373,7 +412,7 @@ impl LcPtr<EVP_PKEY> {
 
     pub(crate) fn sign_digest<F>(
         &self,
-        digest: &[u8],
+        digest: PreHashedInput<'_>,
         padding_fn: Option<F>,
     ) -> Result<Box<[u8]>, Unspecified>
     where
@@ -389,7 +428,7 @@ impl LcPtr<EVP_PKEY> {
             pad_fn(pctx.as_mut_ptr())?;
         }
 
-        let msg_digest = digest;
+        let msg_digest = digest.as_slice();
         let mut sig_len = 0;
         if 1 != unsafe {
             EVP_PKEY_sign(
@@ -472,7 +511,7 @@ impl LcPtr<EVP_PKEY> {
 
     pub(crate) fn verify_digest_sig<F>(
         &self,
-        digest: &[u8],
+        digest: PreHashedInput<'_>,
         padding_fn: Option<F>,
         signature: &[u8],
     ) -> Result<(), Unspecified>
@@ -489,7 +528,7 @@ impl LcPtr<EVP_PKEY> {
             pad_fn(pctx.as_mut_ptr())?;
         }
 
-        let msg_digest = digest;
+        let msg_digest = digest.as_slice();
 
         if 1 == unsafe {
             indicator_check!(EVP_PKEY_verify(

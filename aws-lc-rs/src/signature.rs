@@ -28,6 +28,12 @@
 //! the caller the responsibility of ensuring the digest really is the hash of
 //! the intended message.
 //!
+//! ML-DSA does not participate in that flow, because what it signs is not a hash
+//! of the message alone: it is a key-dependent representative `mu` derived from
+//! both the public key and the message, so a [`Digest`] cannot express it. The
+//! equivalent for ML-DSA is the "external mu" variant in [`crate::ml_dsa`],
+//! which also supports deriving `mu` incrementally over a streamed message.
+//!
 //! This module is optimized for signing messages that are available in full,
 //! rather than streaming or incrementally-hashed large messages.
 //!
