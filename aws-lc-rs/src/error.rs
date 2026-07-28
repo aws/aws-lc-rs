@@ -229,10 +229,179 @@ impl From<Unspecified> for KeyRejected {
     }
 }
 
+/// The category of a failure captured internally by *aws-lc-rs*.
+///
+/// Categories are deliberately coarse. In particular, every authentication and
+/// signature verification failure collapses into [`ErrorKind::VerificationFailed`]
+/// with no further detail: distinguishing an AEAD tag mismatch from an RSA
+/// padding failure is a side channel and must not be observable by callers.
+///
+/// This type is internal for now. It is the foundation for reporting more detail
+/// than [`Unspecified`] can carry; exposing it on the existing public signatures
+/// requires a breaking change, because [`Unspecified`] is a unit struct that
+/// downstream code constructs (for example in `NonceSequence::advance`
+/// implementations) and matches on.
+#[non_exhaustive]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub(crate) enum ErrorKind {
+    /// A caller-supplied value was rejected: wrong length, empty slice, or a
+    /// value outside the range the algorithm accepts.
+    InvalidInput,
+
+    /// A key, signature, or other structure could not be parsed or serialized.
+    Encoding,
+
+    /// Authentication or signature verification failed.
+    ///
+    /// Intentionally opaque: no sub-category is ever recorded for this kind.
+    VerificationFailed,
+
+    /// AWS-LC could not allocate memory.
+    AllocationFailed,
+
+    /// An AWS-LC call failed for a reason we do not classify further.
+    Library,
+
+    /// No detail was captured at the point of failure.
+    Unspecified,
+}
+
+impl ErrorKind {
+    /// A short token naming this category.
+    ///
+    /// As with [`KeyRejected::description_`], these strings are diagnostic and
+    /// callers must not depend on their exact contents.
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            ErrorKind::InvalidInput => "InvalidInput",
+            ErrorKind::Encoding => "Encoding",
+            ErrorKind::VerificationFailed => "VerificationFailed",
+            ErrorKind::AllocationFailed => "AllocationFailed",
+            ErrorKind::Library => "Library",
+            ErrorKind::Unspecified => "Unspecified",
+        }
+    }
+}
+
+impl core::fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+/// A failure, together with the operation that produced it.
+///
+/// `ErrorDetail` is `Copy` and allocation-free: `context` is always a
+/// `&'static str`, normally the name of the AWS-LC function that failed. This
+/// mirrors how [`KeyRejected`] carries a `&'static str` rather than an owned
+/// `String`, so capturing detail cannot itself fail or allocate on an error
+/// path.
+///
+/// Detail is captured at the point of failure and converted to the appropriate
+/// public error type ([`Unspecified`] or [`KeyRejected`]) at the API boundary,
+/// so adding it does not change any public signature.
+//
+// TODO: also capture the AWS-LC error queue value (`ERR_get_error`) here. That
+// is only meaningful once we clear the queue at the start of each fallible
+// operation; today *aws-lc-rs* never calls `ERR_clear_error`, so the queue can
+// hold stale entries (including entries from other consumers of AWS-LC in the
+// same process) and would report the wrong cause.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ErrorDetail {
+    kind: ErrorKind,
+    context: &'static str,
+}
+
+#[allow(dead_code)]
+impl ErrorDetail {
+    /// Captures a failure of `kind` produced by `context`.
+    pub(crate) const fn new(kind: ErrorKind, context: &'static str) -> Self {
+        Self { kind, context }
+    }
+
+    /// The category of this failure.
+    pub(crate) const fn kind(self) -> ErrorKind {
+        self.kind
+    }
+
+    /// The operation that produced this failure.
+    pub(crate) const fn context(self) -> &'static str {
+        self.context
+    }
+
+    /// A caller-supplied value was rejected.
+    pub(crate) const fn invalid_input(context: &'static str) -> Self {
+        Self::new(ErrorKind::InvalidInput, context)
+    }
+
+    /// A structure could not be parsed or serialized.
+    pub(crate) const fn encoding(context: &'static str) -> Self {
+        Self::new(ErrorKind::Encoding, context)
+    }
+
+    /// Authentication or signature verification failed.
+    pub(crate) const fn verification_failed(context: &'static str) -> Self {
+        Self::new(ErrorKind::VerificationFailed, context)
+    }
+
+    /// AWS-LC could not allocate memory.
+    pub(crate) const fn allocation_failed(context: &'static str) -> Self {
+        Self::new(ErrorKind::AllocationFailed, context)
+    }
+
+    /// An AWS-LC call failed without further classification.
+    pub(crate) const fn library(context: &'static str) -> Self {
+        Self::new(ErrorKind::Library, context)
+    }
+
+    /// No detail was captured.
+    pub(crate) const fn unspecified() -> Self {
+        Self::new(ErrorKind::Unspecified, "")
+    }
+}
+
+impl core::fmt::Display for ErrorDetail {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        if self.context.is_empty() {
+            f.write_str(self.kind.as_str())
+        } else {
+            write!(f, "{} ({})", self.kind.as_str(), self.context)
+        }
+    }
+}
+
+impl Error for ErrorDetail {}
+
+impl From<ErrorDetail> for Unspecified {
+    fn from(_: ErrorDetail) -> Self {
+        Unspecified
+    }
+}
+
+impl From<ErrorDetail> for KeyRejected {
+    fn from(detail: ErrorDetail) -> Self {
+        match detail.kind() {
+            ErrorKind::Encoding => KeyRejected::invalid_encoding(),
+            ErrorKind::InvalidInput
+            | ErrorKind::AllocationFailed
+            | ErrorKind::Library
+            | ErrorKind::VerificationFailed => KeyRejected::unexpected_error(),
+            _ => KeyRejected::unspecified(),
+        }
+    }
+}
+
+// Lets code that still returns `Result<_, ()>` internally call functions that
+// now produce `ErrorDetail` via `?`. Every use of this conversion discards
+// detail, so it marks a path that has not been converted yet.
+impl From<ErrorDetail> for () {
+    fn from(_: ErrorDetail) -> Self {}
+}
+
 #[allow(deprecated, unused_imports)]
 #[cfg(test)]
 mod tests {
-    use crate::error::KeyRejected;
+    use crate::error::{ErrorDetail, ErrorKind, KeyRejected};
     use crate::test;
     use std::error::Error;
 
@@ -266,5 +435,58 @@ mod tests {
         assert_eq!("Unspecified", unspecified.description());
 
         test::compile_time_assert_std_error_error::<KeyRejected>();
+    }
+
+    #[test]
+    fn error_detail_display() {
+        let detail = ErrorDetail::library("EVP_PKEY_new");
+        assert_eq!(ErrorKind::Library, detail.kind());
+        assert_eq!("EVP_PKEY_new", detail.context());
+        assert_eq!("Library (EVP_PKEY_new)", format!("{detail}"));
+
+        // An unspecified detail carries no context and formats like `Unspecified`.
+        let detail = ErrorDetail::unspecified();
+        assert_eq!("Unspecified", format!("{detail}"));
+        assert_eq!("Unspecified", format!("{}", ErrorKind::Unspecified));
+    }
+
+    #[test]
+    fn error_detail_to_unspecified_is_lossy() {
+        // The public error type is unchanged, so all detail collapses.
+        let unspecified = super::Unspecified::from(ErrorDetail::invalid_input("nonce length"));
+        assert_eq!(super::Unspecified, unspecified);
+        assert_eq!("Unspecified", format!("{unspecified}"));
+    }
+
+    #[test]
+    fn error_detail_to_key_rejected() {
+        assert_eq!(
+            KeyRejected::invalid_encoding(),
+            KeyRejected::from(ErrorDetail::encoding("EVP_parse_private_key"))
+        );
+        assert_eq!(
+            KeyRejected::unexpected_error(),
+            KeyRejected::from(ErrorDetail::allocation_failed("EVP_PKEY_new"))
+        );
+        assert_eq!(
+            KeyRejected::unexpected_error(),
+            KeyRejected::from(ErrorDetail::library("EVP_PKEY_CTX_new"))
+        );
+        assert_eq!(
+            KeyRejected::unspecified(),
+            KeyRejected::from(ErrorDetail::unspecified())
+        );
+    }
+
+    #[test]
+    fn error_detail_verification_failure_is_opaque() {
+        // Verification failures must not be distinguishable from one another.
+        let aead = ErrorDetail::verification_failed("EVP_AEAD_CTX_open");
+        let rsa = ErrorDetail::verification_failed("EVP_AEAD_CTX_open");
+        assert_eq!(aead, rsa);
+        assert_eq!(ErrorKind::VerificationFailed, aead.kind());
+
+        // ... and they must not leak a sub-category through the public type.
+        assert_eq!(super::Unspecified, super::Unspecified::from(aead));
     }
 }
