@@ -10,7 +10,7 @@ use crate::aws_lc::{
 };
 
 use crate::digest::{self, match_digest_type, Digest};
-use crate::error::Unspecified;
+use crate::error::{ErrorDetail, Unspecified};
 use crate::ptr::LcPtr;
 use crate::rsa::key::parse_rsa_public_key;
 use crate::sealed::Sealed;
@@ -259,12 +259,12 @@ impl Debug for RsaSignatureEncoding {
 }
 
 #[inline]
-pub(crate) fn configure_rsa_pkcs1_pss_padding(pctx: *mut EVP_PKEY_CTX) -> Result<(), ()> {
+pub(crate) fn configure_rsa_pkcs1_pss_padding(pctx: *mut EVP_PKEY_CTX) -> Result<(), ErrorDetail> {
     if 1 != unsafe { EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) } {
-        return Err(());
+        return Err(ErrorDetail::library("EVP_PKEY_CTX_set_rsa_padding"));
     }
     if 1 != unsafe { EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST) } {
-        return Err(());
+        return Err(ErrorDetail::library("EVP_PKEY_CTX_set_rsa_pss_saltlen"));
     }
     Ok(())
 }
@@ -307,7 +307,7 @@ pub(crate) fn verify_rsa_digest_signature(
         |pctx: *mut EVP_PKEY_CTX| {
             let evp_md = match_digest_type(&digest.algorithm().id);
             if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, evp_md.as_const_ptr()) } {
-                return Err(());
+                return Err(ErrorDetail::library("EVP_PKEY_CTX_set_signature_md"));
             }
             if let RsaPadding::RSA_PKCS1_PSS_PADDING = padding {
                 configure_rsa_pkcs1_pss_padding(pctx)

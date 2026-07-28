@@ -12,7 +12,7 @@ use crate::aws_lc::{
 #[cfg(feature = "ring-io")]
 use crate::aws_lc::{RSA_get0_e, RSA_get0_n};
 use crate::encoding::{AsDer, Pkcs8V1Der, PublicKeyX509Der};
-use crate::error::{KeyRejected, Unspecified};
+use crate::error::{ErrorDetail, KeyRejected, Unspecified};
 #[cfg(feature = "ring-io")]
 use crate::io;
 use crate::ptr::{DetachableLcPtr, LcPtr};
@@ -245,7 +245,7 @@ impl KeyPair {
             |pctx: *mut EVP_PKEY_CTX| {
                 let evp_md = match_digest_type(&digest.algorithm().id);
                 if 1 != unsafe { EVP_PKEY_CTX_set_signature_md(pctx, evp_md.as_const_ptr()) } {
-                    return Err(());
+                    return Err(ErrorDetail::library("EVP_PKEY_CTX_set_signature_md"));
                 }
                 if let RsaPadding::RSA_PKCS1_PSS_PADDING = encoding.padding() {
                     configure_rsa_pkcs1_pss_padding(pctx)
@@ -446,16 +446,16 @@ where
     B: AsRef<[u8]> + Debug,
 {
     #[inline]
-    fn build_rsa(&self) -> Result<LcPtr<EVP_PKEY>, ()> {
+    fn build_rsa(&self) -> Result<LcPtr<EVP_PKEY>, ErrorDetail> {
         let n_bytes = self.n.as_ref();
         if n_bytes.is_empty() || n_bytes[0] == 0u8 {
-            return Err(());
+            return Err(ErrorDetail::invalid_input("RSA modulus"));
         }
         let mut n_bn = DetachableLcPtr::try_from(n_bytes)?;
 
         let e_bytes = self.e.as_ref();
         if e_bytes.is_empty() || e_bytes[0] == 0u8 {
-            return Err(());
+            return Err(ErrorDetail::invalid_input("RSA public exponent"));
         }
         let mut e_bn = DetachableLcPtr::try_from(e_bytes)?;
 
@@ -468,14 +468,14 @@ where
                 null_mut(),
             )
         } {
-            return Err(());
+            return Err(ErrorDetail::library("RSA_set0_key"));
         }
         n_bn.detach();
         e_bn.detach();
 
         let mut pkey = LcPtr::new(unsafe { EVP_PKEY_new() })?;
         if 1 != unsafe { EVP_PKEY_assign_RSA(pkey.as_mut_ptr(), rsa.as_mut_ptr()) } {
-            return Err(());
+            return Err(ErrorDetail::library("EVP_PKEY_assign_RSA"));
         }
         rsa.detach();
 
@@ -548,7 +548,7 @@ where
     ) -> Result<crate::signature::ParsedPublicKey, KeyRejected> {
         let pkey = self
             .build_rsa()
-            .map_err(|()| KeyRejected::inconsistent_components())?;
+            .map_err(|_| KeyRejected::inconsistent_components())?;
         Ok(crate::signature::ParsedPublicKey::from_rsa_evp_pkey(
             params, pkey,
         )?)
@@ -603,7 +603,7 @@ pub(super) fn generate_rsa_key(size: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecifi
         if 1 == unsafe { EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, size) } {
             Ok(())
         } else {
-            Err(())
+            Err(ErrorDetail::library("EVP_PKEY_CTX_set_rsa_keygen_bits"))
         }
     };
 

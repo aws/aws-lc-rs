@@ -375,7 +375,7 @@ pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<'_, 
             AlgorithmID::SHA3_384 => EVP_sha3_384(),
             AlgorithmID::SHA3_512 => EVP_sha3_512(),
         })
-        .unwrap_or_else(|()| panic!("Digest algorithm not found: {algorithm_id:?}"))
+        .unwrap_or_else(|_| panic!("Digest algorithm not found: {algorithm_id:?}"))
     }
 }
 

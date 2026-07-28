@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
 use crate::aws_lc::{BN_bin2bn, BN_bn2bin, BN_new, BN_num_bytes, BN_set_u64, BIGNUM};
+use crate::error::ErrorDetail;
 use crate::ptr::{ConstPointer, DetachableLcPtr, LcPtr};
 use core::ptr::null_mut;
 
 impl TryFrom<&[u8]> for LcPtr<BIGNUM> {
-    type Error = ();
+    type Error = ErrorDetail;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         unsafe { LcPtr::new(BN_bin2bn(bytes.as_ptr(), bytes.len(), null_mut())) }
@@ -14,7 +15,7 @@ impl TryFrom<&[u8]> for LcPtr<BIGNUM> {
 }
 
 impl TryFrom<&[u8]> for DetachableLcPtr<BIGNUM> {
-    type Error = ();
+    type Error = ErrorDetail;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         unsafe { DetachableLcPtr::new(BN_bin2bn(bytes.as_ptr(), bytes.len(), null_mut())) }
@@ -22,13 +23,13 @@ impl TryFrom<&[u8]> for DetachableLcPtr<BIGNUM> {
 }
 
 impl TryFrom<u64> for DetachableLcPtr<BIGNUM> {
-    type Error = ();
+    type Error = ErrorDetail;
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         unsafe {
             let mut bn = DetachableLcPtr::new(BN_new())?;
             if 1 != BN_set_u64(bn.as_mut_ptr(), value) {
-                return Err(());
+                return Err(ErrorDetail::library("BN_set_u64"));
             }
             Ok(bn)
         }

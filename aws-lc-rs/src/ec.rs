@@ -15,7 +15,7 @@ use crate::aws_lc::{
     EC_KEY, EVP_PKEY, EVP_PKEY_EC,
 };
 use crate::ec::signature::AlgorithmID;
-use crate::error::{KeyRejected, Unspecified};
+use crate::error::{ErrorDetail, KeyRejected, Unspecified};
 #[cfg(feature = "fips")]
 use crate::fips::indicator_check;
 use crate::ptr::{ConstPointer, LcPtr};
@@ -90,7 +90,9 @@ pub(crate) fn evp_key_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unspecifie
         if 1 == unsafe { EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid) } {
             Ok(())
         } else {
-            Err(())
+            Err(ErrorDetail::library(
+                "EVP_PKEY_CTX_set_ec_paramgen_curve_nid",
+            ))
         }
     };
     LcPtr::<EVP_PKEY>::generate(EVP_PKEY_EC, Some(params_fn))

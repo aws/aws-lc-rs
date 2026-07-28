@@ -13,7 +13,7 @@ use crate::ec::encoding::sec1::marshal_sec1_public_point;
 use crate::encoding::{
     AsBigEndian, AsDer, EcPublicKeyCompressedBin, EcPublicKeyUncompressedBin, PublicKeyX509Der,
 };
-use crate::error::Unspecified;
+use crate::error::{ErrorDetail, Unspecified};
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
 use crate::ptr::{DetachableLcPtr, LcPtr};
 use crate::signature::{ParsedPublicKey, ParsedVerificationAlgorithm, VerificationAlgorithm};
@@ -315,10 +315,10 @@ fn verify_asn1_digest_signature(
 unsafe fn ecdsa_sig_from_fixed(
     alg_id: &'static AlgorithmID,
     signature: &[u8],
-) -> Result<LcPtr<ECDSA_SIG>, ()> {
+) -> Result<LcPtr<ECDSA_SIG>, ErrorDetail> {
     let num_size_bytes = alg_id.private_key_size();
     if signature.len() != 2 * num_size_bytes {
-        return Err(());
+        return Err(ErrorDetail::invalid_input("ECDSA fixed signature length"));
     }
     let mut r_bn = DetachableLcPtr::<BIGNUM>::try_from(&signature[..num_size_bytes])?;
     let mut s_bn = DetachableLcPtr::<BIGNUM>::try_from(&signature[num_size_bytes..])?;
@@ -326,7 +326,7 @@ unsafe fn ecdsa_sig_from_fixed(
     let mut ecdsa_sig = LcPtr::new(ECDSA_SIG_new())?;
 
     if 1 != ECDSA_SIG_set0(ecdsa_sig.as_mut_ptr(), r_bn.as_mut_ptr(), s_bn.as_mut_ptr()) {
-        return Err(());
+        return Err(ErrorDetail::library("ECDSA_SIG_set0"));
     }
     r_bn.detach();
     s_bn.detach();

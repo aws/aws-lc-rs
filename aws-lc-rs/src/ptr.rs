@@ -7,6 +7,7 @@ use crate::aws_lc::{
     RSA_free, BIGNUM, CMAC_CTX, ECDSA_SIG, EC_GROUP, EC_KEY, EC_POINT, EVP_AEAD_CTX,
     EVP_CIPHER_CTX, EVP_PKEY, EVP_PKEY_CTX, RSA,
 };
+use crate::error::ErrorDetail;
 use std::marker::PhantomData;
 
 pub(crate) type LcPtr<T> = ManagedPointer<*mut T>;
@@ -19,11 +20,11 @@ pub(crate) struct ManagedPointer<P: Pointer> {
 
 impl<P: Pointer> ManagedPointer<P> {
     #[inline]
-    pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ()> {
+    pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ErrorDetail> {
         if let Some(pointer) = value.into_pointer() {
             Ok(Self { pointer })
         } else {
-            Err(())
+            Err(ErrorDetail::allocation_failed(P::TYPE_NAME))
         }
     }
 
@@ -62,10 +63,10 @@ impl<P: Pointer> ManagedPointer<P> {
     pub fn project_const_lifetime<'a, C>(
         &'a self,
         f: unsafe fn(&'a Self) -> *const C,
-    ) -> Result<ConstPointer<'a, C>, ()> {
+    ) -> Result<ConstPointer<'a, C>, ErrorDetail> {
         let ptr = unsafe { f(self) };
         if ptr.is_null() {
-            return Err(());
+            return Err(ErrorDetail::library(P::TYPE_NAME));
         }
         Ok(ConstPointer {
             ptr,
@@ -94,13 +95,13 @@ pub(crate) struct DetachablePointer<P: Pointer> {
 
 impl<P: Pointer> DetachablePointer<P> {
     #[inline]
-    pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ()> {
+    pub fn new<T: IntoPointer<P>>(value: T) -> Result<Self, ErrorDetail> {
         if let Some(pointer) = value.into_pointer() {
             Ok(Self {
                 pointer: Some(pointer),
             })
         } else {
-            Err(())
+            Err(ErrorDetail::allocation_failed(P::TYPE_NAME))
         }
     }
 
@@ -139,9 +140,9 @@ pub(crate) struct ConstPointer<'a, T> {
 }
 
 impl<T> ConstPointer<'static, T> {
-    pub unsafe fn new_static(ptr: *const T) -> Result<Self, ()> {
+    pub unsafe fn new_static(ptr: *const T) -> Result<Self, ErrorDetail> {
         if ptr.is_null() {
-            return Err(());
+            return Err(ErrorDetail::library("ConstPointer::new_static"));
         }
         Ok(ConstPointer {
             ptr,
@@ -154,10 +155,10 @@ impl<T> ConstPointer<'_, T> {
     pub fn project_const_lifetime<'a, C>(
         &'a self,
         f: unsafe fn(&'a Self) -> *const C,
-    ) -> Result<ConstPointer<'a, C>, ()> {
+    ) -> Result<ConstPointer<'a, C>, ErrorDetail> {
         let ptr = unsafe { f(self) };
         if ptr.is_null() {
-            return Err(());
+            return Err(ErrorDetail::library("ConstPointer::project_const_lifetime"));
         }
         Ok(ConstPointer {
             ptr,
@@ -172,6 +173,10 @@ impl<T> ConstPointer<'_, T> {
 
 pub(crate) trait Pointer {
     type T;
+
+    /// The name of the underlying AWS-LC type, used as failure context so that
+    /// call sites do not have to pass one explicitly.
+    const TYPE_NAME: &'static str;
 
     fn free(&mut self);
     fn as_const_ptr(&self) -> *const Self::T;
@@ -197,6 +202,8 @@ macro_rules! create_pointer {
     ($ty:ty, $free:path) => {
         impl Pointer for *mut $ty {
             type T = $ty;
+
+            const TYPE_NAME: &'static str = stringify!($ty);
 
             #[inline]
             fn free(&mut self) {

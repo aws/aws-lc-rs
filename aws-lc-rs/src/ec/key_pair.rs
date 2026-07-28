@@ -20,7 +20,7 @@ use crate::ec::encoding::sec1::{
     marshal_sec1_private_key, parse_sec1_private_bn, parse_sec1_public_point,
 };
 use crate::encoding::{AsBigEndian, AsDer, EcPrivateKeyBin, EcPrivateKeyRfc5915Der};
-use crate::error::{KeyRejected, Unspecified};
+use crate::error::{ErrorDetail, KeyRejected, Unspecified};
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
 use crate::pkcs8::{Document, Version};
 use crate::ptr::LcPtr;
@@ -60,7 +60,7 @@ impl EcdsaKeyPair {
     fn new(
         algorithm: &'static EcdsaSigningAlgorithm,
         evp_pkey: LcPtr<EVP_PKEY>,
-    ) -> Result<Self, ()> {
+    ) -> Result<Self, ErrorDetail> {
         let pubkey = ec::signature::public_key_from_evp_pkey(&evp_pkey, algorithm)?;
 
         Ok(Self {

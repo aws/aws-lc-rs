@@ -398,6 +398,16 @@ impl From<ErrorDetail> for () {
     fn from(_: ErrorDetail) -> Self {}
 }
 
+// The mirror of the above, for converting bottom-up: an inner function that
+// still returns `Unspecified` has no detail to contribute, so it widens to
+// `ErrorKind::Unspecified`. Each use marks an inner call that has not been
+// converted yet.
+impl From<Unspecified> for ErrorDetail {
+    fn from(_: Unspecified) -> Self {
+        ErrorDetail::unspecified()
+    }
+}
+
 #[allow(deprecated, unused_imports)]
 #[cfg(test)]
 mod tests {

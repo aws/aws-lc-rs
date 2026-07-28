@@ -51,7 +51,7 @@ use crate::aws_lc::{
 };
 use crate::buffer::Buffer;
 use crate::encoding::generated_encodings;
-use crate::error::{KeyRejected, Unspecified};
+use crate::error::{ErrorDetail, KeyRejected, Unspecified};
 use crate::ptr::LcPtr;
 use alloc::borrow::Cow;
 use core::cmp::Ordering;
@@ -554,7 +554,7 @@ fn kem_key_generate(nid: i32) -> Result<LcPtr<EVP_PKEY>, Unspecified> {
         if 1 == unsafe { EVP_PKEY_CTX_kem_set_params(ctx, nid) } {
             Ok(())
         } else {
-            Err(())
+            Err(ErrorDetail::library("EVP_PKEY_CTX_kem_set_params"))
         }
     };
 

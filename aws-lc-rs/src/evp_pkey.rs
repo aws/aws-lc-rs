@@ -16,7 +16,7 @@ use crate::aws_lc::{
 use crate::cbb::LcCBB;
 use crate::digest::digest_ctx::DigestContext;
 use crate::digest::Digest;
-use crate::error::{KeyRejected, Unspecified};
+use crate::error::{ErrorDetail, KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::Version;
 use crate::ptr::{ConstPointer, LcPtr};
@@ -33,12 +33,17 @@ impl PartialEq<Self> for LcPtr<EVP_PKEY> {
 }
 
 #[allow(non_camel_case_types)]
-pub(crate) trait EVP_PKEY_CTX_consumer: Fn(*mut EVP_PKEY_CTX) -> Result<(), ()> {}
+pub(crate) trait EVP_PKEY_CTX_consumer:
+    Fn(*mut EVP_PKEY_CTX) -> Result<(), ErrorDetail>
+{
+}
 
-impl<T> EVP_PKEY_CTX_consumer for T where T: Fn(*mut EVP_PKEY_CTX) -> Result<(), ()> {}
+impl<T> EVP_PKEY_CTX_consumer for T where T: Fn(*mut EVP_PKEY_CTX) -> Result<(), ErrorDetail> {}
 
 #[allow(non_upper_case_globals, clippy::type_complexity)]
-pub(crate) const No_EVP_PKEY_CTX_consumer: Option<fn(*mut EVP_PKEY_CTX) -> Result<(), ()>> = None;
+pub(crate) const No_EVP_PKEY_CTX_consumer: Option<
+    fn(*mut EVP_PKEY_CTX) -> Result<(), ErrorDetail>,
+> = None;
 
 impl ConstPointer<'_, EVP_PKEY> {
     pub(crate) fn validate_as_ed25519(&self) -> Result<(), KeyRejected> {
@@ -100,14 +105,14 @@ impl ConstPointer<'_, EVP_PKEY> {
         self.project_const_lifetime(unsafe {
             |evp_pkey| EVP_PKEY_get0_EC_KEY(evp_pkey.as_const_ptr())
         })
-        .map_err(|()| KeyRejected::wrong_algorithm())
+        .map_err(|_| KeyRejected::wrong_algorithm())
     }
 
     pub(crate) fn get_rsa(&self) -> Result<ConstPointer<'_, RSA>, KeyRejected> {
         self.project_const_lifetime(unsafe {
             |evp_pkey| EVP_PKEY_get0_RSA(evp_pkey.as_const_ptr())
         })
-        .map_err(|()| KeyRejected::wrong_algorithm())
+        .map_err(|_| KeyRejected::wrong_algorithm())
     }
 
     pub(crate) fn marshal_rfc5280_public_key(&self) -> Result<Vec<u8>, Unspecified> {
@@ -215,7 +220,7 @@ impl LcPtr<EVP_PKEY> {
         let mut cbs = cbs::build_CBS(bytes);
         // Also checks the validity of the key
         let evp_pkey = LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })
-            .map_err(|()| KeyRejected::invalid_encoding())?;
+            .map_err(|_| KeyRejected::invalid_encoding())?;
         evp_pkey
             .as_const()
             .id()
@@ -231,7 +236,7 @@ impl LcPtr<EVP_PKEY> {
         let mut cbs = cbs::build_CBS(bytes);
         // Also checks the validity of the key
         let evp_pkey = LcPtr::new(unsafe { EVP_parse_private_key(&mut cbs) })
-            .map_err(|()| KeyRejected::invalid_encoding())?;
+            .map_err(|_| KeyRejected::invalid_encoding())?;
         evp_pkey
             .as_const()
             .id()
@@ -241,7 +246,7 @@ impl LcPtr<EVP_PKEY> {
     }
 
     #[allow(non_snake_case)]
-    pub(crate) fn create_EVP_PKEY_CTX(&self) -> Result<LcPtr<EVP_PKEY_CTX>, ()> {
+    pub(crate) fn create_EVP_PKEY_CTX(&self) -> Result<LcPtr<EVP_PKEY_CTX>, ErrorDetail> {
         // The only modification made by EVP_PKEY_CTX_new to `priv_key` is to increment its
         // refcount. AWS-LC's refcount operations are thread-safe: lock-free `_Atomic` CAS on the
         // C11-atomic build, `InterlockedIncrement`-style atomics on Windows, and a mutex-protected
@@ -267,15 +272,15 @@ impl LcPtr<EVP_PKEY> {
                 4896 => Self::new(unsafe {
                     EVP_PKEY_pqdsa_new_raw_private_key(NID_MLDSA87, bytes.as_ptr(), bytes.len())
                 }),
-                _ => Err(()),
+                _ => Err(ErrorDetail::invalid_input("ML-DSA private key length")),
             }
-            .map_err(|()| KeyRejected::invalid_encoding());
+            .map_err(|_| KeyRejected::invalid_encoding());
         }
 
         Self::new(unsafe {
             EVP_PKEY_new_raw_private_key(evp_pkey_type, null_mut(), bytes.as_ptr(), bytes.len())
         })
-        .map_err(|()| KeyRejected::unspecified())
+        .map_err(|_| KeyRejected::unspecified())
     }
 
     pub(crate) fn parse_raw_public_key(
@@ -293,15 +298,15 @@ impl LcPtr<EVP_PKEY> {
                 2592 => Self::new(unsafe {
                     EVP_PKEY_pqdsa_new_raw_public_key(NID_MLDSA87, bytes.as_ptr(), bytes.len())
                 }),
-                _ => Err(()),
+                _ => Err(ErrorDetail::invalid_input("ML-DSA public key length")),
             }
-            .map_err(|()| KeyRejected::unspecified());
+            .map_err(|_| KeyRejected::unspecified());
         }
 
         Self::new(unsafe {
             EVP_PKEY_new_raw_public_key(evp_pkey_type, null_mut(), bytes.as_ptr(), bytes.len())
         })
-        .map_err(|()| KeyRejected::invalid_encoding())
+        .map_err(|_| KeyRejected::invalid_encoding())
     }
 
     pub(crate) fn sign<F>(

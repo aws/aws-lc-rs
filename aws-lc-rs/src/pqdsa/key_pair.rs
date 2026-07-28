@@ -5,7 +5,7 @@ use crate::aws_lc::{
     EVP_PKEY_CTX_pqdsa_set_params, EVP_PKEY_pqdsa_new_raw_private_key, EVP_PKEY, EVP_PKEY_PQDSA,
 };
 use crate::encoding::{AsDer, AsRawBytes, Pkcs8V1Der, PqdsaPrivateKeyRaw};
-use crate::error::{KeyRejected, Unspecified};
+use crate::error::{ErrorDetail, KeyRejected, Unspecified};
 use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
 use crate::pkcs8;
 use crate::pkcs8::{Document, Version};
@@ -186,7 +186,7 @@ impl PqdsaKeyPair {
         let evp_pkey = LcPtr::new(unsafe {
             EVP_PKEY_pqdsa_new_raw_private_key(nid, seed.as_ptr(), seed.len())
         })
-        .map_err(|()| KeyRejected::unspecified())?;
+        .map_err(|_| KeyRejected::unspecified())?;
         validate_pqdsa_evp_key(&evp_pkey, algorithm.0.id)?;
         let pubkey =
             PublicKey::from_private_evp_pkey(&evp_pkey).map_err(|_| KeyRejected::unspecified())?;
@@ -268,7 +268,7 @@ pub(crate) fn evp_key_pqdsa_generate(nid: c_int) -> Result<LcPtr<EVP_PKEY>, Unsp
         if 1 == unsafe { EVP_PKEY_CTX_pqdsa_set_params(ctx, nid) } {
             Ok(())
         } else {
-            Err(())
+            Err(ErrorDetail::library("EVP_PKEY_CTX_pqdsa_set_params"))
         }
     };
     LcPtr::<EVP_PKEY>::generate(EVP_PKEY_PQDSA, Some(params_fn))
