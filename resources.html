@@ -328,6 +328,32 @@ when building for targets that are compatible with another target's bindings.</p
 </blockquote>
 </li>
 </ul>
+<h2 id="aws-lc-rs-environment-variables"><a class="header" href="#aws-lc-rs-environment-variables"><code>aws-lc-rs</code> Environment Variables</a></h2>
+<p>The <code>aws-lc-rs</code> crate supports the following environment variables for configuring build behavior.</p>
+<ul>
+<li>
+<p><strong><code>AWS_LC_RS_DEV_TESTS_ONLY</code></strong></p>
+<p>Enables development-only testing functionality without requiring the <code>dev-tests-only</code> feature flag.
+When enabled, the <code>rand::unsealed</code> module is exposed, allowing consumers to provide their own
+implementations of <code>SecureRandom</code> for deterministic or custom random number generation in tests.</p>
+<ul>
+<li><code>1</code> - Enable development testing functionality</li>
+<li><code>0</code> - Explicitly disable (overrides the <code>dev-tests-only</code> feature flag if set)</li>
+</ul>
+<p>This setting is restricted to dev/debug profile builds. Attempting to use it in a release build
+will result in a compilation panic.</p>
+<blockquote>
+<p><strong>Note:</strong> This environment variable can also override the <code>dev-tests-only</code> Cargo feature flag.
+If both the feature flag and the environment variable are present, the environment variable
+takes precedence.</p>
+</blockquote>
+</li>
+<li>
+<p><strong><code>AWS_LC_RS_DISABLE_SLOW_TESTS</code></strong></p>
+<p>When set to <code>1</code>, disables slow-running tests in the <code>aws-lc-rs</code> test suite. This can be useful
+for faster iteration during development.</p>
+</li>
+</ul>
 <h2 id="links"><a class="header" href="#links">Links</a></h2>
 <ul>
 <li><a href="https://docs.rs/aws-lc-rs/latest">API Reference Guide</a></li>

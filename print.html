@@ -225,8 +225,8 @@ to using the more complete target-specific bindings. See the pre-generated bindi
 <a href="https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys/src"><code>aws-lc-sys/src/</code></a>.</p>
 </blockquote>
 <p><strong>FIPS (<code>aws-lc-fips-sys</code>):</strong> Pre-generated bindings are available for a limited set of targets.
-See <a href="https://github.com/aws/aws-lc-rs/tree/main/aws-lc-fips-sys/src"><code>aws-lc-fips-sys/src/</code></a> for
-the list. Bindgen is required for all other targets.</p>
+See the <a href="requirements/../platform_support.html#pre-generated-fips-bindings">Pre-generated FIPS Bindings</a> table
+on the Platform Support page for the full list. Bindgen is required for all other targets.</p>
 <h3 id="tested-platforms"><a class="header" href="#tested-platforms">Tested Platforms</a></h3>
 <p>A mostly complete set of platforms for which we test our builds can be found in our
 <a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml">CI workflow configuration</a>.</p>
@@ -423,6 +423,23 @@ scenarios or when using MSYS2/MinGW environments. When using Clang:</p>
 <li>Ensure <code>clang</code> or <code>clang-cl</code> is available in your PATH</li>
 <li>For MSYS2 environments, the <code>clang64</code> or <code>ucrt64</code> subsystems provide Clang toolchains</li>
 </ul>
+<h4 id="clang-driver-mode-on-the-msvc-abi"><a class="header" href="#clang-driver-mode-on-the-msvc-abi">Clang driver mode on the MSVC ABI</a></h4>
+<p>For <code>*-pc-windows-msvc</code> targets, the C compiler flag <em>dialect</em> is determined by the compiler's
+<strong>driver mode</strong>, not by the target ABI:</p>
+<ul>
+<li><code>clang-cl</code> (like <code>cl.exe</code>) runs in <strong>cl driver mode</strong> and takes MSVC-style flags (<code>/Od</code>, <code>/FI</code>, ...).</li>
+<li>plain <code>clang</code> (for example <code>CC=clang</code>, or cross-compiling with <a href="https://github.com/rust-cross/cargo-xwin"><code>cargo-xwin</code></a>) runs in <strong>GNU driver
+mode</strong> and takes GNU-style flags, even when targeting the MSVC ABI.</li>
+</ul>
+<p>Both driver modes are supported, and both are exercised in CI for <code>x86_64-pc-windows-msvc</code>. If you
+override <code>CC</code>, the rest of the build environment (such as <code>AR</code>) should match the driver mode of the
+compiler you select.</p>
+<blockquote>
+<p><strong>Note:</strong> If you build the C sources with LTO under plain <code>clang</code> (e.g. <code>CFLAGS=-flto=thin</code>), the
+resulting objects are LLVM bitcode, which the default MSVC <code>link.exe</code> cannot consume. Link with
+<code>lld-link</code> from the same LLVM toolchain (for example <code>RUSTFLAGS=-Clinker=lld-link</code>) so the bitcode
+is understood.</p>
+</blockquote>
 <h2 id="cmake-1"><a class="header" href="#cmake-1">CMake</a></h2>
 <p>CMake is only required for FIPS builds on Windows.</p>
 <ol>
@@ -520,42 +537,31 @@ be distributed alongside any executable that depends on <strong>aws-lc-rs</stron
 <h2 id="troubleshooting-2"><a class="header" href="#troubleshooting-2">Troubleshooting</a></h2>
 <p>See our <a href="requirements/../resources.html#build-environment-variables">troubleshooting section</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="platform-support"><a class="header" href="#platform-support">Platform Support</a></h1>
-<h2 id="pre-generated-bindings-1"><a class="header" href="#pre-generated-bindings-1">Pre-generated bindings</a></h2>
-<p><code>aws-lc-rs</code> can utilize pre-generated bindings when operating on the following
-build targets.</p>
-<div class="table-wrapper"><table><thead><tr><th>Platform</th><th><code>aws-lc-sys</code></th><th><code>aws-lc-fips-sys</code></th></tr></thead><tbody>
-<tr><td><code>aarch64-apple-darwin</code></td><td>✓</td><td>✓</td></tr>
-<tr><td><code>aarch64-pc-windows-msvc</code></td><td>✓</td><td>✓ ²</td></tr>
-<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td></tr>
-<tr><td><code>aarch64-unknown-linux-musl</code></td><td>✓</td><td>✓</td></tr>
-<tr><td><code>i686-pc-windows-msvc</code></td><td>✓</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>i686-unknown-linux-gnu</code></td><td>✓</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>x86_64-apple-darwin</code></td><td>✓</td><td>✓</td></tr>
-<tr><td><code>x86_64-pc-windows-gnu</code></td><td>✓</td><td><strong>Not Supported</strong></td></tr>
-<tr><td><code>x86_64-pc-windows-msvc</code></td><td>✓</td><td>✓ ²</td></tr>
-<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td></tr>
-<tr><td><code>x86_64-unknown-linux-musl</code></td><td>✓</td><td>✓</td></tr>
+<h2 id="non-fips-builds-aws-lc-sys-2"><a class="header" href="#non-fips-builds-aws-lc-sys-2">Non-FIPS Builds (<code>aws-lc-sys</code>)</a></h2>
+<p>For non-FIPS builds, <code>aws-lc-sys</code> provides <strong>universal pre-generated bindings</strong> that work across
+<strong>all</strong> supported platforms. Bindgen is never required, CMake is never required, and Go is never
+required. The only build requirement is a C/C++ compiler.</p>
+<p>This means that if your target platform is supported by both <a href="https://github.com/aws/aws-lc">AWS-LC</a> and the
+<a href="https://doc.rust-lang.org/rustc/platform-support.html">Rust compiler (with std support)</a>, <code>aws-lc-rs</code> should work out of the box
+without any additional tooling beyond a C/C++ compiler.</p>
+<h2 id="fips-builds-aws-lc-fips-sys-2"><a class="header" href="#fips-builds-aws-lc-fips-sys-2">FIPS Builds (<code>aws-lc-fips-sys</code>)</a></h2>
+<p>FIPS builds always require <strong>CMake</strong> and <strong>Go</strong> in addition to a C/C++ compiler. FIPS builds also
+require <strong>bindgen</strong> unless pre-generated bindings are available for the target platform.</p>
+<h3 id="pre-generated-fips-bindings"><a class="header" href="#pre-generated-fips-bindings">Pre-generated FIPS Bindings</a></h3>
+<p>Pre-generated bindings for <code>aws-lc-fips-sys</code> are available for the following targets. All other
+FIPS targets require bindgen.</p>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Pre-generated FIPS Bindings</th></tr></thead><tbody>
+<tr><td><code>aarch64-apple-darwin</code></td><td>✓</td></tr>
+<tr><td><code>aarch64-pc-windows-msvc</code></td><td>✗ (bindgen required) ¹</td></tr>
+<tr><td><code>aarch64-unknown-linux-gnu</code></td><td>✓</td></tr>
+<tr><td><code>aarch64-unknown-linux-musl</code></td><td>✓</td></tr>
+<tr><td><code>x86_64-apple-darwin</code></td><td>✓</td></tr>
+<tr><td><code>x86_64-pc-windows-msvc</code></td><td>✗ (bindgen required) ¹</td></tr>
+<tr><td><code>x86_64-unknown-linux-gnu</code></td><td>✓</td></tr>
+<tr><td><code>x86_64-unknown-linux-musl</code></td><td>✓</td></tr>
 </tbody></table>
 </div>
-<p>² FIPS is supported but requires bindgen (no pre-generated FIPS bindings are available for Windows platforms)</p>
-<h2 id="tested-platforms-1"><a class="header" href="#tested-platforms-1">Tested platforms</a></h2>
-<p>In addition to the platforms with pre-generated bindings listed above, <code>aws-lc-rs</code> CI builds and/or tests on many additional platforms.
-See our <a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml">CI workflow configuration</a> for the complete list of tested platforms.</p>
-<h3 id="build-requirements-summary"><a class="header" href="#build-requirements-summary">Build Requirements Summary</a></h3>
-<p><strong>For non-FIPS builds (<code>aws-lc-sys</code>):</strong></p>
-<ul>
-<li>C/C++ Compiler: Required</li>
-<li>CMake: <strong>Never</strong> required</li>
-<li>Bindgen: <strong>Never</strong> required (universal pre-generated bindings are provided)</li>
-<li>Go: <strong>Never</strong> required</li>
-</ul>
-<p><strong>For FIPS builds (<code>aws-lc-fips-sys</code>):</strong></p>
-<ul>
-<li>C/C++ Compiler: Required</li>
-<li>CMake: <strong>Always</strong> required</li>
-<li>Go: <strong>Always</strong> required</li>
-<li>Bindgen: Required <strong>unless</strong> the target has pre-generated bindings (see table above)</li>
-</ul>
+<p>¹ FIPS is supported on this platform but requires bindgen (no pre-generated FIPS bindings are available for Windows platforms)</p>
 <h3 id="bindgen-for-fips-builds"><a class="header" href="#bindgen-for-fips-builds">Bindgen for FIPS Builds</a></h3>
 <p>For FIPS builds on targets without pre-generated bindings, one of the following options must be used for bindings generation.
 See <a href="requirements/README.html">requirements</a> page for more information.</p>
@@ -571,6 +577,17 @@ aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;, &quot;fi
 </ul>
 <pre><code class="language-shell">cargo install --force --locked bindgen-cli
 </code></pre>
+<h2 id="tested-platforms-1"><a class="header" href="#tested-platforms-1">Tested Platforms</a></h2>
+<p><code>aws-lc-rs</code> CI builds and/or tests on many platforms beyond those listed in the FIPS bindings table above.
+See our <a href="https://github.com/aws/aws-lc-rs/blob/main/.github/workflows/cross.yml">CI workflow configuration</a> for the complete list of tested platforms.</p>
+<h3 id="build-requirements-summary"><a class="header" href="#build-requirements-summary">Build Requirements Summary</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Requirement</th><th>Non-FIPS (<code>aws-lc-sys</code>)</th><th>FIPS (<code>aws-lc-fips-sys</code>)</th></tr></thead><tbody>
+<tr><td>C/C++ Compiler</td><td>Required</td><td>Required</td></tr>
+<tr><td>CMake</td><td><strong>Never</strong> required</td><td><strong>Always</strong> required</td></tr>
+<tr><td>Bindgen</td><td><strong>Never</strong> required (universal pre-generated bindings)</td><td>Required unless target has pre-generated bindings</td></tr>
+<tr><td>Go</td><td><strong>Never</strong> required</td><td><strong>Always</strong> required</td></tr>
+</tbody></table>
+</div>
 <h3 id="linux-platforms"><a class="header" href="#linux-platforms">Linux Platforms</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th><th>FIPS</th></tr></thead><tbody>
 <tr><td><code>aarch64-unknown-linux-gnu</code></td><td>✓</td><td>✓</td><td>✓</td></tr>
@@ -631,6 +648,7 @@ aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;, &quot;fi
 <h3 id="other-platforms"><a class="header" href="#other-platforms">Other Platforms</a></h3>
 <div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Build</th><th>Tests</th></tr></thead><tbody>
 <tr><td><code>x86_64-unknown-illumos</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code>wasm32-unknown-emscripten</code></td><td>✓</td><td>✓</td></tr>
 <tr><td>OpenHarmony (aarch64)</td><td>✓</td><td></td></tr>
 <tr><td>OpenWrt (aarch64-musl)</td><td>✓</td><td></td></tr>
 <tr><td>Alpine Linux</td><td>✓</td><td>✓</td></tr>
@@ -640,26 +658,78 @@ aws-lc-rs = { version = &quot;1&quot;, features = [&quot;bindgen&quot;, &quot;fi
 <p>While we aim to be API-compatible with <code>ring</code> v0.16 there are some differences in our implementation. Please review the
 <a href="https://docs.rs/aws-lc-rs/latest/aws_lc_rs/#ring-compatibility">ring-compatibility</a> section of our <a href="https://docs.rs/aws-lc-rs/latest/aws_lc_rs">API reference guide</a>.</p>
 <h2 id="can-i-run-aws-lc-rs-on-x-platform-or-architecture"><a class="header" href="#can-i-run-aws-lc-rs-on-x-platform-or-architecture">Can I run <code>aws-lc-rs</code> on <em>X</em> platform or architecture?</a></h2>
-<p>The answer to this question is dependent on several factors based on the target environment:</p>
-<ul>
-<li>Must be a platform and CPU architecture supported by <a href="https://github.com/aws/aws-lc">AWS-LC</a>.</li>
-<li>Must be a platform supported by the Rust compiler with support for the full standard library.
-See the <a href="https://doc.rust-lang.org/rustc/platform-support.html">Rust compiler's platform support</a> documentation.</li>
-<li><strong>For non-FIPS builds:</strong> Bindgen is <strong>never</strong> required. The <code>aws-lc-sys</code> crate provides universal pre-generated
-bindings that cover all functions used by <code>aws-lc-rs</code>.</li>
-<li><strong>For FIPS builds:</strong> If <code>aws-lc-fips-sys</code> doesn't have pre-generated bindings for your target platform,
-you must use the <code>bindgen</code> crate feature of <code>aws-lc-rs</code>, or have the <a href="https://crates.io/crates/bindgen-cli">bindgen-cli</a> installed, to enable
-generation of the FFI bindings for the desired platform and architecture.</li>
-</ul>
+<p><strong>For non-FIPS builds:</strong> If your target platform is supported by both <a href="https://github.com/aws/aws-lc">AWS-LC</a> and the
+<a href="https://doc.rust-lang.org/rustc/platform-support.html">Rust compiler (with std support)</a>, then <code>aws-lc-rs</code> should work
+out of the box. The <code>aws-lc-sys</code> crate provides <strong>universal pre-generated bindings</strong> that work
+across all supported platforms — bindgen, CMake, and Go are <strong>never</strong> required. The only build
+requirement is a C/C++ compiler.</p>
+<p><strong>For FIPS builds:</strong> Additional tooling is always required (CMake, Go), and bindgen is also required
+unless <code>aws-lc-fips-sys</code> has pre-generated bindings for your target platform. If bindgen is needed,
+you can either use the <code>bindgen</code> crate feature of <code>aws-lc-rs</code>, or have the <a href="https://crates.io/crates/bindgen-cli">bindgen-cli</a> installed.</p>
 <blockquote>
 <p><strong>Note:</strong> If you take a direct dependency on <code>aws-lc-sys</code> (not through <code>aws-lc-rs</code>) and need access to the
 complete AWS-LC API, you may want to use target-specific bindings or enable bindgen for complete API coverage.</p>
 </blockquote>
-<ul>
-<li>See <a href="requirements/README.html">Requirements</a> and <a href="platform_support.html">Platform Support</a> for more details on
-build requirements for various platforms.</li>
-</ul>
+<p>See <a href="requirements/README.html">Requirements</a> and <a href="platform_support.html">Platform Support</a> for more
+details on build requirements for various platforms.</p>
 <p>If there is a platform or architecture you are interested in seeing support for, please create a GitHub <a href="https://github.com/aws/aws-lc-rs/issues/new/choose">issue</a>.</p>
+<h2 id="can-i-link-against-a-system-installed-aws-lc-instead-of-building-from-source"><a class="header" href="#can-i-link-against-a-system-installed-aws-lc-instead-of-building-from-source">Can I link against a system-installed AWS-LC instead of building from source?</a></h2>
+<p>Yes. The <code>aws-lc-sys</code> and <code>aws-lc-fips-sys</code> crates can link against a pre-existing
+AWS-LC install instead of compiling the bundled source. Point them at an install
+explicitly with <code>AWS_LC_SYS_SYSTEM_DIR</code> / <code>AWS_LC_FIPS_SYS_SYSTEM_DIR</code>, or let them
+auto-detect one via common OpenSSL-compatible environment variables
+(<code>OPENSSL_DIR</code>, or <code>OPENSSL_INCLUDE_DIR</code> + <code>OPENSSL_LIB_DIR</code>) or pkg-config.
+The install must be AWS-LC (not OpenSSL) and ship the
+pre-generated Rust bindings; otherwise the build falls back to source. The
+<code>AWS_LC_SYS_USE_SYSTEM</code> / <code>AWS_LC_FIPS_SYS_USE_SYSTEM</code> variable controls whether
+detection runs and whether a system install is required.</p>
+<p>See the <a href="https://github.com/aws/aws-lc-rs/blob/main/aws-lc-sys/README.md">aws-lc-sys</a> and <a href="https://github.com/aws/aws-lc-rs/blob/main/aws-lc-fips-sys/README.md">aws-lc-fips-sys</a> READMEs for the full discovery order
+and the required install layout.</p>
+<h2 id="how-can-i-use-a-custom-or-deterministic-rng-for-testing"><a class="header" href="#how-can-i-use-a-custom-or-deterministic-rng-for-testing">How can I use a custom or deterministic RNG for testing?</a></h2>
+<p>The <code>dev-tests-only</code> feature unseals the <code>rand::SecureRandom</code> trait, allowing you to provide your
+own implementation of <code>SecureRandom</code> for custom random number generation in tests.
+This is useful when you need reproducible test vectors or want to control the random bytes returned
+during testing.</p>
+<p>To enable this functionality, either:</p>
+<ul>
+<li>Add the <code>dev-tests-only</code> feature flag:</li>
+</ul>
+<pre><code class="language-toml">[dev-dependencies]
+aws-lc-rs = { version = &quot;1&quot;, features = [&quot;dev-tests-only&quot;] }
+</code></pre>
+<ul>
+<li>Or set the <code>AWS_LC_RS_DEV_TESTS_ONLY</code> environment variable:</li>
+</ul>
+<pre><code class="language-shell">AWS_LC_RS_DEV_TESTS_ONLY=1 cargo test
+</code></pre>
+<p>Once enabled, you can implement <code>aws_lc_rs::rand::unsealed::SecureRandom</code> for your own type.
+A blanket implementation will automatically provide the public <code>SecureRandom</code> trait for your type:</p>
+<pre><code class="language-rust ignore">use aws_lc_rs::error::Unspecified;
+use aws_lc_rs::rand::{unsealed, SecureRandom};
+
+#[derive(Debug)]
+struct DeterministicRandom {
+    seed: u8,
+}
+
+impl unsealed::SecureRandom for DeterministicRandom {
+    fn fill_impl(&amp;self, dest: &amp;mut [u8]) -&gt; Result&lt;(), Unspecified&gt; {
+        for (i, byte) in dest.iter_mut().enumerate() {
+            *byte = self.seed.wrapping_add(i as u8);
+        }
+        Ok(())
+    }
+}
+
+// DeterministicRandom now implements SecureRandom and can be used
+// anywhere a &amp;dyn SecureRandom is expected.</code></pre>
+<blockquote>
+<p><strong>Note:</strong> The <code>dev-tests-only</code> feature is restricted to dev/debug profile builds only. Attempting
+to use it in a release build will result in a compile-time error. This is a safety measure to
+prevent deterministic or weakened RNG implementations from being used in production code.</p>
+</blockquote>
+<p>See the <a href="https://github.com/aws/aws-lc-rs/blob/main/aws-lc-rs/tests/unsealed_rand_test.rs"><code>unsealed_rand_test.rs</code></a>
+file in the repository for additional examples.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="resources"><a class="header" href="#resources">Resources</a></h1>
 <h2 id="build-environment-variables"><a class="header" href="#build-environment-variables">Build Environment Variables</a></h2>
 <p>The <code>aws-lc-sys</code> crate supports several environment variables that can help configure or troubleshoot
@@ -820,6 +890,32 @@ used to eliminate this latency.</p>
 It is primarily useful for selecting different pre-generated bindings or symbol prefixes
 when building for targets that are compatible with another target's bindings.</p>
 </blockquote>
+</li>
+</ul>
+<h2 id="aws-lc-rs-environment-variables"><a class="header" href="#aws-lc-rs-environment-variables"><code>aws-lc-rs</code> Environment Variables</a></h2>
+<p>The <code>aws-lc-rs</code> crate supports the following environment variables for configuring build behavior.</p>
+<ul>
+<li>
+<p><strong><code>AWS_LC_RS_DEV_TESTS_ONLY</code></strong></p>
+<p>Enables development-only testing functionality without requiring the <code>dev-tests-only</code> feature flag.
+When enabled, the <code>rand::unsealed</code> module is exposed, allowing consumers to provide their own
+implementations of <code>SecureRandom</code> for deterministic or custom random number generation in tests.</p>
+<ul>
+<li><code>1</code> - Enable development testing functionality</li>
+<li><code>0</code> - Explicitly disable (overrides the <code>dev-tests-only</code> feature flag if set)</li>
+</ul>
+<p>This setting is restricted to dev/debug profile builds. Attempting to use it in a release build
+will result in a compilation panic.</p>
+<blockquote>
+<p><strong>Note:</strong> This environment variable can also override the <code>dev-tests-only</code> Cargo feature flag.
+If both the feature flag and the environment variable are present, the environment variable
+takes precedence.</p>
+</blockquote>
+</li>
+<li>
+<p><strong><code>AWS_LC_RS_DISABLE_SLOW_TESTS</code></strong></p>
+<p>When set to <code>1</code>, disables slow-running tests in the <code>aws-lc-rs</code> test suite. This can be useful
+for faster iteration during development.</p>
 </li>
 </ul>
 <h2 id="links"><a class="header" href="#links">Links</a></h2>

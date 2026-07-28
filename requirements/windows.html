@@ -212,6 +212,23 @@ scenarios or when using MSYS2/MinGW environments. When using Clang:</p>
 <li>Ensure <code>clang</code> or <code>clang-cl</code> is available in your PATH</li>
 <li>For MSYS2 environments, the <code>clang64</code> or <code>ucrt64</code> subsystems provide Clang toolchains</li>
 </ul>
+<h4 id="clang-driver-mode-on-the-msvc-abi"><a class="header" href="#clang-driver-mode-on-the-msvc-abi">Clang driver mode on the MSVC ABI</a></h4>
+<p>For <code>*-pc-windows-msvc</code> targets, the C compiler flag <em>dialect</em> is determined by the compiler's
+<strong>driver mode</strong>, not by the target ABI:</p>
+<ul>
+<li><code>clang-cl</code> (like <code>cl.exe</code>) runs in <strong>cl driver mode</strong> and takes MSVC-style flags (<code>/Od</code>, <code>/FI</code>, ...).</li>
+<li>plain <code>clang</code> (for example <code>CC=clang</code>, or cross-compiling with <a href="https://github.com/rust-cross/cargo-xwin"><code>cargo-xwin</code></a>) runs in <strong>GNU driver
+mode</strong> and takes GNU-style flags, even when targeting the MSVC ABI.</li>
+</ul>
+<p>Both driver modes are supported, and both are exercised in CI for <code>x86_64-pc-windows-msvc</code>. If you
+override <code>CC</code>, the rest of the build environment (such as <code>AR</code>) should match the driver mode of the
+compiler you select.</p>
+<blockquote>
+<p><strong>Note:</strong> If you build the C sources with LTO under plain <code>clang</code> (e.g. <code>CFLAGS=-flto=thin</code>), the
+resulting objects are LLVM bitcode, which the default MSVC <code>link.exe</code> cannot consume. Link with
+<code>lld-link</code> from the same LLVM toolchain (for example <code>RUSTFLAGS=-Clinker=lld-link</code>) so the bitcode
+is understood.</p>
+</blockquote>
 <h2 id="cmake"><a class="header" href="#cmake">CMake</a></h2>
 <p>CMake is only required for FIPS builds on Windows.</p>
 <ol>
