@@ -70,6 +70,64 @@ function sanity_check_sys_crate {
   echo Sanity check: SUCCESS
 }
 
+# Verifies that the packaged crate builds and tests against the dependency
+# versions currently published on crates.io. The manifest in the packaged
+# .crate has all `path` entries stripped, so dependency resolution comes from
+# the registry rather than the local workspace. Direct dependencies are pinned
+# to the *minimum* versions allowed by Cargo.toml to verify that the declared
+# version requirements are actually sufficient.
+#
+# This catches the failure that occurred with aws-lc-rs v1.17.2, which
+# depended on symbols only available in a not-yet-published aws-lc-fips-sys.
+# Local checks passed (path deps), but the published crate failed to build
+# with the `fips` feature.
+#
+# Usage: verify_crate_with_published_deps RELATIVE_CRATE_PATH CARGO_ARGS...
+#   Each CARGO_ARGS element is a (space-separated) set of arguments appended
+#   to `cargo test` for one build configuration.
+function verify_crate_with_published_deps {
+  local RELATIVE_CRATE_PATH=$1
+  shift
+  local FEATURE_CONFIGS=("$@")
+
+  local REPO_ROOT CRATE_DIR
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+  CRATE_DIR="${REPO_ROOT}/${RELATIVE_CRATE_PATH}"
+
+  local TEMP_TARGET_DIR TEMP_UNPACK_DIR
+  TEMP_TARGET_DIR=$(mktemp -d)
+  TEMP_UNPACK_DIR=$(mktemp -d)
+
+  pushd "${CRATE_DIR}" &>/dev/null
+  cargo package --no-verify --allow-dirty --target-dir "${TEMP_TARGET_DIR}"
+  popd &>/dev/null # "${CRATE_DIR}"
+
+  local CRATE_FILES UNPACKED_CRATE_DIRS
+  CRATE_FILES=("${TEMP_TARGET_DIR}"/package/*.crate)
+  tar xzf "${CRATE_FILES[0]}" -C "${TEMP_UNPACK_DIR}"
+  UNPACKED_CRATE_DIRS=("${TEMP_UNPACK_DIR}"/*)
+
+  pushd "${UNPACKED_CRATE_DIRS[0]}" &>/dev/null
+
+  export GOPROXY=direct
+
+  # Pin direct dependencies to the minimum versions allowed by Cargo.toml.
+  # This fails if a dependency version requirement has not been published yet.
+  cargo +nightly update -Zdirect-minimal-versions
+
+  local CONFIG
+  for CONFIG in "${FEATURE_CONFIGS[@]}"; do
+    # shellcheck disable=SC2086
+    cargo test --target-dir "${TEMP_TARGET_DIR}" ${CONFIG}
+  done
+
+  popd &>/dev/null # "${UNPACKED_CRATE_DIRS[0]}"
+
+  rm -rf "${TEMP_TARGET_DIR}" "${TEMP_UNPACK_DIR}" &>/dev/null || true
+
+  echo Published dependency check: SUCCESS
+}
+
 function run_prepublish_checks {
   local SCRIPT_DIR
   SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
