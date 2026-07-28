@@ -349,7 +349,28 @@ impl SystemLib {
             .ok_or("libcrypto parent directory not found")?;
         let include_dir = &self.layout.include_dir;
 
-        std::fs::copy(&bindings, out_dir().join("bindings.rs"))
+        let bindings_dest = out_dir().join("bindings.rs");
+        // `fs::copy` propagates a read-only source's permissions (issue #1193),
+        // so remove any stale copy before copying. Windows can't `remove_file`
+        // a read-only file, so clear the attribute first.
+        if bindings_dest.exists() {
+            if let Ok(metadata) = std::fs::metadata(&bindings_dest) {
+                let mut permissions = metadata.permissions();
+                if permissions.readonly() {
+                    #[allow(clippy::permissions_set_readonly_false)]
+                    permissions.set_readonly(false);
+                    let _ = std::fs::set_permissions(&bindings_dest, permissions);
+                }
+            }
+            std::fs::remove_file(&bindings_dest).map_err(|e| {
+                format!(
+                    "Failed to remove stale bindings at {}: {}",
+                    bindings_dest.display(),
+                    e
+                )
+            })?;
+        }
+        std::fs::copy(&bindings, &bindings_dest)
             .map_err(|e| format!("Failed to copy bindings from {}: {}", bindings.display(), e))?;
         emit_warning(format!(
             "Using pre-generated bindings from: {}",
