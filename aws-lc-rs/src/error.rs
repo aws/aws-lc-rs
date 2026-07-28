@@ -312,7 +312,6 @@ pub(crate) struct ErrorDetail {
     context: &'static str,
 }
 
-#[allow(dead_code)]
 impl ErrorDetail {
     /// Captures a failure of `kind` produced by `context`.
     pub(crate) const fn new(kind: ErrorKind, context: &'static str) -> Self {
@@ -340,6 +339,11 @@ impl ErrorDetail {
     }
 
     /// Authentication or signature verification failed.
+    //
+    // Not yet used: the verification paths in `evp_pkey.rs` still return
+    // `Unspecified` directly, and converting them ripples into ~9 tail-position
+    // call sites. Exercised by tests so the opaqueness invariant is pinned.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) const fn verification_failed(context: &'static str) -> Self {
         Self::new(ErrorKind::VerificationFailed, context)
     }
@@ -362,10 +366,10 @@ impl ErrorDetail {
 
 impl core::fmt::Display for ErrorDetail {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        if self.context.is_empty() {
-            f.write_str(self.kind.as_str())
+        if self.context().is_empty() {
+            f.write_str(self.kind().as_str())
         } else {
-            write!(f, "{} ({})", self.kind.as_str(), self.context)
+            write!(f, "{} ({})", self.kind().as_str(), self.context())
         }
     }
 }
@@ -391,17 +395,10 @@ impl From<ErrorDetail> for KeyRejected {
     }
 }
 
-// Lets code that still returns `Result<_, ()>` internally call functions that
-// now produce `ErrorDetail` via `?`. Every use of this conversion discards
-// detail, so it marks a path that has not been converted yet.
-impl From<ErrorDetail> for () {
-    fn from(_: ErrorDetail) -> Self {}
-}
-
-// The mirror of the above, for converting bottom-up: an inner function that
-// still returns `Unspecified` has no detail to contribute, so it widens to
-// `ErrorKind::Unspecified`. Each use marks an inner call that has not been
-// converted yet.
+// An inner function that still returns `Unspecified` has no detail to
+// contribute, so it widens to `ErrorKind::Unspecified`. This exists to allow
+// converting the crate bottom-up: each use marks an inner call that has not
+// been converted yet, so `grep` finds the remaining work.
 impl From<Unspecified> for ErrorDetail {
     fn from(_: Unspecified) -> Self {
         ErrorDetail::unspecified()

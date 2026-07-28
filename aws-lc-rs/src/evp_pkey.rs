@@ -220,7 +220,7 @@ impl LcPtr<EVP_PKEY> {
         let mut cbs = cbs::build_CBS(bytes);
         // Also checks the validity of the key
         let evp_pkey = LcPtr::new(unsafe { EVP_parse_public_key(&mut cbs) })
-            .map_err(|_| KeyRejected::invalid_encoding())?;
+            .map_err(|_| ErrorDetail::encoding("EVP_parse_public_key"))?;
         evp_pkey
             .as_const()
             .id()
@@ -236,7 +236,7 @@ impl LcPtr<EVP_PKEY> {
         let mut cbs = cbs::build_CBS(bytes);
         // Also checks the validity of the key
         let evp_pkey = LcPtr::new(unsafe { EVP_parse_private_key(&mut cbs) })
-            .map_err(|_| KeyRejected::invalid_encoding())?;
+            .map_err(|_| ErrorDetail::encoding("EVP_parse_private_key"))?;
         evp_pkey
             .as_const()
             .id()
