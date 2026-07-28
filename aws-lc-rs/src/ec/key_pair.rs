@@ -247,7 +247,7 @@ impl EcdsaKeyPair {
     pub fn sign_digest(&self, digest: &Digest) -> Result<Signature, Unspecified> {
         let out_sig = self
             .evp_pkey
-            .sign_digest(digest, No_EVP_PKEY_CTX_consumer)?;
+            .sign_digest(digest.as_ref(), No_EVP_PKEY_CTX_consumer)?;
         if self.algorithm.digest != digest.algorithm() {
             return Err(Unspecified);
         }

@@ -515,6 +515,22 @@ impl ParsedPublicKey {
         &self.key
     }
 
+    /// Returns the `PqdsaVerificationAlgorithm` this key was parsed under, or `None` if the
+    /// key is not a PQDSA key.
+    pub(crate) fn pqdsa_verification_algorithm(
+        &self,
+    ) -> Option<&'static PqdsaVerificationAlgorithm> {
+        if self.algorithm.type_id() != TypeId::of::<PqdsaVerificationAlgorithm>() {
+            return None;
+        }
+        // Same downcast as `parse_public_key` performs when selecting the parse routine.
+        #[allow(clippy::cast_ptr_alignment)]
+        Some(unsafe {
+            &*(self.algorithm as *const dyn VerificationAlgorithm)
+                .cast::<PqdsaVerificationAlgorithm>()
+        })
+    }
+
     /// Constructs a `ParsedPublicKey` directly from an already-built RSA
     /// `EVP_PKEY`, skipping the DER-encode / DER-decode round-trip that
     /// [`parse_public_key`] would otherwise perform. The SubjectPublicKeyInfo

@@ -308,7 +308,7 @@ fn verify_asn1_digest_signature(
     public_key: &LcPtr<EVP_PKEY>,
     signature: &[u8],
 ) -> Result<(), Unspecified> {
-    public_key.verify_digest_sig(digest, No_EVP_PKEY_CTX_consumer, signature)
+    public_key.verify_digest_sig(digest.as_ref(), No_EVP_PKEY_CTX_consumer, signature)
 }
 
 #[inline]

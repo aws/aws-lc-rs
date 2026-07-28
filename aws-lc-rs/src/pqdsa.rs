@@ -4,10 +4,24 @@
 pub(crate) mod key_pair;
 pub(crate) mod signature;
 
-use crate::aws_lc::{EVP_PKEY, EVP_PKEY_PQDSA, NID_MLDSA44, NID_MLDSA65, NID_MLDSA87};
+use crate::aws_lc::{
+    EVP_DigestFinalXOF, EVP_DigestInit_ex, EVP_DigestUpdate, EVP_shake256, EVP_PKEY,
+    EVP_PKEY_PQDSA, NID_MLDSA44, NID_MLDSA65, NID_MLDSA87,
+};
+use crate::digest::digest_ctx::DigestContext;
 use crate::error::{KeyRejected, Unspecified};
 use crate::ptr::LcPtr;
 use core::ffi::c_int;
+use core::ptr::null_mut;
+
+/// The largest external message representative length across all PQDSA algorithms.
+///
+/// Mirrors the role of [`crate::digest::MAX_OUTPUT_LEN`]: it sizes the fixed buffer inside
+/// the representative value type so one type can carry any algorithm's representative.
+pub(crate) const MAX_EXTERNAL_REPRESENTATIVE_LEN: usize = 64;
+
+/// The length in bytes of `tr = SHAKE256(public_key)` (`ML_DSA_TRBYTES`).
+pub(crate) const TR_LEN: usize = 64;
 
 #[derive(Debug, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
@@ -90,6 +104,80 @@ pub(crate) fn parse_pqdsa_public_key(
             EVP_PKEY_PQDSA,
         ))
         .and_then(|key| validate_pqdsa_evp_key(&key, id).map(|()| key))
+}
+
+/// Returns the length in bytes of the external message representative that `id` signs and
+/// verifies, or `None` if `id` does not support signing a precomputed representative.
+///
+/// This mirrors AWS-LC's `PQDSA.digest_len`, which is a field on the family-level `PQDSA`
+/// struct rather than on any one algorithm: the ability to sign a precomputed representative
+/// is modelled as a per-algorithm capability that individual algorithms opt into.
+///
+/// For ML-DSA the representative is `mu`, of length `ML_DSA_CRHBYTES` (64) for every
+/// parameter set. A future algorithm can only support this if its representative is a
+/// deterministic function of public inputs alone -- that holds for ML-DSA, but not for
+/// schemes that mix signer-chosen randomness into the message hash before signing (SLH-DSA
+/// derives it through a secret-keyed PRF; FN-DSA draws a fresh salt).
+//
+// This is deliberately an exhaustive `match` with no wildcard arm. Every PQDSA algorithm
+// supported today is an ML-DSA parameter set, so there is no reachable `None` case; writing
+// it this way means adding an algorithm to `AlgorithmID` is a compile error here, forcing a
+// deliberate decision instead of silently claiming or denying support for it. The `Option`
+// is therefore always `Some` today, and is kept so that adding an algorithm that does not
+// support this is not a breaking change to every caller.
+#[allow(clippy::unnecessary_wraps)]
+pub(crate) const fn external_representative_len(id: &AlgorithmID) -> Option<usize> {
+    match id {
+        AlgorithmID::ML_DSA_44 | AlgorithmID::ML_DSA_65 | AlgorithmID::ML_DSA_87 => Some(64),
+    }
+}
+
+/// Computes `tr = SHAKE256(public_key, 64)`, the public key hash that binds `mu` to a
+/// specific key. `raw_public_key` must be the raw (not X.509) public key encoding.
+pub(crate) fn compute_tr(raw_public_key: &[u8]) -> Result<[u8; TR_LEN], Unspecified> {
+    let mut tr = [0u8; TR_LEN];
+    shake256(&[raw_public_key], &mut tr)?;
+    Ok(tr)
+}
+
+/// Computes `mu`, the FIPS 204 "message representative", from a precomputed `tr`, squeezing
+/// `mu.len()` bytes:
+///
+/// ```text
+/// mu = SHAKE256(tr || 0x00 || len(context) || context || message, mu.len())
+/// ```
+///
+/// The `0x00` octet is the domain separator selecting "pure" ML-DSA (as opposed to
+/// HashML-DSA, which uses `0x01`).
+pub(crate) fn compute_mu(
+    tr: &[u8; TR_LEN],
+    context: &[u8],
+    message: &[u8],
+    mu: &mut [u8],
+) -> Result<(), Unspecified> {
+    // FIPS 204 limits the context string to 255 bytes, which is also what the single
+    // length octet below can encode.
+    let context_len = u8::try_from(context.len()).map_err(|_| Unspecified)?;
+
+    shake256(&[tr, &[0u8, context_len], context, message], mu)
+}
+
+/// Absorbs each element of `inputs` in order and squeezes `output.len()` bytes.
+fn shake256(inputs: &[&[u8]], output: &mut [u8]) -> Result<(), Unspecified> {
+    let mut md_ctx = DigestContext::new_uninit();
+    if 1 != unsafe { EVP_DigestInit_ex(md_ctx.as_mut_ptr(), EVP_shake256(), null_mut()) } {
+        return Err(Unspecified);
+    }
+    for input in inputs {
+        if 1 != unsafe { EVP_DigestUpdate(md_ctx.as_mut_ptr(), input.as_ptr().cast(), input.len()) }
+        {
+            return Err(Unspecified);
+        }
+    }
+    if 1 != unsafe { EVP_DigestFinalXOF(md_ctx.as_mut_ptr(), output.as_mut_ptr(), output.len()) } {
+        return Err(Unspecified);
+    }
+    Ok(())
 }
 
 #[cfg(test)]

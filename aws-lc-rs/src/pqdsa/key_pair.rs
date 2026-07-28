@@ -257,6 +257,10 @@ impl PqdsaKeyPair {
     pub fn private_key(&self) -> PqdsaPrivateKey<'_> {
         PqdsaPrivateKey(self)
     }
+
+    pub(crate) fn evp_pkey(&self) -> &LcPtr<EVP_PKEY> {
+        &self.evp_pkey
+    }
 }
 
 unsafe impl Send for PqdsaKeyPair {}

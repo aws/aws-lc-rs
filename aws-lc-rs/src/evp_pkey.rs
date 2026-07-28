@@ -15,7 +15,6 @@ use crate::aws_lc::{
 };
 use crate::cbb::LcCBB;
 use crate::digest::digest_ctx::DigestContext;
-use crate::digest::Digest;
 use crate::error::{KeyRejected, Unspecified};
 use crate::fips::indicator_check;
 use crate::pkcs8::Version;
@@ -374,7 +373,7 @@ impl LcPtr<EVP_PKEY> {
 
     pub(crate) fn sign_digest<F>(
         &self,
-        digest: &Digest,
+        digest: &[u8],
         padding_fn: Option<F>,
     ) -> Result<Box<[u8]>, Unspecified>
     where
@@ -390,7 +389,7 @@ impl LcPtr<EVP_PKEY> {
             pad_fn(pctx.as_mut_ptr())?;
         }
 
-        let msg_digest = digest.as_ref();
+        let msg_digest = digest;
         let mut sig_len = 0;
         if 1 != unsafe {
             EVP_PKEY_sign(
@@ -473,7 +472,7 @@ impl LcPtr<EVP_PKEY> {
 
     pub(crate) fn verify_digest_sig<F>(
         &self,
-        digest: &Digest,
+        digest: &[u8],
         padding_fn: Option<F>,
         signature: &[u8],
     ) -> Result<(), Unspecified>
@@ -490,7 +489,7 @@ impl LcPtr<EVP_PKEY> {
             pad_fn(pctx.as_mut_ptr())?;
         }
 
-        let msg_digest = digest.as_ref();
+        let msg_digest = digest;
 
         if 1 == unsafe {
             indicator_check!(EVP_PKEY_verify(
