@@ -395,3 +395,27 @@ jobs:
             echo "SUCCESS: All object files have .note.GNU-stack section"
             exit 0
           fi
+
+  docs:
+    if: github.repository_owner == 'aws'
+    name: Build and test documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '>=1.18'
+      # Keep the mdbook version and commands in sync with deploy-docs.yml
+      - name: Build and Test User Guide
+        run: |
+          curl -L https://github.com/rust-lang/mdBook/releases/download/v0.4.34/mdbook-v0.4.34-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          ./mdbook build book
+          ./mdbook test book
+      - name: Build Documentation
+        run: cargo doc --features fips,unstable --no-deps --workspace

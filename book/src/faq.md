@@ -81,7 +81,7 @@ AWS_LC_RS_DEV_TESTS_ONLY=1 cargo test
 Once enabled, you can implement `aws_lc_rs::rand::unsealed::SecureRandom` for your own type.
 A blanket implementation will automatically provide the public `SecureRandom` trait for your type:
 
-```rust
+```rust,ignore
 use aws_lc_rs::error::Unspecified;
 use aws_lc_rs::rand::{unsealed, SecureRandom};
 
