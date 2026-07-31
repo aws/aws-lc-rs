@@ -512,7 +512,7 @@ jobs:
         with:
           submodules: "recursive"
       - name: Prepare VM
-        uses: vmactions/netbsd-vm@v1
+        uses: vmactions/netbsd-vm@v1.4.4
         with:
           release: ${{ matrix.release }}
           arch: ${{ matrix.arch }}
