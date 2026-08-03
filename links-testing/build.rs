@@ -61,7 +61,10 @@ fn build_and_link(links: &str, target_name: &str) {
     assert_eq!(libcrypto_path.parent(), Some(libdir.as_path()));
 
     let link_kind = env(format!("DEP_{links}_LINK_KIND"));
-    assert!(matches!(link_kind.as_str(), "static" | "dylib"));
+    assert!(
+        matches!(link_kind.as_str(), "static" | "dylib"),
+        "unexpected exported link_kind: {link_kind:?}"
+    );
     if link_kind == "static" {
         // a static artifact must be an archive (`.a`) or MSVC library (`.lib`)
         let extension = libcrypto_path.extension().and_then(|e| e.to_str());
