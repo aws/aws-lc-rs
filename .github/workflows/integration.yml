@@ -131,7 +131,9 @@ jobs:
     env:
       # 'default' leaves the linkage choice to the builder; 'dynamic' forces a
       # shared-library build so the exported artifact-path metadata is
-      # validated for both link kinds.
+      # validated for both link kinds. 'default' sets these to the empty string
+      # (Actions cannot omit an env key conditionally), which the builder's
+      # `parse_to_bool` treats the same as unset.
       AWS_LC_SYS_STATIC: ${{ (matrix.linkage == 'dynamic' && '0') || '' }}
       AWS_LC_FIPS_SYS_STATIC: ${{ (matrix.linkage == 'dynamic' && '0') || '' }}
     strategy:
@@ -140,6 +142,24 @@ jobs:
         os: [ ubuntu-latest, macos-15-intel, macos-latest, windows-latest ]
         features: [ aws-lc-rs, aws-lc-rs-fips, aws-lc-sys, aws-lc-fips-sys, aws-lc-sys-ssl, aws-lc-fips-sys-ssl ]
         linkage: [ default, dynamic ]
+        # Placeholder dimension: an `include` entry whose keys all match an
+        # existing combination is merged into it rather than adding a job. The
+        # `target` values below conflict with this one, so they create new jobs
+        # instead of silently retargeting the windows-msvc jobs. Do not remove.
+        target: [ '' ]
+        exclude:
+          # FIPS builds already default to a shared library everywhere except
+          # Linux (see `OutputLibType::default`), so 'dynamic' would rebuild
+          # exactly what 'default' builds on macOS and Windows.
+          - { os: macos-15-intel, features: aws-lc-rs-fips, linkage: dynamic }
+          - { os: macos-15-intel, features: aws-lc-fips-sys, linkage: dynamic }
+          - { os: macos-15-intel, features: aws-lc-fips-sys-ssl, linkage: dynamic }
+          - { os: macos-latest, features: aws-lc-rs-fips, linkage: dynamic }
+          - { os: macos-latest, features: aws-lc-fips-sys, linkage: dynamic }
+          - { os: macos-latest, features: aws-lc-fips-sys-ssl, linkage: dynamic }
+          - { os: windows-latest, features: aws-lc-rs-fips, linkage: dynamic }
+          - { os: windows-latest, features: aws-lc-fips-sys, linkage: dynamic }
+          - { os: windows-latest, features: aws-lc-fips-sys-ssl, linkage: dynamic }
         include:
           # MinGW dynamic builds produce `lib*.dll.a` import libraries;
           # exercise the exported artifact-path metadata on windows-gnu.
@@ -162,6 +182,18 @@ jobs:
       - name: Install Rust target
         if: ${{ matrix.target != '' }}
         run: rustup target add ${{ matrix.target }}
+      - name: Install MinGW toolchain
+        if: ${{ endsWith(matrix.target, '-windows-gnu') }}
+        uses: bwoodsend/setup-winlibs-action@v1
+        with:
+          architecture: x86_64
+      - name: Use Ninja for windows-gnu CMake builds
+        # The default generator for *-windows-gnu on a Windows host is "MinGW
+        # Makefiles", which CMake refuses to use when sh.exe is on PATH -- it
+        # always is here, via Git for Windows. Ninja is installed below.
+        if: ${{ endsWith(matrix.target, '-windows-gnu') }}
+        shell: bash
+        run: echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
       - name: Install NASM on Windows
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
