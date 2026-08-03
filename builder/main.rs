@@ -343,6 +343,11 @@ impl OutputLibType {
         }
     }
 
+    /// Returns the platform-specific filename for a library named `name`.
+    ///
+    /// On MSVC a static archive and a DLL import library are both `{name}.lib`,
+    /// so both linkages return the same name; `system_library::probe_lib`
+    /// disambiguates them via a sibling `../bin/{name}.dll`.
     fn library_filename(self, name: &str) -> String {
         match (target_os().as_str(), target_env().as_str(), self) {
             ("windows", "msvc", _) => format!("{name}.lib"),
