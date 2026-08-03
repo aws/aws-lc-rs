@@ -66,10 +66,9 @@ if (BORINGSSL_PREFIX)
     else()
         set(TARGET_PREFIX "lib${BORINGSSL_PREFIX}")
     endif()
-    # PREFIX renames the library artifact itself; IMPORT_PREFIX renames the
-    # import library generated for shared builds on DLL platforms (e.g.
-    # MinGW's lib*.dll.a), keeping it discoverable under the prefixed name.
-    # IMPORT_PREFIX is ignored on non-DLL platforms.
+    # PREFIX renames the library itself; IMPORT_PREFIX renames the import
+    # library produced for shared builds on DLL platforms (MinGW's lib*.dll.a),
+    # keeping it discoverable under the prefixed name. Ignored elsewhere.
     set_my_target_properties(PREFIX ${TARGET_PREFIX})
     set_my_target_properties(IMPORT_PREFIX ${TARGET_PREFIX})
 

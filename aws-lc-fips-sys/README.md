@@ -14,10 +14,14 @@ Downstream Cargo build scripts that compile additional C code against this
 AWS-LC FIPS build can use the exported `include`, `libdir`, `libcrypto_path`,
 and `link_kind` metadata. When the `ssl` feature is enabled, `libssl_path` is
 also exported. Cargo exposes these values to direct dependents as versioned
-`DEP_AWS_LC_FIPS_*` environment variables. On Windows, `libcrypto_path` and
-`libssl_path` refer to the link-time artifact -- for dynamic builds this is the
-import library (`*.lib` for MSVC, `lib*.dll.a` for MinGW), not the runtime
-DLL; the DLL is located in `libdir`.
+`DEP_AWS_LC_FIPS_*` environment variables.
+
+On Windows, `libcrypto_path` and `libssl_path` refer to the link-time artifact
+-- for dynamic builds this is the import library (`*.lib` for MSVC,
+`lib*.dll.a` for MinGW), not the runtime DLL. For builds from source the DLL is
+placed alongside the import library in `libdir`; when linking against a
+pre-installed AWS-LC (`AWS_LC_FIPS_SYS_SYSTEM_DIR`) the DLL follows the CMake
+install layout and lives in `bin/` instead.
 
 ## FIPS
 
