@@ -412,6 +412,10 @@ impl SystemLib {
             println!("cargo:rerun-if-changed={}", ssl_lib.path.display());
         }
 
+        // After the libcrypto/libssl directives: GNU ld needs the providers to
+        // follow the archive that references them.
+        crate::emit_system_libs_metadata();
+
         println!("cargo:include={}", include_dir.display());
 
         println!("cargo:rerun-if-changed={}", include_dir.display());

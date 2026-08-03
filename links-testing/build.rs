@@ -47,6 +47,13 @@ fn build_and_link(links: &str, target_name: &str) {
     let libcrypto = env(format!("DEP_{links}_LIBCRYPTO"));
     println!("cargo:rustc-link-lib={libcrypto}");
 
+    // The sys crate's own directives never reach us -- nothing here references
+    // its rlib -- so the required system libraries come from the metadata.
+    let system_libs = env(format!("DEP_{links}_SYSTEM_LIBS"));
+    for lib in system_libs.split(',').filter(|lib| !lib.is_empty()) {
+        println!("cargo:rustc-link-lib={lib}");
+    }
+
     // ensure downstream native builds receive the exact artifact location
     let libdir = std::path::PathBuf::from(env(format!("DEP_{links}_LIBDIR")));
     let libcrypto_path = std::path::PathBuf::from(env(format!("DEP_{links}_LIBCRYPTO_PATH")));

@@ -1394,13 +1394,7 @@ pub(crate) fn emit_source_build_metadata(manifest_dir: &Path, build_prefix: &Opt
         system_library::emit_fips_version(&get_aws_lc_include_path(manifest_dir)).unwrap();
     }
 
-    // MinGW/GCC ignores `#pragma comment(lib, "bcrypt.lib")`, so we must
-    // link explicitly. The upstream CMakeLists.txt forces _WIN32_WINNT_WIN7
-    // for MINGW+GCC, activating the BCryptGenRandom codepath.
-    // See: https://github.com/aws/aws-lc/pull/3239
-    if target().contains("-windows-gnu") {
-        println!("cargo:rustc-link-lib=bcrypt");
-    }
+    emit_system_libs_metadata();
 
     println!(
         "cargo:include={}",
@@ -1418,6 +1412,35 @@ pub(crate) fn emit_source_build_metadata(manifest_dir: &Path, build_prefix: &Opt
     }
 
     println!("cargo:rerun-if-changed=aws-lc/");
+}
+
+/// System libraries that AWS-LC itself requires, beyond its own artifacts.
+///
+/// The `-windows-gnu` match also covers `-windows-gnullvm` (same MinGW ABI).
+fn required_system_libs(target: &str) -> Vec<&'static str> {
+    let mut libs = Vec::new();
+
+    // MinGW/GCC ignores `#pragma comment(lib, "bcrypt.lib")`, so we must
+    // link explicitly. The upstream CMakeLists.txt forces _WIN32_WINNT_WIN7
+    // for MINGW+GCC, activating the BCryptGenRandom codepath.
+    // See: https://github.com/aws/aws-lc/pull/3239
+    if target.contains("-windows-gnu") {
+        libs.push("bcrypt");
+    }
+
+    libs
+}
+
+/// Links the system libraries AWS-LC needs and exports the same list as
+/// `system_libs`, so the directives and the metadata cannot drift. Consumers
+/// cannot infer these from the artifact paths, and Cargo only propagates our
+/// directives to crates that link the sys crate's rlib.
+pub(crate) fn emit_system_libs_metadata() {
+    let libs = required_system_libs(&target());
+    for lib in &libs {
+        println!("cargo:rustc-link-lib={lib}");
+    }
+    println!("cargo:system_libs={}", libs.join(","));
 }
 
 /// Exports stable, absolute native-library locations for downstream build
@@ -1788,6 +1811,46 @@ mod tests {
         assert_eq!(parse_to_bool("invalid"), None);
         assert_eq!(parse_to_bool("maybe"), None);
         assert_eq!(parse_to_bool("   "), None);
+    }
+
+    // -------------------------------------------------------------------------
+    // required_system_libs tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_required_system_libs_mingw_targets_need_bcrypt() {
+        for target in [
+            "x86_64-pc-windows-gnu",
+            "i686-pc-windows-gnu",
+            // gnullvm shares the MinGW ABI, and the substring match covers it.
+            "aarch64-pc-windows-gnullvm",
+        ] {
+            assert_eq!(
+                required_system_libs(target),
+                ["bcrypt"],
+                "expected bcrypt for {target}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_required_system_libs_empty_elsewhere() {
+        for target in [
+            // MSVC gets bcrypt via `#pragma comment(lib, ...)`.
+            "x86_64-pc-windows-msvc",
+            "aarch64-pc-windows-msvc",
+            "aarch64-apple-darwin",
+            // Must not be confused by the unrelated `-gnu` environment.
+            "x86_64-unknown-linux-gnu",
+            "aarch64-unknown-linux-musl",
+            "aarch64-linux-android",
+        ] {
+            assert!(
+                required_system_libs(target).is_empty(),
+                "unexpected system libs for {target}: {:?}",
+                required_system_libs(target)
+            );
+        }
     }
 
     // -------------------------------------------------------------------------
