@@ -1052,7 +1052,7 @@ impl crate::Builder for CcBuilder {
             &self.build_prefix,
         );
 
-        crate::emit_source_build_metadata(&self.manifest_dir);
+        crate::emit_source_build_metadata(&self.manifest_dir, &self.build_prefix);
 
         Ok(())
     }

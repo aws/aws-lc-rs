@@ -1387,7 +1387,7 @@ fn main() {
 /// Emits the shared post-build cargo metadata for source-based builders
 /// (`CMake` and CC). This sets up include paths, exports library and
 /// configuration names for downstream crates, and registers rerun triggers.
-pub(crate) fn emit_source_build_metadata(manifest_dir: &Path) {
+pub(crate) fn emit_source_build_metadata(manifest_dir: &Path, build_prefix: &Option<String>) {
     // Only aws-lc-fips-sys consumes the generated FIPS-version constant; a
     // FIPS-flavored aws-lc-sys build reports a module version of 0.
     if is_fips_crate() {
@@ -1407,10 +1407,14 @@ pub(crate) fn emit_source_build_metadata(manifest_dir: &Path) {
         setup_include_paths(&out_dir(), manifest_dir).display()
     );
 
-    // export the artifact names
-    println!("cargo:libcrypto={}_crypto", prefix_string());
+    // Derive the artifact names from `build_prefix`, not `prefix_string()`:
+    // with `AWS_LC_SYS_NO_PREFIX` set the libraries are built unprefixed.
+    println!(
+        "cargo:libcrypto={}",
+        OutputLib::Crypto.libname(build_prefix)
+    );
     if cfg!(feature = "ssl") {
-        println!("cargo:libssl={}_ssl", prefix_string());
+        println!("cargo:libssl={}", OutputLib::Ssl.libname(build_prefix));
     }
 
     println!("cargo:rerun-if-changed=aws-lc/");
