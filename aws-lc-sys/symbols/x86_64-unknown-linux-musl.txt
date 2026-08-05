@@ -1056,6 +1056,7 @@ ERR_set_error_data
 ERR_set_mark
 EVP_AEAD_CTX_aead
 EVP_AEAD_CTX_cleanup
+EVP_AEAD_CTX_copy
 EVP_AEAD_CTX_deserialize_state
 EVP_AEAD_CTX_free
 EVP_AEAD_CTX_get_aead_id
@@ -2832,6 +2833,7 @@ abi_test_trampoline
 abi_test_unwind_return
 abi_test_unwind_start
 abi_test_unwind_stop
+aead_ctx_copy_state_trivial
 aes128gcmsiv_aes_ks
 aes128gcmsiv_aes_ks_enc_x1
 aes128gcmsiv_dec
