@@ -1625,32 +1625,135 @@ fn rsa_keypair_from_components_rejects_inconsistent() {
         component[component.len() - 1] ^= 0x02;
     }
 
+    fn expect_inconsistent(components: &RsaKeyPairComponents<Vec<u8>>, what: &str) {
+        let err = RsaKeyPair::from_components(components).expect_err(what);
+        assert_eq!("InconsistentComponents", err.to_string(), "{what}");
+    }
+
     // n != p * q
     let mut components = rsa_test_key_pair_components();
     corrupt_last_byte(&mut components.public_key.n);
-    RsaKeyPair::from_components(&components).expect_err("modified n");
+    expect_inconsistent(&components, "modified n");
 
     // p and q swapped: n == q * p still holds, but the CRT parameters are
     // inconsistent with the swapped factors.
     let mut components = rsa_test_key_pair_components();
     std::mem::swap(&mut components.p, &mut components.q);
-    RsaKeyPair::from_components(&components).expect_err("swapped p and q");
+    expect_inconsistent(&components, "swapped p and q");
 
     // d inconsistent with e.
     let mut components = rsa_test_key_pair_components();
     corrupt_last_byte(&mut components.d);
-    RsaKeyPair::from_components(&components).expect_err("modified d");
+    expect_inconsistent(&components, "modified d");
 
     // Inconsistent CRT parameters.
     let mut components = rsa_test_key_pair_components();
     corrupt_last_byte(&mut components.dP);
-    RsaKeyPair::from_components(&components).expect_err("modified dP");
+    expect_inconsistent(&components, "modified dP");
 
     let mut components = rsa_test_key_pair_components();
     corrupt_last_byte(&mut components.dQ);
-    RsaKeyPair::from_components(&components).expect_err("modified dQ");
+    expect_inconsistent(&components, "modified dQ");
 
     let mut components = rsa_test_key_pair_components();
     corrupt_last_byte(&mut components.qInv);
-    RsaKeyPair::from_components(&components).expect_err("modified qInv");
+    expect_inconsistent(&components, "modified qInv");
+}
+
+// A `PublicKeyComponents` value must be accepted (or rejected) consistently by
+// every API that consumes it: the type documents `n` and `e` as being encoded
+// without leading zeros, so `from_components` must enforce that too rather than
+// accepting keys that the public-key APIs go on to reject.
+#[test]
+fn rsa_keypair_from_components_rejects_leading_zero_public_components() {
+    let cases: [(&str, fn(&mut RsaKeyPairComponents<Vec<u8>>)); 4] = [
+        ("leading zero on n", |c| c.public_key.n.insert(0, 0u8)),
+        ("leading zero on e", |c| c.public_key.e.insert(0, 0u8)),
+        ("empty n", |c| c.public_key.n.clear()),
+        ("empty e", |c| c.public_key.e.clear()),
+    ];
+
+    for (label, mutate) in cases {
+        let mut components = rsa_test_key_pair_components();
+        mutate(&mut components);
+
+        let err = RsaKeyPair::from_components(&components).expect_err(label);
+        assert_eq!("InvalidEncoding", err.to_string(), "{label}");
+
+        // The pre-existing public-key APIs must agree.
+        let public_key = RsaPublicKeyComponents {
+            n: components.public_key.n.clone(),
+            e: components.public_key.e.clone(),
+        };
+        assert!(
+            AsDer::<PublicKeyX509Der>::as_der(&public_key).is_err(),
+            "{label}: as_der accepted what from_components rejected"
+        );
+        let encrypting_key: Result<PublicEncryptingKey, _> = public_key.try_into();
+        assert!(
+            encrypting_key.is_err(),
+            "{label}: PublicEncryptingKey accepted what from_components rejected"
+        );
+    }
+}
+
+// Leading zeros on the *private* components are accepted: the type makes no
+// claim about their encoding, and the integers they decode to are unchanged.
+#[test]
+fn rsa_keypair_from_components_allows_leading_zero_private_components() {
+    let mut components = rsa_test_key_pair_components();
+    for component in [
+        &mut components.d,
+        &mut components.p,
+        &mut components.q,
+        &mut components.dP,
+        &mut components.dQ,
+        &mut components.qInv,
+    ] {
+        component.insert(0, 0u8);
+    }
+
+    let key_pair = RsaKeyPair::from_components(&components).expect("valid components");
+    let from_der =
+        RsaKeyPair::from_der(include_bytes!("data/rsa_test_private_key_2048.der")).unwrap();
+    assert_eq!(
+        key_pair.public_key().as_ref(),
+        from_der.public_key().as_ref()
+    );
+}
+
+// Exercises the accepted key-size window (2048 to 8192 bits) and the component
+// encoding rules against real keys. Kept in a test-vector file because the
+// components of the larger keys are bulky.
+#[test]
+fn rsa_from_components_test() {
+    test::run(
+        test_file!("data/rsa_from_components_tests.txt"),
+        |section, test_case| {
+            assert_eq!(section, "");
+
+            let components = RsaKeyPairComponents {
+                public_key: RsaPublicKeyComponents {
+                    n: test_case.consume_bytes("N"),
+                    e: test_case.consume_bytes("E"),
+                },
+                d: test_case.consume_bytes("D"),
+                p: test_case.consume_bytes("P"),
+                q: test_case.consume_bytes("Q"),
+                dP: test_case.consume_bytes("DP"),
+                dQ: test_case.consume_bytes("DQ"),
+                qInv: test_case.consume_bytes("QInv"),
+            };
+            let error = test_case.consume_optional_string("Error");
+
+            match (RsaKeyPair::from_components(&components), error) {
+                (Ok(_), None) => (),
+                (Err(e), None) => panic!("Failed with error \"{e}\", but expected to succeed"),
+                (Ok(_), Some(e)) => panic!("Succeeded, but expected error \"{e}\""),
+                (Err(actual), Some(expected)) => assert_eq!(format!("{actual}"), expected),
+            }
+
+            Ok(())
+        },
+    );
 }
