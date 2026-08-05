@@ -127,7 +127,7 @@ pub(crate) fn is_fips_build() -> bool {
     is_fips_crate() || cfg!(feature = "fips")
 }
 
-fn is_fips_crate() -> bool {
+pub(crate) fn is_fips_crate() -> bool {
     crate_name().contains("fips")
 }
 
@@ -775,6 +775,7 @@ static mut SYS_NO_ASM: bool = false;
 static mut SYS_PREBUILT_NASM: Option<bool> = None;
 static mut SYS_CMAKE_BUILDER: Option<bool> = None;
 static mut SYS_NO_PREGENERATED_SRC: bool = false;
+static mut SYS_SMALL: Option<bool> = None;
 static mut SYS_EFFECTIVE_TARGET: String = String::new();
 static mut SYS_NO_JITTER_ENTROPY: Option<bool> = None;
 static mut SYS_NO_U1_BINDINGS: Option<bool> = None;
@@ -799,6 +800,7 @@ fn initialize() {
         SYS_C_STD = CStdRequested::from_env();
         SYS_CMAKE_BUILDER = env_crate_var_to_bool("CMAKE_BUILDER");
         SYS_NO_PREGENERATED_SRC = env_crate_var_to_bool("NO_PREGENERATED_SRC").unwrap_or(false);
+        SYS_SMALL = env_crate_var_to_bool("SMALL");
         SYS_EFFECTIVE_TARGET = optional_env_crate_target("EFFECTIVE_TARGET").unwrap_or_default();
         SYS_NO_JITTER_ENTROPY = env_crate_var_to_bool("NO_JITTER_ENTROPY");
         SYS_NO_U1_BINDINGS = env_crate_var_to_bool("NO_U1_BINDINGS");
@@ -818,6 +820,15 @@ fn initialize() {
         !is_fips_crate() || is_fips_build(),
         "aws-lc-fips-sys requires 'fips' feature to be enabled.",
     );
+
+    // Emitted here because is_small() is called multiple times per build.
+    if is_fips_crate() && is_small() {
+        emit_warning(
+            "OPENSSL_SMALL is being applied to a FIPS build. \
+             This changes the compiled module and may affect FIPS validation status. \
+             Consult your compliance requirements before shipping this configuration.",
+        );
+    }
 
     if !is_external_bindgen_requested().unwrap_or(false)
         && (is_pregenerating_bindings() || !has_bindgen_feature())
@@ -917,6 +928,20 @@ fn is_external_bindgen_requested() -> Option<bool> {
 
 fn is_no_asm() -> bool {
     unsafe { SYS_NO_ASM }
+}
+
+pub(crate) fn is_small() -> bool {
+    // An explicit setting takes precedence over opt-level detection.
+    if let Some(explicit) = unsafe { SYS_SMALL } {
+        return explicit;
+    }
+    // aws-lc-fips-sys tracks a certification-track FIPS module whose exact shape
+    // matters: size optimization requires an explicit AWS_LC_FIPS_SYS_SMALL=1.
+    // Mainline FIPS-mode builds (`fips` feature) use normal opt-level detection.
+    if is_fips_crate() {
+        return false;
+    }
+    matches!(cargo_env("OPT_LEVEL").as_str(), "z" | "s")
 }
 
 #[allow(static_mut_refs)]

@@ -1,0 +1,17 @@
+[package]
+name = "binary-size"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Standalone crate (not part of the main workspace) for binary-size measurement.
+[workspace]
+
+[dependencies]
+aws-lc-rs = { path = "../../aws-lc-rs" }
+
+[profile.release]
+lto = false
+codegen-units = 16
+panic = "abort"
+strip = true
