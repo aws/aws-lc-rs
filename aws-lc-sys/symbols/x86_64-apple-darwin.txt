@@ -43,6 +43,7 @@ abi_test_unwind_stop
 ACCESS_DESCRIPTION_free
 ACCESS_DESCRIPTION_it
 ACCESS_DESCRIPTION_new
+aead_ctx_copy_state_trivial
 AES_cbc_encrypt
 AES_cfb1_encrypt
 AES_cfb128_encrypt
@@ -1607,6 +1608,7 @@ EVP_aead_aes_256_gcm_tls13
 EVP_aead_chacha20_poly1305
 EVP_AEAD_CTX_aead
 EVP_AEAD_CTX_cleanup
+EVP_AEAD_CTX_copy
 EVP_AEAD_CTX_deserialize_state
 EVP_AEAD_CTX_free
 EVP_AEAD_CTX_get_aead_id
