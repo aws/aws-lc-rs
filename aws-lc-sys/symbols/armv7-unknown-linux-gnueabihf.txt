@@ -1056,6 +1056,7 @@ ERR_set_error_data
 ERR_set_mark
 EVP_AEAD_CTX_aead
 EVP_AEAD_CTX_cleanup
+EVP_AEAD_CTX_copy
 EVP_AEAD_CTX_deserialize_state
 EVP_AEAD_CTX_free
 EVP_AEAD_CTX_get_aead_id
@@ -2821,6 +2822,7 @@ abi_test_clobber_r7
 abi_test_clobber_r8
 abi_test_clobber_r9
 abi_test_trampoline
+aead_ctx_copy_state_trivial
 aes_ctr_set_key
 aes_hw_cbc_encrypt
 aes_hw_ctr32_encrypt_blocks
