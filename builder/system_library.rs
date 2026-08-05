@@ -12,7 +12,7 @@
 
 use crate::fips_probe::verify_fips_install;
 use crate::{
-    crate_env_var_name, emit_rustc_cfg, emit_warning, is_fips_build, is_fips_crate,
+    copy_writable, crate_env_var_name, emit_rustc_cfg, emit_warning, is_fips_build, is_fips_crate,
     is_static_library, link_fips_runtime_check, out_dir, target_env, target_os, Builder,
     OutputLibType,
 };
@@ -349,29 +349,7 @@ impl SystemLib {
             .ok_or("libcrypto parent directory not found")?;
         let include_dir = &self.layout.include_dir;
 
-        let bindings_dest = out_dir().join("bindings.rs");
-        // `fs::copy` propagates a read-only source's permissions (issue #1193),
-        // so remove any stale copy before copying. Windows can't `remove_file`
-        // a read-only file, so clear the attribute first.
-        if bindings_dest.exists() {
-            if let Ok(metadata) = std::fs::metadata(&bindings_dest) {
-                let mut permissions = metadata.permissions();
-                if permissions.readonly() {
-                    #[allow(clippy::permissions_set_readonly_false)]
-                    permissions.set_readonly(false);
-                    let _ = std::fs::set_permissions(&bindings_dest, permissions);
-                }
-            }
-            std::fs::remove_file(&bindings_dest).map_err(|e| {
-                format!(
-                    "Failed to remove stale bindings at {}: {}",
-                    bindings_dest.display(),
-                    e
-                )
-            })?;
-        }
-        std::fs::copy(&bindings, &bindings_dest)
-            .map_err(|e| format!("Failed to copy bindings from {}: {}", bindings.display(), e))?;
+        copy_writable(&bindings, &out_dir().join("bindings.rs"))?;
         emit_warning(format!(
             "Using pre-generated bindings from: {}",
             bindings.display()

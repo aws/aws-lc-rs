@@ -62,6 +62,22 @@ jobs:
         working-directory: ${{ matrix.crate_dir }}
         run: cargo clippy ${{ matrix.features }} --all-targets -- -W clippy::all -W clippy::pedantic -D warnings
 
+  # The clippy job above runs on Linux, so every #[cfg(windows)] block in the
+  # builder is cfg-stripped before lints run. builder-test compiles the builder
+  # as a plain lib, so this lints that code without building AWS-LC. `--lib`
+  # skips the builder's test modules, which have pre-existing findings.
+  clippy-builder-windows:
+    if: github.repository_owner == 'aws'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --component clippy --no-self-update
+          rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
+      - name: Run cargo clippy (builder)
+        run: cargo clippy -p builder-test --lib -- -W clippy::all -W clippy::pedantic -D warnings
+
   apidiff:
     if: github.repository_owner == 'aws' && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
