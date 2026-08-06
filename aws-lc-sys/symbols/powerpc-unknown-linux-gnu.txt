@@ -1049,6 +1049,7 @@ ERR_set_error_data
 ERR_set_mark
 EVP_AEAD_CTX_aead
 EVP_AEAD_CTX_cleanup
+EVP_AEAD_CTX_copy
 EVP_AEAD_CTX_deserialize_state
 EVP_AEAD_CTX_free
 EVP_AEAD_CTX_get_aead_id
@@ -2782,6 +2783,7 @@ X509v3_get_ext_count
 a2i_ASN1_INTEGER
 a2i_IPADDRESS
 a2i_IPADDRESS_NC
+aead_ctx_copy_state_trivial
 aes_ctr_set_key
 aes_nohw_cbc_encrypt
 aes_nohw_ctr32_encrypt_blocks

@@ -9,7 +9,7 @@
 #define BORINGSSL_PREFIX_SYMBOLS_ASM_H
 
 #ifndef BORINGSSL_PREFIX
-#define BORINGSSL_PREFIX aws_lc_0_43_0
+#define BORINGSSL_PREFIX aws_lc_0_44_0
 #endif // BORINGSSL_PREFIX
 
 // On iOS and macOS, we need to treat assembly symbols differently from other
@@ -1086,6 +1086,7 @@
 #define _ERR_set_mark BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, ERR_set_mark)
 #define _EVP_AEAD_CTX_aead BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_AEAD_CTX_aead)
 #define _EVP_AEAD_CTX_cleanup BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_AEAD_CTX_cleanup)
+#define _EVP_AEAD_CTX_copy BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_AEAD_CTX_copy)
 #define _EVP_AEAD_CTX_deserialize_state BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_AEAD_CTX_deserialize_state)
 #define _EVP_AEAD_CTX_free BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_AEAD_CTX_free)
 #define _EVP_AEAD_CTX_get_aead_id BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, EVP_AEAD_CTX_get_aead_id)
@@ -3042,6 +3043,7 @@
 #define _abi_test_unwind_return BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, abi_test_unwind_return)
 #define _abi_test_unwind_start BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, abi_test_unwind_start)
 #define _abi_test_unwind_stop BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, abi_test_unwind_stop)
+#define _aead_ctx_copy_state_trivial BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, aead_ctx_copy_state_trivial)
 #define _aes128gcmsiv_aes_ks BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, aes128gcmsiv_aes_ks)
 #define _aes128gcmsiv_aes_ks_enc_x1 BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, aes128gcmsiv_aes_ks_enc_x1)
 #define _aes128gcmsiv_dec BORINGSSL_ADD_PREFIX_MAC_ASM(BORINGSSL_PREFIX, aes128gcmsiv_dec)
