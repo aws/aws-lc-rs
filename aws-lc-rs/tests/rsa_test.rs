@@ -1666,7 +1666,9 @@ fn rsa_keypair_from_components_rejects_inconsistent() {
 // accepting keys that the public-key APIs go on to reject.
 #[test]
 fn rsa_keypair_from_components_rejects_leading_zero_public_components() {
-    let cases: [(&str, fn(&mut RsaKeyPairComponents<Vec<u8>>)); 4] = [
+    type MutateComponents = fn(&mut RsaKeyPairComponents<Vec<u8>>);
+
+    let cases: [(&str, MutateComponents); 4] = [
         ("leading zero on n", |c| c.public_key.n.insert(0, 0u8)),
         ("leading zero on e", |c| c.public_key.e.insert(0, 0u8)),
         ("empty n", |c| c.public_key.n.clear()),
