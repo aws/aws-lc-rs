@@ -620,7 +620,63 @@ pub(crate) fn out_dir() -> PathBuf {
     out
 }
 
-/// On Windows, convert a path to its 8.3 short form to avoid MAX_PATH (260 char) limits
+/// Copies `src` over `dest`, leaving the copy writable.
+///
+/// `fs::copy` propagates the source's permission bits, so copying out of a
+/// read-only location (the Nix store, say) would otherwise leave a read-only
+/// file that the next overwrite cannot open (aws/aws-lc-rs#1193).
+pub(crate) fn copy_writable(src: &Path, dest: &Path) -> Result<(), String> {
+    // Removal needs write permission on the directory, overwriting in place on
+    // the file; try both.
+    if remove_existing(dest).is_err() {
+        grant_write_permission(dest);
+    }
+    std::fs::copy(src, dest).map_err(|e| {
+        format!(
+            "Failed to copy {} to {}: {e}",
+            src.display(),
+            dest.display()
+        )
+    })?;
+    // nasm -o and bindgen write these same paths without clearing read-only first.
+    grant_write_permission(dest);
+    Ok(())
+}
+
+fn remove_existing(path: &Path) -> std::io::Result<()> {
+    // Only Windows refuses to remove a read-only file -- through at least Rust
+    // 1.85; std fixed it by 1.90, but our MSRV is 1.71.
+    #[cfg(windows)]
+    grant_write_permission(path);
+    match std::fs::remove_file(path) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        result => result,
+    }
+}
+
+fn grant_write_permission(path: &Path) {
+    let Ok(metadata) = std::fs::metadata(path) else {
+        return;
+    };
+    let mut permissions = metadata.permissions();
+    if !permissions.readonly() {
+        return;
+    }
+    #[cfg(unix)]
+    {
+        // `set_readonly(false)` would widen this to 0o666.
+        use std::os::unix::fs::PermissionsExt;
+        permissions.set_mode(permissions.mode() | 0o200);
+    }
+    #[cfg(windows)]
+    {
+        #[allow(clippy::permissions_set_readonly_false)]
+        permissions.set_readonly(false);
+    }
+    let _ = std::fs::set_permissions(path, permissions);
+}
+
+/// On Windows, convert a path to its 8.3 short form to avoid `MAX_PATH` (260 char) limits
 /// when cl.exe is invoked with deeply nested source trees (e.g. Bazel runfiles).
 #[cfg(windows)]
 fn to_short_path(path: &Path) -> PathBuf {
@@ -632,6 +688,7 @@ fn to_short_path(path: &Path) -> PathBuf {
             cchBuffer: u32,
         ) -> u32;
     }
+    const MAX_PATH: usize = 260;
     let wide: Vec<u16> = path
         .as_os_str()
         .encode_wide()
@@ -649,14 +706,12 @@ fn to_short_path(path: &Path) -> PathBuf {
     buf.truncate(result as usize);
     let short_path = PathBuf::from(std::ffi::OsString::from_wide(&buf));
 
-    const MAX_PATH: usize = 260;
     let original_len = wide.len() - 1;
     if original_len >= MAX_PATH && (result as usize) >= MAX_PATH {
         emit_warning(format!(
-            "Path length ({}) exceeds MAX_PATH ({}) and 8.3 short name conversion was ineffective. \
-             8.3 short names may be disabled on this volume. \
-             See: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-8dot3name",
-            original_len, MAX_PATH,
+            "Path length ({original_len}) exceeds MAX_PATH ({MAX_PATH}) and 8.3 short name \
+             conversion was ineffective. 8.3 short names may be disabled on this volume. \
+             See: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/fsutil-8dot3name"
         ));
     }
 
@@ -1528,9 +1583,9 @@ fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
     for path in include_paths {
         for child in std::fs::read_dir(path).into_iter().flatten().flatten() {
             if child.path().is_file() {
-                std::fs::copy(
-                    child.path(),
-                    include_dir.join(child.path().file_name().unwrap()),
+                copy_writable(
+                    &child.path(),
+                    &include_dir.join(child.path().file_name().unwrap()),
                 )
                 .expect("Failed to copy include file during build setup");
                 continue;

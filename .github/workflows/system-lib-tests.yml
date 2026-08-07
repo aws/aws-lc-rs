@@ -298,6 +298,131 @@ jobs:
           fi
 
   # ---------------------------------------------------------------------------
+  # Regression test for https://github.com/aws/aws-lc-rs/issues/1193: repeated
+  # builds against a read-only install (e.g. the Nix store). The build-script
+  # rerun is forced via the existing `rerun-if-changed=builder/` directive and
+  # reuses the same OUT_DIR, which holds the previously copied bindings.
+  # ---------------------------------------------------------------------------
+  test-readonly-install-unix:
+    if: github.repository_owner == 'aws'
+    needs: build-aws-lc-unix
+    name: "Test: read-only install, repeated builds (${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-sys/aws-lc
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download AWS-LC install
+        uses: actions/download-artifact@v8
+        with:
+          name: aws-lc-install-${{ matrix.os }}
+          path: ${{ github.workspace }}/aws-lc-artifacts
+
+      - name: Make the AWS-LC install read-only
+        run: chmod -R a-w "${{ github.workspace }}/aws-lc-artifacts/install"
+
+      - name: Build twice against the read-only install
+        env:
+          AWS_LC_SYS_SYSTEM_DIR: ${{ github.workspace }}/aws-lc-artifacts/install
+          AWS_LC_SYS_STATIC: "1"
+        run: |
+          set -o pipefail
+
+          # First build: copies the pre-generated bindings into OUT_DIR.
+          cargo build -vv -p aws-lc-sys 2>&1 | tee cargo-run1.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo-run1.log; then
+            echo '::error::System-library code path was not entered on the first build.'
+            exit 1
+          fi
+
+          # Force a build-script rerun against the same OUT_DIR.
+          touch aws-lc-sys/builder/main.rs
+
+          # Second build: used to fail with EACCES overwriting the read-only copy.
+          cargo build -vv -p aws-lc-sys 2>&1 | tee cargo-run2.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo-run2.log; then
+            echo '::error::System-library code path was not entered on the second build.'
+            exit 1
+          fi
+
+      - name: Restore write permissions for runner cleanup
+        if: always()
+        run: chmod -R u+w "${{ github.workspace }}/aws-lc-artifacts" || true
+
+  # ---------------------------------------------------------------------------
+  # Windows variant: `fs::copy` propagates the read-only attribute and
+  # `remove_file` fails on read-only files, so this exercises the build
+  # script's attribute-clearing branch (dead code on Unix).
+  # ---------------------------------------------------------------------------
+  test-readonly-install-windows:
+    if: github.repository_owner == 'aws'
+    needs: build-aws-lc-windows
+    name: "Test: read-only install, repeated builds (windows-latest)"
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Remove the AWS-LC submodule working tree
+        shell: bash
+        run: rm -rf aws-lc-sys/aws-lc
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download AWS-LC install
+        uses: actions/download-artifact@v8
+        with:
+          name: aws-lc-install-windows-latest
+          path: ${{ github.workspace }}/aws-lc-artifacts
+
+      - name: Make the AWS-LC install read-only
+        shell: pwsh
+        # FILE_ATTRIBUTE_READONLY is what fs::copy propagates and remove_file rejects.
+        run: |
+          Get-ChildItem -Recurse -File "${{ github.workspace }}\aws-lc-artifacts\install" |
+            ForEach-Object { $_.IsReadOnly = $true }
+
+      - name: Build twice against the read-only install
+        shell: bash
+        env:
+          AWS_LC_SYS_SYSTEM_DIR: ${{ github.workspace }}/aws-lc-artifacts/install
+          AWS_LC_SYS_STATIC: "1"
+        run: |
+          set -o pipefail
+
+          # First build: copies the pre-generated bindings (read-only) into OUT_DIR.
+          cargo build -vv -p aws-lc-sys 2>&1 | tee cargo-run1.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo-run1.log; then
+            echo '::error::System-library code path was not entered on the first build.'
+            exit 1
+          fi
+
+          # Force a build-script rerun against the same OUT_DIR.
+          touch aws-lc-sys/builder/main.rs
+
+          # Second build: remove_file on the read-only copy fails without the fix.
+          cargo build -vv -p aws-lc-sys 2>&1 | tee cargo-run2.log
+          if ! grep -q 'Using system-installed AWS-LC from' cargo-run2.log; then
+            echo '::error::System-library code path was not entered on the second build.'
+            exit 1
+          fi
+
+      - name: Restore write permissions for runner cleanup
+        if: always()
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -File "${{ github.workspace }}\aws-lc-artifacts" |
+            ForEach-Object { $_.IsReadOnly = $false }
+
+  # ---------------------------------------------------------------------------
   # Proves the declared minimum: build AWS-LC at MINIMUM_AWS_LC_VERSION (see
   # builder/system_library.rs) and run the full test suite against it with the
   # version check enabled. A failure means the minimum is unsupported and must

@@ -12,7 +12,7 @@
 
 use crate::fips_probe::verify_fips_install;
 use crate::{
-    crate_env_var_name, emit_rustc_cfg, emit_warning, is_fips_build, is_fips_crate,
+    copy_writable, crate_env_var_name, emit_rustc_cfg, emit_warning, is_fips_build, is_fips_crate,
     is_static_library, link_fips_runtime_check, out_dir, target_env, target_os, Builder,
     OutputLibType,
 };
@@ -349,8 +349,7 @@ impl SystemLib {
             .ok_or("libcrypto parent directory not found")?;
         let include_dir = &self.layout.include_dir;
 
-        std::fs::copy(&bindings, out_dir().join("bindings.rs"))
-            .map_err(|e| format!("Failed to copy bindings from {}: {}", bindings.display(), e))?;
+        copy_writable(&bindings, &out_dir().join("bindings.rs"))?;
         emit_warning(format!(
             "Using pre-generated bindings from: {}",
             bindings.display()
