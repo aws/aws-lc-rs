@@ -70,7 +70,7 @@ function sanity_check_sys_crate {
   echo Sanity check: SUCCESS
 }
 
-# Verifies that the packaged crate builds and tests against the dependency
+# Verifies that the packaged crate builds against the dependency
 # versions currently published on crates.io. The manifest in the packaged
 # .crate has all `path` entries stripped, so dependency resolution comes from
 # the registry rather than the local workspace. Direct dependencies are pinned
@@ -82,9 +82,14 @@ function sanity_check_sys_crate {
 # Local checks passed (path deps), but the published crate failed to build
 # with the `fips` feature.
 #
+# Note: This only verifies that the crate *builds*. The packaged crate
+# deliberately excludes test data files (see `exclude` in Cargo.toml), so
+# `#[cfg(test)]` code and doc tests cannot be compiled from the package
+# contents.
+#
 # Usage: verify_crate_with_published_deps RELATIVE_CRATE_PATH CARGO_ARGS...
 #   Each CARGO_ARGS element is a (space-separated) set of arguments appended
-#   to `cargo test` for one build configuration.
+#   to `cargo build` for one build configuration.
 function verify_crate_with_published_deps {
   local RELATIVE_CRATE_PATH=$1
   shift
@@ -118,7 +123,7 @@ function verify_crate_with_published_deps {
   local CONFIG
   for CONFIG in "${FEATURE_CONFIGS[@]}"; do
     # shellcheck disable=SC2086
-    cargo test --target-dir "${TEMP_TARGET_DIR}" ${CONFIG}
+    cargo build --target-dir "${TEMP_TARGET_DIR}" ${CONFIG}
   done
 
   popd &>/dev/null # "${UNPACKED_CRATE_DIRS[0]}"
