@@ -10,7 +10,9 @@ default = ["aws-lc-sys"]
 aws-lc-rs = ["dep:aws-lc-rs"]
 aws-lc-rs-fips = ["aws-lc-rs", "aws-lc-rs/fips"]
 aws-lc-sys = ["dep:aws-lc-sys"]
+aws-lc-sys-ssl = ["aws-lc-sys", "aws-lc-sys/ssl"]
 aws-lc-fips-sys = ["dep:aws-lc-fips-sys"]
+aws-lc-fips-sys-ssl = ["aws-lc-fips-sys", "aws-lc-fips-sys/ssl"]
 
 [dependencies]
 aws-lc-rs = { path = "../aws-lc-rs", optional = true }

@@ -737,6 +737,12 @@ impl crate::Builder for CmakeBuilder {
     fn build(&self) -> Result<(), String> {
         self.build_library();
 
+        crate::emit_source_library_metadata(
+            &self.artifact_output_dir(),
+            self.output_lib_type,
+            &self.build_prefix,
+        );
+
         println!(
             "cargo:rustc-link-search=native={}",
             self.artifact_output_dir().display()
@@ -756,7 +762,7 @@ impl crate::Builder for CmakeBuilder {
             );
         }
 
-        crate::emit_source_build_metadata(&self.manifest_dir);
+        crate::emit_source_build_metadata(&self.manifest_dir, &self.build_prefix);
 
         Ok(())
     }

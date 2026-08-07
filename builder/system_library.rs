@@ -389,13 +389,32 @@ impl SystemLib {
         let optional_ssl_lib = self.ssl_lib.borrow();
         let kind = crypto_lib.lib_type.rust_lib_type();
         println!("cargo:rustc-link-search=native={}", lib_dir.display());
+        println!("cargo:libdir={}", lib_dir.display());
         println!("cargo:libcrypto={}", crypto_lib.name);
+        println!("cargo:libcrypto_path={}", crypto_lib.path.display());
+        println!("cargo:link_kind={kind}");
         println!("cargo:rustc-link-lib={kind}={}", crypto_lib.name);
         if let Some(ssl_lib) = optional_ssl_lib.as_ref() {
+            // `link_kind` (above) describes libcrypto. Without a requested lib
+            // type the two libraries could in principle resolve to different
+            // types; warn rather than export misleading metadata.
+            if ssl_lib.lib_type != crypto_lib.lib_type {
+                emit_warning(format!(
+                    "libcrypto ({}) and libssl ({}) resolved to different library types; \
+                     the exported link_kind describes libcrypto only",
+                    crypto_lib.lib_type.description(),
+                    ssl_lib.lib_type.description(),
+                ));
+            }
             println!("cargo:rustc-link-lib={kind}={}", ssl_lib.name);
             println!("cargo:libssl={}", ssl_lib.name);
+            println!("cargo:libssl_path={}", ssl_lib.path.display());
             println!("cargo:rerun-if-changed={}", ssl_lib.path.display());
         }
+
+        // After the libcrypto/libssl directives: GNU ld needs the providers to
+        // follow the archive that references them.
+        crate::emit_system_libs_metadata();
 
         println!("cargo:include={}", include_dir.display());
 
@@ -696,9 +715,12 @@ fn is_msvc() -> bool {
 /// `{name}.lib`. The two are disambiguated by `msvc_has_sibling_dll`: if
 /// `../bin/{name}.dll` exists, the `.lib` is an import library (dynamic);
 /// otherwise it is a real static archive.
+///
+/// On MinGW, the runtime DLL is installed to `bin/` rather than `lib_dir`, so
+/// the import library `lib{name}.dll.a` is the only artifact to look for here.
 fn probe_lib(lib_dir: &Path, name: &str, lib_type: OutputLibType) -> Option<PathBuf> {
     let want_dynamic = matches!(lib_type, OutputLibType::Dynamic);
-    let path = lib_dir.join(lib_filename(name, lib_type));
+    let path = lib_dir.join(lib_type.library_filename(name));
     if !path.exists() {
         return None;
     }
@@ -710,34 +732,10 @@ fn probe_lib(lib_dir: &Path, name: &str, lib_type: OutputLibType) -> Option<Path
     Some(path)
 }
 
-/// Returns the platform-specific filename for a library named `base` of the
-/// given linkage type.
-///
-/// On MSVC, both real static archives and DLL import libraries are named
-/// `{base}.lib`, so this function returns that name for either linkage. The
-/// two are disambiguated at probe time inside `probe_lib` via the sibling
-/// `../bin/{base}.dll` check.
-fn lib_filename(base: &str, lib_type: OutputLibType) -> String {
-    if is_msvc() {
-        return format!("{base}.lib");
-    }
-
-    match lib_type {
-        OutputLibType::Static => format!("lib{base}.a"),
-        OutputLibType::Dynamic => match target_os().as_str() {
-            // MinGW: the runtime DLL lives in bin/, not lib_dir. The import
-            // library lib{base}.dll.a is the only artifact in lib_dir.
-            "windows" => format!("lib{base}.dll.a"),
-            "macos" | "ios" | "tvos" => format!("lib{base}.dylib"),
-            _ => format!("lib{base}.so"),
-        },
-    }
-}
-
 /// Comma-separated list of platform-appropriate filenames the resolver looks
-/// for. Used purely for error messages. Note that on MSVC `lib_filename`
-/// produces the same `{base}.lib` for either linkage, so the `filter`
-/// argument doesn't change the resulting list there (deduplicated below).
+/// for. Used purely for error messages. On MSVC `library_filename` returns the
+/// same `{base}.lib` for either linkage, so `filter` doesn't change the
+/// resulting list there (deduplicated below).
 fn expected_lib_filenames(candidates: &[&str], filter: Option<OutputLibType>) -> String {
     let lib_types: &[OutputLibType] = match filter {
         Some(OutputLibType::Static) => &[OutputLibType::Static],
@@ -747,7 +745,7 @@ fn expected_lib_filenames(candidates: &[&str], filter: Option<OutputLibType>) ->
     let mut names: Vec<String> = Vec::new();
     for &lt in lib_types {
         for base in candidates {
-            let name = lib_filename(base, lt);
+            let name = lt.library_filename(base);
             if !names.contains(&name) {
                 names.push(name);
             }

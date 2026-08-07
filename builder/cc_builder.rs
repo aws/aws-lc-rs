@@ -1078,7 +1078,13 @@ impl crate::Builder for CcBuilder {
         let sources = crate::cc_builder::identify_sources();
         self.build_library(sources.as_slice());
 
-        crate::emit_source_build_metadata(&self.manifest_dir);
+        crate::emit_source_library_metadata(
+            &self.out_dir,
+            self.output_lib_type,
+            &self.build_prefix,
+        );
+
+        crate::emit_source_build_metadata(&self.manifest_dir, &self.build_prefix);
 
         Ok(())
     }

@@ -342,6 +342,23 @@ impl OutputLibType {
             Self::Dynamic => "dynamic",
         }
     }
+
+    /// Returns the platform-specific filename for a library named `name`.
+    ///
+    /// On MSVC a static archive and a DLL import library are both `{name}.lib`,
+    /// so both linkages return the same name; `system_library::probe_lib`
+    /// disambiguates them via a sibling `../bin/{name}.dll`.
+    fn library_filename(self, name: &str) -> String {
+        match (target_os().as_str(), target_env().as_str(), self) {
+            ("windows", "msvc", _) => format!("{name}.lib"),
+            ("windows", _, Self::Dynamic) => format!("lib{name}.dll.a"),
+            ("macos" | "ios" | "tvos" | "watchos" | "visionos", _, Self::Dynamic) => {
+                format!("lib{name}.dylib")
+            }
+            (_, _, Self::Dynamic) => format!("lib{name}.so"),
+            (_, _, Self::Static) => format!("lib{name}.a"),
+        }
+    }
 }
 
 impl OutputLib {
@@ -1395,33 +1412,102 @@ fn main() {
 /// Emits the shared post-build cargo metadata for source-based builders
 /// (`CMake` and CC). This sets up include paths, exports library and
 /// configuration names for downstream crates, and registers rerun triggers.
-pub(crate) fn emit_source_build_metadata(manifest_dir: &Path) {
+pub(crate) fn emit_source_build_metadata(manifest_dir: &Path, build_prefix: &Option<String>) {
     // Only aws-lc-fips-sys consumes the generated FIPS-version constant; a
     // FIPS-flavored aws-lc-sys build reports a module version of 0.
     if is_fips_crate() {
         system_library::emit_fips_version(&get_aws_lc_include_path(manifest_dir)).unwrap();
     }
 
-    // MinGW/GCC ignores `#pragma comment(lib, "bcrypt.lib")`, so we must
-    // link explicitly. The upstream CMakeLists.txt forces _WIN32_WINNT_WIN7
-    // for MINGW+GCC, activating the BCryptGenRandom codepath.
-    // See: https://github.com/aws/aws-lc/pull/3239
-    if target().contains("-windows-gnu") {
-        println!("cargo:rustc-link-lib=bcrypt");
-    }
+    emit_system_libs_metadata();
 
     println!(
         "cargo:include={}",
         setup_include_paths(&out_dir(), manifest_dir).display()
     );
 
-    // export the artifact names
-    println!("cargo:libcrypto={}_crypto", prefix_string());
+    // Derive the artifact names from `build_prefix`, not `prefix_string()`:
+    // with `AWS_LC_SYS_NO_PREFIX` set the libraries are built unprefixed.
+    println!(
+        "cargo:libcrypto={}",
+        OutputLib::Crypto.libname(build_prefix)
+    );
     if cfg!(feature = "ssl") {
-        println!("cargo:libssl={}_ssl", prefix_string());
+        println!("cargo:libssl={}", OutputLib::Ssl.libname(build_prefix));
     }
 
     println!("cargo:rerun-if-changed=aws-lc/");
+}
+
+/// System libraries that AWS-LC itself requires, beyond its own artifacts.
+///
+/// The `-windows-gnu` match also covers `-windows-gnullvm` (same MinGW ABI).
+fn required_system_libs(target: &str) -> Vec<&'static str> {
+    let mut libs = Vec::new();
+
+    // MinGW/GCC ignores `#pragma comment(lib, "bcrypt.lib")`, so we must
+    // link explicitly. The upstream CMakeLists.txt forces _WIN32_WINNT_WIN7
+    // for MINGW+GCC, activating the BCryptGenRandom codepath.
+    // See: https://github.com/aws/aws-lc/pull/3239
+    if target.contains("-windows-gnu") {
+        libs.push("bcrypt");
+    }
+
+    libs
+}
+
+/// Links the system libraries AWS-LC needs and exports the same list as
+/// `system_libs`, so the directives and the metadata cannot drift. Consumers
+/// cannot infer these from the artifact paths, and Cargo only propagates our
+/// directives to crates that link the sys crate's rlib.
+pub(crate) fn emit_system_libs_metadata() {
+    let libs = required_system_libs(&target());
+    for lib in &libs {
+        println!("cargo:rustc-link-lib={lib}");
+    }
+    println!("cargo:system_libs={}", libs.join(","));
+}
+
+/// Exports stable, absolute native-library locations for downstream build
+/// scripts that need to compile additional C code against this AWS-LC build.
+///
+/// The artifact filenames are predicted from the target platform and link
+/// kind, so a wrong prediction is possible on configurations we don't
+/// exercise. If a predicted artifact is missing, the corresponding `*_path`
+/// key is skipped (with a warning) rather than failing the build; the
+/// `links-testing` crate asserts these exports are present for every
+/// configuration covered by CI.
+pub(crate) fn emit_source_library_metadata(
+    lib_dir: &Path,
+    output_lib_type: OutputLibType,
+    build_prefix: &Option<String>,
+) {
+    println!("cargo:libdir={}", lib_dir.display());
+    println!("cargo:link_kind={}", output_lib_type.rust_lib_type());
+
+    let crypto_path =
+        lib_dir.join(output_lib_type.library_filename(&OutputLib::Crypto.libname(build_prefix)));
+    if crypto_path.is_file() {
+        println!("cargo:libcrypto_path={}", crypto_path.display());
+    } else {
+        emit_warning(format!(
+            "AWS-LC libcrypto artifact not found: {}; not exporting libcrypto_path",
+            crypto_path.display()
+        ));
+    }
+
+    if cfg!(feature = "ssl") {
+        let ssl_path =
+            lib_dir.join(output_lib_type.library_filename(&OutputLib::Ssl.libname(build_prefix)));
+        if ssl_path.is_file() {
+            println!("cargo:libssl_path={}", ssl_path.display());
+        } else {
+            emit_warning(format!(
+                "AWS-LC libssl artifact not found: {}; not exporting libssl_path",
+                ssl_path.display()
+            ));
+        }
+    }
 }
 
 fn setup_include_paths(out_dir: &Path, manifest_dir: &Path) -> PathBuf {
@@ -1750,6 +1836,46 @@ mod tests {
         assert_eq!(parse_to_bool("invalid"), None);
         assert_eq!(parse_to_bool("maybe"), None);
         assert_eq!(parse_to_bool("   "), None);
+    }
+
+    // -------------------------------------------------------------------------
+    // required_system_libs tests
+    // -------------------------------------------------------------------------
+
+    #[test]
+    fn test_required_system_libs_mingw_targets_need_bcrypt() {
+        for target in [
+            "x86_64-pc-windows-gnu",
+            "i686-pc-windows-gnu",
+            // gnullvm shares the MinGW ABI, and the substring match covers it.
+            "aarch64-pc-windows-gnullvm",
+        ] {
+            assert_eq!(
+                required_system_libs(target),
+                ["bcrypt"],
+                "expected bcrypt for {target}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_required_system_libs_empty_elsewhere() {
+        for target in [
+            // MSVC gets bcrypt via `#pragma comment(lib, ...)`.
+            "x86_64-pc-windows-msvc",
+            "aarch64-pc-windows-msvc",
+            "aarch64-apple-darwin",
+            // Must not be confused by the unrelated `-gnu` environment.
+            "x86_64-unknown-linux-gnu",
+            "aarch64-unknown-linux-musl",
+            "aarch64-linux-android",
+        ] {
+            assert!(
+                required_system_libs(target).is_empty(),
+                "unexpected system libs for {target}: {:?}",
+                required_system_libs(target)
+            );
+        }
     }
 
     // -------------------------------------------------------------------------

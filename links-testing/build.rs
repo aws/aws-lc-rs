@@ -31,19 +31,65 @@ fn main() {
 }
 
 fn build_and_link(links: &str, target_name: &str) {
+    let links = links.to_uppercase();
+
     // ensure that the include path is exported and set up correctly
     cc::Build::new()
-        .include(env(format!("DEP_{}_INCLUDE", links.to_uppercase())))
+        .include(env(format!("DEP_{links}_INCLUDE")))
         .file("src/testing.c")
         .compile(&format!("testing_{target_name}"));
 
     // make sure the root was exported
-    let root = env(format!("DEP_{}_ROOT", links.to_uppercase()));
+    let root = env(format!("DEP_{links}_ROOT"));
     println!("cargo:rustc-link-search={root}");
 
     // ensure the libcrypto artifact is linked
-    let libcrypto = env(format!("DEP_{}_LIBCRYPTO", links.to_uppercase()));
+    let libcrypto = env(format!("DEP_{links}_LIBCRYPTO"));
     println!("cargo:rustc-link-lib={libcrypto}");
+
+    // The sys crate's own directives never reach us -- nothing here references
+    // its rlib -- so the required system libraries come from the metadata.
+    let system_libs = env(format!("DEP_{links}_SYSTEM_LIBS"));
+    for lib in system_libs.split(',').filter(|lib| !lib.is_empty()) {
+        println!("cargo:rustc-link-lib={lib}");
+    }
+
+    // ensure downstream native builds receive the exact artifact location
+    let libdir = std::path::PathBuf::from(env(format!("DEP_{links}_LIBDIR")));
+    let libcrypto_path = std::path::PathBuf::from(env(format!("DEP_{links}_LIBCRYPTO_PATH")));
+    assert!(
+        libdir.is_dir(),
+        "exported libdir does not exist: {libdir:?}"
+    );
+    assert!(
+        libcrypto_path.is_file(),
+        "exported libcrypto path does not exist: {libcrypto_path:?}"
+    );
+    assert_eq!(libcrypto_path.parent(), Some(libdir.as_path()));
+
+    let link_kind = env(format!("DEP_{links}_LINK_KIND"));
+    assert!(
+        matches!(link_kind.as_str(), "static" | "dylib"),
+        "unexpected exported link_kind: {link_kind:?}"
+    );
+    if link_kind == "static" {
+        // a static artifact must be an archive (`.a`) or MSVC library (`.lib`)
+        let extension = libcrypto_path.extension().and_then(|e| e.to_str());
+        assert!(
+            matches!(extension, Some("a" | "lib")),
+            "unexpected static libcrypto artifact: {libcrypto_path:?}"
+        );
+    }
+
+    // when libssl is built, its exact artifact location must be exported too
+    if optional_env(format!("DEP_{links}_LIBSSL")).is_some() {
+        let libssl_path = std::path::PathBuf::from(env(format!("DEP_{links}_LIBSSL_PATH")));
+        assert!(
+            libssl_path.is_file(),
+            "exported libssl path does not exist: {libssl_path:?}"
+        );
+        assert_eq!(libssl_path.parent(), Some(libdir.as_path()));
+    }
 }
 
 fn get_package_links_property(cargo_toml_path: &str) -> String {
@@ -57,6 +103,11 @@ fn get_package_links_property(cargo_toml_path: &str) -> String {
 
 fn env<S: AsRef<str>>(s: S) -> String {
     let s = s.as_ref();
+    optional_env(s).unwrap_or_else(|| panic!("missing env var {s}"))
+}
+
+fn optional_env<S: AsRef<str>>(s: S) -> Option<String> {
+    let s = s.as_ref();
     println!("cargo:rerun-if-env-changed={s}");
-    std::env::var(s).unwrap_or_else(|_| panic!("missing env var {s}"))
+    std::env::var(s).ok()
 }
