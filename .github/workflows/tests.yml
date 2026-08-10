@@ -830,6 +830,9 @@ jobs:
             env_value: '-O2'
           - env_name: TARGET_CFLAGS
             env_value: '-O2'
+          # Not exportable by a POSIX shell, but inheritable from a parent process (setenv).
+          - env_name: CFLAGS_x86_64-unknown-linux-gnu
+            env_value: '-O3'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -844,12 +847,10 @@ jobs:
           go-version: '>=1.18'
       - name: Run tests
         run: |
-          export ${{ matrix.env_name }}="${{ matrix.env_value }}"
-          cargo test -p aws-lc-rs --all-targets
+          env "${{ matrix.env_name }}=${{ matrix.env_value }}" cargo test -p aws-lc-rs --all-targets
       - name: Run tests w/ FIPS
         run: |
-          export ${{ matrix.env_name }}="${{ matrix.env_value }}"
-          cargo test -p aws-lc-rs --all-targets --features fips
+          env "${{ matrix.env_name }}=${{ matrix.env_value }}" cargo test -p aws-lc-rs --all-targets --features fips
 
   builder-tests:
     if: github.repository_owner == 'aws'
