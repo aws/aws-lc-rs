@@ -218,7 +218,7 @@ pub(super) fn encrypt_ecb_mode(
 
     // This is a sanity check that should not happen. We validate in `encrypt` that in_out.len() % block_len == 0
     // for this mode.
-    debug_assert!(in_out_iter.into_remainder().is_empty());
+    debug_assert_eq!(in_out_iter.into_remainder(), []);
 
     Ok(context.into())
 }
@@ -247,9 +247,9 @@ pub(super) fn decrypt_ecb_mode<'in_out>(
             aes_ecb_decrypt(dec_key, block);
         }
 
-        // This is a sanity check hat should not fail. We validate in `decrypt` that in_out.len() % block_len == 0 for
+        // This is a sanity check that should not fail. We validate in `decrypt` that in_out.len() % block_len == 0 for
         // this mode.
-        debug_assert!(in_out_iter.into_remainder().is_empty());
+        debug_assert_eq!(in_out_iter.into_remainder(), []);
     }
 
     Ok(in_out)
