@@ -416,6 +416,7 @@ impl SystemLib {
         crate::emit_system_libs_metadata();
 
         println!("cargo:include={}", include_dir.display());
+        println!("cargo:root={}", self.layout.marker_dir.display());
 
         println!("cargo:rerun-if-changed={}", include_dir.display());
         println!("cargo:rerun-if-changed={}", crypto_lib.path.display());

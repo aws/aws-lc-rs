@@ -20,6 +20,10 @@ AWS-LC build can use the exported `include`, `libdir`, `libcrypto_path`,
 `libssl_path` is also exported. Cargo exposes these values to direct dependents
 as versioned `DEP_AWS_LC_*` environment variables.
 
+`root` is also exported for dependents that predate the keys above. It names a
+directory containing the build. It is the output root when built from source, 
+or the install prefix for a pre-installed AWS-LC.
+
 `link_kind` is `static` or `dylib`, usable directly as the `<kind>` in a
 `cargo:rustc-link-lib=<kind>=<name>` directive.
 
