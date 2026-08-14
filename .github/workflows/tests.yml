@@ -851,6 +851,100 @@ jobs:
           export ${{ matrix.env_name }}="${{ matrix.env_value }}"
           cargo test -p aws-lc-rs --all-targets --features fips
 
+  builder-tests:
+    if: github.repository_owner == 'aws'
+    # The builder normally compiles only as a build script, so its unit tests run
+    # solely through the builder-test harness crate; no other lane runs them. The
+    # compiler-probe tests need the runner's clang and GCC and only run on Linux.
+    name: builder unit tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - name: Run builder unit tests
+        run: cargo test -p builder-test
+
+  linux-clang-lto:
+    if: github.repository_owner == 'aws'
+    # Guards https://github.com/aws/aws-lc-rs/issues/1211: under `-flto`, clang flag
+    # probes never reach the integrated assembler, so `-Wa,--debug-prefix-map` probed
+    # as supported and `.S` sources failed to assemble. No other lane combined clang,
+    # Linux, and a release opt level; build-only since bitcode needs an LTO-aware link.
+    name: Linux clang LTO - CMake ${{ matrix.cmake }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cmake: [0, 1]
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+      CXX: clang++
+      CFLAGS: '-flto=thin'
+      AWS_LC_SYS_CMAKE_BUILDER: ${{ matrix.cmake }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - name: Release build
+        run: cargo build -p aws-lc-sys --release
+
+  linux-clang-path-stripping:
+    if: github.repository_owner == 'aws'
+    # Clang no longer gets `-Wa,--debug-prefix-map`, so `-ffile-prefix-map` alone must
+    # strip `.S` paths (compilers.yml asserts this for GCC only). cc builder only: the
+    # C-side prefix-map never reaches `CMAKE_ASM_FLAGS`. No LTO: bitcode has no DWARF.
+    name: Linux clang path stripping
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+      CXX: clang++
+      AWS_LC_SYS_CMAKE_BUILDER: 0
+      CARGO_PROFILE_RELEASE_DEBUG: 'true'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: 'recursive'
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+      - name: Install readelf
+        run: sudo apt-get update && sudo apt-get install -y binutils
+      - name: Release build with debug info
+        run: cargo build -p aws-lc-sys --release
+      - name: Verify paths not found in release build with debug info
+        run: |
+          RELEASE_LIBCRYPTO_COUNT=$(find ./target/release -type f -name "libaws_lc_*_crypto.a" | wc -l)
+          if [ "${RELEASE_LIBCRYPTO_COUNT}" -ne 1 ]; then
+            echo "FAIL: expected exactly one release libcrypto archive, found ${RELEASE_LIBCRYPTO_COUNT}:"
+            find ./target/release -type f -name "libaws_lc_*_crypto.a"
+            exit 1
+          fi
+          RELEASE_LIBCRYPTO=$(find ./target/release -type f -name "libaws_lc_*_crypto.a")
+          # Require `.S` DWARF line data, else the path check below passes vacuously.
+          if ! readelf --debug-dump=decodedline "${RELEASE_LIBCRYPTO}" | grep -Eq '\.S[[:space:]]+[0-9]+'; then
+            echo "FAIL: no assembly source line-table entries found; expected DWARF"
+            exit 1
+          fi
+          if strings "${RELEASE_LIBCRYPTO}" | grep "${PWD}/"; then
+            echo "FAIL: build paths leaked into archive (DWARF source paths):"
+            strings "${RELEASE_LIBCRYPTO}" | grep "${PWD}/" | sort -u | head -20
+            exit 1; # FAIL - we did not expect to find "${PWD}" (i.e., a path)
+          fi
+
   windows-hostile-environment:
     if: github.repository_owner == 'aws'
     name: Windows hostile env - CC=${{ matrix.cc }} CFLAGS=${{ matrix.cflags }}
