@@ -28,7 +28,7 @@ use crate::{
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[non_exhaustive]
 #[derive(PartialEq, Eq)]
@@ -380,7 +380,7 @@ impl CcBuilder {
         }
 
         let mut cc_build = self.create_builder();
-        let (is_cl_like, build_options) = self.collect_universal_build_options(&cc_build, false);
+        let (_, build_options) = self.collect_universal_build_options(&cc_build, false);
         for option in build_options {
             option.apply_cc(&mut cc_build);
         }
@@ -402,19 +402,8 @@ impl CcBuilder {
 
         // `-ffile-prefix-map` does not reach GNU `as` for `.S` sources, so in
         // release-style builds mirror it with `-Wa,--debug-prefix-map=...`.
-        // Probe first because clang's integrated assembler rejects the flag,
-        // and skip paths with spaces because `-Wa,...` must stay a bare token.
-        let opt_level = cargo_env("OPT_LEVEL");
-        if (target_os() == "linux" || target_os().ends_with("bsd"))
-            && !is_cl_like
-            && !matches!(opt_level.as_str(), "0" | "1" | "2")
-            && !self.manifest_dir.to_string_lossy().contains(' ')
-        {
-            let path_str = self.manifest_dir.display().to_string();
-            let asm_flag = format!("-Wa,--debug-prefix-map={path_str}=");
-            if cc_build.is_flag_supported(&asm_flag).unwrap_or(false) {
-                cc_build.asm_flag(asm_flag);
-            }
+        if let Some(asm_flag) = asm_debug_prefix_map_flag(&self.manifest_dir) {
+            cc_build.asm_flag(asm_flag);
         }
 
         cc_build
@@ -991,8 +980,7 @@ impl CcBuilder {
 
 /// Temporarily removes every `CFLAGS`-family env var the cc crate consults (see its
 /// `target_envs`), so that `cc::Build::get_compiler()` computes only the target's
-/// default flags. Assumes HOST == TARGET (the memcmp probe only runs natively), where
-/// cc consults `HOST_CFLAGS` and never `TARGET_CFLAGS`.
+/// default flags. `cc` concatenates all set variants, so all must go.
 fn cflags_ignore_guards() -> Vec<EnvGuard> {
     let target = target();
     let target_u = target.replace(['-', '.'], "_");
@@ -1000,11 +988,55 @@ fn cflags_ignore_guards() -> Vec<EnvGuard> {
         format!("CFLAGS_{target}"),
         format!("CFLAGS_{target_u}"),
         "HOST_CFLAGS".to_string(),
+        "TARGET_CFLAGS".to_string(),
         "CFLAGS".to_string(),
     ]
     .iter()
     .map(|name| EnvGuard::remove(name))
     .collect()
+}
+
+/// Whether the DWARF path-stripping assembler flag applies to this target and
+/// profile, independent of the compiler: only GNU `as` targets, only release-style
+/// profiles, and `-Wa,...` must stay a single bare token (no spaces).
+fn asm_debug_prefix_map_applies(target_os: &str, opt_level: &str, manifest_dir: &Path) -> bool {
+    (target_os == "linux" || target_os.ends_with("bsd"))
+        && !matches!(opt_level, "0" | "1" | "2")
+        && !manifest_dir.to_string_lossy().contains(' ')
+}
+
+/// The GNU `as` flag that strips `manifest_dir` from DWARF emitted for `.S`
+/// sources, or `None` when it must not be used.
+///
+/// Gated on the compiler family, not a flag probe: GCC does not forward
+/// `-ffile-prefix-map` to `as`, while clang's integrated assembler honors it
+/// directly and rejects `--debug-prefix-map` -- but only diagnoses it when a job
+/// reaches the assembler, which a C probe under `-flto` never does. The remaining
+/// probe, run with user `CFLAGS` suppressed, only guards a GNU `as` predating the
+/// option (binutils 2.26).
+/// See: <https://github.com/aws/aws-lc-rs/issues/1211>
+pub(crate) fn asm_debug_prefix_map_flag(manifest_dir: &Path) -> Option<String> {
+    if !asm_debug_prefix_map_applies(&target_os(), &cargo_env("OPT_LEVEL"), manifest_dir) {
+        return None;
+    }
+
+    let flag = format!("-Wa,--debug-prefix-map={}=", manifest_dir.display());
+
+    let _cflags_guards = cflags_ignore_guards();
+    let probe_build = cc::Build::default();
+    // `try_get_compiler` so an unresolvable compiler cannot panic the build script.
+    let Ok(compiler) = probe_build.try_get_compiler() else {
+        return None;
+    };
+    if !compiler.is_like_gnu() {
+        return None;
+    }
+    if !probe_build.is_flag_supported(&flag).unwrap_or(false) {
+        emit_warning(format!("Assembler does not support flag: {flag}"));
+        return None;
+    }
+    emit_warning(format!("Using assembler flag: {flag}"));
+    Some(flag)
 }
 
 /// Version reported by a GCC-like compiler, if determinable. Prefers `-dumpfullversion`
@@ -1144,9 +1176,8 @@ mod tests {
         assert!(gcc_version_may_have_memcmp_bug("unknown"));
     }
 
-    // The memcmp probe must exclude user CFLAGS (#1132) while `cc` computes the
-    // compiler's default flags; every env var variant `cc` consults must be
-    // suppressed, and all must be restored when the guards drop.
+    // The builder probes must exclude user CFLAGS (#1132, #1211): every env var
+    // variant `cc` consults must be suppressed, and restored when the guards drop.
     #[test]
     fn test_cflags_ignore_guards_suppress_and_restore() {
         let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
@@ -1162,7 +1193,8 @@ mod tests {
             assert!(env::var("CFLAGS_x86_64-unknown-linux-gnu").is_err());
             assert!(env::var("CFLAGS_x86_64_unknown_linux_gnu").is_err());
             assert!(env::var("HOST_CFLAGS").is_err());
-            assert_eq!(env::var("TARGET_CFLAGS").unwrap(), "-ftarget");
+            // `cc` reads this variant instead of `HOST_CFLAGS` when cross-compiling.
+            assert!(env::var("TARGET_CFLAGS").is_err());
         }
         assert_eq!(env::var("CFLAGS").unwrap(), "-flto=thin");
         assert_eq!(
@@ -1174,6 +1206,124 @@ mod tests {
             "-funderscore-variant"
         );
         assert_eq!(env::var("HOST_CFLAGS").unwrap(), "-fhost");
+        assert_eq!(env::var("TARGET_CFLAGS").unwrap(), "-ftarget");
+    }
+
+    // Compiler-independent gating only; the GNU-family gate (#1211) needs a real
+    // compiler and is covered by the test below.
+    #[test]
+    fn test_asm_debug_prefix_map_applies() {
+        use std::path::Path;
+        let dir = Path::new("/tmp/aws-lc-sys");
+
+        // Release-style profiles on GNU `as` targets.
+        assert!(asm_debug_prefix_map_applies("linux", "3", dir));
+        assert!(asm_debug_prefix_map_applies("linux", "s", dir));
+        assert!(asm_debug_prefix_map_applies("linux", "z", dir));
+        assert!(asm_debug_prefix_map_applies("freebsd", "3", dir));
+        assert!(asm_debug_prefix_map_applies("netbsd", "3", dir));
+
+        // Debug-style profiles keep full paths.
+        for opt_level in ["0", "1", "2"] {
+            assert!(!asm_debug_prefix_map_applies("linux", opt_level, dir));
+        }
+
+        // Targets that do not use GNU `as`.
+        for target_os in ["macos", "windows", "ios", "android"] {
+            assert!(!asm_debug_prefix_map_applies(target_os, "3", dir));
+        }
+
+        // `-Wa,...` must stay one bare token, so spaced paths are skipped.
+        assert!(!asm_debug_prefix_map_applies(
+            "linux",
+            "3",
+            Path::new("/tmp/aws lc sys")
+        ));
+    }
+
+    /// Host triple for `TARGET`/`HOST`, which `cc` requires but `cargo test` omits.
+    fn host_triple() -> Option<String> {
+        let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".to_string());
+        let output = std::process::Command::new(rustc).arg("-vV").output().ok()?;
+        String::from_utf8(output.stdout)
+            .ok()?
+            .lines()
+            .find_map(|line| line.strip_prefix("host: ").map(str::to_string))
+    }
+
+    /// Env for natively probing `cc_value` with `-flto=thin` in user CFLAGS, or
+    /// `None` where that cannot run: `cc` panics on a `CARGO_CFG_TARGET_OS`
+    /// contradicting `TARGET`, so only hosts where the flag applies qualify.
+    /// Native TARGET/HOST so the probe reflects the compiler, not a missing sysroot.
+    fn native_lto_probe_guards(cc_value: &str) -> Option<(tempfile::TempDir, Vec<EnvGuard>)> {
+        let host_os = std::env::consts::OS;
+        if !(host_os == "linux" || host_os.ends_with("bsd")) {
+            return None;
+        }
+        let host = host_triple()?;
+        let temp_out = tempfile::tempdir().unwrap();
+        let guards = vec![
+            EnvGuard::new("OUT_DIR", temp_out.path()),
+            EnvGuard::new("TARGET", &host),
+            EnvGuard::new("HOST", &host),
+            EnvGuard::new("CARGO_CFG_TARGET_OS", host_os),
+            EnvGuard::new("OPT_LEVEL", "3"),
+            EnvGuard::new("CC", cc_value),
+            EnvGuard::new("CFLAGS", "-flto=thin"),
+        ];
+        Some((temp_out, guards))
+    }
+
+    // Regression test for https://github.com/aws/aws-lc-rs/issues/1211: clang must
+    // not receive the GNU-only assembler flag when user CFLAGS enables LTO. Pins
+    // end behavior only -- the family gate and the CFLAGS-suppressed probe each
+    // yield `None` here on their own. linux-clang-lto covers the bug end to end.
+    #[test]
+    fn test_asm_debug_prefix_map_flag_withheld_from_clang_under_lto() {
+        use std::path::Path;
+
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let Some(_guards) = native_lto_probe_guards("clang") else {
+            return; // host cannot run the probe; the builder-tests CI lane covers it
+        };
+
+        assert_eq!(
+            asm_debug_prefix_map_flag(Path::new("/tmp/aws-lc-sys")),
+            None,
+            "clang must not receive the GNU-only -Wa,--debug-prefix-map flag"
+        );
+    }
+
+    // Positive-path companion to the test above: real GCC keeps the flag under the
+    // same user LTO CFLAGS, pinning that clang's `None` comes from gating rather
+    // than the helper never returning `Some`. GCC rejects `-flto=thin`, so this
+    // also fails if the probe stops suppressing CFLAGS.
+    #[test]
+    fn test_asm_debug_prefix_map_flag_granted_to_gcc_under_lto() {
+        use std::path::Path;
+
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let Some(_guards) = native_lto_probe_guards("gcc") else {
+            return; // host cannot run the probe; the builder-tests CI lane covers it
+        };
+        // Skip hosts where `gcc` is absent or a clang shim (e.g. BSDs).
+        {
+            let _cflags_guards = cflags_ignore_guards();
+            match cc::Build::default().try_get_compiler() {
+                Ok(compiler) if compiler.is_like_gnu() => {}
+                _ => return,
+            }
+        }
+
+        let manifest_dir = Path::new("/tmp/aws-lc-sys");
+        assert_eq!(
+            asm_debug_prefix_map_flag(manifest_dir),
+            Some(format!(
+                "-Wa,--debug-prefix-map={}=",
+                manifest_dir.display()
+            )),
+            "GCC must keep the assembler flag when user CFLAGS enables LTO"
+        );
     }
 
     // Guards https://github.com/aws/aws-lc-rs/issues/1146: in cl driver mode
