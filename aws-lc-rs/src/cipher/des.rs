@@ -121,7 +121,7 @@ pub(super) fn encrypt_ecb_mode(
     }
     // Sanity check: `encrypt` validates that `in_out.len() % block_len == 0`
     // for ECB mode before dispatching here.
-    debug_assert!(in_out_iter.into_remainder().is_empty());
+    debug_assert_eq!(in_out_iter.into_remainder(), []);
 
     Ok(context.into())
 }
@@ -138,7 +138,7 @@ pub(super) fn decrypt_ecb_mode<'in_out>(
     // The inner scope ends the mutable borrow of `in_out` held by
     // `in_out_iter` before we return `Ok(in_out)` below. `into_remainder()`
     // would also consume the iterator and release the borrow, but it's inside
-    // a `debug_assert!` and therefore not evaluated in release builds, so we
+    // a `debug_assert_eq!` and therefore not evaluated in release builds, so we
     // can't rely on it for that purpose. `encrypt_ecb_mode` doesn't need this
     // scope because it doesn't return `in_out`.
     {
@@ -158,7 +158,7 @@ pub(super) fn decrypt_ecb_mode<'in_out>(
         }
         // Sanity check: `decrypt` validates that `in_out.len() % block_len == 0`
         // for ECB mode before dispatching here.
-        debug_assert!(in_out_iter.into_remainder().is_empty());
+        debug_assert_eq!(in_out_iter.into_remainder(), []);
     }
 
     Ok(in_out)
