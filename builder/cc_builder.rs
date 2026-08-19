@@ -979,12 +979,18 @@ impl CcBuilder {
 /// and `HOST_CFLAGS` otherwise, so callers that may cross-compile need both.
 fn cflags_env_names(include_target_prefixed: bool) -> Vec<String> {
     let target = target();
+    // cc 1.2.26 replaces only `-`, while newer versions replace both `-` and `.`.
+    // Include both spellings because either version may satisfy our dependency range.
+    let target_u_legacy = target.replace('-', "_");
     let target_u = target.replace(['-', '.'], "_");
     let mut names = vec![
         format!("CFLAGS_{target}"),
-        format!("CFLAGS_{target_u}"),
-        "HOST_CFLAGS".to_string(),
+        format!("CFLAGS_{target_u_legacy}"),
     ];
+    if target_u != target_u_legacy {
+        names.push(format!("CFLAGS_{target_u}"));
+    }
+    names.push("HOST_CFLAGS".to_string());
     if include_target_prefixed {
         names.push("TARGET_CFLAGS".to_string());
     }
@@ -1338,17 +1344,19 @@ mod tests {
     #[test]
     fn test_jitter_entropy_cflags_guards_filter_every_cc_variant() {
         let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
-        let _target_guard = EnvGuard::new("TARGET", "aarch64-apple-darwin");
-        let _g1 = EnvGuard::new("CFLAGS_aarch64-apple-darwin", "-O3 -fdash");
-        let _g2 = EnvGuard::new("CFLAGS_aarch64_apple_darwin", "-O2 -funderscore");
-        let _g3 = EnvGuard::new("HOST_CFLAGS", "-Ofast -fhost");
-        let _g4 = EnvGuard::new("TARGET_CFLAGS", "-Os -ftarget");
-        let _g5 = EnvGuard::new("CFLAGS", "-O1 -fbase");
+        let _target_guard = EnvGuard::new("TARGET", "thumbv8m.main-none-eabi");
+        let _g1 = EnvGuard::new("CFLAGS_thumbv8m.main-none-eabi", "-O3 -fraw");
+        let _g2 = EnvGuard::new("CFLAGS_thumbv8m.main_none_eabi", "-O2 -flegacy");
+        let _g3 = EnvGuard::new("CFLAGS_thumbv8m_main_none_eabi", "-Oz -fcurrent");
+        let _g4 = EnvGuard::new("HOST_CFLAGS", "-Ofast -fhost");
+        let _g5 = EnvGuard::new("TARGET_CFLAGS", "-Os -ftarget");
+        let _g6 = EnvGuard::new("CFLAGS", "-O1 -fbase");
         {
             let _guards = CcBuilder::jitter_entropy_cflags_guards(false);
             for name in [
-                "CFLAGS_aarch64-apple-darwin",
-                "CFLAGS_aarch64_apple_darwin",
+                "CFLAGS_thumbv8m.main-none-eabi",
+                "CFLAGS_thumbv8m.main_none_eabi",
+                "CFLAGS_thumbv8m_main_none_eabi",
                 "HOST_CFLAGS",
                 "TARGET_CFLAGS",
                 "CFLAGS",
@@ -1366,26 +1374,30 @@ mod tests {
                 );
             }
             // Non-optimization flags are preserved.
-            assert!(env::var("CFLAGS_aarch64-apple-darwin")
+            assert!(env::var("CFLAGS_thumbv8m.main-none-eabi")
                 .unwrap()
-                .contains("-fdash"));
+                .contains("-fraw"));
         }
         // Every guarded variable is restored on drop.
         assert_eq!(
-            env::var("CFLAGS_aarch64-apple-darwin").unwrap(),
-            "-O3 -fdash"
+            env::var("CFLAGS_thumbv8m.main-none-eabi").unwrap(),
+            "-O3 -fraw"
         );
         assert_eq!(
-            env::var("CFLAGS_aarch64_apple_darwin").unwrap(),
-            "-O2 -funderscore"
+            env::var("CFLAGS_thumbv8m.main_none_eabi").unwrap(),
+            "-O2 -flegacy"
+        );
+        assert_eq!(
+            env::var("CFLAGS_thumbv8m_main_none_eabi").unwrap(),
+            "-Oz -fcurrent"
         );
         assert_eq!(env::var("HOST_CFLAGS").unwrap(), "-Ofast -fhost");
         assert_eq!(env::var("TARGET_CFLAGS").unwrap(), "-Os -ftarget");
         assert_eq!(env::var("CFLAGS").unwrap(), "-O1 -fbase");
     }
 
-    // cc's `target_envs` replaces both `-` and `.` when forming the underscore
-    // spelling; a dotted triple pins that we match it.
+    // cc 1.2.26 replaces only `-` in `target_envs`, while newer versions replace
+    // both `-` and `.`; a dotted triple pins that we cover both supported forms.
     #[test]
     fn test_cflags_env_names_match_cc_target_envs() {
         let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
@@ -1395,6 +1407,7 @@ mod tests {
             names,
             vec![
                 "CFLAGS_thumbv8m.main-none-eabi",
+                "CFLAGS_thumbv8m.main_none_eabi",
                 "CFLAGS_thumbv8m_main_none_eabi",
                 "HOST_CFLAGS",
                 "TARGET_CFLAGS",
