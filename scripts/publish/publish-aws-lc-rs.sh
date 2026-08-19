@@ -16,7 +16,7 @@ publish_options "$@"
 
 pushd "${CRATE_DIR}" &>/dev/null
 run_prepublish_checks -c "${RELATIVE_CRATE_PATH}"
-# Verify the packaged crate builds/tests against the sys crate versions
+# Verify the packaged crate builds against the sys crate versions
 # currently available on crates.io, resolved to the minimum versions allowed
 # by our Cargo.toml. Checks both the default (non-FIPS) and FIPS builds.
 verify_crate_with_published_deps "${RELATIVE_CRATE_PATH}" \
