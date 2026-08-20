@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC
 
-use crate::cc_builder::CcBuilder;
+use crate::cc_builder::{asm_debug_prefix_map_flag, CcBuilder};
 use crate::OutputLib::{Crypto, Ssl};
 use crate::{
     allow_prebuilt_nasm, cargo_env, effective_target, emit_warning, execute_command,
@@ -120,22 +120,10 @@ impl CmakeBuilder {
             option.apply_cmake(cmake_cfg, is_cl_like);
         }
 
-        // CMake seeds `CMAKE_C_FLAGS` and `CMAKE_ASM_FLAGS` separately, so the
-        // C-side prefix-map does not cover `.S` sources. In release-style
-        // builds, mirror it with `asmflag()` when the compiler accepts
-        // `-Wa,--debug-prefix-map=...`, and skip paths with spaces because the
-        // flag must survive CMake and the assembler as one bare token.
-        let opt_level = cargo_env("OPT_LEVEL");
-        if !is_cl_like
-            && (target_os() == "linux" || target_os().ends_with("bsd"))
-            && !matches!(opt_level.as_str(), "0" | "1" | "2")
-            && !self.manifest_dir.to_string_lossy().contains(' ')
-        {
-            let path_str = self.manifest_dir.display().to_string();
-            let asm_flag = format!("-Wa,--debug-prefix-map={path_str}=");
-            if cc_build.is_flag_supported(&asm_flag).unwrap_or(false) {
-                cmake_cfg.asmflag(asm_flag);
-            }
+        // CMake seeds `CMAKE_C_FLAGS` and `CMAKE_ASM_FLAGS` separately, so the C-side
+        // prefix-map does not cover `.S` sources; mirror it via `asmflag()` when needed.
+        if let Some(asm_flag) = asm_debug_prefix_map_flag(&self.manifest_dir) {
+            cmake_cfg.asmflag(asm_flag);
         }
 
         cmake_cfg
