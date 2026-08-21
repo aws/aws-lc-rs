@@ -574,20 +574,11 @@ impl CcBuilder {
     /// Jitterentropy MUST be compiled with -O0, so we temporarily override
     /// CFLAGS to replace any optimization flags with -O0.
     ///
-    /// The cc crate collects flags from ALL matching CFLAGS env vars (not just
-    /// the highest-priority one), so we must filter every variable it checks:
-    ///   1. `CFLAGS_{target}` (e.g. `CFLAGS_x86_64_unknown_freebsd`)
-    ///   2. `HOST_CFLAGS` or `TARGET_CFLAGS`
-    ///   3. `CFLAGS`
+    /// Every variable cc reads must be filtered (see `cflags_env_names`); missing
+    /// the raw-triple spelling was <https://github.com/aws/aws-lc-rs/issues/1205>.
     fn jitter_entropy_cflags_guards(is_cl_like: bool) -> Vec<EnvGuard> {
-        let target_u = target().to_lowercase().replace('-', "_");
-
-        let cflags_env_names: Vec<String> = vec![
-            format!("CFLAGS_{target_u}"),
-            "HOST_CFLAGS".to_string(),
-            "TARGET_CFLAGS".to_string(),
-            "CFLAGS".to_string(),
-        ];
+        // Jitterentropy may be cross-compiled, so include TARGET_CFLAGS too.
+        let cflags_env_names = cflags_env_names(true);
 
         let filter_cflags = |value: &str| -> String {
             let filtered: String = value
@@ -978,22 +969,43 @@ impl CcBuilder {
     }
 }
 
+/// The `CFLAGS`-family env var names the cc crate consults (its `target_envs`).
+/// cc's `envflags` collects flags from EVERY one that is set, so overriding or
+/// suppressing user flags must handle all of them -- including the raw-triple
+/// spelling (`CFLAGS_aarch64-apple-darwin`), which a shell cannot usually export
+/// but a process can set via `setenv` (#1205).
+///
+/// `include_target_prefixed` adds `TARGET_CFLAGS`: cc reads it when cross-compiling
+/// and `HOST_CFLAGS` otherwise, so callers that may cross-compile need both.
+fn cflags_env_names(include_target_prefixed: bool) -> Vec<String> {
+    let target = target();
+    // cc 1.2.26 replaces only `-`, while newer versions replace both `-` and `.`.
+    // Include both spellings because either version may satisfy our dependency range.
+    let target_u_legacy = target.replace('-', "_");
+    let target_u = target.replace(['-', '.'], "_");
+    let mut names = vec![
+        format!("CFLAGS_{target}"),
+        format!("CFLAGS_{target_u_legacy}"),
+    ];
+    if target_u != target_u_legacy {
+        names.push(format!("CFLAGS_{target_u}"));
+    }
+    names.push("HOST_CFLAGS".to_string());
+    if include_target_prefixed {
+        names.push("TARGET_CFLAGS".to_string());
+    }
+    names.push("CFLAGS".to_string());
+    names
+}
+
 /// Temporarily removes every `CFLAGS`-family env var the cc crate consults (see its
 /// `target_envs`), so that `cc::Build::get_compiler()` computes only the target's
 /// default flags. `cc` concatenates all set variants, so all must go.
 fn cflags_ignore_guards() -> Vec<EnvGuard> {
-    let target = target();
-    let target_u = target.replace(['-', '.'], "_");
-    [
-        format!("CFLAGS_{target}"),
-        format!("CFLAGS_{target_u}"),
-        "HOST_CFLAGS".to_string(),
-        "TARGET_CFLAGS".to_string(),
-        "CFLAGS".to_string(),
-    ]
-    .iter()
-    .map(|name| EnvGuard::remove(name))
-    .collect()
+    cflags_env_names(true)
+        .iter()
+        .map(|name| EnvGuard::remove(name))
+        .collect()
 }
 
 /// Whether the DWARF path-stripping assembler flag applies to this target and
@@ -1324,6 +1336,85 @@ mod tests {
             )),
             "GCC must keep the assembler flag when user CFLAGS enables LTO"
         );
+    }
+
+    // Guards https://github.com/aws/aws-lc-rs/issues/1205: an optimization flag in ANY
+    // CFLAGS variant cc reads (including the raw-triple spelling, settable via setenv)
+    // overrides jitterentropy's required -O0, so every variant must be filtered.
+    #[test]
+    fn test_jitter_entropy_cflags_guards_filter_every_cc_variant() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let _target_guard = EnvGuard::new("TARGET", "thumbv8m.main-none-eabi");
+        let _g1 = EnvGuard::new("CFLAGS_thumbv8m.main-none-eabi", "-O3 -fraw");
+        let _g2 = EnvGuard::new("CFLAGS_thumbv8m.main_none_eabi", "-O2 -flegacy");
+        let _g3 = EnvGuard::new("CFLAGS_thumbv8m_main_none_eabi", "-Oz -fcurrent");
+        let _g4 = EnvGuard::new("HOST_CFLAGS", "-Ofast -fhost");
+        let _g5 = EnvGuard::new("TARGET_CFLAGS", "-Os -ftarget");
+        let _g6 = EnvGuard::new("CFLAGS", "-O1 -fbase");
+        {
+            let _guards = CcBuilder::jitter_entropy_cflags_guards(false);
+            for name in [
+                "CFLAGS_thumbv8m.main-none-eabi",
+                "CFLAGS_thumbv8m.main_none_eabi",
+                "CFLAGS_thumbv8m_main_none_eabi",
+                "HOST_CFLAGS",
+                "TARGET_CFLAGS",
+                "CFLAGS",
+            ] {
+                let value = env::var(name).unwrap();
+                assert!(
+                    !value
+                        .split_whitespace()
+                        .any(|f| f.starts_with("-O") && f != "-O0"),
+                    "{name} still carries an optimization flag: {value}"
+                );
+                assert!(
+                    value.split_whitespace().any(|f| f == "-O0"),
+                    "{name} must force -O0: {value}"
+                );
+            }
+            // Non-optimization flags are preserved.
+            assert!(env::var("CFLAGS_thumbv8m.main-none-eabi")
+                .unwrap()
+                .contains("-fraw"));
+        }
+        // Every guarded variable is restored on drop.
+        assert_eq!(
+            env::var("CFLAGS_thumbv8m.main-none-eabi").unwrap(),
+            "-O3 -fraw"
+        );
+        assert_eq!(
+            env::var("CFLAGS_thumbv8m.main_none_eabi").unwrap(),
+            "-O2 -flegacy"
+        );
+        assert_eq!(
+            env::var("CFLAGS_thumbv8m_main_none_eabi").unwrap(),
+            "-Oz -fcurrent"
+        );
+        assert_eq!(env::var("HOST_CFLAGS").unwrap(), "-Ofast -fhost");
+        assert_eq!(env::var("TARGET_CFLAGS").unwrap(), "-Os -ftarget");
+        assert_eq!(env::var("CFLAGS").unwrap(), "-O1 -fbase");
+    }
+
+    // cc 1.2.26 replaces only `-` in `target_envs`, while newer versions replace
+    // both `-` and `.`; a dotted triple pins that we cover both supported forms.
+    #[test]
+    fn test_cflags_env_names_match_cc_target_envs() {
+        let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+        let _target_guard = EnvGuard::new("TARGET", "thumbv8m.main-none-eabi");
+        let names = cflags_env_names(true);
+        assert_eq!(
+            names,
+            vec![
+                "CFLAGS_thumbv8m.main-none-eabi",
+                "CFLAGS_thumbv8m.main_none_eabi",
+                "CFLAGS_thumbv8m_main_none_eabi",
+                "HOST_CFLAGS",
+                "TARGET_CFLAGS",
+                "CFLAGS",
+            ]
+        );
+        assert!(!cflags_env_names(false).contains(&"TARGET_CFLAGS".to_string()));
     }
 
     // Guards https://github.com/aws/aws-lc-rs/issues/1146: in cl driver mode
