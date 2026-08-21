@@ -606,3 +606,30 @@ fn test_wrong_digest() {
         .verify_digest(&digest_sha384, signature_sha256.as_ref())
         .is_err());
 }
+
+#[test]
+fn test_p256_sha1_asn1_roundtrip() {
+    let rng = SystemRandom::new();
+    let key_pair = EcdsaKeyPair::generate(&signature::ECDSA_P256_SHA1_ASN1_SIGNING).unwrap();
+    let msg = b"legacy CloudFront-style policy";
+
+    let sig = key_pair.sign(&rng, msg).unwrap();
+
+    let upk = UnparsedPublicKey::new(
+        &signature::ECDSA_P256_SHA1_ASN1,
+        key_pair.public_key().as_ref(),
+    );
+    upk.verify(msg, sig.as_ref()).unwrap();
+
+    let sha1_digest = digest::digest(&SHA1_FOR_LEGACY_USE_ONLY, msg);
+    let imported = Digest::import_less_safe(sha1_digest.as_ref(), &SHA1_FOR_LEGACY_USE_ONLY).unwrap();
+    let digest_sig = key_pair.sign_digest(&imported).unwrap();
+    upk.verify_digest(&imported, digest_sig.as_ref()).unwrap();
+
+    // SHA-1 signatures must not verify under the SHA-256 algorithm.
+    let upk_sha256 = UnparsedPublicKey::new(
+        &signature::ECDSA_P256_SHA256_ASN1,
+        key_pair.public_key().as_ref(),
+    );
+    assert!(upk_sha256.verify(msg, sig.as_ref()).is_err());
+}
