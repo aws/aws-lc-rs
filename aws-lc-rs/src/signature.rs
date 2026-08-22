@@ -950,7 +950,7 @@ pub const ECDSA_P256K1_SHA3_256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerific
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
-/// *Not recommended.* Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-1.
+/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-1.
 pub const ECDSA_P256_SHA1_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
     digest: &digest::SHA1_FOR_LEGACY_USE_ONLY,
@@ -1113,8 +1113,8 @@ pub const ECDSA_P256K1_SHA3_256_FIXED_SIGNING: EcdsaSigningAlgorithm =
 
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-1.
 /// # ⚠️ Warning
-/// SHA-1 is deprecated and should not be used for new applications. This scheme is provided
-/// only for compatibility with legacy protocols such as CloudFront-style signed URLs.
+/// The SHA-1 digest algorithm is deprecated.
+/// This scheme should only be used for backwards compatibility purposes.
 pub const ECDSA_P256_SHA1_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256_SHA1_ASN1);
 
