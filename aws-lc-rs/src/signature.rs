@@ -1111,13 +1111,6 @@ pub const ECDSA_P256K1_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
 pub const ECDSA_P256K1_SHA3_256_FIXED_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA3_256_FIXED);
 
-/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-1.
-/// # ⚠️ Warning
-/// The SHA-1 digest algorithm is deprecated.
-/// This scheme should only be used for backwards compatibility purposes.
-pub const ECDSA_P256_SHA1_ASN1_SIGNING: EcdsaSigningAlgorithm =
-    EcdsaSigningAlgorithm(&ECDSA_P256_SHA1_ASN1);
-
 /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
 pub const ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
     EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_ASN1);
