@@ -128,6 +128,10 @@ impl StreamingEncryptingKey {
         if !algorithm.supports_mode(mode) {
             return Err(Unspecified);
         }
+        // EVP initialization reads the algorithm's IV length without receiving the slice length.
+        if !algorithm.is_valid_encryption_context(mode, &context) {
+            return Err(Unspecified);
+        }
         // The streaming path passes raw key bytes to the EVP API rather than
         // going through `SymmetricCipherKey` construction.  Validate
         // algorithm-specific key constraints (e.g. DES weak-key / K1!=K2
@@ -459,6 +463,9 @@ impl StreamingDecryptingKey {
         if !algorithm.supports_mode(mode) {
             return Err(Unspecified);
         }
+        if !algorithm.is_valid_decryption_context(mode, &context) {
+            return Err(Unspecified);
+        }
         // See comment in `StreamingEncryptingKey::new`.
         key.validate_key_material()?;
         let mut cipher_ctx = LcPtr::new(unsafe { EVP_CIPHER_CTX_new() })?;
@@ -703,9 +710,13 @@ impl StreamingDecryptingKey {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "legacy-des")]
+    #[allow(deprecated)]
+    use crate::cipher::DES_FOR_LEGACY_USE_ONLY;
     use crate::cipher::{
         DecryptionContext, EncryptionContext, OperatingMode, StreamingDecryptingKey,
-        StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_256, AES_256_KEY_LEN,
+        StreamingEncryptingKey, UnboundCipherKey, AES_128, AES_128_KEY_LEN, AES_256,
+        AES_256_KEY_LEN,
     };
     use crate::iv::{FixedLength, IV_LEN_128_BIT};
     use crate::rand::{SecureRandom, SystemRandom};
@@ -1689,4 +1700,111 @@ mod tests {
         2,
         9
     );
+
+    #[test]
+    fn test_new_rejects_none_context_for_iv_required_modes() {
+        let key_bytes = [0u8; AES_128_KEY_LEN];
+        for mode in [
+            OperatingMode::CBC,
+            OperatingMode::CTR,
+            OperatingMode::CFB128,
+        ] {
+            let key = UnboundCipherKey::new(&AES_128, &key_bytes).unwrap();
+            assert!(
+                StreamingEncryptingKey::new(key, mode, EncryptionContext::None).is_err(),
+                "AES + {mode:?} + EncryptionContext::None should be rejected"
+            );
+
+            let key = UnboundCipherKey::new(&AES_128, &key_bytes).unwrap();
+            assert!(
+                StreamingDecryptingKey::new(key, mode, DecryptionContext::None).is_err(),
+                "AES + {mode:?} + DecryptionContext::None should be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn test_new_accepts_none_context_for_ecb() {
+        let key_bytes = [0u8; AES_128_KEY_LEN];
+
+        let key = UnboundCipherKey::new(&AES_128, &key_bytes).unwrap();
+        assert!(
+            StreamingEncryptingKey::new(key, OperatingMode::ECB, EncryptionContext::None).is_ok()
+        );
+
+        let key = UnboundCipherKey::new(&AES_128, &key_bytes).unwrap();
+        assert!(
+            StreamingDecryptingKey::new(key, OperatingMode::ECB, DecryptionContext::None).is_ok()
+        );
+    }
+
+    #[cfg(feature = "legacy-des")]
+    #[test]
+    fn test_new_rejects_iv64_context_for_aes() {
+        let key_bytes = [0u8; AES_128_KEY_LEN];
+        for mode in [
+            OperatingMode::CBC,
+            OperatingMode::CTR,
+            OperatingMode::CFB128,
+        ] {
+            let key = UnboundCipherKey::new(&AES_128, &key_bytes).unwrap();
+            let context = EncryptionContext::Iv64(FixedLength::new().unwrap());
+            assert!(
+                StreamingEncryptingKey::new(key, mode, context).is_err(),
+                "AES + {mode:?} + EncryptionContext::Iv64 should be rejected"
+            );
+
+            let key = UnboundCipherKey::new(&AES_128, &key_bytes).unwrap();
+            let context = DecryptionContext::Iv64(FixedLength::new().unwrap());
+            assert!(
+                StreamingDecryptingKey::new(key, mode, context).is_err(),
+                "AES + {mode:?} + DecryptionContext::Iv64 should be rejected"
+            );
+        }
+    }
+
+    #[cfg(feature = "legacy-des")]
+    #[test]
+    #[allow(deprecated)]
+    fn test_new_rejects_iv128_context_for_des() {
+        let key_bytes = from_hex("0123456789abcdef").unwrap();
+
+        let key = UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+        let context = EncryptionContext::Iv128(FixedLength::new().unwrap());
+        assert!(
+            StreamingEncryptingKey::new(key, OperatingMode::CBC, context).is_err(),
+            "DES + CBC + EncryptionContext::Iv128 should be rejected"
+        );
+
+        let key = UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+        let context = DecryptionContext::Iv128(FixedLength::new().unwrap());
+        assert!(
+            StreamingDecryptingKey::new(key, OperatingMode::CBC, context).is_err(),
+            "DES + CBC + DecryptionContext::Iv128 should be rejected"
+        );
+    }
+
+    #[cfg(feature = "legacy-des")]
+    #[test]
+    #[allow(deprecated)]
+    fn test_new_accepts_valid_des_contexts() {
+        let key_bytes = from_hex("0123456789abcdef").unwrap();
+
+        let key = UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+        assert!(
+            StreamingEncryptingKey::new(key, OperatingMode::ECB, EncryptionContext::None).is_ok()
+        );
+        let key = UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+        assert!(
+            StreamingDecryptingKey::new(key, OperatingMode::ECB, DecryptionContext::None).is_ok()
+        );
+
+        let key = UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+        let context = EncryptionContext::Iv64(FixedLength::new().unwrap());
+        assert!(StreamingEncryptingKey::new(key, OperatingMode::CBC, context).is_ok());
+
+        let key = UnboundCipherKey::new(&DES_FOR_LEGACY_USE_ONLY, &key_bytes).unwrap();
+        let context = DecryptionContext::Iv64(FixedLength::new().unwrap());
+        assert!(StreamingDecryptingKey::new(key, OperatingMode::CBC, context).is_ok());
+    }
 }

@@ -402,8 +402,17 @@ impl UnboundKey {
 
         in_out.extend(tag_buffer[..alg_tag_len].iter());
 
-        let mut out_len = MaybeUninit::<usize>::uninit();
+        // Safe `Extend` implementations are not required to grow the buffer,
+        // so derive the FFI capacity from the actual post-extend slice.
         let mut_in_out = in_out.as_mut();
+        let out_capacity = mut_in_out.len();
+        let expected_len = plaintext_len.checked_add(alg_tag_len).ok_or(Unspecified)?;
+        // Only under-growth is unsound; an exact match also fails closed on over-growth.
+        if out_capacity != expected_len {
+            return Err(Unspecified);
+        }
+
+        let mut out_len = MaybeUninit::<usize>::uninit();
 
         {
             let nonce = nonce.as_ref();
@@ -415,7 +424,7 @@ impl UnboundKey {
                     self.ctx.as_ref().as_const_ptr(),
                     mut_in_out.as_mut_ptr(),
                     out_len.as_mut_ptr(),
-                    plaintext_len + alg_tag_len,
+                    out_capacity,
                     nonce.as_ptr(),
                     nonce.len(),
                     mut_in_out.as_ptr(),
@@ -443,21 +452,24 @@ impl UnboundKey {
         let mut tag_buffer = [0u8; MAX_TAG_NONCE_BUFFER_LEN];
 
         let mut out_tag_len = MaybeUninit::<usize>::uninit();
+        let plaintext_len;
 
         {
-            let plaintext_len = in_out.as_mut().len();
-            let in_out = in_out.as_mut();
+            // Derive both the FFI pointer and length from the same slice. `AsMut`
+            // implementations are not required to return the same view across calls.
+            let mut_in_out = in_out.as_mut();
+            plaintext_len = mut_in_out.len();
 
             if 1 != indicator_check!(unsafe {
                 EVP_AEAD_CTX_seal_scatter(
                     self.ctx.as_ref().as_const_ptr(),
-                    in_out.as_mut_ptr(),
+                    mut_in_out.as_mut_ptr(),
                     tag_buffer.as_mut_ptr(),
                     out_tag_len.as_mut_ptr(),
                     tag_buffer.len(),
                     null(),
                     0,
-                    in_out.as_ptr(),
+                    mut_in_out.as_ptr(),
                     plaintext_len,
                     null(),
                     0,
@@ -477,6 +489,11 @@ impl UnboundKey {
         )?);
 
         in_out.extend(&tag_buffer[..tag_len]);
+
+        let expected_len = plaintext_len.checked_add(tag_len).ok_or(Unspecified)?;
+        if in_out.as_mut().len() != expected_len {
+            return Err(Unspecified);
+        }
 
         Ok(nonce)
     }
@@ -596,5 +613,204 @@ impl From<hkdf::Okm<'_, &'static Algorithm>> for UnboundKey {
         let algorithm = *okm.len();
         okm.fill(key_bytes).unwrap();
         Self::new(algorithm, key_bytes).unwrap()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct NormalBuffer(Vec<u8>);
+
+    impl AsMut<[u8]> for NormalBuffer {
+        fn as_mut(&mut self) -> &mut [u8] {
+            self.0.as_mut_slice()
+        }
+    }
+
+    impl<'a> Extend<&'a u8> for NormalBuffer {
+        fn extend<T: IntoIterator<Item = &'a u8>>(&mut self, iter: T) {
+            self.0.extend(iter);
+        }
+    }
+
+    struct NoGrowBuffer(Vec<u8>);
+
+    impl AsMut<[u8]> for NoGrowBuffer {
+        fn as_mut(&mut self) -> &mut [u8] {
+            self.0.as_mut_slice()
+        }
+    }
+
+    impl<'a> Extend<&'a u8> for NoGrowBuffer {
+        fn extend<T: IntoIterator<Item = &'a u8>>(&mut self, _iter: T) {}
+    }
+
+    struct ShortExtendBuffer(Vec<u8>);
+
+    impl AsMut<[u8]> for ShortExtendBuffer {
+        fn as_mut(&mut self) -> &mut [u8] {
+            self.0.as_mut_slice()
+        }
+    }
+
+    impl<'a> Extend<&'a u8> for ShortExtendBuffer {
+        fn extend<T: IntoIterator<Item = &'a u8>>(&mut self, iter: T) {
+            self.0.extend(iter.into_iter().take(1));
+        }
+    }
+
+    struct ShrinkingBuffer(Vec<u8>);
+
+    impl AsMut<[u8]> for ShrinkingBuffer {
+        fn as_mut(&mut self) -> &mut [u8] {
+            self.0.as_mut_slice()
+        }
+    }
+
+    impl<'a> Extend<&'a u8> for ShrinkingBuffer {
+        fn extend<T: IntoIterator<Item = &'a u8>>(&mut self, _iter: T) {
+            let new_len = self.0.len().saturating_sub(1);
+            self.0.truncate(new_len);
+        }
+    }
+
+    fn test_key() -> UnboundKey {
+        UnboundKey::new(&AES_128_GCM, &[0x42u8; 16]).unwrap()
+    }
+
+    fn test_randnonce_key() -> UnboundKey {
+        UnboundKey::from(
+            AeadCtx::aes_128_gcm_randnonce(
+                &[0x42u8; 16],
+                AES_128_GCM.tag_len(),
+                AES_128_GCM.nonce_len(),
+            )
+            .unwrap(),
+        )
+    }
+
+    fn test_nonce() -> Nonce {
+        Nonce::try_assume_unique_for_key(&[0x24u8; NONCE_LEN]).unwrap()
+    }
+
+    #[test]
+    fn seal_combined_normal_extend_succeeds_and_roundtrips() {
+        let key = test_key();
+        let plaintext = b"seal_combined soundness regression test".to_vec();
+        let mut in_out = NormalBuffer(plaintext.clone());
+
+        let nonce = key
+            .seal_combined(test_nonce(), &[], &mut in_out)
+            .expect("a normal, Vec-like Extend impl must succeed");
+
+        assert_eq!(in_out.0.len(), plaintext.len() + key.algorithm().tag_len());
+
+        let opened: &[u8] = key
+            .open_within(nonce, &[], &mut in_out.0, 0..)
+            .expect("the sealed output must open back to the original plaintext");
+        assert_eq!(opened, plaintext.as_slice());
+    }
+
+    #[test]
+    fn seal_combined_rejects_no_grow_extend() {
+        let key = test_key();
+        let plaintext = b"some plaintext".to_vec();
+        let original_len = plaintext.len();
+        let mut in_out = NoGrowBuffer(plaintext);
+
+        let result = key.seal_combined(test_nonce(), &[], &mut in_out);
+
+        assert!(
+            result.is_err(),
+            "a no-op Extend impl must not be trusted to have appended the tag"
+        );
+        assert_eq!(in_out.0.len(), original_len);
+    }
+
+    #[test]
+    fn seal_combined_rejects_short_extend() {
+        let key = test_key();
+        let mut in_out = ShortExtendBuffer(b"some plaintext".to_vec());
+
+        let result = key.seal_combined(test_nonce(), &[], &mut in_out);
+
+        assert!(
+            result.is_err(),
+            "an Extend impl that appends fewer bytes than the tag length must be rejected"
+        );
+    }
+
+    #[test]
+    fn seal_combined_rejects_shrinking_extend() {
+        let key = test_key();
+        let mut in_out = ShrinkingBuffer(b"some plaintext".to_vec());
+
+        let result = key.seal_combined(test_nonce(), &[], &mut in_out);
+
+        assert!(
+            result.is_err(),
+            "an Extend impl that shrinks the collection must be rejected"
+        );
+    }
+
+    #[test]
+    fn seal_combined_randnonce_normal_extend_succeeds_and_roundtrips() {
+        let key = test_randnonce_key();
+        let plaintext = b"seal_combined_randnonce soundness regression test".to_vec();
+        let mut in_out = NormalBuffer(plaintext.clone());
+
+        let nonce = key
+            .seal_combined_randnonce(&[], &mut in_out)
+            .expect("a normal, Vec-like Extend impl must succeed");
+
+        assert_eq!(in_out.0.len(), plaintext.len() + key.algorithm().tag_len());
+
+        let opened = key
+            .open_within(nonce, &[], &mut in_out.0, 0..)
+            .expect("the sealed output must open back to the original plaintext");
+        assert_eq!(opened, plaintext.as_slice());
+    }
+
+    #[test]
+    fn seal_combined_randnonce_rejects_no_grow_extend() {
+        let key = test_randnonce_key();
+        let plaintext = b"some plaintext".to_vec();
+        let original_len = plaintext.len();
+        let mut in_out = NoGrowBuffer(plaintext);
+
+        let result = key.seal_combined_randnonce(&[], &mut in_out);
+
+        assert!(
+            result.is_err(),
+            "a no-op Extend impl must not be trusted to have appended the tag"
+        );
+        assert_eq!(in_out.0.len(), original_len);
+    }
+
+    #[test]
+    fn seal_combined_randnonce_rejects_short_extend() {
+        let key = test_randnonce_key();
+        let mut in_out = ShortExtendBuffer(b"some plaintext".to_vec());
+
+        let result = key.seal_combined_randnonce(&[], &mut in_out);
+
+        assert!(
+            result.is_err(),
+            "an Extend impl that appends fewer bytes than the tag length must be rejected"
+        );
+    }
+
+    #[test]
+    fn seal_combined_randnonce_rejects_shrinking_extend() {
+        let key = test_randnonce_key();
+        let mut in_out = ShrinkingBuffer(b"some plaintext".to_vec());
+
+        let result = key.seal_combined_randnonce(&[], &mut in_out);
+
+        assert!(
+            result.is_err(),
+            "an Extend impl that shrinks the collection must be rejected"
+        );
     }
 }
