@@ -950,6 +950,13 @@ pub const ECDSA_P256K1_SHA3_256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerific
     sig_format: EcdsaSignatureFormat::Fixed,
 };
 
+/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-1.
+pub const ECDSA_P256_SHA1_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+    id: &ec::signature::AlgorithmID::ECDSA_P256,
+    digest: &digest::SHA1_FOR_LEGACY_USE_ONLY,
+    sig_format: EcdsaSignatureFormat::ASN1,
+};
+
 /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
 pub const ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
     id: &ec::signature::AlgorithmID::ECDSA_P256,
