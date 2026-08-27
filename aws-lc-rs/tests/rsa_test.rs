@@ -1513,6 +1513,65 @@ fn test_wrong_digest() {
     assert!(upk.verify_digest(&digest_sha384, &signature).is_err());
 }
 
+fn check_verify_digest_sig_enforces_digest_pin(
+    signing_256: &'static dyn signature::RsaEncoding,
+    signing_384: &'static dyn signature::RsaEncoding,
+    verify_256: &'static dyn VerificationAlgorithm,
+    verify_384: &'static dyn VerificationAlgorithm,
+) {
+    let keypair = RsaKeyPair::generate(KeySize::Rsa2048).unwrap();
+    let msg = "Hello World!";
+    let digest_sha256 = digest::digest(&SHA256, msg.as_bytes());
+    let digest_sha384 = digest::digest(&SHA384, msg.as_bytes());
+
+    let mut sig_sha256 = vec![0u8; keypair.public_modulus_len()];
+    keypair
+        .sign_digest(signing_256, &digest_sha256, &mut sig_sha256)
+        .unwrap();
+    let mut sig_sha384 = vec![0u8; keypair.public_modulus_len()];
+    keypair
+        .sign_digest(signing_384, &digest_sha384, &mut sig_sha384)
+        .unwrap();
+
+    let public_key_bytes = keypair.public_key().as_ref();
+    let parsed_sha256 = ParsedPublicKey::new(verify_256, public_key_bytes).unwrap();
+    let parsed_sha384 = ParsedPublicKey::new(verify_384, public_key_bytes).unwrap();
+
+    parsed_sha256
+        .verify_digest_sig(&digest_sha256, &sig_sha256)
+        .unwrap();
+    parsed_sha384
+        .verify_digest_sig(&digest_sha384, &sig_sha384)
+        .unwrap();
+
+    assert!(parsed_sha256
+        .verify_digest_sig(&digest_sha384, &sig_sha384)
+        .is_err());
+    assert!(parsed_sha384
+        .verify_digest_sig(&digest_sha256, &sig_sha256)
+        .is_err());
+}
+
+#[test]
+fn test_parsed_public_key_rsa_pkcs1_verify_digest_sig_enforces_digest_pin() {
+    check_verify_digest_sig_enforces_digest_pin(
+        &signature::RSA_PKCS1_SHA256,
+        &signature::RSA_PKCS1_SHA384,
+        &signature::RSA_PKCS1_2048_8192_SHA256,
+        &signature::RSA_PKCS1_2048_8192_SHA384,
+    );
+}
+
+#[test]
+fn test_parsed_public_key_rsa_pss_verify_digest_sig_enforces_digest_pin() {
+    check_verify_digest_sig_enforces_digest_pin(
+        &signature::RSA_PSS_SHA256,
+        &signature::RSA_PSS_SHA384,
+        &signature::RSA_PSS_2048_8192_SHA256,
+        &signature::RSA_PSS_2048_8192_SHA384,
+    );
+}
+
 // Components of the RSA private key in "data/rsa_test_private_key_2048.der",
 // big-endian-encoded without leading zeros.
 mod test_key_components {

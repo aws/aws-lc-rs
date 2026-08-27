@@ -149,6 +149,46 @@ fn hkdf_key_types() {
 }
 
 #[test]
+fn hkdf_cross_algorithm_salt_from_okm() {
+    let source_alg = hkdf::HKDF_SHA384;
+    let target_alg = hkdf::HKDF_SHA256;
+    assert_ne!(source_alg, target_alg);
+
+    let source_salt = hkdf::Salt::new(source_alg, b"source salt value");
+    let prk = source_salt.extract(b"input keying material");
+    let info: &[&[u8]] = &[b"context"];
+
+    let okm = prk.expand(info, target_alg).unwrap();
+    let derived_salt = hkdf::Salt::from(okm);
+
+    assert_eq!(derived_salt.algorithm(), target_alg);
+
+    // `Okm` is single-use, so derive the bytes again for the explicit control.
+    let mut salt_bytes = [0u8; 32]; // HKDF_SHA256 digest output length.
+    prk.expand(info, target_alg)
+        .unwrap()
+        .fill(&mut salt_bytes)
+        .unwrap();
+    let explicit_salt = hkdf::Salt::new(target_alg, &salt_bytes);
+
+    let secret = b"downstream secret";
+    let downstream_info: &[&[u8]] = &[b"downstream"];
+
+    let My(from_derived) = derived_salt
+        .extract(secret)
+        .expand(downstream_info, My(32))
+        .unwrap()
+        .into();
+    let My(from_explicit) = explicit_salt
+        .extract(secret)
+        .expand(downstream_info, My(32))
+        .unwrap()
+        .into();
+
+    assert_eq!(from_derived, from_explicit);
+}
+
+#[test]
 fn hkdf_clone_tests() {
     for &alg in &[
         hkdf::HKDF_SHA1_FOR_LEGACY_USE_ONLY,

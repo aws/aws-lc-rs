@@ -194,8 +194,8 @@ impl Salt {
 
 impl From<Okm<'_, Algorithm>> for Salt {
     fn from(okm: Okm<'_, Algorithm>) -> Self {
-        let algorithm = okm.prk.algorithm;
-        let salt_len = okm.len().len();
+        let algorithm = okm.len;
+        let salt_len = okm.len.len();
         let mut salt_bytes = vec![0u8; salt_len];
         okm.fill(&mut salt_bytes).unwrap();
         Self {

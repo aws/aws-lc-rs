@@ -79,6 +79,7 @@ impl ParsedVerificationAlgorithm for RsaParameters {
     ) -> Result<(), Unspecified> {
         let evp_pkey = public_key.key();
         verify_rsa_digest_signature(
+            self.digest_algorithm(),
             self.padding(),
             evp_pkey,
             digest,
@@ -126,11 +127,9 @@ impl VerificationAlgorithm for RsaParameters {
         digest: &Digest,
         signature: &[u8],
     ) -> Result<(), Unspecified> {
-        if self.digest_algorithm() != digest.algorithm() {
-            return Err(Unspecified);
-        }
         let evp_pkey = parse_rsa_public_key(public_key)?;
         verify_rsa_digest_signature(
+            self.digest_algorithm(),
             self.padding(),
             &evp_pkey,
             digest,
@@ -293,12 +292,18 @@ pub(crate) fn verify_rsa_signature(
 
 #[inline]
 pub(crate) fn verify_rsa_digest_signature(
+    algorithm: &'static digest::Algorithm,
     padding: &'static RsaPadding,
     public_key: &LcPtr<EVP_PKEY>,
     digest: &Digest,
     signature: &[u8],
     allowed_bit_size: &RangeInclusive<u32>,
 ) -> Result<(), Unspecified> {
+    // Enforced here so no caller can omit it; the ctx below is configured from `digest`.
+    if algorithm != digest.algorithm() {
+        return Err(Unspecified);
+    }
+
     if !allowed_bit_size.contains(&public_key.as_const().key_size_bits().try_into()?) {
         return Err(Unspecified);
     }

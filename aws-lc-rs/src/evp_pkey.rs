@@ -23,6 +23,7 @@ use crate::ptr::{ConstPointer, LcPtr};
 use crate::{cbs, digest};
 use core::ffi::c_int;
 use std::ptr::{null, null_mut};
+use zeroize::Zeroizing;
 
 impl PartialEq<Self> for LcPtr<EVP_PKEY> {
     /// Only compares params and public key
@@ -507,7 +508,7 @@ impl LcPtr<EVP_PKEY> {
         }
     }
 
-    pub(crate) fn agree(&self, peer_key: &mut Self) -> Result<Box<[u8]>, Unspecified> {
+    pub(crate) fn agree(&self, peer_key: &mut Self) -> Result<Zeroizing<Vec<u8>>, Unspecified> {
         let mut pctx = self.create_EVP_PKEY_CTX()?;
 
         if 1 != unsafe { EVP_PKEY_derive_init(pctx.as_mut_ptr()) } {
@@ -523,15 +524,17 @@ impl LcPtr<EVP_PKEY> {
             return Err(Unspecified);
         }
 
-        let mut secret = vec![0u8; secret_len];
+        // Own the allocation before the fallible derive call so every exit path scrubs it.
+        let mut secret = Zeroizing::new(vec![0u8; secret_len]);
         if 1 != indicator_check!(unsafe {
             EVP_PKEY_derive(pctx.as_mut_ptr(), secret.as_mut_ptr(), &mut secret_len)
         }) {
             return Err(Unspecified);
         }
+        // Preserve the allocation so `Zeroizing` can scrub its full capacity.
         secret.truncate(secret_len);
 
-        Ok(secret.into_boxed_slice())
+        Ok(secret)
     }
 
     pub(crate) fn generate<F>(pkey_type: c_int, params_fn: Option<F>) -> Result<Self, Unspecified>
@@ -572,5 +575,41 @@ impl Clone for LcPtr<EVP_PKEY> {
             "infallible AWS-LC function"
         );
         Self::new(unsafe { self.as_mut_unsafe_ptr() }).expect("non-null AWS-LC EVP_PKEY pointer")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::aws_lc::EVP_PKEY_X25519;
+
+    fn generate_ed25519() -> LcPtr<EVP_PKEY> {
+        LcPtr::<EVP_PKEY>::generate(EVP_PKEY_ED25519, No_EVP_PKEY_CTX_consumer)
+            .expect("ed25519 keygen")
+    }
+
+    fn generate_x25519() -> LcPtr<EVP_PKEY> {
+        LcPtr::<EVP_PKEY>::generate(EVP_PKEY_X25519, No_EVP_PKEY_CTX_consumer)
+            .expect("x25519 keygen")
+    }
+
+    #[test]
+    fn agree_computes_matching_shared_secret_from_both_sides() {
+        let mut key_a = generate_x25519();
+        let mut key_b = generate_x25519();
+
+        let secret_ab = key_a.agree(&mut key_b).expect("agree a->b");
+        let secret_ba = key_b.agree(&mut key_a).expect("agree b->a");
+
+        assert!(!secret_ab.is_empty());
+        assert_eq!(secret_ab.as_slice(), secret_ba.as_slice());
+    }
+
+    #[test]
+    fn agree_rejects_mismatched_key_types() {
+        let x25519_key = generate_x25519();
+        let mut ed25519_key = generate_ed25519();
+
+        assert!(x25519_key.agree(&mut ed25519_key).is_err());
     }
 }
