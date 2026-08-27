@@ -10,18 +10,23 @@ env:
   # We can pin the version if nightly is too unstable.
   # Otherwise, we test against the latest version.
   RUST_NIGHTLY_TOOLCHAIN: nightly
+  MDBOOK_VERSION: 0.4.34
+  MDBOOK_SHA256: 535a109e6f5a838c644fb0615d34f4c12e588b666f7e4b28fb987e79e2807288
   DEBIAN_FRONTEND: noninteractive
 
 permissions:
-  contents: write
-  pages: write
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy-user-guide:
+  build-user-guide:
     if: github.repository == 'aws/aws-lc-rs'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           submodules: 'recursive'
@@ -29,12 +34,16 @@ jobs:
         run: |
           rustup toolchain install ${{ env.RUST_NIGHTLY_TOOLCHAIN }} --profile minimal --no-self-update
           rustup default ${{ env.RUST_NIGHTLY_TOOLCHAIN }}
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: '>=1.18'
       - name: Build and Test User Guide
         run: |
-          curl -L https://github.com/rust-lang/mdBook/releases/download/v0.4.34/mdbook-v0.4.34-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          curl --proto '=https' --tlsv1.2 --fail --location \
+            --output mdbook.tar.gz \
+            "https://github.com/rust-lang/mdBook/releases/download/v${{ env.MDBOOK_VERSION }}/mdbook-v${{ env.MDBOOK_VERSION }}-x86_64-unknown-linux-gnu.tar.gz"
+          printf '%s  %s\n' "${{ env.MDBOOK_SHA256 }}" mdbook.tar.gz | sha256sum --check
+          tar xzf mdbook.tar.gz
           ./mdbook build book
           ./mdbook test book
       - name: Build Documentation
@@ -45,7 +54,28 @@ jobs:
         run: |
           mkdir -p "book/book/rustdocs/${REF_NAME}"
           cp --recursive target/doc -t "book/book/rustdocs/${REF_NAME}"
-      - name: Deploy Docs
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Validate documentation artifact
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          test -f book/book/index.html
+          test -f "book/book/rustdocs/${REF_NAME}/doc/aws_lc_rs/index.html"
+      - name: Upload documentation artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          folder: book/book
+          path: book/book
+
+  deploy-user-guide:
+    if: github.repository == 'aws/aws-lc-rs'
+    needs: build-user-guide
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy documentation
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
