@@ -4,10 +4,18 @@
 pub(crate) mod key_pair;
 pub(crate) mod signature;
 
-use crate::aws_lc::{EVP_PKEY, EVP_PKEY_PQDSA, NID_MLDSA44, NID_MLDSA65, NID_MLDSA87};
+use crate::aws_lc::{
+    EVP_DigestFinalXOF, EVP_DigestInit_ex, EVP_DigestUpdate, EVP_shake256, EVP_PKEY,
+    EVP_PKEY_PQDSA, NID_MLDSA44, NID_MLDSA65, NID_MLDSA87,
+};
+use crate::digest::digest_ctx::DigestContext;
 use crate::error::{KeyRejected, Unspecified};
 use crate::ptr::LcPtr;
 use core::ffi::c_int;
+use core::ptr::null_mut;
+
+/// The length in bytes of `tr = SHAKE256(public_key)` (`ML_DSA_TRBYTES`).
+pub(crate) const TR_LEN: usize = 64;
 
 #[derive(Debug, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
@@ -90,6 +98,109 @@ pub(crate) fn parse_pqdsa_public_key(
             EVP_PKEY_PQDSA,
         ))
         .and_then(|key| validate_pqdsa_evp_key(&key, id).map(|()| key))
+}
+
+/// Returns the length in bytes of the external message representative that `id` signs and
+/// verifies, or `None` if `id` does not support signing a precomputed representative.
+///
+/// This mirrors AWS-LC's family-level `PQDSA.digest_len`. For ML-DSA the representative is
+/// `mu`, of length `ML_DSA_CRHBYTES` (64) for every parameter set. A future algorithm can
+/// only support this if its representative is a deterministic function of public inputs
+/// alone -- true for ML-DSA, but not for SLH-DSA (secret-keyed PRF) or FN-DSA (fresh salt).
+//
+// Deliberately an exhaustive `match` with no wildcard arm: adding an `AlgorithmID` is a
+// compile error here, forcing a decision instead of silently claiming or denying support.
+// The `Option` never escapes the public API; the `crate::ml_dsa` handles can only be
+// constructed for a supporting algorithm.
+#[allow(clippy::unnecessary_wraps)]
+pub(crate) const fn external_representative_len(id: &AlgorithmID) -> Option<usize> {
+    match id {
+        AlgorithmID::ML_DSA_44 | AlgorithmID::ML_DSA_65 | AlgorithmID::ML_DSA_87 => Some(64),
+    }
+}
+
+/// An incremental SHAKE256 absorb/squeeze, the XOF underlying both `tr` and `mu`.
+#[derive(Clone)]
+struct Shake256 {
+    md_ctx: DigestContext,
+}
+
+impl Shake256 {
+    fn new() -> Result<Self, Unspecified> {
+        let mut md_ctx = DigestContext::new_uninit();
+        if 1 != unsafe { EVP_DigestInit_ex(md_ctx.as_mut_ptr(), EVP_shake256(), null_mut()) } {
+            return Err(Unspecified);
+        }
+        Ok(Self { md_ctx })
+    }
+
+    fn update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
+        if 1 != unsafe {
+            EVP_DigestUpdate(self.md_ctx.as_mut_ptr(), data.as_ptr().cast(), data.len())
+        } {
+            return Err(Unspecified);
+        }
+        Ok(())
+    }
+
+    fn finish(mut self, output: &mut [u8]) -> Result<(), Unspecified> {
+        if 1 != unsafe {
+            EVP_DigestFinalXOF(self.md_ctx.as_mut_ptr(), output.as_mut_ptr(), output.len())
+        } {
+            return Err(Unspecified);
+        }
+        Ok(())
+    }
+}
+
+/// Computes `tr = SHAKE256(public_key, 64)`, the public key hash that binds `mu` to a
+/// specific key. `raw_public_key` must be the raw (not X.509) public key encoding.
+pub(crate) fn compute_tr(raw_public_key: &[u8]) -> Result<[u8; TR_LEN], Unspecified> {
+    let mut tr = [0u8; TR_LEN];
+    let mut shake = Shake256::new()?;
+    shake.update(raw_public_key)?;
+    shake.finish(&mut tr)?;
+    Ok(tr)
+}
+
+/// An in-progress computation of `mu`, the FIPS 204 "message representative":
+///
+/// ```text
+/// mu = SHAKE256(tr || 0x00 || len(context) || context || message, mu_len)
+/// ```
+///
+/// The `0x00` octet is the domain separator selecting "pure" ML-DSA (as opposed to
+/// HashML-DSA, which uses `0x01`). Everything up to and including `context` is absorbed by
+/// [`Self::new`], so the message itself can be supplied incrementally.
+#[derive(Clone)]
+pub(crate) struct MuHasher {
+    shake: Shake256,
+}
+
+impl MuHasher {
+    /// Starts a `mu` computation from a precomputed `tr`, absorbing the domain separator and
+    /// the context string.
+    pub(crate) fn new(tr: &[u8; TR_LEN], context: &[u8]) -> Result<Self, Unspecified> {
+        // FIPS 204 limits the context string to 255 bytes, which is also what the single
+        // length octet below can encode.
+        let context_len = u8::try_from(context.len()).map_err(|_| Unspecified)?;
+
+        let mut shake = Shake256::new()?;
+        shake.update(tr)?;
+        shake.update(&[0u8, context_len])?;
+        shake.update(context)?;
+        Ok(Self { shake })
+    }
+
+    /// Absorbs the next chunk of the message.
+    pub(crate) fn update(&mut self, data: &[u8]) -> Result<(), Unspecified> {
+        self.shake.update(data)
+    }
+
+    /// Squeezes `mu.len()` bytes, consuming the hasher.
+    pub(crate) fn finish(self, mu: &mut [u8]) -> Result<(), Unspecified> {
+        self.shake.finish(mu)
+    }
 }
 
 #[cfg(test)]

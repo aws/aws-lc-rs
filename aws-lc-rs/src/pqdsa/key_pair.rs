@@ -17,6 +17,10 @@ use core::fmt::{Debug, Formatter};
 use std::ffi::c_int;
 
 /// A PQDSA (Post-Quantum Digital Signature Algorithm) key pair, used for signing and verification.
+///
+/// For ML-DSA keys, [`crate::ml_dsa`] additionally supports the FIPS 204 "external mu"
+/// variant, in which the message representative is derived separately from the signing
+/// operation.
 #[allow(clippy::module_name_repetitions)]
 pub struct PqdsaKeyPair {
     algorithm: &'static PqdsaSigningAlgorithm,
@@ -256,6 +260,10 @@ impl PqdsaKeyPair {
     #[must_use]
     pub fn private_key(&self) -> PqdsaPrivateKey<'_> {
         PqdsaPrivateKey(self)
+    }
+
+    pub(crate) fn evp_pkey(&self) -> &LcPtr<EVP_PKEY> {
+        &self.evp_pkey
     }
 }
 

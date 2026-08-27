@@ -48,6 +48,10 @@ impl PqdsaSigningAlgorithm {
     pub fn seed_len(&self) -> usize {
         self.0.id.seed_size_bytes()
     }
+
+    pub(crate) fn verification_algorithm(&self) -> &'static PqdsaVerificationAlgorithm {
+        self.0
+    }
 }
 
 /// A PQDSA public key.

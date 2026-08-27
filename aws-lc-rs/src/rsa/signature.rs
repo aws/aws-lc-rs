@@ -322,5 +322,5 @@ pub(crate) fn verify_rsa_digest_signature(
         }
     });
 
-    public_key.verify_digest_sig(digest, padding_fn, signature)
+    public_key.verify_digest_sig(digest.into(), padding_fn, signature)
 }
