@@ -137,8 +137,18 @@ function assert_docker_status {
 
 function parse_version {
   local VERSION="${1}"
-  echo Version: "${VERSION}"
-  echo "${VERSION}" | grep -E -q '^[0-9]+\.[0-9]+\.[0-9]+$'
+  printf 'Version: %s\n' "${VERSION}"
+  [[ "${VERSION}" != *$'\n'* ]] &&
+    [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
+function version_is_greater {
+  local CANDIDATE_VERSION="${1}"
+  local PUBLISHED_VERSION="${2}"
+
+  perl -Mversion -e \
+    'exit !(version->parse($ARGV[0]) > version->parse($ARGV[1]))' \
+    -- "${CANDIDATE_VERSION}" "${PUBLISHED_VERSION}"
 }
 
 function prompt_yes_no {
@@ -166,6 +176,7 @@ function validate_crate_version {
   local CRATE_VERSION
   CRATE_VERSION=$("${REPO_ROOT}"/scripts/tools/cargo-dig.rs -v)
 
+  local PUBLISHED_CRATE_VERSION
   PUBLISHED_CRATE_VERSION=$(cargo search "${CRATE_NAME}" | grep -E "^${CRATE_NAME} " | sed -e 's/.*"\(.*\)".*/\1/')
 
   if ! parse_version "${PUBLISHED_CRATE_VERSION}"; then
@@ -176,7 +187,7 @@ function validate_crate_version {
   echo
   echo "Current published version of ${CRATE_NAME}: ${PUBLISHED_CRATE_VERSION}"
   if parse_version "${CRATE_VERSION}"; then
-    if ! perl -e "exit !(version->parse('${CRATE_VERSION}')>version->parse('${PUBLISHED_CRATE_VERSION}'))"; then
+    if ! version_is_greater "${CRATE_VERSION}" "${PUBLISHED_CRATE_VERSION}"; then
       echo "New version must come after: ${PUBLISHED_CRATE_VERSION}"
       exit 1
     fi
