@@ -163,9 +163,13 @@ jobs:
     if:  github.event_name == 'pull_request'
     name: aws-ls-rs coverage
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          persist-credentials: false
           submodules: 'recursive'
           lfs: true
 
@@ -182,10 +186,9 @@ jobs:
       - name: Run FIPS coverage
         run: cargo llvm-cov -p aws-lc-rs --features unstable,fips --no-fail-fast --ignore-filename-regex "aws-lc-(fips-)?sys/.*" --codecov --output-path ./codecov-fips.json
       - name: Upload coverage reports to Codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
+          use_oidc: true
           files: ./codecov.json,./codecov-fips.json
           verbose: true
           fail_ci_if_error: true
