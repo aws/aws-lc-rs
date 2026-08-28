@@ -24,12 +24,15 @@
 //!    matching `openssl-sys`'s "env vars take precedence over pkg-config"
 //!    ordering while also recognizing AWS-LC's native package names.
 //!
-//! Probing pkg-config on the default path is safe despite not being opt-in:
-//! a candidate is only *adopted* if it carries the `OPENSSL_IS_AWSLC` marker
-//! and ships usable bindings, so a stray system OpenSSL (or a binding-less
-//! AWS-LC) is rejected and the build falls back to source. Cross-compilation is
-//! left to the `pkg_config` crate, which refuses to run unless
-//! `PKG_CONFIG_ALLOW_CROSS=1` (again matching `openssl-sys`).
+//! Treat `OPENSSL_*`, pkg-config metadata, and the paths they select as trusted
+//! build inputs. For FIPS builds, validation may load and execute a candidate
+//! before adoption, including shared-library initialization and candidates later
+//! rejected. Set `<crate>_USE_SYSTEM=0` to skip automatic discovery.
+//!
+//! Cross-compilation discovery is left to the `pkg_config` crate, which refuses
+//! to run unless `PKG_CONFIG_ALLOW_CROSS=1` (again matching `openssl-sys`). The
+//! FIPS probe runs only when the host can launch the target directly or through
+//! `CARGO_TARGET_<TRIPLE>_RUNNER`.
 
 use crate::system_library::{InstallLayout, SystemLib};
 use crate::{
