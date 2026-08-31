@@ -971,6 +971,11 @@ EC_POINT_set_to_infinity
 EC_curve_nid2nist
 EC_curve_nist2nid
 EC_get_builtin_curves
+EC_group_brainpoolP224r1
+EC_group_brainpoolP256r1
+EC_group_brainpoolP320r1
+EC_group_brainpoolP384r1
+EC_group_brainpoolP512r1
 EC_group_p224
 EC_group_p256
 EC_group_p384
@@ -1464,6 +1469,7 @@ EVP_hpke_aes_256_gcm
 EVP_hpke_chacha20_poly1305
 EVP_hpke_hkdf_sha256
 EVP_hpke_x25519_hkdf_sha256
+EVP_keccak256
 EVP_marshal_digest_algorithm
 EVP_marshal_private_key
 EVP_marshal_private_key_v2
@@ -1573,8 +1579,15 @@ Keccak1600_Absorb
 Keccak1600_Absorb_once_x4
 Keccak1600_Squeeze
 Keccak1600_Squeezeblocks_x4
+Keccak256
+Keccak256_Final
+Keccak256_Init
+Keccak256_Update
 KeccakF1600
 KeccakF1600_hw
+KeccakSponge_Absorb
+KeccakSponge_AbsorbFinal
+KeccakSponge_Reset
 MD4
 MD4_Final
 MD4_Init
@@ -3194,6 +3207,7 @@ ec_felem_to_bignum
 ec_felem_to_bytes
 ec_get_x_coordinate_as_bytes
 ec_get_x_coordinate_as_scalar
+ec_group_new_by_curve_name_nonfips
 ec_hash_to_curve_p256_xmd_sha256_sswu
 ec_hash_to_curve_p384_xmd_sha384_sswu
 ec_hash_to_curve_p384_xmd_sha512_sswu_draft07
