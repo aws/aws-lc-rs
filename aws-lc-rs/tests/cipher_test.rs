@@ -16,6 +16,10 @@ use aws_lc_rs::test;
 use aws_lc_rs::test::from_hex;
 use paste::paste;
 
+// NOTE: these helpers hand `update` one byte MORE than its documented minimum
+// (`in_len + block_len`), so they cover the generous-buffer path and are not
+// output-bounds tests. Overrun coverage lives in the `cipher::streaming` unit
+// tests, which canary the bytes past each output slice.
 fn step_encrypt(
     mut encrypting_key: StreamingEncryptingKey,
     plaintext: &[u8],
